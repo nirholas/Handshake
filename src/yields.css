@@ -1,0 +1,468 @@
+/*
+ * /yields — DeFi yield-pool explorer. Reuses cv-container, cv-stats-grid,
+ * cv-stat-card, cv-table, cv-search, hm-seg, cv-empty, cv-skel and the
+ * scr-controls / scr-field / scr-reset filter chrome from screener.css's
+ * siblings. This file styles only what is unique to the yields page: the
+ * stablecoin toggle, the wide pool table's pool/APY/chip cells, and the
+ * per-row expansion drawer with its dual-axis APY/TVL chart.
+ *
+ * Chart axis colors are theme-aware custom properties so the SVG strokes and
+ * the legend swatches always agree.
+ */
+
+:root[data-theme='light'] {
+	--yl-apy-axis: #7c3aed;
+	--yl-tvl-axis: #2563eb;
+	--yl-amber: #b45309;
+	--yl-amber-soft: rgba(245, 158, 11, 0.14);
+}
+:root[data-theme='dark'] {
+	--yl-apy-axis: #a78bfa;
+	--yl-tvl-axis: #60a5fa;
+	--yl-amber: #fbbf24;
+	--yl-amber-soft: rgba(245, 158, 11, 0.16);
+}
+
+/* ── Stat cards ─────────────────────────────────────────────────────────── */
+
+.yl-stats {
+	margin-bottom: 1.5rem;
+}
+@media (min-width: 768px) {
+	/* Three headline stats read best across three columns, not four. */
+	.yl-stats {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+.yl-stat-skel {
+	display: inline-block;
+	width: 5.5rem;
+	height: 1.5rem;
+	vertical-align: middle;
+}
+
+/* ── Filter controls ───────────────────────────────────────────────────── */
+
+.yl-controls {
+	align-items: flex-end;
+}
+.yl-search {
+	max-width: 20rem;
+	flex: 1 1 16rem;
+}
+
+.yl-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.8125rem;
+	font-weight: 500;
+	color: var(--cv-text-2);
+	cursor: pointer;
+	user-select: none;
+	padding-bottom: 0.5rem;
+}
+.yl-toggle input {
+	appearance: none;
+	width: 2.25rem;
+	height: 1.25rem;
+	border-radius: 999px;
+	background: var(--cv-surface-3);
+	border: 1px solid var(--cv-border);
+	position: relative;
+	cursor: pointer;
+	transition:
+		background 0.15s,
+		border-color 0.15s;
+	flex-shrink: 0;
+}
+.yl-toggle input::after {
+	content: '';
+	position: absolute;
+	top: 1px;
+	left: 1px;
+	width: 1rem;
+	height: 1rem;
+	border-radius: 50%;
+	background: var(--cv-text-3);
+	transition:
+		transform 0.18s ease,
+		background 0.15s;
+}
+.yl-toggle input:checked {
+	background: color-mix(in srgb, var(--cv-accent) 30%, transparent);
+	border-color: var(--cv-accent);
+}
+.yl-toggle input:checked::after {
+	transform: translateX(1rem);
+	background: var(--cv-accent);
+}
+.yl-toggle input:hover {
+	border-color: var(--cv-border-hover);
+}
+.yl-toggle input:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+}
+
+.yl-seg {
+	padding-bottom: 0;
+}
+
+/* ── Table ──────────────────────────────────────────────────────────────── */
+
+.yl-table {
+	min-width: 720px;
+}
+/* Header cells aren't click-to-sort here (sort is the TVL|APY toggle), so drop
+   the inherited pointer affordance. */
+.yl-table th {
+	cursor: default;
+}
+.yl-table th:hover {
+	color: var(--cv-text-2);
+}
+
+.yl-row {
+	cursor: pointer;
+}
+.yl-row td {
+	transition: background 0.12s;
+}
+.yl-row:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: -2px;
+}
+.yl-row.is-open td {
+	background: var(--cv-surface-2);
+}
+
+.yl-pool {
+	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+}
+.yl-pool .chev {
+	color: var(--cv-text-3);
+	font-size: 0.7rem;
+	transition: transform 0.18s ease;
+	transform: translateY(-1px);
+}
+.yl-row.is-open .yl-pool .chev {
+	transform: translateY(-1px) rotate(90deg);
+	color: var(--cv-accent);
+}
+.yl-pool .pool-inner {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+	min-width: 0;
+}
+.yl-pool .sym {
+	font-weight: 600;
+	color: var(--cv-text);
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+.yl-pool .meta {
+	font-size: 0.7rem;
+	color: var(--cv-text-3);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 14rem;
+}
+.yl-tag {
+	font-size: 0.625rem;
+	font-weight: 600;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	color: var(--cv-accent);
+	background: color-mix(in srgb, var(--cv-accent) 12%, transparent);
+	border-radius: var(--cv-radius-sm);
+	padding: 0.05rem 0.3rem;
+}
+
+.yl-project {
+	color: var(--cv-text-2);
+	text-transform: capitalize;
+}
+.yl-chain {
+	color: var(--cv-text-2);
+}
+
+.yl-apy .big {
+	font-weight: 700;
+	color: var(--cv-text);
+	font-variant-numeric: tabular-nums;
+}
+.yl-apy .sub {
+	display: block;
+	font-size: 0.6875rem;
+	font-weight: 400;
+	color: var(--cv-text-3);
+	margin-top: 0.1rem;
+	white-space: nowrap;
+}
+
+.cv-table td.num {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+.cv-table td.dim {
+	color: var(--cv-text-3);
+}
+
+/* Risk / outlook chips */
+.yl-chips {
+	white-space: nowrap;
+}
+.yl-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	border-radius: var(--cv-radius-sm);
+	padding: 0.1rem 0.4rem;
+	font-size: 0.6875rem;
+	font-weight: 600;
+	line-height: 1.4;
+	white-space: nowrap;
+}
+.yl-chip + .yl-chip {
+	margin-left: 0.3rem;
+}
+.yl-chip.il-yes {
+	color: var(--yl-amber);
+	background: var(--yl-amber-soft);
+}
+.yl-chip.il-no {
+	color: var(--cv-green);
+	background: var(--cv-green-soft);
+}
+.yl-chip.outlook {
+	font-weight: 500;
+	color: var(--cv-text-2);
+	background: var(--cv-surface-3);
+}
+.yl-chip.outlook.up {
+	color: var(--cv-green);
+	background: var(--cv-green-soft);
+}
+.yl-chip.outlook.down {
+	color: var(--cv-red);
+	background: var(--cv-red-soft);
+}
+
+/* ── Row drawer ─────────────────────────────────────────────────────────── */
+
+.yl-drawer-row.is-open td {
+	background: var(--cv-surface-2);
+}
+.yl-drawer-cell {
+	padding: 0 !important;
+	border-bottom: 1px solid var(--cv-border);
+}
+.yl-drawer {
+	padding: 1rem 1.25rem 1.25rem;
+	animation: ylDrawerIn 0.22s ease;
+}
+@keyframes ylDrawerIn {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.yl-chart-skel,
+.yl-chart-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.75rem;
+	min-height: 180px;
+	color: var(--cv-text-3);
+	font-size: 0.875rem;
+	text-align: center;
+}
+.yl-chart-skel {
+	flex-direction: row;
+}
+
+.yl-chart-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+}
+.yl-legend {
+	display: flex;
+	gap: 1rem;
+}
+.yl-leg {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-size: 0.75rem;
+	font-weight: 500;
+	color: var(--cv-text-2);
+}
+.yl-leg i {
+	width: 0.75rem;
+	height: 0.2rem;
+	border-radius: 2px;
+	display: inline-block;
+}
+.yl-leg.apy i {
+	background: var(--yl-apy-axis);
+}
+.yl-leg.tvl i {
+	background: var(--yl-tvl-axis);
+}
+.yl-chart-range {
+	font-size: 0.75rem;
+	color: var(--cv-text-3);
+	font-variant-numeric: tabular-nums;
+}
+
+.yl-chart-area {
+	position: relative;
+}
+.yl-chart-area svg {
+	display: block;
+	width: 100%;
+	height: auto;
+	touch-action: none;
+}
+
+.yl-tip {
+	position: absolute;
+	top: 0;
+	transform: translateX(-50%);
+	pointer-events: none;
+	background: var(--cv-surface);
+	border: 1px solid var(--cv-border);
+	border-radius: var(--cv-radius-md);
+	box-shadow: var(--cv-shadow-card);
+	padding: 0.5rem 0.625rem;
+	font-size: 0.75rem;
+	white-space: nowrap;
+	z-index: 2;
+}
+.yl-tip .d {
+	color: var(--cv-text-3);
+	margin: 0 0 0.25rem;
+	font-size: 0.6875rem;
+}
+.yl-tip .a {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	margin: 0.1rem 0;
+	color: var(--cv-text);
+	font-variant-numeric: tabular-nums;
+}
+.yl-tip .a i {
+	width: 0.6rem;
+	height: 0.6rem;
+	border-radius: 2px;
+	flex-shrink: 0;
+}
+.yl-tip .a i.apy {
+	background: var(--yl-apy-axis);
+}
+.yl-tip .a i.tvl {
+	background: var(--yl-tvl-axis);
+}
+
+/* ── Load more / empty / retry / attribution ────────────────────────────── */
+
+.yl-more-wrap {
+	display: flex;
+	justify-content: center;
+	margin: 1.25rem 0 0;
+}
+.yl-more {
+	appearance: none;
+	cursor: pointer;
+	font: inherit;
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: var(--cv-text);
+	background: var(--cv-surface);
+	border: 1px solid var(--cv-border);
+	border-radius: var(--cv-radius-md);
+	padding: 0.625rem 1.5rem;
+	transition:
+		background 0.15s,
+		border-color 0.15s;
+}
+.yl-more:hover:not(:disabled) {
+	background: var(--cv-surface-2);
+	border-color: var(--cv-border-hover);
+}
+.yl-more:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+}
+.yl-more:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+
+.yl-retry {
+	appearance: none;
+	cursor: pointer;
+	font: inherit;
+	font-size: 0.8125rem;
+	font-weight: 500;
+	color: #fff;
+	background: var(--cv-accent);
+	border: 0;
+	border-radius: var(--cv-radius-md);
+	padding: 0.5rem 1.25rem;
+	transition: background 0.15s;
+}
+.yl-retry:hover {
+	background: var(--cv-accent-hover);
+}
+.yl-retry:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+}
+
+.cv-empty-sub {
+	font-size: 0.8125rem;
+	color: var(--cv-text-3);
+	margin: 0.5rem 0 1rem;
+}
+
+.yl-attribution {
+	font-size: 0.75rem;
+	color: var(--cv-text-3);
+	margin-top: 0.75rem;
+	max-width: 46rem;
+}
+.yl-attribution a {
+	color: var(--cv-accent);
+}
+.yl-attribution a:hover {
+	text-decoration: underline;
+}
+
+@media (max-width: 639px) {
+	.yl-search {
+		flex-basis: 100%;
+		max-width: none;
+	}
+	.yl-toggle {
+		flex: 1 1 45%;
+	}
+}

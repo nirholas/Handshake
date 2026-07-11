@@ -137,7 +137,7 @@ function renderTable() {
 
 	const rows = sortedCategories()
 		.map((c) => {
-			const href = `/coins?category=${encodeURIComponent(c.id)}`;
+			const href = `/category/${encodeURIComponent(c.id)}`;
 			return `
 			<tr data-href="${esc(href)}">
 				<td class="rank hide-sm cv-mono">${c.rank ?? '—'}</td>

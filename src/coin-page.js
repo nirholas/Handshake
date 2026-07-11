@@ -1,8 +1,11 @@
 // /coin/:id — rich coin detail page, adopted from the cryptocurrency.cv coin
 // pages: header (icon / name / rank / price / 24h-7d-30d chips), interactive
-// SVG price chart with time ranges and a crosshair tooltip, market-stats grid,
-// related news, about text, and link pills. Data comes from the /api/coin/*
-// proxies (CoinGecko + the native three.ws news aggregator) — never mocked.
+// SVG price chart with time ranges and a crosshair tooltip, a 1h→1y price
+// performance matrix, market-stats grid, supply bar, ATH/ATL cards, sentiment
+// vote split, community/developer activity grids, a paginated exchange-listings
+// table, related news, about text, and link pills. Data comes from the
+// /api/coin/* proxies (CoinGecko + the native three.ws news aggregator) —
+// never mocked.
 
 import {
 	formatUsd,
@@ -364,6 +367,12 @@ function renderLinks(coin) {
 	if (l.reddit) pills.push(pill(l.reddit, 'Reddit'));
 	if (l.telegram) pills.push(pill(`https://t.me/${l.telegram}`, 'Telegram'));
 	if (l.github) pills.push(pill(l.github, 'GitHub'));
+	// Extra tracked repos beyond the primary GitHub link.
+	for (const url of (l.repos || []).slice(1, 3)) pills.push(pill(url, 'GitHub'));
+	if (l.whitepaper) pills.push(pill(l.whitepaper, 'Whitepaper'));
+	if (l.forum) pills.push(pill(l.forum, 'Forum'));
+	if (l.chat) pills.push(pill(l.chat, 'Chat'));
+	if (l.announcement) pills.push(pill(l.announcement, 'Announcements'));
 	for (const url of (l.explorers || []).slice(0, 2)) pills.push(pill(url, 'Explorer'));
 
 	// three.ws integration: a Solana contract gets first-party intel links.
@@ -410,6 +419,276 @@ function renderLinks(coin) {
 			}
 		});
 	});
+}
+
+// ── Price performance matrix ─────────────────────────────────────────────────
+
+const PERF_WINDOWS = [
+	['1h', 'h1'],
+	['24h', 'h24'],
+	['7d', 'd7'],
+	['14d', 'd14'],
+	['30d', 'd30'],
+	['60d', 'd60'],
+	['200d', 'd200'],
+	['1y', 'y1'],
+];
+
+function renderPerf(coin) {
+	const cp = coin.market?.change_pct || {};
+	const cells = PERF_WINDOWS.map(([label, key]) => {
+		const v = cp[key];
+		const has = v != null && Number.isFinite(v);
+		const dir = !has ? '' : v >= 0 ? 'up' : 'down';
+		const val = has ? `${v >= 0 ? '▲' : '▼'} ${Math.abs(v).toFixed(2)}%` : '—';
+		return `
+			<div class="cv-perf-cell ${dir}">
+				<span class="win">${esc(label)}</span>
+				<span class="val">${esc(val)}</span>
+			</div>`;
+	}).join('');
+	$('cv-perf').innerHTML = `<h2 class="cv-h2">Price Performance</h2><div class="cv-perf-grid">${cells}</div>`;
+}
+
+// ── Supply ───────────────────────────────────────────────────────────────────
+
+function renderSupply(coin) {
+	const m = coin.market || {};
+	const el = $('cv-supply');
+	const circ = m.circulating;
+	const cap = m.max ?? m.total;
+	if (circ == null && m.total == null && m.max == null && m.mcap_fdv_ratio == null) {
+		el.innerHTML = '';
+		return;
+	}
+	const pct = circ != null && cap ? Math.min(100, (circ / cap) * 100) : null;
+	const capWord = m.max != null ? 'max' : 'total';
+	el.innerHTML = `
+		<h2 class="cv-h2">Supply</h2>
+		<div class="cv-supply-card">
+			<div class="cv-supply-row">
+				<span>Circulating <strong>${esc(formatSupply(circ))}${coin.symbol ? ` ${esc(coin.symbol)}` : ''}</strong></span>
+				${cap != null ? `<span>${m.max != null ? 'Max' : 'Total'} Supply <strong>${esc(formatSupply(cap))}</strong></span>` : ''}
+			</div>
+			${pct != null ? `<div class="cv-supply-track"><div class="cv-supply-fill" style="width:${pct.toFixed(1)}%"></div></div>` : ''}
+			<div class="cv-supply-meta">
+				${pct != null ? `<span><strong>${pct.toFixed(1)}%</strong> of ${capWord} in circulation</span>` : ''}
+				${m.mcap_fdv_ratio != null ? `<span>Mkt Cap / FDV <strong>${m.mcap_fdv_ratio.toFixed(2)}</strong></span>` : ''}
+				${m.mcap_change_24h_pct != null ? `<span>Mkt Cap 24h <strong class="cv-${m.mcap_change_24h_pct >= 0 ? 'up' : 'down'}">${esc(formatPercent(m.mcap_change_24h_pct))}</strong></span>` : ''}
+			</div>
+		</div>`;
+}
+
+// ── All-time high / low ──────────────────────────────────────────────────────
+
+function renderExtremes(coin) {
+	const m = coin.market || {};
+	const el = $('cv-extremes');
+	if (m.ath == null && m.atl == null) {
+		el.innerHTML = '';
+		return;
+	}
+	const mult = m.price != null && m.atl ? m.price / m.atl : null;
+	const cards = [];
+	if (m.ath != null) {
+		const draw =
+			m.ath_change_pct != null
+				? ` · <span class="cv-down">${esc(formatPercent(m.ath_change_pct))}</span> from ATH`
+				: '';
+		cards.push(`
+			<div class="cv-extreme">
+				<p class="label">All-Time High</p>
+				<p class="value">${esc(formatPrice(m.ath))}</p>
+				<p class="sub">${m.ath_date ? esc(formatDateShort(m.ath_date)) : ''}${draw}</p>
+			</div>`);
+	}
+	if (m.atl != null) {
+		const rec =
+			mult != null
+				? ` · <span class="cv-up">${mult >= 100 ? Math.round(mult).toLocaleString('en-US') : mult.toFixed(1)}×</span> from ATL`
+				: '';
+		cards.push(`
+			<div class="cv-extreme">
+				<p class="label">All-Time Low</p>
+				<p class="value">${esc(formatPrice(m.atl))}</p>
+				<p class="sub">${m.atl_date ? esc(formatDateShort(m.atl_date)) : ''}${rec}</p>
+			</div>`);
+	}
+	el.innerHTML = `<h2 class="cv-h2">All-Time High &amp; Low</h2><div class="cv-extremes-grid">${cards.join('')}</div>`;
+}
+
+// ── Community sentiment ──────────────────────────────────────────────────────
+
+function renderSentiment(coin) {
+	const s = coin.sentiment || {};
+	const el = $('cv-sentiment');
+	const { up_pct: up, down_pct: down, watchlist_users: watch } = s;
+	if (up == null && down == null && watch == null) {
+		el.innerHTML = '';
+		return;
+	}
+	let bar = '';
+	if (up != null || down != null) {
+		const u = up != null ? up : down != null ? 100 - down : 50;
+		const d = down != null ? down : 100 - u;
+		bar = `
+			<div class="cv-sent-row">
+				<span class="cv-up">▲ ${u.toFixed(0)}% Bullish</span>
+				<span class="cv-down">${d.toFixed(0)}% Bearish ▼</span>
+			</div>
+			<div class="cv-sent-bar"><span class="up" style="width:${u}%"></span><span class="down" style="width:${d}%"></span></div>`;
+	}
+	el.innerHTML = `
+		<h2 class="cv-h2">Community Sentiment</h2>
+		<div class="cv-sent-card">
+			${bar}
+			${watch != null ? `<p class="cv-sent-watch"><strong>${esc(formatSupply(watch))}</strong> users watching on CoinGecko</p>` : ''}
+		</div>`;
+}
+
+// ── Community & developer activity ───────────────────────────────────────────
+
+function statCell(label, value) {
+	return `<div class="cv-mini-stat"><p class="label">${esc(label)}</p><p class="value cv-mono">${esc(value)}</p></div>`;
+}
+
+function renderDevCom(coin) {
+	const el = $('cv-devcom');
+	const com = coin.community;
+	const dev = coin.developer;
+	const blocks = [];
+	if (com) {
+		const cells = [
+			com.twitter_followers != null && statCell('Twitter Followers', formatSupply(com.twitter_followers)),
+			com.reddit_subscribers != null && statCell('Reddit Subscribers', formatSupply(com.reddit_subscribers)),
+			com.telegram_users != null && statCell('Telegram Members', formatSupply(com.telegram_users)),
+		].filter(Boolean).join('');
+		if (cells) blocks.push(`<div><h3 class="cv-h3">Community</h3><div class="cv-dc-grid">${cells}</div></div>`);
+	}
+	if (dev) {
+		const cells = [
+			dev.stars != null && statCell('GitHub Stars', formatSupply(dev.stars)),
+			dev.forks != null && statCell('Forks', formatSupply(dev.forks)),
+			dev.subscribers != null && statCell('Watchers', formatSupply(dev.subscribers)),
+			dev.total_issues != null && statCell('Total Issues', formatSupply(dev.total_issues)),
+			dev.closed_issues != null && statCell('Closed Issues', formatSupply(dev.closed_issues)),
+			dev.prs_merged != null && statCell('PRs Merged', formatSupply(dev.prs_merged)),
+			dev.pr_contributors != null && statCell('Contributors', formatSupply(dev.pr_contributors)),
+			dev.commits_4w != null && statCell('Commits (4w)', formatSupply(dev.commits_4w)),
+		].filter(Boolean).join('');
+		if (cells) blocks.push(`<div><h3 class="cv-h3">Developer Activity</h3><div class="cv-dc-grid">${cells}</div></div>`);
+	}
+	if (!blocks.length) {
+		el.innerHTML = '';
+		return;
+	}
+	el.innerHTML = `<h2 class="cv-h2">Community &amp; Development</h2><div class="cv-dc-wrap ${blocks.length === 2 ? 'two' : ''}">${blocks.join('')}</div>`;
+}
+
+// ── Markets (exchange listings) ──────────────────────────────────────────────
+
+const marketsState = { page: 0, rows: [], loading: false, done: false, error: false };
+
+function trustCell(trust) {
+	if (!trust) return '<span class="cv-trust">—</span>';
+	const label = { green: 'High', yellow: 'Fair', red: 'Low' }[trust] || '';
+	return `<span class="cv-trust"><span class="dot ${trust}" aria-hidden="true"></span>${esc(label)}</span>`;
+}
+
+function tickerRow(t) {
+	const ex = t.exchange || {};
+	const exCell = ex.id
+		? `<a class="cv-mkt-x" href="/exchange/${encodeURIComponent(ex.id)}">${ex.logo ? `<img src="${esc(ex.logo)}" alt="" loading="lazy" />` : ''}<span class="nm">${esc(ex.name || ex.id)}</span></a>`
+		: `<span class="cv-mkt-x"><span class="nm">${esc(ex.name || '—')}</span></span>`;
+	const pairCell = t.trade_url
+		? `<a class="cv-mkt-pair" href="${esc(t.trade_url)}" target="_blank" rel="noopener noreferrer">${esc(t.pair || '—')} ↗</a>`
+		: `<span class="cv-mkt-pair">${esc(t.pair || '—')}</span>`;
+	return `
+		<tr class="${t.stale ? 'cv-stale' : ''}">
+			<td class="left">${exCell}</td>
+			<td class="left">${pairCell}</td>
+			<td class="cv-mono">${esc(formatPrice(t.price_usd))}</td>
+			<td class="cv-mono">${t.spread_pct != null ? `${t.spread_pct.toFixed(2)}%` : '—'}</td>
+			<td class="cv-mono">${esc(formatUsd(t.depth_up_usd))}</td>
+			<td class="cv-mono">${esc(formatUsd(t.depth_down_usd))}</td>
+			<td class="cv-mono">${esc(formatUsd(t.volume_usd))}</td>
+			<td>${trustCell(t.trust)}</td>
+		</tr>`;
+}
+
+function renderMarkets(coin) {
+	const el = $('cv-markets');
+	const { rows, loading, error, done } = marketsState;
+	if (!rows.length && loading) {
+		el.innerHTML = `
+			<h2 class="cv-h2">Markets</h2>
+			<div class="cv-table-wrap">
+				<div class="cv-skel" style="height:2.5rem;margin-bottom:0.5rem"></div>
+				${Array.from({ length: 6 }, () => '<div class="cv-skel" style="height:2.25rem;margin-bottom:0.375rem"></div>').join('')}
+			</div>`;
+		return;
+	}
+	if (!rows.length && error) {
+		el.innerHTML = `
+			<h2 class="cv-h2">Markets</h2>
+			<div class="cv-mkt-error">
+				<p style="margin:0 0 0.75rem">Exchange listings are temporarily unavailable.</p>
+				<button type="button" id="cv-mkt-retry">Retry</button>
+			</div>`;
+		$('cv-mkt-retry')?.addEventListener('click', () => {
+			marketsState.error = false;
+			marketsState.page = 0;
+			loadMarkets(coin);
+		});
+		return;
+	}
+	if (!rows.length) {
+		el.innerHTML = '';
+		return;
+	}
+	el.innerHTML = `
+		<h2 class="cv-h2">Markets</h2>
+		<div class="cv-table-wrap">
+			<table class="cv-table">
+				<thead>
+					<tr>
+						<th scope="col" class="left">Exchange</th>
+						<th scope="col" class="left">Pair</th>
+						<th scope="col">Price</th>
+						<th scope="col">Spread</th>
+						<th scope="col">+2% Depth</th>
+						<th scope="col">−2% Depth</th>
+						<th scope="col">24h Volume</th>
+						<th scope="col">Trust</th>
+					</tr>
+				</thead>
+				<tbody>${rows.map(tickerRow).join('')}</tbody>
+			</table>
+		</div>
+		${done ? '' : `<button type="button" class="cv-load-more" id="cv-mkt-more"${loading ? ' disabled' : ''}>${loading ? 'Loading…' : 'Load more exchanges'}</button>`}`;
+	$('cv-mkt-more')?.addEventListener('click', () => loadMarkets(coin));
+}
+
+async function loadMarkets(coin) {
+	if (marketsState.loading || marketsState.done) return;
+	marketsState.loading = true;
+	renderMarkets(coin);
+	try {
+		const next = marketsState.page + 1;
+		const { tickers, count } = await getJson(
+			`/api/coin/tickers?id=${encodeURIComponent(coin.id)}&page=${next}`,
+		);
+		marketsState.page = next;
+		marketsState.rows.push(...(tickers || []));
+		// A short page (CoinGecko caps at 100/page) or the 10-page ceiling ends it.
+		if (!count || count < 100 || next >= 10) marketsState.done = true;
+		marketsState.loading = false;
+		marketsState.error = false;
+	} catch {
+		marketsState.loading = false;
+		marketsState.error = true;
+	}
+	renderMarkets(coin);
 }
 
 // ── Not found / error states ────────────────────────────────────────────────
@@ -495,7 +774,12 @@ async function main() {
 	main_.removeAttribute('aria-busy');
 	updateMeta(coin);
 	renderHead(coin);
+	renderPerf(coin);
 	renderStats(coin);
+	renderSupply(coin);
+	renderExtremes(coin);
+	renderSentiment(coin);
+	renderDevCom(coin);
 	renderAbout(coin);
 	renderLinks(coin);
 	if (coin.last_updated) {
@@ -503,8 +787,9 @@ async function main() {
 		upd.hidden = false;
 		upd.textContent = `Last updated: ${new Date(coin.last_updated).toLocaleString()}`;
 	}
-	// Chart + news stream in independently of the core profile.
+	// Chart, markets, and news stream in independently of the core profile.
 	loadChart(coin);
+	loadMarkets(coin);
 	loadNews(coin);
 }
 

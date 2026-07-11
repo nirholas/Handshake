@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en" class="cv-page">
+	<head>
+		<script>
+			/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>DeFi Yields · three.ws</title>
+		<meta
+			name="description"
+			content="Explore live DeFi yield pools across every chain and protocol — filter by chain, project, stablecoins and TVL, sort by APY or size, and open any pool for its full APY and TVL history. Data from DeFiLlama."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/yields" />
+		<meta property="og:title" content="DeFi Yields · three.ws" />
+		<meta
+			property="og:description"
+			content="Explore live DeFi yield pools across every chain and protocol — filter by chain, project, stablecoins and TVL, sort by APY or size, and chart any pool's APY and TVL history."
+		/>
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=DeFi+Yields&amp;d=Explore+live+DeFi+yield+pools+across+every+chain+and+protocol+%E2%80%94+filter+by+chain%2C+project%2C+stablecoins+and+TVL%2C+sort+by+APY+or+size%2C+and+chart+any+pool%27s+history&amp;p=%2Fyields"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="DeFi Yields · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Explore live DeFi yield pools across every chain and protocol — filter by chain, project, stablecoins and TVL, sort by APY or size, and chart any pool's history."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=DeFi+Yields&amp;d=Explore+live+DeFi+yield+pools+across+every+chain+and+protocol+%E2%80%94+filter+by+chain%2C+project%2C+stablecoins+and+TVL%2C+sort+by+APY+or+size%2C+and+chart+any+pool%27s+history&amp;p=%2Fyields"
+		/>
+		<meta name="theme-color" content="#09090b" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/yields.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="canonical" href="https://three.ws/yields" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="DeFi Yields — three.ws" />
+
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@graph": [
+					{
+						"@type": "WebPage",
+						"name": "DeFi Yields",
+						"description": "Explore live DeFi yield pools across every chain and protocol. Filter by chain, project, stablecoins and minimum TVL, sort by APY or TVL, and open any pool to chart its APY and TVL history. Data sourced from DeFiLlama.",
+						"url": "https://three.ws/yields",
+						"isPartOf": {
+							"@type": "WebSite",
+							"name": "three.ws",
+							"url": "https://three.ws"
+						},
+						"primaryImageOfPage": "https://three.ws/api/page-og?s=crypto&amp;t=DeFi+Yields&amp;d=Explore+live+DeFi+yield+pools+across+every+chain+and+protocol%2C+filter+by+chain%2C+project%2C+stablecoins+and+TVL%2C+and+chart+any+pool%27s+history&amp;p=%2Fyields"
+					}
+				]
+			}
+		</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container">
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/markets">Markets</a><span class="sep">/</span
+				><span class="here">DeFi Yields</span>
+			</nav>
+			<h1 class="cv-h1">DeFi Yields</h1>
+			<p class="cv-sub">
+				Live yield pools across every chain and protocol. Filter by chain, project,
+				stablecoins and minimum TVL, sort by APY or size, then open any pool to chart its
+				full APY and TVL history.
+			</p>
+
+			<!-- Whole-dataset stats. Hydrated by src/yields.js. -->
+			<section class="cv-stats-grid yl-stats" aria-label="DeFi yield overview" id="yl-stats">
+				<div class="cv-stat-card">
+					<div>
+						<p class="label">Pools Tracked</p>
+						<p class="value" id="yl-stat-pools"><span class="cv-skel yl-stat-skel"></span></p>
+					</div>
+					<span class="icon" aria-hidden="true">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
+					</span>
+				</div>
+				<div class="cv-stat-card">
+					<div>
+						<p class="label">Total TVL</p>
+						<p class="value" id="yl-stat-tvl"><span class="cv-skel yl-stat-skel"></span></p>
+					</div>
+					<span class="icon" aria-hidden="true">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+					</span>
+				</div>
+				<div class="cv-stat-card">
+					<div>
+						<p class="label">Median APY</p>
+						<p class="value" id="yl-stat-apy"><span class="cv-skel yl-stat-skel"></span></p>
+					</div>
+					<span class="icon" aria-hidden="true">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+					</span>
+				</div>
+			</section>
+
+			<!-- Filter controls. Wired by src/yields.js. All state syncs to the URL. -->
+			<div class="scr-controls yl-controls">
+				<div class="cv-search yl-search" id="yl-search">
+					<span class="mag" aria-hidden="true">
+						<svg
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						>
+							<circle cx="11" cy="11" r="8" />
+							<path d="m21 21-4.3-4.3" />
+						</svg>
+					</span>
+					<input
+						id="yl-search-input"
+						type="search"
+						placeholder="Filter by symbol, project or chain…"
+						autocomplete="off"
+						spellcheck="false"
+						aria-label="Filter pools by symbol, project or chain"
+					/>
+				</div>
+
+				<label class="scr-field">
+					<span>Chain</span>
+					<select id="yl-chain" aria-label="Filter by chain">
+						<option value="">All chains</option>
+					</select>
+				</label>
+
+				<label class="scr-field">
+					<span>Project</span>
+					<select id="yl-project" aria-label="Filter by project">
+						<option value="">All projects</option>
+					</select>
+				</label>
+
+				<label class="scr-field">
+					<span>Min TVL</span>
+					<select id="yl-mintvl" aria-label="Minimum total value locked">
+						<option value="0">Any</option>
+						<option value="10000">$10K+</option>
+						<option value="100000">$100K+</option>
+						<option value="1000000">$1M+</option>
+						<option value="10000000">$10M+</option>
+					</select>
+				</label>
+
+				<label class="yl-toggle">
+					<input type="checkbox" id="yl-stable" />
+					<span>Stablecoins only</span>
+				</label>
+
+				<div class="hm-seg yl-seg" role="group" aria-label="Sort order" id="yl-sort">
+					<button type="button" data-sort="tvl" aria-pressed="true">TVL</button>
+					<button type="button" data-sort="apy" aria-pressed="false">APY</button>
+				</div>
+
+				<button type="button" class="scr-reset" id="yl-reset">Reset</button>
+			</div>
+
+			<div class="scr-meta">
+				<span id="yl-count" class="scr-count" aria-live="polite"></span>
+				<div class="cv-pills">
+					<a class="cv-pill" href="/screener">Screener</a>
+					<a class="cv-pill" href="/markets">Markets</a>
+					<a class="cv-pill" href="/heatmap">Heatmap</a>
+				</div>
+			</div>
+
+			<!-- Results table. Hydrated by src/yields.js. -->
+			<section id="yl-table" aria-label="DeFi yield pools"></section>
+
+			<div class="yl-more-wrap" id="yl-more-wrap" hidden>
+				<button type="button" class="yl-more" id="yl-more">Load more pools</button>
+			</div>
+
+			<p class="cv-updated" id="yl-updated"></p>
+			<p class="yl-attribution">
+				Yield data from
+				<a href="https://defillama.com/yields" rel="noopener noreferrer" target="_blank">DeFiLlama</a>. APY figures
+				are protocol-reported and vary with pool conditions — not financial advice.
+			</p>
+		</main>
+
+		<script type="module" src="/src/yields.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>

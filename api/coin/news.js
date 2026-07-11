@@ -27,7 +27,11 @@ export default wrap(async (req, res) => {
 	}
 
 	// Response shape kept stable for src/coin-page.js (published_at naming).
+	// id + published_at let the client build the canonical on-site story-page
+	// link (src/shared/news-links.js storyPath) instead of bouncing users to
+	// the publisher.
 	const articles = result.articles.map((a) => ({
+		id: a.id,
 		title: a.title,
 		link: a.link,
 		description: a.description,

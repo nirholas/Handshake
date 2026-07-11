@@ -1275,6 +1275,14 @@
 					"added": "2026-07-08"
 				},
 				{
+					"path": "/yields",
+					"title": "DeFi Yields Explorer",
+					"description": "Explore roughly 15,000 live DeFi yield pools across every chain and protocol — filter by chain, project, stablecoin exposure, and minimum TVL, sort by APY or TVL, and open any pool to see its full APY and TVL history. Live from DeFiLlama, no key required.",
+					"priority": 0.7,
+					"changefreq": "hourly",
+					"added": "2026-07-11"
+				},
+				{
 					"path": "/bnb",
 					"title": "BNB Chain — Three Genuinely-Unique Demos",
 					"description": "The BNB Chain campaign's front door: gasless agent onboarding, an on-chain-gated 3D vault, and a real-time on-chain world, each traced to a capability independently verified live on BNB Chain — plus a live block-time widget proving the ~0.45s block claim on every page load. Cards auto-light-up from coming-soon to live as each track ships.",

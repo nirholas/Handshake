@@ -1,0 +1,287 @@
+/*
+ * /exchange/:id — feature styles layered on top of /src/coin-pages.css.
+ * Reuses the shared cv-* container, card, chart, table, pill, and state
+ * system; adds only the hero, trust-score badge, meta chips, and markets-table
+ * affordances unique to this detail page.
+ */
+
+/* ── Hero ──────────────────────────────────────────────────────────────────── */
+
+.ex-hero {
+	display: flex;
+	gap: 1.25rem;
+	align-items: flex-start;
+	margin: 0.5rem 0 2rem;
+}
+.ex-logo {
+	width: 72px;
+	height: 72px;
+	border-radius: 16px;
+	object-fit: contain;
+	background: var(--cv-surface-2);
+	border: 1px solid var(--cv-border);
+	flex-shrink: 0;
+}
+.ex-logo-fallback {
+	background: var(--cv-surface-2);
+}
+.ex-hero-body {
+	flex: 1;
+	min-width: 0;
+}
+.ex-title-row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.625rem 0.75rem;
+}
+.ex-title {
+	margin: 0;
+	font-size: clamp(1.5rem, 4vw, 2rem);
+	line-height: 1.1;
+}
+
+/* Trust-score badge — larger sibling of the /exchanges list pill. */
+.ex-score {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.0625rem;
+	border-radius: 999px;
+	padding: 0.25rem 0.625rem;
+	font-family: var(--cv-font-mono);
+	font-size: 1rem;
+	font-weight: 700;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+	border: 1px solid transparent;
+	cursor: help;
+}
+.ex-score .of {
+	font-size: 0.6875rem;
+	font-weight: 500;
+	opacity: 0.7;
+}
+.ex-score-hi {
+	color: var(--cv-green);
+	background: var(--cv-green-soft);
+	border-color: color-mix(in srgb, var(--cv-green) 30%, transparent);
+}
+.ex-score-mid {
+	color: #b45309;
+	background: rgba(234, 179, 8, 0.12);
+	border-color: rgba(234, 179, 8, 0.35);
+}
+:root[data-theme='dark'] .ex-score-mid {
+	color: #fbbf24;
+}
+.ex-score-lo {
+	color: var(--cv-red);
+	background: var(--cv-red-soft);
+	border-color: color-mix(in srgb, var(--cv-red) 30%, transparent);
+}
+
+.ex-rank {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.25rem 0.5rem;
+	border-radius: 999px;
+	background: var(--cv-surface-2);
+	border: 1px solid var(--cv-border);
+	color: var(--cv-text-2);
+	font-family: var(--cv-font-mono);
+	font-size: 0.8125rem;
+	font-weight: 600;
+	line-height: 1;
+	cursor: help;
+}
+
+/* Meta chips: centralized/DEX, country, launch year. */
+.ex-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.375rem;
+	margin: 0.875rem 0 0;
+}
+.ex-chip {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.25rem 0.625rem;
+	border-radius: 999px;
+	background: var(--cv-surface-2);
+	border: 1px solid var(--cv-border);
+	color: var(--cv-text-2);
+	font-size: 0.75rem;
+	font-weight: 500;
+	line-height: 1.4;
+}
+.ex-chip-dex {
+	color: var(--cv-accent);
+	border-color: color-mix(in srgb, var(--cv-accent) 35%, transparent);
+	background: color-mix(in srgb, var(--cv-accent) 8%, transparent);
+}
+
+.ex-desc {
+	margin-top: 1rem;
+	font-size: 0.9375rem;
+	max-width: 68ch;
+}
+.ex-links {
+	margin-top: 1.125rem;
+}
+
+/* ── Stat cards ────────────────────────────────────────────────────────────── */
+
+.ex-stat .sub {
+	margin-top: 0.25rem;
+}
+
+/* Info affordance next to the normalized-volume label. */
+.ex-info {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.75rem;
+	color: var(--cv-text-3);
+	cursor: help;
+	transition: color 0.15s;
+}
+.ex-info:hover,
+.ex-info:focus-visible {
+	color: var(--cv-accent);
+	outline: none;
+}
+.ex-info:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+	border-radius: var(--cv-radius-sm);
+}
+
+/* ── Chart tooltip: two mono lines (USD + BTC) plus the date. ──────────────── */
+
+.cv-chart-tip .p + .p {
+	font-size: 0.75rem;
+	color: var(--cv-text-3);
+}
+
+/* ── Markets / contracts table ─────────────────────────────────────────────── */
+
+.ex-pair {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+}
+.ex-pair-link {
+	color: var(--cv-text);
+	text-decoration: none;
+	font-weight: 500;
+	transition: color 0.15s;
+}
+.ex-pair-link:hover,
+.ex-pair-link:focus-visible {
+	color: var(--cv-accent);
+}
+.ex-pair-link:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+	border-radius: var(--cv-radius-sm);
+}
+.ex-trade {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--cv-text-3);
+	transition: color 0.15s;
+}
+.ex-trade:hover,
+.ex-trade:focus-visible {
+	color: var(--cv-accent);
+	outline: none;
+}
+.ex-trade:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+	border-radius: var(--cv-radius-sm);
+}
+.ex-trade-inline {
+	color: var(--cv-text-3);
+}
+
+/* Trust dot: green High / yellow Fair / red Low. */
+.ex-trust-cell {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.375rem;
+	font-size: 0.8125rem;
+	color: var(--cv-text-2);
+}
+.ex-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+.ex-dot-green {
+	background: var(--cv-green);
+}
+.ex-dot-yellow {
+	background: #eab308; /* no yellow token in the cv palette */
+}
+.ex-dot-red {
+	background: var(--cv-red);
+}
+
+/* Stale / anomalous tickers are dimmed but still legible. */
+.ex-mkt-table tr.ex-stale td {
+	opacity: 0.5;
+}
+
+.ex-mkt-note {
+	margin: 0.875rem 0 0;
+	font-size: 0.8125rem;
+	color: var(--cv-text-3);
+}
+
+/* ── Error-state retry button ──────────────────────────────────────────────── */
+
+.ex-retry {
+	appearance: none;
+	cursor: pointer;
+	font: inherit;
+	font-weight: 600;
+	color: var(--cv-text);
+	background: var(--cv-surface-2);
+	border: 1px solid var(--cv-border);
+	border-radius: var(--cv-radius-md);
+	padding: 0.5rem 1.125rem;
+	transition:
+		border-color 0.15s,
+		background 0.15s;
+}
+.ex-retry:hover {
+	border-color: var(--cv-border-hover);
+	background: var(--cv-surface-3);
+}
+.ex-retry:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+	.ex-hero {
+		gap: 0.875rem;
+	}
+	.ex-logo {
+		width: 56px;
+		height: 56px;
+		border-radius: 12px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ex-pair-link,
+	.ex-trade,
+	.ex-info,
+	.ex-retry {
+		transition: none;
+	}
+}

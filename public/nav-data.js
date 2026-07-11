@@ -413,6 +413,11 @@ export const NAV_GROUPS = [
 						desc: 'Stablecoin market caps and peg health across every major issuer',
 					},
 					{
+						title: 'DeFi Yields',
+						href: '/yields',
+						desc: 'Explore ~15k live yield pools — APY, TVL, and per-pool history from DeFiLlama',
+					},
+					{
 						title: 'Coin Intelligence',
 						href: '/coin-intel',
 						badge: 'Live',

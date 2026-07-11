@@ -1,0 +1,281 @@
+/*
+ * /category/:id — crypto sector detail page. Reuses the shared cv-* token,
+ * card, table, and stat-card system from coin-pages.css; this file adds only
+ * the page-specific pieces: the hero head with its stacked coin avatars, the
+ * stat-card info tooltip, the related-category cards, and the footer link.
+ */
+
+/* ── Hero ──────────────────────────────────────────────────────────────────── */
+
+.cat-hero-head {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	margin-bottom: 1.25rem;
+}
+
+.cat-hero-avatars {
+	display: inline-flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+.cat-hero-avatars img {
+	width: 34px;
+	height: 34px;
+	border-radius: 50%;
+	background: var(--cv-surface-3);
+	border: 2px solid var(--cv-surface);
+	object-fit: cover;
+}
+.cat-hero-avatars img + img {
+	margin-left: -12px;
+}
+
+.cat-hero-title {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.75rem;
+}
+.cat-hero-title h1 {
+	font-family: var(--cv-font-serif);
+	font-size: 1.875rem;
+	font-weight: 700;
+	margin: 0;
+	color: var(--cv-text);
+	line-height: 1.1;
+}
+@media (min-width: 768px) {
+	.cat-hero-title h1 {
+		font-size: 2.25rem;
+	}
+}
+.cat-hero-kicker {
+	margin: 0.375rem 0 0;
+	font-size: 0.7rem;
+	font-weight: 500;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--cv-text-3);
+}
+
+.cat-desc {
+	max-width: 68ch;
+	margin-bottom: 0.5rem;
+}
+
+/* ── Stat cards ────────────────────────────────────────────────────────────── */
+
+.cat-stat-grid {
+	display: grid;
+	gap: 1rem;
+	grid-template-columns: 1fr;
+}
+@media (min-width: 560px) {
+	.cat-stat-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+@media (min-width: 900px) {
+	.cat-stat-grid {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}
+
+/* Color the 24h-change value — beats `.cv-stat-card .value`'s base color. */
+.cv-stat-card .value.cv-up {
+	color: var(--cv-green);
+}
+.cv-stat-card .value.cv-down {
+	color: var(--cv-red);
+}
+
+/* Info tooltip on the "share of categorized market" card. */
+.cat-info {
+	display: inline-flex;
+	align-items: center;
+	position: relative;
+	margin-left: 0.3rem;
+	color: var(--cv-text-3);
+	cursor: help;
+	vertical-align: middle;
+}
+.cat-info svg {
+	width: 0.875rem;
+	height: 0.875rem;
+	display: block;
+}
+.cat-info:hover,
+.cat-info:focus-visible {
+	color: var(--cv-accent);
+	outline: none;
+}
+.cat-info::after {
+	content: attr(data-tip);
+	position: absolute;
+	bottom: calc(100% + 8px);
+	left: 50%;
+	transform: translateX(-50%) translateY(4px);
+	width: max-content;
+	max-width: 15rem;
+	padding: 0.5rem 0.625rem;
+	border-radius: var(--cv-radius-md);
+	background: var(--cv-text);
+	color: var(--cv-surface);
+	font-size: 0.75rem;
+	font-weight: 400;
+	line-height: 1.35;
+	letter-spacing: 0;
+	text-transform: none;
+	white-space: normal;
+	box-shadow: var(--cv-shadow-card-hover);
+	opacity: 0;
+	pointer-events: none;
+	transition:
+		opacity 0.15s ease,
+		transform 0.15s ease;
+	z-index: 5;
+}
+.cat-info:hover::after,
+.cat-info:focus-visible::after {
+	opacity: 1;
+	transform: translateX(-50%) translateY(0);
+}
+
+/* ── Coins table header row ────────────────────────────────────────────────── */
+
+.cat-coins-bar {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-bottom: 1rem;
+}
+.cat-coins-count {
+	font-size: 0.8125rem;
+	color: var(--cv-text-3);
+	flex-shrink: 0;
+}
+
+.cat-table-error {
+	border: 1px solid var(--cv-border);
+	border-radius: var(--cv-radius-lg);
+	background: var(--cv-surface);
+	color: var(--cv-text-2);
+	padding: 2rem 1.5rem;
+	text-align: center;
+	font-size: 0.875rem;
+}
+.cat-table-error button {
+	appearance: none;
+	cursor: pointer;
+	font: inherit;
+	font-weight: 600;
+	color: var(--cv-text);
+	background: var(--cv-surface-2);
+	border: 1px solid var(--cv-border);
+	border-radius: var(--cv-radius-md);
+	padding: 0.5rem 1.125rem;
+	transition:
+		border-color 0.15s,
+		background 0.15s;
+}
+.cat-table-error button:hover {
+	border-color: var(--cv-border-hover);
+	background: var(--cv-surface-3);
+}
+.cat-table-error button:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+}
+
+/* ── Related categories ────────────────────────────────────────────────────── */
+
+.cat-rel-grid {
+	display: grid;
+	gap: 0.75rem;
+	grid-template-columns: 1fr;
+}
+@media (min-width: 560px) {
+	.cat-rel-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+@media (min-width: 900px) {
+	.cat-rel-grid {
+		grid-template-columns: repeat(4, 1fr);
+	}
+}
+.cat-rel-card {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	padding: 0.875rem 1rem;
+	border: 1px solid var(--cv-border);
+	border-radius: var(--cv-radius-lg);
+	background: var(--cv-surface);
+	box-shadow: var(--cv-shadow-card);
+	text-decoration: none;
+	transition:
+		box-shadow 0.2s,
+		border-color 0.2s,
+		transform 0.2s;
+}
+.cat-rel-card:hover {
+	box-shadow: var(--cv-shadow-card-hover);
+	border-color: var(--cv-border-hover);
+	transform: translateY(-2px);
+}
+.cat-rel-card:focus-visible {
+	outline: 2px solid var(--cv-accent);
+	outline-offset: 2px;
+}
+.cat-rel-card .nm {
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--cv-text);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.cat-rel-card:hover .nm {
+	color: var(--cv-accent);
+}
+.cat-rel-card .mc {
+	font-size: 0.875rem;
+	color: var(--cv-text-2);
+}
+.cat-rel-card .chg {
+	font-size: 0.8125rem;
+	font-weight: 500;
+}
+.cat-rel-card .chg.dim {
+	color: var(--cv-text-3);
+}
+
+/* ── Footer link ───────────────────────────────────────────────────────────── */
+
+.cat-footer-link {
+	font-size: 0.875rem;
+	color: var(--cv-text-3);
+	margin: 0;
+}
+.cat-footer-link a {
+	color: var(--cv-accent);
+	text-decoration: none;
+	font-weight: 500;
+}
+.cat-footer-link a:hover,
+.cat-footer-link a:focus-visible {
+	text-decoration: underline;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.cat-rel-card,
+	.cat-info::after {
+		transition: none;
+	}
+	.cat-rel-card:hover {
+		transform: none;
+	}
+}

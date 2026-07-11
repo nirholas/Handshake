@@ -356,3 +356,14 @@ export function sourcePriority(key) {
 	// Untiered: English long-tail before international, which is niche by design.
 	return NEWS_SOURCES[key]?.language ? 4 : 3;
 }
+
+/**
+ * The "Featured" bar: the majors and mainstream desks whose editorial standards
+ * carry the front of the briefing — tier1/tier2 upstream, or a credibility score
+ * at or above 0.85. Backs /api/news/feed?featured=1.
+ */
+export function isFeaturedSource(key) {
+	const s = NEWS_SOURCES[key];
+	if (!s) return false;
+	return s.tier === 'tier1' || s.tier === 'tier2' || (s.credibility || 0) >= 0.85;
+}

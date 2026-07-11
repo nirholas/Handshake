@@ -40,19 +40,42 @@ editorial serif headings, hairline borders, mono numerals, light/dark themes.
   24h / 7d / 30d change chips, plus the coin's categories.
 - **Interactive chart** — SVG line chart across 24H / 7D / 30D / 90D / 1Y with
   a crosshair tooltip showing exact price and time.
+- **Price performance matrix** — colored 1h / 24h / 7d / 14d / 30d / 60d /
+  200d / 1y change cells, so the whole return curve is legible at a glance.
 - **Market stats** — market cap, 24h volume, circulating/total supply,
   all-time high and low (dated), 24h high/low.
+- **Supply** — a circulating-vs-max (or total) supply bar with the percentage
+  in circulation, the market-cap / FDV ratio, and 24h market-cap change.
+- **All-time high / low** — value and date for each, the drawdown from ATH,
+  and the recovery multiple from ATL.
+- **Community sentiment** — the CoinGecko bullish/bearish vote split and the
+  number of users watching the coin. Hidden when the coin has no votes.
+- **Community & development** — Twitter / Reddit / Telegram followings and
+  GitHub stars, forks, watchers, issues, merged PRs, contributors, and
+  commits in the last four weeks. Each block hides when untracked.
+- **Markets** — a paginated exchange-listings table (from
+  [`/api/coin/tickers`](../api/coin/tickers.js)): exchange (linking to its
+  [detail page](#exchangeid--exchange-detail)), pair (deep-linking to the
+  live trade page on that venue), price, spread, +2% / −2% order-book depth,
+  24h volume, and a color-coded trust rating. Stale/anomalous rows are dimmed.
 - **Related news** — live articles mentioning the coin, from the native
   three.ws aggregator (192 publisher feeds, `api/_lib/news.js`).
 - **About + links** — plain-text description, official site / social /
-  explorer pills, and per-chain contract addresses with one-click copy.
+  explorer pills, plus whitepaper, forum, chat, announcement, and extra-repo
+  links, and per-chain contract addresses with one-click copy.
 - **three.ws integration** — coins with a Solana contract cross-link into
   [Alpha Copilot](/alpha-copilot) and the [live trade feed](/trades). A
   mint-shaped id that isn't on the market data source points to its
   [launch profile](/launches) and [Coin Intelligence](/coin-intel) instead.
 
-Unknown ids, upstream outages, loading, and empty news all have designed
-states — the page never renders a blank void.
+The detail endpoint ([`api/coin/detail.js`](../api/coin/detail.js)) requests
+CoinGecko's community and developer blocks and slims the multi-hundred-KB
+payload to exactly these fields; all-zero developer/community blocks (coins
+with no tracked repo or socials) collapse to `null` so the page hides the
+whole section rather than render a wall of zeros.
+
+Unknown ids, upstream outages, loading, and empty news/markets all have
+designed states — the page never renders a blank void.
 
 ## The market tools
 
@@ -105,11 +128,15 @@ data" rule:
   `/api/coin/markets` (no new endpoint).
 - **`/categories`** — every crypto sector ranked by market cap with 24h change,
   volume, and the top coins in each. New `/api/coin/categories` (CoinGecko
-  `/coins/categories`).
+  `/coins/categories`). Each row opens a [category detail
+  page](#categoryid--category-detail).
 - **`/exchanges`** — top exchanges by trust score and 24h volume (USD, derived
-  from the live BTC price). New `/api/coin/exchanges`.
+  from the live BTC price). New `/api/coin/exchanges`. Each row opens an
+  [exchange detail page](#exchangeid--exchange-detail).
 - **`/derivatives`** — perpetual-futures markets: price, funding rate, open
-  interest, volume, filterable by index. New `/api/coin/derivatives`.
+  interest, volume, filterable by index, plus a **Derivatives Exchanges** table
+  (open interest, perp/futures counts) whose rows open the exchange detail page.
+  `/api/coin/derivatives` (`?view=exchanges` for the venues).
 - **`/converter`** — convert any crypto ⇄ any major fiat at live rates
   (USD-anchored math covers all four directions). New `/api/coin/rates`
   (CoinGecko `/exchange_rates`) + `/api/coin/markets`/`detail`.
@@ -119,6 +146,39 @@ data" rule:
   `/api/defi/chains` (DeFiLlama).
 - **`/stablecoins`** — stablecoins by circulating market cap with live peg
   health and backing mechanism. New `/api/defi/stablecoins` (DeFiLlama).
+- **`/yields`** — an explorer over ~15,000 live DeFi yield pools: filter by
+  chain, project, stablecoin exposure, and minimum TVL; sort by APY or TVL
+  (the APY sort ignores sub-$10k dust pools to keep the ranking honest); open
+  any row for its full APY + TVL history in a dual-axis chart. Filters sync to
+  the URL for shareable views. New `/api/defi/yields` (DeFiLlama
+  `yields.llama.fi/pools` + `/chart/{pool}`).
+
+## Detail pages
+
+Beyond `/coin/:id`, two list surfaces now have their own rich detail pages,
+reached by clicking a row.
+
+### `/exchange/:id` — exchange detail
+
+A full profile for one exchange (or derivatives venue): logo, trust-score
+badge, rank, country, year established, centralized/DEX flag, and description;
+stat cards for 24h volume (BTC + USD), **normalized** 24h volume (adjusted to
+discount wash trading), markets count, and trust rank; an interactive
+BTC-volume history chart (7D–365D, crosshair with BTC + USD); and a markets
+table of the venue's pairs (each pair deep-linking to `/coin/:id` and to the
+live trade page), with price, spread, 24h volume, and trust. Derivatives venues
+show open interest and perp/futures pair counts with a contract table instead.
+New `/api/coin/exchange` (CoinGecko `/exchanges/{id}` + `/volume_chart`, falling
+back to `/derivatives/exchanges/{id}`).
+
+### `/category/:id` — category detail
+
+A sector page: rank ("#N by market cap"), description, and stat cards for
+market cap, 24h change, 24h volume, and share of the categorized market; the
+full sortable coins table for that category (reusing the shared markets table,
+so every row deep-links to `/coin/:id`); and a strip of related categories.
+Reuses `/api/coin/markets?category=<id>` for the table and new
+`/api/coin/category` for the header + neighbours.
 
 ## News & the markets hub
 
@@ -199,12 +259,16 @@ All data is real and fetched at runtime — nothing is hardcoded or sampled:
 
 | Endpoint                | Upstream                                                   | Cache        |
 | ----------------------- | ---------------------------------------------------------- | ------------ |
-| `/api/coin/detail`      | CoinGecko `/coins/{id}` or `/coins/solana/contract/{mint}` | 60 s         |
+| `/api/coin/detail`      | CoinGecko `/coins/{id}` or `/coins/solana/contract/{mint}` (with community + developer blocks) | 60 s |
+| `/api/coin/tickers`     | CoinGecko `/coins/{id}/tickers` (exchange listings, ±2% depth) | 120 s     |
 | `/api/coin/ohlc`        | CoinGecko `/coins/{id}/market_chart`                       | 120 s        |
-| `/api/coin/markets`     | CoinGecko `/coins/markets`, `/search`                      | 60 s / 300 s |
+| `/api/coin/markets`     | CoinGecko `/coins/markets` (optional `category=`), `/search` | 60 s / 300 s |
 | `/api/coin/categories`  | CoinGecko `/coins/categories`                              | 300 s        |
+| `/api/coin/category`    | CoinGecko `/coins/categories` (one category + rank + neighbours) | 600 s   |
 | `/api/coin/exchanges`   | CoinGecko `/exchanges` + `/simple/price` (BTC)             | 300 s        |
-| `/api/coin/derivatives` | CoinGecko `/derivatives`                                   | 60 s         |
+| `/api/coin/exchange`    | CoinGecko `/exchanges/{id}` (+ `/volume_chart`) or `/derivatives/exchanges/{id}` fallback | 120 s |
+| `/api/coin/derivatives` | CoinGecko `/derivatives` (`?view=exchanges` → `/derivatives/exchanges`) | 60 s / 300 s |
+| `/api/defi/yields`      | DeFiLlama `yields.llama.fi/pools` (+ `/chart/{pool}`)      | 300 s / 600 s |
 | `/api/coin/rates`       | CoinGecko `/exchange_rates`                                | 300 s        |
 | `/api/defi/protocols`   | DeFiLlama `/protocols` (CEX excluded)                      | 300 s        |
 | `/api/defi/chains`      | DeFiLlama `/v2/chains`                                     | 300 s        |
@@ -238,9 +302,12 @@ text before they reach the client.
 | Gas tracker                 | [`pages/gas.html`](../pages/gas.html) + [`src/gas.js`](../src/gas.js)                                                                    |
 | Compare                     | [`pages/compare.html`](../pages/compare.html) + [`src/compare.js`](../src/compare.js)                                                    |
 | Screener / Categories       | `pages/screener.html`, `pages/categories.html` (+ `src/*.js`, `src/*.css`)                                                               |
+| Category detail             | [`pages/category.html`](../pages/category.html) + `src/category-page.js` + `src/category-page.css`, API [`api/coin/category.js`](../api/coin/category.js) |
 | Exchanges / Derivatives     | `pages/exchanges.html`, `pages/derivatives.html` (+ `src/*.js`, `src/*.css`)                                                             |
+| Exchange detail             | [`pages/exchange.html`](../pages/exchange.html) + `src/exchange-page.js` + `src/exchange-page.css`, API [`api/coin/exchange.js`](../api/coin/exchange.js) |
 | Converter                   | `pages/converter.html` + `src/converter.js` + `src/converter.css`                                                                        |
 | DeFi / Chains / Stablecoins | `pages/{defi,chains,stablecoins}.html` (+ `src/*.js`, `src/*.css`), APIs in [`api/defi/`](../api/defi)                                   |
+| DeFi Yields                 | [`pages/yields.html`](../pages/yields.html) + `src/yields.js` + `src/yields.css`, API [`api/defi/yields.js`](../api/defi/yields.js)      |
 | Markets hub                 | [`pages/markets.html`](../pages/markets.html) + [`src/markets-page.js`](../src/markets-page.js)                                          |
 | Crypto news                 | [`pages/markets-news.html`](../pages/markets-news.html) + [`src/markets-news.js`](../src/markets-news.js)                                |
 | Article reader              | [`pages/news-article.html`](../pages/news-article.html) + [`src/news-article.js`](../src/news-article.js)                                |

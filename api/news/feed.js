@@ -12,6 +12,8 @@
 //             carries international feeds in 17 languages; they are opt-in so
 //             the default feed does not interleave languages.
 //   q         case-insensitive full-text filter (title/description/tickers)
+//   featured  '1' narrows sources to the majors (tier1/tier2 or credibility
+//             ≥ 0.85) — the Featured tab on /markets/news
 //   limit     1–50 (default 30)
 //   offset    pagination offset
 //   meta=1    include the source registry + category + language lists
@@ -36,6 +38,7 @@ export default wrap(async (req, res) => {
 	const source = (params.get('source') || '').trim().toLowerCase() || undefined;
 	const q = (params.get('q') || '').trim().slice(0, 80) || undefined;
 	const lang = (params.get('lang') || 'en').trim().toLowerCase();
+	const featured = params.get('featured') === '1';
 	const limit = Math.min(Math.max(1, parseInt(params.get('limit') || '30', 10) || 30), 50);
 	const offset = Math.max(0, parseInt(params.get('offset') || '0', 10) || 0);
 
@@ -57,7 +60,7 @@ export default wrap(async (req, res) => {
 		});
 	}
 
-	const result = await getNews({ category, source, lang, q, limit, offset });
+	const result = await getNews({ category, source, lang, q, limit, offset, featured });
 
 	const body = {
 		articles: result.articles,
@@ -77,6 +80,7 @@ export default wrap(async (req, res) => {
 			key,
 			name: s.name,
 			category: s.category,
+			...(s.tier ? { tier: s.tier } : {}),
 			...(s.language ? { language: s.language } : {}),
 		}));
 	}

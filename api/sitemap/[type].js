@@ -13,6 +13,8 @@ import path from 'node:path';
 import { sql } from '../_lib/db.js';
 import { env } from '../_lib/env.js';
 import { reportServerError, redactUrl } from '../_lib/http.js';
+import { getMonths, loadMonth } from '../_lib/news-archive-store.js';
+import { storyPath } from '../../src/shared/news-links.js';
 
 const ORIGIN = env.APP_ORIGIN;
 const MAX_URLS = 45_000;
@@ -173,12 +175,42 @@ async function profilesSitemap() {
 	}));
 }
 
+// Story pages (/markets/news/<YYYY-MM>/<id>-<slug>) for the newest archive
+// months. The full 660k-article corpus would blow the 50k/URL cap many times
+// over — recent months are where crawl demand is, and older stories are
+// reachable through the archive UI and inter-article links. Months come from
+// the same GCS store the archive endpoint serves, so this stays in lockstep
+// with what actually resolves.
+const NEWS_SITEMAP_MONTHS = 3;
+
+async function newsSitemap() {
+	const months = await getMonths();
+	const recent = months.slice(-NEWS_SITEMAP_MONTHS).reverse(); // newest first
+	const out = [];
+	for (const month of recent) {
+		const records = await loadMonth(month).catch(() => []);
+		for (const a of records) {
+			const loc = storyPath(a);
+			if (!loc) continue; // undated/id-less corpus rows have no story page
+			out.push({
+				loc: `${ORIGIN}${loc}`,
+				lastmod: fmtDate(a.pub_date),
+				changefreq: 'monthly',
+				priority: '0.6',
+			});
+			if (out.length >= MAX_URLS) return out;
+		}
+	}
+	return out;
+}
+
 const BUILDERS = {
 	core: coreSitemap,
 	agents: agentsSitemap,
 	avatars: avatarsSitemap,
 	widgets: widgetsSitemap,
 	profiles: profilesSitemap,
+	news: newsSitemap,
 };
 
 export default async function handler(req, res) {

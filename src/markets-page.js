@@ -120,6 +120,8 @@ const G = {
 	link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
 	dollar:
 		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+	yield:
+		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14s1.5-4 5-4 5 3 5-2"/><circle cx="18" cy="7" r="1.5"/></svg>',
 	radar:
 		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.07 4.93A10 10 0 0 0 6.99 3.34"/><path d="M4 6h.01"/><path d="M2.29 9.62a10 10 0 1 0 19.02-1.27"/><path d="M16.24 7.76a6 6 0 1 0-8.01 8.91"/><path d="M12 18h.01"/><path d="M17.99 11.66a6 6 0 0 1-2.22 5.01"/><circle cx="12" cy="12" r="2"/><path d="m13.41 10.59 5.66-5.66"/></svg>',
 };
@@ -141,6 +143,7 @@ const SUITE = [
 	{ href: '/defi', glyph: 'defi', title: 'DeFi TVL', desc: 'Total value locked across DeFi protocols, live from DeFiLlama.' },
 	{ href: '/chains', glyph: 'link', title: 'Chains', desc: 'Blockchain TVL leaderboard with dominance share per chain.' },
 	{ href: '/stablecoins', glyph: 'dollar', title: 'Stablecoins', desc: 'Market caps and peg health across every major issuer.' },
+	{ href: '/yields', glyph: 'yield', title: 'DeFi Yields', desc: 'Explore ~15k live yield pools by APY and TVL, each with its own history.' },
 	{ href: '/coin-intel', glyph: 'radar', title: 'Coin Intelligence', desc: 'Every launch classified — organic vs bundle, with a learning score.' },
 ];
 

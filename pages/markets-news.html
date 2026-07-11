@@ -18,18 +18,18 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Crypto News · three.ws</title>
+		<title>Crypto News Briefing · three.ws</title>
 		<meta
 			name="description"
-			content="Live crypto news aggregated from 192 publisher feeds — CoinDesk, The Block, Decrypt, CoinTelegraph and more. Filter by category, search headlines, and open any story in a rich reader."
+			content="Your crypto briefing — live headlines from 192 publisher feeds, an AI-clustered daily digest, breaking-news ticker, and saved stories. Filter by Featured, Trending, DeFi, Bitcoin, Ethereum, and more."
 		/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/markets/news" />
-		<meta property="og:title" content="Crypto News · three.ws" />
+		<meta property="og:title" content="Crypto News Briefing · three.ws" />
 		<meta
 			property="og:description"
-			content="Live crypto news aggregated from 192 publisher feeds, filterable by category and searchable — with a rich reader for every story."
+			content="Your crypto briefing — live headlines from 192 publisher feeds, an AI daily digest, breaking ticker, and saved stories."
 		/>
 		<meta
 			property="og:image"
@@ -39,10 +39,10 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Crypto News · three.ws" />
+		<meta name="twitter:title" content="Crypto News Briefing · three.ws" />
 		<meta
 			name="twitter:description"
-			content="Live crypto news aggregated from 192 publisher feeds, filterable by category and searchable."
+			content="Your crypto briefing — live headlines from 192 publisher feeds, an AI daily digest, breaking ticker, and saved stories."
 		/>
 		<meta
 			name="twitter:image"
@@ -67,25 +67,72 @@
 		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 		<meta property="og:locale" content="en_US" />
 		<meta property="og:image:alt" content="Crypto News — three.ws" />
-		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Crypto News","description":"Live crypto news aggregated from 192 publisher feeds — filterable by category, searchable, with a rich reader for every story.","url":"https://three.ws/markets/news","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}]}</script>
+		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Crypto News Briefing","description":"Your crypto briefing — live headlines aggregated from 192 publisher feeds, an AI-clustered daily digest, a breaking-news ticker, and saved stories.","url":"https://three.ws/markets/news","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}]}</script>
 	</head>
 	<body>
 		<header><div id="nav-container"></div></header>
 		<script src="/nav.js"></script>
 
-		<main class="cv-container">
+		<main class="cv-container nwb">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
 				<a href="/markets">Markets</a><span class="sep">/</span><span class="here">News</span>
 			</nav>
-			<h1 class="cv-h1">Crypto News</h1>
-			<p class="cv-sub">
-				Live headlines aggregated from 192 publisher feeds across the industry — majors,
-				research desks, on-chain analysts, exchanges, and regulators. Click any story for a
-				rich reader with summary, key points, and related coverage.
-			</p>
+
+			<!-- Briefing masthead: title + date left, search/filters/AI right. -->
+			<header class="nwb-head">
+				<div class="nwb-head-id">
+					<h1 class="cv-h1">Your briefing</h1>
+					<p class="nwb-date" id="nwb-date"></p>
+				</div>
+				<div class="nwb-head-tools">
+					<div class="cv-search nwb-search">
+						<input
+							id="nw-search"
+							type="search"
+							placeholder="Search news… (e.g., Ethereum ETF, DeFi hack)"
+							aria-label="Search news"
+							autocomplete="off"
+						/>
+					</div>
+					<div class="nwb-controls">
+						<select id="nw-lang" class="nw-select" aria-label="Filter by language">
+							<option value="en">English</option>
+						</select>
+						<select id="nw-source" class="nw-select" aria-label="Filter by source">
+							<option value="">All sources</option>
+						</select>
+						<a class="nwb-ask" href="/markets/digest">
+							<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5c-3.6 0-6.5 2.5-6.5 5.6 0 1.8 1 3.4 2.5 4.4v3l2.8-1.6c.4.1.8.1 1.2.1 3.6 0 6.5-2.5 6.5-5.9S11.6 1.5 8 1.5z"/></svg>
+							Ask AI about this
+						</a>
+					</div>
+				</div>
+			</header>
+
+			<!-- Primary briefing tabs. Hydrated by src/markets-news.js. -->
+			<div id="nw-tabs" class="nwb-tabs" role="group" aria-label="Briefing sections"></div>
+
+			<!-- Full category picker, revealed by the "All" tab. -->
+			<div id="nwb-cats" class="nw-tabs nwb-cats" role="group" aria-label="All news categories" hidden></div>
+
+			<!-- Breaking-news ticker. Hidden until a story <45 min old exists. -->
+			<div id="nwb-breaking" class="nwb-break" role="region" aria-label="Breaking news" hidden></div>
+
+			<!-- Today's AI Briefing — narratives from /api/news/digest. -->
+			<section id="nwb-brief" class="nwb-brief" aria-label="Today's AI briefing" hidden></section>
+
+			<p id="nw-count" class="nw-count" role="status"></p>
+
+			<!-- Top stories (hero + rail), trending narratives, saved stories, and
+			     the latest grid all render inside. Hydrated by src/markets-news.js. -->
+			<section id="nw-feed" class="cv-section nwb-feed" aria-label="News feed" aria-live="polite"></section>
+
+			<div style="display: flex; justify-content: center; margin: 1.5rem 0 0">
+				<button id="nw-more" class="cv-load-more" type="button" hidden>Load more stories</button>
+			</div>
 
 			<!-- Sibling market surfaces. -->
-			<nav class="cv-tools" aria-label="Market tools">
+			<nav class="cv-tools" aria-label="Market tools" style="margin-top: 2rem">
 				<a class="cv-pill" href="/markets">Markets Hub</a>
 				<a class="cv-pill" href="/markets/news" aria-current="page">News</a>
 				<a class="cv-pill" href="/markets/digest">Digest</a>
@@ -97,40 +144,9 @@
 				<a class="cv-pill" href="/gas">Gas</a>
 			</nav>
 
-			<!-- Category tabs. Hydrated by src/markets-news.js. -->
-			<div id="nw-tabs" class="nw-tabs" role="group" aria-label="News categories"></div>
-
-			<!-- Search + language + source filters. -->
-			<div class="nw-toolbar">
-				<div class="cv-search">
-					<input
-						id="nw-search"
-						type="search"
-						placeholder="Search headlines — bitcoin etf, solana, hack…"
-						aria-label="Search news"
-						autocomplete="off"
-					/>
-				</div>
-				<select id="nw-lang" class="nw-select" aria-label="Filter by language">
-					<option value="en">English</option>
-				</select>
-				<select id="nw-source" class="nw-select" aria-label="Filter by source">
-					<option value="">All sources</option>
-				</select>
-			</div>
-
-			<p id="nw-count" class="nw-count" role="status"></p>
-
-			<!-- Lead story + article grid. Hydrated by src/markets-news.js. -->
-			<section id="nw-feed" class="cv-section" aria-label="News feed" aria-live="polite"></section>
-
-			<div style="display: flex; justify-content: center; margin: 1.5rem 0 0">
-				<button id="nw-more" class="cv-load-more" type="button" hidden>Load more stories</button>
-			</div>
-
 			<!-- Archive cross-link. -->
 			<section class="cv-section" aria-label="Historical archive">
-				<div class="art-preview-note" style="margin-top: 2rem">
+				<div class="art-preview-note" style="margin-top: 1.25rem">
 					<span aria-hidden="true">🗞</span>
 					<span>
 						Looking for older coverage? The

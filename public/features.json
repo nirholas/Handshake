@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-10T18:59:18.151Z",
+	"generated_at": "2026-07-11T00:26:13.834Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1561,6 +1561,16 @@
 					"title": "Stablecoins Market Cap & Peg Health",
 					"description": "Every major stablecoin ranked by circulating market cap, with live peg health, backing mechanism (fiat-backed, crypto-backed, algorithmic), and the chains it lives on. Live from DeFiLlama.",
 					"added": "2026-07-08",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/yields",
+					"title": "DeFi Yields Explorer",
+					"description": "Explore roughly 15,000 live DeFi yield pools across every chain and protocol — filter by chain, project, stablecoin exposure, and minimum TVL, sort by APY or TVL, and open any pool to see its full APY and TVL history. Live from DeFiLlama, no key required.",
+					"added": "2026-07-11",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws — the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-07-11",
+			"title": "Richer coin pages, plus new exchange, category, and DeFi-yields detail pages",
+			"summary": "Every coin page now shows far more of what the data already offers: a 1h-to-1y price-performance matrix, a circulating-vs-max supply bar with the market-cap/FDV ratio, all-time high and low with the drawdown and recovery multiple, the community bullish/bearish sentiment split, GitHub and social activity, and a full exchange-listings table with spread, order-book depth, and a trust rating for each venue. Exchanges and crypto categories, which used to only send you off-site or filter a table, now have their own detail pages — an exchange page with a trust badge, wash-volume-adjusted volume, a volume-history chart, and its markets, and a category page with the sector's rank, stats, and full coin list. And a brand-new DeFi Yields explorer covers roughly 15,000 live pools across every chain and protocol, filterable and sortable, each with its own APY and TVL history chart. All of it is real, key-free data.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/yields"
+		},
+		{
 			"date": "2026-07-10",
 			"title": "Crypto news now aggregates 192 publisher feeds, in 18 languages",
 			"summary": "The news feed grew from 38 sources to 192 — every major newsroom plus research desks, security teams, on-chain analysts, exchanges, regulators, and independent journalists, across 27 categories. 33 of them publish in a language other than English, so /markets/news now has a language picker covering 18 languages; the default feed stays English-only. Every feed was fetched and parsed before being added, so the list holds no dead links: of roughly 450 candidate feeds, about half turned out to be defunct domains, URLs that now serve a web page instead of a feed, or sites that block servers outright. Binance listing announcements are in there too, which no RSS feed carries.",

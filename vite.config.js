@@ -482,6 +482,9 @@ const appConfig = {
 				defi: resolve(__dirname, 'pages/defi.html'),
 				chains: resolve(__dirname, 'pages/chains.html'),
 				stablecoins: resolve(__dirname, 'pages/stablecoins.html'),
+				exchange: resolve(__dirname, 'pages/exchange.html'),
+				category: resolve(__dirname, 'pages/category.html'),
+				yields: resolve(__dirname, 'pages/yields.html'),
 				bnb: resolve(__dirname, 'pages/bnb.html'),
 				'bnb-latency': resolve(__dirname, 'pages/bnb-latency.html'),
 				vault: resolve(__dirname, 'pages/vault.html'),
@@ -1072,6 +1075,8 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/chains/': resolve(root, 'pages/chains.html'),
 					'/stablecoins': resolve(root, 'pages/stablecoins.html'),
 					'/stablecoins/': resolve(root, 'pages/stablecoins.html'),
+					'/yields': resolve(root, 'pages/yields.html'),
+					'/yields/': resolve(root, 'pages/yields.html'),
 					'/bnb': resolve(root, 'pages/bnb.html'),
 					'/bnb/': resolve(root, 'pages/bnb.html'),
 					'/bnb-latency': resolve(root, 'pages/bnb-latency.html'),
@@ -1499,6 +1504,12 @@ support: resolve(__dirname, 'pages/support.html'),
 						/^\/coin\/[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}\/?$/.test(path)
 					)
 						filePath = resolve(root, 'pages/coin.html');
+					// /exchange/:id  → exchange detail page (CoinGecko exchange slug)
+					else if (!filePath && /^\/exchange\/[a-z0-9_-]{1,60}\/?$/i.test(path))
+						filePath = resolve(root, 'pages/exchange.html');
+					// /category/:id  → crypto category detail page
+					else if (!filePath && /^\/category\/[a-z0-9-]{1,80}\/?$/.test(path))
+						filePath = resolve(root, 'pages/category.html');
 					// /@<handle>  → public live profile page
 					else if (!filePath && /^\/@[a-z0-9_-]{3,30}\/?$/i.test(path))
 						filePath = resolve(root, 'pages/handle.html');

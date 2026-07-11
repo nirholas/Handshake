@@ -7,8 +7,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const {
 	parseFeed, lexiconSentiment, extractTickers, articleId, stripHtml, getNews, findArticle,
-	stripFeedBoilerplate, truncateWords,
+	stripFeedBoilerplate, truncateWords, cleanImageUrl, metaContent, extractOgImage,
 } = await import('../api/_lib/news.js');
+const { isFeaturedSource, NEWS_SOURCES } = await import('../api/_lib/news-sources.js');
 
 const RSS_FIXTURE = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -125,6 +126,73 @@ describe('enrichment', () => {
 		expect(truncateWords('', 20)).toBeNull();
 		// a single word longer than the cap still truncates rather than overflowing
 		expect(truncateWords('supercalifragilistic', 10).length).toBeLessThanOrEqual(11);
+	});
+});
+
+describe('image hygiene', () => {
+	it('cleanImageUrl keeps real https URLs and upgrades http / protocol-relative', () => {
+		expect(cleanImageUrl('https://cdn.example.com/a.jpg')).toBe('https://cdn.example.com/a.jpg');
+		expect(cleanImageUrl('http://cdn.example.com/a.jpg')).toBe('https://cdn.example.com/a.jpg');
+		expect(cleanImageUrl('//cdn.example.com/a.jpg')).toBe('https://cdn.example.com/a.jpg');
+	});
+
+	it('cleanImageUrl rejects data: URIs, relative paths, and tracking pixels', () => {
+		expect(cleanImageUrl('data:image/svg+xml,%3Csvg%3E')).toBeNull(); // ZeroHedge ships this
+		expect(cleanImageUrl('/images/local.png')).toBeNull();
+		expect(cleanImageUrl('ftp://example.com/a.jpg')).toBeNull();
+		expect(cleanImageUrl('https://stats.example.com/1x1.gif')).toBeNull();
+		expect(cleanImageUrl('https://example.com/spacer.gif')).toBeNull();
+		expect(cleanImageUrl('https://feeds.feedburner.com/~r/site/~4/abc')).toBeNull();
+		expect(cleanImageUrl('')).toBeNull();
+		expect(cleanImageUrl(null)).toBeNull();
+	});
+
+	it('parseFeed falls through junk media:content to a real enclosure image', () => {
+		const xml = `<?xml version="1.0"?><rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
+			<channel><item>
+				<title>Story with a junk media slot</title>
+				<link>https://example.com/story</link>
+				<media:content url="data:image/svg+xml,%3Csvg%3E"/>
+				<enclosure url="https://cdn.example.com/real.jpg" type="image/jpeg"/>
+			</item></channel></rss>`;
+		const [a] = parseFeed(xml, 'coindesk');
+		expect(a.image).toBe('https://cdn.example.com/real.jpg');
+	});
+
+	it('extractOgImage reads og:image / twitter:image in either attribute order', () => {
+		expect(
+			extractOgImage('<head><meta property="og:image" content="https://pub.example.com/og.jpg"/></head>'),
+		).toBe('https://pub.example.com/og.jpg');
+		expect(
+			extractOgImage('<head><meta content="https://pub.example.com/tw.jpg" name="twitter:image"/></head>'),
+		).toBe('https://pub.example.com/tw.jpg');
+		// secure_url wins over the plain og:image
+		expect(
+			extractOgImage(
+				'<head><meta property="og:image" content="http://pub.example.com/a.jpg"/><meta property="og:image:secure_url" content="https://pub.example.com/b.jpg"/></head>',
+			),
+		).toBe('https://pub.example.com/b.jpg');
+		// a data:-URI og:image is junk, not a preview
+		expect(extractOgImage('<meta property="og:image" content="data:image/png;base64,xx"/>')).toBeNull();
+		expect(extractOgImage('<head><title>no meta</title></head>')).toBeNull();
+	});
+
+	it('metaContent returns null when the tag is absent', () => {
+		expect(metaContent('<head></head>', ['og:image'])).toBeNull();
+	});
+});
+
+describe('featured sources', () => {
+	it('admits tier1/tier2 and high-credibility outlets, refuses the long tail', () => {
+		expect(isFeaturedSource('coindesk')).toBe(true); // tier2, 0.95
+		expect(isFeaturedSource('theblock')).toBe(true); // tier2, 0.93
+		expect(isFeaturedSource('bbc_business')).toBe(true); // tier1
+		expect(isFeaturedSource('watcherguru')).toBe(false); // tier3, 0.68
+		expect(isFeaturedSource('not-a-source')).toBe(false);
+		// the bar yields a real set — enough for a Featured tab, far below the registry
+		const featured = Object.keys(NEWS_SOURCES).filter(isFeaturedSource);
+		expect(featured.length).toBeGreaterThanOrEqual(8);
+		expect(featured.length).toBeLessThan(Object.keys(NEWS_SOURCES).length / 4);
 	});
 });
 

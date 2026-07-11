@@ -1,15 +1,31 @@
-// /markets/news/article — the rich reader. Takes ?url= (+ title/source/image
-// for instant first paint), calls /api/news/article for server-side
-// extraction + analysis, and renders: hero image, byline with sentiment,
-// summary + key-points card, full article prose (when the publisher allows
-// extraction or ships it in their feed), detected ticker chips, and a
-// related-coverage rail. Publisher-blocked pages degrade to an honest
-// preview with a prominent read-at-source CTA — never a dead end.
+// The rich reader behind BOTH article surfaces:
+//   • /markets/news/<YYYY-MM>/<id>-<slug> — the canonical story pages. The
+//     server (api/news/story-page.js) renders the shell with real meta tags
+//     and a crawler-visible body plus a #art-seed JSON block; this module
+//     keeps that content on screen and upgrades it in place once the full
+//     extraction + analysis arrives.
+//   • /markets/news/article?url=… — the legacy query-param reader (noindex),
+//     still used for articles without a stable id/date.
+// Renders: hero image, byline with sentiment, summary + key-points card, full
+// article prose (when the publisher allows extraction or ships it in their
+// feed), ticker chips deep-linking to /coin/:id, market context at
+// publication, and a related-coverage rail. Publisher-blocked pages degrade
+// to an honest preview with a prominent read-at-source CTA — never a dead end.
 
 import { timeAgo, escapeHtml as esc } from './shared/coin-format.js';
 import { newsCard, wireNewsContainer } from './shared/news-render.js';
+import { tickerHref, TICKER_COIN_IDS } from './shared/news-links.js';
 
 const root = document.getElementById('art-root');
+
+let wired = false;
+function wire() {
+	// wireNewsContainer attaches delegated listeners to the container itself —
+	// they survive innerHTML swaps, so wiring twice would double-fire clicks.
+	if (wired) return;
+	wireNewsContainer(root);
+	wired = true;
+}
 
 async function getJson(url) {
 	const res = await fetch(url, { headers: { accept: 'application/json' } });
@@ -62,18 +78,35 @@ function tickersHtml(a) {
 	return `<div class="nw-chips" style="margin:0 0 1.25rem">${a.tickers
 		.map(
 			(t) =>
-				`<a class="nw-chip" href="/markets/news?q=${encodeURIComponent(t)}" aria-label="More ${esc(t)} coverage">${esc(t)}</a>`,
+				`<a class="nw-chip" href="${esc(tickerHref(t))}" aria-label="${TICKER_COIN_IDS[t] ? `${esc(t)} price and profile` : `More ${esc(t)} coverage`}">${esc(t)}</a>`,
 		)
 		.join('')}</div>`;
 }
 
-function summaryCardHtml(a) {
+function fmtUsd(n) {
+	if (typeof n !== 'number' || !Number.isFinite(n)) return null;
+	return `$${n.toLocaleString('en-US', { maximumFractionDigits: n >= 1000 ? 0 : 2 })}`;
+}
+
+// The market snapshot the hourly archiver captured when the story was
+// published — real recorded data the publisher's own page doesn't have.
+function marketContextHtml(mc) {
+	if (!mc) return '';
+	const parts = [];
+	if (fmtUsd(mc.btc_price)) parts.push(`BTC ${fmtUsd(mc.btc_price)}`);
+	if (fmtUsd(mc.eth_price)) parts.push(`ETH ${fmtUsd(mc.eth_price)}`);
+	if (mc.fear_greed_index != null) parts.push(`Fear &amp; Greed ${esc(String(mc.fear_greed_index))}`);
+	return parts.length ? `<p class="art-provider">Market at publication: ${parts.join(' · ')}</p>` : '';
+}
+
+function summaryCardHtml(a, seed) {
 	const points = (a.key_points || []).filter(Boolean);
 	return `
 		<div class="art-summary-card">
 			<h2>Summary</h2>
 			<p>${esc(a.summary || a.description || '')}</p>
 			${points.length ? `<h2 style="margin-top:1rem">Key points</h2><ul class="art-keypoints">${points.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
+			${marketContextHtml(seed?.market_context)}
 			<p class="art-provider">${a.analysis_provider === 'heuristic' ? 'Extractive summary from the article text' : `AI summary via ${esc(a.analysis_provider)}`} · three.ws news</p>
 		</div>`;
 }
@@ -89,7 +122,7 @@ function render(a, seed) {
 		<div class="art-layout">
 			<div>
 				${tickersHtml(a)}
-				${summaryCardHtml(a)}
+				${summaryCardHtml(a, seed)}
 				${
 					isPreview
 						? `<div class="art-preview-note">
@@ -112,7 +145,7 @@ function render(a, seed) {
 			</aside>
 		</div>`;
 	document.title = `${a.title} · Crypto News · three.ws`;
-	wireNewsContainer(root);
+	wire();
 }
 
 function renderError(err, seed) {
@@ -130,9 +163,49 @@ function renderError(err, seed) {
 	document.getElementById('art-retry')?.addEventListener('click', init);
 }
 
+// On a server-rendered story page the crawler body is already meaningful —
+// keep it on screen and only signal that the full text is on its way.
+function ssrLoadingIndicator(show) {
+	document.getElementById('art-ssr-loading')?.remove();
+	if (!show) return;
+	const el = document.createElement('div');
+	el.id = 'art-ssr-loading';
+	el.className = 'art-byline';
+	el.innerHTML = `<span class="cv-spinner" aria-hidden="true"></span><span>Extracting the full story…</span>`;
+	const anchor = root.querySelector('.art-byline');
+	if (anchor) anchor.after(el);
+	else root.prepend(el);
+}
+
+function ssrErrorNotice(err) {
+	ssrLoadingIndicator(false);
+	const el = document.createElement('div');
+	el.className = 'art-preview-note';
+	el.innerHTML = `
+		<span aria-hidden="true">⚠️</span>
+		<span>Full-text extraction is unavailable right now
+		(${err.status === 429 ? 'rate limited — reload in a few seconds' : esc(err.message || 'the reader service didn’t respond')}).
+		The story summary above and the read-at-source link still work.</span>`;
+	const anchor = root.querySelector('.art-summary-card');
+	if (anchor) anchor.after(el);
+	else root.append(el);
+}
+
+function readSsrSeed() {
+	const el = document.getElementById('art-seed');
+	if (!el) return null;
+	try {
+		const seed = JSON.parse(el.textContent);
+		return seed?.url ? seed : null;
+	} catch {
+		return null;
+	}
+}
+
 async function init() {
+	const ssrSeed = readSsrSeed();
 	const p = new URLSearchParams(location.search);
-	const seed = {
+	const seed = ssrSeed || {
 		url: p.get('url') || '',
 		title: p.get('title') || '',
 		source: p.get('source') || '',
@@ -147,8 +220,13 @@ async function init() {
 			</div>`;
 		return;
 	}
-	if (seed.title) document.title = `${seed.title} · Crypto News · three.ws`;
-	root.innerHTML = skeletonHtml(seed);
+	wire();
+	if (ssrSeed) {
+		ssrLoadingIndicator(true);
+	} else {
+		if (seed.title) document.title = `${seed.title} · Crypto News · three.ws`;
+		root.innerHTML = skeletonHtml(seed);
+	}
 	try {
 		const q = new URLSearchParams({ url: seed.url });
 		if (seed.title) q.set('title', seed.title);
@@ -156,7 +234,8 @@ async function init() {
 		const a = await getJson(`/api/news/article?${q}`);
 		render(a, seed);
 	} catch (err) {
-		renderError(err, seed);
+		if (ssrSeed) ssrErrorNotice(err);
+		else renderError(err, seed);
 	}
 }
 

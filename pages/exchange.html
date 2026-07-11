@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en" class="cv-page">
+	<head>
+		<script>
+			/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Exchange · three.ws</title>
+		<meta
+			name="description"
+			content="A rich profile for any crypto exchange — trust score, 24h volume, open interest, markets, and volume history. Real CoinGecko data, no API key."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/exchanges" />
+		<meta property="og:title" content="Exchange · three.ws" />
+		<meta
+			property="og:description"
+			content="Trust score, 24h trading volume, markets, and volume history for any crypto exchange. Real CoinGecko data."
+		/>
+		<meta property="og:image" content="https://three.ws/og-image.png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Exchange · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Trust score, 24h trading volume, markets, and volume history for any crypto exchange."
+		/>
+		<meta name="twitter:image" content="https://three.ws/og-image.png" />
+		<meta name="theme-color" content="#09090b" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/exchange-page.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="canonical" href="https://three.ws/exchanges" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container" id="ex-main" aria-busy="true">
+			<!-- Breadcrumbs -->
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/markets">Markets</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<a href="/exchanges">Exchanges</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<span class="here" id="ex-crumb-name">…</span>
+			</nav>
+
+			<!-- Hero: logo, name, trust score, rank, meta chips, description, links. -->
+			<section id="ex-hero" aria-label="Exchange overview"></section>
+
+			<!-- Stat cards: 24h volume, normalized volume / open interest, markets, rank. -->
+			<section id="ex-stats" class="cv-section" aria-label="Exchange stats"></section>
+
+			<!-- Volume history chart (spot venues only). -->
+			<section id="ex-chart" aria-label="Volume chart"></section>
+
+			<!-- Markets / contracts table. -->
+			<section id="ex-markets" class="cv-section" aria-label="Markets"></section>
+
+			<p class="cv-updated" id="ex-updated" hidden></p>
+		</main>
+
+		<script type="module" src="/src/exchange-page.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>

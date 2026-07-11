@@ -4,6 +4,11 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-07-11
+
+- **DeFi Yields Explorer** (`/yields`) — Explore roughly 15,000 live DeFi yield pools across every chain and protocol — filter by chain, project, stablecoin exposure, and minimum TVL, sort by APY or TVL, and open any pool to see its full APY and TVL history. Live from DeFiLlama, no key required.
+- **Richer coin pages, plus new exchange, category, and DeFi-yields detail pages** — Every coin page now shows far more of what the data already offers: a 1h-to-1y price-performance matrix, a circulating-vs-max supply bar with the market-cap/FDV ratio, all-time high and low with the drawdown and recovery multiple, the community bullish/bearish sentiment split, GitHub and social activity, and a full exchange-listings table with spread, order-book depth, and a trust rating for each venue. Exchanges and crypto categories, which used to only send you off-site or filter a table, now have their own detail pages — an exchange page with a trust badge, wash-volume-adjusted volume, a volume-history chart, and its markets, and a category page with the sector's rank, stats, and full coin list. And a brand-new DeFi Yields explorer covers roughly 15,000 live pools across every chain and protocol, filterable and sortable, each with its own APY and TVL history chart. All of it is real, key-free data. (`/yields`) `[feature, improvement]`
+
 ## 2026-07-10
 
 - **Crypto News** (`/markets/news`) — Live crypto news aggregated natively from 192 publisher feeds in 18 languages — filter by category (Bitcoin, DeFi, security, regulation, and more), pick a language, search headlines, and open any story in a rich reader with summary, key points, sentiment, and related coverage.

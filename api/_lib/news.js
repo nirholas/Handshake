@@ -24,7 +24,7 @@
 
 import { createHash } from 'node:crypto';
 import { XMLParser } from 'fast-xml-parser';
-import { NEWS_SOURCES, sourcesForCategory, sourcesForLanguage, sourcePriority } from './news-sources.js';
+import { NEWS_SOURCES, sourcesForCategory, sourcesForLanguage, sourcePriority, isFeaturedSource } from './news-sources.js';
 
 const FEED_TIMEOUT_MS = 7000;
 const FRESH_MS = 300_000; // refetch a source after 5 min
@@ -171,6 +171,48 @@ function firstImage(html) {
 	return m ? m[1] : null;
 }
 
+/**
+ * Feeds ship junk in their image slots: data:-URI placeholders (ZeroHedge sends
+ * an inline SVG icon as media:content), 1×1 tracking pixels, protocol-relative
+ * links, and plain-http URLs that an https page can't render (mixed content is
+ * blocked, not downgraded). Only a real, loadable https URL survives this —
+ * anything else becomes null so the card falls back cleanly instead of showing
+ * a broken or junk preview.
+ */
+export function cleanImageUrl(raw) {
+	let url = str(raw);
+	if (!url) return null;
+	if (url.startsWith('//')) url = `https:${url}`;
+	if (/^http:\/\//i.test(url)) url = `https://${url.slice(7)}`;
+	if (!/^https:\/\//i.test(url)) return null; // data:, blob:, ftp:, relative paths
+	if (/(?:^|[/_.-])(?:1x1|pixel|spacer|blank|transparent)(?:[/_.-]|\.(?:gif|png)\b)/i.test(url)) return null;
+	if (/feeds\.feedburner\.com\/~/i.test(url)) return null; // FeedBurner impression beacons
+	return url;
+}
+
+/** First <meta property|name="…" content="…"> match, attribute order agnostic. */
+export function metaContent(html, patterns) {
+	for (const name of patterns) {
+		const re = new RegExp(
+			`<meta[^>]+(?:property|name)=["']${name}["'][^>]+content=["']([^"']+)["']|<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${name}["']`,
+			'i',
+		);
+		const m = String(html || '').match(re);
+		if (m) return (m[1] || m[2] || '').trim() || null;
+	}
+	return null;
+}
+
+/**
+ * The article page's own preview image — what the publisher would show on a
+ * social share. Backs /api/news/image for articles whose feed carries no image.
+ */
+export function extractOgImage(html) {
+	return cleanImageUrl(
+		metaContent(html, ['og:image:secure_url', 'og:image', 'twitter:image', 'twitter:image:src']),
+	);
+}
+
 function normalizeLink(it) {
 	// RSS: <link>url</link>. Atom: <link href="..."/> possibly an array with
 	// rel variants — prefer rel="alternate", else the first href.
@@ -201,12 +243,19 @@ export function parseFeed(xml, sourceKey) {
 				str(it?.['content:encoded']) ||
 				str(it?.content?.['#text']) ||
 				'';
+			// First candidate that survives hygiene wins — a junk media:content
+			// (ZeroHedge ships a data:-URI icon there) must not mask a real
+			// thumbnail further down the chain.
 			const image =
-				str(it?.['media:content']?.['@url']) ||
-				(Array.isArray(it?.['media:content']) ? str(it['media:content'][0]?.['@url']) : null) ||
-				str(it?.['media:thumbnail']?.['@url']) ||
-				str(it?.enclosure?.['@url']) ||
-				firstImage(it?.['content:encoded'] || rawDesc);
+				[
+					str(it?.['media:content']?.['@url']),
+					Array.isArray(it?.['media:content']) ? str(it['media:content'][0]?.['@url']) : null,
+					str(it?.['media:thumbnail']?.['@url']),
+					str(it?.enclosure?.['@url']),
+					firstImage(it?.['content:encoded'] || rawDesc),
+				]
+					.map(cleanImageUrl)
+					.find(Boolean) || null;
 			const pubDate = str(it?.pubDate) || str(it?.published) || str(it?.updated) || str(it?.['dc:date']);
 			const iso = pubDate && !Number.isNaN(Date.parse(pubDate)) ? new Date(pubDate).toISOString() : null;
 			const author =
@@ -475,10 +524,13 @@ function dedupe(articles) {
  * Chinese headlines into an English feed. They are opt-in: pass a language code
  * for one, or 'all' for the whole registry.
  *
- * @param {object} opts { category, source, lang, q, limit, offset }
+ * `featured` narrows the fan-out to the majors (tier1/tier2 or credibility
+ * ≥ 0.85) — the "Featured" tab on /markets/news.
+ *
+ * @param {object} opts { category, source, lang, q, limit, offset, featured }
  * @returns {{ articles: Array, total: number, sources_ok: number, sources_total: number }}
  */
-export async function getNews({ category, source, lang = 'en', q, limit = 30, offset = 0 } = {}) {
+export async function getNews({ category, source, lang = 'en', q, limit = 30, offset = 0, featured = false } = {}) {
 	let keys;
 	if (source && NEWS_SOURCES[source]) keys = [source];
 	else if (source) return { articles: [], total: 0, sources_ok: 0, sources_total: 0 };
@@ -488,6 +540,7 @@ export async function getNews({ category, source, lang = 'en', q, limit = 30, of
 			const inLang = new Set(sourcesForLanguage(lang));
 			keys = keys.filter((k) => inLang.has(k));
 		}
+		if (featured) keys = keys.filter(isFeaturedSource);
 	}
 
 	// A narrow selection — one source, or a small language/category slice — has

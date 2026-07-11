@@ -6,6 +6,7 @@
 
 import { escapeHtml as esc } from './shared/coin-format.js';
 import { ensureX402 } from './shared/x402-loader.js';
+import { readerHref } from './shared/news-render.js';
 
 const $ = (id) => document.getElementById(id);
 const PAGE_SIZE = 50;
@@ -132,10 +133,7 @@ function rowHtml(a) {
 		: '—';
 	const label = a.sentiment?.label || 'neutral';
 	const dotCls = label.includes('positive') ? 'pos' : label.includes('negative') ? 'neg' : '';
-	const readerParams = new URLSearchParams({ url: a.link || '', title: a.title, source: a.source });
-	const titleInner = a.link
-		? `<a href="/markets/news/article?${esc(readerParams.toString())}">${esc(a.title)}</a>`
-		: esc(a.title);
+	const titleInner = a.link ? `<a href="${esc(readerHref(a))}">${esc(a.title)}</a>` : esc(a.title);
 	return `
 		<div class="arc-row">
 			<span class="arc-date">${esc(dateStr)}</span>

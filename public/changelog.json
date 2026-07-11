@@ -1,11 +1,32 @@
 {
-	"generated_at": "2026-07-10T18:59:18.164Z",
+	"generated_at": "2026-07-11T00:26:13.847Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-11",
+			"type": "launch",
+			"title": "DeFi Yields Explorer",
+			"summary": "Explore roughly 15,000 live DeFi yield pools across every chain and protocol — filter by chain, project, stablecoin exposure, and minimum TVL, sort by APY or TVL, and open any pool to see its full APY and TVL history. Live from DeFiLlama, no key required.",
+			"link": "/yields",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-11",
+			"type": "update",
+			"title": "Richer coin pages, plus new exchange, category, and DeFi-yields detail pages",
+			"summary": "Every coin page now shows far more of what the data already offers: a 1h-to-1y price-performance matrix, a circulating-vs-max supply bar with the market-cap/FDV ratio, all-time high and low with the drawdown and recovery multiple, the community bullish/bearish sentiment split, GitHub and social activity, and a full exchange-listings table with spread, order-book depth, and a trust rating for each venue. Exchanges and crypto categories, which used to only send you off-site or filter a table, now have their own detail pages — an exchange page with a trust badge, wash-volume-adjusted volume, a volume-history chart, and its markets, and a category page with the sector's rank, stats, and full coin list. And a brand-new DeFi Yields explorer covers roughly 15,000 live pools across every chain and protocol, filterable and sortable, each with its own APY and TVL history chart. All of it is real, key-free data.",
+			"link": "/yields",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-07-10",
 			"type": "launch",

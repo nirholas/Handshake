@@ -128,7 +128,11 @@ function renderTable() {
 
 	const rows = sortedExchanges()
 		.map((e) => {
-			const rowAttrs = e.url ? ` data-href="${esc(e.url)}"` : '';
+			// The whole row opens the internal /exchange/:id profile; the
+			// external website stays a small secondary ↗ affordance.
+			const rowAttrs = e.id
+				? ` data-href="/exchange/${encodeURIComponent(e.id)}" tabindex="0" role="link" aria-label="Open ${esc(e.name)} exchange profile"`
+				: '';
 			return `
 			<tr${rowAttrs}>
 				<td class="rank cv-mono left">${e.trust_score_rank ?? '—'}</td>
@@ -179,12 +183,23 @@ function renderTable() {
 		});
 	});
 
-	// Whole row opens the exchange in a new tab; the icon link inside stays a real
-	// anchor for middle-click / keyboard users.
+	// Whole row opens the exchange's internal /exchange/:id profile; the website
+	// icon link inside stays a real anchor to the external venue. Rows are
+	// keyboard-focusable (role=link) so Enter / Space navigate too.
 	el.querySelectorAll('tr[data-href]').forEach((tr) => {
+		const go = () => {
+			window.location.assign(tr.dataset.href);
+		};
 		tr.addEventListener('click', (e) => {
 			if (e.target.closest('a')) return;
-			window.open(tr.dataset.href, '_blank', 'noopener');
+			go();
+		});
+		tr.addEventListener('keydown', (e) => {
+			if (e.target.closest('a')) return;
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				go();
+			}
 		});
 	});
 }

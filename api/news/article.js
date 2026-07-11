@@ -18,7 +18,7 @@
 import { lookup } from 'node:dns/promises';
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { getNews, findArticle, extractTickers, lexiconSentiment, stripHtml, stripJsonFence } from '../_lib/news.js';
+import { getNews, findArticle, extractTickers, lexiconSentiment, stripHtml, stripJsonFence, metaContent } from '../_lib/news.js';
 import { llmComplete, llmConfigured } from '../_lib/llm.js';
 
 const FETCH_TIMEOUT_MS = 10_000;
@@ -59,18 +59,7 @@ async function assertPublicUrl(urlString) {
 }
 
 // ── Extraction ───────────────────────────────────────────────────────────────
-
-function metaContent(html, patterns) {
-	for (const name of patterns) {
-		const re = new RegExp(
-			`<meta[^>]+(?:property|name)=["']${name}["'][^>]+content=["']([^"']+)["']|<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${name}["']`,
-			'i',
-		);
-		const m = html.match(re);
-		if (m) return (m[1] || m[2] || '').trim() || null;
-	}
-	return null;
-}
+// metaContent lives in _lib/news.js, shared with the /api/news/image resolver.
 
 function extractParagraphs(html) {
 	// Prefer semantic containers; fall back to the whole document.

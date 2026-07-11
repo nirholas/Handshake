@@ -1,9 +1,12 @@
 // GET /api/coin/markets?page=1&per_page=100     → ranked market table rows
 // GET /api/coin/markets?q=<text>                → coin search (id/name/symbol)
+// GET /api/coin/markets?category=<slug>&…       → table rows for one category
 // ---------------------------------------------------------------------------
-// Powers the /coins index. Table mode proxies CoinGecko /coins/markets with
-// 7d sparklines (downsampled server-side so 100 rows stay ~50KB); search mode
-// proxies /search for the type-ahead. Both cached in-memory + CDN.
+// Powers the /coins index and the /category/:id coins table. Table mode
+// proxies CoinGecko /coins/markets with 7d sparklines (downsampled
+// server-side so 100 rows stay ~50KB), optionally scoped to a CoinGecko
+// category id; search mode proxies /search for the type-ahead. Both cached
+// in-memory + CDN.
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
@@ -59,13 +62,20 @@ export default wrap(async (req, res) => {
 
 		const page = Math.min(Math.max(1, parseInt(params.get('page') || '1', 10) || 1), 20);
 		const perPage = Math.min(Math.max(10, parseInt(params.get('per_page') || '100', 10) || 100), 250);
+		// Optional CoinGecko category id (e.g. layer-1, artificial-intelligence) —
+		// scopes the table to one sector for the /category/:id coins list.
+		const category = (params.get('category') || '').trim().toLowerCase();
+		if (category && !/^[a-z0-9-]{1,80}$/.test(category)) {
+			return error(res, 400, 'bad_category', 'category must be a CoinGecko category id');
+		}
 		const raw = await geckoFetch(
 			`/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${perPage}&page=${page}` +
-				`&sparkline=true&price_change_percentage=24h,7d`,
+				`&sparkline=true&price_change_percentage=24h,7d` +
+				(category ? `&category=${encodeURIComponent(category)}` : ''),
 			{ ttlMs: 60_000, timeoutMs: 10_000 },
 		);
 		if (!Array.isArray(raw)) throw new Error('unexpected upstream payload');
-		return json(res, 200, { coins: raw.map(shapeRow), page, per_page: perPage }, {
+		return json(res, 200, { coins: raw.map(shapeRow), page, per_page: perPage, category: category || null }, {
 			'cache-control': 'public, max-age=30, s-maxage=60, stale-while-revalidate=300',
 		});
 	} catch {

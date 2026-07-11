@@ -237,6 +237,133 @@ function renderTable() {
 	});
 }
 
+// ── Derivatives exchanges section ───────────────────────────────────────────
+// A second table ranked by open interest, from /api/coin/derivatives?view=
+// exchanges. Rows deep-link to the internal /exchange/:id profile (the detail
+// endpoint's derivatives fallback serves these venues). The section container
+// is injected here rather than living in the static HTML.
+
+const exState = { exchanges: [], loading: true, error: false };
+
+// BTC amount: 4 decimals below 1 BTC, whole otherwise; em dash for missing.
+function formatBtc(n) {
+	if (n == null || !Number.isFinite(n)) return '—';
+	return n.toLocaleString('en-US', { maximumFractionDigits: n < 1 ? 4 : 0 });
+}
+
+function exSection() {
+	let el = $('dv-exchanges');
+	if (el) return el;
+	el = document.createElement('section');
+	el.id = 'dv-exchanges';
+	el.className = 'cv-section';
+	el.setAttribute('aria-label', 'Derivatives exchanges');
+	const updated = $('dv-updated');
+	const market = $('dv-market');
+	// Sit between the perps table and the "updated" line.
+	if (updated && updated.parentNode) updated.parentNode.insertBefore(el, updated);
+	else if (market && market.parentNode) market.parentNode.appendChild(el);
+	else document.querySelector('.cv-container')?.appendChild(el);
+	return el;
+}
+
+const EX_COLUMNS = [
+	{ label: 'Exchange', left: true },
+	{ label: 'Open Interest BTC', num: true },
+	{ label: '24h Vol BTC', num: true },
+	{ label: 'Perps', num: true, hide: 'hide-sm' },
+	{ label: 'Futures', num: true, hide: 'hide-sm' },
+	{ label: 'Year', num: true, hide: 'hide-md' },
+	{ label: 'Country', left: true, hide: 'hide-md' },
+];
+
+function renderExchanges() {
+	const el = exSection();
+	const heading = '<h2 class="cv-h2">Derivatives Exchanges</h2>';
+
+	if (exState.loading) {
+		el.innerHTML = `${heading}<div class="cv-table-wrap" style="padding:0.75rem">${Array.from(
+			{ length: 6 },
+			() => '<div class="cv-skel" style="height:2.5rem;margin:0.375rem 0"></div>',
+		).join('')}</div>`;
+		return;
+	}
+	if (exState.error) {
+		el.innerHTML = `${heading}<div class="cv-empty">Derivatives exchange data is temporarily unavailable. Please try again shortly.</div>`;
+		return;
+	}
+	if (!exState.exchanges.length) {
+		el.innerHTML = `${heading}<div class="cv-empty">No derivatives exchanges to show right now.</div>`;
+		return;
+	}
+
+	const head = EX_COLUMNS.map(
+		(c) =>
+			`<th scope="col" class="${c.left ? 'left' : ''} ${c.hide || ''}">${esc(c.label)}</th>`,
+	).join('');
+
+	const body = exState.exchanges
+		.map((e) => {
+			const rowAttrs = e.id
+				? ` data-href="/exchange/${encodeURIComponent(e.id)}" tabindex="0" role="link" aria-label="Open ${esc(e.name)} exchange profile"`
+				: '';
+			return `
+			<tr${rowAttrs}>
+				<td class="left name-cell"><span class="inner">
+					${e.image ? `<img src="${esc(e.image)}" alt="" loading="lazy" width="24" height="24" data-no-dark-filter />` : ''}
+					<span class="nm">${esc(e.name)}</span>
+				</span></td>
+				<td class="cv-mono">${esc(formatBtc(e.open_interest_btc))}</td>
+				<td class="cv-mono">${esc(formatBtc(e.trade_volume_24h_btc))}</td>
+				<td class="cv-mono hide-sm">${e.perpetual_pairs ?? '—'}</td>
+				<td class="cv-mono hide-sm">${e.futures_pairs ?? '—'}</td>
+				<td class="cv-mono hide-md">${e.year_established ?? '—'}</td>
+				<td class="left dim hide-md">${esc(e.country || '—')}</td>
+			</tr>`;
+		})
+		.join('');
+
+	el.innerHTML = `
+		${heading}
+		<div class="cv-table-wrap">
+			<table class="cv-table dv-table dv-ex-table">
+				<thead><tr>${head}</tr></thead>
+				<tbody>${body}</tbody>
+			</table>
+		</div>`;
+
+	// Whole row opens the internal /exchange/:id profile; keyboard-accessible.
+	el.querySelectorAll('tr[data-href]').forEach((tr) => {
+		const go = () => window.location.assign(tr.dataset.href);
+		tr.addEventListener('click', (e) => {
+			if (e.target.closest('a')) return;
+			go();
+		});
+		tr.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				go();
+			}
+		});
+	});
+}
+
+async function loadExchanges() {
+	exState.loading = true;
+	exState.error = false;
+	renderExchanges();
+	try {
+		const data = await getJson('/api/coin/derivatives?view=exchanges');
+		exState.exchanges = Array.isArray(data.exchanges) ? data.exchanges : [];
+		exState.loading = false;
+	} catch {
+		exState.loading = false;
+		exState.error = true;
+		exState.exchanges = [];
+	}
+	renderExchanges();
+}
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 
 function renderSkeleton() {
@@ -269,6 +396,8 @@ async function load() {
 	renderStats();
 	buildFilters();
 	renderTable();
+	// The derivatives-exchanges table streams in independently of the perps.
+	loadExchanges();
 }
 
 load();

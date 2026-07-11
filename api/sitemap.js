@@ -72,6 +72,9 @@ export default async function handler(req, res) {
 		{ loc: `${ORIGIN}/sitemap/avatars.xml`, lastmod: fmtDate(avatarsTs || today) },
 		{ loc: `${ORIGIN}/sitemap/widgets.xml`, lastmod: fmtDate(widgetsTs || today) },
 		{ loc: `${ORIGIN}/sitemap/profiles.xml`, lastmod: fmtDate(usersTs || subdomainsTs || today) },
+		// Story pages for recent news — the archive appender refreshes hourly,
+		// so the newest articles are always crawlable within the hour.
+		{ loc: `${ORIGIN}/sitemap/news.xml`, lastmod: today },
 	];
 
 	const body =

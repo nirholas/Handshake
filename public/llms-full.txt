@@ -951,6 +951,12 @@ URL: https://three.ws/stablecoins
 
 Every major stablecoin ranked by circulating market cap, with live peg health, backing mechanism (fiat-backed, crypto-backed, algorithmic), and the chains it lives on. Live from DeFiLlama.
 
+### DeFi Yields Explorer
+
+URL: https://three.ws/yields
+
+Explore roughly 15,000 live DeFi yield pools across every chain and protocol — filter by chain, project, stablecoin exposure, and minimum TVL, sort by APY or TVL, and open any pool to see its full APY and TVL history. Live from DeFiLlama, no key required.
+
 ### BNB Chain — Three Genuinely-Unique Demos
 
 URL: https://three.ws/bnb

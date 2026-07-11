@@ -41,7 +41,10 @@ function validateUrl(rawUrl) {
  * Fetch bytes from an untrusted URL with SSRF protection.
  *
  * @param {string} rawUrl
- * @param {{ maxBytes?: number, timeoutMs?: number }} opts
+ * @param {{ maxBytes?: number, timeoutMs?: number, headers?: object }} opts
+ *   opts.headers merges over the defaults — callers fetching non-model content
+ *   (the news og:image resolver pulls publisher HTML) present their own
+ *   user-agent/accept instead of the model ones.
  * @returns {Promise<{ bytes: Uint8Array, url: string, contentType: string, filename: string }>}
  */
 export async function fetchModel(rawUrl, opts = {}) {
@@ -71,6 +74,7 @@ export async function fetchModel(rawUrl, opts = {}) {
 				headers: {
 					'user-agent': '3d-agent-mcp/1.0 (+https://three.ws/)',
 					accept: 'model/gltf-binary, model/gltf+json, application/octet-stream, */*;q=0.5',
+					...(opts.headers || {}),
 				},
 			});
 
