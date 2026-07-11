@@ -249,7 +249,7 @@ LLM runtime configuration. When omitted, the agent is reactive-only (skills and 
 
 | Field          | Type   | Required | Default | Description |
 |----------------|--------|----------|---------|-------------|
-| `provider`     | string | Yes      | `"none"` | `"anthropic"`, `"openai"`, `"local"`, or `"none"`. Use `"none"` for a purely reactive avatar. |
+| `provider`     | string | Yes      | `"none"` | `"anthropic"` or `"none"`. Use `"none"` for a purely reactive avatar (skills drive it; the LLM never runs). |
 | `model`        | string | No       | —       | Model ID, e.g. `"claude-opus-4-7"`. |
 | `instructions` | string | No       | —       | Relative path to a Markdown file (`instructions.md`) that contains the system prompt. Frontmatter in the file can override any `brain.*` field. |
 | `temperature`  | number | No       | 0.7     | LLM sampling temperature (0–1). |
@@ -278,7 +278,7 @@ Text-to-speech and speech-to-text configuration.
 
 | Field      | Type   | Required | Default     | Description |
 |------------|--------|----------|-------------|-------------|
-| `provider` | string | Yes      | `"browser"` | `"browser"` (Web Speech API), `"elevenlabs"`, `"openai"`, or `"none"`. |
+| `provider` | string | Yes      | `"browser"` | `"browser"` (Web Speech API), `"neural"` (free in-browser neural voice — runs the Kokoro 82M ONNX model on WebGPU with a WASM fallback via HeadTTS; no API key, returns real viseme timestamps for lip-sync; the model downloads lazily from a CDN on first speak), `"elevenlabs"`, or `"none"`. |
 | `voiceId`  | string | No       | `"default"` | Provider-specific voice identifier. |
 | `rate`     | number | No       | 1.0         | Speech rate multiplier (0.5–2.0). |
 | `pitch`    | number | No       | 1.0         | Voice pitch multiplier (0.5–2.0). |
@@ -287,7 +287,7 @@ Text-to-speech and speech-to-text configuration.
 
 | Field        | Type    | Required | Default     | Description |
 |--------------|---------|----------|-------------|-------------|
-| `provider`   | string  | Yes      | `"browser"` | `"browser"` (Web Speech API), `"whisper"`, or `"none"`. |
+| `provider`   | string  | Yes      | `"browser"` | `"browser"` (Web Speech API) or `"none"`. |
 | `language`   | string  | No       | `"en-US"`   | BCP 47 language tag. |
 | `continuous` | boolean | No       | `false`     | Whether to keep the microphone open between utterances. |
 
@@ -369,8 +369,10 @@ Full set of built-in scene tools:
 | `setExpression` | Set a morph target expression blend. |
 | `speak`         | Emit a speech utterance (TTS + protocol event). |
 | `remember`      | Write a memory entry. |
+| `see_screen`    | Capture what is currently visible on screen to inform the agent's response. |
 | `moveTo`        | Move the agent to a position in the scene. |
-| `pointAt`       | Point at a target in the scene. |
+
+On a multi-agent stage, two additional stage-scoped tools become available: `observe_agents` (list the other agents sharing the stage, with names and positions) and `say_to_agent` (send a message to another agent on the same stage).
 
 ---
 

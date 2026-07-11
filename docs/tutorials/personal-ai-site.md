@@ -92,33 +92,30 @@ Configure local memory in your agent manifest or element attributes:
 }
 ```
 
-Then pre-load facts after the agent initialises:
+Then pre-load facts after the agent initialises. The element exposes its memory store as `agent.memory`, and `write(key, entry)` stores a Markdown note under that key — `name` and `description` are what the memory index shows the LLM, `body` is the full note, and `type` groups it in the index (`user`, `project`, `reference`, or `feedback`):
 
 ```js
 const agent = document.getElementById('maya');
 
-agent.addEventListener('ready', async () => {
-  await agent.agent.memory.write('long-term', 'portfolio', {
-    projects: [
-      {
-        name: 'Acme Dashboard',
-        url: 'yourname.com/work/acme',
-        year: 2024,
-        description: 'Redesigned the main analytics dashboard, reducing time-to-insight by 40%.'
-      },
-      {
-        name: 'Health App AR',
-        url: 'yourname.com/work/health-ar',
-        year: 2023,
-        description: 'AR overlay for physiotherapy exercises, used by 12k patients in clinical trial.'
-      }
-    ]
+agent.addEventListener('agent:ready', () => {
+  agent.memory.write('portfolio', {
+    name: 'Portfolio projects',
+    description: 'Shipped projects with URLs, years, and outcomes',
+    type: 'project',
+    body: [
+      '## Acme Dashboard (2024) — yourname.com/work/acme',
+      'Redesigned the main analytics dashboard, reducing time-to-insight by 40%.',
+      '',
+      '## Health App AR (2023) — yourname.com/work/health-ar',
+      'AR overlay for physiotherapy exercises, used by 12k patients in a clinical trial.',
+    ].join('\n'),
   });
 
-  await agent.agent.memory.write('long-term', 'availability', {
-    freelance: false,
-    open_to: ['advisory', 'speaking', 'collaboration'],
-    note: 'Back on the market Q4 2026.'
+  agent.memory.write('availability', {
+    name: 'Availability',
+    description: 'Freelance and collaboration status',
+    type: 'user',
+    body: 'Not available for freelance until Q4 2026. Open to advisory, speaking, and collaboration.',
   });
 });
 ```

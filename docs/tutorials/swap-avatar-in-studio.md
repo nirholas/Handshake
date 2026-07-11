@@ -101,13 +101,11 @@ When you save a new body in Studio, the only field that changes in that record i
 This is the crucial property. Your embed snippet is:
 
 ```html
-<script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-></script>
+<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
+<agent-3d agent-id="YOUR_AGENT_ID" mode="floating"></agent-3d>
 ```
 
-There is no body URL in this snippet. The script tag references the agent by its ID, and the embed loader fetches the current body URL from the platform every time a visitor loads the page. When you swap the body in Studio, the next page load returns the new body. The customer site doesn't need to be re-deployed, the snippet doesn't need to be edited, the cached HTML on Cloudflare doesn't need to be purged.
+There is no body URL in this snippet. The `<agent-3d>` element references the agent by its ID, and the embed runtime fetches the current body URL from the platform every time a visitor loads the page. When you swap the body in Studio, the next page load returns the new body. The customer site doesn't need to be re-deployed, the snippet doesn't need to be edited, the cached HTML on Cloudflare doesn't need to be purged.
 
 This is by design and it's worth pausing on, because it changes how you operate at scale. You can:
 

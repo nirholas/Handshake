@@ -87,9 +87,9 @@ A minimal manifest looks like:
 
 ```json
 {
-  "specVersion": "0.1",
+  "spec": "agent-manifest/0.1",
   "name": "Aria",
-  "body": { "uri": "./body.glb", "format": "glb" },
+  "body": { "uri": "./body.glb", "format": "gltf-binary" },
   "brain": {
     "provider": "anthropic",
     "model": "claude-sonnet-4-6",

@@ -8,7 +8,7 @@ A validation report says "I checked agent #N's model and it is sound." For that 
 
 ## What a validator attests to
 
-A validator runs a deterministic suite over an agent's GLB and metadata, produces an [agent validation report](../public/validation/REPORT_FORMAT.md), pins it to IPFS, and calls `recordValidation(agentId, reportCID)` from an allow-listed address.
+A validator runs a deterministic suite over an agent's GLB and metadata, produces an [agent validation report](../public/validation/REPORT_FORMAT.md), pins it to IPFS, and calls `recordValidation(uint256 agentId, bool passed, bytes32 proofHash, string proofURI, string kind)` from an allow-listed address — `proofHash` is the sha256 of the report JSON, `proofURI` points at the pinned report (e.g. `ipfs://…`), and `kind` tags the suite (e.g. `"glb-schema"`).
 
 The minimum suite for "verified" status:
 
@@ -24,7 +24,7 @@ A `pass` verdict requires zero `fail` suites. `warn` is allowed.
 
 ## Current allow-list
 
-Maintained on-chain at the registry's `validators` mapping. The canonical mirror lives at:
+Maintained on-chain at the registry's `isValidator` mapping. The canonical mirror lives at:
 
 - **Base mainnet (8453):** [public/.well-known/validators.json](../public/.well-known/validators.json)
 - **Base Sepolia (84532):** same file, `testnet` array.

@@ -1,7 +1,7 @@
 # Button + Pill Migration Map (B04)
 
 **Canonical system:** `public/style.css` — `.btn` base + BEM modifiers + `.pill` base + semantic modifiers.
-**Tokens:** B01 `:root` block in `public/style.css` (`--btn-*`, `--badge-*`, `--focus-ring-*`, `--disabled-*`).
+**Tokens:** B01 primitives in `public/tokens.css`; component tokens (`--btn-*`, `--badge-*`, `--focus-ring-*`, `--disabled-*`) layered in `public/style.css`.
 
 ---
 

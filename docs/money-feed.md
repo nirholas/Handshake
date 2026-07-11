@@ -12,15 +12,17 @@ event lives.
 
 | Layer | Backing store | Surface | What it shows |
 |---|---|---|---|
-| **Live ticker** | Redis list `feed:events` | `GET /api/feed`, widget `public/feed.js` | A curated, newest-first stream of notable public events. |
+| **Live ticker** | Redis list `feed:events` | `GET /api/feed` + `GET /api/feed-stream` (SSE), client `src/theater-feed.js` | A curated, newest-first stream of notable public events. |
 | **Custody ledger** | Postgres `agent_custody_events` | Portfolio + volume dashboards | Every real wallet spend/transfer, the canonical record of money moved. |
 | **Domain records** | `circulation_actions`, `pump_agent_trades`, `pump_agent_mints`, `skill_purchases`, `asset_purchases` | Pump feed, `/launches`, agent profiles | Per-domain detail behind each event. |
 
 ## Live ticker — `/api/feed`
 
 A public, read-only, cache-friendly endpoint backed by a capped Redis list
-(`feed:events`, max 200 entries). The on-page widget polls it every ~20 seconds
-and prepends anything new. The endpoint is edge-cached
+(`feed:events`, max 200 entries). The on-page client
+([`src/theater-feed.js`](../src/theater-feed.js)) fetches one snapshot of
+`GET /api/feed` for first paint, then tails the live SSE stream at
+`GET /api/feed-stream` for fresh events. The snapshot endpoint is edge-cached
 (`s-maxage=20, stale-while-revalidate=60`) so idle tabs don't drain the Redis
 request quota.
 

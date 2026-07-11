@@ -133,6 +133,10 @@ html.cv-page,
 	margin: 0 auto;
 	padding: 2.5rem var(--cv-content-padding) 4rem;
 	width: 100%;
+	/* width:100% + horizontal padding must not exceed the viewport — without
+	   this every cv-page is 2×padding wider than small screens and scrolls
+	   sideways. */
+	box-sizing: border-box;
 }
 
 /* ── Typography ─────────────────────────────────────────────────────────── */
@@ -2042,6 +2046,10 @@ a.cv-liq-item:focus-visible {
 }
 .nwb-search {
 	width: 100%;
+	max-width: none;
+	/* .cv-search carries flex: 1 1 16rem for row layouts; inside this column
+	   that basis becomes 256px of HEIGHT. Reset to content height. */
+	flex: 0 0 auto;
 }
 .nwb-controls {
 	display: flex;

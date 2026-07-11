@@ -123,7 +123,6 @@ Notifications (no `id`) sent to the parent over `postMessage`:
 |-------------------|--------------------------------------|------------|
 | `viewer.ready`    | `{}`                                 | First successful model frame. |
 | `model.loaded`    | `{ url, success, error? }`           | After every `model.load` (success or failure). |
-| `widget.revealed` | `{ mode: 'auto' \| 'interaction' }`  | Visitor clicked the play button (interaction mode) or auto mode booted. |
 
 ### Wire format
 

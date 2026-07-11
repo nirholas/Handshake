@@ -2117,20 +2117,20 @@ hash — never a coordinate or raw device token. Anyone can re-verify a proof at
 ### Resolve on-chain agent
 
 ```
-GET /api/erc8004/:chainId/:agentId
+GET /api/v1/agents/:caip
 ```
 
-Resolves an on-chain ERC-8004 agent by chain ID and agent ID, returning its full manifest JSON. No auth required.
+Public, gateway-cached resolver for an ERC-8004 agent. `:caip` is a URL-encoded CAIP-style ref — `eip155:<chainId>:<registryAddress>/<tokenId>` — so consumers (the badge web component, indexers, third-party sites) don't have to do RPC + IPFS + sha256 verification themselves. No auth required.
 
 **Example**
 
 ```
-GET /api/erc8004/8453/42
+GET /api/v1/agents/eip155%3A8453%3A0x8004A169...%2F1
 ```
 
-**Response:** Full agent manifest JSON as registered on-chain.
+**Response:** `{ ref, chainId, agentId, registry, owner, tokenURI, card, verified: { modelSha256, cardSchema }, fetchedAt }` — `card` is the resolved agent card JSON.
 
-Returns `400 CHAIN_NOT_SUPPORTED` if `chainId` is not in the platform's supported chain list.
+Errors: `400 invalid_caip`, `404 not_found`, `502 upstream`, `429 rate_limited`. Responses are edge-cached (5 min fresh, 1 h stale-while-revalidate). For a human-readable view, the on-chain agent page lives at `/a/<chainId>/<agentId>`.
 
 ---
 

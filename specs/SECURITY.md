@@ -52,7 +52,7 @@ Attacker mints thousands of agents to spam discovery surfaces.
 
 Pinned GLB is dropped by all gateways; card now points at dead content.
 
-- **Mitigation:** the registration flow pins to Storacha (paid). Validators MUST re-fetch on every attestation; a dropped file produces a `fail` on `manifest-integrity`, demoting the agent.
+- **Mitigation:** the registration flow pins via the platform pinning service (`api/pinning/[action].js`) — Pinata when `PINATA_JWT` is set, with web3.storage and Filebase as alternative providers (`src/pinning/`). Validators MUST re-fetch on every attestation; a dropped file produces a `fail` on `manifest-integrity`, demoting the agent.
 - **Status:** mitigated during validator runs. Long-term: optional Filecoin deal storage for "permanent" tier agents.
 
 ### V8 — NSFW / illegal model content

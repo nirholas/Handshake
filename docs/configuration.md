@@ -44,13 +44,13 @@ DATABASE_URL=postgres://user:pass@ep-xxx.neon.tech/neondb?sslmode=require
 
 Get from: [Neon](https://neon.tech) (free tier works for development), Supabase, or any PostgreSQL host. Always include `?sslmode=require` in production.
 
-After setting this, apply the schema:
+After setting this, provision the schema:
 
 ```bash
-psql "$DATABASE_URL" -f api/_lib/schema.sql
+npm run db:bootstrap
 ```
 
-The migration is idempotent — safe to re-run.
+This runs all four provisioning steps (core schema + indexer + delegations + migrations) and is idempotent — safe to re-run. Do not apply `api/_lib/schema.sql` alone: the base schema does not create the migration-defined tables and leaves a half-provisioned database (see [deployment.md](deployment.md)).
 
 #### `JWT_SECRET`
 **Required.** Long random secret used for two purposes: signing session JWTs and (via HKDF) deriving the AES-256-GCM key that encrypts agent wallet private keys.
@@ -479,9 +479,9 @@ For a fully open public platform where any site can embed agent viewers, set `"o
 
 ## `.mcp.json`
 
-Configures the MCP server connection for Claude Code integration. Claude Code auto-discovers this file from the project root.
+Configures MCP server connections for Claude Code integration. Claude Code auto-discovers this file from the project root. The checked-in file defines four servers (`meshy`, `3d-agent`, `3d-agent-local`, `atelier`); secrets are never inlined — values use `${VAR}` environment-variable interpolation, resolved from your shell at load time.
 
-The production configuration points to the hosted MCP endpoint and authenticates with a bearer API key:
+The minimal hosted-endpoint entry looks like:
 
 ```json
 {
@@ -489,16 +489,16 @@ The production configuration points to the hosted MCP endpoint and authenticates
     "3d-agent": {
       "url": "https://three.ws/api/mcp",
       "headers": {
-        "Authorization": "Bearer <your-api-key>"
+        "Authorization": "Bearer ${THREE_WS_MCP_TOKEN}"
       }
     }
   }
 }
 ```
 
-Replace the `Authorization` value with an API key from your dashboard. For local development, point `url` at `http://localhost:3000/api/mcp`.
+Set `THREE_WS_MCP_TOKEN` in your environment to an API key from your dashboard. For local development, point `url` at `http://localhost:3000/api/mcp`.
 
-**Never commit a real API key** in this file. Add `.mcp.json` to `.gitignore` or use a development-only key with limited permissions.
+**Never commit a real API key** in this file — keep the `${VAR}` interpolation form so the checked-in file stays secret-free.
 
 ---
 

@@ -43,11 +43,7 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
    - **Apache:** `Header set Access-Control-Allow-Origin "*"` in `.htaccess`.
    - **AWS S3 / CloudFront:** Set a CORS policy on the bucket (allow all origins, GET method).
    - **Vercel / Netlify:** Add a `headers` rule in the config file.
-2. If you can't modify the server, use the `key-proxy` attribute on `<agent-3d>` to route the fetch through a proxy that adds CORS headers:
-   ```html
-   <agent-3d src="https://cdn.example.com/model.glb"
-             key-proxy="https://your-cors-proxy/proxy?url="></agent-3d>
-   ```
+2. If you can't modify the server, re-host the file somewhere that sends CORS headers: the platform's hosted storage (uploads via the Studio are CORS-configured automatically), or any CDN/bucket with a permissive CORS rule (Cloudflare R2, S3 + CORS policy). Note that the `key-proxy` attribute is **not** a fetch proxy — it points the element at your LLM API-key proxy endpoint (so the key never reaches the client) and has no effect on GLB loading.
 
 ---
 
@@ -120,7 +116,12 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
    - `401` — the API key is missing or invalid.
    - `429` — rate limited. Wait a minute and retry.
    - `500` — server error. Check the server logs.
-3. Verify `ANTHROPIC_API_KEY` is set in your environment. In Vercel: Settings → Environment Variables. The key must be present before deployment — a new deploy is required after adding it.
+3. Verify `ANTHROPIC_API_KEY` is set in your server environment. On the production Cloud Run service:
+   ```bash
+   gcloud run services update three-ws-api --region us-central1 \
+     --update-env-vars ANTHROPIC_API_KEY=sk-ant-...
+   ```
+   Updating an env var rolls a new revision automatically. On a self-hosted fork, set it wherever your host reads environment variables and restart/redeploy.
 4. If you're calling the Anthropic API directly from the browser (not via a proxy), also set the `api-key` attribute on the element and note that this exposes your key to users.
 
 ---
@@ -246,8 +247,12 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
      console.log(e.data);
    });
    ```
-3. All messages use the `'3dagent:'` type prefix. Outbound messages should look like `{ type: '3dagent:speak', payload: { text: '...' } }`.
-4. Use the embed-host bridge (`src/embed-host-bridge.js`) rather than raw `postMessage` — it handles the ping/pong handshake and waits for the iframe to be ready.
+3. Use the correct envelope shape. There are two related protocols, and neither uses a type prefix like `3dagent:`:
+   - The **element bridge** (`src/embed-host-bridge.js`) wraps every message in `{ v: 1, source: 'agent-host' | 'agent-3d', id, kind, op, payload }` — e.g. a speak request is `{ v: 1, source: 'agent-host', id: '<uuid>', kind: 'request', op: 'speak', payload: { text: '...' } }`.
+   - The **host protocol** ([specs/EMBED_HOST_PROTOCOL.md](../specs/EMBED_HOST_PROTOCOL.md)) uses `{ v: 1, type: 'host.*' | 'embed.*', id, payload }` — e.g. `{ v: 1, type: 'host.chat.message', payload: { ... } }`.
+
+   Messages that don't match the expected envelope (missing `v: 1`, wrong `source`/`type`) are silently ignored.
+4. Use the `EmbedHostBridge` class (`src/embed-host-bridge.js`) rather than raw `postMessage` — it handles the handshake, queues requests until the iframe is ready, and correlates responses by `id`.
 
 ---
 
@@ -307,9 +312,9 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
 
 **Fix steps:**
 
-1. Set `PUBLIC_APP_ORIGIN` to exactly the origin users are hitting (e.g. `https://www.yourdomain.com`). `www.yourdomain.com` and `yourdomain.com` are treated as different domains.
+1. Set `PUBLIC_APP_ORIGIN` to exactly the origin users are hitting (e.g. `https://www.yourdomain.com`). `www.yourdomain.com` and `yourdomain.com` are treated as different domains. In production this lives on the Cloud Run service (`gcloud run services update three-ws-api --region us-central1 --update-env-vars PUBLIC_APP_ORIGIN=...`).
 2. For local development, any `localhost` domain is accepted automatically — you don't need to set `PUBLIC_APP_ORIGIN` for local dev.
-3. For Vercel preview deployments, `VERCEL_URL` is automatically trusted alongside `PUBLIC_APP_ORIGIN`.
+3. For forks deployed on Vercel, the deployment host injected as `VERCEL_URL` is automatically trusted alongside `PUBLIC_APP_ORIGIN`.
 
 ---
 

@@ -15,7 +15,7 @@ This document covers what is supported today, the end-to-end registration flow, 
 | Sign-In with Solana (SIWS) | Live | [api/auth/siws/\[action\].js](../api/auth/siws/%5Baction%5D.js) (handles `nonce` + `verify`) |
 | Linking a Solana wallet to a user | Live | `user_wallets` table, `chain_type = 'solana'` |
 | Solana payments (checkout + confirm) | Live | [api/payments/solana/\[action\].js](../api/payments/solana/%5Baction%5D.js) (handles `checkout` + `confirm`) |
-| Agent identity NFT (Metaplex Core) | Live | [api/agents/register/\[action\].js](../api/agents/register/%5Baction%5D.js) (handles `solana-prep` + `solana-confirm`) |
+| Agent identity NFT (Metaplex Core) | Live | [api/agents/solana/\[action\].js](../api/agents/solana/%5Baction%5D.js) (handles `register-prep` + `register-confirm`) |
 | Agent record persisted in DB | Live | `agent_identities`, `meta.chain_type='solana'`, `meta.sol_mint_address` |
 | On-chain reputation registry | **Not on Solana** | EVM only |
 | On-chain validation registry | **Not on Solana** | EVM only (testnet) |

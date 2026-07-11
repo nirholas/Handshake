@@ -137,7 +137,7 @@ The `brain` attribute turns the 3D viewer into a conversational agent:
 
 | Attribute | What it does |
 |-----------|--------------|
-| `brain` | LLM model ID. Anthropic: `claude-sonnet-4-6`, `claude-opus-4-7`, `claude-haiku-4-5`. OpenAI: `gpt-4o`, `gpt-4o-mini`. Omit for a viewer-only display with no AI. |
+| `brain` | LLM model ID. The in-browser runtime supports the Anthropic provider — registered model IDs: `claude-sonnet-4-6`, `claude-opus-4-7`, `claude-opus-4-6`, `claude-haiku-4-5-20251001`. Omit for a viewer-only display with no AI (provider `none`). |
 | `instructions` | System prompt for the agent's personality and role. |
 | `mode` | Layout mode: `inline` (flows with page content), `floating` (fixed bubble in a corner), `fullscreen`, or `section`. Default: `inline`. |
 
@@ -161,7 +161,7 @@ The fastest path to an embeddable 3D experience is an iframe widget. Build one i
 
 ```html
 <iframe
-  src="https://three.ws/app#widget=wdgt_YOUR_ID&kiosk=true"
+  src="https://three.ws/widget#widget=wdgt_YOUR_ID&kiosk=true"
   width="600"
   height="600"
   style="border:0;border-radius:12px;max-width:100%"

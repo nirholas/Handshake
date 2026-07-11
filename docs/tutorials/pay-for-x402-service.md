@@ -32,11 +32,11 @@ The price, the recipient, and the network all come from the seller's 402 challen
 
 There are two distinct problems: **finding** an endpoint and **paying** it.
 
-**Finding.** The [Bazaar](/bazaar) is a discovery surface. Server-side, [`/api/bazaar/list`](api/bazaar/list.js) and [`/api/bazaar/search`](api/bazaar/search.js) call each configured facilitator's `/discovery/resources` route, merge the catalogs, dedupe (HTTP by resource URL, MCP by `resource + toolName`), normalize the shape, and apply your filters. The default facilitators are PayAI (`facilitator.payai.network`, Base + Solana) and Coinbase CDP (`api.cdp.coinbase.com/platform/v2/x402`, Base + EVM L2s), wired in [`api/_lib/x402/bazaar-client.js`](api/_lib/x402/bazaar-client.js). An endpoint shows up here once it has answered a discovery probe with a valid 402 — there is no submission form. (How three.ws gets *its own* endpoints into those catalogs is the build-side concern covered in [paid-x402-endpoint](/tutorials/paid-x402-endpoint).)
+**Finding.** The [Bazaar](/bazaar) is a discovery surface. Server-side, `/api/bazaar/list` (`api/bazaar/list.js`) and `/api/bazaar/search` (`api/bazaar/search.js`) call each configured facilitator's `/discovery/resources` route, merge the catalogs, dedupe (HTTP by resource URL, MCP by `resource + toolName`), normalize the shape, and apply your filters. The default facilitators are PayAI (`facilitator.payai.network`, Base + Solana) and Coinbase CDP (`api.cdp.coinbase.com/platform/v2/x402`, Base + EVM L2s), wired in `api/_lib/x402/bazaar-client.js`. An endpoint shows up here once it has answered a discovery probe with a valid 402 — there is no submission form. (How three.ws gets *its own* endpoints into those catalogs is the build-side concern covered in [paid-x402-endpoint](/tutorials/paid-x402-endpoint).)
 
-**Paying.** Every payment runs through the same drop-in module, [`public/x402.js`](public/x402.js), exposed as `window.X402.pay(...)`. It does the 402 → sign → retry dance for you:
+**Paying.** Every payment runs through the same drop-in module, `public/x402.js`, exposed as `window.X402.pay(...)`. It does the 402 → sign → retry dance for you:
 
-- For **Solana**, the wallet can only sign serialized transactions, so the module posts the challenge's `accept` to [`/api/x402-checkout?action=prepare`](api/x402-checkout.js), gets back a partially-signed SPL `transferChecked`, has Phantom add the buyer's signature, then `?action=encode`s it into the `X-PAYMENT` header.
+- For **Solana**, the wallet can only sign serialized transactions, so the module posts the challenge's `accept` to `/api/x402-checkout?action=prepare` (`api/x402-checkout.js`), gets back a partially-signed SPL `transferChecked`, has Phantom add the buyer's signature, then `?action=encode`s it into the `X-PAYMENT` header.
 - For **Base / EVM**, the wallet signs an EIP-3009 `transferWithAuthorization` typed-data message locally — no server prep needed.
 
 Either way the signed payload is base64-encoded into `X-PAYMENT`, the gated request is retried once, and the unlocked result plus the decoded `X-PAYMENT-RESPONSE` receipt come back.
@@ -102,7 +102,7 @@ You get back a `402 Payment Required` whose JSON body (and a base64 mirror in th
 Read it like a receipt-in-advance:
 
 - **`amount`** is in atomic units of **`asset`**. With `decimals: 6`, `"1000"` is $0.001. (Spec-strict sellers may name this field `maxAmountRequired`; the client coerces both to `amount`.)
-- **`network`** tells you which wallet you need. `solana` / `solana:*` → Phantom/Solflare; `eip155:8453` → Base; other `eip155:*` are the EVM L2s in [`EVM_NETWORKS`](public/x402-pay-core.js).
+- **`network`** tells you which wallet you need. `solana` / `solana:*` → Phantom/Solflare; `eip155:8453` → Base; other `eip155:*` are the EVM L2s in `EVM_NETWORKS` (`public/x402-pay-core.js`).
 - **`payTo`** is exactly where your USDC goes. Nothing else moves.
 - **`maxTimeoutSeconds`** bounds how long your signed authorization is valid — your one safety net against a stale payment lingering.
 
@@ -117,9 +117,9 @@ A single endpoint can list several `accepts` (e.g. Base *and* Solana). You — o
 Two related routes sit under it:
 
 - **[/pay/calls](/pay/calls)** — the public ledger of paid x402 calls to the platform. Each settled call gets a permalink (`/pay/calls/<tx-signature>`) showing the tool invoked and the on-chain transaction. This is your audit trail: every payment you make here is verifiable on-chain by anyone.
-- **`/pay/c/<slug>`** — a *hosted checkout link*. A provider creates a SKU in their dashboard (see [`api/x402-skus.js`](api/x402-skus.js)) and shares the URL; the page hydrates from `/api/x402-skus?slug=<slug>` and opens the same drop-in modal pre-wired to that endpoint. If someone hands you a `/pay/c/...` link, paying it is identical to Step 2 — open it, pick a wallet, approve.
+- **`/pay/c/<slug>`** — a *hosted checkout link*. A provider creates a SKU in their dashboard (see `api/x402-skus.js`) and shares the URL; the page hydrates from `/api/x402-skus?slug=<slug>` and opens the same drop-in modal pre-wired to that endpoint. If someone hands you a `/pay/c/...` link, paying it is identical to Step 2 — open it, pick a wallet, approve.
 
-The point of the `/pay` surface: the *exact same* payment core ([`public/x402.js`](public/x402.js) and its sibling [`public/x402-pay-core.js`](public/x402-pay-core.js)) drives the Bazaar's "Try it", the hosted checkout, the full-page paywall, and the programmatic call below. Learn it once.
+The point of the `/pay` surface: the *exact same* payment core (`public/x402.js` and its sibling `public/x402-pay-core.js`) drives the Bazaar's "Try it", the hosted checkout, the full-page paywall, and the programmatic call below. Learn it once.
 
 ---
 
@@ -226,7 +226,7 @@ You learned four ways to consume an x402 paid service:
 - **`window.X402.pay`** — pay for any endpoint from your own code; resolves with the result plus an on-chain receipt, with a `networks` allowlist to pin the rail.
 - **The Endpoint Shopper** ([/shopper](/shopper)) — describe a task and a budget; an agent discovers, pays for, and synthesizes results from Bazaar endpoints autonomously.
 
-The throughline: discovery and payment are decoupled, the 402 challenge is the single source of truth for price and recipient, every payment settles on-chain in USDC, and one module ([`public/x402.js`](public/x402.js)) drives every surface.
+The throughline: discovery and payment are decoupled, the 402 challenge is the single source of truth for price and recipient, every payment settles on-chain in USDC, and one module (`public/x402.js`) drives every surface.
 
 **Use it from your own project (npm)**
 

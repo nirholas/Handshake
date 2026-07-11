@@ -56,16 +56,23 @@ Either direction alone is **unverified**. A consumer (resolver, badge, indexer) 
 
 ## Resolver behavior
 
-The HTTP resolver at [`/api/v1/agents/:caip`](../api/v1/agents/[caip].js) SHOULD, when reachable, resolve the `claims` array and return:
+The HTTP resolver at [`/api/v1/agents/:caip`](../api/v1/agents/[caip].js) currently returns the on-chain agent record plus card-level verification:
 
 ```json
-"claims": [
-	{ "type": "ens", "name": "coachleo.eth", "verified": true },
-	{ "type": "dns", "name": "coachleo.com", "verified": false, "reason": "no _agent TXT" }
-]
+{
+	"ref": "eip155:8453:0x…/42",
+	"chainId": 8453,
+	"agentId": "42",
+	"registry": "0x…",
+	"owner": "0x…",
+	"tokenURI": "ipfs://…",
+	"card": { "…": "the fetched agent card" },
+	"verified": { "modelSha256": true, "cardSchema": "3d-agent-card-v1" },
+	"fetchedAt": "2026-07-11T00:00:00.000Z"
+}
 ```
 
-Verification is best-effort and time-bounded; failures are reported, not thrown.
+Any `claims` array appears only inside `card` (verbatim from the agent card); the resolver does not yet verify it. As a future extension, the resolver SHOULD resolve the card's `claims` array and annotate each entry with a per-name `verified` flag (and a `reason` on failure), e.g. `{ "type": "ens", "name": "coachleo.eth", "verified": true }`. When implemented, verification is best-effort and time-bounded; failures are reported, not thrown.
 
 ## Adding `claims` to the v1 schema
 

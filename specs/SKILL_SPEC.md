@@ -242,7 +242,15 @@ A skill without `handlers.js` is valid — it's pure prompt engineering + assets
 
 ## Skill discovery
 
-`Registry.searchSkills({ tags: ["greeting"], rig: "mixamo" })` queries:
+The runtime class is `SkillRegistry` ([src/skills/index.js](../src/skills/index.js)). Skills are installed explicitly with `registry.install({ uri, version })` and removed with `registry.uninstall(name)`; there is no built-in search method. Discovery over the installed set is caller-side iteration — e.g. filter `registry.all()` by manifest fields such as `tags`:
+
+```js
+const greeters = registry.all().filter((s) => s.manifest.tags?.includes("greeting"));
+```
+
+`registry.allTools()` merges every installed skill's tool schemas into the runtime tool-use schema, `registry.findSkillForTool(name)` resolves a tool name back to its skill, and `registry.systemPrompt()` concatenates the installed skills' `SKILL.md` fragments for the system prompt.
+
+Install specs come from:
 
 1. The local manifest's `skills` array.
 2. Optional HTTPS skill index (community-hosted).

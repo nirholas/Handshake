@@ -79,14 +79,14 @@ The current production-ready models, with the tradeoffs that actually matter for
 - **Capability:** Excellent at tool use, structured output, and following system prompts. The right default for support, sales, concierge, and personal agents.
 - **Context window:** 200K tokens. Plenty of room for long system prompts and memory.
 
-**Claude Opus 4.7 (1M)** (`claude-opus-4-7-1m`) — when you need the smartest model.
+**Claude Opus 4.7** (`claude-opus-4-7`) — when you need the smartest model.
 
 - **Cost:** ~5x Sonnet. Worth it for high-stakes agents (legal, medical, financial assistants) and complex reasoning chains.
 - **Latency:** First token in ~1.2s. Full reply 2.5-4s for a typical turn.
 - **Capability:** Best-in-class at multi-step reasoning, ambiguous instruction handling, and long-context retrieval. Holds character better under adversarial pressure.
-- **Context window:** 1M tokens. Useful only if you're loading very long documents or transcripts into the prompt.
+- **Context window:** 200K tokens. Same headroom as Sonnet — the upgrade is depth of reasoning, not window size.
 
-**Claude Haiku 4.5** (`claude-haiku-4-5`) — when latency matters more than depth.
+**Claude Haiku 4.5** (`claude-haiku-4-5-20251001`) — when latency matters more than depth.
 
 - **Cost:** ~1/3 of Sonnet.
 - **Latency:** First token in ~250ms. Full reply in well under a second.
@@ -234,7 +234,8 @@ This is the part that often surprises people: the embed snippet on your website 
 If you have:
 
 ```html
-<script src="https://three.ws/cdn/agent-3d.js" data-agent-id="YOUR_AGENT_ID" id="agent"></script>
+<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
+<agent-3d agent-id="YOUR_AGENT_ID" id="agent"></agent-3d>
 ```
 
 …on a thousand pages, you can switch the brain from Sonnet to Opus to GPT-5 entirely from the dashboard. No deploy. No code edit. The next page load picks up the new model.

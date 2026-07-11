@@ -9,9 +9,10 @@
 //   2. On error, one retry through the same-origin /api/img proxy — the server
 //      fetch is immune to referrer/CORS blocking and mixed-content rules.
 //   3. On a second error, the source-initials tile.
-// Articles whose feed ships no image at all point at /api/news/image, which
-// resolves the publisher page's og:image server-side; its 404 lands on the
-// same initials tile.
+// Articles whose feed ships no image at all render the initials tile
+// immediately and upgrade in place: /api/news/image resolves the publisher
+// page's og:image server-side, fetched from here with fetch() (not an <img>
+// src) so its designed "no preview exists" 404 never logs a console error.
 
 import { timeAgo, escapeHtml as esc } from './coin-format.js';
 import { storyPath } from './news-links.js';
@@ -115,11 +116,61 @@ const proxied = (u) => `/api/img?url=${encodeURIComponent(u)}`;
 export function newsMedia(a, { heroic = false } = {}) {
 	const cls = heroic ? 'nw-hero-media' : 'nw-media';
 	const initials = esc((a.source || '?').slice(0, 2).toUpperCase());
-	// Feed image → direct load with one proxy retry. No feed image → the
-	// og:image resolver; its 404 fires the same error path → initials tile.
-	const src = a.image || `/api/news/image?url=${encodeURIComponent(a.link)}`;
-	const retry = a.image ? ` data-retry="${esc(proxied(a.image))}"` : '';
-	return `<div class="${cls}" style="position:relative"><img src="${esc(src)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-fallback="${initials}"${retry} /></div>`;
+	if (!a.image) {
+		// Designed tile now; wireNewsContainer resolves the publisher's og:image
+		// in the background and swaps the tile when one exists.
+		return `<div class="${cls}" style="position:relative" data-resolve="${esc(a.link)}"><div class="nw-fallback">${initials}</div></div>`;
+	}
+	return `<div class="${cls}" style="position:relative"><img src="${esc(a.image)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-fallback="${initials}" data-retry="${esc(proxied(a.image))}" /></div>`;
+}
+
+// og:image resolution for imageless articles, bounded to a few fetches in
+// flight — a page of text-only stories must not fire fifteen concurrent
+// upstream page-fetches through the resolver.
+const RESOLVE_CONCURRENCY = 4;
+let resolveActive = 0;
+const resolveQueue = [];
+
+function pumpResolveQueue() {
+	while (resolveActive < RESOLVE_CONCURRENCY && resolveQueue.length) {
+		const job = resolveQueue.shift();
+		resolveActive++;
+		job().finally(() => {
+			resolveActive--;
+			pumpResolveQueue();
+		});
+	}
+}
+
+async function resolveMedia(el, link) {
+	try {
+		const res = await fetch(`/api/news/image?url=${encodeURIComponent(link)}`);
+		if (!res.ok) return; // no preview exists — the tile IS the design
+		const blob = await res.blob();
+		if (!blob.type.startsWith('image/')) return;
+		const tile = el.querySelector('.nw-fallback');
+		if (!tile || !el.isConnected) return;
+		const img = document.createElement('img');
+		img.alt = '';
+		img.decoding = 'async';
+		const url = URL.createObjectURL(blob);
+		img.onload = () => {
+			URL.revokeObjectURL(url);
+			tile.replaceWith(img);
+		};
+		img.src = url;
+	} catch {
+		/* network hiccup — the tile stays */
+	}
+}
+
+function queueMediaResolves(container) {
+	for (const el of container.querySelectorAll('[data-resolve]')) {
+		const link = el.dataset.resolve;
+		el.removeAttribute('data-resolve'); // claim before the job runs — never double-queue
+		if (link) resolveQueue.push(() => resolveMedia(el, link));
+	}
+	pumpResolveQueue();
 }
 
 // ── Cards / rows ─────────────────────────────────────────────────────────────
@@ -167,6 +218,19 @@ export function newsRow(a, { thumb = true, star = true } = {}) {
  *   • star buttons → saved store; onSave lets the Saved tab react live
  */
 export function wireNewsContainer(container, { onTicker, onSave } = {}) {
+	// Upgrade imageless tiles now and after every re-render (tab switches and
+	// load-more replace innerHTML; the observer catches them all).
+	queueMediaResolves(container);
+	let resolveScheduled = false;
+	new MutationObserver(() => {
+		if (resolveScheduled) return;
+		resolveScheduled = true;
+		requestAnimationFrame(() => {
+			resolveScheduled = false;
+			queueMediaResolves(container);
+		});
+	}).observe(container, { childList: true, subtree: true });
+
 	container.addEventListener(
 		'error',
 		(e) => {

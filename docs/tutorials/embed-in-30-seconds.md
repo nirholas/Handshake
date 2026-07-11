@@ -1,11 +1,11 @@
 # Embed in 30 seconds
 
-The fastest way to put a living 3D agent on a website is one line of HTML. Paste a single `<script>` tag, save the file, refresh the browser — there's a 3D character animating in the corner of your page, ready to greet visitors. No build step, no npm install, no framework adapter, no API plumbing.
+The fastest way to put a living 3D agent on a website is two lines of HTML. Paste a `<script>` tag that loads the runtime and an `<agent-3d>` tag that places the agent, save the file, refresh the browser — there's a 3D character animating in the corner of your page, ready to greet visitors. No build step, no npm install, no framework adapter, no API plumbing.
 
-This tutorial walks through that one-liner end to end. By the time you finish, you will have an agent live on a real page, you will know exactly which line to copy, and you will know how to debug it when something gets in the way.
+This tutorial walks through those two lines end to end. By the time you finish, you will have an agent live on a real page, you will know exactly which lines to copy, and you will know how to debug it when something gets in the way.
 
 **What you'll build:**
-- A live 3D agent embedded on an HTML page with one script tag
+- A live 3D agent embedded on an HTML page with two tags
 - A working agent ID from the three.ws editor
 - A floating widget that animates, greets, and chats out of the box
 - A clear mental model of what the embed loader actually does
@@ -16,7 +16,7 @@ This tutorial walks through that one-liner end to end. By the time you finish, y
 
 ## Step 1 — Get an agent ID
 
-Every embedded agent on three.ws has a permanent ID. The script tag uses that ID to fetch the agent's body, personality, skills, and animations from the platform. Without one, there is nothing to embed.
+Every embedded agent on three.ws has a permanent ID. The `<agent-3d>` tag uses that ID to fetch the agent's body, personality, skills, and animations from the platform. Without one, there is nothing to embed.
 
 Open [https://three.ws/create](https://three.ws/create) in a new tab. The editor loads with a default avatar in the centre of the canvas. You have two paths from here.
 
@@ -28,7 +28,7 @@ If you want to ship something working as fast as possible, skip every panel for 
 https://three.ws/agent/0xabc123…def
 ```
 
-The string after `/agent/` is your agent ID. Copy it. You will paste it into the script tag in the next step.
+The string after `/agent/` is your agent ID. Copy it. You will paste it into the `<agent-3d>` tag in the next step.
 
 ### Path B — Customise first, then save
 
@@ -74,10 +74,8 @@ Open your editor, create a new file called `index.html` anywhere on your compute
     Try clicking it. Try saying hi. It works the same in every browser.
   </p>
 
-  <script
-    src="https://three.ws/cdn/agent-3d.js"
-    data-agent-id="YOUR_AGENT_ID"
-  ></script>
+  <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
+  <agent-3d agent-id="YOUR_AGENT_ID" mode="floating"></agent-3d>
 </body>
 </html>
 ```
@@ -88,61 +86,59 @@ Save the file. Double-click it to open in your browser, or drag it into a browse
 
 You should see a 3D character appear in the bottom-right corner of the page within a couple of seconds. It will start an idle animation. Click on it and a chat panel slides open. Type a question, press Enter, and the agent replies — with voice and animation.
 
-That's the whole feature. One script tag, one agent ID, one working 3D agent.
+That's the whole feature. One script tag, one `<agent-3d>` tag, one working 3D agent.
 
 ---
 
-## Step 3 — Understand what the script tag does
+## Step 3 — Understand what the two tags do
 
 It is worth taking a minute to understand what just happened, because once you know, every other embed customisation is obvious.
 
-When the browser hits this line:
+When the browser hits these lines:
 
 ```html
-<script
-  src="https://three.ws/cdn/agent-3d.js"
-  data-agent-id="YOUR_AGENT_ID"
-></script>
+<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
+<agent-3d agent-id="YOUR_AGENT_ID" mode="floating"></agent-3d>
 ```
 
 …the following happens in order:
 
 1. The browser fetches `agent-3d.js` from the three.ws CDN. The file is a single self-contained bundle: it brings its own copy of Three.js, the glTF loader, the chat UI, the speech subsystem — everything. There are no other network dependencies at this stage.
 
-2. The script reads its own `data-agent-id` attribute (and any other `data-*` attributes you've set — more on that in the customisation tutorial).
+2. The script registers `<agent-3d>` as a custom element. Every `<agent-3d>` tag on the page — including the one you just pasted — comes alive and reads its own attributes (`agent-id`, `mode`, and the others covered in the customisation tutorial).
 
-3. It calls the three.ws API to fetch the agent's manifest: name, body URL, personality, skills, default greeting, and the list of animation clips baked into the GLB.
+3. The element calls the three.ws API to fetch the agent's manifest: name, body URL, personality, skills, default greeting, and the list of animation clips baked into the GLB.
 
-4. It injects a container element into the page (by default, fixed to the bottom-right corner) and renders the 3D scene inside it.
+4. In `mode="floating"`, the element pins itself to the bottom-right corner of the page and renders the 3D scene inside it.
 
-5. Once the avatar is loaded, the script dispatches a `agent:ready` event you can listen to. The agent then begins its idle animation and waits for interaction.
+5. Once the avatar is loaded, the element dispatches a `agent:ready` event you can listen to. The agent then begins its idle animation and waits for interaction.
 
 Notice what is *not* on this list:
 - No iframe. The agent renders directly in your page's DOM, which means it inherits your site's CSS scope intentionally (we'll cover styling shadows in the customisation tutorial).
 - No second script tag. You don't need to load Three.js separately. You don't need to bundle anything.
 - No build step. The script is plain JavaScript, served minified from a CDN edge.
 
-The whole thing is by design: one tag, no setup, real 3D in any HTML page.
+The whole thing is by design: two tags, no setup, real 3D in any HTML page.
 
 ---
 
 ## Step 4 — Where to paste it on a real site
 
-The example file above puts the script tag right above `</body>`. That is the recommended placement for any page you embed on. Two reasons:
+The example file above puts both tags right above `</body>`. That is the recommended placement for any page you embed on. Two reasons:
 
-**Performance.** The script is not blocking your page's HTML or critical CSS. Visitors see your headline and copy first, then the agent finishes loading and slides in.
+**Performance.** The script is a module, so it never blocks your page's HTML or critical CSS. Visitors see your headline and copy first, then the agent finishes loading and slides in.
 
 **DOM availability.** When the script runs, every element your page might want to react to is already in the DOM. If you decide later to attach event listeners or call the JS API, you don't have to wrap them in `DOMContentLoaded`.
 
 If your site is built on a framework or CMS, the right place depends on the template system:
 
-- **WordPress** — Use a "Custom HTML" widget in the footer, or paste it via a footer scripts plugin like Insert Headers and Footers. Avoid the `<head>` section.
-- **Shopify** — Edit `theme.liquid` and paste the tag right before `</body>`.
-- **Webflow / Squarespace / Wix** — Each one has a "Custom code / Footer code injection" field in site settings. That is where the tag belongs.
-- **Next.js / React** — Use the framework's script component (`next/script` with `strategy="afterInteractive"`, or a plain `useEffect` injection on the page). Do not import the script as an ES module; it's a side-effect bundle that registers itself globally.
-- **Static site generator (Astro, Eleventy, Hugo, Jekyll)** — Paste the raw tag into your base layout template above `</body>`.
+- **WordPress** — Use a "Custom HTML" widget in the footer, or paste both tags via a footer scripts plugin like Insert Headers and Footers. Avoid the `<head>` section.
+- **Shopify** — Edit `theme.liquid` and paste both tags right before `</body>`.
+- **Webflow / Squarespace / Wix** — Each one has a "Custom code / Footer code injection" field in site settings. That is where the tags belong.
+- **Next.js / React** — Load the bundle with the framework's script component (`next/script` with `strategy="afterInteractive"`, or a plain `useEffect` injection on the page), then render `<agent-3d agent-id="…" mode="floating"></agent-3d>` in your JSX. The script's only side effect is registering the custom element; it renders nothing on its own.
+- **Static site generator (Astro, Eleventy, Hugo, Jekyll)** — Paste the raw tags into your base layout template above `</body>`.
 
-The script never re-renders the rest of your DOM. It only appends a single container element. This means there's no risk of it conflicting with your existing layout.
+The script never touches the rest of your DOM. The `<agent-3d>` element you placed is the only thing rendered, and in floating mode it pins itself to a corner. This means there's no risk of it conflicting with your existing layout.
 
 ---
 
@@ -183,8 +179,8 @@ A short guide to the things that usually go wrong, in roughly the order of how o
 
 Open the console first. The fix is almost always one of these three:
 
-- **Wrong agent ID.** The most common cause. Copy it again from the URL in [https://three.ws/my-agents](https://three.ws/my-agents) — that's the page that lists every agent you've saved. Paste it into the `data-agent-id` attribute and reload.
-- **The script tag is malformed.** Check that you copied the full src URL (`https://three.ws/cdn/agent-3d.js`), that there are no stray characters between attributes, and that the tag is closed.
+- **Wrong agent ID.** The most common cause. Copy it again from the URL in [https://three.ws/my-agents](https://three.ws/my-agents) — that's the page that lists every agent you've saved. Paste it into the `agent-id` attribute and reload.
+- **One of the tags is malformed.** Check that you copied the full src URL (`https://three.ws/agent-3d/latest/agent-3d.js`), that the script tag has `type="module"`, and that the `<agent-3d>` tag is closed with `</agent-3d>` — custom elements are not self-closing.
 - **The page is being served as plain `file://` and something is blocked.** This is uncommon — most browsers allow the embed to work from a local file — but if you hit it, run a quick local server: `python3 -m http.server 8080` and open `http://localhost:8080` instead.
 
 ### "The page says the script is blocked"
@@ -214,15 +210,20 @@ A few legitimate reasons:
 
 ### "I want it not to appear on certain pages"
 
-The simplest answer: just don't include the script tag on those pages. If your CMS only lets you set one site-wide footer block, gate the tag with a tiny conditional based on `location.pathname`:
+The simplest answer: just don't include the tags on those pages. If your CMS only lets you set one site-wide footer block, gate them with a tiny conditional based on `location.pathname`:
 
 ```html
 <script>
   if (!location.pathname.startsWith('/admin')) {
     var s = document.createElement('script');
-    s.src = 'https://three.ws/cdn/agent-3d.js';
-    s.setAttribute('data-agent-id', 'YOUR_AGENT_ID');
+    s.type = 'module';
+    s.src = 'https://three.ws/agent-3d/latest/agent-3d.js';
     document.body.appendChild(s);
+
+    var el = document.createElement('agent-3d');
+    el.setAttribute('agent-id', 'YOUR_AGENT_ID');
+    el.setAttribute('mode', 'floating');
+    document.body.appendChild(el);
   }
 </script>
 ```
@@ -247,9 +248,9 @@ If they comment that the agent is in the wrong corner, or feels too big, or dist
 
 You now know:
 - How to get an agent ID from the editor at [https://three.ws/create](https://three.ws/create)
-- The one script tag that powers every three.ws embed
-- Where to paste it on different site stacks
-- What the embed loader actually does behind the scenes
+- The two tags that power every three.ws embed — the runtime script and the `<agent-3d>` element
+- Where to paste them on different site stacks
+- What the embed runtime actually does behind the scenes
 - The fastest path to diagnose the three most common failure modes
 
 A working embedded agent is the foundation everything else builds on. From here, every other tutorial in this tier is about turning that working embed into something that matches your brand, your voice, and your visitors.

@@ -1,7 +1,8 @@
 # Design Tokens — three.ws
 
-Canonical design vocabulary. Source of truth: the `:root` block in
-[`public/style.css`](../public/style.css). New pages reference these tokens
+Canonical design vocabulary. Source of truth for every primitive:
+[`public/tokens.css`](../public/tokens.css); [`public/style.css`](../public/style.css)
+imports it first and layers component tokens on top. New pages reference these tokens
 directly (`var(--surface-1)`, `var(--text-md)`, `var(--font-display)`) instead
 of hand-rolling hex/rgba/px values. Per-surface namespaces (`--nv-*`, `--ibm-*`)
 alias the canonical tokens through the CSS-var fallback chain so every surface

@@ -61,7 +61,7 @@ Start with the simplest possible embed. Create `index.html` and paste this:
     </div>
   </div>
 
-  <script type="module" src="https://three.ws/cdn/agent-3d.js"></script>
+  <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
   <script type="module" src="./app.js"></script>
 </body>
 </html>
