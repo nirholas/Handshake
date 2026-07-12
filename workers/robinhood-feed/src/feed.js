@@ -43,6 +43,20 @@ const ODYSSEY_FACTORIES = [
 	ODYSSEY_ADDRESSES.instantFactory,
 ];
 
+// Bounded-concurrency map — a backfill of hundreds of launches each needing a
+// metadata multicall must not run one-at-a-time (minutes of dead sequential
+// RPC latency) nor all-at-once (a request storm against a public RPC).
+async function mapLimit(items, limit, fn) {
+	let i = 0;
+	const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+		while (i < items.length) {
+			const idx = i++;
+			await fn(items[idx], idx);
+		}
+	});
+	await Promise.all(workers);
+}
+
 /**
  * Start the firehose.
  * @param {(ev: { kind: 'launch'|'trade'|'graduation'|'status', data: object }) => void} onEvent
@@ -190,15 +204,20 @@ export function startFirehose(onEvent) {
 	}
 
 	// ── cold-start backfill: register existing pools + seed the replay buffer ───
+	//
+	// getRecentLaunches over a wide window can return hundreds of launches; the
+	// replay buffer only ever surfaces the newest `bufferLimit`, so fully
+	// resolving metadata for the rest is wasted RPC work that would otherwise
+	// serialize cold start for minutes. Every discovered pool is still tracked
+	// (cheap, synchronous) so live Uniswap swaps on older NOXA coins are caught;
+	// only the newest slice gets the full emit (metadata + ETH price + buffer).
 	async function backfill() {
 		try {
 			const launches = await getRecentLaunches(hood, { lookbackBlocks: config.backfillBlocks });
-			// Oldest-first so the newest launch lands on top of the replay buffer.
-			for (const l of launches) {
-				if (l.pool) trackPool(l.pool, l.token);
-				await emitLaunch(l);
-			}
-			onEvent({ kind: 'status', data: { level: 'info', src: 'backfill', launches: launches.length } });
+			for (const l of launches) if (l.pool) trackPool(l.pool, l.token);
+			const toEmit = launches.slice(-config.bufferLimit); // oldest-first input → newest last
+			await mapLimit(toEmit, 8, (l) => emitLaunch(l));
+			onEvent({ kind: 'status', data: { level: 'info', src: 'backfill', launches: launches.length, emitted: toEmit.length } });
 		} catch (err) {
 			onEvent({ kind: 'status', data: { level: 'warn', src: 'backfill', message: err?.message } });
 		}

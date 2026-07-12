@@ -1,13 +1,17 @@
 /**
  * Chalk-free ANSI styling. Small, dependency-free, and TTY-aware.
  *
- * Colour is enabled only when stdout is a TTY, `NO_COLOR` is unset, and the
+ * Colour is enabled when stdout is a TTY, `NO_COLOR` is unset, and the
  * terminal is not `dumb`. `--no-color` (or a non-TTY pipe) forces plain text,
- * so `hood ... --json | jq` and log files stay clean.
+ * so `hood ... --json | jq` and log files stay clean. `FORCE_COLOR=1`
+ * overrides the TTY check (the same convention chalk/supports-color use) —
+ * used by the docs session-capture script to record a colourised transcript
+ * from a piped subprocess.
  */
 
-let colorEnabled =
-  !!process.stdout.isTTY && !process.env.NO_COLOR && process.env.TERM !== 'dumb'
+let colorEnabled = process.env.FORCE_COLOR
+  ? process.env.FORCE_COLOR !== '0'
+  : !!process.stdout.isTTY && !process.env.NO_COLOR && process.env.TERM !== 'dumb'
 
 /** Force colour on or off (wired to the global `--no-color` flag). */
 export function setColorEnabled(enabled: boolean): void {
