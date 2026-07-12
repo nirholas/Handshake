@@ -9,7 +9,8 @@
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/nirholas/agent-sniper.git"
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/agent-sniper"
 	},
 	"keywords": [
 		"solana",

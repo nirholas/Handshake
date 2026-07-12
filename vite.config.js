@@ -399,6 +399,7 @@ const appConfig = {
 				'embed-walk': resolve(__dirname, 'pages/embed-walk.html'),
 				'agent-embed': resolve(__dirname, 'pages/agent-embed.html'),
 				'agent-detail': resolve(__dirname, 'pages/agent-detail.html'),
+				'agent-detail-classic': resolve(__dirname, 'pages/agent-detail-classic.html'),
 				'agent-screen': resolve(__dirname, 'pages/agent-screen.html'),
 				'agents-live':  resolve(__dirname, 'pages/agents-live.html'),
 				'agent-wallet': resolve(__dirname, 'pages/agent-wallet.html'),
@@ -1460,6 +1461,9 @@ support: resolve(__dirname, 'pages/support.html'),
 					// (must precede the /agent/:id and /agents/:id catch-alls below).
 					else if (!filePath && /^\/agents?\/[^/.]+\/wallet\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-wallet.html');
+					// /agents/:id/classic → the preserved pre-redesign profile layout
+					else if (!filePath && /^\/agents?\/[^/.]+\/classic\/?$/.test(path))
+						filePath = resolve(root, 'pages/agent-detail-classic.html');
 					else if (!filePath && /^\/agents\/[^/.]+\/?$/.test(path))
 						filePath = resolve(root, 'pages/agent-detail.html');
 					else if (!filePath && /^\/agent\/[^/]+\/mind\/?$/.test(path))

@@ -1,0 +1,760 @@
+/*
+ * Agent detail — v2 layout.
+ *
+ * Loads AFTER agent-detail.css and restructures the page shell (hero, sticky
+ * section nav, grouped card grids) while every leaf component keeps the
+ * canonical `ad-*` styling from the base sheet. The previous layout is
+ * preserved verbatim at /agents/:id/classic (pages/agent-detail-classic.html),
+ * which does NOT load this file.
+ */
+
+:root {
+	--adv2-nav-h: 69px;
+	--adv2-max: 1280px;
+	--adv2-pad: 24px;
+}
+@media (max-width: 768px) {
+	:root {
+		--adv2-nav-h: 65px;
+		--adv2-pad: 16px;
+	}
+}
+
+/* ── Shell ─────────────────────────────────────────────────────────────── */
+
+.ad-main.adv2 {
+	max-width: none;
+	padding-bottom: 24px;
+}
+.adv2-wrap {
+	max-width: var(--adv2-max);
+	margin: 0 auto;
+	padding-left: var(--adv2-pad);
+	padding-right: var(--adv2-pad);
+	width: 100%;
+	min-width: 0;
+}
+/* Self-mounting cross-link panels (alpha co-pilot, stages, labor, presence,
+   live watch) prepend/append themselves to .ad-main. Keep them on the same
+   reading measure as the rest of the page instead of full-bleed. */
+.ad-main.adv2 > :not(.adv2-wrap):not(.adv2-tabs):not(.ad-foot) {
+	max-width: var(--adv2-max);
+	margin-left: auto;
+	margin-right: auto;
+	width: calc(100% - var(--adv2-pad) * 2);
+	min-width: 0;
+}
+
+.adv2-top {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	flex-wrap: wrap;
+	padding-top: 6px;
+}
+.adv2-top .ad-back {
+	margin: 16px 0 8px;
+}
+.adv2-top-right {
+	display: inline-flex;
+	align-items: center;
+	gap: 14px;
+	margin: 16px 0 8px;
+}
+.adv2-classic-link {
+	font-size: 12px;
+	color: var(--ad-dim);
+	border-bottom: 1px dotted var(--ad-line-2);
+	padding-bottom: 1px;
+	transition: color 0.15s;
+}
+.adv2-classic-link:hover {
+	color: var(--ad-text);
+}
+
+/* ── Hero — horizontal identity band ───────────────────────────────────── */
+
+.adv2-hero {
+	display: grid;
+	grid-template-columns: 240px minmax(0, 1fr);
+	gap: 28px;
+	align-items: center;
+	padding: 18px var(--adv2-pad) 26px;
+	text-align: left;
+}
+.adv2-hero .ad-hero-avatar-wrap {
+	margin-top: 0;
+	justify-self: center;
+}
+.adv2-hero .ad-hero-body {
+	max-width: none;
+	margin-top: 0;
+	text-align: left;
+	min-width: 0;
+}
+.adv2-hero .ad-hero-title,
+.adv2-hero .ad-hero-meta,
+.adv2-hero .ad-market-meta,
+.adv2-hero .ad-hero-trust,
+.adv2-hero .ad-hero-actions,
+.adv2-hero .ad-owner-bar {
+	justify-content: flex-start;
+}
+.adv2-hero .ad-hero-title h1 {
+	font-size: 32px;
+}
+.adv2-hero .ad-hero-desc {
+	margin: 10px 0;
+	max-width: 62ch;
+	-webkit-line-clamp: 3;
+}
+.adv2-hero .ad-hero-actions {
+	margin-top: 16px;
+	justify-content: flex-start;
+}
+.adv2-hero .ad-hero-share-float {
+	top: 16px;
+	right: var(--adv2-pad);
+}
+
+@media (max-width: 820px) {
+	.adv2-hero {
+		grid-template-columns: 1fr;
+		gap: 14px;
+		text-align: center;
+	}
+	.adv2-hero .ad-hero-body {
+		text-align: center;
+	}
+	.adv2-hero .ad-hero-title,
+	.adv2-hero .ad-hero-meta,
+	.adv2-hero .ad-market-meta,
+	.adv2-hero .ad-hero-trust,
+	.adv2-hero .ad-hero-actions,
+	.adv2-hero .ad-owner-bar {
+		justify-content: center;
+	}
+	.adv2-hero .ad-hero-desc {
+		margin: 10px auto;
+	}
+}
+
+/* ── Platform pulse strip ──────────────────────────────────────────────── */
+
+.ad-platform-bar {
+	display: flex;
+	align-items: center;
+	gap: 26px;
+	flex-wrap: wrap;
+	margin: 0 0 18px;
+	padding: 12px 18px;
+	border: 1px solid var(--ad-line);
+	border-radius: var(--radius-card);
+	background: var(--ad-bg-2);
+}
+.ad-platform-kicker {
+	display: inline-flex;
+	align-items: center;
+	font-size: 9.5px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.09em;
+	color: var(--ad-dim);
+	padding-right: 18px;
+	border-right: 1px solid var(--ad-line);
+	white-space: nowrap;
+}
+@media (max-width: 520px) {
+	.ad-platform-kicker {
+		flex-basis: 100%;
+		padding-right: 0;
+		border-right: 0;
+		margin-bottom: 2px;
+	}
+}
+.ad-platform-stat {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+.ad-platform-stat-val {
+	font-size: 14px;
+	font-weight: 700;
+	color: var(--ad-text);
+	letter-spacing: -0.01em;
+	font-variant-numeric: tabular-nums;
+}
+.ad-platform-stat-val.positive {
+	color: #34d399;
+}
+.ad-platform-stat-lbl {
+	font-size: 9.5px;
+	text-transform: uppercase;
+	letter-spacing: 0.07em;
+	color: var(--ad-dim);
+}
+.ad-platform-dot {
+	display: inline-block;
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: #34d399;
+	margin-right: 4px;
+	vertical-align: middle;
+	animation: ad-plat-blink 2s ease-out infinite;
+}
+@keyframes ad-plat-blink {
+	0% {
+		box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5);
+	}
+	70% {
+		box-shadow: 0 0 0 4px transparent;
+	}
+	100% {
+		box-shadow: 0 0 0 0 transparent;
+	}
+}
+
+/* ── Sticky section navigation ─────────────────────────────────────────── */
+
+.adv2-tabs {
+	position: sticky;
+	top: var(--adv2-nav-h);
+	z-index: 40;
+	background: color-mix(in srgb, var(--ad-bg) 86%, transparent);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	border-top: 1px solid var(--ad-line);
+	border-bottom: 1px solid var(--ad-line);
+	margin-bottom: 26px;
+}
+.adv2-tabs-row {
+	display: flex;
+	gap: 4px;
+	overflow-x: auto;
+	scrollbar-width: none;
+	-webkit-overflow-scrolling: touch;
+}
+.adv2-tabs-row::-webkit-scrollbar {
+	display: none;
+}
+.adv2-tab {
+	flex-shrink: 0;
+	padding: 12px 14px 10px;
+	font-size: 13px;
+	color: var(--ad-muted);
+	border-bottom: 2px solid transparent;
+	transition: color 0.15s, border-color 0.15s;
+	white-space: nowrap;
+}
+.adv2-tab:hover {
+	color: var(--ad-text);
+}
+.adv2-tab.is-active {
+	color: var(--ad-text);
+	border-bottom-color: var(--ad-text);
+}
+.adv2-tab:focus-visible {
+	outline: 2px solid var(--ad-cyan);
+	outline-offset: -2px;
+	border-radius: 6px;
+}
+.adv2-tab.is-hidden {
+	display: none;
+}
+
+/* ── Section groups ────────────────────────────────────────────────────── */
+
+.adv2-body {
+	display: flex;
+	flex-direction: column;
+	gap: 44px;
+	padding-bottom: 12px;
+}
+.adv2-group {
+	/* Anchor target lands below the two sticky bars (site nav + section tabs). */
+	scroll-margin-top: calc(var(--adv2-nav-h) + 64px);
+	min-width: 0;
+}
+.adv2-group.is-empty {
+	display: none;
+}
+.adv2-group-head {
+	margin: 0 0 16px;
+}
+.adv2-group-head h2 {
+	margin: 0;
+	font-size: 19px;
+	font-weight: 650;
+	letter-spacing: -0.015em;
+	color: var(--ad-text);
+}
+.adv2-group-head p {
+	margin: 4px 0 0;
+	font-size: 13px;
+	color: var(--ad-muted);
+}
+
+.adv2-grid {
+	display: grid;
+	/* auto-fit (not auto-fill): a partial row stretches its cards across the
+	   full measure instead of leaving a dead empty track on the right. */
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+	gap: 16px;
+	align-items: start;
+}
+.adv2-grid > .ad-card,
+.adv2-grid > details {
+	margin: 0;
+	min-width: 0;
+}
+.adv2-grid > [data-span='2'] {
+	grid-column: 1 / -1;
+}
+
+/* Raw metadata disclosure keeps its collapsed-card look inside the grid. */
+.adv2-grid > details.ad-collapse {
+	padding: 0;
+}
+.adv2-grid > details.ad-collapse summary {
+	padding: 18px 20px;
+}
+.adv2-grid > details.ad-collapse[open] {
+	padding-bottom: 18px;
+}
+.adv2-grid > details.ad-collapse[open] .ad-raw {
+	margin: 0 20px;
+}
+
+/* ── "More" actions menu (native details popover) ──────────────────────── */
+
+.adv2-more {
+	position: relative;
+	display: inline-block;
+}
+.adv2-more > summary {
+	list-style: none;
+	user-select: none;
+}
+.adv2-more > summary::-webkit-details-marker {
+	display: none;
+}
+.adv2-more[open] > summary {
+	border-color: var(--ad-line-2);
+}
+.adv2-more-menu {
+	position: absolute;
+	top: calc(100% + 6px);
+	left: 0;
+	z-index: 60;
+	min-width: 190px;
+	display: flex;
+	flex-direction: column;
+	padding: 6px;
+	background: var(--ad-card);
+	border: 1px solid var(--ad-line-2);
+	border-radius: 12px;
+	box-shadow: var(--shadow-2);
+	animation: adv2-menu-in 0.14s ease-out;
+}
+@keyframes adv2-menu-in {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+.adv2-more-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 9px 10px;
+	border-radius: 8px;
+	font-size: 13px;
+	color: var(--ad-text);
+	background: none;
+	border: none;
+	font-family: inherit;
+	cursor: pointer;
+	text-align: left;
+	width: 100%;
+	transition: background 0.12s;
+}
+.adv2-more-item:hover {
+	background: rgba(255, 255, 255, 0.06);
+}
+.adv2-more-item:focus-visible {
+	outline: 2px solid var(--ad-cyan);
+	outline-offset: -2px;
+}
+.adv2-more-item svg {
+	flex-shrink: 0;
+	color: var(--ad-muted);
+}
+
+/* On narrow screens the menu hugs the right edge so it can't overflow. */
+@media (max-width: 820px) {
+	.adv2-more-menu {
+		left: auto;
+		right: 0;
+	}
+}
+
+/* ── Loading skeletons (shell classes referenced by agent-detail.js) ───── */
+
+.ad-main.loading .ad-hero-avatar,
+.ad-main.loading .ad-hero-body > *,
+.ad-main.loading .ad-card .ad-row,
+.ad-main.loading .ad-card .ad-balance,
+.ad-main.loading .ad-card .ad-services,
+.ad-main.loading .ad-card .ad-token-body,
+.ad-main.loading .ad-card .ad-trust-pills,
+.ad-main.loading .ad-card .ad-protocols,
+.ad-main.loading .ad-card .ad-sub,
+.ad-main.loading .ad-card .ad-cta-row {
+	visibility: hidden;
+}
+
+.skeleton {
+	background-color: var(--skeleton-base);
+	background-image: linear-gradient(
+		90deg,
+		var(--skeleton-base) 0%,
+		var(--skeleton-sheen) 50%,
+		var(--skeleton-base) 100%
+	);
+	background-size: 200% 100%;
+	border-radius: var(--skeleton-radius);
+	animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes skeleton-shimmer {
+	0% {
+		background-position: 200% 0;
+	}
+	100% {
+		background-position: -200% 0;
+	}
+}
+
+.ad-main.loading .ad-hero-avatar {
+	visibility: visible;
+	background-color: var(--skeleton-base);
+	background-image: linear-gradient(
+		90deg,
+		var(--skeleton-base) 0%,
+		var(--skeleton-sheen) 50%,
+		var(--skeleton-base) 100%
+	);
+	background-size: 200% 100%;
+	animation: skeleton-shimmer 1.4s ease-in-out infinite;
+	border-radius: 18px;
+}
+.ad-main.loading #ad-name-skeleton,
+.ad-main.loading #ad-meta-skeleton,
+.ad-main.loading #ad-desc-skeleton {
+	display: block;
+}
+@media (prefers-reduced-motion: reduce) {
+	.skeleton,
+	.ad-main.loading .ad-hero-avatar {
+		animation: none;
+	}
+}
+
+/* ── Trading record card (leaf styles for JS-rendered rows) ────────────── */
+
+.ad-pill {
+	display: inline-flex;
+	align-items: center;
+	font-size: 10px;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	padding: 2px 6px;
+	border-radius: 4px;
+	text-transform: uppercase;
+	vertical-align: middle;
+	margin-left: 8px;
+}
+.ad-pill-sim {
+	background: rgba(255, 190, 0, 0.15);
+	color: #fbbe00;
+	border: 1px solid rgba(255, 190, 0, 0.25);
+}
+.ad-trade-winrate-wrap {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+.ad-trade-ring {
+	display: inline-flex;
+}
+.ad-trade-spark {
+	margin: 2px 0 6px;
+	padding: 8px 10px;
+	border-radius: 8px;
+	background: var(--surface2, rgba(255, 255, 255, 0.04));
+}
+.ad-trade-spark-head {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	font-size: 11px;
+	color: var(--ink-dim, #888);
+	margin-bottom: 4px;
+}
+.ad-trade-spark-net {
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+}
+.ad-trade-spark-net.positive {
+	color: #22d160;
+}
+.ad-trade-spark-net.negative {
+	color: #ff4545;
+}
+.ad-trade-history {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin-top: 4px;
+}
+.ad-trade-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 7px 10px;
+	border-radius: 8px;
+	background: var(--surface2, rgba(255, 255, 255, 0.04));
+	font-size: 13px;
+	line-height: 1.3;
+}
+.ad-trade-outcome {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+.ad-trade-outcome.win {
+	background: #22d160;
+}
+.ad-trade-outcome.loss {
+	background: #ff4545;
+}
+.ad-trade-outcome.flat {
+	background: #888;
+}
+.ad-trade-outcome.open {
+	background: #fbbe00;
+}
+.ad-trade-symbol {
+	font-weight: 700;
+	flex-shrink: 0;
+	min-width: 54px;
+}
+.ad-trade-tier {
+	font-size: 11px;
+	color: var(--ink-dim, #888);
+	flex-shrink: 0;
+}
+.ad-trade-peak {
+	margin-left: auto;
+	font-weight: 700;
+	font-size: 12px;
+}
+.ad-trade-pnl {
+	font-size: 12px;
+	color: var(--ink-dim, #888);
+	min-width: 64px;
+	text-align: right;
+}
+.ad-trade-pnl.positive {
+	color: #22d160;
+}
+.ad-trade-pnl.negative {
+	color: #ff4545;
+}
+
+/* ── Walk-with-this-agent preview card ─────────────────────────────────── */
+
+.ad-walk-card .ad-preview-hint {
+	margin-left: auto;
+	font-size: 11px;
+	color: var(--ink-dim, #888);
+}
+/* Card width comes from the grid column, so use a query container: the body
+   stacks on the card's own width instead of guessing from the viewport. */
+.ad-walk-card {
+	container-type: inline-size;
+}
+.ad-walk-body {
+	display: grid;
+	grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+	gap: 22px;
+	align-items: stretch;
+	margin-top: 12px;
+}
+/* No frame: the embed runs on a transparent background with the ground disc
+   hidden, so the avatar + joystick float directly on the card. */
+.ad-walk-stage {
+	position: relative;
+	width: 100%;
+	aspect-ratio: 3 / 4;
+	background: transparent;
+	border: 0;
+}
+.ad-walk-info {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 14px;
+	min-width: 0;
+}
+.ad-walk-lead {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.6;
+	color: var(--ink-dim, #b7b7b7);
+	max-width: 42ch;
+}
+.ad-walk-tips {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+.ad-walk-tips li {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	font-size: 13px;
+	color: var(--ink-dim, #9a9a9a);
+}
+.ad-walk-tips svg {
+	width: 15px;
+	height: 15px;
+	flex-shrink: 0;
+	color: rgba(124, 92, 255, 0.85);
+}
+@container (max-width: 520px) {
+	.ad-walk-body {
+		grid-template-columns: 1fr;
+	}
+	.ad-walk-stage {
+		max-width: 300px;
+		margin: 0 auto;
+	}
+	.ad-walk-info {
+		text-align: center;
+		align-items: center;
+	}
+	.ad-walk-lead {
+		max-width: none;
+	}
+}
+.ad-walk-frame {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	border: 0;
+	display: block;
+	/* This page renders with `color-scheme: dark`, which Chromium propagates
+	   into child iframes and paints their otherwise-transparent backdrop
+	   opaque — turning the floating avatar into a white box. Forcing the
+	   frame's own scheme to `light` keeps the embed's transparent background
+	   showing the card through. */
+	color-scheme: light;
+	background: transparent;
+	transition: opacity 0.4s ease;
+}
+.ad-walk-skeleton {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 14px;
+	pointer-events: none;
+	transition: opacity 0.3s ease;
+}
+.ad-walk-skeleton.is-hidden {
+	opacity: 0;
+}
+.ad-walk-skeleton-pulse {
+	width: 56px;
+	height: 56px;
+	border-radius: 50%;
+	background: rgba(124, 92, 255, 0.18);
+	box-shadow: 0 0 0 0 rgba(124, 92, 255, 0.4);
+	animation: ad-walk-pulse 1.6s ease-out infinite;
+}
+.ad-walk-skeleton-label {
+	font-size: 11px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--ink-dim, #999);
+}
+@keyframes ad-walk-pulse {
+	0% {
+		box-shadow: 0 0 0 0 rgba(124, 92, 255, 0.45);
+	}
+	70% {
+		box-shadow: 0 0 0 18px rgba(124, 92, 255, 0);
+	}
+	100% {
+		box-shadow: 0 0 0 0 rgba(124, 92, 255, 0);
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.ad-walk-skeleton-pulse {
+		animation: none;
+	}
+	.ad-walk-frame {
+		transition: none;
+	}
+}
+.ad-walk-error {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 12px;
+	padding: 16px;
+	text-align: center;
+}
+.ad-walk-error[hidden] {
+	display: none;
+}
+.ad-walk-error-msg {
+	font-size: 13px;
+	color: var(--ink-dim, #aaa);
+	max-width: 200px;
+}
+.ad-walk-expand {
+	margin-top: 4px;
+	align-self: flex-start;
+}
+@media (max-width: 640px) {
+	.ad-walk-expand {
+		align-self: stretch;
+		justify-content: center;
+	}
+}
+
+/* ── Footer ────────────────────────────────────────────────────────────── */
+
+.ad-main.adv2 .ad-foot {
+	max-width: var(--adv2-max);
+	margin: 24px auto 0;
+	padding-left: var(--adv2-pad);
+	padding-right: var(--adv2-pad);
+}

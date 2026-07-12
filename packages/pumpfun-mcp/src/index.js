@@ -111,14 +111,14 @@ async function main() {
 			capabilities: { tools: { listChanged: false } },
 			instructions:
 				'Free, read-only pump.fun + Solana tools from three.ws. Token discovery ' +
-				'(searchTokens, getTrendingTokens, getNewTokens, getGraduatedTokens, ' +
-				'getKingOfTheHill), on-chain analysis (getBondingCurve, getTokenHolders, ' +
-				'getTokenDetails, getTokenTrades), creator intelligence (getCreatorProfile, ' +
+				'(search_tokens, get_trending_tokens, get_new_tokens, get_graduated_tokens, ' +
+				'get_king_of_the_hill), on-chain analysis (get_bonding_curve, get_token_holders, ' +
+				'get_token_details, get_token_trades), creator intelligence (get_creator_profile, ' +
 				'pumpfun_list_claims, pumpfun_watch_claims, pumpfun_first_claims), Solana Name ' +
 				'Service (sns_resolve, sns_reverseLookup), market signals (' +
-				'kol_leaderboard, pumpfun_quote_swap, pumpfun_watch_whales), and social ' +
-				'sentiment (social_cashtag_sentiment, social_x_post_impact). All data is live ' +
-				'and on-chain; no API keys required.',
+				'kol_leaderboard, pumpfun_quote_swap, pumpfun_watch_whales, pumpfun_bot_status), ' +
+				'and social sentiment (social_cashtag_sentiment, social_x_post_impact). All data ' +
+				'is live and on-chain; no API keys required.',
 		},
 	);
 

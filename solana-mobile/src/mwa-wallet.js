@@ -16,7 +16,10 @@ import { PublicKey } from '@solana/web3.js';
 const APP_IDENTITY = Object.freeze({
 	name: 'three.ws',
 	uri: 'https://three.ws',
-	icon: 'https://three.ws/pwa-192x192.png',
+	// MWA spec: identity.icon MUST be a relative URI (resolved against uri).
+	// An absolute URL here makes every authorize() throw before reaching the
+	// wallet.
+	icon: '/pwa-192x192.png',
 });
 
 const SESSION_KEY = 'threews:mwa:authToken';

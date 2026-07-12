@@ -36,7 +36,7 @@
   ],
   "author": "nirholas <support@three.ws>",
   "license": "MIT",
-  "homepage": "https://three.ws/mcp",
+  "homepage": "https://three.ws",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nirholas/three.ws.git",

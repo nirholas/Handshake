@@ -38,7 +38,7 @@
   ],
   "author": "nirholas <support@three.ws>",
   "license": "MIT",
-  "homepage": "https://three.ws/vanity",
+  "homepage": "https://three.ws/vanity-wallet",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nirholas/three.ws.git",

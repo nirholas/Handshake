@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/agentcore-payments-mcp",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"mcpName": "io.github.nirholas/agentcore-payments-mcp",
 	"description": "Platform-managed agent payment sessions — create a budget, pay any x402 endpoint without holding a private key. Governed by spend limits, URL allowlists, and per-tx ceilings. The agent proposes spend; three.ws governance enforces policy.",
 	"type": "module",

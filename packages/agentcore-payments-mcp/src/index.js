@@ -21,6 +21,8 @@
 // Wire into Claude Code / Cursor — see README.md.
 
 import { createRequire } from 'node:module';
+import { realpathSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -64,51 +66,56 @@ export function buildServer() {
 	);
 
 	for (const tool of TOOLS) {
-		server.tool(tool.name, tool.description, tool.inputSchema, async (args) => {
-			try {
-				const result = await tool.handler(args);
-				return {
-					content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-				};
-			} catch (err) {
-				const code = err?.code ?? 'error';
-				const status = err?.status ?? null;
-				const body = err?.body ?? null;
-				const detail = body
-					? `\n\nUpstream detail: ${JSON.stringify(body, null, 2)}`
-					: '';
-				return {
-					content: [
-						{
-							type: 'text',
-							text: JSON.stringify(
-								{
-									ok: false,
-									error: err?.message ?? 'unknown error',
-									code,
-									...(status ? { status } : {}),
-								},
-								null,
-								2,
-							),
-						},
-					],
-					isError: true,
-				};
-			}
-		});
+		server.registerTool(
+			tool.name,
+			{
+				title: tool.title,
+				description: tool.description,
+				inputSchema: tool.inputSchema,
+				// MCP ToolAnnotations (readOnlyHint / destructiveHint / idempotentHint /
+				// openWorldHint) — lets clients gate confirmation prompts per tool
+				// instead of treating every call as a destructive write.
+				annotations: tool.annotations,
+			},
+			async (args, extra) => {
+				try {
+					const result = await tool.handler(args, extra);
+					return {
+						content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+					};
+				} catch (err) {
+					const payload = {
+						ok: false,
+						error: err?.message ?? 'unknown error',
+						code: err?.code ?? 'error',
+						...(err?.status ? { status: err.status } : {}),
+						...(err?.body ? { detail: err.body } : {}),
+					};
+					return {
+						content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }],
+						isError: true,
+					};
+				}
+			},
+		);
 	}
 
 	return server;
 }
 
-// Start the server when run directly
-const isMain =
-	typeof process !== 'undefined' &&
-	process.argv[1] &&
-	(process.argv[1].endsWith('index.js') || process.argv[1].endsWith('agentcore-payments-mcp'));
+// Connect stdio ONLY when this file is the process entry point. Importing the
+// module (tests, embedding) must not grab the transport. realpath both sides:
+// npm bin shims are symlinks, so argv[1] may differ from import.meta.url.
+function isProcessEntryPoint() {
+	if (!process.argv[1]) return false;
+	try {
+		return import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href;
+	} catch {
+		return false;
+	}
+}
 
-if (isMain) {
+if (isProcessEntryPoint()) {
 	const server = buildServer();
 	const transport = new StdioServerTransport();
 	await server.connect(transport);

@@ -88,8 +88,7 @@ All tools are **read-only** — nothing signs or sends a transaction. `pumpfun_q
 | `get_king_of_the_hill`         | Highest-cap token still on the bonding curve.                                                                                                                                                                                                                                         |
 | `get_token_holders`          | Top holders with concentration analysis (on-chain).                                                                                                                                                                                                                                   |
 | `get_creator_profile`        | A creator's tokens with rug-pull risk flags.                                                                                                                                                                                                                                          |
-| `kol_radar`                | gmgn-style early-detection radar signals.                                                                                                                                                                                                                                             |
-| `kol_leaderboard`          | Top KOL traders ranked by P&L.                                                                                                                                                                                                                                                        |
+| `kol_leaderboard`          | Top KOL traders ranked by P&L for a 24h/7d/30d window.                                                                                                                                                                                                                                |
 | `pumpfun_list_claims`      | Recent creator fee-claim events (on-chain).                                                                                                                                                                                                                                           |
 | `pumpfun_watch_claims`     | Fee claims for a creator within a look-back window.                                                                                                                                                                                                                                   |
 | `pumpfun_first_claims`     | First-ever creator claims — a cash-out signal.                                                                                                                                                                                                                                        |
@@ -100,6 +99,7 @@ All tools are **read-only** — nothing signs or sends a transaction. `pumpfun_q
 | `sns_reverseLookup`        | Reverse-lookup a wallet to its primary `.sol` domain.                                                                                                                                                                                                                                 |
 | `social_cashtag_sentiment` | Deterministic lexicon sentiment over supplied posts.                                                                                                                                                                                                                                  |
 | `social_x_post_impact`     | Correlate an X post to bonding-curve price impact.                                                                                                                                                                                                                                    |
+| `pumpfun_bot_status`       | Configuration + health of the pump.fun indexer backend — `configured`, `healthy`, and ping latency. Always available.                                                                                                                                                                 |
 | `pumpfun_token_3d`         | **Live 3D snapshot** of a token — composes metadata, holders, and graduation into a shareable [three.ws/coin3d](https://three.ws/coin3d) viewer (spinning coin medallion + holder galaxy + graduation ring) and returns the deep-link, an embeddable iframe, and the underlying data. |
 
 The live tool list is fetched from the backend at startup; a bundled copy ships as an offline fallback so a fresh install always advertises a correct surface.
@@ -123,6 +123,19 @@ No configuration is required. One optional override exists:
 This package is a small stdio ↔ HTTP bridge. It forwards MCP `tools/call` requests to the canonical three.ws pump.fun JSON-RPC backend, which performs the actual Solana RPC reads and pump.fun API queries. That keeps one authoritative implementation, ships no secrets to clients, and means the tool surface stays current automatically.
 
 `pumpfun_token_3d` is a **native** tool: it runs in-process, orchestrating several backend reads (metadata + bonding curve + holders) and resolving the token logo from its on-chain metadata URI, then returns a deep-link into the three.ws 3D viewer. It needs no extra keys and adds no new backend dependency.
+
+## Errors
+
+Failures surface as MCP tool errors (`isError: true`) with the real cause — never a silent empty result:
+
+| Error text | Meaning | Recovery |
+| ---------- | ------- | -------- |
+| `Backend request failed: …` | The bridge could not reach the backend (network, non-2xx, bad JSON). | Check connectivity / `PUMPFUN_MCP_URL`; safe to retry. |
+| `[-32602] …` | Invalid argument (e.g. `pumpfun_token_3d` without a `mint`). | Fix the argument named in the message. |
+| `[-32004] no on-chain data for <mint>: …` | `pumpfun_token_3d` found no metadata, curve, or holder data for the mint. | Verify the mint address and network (`mainnet`/`devnet`). |
+| `[<code>] <message>` | Any other backend JSON-RPC error (unknown tool, indexer unavailable, on-chain read failure), passed through verbatim. | The message states the upstream cause; transient indexer errors are safe to retry. |
+
+`pumpfun_token_3d` degrades gracefully: if only some of its three source reads succeed it still returns a snapshot, marking the missing parts (`no holder data available`, `no bonding-curve data available`) — it errors only when all three fail.
 
 ## Requirements
 

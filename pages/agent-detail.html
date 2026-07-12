@@ -35,260 +35,8 @@
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/src/ui-juice.css" />
 		<link rel="stylesheet" href="/src/agent-detail.css" />
+		<link rel="stylesheet" href="/src/agent-detail-v2.css" />
 		<link rel="stylesheet" href="/src/pump/launch-token-modal.css" />
-		<style>
-			.ad-main.loading .ad-hero-avatar,
-			.ad-main.loading .ad-hero-body > *,
-			.ad-main.loading .ad-card .ad-row,
-			.ad-main.loading .ad-card .ad-balance,
-			.ad-main.loading .ad-card .ad-services,
-			.ad-main.loading .ad-card .ad-token-body,
-			.ad-main.loading .ad-card .ad-trust-pills,
-			.ad-main.loading .ad-card .ad-protocols,
-			.ad-main.loading .ad-card .ad-sub,
-			.ad-main.loading .ad-card .ad-cta-row {
-				visibility: hidden;
-			}
-
-			/* Shared B04 skeleton treatment — monochrome shimmer, tokens from
-			   agent-detail.css :root mirror the canonical site values. */
-			.skeleton {
-				background-color: var(--skeleton-base);
-				background-image: linear-gradient(
-					90deg,
-					var(--skeleton-base) 0%,
-					var(--skeleton-sheen) 50%,
-					var(--skeleton-base) 100%
-				);
-				background-size: 200% 100%;
-				border-radius: var(--skeleton-radius);
-				animation: skeleton-shimmer 1.4s ease-in-out infinite;
-			}
-
-			@keyframes skeleton-shimmer {
-				0% {
-					background-position: 200% 0;
-				}
-				100% {
-					background-position: -200% 0;
-				}
-			}
-
-			.ad-main.loading .ad-hero-avatar {
-				visibility: visible; /* Keep the container visible */
-				background-color: var(--skeleton-base);
-				background-image: linear-gradient(
-					90deg,
-					var(--skeleton-base) 0%,
-					var(--skeleton-sheen) 50%,
-					var(--skeleton-base) 100%
-				);
-				background-size: 200% 100%;
-				animation: skeleton-shimmer 1.4s ease-in-out infinite;
-				border-radius: 50%;
-				width: 120px;
-				height: 120px;
-			}
-
-			@media (prefers-reduced-motion: reduce) {
-				.skeleton,
-				.ad-main.loading .ad-hero-avatar {
-					animation: none;
-				}
-			}
-			.ad-main.loading #ad-name-skeleton {
-				display: block;
-			}
-			.ad-main.loading #ad-meta-skeleton {
-				display: block;
-			}
-			.ad-main.loading #ad-desc-skeleton {
-				display: block;
-			}
-
-			.ad-main.loading .ad-card .skeleton-row {
-				display: flex;
-				justify-content: space-between;
-				margin-bottom: 0.5rem;
-			}
-
-			.ad-main.loading .ad-card .skeleton-text {
-				height: 1em;
-				width: 70%;
-			}
-			.ad-main.loading .ad-card .skeleton-text-short {
-				width: 30%;
-			}
-
-			/* Trading record card */
-			.ad-pill { display: inline-flex; align-items: center; font-size: 10px; font-weight: 700; letter-spacing: .06em; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; vertical-align: middle; margin-left: 8px; }
-			.ad-pill-sim { background: rgba(255,190,0,.15); color: #fbbe00; border: 1px solid rgba(255,190,0,.25); }
-			.ad-trade-winrate-wrap { display: inline-flex; align-items: center; gap: 8px; }
-			.ad-trade-ring { display: inline-flex; }
-			.ad-trade-spark { margin: 2px 0 6px; padding: 8px 10px; border-radius: 8px; background: var(--surface2, rgba(255,255,255,.04)); }
-			.ad-trade-spark-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 11px; color: var(--ink-dim, #888); margin-bottom: 4px; }
-			.ad-trade-spark-net { font-weight: 700; font-variant-numeric: tabular-nums; }
-			.ad-trade-spark-net.positive { color: #22d160; }
-			.ad-trade-spark-net.negative { color: #ff4545; }
-			.ad-trade-history { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
-			.ad-trade-row { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 8px; background: var(--surface2, rgba(255,255,255,.04)); font-size: 13px; line-height: 1.3; }
-			.ad-trade-outcome { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-			.ad-trade-outcome.win  { background: #22d160; }
-			.ad-trade-outcome.loss { background: #ff4545; }
-			.ad-trade-outcome.flat { background: #888; }
-			.ad-trade-outcome.open { background: #fbbe00; }
-			.ad-trade-symbol { font-weight: 700; flex-shrink: 0; min-width: 54px; }
-			.ad-trade-tier   { font-size: 11px; color: var(--ink-dim, #888); flex-shrink: 0; }
-			.ad-trade-peak   { margin-left: auto; font-weight: 700; font-size: 12px; }
-			.ad-trade-pnl    { font-size: 12px; color: var(--ink-dim, #888); min-width: 64px; text-align: right; }
-			.ad-trade-pnl.positive { color: #22d160; }
-			.ad-trade-pnl.negative { color: #ff4545; }
-
-			/* Walk-with-this-agent preview card. Token-styled: reuses the page's
-			   surface/border variables so it reads as one of the agent cards. */
-			.ad-walk-card .ad-preview-hint { margin-left: auto; font-size: 11px; color: var(--ink-dim, #888); }
-			/* The card tiles inside the masonry grid, so its width is set by the
-			   column — not the viewport. Make it a query container so the body
-			   below can stack on the card's own width instead of guessing from the
-			   screen size (which left the copy column at ~80px, one word per line). */
-			.ad-walk-card { container-type: inline-size; }
-			/* Two-column body: avatar stage left, supporting copy + CTA fill the
-			   right so the card reads as one composed unit instead of a small frame
-			   marooned in empty space. */
-			.ad-walk-body {
-				display: grid;
-				grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
-				gap: 22px;
-				align-items: stretch;
-				margin-top: 12px;
-			}
-			/* No frame: the embed runs on a transparent background with the ground
-			   disc hidden, so the avatar + joystick float directly on the card.
-			   The stage is just a transparent, aspect-locked positioning box. */
-			.ad-walk-stage {
-				position: relative;
-				width: 100%;
-				aspect-ratio: 3 / 4;
-				background: transparent;
-				border: 0;
-			}
-			.ad-walk-info {
-				display: flex;
-				flex-direction: column;
-				justify-content: center;
-				gap: 14px;
-				min-width: 0;
-			}
-			.ad-walk-lead {
-				margin: 0;
-				font-size: 14px;
-				line-height: 1.6;
-				color: var(--ink-dim, #b7b7b7);
-				max-width: 42ch;
-			}
-			.ad-walk-tips {
-				margin: 0;
-				padding: 0;
-				list-style: none;
-				display: flex;
-				flex-direction: column;
-				gap: 8px;
-			}
-			.ad-walk-tips li {
-				display: flex;
-				align-items: center;
-				gap: 9px;
-				font-size: 13px;
-				color: var(--ink-dim, #9a9a9a);
-			}
-			.ad-walk-tips svg {
-				width: 15px;
-				height: 15px;
-				flex-shrink: 0;
-				color: rgba(124, 92, 255, 0.85);
-			}
-			/* Stack when the card itself (not the screen) is too narrow for a
-			   readable two-up split — covers narrow grid columns and small
-			   viewports alike. */
-			@container (max-width: 520px) {
-				.ad-walk-body { grid-template-columns: 1fr; }
-				.ad-walk-stage { max-width: 300px; margin: 0 auto; }
-				.ad-walk-info { text-align: center; align-items: center; }
-				.ad-walk-lead { max-width: none; }
-			}
-			.ad-walk-frame {
-				position: absolute;
-				inset: 0;
-				width: 100%;
-				height: 100%;
-				border: 0;
-				display: block;
-				/* This page renders with `color-scheme: dark`, which Chromium
-				   propagates into child iframes and paints their otherwise-
-				   transparent backdrop opaque — turning the floating avatar into a
-				   white box. Forcing the frame's own scheme to `light` keeps the
-				   embed's transparent background showing the card through. */
-				color-scheme: light;
-				background: transparent;
-				transition: opacity 0.4s ease;
-			}
-			.ad-walk-skeleton {
-				position: absolute;
-				inset: 0;
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				justify-content: center;
-				gap: 14px;
-				pointer-events: none;
-				transition: opacity 0.3s ease;
-			}
-			.ad-walk-skeleton.is-hidden { opacity: 0; }
-			.ad-walk-skeleton-pulse {
-				width: 56px;
-				height: 56px;
-				border-radius: 50%;
-				background: rgba(124, 92, 255, 0.18);
-				box-shadow: 0 0 0 0 rgba(124, 92, 255, 0.4);
-				animation: ad-walk-pulse 1.6s ease-out infinite;
-			}
-			.ad-walk-skeleton-label { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-dim, #999); }
-			@keyframes ad-walk-pulse {
-				0% { box-shadow: 0 0 0 0 rgba(124, 92, 255, 0.45); }
-				70% { box-shadow: 0 0 0 18px rgba(124, 92, 255, 0); }
-				100% { box-shadow: 0 0 0 0 rgba(124, 92, 255, 0); }
-			}
-			@media (prefers-reduced-motion: reduce) {
-				.ad-walk-skeleton-pulse { animation: none; }
-				.ad-walk-frame { transition: none; }
-			}
-			.ad-walk-error {
-				position: absolute;
-				inset: 0;
-				display: flex;
-				flex-direction: column;
-				align-items: center;
-				justify-content: center;
-				gap: 12px;
-				padding: 16px;
-				text-align: center;
-			}
-			.ad-walk-error[hidden] { display: none; }
-			.ad-walk-error-msg { font-size: 13px; color: var(--ink-dim, #aaa); max-width: 200px; }
-			.ad-walk-expand { margin-top: 4px; align-self: flex-start; }
-			@media (max-width: 640px) {
-				.ad-walk-expand { align-self: stretch; justify-content: center; }
-			}
-			.ad-platform-bar { display:flex; align-items:center; gap:14px; margin-top:10px; padding:8px 0; border-top:1px solid rgba(255,255,255,.07); flex-wrap:wrap; }
-			.ad-platform-kicker { display:inline-flex; align-items:center; font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:var(--text-3,#777); padding-right:14px; border-right:1px solid rgba(255,255,255,.09); white-space:nowrap; }
-			@media (max-width:520px) { .ad-platform-kicker { flex-basis:100%; padding-right:0; border-right:0; margin-bottom:2px; } }
-			.ad-platform-stat { display:flex; flex-direction:column; gap:1px; }
-			.ad-platform-stat-val { font-size:13px; font-weight:700; color:var(--text,#f4f4f5); letter-spacing:-0.01em; }
-			.ad-platform-stat-val.positive { color:#34d399; }
-			.ad-platform-stat-lbl { font-size:9.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--text-3,#666); }
-			.ad-platform-dot { display:inline-block; width:5px; height:5px; border-radius:50%; background:#34d399; margin-right:4px; vertical-align:middle; animation:ad-plat-blink 2s ease-out infinite; }
-			@keyframes ad-plat-blink { 0%{box-shadow:0 0 0 0 rgba(52,211,153,.5)} 70%{box-shadow:0 0 0 4px transparent} 100%{box-shadow:0 0 0 0 transparent} }
-		</style>
 		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/footer.css" />
 		<script defer src="/footer-newsletter.js"></script>
@@ -323,763 +71,838 @@
 		<div id="nav-container"></div>
 		<script src="/nav.js"></script>
 
-		<div class="ad-shell">
-			<aside class="ad-sidebar">
-				<div class="ad-brand">three.ws</div>
-				<nav class="ad-nav">
-					<a href="/">Home</a>
-					<a class="active" href="/marketplace"
-						>Agents <span class="ad-beta">BETA</span></a
-					>
-					<a href="/discover">Discover</a>
-					<a href="/create">Create</a>
-					<a href="/docs">Docs</a>
-				</nav>
-				<div class="ad-side-foot">
-					<a href="https://x.com/trythreews" target="_blank" rel="noopener">X</a>
-					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener"
-						>GitHub</a
-					>
-				</div>
-			</aside>
-
-			<main class="ad-main loading">
-				<div class="ad-topbar">
-					<input class="ad-search" placeholder="Search agents…" />
-					<div class="ad-actions">
-						<a class="ad-btn" href="/create">Create Agent</a>
-						<button id="connect-wallet-btn" class="ad-btn ad-btn-primary">
-							Connect Wallet
-						</button>
-					</div>
-				</div>
-
-				<div class="ad-back-row">
-					<a class="ad-back" href="/agents">← Back to Registry</a>
+		<main class="ad-main adv2 loading">
+			<div class="adv2-wrap adv2-top">
+				<a class="ad-back" href="/agents">← Back to Registry</a>
+				<div class="adv2-top-right">
+					<a class="adv2-classic-link" id="adv2-classic-link" href="/agents" title="View this profile in the previous layout">Classic layout</a>
 					<div id="view-switch-slot"></div>
 				</div>
+			</div>
 
-				<section class="ad-hero">
-					<div class="ad-hero-glow" id="ad-hero-glow" aria-hidden="true"></div>
-					<button class="ad-hero-share-float" id="ad-hero-share-float" aria-label="Share this agent" title="Share">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-					</button>
-					<div class="ad-hero-avatar-wrap" id="ad-avatar-wrap" role="button" aria-label="View full 3D model" tabindex="0">
-						<div id="ad-avatar-3d" class="ad-hero-avatar" role="img" aria-label="Agent 3D avatar"></div>
-						<img class="ad-hero-avatar" id="ad-avatar" alt="" style="display:none" />
-						<div class="ad-hero-avatar-overlay" aria-hidden="true">
-							<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-						</div>
+			<!-- ── Hero: identity + primary actions ─────────────────────────── -->
+			<section class="ad-hero adv2-hero adv2-wrap">
+				<div class="ad-hero-glow" id="ad-hero-glow" aria-hidden="true"></div>
+				<button class="ad-hero-share-float" id="ad-hero-share-float" aria-label="Share this agent" title="Share">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+				</button>
+				<div class="ad-hero-avatar-wrap" id="ad-avatar-wrap" role="button" aria-label="View full 3D model" tabindex="0">
+					<div id="ad-avatar-3d" class="ad-hero-avatar" role="img" aria-label="Agent 3D avatar"></div>
+					<img class="ad-hero-avatar" id="ad-avatar" alt="" style="display:none" />
+					<div class="ad-hero-avatar-overlay" aria-hidden="true">
+						<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
 					</div>
-					<div class="ad-hero-body">
-						<div class="ad-hero-title">
-							<h1 id="ad-name"></h1>
-							<div
-								id="ad-name-skeleton"
-								class="skeleton"
-								style="width: 200px; height: 36px; display: none"
-							></div>
-							<span class="ad-status" id="ad-status">Active</span>
-						</div>
-						<div class="ad-hero-meta">
-							<span id="ad-id-short" class="ad-mono"></span>
-							<button
-								class="ad-copy"
-								data-copy-target="ad-id-short"
-								aria-label="Copy"
+				</div>
+				<div class="ad-hero-body">
+					<div class="ad-hero-title">
+						<h1 id="ad-name"></h1>
+						<div
+							id="ad-name-skeleton"
+							class="skeleton"
+							style="width: 200px; height: 36px; display: none"
+						></div>
+						<span class="ad-status" id="ad-status">Active</span>
+					</div>
+					<div class="ad-hero-meta">
+						<span id="ad-id-short" class="ad-mono"></span>
+						<button
+							class="ad-copy"
+							data-copy-target="ad-id-short"
+							aria-label="Copy"
+						>
+							⧉
+						</button>
+						<span class="ad-dot">·</span>
+						<span id="ad-asset-kind">Core Asset</span>
+					</div>
+					<div class="ad-market-meta" id="ad-market-meta" hidden>
+						<button
+							type="button"
+							id="d-author"
+							class="ad-author-btn"
+							aria-label="View creator profile"
+						>
+							—
+						</button>
+						<span class="ad-dot">·</span>
+						<span id="ad-published"></span>
+						<span id="ad-category" class="ad-cat-pill"></span>
+						<span id="ad-views" class="ad-stat-pill"></span>
+						<span id="ad-forks-pill" class="ad-stat-pill" hidden></span>
+					</div>
+					<div
+						id="ad-meta-skeleton"
+						class="skeleton"
+						style="width: 150px; height: 16px; margin-top: 8px; display: none"
+					></div>
+					<p class="ad-hero-desc" id="ad-desc"></p>
+					<div
+						id="ad-desc-skeleton"
+						class="skeleton"
+						style="width: 80%; height: 48px; margin-top: 8px; display: none"
+					></div>
+					<div class="ad-hero-trust" id="ad-trust-pills"></div>
+					<avatar-actions id="ad-avatar-actions" mode="fork" style="display:none;margin:10px 0"></avatar-actions>
+					<div id="ad-owner-bar" class="ad-owner-bar" hidden></div>
+					<div class="ad-hero-actions">
+						<a
+							id="ad-walk-link"
+							class="ad-btn ad-btn-primary"
+							href="/walk/app"
+							aria-label="Walk with this agent — drive its avatar around in real time"
+						>
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right: 6px">
+								<circle cx="13" cy="4" r="2" />
+								<path d="M7 21l3-6 2-3" />
+								<path d="M10 12l-1-4 4 1 2 3 3 1" />
+								<path d="M9 8l-2 1-2 4" />
+							</svg>
+							Walk with this agent
+						</a>
+						<a
+							id="ad-see-3d"
+							class="ad-btn"
+							href="/play"
+							aria-label="See this agent's 3D avatar in the three.ws world"
+						>
+							<svg
+								width="14"
+								height="14"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								aria-hidden="true"
+								style="margin-right: 6px"
 							>
-								⧉
+								<path
+									d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+								/>
+								<polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+								<line x1="12" y1="22.08" x2="12" y2="12" />
+							</svg>
+							See in 3D
+						</a>
+						<span class="ad-market-actions" id="ad-market-actions" hidden>
+							<button type="button" id="ad-fork" class="ad-btn ad-btn-primary">
+								⑂ Fork &amp; Chat
 							</button>
-							<span class="ad-dot">·</span>
-							<span id="ad-asset-kind">Core Asset</span>
-						</div>
-						<div class="ad-market-meta" id="ad-market-meta" hidden>
 							<button
 								type="button"
-								id="d-author"
-								class="ad-author-btn"
-								aria-label="View creator profile"
+								id="ad-bookmark"
+								class="ad-btn"
+								aria-pressed="false"
 							>
-								—
+								☆ Save
 							</button>
-							<span class="ad-dot">·</span>
-							<span id="ad-published"></span>
-							<span id="ad-category" class="ad-cat-pill"></span>
-							<span id="ad-views" class="ad-stat-pill"></span>
-							<span id="ad-forks-pill" class="ad-stat-pill" hidden></span>
-						</div>
-						<div
-							id="ad-meta-skeleton"
-							class="skeleton"
-							style="width: 150px; height: 16px; margin-top: 8px; display: none"
-						></div>
-						<p class="ad-hero-desc" id="ad-desc"></p>
-						<div
-							id="ad-desc-skeleton"
-							class="skeleton"
-							style="width: 80%; height: 48px; margin-top: 8px; display: none"
-						></div>
-						<div class="ad-hero-trust" id="ad-trust-pills"></div>
-						<avatar-actions id="ad-avatar-actions" mode="fork" style="display:none;margin:10px 0"></avatar-actions>
-						<div class="ad-platform-bar" id="ad-platform-bar" hidden aria-label="three.ws network activity across all agents">
-							<span class="ad-platform-kicker">Across three.ws</span>
-							<div class="ad-platform-stat">
-								<span class="ad-platform-stat-val" id="adp-agents">—</span>
-								<span class="ad-platform-stat-lbl"><span class="ad-platform-dot" aria-hidden="true"></span>Agents live</span>
-							</div>
-							<div class="ad-platform-stat">
-								<span class="ad-platform-stat-val positive" id="adp-winrate">—</span>
-								<span class="ad-platform-stat-lbl">Platform win rate</span>
-							</div>
-							<div class="ad-platform-stat">
-								<span class="ad-platform-stat-val" id="adp-wins">—</span>
-								<span class="ad-platform-stat-lbl">Oracle wins</span>
-							</div>
-							<div class="ad-platform-stat">
-								<span class="ad-platform-stat-val" id="adp-scored">—</span>
-								<span class="ad-platform-stat-lbl">Scored today</span>
-							</div>
-						</div>
-						<div id="ad-owner-bar" class="ad-owner-bar" hidden></div>
-						<div class="ad-hero-actions">
-							<a
-								id="ad-see-3d"
-								class="ad-btn ad-btn-primary"
-								href="/play"
-								aria-label="See this agent's 3D avatar in the three.ws world"
-							>
-								<svg
-									width="14"
-									height="14"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									stroke-width="2"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									aria-hidden="true"
-									style="margin-right: 6px"
-								>
-									<path
-										d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
-									/>
-									<polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-									<line x1="12" y1="22.08" x2="12" y2="12" />
-								</svg>
-								See in 3D
-							</a>
-							<a
-								id="ad-walk-link"
-								class="ad-btn ad-btn-primary"
-								href="/walk/app"
-								aria-label="Walk with this agent — drive its avatar around in real time"
-							>
-								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right: 6px">
-									<circle cx="13" cy="4" r="2" />
-									<path d="M7 21l3-6 2-3" />
-									<path d="M10 12l-1-4 4 1 2 3 3 1" />
-									<path d="M9 8l-2 1-2 4" />
-								</svg>
-								Walk with this agent
-							</a>
-							<a
-								id="ad-watch-live"
-								class="ad-btn"
-								href="/agents-live"
-								aria-label="Watch this agent's live screen and avatar cam"
-							>
-								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right: 6px">
-									<rect x="2" y="3" width="20" height="14" rx="2" />
-									<path d="M8 21h8M12 17v4" />
-								</svg>
-								Watch live
-							</a>
-							<a
-								id="ad-irl-link"
-								class="ad-btn"
-								href="/irl"
-								aria-label="View this agent in IRL — place it in your real space"
-							>
-								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right: 6px">
-									<circle cx="12" cy="8" r="4" />
-									<path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-								</svg>
-								View in IRL
-							</a>
-							<a
-								id="ad-xr-link"
-								class="ad-btn"
-								href="/xr"
-								aria-label="View this agent in XR — immersive AR/VR"
-							>
-								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right: 6px">
-									<path d="M3 7l9-4 9 4v10l-9 4-9-4V7z" />
-									<path d="M12 3v18M3 7l9 4 9-4" />
-								</svg>
-								View in XR
-							</a>
-							<button
-								type="button"
-								id="ad-share-btn"
-								class="ad-btn"
-								aria-label="Share this agent"
-								style="display: none"
-							>
-								<svg
-									width="14"
-									height="14"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									stroke-width="2"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									aria-hidden="true"
-									style="margin-right: 6px"
-								>
-									<circle cx="18" cy="5" r="3" />
-									<circle cx="6" cy="12" r="3" />
-									<circle cx="18" cy="19" r="3" />
-									<line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-									<line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-								</svg>
-								Share
+							<button type="button" id="ad-export-json" class="ad-btn">
+								↓ Export JSON
 							</button>
-							<span class="ad-market-actions" id="ad-market-actions" hidden>
-								<button type="button" id="ad-fork" class="ad-btn ad-btn-primary">
-									⑂ Fork &amp; Chat
-								</button>
+						</span>
+						<details class="adv2-more">
+							<summary class="ad-btn" aria-label="More ways to view this agent">
+								More
+								<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-left:6px"><polyline points="6 9 12 15 18 9"/></svg>
+							</summary>
+							<div class="adv2-more-menu" role="menu">
+								<a
+									id="ad-watch-live"
+									class="adv2-more-item"
+									href="/agents-live"
+									role="menuitem"
+									aria-label="Watch this agent's live screen and avatar cam"
+								>
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+										<rect x="2" y="3" width="20" height="14" rx="2" />
+										<path d="M8 21h8M12 17v4" />
+									</svg>
+									Watch live
+								</a>
+								<a
+									id="ad-irl-link"
+									class="adv2-more-item"
+									href="/irl"
+									role="menuitem"
+									aria-label="View this agent in IRL — place it in your real space"
+								>
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+										<circle cx="12" cy="8" r="4" />
+										<path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+									</svg>
+									View in IRL
+								</a>
+								<a
+									id="ad-xr-link"
+									class="adv2-more-item"
+									href="/xr"
+									role="menuitem"
+									aria-label="View this agent in XR — immersive AR/VR"
+								>
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+										<path d="M3 7l9-4 9 4v10l-9 4-9-4V7z" />
+										<path d="M12 3v18M3 7l9 4 9-4" />
+									</svg>
+									View in XR
+								</a>
 								<button
 									type="button"
-									id="ad-bookmark"
-									class="ad-btn"
-									aria-pressed="false"
+									id="ad-share-btn"
+									class="adv2-more-item"
+									role="menuitem"
+									aria-label="Share this agent"
+									style="display: none"
 								>
-									☆ Save
+									<svg
+										width="14"
+										height="14"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										aria-hidden="true"
+									>
+										<circle cx="18" cy="5" r="3" />
+										<circle cx="6" cy="12" r="3" />
+										<circle cx="18" cy="19" r="3" />
+										<line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+										<line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+									</svg>
+									Share
 								</button>
-								<button type="button" id="ad-export-json" class="ad-btn">
-									↓ Export JSON
-								</button>
-							</span>
-						</div>
-					</div>
-				</section>
-
-				<div class="ad-cards">
-
-				<!-- Achievements — earned badges + in-progress ladder, computed from
-				     real launches, graduations, market caps, supporters, burns,
-				     reputation, and tenure. Hidden for visitors on a blank profile;
-				     always shown to the owner (with an encouraging empty state). -->
-				<section class="ad-card" id="ad-achievements-card">
-					<div class="ad-card-head">
-						<span class="ad-bullet ad-bullet-amber"></span>
-						<h2>ACHIEVEMENTS</h2>
-						<span class="ad-preview-hint">Earned on three.ws</span>
-					</div>
-					<div id="ad-achievements-body"></div>
-				</section>
-
-				<section class="ad-card ad-walk-card" id="ad-walk-card" hidden>
-					<div class="ad-card-head">
-						<span class="ad-bullet ad-bullet-violet"></span>
-						<h2>WALK WITH THIS AGENT</h2>
-						<span class="ad-preview-hint">Drive its avatar in real time</span>
-					</div>
-					<div class="ad-walk-body">
-						<div class="ad-walk-stage" id="ad-walk-stage">
-							<div class="ad-walk-skeleton" id="ad-walk-skeleton" aria-hidden="true">
-								<span class="ad-walk-skeleton-pulse"></span>
-								<span class="ad-walk-skeleton-label">Loading avatar…</span>
 							</div>
-							<iframe
-								id="ad-walk-frame"
-								class="ad-walk-frame"
-								title="Walking 3D avatar preview"
-								loading="lazy"
-								allow="accelerometer; gyroscope; xr-spatial-tracking"
-								style="opacity: 0"
-							></iframe>
-							<div class="ad-walk-error" id="ad-walk-error" hidden>
-								<span class="ad-walk-error-msg">Couldn’t load the walking preview.</span>
-								<button type="button" class="ad-btn" id="ad-walk-retry">Retry</button>
-							</div>
-						</div>
-						<div class="ad-walk-info">
-							<p class="ad-walk-lead">This agent has a live, embodied avatar. Drag to look around the studio, then take the controls and walk it in real time.</p>
-							<ul class="ad-walk-tips">
-								<li>
-									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></svg>
-									Walks an idle wander until you take over
-								</li>
-								<li>
-									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9l-3 3 3 3" /><path d="M9 5l3-3 3 3" /><path d="M15 19l-3 3-3-3" /><path d="M19 9l3 3-3 3" /><path d="M2 12h20" /><path d="M12 2v20" /></svg>
-									Drag to orbit, joystick to drive
-								</li>
-								<li>
-									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6" /><path d="M10 14L21 3" /><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" /></svg>
-									Open the full walk for the whole world
-								</li>
-							</ul>
-							<a
-								class="ad-btn ad-btn-primary ad-walk-expand"
-								id="ad-walk-expand"
-								href="/walk/app"
-								aria-label="Open the full walk experience with this agent"
-							>
-								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right: 6px">
-									<path d="M15 3h6v6" />
-									<path d="M10 14L21 3" />
-									<path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
-								</svg>
-								Open full walk
-							</a>
-						</div>
+						</details>
 					</div>
-				</section>
-
-				<section class="ad-card ad-sale-card" id="ad-sale-card" hidden>
-					<div class="ad-card-head">
-						<span class="ad-bullet ad-bullet-green"></span>
-						<h2>OWNERSHIP</h2>
-					</div>
-					<div id="ad-sale-panel"></div>
-				</section>
-
-				<section class="ad-card ad-preview-card" id="ad-preview-card" hidden>
-					<div class="ad-card-head">
-						<span class="ad-bullet ad-bullet-green"></span>
-						<h2>TRY IT NOW</h2>
-						<span class="ad-preview-hint">Send a message — no fork required</span>
-					</div>
-					<div class="ad-preview-thread" id="d-preview-thread" aria-live="polite"></div>
-					<form class="ad-preview-form" id="d-preview-form" autocomplete="off">
-						<input
-							type="text"
-							id="d-preview-input"
-							class="ad-preview-input"
-							placeholder="Ask this agent anything…"
-							maxlength="2000"
-							required
-						/>
-						<button type="submit" class="ad-btn ad-btn-primary" id="d-preview-send">
-							Send
-						</button>
-					</form>
-					<div class="ad-preview-footer" id="d-preview-footer"></div>
-					<div id="d-preview-stream" hidden style="margin-top:12px"></div>
-				</section>
-
-				<section class="ad-card ad-pricing-card" id="ad-pricing-card" hidden>
-					<div class="ad-card-head">
-						<span class="ad-bullet ad-bullet-amber"></span>
-						<h2>SKILLS &amp; PRICING</h2>
-					</div>
-					<div class="ad-pricing-summary" id="ad-pricing-summary" hidden></div>
-					<div id="ad-pricing-body"></div>
-					<div id="ad-pricing-library" hidden></div>
-				</section>
-
-				<section class="ad-card ad-tiers-card" id="ad-tiers-card" hidden>
-					<div class="ad-card-head">
-						<span class="ad-bullet ad-bullet-violet"></span>
-						<h2>SUBSCRIPTION TIERS</h2>
-					</div>
-					<p class="ad-tiers-sub" id="ad-tiers-sub" hidden></p>
-					<div class="ad-tiers-body" id="ad-tiers-body"></div>
-				</section>
-
-				<section class="ad-card">
-					<div class="ad-card-head">
-						<span class="ad-bullet"></span>
-						<h2>SERVICES</h2>
-						<span class="ad-pill ad-pill-muted" id="ad-svc-count">0 configured</span>
-					</div>
-					<div class="ad-services" id="ad-services"></div>
-				</section>
-
-				<section class="ad-card" id="ad-trading-card-section" hidden>
-					<div class="ad-card-head">
-						<span class="ad-bullet"></span>
-						<h2>TRADING CARD</h2>
-						<span class="ad-card-link" id="ad-trading-card-share" role="button" tabindex="0"
-							style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888);cursor:pointer">Share card →</span>
-					</div>
-					<div id="ad-trading-card-mount"></div>
-				</section>
-
-				<section class="ad-card">
-					<div class="ad-card-head">
-						<span class="ad-bullet"></span>
-						<h2>AGENT HOLDINGS</h2>
-					</div>
-					<div class="ad-row" id="ad-holdings-chip"></div>
-					<div class="ad-balance"><span id="ad-holdings-sol">0</span> SOL</div>
-					<div class="flex space-x-2 mt-4 justify-start" id="ad-holdings-actions"></div>
-				</section>
-
-				<section class="ad-card" id="ad-stream-card" hidden>
-					<div class="ad-card-head">
-						<span class="ad-bullet"></span>
-						<h2 id="ad-stream-title">MONEY STREAM</h2>
-						<span id="ad-stream-sub" style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888)">pay by the second</span>
-					</div>
-					<div id="ad-stream-mount"></div>
-				</section>
-
-				<section class="ad-card" id="ad-pulse-card" hidden>
-					<div class="ad-card-head">
-						<span class="ad-bullet"></span>
-						<h2>WALLET STORY</h2>
-						<a class="ad-card-link" href="/pulse" style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888);text-decoration:none">All activity →</a>
-					</div>
-					<div id="ad-pulse-feed"></div>
-				</section>
-
-				<section class="ad-card" id="ad-patronage-card" hidden>
-					<div class="ad-card-head">
-						<span class="ad-bullet"></span>
-						<h2>PATRONAGE</h2>
-					</div>
-					<div id="ad-patronage-panel"></div>
-				</section>
-
-				<section class="ad-card" id="ad-mirror-card" hidden>
-					<div class="ad-card-head">
-						<span class="ad-bullet"></span>
-						<h2>COPY TRADING</h2>
-						<a class="ad-card-link" href="/mirror" style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888);text-decoration:none">Discover leaders →</a>
-					</div>
-					<div id="ad-mirror-panel"></div>
-				</section>
-
-				<section class="ad-card" id="ad-strategy-objects-card" hidden>
-					<div class="ad-card-head">
-						<span class="ad-bullet"></span>
-						<h2>STRATEGIES</h2>
-						<a class="ad-card-link" href="/strategies" style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888);text-decoration:none">Strategy library →</a>
-					</div>
-					<div id="ad-strategy-panel"></div>
-				</section>
-
-				<section class="ad-card">
-					<div class="ad-card-head">
-						<span class="ad-bullet ad-bullet-amber"></span>
-						<h2>AGENT TOKEN</h2>
-					</div>
-					<div id="ad-token-body" class="ad-muted">
-						No agent token linked for this agent yet.
-					</div>
-				</section>
-
-				<!-- 3D Creations — every GLB this agent minted as a tokenized NFT
-				     (api/v1/tokenized/launches?agent_id=), with remix badges linking
-				     into the /creations gallery lineage viewer. Hidden until
-				     renderMintedCreations() confirms this agent has at least one mint. -->
-				<section class="ad-card" id="ad-creations-card" hidden>
-					<div class="ad-card-head">
-						<span class="ad-bullet"></span>
-						<h2>3D CREATIONS</h2>
-					</div>
-					<div id="ad-creations-body" class="ad-muted"></div>
-				</section>
-
-				<!-- Agent Genome — verifiable lineage (parents + children). Hidden
-				     until renderLineage() confirms this agent has descent or offspring. -->
-				<section class="ad-card" id="ad-lineage-card" hidden>
-					<div class="ad-card-head">
-						<span class="ad-bullet ad-bullet-violet"></span>
-						<h2>LINEAGE</h2>
-					</div>
-					<div id="ad-lineage-body" class="ad-muted"></div>
-				</section>
-
-				<section class="ad-card" id="ad-rewards-card" hidden>
-					<div class="ad-card-head">
-						<span class="ad-bullet ad-bullet-green"></span>
-						<h2>CREATOR REWARDS</h2>
-					</div>
-					<div class="ad-row ad-row-split">
-						<span class="ad-muted">Lifetime rewards</span>
-						<span><b id="ad-rewards">0</b> SOL</span>
-					</div>
-				</section>
-
-				<section class="ad-card" id="ad-trading-card" style="display:none">
-					<div class="ad-card-head">
-						<span class="ad-bullet ad-bullet-amber"></span>
-						<h2>TRADING RECORD</h2>
-						<span class="ad-pill ad-pill-sim" id="ad-trade-mode-pill" hidden>SIM</span>
-					</div>
-					<div class="ad-row ad-row-split">
-						<span class="ad-muted">Win rate</span>
-						<span class="ad-trade-winrate-wrap"><span id="ad-trade-winring" class="ad-trade-ring" aria-hidden="true"></span><b id="ad-trade-winrate">—</b></span>
-					</div>
-					<div id="ad-trade-spark" class="ad-trade-spark" hidden></div>
-					<div class="ad-row ad-row-split">
-						<span class="ad-muted">Wins / Losses</span>
-						<span id="ad-trade-wl">—</span>
-					</div>
-					<div class="ad-row ad-row-split">
-						<span class="ad-muted">Realized PnL</span>
-						<span id="ad-trade-pnl">—</span>
-					</div>
-					<div class="ad-row ad-row-split">
-						<span class="ad-muted">ROI</span>
-						<span id="ad-trade-roi">—</span>
-					</div>
-					<div class="ad-sub" style="margin-top:12px">RECENT TRADES</div>
-					<div id="ad-trade-history" class="ad-trade-history"></div>
-					<a class="ad-cta" id="ad-trade-copy-link" href="#" hidden>Copy this trader →</a>
-				</section>
-
-				<section class="ad-card">
-					<div class="ad-card-head">
-						<span class="ad-bullet"></span>
-						<h2>TRUST &amp; SECURITY</h2>
-					</div>
-					<div class="ad-sub">TRUST MECHANISMS</div>
-					<div class="ad-trust-pills" id="ad-trust-mechs"></div>
-					<div class="ad-sub">PAYMENT PROTOCOL</div>
-					<div class="ad-trust-pills" id="ad-payment"></div>
-				</section>
-
-				<section class="ad-card">
-					<div class="ad-card-head">
-						<span class="ad-bullet ad-bullet-dim"></span>
-						<h2>REGISTRATIONS</h2>
-					</div>
-					<div class="ad-row ad-row-split">
-						<span class="ad-muted">Agent ID</span>
-						<span class="ad-mono" id="ad-agent-id"></span>
-					</div>
-					<div class="ad-row ad-row-split">
-						<span class="ad-muted">Registry</span>
-						<span class="ad-trust-pills" id="ad-registries"></span>
-					</div>
-					<div class="ad-row ad-row-split" id="ad-sns-row" style="display: none">
-						<span class="ad-muted">SNS</span>
-						<span class="ad-mono" id="ad-sns"></span>
-					</div>
-					<div class="ad-row ad-row-split" id="ad-voice-row" style="display: none">
-						<span class="ad-muted">Voice</span>
-						<span id="ad-voice"></span>
-					</div>
-				</section>
-
-				<section class="ad-card" id="ad-reputation-card" style="display: none">
-					<div class="ad-card-head">
-						<span class="ad-bullet ad-bullet-amber"></span>
-						<h2>REPUTATION</h2>
-					</div>
-					<div class="ad-row ad-row-split">
-						<span class="ad-muted">Average score</span>
-						<span class="ad-trade-winrate-wrap"><span id="ad-rep-ring" class="ad-trade-ring" aria-hidden="true"></span><b id="ad-rep-avg">—</b> / 5</span>
-					</div>
-					<div class="ad-row ad-row-split">
-						<span class="ad-muted">Feedback count</span>
-						<span id="ad-rep-count">0</span>
-					</div>
-					<div class="ad-row ad-row-split" id="ad-rep-stake-row" style="display: none">
-						<span class="ad-muted">Total stake</span>
-						<span id="ad-rep-stake"></span>
-					</div>
-				</section>
-
-				<section class="ad-card" id="ad-ledger-card" style="display: none">
-					<div class="ad-card-head">
-						<span class="ad-bullet"></span>
-						<h2>REASONING LEDGER</h2>
-						<span class="ad-pill ad-pill-muted" id="ad-ledger-verify">verifying…</span>
-					</div>
-					<div class="ad-row ad-row-split">
-						<span class="ad-muted">Track-record score</span>
-						<span><b id="ad-ledger-score">—</b> / 100</span>
-					</div>
-					<div class="ad-row ad-row-split">
-						<span class="ad-muted">Hit rate</span>
-						<span id="ad-ledger-hitrate">—</span>
-					</div>
-					<div class="ad-row ad-row-split">
-						<span class="ad-muted">Reconciled calls</span>
-						<span id="ad-ledger-sample">0</span>
-					</div>
-					<a class="ad-cta-row" id="ad-ledger-link" href="#" style="display:inline-flex;margin-top:10px;">Open the Reasoning Ledger →</a>
-				</section>
-
-				<section class="ad-card" id="ad-actions-card" style="display: none">
-					<div class="ad-card-head">
-						<span class="ad-bullet ad-bullet-green"></span>
-						<h2>RECENT ACTIONS</h2>
-						<span class="ad-pill ad-pill-muted" id="ad-actions-count">0</span>
-					</div>
-					<div id="ad-actions-list"></div>
-				</section>
-
-				<section class="ad-card" id="ad-memory-card" style="display: none">
-					<div class="ad-card-head">
-						<span class="ad-bullet"></span>
-						<h2>MEMORY</h2>
-						<span class="ad-pill ad-pill-muted" id="ad-memory-count">0</span>
-					</div>
-					<div id="ad-memory-list"></div>
-				</section>
-
-				<section class="ad-card" id="ad-strategy-card" style="display: none">
-					<div class="ad-card-head">
-						<span class="ad-bullet ad-bullet-dim"></span>
-						<h2>STRATEGY</h2>
-					</div>
-					<pre class="ad-raw" id="ad-strategy"></pre>
-				</section>
-
-				<section class="ad-card" id="ad-embed-policy-card" style="display: none">
-					<div class="ad-card-head">
-						<span class="ad-bullet ad-bullet-muted"></span>
-						<h2>EMBED POLICY</h2>
-					</div>
-					<div id="ad-embed-policy"></div>
-				</section>
-
-				<section class="ad-card" id="ad-reviews-card" aria-labelledby="ad-reviews-heading">
-					<div class="ad-card-head">
-						<span class="ad-bullet ad-bullet-amber"></span>
-						<h2 id="ad-reviews-heading">REVIEWS</h2>
-						<span
-							class="ad-pill ad-pill-muted"
-							id="ad-reviews-count"
-							aria-live="polite"
-						></span>
-					</div>
-					<div id="ad-reviews-body" aria-live="polite">
-						<div class="ad-reviews-skeleton" aria-hidden="true">
-							<div class="ad-review-skel-row">
-								<div class="ad-review-skel-avatar skeleton"></div>
-								<div class="ad-review-skel-lines">
-									<div class="ad-review-skel-line short skeleton"></div>
-									<div class="ad-review-skel-line long skeleton"></div>
-									<div class="ad-review-skel-line med skeleton"></div>
-								</div>
-							</div>
-							<div class="ad-review-skel-row">
-								<div class="ad-review-skel-avatar skeleton"></div>
-								<div class="ad-review-skel-lines">
-									<div class="ad-review-skel-line short skeleton"></div>
-									<div class="ad-review-skel-line med skeleton"></div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</section>
-
-				<details class="ad-embed-disclosure">
-					<summary>Developers →</summary>
-				<section class="ad-card ad-embed-card" id="ad-embed-card" hidden>
-					<div class="ad-card-head">
-						<span class="ad-bullet ad-bullet-muted"></span>
-						<h2>EMBED THIS AGENT</h2>
-					</div>
-					<p class="ad-embed-lede">
-						Drop the agent anywhere — as a web component, iframe, or direct link.
-					</p>
-					<div class="ad-embed-section">
-						<div class="ad-embed-label">
-							<span>Web component</span
-							><button class="ad-embed-copy" type="button" data-embed="wc">
-								Copy
-							</button>
-						</div>
-						<pre class="ad-embed-code" id="ad-embed-wc"></pre>
-					</div>
-					<div class="ad-embed-section">
-						<div class="ad-embed-label">
-							<span>Iframe</span
-							><button class="ad-embed-copy" type="button" data-embed="iframe">
-								Copy
-							</button>
-						</div>
-						<pre class="ad-embed-code" id="ad-embed-iframe"></pre>
-					</div>
-					<div class="ad-embed-section">
-						<div class="ad-embed-label">
-							<span>Direct link</span
-							><button class="ad-embed-copy" type="button" data-embed="link">
-								Copy
-							</button>
-						</div>
-						<pre class="ad-embed-code" id="ad-embed-link"></pre>
-					</div>
-				</section>
-				</details>
-
-				<section class="ad-card ad-versions-card" id="ad-versions-card" hidden>
-					<div class="ad-card-head">
-						<span class="ad-bullet ad-bullet-dim"></span>
-						<h2>VERSION HISTORY</h2>
-					</div>
-					<ul class="ad-versions" id="ad-versions-list"></ul>
-				</section>
-
-				<section class="ad-card ad-similar-card" id="ad-similar-card" hidden>
-					<div class="ad-card-head">
-						<span class="ad-bullet"></span>
-						<h2>SIMILAR AGENTS</h2>
-					</div>
-					<div class="ad-similar-grid" id="ad-similar-grid"></div>
-				</section>
-
-				<details class="ad-card ad-collapse">
-					<summary>
-						<span class="ad-bullet ad-bullet-muted"></span>
-						<span class="ad-card-title">RAW METADATA</span>
-					</summary>
-					<pre class="ad-raw" id="ad-raw"></pre>
-				</details>
-
-				<section class="ad-card">
-					<div class="ad-card-head">
-						<span class="ad-bullet"></span>
-						<h2>BLOCKCHAIN DETAILS</h2>
-					</div>
-					<div id="ad-onchain"></div>
-					<div id="ad-deploy-slot" class="ad-deploy-slot"></div>
-					<div class="ad-row ad-row-split">
-						<span class="ad-muted">Active</span><span id="ad-active">true</span>
-					</div>
-					<div class="ad-row ad-row-split">
-						<span class="ad-muted">Services</span><span id="ad-svc-count2">0</span>
-					</div>
-					<div class="ad-row ad-row-split">
-						<span class="ad-muted">Supported Trust</span
-						><span class="ad-trust-pills" id="ad-supported-trust"></span>
-					</div>
-					<div class="ad-row ad-row-split">
-						<span class="ad-muted">Pay-per-call Support</span
-						><span id="ad-x402">No</span>
-					</div>
-					<div class="ad-sub">PROTOCOLS</div>
-					<div class="ad-protocols" id="ad-protocols"></div>
-					<div class="ad-cta-row">
-						<a class="ad-cta" id="ad-explorer" target="_blank" rel="noopener"
-							>View on Explorer ↗</a
-						>
-						<a class="ad-cta" id="ad-trade" target="_blank" rel="noopener"
-							>Trade on Magic Eden ↗</a
-						>
-					</div>
-				</section>
-
 				</div>
+			</section>
 
-				<footer class="ad-foot">
-					<span>© 2026 three.ws</span>
-					<span
-						><a href="/legal/tos">Terms</a> · <a href="/legal/privacy">Privacy</a> ·
-						<a href="/content-policy">Content Policy</a></span
-					>
-				</footer>
-			</main>
-		</div>
+			<!-- ── Platform pulse strip ──────────────────────────────────────── -->
+			<div class="adv2-wrap">
+				<div class="ad-platform-bar" id="ad-platform-bar" hidden aria-label="three.ws network activity across all agents">
+					<span class="ad-platform-kicker">Across three.ws</span>
+					<div class="ad-platform-stat">
+						<span class="ad-platform-stat-val" id="adp-agents">—</span>
+						<span class="ad-platform-stat-lbl"><span class="ad-platform-dot" aria-hidden="true"></span>Agents live</span>
+					</div>
+					<div class="ad-platform-stat">
+						<span class="ad-platform-stat-val positive" id="adp-winrate">—</span>
+						<span class="ad-platform-stat-lbl">Platform win rate</span>
+					</div>
+					<div class="ad-platform-stat">
+						<span class="ad-platform-stat-val" id="adp-wins">—</span>
+						<span class="ad-platform-stat-lbl">Oracle wins</span>
+					</div>
+					<div class="ad-platform-stat">
+						<span class="ad-platform-stat-val" id="adp-scored">—</span>
+						<span class="ad-platform-stat-lbl">Scored today</span>
+					</div>
+				</div>
+			</div>
+
+			<!-- ── Sticky section navigation ─────────────────────────────────── -->
+			<nav class="adv2-tabs" id="adv2-tabs" aria-label="Profile sections">
+				<div class="adv2-wrap adv2-tabs-row">
+					<a href="#sec-overview" data-tab="sec-overview" class="adv2-tab is-active">Overview</a>
+					<a href="#sec-capabilities" data-tab="sec-capabilities" class="adv2-tab">Capabilities</a>
+					<a href="#sec-economy" data-tab="sec-economy" class="adv2-tab">Economy</a>
+					<a href="#sec-activity" data-tab="sec-activity" class="adv2-tab">Activity</a>
+					<a href="#sec-trust" data-tab="sec-trust" class="adv2-tab">Trust &amp; Identity</a>
+					<a href="#sec-reviews" data-tab="sec-reviews" class="adv2-tab">Reviews</a>
+					<a href="#sec-developers" data-tab="sec-developers" class="adv2-tab">Developers</a>
+				</div>
+			</nav>
+
+			<div class="adv2-wrap adv2-body">
+
+				<!-- ══ Overview — meet the agent, try it, walk it ═══════════════ -->
+				<section class="adv2-group" id="sec-overview">
+					<header class="adv2-group-head">
+						<h2>Overview</h2>
+						<p>Try the agent live and see what it has earned on the platform.</p>
+					</header>
+					<div class="adv2-grid">
+
+					<section class="ad-card ad-preview-card" id="ad-preview-card" data-span="2" hidden>
+						<div class="ad-card-head">
+							<span class="ad-bullet ad-bullet-green"></span>
+							<h2>TRY IT NOW</h2>
+							<span class="ad-preview-hint">Send a message — no fork required</span>
+						</div>
+						<div class="ad-preview-thread" id="d-preview-thread" aria-live="polite"></div>
+						<form class="ad-preview-form" id="d-preview-form" autocomplete="off">
+							<input
+								type="text"
+								id="d-preview-input"
+								class="ad-preview-input"
+								placeholder="Ask this agent anything…"
+								maxlength="2000"
+								required
+							/>
+							<button type="submit" class="ad-btn ad-btn-primary" id="d-preview-send">
+								Send
+							</button>
+						</form>
+						<div class="ad-preview-footer" id="d-preview-footer"></div>
+						<div id="d-preview-stream" hidden style="margin-top:12px"></div>
+					</section>
+
+					<section class="ad-card ad-walk-card" id="ad-walk-card" data-span="2" hidden>
+						<div class="ad-card-head">
+							<span class="ad-bullet ad-bullet-violet"></span>
+							<h2>WALK WITH THIS AGENT</h2>
+							<span class="ad-preview-hint">Drive its avatar in real time</span>
+						</div>
+						<div class="ad-walk-body">
+							<div class="ad-walk-stage" id="ad-walk-stage">
+								<div class="ad-walk-skeleton" id="ad-walk-skeleton" aria-hidden="true">
+									<span class="ad-walk-skeleton-pulse"></span>
+									<span class="ad-walk-skeleton-label">Loading avatar…</span>
+								</div>
+								<iframe
+									id="ad-walk-frame"
+									class="ad-walk-frame"
+									title="Walking 3D avatar preview"
+									loading="lazy"
+									allow="accelerometer; gyroscope; xr-spatial-tracking"
+									style="opacity: 0"
+								></iframe>
+								<div class="ad-walk-error" id="ad-walk-error" hidden>
+									<span class="ad-walk-error-msg">Couldn’t load the walking preview.</span>
+									<button type="button" class="ad-btn" id="ad-walk-retry">Retry</button>
+								</div>
+							</div>
+							<div class="ad-walk-info">
+								<p class="ad-walk-lead">This agent has a live, embodied avatar. Drag to look around the studio, then take the controls and walk it in real time.</p>
+								<ul class="ad-walk-tips">
+									<li>
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></svg>
+										Walks an idle wander until you take over
+									</li>
+									<li>
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9l-3 3 3 3" /><path d="M9 5l3-3 3 3" /><path d="M15 19l-3 3-3-3" /><path d="M19 9l3 3-3 3" /><path d="M2 12h20" /><path d="M12 2v20" /></svg>
+										Drag to orbit, joystick to drive
+									</li>
+									<li>
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6" /><path d="M10 14L21 3" /><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" /></svg>
+										Open the full walk for the whole world
+									</li>
+								</ul>
+								<a
+									class="ad-btn ad-btn-primary ad-walk-expand"
+									id="ad-walk-expand"
+									href="/walk/app"
+									aria-label="Open the full walk experience with this agent"
+								>
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right: 6px">
+										<path d="M15 3h6v6" />
+										<path d="M10 14L21 3" />
+										<path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5" />
+									</svg>
+									Open full walk
+								</a>
+							</div>
+						</div>
+					</section>
+
+					<!-- Achievements — earned badges + in-progress ladder, computed from
+					     real launches, graduations, market caps, supporters, burns,
+					     reputation, and tenure. Hidden for visitors on a blank profile;
+					     always shown to the owner (with an encouraging empty state). -->
+					<section class="ad-card" id="ad-achievements-card">
+						<div class="ad-card-head">
+							<span class="ad-bullet ad-bullet-amber"></span>
+							<h2>ACHIEVEMENTS</h2>
+							<span class="ad-preview-hint">Earned on three.ws</span>
+						</div>
+						<div id="ad-achievements-body"></div>
+					</section>
+
+					<section class="ad-card ad-sale-card" id="ad-sale-card" hidden>
+						<div class="ad-card-head">
+							<span class="ad-bullet ad-bullet-green"></span>
+							<h2>OWNERSHIP</h2>
+						</div>
+						<div id="ad-sale-panel"></div>
+					</section>
+
+					</div>
+				</section>
+
+				<!-- ══ Capabilities — what this agent can do, and for how much ══ -->
+				<section class="adv2-group" id="sec-capabilities">
+					<header class="adv2-group-head">
+						<h2>Capabilities</h2>
+						<p>Skills, pricing, and the service endpoints this agent exposes.</p>
+					</header>
+					<div class="adv2-grid">
+
+					<section class="ad-card ad-pricing-card" id="ad-pricing-card" hidden>
+						<div class="ad-card-head">
+							<span class="ad-bullet ad-bullet-amber"></span>
+							<h2>SKILLS &amp; PRICING</h2>
+						</div>
+						<div class="ad-pricing-summary" id="ad-pricing-summary" hidden></div>
+						<div id="ad-pricing-body"></div>
+						<div id="ad-pricing-library" hidden></div>
+					</section>
+
+					<section class="ad-card ad-tiers-card" id="ad-tiers-card" hidden>
+						<div class="ad-card-head">
+							<span class="ad-bullet ad-bullet-violet"></span>
+							<h2>SUBSCRIPTION TIERS</h2>
+						</div>
+						<p class="ad-tiers-sub" id="ad-tiers-sub" hidden></p>
+						<div class="ad-tiers-body" id="ad-tiers-body"></div>
+					</section>
+
+					<section class="ad-card" id="ad-services-card">
+						<div class="ad-card-head">
+							<span class="ad-bullet"></span>
+							<h2>SERVICES</h2>
+							<span class="ad-pill ad-pill-muted" id="ad-svc-count">0 configured</span>
+						</div>
+						<div class="ad-services" id="ad-services"></div>
+					</section>
+
+					</div>
+				</section>
+
+				<!-- ══ Economy — wallet, token, income, and trading ═════════════ -->
+				<section class="adv2-group" id="sec-economy">
+					<header class="adv2-group-head">
+						<h2>Economy</h2>
+						<p>The agent’s wallet, token, income streams, and trading record.</p>
+					</header>
+					<div class="adv2-grid">
+
+					<section class="ad-card" id="ad-holdings-card">
+						<div class="ad-card-head">
+							<span class="ad-bullet"></span>
+							<h2>AGENT HOLDINGS</h2>
+						</div>
+						<div class="ad-row" id="ad-holdings-chip"></div>
+						<div class="ad-balance"><span id="ad-holdings-sol">0</span> SOL</div>
+						<div class="flex space-x-2 mt-4 justify-start" id="ad-holdings-actions"></div>
+					</section>
+
+					<section class="ad-card" id="ad-token-card">
+						<div class="ad-card-head">
+							<span class="ad-bullet ad-bullet-amber"></span>
+							<h2>AGENT TOKEN</h2>
+						</div>
+						<div id="ad-token-body" class="ad-muted">
+							No agent token linked for this agent yet.
+						</div>
+					</section>
+
+					<section class="ad-card" id="ad-trading-card-section" data-span="2" hidden>
+						<div class="ad-card-head">
+							<span class="ad-bullet"></span>
+							<h2>TRADING CARD</h2>
+							<span class="ad-card-link" id="ad-trading-card-share" role="button" tabindex="0"
+								style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888);cursor:pointer">Share card →</span>
+						</div>
+						<div id="ad-trading-card-mount"></div>
+					</section>
+
+					<section class="ad-card" id="ad-stream-card" hidden>
+						<div class="ad-card-head">
+							<span class="ad-bullet"></span>
+							<h2 id="ad-stream-title">MONEY STREAM</h2>
+							<span id="ad-stream-sub" style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888)">pay by the second</span>
+						</div>
+						<div id="ad-stream-mount"></div>
+					</section>
+
+					<section class="ad-card" id="ad-pulse-card" hidden>
+						<div class="ad-card-head">
+							<span class="ad-bullet"></span>
+							<h2>WALLET STORY</h2>
+							<a class="ad-card-link" href="/pulse" style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888);text-decoration:none">All activity →</a>
+						</div>
+						<div id="ad-pulse-feed"></div>
+					</section>
+
+					<section class="ad-card" id="ad-patronage-card" hidden>
+						<div class="ad-card-head">
+							<span class="ad-bullet"></span>
+							<h2>PATRONAGE</h2>
+						</div>
+						<div id="ad-patronage-panel"></div>
+					</section>
+
+					<section class="ad-card" id="ad-mirror-card" hidden>
+						<div class="ad-card-head">
+							<span class="ad-bullet"></span>
+							<h2>COPY TRADING</h2>
+							<a class="ad-card-link" href="/mirror" style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888);text-decoration:none">Discover leaders →</a>
+						</div>
+						<div id="ad-mirror-panel"></div>
+					</section>
+
+					<section class="ad-card" id="ad-strategy-objects-card" hidden>
+						<div class="ad-card-head">
+							<span class="ad-bullet"></span>
+							<h2>STRATEGIES</h2>
+							<a class="ad-card-link" href="/strategies" style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888);text-decoration:none">Strategy library →</a>
+						</div>
+						<div id="ad-strategy-panel"></div>
+					</section>
+
+					<section class="ad-card" id="ad-rewards-card" hidden>
+						<div class="ad-card-head">
+							<span class="ad-bullet ad-bullet-green"></span>
+							<h2>CREATOR REWARDS</h2>
+						</div>
+						<div class="ad-row ad-row-split">
+							<span class="ad-muted">Lifetime rewards</span>
+							<span><b id="ad-rewards">0</b> SOL</span>
+						</div>
+					</section>
+
+					<section class="ad-card" id="ad-trading-card" style="display:none">
+						<div class="ad-card-head">
+							<span class="ad-bullet ad-bullet-amber"></span>
+							<h2>TRADING RECORD</h2>
+							<span class="ad-pill ad-pill-sim" id="ad-trade-mode-pill" hidden>SIM</span>
+						</div>
+						<div class="ad-row ad-row-split">
+							<span class="ad-muted">Win rate</span>
+							<span class="ad-trade-winrate-wrap"><span id="ad-trade-winring" class="ad-trade-ring" aria-hidden="true"></span><b id="ad-trade-winrate">—</b></span>
+						</div>
+						<div id="ad-trade-spark" class="ad-trade-spark" hidden></div>
+						<div class="ad-row ad-row-split">
+							<span class="ad-muted">Wins / Losses</span>
+							<span id="ad-trade-wl">—</span>
+						</div>
+						<div class="ad-row ad-row-split">
+							<span class="ad-muted">Realized PnL</span>
+							<span id="ad-trade-pnl">—</span>
+						</div>
+						<div class="ad-row ad-row-split">
+							<span class="ad-muted">ROI</span>
+							<span id="ad-trade-roi">—</span>
+						</div>
+						<div class="ad-sub" style="margin-top:12px">RECENT TRADES</div>
+						<div id="ad-trade-history" class="ad-trade-history"></div>
+						<a class="ad-cta" id="ad-trade-copy-link" href="#" hidden>Copy this trader →</a>
+					</section>
+
+					<!-- 3D Creations — every GLB this agent minted as a tokenized NFT
+					     (api/v1/tokenized/launches?agent_id=), with remix badges linking
+					     into the /creations gallery lineage viewer. Hidden until
+					     renderMintedCreations() confirms this agent has at least one mint. -->
+					<section class="ad-card" id="ad-creations-card" hidden>
+						<div class="ad-card-head">
+							<span class="ad-bullet"></span>
+							<h2>3D CREATIONS</h2>
+						</div>
+						<div id="ad-creations-body" class="ad-muted"></div>
+					</section>
+
+					</div>
+				</section>
+
+				<!-- ══ Activity — what the agent has been doing (owner-rich) ════ -->
+				<section class="adv2-group" id="sec-activity">
+					<header class="adv2-group-head">
+						<h2>Activity</h2>
+						<p>Signed actions, long-term memory, and the strategy driving them.</p>
+					</header>
+					<div class="adv2-grid">
+
+					<section class="ad-card" id="ad-actions-card" style="display: none">
+						<div class="ad-card-head">
+							<span class="ad-bullet ad-bullet-green"></span>
+							<h2>RECENT ACTIONS</h2>
+							<span class="ad-pill ad-pill-muted" id="ad-actions-count">0</span>
+						</div>
+						<div id="ad-actions-list"></div>
+					</section>
+
+					<section class="ad-card" id="ad-memory-card" style="display: none">
+						<div class="ad-card-head">
+							<span class="ad-bullet"></span>
+							<h2>MEMORY</h2>
+							<span class="ad-pill ad-pill-muted" id="ad-memory-count">0</span>
+						</div>
+						<div id="ad-memory-list"></div>
+					</section>
+
+					<section class="ad-card" id="ad-strategy-card" style="display: none">
+						<div class="ad-card-head">
+							<span class="ad-bullet ad-bullet-dim"></span>
+							<h2>STRATEGY</h2>
+						</div>
+						<pre class="ad-raw" id="ad-strategy"></pre>
+					</section>
+
+					</div>
+				</section>
+
+				<!-- ══ Trust & Identity — registrations, reputation, on-chain ═══ -->
+				<section class="adv2-group" id="sec-trust">
+					<header class="adv2-group-head">
+						<h2>Trust &amp; Identity</h2>
+						<p>How this agent is registered, secured, and scored on-chain.</p>
+					</header>
+					<div class="adv2-grid">
+
+					<section class="ad-card" id="ad-trust-card">
+						<div class="ad-card-head">
+							<span class="ad-bullet"></span>
+							<h2>TRUST &amp; SECURITY</h2>
+						</div>
+						<div class="ad-sub">TRUST MECHANISMS</div>
+						<div class="ad-trust-pills" id="ad-trust-mechs"></div>
+						<div class="ad-sub">PAYMENT PROTOCOL</div>
+						<div class="ad-trust-pills" id="ad-payment"></div>
+					</section>
+
+					<section class="ad-card" id="ad-registrations-card">
+						<div class="ad-card-head">
+							<span class="ad-bullet ad-bullet-dim"></span>
+							<h2>REGISTRATIONS</h2>
+						</div>
+						<div class="ad-row ad-row-split">
+							<span class="ad-muted">Agent ID</span>
+							<span class="ad-mono" id="ad-agent-id"></span>
+						</div>
+						<div class="ad-row ad-row-split">
+							<span class="ad-muted">Registry</span>
+							<span class="ad-trust-pills" id="ad-registries"></span>
+						</div>
+						<div class="ad-row ad-row-split" id="ad-sns-row" style="display: none">
+							<span class="ad-muted">SNS</span>
+							<span class="ad-mono" id="ad-sns"></span>
+						</div>
+						<div class="ad-row ad-row-split" id="ad-voice-row" style="display: none">
+							<span class="ad-muted">Voice</span>
+							<span id="ad-voice"></span>
+						</div>
+					</section>
+
+					<section class="ad-card" id="ad-reputation-card" style="display: none">
+						<div class="ad-card-head">
+							<span class="ad-bullet ad-bullet-amber"></span>
+							<h2>REPUTATION</h2>
+						</div>
+						<div class="ad-row ad-row-split">
+							<span class="ad-muted">Average score</span>
+							<span class="ad-trade-winrate-wrap"><span id="ad-rep-ring" class="ad-trade-ring" aria-hidden="true"></span><b id="ad-rep-avg">—</b> / 5</span>
+						</div>
+						<div class="ad-row ad-row-split">
+							<span class="ad-muted">Feedback count</span>
+							<span id="ad-rep-count">0</span>
+						</div>
+						<div class="ad-row ad-row-split" id="ad-rep-stake-row" style="display: none">
+							<span class="ad-muted">Total stake</span>
+							<span id="ad-rep-stake"></span>
+						</div>
+					</section>
+
+					<section class="ad-card" id="ad-ledger-card" style="display: none">
+						<div class="ad-card-head">
+							<span class="ad-bullet"></span>
+							<h2>REASONING LEDGER</h2>
+							<span class="ad-pill ad-pill-muted" id="ad-ledger-verify">verifying…</span>
+						</div>
+						<div class="ad-row ad-row-split">
+							<span class="ad-muted">Track-record score</span>
+							<span><b id="ad-ledger-score">—</b> / 100</span>
+						</div>
+						<div class="ad-row ad-row-split">
+							<span class="ad-muted">Hit rate</span>
+							<span id="ad-ledger-hitrate">—</span>
+						</div>
+						<div class="ad-row ad-row-split">
+							<span class="ad-muted">Reconciled calls</span>
+							<span id="ad-ledger-sample">0</span>
+						</div>
+						<a class="ad-cta-row" id="ad-ledger-link" href="#" style="display:inline-flex;margin-top:10px;">Open the Reasoning Ledger →</a>
+					</section>
+
+					<!-- Agent Genome — verifiable lineage (parents + children). Hidden
+					     until renderLineage() confirms this agent has descent or offspring. -->
+					<section class="ad-card" id="ad-lineage-card" hidden>
+						<div class="ad-card-head">
+							<span class="ad-bullet ad-bullet-violet"></span>
+							<h2>LINEAGE</h2>
+						</div>
+						<div id="ad-lineage-body" class="ad-muted"></div>
+					</section>
+
+					<section class="ad-card" id="ad-embed-policy-card" style="display: none">
+						<div class="ad-card-head">
+							<span class="ad-bullet ad-bullet-muted"></span>
+							<h2>EMBED POLICY</h2>
+						</div>
+						<div id="ad-embed-policy"></div>
+					</section>
+
+					<section class="ad-card" id="ad-blockchain-card">
+						<div class="ad-card-head">
+							<span class="ad-bullet"></span>
+							<h2>BLOCKCHAIN DETAILS</h2>
+						</div>
+						<div id="ad-onchain"></div>
+						<div id="ad-deploy-slot" class="ad-deploy-slot"></div>
+						<div class="ad-row ad-row-split">
+							<span class="ad-muted">Active</span><span id="ad-active">true</span>
+						</div>
+						<div class="ad-row ad-row-split">
+							<span class="ad-muted">Services</span><span id="ad-svc-count2">0</span>
+						</div>
+						<div class="ad-row ad-row-split">
+							<span class="ad-muted">Supported Trust</span
+							><span class="ad-trust-pills" id="ad-supported-trust"></span>
+						</div>
+						<div class="ad-row ad-row-split">
+							<span class="ad-muted">Pay-per-call Support</span
+							><span id="ad-x402">No</span>
+						</div>
+						<div class="ad-sub">PROTOCOLS</div>
+						<div class="ad-protocols" id="ad-protocols"></div>
+						<div class="ad-cta-row">
+							<a class="ad-cta" id="ad-explorer" target="_blank" rel="noopener"
+								>View on Explorer ↗</a
+							>
+							<a class="ad-cta" id="ad-trade" target="_blank" rel="noopener"
+								>Trade on Magic Eden ↗</a
+							>
+						</div>
+					</section>
+
+					</div>
+				</section>
+
+				<!-- ══ Reviews — social proof + where to go next ════════════════ -->
+				<section class="adv2-group" id="sec-reviews">
+					<header class="adv2-group-head">
+						<h2>Reviews</h2>
+						<p>What people think of this agent — and similar agents to explore.</p>
+					</header>
+					<div class="adv2-grid">
+
+					<section class="ad-card" id="ad-reviews-card" data-span="2" aria-labelledby="ad-reviews-heading">
+						<div class="ad-card-head">
+							<span class="ad-bullet ad-bullet-amber"></span>
+							<h2 id="ad-reviews-heading">REVIEWS</h2>
+							<span
+								class="ad-pill ad-pill-muted"
+								id="ad-reviews-count"
+								aria-live="polite"
+							></span>
+						</div>
+						<div id="ad-reviews-body" aria-live="polite">
+							<div class="ad-reviews-skeleton" aria-hidden="true">
+								<div class="ad-review-skel-row">
+									<div class="ad-review-skel-avatar skeleton"></div>
+									<div class="ad-review-skel-lines">
+										<div class="ad-review-skel-line short skeleton"></div>
+										<div class="ad-review-skel-line long skeleton"></div>
+										<div class="ad-review-skel-line med skeleton"></div>
+									</div>
+								</div>
+								<div class="ad-review-skel-row">
+									<div class="ad-review-skel-avatar skeleton"></div>
+									<div class="ad-review-skel-lines">
+										<div class="ad-review-skel-line short skeleton"></div>
+										<div class="ad-review-skel-line med skeleton"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</section>
+
+					<section class="ad-card ad-similar-card" id="ad-similar-card" data-span="2" hidden>
+						<div class="ad-card-head">
+							<span class="ad-bullet"></span>
+							<h2>SIMILAR AGENTS</h2>
+						</div>
+						<div class="ad-similar-grid" id="ad-similar-grid"></div>
+					</section>
+
+					</div>
+				</section>
+
+				<!-- ══ Developers — embed, versions, raw metadata ═══════════════ -->
+				<section class="adv2-group" id="sec-developers">
+					<header class="adv2-group-head">
+						<h2>Developers</h2>
+						<p>Embed this agent anywhere, inspect its versions and raw record.</p>
+					</header>
+					<div class="adv2-grid">
+
+					<section class="ad-card ad-embed-card" id="ad-embed-card" data-span="2" hidden>
+						<div class="ad-card-head">
+							<span class="ad-bullet ad-bullet-muted"></span>
+							<h2>EMBED THIS AGENT</h2>
+						</div>
+						<p class="ad-embed-lede">
+							Drop the agent anywhere — as a web component, iframe, or direct link.
+						</p>
+						<div class="ad-embed-section">
+							<div class="ad-embed-label">
+								<span>Web component</span
+								><button class="ad-embed-copy" type="button" data-embed="wc">
+									Copy
+								</button>
+							</div>
+							<pre class="ad-embed-code" id="ad-embed-wc"></pre>
+						</div>
+						<div class="ad-embed-section">
+							<div class="ad-embed-label">
+								<span>Iframe</span
+								><button class="ad-embed-copy" type="button" data-embed="iframe">
+									Copy
+								</button>
+							</div>
+							<pre class="ad-embed-code" id="ad-embed-iframe"></pre>
+						</div>
+						<div class="ad-embed-section">
+							<div class="ad-embed-label">
+								<span>Direct link</span
+								><button class="ad-embed-copy" type="button" data-embed="link">
+									Copy
+								</button>
+							</div>
+							<pre class="ad-embed-code" id="ad-embed-link"></pre>
+						</div>
+					</section>
+
+					<section class="ad-card ad-versions-card" id="ad-versions-card" hidden>
+						<div class="ad-card-head">
+							<span class="ad-bullet ad-bullet-dim"></span>
+							<h2>VERSION HISTORY</h2>
+						</div>
+						<ul class="ad-versions" id="ad-versions-list"></ul>
+					</section>
+
+					<details class="ad-card ad-collapse" id="ad-raw-card">
+						<summary>
+							<span class="ad-bullet ad-bullet-muted"></span>
+							<span class="ad-card-title">RAW METADATA</span>
+						</summary>
+						<pre class="ad-raw" id="ad-raw"></pre>
+					</details>
+
+					</div>
+				</section>
+
+			</div>
+
+			<footer class="ad-foot">
+				<span>© 2026 three.ws</span>
+				<span
+					><a href="/legal/tos">Terms</a> · <a href="/legal/privacy">Privacy</a> ·
+					<a href="/content-policy">Content Policy</a></span
+				>
+			</footer>
+		</main>
 
 		<div
 			class="creator-modal-overlay"
@@ -1142,6 +965,7 @@
 		</div>
 
 		<script type="module" src="/src/agent-detail.js"></script>
+		<script type="module" src="/src/agent-detail-v2.js"></script>
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>

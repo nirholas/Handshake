@@ -44,7 +44,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test test/"
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "ajv": "^8.20.0",

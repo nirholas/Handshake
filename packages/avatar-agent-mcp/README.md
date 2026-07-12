@@ -165,26 +165,47 @@ Per-tool environment variables (all optional — set only what you use):
 | Variable                         | Required for                              | Notes                                                                                                                   |
 | -------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `SOLANA_RPC_URL`                 | All Solana ops                            | Defaults to `https://api.mainnet-beta.solana.com`. Bring your own (Helius / QuickNode / Triton) for production traffic. |
-| `ETH_RPC_URL`                    | `ens_sns_resolve`                         | Optional — falls back to ethers' default public providers.                                                              |
+| `ETH_RPC_URL`                    | `ens_sns_resolve`                         | Optional — falls back to ethers' default public providers. Alias: `MAINNET_RPC_URL`.                                    |
 | `HELIUS_API_KEY`                 | `pump_snapshot` (enhanced)                | Adds exact supply + DAS data.                                                                                           |
 | `NVIDIA_API_KEY`                 | `speak` (free lane)                       | NVIDIA NIM key (`nvapi-…`) — leads the TTS provider chain with Magpie TTS.                                              |
 | `OPENAI_API_KEY`                 | `speak` (paid backstop)                   | Used against `api.openai.com/v1/audio/speech` when the free lane is unavailable.                                        |
 | `REPLICATE_API_TOKEN`            | `generate_avatar`                         | Replicate text/image-to-3D.                                                                                             |
 | `REPLICATE_TEXT_TO_AVATAR_MODEL` | `generate_avatar`                         | Pin a commercial-OK version, e.g. latest `tencent/hunyuan-3d-3.1`.                                                      |
-| `SOLANA_SECRET_KEY`              | `wallet_send` / `pump_buy` default signer | Per-call `secret` args override. Treat like cash.                                                                       |
-| `THREE_MINT`                     | `pump_snapshot` / `pump_buy` shorthand    | Set so tools accept `target: "three"`.                                                                                  |
+| `SOLANA_SECRET_KEY`              | `wallet_send` / `pump_buy` default signer | Per-call `secret` args override. Alias: `FUNDER_SECRET`. Treat like cash.                                               |
+| `THREE_MINT`                     | `pump_snapshot` / `pump_buy` shorthand    | Set so tools accept `target: "three"`. Defaults to the canonical $THREE mint.                                           |
 | `MAX_SOL_PER_TX`                 | execution tools                           | Per-transaction spend cap in SOL. Default `0.5`.                                                                        |
 | `REQUIRE_CONFIRM`                | execution tools                           | Default on: execution calls refuse until re-issued with `confirm: true`. Set `0`/`false` to disable.                    |
+| `RECIPIENT_ALLOWLIST`            | execution tools                           | Optional comma-separated base58 pubkeys. When set, SOL destinations (`wallet_send`, the `pump_collect_fees` drain target) must be in the list. |
+| `VIEWER_BASE`                    | `viewer_url`                              | Defaults to `https://three.ws/viewer`. Override to point links at a self-hosted viewer.                                 |
+| `THREE_WS_BASE`                  | hosted rendering / animation catalog      | Defaults to `https://three.ws`. Override only when self-hosting the three.ws backend.                                   |
 
 ## Safety
 
 `wallet_send`, `pump_buy`, `pump_launch`, and `pump_collect_fees` execute real on-chain transactions. The server makes no judgment about inputs — with a valid signer it does exactly what it is told. Secrets are never logged or persisted; the secret from `wallet_create` is returned once.
 
-Three layers keep that power in check:
+Four layers keep that power in check:
 
 1. **Tool annotations** — the four execution tools are flagged `destructiveHint: true`, so annotation-aware MCP clients (Claude Code, Claude Desktop, Cursor) surface a confirmation prompt before running them. Read-only tools are flagged `readOnlyHint: true` and can be safely auto-approved.
 2. **Confirmation gate** — with `REQUIRE_CONFIRM` on (the default), every execution call returns `confirmation_required` until re-issued with `confirm: true`, independent of the client.
-3. **Spend caps** — `MAX_SOL_PER_TX` (default 0.5 SOL) bounds every send, buy, tip, and drain server-side.
+3. **Spend caps** — `MAX_SOL_PER_TX` (default 0.5 SOL) bounds every send, buy, tip, and drain server-side. Enforced in the signing libs themselves, so every path — direct, bundled, atomic — is covered.
+4. **Recipient allowlist** — set `RECIPIENT_ALLOWLIST` and any SOL destination outside the list is refused before a transaction is built.
+
+## Errors
+
+A failed tool call returns an MCP error result (`isError: true`) whose text is a single JSON object — `{ "ok": false, "error": "<code>", "message": "…" }`, plus `status` or the on-chain `signature` when available:
+
+| `error` | Meaning | Recovery |
+| ------- | ------- | -------- |
+| `confirmation_required` | An execution tool was called without `confirm: true` while `REQUIRE_CONFIRM` is on. Returned as a normal (non-error) result — a deliberate refusal, not a failure. | Re-issue the same call with `confirm: true`. |
+| `over_spend_cap` | The requested SOL amount exceeds `MAX_SOL_PER_TX`. | Lower the amount, or raise `MAX_SOL_PER_TX` in the server env (you accept the risk). |
+| `recipient_not_allowed` | `RECIPIENT_ALLOWLIST` is set and the destination isn't in it. | Send to an allowlisted address or extend the list. |
+| `invalid_amount` | A zero, negative, or non-numeric SOL amount. | Pass a positive number. |
+| `vault_too_small` / `nothing_to_drain` | `pump_collect_fees` found no (or dust-level) creator fees to collect. | Nothing to do — check back after more trading volume. |
+| `simulation_failed` | The transaction failed Solana preflight simulation; nothing was broadcast. | The message carries the program logs — fix the underlying cause and retry. |
+| `bad_rpc_url` / `insecure_rpc_url` | `SOLANA_RPC_URL` is malformed or plain-http on a non-localhost host. | Use an `https://` RPC endpoint (or `http://localhost` for a local validator). |
+| `bad_policy_config` | `MAX_SOL_PER_TX` (or another policy var) is not a non-negative number. | Fix the env var value. |
+
+Execution errors that occur after broadcast include the transaction `signature` so you can verify the final on-chain state before retrying — never assume a failed response means no funds moved.
 
 ## Links
 

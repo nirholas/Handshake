@@ -63,13 +63,15 @@ npm install -g @three-ws/ibm-x402-mcp
 
 ## Quick start
 
-With Claude Code, one command (as an end user paying per call, no env vars needed):
+Whoever runs the process is the **operator**: the server fails fast at startup without a payment address and IBM credentials (`WATSONX_API_KEY`, `WATSONX_PROJECT_ID`). Callers of the running server need only USDC — no IBM account. With Claude Code, one command:
 
 ```bash
-claude mcp add ibm-granite-x402 -- npx -y @three-ws/ibm-x402-mcp
+claude mcp add ibm-granite-x402 \
+  -e MCP_SVM_PAYMENT_ADDRESS=your-solana-wallet \
+  -e WATSONX_API_KEY=your-ibm-api-key \
+  -e WATSONX_PROJECT_ID=your-watsonx-project-id \
+  -- npx -y @three-ws/ibm-x402-mcp
 ```
-
-Server operators add `-e MCP_SVM_PAYMENT_ADDRESS=... -e WATSONX_API_KEY=... -e WATSONX_PROJECT_ID=...` before the `--`.
 
 Or wire the server into your MCP client config (`claude_desktop_config.json`, Cursor's `mcp.json`):
 
@@ -110,9 +112,11 @@ Every tool is a read-only model-inference call — nothing on your machine or in
 
 ### Input parameters
 
-**`ibm_granite_chat`** — `messages` (required: 1–50 `{ role, content }` pairs), `model`, `max_new_tokens` (1–4096, default 1024), `temperature` (0–2, default 0.7).
+**`ibm_granite_getting_started`** — `section` (optional: `overview` (default, everything) / `pricing` / `payment` / `tools` / `setup`).
 
-**`ibm_granite_code`** — `task` (required: `generate`/`review`/`refactor`/`explain`/`test`/`document`), `prompt` (required), `language`, `context`.
+**`ibm_granite_chat`** — `messages` (required: 1–50 `{ role, content }` pairs; roles `system`/`user`/`assistant`, content ≤ 32,000 chars), `model` (default `ibm/granite-3-8b-instruct`), `max_new_tokens` (1–4096, default 1024), `temperature` (0–2, default 0.7).
+
+**`ibm_granite_code`** — `task` (required: `generate`/`review`/`refactor`/`explain`/`test`/`document`), `prompt` (required, ≤ 16,000 chars: the description for `generate`, the code for everything else), `language`, `context` (≤ 4,000 chars).
 
 **`ibm_granite_embed`** — `inputs` (required: 1–64 texts, ≤8000 chars each), `model`.
 
@@ -179,17 +183,37 @@ ibm-x402-mcp (stdio MCP server)
 
 | Variable                  | Required                            | Default                                   |
 | ------------------------- | ----------------------------------- | ----------------------------------------- |
-| `MCP_SVM_PAYMENT_ADDRESS` | yes                                 | —                                         |
+| `MCP_SVM_PAYMENT_ADDRESS` | yes                                 | — (aliases: `X402_PAY_TO_SOLANA`, `X402_PAY_TO`) |
 | `WATSONX_API_KEY`         | yes                                 | —                                         |
 | `WATSONX_PROJECT_ID`      | yes (or `WATSONX_SPACE_ID`)         | —                                         |
 | `WATSONX_SPACE_ID`        | alternative to `WATSONX_PROJECT_ID` | —                                         |
 | `WATSONX_URL`             | no                                  | `https://us-south.ml.cloud.ibm.com`       |
 | `WATSONX_MODEL_ID`        | no                                  | `ibm/granite-3-8b-instruct`               |
+| `WATSONX_CODE_MODEL_ID`   | no                                  | `ibm/granite-3-8b-instruct`               |
 | `WATSONX_EMBED_MODEL_ID`  | no                                  | `ibm/granite-embedding-278m-multilingual` |
+| `WATSONX_FORECAST_MODEL`  | no                                  | `ibm/granite-ttm-512-96-r2`               |
+| `WATSONX_TIMEOUT_MS`      | no                                  | `90000`                                   |
 | `X402_FEE_PAYER_SOLANA`   | no                                  | three.ws fee payer                        |
 | `X402_FACILITATOR_URL`    | no                                  | `https://facilitator.payai.network`       |
+| `X402_FACILITATOR_TOKEN`  | no                                  | — (Bearer token for a private facilitator) |
+| `X402_ASSET_MINT_SOLANA`  | no                                  | canonical Solana USDC mint                |
 
 Regional hosts: `us-south`, `eu-de`, `eu-gb`, `jp-tok`, `au-syd`, `ca-tor` — e.g. `https://eu-de.ml.cloud.ibm.com`.
+
+## Errors
+
+Every failure state is explicit — there is no silent fallback:
+
+| State | What you see | Recovery |
+| ----- | ------------ | -------- |
+| Missing env at startup | The process exits with a one-line `configuration error: …` naming the missing variable (`MCP_SVM_PAYMENT_ADDRESS`, `WATSONX_API_KEY`, or `WATSONX_PROJECT_ID`/`WATSONX_SPACE_ID`). | Set the variable and restart. |
+| Unpaid call to a paid tool | An x402 `PaymentRequired` envelope quoting the USDC price and pay-to address — not an error; it is step 1 of the payment loop. | Pay and retry (x402-capable clients do this automatically). |
+| Invalid/underpaid payment | The facilitator rejects verification and a fresh `PaymentRequired` envelope is returned; no inference runs and no funds settle. | Re-sign against the quoted accepts. |
+| IBM-side failure | Tool result `{ "ok": false, "error": "watsonx_error", "message": "…", "status": … }` — IAM auth failure (bad `WATSONX_API_KEY`), model error, or a watsonx.ai timeout (`WATSONX_TIMEOUT_MS`, default 90 s). | The message carries IBM's reason; check credentials, project id, and region. |
+| Unexpected server fault | Tool result `{ "ok": false, "error": "internal_error", "message": "…" }`. | Retry; file an issue if it persists. |
+| Facilitator unreachable at boot | A `facilitator init warning: …` line on stderr; the server still starts and retries lazily on the first paid call. | Check `X402_FACILITATOR_URL` connectivity. |
+
+`ibm_granite_getting_started` is always free and never touches IBM or the facilitator — use it to sanity-check the server before paying.
 
 ## Related
 

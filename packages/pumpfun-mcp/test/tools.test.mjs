@@ -8,7 +8,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { FALLBACK_TOOLS, TOOL_ANNOTATIONS } from '../src/tools.js';
+import {
+	FALLBACK_TOOLS,
+	TOOL_ANNOTATIONS,
+	TOOL_NAME_ALIASES,
+	resolveToolName,
+	alternateToolName,
+} from '../src/tools.js';
 import { NATIVE_TOOLS } from '../src/native.js';
 
 test('FALLBACK_TOOLS is a non-empty array', () => {
@@ -68,6 +74,65 @@ test('semantic spot checks: deterministic and local-compute tools', () => {
 	assert.equal(TOOL_ANNOTATIONS.pumpfun_vanity_mint.openWorldHint, false);
 });
 
+test('resolveToolName maps every legacy alias to canonical and passes others through', () => {
+	for (const [legacy, canonical] of Object.entries(TOOL_NAME_ALIASES)) {
+		assert.equal(resolveToolName(legacy), canonical);
+		// Canonical names are already resolved — they must not change.
+		assert.equal(resolveToolName(canonical), canonical);
+	}
+	assert.equal(resolveToolName('some_unknown_tool'), 'some_unknown_tool');
+	assert.equal(resolveToolName(42), 42, 'non-strings pass through untouched');
+});
+
+test('resolveToolName never resolves inherited object members', () => {
+	for (const name of ['__proto__', 'constructor', 'toString', 'hasOwnProperty']) {
+		assert.equal(resolveToolName(name), name, `${name} must pass through unresolved`);
+	}
+});
+
+test('alternateToolName round-trips both spellings and rejects everything else', () => {
+	for (const [legacy, canonical] of Object.entries(TOOL_NAME_ALIASES)) {
+		assert.equal(alternateToolName(legacy), canonical);
+		assert.equal(alternateToolName(canonical), legacy);
+	}
+	assert.equal(alternateToolName('pumpfun_vanity_mint'), null, 'unaliased tools have no alternate');
+	assert.equal(alternateToolName('nope'), null);
+	assert.equal(alternateToolName(undefined), null);
+	assert.equal(alternateToolName(123), null);
+});
+
+test('every alias targets an advertised canonical tool; legacy spellings are not advertised', () => {
+	const advertised = new Set(FALLBACK_TOOLS.map((t) => t.name));
+	for (const [legacy, canonical] of Object.entries(TOOL_NAME_ALIASES)) {
+		assert.ok(advertised.has(canonical), `${canonical} missing from FALLBACK_TOOLS`);
+		assert.ok(!advertised.has(legacy), `legacy name ${legacy} must not be advertised`);
+	}
+});
+
+test('inputSchema integrity: required fields exist and defaults respect their bounds', () => {
+	for (const tool of FALLBACK_TOOLS) {
+		const { properties = {}, required = [] } = tool.inputSchema;
+		for (const field of required) {
+			assert.ok(
+				Object.hasOwn(properties, field),
+				`${tool.name}: required field "${field}" missing from properties`,
+			);
+		}
+		for (const [field, schema] of Object.entries(properties)) {
+			if (schema.default === undefined || typeof schema.default !== 'number') continue;
+			if (typeof schema.minimum === 'number') {
+				assert.ok(schema.default >= schema.minimum, `${tool.name}.${field}: default below minimum`);
+			}
+			if (typeof schema.maximum === 'number') {
+				assert.ok(schema.default <= schema.maximum, `${tool.name}.${field}: default above maximum`);
+			}
+			if (schema.enum) {
+				assert.ok(schema.enum.includes(schema.default), `${tool.name}.${field}: default not in enum`);
+			}
+		}
+	}
+});
+
 test('native composed tools carry the same annotation contract', () => {
 	assert.ok(NATIVE_TOOLS.length > 0);
 	const fallbackNames = new Set(FALLBACK_TOOLS.map((t) => t.name));
@@ -80,5 +145,21 @@ test('native composed tools carry the same annotation contract', () => {
 		assert.equal(a.destructiveHint, false, `${def.name}: destructiveHint must be false`);
 		assert.equal(typeof a.idempotentHint, 'boolean', `${def.name}: idempotentHint boolean`);
 		assert.equal(typeof a.openWorldHint, 'boolean', `${def.name}: openWorldHint boolean`);
+	}
+});
+
+test('server instructions only reference tools that actually exist', async () => {
+	const src = await readFile(new URL('../src/index.js', import.meta.url), 'utf8');
+	const match = src.match(/instructions:\s*((?:'[^']*'\s*\+?\s*)+)/);
+	assert.ok(match, 'instructions string found in src/index.js');
+	const instructions = match[1].match(/'([^']*)'/g).map((s) => s.slice(1, -1)).join('');
+	const advertised = new Set([
+		...FALLBACK_TOOLS.map((t) => t.name),
+		...NATIVE_TOOLS.map(({ def }) => def.name),
+	]);
+	const mentioned = instructions.match(/[a-z][a-zA-Z0-9]*_[a-zA-Z0-9_]+/g) || [];
+	assert.ok(mentioned.length >= 10, 'instructions should name the tool catalog');
+	for (const name of mentioned) {
+		assert.ok(advertised.has(name), `instructions mention unknown tool: ${name}`);
 	}
 });

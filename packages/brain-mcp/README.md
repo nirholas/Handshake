@@ -79,12 +79,14 @@ Both tools read live data — the provider set and completions vary between call
 
 **`list_providers`** — no parameters.
 
-**`chat`** — `messages` (required: array of `{ role: "user" | "assistant", content }`), `provider` (provider key from `list_providers`, default `gpt-oss-120b`), `system` (optional system prompt), `maxTokens` (optional, 64–16384, clamped to the model's ceiling).
+**`chat`** — `messages` (required: 1–100 turns of `{ role: "user" | "assistant", content }`, content ≤ 16,000 chars), `provider` (provider key from `list_providers`, default `gpt-oss-120b`), `system` (optional system prompt, ≤ 8,000 chars), `maxTokens` (optional, 64–16384, default 4096, clamped to the model's ceiling).
 
 ## Example
 
+Both responses below are shape illustrations — the live provider set and generations will differ.
+
 ```jsonc
-// list_providers
+// list_providers (example response)
 > {}
 {
   "ok": true,
@@ -101,7 +103,7 @@ Both tools read live data — the provider set and completions vary between call
 ```
 
 ```jsonc
-// chat
+// chat (example response)
 > {
     "provider": "claude-sonnet-4-6",
     "system": "You are terse.",
@@ -145,6 +147,19 @@ Create an API key at [three.ws/account](https://three.ws/account). Without it, p
 | `THREE_WS_BASE`       | no       | `https://three.ws` | API base URL (override to self-host or target a preview).        |
 | `THREE_WS_API_KEY`    | no       | —                  | Bearer credential that unlocks the paid first-party flagships.   |
 | `THREE_WS_TIMEOUT_MS` | no       | `120000`           | Per-request timeout (completions stream server-side).            |
+
+## Errors
+
+A failed tool call returns an MCP error result (`isError: true`) whose text is a single JSON object — `{ "ok": false, "error": "<code>", "message": "…" }`, plus `status` and `detail` on upstream rejections:
+
+| `error` | Meaning | Recovery |
+| ------- | ------- | -------- |
+| `upstream_error` | The router rejected the request — `status` carries the real HTTP code: `400` (bad arguments or an unknown provider key), `401` (paid model without a valid `THREE_WS_API_KEY`), `429` (rate-limited), `502` (the model's stream failed before producing output). | Act on `status`; for `401` set a key, for an unknown key re-run `list_providers`. |
+| `timeout` | No complete response within `THREE_WS_TIMEOUT_MS`. Long flagship generations can be slow — the default 120 s matches the router's own ceiling. | Retry, lower `maxTokens`, or pick a `fast`-tier provider. |
+| `network_error` | The request never reached the router (DNS, offline, TLS). | Check connectivity / `THREE_WS_BASE`. |
+| `bad_config` | `THREE_WS_TIMEOUT_MS` is not a positive number (thrown at startup). | Fix the env var. |
+
+If the requested provider fails mid-flight the router transparently falls back to a mirror or free tier and the reply's `routed_via` names the route taken — you only see an error when every route is exhausted.
 
 ## Links
 

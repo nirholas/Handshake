@@ -3618,6 +3618,13 @@
 			"dest": "/agent/index.html"
 		},
 		{
+			"src": "/agent/([^/]+)/classic/?",
+			"status": 301,
+			"headers": {
+				"Location": "/agents/$1/classic"
+			}
+		},
+		{
 			"src": "/agent/([^/]+)",
 			"status": 301,
 			"headers": {
@@ -4089,6 +4096,10 @@
 		{
 			"src": "/agents/[^/.]+/wallet/?",
 			"dest": "/agent-wallet.html"
+		},
+		{
+			"src": "/agents/([^/.]+)/classic/?",
+			"dest": "/agent-detail-classic.html"
 		},
 		{
 			"src": "/agents/([^/.]+)",

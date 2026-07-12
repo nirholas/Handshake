@@ -37,7 +37,7 @@
   ],
   "author": "nirholas <support@three.ws>",
   "license": "MIT",
-  "homepage": "https://three.ws/names",
+  "homepage": "https://three.ws/docs/mcp-naming",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nirholas/three.ws.git",
