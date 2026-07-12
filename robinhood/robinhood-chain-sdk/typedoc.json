@@ -1,0 +1,17 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "out": "docs/api",
+  "name": "hoodchain",
+  "includeVersion": true,
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "readme": "none",
+  "navigationLinks": {
+    "Docs home": "../index.html",
+    "Architecture": "../architecture.html",
+    "GitHub": "https://github.com/nirholas/robinhood-chain-sdk"
+  },
+  "customCss": "docs/typedoc-theme.css",
+  "hideGenerator": true,
+  "searchInComments": true
+}

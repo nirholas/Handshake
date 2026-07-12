@@ -47,14 +47,20 @@ function renderPremium(data) {
 		return;
 	}
 	const { active, passes, keys, plan } = data;
+	const tiers = Array.isArray(data.plans) && data.plans.length ? data.plans : [plan];
+	const fromUsd = Math.min(...tiers.map((t) => Number(t.usd)));
+	const tierName = (id) => {
+		const t = tiers.find((x) => x.id === (id === 'premium' ? 'developer' : id));
+		return t?.tier || t?.name || 'Premium';
+	};
 
 	const hero = active
 		? `
 			<div class="bl-hero bl-hero-active">
 				<div>
-					<div class="bl-kicker">Premium pass</div>
+					<div class="bl-kicker">Premium pass · ${esc(tierName(active.plan))}</div>
 					<div class="bl-title"><span class="bl-dot"></span> Active — ${daysLeft(active.expires_at)} days left</div>
-					<p class="bl-sub">Wallet <code>${esc(active.wallet.slice(0, 4))}…${esc(active.wallet.slice(-4))}</code> · runs until ${esc(fmtDate(active.expires_at))} · $${Number(plan.usd).toFixed(2)}/${plan.days} days</p>
+					<p class="bl-sub">Wallet <code>${esc(active.wallet.slice(0, 4))}…${esc(active.wallet.slice(-4))}</code> · runs until ${esc(fmtDate(active.expires_at))}</p>
 				</div>
 				<a class="dn-btn primary" href="/dashboard/data-api">Manage &amp; renew</a>
 			</div>`
@@ -63,7 +69,7 @@ function renderPremium(data) {
 				<div>
 					<div class="bl-kicker">Premium pass</div>
 					<div class="bl-title">No active pass</div>
-					<p class="bl-sub">Premium unlocks unmetered Data-API search and an API key for $${Number(plan.usd).toFixed(2)}/${plan.days} days — payable in $THREE (cheapest), SOL, or USDC on Solana.</p>
+					<p class="bl-sub">Premium unlocks unmetered Data-API search and an API key from $${fromUsd.toFixed(2)}/${plan.days} days — payable in $THREE (20% off), SOL, or USDC on Solana.</p>
 				</div>
 				<a class="dn-btn primary" href="/dashboard/data-api">Go Premium</a>
 			</div>`;
@@ -72,11 +78,12 @@ function renderPremium(data) {
 		? `
 			<div class="bl-scroll">
 				<table class="bl-table">
-					<thead><tr><th>Purchased</th><th>Paid</th><th class="bl-num">USD</th><th>Period</th><th>Transaction</th></tr></thead>
+					<thead><tr><th>Purchased</th><th>Tier</th><th>Paid</th><th class="bl-num">USD</th><th>Period</th><th>Transaction</th></tr></thead>
 					<tbody>
 						${passes.map((p) => `
 							<tr>
 								<td>${esc(fmtDate(p.created_at))}</td>
+								<td>${esc(tierName(p.plan))}</td>
 								<td>${esc(assetAmount(p))}</td>
 								<td class="bl-num">$${Number(p.usd_price).toFixed(2)}</td>
 								<td>${esc(fmtDate(p.started_at))} → ${esc(fmtDate(p.expires_at))}</td>

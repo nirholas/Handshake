@@ -71,6 +71,14 @@
 			<description>Two real driving missions landed on the /play jobs board. Grab a car parked at any of the four avenue depots, run the rush order to the depot on the other side of town, and get paid — the delivery only counts if you actually drove it, not walked it. Pairs with the world's existing drivable vehicles and cash economy for a real 'drive around, do jobs, spend the cash' loop.</description>
 		</item>
 		<item>
+			<title>News stories now open the full article, with live coin charts</title>
+			<link>https://three.ws/markets/news</link>
+			<guid isPermaLink="false">2026-07-12:News stories now open the full article, with live coin charts</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Open a news story and you now get the whole thing. Many crypto publishers (The Defiant, CoinDesk, The Block and others) block automated fetches, so the reader used to fall back to a single teaser sentence — the page looked empty. It now recovers the full article text through a reader service when a publisher blocks the direct fetch, so the complete story renders instead of a stub. When a story mentions a coin, the reader shows a live price card for it — current price, 24h and 7d moves, a 7-day sparkline chart, and market cap — that links straight to the coin's full profile. Every fully-read story is also saved to a durable crypto knowledge base with its summary, key points, sentiment, tickers, and the companies and projects it's about — the memory our 3D AI agents draw on to answer questions with real, recent, sourced context.</description>
+		</item>
+		<item>
 			<title>News story links no longer go dead</title>
 			<link>https://three.ws/markets/news</link>
 			<guid isPermaLink="false">2026-07-12:News story links no longer go dead</guid>

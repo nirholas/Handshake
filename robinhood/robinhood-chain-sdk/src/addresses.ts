@@ -62,9 +62,9 @@ export const TESTNET_ADDRESSES = {
   /** Testnet USDG ("Global Dollar", 6 decimals). */
   usdg: '0x7E955252E15c84f5768B83c41a71F9eba181802F' as Address,
   /** Canonical testnet WETH9 (matches the official protocol-contracts L2 WETH). */
-  weth: '0x7943e237C7F95dA44E0301572D358911207852Fa' as Address,
+  weth: '0x7943e237c7F95DA44E0301572D358911207852Fa' as Address,
   /** Community Uniswap v3 factory (the one with liquid Stock Token pools). */
-  uniswapV3Factory: '0x0bFbCf9fa4f9C56B0F40a671Ad40E0805A091865' as Address,
+  uniswapV3Factory: '0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865' as Address,
   /** QuoterV2 linked to the factory above. */
   quoterV2: '0xcf05Fc31A6B693DD0bEB76e958ae4BCD490dc985' as Address,
   /** Classic v3 SwapRouter (struct-level deadline) linked to the factory above. */

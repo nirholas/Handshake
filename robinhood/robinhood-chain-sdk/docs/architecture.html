@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture — hoodchain</title>
+<meta name="description" content="How hoodchain is put together: verified addresses, registry pipeline, multiplier semantics, router flavors, firehose decoding.">
+<link rel="stylesheet" href="./site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%AA%B6%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<nav class="top" aria-label="Site">
+  <div class="wrap">
+    <a class="brand" href="./index.html">hood<span class="tick">chain</span></a>
+    <div class="links">
+      <a href="./index.html#quickstart">Quickstart</a>
+      <a href="./architecture.html">Architecture</a>
+      <a href="./api/index.html">API reference</a>
+      <a href="https://github.com/nirholas/robinhood-chain-sdk">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<header class="hero" style="padding-bottom: 8px">
+  <h1 style="font-size: clamp(26px, 4vw, 38px)">Architecture</h1>
+  <p class="lede">
+    hoodchain is a thin, typed layer over viem. It ships data (the verified registry) and
+    semantics (multiplier math, staleness guards, router flavors) — not a client runtime.
+  </p>
+</header>
+
+<section class="block">
+  <h2>The multiplier, or: why generic trackers misprice Stock Tokens</h2>
+  <p class="sub" style="max-width: 760px">
+    Every Stock Token implements ERC-8056: <code>uiMultiplier()</code> returns the
+    shares-per-token ratio, 1e18-scaled. Corporate actions (splits, reinvested dividends)
+    raise the multiplier instead of rebasing balances. Two consequences the SDK encodes:
+  </p>
+  <div class="grid">
+    <div class="card">
+      <h3>Feed prices are already adjusted</h3>
+      <p>Robinhood's Chainlink feeds return the price of one <em>token</em> — underlying share
+      price × multiplier. USD value is therefore <code>balance × feedPrice</code>, full stop.
+      Applying the multiplier again double-counts every dividend. hoodchain never does.</p>
+    </div>
+    <div class="card">
+      <h3>Raw balances understate positions</h3>
+      <p>Share-equivalent units are <code>balance × uiMultiplier ÷ 1e18</code>. hoodchain
+      computes this per position and its live test suite asserts the result equals the
+      token's own on-chain <code>balanceOfUI()</code> — bit-for-bit agreement with the issuer.</p>
+    </div>
+    <div class="card">
+      <h3>Staleness is a market-hours question</h3>
+      <p>Stock feeds update 24/5. A Saturday read of a Friday-close answer is correct, not
+      stale — so <code>getQuote</code> defaults to a 72&nbsp;h window and throws a typed
+      <code>StaleFeedError</code> (with ages attached) beyond it.</p>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <h2>Registry pipeline</h2>
+  <p class="sub" style="max-width: 760px">
+    <code>src/registry/stock-tokens.json</code> is generated, checked in, and re-verifiable:
+    <code>npm run refresh-registry</code> re-runs the whole pipeline and refuses to write if
+    any step fails.
+  </p>
+<pre><code>1  DISCOVER   Blockscout token search — canonical "&lt;Name&gt; • Robinhood Token" pattern
+2  VERIFY     on-chain: every token's EIP-1967 beacon slot must point at the ONE
+              shared Stock beacon (0xe10b6f6B…1b00); symbol/name/decimals/uiMultiplier
+              read back via multicall
+3  FEEDS      Chainlink's official Robinhood directory mapped by ticker; every feed
+              must answer latestRoundData() &gt; 0 at 8 decimals
+4  WRITE      sorted JSON + provenance (block number, counts, source URLs)</code></pre>
+  <p class="sub">
+    Result at generation: <strong>95 tokens</strong> (the docs site lists 25 — the chain is
+    ahead of its own docs), <strong>34 with live Chainlink feeds</strong>. Feed-less tokens
+    still resolve balances and multipliers; pricing them throws <code>FeedNotFoundError</code>.
+  </p>
+</section>
+
+<section class="block">
+  <h2>Verified addresses (mainnet 4663)</h2>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Contract</th><th>Address</th><th>How it was verified</th></tr></thead>
+      <tbody>
+        <tr><td>USDG (6 decimals)</td><td><code>0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168</code></td><td>docs.robinhood.com/chain/contracts + Blockscout-verified Paxos impl</td></tr>
+        <tr><td>WETH9</td><td><code>0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73</code></td><td>official docs + <code>router.WETH9()</code> on-chain</td></tr>
+        <tr><td>UniswapV3Factory</td><td><code>0x1f7d7550B1b028f7571E69A784071F0205FD2EfA</code></td><td><code>SwapRouter02.factory()</code> ∧ <code>QuoterV2.factory()</code></td></tr>
+        <tr><td>QuoterV2</td><td><code>0x33e885eD0Ec9bF04EcfB19341582aADCb4c8A9E7</code></td><td>same deployer as factory; <code>factory()</code> linkage</td></tr>
+        <tr><td>SwapRouter02</td><td><code>0xCaf681a66D020601342297493863E78C959E5cb2</code></td><td>Blockscout-verified source; ecosystem routes through it</td></tr>
+        <tr><td>Multicall3</td><td><code>0xca11bde05977b3631167028862be2a173976ca11</code></td><td>canonical deterministic deployment (in viem's chain def)</td></tr>
+        <tr><td>NOXA LaunchFactory</td><td><code>0xD9eC2db5f3D1b236843925949fe5bd8a3836FCcB</code></td><td>extracted from official frontend bundle; event topics matched to live logs</td></tr>
+        <tr><td>Odyssey BondingCurveFactory</td><td><code>0xEb3FeeD2716cF0eEAda05B22e67424794e1f5a80</code></td><td>extracted from official frontend bundle; event topics matched to live logs</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="sub" style="margin-top: 14px">
+    Testnet (46630) has <em>no</em> official Uniswap deployment — none of the mainnet
+    addresses have code there. The SDK pins the one community deployment with a liquid
+    Stock Token pool and documents the linkage checks; its router is the classic
+    <code>SwapRouter</code> (struct-level deadline), which <code>buildSwapTx</code> handles
+    transparently.
+  </p>
+</section>
+
+<section class="block">
+  <h2>Swap routing</h2>
+  <p class="sub" style="max-width: 760px">
+    <code>quoteSwap</code> simulates QuoterV2 across all four fee tiers for the direct pair
+    plus 0.05%/0.3% two-hop routes through WETH and USDG, then picks the highest output.
+    Pools that exist with zero liquidity (common for Stock Token pairs) revert inside the
+    quoter and are skipped — if nothing fills, you get a typed <code>NoRouteError</code>,
+    never a silent zero. Slippage is applied in basis points to
+    <code>amountOutMinimum</code>; deadlines use each router's native mechanism
+    (<code>multicall(deadline, …)</code> on SwapRouter02, struct field on classic).
+  </p>
+</section>
+
+<section class="block">
+  <h2>Firehose decoding</h2>
+  <p class="sub" style="max-width: 760px">
+    <code>wss://feed.mainnet.chain.robinhood.com</code> is a standard Arbitrum Nitro
+    broadcast feed: JSON frames of sequenced messages whose <code>l2Msg</code> payload is a
+    base64 Nitro L2 message. hoodchain decodes kind <code>0x04</code> (one signed
+    transaction) and kind <code>0x03</code> (length-prefixed batch, recursively) into viem
+    transactions with their eventual hashes, and passes unknown kinds through raw. The
+    client reconnects with exponential backoff and works on the global WebSocket (Node ≥ 22,
+    browsers) or the optional <code>ws</code> package.
+  </p>
+</section>
+
+<section class="block">
+  <h2>Error hierarchy</h2>
+<pre><code>HoodchainError
+├── UnknownSymbolError          symbol not in the registry
+├── FeedNotFoundError           token exists, no Chainlink feed
+├── StaleFeedError              answer older than maxAgeSeconds (carries ages)
+├── InvalidFeedAnswerError      non-positive / incomplete round
+├── NoRouteError                no v3 route with usable liquidity
+├── SlippageExceededError       output below the slippage bound
+├── NoAccountError              write op on a read-only client
+├── StockTokenEligibilityError  acquiring swap without operator acknowledgement
+└── FeedConnectionError         firehose reconnect budget exhausted</code></pre>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>MIT © 2026 nirholas</span>
+    <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

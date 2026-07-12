@@ -1,0 +1,14 @@
+/* Align typedoc's dark theme with the hoodchain docs palette. */
+:root {
+  --dark-color-background: #0a0a0c;
+  --dark-color-background-secondary: #121216;
+  --dark-color-accent: #232329;
+  --dark-color-text: #ededf0;
+  --dark-color-text-aside: #9c9ca6;
+  --dark-color-link: #7ef29a;
+  --dark-code-background: #0e0e11;
+}
+:root[data-theme='dark'] a:hover,
+:root:not([data-theme='light']) a:hover {
+  color: #4cc9f0;
+}

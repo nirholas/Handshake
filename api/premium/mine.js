@@ -7,7 +7,7 @@
 import { cors, json, wrap, method } from '../_lib/http.js';
 import { sql } from '../_lib/db.js';
 import { getSessionUser } from '../_lib/auth.js';
-import { premiumPlan, PREMIUM_RESOURCES } from '../_lib/premium.js';
+import { listPlans, premiumPlan, PREMIUM_RESOURCES } from '../_lib/premium.js';
 
 const SOLANA_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
@@ -56,10 +56,11 @@ export default wrap(async (req, res) => {
 	return json(
 		res, 200,
 		{
-			plan: premiumPlan(),
+			plan: premiumPlan(), // legacy alias: the entry tier
+			plans: listPlans(),
 			resources: PREMIUM_RESOURCES,
 			active: active
-				? { id: active.id, wallet: active.wallet, expires_at: active.expires_at, asset: active.asset }
+				? { id: active.id, wallet: active.wallet, expires_at: active.expires_at, asset: active.asset, plan: active.plan }
 				: null,
 			passes,
 			keys: keys.map((k) => ({

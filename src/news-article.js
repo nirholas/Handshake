@@ -12,7 +12,7 @@
 // publication, and a related-coverage rail. Publisher-blocked pages degrade
 // to an honest preview with a prominent read-at-source CTA — never a dead end.
 
-import { timeAgo, escapeHtml as esc } from './shared/coin-format.js';
+import { timeAgo, escapeHtml as esc, formatPrice, formatPercent, formatUsd } from './shared/coin-format.js';
 import { newsCard, wireNewsContainer } from './shared/news-render.js';
 import { tickerHref, TICKER_COIN_IDS } from './shared/news-links.js';
 
@@ -69,6 +69,8 @@ function bylineHtml(a) {
 	);
 	if (a.extraction === 'feed') {
 		parts.push(`<span class="art-badge" title="The publisher blocks page fetches; this text comes from their own RSS feed">via publisher feed</span>`);
+	} else if (a.extraction === 'reader') {
+		parts.push(`<span class="art-badge" title="The publisher blocks direct fetches; the full text was recovered through a reader service">full text recovered</span>`);
 	}
 	return `<div class="art-byline">${parts.join('')}</div>`;
 }
@@ -81,6 +83,91 @@ function tickersHtml(a) {
 				`<a class="nw-chip" href="${esc(tickerHref(t))}" aria-label="${TICKER_COIN_IDS[t] ? `${esc(t)} price and profile` : `More ${esc(t)} coverage`}">${esc(t)}</a>`,
 		)
 		.join('')}</div>`;
+}
+
+// Topics/entities the story is about — subtle, non-linked context chips that
+// double as the tags recorded into the agent knowledge base.
+function contextTagsHtml(a) {
+	const tags = [...new Set([...(a.topics || []), ...(a.entities || [])])]
+		.filter((t) => typeof t === 'string' && t.trim().length > 1)
+		.slice(0, 8);
+	if (!tags.length) return '';
+	return `<div class="art-tags" aria-label="Topics">${tags.map((t) => `<span class="art-tag">${esc(t)}</span>`).join('')}</div>`;
+}
+
+// Filled-area sparkline for a coin card — reads at a glance which way the week
+// went. Green above the open, red below, matched to the chart tokens.
+function coinSpark(prices) {
+	const pts = (prices || []).filter((n) => typeof n === 'number' && Number.isFinite(n));
+	if (pts.length < 2) return '';
+	const min = Math.min(...pts);
+	const max = Math.max(...pts);
+	const range = max - min || 1;
+	const w = 180;
+	const h = 44;
+	const coords = pts.map((p, i) => [(i / (pts.length - 1)) * w, h - ((p - min) / range) * (h - 4) - 2]);
+	const line = coords.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+	const up = pts[pts.length - 1] >= pts[0];
+	const stroke = up ? 'var(--cv-chart-green)' : 'var(--cv-chart-red)';
+	const gid = `sg${Math.round(pts[0] * 1e3) % 100000}`;
+	const area = `0,${h} ${line} ${w},${h}`;
+	return `<svg class="art-coin-spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+		<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+			<stop offset="0%" stop-color="${stroke}" stop-opacity="0.28"/>
+			<stop offset="100%" stop-color="${stroke}" stop-opacity="0"/>
+		</linearGradient></defs>
+		<polygon points="${area}" fill="url(#${gid})" stroke="none"/>
+		<polyline points="${line}" fill="none" stroke="${stroke}" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+	</svg>`;
+}
+
+function pct(v) {
+	if (typeof v !== 'number' || !Number.isFinite(v)) return '<span class="dim">—</span>';
+	const up = v >= 0;
+	return `<span class="${up ? 'cv-up' : 'cv-down'}">${up ? '▲' : '▼'} ${esc(formatPercent(Math.abs(v)))}</span>`;
+}
+
+function compactUsd(n) {
+	if (typeof n !== 'number' || !Number.isFinite(n)) return null;
+	if (n >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
+	if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
+	return formatUsd(n);
+}
+
+// Live market cards for the coins a story mentions — real price, 24h/7d moves,
+// a 7d sparkline, and market cap, deep-linked into the coin profile.
+function coinsHtml(a) {
+	const coins = (a.coins || []).filter((c) => c && c.price != null);
+	if (!coins.length) return '';
+	return `
+		<section class="art-coins" aria-label="Coins in this story">
+			<h2>Coins in this story</h2>
+			<div class="art-coin-grid">
+				${coins
+					.map(
+						(c) => `
+					<a class="art-coin-card" href="${esc(c.href || `/coin/${c.id}`)}" aria-label="${esc(c.name)} — ${esc(formatPrice(c.price))}">
+						<div class="art-coin-head">
+							${c.image ? `<img class="art-coin-logo" src="${esc(c.image)}" alt="" loading="lazy" width="26" height="26"/>` : ''}
+							<div class="art-coin-id">
+								<span class="art-coin-sym">${esc(c.symbol)}</span>
+								<span class="art-coin-name">${esc(c.name)}</span>
+							</div>
+							${c.rank ? `<span class="art-coin-rank">#${esc(String(c.rank))}</span>` : ''}
+						</div>
+						${coinSpark(c.sparkline)}
+						<div class="art-coin-price">${esc(formatPrice(c.price))}</div>
+						<div class="art-coin-stats">
+							<span title="24h change">24h ${pct(c.change_24h)}</span>
+							<span title="7d change">7d ${pct(c.change_7d)}</span>
+							${compactUsd(c.market_cap) ? `<span class="dim" title="Market cap">${esc(compactUsd(c.market_cap))}</span>` : ''}
+						</div>
+					</a>`,
+					)
+					.join('')}
+			</div>
+			<p class="art-coins-note">Live market data · tap a coin for its full profile</p>
+		</section>`;
 }
 
 function fmtUsd(n) {
@@ -106,7 +193,7 @@ function summaryCardHtml(a, seed) {
 			<h2>Summary</h2>
 			<p>${esc(a.summary || a.description || '')}</p>
 			${points.length ? `<h2 style="margin-top:1rem">Key points</h2><ul class="art-keypoints">${points.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
-			${marketContextHtml(seed?.market_context)}
+			${marketContextHtml(a.market_context || seed?.market_context)}
 			<p class="art-provider">${a.analysis_provider === 'heuristic' ? 'Extractive summary from the article text' : `AI summary via ${esc(a.analysis_provider)}`} · three.ws news</p>
 		</div>`;
 }
@@ -122,7 +209,9 @@ function render(a, seed) {
 		<div class="art-layout">
 			<div>
 				${tickersHtml(a)}
+				${coinsHtml(a)}
 				${summaryCardHtml(a, seed)}
+				${contextTagsHtml(a)}
 				${
 					isPreview
 						? `<div class="art-preview-note">

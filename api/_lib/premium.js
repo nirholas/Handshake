@@ -43,25 +43,88 @@ import { solanaConnection } from './solana/connection.js';
 import { rpcFallbackFromEnv } from './solana/rpc-fallback.js';
 import { NETWORK_SOLANA_MAINNET } from './x402-spec.js';
 
-// ── Plan ─────────────────────────────────────────────────────────────────────
+// ── Plans ────────────────────────────────────────────────────────────────────
+//
+// Three self-serve tiers differentiated on the one axis the platform actually
+// enforces — the API key's per-minute rate limit — plus licensing terms.
+// Every price is env-overridable at runtime (no deploy to reprice):
+//   PREMIUM_PRICE_DEVELOPER / _PRO / _ENTERPRISE       (USD)
+//   PREMIUM_RATE_LIMIT_DEVELOPER / _PRO / _ENTERPRISE  (req/min)
+//   PREMIUM_PASS_USD keeps working as a legacy alias for the developer price,
+//   PREMIUM_PASS_THREE_DISCOUNT / PREMIUM_PASS_DAYS apply to every tier.
+// Rows written before tiers existed carry plan='premium' — treated as
+// 'developer' everywhere.
 
 const num = (v, fallback) => {
 	const n = Number(v);
 	return Number.isFinite(n) && n > 0 ? n : fallback;
 };
 
-export function premiumPlan() {
-	const usd = num(process.env.PREMIUM_PASS_USD, 9.99);
+const TIERS = [
+	{
+		id: 'developer',
+		name: 'Developer',
+		defaultUsd: 19.99,
+		defaultRate: 120,
+		commercial: false,
+		blurb: 'Unmetered archive search for personal projects, bots, and evaluation.',
+	},
+	{
+		id: 'pro',
+		name: 'Pro',
+		defaultUsd: 99,
+		defaultRate: 600,
+		commercial: true,
+		blurb: 'Commercial use for products, dashboards, and research desks — 5× the throughput.',
+	},
+	{
+		id: 'enterprise',
+		name: 'Enterprise',
+		defaultUsd: 499,
+		defaultRate: 2000,
+		commercial: true,
+		blurb: 'Platform-scale throughput, priority support, and bulk corpus arrangements.',
+	},
+];
+
+function resolveTier(t) {
+	const key = t.id.toUpperCase();
+	const legacyUsd = t.id === 'developer' ? process.env.PREMIUM_PASS_USD : undefined;
+	const usd = num(process.env[`PREMIUM_PRICE_${key}`], num(legacyUsd, t.defaultUsd));
 	const threeDiscount = Math.min(0.9, Math.max(0, num(process.env.PREMIUM_PASS_THREE_DISCOUNT, 0.2)));
 	return {
-		id: 'premium',
-		name: 'three.ws Premium',
+		id: t.id,
+		name: `three.ws ${t.name}`,
+		tier: t.name,
 		usd,
 		days: num(process.env.PREMIUM_PASS_DAYS, 30),
 		threeDiscount,
 		threeUsd: Math.round(usd * (1 - threeDiscount) * 100) / 100,
-		rateLimitPerMinute: num(process.env.PREMIUM_RATE_LIMIT_PER_MINUTE, 120),
+		rateLimitPerMinute: num(process.env[`PREMIUM_RATE_LIMIT_${key}`], t.defaultRate),
+		commercial: t.commercial,
+		blurb: t.blurb,
 	};
+}
+
+export function listPlans() {
+	return TIERS.map(resolveTier);
+}
+
+export function planById(id) {
+	const wanted = id === 'premium' || !id ? 'developer' : String(id).toLowerCase();
+	const t = TIERS.find((x) => x.id === wanted);
+	if (!t) {
+		const err = new Error(`plan must be one of: ${TIERS.map((x) => x.id).join(', ')}`);
+		err.status = 400;
+		err.code = 'bad_plan';
+		throw err;
+	}
+	return resolveTier(t);
+}
+
+/** Legacy accessor — the entry tier. Prefer planById()/listPlans(). */
+export function premiumPlan() {
+	return planById('developer');
 }
 
 // Resources the pass unlocks via SIWX browser grants. The API-key lane is
@@ -103,11 +166,10 @@ export function treasuryWallet() {
 // ── Pricing ──────────────────────────────────────────────────────────────────
 
 /**
- * Convert the plan's USD price into an atomic amount of `asset` at the current
+ * Convert a plan's USD price into an atomic amount of `asset` at the current
  * oracle price. Returns { atomics, assetUsd, priceSource, usd }.
  */
-export async function priceAsset(asset) {
-	const plan = premiumPlan();
+export async function priceAsset(asset, plan = premiumPlan()) {
 	if (asset === 'USDC') {
 		return { atomics: BigInt(usdToUsdcAtomics(plan.usd)), assetUsd: null, priceSource: 'parity', usd: plan.usd };
 	}
@@ -152,12 +214,12 @@ export function assertWallet(wallet) {
  * to the treasury) and persist the locked quote. Returns
  * { quote, tx_base64 } where quote carries id/asset/atomics/expiry.
  */
-export async function createQuote({ wallet, asset, userId = null }) {
+export async function createQuote({ wallet, asset, planId = 'developer', userId = null }) {
 	assertWallet(wallet);
 	const { mint, decimals } = assetConfig(asset);
 	const payTo = treasuryWallet();
-	const plan = premiumPlan();
-	const priced = await priceAsset(asset);
+	const plan = planById(planId);
+	const priced = await priceAsset(asset, plan);
 
 	const buyer = new PublicKey(wallet);
 	const dest = new PublicKey(payTo);
@@ -282,7 +344,7 @@ async function currentPass(wallet) {
  * (with the key prefix, not the plaintext — that is shown exactly once).
  */
 export async function activatePass({ quote, txSignature, userId = null }) {
-	const plan = premiumPlan();
+	const plan = planById(quote.plan);
 
 	// Claim the quote first — a lost race here means someone else's request is
 	// already activating this exact payment; fall through to the idempotent read.
@@ -311,9 +373,12 @@ export async function activatePass({ quote, txSignature, userId = null }) {
 	let apiKey = null;
 	let subscriptionId = prev?.api_subscription_id || null;
 	if (subscriptionId) {
+		// Extend AND retier: an upgrade purchase (developer → pro) raises the
+		// existing key's rate limit immediately; a renewal leaves it unchanged.
 		const [extended] = await sql`
 			update x402_subscriptions
-			   set expires_at = ${expiresAt.toISOString()}
+			   set expires_at = ${expiresAt.toISOString()},
+			       rate_limit_per_minute = ${plan.rateLimitPerMinute}
 			 where id = ${subscriptionId} and revoked_at is null
 			returning id
 		`;
@@ -321,10 +386,10 @@ export async function activatePass({ quote, txSignature, userId = null }) {
 	}
 	if (!subscriptionId) {
 		const sub = await createSubscription({
-			name: `Premium pass · ${quote.wallet.slice(0, 4)}…${quote.wallet.slice(-4)}`,
+			name: `${plan.name} pass · ${quote.wallet.slice(0, 4)}…${quote.wallet.slice(-4)}`,
 			rateLimitPerMinute: plan.rateLimitPerMinute,
 			expiresAt: expiresAt.toISOString(),
-			meta: { source: 'premium-pass', wallet: quote.wallet, user_id: userId },
+			meta: { source: 'premium-pass', plan: plan.id, wallet: quote.wallet, user_id: userId },
 			createdBy: userId,
 		});
 		subscriptionId = sub.id;

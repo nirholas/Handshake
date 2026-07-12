@@ -2739,15 +2739,51 @@ GET /api/news/article?url=<article url>&title=&source=
 ```
 
 Server-side extraction with SSRF + DNS-rebinding protection. Returns
-`{ url, title, source, image, author, published_at, description, extraction,
-paragraphs[], content_chars, tickers[], summary, key_points[], sentiment
-("bullish"|"bearish"|"neutral"), analysis_provider, related[], fetched_at }`.
-`extraction` tells you where the text came from: `"page"` (publisher page),
-`"feed"` (the publisher's own `content:encoded` feed body — used when the
-page blocks server fetches), or `"preview"` (metadata only; `blocked_reason`
-set). `analysis_provider` is `groq`/`openrouter` when the platform LLM chain
-is configured, else `heuristic` (extractive summary + lexicon sentiment —
-always available). Cached 30 min per URL.
+`{ id, url, title, source, image, author, published_at, description,
+extraction, paragraphs[], content_chars, tickers[], coins[], summary,
+key_points[], entities[], topics[], sentiment
+("bullish"|"bearish"|"neutral"), analysis_provider, market_context, related[],
+fetched_at }`.
+
+`extraction` tells you where the text came from, in ladder order
+(`api/_lib/article-extract.js`): `"page"` (the publisher's own HTML),
+`"reader"` (recovered through a keyless reader service when the publisher
+Cloudflare-blocks direct fetches — this is what makes bot-blocked outlets like
+The Defiant and CoinDesk return a full story instead of a one-line teaser),
+`"feed"` (the publisher's own `content:encoded` feed body), or `"preview"`
+(metadata only; `blocked_reason` set).
+
+`coins[]` is a live market snapshot for every detected ticker that maps to a
+known coin — `{ symbol, id, name, image, price, change_24h, change_7d,
+market_cap, volume_24h, rank, sparkline[], href }` — so the reader can render a
+price card + 7d chart deep-linked to `/coin/:id`. `entities[]` / `topics[]` are
+the orgs/people/projects and themes the story is about (LLM layer).
+`analysis_provider` names the LLM that summarized it (via the platform chain),
+else `heuristic` (extractive summary + lexicon sentiment — always available).
+
+Cached 30 min per URL in-process; a fully extracted story is also persisted to
+the durable knowledge base below (which then serves as a cross-instance cache,
+so a blockable publisher is only fetched once).
+
+### News knowledge base
+
+```
+GET /api/news/knowledge?id=<16hex>              # full stored record for one story
+GET /api/news/knowledge?ticker=SOL&full=1       # recent stories mentioning a coin
+GET /api/news/knowledge?q=etf&limit=20          # free-text over titles + summaries
+GET /api/news/knowledge                          # latest recorded stories + corpus stats
+```
+
+The grounding surface the three.ws 3D agents read crypto from. Every story the
+reader fully extracts and analyzes is recorded here (`news_knowledge` table,
+`api/_lib/news-knowledge-store.js`): full body, AI summary + key points,
+sentiment, detected tickers with their market snapshot, and named entities —
+permanent and queryable, distinct from the append-only GCS archive and from
+per-agent memory. Lightweight rows by default (id, title, source, sentiment,
+tickers, entities, summary); add `&full=1` for the extracted paragraphs and
+coin snapshot. `stats` reports `{ total, full_text, latest, enabled }`. Free,
+key-less, CORS `*`; CDN cache 60–120 s. Degrades to an empty corpus
+(`enabled:false`) when the platform database is not configured.
 
 ---
 

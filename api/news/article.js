@@ -1,117 +1,38 @@
 // GET /api/news/article?url=<article url>&title=&source=
 // ---------------------------------------------------------------------------
-// Rich article detail for the /markets/news reader. Fetches the publisher
-// page server-side (SSRF-guarded), extracts the real article text and
-// metadata, and layers analysis on top:
-//   • paragraphs      extracted plain-text body (up to 8k chars)
-//   • summary         LLM summary via the platform chain (Groq → OpenRouter);
-//                     falls back to the article's own lead paragraphs
+// Rich article detail for the /markets/news reader. Runs the full extraction
+// ladder (publisher page → Jina Reader → publisher feed → preview, in
+// api/_lib/article-extract.js), so a Cloudflare-blocked publisher still yields
+// the full story instead of a one-line teaser. Layers analysis on top:
+//   • paragraphs      extracted plain-text body
+//   • summary         LLM summary via the platform chain; falls back to lead
 //   • key_points      3–5 takeaways (LLM, or highest-signal sentences)
+//   • entities        orgs / people / projects the story is about (LLM)
 //   • sentiment       bullish / bearish / neutral
 //   • tickers         detected symbols, linkable to /coin/:id
+//   • coins           live price + 7d sparkline for each mapped ticker
 //   • related         live related coverage from the native aggregator
+//
+// Every fully-extracted, analyzed story is recorded to the durable news
+// knowledge base (api/_lib/news-knowledge-store.js) — the corpus the 3D agents
+// read crypto from — which also serves as a cross-instance cache so a story is
+// only pulled from the (rate-limited, blockable) publisher once.
 //
 // The LLM layer is optional by design — when no provider key is present the
 // endpoint still returns the full extracted article with heuristic analysis,
 // clearly labelled via analysis_provider.
 
-import { lookup } from 'node:dns/promises';
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { getNews, findArticle, extractTickers, lexiconSentiment, stripHtml, stripJsonFence, metaContent } from '../_lib/news.js';
+import { getNews, findArticle, articleId, extractTickers, lexiconSentiment, stripJsonFence, metaContent, stripHtml } from '../_lib/news.js';
 import { llmComplete, llmConfigured } from '../_lib/llm.js';
+import { extractArticle } from '../_lib/article-extract.js';
+import { enrichTickers } from '../_lib/news-coins.js';
+import { recordExtraction, getExtraction } from '../_lib/news-knowledge-store.js';
 
-const FETCH_TIMEOUT_MS = 10_000;
-const MAX_RESPONSE_BYTES = 5 * 1024 * 1024;
 const CACHE_TTL_MS = 30 * 60_000;
 
 const _cache = new Map(); // url → { value, expiresAt }
-
-// ── SSRF protection (ported from the cryptocurrency.cv article extractor) ───
-
-function isPrivateOrReservedHost(hostname) {
-	const host = hostname.toLowerCase();
-	if (['localhost', 'metadata.google.internal', 'metadata.google', 'instance-data'].includes(host)) return true;
-	const v4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-	if (v4) {
-		const [, a, b] = v4.map(Number);
-		if (
-			a === 0 || a === 10 || a === 127 ||
-			(a === 169 && b === 254) ||
-			(a === 172 && b >= 16 && b <= 31) ||
-			(a === 192 && b === 168)
-		) return true;
-	}
-	const bare = host.replace(/^\[|\]$/g, '');
-	if (bare === '::1' || /^(fc|fd)/i.test(bare) || /^fe[89ab]/i.test(bare)) return true;
-	return false;
-}
-
-async function assertPublicUrl(urlString) {
-	const parsed = new URL(urlString);
-	if (!/^https?:$/.test(parsed.protocol)) throw new Error('only http(s) urls are supported');
-	if (isPrivateOrReservedHost(parsed.hostname)) throw new Error('url targets a private address');
-	// DNS-rebinding guard: resolve and re-check the actual address
-	if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(parsed.hostname) && !parsed.hostname.includes(':')) {
-		const { address } = await lookup(parsed.hostname);
-		if (isPrivateOrReservedHost(address)) throw new Error('url resolves to a private address');
-	}
-}
-
-// ── Extraction ───────────────────────────────────────────────────────────────
-// metaContent lives in _lib/news.js, shared with the /api/news/image resolver.
-
-function extractParagraphs(html) {
-	// Prefer semantic containers; fall back to the whole document.
-	const scoped =
-		html.match(/<article[^>]*>([\s\S]*?)<\/article>/i)?.[1] ||
-		html.match(/<main[^>]*>([\s\S]*?)<\/main>/i)?.[1] ||
-		html;
-	const cleaned = scoped
-		.replace(/<script[\s\S]*?<\/script>/gi, ' ')
-		.replace(/<style[\s\S]*?<\/style>/gi, ' ')
-		.replace(/<(nav|header|footer|aside|form|figure)[\s\S]*?<\/\1>/gi, ' ');
-	const paragraphs = [];
-	for (const m of cleaned.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)) {
-		const text = stripHtml(m[1]);
-		// skip boilerplate fragments (share prompts, cookie banners, bylines-only)
-		if (text.length < 40) continue;
-		paragraphs.push(text);
-		if (paragraphs.length >= 60) break;
-	}
-	// Some sites (notably CMS-rendered Chinese outlets) use <div> text blocks.
-	if (!paragraphs.length) {
-		const text = stripHtml(cleaned);
-		if (text.length > 200) {
-			for (let i = 0; i < text.length && paragraphs.length < 20; i += 400) {
-				paragraphs.push(text.slice(i, i + 400));
-			}
-		}
-	}
-	return paragraphs;
-}
-
-async function fetchArticle(url) {
-	await assertPublicUrl(url);
-	const resp = await fetch(url, {
-		headers: {
-			'user-agent': 'Mozilla/5.0 (compatible; three.ws-news/1.0; +https://three.ws)',
-			accept: 'text/html,application/xhtml+xml',
-		},
-		redirect: 'follow',
-		signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-	});
-	if (!resp.ok) throw Object.assign(new Error(`source responded ${resp.status}`), { status: resp.status });
-	const contentType = resp.headers.get('content-type') || '';
-	if (!contentType.includes('text/html') && !contentType.includes('application/xhtml+xml')) {
-		throw new Error(`unsupported content type: ${contentType.split(';')[0] || 'unknown'}`);
-	}
-	const declared = parseInt(resp.headers.get('content-length') || '0', 10);
-	if (declared > MAX_RESPONSE_BYTES) throw new Error('article page too large');
-	const html = await resp.text();
-	if (html.length > MAX_RESPONSE_BYTES) throw new Error('article page too large');
-	return html;
-}
 
 // ── Analysis ─────────────────────────────────────────────────────────────────
 
@@ -123,18 +44,19 @@ async function llmAnalyze(content, title, source) {
 	try {
 		const { text, provider } = await llmComplete({
 			system: 'You are a crypto news analyst. Respond only with valid JSON, no markdown fence.',
-			user: `Analyze this article. Respond as {"summary": "...2-3 sentence summary...", "key_points": ["...", "..."], "sentiment": "bullish|bearish|neutral"}.\n\nTitle: ${title}\nSource: ${source}\n\n${content.slice(0, 6000)}`,
-			maxTokens: 700,
+			user: `Analyze this article. Respond as {"summary": "...2-3 sentence summary...", "key_points": ["...", "..."], "sentiment": "bullish|bearish|neutral", "entities": ["organizations, people, and projects the story is about"], "topics": ["1-3 word themes"]}.\n\nTitle: ${title}\nSource: ${source}\n\n${content.slice(0, 6000)}`,
+			maxTokens: 800,
 			timeoutMs: 15_000,
 			track: { tool: 'news_article' },
 		});
 		const parsed = JSON.parse(stripJsonFence(text));
 		if (!parsed.summary) return null;
+		const list = (v, n, cap) => (Array.isArray(v) ? v : []).map((p) => String(p).slice(0, cap)).filter(Boolean).slice(0, n);
 		return {
 			summary: String(parsed.summary).slice(0, 1200),
-			key_points: (Array.isArray(parsed.key_points) ? parsed.key_points : [])
-				.map((p) => String(p).slice(0, 300))
-				.slice(0, 5),
+			key_points: list(parsed.key_points, 5, 300),
+			entities: list(parsed.entities, 12, 80),
+			topics: list(parsed.topics, 8, 40),
 			sentiment: ['bullish', 'bearish', 'neutral'].includes(parsed.sentiment) ? parsed.sentiment : 'neutral',
 			provider,
 		};
@@ -169,7 +91,7 @@ function heuristicAnalyze(paragraphs, title) {
 	}
 	const lex = lexiconSentiment(`${title} ${lead}`);
 	const sentiment = lex.label.includes('positive') ? 'bullish' : lex.label.includes('negative') ? 'bearish' : 'neutral';
-	return { summary, key_points, sentiment, provider: 'heuristic' };
+	return { summary, key_points, entities: [], topics: [], sentiment, provider: 'heuristic' };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -191,43 +113,31 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'bad_url', 'url is not a valid absolute URL');
 	}
 
+	const cacheHeaders = { 'cache-control': 'public, max-age=600, s-maxage=1800, stale-while-revalidate=3600' };
+
 	const hit = _cache.get(target);
-	if (hit && hit.expiresAt > Date.now()) {
-		return json(res, 200, hit.value, {
-			'cache-control': 'public, max-age=600, s-maxage=1800, stale-while-revalidate=3600',
-		});
+	if (hit && hit.expiresAt > Date.now()) return json(res, 200, hit.value, cacheHeaders);
+
+	const id = articleId(target);
+
+	// Durable cache: a prior instance may have already done the expensive full
+	// extraction. Reuse it when it carries real body text — never re-hammer a
+	// rate-limited publisher for a story we already know in full.
+	const stored = await getExtraction(id).catch(() => null);
+	if (stored && (stored.extraction === 'page' || stored.extraction === 'reader') && stored.content_chars > 400) {
+		_cache.set(target, { value: stored, expiresAt: Date.now() + CACHE_TTL_MS });
+		return json(res, 200, stored, cacheHeaders);
 	}
 
 	// The publisher's own feed copy — trusted metadata, and (for feeds that
-	// ship content:encoded) the full article body. Looked up first so a
-	// bot-blocked page fetch still yields real content, never a dead end.
+	// ship content:encoded) a fuller body. Looked up first so a bot-blocked
+	// page fetch still has a fallback body, never a dead end.
 	const feedCopy = await findArticle({ link: target }).catch(() => null);
 
-	let html = null;
-	let fetchError = null;
-	try {
-		html = await fetchArticle(target);
-	} catch (err) {
-		fetchError = err;
-	}
-
-	// extraction ladder: publisher page → publisher feed body → preview
-	let paragraphs = html ? extractParagraphs(html) : [];
-	let extraction = 'page';
-	if (paragraphs.length < 2 && feedCopy?.content_text) {
-		paragraphs = feedCopy.content_text
-			.split(/(?<=[.!?。])\s+(?=[A-Z0-9"“【「])|\n+/)
-			.reduce((acc, sentence) => {
-				const last = acc[acc.length - 1];
-				if (last && last.length + sentence.length < 420) acc[acc.length - 1] = `${last} ${sentence}`;
-				else acc.push(sentence);
-				return acc;
-			}, [])
-			.filter((p) => p.trim().length > 20);
-		extraction = 'feed';
-	} else if (paragraphs.length < 2) {
-		extraction = 'preview';
-	}
+	// Run the extraction ladder: page → reader → feed → preview.
+	const { paragraphs, extraction, blocked_reason, html } = await extractArticle(target, {
+		feedContentText: feedCopy?.content_text || null,
+	});
 
 	const title =
 		(params.get('title') || '').trim().slice(0, 300) ||
@@ -242,26 +152,34 @@ export default wrap(async (req, res) => {
 		new URL(target).hostname.replace(/^www\./, '');
 
 	const content = paragraphs.join('\n').slice(0, 8000);
-	const analysis = (content.length > 300 ? await llmAnalyze(content, title, source) : null) ||
+	const analysis =
+		(content.length > 300 ? await llmAnalyze(content, title, source) : null) ||
 		heuristicAnalyze(paragraphs.length ? paragraphs : [feedCopy?.description || title], title);
 
 	const tickers = extractTickers(`${title} ${content.slice(0, 2000)} ${feedCopy?.description || ''}`);
-	let related = [];
-	try {
-		const relatedQuery = tickers[0] || title.split(/\s+/).slice(0, 3).join(' ');
-		const rel = await getNews({ q: relatedQuery, limit: 7 });
-		related = rel.articles.filter((a) => a.link !== target).slice(0, 6);
-		if (!related.length) {
-			// niche story with no keyword siblings — fall back to the latest
-			// headlines from the same category (or the front page)
-			const fallback = await getNews({ category: feedCopy?.category, limit: 7 });
-			related = fallback.articles.filter((a) => a.link !== target).slice(0, 6);
-		}
-	} catch {
-		related = []; // related rail is optional; the article itself already loaded
-	}
+
+	// Live market snapshot for the mapped tickers, and related coverage — both
+	// optional, fetched together so neither blocks the other.
+	const [coins, related] = await Promise.all([
+		enrichTickers(tickers).catch(() => []),
+		(async () => {
+			try {
+				const relatedQuery = tickers[0] || title.split(/\s+/).slice(0, 3).join(' ');
+				const rel = await getNews({ q: relatedQuery, limit: 7 });
+				let out = rel.articles.filter((a) => a.link !== target).slice(0, 6);
+				if (!out.length) {
+					const fallback = await getNews({ category: feedCopy?.category, limit: 7 });
+					out = fallback.articles.filter((a) => a.link !== target).slice(0, 6);
+				}
+				return out;
+			} catch {
+				return [];
+			}
+		})(),
+	]);
 
 	const value = {
+		id,
 		url: target,
 		title,
 		source,
@@ -275,22 +193,29 @@ export default wrap(async (req, res) => {
 			(html && metaContent(html, ['og:description', 'description', 'twitter:description'])) ||
 			feedCopy?.description ||
 			null,
-		extraction, // 'page' | 'feed' | 'preview'
-		blocked_reason: extraction === 'preview' && fetchError ? String(fetchError.message || 'fetch failed') : null,
+		extraction, // 'page' | 'reader' | 'feed' | 'preview'
+		blocked_reason: extraction === 'preview' ? blocked_reason : null,
 		paragraphs,
 		content_chars: content.length,
 		tickers,
+		coins,
 		summary: analysis.summary,
 		key_points: analysis.key_points,
+		entities: analysis.entities,
+		topics: analysis.topics,
 		sentiment: analysis.sentiment,
 		analysis_provider: analysis.provider,
+		market_context: feedCopy?.market_context || null,
 		related,
 		fetched_at: new Date().toISOString(),
 	};
 
 	_cache.set(target, { value, expiresAt: Date.now() + CACHE_TTL_MS });
 	if (_cache.size > 256) _cache.delete(_cache.keys().next().value);
-	return json(res, 200, value, {
-		'cache-control': 'public, max-age=600, s-maxage=1800, stale-while-revalidate=3600',
-	});
+
+	// Record into the durable knowledge base the 3D agents read from. Fire-and-
+	// forget: a persistence hiccup must never fail the reader response.
+	recordExtraction(value).catch(() => {});
+
+	return json(res, 200, value, cacheHeaders);
 });

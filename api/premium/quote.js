@@ -1,6 +1,7 @@
 // POST /api/premium/quote — lock a price and get the unsigned payment tx.
 //
-// body: { asset: 'THREE' | 'SOL' | 'USDC', wallet: '<base58>' }
+// body: { asset: 'THREE' | 'SOL' | 'USDC', wallet: '<base58>',
+//         plan?: 'developer' | 'pro' | 'enterprise' }   (default developer)
 // →     { quote: { id, asset, amount_atomics, usd_price, expires_at }, tx_base64 }
 //
 // The buyer signs tx_base64 in their own wallet (they are the fee payer),
@@ -23,6 +24,7 @@ export default wrap(async (req, res) => {
 	const body = await readJson(req).catch(() => null);
 	const asset = String(body?.asset || '').toUpperCase();
 	const wallet = String(body?.wallet || '').trim();
+	const planId = String(body?.plan || 'developer').toLowerCase();
 	if (!['THREE', 'SOL', 'USDC'].includes(asset)) {
 		return error(res, 400, 'bad_asset', 'asset must be THREE, SOL, or USDC');
 	}
@@ -38,7 +40,7 @@ export default wrap(async (req, res) => {
 	}
 
 	try {
-		const { quote, tx_base64 } = await createQuote({ wallet, asset, userId });
+		const { quote, tx_base64 } = await createQuote({ wallet, asset, planId, userId });
 		return json(res, 200, { quote, tx_base64 }, { 'cache-control': 'no-store' });
 	} catch (e) {
 		return error(res, e.status || 502, e.code || 'quote_failed', e.message);

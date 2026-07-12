@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hoodchain — the Robinhood Chain SDK</title>
+<meta name="description" content="TypeScript SDK for Robinhood Chain (4663): Stock Tokens, Chainlink quotes, multiplier-correct portfolios, Uniswap v3 swaps, USDG, launchpad watchers, and the sequencer firehose.">
+<link rel="stylesheet" href="./site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%AA%B6%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<nav class="top" aria-label="Site">
+  <div class="wrap">
+    <a class="brand" href="./index.html">hood<span class="tick">chain</span></a>
+    <div class="links">
+      <a href="#quickstart">Quickstart</a>
+      <a href="#modules" class="hide-sm">Modules</a>
+      <a href="./architecture.html">Architecture</a>
+      <a href="./api/index.html">API reference</a>
+      <a href="https://github.com/nirholas/robinhood-chain-sdk">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <h1>The TypeScript SDK for<br><span class="grad">Robinhood Chain</span></h1>
+  <p class="lede">
+    Typed, tree-shakeable, viem-native. 95 verified Stock Tokens, Chainlink quotes with
+    staleness guards, multiplier-correct portfolios, Uniswap v3 swaps, USDG, launchpad
+    watchers for NOXA &amp; The Odyssey, and the raw sequencer firehose — chain ID 4663.
+  </p>
+  <div class="cta">
+    <span class="install"><span class="dollar">$</span> npm install hoodchain viem</span>
+    <a class="btn primary" href="#quickstart">Get started</a>
+    <a class="btn" href="./api/index.html">API reference</a>
+  </div>
+
+  <div class="board-head">
+    <h2>Stock Tokens, live</h2>
+    <span class="status" id="board-status"><span class="dot"></span><span id="board-status-text">connecting to chain 4663…</span></span>
+  </div>
+  <div class="board" id="board" aria-live="polite"></div>
+  <div class="board-error" id="board-error">
+    Could not reach the public RPC (<code>rpc.mainnet.chain.robinhood.com</code>) from your
+    browser. It may be briefly unavailable, or an extension is blocking cross-origin
+    requests — check the <a href="https://robinhoodchain.blockscout.com">explorer</a> and reload.
+  </div>
+  <p class="board-note">
+    Every price on this page is read client-side from Robinhood Chain's public RPC — one
+    <code>eth_call</code> per Chainlink feed, refreshed every 15&nbsp;s. Feeds are
+    multiplier-adjusted token prices and update 24/5 following market hours.
+  </p>
+</header>
+
+<main class="wrap">
+
+<section class="block" id="quickstart">
+  <h2>Quickstart</h2>
+  <p class="sub">Node ≥ 20. viem is a peer dependency; <code>ws</code> is optional (Node ≤ 21 firehose only).</p>
+<pre><code>npm install hoodchain viem</code></pre>
+<pre><code>import { createHoodClient, getQuote, getPortfolio } from 'hoodchain'
+
+const hood = createHoodClient()               // mainnet 4663, public RPC
+
+// Chainlink quote (multiplier-adjusted token price, staleness-guarded)
+const aapl = await getQuote(hood, 'AAPL')
+console.log(`AAPL: $${aapl.priceUsd}`)
+
+// Multiplier-correct portfolio for any address
+const portfolio = await getPortfolio(hood, '0xYourAddress')
+console.log(`total: $${portfolio.totalUsd.toFixed(2)}`)
+for (const p of portfolio.positions) {
+  console.log(`${p.symbol}: ${p.balanceTokens} tokens = ${p.shareEquivalent} shares → $${p.valueUsd}`)
+}</code></pre>
+  <p class="sub" style="margin-top:16px">
+    Wallet operations take a viem account:
+  </p>
+<pre><code>import { privateKeyToAccount } from 'viem/accounts'
+
+const hood = createHoodClient({
+  chain: 'testnet',
+  account: privateKeyToAccount(process.env.ROBINHOOD_CHAIN_PRIVATE_KEY),
+})
+const { hash, receipt } = await executeSwap(hood, {
+  tokenIn: TESTNET_ADDRESSES.weth,
+  tokenOut: TESTNET_STOCK_TOKENS.NFLX,
+  amountIn: parseEther('0.0001'),
+})</code></pre>
+</section>
+
+<section class="block" id="modules">
+  <h2>Modules</h2>
+  <p class="sub">Import only what you use — the package is side-effect-free and tree-shakeable.</p>
+  <div class="grid">
+    <div class="card">
+      <h3><code>client</code></h3>
+      <p>Thin factory over viem pinned to the official <code>robinhood</code> / <code>robinhoodTestnet</code> chain definitions. Multicall batching on by default.</p>
+    </div>
+    <div class="card">
+      <h3><code>stocks</code></h3>
+      <p>The 95-token registry, Chainlink quotes with a configurable staleness guard, ERC-8056 multipliers, and portfolios whose share math matches the token's own <code>balanceOfUI()</code>.</p>
+    </div>
+    <div class="card">
+      <h3><code>swap</code></h3>
+      <p>QuoterV2 quoting across every fee tier plus two-hop routes via WETH/USDG, slippage bounds, deadlines, and calldata for the canonical router on each network.</p>
+    </div>
+    <div class="card">
+      <h3><code>usdg</code></h3>
+      <p>Paxos Global Dollar: verified address, 6-decimal parse/format, balances, transfers, approvals. (No EIP-2612 permit — verified on-chain.)</p>
+    </div>
+    <div class="card">
+      <h3><code>launchpads</code></h3>
+      <p>Decoded launch, curve-trade, and graduation events for NOXA and The Odyssey — <code>watchLaunches()</code>, <code>getRecentLaunches()</code>, <code>watchGraduations()</code>.</p>
+    </div>
+    <div class="card">
+      <h3><code>feed</code></h3>
+      <p>Reconnecting client for the sequencer firehose: every transaction decoded ~100–300&nbsp;ms before RPC, plus a simple <code>watchTransfers()</code> helper.</p>
+    </div>
+  </div>
+
+  <div class="disclosure">
+    <strong>Stock Token eligibility.</strong> Stock Tokens are tokenized debt securities
+    (issuer: Robinhood Assets (Jersey) Ltd) and may not be offered, sold, or delivered to US
+    persons (additional limits: Canada, UK, Switzerland). Reading data is unrestricted;
+    swaps that <em>acquire</em> a Stock Token throw until the operator sets
+    <code>acknowledgeStockTokenEligibility: true</code>, affirming eligibility.
+  </div>
+</section>
+
+<section class="block" id="verified">
+  <h2>Verified, not vibes</h2>
+  <p class="sub">
+    Every address the SDK ships was verified during development — and is re-verified every
+    time the registry regenerates (<code>npm run refresh-registry</code>).
+  </p>
+  <div class="grid">
+    <div class="card">
+      <h3>95 tokens, one beacon</h3>
+      <p>All canonical Stock Tokens are BeaconProxies onto one shared, source-verified <code>Stock</code> implementation. The registry asserts the beacon slot of every entry — a counterfeit token cannot slip in.</p>
+    </div>
+    <div class="card">
+      <h3>34 Chainlink feeds</h3>
+      <p>Feed proxies come from Chainlink's official directory and each one answered <code>latestRoundData()</code> with a positive 8-decimal price at generation.</p>
+    </div>
+    <div class="card">
+      <h3>On-chain-linked Uniswap</h3>
+      <p>The router, quoter, and factory were resolved by reading <code>factory()</code> / <code>WETH9()</code> on-chain — not copied from a chain-list. Both networks' flavors handled.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>MIT © 2026 nirholas</span>
+    <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
+  </div>
+</footer>
+
+<script>
+// Live Stock Token board — raw JSON-RPC eth_call to each Chainlink feed, no libraries.
+// latestRoundData() selector 0xfeaf968c; answer = second 32-byte word, 8 decimals.
+const RPC = 'https://rpc.mainnet.chain.robinhood.com'
+const TOKENS = [
+  { symbol: 'AAPL', name: 'Apple', feed: '0x6B22A786bAa607d76728168703a39Ea9C99f2cD0' },
+  { symbol: 'TSLA', name: 'Tesla', feed: '0x4A1166a659A55625345e9515b32adECea5547C38' },
+  { symbol: 'NVDA', name: 'NVIDIA', feed: '0x379EC4f7C378F34a1B47E4F3cbeBCbAC3E8E9F15' },
+  { symbol: 'MSFT', name: 'Microsoft', feed: '0x45C3C877C15E6BA2EBB19eA114Ea508d14C1Af2E' },
+  { symbol: 'META', name: 'Meta Platforms', feed: '0x7C38C00C30BEe9378381E7B6135d7283356D71b1' },
+  { symbol: 'AMZN', name: 'Amazon', feed: '0xD5a1508ceD74c084eBf3cBe853e2C968fB2a651C' },
+  { symbol: 'GOOGL', name: 'Alphabet', feed: '0xF6f373a037c30F0e5010d854385cA89185AE638b' },
+  { symbol: 'SPY', name: 'S&P 500 ETF', feed: '0x319724394D3A0e3669269846abE664Cd621f9f6A' },
+  { symbol: 'QQQ', name: 'Invesco QQQ', feed: '0x80901d846d5D7B030F26B480776EE3b29374C2ae' },
+  { symbol: 'COIN', name: 'Coinbase', feed: '0xA3a468A452940B7D6b69991207B508c609a98Ef2' },
+  { symbol: 'MSTR', name: 'Strategy', feed: '0x396118bdFB181e6240E74D243F266B061c0edc3D' },
+  { symbol: 'GME', name: 'GameStop', feed: '0x27C71df6A64fB476468EdF256CF72c038baB5B67' },
+  { symbol: 'PLTR', name: 'Palantir', feed: '0x820ABedFF239034956B7A9d2F0a331f9F075eB4c' },
+  { symbol: 'AMD', name: 'AMD', feed: '0x943A29E7ae51A4798823ca9eEd2ed533B2A22C72' },
+  { symbol: 'INTC', name: 'Intel', feed: '0x3f390C5C24628Ac7C489515402235FeAD71D1913' },
+  { symbol: 'ORCL', name: 'Oracle', feed: '0x0e6a64a2B58A6693a531E6c555f3A5d042eEA844' },
+]
+
+const board = document.getElementById('board')
+const statusEl = document.getElementById('board-status')
+const statusText = document.getElementById('board-status-text')
+const errorEl = document.getElementById('board-error')
+const tiles = new Map()
+const lastPrice = new Map()
+
+for (const t of TOKENS) {
+  const tile = document.createElement('div')
+  tile.className = 'tile'
+  tile.innerHTML =
+    '<div class="sym">' + t.symbol + '</div>' +
+    '<div class="co">' + t.name + '</div>' +
+    '<div class="px skeleton">$0000.00</div>' +
+    '<div class="meta"></div>'
+  board.appendChild(tile)
+  tiles.set(t.symbol, tile)
+}
+
+async function rpcBatch(calls) {
+  const body = calls.map((c, id) => ({
+    jsonrpc: '2.0', id,
+    method: 'eth_call',
+    params: [{ to: c.feed, data: '0xfeaf968c' }, 'latest'],
+  }))
+  const res = await fetch(RPC, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error('RPC ' + res.status)
+  return res.json()
+}
+
+function decodeRound(hex) {
+  if (!hex || hex === '0x' || hex.length < 2 + 64 * 5) return null
+  const word = (i) => hex.slice(2 + 64 * i, 2 + 64 * (i + 1))
+  const answer = BigInt('0x' + word(1))
+  const updatedAt = Number(BigInt('0x' + word(3)))
+  return { price: Number(answer) / 1e8, updatedAt }
+}
+
+function fmtAge(updatedAt) {
+  const s = Math.max(0, Math.floor(Date.now() / 1000) - updatedAt)
+  if (s < 90) return s + 's ago'
+  if (s < 5400) return Math.round(s / 60) + 'm ago'
+  if (s < 172800) return Math.round(s / 3600) + 'h ago'
+  return Math.round(s / 86400) + 'd ago'
+}
+
+async function refresh() {
+  try {
+    const results = await rpcBatch(TOKENS)
+    const byId = new Map(results.map((r) => [r.id, r]))
+    let ok = 0
+    TOKENS.forEach((t, id) => {
+      const round = decodeRound(byId.get(id)?.result)
+      const tile = tiles.get(t.symbol)
+      const px = tile.querySelector('.px')
+      const meta = tile.querySelector('.meta')
+      if (!round || round.price <= 0) {
+        px.classList.remove('skeleton')
+        px.textContent = '—'
+        meta.textContent = 'no answer'
+        return
+      }
+      ok += 1
+      const prev = lastPrice.get(t.symbol)
+      px.classList.remove('skeleton', 'up', 'down')
+      if (prev !== undefined && round.price !== prev) {
+        px.classList.add(round.price > prev ? 'up' : 'down')
+      }
+      lastPrice.set(t.symbol, round.price)
+      px.textContent = '$' + round.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      meta.textContent = 'updated ' + fmtAge(round.updatedAt)
+    })
+    statusEl.className = 'status live'
+    statusText.textContent = 'live · ' + ok + '/' + TOKENS.length + ' feeds · refreshes every 15s'
+    errorEl.classList.remove('visible')
+  } catch (e) {
+    statusEl.className = 'status error'
+    statusText.textContent = 'RPC unreachable'
+    errorEl.classList.add('visible')
+    for (const tile of tiles.values()) tile.querySelector('.px').classList.remove('skeleton')
+  }
+}
+
+refresh()
+setInterval(refresh, 15000)
+</script>
+
+</body>
+</html>
