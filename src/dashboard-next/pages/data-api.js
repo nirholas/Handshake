@@ -21,10 +21,17 @@ import {
 
 const WALLET_LS = 'threews:premium:wallet';
 
+// A wallet-ownership signature is required to read the private half of
+// /api/premium/status (keys, usage, purchase history). The server accepts it
+// within a 5-minute window; we reuse a signature for 4 minutes so a single
+// approval covers a normal session of key management without re-prompting.
+const PROOF_TTL_MS = 4 * 60 * 1000;
+
 const state = {
 	plans: null,
 	wallet: localStorage.getItem(WALLET_LS) || null,
 	status: null,     // /api/premium/status for state.wallet
+	proof: null,      // { wallet, signature, issuedAt, ts } ownership proof for keys/history
 	buying: null,     // asset symbol while a purchase is in flight
 	freshKey: null,   // plaintext shown exactly once after purchase/rotate
 };
@@ -48,6 +55,35 @@ function amountLabel(a) {
 
 function solanaProvider() {
 	return window.phantom?.solana || window.solana || null;
+}
+
+// Base64 of an ed25519 signature — the server (verifySiwsSignature) accepts base64.
+function bytesToB64(bytes) {
+	const arr = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+	let bin = '';
+	for (const b of arr) bin += String.fromCharCode(b);
+	return btoa(bin);
+}
+
+function freshProof() {
+	const p = state.proof;
+	return p && p.wallet === state.wallet && Date.now() - p.ts < PROOF_TTL_MS ? p : null;
+}
+
+// Prove control of the connected wallet so the server returns keys/usage/history.
+// Reuses a still-fresh proof; otherwise asks the wallet to sign once. Returns the
+// proof, or null if the wallet can't sign (falls back to public pass-state only).
+async function ensureProof(provider) {
+	if (!state.wallet) return null;
+	const cached = freshProof();
+	if (cached) return cached;
+	if (!provider?.signMessage) return null;
+	const issuedAt = new Date().toISOString();
+	const message = `three.ws premium status\nWallet: ${state.wallet}\nIssued At: ${issuedAt}`;
+	const res = await provider.signMessage(new TextEncoder().encode(message), 'utf8');
+	const signature = bytesToB64(res?.signature ?? res);
+	state.proof = { wallet: state.wallet, signature, issuedAt, ts: Date.now() };
+	return state.proof;
 }
 
 // ── Purchase flow ────────────────────────────────────────────────────────────
@@ -102,6 +138,7 @@ async function buy(asset) {
 		const out = await pollSubscribe(quote.id, signature);
 		state.freshKey = out.api_key || null;
 		setBuyNote('');
+		try { await ensureProof(provider); } catch { /* keys stay hidden until Verify */ }
 		await loadStatus();
 	} catch (err) {
 		if (!/user rejected|cancell?ed/i.test(err?.message || '')) {
@@ -147,7 +184,7 @@ function renderStatusCard() {
 				<button class="dn-btn primary" id="da-connect" type="button">Connect wallet</button>
 			</div>`;
 		$('da-connect')?.addEventListener('click', async () => {
-			try { await connectWallet(); await loadStatus(); } catch (e) { setBuyNote(e.message, true); }
+			try { await verifyAndLoad(); } catch (e) { setBuyNote(e.message, true); }
 		});
 		return;
 	}
@@ -169,6 +206,10 @@ function renderStatusCard() {
 			</div>`;
 	} else {
 		const left = daysLeft(s.pass.expires_at);
+		// A fresh ownership signature unlocks the key-management panel below.
+		const verifyBtn = freshProof()
+			? ''
+			: `<button class="dn-btn ghost" id="da-verify" type="button">Verify to manage keys</button>`;
 		el.innerHTML = `
 			<div class="da-hero da-hero-active">
 				<div>
@@ -176,15 +217,19 @@ function renderStatusCard() {
 					<div class="da-hero-title"><span class="da-dot"></span> Active — ${left} day${left === 1 ? '' : 's'} left</div>
 					<p class="da-hero-sub">Runs until ${esc(fmtDate(s.pass.expires_at))}. Renewing now appends 30 days to the end — no lost time. Browser searches: choose “sign with wallet” in the payment dialog on <a href="/markets/archive">/markets/archive</a>.</p>
 				</div>
-				<button class="dn-btn ghost" id="da-switch" type="button">Switch wallet</button>
+				<div class="da-hero-actions">${verifyBtn}<button class="dn-btn ghost" id="da-switch" type="button">Switch wallet</button></div>
 			</div>`;
 	}
+	$('da-verify')?.addEventListener('click', async () => {
+		try { await verifyAndLoad(); } catch (e) { setBuyNote(e.message, true); }
+	});
 	$('da-switch')?.addEventListener('click', async () => {
 		localStorage.removeItem(WALLET_LS);
 		state.wallet = null;
 		state.status = null;
+		state.proof = null;
 		renderStatusCard();
-		try { await connectWallet(); await loadStatus(); } catch { /* stays disconnected */ }
+		try { await verifyAndLoad(); } catch { /* stays disconnected */ }
 	});
 }
 
@@ -255,11 +300,21 @@ function renderKeys() {
 	if (!el) return;
 	const keys = state.status?.keys || [];
 	if (!state.wallet || !keys.length) {
-		el.innerHTML = `
-			<div class="dn-panel">
-				<div class="da-panel-head"><h2>API key</h2></div>
-				<p class="da-note">No key yet — buying a pass mints one automatically (<code>x402_live_…</code>). It bypasses the per-call x402 charge on every premium endpoint via the <code>X-API-Key</code> header.</p>
-			</div>`;
+		// An active pass with no visible key means we haven't proved wallet
+		// ownership yet — the key exists server-side but is gated behind a signature.
+		const locked = state.status?.active && !freshProof();
+		el.innerHTML = locked
+			? `<div class="dn-panel">
+					<div class="da-panel-head"><h2>API key</h2></div>
+					<p class="da-note">Your key is protected. <button class="da-inline-link" id="da-keys-verify" type="button">Verify this wallet</button> to view its prefix, usage, and rotate/revoke controls.</p>
+				</div>`
+			: `<div class="dn-panel">
+					<div class="da-panel-head"><h2>API key</h2></div>
+					<p class="da-note">No key yet — buying a pass mints one automatically (<code>x402_live_…</code>). It bypasses the per-call x402 charge on every premium endpoint via the <code>X-API-Key</code> header.</p>
+				</div>`;
+		$('da-keys-verify')?.addEventListener('click', async () => {
+			try { await verifyAndLoad(); } catch (e) { setBuyNote(e.message, true); }
+		});
 		return;
 	}
 	const rows = keys.map((k) => `
@@ -373,11 +428,22 @@ function renderAll() {
 async function loadStatus() {
 	if (!state.wallet) { renderAll(); return; }
 	try {
-		state.status = await get(`/api/premium/status?wallet=${encodeURIComponent(state.wallet)}`);
+		const p = freshProof();
+		const auth = p
+			? `&signature=${encodeURIComponent(p.signature)}&issuedAt=${encodeURIComponent(p.issuedAt)}`
+			: '';
+		state.status = await get(`/api/premium/status?wallet=${encodeURIComponent(state.wallet)}${auth}`);
 	} catch {
 		state.status = null;
 	}
 	renderAll();
+}
+
+// Connect the wallet, prove ownership, then reload the (now full) status.
+async function verifyAndLoad() {
+	const { provider } = await connectWallet();
+	await ensureProof(provider);
+	await loadStatus();
 }
 
 function injectStyles() {
@@ -393,6 +459,9 @@ function injectStyles() {
 		.da-hero-title { font-size: 1.35rem; font-weight: 680; color: var(--nxt-ink); margin: .2rem 0; display: flex; align-items: center; gap: .5rem; }
 		.da-hero-sub { margin: 0; font-size: .85rem; color: var(--nxt-ink-dim); line-height: 1.55; max-width: 60ch; }
 		.da-hero-sub a { color: var(--nxt-accent); }
+		.da-hero-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+		.da-inline-link { background: none; border: none; padding: 0; font: inherit; color: var(--nxt-accent); cursor: pointer; text-decoration: underline; }
+		.da-inline-link:hover { color: var(--nxt-ink); }
 		.da-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--nxt-success); box-shadow: 0 0 8px var(--nxt-success); display: inline-block; }
 		.da-panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; flex-wrap: wrap; margin-bottom: .9rem; }
 		.da-panel-head h2 { margin: 0; font-size: .95rem; font-weight: 650; color: var(--nxt-ink); }
