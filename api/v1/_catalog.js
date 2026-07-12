@@ -255,6 +255,74 @@ export const CATALOG = [
 		},
 	},
 	{
+		id: 'v1.robinhood.chain',
+		method: 'GET',
+		path: '/api/v1/robinhood/chain',
+		auth: 'public',
+		summary:
+			'Robinhood Chain (4663) stats — live block height + gas price, ETH price, and TVL now + ' +
+			'90-day history (DefiLlama). Free, keyless.',
+		params: {},
+	},
+	{
+		id: 'v1.robinhood.stocks',
+		method: 'GET',
+		path: '/api/v1/robinhood/stocks',
+		auth: 'public',
+		summary:
+			'The 24/7 tokenized-equity board: Chainlink NAV price, deepest DEX price, premium/discount, ' +
+			'uiMultiplier, and 24h DEX volume/liquidity for every Robinhood Chain Stock Token. Free, ' +
+			'keyless, display-only (Stock Tokens are tokenized securities — see the disclosure field).',
+		params: {
+			q: 'string — filter by symbol/name substring (optional)',
+			sort: 'string — "symbol" | "price" | "volume" | "liquidity" | "premium" (default "symbol")',
+			dir: 'string — "asc" | "desc" (default depends on sort)',
+		},
+	},
+	{
+		id: 'v1.robinhood.stocks_detail',
+		method: 'GET',
+		path: '/api/v1/robinhood/stocks-detail',
+		auth: 'public',
+		summary:
+			'One Stock Token in depth: Chainlink NAV + recent round history, every DEX pair, holders, ' +
+			'recent transfers, and contract links. Free, keyless, display-only.',
+		params: { symbol: 'string — ticker, e.g. "AAPL" (required)' },
+	},
+	{
+		id: 'v1.robinhood.coins',
+		method: 'GET',
+		path: '/api/v1/robinhood/coins',
+		auth: 'public',
+		summary:
+			'Robinhood Chain memecoin screener (CoinGecko "Robinhood Chain Meme" / "Stocks Ecosystem" ' +
+			'categories) — price, market cap, 24h/7d change, 7-day sparkline. Free, keyless, non-security.',
+		params: {
+			category: 'string — "meme" | "stocks-ecosystem" | "ecosystem" (default "meme")',
+			sort: 'string — "market_cap" | "volume" | "gainers" | "losers" (default "market_cap")',
+		},
+	},
+	{
+		id: 'v1.robinhood.coins_detail',
+		method: 'GET',
+		path: '/api/v1/robinhood/coins-detail',
+		auth: 'public',
+		summary:
+			'One Robinhood Chain coin in depth (DexScreener + Blockscout): price, market cap, FDV, ' +
+			'liquidity, every pool, holders, recent transfers. Free, keyless, non-security.',
+		params: { address: 'string — 0x… token contract address (required)' },
+	},
+	{
+		id: 'v1.robinhood.launches',
+		method: 'GET',
+		path: '/api/v1/robinhood/launches',
+		auth: 'public',
+		summary:
+			'Recent token launches on NOXA (instant Uniswap v3) and The Odyssey (bonding curve), newest ' +
+			'first, enriched with live market data where a pool exists. Free, keyless.',
+		params: { limit: 'number 1–60 (default 40)' },
+	},
+	{
 		id: 'v1.pump.whales',
 		method: 'GET',
 		path: '/api/v1/pump/whales',

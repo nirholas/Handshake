@@ -37,6 +37,12 @@ import type {
 } from '../types.js'
 import { SCHEME, X402_VERSION } from '../types.js'
 
+/** The EIP-712 message a payer signs — {@link ExactEvmAuthorization} with numeric fields as bigints. */
+export type AuthorizationMessage = Omit<
+  ExactEvmAuthorization,
+  'value' | 'validAfter' | 'validBefore'
+> & { value: bigint; validAfter: bigint; validBefore: bigint }
+
 /** A minimal typed-data signer. A viem `LocalAccount` satisfies this directly. */
 export interface Signer {
   address: Address
@@ -44,7 +50,7 @@ export interface Signer {
     domain: TypedDataDomain
     types: typeof TRANSFER_WITH_AUTHORIZATION_TYPES
     primaryType: 'TransferWithAuthorization'
-    message: ExactEvmAuthorization & { value: bigint; validAfter: bigint; validBefore: bigint }
+    message: AuthorizationMessage
   }): Promise<Hex>
 }
 
