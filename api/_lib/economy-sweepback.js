@@ -112,7 +112,18 @@ async function sweepTokenBalances({ connection, owner, network }) {
 		try {
 			({ value: accounts } = await connection.getParsedTokenAccountsByOwner(owner.publicKey, { programId }));
 		} catch (e) {
-			failed.push({ mint: `program:${programId.toBase58()}`, reason: `rpc_error: ${e?.message}` });
+			const msg = e?.message || '';
+			// web3.js validates jsonParsed responses with superstruct; some Token-2022
+			// accounts (extensions the installed lib can't model) make the WHOLE call
+			// throw "Expected the value to satisfy a union of `type | type`". That is a
+			// client-side parse limitation, not a sweep failure — our engines hold
+			// USDC + SOL, not Token-2022 — so degrade quietly rather than alerting on
+			// every run. A genuine RPC/network error still surfaces.
+			if (/satisfy a union|Expected the value|superstruct/i.test(msg)) {
+				console.warn('[sweepback] parsed token query unsupported for program', programId.toBase58(), '- skipping', msg);
+				continue;
+			}
+			failed.push({ mint: `program:${programId.toBase58()}`, reason: `rpc_error: ${msg}` });
 			continue;
 		}
 		const holdings = accounts
