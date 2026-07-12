@@ -18,8 +18,12 @@ const GCS_LIST =
 
 const MONTH_CACHE_MAX = 5;
 const META_TTL_MS = 3600_000;
+// The hourly archiver keeps appending to the last two month files; a cached
+// copy of those must expire or a long-lived instance never sees new stories
+// and their fresh permalinks 404 until restart. Older months are immutable.
+const MUTABLE_MONTH_TTL_MS = 10 * 60_000;
 
-// month "YYYY-MM" → compact article records (newest month files are ~2–11 MB
+// month "YYYY-MM" → { records, expiresAt } (newest month files are ~2–11 MB
 // raw; compact form keeps only serving fields). LRU by Map insertion order.
 const monthCache = new Map();
 // small metadata caches: { value, expiresAt }
@@ -87,13 +91,23 @@ export async function getMonths() {
 	return value;
 }
 
+// The archiver still appends to the current and previous month; everything
+// older is a sealed, immutable file.
+function isMutableMonth(month) {
+	const d = new Date();
+	const cur = d.toISOString().slice(0, 7);
+	d.setUTCDate(1);
+	d.setUTCMonth(d.getUTCMonth() - 1);
+	return month === cur || month === d.toISOString().slice(0, 7);
+}
+
 /** One month of compact records, newest-first, LRU-cached. */
 export async function loadMonth(month) {
-	if (monthCache.has(month)) {
-		const records = monthCache.get(month);
+	const hit = monthCache.get(month);
+	if (hit && hit.expiresAt > Date.now()) {
 		monthCache.delete(month);
-		monthCache.set(month, records); // refresh LRU recency
-		return records;
+		monthCache.set(month, hit); // refresh LRU recency
+		return hit.records;
 	}
 	const resp = await fetch(`${GCS_BASE}/articles/${month}.jsonl`, {
 		signal: AbortSignal.timeout(30_000),
@@ -111,7 +125,10 @@ export async function loadMonth(month) {
 	}
 	// newest-first inside the month so early-stop pagination is stable
 	records.sort((a, b) => new Date(b.pub_date || 0) - new Date(a.pub_date || 0));
-	monthCache.set(month, records);
+	monthCache.set(month, {
+		records,
+		expiresAt: isMutableMonth(month) ? Date.now() + MUTABLE_MONTH_TTL_MS : Infinity,
+	});
 	while (monthCache.size > MONTH_CACHE_MAX) {
 		monthCache.delete(monthCache.keys().next().value);
 	}
