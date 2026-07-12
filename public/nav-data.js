@@ -333,6 +333,11 @@ export const NAV_GROUPS = [
 						desc: 'Global stats, the top 100 coins, live news, and every market tool in one place',
 					},
 					{
+						title: 'Robinhood Chain',
+						href: '/markets/robinhood',
+						desc: 'Live Stock Token NAV vs DEX premium, a memecoin screener, and a real buy flow',
+					},
+					{
 						title: 'Crypto News',
 						href: '/markets/news',
 						desc: 'Live headlines from 37 publisher feeds with a rich reader for every story',

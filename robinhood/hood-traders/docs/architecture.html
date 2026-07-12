@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Architecture — hood-traders</title>
+  <meta name="description" content="The observe → decide → simulate → risk-check → execute → journal loop behind every hood-traders agent." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="topnav">
+    <div class="brand"><span class="dot"></span>hood-traders</div>
+    <div class="links">
+      <a href="index.html">Overview</a>
+      <a href="architecture.html" class="active">Architecture</a>
+      <a href="strategies.html">Strategies</a>
+      <a href="quickstart.html">Quickstart</a>
+      <a href="https://github.com/nirholas/hood-traders" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <h1>Architecture</h1>
+    <p class="lede">
+      An agent is a strategy plugged into a fixed pipeline. The strategy only ever proposes —
+      every risk cap is enforced by the agent, after simulation, before anything executes. A
+      strategy cannot skip the gate, in paper mode or live.
+    </p>
+
+    <h2>The pipeline</h2>
+    <div class="flow-diagram">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-body">
+          <h3>Observe — <code>Market</code> (<code>src/framework/market.ts</code>)</h3>
+          <p>
+            Every number a strategy sees comes from a live RPC call through the <code>hoodchain</code>
+            SDK: Chainlink <code>latestRoundData()</code> for Stock Token quotes, Uniswap v3
+            <code>QuoterV2</code> simulated calls for spot prices, and the live sequencer/log
+            watchers for new launches. Nothing here is cached beyond a few seconds (ETH/USD, 30s)
+            and nothing is fabricated — nulls propagate instead of invented numbers.
+          </p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-body">
+          <h3>Decide — <code>Strategy.tick()</code></h3>
+          <p>
+            Pure function of the current market view and open positions to a <code>Decision</code>:
+            a list of <code>Intent</code>s (buy/sell proposals) and <code>Alert</code>s. Strategies
+            never touch the wallet, the risk engine, or the journal directly — they cannot.
+          </p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-body">
+          <h3>Simulate — a real <code>eth_call</code></h3>
+          <p>
+            Every intent is re-quoted against live liquidity via <code>QuoterV2</code> before
+            anything else happens — this is a real simulation against the current pool state, the
+            same call type Uniswap's own frontend uses, not a cached or stale price.
+          </p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-body">
+          <h3>Risk-check — <code>RiskEngine.check()</code> (fails CLOSED)</h3>
+          <p>
+            Kill switch → zero/negative amount → cooldown → slippage bound → position cap → agent
+            daily cap → fleet daily cap, in that order, so the journaled refusal reason is always
+            the most specific true one. Any check the engine cannot satisfy refuses the trade —
+            there is no default-allow path. See the full table below.
+          </p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">5</div>
+        <div class="flow-body">
+          <h3>Execute</h3>
+          <p>
+            <strong>Paper:</strong> the simulated fill is recorded as the trade — same code path,
+            same accounting, no signature. <strong>Live:</strong> <code>buildSwapTx</code> →
+            <code>ensureApproval</code> → <code>sendTransaction</code> → wait for receipt, using
+            <code>hoodchain</code>'s router-flavor-aware swap builder (mainnet SwapRouter02 vs.
+            testnet's classic SwapRouter).
+          </p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">6</div>
+        <div class="flow-body">
+          <h3>Journal — SQLite (<code>src/framework/journal.ts</code>)</h3>
+          <p>
+            Every trade AND every refusal is written, with the strategy's reason string, the risk
+            verdict, and an equity mark. bigints are stored as decimal TEXT (SQLite's native
+            integer is 64-bit signed; token amounts routinely exceed that). The dashboard reads
+            straight from this table — nothing is held only in memory.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <h2>Risk rails</h2>
+    <p>Every rail applies identically in paper and live mode. Sells are exempt from the position/spend caps — they reduce risk, and refusing a de-risking sell because of a spend cap would trap an agent in a losing position.</p>
+    <table class="risk-table">
+      <thead><tr><th>Rail</th><th>Env var</th><th>Enforced where</th></tr></thead>
+      <tbody>
+        <tr><td>Per-position cap</td><td><code>AGENT_MAX_POSITION_USDG</code></td><td>Before any buy — projected position value must stay under the cap</td></tr>
+        <tr><td>Per-agent daily spend cap</td><td><code>AGENT_MAX_DAILY_SPEND_USDG</code></td><td>Before any buy — UTC-day rolling spend</td></tr>
+        <tr><td>Fleet-wide daily spend cap</td><td><code>FLEET_MAX_DAILY_SPEND_USDG</code></td><td>Before any buy, across every agent</td></tr>
+        <tr><td>Slippage bound</td><td><code>AGENT_MAX_SLIPPAGE_BPS</code></td><td>Every order, buy or sell</td></tr>
+        <tr><td>Cooldown</td><td><code>AGENT_COOLDOWN_SECONDS</code></td><td>Every order, buy or sell</td></tr>
+        <tr><td>Kill switch</td><td><code>KILL_FILE</code> / SIGINT / <code>POST /api/kill</code></td><td>Every order — halts new risk immediately, never force-sells</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Paper vs. live</h2>
+    <p>
+      Paper mode runs the <em>identical</em> pipeline against <em>identical</em> live data — the
+      only difference is step 5: paper records the QuoterV2-simulated fill as the trade, live
+      signs and broadcasts it. This means a strategy validated in paper mode behaves the same way
+      in live mode, modulo real-world slippage/MEV the simulation can't see. Live mode requires
+      <strong>both</strong> <code>HOOD_TRADERS_LIVE=1</code> <strong>and</strong> a valid
+      <code>ROBINHOOD_CHAIN_PRIVATE_KEY</code> — missing either falls back to paper, so there is no
+      accidental-live path.
+    </p>
+
+    <h2>Why a fresh framework and not hoodkit</h2>
+    <p>
+      This package's prompt called for building on <code>hoodkit</code> (the wave-2 advanced
+      SDK wrapper) if it existed. At build time it had not shipped, so <code>hood-traders</code>
+      talks to <code>hoodchain</code> (the core SDK) directly through <code>src/framework/market.ts</code>
+      — a thin adapter that is the only place a future <code>hoodkit</code> swap-in would touch.
+    </p>
+
+    <footer class="footer">
+      <span>hood-traders · Robinhood Chain autonomous trading fleet</span>
+      <span>Built by <a href="https://x.com/nichxbt" target="_blank" rel="noopener">nirholas</a> · <a href="https://three.ws" target="_blank" rel="noopener">three.ws</a></span>
+    </footer>
+  </div>
+</body>
+</html>

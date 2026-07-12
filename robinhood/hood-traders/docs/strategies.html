@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Strategies — hood-traders</title>
+  <meta name="description" content="Honest edge hypotheses and failure modes for launch-sniper, momentum, and premium-watch." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="topnav">
+    <div class="brand"><span class="dot"></span>hood-traders</div>
+    <div class="links">
+      <a href="index.html">Overview</a>
+      <a href="architecture.html">Architecture</a>
+      <a href="strategies.html" class="active">Strategies</a>
+      <a href="quickstart.html">Quickstart</a>
+      <a href="https://github.com/nirholas/hood-traders" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <h1>Strategies</h1>
+    <p class="lede">
+      Three simple, honestly documented strategies. No ML theater — every entry/exit rule is
+      readable in one file, and every strategy's <code>meta.edge</code> / <code>meta.failureModes</code>
+      is a live object on the class, not a comment that can drift from the code.
+    </p>
+
+    <h2>launch-sniper</h2>
+    <p><code>src/strategies/launch-sniper.ts</code> · quote token: WETH</p>
+    <p><strong>Edge hypothesis:</strong> the first minutes after a NOXA instant-listing are the
+      most information-rich and most volatile window a memecoin ever has. A disciplined buyer who
+      only touches round-trippable, non-deployer-heavy launches, and exits mechanically instead of
+      falling in love, harvests a slice of that opening volatility. The edge is speed + discipline,
+      not prediction.</p>
+    <h3>Entry filters (all must clear)</h3>
+    <ul>
+      <li><strong>Liquid route exists</strong> — a real QuoterV2 quote must resolve; un-graduated Odyssey bonding-curve tokens have no Uniswap pool yet and are skipped.</li>
+      <li><strong>Round-trip retention</strong> — buy then immediately quote a sell-back; a honeypot or thin pool that loses more than <code>maxRoundTripLossPct</code> (default 35%) of value is rejected.</li>
+      <li><strong>Deployer concentration</strong> — the launching wallet must hold under <code>maxDeployerPct</code> (default 15%) of total supply.</li>
+      <li><strong>Freshness</strong> — only launches seen within <code>maxLaunchAgeSeconds</code> (default 5 min) are considered.</li>
+    </ul>
+    <h3>Exits (mechanical, first match wins)</h3>
+    <ul>
+      <li>Take-profit: <code>takeProfitPct</code> (default +60%)</li>
+      <li>Stop-loss: <code>stopLossPct</code> (default −35%)</li>
+      <li>Time exit: <code>maxHoldSeconds</code> (default 30 min), regardless of PnL</li>
+    </ul>
+    <h3>Failure modes</h3>
+    <ul>
+      <li>Most new launches trend to zero — the stop loss fires often; profitability depends on winners covering losers.</li>
+      <li>Honeypots can enable a sell tax <em>after</em> entry — the entry-time round-trip check cannot see that.</li>
+      <li>Odyssey bonding-curve tokens are skipped pre-graduation — this is effectively a NOXA sniper.</li>
+      <li>Paper fills use the QuoterV2 mid; live, faster bots win the best fills and you eat worse slippage.</li>
+    </ul>
+
+    <h2>momentum</h2>
+    <p><code>src/strategies/momentum.ts</code> · quote token: USDG</p>
+    <p><strong>Edge hypothesis:</strong> a token that has already graduated to a locked Uniswap v3
+      pool survived the highest-mortality phase. A subsequent breakout — price up sharply over a
+      short lookback — reflects real incoming demand rather than launch-day noise, and trend-
+      following it with a trailing stop captures the middle of the move while giving back only
+      the tail.</p>
+    <h3>Entry</h3>
+    <p>Price gain over <code>lookbackSamples</code> ticks (default 6) exceeds <code>breakoutPct</code>
+      (default 15%) → buy <code>entryUsdg</code> (default $10) worth.</p>
+    <h3>Exits</h3>
+    <ul>
+      <li>Trailing stop: <code>trailingStopPct</code> (default 20%) off the post-entry peak</li>
+      <li>Time exit: <code>maxHoldSeconds</code> (default 60 min)</li>
+    </ul>
+    <h3>Failure modes</h3>
+    <ul>
+      <li>Breakouts on illiquid tokens are trivially fakeable by one wallet round-tripping the pool — this is a price-only signal with no depth check.</li>
+      <li>Trailing stops whipsaw in choppy markets — expect a string of small losses between real trends.</li>
+      <li>Discovery scans a bounded block lookback; a breakout on a token outside that window is missed until the next pass.</li>
+      <li>No edge in a flat or declining market — this is a trend-only strategy by design.</li>
+    </ul>
+
+    <h2>premium-watch</h2>
+    <p><code>src/strategies/premium-watch.ts</code> · quote token: USDG · <strong>alerts-only by default</strong></p>
+    <p><strong>Edge hypothesis:</strong> Stock Token pools are much thinner than the underlying
+      equity market, so DEX price can drift from the Chainlink oracle when flow is one-sided. If
+      the drift is a liquidity artifact, buying the discount and later selling back at fair
+      captures the reversion as the pool re-equilibrates.</p>
+
+    <div class="callout warn">
+      <strong>Trading is gated, on purpose.</strong> Stock Tokens are tokenized debt securities
+      (issuer: Robinhood Assets (Jersey) Ltd) and may not be offered to US/Canada/UK/Switzerland
+      persons. This strategy trades convergence only when <strong>both</strong>
+      <code>enableTrading: true</code> in its params <strong>and</strong>
+      <code>HOOD_STOCK_TOKEN_ELIGIBLE=true</code> in the environment. Missing either keeps it
+      strictly alerts-only, which is the default and the recommended mode. Displaying spread data
+      and alerting are never gated.
+    </div>
+
+    <h3>Signal</h3>
+    <p>Spread <code>= (dexPrice - oracle) / oracle</code>, in bps. Alerts when
+      <code>|spread| >= alertThresholdBps</code> (default 50bps). Trades a discount (DEX cheap)
+      when <code>spread &lt;= -tradeThresholdBps</code> (default 150bps) — only in eligible+opted-in
+      configuration.</p>
+    <h3>Exits</h3>
+    <ul>
+      <li>Convergence: spread reverts within <code>exitThresholdBps</code> (default 20bps)</li>
+      <li>Time exit: <code>maxHoldSeconds</code> (default 2h)</li>
+    </ul>
+    <h3>Failure modes</h3>
+    <ul>
+      <li>A premium/discount can be <em>correct</em> — DEX price may reflect information the ≤24h Chainlink heartbeat hasn't caught up to yet; fading it then loses on purpose.</li>
+      <li>Stock Token pools are thin; the probe price doesn't reflect real trade-size slippage, and the trade itself moves the spread being arbitraged.</li>
+      <li>No shorting primitive exists — only discounts are ever tradeable; premiums are alert-only by construction, not by choice.</li>
+      <li>Chainlink staleness (weekend gap, feed outage) can masquerade as a discount when the oracle, not the pool, is stale.</li>
+    </ul>
+
+    <footer class="footer">
+      <span>hood-traders · Robinhood Chain autonomous trading fleet</span>
+      <span>Built by <a href="https://x.com/nichxbt" target="_blank" rel="noopener">nirholas</a> · <a href="https://three.ws" target="_blank" rel="noopener">three.ws</a></span>
+    </footer>
+  </div>
+</body>
+</html>

@@ -58,6 +58,7 @@
     "dev:data": "tsx src/data-server.ts",
     "dev:trading": "tsx src/trading-server.ts",
     "start": "node dist/data-server.js",
+    "docs:tools": "tsx scripts/generate-tools-doc.mjs",
     "test": "vitest run tests/schema.test.ts tests/trading-guards.test.ts",
     "test:live": "vitest run -c vitest.live.config.ts tests/data-client.live.test.ts --testTimeout 120000",
     "test:swap": "vitest run -c vitest.live.config.ts tests/trading-swap.live.test.ts --testTimeout 180000",
@@ -65,7 +66,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "hoodchain": "file:../robinhood-chain-sdk",
+    "hoodchain": "^0.1.0",
     "viem": "^2.55.1",
     "ws": "^8.21.0",
     "zod": "^3.25.76"

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-12",
+			"title": "Robinhood Chain now on three.ws Markets — live stocks, coins, and a real buy flow",
+			"summary": "A new /markets/robinhood hub covers Robinhood Chain end to end: a 24/7 tokenized-equity board with live Chainlink NAV vs. Uniswap DEX premium for every Stock Token, a memecoin screener across the NOXA and The Odyssey launchpads, recent on-chain launches, and chain stats. Every coin and Stock Token has its own detail page with a price chart, holders, recent transfers, and contract links. Coin pages carry a real buy flow — connect a wallet, switch to Robinhood Chain, get a live Uniswap v3 quote, and swap with your own slippage tolerance; wallets with no funds on the chain get a bridge link instead of a dead end. Stock Tokens stay display-only, since they are tokenized securities not offered to US persons. A new paid API endpoint returns a wallet's full Stock Token portfolio, corporate-action-adjusted and priced at live NAV.",
+			"tags": [
+				"feature"
+			],
+			"link": "/markets/robinhood"
+		},
+		{
+			"date": "2026-07-12",
 			"title": "News stories now open the full article, with live coin charts",
 			"summary": "Open a news story and you now get the whole thing. Many crypto publishers (The Defiant, CoinDesk, The Block and others) block automated fetches, so the reader used to fall back to a single teaser sentence — the page looked empty. It now recovers the full article text through a reader service when a publisher blocks the direct fetch, so the complete story renders instead of a stub. When a story mentions a coin, the reader shows a live price card for it — current price, 24h and 7d moves, a 7-day sparkline chart, and market cap — that links straight to the coin's full profile. Every fully-read story is also saved to a durable crypto knowledge base with its summary, key points, sentiment, tickers, and the companies and projects it's about — the memory our 3D AI agents draw on to answer questions with real, recent, sourced context.",
 			"tags": [

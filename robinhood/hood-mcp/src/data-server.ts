@@ -18,6 +18,7 @@ import { readOnlyClient, resolveNetwork } from './shared/client.js'
 import { registerDataTools } from './register-data.js'
 import { SERVER_NAME, SERVER_VERSION } from './version.js'
 import { loadPaywallMiddleware, readPaywallConfig } from './x402-seam.js'
+import { isMainModule } from './shared/is-main.js'
 
 const INSTRUCTIONS = `Read-only market data for Robinhood Chain (chain ID 4663), the permissionless
 Arbitrum Orbit L2 with tokenized-equity "Stock Tokens", the USDG stablecoin, and the NOXA / The
@@ -122,8 +123,8 @@ async function main(): Promise<void> {
   }
 }
 
-// Only run when executed as a binary, not when imported.
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Only run when executed as a binary (handles npm's bin symlinks), not when imported.
+if (isMainModule(import.meta.url)) {
   main().catch((e) => {
     process.stderr.write(`[${SERVER_NAME}] fatal: ${e instanceof Error ? e.stack : String(e)}\n`)
     process.exit(1)

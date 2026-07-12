@@ -12,6 +12,10 @@ import { bold, dim, gray, green, yellow } from '../ui/ansi.js'
 import { addr } from '../format.js'
 import { txUrl } from '../blockscout.js'
 import { guardError, usageError } from '../errors.js'
+import { checkSpendCap } from '../spend-cap.js'
+import { getDexPriceUsd } from '../prices.js'
+import { MAINNET_ADDRESSES, TESTNET_ADDRESSES } from 'hoodchain'
+import { warn } from '../output.js'
 
 export function transferCommand(): Command {
   return new Command('transfer')
@@ -52,6 +56,15 @@ async function transfer(ctx: Context, opts: TransferOpts): Promise<void> {
     )
   }
 
+  // maxSpendUsd guard rail: USDG is 1:1, native ETH/other tokens price off
+  // their own DEX quote against USDG.
+  const spendToken = isNative ? (ctx.network === 'testnet' ? TESTNET_ADDRESSES.weth : MAINNET_ADDRESSES.weth) : tokenInfo!.address
+  const estimatedUsd = await estimateSpendUsd(client, symbol, spendToken, isNative ? 18 : tokenInfo!.decimals, Number(opts.amount))
+  if (ctx.config.maxSpendUsd !== undefined && estimatedUsd === null) {
+    warn(`Could not verify this transfer against your $${ctx.config.maxSpendUsd} spend cap (no price route for ${symbol}) — proceeding.`)
+  }
+  checkSpendCap({ maxSpendUsd: ctx.config.maxSpendUsd, estimatedUsd })
+
   if (!ctx.json) {
     process.stdout.write(
       renderConfirm({ to, amount: opts.amount, symbol, network: ctx.network }) + '\n\n',
@@ -72,6 +85,18 @@ async function transfer(ctx: Context, opts: TransferOpts): Promise<void> {
   const result = { to, amount: opts.amount, symbol, hash, status: receipt.status, explorer: txUrl(ctx.network, hash) }
   printResult(result, () => renderResult(result), ctx.json)
   if (receipt.status !== 'success') process.exitCode = 1
+}
+
+async function estimateSpendUsd(
+  client: Parameters<typeof getDexPriceUsd>[0],
+  symbol: string,
+  address: `0x${string}`,
+  decimals: number,
+  amount: number,
+): Promise<number | null> {
+  if (symbol === 'USDG') return amount
+  const perToken = await getDexPriceUsd(client, address, decimals)
+  return perToken !== null ? perToken * amount : null
 }
 
 function formatBalance(balance: bigint, isNative: boolean, decimals?: number): string {

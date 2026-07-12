@@ -107,6 +107,11 @@ export class Fleet {
     for (const a of this.agents) a.stop()
   }
 
+  /** Run exactly one tick per agent, in parallel, without arming the interval scheduler. Used by E2E tests. */
+  async tickAllOnce(): Promise<void> {
+    await Promise.all(this.agents.map((a) => a.tick()))
+  }
+
   /** Trip the kill switch — halts new orders across the fleet. */
   tripKill(reason: string): void {
     this.kill.trip(reason)

@@ -1,5 +1,5 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
-import { ApiError, toApiError } from '../lib/errors.js'
+import { ApiError, apiValidationHook, toApiError } from '../lib/errors.js'
 import { paymentsEnabled } from '../lib/env.js'
 import { PRICES } from '../lib/x402.js'
 import { SymbolParam, AddressParam, HistoryQuery, EquitiesListQuery, ErrorSchema, LOOKBACK_BLOCKS } from '../schemas.js'
@@ -9,7 +9,7 @@ import { getEquity, listEquities } from '../services/equities.js'
 import { mintSession } from '../lib/firehose-session.js'
 import { withMeta } from '../lib/response.js'
 
-export const paidRoutes = new OpenAPIHono()
+export const paidRoutes = new OpenAPIHono({ defaultHook: apiValidationHook })
 
 const JsonBody = z.record(z.string(), z.unknown())
 const errorResponse = { content: { 'application/json': { schema: ErrorSchema } }, description: 'Error' } as const

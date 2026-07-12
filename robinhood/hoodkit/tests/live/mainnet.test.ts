@@ -119,6 +119,7 @@ describe('live: Indexer — full holder-history backfill vs Blockscout', () => {
         path: dbPath,
         tokens: [WEN_TOKEN],
         chunkSize: 50_000n,
+        throttleMs: 120,
       })
       try {
         const head = await hood.public.getBlockNumber()

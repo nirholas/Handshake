@@ -18,6 +18,11 @@ import { normalizeGatewayURL } from '../../src/ipfs.js';
 
 // Solana mint addresses — base58, 32–44 chars. Communities are keyed by these.
 const BASE58_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+// EVM addresses (Ethereum/Base/BSC/Robinhood Chain, etc.) — the CHAINS list in
+// api/community/messages.js already names these as supported chain ids; this
+// gate previously only accepted Solana, so every EVM-chain world's Town chat
+// 400'd before the request ever reached CoinCommunities.
+const EVM_RE = /^0x[a-fA-F0-9]{40}$/;
 
 let _configured = false;
 
@@ -49,7 +54,7 @@ export function canPostServer() {
 
 /** Validate a community token address before it ever reaches the API. */
 export function isValidToken(token) {
-	return typeof token === 'string' && BASE58_RE.test(token);
+	return typeof token === 'string' && (BASE58_RE.test(token) || EVM_RE.test(token));
 }
 
 class UnconfiguredError extends Error {

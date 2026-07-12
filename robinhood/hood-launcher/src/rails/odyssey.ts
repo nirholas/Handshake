@@ -28,6 +28,19 @@ import { explorerTxUrl, explorerTokenUrl } from '../core/explorer.js'
  *   `0xcce7ec13`, and emits the SDK-documented `TokenCreated`/`Traded`
  *   topics on the curve.
  *
+ * A full survey of every historical `TokenCreated` emission on the bonding
+ * factory (47 logs, `eth_getLogs` from block 0) found FOUR distinct create
+ * selectors, not one: `0x8680ce63` (22 uses, an unexplained extra numeric
+ * parameter with no consistent relationship to `msg.value`), `0x59a35641`
+ * (20 uses, requires a 65-byte trailing ECDSA signature — an off-chain
+ * backend co-signs each launch, which this rail has no way to produce),
+ * `0xc56f3820` (3 uses, undecoded), and `0x56f698a3` (2 uses — the one this
+ * rail ships). `0x56f698a3` is a minority path, but it is the ONLY variant
+ * proven simple, unsigned, and byte-for-byte reproducible from real txs
+ * without guessing a signature or an unverified parameter — see
+ * `tests/unit/odyssey-calldata.test.ts`. It is still live and callable on
+ * mainnet today (both sampled uses succeeded).
+ *
  * `reflectionFactory` and `legacyFactory` were not sampled for creates during
  * this build and are intentionally NOT exposed by this rail — see the README
  * "Rails shipped vs excluded" section.
@@ -74,8 +87,7 @@ export class OdysseyRail implements Rail {
     const preflight = await this.preflight(ctx, input)
 
     if (this.variant === 'instant') {
-      const data = ('0x' +
-        ODYSSEY_SELECTORS.instantCreate.slice(2) +
+      const data = (ODYSSEY_SELECTORS.instantCreate +
         encodeAbiParameters(
           [{ type: 'string' }, { type: 'string' }, { type: 'uint256' }],
           [input.name, input.symbol, input.initialBuyWei],
@@ -96,8 +108,7 @@ export class OdysseyRail implements Rail {
     }
 
     // Bonding: create (value 0), then optional buy (value = initialBuyWei).
-    const createData = ('0x' +
-      ODYSSEY_SELECTORS.bondingCreate.slice(2) +
+    const createData = (ODYSSEY_SELECTORS.bondingCreate +
       encodeAbiParameters(
         [{ type: 'string' }, { type: 'string' }, { type: 'uint256' }, { type: 'uint256' }],
         [input.name, input.symbol, ODYSSEY_BONDING_CONSTANTS.threshold, ODYSSEY_BONDING_CONSTANTS.reserved],
@@ -189,8 +200,7 @@ export class OdysseyRail implements Rail {
       // freshly-created curve the caller controls end-to-end in the same
       // launch; callers wanting slippage protection should call the buy
       // step separately with a quote.
-      const buyData = ('0x' +
-        ODYSSEY_SELECTORS.bondingBuy.slice(2) +
+      const buyData = (ODYSSEY_SELECTORS.bondingBuy +
         encodeAbiParameters([{ type: 'address' }, { type: 'uint256' }], [token, 0n]).slice(2)) as `0x${string}`
       const buyHash = await client.wallet.sendTransaction({
         to: ODYSSEY.bondingCurveFactory,

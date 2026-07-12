@@ -178,6 +178,77 @@ export const CATALOG = [
 		},
 	},
 	{
+		id: 'v1.robinhood.chain',
+		method: 'GET',
+		path: '/api/v1/robinhood/chain',
+		auth: 'public',
+		summary:
+			'Robinhood Chain (4663) stats: block height, gas, tx/address counts, and chain TVL ' +
+			'(now + 90-day history). Free, keyless, real data from Blockscout + DefiLlama; 60/min per IP.',
+		params: {},
+	},
+	{
+		id: 'v1.robinhood.stocks',
+		method: 'GET',
+		path: '/api/v1/robinhood/stocks',
+		auth: 'public',
+		summary:
+			'The 24/7 Robinhood Chain tokenized-equity board: live Chainlink NAV vs. deepest Uniswap ' +
+			'DEX price, premium/discount, uiMultiplier, 24h volume, and liquidity for every Stock ' +
+			'Token — one on-chain multicall, never 95 RPC calls. Free, keyless; 60/min per IP.',
+		params: {
+			q: 'string — filter by symbol or name substring (optional)',
+			sort: 'string — "symbol" | "volume" | "premium" | "liquidity" (default symbol)',
+			dir: 'string — "asc" | "desc" (default desc, ignored for symbol)',
+		},
+	},
+	{
+		id: 'v1.robinhood.stocks-detail',
+		method: 'GET',
+		path: '/api/v1/robinhood/stocks-detail',
+		auth: 'public',
+		summary:
+			'One Robinhood Chain Stock Token in depth: Chainlink NAV + recent round history, every ' +
+			'DEX pair, premium/discount, holders, recent transfers, and contract links. Display-only ' +
+			'— carries the US-persons eligibility disclosure. Free, keyless; 60/min per IP.',
+		params: { symbol: 'string — Stock Token ticker, e.g. "AAPL" (required)' },
+	},
+	{
+		id: 'v1.robinhood.coins',
+		method: 'GET',
+		path: '/api/v1/robinhood/coins',
+		auth: 'public',
+		summary:
+			'Robinhood Chain memecoin screener (NOXA + The Odyssey launchpads) via CoinGecko ' +
+			'categories: price, market cap, 24h/7d change, 7d sparkline. Free, keyless; 60/min per IP.',
+		params: {
+			category: 'string — "meme" | "stocks-ecosystem" | "ecosystem" (default meme)',
+			sort: 'string — "market_cap" | "volume" | "gainers" | "losers" (default market_cap)',
+		},
+	},
+	{
+		id: 'v1.robinhood.coins-detail',
+		method: 'GET',
+		path: '/api/v1/robinhood/coins-detail',
+		auth: 'public',
+		summary:
+			'One Robinhood Chain coin in depth: DexScreener market data (price, mcap, FDV, ' +
+			'liquidity, volume, pools) + Blockscout holders/transfers/contract links. Non-security ' +
+			'token, no eligibility gate. Free, keyless; 60/min per IP.',
+		params: { address: 'string — 0x… token contract address (required)' },
+	},
+	{
+		id: 'v1.robinhood.launches',
+		method: 'GET',
+		path: '/api/v1/robinhood/launches',
+		auth: 'public',
+		summary:
+			'Recent Robinhood Chain launchpad activity (NOXA instant + The Odyssey bonding-curve), ' +
+			'read from on-chain logs and enriched with DexScreener market data, newest first. ' +
+			'Free, keyless; 60/min per IP.',
+		params: { limit: 'number 1–60 (default 40)' },
+	},
+	{
 		id: 'v1.pump.search',
 		method: 'GET',
 		path: '/api/v1/pump/search',

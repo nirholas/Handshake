@@ -1,0 +1,126 @@
+<title>Tools — hood-mcp</title>
+<meta name="description" content="Full tool reference for hood-mcp, generated from the servers' live registered schemas." />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏹</text></svg>" />
+<link rel="stylesheet" href="site.css" />
+
+<nav class="top">
+  <div class="wrap">
+    <div class="brand"><span class="tick">hood</span>-mcp</div>
+    <div class="links">
+      <a href="index.html">Overview</a>
+      <a href="install.html">Install</a>
+      <a href="tools.html" aria-current="page">Tools</a>
+      <a href="safety.html">Safety model</a>
+      <a href="https://github.com/nirholas/hood-mcp">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <section style="border-top:none; padding-top:48px;">
+    <h2 style="font-size:30px;">Tool reference</h2>
+    <p class="section-lede">
+      Generated directly from each server's live registered tool schemas — this page cannot
+      drift from the actual tools. Regenerate with <code>node scripts/generate-tools-doc.mjs</code>.
+    </p>
+  </section>
+
+  <section>
+    <h2>hood-mcp — data server (9 tools)</h2>
+    <p class="section-lede">Zero-config, read-only, no wallet required.</p>
+    <div class="card" style="margin-bottom:14px;">
+  <h3><code>get_chain_stats</code> <span class="pill free">free</span></h3>
+  <p>Live Robinhood Chain overview: latest block, gas price, TVL, and network totals (blocks, addresses, transactions, block time). No inputs.</p>
+  <p style="color:var(--text-faint);font-size:13px;">No parameters.</p>
+</div>
+<div class="card" style="margin-bottom:14px;">
+  <h3><code>list_stock_tokens</code> <span class="pill free">free</span></h3>
+  <p>The registry of tokenized-equity Stock Tokens on Robinhood Chain (ticker, name, contract, Chainlink feed). Set pricedOnly to return only tokens with a live feed.</p>
+  <div class="table-scroll"><table><thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>pricedOnly</code></td><td><code>boolean</code></td><td>Only tokens with a Chainlink price feed.</td></tr>
+<tr><td><code>limit</code></td><td><code>integer</code></td><td>Max entries (default all).</td></tr>
+<tr><td><code>offset</code></td><td><code>integer</code></td><td>Skip this many (pagination).</td></tr></tbody></table></div>
+</div>
+<div class="card" style="margin-bottom:14px;">
+  <h3><code>get_stock_quote</code> <span class="pill free">free</span></h3>
+  <p>Price a Stock Token by ticker: the Chainlink oracle price, the on-chain Uniswap DEX mid price, the premium/discount between them, and the ERC-8056 multiplier (so you also get the underlying share price).</p>
+  <div class="table-scroll"><table><thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>symbol</code> <span style="color:var(--down);font-size:11px;">required</span></td><td><code>string</code></td><td>Ticker, e.g. &quot;AAPL&quot; or &quot;TSLA&quot; (case-insensitive).</td></tr>
+<tr><td><code>maxAgeSeconds</code></td><td><code>integer</code></td><td>Reject the Chainlink answer if older than this (default 3 days; 24/5 feeds).</td></tr></tbody></table></div>
+</div>
+<div class="card" style="margin-bottom:14px;">
+  <h3><code>get_portfolio</code> <span class="pill free">free</span></h3>
+  <p>Multiplier-correct Stock Token portfolio for any address: per-position token balance, ERC-8056 share-equivalent, USD value, plus the USDG cash balance. Read-only.</p>
+  <div class="table-scroll"><table><thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>address</code> <span style="color:var(--down);font-size:11px;">required</span></td><td><code>string</code></td><td>Wallet address (0x…40 hex) to value.</td></tr></tbody></table></div>
+</div>
+<div class="card" style="margin-bottom:14px;">
+  <h3><code>get_coin</code> <span class="pill free">free</span></h3>
+  <p>Detail for any Robinhood Chain token by contract address: price, 24h volume, liquidity, FDV, holder count, and whether it is a registered Stock Token.</p>
+  <div class="table-scroll"><table><thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>address</code> <span style="color:var(--down);font-size:11px;">required</span></td><td><code>string</code></td><td>Token contract address (0x…40 hex).</td></tr></tbody></table></div>
+</div>
+<div class="card" style="margin-bottom:14px;">
+  <h3><code>list_trending_coins</code> <span class="pill free">free</span></h3>
+  <p>The trending pools on Robinhood Chain right now (memecoins and stocks) with price, 24h volume, price change, and liquidity — the pulse of the chain.</p>
+  <div class="table-scroll"><table><thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>limit</code></td><td><code>integer</code></td><td>How many (default 10, max 30).</td></tr></tbody></table></div>
+</div>
+<div class="card" style="margin-bottom:14px;">
+  <h3><code>get_recent_launches</code> <span class="pill free">free</span></h3>
+  <p>Recently launched tokens on Robinhood Chain launchpads (NOXA and The Odyssey), newest first, scanned from on-chain logs.</p>
+  <div class="table-scroll"><table><thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>lookbackBlocks</code></td><td><code>integer</code></td><td>Blocks to scan back (~30k ≈ 1h; default 30000).</td></tr>
+<tr><td><code>launchpad</code></td><td><code>string</code></td><td>Restrict to one launchpad.</td></tr>
+<tr><td><code>limit</code></td><td><code>integer</code></td><td>Max launches to return (default 25).</td></tr></tbody></table></div>
+</div>
+<div class="card" style="margin-bottom:14px;">
+  <h3><code>watch_launches</code> <span class="pill free">free</span></h3>
+  <p>Watch NOXA + The Odyssey live for new token launches, blocking up to waitSeconds (or until limit launches are seen), then returns what appeared. Falls back to the most recent launch if none fire in the window.</p>
+  <div class="table-scroll"><table><thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>waitSeconds</code></td><td><code>integer</code></td><td>How long to watch (default 20, max 120).</td></tr>
+<tr><td><code>launchpad</code></td><td><code>string</code></td><td>Restrict to one launchpad.</td></tr>
+<tr><td><code>limit</code></td><td><code>integer</code></td><td>Stop early after this many (default 20).</td></tr>
+<tr><td><code>includeRecentIfEmpty</code></td><td><code>boolean</code></td><td>If nothing launches in the window, return the latest recent launch (default true).</td></tr></tbody></table></div>
+</div>
+<div class="card" style="margin-bottom:14px;">
+  <h3><code>search_token</code> <span class="pill free">free</span></h3>
+  <p>Find tokens on Robinhood Chain by ticker, name, or contract address — searches the Stock Token registry and the Blockscout index together.</p>
+  <div class="table-scroll"><table><thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>query</code> <span style="color:var(--down);font-size:11px;">required</span></td><td><code>string</code></td><td>Ticker, name fragment, or 0x address.</td></tr>
+<tr><td><code>limit</code></td><td><code>integer</code></td><td>Max results (default 20).</td></tr></tbody></table></div>
+</div>
+  </section>
+
+  <section>
+    <h2>hood-mcp-trading — wallet server (4 tools)</h2>
+    <p class="section-lede">Requires <code>HOOD_MCP_ENABLE_TRADING=1</code> + a wallet key. See the <a href="safety.html">safety model</a>.</p>
+    <div class="card" style="margin-bottom:14px;">
+  <h3><code>get_my_portfolio</code> <span class="pill free">read-only</span></h3>
+  <p>This wallet&#39;s holdings on Robinhood Chain: native ETH (gas), USDG cash, and every Stock Token position with multiplier-correct USD value. Read-only.</p>
+  <p style="color:var(--text-faint);font-size:13px;">No parameters.</p>
+</div>
+<div class="card" style="margin-bottom:14px;">
+  <h3><code>get_swap_quote</code> <span class="pill free">read-only</span></h3>
+  <p>Quote a Uniswap swap on Robinhood Chain without signing: best route, expected output, minimum received at your slippage, and the USD value of the input. Tokens are addresses, Stock Token tickers, or USDG/WETH.</p>
+  <div class="table-scroll"><table><thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>tokenIn</code> <span style="color:var(--down);font-size:11px;">required</span></td><td><code>string</code></td><td>Input token: address, ticker (e.g. TSLA), or USDG/WETH.</td></tr>
+<tr><td><code>tokenOut</code> <span style="color:var(--down);font-size:11px;">required</span></td><td><code>string</code></td><td>Output token: address, ticker, or USDG/WETH.</td></tr>
+<tr><td><code>amountIn</code> <span style="color:var(--down);font-size:11px;">required</span></td><td><code>string</code></td><td>Human amount of tokenIn, e.g. &quot;100&quot; or &quot;0.05&quot;.</td></tr>
+<tr><td><code>slippageBps</code></td><td><code>integer</code></td><td>Slippage tolerance in bps (default 50 = 0.5%).</td></tr></tbody></table></div>
+</div>
+<div class="card" style="margin-bottom:14px;">
+  <h3><code>execute_swap</code> <span class="pill guarded">guarded</span></h3>
+  <p>Swap tokens on Robinhood Chain. First call returns a SIMULATION and requires confirm=true to broadcast. Spend is hard-capped in USD; Stock Token BUYS require eligibility. Approves the router automatically if needed.</p>
+  <div class="table-scroll"><table><thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>tokenIn</code> <span style="color:var(--down);font-size:11px;">required</span></td><td><code>string</code></td><td>Input token: address, ticker, or USDG/WETH.</td></tr>
+<tr><td><code>tokenOut</code> <span style="color:var(--down);font-size:11px;">required</span></td><td><code>string</code></td><td>Output token: address, ticker, or USDG/WETH.</td></tr>
+<tr><td><code>amountIn</code> <span style="color:var(--down);font-size:11px;">required</span></td><td><code>string</code></td><td>Human amount of tokenIn to spend, e.g. &quot;10&quot;.</td></tr>
+<tr><td><code>slippageBps</code></td><td><code>integer</code></td><td>Slippage tolerance in bps (default 50).</td></tr>
+<tr><td><code>confirm</code></td><td><code>boolean</code></td><td>Must be true to actually broadcast. Omit/false to preview.</td></tr></tbody></table></div>
+</div>
+<div class="card" style="margin-bottom:14px;">
+  <h3><code>transfer_usdg</code> <span class="pill guarded">guarded</span></h3>
+  <p>Send USDG to an address. First call returns a preview and requires confirm=true to broadcast. The amount is hard-capped in USD by the same spend limits.</p>
+  <div class="table-scroll"><table><thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead><tbody><tr><td><code>to</code> <span style="color:var(--down);font-size:11px;">required</span></td><td><code>string</code></td><td>Recipient address (0x…40 hex).</td></tr>
+<tr><td><code>amount</code> <span style="color:var(--down);font-size:11px;">required</span></td><td><code>string</code></td><td>Human USDG amount, e.g. &quot;5.00&quot;.</td></tr>
+<tr><td><code>confirm</code></td><td><code>boolean</code></td><td>Must be true to actually broadcast. Omit/false to preview.</td></tr></tbody></table></div>
+</div>
+  </section>
+
+  <footer>
+    MIT © 2026 nirholas · Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+    <a href="https://three.ws">three.ws</a>
+  </footer>
+</main>

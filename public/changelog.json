@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-12T13:35:49.974Z",
+	"generated_at": "2026-07-12T13:39:31.151Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Docs · The autonomous economy",
 			"summary": "How the three.ws on-chain treasury funds itself and where every dollar flows: the funding-root and engine wallets, the topup/sweepback loop, the allowlist- and destination-locks that keep money inside platform-owned wallets, and the two leak scanners that audit every signer wallet on-chain every minute — plus how to verify there's no leak yourself.",
 			"link": "/docs/autonomous-economy",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "launch",
+			"title": "Robinhood Chain",
+			"summary": "The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL — plus a real wallet-connect buy flow for its coins.",
+			"link": "/markets/robinhood",
 			"tags": [
 				"launch"
 			]
@@ -151,6 +161,16 @@
 			"link": null,
 			"tags": [
 				"security"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "update",
+			"title": "Robinhood Chain now on three.ws Markets — live stocks, coins, and a real buy flow",
+			"summary": "A new /markets/robinhood hub covers Robinhood Chain end to end: a 24/7 tokenized-equity board with live Chainlink NAV vs. Uniswap DEX premium for every Stock Token, a memecoin screener across the NOXA and The Odyssey launchpads, recent on-chain launches, and chain stats. Every coin and Stock Token has its own detail page with a price chart, holders, recent transfers, and contract links. Coin pages carry a real buy flow — connect a wallet, switch to Robinhood Chain, get a live Uniswap v3 quote, and swap with your own slippage tolerance; wallets with no funds on the chain get a bridge link instead of a dead end. Stock Tokens stay display-only, since they are tokenized securities not offered to US persons. A new paid API endpoint returns a wallet's full Stock Token portfolio, corporate-action-adjusted and priced at live NAV.",
+			"link": "/markets/robinhood",
+			"tags": [
+				"feature"
 			]
 		},
 		{

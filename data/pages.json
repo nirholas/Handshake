@@ -1591,6 +1591,14 @@
 					"added": "2026-07-10"
 				},
 				{
+					"path": "/markets/robinhood",
+					"title": "Robinhood Chain",
+					"description": "The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL — plus a real wallet-connect buy flow for its coins.",
+					"priority": 0.7,
+					"changefreq": "hourly",
+					"added": "2026-07-12"
+				},
+				{
 					"path": "/markets/news",
 					"title": "Crypto News",
 					"description": "Live crypto news aggregated natively from 192 publisher feeds in 18 languages — filter by category (Bitcoin, DeFi, security, regulation, and more), pick a language, search headlines, and open any story in a rich reader with summary, key points, sentiment, and related coverage.",

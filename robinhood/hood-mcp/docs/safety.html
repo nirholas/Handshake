@@ -1,0 +1,152 @@
+<title>Safety model — hood-mcp</title>
+<meta name="description" content="How hood-mcp-trading guards every fund-moving tool call: kill switch, eligibility gate, spend caps, confirm gate." />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏹</text></svg>" />
+<link rel="stylesheet" href="site.css" />
+
+<nav class="top">
+  <div class="wrap">
+    <div class="brand"><span class="tick">hood</span>-mcp</div>
+    <div class="links">
+      <a href="index.html">Overview</a>
+      <a href="install.html">Install</a>
+      <a href="tools.html">Tools</a>
+      <a href="safety.html" aria-current="page">Safety model</a>
+      <a href="https://github.com/nirholas/hood-mcp">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <section style="border-top:none; padding-top:48px;">
+    <h2 style="font-size:30px;">Safety model</h2>
+    <p class="section-lede">
+      <code>hood-mcp</code> (the data server) never signs anything — every tool is read-only.
+      <code>hood-mcp-trading</code> is a separate opt-in binary with four gates, in this order,
+      before a single wei moves.
+    </p>
+  </section>
+
+  <section>
+    <h2>The four gates</h2>
+    <ol class="gate-list">
+      <li>
+        <div class="num">1</div>
+        <div>
+          <h3>Kill switch — the process itself</h3>
+          <p>
+            <code>hood-mcp-trading</code> checks <code>HOOD_MCP_ENABLE_TRADING === "1"</code>
+            before it even connects to the MCP transport. Set a wallet key without this and the
+            process throws on startup and exits — it will not silently run read-only.
+          </p>
+        </div>
+      </li>
+      <li>
+        <div class="num">2</div>
+        <div>
+          <h3>Eligibility gate — Stock Token acquisitions</h3>
+          <p>
+            Stock Tokens are tokenized debt securities (issuer: Robinhood Assets (Jersey) Ltd)
+            and may not be offered, sold, or delivered to US persons (additional limits: Canada,
+            UK, Switzerland). Any swap whose <em>output</em> is a canonical Stock Token throws
+            unless <code>HOOD_MCP_ACKNOWLEDGE_ELIGIBILITY=1</code> — the operator's explicit
+            affirmation of eligibility. Selling a Stock Token, and all memecoin trades, are never
+            gated by this.
+          </p>
+        </div>
+      </li>
+      <li>
+        <div class="num">3</div>
+        <div>
+          <h3>Spend caps — checked before signing</h3>
+          <p>
+            Every mutating call is valued in USD (via USDG) and checked against
+            <code>HOOD_MCP_MAX_SPEND_USDG</code> (per single call, default $25) and
+            <code>HOOD_MCP_MAX_SESSION_USDG</code> (cumulative for the process's lifetime,
+            default $100). The check runs <strong>before</strong> anything is signed — a
+            rejected call never reaches the wallet. On mainnet, a spend with no USDG price route
+            is rejected outright rather than treated as zero-value.
+          </p>
+        </div>
+      </li>
+      <li>
+        <div class="num">4</div>
+        <div>
+          <h3>Confirm gate — every mutating tool, every time</h3>
+          <p>
+            <code>execute_swap</code> and <code>transfer_usdg</code> always return a simulation
+            (recipient, amount, token, minimum received, session budget remaining) on the first
+            call. <strong>Nothing is broadcast</strong> until the exact same call is repeated
+            with <code>confirm: true</code>. There is no "trust me" flag — an agent (or the
+            human behind it) sees the concrete numbers before anything moves.
+          </p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>What a blocked call looks like</h2>
+    <div class="flow">
+      <div class="step">execute_swap(tokenOut: "AAPL")</div>
+      <span class="arrow">→</span>
+      <div class="step blocked">eligibility not acknowledged</div>
+      <span class="arrow">→</span>
+      <div class="step blocked">isError: true, nothing signed</div>
+    </div>
+    <div class="flow">
+      <div class="step">execute_swap(amountIn: "1000 USDG")</div>
+      <span class="arrow">→</span>
+      <div class="step blocked">$1000 &gt; $25 per-call cap</div>
+      <span class="arrow">→</span>
+      <div class="step blocked">isError: true, nothing signed</div>
+    </div>
+    <div class="flow">
+      <div class="step">execute_swap(amountIn: "10 USDG")</div>
+      <span class="arrow">→</span>
+      <div class="step ok">under cap, simulation returned</div>
+      <span class="arrow">→</span>
+      <div class="step">confirm: true</div>
+      <span class="arrow">→</span>
+      <div class="step ok">broadcast, receipt returned</div>
+    </div>
+    <p style="color:var(--text-dim); font-size:13.5px;">
+      Every path above is exercised by real tests against live network reads — see
+      <code>tests/trading-guards.test.ts</code> in the repo.
+    </p>
+  </section>
+
+  <section>
+    <h2>What's NOT guarded</h2>
+    <p class="section-lede" style="max-width:none;">
+      Be precise about the boundary. These are true regardless of caps or gates:
+    </p>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Slippage is your risk, not a cap</h3>
+        <p><code>slippageBps</code> defaults to 50 (0.5%) but is caller-controlled up to 5000
+        (50%). A high slippage tolerance can still result in a bad fill within your USD cap.</p>
+      </div>
+      <div class="card">
+        <h3>The session cap resets on restart</h3>
+        <p><code>HOOD_MCP_MAX_SESSION_USDG</code> is an in-memory counter. Restarting the
+        trading server process resets it to zero — it is not a persistent ledger.</p>
+      </div>
+      <div class="card">
+        <h3>The wallet key is the real boundary</h3>
+        <p>Anyone with <code>ROBINHOOD_CHAIN_PRIVATE_KEY</code> can bypass this server entirely
+        and sign directly. Treat the key with the same care you would give any hot wallet key.</p>
+      </div>
+      <div class="card">
+        <h3>Testnet spends are unvalued, not uncapped</h3>
+        <p>Testnet assets have no USD price, so their notional counts as $0 against the cap — the
+        confirm gate is the real guard there, not the dollar limit.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    MIT © 2026 nirholas · Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+    <a href="https://three.ws">three.ws</a>
+  </footer>
+</main>

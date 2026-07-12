@@ -18,6 +18,7 @@ import { walletClientFromEnv } from './shared/client.js'
 import { readTradingConfig, SpendLedger } from './shared/trading-env.js'
 import { registerTradingTools } from './register-trading.js'
 import { SERVER_NAME, SERVER_VERSION } from './version.js'
+import { isMainModule } from './shared/is-main.js'
 
 const NAME = `${SERVER_NAME}-trading`
 
@@ -56,7 +57,7 @@ async function main(): Promise<void> {
   )
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isMainModule(import.meta.url)) {
   main().catch((e) => {
     process.stderr.write(`[${NAME}] fatal: ${e instanceof Error ? e.message : String(e)}\n`)
     process.exit(1)

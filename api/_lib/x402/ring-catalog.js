@@ -1174,6 +1174,25 @@ export const RING_CATALOG = [
 		businessEffect: 'Generates a real GPU-derived remix of a published creation, records parent→child provenance, and routes a real on-chain USDC royalty to the source creator.',
 		note: 'autobuy:false — every call is a real GPU generation plus a possible real on-chain USDC royalty transfer to a third-party creator wallet; requires a live, published remixable source creation id (the canary UUID resolves to source_not_found). Verify once against a known published remixable source.',
 	},
+
+	// ── Robinhood Chain — market data ────────────────────────────────────────
+	{
+		slug: 'robinhood-portfolio',
+		sourceFile: 'api/v1/robinhood/portfolio.js',
+		path: '/api/v1/robinhood/portfolio',
+		method: 'GET',
+		query: { address: '0x0000000000000000000000000000000000000000' },
+		body: NO_BODY,
+		priceAtomicDefault: 2_000,
+		priceSlug: 'robinhood-portfolio',
+		tier: 'intel',
+		kind: 'intel',
+		network: null,
+		autobuy: false,
+		weight: 0,
+		businessEffect: 'Reads a wallet\'s multiplier-correct Robinhood Chain Stock Token portfolio via on-chain multicall, priced at live Chainlink NAV (read-only, no state change).',
+		note: 'autobuy:false — the canary (zero address) always succeeds but fans out one multicall of ~95 balanceOf reads against the public Robinhood Chain RPC per call; rotating it hourly adds avoidable RPC load for a brand-new, low-traffic endpoint. One-time settle proof via the coverage sweep.',
+	},
 ];
 
 // ── selectors ─────────────────────────────────────────────────────────────────

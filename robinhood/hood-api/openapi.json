@@ -1,0 +1,606 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "hood-api",
+    "version": "0.1.0",
+    "description": "Hosted market-data API for Robinhood Chain (chain ID 4663): Stock Tokens with Chainlink + DEX premium/discount, memecoin launchpads, multiplier-correct portfolios, cross-venue tokenized-equity spreads, and a real-time firehose. Free tier is IP-rate-limited; paid endpoints are metered via x402.",
+    "license": {
+      "name": "MIT"
+    },
+    "contact": {
+      "name": "nirholas",
+      "url": "https://x.com/nichxbt"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://hood-api.example.com",
+      "description": "Production (replace with your deployment URL)"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "unknown_symbol"
+          },
+          "hint": {
+            "type": "string",
+            "example": "Symbol not found in the Stock Token registry."
+          },
+          "docs": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://nirholas.github.io/hood-api/#errors"
+          }
+        },
+        "required": [
+          "error",
+          "hint",
+          "docs"
+        ]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/v1/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Service liveness + RPC reachability",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/chain": {
+      "get": {
+        "tags": [
+          "Chain"
+        ],
+        "summary": "Chain stats: block height, gas, TVL, ETH price",
+        "responses": {
+          "200": {
+            "description": "Chain stats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/stocks": {
+      "get": {
+        "tags": [
+          "Stocks"
+        ],
+        "summary": "All Stock Tokens: Chainlink price, DEX price, premium/discount, liquidity",
+        "responses": {
+          "200": {
+            "description": "Stock Token list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/stocks/{symbol}": {
+      "get": {
+        "tags": [
+          "Stocks"
+        ],
+        "summary": "Stock Token detail: candles, holders, feed metadata, links",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10,
+              "example": "AAPL",
+              "description": "Stock Token ticker, case-insensitive"
+            },
+            "required": true,
+            "description": "Stock Token ticker, case-insensitive",
+            "name": "symbol",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "5m",
+                "15m",
+                "1h",
+                "4h",
+                "1d"
+              ]
+            },
+            "required": false,
+            "name": "interval",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock Token detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/coins": {
+      "get": {
+        "tags": [
+          "Coins"
+        ],
+        "summary": "Memecoins: launchpad state, price, liquidity, holders, age",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 60,
+              "example": 25
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Coin list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/coins/{address}": {
+      "get": {
+        "tags": [
+          "Coins"
+        ],
+        "summary": "Coin detail: launch info, graduation status, DEX stats, holders",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "example": "0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9",
+              "description": "EVM contract or wallet address"
+            },
+            "required": true,
+            "description": "EVM contract or wallet address",
+            "name": "address",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Coin detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/launches": {
+      "get": {
+        "tags": [
+          "Coins"
+        ],
+        "summary": "Recent + live launchpad activity (NOXA, The Odyssey)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "noxa",
+                "odyssey"
+              ],
+              "description": "Restrict to one launchpad"
+            },
+            "required": false,
+            "description": "Restrict to one launchpad",
+            "name": "launchpad",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "15m",
+                "1h",
+                "6h",
+                "24h"
+              ],
+              "example": "1h"
+            },
+            "required": false,
+            "name": "lookback",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "example": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Launch list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/portfolio/{address}": {
+      "get": {
+        "tags": [
+          "Paid"
+        ],
+        "summary": "Multiplier-correct portfolio valuation (x402, $0.002)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^0x[a-fA-F0-9]{40}$",
+              "example": "0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9",
+              "description": "EVM contract or wallet address"
+            },
+            "required": true,
+            "description": "EVM contract or wallet address",
+            "name": "address",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Portfolio",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/stocks/{symbol}/history": {
+      "get": {
+        "tags": [
+          "Paid"
+        ],
+        "summary": "Deep OHLCV history for one Stock Token (x402, $0.005)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10,
+              "example": "AAPL",
+              "description": "Stock Token ticker, case-insensitive"
+            },
+            "required": true,
+            "description": "Stock Token ticker, case-insensitive",
+            "name": "symbol",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "5m",
+                "15m",
+                "1h",
+                "4h",
+                "1d"
+              ],
+              "example": "1h",
+              "description": "Candle bucket size"
+            },
+            "required": false,
+            "description": "Candle bucket size",
+            "name": "interval",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "1h",
+                "6h",
+                "24h",
+                "7d",
+                "30d"
+              ],
+              "example": "7d",
+              "description": "How far back to reconstruct OHLCV from swap logs"
+            },
+            "required": false,
+            "description": "How far back to reconstruct OHLCV from swap logs",
+            "name": "lookback",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "History",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/equities": {
+      "get": {
+        "tags": [
+          "Paid"
+        ],
+        "summary": "Cross-venue tokenized-equity spreads: Robinhood Chain vs xStocks vs Ondo (x402, $0.01)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 30,
+              "example": 10
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cross-venue list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/equities/{symbol}": {
+      "get": {
+        "tags": [
+          "Paid"
+        ],
+        "summary": "Cross-venue price for one ticker (x402, $0.01)",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 10,
+              "example": "AAPL",
+              "description": "Stock Token ticker, case-insensitive"
+            },
+            "required": true,
+            "description": "Stock Token ticker, case-insensitive",
+            "name": "symbol",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cross-venue row",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/firehose": {
+      "get": {
+        "tags": [
+          "Paid"
+        ],
+        "summary": "Mint a metered session token for the real-time /v1/ws firehose (x402, $0.01)",
+        "responses": {
+          "200": {
+            "description": "Session token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {}
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}

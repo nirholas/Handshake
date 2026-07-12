@@ -35,5 +35,22 @@ export default {
 			address: { type: 'string', description: 'EVM wallet address to value (0x…40 hex chars).' },
 		},
 	},
+	outputExample: {
+		owner: '0x9701fb0aDe1E269c8f64Ec0C7b3cfADB31A13A52',
+		positions: [
+			{
+				symbol: 'AAPL',
+				name: 'Apple • Robinhood Token',
+				address: '0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9',
+				rawBalance: '1000000000000000000',
+				uiMultiplier: '1000000000000000000',
+				shares: 1,
+				navPriceUsd: 315.5,
+				valueUsd: 315.5,
+			},
+		],
+		totalValueUsd: 315.5,
+		positionCount: 1,
+	},
 	storefronts: ['x402scan'],
 };

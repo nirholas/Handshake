@@ -87,7 +87,9 @@ describe('free endpoints (live)', () => {
   it('GET /v1/coins/not-an-address returns a structured 400', async () => {
     const { status, body } = await get('/v1/coins/not-an-address')
     expect(status).toBe(400)
-    expect(body.error).toBe('invalid_address')
+    expect(body.error).toBe('invalid_request')
+    expect(typeof body.hint).toBe('string')
+    expect(typeof body.docs).toBe('string')
   })
 
   it('GET /v1/launches returns a well-formed (possibly empty) live list', async () => {

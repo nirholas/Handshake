@@ -15,6 +15,14 @@
 			<description>How the three.ws on-chain treasury funds itself and where every dollar flows: the funding-root and engine wallets, the topup/sweepback loop, the allowlist- and destination-locks that keep money inside platform-owned wallets, and the two leak scanners that audit every signer wallet on-chain every minute — plus how to verify there's no leak yourself.</description>
 		</item>
 		<item>
+			<title>Robinhood Chain</title>
+			<link>https://three.ws/markets/robinhood</link>
+			<guid isPermaLink="false">2026-07-12:Robinhood Chain</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL — plus a real wallet-connect buy flow for its coins.</description>
+		</item>
+		<item>
 			<title>Agent discovery fixed: six paid endpoints were invisible to x402 scanners</title>
 			<link>https://three.ws/openapi.json</link>
 			<guid isPermaLink="false">2026-07-12:Agent discovery fixed: six paid endpoints were invisible to x402 scanners</guid>
@@ -117,6 +125,14 @@
 			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
 			<category>security</category>
 			<description>The in-house payment facilitator that verifies agent-to-agent USDC payments used to check only that a payment was correctly formed — the right amount, token, and recipient — but not that the buyer's account actually held the funds. Because paid endpoints run the requested work first and settle the payment afterward, a payment signed from an empty account could pass the check, trigger real (and sometimes costly) work like an AI generation, and only then fail to settle — leaving the platform to absorb the cost. Verification now simulates the payment on-chain, and falls back to a direct balance check if that's briefly unavailable, so a payment that can't settle is rejected before any work runs. Genuine, funded payments are unaffected.</description>
+		</item>
+		<item>
+			<title>Robinhood Chain now on three.ws Markets — live stocks, coins, and a real buy flow</title>
+			<link>https://three.ws/markets/robinhood</link>
+			<guid isPermaLink="false">2026-07-12:Robinhood Chain now on three.ws Markets — live stocks, coins, and a real buy flow</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new /markets/robinhood hub covers Robinhood Chain end to end: a 24/7 tokenized-equity board with live Chainlink NAV vs. Uniswap DEX premium for every Stock Token, a memecoin screener across the NOXA and The Odyssey launchpads, recent on-chain launches, and chain stats. Every coin and Stock Token has its own detail page with a price chart, holders, recent transfers, and contract links. Coin pages carry a real buy flow — connect a wallet, switch to Robinhood Chain, get a live Uniswap v3 quote, and swap with your own slippage tolerance; wallets with no funds on the chain get a bridge link instead of a dead end. Stock Tokens stay display-only, since they are tokenized securities not offered to US persons. A new paid API endpoint returns a wallet's full Stock Token portfolio, corporate-action-adjusted and priced at live NAV.</description>
 		</item>
 		<item>
 			<title>Seeker wallet signing fixed before it ever shipped</title>

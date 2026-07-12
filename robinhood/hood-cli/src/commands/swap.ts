@@ -12,6 +12,9 @@ import { accent, bold, dim, gray, green, yellow } from '../ui/ansi.js'
 import { num, addr } from '../format.js'
 import { txUrl } from '../blockscout.js'
 import { guardError, usageError } from '../errors.js'
+import { checkSpendCap } from '../spend-cap.js'
+import { getDexPriceUsd } from '../prices.js'
+import { warn } from '../output.js'
 
 export function swapCommand(): Command {
   return new Command('swap')
@@ -69,6 +72,14 @@ async function swap(ctx: Context, opts: SwapOpts): Promise<void> {
     return
   }
 
+  // maxSpendUsd guard rail: estimate what's being sold in USD (USDG is 1:1;
+  // anything else prices off its own DEX quote) and refuse over the cap.
+  const estimatedUsd = await estimateSpendUsd(client, tokenIn.symbol, tokenIn.address, tokenIn.decimals, Number(opts.amount))
+  if (ctx.config.maxSpendUsd !== undefined && estimatedUsd === null) {
+    warn(`Could not verify this swap against your $${ctx.config.maxSpendUsd} spend cap (no price route for ${tokenIn.symbol}) — proceeding.`)
+  }
+  checkSpendCap({ maxSpendUsd: ctx.config.maxSpendUsd, estimatedUsd })
+
   // Write path: money-moving action — render the confirmation table and stop
   // for explicit yes/no before signing, per CLAUDE.md's irreversible-action gate.
   if (!ctx.json) process.stdout.write(renderQuote(summary, true) + '\n\n')
@@ -101,6 +112,18 @@ async function swap(ctx: Context, opts: SwapOpts): Promise<void> {
     }
     throw err
   }
+}
+
+async function estimateSpendUsd(
+  client: Parameters<typeof getDexPriceUsd>[0],
+  symbol: string,
+  address: `0x${string}`,
+  decimals: number,
+  amount: number,
+): Promise<number | null> {
+  if (symbol === 'USDG') return amount
+  const perToken = await getDexPriceUsd(client, address, decimals)
+  return perToken !== null ? perToken * amount : null
 }
 
 function renderQuote(

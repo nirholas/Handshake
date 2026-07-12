@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-12T13:35:49.953Z",
+	"generated_at": "2026-07-12T13:39:31.135Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1941,6 +1941,16 @@
 					"title": "Markets Hub",
 					"description": "The three.ws markets hub — live global stats, the top 100 coins, breaking crypto news from 192 publisher feeds, a 662k-article news archive, and hero links to the full markets toolset.",
 					"added": "2026-07-10",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/markets/robinhood",
+					"title": "Robinhood Chain",
+					"description": "The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL — plus a real wallet-connect buy flow for its coins.",
+					"added": "2026-07-12",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>hood-traders — autonomous trading agents for Robinhood Chain</title>
+  <meta name="description" content="A framework and runnable fleet of autonomous agents that trade Robinhood Chain memecoins and watch Stock Token premium/discount. Real risk caps, real signed swaps, live decision journal." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="topnav">
+    <div class="brand"><span class="dot"></span>hood-traders</div>
+    <div class="links">
+      <a href="index.html" class="active">Overview</a>
+      <a href="architecture.html">Architecture</a>
+      <a href="strategies.html">Strategies</a>
+      <a href="quickstart.html">Quickstart</a>
+      <a href="https://github.com/nirholas/hood-traders" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <section class="hero">
+      <div class="hero-badges">
+        <span class="badge paper">◆ paper mode by default</span>
+        <span class="badge">Robinhood Chain 4663 / 46630</span>
+        <span class="badge">MIT licensed</span>
+      </div>
+      <h1>Autonomous agents that trade Robinhood Chain — with real risk caps and a live decision journal.</h1>
+      <p class="lede">
+        A framework + runnable fleet: strategy + wallet + risk budget + journal. Every tick observes
+        live market data, simulates the fill with a real Uniswap v3 <code>eth_call</code>, checks
+        every risk cap before anything executes, and journals the decision — trade or refusal —
+        into SQLite. Three honest strategies ship out of the box.
+      </p>
+      <div class="cta-row">
+        <a class="btn primary" href="quickstart.html">Run your own fleet →</a>
+        <a class="btn secondary" href="architecture.html">See how it works</a>
+      </div>
+    </section>
+
+    <section aria-live="polite">
+      <h2>Live from Robinhood Chain mainnet</h2>
+      <p>
+        This ticker calls the public RPC directly from your browser right now — no server, no
+        SDK bundle, just a raw JSON-RPC POST. It's the same chain the fleet trades on.
+      </p>
+      <div id="live-ticker" class="stat-grid">
+        <div class="stat-tile"><div class="stat-label">Loading…</div><div class="stat-value">—</div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>A captured paper session</h2>
+      <p>
+        The numbers below are a real ≥30-minute paper-mode run against live mainnet data — not a
+        mockup. <strong>Paper mode</strong>: every fill is simulated against the real Uniswap v3
+        quote, no funds moved. See the full methodology in <a href="architecture.html">Architecture</a>.
+      </p>
+      <div id="session-summary" class="stat-grid">
+        <div class="state-block">Session data loads from <code>session.json</code> after a captured run — see the repo's <code>tests/e2e/</code> for the harness.</div>
+      </div>
+      <h3>Decision journal excerpt</h3>
+      <div id="session-journal" class="journal-feed"></div>
+    </section>
+
+    <section>
+      <h2>Three strategies, honestly documented</h2>
+      <div class="card-grid">
+        <div class="card">
+          <h3>launch-sniper</h3>
+          <p class="edge">Enter new launchpad coins that clear round-trip + deployer-concentration filters, exit on TP/stop/time.</p>
+          <ul>
+            <li>Most new launches go to zero — negative-carry unless winners cover losers</li>
+            <li>Honeypots can toggle a sell tax after entry</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>momentum</h3>
+          <p class="edge">Volume+price breakouts on already-graduated (liquid) tokens, trailing-stop exits.</p>
+          <ul>
+            <li>Breakouts on thin pools are trivially fakeable</li>
+            <li>No edge in a flat or declining market — trend-only by design</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>premium-watch</h3>
+          <p class="edge">Tracks Chainlink-vs-DEX spread on Stock Tokens. <strong>Alerts-only by default</strong> — trading needs explicit eligibility.</p>
+          <ul>
+            <li>A premium can be correct — fading it loses on purpose</li>
+            <li>No shorting primitive — only discounts are ever tradeable</li>
+          </ul>
+        </div>
+      </div>
+      <p><a href="strategies.html">Full strategy docs with live examples →</a></p>
+    </section>
+
+    <div class="callout danger">
+      <strong>⚠ Risk disclaimer.</strong> This software can autonomously sign and broadcast real
+      transactions with real funds in live mode. Trading is risky — most new memecoin launches go
+      to zero. Paper mode is the default and touches no funds. Read the full disclaimer in the
+      <a href="https://github.com/nirholas/hood-traders#readme" target="_blank" rel="noopener">README</a>
+      before funding a wallet.
+    </div>
+
+    <footer class="footer">
+      <span>hood-traders · Robinhood Chain autonomous trading fleet</span>
+      <span>Built by <a href="https://x.com/nichxbt" target="_blank" rel="noopener">nirholas</a> · <a href="https://three.ws" target="_blank" rel="noopener">three.ws</a></span>
+    </footer>
+  </div>
+
+  <script src="live-ticker.js" type="module"></script>
+  <script src="session-loader.js" type="module"></script>
+</body>
+</html>
