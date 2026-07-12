@@ -81,11 +81,58 @@ export async function loadAgentForSigning(agentId, userId, audit = null) {
 		`;
 	}
 
-	const keypair = await recoverSolanaAgentKeypair(meta.encrypted_solana_secret, {
-		agentId,
-		userId,
-		reason: audit?.reason || 'pumpfun_action',
-		meta: audit?.meta,
-	});
+	let keypair;
+	try {
+		keypair = await recoverSolanaAgentKeypair(meta.encrypted_solana_secret, {
+			agentId,
+			userId,
+			reason: audit?.reason || 'pumpfun_action',
+			meta: audit?.meta,
+		});
+	} catch (err) {
+		// A custodial wallet encrypted under a RETIRED key (e.g. the WALLET_ENCRYPTION_KEY
+		// that changed during the Vercel→Cloud Run migration) can no longer be decrypted
+		// with the current key OR the JWT_SECRET fallback. decryptSecret authenticates
+		// every candidate (AES-GCM), so a failure here is a DEFINITIVE "unrecoverable",
+		// not a transient fault — and the stored address is already unreachable because we
+		// can't sign for it, so nothing new is stranded. Rather than fail every launch
+		// forever, self-heal: mint a fresh wallet under the CURRENT key (the same
+		// self-provision the no-wallet branch above does), keep the dead address in meta
+		// for the audit/recovery trail, and continue.
+		if (!isUnrecoverableSecret(err)) throw err;
+		const sol = await generateSolanaAgentWallet();
+		meta = {
+			...meta,
+			solana_address: sol.address,
+			encrypted_solana_secret: sol.encrypted_secret,
+			solana_wallet_source: 're_provisioned_stale_key',
+			stale_solana_address: meta.solana_address,
+			rekeyed_at: new Date().toISOString(),
+		};
+		await sql`
+			UPDATE agent_identities
+			SET meta = ${JSON.stringify(meta)}::jsonb
+			WHERE id = ${agentId}
+		`;
+		keypair = await recoverSolanaAgentKeypair(meta.encrypted_solana_secret, {
+			agentId,
+			userId,
+			reason: 're_provision_stale_key',
+			meta: audit?.meta,
+		});
+	}
 	return { agent: row, keypair, meta };
+}
+
+// A stored custodial secret is unrecoverable when neither the dedicated wallet key
+// nor the JWT_SECRET fallback can authenticate it (AES-GCM OperationError), or when
+// the decrypted bytes aren't a valid 64-byte secret key. These are permanent — a
+// retired key or a corrupt record — so it's safe to re-provision rather than retry.
+export function isUnrecoverableSecret(err) {
+	const name = err?.name || '';
+	const msg = String(err?.message || '');
+	return (
+		name === 'OperationError' ||
+		/decrypt failed|no candidate key|bad secret key|invalid secret key|secret key size/i.test(msg)
+	);
 }
