@@ -75,28 +75,66 @@ beforeEach(() => {
 	rpcMock.getParsedTransaction = null;
 	delete process.env.PREMIUM_PASS_USD;
 	delete process.env.PREMIUM_PASS_THREE_DISCOUNT;
+	for (const t of ['DEVELOPER', 'PRO', 'ENTERPRISE']) {
+		delete process.env[`PREMIUM_PRICE_${t}`];
+		delete process.env[`PREMIUM_RATE_LIMIT_${t}`];
+	}
+});
+
+// ── Plan catalog ─────────────────────────────────────────────────────────────
+
+describe('plans', () => {
+	it('exposes three tiers with ascending price and throughput', () => {
+		const plans = premium.listPlans();
+		expect(plans.map((p) => p.id)).toEqual(['developer', 'pro', 'enterprise']);
+		expect(plans.map((p) => p.usd)).toEqual([19.99, 99, 499]);
+		expect(plans.map((p) => p.rateLimitPerMinute)).toEqual([120, 600, 2000]);
+		expect(plans.map((p) => p.commercial)).toEqual([false, true, true]);
+	});
+
+	it('maps the legacy plan id "premium" (pre-tier rows) to developer', () => {
+		expect(premium.planById('premium').id).toBe('developer');
+		expect(premium.planById(undefined).id).toBe('developer');
+	});
+
+	it('rejects unknown plan ids', () => {
+		expect(() => premium.planById('mega')).toThrow(/plan must be one of/);
+	});
+
+	it('per-tier env overrides reprice live', () => {
+		process.env.PREMIUM_PRICE_PRO = '49';
+		process.env.PREMIUM_RATE_LIMIT_PRO = '900';
+		const pro = premium.planById('pro');
+		expect(pro.usd).toBe(49);
+		expect(pro.rateLimitPerMinute).toBe(900);
+	});
 });
 
 // ── Pricing ──────────────────────────────────────────────────────────────────
 
 describe('priceAsset', () => {
-	it('USDC is parity: $9.99 → 9990000 atomics', async () => {
+	it('USDC is parity: developer $19.99 → 19990000 atomics', async () => {
 		const p = await premium.priceAsset('USDC');
-		expect(p.atomics).toBe(9_990_000n);
+		expect(p.atomics).toBe(19_990_000n);
 		expect(p.priceSource).toBe('parity');
 	});
 
 	it('SOL converts at the oracle price', async () => {
 		const p = await premium.priceAsset('SOL');
-		expect(p.atomics).toBe(BigInt(Math.ceil((9.99 / 150) * 1e9)));
+		expect(p.atomics).toBe(BigInt(Math.ceil((19.99 / 150) * 1e9)));
 		expect(p.assetUsd).toBe(150);
 	});
 
-	it('$THREE gets the discount: $9.99 −20% at $0.002 → 3,995 THREE', async () => {
+	it('$THREE gets the discount: $19.99 −20% at $0.002 → ~7,996 THREE', async () => {
 		const p = await premium.priceAsset('THREE');
-		// 9.99 * 0.8 = 7.992 → rounded to 7.99 USD, / 0.002 = 3995 THREE
-		expect(p.usd).toBe(7.99);
-		expect(p.atomics).toBe(BigInt(Math.ceil((7.99 / 0.002) * 1e6)));
+		// 19.99 * 0.8 = 15.992 → rounded to 15.99 USD, / 0.002 = 7995 THREE
+		expect(p.usd).toBe(15.99);
+		expect(p.atomics).toBe(BigInt(Math.ceil((15.99 / 0.002) * 1e6)));
+	});
+
+	it('prices the requested tier, not just the entry one', async () => {
+		const p = await premium.priceAsset('USDC', premium.planById('pro'));
+		expect(p.atomics).toBe(99_000_000n);
 	});
 
 	it('rejects unknown assets and malformed wallets', async () => {
@@ -248,6 +286,31 @@ describe('activatePass', () => {
 		expect(out.pass.id).toBe('pass-1');
 		expect(out.apiKey).toBeNull();
 		expect(keyMints.length).toBe(0);
+	});
+
+	it('a pro purchase mints a 600/min key labelled with the tier', async () => {
+		db.handlers.push(
+			{ match: /update premium_quotes/, result: () => [{ id: 'q-pro' }] },
+			{ match: /select \* from premium_passes where wallet/, result: () => [] },
+			{ match: /insert into premium_passes/, result: () => [{ id: 'pass-pro' }] },
+		);
+		await premium.activatePass({ quote: { ...QUOTE, id: 'q-pro', plan: 'pro' }, txSignature: 'sig-pro' });
+		expect(keyMints[0].rateLimitPerMinute).toBe(600);
+		expect(keyMints[0].name).toContain('Pro');
+		expect(keyMints[0].meta.plan).toBe('pro');
+	});
+
+	it('an upgrade purchase retiers the existing key to the new rate limit', async () => {
+		const prevExpiry = new Date(Date.now() + 5 * 86400_000).toISOString();
+		let retieredTo = null;
+		db.handlers.push(
+			{ match: /update premium_quotes/, result: () => [{ id: 'q-up' }] },
+			{ match: /select \* from premium_passes where wallet/, result: () => [{ id: 'pass-0', wallet: BUYER, expires_at: prevExpiry, api_subscription_id: 'sub_prev' }] },
+			{ match: /update x402_subscriptions/, result: (values) => { retieredTo = values.find((v) => typeof v === 'number'); return [{ id: 'sub_prev' }]; } },
+			{ match: /insert into premium_passes/, result: () => [{ id: 'pass-up' }] },
+		);
+		await premium.activatePass({ quote: { ...QUOTE, id: 'q-up', plan: 'enterprise' }, txSignature: 'sig-up' });
+		expect(retieredTo).toBe(2000);
 	});
 
 	it('a claimed quote with no matching pass is a hard conflict', async () => {

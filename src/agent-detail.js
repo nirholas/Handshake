@@ -83,26 +83,34 @@ function mountAgentDetailAura(agent) {
 	hydrateAvatarWallet(wrap, agent, { lod: 'full', live: true, network: 'mainnet', fetchPrefs: false })
 		.then((c) => {
 			adNetWorthAura = c;
+			// The v2 shell provides dedicated slots so these cross-link panels
+			// compose into the layout (banner strip below the hero, watch panel in
+			// the Activity section) instead of stacking full-width banners above
+			// the fold. Classic layout — and any other page without slots — keeps
+			// the original prepend/append-to-main behavior.
+			const main = document.querySelector('.ad-main');
+			const bannerHost = document.getElementById('adv2-banners') || main;
+			const bannerPos = bannerHost === main ? 'prepend' : 'append';
+			const watchHost = document.getElementById('adv2-watch-slot') || main;
 			// Mount the presence panel (tier + reputation regalia + owner reactivity
 			// dial) at the top of the main column, kept in lockstep with the aura.
-			const main = document.querySelector('.ad-main');
-			if (c && main) {
-				mountPresence({ agentId: agent.id, container: main, aura: c, position: 'prepend' })
+			if (c && bannerHost) {
+				mountPresence({ agentId: agent.id, container: bannerHost, aura: c, position: bannerPos })
 					.then((panel) => { adNetWorthPanel = panel || null; })
 					.catch(() => { /* read failed — aura still shows the look */ });
 			}
 			// Living Stages cross-link: a "live now / next show" badge for visitors,
 			// and one-tap stage controls (create / go live / end show) for the owner.
 			if (main) {
-				mountStagePanel({ agentId: agent.id, agentName: agent.name || 'this agent', isOwner: !!agent.isOwner, container: main, position: 'prepend' })
+				mountStagePanel({ agentId: agent.id, agentName: agent.name || 'this agent', isOwner: !!agent.isOwner, container: bannerHost, position: bannerPos })
 					.catch(() => { /* stage is an enhancement; never block the profile */ });
 					// Labor Market cross-link: this agent's "Work" record (earnings, jobs,
 					// reputation) + a link to post or work for hire. Enhancement only.
-					mountLaborPanel({ agentId: agent.id, agentName: agent.name || 'this agent', isOwner: !!agent.isOwner, container: main, position: 'prepend' })
+					mountLaborPanel({ agentId: agent.id, agentName: agent.name || 'this agent', isOwner: !!agent.isOwner, container: bannerHost, position: bannerPos })
 						.catch(() => { /* never block the profile */ });
 					// Alpha Co-pilot cross-link: hear this agent read a real live launch in
 					// character and (for the owner) act within its spend limits. Enhancement.
-					mountAlphaPanel({ agentId: agent.id, agentName: agent.name || 'this agent', isOwner: !!agent.isOwner, container: main, position: 'prepend' })
+					mountAlphaPanel({ agentId: agent.id, agentName: agent.name || 'this agent', isOwner: !!agent.isOwner, container: bannerHost, position: bannerPos })
 						.catch(() => { /* never block the profile */ });
 					// Live watch panel — agent's screen + avatar webcam. Always shown;
 					// renders real activity canvas when no Playwright frames are flowing.
@@ -112,7 +120,7 @@ function mountAgentDetailAura(agent) {
 						agentName: agent.name || 'this agent',
 						avatarUrl: agentAvatarGlb(agent),
 						isOwner: !!agent.isOwner,
-						container: main,
+						container: watchHost,
 						position: 'append',
 					}).then((h) => { _watchHandle = h || null; }).catch(() => { /* never block */ });
 			}
@@ -368,6 +376,11 @@ async function renderLaunchHistory(container, agent) {
 		return; // history is supplementary — the primary token chip still renders
 	}
 	if (!coins.length) return;
+
+	// Real launch history is worth showing even when no token is linked — undo
+	// the visitor-facing hide of the token card (v2 layout only).
+	const tokenCard = document.getElementById('ad-token-card');
+	if (tokenCard) tokenCard.hidden = false;
 
 	// A single launch that is already shown as the agent token chip above would
 	// be pure duplication — just add the public-feed link in that case.
@@ -1173,6 +1186,13 @@ function render(agent) {
 	// A re-render (avatar refresh) clears the token body below; tear down any
 	// coin-status widgets first so their refresh timers don't leak.
 	destroyCoinStatus();
+
+	// "No agent token linked yet" is dead weight for a visitor — hide the card
+	// unless there's a token, the viewer owns the agent (launch CTA), or launch
+	// history reveals it below. Classic layout has no #ad-token-card, so this
+	// is a v2-only refinement.
+	const tokenCard = document.getElementById('ad-token-card');
+	if (tokenCard) tokenCard.hidden = !agent.token && !agent.isOwner;
 
 	if (agent.token) {
 		$('ad-token-body').classList.remove('ad-muted');
@@ -2892,13 +2912,22 @@ async function loadPlatformBar() {
 		if (!r.ok) return;
 		const d = await r.json();
 		const fmt = n => n >= 1e3 ? (n/1e3).toFixed(1)+'K' : String(n||0);
-		const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
-		set('adp-agents', fmt(d.agents_armed));
-		set('adp-winrate', d.win_rate != null ? d.win_rate+'%' : '—');
-		set('adp-wins', fmt(d.total_wins));
-		set('adp-scored', fmt(d.scored_24h));
+		// A zero or dash in a stats strip reads as "the platform is dead" — only
+		// show stats with a real value, and only reveal the bar if any survive.
+		let shown = 0;
+		const set = (id, ok, v) => {
+			const e = document.getElementById(id);
+			if (!e) return;
+			const stat = e.closest('.ad-platform-stat');
+			if (ok) { e.textContent = v; shown++; }
+			else if (stat) stat.hidden = true;
+		};
+		set('adp-agents', Number(d.agents_armed) > 0, fmt(d.agents_armed));
+		set('adp-winrate', Number(d.win_rate) > 0, d.win_rate + '%');
+		set('adp-wins', Number(d.total_wins) > 0, fmt(d.total_wins));
+		set('adp-scored', Number(d.scored_24h) > 0, fmt(d.scored_24h));
 		const bar = document.getElementById('ad-platform-bar');
-		if (bar) bar.hidden = false;
+		if (bar && shown > 0) bar.hidden = false;
 	} catch { /* non-fatal */ }
 }
 

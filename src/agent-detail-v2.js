@@ -36,6 +36,8 @@ const tabs = new Map(
 
 function cardVisible(el) {
 	if (el.hidden) return false;
+	// A mount slot ([data-slot]) only counts once a panel has landed in it.
+	if (el.dataset.slot != null && !el.childElementCount) return false;
 	// Cards toggled via inline style (display:none) rather than [hidden].
 	return getComputedStyle(el).display !== 'none';
 }
@@ -63,6 +65,8 @@ if (body) {
 	visibilityObserver.observe(body, {
 		attributes: true,
 		attributeFilter: ['hidden', 'style', 'class'],
+		// Mount slots go from empty → populated via childList, not attributes.
+		childList: true,
 		subtree: true,
 	});
 }

@@ -119,15 +119,15 @@ function setBuyNote(text, isError = false) {
 	el.style.color = isError ? 'var(--nxt-danger)' : 'var(--nxt-ink-dim)';
 }
 
-async function buy(asset) {
+async function buy(planId, asset) {
 	if (state.buying) return;
-	state.buying = asset;
+	state.buying = `${planId}:${asset}`;
 	renderPricing();
 	try {
 		setBuyNote('Connecting wallet…');
 		const { provider, wallet } = await connectWallet();
 		setBuyNote('Locking the price and building your payment…');
-		const { quote, tx_base64 } = await post('/api/premium/quote', { asset, wallet });
+		const { quote, tx_base64 } = await post('/api/premium/quote', { asset, wallet, plan: planId });
 		setBuyNote('Confirm the payment in your wallet…');
 		const { VersionedTransaction } = await import('@solana/web3.js');
 		const bytes = Uint8Array.from(atob(tx_base64), (c) => c.charCodeAt(0));
@@ -236,42 +236,58 @@ function renderStatusCard() {
 function renderPricing() {
 	const el = $('da-pricing');
 	if (!el || !state.plans) return;
-	const { plan, assets } = state.plans;
+	const plans = state.plans.plans || [];
+	if (!plans.length) return;
 	const active = Boolean(state.status?.active);
-	const cards = assets.map((a) => {
-		const highlight = a.asset === 'THREE';
-		const buyLabel = state.buying === a.asset
-			? 'Processing…'
-			: active ? `Renew with ${a.asset === 'THREE' ? '$THREE' : a.asset}` : `Pay with ${a.asset === 'THREE' ? '$THREE' : a.asset}`;
+	const fromUsd = Math.min(...plans.map((p) => Number(p.usd)));
+
+	const assetBtn = (plan, a) => {
+		const key = `${plan.id}:${a.asset}`;
+		const label = a.asset === 'THREE' ? '$THREE' : a.asset;
 		if (!a.available) {
-			return `
-				<div class="da-card" aria-disabled="true">
-					<div class="da-card-asset">${a.asset === 'THREE' ? '$THREE' : esc(a.asset)}</div>
-					<div class="da-card-amount">—</div>
-					<div class="da-card-usd">${esc(a.reason || 'temporarily unavailable')}</div>
-					<button class="dn-btn" type="button" disabled>Unavailable</button>
-				</div>`;
+			return `<button class="da-paybtn" type="button" disabled title="${esc(a.reason || 'temporarily unavailable')}">${esc(label)} —</button>`;
 		}
+		const busy = state.buying === key;
 		return `
-			<div class="da-card ${highlight ? 'da-card-hot' : ''}">
-				${highlight ? `<div class="da-card-badge">−${Math.round((a.discount || 0) * 100)}% · platform coin</div>` : ''}
-				<div class="da-card-asset">${a.asset === 'THREE' ? '$THREE' : esc(a.asset)}</div>
-				<div class="da-card-amount">${esc(amountLabel(a))}</div>
-				<div class="da-card-usd">≈ $${Number(a.usd).toFixed(2)} · ${plan.days} days</div>
-				<button class="dn-btn ${highlight ? 'primary' : ''}" type="button" data-buy="${esc(a.asset)}" ${state.buying ? 'disabled' : ''}>${esc(buyLabel)}</button>
+			<button class="da-paybtn ${a.asset === 'THREE' ? 'da-paybtn-three' : ''}" type="button"
+				data-buy-plan="${esc(plan.id)}" data-buy-asset="${esc(a.asset)}" ${state.buying ? 'disabled' : ''}
+				title="≈ $${Number(a.usd).toFixed(2)} in ${esc(label)}">
+				${busy ? 'Processing…' : `${esc(amountLabel(a))}${a.asset === 'THREE' ? ` <span class="da-off">−${Math.round((a.discount || 0) * 100)}%</span>` : ''}`}
+			</button>`;
+	};
+
+	const cards = plans.map((plan) => {
+		const hot = plan.id === 'pro';
+		return `
+			<div class="da-tiercard ${hot ? 'da-card-hot' : ''}">
+				${hot ? '<div class="da-card-badge">Most popular</div>' : ''}
+				<div class="da-card-asset">${esc(plan.tier)}</div>
+				<div class="da-card-amount">$${Number(plan.usd) % 1 ? Number(plan.usd).toFixed(2) : Number(plan.usd)}<span class="da-per">/${plan.days}d</span></div>
+				<ul class="da-feats">
+					<li><strong>${Number(plan.rate_limit_per_minute).toLocaleString()}</strong> requests/min</li>
+					<li>Unmetered archive search + API key</li>
+					<li>${plan.commercial ? 'Commercial use licensed' : 'Personal & evaluation use'}</li>
+					${plan.id === 'enterprise' ? '<li>Priority support · bulk corpus arrangements</li>' : ''}
+				</ul>
+				<p class="da-card-usd">${esc(plan.blurb || '')}</p>
+				<div class="da-paygroup" role="group" aria-label="Pay for ${esc(plan.tier)}">
+					${(plan.assets || []).map((a) => assetBtn(plan, a)).join('')}
+				</div>
 			</div>`;
 	}).join('');
+
 	el.innerHTML = `
 		<div class="dn-panel">
 			<div class="da-panel-head">
-				<h2>${state.status?.active ? 'Renew' : 'Go Premium'} — $${Number(plan.usd).toFixed(2)}/${plan.days} days</h2>
-				<span class="da-tagline">Solana only · one transaction · no card, no account required to pay</span>
+				<h2>${active ? 'Renew or upgrade' : 'Go Premium'} — from $${fromUsd % 1 ? fromUsd.toFixed(2) : fromUsd}/30 days</h2>
+				<span class="da-tagline">Solana only · one transaction · pay in $THREE (20% off), SOL, or USDC</span>
 			</div>
-			<div class="da-cards">${cards}</div>
+			<div class="da-cards da-cards-tiers">${cards}</div>
 			<p class="da-note" id="da-buy-note" role="status" aria-live="polite"></p>
+			<p class="da-note" style="color:var(--nxt-ink-fade)">Buying a higher tier while a pass is active upgrades your key's rate limit immediately and appends the new period to the end. Enterprise needs something custom? <a href="/community" style="color:var(--nxt-accent)">Talk to us.</a></p>
 		</div>`;
-	el.querySelectorAll('[data-buy]').forEach((b) =>
-		b.addEventListener('click', () => buy(b.dataset.buy)),
+	el.querySelectorAll('[data-buy-plan]').forEach((b) =>
+		b.addEventListener('click', () => buy(b.dataset.buyPlan, b.dataset.buyAsset)),
 	);
 }
 
@@ -475,6 +491,20 @@ function injectStyles() {
 		.da-card-asset { font-size: .78rem; color: var(--nxt-ink-dim); font-weight: 600; }
 		.da-card-amount { font-size: 1.3rem; font-weight: 700; color: var(--nxt-ink); letter-spacing: -.01em; }
 		.da-card-usd { font-size: .74rem; color: var(--nxt-ink-fade); margin-bottom: .55rem; }
+		.da-cards-tiers { grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); align-items: stretch; }
+		.da-tiercard { position: relative; border: 1px solid var(--nxt-stroke); border-radius: var(--nxt-radius-sm); padding: 1.2rem 1.1rem 1rem; display: flex; flex-direction: column; gap: .4rem; transition: border-color .15s ease, transform .15s ease; }
+		.da-tiercard:hover { border-color: var(--nxt-stroke-strong); transform: translateY(-1px); }
+		.da-per { font-size: .8rem; font-weight: 500; color: var(--nxt-ink-fade); margin-left: .15rem; }
+		.da-feats { list-style: none; margin: .2rem 0 .3rem; padding: 0; display: flex; flex-direction: column; gap: .3rem; }
+		.da-feats li { font-size: .78rem; color: var(--nxt-ink-dim); padding-left: 1.1rem; position: relative; }
+		.da-feats li::before { content: '✓'; position: absolute; left: 0; color: var(--nxt-success); font-weight: 700; }
+		.da-paygroup { display: flex; flex-direction: column; gap: .4rem; margin-top: auto; }
+		.da-paybtn { display: flex; align-items: center; justify-content: center; gap: .4rem; width: 100%; border: 1px solid var(--nxt-stroke); background: color-mix(in srgb, var(--nxt-ink) 4%, transparent); color: var(--nxt-ink); border-radius: var(--nxt-radius-sm); font-size: .8rem; font-weight: 600; padding: .5rem .7rem; cursor: pointer; transition: border-color .12s ease, background .12s ease; }
+		.da-paybtn:hover:not(:disabled) { border-color: var(--nxt-stroke-strong); background: color-mix(in srgb, var(--nxt-ink) 8%, transparent); }
+		.da-paybtn:focus-visible { outline: 2px solid var(--nxt-accent); outline-offset: 2px; }
+		.da-paybtn:disabled { opacity: .55; cursor: default; }
+		.da-paybtn-three { border-color: color-mix(in srgb, var(--nxt-accent) 55%, transparent); background: color-mix(in srgb, var(--nxt-accent) 8%, transparent); }
+		.da-off { font-size: .68rem; font-weight: 700; color: var(--nxt-accent); }
 		.da-note { margin: .8rem 0 0; font-size: .8rem; color: var(--nxt-ink-dim); line-height: 1.5; min-height: 1em; }
 		.da-fresh { border-color: color-mix(in srgb, var(--nxt-success) 50%, transparent); }
 		.da-keyrow { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; margin-top: .6rem; }
@@ -505,7 +535,7 @@ function injectStyles() {
 	main.innerHTML = `
 		<div style="margin-bottom:1.5rem">
 			<h1 class="dn-h1" style="margin-bottom:.25rem">Data API</h1>
-			<p class="dn-h1-sub" style="margin:0">The 660k-article crypto-news archive as a developer product — one monthly pass, paid on Solana in $THREE, SOL, or USDC, instead of a payment per call.</p>
+			<p class="dn-h1-sub" style="margin:0">The 660k-article crypto-news archive as a developer product — a monthly pass in three tiers, paid on Solana in $THREE, SOL, or USDC, instead of a payment per call.</p>
 		</div>
 		<div class="da-root" id="da-root">
 			<div id="da-status"></div>

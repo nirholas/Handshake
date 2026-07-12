@@ -13293,7 +13293,7 @@
 		{
 			"date": "2026-07-11",
 			"title": "Premium: one monthly pass instead of paying per call",
-			"summary": "Go Premium for $9.99/30 days and stop paying the Data API per search: one Solana payment — in $THREE at 20% off, SOL, or USDC — mints an API key with unmetered archive search and lets your wallet sign in on the archive page instead of paying. Two new dashboard surfaces ship with it: a developer console at /dashboard/data-api (buy or renew the pass, manage and rotate API keys, live usage, copy-paste quickstarts) and Billing & Passes at /dashboard/billing (pass status, on-chain payment history, your subscriptions and paid services in one place). Renewals stack — renewing early adds 30 days to the end, never losing time.",
+			"summary": "Go Premium and stop paying the Data API per search: one Solana payment — in $THREE at 20% off, SOL, or USDC — buys 30 days of unmetered archive search plus an API key. Three tiers: Developer at $19.99 (120 requests/min), Pro at $99 (600/min, commercial use), and Enterprise at $499 (2,000/min, priority support, bulk corpus arrangements). Two new dashboard surfaces ship with it: a developer console at /dashboard/data-api (buy, renew, or upgrade the pass, manage and rotate API keys, live usage, copy-paste quickstarts) and Billing & Passes at /dashboard/billing (pass status, on-chain payment history, your subscriptions and paid services in one place). Renewals stack — renewing early adds 30 days to the end, and upgrading raises your rate limit immediately.",
 			"tags": [
 				"feature"
 			],

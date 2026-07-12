@@ -140,6 +140,29 @@
 	}
 }
 
+/* ── Cross-link panel strip (presence / stages / labor / alpha) ────────── */
+/* The panels own their internal look; this just tiles them two-up on desktop
+   so they read as compact cards below the hero instead of a stack of
+   full-width banners above it. */
+
+.adv2-banners {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+	gap: 12px;
+	align-items: stretch;
+	margin-bottom: 18px;
+}
+.adv2-banners:empty {
+	display: none;
+	margin: 0;
+}
+.adv2-banners > * {
+	min-width: 0;
+	margin: 0;
+	height: 100%;
+	box-sizing: border-box;
+}
+
 /* ── Platform pulse strip ──────────────────────────────────────────────── */
 
 .ad-platform-bar {

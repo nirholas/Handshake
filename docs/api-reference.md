@@ -2695,10 +2695,11 @@ requests arriving with `X-PAYMENT` skip the free quota entirely. `?stats=true`
 reports the live terms under `search_access`.
 
 **Premium pass (monthly):** skip per-call payments entirely with the
-[Premium pass](/docs/premium) — $9.99/30 days on Solana in $THREE (20% off),
-SOL, or USDC. It mints an `x402_live_…` API key (send as `X-API-Key`) and a
-wallet-signature (SIWX) grant for browsers. Buy at
-[/dashboard/data-api](/dashboard/data-api) or over the raw API
+[Premium pass](/docs/premium) — from $19.99/30 days (Developer 120 req/min;
+Pro $99 at 600 req/min with commercial use; Enterprise $499 at 2,000 req/min)
+on Solana in $THREE (20% off), SOL, or USDC. It mints an `x402_live_…` API
+key (send as `X-API-Key`) and a wallet-signature (SIWX) grant for browsers.
+Buy at [/dashboard/data-api](/dashboard/data-api) or over the raw API
 (`/api/premium/plans` → `quote` → `subscribe`).
 
 ### Daily digest

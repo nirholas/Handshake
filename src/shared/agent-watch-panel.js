@@ -1132,20 +1132,29 @@ class WatchPanel {
 
 	_startActivityPoll() {
 		const poll = async () => {
-			if (this._destroyed || this._fetchingActivity) return;
+			if (this._destroyed || this._fetchingActivity || this._activityDenied) return;
 			this._fetchingActivity = true;
 			try {
 				const r = await fetch(ACTIONS_URL(this.agentId), { credentials: 'include' });
-				if (r.ok) {
+				if (r.status === 401 || r.status === 403) {
+					// The actions feed needs auth. Stop polling — every retry would
+					// 401 identically — and replace the initial "Loading…" row with
+					// an honest state instead of leaving it spinning forever.
+					this._activityDenied = true;
+					if (this._activityPollId) { clearInterval(this._activityPollId); this._activityPollId = null; }
+					if (this._logCount) this._logCount.textContent = '—';
+					if (this._logList) {
+						this._logList.innerHTML =
+							'<div class="wp-log-empty">Sign in to see this agent’s action log</div>';
+					}
+				} else if (r.ok) {
 					const d = await r.json();
 					const rows = d?.data?.actions || d?.actions || [];
-					if (rows.length) {
-						// Only replace if server has newer entries than what the SSE pushed.
-						if (rows.length >= this._actions.length) {
-							this._actions = rows;
-							this._renderLog();
-						}
-					}
+					// Only replace if server has newer entries than what the SSE pushed,
+					// but always render — an empty success is "No activity yet", not an
+					// eternal "Loading…".
+					if (rows.length >= this._actions.length) this._actions = rows;
+					this._renderLog();
 				}
 			} catch { /* non-critical */ }
 			this._fetchingActivity = false;
