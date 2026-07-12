@@ -6396,6 +6396,11 @@ let solanaWeb3Mod;
 let splTokenMod;
 
 const WALLET_PROVIDERS = [
+	// Seeker/Saga TWA: solana-mobile/src/index.js injects a Seed-Vault-backed
+	// wallet with isThreeWs=true (and isPhantom=false, on purpose). Its
+	// detect() only returns truthy inside the TWA, so this entry is inert
+	// everywhere else.
+	{ key: 'seeker',   name: 'Seeker Wallet', detect: () => (window.threeWsWallet?.isThreeWs && window.threeWsWallet) || (window.solana?.isThreeWs && window.solana) },
 	{ key: 'phantom',  name: 'Phantom',  detect: () => window.phantom?.solana || (window.solana?.isPhantom && window.solana) },
 	{ key: 'solflare', name: 'Solflare', detect: () => window.solflare },
 	{ key: 'backpack', name: 'Backpack', detect: () => window.backpack?.solana || (window.solana?.isBackpack && window.solana) },
@@ -6580,10 +6585,12 @@ async function onHeaderConnectClick(btn) {
 		);
 		return;
 	}
-	// No injected wallet — offer install links.
+	// No injected wallet — offer install links. Seeker Wallet isn't something
+	// you install from a browser (it's built into the Seeker/Saga TWA), so it
+	// never appears in this fallback.
 	openWalletMenu(
 		btn,
-		WALLET_PROVIDERS.map((p) => ({
+		WALLET_PROVIDERS.filter((p) => p.key !== 'seeker').map((p) => ({
 			label: `Install ${p.name} ↗`,
 			href: walletInstallUrl(p.key),
 		})),

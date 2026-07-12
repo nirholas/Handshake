@@ -457,6 +457,11 @@ let splTokenMod;
 let connectedWallet = null; // { provider, name, publicKey }
 
 const WALLET_PROVIDERS = [
+	// Seeker/Saga TWA: solana-mobile/src/index.js injects a Seed-Vault-backed
+	// wallet with isThreeWs=true (and isPhantom=false, on purpose). Its
+	// detect() only returns truthy inside the TWA, so this entry is inert
+	// everywhere else.
+	{ key: 'seeker', name: 'Seeker Wallet', detect: () => (window.threeWsWallet?.isThreeWs && window.threeWsWallet) || (window.solana?.isThreeWs && window.solana) },
 	{ key: 'phantom', name: 'Phantom', detect: () => window.phantom?.solana || (window.solana?.isPhantom && window.solana) },
 	{ key: 'solflare', name: 'Solflare', detect: () => window.solflare },
 	{ key: 'backpack', name: 'Backpack', detect: () => window.backpack?.solana || (window.solana?.isBackpack && window.solana) },
