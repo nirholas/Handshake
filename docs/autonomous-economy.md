@@ -64,6 +64,19 @@ app — an unset receiver fails closed rather than routing to a baked-in address
 
 The result is a closed loop: **root → engines → work → surplus → root.**
 
+### Keeping wallets in the right asset (SOL ⇄ USDC)
+
+Some engines spend **SOL** (coin launches, gas); others spend **USDC** (the x402 ring
+and agent-to-agent settlement payers). Loading the economy with SOL alone would leave
+the USDC spenders unable to work once their USDC ran out. The `economy-rebalance` cron
+closes that gap: when a USDC-spending wallet drops below its USDC floor while holding
+SOL above its own reserve, it swaps a slice of that SOL into USDC on Jupiter — a
+**self-swap**, no cross-wallet transfer — and the reverse when a SOL spender is starved
+but sitting on USDC. So you can fund the economy with **either** asset and it converts to
+whatever each wallet needs. Every swap is reserve-, per-swap-, per-run- and
+slippage-capped, and the rebalancer is **off until `ECONOMY_REBALANCE_ENABLED=1`** — even
+disabled it reports the plan it *would* run, so the operator can review before arming it.
+
 ---
 
 ## 3. Why it can't leak (by construction)
