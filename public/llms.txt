@@ -31,6 +31,7 @@ Entry points into the product.
 - [My Collection](https://three.ws/collection): View all the skills and subscriptions you've unlocked on three.ws.
 - [Skills Marketplace](https://three.ws/skills): Browse, search, and install agent skills — tool packs, knowledge bases, and capabilities that make AI agents smarter.
 - [Community](https://three.ws/community): Live platform activity plus where to follow, contribute, and connect with three.ws creators.
+- [Search](https://three.ws/search): One search across every creation type on three.ws — avatars, agents, 3D models, worlds, and coins — with remixable models remixable straight from the results.
 - [Sitemap](https://three.ws/sitemap): Human-readable index of every page on three.ws.
 - [Characters](https://three.ws/characters): Discover AI characters on three.ws. Chat, trade, and create.
 - [What is three.ws?](https://three.ws/what-is): Plain-English introduction to three.ws — what a 3D AI agent is, real use-cases, and where to begin.

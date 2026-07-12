@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-12T16:11:52.286Z",
+	"generated_at": "2026-07-12T16:56:26.612Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -210,6 +210,16 @@
 					"title": "Community",
 					"description": "Live platform activity plus where to follow, contribute, and connect with three.ws creators.",
 					"added": "2026-05-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/search",
+					"title": "Search",
+					"description": "One search across every creation type on three.ws — avatars, agents, 3D models, worlds, and coins — with remixable models remixable straight from the results.",
+					"added": "2026-07-12",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

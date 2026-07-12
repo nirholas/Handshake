@@ -126,6 +126,11 @@ export const NAV_GROUPS = [
 				label: 'Start here',
 				items: [
 					{
+						title: 'Search',
+						href: '/search',
+						desc: 'One search across avatars, agents, 3D models, worlds & coins — remix straight from the results',
+					},
+					{
 						title: 'Trending',
 						href: '/trending',
 						desc: 'Top agents by real activity + top Oracle conviction coins',
@@ -494,6 +499,11 @@ export const NAV_GROUPS = [
 						title: 'Trader Leaderboard',
 						href: '/leaderboard',
 						desc: 'Top traders ranked by a provable track record',
+					},
+					{
+						title: 'Rankings',
+						href: '/rankings',
+						desc: 'Cross-surface leaderboard — creations, remixes, launches, followers, and walk distance, plus streaks and badges',
 					},
 					{
 						title: 'The Arena',

@@ -140,3 +140,47 @@ export async function queryAgentLaunches({
 
 	return { launches, has_more: hasMore };
 }
+
+/**
+ * Name/symbol search over three.ws's own launch directory (pump_agent_mints) —
+ * the platform-native half of the cross-entity search endpoint (api/search.js).
+ * Distinct from searchPumpTokens (api/_lib/pump-search.js), which searches
+ * pump.fun/Birdeye market-wide and has no creator or three.ws-verified
+ * created_at; results here always carry a real launching agent and timestamp.
+ */
+export async function searchAgentLaunches({ q, network = 'mainnet', limit = 12 } = {}) {
+	const search = typeof q === 'string' && q.trim() ? `%${q.trim().slice(0, 80)}%` : null;
+	if (!search) return [];
+	const capped = Math.min(Math.max(Number(limit) || 12, 1), 24);
+	const rows = await sql`
+		select pam.mint, pam.network, pam.name, pam.symbol, pam.created_at,
+		       ai.id as agent_id, ai.name as agent_name,
+		       a.thumbnail_key as avatar_thumbnail_key,
+		       a.visibility as avatar_visibility
+		from pump_agent_mints pam
+		left join agent_identities ai on ai.id = pam.agent_id and ai.deleted_at is null
+		left join avatars a on a.id = ai.avatar_id and a.deleted_at is null
+		where pam.network = ${network}
+		  and (coalesce(pam.name,'') ilike ${search} or coalesce(pam.symbol,'') ilike ${search})
+		order by pam.created_at desc
+		limit ${capped}
+	`;
+	return rows.map((r) => {
+		const avatarPublic = r.avatar_visibility === 'public' || r.avatar_visibility === 'unlisted';
+		return {
+			mint: r.mint,
+			network: r.network,
+			name: r.name,
+			symbol: r.symbol,
+			createdAt: r.created_at,
+			agent: r.agent_id
+				? {
+						id: r.agent_id,
+						name: r.agent_name,
+						url: `/agents/${r.agent_id}`,
+						avatar_thumbnail_url: r.avatar_thumbnail_key && avatarPublic ? r2PublicUrl(r.avatar_thumbnail_key) : null,
+					}
+				: null,
+		};
+	});
+}

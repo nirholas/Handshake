@@ -181,10 +181,14 @@ export async function bumpViews(id) {
  * scope: 'recent' (default) | 'featured'. Returns lightweight cards.
  * `before` (recent scope only) cursors by created_at for infinite scroll —
  * used by the platform-wide activity feed (api/users/me/feed.js, scope=all).
+ * `q` (optional, recent scope only) does a case-insensitive substring match on
+ * title/prompt — powers the cross-entity search endpoint (api/search.js);
+ * additive and backward-compatible, ignored when scope='featured'.
  */
-export async function listDioramas({ scope = 'recent', limit = 24, before } = {}) {
+export async function listDioramas({ scope = 'recent', limit = 24, before, q } = {}) {
 	if (!(await ensureTable())) return [];
 	const lim = Math.min(60, Math.max(1, Number(limit) || 24));
+	const search = typeof q === 'string' && q.trim() ? `%${q.trim().slice(0, 120)}%` : null;
 	try {
 		const rows =
 			scope === 'featured'
@@ -204,6 +208,7 @@ export async function listDioramas({ scope = 'recent', limit = 24, before } = {}
 							from dioramas d
 							left join users u on u.id = d.user_id and u.deleted_at is null
 							where d.created_at < ${before}
+							  and (${search}::text is null or d.title ilike ${search} or d.prompt ilike ${search})
 							order by d.created_at desc limit ${lim}`
 					: await sql`
 							select d.id, d.title, d.prompt, d.mood, d.ground, d.views, d.featured, d.created_at,
@@ -211,6 +216,7 @@ export async function listDioramas({ scope = 'recent', limit = 24, before } = {}
 								u.username as creator_username, u.display_name as creator_display_name, u.avatar_url as creator_avatar_url
 							from dioramas d
 							left join users u on u.id = d.user_id and u.deleted_at is null
+							where (${search}::text is null or d.title ilike ${search} or d.prompt ilike ${search})
 							order by d.created_at desc limit ${lim}`;
 		return rows.map(toCard);
 	} catch (err) {

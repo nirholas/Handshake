@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-12",
+			"title": "New: one search across avatars, agents, models, worlds, and coins",
+			"summary": "/search is a new page that queries every creation type on three.ws at once — public avatars, on-chain/Solana agents, forged 3D models, saved worlds, and coins (three.ws's own agent launches first, then the wider pump.fun market) — and ranks results by recency plus real signals like follower count and remix count. Every result links to the live asset and, whenever a creator profile is actually known, straight to it. Models published to the remix bazaar get a one-click \"Remix — $0.25\" action right on the result card, wired to the same real, on-chain-royalty remix flow as the Creator Gallery — no more digging into a model's own page first. Linked from the Discover menu.",
+			"tags": [
+				"feature"
+			],
+			"link": "/search"
+		},
+		{
+			"date": "2026-07-12",
 			"title": "/feed and /community are now real, live pages",
 			"summary": "/feed used to only show activity from people you follow — it now defaults to a live, platform-wide feed of every new avatar, agent, forged 3D model, saved world, coin launch, and follow, with a toggle to switch to just the people you follow. Scroll for more and it loads the next page automatically; a \"New activity\" pill appears when something fresh lands so the list never jumps under you mid-read. /community, previously a static grid of links, now leads with that same live activity feed alongside the existing links to X, GitHub, docs, and tutorials.",
 			"tags": [

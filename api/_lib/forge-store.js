@@ -21,6 +21,7 @@ import { putObject, publicUrl } from './r2.js';
 import { recordGenerationEvent } from './forge-events.js';
 import { scoreGlbQuality } from './glb-quality.js';
 import { compressGlb } from './glb-compress.js';
+import { recordDailyActivity, maybeAwardFirstCreation } from './streaks.js';
 
 // Stable, non-secret salt so a leaked DB row can't be trivially reversed to the
 // raw browser-local id. The id is anonymous to begin with; this is hygiene, not
@@ -874,7 +875,8 @@ export async function listRemixable({ limit = 24, before, category, q, sort } = 
 			`select p.id, p.prompt, p.glb_url, p.preview_image_url, p.remix_royalty_bps,
 				p.creator_wallet_solana, p.parent_creation_id, p.lineage_index,
 				p.backend, p.model_category, p.created_at,
-				coalesce(rc.remix_count, 0) as remix_count
+				coalesce(rc.remix_count, 0) as remix_count,
+				u.username as owner_username, u.display_name as owner_display_name, u.avatar_url as owner_avatar_url
 			 from forge_creations p
 			 left join (
 				select parent_creation_id, count(*) as remix_count
@@ -882,6 +884,7 @@ export async function listRemixable({ limit = 24, before, category, q, sort } = 
 				where parent_creation_id is not null and status = 'done'
 				group by parent_creation_id
 			 ) rc on rc.parent_creation_id = p.id
+			 left join users u on u.id = p.user_id and u.deleted_at is null
 			 where ${conds.join(' and ')}
 			 order by ${orderBy}
 			 limit ${limitParam}`,
@@ -902,6 +905,11 @@ export async function listRemixable({ limit = 24, before, category, q, sort } = 
 			backend: r.backend ?? null,
 			model_category: r.model_category ?? 'other',
 			created_at: r.created_at,
+			// Opt-in creator attribution — only when the model was made while
+			// signed in (same contract as listRecentCreations / creator-portfolio).
+			ownerUsername: r.owner_username || null,
+			ownerDisplayName: r.owner_display_name || null,
+			ownerAvatarUrl: r.owner_avatar_url || null,
 		}));
 	} catch (err) {
 		if (isDbUnavailableError(err)) console.warn('[forge-store] listRemixable skipped (db unavailable):', err?.message);

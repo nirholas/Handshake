@@ -133,6 +133,12 @@ URL: https://three.ws/community
 
 Live platform activity plus where to follow, contribute, and connect with three.ws creators.
 
+### Search
+
+URL: https://three.ws/search
+
+One search across every creation type on three.ws — avatars, agents, 3D models, worlds, and coins — with remixable models remixable straight from the results.
+
 ### Sitemap
 
 URL: https://three.ws/sitemap

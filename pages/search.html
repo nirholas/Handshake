@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Search · three.ws</title>
+		<meta
+			name="description"
+			content="Search everything on three.ws in one place — avatars, agents, 3D models, worlds, and coins — and remix any published model straight from the results."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/search" />
+		<meta property="og:title" content="Search · three.ws" />
+		<meta
+			property="og:description"
+			content="One search across every creation type on three.ws — avatars, agents, 3D models, worlds, and coins."
+		/>
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Search&amp;d=One+search+across+every+creation+type+on+three.ws.&amp;p=%2Fsearch" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Search · three.ws" />
+		<meta name="twitter:description" content="One search across every creation type on three.ws — avatars, agents, 3D models, worlds, and coins." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Search&amp;d=One+search+across+every+creation+type+on+three.ws.&amp;p=%2Fsearch" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/search-page.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<script defer src="/footer-newsletter.js"></script>
+		<link rel="canonical" href="https://three.ws/search" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"SearchResultsPage","name":"Search","description":"Search every creation type on three.ws — avatars, agents, 3D models, worlds, and coins.","url":"https://three.ws/search","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Search — three.ws" />
+		<script src="/model-viewer-meshopt.js"></script>
+		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js" integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw" crossorigin="anonymous"></script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="sr-shell">
+			<section class="sr-hero">
+				<p class="sr-kicker"><span aria-hidden="true">⌕</span> Cross-entity search</p>
+				<h1 class="sr-title">Search <em>everything</em></h1>
+				<p class="sr-sub">
+					One query across every creation type on three.ws — avatars, agents, 3D models, worlds, and coins.
+					Remixable models can be remixed straight from the results.
+				</p>
+				<div class="sr-controls">
+					<label class="sr-search" for="sr-q">
+						<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" d="M13.6 13.6 18 18M9 15.5a6.5 6.5 0 1 1 0-13 6.5 6.5 0 0 1 0 13Z"/></svg>
+						<input type="search" id="sr-q" placeholder="Search avatars, agents, models, worlds, coins…" autocomplete="off" maxlength="80" />
+					</label>
+					<div class="sr-types" id="sr-types" role="tablist" aria-label="Filter by type"></div>
+				</div>
+			</section>
+
+			<section class="sr-feed-head">
+				<h2 class="sr-section-h" style="font-family: var(--font-display, sans-serif); font-size: var(--text-lg, 1.05rem); font-weight: 600; margin: 0;">Results</h2>
+				<span id="sr-count" class="sr-count" aria-live="polite"></span>
+			</section>
+
+			<section id="sr-grid" class="sr-grid" aria-label="Search results"></section>
+
+			<div class="sr-quicklinks" id="sr-quicklinks">
+				<a class="sr-quicklink" href="/creations">
+					<span class="sr-quicklink-title">Creator Gallery →</span>
+					<span class="sr-quicklink-desc">Browse and remix the live 3D creation bazaar</span>
+				</a>
+				<a class="sr-quicklink" href="/gallery">
+					<span class="sr-quicklink-title">Avatar Gallery →</span>
+					<span class="sr-quicklink-desc">Every public 3D avatar</span>
+				</a>
+				<a class="sr-quicklink" href="/agents">
+					<span class="sr-quicklink-title">Agents Index →</span>
+					<span class="sr-quicklink-desc">Browse every registered agent</span>
+				</a>
+				<a class="sr-quicklink" href="/play">
+					<span class="sr-quicklink-title">Worlds →</span>
+					<span class="sr-quicklink-desc">Every coin is a 3D world — drop in</span>
+				</a>
+				<a class="sr-quicklink" href="/launches">
+					<span class="sr-quicklink-title">All Launches →</span>
+					<span class="sr-quicklink-desc">Every agent-launched coin</span>
+				</a>
+				<a class="sr-quicklink" href="/trending">
+					<span class="sr-quicklink-title">Trending →</span>
+					<span class="sr-quicklink-desc">Top agents and top conviction coins right now</span>
+				</a>
+			</div>
+		</main>
+
+		<script type="module" src="/src/search-page.js"></script>
+		<script src="/brand.js" defer></script>
+		<script src="/footer.js"></script>
+	</body>
+</html>

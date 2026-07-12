@@ -180,6 +180,14 @@
 					"added": "2026-05-04"
 				},
 				{
+					"path": "/search",
+					"title": "Search",
+					"description": "One search across every creation type on three.ws — avatars, agents, 3D models, worlds, and coins — with remixable models remixable straight from the results.",
+					"priority": 0.8,
+					"changefreq": "daily",
+					"added": "2026-07-12"
+				},
+				{
 					"path": "/sitemap",
 					"title": "Sitemap",
 					"description": "Human-readable index of every page on three.ws.",

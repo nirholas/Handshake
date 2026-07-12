@@ -23,6 +23,14 @@
 			<description>The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL — plus a real wallet-connect buy flow for its coins.</description>
 		</item>
 		<item>
+			<title>Search</title>
+			<link>https://three.ws/search</link>
+			<guid isPermaLink="false">2026-07-12:Search</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>One search across every creation type on three.ws — avatars, agents, 3D models, worlds, and coins — with remixable models remixable straight from the results.</description>
+		</item>
+		<item>
 			<title>Your creator portfolio</title>
 			<link>https://three.ws/profile</link>
 			<guid isPermaLink="false">2026-07-12:Your creator portfolio</guid>
@@ -109,6 +117,14 @@
 			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Two real driving missions landed on the /play jobs board. Grab a car parked at any of the four avenue depots, run the rush order to the depot on the other side of town, and get paid — the delivery only counts if you actually drove it, not walked it. Pairs with the world's existing drivable vehicles and cash economy for a real 'drive around, do jobs, spend the cash' loop.</description>
+		</item>
+		<item>
+			<title>New: one search across avatars, agents, models, worlds, and coins</title>
+			<link>https://three.ws/search</link>
+			<guid isPermaLink="false">2026-07-12:New: one search across avatars, agents, models, worlds, and coins</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>/search is a new page that queries every creation type on three.ws at once — public avatars, on-chain/Solana agents, forged 3D models, saved worlds, and coins (three.ws's own agent launches first, then the wider pump.fun market) — and ranks results by recency plus real signals like follower count and remix count. Every result links to the live asset and, whenever a creator profile is actually known, straight to it. Models published to the remix bazaar get a one-click &quot;Remix — $0.25&quot; action right on the result card, wired to the same real, on-chain-royalty remix flow as the Creator Gallery — no more digging into a model's own page first. Linked from the Discover menu.</description>
 		</item>
 		<item>
 			<title>News stories now open the full article, with live coin charts</title>

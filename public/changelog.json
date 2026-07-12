@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-12T16:11:52.299Z",
+	"generated_at": "2026-07-12T16:56:26.625Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -22,6 +22,16 @@
 			"title": "Robinhood Chain",
 			"summary": "The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL — plus a real wallet-connect buy flow for its coins.",
 			"link": "/markets/robinhood",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "launch",
+			"title": "Search",
+			"summary": "One search across every creation type on three.ws — avatars, agents, 3D models, worlds, and coins — with remixable models remixable straight from the results.",
+			"link": "/search",
 			"tags": [
 				"launch"
 			]
@@ -136,6 +146,16 @@
 			"title": "New driving jobs in /play — Cross-Town Delivery and East-West Express",
 			"summary": "Two real driving missions landed on the /play jobs board. Grab a car parked at any of the four avenue depots, run the rush order to the depot on the other side of town, and get paid — the delivery only counts if you actually drove it, not walked it. Pairs with the world's existing drivable vehicles and cash economy for a real 'drive around, do jobs, spend the cash' loop.",
 			"link": "/play",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "update",
+			"title": "New: one search across avatars, agents, models, worlds, and coins",
+			"summary": "/search is a new page that queries every creation type on three.ws at once — public avatars, on-chain/Solana agents, forged 3D models, saved worlds, and coins (three.ws's own agent launches first, then the wider pump.fun market) — and ranks results by recency plus real signals like follower count and remix count. Every result links to the live asset and, whenever a creator profile is actually known, straight to it. Models published to the remix bazaar get a one-click \"Remix — $0.25\" action right on the result card, wired to the same real, on-chain-royalty remix flow as the Creator Gallery — no more digging into a model's own page first. Linked from the Discover menu.",
+			"link": "/search",
 			"tags": [
 				"feature"
 			]
