@@ -58,6 +58,16 @@ ENV NODE_ENV=production \
 # an unprivileged `node` user (uid 1000). The app never writes to /app at
 # runtime — persona/ledger disk fallbacks target os.tmpdir(), and headless
 # chromium downloads to /tmp — so a read-only, root-owned app tree is fine.
+#
+# But `COPY . .` preserves the build context's file modes, and a context built
+# with an unusual umask (e.g. a git worktree on some CI filesystems yields dirs
+# without the world-traverse bit) leaves directories the `node` user cannot enter
+# — the container then dies at boot with a misleading `Cannot find module
+# '/app/server/index.mjs'` (really EACCES on the path, surfaced as MODULE_NOT_FOUND).
+# Normalize to world-readable + traversable before dropping privileges so the
+# image boots regardless of the source umask. `a+rX` adds read to everything and
+# the execute/traverse bit only to directories (and already-executable files).
+RUN chmod -R a+rX /app
 USER node
 
 EXPOSE 8080
