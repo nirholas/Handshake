@@ -19,7 +19,7 @@
 //   PATCH /api/dashboard/prefs              body prefs patch
 
 import { mountShell } from '../shell.js';
-import { requireUser, get, post, del, patch, esc, relTime, ApiError } from '../api.js';
+import { requireUser, get, post, put, del, patch, esc, relTime, ApiError } from '../api.js';
 import { emptyStateHTML, errorStateHTML, ensureStateKitStyles, attachRetry } from '../../shared/state-kit.js';
 
 const MONO = `'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace`;
@@ -114,9 +114,10 @@ async function loadContent(host) {
 
 	const retry = () => loadContent(host);
 
-	const [sessionsResp, notifResp, summaryResp, usageResp, prefsResp] = await Promise.all([
+	const [sessionsResp, notifResp, notifPrefsResp, summaryResp, usageResp, prefsResp] = await Promise.all([
 		safeGet('/api/auth/sessions'),
 		safeGet('/api/notifications?limit=20'),
+		safeGet('/api/notifications/preferences'),
 		safeGet('/api/billing/summary'),
 		safeGet('/api/usage/summary'),
 		safeGet('/api/dashboard/prefs'),
@@ -128,6 +129,7 @@ async function loadContent(host) {
 	host.appendChild(renderTheme());
 	host.appendChild(renderSessions(sessionsResp, retry));
 	host.appendChild(renderNotifications(notifResp, retry));
+	host.appendChild(renderNotificationPrefs(notifPrefsResp, retry));
 	host.appendChild(renderDefaultNetwork(prefs));
 	host.appendChild(renderStorage(summaryResp, retry));
 	host.appendChild(renderLlmUsage(usageResp, retry));
@@ -322,6 +324,129 @@ function renderNotifications(resp, onRetry) {
 			toast(err?.message || 'Failed');
 			btn.disabled = false;
 			btn.textContent = 'Mark all read';
+		}
+	});
+
+	return panel;
+}
+
+// ── Notification preferences ────────────────────────────────────────────────
+// Per-type mute control: which channel(s) deliver each category of notification
+// (sales, purchases, social, irl, alerts, account). Backed by the real
+// notification_preferences table (api/_lib/notify-prefs.js is the single
+// source of truth for categories/channels/defaults) — every write path in
+// api/_lib/notify.js checks this before sending push/email, so a toggle here
+// takes effect on the very next event, not just in the UI.
+
+const CHANNEL_LABEL = { in_app: 'In-app', push: 'Push', email: 'Email', telegram: 'Telegram' };
+
+function renderNotificationPrefs(resp, onRetry) {
+	const panel = document.createElement('div');
+	panel.className = 'dn-panel';
+	panel.setAttribute('aria-label', 'Notification preferences');
+
+	if (!resp.ok) {
+		panel.innerHTML = `
+			<div style="margin-bottom:14px">
+				<div class="dn-panel-title">Notification preferences</div>
+				<div class="dn-panel-sub" style="margin:2px 0 0">Choose which channels deliver each kind of notification.</div>
+			</div>
+			<div data-slot="notif-prefs-err"></div>`;
+		const errHost = panel.querySelector('[data-slot="notif-prefs-err"]');
+		errHost.innerHTML = errorStateHTML({
+			title: "Couldn't load notification preferences",
+			body: 'We couldn’t reach the preference center. Try again in a moment.',
+		});
+		attachRetry(errHost, onRetry);
+		return panel;
+	}
+
+	const body = resp.data || {};
+	const categories = Array.isArray(body.categories) ? body.categories : [];
+	const channels = Array.isArray(body.channels) ? body.channels : ['in_app', 'push', 'email', 'telegram'];
+	const matrix = body.prefs?.categories || {};
+	const subscribedDevices = body.push?.subscribed_devices ?? 0;
+
+	panel.innerHTML = `
+		<div style="margin-bottom:14px">
+			<div class="dn-panel-title">Notification preferences</div>
+			<div class="dn-panel-sub" style="margin:2px 0 0">Mute noisy categories per channel — the bell (in-app) always stays available so nothing is ever silently lost.</div>
+		</div>
+		${!categories.length ? emptyStateHTML({
+			icon: '',
+			title: 'No preference categories yet',
+			body: 'The preference center will appear here once it has categories to show.',
+			compact: true,
+		}) : `
+			<div style="overflow-x:auto">
+				<table style="width:100%;border-collapse:collapse;font-size:13px">
+					<thead>
+						<tr style="text-align:left;color:var(--nxt-ink-fade);border-bottom:1px solid var(--nxt-stroke)">
+							<th style="padding:8px 10px;font-weight:500;min-width:180px">Category</th>
+							${channels.map((ch) => `<th style="padding:8px 10px;font-weight:500;text-align:center">${esc(CHANNEL_LABEL[ch] || ch)}</th>`).join('')}
+						</tr>
+					</thead>
+					<tbody>
+						${categories.map((cat) => `
+							<tr style="border-bottom:1px solid var(--nxt-stroke)" data-cat-row="${esc(cat.key)}">
+								<td style="padding:10px">
+									<div style="font-weight:500">${esc(cat.label || cat.key)}</div>
+									${cat.description ? `<div style="font-size:12px;color:var(--nxt-ink-dim);margin-top:2px">${esc(cat.description)}</div>` : ''}
+								</td>
+								${channels.map((ch) => {
+									const on = matrix?.[cat.key]?.[ch] ?? false;
+									const disabled = ch === 'telegram' && !body.prefs?.telegram_chat_id;
+									return `
+										<td style="padding:10px;text-align:center">
+											<button type="button" role="switch" class="set-switch" data-notif-cat="${esc(cat.key)}" data-notif-ch="${esc(ch)}"
+												aria-checked="${on ? 'true' : 'false'}"
+												${disabled ? 'disabled title="Link a Telegram chat id to enable"' : ''}
+												aria-label="${esc(cat.label || cat.key)} via ${esc(CHANNEL_LABEL[ch] || ch)}"
+												style="${disabled ? 'opacity:.35;cursor:not-allowed' : ''}"></button>
+										</td>
+									`;
+								}).join('')}
+							</tr>
+						`).join('')}
+					</tbody>
+				</table>
+			</div>
+			<div style="margin-top:12px;font-size:12px;color:var(--nxt-ink-fade)">
+				${subscribedDevices > 0
+					? `Push is enabled on ${subscribedDevices} device${subscribedDevices === 1 ? '' : 's'}.`
+					: 'No devices are subscribed to push yet — enable it from the notification bell.'}
+			</div>
+			<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--nxt-stroke);display:flex;justify-content:flex-end">
+				<button class="dn-btn primary" data-action="save-notif-prefs">Save notification preferences</button>
+			</div>
+		`}
+	`;
+
+	panel.querySelectorAll('[data-notif-cat]').forEach((sw) => {
+		sw.addEventListener('click', () => {
+			if (sw.disabled) return;
+			sw.setAttribute('aria-checked', sw.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
+		});
+	});
+
+	panel.querySelector('[data-action="save-notif-prefs"]')?.addEventListener('click', async (e) => {
+		const btn = e.currentTarget;
+		const next = {};
+		panel.querySelectorAll('[data-notif-cat]').forEach((sw) => {
+			const cat = sw.dataset.notifCat;
+			const ch = sw.dataset.notifCh;
+			(next[cat] ??= {})[ch] = sw.getAttribute('aria-checked') === 'true';
+		});
+		btn.disabled = true;
+		btn.textContent = 'Saving…';
+		try {
+			await put('/api/notifications/preferences', { categories: next });
+			toast('Notification preferences saved');
+		} catch (err) {
+			toast(err?.message || 'Save failed');
+		} finally {
+			btn.disabled = false;
+			btn.textContent = 'Save notification preferences';
 		}
 	});
 

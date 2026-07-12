@@ -382,6 +382,14 @@ function toggleFriendsPanel() {
 if (friendsHudBtn) friendsHudBtn.addEventListener('click', toggleFriendsPanel);
 if (friendsCloseBtn) friendsCloseBtn.addEventListener('click', closeFriendsPanel);
 
+// Deep link from a DM notification: /walk?dm=<friendId> opens the panel
+// straight into that thread instead of the friend list.
+const _dmDeepLink = new URLSearchParams(location.search).get('dm');
+if (_dmDeepLink) {
+	openFriendsPanel();
+	_friendsPanel?.client?.openThread?.(_dmDeepLink);
+}
+
 // Close on backdrop click.
 if (friendsOverlay) {
 	friendsOverlay.addEventListener('pointerdown', (e) => {

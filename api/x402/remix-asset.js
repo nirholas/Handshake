@@ -28,6 +28,7 @@ import { atomicsToUsd } from '../_lib/remix-royalty.js';
 import { composeRefinement } from '../../mcp-server/src/tools/_lineage.js';
 import { generate, originFromReq, viewerUrl } from '../_mcp-studio/forge-client.js';
 import remixAssetListing from '../_lib/service-catalog/services/remix-asset.js';
+import { publishUserEvent } from '../_lib/feed.js';
 
 // $0.25 — the cost of a generation. The creator royalty comes OUT of this fee
 // (the platform's share), never as an extra charge to the remixer.
@@ -144,6 +145,22 @@ async function handleRemix({ req, requirement }) {
 		// The remix WAS generated and the fee WILL settle; the royalty transfer
 		// alone failed. Report it truthfully rather than pretending it paid.
 		royalty = { paid: false, reason: 'royalty_transfer_failed', error: err.message };
+	}
+
+	// Notify the source creator (real signed-in creators only — anonymous
+	// forge_creations rows have no user_id to notify). Fire-and-forget, never
+	// blocks the response; folds the royalty outcome into the same notice so a
+	// creator learns "you were remixed" and "you got paid" in one line.
+	if (source.userId) {
+		publishUserEvent(source.userId, {
+			type: 'remix',
+			actor: 'Someone',
+			link: remixCreationId ? viewerUrl(base, job.glb_url) : '/profile',
+			sourcePrompt: source.prompt,
+			creationId: remixCreationId,
+			royaltyPaid: royalty.paid,
+			royaltyUsd: royalty.creatorUsd ?? 0,
+		});
 	}
 
 	return {

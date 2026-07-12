@@ -25,6 +25,19 @@ function toProfile(row) {
 	};
 }
 
+// Public display profile for a single account — used where a caller (e.g. the
+// DM notification write path) needs a display name/link but isn't already
+// walking the friend graph. Returns null for a missing/deleted account.
+export async function getPublicProfile(userId) {
+	if (!userId) return null;
+	const [row] = await sql`
+		select id, display_name, username, avatar_url from users
+		where id = ${userId} and deleted_at is null
+		limit 1
+	`;
+	return toProfile(row);
+}
+
 // ── search ───────────────────────────────────────────────────────────────────
 // Find accounts by display name or username, excluding the caller and anyone
 // they've already muted. The caller's existing relationship to each hit is

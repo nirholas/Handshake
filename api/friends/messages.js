@@ -13,7 +13,8 @@ import { requireCsrf } from '../_lib/csrf.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
 import { resolveAccount } from '../_lib/account-auth.js';
 import { notifyMultiplayer } from '../_lib/presence-store.js';
-import { areFriends, getThread, markThreadRead, sendDM } from '../_lib/friends-store.js';
+import { areFriends, getThread, markThreadRead, sendDM, getPublicProfile } from '../_lib/friends-store.js';
+import { publishUserEvent } from '../_lib/feed.js';
 
 const MAX_BODY_LEN = 2000;
 
@@ -80,5 +81,20 @@ export default wrap(async (req, res) => {
 	}
 
 	notifyMultiplayer('dm', to, { message });
+
+	// Durable bell notification alongside the live socket push, so a recipient
+	// who is offline (or on a different page than /walk) still learns about the
+	// message on their next visit — the socket-only path left them with no
+	// record at all. Fire-and-forget; never blocks the send.
+	getPublicProfile(me)
+		.then((sender) => {
+			publishUserEvent(to, {
+				type: 'dm_received',
+				actor: sender?.name || 'Someone',
+				link: `/walk?dm=${encodeURIComponent(me)}`,
+			});
+		})
+		.catch(() => {});
+
 	return json(res, 200, { data: { message } });
 });

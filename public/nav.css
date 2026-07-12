@@ -238,6 +238,15 @@
 .notif-mark-all:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.06); }
 .notif-mark-all:focus-visible { outline: 2px solid rgba(255,255,255,0.3); outline-offset: 1px; }
 .notif-mark-all:disabled { opacity: 0.45; cursor: default; }
+.notif-prefs-link {
+	display: flex; align-items: center; justify-content: center;
+	width: 24px; height: 24px; border-radius: 6px;
+	font-size: var(--text-sm); color: rgba(255,255,255,0.4);
+	text-decoration: none; line-height: 1;
+	transition: color 0.12s, background 0.12s;
+}
+.notif-prefs-link:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.06); }
+.notif-prefs-link:focus-visible { outline: 2px solid rgba(255,255,255,0.3); outline-offset: 1px; }
 .notif-panel-body { overflow-y: auto; flex: 1; }
 .notif-panel-body::-webkit-scrollbar { width: 4px; }
 .notif-panel-body::-webkit-scrollbar-track { background: transparent; }

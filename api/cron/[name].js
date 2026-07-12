@@ -66,6 +66,7 @@ import { sendEmail } from '../_lib/email.js';
 import { fetchSafePublicUrl } from '../_lib/ssrf-guard.js';
 import { runPumpAlertRules } from '../_lib/pump-alert-runner.js';
 import { constantTimeEquals } from '../_lib/crypto.js';
+import { publishUserEvent } from '../_lib/feed.js';
 
 // ─── Cron auth ───────────────────────────────────────────────────────────────
 //
@@ -965,7 +966,7 @@ async function handlePumpAgentStats(req, res) {
 	if (!requireCron(req, res)) return;
 
 	const mints = await sql`
-		select id, mint, network from pump_agent_mints
+		select id, mint, network, user_id, name from pump_agent_mints
 		order by id limit ${PUMP_STATS_MAX_PER_RUN}
 	`;
 
@@ -1063,6 +1064,18 @@ async function handlePumpAgentStats(req, res) {
 					`;
 				} catch {
 					// pumpfun_signals table optional
+				}
+
+				// Tell the launch owner their coin filled its bonding curve and
+				// migrated — the platform already knew this the instant the flip
+				// happened but had no way to surface it until now.
+				if (m.user_id) {
+					publishUserEvent(m.user_id, {
+						type: 'pump_launch_filled',
+						name: m.name || null,
+						mint: m.mint,
+						link: `/launches/${encodeURIComponent(m.mint)}`,
+					});
 				}
 			}
 

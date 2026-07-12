@@ -81,6 +81,10 @@ const TYPE_ICON = {
 	reply:                    '💬',
 	irl_interaction:          '📍',
 	irl_reply:                '💬',
+	follow:                   '👤',
+	dm_received:              '💬',
+	pump_launch_filled:       '🚀',
+	agent_review:             '⭐',
 };
 
 function notifLabel(n) {
@@ -114,7 +118,17 @@ function notifLabel(n) {
 		case 'embed':
 			return `Your creation was embedded`;
 		case 'remix':
-			return `Someone remixed your creation`;
+			return p.royaltyPaid && p.royaltyUsd
+				? `Someone remixed your creation — you earned $${Number(p.royaltyUsd).toFixed(3)} in royalties`
+				: `Someone remixed your creation`;
+		case 'follow':
+			return p.actor ? `${p.actor} started following you` : `Someone started following you`;
+		case 'dm_received':
+			return p.actor ? `New message from ${p.actor}` : `You have a new message`;
+		case 'pump_launch_filled':
+			return p.name ? `${p.name} hit its funding target and graduated` : `Your launch hit its funding target and graduated`;
+		case 'agent_review':
+			return p.actor ? `${p.actor} reviewed your agent${p.rating ? ` (${p.rating}★)` : ''}` : `Your agent received a new review`;
 		case 'reply':
 			return `New reply on your agent`;
 		case 'irl_interaction':
@@ -375,7 +389,10 @@ class NotificationInbox {
 		el.innerHTML = `
 			<div class="notif-panel-head">
 				<span class="notif-panel-title">Notifications</span>
-				<button type="button" class="notif-mark-all btn-ghost" aria-label="Mark all as read">Mark all read</button>
+				<div style="display:flex;align-items:center;gap:4px">
+					<a href="/dashboard/settings" class="notif-prefs-link btn-ghost" aria-label="Notification preferences" title="Notification preferences">⚙</a>
+					<button type="button" class="notif-mark-all btn-ghost" aria-label="Mark all as read">Mark all read</button>
+				</div>
 			</div>
 			<div class="notif-panel-body" aria-live="polite" aria-atomic="false"></div>
 		`;
