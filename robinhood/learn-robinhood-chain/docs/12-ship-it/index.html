@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ship it: deploy and go mainnet · Learn Robinhood Chain</title>
+<meta name="description" content="Deploy your static app to Pages, your API to Cloud Run, and walk the going-mainnet checklist: funding, keys, spend caps, and monitoring.">
+<meta property="og:title" content="Ship it: deploy and go mainnet · Learn Robinhood Chain">
+<meta property="og:description" content="Deploy your static app to Pages, your API to Cloud Run, and walk the going-mainnet checklist: funding, keys, spend caps, and monitoring.">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#0b0d10">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300c805'/%3E%3Cpath d='M9 22V10h4.4c2.6 0 4.2 1.4 4.2 3.7 0 1.7-.9 2.9-2.4 3.4l2.9 4.9h-2.8l-2.5-4.4h-1.4V22H9zm2.4-6.3h1.8c1.2 0 1.9-.6 1.9-1.7s-.7-1.7-1.9-1.7h-1.8v3.4z' fill='%23000'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/styles.css">
+<link rel="stylesheet" href="../assets/hljs.css">
+</head>
+<body class="page-doc">
+<a class="skip-link" href="#main">Skip to content</a>
+<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../">
+      <span class="brand-mark" aria-hidden="true">R</span>
+      <span class="brand-text">Learn <strong>Robinhood Chain</strong></span>
+    </a>
+    <div class="topbar-actions">
+      <button class="search-open" type="button" aria-label="Search tutorials" aria-keyshortcuts="/">
+        <span class="search-open-label">Search</span><kbd>/</kbd>
+      </button>
+      <a class="ghost-link" href="https://github.com/nirholas/learn-robinhood-chain" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle color theme" title="Toggle theme"></button>
+      <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false"></button>
+    </div>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar" aria-label="Tutorials">
+    <nav class="sidebar-nav"><div class="nav-section"><p class="nav-section-title">Foundations</p><ul><li><a href="../01-what-is-robinhood-chain/"><span class="nav-idx">01</span>What it actually is</a></li><li><a href="../02-connect-and-read/"><span class="nav-idx">02</span>Connect &amp; read</a></li><li><a href="../03-stock-tokens-explained/"><span class="nav-idx">03</span>Stock Tokens</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Building</p><ul><li><a href="../04-live-price-ticker/"><span class="nav-idx">04</span>Live price ticker</a></li><li><a href="../05-portfolio-tracker/"><span class="nav-idx">05</span>Portfolio tracker</a></li><li><a href="../06-swapping-on-chain/"><span class="nav-idx">06</span>Swapping on-chain</a></li><li><a href="../07-streaming-the-chain/"><span class="nav-idx">07</span>Streaming the chain</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Monetizing &amp; agents</p><ul><li><a href="../08-sell-your-api-for-usdg/"><span class="nav-idx">08</span>Sell your API</a></li><li><a href="../09-ai-agent-chain-access/"><span class="nav-idx">09</span>AI agent access (MCP)</a></li><li><a href="../10-autonomous-trading-agent/"><span class="nav-idx">10</span>Autonomous agent</a></li><li><a href="../11-launch-a-coin/"><span class="nav-idx">11</span>Launch a coin</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Capstone</p><ul><li><a href="../12-ship-it/" class="active" aria-current="page"><span class="nav-idx">12</span>Ship it</a></li></ul></div></nav>
+  </aside>
+  <div class="sidebar-scrim" hidden></div>
+  <main class="doc" id="main" data-slug="12-ship-it">
+  <article class="doc-article">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="../">Home</a><span aria-hidden="true">/</span><span>Capstone</span></nav>
+    <header class="doc-header">
+      <h1>Ship it: deploy and go mainnet</h1>
+      <div class="doc-meta">
+        <span class="doc-meta-item">18 min</span>
+        <span class="doc-meta-sep">·</span>
+        <span class="doc-meta-item">6 min read</span>
+        <span class="doc-meta-sep">·</span>
+        <label class="done-toggle"><input type="checkbox" class="done-check"> Mark complete</label>
+      </div>
+    </header>
+    <aside class="whatbuild"><p class="whatbuild-title">What you'll build</p><p>A deployment plan and a mainnet-readiness checklist you can actually tick off before you flip the switch.</p></aside>
+    <aside class="prereq"><p class="prereq-title">Prerequisites</p><ul><li>Anything you built in Tutorials 4–11</li><li>A deploy target (GitHub Pages and/or Google Cloud Run)</li></ul></aside>
+    <div class="doc-body"><p>Everything in this course has been real, run code. This capstone is about the last mile: getting what you built in front of actual users, and the checklist to walk before you let it touch mainnet with real money.</p>
+<h2 id="deploying-a-static-app-github-pages"><a class="anchor" href="#deploying-a-static-app-github-pages" aria-label="Link to this section">#</a>Deploying a static app: GitHub Pages</h2><p>If what you built is client-side — a ticker, a portfolio dashboard, anything using only <code>hood.public</code> reads (Tutorials 2, 4, 5, 7) — it needs no backend at all. This very site is the reference example: it&#39;s a static build in <code>docs/</code>, deployed from a branch.</p>
+<p><strong>One-time setup:</strong></p>
+<ol>
+<li>Push your repo to GitHub.</li>
+<li><strong>Settings → Pages → Build and deployment → Source: &quot;Deploy from a branch.&quot;</strong></li>
+<li>Branch: <code>main</code>, folder: <code>/docs</code>. Save.</li>
+<li>Your site is live at <code>https://&lt;username&gt;.github.io/&lt;repo&gt;/</code> within a minute or two.</li>
+</ol>
+<p>That&#39;s the entire deployment. No build step runs on GitHub&#39;s infrastructure — you commit the already-built <code>docs/</code> folder, exactly as this repo does. Re-deploying is <code>npm run build &amp;&amp; git add docs &amp;&amp; git commit &amp;&amp; git push</code>.</p>
+<div class="callout callout-tip"><p class="callout-title">Why deploy-from-branch instead of a GitHub Actions build</p><p>It&#39;s simpler, it&#39;s faster (no CI queue), and it means what&#39;s live is <em>exactly</em> what you built and tested locally — no environment drift between your machine and a CI runner. The tradeoff is you must remember to run the build before committing; a pre-commit hook or a habit covers that.</p>
+</div>
+
+<h3 id="rpc-calls-from-a-static-site"><a class="anchor" href="#rpc-calls-from-a-static-site" aria-label="Link to this section">#</a>RPC calls from a static site</h3><p>A pure static deploy still makes real, live RPC calls — straight from the visitor&#39;s browser to <code>rpc.mainnet.chain.robinhood.com</code>, exactly like this site&#39;s <a href="../">live chain-stats strip</a> does. That&#39;s the whole trick behind &quot;the landing page can show live data on GitHub Pages&quot;: public reads need no server. The only thing you can&#39;t do from a static site is anything requiring a private key or server-side secret — which brings us to Cloud Run.</p>
+<h2 id="deploying-a-server-google-cloud-run"><a class="anchor" href="#deploying-a-server-google-cloud-run" aria-label="Link to this section">#</a>Deploying a server: Google Cloud Run</h2><p>The moment your app needs a wallet key (an agent, Tutorial 10), verifies payments server-side (the x402 API, Tutorial 8), or holds any other secret, it needs a real backend. Google Cloud Run is a strong default: pay-per-request, scales to zero, and a straightforward <code>Dockerfile</code> gets you there.</p>
+<figure class="code-block" data-lang="text"><figcaption><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-plaintext">FROM node:20-slim
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev
+COPY . .
+ENV PORT=8080
+EXPOSE 8080
+CMD ["node", "server.mjs"]</code></pre></figure><p>Two things Cloud Run requires that are easy to miss the first time:</p>
+<ul>
+<li><strong>Listen on <code>process.env.PORT</code></strong>, not a hardcoded port. Cloud Run injects <code>PORT</code> (usually <code>8080</code>) and routes traffic there — a hardcoded <code>3000</code> will silently fail health checks.</li>
+<li><strong>Bind to <code>0.0.0.0</code>, not <code>localhost</code>.</strong> <code>app.listen(port)</code> defaults to all interfaces in Express and is fine; some frameworks default to loopback-only, which Cloud Run can&#39;t reach.</li>
+</ul>
+<p>Deploy:</p>
+<figure class="code-block" data-lang="bash"><figcaption><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-bash">gcloud run deploy my-robinhood-app \
+  --<span class="hljs-built_in">source</span> . \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-env-vars PAYOUT_ADDRESS=0xYourAddress</code></pre></figure><p><strong>Never bake a private key into the container image or set it with <code>--set-env-vars</code> in a command you&#39;ll paste into a README.</strong> Use <code>gcloud run services update --update-secrets</code> backed by Secret Manager, or your platform&#39;s equivalent secret store — the difference between an env var and a secret-manager binding is the difference between a key that leaks the moment someone reads your shell history and one that doesn&#39;t.</p>
+<h2 id="an-alternative-vercel"><a class="anchor" href="#an-alternative-vercel" aria-label="Link to this section">#</a>An alternative: Vercel</h2><p>If your app is a standard Next.js/Vite frontend with lightweight serverless API routes, Vercel remains a fine choice for the same static-plus-functions shape — deploy with <code>vercel --prod</code> after <code>vercel link</code>. Prefer Cloud Run specifically once you have a long-running process (an always-on trading agent, a WebSocket firehose consumer) — Vercel&#39;s serverless functions are request-scoped and will terminate a background loop between invocations.</p>
+<h2 id="the-going-mainnet-checklist"><a class="anchor" href="#the-going-mainnet-checklist" aria-label="Link to this section">#</a>The going-mainnet checklist</h2><p>Everything below was demonstrated somewhere in this course. This is the assembled version — walk it in order before flipping any switch that spends real money.</p>
+<h3 id="funding"><a class="anchor" href="#funding" aria-label="Link to this section">#</a>Funding</h3><ul>
+<li><input disabled="" type="checkbox"> The wallet holds <strong>only</strong> what you&#39;re prepared to lose during the first live days (Tutorial 10) — not your full intended capital.</li>
+<li><input disabled="" type="checkbox"> You&#39;ve verified the wallet&#39;s mainnet ETH balance covers gas for your expected transaction volume; Robinhood Chain&#39;s ~100ms blocks mean a busy agent can rack up transaction count fast.</li>
+</ul>
+<h3 id="keys"><a class="anchor" href="#keys" aria-label="Link to this section">#</a>Keys</h3><ul>
+<li><input disabled="" type="checkbox"> The private key lives in a secret manager or env var injected at runtime — never in source, never in a Docker image layer, never in a README example with a real value (Tutorial 6, 10, 12).</li>
+<li><input disabled="" type="checkbox"> <code>.env</code> and any key file are in <code>.gitignore</code>, and you&#39;ve confirmed with <code>git status</code> that nothing sensitive is staged before your first push.</li>
+</ul>
+<h3 id="spend-caps"><a class="anchor" href="#spend-caps" aria-label="Link to this section">#</a>Spend caps</h3><ul>
+<li><input disabled="" type="checkbox"> Per-transaction and per-period spend caps are enforced in code, not just &quot;the strategy wouldn&#39;t do that&quot; (Tutorial 10) — assume the strategy has a bug.</li>
+<li><input disabled="" type="checkbox"> A kill switch exists, is tested, and stops the process <strong>between</strong> operations rather than mid-transaction (Tutorial 10).</li>
+</ul>
+<h3 id="compliance"><a class="anchor" href="#compliance" aria-label="Link to this section">#</a>Compliance</h3><ul>
+<li><input disabled="" type="checkbox"> Any flow that can acquire a Stock Token has the eligibility gate active by default, and <code>acknowledgeStockTokenEligibility: true</code> is set only after genuine confirmation of operator eligibility — never flipped on reflexively to silence an error (Tutorial 1, 6).</li>
+<li><input disabled="" type="checkbox"> Untrusted on-chain data (token names, memos, launch metadata) is escaped before rendering and never interpreted as an instruction to an agent or LLM (Tutorial 1, 11).</li>
+</ul>
+<h3 id="correctness"><a class="anchor" href="#correctness" aria-label="Link to this section">#</a>Correctness</h3><ul>
+<li><input disabled="" type="checkbox"> Portfolio and pricing code follows the multiplier rule exactly — value is <code>balance × feed price</code>, never <code>balance × multiplier × feed price</code> (Tutorial 3, 5).</li>
+<li><input disabled="" type="checkbox"> Staleness windows account for the 24/5 market schedule; a tight window won&#39;t falsely flag every weekend read as broken (Tutorial 3, 4).</li>
+<li><input disabled="" type="checkbox"> Payment or transaction verification decodes actual event arguments (recipient, amount) rather than checking &quot;a log exists&quot; — Tutorial 8 documents a real bug of exactly this shape that was caught and fixed while writing this course.</li>
+</ul>
+<h3 id="infrastructure"><a class="anchor" href="#infrastructure" aria-label="Link to this section">#</a>Infrastructure</h3><ul>
+<li><input disabled="" type="checkbox"> You&#39;re on a dedicated RPC (Alchemy or equivalent) for anything beyond light, occasional reads — the public RPC rate-limits wide scans (Tutorial 2, 7) and a production agent hitting <code>429</code>s is a production agent silently missing data.</li>
+<li><input disabled="" type="checkbox"> Logs capture every decision an autonomous component makes, with enough detail to reconstruct &quot;why did it do that&quot; after the fact (Tutorial 10).</li>
+<li><input disabled="" type="checkbox"> Secrets are in a secret manager, not env vars set from a shell command that lands in history or CI logs.</li>
+</ul>
+<h3 id="monitoring"><a class="anchor" href="#monitoring" aria-label="Link to this section">#</a>Monitoring</h3><ul>
+<li><input disabled="" type="checkbox"> You have a way to know the agent/service is still running — a heartbeat, a health check endpoint, or an external uptime check — not just &quot;I&#39;ll notice if it stops.&quot;</li>
+<li><input disabled="" type="checkbox"> Failed transactions and thrown errors are surfaced somewhere you&#39;ll actually see them (a log aggregator, an alert), not just printed to a terminal that isn&#39;t open.</li>
+</ul>
+<h2 id="where-to-go-from-here"><a class="anchor" href="#where-to-go-from-here" aria-label="Link to this section">#</a>Where to go from here</h2><p>You&#39;ve built, in order: a correct mental model, a first read, the multiplier rule, a live ticker, a portfolio tracker, a working swap, two live streams, a paid API (with a real bug caught and fixed), a working MCP server, a risk-controlled paper-trading agent, and an honest account of the launch-write gap. That&#39;s the full stack of a serious Robinhood Chain application. The <a href="https://github.com/nirholas/robinhood-chain-sdk" target="_blank" rel="noopener noreferrer">hoodchain SDK</a> that powered all of it is open source — read its source when you need to go deeper than any tutorial here, and consider contributing back (the launch-ABI gap from Tutorial 11 is a real, well-scoped next PR for someone with more time to reverse-engineer it responsibly).</p>
+<p>Build something worth screenshotting.</p>
+</div>
+    <nav class="pager-nav" aria-label="Tutorial pagination"><a class="pager pager-prev" href="../11-launch-a-coin/"><span class="pager-dir">← Previous</span><span class="pager-title">Launch a coin programmatically</span></a><span></span></nav>
+    <footer class="doc-footer">
+      <p>Question or correction? <a href="https://github.com/nirholas/learn-robinhood-chain/issues" target="_blank" rel="noopener noreferrer">Open an issue</a>.</p>
+      <p>Built by <a href="https://x.com/nichxbt" target="_blank" rel="noopener noreferrer">nirholas</a> · <a href="https://three.ws" target="_blank" rel="noopener noreferrer">three.ws</a></p>
+    </footer>
+  </article>
+  <nav class="toc" aria-label="On this page"><p class="toc-title">On this page</p><ul><li class="toc-l2"><a href="#deploying-a-static-app-github-pages">Deploying a static app: GitHub Pages</a></li><li class="toc-l3"><a href="#rpc-calls-from-a-static-site">RPC calls from a static site</a></li><li class="toc-l2"><a href="#deploying-a-server-google-cloud-run">Deploying a server: Google Cloud Run</a></li><li class="toc-l2"><a href="#an-alternative-vercel">An alternative: Vercel</a></li><li class="toc-l2"><a href="#the-going-mainnet-checklist">The going-mainnet checklist</a></li><li class="toc-l3"><a href="#funding">Funding</a></li><li class="toc-l3"><a href="#keys">Keys</a></li><li class="toc-l3"><a href="#spend-caps">Spend caps</a></li><li class="toc-l3"><a href="#compliance">Compliance</a></li><li class="toc-l3"><a href="#correctness">Correctness</a></li><li class="toc-l3"><a href="#infrastructure">Infrastructure</a></li><li class="toc-l3"><a href="#monitoring">Monitoring</a></li><li class="toc-l2"><a href="#where-to-go-from-here">Where to go from here</a></li></ul></nav>
+</main>
+</div>
+<div class="search-modal" id="search-modal" hidden role="dialog" aria-modal="true" aria-label="Search">
+  <div class="search-panel">
+    <input type="search" id="search-input" placeholder="Search tutorials…" autocomplete="off" spellcheck="false" aria-label="Search query">
+    <ul class="search-results" id="search-results" aria-live="polite"></ul>
+    <p class="search-hint"><kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>esc</kbd> to close</p>
+  </div>
+</div>
+<script defer src="../assets/app.js"></script><script defer src="../assets/search.js"></script>
+</body>
+</html>

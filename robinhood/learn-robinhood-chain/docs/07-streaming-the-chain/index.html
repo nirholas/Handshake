@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Streaming the chain: launchpads + firehose · Learn Robinhood Chain</title>
+<meta name="description" content="Watch NOXA and The Odyssey for new memecoin launches, then tap the raw sequencer firehose to see transactions ~100ms before they're queryable.">
+<meta property="og:title" content="Streaming the chain: launchpads + firehose · Learn Robinhood Chain">
+<meta property="og:description" content="Watch NOXA and The Odyssey for new memecoin launches, then tap the raw sequencer firehose to see transactions ~100ms before they're queryable.">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#0b0d10">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300c805'/%3E%3Cpath d='M9 22V10h4.4c2.6 0 4.2 1.4 4.2 3.7 0 1.7-.9 2.9-2.4 3.4l2.9 4.9h-2.8l-2.5-4.4h-1.4V22H9zm2.4-6.3h1.8c1.2 0 1.9-.6 1.9-1.7s-.7-1.7-1.9-1.7h-1.8v3.4z' fill='%23000'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/styles.css">
+<link rel="stylesheet" href="../assets/hljs.css">
+</head>
+<body class="page-doc">
+<a class="skip-link" href="#main">Skip to content</a>
+<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../">
+      <span class="brand-mark" aria-hidden="true">R</span>
+      <span class="brand-text">Learn <strong>Robinhood Chain</strong></span>
+    </a>
+    <div class="topbar-actions">
+      <button class="search-open" type="button" aria-label="Search tutorials" aria-keyshortcuts="/">
+        <span class="search-open-label">Search</span><kbd>/</kbd>
+      </button>
+      <a class="ghost-link" href="https://github.com/nirholas/learn-robinhood-chain" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle color theme" title="Toggle theme"></button>
+      <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false"></button>
+    </div>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar" aria-label="Tutorials">
+    <nav class="sidebar-nav"><div class="nav-section"><p class="nav-section-title">Foundations</p><ul><li><a href="../01-what-is-robinhood-chain/"><span class="nav-idx">01</span>What it actually is</a></li><li><a href="../02-connect-and-read/"><span class="nav-idx">02</span>Connect &amp; read</a></li><li><a href="../03-stock-tokens-explained/"><span class="nav-idx">03</span>Stock Tokens</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Building</p><ul><li><a href="../04-live-price-ticker/"><span class="nav-idx">04</span>Live price ticker</a></li><li><a href="../05-portfolio-tracker/"><span class="nav-idx">05</span>Portfolio tracker</a></li><li><a href="../06-swapping-on-chain/"><span class="nav-idx">06</span>Swapping on-chain</a></li><li><a href="../07-streaming-the-chain/" class="active" aria-current="page"><span class="nav-idx">07</span>Streaming the chain</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Monetizing &amp; agents</p><ul><li><a href="../08-sell-your-api-for-usdg/"><span class="nav-idx">08</span>Sell your API</a></li><li><a href="../09-ai-agent-chain-access/"><span class="nav-idx">09</span>AI agent access (MCP)</a></li><li><a href="../10-autonomous-trading-agent/"><span class="nav-idx">10</span>Autonomous agent</a></li><li><a href="../11-launch-a-coin/"><span class="nav-idx">11</span>Launch a coin</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Capstone</p><ul><li><a href="../12-ship-it/"><span class="nav-idx">12</span>Ship it</a></li></ul></div></nav>
+  </aside>
+  <div class="sidebar-scrim" hidden></div>
+  <main class="doc" id="main" data-slug="07-streaming-the-chain">
+  <article class="doc-article">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="../">Home</a><span aria-hidden="true">/</span><span>Building</span></nav>
+    <header class="doc-header">
+      <h1>Streaming the chain: launchpads + firehose</h1>
+      <div class="doc-meta">
+        <span class="doc-meta-item">18 min</span>
+        <span class="doc-meta-sep">·</span>
+        <span class="doc-meta-item">5 min read</span>
+        <span class="doc-meta-sep">·</span>
+        <label class="done-toggle"><input type="checkbox" class="done-check"> Mark complete</label>
+      </div>
+    </header>
+    <aside class="whatbuild"><p class="whatbuild-title">What you'll build</p><p>Two live streams: a launch watcher printing new tokens as they deploy, and a firehose counter clocking hundreds of transactions per second.</p></aside>
+    <aside class="prereq"><p class="prereq-title">Prerequisites</p><ul><li><a href="../02-connect-and-read/">Tutorial 2</a></li><li>Node ≥ 20 (the firehose uses WebSockets)</li></ul></aside>
+    <div class="doc-body"><p>Robinhood Chain moves fast — ~100ms blocks, hundreds of transactions per second at peak. This tutorial covers the two ways to watch it live: <strong>confirmed event streams</strong> (launchpad watchers, the pattern you&#39;ll use for almost everything) and the <strong>raw sequencer firehose</strong> (transactions decoded before they&#39;re even in a block). Both examples below are real captures against mainnet.</p>
+<h2 id="two-memecoin-launchpads-two-designs"><a class="anchor" href="#two-memecoin-launchpads-two-designs" aria-label="Link to this section">#</a>Two memecoin launchpads, two designs</h2><p>Robinhood Chain is permissionless (Tutorial 1), and two launchpads have grown on top of it, with genuinely different mechanics:</p>
+<ul>
+<li><strong>NOXA</strong> — an <em>instant</em> launcher. One transaction deploys the ERC-20, creates a Uniswap v3 pool at the 1% tier, seeds single-sided liquidity, and permanently locks the LP NFT. There&#39;s no bonding curve and no graduation — the token trades as a normal Uniswap v3 pool from block one.</li>
+<li><strong>The Odyssey</strong> — a <em>pump.fun-style bonding curve</em>, priced in native ETH with virtual reserves. Trades happen against the curve (<code>Traded</code> events) until it fills, at which point <code>PoolCompleted</code> + <code>PoolMigrated</code> fire and liquidity moves to a locked Uniswap v3 pool — the &quot;graduation&quot; moment.</li>
+</ul>
+<p>The <a href="https://github.com/nirholas/robinhood-chain-sdk" target="_blank" rel="noopener noreferrer">hoodchain SDK</a> ships decoded event ABIs and watcher functions for both, extracted from each platform&#39;s frontend bundle and confirmed against live logs during SDK development (neither publishes verified source on Blockscout, so this took direct log inspection rather than an ABI download).</p>
+<h2 id="watching-for-new-launches"><a class="anchor" href="#watching-for-new-launches" aria-label="Link to this section">#</a>Watching for new launches</h2><figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">import</span> { createHoodClient, getRecentLaunches, watchLaunches, watchGraduations } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;hoodchain&#x27;</span>
+
+<span class="hljs-keyword">const</span> hood = <span class="hljs-title function_">createHoodClient</span>()
+
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;recent launches (last ~2h of blocks):&#x27;</span>)
+<span class="hljs-keyword">const</span> recent = <span class="hljs-keyword">await</span> <span class="hljs-title function_">getRecentLaunches</span>(hood, { <span class="hljs-attr">lookbackBlocks</span>: <span class="hljs-number">60_000n</span> })
+<span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> l <span class="hljs-keyword">of</span> recent.<span class="hljs-title function_">slice</span>(-<span class="hljs-number">10</span>)) {
+  <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`  [<span class="hljs-subst">${l.launchpad}</span>] token <span class="hljs-subst">${l.token}</span> by <span class="hljs-subst">${l.creator}</span><span class="hljs-subst">${l.pool ? <span class="hljs-string">` pool <span class="hljs-subst">${l.pool}</span>`</span> : <span class="hljs-string">&#x27; (on curve)&#x27;</span>}</span>`</span>)
+}
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`  (<span class="hljs-subst">${recent.length}</span> total)\n`</span>)
+
+<span class="hljs-keyword">const</span> unwatchLaunches = <span class="hljs-title function_">watchLaunches</span>(hood, <span class="hljs-function">(<span class="hljs-params">launch</span>) =&gt;</span> {
+  <span class="hljs-keyword">const</span> venue = launch.<span class="hljs-property">launchpad</span> === <span class="hljs-string">&#x27;noxa&#x27;</span> ? <span class="hljs-string">&#x27;NOXA (instant pool)&#x27;</span> : <span class="hljs-string">&#x27;Odyssey (bonding curve)&#x27;</span>
+  <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`LAUNCH <span class="hljs-subst">${venue}</span>: <span class="hljs-subst">${launch.token}</span> by <span class="hljs-subst">${launch.creator}</span> — tx <span class="hljs-subst">${launch.transactionHash}</span>`</span>)
+})
+<span class="hljs-keyword">const</span> unwatchGraduations = <span class="hljs-title function_">watchGraduations</span>(hood, <span class="hljs-function">(<span class="hljs-params">g</span>) =&gt;</span> {
+  <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`GRADUATION: <span class="hljs-subst">${g.token}</span> → Uniswap v3 pool <span class="hljs-subst">${g.pool}</span> — tx <span class="hljs-subst">${g.transactionHash}</span>`</span>)
+})</code></pre></figure><p>Running <code>getRecentLaunches</code> with the default 30,000-block lookback (roughly the last hour) against live mainnet returned <strong>zero</strong> launches at the time of writing — both launchpads were genuinely quiet in that window. That&#39;s a real, useful data point about the current state of the ecosystem, not a bug: widening the scan confirms the watcher logic itself is correct.</p>
+<h3 id="proving-the-decoder-works-a-historical-scan"><a class="anchor" href="#proving-the-decoder-works-a-historical-scan" aria-label="Link to this section">#</a>Proving the decoder works: a historical scan</h3><p>To confirm <code>getRecentLaunches</code> actually decodes NOXA&#39;s <code>TokenLaunched</code> event correctly (rather than just returning zero because nothing happened), scan the 9,000 blocks starting at NOXA&#39;s own recorded deploy block:</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">import</span> { createHoodClient, <span class="hljs-variable constant_">NOXA_ADDRESSES</span>, noxaTokenLaunchedEvent } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;hoodchain&#x27;</span>
+
+<span class="hljs-keyword">const</span> hood = <span class="hljs-title function_">createHoodClient</span>()
+<span class="hljs-keyword">const</span> logs = <span class="hljs-keyword">await</span> hood.<span class="hljs-property">public</span>.<span class="hljs-title function_">getLogs</span>({
+  <span class="hljs-attr">address</span>: <span class="hljs-variable constant_">NOXA_ADDRESSES</span>.<span class="hljs-property">launchFactory</span>,
+  <span class="hljs-attr">event</span>: noxaTokenLaunchedEvent,
+  <span class="hljs-attr">fromBlock</span>: <span class="hljs-variable constant_">NOXA_ADDRESSES</span>.<span class="hljs-property">deployBlock</span>,
+  <span class="hljs-attr">toBlock</span>: <span class="hljs-variable constant_">NOXA_ADDRESSES</span>.<span class="hljs-property">deployBlock</span> + <span class="hljs-number">9000n</span>,
+})
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`TokenLaunched logs near deploy: <span class="hljs-subst">${logs.length}</span>`</span>)
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`first token: <span class="hljs-subst">${logs[<span class="hljs-number">0</span>].args.token}</span>`</span>)</code></pre></figure><figure class="code-block" data-lang="text"><figcaption><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-plaintext">TokenLaunched logs near deploy: 21
+first token: 0x6399E2Bd8af62C0ac13f55613C3469b67332a6Fd</code></pre></figure><p>Real result: <strong>21 launches</strong>, decoded correctly, first token address included. The watcher works; the launchpads have simply had quiet stretches. This is a useful verification technique generally — when a live &quot;recent activity&quot; query returns zero, don&#39;t assume it&#39;s broken; confirm the decoder against a window you know had activity before you trust the &quot;quiet&quot; result.</p>
+<div class="callout callout-warning"><p class="callout-title">The public RPC rate-limits wide scans</p><p>Scanning a <strong>million-block</strong> window (<code>lookbackBlocks: 1_000_000n</code>) against the public RPC returned a real <code>429 Too Many Requests</code> from <code>eth_getLogs</code> during testing — even with <code>getRecentLaunches</code>&#39;s built-in chunking (<code>chunkSize</code>, default 10,000 blocks per request). For anything beyond a rough &quot;last hour or two&quot; scan, use a dedicated RPC key (Tutorial 2) or narrow your chunk size further.</p>
+</div>
+
+<h2 id="the-raw-sequencer-firehose"><a class="anchor" href="#the-raw-sequencer-firehose" aria-label="Link to this section">#</a>The raw sequencer firehose</h2><p>Confirmed-event watching (above) is what you want for almost everything — it&#39;s simple and it&#39;s what block explorers show. But Robinhood Chain also publishes its <strong>Arbitrum Nitro sequencer feed</strong> directly: every transaction the sequencer accepts, decoded, <strong>~100–300ms before it&#39;s queryable over RPC</strong>. That latency matters for MEV-sensitive or ultra-low-latency use cases; for everyone else it&#39;s a fascinating window into how much traffic the chain actually carries.</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">import</span> { subscribeFeed } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;hoodchain&#x27;</span>
+<span class="hljs-keyword">import</span> { formatEther } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;viem&#x27;</span>
+
+<span class="hljs-keyword">let</span> messages = <span class="hljs-number">0</span>
+<span class="hljs-keyword">let</span> txs = <span class="hljs-number">0</span>
+<span class="hljs-keyword">const</span> startedAt = <span class="hljs-title class_">Date</span>.<span class="hljs-title function_">now</span>()
+
+<span class="hljs-keyword">const</span> sub = <span class="hljs-keyword">await</span> <span class="hljs-title function_">subscribeFeed</span>(
+  <span class="hljs-function">(<span class="hljs-params">msg</span>) =&gt;</span> {
+    messages += <span class="hljs-number">1</span>
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> tx <span class="hljs-keyword">of</span> msg.<span class="hljs-property">transactions</span>) {
+      txs += <span class="hljs-number">1</span>
+      <span class="hljs-keyword">const</span> t = tx.<span class="hljs-property">transaction</span>
+      <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`<span class="hljs-subst">${tx.hash}</span>  -&gt;<span class="hljs-subst">${t.to ?? <span class="hljs-string">&#x27;(create)&#x27;</span>}</span>`</span>)
+    }
+  },
+  { <span class="hljs-attr">onConnect</span>: <span class="hljs-function">() =&gt;</span> <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;connected.&#x27;</span>) },
+)
+
+<span class="hljs-built_in">setTimeout</span>(<span class="hljs-function">() =&gt;</span> {
+  sub.<span class="hljs-title function_">close</span>()
+  <span class="hljs-keyword">const</span> rate = (txs / ((<span class="hljs-title class_">Date</span>.<span class="hljs-title function_">now</span>() - startedAt) / <span class="hljs-number">1000</span>)).<span class="hljs-title function_">toFixed</span>(<span class="hljs-number">1</span>)
+  <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`<span class="hljs-subst">${messages}</span> messages, <span class="hljs-subst">${txs}</span> txs in <span class="hljs-subst">${((<span class="hljs-built_in">Date</span>.now() - startedAt) / <span class="hljs-number">1000</span>).toFixed(<span class="hljs-number">0</span>)}</span>s (<span class="hljs-subst">${rate}</span> tx/s)`</span>)
+}, <span class="hljs-number">12_000</span>)</code></pre></figure><p>A real 12-second capture against <code>wss://feed.mainnet.chain.robinhood.com</code>:</p>
+<figure class="code-block" data-lang="text"><figcaption><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-plaintext">connected.
+0xcbadb5925ef1f8716a52ee6caefb01c5b4aa226dd815777f6dff3c00f2f15d35  -&gt;0x00bfd5004d8503007c007bfb7500158500f90052
+0x1f5a5d2b62a57cbe6eb4795fbda6e90e8da17c979877203785b323680cd95def  -&gt;0x77afb8cb800bd0688c78a3ca322226b4f1401e3a
+0xebf02e0e86381a389a287caba0b23dfac44b7d1d2c17d8105584c9da3b413d17  -&gt;0x65050a9b7e5075a2ba5ced7b1b64ee66262c40dc
+...
+979 messages, 6451 txs in 12s (537.6 tx/s)</code></pre></figure><p><strong>6,451 real transactions in 12 seconds</strong> — over 500 tx/s sustained. That number alone tells you Robinhood Chain is carrying meaningfully more traffic than a quiet L2; at ~100ms blocks, that&#39;s roughly 50+ transactions landing in every block. If your mental model of activity on this chain came from watching a slow block explorer feed, the firehose is a useful correction.</p>
+<h3 id="how-the-decoding-works"><a class="anchor" href="#how-the-decoding-works" aria-label="Link to this section">#</a>How the decoding works</h3><p>The sequencer publishes frames matching the Nitro broadcast feed shape: a header (kind, sender, L1 block number, timestamp) plus a base64 <code>l2Msg</code> payload. The first byte of the decoded payload is the message kind — <code>0x04</code> (<code>SignedTx</code>: the rest is one raw RLP/typed transaction) or <code>0x03</code> (<code>Batch</code>: a sequence of length-prefixed nested L2 messages, decoded recursively). <code>subscribeFeed</code> handles both, reconnects with exponential backoff on drops, and — critically — <strong>never throws on an unparseable payload</strong>; malformed or unrecognized frames simply decode to zero transactions rather than crashing your stream.</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-comment">// simplified from the SDK&#x27;s feed.ts — the kind-byte dispatch</span>
+<span class="hljs-keyword">const</span> kind = bytes[<span class="hljs-number">0</span>]
+<span class="hljs-keyword">if</span> (kind === <span class="hljs-number">0x04</span>) <span class="hljs-keyword">return</span> [<span class="hljs-title function_">decodeSignedTx</span>(bytes.<span class="hljs-title function_">subarray</span>(<span class="hljs-number">1</span>))]
+<span class="hljs-keyword">if</span> (kind === <span class="hljs-number">0x03</span>) <span class="hljs-keyword">return</span> <span class="hljs-title function_">decodeBatch</span>(bytes.<span class="hljs-title function_">subarray</span>(<span class="hljs-number">1</span>))  <span class="hljs-comment">// recurses per nested message</span>
+<span class="hljs-keyword">return</span> [] <span class="hljs-comment">// unknown kind — never throw</span></code></pre></figure><div class="callout callout-tip"><p class="callout-title">No auth, no key, works in the browser too</p><p>The firehose endpoint needs no authentication. On Node ≥ 22 and in browsers it uses the global <code>WebSocket</code>; on Node 20/21 install the optional <code>ws</code> peer dependency (<code>npm install ws</code>).</p>
+</div>
+
+<h2 id="a-simpler-alternative-watching-confirmed-transfers"><a class="anchor" href="#a-simpler-alternative-watching-confirmed-transfers" aria-label="Link to this section">#</a>A simpler alternative: watching confirmed transfers</h2><p>Not every use case needs launchpad decoding or firehose-level latency. For &quot;notify me when this token moves,&quot; <code>watchTransfers</code> polls confirmed <code>Transfer</code> logs — the simplest possible event stream:</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">import</span> { watchTransfers, <span class="hljs-variable constant_">MAINNET_ADDRESSES</span>, formatUsdg } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;hoodchain&#x27;</span>
+
+<span class="hljs-keyword">const</span> unwatch = <span class="hljs-title function_">watchTransfers</span>(hood, { <span class="hljs-attr">token</span>: <span class="hljs-variable constant_">MAINNET_ADDRESSES</span>.<span class="hljs-property">usdg</span> }, <span class="hljs-function">(<span class="hljs-params">t</span>) =&gt;</span> {
+  <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`<span class="hljs-subst">${t.<span class="hljs-keyword">from</span>}</span> -&gt; <span class="hljs-subst">${t.to}</span>: <span class="hljs-subst">${formatUsdg(t.value)}</span> USDG`</span>)
+})</code></pre></figure><h2 id="troubleshooting"><a class="anchor" href="#troubleshooting" aria-label="Link to this section">#</a>Troubleshooting</h2><p><strong><code>getRecentLaunches</code> returns 0 and I don&#39;t trust it</strong> — widen the window, or run the historical-scan verification above against <code>NOXA_ADDRESSES.deployBlock</code>. Zero is a legitimate answer when the launchpads are quiet.</p>
+<p><strong><code>429 Too Many Requests</code> from <code>eth_getLogs</code></strong> — you&#39;re scanning too wide a block range on the public RPC. Shrink <code>lookbackBlocks</code>, shrink <code>chunkSize</code>, or move to a dedicated RPC (Tutorial 2).</p>
+<p><strong>Firehose connects then immediately disconnects repeatedly</strong> — check <code>onError</code> in your <code>subscribeFeed</code> options; the client backs off exponentially (capped at 30s) and gives up after <code>maxReconnects</code> (default 10). A flaky network will show this pattern; a genuinely down feed will exhaust the retries and call <code>onError</code> with a <code>FeedConnectionError</code>.</p>
+<p><strong><code>no WebSocket implementation available</code></strong> — you&#39;re on Node &lt; 22 without the <code>ws</code> package. Run <code>npm install ws</code>.</p>
+<h2 id="what-you-built"><a class="anchor" href="#what-you-built" aria-label="Link to this section">#</a>What you built</h2><p>Two live streams against real mainnet traffic: a launch/graduation watcher (verified against 21 real historical NOXA launches) and a raw firehose clocking over 500 tx/s. You also hit and worked around a real RPC rate limit — a lesson that&#39;ll save you time on any wide historical scan. Next, we turn read access into revenue: selling your own API for USDG.</p>
+</div>
+    <nav class="pager-nav" aria-label="Tutorial pagination"><a class="pager pager-prev" href="../06-swapping-on-chain/"><span class="pager-dir">← Previous</span><span class="pager-title">Swapping on-chain: quotes, slippage, execution</span></a><a class="pager pager-next" href="../08-sell-your-api-for-usdg/"><span class="pager-dir">Next →</span><span class="pager-title">Sell your API for USDG with x402</span></a></nav>
+    <footer class="doc-footer">
+      <p>Question or correction? <a href="https://github.com/nirholas/learn-robinhood-chain/issues" target="_blank" rel="noopener noreferrer">Open an issue</a>.</p>
+      <p>Built by <a href="https://x.com/nichxbt" target="_blank" rel="noopener noreferrer">nirholas</a> · <a href="https://three.ws" target="_blank" rel="noopener noreferrer">three.ws</a></p>
+    </footer>
+  </article>
+  <nav class="toc" aria-label="On this page"><p class="toc-title">On this page</p><ul><li class="toc-l2"><a href="#two-memecoin-launchpads-two-designs">Two memecoin launchpads, two designs</a></li><li class="toc-l2"><a href="#watching-for-new-launches">Watching for new launches</a></li><li class="toc-l3"><a href="#proving-the-decoder-works-a-historical-scan">Proving the decoder works: a historical scan</a></li><li class="toc-l2"><a href="#the-raw-sequencer-firehose">The raw sequencer firehose</a></li><li class="toc-l3"><a href="#how-the-decoding-works">How the decoding works</a></li><li class="toc-l2"><a href="#a-simpler-alternative-watching-confirmed-transfers">A simpler alternative: watching confirmed transfers</a></li><li class="toc-l2"><a href="#troubleshooting">Troubleshooting</a></li><li class="toc-l2"><a href="#what-you-built">What you built</a></li></ul></nav>
+</main>
+</div>
+<div class="search-modal" id="search-modal" hidden role="dialog" aria-modal="true" aria-label="Search">
+  <div class="search-panel">
+    <input type="search" id="search-input" placeholder="Search tutorials…" autocomplete="off" spellcheck="false" aria-label="Search query">
+    <ul class="search-results" id="search-results" aria-live="polite"></ul>
+    <p class="search-hint"><kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>esc</kbd> to close</p>
+  </div>
+</div>
+<script defer src="../assets/app.js"></script><script defer src="../assets/search.js"></script>
+</body>
+</html>

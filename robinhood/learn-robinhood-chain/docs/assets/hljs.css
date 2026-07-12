@@ -1,0 +1,14 @@
+/* highlight.js — theme-aware, self-hosted (no CDN) */
+.hljs{color:var(--code-fg);background:transparent}
+.hljs-comment,.hljs-quote{color:var(--hl-comment);font-style:italic}
+.hljs-keyword,.hljs-selector-tag,.hljs-literal,.hljs-section,.hljs-link{color:var(--hl-keyword)}
+.hljs-function .hljs-keyword{color:var(--hl-keyword)}
+.hljs-string,.hljs-attr,.hljs-template-tag,.hljs-addition,.hljs-regexp{color:var(--hl-string)}
+.hljs-number,.hljs-symbol,.hljs-bullet,.hljs-meta{color:var(--hl-number)}
+.hljs-title,.hljs-title.function_,.hljs-name{color:var(--hl-title)}
+.hljs-type,.hljs-class .hljs-title,.hljs-title.class_,.hljs-built_in{color:var(--hl-type)}
+.hljs-variable,.hljs-template-variable,.hljs-property{color:var(--hl-var)}
+.hljs-attribute{color:var(--hl-attr)}
+.hljs-deletion{color:var(--hl-deletion)}
+.hljs-emphasis{font-style:italic}
+.hljs-strong{font-weight:600}

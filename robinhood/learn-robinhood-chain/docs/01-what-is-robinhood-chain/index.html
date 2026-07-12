@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What Robinhood Chain actually is · Learn Robinhood Chain</title>
+<meta name="description" content="Architecture, chain IDs, and what's real vs hype — the no-token fact, the US-person restriction, and permissionless deployment, all sourced.">
+<meta property="og:title" content="What Robinhood Chain actually is · Learn Robinhood Chain">
+<meta property="og:description" content="Architecture, chain IDs, and what's real vs hype — the no-token fact, the US-person restriction, and permissionless deployment, all sourced.">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#0b0d10">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300c805'/%3E%3Cpath d='M9 22V10h4.4c2.6 0 4.2 1.4 4.2 3.7 0 1.7-.9 2.9-2.4 3.4l2.9 4.9h-2.8l-2.5-4.4h-1.4V22H9zm2.4-6.3h1.8c1.2 0 1.9-.6 1.9-1.7s-.7-1.7-1.9-1.7h-1.8v3.4z' fill='%23000'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/styles.css">
+<link rel="stylesheet" href="../assets/hljs.css">
+</head>
+<body class="page-doc">
+<a class="skip-link" href="#main">Skip to content</a>
+<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../">
+      <span class="brand-mark" aria-hidden="true">R</span>
+      <span class="brand-text">Learn <strong>Robinhood Chain</strong></span>
+    </a>
+    <div class="topbar-actions">
+      <button class="search-open" type="button" aria-label="Search tutorials" aria-keyshortcuts="/">
+        <span class="search-open-label">Search</span><kbd>/</kbd>
+      </button>
+      <a class="ghost-link" href="https://github.com/nirholas/learn-robinhood-chain" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle color theme" title="Toggle theme"></button>
+      <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false"></button>
+    </div>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar" aria-label="Tutorials">
+    <nav class="sidebar-nav"><div class="nav-section"><p class="nav-section-title">Foundations</p><ul><li><a href="../01-what-is-robinhood-chain/" class="active" aria-current="page"><span class="nav-idx">01</span>What it actually is</a></li><li><a href="../02-connect-and-read/"><span class="nav-idx">02</span>Connect &amp; read</a></li><li><a href="../03-stock-tokens-explained/"><span class="nav-idx">03</span>Stock Tokens</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Building</p><ul><li><a href="../04-live-price-ticker/"><span class="nav-idx">04</span>Live price ticker</a></li><li><a href="../05-portfolio-tracker/"><span class="nav-idx">05</span>Portfolio tracker</a></li><li><a href="../06-swapping-on-chain/"><span class="nav-idx">06</span>Swapping on-chain</a></li><li><a href="../07-streaming-the-chain/"><span class="nav-idx">07</span>Streaming the chain</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Monetizing &amp; agents</p><ul><li><a href="../08-sell-your-api-for-usdg/"><span class="nav-idx">08</span>Sell your API</a></li><li><a href="../09-ai-agent-chain-access/"><span class="nav-idx">09</span>AI agent access (MCP)</a></li><li><a href="../10-autonomous-trading-agent/"><span class="nav-idx">10</span>Autonomous agent</a></li><li><a href="../11-launch-a-coin/"><span class="nav-idx">11</span>Launch a coin</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Capstone</p><ul><li><a href="../12-ship-it/"><span class="nav-idx">12</span>Ship it</a></li></ul></div></nav>
+  </aside>
+  <div class="sidebar-scrim" hidden></div>
+  <main class="doc" id="main" data-slug="01-what-is-robinhood-chain">
+  <article class="doc-article">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="../">Home</a><span aria-hidden="true">/</span><span>Foundations</span></nav>
+    <header class="doc-header">
+      <h1>What Robinhood Chain actually is</h1>
+      <div class="doc-meta">
+        <span class="doc-meta-item">10 min</span>
+        <span class="doc-meta-sep">·</span>
+        <span class="doc-meta-item">6 min read</span>
+        <span class="doc-meta-sep">·</span>
+        <label class="done-toggle"><input type="checkbox" class="done-check"> Mark complete</label>
+      </div>
+    </header>
+    <aside class="whatbuild"><p class="whatbuild-title">What you'll build</p><p>A correct mental model of the chain: what it is, what it is <em>not</em>, and the two facts that trip up every newcomer.</p></aside>
+    <aside class="prereq"><p class="prereq-title">Prerequisites</p><ul><li>Curiosity. No wallet or code yet.</li></ul></aside>
+    <div class="doc-body"><p>Robinhood Chain launched its mainnet on July 1, 2026. In the weeks since, the amount of confident, wrong information written about it has been remarkable. This page is the antidote: the architecture, the chain IDs, and — more importantly — the three facts that every newcomer gets backwards.</p>
+<p>Everything here is sourced. Where a claim matters, it links to the <a href="https://docs.robinhood.com/chain/" target="_blank" rel="noopener noreferrer">official docs</a> or to something you can verify on-chain yourself in the next tutorial.</p>
+<h2 id="the-one-paragraph-version"><a class="anchor" href="#the-one-paragraph-version" aria-label="Link to this section">#</a>The one-paragraph version</h2><p>Robinhood Chain is a <strong>permissionless <a href="https://docs.arbitrum.io/launch-orbit-chain/orbit-gentle-introduction" target="_blank" rel="noopener noreferrer">Arbitrum Orbit</a> Layer 2</strong> that settles to Ethereum, posts its data as blobs, and pays gas in <strong>ETH</strong>. Blocks land in roughly 100 milliseconds. It supports <a href="https://eips.ethereum.org/EIPS/eip-4337" target="_blank" rel="noopener noreferrer">ERC-4337</a> account abstraction. Its headline feature is ~95 <strong>Stock Tokens</strong> — tokenized US equities, each a plain ERC-20 with a Chainlink price feed — plus <strong>USDG</strong>, a dollar stablecoin. That&#39;s the whole chain in one breath. The rest of this page is the fine print, and the fine print is where the money and the mistakes are.</p>
+<h2 id="architecture-precisely"><a class="anchor" href="#architecture-precisely" aria-label="Link to this section">#</a>Architecture, precisely</h2><table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Type</td>
+<td>Arbitrum Orbit L2 (Nitro stack)</td>
+</tr>
+<tr>
+<td>Settlement</td>
+<td>Ethereum mainnet</td>
+</tr>
+<tr>
+<td>Data availability</td>
+<td>Blobs (EIP-4844)</td>
+</tr>
+<tr>
+<td>Gas token</td>
+<td><strong>ETH</strong> (not a chain-native token)</td>
+</tr>
+<tr>
+<td>Block time</td>
+<td>~100 ms</td>
+</tr>
+<tr>
+<td>Account abstraction</td>
+<td>ERC-4337 supported</td>
+</tr>
+<tr>
+<td>Multicall3</td>
+<td><code>0xca11bde05977b3631167028862be2a173976ca11</code> (canonical)</td>
+</tr>
+</tbody></table>
+<p>Because it&#39;s a standard Nitro Orbit chain, <strong>your existing Ethereum tooling just works</strong> — viem, ethers, wagmi, Foundry, Hardhat. There is no exotic SDK you&#39;re forced to adopt, no bespoke RPC dialect. That is the single most important practical fact for a developer, and it&#39;s why the rest of this course is mostly &quot;normal EVM development, applied well.&quot;</p>
+<h3 id="the-two-networks"><a class="anchor" href="#the-two-networks" aria-label="Link to this section">#</a>The two networks</h3><p>You will use both. Reads and demos happen on mainnet; anything that writes, you rehearse on testnet first.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Mainnet</th>
+<th>Testnet</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Chain ID</td>
+<td><strong>4663</strong></td>
+<td><strong>46630</strong></td>
+</tr>
+<tr>
+<td>RPC</td>
+<td><code>https://rpc.mainnet.chain.robinhood.com</code></td>
+<td><code>https://rpc.testnet.chain.robinhood.com</code></td>
+</tr>
+<tr>
+<td>Explorer</td>
+<td><a href="https://robinhoodchain.blockscout.com" target="_blank" rel="noopener noreferrer">robinhoodchain.blockscout.com</a></td>
+<td><a href="https://explorer.testnet.chain.robinhood.com" target="_blank" rel="noopener noreferrer">explorer.testnet.chain.robinhood.com</a></td>
+</tr>
+<tr>
+<td>Sequencer feed</td>
+<td><code>wss://feed.mainnet.chain.robinhood.com</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Faucet</td>
+<td>—</td>
+<td><a href="https://faucet.testnet.chain.robinhood.com/" target="_blank" rel="noopener noreferrer">faucet.testnet.chain.robinhood.com</a></td>
+</tr>
+</tbody></table>
+<div class="callout callout-tip"><p class="callout-title">viem ships the chain definitions</p><p>As of <code>viem@2.55.0</code>, both networks are built in: <code>import { robinhood, robinhoodTestnet } from &#39;viem/chains&#39;</code>. <strong>Never hand-roll the chain config</strong> — you&#39;ll get the multicall address or the block explorer wrong and spend an afternoon debugging it. Let viem do it.</p>
+</div>
+
+<h2 id="the-three-facts-everyone-gets-wrong"><a class="anchor" href="#the-three-facts-everyone-gets-wrong" aria-label="Link to this section">#</a>The three facts everyone gets wrong</h2><h3 id="1-there-is-no-chain-token-gas-is-eth"><a class="anchor" href="#1-there-is-no-chain-token-gas-is-eth" aria-label="Link to this section">#</a>1. There is no chain token. Gas is ETH.</h3><p>Search social media and you&#39;ll find people trading &quot;the Robinhood Chain token,&quot; quoting its price, and posting its contract address. <strong>It does not exist.</strong> Robinhood Chain pays gas in bridged ETH, exactly like Arbitrum One or Base. There is no native gas token and no official chain coin.</p>
+<p>Anyone showing you a &quot;$HOOD chain token&quot; contract is showing you a memecoin someone permissionlessly deployed <em>on</em> the chain — which is allowed and common (see Tutorial 7) — not a token <em>of</em> the chain. Internalize this now; it will save you from a scam later.</p>
+<h3 id="2-stock-tokens-may-not-be-sold-to-us-persons"><a class="anchor" href="#2-stock-tokens-may-not-be-sold-to-us-persons" aria-label="Link to this section">#</a>2. Stock Tokens may not be sold to US persons.</h3><p>This is the fact with legal teeth. Stock Tokens are <strong>tokenized debt securities</strong>, issued by <em>Robinhood Assets (Jersey) Ltd</em>. They <strong>may not be offered, sold, or delivered to US persons</strong>, with additional restrictions for Canada, the UK, and Switzerland.</p>
+<p>The critical nuance for developers:</p>
+<ul>
+<li><strong>The restriction is legal and front-end enforced — not enforced at the contract level.</strong> The ERC-20 contracts will happily transfer to anyone. Compliance is your responsibility as the operator of any interface or agent.</li>
+<li><strong>Reading and displaying Stock Token data is unrestricted.</strong> Prices, supply, someone&#39;s holdings — all fair game. Most of this course is reads, and none of it is gated.</li>
+<li><strong>Any flow that <em>acquires</em> a Stock Token needs an eligibility gate.</strong> A buy button, a swap that outputs a Stock Token, an agent that accumulates one — those require a clear disclosure and a geo/eligibility gate, defaulting to <em>off</em>.</li>
+</ul>
+<p>You&#39;ll see this enforced in code in Tutorial 6: the <a href="https://github.com/nirholas/robinhood-chain-sdk" target="_blank" rel="noopener noreferrer">hoodchain</a> SDK throws a <code>StockTokenEligibilityError</code> on any swap that acquires a Stock Token until the operator explicitly affirms eligibility. That default-closed posture is the pattern to copy.</p>
+<div class="callout callout-warning"><p class="callout-title">Not financial or legal advice</p><p>This is educational material about a blockchain&#39;s mechanics. It is not investment advice, and it is not legal advice about your eligibility. If you operate an interface, get real counsel on your obligations.</p>
+</div>
+
+<h3 id="3-anyone-can-deploy-the-chain-is-permissionless"><a class="anchor" href="#3-anyone-can-deploy-the-chain-is-permissionless" aria-label="Link to this section">#</a>3. Anyone can deploy. The chain is permissionless.</h3><p>Robinhood issues the Stock Tokens and runs the sequencer, but the chain itself is open. Anyone can deploy a contract, launch a memecoin, or stand up a DEX pool — and people have. There are already two memecoin launchpads (NOXA and The Odyssey), the full Uniswap v3 stack, 1inch, a zero-fee stock DEX (Arcus), a perps venue (Lighter), and Morpho for lending.</p>
+<p>This is why &quot;what&#39;s on Robinhood Chain&quot; is a moving target and why on-chain data — token names, memos, listing text — is <strong>untrusted input</strong>. Treat it exactly like user input from the open internet: never render it without escaping, and never let it drive a spend. Tutorial 7 shows you how to read this firehose safely.</p>
+<h2 id="what39s-actually-live"><a class="anchor" href="#what39s-actually-live" aria-label="Link to this section">#</a>What&#39;s actually live</h2><p>A quick, non-exhaustive map so you know the terrain:</p>
+<ul>
+<li><strong>Assets</strong> — ~95 Stock Tokens (ERC-20, 18 decimals, one Chainlink feed each) and <strong>USDG</strong> (Paxos Global Dollar, <strong>6 decimals</strong>, no EIP-2612 permit).</li>
+<li><strong>DEXes / DeFi</strong> — Uniswap v2/v3/v4 + UniswapX (the primary public liquidity), 1inch, Arcus (zero-fee stock DEX), Lighter (perps), Morpho (lending).</li>
+<li><strong>Launchpads</strong> — NOXA (&quot;NOXA Fun&quot;) and The Odyssey, both pump.fun-style, graduating liquidity to Uniswap v3.</li>
+<li><strong>Data providers</strong> — DefiLlama (<code>/chain/robinhood-chain</code>), CoinGecko, GeckoTerminal, Dune, Goldsky, and the Blockscout Pro API already index the chain.</li>
+</ul>
+<h2 id="where-to-get-canonical-addresses"><a class="anchor" href="#where-to-get-canonical-addresses" aria-label="Link to this section">#</a>Where to get canonical addresses</h2><p>When you need a verified contract address — a Stock Token, USDG, a router — there is exactly one right source order:</p>
+<ol>
+<li><strong><a href="https://docs.robinhood.com/chain/contracts" target="_blank" rel="noopener noreferrer">docs.robinhood.com/chain/contracts</a></strong> — the official registry for Stock Token and USDG addresses.</li>
+<li><strong>Verify it resolves on Blockscout</strong> before you ship it. An address in a blog post (including this one) is a lead, not a source of truth.</li>
+</ol>
+<p>The <a href="https://github.com/nirholas/robinhood-chain-sdk" target="_blank" rel="noopener noreferrer">hoodchain SDK</a> does this work for you: it ships a checked-in registry of all 95 Stock Tokens, each verified on-chain against the shared <code>Stock</code> beacon and mapped to its Chainlink feed, regenerable with one command. You&#39;ll use it from Tutorial 2 onward so you never hand-type an address.</p>
+<h2 id="you-now-know-more-than-most"><a class="anchor" href="#you-now-know-more-than-most" aria-label="Link to this section">#</a>You now know more than most</h2><p>You understand the architecture, both chain IDs, the no-token fact, the US-person restriction, and that the chain is permissionless and its on-chain data untrusted. That&#39;s the mental model. Next, you&#39;ll prove the architecture is real by reading the live chain yourself — in about five minutes.</p>
+</div>
+    <nav class="pager-nav" aria-label="Tutorial pagination"><span></span><a class="pager pager-next" href="../02-connect-and-read/"><span class="pager-dir">Next →</span><span class="pager-title">Connect and read the chain in 5 minutes</span></a></nav>
+    <footer class="doc-footer">
+      <p>Question or correction? <a href="https://github.com/nirholas/learn-robinhood-chain/issues" target="_blank" rel="noopener noreferrer">Open an issue</a>.</p>
+      <p>Built by <a href="https://x.com/nichxbt" target="_blank" rel="noopener noreferrer">nirholas</a> · <a href="https://three.ws" target="_blank" rel="noopener noreferrer">three.ws</a></p>
+    </footer>
+  </article>
+  <nav class="toc" aria-label="On this page"><p class="toc-title">On this page</p><ul><li class="toc-l2"><a href="#the-one-paragraph-version">The one-paragraph version</a></li><li class="toc-l2"><a href="#architecture-precisely">Architecture, precisely</a></li><li class="toc-l3"><a href="#the-two-networks">The two networks</a></li><li class="toc-l2"><a href="#the-three-facts-everyone-gets-wrong">The three facts everyone gets wrong</a></li><li class="toc-l3"><a href="#1-there-is-no-chain-token-gas-is-eth">1. There is no chain token. Gas is ETH.</a></li><li class="toc-l3"><a href="#2-stock-tokens-may-not-be-sold-to-us-persons">2. Stock Tokens may not be sold to US persons.</a></li><li class="toc-l3"><a href="#3-anyone-can-deploy-the-chain-is-permissionless">3. Anyone can deploy. The chain is permissionless.</a></li><li class="toc-l2"><a href="#what39s-actually-live">What&amp;#39;s actually live</a></li><li class="toc-l2"><a href="#where-to-get-canonical-addresses">Where to get canonical addresses</a></li><li class="toc-l2"><a href="#you-now-know-more-than-most">You now know more than most</a></li></ul></nav>
+</main>
+</div>
+<div class="search-modal" id="search-modal" hidden role="dialog" aria-modal="true" aria-label="Search">
+  <div class="search-panel">
+    <input type="search" id="search-input" placeholder="Search tutorials…" autocomplete="off" spellcheck="false" aria-label="Search query">
+    <ul class="search-results" id="search-results" aria-live="polite"></ul>
+    <p class="search-hint"><kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>esc</kbd> to close</p>
+  </div>
+</div>
+<script defer src="../assets/app.js"></script><script defer src="../assets/search.js"></script>
+</body>
+</html>

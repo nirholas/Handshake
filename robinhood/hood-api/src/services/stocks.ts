@@ -108,7 +108,7 @@ export async function getStockDetail(symbolRaw: string, interval: string) {
       getCandles(client, token.address as Address, eth, { interval, lookbackBlocks: 900_000n }).catch(() => null),
     ])
 
-    const source = [SOURCE.registry, SOURCE.chainlink, SOURCE.uniswap]
+    const source: string[] = [SOURCE.registry, SOURCE.chainlink, SOURCE.uniswap]
     if (counters) source.push(SOURCE.blockscout)
 
     return withMeta(

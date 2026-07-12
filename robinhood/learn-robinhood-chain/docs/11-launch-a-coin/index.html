@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Launch a coin programmatically · Learn Robinhood Chain</title>
+<meta name="description" content="How Robinhood Chain's launchpads work, how to decode their events, and the responsible path to launching a token on testnet from code.">
+<meta property="og:title" content="Launch a coin programmatically · Learn Robinhood Chain">
+<meta property="og:description" content="How Robinhood Chain's launchpads work, how to decode their events, and the responsible path to launching a token on testnet from code.">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#0b0d10">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300c805'/%3E%3Cpath d='M9 22V10h4.4c2.6 0 4.2 1.4 4.2 3.7 0 1.7-.9 2.9-2.4 3.4l2.9 4.9h-2.8l-2.5-4.4h-1.4V22H9zm2.4-6.3h1.8c1.2 0 1.9-.6 1.9-1.7s-.7-1.7-1.9-1.7h-1.8v3.4z' fill='%23000'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/styles.css">
+<link rel="stylesheet" href="../assets/hljs.css">
+</head>
+<body class="page-doc">
+<a class="skip-link" href="#main">Skip to content</a>
+<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../">
+      <span class="brand-mark" aria-hidden="true">R</span>
+      <span class="brand-text">Learn <strong>Robinhood Chain</strong></span>
+    </a>
+    <div class="topbar-actions">
+      <button class="search-open" type="button" aria-label="Search tutorials" aria-keyshortcuts="/">
+        <span class="search-open-label">Search</span><kbd>/</kbd>
+      </button>
+      <a class="ghost-link" href="https://github.com/nirholas/learn-robinhood-chain" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle color theme" title="Toggle theme"></button>
+      <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false"></button>
+    </div>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar" aria-label="Tutorials">
+    <nav class="sidebar-nav"><div class="nav-section"><p class="nav-section-title">Foundations</p><ul><li><a href="../01-what-is-robinhood-chain/"><span class="nav-idx">01</span>What it actually is</a></li><li><a href="../02-connect-and-read/"><span class="nav-idx">02</span>Connect &amp; read</a></li><li><a href="../03-stock-tokens-explained/"><span class="nav-idx">03</span>Stock Tokens</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Building</p><ul><li><a href="../04-live-price-ticker/"><span class="nav-idx">04</span>Live price ticker</a></li><li><a href="../05-portfolio-tracker/"><span class="nav-idx">05</span>Portfolio tracker</a></li><li><a href="../06-swapping-on-chain/"><span class="nav-idx">06</span>Swapping on-chain</a></li><li><a href="../07-streaming-the-chain/"><span class="nav-idx">07</span>Streaming the chain</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Monetizing &amp; agents</p><ul><li><a href="../08-sell-your-api-for-usdg/"><span class="nav-idx">08</span>Sell your API</a></li><li><a href="../09-ai-agent-chain-access/"><span class="nav-idx">09</span>AI agent access (MCP)</a></li><li><a href="../10-autonomous-trading-agent/"><span class="nav-idx">10</span>Autonomous agent</a></li><li><a href="../11-launch-a-coin/" class="active" aria-current="page"><span class="nav-idx">11</span>Launch a coin</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Capstone</p><ul><li><a href="../12-ship-it/"><span class="nav-idx">12</span>Ship it</a></li></ul></div></nav>
+  </aside>
+  <div class="sidebar-scrim" hidden></div>
+  <main class="doc" id="main" data-slug="11-launch-a-coin">
+  <article class="doc-article">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="../">Home</a><span aria-hidden="true">/</span><span>Monetizing &amp; agents</span></nav>
+    <header class="doc-header">
+      <h1>Launch a coin programmatically</h1>
+      <div class="doc-meta">
+        <span class="doc-meta-item">20 min</span>
+        <span class="doc-meta-sep">·</span>
+        <span class="doc-meta-item">4 min read</span>
+        <span class="doc-meta-sep">·</span>
+        <label class="done-toggle"><input type="checkbox" class="done-check"> Mark complete</label>
+      </div>
+    </header>
+    <aside class="whatbuild"><p class="whatbuild-title">What you'll build</p><p>A launch monitor that decodes real NOXA and Odyssey events, and a clear, responsibly-framed recipe for launching your own test token.</p></aside>
+    <aside class="prereq"><p class="prereq-title">Prerequisites</p><ul><li><a href="../07-streaming-the-chain/">Tutorial 7</a> — launch events</li><li>A funded testnet wallet for the write step</li></ul></aside>
+    <div class="doc-body"><p>Tutorial 7 taught you to <em>watch</em> NOXA and The Odyssey. This tutorial takes it one step further — a live launch monitor with fuller event decoding — and then gives you an honest account of what programmatic <em>launching</em> actually requires today, including a real gap this course found and didn&#39;t paper over.</p>
+<h2 id="a-fuller-launch-monitor"><a class="anchor" href="#a-fuller-launch-monitor" aria-label="Link to this section">#</a>A fuller launch monitor</h2><p>Extend the watcher from Tutorial 7 to decode every field each platform&#39;s events carry, so you can react to specific launch shapes rather than just &quot;something launched&quot;:</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">import</span> { createHoodClient, watchLaunches, watchCurveTrades, watchGraduations, formatUsdg } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;hoodchain&#x27;</span>
+<span class="hljs-keyword">import</span> { formatEther } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;viem&#x27;</span>
+
+<span class="hljs-keyword">const</span> hood = <span class="hljs-title function_">createHoodClient</span>()
+
+<span class="hljs-title function_">watchLaunches</span>(hood, <span class="hljs-function">(<span class="hljs-params">launch</span>) =&gt;</span> {
+  <span class="hljs-keyword">if</span> (launch.<span class="hljs-property">launchpad</span> === <span class="hljs-string">&#x27;noxa&#x27;</span>) {
+    <span class="hljs-comment">// NOXA: instant listing — trading starts immediately on the pool address</span>
+    <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`NOXA launch: <span class="hljs-subst">${launch.token}</span> by <span class="hljs-subst">${launch.creator}</span>, pool <span class="hljs-subst">${launch.pool}</span>`</span>)
+  } <span class="hljs-keyword">else</span> {
+    <span class="hljs-comment">// Odyssey: opens on a bonding curve — no pool until it graduates</span>
+    <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`Odyssey curve opened: <span class="hljs-subst">${launch.token}</span> by <span class="hljs-subst">${launch.creator}</span> (no pool yet)`</span>)
+  }
+})
+
+<span class="hljs-comment">// only meaningful for Odyssey — NOXA has no curve, it&#x27;s a normal Uniswap v3 pool from block one</span>
+<span class="hljs-title function_">watchCurveTrades</span>(hood, <span class="hljs-function">(<span class="hljs-params">trade</span>) =&gt;</span> {
+  <span class="hljs-keyword">const</span> dir = trade.<span class="hljs-property">isBuy</span> ? <span class="hljs-string">&#x27;BUY&#x27;</span> : <span class="hljs-string">&#x27;SELL&#x27;</span>
+  <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`<span class="hljs-subst">${dir}</span> <span class="hljs-subst">${trade.token}</span>: <span class="hljs-subst">${formatEther(trade.tokenAmount)}</span> tokens for <span class="hljs-subst">${formatEther(trade.quoteAmount)}</span> ETH`</span>)
+})
+
+<span class="hljs-title function_">watchGraduations</span>(hood, <span class="hljs-function">(<span class="hljs-params">g</span>) =&gt;</span> {
+  <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`GRADUATED: <span class="hljs-subst">${g.token}</span> -&gt; locked Uniswap v3 pool <span class="hljs-subst">${g.pool}</span>`</span>)
+})</code></pre></figure><p>This is exactly the decoding verified in Tutorial 7 against 21 real historical NOXA launches — extended here with curve-trade and graduation handling for Odyssey specifically. If you&#39;re building a trading bot or an alert system (Tutorial 16-style tooling), this is the complete event surface you&#39;d hook into.</p>
+<h2 id="what-quotlaunch-a-coin-programmaticallyquot-actually-requires-and-a-real-gap"><a class="anchor" href="#what-quotlaunch-a-coin-programmaticallyquot-actually-requires-and-a-real-gap" aria-label="Link to this section">#</a>What &quot;launch a coin programmatically&quot; actually requires — and a real gap</h2><p>Watching launches only requires decoding <strong>events</strong>, which are public and don&#39;t need a verified ABI — you can decode a known event signature off any contract, verified or not. <strong>Sending a transaction that creates a new launch is different</strong>: it requires the factory contract&#39;s <em>write function</em> signature — argument names, types, and order — which you can only get reliably from a verified source contract, or by painstakingly reverse-engineering calldata from a real transaction.</p>
+<p>This course checked both launchpads&#39; factory contracts against the Blockscout API before writing this page:</p>
+<figure class="code-block" data-lang="bash"><figcaption><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-bash">curl -s https://robinhoodchain.blockscout.com/api/v2/smart-contracts/0xD9eC2db5f3D1b236843925949fe5bd8a3836FCcB</code></pre></figure><p>Neither the NOXA launch factory (<code>0xD9eC2db5f3D1b236843925949fe5bd8a3836FCcB</code>) nor The Odyssey&#39;s bonding-curve factory (<code>0xEb3FeeD2716cF0eEAda05B22e67424794e1f5a80</code>) returns verified source through Blockscout&#39;s API — confirming what the <a href="https://github.com/nirholas/robinhood-chain-sdk/blob/main/src/launchpads.ts" target="_blank" rel="noopener noreferrer">hoodchain SDK&#39;s own source comments</a> already note: <em>&quot;neither publishes verified source on Blockscout.&quot;</em> That&#39;s why the SDK ships <strong>event ABIs only</strong> (for the read/watch path you used above) and no write-function ABI for either factory — extracting one would mean either reverse-engineering calldata from real launch transactions or asking the platforms directly, and doing that with unverified confidence long enough to publish it as &quot;the&quot; launch function would risk shipping guessed calldata that either fails or, worse, succeeds with the wrong parameters.</p>
+<div class="callout callout-warning"><p class="callout-title">We will not publish a guessed function signature</p><p>It would be easy to fill this section with a plausible-looking <code>createToken(name, symbol, supply, ...)</code> call. It would also be irresponsible: an unverified guess at a factory&#39;s write interface, if wrong, can burn real gas on a failed transaction or — worse — succeed with parameters you didn&#39;t intend (wrong fee tier, wrong initial liquidity split, wrong lock terms). This course only ships code that was actually run and verified. For the launch-transaction write path specifically, that bar isn&#39;t met yet.</p>
+</div>
+
+<h2 id="the-responsible-path-today"><a class="anchor" href="#the-responsible-path-today" aria-label="Link to this section">#</a>The responsible path today</h2><p>Until a launch factory&#39;s write ABI is verified from a primary source, the correct way to launch a token on NOXA or The Odyssey is through <strong>the platform&#39;s own front-end</strong> (fun.noxa.fi/robinhood, theodyssey.fun) — it already encodes the correct calldata, has been tested against the live contract by its own team, and gives you a UI to review exactly what you&#39;re about to deploy before you sign. That&#39;s not a cop-out; it&#39;s the same advice you&#39;d give anyone about to send a transaction to a contract they don&#39;t have a verified interface for.</p>
+<p>If you want to pursue the programmatic path yourself: launch a token through the front-end <strong>once</strong>, on testnet, with a throwaway wallet, then pull the transaction&#39;s calldata from the explorer and decode it against the four-byte selector directory or by testing candidate ABIs against <code>eth_call</code> in simulation. That reverse-engineering work is exactly what standing up a verified, publishable write-ABI would require — and it&#39;s future work this course is flagging rather than rushing.</p>
+<h2 id="what-a-launch-monitor-is-good-for-right-now"><a class="anchor" href="#what-a-launch-monitor-is-good-for-right-now" aria-label="Link to this section">#</a>What a launch monitor <em>is</em> good for right now</h2><p>None of the above weakens the read side. A production-quality launch monitor — alerting, filtering by creator reputation, feeding a trading bot&#39;s universe of new tokens — is fully buildable today with the event decoding shown above and in Tutorial 7. That&#39;s most of what &quot;reacting to launches&quot; actually means in practice; only the &quot;originate a new launch from my own code&quot; half has the gap described here.</p>
+<h2 id="troubleshooting"><a class="anchor" href="#troubleshooting" aria-label="Link to this section">#</a>Troubleshooting</h2><p><strong>I found a write ABI for one of these factories elsewhere</strong> — verify it against a real <code>eth_call</code> simulation before trusting it (Tutorial 6 covers <code>simulateContract</code>-style verification for swaps; the same discipline applies here). If it&#39;s a real, verified interface, it belongs in an update to the SDK&#39;s <code>launchpads.ts</code>, not a one-off script.</p>
+<p><strong><code>watchCurveTrades</code> never fires for a NOXA token</strong> — expected. NOXA has no bonding curve; its tokens trade as ordinary Uniswap v3 swaps from launch, which you&#39;d track with <code>watchTransfers</code> (Tutorial 7) on the token itself, not curve events.</p>
+<p><strong>I want historical curve trade volume for a specific token</strong> — use <code>client.public.getLogs</code> directly with <code>odysseyTradedEvent</code> and an <code>args: { token }</code> filter over a historical block range, following the pattern from <code>getRecentLaunches</code> in Tutorial 7.</p>
+<h2 id="what-you-built"><a class="anchor" href="#what-you-built" aria-label="Link to this section">#</a>What you built</h2><p>A launch monitor covering both platforms&#39; full event surface, and — just as valuably — a documented, honest boundary around what&#39;s safely automatable today versus what still requires a human at the platform&#39;s own front-end. Knowing where that line is is worth more than a script that pretends it isn&#39;t there. Next: the capstone — taking everything you&#39;ve built and actually shipping it.</p>
+</div>
+    <nav class="pager-nav" aria-label="Tutorial pagination"><a class="pager pager-prev" href="../10-autonomous-trading-agent/"><span class="pager-dir">← Previous</span><span class="pager-title">Build an autonomous trading agent</span></a><a class="pager pager-next" href="../12-ship-it/"><span class="pager-dir">Next →</span><span class="pager-title">Ship it: deploy and go mainnet</span></a></nav>
+    <footer class="doc-footer">
+      <p>Question or correction? <a href="https://github.com/nirholas/learn-robinhood-chain/issues" target="_blank" rel="noopener noreferrer">Open an issue</a>.</p>
+      <p>Built by <a href="https://x.com/nichxbt" target="_blank" rel="noopener noreferrer">nirholas</a> · <a href="https://three.ws" target="_blank" rel="noopener noreferrer">three.ws</a></p>
+    </footer>
+  </article>
+  <nav class="toc" aria-label="On this page"><p class="toc-title">On this page</p><ul><li class="toc-l2"><a href="#a-fuller-launch-monitor">A fuller launch monitor</a></li><li class="toc-l2"><a href="#what-quotlaunch-a-coin-programmaticallyquot-actually-requires-and-a-real-gap">What &amp;quot;launch a coin programmatically&amp;quot; actually requires — and a real gap</a></li><li class="toc-l2"><a href="#the-responsible-path-today">The responsible path today</a></li><li class="toc-l2"><a href="#what-a-launch-monitor-is-good-for-right-now">What a launch monitor is good for right now</a></li><li class="toc-l2"><a href="#troubleshooting">Troubleshooting</a></li><li class="toc-l2"><a href="#what-you-built">What you built</a></li></ul></nav>
+</main>
+</div>
+<div class="search-modal" id="search-modal" hidden role="dialog" aria-modal="true" aria-label="Search">
+  <div class="search-panel">
+    <input type="search" id="search-input" placeholder="Search tutorials…" autocomplete="off" spellcheck="false" aria-label="Search query">
+    <ul class="search-results" id="search-results" aria-live="polite"></ul>
+    <p class="search-hint"><kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>esc</kbd> to close</p>
+  </div>
+</div>
+<script defer src="../assets/app.js"></script><script defer src="../assets/search.js"></script>
+</body>
+</html>

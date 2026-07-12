@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swapping on-chain: quotes, slippage, execution · Learn Robinhood Chain</title>
+<meta name="description" content="Quote a Uniswap v3 swap across every fee tier, set slippage correctly, and execute on testnet — with a Stock Token eligibility sidebar.">
+<meta property="og:title" content="Swapping on-chain: quotes, slippage, execution · Learn Robinhood Chain">
+<meta property="og:description" content="Quote a Uniswap v3 swap across every fee tier, set slippage correctly, and execute on testnet — with a Stock Token eligibility sidebar.">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#0b0d10">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300c805'/%3E%3Cpath d='M9 22V10h4.4c2.6 0 4.2 1.4 4.2 3.7 0 1.7-.9 2.9-2.4 3.4l2.9 4.9h-2.8l-2.5-4.4h-1.4V22H9zm2.4-6.3h1.8c1.2 0 1.9-.6 1.9-1.7s-.7-1.7-1.9-1.7h-1.8v3.4z' fill='%23000'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/styles.css">
+<link rel="stylesheet" href="../assets/hljs.css">
+</head>
+<body class="page-doc">
+<a class="skip-link" href="#main">Skip to content</a>
+<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../">
+      <span class="brand-mark" aria-hidden="true">R</span>
+      <span class="brand-text">Learn <strong>Robinhood Chain</strong></span>
+    </a>
+    <div class="topbar-actions">
+      <button class="search-open" type="button" aria-label="Search tutorials" aria-keyshortcuts="/">
+        <span class="search-open-label">Search</span><kbd>/</kbd>
+      </button>
+      <a class="ghost-link" href="https://github.com/nirholas/learn-robinhood-chain" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle color theme" title="Toggle theme"></button>
+      <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false"></button>
+    </div>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar" aria-label="Tutorials">
+    <nav class="sidebar-nav"><div class="nav-section"><p class="nav-section-title">Foundations</p><ul><li><a href="../01-what-is-robinhood-chain/"><span class="nav-idx">01</span>What it actually is</a></li><li><a href="../02-connect-and-read/"><span class="nav-idx">02</span>Connect &amp; read</a></li><li><a href="../03-stock-tokens-explained/"><span class="nav-idx">03</span>Stock Tokens</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Building</p><ul><li><a href="../04-live-price-ticker/"><span class="nav-idx">04</span>Live price ticker</a></li><li><a href="../05-portfolio-tracker/"><span class="nav-idx">05</span>Portfolio tracker</a></li><li><a href="../06-swapping-on-chain/" class="active" aria-current="page"><span class="nav-idx">06</span>Swapping on-chain</a></li><li><a href="../07-streaming-the-chain/"><span class="nav-idx">07</span>Streaming the chain</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Monetizing &amp; agents</p><ul><li><a href="../08-sell-your-api-for-usdg/"><span class="nav-idx">08</span>Sell your API</a></li><li><a href="../09-ai-agent-chain-access/"><span class="nav-idx">09</span>AI agent access (MCP)</a></li><li><a href="../10-autonomous-trading-agent/"><span class="nav-idx">10</span>Autonomous agent</a></li><li><a href="../11-launch-a-coin/"><span class="nav-idx">11</span>Launch a coin</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Capstone</p><ul><li><a href="../12-ship-it/"><span class="nav-idx">12</span>Ship it</a></li></ul></div></nav>
+  </aside>
+  <div class="sidebar-scrim" hidden></div>
+  <main class="doc" id="main" data-slug="06-swapping-on-chain">
+  <article class="doc-article">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="../">Home</a><span aria-hidden="true">/</span><span>Building</span></nav>
+    <header class="doc-header">
+      <h1>Swapping on-chain: quotes, slippage, execution</h1>
+      <div class="doc-meta">
+        <span class="doc-meta-item">20 min</span>
+        <span class="doc-meta-sep">·</span>
+        <span class="doc-meta-item">5 min read</span>
+        <span class="doc-meta-sep">·</span>
+        <label class="done-toggle"><input type="checkbox" class="done-check"> Mark complete</label>
+      </div>
+    </header>
+    <aside class="whatbuild"><p class="whatbuild-title">What you'll build</p><p>A working swap: a real mainnet quote you can run now, and the exact, safe path to a real testnet swap transaction.</p></aside>
+    <aside class="prereq"><p class="prereq-title">Prerequisites</p><ul><li><a href="../02-connect-and-read/">Tutorial 2</a></li><li>A wallet private key in an env var for the write step (testnet)</li></ul></aside>
+    <div class="doc-body"><p>Swapping is where reads become writes, and where a single wrong assumption costs real money. This tutorial covers all three layers — quoting a route, protecting yourself with slippage, and sending the transaction — plus the eligibility gate that exists specifically because some of the tokens you can swap into are regulated securities.</p>
+<h2 id="the-routing-problem"><a class="anchor" href="#the-routing-problem" aria-label="Link to this section">#</a>The routing problem</h2><p>Robinhood Chain&#39;s DEX layer is Uniswap v3. A v3 pool exists per <strong>token pair per fee tier</strong> (0.01%, 0.05%, 0.3%, 1%), and plenty of those pools exist with <strong>zero liquidity</strong> — deployed, but never seeded. A naive swap implementation that assumes &quot;the 0.3% pool&quot; will revert constantly. The right approach probes every fee tier for a direct route, plus two-hop routes through common intermediates (WETH, USDG), and picks whichever produces the best output. That&#39;s what <code>quoteSwap</code> does.</p>
+<h2 id="getting-a-real-quote-mainnet-read-only-no-wallet-needed"><a class="anchor" href="#getting-a-real-quote-mainnet-read-only-no-wallet-needed" aria-label="Link to this section">#</a>Getting a real quote (mainnet, read-only, no wallet needed)</h2><p>This runs right now, with no funds and no risk — quoting is a simulated call, not a transaction:</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">import</span> { createHoodClient, quoteSwap, parseUsdg, <span class="hljs-variable constant_">MAINNET_ADDRESSES</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;hoodchain&#x27;</span>
+<span class="hljs-keyword">import</span> { formatEther } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;viem&#x27;</span>
+
+<span class="hljs-keyword">const</span> hood = <span class="hljs-title function_">createHoodClient</span>()
+
+<span class="hljs-keyword">const</span> quote = <span class="hljs-keyword">await</span> <span class="hljs-title function_">quoteSwap</span>(hood, {
+  <span class="hljs-attr">tokenIn</span>: <span class="hljs-variable constant_">MAINNET_ADDRESSES</span>.<span class="hljs-property">usdg</span>,
+  <span class="hljs-attr">tokenOut</span>: <span class="hljs-variable constant_">MAINNET_ADDRESSES</span>.<span class="hljs-property">weth</span>,
+  <span class="hljs-attr">amountIn</span>: <span class="hljs-title function_">parseUsdg</span>(<span class="hljs-string">&#x27;100&#x27;</span>), <span class="hljs-comment">// USDG has 6 decimals — always use parseUsdg, not parseUnits(x, 18)</span>
+})
+
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`100 USDG -&gt; <span class="hljs-subst">${formatEther(quote.amountOut)}</span> WETH`</span>)
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`route: <span class="hljs-subst">${quote.route.fees.join(<span class="hljs-string">&#x27;/&#x27;</span>)}</span> fee tier(s), <span class="hljs-subst">${quote.route.path.length}</span> hop(s)`</span>)
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`gas estimate: <span class="hljs-subst">${quote.gasEstimate}</span>`</span>)</code></pre></figure><figure class="code-block" data-lang="text"><figcaption><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-plaintext">100 USDG -&gt; 0.055549693087148477 WETH
+route: 100 fee tier(s), 2 hop(s)</code></pre></figure><p>That&#39;s a live capture: <strong>100 USDG quoted at 0.0555 WETH</strong>, filled through the 0.01% fee tier. Note the router picked a <em>two-hop</em> path even though <code>fees.join()</code> shows one number — <code>quoteSwap</code> probes single-hop routes across all four tiers <em>and</em> two-hop routes through WETH/USDG, and the winner here happened to be the tightest single-tier pool. Run it again in your own terminal and you&#39;ll get a live number of your own; Uniswap v3 pricing moves with every block.</p>
+<div class="callout callout-tip"><p class="callout-title">USDG has 6 decimals, not 18</p><p>This is the single most common bug in a Robinhood Chain integration. USDG deliberately mirrors USDC&#39;s convention, unlike most L2-native stables which use 18. Always use the SDK&#39;s <code>parseUsdg</code> / <code>formatUsdg</code> helpers instead of hardcoding a decimals count — they encode the correct value so you can&#39;t get it wrong.</p>
+</div>
+
+<h2 id="building-and-sending-the-transaction"><a class="anchor" href="#building-and-sending-the-transaction" aria-label="Link to this section">#</a>Building and sending the transaction</h2><p>A quote alone doesn&#39;t move funds. <code>buildSwapTx</code> turns a quote into calldata with a slippage-protected minimum output and a deadline; <code>executeSwap</code> does the whole pipeline — quote, build, approve if needed, send, confirm — in one call:</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">import</span> { parseEther } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;viem&#x27;</span>
+<span class="hljs-keyword">import</span> { privateKeyToAccount } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;viem/accounts&#x27;</span>
+<span class="hljs-keyword">import</span> { createHoodClient, executeSwap, <span class="hljs-variable constant_">TESTNET_ADDRESSES</span>, <span class="hljs-variable constant_">TESTNET_STOCK_TOKENS</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;hoodchain&#x27;</span>
+
+<span class="hljs-keyword">const</span> hood = <span class="hljs-title function_">createHoodClient</span>({
+  <span class="hljs-attr">chain</span>: <span class="hljs-string">&#x27;testnet&#x27;</span>,
+  <span class="hljs-attr">account</span>: <span class="hljs-title function_">privateKeyToAccount</span>(process.<span class="hljs-property">env</span>.<span class="hljs-property">ROBINHOOD_CHAIN_PRIVATE_KEY</span> <span class="hljs-keyword">as</span> <span class="hljs-string">`0x<span class="hljs-subst">${<span class="hljs-built_in">string</span>}</span>`</span>),
+})
+
+<span class="hljs-keyword">const</span> { hash, receipt, quote } = <span class="hljs-keyword">await</span> <span class="hljs-title function_">executeSwap</span>(hood, {
+  <span class="hljs-attr">tokenIn</span>: <span class="hljs-variable constant_">TESTNET_ADDRESSES</span>.<span class="hljs-property">weth</span>,
+  <span class="hljs-attr">tokenOut</span>: <span class="hljs-variable constant_">TESTNET_STOCK_TOKENS</span>.<span class="hljs-property">NFLX</span>,
+  <span class="hljs-attr">amountIn</span>: <span class="hljs-title function_">parseEther</span>(<span class="hljs-string">&#x27;0.0001&#x27;</span>),
+})
+
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`swapped for <span class="hljs-subst">${formatEther(quote.amountOut)}</span> NFLX — tx <span class="hljs-subst">${hash}</span>, status <span class="hljs-subst">${receipt.status}</span>`</span>)</code></pre></figure><p>Under the hood, <code>executeSwap</code>:</p>
+<ol>
+<li>Calls <code>quoteSwap</code> to find the best route.</li>
+<li>Calls <code>buildSwapTx</code> to encode calldata with <code>amountOutMinimum</code> set from your slippage tolerance (default 0.5%, <code>slippageBps: 50</code>) and a deadline (default 10 minutes).</li>
+<li>Calls <code>ensureApproval</code> — checks the router&#39;s current allowance and sends an <code>approve</code> <strong>only if it&#39;s short</strong>, so a second swap of the same token doesn&#39;t re-approve for no reason.</li>
+<li>Sends the transaction and waits for the receipt.</li>
+</ol>
+<h3 id="two-router-flavors-handled-for-you"><a class="anchor" href="#two-router-flavors-handled-for-you" aria-label="Link to this section">#</a>Two router flavors, handled for you</h3><p>Mainnet routes through <strong>SwapRouter02</strong> (no <code>deadline</code> field in the call struct — it&#39;s enforced by wrapping the call in <code>multicall(deadline, [data])</code>). The testnet community deployment uses the <strong>classic <code>SwapRouter</code></strong>, whose struct carries <code>deadline</code> directly. <code>buildSwapTx</code> detects which network you&#39;re on and encodes the right shape automatically — this is exactly the kind of chain-specific footgun a good SDK exists to remove.</p>
+<h2 id="the-eligibility-gate"><a class="anchor" href="#the-eligibility-gate" aria-label="Link to this section">#</a>The eligibility gate</h2><p>Every canonical Stock Token is a regulated security under the restriction from Tutorial 1: it may not be offered, sold, or delivered to US persons. <code>buildSwapTx</code> enforces this at the SDK boundary — <strong>any swap whose output is a canonical Stock Token throws before it builds calldata</strong>, unless you&#39;ve explicitly affirmed eligibility:</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">import</span> { createHoodClient, <span class="hljs-title class_">StockTokenEligibilityError</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;hoodchain&#x27;</span>
+
+<span class="hljs-keyword">const</span> hood = <span class="hljs-title function_">createHoodClient</span>() <span class="hljs-comment">// default: acknowledgeStockTokenEligibility is false</span>
+
+<span class="hljs-keyword">try</span> {
+  <span class="hljs-keyword">await</span> <span class="hljs-title function_">executeSwap</span>(hood, { <span class="hljs-attr">tokenIn</span>: usdg, <span class="hljs-attr">tokenOut</span>: aaplToken, <span class="hljs-attr">amountIn</span>: <span class="hljs-title function_">parseUsdg</span>(<span class="hljs-string">&#x27;100&#x27;</span>) })
+} <span class="hljs-keyword">catch</span> (e) {
+  <span class="hljs-keyword">if</span> (e <span class="hljs-keyword">instanceof</span> <span class="hljs-title class_">StockTokenEligibilityError</span>) {
+    <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">error</span>(<span class="hljs-string">&#x27;Refused: Stock Token acquisition needs an eligibility acknowledgment.&#x27;</span>)
+  }
+}</code></pre></figure><p>To proceed, the <em>operator</em> — not the end user, the person deploying the software — affirms eligibility explicitly:</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">const</span> hood = <span class="hljs-title function_">createHoodClient</span>({ <span class="hljs-attr">acknowledgeStockTokenEligibility</span>: <span class="hljs-literal">true</span> })</code></pre></figure><p>This default-closed design is worth copying even outside this SDK: <strong>gate the risky path, not the safe one.</strong> Reads and <em>sells</em> of Stock Tokens are never restricted — only acquisition is, matching the actual legal restriction.</p>
+<div class="callout callout-danger"><p class="callout-title">Not a substitute for real compliance</p><p>This flag is a development safety rail, not a KYC system. If you&#39;re building a real product that lets users acquire Stock Tokens, you need actual jurisdiction detection and legal review — this flag just stops you from <em>accidentally</em> shipping an unrestricted buy button.</p>
+</div>
+
+<h2 id="slippage-and-deadlines-tuned-correctly"><a class="anchor" href="#slippage-and-deadlines-tuned-correctly" aria-label="Link to this section">#</a>Slippage and deadlines, tuned correctly</h2><p>The defaults (0.5% slippage, 10-minute deadline) are reasonable for a human clicking a button. Tune them for your use case:</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">const</span> tx = <span class="hljs-title function_">buildSwapTx</span>(hood, quote, {
+  <span class="hljs-attr">slippageBps</span>: <span class="hljs-number">100</span>,        <span class="hljs-comment">// 1% — wider for a thinly-traded pair</span>
+  <span class="hljs-attr">deadlineSeconds</span>: <span class="hljs-number">120</span>,    <span class="hljs-comment">// 2 minutes — tighter for an automated agent that re-quotes often</span>
+})</code></pre></figure><p>Wider slippage on illiquid Stock Token pools reduces failed transactions at the cost of worse fills; tighter deadlines protect an automated system from executing a stale quote after a long delay.</p>
+<h2 id="testnet-verification-status"><a class="anchor" href="#testnet-verification-status" aria-label="Link to this section">#</a>Testnet verification status</h2><p>This tutorial&#39;s <code>quoteSwap</code> example above is a <strong>live, real capture from mainnet</strong> — you can run it yourself right now. The <code>executeSwap</code> write path is fully implemented and unit-tested (calldata encoding for both router flavors is asserted byte-for-byte in the SDK&#39;s test suite), but a <strong>real signed testnet transaction was not captured for this page</strong>: the testnet faucet sits behind Cloudflare Turnstile and Google Sign-In, which can&#39;t be scripted, and no pre-funded testnet key was available in this environment. If you fund a testnet wallet yourself via the <a href="https://faucet.testnet.chain.robinhood.com/" target="_blank" rel="noopener noreferrer">faucet</a>, the example above will execute exactly as written — it&#39;s the same code the SDK&#39;s own <code>examples/swap-testnet.ts</code> uses.</p>
+<h2 id="troubleshooting"><a class="anchor" href="#troubleshooting" aria-label="Link to this section">#</a>Troubleshooting</h2><p><strong><code>NoRouteError</code></strong> — no probed route (any fee tier, direct or two-hop via WETH/USDG) produced output for your amount. Either the pair genuinely has no liquidity, or your <code>amountIn</code> is too large for the pool&#39;s depth. Try a smaller amount or a different intermediate via <code>quoteSwap</code>&#39;s <code>intermediates</code> option.</p>
+<p><strong><code>StockTokenEligibilityError</code></strong> — you&#39;re swapping into a Stock Token without acknowledging eligibility. See the eligibility section above; this is almost always working as intended.</p>
+<p><strong>Transaction reverts with no clear reason on testnet</strong> — remember there&#39;s no <em>official</em> Uniswap deployment on testnet; the SDK uses the one community deployment with a genuinely liquid pool (NFLX/WETH). Swapping into a different testnet Stock Token may have no liquidity at all.</p>
+<p><strong><code>SlippageExceededError</code></strong> or a revert from <code>amountOutMinimum</code> — the price moved between quoting and sending. Either widen <code>slippageBps</code> or re-quote closer to send time.</p>
+<h2 id="what-you-built"><a class="anchor" href="#what-you-built" aria-label="Link to this section">#</a>What you built</h2><p>A quoting function that correctly probes every viable route, a transaction builder that handles both router flavors and protects you with slippage, and a firsthand look at a default-closed compliance gate. Next: watching the chain move in real time, from confirmed launch events down to the raw sequencer feed.</p>
+</div>
+    <nav class="pager-nav" aria-label="Tutorial pagination"><a class="pager pager-prev" href="../05-portfolio-tracker/"><span class="pager-dir">← Previous</span><span class="pager-title">Portfolio tracker done right</span></a><a class="pager pager-next" href="../07-streaming-the-chain/"><span class="pager-dir">Next →</span><span class="pager-title">Streaming the chain: launchpads + firehose</span></a></nav>
+    <footer class="doc-footer">
+      <p>Question or correction? <a href="https://github.com/nirholas/learn-robinhood-chain/issues" target="_blank" rel="noopener noreferrer">Open an issue</a>.</p>
+      <p>Built by <a href="https://x.com/nichxbt" target="_blank" rel="noopener noreferrer">nirholas</a> · <a href="https://three.ws" target="_blank" rel="noopener noreferrer">three.ws</a></p>
+    </footer>
+  </article>
+  <nav class="toc" aria-label="On this page"><p class="toc-title">On this page</p><ul><li class="toc-l2"><a href="#the-routing-problem">The routing problem</a></li><li class="toc-l2"><a href="#getting-a-real-quote-mainnet-read-only-no-wallet-needed">Getting a real quote (mainnet, read-only, no wallet needed)</a></li><li class="toc-l2"><a href="#building-and-sending-the-transaction">Building and sending the transaction</a></li><li class="toc-l3"><a href="#two-router-flavors-handled-for-you">Two router flavors, handled for you</a></li><li class="toc-l2"><a href="#the-eligibility-gate">The eligibility gate</a></li><li class="toc-l2"><a href="#slippage-and-deadlines-tuned-correctly">Slippage and deadlines, tuned correctly</a></li><li class="toc-l2"><a href="#testnet-verification-status">Testnet verification status</a></li><li class="toc-l2"><a href="#troubleshooting">Troubleshooting</a></li><li class="toc-l2"><a href="#what-you-built">What you built</a></li></ul></nav>
+</main>
+</div>
+<div class="search-modal" id="search-modal" hidden role="dialog" aria-modal="true" aria-label="Search">
+  <div class="search-panel">
+    <input type="search" id="search-input" placeholder="Search tutorials…" autocomplete="off" spellcheck="false" aria-label="Search query">
+    <ul class="search-results" id="search-results" aria-live="polite"></ul>
+    <p class="search-hint"><kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>esc</kbd> to close</p>
+  </div>
+</div>
+<script defer src="../assets/app.js"></script><script defer src="../assets/search.js"></script>
+</body>
+</html>

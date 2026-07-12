@@ -17,7 +17,7 @@ export async function getChain() {
       defillama.getChainTvl().catch(() => null),
     ])
 
-    const source = [SOURCE.rpc]
+    const source: string[] = [SOURCE.rpc]
     if (stats) source.push(SOURCE.blockscout)
     if (tvlUsd !== null) source.push(SOURCE.defillama)
 

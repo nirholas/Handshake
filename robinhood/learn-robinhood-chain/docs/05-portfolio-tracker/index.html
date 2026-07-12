@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portfolio tracker done right · Learn Robinhood Chain</title>
+<meta name="description" content="Value any address's Stock Token holdings in one multicall — and understand exactly why a naive tracker reports the wrong number after a split.">
+<meta property="og:title" content="Portfolio tracker done right · Learn Robinhood Chain">
+<meta property="og:description" content="Value any address's Stock Token holdings in one multicall — and understand exactly why a naive tracker reports the wrong number after a split.">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#0b0d10">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300c805'/%3E%3Cpath d='M9 22V10h4.4c2.6 0 4.2 1.4 4.2 3.7 0 1.7-.9 2.9-2.4 3.4l2.9 4.9h-2.8l-2.5-4.4h-1.4V22H9zm2.4-6.3h1.8c1.2 0 1.9-.6 1.9-1.7s-.7-1.7-1.9-1.7h-1.8v3.4z' fill='%23000'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/styles.css">
+<link rel="stylesheet" href="../assets/hljs.css">
+</head>
+<body class="page-doc">
+<a class="skip-link" href="#main">Skip to content</a>
+<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../">
+      <span class="brand-mark" aria-hidden="true">R</span>
+      <span class="brand-text">Learn <strong>Robinhood Chain</strong></span>
+    </a>
+    <div class="topbar-actions">
+      <button class="search-open" type="button" aria-label="Search tutorials" aria-keyshortcuts="/">
+        <span class="search-open-label">Search</span><kbd>/</kbd>
+      </button>
+      <a class="ghost-link" href="https://github.com/nirholas/learn-robinhood-chain" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle color theme" title="Toggle theme"></button>
+      <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false"></button>
+    </div>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar" aria-label="Tutorials">
+    <nav class="sidebar-nav"><div class="nav-section"><p class="nav-section-title">Foundations</p><ul><li><a href="../01-what-is-robinhood-chain/"><span class="nav-idx">01</span>What it actually is</a></li><li><a href="../02-connect-and-read/"><span class="nav-idx">02</span>Connect &amp; read</a></li><li><a href="../03-stock-tokens-explained/"><span class="nav-idx">03</span>Stock Tokens</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Building</p><ul><li><a href="../04-live-price-ticker/"><span class="nav-idx">04</span>Live price ticker</a></li><li><a href="../05-portfolio-tracker/" class="active" aria-current="page"><span class="nav-idx">05</span>Portfolio tracker</a></li><li><a href="../06-swapping-on-chain/"><span class="nav-idx">06</span>Swapping on-chain</a></li><li><a href="../07-streaming-the-chain/"><span class="nav-idx">07</span>Streaming the chain</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Monetizing &amp; agents</p><ul><li><a href="../08-sell-your-api-for-usdg/"><span class="nav-idx">08</span>Sell your API</a></li><li><a href="../09-ai-agent-chain-access/"><span class="nav-idx">09</span>AI agent access (MCP)</a></li><li><a href="../10-autonomous-trading-agent/"><span class="nav-idx">10</span>Autonomous agent</a></li><li><a href="../11-launch-a-coin/"><span class="nav-idx">11</span>Launch a coin</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Capstone</p><ul><li><a href="../12-ship-it/"><span class="nav-idx">12</span>Ship it</a></li></ul></div></nav>
+  </aside>
+  <div class="sidebar-scrim" hidden></div>
+  <main class="doc" id="main" data-slug="05-portfolio-tracker">
+  <article class="doc-article">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="../">Home</a><span aria-hidden="true">/</span><span>Building</span></nav>
+    <header class="doc-header">
+      <h1>Portfolio tracker done right</h1>
+      <div class="doc-meta">
+        <span class="doc-meta-item">15 min</span>
+        <span class="doc-meta-sep">·</span>
+        <span class="doc-meta-item">4 min read</span>
+        <span class="doc-meta-sep">·</span>
+        <label class="done-toggle"><input type="checkbox" class="done-check"> Mark complete</label>
+      </div>
+    </header>
+    <aside class="whatbuild"><p class="whatbuild-title">What you'll build</p><p>A portfolio valuation tool that is correct after corporate actions, cross-checked against the token&#39;s own on-chain share accounting.</p></aside>
+    <aside class="prereq"><p class="prereq-title">Prerequisites</p><ul><li><a href="../03-stock-tokens-explained/">Tutorial 3</a> — the multiplier trap</li><li>Node ≥ 20</li></ul></aside>
+    <div class="doc-body"><p>Every wallet tracker on every chain does the same thing: enumerate token balances, price them, sum them. On Robinhood Chain, that naive recipe is wrong twice — once from the multiplier trap (Tutorial 3), and once from the sheer number of round trips a naive implementation makes. This tutorial builds the tracker correctly: one multicall sweep, multiplier-correct valuation, and an honest treatment of holdings that can&#39;t be priced.</p>
+<h2 id="why-quotjust-loop-and-call-balanceofquot-doesn39t-scale"><a class="anchor" href="#why-quotjust-loop-and-call-balanceofquot-doesn39t-scale" aria-label="Link to this section">#</a>Why &quot;just loop and call balanceOf&quot; doesn&#39;t scale</h2><p>There are 95 Stock Tokens in the registry. A naive tracker does:</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> token <span class="hljs-keyword">of</span> tokens) {
+  <span class="hljs-keyword">const</span> balance = <span class="hljs-keyword">await</span> client.<span class="hljs-title function_">readContract</span>({ <span class="hljs-attr">address</span>: token.<span class="hljs-property">address</span>, <span class="hljs-attr">abi</span>: erc20Abi, <span class="hljs-attr">functionName</span>: <span class="hljs-string">&#x27;balanceOf&#x27;</span>, <span class="hljs-attr">args</span>: [owner] })
+  <span class="hljs-comment">// ...</span>
+}</code></pre></figure><p>That&#39;s 95 sequential RPC round trips before you&#39;ve even started pricing anything. On the public RPC, each round trip is real latency — this loop takes seconds and burns your rate limit for nothing, since most addresses hold a handful of these tokens at most.</p>
+<h2 id="the-right-approach-one-multicall"><a class="anchor" href="#the-right-approach-one-multicall" aria-label="Link to this section">#</a>The right approach: one multicall</h2><p>viem&#39;s public client (used by <code>hoodchain</code>) batches calls into <code>Multicall3</code> automatically when <code>batch: { multicall: true }</code> is set — which <code>createHoodClient()</code> does for you. So the fix is almost free: fire all 95 <code>balanceOf</code> reads as a single batch, filter to the ones that are actually held, then multicall <em>those</em> for balance + multiplier together, and multicall the feeds for pricing. That&#39;s what <code>getPortfolio</code> does under the hood:</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">import</span> { createHoodClient, getPortfolio } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;hoodchain&#x27;</span>
+<span class="hljs-keyword">import</span> <span class="hljs-keyword">type</span> { <span class="hljs-title class_">Address</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;viem&#x27;</span>
+
+<span class="hljs-keyword">const</span> owner = process.<span class="hljs-property">argv</span>[<span class="hljs-number">2</span>] <span class="hljs-keyword">as</span> <span class="hljs-title class_">Address</span> | <span class="hljs-literal">undefined</span>
+<span class="hljs-keyword">if</span> (!owner || !<span class="hljs-regexp">/^0x[0-9a-fA-F]{40}$/</span>.<span class="hljs-title function_">test</span>(owner)) {
+  <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">error</span>(<span class="hljs-string">&#x27;usage: npx tsx portfolio.ts 0xADDRESS&#x27;</span>)
+  process.<span class="hljs-title function_">exit</span>(<span class="hljs-number">1</span>)
+}
+
+<span class="hljs-keyword">const</span> hood = <span class="hljs-title function_">createHoodClient</span>()
+<span class="hljs-keyword">const</span> portfolio = <span class="hljs-keyword">await</span> <span class="hljs-title function_">getPortfolio</span>(hood, owner, { <span class="hljs-attr">maxAgeSeconds</span>: <span class="hljs-number">7</span> * <span class="hljs-number">24</span> * <span class="hljs-number">60</span> * <span class="hljs-number">60</span> })
+
+<span class="hljs-keyword">if</span> (portfolio.<span class="hljs-property">positions</span>.<span class="hljs-property">length</span> === <span class="hljs-number">0</span>) {
+  <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`<span class="hljs-subst">${owner}</span> holds no Stock Tokens.`</span>)
+  process.<span class="hljs-title function_">exit</span>(<span class="hljs-number">0</span>)
+}
+
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`Stock Token portfolio for <span class="hljs-subst">${owner}</span>\n`</span>)
+<span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> p <span class="hljs-keyword">of</span> portfolio.<span class="hljs-property">positions</span>) {
+  <span class="hljs-keyword">const</span> value = p.<span class="hljs-property">valueUsd</span> === <span class="hljs-literal">null</span> ? <span class="hljs-string">&#x27;unpriced (no feed)&#x27;</span> : <span class="hljs-string">`$<span class="hljs-subst">${p.valueUsd.toFixed(<span class="hljs-number">2</span>)}</span>`</span>
+  <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(
+    <span class="hljs-string">`<span class="hljs-subst">${p.<span class="hljs-built_in">symbol</span>.padEnd(<span class="hljs-number">6</span>)}</span> <span class="hljs-subst">${p.balanceTokens.toFixed(<span class="hljs-number">6</span>).padStart(<span class="hljs-number">16</span>)}</span> tokens  `</span> +
+      <span class="hljs-string">`= <span class="hljs-subst">${p.shareEquivalent.toFixed(<span class="hljs-number">6</span>).padStart(<span class="hljs-number">16</span>)}</span> share-equivalents  <span class="hljs-subst">${value}</span>`</span>,
+  )
+}
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`\nTotal priced value: $<span class="hljs-subst">${portfolio.totalUsd.toFixed(<span class="hljs-number">2</span>)}</span>`</span>)
+<span class="hljs-keyword">if</span> (portfolio.<span class="hljs-property">unpricedSymbols</span>.<span class="hljs-property">length</span>) {
+  <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`Unpriced holdings (no Chainlink feed yet): <span class="hljs-subst">${portfolio.unpricedSymbols.join(<span class="hljs-string">&#x27;, &#x27;</span>)}</span>`</span>)
+}</code></pre></figure><p>Run it against any address (this example uses the Multicall3 deployer, a busy contract address, purely to demonstrate the zero-holdings path):</p>
+<figure class="code-block" data-lang="bash"><figcaption><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-bash">npx tsx portfolio.ts 0xca11bde05977b3631167028862be2a173976ca11</code></pre></figure><figure class="code-block" data-lang="text"><figcaption><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-plaintext">0xca11bde05977b3631167028862be2a173976ca11 holds no Stock Tokens.</code></pre></figure><p>That&#39;s the honest empty state — the tracker checked all 95 tokens in one batch and confirmed zero holdings, rather than silently returning nothing. Point it at a wallet that actually holds Stock Tokens (your testnet wallet from Tutorial 2, once funded, or any address you find via the explorer) and you&#39;ll see rows like:</p>
+<figure class="code-block" data-lang="text"><figcaption><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-plaintext">Stock Token portfolio for 0xYourAddress
+
+NFLX         5.000000000000000000 tokens  =         5.000000000000000000 share-equivalents  $612.40
+TSLA         2.500000000000000000 tokens  =         2.500000000000000000 share-equivalents  $1019.55
+
+Total priced value: $1631.95</code></pre></figure><h2 id="what-getportfolio-is-actually-doing"><a class="anchor" href="#what-getportfolio-is-actually-doing" aria-label="Link to this section">#</a>What <code>getPortfolio</code> is actually doing</h2><p>Reading the <a href="https://github.com/nirholas/robinhood-chain-sdk/blob/main/src/stocks.ts" target="_blank" rel="noopener noreferrer">source</a> is worth five minutes, because the pattern generalizes to any multi-asset dashboard you&#39;ll ever build:</p>
+<ol>
+<li><strong>One multicall</strong> for <code>balanceOf</code> across all 95 registry tokens, <code>allowFailure: false</code> — if this fails, something is fundamentally wrong (bad RPC), so let it throw.</li>
+<li><strong>Filter to non-zero balances.</strong> Most wallets hold a handful of tokens; there&#39;s no reason to fetch multiplier and feed data for tokens you don&#39;t own.</li>
+<li><strong>A second multicall</strong>, this time for <code>balanceOf</code> + <code>uiMultiplier()</code> together, only over the held tokens.</li>
+<li><strong>A third multicall for feed prices</strong>, <code>allowFailure: true</code> — a single bad feed (stale, or a reverting call) shouldn&#39;t take down the whole portfolio. Positions with a failed feed fall back to <code>valueUsd: null</code>.</li>
+<li><strong>Valuation</strong>, per the Tutorial 3 rule: <code>valueUsd = balanceTokens × quote.priceUsd</code>. Multiplier is used only for <code>shareEquivalent</code>, never for <code>valueUsd</code>.</li>
+</ol>
+<p>Total RPC round trips for a full 95-token sweep: <strong>three</strong>, regardless of how many tokens the wallet actually holds. That&#39;s the difference between a tracker that feels instant and one that spins for ten seconds.</p>
+<h2 id="correctness-proven-not-asserted"><a class="anchor" href="#correctness-proven-not-asserted" aria-label="Link to this section">#</a>Correctness, proven, not asserted</h2><p>It&#39;s easy to <em>claim</em> multiplier-correct math. The SDK&#39;s live test suite instead <strong>cross-checks its share-equivalent computation against the token contract&#39;s own <code>balanceOfUI()</code></strong> — a view function the Stock Token contracts expose that does the same multiplication on-chain. If the SDK&#39;s <code>shareEquivalent</code> field and the contract&#39;s <code>balanceOfUI()</code> ever disagree, the test fails. That&#39;s the standard to hold your own money-math code to: don&#39;t just compute a number, find an independent on-chain source of truth and assert equality against it.</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-comment">// simplified from tests/live — the actual assertion the SDK ships with</span>
+<span class="hljs-keyword">const</span> onChainShares = <span class="hljs-keyword">await</span> hood.<span class="hljs-property">public</span>.<span class="hljs-title function_">readContract</span>({
+  <span class="hljs-attr">address</span>: token.<span class="hljs-property">address</span>, <span class="hljs-attr">abi</span>: stockTokenAbi, <span class="hljs-attr">functionName</span>: <span class="hljs-string">&#x27;balanceOfUI&#x27;</span>, <span class="hljs-attr">args</span>: [owner],
+})
+<span class="hljs-title function_">expect</span>(position.<span class="hljs-property">shareEquivalent</span>).<span class="hljs-title function_">toBeCloseTo</span>(<span class="hljs-title class_">Number</span>(<span class="hljs-title function_">formatUnits</span>(onChainShares, <span class="hljs-number">18</span>)))</code></pre></figure><h2 id="handling-the-unpriced-case-in-a-ui"><a class="anchor" href="#handling-the-unpriced-case-in-a-ui" aria-label="Link to this section">#</a>Handling the unpriced case in a UI</h2><p><code>portfolio.unpricedSymbols</code> exists because 95 tokens exist but only a subset have a live Chainlink feed (34 at the time of writing). A dashboard that silently omits unpriced holdings is lying by omission — a user who holds one would wonder where it went. Show it, clearly labeled as unpriced, and let <code>totalUsd</code> reflect only what could actually be valued:</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">const</span> totalLabel = portfolio.<span class="hljs-property">unpricedSymbols</span>.<span class="hljs-property">length</span>
+  ? <span class="hljs-string">`$<span class="hljs-subst">${portfolio.totalUsd.toFixed(<span class="hljs-number">2</span>)}</span> priced (+ <span class="hljs-subst">${portfolio.unpricedSymbols.length}</span> unpriced holdings)`</span>
+  : <span class="hljs-string">`$<span class="hljs-subst">${portfolio.totalUsd.toFixed(<span class="hljs-number">2</span>)}</span>`</span></code></pre></figure><h2 id="troubleshooting"><a class="anchor" href="#troubleshooting" aria-label="Link to this section">#</a>Troubleshooting</h2><p><strong>Portfolio total looks wrong after I know a token split</strong> — you&#39;re computing value somewhere outside <code>getPortfolio</code>, and you&#39;re multiplying by the multiplier. Revisit Tutorial 3; the rule doesn&#39;t change just because you&#39;re now summing across many tokens.</p>
+<p><strong>Slow first run</strong> — the very first multicall batch resolves 95 balances; on the public RPC that&#39;s still one HTTP round trip, but a cold connection adds latency. Subsequent calls are fast.</p>
+<p><strong>A held token shows <code>unpriced (no feed)</code></strong> — expected for tokens outside Chainlink&#39;s current 34-feed coverage. Its balance is real; it just can&#39;t be priced on-chain yet.</p>
+<p><strong>I want portfolio history / a chart</strong> — this reads <em>current</em> state only. For history, you&#39;d index <code>Transfer</code> events over time (see <code>watchTransfers</code> in Tutorial 7) and combine with historical feed rounds — a bigger project outside this tutorial&#39;s scope.</p>
+<h2 id="what-you-built"><a class="anchor" href="#what-you-built" aria-label="Link to this section">#</a>What you built</h2><p>A portfolio tracker that does one multicall sweep instead of ninety-five sequential calls, values holdings using the correct rule from Tutorial 3, and is honest about what it can&#39;t price — with its math independently verified against the chain&#39;s own accounting. Next: turning a read into a write, with your first on-chain swap.</p>
+</div>
+    <nav class="pager-nav" aria-label="Tutorial pagination"><a class="pager pager-prev" href="../04-live-price-ticker/"><span class="pager-dir">← Previous</span><span class="pager-title">Your first app: a live price ticker</span></a><a class="pager pager-next" href="../06-swapping-on-chain/"><span class="pager-dir">Next →</span><span class="pager-title">Swapping on-chain: quotes, slippage, execution</span></a></nav>
+    <footer class="doc-footer">
+      <p>Question or correction? <a href="https://github.com/nirholas/learn-robinhood-chain/issues" target="_blank" rel="noopener noreferrer">Open an issue</a>.</p>
+      <p>Built by <a href="https://x.com/nichxbt" target="_blank" rel="noopener noreferrer">nirholas</a> · <a href="https://three.ws" target="_blank" rel="noopener noreferrer">three.ws</a></p>
+    </footer>
+  </article>
+  <nav class="toc" aria-label="On this page"><p class="toc-title">On this page</p><ul><li class="toc-l2"><a href="#why-quotjust-loop-and-call-balanceofquot-doesn39t-scale">Why &amp;quot;just loop and call balanceOf&amp;quot; doesn&amp;#39;t scale</a></li><li class="toc-l2"><a href="#the-right-approach-one-multicall">The right approach: one multicall</a></li><li class="toc-l2"><a href="#what-getportfolio-is-actually-doing">What getPortfolio is actually doing</a></li><li class="toc-l2"><a href="#correctness-proven-not-asserted">Correctness, proven, not asserted</a></li><li class="toc-l2"><a href="#handling-the-unpriced-case-in-a-ui">Handling the unpriced case in a UI</a></li><li class="toc-l2"><a href="#troubleshooting">Troubleshooting</a></li><li class="toc-l2"><a href="#what-you-built">What you built</a></li></ul></nav>
+</main>
+</div>
+<div class="search-modal" id="search-modal" hidden role="dialog" aria-modal="true" aria-label="Search">
+  <div class="search-panel">
+    <input type="search" id="search-input" placeholder="Search tutorials…" autocomplete="off" spellcheck="false" aria-label="Search query">
+    <ul class="search-results" id="search-results" aria-live="polite"></ul>
+    <p class="search-hint"><kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>esc</kbd> to close</p>
+  </div>
+</div>
+<script defer src="../assets/app.js"></script><script defer src="../assets/search.js"></script>
+</body>
+</html>

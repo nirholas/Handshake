@@ -21,6 +21,11 @@ const num = (v) => (Number.isFinite(v) ? v : null);
 /**
  * A token launch (NOXA instant list or Odyssey curve open).
  * pump `mint` → `mint` (the coin address; this is the world seed).
+ *
+ * `launch.initialBuyAmount` is best-effort: the hoodchain SDK's high-level
+ * `watchLaunches`/`getRecentLaunches` return the decoded `Launch` shape,
+ * which does not carry it (it's a NOXA-only raw log field). When absent this
+ * resolves to `null`, never a fabricated value.
  */
 export function normalizeLaunch({ launch, name = null, symbol = null, ethUsd = 0, atMs }) {
 	const initialNative = launch.initialBuyAmount != null

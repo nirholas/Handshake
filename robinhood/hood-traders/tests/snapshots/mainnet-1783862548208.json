@@ -1,0 +1,82 @@
+{
+  "capturedAt": 1783862548208,
+  "network": "mainnet",
+  "chainId": 4663,
+  "blockNumber": "7837330",
+  "ethUsd": 1805.6772999999998,
+  "quotes": [
+    {
+      "symbol": "AAPL",
+      "address": "0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9",
+      "priceUsd": 315.5,
+      "ageSeconds": 152274,
+      "roundId": "18446744073709551791"
+    },
+    {
+      "symbol": "AMD",
+      "address": "0x86923f96303D656E4aa86D9d42D1e57ad2023fdC",
+      "priceUsd": 558.21015,
+      "ageSeconds": 149202,
+      "roundId": "18446744073709552439"
+    },
+    {
+      "symbol": "AMZN",
+      "address": "0x12f190a9F9d7D37a250758b26824B97CE941bF54",
+      "priceUsd": 245.5677,
+      "ageSeconds": 170445,
+      "roundId": "18446744073709551835"
+    },
+    {
+      "symbol": "ASML",
+      "address": "0x47F93d52cBeC7C6D2CfC080e154002370a60dAEA",
+      "priceUsd": 1797.58755,
+      "ageSeconds": 151887,
+      "roundId": "18446744073709552134"
+    },
+    {
+      "symbol": "BABA",
+      "address": "0xad25Ac6C84D497db898fa1E8387bf6Af3532a1c4",
+      "priceUsd": 112.195,
+      "ageSeconds": 155025,
+      "roundId": "18446744073709552096"
+    },
+    {
+      "symbol": "CLSK",
+      "address": "0xcBB95BBF36099d34dA091dc6Fa6F49EfA257Cee3",
+      "priceUsd": 12.86499999,
+      "ageSeconds": 149235,
+      "roundId": "18446744073709552791"
+    },
+    {
+      "symbol": "COIN",
+      "address": "0x6330D8C3178a418788dF01a47479c0ce7CCF450b",
+      "priceUsd": 159.43135,
+      "ageSeconds": 159075,
+      "roundId": "18446744073709552345"
+    },
+    {
+      "symbol": "CRCL",
+      "address": "0xdF0992E440dD0be65BD8439b609d6D4366bf1CB5",
+      "priceUsd": 66.34635,
+      "ageSeconds": 145188,
+      "roundId": "18446744073709552661"
+    }
+  ],
+  "spotSamples": [
+    {
+      "symbol": "AAPL",
+      "address": "0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9",
+      "error": "No swappable Uniswap v3 route from 0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9 to 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168: no direct pool (fees 100/500/3000/10000) or two-hop route via 1 intermediates produced output for amountIn=1000000000000000000 Pools may exist without liquidity; try a different intermediate or amount."
+    },
+    {
+      "symbol": "AMD",
+      "address": "0x86923f96303D656E4aa86D9d42D1e57ad2023fdC",
+      "error": "No swappable Uniswap v3 route from 0x86923f96303D656E4aa86D9d42D1e57ad2023fdC to 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168: no direct pool (fees 100/500/3000/10000) or two-hop route via 1 intermediates produced output for amountIn=1000000000000000000 Pools may exist without liquidity; try a different intermediate or amount."
+    },
+    {
+      "symbol": "AMZN",
+      "address": "0x12f190a9F9d7D37a250758b26824B97CE941bF54",
+      "error": "No swappable Uniswap v3 route from 0x12f190a9F9d7D37a250758b26824B97CE941bF54 to 0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168: no direct pool (fees 100/500/3000/10000) or two-hop route via 1 intermediates produced output for amountIn=1000000000000000000 Pools may exist without liquidity; try a different intermediate or amount."
+    }
+  ]
+}

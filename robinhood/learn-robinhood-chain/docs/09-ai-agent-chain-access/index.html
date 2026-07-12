@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Give your AI agent chain access with MCP · Learn Robinhood Chain</title>
+<meta name="description" content="Build a Model Context Protocol server that exposes Robinhood Chain reads as tools, then wire it into Claude Code, Claude Desktop, or Cursor — with a real transcript.">
+<meta property="og:title" content="Give your AI agent chain access with MCP · Learn Robinhood Chain">
+<meta property="og:description" content="Build a Model Context Protocol server that exposes Robinhood Chain reads as tools, then wire it into Claude Code, Claude Desktop, or Cursor — with a real transcript.">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#0b0d10">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300c805'/%3E%3Cpath d='M9 22V10h4.4c2.6 0 4.2 1.4 4.2 3.7 0 1.7-.9 2.9-2.4 3.4l2.9 4.9h-2.8l-2.5-4.4h-1.4V22H9zm2.4-6.3h1.8c1.2 0 1.9-.6 1.9-1.7s-.7-1.7-1.9-1.7h-1.8v3.4z' fill='%23000'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/styles.css">
+<link rel="stylesheet" href="../assets/hljs.css">
+</head>
+<body class="page-doc">
+<a class="skip-link" href="#main">Skip to content</a>
+<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../">
+      <span class="brand-mark" aria-hidden="true">R</span>
+      <span class="brand-text">Learn <strong>Robinhood Chain</strong></span>
+    </a>
+    <div class="topbar-actions">
+      <button class="search-open" type="button" aria-label="Search tutorials" aria-keyshortcuts="/">
+        <span class="search-open-label">Search</span><kbd>/</kbd>
+      </button>
+      <a class="ghost-link" href="https://github.com/nirholas/learn-robinhood-chain" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle color theme" title="Toggle theme"></button>
+      <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false"></button>
+    </div>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar" aria-label="Tutorials">
+    <nav class="sidebar-nav"><div class="nav-section"><p class="nav-section-title">Foundations</p><ul><li><a href="../01-what-is-robinhood-chain/"><span class="nav-idx">01</span>What it actually is</a></li><li><a href="../02-connect-and-read/"><span class="nav-idx">02</span>Connect &amp; read</a></li><li><a href="../03-stock-tokens-explained/"><span class="nav-idx">03</span>Stock Tokens</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Building</p><ul><li><a href="../04-live-price-ticker/"><span class="nav-idx">04</span>Live price ticker</a></li><li><a href="../05-portfolio-tracker/"><span class="nav-idx">05</span>Portfolio tracker</a></li><li><a href="../06-swapping-on-chain/"><span class="nav-idx">06</span>Swapping on-chain</a></li><li><a href="../07-streaming-the-chain/"><span class="nav-idx">07</span>Streaming the chain</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Monetizing &amp; agents</p><ul><li><a href="../08-sell-your-api-for-usdg/"><span class="nav-idx">08</span>Sell your API</a></li><li><a href="../09-ai-agent-chain-access/" class="active" aria-current="page"><span class="nav-idx">09</span>AI agent access (MCP)</a></li><li><a href="../10-autonomous-trading-agent/"><span class="nav-idx">10</span>Autonomous agent</a></li><li><a href="../11-launch-a-coin/"><span class="nav-idx">11</span>Launch a coin</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Capstone</p><ul><li><a href="../12-ship-it/"><span class="nav-idx">12</span>Ship it</a></li></ul></div></nav>
+  </aside>
+  <div class="sidebar-scrim" hidden></div>
+  <main class="doc" id="main" data-slug="09-ai-agent-chain-access">
+  <article class="doc-article">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="../">Home</a><span aria-hidden="true">/</span><span>Monetizing &amp; agents</span></nav>
+    <header class="doc-header">
+      <h1>Give your AI agent chain access with MCP</h1>
+      <div class="doc-meta">
+        <span class="doc-meta-item">22 min</span>
+        <span class="doc-meta-sep">·</span>
+        <span class="doc-meta-item">4 min read</span>
+        <span class="doc-meta-sep">·</span>
+        <label class="done-toggle"><input type="checkbox" class="done-check"> Mark complete</label>
+      </div>
+    </header>
+    <aside class="whatbuild"><p class="whatbuild-title">What you'll build</p><p>An MCP server your AI assistant can call to quote Stock Tokens and read portfolios live, plus the exact config to connect it.</p></aside>
+    <aside class="prereq"><p class="prereq-title">Prerequisites</p><ul><li><a href="../04-live-price-ticker/">Tutorial 4</a> and <a href="../05-portfolio-tracker/">5</a></li><li>Claude Code, Claude Desktop, or Cursor installed</li></ul></aside>
+    <div class="doc-body"><p>An AI coding assistant is only as useful as the tools it can call. This tutorial builds a <strong>Model Context Protocol (MCP)</strong> server that exposes Robinhood Chain reads — quotes, portfolios, the registry — as tools any MCP-compatible assistant can invoke, then wires it into Claude Code, Claude Desktop, and Cursor. Everything below was run against a real MCP client, not described secondhand.</p>
+<h2 id="what-mcp-actually-is"><a class="anchor" href="#what-mcp-actually-is" aria-label="Link to this section">#</a>What MCP actually is</h2><p><a href="https://modelcontextprotocol.io" target="_blank" rel="noopener noreferrer">MCP</a> is a JSON-RPC-based protocol that lets an AI assistant discover and call <em>tools</em> exposed by a separate process — your server. The assistant doesn&#39;t need special Robinhood Chain knowledge baked in; it needs your server to expose well-described tools, and it reasons about when to call them. This is the same shape as the paid MCP tools you may have already used from three.ws (<code>forge_free</code>, <code>crypto_news</code>, and friends) — except here, you&#39;re the one writing the server.</p>
+<h2 id="the-server"><a class="anchor" href="#the-server" aria-label="Link to this section">#</a>The server</h2><p>Three tools: a live quote, a portfolio valuation, and a registry listing — the exact operations from Tutorials 4 and 5, now callable by an LLM instead of a terminal script.</p>
+<figure class="code-block" data-lang="bash"><figcaption><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-bash">npm install @modelcontextprotocol/sdk zod hoodchain viem</code></pre></figure><figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-comment">// server.mjs</span>
+<span class="hljs-keyword">import</span> { <span class="hljs-title class_">McpServer</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@modelcontextprotocol/sdk/server/mcp.js&#x27;</span>
+<span class="hljs-keyword">import</span> { <span class="hljs-title class_">StdioServerTransport</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@modelcontextprotocol/sdk/server/stdio.js&#x27;</span>
+<span class="hljs-keyword">import</span> { z } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;zod&#x27;</span>
+<span class="hljs-keyword">import</span> { createHoodClient, getQuote, getPortfolio, listPricedStockTokens } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;hoodchain&#x27;</span>
+
+<span class="hljs-keyword">const</span> hood = <span class="hljs-title function_">createHoodClient</span>()
+<span class="hljs-keyword">const</span> server = <span class="hljs-keyword">new</span> <span class="hljs-title class_">McpServer</span>({ <span class="hljs-attr">name</span>: <span class="hljs-string">&#x27;robinhood-chain-mcp&#x27;</span>, <span class="hljs-attr">version</span>: <span class="hljs-string">&#x27;0.1.0&#x27;</span> })
+
+server.<span class="hljs-title function_">registerTool</span>(
+  <span class="hljs-string">&#x27;get_stock_quote&#x27;</span>,
+  {
+    <span class="hljs-attr">title</span>: <span class="hljs-string">&#x27;Get Stock Token quote&#x27;</span>,
+    <span class="hljs-attr">description</span>: <span class="hljs-string">&#x27;Live, multiplier-adjusted Chainlink price for a Robinhood Chain Stock Token, by ticker (e.g. AAPL, TSLA).&#x27;</span>,
+    <span class="hljs-attr">inputSchema</span>: { <span class="hljs-attr">symbol</span>: z.<span class="hljs-title function_">string</span>().<span class="hljs-title function_">describe</span>(<span class="hljs-string">&#x27;Ticker symbol, case-insensitive&#x27;</span>) },
+  },
+  <span class="hljs-title function_">async</span> ({ <span class="hljs-built_in">symbol</span> }) =&gt; {
+    <span class="hljs-keyword">const</span> q = <span class="hljs-keyword">await</span> <span class="hljs-title function_">getQuote</span>(hood, <span class="hljs-built_in">symbol</span>, { <span class="hljs-attr">maxAgeSeconds</span>: <span class="hljs-number">7</span> * <span class="hljs-number">24</span> * <span class="hljs-number">60</span> * <span class="hljs-number">60</span> })
+    <span class="hljs-keyword">return</span> {
+      <span class="hljs-attr">content</span>: [{ <span class="hljs-attr">type</span>: <span class="hljs-string">&#x27;text&#x27;</span>, <span class="hljs-attr">text</span>: <span class="hljs-title class_">JSON</span>.<span class="hljs-title function_">stringify</span>({
+        <span class="hljs-attr">symbol</span>: q.<span class="hljs-property">symbol</span>, <span class="hljs-attr">priceUsd</span>: q.<span class="hljs-property">priceUsd</span>, <span class="hljs-attr">updatedAt</span>: <span class="hljs-keyword">new</span> <span class="hljs-title class_">Date</span>(q.<span class="hljs-property">updatedAt</span> * <span class="hljs-number">1000</span>).<span class="hljs-title function_">toISOString</span>(),
+      }) }],
+    }
+  },
+)
+
+server.<span class="hljs-title function_">registerTool</span>(
+  <span class="hljs-string">&#x27;get_portfolio&#x27;</span>,
+  {
+    <span class="hljs-attr">title</span>: <span class="hljs-string">&#x27;Get Stock Token portfolio&#x27;</span>,
+    <span class="hljs-attr">description</span>: <span class="hljs-string">&#x27;Multiplier-correct Stock Token holdings and USD valuation for any address on Robinhood Chain.&#x27;</span>,
+    <span class="hljs-attr">inputSchema</span>: { <span class="hljs-attr">address</span>: z.<span class="hljs-title function_">string</span>().<span class="hljs-title function_">describe</span>(<span class="hljs-string">&#x27;0x-prefixed wallet address&#x27;</span>) },
+  },
+  <span class="hljs-title function_">async</span> ({ address }) =&gt; {
+    <span class="hljs-keyword">const</span> p = <span class="hljs-keyword">await</span> <span class="hljs-title function_">getPortfolio</span>(hood, address, { <span class="hljs-attr">maxAgeSeconds</span>: <span class="hljs-number">7</span> * <span class="hljs-number">24</span> * <span class="hljs-number">60</span> * <span class="hljs-number">60</span> })
+    <span class="hljs-keyword">return</span> { <span class="hljs-attr">content</span>: [{ <span class="hljs-attr">type</span>: <span class="hljs-string">&#x27;text&#x27;</span>, <span class="hljs-attr">text</span>: <span class="hljs-title class_">JSON</span>.<span class="hljs-title function_">stringify</span>({ <span class="hljs-attr">totalUsd</span>: p.<span class="hljs-property">totalUsd</span>, <span class="hljs-attr">positions</span>: p.<span class="hljs-property">positions</span>.<span class="hljs-property">length</span> }) }] }
+  },
+)
+
+server.<span class="hljs-title function_">registerTool</span>(
+  <span class="hljs-string">&#x27;list_priced_stock_tokens&#x27;</span>,
+  { <span class="hljs-attr">title</span>: <span class="hljs-string">&#x27;List priced Stock Tokens&#x27;</span>, <span class="hljs-attr">description</span>: <span class="hljs-string">&#x27;All Robinhood Chain Stock Tokens with a live Chainlink feed.&#x27;</span>, <span class="hljs-attr">inputSchema</span>: {} },
+  <span class="hljs-title function_">async</span> () =&gt; ({ <span class="hljs-attr">content</span>: [{ <span class="hljs-attr">type</span>: <span class="hljs-string">&#x27;text&#x27;</span>, <span class="hljs-attr">text</span>: <span class="hljs-title class_">JSON</span>.<span class="hljs-title function_">stringify</span>(<span class="hljs-title function_">listPricedStockTokens</span>().<span class="hljs-title function_">map</span>(<span class="hljs-function">(<span class="hljs-params">t</span>) =&gt;</span> t.<span class="hljs-property">symbol</span>)) }] }),
+)
+
+<span class="hljs-keyword">const</span> transport = <span class="hljs-keyword">new</span> <span class="hljs-title class_">StdioServerTransport</span>()
+<span class="hljs-keyword">await</span> server.<span class="hljs-title function_">connect</span>(transport)</code></pre></figure><p>Notice what this server does <em>not</em> do: no wallet, no write tools, no private key. Read-only MCP tools need none of that — exactly the same &quot;reads are free and keyless&quot; property from Tutorial 2. A write-capable version (place a swap, transfer USDG) is a natural extension, but it should prompt for confirmation before every transaction — treat an LLM&#39;s tool call exactly like a user action, not an autonomous decision, for anything that spends.</p>
+<h2 id="a-real-transcript"><a class="anchor" href="#a-real-transcript" aria-label="Link to this section">#</a>A real transcript</h2><p>Rather than describe what connecting an assistant <em>would</em> show, here&#39;s an actual MCP client — built with the same <code>@modelcontextprotocol/sdk</code> package — connecting over stdio, listing the server&#39;s tools, and calling two of them against live mainnet:</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-comment">// client-test.mjs</span>
+<span class="hljs-keyword">import</span> { <span class="hljs-title class_">Client</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@modelcontextprotocol/sdk/client/index.js&#x27;</span>
+<span class="hljs-keyword">import</span> { <span class="hljs-title class_">StdioClientTransport</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;@modelcontextprotocol/sdk/client/stdio.js&#x27;</span>
+
+<span class="hljs-keyword">const</span> transport = <span class="hljs-keyword">new</span> <span class="hljs-title class_">StdioClientTransport</span>({ <span class="hljs-attr">command</span>: <span class="hljs-string">&#x27;node&#x27;</span>, <span class="hljs-attr">args</span>: [<span class="hljs-string">&#x27;server.mjs&#x27;</span>] })
+<span class="hljs-keyword">const</span> client = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Client</span>({ <span class="hljs-attr">name</span>: <span class="hljs-string">&#x27;test-client&#x27;</span>, <span class="hljs-attr">version</span>: <span class="hljs-string">&#x27;0.1.0&#x27;</span> })
+<span class="hljs-keyword">await</span> client.<span class="hljs-title function_">connect</span>(transport)
+
+<span class="hljs-keyword">const</span> tools = <span class="hljs-keyword">await</span> client.<span class="hljs-title function_">listTools</span>()
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;TOOLS:&#x27;</span>, tools.<span class="hljs-property">tools</span>.<span class="hljs-title function_">map</span>(<span class="hljs-function">(<span class="hljs-params">t</span>) =&gt;</span> t.<span class="hljs-property">name</span>).<span class="hljs-title function_">join</span>(<span class="hljs-string">&#x27;, &#x27;</span>))
+
+<span class="hljs-keyword">const</span> quote = <span class="hljs-keyword">await</span> client.<span class="hljs-title function_">callTool</span>({ <span class="hljs-attr">name</span>: <span class="hljs-string">&#x27;get_stock_quote&#x27;</span>, <span class="hljs-attr">arguments</span>: { <span class="hljs-attr">symbol</span>: <span class="hljs-string">&#x27;TSLA&#x27;</span> } })
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;get_stock_quote(TSLA) -&gt;&#x27;</span>, quote.<span class="hljs-property">content</span>[<span class="hljs-number">0</span>].<span class="hljs-property">text</span>)
+
+<span class="hljs-keyword">const</span> list = <span class="hljs-keyword">await</span> client.<span class="hljs-title function_">callTool</span>({ <span class="hljs-attr">name</span>: <span class="hljs-string">&#x27;list_priced_stock_tokens&#x27;</span>, <span class="hljs-attr">arguments</span>: {} })
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;list_priced_stock_tokens() -&gt; count&#x27;</span>, <span class="hljs-title class_">JSON</span>.<span class="hljs-title function_">parse</span>(list.<span class="hljs-property">content</span>[<span class="hljs-number">0</span>].<span class="hljs-property">text</span>).<span class="hljs-property">length</span>)</code></pre></figure><figure class="code-block" data-lang="bash"><figcaption><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-bash">$ node client-test.mjs</code></pre></figure><figure class="code-block" data-lang="text"><figcaption><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-plaintext">TOOLS: get_stock_quote, get_portfolio, list_priced_stock_tokens
+get_stock_quote(TSLA) -&gt; {"symbol":"TSLA","priceUsd":407.825,"updatedAt":"2026-07-10T19:53:35.000Z"}
+list_priced_stock_tokens() -&gt; count 34</code></pre></figure><p>This is the exact protocol exchange an assistant like Claude performs when it decides to call <code>get_stock_quote</code> — a real handshake, a real tool list, a real live price. The <code>34</code> matches the priced-token count from Tutorial 3; if that number drifts as Chainlink adds feeds, your server will report it correctly without any code change, because it reads the SDK&#39;s registry live rather than hardcoding a count.</p>
+<h2 id="connecting-to-claude-code"><a class="anchor" href="#connecting-to-claude-code" aria-label="Link to this section">#</a>Connecting to Claude Code</h2><p>Claude Code discovers MCP servers from a project or user config. Add this server with the CLI:</p>
+<figure class="code-block" data-lang="bash"><figcaption><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-bash">claude mcp add robinhood-chain -- node /absolute/path/to/server.mjs</code></pre></figure><p>Or add it directly to <code>.mcp.json</code> in your project root:</p>
+<figure class="code-block" data-lang="JSON"><figcaption><span class="code-lang">JSON</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;mcpServers&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">&quot;robinhood-chain&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+      <span class="hljs-attr">&quot;command&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;node&quot;</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;args&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;/absolute/path/to/server.mjs&quot;</span><span class="hljs-punctuation">]</span>
+    <span class="hljs-punctuation">}</span>
+  <span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span></code></pre></figure><p>Restart Claude Code (or run <code>/mcp</code> to reconnect) and ask something like <em>&quot;What&#39;s the live price of TSLA on Robinhood Chain?&quot;</em> — Claude will call <code>get_stock_quote</code> and answer from the real response, not from training data (which has no idea Robinhood Chain exists, or that it launched in July 2026).</p>
+<h2 id="connecting-to-claude-desktop"><a class="anchor" href="#connecting-to-claude-desktop" aria-label="Link to this section">#</a>Connecting to Claude Desktop</h2><p>Claude Desktop reads its MCP config from <code>claude_desktop_config.json</code> (<strong>Settings → Developer → Edit Config</strong> opens the file directly):</p>
+<figure class="code-block" data-lang="JSON"><figcaption><span class="code-lang">JSON</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;mcpServers&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">&quot;robinhood-chain&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+      <span class="hljs-attr">&quot;command&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;node&quot;</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;args&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;/absolute/path/to/server.mjs&quot;</span><span class="hljs-punctuation">]</span>
+    <span class="hljs-punctuation">}</span>
+  <span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span></code></pre></figure><p>Fully restart the app after editing (not just close the window) for the new server to be picked up.</p>
+<h2 id="connecting-to-cursor"><a class="anchor" href="#connecting-to-cursor" aria-label="Link to this section">#</a>Connecting to Cursor</h2><p>Cursor uses the same MCP config shape, in <code>.cursor/mcp.json</code> at your project root or <code>~/.cursor/mcp.json</code> globally:</p>
+<figure class="code-block" data-lang="JSON"><figcaption><span class="code-lang">JSON</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;mcpServers&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">&quot;robinhood-chain&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+      <span class="hljs-attr">&quot;command&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;node&quot;</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-attr">&quot;args&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;/absolute/path/to/server.mjs&quot;</span><span class="hljs-punctuation">]</span>
+    <span class="hljs-punctuation">}</span>
+  <span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span></code></pre></figure><p>Open <strong>Cursor Settings → MCP</strong> to confirm the server shows as connected with its three tools listed.</p>
+<h2 id="troubleshooting"><a class="anchor" href="#troubleshooting" aria-label="Link to this section">#</a>Troubleshooting</h2><p><strong>Server doesn&#39;t show up / &quot;0 tools&quot;</strong> — double-check the <code>args</code> path is absolute, not relative; MCP host apps don&#39;t inherit your shell&#39;s working directory. Run <code>node /absolute/path/to/server.mjs</code> by hand first — if it hangs waiting on stdin with no error, that&#39;s actually correct (stdio transport blocks reading for the next message); Ctrl-C to confirm it started without throwing.</p>
+<p><strong>Tool call errors with <code>UnknownSymbolError</code> surfaced as a generic failure</strong> — MCP wraps thrown errors into an error-content response by default; add a <code>try/catch</code> per tool if you want to return a structured, LLM-readable error message instead of a stack trace.</p>
+<p><strong>Assistant answers from stale training knowledge instead of calling the tool</strong> — make your tool <code>description</code> field more specific about <em>when</em> to use it (&quot;always use this for current Robinhood Chain prices — do not answer from memory, this chain launched after most training cutoffs&quot;). Description quality is the entire interface between your server and the model&#39;s judgment.</p>
+<h2 id="what-you-built"><a class="anchor" href="#what-you-built" aria-label="Link to this section">#</a>What you built</h2><p>A real MCP server, verified against a real MCP client with a live mainnet call captured in this page, plus the exact configuration to wire it into the three major MCP-compatible coding assistants. Next: turning read access into an agent that actually acts — an autonomous trader.</p>
+</div>
+    <nav class="pager-nav" aria-label="Tutorial pagination"><a class="pager pager-prev" href="../08-sell-your-api-for-usdg/"><span class="pager-dir">← Previous</span><span class="pager-title">Sell your API for USDG with x402</span></a><a class="pager pager-next" href="../10-autonomous-trading-agent/"><span class="pager-dir">Next →</span><span class="pager-title">Build an autonomous trading agent</span></a></nav>
+    <footer class="doc-footer">
+      <p>Question or correction? <a href="https://github.com/nirholas/learn-robinhood-chain/issues" target="_blank" rel="noopener noreferrer">Open an issue</a>.</p>
+      <p>Built by <a href="https://x.com/nichxbt" target="_blank" rel="noopener noreferrer">nirholas</a> · <a href="https://three.ws" target="_blank" rel="noopener noreferrer">three.ws</a></p>
+    </footer>
+  </article>
+  <nav class="toc" aria-label="On this page"><p class="toc-title">On this page</p><ul><li class="toc-l2"><a href="#what-mcp-actually-is">What MCP actually is</a></li><li class="toc-l2"><a href="#the-server">The server</a></li><li class="toc-l2"><a href="#a-real-transcript">A real transcript</a></li><li class="toc-l2"><a href="#connecting-to-claude-code">Connecting to Claude Code</a></li><li class="toc-l2"><a href="#connecting-to-claude-desktop">Connecting to Claude Desktop</a></li><li class="toc-l2"><a href="#connecting-to-cursor">Connecting to Cursor</a></li><li class="toc-l2"><a href="#troubleshooting">Troubleshooting</a></li><li class="toc-l2"><a href="#what-you-built">What you built</a></li></ul></nav>
+</main>
+</div>
+<div class="search-modal" id="search-modal" hidden role="dialog" aria-modal="true" aria-label="Search">
+  <div class="search-panel">
+    <input type="search" id="search-input" placeholder="Search tutorials…" autocomplete="off" spellcheck="false" aria-label="Search query">
+    <ul class="search-results" id="search-results" aria-live="polite"></ul>
+    <p class="search-hint"><kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>esc</kbd> to close</p>
+  </div>
+</div>
+<script defer src="../assets/app.js"></script><script defer src="../assets/search.js"></script>
+</body>
+</html>

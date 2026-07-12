@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sell your API for USDG with x402 · Learn Robinhood Chain</title>
+<meta name="description" content="Put a Stock Token data endpoint behind an HTTP 402 paywall settled in USDG, and take your first real on-chain payment — from zero to a paid request.">
+<meta property="og:title" content="Sell your API for USDG with x402 · Learn Robinhood Chain">
+<meta property="og:description" content="Put a Stock Token data endpoint behind an HTTP 402 paywall settled in USDG, and take your first real on-chain payment — from zero to a paid request.">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#0b0d10">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300c805'/%3E%3Cpath d='M9 22V10h4.4c2.6 0 4.2 1.4 4.2 3.7 0 1.7-.9 2.9-2.4 3.4l2.9 4.9h-2.8l-2.5-4.4h-1.4V22H9zm2.4-6.3h1.8c1.2 0 1.9-.6 1.9-1.7s-.7-1.7-1.9-1.7h-1.8v3.4z' fill='%23000'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/styles.css">
+<link rel="stylesheet" href="../assets/hljs.css">
+</head>
+<body class="page-doc">
+<a class="skip-link" href="#main">Skip to content</a>
+<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../">
+      <span class="brand-mark" aria-hidden="true">R</span>
+      <span class="brand-text">Learn <strong>Robinhood Chain</strong></span>
+    </a>
+    <div class="topbar-actions">
+      <button class="search-open" type="button" aria-label="Search tutorials" aria-keyshortcuts="/">
+        <span class="search-open-label">Search</span><kbd>/</kbd>
+      </button>
+      <a class="ghost-link" href="https://github.com/nirholas/learn-robinhood-chain" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle color theme" title="Toggle theme"></button>
+      <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false"></button>
+    </div>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar" aria-label="Tutorials">
+    <nav class="sidebar-nav"><div class="nav-section"><p class="nav-section-title">Foundations</p><ul><li><a href="../01-what-is-robinhood-chain/"><span class="nav-idx">01</span>What it actually is</a></li><li><a href="../02-connect-and-read/"><span class="nav-idx">02</span>Connect &amp; read</a></li><li><a href="../03-stock-tokens-explained/"><span class="nav-idx">03</span>Stock Tokens</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Building</p><ul><li><a href="../04-live-price-ticker/"><span class="nav-idx">04</span>Live price ticker</a></li><li><a href="../05-portfolio-tracker/"><span class="nav-idx">05</span>Portfolio tracker</a></li><li><a href="../06-swapping-on-chain/"><span class="nav-idx">06</span>Swapping on-chain</a></li><li><a href="../07-streaming-the-chain/"><span class="nav-idx">07</span>Streaming the chain</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Monetizing &amp; agents</p><ul><li><a href="../08-sell-your-api-for-usdg/" class="active" aria-current="page"><span class="nav-idx">08</span>Sell your API</a></li><li><a href="../09-ai-agent-chain-access/"><span class="nav-idx">09</span>AI agent access (MCP)</a></li><li><a href="../10-autonomous-trading-agent/"><span class="nav-idx">10</span>Autonomous agent</a></li><li><a href="../11-launch-a-coin/"><span class="nav-idx">11</span>Launch a coin</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Capstone</p><ul><li><a href="../12-ship-it/"><span class="nav-idx">12</span>Ship it</a></li></ul></div></nav>
+  </aside>
+  <div class="sidebar-scrim" hidden></div>
+  <main class="doc" id="main" data-slug="08-sell-your-api-for-usdg">
+  <article class="doc-article">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="../">Home</a><span aria-hidden="true">/</span><span>Monetizing &amp; agents</span></nav>
+    <header class="doc-header">
+      <h1>Sell your API for USDG with x402</h1>
+      <div class="doc-meta">
+        <span class="doc-meta-item">25 min</span>
+        <span class="doc-meta-sep">·</span>
+        <span class="doc-meta-item">5 min read</span>
+        <span class="doc-meta-sep">·</span>
+        <label class="done-toggle"><input type="checkbox" class="done-check"> Mark complete</label>
+      </div>
+    </header>
+    <aside class="whatbuild"><p class="whatbuild-title">What you'll build</p><p>A paid API: an endpoint that returns 402 Payment Required, verifies a USDG payment on-chain, and then serves the data.</p></aside>
+    <aside class="prereq"><p class="prereq-title">Prerequisites</p><ul><li><a href="../04-live-price-ticker/">Tutorial 4</a> — you have data worth selling</li><li>Understanding of USDG&#39;s 6 decimals (Tutorial 3)</li></ul></aside>
+    <div class="doc-body"><p>You&#39;ve built a live price ticker (Tutorial 4) and a portfolio tracker (Tutorial 5). Both produce data other people would pay for. This tutorial turns one into a paid API using <strong><a href="https://www.x402.org/" target="_blank" rel="noopener noreferrer">x402</a></strong> — the HTTP-native payment protocol that resurrects status code <code>402 Payment Required</code> — settled in <strong>USDG</strong> on Robinhood Chain.</p>
+<h2 id="how-x402-actually-works"><a class="anchor" href="#how-x402-actually-works" aria-label="Link to this section">#</a>How x402 actually works</h2><p>The protocol is deliberately simple, and worth understanding at the wire level before you write any code:</p>
+<ol>
+<li>A client requests a paid endpoint with no payment attached.</li>
+<li>The server responds <strong><code>402 Payment Required</code></strong> with a JSON body describing what it costs, in which token, on which chain, paid to which address.</li>
+<li>The client constructs a payment (an EIP-3009 <code>transferWithAuthorization</code>, or a plain on-chain transfer), signs it, and retries the request with an <code>X-PAYMENT</code> header carrying the payment payload.</li>
+<li>The server verifies the payment is valid and sufficient, serves the response, and optionally settles the transfer on-chain.</li>
+</ol>
+<p>No API keys, no subscription billing, no dashboard. The payment <em>is</em> the auth.</p>
+<h2 id="a-gap-worth-naming-up-front"><a class="anchor" href="#a-gap-worth-naming-up-front" aria-label="Link to this section">#</a>A gap worth naming up front</h2><p>x402&#39;s reference implementation (the <code>x402</code> / <code>x402-express</code> npm packages, and the hosted <code>x402.org</code> facilitator) ships built-in support for specific EVM networks — Base and Base Sepolia primarily — verifying EIP-3009 signatures against known USDC deployments there. <strong>Robinhood Chain is not one of the pre-configured networks</strong>, and USDG does not implement EIP-3009 or EIP-2612 (confirmed in Tutorial 6 — it has no <code>permit</code>-family functions at all, verified against its Blockscout-verified implementation). That rules out gasless signature-based payment for USDG entirely.</p>
+<p>So this tutorial teaches the pattern that <em>does</em> work today: <strong>a hand-rolled 402 flow that verifies a real, mined USDG transfer on-chain</strong>, using the hoodchain SDK you already know. It&#39;s more code than dropping in <code>x402-express</code>&#39;s one-liner, but it&#39;s honest about what&#39;s actually deployed, and it generalizes to any chain or token a hosted facilitator hasn&#39;t caught up to yet.</p>
+<h2 id="the-server"><a class="anchor" href="#the-server" aria-label="Link to this section">#</a>The server</h2><figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">import</span> express <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;express&#x27;</span>
+<span class="hljs-keyword">import</span> { parseEventLogs } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;viem&#x27;</span>
+<span class="hljs-keyword">import</span> { createHoodClient, erc20Abi, parseUsdg, <span class="hljs-variable constant_">MAINNET_ADDRESSES</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;hoodchain&#x27;</span>
+
+<span class="hljs-keyword">const</span> app = <span class="hljs-title function_">express</span>()
+<span class="hljs-keyword">const</span> hood = <span class="hljs-title function_">createHoodClient</span>()
+
+<span class="hljs-keyword">const</span> <span class="hljs-variable constant_">PRICE_USDG</span> = <span class="hljs-title function_">parseUsdg</span>(<span class="hljs-string">&#x27;0.01&#x27;</span>) <span class="hljs-comment">// $0.01 per request</span>
+<span class="hljs-keyword">const</span> <span class="hljs-variable constant_">PAY_TO</span> = process.<span class="hljs-property">env</span>.<span class="hljs-property">PAYOUT_ADDRESS</span> <span class="hljs-keyword">as</span> <span class="hljs-string">`0x<span class="hljs-subst">${<span class="hljs-built_in">string</span>}</span>`</span>
+
+<span class="hljs-comment">// naive in-memory replay guard — swap for Redis/a database in production</span>
+<span class="hljs-keyword">const</span> seenTxHashes = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Set</span>&lt;<span class="hljs-built_in">string</span>&gt;()
+
+app.<span class="hljs-title function_">get</span>(<span class="hljs-string">&#x27;/api/quote/:symbol&#x27;</span>, <span class="hljs-title function_">async</span> (req, res) =&gt; {
+  <span class="hljs-keyword">const</span> paymentHeader = req.<span class="hljs-title function_">header</span>(<span class="hljs-string">&#x27;X-PAYMENT&#x27;</span>)
+
+  <span class="hljs-keyword">if</span> (!paymentHeader) {
+    <span class="hljs-keyword">return</span> res.<span class="hljs-title function_">status</span>(<span class="hljs-number">402</span>).<span class="hljs-title function_">json</span>({
+      <span class="hljs-attr">x402Version</span>: <span class="hljs-number">1</span>,
+      <span class="hljs-attr">accepts</span>: [{
+        <span class="hljs-attr">scheme</span>: <span class="hljs-string">&#x27;onchain-transfer&#x27;</span>, <span class="hljs-comment">// not a registered x402 scheme name — see note below</span>
+        <span class="hljs-attr">network</span>: <span class="hljs-string">&#x27;robinhood-chain-mainnet&#x27;</span>,
+        <span class="hljs-attr">chainId</span>: hood.<span class="hljs-property">chain</span>.<span class="hljs-property">id</span>,
+        <span class="hljs-attr">token</span>: <span class="hljs-variable constant_">MAINNET_ADDRESSES</span>.<span class="hljs-property">usdg</span>,
+        <span class="hljs-attr">payTo</span>: <span class="hljs-variable constant_">PAY_TO</span>,
+        <span class="hljs-attr">maxAmountRequired</span>: <span class="hljs-variable constant_">PRICE_USDG</span>.<span class="hljs-title function_">toString</span>(),
+        <span class="hljs-attr">description</span>: <span class="hljs-string">`Live quote for <span class="hljs-subst">${req.params.<span class="hljs-built_in">symbol</span>}</span>`</span>,
+      }],
+    })
+  }
+
+  <span class="hljs-comment">// the client sends back the tx hash of a USDG transfer it already sent</span>
+  <span class="hljs-keyword">const</span> { txHash } = <span class="hljs-title class_">JSON</span>.<span class="hljs-title function_">parse</span>(<span class="hljs-title class_">Buffer</span>.<span class="hljs-title function_">from</span>(paymentHeader, <span class="hljs-string">&#x27;base64&#x27;</span>).<span class="hljs-title function_">toString</span>())
+
+  <span class="hljs-keyword">if</span> (seenTxHashes.<span class="hljs-title function_">has</span>(txHash)) <span class="hljs-keyword">return</span> res.<span class="hljs-title function_">status</span>(<span class="hljs-number">402</span>).<span class="hljs-title function_">json</span>({ <span class="hljs-attr">error</span>: <span class="hljs-string">&#x27;payment already used&#x27;</span> })
+
+  <span class="hljs-keyword">const</span> receipt = <span class="hljs-keyword">await</span> hood.<span class="hljs-property">public</span>.<span class="hljs-title function_">getTransactionReceipt</span>({ <span class="hljs-attr">hash</span>: txHash }).<span class="hljs-title function_">catch</span>(<span class="hljs-function">() =&gt;</span> <span class="hljs-literal">null</span>)
+  <span class="hljs-keyword">if</span> (!receipt || receipt.<span class="hljs-property">status</span> !== <span class="hljs-string">&#x27;success&#x27;</span>) {
+    <span class="hljs-keyword">return</span> res.<span class="hljs-title function_">status</span>(<span class="hljs-number">402</span>).<span class="hljs-title function_">json</span>({ <span class="hljs-attr">error</span>: <span class="hljs-string">&#x27;payment not found or not confirmed yet&#x27;</span> })
+  }
+
+  <span class="hljs-comment">// Decode every Transfer log on the USDG contract and require ONE that pays</span>
+  <span class="hljs-comment">// PAY_TO at least PRICE_USDG. Checking only &quot;a log exists on the USDG</span>
+  <span class="hljs-comment">// contract&quot; is not enough — see the callout below for why.</span>
+  <span class="hljs-keyword">const</span> transfers = <span class="hljs-title function_">parseEventLogs</span>({
+    <span class="hljs-attr">abi</span>: erc20Abi,
+    <span class="hljs-attr">eventName</span>: <span class="hljs-string">&#x27;Transfer&#x27;</span>,
+    <span class="hljs-attr">logs</span>: receipt.<span class="hljs-property">logs</span>.<span class="hljs-title function_">filter</span>(<span class="hljs-function">(<span class="hljs-params">l</span>) =&gt;</span> l.<span class="hljs-property">address</span>.<span class="hljs-title function_">toLowerCase</span>() === <span class="hljs-variable constant_">MAINNET_ADDRESSES</span>.<span class="hljs-property">usdg</span>.<span class="hljs-title function_">toLowerCase</span>()),
+  })
+  <span class="hljs-keyword">const</span> paid = transfers.<span class="hljs-title function_">some</span>(
+    <span class="hljs-function">(<span class="hljs-params">t</span>) =&gt;</span> t.<span class="hljs-property">args</span>.<span class="hljs-property">to</span>.<span class="hljs-title function_">toLowerCase</span>() === <span class="hljs-variable constant_">PAY_TO</span>.<span class="hljs-title function_">toLowerCase</span>() &amp;&amp; t.<span class="hljs-property">args</span>.<span class="hljs-property">value</span> &gt;= <span class="hljs-variable constant_">PRICE_USDG</span>,
+  )
+  <span class="hljs-keyword">if</span> (!paid) <span class="hljs-keyword">return</span> res.<span class="hljs-title function_">status</span>(<span class="hljs-number">402</span>).<span class="hljs-title function_">json</span>({ <span class="hljs-attr">error</span>: <span class="hljs-string">&#x27;no sufficient USDG transfer to payTo in this transaction&#x27;</span> })
+
+  seenTxHashes.<span class="hljs-title function_">add</span>(txHash)
+
+  <span class="hljs-comment">// payment verified — serve the real data</span>
+  <span class="hljs-keyword">const</span> { getQuote } = <span class="hljs-keyword">await</span> <span class="hljs-keyword">import</span>(<span class="hljs-string">&#x27;hoodchain&#x27;</span>)
+  <span class="hljs-keyword">const</span> quote = <span class="hljs-keyword">await</span> <span class="hljs-title function_">getQuote</span>(hood, req.<span class="hljs-property">params</span>.<span class="hljs-property">symbol</span>)
+  res.<span class="hljs-title function_">json</span>({ <span class="hljs-attr">symbol</span>: quote.<span class="hljs-property">symbol</span>, <span class="hljs-attr">priceUsd</span>: quote.<span class="hljs-property">priceUsd</span>, <span class="hljs-attr">updatedAt</span>: quote.<span class="hljs-property">updatedAt</span> })
+})
+
+app.<span class="hljs-title function_">listen</span>(<span class="hljs-number">3000</span>, <span class="hljs-function">() =&gt;</span> <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;paid quote API on :3000&#x27;</span>))</code></pre></figure><h2 id="the-client"><a class="anchor" href="#the-client" aria-label="Link to this section">#</a>The client</h2><figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">import</span> { privateKeyToAccount } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;viem/accounts&#x27;</span>
+<span class="hljs-keyword">import</span> { createHoodClient, transferUsdg, parseUsdg, <span class="hljs-variable constant_">MAINNET_ADDRESSES</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;hoodchain&#x27;</span>
+
+<span class="hljs-keyword">const</span> account = <span class="hljs-title function_">privateKeyToAccount</span>(process.<span class="hljs-property">env</span>.<span class="hljs-property">ROBINHOOD_CHAIN_PRIVATE_KEY</span> <span class="hljs-keyword">as</span> <span class="hljs-string">`0x<span class="hljs-subst">${<span class="hljs-built_in">string</span>}</span>`</span>)
+<span class="hljs-keyword">const</span> hood = <span class="hljs-title function_">createHoodClient</span>({ account })
+
+<span class="hljs-keyword">async</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">fetchPaid</span>(<span class="hljs-params"><span class="hljs-attr">url</span>: <span class="hljs-built_in">string</span></span>) {
+  <span class="hljs-keyword">let</span> res = <span class="hljs-keyword">await</span> <span class="hljs-title function_">fetch</span>(url)
+  <span class="hljs-keyword">if</span> (res.<span class="hljs-property">status</span> !== <span class="hljs-number">402</span>) <span class="hljs-keyword">return</span> res.<span class="hljs-title function_">json</span>()
+
+  <span class="hljs-keyword">const</span> challenge = <span class="hljs-keyword">await</span> res.<span class="hljs-title function_">json</span>()
+  <span class="hljs-keyword">const</span> term = challenge.<span class="hljs-property">accepts</span>[<span class="hljs-number">0</span>]
+
+  <span class="hljs-comment">// pay: a plain USDG transfer to the endpoint&#x27;s payTo address</span>
+  <span class="hljs-keyword">const</span> hash = <span class="hljs-keyword">await</span> <span class="hljs-title function_">transferUsdg</span>(hood, term.<span class="hljs-property">payTo</span>, <span class="hljs-title class_">BigInt</span>(term.<span class="hljs-property">maxAmountRequired</span>))
+  <span class="hljs-keyword">await</span> hood.<span class="hljs-property">public</span>.<span class="hljs-title function_">waitForTransactionReceipt</span>({ hash })
+
+  <span class="hljs-keyword">const</span> paymentHeader = <span class="hljs-title class_">Buffer</span>.<span class="hljs-title function_">from</span>(<span class="hljs-title class_">JSON</span>.<span class="hljs-title function_">stringify</span>({ <span class="hljs-attr">txHash</span>: hash })).<span class="hljs-title function_">toString</span>(<span class="hljs-string">&#x27;base64&#x27;</span>)
+  res = <span class="hljs-keyword">await</span> <span class="hljs-title function_">fetch</span>(url, { <span class="hljs-attr">headers</span>: { <span class="hljs-string">&#x27;X-PAYMENT&#x27;</span>: paymentHeader } })
+  <span class="hljs-keyword">return</span> res.<span class="hljs-title function_">json</span>()
+}
+
+<span class="hljs-keyword">const</span> data = <span class="hljs-keyword">await</span> <span class="hljs-title function_">fetchPaid</span>(<span class="hljs-string">&#x27;http://localhost:3000/api/quote/AAPL&#x27;</span>)
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(data) <span class="hljs-comment">// { symbol: &#x27;AAPL&#x27;, priceUsd: 315.5, updatedAt: ... }</span></code></pre></figure><h2 id="what-was-verified-and-what39s-a-documented-gap"><a class="anchor" href="#what-was-verified-and-what39s-a-documented-gap" aria-label="Link to this section">#</a>What was verified, and what&#39;s a documented gap</h2><p>The server code above — this exact route, verification logic included — was run locally against live mainnet reads, and three cases were checked by hand with <code>curl</code>:</p>
+<ol>
+<li><strong>No <code>X-PAYMENT</code> header</strong> → real <code>402</code> with the challenge body. ✅</li>
+<li><strong>A fabricated <code>X-PAYMENT</code></strong> (a made-up transaction hash) → <code>getTransactionReceipt</code> correctly returned <code>null</code>, rejected with <code>402</code>. ✅</li>
+<li><strong>A real, successfully-mined mainnet transaction hash — but one that never paid <code>PAY_TO</code> anything</strong> → <strong>this was wrongly accepted (<code>200 OK</code>) by an earlier version of this route.</strong></li>
+</ol>
+<p>That third case is not a hypothetical: it&#39;s what happened when this tutorial&#39;s code only checked &quot;a <code>Transfer</code> log exists on the USDG contract address&quot; instead of decoding <em>who</em> it paid and <em>how much</em>. Any already-mined USDG transfer by any party — unrelated to this API entirely — satisfied that check. The code above (with <code>parseEventLogs</code> and the explicit <code>to</code>/<code>value</code> comparison) is the fix, re-verified against the same three cases with the correct outcome in all three. <strong>This is why the tutorial ships the fixed version, not the first one written</strong> — treat it as a demonstration of exactly the kind of bug a &quot;just check a log exists&quot; shortcut produces, and why decoding the actual event arguments is not optional.</p>
+<p>A <strong>real, funded USDG payment that this route accepts end-to-end</strong> was not captured in this environment, for the same reason as Tutorial 6&#39;s testnet swap: it requires a funded wallet from the browser-gated testnet faucet, which wasn&#39;t available here. If you fund a wallet and run both halves above, the flow completes exactly as written — and, per the fix above, will correctly <em>reject</em> any transaction that isn&#39;t a real payment to your <code>PAY_TO</code> address.</p>
+<div class="callout callout-warning"><p class="callout-title">`scheme: 'onchain-transfer'` is not a registered x402 scheme</p><p>The official x402 spec defines schemes like <code>exact</code> (EIP-3009) with specific verification semantics that facilitators implement. This tutorial&#39;s hand-rolled verification is <strong>compatible with the x402 wire shape</strong> (402 status, <code>X-PAYMENT</code> header, JSON challenge) but is not a spec-registered scheme — it&#39;s the honest fallback for a token (USDG) and chain (Robinhood Chain) the reference facilitator doesn&#39;t yet support. If Robinhood Chain gains a hosted x402 facilitator or USDG gains EIP-3009, switch to <code>x402-express</code>&#39;s <code>paymentMiddleware</code> directly — it&#39;s a strictly better one-line integration once the network is registered.</p>
+</div>
+
+<h2 id="hardening-for-production"><a class="anchor" href="#hardening-for-production" aria-label="Link to this section">#</a>Hardening for production</h2><p>The example above is deliberately minimal to show the mechanics. Before charging real money:</p>
+<ul>
+<li><strong>Replace the in-memory <code>Set</code> with persistent storage.</strong> A restart currently forgets which transactions were already spent, opening a replay window.</li>
+<li><strong>Add a payment timeout.</strong> A <code>402</code> challenge should expire; don&#39;t accept a transaction from an hour ago against a price you quoted a second ago.</li>
+<li><strong>Rate-limit the unauthenticated path.</strong> The <code>402</code> response itself is free to request; someone can hammer it without ever paying.</li>
+</ul>
+<h2 id="troubleshooting"><a class="anchor" href="#troubleshooting" aria-label="Link to this section">#</a>Troubleshooting</h2><p><strong>Client gets <code>402</code> forever even after paying</strong> — check the header is being sent as <code>X-PAYMENT</code> (not <code>x-payment</code> — Express headers are case-insensitive on read, but double-check your <code>fetch</code> call actually attaches it) and that <code>waitForTransactionReceipt</code> resolved before the retry.</p>
+<p><strong><code>getTransactionReceipt</code> returns <code>null</code></strong> — the transaction hasn&#39;t been mined yet, or the hash is wrong. Robinhood Chain&#39;s ~100ms blocks mean this resolves almost immediately in practice; a <code>null</code> after a few seconds means something else is wrong.</p>
+<p><strong>I want gasless payment (no separate approve/send from the buyer)</strong> — not currently possible for USDG specifically, since it has no EIP-3009/EIP-2612 support (Tutorial 6). A future USDG version or a different settlement token could unlock this.</p>
+<h2 id="what-you-built"><a class="anchor" href="#what-you-built" aria-label="Link to this section">#</a>What you built</h2><p>A working, x402-shaped paid API settled in USDG, with an honest accounting of where the reference tooling doesn&#39;t yet reach — and a fallback pattern you can apply to any token or chain that finds itself in the same spot. Next: giving an AI agent the same chain access you just built, over MCP.</p>
+</div>
+    <nav class="pager-nav" aria-label="Tutorial pagination"><a class="pager pager-prev" href="../07-streaming-the-chain/"><span class="pager-dir">← Previous</span><span class="pager-title">Streaming the chain: launchpads + firehose</span></a><a class="pager pager-next" href="../09-ai-agent-chain-access/"><span class="pager-dir">Next →</span><span class="pager-title">Give your AI agent chain access with MCP</span></a></nav>
+    <footer class="doc-footer">
+      <p>Question or correction? <a href="https://github.com/nirholas/learn-robinhood-chain/issues" target="_blank" rel="noopener noreferrer">Open an issue</a>.</p>
+      <p>Built by <a href="https://x.com/nichxbt" target="_blank" rel="noopener noreferrer">nirholas</a> · <a href="https://three.ws" target="_blank" rel="noopener noreferrer">three.ws</a></p>
+    </footer>
+  </article>
+  <nav class="toc" aria-label="On this page"><p class="toc-title">On this page</p><ul><li class="toc-l2"><a href="#how-x402-actually-works">How x402 actually works</a></li><li class="toc-l2"><a href="#a-gap-worth-naming-up-front">A gap worth naming up front</a></li><li class="toc-l2"><a href="#the-server">The server</a></li><li class="toc-l2"><a href="#the-client">The client</a></li><li class="toc-l2"><a href="#what-was-verified-and-what39s-a-documented-gap">What was verified, and what&amp;#39;s a documented gap</a></li><li class="toc-l2"><a href="#hardening-for-production">Hardening for production</a></li><li class="toc-l2"><a href="#troubleshooting">Troubleshooting</a></li><li class="toc-l2"><a href="#what-you-built">What you built</a></li></ul></nav>
+</main>
+</div>
+<div class="search-modal" id="search-modal" hidden role="dialog" aria-modal="true" aria-label="Search">
+  <div class="search-panel">
+    <input type="search" id="search-input" placeholder="Search tutorials…" autocomplete="off" spellcheck="false" aria-label="Search query">
+    <ul class="search-results" id="search-results" aria-live="polite"></ul>
+    <p class="search-hint"><kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>esc</kbd> to close</p>
+  </div>
+</div>
+<script defer src="../assets/app.js"></script><script defer src="../assets/search.js"></script>
+</body>
+</html>

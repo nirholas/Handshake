@@ -9,7 +9,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "node --test tests/"
+    "test": "node --test tests/**/*.test.js"
   },
   "dependencies": {
     "hoodchain": "file:../../robinhood/robinhood-chain-sdk",

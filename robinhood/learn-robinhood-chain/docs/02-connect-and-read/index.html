@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connect and read the chain in 5 minutes · Learn Robinhood Chain</title>
+<meta name="description" content="Add the network to a wallet, get testnet funds, and make your first read against mainnet with viem — a real block number and gas price in your terminal.">
+<meta property="og:title" content="Connect and read the chain in 5 minutes · Learn Robinhood Chain">
+<meta property="og:description" content="Add the network to a wallet, get testnet funds, and make your first read against mainnet with viem — a real block number and gas price in your terminal.">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#0b0d10">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300c805'/%3E%3Cpath d='M9 22V10h4.4c2.6 0 4.2 1.4 4.2 3.7 0 1.7-.9 2.9-2.4 3.4l2.9 4.9h-2.8l-2.5-4.4h-1.4V22H9zm2.4-6.3h1.8c1.2 0 1.9-.6 1.9-1.7s-.7-1.7-1.9-1.7h-1.8v3.4z' fill='%23000'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/styles.css">
+<link rel="stylesheet" href="../assets/hljs.css">
+</head>
+<body class="page-doc">
+<a class="skip-link" href="#main">Skip to content</a>
+<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../">
+      <span class="brand-mark" aria-hidden="true">R</span>
+      <span class="brand-text">Learn <strong>Robinhood Chain</strong></span>
+    </a>
+    <div class="topbar-actions">
+      <button class="search-open" type="button" aria-label="Search tutorials" aria-keyshortcuts="/">
+        <span class="search-open-label">Search</span><kbd>/</kbd>
+      </button>
+      <a class="ghost-link" href="https://github.com/nirholas/learn-robinhood-chain" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle color theme" title="Toggle theme"></button>
+      <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false"></button>
+    </div>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar" aria-label="Tutorials">
+    <nav class="sidebar-nav"><div class="nav-section"><p class="nav-section-title">Foundations</p><ul><li><a href="../01-what-is-robinhood-chain/"><span class="nav-idx">01</span>What it actually is</a></li><li><a href="../02-connect-and-read/" class="active" aria-current="page"><span class="nav-idx">02</span>Connect &amp; read</a></li><li><a href="../03-stock-tokens-explained/"><span class="nav-idx">03</span>Stock Tokens</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Building</p><ul><li><a href="../04-live-price-ticker/"><span class="nav-idx">04</span>Live price ticker</a></li><li><a href="../05-portfolio-tracker/"><span class="nav-idx">05</span>Portfolio tracker</a></li><li><a href="../06-swapping-on-chain/"><span class="nav-idx">06</span>Swapping on-chain</a></li><li><a href="../07-streaming-the-chain/"><span class="nav-idx">07</span>Streaming the chain</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Monetizing &amp; agents</p><ul><li><a href="../08-sell-your-api-for-usdg/"><span class="nav-idx">08</span>Sell your API</a></li><li><a href="../09-ai-agent-chain-access/"><span class="nav-idx">09</span>AI agent access (MCP)</a></li><li><a href="../10-autonomous-trading-agent/"><span class="nav-idx">10</span>Autonomous agent</a></li><li><a href="../11-launch-a-coin/"><span class="nav-idx">11</span>Launch a coin</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Capstone</p><ul><li><a href="../12-ship-it/"><span class="nav-idx">12</span>Ship it</a></li></ul></div></nav>
+  </aside>
+  <div class="sidebar-scrim" hidden></div>
+  <main class="doc" id="main" data-slug="02-connect-and-read">
+  <article class="doc-article">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="../">Home</a><span aria-hidden="true">/</span><span>Foundations</span></nav>
+    <header class="doc-header">
+      <h1>Connect and read the chain in 5 minutes</h1>
+      <div class="doc-meta">
+        <span class="doc-meta-item">5 min</span>
+        <span class="doc-meta-sep">·</span>
+        <span class="doc-meta-item">4 min read</span>
+        <span class="doc-meta-sep">·</span>
+        <label class="done-toggle"><input type="checkbox" class="done-check"> Mark complete</label>
+      </div>
+    </header>
+    <aside class="whatbuild"><p class="whatbuild-title">What you'll build</p><p>A tiny script that connects to Robinhood Chain and prints the live block height, chain ID, and gas price.</p></aside>
+    <aside class="prereq"><p class="prereq-title">Prerequisites</p><ul><li><a href="https://nodejs.org" target="_blank" rel="noopener noreferrer">Node.js</a> ≥ 20 and a terminal</li><li>Any code editor</li></ul></aside>
+    <div class="doc-body"><p>Talk is cheap. In the next five minutes you&#39;ll connect to Robinhood Chain and pull real data off it — the current block height, the chain ID, and the gas price — with about fifteen lines of code. No wallet, no funds, no signup. Reads are free and public.</p>
+<h2 id="add-the-network-to-a-wallet-optional-60-seconds"><a class="anchor" href="#add-the-network-to-a-wallet-optional-60-seconds" aria-label="Link to this section">#</a>Add the network to a wallet (optional, 60 seconds)</h2><p>You don&#39;t need a wallet for reads, but if you want to poke around a block explorer with a browser wallet, add the network manually. In MetaMask: <strong>Settings → Networks → Add network → Add manually</strong>, then:</p>
+<figure class="code-block" data-lang="text"><figcaption><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-plaintext">Network name:     Robinhood Chain
+RPC URL:          https://rpc.mainnet.chain.robinhood.com
+Chain ID:         4663
+Currency symbol:  ETH
+Block explorer:   https://robinhoodchain.blockscout.com</code></pre></figure><p>For anything that spends, use <strong>testnet</strong> (chain ID <code>46630</code>, RPC <code>https://rpc.testnet.chain.robinhood.com</code>) and claim funds from the <a href="https://faucet.testnet.chain.robinhood.com/" target="_blank" rel="noopener noreferrer">faucet</a> first.</p>
+<div class="callout callout-warning"><p class="callout-title">The faucet needs a real browser</p><p>The testnet faucet is behind Cloudflare Turnstile and Google Sign-In — it can&#39;t be scripted. It drips 0.01 ETH plus five of each test Stock Token (TSLA, AMZN, PLTR, NFLX, AMD) per 24 hours. Claim once, up front, and reuse that wallet for every write tutorial. There&#39;s also a <a href="https://faucets.chain.link/robinhood-testnet" target="_blank" rel="noopener noreferrer">Chainlink faucet</a> for testnet LINK/ETH.</p>
+</div>
+
+<h2 id="read-the-chain-with-raw-json-rpc-zero-dependencies"><a class="anchor" href="#read-the-chain-with-raw-json-rpc-zero-dependencies" aria-label="Link to this section">#</a>Read the chain with raw JSON-RPC (zero dependencies)</h2><p>Before any library, prove the RPC is real with nothing but <code>curl</code>. This asks the node for its chain ID:</p>
+<figure class="code-block" data-lang="bash"><figcaption><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-bash">curl -s https://rpc.mainnet.chain.robinhood.com \
+  -H <span class="hljs-string">&#x27;content-type: application/json&#x27;</span> \
+  -d <span class="hljs-string">&#x27;{&quot;jsonrpc&quot;:&quot;2.0&quot;,&quot;id&quot;:1,&quot;method&quot;:&quot;eth_chainId&quot;,&quot;params&quot;:[]}&#x27;</span></code></pre></figure><figure class="code-block" data-lang="JSON"><figcaption><span class="code-lang">JSON</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-json"><span class="hljs-punctuation">{</span><span class="hljs-attr">&quot;jsonrpc&quot;</span><span class="hljs-punctuation">:</span><span class="hljs-string">&quot;2.0&quot;</span><span class="hljs-punctuation">,</span><span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span><span class="hljs-number">1</span><span class="hljs-punctuation">,</span><span class="hljs-attr">&quot;result&quot;</span><span class="hljs-punctuation">:</span><span class="hljs-string">&quot;0x1237&quot;</span><span class="hljs-punctuation">}</span></code></pre></figure><p><code>0x1237</code> is <code>4663</code> in decimal — the mainnet chain ID. The chain is answering. That&#39;s the entire foundation of everything that follows.</p>
+<div class="callout callout-tip"><p class="callout-title">You just saw the landing page's secret</p><p>The live stats strip on this site&#39;s <a href="../">home page</a> is doing exactly this — plain <code>fetch</code> calls to that same RPC from your browser. Read-only chain access needs no backend, no key, and no SDK. That property is why so much of this course runs client-side.</p>
+</div>
+
+<h2 id="read-the-chain-with-viem"><a class="anchor" href="#read-the-chain-with-viem" aria-label="Link to this section">#</a>Read the chain with viem</h2><p><code>curl</code> is fine for a sanity check; for real work you want typed results and helpers. Install viem:</p>
+<figure class="code-block" data-lang="bash"><figcaption><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-bash">npm init -y
+npm install viem
+npm pkg <span class="hljs-built_in">set</span> <span class="hljs-built_in">type</span>=module</code></pre></figure><p>Create <code>read.ts</code> (or <code>.mjs</code>) and paste:</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">import</span> { createPublicClient, http, formatGwei } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;viem&#x27;</span>
+<span class="hljs-keyword">import</span> { robinhood } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;viem/chains&#x27;</span>
+
+<span class="hljs-keyword">const</span> client = <span class="hljs-title function_">createPublicClient</span>({
+  <span class="hljs-attr">chain</span>: robinhood,           <span class="hljs-comment">// viem&#x27;s official chain def — chain ID 4663</span>
+  <span class="hljs-attr">transport</span>: <span class="hljs-title function_">http</span>(),          <span class="hljs-comment">// uses the public RPC from the chain def</span>
+})
+
+<span class="hljs-keyword">const</span> [blockNumber, gasPrice, chainId] = <span class="hljs-keyword">await</span> <span class="hljs-title class_">Promise</span>.<span class="hljs-title function_">all</span>([
+  client.<span class="hljs-title function_">getBlockNumber</span>(),
+  client.<span class="hljs-title function_">getGasPrice</span>(),
+  client.<span class="hljs-title function_">getChainId</span>(),
+])
+
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`chain id      <span class="hljs-subst">${chainId}</span>`</span>)
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`block height  <span class="hljs-subst">${blockNumber}</span>`</span>)
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`gas price     <span class="hljs-subst">${formatGwei(gasPrice)}</span> gwei`</span>)</code></pre></figure><p>Run it:</p>
+<figure class="code-block" data-lang="bash"><figcaption><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-bash">npx tsx read.ts</code></pre></figure><figure class="code-block" data-lang="text"><figcaption><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-plaintext">chain id      4663
+block height  7727411
+gas price     0.01 gwei</code></pre></figure><p>That block number was live when this tutorial was written; yours will be higher, because Robinhood Chain produces a new block roughly every 100 milliseconds. Do the math: <strong>that&#39;s on the order of half a million blocks a day.</strong> Keep it in mind when you scan historical logs later — &quot;the last hour&quot; is tens of thousands of blocks.</p>
+<h2 id="use-a-faster-rpc-when-the-public-one-isn39t-enough"><a class="anchor" href="#use-a-faster-rpc-when-the-public-one-isn39t-enough" aria-label="Link to this section">#</a>Use a faster RPC (when the public one isn&#39;t enough)</h2><p>The public RPC is perfect for learning and light apps, but it rate-limits. The moment you&#39;re scanning large block ranges or serving users, move to a dedicated endpoint. Alchemy is the recommended provider:</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">const</span> client = <span class="hljs-title function_">createPublicClient</span>({
+  <span class="hljs-attr">chain</span>: robinhood,
+  <span class="hljs-attr">transport</span>: <span class="hljs-title function_">http</span>(<span class="hljs-string">`https://robinhood-mainnet.g.alchemy.com/v2/<span class="hljs-subst">${process.env.ALCHEMY_KEY}</span>`</span>),
+})</code></pre></figure><p>You&#39;ll feel the difference immediately in Tutorial 7 when scanning launchpad history — the public RPC will return <code>429 Too Many Requests</code> on a wide scan; a dedicated key won&#39;t.</p>
+<h2 id="skip-the-boilerplate-the-hoodchain-client"><a class="anchor" href="#skip-the-boilerplate-the-hoodchain-client" aria-label="Link to this section">#</a>Skip the boilerplate: the hoodchain client</h2><p>Everything above is standard viem. As your app grows you&#39;ll want the batteries-included client from the <a href="https://github.com/nirholas/robinhood-chain-sdk" target="_blank" rel="noopener noreferrer">hoodchain SDK</a> — it wraps viem with multicall batching on by default, both networks pre-wired, and an optional wallet:</p>
+<figure class="code-block" data-lang="bash"><figcaption><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-bash">npm install hoodchain viem</code></pre></figure><figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">import</span> { createHoodClient } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;hoodchain&#x27;</span>
+
+<span class="hljs-keyword">const</span> hood = <span class="hljs-title function_">createHoodClient</span>() <span class="hljs-comment">// mainnet 4663, public RPC, multicall batching on</span>
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;block&#x27;</span>, <span class="hljs-keyword">await</span> hood.<span class="hljs-property">public</span>.<span class="hljs-title function_">getBlockNumber</span>())</code></pre></figure><p><code>hood.public</code> is a normal viem <code>PublicClient</code>, so nothing you learned is wasted — the SDK just removes the setup. From the next tutorial on, we use <code>createHoodClient</code> because it also knows about Stock Tokens, feeds, and swaps, which raw viem does not. When you need to drop to the metal, <code>hood.public</code> and <code>hood.wallet</code> are right there.</p>
+<h2 id="troubleshooting"><a class="anchor" href="#troubleshooting" aria-label="Link to this section">#</a>Troubleshooting</h2><p><strong><code>Cannot use import statement outside a module</code></strong> — add <code>&quot;type&quot;: &quot;module&quot;</code> to your <code>package.json</code> (<code>npm pkg set type=module</code>), or use the <code>.mjs</code> extension.</p>
+<p><strong><code>fetch failed</code> / <code>ECONNREFUSED</code></strong> — check the RPC URL for a typo; it&#39;s <code>rpc.mainnet.chain.robinhood.com</code>, no port, HTTPS. Confirm you have network access with the <code>curl</code> command above.</p>
+<p><strong><code>npx tsx</code> is slow the first time</strong> — <code>tsx</code> is being downloaded. Install it once (<code>npm i -D tsx</code>) to make subsequent runs instant.</p>
+<p><strong>The block number looks <em>huge</em> / grows while you watch</strong> — that&#39;s correct. ~100 ms blocks. It&#39;s a feature, not a bug.</p>
+<h2 id="what-you-learned"><a class="anchor" href="#what-you-learned" aria-label="Link to this section">#</a>What you learned</h2><p>You connected to Robinhood Chain three ways — raw <code>curl</code>, plain viem, and the hoodchain client — and read live data with each. You know reads are free and keyless, why block numbers are enormous, and when to upgrade off the public RPC. Next, the one concept that makes Stock Tokens different from every other ERC-20 you&#39;ve touched.</p>
+</div>
+    <nav class="pager-nav" aria-label="Tutorial pagination"><a class="pager pager-prev" href="../01-what-is-robinhood-chain/"><span class="pager-dir">← Previous</span><span class="pager-title">What Robinhood Chain actually is</span></a><a class="pager pager-next" href="../03-stock-tokens-explained/"><span class="pager-dir">Next →</span><span class="pager-title">Stock Tokens explained for developers</span></a></nav>
+    <footer class="doc-footer">
+      <p>Question or correction? <a href="https://github.com/nirholas/learn-robinhood-chain/issues" target="_blank" rel="noopener noreferrer">Open an issue</a>.</p>
+      <p>Built by <a href="https://x.com/nichxbt" target="_blank" rel="noopener noreferrer">nirholas</a> · <a href="https://three.ws" target="_blank" rel="noopener noreferrer">three.ws</a></p>
+    </footer>
+  </article>
+  <nav class="toc" aria-label="On this page"><p class="toc-title">On this page</p><ul><li class="toc-l2"><a href="#add-the-network-to-a-wallet-optional-60-seconds">Add the network to a wallet (optional, 60 seconds)</a></li><li class="toc-l2"><a href="#read-the-chain-with-raw-json-rpc-zero-dependencies">Read the chain with raw JSON-RPC (zero dependencies)</a></li><li class="toc-l2"><a href="#read-the-chain-with-viem">Read the chain with viem</a></li><li class="toc-l2"><a href="#use-a-faster-rpc-when-the-public-one-isn39t-enough">Use a faster RPC (when the public one isn&amp;#39;t enough)</a></li><li class="toc-l2"><a href="#skip-the-boilerplate-the-hoodchain-client">Skip the boilerplate: the hoodchain client</a></li><li class="toc-l2"><a href="#troubleshooting">Troubleshooting</a></li><li class="toc-l2"><a href="#what-you-learned">What you learned</a></li></ul></nav>
+</main>
+</div>
+<div class="search-modal" id="search-modal" hidden role="dialog" aria-modal="true" aria-label="Search">
+  <div class="search-panel">
+    <input type="search" id="search-input" placeholder="Search tutorials…" autocomplete="off" spellcheck="false" aria-label="Search query">
+    <ul class="search-results" id="search-results" aria-live="polite"></ul>
+    <p class="search-hint"><kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>esc</kbd> to close</p>
+  </div>
+</div>
+<script defer src="../assets/app.js"></script><script defer src="../assets/search.js"></script>
+</body>
+</html>

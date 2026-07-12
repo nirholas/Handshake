@@ -6,11 +6,11 @@ export type RailName = 'noxa' | 'odyssey' | 'direct'
 
 /** Social links attached to a launch (all optional). */
 export interface Socials {
-  telegram?: string
-  twitter?: string
-  discord?: string
-  website?: string
-  farcaster?: string
+  telegram?: string | undefined
+  twitter?: string | undefined
+  discord?: string | undefined
+  website?: string | undefined
+  farcaster?: string | undefined
 }
 
 /**

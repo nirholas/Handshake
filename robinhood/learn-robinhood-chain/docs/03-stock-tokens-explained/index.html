@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stock Tokens explained for developers · Learn Robinhood Chain</title>
+<meta name="description" content="ERC-20 + a Chainlink feed + ERC-8056 uiMultiplier(). The split/dividend trap, with a worked example showing the wrong and the right valuation.">
+<meta property="og:title" content="Stock Tokens explained for developers · Learn Robinhood Chain">
+<meta property="og:description" content="ERC-20 + a Chainlink feed + ERC-8056 uiMultiplier(). The split/dividend trap, with a worked example showing the wrong and the right valuation.">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#0b0d10">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300c805'/%3E%3Cpath d='M9 22V10h4.4c2.6 0 4.2 1.4 4.2 3.7 0 1.7-.9 2.9-2.4 3.4l2.9 4.9h-2.8l-2.5-4.4h-1.4V22H9zm2.4-6.3h1.8c1.2 0 1.9-.6 1.9-1.7s-.7-1.7-1.9-1.7h-1.8v3.4z' fill='%23000'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/styles.css">
+<link rel="stylesheet" href="../assets/hljs.css">
+</head>
+<body class="page-doc">
+<a class="skip-link" href="#main">Skip to content</a>
+<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../">
+      <span class="brand-mark" aria-hidden="true">R</span>
+      <span class="brand-text">Learn <strong>Robinhood Chain</strong></span>
+    </a>
+    <div class="topbar-actions">
+      <button class="search-open" type="button" aria-label="Search tutorials" aria-keyshortcuts="/">
+        <span class="search-open-label">Search</span><kbd>/</kbd>
+      </button>
+      <a class="ghost-link" href="https://github.com/nirholas/learn-robinhood-chain" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle color theme" title="Toggle theme"></button>
+      <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false"></button>
+    </div>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar" aria-label="Tutorials">
+    <nav class="sidebar-nav"><div class="nav-section"><p class="nav-section-title">Foundations</p><ul><li><a href="../01-what-is-robinhood-chain/"><span class="nav-idx">01</span>What it actually is</a></li><li><a href="../02-connect-and-read/"><span class="nav-idx">02</span>Connect &amp; read</a></li><li><a href="../03-stock-tokens-explained/" class="active" aria-current="page"><span class="nav-idx">03</span>Stock Tokens</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Building</p><ul><li><a href="../04-live-price-ticker/"><span class="nav-idx">04</span>Live price ticker</a></li><li><a href="../05-portfolio-tracker/"><span class="nav-idx">05</span>Portfolio tracker</a></li><li><a href="../06-swapping-on-chain/"><span class="nav-idx">06</span>Swapping on-chain</a></li><li><a href="../07-streaming-the-chain/"><span class="nav-idx">07</span>Streaming the chain</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Monetizing &amp; agents</p><ul><li><a href="../08-sell-your-api-for-usdg/"><span class="nav-idx">08</span>Sell your API</a></li><li><a href="../09-ai-agent-chain-access/"><span class="nav-idx">09</span>AI agent access (MCP)</a></li><li><a href="../10-autonomous-trading-agent/"><span class="nav-idx">10</span>Autonomous agent</a></li><li><a href="../11-launch-a-coin/"><span class="nav-idx">11</span>Launch a coin</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Capstone</p><ul><li><a href="../12-ship-it/"><span class="nav-idx">12</span>Ship it</a></li></ul></div></nav>
+  </aside>
+  <div class="sidebar-scrim" hidden></div>
+  <main class="doc" id="main" data-slug="03-stock-tokens-explained">
+  <article class="doc-article">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="../">Home</a><span aria-hidden="true">/</span><span>Foundations</span></nav>
+    <header class="doc-header">
+      <h1>Stock Tokens explained for developers</h1>
+      <div class="doc-meta">
+        <span class="doc-meta-item">12 min</span>
+        <span class="doc-meta-sep">·</span>
+        <span class="doc-meta-item">6 min read</span>
+        <span class="doc-meta-sep">·</span>
+        <label class="done-toggle"><input type="checkbox" class="done-check"> Mark complete</label>
+      </div>
+    </header>
+    <aside class="whatbuild"><p class="whatbuild-title">What you'll build</p><p>The one piece of domain knowledge that separates a correct Robinhood Chain app from a subtly broken one.</p></aside>
+    <aside class="prereq"><p class="prereq-title">Prerequisites</p><ul><li><a href="../02-connect-and-read/">Tutorial 2</a> — you can read the chain</li><li>Comfort with <code>bigint</code> in JavaScript</li></ul></aside>
+    <div class="doc-body"><p>If you remember one page from this course, make it this one. Stock Tokens look like ordinary ERC-20s, and 95% of the time they behave like ordinary ERC-20s. It&#39;s the other 5% — corporate actions like splits and dividends — that quietly breaks naive integrations and reports the wrong dollar value to a user. Here&#39;s exactly how they work, and the one worked example that makes the trap impossible to fall into.</p>
+<h2 id="anatomy-of-a-stock-token"><a class="anchor" href="#anatomy-of-a-stock-token" aria-label="Link to this section">#</a>Anatomy of a Stock Token</h2><p>A canonical Stock Token on Robinhood Chain is three things bolted together:</p>
+<ol>
+<li><strong>A plain ERC-20</strong>, 18 decimals. <code>balanceOf</code>, <code>transfer</code>, <code>approve</code> — all the usual methods, nothing surprising.</li>
+<li><strong>A Chainlink price feed</strong> — a separate contract, one per token, exposing <code>latestRoundData()</code> and answering with an <strong>8-decimal</strong> USD price.</li>
+<li><strong>An <a href="https://eips.ethereum.org/" target="_blank" rel="noopener noreferrer">ERC-8056</a> <code>uiMultiplier()</code></strong> — a single function returning a <code>1e18</code>-scaled ratio that encodes every corporate action the underlying stock has had.</li>
+</ol>
+<p>Every canonical Stock Token proxies to one shared <code>Stock</code> beacon contract, which is how the <a href="https://github.com/nirholas/robinhood-chain-sdk" target="_blank" rel="noopener noreferrer">hoodchain SDK</a> verifies that an address is a <em>real</em> Stock Token and not a lookalike: it checks the EIP-1967 beacon slot points at that one shared beacon.</p>
+<h2 id="the-multiplier-and-why-it-exists"><a class="anchor" href="#the-multiplier-and-why-it-exists" aria-label="Link to this section">#</a>The multiplier, and why it exists</h2><p>Stocks split. They pay dividends. A traditional token would handle a 2-for-1 split by <em>rebasing</em> — doubling everyone&#39;s balance overnight. Rebasing tokens are notoriously hostile to integrators: your cached balances silently go wrong, and every DeFi protocol that holds the token has to special-case it.</p>
+<p>Robinhood Chain took the other path. <strong>Balances never change from corporate actions.</strong> Instead, <code>uiMultiplier()</code> moves. It&#39;s the shares-per-token ratio, scaled by <code>1e18</code>:</p>
+<ul>
+<li><code>1000000000000000000</code> (i.e. <code>1e18</code>) → 1 token represents 1 share. This is the starting state for every token.</li>
+<li>After a reinvested dividend or a split adjustment, it rises above <code>1e18</code>. Your token balance is unchanged; each token now represents <em>more than one share</em> of economic exposure.</li>
+</ul>
+<p>So a Stock Token has <strong>two different quantities</strong> you can ask about, and they answer different questions:</p>
+<table>
+<thead>
+<tr>
+<th>Quantity</th>
+<th>Formula</th>
+<th>Answers</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Token balance</td>
+<td><code>balanceOf(you)</code></td>
+<td>&quot;How many tokens do I hold?&quot;</td>
+</tr>
+<tr>
+<td>Share-equivalent</td>
+<td><code>balance × uiMultiplier ÷ 1e18</code></td>
+<td>&quot;How many shares of the stock is that?&quot;</td>
+</tr>
+</tbody></table>
+<h2 id="the-trap-which-number-do-you-multiply-by-the-price"><a class="anchor" href="#the-trap-which-number-do-you-multiply-by-the-price" aria-label="Link to this section">#</a>The trap: which number do you multiply by the price?</h2><p>Here&#39;s where integrations break. You have a token balance, a multiplier, and a Chainlink price. To get a USD value, which do you multiply?</p>
+<p>The instinct — and it&#39;s wrong — is: <em>shares × price</em>. That is, <code>balance × multiplier × price</code>. It feels right (&quot;value = number of shares times price per share&quot;), and it produces a number that looks plausible. After a corporate action, it is <strong>too high</strong>, because you&#39;ve counted the multiplier twice.</p>
+<p><strong>The reason:</strong> Robinhood&#39;s Chainlink feeds are <strong>already multiplier-adjusted</strong>. The feed for a Stock Token returns the total-return price of <em>one token</em>, not the price of one underlying share. The corporate action is baked into the feed answer. So:</p>
+<div class="callout callout-danger"><p class="callout-title">The rule, memorize it</p><p><strong>USD value = token balance × feed price. Nothing else.</strong>
+The feed price already includes the multiplier. Applying <code>uiMultiplier</code> to the <em>value</em> double-counts every split and dividend. Use <code>uiMultiplier</code> only to report <strong>share-equivalents</strong> to a human — never in a valuation.</p>
+</div>
+
+<h2 id="a-worked-example"><a class="anchor" href="#a-worked-example" aria-label="Link to this section">#</a>A worked example</h2><p>Suppose a token has had a corporate action, so its multiplier is <code>1.5e18</code> (each token now represents 1.5 shares). You hold 10 tokens. The Chainlink feed answers <code>20000000000</code> — that&#39;s <code>$200.00</code> at 8 decimals, and remember, that&#39;s the price of one <em>token</em>.</p>
+<p><strong>Wrong (double-counts the multiplier):</strong></p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">const</span> shares = balance * multiplier / <span class="hljs-number">10n</span> ** <span class="hljs-number">18n</span>   <span class="hljs-comment">// 10 × 1.5 = 15 &quot;shares&quot;</span>
+<span class="hljs-keyword">const</span> wrongUsd = shares * feedPriceUsd             <span class="hljs-comment">// 15 × $200 = $3,000  ❌</span></code></pre></figure><p><strong>Right (feed price is per token, already adjusted):</strong></p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">const</span> rightUsd = balanceTokens * feedPriceUsd      <span class="hljs-comment">// 10 × $200 = $2,000  ✅</span></code></pre></figure><p>The wrong version overstates the position by exactly the multiplier — a 50% error here. On a real portfolio dashboard that&#39;s the difference between a user trusting your app and closing it forever. And the share count itself is still useful — you&#39;d show &quot;10 tokens ≈ 15 shares&quot; as context — you just don&#39;t put it in the dollar math.</p>
+<div class="callout callout-tip"><p class="callout-title">The feed answer isn't stale on weekends — it's closed</p><p>Stock feeds update 24/5, following market hours. Read one on a Saturday and its <code>updatedAt</code> will be Friday&#39;s close. That is <strong>not</strong> a stale feed; it&#39;s a closed market. A staleness check with a one-hour window will reject every weekend read. Use a window that tolerates the weekend gap (~72 hours), and tighten it only during market hours if you need to. The hoodchain SDK defaults to a 72-hour window for exactly this reason.</p>
+</div>
+
+<h2 id="doing-it-correctly-with-the-sdk"><a class="anchor" href="#doing-it-correctly-with-the-sdk" aria-label="Link to this section">#</a>Doing it correctly, with the SDK</h2><p>The <a href="https://github.com/nirholas/robinhood-chain-sdk" target="_blank" rel="noopener noreferrer">hoodchain SDK</a> encodes all of the above so you don&#39;t have to. Here&#39;s the whole thing, correct by construction:</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">import</span> { createHoodClient, getQuote, getMultiplier } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;hoodchain&#x27;</span>
+
+<span class="hljs-keyword">const</span> hood = <span class="hljs-title function_">createHoodClient</span>()
+
+<span class="hljs-comment">// getQuote returns the multiplier-adjusted price of ONE TOKEN</span>
+<span class="hljs-keyword">const</span> quote = <span class="hljs-keyword">await</span> <span class="hljs-title function_">getQuote</span>(hood, <span class="hljs-string">&#x27;AAPL&#x27;</span>, { <span class="hljs-attr">maxAgeSeconds</span>: <span class="hljs-number">7</span> * <span class="hljs-number">24</span> * <span class="hljs-number">60</span> * <span class="hljs-number">60</span> })
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`AAPL token price: $<span class="hljs-subst">${quote.priceUsd}</span>`</span>)   <span class="hljs-comment">// e.g. $315.50</span>
+
+<span class="hljs-comment">// getMultiplier is the shares-per-token ratio — for display, not valuation</span>
+<span class="hljs-keyword">const</span> m = <span class="hljs-keyword">await</span> <span class="hljs-title function_">getMultiplier</span>(hood, <span class="hljs-string">&#x27;AAPL&#x27;</span>)
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`1 AAPL token = <span class="hljs-subst">${<span class="hljs-built_in">Number</span>(m) / <span class="hljs-number">1e18</span>}</span> shares`</span>)  <span class="hljs-comment">// e.g. 1.0</span></code></pre></figure><p><code>getQuote</code> also runs the staleness guard, validates the answer is positive and the round is complete, and throws a typed <code>StaleFeedError</code> / <code>InvalidFeedAnswerError</code> / <code>FeedNotFoundError</code> you can catch precisely. <code>getPortfolio</code> (Tutorial 5) applies the valuation rule across every holding and even cross-checks its share math against the token&#39;s own on-chain <code>balanceOfUI()</code>.</p>
+<h2 id="not-every-token-has-a-feed"><a class="anchor" href="#not-every-token-has-a-feed" aria-label="Link to this section">#</a>Not every token has a feed</h2><p>There are 95 Stock Tokens on-chain but Chainlink&#39;s public directory currently lists feeds for a <strong>subset</strong> — 34 at the time of writing. A token without a feed can still have its balance read; it just can&#39;t be priced on-chain. The SDK models this honestly: <code>listPricedStockTokens()</code> returns only the priceable ones, and <code>getQuote</code> on an unpriced token throws <code>FeedNotFoundError</code> rather than inventing a number. When you build the portfolio tracker, you&#39;ll see unpriced holdings reported as such — never as <code>$0</code>, which would be a lie.</p>
+<h2 id="troubleshooting"><a class="anchor" href="#troubleshooting" aria-label="Link to this section">#</a>Troubleshooting</h2><p><strong>My USD total is way too high after a split</strong> — you&#39;re multiplying by <code>uiMultiplier</code> somewhere in the value path. Remove it. Value is <code>balance × feed price</code>, full stop.</p>
+<p><strong><code>StaleFeedError</code> on a weekend</strong> — expected. Widen <code>maxAgeSeconds</code> to cover the weekend (e.g. <code>7 * 24 * 60 * 60</code>). The market is closed, not the feed broken.</p>
+<p><strong><code>FeedNotFoundError</code></strong> — that token has no Chainlink feed. Read its balance, but don&#39;t try to price it. Use <code>listPricedStockTokens()</code> to see what <em>can</em> be priced.</p>
+<p><strong>My &quot;share count&quot; and &quot;token count&quot; differ and I expected them equal</strong> — that token has had a corporate action, so its multiplier is above <code>1e18</code>. That divergence is the whole point of the design; both numbers are correct, they just answer different questions.</p>
+<h2 id="what-you-learned"><a class="anchor" href="#what-you-learned" aria-label="Link to this section">#</a>What you learned</h2><p>You now understand the one thing that makes Robinhood Chain integrations subtly hard: the multiplier, the two quantities it produces, and the ironclad rule that valuation uses the feed price alone. You also know feeds are 24/5 and that not every token is priceable. With this, you&#39;re ready to build — starting with a live price ticker.</p>
+</div>
+    <nav class="pager-nav" aria-label="Tutorial pagination"><a class="pager pager-prev" href="../02-connect-and-read/"><span class="pager-dir">← Previous</span><span class="pager-title">Connect and read the chain in 5 minutes</span></a><a class="pager pager-next" href="../04-live-price-ticker/"><span class="pager-dir">Next →</span><span class="pager-title">Your first app: a live price ticker</span></a></nav>
+    <footer class="doc-footer">
+      <p>Question or correction? <a href="https://github.com/nirholas/learn-robinhood-chain/issues" target="_blank" rel="noopener noreferrer">Open an issue</a>.</p>
+      <p>Built by <a href="https://x.com/nichxbt" target="_blank" rel="noopener noreferrer">nirholas</a> · <a href="https://three.ws" target="_blank" rel="noopener noreferrer">three.ws</a></p>
+    </footer>
+  </article>
+  <nav class="toc" aria-label="On this page"><p class="toc-title">On this page</p><ul><li class="toc-l2"><a href="#anatomy-of-a-stock-token">Anatomy of a Stock Token</a></li><li class="toc-l2"><a href="#the-multiplier-and-why-it-exists">The multiplier, and why it exists</a></li><li class="toc-l2"><a href="#the-trap-which-number-do-you-multiply-by-the-price">The trap: which number do you multiply by the price?</a></li><li class="toc-l2"><a href="#a-worked-example">A worked example</a></li><li class="toc-l2"><a href="#doing-it-correctly-with-the-sdk">Doing it correctly, with the SDK</a></li><li class="toc-l2"><a href="#not-every-token-has-a-feed">Not every token has a feed</a></li><li class="toc-l2"><a href="#troubleshooting">Troubleshooting</a></li><li class="toc-l2"><a href="#what-you-learned">What you learned</a></li></ul></nav>
+</main>
+</div>
+<div class="search-modal" id="search-modal" hidden role="dialog" aria-modal="true" aria-label="Search">
+  <div class="search-panel">
+    <input type="search" id="search-input" placeholder="Search tutorials…" autocomplete="off" spellcheck="false" aria-label="Search query">
+    <ul class="search-results" id="search-results" aria-live="polite"></ul>
+    <p class="search-hint"><kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>esc</kbd> to close</p>
+  </div>
+</div>
+<script defer src="../assets/app.js"></script><script defer src="../assets/search.js"></script>
+</body>
+</html>

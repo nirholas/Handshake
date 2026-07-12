@@ -293,7 +293,7 @@ export function registerTradingTools(
           { tokenIn: ti.address, tokenOut: to.address, amountIn: amountInRaw },
           { slippageBps: bps },
         )
-        ledger.recordSpend(usd)
+        ledger.recordSpend(usdForCap)
         return toResult({
           ...preview,
           confirmed: true,

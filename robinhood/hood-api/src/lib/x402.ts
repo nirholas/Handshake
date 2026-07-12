@@ -19,10 +19,10 @@ function facilitatorConfig(): FacilitatorConfig | undefined {
     // Base mainnet USDC settlement via the CDP facilitator.
     return {
       url: 'https://api.cdp.coinbase.com/platform/v2/x402' as FacilitatorConfig['url'],
-      createAuthHeaders: async () => ({
-        verify: { Authorization: `Bearer ${env.cdpApiKeyId}:${env.cdpApiKeySecret}` },
-        settle: { Authorization: `Bearer ${env.cdpApiKeyId}:${env.cdpApiKeySecret}` },
-      }),
+      createAuthHeaders: async () => {
+        const auth = { Authorization: `Bearer ${env.cdpApiKeyId}:${env.cdpApiKeySecret}` }
+        return { verify: auth, settle: auth, supported: auth }
+      },
     }
   }
   // base-sepolia default: the public x402.org facilitator (or an operator override).

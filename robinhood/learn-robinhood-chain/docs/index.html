@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Learn Robinhood Chain — From zero to shipping an autonomous agent on Robinhood Chain.</title>
+<meta name="description" content="From zero to shipping an autonomous agent on Robinhood Chain. Twelve on-chain-verified tutorials for building on Robinhood Chain (chain ID 4663).">
+<meta property="og:title" content="Learn Robinhood Chain — From zero to shipping an autonomous agent on Robinhood Chain.">
+<meta property="og:description" content="From zero to shipping an autonomous agent on Robinhood Chain. Twelve on-chain-verified tutorials for building on Robinhood Chain (chain ID 4663).">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#0b0d10">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300c805'/%3E%3Cpath d='M9 22V10h4.4c2.6 0 4.2 1.4 4.2 3.7 0 1.7-.9 2.9-2.4 3.4l2.9 4.9h-2.8l-2.5-4.4h-1.4V22H9zm2.4-6.3h1.8c1.2 0 1.9-.6 1.9-1.7s-.7-1.7-1.9-1.7h-1.8v3.4z' fill='%23000'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/styles.css">
+
+</head>
+<body class="page-home">
+<a class="skip-link" href="#main">Skip to content</a>
+<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="./">
+      <span class="brand-mark" aria-hidden="true">R</span>
+      <span class="brand-text">Learn <strong>Robinhood Chain</strong></span>
+    </a>
+    <div class="topbar-actions">
+      <button class="search-open" type="button" aria-label="Search tutorials" aria-keyshortcuts="/">
+        <span class="search-open-label">Search</span><kbd>/</kbd>
+      </button>
+      <a class="ghost-link" href="https://github.com/nirholas/learn-robinhood-chain" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle color theme" title="Toggle theme"></button>
+      <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false"></button>
+    </div>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar" aria-label="Tutorials">
+    <nav class="sidebar-nav"><div class="nav-section"><p class="nav-section-title">Foundations</p><ul><li><a href="01-what-is-robinhood-chain/"><span class="nav-idx">01</span>What it actually is</a></li><li><a href="02-connect-and-read/"><span class="nav-idx">02</span>Connect &amp; read</a></li><li><a href="03-stock-tokens-explained/"><span class="nav-idx">03</span>Stock Tokens</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Building</p><ul><li><a href="04-live-price-ticker/"><span class="nav-idx">04</span>Live price ticker</a></li><li><a href="05-portfolio-tracker/"><span class="nav-idx">05</span>Portfolio tracker</a></li><li><a href="06-swapping-on-chain/"><span class="nav-idx">06</span>Swapping on-chain</a></li><li><a href="07-streaming-the-chain/"><span class="nav-idx">07</span>Streaming the chain</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Monetizing &amp; agents</p><ul><li><a href="08-sell-your-api-for-usdg/"><span class="nav-idx">08</span>Sell your API</a></li><li><a href="09-ai-agent-chain-access/"><span class="nav-idx">09</span>AI agent access (MCP)</a></li><li><a href="10-autonomous-trading-agent/"><span class="nav-idx">10</span>Autonomous agent</a></li><li><a href="11-launch-a-coin/"><span class="nav-idx">11</span>Launch a coin</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Capstone</p><ul><li><a href="12-ship-it/"><span class="nav-idx">12</span>Ship it</a></li></ul></div></nav>
+  </aside>
+  <div class="sidebar-scrim" hidden></div>
+  <main class="landing" id="main">
+  <section class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">Chain ID 4663 · Arbitrum Orbit L2 · ETH gas · ~100ms blocks</p>
+      <h1>Build on <span class="grad">Robinhood Chain</span>.</h1>
+      <p class="lede">From zero to shipping an autonomous agent on Robinhood Chain. Twelve tutorials, each performed on-chain, from your first RPC read to a live autonomous agent — built on the open-source <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a> SDK.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="01-what-is-robinhood-chain/">Start learning</a>
+        <a class="btn btn-ghost" href="04-live-price-ticker/">Jump to code</a>
+      </div>
+      <div class="chain-strip" id="chain-strip" aria-label="Live chain stats">
+        <div class="stat"><span class="stat-label">Block height</span><span class="stat-value" id="stat-block">…</span></div>
+        <div class="stat"><span class="stat-label">Gas price</span><span class="stat-value" id="stat-gas">…</span></div>
+        <div class="stat"><span class="stat-label">AAPL token</span><span class="stat-value" id="stat-aapl">…</span></div>
+        <div class="stat"><span class="stat-label">USDG supply</span><span class="stat-value" id="stat-usdg">…</span></div>
+      </div>
+      <p class="chain-strip-note" id="chain-strip-note">Live from the public RPC in your browser.</p>
+    </div>
+  </section>
+  <div class="curriculum">
+    <div class="curriculum-head">
+      <h2 class="section-h">The curriculum</h2>
+      <button class="reset-progress" type="button" id="reset-progress" hidden>Reset progress</button>
+    </div>
+    <p class="progress-line"><span id="progress-count">0</span> of 12 completed · progress is saved in your browser</p>
+    
+    <section class="curriculum-group">
+      <h2 class="curriculum-group-title">Foundations</h2>
+      <div class="card-grid">
+        <a class="tut-card" href="01-what-is-robinhood-chain/" data-slug="01-what-is-robinhood-chain">
+          <span class="tut-card-idx">01</span>
+          <span class="tut-card-check" aria-hidden="true"></span>
+          <span class="tut-card-body">
+            <span class="tut-card-title">What Robinhood Chain actually is</span>
+            <span class="tut-card-desc">Architecture, chain IDs, and what's real vs hype — the no-token fact, the US-person restriction, and permissionless deployment, all sourced.</span>
+            <span class="tut-card-time">10 min</span>
+          </span>
+        </a><a class="tut-card" href="02-connect-and-read/" data-slug="02-connect-and-read">
+          <span class="tut-card-idx">02</span>
+          <span class="tut-card-check" aria-hidden="true"></span>
+          <span class="tut-card-body">
+            <span class="tut-card-title">Connect and read the chain in 5 minutes</span>
+            <span class="tut-card-desc">Add the network to a wallet, get testnet funds, and make your first read against mainnet with viem — a real block number and gas price in your terminal.</span>
+            <span class="tut-card-time">5 min</span>
+          </span>
+        </a><a class="tut-card" href="03-stock-tokens-explained/" data-slug="03-stock-tokens-explained">
+          <span class="tut-card-idx">03</span>
+          <span class="tut-card-check" aria-hidden="true"></span>
+          <span class="tut-card-body">
+            <span class="tut-card-title">Stock Tokens explained for developers</span>
+            <span class="tut-card-desc">ERC-20 + a Chainlink feed + ERC-8056 uiMultiplier(). The split/dividend trap, with a worked example showing the wrong and the right valuation.</span>
+            <span class="tut-card-time">12 min</span>
+          </span>
+        </a>
+      </div>
+    </section>
+    <section class="curriculum-group">
+      <h2 class="curriculum-group-title">Building</h2>
+      <div class="card-grid">
+        <a class="tut-card" href="04-live-price-ticker/" data-slug="04-live-price-ticker">
+          <span class="tut-card-idx">04</span>
+          <span class="tut-card-check" aria-hidden="true"></span>
+          <span class="tut-card-body">
+            <span class="tut-card-title">Your first app: a live price ticker</span>
+            <span class="tut-card-desc">Build a terminal price ticker that streams multiplier-adjusted Chainlink quotes for any Stock Token, with staleness handling done right.</span>
+            <span class="tut-card-time">15 min</span>
+          </span>
+        </a><a class="tut-card" href="05-portfolio-tracker/" data-slug="05-portfolio-tracker">
+          <span class="tut-card-idx">05</span>
+          <span class="tut-card-check" aria-hidden="true"></span>
+          <span class="tut-card-body">
+            <span class="tut-card-title">Portfolio tracker done right</span>
+            <span class="tut-card-desc">Value any address's Stock Token holdings in one multicall — and understand exactly why a naive tracker reports the wrong number after a split.</span>
+            <span class="tut-card-time">15 min</span>
+          </span>
+        </a><a class="tut-card" href="06-swapping-on-chain/" data-slug="06-swapping-on-chain">
+          <span class="tut-card-idx">06</span>
+          <span class="tut-card-check" aria-hidden="true"></span>
+          <span class="tut-card-body">
+            <span class="tut-card-title">Swapping on-chain: quotes, slippage, execution</span>
+            <span class="tut-card-desc">Quote a Uniswap v3 swap across every fee tier, set slippage correctly, and execute on testnet — with a Stock Token eligibility sidebar.</span>
+            <span class="tut-card-time">20 min</span>
+          </span>
+        </a><a class="tut-card" href="07-streaming-the-chain/" data-slug="07-streaming-the-chain">
+          <span class="tut-card-idx">07</span>
+          <span class="tut-card-check" aria-hidden="true"></span>
+          <span class="tut-card-body">
+            <span class="tut-card-title">Streaming the chain: launchpads + firehose</span>
+            <span class="tut-card-desc">Watch NOXA and The Odyssey for new memecoin launches, then tap the raw sequencer firehose to see transactions ~100ms before they're queryable.</span>
+            <span class="tut-card-time">18 min</span>
+          </span>
+        </a>
+      </div>
+    </section>
+    <section class="curriculum-group">
+      <h2 class="curriculum-group-title">Monetizing &amp; agents</h2>
+      <div class="card-grid">
+        <a class="tut-card" href="08-sell-your-api-for-usdg/" data-slug="08-sell-your-api-for-usdg">
+          <span class="tut-card-idx">08</span>
+          <span class="tut-card-check" aria-hidden="true"></span>
+          <span class="tut-card-body">
+            <span class="tut-card-title">Sell your API for USDG with x402</span>
+            <span class="tut-card-desc">Put a Stock Token data endpoint behind an HTTP 402 paywall settled in USDG, and take your first real on-chain payment — from zero to a paid request.</span>
+            <span class="tut-card-time">25 min</span>
+          </span>
+        </a><a class="tut-card" href="09-ai-agent-chain-access/" data-slug="09-ai-agent-chain-access">
+          <span class="tut-card-idx">09</span>
+          <span class="tut-card-check" aria-hidden="true"></span>
+          <span class="tut-card-body">
+            <span class="tut-card-title">Give your AI agent chain access with MCP</span>
+            <span class="tut-card-desc">Build a Model Context Protocol server that exposes Robinhood Chain reads as tools, then wire it into Claude Code, Claude Desktop, or Cursor — with a real transcript.</span>
+            <span class="tut-card-time">22 min</span>
+          </span>
+        </a><a class="tut-card" href="10-autonomous-trading-agent/" data-slug="10-autonomous-trading-agent">
+          <span class="tut-card-idx">10</span>
+          <span class="tut-card-check" aria-hidden="true"></span>
+          <span class="tut-card-body">
+            <span class="tut-card-title">Build an autonomous trading agent</span>
+            <span class="tut-card-desc">A paper-mode trading agent with a real strategy, hard spend caps, and a kill switch — risk-first framing before a single lira of real capital.</span>
+            <span class="tut-card-time">30 min</span>
+          </span>
+        </a><a class="tut-card" href="11-launch-a-coin/" data-slug="11-launch-a-coin">
+          <span class="tut-card-idx">11</span>
+          <span class="tut-card-check" aria-hidden="true"></span>
+          <span class="tut-card-body">
+            <span class="tut-card-title">Launch a coin programmatically</span>
+            <span class="tut-card-desc">How Robinhood Chain's launchpads work, how to decode their events, and the responsible path to launching a token on testnet from code.</span>
+            <span class="tut-card-time">20 min</span>
+          </span>
+        </a>
+      </div>
+    </section>
+    <section class="curriculum-group">
+      <h2 class="curriculum-group-title">Capstone</h2>
+      <div class="card-grid">
+        <a class="tut-card" href="12-ship-it/" data-slug="12-ship-it">
+          <span class="tut-card-idx">12</span>
+          <span class="tut-card-check" aria-hidden="true"></span>
+          <span class="tut-card-body">
+            <span class="tut-card-title">Ship it: deploy and go mainnet</span>
+            <span class="tut-card-desc">Deploy your static app to Pages, your API to Cloud Run, and walk the going-mainnet checklist: funding, keys, spend caps, and monitoring.</span>
+            <span class="tut-card-time">18 min</span>
+          </span>
+        </a>
+      </div>
+    </section>
+  </div>
+  <footer class="site-footer">
+    <p>Built by <a href="https://x.com/nichxbt" target="_blank" rel="noopener noreferrer">nirholas</a> · <a href="https://three.ws" target="_blank" rel="noopener noreferrer">three.ws</a></p>
+    <p class="disclaimer">Educational material. Stock Tokens are tokenized debt securities (issuer: Robinhood Assets (Jersey) Ltd) and may not be offered, sold, or delivered to US persons. Nothing here is financial advice.</p>
+  </footer>
+</main>
+</div>
+<div class="search-modal" id="search-modal" hidden role="dialog" aria-modal="true" aria-label="Search">
+  <div class="search-panel">
+    <input type="search" id="search-input" placeholder="Search tutorials…" autocomplete="off" spellcheck="false" aria-label="Search query">
+    <ul class="search-results" id="search-results" aria-live="polite"></ul>
+    <p class="search-hint"><kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>esc</kbd> to close</p>
+  </div>
+</div>
+<script defer src="assets/app.js"></script><script defer src="assets/ticker.js"></script><script defer src="assets/search.js"></script>
+</body>
+</html>

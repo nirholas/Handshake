@@ -10,10 +10,14 @@ import {
   V3_FEE_TIERS,
   erc20Abi,
   uniswapV3FactoryAbi,
-  uniswapV3PoolAbi,
   quoteSwap,
   type HoodClient,
 } from 'hoodchain'
+
+/** `token0()` isn't in the SDK's minimal pool ABI (it only ships liquidity/slot0) — read it directly. */
+const poolToken0Abi = [
+  { type: 'function', name: 'token0', stateMutability: 'view', inputs: [], outputs: [{ type: 'address' }] },
+] as const
 
 /**
  * On-chain Uniswap v3 market data for Robinhood Chain Stock Tokens: mid price
@@ -308,10 +312,8 @@ export async function getCandles(
   const chosen = pools[bestIdx]!
 
   // token0/token1 ordering fixes the sign convention for amount0/amount1.
-  const [token0] = await Promise.all([
-    client.public.readContract({ address: chosen.pool, abi: uniswapV3PoolAbi, functionName: 'token0' }),
-  ])
-  const tokenIsToken0 = (token0 as Address).toLowerCase() === token.toLowerCase()
+  const token0 = await client.public.readContract({ address: chosen.pool, abi: poolToken0Abi, functionName: 'token0' })
+  const tokenIsToken0 = token0.toLowerCase() === token.toLowerCase()
   const quoteDecimals = chosen.quote === 'USDG' ? 6 : 18
   const quoteToUsd = chosen.quote === 'USDG' ? 1 : (ethPriceUsd ?? 0)
 

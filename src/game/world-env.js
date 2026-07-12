@@ -135,6 +135,22 @@ const CURATED_BIOMES = [
 		hill: 0x141b24, trunk: 0x2a3645, leafA: 0x223044, leafB: 0x2c3c52,
 		flora: 'conifer', density: 12,
 	},
+	{
+		// Robinhood Chain worlds. A trading-floor-at-night mood — deep emerald
+		// dark fading to near-black, gold ticker-tape accents on the ring and
+		// glass "crystal" flora standing in for a financial district skyline. No
+		// wordmark, logo, or literal brand hex; the palette nods at "stocks +
+		// tape" rather than reproducing anyone's UI. Pinned via ?biome=hoodchain
+		// (or opts.biome) so every Robinhood Chain coin shares this family while
+		// the usual per-coin hue jitter keeps them from looking identical.
+		id: 'hoodchain', label: 'Ticker Row',
+		sky: ['#03130c', '#0a2e1e', '#123c28'], fog: '#0a2419', fogNear: 75, fogFar: 310,
+		hemi: [0x3fd68a, 0x081a10, 0.62], ambient: 0.26,
+		sun: { color: 0xffc35a, intensity: 1.6, elevation: 44, azimuth: 205 },
+		ground: 0x0e1d15, plaza: 0x162a1f, grid: 0x2a4636, ring: 0xf2b705,
+		hill: 0x11241a, trunk: 0x203a2c, leafA: 0x1fae6e, leafB: 0x2ecf85,
+		flora: 'crystal', density: 26,
+	},
 ];
 
 // Map any seed to a biome. Exposed so the UI can name the world the player is in.

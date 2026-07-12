@@ -68,6 +68,7 @@ import solanaRegisterHealth from './solana-register-health.js';
 import spendSession from './spend-session.js';
 import telegramHealth from './telegram-health.js';
 import walletConnect from './wallet-connect.js';
+import robinhoodPortfolio from './robinhood-portfolio.js';
 
 export const PAID_SERVICES = Object.freeze([
 	modelCheck,
@@ -128,4 +129,5 @@ export const PAID_SERVICES = Object.freeze([
 	spendSession,
 	telegramHealth,
 	walletConnect,
+	robinhoodPortfolio,
 ]);

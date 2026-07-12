@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your first app: a live price ticker · Learn Robinhood Chain</title>
+<meta name="description" content="Build a terminal price ticker that streams multiplier-adjusted Chainlink quotes for any Stock Token, with staleness handling done right.">
+<meta property="og:title" content="Your first app: a live price ticker · Learn Robinhood Chain">
+<meta property="og:description" content="Build a terminal price ticker that streams multiplier-adjusted Chainlink quotes for any Stock Token, with staleness handling done right.">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#0b0d10">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2300c805'/%3E%3Cpath d='M9 22V10h4.4c2.6 0 4.2 1.4 4.2 3.7 0 1.7-.9 2.9-2.4 3.4l2.9 4.9h-2.8l-2.5-4.4h-1.4V22H9zm2.4-6.3h1.8c1.2 0 1.9-.6 1.9-1.7s-.7-1.7-1.9-1.7h-1.8v3.4z' fill='%23000'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/styles.css">
+<link rel="stylesheet" href="../assets/hljs.css">
+</head>
+<body class="page-doc">
+<a class="skip-link" href="#main">Skip to content</a>
+<script>(function(){try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="../">
+      <span class="brand-mark" aria-hidden="true">R</span>
+      <span class="brand-text">Learn <strong>Robinhood Chain</strong></span>
+    </a>
+    <div class="topbar-actions">
+      <button class="search-open" type="button" aria-label="Search tutorials" aria-keyshortcuts="/">
+        <span class="search-open-label">Search</span><kbd>/</kbd>
+      </button>
+      <a class="ghost-link" href="https://github.com/nirholas/learn-robinhood-chain" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle color theme" title="Toggle theme"></button>
+      <button class="menu-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false"></button>
+    </div>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar" aria-label="Tutorials">
+    <nav class="sidebar-nav"><div class="nav-section"><p class="nav-section-title">Foundations</p><ul><li><a href="../01-what-is-robinhood-chain/"><span class="nav-idx">01</span>What it actually is</a></li><li><a href="../02-connect-and-read/"><span class="nav-idx">02</span>Connect &amp; read</a></li><li><a href="../03-stock-tokens-explained/"><span class="nav-idx">03</span>Stock Tokens</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Building</p><ul><li><a href="../04-live-price-ticker/" class="active" aria-current="page"><span class="nav-idx">04</span>Live price ticker</a></li><li><a href="../05-portfolio-tracker/"><span class="nav-idx">05</span>Portfolio tracker</a></li><li><a href="../06-swapping-on-chain/"><span class="nav-idx">06</span>Swapping on-chain</a></li><li><a href="../07-streaming-the-chain/"><span class="nav-idx">07</span>Streaming the chain</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Monetizing &amp; agents</p><ul><li><a href="../08-sell-your-api-for-usdg/"><span class="nav-idx">08</span>Sell your API</a></li><li><a href="../09-ai-agent-chain-access/"><span class="nav-idx">09</span>AI agent access (MCP)</a></li><li><a href="../10-autonomous-trading-agent/"><span class="nav-idx">10</span>Autonomous agent</a></li><li><a href="../11-launch-a-coin/"><span class="nav-idx">11</span>Launch a coin</a></li></ul></div><div class="nav-section"><p class="nav-section-title">Capstone</p><ul><li><a href="../12-ship-it/"><span class="nav-idx">12</span>Ship it</a></li></ul></div></nav>
+  </aside>
+  <div class="sidebar-scrim" hidden></div>
+  <main class="doc" id="main" data-slug="04-live-price-ticker">
+  <article class="doc-article">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="../">Home</a><span aria-hidden="true">/</span><span>Building</span></nav>
+    <header class="doc-header">
+      <h1>Your first app: a live price ticker</h1>
+      <div class="doc-meta">
+        <span class="doc-meta-item">15 min</span>
+        <span class="doc-meta-sep">·</span>
+        <span class="doc-meta-item">3 min read</span>
+        <span class="doc-meta-sep">·</span>
+        <label class="done-toggle"><input type="checkbox" class="done-check"> Mark complete</label>
+      </div>
+    </header>
+    <aside class="whatbuild"><p class="whatbuild-title">What you'll build</p><p>A live-updating terminal ticker for AAPL, TSLA, NVDA and SPY — real prices, refreshing on an interval.</p></aside>
+    <aside class="prereq"><p class="prereq-title">Prerequisites</p><ul><li><a href="../03-stock-tokens-explained/">Tutorial 3</a> — you understand feeds and multipliers</li><li>Node ≥ 20</li></ul></aside>
+    <div class="doc-body"><p>Time to build something that runs. A live price ticker is the &quot;hello world&quot; of market data: it reads prices, formats them, and refreshes. By the end you&#39;ll have a terminal that streams multiplier-adjusted Chainlink quotes for any Stock Token — and you&#39;ll have handled the two things beginners skip, staleness and unpriced tokens.</p>
+<h2 id="the-naive-version-and-why-we-won39t-ship-it"><a class="anchor" href="#the-naive-version-and-why-we-won39t-ship-it" aria-label="Link to this section">#</a>The naive version (and why we won&#39;t ship it)</h2><p>You <em>could</em> read a Chainlink feed directly and print the answer:</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">import</span> { createHoodClient } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;hoodchain&#x27;</span>
+<span class="hljs-keyword">const</span> hood = <span class="hljs-title function_">createHoodClient</span>()
+<span class="hljs-keyword">const</span> [, answer] = <span class="hljs-keyword">await</span> hood.<span class="hljs-property">public</span>.<span class="hljs-title function_">readContract</span>({
+  <span class="hljs-attr">address</span>: <span class="hljs-string">&#x27;0x6B22A786bAa607d76728168703a39Ea9C99f2cD0&#x27;</span>, <span class="hljs-comment">// AAPL feed</span>
+  <span class="hljs-attr">abi</span>: [{ <span class="hljs-attr">name</span>: <span class="hljs-string">&#x27;latestRoundData&#x27;</span>, <span class="hljs-attr">type</span>: <span class="hljs-string">&#x27;function&#x27;</span>, <span class="hljs-attr">stateMutability</span>: <span class="hljs-string">&#x27;view&#x27;</span>, <span class="hljs-attr">inputs</span>: [],
+    <span class="hljs-attr">outputs</span>: [{<span class="hljs-attr">type</span>:<span class="hljs-string">&#x27;uint80&#x27;</span>},{<span class="hljs-attr">type</span>:<span class="hljs-string">&#x27;int256&#x27;</span>},{<span class="hljs-attr">type</span>:<span class="hljs-string">&#x27;uint256&#x27;</span>},{<span class="hljs-attr">type</span>:<span class="hljs-string">&#x27;uint256&#x27;</span>},{<span class="hljs-attr">type</span>:<span class="hljs-string">&#x27;uint80&#x27;</span>}] }],
+  <span class="hljs-attr">functionName</span>: <span class="hljs-string">&#x27;latestRoundData&#x27;</span>,
+})
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-title class_">Number</span>(answer) / <span class="hljs-number">1e8</span>)</code></pre></figure><p>This works, but it hardcodes an address, ignores whether the round is complete, and will happily print a price from a feed that hasn&#39;t updated in a month. We can do better in the same number of lines.</p>
+<h2 id="the-real-ticker"><a class="anchor" href="#the-real-ticker" aria-label="Link to this section">#</a>The real ticker</h2><p><code>getQuote</code> from the <a href="https://github.com/nirholas/robinhood-chain-sdk" target="_blank" rel="noopener noreferrer">hoodchain SDK</a> does the address lookup, the multiplier-correct interpretation, the staleness guard, and the answer validation. Create <code>ticker.ts</code>:</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">import</span> { createHoodClient, getQuote, listPricedStockTokens, <span class="hljs-title class_">FeedNotFoundError</span>, <span class="hljs-title class_">StaleFeedError</span> } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;hoodchain&#x27;</span>
+
+<span class="hljs-keyword">const</span> hood = <span class="hljs-title function_">createHoodClient</span>()
+
+<span class="hljs-comment">// symbols from argv, or a sensible default set</span>
+<span class="hljs-keyword">const</span> symbols = process.<span class="hljs-property">argv</span>.<span class="hljs-title function_">slice</span>(<span class="hljs-number">2</span>).<span class="hljs-property">length</span> ? process.<span class="hljs-property">argv</span>.<span class="hljs-title function_">slice</span>(<span class="hljs-number">2</span>) : [<span class="hljs-string">&#x27;AAPL&#x27;</span>, <span class="hljs-string">&#x27;TSLA&#x27;</span>, <span class="hljs-string">&#x27;NVDA&#x27;</span>, <span class="hljs-string">&#x27;SPY&#x27;</span>]
+
+<span class="hljs-comment">// stock feeds update 24/5 — a week-wide window means weekend runs don&#x27;t throw</span>
+<span class="hljs-keyword">const</span> maxAgeSeconds = <span class="hljs-number">7</span> * <span class="hljs-number">24</span> * <span class="hljs-number">60</span> * <span class="hljs-number">60</span>
+
+<span class="hljs-keyword">async</span> <span class="hljs-keyword">function</span> <span class="hljs-title function_">tick</span>(<span class="hljs-params"></span>) {
+  <span class="hljs-keyword">const</span> rows = <span class="hljs-keyword">await</span> <span class="hljs-title class_">Promise</span>.<span class="hljs-title function_">all</span>(
+    symbols.<span class="hljs-title function_">map</span>(<span class="hljs-title function_">async</span> (<span class="hljs-built_in">symbol</span>) =&gt; {
+      <span class="hljs-keyword">try</span> {
+        <span class="hljs-keyword">const</span> q = <span class="hljs-keyword">await</span> <span class="hljs-title function_">getQuote</span>(hood, <span class="hljs-built_in">symbol</span>, { maxAgeSeconds })
+        <span class="hljs-keyword">const</span> age = (q.<span class="hljs-property">ageSeconds</span> / <span class="hljs-number">3600</span>).<span class="hljs-title function_">toFixed</span>(<span class="hljs-number">1</span>)
+        <span class="hljs-keyword">return</span> <span class="hljs-string">`<span class="hljs-subst">${<span class="hljs-built_in">symbol</span>.padEnd(<span class="hljs-number">6</span>)}</span> $<span class="hljs-subst">${q.priceUsd.toFixed(<span class="hljs-number">2</span>).padStart(<span class="hljs-number">10</span>)}</span>   (feed <span class="hljs-subst">${age}</span>h old)`</span>
+      } <span class="hljs-keyword">catch</span> (e) {
+        <span class="hljs-keyword">if</span> (e <span class="hljs-keyword">instanceof</span> <span class="hljs-title class_">FeedNotFoundError</span>) <span class="hljs-keyword">return</span> <span class="hljs-string">`<span class="hljs-subst">${<span class="hljs-built_in">symbol</span>.padEnd(<span class="hljs-number">6</span>)}</span> <span class="hljs-subst">${<span class="hljs-string">&#x27;no feed&#x27;</span>.padStart(<span class="hljs-number">11</span>)}</span>`</span>
+        <span class="hljs-keyword">if</span> (e <span class="hljs-keyword">instanceof</span> <span class="hljs-title class_">StaleFeedError</span>) <span class="hljs-keyword">return</span> <span class="hljs-string">`<span class="hljs-subst">${<span class="hljs-built_in">symbol</span>.padEnd(<span class="hljs-number">6</span>)}</span> <span class="hljs-subst">${<span class="hljs-string">&#x27;stale&#x27;</span>.padStart(<span class="hljs-number">11</span>)}</span>`</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-string">`<span class="hljs-subst">${<span class="hljs-built_in">symbol</span>.padEnd(<span class="hljs-number">6</span>)}</span> <span class="hljs-subst">${<span class="hljs-string">&#x27;error&#x27;</span>.padStart(<span class="hljs-number">11</span>)}</span>`</span>
+      }
+    }),
+  )
+  <span class="hljs-comment">// redraw in place</span>
+  process.<span class="hljs-property">stdout</span>.<span class="hljs-title function_">write</span>(<span class="hljs-string">&#x27;\x1b[2J\x1b[H&#x27;</span>)
+  <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`Robinhood Chain — <span class="hljs-subst">${listPricedStockTokens().length}</span> priced Stock Tokens · <span class="hljs-subst">${<span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>().toLocaleTimeString()}</span>\n`</span>)
+  <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(rows.<span class="hljs-title function_">join</span>(<span class="hljs-string">&#x27;\n&#x27;</span>))
+}
+
+<span class="hljs-keyword">await</span> <span class="hljs-title function_">tick</span>()
+<span class="hljs-built_in">setInterval</span>(tick, <span class="hljs-number">15_000</span>) <span class="hljs-comment">// feeds don&#x27;t move every second; 15s is plenty</span></code></pre></figure><p>Run it:</p>
+<figure class="code-block" data-lang="bash"><figcaption><span class="code-lang">bash</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-bash">npx tsx ticker.ts AAPL TSLA NVDA SPY</code></pre></figure><figure class="code-block" data-lang="text"><figcaption><span class="code-lang">text</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-plaintext">Robinhood Chain — 34 priced Stock Tokens · 12:18:41 PM
+
+AAPL   $    315.50   (feed 41.2h old)
+TSLA   $    407.82   (feed 40.4h old)
+NVDA   $    210.19   (feed 44.0h old)
+SPY    $    753.62   (feed 44.1h old)</code></pre></figure><p>Those are real prices, pulled live while writing this. The feed ages are ~40 hours because this run happened over a weekend — the market was closed, the feeds paused, and our 7-day window correctly accepted them instead of throwing. That&#39;s the staleness handling from Tutorial 3, doing its job in production.</p>
+<div class="callout callout-tip"><p class="callout-title">Every design decision here is deliberate</p><ul>
+<li><strong>15-second interval, not 1s.</strong> Chainlink stock feeds update on the order of minutes to hours, gated by a heartbeat and a deviation threshold. Polling every second just wastes RPC calls to see the same number.</li>
+<li><strong><code>Promise.all</code>, not a loop.</strong> All symbols are fetched concurrently; the ticker&#39;s latency is one RPC round-trip, not N of them.</li>
+<li><strong>Typed catches.</strong> <code>FeedNotFoundError</code> and <code>StaleFeedError</code> are distinct outcomes with distinct UI — &quot;no feed&quot; is permanent, &quot;stale&quot; is temporary. Never collapse them into a generic &quot;error.&quot;</li>
+</ul>
+</div>
+
+<h2 id="add-the-multiplier-for-context"><a class="anchor" href="#add-the-multiplier-for-context" aria-label="Link to this section">#</a>Add the multiplier, for context</h2><p>Users like to see share-equivalents. Remember the Tutorial 3 rule: the multiplier is for <em>display</em>, never for the dollar math. Add it as a separate column:</p>
+<figure class="code-block" data-lang="TypeScript"><figcaption><span class="code-lang">TypeScript</span><button class="copy-btn" type="button" aria-label="Copy code to clipboard">Copy</button></figcaption><pre><code class="hljs language-typescript"><span class="hljs-keyword">import</span> { getMultiplier } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;hoodchain&#x27;</span>
+
+<span class="hljs-keyword">const</span> [q, m] = <span class="hljs-keyword">await</span> <span class="hljs-title class_">Promise</span>.<span class="hljs-title function_">all</span>([<span class="hljs-title function_">getQuote</span>(hood, <span class="hljs-built_in">symbol</span>, { maxAgeSeconds }), <span class="hljs-title function_">getMultiplier</span>(hood, <span class="hljs-built_in">symbol</span>)])
+<span class="hljs-keyword">const</span> shares = m === <span class="hljs-literal">null</span> ? <span class="hljs-string">&#x27;n/a&#x27;</span> : (<span class="hljs-title class_">Number</span>(m) / <span class="hljs-number">1e18</span>).<span class="hljs-title function_">toFixed</span>(<span class="hljs-number">4</span>)
+<span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">`<span class="hljs-subst">${<span class="hljs-built_in">symbol</span>}</span>  $<span class="hljs-subst">${q.priceUsd.toFixed(<span class="hljs-number">2</span>)}</span>  (1 token = <span class="hljs-subst">${shares}</span> shares)`</span>)</code></pre></figure><p>For the mega-cap tickers above, the multiplier is <code>1.0000</code> — no corporate action since the token launched. When one does have a split or dividend, this column is where you&#39;d surface it, while your USD math stays untouched.</p>
+<h2 id="a-browser-version-no-backend-needed"><a class="anchor" href="#a-browser-version-no-backend-needed" aria-label="Link to this section">#</a>A browser version (no backend needed)</h2><p>Everything here works client-side too — that&#39;s how this site&#39;s <a href="../">home-page ticker</a> runs. In a browser you&#39;d skip the SDK&#39;s Node bits and hit the RPC with <code>fetch</code>, decoding <code>latestRoundData()</code> yourself (the answer is the second 32-byte word of the response). The <a href="https://github.com/nirholas/learn-robinhood-chain/blob/main/assets/ticker.js" target="_blank" rel="noopener noreferrer"><code>ticker.js</code></a> on this very site is a complete, dependency-free reference for that — read it if you want the raw JSON-RPC version.</p>
+<h2 id="troubleshooting"><a class="anchor" href="#troubleshooting" aria-label="Link to this section">#</a>Troubleshooting</h2><p><strong>Every symbol prints <code>stale</code></strong> — your <code>maxAgeSeconds</code> is too tight for the current time (weekend/holiday). Widen it. During market hours you can go as tight as the feed&#39;s heartbeat.</p>
+<p><strong><code>UnknownSymbolError</code></strong> — the ticker you passed isn&#39;t in the registry. Symbols are case-insensitive tickers as listed on-chain. Run <code>listStockTokens()</code> to see all 95, or <code>listPricedStockTokens()</code> for the priceable ones.</p>
+<p><strong>Screen flicker on redraw</strong> — the <code>\x1b[2J\x1b[H</code> clear-and-home is crude but portable. For a polished TUI, reach for a library like <code>blessed</code> or <code>ink</code>; for a learning ticker, the escape codes are fine.</p>
+<p><strong><code>429 Too Many Requests</code></strong> — you&#39;re on the public RPC and polling too hard, or running several scripts at once. Raise the interval or switch to an Alchemy endpoint (Tutorial 2).</p>
+<h2 id="what-you-built"><a class="anchor" href="#what-you-built" aria-label="Link to this section">#</a>What you built</h2><p>A real, live, multiplier-correct price ticker with proper staleness and unpriced-token handling — the market-data foundation every other app in this course builds on. Next, we take reads a step further: valuing an entire portfolio in a single call, and getting it <em>right</em> where naive trackers get it wrong.</p>
+</div>
+    <nav class="pager-nav" aria-label="Tutorial pagination"><a class="pager pager-prev" href="../03-stock-tokens-explained/"><span class="pager-dir">← Previous</span><span class="pager-title">Stock Tokens explained for developers</span></a><a class="pager pager-next" href="../05-portfolio-tracker/"><span class="pager-dir">Next →</span><span class="pager-title">Portfolio tracker done right</span></a></nav>
+    <footer class="doc-footer">
+      <p>Question or correction? <a href="https://github.com/nirholas/learn-robinhood-chain/issues" target="_blank" rel="noopener noreferrer">Open an issue</a>.</p>
+      <p>Built by <a href="https://x.com/nichxbt" target="_blank" rel="noopener noreferrer">nirholas</a> · <a href="https://three.ws" target="_blank" rel="noopener noreferrer">three.ws</a></p>
+    </footer>
+  </article>
+  <nav class="toc" aria-label="On this page"><p class="toc-title">On this page</p><ul><li class="toc-l2"><a href="#the-naive-version-and-why-we-won39t-ship-it">The naive version (and why we won&amp;#39;t ship it)</a></li><li class="toc-l2"><a href="#the-real-ticker">The real ticker</a></li><li class="toc-l2"><a href="#add-the-multiplier-for-context">Add the multiplier, for context</a></li><li class="toc-l2"><a href="#a-browser-version-no-backend-needed">A browser version (no backend needed)</a></li><li class="toc-l2"><a href="#troubleshooting">Troubleshooting</a></li><li class="toc-l2"><a href="#what-you-built">What you built</a></li></ul></nav>
+</main>
+</div>
+<div class="search-modal" id="search-modal" hidden role="dialog" aria-modal="true" aria-label="Search">
+  <div class="search-panel">
+    <input type="search" id="search-input" placeholder="Search tutorials…" autocomplete="off" spellcheck="false" aria-label="Search query">
+    <ul class="search-results" id="search-results" aria-live="polite"></ul>
+    <p class="search-hint"><kbd>↑</kbd><kbd>↓</kbd> to navigate · <kbd>↵</kbd> to open · <kbd>esc</kbd> to close</p>
+  </div>
+</div>
+<script defer src="../assets/app.js"></script><script defer src="../assets/search.js"></script>
+</body>
+</html>
