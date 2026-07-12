@@ -63,10 +63,10 @@ describe('GET /api/healthz', () => {
 		expect(body.monitor.running).toBe(true);
 	});
 
-	// api/_lib/alerts.js is a deliberate silent no-op without both env vars. That
-	// is right for dev/tests and wrong to leave unnoticed in production, where it
-	// means every 5xx report, ring-leak CRITICAL, and low-balance warning is
-	// dropped with nothing to show for it. healthz must report the gate honestly.
+	// Ops alerts always persist to the dashboard (ops_alerts / /admin/ops); the
+	// dashboard is the primary sink and is never a no-op. Telegram is an optional
+	// extra push. healthz reports the dashboard as primary and telegram_push as
+	// enabled/disabled — a disabled push is expected, not a fault.
 	describe('ops alert channel', () => {
 		const SAVED = [process.env.TELEGRAM_BOT_TOKEN, process.env.TELEGRAM_ALERTS_CHAT_ID];
 		afterEach(() => {
@@ -76,28 +76,31 @@ describe('GET /api/healthz', () => {
 			}
 		});
 
-		it('reports configured=false AND a warning when the channel is unwired', async () => {
+		it('always reports the dashboard as the primary sink', async () => {
 			delete process.env.TELEGRAM_BOT_TOKEN;
 			delete process.env.TELEGRAM_ALERTS_CHAT_ID;
 			const { body } = await callHealthz();
-			expect(body.alerts.configured).toBe(false);
-			expect(body.alerts.warning).toMatch(/silent no-op/i);
-			expect(body.alerts.requires).toEqual(['TELEGRAM_BOT_TOKEN', 'TELEGRAM_ALERTS_CHAT_ID']);
+			expect(body.alerts.primary).toBe('dashboard');
+			expect(body.alerts.dashboard).toBe('/admin/ops');
+			// No "silent no-op" framing — alerts persist regardless of Telegram.
+			expect(body.alerts.warning).toBeUndefined();
 		});
 
-		it('reports configured=false when only one of the two vars is set', async () => {
+		it('reports telegram_push disabled when the channel is unwired or half-set', async () => {
+			delete process.env.TELEGRAM_BOT_TOKEN;
+			delete process.env.TELEGRAM_ALERTS_CHAT_ID;
+			expect((await callHealthz()).body.alerts.telegram_push).toBe('disabled');
+
 			process.env.TELEGRAM_BOT_TOKEN = 'bot-token';
 			delete process.env.TELEGRAM_ALERTS_CHAT_ID;
-			const { body } = await callHealthz();
-			expect(body.alerts.configured).toBe(false);
+			expect((await callHealthz()).body.alerts.telegram_push).toBe('disabled');
 		});
 
-		it('reports configured=true with no warning once both vars are set', async () => {
+		it('reports telegram_push enabled once both vars are set', async () => {
 			process.env.TELEGRAM_BOT_TOKEN = 'bot-token';
 			process.env.TELEGRAM_ALERTS_CHAT_ID = '-1001234567890';
 			const { body } = await callHealthz();
-			expect(body.alerts.configured).toBe(true);
-			expect(body.alerts.warning).toBeUndefined();
+			expect(body.alerts.telegram_push).toBe('enabled');
 		});
 	});
 

@@ -43,6 +43,42 @@
 		.banner-text { font-size: 14.5px; font-weight: 600; }
 		.banner-sub { font-size: 12.5px; color: rgba(255,255,255,0.45); margin-left: auto; }
 
+		/* Ops alerts feed */
+		.alerts-section { margin-bottom: 2.5rem; }
+		.alerts-hd { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem; }
+		.alerts-hd-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: rgba(255,255,255,0.3); }
+		.alerts-hd-counts { display: flex; gap: 0.4rem; }
+		.alert-count-pill { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 99px; border: 1px solid; }
+		.alert-count-pill.critical { color: #f87171; background: rgba(248,113,113,0.1); border-color: rgba(248,113,113,0.25); }
+		.alert-count-pill.warn { color: #f0a93b; background: rgba(240,169,59,0.1); border-color: rgba(240,169,59,0.25); }
+		.alert-count-pill.info { color: #60a5fa; background: rgba(96,165,250,0.1); border-color: rgba(96,165,250,0.25); }
+		.alerts-empty { display: flex; align-items: center; gap: 0.6rem; padding: 1.1rem 1.4rem; border-radius: 12px; background: rgba(47,191,113,0.06); border: 1px solid rgba(47,191,113,0.16); color: #2fbf71; font-size: 13.5px; font-weight: 600; }
+		.alert-card { display: grid; grid-template-columns: 4px 1fr auto; gap: 0 1rem; align-items: start; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 0.9rem 1.1rem 0.9rem 0; margin-bottom: 0.65rem; overflow: hidden; }
+		.alert-card .rail { grid-row: 1 / -1; align-self: stretch; border-radius: 4px 0 0 4px; }
+		.alert-card.critical .rail { background: #f87171; }
+		.alert-card.warn .rail { background: #f0a93b; }
+		.alert-card.info .rail { background: #60a5fa; }
+		.alert-body { min-width: 0; }
+		.alert-title { font-size: 13.5px; font-weight: 700; color: #f1f5f9; margin: 0 0 0.3rem; line-height: 1.4; word-break: break-word; }
+		.alert-detail { font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.55; white-space: pre-wrap; word-break: break-word; margin: 0.15rem 0 0; max-height: 3.4em; overflow: hidden; position: relative; cursor: pointer; }
+		.alert-detail.expanded { max-height: none; }
+		.alert-detail.clamped::after { content: '… more'; position: absolute; right: 0; bottom: 0; padding-left: 1.5rem; background: linear-gradient(90deg, transparent, #131318 40%); color: rgba(255,255,255,0.4); font-weight: 600; }
+		.alert-meta { display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem; margin-top: 0.5rem; font-size: 11px; color: rgba(255,255,255,0.32); }
+		.alert-meta .sev { font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+		.alert-card.critical .sev { color: #f87171; }
+		.alert-card.warn .sev { color: #f0a93b; }
+		.alert-card.info .sev { color: #60a5fa; }
+		.alert-count-badge { font-variant-numeric: tabular-nums; }
+		.alert-actions { align-self: center; }
+		.alert-ack { font: inherit; font-size: 11.5px; font-weight: 600; padding: 6px 13px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7); cursor: pointer; transition: all .15s; white-space: nowrap; }
+		.alert-ack:hover { background: rgba(47,191,113,0.14); border-color: rgba(47,191,113,0.4); color: #2fbf71; }
+		.alert-ack:disabled { opacity: 0.5; cursor: default; }
+		.alerts-resolved-toggle { font: inherit; font-size: 11.5px; font-weight: 600; color: rgba(255,255,255,0.4); background: none; border: none; cursor: pointer; padding: 0.4rem 0; margin-top: 0.3rem; }
+		.alerts-resolved-toggle:hover { color: rgba(255,255,255,0.7); }
+		.alert-card.resolved { opacity: 0.55; }
+		.alert-unack { font: inherit; font-size: 11.5px; font-weight: 600; padding: 6px 13px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: transparent; color: rgba(255,255,255,0.45); cursor: pointer; white-space: nowrap; }
+		.alert-unack:hover { color: #f0a93b; border-color: rgba(240,169,59,0.4); }
+
 		/* Summary cards */
 		.ops-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
 		.sum-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 1rem 1.1rem; }
@@ -139,6 +175,19 @@ import '/nav.js';
 			<div class="banner-sub" id="bannerSub"></div>
 		</div>
 
+		<!-- Ops alerts (from ops_alerts — every sendOpsAlert persists here) -->
+		<div class="alerts-section" id="alertsSection">
+			<div class="alerts-hd">
+				<span class="alerts-hd-title">Alerts</span>
+				<span class="alerts-hd-counts" id="alertCounts"></span>
+			</div>
+			<div id="alertsBody">
+				<div class="skeleton" style="height:56px"></div>
+			</div>
+			<button class="alerts-resolved-toggle" id="resolvedToggle" style="display:none" onclick="toggleResolved()"></button>
+			<div id="resolvedBody" style="display:none"></div>
+		</div>
+
 		<div class="ops-summary" id="summaryCards"></div>
 
 		<!-- Failing spotlight -->
@@ -225,6 +274,99 @@ async function load() {
 		$('refreshBtn').textContent = 'Refresh now';
 		$('refreshBtn').disabled = false;
 	}
+	loadAlerts();
+}
+
+let _showResolved = false;
+
+async function loadAlerts() {
+	if (!_secret) return;
+	try {
+		const r = await fetch('/api/admin/ops-alerts', { headers: { 'x-ops-secret': _secret } });
+		if (!r.ok) throw new Error('HTTP ' + r.status);
+		renderAlerts(await r.json());
+	} catch (e) {
+		$('alertsBody').innerHTML = `<div class="alerts-empty" style="background:rgba(248,113,113,0.06);border-color:rgba(248,113,113,0.16);color:#f87171">Couldn't load alerts: ${esc(e.message)}</div>`;
+	}
+}
+
+function alertCard(a, resolved) {
+	const sev = a.severity || 'warn';
+	const last = a.last_seen ? fmtAgo(Date.now() - new Date(a.last_seen).getTime()) : '—';
+	const first = a.first_seen ? new Date(a.first_seen).toLocaleString() : '';
+	const countTxt = a.count > 1 ? `×${a.count}` : '';
+	const detail = a.detail
+		? `<p class="alert-detail clamped" onclick="this.classList.toggle('expanded');this.classList.toggle('clamped')">${esc(a.detail)}</p>`
+		: '';
+	const action = resolved
+		? `<button class="alert-unack" onclick="ackAlert('${esc(a.signature)}','unack',this)">Reopen</button>`
+		: `<button class="alert-ack" onclick="ackAlert('${esc(a.signature)}','ack',this)">Acknowledge</button>`;
+	return `<div class="alert-card ${sev}${resolved ? ' resolved' : ''}">
+		<div class="rail"></div>
+		<div class="alert-body">
+			<p class="alert-title">${esc(a.title)}</p>
+			${detail}
+			<div class="alert-meta">
+				<span class="sev">${sev}</span>
+				${countTxt ? `<span class="alert-count-badge">${countTxt}</span>` : ''}
+				<span>last ${last}</span>
+				${first ? `<span title="first seen">since ${esc(first)}</span>` : ''}
+				${a.environment ? `<span>${esc(a.environment)}</span>` : ''}
+				${resolved && a.acknowledged_by ? `<span>ack’d by ${esc(a.acknowledged_by)}</span>` : ''}
+			</div>
+		</div>
+		<div class="alert-actions">${action}</div>
+	</div>`;
+}
+
+function renderAlerts(d) {
+	const c = d.counts || { active: 0, critical: 0, warn: 0, info: 0 };
+	const pills = [];
+	if (c.critical) pills.push(`<span class="alert-count-pill critical">${c.critical} critical</span>`);
+	if (c.warn) pills.push(`<span class="alert-count-pill warn">${c.warn} warning</span>`);
+	if (c.info) pills.push(`<span class="alert-count-pill info">${c.info} info</span>`);
+	$('alertCounts').innerHTML = pills.join('');
+
+	const active = d.active || [];
+	if (!active.length) {
+		$('alertsBody').innerHTML = `<div class="alerts-empty">✓ No active alerts — all clear${d.note ? ' (' + esc(d.note) + ')' : ''}</div>`;
+	} else {
+		$('alertsBody').innerHTML = active.map(a => alertCard(a, false)).join('');
+	}
+
+	const resolved = d.resolved || [];
+	const tog = $('resolvedToggle');
+	if (resolved.length) {
+		tog.style.display = 'block';
+		tog.textContent = (_showResolved ? '▾ Hide' : '▸ Show') + ` ${resolved.length} acknowledged`;
+		$('resolvedBody').style.display = _showResolved ? 'block' : 'none';
+		$('resolvedBody').innerHTML = _showResolved ? resolved.map(a => alertCard(a, true)).join('') : '';
+	} else {
+		tog.style.display = 'none';
+		$('resolvedBody').style.display = 'none';
+	}
+}
+
+function toggleResolved() { _showResolved = !_showResolved; loadAlerts(); }
+
+async function ackAlert(signature, action, btn) {
+	if (btn) { btn.disabled = true; btn.textContent = action === 'ack' ? 'Acknowledging…' : 'Reopening…'; }
+	try {
+		const r = await fetch('/api/admin/ops-alerts', {
+			method: 'POST',
+			headers: { 'x-ops-secret': _secret, 'content-type': 'application/json' },
+			body: JSON.stringify({ signature, action }),
+		});
+		if (!r.ok) throw new Error('HTTP ' + r.status);
+		await loadAlerts();
+	} catch (e) {
+		if (btn) { btn.disabled = false; btn.textContent = action === 'ack' ? 'Acknowledge' : 'Reopen'; }
+		alert('Failed: ' + e.message);
+	}
+}
+
+function esc(s) {
+	return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
 }
 
 function render(d) {
@@ -313,6 +455,7 @@ async function tryAuth() {
 	render(data);
 	$('authGate').style.display = 'none';
 	$('dashboard').style.display = 'block';
+	loadAlerts();
 	startAutoRefresh();
 }
 

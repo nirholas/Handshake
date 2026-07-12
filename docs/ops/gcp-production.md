@@ -297,28 +297,34 @@ pattern-matching an RPC error string, whose wording varies by provider.
 To resume autonomous spend, fund the payer's USDC float. The loop self-recovers
 on the next tick — no redeploy, no flag flip.
 
-### Resolved: ops alert channel wired (2026-07-11)
+### Ops alerts: dashboard-primary (2026-07-12)
 
-`/api/healthz` reported `alerts.configured: false` and **every** `sendOpsAlert()`
-was a silent no-op — 5xx faults, `api/client-errors.js` browser reports,
-ring-leak CRITICALs, and low-balance warnings all dropped (`api/_lib/alerts.js`
-returns early when either Telegram var is missing). Production had no real-time
-alerting, which is why the x402 payment storm below ran for a day unnoticed.
+Ops alerting used to be Telegram-only, and Telegram-only meant that with no chat
+configured **every** `sendOpsAlert()` was a silent no-op — 5xx faults,
+`api/client-errors.js` browser reports, ring-leak CRITICALs, and low-balance
+warnings all dropped. That is why the x402 payment storm below ran for a day
+unnoticed.
 
-Fix: bot `@threewsbot` (owner-created via `@BotFather`). Token stored in Secret
-Manager (`telegram-bot-token`, granted to the `three-ws@` runtime SA) and
-referenced by `TELEGRAM_BOT_TOKEN`; `TELEGRAM_ALERTS_CHAT_ID` set inline to the
-owner's private DM chat id (a bot cannot DM a user until that user has messaged
-it first — the owner sent `/start` to seed the chat, then the id was read off
-`getUpdates`). Verified end to end: a direct `sendMessage` delivered, `healthz`
-now reports `alerts.configured: true`, and the app's own empty-float alert
-fired from revision `three-ws-api-00059-vbg`. Alerts are deduped per signature
-for 1h and capped at 20/h (`alerts.js`), so a recurring condition notifies once,
-not every tick.
+Now every `sendOpsAlert()` **always** persists to the `ops_alerts` table
+(`api/_lib/alerts.js`, migration `20260712000000_ops_alerts.sql`), keyed by the
+alert's stable signature so a recurring condition is one row with a growing
+`count`, not a flood. The admin surface at **`/admin/ops`** ("Platform Health")
+renders the active feed — severity-sorted, with acknowledge / reopen — from
+`GET/POST /api/admin/ops-alerts`. Auth is the same `x-ops-secret`
+(`OPS_SECRET`, falling back to `CRON_SECRET`) the ops page already uses. This is
+the primary sink and needs no third-party service.
 
-To point alerts at a shared private group instead of the owner's DM: add
-`@threewsbot` to the group (admin if it's a channel), post any message, read the
-new negative chat id from `getUpdates`, and update `TELEGRAM_ALERTS_CHAT_ID`.
+Telegram is now an **optional extra push**, off by default. When both
+`TELEGRAM_BOT_TOKEN` and `TELEGRAM_ALERTS_CHAT_ID` are set, alerts also push to
+that private chat (deduped per signature for 1h, capped at 20/h). It is
+deliberately unset in production — the dashboard is the channel. `/api/healthz`
+reports `alerts.primary: "dashboard"` and `alerts.telegram_push:
+"disabled"|"enabled"`; a disabled push is expected, not a fault. The
+`@threewsbot` token remains in Secret Manager (`telegram-bot-token`) for
+user-facing bot use (e.g. changelog push to holders); it is **not** wired to ops
+alerts. To turn the extra push on, add `@threewsbot` to a private ops chat, read
+its id from `getUpdates`, and set `TELEGRAM_ALERTS_CHAT_ID` (+ point
+`TELEGRAM_BOT_TOKEN` at the secret).
 
 ### Resolved: x402 sponsor co-signing key (2026-07-09)
 

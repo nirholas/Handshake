@@ -361,19 +361,15 @@ export default wrap(async (req, res) => {
 				requires: ['NVIDIA_API_KEY', 'NVIDIA_ASR_FUNCTION_ID'],
 			},
 		},
-		// The real-time ops alert channel (api/_lib/alerts.js). It is a deliberate
-		// silent no-op when unconfigured, so dev and tests need no secrets — but
-		// that same silence in production means every 5xx report, browser-error
-		// report, ring-leak CRITICAL, and low-balance warning goes nowhere with no
-		// indication anything is wrong. Surface the gate here so a missing channel
-		// is visible on the dashboard instead of only discoverable by reading code.
+		// Ops alerts (api/_lib/alerts.js). Every sendOpsAlert() ALWAYS persists to
+		// the ops_alerts table and surfaces on the admin dashboard (/admin/ops), so
+		// alerts are never silently dropped. Telegram is an OPTIONAL extra push for
+		// real-time notification; its absence is expected, not a fault.
 		alerts: {
-			configured: alertsConfigured(),
-			channel: 'telegram',
-			requires: ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_ALERTS_CHAT_ID'],
-			...(alertsConfigured() ? {} : {
-				warning: 'ops alerts are a silent no-op — sendOpsAlert() calls (5xx faults, client errors, ring leaks, low-balance) are dropped',
-			}),
+			primary: 'dashboard',
+			dashboard: '/admin/ops',
+			telegram_push: alertsConfigured() ? 'enabled' : 'disabled',
+			telegram_requires: ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_ALERTS_CHAT_ID'],
 		},
 	}, { 'cache-control': 'public, max-age=2, s-maxage=2' });
 });
