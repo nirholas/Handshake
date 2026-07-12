@@ -65,6 +65,17 @@ const NVIDIA_MODEL = 'meta/llama-3.3-70b-instruct';
 // enough for a single prompt-refine turn; the rest of the free chain still
 // backs it up if the NIM lane is down.
 const NVIDIA_NEMOTRON_MODEL = 'nvidia/nvidia-nemotron-nano-9b-v2';
+// OVH AI Endpoints anonymous tier: no key, no account, no signup — Llama 3.3
+// 70B served free by OVHcloud's officially documented trial lane (not a ToS
+// workaround). The tradeoff for needing zero setup is a tight 2 req/min per
+// model per IP quota, so it rides at the back of the 70B-class group rather
+// than leading. https://help.ovhcloud.com/csm/en-public-cloud-ai-endpoints-capabilities
+const OVH_MODEL = 'Meta-Llama-3_3-70B-Instruct';
+// Pollinations' keyless anonymous tier: also no key, routes to a hosted
+// gpt-oss-20b. Smaller than the 70B rungs above it, so it sits in the
+// capability-step-down group alongside Groq's instant lane — an always-on
+// fallback that needs nothing configured. https://github.com/pollinations/pollinations/blob/master/APIDOCS.md
+const POLLINATIONS_MODEL = 'openai-fast';
 // The NVIDIA free NIM lane sits behind a shared queue that, under load, holds a
 // request far longer than a fallback rung should block the chain (observed live
 // 2026-07-12: 25s hang on a 900-token compose prompt while groq/openrouter
@@ -208,7 +219,7 @@ function vertexGeminiProvider() {
 	};
 }
 
-function openaiCompatProvider({ name, key, url, model, extraHeaders = {}, timeoutMs = null }) {
+function openaiCompatProvider({ name, key = null, url, model, extraHeaders = {}, timeoutMs = null }) {
 	return {
 		name,
 		model,
@@ -220,7 +231,10 @@ function openaiCompatProvider({ name, key, url, model, extraHeaders = {}, timeou
 		// spend the general per-provider budget waiting on it before reaching a
 		// reliable rung. Null = use the caller's general cap.
 		...(timeoutMs ? { timeoutMs } : {}),
-		headers: { 'content-type': 'application/json', authorization: `Bearer ${key}`, ...extraHeaders },
+		// `key` is optional — the truly keyless free lanes (OVH anonymous tier,
+		// Pollinations) reject requests that carry a bogus Authorization header, so
+		// omit it entirely rather than sending "Bearer null".
+		headers: { 'content-type': 'application/json', ...(key ? { authorization: `Bearer ${key}` } : {}), ...extraHeaders },
 		buildBody: (system, user, maxTokens) => ({
 			model,
 			max_tokens: maxTokens,

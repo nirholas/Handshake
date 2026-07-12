@@ -15,9 +15,14 @@
 import { Connection, Keypair, Transaction, VersionedTransaction } from '@solana/web3.js';
 import { grindVanity } from '../solana/vanity/grinder.js';
 
-/** Detect an injected Solana wallet (Phantom / Backpack / Solflare). */
+/** Detect an injected Solana wallet (Phantom / Backpack / Solflare / Seeker). */
 export function detectSolanaWallet() {
 	if (typeof window === 'undefined') return null;
+	// Seeker/Saga TWA: isPhantom=false on purpose (it isn't Phantom) — check
+	// its own isThreeWs flag first, same order as
+	// src/onchain/adapters/solana.js.
+	if (window.threeWsWallet?.isThreeWs) return window.threeWsWallet;
+	if (window.solana?.isThreeWs) return window.solana;
 	if (window.phantom?.solana?.isPhantom) return window.phantom.solana;
 	if (window.solana?.isPhantom) return window.solana;
 	if (window.backpack?.solana) return window.backpack.solana;
