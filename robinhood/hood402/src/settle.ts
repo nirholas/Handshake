@@ -16,6 +16,7 @@ export interface HoodBroadcaster {
     functionName: string
     args: readonly unknown[]
     chain: Chain | null
+    account: Address
   }): Promise<Hex>
 }
 
@@ -31,6 +32,8 @@ export interface SettleOptions {
   requirements: PaymentRequirements
   /** Facilitator gas wallet that broadcasts the settlement transaction. */
   wallet: HoodBroadcaster
+  /** The facilitator's own address (the gas-paying account bound to `wallet`). */
+  account: Address
   /** Public client used to re-verify and to await the receipt. */
   reader: HoodConfirmer
   /** Injectable clock (unix seconds) for deterministic tests. */
@@ -94,6 +97,7 @@ export async function settlePayment(opts: SettleOptions): Promise<SettleResult> 
         s,
       ],
       chain: net.chain,
+      account: opts.account,
     })
   } catch (err) {
     return {

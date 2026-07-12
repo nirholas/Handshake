@@ -100,15 +100,22 @@ describe('createTwapExecutor', () => {
   const tokenIn = '0x1111111111111111111111111111111111111111' as `0x${string}`
   const tokenOut = '0x2222222222222222222222222222222222222222' as `0x${string}`
 
+  // Drives the REAL quoteSwap/buildSwapTx code paths (no module mocking) by
+  // stubbing only the two viem client methods they call: `simulateContract`
+  // (the QuoterV2 probe) and `call` (the dry-run eth_call). Every probed route
+  // "succeeds" at 2x amountIn so route selection is deterministic.
   function fakeReadOnlyClient(): HoodClient {
+    const simulateContract = vi.fn(async ({ functionName, args }: { functionName: string; args: readonly unknown[] }) => {
+      const amountIn = functionName === 'quoteExactInputSingle' ? (args[0] as { amountIn: bigint }).amountIn : (args[1] as bigint)
+      return { result: [amountIn * 2n, 0n, 0n, 100_000n] }
+    })
+    const call = vi.fn(async () => ({ data: '0x' as const }))
     return {
       network: 'testnet',
       wallet: null,
-      account: null,
+      account: { address: '0x9999999999999999999999999999999999999999' },
       chain: { id: 46630 },
-      public: {
-        call: vi.fn(async () => ({ data: '0x' })),
-      },
+      public: { simulateContract, call },
     } as unknown as HoodClient
   }
 
@@ -122,34 +129,12 @@ describe('createTwapExecutor', () => {
   })
 
   it('defaults to dry-run (simulated, never sent) when the client has no wallet', async () => {
-    vi.doMock('hoodchain', async () => {
-      const actual = await vi.importActual<typeof import('hoodchain')>('hoodchain')
-      return {
-        ...actual,
-        quoteSwap: vi.fn(async (_client: unknown, args: { amountIn: bigint }) => ({
-          route: { fees: [500], path: [tokenIn, tokenOut], encodedPath: '0x' },
-          amountIn: args.amountIn,
-          amountOut: args.amountIn * 2n,
-          gasEstimate: 100_000n,
-        })),
-        buildSwapTx: vi.fn(() => ({
-          to: tokenOut,
-          data: '0xdead',
-          value: 0n,
-          quote: {},
-          amountOutMinimum: 1n,
-          deadline: 0n,
-        })),
-      }
-    })
-    const { createTwapExecutor: freshTwap } = await import('../../src/strategy/index.js')
     const client = fakeReadOnlyClient()
-    const twap = freshTwap(client, { tokenIn, tokenOut, totalAmountIn: 400n, slices: 2, intervalMs: 0 })
+    const twap = createTwapExecutor(client, { tokenIn, tokenOut, totalAmountIn: 400n, slices: 2, intervalMs: 0 })
     const results = await twap.run()
     expect(results).toHaveLength(2)
     for (const r of results) expect(r.status).toBe('simulated')
-    expect((client.public.call as ReturnType<typeof vi.fn>)).toHaveBeenCalled()
-    vi.doUnmock('hoodchain')
+    expect(client.public.call).toHaveBeenCalled()
   })
 
   it('skips a slice when onBeforeSlice returns false', async () => {

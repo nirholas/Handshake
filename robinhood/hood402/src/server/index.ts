@@ -54,6 +54,8 @@ export interface PaywallOptions {
   // --- self-settle mode ---
   /** viem WalletClient (gas key) for local settlement. */
   wallet?: HoodBroadcaster
+  /** The gas wallet's own address (the account bound to `wallet`). */
+  account?: Address
   /** viem PublicClient for verification + confirmation. */
   reader?: HoodConfirmer
 }
@@ -88,9 +90,9 @@ export class PaywallEngine {
     }
     this.wallet = opts.wallet
     this.reader = opts.reader
-    if (!this.facilitator && !(this.wallet && this.reader)) {
+    if (!this.facilitator && !(this.wallet && this.reader && opts.account)) {
       throw new Hood402ConfigError(
-        'hood402 paywall: provide either `facilitator` or both `wallet` and `reader`.',
+        'hood402 paywall: provide either `facilitator` or all of `wallet`, `account`, and `reader`.',
       )
     }
   }
@@ -148,6 +150,7 @@ export class PaywallEngine {
       payload,
       requirements,
       wallet: this.wallet!,
+      account: this.opts.account!,
       reader: this.reader as HoodConfirmer,
     })
   }

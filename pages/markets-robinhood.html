@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en" class="cv-page" data-shell>
+	<head>
+		<script>
+			/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Robinhood Chain — Stock Tokens, memecoins &amp; chain stats · three.ws</title>
+		<meta
+			name="description"
+			content="Live Robinhood Chain (4663) market data: the 24/7 tokenized-equity board with Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener (NOXA / The Odyssey), recent launches, and chain TVL — real on-chain and DeFiLlama data, no API key."
+		/>
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/markets/robinhood" />
+		<meta property="og:title" content="Robinhood Chain — Stock Tokens, memecoins &amp; chain stats · three.ws" />
+		<meta
+			property="og:description"
+			content="Live Robinhood Chain market data — Stock Token board with Chainlink NAV vs DEX premium, a memecoin screener, recent launches, and chain TVL."
+		/>
+		<meta
+			property="og:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Robinhood+Chain&amp;d=Live+Stock+Token+board%2C+memecoin+screener%2C+and+chain+TVL+for+Robinhood+Chain&amp;p=%2Fmarkets%2Frobinhood"
+		/>
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Robinhood Chain · three.ws" />
+		<meta
+			name="twitter:description"
+			content="Live Stock Token board, memecoin screener, and chain TVL for Robinhood Chain."
+		/>
+		<meta
+			name="twitter:image"
+			content="https://three.ws/api/page-og?s=crypto&amp;t=Robinhood+Chain&amp;d=Live+Stock+Token+board%2C+memecoin+screener%2C+and+chain+TVL+for+Robinhood+Chain&amp;p=%2Fmarkets%2Frobinhood"
+		/>
+		<meta name="theme-color" content="#09090b" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/chain-page.css" />
+		<link rel="stylesheet" href="/src/robinhood.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="canonical" href="https://three.ws/markets/robinhood" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:image:alt" content="Robinhood Chain markets — three.ws" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Robinhood Chain","description":"Live Robinhood Chain market data — Stock Token board, memecoin screener, recent launches, and chain TVL.","url":"https://three.ws/markets/robinhood","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}]}</script>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container" id="rh-main">
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/markets">Markets</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<span class="here">Robinhood Chain</span>
+			</nav>
+
+			<h1 class="cv-h1">Robinhood Chain</h1>
+			<p class="cv-sub">
+				A permissionless Arbitrum Orbit L2 tokenizing ~95 US equities 24/7, alongside a live memecoin
+				ecosystem. Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener, recent
+				launches, and chain stats — real on-chain and DeFiLlama data.
+			</p>
+
+			<div class="rh-tabs" role="tablist" aria-label="Robinhood Chain views">
+				<button type="button" class="rh-tab is-active" data-tab="stocks" role="tab" aria-selected="true" id="rh-tab-stocks">Stocks</button>
+				<button type="button" class="rh-tab" data-tab="coins" role="tab" aria-selected="false" id="rh-tab-coins">Coins</button>
+				<button type="button" class="rh-tab" data-tab="chain" role="tab" aria-selected="false" id="rh-tab-chain">Chain</button>
+			</div>
+
+			<section id="rh-panel-stocks" class="rh-panel" role="tabpanel" aria-labelledby="rh-tab-stocks"></section>
+			<section id="rh-panel-coins" class="rh-panel" role="tabpanel" aria-labelledby="rh-tab-coins" hidden></section>
+			<section id="rh-panel-chain" class="rh-panel" role="tabpanel" aria-labelledby="rh-tab-chain" hidden></section>
+
+			<p class="cv-updated" id="rh-updated" hidden></p>
+		</main>
+
+		<script type="module" src="/src/markets-robinhood.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>

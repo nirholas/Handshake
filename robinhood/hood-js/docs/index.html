@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hood-js — five lines to your first Robinhood Chain trade</title>
+<meta name="description" content="The 'just works' wrapper for Robinhood Chain (4663): stock prices, portfolios, trending memecoins, launch streams, and swaps in one import.">
+<link rel="stylesheet" href="./site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%AA%B6%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<nav class="top" aria-label="Site">
+  <div class="wrap">
+    <a class="brand" href="./index.html">hood<span class="tick">-js</span></a>
+    <div class="links">
+      <a href="#repl">Try it live</a>
+      <a href="#quickstart" class="hide-sm">Quickstart</a>
+      <a href="#api">API</a>
+      <a href="https://github.com/nirholas/hood-js">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <h1>Five lines to your<br><span class="grad">first Robinhood Chain trade</span></h1>
+  <p class="lede">
+    One import, sensible defaults, promise-first. Stock Token prices, multiplier-correct
+    portfolios, trending memecoins, live launch streams, and swaps — chain ID 4663, public
+    RPC by default. No wallet needed until you actually swap.
+  </p>
+  <div class="cta">
+    <span class="install"><span class="dollar">$</span> npm install hood-js viem</span>
+    <a class="btn primary" href="#repl">Try it live</a>
+    <a class="btn" href="#quickstart">Quickstart</a>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section class="block" id="repl">
+  <div class="repl-head">
+    <h2>Type a real call. Get a real answer.</h2>
+    <span class="status" id="repl-status"><span class="dot"></span><span id="repl-status-text">loading viem + registry…</span></span>
+  </div>
+  <p class="sub">
+    This runs live in your browser — real <code>eth_call</code>s to Robinhood Chain's public
+    RPC and a real fetch to GeckoTerminal, using <a href="https://esm.sh/viem">viem via esm.sh</a>
+    (no bundler, no server, no fake data). Supports <code>price</code>, <code>prices</code>,
+    <code>coins</code>, and single-hop <code>quote</code>. <code>portfolio</code> and
+    <code>swap</code> need the full package in Node.
+  </p>
+
+  <div class="repl">
+    <div class="repl-out" id="repl-out" aria-live="polite"></div>
+    <form class="repl-form" id="repl-form">
+      <span class="prompt">&gt;</span>
+      <input id="repl-input" type="text" autocomplete="off" spellcheck="false"
+        placeholder="hood.price('TSLA')" aria-label="hood-js command">
+      <button type="submit" id="repl-run">Run</button>
+    </form>
+  </div>
+  <div class="repl-chips">
+    <button class="chip" data-cmd="hood.price('TSLA')">hood.price('TSLA')</button>
+    <button class="chip" data-cmd="hood.prices(['AAPL','TSLA','NVDA'])">hood.prices([...])</button>
+    <button class="chip" data-cmd="hood.coins({limit:5})">hood.coins({limit:5})</button>
+    <button class="chip" data-cmd="hood.quote({sell:'USDG',buy:'WETH',amount:100})">hood.quote({...})</button>
+  </div>
+</section>
+
+<section class="block" id="quickstart">
+  <h2>Quickstart</h2>
+  <p class="sub">Node ≥ 20. viem is a peer dependency.</p>
+<pre><code>npm install hood-js viem</code></pre>
+<pre><code>import hood from 'hood-js'
+
+const { usd } = await hood.price('AAPL')
+console.log(`AAPL: $${usd}`)
+
+const top = await hood.coins({ limit: 5 })
+for (const c of top) console.log(c.symbol, `$${c.priceUsd}`, `${c.change24h}%`)
+
+const q = await hood.quote({ sell: 'USDG', buy: 'WETH', amount: 100 })
+const { hash, url } = await hood.swap({ ...q, wallet: process.env.PK })
+console.log('done:', url)</code></pre>
+</section>
+
+<section class="block" id="api">
+  <h2>API reference</h2>
+  <p class="sub">Every read needs nothing — no key, no wallet. Only <code>swap</code> does.</p>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>Call</th><th>Returns</th><th>Wallet?</th></tr></thead>
+    <tbody>
+      <tr><td><code>hood.price(symbol)</code></td><td>live USD price for one Stock Token</td><td>no</td></tr>
+      <tr><td><code>hood.prices([symbols])</code></td><td>batched multicall, same order</td><td>no</td></tr>
+      <tr><td><code>hood.portfolio(address)</code></td><td>multiplier-correct, USD-valued positions</td><td>no</td></tr>
+      <tr><td><code>hood.coins({ limit?, window? })</code></td><td>trending memecoins (launchpads + Uniswap)</td><td>no</td></tr>
+      <tr><td><code>hood.launches({ live? }, cb?)</code></td><td>recent or streamed NOXA / Odyssey launches</td><td>no</td></tr>
+      <tr><td><code>hood.quote({ sell, buy, amount })</code></td><td>a swap quote — spread into <code>swap()</code></td><td>no</td></tr>
+      <tr><td><code>hood.swap({ ...quote, wallet })</code></td><td>executed swap: hash, url, amounts</td><td><strong>yes</strong></td></tr>
+      <tr><td><code>hood.config({ ... })</code></td><td><code>hood</code> (chainable)</td><td>—</td></tr>
+      <tr><td><code>hood.testnet()</code> / <code>hood.mainnet()</code></td><td><code>hood</code> (chainable)</td><td>—</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="disclosure">
+    <strong>Stock Token eligibility.</strong> Stock Tokens are tokenized debt securities
+    (issuer: Robinhood Assets (Jersey) Ltd) and may not be offered, sold, or delivered to US
+    persons (additional limits: Canada, UK, Switzerland). Reading data is unrestricted;
+    buying one throws until you call <code>hood.config({ acknowledgeEligibility: true })</code>,
+    affirming eligibility. Memecoins are never gated.
+  </div>
+</section>
+
+<section class="block" id="errors">
+  <h2>One error type, always friendly</h2>
+  <p class="sub">Never a raw viem stack trace — a <code>HoodError</code> with a plain-language message and a stable <code>code</code>.</p>
+  <div class="grid">
+    <div class="card"><h3>Offline validation</h3><p>Bad arguments (empty symbol, negative amount, missing wallet) fail instantly with <code>BAD_INPUT</code> — no network round-trip.</p></div>
+    <div class="card"><h3>Typed codes</h3><p><code>UNKNOWN_SYMBOL</code>, <code>NO_FEED</code>, <code>STALE_PRICE</code>, <code>NO_ROUTE</code>, <code>NEEDS_WALLET</code>, <code>NEEDS_ELIGIBILITY</code>, and more.</p></div>
+    <div class="card"><h3><code>cause</code> preserved</h3><p>The original hoodchain/viem error rides along on <code>err.cause</code> for debugging — nothing is hidden, just translated.</p></div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>MIT © 2026 nirholas</span>
+    <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
+  </div>
+</footer>
+
+<script type="module">
+import { createPublicClient, http, parseUnits, formatUnits } from 'https://esm.sh/viem@2.55.1'
+import { robinhood } from 'https://esm.sh/viem@2.55.1/chains'
+
+const aggregatorV3Abi = [
+  { type: 'function', name: 'latestRoundData', stateMutability: 'view', inputs: [],
+    outputs: [
+      { name: 'roundId', type: 'uint80' }, { name: 'answer', type: 'int256' },
+      { name: 'startedAt', type: 'uint256' }, { name: 'updatedAt', type: 'uint256' },
+      { name: 'answeredInRound', type: 'uint80' },
+    ] },
+]
+const quoterV2Abi = [
+  { type: 'function', name: 'quoteExactInputSingle', stateMutability: 'nonpayable',
+    inputs: [{ name: 'params', type: 'tuple', components: [
+      { name: 'tokenIn', type: 'address' }, { name: 'tokenOut', type: 'address' },
+      { name: 'amountIn', type: 'uint256' }, { name: 'fee', type: 'uint24' },
+      { name: 'sqrtPriceLimitX96', type: 'uint160' } ] }],
+    outputs: [
+      { name: 'amountOut', type: 'uint256' }, { name: 'sqrtPriceX96After', type: 'uint160' },
+      { name: 'initializedTicksCrossed', type: 'uint32' }, { name: 'gasEstimate', type: 'uint256' } ] },
+]
+
+// Verified mainnet addresses (see robinhood-chain-sdk/src/addresses.ts — same source of truth).
+const USDG = '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168'
+const WETH = '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73'
+const QUOTER_V2 = '0x33e885eD0Ec9bF04EcfB19341582aADCb4c8A9E7'
+const V3_FEE_TIERS = [100, 500, 3000, 10000]
+const USDG_DECIMALS = 6
+
+const statusEl = document.getElementById('repl-status')
+const statusText = document.getElementById('repl-status-text')
+const outEl = document.getElementById('repl-out')
+const form = document.getElementById('repl-form')
+const input = document.getElementById('repl-input')
+const runBtn = document.getElementById('repl-run')
+
+let client, bySymbol
+let ready = false
+
+function line(cls, text) {
+  const div = document.createElement('div')
+  div.className = 'repl-line ' + cls
+  div.textContent = text
+  outEl.appendChild(div)
+  outEl.scrollTop = outEl.scrollHeight
+}
+
+function echo(cmd) {
+  const div = document.createElement('div')
+  div.className = 'repl-line in'
+  div.innerHTML = '<span class="prompt">&gt;</span>'
+  div.appendChild(document.createTextNode(cmd))
+  outEl.appendChild(div)
+  outEl.scrollTop = outEl.scrollHeight
+}
+
+function looseParse(argsSrc) {
+  let t = argsSrc.replace(/([{,]\s*)([A-Za-z_$][\w$]*)\s*:/g, '$1"$2":')
+  t = t.replace(/'([^']*)'/g, '"$1"')
+  return JSON.parse('[' + t + ']')
+}
+
+async function price(symbol) {
+  const token = bySymbol.get(String(symbol).toUpperCase())
+  if (!token) throw new Error(`"${symbol}" is not a known Stock Token. Try AAPL, TSLA, NVDA, MSFT…`)
+  if (!token.feed) throw new Error(`"${token.symbol}" has no live Chainlink feed — can't be priced.`)
+  const round = await client.readContract({ address: token.feed, abi: aggregatorV3Abi, functionName: 'latestRoundData' })
+  return { symbol: token.symbol, usd: Number(round[1]) / 1e8, updatedAt: new Date(Number(round[3]) * 1000).toISOString() }
+}
+
+async function prices(symbols) {
+  if (!Array.isArray(symbols)) throw new Error('prices() needs an array of tickers.')
+  return Promise.all(symbols.map((s) => price(s).catch(() => ({ symbol: s, usd: null, updatedAt: null }))))
+}
+
+async function coins(opts = {}) {
+  const limit = opts.limit ?? 10
+  const url = `https://api.geckoterminal.com/api/v2/networks/robinhood/trending_pools?include=base_token,dex&duration=24h&page=1`
+  const res = await fetch(url, { headers: { accept: 'application/json' } })
+  if (!res.ok) throw new Error(`GeckoTerminal HTTP ${res.status}`)
+  const body = await res.json()
+  const tokenById = new Map((body.included || []).filter((i) => i.type === 'token').map((i) => [i.id, i]))
+  return (body.data || []).slice(0, limit).map((pool) => {
+    const a = pool.attributes
+    const baseId = pool.relationships?.base_token?.data?.id
+    const base = baseId ? tokenById.get(baseId) : undefined
+    return {
+      symbol: base?.attributes?.symbol ?? a.name.split(' / ')[0],
+      priceUsd: Number(a.base_token_price_usd) || 0,
+      change24h: a.price_change_percentage?.h24 != null ? Number(a.price_change_percentage.h24) : null,
+      dex: pool.relationships?.dex?.data?.id ?? 'unknown',
+    }
+  })
+}
+
+async function resolveAddr(ref) {
+  const upper = String(ref).toUpperCase()
+  if (upper === 'USDG') return { address: USDG, decimals: USDG_DECIMALS, label: 'USDG' }
+  if (upper === 'WETH' || upper === 'ETH') return { address: WETH, decimals: 18, label: 'WETH' }
+  const token = bySymbol.get(upper)
+  if (!token) throw new Error(`"${ref}" isn't USDG/WETH or a known Stock Token. The in-browser demo only quotes those (memecoins need the Node package).`)
+  return { address: token.address, decimals: token.decimals, label: token.symbol }
+}
+
+async function quote({ sell, buy, amount }) {
+  if (sell == null || buy == null || amount == null) throw new Error('quote needs { sell, buy, amount }.')
+  const tokenIn = await resolveAddr(sell)
+  const tokenOut = await resolveAddr(buy)
+  const amountIn = parseUnits(String(amount), tokenIn.decimals)
+  let best = null
+  for (const fee of V3_FEE_TIERS) {
+    try {
+      const { result } = await client.simulateContract({
+        address: QUOTER_V2, abi: quoterV2Abi, functionName: 'quoteExactInputSingle',
+        args: [{ tokenIn: tokenIn.address, tokenOut: tokenOut.address, amountIn, fee, sqrtPriceLimitX96: 0n }],
+      })
+      if (!best || result[0] > best.amountOut) best = { fee, amountOut: result[0] }
+    } catch { /* pool at this tier may not exist or has no liquidity for this size */ }
+  }
+  if (!best) throw new Error(`No direct v3 pool with liquidity for ${tokenIn.label} → ${tokenOut.label} at this amount. The in-browser demo only tries single-hop routes — the Node package also tries two-hop routes via WETH/USDG.`)
+  const buyAmount = formatUnits(best.amountOut, tokenOut.decimals)
+  return { sell: tokenIn.label, buy: tokenOut.label, sellAmount: String(amount), buyAmount, feeTier: best.fee }
+}
+
+const METHODS = { price, prices, coins, quote }
+
+async function run(cmd) {
+  echo(cmd)
+  const match = cmd.trim().match(/^hood\.(\w+)\((.*)\)$/s)
+  if (!match) {
+    line('err', `Couldn't parse "${cmd}". Try: hood.price('TSLA')`)
+    return
+  }
+  const [, methodName, argsSrc] = match
+  const fn = METHODS[methodName]
+  if (!fn) {
+    line('err', `hood.${methodName}() isn't supported in this browser demo. Supported here: ${Object.keys(METHODS).join(', ')}. portfolio()/swap() need the Node package.`)
+    return
+  }
+  if (!ready) {
+    line('err', 'Still connecting to Robinhood Chain — try again in a second.')
+    return
+  }
+  try {
+    const args = looseParse(argsSrc)
+    const result = await fn(...args)
+    line('out', JSON.stringify(result, null, 2))
+  } catch (err) {
+    line('err', err.message || String(err))
+  }
+}
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault()
+  const cmd = input.value.trim()
+  if (!cmd) return
+  input.value = ''
+  run(cmd)
+})
+
+document.querySelectorAll('.chip').forEach((chip) => {
+  chip.addEventListener('click', () => {
+    input.value = chip.dataset.cmd
+    run(chip.dataset.cmd)
+  })
+})
+
+async function init() {
+  try {
+    client = createPublicClient({ chain: robinhood, transport: http() })
+    const res = await fetch('./stock-tokens.json')
+    const registry = await res.json()
+    bySymbol = new Map(registry.tokens.map((t) => [t.symbol.toUpperCase(), t]))
+    const chainId = await client.getChainId()
+    ready = true
+    statusEl.className = 'status live'
+    statusText.textContent = `live · chain ${chainId} · ${registry.tokenCount} Stock Tokens loaded`
+    line('hint', `Connected to Robinhood Chain (${chainId}). Try a command below, or click a chip.`)
+    run("hood.price('TSLA')")
+  } catch (err) {
+    statusEl.className = 'status error'
+    statusText.textContent = 'connection failed'
+    line('err', 'Could not load viem or the token registry: ' + (err?.message || err))
+  }
+}
+
+init()
+</script>
+
+</body>
+</html>

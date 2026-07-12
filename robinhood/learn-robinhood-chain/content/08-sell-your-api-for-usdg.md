@@ -21,7 +21,8 @@ So this tutorial teaches the pattern that *does* work today: **a hand-rolled 402
 
 ```ts
 import express from 'express'
-import { createHoodClient, getUsdgBalance, formatUsdg, parseUsdg, MAINNET_ADDRESSES } from 'hoodchain'
+import { parseEventLogs } from 'viem'
+import { createHoodClient, erc20Abi, parseUsdg, MAINNET_ADDRESSES } from 'hoodchain'
 
 const app = express()
 const hood = createHoodClient()
@@ -60,11 +61,18 @@ app.get('/api/quote/:symbol', async (req, res) => {
     return res.status(402).json({ error: 'payment not found or not confirmed yet' })
   }
 
-  // verify it's a real USDG Transfer to PAY_TO of at least PRICE_USDG
-  const transferLog = receipt.logs.find(
-    (l) => l.address.toLowerCase() === MAINNET_ADDRESSES.usdg.toLowerCase(),
+  // Decode every Transfer log on the USDG contract and require ONE that pays
+  // PAY_TO at least PRICE_USDG. Checking only "a log exists on the USDG
+  // contract" is not enough — see the callout below for why.
+  const transfers = parseEventLogs({
+    abi: erc20Abi,
+    eventName: 'Transfer',
+    logs: receipt.logs.filter((l) => l.address.toLowerCase() === MAINNET_ADDRESSES.usdg.toLowerCase()),
+  })
+  const paid = transfers.some(
+    (t) => t.args.to.toLowerCase() === PAY_TO.toLowerCase() && t.args.value >= PRICE_USDG,
   )
-  if (!transferLog) return res.status(402).json({ error: 'not a USDG transfer' })
+  if (!paid) return res.status(402).json({ error: 'no sufficient USDG transfer to payTo in this transaction' })
 
   seenTxHashes.add(txHash)
 
@@ -108,7 +116,15 @@ console.log(data) // { symbol: 'AAPL', priceUsd: 315.5, updatedAt: ... }
 
 ## What was verified, and what's a documented gap
 
-The server and client code above were exercised locally end-to-end against a running Express server on this machine: an unauthenticated request correctly returned `402` with the challenge body, and a request carrying a *fabricated* `X-PAYMENT` header (a made-up transaction hash) correctly fell through to `getTransactionReceipt` returning `null` and was rejected with `402` again — proving the verification path actually checks the chain rather than trusting the header blindly. A **real, funded USDG payment** was not captured end-to-end in this environment, for the same reason as Tutorial 6's testnet swap: it requires a funded wallet from the browser-gated testnet faucet, which wasn't available here. If you fund a wallet and run both halves above, the flow completes exactly as written.
+The server code above — this exact route, verification logic included — was run locally against live mainnet reads, and three cases were checked by hand with `curl`:
+
+1. **No `X-PAYMENT` header** → real `402` with the challenge body. ✅
+2. **A fabricated `X-PAYMENT`** (a made-up transaction hash) → `getTransactionReceipt` correctly returned `null`, rejected with `402`. ✅
+3. **A real, successfully-mined mainnet transaction hash — but one that never paid `PAY_TO` anything** → **this was wrongly accepted (`200 OK`) by an earlier version of this route.**
+
+That third case is not a hypothetical: it's what happened when this tutorial's code only checked "a `Transfer` log exists on the USDG contract address" instead of decoding *who* it paid and *how much*. Any already-mined USDG transfer by any party — unrelated to this API entirely — satisfied that check. The code above (with `parseEventLogs` and the explicit `to`/`value` comparison) is the fix, re-verified against the same three cases with the correct outcome in all three. **This is why the tutorial ships the fixed version, not the first one written** — treat it as a demonstration of exactly the kind of bug a "just check a log exists" shortcut produces, and why decoding the actual event arguments is not optional.
+
+A **real, funded USDG payment that this route accepts end-to-end** was not captured in this environment, for the same reason as Tutorial 6's testnet swap: it requires a funded wallet from the browser-gated testnet faucet, which wasn't available here. If you fund a wallet and run both halves above, the flow completes exactly as written — and, per the fix above, will correctly *reject* any transaction that isn't a real payment to your `PAY_TO` address.
 
 :::warning `scheme: 'onchain-transfer'` is not a registered x402 scheme
 The official x402 spec defines schemes like `exact` (EIP-3009) with specific verification semantics that facilitators implement. This tutorial's hand-rolled verification is **compatible with the x402 wire shape** (402 status, `X-PAYMENT` header, JSON challenge) but is not a spec-registered scheme — it's the honest fallback for a token (USDG) and chain (Robinhood Chain) the reference facilitator doesn't yet support. If Robinhood Chain gains a hosted x402 facilitator or USDG gains EIP-3009, switch to `x402-express`'s `paymentMiddleware` directly — it's a strictly better one-line integration once the network is registered.
@@ -119,7 +135,6 @@ The official x402 spec defines schemes like `exact` (EIP-3009) with specific ver
 The example above is deliberately minimal to show the mechanics. Before charging real money:
 
 - **Replace the in-memory `Set` with persistent storage.** A restart currently forgets which transactions were already spent, opening a replay window.
-- **Check the transfer amount and recipient precisely**, not just "a log exists on the USDG contract." Decode the `Transfer` event's `to` and `value` fields and compare against `payTo` / `maxAmountRequired` exactly — the example above checks existence but should be extended to check the decoded values before shipping.
 - **Add a payment timeout.** A `402` challenge should expire; don't accept a transaction from an hour ago against a price you quoted a second ago.
 - **Rate-limit the unauthenticated path.** The `402` response itself is free to request; someone can hammer it without ever paying.
 

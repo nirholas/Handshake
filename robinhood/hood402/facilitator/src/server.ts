@@ -1,4 +1,5 @@
 import express, { type NextFunction, type Request, type Response } from 'express'
+import { getAddress, type Address, type Hex } from 'viem'
 import {
   requireNetwork,
   verifyPayment,
@@ -133,9 +134,9 @@ export function buildApp(config: FacilitatorConfig, ledger: Ledger) {
         if (existing.status === 'settled' && existing.tx_hash) {
           res.json({
             success: true,
-            transaction: existing.tx_hash,
+            transaction: existing.tx_hash as Hex,
             network: net.id,
-            payer: existing.payer,
+            payer: getAddress(existing.payer),
           } satisfies SettleResult)
           return
         }
@@ -144,7 +145,7 @@ export function buildApp(config: FacilitatorConfig, ledger: Ledger) {
             success: false,
             errorReason: 'authorization_already_used',
             network: net.id,
-            payer: existing.payer,
+            payer: getAddress(existing.payer),
           } satisfies SettleResult)
           return
         }
@@ -153,7 +154,7 @@ export function buildApp(config: FacilitatorConfig, ledger: Ledger) {
           success: false,
           errorReason: 'authorization_already_used',
           network: net.id,
-          payer: existing.payer,
+          payer: getAddress(existing.payer),
         } satisfies SettleResult)
         return
       }
@@ -162,6 +163,7 @@ export function buildApp(config: FacilitatorConfig, ledger: Ledger) {
         payload,
         requirements,
         wallet: runtime.walletClient,
+        account: config.signerAddress as Address,
         reader: runtime.publicClient,
         network: net,
       })

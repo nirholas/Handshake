@@ -14,13 +14,16 @@ export interface ApiErrorBody {
 
 const DOCS_BASE = 'https://nirholas.github.io/hood-api'
 
+/** Every HTTP status an ApiError can carry — a closed literal union so route handlers typecheck against `default`. */
+export type ApiErrorStatus = 400 | 401 | 404 | 451 | 500 | 502 | 503
+
 export class ApiError extends Error {
-  readonly status: number
+  readonly status: ApiErrorStatus
   readonly code: string
   readonly hint: string
   readonly docsPath: string
 
-  constructor(status: number, code: string, hint: string, docsPath = '/#errors') {
+  constructor(status: ApiErrorStatus, code: string, hint: string, docsPath = '/#errors') {
     super(`${code}: ${hint}`)
     this.name = 'ApiError'
     this.status = status

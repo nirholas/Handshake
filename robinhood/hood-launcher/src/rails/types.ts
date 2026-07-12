@@ -86,10 +86,10 @@ export interface RailPlan {
   preflight: RailPreflight
 }
 
-/** A single unsigned transaction in a launch plan. */
+/** A single unsigned transaction in a launch plan. `to` is omitted for a contract-creation step. */
 export interface RailStep {
   label: string
-  to: Address
+  to?: Address
   data: Hex
   value: bigint
 }
