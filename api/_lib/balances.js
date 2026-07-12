@@ -16,6 +16,7 @@
 
 import { cacheGet, cacheSet, cacheDel } from './cache.js';
 import { getMetadataForMints } from './token-metadata.js';
+import { solPriceUsd } from './sol-price.js';
 
 const BALANCES_TTL_S = 60;
 // Last-known-good snapshot lifetime. A long horizon so a wallet that briefly
@@ -191,21 +192,12 @@ async function jupiterPrices(mints) {
 
 const SOL_MINT = 'So11111111111111111111111111111111111111112';
 
+// Native SOL/USD spot. Delegates to the canonical 7-source failover in
+// api/_lib/sol-price.js (Jupiter/CoinGecko + Kraken/Coinbase/Bitfinex/DefiLlama/
+// DIA), 60s-cached. Returns 0 when every source is exhausted — same "unpriced"
+// contract the token-price path relies on.
 async function solNativePrice() {
-	try {
-		const data = await fetchJson(`https://lite-api.jup.ag/price/v3?ids=${SOL_MINT}`);
-		const usd = data?.[SOL_MINT]?.usdPrice ?? data?.[SOL_MINT]?.price ?? 0;
-		return Number(usd) || 0;
-	} catch {
-		try {
-			const cg = await fetchJson(
-				'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_24hr_change=true',
-			);
-			return cg?.solana?.usd ?? 0;
-		} catch {
-			return 0;
-		}
-	}
+	return solPriceUsd();
 }
 
 /**

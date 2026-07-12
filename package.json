@@ -285,7 +285,6 @@
 		"@pump-fun/pump-swap-sdk": "^1.17.0",
 		"@pythnetwork/hermes-client": "^3.1.0",
 		"@solana-mobile/mobile-wallet-adapter-protocol-web3js": "^2.2.9",
-		"@solana-program/compute-budget": "^0.15.0",
 		"@solana-program/stake": "^0.6.1",
 		"@solana-program/token": "^0.13.0",
 		"@solana/kit": "^6.9.0",

@@ -24,9 +24,6 @@
 import { isUuid, isValidSolanaAddress, isValidEvmAddress } from '../validate.js';
 import { CHAIN_BY_ID } from '../erc8004-chains.js';
 
-// The canonical wrapped-SOL mint — used only to price a wallet's native SOL
-// balance into USD for the holdings dimension.
-const SOL_MINT = 'So11111111111111111111111111111111111111112';
 const DEFAULT_EVM_CHAIN = 8453; // Base — where ERC-8004 sees the most agent activity.
 
 export const SUBJECT_TYPES = [
@@ -712,9 +709,9 @@ async function scoreSolanaWallet(det, { knownAgentId }, ts) {
 // ── shared upstream reads ────────────────────────────────────────────────────
 
 async function solPriceUsd() {
-	const { solanaMintUsdPrice } = await import('../balances.js');
-	const p = await solanaMintUsdPrice(SOL_MINT);
-	return Number(p) || null;
+	const { solPriceUsd: solSpotUsd } = await import('../sol-price.js');
+	const p = await solSpotUsd();
+	return p > 0 ? p : null;
 }
 
 // DexScreener token lookup → normalized market signals, or null if it's not a

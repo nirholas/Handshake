@@ -1,0 +1,13 @@
+node_modules
+dist
+*.log
+.env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite-journal
+*.db
+coverage
+.DS_Store
+examples/react-demo/dist
+examples/*.sqlite

@@ -1,0 +1,66 @@
+{
+  "name": "hood-cli",
+  "version": "0.1.0",
+  "description": "The command-line toolkit for Robinhood Chain (chain 4663): instant reads with zero config, guarded writes with a wallet. Prices, portfolios, launches, swaps, transfers — the gh/vercel of Robinhood Chain.",
+  "keywords": [
+    "robinhood",
+    "robinhood-chain",
+    "cli",
+    "stock-tokens",
+    "usdg",
+    "uniswap",
+    "chainlink",
+    "web3",
+    "viem"
+  ],
+  "license": "MIT",
+  "author": "nirholas (https://x.com/nichxbt)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/hood-cli.git"
+  },
+  "homepage": "https://nirholas.github.io/hood-cli/",
+  "bugs": {
+    "url": "https://github.com/nirholas/hood-cli/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "hood": "./dist/cli.js",
+    "hoodc": "./dist/cli.js"
+  },
+  "exports": {
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "contracts/ERC20.sol",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run tests/unit",
+    "e2e": "node scripts/e2e.mjs",
+    "capture": "node scripts/capture-session.mjs",
+    "compile-erc20": "node scripts/compile-erc20.mjs",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "hoodchain": "file:../robinhood-chain-sdk",
+    "viem": "^2.55.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/ws": "^8.18.0",
+    "solc": "^0.8.28",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

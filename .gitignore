@@ -374,3 +374,7 @@ solana-mobile/build/
 main.zip
 .x402-directory-credentials.json
 robinhood-chain-prompts.zip
+prompts/robinhood-chain/13-threews-play.md
+prompts/robinhood-chain/12-threews-markets.md
+prompts/robinhood-chain/10-tutorials.md
+prompts/robinhood-chain/11-toolkit-cli.md

@@ -1,0 +1,71 @@
+{
+  "name": "hood-js",
+  "version": "0.1.0",
+  "description": "The five-lines-to-your-first-trade wrapper for Robinhood Chain (ID 4663). One import, sensible defaults, promise-first, browser + Node: stock prices, portfolios, trending memecoins, launch streams, and swaps.",
+  "keywords": [
+    "robinhood",
+    "robinhood-chain",
+    "stock-tokens",
+    "memecoins",
+    "usdg",
+    "swap",
+    "viem",
+    "web3",
+    "easy",
+    "sdk"
+  ],
+  "license": "MIT",
+  "author": "nirholas (https://x.com/nichxbt)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/hood-js.git"
+  },
+  "homepage": "https://nirholas.github.io/hood-js/",
+  "bugs": {
+    "url": "https://github.com/nirholas/hood-js/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run tests/unit",
+    "test:live": "vitest run tests/live --testTimeout 120000",
+    "size": "node scripts/size.mjs",
+    "prepublishOnly": "npm run build && npm test && npm run size"
+  },
+  "dependencies": {
+    "hoodchain": "^0.1.0"
+  },
+  "peerDependencies": {
+    "viem": "^2.55.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "gzip-size": "^7.0.0",
+    "hoodchain": "file:../robinhood-chain-sdk",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.0",
+    "viem": "^2.55.0",
+    "vitest": "^3.2.0"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts", "src/react/index.ts"],
+  "out": "docs/api",
+  "readme": "none",
+  "name": "hoodkit",
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "githubPages": false
+}

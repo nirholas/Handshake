@@ -1,0 +1,96 @@
+{
+  "name": "hoodkit",
+  "version": "0.1.0",
+  "description": "Power-user toolkit for Robinhood Chain (chain ID 4663): real-time streams with reconnect gap-fill, read-through caching with request coalescing, multicall batching, a local SQLite indexer (holders/OHLCV/volume), agent strategy primitives (PnL, TWAP, triggers, spend caps, dry-run), and SSR-safe React hooks.",
+  "keywords": [
+    "robinhood",
+    "robinhood-chain",
+    "stock-tokens",
+    "streaming",
+    "indexer",
+    "ohlcv",
+    "cache",
+    "multicall",
+    "twap",
+    "react-hooks",
+    "viem",
+    "web3"
+  ],
+  "license": "MIT",
+  "author": "nirholas (https://x.com/nichxbt)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/hoodkit.git"
+  },
+  "homepage": "https://nirholas.github.io/hoodkit/",
+  "bugs": {
+    "url": "https://github.com/nirholas/hoodkit/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js",
+      "require": "./dist/react/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run tests/unit",
+    "test:live": "vitest run tests/live --testTimeout 180000",
+    "docs:api": "typedoc",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "peerDependencies": {
+    "better-sqlite3": ">=11",
+    "hoodchain": "^0.1.0",
+    "react": ">=18",
+    "viem": "^2.55.0",
+    "ws": "^8.18.0"
+  },
+  "peerDependenciesMeta": {
+    "better-sqlite3": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "ws": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/ws": "^8.18.0",
+    "better-sqlite3": "^12.0.0",
+    "hoodchain": "file:../robinhood-chain-sdk",
+    "react": "^19.0.0",
+    "tsup": "^8.5.0",
+    "typedoc": "^0.28.0",
+    "typescript": "^5.9.0",
+    "viem": "^2.55.0",
+    "vitest": "^3.2.0",
+    "ws": "^8.18.0"
+  }
+}

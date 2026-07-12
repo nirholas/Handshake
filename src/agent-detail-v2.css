@@ -138,6 +138,9 @@
 	.adv2-hero .ad-hero-desc {
 		margin: 10px auto;
 	}
+	.adv2-hero .ad-hero-title h1 {
+		font-size: 26px;
+	}
 }
 
 /* ── Cross-link panel strip (presence / stages / labor / alpha) ────────── */

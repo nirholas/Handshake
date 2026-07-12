@@ -1,0 +1,82 @@
+{
+  "name": "hood-mcp",
+  "version": "0.1.0",
+  "description": "Model Context Protocol servers for Robinhood Chain (chain ID 4663): a zero-config read-only data server (Stock Token quotes, multiplier-correct portfolios, memecoin launches, chain stats) and an explicitly opt-in trading server (guarded swaps + USDG transfers with hard spend caps and a confirm gate).",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "robinhood",
+    "robinhood-chain",
+    "stock-tokens",
+    "tokenized-equities",
+    "usdg",
+    "chainlink",
+    "uniswap",
+    "ai-agents",
+    "claude",
+    "cursor"
+  ],
+  "license": "MIT",
+  "author": "nirholas (https://x.com/nichxbt)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/hood-mcp.git"
+  },
+  "homepage": "https://nirholas.github.io/hood-mcp/",
+  "bugs": {
+    "url": "https://github.com/nirholas/hood-mcp/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "hood-mcp": "./dist/data-server.js",
+    "hood-mcp-trading": "./dist/trading-server.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./data-server": "./dist/data-server.js",
+    "./trading-server": "./dist/trading-server.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "server.json",
+    "smithery.yaml",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "dev:data": "tsx src/data-server.ts",
+    "dev:trading": "tsx src/trading-server.ts",
+    "start": "node dist/data-server.js",
+    "test": "vitest run tests/schema.test.ts tests/trading-guards.test.ts",
+    "test:live": "vitest run tests/data-client.live.test.ts --testTimeout 120000",
+    "test:swap": "vitest run tests/trading-swap.live.test.ts --testTimeout 180000",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "hoodchain": "^0.1.0",
+    "viem": "^2.55.0",
+    "ws": "^8.18.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/ws": "^8.18.0",
+    "tsup": "^8.5.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}
