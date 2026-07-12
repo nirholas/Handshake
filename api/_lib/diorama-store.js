@@ -179,8 +179,10 @@ export async function bumpViews(id) {
 /**
  * List dioramas for the public gallery — index columns only, no full plans.
  * scope: 'recent' (default) | 'featured'. Returns lightweight cards.
+ * `before` (recent scope only) cursors by created_at for infinite scroll —
+ * used by the platform-wide activity feed (api/users/me/feed.js, scope=all).
  */
-export async function listDioramas({ scope = 'recent', limit = 24 } = {}) {
+export async function listDioramas({ scope = 'recent', limit = 24, before } = {}) {
 	if (!(await ensureTable())) return [];
 	const lim = Math.min(60, Math.max(1, Number(limit) || 24));
 	try {
@@ -189,18 +191,27 @@ export async function listDioramas({ scope = 'recent', limit = 24 } = {}) {
 				? await sql`
 						select d.id, d.title, d.prompt, d.mood, d.ground, d.views, d.featured, d.created_at,
 							d.doc->'objects' as objects, d.doc->'palette' as palette, d.doc->'author' as author,
-							u.username as creator_username
+							u.username as creator_username, u.display_name as creator_display_name, u.avatar_url as creator_avatar_url
 						from dioramas d
 						left join users u on u.id = d.user_id and u.deleted_at is null
 						where d.featured = true
 						order by d.created_at desc limit ${lim}`
-				: await sql`
-						select d.id, d.title, d.prompt, d.mood, d.ground, d.views, d.featured, d.created_at,
-							d.doc->'objects' as objects, d.doc->'palette' as palette, d.doc->'author' as author,
-							u.username as creator_username
-						from dioramas d
-						left join users u on u.id = d.user_id and u.deleted_at is null
-						order by d.created_at desc limit ${lim}`;
+				: before
+					? await sql`
+							select d.id, d.title, d.prompt, d.mood, d.ground, d.views, d.featured, d.created_at,
+								d.doc->'objects' as objects, d.doc->'palette' as palette, d.doc->'author' as author,
+								u.username as creator_username, u.display_name as creator_display_name, u.avatar_url as creator_avatar_url
+							from dioramas d
+							left join users u on u.id = d.user_id and u.deleted_at is null
+							where d.created_at < ${before}
+							order by d.created_at desc limit ${lim}`
+					: await sql`
+							select d.id, d.title, d.prompt, d.mood, d.ground, d.views, d.featured, d.created_at,
+								d.doc->'objects' as objects, d.doc->'palette' as palette, d.doc->'author' as author,
+								u.username as creator_username, u.display_name as creator_display_name, u.avatar_url as creator_avatar_url
+							from dioramas d
+							left join users u on u.id = d.user_id and u.deleted_at is null
+							order by d.created_at desc limit ${lim}`;
 		return rows.map(toCard);
 	} catch (err) {
 		console.error('[diorama-store] listDioramas failed:', err?.message);
@@ -223,6 +234,8 @@ function toCard(row) {
 		palette: row.palette || null,
 		author: row.author || null,
 		creatorUsername: row.creator_username || null,
+		creatorDisplayName: row.creator_display_name || null,
+		creatorAvatarUrl: row.creator_avatar_url || null,
 		thumbnailGlb: thumb,
 		objectCount: objects.length,
 		views: Number(row.views) || 0,

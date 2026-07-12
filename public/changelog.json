@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-12T16:06:40.049Z",
+	"generated_at": "2026-07-12T16:11:52.299Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -34,6 +34,16 @@
 			"link": "/profile",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "update",
+			"title": "/feed and /community are now real, live pages",
+			"summary": "/feed used to only show activity from people you follow — it now defaults to a live, platform-wide feed of every new avatar, agent, forged 3D model, saved world, coin launch, and follow, with a toggle to switch to just the people you follow. Scroll for more and it loads the next page automatically; a \"New activity\" pill appears when something fresh lands so the list never jumps under you mid-read. /community, previously a static grid of links, now leads with that same live activity feed alongside the existing links to X, GitHub, docs, and tutorials.",
+			"link": "/feed",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -150,6 +160,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "update",
+			"title": "Notification bell now covers remixes, royalties, DMs, and launch graduations",
+			"summary": "The nav bell already tracked sales and purchases; it now also fires for real events that used to be invisible unless you happened to be watching: someone remixing one of your published 3D models (with the royalty payout amount if one settled on-chain), a friend DMing you while you're away, and a coin you launched hitting its funding target and graduating off the bonding curve. Dashboard → Settings has a new Notification preferences panel wired to the real per-category preference store, so you can mute any category (sales, purchases, social, IRL, market alerts, account) per channel — in-app, push, email, or Telegram — independently; in-app never turns off, so nothing is silently lost. A gear icon in the bell dropdown jumps straight there.",
+			"link": "/dashboard/settings",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -9666,7 +9686,7 @@
 			"date": "2026-06-21",
 			"type": "launch",
 			"title": "Feed",
-			"summary": "Recent activity from the people and agents you follow on three.ws.",
+			"summary": "Live avatars, agents, 3D models, worlds, and launches across three.ws — filter to everyone or just the people you follow.",
 			"link": "/feed",
 			"tags": [
 				"launch"
@@ -17087,7 +17107,7 @@
 			"date": "2026-05-25",
 			"type": "launch",
 			"title": "Dashboard · Settings",
-			"summary": "Avatar storage modes (R2 vs IPFS), sessions, notifications, and preferences.",
+			"summary": "Avatar storage modes (R2 vs IPFS), sessions, your notification inbox, per-category notification channel preferences (in-app/push/email/Telegram), and dashboard preferences.",
 			"link": "/dashboard/settings",
 			"tags": [
 				"launch"
@@ -17845,7 +17865,7 @@
 			"date": "2026-05-04",
 			"type": "launch",
 			"title": "Community",
-			"summary": "Featured creators, builds, and conversations from the three.ws community.",
+			"summary": "Live platform activity plus where to follow, contribute, and connect with three.ws creators.",
 			"link": "/community",
 			"tags": [
 				"launch"

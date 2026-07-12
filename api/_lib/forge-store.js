@@ -719,6 +719,59 @@ export async function listShowcase({ limit = 12 } = {}) {
 	}
 }
 
+// Newest durable creations across ALL clients, WITH creator attribution when
+// the creator was signed in — powers the platform-wide activity feed
+// (api/users/me/feed.js, scope=all) and /community. Same public-artifact bar
+// as listShowcase (finished rows with a stored GLB, nothing rejected by its
+// own maker), but left-joins users so a signed-in creator's forge shows up
+// with a real profile link while an anonymous one (the majority) still
+// appears with no identity attached rather than being excluded.
+export async function listRecentCreations({ limit = 24, before } = {}) {
+	if (!forgeStoreEnabled()) return [];
+	const capped = Math.min(Math.max(Number(limit) || 24, 1), 60);
+	try {
+		const rows = before
+			? await sql`
+				select fc.id, fc.prompt, fc.glb_url, fc.preview_image_url, fc.model_category,
+					fc.parent_creation_id, fc.created_at,
+					u.username, u.display_name, u.avatar_url
+				from forge_creations fc
+				left join users u on u.id = fc.user_id and u.deleted_at is null and u.username is not null
+				where fc.status = 'done' and fc.glb_url is not null
+					and (fc.outcome is null or fc.outcome != 'rejected')
+					and fc.created_at < ${before}
+				order by fc.created_at desc
+				limit ${capped}`
+			: await sql`
+				select fc.id, fc.prompt, fc.glb_url, fc.preview_image_url, fc.model_category,
+					fc.parent_creation_id, fc.created_at,
+					u.username, u.display_name, u.avatar_url
+				from forge_creations fc
+				left join users u on u.id = fc.user_id and u.deleted_at is null and u.username is not null
+				where fc.status = 'done' and fc.glb_url is not null
+					and (fc.outcome is null or fc.outcome != 'rejected')
+				order by fc.created_at desc
+				limit ${capped}`;
+		return rows.map((r) => ({
+			id: r.id,
+			type: 'model',
+			prompt: r.prompt,
+			glbUrl: r.glb_url,
+			previewImageUrl: r.preview_image_url,
+			category: r.model_category ?? 'other',
+			isRemix: Boolean(r.parent_creation_id),
+			createdAt: r.created_at,
+			username: r.username || null,
+			displayName: r.display_name || null,
+			avatarUrl: r.avatar_url || null,
+		}));
+	} catch (err) {
+		if (isDbUnavailableError(err)) console.warn('[forge-store] listRecentCreations skipped (db unavailable):', err?.message);
+		else console.error('[forge-store] listRecentCreations failed:', err?.message);
+		return [];
+	}
+}
+
 // ── Remix economy ────────────────────────────────────────────────────────────
 //
 // A creator opts a finished creation into the remix bazaar (setRemixable) with a
@@ -910,7 +963,7 @@ export async function getRemixSource({ creationId }) {
 	if (!forgeStoreEnabled() || !creationId) return null;
 	try {
 		const rows = await sql`
-			select id, client_key, prompt, glb_url, preview_image_url,
+			select id, client_key, user_id, prompt, glb_url, preview_image_url,
 				remixable, remix_royalty_bps, creator_wallet_solana,
 				parent_creation_id, lineage_index, aspect, created_at
 			from forge_creations
@@ -922,6 +975,7 @@ export async function getRemixSource({ creationId }) {
 		return {
 			id: r.id,
 			clientKey: r.client_key,
+			userId: r.user_id ?? null,
 			prompt: r.prompt,
 			glbUrl: r.glb_url,
 			previewImageUrl: r.preview_image_url,

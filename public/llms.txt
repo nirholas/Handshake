@@ -30,14 +30,14 @@ Entry points into the product.
 - [Marketplace Analytics](https://three.ws/marketplace/analytics): Real-time stats on the three.ws skill marketplace: top skills, top agents, and sales volume.
 - [My Collection](https://three.ws/collection): View all the skills and subscriptions you've unlocked on three.ws.
 - [Skills Marketplace](https://three.ws/skills): Browse, search, and install agent skills — tool packs, knowledge bases, and capabilities that make AI agents smarter.
-- [Community](https://three.ws/community): Featured creators, builds, and conversations from the three.ws community.
+- [Community](https://three.ws/community): Live platform activity plus where to follow, contribute, and connect with three.ws creators.
 - [Sitemap](https://three.ws/sitemap): Human-readable index of every page on three.ws.
 - [Characters](https://three.ws/characters): Discover AI characters on three.ws. Chat, trade, and create.
 - [What is three.ws?](https://three.ws/what-is): Plain-English introduction to three.ws — what a 3D AI agent is, real use-cases, and where to begin.
 - [Pitch Deck](https://three.ws/pitch): The three.ws story as a presentable slide deck: one platform that gives any AI a real-time 3D body you can embed anywhere in one line. Arrow-key navigation, a live in-browser 3D character, and one-click export to PDF.
 - [Guided Tour](https://three.ws/tour): A 3D guide walks across the live site, points at every feature, and narrates what each one does and how to use it — voice plus an on-screen chat bubble, paced by you.
 - [Walk Anywhere on the Web](https://three.ws/walk): Your 3D avatar walks anywhere on the web. Live demos across six environments, a Chrome extension, one-tag embeds, and a global distance leaderboard.
-- [Feed](https://three.ws/feed): Recent activity from the people and agents you follow on three.ws.
+- [Feed](https://three.ws/feed): Live avatars, agents, 3D models, worlds, and launches across three.ws — filter to everyone or just the people you follow.
 - [Partner Ecosystem](https://three.ws/partners): three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle. The cloud and AI platforms powering 3D AI agents at enterprise scale.
 
 ## Build

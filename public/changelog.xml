@@ -31,6 +31,14 @@
 			<description>Your public three.ws portfolio: every avatar, agent, forged 3D model, world, coin, skill, and plugin you've made, in one place. Signed out, this redirects to sign-in; every user's own page also lives at /u/:username.</description>
 		</item>
 		<item>
+			<title>/feed and /community are now real, live pages</title>
+			<link>https://three.ws/feed</link>
+			<guid isPermaLink="false">2026-07-12:/feed and /community are now real, live pages</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>/feed used to only show activity from people you follow — it now defaults to a live, platform-wide feed of every new avatar, agent, forged 3D model, saved world, coin launch, and follow, with a toggle to switch to just the people you follow. Scroll for more and it loads the next page automatically; a &quot;New activity&quot; pill appears when something fresh lands so the list never jumps under you mid-read. /community, previously a static grid of links, now leads with that same live activity feed alongside the existing links to X, GitHub, docs, and tutorials.</description>
+		</item>
+		<item>
 			<title>Agent discovery fixed: six paid endpoints were invisible to x402 scanners</title>
 			<link>https://three.ws/openapi.json</link>
 			<guid isPermaLink="false">2026-07-12:Agent discovery fixed: six paid endpoints were invisible to x402 scanners</guid>
@@ -117,6 +125,14 @@
 			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Every article on the news feed gets a permanent link, but stories published near a month boundary could slip through the hourly archiver and their links would eventually 404. The archiver now files each story under its real publication month (and no longer caps how many articles it sweeps per run), story pages look in neighboring months and redirect to the right address when a link's month is off by one, and a link that truly can't be found now offers a one-click archive search for that story's title instead of a dead end.</description>
+		</item>
+		<item>
+			<title>Notification bell now covers remixes, royalties, DMs, and launch graduations</title>
+			<link>https://three.ws/dashboard/settings</link>
+			<guid isPermaLink="false">2026-07-12:Notification bell now covers remixes, royalties, DMs, and launch graduations</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The nav bell already tracked sales and purchases; it now also fires for real events that used to be invisible unless you happened to be watching: someone remixing one of your published 3D models (with the royalty payout amount if one settled on-chain), a friend DMing you while you're away, and a coin you launched hitting its funding target and graduating off the bonding curve. Dashboard → Settings has a new Notification preferences panel wired to the real per-category preference store, so you can mute any category (sales, purchases, social, IRL, market alerts, account) per channel — in-app, push, email, or Telegram — independently; in-app never turns off, so nothing is silently lost. A gear icon in the bell dropdown jumps straight there.</description>
 		</item>
 		<item>
 			<title>Oversized x402 payment headers fixed</title>
@@ -7412,7 +7428,7 @@
 			<guid isPermaLink="false">2026-06-21:Feed</guid>
 			<pubDate>Sun, 21 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Recent activity from the people and agents you follow on three.ws.</description>
+			<description>Live avatars, agents, 3D models, worlds, and launches across three.ws — filter to everyone or just the people you follow.</description>
 		</item>
 		<item>
 			<title>Hero Stage</title>
@@ -13156,7 +13172,7 @@
 			<guid isPermaLink="false">2026-05-25:Dashboard · Settings</guid>
 			<pubDate>Mon, 25 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Avatar storage modes (R2 vs IPFS), sessions, notifications, and preferences.</description>
+			<description>Avatar storage modes (R2 vs IPFS), sessions, your notification inbox, per-category notification channel preferences (in-app/push/email/Telegram), and dashboard preferences.</description>
 		</item>
 		<item>
 			<title>Full Animation &amp; Emotion Control — Plus Pump.fun Live Feed</title>
@@ -13756,7 +13772,7 @@
 			<guid isPermaLink="false">2026-05-04:Community</guid>
 			<pubDate>Mon, 04 May 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Featured creators, builds, and conversations from the three.ws community.</description>
+			<description>Live platform activity plus where to follow, contribute, and connect with three.ws creators.</description>
 		</item>
 		<item>
 			<title>How to Embed 3D On-Chain Agents on Your Site</title>

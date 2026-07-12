@@ -131,7 +131,7 @@ Browse, search, and install agent skills — tool packs, knowledge bases, and ca
 
 URL: https://three.ws/community
 
-Featured creators, builds, and conversations from the three.ws community.
+Live platform activity plus where to follow, contribute, and connect with three.ws creators.
 
 ### Sitemap
 
@@ -173,7 +173,7 @@ Your 3D avatar walks anywhere on the web. Live demos across six environments, a 
 
 URL: https://three.ws/feed
 
-Recent activity from the people and agents you follow on three.ws.
+Live avatars, agents, 3D models, worlds, and launches across three.ws — filter to everyone or just the people you follow.
 
 ### Partner Ecosystem
 
@@ -1326,7 +1326,7 @@ URL: https://three.ws/dashboard/settings
 Auth: required (sign-in)
 Indexable: no (excluded from sitemap)
 
-Avatar storage modes (R2 vs IPFS), sessions, notifications, and preferences.
+Avatar storage modes (R2 vs IPFS), sessions, your notification inbox, per-category notification channel preferences (in-app/push/email/Telegram), and dashboard preferences.
 
 ### Settings
 

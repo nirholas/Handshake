@@ -3,9 +3,9 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Your Feed — three.ws</title>
+		<title>Feed — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<meta name="description" content="Recent activity from the people and agents you follow on three.ws." />
+		<meta name="description" content="Live avatars, agents, 3D models, worlds, and launches across three.ws." />
 		<meta name="theme-color" content="#000000" />
 		<meta name="robots" content="noindex" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -208,6 +208,81 @@
 				0% { background-position: 100% 0; }
 				100% { background-position: 0 0; }
 			}
+
+			.feed-scope {
+				display: flex;
+				gap: 0.5rem;
+				margin: 1.2rem 0 0.4rem;
+			}
+			.feed-scope button {
+				font: inherit;
+				font-size: 0.85rem;
+				font-weight: 500;
+				background: transparent;
+				color: rgba(255, 255, 255, 0.5);
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				border-radius: 999px;
+				padding: 0.4rem 0.95rem;
+				cursor: pointer;
+				transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+			}
+			.feed-scope button:hover { color: rgba(255, 255, 255, 0.85); border-color: rgba(255, 255, 255, 0.3); }
+			.feed-scope button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+			.feed-scope button[aria-pressed="true"] {
+				background: #fff;
+				color: #000;
+				border-color: #fff;
+			}
+
+			.feed-newpill {
+				display: none;
+				width: 100%;
+				text-align: center;
+				background: #fff;
+				color: #000;
+				font-weight: 500;
+				font-size: 0.85rem;
+				border: none;
+				border-radius: 999px;
+				padding: 0.55rem 1rem;
+				margin-bottom: 1rem;
+				cursor: pointer;
+				animation: feed-in 0.25s ease both;
+			}
+			.feed-newpill.visible { display: block; }
+			.feed-newpill:hover { opacity: 0.9; }
+
+			.feed-more {
+				display: block;
+				width: 100%;
+				background: transparent;
+				color: rgba(255, 255, 255, 0.6);
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				border-radius: 10px;
+				padding: 0.7rem;
+				font: inherit;
+				font-size: 0.85rem;
+				cursor: pointer;
+				margin-top: 0.6rem;
+				transition: border-color 0.15s ease, color 0.15s ease;
+			}
+			.feed-more:hover { color: #fff; border-color: rgba(255, 255, 255, 0.3); }
+			.feed-more:disabled { opacity: 0.5; cursor: default; }
+
+			.feed-follow-line { display: flex; align-items: center; gap: 0.5rem; }
+			.feed-follow-target {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				color: #fff;
+				font-weight: 500;
+				text-decoration: none;
+			}
+			.feed-follow-target:hover { text-decoration: underline; }
+			.feed-follow-target img {
+				width: 22px; height: 22px; border-radius: 50%; object-fit: cover;
+				border: 1px solid rgba(255, 255, 255, 0.15);
+			}
 		</style>
 	
 	<link rel="canonical" href="https://three.ws/feed">
@@ -215,9 +290,9 @@
 	<meta property="og:site_name" content="three.ws">
 	<meta property="og:locale" content="en_US">
 	<meta property="og:title" content="Feed · three.ws">
-	<meta property="og:description" content="Recent activity from the people and agents you follow on three.ws.">
+	<meta property="og:description" content="Live avatars, agents, 3D models, worlds, and launches across three.ws.">
 	<meta property="og:url" content="https://three.ws/feed">
-	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Feed&amp;d=Recent+activity+from+the+people+and+agents+you+follow+on+three.ws.&amp;p=%2Ffeed">
+	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Feed&amp;d=Live+avatars%2C+agents%2C+3D+models%2C+worlds%2C+and+launches+across+three.ws.&amp;p=%2Ffeed">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta property="og:image:type" content="image/png">
@@ -225,9 +300,9 @@
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
 	<meta name="twitter:title" content="Feed · three.ws">
-	<meta name="twitter:description" content="Recent activity from the people and agents you follow on three.ws.">
-	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Feed&amp;d=Recent+activity+from+the+people+and+agents+you+follow+on+three.ws.&amp;p=%2Ffeed">
-	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Feed","description":"Recent activity from the people and agents you follow on three.ws.","url":"https://three.ws/feed","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&t=Feed&d=Recent+activity+from+the+people+and+agents+you+follow+on+three.ws.&p=%2Ffeed"}]}</script>
+	<meta name="twitter:description" content="Live avatars, agents, 3D models, worlds, and launches across three.ws.">
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Feed&amp;d=Live+avatars%2C+agents%2C+3D+models%2C+worlds%2C+and+launches+across+three.ws.&amp;p=%2Ffeed">
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Feed","description":"Live avatars, agents, 3D models, worlds, and launches across three.ws.","url":"https://three.ws/feed","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&t=Feed&d=Live+avatars%2C+agents%2C+3D+models%2C+worlds%2C+and+launches+across+three.ws.&p=%2Ffeed"}]}</script>
 </head>
 	<body>
 		<header><div id="nav-container"></div></header>
@@ -236,18 +311,25 @@
 		<main>
 			<div class="feed-root">
 				<div class="feed-head">
-					<h1>Your Feed</h1>
-					<p>New avatars, agents, and launches from everyone you follow.</p>
+					<h1>Feed</h1>
+					<p>New avatars, agents, models, worlds, and launches across three.ws.</p>
 					<a class="feed-tip" href="/discover">
 						<svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1m.75 10.5h-1.5V7h1.5zm0-6h-1.5V4h1.5z"/></svg>
 						Discover more people to follow
 					</a>
 				</div>
+				<div class="feed-scope" role="tablist" aria-label="Feed scope">
+					<button type="button" id="scope-all" role="tab" aria-pressed="true">All activity</button>
+					<button type="button" id="scope-following" role="tab" aria-pressed="false">Following</button>
+				</div>
+				<button type="button" class="feed-newpill" id="feed-newpill">New activity — click to view</button>
 				<div id="feed-list">
 					<div class="feed-skeleton"></div>
 					<div class="feed-skeleton"></div>
 					<div class="feed-skeleton"></div>
 				</div>
+				<button type="button" class="feed-more" id="feed-more" hidden>Load more</button>
+				<div id="feed-sentinel" aria-hidden="true"></div>
 			</div>
 		</main>
 
@@ -260,13 +342,28 @@
 				String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 			const attr = (s) => esc(s).replace(/"/g, '&quot;');
 			const list = document.getElementById('feed-list');
+			const moreBtn = document.getElementById('feed-more');
+			const newPill = document.getElementById('feed-newpill');
+			const sentinel = document.getElementById('feed-sentinel');
+			const scopeAllBtn = document.getElementById('scope-all');
+			const scopeFollowingBtn = document.getElementById('scope-following');
 
 			const VERB = {
 				avatar: 'created a new avatar',
 				agent: 'launched an agent',
 				coin: 'launched a coin',
+				model: 'forged a 3D model',
+				world: 'built a world',
 			};
-			const GLYPH = { avatar: '◎', agent: '🤖', coin: '◉' };
+			const GLYPH = { avatar: '◎', agent: '🤖', coin: '◉', model: '✦', world: '🌐', follow: '⇢' };
+			const SCOPE_KEY = 'twx_feed_scope';
+
+			let scope = localStorage.getItem(SCOPE_KEY) === 'following' ? 'following' : 'all';
+			let cursor = null;
+			let loading = false;
+			let done = false;
+			let renderedOnce = false;
+			let pollTimer = null;
 
 			function relTime(iso) {
 				if (!iso) return '';
@@ -283,26 +380,56 @@
 				return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 			}
 
+			function actorLink(actor, extra = '') {
+				if (!actor || !actor.username) return `<span class="actor" style="color:#fff;font-weight:500">${esc(actor?.display_name || 'A three.ws creator')}</span>`;
+				return `<a class="actor" href="/u/${attr(actor.username)}"${extra}>${esc(actor.display_name)}</a>`;
+			}
+
 			function avatarEl(actor) {
 				const inner = actor.avatar_url
 					? `<img src="${attr(actor.avatar_url)}" alt="${attr(actor.display_name)}" loading="lazy" referrerpolicy="no-referrer">`
 					: '◎';
-				return `<a class="feed-avatar" href="/u/${attr(actor.username)}" aria-label="${attr(actor.display_name)}">${inner}</a>`;
+				return actor.username
+					? `<a class="feed-avatar" href="/u/${attr(actor.username)}" aria-label="${attr(actor.display_name)}">${inner}</a>`
+					: `<span class="feed-avatar" aria-hidden="true">${inner}</span>`;
 			}
 
 			function itemEl(it) {
 				const a = it.actor || {};
+
+				if (it.kind === 'follow') {
+					const t = it.target || {};
+					return `
+						<article class="feed-item">
+							${avatarEl(a)}
+							<div class="feed-body">
+								<div class="feed-line feed-follow-line">
+									${actorLink(a)}
+									<span class="feed-verb">followed</span>
+									<a class="feed-follow-target" href="${attr(it.href)}">
+										${t.avatar_url ? `<img src="${attr(t.avatar_url)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}
+										${esc(t.display_name)}
+									</a>
+									<span class="feed-pill">follow</span>
+								</div>
+								<div class="feed-time">${esc(relTime(it.created_at))}</div>
+							</div>
+						</article>
+					`;
+				}
+
 				const cardThumb = it.image
 					? `<img src="${attr(it.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">`
 					: GLYPH[it.kind] || '◎';
 				const external = it.external ? ' target="_blank" rel="noopener"' : '';
+				const verb = it.kind === 'model' && it.isRemix ? 'remixed a 3D model' : VERB[it.kind] || 'shared something';
 				return `
 					<article class="feed-item">
 						${avatarEl(a)}
 						<div class="feed-body">
 							<div class="feed-line">
-								<a class="actor" href="/u/${attr(a.username)}">${esc(a.display_name)}</a>
-								<span class="feed-verb"> ${esc(VERB[it.kind] || 'shared something')}</span>
+								${actorLink(a)}
+								<span class="feed-verb"> ${esc(verb)}</span>
 								<span class="feed-pill">${esc(it.kind)}</span>
 							</div>
 							<a class="feed-card" href="${attr(it.href)}"${external}>
@@ -327,39 +454,61 @@
 						${cta ? `<a class="feed-btn" href="${attr(cta.href)}">${esc(cta.label)}</a>` : ''}
 					</div>
 				`;
+				moreBtn.hidden = true;
 			}
 
-			(async function load() {
+			function updateScopeButtons() {
+				scopeAllBtn.setAttribute('aria-pressed', String(scope === 'all'));
+				scopeFollowingBtn.setAttribute('aria-pressed', String(scope === 'following'));
+			}
+
+			async function fetchPage(before) {
+				const params = new URLSearchParams({ scope, limit: '24' });
+				if (before) params.set('before', before);
+				return fetch(`/api/users/me/feed?${params}`, { credentials: 'include' });
+			}
+
+			async function loadInitial() {
+				stopPoll();
+				newPill.classList.remove('visible');
+				cursor = null;
+				done = false;
+				renderedOnce = false;
+				list.innerHTML = `<div class="feed-skeleton"></div><div class="feed-skeleton"></div><div class="feed-skeleton"></div>`;
+				moreBtn.hidden = true;
+
 				let res;
 				try {
-					res = await fetch('/api/users/me/feed?limit=40', { credentials: 'include' });
+					res = await fetchPage();
 				} catch {
-					renderState({ glyph: '⚠', title: 'Could not load your feed', body: 'Check your connection and try again.', cta: { href: '/feed', label: 'Retry' } });
+					renderState({ glyph: '⚠', title: 'Could not load the feed', body: 'Check your connection and try again.', cta: { href: '/feed', label: 'Retry' } });
 					return;
 				}
 
 				if (res.status === 401) {
 					renderState({
 						glyph: '◎',
-						title: 'Sign in to see your feed',
-						body: 'Follow creators and agents on three.ws to build a feed of their latest work.',
+						title: 'Sign in to see who you follow',
+						body: 'Follow creators and agents on three.ws to build a feed of their latest work — or switch to All activity above.',
 						cta: { href: `/login?return=${encodeURIComponent('/feed')}`, label: 'Sign in' },
 					});
 					return;
 				}
 				if (!res.ok) {
-					renderState({ glyph: '⚠', title: 'Something went wrong', body: 'We could not load your feed right now.', cta: { href: '/feed', label: 'Retry' } });
+					renderState({ glyph: '⚠', title: 'Something went wrong', body: 'We could not load the feed right now.', cta: { href: '/feed', label: 'Retry' } });
 					return;
 				}
 
 				const data = await res.json();
 				const items = data.items || [];
+				cursor = data.next || null;
+				done = !cursor;
 
-				if (data.following_count === 0) {
+				if (scope === 'following' && data.following_count === 0) {
 					renderState({
 						glyph: '✦',
 						title: "You're not following anyone yet",
-						body: 'Find creators and agents to follow — their new avatars, agents, and launches will show up here.',
+						body: 'Find creators and agents to follow — their new avatars, agents, models, and launches will show up here.',
 						cta: { href: '/discover', label: 'Discover creators' },
 					});
 					return;
@@ -367,15 +516,107 @@
 				if (!items.length) {
 					renderState({
 						glyph: '☾',
-						title: 'No recent activity',
-						body: 'The people you follow have not posted anything public lately. Check back soon.',
-						cta: { href: '/discover', label: 'Follow more people' },
+						title: scope === 'following' ? 'No recent activity' : 'Nothing has happened yet',
+						body: scope === 'following'
+							? 'The people you follow have not posted anything public lately. Check back soon.'
+							: 'Be the first — forge a model, build a world, or launch an agent.',
+						cta: { href: scope === 'following' ? '/discover' : '/create', label: scope === 'following' ? 'Follow more people' : 'Start creating' },
 					});
 					return;
 				}
 
 				list.innerHTML = items.map(itemEl).join('');
-			})();
+				renderedOnce = true;
+				topCreatedAt = items[0].created_at;
+				moreBtn.hidden = done;
+				startPoll();
+			}
+
+			async function loadMore() {
+				if (loading || done || !renderedOnce) return;
+				loading = true;
+				moreBtn.disabled = true;
+				moreBtn.textContent = 'Loading…';
+				try {
+					const res = await fetchPage(cursor);
+					if (!res.ok) throw new Error('load more failed');
+					const data = await res.json();
+					const items = data.items || [];
+					list.insertAdjacentHTML('beforeend', items.map(itemEl).join(''));
+					cursor = data.next || null;
+					done = !cursor || !items.length;
+				} catch {
+					done = true;
+				} finally {
+					loading = false;
+					moreBtn.disabled = false;
+					moreBtn.textContent = 'Load more';
+					moreBtn.hidden = done;
+				}
+			}
+
+			moreBtn.addEventListener('click', loadMore);
+			const observer = new IntersectionObserver((entries) => {
+				if (entries.some((e) => e.isIntersecting)) loadMore();
+			}, { rootMargin: '400px' });
+			observer.observe(sentinel);
+
+			// Poll for newer items than the currently rendered top; on real activity
+			// surface a "New activity" pill instead of silently reflowing the list
+			// under the reader (same delight-without-jank pattern as the site-wide
+			// ticker in api/feed.js / public/feed.js).
+			function startPoll() {
+				stopPoll();
+				pollTimer = setInterval(checkForNew, 25000);
+			}
+			function stopPoll() {
+				if (pollTimer) clearInterval(pollTimer);
+				pollTimer = null;
+			}
+			let topCreatedAt = null;
+			async function checkForNew() {
+				if (document.hidden) return;
+				try {
+					const res = await fetchPage();
+					if (!res.ok) return;
+					const data = await res.json();
+					const items = data.items || [];
+					if (!items.length) return;
+					if (!topCreatedAt) { topCreatedAt = items[0].created_at; return; }
+					if (new Date(items[0].created_at) > new Date(topCreatedAt)) {
+						newPill.classList.add('visible');
+					}
+				} catch {
+					/* a missed poll is invisible — next tick tries again */
+				}
+			}
+
+			newPill.addEventListener('click', () => {
+				newPill.classList.remove('visible');
+				topCreatedAt = null;
+				window.scrollTo({ top: 0, behavior: 'smooth' });
+				loadInitial();
+			});
+
+			scopeAllBtn.addEventListener('click', () => {
+				if (scope === 'all') return;
+				scope = 'all';
+				localStorage.setItem(SCOPE_KEY, scope);
+				updateScopeButtons();
+				topCreatedAt = null;
+				loadInitial();
+			});
+			scopeFollowingBtn.addEventListener('click', () => {
+				if (scope === 'following') return;
+				scope = 'following';
+				localStorage.setItem(SCOPE_KEY, scope);
+				updateScopeButtons();
+				topCreatedAt = null;
+				loadInitial();
+			});
+
+			updateScopeButtons();
+			loadInitial();
 		</script>
 	</body>
 </html>

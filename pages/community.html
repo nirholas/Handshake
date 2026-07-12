@@ -103,6 +103,81 @@
 			.section li { color: var(--muted); font-size: 14.5px; margin-bottom: 8px; line-height: 1.5; }
 			.section li strong { color: var(--text); }
 			a { color: var(--accent); }
+
+			.activity-head {
+				display: flex;
+				align-items: baseline;
+				justify-content: space-between;
+				gap: 12px;
+				margin-bottom: 16px;
+			}
+			.activity-head h2 { margin: 0; }
+			.activity-head a {
+				font-size: 13.5px;
+				font-weight: 600;
+				text-decoration: none;
+				white-space: nowrap;
+			}
+			.activity-head a:hover { text-decoration: underline; }
+
+			.activity-list {
+				border: 1px solid var(--border);
+				border-radius: 16px;
+				background: var(--panel);
+				overflow: hidden;
+			}
+			.activity-row {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				padding: 14px 18px;
+				border-bottom: 1px solid var(--border);
+				text-decoration: none;
+				color: inherit;
+				transition: background 0.15s;
+				animation: activity-in 0.35s ease both;
+			}
+			@keyframes activity-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+			.activity-row:last-child { border-bottom: none; }
+			.activity-row:hover { background: #1a1a1a; }
+			.activity-avatar {
+				width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+				background: #1e1e1e; border: 1px solid var(--border);
+				object-fit: cover; display: flex; align-items: center; justify-content: center;
+				color: var(--muted); font-size: 0.95rem; overflow: hidden;
+			}
+			.activity-avatar img { width: 100%; height: 100%; object-fit: cover; }
+			.activity-thumb {
+				width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0;
+				background: #1e1e1e; object-fit: cover; overflow: hidden;
+				display: flex; align-items: center; justify-content: center; color: var(--muted);
+			}
+			.activity-thumb img { width: 100%; height: 100%; object-fit: cover; }
+			.activity-text { flex: 1; min-width: 0; }
+			.activity-line {
+				font-size: 14px;
+				color: var(--text);
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.activity-line strong { font-weight: 600; }
+			.activity-verb { color: var(--muted); font-weight: 400; }
+			.activity-time { font-size: 12px; color: var(--muted); margin-top: 2px; }
+			.activity-empty, .activity-error {
+				padding: 32px 18px;
+				text-align: center;
+				color: var(--muted);
+				font-size: 14px;
+			}
+			.activity-skeleton {
+				height: 62px;
+				border-bottom: 1px solid var(--border);
+				background: linear-gradient(90deg, #161616 25%, #1c1c1c 37%, #161616 63%);
+				background-size: 400% 100%;
+				animation: activity-shimmer 1.4s ease infinite;
+			}
+			@keyframes activity-shimmer { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
 		</style>
 	
 	<meta name="twitter:card" content="summary_large_image">
@@ -124,6 +199,18 @@
 			<div class="eyebrow">Community</div>
 			<h1>Build with us.</h1>
 			<p class="sub">three.ws is built in the open. Follow along, share what you're building, and help shape the 3D agent layer of the internet.</p>
+
+			<div class="section">
+				<div class="activity-head">
+					<h2>Live activity</h2>
+					<a href="/feed">Open the full feed →</a>
+				</div>
+				<div class="activity-list" id="community-activity">
+					<div class="activity-skeleton"></div>
+					<div class="activity-skeleton"></div>
+					<div class="activity-skeleton"></div>
+				</div>
+			</div>
 
 			<div class="grid">
 				<div class="card">
@@ -172,5 +259,92 @@
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
 		<script src="/brand.js" defer></script>
+
+		<script type="module">
+			const esc = (s) =>
+				String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+			const attr = (s) => esc(s).replace(/"/g, '&quot;');
+			const el = document.getElementById('community-activity');
+
+			const VERB = {
+				avatar: 'created a new avatar',
+				agent: 'launched an agent',
+				coin: 'launched a coin',
+				model: 'forged a 3D model',
+				world: 'built a world',
+			};
+			const GLYPH = { avatar: '◎', agent: '🤖', coin: '◉', model: '✦', world: '🌐', follow: '⇢' };
+
+			function relTime(iso) {
+				const then = new Date(iso).getTime();
+				if (!Number.isFinite(then)) return '';
+				const diff = Math.max(0, Date.now() - then);
+				const m = Math.floor(diff / 60000);
+				if (m < 1) return 'just now';
+				if (m < 60) return `${m}m ago`;
+				const h = Math.floor(m / 60);
+				if (h < 24) return `${h}h ago`;
+				const d = Math.floor(h / 24);
+				return d < 30 ? `${d}d ago` : new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+			}
+
+			function rowEl(it) {
+				const a = it.actor || {};
+				const name = esc(a.display_name || 'A three.ws creator');
+				const nameHtml = a.username ? `<a href="/u/${attr(a.username)}" style="color:inherit;text-decoration:none">${name}</a>` : name;
+				const avatarHtml = a.avatar_url
+					? `<img src="${attr(a.avatar_url)}" alt="" loading="lazy" referrerpolicy="no-referrer">`
+					: GLYPH[it.kind] || '◎';
+
+				if (it.kind === 'follow') {
+					const t = it.target || {};
+					return `
+						<a class="activity-row" href="${attr(it.href)}">
+							<span class="activity-avatar">${avatarHtml}</span>
+							<div class="activity-text">
+								<div class="activity-line"><strong>${nameHtml}</strong> <span class="activity-verb">followed</span> <strong>${esc(t.display_name)}</strong></div>
+								<div class="activity-time">${esc(relTime(it.created_at))}</div>
+							</div>
+						</a>
+					`;
+				}
+
+				const verb = it.kind === 'model' && it.isRemix ? 'remixed a 3D model' : VERB[it.kind] || 'shared something';
+				const thumbHtml = it.image
+					? `<img src="${attr(it.image)}" alt="" loading="lazy" referrerpolicy="no-referrer">`
+					: (GLYPH[it.kind] || '◎');
+				return `
+					<a class="activity-row" href="${attr(it.href)}"${it.external ? ' target="_blank" rel="noopener"' : ''}>
+						<span class="activity-avatar">${avatarHtml}</span>
+						<div class="activity-text">
+							<div class="activity-line"><strong>${nameHtml}</strong> <span class="activity-verb">${esc(verb)}</span> — ${esc(it.title || 'Untitled')}</div>
+							<div class="activity-time">${esc(relTime(it.created_at))}</div>
+						</div>
+						<span class="activity-thumb">${thumbHtml}</span>
+					</a>
+				`;
+			}
+
+			(async function load() {
+				let res;
+				try {
+					res = await fetch('/api/users/me/feed?scope=all&limit=10');
+				} catch {
+					el.innerHTML = `<div class="activity-error">Could not load live activity right now.</div>`;
+					return;
+				}
+				if (!res.ok) {
+					el.innerHTML = `<div class="activity-error">Could not load live activity right now.</div>`;
+					return;
+				}
+				const data = await res.json();
+				const items = data.items || [];
+				if (!items.length) {
+					el.innerHTML = `<div class="activity-empty">Nothing has happened yet — be the first to <a href="/create">create something</a>.</div>`;
+					return;
+				}
+				el.innerHTML = items.map(rowEl).join('');
+			})();
+		</script>
 </body>
 </html>

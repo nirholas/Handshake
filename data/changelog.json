@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-07-12",
+			"title": "/feed and /community are now real, live pages",
+			"summary": "/feed used to only show activity from people you follow — it now defaults to a live, platform-wide feed of every new avatar, agent, forged 3D model, saved world, coin launch, and follow, with a toggle to switch to just the people you follow. Scroll for more and it loads the next page automatically; a \"New activity\" pill appears when something fresh lands so the list never jumps under you mid-read. /community, previously a static grid of links, now leads with that same live activity feed alongside the existing links to X, GitHub, docs, and tutorials.",
+			"tags": [
+				"feature"
+			],
+			"link": "/feed"
+		},
+		{
+			"date": "2026-07-12",
+			"title": "Notification bell now covers remixes, royalties, DMs, and launch graduations",
+			"summary": "The nav bell already tracked sales and purchases; it now also fires for real events that used to be invisible unless you happened to be watching: someone remixing one of your published 3D models (with the royalty payout amount if one settled on-chain), a friend DMing you while you're away, and a coin you launched hitting its funding target and graduating off the bonding curve. Dashboard → Settings has a new Notification preferences panel wired to the real per-category preference store, so you can mute any category (sales, purchases, social, IRL, market alerts, account) per channel — in-app, push, email, or Telegram — independently; in-app never turns off, so nothing is silently lost. A gear icon in the bell dropdown jumps straight there.",
+			"tags": [
+				"feature"
+			],
+			"link": "/dashboard/settings"
+		},
+		{
+			"date": "2026-07-12",
 			"title": "Follow creators site-wide and see who's following you",
 			"summary": "Every profile at /u/:username now has a Follow button, plus follower and following counts you can open into full lists. Following someone is one-directional and needs no approval — the right model for keeping up with a creator, not the mutual-friend system that already powers /play and /walk DMs. You get a notification when someone follows you, and following people now feeds your home feed (GET /api/users/me/feed) with their new avatars, agents, coins, models, and worlds as they post them. Logged-out visitors are sent to sign in instead of the button silently doing nothing.",
 			"tags": [

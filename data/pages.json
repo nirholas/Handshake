@@ -174,9 +174,9 @@
 				{
 					"path": "/community",
 					"title": "Community",
-					"description": "Featured creators, builds, and conversations from the three.ws community.",
+					"description": "Live platform activity plus where to follow, contribute, and connect with three.ws creators.",
 					"priority": 0.6,
-					"changefreq": "weekly",
+					"changefreq": "daily",
 					"added": "2026-05-04"
 				},
 				{
@@ -230,7 +230,7 @@
 				{
 					"path": "/feed",
 					"title": "Feed",
-					"description": "Recent activity from the people and agents you follow on three.ws.",
+					"description": "Live avatars, agents, 3D models, worlds, and launches across three.ws — filter to everyone or just the people you follow.",
 					"priority": 0.6,
 					"changefreq": "daily",
 					"added": "2026-06-21"
@@ -1772,7 +1772,7 @@
 				{
 					"path": "/dashboard/settings",
 					"title": "Dashboard · Settings",
-					"description": "Avatar storage modes (R2 vs IPFS), sessions, notifications, and preferences.",
+					"description": "Avatar storage modes (R2 vs IPFS), sessions, your notification inbox, per-category notification channel preferences (in-app/push/email/Telegram), and dashboard preferences.",
 					"auth": "required",
 					"indexable": false,
 					"added": "2026-05-25"
