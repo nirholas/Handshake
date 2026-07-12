@@ -13458,6 +13458,15 @@
 				"improvement"
 			],
 			"link": "/docs/market-data-api"
+		},
+		{
+			"date": "2026-07-12",
+			"title": "A cross-surface leaderboard, streaks, and badges",
+			"summary": "A new Rankings board at /rankings ranks creators across every surface at once — creations forged, remixes received, coins launched, followers, and distance walked while signed in — with your own rank pinned even if you're off the visible page. Showing up daily (a login, a finished creation, or a walk session) now builds a real streak, shown on your profile and on the Rankings page. Four badges are genuinely earnable and persist once unlocked: First Creation, Remixed, 7-Day Streak, and a daily-refreshed Top 10 placement per metric.",
+			"tags": [
+				"feature"
+			],
+			"link": "/rankings"
 		}
 	]
 }

@@ -6,6 +6,7 @@ import { env } from './env.js';
 import { sql } from './db.js';
 import { logAudit } from './audit.js';
 import { randomToken, sha256, hmacSha256, constantTimeEquals } from './crypto.js';
+import { recordDailyActivity } from './streaks.js';
 
 const ACCESS_TTL_SEC = 60 * 60; // 1h access tokens
 const REFRESH_TTL_SEC = 60 * 60 * 24 * 30; // 30d refresh tokens
@@ -153,6 +154,10 @@ export async function createSession({ userId, userAgent, ip }) {
 		insert into sessions (user_id, token_hash, user_agent, ip, expires_at)
 		values (${userId}, ${hash}, ${userAgent ?? null}, ${ip ?? null}, now() + ${`${SESSION_TTL_SEC} seconds`}::interval)
 	`;
+	// A login (or the once-a-day silent session rotation in getSessionUser)
+	// is a qualifying activity for the cross-surface streak. Fire-and-forget —
+	// a streak-tracking hiccup must never block sign-in.
+	recordDailyActivity(userId).catch(() => {});
 	return secret;
 }
 

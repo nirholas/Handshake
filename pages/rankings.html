@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<title>Rankings · three.ws</title>
+		<meta name="description" content="The cross-surface three.ws leaderboard — creators ranked by real creations, remixes received, coin launches, followers, and distance walked. Track your streak and earn badges for showing up." />
+		<link rel="canonical" href="https://three.ws/rankings" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/rankings" />
+		<meta property="og:title" content="Rankings · three.ws" />
+		<meta property="og:description" content="Creators ranked by real creations, remixes received, coin launches, followers, and distance walked — one board across every surface." />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Rankings&amp;d=The+cross-surface+leaderboard+%E2%80%94+creations%2C+remixes%2C+launches%2C+followers%2C+and+walk+distance%2C+ranked.&amp;p=%2Frankings" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Rankings · three.ws" />
+		<meta name="twitter:description" content="Creators ranked by real creations, remixes, launches, followers, and walk distance — one board across every surface." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=Rankings&amp;d=The+cross-surface+leaderboard+%E2%80%94+creations%2C+remixes%2C+launches%2C+followers%2C+and+walk+distance%2C+ranked.&amp;p=%2Frankings" />
+		<meta name="theme-color" content="#0a0a0a" />
+		<style>
+			.rk-shell { max-width: 980px; margin: 0 auto; padding: var(--space-lg) var(--space-md) var(--space-2xl); }
+
+			.rk-hero { padding: var(--space-xl) 0 var(--space-md); }
+			.rk-kicker {
+				display: inline-flex; align-items: center; gap: var(--space-xs);
+				font: var(--weight-semibold) var(--text-2xs)/1.2 var(--font-mono);
+				letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-dim);
+				margin: 0 0 var(--space-sm);
+			}
+			.rk-live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-success); box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-success) 60%, transparent); animation: rk-pulse 1.8s ease infinite; }
+			@keyframes rk-pulse { 0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-success) 55%, transparent); } 70% { box-shadow: 0 0 0 6px transparent; } }
+			.rk-title { font: var(--weight-bold) var(--text-2xl)/1.05 var(--font-display); color: var(--color-text-bright); margin: 0 0 var(--space-sm); letter-spacing: -0.02em; }
+			.rk-sub { font: var(--weight-regular) var(--text-base)/var(--leading-normal) var(--font-body); color: var(--color-text-dim); margin: 0; max-width: 62ch; }
+
+			/* Your streak card */
+			.rk-streak-card {
+				display: none;
+				align-items: center; gap: var(--space-md);
+				margin: var(--space-lg) 0 0;
+				padding: var(--space-md);
+				border: 1px solid var(--color-border);
+				border-radius: var(--radius-lg);
+				background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, var(--surface-1)), var(--surface-1));
+			}
+			.rk-streak-card.is-visible { display: flex; }
+			.rk-streak-flame { font-size: 28px; line-height: 1; flex: none; }
+			.rk-streak-body { flex: 1; min-width: 0; }
+			.rk-streak-num { font: var(--weight-bold) var(--text-xl)/1.1 var(--font-display); color: var(--color-text-bright); }
+			.rk-streak-label { font: var(--weight-medium) var(--text-sm)/1.3 var(--font-body); color: var(--color-text-dim); margin-top: 2px; }
+			.rk-streak-badges { display: flex; gap: var(--space-2xs); flex-wrap: wrap; }
+			.rk-badge-chip {
+				display: inline-flex; align-items: center; gap: 4px;
+				padding: 4px 9px; border-radius: var(--radius-pill);
+				background: var(--surface-2); border: 1px solid var(--color-border);
+				font: var(--weight-medium) var(--text-2xs)/1 var(--font-body); color: var(--color-text);
+				white-space: nowrap;
+			}
+
+			.rk-controls { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center; margin: var(--space-lg) 0 var(--space-md); }
+			.rk-seg { display: inline-flex; flex-wrap: wrap; gap: var(--space-3xs); padding: var(--space-3xs); background: var(--surface-1); border: 1px solid var(--color-border); border-radius: var(--radius-pill); }
+			.rk-seg-btn {
+				appearance: none; border: 0; background: transparent; cursor: pointer;
+				padding: var(--space-xs) var(--space-md); border-radius: var(--radius-pill);
+				font: var(--weight-medium) var(--text-md)/1 var(--font-body); color: var(--color-text-dim);
+				transition: color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
+				white-space: nowrap;
+			}
+			.rk-seg-btn:hover { color: var(--color-text); }
+			.rk-seg-btn.is-active { background: var(--surface-3); color: var(--color-text-bright); }
+			.rk-seg-btn:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
+
+			.rk-board { border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--surface-1); overflow: hidden; }
+			.rk-head, .rk-row {
+				display: grid;
+				grid-template-columns: 56px 1fr 140px;
+				align-items: center; gap: var(--space-sm);
+				padding: var(--space-sm) var(--space-md);
+			}
+			.rk-head { background: var(--surface-2); border-bottom: 1px solid var(--color-border); font: var(--weight-semibold) var(--text-2xs)/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-faint); }
+			.rk-col-num { text-align: right; }
+			.rk-row { border-bottom: 1px solid var(--color-border); transition: background var(--duration-fast) var(--ease-standard); }
+			.rk-row:last-child { border-bottom: 0; }
+			.rk-row:hover { background: var(--surface-2); }
+			.rk-rank { font: var(--weight-bold) var(--text-md)/1 var(--font-mono); color: var(--color-text-dim); }
+			.rk-rank.is-top { color: var(--color-text-bright); }
+			.rk-medal { font-size: 16px; }
+			.rk-creator { display: flex; align-items: center; gap: var(--space-sm); min-width: 0; }
+			.rk-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; background: var(--surface-3); flex: none; border: 1px solid var(--color-border); }
+			.rk-avatar-fallback { display: flex; align-items: center; justify-content: center; font: var(--weight-semibold) var(--text-sm)/1 var(--font-body); color: var(--color-text-dim); }
+			.rk-handle { font: var(--weight-medium) var(--text-md)/1.2 var(--font-body); color: var(--color-text); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+			a.rk-handle:hover { color: var(--color-text-bright); text-decoration: underline; }
+			.rk-value { font: var(--weight-semibold) var(--text-md)/1 var(--font-mono); color: var(--color-text-bright); text-align: right; }
+
+			.rk-me { position: sticky; bottom: 0; z-index: 5; margin-top: var(--space-md); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--color-border)); border-radius: var(--radius-lg); background: var(--surface-3); backdrop-filter: blur(var(--blur-md)); -webkit-backdrop-filter: blur(var(--blur-md)); box-shadow: var(--shadow-2); }
+			.rk-me .rk-row { border-bottom: 0; }
+			.rk-me-tag { font: var(--weight-semibold) var(--text-2xs)/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-faint); padding: var(--space-xs) var(--space-md) 0; }
+
+			.rk-loadmore { display: block; margin: var(--space-md) auto 0; appearance: none; cursor: pointer; padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-md); border: 1px solid var(--color-border); background: var(--surface-1); color: var(--color-text); font: var(--weight-medium) var(--text-md)/1 var(--font-body); transition: background var(--duration-fast) var(--ease-standard); }
+			.rk-loadmore:hover { background: var(--surface-2); }
+			.rk-loadmore:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: var(--focus-ring-offset); }
+			.rk-loadmore[disabled] { opacity: var(--disabled-opacity); cursor: var(--disabled-cursor); }
+
+			.rk-state { padding: var(--space-2xl) var(--space-md); text-align: center; }
+			.rk-state-title { font: var(--weight-semibold) var(--text-lg)/1.2 var(--font-display); color: var(--color-text-bright); margin: 0 0 var(--space-xs); }
+			.rk-state-msg { font: var(--weight-regular) var(--text-md)/var(--leading-normal) var(--font-body); color: var(--color-text-dim); margin: 0 auto var(--space-md); max-width: 46ch; }
+			.rk-state .rk-cta { display: inline-flex; align-items: center; gap: var(--space-xs); padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-md); background: var(--accent); color: #0a0a0a; font: var(--weight-semibold) var(--text-md)/1 var(--font-body); text-decoration: none; transition: opacity var(--duration-fast) var(--ease-standard); }
+			.rk-state .rk-cta:hover { opacity: 0.85; }
+
+			.rk-skel-row { display: grid; grid-template-columns: 56px 1fr 140px; gap: var(--space-sm); align-items: center; padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--color-border); }
+			.rk-skel { height: 14px; border-radius: var(--radius-sm); background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 37%, var(--surface-2) 63%); background-size: 400% 100%; animation: rk-shimmer 1.4s ease infinite; }
+			.rk-skel.circle { width: 34px; height: 34px; border-radius: 50%; }
+			@keyframes rk-shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+			@media (prefers-reduced-motion: reduce) { .rk-skel, .rk-live-dot { animation: none; } }
+
+			.rk-footer-links { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: var(--space-lg); }
+			.rk-footer-links a { font: var(--weight-medium) var(--text-sm)/1 var(--font-body); color: var(--color-text-dim); text-decoration: none; padding: var(--space-xs) var(--space-md); border: 1px solid var(--color-border); border-radius: var(--radius-pill); transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
+			.rk-footer-links a:hover { color: var(--color-text-bright); border-color: var(--color-text-dim); }
+
+			@media (max-width: 640px) {
+				.rk-head, .rk-row, .rk-skel-row { grid-template-columns: 40px 1fr 96px; }
+				.rk-title { font-size: var(--text-xl); }
+			}
+		</style>
+
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+	<meta property="og:locale" content="en_US">
+	<meta property="og:image:alt" content="Rankings — three.ws">
+	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Rankings","description":"The cross-surface three.ws leaderboard — creations, remixes, launches, followers, and walk distance, ranked.","url":"https://three.ws/rankings","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}]}</script>
+</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="rk-shell" aria-labelledby="rk-title">
+			<section class="rk-hero">
+				<p class="rk-kicker"><span class="rk-live-dot" aria-hidden="true"></span> Cross-surface · updates live</p>
+				<h1 id="rk-title" class="rk-title">Rankings</h1>
+				<p class="rk-sub">One board across every surface — creations forged, remixes earned, coins launched, creators followed, and distance walked. Show up daily to build a streak and earn badges.</p>
+			</section>
+
+			<div class="rk-streak-card" id="rk-streak-card">
+				<div class="rk-streak-flame" aria-hidden="true">🔥</div>
+				<div class="rk-streak-body">
+					<div class="rk-streak-num" id="rk-streak-num">0-day streak</div>
+					<div class="rk-streak-label" id="rk-streak-label">Come back tomorrow to keep it alive</div>
+					<div class="rk-streak-badges" id="rk-streak-badges"></div>
+				</div>
+			</div>
+
+			<section class="rk-controls" aria-label="Leaderboard metric">
+				<div class="rk-seg" role="tablist" aria-label="Rank by" id="rk-metric">
+					<button class="rk-seg-btn is-active" data-metric="creations" role="tab" aria-selected="true">Creations</button>
+					<button class="rk-seg-btn" data-metric="remixes_received" role="tab" aria-selected="false">Remixes</button>
+					<button class="rk-seg-btn" data-metric="launches" role="tab" aria-selected="false">Launches</button>
+					<button class="rk-seg-btn" data-metric="followers" role="tab" aria-selected="false">Followers</button>
+					<button class="rk-seg-btn" data-metric="walk_distance" role="tab" aria-selected="false">Walk Distance</button>
+				</div>
+			</section>
+
+			<section class="rk-board" aria-label="Ranked creators" aria-busy="true">
+				<div class="rk-head" role="row" aria-hidden="true">
+					<span>#</span>
+					<span>Creator</span>
+					<span class="rk-col-num" id="rk-metric-label">Creations</span>
+				</div>
+				<div id="rk-rows" aria-live="polite"></div>
+			</section>
+
+			<button type="button" id="rk-loadmore" class="rk-loadmore" hidden>Show more</button>
+
+			<div id="rk-me-wrap" class="rk-me" hidden>
+				<div class="rk-me-tag">Your rank</div>
+				<div id="rk-me-row"></div>
+			</div>
+
+			<nav class="rk-footer-links" aria-label="Other leaderboards">
+				<a href="/leaderboard">Trader Leaderboard →</a>
+				<a href="/walk-leaderboard">Walk Leaderboard →</a>
+				<a href="/creations">Remix Bazaar →</a>
+			</nav>
+		</main>
+
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+
+		<script type="module">
+			const rowsEl = document.getElementById('rk-rows');
+			const boardEl = rowsEl.closest('.rk-board');
+			const metricLabelEl = document.getElementById('rk-metric-label');
+			const loadMoreEl = document.getElementById('rk-loadmore');
+			const meWrap = document.getElementById('rk-me-wrap');
+			const meRow = document.getElementById('rk-me-row');
+			const metricSeg = document.getElementById('rk-metric');
+			const streakCard = document.getElementById('rk-streak-card');
+			const streakNum = document.getElementById('rk-streak-num');
+			const streakLabel = document.getElementById('rk-streak-label');
+			const streakBadges = document.getElementById('rk-streak-badges');
+
+			const METRIC_HEAD = {
+				creations: 'Creations',
+				remixes_received: 'Remixes',
+				launches: 'Launches',
+				followers: 'Followers',
+				walk_distance: 'Distance',
+			};
+			const EMPTY_COPY = {
+				creations: { title: 'No creations ranked yet', msg: 'Forge a 3D model or build a world while signed in — it’ll show up here.', cta: { href: '/forge', label: 'Start creating →' } },
+				remixes_received: { title: 'No remixes yet', msg: 'Publish one of your creations to the remix bazaar and wait for another creator to build on it.', cta: { href: '/creations', label: 'Open the bazaar →' } },
+				launches: { title: 'No launches ranked yet', msg: 'Launch a coin from one of your agents to show up here.', cta: { href: '/create-agent', label: 'Launch an agent →' } },
+				followers: { title: 'No one ranked yet', msg: 'Grow your following by sharing your profile and creations.', cta: { href: '/feed', label: 'Open your feed →' } },
+				walk_distance: { title: 'No walkers ranked yet', msg: 'Sign in and take your avatar for a walk — distance while signed in counts here.', cta: { href: '/walk', label: 'Start walking →' } },
+			};
+			const PAGE = 50;
+			let state = { metric: 'creations', offset: 0, total: 0, loading: false };
+
+			const esc = (s) => String(s).replace(/[<>&"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]));
+
+			function fmtValue(metric, v) {
+				if (metric === 'walk_distance') return v >= 1000 ? (v / 1000).toFixed(2) + ' km' : Math.round(v) + ' m';
+				return String(Math.round(v));
+			}
+
+			function medal(rank) {
+				if (rank === 1) return '<span class="rk-medal" aria-hidden="true">🥇</span>';
+				if (rank === 2) return '<span class="rk-medal" aria-hidden="true">🥈</span>';
+				if (rank === 3) return '<span class="rk-medal" aria-hidden="true">🥉</span>';
+				return '';
+			}
+
+			function avatarCell(r) {
+				if (r.avatar) return `<img class="rk-avatar" src="${esc(r.avatar)}" alt="" loading="lazy" />`;
+				const ch = esc((r.handle || '?').replace(/^@/, '')[0] || '?').toUpperCase();
+				return `<span class="rk-avatar rk-avatar-fallback" aria-hidden="true">${ch}</span>`;
+			}
+
+			function rowHtml(r, metric, isMe) {
+				const handle = r.profileUrl
+					? `<a class="rk-handle" href="${esc(r.profileUrl)}">${esc(r.handle)}</a>`
+					: `<span class="rk-handle">${esc(r.handle)}${isMe ? ' (you)' : ''}</span>`;
+				const rankCls = r.rank && r.rank <= 3 ? 'rk-rank is-top' : 'rk-rank';
+				const rankText = r.rank == null ? '—' : (medal(r.rank) || '#' + r.rank);
+				return `
+					<div class="rk-row" role="row">
+						<span class="${rankCls}">${rankText}</span>
+						<span class="rk-creator">${avatarCell(r)} ${handle}</span>
+						<span class="rk-value">${fmtValue(metric, r.value)}</span>
+					</div>`;
+			}
+
+			function skeleton() {
+				let h = '';
+				for (let i = 0; i < 8; i++) {
+					h += `<div class="rk-skel-row"><span class="rk-skel" style="width:24px"></span><span style="display:flex;align-items:center;gap:10px"><span class="rk-skel circle"></span><span class="rk-skel" style="width:120px"></span></span><span class="rk-skel" style="width:70px;justify-self:end"></span></div>`;
+				}
+				rowsEl.innerHTML = h;
+			}
+
+			function showState(copy) {
+				rowsEl.innerHTML = `<div class="rk-state"><p class="rk-state-title">${esc(copy.title)}</p><p class="rk-state-msg">${esc(copy.msg)}</p>${copy.cta ? `<a class="rk-cta" href="${esc(copy.cta.href)}">${esc(copy.cta.label)}</a>` : ''}</div>`;
+			}
+
+			function renderMe(me, metric) {
+				if (!me) { meWrap.hidden = true; return; }
+				meWrap.hidden = false;
+				meRow.innerHTML = rowHtml(me, metric, true);
+			}
+
+			async function load({ reset = true } = {}) {
+				if (state.loading) return;
+				state.loading = true;
+				if (reset) { state.offset = 0; skeleton(); meWrap.hidden = true; }
+				boardEl.setAttribute('aria-busy', 'true');
+				loadMoreEl.disabled = true;
+				const params = new URLSearchParams({ metric: state.metric, limit: String(PAGE), offset: String(state.offset) });
+				try {
+					const res = await fetch('/api/leaderboard/unified?' + params.toString(), { credentials: 'include' });
+					if (!res.ok) throw new Error('HTTP ' + res.status);
+					const data = await res.json();
+					state.total = data.total || 0;
+					const metric = data.metric || state.metric;
+					metricLabelEl.textContent = METRIC_HEAD[metric] || 'Value';
+
+					if (reset && (!data.rows || !data.rows.length)) {
+						showState(EMPTY_COPY[metric] || { title: 'No one ranked yet', msg: 'Be the first.' });
+						renderMe(data.me && data.me.value > 0 ? data.me : null, metric);
+						return;
+					}
+
+					const html = (data.rows || []).map((r) => rowHtml(r, metric, data.me && r.userId === data.me.userId)).join('');
+					if (reset) rowsEl.innerHTML = html; else rowsEl.insertAdjacentHTML('beforeend', html);
+
+					state.offset += (data.rows || []).length;
+					loadMoreEl.hidden = !data.hasMore;
+					renderMe(data.me, metric);
+				} catch (err) {
+					if (reset) {
+						const wrap = document.createElement('div');
+						wrap.className = 'rk-state';
+						wrap.innerHTML = `<p class="rk-state-title">Couldn't load the leaderboard</p><p class="rk-state-msg">${esc(err.message || 'Something went wrong.')}</p>`;
+						const btn = document.createElement('button');
+						btn.className = 'rk-cta';
+						btn.type = 'button';
+						btn.textContent = 'Retry';
+						btn.addEventListener('click', () => load({ reset: true }));
+						wrap.appendChild(btn);
+						rowsEl.replaceChildren(wrap);
+					}
+				} finally {
+					state.loading = false;
+					boardEl.setAttribute('aria-busy', 'false');
+					loadMoreEl.disabled = false;
+				}
+			}
+
+			function bindSeg(seg, key, onChange) {
+				seg.addEventListener('click', (e) => {
+					const btn = e.target.closest('.rk-seg-btn');
+					if (!btn || btn.classList.contains('is-active')) return;
+					seg.querySelectorAll('.rk-seg-btn').forEach((b) => { b.classList.remove('is-active'); b.setAttribute('aria-selected', 'false'); });
+					btn.classList.add('is-active');
+					btn.setAttribute('aria-selected', 'true');
+					state[key] = btn.dataset[key];
+					onChange();
+				});
+				seg.addEventListener('keydown', (e) => {
+					if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+					const btns = [...seg.querySelectorAll('.rk-seg-btn')];
+					const i = btns.findIndex((b) => b.classList.contains('is-active'));
+					const next = btns[(i + (e.key === 'ArrowRight' ? 1 : btns.length - 1)) % btns.length];
+					next.focus(); next.click();
+					e.preventDefault();
+				});
+			}
+
+			bindSeg(metricSeg, 'metric', () => load({ reset: true }));
+			loadMoreEl.addEventListener('click', () => load({ reset: false }));
+
+			load({ reset: true });
+
+			// Streak card — only for a signed-in viewer with a resolvable username.
+			// Reuses GET /api/users/:username (already returns streak + badges) so
+			// this page adds zero new auth surface: it just needs to know who's
+			// signed in, which /api/auth/me already answers (same call profile.html
+			// uses to resolve the viewer).
+			(async () => {
+				try {
+					const meRes = await fetch('/api/auth/me', { credentials: 'include' });
+					if (!meRes.ok) return;
+					const me = await meRes.json();
+					const username = me?.user?.username;
+					if (!username) return;
+					const profRes = await fetch(`/api/users/${encodeURIComponent(username)}`);
+					if (!profRes.ok) return;
+					const prof = await profRes.json();
+					const streak = prof?.streak;
+					if (!streak) return;
+					streakCard.classList.add('is-visible');
+					streakNum.textContent = `${streak.currentStreak || 0}-day streak`;
+					streakLabel.textContent = streak.currentStreak > 0
+						? 'Come back tomorrow to keep it alive'
+						: 'Create, launch, or walk today to start one';
+					const badges = (prof.badges || []).slice(0, 4);
+					streakBadges.innerHTML = badges
+						.map((b) => `<span class="rk-badge-chip" title="${esc(b.description || '')}">${esc(b.icon || '★')} ${esc(b.label || b.code)}</span>`)
+						.join('');
+				} catch {
+					/* streak card is a bonus — never block the board */
+				}
+			})();
+		</script>
+	</body>
+</html>

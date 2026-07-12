@@ -5313,6 +5313,10 @@
 		{
 			"path": "/api/cron/news-archive-append",
 			"schedule": "17 * * * *"
+		},
+		{
+			"path": "/api/cron/leaderboard-rollup",
+			"schedule": "0 9 * * *"
 		}
 	]
 }

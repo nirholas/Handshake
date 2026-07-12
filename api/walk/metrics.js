@@ -31,6 +31,7 @@ import { parse } from '../_lib/validate.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { getSessionUser, extractBearer, authenticateBearer } from '../_lib/auth.js';
+import { recordDailyActivity } from '../_lib/streaks.js';
 
 export const maxDuration = 10;
 
@@ -170,6 +171,10 @@ export default wrap(async (req, res) => {
 			`;
 		}
 	}
+
+	// A signed-in walker's session is a qualifying streak action. Anonymous
+	// walkers have no user_id to attach a cross-surface streak to.
+	if (userId && hasMetrics) recordDailyActivity(userId).catch(() => {});
 
 	return json(res, 200, { ok: true, recorded: hasMetrics || !!body.eventName || codes.length > 0 });
 });

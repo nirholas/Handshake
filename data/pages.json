@@ -722,6 +722,14 @@
 					"added": "2026-06-05"
 				},
 				{
+					"path": "/rankings",
+					"title": "Rankings",
+					"description": "The cross-surface three.ws leaderboard — creators ranked by real creations, remixes received, coin launches, followers, and distance walked. Track your streak and earn badges for showing up.",
+					"priority": 0.7,
+					"changefreq": "daily",
+					"added": "2026-07-12"
+				},
+				{
 					"path": "/walk-leaderboard",
 					"title": "Walk Leaderboard",
 					"description": "Global leaderboard for the walking avatar — distance walked, sites visited, and time, ranked daily, weekly, and all-time.",

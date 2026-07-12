@@ -2251,3 +2251,25 @@ create index if not exists agent_brain_anchors_hash
     on agent_brain_anchors(agent_id, brain_hash);
 create index if not exists agent_brain_anchors_status
     on agent_brain_anchors(agent_id, status, created_at desc);
+
+-- ── user_streaks / user_badges — cross-surface leaderboard streaks + badges ──
+-- See api/_lib/migrations/20260712020000_leaderboard_streaks_badges.sql for the
+-- full rationale.
+create table if not exists user_streaks (
+    user_id         uuid primary key references users(id) on delete cascade,
+    current_streak  integer not null default 0,
+    longest_streak  integer not null default 0,
+    last_active_day date,
+    updated_at      timestamptz not null default now(),
+    created_at      timestamptz not null default now()
+);
+
+create table if not exists user_badges (
+    id          bigserial primary key,
+    user_id     uuid not null references users(id) on delete cascade,
+    code        text not null,
+    context     jsonb,
+    unlocked_at timestamptz not null default now()
+);
+create unique index if not exists user_badges_uniq on user_badges (user_id, code);
+create index if not exists user_badges_user on user_badges (user_id, unlocked_at desc);

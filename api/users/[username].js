@@ -4,6 +4,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { publicUrl, thumbnailUrl } from '../_lib/r2.js';
 import { listCreationsByUser, countCreationsByUser } from '../_lib/forge-store.js';
 import { listDioramasByUser, countDioramasByUser } from '../_lib/diorama-store.js';
+import { getStreak, listBadges } from '../_lib/streaks.js';
 
 const CREATIONS_PAGE_SIZE = 24;
 const SITE = 'https://three.ws';
@@ -219,6 +220,14 @@ export default wrap(async (req, res) => {
 		countDioramasByUser({ userId: user.id }),
 	]);
 
+	// Streak + badges — the retention layer for the cross-surface leaderboard.
+	// Both fail soft to an empty/zero state so a streak-tracking hiccup never
+	// 500s a profile.
+	const [streak, badges] = await Promise.all([
+		getStreak(user.id).catch(() => ({ currentStreak: 0, longestStreak: 0, lastActiveDay: null })),
+		listBadges(user.id).catch(() => []),
+	]);
+
 	const avatars = avatarRows.map((a) => ({
 		id: a.id,
 		slug: a.slug,
@@ -429,6 +438,8 @@ export default wrap(async (req, res) => {
 			banner_url: user.banner_url || null,
 		},
 		stats,
+		streak: streak || { currentStreak: 0, longestStreak: 0, lastActiveDay: null },
+		badges,
 		social,
 		avatars,
 		agents,

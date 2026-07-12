@@ -16,6 +16,7 @@ import { randomUUID } from 'node:crypto';
 import { sql } from './db.js';
 import { databaseConfigured } from './env.js';
 import { normalizeDiorama } from '../../src/diorama/schema.js';
+import { recordDailyActivity, maybeAwardFirstCreation } from './streaks.js';
 
 export function dioramaStoreEnabled() {
 	return databaseConfigured();
@@ -76,6 +77,12 @@ export async function saveDiorama({ diorama, clientKey = null, userId = null }) 
 				${clientKey}, ${userId}, 0, false, ${createdAt}
 			)
 		`;
+		// A saved world is a qualifying streak action + the trigger for the
+		// "first creation" badge. Fire-and-forget — never blocks the save.
+		if (userId) {
+			recordDailyActivity(userId).catch(() => {});
+			maybeAwardFirstCreation(userId).catch(() => {});
+		}
 		return { id, createdAt };
 	} catch (err) {
 		console.error('[diorama-store] saveDiorama failed:', err?.message);

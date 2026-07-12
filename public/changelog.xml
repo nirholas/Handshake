@@ -15,6 +15,14 @@
 			<description>How the three.ws on-chain treasury funds itself and where every dollar flows: the funding-root and engine wallets, the topup/sweepback loop, the allowlist- and destination-locks that keep money inside platform-owned wallets, and the two leak scanners that audit every signer wallet on-chain every minute — plus how to verify there's no leak yourself.</description>
 		</item>
 		<item>
+			<title>Rankings</title>
+			<link>https://three.ws/rankings</link>
+			<guid isPermaLink="false">2026-07-12:Rankings</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The cross-surface three.ws leaderboard — creators ranked by real creations, remixes received, coin launches, followers, and distance walked. Track your streak and earn badges for showing up.</description>
+		</item>
+		<item>
 			<title>Robinhood Chain</title>
 			<link>https://three.ws/markets/robinhood</link>
 			<guid isPermaLink="false">2026-07-12:Robinhood Chain</guid>
@@ -45,6 +53,14 @@
 			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>/feed used to only show activity from people you follow — it now defaults to a live, platform-wide feed of every new avatar, agent, forged 3D model, saved world, coin launch, and follow, with a toggle to switch to just the people you follow. Scroll for more and it loads the next page automatically; a &quot;New activity&quot; pill appears when something fresh lands so the list never jumps under you mid-read. /community, previously a static grid of links, now leads with that same live activity feed alongside the existing links to X, GitHub, docs, and tutorials.</description>
+		</item>
+		<item>
+			<title>A cross-surface leaderboard, streaks, and badges</title>
+			<link>https://three.ws/rankings</link>
+			<guid isPermaLink="false">2026-07-12:A cross-surface leaderboard, streaks, and badges</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new Rankings board at /rankings ranks creators across every surface at once — creations forged, remixes received, coins launched, followers, and distance walked while signed in — with your own rank pinned even if you're off the visible page. Showing up daily (a login, a finished creation, or a walk session) now builds a real streak, shown on your profile and on the Rankings page. Four badges are genuinely earnable and persist once unlocked: First Creation, Remixed, 7-Day Streak, and a daily-refreshed Top 10 placement per metric.</description>
 		</item>
 		<item>
 			<title>Agent discovery fixed: six paid endpoints were invisible to x402 scanners</title>

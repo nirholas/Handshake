@@ -466,6 +466,53 @@
 				color: rgba(255, 255, 255, 0.35);
 			}
 
+			/* ── Streak + badges ─────────────────────────────────────────────── */
+			.up-streak-row {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: 0.75rem;
+				margin: -1.1rem 0 2rem;
+			}
+
+			.up-streak-pill {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				padding: 0.4rem 0.75rem;
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				border-radius: 999px;
+				background: rgba(255, 255, 255, 0.02);
+				font-size: 0.72rem;
+				font-weight: 500;
+				color: rgba(255, 255, 255, 0.75);
+			}
+
+			.up-streak-pill .up-streak-flame {
+				font-size: 0.85rem;
+				line-height: 1;
+			}
+
+			.up-badge-chip {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.35rem;
+				padding: 0.4rem 0.7rem;
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				border-radius: 999px;
+				background: rgba(255, 255, 255, 0.02);
+				font-size: 0.72rem;
+				font-weight: 500;
+				color: rgba(255, 255, 255, 0.75);
+				cursor: default;
+				transition: border-color 0.15s, background 0.15s;
+			}
+
+			.up-badge-chip:hover {
+				border-color: rgba(255, 255, 255, 0.2);
+				background: rgba(255, 255, 255, 0.04);
+			}
+
 			/* ── Tabs ────────────────────────────────────────────────────────── */
 			.up-tabs {
 				display: flex;
@@ -1451,6 +1498,8 @@
 				const {
 					user,
 					stats = {},
+					streak = { currentStreak: 0, longestStreak: 0, lastActiveDay: null },
+					badges = [],
 					social = {},
 					avatars = [],
 					agents = [],
@@ -1747,6 +1796,27 @@
 						)
 						.join('');
 
+				// Streak + earned badges — a real earned-record row, never a
+				// synthetic trophy. Hidden entirely for a user with no streak and no
+				// badges yet, rather than showing an empty "0-day streak" ghost.
+				const streakHtml = (() => {
+					const days = streak.currentStreak || 0;
+					const badgeChips = badges
+						.map(
+							(b) => `
+						<span class="up-badge-chip" title="${attr(b.description || '')}">
+							<span aria-hidden="true">${esc(b.icon || '★')}</span> ${esc(b.label || b.code)}
+						</span>
+					`,
+						)
+						.join('');
+					if (!days && !badgeChips) return '';
+					const streakPill = days
+						? `<span class="up-streak-pill"><span class="up-streak-flame" aria-hidden="true">🔥</span> ${days}-day streak</span>`
+						: '';
+					return `<div class="up-streak-row">${streakPill}${badgeChips}</div>`;
+				})();
+
 				// Tabs: only show those with content; default to first non-empty
 				const tabs = [
 					{ key: 'creations', label: 'Creations', count: stats.creations || creations.length },
@@ -1828,6 +1898,7 @@
 					</div>
 					<div id="up-walk-hero"></div>
 					<div class="up-stats">${statsHtml}</div>
+					${streakHtml}
 					${tabBar}
 					<section class="up-section" data-section="creations"${defaultTab === 'creations' ? '' : ' hidden'}>
 						${renderCreationsGrid(creations)}

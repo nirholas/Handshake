@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-12T16:56:26.612Z",
+	"generated_at": "2026-07-12T16:59:04.926Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -874,6 +874,16 @@
 					"title": "Labs Showcase",
 					"description": "A curated gallery of three.ws's most powerful — and most hidden — features. Find and try things you didn't know existed.",
 					"added": "2026-06-05",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/rankings",
+					"title": "Rankings",
+					"description": "The cross-surface three.ws leaderboard — creators ranked by real creations, remixes received, coin launches, followers, and distance walked. Track your streak and earn badges for showing up.",
+					"added": "2026-07-12",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

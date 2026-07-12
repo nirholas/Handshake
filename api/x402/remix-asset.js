@@ -28,6 +28,7 @@ import { atomicsToUsd } from '../_lib/remix-royalty.js';
 import { composeRefinement } from '../../mcp-server/src/tools/_lineage.js';
 import { generate, originFromReq, viewerUrl } from '../_mcp-studio/forge-client.js';
 import remixAssetListing from '../_lib/service-catalog/services/remix-asset.js';
+import { unlockBadge, BADGES } from '../_lib/streaks.js';
 import { publishUserEvent } from '../_lib/feed.js';
 
 // $0.25 — the cost of a generation. The creator royalty comes OUT of this fee
@@ -161,6 +162,8 @@ async function handleRemix({ req, requirement }) {
 			royaltyPaid: royalty.paid,
 			royaltyUsd: royalty.creatorUsd ?? 0,
 		});
+		// First-remix-received badge — a real earned record, awarded once.
+		unlockBadge(source.userId, BADGES.FIRST_REMIX_RECEIVED).catch(() => {});
 	}
 
 	return {

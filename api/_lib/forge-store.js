@@ -18,10 +18,10 @@ import { randomUUID } from 'node:crypto';
 import { sql, isDbUnavailableError } from './db.js';
 import { databaseConfigured } from './env.js';
 import { putObject, publicUrl } from './r2.js';
+import { recordDailyActivity, maybeAwardFirstCreation } from './streaks.js';
 import { recordGenerationEvent } from './forge-events.js';
 import { scoreGlbQuality } from './glb-quality.js';
 import { compressGlb } from './glb-compress.js';
-import { recordDailyActivity, maybeAwardFirstCreation } from './streaks.js';
 
 // Stable, non-secret salt so a leaked DB row can't be trivially reversed to the
 // raw browser-local id. The id is anonymous to begin with; this is hygiene, not
@@ -122,7 +122,7 @@ export async function findByJob({ replicateJobId, clientKey }) {
 		const rows = await sql`
 			select id, status, glb_url, glb_key, prompt, preview_image_url,
 				views_requested, views_used, multiview, backend, tier, path, model_category,
-				created_at
+				user_id, created_at
 			from forge_creations
 			where replicate_job_id = ${replicateJobId} and client_key = ${clientKey}
 			limit 1
@@ -322,6 +322,13 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 			latencyMs,
 			source: 'materialize',
 		});
+		// A finished, signed-in creation is a qualifying streak action + the
+		// trigger for the "first creation" badge. Fire-and-forget — never blocks
+		// delivery of the model itself.
+		if (existing.user_id) {
+			recordDailyActivity(existing.user_id).catch(() => {});
+			maybeAwardFirstCreation(existing.user_id).catch(() => {});
+		}
 		return {
 			id: existing.id,
 			glbUrl: glb.publicUrl,
