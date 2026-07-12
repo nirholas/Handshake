@@ -186,17 +186,15 @@ export function startFirehose(onEvent) {
 		onEvent({ kind: 'status', data: { level: 'info', src: 'gap-fill', from: Number(from), to: Number(head) } });
 		try {
 			const launches = await getRecentLaunches(hood, { lookbackBlocks: head - from + 1n });
-			for (const l of launches) if (l.blockNumber >= from) await emitLaunch(l);
+			await mapLimit(launches.filter((l) => l.blockNumber >= from), 8, (l) => emitLaunch(l));
 			const logs = await hood.public.getLogs({
 				address: ODYSSEY_FACTORIES, event: odysseyTradedEvent, fromBlock: from, toBlock: head,
 			});
-			for (const log of logs) {
-				await emitCurveTrade({
-					launchpad: 'odyssey', token: log.args.token, trader: log.args.trader,
-					isBuy: log.args.isBuy, tokenAmount: log.args.tokenAmount, quoteAmount: log.args.quoteAmount,
-					fee: log.args.fee, blockNumber: log.blockNumber, transactionHash: log.transactionHash,
-				});
-			}
+			await mapLimit(logs, 8, (log) => emitCurveTrade({
+				launchpad: 'odyssey', token: log.args.token, trader: log.args.trader,
+				isBuy: log.args.isBuy, tokenAmount: log.args.tokenAmount, quoteAmount: log.args.quoteAmount,
+				fee: log.args.fee, blockNumber: log.blockNumber, transactionHash: log.transactionHash,
+			}));
 		} catch (err) {
 			onEvent({ kind: 'status', data: { level: 'warn', src: 'gap-fill', message: err?.message } });
 		}

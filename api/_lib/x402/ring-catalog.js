@@ -1178,8 +1178,8 @@ export const RING_CATALOG = [
 	// ── Robinhood Chain — market data ────────────────────────────────────────
 	{
 		slug: 'robinhood-portfolio',
-		sourceFile: 'api/v1/robinhood/portfolio.js',
-		path: '/api/v1/robinhood/portfolio',
+		sourceFile: 'api/x402/robinhood-portfolio.js',
+		path: '/api/x402/robinhood-portfolio',
 		method: 'GET',
 		query: { address: '0x0000000000000000000000000000000000000000' },
 		body: NO_BODY,

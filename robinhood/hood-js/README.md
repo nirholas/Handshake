@@ -253,7 +253,7 @@ unless `ROBINHOOD_CHAIN_PRIVATE_KEY` is set to a faucet-funded key (see **Testne
 
 ## Examples
 
-Five runnable scripts in [`examples/`](./examples) — prices, trending coins, portfolio
+Four runnable scripts in [`examples/`](./examples) — prices, trending coins, portfolio
 lookup, and a real testnet swap. See [`examples/README.md`](./examples/README.md).
 
 ## Relationship to `hoodchain`
@@ -263,6 +263,10 @@ lower-level typed SDK (raw viem clients, every module exposed individually, no o
 defaults). Reach for `hoodchain` directly when you need routing internals, the raw
 sequencer firehose, or fine-grained control over slippage/deadlines/multi-token batching
 beyond what this facade exposes.
+
+## License
+
+[Apache-2.0](./LICENSE) © 2026 nirholas
 
 ---
 

@@ -6,14 +6,40 @@ Twelve tutorials, zero to shipping an autonomous agent, every one of them perfor
 
 **Live site:** `https://nirholas.github.io/learn-robinhood-chain/` (after Pages setup — see below)
 
-## What's here
+## How to use this course
 
-| Section | Tutorials |
-| --- | --- |
-| **Foundations** | What Robinhood Chain actually is · Connect and read in 5 minutes · Stock Tokens explained |
-| **Building** | Live price ticker · Portfolio tracker · Swapping on-chain · Streaming the chain |
-| **Monetizing & agents** | Sell your API for USDG (x402) · AI agent access (MCP) · Autonomous trading agent · Launch a coin |
-| **Capstone** | Ship it — deploy and go mainnet |
+Work through the tutorials in order — each one lists the specific prior tutorial it depends on, and later lessons (a portfolio tracker, a paid API, an autonomous agent) assume the SDK fluency the earlier ones build. That said, it's structured so you can jump straight to a section if you already know the basics:
+
+- New to Robinhood Chain entirely? Start at **Tutorial 1** and read straight through.
+- Already comfortable connecting to an EVM chain and just want to build? Skim **Tutorial 3** (the Stock Token multiplier trap — the one piece of domain knowledge every other tutorial assumes) and start building at **Tutorial 4**.
+- Here for monetization or agents specifically? Tutorials 8–11 stand mostly on their own once you've done 4–6.
+
+Every tutorial ends with a **"What you built"** recap and a **Troubleshooting** section for the errors you're actually likely to hit. Code blocks have copy buttons; nothing in a tutorial was written without being run for real first (see [the honesty standard](#the-honesty-standard-this-repo-holds-itself-to) below).
+
+## Prerequisites
+
+- [Node.js](https://nodejs.org) ≥ 20 and a terminal.
+- Any code editor.
+- Comfort reading TypeScript/JavaScript and basic `bigint` arithmetic (Tutorial 3 explains the one gotcha this course cares about).
+- A wallet you control, for the tutorials with a write step (6, 8, 10, 11) — testnet funds are enough; no mainnet capital is required to complete the course.
+- No prior Robinhood Chain or Solidity experience assumed. Tutorial 1 builds the mental model from zero.
+
+## Table of contents
+
+| # | Tutorial | Section | Time |
+| --- | --- | --- | --- |
+| 1 | [What Robinhood Chain actually is](docs/01-what-is-robinhood-chain/) | Foundations | 10 min |
+| 2 | [Connect and read the chain in 5 minutes](docs/02-connect-and-read/) | Foundations | 5 min |
+| 3 | [Stock Tokens explained for developers](docs/03-stock-tokens-explained/) | Foundations | 12 min |
+| 4 | [Your first app: a live price ticker](docs/04-live-price-ticker/) | Building | 15 min |
+| 5 | [Portfolio tracker done right](docs/05-portfolio-tracker/) | Building | 15 min |
+| 6 | [Swapping on-chain: quotes, slippage, execution](docs/06-swapping-on-chain/) | Building | 20 min |
+| 7 | [Streaming the chain: launchpads + firehose](docs/07-streaming-the-chain/) | Building | 18 min |
+| 8 | [Sell your API for USDG with x402](docs/08-sell-your-api-for-usdg/) | Monetizing & agents | 25 min |
+| 9 | [Give your AI agent chain access with MCP](docs/09-ai-agent-chain-access/) | Monetizing & agents | 22 min |
+| 10 | [Build an autonomous trading agent](docs/10-autonomous-trading-agent/) | Monetizing & agents | 30 min |
+| 11 | [Launch a coin programmatically](docs/11-launch-a-coin/) | Monetizing & agents | 20 min |
+| 12 | [Ship it: deploy and go mainnet](docs/12-ship-it/) | Capstone | 18 min |
 
 Every tutorial is built on the open-source [`hoodchain`](https://github.com/nirholas/robinhood-chain-sdk) TypeScript SDK. Real prices, real transaction hashes, real firehose throughput numbers, and — in Tutorial 8 — a real bug this course found and fixed while writing the payment-verification example, documented rather than smoothed over.
 
@@ -72,7 +98,7 @@ No GitHub Actions workflow is used or required — `docs/` is a pre-built, commi
 
 ## License
 
-MIT © 2026 nirholas
+Apache License 2.0 © 2026 nirholas — see [LICENSE](./LICENSE).
 
 ---
 

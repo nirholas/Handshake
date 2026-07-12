@@ -119,7 +119,7 @@ async function main() {
   </section>
 
   <footer>
-    MIT © 2026 nirholas · Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+    Apache License 2.0 © 2026 nirholas · Built by <a href="https://x.com/nichxbt">nirholas</a> ·
     <a href="https://three.ws">three.ws</a>
   </footer>
 </main>

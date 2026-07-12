@@ -56,8 +56,6 @@ export class HoodLauncher {
         ? BigInt(Math.round((launchConfig.direct?.seedEth ?? 0) * 1e18))
         : input.initialBuyWei
 
-    await enforceCaps(this.config, this.ledger, this.killSwitch, client, seedWei)
-
     const directOptions: DirectRailOptions | undefined =
       launchConfig.rail === 'direct' && launchConfig.direct
         ? {
@@ -70,6 +68,9 @@ export class HoodLauncher {
         : undefined
 
     const ctx = { client, ...(directOptions ? { direct: directOptions } : {}) }
+    // Preflight is a pure read — always safe to run, even mid-kill-switch or
+    // before the operator has acknowledged live-launch responsibility. Only
+    // an actual spend attempt below is gated by enforceCaps().
     const preflight = await rail.preflight(ctx, input)
 
     if (options.dryRun || !preflight.ready) {
@@ -81,7 +82,7 @@ export class HoodLauncher {
         token: null,
         seedWei: seedWei.toString(),
         launchTx: null,
-        status: options.dryRun ? 'rejected' : 'rejected',
+        status: 'rejected',
         reason: options.dryRun ? 'dry-run' : preflight.blockers.join('; '),
       })
       return { input, preflight, result: null, dryRun: Boolean(options.dryRun) }
@@ -91,6 +92,8 @@ export class HoodLauncher {
       throw new Error('Launch refused: set LIVE=1 to send real transactions (this run was not a dry-run request)')
     }
     if (!client.account) throw new NoSignerError('HoodLauncher.launch')
+
+    await enforceCaps(this.config, this.ledger, this.killSwitch, client, seedWei)
 
     try {
       const result = await rail.launch(ctx, input)

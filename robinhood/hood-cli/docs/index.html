@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hood-cli — the Robinhood Chain command-line toolkit</title>
+<meta name="description" content="hood-cli: instant reads with zero config, guarded writes with a wallet. Prices, portfolios, launches, swaps, transfers — the gh/vercel of Robinhood Chain (4663).">
+<link rel="stylesheet" href="./site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%BB%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<nav class="top" aria-label="Site">
+  <div class="wrap">
+    <a class="brand" href="./index.html">hood<span class="tick">-cli</span></a>
+    <div class="links">
+      <a href="#quickstart">Quickstart</a>
+      <a href="#commands" class="hide-sm">Commands</a>
+      <a href="./commands.html">Command reference</a>
+      <a href="https://github.com/nirholas/hood-cli">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <h1>The command line for<br><span class="grad">Robinhood Chain</span></h1>
+  <p class="lede">
+    Instant reads, zero config. Guarded writes with a wallet. Prices, the full Stock
+    Token board, launchpad feeds, portfolios, swaps, transfers — chain ID 4663, the
+    <code>gh</code>/<code>vercel</code> of Robinhood Chain.
+  </p>
+  <div class="cta">
+    <span class="install"><span class="dollar">$</span> npm install -g hood-cli<button class="copy" data-copy="npm install -g hood-cli" aria-label="Copy install command">copy</button></span>
+    <a class="btn primary" href="#quickstart">Get started</a>
+    <a class="btn" href="./commands.html">Command reference</a>
+  </div>
+
+  <div class="terminal" id="terminal">
+    <div class="terminal-bar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="title">hood — real session, chain 4663 mainnet</span>
+    </div>
+    <div class="terminal-body" id="terminal-body" aria-live="polite"></div>
+    <div class="terminal-note" id="terminal-note">Replaying a real captured session — every number is a live mainnet read.</div>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section class="block" id="quickstart">
+  <h2>Quickstart</h2>
+  <p class="sub">Node ≥ 20. Reads work with zero setup; writes need a wallet.</p>
+  <pre><code># install globally
+npm install -g hood-cli
+
+# instant read — no config, no wallet
+hood price AAPL
+
+# the full Stock Token board, live
+hood stocks --sort premium --dex
+
+# stream new memecoin launches
+hood launches --follow
+
+# set up a wallet (encrypted keystore, password-protected)
+hood config set wallet
+
+# quote a swap (default: dry run)
+hood swap --sell USDG --buy WETH --amount 100
+
+# sign and send — always confirms first
+hood swap --sell USDG --buy WETH --amount 100 --execute</code></pre>
+</section>
+
+<section class="block" id="commands">
+  <h2>Every command</h2>
+  <p class="sub">Reads need nothing. Writes need a wallet + <code>--execute</code> — quote/plan is always the default. Full reference with live <code>--help</code> output: <a href="./commands.html">commands.html</a>.</p>
+  <div class="grid">
+    <div class="card"><h3>hood price &lt;symbol&gt;</h3><p>Chainlink oracle price, live DEX price, and the premium between them.</p></div>
+    <div class="card"><h3>hood stocks</h3><p>The full 95-token Stock Token board, sortable by symbol, price, or premium.</p></div>
+    <div class="card"><h3>hood coins</h3><p>Memecoin screener — newest launches or ranked by bonding-curve activity.</p></div>
+    <div class="card"><h3>hood launches --follow</h3><p>Live-streaming feed of new NOXA and The Odyssey launches.</p></div>
+    <div class="card"><h3>hood portfolio &lt;address&gt;</h3><p>Multiplier-correct positions and USD totals for any wallet.</p></div>
+    <div class="card"><h3>hood tx / hood token</h3><p>Decoded transaction inspection and token metadata via Blockscout + RPC.</p></div>
+    <div class="card"><h3>hood watch &lt;addr|token&gt;</h3><p>Live activity stream — transfers and native ETH movement.</p></div>
+    <div class="card"><h3>hood swap</h3><p>Quote by default; <code>--execute</code> signs and sends a real Uniswap v3 swap.</p></div>
+    <div class="card"><h3>hood transfer</h3><p>Send ETH or any ERC-20, with an always-on confirmation gate.</p></div>
+    <div class="card"><h3>hood deploy-token</h3><p>Deploy a real, fixed-supply ERC-20 from a JSON config.</p></div>
+    <div class="card"><h3>hood faucet</h3><p>Testnet faucet instructions + live testnet balance check.</p></div>
+    <div class="card"><h3>hood config</h3><p>RPC, wallet, network, and spend-cap settings.</p></div>
+  </div>
+</section>
+
+<section class="block" id="guards">
+  <h2>Guard rails</h2>
+  <p class="sub">Every write defaults to a dry run. Nothing signs without an explicit gate.</p>
+  <div class="grid">
+    <div class="card"><h3>--execute required</h3><p>Swaps, transfers, and deploys print a plan by default. Nothing is sent until you pass <code>--execute</code>.</p></div>
+    <div class="card"><h3>Interactive confirm</h3><p>Even with <code>--execute</code>, a yes/no prompt renders the recipient, amount, and network before signing — skip it only with <code>--yes</code>.</p></div>
+    <div class="card"><h3>Stock Token eligibility</h3><p>Stock Tokens are tokenized securities. Acquiring one requires <code>--acknowledge-eligibility</code> — an explicit operator affirmation, never assumed.</p></div>
+    <div class="card"><h3>Spend cap</h3><p><code>hood config set maxSpendUsd &lt;n&gt;</code> refuses any swap or transfer whose estimated USD value exceeds your cap.</p></div>
+    <div class="card"><h3>Encrypted keystore</h3><p>Wallet keys are AES-256-GCM encrypted under a scrypt-derived password — never plaintext on disk.</p></div>
+    <div class="card"><h3>Meaningful exit codes</h3><p>Scriptable: 2 = bad usage, 3 = network, 4 = guard refused, 5 = not found, 6 = wallet needed.</p></div>
+  </div>
+</section>
+
+</main>
+
+<footer class="wrap">
+  <p>MIT licensed. Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a>. Not affiliated with Robinhood Markets, Inc.</p>
+</footer>
+
+<script id="session-data" type="application/json">
+{
+  "capturedAt": "2026-07-12T13:54:03.577Z",
+  "chain": "Robinhood Chain mainnet (4663)",
+  "frames": [
+    {
+      "prompt": "hood price AAPL",
+      "output": "\u001b[38;5;79m◈\u001b[39m \u001b[1mAAPL\u001b[22m \u001b[2m· Robinhood Chain mainnet\u001b[22m\n\u001b[2mOracle\u001b[22m    \u001b[1m$315.50\u001b[22m\n\u001b[2mUpdated\u001b[22m   \u001b[2m1d 18h ago\u001b[22m\n\u001b[2mDEX\u001b[22m       \u001b[2mno pool\u001b[22m\n\u001b[2mPremium\u001b[22m   \u001b[2m—\u001b[22m\n\u001b[2mToken\u001b[22m     \u001b[90m0xaF3D…93f9\u001b[39m"
+    },
+    {
+      "prompt": "hood stocks --sort premium --dex --limit 6",
+      "output": "\u001b[38;5;79m◈\u001b[39m \u001b[1mStock Tokens\u001b[22m \u001b[2m· mainnet · 6 shown · 6 priced\u001b[22m\n\u001b[2mSYMBOL\u001b[22m    \u001b[2mPRICE\u001b[22m      \u001b[2mDEX\u001b[22m  \u001b[2mPREMIUM\u001b[22m     \u001b[2mAGE\u001b[22m  \u001b[2mNAME\u001b[22m                      \u001b[2mADDRESS\u001b[22m    \n\u001b[90m────────────────────────────────────────────────────────────────────────────────\u001b[39m\n\u001b[1mCLSK\u001b[22m     $12.86   $15.51  \u001b[32m+20.58%\u001b[39m  \u001b[2m1d 17h\u001b[22m  \u001b[2mCleanSpark\u001b[22m                \u001b[90m0xcBB9…Cee3\u001b[39m\n\u001b[1mIONQ\u001b[22m     $43.08   $49.44  \u001b[32m+14.76%\u001b[39m  \u001b[2m1d 18h\u001b[22m  \u001b[2mIonQ\u001b[22m                      \u001b[90m0x5583…0EfE\u001b[39m\n\u001b[1mNBIS\u001b[22m    $219.24  $248.41  \u001b[32m+13.31%\u001b[39m  \u001b[2m1d 17h\u001b[22m  \u001b[2mNebius Group\u001b[22m              \u001b[90m0x9D9c…7931\u001b[39m\n\u001b[1mRGTI\u001b[22m     $16.57   $18.57  \u001b[32m+12.06%\u001b[39m  \u001b[2m1d 17h\u001b[22m  \u001b[2mRigetti Computing\u001b[22m         \u001b[90m0x2843…97Ba\u001b[39m\n\u001b[1mEWY\u001b[22m     $183.77  $199.36   \u001b[32m+8.48%\u001b[39m  \u001b[2m1d 20h\u001b[22m  \u001b[2miShares MSCI South Kore…\u001b[22m  \u001b[90m0x7f0a…13Fc\u001b[39m\n\u001b[1mTSM\u001b[22m     $434.37  $424.15   \u001b[31m-2.35%\u001b[39m  \u001b[2m1d 17h\u001b[22m  \u001b[2mTaiwan Semiconductor Ma…\u001b[22m  \u001b[90m0x58Ff…e7AA\u001b[39m"
+    },
+    {
+      "prompt": "hood launches --lookback 2000000 --limit 5 --names",
+      "output": "\u001b[38;5;79m◈\u001b[39m \u001b[1mLaunches\u001b[22m \u001b[2m· mainnet · 5\u001b[22m\n   \u001b[2mBLOCK\u001b[22m  \u001b[2mPAD\u001b[22m   \u001b[2mTOKEN\u001b[22m        \u001b[2mADDRESS\u001b[22m      \u001b[2mCREATOR\u001b[22m      \u001b[2mPOOL\u001b[22m       \n\u001b[90m──────────────────────────────────────────────────────────────────\u001b[39m\n\u001b[2m#6880646\u001b[22m  \u001b[38;5;79mNOXA\u001b[39m  \u001b[1mdoginhood\u001b[22m    \u001b[90m0x955b…6B44\u001b[39m  \u001b[90m0x4Ba0…bdc2\u001b[39m  \u001b[90m0xEFD7…6272\u001b[39m\n\u001b[2m#6880627\u001b[22m  \u001b[38;5;79mNOXA\u001b[39m  \u001b[1mDEBTCAT\u001b[22m      \u001b[90m0x5dDf…9C05\u001b[39m  \u001b[90m0xf1e6…762C\u001b[39m  \u001b[90m0x7D58…132c\u001b[39m\n\u001b[2m#6880442\u001b[22m  \u001b[38;5;79mNOXA\u001b[39m  \u001b[1mTURWIMA\u001b[22m      \u001b[90m0x7349…BDdD\u001b[39m  \u001b[90m0x7A23…6B55\u001b[39m  \u001b[90m0xE825…C1Bc\u001b[39m\n\u001b[2m#6880408\u001b[22m  \u001b[38;5;79mNOXA\u001b[39m  \u001b[1mHOODMAXXING\u001b[22m  \u001b[90m0x2AE3…23cF\u001b[39m  \u001b[90m0xAF02…5689\u001b[39m  \u001b[90m0x68e7…5Ad4\u001b[39m\n\u001b[2m#6880399\u001b[22m  \u001b[38;5;79mNOXA\u001b[39m  \u001b[1mcashcoin\u001b[22m     \u001b[90m0x3bcd…C9A6\u001b[39m  \u001b[90m0xa732…CC87\u001b[39m  \u001b[90m0x4ab0…a86d\u001b[39m"
+    },
+    {
+      "prompt": "hood portfolio 0x9701fb0aDe1E269c8f64Ec0C7b3cfADB31A13A52",
+      "output": "\u001b[38;5;79m◈\u001b[39m \u001b[1mPortfolio\u001b[22m \u001b[2m· 0x9701…3A52 · mainnet\u001b[22m\n\u001b[2mETH\u001b[22m      0.003784\n\u001b[2mUSDG\u001b[22m     $0.0550\n\u001b[2mStocks\u001b[22m   $0.00\n\u001b[2mTotal\u001b[22m    \u001b[1m$0.0550\u001b[22m\n\n\u001b[2mNo Stock Token positions. Fund with `hood swap --sell USDG --buy <ticker>`.\u001b[22m"
+    },
+    {
+      "prompt": "hood swap --sell USDG --buy WETH --amount 250",
+      "output": "\u001b[38;5;79m◈\u001b[39m \u001b[1mSwap quote\u001b[22m \u001b[2m· mainnet · add --execute to send\u001b[22m\n\u001b[2mSell\u001b[22m            \u001b[1m250\u001b[22m USDG\n\u001b[2mBuy\u001b[22m             \u001b[1m~0.138501866807990729\u001b[22m WETH\n\u001b[2mMin. received\u001b[22m   \u001b[2m0.137809357473950775 WETH (0.50% slippage)\u001b[22m\n\u001b[2mRate\u001b[22m            1 USDG ≈ 0.000554 WETH\n\u001b[2mRoute\u001b[22m           \u001b[2mdirect pool\u001b[22m"
+    },
+    {
+      "prompt": "hood tx 0x870a3bee3070f10e3c4f34271cfde70fd5aa0dc2eade6f07d01ae6c9a00285bd",
+      "output": "\u001b[38;5;79m◈\u001b[39m \u001b[1mTransaction\u001b[22m \u001b[2m0x870a…85bd\u001b[22m  \u001b[32m● success\u001b[39m\n\u001b[2mFrom\u001b[22m       \u001b[90m0xdf65…c23e\u001b[39m\n\u001b[2mTo\u001b[22m         \u001b[90m0xd9ec…fccb\u001b[39m\n\u001b[2mValue\u001b[22m      \u001b[1m0.0505 ETH\u001b[22m\n\u001b[2mMethod\u001b[22m     \u001b[1m0x686399cb\u001b[22m\n\u001b[2mBlock\u001b[22m      #5843692\n\u001b[2mWhen\u001b[22m       \u001b[2m2026-07-10 05:54:38Z\u001b[22m\n\u001b[2mGas used\u001b[22m   \u001b[2m6,845,934 @ 0.0485 gwei\u001b[22m\n\u001b[2mFee\u001b[22m        0.00033229 ETH\n\u001b[2mExplorer\u001b[22m   \u001b[90mhttps://robinhoodchain.blockscout.com/tx/0x870a3bee3070f10e3c4f34271cfde70fd5aa0dc2eade6f07d01ae6c9a00285bd\u001b[39m\n\n\u001b[2mToken transfers\u001b[22m\n  \u001b[90m0x0000…0000\u001b[39m \u001b[2m→\u001b[22m \u001b[90m0xD9eC…FCcB\u001b[39m  \u001b[1m1000000000\u001b[22m \u001b[38;5;79m💎👐\u001b[39m\n  \u001b[90m0xD9eC…FCcB\u001b[39m \u001b[2m→\u001b[22m \u001b[90m0x872B…14E7\u001b[39m  \u001b[1m999999999.999999\u001b[22m \u001b[38;5;79m💎👐\u001b[39m\n  \u001b[90m0x872B…14E7\u001b[39m \u001b[2m→\u001b[22m \u001b[90m0xdF65…C23e\u001b[39m  \u001b[1m35227361.211893\u001b[22m \u001b[38;5;79m💎👐\u001b[39m\n  \u001b[90m0x0000…0000\u001b[39m \u001b[2m→\u001b[22m \u001b[90m0xCaf6…5cb2\u001b[39m  \u001b[1m0.05\u001b[22m \u001b[38;5;79mWETH\u001b[39m\n  \u001b[90m0xCaf6…5cb2\u001b[39m \u001b[2m→\u001b[22m \u001b[90m0x872B…14E7\u001b[39m  \u001b[1m0.05\u001b[22m \u001b[38;5;79mWETH\u001b[39m"
+    }
+  ]
+}
+</script>
+<script>
+(function () {
+  var data = JSON.parse(document.getElementById('session-data').textContent);
+  var body = document.getElementById('terminal-body');
+  var note = document.getElementById('terminal-note');
+  var frames = data.frames || [];
+  var fi = 0;
+
+  function typePrompt(text, done) {
+    var line = document.createElement('div');
+    line.className = 'line-prompt';
+    body.appendChild(line);
+    var i = 0;
+    var iv = setInterval(function () {
+      line.textContent = text.slice(0, i + 1);
+      i++;
+      body.scrollTop = body.scrollHeight;
+      if (i >= text.length) { clearInterval(iv); setTimeout(done, 220); }
+    }, 18);
+  }
+
+  function showOutput(html, done) {
+    var pre = document.createElement('div');
+    pre.innerHTML = html;
+    body.appendChild(pre);
+    body.scrollTop = body.scrollHeight;
+    setTimeout(done, 1400);
+  }
+
+  function ansiToHtml(s) {
+    var esc = document.createElement('div');
+    esc.textContent = s;
+    var out = esc.innerHTML;
+    var openTags = [];
+    out = out.replace(/\x1b\[(\d+(?:;\d+)*)m/g, function (_, codes) {
+      var parts = codes.split(';').map(Number);
+      var spans = '';
+      for (var idx = 0; idx < parts.length; idx++) {
+        var c = parts[idx];
+        if (c === 0) { spans += openTags.map(function () { return '</span>'; }).join(''); openTags = []; }
+        else if (c === 1) { openTags.push('b'); spans += '<span style="font-weight:700">'; }
+        else if (c === 2) { openTags.push('d'); spans += '<span style="opacity:.6">'; }
+        else if (c === 22) { spans += '</span>'; openTags.pop(); }
+        else if (c === 32) { openTags.push('g'); spans += '<span style="color:#6fe08a">'; }
+        else if (c === 31) { openTags.push('r'); spans += '<span style="color:#f26d7e">'; }
+        else if (c === 90) { openTags.push('gr'); spans += '<span style="color:#7a7a86">'; }
+        else if (c === 39) { spans += '</span>'; openTags.pop(); }
+        else if (parts[idx] === 38 && parts[idx + 1] === 5) {
+          openTags.push('x'); spans += '<span style="color:#7ef29a">'; idx += 2;
+        }
+      }
+      return spans;
+    });
+    out += openTags.map(function () { return '</span>'; }).join('');
+    return out;
+  }
+
+  // Real ANSI codes come straight from the captured session (docs/session.json,
+  // produced by `npm run capture` against live mainnet) — never hand-written.
+  function playFrame() {
+    if (fi >= frames.length) {
+      setTimeout(function () { body.innerHTML = ''; fi = 0; playFrame(); }, 2600);
+      return;
+    }
+    var frame = frames[fi];
+    note.textContent = 'hood ' + frame.prompt.replace(/^hood /, '') + ' — captured ' + (data.capturedAt ? new Date(data.capturedAt).toLocaleDateString() : '');
+    typePrompt(frame.prompt, function () {
+      showOutput(ansiToHtml(frame.output), function () {
+        fi++;
+        playFrame();
+      });
+    });
+  }
+
+  if (frames.length === 0) {
+    body.textContent = 'No captured session found. Run `npm run capture` to record one.';
+  } else if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    frames.forEach(function (f) {
+      var p = document.createElement('div'); p.className = 'line-prompt'; p.textContent = f.prompt;
+      body.appendChild(p);
+      var o = document.createElement('div'); o.innerHTML = ansiToHtml(f.output);
+      body.appendChild(o);
+    });
+  } else {
+    playFrame();
+  }
+
+  document.querySelectorAll('button.copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      navigator.clipboard.writeText(btn.getAttribute('data-copy')).then(function () {
+        var prev = btn.textContent;
+        btn.textContent = 'copied';
+        setTimeout(function () { btn.textContent = prev; }, 1200);
+      });
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

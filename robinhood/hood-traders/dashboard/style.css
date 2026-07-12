@@ -79,6 +79,10 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   box-shadow: 0 0 12px rgba(109, 94, 248, 0.6);
 }
 
+/* [hidden] must win over .badge's display: inline-flex — equal specificity,
+   later source order would otherwise re-show a badge JS explicitly hid. */
+.badge[hidden] { display: none; }
+
 .badge {
   display: inline-flex;
   align-items: center;

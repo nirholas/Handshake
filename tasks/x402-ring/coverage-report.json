@@ -1,0 +1,28 @@
+{
+	"generatedAt": "2026-07-12T14:06:11.873Z",
+	"origin": "https://three.ws",
+	"includeManual": false,
+	"spentUsd": "0.0000",
+	"rows": [
+		{
+			"slug": "agent-reputation",
+			"path": "/api/x402/agent-reputation",
+			"method": "POST",
+			"autobuy": true,
+			"priceAtomic": 10000,
+			"challenge402": true,
+			"solanaAccept": true,
+			"settleSignature": null,
+			"responseOk": false,
+			"status": 400,
+			"error": "http_400",
+			"effect": {
+				"checked": false,
+				"ok": null,
+				"note": ""
+			},
+			"businessEffect": "Sweeps recent agents into a reputation aggregate (read-only).",
+			"note": ""
+		}
+	]
+}

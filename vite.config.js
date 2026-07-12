@@ -1056,6 +1056,8 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/coins/': resolve(root, 'pages/coins.html'),
 					'/markets': resolve(root, 'pages/markets.html'),
 					'/markets/': resolve(root, 'pages/markets.html'),
+					'/markets/robinhood': resolve(root, 'pages/markets-robinhood.html'),
+					'/markets/robinhood/': resolve(root, 'pages/markets-robinhood.html'),
 					'/markets/news': resolve(root, 'pages/markets-news.html'),
 					'/markets/news/': resolve(root, 'pages/markets-news.html'),
 					'/markets/digest': resolve(root, 'pages/news-digest.html'),
@@ -1528,6 +1530,12 @@ support: resolve(__dirname, 'pages/support.html'),
 						/^\/coin\/[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}\/?$/.test(path)
 					)
 						filePath = resolve(root, 'pages/coin.html');
+					// /markets/robinhood/stock/:symbol  → Robinhood Chain Stock Token detail
+					else if (!filePath && /^\/markets\/robinhood\/stock\/[A-Za-z0-9.-]{1,10}\/?$/.test(path))
+						filePath = resolve(root, 'pages/robinhood-stock.html');
+					// /markets/robinhood/coin/:address  → Robinhood Chain coin detail
+					else if (!filePath && /^\/markets\/robinhood\/coin\/0x[0-9a-fA-F]{40}\/?$/.test(path))
+						filePath = resolve(root, 'pages/robinhood-coin.html');
 					// /drop/:id  → sealed wallet gift claim page (24 lowercase hex chars,
 					// matching api/vanity/drops.js's id format)
 					else if (!filePath && /^\/drop\/[0-9a-f]{24}\/?$/.test(path))

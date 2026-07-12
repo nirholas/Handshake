@@ -349,11 +349,15 @@ export class Agent {
     // sell: realize PnL on the sold fraction
     if (!existing) return
     const sellAmount = intent.amountIn > existing.amount ? existing.amount : intent.amountIn
+    // fraction as a float only touches investedUsd (already a float, USD-scale — safe);
+    // costBasis stays bigint-only arithmetic so large token-unit positions (amounts near
+    // or past 2^53) don't lose precision through a Number() round-trip.
     const fraction = existing.amount > 0n ? Number(sellAmount) / Number(existing.amount) : 1
     const costFractionUsd = existing.investedUsd * fraction
+    const costBasisSold = existing.amount > 0n ? (existing.costBasis * sellAmount) / existing.amount : existing.costBasis
     this.realizedUsd += notionalUsd - costFractionUsd
     existing.amount -= sellAmount
-    existing.costBasis -= BigInt(Math.floor(Number(existing.costBasis) * fraction))
+    existing.costBasis -= costBasisSold
     existing.investedUsd -= costFractionUsd
     if (existing.amount <= DUST) this.positions.delete(key)
   }

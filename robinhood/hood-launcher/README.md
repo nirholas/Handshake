@@ -24,7 +24,7 @@ The pump.fun-launcher playbook, ported to chain 4663 — nothing like it existed
 5. **CLI + HTTP API** — one core, three ways to drive it: `hood-launch` (one-shot), `hood-auto`
    (the scheduler), and a small HTTP API for programmatic use.
 
-Docs: **https://nirholas.github.io/hood-launcher/**
+Docs: **https://nirholas.github.io/robinhood-chain-launcher/**
 
 ## Install
 
@@ -74,7 +74,7 @@ guessed. See `tests/unit/*-calldata.test.ts`, which re-run each proof on every `
 
 | Rail | Network | What it does | Proof |
 | --- | --- | --- | --- |
-| `noxa` | mainnet only | One `launchToken` call: deploys the ERC-20, creates a Uniswap v3 pool at the launcher's configured fee tier, seeds single-sided liquidity, permanently locks the LP. Trading starts immediately. | `launchToken(...)` reproduces tx [`0x9023735...4872dc`](https://robinhoodchain.blockscout.com/tx/0x90237351d992942bd33a471e8d791be5c51e74a9ed1e91268b7fc3148d4872dc) byte-for-byte, selector `0x686399cb` included. ABI recovered from NOXA's own production frontend bundle. |
+| `noxa` | mainnet only | One `launchToken` call: deploys the ERC-20, creates a Uniswap v3 pool at the launcher's configured fee tier, seeds single-sided liquidity, permanently locks the LP. Trading starts immediately. | `launchToken(...)` reproduces the real, successful [`ROBINDOG` launch tx](https://robinhoodchain.blockscout.com/tx/0x63da3b0a80cbc836806ed055ed797667e7ec59391cf7aeb5a3dcfeb9152756d0) byte-for-byte, selector `0x686399cb` included. ABI recovered from NOXA's own production frontend bundle. |
 | `odyssey` (`instant`) | mainnet only | One payable call to The Odyssey's instant factory: `msg.value` folds directly into the initial buy, lists to a Uniswap v3 pool immediately. | Reproduces two real create txs byte-for-byte (`0x8a21d7f3...`, `0x4da9887c...`), selector `0x548eb31b`. |
 | `odyssey` (`bonding`) | mainnet only | Create on the native-ETH bonding-curve factory (zero value), optional separate `buy` call to seed the curve. | Reproduces two real create txs byte-for-byte (`0xd1404ae2...`, `0xd024b90b...`), selector `0x56f698a3`; buy shape matches a real buy tx (`0xf3bd87ab...`), selector `0xcce7ec13`. |
 | `direct` | mainnet + testnet | Deploys `contracts/HoodToken.sol` (OpenZeppelin v5 `ERC20`, fixed supply, no mint function, no owner — nothing to renounce because there's nothing privileged to begin with), creates + initializes a Uniswap v3 pool, seeds a full-range LP position, then burns or time-locks the LP NFT per config. Every deployed contract is submitted for Blockscout source verification as the final step. | No ABI reverse-engineering needed — this is code hood-launcher wrote and compiled itself. Verified live on both mainnet and testnet Blockscout (`?module=contract&action=verifysourcecode`). |
@@ -102,12 +102,18 @@ NOXA (byte-for-byte tx reproduction) rather than a Blockscout ABI match.
 ## Concept engine
 
 ```ts
-import { buildConcept, loadOperatorConfig } from 'hood-launcher'
+import { buildConcept, loadOperatorConfig, launchConfigSchema } from 'hood-launcher'
 
 const config = loadOperatorConfig() // reads ROBINHOOD_CHAIN_NETWORK, etc.
-const result = await buildConcept(config.network, {
-  name: 'placeholder', symbol: 'PLC', description: '', socials: {}, initialBuyEth: 0, rail: 'noxa',
-}, { theme: 'the strait of hormuz closure and crypto market resilience' })
+// launchConfigSchema.parse fills in every default (odysseyVariant, description, socials, …) —
+// the same pattern the autonomous scheduler uses (src/auto/scheduler.ts) — so the object below
+// only needs to supply the fields that actually vary per launch.
+const launchConfig = launchConfigSchema.parse({
+  name: 'placeholder', symbol: 'PLC', rail: 'noxa',
+})
+const result = await buildConcept(config.network, launchConfig, {
+  theme: 'the strait of hormuz closure and crypto market resilience',
+})
 
 console.log(result.input.name, result.input.symbol, result.input.logoUri)
 ```
@@ -148,7 +154,7 @@ gates.
 | Cap | Env | Enforcement |
 | --- | --- | --- |
 | Launches per day | `MAX_LAUNCHES_PER_DAY` (default 3) | Rolling 24h window over the launch ledger (`.hood-launcher/launches.jsonl`) |
-| Seed value | `MAX_SEED_USDG` (default 50) | Live Uniswap v3 WETH→USDG quote on mainnet converts the seed/buy amount to a USD estimate before every launch; on testnet's thin liquidity where no route exists, the check is skipped and logged rather than fabricating a price |
+| Seed value | `MAX_SEED_USDG` (default 50) | Live Uniswap v3 WETH→USDG quote on mainnet converts the seed/buy amount to a USD estimate before every launch; on testnet's thin liquidity where no route exists, the check is skipped rather than fabricating a price |
 | Kill switch | — | SIGINT, SIGTERM, a `KILL` sentinel file in the data dir, or `POST /kill` — any one stops all further launches for the life of the process |
 | Responsibility | `ACKNOWLEDGE_LAUNCH_RESPONSIBILITY=1` | Required before ANY `LIVE=1` launch, autonomous or manual |
 
@@ -230,6 +236,10 @@ bin/           hood-launch.ts (CLI), hood-auto.ts (scheduler CLI)
 contracts/     HoodToken.sol, HoodLPLocker.sol + compiled artifacts (ABI + bytecode + verification input)
 tests/         unit/ (network-free, calldata proofs) + live/ (real chain/API calls)
 ```
+
+## License
+
+[Apache License 2.0](./LICENSE) © 2026 nirholas.
 
 ---
 

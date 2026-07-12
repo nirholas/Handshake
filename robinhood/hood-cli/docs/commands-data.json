@@ -1,0 +1,58 @@
+{
+  "generatedAt": "2026-07-12T13:59:00.458Z",
+  "root": "Usage: hood [options] [command]\n\nThe command-line toolkit for Robinhood Chain (4663) — instant reads, guarded\nwrites.\n\nOptions:\n  -v, --version                  output the version number\n  --json                         machine-readable JSON output\n  --network <net>                mainnet | testnet (default: \"mainnet\")\n  --rpc <url>                    override the RPC endpoint\n  --verbose                      show raw error causes\n  --yes                          skip interactive confirmation on writes (still\n                                 requires --execute)\n  --acknowledge-eligibility      affirm Stock Token acquisition eligibility\n                                 (non-US/CA/UK/CH)\n  --no-color                     disable ANSI colour\n  -h, --help                     display help for command\n\nCommands:\n  price [options] <symbol>       Chainlink oracle price + DEX price + premium\n                                 for a Stock Token\n  stocks [options]               The full Stock Token board with live Chainlink\n                                 prices\n  coins [options]                Memecoin screener — newest or trending\n                                 launches\n  launches [options]             Recent memecoin launches from NOXA and The\n                                 Odyssey\n  portfolio [options] <address>  Multiplier-correct Stock Token positions + USD\n                                 totals for an address\n  tx <hash>                      Decode a transaction: status, transfers, gas,\n                                 method\n  token <address>                Inspect a token: metadata, supply, multiplier,\n                                 price\n  watch [options] <addrOrToken>  Live activity stream for an address or a token\n                                 (ERC-20 transfers + native ETH)\n  swap [options]                 Quote (default) or execute a Uniswap v3 swap\n                                 between two tokens\n  transfer [options]             Send ETH or an ERC-20 token to an address\n  faucet                         Print testnet faucet instructions + current\n                                 testnet balances\n  deploy-token [options]         Deploy a fixed-supply ERC-20 from a JSON\n                                 config (direct-rail, no launchpad)\n  config                         Manage hood-cli settings (rpc, wallet,\n                                 network)\n  help [command]                 display help for command",
+  "commands": [
+    {
+      "name": "price",
+      "help": "Usage: hood price [options] <symbol>\n\nChainlink oracle price + DEX price + premium for a Stock Token\n\nArguments:\n  symbol               ticker (AAPL) or token address\n\nOptions:\n  --watch              live-updating view (repaints in place) (default: false)\n  --interval <ms>      refresh interval for --watch (default: \"4000\")\n  --max-age <seconds>  max acceptable Chainlink answer age\n  --no-dex             skip the Uniswap price probe (oracle only)\n  -h, --help           display help for command"
+    },
+    {
+      "name": "stocks",
+      "help": "Usage: hood stocks [options]\n\nThe full Stock Token board with live Chainlink prices\n\nOptions:\n  --sort <key>  sort by symbol | price | premium (premium implies --dex)\n                (default: \"symbol\")\n  --dex         also probe Uniswap for DEX price + premium (slower) (default:\n                false)\n  --priced      only tokens with a live Chainlink feed (default: false)\n  --limit <n>   show at most n rows\n  -h, --help    display help for command"
+    },
+    {
+      "name": "coins",
+      "help": "Usage: hood coins [options]\n\nMemecoin screener — newest or trending launches\n\nOptions:\n  --new                newest launches (default) (default: false)\n  --trending           rank by bonding-curve trade activity (default: false)\n  --lookback <blocks>  blocks to scan (default: \"50000\")\n  --limit <n>          rows to show (default: \"20\")\n  --names              resolve token symbols on-chain (default: false)\n  -h, --help           display help for command"
+    },
+    {
+      "name": "launches",
+      "help": "Usage: hood launches [options]\n\nRecent memecoin launches from NOXA and The Odyssey\n\nOptions:\n  --follow             stream new launches live (default: false)\n  --launchpad <name>   noxa | odyssey (default: both)\n  --lookback <blocks>  blocks to scan for the snapshot (default: \"30000\")\n  --limit <n>          max rows in the snapshot (default: \"25\")\n  --names              resolve each token symbol on-chain (default: false)\n  -h, --help           display help for command"
+    },
+    {
+      "name": "portfolio",
+      "help": "Usage: hood portfolio [options] <address>\n\nMultiplier-correct Stock Token positions + USD totals for an address\n\nArguments:\n  address              wallet address to inspect\n\nOptions:\n  --max-age <seconds>  max acceptable Chainlink answer age\n  -h, --help           display help for command"
+    },
+    {
+      "name": "tx",
+      "help": "Usage: hood tx [options] <hash>\n\nDecode a transaction: status, transfers, gas, method\n\nArguments:\n  hash        transaction hash\n\nOptions:\n  -h, --help  display help for command"
+    },
+    {
+      "name": "token",
+      "help": "Usage: hood token [options] <address>\n\nInspect a token: metadata, supply, multiplier, price\n\nArguments:\n  address     token address or ticker\n\nOptions:\n  -h, --help  display help for command"
+    },
+    {
+      "name": "watch",
+      "help": "Usage: hood watch [options] <addrOrToken>\n\nLive activity stream for an address or a token (ERC-20 transfers + native ETH)\n\nArguments:\n  addrOrToken  wallet address, token address, or ticker to watch\n\nOptions:\n  --token      treat the argument as a token (stream ALL transfers of it)\n               (default: false)\n  -h, --help   display help for command"
+    },
+    {
+      "name": "swap",
+      "help": "Usage: hood swap [options]\n\nQuote (default) or execute a Uniswap v3 swap between two tokens\n\nOptions:\n  --sell <token>     ticker or address to sell (e.g. USDG)\n  --buy <token>      ticker or address to buy\n  --amount <amount>  amount of --sell to spend, in whole tokens\n  --slippage <bps>   slippage tolerance in basis points (default: \"50\")\n  --execute          sign and send (default: quote only) (default: false)\n  -h, --help         display help for command"
+    },
+    {
+      "name": "transfer",
+      "help": "Usage: hood transfer [options]\n\nSend ETH or an ERC-20 token to an address\n\nOptions:\n  --to <address>     recipient address\n  --amount <amount>  amount to send, in whole tokens\n  --token <token>    ticker or address to send (default: native ETH)\n  -h, --help         display help for command"
+    },
+    {
+      "name": "faucet",
+      "help": "Usage: hood faucet [options]\n\nPrint testnet faucet instructions + current testnet balances\n\nOptions:\n  -h, --help  display help for command"
+    },
+    {
+      "name": "deploy-token",
+      "help": "Usage: hood deploy-token [options]\n\nDeploy a fixed-supply ERC-20 from a JSON config (direct-rail, no launchpad)\n\nOptions:\n  --config <path>  path to a JSON file: { name, symbol, decimals?,\n                   initialSupply }\n  --execute        sign and send (default: print the plan only) (default:\n                   false)\n  -h, --help       display help for command"
+    },
+    {
+      "name": "config",
+      "help": "Usage: hood config [options] [command]\n\nManage hood-cli settings (rpc, wallet, network)\n\nOptions:\n  -h, --help         display help for command\n\nCommands:\n  set <key> [value]  set a config value (network, rpc, testnetRpc, alchemyKey,\n                     maxSpendUsd, wallet)\n  get <key>          print one config value\n  list               print the full config (secrets masked)\n  help [command]     display help for command"
+    }
+  ]
+}

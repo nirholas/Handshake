@@ -117,7 +117,7 @@ function renderHolders(s) {
 				<tbody>${holders
 					.map(
 						(h) => `
-					<tr><td class="left cv-mono">${h.address ? `<a href="https://robinhoodchain.blockscout.com/address/${esc(h.address)}" target="_blank" rel="noopener noreferrer">${esc(h.address.slice(0, 8))}…${esc(h.address.slice(-6))}</a>` : '—'}</td><td class="cv-mono">${h.value ? Number(h.value).toLocaleString('en-US') : '—'}</td></tr>`,
+					<tr><td class="left cv-mono">${h.address ? `<a href="https://robinhoodchain.blockscout.com/address/${esc(h.address)}" target="_blank" rel="noopener noreferrer">${esc(h.address.slice(0, 8))}…${esc(h.address.slice(-6))}</a>` : '—'}</td><td class="cv-mono">${h.uiAmount != null ? h.uiAmount.toLocaleString('en-US', { maximumFractionDigits: 4 }) : '—'}</td></tr>`,
 					)
 					.join('')}</tbody>
 			</table>

@@ -183,7 +183,7 @@ the owner should take:
 
 ## License
 
-MIT © 2026 nirholas
+Apache License 2.0 © 2026 nirholas
 
 ---
 

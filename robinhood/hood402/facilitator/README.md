@@ -121,6 +121,6 @@ the version actually published to the registry — `npm pack` succeeds either wa
 
 ## License
 
-MIT © 2026 nirholas
+Apache-2.0 © 2026 nirholas
 
 Built by [nirholas](https://x.com/nichxbt) · [three.ws](https://three.ws)

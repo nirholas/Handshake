@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Autonomous mode — hood-launcher</title>
+<meta name="description" content="A scheduler that watches trending crypto narratives, proposes a launch, and only executes past hard caps and an approval gate.">
+<link rel="stylesheet" href="./site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9A%80%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<nav class="top" aria-label="Site">
+  <div class="wrap">
+    <a class="brand" href="./index.html">hood<span class="tick">-launcher</span></a>
+    <div class="links">
+      <a href="./index.html#quickstart">Quickstart</a>
+      <a href="./rails.html">Rails</a>
+      <a href="./autonomous.html">Autonomous mode</a>
+      <a href="./safety.html">Safety</a>
+      <a href="https://github.com/nirholas/robinhood-chain-launcher">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap" style="padding-bottom: 20px;">
+  <h1>Autonomous<br><span class="grad">launch mode</span></h1>
+  <p class="lede">
+    A scheduler that watches trending crypto narratives, proposes a launch, and only executes
+    past hard caps and an approval gate. It cannot spend a single wei without either
+    <code>AUTO_APPROVE=1</code> or an explicit operator approval — and never without
+    <code>LIVE=1</code>, regardless of either.
+  </p>
+</header>
+
+<main class="wrap">
+
+<section class="block">
+  <h2>The loop</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>1. Watch</h3>
+      <p>Polls the free three.ws crypto-news digest (<code>GET /api/news/digest</code>) —
+      real clustered narratives with a title, summary, market stance, and tickers, no key
+      required.</p>
+    </div>
+    <div class="card">
+      <h3>2. Propose</h3>
+      <p>The strongest un-proposed narrative becomes a theme. The concept engine generates a
+      name/ticker/description, runs the safety screen, checks on-chain ticker uniqueness, and
+      resolves artwork — then runs a full preflight (dry-run, nothing spent).</p>
+    </div>
+    <div class="card">
+      <h3>3. Approve</h3>
+      <p><code>AUTO_APPROVE=1</code> executes automatically (still subject to every cap
+      below), or an operator approves explicitly — <code>hood-auto approve &lt;id&gt;</code>
+      / <code>POST /auto/approve/:id</code>.</p>
+    </div>
+    <div class="card">
+      <h3>4. Execute</h3>
+      <p>Only with <code>LIVE=1</code> set — approval and liveness are independent gates.
+      Without <code>LIVE=1</code>, an approved proposal still just runs another dry-run and
+      reports what would have happened.</p>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <h2>Hard caps</h2>
+  <p class="sub">Enforced in <code>src/core/caps.ts</code>, on every launch — manual or autonomous. Throws a typed error, never warns-and-proceeds.</p>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Cap</th><th>Env var</th><th>Enforcement</th></tr></thead>
+      <tbody>
+        <tr><td>Launches per day</td><td><code>MAX_LAUNCHES_PER_DAY</code> (default 3)</td><td>Rolling 24h window over the launch ledger</td></tr>
+        <tr><td>Seed value</td><td><code>MAX_SEED_USDG</code> (default 50)</td><td>Live Uniswap v3 WETH→USDG quote converts the seed/buy to a USD estimate before every launch</td></tr>
+        <tr><td>Kill switch</td><td>—</td><td>SIGINT, SIGTERM, a <code>KILL</code> sentinel file, or <code>POST /kill</code></td></tr>
+        <tr><td>Responsibility</td><td><code>ACKNOWLEDGE_LAUNCH_RESPONSIBILITY=1</code></td><td>Required before any <code>LIVE=1</code> launch</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="block">
+  <h2>CLI</h2>
+  <pre><code>hood-auto tick                      # one poll-propose cycle
+hood-auto list                      # pending proposals
+hood-auto approve &lt;id&gt;
+hood-auto reject &lt;id&gt;
+hood-auto loop --interval-minutes 60   # run forever</code></pre>
+</section>
+
+<section class="block">
+  <h2>HTTP API</h2>
+  <pre><code>GET  /auto/pending           list pending proposals
+POST /auto/tick              run one poll-propose cycle
+POST /auto/approve/:id       approve + (if LIVE=1) execute
+POST /auto/reject/:id
+POST /kill                   engage the kill switch immediately</code></pre>
+</section>
+
+<div class="disclosure">
+  Autonomous launches still create real, tradeable, irreversible on-chain assets. Read
+  <a href="./safety.html">Safety</a> before setting <code>AUTO_APPROVE=1</code> and
+  <code>LIVE=1</code> together.
+</div>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
+    <span><a href="https://github.com/nirholas/robinhood-chain-launcher">GitHub</a> · <a href="./index.html">Home</a> · <a href="./rails.html">Rails</a> · <a href="./safety.html">Safety</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

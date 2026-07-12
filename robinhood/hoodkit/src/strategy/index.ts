@@ -8,6 +8,18 @@ import {
 } from 'hoodchain'
 import { streamPrices, type PriceTick, type StreamPollOptions } from '../stream/index.js'
 
+/**
+ * Concise error text for a failed slice. Prefers viem's `shortMessage` (a
+ * one-line summary) over the default `message`, which on a reverted `eth_call`
+ * embeds the full raw calldata and is unreadable in a log line.
+ */
+function describeError(error: unknown): string {
+  if (error && typeof error === 'object' && 'shortMessage' in error && typeof error.shortMessage === 'string') {
+    return error.shortMessage
+  }
+  return error instanceof Error ? error.message : String(error)
+}
+
 export { Position } from './position.js'
 export type { Fill, PnlSnapshot } from './position.js'
 
@@ -266,7 +278,7 @@ export function createTwapExecutor(client: HoodClient, config: TwapConfig): Twap
       spendCap.spend(amountIn)
       return { index, total, amountIn, status: 'sent', quote, amountOutMinimum: tx.amountOutMinimum, hash }
     } catch (error) {
-      return { index, total, amountIn, status: 'failed', error: error instanceof Error ? error.message : String(error) }
+      return { index, total, amountIn, status: 'failed', error: describeError(error) }
     }
   }
 

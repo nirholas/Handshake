@@ -59,7 +59,7 @@ Paid via x402 ($0.002 USDC, Base or Solana):
 
 | Endpoint | Returns |
 | --- | --- |
-| `GET /api/v1/robinhood/portfolio?address=0x…` | Multiplier-correct Stock Token portfolio: every held symbol's true position (raw balance × ERC-8056 `uiMultiplier`) priced at the live Chainlink NAV, plus a total USD value |
+| `GET /api/x402/robinhood-portfolio?address=0x…` | Multiplier-correct Stock Token portfolio: every held symbol's true position (raw balance × ERC-8056 `uiMultiplier`) priced at the live Chainlink NAV, plus a total USD value |
 
 Every response carries `source` and `asOf` fields. A miss is a structured error, never a bare 500.
 

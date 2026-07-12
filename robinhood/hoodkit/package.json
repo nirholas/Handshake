@@ -16,7 +16,7 @@
     "viem",
     "web3"
   ],
-  "license": "MIT",
+  "license": "Apache-2.0",
   "author": "nirholas (https://x.com/nichxbt)",
   "repository": {
     "type": "git",

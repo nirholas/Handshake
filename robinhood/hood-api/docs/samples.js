@@ -1,5 +1,5 @@
 window.HOOD_API_SAMPLES = {
-  "capturedAt": "2026-07-12T13:44:08.147Z",
+  "capturedAt": "2026-07-12T14:10:10.296Z",
   "health": {
     "status": 200,
     "body": {
@@ -7,9 +7,9 @@ window.HOOD_API_SAMPLES = {
       "version": "0.1.0",
       "chainId": 4663,
       "rpcOk": true,
-      "blockHeight": "7850302",
+      "blockHeight": "7865883",
       "paymentsEnabled": true,
-      "asOf": "2026-07-12T13:44:08.375Z"
+      "asOf": "2026-07-12T14:10:10.466Z"
     }
   },
   "chain": {
@@ -17,23 +17,23 @@ window.HOOD_API_SAMPLES = {
     "body": {
       "chainId": 4663,
       "network": "mainnet",
-      "blockHeight": "7850302",
+      "blockHeight": "7865883",
       "avgBlockTimeMs": 101,
       "gas": {
-        "currentGwei": 0.051716,
+        "currentGwei": 0.051554,
         "slowGwei": 0.05,
-        "averageGwei": 0.06,
-        "fastGwei": 0.26
+        "averageGwei": 0.08,
+        "fastGwei": 0.36
       },
-      "ethPriceUsd": 1807.15,
-      "tvlUsd": 130635631.14444755,
-      "marketCapUsd": 218092334384.94617,
+      "ethPriceUsd": 1804.67,
+      "tvlUsd": 130976327.26119462,
+      "marketCapUsd": 217793040475.04678,
       "totalTransactions": "48538402",
       "transactionsToday": "10439032",
-      "totalAddresses": "1312150",
-      "networkUtilizationPct": 9.132633493891262e-8,
+      "totalAddresses": "1316584",
+      "networkUtilizationPct": 1.1185744597241865e-7,
       "explorer": "https://robinhoodchain.blockscout.com",
-      "asOf": "2026-07-12T13:44:08.639Z",
+      "asOf": "2026-07-12T14:10:10.761Z",
       "source": [
         "robinhood-chain-rpc",
         "blockscout",
@@ -73,7 +73,7 @@ window.HOOD_API_SAMPLES = {
           "dexPriceUsd": null,
           "premiumDiscount": null,
           "uiMultiplier": 1,
-          "liquidityUsd": 2.1687599999999997e-14,
+          "liquidityUsd": 2.1664199999999997e-14,
           "pool": "0x8bb3514e2204E1cDF3Ac149EFEe7Ff04D91B719f",
           "feeTier": 500,
           "hasFeed": true
@@ -1270,10 +1270,10 @@ window.HOOD_API_SAMPLES = {
           "decimals": 18,
           "chainlinkPriceUsd": 407.825,
           "feedUpdatedAt": "2026-07-10T19:53:35.000Z",
-          "dexPriceUsd": 23.20889,
-          "premiumDiscount": -0.9430910562128364,
+          "dexPriceUsd": 23.185809,
+          "premiumDiscount": -0.9431476515662355,
           "uiMultiplier": 1,
-          "liquidityUsd": 47.13946258260744,
+          "liquidityUsd": 47.08860110303234,
           "pool": "0xA953CA88ff430e9487c60cA34d757414f4efdA07",
           "feeTier": 3000,
           "hasFeed": true
@@ -1475,7 +1475,7 @@ window.HOOD_API_SAMPLES = {
         }
       ],
       "note": "Per-token 24h DEX volume and OHLCV candles are on the detail endpoint (/v1/stocks/{symbol}); reconstructing them for every token per request would hammer the public RPC.",
-      "asOf": "2026-07-12T13:44:10.900Z",
+      "asOf": "2026-07-12T14:10:12.905Z",
       "source": [
         "hoodchain-registry",
         "chainlink-feeds",
@@ -1496,128 +1496,120 @@ window.HOOD_API_SAMPLES = {
         "feed": "0x4A1166a659A55625345e9515b32adECea5547C38",
         "roundId": "18446744073709551930",
         "updatedAt": "2026-07-10T19:53:35.000Z",
-        "ageSeconds": 150635
+        "ageSeconds": 152197
       },
       "dex": {
-        "priceUsd": 23.20889,
+        "priceUsd": 23.185809,
         "pool": "0xA953CA88ff430e9487c60cA34d757414f4efdA07",
         "feeTier": 3000,
         "quoteAsset": "WETH",
-        "liquidityUsd": 47.13946258260744,
-        "volume24hUsd": 38.84698600036214
+        "liquidityUsd": 47.08860110303234,
+        "volume24hUsd": 33.73699771603696
       },
-      "premiumDiscount": -0.9430910562128364,
+      "premiumDiscount": -0.9431476515662355,
       "candles": {
         "interval": "1h",
-        "fromBlock": "6950302",
-        "toBlock": "7850302",
+        "fromBlock": "6965883",
+        "toBlock": "7865883",
         "series": [
           {
-            "t": 1783771200,
-            "o": 408.173106564646,
-            "h": 408.173106564646,
-            "l": 403.2395191182679,
-            "c": 403.2395191182679,
-            "v": 5.0735481782259395
-          },
-          {
             "t": 1783778400,
-            "o": 408.2967464796052,
-            "h": 408.2967464796052,
-            "l": 405.6090842492009,
-            "c": 405.720682811202,
-            "v": 14.37966501006062
+            "o": 407.85621161785826,
+            "h": 407.85621161785826,
+            "l": 405.1714492609389,
+            "c": 405.2829274128277,
+            "v": 14.364149961773329
           },
           {
             "t": 1783782000,
-            "o": 409.4467387168462,
-            "h": 409.4467387168462,
-            "l": 409.4467387168462,
-            "c": 409.4467387168462,
-            "v": 0.54219
+            "o": 409.00496306227984,
+            "h": 409.00496306227984,
+            "l": 409.00496306227984,
+            "c": 409.00496306227984,
+            "v": 0.5416049999999999
           },
           {
             "t": 1783785600,
-            "o": 403.90094872710546,
-            "h": 403.90094872710546,
-            "l": 403.25483616472144,
-            "c": 403.25483616472144,
-            "v": 4.260329290758027
+            "o": 403.4651567445802,
+            "h": 403.4651567445802,
+            "l": 402.8197413102306,
+            "c": 402.8197413102306,
+            "v": 4.255732576257403
           },
           {
             "t": 1783789200,
-            "o": 403.79192966178255,
-            "h": 403.79192966178255,
-            "l": 403.79192966178255,
-            "c": 403.79192966178255,
-            "v": 0.00813285
+            "o": 403.3562553062021,
+            "h": 403.3562553062021,
+            "l": 403.3562553062021,
+            "c": 403.3562553062021,
+            "v": 0.008124075
           },
           {
             "t": 1783792800,
-            "o": 404.2261077126562,
-            "h": 404.2261077126562,
-            "l": 404.2261077126562,
-            "c": 404.2261077126562,
-            "v": 0.4395122674030227
+            "o": 403.78996489738495,
+            "h": 403.78996489738495,
+            "l": 403.78996489738495,
+            "c": 403.78996489738495,
+            "v": 0.43903805231895476
           },
           {
             "t": 1783800000,
-            "o": 406.4076269161194,
-            "h": 406.4076269161194,
-            "l": 406.4076269161194,
-            "c": 406.4076269161194,
-            "v": 1.8073
+            "o": 405.9691303342091,
+            "h": 405.9691303342091,
+            "l": 405.9691303342091,
+            "c": 405.9691303342091,
+            "v": 1.80535
           },
           {
             "t": 1783810800,
-            "o": 408.81960226354744,
-            "h": 408.81960226354744,
-            "l": 408.81960226354744,
-            "c": 408.81960226354744,
-            "v": 0.6661398985426578
+            "o": 408.3785032625991,
+            "h": 408.3785032625991,
+            "l": 408.3785032625991,
+            "c": 408.3785032625991,
+            "v": 0.6654211618624397
           },
           {
             "t": 1783818000,
-            "o": 410.0052191394728,
-            "h": 410.0052191394728,
-            "l": 410.0052191394728,
-            "c": 410.0052191394728,
-            "v": 0.5477582714237483
+            "o": 409.56284090823175,
+            "h": 409.56284090823175,
+            "l": 409.56284090823175,
+            "c": 409.56284090823175,
+            "v": 0.547167263495194
           },
           {
             "t": 1783832400,
-            "o": 407.5527049170627,
-            "h": 409.47967791430267,
-            "l": 407.5527049170627,
-            "c": 409.47967791430267,
-            "v": 0.5439972999999999
+            "o": 407.1129728445854,
+            "h": 409.0378667197401,
+            "l": 407.1129728445854,
+            "c": 409.0378667197401,
+            "v": 0.5434103499999999
           },
           {
             "t": 1783839600,
-            "o": 409.4990953108372,
-            "h": 409.4990953108372,
-            "l": 409.4990953108372,
-            "c": 409.4990953108372,
-            "v": 0.018073000000000002
+            "o": 409.0572631657279,
+            "h": 409.0572631657279,
+            "l": 409.0572631657279,
+            "c": 409.0572631657279,
+            "v": 0.0180535
           },
           {
             "t": 1783854000,
-            "o": 401.7389551187121,
-            "h": 407.8736815154242,
-            "l": 401.7389551187121,
-            "c": 407.8736815154242,
-            "v": 10.560339933948127
+            "o": 401.3054958355375,
+            "h": 407.4336031228192,
+            "l": 401.3054958355375,
+            "c": 407.4336031228192,
+            "v": 10.548945775329637
           }
         ]
       },
-      "holders": 3530,
+      "holders": 3532,
       "transfersCount": 347334,
       "links": {
         "token": "https://robinhoodchain.blockscout.com/token/0x322F0929c4625eD5bAd873c95208D54E1c003b2d",
         "feed": "https://robinhoodchain.blockscout.com/address/0x4A1166a659A55625345e9515b32adECea5547C38",
         "pool": "https://robinhoodchain.blockscout.com/address/0xA953CA88ff430e9487c60cA34d757414f4efdA07"
       },
-      "asOf": "2026-07-12T13:44:11.445Z",
+      "asOf": "2026-07-12T14:10:13.474Z",
       "source": [
         "hoodchain-registry",
         "chainlink-feeds",
@@ -1632,7 +1624,7 @@ window.HOOD_API_SAMPLES = {
       "count": 0,
       "lookbackBlocks": "200000",
       "coins": [],
-      "asOf": "2026-07-12T13:44:11.541Z",
+      "asOf": "2026-07-12T14:10:13.562Z",
       "source": [
         "noxa-launchpad",
         "odyssey-launchpad",
@@ -1651,7 +1643,7 @@ window.HOOD_API_SAMPLES = {
         "odyssey"
       ],
       "launches": [],
-      "asOf": "2026-07-12T13:44:11.635Z",
+      "asOf": "2026-07-12T14:10:13.652Z",
       "source": [
         "noxa-launchpad",
         "odyssey-launchpad",
@@ -1668,7 +1660,7 @@ window.HOOD_API_SAMPLES = {
           "scheme": "exact",
           "network": "base-sepolia",
           "maxAmountRequired": "2000",
-          "resource": "http://127.0.0.1:42685/v1/portfolio/0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9",
+          "resource": "http://127.0.0.1:35249/v1/portfolio/0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9",
           "description": "Multiplier-correct Robinhood Chain portfolio valuation",
           "mimeType": "application/json",
           "payTo": "0xc8E94d65E00ccb90b41eDE17ca08cA137e46629c",

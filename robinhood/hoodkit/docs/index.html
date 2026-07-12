@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hoodkit — the power-user toolkit for Robinhood Chain</title>
+<meta name="description" content="Streaming, caching, batching, a local indexer, agent strategy primitives, and React hooks for Robinhood Chain (4663). Built on hoodchain.">
+<link rel="stylesheet" href="./site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<nav class="top" aria-label="Site">
+  <div class="wrap">
+    <a class="brand" href="./index.html">hood<span class="tick">kit</span></a>
+    <div class="links">
+      <a href="#quickstart">Quickstart</a>
+      <a href="#modules" class="hide-sm">Modules</a>
+      <a href="#decision">hoodkit vs hood-js</a>
+      <a href="./guides.html">Guides</a>
+      <a href="./api/index.html">API reference</a>
+      <a href="https://github.com/nirholas/hoodkit">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <h1>The power-user toolkit for<br><span class="grad">Robinhood Chain</span></h1>
+  <p class="lede">
+    Where <code>hood-js</code> hides complexity, <code>hoodkit</code> weaponizes it: reconnecting
+    real-time streams, request-coalescing cache, multicall batching, a local SQLite indexer for
+    holders and OHLCV, agent strategy primitives (PnL, TWAP, spend caps), and SSR-safe React
+    hooks — all built on the <a href="https://nirholas.github.io/robinhood-chain-sdk/">hoodchain</a>
+    core SDK.
+  </p>
+  <div class="cta">
+    <span class="install"><span class="dollar">$</span> npm install hoodkit hoodchain viem</span>
+    <a class="btn primary" href="#quickstart">Get started</a>
+    <a class="btn" href="./api/index.html">API reference</a>
+  </div>
+
+  <div class="board-head">
+    <h2>Stock Tokens, live</h2>
+    <span class="status" id="board-status"><span class="dot"></span><span id="board-status-text">connecting to chain 4663…</span></span>
+  </div>
+  <div class="board" id="board" aria-live="polite"></div>
+  <div class="board-error" id="board-error">
+    Could not reach the public RPC (<code>rpc.mainnet.chain.robinhood.com</code>) from your
+    browser. It may be briefly unavailable, or an extension is blocking cross-origin
+    requests — check the <a href="https://robinhoodchain.blockscout.com">explorer</a> and reload.
+  </div>
+  <p class="board-note">
+    This board is the exact pattern <code>streamPrices()</code> wraps: poll every feed in one
+    multicall, emit only on a changed Chainlink round. Here it's raw JSON-RPC so the page works
+    with zero dependencies; the package version is a few lines with reconnect + backpressure handling.
+  </p>
+
+  <div class="board-head">
+    <h2>Live launches — NOXA + The Odyssey</h2>
+    <span class="status" id="launch-status"><span class="dot"></span><span id="launch-status-text">watching factory logs…</span></span>
+  </div>
+  <div class="launch-panel" id="launch-panel">
+    <div class="launch-empty" id="launch-empty">watching for new launches — this polls live, leave it open</div>
+  </div>
+  <p class="board-note">
+    The exact pattern <code>streamLaunches()</code> wraps: poll <code>eth_getLogs</code> for both
+    factories, decode <code>TokenLaunched</code> / <code>TokenCreated</code>, advance a cursor only
+    after a chunk fully delivers — so a dropped connection re-scans the missed range instead of
+    silently skipping it.
+  </p>
+</header>
+
+<main class="wrap">
+
+<section class="block" id="quickstart">
+  <h2>Quickstart</h2>
+  <p class="sub">Node ≥ 20. <code>hoodchain</code> and <code>viem</code> are peer dependencies. <code>better-sqlite3</code>, <code>react</code>, and <code>ws</code> are optional — only needed for the modules that use them.</p>
+<pre><code>npm install hoodkit hoodchain viem</code></pre>
+<pre><code>import { createHoodClient } from 'hoodchain'
+import { streamSwaps, createHoodCache, plan, createIndexer } from 'hoodkit'
+
+const hood = createHoodClient()
+
+// Reconnecting, gap-filled swap stream
+const swaps = await streamSwaps(hood, { token: '0x…WEN' })
+swaps.on('data', (s) =&gt; console.log(s.buysToken0 ? 'BUY' : 'SELL', s.price))
+
+// Request-coalescing cache — 100 concurrent reads, 1 RPC call
+const cache = createHoodCache(hood)
+await Promise.all(Array.from({ length: 100 }, () =&gt; cache.getQuote('AAPL')))
+
+// Local SQLite index: holders, OHLCV candles, 24h volume
+const indexer = await createIndexer({ client: hood, path: './hood.sqlite', tokens: ['0x…'] })
+await indexer.sync({ fromBlock: 0n })
+console.log(indexer.holderCount('0x…'), indexer.candles('0x…', '1h'))</code></pre>
+  <p class="sub" style="margin-top:16px">React hooks live at the <code>hoodkit/react</code> subpath:</p>
+<pre><code>import { HoodProvider, useQuote, useLaunches } from 'hoodkit/react'
+
+function Ticker() {
+  const { data } = useQuote('AAPL')
+  return &lt;span&gt;{data ? `$${data.priceUsd.toFixed(2)}` : '…'}&lt;/span&gt;
+}</code></pre>
+</section>
+
+<section class="block" id="modules">
+  <h2>Modules</h2>
+  <p class="sub">Import only what you use. Heavy deps (<code>better-sqlite3</code>, <code>react</code>) are optional peers — the core install stays light.</p>
+  <div class="grid">
+    <div class="card">
+      <h3><code>stream</code></h3>
+      <p>Backpressure-safe <code>Stream&lt;T&gt;</code> (event-emitter AND async-iterator) over prices, swaps, launches, and portfolio changes. Gap-fill log cursor: a dropped connection re-scans the missed block range, never silently skips it.</p>
+      <a class="card-link" href="./guides.html#stream">Guide →</a>
+    </div>
+    <div class="card">
+      <h3><code>cache</code></h3>
+      <p>Read-through cache with request coalescing — N concurrent identical reads become 1 upstream call — and per-datatype TTLs. Pluggable store: in-memory LRU by default, bring your own Redis adapter.</p>
+      <a class="card-link" href="./guides.html#cache">Guide →</a>
+    </div>
+    <div class="card">
+      <h3><code>batch</code></h3>
+      <p><code>plan()</code> batches arbitrary reads into the fewest Multicall3 round-trips, chunked and failure-isolated. <code>createBatcher()</code> is a DataLoader-style batcher: unrelated call sites sharing one tick collapse into one multicall automatically.</p>
+      <a class="card-link" href="./guides.html#batch">Guide →</a>
+    </div>
+    <div class="card">
+      <h3><code>indexer</code></h3>
+      <p>A local SQLite indexer: incremental sync from the last synced block, <code>holders()</code>, <code>candles()</code> (real OHLCV from swap events), <code>volume24h()</code> — all answered with zero RPC once synced.</p>
+      <a class="card-link" href="./guides.html#indexer">Guide →</a>
+    </div>
+    <div class="card">
+      <h3><code>strategy</code></h3>
+      <p>What autonomous agents need: multiplier-aware <code>Position</code> PnL tracking, a <code>TwapExecutor</code> with per-slice slippage bounds and a hard <code>SpendCap</code>, price-cross triggers, and a real <code>eth_call</code> dry-run mode.</p>
+      <a class="card-link" href="./guides.html#strategy">Guide →</a>
+    </div>
+    <div class="card">
+      <h3><code>react</code></h3>
+      <p><code>hoodkit/react</code>: <code>useQuote</code>, <code>usePortfolio</code>, <code>useLaunches</code>, <code>useSwap</code> over the stream/cache layers. SSR-safe — every subscription lives inside <code>useEffect</code>.</p>
+      <a class="card-link" href="./guides.html#react">Guide →</a>
+    </div>
+  </div>
+
+  <div class="disclosure">
+    <strong>Stock Token eligibility.</strong> hoodkit inherits hoodchain's eligibility gate:
+    reads are unrestricted, but any swap whose output is a canonical Stock Token throws until the
+    operator's client sets <code>acknowledgeStockTokenEligibility: true</code>. Stock Tokens are
+    tokenized debt securities and may not be offered, sold, or delivered to US persons (additional
+    limits: Canada, UK, Switzerland).
+  </div>
+</section>
+
+<section class="block" id="decision">
+  <h2>hoodkit vs hood-js vs the core SDK</h2>
+  <p class="sub">An honest decision table. Most apps start with <code>hood-js</code> and never need more.</p>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr><th>You need</th><th>Reach for</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>A quote, a swap, a portfolio read — one-off scripts, simple UIs</td><td><code>hoodchain</code> directly</td></tr>
+        <tr><td>The friendliest possible API surface, sane defaults baked in</td><td><code>hood-js</code></td></tr>
+        <tr><td>Real-time UI that must survive dropped connections without missing events</td><td><code>hoodkit</code> (<code>stream</code>)</td></tr>
+        <tr><td>A backend serving many users hitting the same hot reads</td><td><code>hoodkit</code> (<code>cache</code> + <code>batch</code>)</td></tr>
+        <tr><td>Holder counts, price charts, or trade history without re-scanning logs every request</td><td><code>hoodkit</code> (<code>indexer</code>)</td></tr>
+        <tr><td>An autonomous agent that trades, tracks PnL, and must never overspend</td><td><code>hoodkit</code> (<code>strategy</code>)</td></tr>
+        <tr><td>A React dashboard wired to live chain data</td><td><code>hoodkit/react</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="sub" style="margin-top:14px">
+    hoodkit depends on hoodchain for every primitive (addresses, ABIs, the client, the registry) —
+    it never re-implements chain plumbing, only the operational layer around it: what happens when
+    a socket drops, when 100 requests want the same data at once, or when you need six months of
+    trade history without paying for it in RPC calls every time.
+  </p>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Apache-2.0 © 2026 nirholas</span>
+    <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
+  </div>
+</footer>
+
+<script>
+// Live Stock Token board — raw JSON-RPC eth_call to each Chainlink feed, no libraries.
+// latestRoundData() selector 0xfeaf968c; answer = second 32-byte word, 8 decimals.
+const RPC = 'https://rpc.mainnet.chain.robinhood.com'
+const TOKENS = [
+  { symbol: 'AAPL', name: 'Apple', feed: '0x6B22A786bAa607d76728168703a39Ea9C99f2cD0' },
+  { symbol: 'TSLA', name: 'Tesla', feed: '0x4A1166a659A55625345e9515b32adECea5547C38' },
+  { symbol: 'NVDA', name: 'NVIDIA', feed: '0x379EC4f7C378F34a1B47E4F3cbeBCbAC3E8E9F15' },
+  { symbol: 'MSFT', name: 'Microsoft', feed: '0x45C3C877C15E6BA2EBB19eA114Ea508d14C1Af2E' },
+  { symbol: 'META', name: 'Meta Platforms', feed: '0x7C38C00C30BEe9378381E7B6135d7283356D71b1' },
+  { symbol: 'AMZN', name: 'Amazon', feed: '0xD5a1508ceD74c084eBf3cBe853e2C968fB2a651C' },
+  { symbol: 'GOOGL', name: 'Alphabet', feed: '0xF6f373a037c30F0e5010d854385cA89185AE638b' },
+  { symbol: 'COIN', name: 'Coinbase', feed: '0xA3a468A452940B7D6b69991207B508c609a98Ef2' },
+]
+
+const board = document.getElementById('board')
+const statusEl = document.getElementById('board-status')
+const statusText = document.getElementById('board-status-text')
+const errorEl = document.getElementById('board-error')
+const tiles = new Map()
+const lastPrice = new Map()
+
+for (const t of TOKENS) {
+  const tile = document.createElement('div')
+  tile.className = 'tile'
+  tile.innerHTML =
+    '<div class="sym">' + t.symbol + '</div>' +
+    '<div class="co">' + t.name + '</div>' +
+    '<div class="px skeleton">$0000.00</div>' +
+    '<div class="meta"></div>'
+  board.appendChild(tile)
+  tiles.set(t.symbol, tile)
+}
+
+async function rpc(method, params) {
+  const res = await fetch(RPC, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+  })
+  if (!res.ok) throw new Error('RPC ' + res.status)
+  const json = await res.json()
+  if (json.error) throw new Error(json.error.message || 'RPC error')
+  return json.result
+}
+
+async function rpcBatch(calls) {
+  const body = calls.map((c, id) => ({
+    jsonrpc: '2.0', id,
+    method: 'eth_call',
+    params: [{ to: c.feed, data: '0xfeaf968c' }, 'latest'],
+  }))
+  const res = await fetch(RPC, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error('RPC ' + res.status)
+  return res.json()
+}
+
+function decodeRound(hex) {
+  if (!hex || hex === '0x' || hex.length < 2 + 64 * 5) return null
+  const word = (i) => hex.slice(2 + 64 * i, 2 + 64 * (i + 1))
+  const answer = BigInt('0x' + word(1))
+  const updatedAt = Number(BigInt('0x' + word(3)))
+  return { price: Number(answer) / 1e8, updatedAt }
+}
+
+function fmtAge(updatedAt) {
+  const s = Math.max(0, Math.floor(Date.now() / 1000) - updatedAt)
+  if (s < 90) return s + 's ago'
+  if (s < 5400) return Math.round(s / 60) + 'm ago'
+  if (s < 172800) return Math.round(s / 3600) + 'h ago'
+  return Math.round(s / 86400) + 'd ago'
+}
+
+async function refreshPrices() {
+  try {
+    const results = await rpcBatch(TOKENS)
+    const byId = new Map(results.map((r) => [r.id, r]))
+    let ok = 0
+    TOKENS.forEach((t, id) => {
+      const round = decodeRound(byId.get(id)?.result)
+      const tile = tiles.get(t.symbol)
+      const px = tile.querySelector('.px')
+      const meta = tile.querySelector('.meta')
+      if (!round || round.price <= 0) {
+        px.classList.remove('skeleton')
+        px.textContent = '—'
+        meta.textContent = 'no answer'
+        return
+      }
+      ok += 1
+      const prev = lastPrice.get(t.symbol)
+      px.classList.remove('skeleton', 'up', 'down')
+      if (prev !== undefined && round.price !== prev) {
+        px.classList.add(round.price > prev ? 'up' : 'down')
+      }
+      lastPrice.set(t.symbol, round.price)
+      px.textContent = '$' + round.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      meta.textContent = 'updated ' + fmtAge(round.updatedAt)
+    })
+    statusEl.className = 'status live'
+    statusText.textContent = 'live · ' + ok + '/' + TOKENS.length + ' feeds · refreshes every 15s'
+    errorEl.classList.remove('visible')
+  } catch (e) {
+    statusEl.className = 'status error'
+    statusText.textContent = 'RPC unreachable'
+    errorEl.classList.add('visible')
+    for (const tile of tiles.values()) tile.querySelector('.px').classList.remove('skeleton')
+  }
+}
+
+// Live launch feed — raw eth_getLogs poll against NOXA + Odyssey factories.
+const NOXA_FACTORY = '0xD9eC2db5f3D1b236843925949fe5bd8a3836FCcB'
+const ODYSSEY_FACTORIES = ['0xEb3FeeD2716cF0eEAda05B22e67424794e1f5a80', '0x6Ce85c4b7cE12903E5867652C265bCcce57f935F', '0xD7601cEe401306fdea5833c6898181D9c770F800']
+const NOXA_TOPIC = '0xdb51ea9ad51ab453a65a4cb7e60c3cb378c9501bb002609f8f97778fb6c4235a'
+const ODYSSEY_TOPIC = '0xa52263eeb2ea349365a35c006fc978b0b85eb109fe50959959c829b329bebf9e'
+
+const launchPanel = document.getElementById('launch-panel')
+const launchEmpty = document.getElementById('launch-empty')
+const launchStatusEl = document.getElementById('launch-status')
+const launchStatusText = document.getElementById('launch-status-text')
+let launchCursor = null
+const MAX_ROWS = 15
+
+function addr32(topicOrData) {
+  return '0x' + topicOrData.slice(-40)
+}
+
+function renderLaunch(launchpad, token, blockNumber) {
+  if (launchEmpty.isConnected) launchEmpty.remove()
+  const row = document.createElement('div')
+  row.className = 'launch-row'
+  row.innerHTML =
+    '<span class="pill pill-' + launchpad + '">' + launchpad + '</span>' +
+    '<span class="addr">' + token.slice(0, 6) + '…' + token.slice(-4) + '</span>' +
+    '<span class="block">block ' + blockNumber + '</span>'
+  launchPanel.prepend(row)
+  while (launchPanel.children.length > MAX_ROWS) launchPanel.lastChild.remove()
+}
+
+async function pollLaunches() {
+  try {
+    const head = parseInt(await rpc('eth_blockNumber', []), 16)
+    if (launchCursor === null) {
+      launchCursor = head // live-only: start watching from now, no historical backfill
+      launchStatusEl.className = 'status live'
+      launchStatusText.textContent = 'live · watching from block ' + head
+      return
+    }
+    if (head <= launchCursor) return
+    const fromBlock = '0x' + (launchCursor + 1).toString(16)
+    const toBlock = '0x' + head.toString(16)
+    const [noxaLogs, odysseyLogs] = await Promise.all([
+      rpc('eth_getLogs', [{ address: NOXA_FACTORY, topics: [NOXA_TOPIC], fromBlock, toBlock }]),
+      rpc('eth_getLogs', [{ address: ODYSSEY_FACTORIES, topics: [ODYSSEY_TOPIC], fromBlock, toBlock }]),
+    ])
+    const events = [
+      ...noxaLogs.map((l) => ({ launchpad: 'noxa', token: addr32(l.topics[1]), blockNumber: parseInt(l.blockNumber, 16) })),
+      ...odysseyLogs.map((l) => ({ launchpad: 'odyssey', token: addr32(l.topics[1]), blockNumber: parseInt(l.blockNumber, 16) })),
+    ].sort((a, b) => a.blockNumber - b.blockNumber)
+    for (const e of events) renderLaunch(e.launchpad, e.token, e.blockNumber)
+    launchCursor = head
+    launchStatusText.textContent = 'live · block ' + head + (events.length ? ' · +' + events.length + ' new' : '')
+  } catch (e) {
+    launchStatusEl.className = 'status error'
+    launchStatusText.textContent = 'RPC unreachable'
+  }
+}
+
+refreshPrices()
+setInterval(refreshPrices, 15000)
+pollLaunches()
+setInterval(pollLaunches, 4000)
+</script>
+
+</body>
+</html>

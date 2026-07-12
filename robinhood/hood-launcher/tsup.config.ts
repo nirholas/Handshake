@@ -5,6 +5,7 @@ export default defineConfig({
     index: 'src/index.ts',
     cli: 'bin/hood-launch.ts',
     'cli-auto': 'bin/hood-auto.ts',
+    'api-server': 'src/api/server.ts',
   },
   format: ['esm', 'cjs'],
   dts: { entry: 'src/index.ts' },

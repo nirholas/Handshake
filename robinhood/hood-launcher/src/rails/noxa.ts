@@ -14,12 +14,14 @@ import { explorerTxUrl, explorerTokenUrl } from '../core/explorer.js'
  * normal Uniswap v3 swapping — there is no graduation step.
  *
  * The `launchToken` ABI was extracted from NOXA's production frontend bundle
- * and *proven*: encoding it with the exact inputs recovered from the real
- * historical launch tx
- * `0x90237351d992942bd33a471e8d791be5c51e74a9ed1e91268b7fc3148d4872dc`
- * (the "We are so back" / BACK launch) reproduces that transaction's calldata
- * byte-for-byte, selector included (`0x686399cb`). See
- * `tests/unit/noxa-calldata.test.ts`.
+ * and *proven*: encoding it with the exact inputs decoded from a real,
+ * SUCCESSFUL historical launch tx
+ * (`0x63da3b0a80cbc836806ed055ed797667e7ec59391cf7aeb5a3dcfeb9152756d0`, the
+ * "ROBIN DOG" / ROBINDOG launch — chosen after verifying its receipt
+ * actually fired `TokenLaunched`; an earlier candidate tx round-tripped its
+ * calldata correctly too but had reverted on-chain, so it was replaced)
+ * reproduces that transaction's calldata byte-for-byte, selector included
+ * (`0x686399cb`). See `tests/unit/noxa-calldata.test.ts`.
  */
 export class NoxaRail implements Rail {
   readonly name = 'noxa' as const

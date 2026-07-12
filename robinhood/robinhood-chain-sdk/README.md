@@ -180,7 +180,7 @@ npm publish --access public
 
 ## License
 
-MIT © 2026 nirholas
+Apache-2.0 © 2026 nirholas
 
 ---
 

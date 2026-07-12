@@ -340,7 +340,13 @@ export async function blockscoutToken(address) {
 	return data && !data.__error ? data : null;
 }
 
-export async function blockscoutHolders(address, limit = 25) {
+/**
+ * Top holders for a token. Blockscout's `value` is the RAW atomic balance
+ * (wei-scale for an 18-decimal ERC-20) — passing `decimals` also returns a
+ * human-readable `uiAmount` so callers never have to divide raw wei
+ * themselves (or, worse, display it undivided).
+ */
+export async function blockscoutHolders(address, limit = 25, decimals = 18) {
 	const addr = String(address || '').toLowerCase();
 	if (!/^0x[0-9a-f]{40}$/.test(addr)) return [];
 	const data = await fetchJson(
@@ -349,11 +355,13 @@ export async function blockscoutHolders(address, limit = 25) {
 		`rh:bs:holders:${addr}`,
 	);
 	const items = Array.isArray(data?.items) ? data.items : [];
+	const div = 10 ** decimals;
 	return items.slice(0, limit).map((h) => ({
 		address: h.address?.hash || null,
 		isContract: Boolean(h.address?.is_contract),
 		name: h.address?.name || null,
 		value: h.value || null,
+		uiAmount: h.value ? Number(h.value) / div : null,
 	}));
 }
 

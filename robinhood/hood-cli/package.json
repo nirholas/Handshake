@@ -46,6 +46,9 @@
     "test": "vitest run tests/unit",
     "e2e": "node scripts/e2e.mjs",
     "capture": "node scripts/capture-session.mjs",
+    "docs:commands": "node scripts/generate-docs.mjs",
+    "docs:build": "node scripts/build-docs.mjs",
+    "docs": "npm run capture && npm run docs:commands && npm run docs:build",
     "compile-erc20": "node scripts/compile-erc20.mjs",
     "prepublishOnly": "npm run build && npm test"
   },
@@ -58,6 +61,7 @@
   "devDependencies": {
     "@types/node": "^24.0.0",
     "@types/ws": "^8.18.0",
+    "solc": "^0.8.36",
     "tsup": "^8.5.0",
     "typescript": "^5.9.0",
     "vitest": "^3.2.0"

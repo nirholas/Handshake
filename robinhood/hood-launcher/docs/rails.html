@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rails — hood-launcher</title>
+<meta name="description" content="Every hood-launcher launch rail, proven byte-for-byte against a real historical Robinhood Chain transaction.">
+<link rel="stylesheet" href="./site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9A%80%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<nav class="top" aria-label="Site">
+  <div class="wrap">
+    <a class="brand" href="./index.html">hood<span class="tick">-launcher</span></a>
+    <div class="links">
+      <a href="./index.html#quickstart">Quickstart</a>
+      <a href="./rails.html">Rails</a>
+      <a href="./autonomous.html">Autonomous mode</a>
+      <a href="./safety.html">Safety</a>
+      <a href="https://github.com/nirholas/robinhood-chain-launcher">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap" style="padding-bottom: 20px;">
+  <h1>Three rails,<br><span class="grad">one interface</span></h1>
+  <p class="lede">
+    Every calldata builder here is proven against a real historical mainnet transaction —
+    never guessed. Neither NOXA nor The Odyssey publishes a verified ABI on Blockscout, so
+    every selector and argument layout was recovered by decoding real signed transactions
+    and confirmed byte-for-byte in <code>tests/unit/*-calldata.test.ts</code>, which re-run
+    every proof on every <code>npm test</code>.
+  </p>
+</header>
+
+<main class="wrap">
+
+<section class="block">
+  <h2><code>noxa</code> — instant listing</h2>
+  <p class="sub">Mainnet 4663 only. One transaction, one confirmation, trading from block one.</p>
+  <p>
+    <code>launchToken((string name, string symbol, string logo, string description,
+    (string telegram, string twitter, string discord, string website, string farcaster)
+    socials, address devWallet), uint256 launchConfigId, uint256 dexId, bytes32 salt)</code>
+    deploys the ERC-20, creates a Uniswap v3 pool via the launcher's configured DEX (currently
+    the WETH pair at the 1% fee tier — read live from <code>getDexConfig(0)</code>), seeds
+    single-sided liquidity, and permanently locks the LP NFT. There is no bonding curve and no
+    graduation step.
+  </p>
+  <p>
+    The ABI was extracted from NOXA's own production frontend bundle
+    (<code>fun.noxa.fi/assets/index-*.js</code>). Proof: encoding it with the exact inputs
+    decoded from a real, successful launch tx
+    (<a href="https://robinhoodchain.blockscout.com/tx/0x63da3b0a80cbc836806ed055ed797667e7ec59391cf7aeb5a3dcfeb9152756d0" target="_blank" rel="noopener">ROBINDOG launch</a>)
+    reproduces that transaction's calldata byte-for-byte, selector <code>0x686399cb</code>
+    included — confirmed by round-tripping the decode through <code>viem</code>'s own
+    <code>decodeFunctionData</code> → <code>encodeFunctionData</code>, not hand-transcribed.
+  </p>
+  <p>
+    Launch fee: read live from <code>launchFactory.launchFee()</code> (0.0005 ETH when this
+    was built). <code>launchEnabled()</code> is also read live before every preflight — NOXA
+    can pause new launches on-chain, and this rail surfaces that as a blocker rather than
+    letting the transaction revert.
+  </p>
+</section>
+
+<section class="block">
+  <h2><code>odyssey</code> — instant and bonding-curve factories</h2>
+  <p class="sub">Mainnet 4663 only. Two independent factories, two different launch shapes.</p>
+
+  <h3 style="font-size:16px;margin:24px 0 8px">Instant factory</h3>
+  <p>
+    One payable call, <code>f(string name, string symbol, uint256 buyAmount)</code>, selector
+    <code>0x548eb31b</code>. The invariant <code>msg.value === buyAmount</code> held across
+    every sampled create — the initial buy folds directly into creation, and lists to a
+    Uniswap v3 pool immediately. Proven byte-for-byte against two real txs (a 0.03&nbsp;ETH
+    buy and a zero-buy creation).
+  </p>
+
+  <h3 style="font-size:16px;margin:24px 0 8px">Bonding-curve factory</h3>
+  <p>
+    A native-ETH virtual-reserve curve. Creation — <code>f(string name, string symbol,
+    uint256, uint256)</code>, selector <code>0x56f698a3</code> — is a separate zero-value call
+    from the initial buy; every sampled create replayed the same two trailing constants
+    (<code>0.5e18</code>, <code>0</code>), so this rail replays them rather than inventing new
+    values. Buying is <code>buy(address token, uint256 minTokensOut)</code> payable, selector
+    <code>0xcce7ec13</code>.
+  </p>
+
+  <div class="disclosure">
+    A full survey of every historical <code>TokenCreated</code> emission on the bonding
+    factory (47 logs, <code>eth_getLogs</code> from block 0) found <strong>four</strong>
+    distinct create selectors, not one: <code>0x8680ce63</code> (22 uses, an unexplained extra
+    numeric parameter with no consistent relationship to <code>msg.value</code>),
+    <code>0x59a35641</code> (20 uses, requires a 65-byte trailing ECDSA signature from an
+    off-chain backend signer this rail has no way to produce), <code>0xc56f3820</code>
+    (3 uses, undecoded), and <code>0x56f698a3</code> (2 uses — the one this rail ships).
+    Shipping either majority selector would mean guessing a signature scheme or an unverified
+    parameter, which this build refuses to do. <strong>The Odyssey publishing a verified ABI
+    or an official SDK is the only thing that would change this.</strong>
+  </div>
+
+  <p>
+    <code>reflectionFactory</code> and <code>legacyFactory</code> were not sampled for
+    creates during this build and are intentionally not exposed.
+  </p>
+</section>
+
+<section class="block">
+  <h2><code>direct</code> — clean-room ERC-20 + Uniswap v3</h2>
+  <p class="sub">Mainnet AND testnet. No launchpad, no ABI reverse-engineering — just audited-pattern code this project wrote and compiled itself.</p>
+  <p>
+    Deploys <code>HoodToken</code> — OpenZeppelin v5 <code>ERC20</code>, fixed supply minted
+    once in the constructor, no mint function anywhere in the contract, no owner, nothing to
+    renounce because there is nothing privileged to begin with. Then creates + initializes a
+    Uniswap v3 pool at the configured fee tier, seeds a full-range LP position, and burns or
+    time-locks the LP position NFT per config (<code>HoodLPLocker</code> — a permissionless
+    timelock that never touches a locked position before its unlock timestamp, no admin
+    override exists).
+  </p>
+  <p>
+    Every deployed contract is submitted for Blockscout source verification as the final
+    step, using a self-contained standard-json-input embedded in the compiled artifact at
+    build time (<code>npm run compile:contract</code>) — the exact input that produced the
+    deployed bytecode, replayed byte-for-byte, not reconstructed from a template.
+  </p>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Config</th><th>Default</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td><code>totalSupply</code></td><td>1,000,000,000</td><td>Whole tokens; 18 decimals applied</td></tr>
+        <tr><td><code>feeTier</code></td><td>10000 (1%)</td><td>Matches NOXA's default pairing behavior on this chain</td></tr>
+        <tr><td><code>lpSupplyBps</code></td><td>10000 (100%)</td><td>Fraction of supply deposited as the LP's token side</td></tr>
+        <tr><td><code>lpDisposition</code></td><td><code>burn</code></td><td><code>burn</code> · <code>lock</code> (180-day timelock) · <code>keep</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
+    <span><a href="https://github.com/nirholas/robinhood-chain-launcher">GitHub</a> · <a href="./index.html">Home</a> · <a href="./autonomous.html">Autonomous mode</a> · <a href="./safety.html">Safety</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

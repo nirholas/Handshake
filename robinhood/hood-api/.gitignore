@@ -6,4 +6,3 @@ dist
 *.log
 .DS_Store
 coverage
-docs/samples.generated.json

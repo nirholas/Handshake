@@ -136,6 +136,7 @@ All of `.env.example` is optional for paper mode. Key knobs:
 | Var | Default | Meaning |
 |---|---|---|
 | `HOOD_NETWORK` | `mainnet` | `mainnet` (4663) or `testnet` (46630) |
+| `HOOD_RPC_URL` | *(viem's public RPC)* | Optional paid RPC (Alchemy recommended for live trading) |
 | `HOOD_TRADERS_LIVE` | `0` | Must be `1` (+ a valid key) to trade real funds |
 | `HOOD_STOCK_TOKEN_ELIGIBLE` | `false` | Non-US-person affirmation gating Stock Token acquisition |
 | `FLEET_MAX_DAILY_SPEND_USDG` | `250` | Hard ceiling across the whole fleet, USD/day |
@@ -209,7 +210,7 @@ always-on container host instead.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Apache-2.0 — see [LICENSE](LICENSE).
 
 ---
 

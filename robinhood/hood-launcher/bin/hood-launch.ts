@@ -92,7 +92,7 @@ async function main() {
             extra: outcome.result.extra,
           }
         : null,
-    }, null, 2))
+    }, (_k, v) => (typeof v === 'bigint' ? v.toString() : v), 2))
     return
   }
 

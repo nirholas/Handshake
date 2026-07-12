@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guides — hoodkit</title>
+<meta name="description" content="Per-module guides for hoodkit: stream, cache, batch, indexer, strategy, react.">
+<link rel="stylesheet" href="./site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9A%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<nav class="top" aria-label="Site">
+  <div class="wrap">
+    <a class="brand" href="./index.html">hood<span class="tick">kit</span></a>
+    <div class="links">
+      <a href="./index.html">Home</a>
+      <a href="#stream">stream</a>
+      <a href="#cache" class="hide-sm">cache</a>
+      <a href="#batch" class="hide-sm">batch</a>
+      <a href="#indexer" class="hide-sm">indexer</a>
+      <a href="#strategy" class="hide-sm">strategy</a>
+      <a href="#react" class="hide-sm">react</a>
+      <a href="./api/index.html">API reference</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap" style="padding: 56px 0 20px;">
+  <h1>Guides</h1>
+  <p class="lede">One section per module, each with a real, copy-pasteable example against live chain data.</p>
+</header>
+
+<main class="wrap">
+
+<section class="block" id="stream">
+  <h2><code>stream</code> — reconnecting real-time data</h2>
+  <p class="sub">
+    Every stream returns a <code>Stream&lt;T&gt;</code>: an event emitter AND a backpressure-safe
+    async iterable, backed by the same source. Log-based streams (<code>streamSwaps</code>,
+    <code>streamLaunches</code>, <code>streamPortfolio</code>) use a gap-fill cursor — it only
+    advances after a block range's logs are fully delivered, so a dropped RPC connection re-scans
+    the missed range on the next poll instead of silently skipping it.
+  </p>
+<pre><code>import { createHoodClient } from 'hoodchain'
+import { streamPrices, streamSwaps, streamLaunches } from 'hoodkit'
+
+const hood = createHoodClient()
+
+// Event-emitter form
+const prices = streamPrices(hood, ['AAPL', 'TSLA'])
+prices.on('data', (tick) => console.log(tick.symbol, tick.priceUsd))
+prices.on('error', (err) => console.error('feed error', err))
+// later: prices.close()
+
+// Async-iterator form — same stream, different consumption style
+const swaps = await streamSwaps(hood, { token: '0x…WEN' })
+for await (const swap of swaps) {
+  console.log(swap.buysToken0 ? 'BUY' : 'SELL', swap.price, swap.volume1)
+}
+
+// Launches, gap-filled from a historical block if you pass fromBlock
+const launches = streamLaunches(hood, { fromBlock: 7_000_000n })
+launches.on('data', (l) => console.log(l.launchpad, l.token, l.creator))</code></pre>
+  <p class="sub">
+    Overflow policy controls the async-iterator buffer when a consumer falls behind:
+    <code>'drop-oldest'</code> (default for swaps/launches — keep the newest, count the rest in
+    <code>stream.dropped</code>), <code>'latest'</code> (default for prices — only the current
+    value matters), or <code>'block'</code> (never drop; only for naturally slow producers).
+  </p>
+</section>
+
+<section class="block" id="cache">
+  <h2><code>cache</code> — read-through + request coalescing</h2>
+  <p class="sub">
+    N concurrent identical reads collapse into exactly 1 upstream call. Per-datatype TTLs match how
+    fast each thing actually changes: quotes 2s, portfolios 5s, multipliers 10min, registry 1h.
+  </p>
+<pre><code>import { createHoodClient } from 'hoodchain'
+import { createHoodCache, MemoryLruStore } from 'hoodkit'
+
+const hood = createHoodClient()
+const cache = createHoodCache(hood, {
+  ttls: { quote: 2_000 }, // override any subset of the defaults
+})
+
+// 100 concurrent calls -> 1 RPC round-trip
+const results = await Promise.all(Array.from({ length: 100 }, () => cache.getQuote('AAPL')))
+console.log(cache.stats) // { hits, misses: 1, coalesced: 99 }
+
+// Bring your own store — e.g. Redis, so the cache survives process restarts
+const store = {
+  async get(key) { const v = await redis.get(key); return v ? JSON.parse(v) : undefined },
+  async set(key, value, ttlMs) { await redis.set(key, JSON.stringify(value), 'PX', ttlMs) },
+  async delete(key) { await redis.del(key) },
+}
+const redisCache = createHoodCache(hood, { store })</code></pre>
+</section>
+
+<section class="block" id="batch">
+  <h2><code>batch</code> — multicall aggregation</h2>
+  <p class="sub">
+    <code>plan()</code> batches arbitrary reads into the fewest Multicall3 round-trips (chunked,
+    each read isolated — one revert can't sink the batch). <code>createBatcher()</code> coalesces
+    reads from unrelated call sites within the same tick, DataLoader-style.
+  </p>
+<pre><code>import { createHoodClient, erc20Abi, listStockTokens } from 'hoodchain'
+import { plan, createBatcher } from 'hoodkit'
+
+const hood = createHoodClient()
+
+// One-shot: read every Stock Token's totalSupply in a handful of multicalls
+const results = await plan(hood, listStockTokens().map((t) => ({
+  address: t.address, abi: erc20Abi, functionName: 'totalSupply',
+})))
+
+// Ongoing: independent code paths sharing one multicall automatically
+const batcher = createBatcher(hood)
+const [a, b, c] = await Promise.all([
+  batcher.call({ address: t1, abi: erc20Abi, functionName: 'balanceOf', args: [me] }),
+  batcher.call({ address: t2, abi: erc20Abi, functionName: 'balanceOf', args: [me] }),
+  batcher.call({ address: t3, abi: erc20Abi, functionName: 'balanceOf', args: [me] }),
+]) // one multicall, not three</code></pre>
+</section>
+
+<section class="block" id="indexer">
+  <h2><code>indexer</code> — local SQLite index</h2>
+  <p class="sub">
+    Syncs <code>Transfer</code> and Uniswap v3 <code>Swap</code> events for a token set into
+    SQLite, resuming from the last synced block. Requires the optional
+    <code>better-sqlite3</code> peer dependency.
+  </p>
+<pre><code>import { createHoodClient } from 'hoodchain'
+import { createIndexer } from 'hoodkit'
+
+const hood = createHoodClient()
+const indexer = await createIndexer({
+  client: hood,
+  path: './hood.sqlite',
+  tokens: ['0x…WEN'],
+  chunkSize: 50_000n,
+  throttleMs: 100, // be polite to the public RPC on a full backfill
+})
+
+// Full history is needed for an accurate absolute holder count; swap history
+// can be scoped separately (candles rarely need the whole multi-day log).
+const head = await hood.public.getBlockNumber()
+await indexer.sync({ fromBlock: 0n, swapFromBlock: head - 50_000n })
+
+console.log(indexer.holderCount('0x…WEN'))       // verified against Blockscout in CI
+console.log(indexer.candles('0x…WEN', '1h'))     // real OHLCV from indexed swaps
+console.log(indexer.volume24h('0x…WEN'))         // trailing 24h token volume</code></pre>
+  <p class="sub">
+    Balances are recomputed exactly in JS bigints from raw transfer deltas — SQLite's
+    <code>SUM()</code> silently loses precision past ~9.2e18, which 18-decimal token values
+    routinely exceed.
+  </p>
+</section>
+
+<section class="block" id="strategy">
+  <h2><code>strategy</code> — agent primitives</h2>
+  <p class="sub">
+    Position PnL, TWAP execution, price triggers, and a hard spend cap — the primitives an
+    autonomous trading agent needs, with a dry-run mode on by default.
+  </p>
+<pre><code>import { createHoodClient, MAINNET_ADDRESSES, parseUsdg } from 'hoodchain'
+import { Position, SpendCap, createTwapExecutor, createPriceTriggers } from 'hoodkit'
+
+// Multiplier-aware PnL
+const position = new Position()
+position.record({ side: 'buy', quantity: 10, price: 100 })
+position.record({ side: 'sell', quantity: 4, price: 150 })
+console.log(position.snapshot(120)) // { realized, unrealized, total, shareEquivalent, ... }
+
+// TWAP with a hard spend cap and a kill switch
+const hood = createHoodClient()
+const controller = new AbortController()
+const twap = createTwapExecutor(hood, {
+  tokenIn: MAINNET_ADDRESSES.usdg,
+  tokenOut: MAINNET_ADDRESSES.weth,
+  totalAmountIn: parseUsdg('1000'),
+  slices: 5,
+  spendCap: new SpendCap(parseUsdg('1000')),
+  signal: controller.signal,
+})
+const results = await twap.run() // dry-run (simulated) unless the client has a wallet
+
+// Price triggers
+const triggers = createPriceTriggers(hood)
+triggers.onCross('AAPL', 250, 'up', (e) => console.log('AAPL broke $250:', e.price))</code></pre>
+</section>
+
+<section class="block" id="react">
+  <h2><code>hoodkit/react</code> — SSR-safe hooks</h2>
+  <p class="sub">
+    All subscriptions live inside <code>useEffect</code>, so components render inert on the server
+    and hydrate on the client.
+  </p>
+<pre><code>import { HoodProvider, useQuote, usePortfolio, useLaunches, useSwap } from 'hoodkit/react'
+import { createHoodClient } from 'hoodchain'
+
+function App() {
+  const client = createHoodClient()
+  return (
+    &lt;HoodProvider client={client}&gt;
+      &lt;Dashboard /&gt;
+    &lt;/HoodProvider&gt;
+  )
+}
+
+function Dashboard() {
+  const { data: quote } = useQuote('AAPL')
+  const { data: portfolio } = usePortfolio('0xYourAddress')
+  const { launches } = useLaunches({ limit: 20 })
+  const { getQuote, swap, isSwapping } = useSwap()
+
+  return (
+    &lt;div&gt;
+      &lt;p&gt;AAPL: {quote ? `$${quote.priceUsd}` : '…'}&lt;/p&gt;
+      &lt;p&gt;Portfolio: {portfolio ? `$${portfolio.totalUsd.toFixed(2)}` : '…'}&lt;/p&gt;
+      &lt;ul&gt;{launches.map((l) =&gt; &lt;li key={l.transactionHash}&gt;{l.launchpad}: {l.token}&lt;/li&gt;)}&lt;/ul&gt;
+    &lt;/div&gt;
+  )
+}</code></pre>
+  <p class="sub">See the fully working demo in <code>examples/react-demo/</code> (run with <code>npm run dev</code>).</p>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Apache-2.0 © 2026 nirholas</span>
+    <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -13,7 +13,7 @@ export default {
 		'Robinhood Chain Portfolio — the multiplier-correct USD value of any wallet\'s ' +
 		'tokenized-equity holdings on Robinhood Chain (4663), corporate-action-adjusted ' +
 		'via ERC-8056 uiMultiplier and priced against live Chainlink NAV feeds.',
-	path: '/api/v1/robinhood/portfolio',
+	path: '/api/x402/robinhood-portfolio',
 	method: 'GET',
 	free: false,
 	status: 'live',

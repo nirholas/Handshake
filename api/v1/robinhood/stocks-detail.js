@@ -44,7 +44,7 @@ export default defineEndpoint({
 			dexPairsForToken(token.address),
 			token.feed ? feedRoundHistory(token.feed, 24) : Promise.resolve([]),
 			blockscoutToken(token.address),
-			blockscoutHolders(token.address, 25),
+			blockscoutHolders(token.address, 25, token.decimals),
 			blockscoutTransfers(token.address, 25),
 		]);
 
