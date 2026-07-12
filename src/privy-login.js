@@ -145,6 +145,12 @@ function withTimeout(promise, ms, message) {
 // ── Solana wallet detection ───────────────────────────────────────────────────
 
 function getSolanaProvider() {
+	// Seeker/Saga TWA: solana-mobile/src/index.js injects a Phantom-shaped
+	// wallet backed by Seed Vault with isPhantom=false (it isn't Phantom) —
+	// check its own isThreeWs flag first, same order as
+	// src/onchain/adapters/solana.js.
+	if (window.threeWsWallet?.isThreeWs)    return window.threeWsWallet;
+	if (window.solana?.isThreeWs)           return window.solana;
 	if (window.phantom?.solana?.isPhantom)  return window.phantom.solana;
 	if (window.solana?.isPhantom)           return window.solana;
 	if (window.backpack?.solana)            return window.backpack.solana;
