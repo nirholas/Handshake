@@ -213,8 +213,10 @@ describe('llmComplete — multiple OpenRouter keys', () => {
 		await expect(llm.llmComplete({ system: 's', user: 'u' })).rejects.toMatchObject({ status: 502 });
 		// or-same is deduped to a single key, but the primary key legitimately has
 		// two rungs (paid model + its :free variant), then or-extra's :free rung —
-		// three fetches. Without dedup or-same would be tried as a fallback too (four).
-		expect(n).toBe(3);
+		// three OpenRouter fetches (without dedup or-same would be tried again as a
+		// fallback too). The chain then falls through the two unconditional keyless
+		// lanes (OVH, Pollinations) before giving up — five fetches total.
+		expect(n).toBe(5);
 	});
 
 	it('llmConfigured is true with only fallback keys set', () => {
@@ -415,11 +417,15 @@ describe('llmComplete — paid server keys are the automatic last resort', () =>
 });
 
 describe('llmComplete — failure modes', () => {
-	it('throws LlmUnavailableError (503) when no provider is configured', async () => {
-		installFetch({});
+	// LlmUnavailableError is now effectively unreachable in practice — OVH and
+	// Pollinations are unconditional keyless rungs, so providerChain() is never
+	// empty. What used to be "no provider configured" now degrades to the last
+	// upstream error from those keyless lanes instead.
+	it('throws the last upstream error (502), not LlmUnavailableError, when no keys are configured and the keyless lanes also fail', async () => {
+		installFetch({ [OVH_HOST]: errResp(429, 'rate limited'), [POLLINATIONS_HOST]: errResp(502, 'bad gateway') });
 		await expect(llm.llmComplete({ system: 's', user: 'u' })).rejects.toMatchObject({
-			code: 'llm_unavailable',
-			status: 503,
+			status: 502,
+			code: 'upstream_error',
 		});
 	});
 
