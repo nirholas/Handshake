@@ -12,47 +12,9 @@
 // the same signature fires again (which re-activates it).
 
 import { wrap, cors, json, error, readJson, rateLimited } from '../_lib/http.js';
-import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
-import { getSessionUser } from '../_lib/auth.js';
-import { isAdminUser } from '../_lib/admin.js';
-
-const IS_PROD = env.NODE_ENV === 'production' || env.VERCEL_ENV === 'production';
-
-// Authorize a request and return the actor identity for attribution. Two ways
-// in, both fail CLOSED in production:
-//   1. A signed-in platform admin (session + admin wallet, the requireAdmin
-//      model) — the strongest path, and the only one that yields a real per-user
-//      identity for the acknowledge audit trail.
-//   2. A dedicated OPS_SECRET presented as `x-ops-secret` (bookmarkable page /
-//      headless). This is deliberately NOT CRON_SECRET: the ops dashboard must
-//      never share a credential with the crons that move real funds, so viewing
-//      health can't be escalated into triggering a payment job. Set OPS_SECRET
-//      and CRON_SECRET is no longer accepted here.
-// No secret configured + no admin session → allowed ONLY off-production (local
-// dev); in production this denies. The endpoint exposes wallet addresses, tx
-// signatures, key-rotation hints, and stack traces, so an open default is unsafe.
-async function authorize(req) {
-	try {
-		const user = await getSessionUser(req);
-		if (user && (await isAdminUser(user))) {
-			return { ok: true, actor: user.wallet_address || `user:${user.id}` };
-		}
-	} catch {
-		/* no/invalid session — fall through to the secret path */
-	}
-	const secret = env.OPS_SECRET;
-	if (secret) {
-		const provided =
-			req.headers['x-ops-secret'] || req.headers['authorization']?.replace(/^Bearer\s+/i, '');
-		if (provided && constantTimeEquals(provided, secret)) return { ok: true, actor: 'ops-secret' };
-		return { ok: false };
-	}
-	// No OPS_SECRET set: open in dev for local work, closed in production.
-	return { ok: !IS_PROD, actor: 'dev' };
-}
+import { authorizeOps } from '../_lib/ops-auth.js';
 
 const ACTIVE_LIMIT = 200;
 const RESOLVED_LIMIT = 50;
@@ -93,7 +55,7 @@ export default wrap(async (req, res) => {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const auth = await authorize(req);
+	const auth = await authorizeOps(req);
 	if (!auth.ok) return error(res, 401, 'unauthorized', 'admin session or x-ops-secret required');
 
 	const m = req.method?.toUpperCase();

@@ -8,8 +8,8 @@ import { cors, error, json, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { cacheGet } from '../_lib/cache.js';
 import { env } from '../_lib/env.js';
-import { constantTimeEquals } from '../_lib/crypto.js';
 import { sql } from '../_lib/db.js';
+import { authorizeOps } from '../_lib/ops-auth.js';
 
 const PROBE_TIMEOUT_MS = 8_000;
 const ORIGIN = env.APP_ORIGIN || 'https://three.ws';
@@ -109,13 +109,10 @@ export default wrap(async (req, res) => {
 	const rl = await limits.authIp(clientIp(req));
 	if (!rl.success) return rateLimited(res, rl);
 
-	const secret = env.OPS_SECRET || env.CRON_SECRET;
-	if (secret) {
-		const provided = req.headers['x-ops-secret'] || req.headers['authorization']?.replace(/^Bearer\s+/i, '');
-		if (!provided || !constantTimeEquals(provided, secret)) {
-			return error(res, 401, 'unauthorized', 'x-ops-secret required');
-		}
-	}
+	// Same hardened gate as /api/admin/ops-alerts: admin session or a dedicated
+	// OPS_SECRET, fail-closed in production, never CRON_SECRET.
+	const auth = await authorizeOps(req);
+	if (!auth.ok) return error(res, 401, 'unauthorized', 'admin session or x-ops-secret required');
 
 	const t0 = Date.now();
 
