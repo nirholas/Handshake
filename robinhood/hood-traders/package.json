@@ -26,6 +26,22 @@
   "engines": {
     "node": ">=20"
   },
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "dashboard",
+    "README.md",
+    "LICENSE"
+  ],
   "bin": {
     "hood-traders": "./dist/main.js"
   },
@@ -38,7 +54,8 @@
     "test": "vitest run tests/unit",
     "test:e2e": "vitest run tests/e2e --testTimeout 120000",
     "snapshot": "tsx scripts/capture-snapshot.ts",
-    "testnet-trade": "tsx scripts/testnet-trade.ts"
+    "testnet-trade": "tsx scripts/testnet-trade.ts",
+    "capture-session": "node scripts/capture-session.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^11.8.0",

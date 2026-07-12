@@ -3,7 +3,7 @@ const BASE = 'http://localhost:8080';
 const RH_COIN = '0x6b21b4567EfAd992B65f8a92457B45a74ed59486';
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-await page.goto(`${BASE}/temporary?coin=${RH_COIN}&name=BiomeCheck`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+await page.goto(`${BASE}/play?coin=${RH_COIN}&name=BiomeCheck`, { waitUntil: 'domcontentloaded', timeout: 45000 });
 await page.waitForTimeout(5000);
 // Dismiss the controls overlay if present (Esc closes it per the HUD legend).
 await page.keyboard.press('Escape').catch(() => {});

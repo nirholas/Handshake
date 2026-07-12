@@ -276,7 +276,12 @@ function enterWorld(coin) {
 	if (a?.id) params.set('avatar', a.id);
 	if (name) params.set('name', name);
 	const qs = params.toString();
-	window.location.href = `/temporary${qs ? `?${qs}` : ''}`;
+	// Robinhood Chain coins run on the full CoinCommunities engine (biome,
+	// live-trade chart-screen terminal, market reactor — pages/play.html) since
+	// that's where world-env.js's chain-flavored biome and the trade-feed
+	// wiring live; /temporary's simpler walk.js scene has neither.
+	const page = chainOf(coin) === 'robinhood-chain' ? '/play' : '/temporary';
+	window.location.href = `${page}${qs ? `?${qs}` : ''}`;
 }
 
 // ── worlds grid ──────────────────────────────────────────────────────────────

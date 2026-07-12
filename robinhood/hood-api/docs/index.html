@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>hood-api — Market data for Robinhood Chain</title>
+<meta name="description" content="Hosted REST API for Robinhood Chain: Stock Tokens, memecoin launchpads, cross-venue equity spreads, and a real-time firehose. Free tier + x402 micropayments." />
+<link rel="stylesheet" href="site.css" />
+<script src="samples.js"></script>
+</head>
+<body>
+
+<nav class="top">
+  <div class="wrap">
+    <div class="brand">hood<span class="tick">-api</span></div>
+    <div class="links">
+      <a href="#endpoints">Endpoints</a>
+      <a href="#console" class="hide-sm">Console</a>
+      <a href="#x402">x402</a>
+      <a href="#pricing" class="hide-sm">Pricing</a>
+      <a href="openapi.json">OpenAPI</a>
+      <a href="https://github.com/nirholas/hood-api">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <section class="hero">
+    <h1>The market-data layer<br /><span class="grad">Robinhood Chain</span> was missing.</h1>
+    <p class="lede">
+      Stock Tokens priced against Chainlink <em>and</em> the DEX, with the real premium or discount between them.
+      Memecoin launchpads. Multiplier-correct portfolios. The only place that prices the same ticker across
+      Robinhood Chain, xStocks, and Ondo Global Markets side by side. Free for the basics, metered with
+      <a href="#x402">x402</a> for the deep stuff — no API keys, no subscriptions.
+    </p>
+    <div class="cta">
+      <div class="install"><span class="dollar">$</span> curl {api}/v1/stocks</div>
+      <a class="btn primary" href="#console">Try it</a>
+      <a class="btn" href="#endpoints">See all endpoints</a>
+    </div>
+  </section>
+
+  <div class="board-head">
+    <h2>Robinhood Chain, live</h2>
+    <span class="status" id="chain-status"><span class="dot"></span><span id="chain-status-text">connecting…</span></span>
+  </div>
+  <div class="board" id="chain-board">
+    <div class="tile"><div class="sym">Block height</div><div class="px skeleton" id="tile-block">—</div><div class="meta">chain 4663</div></div>
+    <div class="tile"><div class="sym">Gas price</div><div class="px skeleton" id="tile-gas">—</div><div class="meta">gwei, ETH gas</div></div>
+    <div class="tile"><div class="sym">AAPL · Chainlink</div><div class="px skeleton" id="tile-aapl">—</div><div class="meta">per token, multiplier-adjusted</div></div>
+    <div class="tile"><div class="sym">TSLA · Chainlink</div><div class="px skeleton" id="tile-tsla">—</div><div class="meta">per token, multiplier-adjusted</div></div>
+  </div>
+  <p class="board-note">Fetched directly from the public RPC in your browser — no server, no proxy, no API key.</p>
+
+  <section class="block" id="console">
+    <h2>Console</h2>
+    <p class="sub">
+      Point this at a deployed hood-api instance to run every endpoint live from the browser. Leave it blank and
+      each card below falls back to a real captured response — never a fabricated one.
+    </p>
+    <div class="install" style="width:100%; max-width: 640px;">
+      <span class="dollar">API</span>
+      <input id="api-base" type="text" placeholder="https://your-hood-api.example.com (optional)"
+        style="flex:1; background:transparent; border:none; color:inherit; font:inherit; outline:none;" />
+      <button class="btn" id="api-base-save" style="padding:5px 12px;">Save</button>
+    </div>
+  </section>
+
+  <section class="block" id="endpoints">
+    <h2>Free endpoints</h2>
+    <p class="sub">IP-rate-limited, generous, no key required. Every response carries <code>asOf</code> + <code>source</code>.</p>
+    <div id="free-endpoints"></div>
+  </section>
+
+  <section class="block" id="paid">
+    <h2>Paid endpoints</h2>
+    <p class="sub">Metered per-call via <a href="#x402">x402</a> — USDC on Base (mainnet) or Base Sepolia (testnet). No account, no invoice, no subscription.</p>
+    <div id="paid-endpoints"></div>
+  </section>
+
+  <section class="block" id="x402">
+    <h2>Paying with x402</h2>
+    <p class="sub">
+      Every paid route returns HTTP 402 with a signed <code>PaymentRequirements</code> challenge when called
+      without payment. A wallet-aware fetch wrapper pays it automatically and retries once.
+    </p>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="challenge">1 — The 402 challenge</button>
+      <button class="tab-btn" data-tab="client">2 — Pay it</button>
+    </div>
+    <div class="tabpanel active" data-tab="challenge">
+      <pre><code id="x402-challenge-sample">loading…</code></pre>
+      <p class="samplemeta">Real response captured from a running hood-api instance with payments enabled — see the report for the live curl transcript.</p>
+    </div>
+    <div class="tabpanel" data-tab="client">
+      <pre><code>import { createSigner } from 'x402/types'
+import { wrapFetchWithPayment } from 'x402-fetch'
+
+// base-sepolia testnet key funded with a few cents of test USDC
+// (faucet.circle.com — browser + reCAPTCHA, no scriptable path)
+const signer = await createSigner('base-sepolia', process.env.PRIVATE_KEY)
+const fetchWithPay = wrapFetchWithPayment(fetch, signer)
+
+const res = await fetchWithPay('https://your-hood-api.example.com/v1/portfolio/0xYourAddress')
+const portfolio = await res.json()
+console.log(portfolio.totalUsd)
+
+// mainnet: createSigner('base', process.env.PRIVATE_KEY) — pays real USDC on Base.</code></pre>
+    </div>
+    <div class="disclosure">
+      Settlement network is chosen by the deployment (<code>X402_NETWORK=base</code> or <code>base-sepolia</code>),
+      not the caller. A deployment configured for Base mainnet only accepts real USDC; one configured for
+      Base Sepolia only accepts testnet USDC. Check <code>GET /v1/health</code> or the 402 challenge's
+      <code>network</code> field to see which.
+    </div>
+  </section>
+
+  <section class="block" id="pricing">
+    <h2>Pricing</h2>
+    <p class="sub">Free tier has no key and no quota beyond IP rate limits. Paid calls settle per-request — nothing to subscribe to, nothing to cancel.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Endpoint</th><th>Tier</th><th>Price</th><th>What you get</th></tr></thead>
+        <tbody>
+          <tr><td><code>/v1/health</code>, <code>/v1/chain</code></td><td><span class="pill free">FREE</span></td><td>—</td><td>Liveness + chain stats</td></tr>
+          <tr><td><code>/v1/stocks</code>, <code>/v1/stocks/{symbol}</code></td><td><span class="pill free">FREE</span></td><td>—</td><td>Chainlink + DEX price, premium/discount, liquidity</td></tr>
+          <tr><td><code>/v1/coins</code>, <code>/v1/coins/{address}</code>, <code>/v1/launches</code></td><td><span class="pill free">FREE</span></td><td>—</td><td>NOXA + Odyssey launchpad data</td></tr>
+          <tr><td><code>/v1/portfolio/{address}</code></td><td><span class="pill paid">PAID</span></td><td>$0.002</td><td>Multiplier-correct valuation, every position</td></tr>
+          <tr><td><code>/v1/stocks/{symbol}/history</code></td><td><span class="pill paid">PAID</span></td><td>$0.005</td><td>Deep OHLCV, up to 30 days</td></tr>
+          <tr><td><code>/v1/equities</code>, <code>/v1/equities/{symbol}</code></td><td><span class="pill paid">PAID</span></td><td>$0.01</td><td>Cross-venue spread vs xStocks + Ondo</td></tr>
+          <tr><td><code>/v1/firehose</code> → <code>wss /v1/ws</code></td><td><span class="pill paid">PAID</span></td><td>$0.01 / session</td><td>~10 min of real-time launches, trades, ticks, raw firehose</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="block" id="errors">
+    <h2>Errors</h2>
+    <p class="sub">Every error is structured — never a bare 500.</p>
+    <pre><code>{
+  "error": "unknown_symbol",
+  "hint": "\"NOPE\" is not a canonical Robinhood Chain Stock Token. List them at /v1/stocks.",
+  "docs": "https://nirholas.github.io/hood-api/#errors"
+}</code></pre>
+  </section>
+
+  <section class="block">
+    <h2>Legal</h2>
+    <div class="disclosure">
+      Stock Tokens are tokenized debt securities (issuer: Robinhood Assets (Jersey) Ltd) and may not be offered,
+      sold, or delivered to US persons (additional limits: Canada, UK, Switzerland). This API only <em>displays</em>
+      Stock Token data — unrestricted. It never executes a swap or acquisition.
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <div>MIT licensed. Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></div>
+    <div><a href="openapi.json">OpenAPI 3.1</a> · <a href="https://github.com/nirholas/hood-api">Source</a></div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+  var RPC = 'https://rpc.mainnet.chain.robinhood.com';
+  var STOCK_BEACON_APPL_FEED = '0x6B22A786bAa607d76728168703a39Ea9C99f2cD0'; // AAPL Chainlink feed
+  var STOCK_TSLA_FEED = '0x4A1166a659A55625345e9515b32adECea5547C38'; // TSLA Chainlink feed
+
+  function rpc(method, params) {
+    return fetch(RPC, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: method, params: params || [] }),
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      if (j.error) throw new Error(j.error.message);
+      return j.result;
+    });
+  }
+
+  // latestRoundData() selector 0xfeaf968c, no args
+  function latestRoundData(feed) {
+    return rpc('eth_call', [{ to: feed, data: '0xfeaf968c' }, 'latest']).then(function (hex) {
+      var data = hex.slice(2);
+      var answer = BigInt('0x' + data.slice(64, 128));
+      return Number(answer) / 1e8;
+    });
+  }
+
+  function setTile(id, text) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    el.classList.remove('skeleton');
+  }
+
+  function setStatus(ok, text) {
+    var el = document.getElementById('chain-status');
+    var t = document.getElementById('chain-status-text');
+    el.className = 'status ' + (ok ? 'live' : 'error');
+    t.textContent = text;
+  }
+
+  Promise.all([
+    rpc('eth_blockNumber').then(function (h) { setTile('tile-block', parseInt(h, 16).toLocaleString()); }),
+    rpc('eth_gasPrice').then(function (h) { setTile('tile-gas', (parseInt(h, 16) / 1e9).toFixed(4)); }),
+    latestRoundData(STOCK_BEACON_APPL_FEED).then(function (p) { setTile('tile-aapl', '$' + p.toFixed(2)); }),
+    latestRoundData(STOCK_TSLA_FEED).then(function (p) { setTile('tile-tsla', '$' + p.toFixed(2)); }),
+  ]).then(function () {
+    setStatus(true, 'live — public RPC, chain 4663');
+  }).catch(function (e) {
+    setStatus(false, 'RPC unreachable (' + e.message + ') — showing captured samples below instead');
+  });
+
+  // ---- API console + endpoint reference ----
+  var API_KEY = 'hood-api-console-base';
+  var apiBaseInput = document.getElementById('api-base');
+  apiBaseInput.value = localStorage.getItem(API_KEY) || '';
+  document.getElementById('api-base-save').addEventListener('click', function () {
+    localStorage.setItem(API_KEY, apiBaseInput.value.trim());
+    renderAll();
+  });
+
+  var SAMPLES = window.HOOD_API_SAMPLES || {};
+
+  var FREE = [
+    { path: '/v1/health', desc: 'Service liveness + RPC reachability.', sample: SAMPLES.health },
+    { path: '/v1/chain', desc: 'Chain stats: block height, gas, TVL, ETH price.', sample: SAMPLES.chain },
+    { path: '/v1/stocks', desc: 'All 95 Stock Tokens: Chainlink price, DEX price, premium/discount, liquidity.', sample: SAMPLES.stocks },
+    { path: '/v1/stocks/{symbol}', desc: 'One Stock Token in depth: candles, holders, feed metadata, links.', sample: SAMPLES.stockDetail, example: '/v1/stocks/TSLA' },
+    { path: '/v1/coins', desc: 'Memecoins: launchpad state, price, liquidity, holders, age.', sample: SAMPLES.coins, example: '/v1/coins?limit=8' },
+    { path: '/v1/coins/{address}', desc: 'Coin detail: launch info, graduation status, DEX stats, holders.' },
+    { path: '/v1/launches', desc: 'Recent + live launchpad activity (NOXA, The Odyssey).', sample: SAMPLES.launches, example: '/v1/launches?lookback=24h&limit=8' },
+  ];
+  var PAID = [
+    { path: '/v1/portfolio/{address}', price: '$0.002', desc: 'Multiplier-correct full portfolio with USD valuation.' },
+    { path: '/v1/stocks/{symbol}/history', price: '$0.005', desc: 'Deep OHLCV history, up to 30 days.' },
+    { path: '/v1/equities', price: '$0.01', desc: 'Cross-venue tokenized-equity spreads: Robinhood Chain vs xStocks vs Ondo.' },
+    { path: '/v1/equities/{symbol}', price: '$0.01', desc: 'Cross-venue price for one ticker.' },
+    { path: '/v1/firehose', price: '$0.01', desc: 'Mint a metered session for the real-time /v1/ws firehose (launches, trades, ticks, raw feed).' },
+  ];
+
+  function fmtSample(s) {
+    if (!s) return null;
+    return JSON.stringify(s.body, null, 2);
+  }
+
+  function endpointCard(e, tier) {
+    var div = document.createElement('div');
+    div.className = 'endpoint';
+    var pill = tier === 'paid' ? '<span class="pill paid">PAID</span>' : '<span class="pill free">FREE</span>';
+    var price = tier === 'paid' ? '<span class="price">' + e.price + '</span>' : '';
+    div.innerHTML =
+      '<div class="row1"><span class="pill get">GET</span>' + pill +
+      '<span class="path">' + e.path + '</span>' + price + '</div>' +
+      '<p class="desc">' + e.desc + '</p>' +
+      '<details><summary>Response</summary><pre><code class="resp">loading…</code></pre></details>';
+    var codeEl = div.querySelector('.resp');
+    var details = div.querySelector('details');
+    var loaded = false;
+
+    function load() {
+      if (loaded) return;
+      loaded = true;
+      var base = (localStorage.getItem(API_KEY) || '').replace(/\/$/, '');
+      var path = e.example || e.path;
+      if (base && path.indexOf('{') === -1) {
+        codeEl.textContent = 'fetching ' + base + path + ' …';
+        fetch(base + path).then(function (r) { return r.json(); }).then(function (json) {
+          codeEl.textContent = JSON.stringify(json, null, 2);
+        }).catch(function (err) {
+          codeEl.textContent = 'live fetch failed: ' + err.message + '\n\nFalling back to captured sample:\n\n' + (fmtSample(e.sample) || 'no sample captured for this endpoint');
+        });
+      } else {
+        var sample = fmtSample(e.sample);
+        codeEl.textContent = sample
+          ? sample
+          : 'no captured sample for this endpoint yet — path parameters required (' + e.path + ')';
+      }
+    }
+    details.addEventListener('toggle', function () { if (details.open) load(); });
+    return div;
+  }
+
+  function renderAll() {
+    var freeEl = document.getElementById('free-endpoints');
+    var paidEl = document.getElementById('paid-endpoints');
+    freeEl.innerHTML = '';
+    paidEl.innerHTML = '';
+    FREE.forEach(function (e) { freeEl.appendChild(endpointCard(e, 'free')); });
+    PAID.forEach(function (e) { paidEl.appendChild(endpointCard(e, 'paid')); });
+  }
+  renderAll();
+
+  // x402 challenge sample
+  var challengeSample = SAMPLES.portfolioChallenge;
+  document.getElementById('x402-challenge-sample').textContent = challengeSample
+    ? JSON.stringify(challengeSample.body, null, 2)
+    : 'GET /v1/portfolio/0x… without X-PAYMENT →\n\nHTTP 402\n{ "accepts": [ { "scheme": "exact", "network": "base-sepolia", ... } ] }';
+
+  // tabs
+  document.querySelectorAll('.tab-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var tab = btn.getAttribute('data-tab');
+      document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.toggle('active', b === btn); });
+      document.querySelectorAll('.tabpanel').forEach(function (p) {
+        p.classList.toggle('active', p.getAttribute('data-tab') === tab);
+      });
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

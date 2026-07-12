@@ -34,10 +34,10 @@ const env = { ...restEnv, HOOD_CONFIG_DIR: join(workDir, 'config') }
 
 const results = []
 
-function run(label, args, { expectExit = 0, mustContain = [], mustNotContain = [], stdin, timeout = 60_000 } = {}) {
+function run(label, args, { expectExit = 0, mustContain = [], mustNotContain = [], stdin, extraEnv, timeout = 60_000 } = {}) {
   const started = Date.now()
   const proc = spawnSync('node', [bin, ...args], {
-    env,
+    env: extraEnv ? { ...env, ...extraEnv } : env,
     encoding: 'utf8',
     input: stdin,
     timeout,
@@ -122,7 +122,7 @@ run('transfer: refuses without a configured wallet (WALLET exit 6)', [
 console.log(`\n== Wallet-backed flows ==\n`)
 
 run('config set wallet: generates + encrypts a new keystore', ['config', 'set', 'wallet'], {
-  stdin: 'testpassword123\ntestpassword123\n',
+  extraEnv: { HOOD_WALLET_PASSWORD: 'testpassword123' },
   mustContain: ['Wallet generated'],
 })
 run('config get walletAddress: reads the generated address back', ['config', 'get', 'walletAddress'], {
@@ -136,6 +136,7 @@ run('transfer: insufficient balance on the freshly generated (empty) wallet', [
   '1',
   '--yes',
 ], {
+  extraEnv: { HOOD_WALLET_PASSWORD: 'testpassword123' },
   expectExit: 4,
   mustContain: ['Insufficient balance'],
 })

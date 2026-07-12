@@ -1,0 +1,15 @@
+{
+  "name": "Sleepy Capybara",
+  "symbol": "NAP",
+  "description": "a very tired rodent, unbothered by the market",
+  "socials": { "twitter": "https://x.com/example" },
+  "initialBuyEth": 0,
+  "rail": "direct",
+  "direct": {
+    "totalSupply": 1000000000,
+    "feeTier": 10000,
+    "seedEth": 0.01,
+    "lpSupplyBps": 10000,
+    "lpDisposition": "burn"
+  }
+}

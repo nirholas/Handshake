@@ -28,7 +28,7 @@ export function configCommand(): Command {
       if (command.optsWithGlobals().color === false) setColorEnabled(false)
       const json = !!command.optsWithGlobals().json
       if (key === 'wallet') {
-        await setWallet(json)
+        await setWallet(json, !!command.optsWithGlobals().yes)
         return
       }
       if (value === undefined) throw usageError(`"hood config set ${key}" needs a value.`)
@@ -68,11 +68,11 @@ export function configCommand(): Command {
   return cmd
 }
 
-async function setWallet(json: boolean): Promise<void> {
+async function setWallet(json: boolean, assumeYes: boolean): Promise<void> {
   const config = loadConfig()
   const keystorePath = config.walletKeystore ?? defaultKeystorePath()
 
-  if (keystoreExists(keystorePath)) {
+  if (keystoreExists(keystorePath) && !assumeYes) {
     const overwrite = await confirm(`A wallet already exists at ${keystorePath}. Overwrite it?`)
     if (!overwrite) throw guardError('Wallet setup cancelled.')
   }

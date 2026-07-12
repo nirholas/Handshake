@@ -1,0 +1,8 @@
+{
+  "name": "Sleepy Capybara",
+  "symbol": "NAP",
+  "description": "a very tired rodent, unbothered by the market",
+  "socials": { "twitter": "https://x.com/example" },
+  "initialBuyEth": 0,
+  "rail": "noxa"
+}

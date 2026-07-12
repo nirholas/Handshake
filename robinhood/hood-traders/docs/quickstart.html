@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quickstart — hood-traders</title>
+  <meta name="description" content="Run your own hood-traders fleet in 5 minutes, paper mode, zero config." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="topnav">
+    <div class="brand"><span class="dot"></span>hood-traders</div>
+    <div class="links">
+      <a href="index.html">Overview</a>
+      <a href="architecture.html">Architecture</a>
+      <a href="strategies.html">Strategies</a>
+      <a href="quickstart.html" class="active">Quickstart</a>
+      <a href="https://github.com/nirholas/hood-traders" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <h1>Run your own fleet in 5 minutes</h1>
+    <p class="lede">Paper mode by default — simulates fills against live market data, moves no real funds, needs no wallet or key.</p>
+
+    <h2>1. Clone both repos</h2>
+    <p>
+      <code>hood-traders</code> depends on <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a>,
+      which isn't on npm yet — check them out as siblings:
+    </p>
+    <pre><code>git clone https://github.com/nirholas/hood-traders.git
+git clone https://github.com/nirholas/robinhood-chain-sdk.git
+cd hood-traders</code></pre>
+
+    <h2>2. Install and build</h2>
+    <pre><code>npm install
+npm i ../robinhood-chain-sdk   # local link until hoodchain publishes
+npm run build</code></pre>
+
+    <h2>3. Run the fleet</h2>
+    <pre><code>npm run fleet</code></pre>
+    <p>Open <a href="http://localhost:4670">http://localhost:4670</a> — the dashboard is live immediately: fleet equity, per-agent positions, and the decision journal streaming from real mainnet ticks.</p>
+
+    <h2>Or: Docker, zero local Node needed</h2>
+    <pre><code>cd hood-traders
+docker compose up --build</code></pre>
+    <p>Same result. The compose file's build context is the parent directory so it can reach the sibling <code>robinhood-chain-sdk</code> checkout from step 1.</p>
+
+    <h2>Try the kill switch</h2>
+    <pre><code># any one of these halts new orders across every agent immediately
+touch KILL                                    # local
+curl -X POST http://localhost:4670/api/kill    # HTTP
+# Ctrl-C also works</code></pre>
+
+    <h2>Going live</h2>
+    <div class="callout danger">
+      <strong>Real funds.</strong> Live mode signs and broadcasts real transactions. Only do this
+      with a wallet you can afford to lose, after reading the strategy failure modes.
+    </div>
+    <pre><code>cp .env.example .env
+# edit .env:
+#   HOOD_TRADERS_LIVE=1
+#   ROBINHOOD_CHAIN_PRIVATE_KEY=0x...
+npm run fleet</code></pre>
+    <p>Both <code>HOOD_TRADERS_LIVE=1</code> and a valid key are required — missing either keeps you in paper mode.</p>
+
+    <h2>Tune a strategy</h2>
+    <p>Edit <code>src/main.ts</code> — every strategy takes a params object:</p>
+    <pre><code>import { LaunchSniper } from './strategies/launch-sniper.js'
+
+fleet.addAgents([
+  {
+    id: 'sniper-conservative',
+    strategy: new LaunchSniper({
+      entryWeth: 0.005,
+      takeProfitPct: 0.4,
+      stopLossPct: 0.2,
+      maxDeployerPct: 0.1,
+    }),
+    tickIntervalMs: 4000,
+  },
+])</code></pre>
+
+    <h2>Next</h2>
+    <p>
+      <a href="architecture.html">Read the architecture</a> to understand the risk gate, or
+      <a href="strategies.html">the strategy docs</a> for every tunable and failure mode.
+    </p>
+
+    <footer class="footer">
+      <span>hood-traders · Robinhood Chain autonomous trading fleet</span>
+      <span>Built by <a href="https://x.com/nichxbt" target="_blank" rel="noopener">nirholas</a> · <a href="https://three.ws" target="_blank" rel="noopener">three.ws</a></span>
+    </footer>
+  </div>
+</body>
+</html>

@@ -62,19 +62,6 @@ export interface Position {
   meta: Record<string, unknown>
 }
 
-/** Outcome of the simulate step — a real QuoterV2 `eth_call` against live pools. */
-export interface Simulation {
-  amountIn: bigint
-  /** Expected output at current liquidity. */
-  expectedOut: bigint
-  /** Minimum out after slippage bound. */
-  minOut: bigint
-  /** Implied price impact vs a hypothetical zero-slippage fill, in bps (best-effort). */
-  routeHops: number
-  gasEstimate: bigint
-  slippageBps: number
-}
-
 /** Reason an intent was refused before execution. */
 export type RefusalReason =
   | 'position_cap'

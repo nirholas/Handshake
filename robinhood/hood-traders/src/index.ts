@@ -29,7 +29,6 @@ export type {
   Position,
   RefusalReason,
   RiskLimits,
-  Simulation,
   TradeRecord,
 } from './framework/types.js'
 
