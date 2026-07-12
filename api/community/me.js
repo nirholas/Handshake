@@ -3,21 +3,13 @@
 // their linked wallets, so Town knows whether the composer can post directly or
 // needs an X sign-in / wallet link first. Unauthenticated → { user: null }.
 import { cors, error, json, method, wrap } from '../_lib/http.js';
-import {
-	cc,
-	userAuthHeaders,
-	clearUserSession,
-	UnconfiguredError,
-} from '../_lib/coin-communities.js';
+import { cc, withAuthRefresh, UnconfiguredError } from '../_lib/coin-communities.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['GET'])) return;
 
 	res.setHeader('cache-control', 'no-store');
-
-	const headers = userAuthHeaders(req);
-	if (!headers) return json(res, 200, { data: { user: null } });
 
 	let api;
 	try {
@@ -29,25 +21,21 @@ export default wrap(async (req, res) => {
 		throw err;
 	}
 
-	const { data, error: apiErr } = await api.userMe({ headers });
-	if (apiErr) {
-		// Expired/invalid session — clear it so the client falls back to sign-in.
-		if (apiErr.statusCode === 401) {
-			clearUserSession(res);
-			return json(res, 200, { data: { user: null } });
-		}
-		return error(res, 502, 'upstream_error', apiErr.message || 'failed to load user');
-	}
+	const { data, error: apiErr, headers } = await withAuthRefresh(req, res, async (h) => {
+		const me = await api.userMe({ headers: h });
+		if (me.error) return { error: me.error };
+		const w = await api.getWallets({ headers: h });
+		const wallets = w.error
+			? []
+			: (w.data?.wallets ?? []).map((x) => ({ address: x.address, chainType: x.chainType }));
+		return { data: { user: me.data?.user, wallets } };
+	});
 
-	let wallets = [];
-	const w = await api.getWallets({ headers });
-	if (!w.error)
-		wallets = (w.data?.wallets ?? []).map((x) => ({
-			address: x.address,
-			chainType: x.chainType,
-		}));
+	// No usable session — never signed in, or the refresh token itself expired.
+	if (!headers) return json(res, 200, { data: { user: null } });
+	if (apiErr) return error(res, 502, 'upstream_error', apiErr.message || 'failed to load user');
 
-	const user = data?.user
+	const user = data.user
 		? {
 				id: data.user.id,
 				username: data.user.username,
@@ -55,7 +43,7 @@ export default wrap(async (req, res) => {
 				followers: data.user.followerCount ?? 0,
 			}
 		: null;
-	const solWallet = wallets.find((x) => x.chainType === 'svm')?.address || null;
+	const solWallet = data.wallets.find((x) => x.chainType === 'svm')?.address || null;
 
-	return json(res, 200, { data: { user, wallets, solWallet } });
+	return json(res, 200, { data: { user, wallets: data.wallets, solWallet } });
 });

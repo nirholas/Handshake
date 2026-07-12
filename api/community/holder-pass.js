@@ -19,7 +19,7 @@
 //   403 wallet_required — signed in but no linked Solana wallet
 import { cors, error, json, method, wrap, rateLimited } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
-import { cc, userAuthHeaders, isValidToken, UnconfiguredError } from '../_lib/coin-communities.js';
+import { cc, withAuthRefresh, isValidToken, UnconfiguredError } from '../_lib/coin-communities.js';
 import { getBalances, solanaMintUsdPrice } from '../_lib/balances.js';
 import { HOLDER_MIN_USD, signHolderPass } from '../_lib/holder-pass.js';
 import { readWorldGate } from '../_lib/world-gate.js';
@@ -44,11 +44,6 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'validation_error', 'valid token query param required');
 	}
 
-	const headers = userAuthHeaders(req);
-	if (!headers) {
-		return error(res, 401, 'auth_required', 'sign in with X to enter a holder world');
-	}
-
 	let api;
 	try {
 		api = cc();
@@ -59,15 +54,20 @@ export default wrap(async (req, res) => {
 		throw err;
 	}
 
-	// The wallets are taken from the authenticated session — never the request body.
-	const w = await api.getWallets({ headers });
-	if (w.error) {
-		if (w.error.statusCode === 401) {
-			return error(res, 401, 'auth_required', 'session expired — sign in again');
-		}
-		return error(res, 502, 'upstream_error', w.error.message || 'failed to read wallets');
+	// The wallets are taken from the authenticated session — never the request
+	// body. Transparently refreshes an expired (1h) access token off the 30-day
+	// refresh token before giving up, so a player who's been signed in for a
+	// while isn't wrongly bounced out of the holders-world gate as "not signed in".
+	const { data: wData, error: wErr, headers } = await withAuthRefresh(req, res, (h) =>
+		api.getWallets({ headers: h }),
+	);
+	if (!headers) {
+		return error(res, 401, 'auth_required', 'sign in with X to enter a holder world');
 	}
-	const svmWallets = (w.data?.wallets ?? [])
+	if (wErr) {
+		return error(res, 502, 'upstream_error', wErr.message || 'failed to read wallets');
+	}
+	const svmWallets = (wData?.wallets ?? [])
 		.filter((x) => x.chainType === 'svm')
 		.map((x) => x.address)
 		.filter(Boolean);

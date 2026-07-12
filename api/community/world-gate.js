@@ -18,7 +18,7 @@
 //   403 wallet_required   — signed in, but no linked Solana wallet to match
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { clientIp, limits } from '../_lib/rate-limit.js';
-import { cc, userAuthHeaders, isValidToken, UnconfiguredError } from '../_lib/coin-communities.js';
+import { cc, userAuthHeaders, withAuthRefresh, isValidToken, UnconfiguredError } from '../_lib/coin-communities.js';
 import { readWorldGate, writeWorldGate, normalizeMinTokens } from '../_lib/world-gate.js';
 
 const PUMP_FRONTEND_BASE = process.env.PUMP_FRONTEND_BASE || 'https://frontend-api-v3.pump.fun';
@@ -41,7 +41,8 @@ async function resolveCoinCreator(mint) {
 	}
 }
 
-// The signed-in user's linked Solana wallets, or { error } shaped like the SDK's.
+// The signed-in user's linked Solana wallets, as { data: { wallets }, error }
+// shaped like the SDK's so it composes directly with withAuthRefresh.
 async function linkedSvmWallets(api, headers) {
 	const w = await api.getWallets({ headers });
 	if (w.error) return { error: w.error };
@@ -50,7 +51,7 @@ async function linkedSvmWallets(api, headers) {
 		.map((x) => x.address)
 		.filter(Boolean)
 		.slice(0, MAX_WALLETS_CHECKED);
-	return { wallets };
+	return { data: { wallets } };
 }
 
 export default wrap(async (req, res) => {
@@ -66,8 +67,6 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'validation_error', 'valid token query param required');
 	}
 
-	const headers = userAuthHeaders(req);
-
 	if (req.method === 'GET') {
 		const gate = await readWorldGate(mint);
 		const minTokens = gate?.minTokens || 0;
@@ -75,13 +74,14 @@ export default wrap(async (req, res) => {
 		// coin's creator. Best-effort — any failure just yields canEdit:false (the
 		// read still succeeds), so the requirement is always visible.
 		let canEdit = false;
-		if (headers) {
+		if (userAuthHeaders(req)) {
 			try {
 				const api = cc();
-				const [{ wallets = [] }, creator] = await Promise.all([
-					linkedSvmWallets(api, headers).then((r) => r.error ? { wallets: [] } : r),
+				const [{ data: walletsData }, creator] = await Promise.all([
+					withAuthRefresh(req, res, (h) => linkedSvmWallets(api, h)),
 					resolveCoinCreator(mint),
 				]);
+				const wallets = walletsData?.wallets ?? [];
 				canEdit = !!creator && wallets.includes(creator);
 			} catch { /* canEdit stays false */ }
 		}
@@ -89,10 +89,6 @@ export default wrap(async (req, res) => {
 	}
 
 	// POST — set the threshold. Creator-only.
-	if (!headers) {
-		return error(res, 401, 'auth_required', 'sign in with X to manage this world');
-	}
-
 	let api;
 	try {
 		api = cc();
@@ -112,11 +108,16 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'validation_error', 'body must be JSON { minTokens }');
 	}
 
-	const { wallets, error: walletErr } = await linkedSvmWallets(api, headers);
+	const { data: walletData, error: walletErr, headers } = await withAuthRefresh(req, res, (h) =>
+		linkedSvmWallets(api, h),
+	);
+	if (!headers) {
+		return error(res, 401, 'auth_required', 'sign in with X to manage this world');
+	}
 	if (walletErr) {
-		if (walletErr.statusCode === 401) return error(res, 401, 'auth_required', 'session expired — sign in again');
 		return error(res, 502, 'upstream_error', walletErr.message || 'failed to read wallets');
 	}
+	const wallets = walletData?.wallets ?? [];
 	if (!wallets.length) {
 		return error(res, 403, 'wallet_required', 'link the creator wallet to manage this world');
 	}

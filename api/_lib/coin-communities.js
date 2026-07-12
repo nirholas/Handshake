@@ -138,17 +138,66 @@ export function clearUserSession(res) {
 	]);
 }
 
+function readSessionCookie(req, name) {
+	const cookie = req.headers.cookie || '';
+	const m = cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`));
+	return m ? decodeURIComponent(m[1]) : null;
+}
+
 /** Read the current user's access token from the request cookies, if any. */
 export function userToken(req) {
-	const cookie = req.headers.cookie || '';
-	const m = cookie.match(new RegExp(`(?:^|;\\s*)${AT_COOKIE}=([^;]+)`));
-	return m ? decodeURIComponent(m[1]) : null;
+	return readSessionCookie(req, AT_COOKIE);
+}
+
+/** Read the current user's refresh token from the request cookies, if any. */
+export function userRefreshToken(req) {
+	return readSessionCookie(req, RT_COOKIE);
 }
 
 /** Per-call headers that attach a user's bearer JWT for user-scoped operations. */
 export function userAuthHeaders(req) {
 	const token = userToken(req);
 	return token ? { Authorization: `Bearer ${token}` } : null;
+}
+
+/**
+ * Runs an authenticated CoinCommunities API call, transparently refreshing the
+ * session on a 401 and retrying once before giving up. The `cc_at` access-token
+ * cookie only lives 1h; without this, any signed-in player who comes back to
+ * `/play` after an hour gets treated as never having signed in at all, even
+ * though the 30-day `cc_rt` refresh token is still good.
+ *
+ * `call(headers)` should run one or more SDK calls with the given bearer
+ * headers and return `{ data, error }` (an upstream 401 on any of them should
+ * surface as `error.statusCode === 401`). Returns `{ data, error, headers }`;
+ * `headers` is null when there is no usable session (never signed in, or the
+ * refresh itself failed) — callers should treat that as "not logged in"
+ * regardless of `error`, since `error` may just be the original 401.
+ */
+export async function withAuthRefresh(req, res, call) {
+	const headers = userAuthHeaders(req);
+	if (!headers) return { data: null, error: null, headers: null };
+
+	let result = await call(headers);
+	if (result?.error?.statusCode !== 401) return { ...result, headers };
+
+	const refreshToken = userRefreshToken(req);
+	if (!refreshToken) {
+		clearUserSession(res);
+		return { ...result, headers: null };
+	}
+
+	const api = cc();
+	const { data: refreshed, error: refreshErr } = await api.refreshToken({ body: { refreshToken } });
+	if (refreshErr || !refreshed?.accessToken) {
+		clearUserSession(res);
+		return { ...result, headers: null };
+	}
+
+	setUserSession(res, refreshed);
+	const freshHeaders = { Authorization: `Bearer ${refreshed.accessToken}` };
+	result = await call(freshHeaders);
+	return { ...result, headers: freshHeaders };
 }
 
 /**

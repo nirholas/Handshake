@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-12T13:51:14.886Z",
+	"generated_at": "2026-07-12T14:51:46.886Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -68,6 +68,16 @@
 			"link": null,
 			"tags": [
 				"security"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "update",
+			"title": "Fixed: /play was signing players out after an hour",
+			"summary": "Players who signed in with X to enter a coin's Holders world could get bounced back to the /play lobby with a false \"not signed in\" message after about an hour, even though their session was still good. The sign-in session's access token only lived for an hour, and the endpoints checking it were discarding the still-valid 30-day session instead of quietly renewing it. Signing in with X on /play now stays good for the full 30 days without needing to reconnect.",
+			"link": "/play",
+			"tags": [
+				"fix"
 			]
 		},
 		{

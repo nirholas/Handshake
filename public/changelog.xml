@@ -55,6 +55,14 @@
 			<description>The server that routes every /api request to its handler split the URL into path segments before decoding them, so a specially encoded request could smuggle a '../' into a single segment and reach a file outside the API folder — or an internal helper meant to be unreachable — and run it without authentication. The router now rejects any decoded segment that contains a path separator and, as a second line of defense, refuses to load any handler that resolves outside the API directory. Normal routes are unaffected; a regression test locks the fix in place.</description>
 		</item>
 		<item>
+			<title>Fixed: /play was signing players out after an hour</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-07-12:Fixed: /play was signing players out after an hour</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Players who signed in with X to enter a coin's Holders world could get bounced back to the /play lobby with a false &quot;not signed in&quot; message after about an hour, even though their session was still good. The sign-in session's access token only lived for an hour, and the endpoints checking it were discarding the still-valid 30-day session instead of quietly renewing it. Signing in with X on /play now stays good for the full 30 days without needing to reconnect.</description>
+		</item>
+		<item>
 			<title>Market-maker and limit-order engines are now crash-safe on Cloud Run</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-12:Market-maker and limit-order engines are now crash-safe on Cloud Run</guid>

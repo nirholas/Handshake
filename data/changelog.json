@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-12",
+			"title": "Fixed: /play was signing players out after an hour",
+			"summary": "Players who signed in with X to enter a coin's Holders world could get bounced back to the /play lobby with a false \"not signed in\" message after about an hour, even though their session was still good. The sign-in session's access token only lived for an hour, and the endpoints checking it were discarding the still-valid 30-day session instead of quietly renewing it. Signing in with X on /play now stays good for the full 30 days without needing to reconnect.",
+			"tags": [
+				"fix"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-07-12",
 			"title": "The datapoint API now covers any token by contract — 1,000,000+ paid endpoints",
 			"summary": "The pay-per-datapoint fabric grew from ~480,000 to over 1,000,000 individually addressable endpoints. The headline addition is per-contract coverage: pass ANY Solana mint or EVM address (not just CoinGecko-listed coins) to /api/x402/d/token/<address>/<metric> for live price, liquidity, market cap, FDV, volume and 24h change, or to /api/x402/d/token-security/<mint>/<metric> for a rug-risk read — mint and freeze authority status, metadata mutability, holder concentration, liquidity depth, and an overall risk verdict. Freshly launched mints with no CoinGecko id resolve through DexScreener, pump.fun and Helius. Four more families joined too: sector categories, DEX trading volumes, protocol fees & revenue, and derivatives (perp) venues. Every one is $0.0005 USDC per call, and the public discovery doc now advertises ~4,400 concrete endpoints for crawlers to index.",
 			"tags": [
