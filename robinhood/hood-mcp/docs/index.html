@@ -1,0 +1,130 @@
+<title>hood-mcp — MCP servers for Robinhood Chain</title>
+<meta name="description" content="Model Context Protocol servers for Robinhood Chain: zero-config Stock Token data plus a guarded, spend-capped trading server for AI agents." />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏹</text></svg>" />
+<link rel="stylesheet" href="site.css" />
+
+<nav class="top">
+  <div class="wrap">
+    <div class="brand"><span class="tick">hood</span>-mcp</div>
+    <div class="links">
+      <a href="index.html" aria-current="page">Overview</a>
+      <a href="install.html">Install</a>
+      <a href="tools.html">Tools</a>
+      <a href="safety.html">Safety model</a>
+      <a href="https://github.com/nirholas/hood-mcp">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <section class="hero" style="border-top:none;">
+    <div class="badges">
+      <span class="badge">chain 4663</span>
+      <span class="badge free">data server: free, zero-config</span>
+      <span class="badge guarded">trading server: opt-in, spend-capped</span>
+    </div>
+    <h1>MCP servers for <span class="grad">Robinhood Chain</span></h1>
+    <p class="lede">
+      Stock Token quotes, multiplier-correct portfolios, memecoin launches, and chain stats —
+      free and read-only. Plus a separate, explicitly opt-in trading server with hard spend caps
+      and a confirm gate for agents that want to act, not just look.
+    </p>
+    <div class="cta">
+      <a class="btn primary" href="install.html">Install in 60 seconds</a>
+      <a class="btn" href="tools.html">Browse tools</a>
+      <a class="btn" href="https://github.com/nirholas/hood-mcp">View source</a>
+    </div>
+  </section>
+
+  <section>
+    <h2>A real session</h2>
+    <p class="section-lede">
+      This is an unedited MCP tool call against the live server in this repo, captured against
+      Robinhood Chain mainnet during the build — the same stdio transport Claude Code, Claude
+      Desktop, and Cursor use.
+    </p>
+    <div class="transcript">
+      <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp;claude · hood-mcp connected</div>
+      <div class="body">
+        <div class="user">What's GME trading at on Robinhood Chain, and what's the premium over the oracle price?</div>
+        <div class="tool-call">→ calling <span class="name">get_stock_quote</span>({ "symbol": "GME" })</div>
+        <pre class="tool-result">{
+  "symbol": "GME",
+  "name": "GameStop • Robinhood Token",
+  "chainlink": { "priceUsd": 21.76125, "ageSeconds": 169330 },
+  "dexPriceUsd": 20.521686,
+  "premiumPct": -5.6962,
+  "premiumNote": "positive = DEX trades above oracle",
+  "uiMultiplier": "1000000000000000000",
+  "underlyingSharePriceUsd": 21.76125,
+  "sources": ["chainlink", "uniswap-v3", "robinhood-chain-rpc"]
+}</pre>
+        <div class="answer">
+          The Chainlink oracle prices the GME Stock Token at <strong>$21.76</strong>. It's actually
+          trading at <strong>$20.52</strong> on the token's Uniswap v3 pool — a
+          <strong>5.70% discount</strong> to the oracle. The <code>uiMultiplier</code> is
+          <code>1e18</code> (1:1), so that's also the underlying share price: no split or
+          reinvested-dividend adjustment has happened yet.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Two servers</h2>
+    <p class="section-lede">One package, two binaries, two very different trust levels.</p>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>hood-mcp <span class="pill free">free</span></h3>
+        <p>
+          9 read-only tools. No API key, no wallet, no config — runs against the public RPC out
+          of the box. Stock Token quotes with live oracle + DEX premium, multiplier-correct
+          portfolios, memecoin data, launch scanning, chain stats.
+        </p>
+      </div>
+      <div class="card">
+        <h3>hood-mcp-trading <span class="pill guarded">opt-in</span></h3>
+        <p>
+          4 tools for one configured wallet. Refuses to start without an explicit kill switch.
+          Every mutating call is spend-capped in USD and requires a second, confirmed call to
+          broadcast. See the <a href="safety.html">safety model</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Why this exists</h2>
+    <p class="section-lede">
+      Robinhood Chain launched 2026-07-01. As of this build, the ecosystem has exactly two other
+      MCP servers for the chain — both zero-star, read-only hobby projects a few days old.
+      This is the productized one: a full data surface plus a trading surface built to a real
+      safety bar, not a demo.
+    </p>
+    <div class="grid cols-3">
+      <div class="card">
+        <h3>Multiplier-correct</h3>
+        <p>Stock Tokens implement ERC-8056. Raw balances understate positions after a split or
+        reinvested dividend — this server does the share math right, same as the underlying
+        <code>hoodchain</code> SDK.</p>
+      </div>
+      <div class="card">
+        <h3>Real upstreams</h3>
+        <p>Chainlink, Uniswap v3, Blockscout, GeckoTerminal, DefiLlama — no cached fixtures, no
+        placeholder data. Every tool call hits the chain or a real API.</p>
+      </div>
+      <div class="card">
+        <h3>Guarded by default</h3>
+        <p>The trading server ships with spend caps and a confirm gate on by default. An agent
+        cannot move funds on the first call, ever.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    MIT © 2026 nirholas · Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+    <a href="https://three.ws">three.ws</a> ·
+    <a href="https://github.com/nirholas/hood-mcp">github.com/nirholas/hood-mcp</a>
+  </footer>
+</main>
