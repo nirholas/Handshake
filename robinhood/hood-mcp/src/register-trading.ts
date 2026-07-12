@@ -283,8 +283,8 @@ export function registerTradingTools(
             confirmed: false,
             message:
               `SIMULATION ONLY — nothing was signed. To broadcast, call execute_swap again with the ` +
-              `same arguments and confirm=true. This will send ${amountIn} ${ti.symbol} ($${round(usd, 4)}) ` +
-              `from ${walletAddress}.`,
+              `same arguments and confirm=true. This will send ${amountIn} ${ti.symbol}` +
+              `${usd === null ? '' : ` ($${round(usd, 4)})`} from ${walletAddress}.`,
           })
         }
 

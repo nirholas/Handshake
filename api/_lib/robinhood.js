@@ -477,6 +477,55 @@ export async function recentLaunches({ limit = 40 } = {}) {
 	return all.slice(0, limit);
 }
 
+const ERC20_BALANCE_ABI = [
+	{ type: 'function', name: 'balanceOf', stateMutability: 'view', inputs: [{ type: 'address' }], outputs: [{ type: 'uint256' }] },
+];
+
+/**
+ * Multiplier-correct full Stock Token portfolio for a wallet: one multicall
+ * for balanceOf across every registry token, joined against the Chainlink NAV
+ * snapshot. `raw balance × uiMultiplier / 1e18 = true position` (ERC-8056) —
+ * corporate actions (splits/dividends) are already folded into uiMultiplier,
+ * so this is the one place a caller should read "how many shares do I hold",
+ * never the raw ERC-20 balance. USD valuation uses the Chainlink NAV, which is
+ * already multiplier-adjusted (never re-apply uiMultiplier to a feed price).
+ */
+export async function walletStockPortfolio(owner) {
+	const client = publicClient(false);
+	const reg = stockRegistry();
+	const snap = await chainlinkSnapshot();
+
+	const balances = await client.multicall({
+		contracts: reg.tokens.map((t) => ({ address: t.address, abi: ERC20_BALANCE_ABI, functionName: 'balanceOf', args: [owner] })),
+		allowFailure: true,
+	});
+
+	const positions = [];
+	for (let i = 0; i < reg.tokens.length; i++) {
+		const t = reg.tokens[i];
+		const b = balances[i];
+		if (b?.status !== 'success' || b.result === 0n) continue;
+		const feed = snap[t.address.toLowerCase()] || null;
+		const multiplier = feed?.uiMultiplier ? BigInt(feed.uiMultiplier) : BigInt(t.uiMultiplierAtGeneration || '1000000000000000000');
+		const rawBalance = b.result;
+		const adjustedUnits = Number(rawBalance) * (Number(multiplier) / 1e18) / 10 ** t.decimals;
+		const navPrice = feed?.priceUsd ?? null;
+		positions.push({
+			symbol: t.symbol,
+			name: t.name,
+			address: t.address,
+			rawBalance: rawBalance.toString(),
+			uiMultiplier: multiplier.toString(),
+			shares: adjustedUnits,
+			navPriceUsd: navPrice,
+			valueUsd: navPrice != null ? adjustedUnits * navPrice : null,
+		});
+	}
+	positions.sort((a, b) => (b.valueUsd ?? 0) - (a.valueUsd ?? 0));
+	const totalValueUsd = positions.reduce((sum, p) => sum + (p.valueUsd || 0), 0);
+	return { owner, positions, totalValueUsd, positionCount: positions.length };
+}
+
 // ── Shared derivations ─────────────────────────────────────────────────────
 /**
  * Premium/discount of a DEX mid price vs the Chainlink NAV, as a signed
