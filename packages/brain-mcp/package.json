@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/brain-mcp",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"mcpName": "io.github.nirholas/brain-mcp",
 	"description": "Any model, one interface — the three.ws multi-provider LLM router over MCP. Discover available providers/models (Claude, GPT-4o, Qwen, DeepSeek, NVIDIA Nemotron, IBM Granite…) and run a chat completion through whichever one fits. Free tiers need no key; paid flagships unlock with a three.ws API key.",
 	"type": "module",

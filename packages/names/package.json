@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/names",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "ENS + SNS name resolution, *.threews.sol subdomain minting, and pay-by-name in one import. The three.ws agent-identity SDK.",
   "type": "module",
   "main": "./src/index.js",

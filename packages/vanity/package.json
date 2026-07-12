@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/vanity",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Mine Solana vanity addresses (custom prefix/suffix) fast — WASM-accelerated, in the browser or Node. Ergonomic grind() API over a real Rust/ed25519 grinder, with progress, difficulty/ETA, and a paid x402 fallback.",
   "type": "module",
   "main": "./src/index.js",

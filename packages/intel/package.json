@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/intel",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Token sentiment + market intelligence in one import. Sentiment pulse, aixbt narrative intel, momentum-ranked project scans, and live Solana token snapshots — the three.ws intelligence SDK.",
   "type": "module",
   "main": "./src/index.js",

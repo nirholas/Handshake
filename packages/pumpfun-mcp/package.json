@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/pumpfun-mcp",
-	"version": "0.2.2",
+	"version": "0.2.3",
 	"description": "Free, read-only pump.fun + Solana MCP server — token discovery, on-chain bonding-curve & holder analysis, creator fee-claim tracking, SNS resolution, KOL signals, and swap quotes. No API keys.",
 	"type": "module",
 	"author": "nirholas",

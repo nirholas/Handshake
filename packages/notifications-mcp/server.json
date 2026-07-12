@@ -18,12 +18,12 @@
 		"source": "github",
 		"subfolder": "packages/notifications-mcp"
 	},
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"packages": [
 		{
 			"registryType": "npm",
 			"identifier": "@three-ws/notifications-mcp",
-			"version": "0.1.1",
+			"version": "0.1.2",
 			"runtimeHint": "npx",
 			"transport": {
 				"type": "stdio"

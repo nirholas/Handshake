@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/mocap",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Motion capture as an API. Turn webcam/video into face, pose, and hand animation clips, then save, share, and replay them on any three.ws avatar.",
   "type": "module",
   "main": "./src/index.js",

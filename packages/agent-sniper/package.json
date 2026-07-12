@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/agent-sniper",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"mcpName": "io.github.nirholas/agent-sniper",
 	"description": "Lightweight, embeddable pump.fun sniper engine for 3D AI agents — multi-agent, multi-user, with pluggable wallet/store/RPC adapters. Library + CLI + MCP server + x402 paid API.",
 	"type": "module",

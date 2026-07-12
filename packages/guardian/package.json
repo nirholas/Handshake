@@ -1,6 +1,6 @@
 {
   "name": "@three-ws/guardian",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Content safety + governance for AI agents in one import. IBM Granite Guardian risk classification, NVIDIA NemoGuard content moderation, autonomous-send caps, and a tamper-evident audit ledger — over the three.ws Trust Layer.",
   "type": "module",
   "main": "./src/index.js",
