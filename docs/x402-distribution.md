@@ -64,6 +64,36 @@ search results after 30 days without a settle**.
   (start with the flagship services, not health canaries). Our origin metadata
   (og-tags, favicon) renders on the resource page — already good.
 
+### AgentCash (agentcash.dev)
+
+- **Mechanism:** AgentCash is an aggregating discovery interface for
+  agent-payable APIs. It does not have its own registration form — it discovers
+  us three ways: (1) crawling x402scan / the CDP Bazaar (register there and
+  AgentCash picks us up), (2) reading `GET /openapi.json` for the AgentCash
+  discovery fields (`info.x-guidance`, `info.contact.email`, per-operation
+  `x-payment-info` + `responses.402` + request/response schemas — all emitted by
+  [`api/openapi-json.js`](../api/openapi-json.js)), and (3) probing each paid
+  route's live 402 challenge. Validate any time with
+  `npx -y @agentcash/discovery@latest discover https://three.ws` and
+  `… check https://three.ws/<paid-route>`.
+- **Critical invariant — the `PAYMENT-REQUIRED` header carries the bazaar
+  block.** AgentCash's probe reads the 402 challenge from the `PAYMENT-REQUIRED`
+  **response header** in preference to the JSON body, and checks
+  `extensions.bazaar.schema.properties.input` / `.output` for each endpoint's
+  input/output schema. Our header mirror is size-capped (8 KB; oversized headers
+  were dropped by the LB / flagged HEADERS_OVERFLOW), so
+  `paymentRequiredHeaderValue()` in
+  [`api/_lib/x402-spec.js`](../api/_lib/x402-spec.js) keeps the `bazaar`
+  extension while shedding the heavy payment-execution extensions, degrading it
+  in tiers (full bazaar → drop `info` examples → compact `{type:'object'}` field
+  schemas) so input/output presence survives. **Do not** reintroduce an
+  extension-less header mirror for paid routes — it makes every endpoint look
+  schema-less to AgentCash and x402scan's Bazaar probe. Covered by
+  `tests/api/x402-spec.test.js` (`paymentRequiredHeaderValue cap`).
+- **Ops required:** none beyond keeping x402scan current and `/openapi.json`
+  valid. We advertise x402 only (no MPP / Tempo rail), so **mppscan** does not
+  apply — AgentCash lists us under x402.
+
 ### 402index.io — automated ✅
 
 - **Mechanism:** open API, `POST https://402index.io/api/v1/register` with
