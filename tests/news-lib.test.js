@@ -8,6 +8,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 const {
 	parseFeed, lexiconSentiment, extractTickers, articleId, stripHtml, getNews, findArticle,
 	stripFeedBoilerplate, truncateWords, cleanImageUrl, metaContent, extractOgImage,
+	clampFuturePubDate,
 } = await import('../api/_lib/news.js');
 const { isFeaturedSource, NEWS_SOURCES } = await import('../api/_lib/news-sources.js');
 
@@ -78,6 +79,34 @@ describe('parseFeed', () => {
 	it('drops items with no link or title', () => {
 		const xml = `<rss><channel><item><title>only title</title></item></channel></rss>`;
 		expect(parseFeed(xml, 'coindesk')).toHaveLength(0);
+	});
+});
+
+describe('clampFuturePubDate', () => {
+	it('leaves past and near-future dates alone', () => {
+		expect(clampFuturePubDate('2026-07-09T14:00:00.000Z')).toBe('2026-07-09T14:00:00.000Z');
+		const soon = new Date(Date.now() + 3_600_000).toISOString();
+		expect(clampFuturePubDate(soon)).toBe(soon);
+		expect(clampFuturePubDate(null)).toBe(null);
+		expect(clampFuturePubDate('not a date')).toBe('not a date');
+	});
+
+	it('clamps a bogus far-future publisher date to now', () => {
+		// Real incident: CoinPaper stamped a live story 2026-08-31 in July,
+		// minting a permalink month no lookup could ever satisfy.
+		const bogus = new Date(Date.now() + 50 * 24 * 3_600_000).toISOString();
+		const clamped = clampFuturePubDate(bogus);
+		expect(clamped).not.toBe(bogus);
+		expect(Date.parse(clamped)).toBeLessThanOrEqual(Date.now() + 1000);
+	});
+
+	it('is applied to feed items at parse time', () => {
+		const future = RSS_FIXTURE.replace(
+			'Thu, 09 Jul 2026 14:00:00 GMT',
+			new Date(Date.now() + 50 * 24 * 3_600_000).toUTCString(),
+		);
+		const [a] = parseFeed(future, 'coindesk');
+		expect(Date.parse(a.pub_date)).toBeLessThanOrEqual(Date.now() + 1000);
 	});
 });
 

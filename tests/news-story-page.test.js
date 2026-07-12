@@ -107,6 +107,20 @@ describe('GET /api/news/story-page', () => {
 		expect(res.headers.location).toMatch(new RegExp(`^/markets/news/${prev}/${ARTICLE.id}`));
 	});
 
+	it('a future-month URL (publisher-stamped bogus date) still finds the live story and 301s', async () => {
+		const nowMonth = new Date().toISOString().slice(0, 7);
+		const next = (() => {
+			const d = new Date(`${nowMonth}-01T00:00:00Z`);
+			d.setUTCMonth(d.getUTCMonth() + 1);
+			return d.toISOString().slice(0, 7);
+		})();
+		const liveArticle = { ...ARTICLE, pub_date: `${nowMonth}-08T09:00:00.000Z` };
+		findArticle.mockResolvedValue(liveArticle);
+		const res = await call(`/api/news/story-page?month=${next}&id=${ARTICLE.id}`);
+		expect(res.statusCode).toBe(301);
+		expect(res.headers.location).toMatch(new RegExp(`^/markets/news/${nowMonth}/${ARTICLE.id}`));
+	});
+
 	it('404 turns the URL slug into a prefilled archive search', async () => {
 		const res = await call(
 			'/api/news/story-page?month=2025-02&id=deadbeefdeadbeef&slug=regulated-crypto-exchanges-gain-ground',

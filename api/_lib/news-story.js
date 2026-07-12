@@ -15,11 +15,18 @@ export function validStoryKey(month, id) {
 }
 
 function recentMonths() {
+	// Previous, current AND next month: publishers have shipped future-dated
+	// stories (the aggregator now clamps those, but already-minted links carry
+	// the bogus month), so a next-month URL must still reach the live lookup.
 	const now = new Date();
 	const cur = now.toISOString().slice(0, 7);
-	now.setUTCDate(1);
-	now.setUTCMonth(now.getUTCMonth() - 1);
-	return [cur, now.toISOString().slice(0, 7)];
+	const shift = (n) => {
+		const d = new Date(now);
+		d.setUTCDate(1);
+		d.setUTCMonth(d.getUTCMonth() + n);
+		return d.toISOString().slice(0, 7);
+	};
+	return [cur, shift(-1), shift(1)];
 }
 
 function adjacentMonths(month) {

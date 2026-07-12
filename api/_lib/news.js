@@ -67,6 +67,19 @@ export function articleId(link) {
 	return createHash('sha256').update(String(link)).digest('hex').slice(0, 16);
 }
 
+// A publisher-stamped date meaningfully in the future is bogus (CoinPaper has
+// shipped stories dated seven weeks ahead) and poisons everything keyed on the
+// publication month: the permalink month the browser mints, the archive month
+// file the cron writes, and the story-page lookup — a future-dated article got
+// a permalink that 404'd while the story was live on the feed. Clamp to fetch
+// time; honest timezone skew stays inside the 24h allowance.
+export function clampFuturePubDate(iso) {
+	if (!iso) return iso;
+	const t = Date.parse(iso);
+	if (!Number.isFinite(t) || t <= Date.now() + 24 * 3_600_000) return iso;
+	return new Date().toISOString();
+}
+
 // WordPress and its plugins append syndication boilerplate to every excerpt:
 // "The post <title> appeared first on <site>.", "Continue reading…",
 // "Read more on …", trailing "[…]". None of it is article text — strip it
@@ -257,7 +270,9 @@ export function parseFeed(xml, sourceKey) {
 					.map(cleanImageUrl)
 					.find(Boolean) || null;
 			const pubDate = str(it?.pubDate) || str(it?.published) || str(it?.updated) || str(it?.['dc:date']);
-			const iso = pubDate && !Number.isNaN(Date.parse(pubDate)) ? new Date(pubDate).toISOString() : null;
+			const iso = clampFuturePubDate(
+				pubDate && !Number.isNaN(Date.parse(pubDate)) ? new Date(pubDate).toISOString() : null,
+			);
 			const author =
 				stripHtml(str(it?.['dc:creator']) || str(it?.author?.name) || str(it?.author) || '') || null;
 			// Some feeds (e.g. Bitcoin Magazine) prefix descriptions with their own
@@ -317,7 +332,7 @@ const JSON_ADAPTERS = {
 				const title = stripHtml(a?.title);
 				if (!title || !a?.code) return null;
 				const link = `https://www.binance.com/en/support/announcement/detail/${a.code}`;
-				const iso = Number.isFinite(a.releaseDate) ? new Date(a.releaseDate).toISOString() : null;
+				const iso = clampFuturePubDate(Number.isFinite(a.releaseDate) ? new Date(a.releaseDate).toISOString() : null);
 				return {
 					id: articleId(link),
 					title,
