@@ -20,10 +20,22 @@
 // Dry-run by default: reports which agents WOULD be re-keyed. Pass --apply to write.
 
 import { neon } from '@neondatabase/serverless';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { generateSolanaAgentWallet, recoverSolanaAgentKeypair } from '../api/_lib/agent-wallet.js';
 
 const APPLY = process.argv.includes('--apply');
+// Re-keying abandons the old address, so a FUNDED stale wallet is skipped by default
+// (its SOL is recoverable only with the retired key). Pass --force-drop-funds to
+// re-key anyway, knowingly abandoning whatever SOL sits behind the retired key.
+const FORCE_DROP = process.argv.includes('--force-drop-funds');
+const DUST_SOL = 0.01;
 const sql = neon(process.env.DATABASE_URL);
+const rpc = new Connection(process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com', 'confirmed');
+
+async function solBalance(addr) {
+	if (!addr) return 0;
+	try { return (await rpc.getBalance(new PublicKey(addr))) / 1e9; } catch { return NaN; }
+}
 
 async function decryptsOk(encryptedSecret) {
 	if (!encryptedSecret) return false;
@@ -47,14 +59,29 @@ console.log(`\nlaunch-pool agents in the global queue: ${rows.length}  (${APPLY 
 
 let rekeyed = 0;
 let healthy = 0;
+let fundedSkipped = 0;
+let strandedSol = 0;
 for (const r of rows) {
 	if (await decryptsOk(r.sec)) {
 		healthy++;
 		console.log(`  ✓ ${r.name.padEnd(14)} ${r.addr} — decrypts, left as-is`);
 		continue;
 	}
+	// Undecryptable. Protect funds: don't abandon a wallet that still holds SOL
+	// unless explicitly forced — that SOL is recoverable only with the retired key.
+	const bal = await solBalance(r.addr);
+	if (Number.isNaN(bal)) {
+		console.log(`  ? ${r.name.padEnd(14)} ${r.addr} — balance unknown (RPC), SKIP`);
+		continue;
+	}
+	if (bal > DUST_SOL && !FORCE_DROP) {
+		fundedSkipped++;
+		strandedSol += bal;
+		console.log(`  💰 ${r.name.padEnd(14)} ${r.addr} — holds ${bal.toFixed(4)} SOL, SKIP (recover with old key first, or --force-drop-funds)`);
+		continue;
+	}
 	if (!APPLY) {
-		console.log(`  ⟳ ${r.name.padEnd(14)} ${r.addr} — WOULD re-key (undecryptable)`);
+		console.log(`  ⟳ ${r.name.padEnd(14)} ${r.addr} — WOULD re-key (empty/undecryptable)`);
 		rekeyed++;
 		continue;
 	}
@@ -75,5 +102,10 @@ for (const r of rows) {
 }
 
 console.log(`\n${'─'.repeat(60)}`);
-console.log(`healthy: ${healthy}   ${APPLY ? 're-keyed' : 'to re-key'}: ${rekeyed}`);
-if (!APPLY && rekeyed) console.log('\nRe-run with --apply to re-key the undecryptable wallets.');
+console.log(`healthy: ${healthy}   ${APPLY ? 're-keyed' : 'to re-key'}: ${rekeyed}   funded-skipped: ${fundedSkipped} (${strandedSol.toFixed(4)} SOL)`);
+if (fundedSkipped) {
+	console.log(`\n⚠️  ${fundedSkipped} wallet(s) hold ${strandedSol.toFixed(4)} SOL under the retired key.`);
+	console.log('   Recover them first (decrypt+sweep with the OLD WALLET_ENCRYPTION_KEY), then re-run.');
+	console.log('   Or --force-drop-funds to re-key anyway, knowingly abandoning that SOL.');
+}
+if (!APPLY && rekeyed) console.log('\nRe-run with --apply to re-key the empty undecryptable wallets.');

@@ -100,6 +100,34 @@ export async function loadAgentForSigning(agentId, userId, audit = null) {
 		// self-provision the no-wallet branch above does), keep the dead address in meta
 		// for the audit/recovery trail, and continue.
 		if (!isUnrecoverableSecret(err)) throw err;
+		// Before abandoning the dead wallet, make sure it isn't holding funds that are
+		// still recoverable with the retired key. Silently re-keying a FUNDED wallet
+		// would strand real SOL. If it holds more than dust, refuse and surface it for
+		// manual recovery (decrypt + sweep with the old key, then it re-keys clean);
+		// only an empty stale wallet is safe to auto-replace.
+		let staleSol;
+		try {
+			staleSol = await staleWalletBalanceSol(meta.solana_address);
+		} catch {
+			// Can't confirm the wallet is empty — fail CLOSED rather than risk
+			// abandoning funds during an RPC hiccup. The launcher will retry next tick.
+			return {
+				error: {
+					status: 503,
+					code: 'stale_balance_unverified',
+					msg: 'could not verify the retired-key wallet is empty before re-keying — will retry',
+				},
+			};
+		}
+		if (staleSol > STALE_REKEY_DUST_SOL) {
+			return {
+				error: {
+					status: 409,
+					code: 'wallet_funds_stranded',
+					msg: `custodial wallet ${meta.solana_address} holds ${staleSol.toFixed(4)} SOL under a retired encryption key — recover it before re-keying`,
+				},
+			};
+		}
 		const sol = await generateSolanaAgentWallet();
 		meta = {
 			...meta,
@@ -128,6 +156,21 @@ export async function loadAgentForSigning(agentId, userId, audit = null) {
 // nor the JWT_SECRET fallback can authenticate it (AES-GCM OperationError), or when
 // the decrypted bytes aren't a valid 64-byte secret key. These are permanent — a
 // retired key or a corrupt record — so it's safe to re-provision rather than retry.
+// A stale wallet below this SOL is treated as empty — safe to abandon and re-key.
+// Above it, re-keying would strand funds, so the self-heal refuses and flags it.
+const STALE_REKEY_DUST_SOL = 0.01;
+
+// On-chain SOL balance of an address, for the self-heal's fund-safety check. Uses
+// the public RPC (a free read). Throws on an RPC error so the caller can fail CLOSED
+// (refuse to re-key) rather than mistake an unreachable RPC for an empty wallet.
+async function staleWalletBalanceSol(address) {
+	if (!address) return 0;
+	const { PublicKey } = await import('@solana/web3.js');
+	const conn = solanaPublicConnection('mainnet');
+	const lamports = await conn.getBalance(new PublicKey(address));
+	return lamports / 1e9;
+}
+
 export function isUnrecoverableSecret(err) {
 	const name = err?.name || '';
 	const msg = String(err?.message || '');
