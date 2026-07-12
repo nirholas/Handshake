@@ -66,9 +66,9 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "hoodchain": "^0.1.0",
-    "viem": "^2.55.0",
-    "ws": "^8.18.0",
+    "hoodchain": "file:../robinhood-chain-sdk",
+    "viem": "^2.55.1",
+    "ws": "^8.21.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {

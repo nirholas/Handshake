@@ -1,0 +1,17 @@
+{
+  "name": "rh-example-02-stock-price-sdk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Read Robinhood Chain Stock Token prices in three lines with the hoodchain SDK.",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "hoodchain": "^0.1.0",
+    "viem": "^2.55.0"
+  }
+}

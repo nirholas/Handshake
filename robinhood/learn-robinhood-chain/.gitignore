@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.*
+*.log
+.DS_Store
+.vscode/
+.idea/
+
+# docs/ IS committed — GitHub Pages deploys from it. Do not ignore it.

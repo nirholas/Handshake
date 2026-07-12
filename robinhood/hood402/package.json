@@ -1,0 +1,83 @@
+{
+  "name": "hood402",
+  "version": "0.1.0",
+  "description": "x402 payment rail for USDG on Robinhood Chain (chain 4663). Spec-conformant `exact`/EIP-3009 server middleware, client fetch wrapper, and a self-hostable facilitator. Interoperates with any standard x402 client.",
+  "keywords": [
+    "x402",
+    "robinhood",
+    "robinhood-chain",
+    "usdg",
+    "eip-3009",
+    "transferwithauthorization",
+    "payments",
+    "402",
+    "micropayments",
+    "agent-payments",
+    "viem",
+    "stablecoin"
+  ],
+  "license": "MIT",
+  "author": "nirholas (https://x.com/nichxbt)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/hood402.git"
+  },
+  "homepage": "https://nirholas.github.io/hood402/",
+  "bugs": {
+    "url": "https://github.com/nirholas/hood402/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "import": "./dist/server/index.js",
+      "require": "./dist/server/index.cjs"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "import": "./dist/client/index.js",
+      "require": "./dist/client/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run tests",
+    "test:watch": "vitest",
+    "verify:usdg": "node scripts/verify-usdg.mjs",
+    "e2e": "tsx examples/e2e.ts",
+    "demo:server": "tsx examples/demo-server.ts",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "peerDependencies": {
+    "viem": "^2.55.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "viem": "^2.55.0",
+    "vitest": "^2.1.8"
+  },
+  "workspaces": [
+    "facilitator"
+  ]
+}

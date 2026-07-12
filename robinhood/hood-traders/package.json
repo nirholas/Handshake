@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "better-sqlite3": "^11.8.0",
-    "hoodchain": "^0.1.0",
+    "hoodchain": "file:../robinhood-chain-sdk",
     "viem": "^2.55.0",
     "ws": "^8.18.0"
   },

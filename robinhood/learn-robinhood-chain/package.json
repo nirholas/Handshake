@@ -1,0 +1,32 @@
+{
+  "name": "learn-robinhood-chain",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The definitive learning site for building on Robinhood Chain (chain ID 4663) — from your first RPC read to shipping an autonomous agent. Static site, every tutorial verified on-chain.",
+  "keywords": [
+    "robinhood",
+    "robinhood-chain",
+    "tutorials",
+    "stock-tokens",
+    "usdg",
+    "hoodchain",
+    "viem",
+    "web3"
+  ],
+  "license": "MIT",
+  "author": "nirholas (https://x.com/nichxbt)",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node build.mjs && node serve.mjs",
+    "serve": "node serve.mjs",
+    "clean": "node -e \"import('node:fs').then(fs=>fs.rmSync('docs',{recursive:true,force:true}))\""
+  },
+  "devDependencies": {
+    "highlight.js": "^11.11.1",
+    "marked": "^12.0.2"
+  }
+}

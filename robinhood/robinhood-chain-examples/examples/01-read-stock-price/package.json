@@ -1,0 +1,16 @@
+{
+  "name": "rh-example-01-read-stock-price",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Read a Robinhood Chain Stock Token price with viem only (no SDK).",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "viem": "^2.55.0"
+  }
+}

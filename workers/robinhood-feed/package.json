@@ -1,0 +1,19 @@
+{
+  "name": "robinhood-feed",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Normalized Robinhood Chain (4663) firehose — launches, trades and graduations from NOXA + The Odyssey + Uniswap v3, served over WS/SSE in the same shape three.ws pump.fun consumers expect.",
+  "author": "nirholas (https://x.com/nichxbt)",
+  "license": "MIT",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node --test tests/"
+  },
+  "dependencies": {
+    "hoodchain": "file:../../robinhood/robinhood-chain-sdk",
+    "viem": "^2.55.0",
+    "ws": "^8.18.0"
+  }
+}
