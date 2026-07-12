@@ -72,12 +72,30 @@ function init() {
 		const mood = MOODS.includes(diorama.mood) ? diorama.mood : 'day';
 		if (el.hudTitle) el.hudTitle.textContent = diorama.title || 'A little world';
 		if (el.hudMeta) {
-			const author = diorama.author?.handle
-				? `@${diorama.author.handle.replace(/^@/, '')}`
-				: diorama.author?.wallet
-					? shortWallet(diorama.author.wallet)
-					: '';
-			el.hudMeta.textContent = [MOOD_LABEL[mood] || mood, author].filter(Boolean).join(' · ');
+			const moodLabel = MOOD_LABEL[mood] || mood;
+			// A registered creator (diorama.creatorUsername, set server-side only
+			// when the world was saved while signed in) gets a real link to their
+			// public portfolio. Anonymous saves fall back to the plain-text handle
+			// or wallet the composer captured — never a fabricated link.
+			if (diorama.creatorUsername) {
+				const escUser = String(diorama.creatorUsername).replace(/[&<>"']/g, (c) =>
+					({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+				);
+				el.hudMeta.textContent = '';
+				el.hudMeta.append(document.createTextNode(`${moodLabel} · `));
+				const link = document.createElement('a');
+				link.href = `/u/${escUser}`;
+				link.className = 'hud-author-link';
+				link.textContent = `@${escUser}`;
+				el.hudMeta.append(link);
+			} else {
+				const author = diorama.author?.handle
+					? `@${diorama.author.handle.replace(/^@/, '')}`
+					: diorama.author?.wallet
+						? shortWallet(diorama.author.wallet)
+						: '';
+				el.hudMeta.textContent = [moodLabel, author].filter(Boolean).join(' · ');
+			}
 		}
 		show(el.hud);
 	}

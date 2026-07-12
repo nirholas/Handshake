@@ -2,6 +2,40 @@ import { sql } from '../_lib/db.js';
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { publicUrl, thumbnailUrl } from '../_lib/r2.js';
+import { listCreationsByUser, countCreationsByUser } from '../_lib/forge-store.js';
+import { listDioramasByUser, countDioramasByUser } from '../_lib/diorama-store.js';
+
+const CREATIONS_PAGE_SIZE = 24;
+const SITE = 'https://three.ws';
+
+// Merge the first page of a user's forged models + saved worlds into one
+// recency-ordered feed for the profile's "Creations" tab. Deeper pages load
+// lazily from GET /api/users/:username/creations (same merge logic, cursor
+// paginated) so this main endpoint stays fast even for a prolific creator.
+function toCreationCard(it) {
+	return it.type === 'world'
+		? {
+				id: it.id,
+				type: 'world',
+				title: it.title,
+				prompt: it.prompt,
+				thumbnailUrl: it.thumbnailGlb,
+				category: it.mood,
+				viewerUrl: `${SITE}/diorama?id=${it.id}`,
+				createdAt: it.createdAt,
+			}
+		: {
+				id: it.id,
+				type: 'model',
+				title: it.prompt,
+				prompt: it.prompt,
+				thumbnailUrl: it.glbUrl,
+				category: it.category,
+				isRemix: it.isRemix,
+				viewerUrl: `${SITE}/viewer?src=${encodeURIComponent(it.glbUrl)}`,
+				createdAt: it.createdAt,
+			};
+}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', credentials: false })) return;
@@ -35,6 +69,10 @@ export default wrap(async (req, res) => {
 		socialRows,
 		statsRow,
 		shopRows,
+		modelRows,
+		worldRows,
+		modelsCount,
+		worldsCount,
 	] = await Promise.all([
 		sql`
 			select id, name, slug, description, storage_key, thumbnail_key, tags,
@@ -170,6 +208,15 @@ export default wrap(async (req, res) => {
 			order by ap.updated_at desc
 			limit 48
 		`.catch(() => []),
+		// Forged 3D models + saved worlds (dioramas) made while signed in — the
+		// two creation types that live in their own anonymous-by-design tables
+		// rather than an owner_id-keyed one (see api/_lib/migrations/
+		// 20260712010000_creator_portfolio_user_ids.sql). First page only;
+		// deeper pages come from GET /api/users/:username/creations.
+		listCreationsByUser({ userId: user.id, limit: CREATIONS_PAGE_SIZE }),
+		listDioramasByUser({ userId: user.id, limit: CREATIONS_PAGE_SIZE }),
+		countCreationsByUser({ userId: user.id }),
+		countDioramasByUser({ userId: user.id }),
 	]);
 
 	const avatars = avatarRows.map((a) => ({
@@ -328,6 +375,19 @@ export default wrap(async (req, res) => {
 		social[row.provider] = row.username;
 	}
 
+	// Merge forged models + saved worlds into one recency-ordered feed. Each
+	// list is independently already sorted+capped at CREATIONS_PAGE_SIZE, so
+	// slicing after the merge is the true top-N across both types.
+	const creations = [...modelRows, ...worldRows]
+		.map(toCreationCard)
+		.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+		.slice(0, CREATIONS_PAGE_SIZE);
+	const creationsTotal = (modelsCount ?? 0) + (worldsCount ?? 0);
+	const creationsNext =
+		creationsTotal > creations.length && creations.length
+			? creations[creations.length - 1].createdAt
+			: null;
+
 	// Follower/following counts live in their own query so a deploy that lands
 	// before the user_follows migration degrades to zeros rather than 500ing
 	// every public profile (migrate-then-deploy; see api/_lib/bounty-likes.js).
@@ -346,6 +406,9 @@ export default wrap(async (req, res) => {
 		coins: statsRow?.[0]?.coins_count ?? 0,
 		memories: statsRow?.[0]?.memories_count ?? 0,
 		shop: shop.length,
+		creations: creationsTotal,
+		models: modelsCount ?? 0,
+		worlds: worldsCount ?? 0,
 		widget_views: Number(statsRow?.[0]?.total_widget_views ?? 0),
 		followers: followCounts?.followers ?? 0,
 		following: followCounts?.following ?? 0,
@@ -375,5 +438,7 @@ export default wrap(async (req, res) => {
 		coins,
 		memories,
 		shop,
+		creations,
+		creationsNext,
 	});
 });

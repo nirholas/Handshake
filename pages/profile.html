@@ -1460,6 +1460,8 @@
 					coins = [],
 					memories = [],
 					shop = [],
+					creations = [],
+					creationsNext = null,
 				} = data;
 
 				// Who's viewing? Drives the owner-only Edit button vs the Follow button.
@@ -1720,6 +1722,7 @@
 					.join('');
 
 				const statDefs = [
+					['creations', 'Creations'],
 					['avatars', 'Avatars'],
 					['agents', 'Agents'],
 					['widgets', 'Widgets'],
@@ -1746,6 +1749,7 @@
 
 				// Tabs: only show those with content; default to first non-empty
 				const tabs = [
+					{ key: 'creations', label: 'Creations', count: stats.creations || creations.length },
 					{ key: 'avatars', label: 'Avatars', count: avatars.length },
 					{ key: 'agents', label: 'Agents', count: agents.length },
 					{ key: 'widgets', label: 'Widgets', count: widgets.length },
@@ -1825,6 +1829,9 @@
 					<div id="up-walk-hero"></div>
 					<div class="up-stats">${statsHtml}</div>
 					${tabBar}
+					<section class="up-section" data-section="creations"${defaultTab === 'creations' ? '' : ' hidden'}>
+						${renderCreationsGrid(creations)}
+					</section>
 					<section class="up-section" data-section="avatars"${defaultTab === 'avatars' ? '' : ' hidden'}>
 						${renderAvatarsGrid(avatars)}
 					</section>
@@ -1856,6 +1863,8 @@
 						<div id="up-accessories-body"></div>
 					</section>
 				`;
+
+				wireCreationsPagination(user.username, creationsNext);
 
 				// Tab switching — delegated so lazily-added NFT/Accessories tabs work.
 				const tabBarEl = rootEl.querySelector('#up-tab-bar');
@@ -2620,6 +2629,81 @@
 					})
 					.join('');
 				return `<div class="up-grid">${cards}</div>`;
+			}
+
+			// Forged 3D models + saved worlds (dioramas) — the "Creations" tab.
+			// Merged, recency-ordered feed from /api/users/:username (first page)
+			// with a "Load more" button that pages through GET
+			// /api/users/:username/creations (cursor by created_at) for creators
+			// with 100+ items. Each card is a real, live 3D thumbnail (glb model
+			// for a forged mesh; the same for a world's first forged object) that
+			// deep-links to the actual viewer -- never a static screenshot.
+			function creationCardHtml(c) {
+				const thumb = c.thumbnailUrl
+					? `<model-viewer src="${attr(c.thumbnailUrl)}" loading="lazy" reveal="auto" ` +
+						`auto-rotate rotation-per-second="16deg" interaction-prompt="none" disable-zoom ` +
+						`camera-orbit="35deg 78deg auto" shadow-intensity="0" exposure="0.9" ` +
+						`style="width:100%;height:100%;pointer-events:none;--poster-color:transparent" ` +
+						`aria-hidden="true"></model-viewer>`
+					: `<div class="up-card-thumb-placeholder">${c.type === 'world' ? '⛰' : '◎'}</div>`;
+				const badge = c.type === 'world' ? 'World' : 'Model';
+				const date = c.createdAt
+					? new Date(c.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+					: '';
+				return `
+					<a class="up-card" href="${attr(c.viewerUrl)}" style="text-decoration:none">
+						<div class="up-card-thumb">${thumb}</div>
+						<div class="up-card-body">
+							<span class="up-card-chain">${esc(badge)}${c.category ? ` · ${esc(c.category)}` : ''}</span>
+							<span class="up-card-name">${esc((c.title || 'Untitled').slice(0, 80))}</span>
+							<div class="up-card-footer">
+								<span class="up-card-id">${esc(date)}</span>
+								${c.isRemix ? `<span class="up-tag">remix</span>` : ''}
+							</div>
+						</div>
+					</a>
+				`;
+			}
+
+			function renderCreationsGrid(creations) {
+				if (!creations.length) {
+					return `<p class="up-empty">No creations yet. <a href="/create">Forge your first model →</a></p>`;
+				}
+				return `<div class="up-grid" id="up-creations-grid">${creations.map(creationCardHtml).join('')}</div>
+					<div class="up-load-more-row" id="up-creations-more-row" style="text-align:center;margin-top:1.2rem"></div>`;
+			}
+
+			// Wires the "Load more" button once the Creations section is in the
+			// DOM. Idempotent: safe to call every time the tab renders since the
+			// button element is (re)created fresh in renderCreationsGrid.
+			function wireCreationsPagination(username, initialNext) {
+				const row = rootEl.querySelector('#up-creations-more-row');
+				const grid = rootEl.querySelector('#up-creations-grid');
+				if (!row || !grid) return;
+				let cursor = initialNext;
+				if (!cursor) return;
+				const renderMoreBtn = () => {
+					row.innerHTML = `<button type="button" class="up-action-btn" id="up-creations-load-more">Load more</button>`;
+					row.querySelector('#up-creations-load-more')?.addEventListener('click', loadMore, { once: true });
+				};
+				async function loadMore() {
+					row.innerHTML = `<span class="up-empty" style="display:inline">Loading…</span>`;
+					try {
+						const r = await fetch(
+							`/api/users/${encodeURIComponent(username)}/creations?before=${encodeURIComponent(cursor)}`,
+						);
+						const j = await r.json().catch(() => ({}));
+						const items = j.items || [];
+						grid.insertAdjacentHTML('beforeend', items.map(creationCardHtml).join(''));
+						cursor = j.next || null;
+						if (cursor) renderMoreBtn();
+						else row.innerHTML = '';
+					} catch {
+						row.innerHTML = `<button type="button" class="up-action-btn" id="up-creations-load-more">Retry</button>`;
+						row.querySelector('#up-creations-load-more')?.addEventListener('click', loadMore, { once: true });
+					}
+				}
+				renderMoreBtn();
 			}
 
 			// Items the user actively lists for sale (asset_prices). Each card deep

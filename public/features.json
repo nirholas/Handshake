@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-12T14:51:46.866Z",
+	"generated_at": "2026-07-12T15:56:33.778Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2175,6 +2175,16 @@
 					"title": "Settings",
 					"description": "Account, profile, and notification settings.",
 					"added": "2026-04-28",
+					"auth": "required",
+					"indexable": false,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/profile",
+					"title": "Your creator portfolio",
+					"description": "Your public three.ws portfolio: every avatar, agent, forged 3D model, world, coin, skill, and plugin you've made, in one place. Signed out, this redirects to sign-in; every user's own page also lives at /u/:username.",
+					"added": "2026-07-12",
 					"auth": "required",
 					"indexable": false,
 					"tags": [],

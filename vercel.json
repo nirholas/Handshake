@@ -3575,6 +3575,10 @@
 			"dest": "/api/users/[username]/collectibles?username=$1"
 		},
 		{
+			"src": "/api/users/([^/]+)/creations",
+			"dest": "/api/users/[username]/creations?username=$1"
+		},
+		{
 			"src": "/api/users/([^/]+)",
 			"dest": "/api/users/[username]?username=$1"
 		},

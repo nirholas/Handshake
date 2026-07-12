@@ -56,7 +56,7 @@ async function ensureTable() {
  * Persist a fully-forged diorama. Accepts an untrusted plan, normalizes it, and
  * writes one row. Returns { id, createdAt } or null when storage is unavailable.
  */
-export async function saveDiorama({ diorama, clientKey = null }) {
+export async function saveDiorama({ diorama, clientKey = null, userId = null }) {
 	if (!(await ensureTable())) return null;
 	const { ok, diorama: clean, errors } = normalizeDiorama(diorama);
 	if (!ok) {
@@ -69,11 +69,11 @@ export async function saveDiorama({ diorama, clientKey = null }) {
 	const doc = { ...clean, id, createdAt, views: 0, featured: false };
 	try {
 		await sql`
-			insert into dioramas (id, title, prompt, mood, ground, doc, author, client_key, views, featured, created_at)
+			insert into dioramas (id, title, prompt, mood, ground, doc, author, client_key, user_id, views, featured, created_at)
 			values (
 				${id}, ${doc.title}, ${doc.prompt}, ${doc.mood}, ${doc.ground},
 				${JSON.stringify(doc)}::jsonb, ${doc.author ? JSON.stringify(doc.author) : null}::jsonb,
-				${clientKey}, 0, false, ${createdAt}
+				${clientKey}, ${userId}, 0, false, ${createdAt}
 			)
 		`;
 		return { id, createdAt };
@@ -83,15 +83,83 @@ export async function saveDiorama({ diorama, clientKey = null }) {
 	}
 }
 
+/**
+ * A signed-in creator's saved worlds — powers the "Worlds" tab on their
+ * public portfolio (/u/:username). Scoped to user_id, not client_key, so it
+ * only surfaces dioramas saved while logged in. Cursor pagination by
+ * created_at mirrors listCreationsByUser (forge-store.js) so the profile's
+ * combined Creations feed can page through both types together.
+ */
+export async function listDioramasByUser({ userId, limit = 24, before } = {}) {
+	if (!userId || !(await ensureTable())) return [];
+	const lim = Math.min(60, Math.max(1, Number(limit) || 24));
+	try {
+		const rows = before
+			? await sql`
+					select id, title, prompt, mood, ground, views, created_at,
+						doc->'objects' as objects, doc->'palette' as palette
+					from dioramas
+					where user_id = ${userId} and created_at < ${before}
+					order by created_at desc limit ${lim}`
+			: await sql`
+					select id, title, prompt, mood, ground, views, created_at,
+						doc->'objects' as objects, doc->'palette' as palette
+					from dioramas
+					where user_id = ${userId}
+					order by created_at desc limit ${lim}`;
+		return rows.map((row) => {
+			const objects = Array.isArray(row.objects) ? row.objects : [];
+			return {
+				id: row.id,
+				type: 'world',
+				title: row.title,
+				prompt: row.prompt,
+				mood: row.mood,
+				ground: row.ground,
+				palette: row.palette || null,
+				thumbnailGlb: objects.find((o) => o && o.glbUrl)?.glbUrl || null,
+				objectCount: objects.length,
+				views: Number(row.views) || 0,
+				createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
+			};
+		});
+	} catch (err) {
+		console.error('[diorama-store] listDioramasByUser failed:', err?.message);
+		return [];
+	}
+}
+
+/** Count of a signed-in creator's saved worlds — cheap stat-strip number. */
+export async function countDioramasByUser({ userId } = {}) {
+	if (!userId || !(await ensureTable())) return 0;
+	try {
+		const [row] = await sql`select count(*)::int as n from dioramas where user_id = ${userId}`;
+		return row?.n ?? 0;
+	} catch (err) {
+		console.error('[diorama-store] countDioramasByUser failed:', err?.message);
+		return 0;
+	}
+}
+
 /** Fetch one diorama by id (the full plan). Returns the diorama or null. */
 export async function getDiorama(id) {
 	if (!id || !(await ensureTable())) return null;
 	try {
-		const rows = await sql`select doc, views from dioramas where id = ${id} limit 1`;
+		const rows = await sql`
+			select d.doc, d.views, u.username as creator_username
+			from dioramas d
+			left join users u on u.id = d.user_id and u.deleted_at is null
+			where d.id = ${id}
+			limit 1
+		`;
 		if (!rows[0]) return null;
 		const doc = rows[0].doc;
 		doc.views = Number(rows[0].views) || doc.views || 0;
-		return normalizeDiorama(doc).diorama;
+		const diorama = normalizeDiorama(doc).diorama;
+		// Real, opt-in attribution only: a creator link appears when the world was
+		// saved by a signed-in user, never invented from the free-text author field.
+		diorama.creatorUsername = rows[0].creator_username || null;
+		return diorama;
 	} catch (err) {
 		console.error('[diorama-store] getDiorama failed:', err?.message);
 		return null;
@@ -119,15 +187,20 @@ export async function listDioramas({ scope = 'recent', limit = 24 } = {}) {
 		const rows =
 			scope === 'featured'
 				? await sql`
-						select id, title, prompt, mood, ground, views, featured, created_at,
-							doc->'objects' as objects, doc->'palette' as palette, doc->'author' as author
-						from dioramas where featured = true
-						order by created_at desc limit ${lim}`
+						select d.id, d.title, d.prompt, d.mood, d.ground, d.views, d.featured, d.created_at,
+							d.doc->'objects' as objects, d.doc->'palette' as palette, d.doc->'author' as author,
+							u.username as creator_username
+						from dioramas d
+						left join users u on u.id = d.user_id and u.deleted_at is null
+						where d.featured = true
+						order by d.created_at desc limit ${lim}`
 				: await sql`
-						select id, title, prompt, mood, ground, views, featured, created_at,
-							doc->'objects' as objects, doc->'palette' as palette, doc->'author' as author
-						from dioramas
-						order by created_at desc limit ${lim}`;
+						select d.id, d.title, d.prompt, d.mood, d.ground, d.views, d.featured, d.created_at,
+							d.doc->'objects' as objects, d.doc->'palette' as palette, d.doc->'author' as author,
+							u.username as creator_username
+						from dioramas d
+						left join users u on u.id = d.user_id and u.deleted_at is null
+						order by d.created_at desc limit ${lim}`;
 		return rows.map(toCard);
 	} catch (err) {
 		console.error('[diorama-store] listDioramas failed:', err?.message);
@@ -149,6 +222,7 @@ function toCard(row) {
 		ground: row.ground,
 		palette: row.palette || null,
 		author: row.author || null,
+		creatorUsername: row.creator_username || null,
 		thumbnailGlb: thumb,
 		objectCount: objects.length,
 		views: Number(row.views) || 0,

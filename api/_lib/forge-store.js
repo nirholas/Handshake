@@ -84,6 +84,7 @@ export async function createCreation({
 	tier,
 	path,
 	modelCategory,
+	userId,
 }) {
 	if (!forgeStoreEnabled()) return null;
 	const id = randomUUID();
@@ -93,13 +94,13 @@ export async function createCreation({
 			insert into forge_creations
 				(id, client_key, ip_hash, prompt, aspect, preview_image_url,
 				 replicate_job_id, text_to_image_model, views_requested, views_used,
-				 multiview, backend, tier, path, status, outcome, model_category)
+				 multiview, backend, tier, path, status, outcome, model_category, user_id)
 			values
 				(${id}, ${clientKey}, ${ipHash ?? null}, ${prompt}, ${aspect ?? null},
 				 ${previewImageUrl ?? null}, ${replicateJobId ?? null},
 				 ${textToImageModel ?? null}, ${viewsRequested ?? null}, ${viewsUsed ?? null},
 				 ${typeof multiview === 'boolean' ? multiview : null}, ${backend ?? null},
-				 ${tier ?? null}, ${path ?? null}, 'generating', 'generated', ${category})
+				 ${tier ?? null}, ${path ?? null}, 'generating', 'generated', ${category}, ${userId ?? null})
 		`;
 		// Funnel start — counts attempts so the health rollup can show how many
 		// generations began vs. completed. Best-effort; never blocks the insert.
@@ -460,10 +461,12 @@ export async function getPublicCreation({ id }) {
 	if (!forgeStoreEnabled() || !id) return null;
 	try {
 		const rows = await sql`
-			select id, prompt, aspect, glb_url, preview_image_url, outcome,
-				views_used, multiview, backend, tier, path, model_category, created_at
-			from forge_creations
-			where id = ${id} and status = 'done' and glb_url is not null
+			select fc.id, fc.prompt, fc.aspect, fc.glb_url, fc.preview_image_url, fc.outcome,
+				fc.views_used, fc.multiview, fc.backend, fc.tier, fc.path, fc.model_category, fc.created_at,
+				u.username as creator_username
+			from forge_creations fc
+			left join users u on u.id = fc.user_id and u.deleted_at is null
+			where fc.id = ${id} and fc.status = 'done' and fc.glb_url is not null
 			limit 1
 		`;
 		const r = rows[0];
@@ -482,6 +485,9 @@ export async function getPublicCreation({ id }) {
 			path: r.path ?? null,
 			model_category: r.model_category ?? 'other',
 			created_at: r.created_at,
+			// Real, opt-in attribution only — set when the model was forged while
+			// signed in. Never invented for anonymous generations.
+			creatorUsername: r.creator_username || null,
 		};
 	} catch (err) {
 		console.error('[forge-store] getPublicCreation failed:', err?.message);
@@ -603,6 +609,70 @@ export async function listCreations({ clientKey, limit = 24 }) {
 		if (isDbUnavailableError(err)) console.warn('[forge-store] listCreations skipped (db unavailable):', err?.message);
 		else console.error('[forge-store] listCreations failed:', err?.message);
 		return [];
+	}
+}
+
+// A signed-in creator's finished, durably-stored models — powers the
+// "Models" tab on their public portfolio (/u/:username). Scoped to user_id,
+// not client_key, so it only ever surfaces creations made while logged in;
+// anonymous forges (the majority) never attach to any profile. Cursor
+// pagination by created_at mirrors listRemixable so the profile's "load
+// more" can page through a prolific creator's full history.
+export async function listCreationsByUser({ userId, limit = 24, before } = {}) {
+	if (!forgeStoreEnabled() || !userId) return [];
+	const capped = Math.min(Math.max(Number(limit) || 24, 1), 60);
+	try {
+		const rows = before
+			? await sql`
+				select id, prompt, glb_url, preview_image_url, model_category,
+					parent_creation_id, remixable, created_at
+				from forge_creations
+				where user_id = ${userId} and status = 'done' and glb_url is not null
+					and created_at < ${before}
+				order by created_at desc
+				limit ${capped}
+			`
+			: await sql`
+				select id, prompt, glb_url, preview_image_url, model_category,
+					parent_creation_id, remixable, created_at
+				from forge_creations
+				where user_id = ${userId} and status = 'done' and glb_url is not null
+				order by created_at desc
+				limit ${capped}
+			`;
+		return rows.map((r) => ({
+			id: r.id,
+			type: 'model',
+			prompt: r.prompt,
+			glbUrl: r.glb_url,
+			previewImageUrl: r.preview_image_url,
+			category: r.model_category ?? 'other',
+			isRemix: Boolean(r.parent_creation_id),
+			remixable: Boolean(r.remixable),
+			createdAt: r.created_at,
+		}));
+	} catch (err) {
+		if (isDbUnavailableError(err)) console.warn('[forge-store] listCreationsByUser skipped (db unavailable):', err?.message);
+		else console.error('[forge-store] listCreationsByUser failed:', err?.message);
+		return [];
+	}
+}
+
+// Count of a signed-in creator's finished, stored models — cheap stat-strip
+// number, separate from the paginated list above.
+export async function countCreationsByUser({ userId } = {}) {
+	if (!forgeStoreEnabled() || !userId) return 0;
+	try {
+		const [row] = await sql`
+			select count(*)::int as n
+			from forge_creations
+			where user_id = ${userId} and status = 'done' and glb_url is not null
+		`;
+		return row?.n ?? 0;
+	} catch (err) {
+		if (isDbUnavailableError(err)) console.warn('[forge-store] countCreationsByUser skipped (db unavailable):', err?.message);
+		else console.error('[forge-store] countCreationsByUser failed:', err?.message);
+		return 0;
 	}
 }
 

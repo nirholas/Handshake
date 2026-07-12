@@ -77,6 +77,7 @@ const els = {
 	viewerShell: document.getElementById('viewer-shell'),
 	cinema: document.getElementById('cinema'),
 	resultLabel: document.getElementById('result-label'),
+	resultCreator: document.getElementById('result-creator'),
 	resultViews: document.getElementById('result-views'),
 	verdict: document.getElementById('verdict'),
 	download: document.getElementById('download'),
@@ -1616,6 +1617,19 @@ function showResult(glbUrl, label, meta, { autoSaved = false } = {}) {
 	els.viewer.setAttribute('alt', `3D model: ${label}`);
 	lastShownGlb = glbUrl;
 	els.resultLabel.textContent = label;
+	// Real, opt-in attribution only: a byline + link to the creator's public
+	// portfolio appears when this creation was forged while signed in
+	// (meta.creatorUsername, set server-side). Anonymous generations — the
+	// large majority — show no byline, never a fabricated one.
+	if (els.resultCreator) {
+		if (meta?.creatorUsername) {
+			els.resultCreator.href = `/u/${encodeURIComponent(meta.creatorUsername)}`;
+			els.resultCreator.textContent = `by @${meta.creatorUsername}`;
+			els.resultCreator.classList.remove('is-hidden');
+		} else {
+			els.resultCreator.classList.add('is-hidden');
+		}
+	}
 	// Hide the saved chip by default; caller re-shows it for fresh generations.
 	if (els.savedChip) els.savedChip.classList.add('is-hidden');
 	setViewsBadge(meta);
@@ -1795,6 +1809,7 @@ function openCreation(c, { scroll = true } = {}) {
 		backend: c.backend,
 		tier: c.tier,
 		path: c.path,
+		creatorUsername: c.creatorUsername || null,
 	});
 	if (els.verdict) {
 		for (const b of els.verdict.querySelectorAll('button')) {

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-12T14:51:46.886Z",
+	"generated_at": "2026-07-12T15:56:33.792Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -22,6 +22,16 @@
 			"title": "Robinhood Chain",
 			"summary": "The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL — plus a real wallet-connect buy flow for its coins.",
 			"link": "/markets/robinhood",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "launch",
+			"title": "Your creator portfolio",
+			"summary": "Your public three.ws portfolio: every avatar, agent, forged 3D model, world, coin, skill, and plugin you've made, in one place. Signed out, this redirects to sign-in; every user's own page also lives at /u/:username.",
+			"link": "/profile",
 			"tags": [
 				"launch"
 			]
@@ -290,6 +300,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "update",
+			"title": "Your creator portfolio: every forged model and world, in one place",
+			"summary": "Your profile at /u/:username (or just /profile for your own) now has a Creations tab that pulls together everything you've made on three.ws: forged 3D models, saved worlds from Scene Studio, avatars, agents, and coins — each card a real, live, spinning 3D thumbnail linking straight to the model or world. Forging a model or saving a world while signed in now credits it to your account automatically; do it signed out and it stays anonymous like always. Diorama viewers and forge result pages now show \"by @you\" with a link back to your profile when a creation has a known creator, and prolific creators get a Load more button instead of a wall of cards.",
+			"link": "/profile",
+			"tags": [
+				"feature"
 			]
 		},
 		{

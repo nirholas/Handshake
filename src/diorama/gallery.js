@@ -40,6 +40,14 @@ function buildCard(d, onOpen) {
 			`aria-hidden="true"></model-viewer></div>`
 		: `<div class="dio-card__thumb"></div>`;
 
+	// Registered creators (d.creatorUsername, set server-side only when the
+	// world was saved while signed in) get a real link back to their public
+	// portfolio — the same "who made this" wiring as avatars/marketplace
+	// listings. Anonymous saves show no byline, never a fabricated one.
+	const bylineHtml = d.creatorUsername
+		? `<a class="dio-card__by" href="/u/${esc(d.creatorUsername)}">by @${esc(d.creatorUsername)}</a>`
+		: '';
+
 	btn.innerHTML =
 		thumb +
 		`<div class="dio-card__body">` +
@@ -48,11 +56,14 @@ function buildCard(d, onOpen) {
 		`<div class="dio-card__foot">` +
 		`<span class="dio-card__mood">${esc(d.mood || 'a little world')}</span>` +
 		`<span>${d.objectCount || 0} pieces · ${fmtViews(d.views)}</span>` +
-		`</div></div>`;
+		`</div>${bylineHtml}</div>`;
 
 	btn.addEventListener('click', () => {
 		if (typeof onOpen === 'function' && d.id) onOpen(d.id);
 	});
+	// The creator byline is a real nested link (card is a <button> for the
+	// primary "open world" action) — stop its click from also firing onOpen.
+	btn.querySelector('.dio-card__by')?.addEventListener('click', (e) => e.stopPropagation());
 	return btn;
 }
 

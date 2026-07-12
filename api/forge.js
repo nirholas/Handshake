@@ -88,6 +88,7 @@ import {
 	markFailed,
 	findByJob,
 } from './_lib/forge-store.js';
+import { getSessionUser } from './_lib/auth.js';
 import { constantTimeEquals } from './_lib/crypto.js';
 import {
 	forgeRequestHash,
@@ -107,7 +108,6 @@ import {
 	redeemForgePayment,
 	releaseForgePayment,
 } from './_lib/forge-high-payment.js';
-import { getSessionUser } from './_lib/auth.js';
 import {
 	chargeCreditsForAction,
 	quoteCreditsForAction,
@@ -227,6 +227,23 @@ const JOB_ID_RE = /^[a-z0-9]{16,64}$/;
 function clientKeyFrom(req) {
 	const raw = req.headers['x-forge-client'];
 	return hashClient(Array.isArray(raw) ? raw[0] : raw);
+}
+
+// /forge is auth-free and the overwhelming majority of calls are anonymous —
+// but when a caller DOES carry a session cookie (the browser /create/studio
+// flow while logged in), attach their user_id to the durable creation so it
+// surfaces on their public portfolio (/u/:username → "Models" tab). Resolved
+// at most once per request; failures (no db, bad cookie) degrade to null,
+// never block generation.
+async function sessionUserIdFromReq(req) {
+	if (Object.prototype.hasOwnProperty.call(req, '__twxSessionUserId')) return req.__twxSessionUserId;
+	try {
+		const user = await getSessionUser(req);
+		req.__twxSessionUserId = user?.id ?? null;
+	} catch {
+		req.__twxSessionUserId = null;
+	}
+	return req.__twxSessionUserId;
 }
 
 // Resolve the requested generation path + quality tier from the body, falling
@@ -353,6 +370,7 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 		const syntheticJob = randomUUID().replace(/-/g, '');
 		const creationId = await createCreation({
 			clientKey,
+			userId: await sessionUserIdFromReq(req),
 			ipHash: hashIp(ip),
 			prompt,
 			aspect,
@@ -369,6 +387,7 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 		let durable = await materializeCreation({
 			replicateJobId: syntheticJob,
 			clientKey,
+			userId: await sessionUserIdFromReq(req),
 			glbUrl: submitted.resultGlbUrl,
 			quality: true,
 			compress: opts?.compression && opts.compression !== 'none' ? opts.compression : null,
@@ -388,6 +407,7 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 					const retryJob = randomUUID().replace(/-/g, '');
 					await createCreation({
 						clientKey,
+						userId: await sessionUserIdFromReq(req),
 						ipHash: hashIp(ip),
 						prompt,
 						aspect,
@@ -404,6 +424,7 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 					const retryDurable = await materializeCreation({
 						replicateJobId: retryJob,
 						clientKey,
+						userId: await sessionUserIdFromReq(req),
 						glbUrl: retry.resultGlbUrl,
 						quality: true,
 						compress: opts?.compression && opts.compression !== 'none' ? opts.compression : null,
@@ -452,6 +473,7 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 	});
 	const creationId = await createCreation({
 		clientKey,
+		userId: await sessionUserIdFromReq(req),
 		ipHash: hashIp(ip),
 		prompt,
 		aspect,
@@ -574,6 +596,7 @@ async function runHfImageLane({
 	const syntheticJob = randomUUID().replace(/-/g, '');
 	const creationId = await createCreation({
 		clientKey,
+		userId: await sessionUserIdFromReq(req),
 		ipHash: hashIp(ip),
 		prompt: prompt || (isImageMode ? 'image-to-3d' : ''),
 		aspect,
@@ -593,6 +616,7 @@ async function runHfImageLane({
 	let durable = await materializeCreation({
 		replicateJobId: syntheticJob,
 		clientKey,
+		userId: await sessionUserIdFromReq(req),
 		glbUrl: resultGlbUrl,
 		quality: true,
 		compress: wantCompress,
@@ -617,6 +641,7 @@ async function runHfImageLane({
 					const retryJob = randomUUID().replace(/-/g, '');
 					await createCreation({
 						clientKey,
+						userId: await sessionUserIdFromReq(req),
 						ipHash: hashIp(ip),
 						prompt: prompt || (isImageMode ? 'image-to-3d' : ''),
 						aspect,
@@ -633,6 +658,7 @@ async function runHfImageLane({
 					const retryDurable = await materializeCreation({
 						replicateJobId: retryJob,
 						clientKey,
+						userId: await sessionUserIdFromReq(req),
 						glbUrl: retryFinished.resultGlbUrl,
 						quality: true,
 						compress: wantCompress,
@@ -1177,6 +1203,7 @@ async function startJob(req, res) {
 			const token = encodeJobToken({ provider: 'gcp', kind: null, taskId: job.extJobId });
 			const creationId = await createCreation({
 				clientKey: clientKeyFrom(req),
+				userId: await sessionUserIdFromReq(req),
 				ipHash: hashIp(ip),
 				prompt,
 				aspect: null,
@@ -1263,6 +1290,7 @@ async function startJob(req, res) {
 				const syntheticJob = randomUUID().replace(/-/g, '');
 				const creationId = await createCreation({
 					clientKey,
+					userId: await sessionUserIdFromReq(req),
 					ipHash: hashIp(ip),
 					prompt: prompt || (isImageMode ? 'image-to-3d' : ''),
 					aspect: isImageMode ? null : aspect,
@@ -1279,6 +1307,7 @@ async function startJob(req, res) {
 				const durable = await materializeCreation({
 					replicateJobId: syntheticJob,
 					clientKey,
+					userId: await sessionUserIdFromReq(req),
 					glbUrl: submitted.resultGlbUrl,
 					quality: true,
 					compress: opts.compression !== 'none' ? opts.compression : null,
@@ -1315,6 +1344,7 @@ async function startJob(req, res) {
 			// resolve it on poll, exactly like the Replicate path.
 			const creationId = await createCreation({
 				clientKey,
+				userId: await sessionUserIdFromReq(req),
 				ipHash: hashIp(ip),
 				prompt: prompt || (isImageMode ? 'image-to-3d' : ''),
 				aspect: isImageMode ? null : aspect,
@@ -1577,6 +1607,7 @@ async function startJob(req, res) {
 				const clientKey = clientKeyFrom(req);
 				const creationId = await createCreation({
 					clientKey,
+					userId: await sessionUserIdFromReq(req),
 					ipHash: hashIp(ip),
 					prompt: prompt || (isImageMode ? 'image-to-3d' : ''),
 					aspect: isImageMode ? null : aspect,
@@ -1875,6 +1906,7 @@ async function startJob(req, res) {
 		// store just means no durable copy + no gallery entry for this run.
 		const creationId = await createCreation({
 			clientKey: clientKeyFrom(req),
+			userId: await sessionUserIdFromReq(req),
 			ipHash: hashIp(ip),
 			prompt: prompt || (isImageMode ? 'image-to-3d' : ''),
 			aspect,
@@ -2121,6 +2153,7 @@ async function startRigJob(req, res) {
 				: job.extJobId;
 		const creationId = await createCreation({
 			clientKey: clientKeyFrom(req),
+			userId: await sessionUserIdFromReq(req),
 			ipHash: hashIp(ip),
 			prompt: 'auto-rig',
 			aspect: null,
@@ -2285,6 +2318,7 @@ async function pollJob(req, res, jobId) {
 		const durable = await materializeCreation({
 			replicateJobId: upstreamId,
 			clientKey,
+			userId: await sessionUserIdFromReq(req),
 			glbUrl: result.resultGlbUrl,
 			quality: true,
 			compress: boundOpts?.compression || null,

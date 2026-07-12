@@ -23,6 +23,14 @@
 			<description>The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL — plus a real wallet-connect buy flow for its coins.</description>
 		</item>
 		<item>
+			<title>Your creator portfolio</title>
+			<link>https://three.ws/profile</link>
+			<guid isPermaLink="false">2026-07-12:Your creator portfolio</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Your public three.ws portfolio: every avatar, agent, forged 3D model, world, coin, skill, and plugin you've made, in one place. Signed out, this redirects to sign-in; every user's own page also lives at /u/:username.</description>
+		</item>
+		<item>
 			<title>Agent discovery fixed: six paid endpoints were invisible to x402 scanners</title>
 			<link>https://three.ws/openapi.json</link>
 			<guid isPermaLink="false">2026-07-12:Agent discovery fixed: six paid endpoints were invisible to x402 scanners</guid>
@@ -221,6 +229,14 @@
 			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Payment directories like x402scan verify an endpoint by poking it without paying and expecting the HTTP 402 payment challenge back. A July registration run rejected 33 three.ws endpoints because probes were answered with the wrong thing: method or input mistakes returned plain errors before the challenge, and per-item priced endpoints (asset downloads, marketplace skills, fact checks) demanded a valid item id before quoting a price. Now any credential-less request on a paid route receives the full 402 challenge — wrong method, missing id, or empty body included — while real paying callers keep strict validation before any money moves. The free crypto-data endpoints under /api/v1/x are now correctly advertised as free in /openapi.json instead of failing paid-endpoint probes, so agents see them for what they are: no-signup data with a pay-as-you-go overflow lane.</description>
+		</item>
+		<item>
+			<title>Your creator portfolio: every forged model and world, in one place</title>
+			<link>https://three.ws/profile</link>
+			<guid isPermaLink="false">2026-07-12:Your creator portfolio: every forged model and world, in one place</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Your profile at /u/:username (or just /profile for your own) now has a Creations tab that pulls together everything you've made on three.ws: forged 3D models, saved worlds from Scene Studio, avatars, agents, and coins — each card a real, live, spinning 3D thumbnail linking straight to the model or world. Forging a model or saving a world while signed in now credits it to your account automatically; do it signed out and it stays anonymous like always. Diorama viewers and forge result pages now show &quot;by @you&quot; with a link back to your profile when a creation has a known creator, and prolific creators get a Load more button instead of a wall of cards.</description>
 		</item>
 		<item>
 			<title>Your Premium API keys and purchase history are now wallet-gated</title>

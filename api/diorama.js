@@ -32,6 +32,7 @@ import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js'
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { llmComplete, llmConfigured } from './_lib/llm.js';
 import { saveDiorama, getDiorama, listDioramas, bumpViews, dioramaStoreEnabled } from './_lib/diorama-store.js';
+import { getSessionUser } from './_lib/auth.js';
 import {
 	exportDioramaGlb,
 	dioramaExportStoreEnabled,
@@ -204,11 +205,22 @@ async function handleSave(req, res, body) {
 	if (!saveRl.success) {
 		return rateLimited(res, saveRl, 'Saving too fast. Try again in a moment.');
 	}
+	// Anonymous-first (no login required to save/share a world) — but when the
+	// caller carries a session cookie, attach their user_id so the world
+	// surfaces on their public portfolio (/u/:username → "Worlds" tab), and
+	// default the in-scene author credit to their real handle if the client
+	// didn't already set one.
+	const sessionUser = await getSessionUser(req).catch(() => null);
+	const diorama = sessionUser?.username && !body.diorama?.author?.handle
+		? { ...body.diorama, author: { ...(body.diorama?.author || {}), handle: sessionUser.username } }
+		: body.diorama;
+
 	let saved;
 	try {
 		saved = await saveDiorama({
-			diorama: body.diorama,
+			diorama,
 			clientKey: typeof body.clientKey === 'string' ? body.clientKey.slice(0, 128) : null,
+			userId: sessionUser?.id ?? null,
 		});
 	} catch (err) {
 		if (err?.code === 'invalid_diorama') {

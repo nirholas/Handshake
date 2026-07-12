@@ -1740,6 +1740,17 @@
 				text-overflow: ellipsis;
 				white-space: nowrap;
 			}
+			.result-creator {
+				font-size: var(--text-sm);
+				color: var(--ink-dim);
+				text-decoration: none;
+				white-space: nowrap;
+			}
+			.result-creator:hover,
+			.result-creator:focus-visible {
+				color: var(--ink);
+				text-decoration: underline;
+			}
 			/* Auto-save confirmation chip — shown briefly after generation completes */
 			@keyframes saved-pop {
 				0%   { opacity: 0; transform: translateY(3px); }
@@ -3022,6 +3033,7 @@
 					</div>
 					<div class="result-bar">
 						<span class="label" id="result-label"></span>
+						<a class="result-creator is-hidden" id="result-creator" href="#">by @</a>
 						<span class="saved-chip is-hidden" id="result-saved" aria-label="Auto-saved to gallery">Saved ✓</span>
 						<span
 							class="views-badge is-hidden"

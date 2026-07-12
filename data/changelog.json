@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-12",
+			"title": "Your creator portfolio: every forged model and world, in one place",
+			"summary": "Your profile at /u/:username (or just /profile for your own) now has a Creations tab that pulls together everything you've made on three.ws: forged 3D models, saved worlds from Scene Studio, avatars, agents, and coins — each card a real, live, spinning 3D thumbnail linking straight to the model or world. Forging a model or saving a world while signed in now credits it to your account automatically; do it signed out and it stays anonymous like always. Diorama viewers and forge result pages now show \"by @you\" with a link back to your profile when a creation has a known creator, and prolific creators get a Load more button instead of a wall of cards.",
+			"tags": [
+				"feature"
+			],
+			"link": "/profile"
+		},
+		{
+			"date": "2026-07-12",
 			"title": "Fixed: /play was signing players out after an hour",
 			"summary": "Players who signed in with X to enter a coin's Holders world could get bounced back to the /play lobby with a false \"not signed in\" message after about an hour, even though their session was still good. The sign-in session's access token only lived for an hour, and the endpoints checking it were discarding the still-valid 30-day session instead of quietly renewing it. Signing in with X on /play now stays good for the full 30 days without needing to reconnect.",
 			"tags": [

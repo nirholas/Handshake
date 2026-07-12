@@ -267,6 +267,18 @@
 	color: rgba(255, 255, 255, 0.78);
 	text-transform: capitalize;
 }
+.hud-author-link {
+	color: rgba(255, 255, 255, 0.92);
+	text-decoration: none;
+	text-transform: none;
+	pointer-events: auto;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+}
+.hud-author-link:hover,
+.hud-author-link:focus-visible {
+	color: #fff;
+	border-bottom-color: rgba(255, 255, 255, 0.85);
+}
 
 /* Side panel */
 .dio-side {
@@ -565,6 +577,18 @@
 }
 .dio-card__mood {
 	text-transform: capitalize;
+}
+.dio-card__by {
+	display: inline-block;
+	margin-top: 0.4rem;
+	font-size: 0.72rem;
+	color: var(--dio-dim);
+	text-decoration: none;
+}
+.dio-card__by:hover,
+.dio-card__by:focus-visible {
+	color: var(--dio-fg, #fff);
+	text-decoration: underline;
 }
 
 /* Skeleton cards while the gallery loads */

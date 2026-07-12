@@ -1336,6 +1336,14 @@ Indexable: no (excluded from sitemap)
 
 Account, profile, and notification settings.
 
+### Your creator portfolio
+
+URL: https://three.ws/profile
+Auth: required (sign-in)
+Indexable: no (excluded from sitemap)
+
+Your public three.ws portfolio: every avatar, agent, forged 3D model, world, coin, skill, and plugin you've made, in one place. Signed out, this redirects to sign-in; every user's own page also lives at /u/:username.
+
 ## Learn
 
 Docs, tutorials, and reference.
