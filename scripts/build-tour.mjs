@@ -109,6 +109,77 @@ const CONNECTORS = [
 	'Over here is', "Here's", 'Meet', 'And this —', 'Check out', 'This one is',
 ];
 
+// ── Onboarding track ────────────────────────────────────────────────────────
+// A short, hand-authored second curriculum baked into the same stops list
+// (section: "onboarding"), separate from the generic per-page sections above.
+// It exists to answer the question a brand-new account actually has — "what
+// do I do first?" — by chaining the platform's real flows into one guided
+// path: make an avatar → put it in a world → see the world's coin tied to
+// live $THREE market data → optionally launch your own coin → land on your
+// own profile and see what you just made. Every stop is a real, already-
+// shipped page (no bespoke onboarding UI); the "optional" coin-launch stop is
+// clearly announced as skippable in its narration — the visitor can press
+// Next/skip it or jump straight to the final stop via the chapter map.
+const ONBOARDING_STOPS = [
+	{
+		id: 'onboarding-start',
+		path: '/start',
+		title: 'Welcome to three.ws',
+		narration:
+			"Welcome — let's get you set up. In the next few minutes you'll make a 3D avatar, put it in a world, see it tied to real $THREE market data, and land on your own profile with your first creation on it. First stop: your avatar.",
+		highlight: true,
+		targets: ['.wizard, .step, main h1, main'],
+	},
+	{
+		id: 'onboarding-avatar',
+		path: '/create/selfie',
+		title: 'Make your avatar',
+		narration:
+			"This is where you build a body. Take a selfie or describe one, and three.ws generates a rigged, animation-ready 3D avatar you own — this becomes your creator identity across the whole platform.",
+		highlight: true,
+		targets: ['.camera, video, .capture, button, main'],
+	},
+	{
+		id: 'onboarding-world',
+		path: '/diorama',
+		title: 'Build a world',
+		narration:
+			"Nice — you've got an avatar. Now give it somewhere to live. Diorama turns one sentence into a full 3D world and drops your avatar into it. This is your first world, saved to your account.",
+		highlight: true,
+		targets: ['canvas, .diorama-canvas, main'],
+	},
+	{
+		id: 'onboarding-markets',
+		path: '/markets',
+		title: 'Real markets, live',
+		narration:
+			"Your creation isn't sitting in a vacuum — three.ws is wired straight into real on-chain markets. This is live $THREE price and volume, the same rails every coin on the platform launches through.",
+		highlight: true,
+		targets: ['.market-card, .price, canvas, main'],
+	},
+	{
+		id: 'onboarding-launch',
+		path: '/create-agent',
+		title: 'Launch a coin (optional)',
+		narration:
+			"Optional step — skip it if you're not ready. If you want to take your avatar on-chain, this is where you give it a brain and, if you choose, launch its own coin. You can always come back to this later from your profile.",
+		highlight: false,
+		targets: ['form, .wizard, .step, button, main'],
+	},
+	{
+		id: 'onboarding-profile',
+		path: '/profile',
+		title: 'Your profile',
+		narration:
+			"And here's home base — your creator profile. Your avatar and your first world are already listed here, plus any streak or badge you've started earning. Everything you make from now on shows up right here. That's the whole loop — go make something.",
+		highlight: true,
+		targets: ['.creations, .portfolio, main h1, main'],
+	},
+];
+
+const ONBOARDING_SECTION_INTRO =
+	"Welcome — I'm your guide. Let's get you from a blank account to your first real creation in about five minutes.";
+
 function loadPages() {
 	const raw = JSON.parse(readFileSync(PAGES_PATH, 'utf8'));
 	const bySection = new Map();
@@ -229,6 +300,23 @@ function build() {
 	const estimatedMinutes = minutesFor(totalWords, stops.length);
 	const quickMinutes = Math.max(1, minutesFor(quickWords, quickCount));
 
+	// Onboarding track — appended after the general sections so its stops
+	// sort last in curriculum order, but it is its own section/track and is
+	// excluded from 'full'/'quick' by buildPlaylist() (src/feature-tour/
+	// curriculum.js) via `section === 'onboarding'`.
+	sections.push({ id: 'onboarding', title: 'Getting started', intro: ONBOARDING_SECTION_INTRO });
+	let onboardingWords = 0;
+	ONBOARDING_STOPS.forEach((stop, i) => {
+		const introWords = i === 0 ? ONBOARDING_SECTION_INTRO.split(/\s+/).length : 0;
+		onboardingWords += stop.narration.split(/\s+/).length + introWords;
+		stops.push({
+			...stop,
+			section: 'onboarding',
+			...(i === 0 ? { sectionIntro: ONBOARDING_SECTION_INTRO } : {}),
+		});
+	});
+	const onboardingMinutes = Math.max(1, minutesFor(onboardingWords, ONBOARDING_STOPS.length));
+
 	return {
 		version: 2,
 		generatedAt: new Date().toISOString(),
@@ -242,7 +330,7 @@ function build() {
 				id: 'full',
 				title: 'Full tour',
 				description: 'Every feature, chapter by chapter.',
-				stopCount: stops.length,
+				stopCount: stops.length - ONBOARDING_STOPS.length,
 				estimatedMinutes,
 			},
 			{
@@ -251,6 +339,13 @@ function build() {
 				description: 'The best of every chapter, in a few minutes.',
 				stopCount: quickCount,
 				estimatedMinutes: quickMinutes,
+			},
+			{
+				id: 'onboarding',
+				title: 'Getting started',
+				description: 'Avatar → world → markets → your profile, in about five minutes.',
+				stopCount: ONBOARDING_STOPS.length,
+				estimatedMinutes: onboardingMinutes,
 			},
 		],
 		sections,

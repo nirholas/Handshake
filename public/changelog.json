@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-12T16:59:04.940Z",
+	"generated_at": "2026-07-12T17:21:15.952Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -72,6 +72,16 @@
 			"title": "A cross-surface leaderboard, streaks, and badges",
 			"summary": "A new Rankings board at /rankings ranks creators across every surface at once — creations forged, remixes received, coins launched, followers, and distance walked while signed in — with your own rank pinned even if you're off the visible page. Showing up daily (a login, a finished creation, or a walk session) now builds a real streak, shown on your profile and on the Rankings page. Four badges are genuinely earnable and persist once unlocked: First Creation, Remixed, 7-Day Streak, and a daily-refreshed Top 10 placement per metric.",
 			"link": "/rankings",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "update",
+			"title": "A guided tour for your first five minutes on three.ws",
+			"summary": "New accounts now get a real, 3D-guided walkthrough — starting on /start — that chains together everything the platform can do: make an avatar, put it in a world, see it tied to live $THREE market data on /markets, an optional stop to launch your own coin (clearly skippable), and a landing on your own new profile showing what you just made. It's auto-offered once to a genuinely new, signed-in account with zero creations, then stays reachable anytime via \"Replay guided tour\" in the Getting started checklist (bottom-right on most pages). Every stop is the platform's real, already-shipped flow — nothing built just for the tour.",
+			"link": "/start",
 			"tags": [
 				"feature"
 			]

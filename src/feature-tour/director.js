@@ -79,6 +79,11 @@ export class TourDirector {
 		this.playlist = buildPlaylist(this.curriculum, this.track);
 		this.pos = 0;
 		this.index = this.playlist[0] ?? 0;
+		// Record that the account was actually offered the onboarding tour, so
+		// the server-side auto-start check (api/me.js `show_onboarding_tour`)
+		// never re-triggers it — even if the visitor abandons this run before
+		// the completion card fires.
+		if (this.track === 'onboarding') this._reportOnboardingProgress('seen');
 		writeState({
 			active: true,
 			index: this.index,
@@ -110,7 +115,7 @@ export class TourDirector {
 		this.track = state.track || 'full';
 		this.playlist = buildPlaylist(this.curriculum, this.track);
 
-		const here = stopIndexForPath(this.curriculum, location.pathname);
+		const here = stopIndexForPath(this.curriculum, location.pathname, this.playlist);
 		// Clamp the persisted index to the live curriculum: a curriculum that lost
 		// stops between deploys could otherwise point past the end and silently
 		// finish the tour on resume.
@@ -289,10 +294,16 @@ export class TourDirector {
 	}
 
 	// Jump to an absolute curriculum stop from the chapter panel. If it isn't in
-	// the current track's playlist, expand to the Full track so every stop is
-	// reachable, then go to it.
+	// the current track's playlist, switch to whichever track actually contains
+	// it — the Onboarding track for an onboarding-section stop (its own,
+	// disjoint playlist — see buildPlaylist), or the Full track for everything
+	// else — so every stop stays reachable from the chapter map regardless of
+	// which track the visitor started on.
 	_jumpToAbs(abs) {
-		if (this.playlist.indexOf(abs) < 0) this._applyTrack('full', { silent: true });
+		if (this.playlist.indexOf(abs) < 0) {
+			const target = this.curriculum.stops[abs]?.section === 'onboarding' ? 'onboarding' : 'full';
+			this._applyTrack(target, { silent: true });
+		}
 		this._go(this._posForAbs(abs));
 	}
 
@@ -531,18 +542,53 @@ export class TourDirector {
 		this.spotlight.highlight(null);
 		await this.avatar.park();
 		this.avatar.point();
-		const outro = "And that's the whole platform. You've seen how to build an agent, give it a body and a voice, take it on-chain, and put it to work. Go make something — I'll be around if you want to walk it again.";
+		const isOnboarding = this.track === 'onboarding';
+		const outro = isOnboarding
+			? "And that's the loop — avatar, world, markets, and now your own profile with your first creation on it. Everything you make from here shows up right there. Go make something else."
+			: "And that's the whole platform. You've seen how to build an agent, give it a body and a voice, take it on-chain, and put it to work. Go make something — I'll be around if you want to walk it again.";
 		await this._present(outro, token);
 		if (token !== this._runToken) return; // exited / navigated while the outro played
 		markCompleted();
 		clearState();
+		if (isOnboarding) this._reportOnboardingProgress('completed');
 		this._showCompletion();
 	}
 
+	// Persists onboarding-tour progress server-side (api/me.js) so the
+	// account-linked "should we auto-offer the tour" decision survives across
+	// browsers/devices, not just this browser's localStorage. Best-effort and
+	// silent on failure — the tour's own UX never depends on this succeeding,
+	// and a signed-out visitor (401) simply doesn't get server-side tracking.
+	_reportOnboardingProgress(flag) {
+		try {
+			fetch('/api/me', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				credentials: 'include',
+				body: JSON.stringify({ onboarding_tour: flag }),
+				keepalive: true,
+			}).catch(() => {});
+		} catch {
+			/* fetch unavailable / blocked — server-side tracking simply skips */
+		}
+	}
+
 	_showCompletion() {
+		const isOnboarding = this.track === 'onboarding';
 		const card = document.createElement('div');
 		card.className = 'tws-tour-done';
-		card.innerHTML = `
+		card.innerHTML = isOnboarding
+			? `
+			<div class="tws-tour-done__inner" role="dialog" aria-label="Onboarding complete">
+				<div class="tws-tour-done__title">You're set up 🎉</div>
+				<p class="tws-tour-done__body">Avatar made, world built, markets seen, profile live. Ready to take it on-chain?</p>
+				<div class="tws-tour-done__actions">
+					<a class="tws-tour-done__btn tws-tour-done__btn--primary" href="/create-agent">Launch a coin</a>
+					<a class="tws-tour-done__btn" href="/profile">See my profile</a>
+					<button class="tws-tour-done__btn" data-act="close">I'm good for now</button>
+				</div>
+			</div>`
+			: `
 			<div class="tws-tour-done__inner" role="dialog" aria-label="Tour complete">
 				<div class="tws-tour-done__title">Tour complete 🎉</div>
 				<p class="tws-tour-done__body">You've walked the whole of three.ws. Where to next?</p>

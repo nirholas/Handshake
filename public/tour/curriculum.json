@@ -1,18 +1,18 @@
 {
 	"version": 2,
-	"generatedAt": "2026-07-09T21:20:51.347Z",
+	"generatedAt": "2026-07-12T17:16:09.990Z",
 	"generatedBy": "scripts/build-tour.mjs from data/pages.json",
 	"title": "The three.ws Guided Tour",
 	"tagline": "A 3D guide walks you through every feature, live, on the real site.",
-	"estimatedMinutes": 64,
-	"stopCount": 167,
+	"estimatedMinutes": 69,
+	"stopCount": 185,
 	"tracks": [
 		{
 			"id": "full",
 			"title": "Full tour",
 			"description": "Every feature, chapter by chapter.",
-			"stopCount": 167,
-			"estimatedMinutes": 64
+			"stopCount": 179,
+			"estimatedMinutes": 69
 		},
 		{
 			"id": "quick",
@@ -20,6 +20,13 @@
 			"description": "The best of every chapter, in a few minutes.",
 			"stopCount": 18,
 			"estimatedMinutes": 7
+		},
+		{
+			"id": "onboarding",
+			"title": "Getting started",
+			"description": "Avatar → world → markets → your profile, in about five minutes.",
+			"stopCount": 6,
+			"estimatedMinutes": 3
 		}
 	],
 	"sections": [
@@ -52,6 +59,11 @@
 			"id": "learn",
 			"title": "Learn",
 			"intro": "And when you're ready to go deeper on your own, here's where the documentation, guides, and tutorials live. That's the whole tour — let's wrap up."
+		},
+		{
+			"id": "onboarding",
+			"title": "Getting started",
+			"intro": "Welcome — I'm your guide. Let's get you from a blank account to your first real creation in about five minutes."
 		}
 	],
 	"stops": [
@@ -98,11 +110,19 @@
 			]
 		},
 		{
+			"id": "search",
+			"path": "/search",
+			"section": "main",
+			"title": "Search",
+			"narration": "Now, Search. One search across every creation type on three.ws — avatars, agents, 3D models, worlds, and coins — with remixable models remixable straight from the results.",
+			"highlight": false
+		},
+		{
 			"id": "agenc-embodied",
 			"path": "/agenc/embodied",
 			"section": "main",
 			"title": "AgenC · Embodied",
-			"narration": "Now, AgenC · Embodied. Watch two AI agents negotiate and coordinate a task, embodied as 3D characters — the AgenC coordination protocol made visible.",
+			"narration": "Let's visit AgenC · Embodied. Watch two AI agents negotiate and coordinate a task, embodied as 3D characters — the AgenC coordination protocol made visible.",
 			"highlight": false
 		},
 		{
@@ -110,7 +130,7 @@
 			"path": "/agenc/room",
 			"section": "main",
 			"title": "AgenC · Task Room",
-			"narration": "Let's visit AgenC · Task Room. A live room where autonomous agents discover open work, bid for it, and settle on-chain — the labor market up close.",
+			"narration": "Over here is AgenC · Task Room. A live room where autonomous agents discover open work, bid for it, and settle on-chain — the labor market up close.",
 			"highlight": false
 		},
 		{
@@ -118,7 +138,7 @@
 			"path": "/autopilot",
 			"section": "main",
 			"title": "Coin Autopilot",
-			"narration": "Over here is Coin Autopilot. A hands-off token cockpit: set the rules — buys, sells, and guardrails — and let your agent run the coin autonomously.",
+			"narration": "Here's Coin Autopilot. A hands-off token cockpit: set the rules — buys, sells, and guardrails — and let your agent run the coin autonomously.",
 			"highlight": false
 		},
 		{
@@ -126,7 +146,7 @@
 			"path": "/diorama",
 			"section": "main",
 			"title": "Diorama",
-			"narration": "Here's Diorama. Speak a little world into being — describe a scene and watch it assemble into an explorable 3D diorama you can walk through, then take it into AR.",
+			"narration": "Meet Diorama. Speak a little world into being — describe a scene and watch it assemble into an explorable 3D diorama you can walk through, then take it into AR.",
 			"highlight": false
 		},
 		{
@@ -134,7 +154,7 @@
 			"path": "/mocap-studio",
 			"section": "main",
 			"title": "Mocap Studio",
-			"narration": "Meet Mocap Studio. Drive a 3D avatar with your webcam — real-time facial motion capture in the browser, no rig and no download.",
+			"narration": "And this — Mocap Studio. Drive a 3D avatar with your webcam — real-time facial motion capture in the browser, no rig and no download.",
 			"highlight": false
 		},
 		{
@@ -142,7 +162,7 @@
 			"path": "/create/video",
 			"section": "main",
 			"title": "Talking Avatar Video",
-			"narration": "And this — Talking Avatar Video. Turn a three.ws avatar into a talking-head video: type a script, pick a voice, and export a lip-synced clip.",
+			"narration": "Check out Talking Avatar Video. Turn a three.ws avatar into a talking-head video: type a script, pick a voice, and export a lip-synced clip.",
 			"highlight": false
 		},
 		{
@@ -150,7 +170,7 @@
 			"path": "/partners",
 			"section": "main",
 			"title": "Partner Ecosystem",
-			"narration": "Check out Partner Ecosystem. three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle. The cloud and AI platforms powering 3D AI agents at enterprise scale.",
+			"narration": "This one is Partner Ecosystem. three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle. The cloud and AI platforms powering 3D AI agents at enterprise scale.",
 			"highlight": false
 		},
 		{
@@ -158,7 +178,7 @@
 			"path": "/alpha-copilot",
 			"section": "main",
 			"title": "Alpha Co-pilot — your agent narrates its own alpha",
-			"narration": "This one is Alpha Co-pilot — your agent narrates its own alpha. Your 3D agent reads a real pump.fun launch in character — grounded in live liquidity, holder, and smart-money data — and speaks its verdict aloud. Fabricated figures are rejected, never voiced; the owner can act on the call only within hard, server-enforced spend limits.",
+			"narration": "Here we have Alpha Co-pilot — your agent narrates its own alpha. Your 3D agent reads a real pump.fun launch in character — grounded in live liquidity, holder, and smart-money data — and speaks its verdict aloud. Fabricated figures are rejected, never voiced; the owner can act on the call only within hard, server-enforced spend limits.",
 			"highlight": false
 		},
 		{
@@ -166,7 +186,7 @@
 			"path": "/world-lines",
 			"section": "main",
 			"title": "World Lines — agent proof-of-presence quests",
-			"narration": "Here we have World Lines — agent proof-of-presence quests. Walk to an AI agent's real-world spot, complete its AR challenge, and earn a cryptographically real, agent-signed proof of presence. Privacy-preserving (only a ~1 km area is ever recorded), independently verifiable, and ownable.",
+			"narration": "Next up, World Lines — agent proof-of-presence quests. Walk to an AI agent's real-world spot, complete its AR challenge, and earn a cryptographically real, agent-signed proof of presence. Privacy-preserving (only a ~1 km area is ever recorded), independently verifiable, and ownable.",
 			"highlight": false
 		},
 		{
@@ -174,7 +194,7 @@
 			"path": "/pitch",
 			"section": "main",
 			"title": "Pitch Deck",
-			"narration": "Next up, Pitch Deck. The three.ws story as a presentable slide deck: one platform that gives any AI a real-time 3D body you can embed anywhere in one line. Arrow-key navigation, a live in-browser 3D character, and one-click export to PDF.",
+			"narration": "This is Pitch Deck. The three.ws story as a presentable slide deck: one platform that gives any AI a real-time 3D body you can embed anywhere in one line. Arrow-key navigation, a live in-browser 3D character, and one-click export to PDF.",
 			"highlight": false
 		},
 		{
@@ -182,7 +202,7 @@
 			"path": "/feed",
 			"section": "main",
 			"title": "Feed",
-			"narration": "This is Feed. Recent activity from the people and agents you follow on three.ws.",
+			"narration": "Take a look at Feed. Live avatars, agents, 3D models, worlds, and launches across three.ws — filter to everyone or just the people you follow.",
 			"highlight": false
 		},
 		{
@@ -190,7 +210,7 @@
 			"path": "/walk",
 			"section": "main",
 			"title": "Walk Anywhere on the Web",
-			"narration": "Take a look at Walk Anywhere on the Web. Your 3D avatar walks anywhere on the web. Live demos across six environments, a Chrome extension, one-tag embeds, and a global distance leaderboard.",
+			"narration": "Now, Walk Anywhere on the Web. Your 3D avatar walks anywhere on the web. Live demos across six environments, a Chrome extension, one-tag embeds, and a global distance leaderboard.",
 			"highlight": false
 		},
 		{
@@ -198,7 +218,7 @@
 			"path": "/animations",
 			"section": "main",
 			"title": "Animation Gallery",
-			"narration": "Now, Animation Gallery. Browse and preview public animations authored by the three.ws community. Apply any clip to your avatar in the Animation Studio.",
+			"narration": "Let's visit Animation Gallery. Browse and preview public animations authored by the three.ws community. Apply any clip to your avatar in the Animation Studio.",
 			"highlight": false
 		},
 		{
@@ -206,7 +226,7 @@
 			"path": "/irl-privacy",
 			"section": "main",
 			"title": "How location works on IRL",
-			"narration": "Let's visit How location works on IRL. Placed agents are private by location: they appear only to people physically standing near them, never on a map or a list. What's shared, what isn't, and how your camera, motion, and location are used.",
+			"narration": "Over here is How location works on IRL. Placed agents are private by location: they appear only to people physically standing near them, never on a map or a list. What's shared, what isn't, and how your camera, motion, and location are used.",
 			"highlight": false
 		},
 		{
@@ -214,7 +234,7 @@
 			"path": "/collection",
 			"section": "main",
 			"title": "My Collection",
-			"narration": "Over here is My Collection. View all the skills and subscriptions you've unlocked on three.ws.",
+			"narration": "Here's My Collection. View all the skills and subscriptions you've unlocked on three.ws.",
 			"highlight": false
 		},
 		{
@@ -222,7 +242,7 @@
 			"path": "/irl",
 			"section": "main",
 			"title": "IRL",
-			"narration": "Here's IRL. Place a 3D avatar in your real environment. Camera AR passthrough, joystick movement, and tap-to-place 3D objects on your floor.",
+			"narration": "Meet IRL. Place a 3D avatar in your real environment. Camera AR passthrough, joystick movement, and tap-to-place 3D objects on your floor.",
 			"highlight": false
 		},
 		{
@@ -230,7 +250,7 @@
 			"path": "/skills",
 			"section": "main",
 			"title": "Skills Marketplace",
-			"narration": "Meet Skills Marketplace. Browse, search, and install agent skills — tool packs, knowledge bases, and capabilities that make AI agents smarter.",
+			"narration": "And this — Skills Marketplace. Browse, search, and install agent skills — tool packs, knowledge bases, and capabilities that make AI agents smarter.",
 			"highlight": false
 		},
 		{
@@ -238,7 +258,7 @@
 			"path": "/characters",
 			"section": "main",
 			"title": "Characters",
-			"narration": "And this — Characters. Discover AI characters on three.ws. Chat, trade, and create.",
+			"narration": "Check out Characters. Discover AI characters on three.ws. Chat, trade, and create.",
 			"highlight": false
 		},
 		{
@@ -246,7 +266,7 @@
 			"path": "/gallery",
 			"section": "main",
 			"title": "Avatar Gallery",
-			"narration": "Check out Avatar Gallery. Every public 3D avatar in the system, browsable as a grid.",
+			"narration": "This one is Avatar Gallery. Every public 3D avatar in the system, browsable as a grid.",
 			"highlight": false
 		},
 		{
@@ -254,7 +274,7 @@
 			"path": "/temporary",
 			"section": "main",
 			"title": "Drive Your Avatar",
-			"narration": "This one is Drive Your Avatar. Drive a 3D avatar around with a joystick or WASD, then toggle the back camera for AR-style passthrough on your phone.",
+			"narration": "Here we have Drive Your Avatar. Drive a 3D avatar around with a joystick or WASD, then toggle the back camera for AR-style passthrough on your phone.",
 			"highlight": false
 		},
 		{
@@ -262,7 +282,7 @@
 			"path": "/community",
 			"section": "main",
 			"title": "Community",
-			"narration": "Here we have Community. Featured creators, builds, and conversations from the three.ws community.",
+			"narration": "Next up, Community. Live platform activity plus where to follow, contribute, and connect with three.ws creators.",
 			"highlight": false
 		},
 		{
@@ -270,7 +290,7 @@
 			"path": "/create-agent",
 			"section": "build",
 			"title": "Create an Agent",
-			"narration": "Next up, Create an Agent. Step-by-step wizard to create a 3D AI agent: name, 3D body, skills, personality, voice, and on-chain identity.",
+			"narration": "This is Create an Agent. Step-by-step wizard to create a 3D AI agent: name, 3D body, skills, personality, voice, and on-chain identity.",
 			"highlight": true,
 			"sectionIntro": "Now the fun part — building. This is where you give your AI a body: a 3D avatar, a brain, a voice, and the studios to shape all of it.",
 			"targets": [
@@ -282,7 +302,7 @@
 			"path": "/forge",
 			"section": "build",
 			"title": "Forge — Text to 3D",
-			"narration": "This is Forge — Text to 3D. Type a prompt — or drop in photos or a sketch — and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.",
+			"narration": "Take a look at Forge — Text to 3D. Type a prompt — or drop in photos or a sketch — and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.",
 			"highlight": true,
 			"targets": [
 				"textarea, input[type=\"text\"], .prompt-input, form"
@@ -293,7 +313,7 @@
 			"path": "/scan",
 			"section": "build",
 			"title": "3D Scanner — Scan Yourself into 3D",
-			"narration": "Take a look at 3D Scanner — Scan Yourself into 3D. Point your camera at your face, hold still, and walk away with a rigged 3D avatar — reconstruction runs in about a minute, free, in your browser.",
+			"narration": "Now, 3D Scanner — Scan Yourself into 3D. Point your camera at your face, hold still, and walk away with a rigged 3D avatar — reconstruction runs in about a minute, free, in your browser.",
 			"highlight": true,
 			"targets": [
 				"button, .scan-start, video, .camera"
@@ -304,7 +324,7 @@
 			"path": "/pose",
 			"section": "build",
 			"title": "Animation Studio",
-			"narration": "Now, Animation Studio. Pose any three.ws avatar or the built-in mannequin with FK/IK, keyframe a timeline, and preview the motion live. Export an animated GLB or clip JSON, save animations to your account, play them back across the platform, and sell them for USDC.",
+			"narration": "Let's visit Animation Studio. Pose any three.ws avatar or the built-in mannequin with FK/IK, keyframe a timeline, and preview the motion live. Export an animated GLB or clip JSON, save animations to your account, play them back across the platform, and sell them for USDC.",
 			"highlight": false,
 			"targets": [
 				"canvas, .timeline, .pose-controls"
@@ -315,7 +335,7 @@
 			"path": "/voice",
 			"section": "build",
 			"title": "Voice Lab",
-			"narration": "Let's visit Voice Lab. Clone your voice from a short recording, then use it for TTS or give it to your agent. Side-by-side comparison of voice models.",
+			"narration": "Over here is Voice Lab. Clone your voice from a short recording, then use it for TTS or give it to your agent. Side-by-side comparison of voice models.",
 			"highlight": false,
 			"targets": [
 				"button, .record, audio"
@@ -326,7 +346,7 @@
 			"path": "/restyle",
 			"section": "build",
 			"title": "Restyle Studio — material presets, AI restyle & variants",
-			"narration": "Over here is Restyle Studio — material presets, AI restyle & variants. Re-skin any 3D model in the browser: apply PBR material presets (chrome, gold, glass, wood…), restyle from a plain-language AI instruction, fan out seeded colorway variants as durable versions, fine-tune metalness and roughness live, and export a validated GLB — non-destructively, with a real revertable version lineage.",
+			"narration": "Here's Restyle Studio — material presets, AI restyle & variants. Re-skin any 3D model in the browser: apply PBR material presets (chrome, gold, glass, wood…), restyle from a plain-language AI instruction, fan out seeded colorway variants as durable versions, fine-tune metalness and roughness live, and export a validated GLB — non-destructively, with a real revertable version lineage.",
 			"highlight": false
 		},
 		{
@@ -334,7 +354,7 @@
 			"path": "/agents-live",
 			"section": "build",
 			"title": "Live Agents",
-			"narration": "Here's Live Agents. Mission control — real-time grid of all AI agents with active screen streams. Watch their screens and avatar feeds live.",
+			"narration": "Meet Live Agents. Mission control — real-time grid of all AI agents with active screen streams. Watch their screens and avatar feeds live.",
 			"highlight": false
 		},
 		{
@@ -342,7 +362,7 @@
 			"path": "/capture",
 			"section": "build",
 			"title": "Scene Capture — Video to 3D Point Cloud",
-			"narration": "Meet Scene Capture — Video to 3D Point Cloud. Turn a phone video of any space into an explorable 3D point cloud. Streaming feed-forward reconstruction (LingBot-Map Geometric Context Transformer) fuses the frames into a coloured .ply, rendered live in the browser with WebGL. Or load a point cloud you already have.",
+			"narration": "And this — Scene Capture — Video to 3D Point Cloud. Turn a phone video of any space into an explorable 3D point cloud. Streaming feed-forward reconstruction (LingBot-Map Geometric Context Transformer) fuses the frames into a coloured .ply, rendered live in the browser with WebGL. Or load a point cloud you already have.",
 			"highlight": false
 		},
 		{
@@ -350,7 +370,7 @@
 			"path": "/avatar-engines",
 			"section": "build",
 			"title": "Avatar Engines Atlas",
-			"narration": "And this — Avatar Engines Atlas. A curated, factual atlas of the open-source and commercial engines that build high-quality and photoreal 3D human avatars — Gaussian-splat heads, single-photo humans, text→avatar generators, and the rigs three.ws already animates. Technique, license, compute, and integration status for each.",
+			"narration": "Check out Avatar Engines Atlas. A curated, factual atlas of the open-source and commercial engines that build high-quality and photoreal 3D human avatars — Gaussian-splat heads, single-photo humans, text→avatar generators, and the rigs three.ws already animates. Technique, license, compute, and integration status for each.",
 			"highlight": false
 		},
 		{
@@ -358,7 +378,7 @@
 			"path": "/integrations",
 			"section": "build",
 			"title": "Integrations",
-			"narration": "Check out Integrations. Drop-in 3D agents, chat widgets, walk companions, and live token embeds for any site. One script tag. Powered by three.ws.",
+			"narration": "This one is Integrations. Drop-in 3D agents, chat widgets, walk companions, and live token embeds for any site. One script tag. Powered by three.ws.",
 			"highlight": false
 		},
 		{
@@ -366,7 +386,7 @@
 			"path": "/splat",
 			"section": "build",
 			"title": "Splat Viewer — Photoreal Gaussian Avatars",
-			"narration": "This one is Splat Viewer — Photoreal Gaussian Avatars. Render Gaussian-splat and radiance-field avatars in the browser — the photoreal output of engines like GaussianAvatars and HumanGaussian. Load a .ply / .splat / .ksplat by URL or upload; decoding runs entirely client-side.",
+			"narration": "Here we have Splat Viewer — Photoreal Gaussian Avatars. Render Gaussian-splat and radiance-field avatars in the browser — the photoreal output of engines like GaussianAvatars and HumanGaussian. Load a .ply / .splat / .ksplat by URL or upload; decoding runs entirely client-side.",
 			"highlight": false
 		},
 		{
@@ -374,7 +394,7 @@
 			"path": "/agora",
 			"section": "build",
 			"title": "Agora — the Commons",
-			"narration": "Here we have Agora — the Commons. A watchable 3D world where AI agent and human citizens live, work, and earn $THREE. Walk the square, inspect any citizen's passport, and watch the economy come alive.",
+			"narration": "Next up, Agora — the Commons. A watchable 3D world where AI agent and human citizens live, work, and earn $THREE. Walk the square, inspect any citizen's passport, and watch the economy come alive.",
 			"highlight": false
 		},
 		{
@@ -382,7 +402,7 @@
 			"path": "/genome",
 			"section": "build",
 			"title": "Agent Genome — breed two agents",
-			"narration": "Next up, Agent Genome — breed two agents. Breed two AI agents into a provably-inherited offspring. The child inherits a recombination of both parents' brain, voice, body, and on-chain skill licenses — each breeding event seed-recorded so the lineage is re-derivable and forgery-detectable, with a verifiable family tree on every parent and child.",
+			"narration": "This is Agent Genome — breed two agents. Breed two AI agents into a provably-inherited offspring. The child inherits a recombination of both parents' brain, voice, body, and on-chain skill licenses — each breeding event seed-recorded so the lineage is re-derivable and forgery-detectable, with a verifiable family tree on every parent and child.",
 			"highlight": false
 		},
 		{
@@ -390,7 +410,7 @@
 			"path": "/ca2x402",
 			"section": "build",
 			"title": "CA → x402",
-			"narration": "This is CA → x402. Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel — price, momentum, and a bullish/bearish signal — for $0.01 USDC, discoverable in the x402 bazaar.",
+			"narration": "Take a look at CA → x402. Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel — price, momentum, and a bullish/bearish signal — for $0.01 USDC, discoverable in the x402 bazaar.",
 			"highlight": false
 		},
 		{
@@ -398,7 +418,7 @@
 			"path": "/cosmos",
 			"section": "build",
 			"title": "Cosmos — Living Worlds",
-			"narration": "Take a look at Cosmos — Living Worlds. Bring your avatar to life: type a world and NVIDIA Cosmos renders a living, photoreal scene that plays behind your 3D avatar. Generate, preview, and download a short cinematic clip.",
+			"narration": "Now, Cosmos — Living Worlds. Bring your avatar to life: type a world and NVIDIA Cosmos renders a living, photoreal scene that plays behind your 3D avatar. Generate, preview, and download a short cinematic clip.",
 			"highlight": false
 		},
 		{
@@ -406,7 +426,7 @@
 			"path": "/forge-nim",
 			"section": "build",
 			"title": "Forge · NIM — Self-Hosted Image to 3D",
-			"narration": "Now, Forge · NIM — Self-Hosted Image to 3D. Drive a self-hosted TRELLIS NIM (nvcr.io/nim/microsoft/trellis) directly: drop a photo, hit /v1/infer, and get the textured GLB back synchronously as base64 — rendered live and downloadable.",
+			"narration": "Let's visit Forge · NIM — Self-Hosted Image to 3D. Drive a self-hosted TRELLIS NIM (nvcr.io/nim/microsoft/trellis) directly: drop a photo, hit /v1/infer, and get the textured GLB back synchronously as base64 — rendered live and downloadable.",
 			"highlight": false
 		},
 		{
@@ -414,7 +434,7 @@
 			"path": "/genesis",
 			"section": "build",
 			"title": "Instant Agent Genesis",
-			"narration": "Let's visit Instant Agent Genesis. A prompt or a selfie becomes a rigged 3D AI agent with its own custodial Solana + EVM wallet and a verifiable on-chain identity — in under a minute, owned by you.",
+			"narration": "Over here is Instant Agent Genesis. A prompt or a selfie becomes a rigged 3D AI agent with its own custodial Solana + EVM wallet and a verifiable on-chain identity — in under a minute, owned by you.",
 			"highlight": false
 		},
 		{
@@ -422,7 +442,7 @@
 			"path": "/forge-spark",
 			"section": "build",
 			"title": "Text → 3D — Nemotron → FLUX → TRELLIS",
-			"narration": "Over here is Text → 3D — Nemotron → FLUX → TRELLIS. Describe an object and watch it become a textured 3D mesh: Nemotron sharpens the prompt, FLUX paints a clean reference, and TRELLIS reconstructs the model — served on NVIDIA NIM, quiet and always on.",
+			"narration": "Here's Text → 3D — Nemotron → FLUX → TRELLIS. Describe an object and watch it become a textured 3D mesh: Nemotron sharpens the prompt, FLUX paints a clean reference, and TRELLIS reconstructs the model — served on NVIDIA NIM, quiet and always on.",
 			"highlight": false
 		},
 		{
@@ -430,7 +450,7 @@
 			"path": "/dad",
 			"section": "build",
 			"title": "Make Dad a 3D Avatar",
-			"narration": "Here's Make Dad a 3D Avatar. Turn one photo of your dad into a recognizable, rigged, animated 3D avatar — it idles, walks, and waves — then share a permalink.",
+			"narration": "Meet Make Dad a 3D Avatar. Turn one photo of your dad into a recognizable, rigged, animated 3D avatar — it idles, walks, and waves — then share a permalink.",
 			"highlight": false
 		},
 		{
@@ -438,7 +458,7 @@
 			"path": "/forge-studio",
 			"section": "build",
 			"title": "Studio — Object + Avatar from text",
-			"narration": "Meet Studio — Object + Avatar from text. One canvas for both text-to-3D pipelines: forge a textured object (GLB) in the Object tab, or describe a character and get a rigged avatar in the Avatar tab.",
+			"narration": "And this — Studio — Object + Avatar from text. One canvas for both text-to-3D pipelines: forge a textured object (GLB) in the Object tab, or describe a character and get a rigged avatar in the Avatar tab.",
 			"highlight": false
 		},
 		{
@@ -446,7 +466,7 @@
 			"path": "/compose",
 			"section": "build",
 			"title": "Scene Composer",
-			"narration": "And this — Scene Composer. Real-time 3D scene composer: forge items from text, attach them to your avatar's skeleton bones, arrange and scale freely, then export your creation or save it as an outfit.",
+			"narration": "Check out Scene Composer. Real-time 3D scene composer: forge items from text, attach them to your avatar's skeleton bones, arrange and scale freely, then export your creation or save it as an outfit.",
 			"highlight": false
 		},
 		{
@@ -454,7 +474,7 @@
 			"path": "/scene",
 			"section": "build",
 			"title": "Scene Studio",
-			"narration": "Check out Scene Studio. Full 3D scene editor in the browser — import GLB models, arrange them with transform gizmos, edit materials and lights, and export complete scenes.",
+			"narration": "This one is Scene Studio. Full 3D scene editor in the browser — import GLB models, arrange them with transform gizmos, edit materials and lights, and export complete scenes.",
 			"highlight": false
 		},
 		{
@@ -462,7 +482,7 @@
 			"path": "/create/prompt",
 			"section": "build",
 			"title": "Describe it to 3D",
-			"narration": "This one is Describe it to 3D. Type a description. About a minute later: a rigged 3D avatar you can animate and download.",
+			"narration": "Here we have Describe it to 3D. Type a description. About a minute later: a rigged 3D avatar you can animate and download.",
 			"highlight": false
 		},
 		{
@@ -470,7 +490,7 @@
 			"path": "/create/selfie",
 			"section": "build",
 			"title": "Selfie to Avatar",
-			"narration": "Here we have Selfie to Avatar. One selfie. About a minute. A rigged 3D avatar that works everywhere.",
+			"narration": "Next up, Selfie to Avatar. One selfie. About a minute. A rigged 3D avatar that works everywhere.",
 			"highlight": false
 		},
 		{
@@ -478,7 +498,7 @@
 			"path": "/studio",
 			"section": "build",
 			"title": "Widget Studio",
-			"narration": "Next up, Widget Studio. Pick an avatar, configure embed options, copy a one-line snippet for your site.",
+			"narration": "This is Widget Studio. Pick an avatar, configure embed options, copy a one-line snippet for your site.",
 			"highlight": false
 		},
 		{
@@ -486,7 +506,7 @@
 			"path": "/hydrate",
 			"section": "build",
 			"title": "Hydrate",
-			"narration": "This is Hydrate. Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills.",
+			"narration": "Take a look at Hydrate. Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills.",
 			"highlight": false
 		},
 		{
@@ -494,7 +514,7 @@
 			"path": "/app",
 			"section": "build",
 			"title": "Viewer",
-			"narration": "Take a look at Viewer. Drag-and-drop glTF/GLB viewer for inspecting 3D models in the browser.",
+			"narration": "Now, Viewer. Drag-and-drop glTF/GLB viewer for inspecting 3D models in the browser.",
 			"highlight": false
 		},
 		{
@@ -502,7 +522,7 @@
 			"path": "/widgets",
 			"section": "build",
 			"title": "Widgets Gallery",
-			"narration": "Now, Widgets Gallery. Pre-built chat, voice, and 3D-avatar widgets you can drop into any page.",
+			"narration": "Let's visit Widgets Gallery. Pre-built chat, voice, and 3D-avatar widgets you can drop into any page.",
 			"highlight": false
 		},
 		{
@@ -510,7 +530,7 @@
 			"path": "/features",
 			"section": "build",
 			"title": "Features",
-			"narration": "Let's visit Features. Full feature overview of the three.ws platform: avatars, agents, on-chain identity, x402 payments, and embedding.",
+			"narration": "Over here is Features. Full feature overview of the three.ws platform: avatars, agents, on-chain identity, x402 payments, and embedding.",
 			"highlight": false
 		},
 		{
@@ -518,7 +538,7 @@
 			"path": "/pay",
 			"section": "crypto",
 			"title": "Pay (x402)",
-			"narration": "Over here is Pay (x402). Pay-per-call gateway: invoke any x402-protocol paid API with a USDC micro-transaction.",
+			"narration": "Here's Pay (x402). Pay-per-call gateway: invoke any x402-protocol paid API with a USDC micro-transaction.",
 			"highlight": true,
 			"sectionIntro": "Here's what makes three.ws agents truly autonomous — they can hold a wallet and move real money. Let me show you the on-chain side: payments, launches, and live market intelligence.",
 			"targets": [
@@ -530,7 +550,7 @@
 			"path": "/x402/studio",
 			"section": "crypto",
 			"title": "x402 Studio — the Stripe of x402",
-			"narration": "Here's x402 Studio — the Stripe of x402. Merchant console to run a paid x402 business: products and pricing, payout and agent wallets, a real USDC send/receive with SNS .sol resolution, a drag-and-drop storefront, an embeddable pay-button builder, charity and round-up giving, CORS and security.",
+			"narration": "Meet x402 Studio — the Stripe of x402. Merchant console to run a paid x402 business: products and pricing, payout and agent wallets, a real USDC send/receive with SNS .sol resolution, a drag-and-drop storefront, an embeddable pay-button builder, charity and round-up giving, CORS and security.",
 			"highlight": true,
 			"targets": [
 				".console, nav, form, button"
@@ -541,7 +561,7 @@
 			"path": "/launch",
 			"section": "crypto",
 			"title": "Launch a Coin",
-			"narration": "Meet Launch a Coin. Mint a coin for your 3D AI agent in one flow — pick an agent, set the name, symbol, and image, then launch on pump.fun straight from your wallet with an optional three.ws-branded vanity mint.",
+			"narration": "And this — Launch a Coin. Mint a coin for your 3D AI agent in one flow — pick an agent, set the name, symbol, and image, then launch on pump.fun straight from your wallet with an optional three.ws-branded vanity mint.",
 			"highlight": true,
 			"targets": [
 				"form, input, button"
@@ -552,7 +572,7 @@
 			"path": "/oracle",
 			"section": "crypto",
 			"title": "Oracle — AI Conviction Engine",
-			"narration": "And this — Oracle — AI Conviction Engine. A fused AI conviction engine for every pump.fun launch: pedigree (who's buying), structure (bundle vs organic), narrative (what story is it riding), and momentum — fused into a single 0–100 conviction score with transparent pillar reasoning.",
+			"narration": "Check out Oracle — AI Conviction Engine. A fused AI conviction engine for every pump.fun launch: pedigree (who's buying), structure (bundle vs organic), narrative (what story is it riding), and momentum — fused into a single 0–100 conviction score with transparent pillar reasoning.",
 			"highlight": false,
 			"targets": [
 				".score, canvas, .conviction, h1"
@@ -563,11 +583,99 @@
 			"path": "/vanity-wallet",
 			"section": "crypto",
 			"title": "Solana Vanity Wallet",
-			"narration": "Check out Solana Vanity Wallet. Grind a Solana address with a custom prefix — entirely in your browser, across your CPU cores.",
+			"narration": "This one is Solana Vanity Wallet. Grind a Solana address with a custom prefix — entirely in your browser, across your CPU cores. Also send sealed wallet gifts: fund a fresh (optionally vanity-ground) wallet and wrap it in an end-to-end sealed claim link only the recipient can open.",
 			"highlight": false,
 			"targets": [
 				"input, button, .grinder"
 			]
+		},
+		{
+			"id": "markets-robinhood",
+			"path": "/markets/robinhood",
+			"section": "crypto",
+			"title": "Robinhood Chain",
+			"narration": "Here we have Robinhood Chain. The 24/7 tokenized-equity board for Robinhood Chain (4663): live Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener across NOXA and The Odyssey launchpads, recent launches, and chain TVL — plus a real wallet-connect buy flow for its coins.",
+			"highlight": false
+		},
+		{
+			"id": "hacks",
+			"path": "/hacks",
+			"section": "crypto",
+			"title": "DeFi Hacks Database",
+			"narration": "Next up, DeFi Hacks Database. A searchable database of every major DeFi exploit — amount stolen, classification, technique, chains affected, whether it was a bridge hack, and the source, with all-time and trailing-12-month totals. Live from DeFiLlama.",
+			"highlight": false
+		},
+		{
+			"id": "yields",
+			"path": "/yields",
+			"section": "crypto",
+			"title": "DeFi Yields Explorer",
+			"narration": "This is DeFi Yields Explorer. Explore roughly 15,000 live DeFi yield pools across every chain and protocol — filter by chain, project, stablecoin exposure, and minimum TVL, sort by APY or TVL, and open any pool to see its full APY and TVL history. Live from DeFiLlama, no key required.",
+			"highlight": false
+		},
+		{
+			"id": "dex-volumes",
+			"path": "/dex-volumes",
+			"section": "crypto",
+			"title": "DEX Volume Leaderboard",
+			"narration": "Take a look at DEX Volume Leaderboard. Every decentralized exchange ranked by trading volume, with 24h and 7d totals, 7-day change, and market share, plus an aggregate volume history chart. Live from DeFiLlama.",
+			"highlight": false
+		},
+		{
+			"id": "fees",
+			"path": "/fees",
+			"section": "crypto",
+			"title": "Protocol Fees & Revenue",
+			"narration": "Now, Protocol Fees & Revenue. Fees paid by users and revenue kept by protocols across all of DeFi, ranked with 24h/7d/30d totals and an aggregate history chart. Toggle between fees and revenue; each protocol links to its detail page. Live from DeFiLlama.",
+			"highlight": false
+		},
+		{
+			"id": "markets-trending",
+			"path": "/markets/trending",
+			"section": "crypto",
+			"title": "Trending Crypto",
+			"narration": "Let's visit Trending Crypto. The most-searched coins, categories, and NFTs on CoinGecko over the last 24 hours — trending rank, price, 24h change, market cap, and volume, each coin and category linking to its detail page. Auto-refreshing.",
+			"highlight": false
+		},
+		{
+			"id": "markets-news",
+			"path": "/markets/news",
+			"section": "crypto",
+			"title": "Crypto News",
+			"narration": "Over here is Crypto News. Live crypto news aggregated natively from 192 publisher feeds in 18 languages — filter by category (Bitcoin, DeFi, security, regulation, and more), pick a language, search headlines, and open any story in a rich reader with summary, key points, sentiment, and related coverage.",
+			"highlight": false
+		},
+		{
+			"id": "markets-archive",
+			"path": "/markets/archive",
+			"section": "crypto",
+			"title": "Crypto News Archive",
+			"narration": "Here's Crypto News Archive. The largest open crypto-news archive: 660,000+ articles from September 2017 to today, refreshed hourly from the live feed, in English and Chinese — searchable by keyword, ticker, source, sentiment, date, and language.",
+			"highlight": false
+		},
+		{
+			"id": "markets-digest",
+			"path": "/markets/digest",
+			"section": "crypto",
+			"title": "Crypto News Digest",
+			"narration": "Meet Crypto News Digest. The day's crypto news grouped into the handful of stories that actually matter — each with a plain-language summary, a market stance, the tickers involved, and every outlet that covered it. Clustered from 38 live publisher feeds.",
+			"highlight": false
+		},
+		{
+			"id": "markets-news-article",
+			"path": "/markets/news/article",
+			"section": "crypto",
+			"title": "Crypto News Reader",
+			"narration": "And this — Crypto News Reader. Rich article reader for crypto news — full story extraction with AI summary, key points, sentiment, detected tickers, and related coverage from across the industry.",
+			"highlight": false
+		},
+		{
+			"id": "markets",
+			"path": "/markets",
+			"section": "crypto",
+			"title": "Markets Hub",
+			"narration": "Check out Markets Hub. The three.ws markets hub — live global stats, the top 100 coins, breaking crypto news from 192 publisher feeds, a 662k-article news archive, and hero links to the full markets toolset.",
+			"highlight": false
 		},
 		{
 			"id": "chains",
@@ -733,8 +841,8 @@
 			"id": "coins",
 			"path": "/coins",
 			"section": "crypto",
-			"title": "Markets — Live Crypto Prices",
-			"narration": "Here's Markets — Live Crypto Prices. Live global cryptocurrency market data: total market cap, dominance, Fear & Greed, and the top coins with prices, 24h/7d moves, and 7d sparklines. Every coin links to a rich /coin/:id detail page with an interactive chart, market stats, related news, and official links.",
+			"title": "Coins — Live Prices & Market Caps",
+			"narration": "Here's Coins — Live Prices & Market Caps. Live global cryptocurrency market data: total market cap, dominance, Fear & Greed, and the top coins with prices, 24h/7d moves, and 7d sparklines. Every coin links to a rich /coin/:id detail page with an interactive chart, market stats, related news, and official links.",
 			"highlight": false
 		},
 		{
@@ -782,7 +890,7 @@
 			"path": "/launcher",
 			"section": "crypto",
 			"title": "Memetic Launcher",
-			"narration": "Next up, Memetic Launcher. Design your personal autonomous coin launcher — set your mode (trend, meme, hybrid, random), pick trend sources, tune your cadence, and preview exactly what your agents would mint next. Preview mode: no SOL moves until you fund a live launch.",
+			"narration": "Next up, Memetic Launcher. Your personal autonomous coin launcher — set your mode (trend, meme, hybrid, random), pick trend sources, tune your cadence, preview what your agents would mint, then go live: real pump.fun launches on your schedule, self-funded from your own agents' wallets under a hard daily SOL cap.",
 			"highlight": false
 		},
 		{
@@ -1271,19 +1379,27 @@
 			"highlight": true
 		},
 		{
+			"id": "rankings",
+			"path": "/rankings",
+			"section": "labs",
+			"title": "Rankings",
+			"narration": "Next up, Rankings. The cross-surface three.ws leaderboard — creators ranked by real creations, remixes received, coin launches, followers, and distance walked. Track your streak and earn badges for showing up.",
+			"highlight": true
+		},
+		{
 			"id": "viewer",
 			"path": "/viewer",
 			"section": "labs",
 			"title": "glTF / GLB Viewer",
-			"narration": "Next up, glTF / GLB Viewer. Paste any public glTF/GLB URL and preview it inline — the lightweight, unauthenticated model viewer every 3D Studio tool's shared asset link opens.",
-			"highlight": true
+			"narration": "This is glTF / GLB Viewer. Paste any public glTF/GLB URL and preview it inline — the lightweight, unauthenticated model viewer every 3D Studio tool's shared asset link opens.",
+			"highlight": false
 		},
 		{
 			"id": "spatial-mcp",
 			"path": "/spatial-mcp",
 			"section": "labs",
 			"title": "Spatial MCP — reference renderer",
-			"narration": "This is Spatial MCP — reference renderer. The open standard for returning a live, interactive 3D scene as a first-class MCP tool result, with a framework-free reference renderer that displays any conformant artifact — including ones transformed from other tools.",
+			"narration": "Take a look at Spatial MCP — reference renderer. The open standard for returning a live, interactive 3D scene as a first-class MCP tool result, with a framework-free reference renderer that displays any conformant artifact — including ones transformed from other tools.",
 			"highlight": false
 		},
 		{
@@ -1291,7 +1407,7 @@
 			"path": "/walk-leaderboard",
 			"section": "labs",
 			"title": "Walk Leaderboard",
-			"narration": "Take a look at Walk Leaderboard. Global leaderboard for the walking avatar — distance walked, sites visited, and time, ranked daily, weekly, and all-time.",
+			"narration": "Now, Walk Leaderboard. Global leaderboard for the walking avatar — distance walked, sites visited, and time, ranked daily, weekly, and all-time.",
 			"highlight": false
 		},
 		{
@@ -1299,7 +1415,7 @@
 			"path": "/playground",
 			"section": "labs",
 			"title": "Playground",
-			"narration": "Now, Playground. Sandbox for experimenting with agents, prompts, and 3D scenes.",
+			"narration": "Let's visit Playground. Sandbox for experimenting with agents, prompts, and 3D scenes.",
 			"highlight": false
 		},
 		{
@@ -1307,7 +1423,7 @@
 			"path": "/launchpad",
 			"section": "labs",
 			"title": "Launchpad Studio",
-			"narration": "Let's visit Launchpad Studio. Build a hosted 3D launchpad, token page, concierge, or showroom on a three.ws subdomain.",
+			"narration": "Over here is Launchpad Studio. Build a hosted 3D launchpad, token page, concierge, or showroom on a three.ws subdomain.",
 			"highlight": false
 		},
 		{
@@ -1315,7 +1431,7 @@
 			"path": "/lipsync/mic",
 			"section": "labs",
 			"title": "Lipsync (Mic)",
-			"narration": "Over here is Lipsync (Mic). Feed live mic audio through the viseme analyser and watch the avatar's mouth track your voice in real time.",
+			"narration": "Here's Lipsync (Mic). Feed live mic audio through the viseme analyser and watch the avatar's mouth track your voice in real time.",
 			"highlight": false
 		},
 		{
@@ -1323,7 +1439,7 @@
 			"path": "/lipsync",
 			"section": "labs",
 			"title": "Lipsync (TTS)",
-			"narration": "Here's Lipsync (TTS). Type text, stream it through the avatar's voice, and the mouth animates in real time via wawa-lipsync viseme detection.",
+			"narration": "Meet Lipsync (TTS). Type text, stream it through the avatar's voice, and the mouth animates in real time via wawa-lipsync viseme detection.",
 			"highlight": false
 		},
 		{
@@ -1331,7 +1447,7 @@
 			"path": "/chat",
 			"section": "agent-tools",
 			"title": "Chat",
-			"narration": "Meet Chat. Talk to your agent. Voice, text, and tool-use in one interface.",
+			"narration": "And this — Chat. Talk to your agent. Voice, text, and tool-use in one interface.",
 			"highlight": true,
 			"sectionIntro": "Once you've built agents, this is where you talk to them, manage them, and check their reputation.",
 			"targets": [
@@ -1343,7 +1459,7 @@
 			"path": "/agents",
 			"section": "agent-tools",
 			"title": "Agents Index",
-			"narration": "And this — Agents Index. Browse every registered agent on three.ws.",
+			"narration": "Check out Agents Index. Browse every registered agent on three.ws.",
 			"highlight": true
 		},
 		{
@@ -1351,7 +1467,7 @@
 			"path": "/reputation",
 			"section": "agent-tools",
 			"title": "Reputation Explorer",
-			"narration": "Check out Reputation Explorer. Inspect on-chain reputation scores and attestations for any agent.",
+			"narration": "This one is Reputation Explorer. Inspect on-chain reputation scores and attestations for any agent.",
 			"highlight": true
 		},
 		{
@@ -1359,15 +1475,7 @@
 			"path": "/agent-identities",
 			"section": "agent-tools",
 			"title": "Agent Identity Studio — 3D avatars for AI agents",
-			"narration": "This one is Agent Identity Studio — 3D avatars for AI agents. Every AI agent deserves a face. A brand brief becomes a rigged 3D avatar plus posed studio renders — see the demo identities generated end-to-end by the pipeline.",
-			"highlight": false
-		},
-		{
-			"id": "agent",
-			"path": "/agent",
-			"section": "agent-tools",
-			"title": "Agent Home",
-			"narration": "Here we have Agent Home. Default landing for an agent instance — chat, embed, and remix actions.",
+			"narration": "Here we have Agent Identity Studio — 3D avatars for AI agents. Every AI agent deserves a face. A brand brief becomes a rigged 3D avatar plus posed studio renders — see the demo identities generated end-to-end by the pipeline.",
 			"highlight": false
 		},
 		{
@@ -1453,6 +1561,73 @@
 			"title": "Glossary",
 			"narration": "Check out Glossary. Plain-English definitions for the crypto and agent terms used across three.ws — no jargon required to get started.",
 			"highlight": false
+		},
+		{
+			"id": "onboarding-start",
+			"path": "/start",
+			"title": "Welcome to three.ws",
+			"narration": "Welcome — let's get you set up. In the next few minutes you'll make a 3D avatar, put it in a world, see it tied to real $THREE market data, and land on your own profile with your first creation on it. First stop: your avatar.",
+			"highlight": true,
+			"targets": [
+				".wizard, .step, main h1, main"
+			],
+			"section": "onboarding",
+			"sectionIntro": "Welcome — I'm your guide. Let's get you from a blank account to your first real creation in about five minutes."
+		},
+		{
+			"id": "onboarding-avatar",
+			"path": "/create/selfie",
+			"title": "Make your avatar",
+			"narration": "This is where you build a body. Take a selfie or describe one, and three.ws generates a rigged, animation-ready 3D avatar you own — this becomes your creator identity across the whole platform.",
+			"highlight": true,
+			"targets": [
+				".camera, video, .capture, button, main"
+			],
+			"section": "onboarding"
+		},
+		{
+			"id": "onboarding-world",
+			"path": "/diorama",
+			"title": "Build a world",
+			"narration": "Nice — you've got an avatar. Now give it somewhere to live. Diorama turns one sentence into a full 3D world and drops your avatar into it. This is your first world, saved to your account.",
+			"highlight": true,
+			"targets": [
+				"canvas, .diorama-canvas, main"
+			],
+			"section": "onboarding"
+		},
+		{
+			"id": "onboarding-markets",
+			"path": "/markets",
+			"title": "Real markets, live",
+			"narration": "Your creation isn't sitting in a vacuum — three.ws is wired straight into real on-chain markets. This is live $THREE price and volume, the same rails every coin on the platform launches through.",
+			"highlight": true,
+			"targets": [
+				".market-card, .price, canvas, main"
+			],
+			"section": "onboarding"
+		},
+		{
+			"id": "onboarding-launch",
+			"path": "/create-agent",
+			"title": "Launch a coin (optional)",
+			"narration": "Optional step — skip it if you're not ready. If you want to take your avatar on-chain, this is where you give it a brain and, if you choose, launch its own coin. You can always come back to this later from your profile.",
+			"highlight": false,
+			"targets": [
+				"form, .wizard, .step, button, main"
+			],
+			"section": "onboarding"
+		},
+		{
+			"id": "onboarding-profile",
+			"path": "/profile",
+			"title": "Your profile",
+			"narration": "And here's home base — your creator profile. Your avatar and your first world are already listed here, plus any streak or badge you've started earning. Everything you make from now on shows up right here. That's the whole loop — go make something.",
+			"highlight": true,
+			"targets": [
+				".creations, .portfolio, main h1, main"
+			],
+			"section": "onboarding"
 		}
 	]
 }

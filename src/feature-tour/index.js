@@ -57,7 +57,12 @@ export function createFeatureTour() {
 			if (param === 'start') {
 				const mode = params.get('mode');
 				if (mode === 'explore' || mode === 'platformer') startExplore(mode === 'platformer' ? 'platformer' : 'stroll');
-				else ensure().start(params.get('track') === 'quick' ? 'quick' : 'full');
+				else {
+					const requestedTrack = params.get('track');
+					const track =
+						requestedTrack === 'quick' || requestedTrack === 'onboarding' ? requestedTrack : 'full';
+					ensure().start(track);
+				}
 			} else if (param === '0') {
 				control.exit();
 			} else if (param === '1' || readState().active) {

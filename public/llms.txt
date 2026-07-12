@@ -103,6 +103,7 @@ Experimental features actively shipping. Expect fast iteration.
 - [Spatial MCP — reference renderer](https://three.ws/spatial-mcp): The open standard for returning a live, interactive 3D scene as a first-class MCP tool result, with a framework-free reference renderer that displays any conformant artifact — including ones transformed from other tools.
 - [Playground](https://three.ws/playground): Sandbox for experimenting with agents, prompts, and 3D scenes.
 - [Labs Showcase](https://three.ws/labs): A curated gallery of three.ws's most powerful — and most hidden — features. Find and try things you didn't know existed.
+- [Rankings](https://three.ws/rankings): The cross-surface three.ws leaderboard — creators ranked by real creations, remixes received, coin launches, followers, and distance walked. Track your streak and earn badges for showing up.
 - [Walk Leaderboard](https://three.ws/walk-leaderboard): Global leaderboard for the walking avatar — distance walked, sites visited, and time, ranked daily, weekly, and all-time.
 
 ## Crypto

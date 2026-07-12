@@ -241,6 +241,11 @@
 
 		var foot = el('div', 'twg-foot');
 		foot.appendChild(el('span', 'twg-foot-note', '~5 min · no wallet needed'));
+		var replay = el('button', 'twg-link', '🎬 Replay guided tour');
+		replay.type = 'button';
+		replay.title = 'Walk avatar → world → markets → profile again, with a 3D guide';
+		replay.addEventListener('click', replayOnboardingTour);
+		foot.appendChild(replay);
 		var dismiss = el('button', 'twg-link', 'Hide this');
 		dismiss.type = 'button';
 		dismiss.addEventListener('click', hideForever);
@@ -418,6 +423,49 @@
 		overlay.addEventListener('click', function (e) { if (e.target === overlay) close(); });
 	}
 
+	// ── Onboarding guided tour (src/feature-tour/*, section: "onboarding") ──────
+	// A short, self-driving 3D-guide walkthrough chaining avatar → world →
+	// markets → profile, distinct from this checklist. Auto-offered once to a
+	// genuinely new, signed-in account (zero creations, server-confirmed via
+	// GET /api/me `show_onboarding_tour`) landing on a top-level entry route;
+	// always reachable afterward via the "Replay guided tour" link above.
+	var ONBOARDING_TOUR_ROUTES = ['/', '/home', '/dashboard', '/start'];
+	var ONBOARDING_TOUR_URL = '/start?tour=start&track=onboarding';
+
+	function isTourAlreadyActive() {
+		try {
+			var raw = sessionStorage.getItem('tws:tour:state');
+			return !!(raw && JSON.parse(raw).active === true);
+		} catch (_) { return false; }
+	}
+
+	function isOnboardingEligibleRoute() {
+		var p = currentPath();
+		for (var i = 0; i < ONBOARDING_TOUR_ROUTES.length; i++) {
+			if (p === ONBOARDING_TOUR_ROUTES[i]) return true;
+		}
+		return false;
+	}
+
+	function replayOnboardingTour() {
+		location.href = ONBOARDING_TOUR_URL;
+	}
+
+	// Best-effort, silent on any failure (signed out → 401, offline, etc.) —
+	// this must never block or error the page it runs on.
+	function maybeOfferOnboardingTour() {
+		if (hidden || !isAuthed() || isTourAlreadyActive() || !isOnboardingEligibleRoute()) return;
+		if (new URLSearchParams(location.search).get('tour')) return; // a tour deep-link is already in flight
+		fetch('/api/me', { credentials: 'include' })
+			.then(function (res) { return res.ok ? res.json() : null; })
+			.then(function (data) {
+				if (data && data.user && data.user.show_onboarding_tour) {
+					location.href = ONBOARDING_TOUR_URL;
+				}
+			})
+			.catch(function () {});
+	}
+
 	// Pull in the shared corner-stack wherever this widget runs — some pages
 	// include us directly without nav.js (which normally loads it). The stack
 	// adopts our tagged orphan when it initialises, so order doesn't matter.
@@ -464,6 +512,7 @@
 		close: collapse,
 		progress: function () { return Object.assign({}, progress); },
 		isComplete: allCoreDone,
+		replayOnboardingTour: replayOnboardingTour,
 	};
 
 	// React to precise completion signals fired by other modules.
@@ -479,6 +528,7 @@
 		if (!hidden && !isExcludedRoute()) {
 			mount();
 		}
+		maybeOfferOnboardingTour();
 	}
 
 	if (document.readyState === 'loading') {

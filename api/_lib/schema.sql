@@ -47,6 +47,12 @@ alter table users add column if not exists banner_url text;
 alter table users add column if not exists account_tier text
     check (account_tier is null or account_tier in ('beta', 'pro', 'three-dimensional'));
 
+-- Onboarding guided-tour state (api/_lib/migrations/20260712030000_onboarding_tour_state.sql).
+-- seen_at = offered/started at least once (auto-start suppressed after this);
+-- completed_at = finished the onboarding track end to end.
+alter table users add column if not exists onboarding_tour_seen_at timestamptz;
+alter table users add column if not exists onboarding_tour_completed_at timestamptz;
+
 -- ── user_follows — the social graph ──────────────────────────────────────────
 -- A directed follow edge: follower_id follows following_id. Composite PK makes
 -- a follow idempotent (one edge per pair) and the toggle a single upsert/delete.

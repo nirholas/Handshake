@@ -110,16 +110,30 @@ export function markCompleted() {
 
 // ── Playlists ────────────────────────────────────────────────────────────────
 // A track is a view over the curriculum: an ordered list of absolute stop
-// indices to actually visit. 'full' is every stop; 'quick' is the highlighted
-// heroes. Pure (no storage) so the sequencing logic and tests can build it
-// freely. Always non-empty — an unknown track or a curriculum with no highlights
-// falls back to the full list so the tour can never strand itself with nothing
-// to play.
+// indices to actually visit. 'full' is every stop in the general site tour
+// (section !== 'onboarding' — see below); 'quick' is 'full''s highlighted
+// heroes; 'onboarding' is the short, hand-authored new-account walkthrough
+// (section === 'onboarding', built by scripts/build-tour.mjs's
+// ONBOARDING_STOPS) — its own stops are excluded from 'full'/'quick' so the
+// two curricula never bleed into each other on the same visit. Pure (no
+// storage) so the sequencing logic and tests can build it freely. Always
+// non-empty for a curriculum that actually has matching stops — an unknown
+// track or a curriculum with no highlights falls back to the full
+// non-onboarding list so the tour can never strand itself with nothing to play.
 export function buildPlaylist(curriculum, track = 'full') {
 	const all = curriculum.stops.map((_, i) => i);
-	if (track !== 'quick') return all;
-	const quick = all.filter((i) => curriculum.stops[i].highlight);
-	return quick.length ? quick : all;
+	const isOnboardingStop = (i) => curriculum.stops[i].section === 'onboarding';
+
+	if (track === 'onboarding') {
+		const onboarding = all.filter(isOnboardingStop);
+		return onboarding.length ? onboarding : all;
+	}
+
+	const general = all.filter((i) => !isOnboardingStop(i));
+	const base = general.length ? general : all;
+	if (track !== 'quick') return base;
+	const quick = base.filter((i) => curriculum.stops[i].highlight);
+	return quick.length ? quick : base;
 }
 
 export function trackMeta(curriculum, track = 'full') {
@@ -127,9 +141,16 @@ export function trackMeta(curriculum, track = 'full') {
 }
 
 // Index of the first stop on a given path, or -1. Used to snap the tour back
-// onto the route when a visitor navigates by hand.
-export function stopIndexForPath(curriculum, pathname = location.pathname) {
+// onto the route when a visitor navigates by hand. When `playlist` (an array
+// of absolute stop indices, as returned by buildPlaylist) is given, only
+// those stops are considered — otherwise the onboarding curriculum and the
+// general site tour can share a path (e.g. /markets, /profile) and a
+// mid-track hand-navigation could snap onto the wrong track's stop.
+export function stopIndexForPath(curriculum, pathname = location.pathname, playlist = null) {
 	const target = normalizePath(pathname);
+	if (playlist) {
+		return playlist.find((i) => normalizePath(curriculum.stops[i]?.path) === target) ?? -1;
+	}
 	return curriculum.stops.findIndex((s) => normalizePath(s.path) === target);
 }
 

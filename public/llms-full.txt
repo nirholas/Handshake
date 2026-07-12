@@ -536,6 +536,12 @@ URL: https://three.ws/labs
 
 A curated gallery of three.ws's most powerful — and most hidden — features. Find and try things you didn't know existed.
 
+### Rankings
+
+URL: https://three.ws/rankings
+
+The cross-surface three.ws leaderboard — creators ranked by real creations, remixes received, coin launches, followers, and distance walked. Track your streak and earn badges for showing up.
+
 ### Walk Leaderboard
 
 URL: https://three.ws/walk-leaderboard

@@ -63,6 +63,14 @@
 			<description>A new Rankings board at /rankings ranks creators across every surface at once — creations forged, remixes received, coins launched, followers, and distance walked while signed in — with your own rank pinned even if you're off the visible page. Showing up daily (a login, a finished creation, or a walk session) now builds a real streak, shown on your profile and on the Rankings page. Four badges are genuinely earnable and persist once unlocked: First Creation, Remixed, 7-Day Streak, and a daily-refreshed Top 10 placement per metric.</description>
 		</item>
 		<item>
+			<title>A guided tour for your first five minutes on three.ws</title>
+			<link>https://three.ws/start</link>
+			<guid isPermaLink="false">2026-07-12:A guided tour for your first five minutes on three.ws</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>New accounts now get a real, 3D-guided walkthrough — starting on /start — that chains together everything the platform can do: make an avatar, put it in a world, see it tied to live $THREE market data on /markets, an optional stop to launch your own coin (clearly skippable), and a landing on your own new profile showing what you just made. It's auto-offered once to a genuinely new, signed-in account with zero creations, then stays reachable anytime via &quot;Replay guided tour&quot; in the Getting started checklist (bottom-right on most pages). Every stop is the platform's real, already-shipped flow — nothing built just for the tour.</description>
+		</item>
+		<item>
 			<title>Agent discovery fixed: six paid endpoints were invisible to x402 scanners</title>
 			<link>https://three.ws/openapi.json</link>
 			<guid isPermaLink="false">2026-07-12:Agent discovery fixed: six paid endpoints were invisible to x402 scanners</guid>
