@@ -89,10 +89,26 @@ export function hashEntry(prevHash, r) {
 		r.lamports == null ? '' : String(r.lamports),
 		r.tx_signature || '',
 		r.reason || '',
-		r.master_sol_after == null ? '' : String(r.master_sol_after),
+		// master_sol_after is numeric(20,9). Canonicalize to a fixed 9-decimal
+		// string so the WRITE side (which hashes the JS number, e.g. 0.30223827)
+		// and the VERIFY side (which reads the DB's scale-9 string "0.302238270")
+		// produce the SAME hash. Before this, `String(value)` dropped the JS
+		// number's trailing zeros while Postgres kept them, so every row's content
+		// hash mismatched — verifyChain broke at the first row and stopped, masking
+		// it as a single "tamper at seq 5". Number().toFixed(9) is stable for both
+		// a JS number and the DB decimal string.
+		canonicalSol9(r.master_sol_after),
 		prevHash || '',
 	].join('|');
 	return sha256hex(payload);
+}
+
+// Fixed 9-decimal canonical form for a SOL amount that round-trips a JS number
+// and a Postgres numeric(_,9) string to the same string. Empty for null.
+function canonicalSol9(v) {
+	if (v == null || v === '') return '';
+	const n = Number(v);
+	return Number.isFinite(n) ? n.toFixed(9) : String(v);
 }
 
 function round9(n) {
