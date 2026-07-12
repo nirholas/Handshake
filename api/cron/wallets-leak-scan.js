@@ -137,7 +137,29 @@ async function scanOne(conn, PublicKey, wallet, name, allowed, runId) {
 
 	// newest → oldest; process oldest→newest so the cursor advances to the newest.
 	const signatures = sigInfos.map((s) => s.signature);
-	const parsed = await conn.getParsedTransactions(signatures, { maxSupportedTransactionVersion: 0, commitment: 'confirmed' });
+	// Fetch in chunks with a per-signature fallback. A single batch over ALL
+	// signatures 500s against RPC providers that cap `getTransaction` batches
+	// (the public node allows 1), which used to abort the whole scan and — worse —
+	// surface as an unhandled 5xx. On any batch failure, drop to one-at-a-time so
+	// one restrictive provider can't blind the leak scanner. Mirrors
+	// x402-ring-leak-scan's resilient fetch.
+	const PARSED_BATCH = 25;
+	const parsed = [];
+	for (let i = 0; i < signatures.length; i += PARSED_BATCH) {
+		const chunk = signatures.slice(i, i + PARSED_BATCH);
+		try {
+			const got = await conn.getParsedTransactions(chunk, { maxSupportedTransactionVersion: 0, commitment: 'confirmed' });
+			parsed.push(...got);
+		} catch {
+			for (const s of chunk) {
+				try {
+					parsed.push(await conn.getParsedTransaction(s, { maxSupportedTransactionVersion: 0, commitment: 'confirmed' }));
+				} catch {
+					parsed.push(null); // unreadable — skipped below, retried next run
+				}
+			}
+		}
+	}
 
 	for (let i = signatures.length - 1; i >= 0; i--) {
 		const tx = parsed[i];

@@ -28,6 +28,7 @@ import { sendOpsAlert } from '../_lib/alerts.js';
 import { withDbRetry } from '../_lib/db-retry.js';
 import { sql } from '../_lib/db.js';
 import { ECONOMY_MASTER_ADDRESS, RESERVE_SOL } from '../_lib/economy-master.js';
+import { SOLANA_SIGNERS, resolveSignerPubkey } from '../_lib/solana-signers.js';
 import { verifyChain } from '../_lib/economy-ledger.js';
 import { getSolBalance } from '../_lib/avatar-wallet.js';
 
@@ -128,6 +129,45 @@ function masterNetDebit(tx, masterPubkey) {
 	return pre - post; // lamports lost
 }
 
+// Accounts (other than the master) that GAINED lamports in this tx — the SOL
+// recipients. Used to tell an internal topup (recipient ∈ controlled registry)
+// from an actual leak (recipient external). Exported for tests.
+export function masterOutboundRecipients(tx, masterPubkey) {
+	const msg = tx?.transaction?.message;
+	const meta = tx?.meta;
+	if (!msg || !meta || !Array.isArray(meta.preBalances) || !Array.isArray(meta.postBalances)) return [];
+	const keys = (msg.accountKeys || []).map((k) => (typeof k === 'string' ? k : k?.pubkey?.toString?.() || k?.toString?.()));
+	const out = [];
+	for (let i = 0; i < keys.length; i++) {
+		if (keys[i] === masterPubkey) continue;
+		const d = meta.postBalances[i] - meta.preBalances[i];
+		if (typeof d === 'number' && d > 0) out.push(keys[i]);
+	}
+	return out;
+}
+
+// The owner-controlled wallet set: every resolvable SOLANA_SIGNERS pubkey plus
+// the master. The master ONLY ever tops up registry members (enforced by
+// filterToRegistry in economy-master.js), so an outbound whose recipients are
+// all in this set is an internal topup — expected and benign, even if the ledger
+// write lagged. An outbound to anything OUTSIDE this set is the real breach.
+async function controlledPubkeys(masterPubkey) {
+	const set = new Set([masterPubkey]);
+	await Promise.all(
+		SOLANA_SIGNERS.map(async (spec) => {
+			try {
+				// resolveSignerPubkey → { configured, pubkey, decodeError }. Only a
+				// configured signer with a real pubkey counts toward the controlled set.
+				const r = await resolveSignerPubkey(spec);
+				if (r?.pubkey) set.add(r.pubkey);
+			} catch {
+				/* unresolvable signer (missing secret) — skip */
+			}
+		}),
+	);
+	return set;
+}
+
 async function reconcileMaster(conn, masterPubkey, runId) {
 	const findings = [];
 	const summary = { master: masterPubkey, scanned_onchain: 0, unrecorded_outbound: 0, ledger_transfers_checked: 0, missing_onchain: 0, failed_onchain: 0 };
@@ -156,8 +196,13 @@ async function reconcileMaster(conn, masterPubkey, runId) {
 		);
 	}
 
-	// 2. BREACH — every on-chain outbound must be in the ledger.
+	// 2. BREACH — every on-chain outbound must be in the ledger. But a topup to
+	// one of our OWN registry wallets is an internal movement, not a leak: no
+	// funds left the controlled set, so it must never fire a "rotate the key"
+	// alarm just because the ledger write lagged. Only outbound to an EXTERNAL
+	// address is a real breach.
 	const recorded = await ledgerSignatures(masterPubkey);
+	const controlled = await controlledPubkeys(masterPubkey);
 	let sigInfos = [];
 	try {
 		const { PublicKey } = await import('@solana/web3.js');
@@ -178,22 +223,39 @@ async function reconcileMaster(conn, masterPubkey, runId) {
 		}
 		const debitLamports = tx ? masterNetDebit(tx, masterPubkey) : null;
 		if (debitLamports == null) continue;
-		if (debitLamports > OUTBOUND_FEE_FLOOR_SOL * LAMPORTS_PER_SOL) {
-			// An outbound debit we never recorded. This is the breach signal.
-			summary.unrecorded_outbound += 1;
-			findings.push({ kind: 'unrecorded_outbound', sig, sol: debitLamports / LAMPORTS_PER_SOL });
+		if (debitLamports <= OUTBOUND_FEE_FLOOR_SOL * LAMPORTS_PER_SOL) continue; // dust / fee only
+
+		const recipients = masterOutboundRecipients(tx, masterPubkey);
+		const external = recipients.filter((r) => !controlled.has(r));
+		const solStr = (debitLamports / LAMPORTS_PER_SOL).toFixed(6);
+
+		if (recipients.length > 0 && external.length === 0) {
+			// Internal topup to registry wallet(s) whose ledger write lagged. Benign —
+			// record the recording gap (reconciled), no compromise alert.
+			summary.unbooked_internal_topup = (summary.unbooked_internal_topup || 0) + 1;
 			await upsertVerdict({
 				source: 'economy_master_onchain', sourceRef: sig, txSig: sig, network: 'mainnet',
-				amountAtomic: debitLamports, dbStatus: 'not_in_ledger', chainStatus: 'unrecorded_outbound',
-				reconciled: false, discrepancy: `master debited ${(debitLamports / LAMPORTS_PER_SOL).toFixed(6)} SOL with no ledger row`,
-				detail: { blockTime: info.blockTime ?? null, slot: info.slot ?? null }, runId,
+				amountAtomic: debitLamports, dbStatus: 'unbooked_internal_topup', chainStatus: 'internal_topup',
+				reconciled: true, discrepancy: `internal topup of ${solStr} SOL to registry wallet(s) not booked in ledger`,
+				detail: { blockTime: info.blockTime ?? null, slot: info.slot ?? null, recipients }, runId,
 			});
-			await sendOpsAlert(
-				`🚨 Unrecorded SOL leaving the economy master`,
-				`${(debitLamports / LAMPORTS_PER_SOL).toFixed(6)} SOL left ${masterPubkey} in tx ${sig} with NO ledger entry. If the treasury-topup cron did not make this transfer, the key is compromised — rotate ECONOMY_MASTER_SECRET_BASE58 and move remaining funds now. https://solscan.io/tx/${sig}`,
-				{ signature: `economy-breach:${sig}` },
-			);
+			continue;
 		}
+
+		// Recipient outside the controlled set (or unresolvable) — the real breach.
+		summary.unrecorded_outbound += 1;
+		findings.push({ kind: 'unrecorded_outbound', sig, sol: debitLamports / LAMPORTS_PER_SOL, external });
+		await upsertVerdict({
+			source: 'economy_master_onchain', sourceRef: sig, txSig: sig, network: 'mainnet',
+			amountAtomic: debitLamports, dbStatus: 'not_in_ledger', chainStatus: 'unrecorded_outbound',
+			reconciled: false, discrepancy: `master debited ${solStr} SOL to external ${external.join(', ') || 'unknown'} with no ledger row`,
+			detail: { blockTime: info.blockTime ?? null, slot: info.slot ?? null, external }, runId,
+		});
+		await sendOpsAlert(
+			`🚨 Unrecorded SOL leaving the economy master`,
+			`${solStr} SOL left ${masterPubkey} in tx ${sig} to an address OUTSIDE the controlled set (${external.join(', ') || 'unknown'}) with NO ledger entry. If the treasury-topup cron did not make this transfer, the key is compromised — rotate ECONOMY_MASTER_SECRET_BASE58 and move remaining funds now. https://solscan.io/tx/${sig}`,
+			{ signature: `economy-breach:${sig}` },
+		);
 	}
 
 	// 3. INTEGRITY — every recorded transfer must exist + succeed on-chain.
