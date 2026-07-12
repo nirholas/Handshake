@@ -44,8 +44,14 @@ function num(envName, dflt) {
 	return Number.isFinite(v) && v >= 0 ? v : dflt;
 }
 
+// The floor exists to cover the master's OWN rent-exemption (~0.00089 SOL for a
+// System account) and transaction fees (~0.000005 SOL each) — not to gate the
+// master behind an arbitrary balance. 0.02 SOL covers rent-exemption plus
+// thousands of fee-only transactions, so the guard stays real even when the
+// master is funded thin: a 0.3 SOL master should be able to spend ~0.28 of it,
+// not sit fully locked behind a 1 SOL floor sized for a much larger treasury.
 /** Never spend the master below this — its own working reserve + rent + fees. */
-export const RESERVE_SOL = num('ECONOMY_MASTER_RESERVE_SOL', 1);
+export const RESERVE_SOL = num('ECONOMY_MASTER_RESERVE_SOL', 0.02);
 /** Most SOL the master will move to any single engine in one sweep. */
 export const PER_TOPUP_MAX_SOL = num('ECONOMY_MASTER_PER_TOPUP_MAX_SOL', 0.5);
 /** Most SOL the master will move across all engines in one sweep. */
@@ -104,11 +110,16 @@ export function planTopUps(masterSol, targets) {
 			skipped.push({ name: t.name, reason: 'below_dust_threshold' });
 			continue;
 		}
-		const want = Math.min(deficit, PER_TOPUP_MAX_SOL);
-		if (total + want > runCap + 1e-9) {
+		const remaining = round(runCap - total);
+		if (remaining < MIN_TOPUP_SOL) {
 			skipped.push({ name: t.name, reason: 'run_cap_reached' });
 			continue;
 		}
+		// Clamp to whatever's left in the run cap rather than skipping the engine
+		// outright when its full want exceeds it — a thin budget should still fund
+		// the neediest engines as far as it goes, not sit unspent because the first
+		// engine's ask was bigger than the whole cap.
+		const want = round(Math.min(deficit, PER_TOPUP_MAX_SOL, remaining));
 		plan.push({ name: t.name, pubkey: t.pubkey, sol: want });
 		total = round(total + want);
 	}

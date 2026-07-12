@@ -11,20 +11,32 @@ import {
 	RUN_CAP_SOL,
 } from '../api/_lib/economy-master.js';
 
-// Defaults (no env overrides): reserve 1, per-engine 0.5, run cap 2.
+// Defaults (no env overrides): reserve 0.02 (rent-exemption + fee headroom,
+// not a business-scale gate), per-engine 0.5, run cap 2.
 test('defaults are the documented guard values', () => {
-	assert.equal(RESERVE_SOL, 1);
+	assert.equal(RESERVE_SOL, 0.02);
 	assert.equal(PER_TOPUP_MAX_SOL, 0.5);
 	assert.equal(RUN_CAP_SOL, 2);
 });
 
 test('reserve floor: a master below reserve funds nothing', () => {
-	const { plan, totalSol, spendableSol } = planTopUps(0.5, [
+	const { plan, totalSol, spendableSol } = planTopUps(0.01, [
 		{ name: 'a', pubkey: 'A', currentSol: 0, refillToSol: 0.3 },
 	]);
 	assert.equal(spendableSol, 0);
 	assert.equal(plan.length, 0);
 	assert.equal(totalSol, 0);
+});
+
+test('a thinly funded master still spends nearly all of it (no oversized reserve gate)', () => {
+	// 0.302 SOL master — the real prod balance this fix targets. Should be
+	// able to spend ~0.282 of it, not sit fully locked behind a 1 SOL floor.
+	const { plan, totalSol, spendableSol } = planTopUps(0.302, [
+		{ name: 'engine', pubkey: 'E', currentSol: 0, refillToSol: 5 },
+	]);
+	assert.ok(spendableSol > 0.28 && spendableSol < 0.29);
+	assert.equal(plan.length, 1);
+	assert.equal(totalSol, spendableSol);
 });
 
 test('per-engine cap: one engine gets at most PER_TOPUP_MAX_SOL', () => {
@@ -42,10 +54,29 @@ test('per-run cap: a sweep spends at most RUN_CAP_SOL total', () => {
 		currentSol: 0,
 		refillToSol: 0.5,
 	}));
-	const { plan, totalSol, skipped } = planTopUps(10, targets); // spendable 9, runCap 2
+	const { plan, totalSol, skipped } = planTopUps(10, targets); // spendable ~9.98, runCap 2
 	assert.equal(totalSol, 2);
 	assert.equal(plan.length, 4); // 4 × 0.5 = 2.0
 	assert.ok(skipped.some((s) => s.reason === 'run_cap_reached'));
+});
+
+test('per-run cap: a want exceeding the remaining budget is clamped, not skipped', () => {
+	// master 1.32 → spendable 1.3 → runCap 1.3 (below the fixed 2 SOL cap, so the
+	// balance itself is the binding constraint). Three engines each want the
+	// per-engine max (0.5), but only 1.3 total exists: A and B get funded in
+	// full, C should get the LEFTOVER 0.3 rather than being skipped outright —
+	// a thin run cap should still be spent down, not wasted.
+	const { plan, totalSol, skipped } = planTopUps(1.32, [
+		{ name: 'a', pubkey: 'A', currentSol: 0, refillToSol: 1.0 },
+		{ name: 'b', pubkey: 'B', currentSol: 0, refillToSol: 1.0 },
+		{ name: 'c', pubkey: 'C', currentSol: 0, refillToSol: 1.0 },
+	]);
+	assert.equal(totalSol, 1.3);
+	assert.equal(plan.length, 3);
+	assert.equal(plan[0].sol, 0.5);
+	assert.equal(plan[1].sol, 0.5);
+	assert.equal(plan[2].sol, 0.3);
+	assert.equal(skipped.length, 0);
 });
 
 test('dust: a sub-threshold deficit is skipped, not churned', () => {
@@ -56,8 +87,7 @@ test('dust: a sub-threshold deficit is skipped, not churned', () => {
 	assert.deepEqual(skipped, [{ name: 'hair', reason: 'below_dust_threshold' }]);
 });
 
-test('neediest first: the most-drained engine wins a tight run cap', () => {
-	// spendable makes runCap = 0.5 → only one engine can be funded this sweep.
+test('neediest first: the most-drained engine is planned before a less-needy one', () => {
 	const { plan } = planTopUps(1.5, [
 		{ name: 'small', pubkey: 'S', currentSol: 0.4, refillToSol: 0.5 }, // deficit 0.1
 		{ name: 'big', pubkey: 'B', currentSol: 0.0, refillToSol: 0.5 }, // deficit 0.5
