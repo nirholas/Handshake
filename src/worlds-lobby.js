@@ -35,7 +35,11 @@ const el = (tag, attrs = {}, children = []) => {
 };
 
 const compact = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
-const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+// Solana base58 mint (pump.fun) OR an EVM address (Robinhood Chain coins).
+const SOLANA_MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const EVM_ADDR_RE = /^0x[a-fA-F0-9]{40}$/;
+const MINT_RE = { test: (v) => SOLANA_MINT_RE.test(v) || EVM_ADDR_RE.test(v) };
+const chainOf = (token) => (EVM_ADDR_RE.test(token || '') ? 'robinhood-chain' : 'pumpfun');
 
 // ── persisted onboarding choice ──────────────────────────────────────────────
 const LS = {
@@ -64,6 +68,7 @@ const state = {
 	worldsError: '',
 	query: '',
 	avatar: null, // { id, name, model_url, thumbnail_url }
+	chainTab: 'all', // all | pumpfun | robinhood-chain
 };
 
 // ── avatar onboarding ────────────────────────────────────────────────────────
@@ -275,19 +280,48 @@ function enterWorld(coin) {
 }
 
 // ── worlds grid ──────────────────────────────────────────────────────────────
+// Robinhood Chain worlds are a best-effort second source: the firehose worker
+// that backs them may not be running (local dev, or not yet deployed), and
+// that must never fail the pump.fun worlds load — it degrades to "0 Robinhood
+// Chain worlds" rather than surfacing an error for the whole lobby.
+async function loadRobinhoodWorlds() {
+	try {
+		const res = await fetch('/api/robinhood/play-worlds', { headers: { accept: 'application/json' } });
+		if (!res.ok) return [];
+		const body = await res.json();
+		const worlds = body?.data?.worlds || [];
+		return worlds.map((w) => ({ ...w, chain: 'robinhood-chain' }));
+	} catch {
+		return [];
+	}
+}
+
 async function loadWorlds() {
 	state.worldsStatus = 'loading';
 	renderWorlds();
 	try {
-		const res = await fetch('/api/community/worlds', { headers: { accept: 'application/json' } });
+		const [pumpRes, rhWorlds] = await Promise.all([
+			fetch('/api/community/worlds', { headers: { accept: 'application/json' } }),
+			loadRobinhoodWorlds(),
+		]);
 		// 503 = CoinCommunities not configured; 404 = the community proxy isn't
-		// deployed on this target yet. Both mean "no live social layer" — degrade
-		// to the same graceful state where worlds are still enterable, rather than
-		// a hard error.
-		if (res.status === 503 || res.status === 404) { state.worldsStatus = 'unconfigured'; renderWorlds(); return; }
-		if (!res.ok) throw new Error(`worlds ${res.status}`);
-		const body = await res.json();
-		const worlds = body?.data?.worlds || [];
+		// deployed on this target yet. Both mean "no live pump.fun social layer" —
+		// degrade to the same graceful state, UNLESS Robinhood Chain worlds are
+		// available, in which case the lobby still has something to show.
+		if (pumpRes.status === 503 || pumpRes.status === 404) {
+			if (rhWorlds.length) {
+				state.worlds = rhWorlds;
+				state.worldsStatus = 'ready';
+			} else {
+				state.worldsStatus = 'unconfigured';
+			}
+			renderWorlds();
+			return;
+		}
+		if (!pumpRes.ok) throw new Error(`worlds ${pumpRes.status}`);
+		const body = await pumpRes.json();
+		const pumpWorlds = (body?.data?.worlds || []).map((w) => ({ ...w, chain: chainOf(w.token) }));
+		const worlds = [...pumpWorlds, ...rhWorlds];
 		state.worlds = worlds;
 		state.worldsStatus = worlds.length ? 'ready' : 'empty';
 	} catch (err) {
@@ -299,12 +333,14 @@ async function loadWorlds() {
 
 function worldCard(w) {
 	const symbol = w.symbol ? `$${w.symbol}` : `${w.token.slice(0, 4)}…${w.token.slice(-4)}`;
+	const isRobinhood = w.chain === 'robinhood-chain';
 	const card = el('button', { class: 'wl-card', type: 'button', title: `Enter ${symbol}` }, [
 		el('div', { class: 'wl-card-art' }, [
 			w.image
 				? el('img', { src: w.image, alt: symbol, loading: 'lazy', referrerpolicy: 'no-referrer' })
 				: el('div', { class: 'wl-card-art-ph', text: symbol.slice(0, 3) }),
 			el('span', { class: 'wl-card-live' }, [el('span', { class: 'wl-live-dot' }), 'live']),
+			isRobinhood ? el('span', { class: 'wl-card-chain', title: 'Robinhood Chain' }, ['RH']) : null,
 		]),
 		el('div', { class: 'wl-card-body' }, [
 			el('div', { class: 'wl-card-sym', text: symbol }),
@@ -369,16 +405,37 @@ function renderWorlds() {
 	}
 
 	const q = state.query.toLowerCase();
-	const list = state.worlds.filter((w) =>
-		!q || (w.symbol || '').toLowerCase().includes(q) || w.token.toLowerCase().includes(q));
+	const list = state.worlds
+		.filter((w) => state.chainTab === 'all' || (w.chain || 'pumpfun') === state.chainTab)
+		.filter((w) => !q || (w.symbol || '').toLowerCase().includes(q) || w.token.toLowerCase().includes(q));
 	if (count) count.textContent = `${list.length} world${list.length === 1 ? '' : 's'}`;
 	if (!list.length) {
-		host.appendChild(emptyBlock('No match', `No live world matches “${state.query}”.`, 'Clear', () => {
-			state.query = ''; $('#wl-search').value = ''; renderWorlds();
-		}));
+		const chainLabel = state.chainTab === 'robinhood-chain' ? 'Robinhood Chain'
+			: state.chainTab === 'pumpfun' ? 'Pump.fun' : '';
+		if (state.query) {
+			host.appendChild(emptyBlock('No match', `No live world matches “${state.query}”.`, 'Clear', () => {
+				state.query = ''; $('#wl-search').value = ''; renderWorlds();
+			}));
+		} else {
+			host.appendChild(emptyBlock(
+				`No ${chainLabel} worlds yet`,
+				chainLabel === 'Robinhood Chain'
+					? 'No Robinhood Chain coin has launched a live world yet — check back soon, or view all worlds.'
+					: 'No worlds in this filter right now.',
+				'View all worlds', () => { state.chainTab = 'all'; syncTabsUI(); renderWorlds(); },
+			));
+		}
 		return;
 	}
 	for (const w of list) host.appendChild(worldCard(w));
+}
+
+function syncTabsUI() {
+	for (const btn of document.querySelectorAll('.wl-tab')) {
+		const active = btn.dataset.chain === state.chainTab;
+		btn.classList.toggle('is-active', active);
+		btn.setAttribute('aria-selected', String(active));
+	}
 }
 
 function emptyBlock(title, body, ctaLabel, onCta) {
@@ -436,6 +493,14 @@ export function bootLobby() {
 	$('#wl-enter-mainland')?.addEventListener('click', () => enterWorld(''));
 	const search = $('#wl-search');
 	search?.addEventListener('input', () => { state.query = search.value.trim(); renderWorlds(); });
+
+	$('#wl-tabs')?.addEventListener('click', (e) => {
+		const btn = e.target.closest('.wl-tab');
+		if (!btn) return;
+		state.chainTab = btn.dataset.chain;
+		syncTabsUI();
+		renderWorlds();
+	});
 
 	loadWorlds();
 	// Keep the lobby feeling live.

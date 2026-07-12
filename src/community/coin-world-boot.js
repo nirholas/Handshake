@@ -15,8 +15,10 @@ import { mountLobby } from './coin-lobby.js';
 import { mountTown } from './town.js';
 import { fetchWorlds } from './town-client.js';
 
-const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-const isCoin = (v) => typeof v === 'string' && MINT_RE.test(v);
+// Solana base58 mint (pump.fun) OR an EVM address (Robinhood Chain coins).
+const SOLANA_MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const EVM_ADDR_RE = /^0x[a-fA-F0-9]{40}$/;
+const isCoin = (v) => typeof v === 'string' && (SOLANA_MINT_RE.test(v) || EVM_ADDR_RE.test(v));
 
 function readMeta(coin) {
 	try {

@@ -34,6 +34,10 @@ import {
 	datapointDescription,
 	allChains,
 	allStablecoins,
+	allCategories,
+	allDexes,
+	allFees,
+	allDerivativeExchanges,
 } from './_lib/market-data/datapoints.js';
 import { fetchMarketsTable } from './_lib/market-fallbacks.js';
 import { buildProtocols } from './defi/protocols.js';
@@ -534,7 +538,17 @@ const DP_CAPS = {
 	stablecoin: dpIntEnv('X402_DISCOVERY_STABLECOIN_IDS', 100),
 	pool: dpIntEnv('X402_DISCOVERY_POOL_IDS', 60),
 	exchange: dpIntEnv('X402_DISCOVERY_EXCHANGE_IDS', 60),
+	category: dpIntEnv('X402_DISCOVERY_CATEGORY_IDS', 80),
+	dex: dpIntEnv('X402_DISCOVERY_DEX_IDS', 60),
+	fees: dpIntEnv('X402_DISCOVERY_FEES_IDS', 80),
+	'derivative-exchange': dpIntEnv('X402_DISCOVERY_DERIVATIVE_EXCHANGE_IDS', 40),
 };
+
+// The token / token-security families resolve ANY contract at runtime, so there
+// is no finite id list to enumerate. Advertise the capability with $THREE — the
+// platform's own coin — as the worked example id (it resolves to a live 402),
+// and let the free /api/x402/d catalog document the unbounded address space.
+const DP_TOKEN_EXAMPLE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 const DP_TTL_MS = dpIntEnv('X402_DISCOVERY_DATAPOINTS_TTL_MS', 900_000); // 15 min
 
 // Coin has 20 metrics; enumerating all × 100 coins alone is 2,000 rows and
@@ -700,6 +714,51 @@ async function buildDatapointItemsUncached(origin) {
 			for (const metric of metrics) push('exchange', e.id, metric);
 		}
 	} catch (err) { console.error('[wk/x402-discovery] exchange slice', err?.message || err); }
+
+	// Sector categories (CoinGecko categories, market-cap desc).
+	try {
+		const metrics = metricsOf('category');
+		let n = 0;
+		for (const id of (await allCategories()).keys()) {
+			if (n++ >= DP_CAPS.category) break;
+			for (const metric of metrics) push('category', id, metric);
+		}
+	} catch (err) { console.error('[wk/x402-discovery] category slice', err?.message || err); }
+
+	// Top DEXs by 24h volume (DeFiLlama).
+	try {
+		const metrics = metricsOf('dex');
+		let n = 0;
+		for (const slug of (await allDexes()).keys()) {
+			if (n++ >= DP_CAPS.dex) break;
+			for (const metric of metrics) push('dex', slug, metric);
+		}
+	} catch (err) { console.error('[wk/x402-discovery] dex slice', err?.message || err); }
+
+	// Top protocols by fees/revenue (DeFiLlama).
+	try {
+		const metrics = metricsOf('fees');
+		let n = 0;
+		for (const slug of (await allFees()).keys()) {
+			if (n++ >= DP_CAPS.fees) break;
+			for (const metric of metrics) push('fees', slug, metric);
+		}
+	} catch (err) { console.error('[wk/x402-discovery] fees slice', err?.message || err); }
+
+	// Derivative (perp) venues by open interest (CoinGecko).
+	try {
+		const metrics = metricsOf('derivative-exchange');
+		let n = 0;
+		for (const id of (await allDerivativeExchanges()).keys()) {
+			if (n++ >= DP_CAPS['derivative-exchange']) break;
+			for (const metric of metrics) push('derivative-exchange', id, metric);
+		}
+	} catch (err) { console.error('[wk/x402-discovery] derivative-exchange slice', err?.message || err); }
+
+	// Per-contract token market + security — advertised via the $THREE worked
+	// example (the families resolve any address at runtime; no id list to walk).
+	for (const metric of metricsOf('token')) push('token', DP_TOKEN_EXAMPLE_MINT, metric);
+	for (const metric of metricsOf('token-security')) push('token-security', DP_TOKEN_EXAMPLE_MINT, metric);
 
 	return items;
 }

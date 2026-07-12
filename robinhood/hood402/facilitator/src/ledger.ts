@@ -1,6 +1,14 @@
-import { DatabaseSync } from 'node:sqlite'
+import type { DatabaseSync as DatabaseSyncType } from 'node:sqlite'
+import { createRequire } from 'node:module'
 import { mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
+
+// `node:sqlite` is not yet in vite's static builtin-module list, so a plain
+// `import` statement gets mis-resolved under vitest (vite tries — and fails —
+// to bundle it as a bare package). `require()` is opaque to vite's ESM import
+// analysis, so this sidesteps the issue entirely; Node natively supports
+// requiring core modules from an ESM file via `createRequire`.
+const { DatabaseSync } = createRequire(import.meta.url)('node:sqlite') as typeof import('node:sqlite')
 
 export type SettlementStatus = 'pending' | 'settled' | 'failed'
 
@@ -25,7 +33,7 @@ export interface SettlementRow {
  * original transaction instead of broadcasting twice.
  */
 export class Ledger {
-  private readonly db: DatabaseSync
+  private readonly db: DatabaseSyncType
 
   constructor(path: string, clock: () => number = () => Date.now()) {
     if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true })

@@ -53,6 +53,12 @@ import { AccessoryManager } from '../agent-accessories.js';
 import { CosmeticsShop } from './cosmetics-shop.js';
 import { CosmeticsWardrobe } from './cosmetics-wardrobe.js';
 import { HOME_TOWN, isHomeTown } from './home-town.js';
+
+// A Robinhood Chain coin is an EVM address (pump.fun mints are Solana base58).
+// Every RH-chain world pins the 'hoodchain' biome (world-env.js) so the chain
+// reads as a recognisable family; per-coin hue jitter (also in world-env.js)
+// still keeps two RH coins from looking identical.
+const isRobinhoodCoin = (mint) => /^0x[a-fA-F0-9]{40}$/.test(mint || '');
 import { AgentCommerce } from './agent-commerce.js';
 import { IntelKiosk } from './intel-kiosk.js';
 import { WorldLife } from './npc/world-life.js';
@@ -938,9 +944,12 @@ export class CoinCommunities {
 		// every community has its own recognisable world.
 		this.env?.dispose();
 		this._district?.dispose();
-		// The flagship town pins its signature biome; every other coin draws its
-		// look from the mint seed.
-		const biomeOverride = this._biomePin || (isHomeTown(coin.mint) ? (coin.biome || HOME_TOWN.biome) : undefined);
+		// The flagship town pins its signature biome; Robinhood Chain coins pin the
+		// chain-flavored 'hoodchain' biome; every other coin draws its look from
+		// the mint seed.
+		const biomeOverride = this._biomePin
+			|| (isHomeTown(coin.mint) ? (coin.biome || HOME_TOWN.biome) : undefined)
+			|| (isRobinhoodCoin(coin.mint) ? 'hoodchain' : undefined);
 		this.env = createWorldEnvironment(this.scene, this.renderer, WORLD_RADIUS, { mint: coin.mint, biome: biomeOverride });
 		this.ui.toast(`${coin.symbol ? '$' + coin.symbol : coin.name || 'Community'} — ${this.env.biome.label}`, 'info');
 

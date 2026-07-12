@@ -9,10 +9,12 @@
 //   /api/x402/d/pool/747c1d2a-…-296708a3dd90/apy
 //   /api/x402/d/global/btc-dominance
 //
-// Families × live catalog sizes × metrics ≈ 400,000+ standalone endpoints
-// (~17.5k coins × 20 metrics, ~15k pools × 7, ~6k protocols × 6, plus chains,
-// stablecoins, exchanges, and the no-id global/gas/fear-greed families) — all
-// served by ONE dynamic route (api/x402/d/[...path].js) reading this registry.
+// Families × live catalog sizes × metrics ≈ 1,000,000+ standalone endpoints
+// (~17.5k coins × 20 metrics, ~15k pools × 7, ~6k protocols × 6, per-contract
+// token market + security for any Solana mint / EVM address, plus chains,
+// stablecoins, exchanges, categories, DEXs, fees/revenue, derivative venues, and
+// the no-id global/gas/fear-greed families) — all served by ONE dynamic route
+// (api/x402/d/[...path].js) reading this registry.
 // Ids are supplied at runtime by the caller; nothing here hardcodes a specific
 // third-party asset.
 //
@@ -34,6 +36,14 @@ import { buildExchanges } from '../../coin/exchanges.js';
 import { fetchFearGreed } from '../../coin/global.js';
 import { buildGasReport } from '../../coin/gas.js';
 import { loadYieldPools } from '../../defi/yields.js';
+import { buildCategories } from '../../coin/categories.js';
+import { buildDexVolumes } from '../../defi/dex-volumes.js';
+import { buildFees } from '../../defi/fees.js';
+import { buildDerivativeExchanges } from '../../coin/derivatives.js';
+import { composeTokenSnapshot } from '../crypto-token-snapshot.js';
+import { composeTokenSecurity } from '../crypto-token-security.js';
+import { isResolvableAddress, chainOf } from '../token-market.js';
+import { isValidSolanaAddress } from '../validate.js';
 
 const fail = (status, code, message) => {
 	throw Object.assign(new Error(message), { status, code });
@@ -135,6 +145,108 @@ export function allStablecoins() {
 			return byKey;
 		},
 	);
+}
+
+// slug/id → row, over any of our own list-returning builders (categories, DEX
+// volumes, fees/revenue, derivative venues). These builders already cache their
+// own upstream fetch; we memoize the id→row map on top so a per-id lookup is a
+// Map.get, not a linear scan of the whole list on every datapoint call.
+const _listMaps = new Map(); // key → { value: Map, expiresAt }
+
+async function listMap(key, builder, toEntries) {
+	const now = Date.now();
+	const hit = _listMaps.get(key);
+	if (hit && hit.expiresAt > now) return hit.value;
+	const built = await builder();
+	const map = new Map();
+	for (const [k, row] of toEntries(built)) {
+		if (typeof k === 'string' && k) map.set(k, row);
+	}
+	_listMaps.set(key, { value: map, expiresAt: now + TTL_MS });
+	return map;
+}
+
+// The full DeFiLlama category list keyed by CoinGecko category id.
+export function allCategories() {
+	return listMap('categories', buildCategories, ({ categories }) =>
+		(Array.isArray(categories) ? categories : []).map((c) => [c.id, c]),
+	);
+}
+
+// Top-100 DEXs keyed by DeFiLlama protocol slug.
+export function allDexes() {
+	return listMap('dexes', buildDexVolumes, ({ protocols }) =>
+		(Array.isArray(protocols) ? protocols : [])
+			.filter((p) => p.slug)
+			.map((p) => [p.slug, p]),
+	);
+}
+
+// Top protocols keyed by slug, merging the fees and revenue series into one row
+// so a single id exposes both fees-* and revenue-* metrics.
+export function allFees() {
+	return listMap(
+		'fees',
+		async () => {
+			const [fees, revenue] = await Promise.all([buildFees('fees'), buildFees('revenue')]);
+			const bySlug = new Map();
+			for (const p of fees.protocols || []) {
+				if (p.slug) bySlug.set(p.slug, { name: p.name, category: p.category, fees: p, revenue: null });
+			}
+			for (const p of revenue.protocols || []) {
+				if (!p.slug) continue;
+				const row = bySlug.get(p.slug);
+				if (row) row.revenue = p;
+				else bySlug.set(p.slug, { name: p.name, category: p.category, fees: null, revenue: p });
+			}
+			return bySlug;
+		},
+		(bySlug) => bySlug.entries(),
+	);
+}
+
+// Derivative (perp) venues keyed by CoinGecko exchange id.
+export function allDerivativeExchanges() {
+	return listMap('derivative-exchanges', buildDerivativeExchanges, ({ exchanges }) =>
+		(Array.isArray(exchanges) ? exchanges : []).map((e) => [e.id, e]),
+	);
+}
+
+// ── Per-address compose memo (token / token-security families) ───────────────
+//
+// composeTokenSnapshot / composeTokenSecurity each fan out to several upstreams
+// per call. An agent that walks all metrics of one mint would otherwise repeat
+// that fan-out per metric; a short per-address memo collapses it to one.
+const COMPOSE_TTL_MS = 60_000;
+const COMPOSE_CACHE_MAX = 500;
+const _composeMemo = new Map(); // `${kind}:${address}` → { value, expiresAt }
+
+async function composeMemo(kind, address, compose) {
+	const key = `${kind}:${address}`;
+	const now = Date.now();
+	const hit = _composeMemo.get(key);
+	if (hit && hit.expiresAt > now) return hit.value;
+	const result = await compose();
+	if (_composeMemo.size >= COMPOSE_CACHE_MAX) {
+		// Evict the oldest ~10% to bound memory without a full LRU.
+		let drop = Math.ceil(COMPOSE_CACHE_MAX / 10);
+		for (const k of _composeMemo.keys()) {
+			_composeMemo.delete(k);
+			if (--drop <= 0) break;
+		}
+	}
+	_composeMemo.set(key, { value: result, expiresAt: now + COMPOSE_TTL_MS });
+	return result;
+}
+
+// Map a compose-style result ({status:'ok'|'not_found'|'upstream_down'}) onto
+// the resolver contract: ok → the row, not_found → null (404), down → 503.
+function fromCompose(label, id, result, pick) {
+	if (result.status === 'upstream_down') {
+		fail(503, 'data_unavailable', `live ${label} data is temporarily unavailable — retry shortly`);
+	}
+	if (result.status !== 'ok') return null;
+	return pick(result);
 }
 
 // ── Row resolvers (throw 404 for an unknown id, 503 for an outage) ──────────
@@ -311,6 +423,133 @@ export const DATAPOINT_FAMILIES = {
 		},
 	},
 
+	token: {
+		// The coin family resolves CoinGecko-listed assets; this one resolves ANY
+		// on-chain token by contract address — DexScreener + pump.fun + Helius, keyless
+		// where possible — so freshly launched mints with no CoinGecko id are addressable.
+		describeId: 'token contract address — a base58 Solana mint or an EVM 0x address',
+		validateId(id) {
+			if (!isResolvableAddress(id)) {
+				fail(422, 'invalid_id', 'id must be a Solana mint or EVM 0x contract address');
+			}
+		},
+		row: (id) =>
+			resolve('token', id, async () => {
+				const chain = chainOf(id) === 'evm' ? null : 'solana';
+				const result = await composeMemo('snapshot', id, () =>
+					composeTokenSnapshot({ address: id, chain: chain === 'solana' ? null : chain }),
+				);
+				return fromCompose('token', id, result, (r) => r.snapshot);
+			}),
+		approxCount: 40_000, // unbounded in practice — any indexed contract resolves
+		metrics: {
+			price: m('Spot price', 'usd', (s) => num(s.priceUsd)),
+			'change-24h': m('24h price change', 'pct', (s) => num(s.change24h)),
+			'market-cap': m('Market capitalization', 'usd', (s) => num(s.marketCapUsd)),
+			fdv: m('Fully diluted valuation', 'usd', (s) => num(s.fdvUsd)),
+			liquidity: m('Pooled DEX liquidity', 'usd', (s) => num(s.liquidityUsd)),
+			'volume-24h': m('24h trading volume', 'usd', (s) => num(s.volume24hUsd)),
+			name: m('Token name', 'text', (s) => s.name ?? null),
+			symbol: m('Token symbol', 'text', (s) => s.symbol ?? null),
+			chain: m('Host chain', 'text', (s) => s.chain ?? null),
+			dex: m('Deepest-liquidity DEX', 'text', (s) => s.dexId ?? null),
+		},
+	},
+
+	'token-security': {
+		// Rug-lever safety checks for one Solana mint — mint/freeze authority,
+		// metadata mutability, holder concentration, liquidity depth, risk verdict.
+		describeId: 'base58 Solana mint address',
+		validateId(id) {
+			if (!isValidSolanaAddress(id)) {
+				fail(422, 'invalid_id', 'id must be a base58 Solana mint address');
+			}
+		},
+		row: (id) =>
+			resolve('token security', id, async () => {
+				const result = await composeMemo('security', id, () => composeTokenSecurity({ address: id }));
+				return fromCompose('token security', id, result, (r) => r);
+			}),
+		approxCount: 40_000, // unbounded — any Solana mint
+		metrics: {
+			'risk-level': m('Overall risk verdict', 'text', (r) => r.riskLevel),
+			'mint-authority-revoked': m('Mint authority revoked', 'bool', (r) => r.checks.mintAuthorityRevoked),
+			'freeze-authority-revoked': m('Freeze authority revoked', 'bool', (r) => r.checks.freezeAuthorityRevoked),
+			'metadata-mutable': m('Metadata still mutable', 'bool', (r) => r.checks.metadataMutable),
+			'liquidity-usd': m('Pooled liquidity', 'usd', (r) => num(r.checks.liquidityUsd)),
+			'holders-concentrated': m('Top-holder concentration flag', 'bool', (r) => r.checks.topHolderPctFlag),
+		},
+	},
+
+	category: {
+		describeId: 'CoinGecko category id (e.g. a lowercase-hyphen sector slug)',
+		validateId(id) {
+			if (!/^[a-z0-9-]{1,80}$/.test(id)) {
+				fail(422, 'invalid_id', 'id must be a CoinGecko category id (lowercase, hyphens)');
+			}
+		},
+		row: (id) => resolve('category', id, async () => (await allCategories()).get(id) ?? null),
+		approxCount: 300,
+		metrics: {
+			'market-cap': m('Sector market cap', 'usd', (c) => num(c.market_cap)),
+			'market-cap-change-24h': m('24h sector market-cap change', 'pct', (c) => num(c.market_cap_change_24h)),
+			'volume-24h': m('24h sector volume', 'usd', (c) => num(c.volume_24h)),
+		},
+	},
+
+	dex: {
+		describeId: 'DeFiLlama DEX slug (e.g. a lowercase-hyphen protocol key)',
+		validateId(id) {
+			if (!/^[a-z0-9.-]{1,100}$/.test(id)) {
+				fail(422, 'invalid_id', 'id must be a DeFiLlama DEX slug (lowercase, hyphens)');
+			}
+		},
+		row: (id) => resolve('DEX', id, async () => (await allDexes()).get(id) ?? null),
+		approxCount: 100,
+		metrics: {
+			'volume-24h': m('24h trading volume', 'usd', (d) => finite(d.total24h)),
+			'volume-7d': m('7-day trading volume', 'usd', (d) => finite(d.total7d)),
+			'change-7d': m('7d-over-prior-7d volume change', 'pct', (d) => finite(d.change_7d)),
+			'share-pct': m('Share of all-DEX volume', 'pct', (d) => finite(d.share_pct)),
+		},
+	},
+
+	fees: {
+		describeId: 'DeFiLlama protocol slug (e.g. a lowercase-hyphen name)',
+		validateId(id) {
+			if (!/^[a-z0-9-]{1,100}$/.test(id)) {
+				fail(422, 'invalid_id', 'id must be a DeFiLlama protocol slug (lowercase, hyphens)');
+			}
+		},
+		row: (id) => resolve('fees', id, async () => (await allFees()).get(id) ?? null),
+		approxCount: 150,
+		metrics: {
+			'fees-24h': m('24h fees paid by users', 'usd', (r) => finite(r.fees?.total24h)),
+			'fees-7d': m('7-day fees', 'usd', (r) => finite(r.fees?.total7d)),
+			'fees-30d': m('30-day fees', 'usd', (r) => finite(r.fees?.total30d)),
+			'revenue-24h': m('24h protocol revenue', 'usd', (r) => finite(r.revenue?.total24h)),
+			'revenue-7d': m('7-day protocol revenue', 'usd', (r) => finite(r.revenue?.total7d)),
+			'revenue-30d': m('30-day protocol revenue', 'usd', (r) => finite(r.revenue?.total30d)),
+		},
+	},
+
+	'derivative-exchange': {
+		describeId: 'CoinGecko derivatives exchange id (e.g. a lowercase slug)',
+		validateId(id) {
+			if (!/^[a-z0-9_-]{1,60}$/.test(id)) {
+				fail(422, 'invalid_id', 'id must be a CoinGecko derivatives exchange id');
+			}
+		},
+		row: (id) => resolve('derivatives exchange', id, async () => (await allDerivativeExchanges()).get(id) ?? null),
+		approxCount: 50,
+		metrics: {
+			'open-interest-btc': m('Open interest', 'btc', (e) => num(e.open_interest_btc)),
+			'volume-24h-btc': m('24h trade volume', 'btc', (e) => num(e.trade_volume_24h_btc)),
+			'perpetual-pairs': m('Listed perpetual pairs', 'count', (e) => num(e.perpetual_pairs)),
+			'futures-pairs': m('Listed futures pairs', 'count', (e) => num(e.futures_pairs)),
+		},
+	},
+
 	global: {
 		describeId: null, // no id segment — /api/x402/d/global/<metric>
 		row: () => resolve('global market', 'global', () => fetchGlobalMarket()),
@@ -426,7 +665,7 @@ export function datapointDescription({ family, metric, priceAtomics }) {
 		`Single datapoint: ${metricDef.label.toLowerCase()} for one ${family} — ` +
 		`pay $${price} USDC per call and get back one machine-readable value ` +
 		`(unit: ${metricDef.unit}) with a timestamp.${idPart} ` +
-		`Part of the three.ws datapoint fabric — 400,000+ addressable endpoints, cataloged free at /api/x402/d.`
+		`Part of the three.ws datapoint fabric — 1,000,000+ addressable endpoints, cataloged free at /api/x402/d.`
 	);
 }
 

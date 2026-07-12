@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { serve } from '@hono/node-server'
 import { createNodeWebSocket } from '@hono/node-ws'
 import { createApp } from './app.js'

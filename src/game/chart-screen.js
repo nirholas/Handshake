@@ -19,8 +19,15 @@ import {
 	CanvasTexture, SRGBColorSpace, DoubleSide,
 } from 'three';
 
-const TRADES_URL = (mint, limit = 100) =>
-	`/api/pump/coin-trades?mint=${encodeURIComponent(mint)}&limit=${limit}`;
+// An EVM 0x-address identifies a Robinhood Chain coin (NOXA/Odyssey), routed
+// to the robinhood-feed-backed endpoint; everything else is a pump.fun Solana
+// mint. Both endpoints share the identical { trades: [...] } contract, so no
+// other code in this file needs to know which chain a world is on.
+const EVM_ADDR_RE = /^0x[a-fA-F0-9]{40}$/;
+const TRADES_URL = (mint, limit = 100) => {
+	const base = EVM_ADDR_RE.test(mint) ? '/api/robinhood/coin-trades' : '/api/pump/coin-trades';
+	return `${base}?mint=${encodeURIComponent(mint)}&limit=${limit}`;
+};
 const POLL_MS = 5000;
 const REDRAW_MS = 100;          // ~10fps: enough for a smooth ticker, cheap on the GPU
 const MAX_POINTS = 220;         // rolling price history kept across the session

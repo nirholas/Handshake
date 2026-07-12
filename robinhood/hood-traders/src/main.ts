@@ -1,9 +1,16 @@
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { loadFleetConfig } from './framework/config.js'
 import { Fleet } from './framework/fleet.js'
 import { LaunchSniper } from './strategies/launch-sniper.js'
 import { Momentum } from './strategies/momentum.js'
 import { PremiumWatch } from './strategies/premium-watch.js'
 import { createDashboardServer } from './server/dashboard.js'
+
+// main.ts sits at a stable one-level depth in both trees: src/main.ts (tsx,
+// dev) and dist/main.js (tsup bundle, prod) — so "one level up + dashboard"
+// resolves correctly in both without guessing at bundler output shape.
+const DASHBOARD_STATIC_ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..', 'dashboard')
 
 async function main(): Promise<void> {
   const config = loadFleetConfig()
@@ -38,7 +45,7 @@ async function main(): Promise<void> {
 
   await fleet.start()
 
-  const server = createDashboardServer(fleet)
+  const server = createDashboardServer(fleet, DASHBOARD_STATIC_ROOT)
   server.listen(config.dashboardPort, () => {
     console.log(`dashboard listening on :${config.dashboardPort}`)
   })

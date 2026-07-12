@@ -3135,6 +3135,14 @@
 			"dest": "/api/pump/[action]?action=coin-trades"
 		},
 		{
+			"src": "/api/robinhood/coin-trades",
+			"dest": "/api/robinhood/coin-trades.js"
+		},
+		{
+			"src": "/api/robinhood/play-worlds",
+			"dest": "/api/robinhood/play-worlds.js"
+		},
+		{
 			"src": "/api/clash/state",
 			"dest": "/api/clash/[action]?action=state"
 		},

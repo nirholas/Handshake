@@ -1,0 +1,46 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "name": "io.github.nirholas/hood-mcp",
+  "description": "Robinhood Chain data + guarded trading for AI agents: Stock Token quotes, portfolios, launches",
+  "version": "0.1.0",
+  "websiteUrl": "https://nirholas.github.io/hood-mcp/",
+  "repository": {
+    "url": "https://github.com/nirholas/hood-mcp",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "hood-mcp",
+      "version": "0.1.0",
+      "runtimeHint": "npx",
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        {
+          "name": "HOOD_MCP_NETWORK",
+          "description": "Target network: \"mainnet\" (chain 4663, default) or \"testnet\" (chain 46630).",
+          "isRequired": false,
+          "isSecret": false,
+          "default": "mainnet"
+        },
+        {
+          "name": "ALCHEMY_KEY",
+          "description": "Optional Alchemy API key for a faster, private RPC instead of the public endpoint.",
+          "isRequired": false,
+          "isSecret": true
+        }
+      ]
+    }
+  ],
+  "_meta": {
+    "io.modelcontextprotocol.registry/publisher-provided": {
+      "productName": "hood-mcp (data server)",
+      "tradingServer": {
+        "note": "A second, explicitly opt-in wallet server ships in the same package as bin `hood-mcp-trading`. It is NOT auto-installed by MCP clients and requires HOOD_MCP_ENABLE_TRADING=1 plus ROBINHOOD_CHAIN_PRIVATE_KEY. See README.md#trading-server.",
+        "docs": "https://nirholas.github.io/hood-mcp/safety.html"
+      },
+      "categories": ["blockchain", "market-data", "defi", "robinhood-chain"]
+    }
+  }
+}

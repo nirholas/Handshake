@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en" class="cv-page">
+	<head>
+		<script>
+			/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */ (function () {
+				try {
+					var m = localStorage.getItem('twx_theme');
+					var l =
+						m === 'auto'
+							? window.matchMedia &&
+								window.matchMedia('(prefers-color-scheme: light)').matches
+							: m === 'light';
+					document.documentElement.setAttribute('data-theme', l ? 'light' : 'dark');
+				} catch (e) {
+					document.documentElement.setAttribute('data-theme', 'dark');
+				}
+			})();
+		</script>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title id="rh-doc-title">Robinhood Chain Stock Token · three.ws</title>
+		<meta id="rh-doc-desc" name="description" content="Live Chainlink NAV, DEX premium/discount, holders, and contract links for a Robinhood Chain Stock Token." />
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/src/coin-pages.css" />
+		<link rel="stylesheet" href="/src/chain-page.css" />
+		<link rel="stylesheet" href="/src/robinhood.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cv-container" id="rh-main" aria-busy="true">
+			<nav class="cv-crumbs" aria-label="Breadcrumb">
+				<a href="/markets">Markets</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<a href="/markets/robinhood">Robinhood Chain</a>
+				<span class="sep" aria-hidden="true">/</span>
+				<span class="here" id="rh-crumb-symbol">Stock</span>
+			</nav>
+
+			<section id="rh-head"></section>
+			<div class="mkt-cols">
+				<div>
+					<section id="rh-chart"></section>
+					<section id="rh-stats"></section>
+					<section id="rh-holders"></section>
+					<section id="rh-transfers"></section>
+					<section id="rh-links"></section>
+				</div>
+				<aside class="mkt-rail" id="rh-buy-rail"></aside>
+			</div>
+		</main>
+
+		<script type="module" src="/src/robinhood-stock.js"></script>
+		<script src="/brand.js" defer></script>
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+	</body>
+</html>

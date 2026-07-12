@@ -10,6 +10,7 @@ import { accent, bold, dim, gray, green, red } from '../ui/ansi.js'
 import { addr, num, tokenAmount, timestamp } from '../format.js'
 import { fetchTx, txUrl } from '../blockscout.js'
 import { notFoundError, usageError } from '../errors.js'
+import { pMap } from '../pmap.js'
 
 interface TransferLine {
   token: Address
@@ -47,24 +48,62 @@ async function tx(ctx: Context, hash: string): Promise<void> {
     return { transaction, receipt, block, meta }
   })
 
-  const transfers: TransferLine[] = []
+  interface RawTransfer {
+    token: Address
+    from: Address
+    to: Address
+    rawValue: bigint
+    knownSymbol: string | null
+    knownDecimals: number | null
+  }
+  const raw: RawTransfer[] = []
   for (const log of receipt?.logs ?? []) {
     try {
       const decoded = decodeEventLog({ abi: erc20Abi, data: log.data, topics: log.topics })
       if (decoded.eventName !== 'Transfer') continue
       const args = decoded.args as unknown as { from: Address; to: Address; value: bigint }
       const known = ctx.network === 'mainnet' ? getStockTokenByAddress(log.address) : null
-      transfers.push({
+      raw.push({
         token: log.address,
-        symbol: known?.symbol ?? null,
         from: args.from,
         to: args.to,
-        value: known ? tokenAmount(args.value, known.decimals) : args.value.toString(),
+        rawValue: args.value,
+        knownSymbol: known?.symbol ?? null,
+        knownDecimals: known?.decimals ?? null,
       })
     } catch {
       /* not an ERC-20 Transfer — skip */
     }
   }
+
+  // Resolve symbol + decimals for unknown tokens (WETH, USDG, memecoins, …)
+  // straight off the contract, so amounts read in real units, not raw wei.
+  const unknownAddresses = [...new Set(raw.filter((r) => r.knownSymbol === null).map((r) => r.token.toLowerCase()))]
+  const resolved = new Map<string, { symbol: string; decimals: number }>()
+  await pMap(
+    unknownAddresses,
+    async (lower) => {
+      const address = raw.find((r) => r.token.toLowerCase() === lower)!.token
+      const [symbol, decimals] = await Promise.all([
+        client.public.readContract({ address, abi: erc20Abi, functionName: 'symbol' }).catch(() => 'TOKEN'),
+        client.public.readContract({ address, abi: erc20Abi, functionName: 'decimals' }).catch(() => 18),
+      ])
+      resolved.set(lower, { symbol: String(symbol), decimals: Number(decimals) })
+    },
+    8,
+  )
+
+  const transfers: TransferLine[] = raw.map((r) => {
+    const known = r.knownSymbol !== null && r.knownDecimals !== null
+    const meta = known ? { symbol: r.knownSymbol as string, decimals: r.knownDecimals as number } : resolved.get(r.token.toLowerCase())
+    return {
+      token: r.token,
+      symbol: meta?.symbol ?? null,
+      from: r.from,
+      to: r.to,
+      value: meta ? tokenAmount(r.rawValue, meta.decimals) : r.rawValue.toString(),
+    }
+  })
 
   const status = receipt ? (receipt.status === 'success' ? 'success' : 'reverted') : 'pending'
   const gasUsed = receipt?.gasUsed ?? 0n

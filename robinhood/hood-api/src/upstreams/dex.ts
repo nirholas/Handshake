@@ -319,7 +319,8 @@ export async function getCandles(
 
   const latest = await client.public.getBlockNumber()
   const lookback = opts.lookbackBlocks ?? 900_000n // ~24h at 100ms blocks
-  const chunk = opts.chunkSize ?? 45_000n
+  // Public RPC's eth_getLogs range cap sits ~1.2M blocks (verified empirically); stay well under it.
+  const chunk = opts.chunkSize ?? 900_000n
   const fromBlock = latest > lookback ? latest - lookback : 0n
 
   // Sample block timestamps at chunk boundaries and interpolate (avoids a

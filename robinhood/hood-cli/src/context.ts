@@ -4,7 +4,7 @@
  */
 import { createHoodClient, type HoodClient, type HoodNetwork } from 'hoodchain'
 import { privateKeyToAccount } from 'viem/accounts'
-import { isHex } from 'viem'
+import { http, isHex } from 'viem'
 import { loadConfig, defaultKeystorePath, type HoodConfig } from './config.js'
 import { decryptKeystore, keystoreExists } from './keystore.js'
 import { readPassword } from './prompt.js'
@@ -45,6 +45,16 @@ export function resolveRpcUrl(config: HoodConfig, network: HoodNetwork, override
   return config.rpc
 }
 
+/**
+ * The public RPC throttles bursty callers (log scans, wide multicalls) with
+ * 429s. viem's http() default retry (3 attempts, ~150ms base) gives up too
+ * fast for that — widen it so `hood stocks` / `hood launches` ride out a
+ * rate-limit window instead of surfacing a network error to the user.
+ */
+function buildTransport(rpcUrl?: string) {
+  return http(rpcUrl, { retryCount: 5, retryDelay: 500, timeout: 20_000 })
+}
+
 /** Build the shared context from the global flags. */
 export function createContext(opts: GlobalOptions): Context {
   const config = loadConfig()
@@ -64,7 +74,7 @@ export function createContext(opts: GlobalOptions): Context {
     rpcUrl,
     read() {
       if (!readClient) {
-        readClient = createHoodClient({ chain: network, rpcUrl })
+        readClient = createHoodClient({ chain: network, transport: buildTransport(rpcUrl) })
       }
       return readClient
     },
@@ -73,7 +83,7 @@ export function createContext(opts: GlobalOptions): Context {
       const account = await loadAccount(config)
       walletClient = createHoodClient({
         chain: network,
-        rpcUrl,
+        transport: buildTransport(rpcUrl),
         account,
         acknowledgeStockTokenEligibility: !!opts.acknowledgeEligibility,
       })

@@ -178,7 +178,7 @@
 		{
 			"id": "x402-service-catalog",
 			"name": "Paid x402 Service Catalog",
-			"description": "74 pay-per-call services settled via x402 (USDC on Solana and Base): market-data (26), 3d (18), agent-infra (17), launch (5), trust (4), payments (4). Every service is listed with price, input schema, and output example in the machine-readable discovery document — fetch it, pick a service, and pay the 402 challenge.",
+			"description": "75 pay-per-call services settled via x402 (USDC on Solana and Base): market-data (27), 3d (18), agent-infra (17), launch (5), trust (4), payments (4). Every service is listed with price, input schema, and output example in the machine-readable discovery document — fetch it, pick a service, and pay the 402 challenge.",
 			"tags": [
 				"x402",
 				"paid",

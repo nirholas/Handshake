@@ -175,6 +175,67 @@ describe('metric extractors', () => {
 	});
 });
 
+// ── New families: per-contract token, security, and the list families ───────
+describe('token / security / list families', () => {
+	const THREE = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
+
+	it('token accepts Solana mints and EVM 0x addresses, rejects garbage', () => {
+		expect(parseDatapointPath(['token', THREE, 'price']).family).toBe('token');
+		expect(parseDatapointPath(['token', '0x' + 'a'.repeat(40), 'price']).id).toBe('0x' + 'a'.repeat(40));
+		expectThrow(() => parseDatapointPath(['token', 'not an address', 'price']), {
+			status: 422,
+			code: 'invalid_id',
+		});
+	});
+
+	it('token-security is Solana-only', () => {
+		expect(parseDatapointPath(['token-security', THREE, 'risk-level']).metric).toBe('risk-level');
+		expectThrow(() => parseDatapointPath(['token-security', '0x' + 'a'.repeat(40), 'risk-level']), {
+			status: 422,
+			code: 'invalid_id',
+		});
+	});
+
+	it('token metrics read the composeTokenSnapshot shape', () => {
+		const snap = {
+			priceUsd: 0.0017, change24h: -4.2, marketCapUsd: 1_700_000, fdvUsd: 2_000_000,
+			liquidityUsd: 212_000, volume24hUsd: 90_000, name: 'Three', symbol: 'THREE',
+			chain: 'solana', dexId: 'pumpswap',
+		};
+		const mx = DATAPOINT_FAMILIES.token.metrics;
+		expect(mx.price.extract(snap)).toBe(0.0017);
+		expect(mx.liquidity.extract(snap)).toBe(212_000);
+		expect(mx.symbol.extract(snap)).toBe('THREE');
+		expect(mx.dex.extract(snap)).toBe('pumpswap');
+	});
+
+	it('token-security metrics read the composeTokenSecurity shape', () => {
+		const row = {
+			riskLevel: 'medium',
+			checks: {
+				mintAuthorityRevoked: true, freezeAuthorityRevoked: false, metadataMutable: true,
+				liquidityUsd: 8_000, topHolderPctFlag: true,
+			},
+		};
+		const mx = DATAPOINT_FAMILIES['token-security'].metrics;
+		expect(mx['risk-level'].extract(row)).toBe('medium');
+		expect(mx['mint-authority-revoked'].extract(row)).toBe(true);
+		expect(mx['freeze-authority-revoked'].extract(row)).toBe(false);
+		expect(mx['liquidity-usd'].extract(row)).toBe(8_000);
+		expect(mx['holders-concentrated'].extract(row)).toBe(true);
+	});
+
+	it('list-family extractors read their builder shapes', () => {
+		expect(DATAPOINT_FAMILIES.category.metrics['market-cap'].extract({ market_cap: 1e12 })).toBe(1e12);
+		expect(DATAPOINT_FAMILIES.dex.metrics['volume-24h'].extract({ total24h: 5e9 })).toBe(5e9);
+		expect(DATAPOINT_FAMILIES.fees.metrics['revenue-24h'].extract({ revenue: { total24h: 68_630 } })).toBe(68_630);
+		expect(DATAPOINT_FAMILIES.fees.metrics['revenue-24h'].extract({ revenue: null })).toBeNull();
+		expect(
+			DATAPOINT_FAMILIES['derivative-exchange'].metrics['open-interest-btc'].extract({ open_interest_btc: 369_801 }),
+		).toBe(369_801);
+	});
+});
+
 // ── Live 402 boundary on the dynamic route ──────────────────────────────────
 function fakeRes() {
 	return {

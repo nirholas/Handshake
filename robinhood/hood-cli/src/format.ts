@@ -84,6 +84,6 @@ export function tokenAmount(raw: bigint, decimals: number, maxFrac = 6): string 
   const full = formatUnits(raw, decimals)
   if (!full.includes('.')) return full
   const [whole, frac] = full.split('.')
-  const trimmed = frac.slice(0, maxFrac).replace(/0+$/, '')
+  const trimmed = (frac ?? '').slice(0, maxFrac).replace(/0+$/, '')
   return trimmed ? `${whole}.${trimmed}` : (whole as string)
 }

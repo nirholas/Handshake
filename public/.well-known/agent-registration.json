@@ -859,6 +859,17 @@
 			],
 			"scheme": "exact",
 			"priceUsdc": "0.001"
+		},
+		{
+			"url": "https://three.ws/api/v1/robinhood/portfolio",
+			"method": "GET",
+			"description": "Robinhood Chain Portfolio — the multiplier-correct USD value of any wallet's tokenized-equity holdings on Robinhood Chain (4663), corporate-action-adjusted via ERC-8056 uiMultiplier and priced against live Chainlink NAV feeds.",
+			"networks": [
+				"solana",
+				"base"
+			],
+			"scheme": "exact",
+			"priceUsdc": "0.002"
 		}
 	],
 	"registrations": [],

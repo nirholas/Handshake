@@ -48,7 +48,6 @@
   "files": [
     "dist",
     "server.json",
-    "smithery.yaml",
     "README.md",
     "LICENSE"
   ],
@@ -60,8 +59,8 @@
     "dev:trading": "tsx src/trading-server.ts",
     "start": "node dist/data-server.js",
     "test": "vitest run tests/schema.test.ts tests/trading-guards.test.ts",
-    "test:live": "vitest run tests/data-client.live.test.ts --testTimeout 120000",
-    "test:swap": "vitest run tests/trading-swap.live.test.ts --testTimeout 180000",
+    "test:live": "vitest run -c vitest.live.config.ts tests/data-client.live.test.ts --testTimeout 120000",
+    "test:swap": "vitest run -c vitest.live.config.ts tests/trading-swap.live.test.ts --testTimeout 180000",
     "prepublishOnly": "npm run build && npm test"
   },
   "dependencies": {

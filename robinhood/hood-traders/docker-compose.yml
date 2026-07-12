@@ -1,0 +1,33 @@
+# Runs hood-traders in PAPER mode with zero configuration. Build context is the
+# parent directory so the Dockerfile can reach the sibling robinhood-chain-sdk
+# checkout (`hoodchain` is not yet published to npm — see README).
+#
+#   cd hood-traders && docker compose up --build
+#
+# Dashboard: http://localhost:4670
+# To go live: copy .env.example to .env, set HOOD_TRADERS_LIVE=1 and
+# ROBINHOOD_CHAIN_PRIVATE_KEY, then `docker compose --env-file .env up --build`.
+
+services:
+  hood-traders:
+    build:
+      context: ..
+      dockerfile: hood-traders/Dockerfile
+    ports:
+      - '4670:4670'
+    environment:
+      HOOD_NETWORK: ${HOOD_NETWORK:-mainnet}
+      HOOD_TRADERS_LIVE: ${HOOD_TRADERS_LIVE:-0}
+      HOOD_STOCK_TOKEN_ELIGIBLE: ${HOOD_STOCK_TOKEN_ELIGIBLE:-false}
+      FLEET_MAX_DAILY_SPEND_USDG: ${FLEET_MAX_DAILY_SPEND_USDG:-250}
+      DASHBOARD_PORT: '4670'
+      KILL_FILE: /app/hood-traders/data/KILL
+      HOOD_TRADERS_DB: /app/hood-traders/data/hood-traders.db
+      ROBINHOOD_CHAIN_PRIVATE_KEY: ${ROBINHOOD_CHAIN_PRIVATE_KEY:-}
+      HOOD_RPC_URL: ${HOOD_RPC_URL:-}
+    volumes:
+      - hood-traders-data:/app/hood-traders/data
+    restart: unless-stopped
+
+volumes:
+  hood-traders-data:

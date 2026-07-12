@@ -11,6 +11,26 @@ export type { Candle, Interval, TradePoint } from './candles.js'
 import type BetterSqlite3 from 'better-sqlite3'
 type Database = BetterSqlite3.Database
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+/**
+ * Retry a public-RPC `getLogs` call with exponential backoff on transient
+ * failures (rate limiting is common on public endpoints during a full-history
+ * backfill — a bare call would abort the whole sync on the first 429).
+ */
+async function getLogsWithRetry<T>(fn: () => Promise<T>, attempts = 5, baseDelayMs = 400): Promise<T> {
+  let lastError: unknown
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      return await fn()
+    } catch (error) {
+      lastError = error
+      await sleep(baseDelayMs * 2 ** attempt)
+    }
+  }
+  throw lastError
+}
+
 const TRANSFER_EVENT = {
   type: 'event',
   name: 'Transfer',
@@ -150,7 +170,15 @@ export class Indexer {
    * Pass `fromBlock` on the first run to backfill history — required for
    * holder counts to match the full-history on-chain state.
    */
-  async sync(options: { fromBlock?: bigint; toBlock?: bigint; onProgress?: (p: SyncProgress) => void } = {}): Promise<SyncResult> {
+  async sync(
+    options: {
+      fromBlock?: bigint
+      /** Independent backfill start for swaps (defaults to `fromBlock`). Lets you pull full holder history without re-scanning a memecoin's entire swap history for candles. */
+      swapFromBlock?: bigint
+      toBlock?: bigint
+      onProgress?: (p: SyncProgress) => void
+    } = {},
+  ): Promise<SyncResult> {
     const head = options.toBlock ?? (await this.client.public.getBlockNumber())
     let transfersIndexed = 0
     let swapsIndexed = 0
@@ -169,7 +197,9 @@ export class Indexer {
       let from = options.fromBlock ?? this.getCursor(tKey, head)
       for (let start = from; start <= head; start += this.chunkSize) {
         const to = start + this.chunkSize - 1n > head ? head : start + this.chunkSize - 1n
-        const logs = await this.client.public.getLogs({ address: token, event: TRANSFER_EVENT, fromBlock: start, toBlock: to })
+        const logs = await getLogsWithRetry(() =>
+          this.client.public.getLogs({ address: token, event: TRANSFER_EVENT, fromBlock: start, toBlock: to }),
+        )
         const tx = this.db.transaction((rows: typeof logs) => {
           for (const log of rows) {
             const a = log.args as { from?: Address; to?: Address; value?: bigint }
@@ -187,10 +217,12 @@ export class Indexer {
       for (const pool of this.poolsByToken.get(token.toLowerCase()) ?? []) {
         const tokenIs0 = pool.token0.toLowerCase() === token.toLowerCase()
         const sKey = `swap:${pool.pool.toLowerCase()}`
-        from = options.fromBlock ?? this.getCursor(sKey, head)
+        from = (options.swapFromBlock ?? options.fromBlock) ?? this.getCursor(sKey, head)
         for (let start = from; start <= head; start += this.chunkSize) {
           const to = start + this.chunkSize - 1n > head ? head : start + this.chunkSize - 1n
-          const logs = await this.client.public.getLogs({ address: pool.pool, event: uniswapV3SwapEvent, fromBlock: start, toBlock: to })
+          const logs = await getLogsWithRetry(() =>
+            this.client.public.getLogs({ address: pool.pool, event: uniswapV3SwapEvent, fromBlock: start, toBlock: to }),
+          )
           const tx = this.db.transaction((rows: typeof logs) => {
             for (const log of rows) {
               const swap = decodeSwapLog(log, pool)

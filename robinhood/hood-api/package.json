@@ -42,9 +42,11 @@
     "@hono/node-server": "^1.19.14",
     "@hono/node-ws": "^1.3.1",
     "@hono/zod-openapi": "^1.4.0",
+    "dotenv": "^17.4.0",
     "hono": "^4.12.0",
     "hoodchain": "file:../robinhood-chain-sdk",
     "viem": "^2.55.0",
+    "ws": "^8.18.0",
     "x402-hono": "^1.2.0",
     "zod": "^4.4.0"
   },

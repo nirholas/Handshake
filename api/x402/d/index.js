@@ -1,6 +1,6 @@
 // GET /api/x402/d — FREE catalog of the datapoint fabric.
 //
-// Enumerates every family and metric of the 400,000+ standalone paid
+// Enumerates every family and metric of the 1,000,000+ standalone paid
 // datapoint endpoints served by /api/x402/d/<family>/<id>/<metric>, with
 // prices, id guidance, and runnable example URLs. For the DeFiLlama-backed
 // families it can also expand the live id space page by page
@@ -19,6 +19,10 @@ import {
 	allProtocols,
 	allChains,
 	allStablecoins,
+	allCategories,
+	allDexes,
+	allFees,
+	allDerivativeExchanges,
 } from '../../_lib/market-data/datapoints.js';
 import { loadYieldPools } from '../../defi/yields.js';
 import { buildExchanges } from '../../coin/exchanges.js';
@@ -53,6 +57,10 @@ const ID_SOURCES = {
 		}
 		return ids;
 	},
+	category: async () => [...(await allCategories()).keys()],
+	dex: async () => [...(await allDexes()).keys()],
+	fees: async () => [...(await allFees()).keys()],
+	'derivative-exchange': async () => [...(await allDerivativeExchanges()).keys()],
 };
 
 function familySummary(origin, slug, def) {
@@ -92,13 +100,16 @@ export default wrap(async (req, res) => {
 		if (!def) return error(res, 404, 'unknown_family', `unknown family "${family}"`);
 		const source = ID_SOURCES[family];
 		if (!source) {
+			const runtimeIdHint = {
+				coin: 'coin ids are resolved at runtime — any CoinGecko id or Solana mint works; find ids via /api/x402/market-coins?q=<text>',
+				token: 'token ids are resolved at runtime — pass any base58 Solana mint or EVM 0x contract address as the id',
+				'token-security': 'token-security ids are resolved at runtime — pass any base58 Solana mint address as the id',
+			};
 			return error(
 				res,
 				400,
 				'no_id_expansion',
-				family === 'coin'
-					? 'coin ids are resolved at runtime — any CoinGecko id or Solana mint works; find ids via /api/x402/market-coins?q=<text>'
-					: `family "${family}" has no id expansion`,
+				runtimeIdHint[family] || `family "${family}" has no id expansion`,
 			);
 		}
 		try {

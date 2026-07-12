@@ -1,12 +1,7 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { readFile } from 'node:fs/promises'
 import { extname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import type { Fleet } from '../framework/fleet.js'
-
-const __dirname = fileURLToPath(new URL('.', import.meta.url))
-// dist/server/dashboard.js -> ../../dashboard ; src/server/dashboard.ts (tsx) -> ../../dashboard
-const STATIC_ROOT = join(__dirname, '..', '..', 'dashboard')
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -22,11 +17,11 @@ function json(res: ServerResponse, status: number, body: unknown): void {
   res.end(payload)
 }
 
-async function serveStatic(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
+async function serveStatic(staticRoot: string, req: IncomingMessage, res: ServerResponse): Promise<boolean> {
   const url = new URL(req.url ?? '/', 'http://localhost')
   let rel = url.pathname === '/' ? '/index.html' : url.pathname
   if (rel.includes('..')) return false
-  const path = join(STATIC_ROOT, rel)
+  const path = join(staticRoot, rel)
   try {
     const body = await readFile(path)
     res.writeHead(200, { 'content-type': MIME[extname(path)] ?? 'application/octet-stream' })
@@ -41,8 +36,15 @@ async function serveStatic(req: IncomingMessage, res: ServerResponse): Promise<b
  * The fleet dashboard: a tiny read API over {@link Fleet} plus a `POST /kill`
  * panic button, serving the static `dashboard/` UI. No framework — this is a
  * small, auditable surface that is also the E2E harness talks to.
+ *
+ * `staticRoot` is resolved by the caller rather than guessed from this
+ * module's own location: tsup flattens `src/**​/*.ts` into a single-level
+ * `dist/`, so a path relative to *this* file's directory would differ between
+ * `tsx` (unbundled, nested under `src/server/`) and the built bundle (flat).
+ * `main.ts` sits at a stable one-level depth in both trees, so it computes
+ * the path once and passes it in.
  */
-export function createDashboardServer(fleet: Fleet): Server {
+export function createDashboardServer(fleet: Fleet, staticRoot: string): Server {
   return createServer(async (req, res) => {
     const url = new URL(req.url ?? '/', 'http://localhost')
 
@@ -75,7 +77,7 @@ export function createDashboardServer(fleet: Fleet): Server {
       return json(res, 200, { ok: true })
     }
 
-    if (await serveStatic(req, res)) return
+    if (await serveStatic(staticRoot, req, res)) return
     res.writeHead(404, { 'content-type': 'text/plain' })
     res.end('not found')
   })

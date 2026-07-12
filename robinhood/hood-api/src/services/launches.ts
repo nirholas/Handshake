@@ -59,7 +59,11 @@ export async function getLaunches(opts: { lookbackBlocks?: bigint; launchpad?: L
     const latest = BigInt(chain.blockHeight)
     const msPerBlock = chain.avgBlockTimeMs ?? 100
 
-    const launches = await getRecentLaunches(client, { lookbackBlocks: lookback, launchpad: opts.launchpad })
+    const launches = await getRecentLaunches(client, {
+      lookbackBlocks: lookback,
+      launchpad: opts.launchpad,
+      chunkSize: 900_000n, // public RPC's eth_getLogs range cap sits ~1.2M blocks; stay well under it
+    })
     const sorted = launches.sort((a, b) => (a.blockNumber < b.blockNumber ? 1 : -1)).slice(0, limit)
     const rows = sorted.map((l) => enrich(l, latest, msPerBlock))
 

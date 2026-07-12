@@ -25,7 +25,7 @@ export async function listCoins(opts: { limit?: number } = {}) {
     const latest = BigInt(chain.blockHeight)
     const msPerBlock = chain.avgBlockTimeMs ?? 100
 
-    const launches = await getRecentLaunches(client, { lookbackBlocks: COINS_LOOKBACK })
+    const launches = await getRecentLaunches(client, { lookbackBlocks: COINS_LOOKBACK, chunkSize: 900_000n })
     // Newest first, unique by token, capped.
     const seen = new Set<string>()
     const unique: Launch[] = []
@@ -85,7 +85,7 @@ export async function getCoinDetail(addressRaw: string) {
       blockscout.getToken(address),
       blockscout.getTokenCounters(address).catch(() => null),
       getDexStats(client, address, eth).catch(() => null),
-      getRecentLaunches(client, { lookbackBlocks: 1_500_000n }).catch(() => [] as Launch[]),
+      getRecentLaunches(client, { lookbackBlocks: 1_200_000n, chunkSize: 600_000n }).catch(() => [] as Launch[]),
     ])
 
     const launch = launches.find((l) => l.token.toLowerCase() === address.toLowerCase()) ?? null

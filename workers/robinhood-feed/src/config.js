@@ -44,10 +44,16 @@ export const config = {
 	/** Cap on live Uniswap pools we watch for post-graduation / NOXA swaps. */
 	maxTrackedPools: num(process.env.RH_MAX_POOLS, 400),
 	/**
-	 * If the sequencer feed advances this many blocks past the highest block the
-	 * RPC watchers have reported, run a catch-up eth_getLogs to gap-fill.
+	 * If the chain head advances this many blocks past the highest block the RPC
+	 * watchers have reported, run a catch-up eth_getLogs to gap-fill. Robinhood
+	 * Chain produces a block every ~100ms and gapCheck() ticks every 15s, so
+	 * ~150 blocks pass per tick under completely normal conditions — the
+	 * threshold must clear that comfortably or every routine tick misreads
+	 * itself as a stalled watcher and re-scans needlessly. 2 000 blocks ≈ 3.3
+	 * minutes of chain time, well past one poll tick but tight enough to catch
+	 * a genuinely stuck RPC watcher quickly.
 	 */
-	gapCatchupBlocks: num(process.env.RH_GAP_BLOCKS, 40),
+	gapCatchupBlocks: num(process.env.RH_GAP_BLOCKS, 2_000),
 	/** Backfill this many blocks of launches on cold start so a fresh subscriber sees history. */
 	backfillBlocks: BigInt(num(process.env.RH_BACKFILL_BLOCKS, 200_000)),
 };
