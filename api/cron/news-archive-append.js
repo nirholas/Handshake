@@ -148,6 +148,12 @@ async function currentMarketContext() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+function previousMonth(month) {
+	const d = new Date(`${month}-01T00:00:00Z`);
+	d.setUTCMonth(d.getUTCMonth() - 1);
+	return d.toISOString().slice(0, 7);
+}
+
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 	if (!requireCron(req, res)) return;
@@ -161,46 +167,74 @@ export default wrapCron(async (req, res) => {
 	if (!dryRun) token = await getGcpAccessToken();
 
 	// Live sweep across every source — the aggregator serves from its
-	// per-source cache, so this is one bounded fan-out at most.
-	const live = await getNews({ limit: 2000 });
+	// per-source cache, so this is one bounded fan-out at most. The limit must
+	// exceed the whole live corpus (~3k across 159 sources): anything the slice
+	// drops here is silently never archived, and its permalink dies when the
+	// story rotates out of the feed.
+	const live = await getNews({ limit: 10_000 });
 	if (!live.articles.length) {
 		return json(res, 200, { ok: true, month, appended: 0, note: 'aggregator returned no articles' });
 	}
 
-	const objectName = `articles/${month}.jsonl`;
-	const existing = dryRun
-		? { exists: false, generation: '0', text: '' }
-		: await gcsGetObject(token, objectName);
-	const seen = new Set();
-	for (const line of existing.text.split('\n')) {
-		if (!line.trim()) continue;
-		try {
-			seen.add(JSON.parse(line).id);
-		} catch {
-			// malformed line — leave it in place, it just can't dedupe
+	// Bucket each article into ITS publication month — the same month its
+	// permalink (/markets/news/<YYYY-MM>/<id>) points at. Archiving a late-June
+	// story into the July file would strand its canonical URL forever. One
+	// month of grace covers boundary stragglers; anything older is feed
+	// backlog that stays out so it can't pollute the historical corpus.
+	const grace = previousMonth(month);
+	const buckets = new Map(); // YYYY-MM → articles
+	let skippedBacklog = 0;
+	for (const a of live.articles) {
+		const m = a.pub_date ? a.pub_date.slice(0, 7) : month;
+		if (m !== month && m !== grace) {
+			skippedBacklog++;
+			continue;
 		}
+		if (!buckets.has(m)) buckets.set(m, []);
+		buckets.get(m).push(a);
 	}
 
-	// Only archive articles actually published (or first seen) this month, so
-	// a long-lived feed backlog doesn't leak into the wrong month file.
-	const fresh = live.articles.filter(
-		(a) => !seen.has(a.id) && (!a.pub_date || a.pub_date.slice(0, 7) === month),
-	);
-	if (!fresh.length) {
+	// Per-month dedupe against the existing archive object.
+	const months = {}; // YYYY-MM → { existing, fresh }
+	let alreadyArchived = 0;
+	for (const [m, articles] of buckets) {
+		const existing = dryRun
+			? { exists: false, generation: '0', text: '' }
+			: await gcsGetObject(token, `articles/${m}.jsonl`);
+		const seen = new Set();
+		for (const line of existing.text.split('\n')) {
+			if (!line.trim()) continue;
+			try {
+				seen.add(JSON.parse(line).id);
+			} catch {
+				// malformed line — leave it in place, it just can't dedupe
+			}
+		}
+		alreadyArchived += seen.size;
+		months[m] = { existing, fresh: articles.filter((a) => !seen.has(a.id)) };
+	}
+
+	const allFresh = Object.values(months).flatMap((x) => x.fresh);
+	if (!allFresh.length) {
 		return json(res, 200, {
 			ok: true, month, appended: 0, live_considered: live.articles.length,
-			already_archived: seen.size, dry_run: dryRun,
+			already_archived: alreadyArchived, skipped_backlog: skippedBacklog, dry_run: dryRun,
 		});
 	}
 
 	const marketContext = await currentMarketContext();
-	const lines = fresh.map((a) => JSON.stringify(toArchiveRecord(a, marketContext, nowIso)));
+	const appendedByMonth = {};
 
 	if (!dryRun) {
-		const body = existing.text
-			? `${existing.text.replace(/\n$/, '')}\n${lines.join('\n')}\n`
-			: `${lines.join('\n')}\n`;
-		await gcsPutObject(token, objectName, body, existing.generation, 'application/x-ndjson');
+		for (const [m, { existing, fresh }] of Object.entries(months)) {
+			if (!fresh.length) continue;
+			const lines = fresh.map((a) => JSON.stringify(toArchiveRecord(a, marketContext, nowIso)));
+			const body = existing.text
+				? `${existing.text.replace(/\n$/, '')}\n${lines.join('\n')}\n`
+				: `${lines.join('\n')}\n`;
+			await gcsPutObject(token, `articles/${m}.jsonl`, body, existing.generation, 'application/x-ndjson');
+			appendedByMonth[m] = fresh.length;
+		}
 
 		// Keep corpus stats truthful for /markets/archive and the API's
 		// stats mode. Best-effort: a stats race loses to next hour's run.
@@ -208,15 +242,15 @@ export default wrapCron(async (req, res) => {
 			const stats = await gcsGetObject(token, 'meta/stats.json');
 			if (stats.exists) {
 				const parsed = JSON.parse(stats.text);
-				parsed.total_articles += fresh.length;
-				parsed.total_with_url += fresh.length;
-				parsed.total_with_date += fresh.filter((a) => a.pub_date).length;
-				parsed.total_with_description += fresh.filter((a) => a.description).length;
-				const newest = fresh.map((a) => a.pub_date).filter(Boolean).sort().pop();
+				parsed.total_articles += allFresh.length;
+				parsed.total_with_url += allFresh.length;
+				parsed.total_with_date += allFresh.filter((a) => a.pub_date).length;
+				parsed.total_with_description += allFresh.filter((a) => a.description).length;
+				const newest = allFresh.map((a) => a.pub_date).filter(Boolean).sort().pop();
 				if (newest && (!parsed.last_article_date || newest > parsed.last_article_date)) {
 					parsed.last_article_date = newest;
 				}
-				for (const a of fresh) {
+				for (const a of allFresh) {
 					parsed.sources[a.source_key] = (parsed.sources[a.source_key] || 0) + 1;
 				}
 				await gcsPutObject(token, 'meta/stats.json', JSON.stringify(parsed, null, 2), stats.generation, 'application/json');
@@ -224,14 +258,20 @@ export default wrapCron(async (req, res) => {
 		} catch (err) {
 			if (err?.code !== 'race') console.error('news-archive-append: stats update skipped:', err.message);
 		}
+	} else {
+		for (const [m, { fresh }] of Object.entries(months)) {
+			if (fresh.length) appendedByMonth[m] = fresh.length;
+		}
 	}
 
 	return json(res, 200, {
 		ok: true,
 		month,
-		appended: fresh.length,
+		appended: allFresh.length,
+		appended_by_month: appendedByMonth,
 		live_considered: live.articles.length,
-		already_archived: seen.size,
+		already_archived: alreadyArchived,
+		skipped_backlog: skippedBacklog,
 		sources_live: `${live.sources_ok}/${live.sources_total}`,
 		market_context: marketContext ? 'captured' : 'unavailable',
 		dry_run: dryRun,

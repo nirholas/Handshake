@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-12T08:57:33.006Z",
+	"generated_at": "2026-07-12T09:06:07.404Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -68,6 +68,17 @@
 			"link": "/play",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "update",
+			"title": "News story links no longer go dead",
+			"summary": "Every article on the news feed gets a permanent link, but stories published near a month boundary could slip through the hourly archiver and their links would eventually 404. The archiver now files each story under its real publication month (and no longer caps how many articles it sweeps per run), story pages look in neighboring months and redirect to the right address when a link's month is off by one, and a link that truly can't be found now offers a one-click archive search for that story's title instead of a dead end.",
+			"link": "/markets/news",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

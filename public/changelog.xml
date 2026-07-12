@@ -55,6 +55,14 @@
 			<description>Two real driving missions landed on the /play jobs board. Grab a car parked at any of the four avenue depots, run the rush order to the depot on the other side of town, and get paid — the delivery only counts if you actually drove it, not walked it. Pairs with the world's existing drivable vehicles and cash economy for a real 'drive around, do jobs, spend the cash' loop.</description>
 		</item>
 		<item>
+			<title>News story links no longer go dead</title>
+			<link>https://three.ws/markets/news</link>
+			<guid isPermaLink="false">2026-07-12:News story links no longer go dead</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Every article on the news feed gets a permanent link, but stories published near a month boundary could slip through the hourly archiver and their links would eventually 404. The archiver now files each story under its real publication month (and no longer caps how many articles it sweeps per run), story pages look in neighboring months and redirect to the right address when a link's month is off by one, and a link that truly can't be found now offers a one-click archive search for that story's title instead of a dead end.</description>
+		</item>
+		<item>
 			<title>Oversized x402 payment headers fixed</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-12:Oversized x402 payment headers fixed</guid>

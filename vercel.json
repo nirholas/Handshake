@@ -957,8 +957,8 @@
 			"dest": "/news-article.html"
 		},
 		{
-			"src": "/markets/news/(20[0-9]{2}-[0-9]{2})/([a-f0-9]{16})(?:-[a-zA-Z0-9-]{0,120})?/?",
-			"dest": "/api/news/story-page?month=$1&id=$2"
+			"src": "/markets/news/(20[0-9]{2}-[0-9]{2})/([a-f0-9]{16})(?:-([a-zA-Z0-9-]{0,120}))?/?",
+			"dest": "/api/news/story-page?month=$1&id=$2&slug=$3"
 		},
 		{
 			"src": "/markets/archive/?",

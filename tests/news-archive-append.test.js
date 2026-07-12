@@ -33,6 +33,11 @@ vi.mock('../api/_lib/coingecko.js', () => ({
 }));
 
 const NOW_MONTH = new Date().toISOString().slice(0, 7);
+const PREV_MONTH = (() => {
+	const d = new Date(`${NOW_MONTH}-01T00:00:00Z`);
+	d.setUTCMonth(d.getUTCMonth() - 1);
+	return d.toISOString().slice(0, 7);
+})();
 const LIVE = [
 	{
 		id: 'aaaaaaaaaaaaaaaa', title: 'BTC rallies', link: 'https://x.com/a', description: 'Bitcoin gains 5%',
@@ -50,6 +55,12 @@ const LIVE = [
 		id: 'cccccccccccccccc', title: 'Stale backlog item', link: 'https://x.com/c', description: null,
 		image: null, author: null, source: 'Protos', source_key: 'protos', category: 'journalism',
 		pub_date: '2020-01-01T10:00:00.000Z', tickers: [],
+		sentiment: { score: 0, label: 'neutral', confidence: 0.5 },
+	},
+	{
+		id: 'dddddddddddddddd', title: 'Late boundary story', link: 'https://x.com/d', description: 'Published just before the month rolled',
+		image: null, author: null, source: 'The Block', source_key: 'theblock', category: 'general',
+		pub_date: `${PREV_MONTH}-28T23:50:00.000Z`, tickers: [],
 		sentiment: { score: 0, label: 'neutral', confidence: 0.5 },
 	},
 ];
@@ -118,15 +129,19 @@ describe('GET /api/cron/news-archive-append', () => {
 		const res = await call('/api/cron/news-archive-append?dry_run=1');
 		expect(res._json.status).toBe(200);
 		expect(res._json.body.dry_run).toBe(true);
-		// dry run skips the existing-object read, so all in-month items count
-		expect(res._json.body.appended).toBe(2);
+		// dry run skips the existing-object read, so all in-window items count
+		expect(res._json.body.appended).toBe(3);
+		expect(res._json.body.appended_by_month).toEqual({ [NOW_MONTH]: 2, [PREV_MONTH]: 1 });
+		expect(res._json.body.skipped_backlog).toBe(1);
 		expect(writes).toHaveLength(0);
 	});
 
-	it('appends only new in-month articles, schema-complete, generation-guarded', async () => {
+	it('appends new articles into their own pub_date month, schema-complete, generation-guarded', async () => {
 		const res = await call('/api/cron/news-archive-append');
 		expect(res._json.status).toBe(200);
-		expect(res._json.body.appended).toBe(1); // b deduped, c out-of-month
+		expect(res._json.body.appended).toBe(2); // b deduped, c out-of-window
+		expect(res._json.body.appended_by_month).toEqual({ [NOW_MONTH]: 1, [PREV_MONTH]: 1 });
+		expect(res._json.body.skipped_backlog).toBe(1);
 		const monthWrite = writes.find((w) => w.url.includes(`articles%2F${NOW_MONTH}.jsonl`));
 		expect(monthWrite).toBeTruthy();
 		expect(monthWrite.url).toContain('ifGenerationMatch=41');
@@ -146,14 +161,28 @@ describe('GET /api/cron/news-archive-append', () => {
 		expect(rec.meta.import_source).toBe('three.ws-live-archiver');
 	});
 
+	it('a boundary straggler lands in the PREVIOUS month file, not the current one', async () => {
+		await call('/api/cron/news-archive-append');
+		const graceWrite = writes.find((w) => w.url.includes(`articles%2F${PREV_MONTH}.jsonl`));
+		expect(graceWrite).toBeTruthy();
+		expect(graceWrite.url).toContain('ifGenerationMatch=0'); // fresh object
+		const lines = graceWrite.body.trim().split('\n');
+		expect(lines).toHaveLength(1);
+		expect(JSON.parse(lines[0]).id).toBe('dddddddddddddddd');
+		// and it must NOT leak into the current month file
+		const monthWrite = writes.find((w) => w.url.includes(`articles%2F${NOW_MONTH}.jsonl`));
+		expect(monthWrite.body).not.toContain('dddddddddddddddd');
+	});
+
 	it('updates corpus stats after an append', async () => {
 		await call('/api/cron/news-archive-append');
 		const statsWrite = writes.find((w) => w.url.includes('meta%2Fstats.json'));
 		expect(statsWrite).toBeTruthy();
 		expect(statsWrite.url).toContain('ifGenerationMatch=7');
 		const stats = JSON.parse(statsWrite.body);
-		expect(stats.total_articles).toBe(662048);
+		expect(stats.total_articles).toBe(662049);
 		expect(stats.sources.coindesk).toBe(2109);
+		expect(stats.sources.theblock).toBe(1);
 		expect(stats.last_article_date).toBe(`${NOW_MONTH}-05T10:00:00.000Z`);
 	});
 });

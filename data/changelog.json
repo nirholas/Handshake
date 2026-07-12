@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-12",
+			"title": "News story links no longer go dead",
+			"summary": "Every article on the news feed gets a permanent link, but stories published near a month boundary could slip through the hourly archiver and their links would eventually 404. The archiver now files each story under its real publication month (and no longer caps how many articles it sweeps per run), story pages look in neighboring months and redirect to the right address when a link's month is off by one, and a link that truly can't be found now offers a one-click archive search for that story's title instead of a dead end.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/markets/news"
+		},
+		{
+			"date": "2026-07-12",
 			"title": "Closed a path-traversal hole in the API router",
 			"summary": "The server that routes every /api request to its handler split the URL into path segments before decoding them, so a specially encoded request could smuggle a '../' into a single segment and reach a file outside the API folder — or an internal helper meant to be unreachable — and run it without authentication. The router now rejects any decoded segment that contains a path separator and, as a second line of defense, refuses to load any handler that resolves outside the API directory. Normal routes are unaffected; a regression test locks the fix in place.",
 			"tags": [

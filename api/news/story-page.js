@@ -205,13 +205,17 @@ export function renderStoryHtml(shell, a) {
 	return html;
 }
 
-function notFoundHtml(shell, month) {
+function notFoundHtml(shell, month, slug) {
+	// The slug in the URL is the story's own title words — turn the dead link
+	// into a ready-made archive search instead of a dead end.
+	const q = String(slug || '').replace(/-/g, ' ').trim();
+	const searchHref = q ? `/markets/archive?q=${encodeURIComponent(q)}` : '/markets/archive';
 	const body = `
 		<h1 class="art-title">Story not found</h1>
 		<div class="cv-empty">
 			<p><strong>This article isn’t in the ${esc(month || '')} archive.</strong></p>
 			<p>It may have been published in a different month, or the link is incomplete.</p>
-			<p><a class="arc-btn" href="/markets/archive">Search the 660k-article archive</a>
+			<p><a class="arc-btn" href="${esc(searchHref)}">${q ? `Search the archive for “${esc(q)}”` : 'Search the 660k-article archive'}</a>
 			<a class="arc-btn ghost" href="/markets/news">Latest crypto news</a></p>
 		</div>`;
 	return shell
@@ -253,8 +257,18 @@ export default wrap(async (req, res) => {
 	// A resolvable story always has a canonical path; a dated-but-unlinkable
 	// record (no id/date after compaction) can't reach here because the route
 	// carries both. Missing → an honest 404, cached briefly.
-	const status = resolved && storyPath(resolved.article) ? 200 : 404;
-	const html = status === 200 ? renderStoryHtml(shell, resolved.article) : notFoundHtml(shell, month);
+	const canonical = resolved ? storyPath(resolved.article) : null;
+	if (canonical && !canonical.startsWith(`/markets/news/${month}/`)) {
+		// The story exists but lives in a different month (boundary drift or a
+		// revised pub_date) — send crawlers and readers to the canonical URL.
+		res.statusCode = 301;
+		res.setHeader('location', canonical);
+		res.setHeader('cache-control', 'public, max-age=300, s-maxage=3600');
+		res.end();
+		return;
+	}
+	const status = canonical ? 200 : 404;
+	const html = status === 200 ? renderStoryHtml(shell, resolved.article) : notFoundHtml(shell, month, params.get('slug') || req.query?.slug || '');
 
 	_pages.set(key, { html, status, expiresAt: Date.now() + (status === 200 ? CACHE_TTL_MS : 60_000) });
 	if (_pages.size > CACHE_MAX) _pages.delete(_pages.keys().next().value);
