@@ -153,15 +153,19 @@ if (!testnetKey) {
   )
   results.push({ label: 'testnet transfer + swap (real signed tx)', ok: null, skipped: true })
 } else {
-  const importEnv = { ...env, ROBINHOOD_CHAIN_IMPORT_KEY: testnetKey }
-  const importProc = spawnSync('node', [bin, '--network', 'testnet', 'config', 'set', 'wallet'], {
-    env: importEnv,
-    encoding: 'utf8',
-    input: 'testpassword123\ntestpassword123\n',
+  // A dedicated config dir keeps the imported testnet key out of the
+  // mainnet keystore generated above — no overwrite prompt to route around.
+  const testnetEnv = {
+    HOOD_CONFIG_DIR: join(workDir, 'config-testnet'),
+    HOOD_WALLET_PASSWORD: 'testpassword123',
+    ROBINHOOD_CHAIN_IMPORT_KEY: testnetKey,
+  }
+  run('config set wallet --network testnet: imports the funded key', ['--network', 'testnet', 'config', 'set', 'wallet'], {
+    extraEnv: testnetEnv,
+    mustContain: ['Wallet imported'],
   })
-  console.log(importProc.stdout, importProc.stderr)
-
   run('faucet --network testnet: real balance read for the imported key', ['--network', 'testnet', 'faucet'], {
+    extraEnv: testnetEnv,
     mustContain: ['ETH'],
   })
   run('transfer --network testnet --execute: REAL signed testnet transfer', [
@@ -175,7 +179,7 @@ if (!testnetKey) {
     '--execute',
     '--yes',
   ], {
-    stdin: 'testpassword123\n',
+    extraEnv: testnetEnv,
     mustContain: ['confirmed'],
     timeout: 120_000,
   })

@@ -17,6 +17,7 @@ import { renderDrawer,   mountDrawerBehavior  } from './components/drawer.js';
 import { mountPaletteBehavior } from './components/palette.js';
 import { claimPendingReferral } from './referral-claim.js';
 import { track, ANALYTICS_EVENTS } from '../analytics.js';
+import { getMe } from './api.js';
 
 /**
  * Build the shell, mount its behaviour, and resolve to the <main> slot
@@ -33,6 +34,12 @@ export async function mountShell() {
 
 	document.body.classList.add('dn-body');
 
+	// Resolved before the rail renders so admin-only entries (Systems, GCP
+	// Spend) never flash for non-admins. Cached by getMe(), so any page
+	// module's later requireUser() call reuses this same request.
+	const me = await getMe();
+	const isAdmin = !!me?.is_admin;
+
 	// Skip-link — hidden until focused, then jumps to main content. Lives
 	// outside the shell grid so it can absolutely-position over chrome.
 	if (!document.querySelector('.dn-skip')) {
@@ -48,7 +55,7 @@ export async function mountShell() {
 	shell.setAttribute('data-rail-collapsed', 'false');
 	shell.setAttribute('data-drawer-open', 'false');
 	shell.innerHTML = `
-		${renderSidebar(location.pathname)}
+		${renderSidebar(location.pathname, isAdmin)}
 		${renderTopbar(location.pathname)}
 		<main class="dn-main" id="dn-main" tabindex="-1">
 			<div class="dn-main-inner" data-slot="page"></div>
@@ -64,7 +71,7 @@ export async function mountShell() {
 	});
 
 	mountSidebarBehavior(shell);
-	mountMobileNavBehavior(shell, location.pathname);
+	mountMobileNavBehavior(shell, location.pathname, isAdmin);
 	mountTopbarBehavior(shell);
 	mountDrawerBehavior(shell);
 	mountPaletteBehavior();

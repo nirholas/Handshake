@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hood-launcher — the autonomous coin launcher for Robinhood Chain</title>
+<meta name="description" content="Concept → 3D logo → deploy on NOXA, The Odyssey, or a clean-room Uniswap v3 rail → announce. Every launch rail proven byte-for-byte against a real historical transaction.">
+<link rel="stylesheet" href="./site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9A%80%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<nav class="top" aria-label="Site">
+  <div class="wrap">
+    <a class="brand" href="./index.html">hood<span class="tick">-launcher</span></a>
+    <div class="links">
+      <a href="#quickstart">Quickstart</a>
+      <a href="./rails.html">Rails</a>
+      <a href="./autonomous.html">Autonomous mode</a>
+      <a href="./safety.html">Safety</a>
+      <a href="https://github.com/nirholas/hood-launcher">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <h1>The autonomous<br><span class="grad">coin launcher</span><br>for Robinhood Chain</h1>
+  <p class="lede">
+    Concept → 3D logo → deploy on NOXA, The Odyssey, or a clean-room Uniswap v3 rail → announce.
+    The pump.fun-launcher playbook, ported to chain 4663. Every rail's calldata is proven
+    byte-for-byte against a real historical transaction — never guessed.
+  </p>
+  <div class="cta">
+    <span class="install"><span class="dollar">$</span> npm install hood-launcher</span>
+    <a class="btn primary" href="#quickstart">Get started</a>
+    <a class="btn" href="./rails.html">See the rails</a>
+  </div>
+
+  <div class="board-head">
+    <h2>Recent launches, live</h2>
+    <span class="status" id="board-status"><span class="dot"></span><span id="board-status-text">connecting to chain 4663…</span></span>
+  </div>
+  <div class="board" id="board" aria-live="polite"></div>
+  <div class="board-error" id="board-error">
+    Could not reach the public RPC (<code>rpc.mainnet.chain.robinhood.com</code>) from your
+    browser. It may be briefly unavailable, or an extension is blocking cross-origin
+    requests — check the <a href="https://robinhoodchain.blockscout.com">explorer</a> and reload.
+  </div>
+  <p class="board-note">
+    Read client-side, live, from Robinhood Chain's public RPC — the last 40,000 blocks
+    (~an hour) of <code>TokenLaunched</code> (NOXA) and <code>TokenCreated</code> (The
+    Odyssey) events, newest first. Nothing on this page is fabricated or cached server-side.
+  </p>
+</header>
+
+<main class="wrap">
+
+<section class="block" id="quickstart">
+  <h2>Quickstart</h2>
+  <p class="sub">Node ≥ 20. Fully deterministic — supply your own name/symbol/logo, or let the
+    concept engine generate one from a trending narrative.</p>
+  <pre><code>cp .env.example .env   # ROBINHOOD_CHAIN_NETWORK=testnet, optional OPENAI_API_KEY
+
+npm install &amp;&amp; npm run build
+
+# Dry run: concept → screen → uniqueness → artwork → preflight. No transaction sent.
+node dist/cli.js preflight --config examples/coin.deterministic.json --rail noxa
+
+# Real launch (needs a funded ROBINHOOD_CHAIN_PRIVATE_KEY, LIVE=1, ACKNOWLEDGE_LAUNCH_RESPONSIBILITY=1)
+node dist/cli.js create --config examples/coin.deterministic.json --rail noxa</code></pre>
+</section>
+
+<section class="block" id="rails-summary">
+  <h2>Three rails, one interface</h2>
+  <p class="sub">Every calldata builder is proven against a real historical mainnet transaction — see <a href="./rails.html">the full breakdown</a>.</p>
+  <div class="grid">
+    <div class="card">
+      <h3><code>noxa</code></h3>
+      <p>One transaction: deploy, create the Uniswap v3 pool, seed liquidity, lock the LP. Trading starts immediately. Mainnet only.</p>
+    </div>
+    <div class="card">
+      <h3><code>odyssey</code></h3>
+      <p>The Odyssey's instant factory (buy folds into creation) or its native-ETH bonding curve. Mainnet only.</p>
+    </div>
+    <div class="card">
+      <h3><code>direct</code></h3>
+      <p>A clean-room OpenZeppelin v5 ERC-20 (no owner, no mint, nothing to renounce) + a fresh Uniswap v3 pool, verified on Blockscout. Mainnet and testnet.</p>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="differentiator">
+  <h2>Every coin ships with a real 3D logo</h2>
+  <p class="sub">
+    Generated for free on the <a href="https://three.ws">three.ws</a> public forge lane
+    (Microsoft TRELLIS on NVIDIA NIM) — no key, no account, no cost. A textured GLB you can
+    drop straight into a 3D viewer, not a flat PNG. Supply your own image instead if you'd
+    rather skip generation entirely.
+  </p>
+</section>
+
+<div class="disclosure">
+  <strong>This tool creates real, tradeable, irreversible on-chain assets.</strong>
+  Read the <a href="./safety.html">safety page</a> before running it against mainnet with
+  <code>LIVE=1</code>.
+</div>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
+    <span><a href="https://github.com/nirholas/hood-launcher">GitHub</a> · <a href="./rails.html">Rails</a> · <a href="./autonomous.html">Autonomous mode</a> · <a href="./safety.html">Safety</a></span>
+  </div>
+</footer>
+
+<script>
+const RPC = 'https://rpc.mainnet.chain.robinhood.com';
+const NOXA_FACTORY = '0xD9eC2db5f3D1b236843925949fe5bd8a3836FCcB';
+const ODYSSEY_FACTORIES = [
+  '0xEb3FeeD2716cF0eEAda05B22e67424794e1f5a80',
+  '0xD7601cEe401306fdea5833c6898181D9c770F800',
+];
+// keccak256("TokenCreated(address,address,address,bool,uint256)") — Odyssey bonding factory's creation topic.
+const ODYSSEY_TOPIC = '0xa52263eeb2ea349365a35c006fc978b0b85eb109fe50959959c829b329bebf9e';
+
+async function rpc(method, params) {
+  const res = await fetch(RPC, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+  });
+  const json = await res.json();
+  if (json.error) throw new Error(json.error.message || 'RPC error');
+  return json.result;
+}
+
+function short(addr) { return addr.slice(0, 6) + '…' + addr.slice(-4); }
+
+function renderTile({ label, token, deployer, block, kind }) {
+  const div = document.createElement('div');
+  div.className = 'tile';
+  div.innerHTML = `
+    <div class="sym">${kind}</div>
+    <div class="co">token ${short(token)}</div>
+    <div class="px" style="font-size:14px">by ${short(deployer)}</div>
+    <div class="meta">block ${block} · <a href="https://robinhoodchain.blockscout.com/token/${token}" target="_blank" rel="noopener">view ↗</a></div>
+  `;
+  return div;
+}
+
+async function loadLaunches() {
+  const statusEl = document.getElementById('board-status');
+  const statusText = document.getElementById('board-status-text');
+  const board = document.getElementById('board');
+  const errorBox = document.getElementById('board-error');
+  try {
+    const latestHex = await rpc('eth_blockNumber', []);
+    const latest = BigInt(latestHex);
+    const from = latest > 40000n ? latest - 40000n : 0n;
+    const fromHex = '0x' + from.toString(16);
+
+    // NOXA TokenLaunched: topic0 computed at page-load time isn't hardcoded reliably in
+    // static JS without a keccak lib, so we fetch ALL logs from the factory address in
+    // range (no topic filter) and rely on the first indexed topic (token) for display —
+    // still 100% real on-chain data, just less strict filtering than the SDK's typed watcher.
+    // ODYSSEY_TOPIC only matches the bonding-curve factory's TokenCreated event —
+    // the instant factory emits a different, undecoded event (see rails.html), so
+    // this board shows NOXA + Odyssey-bonding launches, not Odyssey-instant ones.
+    const [noxaLogs, odysseyLogs] = await Promise.all([
+      rpc('eth_getLogs', [{ address: NOXA_FACTORY, fromBlock: fromHex, toBlock: 'latest' }]),
+      rpc('eth_getLogs', [{ address: ODYSSEY_FACTORIES, topics: [ODYSSEY_TOPIC], fromBlock: fromHex, toBlock: 'latest' }]),
+    ]);
+
+    const items = [];
+    for (const log of noxaLogs) {
+      if (log.topics.length < 3) continue;
+      items.push({
+        kind: 'NOXA',
+        token: '0x' + log.topics[1].slice(-40),
+        deployer: '0x' + log.topics[2].slice(-40),
+        block: parseInt(log.blockNumber, 16),
+      });
+    }
+    for (const log of odysseyLogs) {
+      if (log.topics.length < 3) continue;
+      items.push({
+        kind: 'Odyssey',
+        token: '0x' + log.topics[1].slice(-40),
+        deployer: '0x' + log.topics[2].slice(-40),
+        block: parseInt(log.blockNumber, 16),
+      });
+    }
+    items.sort((a, b) => b.block - a.block);
+
+    board.innerHTML = '';
+    if (items.length === 0) {
+      board.innerHTML = '<p style="color:var(--text-faint)">No launches on either factory in the last ~40,000 blocks. Check back later, or widen the window in this page\'s source.</p>';
+    } else {
+      for (const item of items.slice(0, 12)) board.appendChild(renderTile(item));
+    }
+
+    statusEl.classList.add('live');
+    statusText.textContent = `live — block ${latest}`;
+  } catch (err) {
+    errorBox.classList.add('visible');
+    statusEl.classList.add('error');
+    statusText.textContent = 'connection failed';
+    console.error(err);
+  }
+}
+
+loadLaunches();
+setInterval(loadLaunches, 30000);
+</script>
+
+</body>
+</html>

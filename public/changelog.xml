@@ -127,6 +127,14 @@
 			<description>The in-house payment facilitator that verifies agent-to-agent USDC payments used to check only that a payment was correctly formed — the right amount, token, and recipient — but not that the buyer's account actually held the funds. Because paid endpoints run the requested work first and settle the payment afterward, a payment signed from an empty account could pass the check, trigger real (and sometimes costly) work like an AI generation, and only then fail to settle — leaving the platform to absorb the cost. Verification now simulates the payment on-chain, and falls back to a direct balance check if that's briefly unavailable, so a payment that can't settle is rejected before any work runs. Genuine, funded payments are unaffected.</description>
 		</item>
 		<item>
+			<title>Robinhood Chain coins now get their own /play world</title>
+			<link>https://three.ws/worlds</link>
+			<guid isPermaLink="false">2026-07-12:Robinhood Chain coins now get their own /play world</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every /play world used to be a pump.fun coin; now Robinhood Chain memecoins (NOXA and The Odyssey launches) get the same treatment — a deterministic 3D world seeded by the coin's address, with a distinct chain-flavored look (a dark ticker-tape palette, gold accents) so a Robinhood Chain world reads apart from a pump.fun one at a glance. Live trades animate the space in real time: buy and sell ripples, a whale spectacle on big trades, and a jumbotron trading terminal, all driven by a new firehose service watching the chain's launchpads and Uniswap v3 pools directly (no third-party feed exists for this chain yet). The /worlds lobby gained a Robinhood Chain tab alongside Pump.fun, and multiplayer works unchanged — drop in with friends, same as any other coin world.</description>
+		</item>
+		<item>
 			<title>Robinhood Chain now on three.ws Markets — live stocks, coins, and a real buy flow</title>
 			<link>https://three.ws/markets/robinhood</link>
 			<guid isPermaLink="false">2026-07-12:Robinhood Chain now on three.ws Markets — live stocks, coins, and a real buy flow</guid>
@@ -149,6 +157,14 @@
 			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The Memetic Launcher's picks got a full quality overhaul. Its cultural radar was half-blind — the pump.fun intel feed was silenced by a miscalibrated quality bar and generic sector words like 'meme' drowned out actual memes — so most picks fell back to random word-salad names. Now the radar reads live meme culture properly (Know Your Meme, Google Trends, Hacker News, Wikipedia attention, and pump.fun's own breakout data), each launch rides a specific rising narrative, the launcher remembers its recent picks so it never re-mints the same joke, coin descriptions are no longer cut off mid-sentence, and a quality gate refuses to spend real SOL on a filler pick when no genuine signal exists. Launch previews in the user launcher now refresh hourly instead of every minute.</description>
+		</item>
+		<item>
+			<title>The datapoint API now covers any token by contract — 1,000,000+ paid endpoints</title>
+			<link>https://three.ws/docs/market-data-api</link>
+			<guid isPermaLink="false">2026-07-12:The datapoint API now covers any token by contract — 1,000,000+ paid endpoints</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The pay-per-datapoint fabric grew from ~480,000 to over 1,000,000 individually addressable endpoints. The headline addition is per-contract coverage: pass ANY Solana mint or EVM address (not just CoinGecko-listed coins) to /api/x402/d/token/&lt;address&gt;/&lt;metric&gt; for live price, liquidity, market cap, FDV, volume and 24h change, or to /api/x402/d/token-security/&lt;mint&gt;/&lt;metric&gt; for a rug-risk read — mint and freeze authority status, metadata mutability, holder concentration, liquidity depth, and an overall risk verdict. Freshly launched mints with no CoinGecko id resolve through DexScreener, pump.fun and Helius. Four more families joined too: sector categories, DEX trading volumes, protocol fees &amp; revenue, and derivatives (perp) venues. Every one is $0.0005 USDC per call, and the public discovery doc now advertises ~4,400 concrete endpoints for crawlers to index.</description>
 		</item>
 		<item>
 			<title>The in-house payment settler is now flood-protected</title>

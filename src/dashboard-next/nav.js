@@ -8,6 +8,9 @@
 //   group    — sidebar section ('Create' | 'Distribute' | 'Monetize' | 'Account')
 //   tags     — extra keywords the command palette can match on
 //   external — if true, opens outside the dashboard (escape hatch to legacy)
+//   admin    — if true, hidden from the rail/palette/mobile-nav for non-admins
+//              (the page itself still enforces this server-side; this flag
+//              only controls whether the link is shown)
 //
 // Adding a new dashboard page = add one entry here. The sidebar and
 // palette pick it up automatically; the per-page HTML and JS still need
@@ -64,8 +67,8 @@ export const NAV = [
 	{ path: '/radar',                 label: 'Coin Radar',      icon: 'live',      group: 'Explore',    tags: ['intelligence', 'bundle', 'organic', 'rug', 'risk', 'score', 'pump.fun', 'launch', 'snipe', 'concentration'], external: true },
 
 	// ── Account ─────────────────────────────────────────────────────────
-	{ path: '/dashboard/systems',     label: 'Systems',         icon: 'pulse',     group: 'Account',    tags: ['health', 'status', 'monitoring', 'workers', 'crons', 'x402', 'pump', 'agents', 'seeding', 'all systems'] },
-	{ path: '/dashboard/spend',       label: 'GCP Spend',       icon: 'chart',     group: 'Account',    tags: ['gcp', 'credits', 'burn', 'cost', 'vertex', 'claude', 'imagen', 'forge', 'gpu', 'budget', 'runway', 'billing', 'cloud', 'spend', 'observability'] },
+	{ path: '/dashboard/systems',     label: 'Systems',         icon: 'pulse',     group: 'Account',    tags: ['health', 'status', 'monitoring', 'workers', 'crons', 'x402', 'pump', 'agents', 'seeding', 'all systems'], admin: true },
+	{ path: '/dashboard/spend',       label: 'GCP Spend',       icon: 'chart',     group: 'Account',    tags: ['gcp', 'credits', 'burn', 'cost', 'vertex', 'claude', 'imagen', 'forge', 'gpu', 'budget', 'runway', 'billing', 'cloud', 'spend', 'observability'], admin: true },
 	{ path: '/dashboard/account',     label: 'Account',         icon: 'user',      group: 'Account',    tags: ['wallets', 'sns', 'delegation', 'profile', 'action log', 'provider keys'] },
 	{ path: '/dashboard/referrals',   label: 'Referrals',       icon: 'gift',      group: 'Account',    tags: ['referral', 'invite', 'membership', 'card', 'refer a friend', 'share', 'rewards', 'position', 'score'] },
 	{ path: '/dashboard/wallet-grinder', label: 'Wallet Grinder', icon: 'sparkle',  group: 'Account',    tags: ['vanity', 'grind', 'keypair', 'wallet', 'solana', 'evm', 'ethereum', 'base', 'polygon', 'address', 'prefix', 'suffix'] },

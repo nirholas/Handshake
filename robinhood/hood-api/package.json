@@ -29,7 +29,7 @@
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "start": "node --import tsx src/index.ts",
+    "start": "node dist/src/index.js",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit",
     "openapi": "tsx scripts/emit-openapi.ts",

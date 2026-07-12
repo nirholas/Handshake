@@ -35,9 +35,9 @@ The browser pages (`/coins`, `/yields`, `/gas`, …) stay free for humans, with 
 
 Full per-endpoint parameter docs are in the free index (`/api/x402/market`) and in each endpoint's discovery listing.
 
-## The datapoint fabric — 480,000+ standalone endpoints
+## The datapoint fabric — 1,000,000+ standalone endpoints
 
-Beyond the 17 category endpoints, **every individual datapoint is its own paid endpoint**: one URL, one value, one micro-payment. The fabric at `/api/x402/d/<family>/<id>/<metric>` makes every (family, id, metric) triple individually addressable — ~17,500 coins × 20 metrics, ~15,500 yield pools × 7, ~6,000 protocols × 6, plus chains, stablecoins, exchanges, and the no-id global/gas/fear-greed families. **$0.0005 USDC per datapoint** (override per family with `X402_PRICE_DATAPOINT_<FAMILY>`).
+Beyond the 17 category endpoints, **every individual datapoint is its own paid endpoint**: one URL, one value, one micro-payment. The fabric at `/api/x402/d/<family>/<id>/<metric>` makes every (family, id, metric) triple individually addressable — ~17,500 coins × 20 metrics, ~15,500 yield pools × 7, ~6,000 protocols × 6, **per-contract token market + security for any Solana mint or EVM address** (10 + 6 metrics, unbounded), plus chains, stablecoins, exchanges, categories, DEXs, fees/revenue, derivative venues, and the no-id global/gas/fear-greed families. **$0.0005 USDC per datapoint** (override per family with `X402_PRICE_DATAPOINT_<FAMILY>`).
 
 ```bash
 # Free catalog: families, metrics, prices, live endpoint count
@@ -51,6 +51,12 @@ curl -s https://three.ws/api/x402/d/coin/bitcoin/price          # → 402 challe
 curl -s https://three.ws/api/x402/d/protocol/lido/tvl
 curl -s https://three.ws/api/x402/d/stablecoin/usdt/peg-deviation-bps
 curl -s https://three.ws/api/x402/d/global/btc-dominance
+
+# Per-contract — resolves ANY mint/address, not just CoinGecko-listed coins
+curl -s https://three.ws/api/x402/d/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump/price
+curl -s https://three.ws/api/x402/d/token-security/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump/risk-level
+curl -s https://three.ws/api/x402/d/dex/uniswap-v3/volume-24h
+curl -s https://three.ws/api/x402/d/fees/lido/revenue-24h
 ```
 
 A paid datapoint response is one value with provenance:
@@ -61,9 +67,9 @@ A paid datapoint response is one value with provenance:
   "as_of": "2026-07-11T22:50:00.000Z", "source": "three.ws market-data" }
 ```
 
-Families: `coin` (id = CoinGecko id or Solana mint), `protocol` (DeFiLlama slug), `chain` (chain name), `pool` (DeFiLlama pool uuid), `stablecoin` (DeFiLlama id or symbol), `exchange` (CoinGecko exchange id), and the id-less `global`, `fear-greed`, `gas`. A path that cannot exist (unknown family or metric, malformed id) answers 404/422 **without** issuing a payment challenge; unknown ids and upstream outages reject after verification but before settlement, so a buyer is never charged for anything but a delivered value.
+Families: `coin` (id = CoinGecko id or Solana mint), `token` (any Solana mint or EVM 0x contract — DexScreener + pump.fun + Helius, so freshly launched mints with no CoinGecko id resolve), `token-security` (any Solana mint — mint/freeze authority, metadata mutability, holder concentration, liquidity, risk verdict), `protocol` (DeFiLlama slug), `chain` (chain name), `pool` (DeFiLlama pool uuid), `stablecoin` (DeFiLlama id or symbol), `exchange` (CoinGecko exchange id), `category` (CoinGecko sector id), `dex` (DeFiLlama DEX slug), `fees` (DeFiLlama protocol slug — fees & revenue), `derivative-exchange` (CoinGecko perp venue id), and the id-less `global`, `fear-greed`, `gas`. A path that cannot exist (unknown family or metric, malformed id) answers 404/422 **without** issuing a payment challenge; unknown ids and upstream outages reject after verification but before settlement, so a buyer is never charged for anything but a delivered value.
 
-The public discovery doc (`/.well-known/x402.json`) enumerates **~3,400 concrete datapoint URLs** so crawlers (x402scan, the CDP Bazaar, 402index) index them directly: every id-less metric, plus the top coins × headline metrics and every chain / top protocols / stablecoins / pools / exchanges × their metrics. Ids come from the same cached feeds the paid route resolves against, and the enumerated slice is memoized (15-min TTL) so the doc renders in tens of milliseconds. The full ~480k-endpoint space beyond the enumerated slice is walkable page-by-page at the free catalog `/api/x402/d?family=<f>&ids=1&page=<n>`. Per-family enumeration width is env-tunable (`X402_DISCOVERY_<FAMILY>_IDS`); `X402_DISCOVERY_DATAPOINTS_WIDE=false` reverts to the small headline slice.
+The public discovery doc (`/.well-known/x402.json`) enumerates **~4,400 concrete datapoint URLs** so crawlers (x402scan, the CDP Bazaar, 402index) index them directly: every id-less metric, the top coins × headline metrics, every chain / top protocols / stablecoins / pools / exchanges / categories / DEXs / fees / derivative venues × their metrics, and the per-contract `token` / `token-security` families advertised via the $THREE worked example (they resolve any address at runtime, so there is no finite id list to enumerate). Ids come from the same cached feeds the paid route resolves against, and the enumerated slice is memoized (15-min TTL) so the doc renders in tens of milliseconds. The full ~1M-endpoint space beyond the enumerated slice is walkable page-by-page at the free catalog `/api/x402/d?family=<f>&ids=1&page=<n>` (for `coin`/`token`/`token-security`, ids resolve at runtime — pass any id/address directly). Per-family enumeration width is env-tunable (`X402_DISCOVERY_<FAMILY>_IDS`); `X402_DISCOVERY_DATAPOINTS_WIDE=false` reverts to the small headline slice.
 
 ## Buying a call
 

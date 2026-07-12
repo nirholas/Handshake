@@ -158,6 +158,12 @@ export interface TwapConfig {
    * send real transactions.
    */
   dryRun?: boolean
+  /**
+   * Output recipient. Defaults to `client.account?.address`. Required when
+   * dry-running a TWAP on a read-only client (no account) — planning and
+   * simulating a swap for an address you're merely watching needs no keys.
+   */
+  recipient?: Address
   /** Called before each slice; return `false` to skip it. */
   onBeforeSlice?: (slice: TwapSlicePlan) => boolean | Promise<boolean>
   /** Called after each slice with its result. */
@@ -245,7 +251,7 @@ export function createTwapExecutor(client: HoodClient, config: TwapConfig): Twap
       }
 
       const quote = await quoteSwap(client, { tokenIn: config.tokenIn, tokenOut: config.tokenOut, amountIn })
-      const tx = buildSwapTx(client, quote, { slippageBps })
+      const tx = buildSwapTx(client, quote, { slippageBps, recipient: config.recipient })
 
       if (dryRun) {
         // Simulate via eth_call — no state change, no signature.

@@ -134,7 +134,8 @@ export class Market {
   /**
    * DEX price of a Stock Token in USD from the USDG pool — the number the
    * premium-watch strategy compares against the Chainlink oracle. Probes with a
-   * $10-equivalent order sized off the oracle price to keep impact realistic.
+   * flat 10 USDG order (small enough to keep impact low across the priced
+   * registry) and backs out the implied per-token price from the fill.
    */
   async stockDexPrice(tokenAddress: Address, referenceUsd: number): Promise<number | null> {
     if (referenceUsd <= 0) return null

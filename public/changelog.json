@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-12T13:49:10.576Z",
+	"generated_at": "2026-07-12T13:51:14.886Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -166,6 +166,16 @@
 		{
 			"date": "2026-07-12",
 			"type": "update",
+			"title": "Robinhood Chain coins now get their own /play world",
+			"summary": "Every /play world used to be a pump.fun coin; now Robinhood Chain memecoins (NOXA and The Odyssey launches) get the same treatment — a deterministic 3D world seeded by the coin's address, with a distinct chain-flavored look (a dark ticker-tape palette, gold accents) so a Robinhood Chain world reads apart from a pump.fun one at a glance. Live trades animate the space in real time: buy and sell ripples, a whale spectacle on big trades, and a jumbotron trading terminal, all driven by a new firehose service watching the chain's launchpads and Uniswap v3 pools directly (no third-party feed exists for this chain yet). The /worlds lobby gained a Robinhood Chain tab alongside Pump.fun, and multiplayer works unchanged — drop in with friends, same as any other coin world.",
+			"link": "/worlds",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "update",
 			"title": "Robinhood Chain now on three.ws Markets — live stocks, coins, and a real buy flow",
 			"summary": "A new /markets/robinhood hub covers Robinhood Chain end to end: a 24/7 tokenized-equity board with live Chainlink NAV vs. Uniswap DEX premium for every Stock Token, a memecoin screener across the NOXA and The Odyssey launchpads, recent on-chain launches, and chain stats. Every coin and Stock Token has its own detail page with a price chart, holders, recent transfers, and contract links. Coin pages carry a real buy flow — connect a wallet, switch to Robinhood Chain, get a live Uniswap v3 quote, and swap with your own slippage tolerance; wallets with no funds on the chain get a bridge link instead of a dead end. Stock Tokens stay display-only, since they are tokenized securities not offered to US persons. A new paid API endpoint returns a wallet's full Stock Token portfolio, corporate-action-adjusted and priced at live NAV.",
 			"link": "/markets/robinhood",
@@ -193,6 +203,17 @@
 			"tags": [
 				"improvement",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "update",
+			"title": "The datapoint API now covers any token by contract — 1,000,000+ paid endpoints",
+			"summary": "The pay-per-datapoint fabric grew from ~480,000 to over 1,000,000 individually addressable endpoints. The headline addition is per-contract coverage: pass ANY Solana mint or EVM address (not just CoinGecko-listed coins) to /api/x402/d/token/<address>/<metric> for live price, liquidity, market cap, FDV, volume and 24h change, or to /api/x402/d/token-security/<mint>/<metric> for a rug-risk read — mint and freeze authority status, metadata mutability, holder concentration, liquidity depth, and an overall risk verdict. Freshly launched mints with no CoinGecko id resolve through DexScreener, pump.fun and Helius. Four more families joined too: sector categories, DEX trading volumes, protocol fees & revenue, and derivatives (perp) venues. Every one is $0.0005 USDC per call, and the public discovery doc now advertises ~4,400 concrete endpoints for crawlers to index.",
+			"link": "/docs/market-data-api",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{
