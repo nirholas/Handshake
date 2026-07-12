@@ -83,6 +83,7 @@ const TARGETS = [
 	{ label: 'three-buyback', path: '/api/cron/run-three-buyback', method: 'GET' },
 	// ── Funding root, treasury autopilot & reconciliation ──────────────────
 	{ label: 'treasury-topup', path: '/api/cron/treasury-topup', method: 'GET' },
+	{ label: 'economy-rebalance', path: '/api/cron/economy-rebalance', method: 'GET' },
 	{ label: 'treasury-autopilot', path: '/api/cron/treasury-autopilot', method: 'GET' },
 	{ label: 'treasury-sweepback', path: '/api/cron/treasury-sweepback', method: 'GET' },
 	{ label: 'economy-reconcile', path: '/api/cron/economy-reconcile', method: 'GET' },

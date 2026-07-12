@@ -13244,6 +13244,16 @@
 				"fix"
 			],
 			"link": "/launcher"
+		},
+		{
+			"date": "2026-07-12",
+			"title": "The x402 catalog jumps to thousands of discoverable data endpoints",
+			"summary": "The machine-readable discovery document at /.well-known/x402.json now advertises roughly 3,400 individual paid data endpoints, up from about 180 — every one a concrete, priced URL that agent directories (x402scan, the Coinbase Bazaar, 402index) can index directly. Each of the top coins, every chain, and the top protocols, stablecoins, yield pools, and exchanges now lists its own datapoints (price, TVL, APY, peg deviation, supply, volume, and more) as standalone $0.0005 endpoints. The underlying datapoint fabric already served the full ~480,000-endpoint space; this makes a broad, high-value slice of it findable without guessing. The listing is memoized so the larger document still renders in milliseconds, and every entry passed the strict indexer-validation check with zero warnings.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/docs/market-data-api"
 		}
 	]
 }

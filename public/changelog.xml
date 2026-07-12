@@ -71,6 +71,14 @@
 			<description>All 60 published @three-ws packages were audited end to end — every test suite run, every install verified, every doc checked against the code. The most-used packages gained serious test coverage: the React embed component went from zero tests to 28, agent payment sessions from zero to 29 (fixing two real bugs found along the way, including tool safety-annotations that were silently dropped so clients could not tell read-only tools from destructive ones), and the pump.fun, Brain, IBM Granite, and marketplace MCP servers roughly tripled their suites. READMEs for the five most-downloaded packages were rewritten or corrected to match the code exactly — phantom tools removed, missing tools and required setup documented, error semantics added. Broken metadata (dead homepage links, a missing license file, a stale repository pointer) was fixed across the fleet.</description>
 		</item>
 		<item>
+			<title>The x402 catalog jumps to thousands of discoverable data endpoints</title>
+			<link>https://three.ws/docs/market-data-api</link>
+			<guid isPermaLink="false">2026-07-12:The x402 catalog jumps to thousands of discoverable data endpoints</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The machine-readable discovery document at /.well-known/x402.json now advertises roughly 3,400 individual paid data endpoints, up from about 180 — every one a concrete, priced URL that agent directories (x402scan, the Coinbase Bazaar, 402index) can index directly. Each of the top coins, every chain, and the top protocols, stablecoins, yield pools, and exchanges now lists its own datapoints (price, TVL, APY, peg deviation, supply, volume, and more) as standalone $0.0005 endpoints. The underlying datapoint fabric already served the full ~480,000-endpoint space; this makes a broad, high-value slice of it findable without guessing. The listing is memoized so the larger document still renders in milliseconds, and every entry passed the strict indexer-validation check with zero warnings.</description>
+		</item>
+		<item>
 			<title>x402 registration probes now always get a real payment challenge</title>
 			<link>https://three.ws/openapi.json</link>
 			<guid isPermaLink="false">2026-07-12:x402 registration probes now always get a real payment challenge</guid>

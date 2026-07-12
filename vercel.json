@@ -5263,6 +5263,10 @@
 			"schedule": "*/30 * * * *"
 		},
 		{
+			"path": "/api/cron/economy-rebalance",
+			"schedule": "*/30 * * * *"
+		},
+		{
 			"path": "/api/cron/treasury-sweepback",
 			"schedule": "41 */6 * * *"
 		},
