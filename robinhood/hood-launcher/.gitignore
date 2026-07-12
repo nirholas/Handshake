@@ -10,3 +10,7 @@ journal.jsonl
 .DS_Store
 scratch/
 coverage/
+
+# Runtime data: launch ledger, autonomous-mode proposals, kill-switch sentinel.
+# HOOD_LAUNCHER_DATA_DIR defaults to .hood-launcher — never commit real or test launch history.
+.hood-launcher/

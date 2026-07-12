@@ -464,7 +464,7 @@ npm publish --access public
 
 ## License
 
-MIT © 2026 nirholas. See [LICENSE](./LICENSE).
+Apache-2.0 © 2026 nirholas. See [LICENSE](./LICENSE).
 
 ---
 

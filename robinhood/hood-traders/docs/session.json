@@ -1,10 +1,10 @@
 {
-  "capturedAt": 1783865092690,
+  "capturedAt": 1783866723450,
   "network": "mainnet",
   "mode": "paper",
-  "durationMinutes": 3.3,
+  "durationMinutes": 30.4,
   "agents": 3,
-  "totalTicks": 62,
+  "totalTicks": 611,
   "trades": 0,
   "refusals": 0,
   "equityUsd": 0,
@@ -14,7 +14,7 @@
     {
       "id": "sniper-1",
       "strategy": "launch-sniper",
-      "ticks": 45,
+      "ticks": 446,
       "trades": 0,
       "refusals": 0,
       "lastError": null
@@ -22,7 +22,7 @@
     {
       "id": "momentum-1",
       "strategy": "momentum",
-      "ticks": 11,
+      "ticks": 107,
       "trades": 0,
       "refusals": 0,
       "lastError": null
@@ -30,7 +30,7 @@
     {
       "id": "premium-1",
       "strategy": "premium-watch",
-      "ticks": 6,
+      "ticks": 58,
       "trades": 0,
       "refusals": 0,
       "lastError": null
@@ -38,493 +38,523 @@
   ],
   "journalExcerpt": [
     {
-      "id": 106,
+      "id": 159,
       "agentId": "premium-1",
-      "ts": 1783865084113,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.74 (268bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.7359396932756,
-        "bps": 267.5397460497915
-      }
-    },
-    {
-      "id": 105,
-      "agentId": "premium-1",
-      "ts": 1783865053076,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.71 (267bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.71450981430485,
-        "bps": 267.0142785338039
-      }
-    },
-    {
-      "id": 104,
-      "agentId": "premium-1",
-      "ts": 1783865022033,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.67 (266bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.67004522963305,
-        "bps": 265.9239926349061
-      }
-    },
-    {
-      "id": 103,
-      "agentId": "premium-1",
-      "ts": 1783864990572,
+      "ts": 1783866709829,
       "kind": "alert",
       "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.75 (268bps)",
       "meta": {
         "symbol": "TSLA",
         "oracleUsd": 407.825,
-        "dexUsd": 418.7500917829744,
-        "bps": 267.8867598350859
+        "dexUsd": 418.7536994681299,
+        "bps": 267.9752214339468
       }
     },
     {
-      "id": 102,
+      "id": 158,
       "agentId": "premium-1",
-      "ts": 1783864958082,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.88 (271bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.87646619663036,
-        "bps": 270.9855010514405
-      }
-    },
-    {
-      "id": 101,
-      "agentId": "premium-1",
-      "ts": 1783864927086,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.59 (264bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.58921677004395,
-        "bps": 263.9420528423701
-      }
-    },
-    {
-      "id": 99,
-      "agentId": "momentum-1",
-      "ts": 1783864881737,
-      "kind": "observe",
-      "detail": "kill switch tripped: dashboard — halting new orders",
-      "meta": {}
-    },
-    {
-      "id": 100,
-      "agentId": "premium-1",
-      "ts": 1783864881737,
-      "kind": "observe",
-      "detail": "kill switch tripped: dashboard — halting new orders",
-      "meta": {}
-    },
-    {
-      "id": 98,
-      "agentId": "sniper-1",
-      "ts": 1783864881736,
-      "kind": "observe",
-      "detail": "kill switch tripped: dashboard — halting new orders",
-      "meta": {}
-    },
-    {
-      "id": 95,
-      "agentId": "sniper-1",
-      "ts": 1783864854374,
-      "kind": "observe",
-      "detail": "kill switch tripped: signal:SIGTERM — halting new orders",
-      "meta": {}
-    },
-    {
-      "id": 96,
-      "agentId": "momentum-1",
-      "ts": 1783864854374,
-      "kind": "observe",
-      "detail": "kill switch tripped: signal:SIGTERM — halting new orders",
-      "meta": {}
-    },
-    {
-      "id": 97,
-      "agentId": "premium-1",
-      "ts": 1783864854374,
-      "kind": "observe",
-      "detail": "kill switch tripped: signal:SIGTERM — halting new orders",
-      "meta": {}
-    },
-    {
-      "id": 94,
-      "agentId": "premium-1",
-      "ts": 1783864838435,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.71 (267bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.70756578411243,
-        "bps": 266.8440086829509
-      }
-    },
-    {
-      "id": 93,
-      "agentId": "premium-1",
-      "ts": 1783864807447,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.72 (267bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.716505501964,
-        "bps": 267.0632134362531
-      }
-    },
-    {
-      "id": 92,
-      "agentId": "premium-1",
-      "ts": 1783864776430,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.80 (269bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.8007194007631,
-        "bps": 269.1281652856771
-      }
-    },
-    {
-      "id": 91,
-      "agentId": "premium-1",
-      "ts": 1783864742791,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.80 (269bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.8048375349633,
-        "bps": 269.2291432590777
-      }
-    },
-    {
-      "id": 90,
-      "agentId": "premium-1",
-      "ts": 1783864711516,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.82 (270bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.8176435947173,
-        "bps": 269.5431519577594
-      }
-    },
-    {
-      "id": 89,
-      "agentId": "premium-1",
-      "ts": 1783864680445,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.66 (266bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.66223454747694,
-        "bps": 265.7324721995207
-      }
-    },
-    {
-      "id": 88,
-      "agentId": "premium-1",
-      "ts": 1783864649236,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.63 (265bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.6278946619512,
-        "bps": 264.89044717590144
-      }
-    },
-    {
-      "id": 87,
-      "agentId": "premium-1",
-      "ts": 1783864617694,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.63 (265bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.62553919346414,
-        "bps": 264.8326903319842
-      }
-    },
-    {
-      "id": 86,
-      "agentId": "premium-1",
-      "ts": 1783864586578,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.63 (265bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.6333240850085,
-        "bps": 265.0235783732853
-      }
-    },
-    {
-      "id": 85,
-      "agentId": "premium-1",
-      "ts": 1783864553098,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.63 (265bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.63382688361696,
-        "bps": 265.03590715667195
-      }
-    },
-    {
-      "id": 84,
-      "agentId": "premium-1",
-      "ts": 1783864516727,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.56 (263bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.5635151950068,
-        "bps": 263.3118419666968
-      }
-    },
-    {
-      "id": 83,
-      "agentId": "premium-1",
-      "ts": 1783864484037,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.56 (263bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.5622282077206,
-        "bps": 263.2802846250375
-      }
-    },
-    {
-      "id": 82,
-      "agentId": "premium-1",
-      "ts": 1783864453051,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.57 (263bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.5691887669503,
-        "bps": 263.4509597731941
-      }
-    },
-    {
-      "id": 81,
-      "agentId": "premium-1",
-      "ts": 1783864422008,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.54 (263bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.5363421308991,
-        "bps": 262.6455497063467
-      }
-    },
-    {
-      "id": 80,
-      "agentId": "premium-1",
-      "ts": 1783864390971,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.57 (264bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.57287166066106,
-        "bps": 263.54126550998774
-      }
-    },
-    {
-      "id": 79,
-      "agentId": "premium-1",
-      "ts": 1783864360005,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.57 (264bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.5722058133098,
-        "bps": 263.5249387190533
-      }
-    },
-    {
-      "id": 78,
-      "agentId": "premium-1",
-      "ts": 1783864329024,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.58 (264bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.5841139856871,
-        "bps": 263.81693093084345
-      }
-    },
-    {
-      "id": 76,
-      "agentId": "premium-1",
-      "ts": 1783864297711,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.58 (264bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.5831738195233,
-        "bps": 263.7938777545108
-      }
-    },
-    {
-      "id": 75,
-      "agentId": "premium-1",
-      "ts": 1783864266521,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.59 (264bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.5911176126211,
-        "bps": 263.98866211294273
-      }
-    },
-    {
-      "id": 74,
-      "agentId": "premium-1",
-      "ts": 1783864235056,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.60 (264bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.60364195244557,
-        "bps": 264.2957629484603
-      }
-    },
-    {
-      "id": 73,
-      "agentId": "premium-1",
-      "ts": 1783864204043,
-      "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.62 (265bps)",
-      "meta": {
-        "symbol": "TSLA",
-        "oracleUsd": 407.825,
-        "dexUsd": 418.62259977198096,
-        "bps": 264.76061477302693
-      }
-    },
-    {
-      "id": 72,
-      "agentId": "premium-1",
-      "ts": 1783864173069,
+      "ts": 1783866678912,
       "kind": "alert",
       "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.64 (265bps)",
       "meta": {
         "symbol": "TSLA",
         "oracleUsd": 407.825,
-        "dexUsd": 418.63781013291936,
-        "bps": 265.1335777090509
+        "dexUsd": 418.6449342628827,
+        "bps": 265.30826366413845
       }
     },
     {
-      "id": 71,
+      "id": 157,
       "agentId": "premium-1",
-      "ts": 1783864142100,
+      "ts": 1783866647939,
       "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.68 (266bps)",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.62 (265bps)",
       "meta": {
         "symbol": "TSLA",
         "oracleUsd": 407.825,
-        "dexUsd": 418.68052665503905,
-        "bps": 266.1810005526649
+        "dexUsd": 418.6245672245037,
+        "bps": 264.8088573408627
       }
     },
     {
-      "id": 70,
+      "id": 156,
       "agentId": "premium-1",
-      "ts": 1783864111127,
+      "ts": 1783866616949,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.72 (267bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.72375531865725,
+        "bps": 267.2409812703308
+      }
+    },
+    {
+      "id": 155,
+      "agentId": "premium-1",
+      "ts": 1783866586016,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.71 (267bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.71050295321083,
+        "bps": 266.91602901271
+      }
+    },
+    {
+      "id": 154,
+      "agentId": "premium-1",
+      "ts": 1783866555090,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.74 (268bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.7354247728944,
+        "bps": 267.5271200366439
+      }
+    },
+    {
+      "id": 153,
+      "agentId": "premium-1",
+      "ts": 1783866523346,
       "kind": "alert",
       "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.73 (267bps)",
       "meta": {
         "symbol": "TSLA",
         "oracleUsd": 407.825,
-        "dexUsd": 418.7325256553843,
-        "bps": 267.45603274405175
+        "dexUsd": 418.73327098566745,
+        "bps": 267.4743084820072
       }
     },
     {
-      "id": 69,
+      "id": 152,
       "agentId": "premium-1",
-      "ts": 1783864078008,
+      "ts": 1783866492222,
       "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.75 (268bps)",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.74 (268bps)",
       "meta": {
         "symbol": "TSLA",
         "oracleUsd": 407.825,
-        "dexUsd": 418.7464535330801,
-        "bps": 267.7975487790137
+        "dexUsd": 418.73695206541015,
+        "bps": 267.56456973972075
       }
     },
     {
-      "id": 68,
+      "id": 151,
       "agentId": "premium-1",
-      "ts": 1783864045335,
+      "ts": 1783866461297,
       "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.86 (271bps)",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.66 (266bps)",
       "meta": {
         "symbol": "TSLA",
         "oracleUsd": 407.825,
-        "dexUsd": 418.86087465275546,
-        "bps": 270.6031913873712
+        "dexUsd": 418.66478913915535,
+        "bps": 265.79511160805146
       }
     },
     {
-      "id": 67,
+      "id": 150,
       "agentId": "premium-1",
-      "ts": 1783864014384,
+      "ts": 1783866430342,
       "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.86 (271bps)",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.63 (265bps)",
       "meta": {
         "symbol": "TSLA",
         "oracleUsd": 407.825,
-        "dexUsd": 418.8581706089018,
-        "bps": 270.5368873634966
+        "dexUsd": 418.63325636933587,
+        "bps": 265.0219179632411
       }
     },
     {
-      "id": 66,
+      "id": 149,
       "agentId": "premium-1",
-      "ts": 1783863983461,
+      "ts": 1783866399378,
       "kind": "alert",
-      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.99 (274bps)",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.65 (266bps)",
       "meta": {
         "symbol": "TSLA",
         "oracleUsd": 407.825,
-        "dexUsd": 418.9876864725548,
-        "bps": 273.712657942863
+        "dexUsd": 418.6545238853112,
+        "bps": 265.5434042864276
+      }
+    },
+    {
+      "id": 148,
+      "agentId": "premium-1",
+      "ts": 1783866368387,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.56 (263bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.5553162047489,
+        "bps": 263.110800091925
+      }
+    },
+    {
+      "id": 147,
+      "agentId": "premium-1",
+      "ts": 1783866337408,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.51 (262bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.50681052418514,
+        "bps": 261.9214252236904
+      }
+    },
+    {
+      "id": 146,
+      "agentId": "premium-1",
+      "ts": 1783866306249,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.51 (262bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.50775691581737,
+        "bps": 261.9446310505089
+      }
+    },
+    {
+      "id": 145,
+      "agentId": "premium-1",
+      "ts": 1783866275278,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.43 (260bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.43424091829166,
+        "bps": 260.1419951766487
+      }
+    },
+    {
+      "id": 144,
+      "agentId": "premium-1",
+      "ts": 1783866244144,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.51 (262bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.50506220736395,
+        "bps": 261.878555933647
+      }
+    },
+    {
+      "id": 143,
+      "agentId": "premium-1",
+      "ts": 1783866213217,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.51 (262bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.5109445134143,
+        "bps": 262.02279196749373
+      }
+    },
+    {
+      "id": 142,
+      "agentId": "premium-1",
+      "ts": 1783866180923,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.51 (262bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.50529692377086,
+        "bps": 261.8843112553391
+      }
+    },
+    {
+      "id": 141,
+      "agentId": "premium-1",
+      "ts": 1783866145878,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.52 (262bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.5222580217758,
+        "bps": 262.3002028266006
+      }
+    },
+    {
+      "id": 140,
+      "agentId": "premium-1",
+      "ts": 1783866114954,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.46 (261bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.4613316444967,
+        "bps": 260.8062684851761
+      }
+    },
+    {
+      "id": 139,
+      "agentId": "premium-1",
+      "ts": 1783866083951,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.47 (261bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.4713461390861,
+        "bps": 261.0518271093268
+      }
+    },
+    {
+      "id": 138,
+      "agentId": "premium-1",
+      "ts": 1783866052887,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.67 (266bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.671189762315,
+        "bps": 265.9520569439103
+      }
+    },
+    {
+      "id": 137,
+      "agentId": "premium-1",
+      "ts": 1783866021970,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.54 (263bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.540951747079,
+        "bps": 262.7585789757625
+      }
+    },
+    {
+      "id": 136,
+      "agentId": "premium-1",
+      "ts": 1783865990673,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.53 (263bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.5346700396433,
+        "bps": 262.60454949165205
+      }
+    },
+    {
+      "id": 135,
+      "agentId": "premium-1",
+      "ts": 1783865959682,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.54 (263bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.5366026009766,
+        "bps": 262.65193651631506
+      }
+    },
+    {
+      "id": 134,
+      "agentId": "premium-1",
+      "ts": 1783865928759,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.53 (262bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.5288845968956,
+        "bps": 262.46268857710027
+      }
+    },
+    {
+      "id": 133,
+      "agentId": "premium-1",
+      "ts": 1783865897833,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.52 (262bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.51583927921894,
+        "bps": 262.1428131973015
+      }
+    },
+    {
+      "id": 132,
+      "agentId": "premium-1",
+      "ts": 1783865866872,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.53 (262bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.52559609166565,
+        "bps": 262.3820533725411
+      }
+    },
+    {
+      "id": 131,
+      "agentId": "premium-1",
+      "ts": 1783865835917,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.49 (262bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.493751303664,
+        "bps": 261.6012089416787
+      }
+    },
+    {
+      "id": 130,
+      "agentId": "premium-1",
+      "ts": 1783865804986,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.49 (261bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.48626417896935,
+        "bps": 261.4176222391801
+      }
+    },
+    {
+      "id": 129,
+      "agentId": "premium-1",
+      "ts": 1783865767908,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.38 (259bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.38199365503016,
+        "bps": 258.8608754988088
+      }
+    },
+    {
+      "id": 128,
+      "agentId": "premium-1",
+      "ts": 1783865735390,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.33 (258bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.3271029315622,
+        "bps": 257.5149373275843
+      }
+    },
+    {
+      "id": 127,
+      "agentId": "premium-1",
+      "ts": 1783865704456,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.52 (262bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.5211941110257,
+        "bps": 262.2741153932619
+      }
+    },
+    {
+      "id": 126,
+      "agentId": "premium-1",
+      "ts": 1783865673504,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.52 (262bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.51783819216763,
+        "bps": 262.19182718488673
+      }
+    },
+    {
+      "id": 124,
+      "agentId": "premium-1",
+      "ts": 1783865642535,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.54 (263bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.5437395405074,
+        "bps": 262.82693656611013
+      }
+    },
+    {
+      "id": 123,
+      "agentId": "premium-1",
+      "ts": 1783865611611,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.47 (261bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.4695191774088,
+        "bps": 261.0070294221498
+      }
+    },
+    {
+      "id": 122,
+      "agentId": "premium-1",
+      "ts": 1783865580632,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.45 (260bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.4462818811553,
+        "bps": 260.43724345381753
+      }
+    },
+    {
+      "id": 121,
+      "agentId": "premium-1",
+      "ts": 1783865549690,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.40 (259bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.40222663001816,
+        "bps": 259.3569945446742
+      }
+    },
+    {
+      "id": 120,
+      "agentId": "premium-1",
+      "ts": 1783865518598,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.38 (259bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.3827397797021,
+        "bps": 258.87917071543194
+      }
+    },
+    {
+      "id": 119,
+      "agentId": "premium-1",
+      "ts": 1783865487636,
+      "kind": "alert",
+      "detail": "[warn] TSLA premium (DEX rich): oracle $407.82 vs DEX $418.45 (261bps)",
+      "meta": {
+        "symbol": "TSLA",
+        "oracleUsd": 407.825,
+        "dexUsd": 418.4517324486919,
+        "bps": 260.57089312062624
       }
     }
   ]

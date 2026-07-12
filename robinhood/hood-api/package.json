@@ -13,7 +13,7 @@
     "hono",
     "api"
   ],
-  "license": "MIT",
+  "license": "Apache-2.0",
   "author": "nirholas (https://x.com/nichxbt)",
   "type": "module",
   "engines": {
