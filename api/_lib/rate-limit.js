@@ -578,6 +578,15 @@ export const limits = {
 	// zauth's paid x402 endpoint and each GET polls a scan session; cap per IP
 	// so one caller can't use the proxy as a relay to hammer their upstream.
 	zauthScanIp: (ip) => getLimiter('zauthscan:ip', { limit: 30, window: '1 m' }).limit(ip),
+	// Robinhood Chain market data (api/v1/robinhood/*). Every response is served
+	// from a short-TTL snapshot cache (cacheWrap), so this only gates cache-miss
+	// origin work — a multicall sweep over the 95 Stock Tokens or a DefiLlama /
+	// CoinGecko fetch. Its OWN bucket (never public:ip — the play-lobby-429
+	// lesson) so a busy board never drains the shared read budget other pages
+	// need. Generous for an interactive board + detail views; `local` (per
+	// instance) because it only bounds scripted scraping of cache-fronted reads,
+	// and a distributed Redis command per poll is what drained the Upstash quota.
+	robinhoodIp: (ip) => getLimiter('robinhood:ip', { limit: 120, window: '1 m', local: true }).limit(ip),
 	// aixbt intelligence bridge (api/aixbt/*). Each call may fall through to the
 	// upstream aixbt REST API, which is rate-limited per key — cap per IP so one
 	// caller can't drain the shared key's budget. Reads are cached, so this is
@@ -796,6 +805,15 @@ export const limits = {
 	// for an agent screening a watchlist while capping a scripted enumeration flood.
 	// Non-critical: a Redis blip degrades to the per-instance memory limiter.
 	tokenSecurityIp: (ip) => getLimiter('token:security:ip', { limit: 20, window: '1 m' }).limit(ip),
+	// Robinhood Chain market data (api/v1/robinhood/*) — free reads that fan out to
+	// on-chain multicall (Chainlink NAV snapshot), Blockscout, DefiLlama, CoinGecko
+	// and DexScreener, every one behind a short-TTL cache, so this only gates
+	// cache-miss origin hits. A DEDICATED per-IP bucket (never the shared publicIp
+	// pool — see the play-lobby-429 self-DoS lesson): 60/min is generous for an
+	// interactive board polling the stocks/coins tabs while capping a scripted
+	// enumeration flood. Non-critical: a Redis blip degrades to the per-instance
+	// memory limiter, never blocks a read.
+	robinhoodRead: (ip) => getLimiter('robinhood:read:ip', { limit: 60, window: '1 m' }).limit(ip),
 	// Free name resolution (api/v1/resolve) — wraps the same ENS RPC failover
 	// chain and SNS/Bonfida calls api/agents/ens/[name].js and api/sns.js already
 	// make, all with their own in-process caches, so this only gates cache-miss

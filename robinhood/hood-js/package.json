@@ -46,7 +46,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && node scripts/postbuild.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run tests/unit",
     "test:live": "vitest run tests/live --testTimeout 120000",

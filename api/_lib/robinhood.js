@@ -225,6 +225,38 @@ export async function bestDexPair(address) {
 	return pairs[0] || null;
 }
 
+/**
+ * Batched DEX snapshot for many token addresses at once → { [lower-addr]:
+ * bestRobinhoodPair }. DexScreener's /tokens/ endpoint accepts up to 30
+ * addresses per call, so the whole 95-token board is 4 calls, not 95 — the
+ * anti-fan-out requirement. Cached 30s per address-chunk.
+ */
+export async function dexSnapshot(addresses) {
+	const list = (Array.isArray(addresses) ? addresses : [])
+		.map((a) => String(a || '').toLowerCase())
+		.filter((a) => /^0x[0-9a-f]{40}$/.test(a));
+	const out = {};
+	const CHUNK = 30;
+	for (let i = 0; i < list.length; i += CHUNK) {
+		const chunk = list.slice(i, i + CHUNK);
+		const key = `rh:dex:multi:${chunk[0]}:${chunk.length}`;
+		const data = await fetchJson(
+			`https://api.dexscreener.com/latest/dex/tokens/${chunk.join(',')}`,
+			30,
+			key,
+		);
+		const pairs = Array.isArray(data?.pairs) ? data.pairs : [];
+		for (const p of pairs) {
+			if (p.chainId !== 'robinhood') continue;
+			const base = String(p.baseToken?.address || '').toLowerCase();
+			if (!chunk.includes(base)) continue;
+			const cur = out[base];
+			if (!cur || (p.liquidity?.usd || 0) > (cur.liquidity?.usd || 0)) out[base] = p;
+		}
+	}
+	return out;
+}
+
 /** DexScreener search restricted to robinhood-chain pairs. */
 export async function dexSearch(query) {
 	const q = String(query || '').trim();
@@ -330,83 +362,61 @@ export const ODYSSEY_FACTORIES = [
 	'0xD7601cEe401306fdea5833c6898181D9c770F800', // instant
 ];
 
-const NOXA_TOKEN_LAUNCHED = {
-	type: 'event',
-	name: 'TokenLaunched',
-	inputs: [
-		{ name: 'token', type: 'address', indexed: true },
-		{ name: 'deployer', type: 'address', indexed: true },
-		{ name: 'dexFactory', type: 'address', indexed: true },
-		{ name: 'pairToken', type: 'address', indexed: false },
-		{ name: 'pool', type: 'address', indexed: false },
-		{ name: 'dexId', type: 'uint256', indexed: false },
-		{ name: 'launchConfigId', type: 'uint256', indexed: false },
-		{ name: 'positionId', type: 'uint256', indexed: false },
-		{ name: 'restrictionsEndBlock', type: 'uint256', indexed: false },
-		{ name: 'initialBuyAmount', type: 'uint256', indexed: false },
-	],
-};
+// Event topic0 selectors (keccak256 of the canonical signature). The public RPC
+// caps eth_getLogs at 10k matched logs and a bounded block range, so newest
+// launches are read from Blockscout's decoded-log API filtered by topic instead
+// — no range guessing, always newest-first. Indexed params live in `topics`:
+// topics[1] = token, topics[2] = deployer/creator (both 32-byte left-padded).
+const NOXA_TOKEN_LAUNCHED_TOPIC =
+	'0xdb51ea9ad51ab453a65a4cb7e60c3cb378c9501bb002609f8f97778fb6c4235a';
+const ODYSSEY_TOKEN_CREATED_TOPIC =
+	'0xa52263eeb2ea349365a35c006fc978b0b85eb109fe50959959c829b329bebf9e';
 
-const ODYSSEY_TOKEN_CREATED = {
-	type: 'event',
-	name: 'TokenCreated',
-	inputs: [
-		{ name: 'token', type: 'address', indexed: true },
-		{ name: 'creator', type: 'address', indexed: true },
-		{ name: 'backingWallet', type: 'address', indexed: false },
-		{ name: 'isMarginBacked', type: 'bool', indexed: false },
-		{ name: 'threshold', type: 'uint256', indexed: false },
-	],
-};
+function topicToAddress(topic) {
+	if (typeof topic !== 'string' || topic.length < 42) return null;
+	return `0x${topic.slice(-40)}`;
+}
+
+async function launchesFromFactory(addr, topic, launchpad, type) {
+	const data = await fetchJson(
+		`${BLOCKSCOUT_BASE}/api/v2/addresses/${addr}/logs?topic=${topic}`,
+		45,
+		`rh:launches:${addr}:${topic.slice(0, 10)}`,
+	);
+	const items = Array.isArray(data?.items) ? data.items : [];
+	return items
+		.map((l) => {
+			const topics = Array.isArray(l.topics) ? l.topics : [];
+			const token = topicToAddress(topics[1]);
+			if (!token) return null;
+			return {
+				launchpad,
+				type,
+				token,
+				deployer: topicToAddress(topics[2]),
+				block: Number(l.block_number || 0),
+				txHash: l.transaction_hash || l.tx_hash || null,
+				timestamp: l.block_timestamp || null,
+			};
+		})
+		.filter(Boolean);
+}
 
 /**
- * Recent launchpad launches from NOXA + The Odyssey factories over the last
- * ~lookback blocks (default ~100k ≈ recent activity at 100ms blocks). Cached
- * 45s. Returns newest first with the launchpad, token, and deployer.
+ * Recent launchpad launches from NOXA + The Odyssey factories, newest first.
+ * Read from Blockscout's decoded-log API (reliable + unbounded) rather than the
+ * range-capped public-RPC eth_getLogs. Cached 45s per factory.
  */
-export async function recentLaunches({ lookbackBlocks = 100_000, limit = 40 } = {}) {
-	return cacheWrap(`rh:launches:${lookbackBlocks}:${limit}`, 45, async () => {
-		const client = publicClient(false);
-		const head = await client.getBlockNumber();
-		const fromBlock = head > BigInt(lookbackBlocks) ? head - BigInt(lookbackBlocks) : 0n;
-
-		const jobs = [
-			client
-				.getLogs({ address: NOXA_FACTORY, event: NOXA_TOKEN_LAUNCHED, fromBlock, toBlock: head })
-				.then((logs) =>
-					logs.map((l) => ({
-						launchpad: 'NOXA',
-						type: 'instant',
-						token: l.args?.token || null,
-						deployer: l.args?.deployer || null,
-						pool: l.args?.pool || null,
-						block: Number(l.blockNumber),
-						txHash: l.transactionHash,
-					})),
-				)
-				.catch(() => []),
-			...ODYSSEY_FACTORIES.map((addr) =>
-				client
-					.getLogs({ address: addr, event: ODYSSEY_TOKEN_CREATED, fromBlock, toBlock: head })
-					.then((logs) =>
-						logs.map((l) => ({
-							launchpad: 'The Odyssey',
-							type: 'bonding-curve',
-							token: l.args?.token || null,
-							deployer: l.args?.creator || null,
-							pool: null,
-							block: Number(l.blockNumber),
-							txHash: l.transactionHash,
-						})),
-					)
-					.catch(() => []),
-			),
-		];
-
-		const all = (await Promise.all(jobs)).flat();
-		all.sort((a, b) => b.block - a.block);
-		return all.slice(0, limit);
-	});
+export async function recentLaunches({ limit = 40 } = {}) {
+	const jobs = [
+		launchesFromFactory(NOXA_FACTORY, NOXA_TOKEN_LAUNCHED_TOPIC, 'NOXA', 'instant'),
+		...ODYSSEY_FACTORIES.map((addr) =>
+			launchesFromFactory(addr, ODYSSEY_TOKEN_CREATED_TOPIC, 'The Odyssey', 'bonding-curve'),
+		),
+	];
+	const all = (await Promise.all(jobs)).flat();
+	all.sort((a, b) => b.block - a.block);
+	return all.slice(0, limit);
 }
 
 // ── Shared derivations ─────────────────────────────────────────────────────

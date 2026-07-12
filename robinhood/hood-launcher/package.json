@@ -1,0 +1,79 @@
+{
+  "name": "hood-launcher",
+  "version": "0.1.0",
+  "description": "Autonomous coin launcher for Robinhood Chain (chain ID 4663): concept → 3D logo → deploy on NOXA or a direct Uniswap v3 rail → announce. CLI, HTTP API, and an autonomous agent, sharing one core.",
+  "keywords": [
+    "robinhood",
+    "robinhood-chain",
+    "memecoin",
+    "launchpad",
+    "noxa",
+    "token-launcher",
+    "uniswap",
+    "viem",
+    "3d-logo",
+    "autonomous-agent"
+  ],
+  "license": "MIT",
+  "author": "nirholas (https://x.com/nichxbt)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/hood-launcher.git"
+  },
+  "homepage": "https://nirholas.github.io/hood-launcher/",
+  "bugs": {
+    "url": "https://github.com/nirholas/hood-launcher/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "hood-launch": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./contracts/HoodToken.json": "./contracts/HoodToken.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "contracts/HoodToken.json",
+    "contracts/HoodToken.sol",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run tests/unit",
+    "test:live": "vitest run tests/live --testTimeout 180000",
+    "compile:contract": "node scripts/compile-contract.mjs",
+    "cli": "tsx bin/hood-launch.ts",
+    "api": "tsx src/api/server.ts",
+    "auto": "tsx bin/hood-auto.ts",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "hoodchain": "^0.1.0",
+    "viem": "^2.55.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@openzeppelin/contracts": "^5.1.0",
+    "@types/node": "^24.0.0",
+    "solc": "^0.8.28",
+    "tsup": "^8.5.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

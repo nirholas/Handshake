@@ -1,0 +1,18 @@
+{
+  "name": "rh-example-06-firehose",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Decode the Robinhood Chain sequencer firehose into a live transaction stream.",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "hoodchain": "^0.1.0",
+    "viem": "^2.55.0",
+    "ws": "^8.18.0"
+  }
+}

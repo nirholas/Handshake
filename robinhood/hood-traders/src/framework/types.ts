@@ -11,7 +11,11 @@ export interface Intent {
   token: Address
   /** Human label for the token, for journal/dashboard readability. */
   tokenSymbol: string
-  /** Notional to trade, denominated in the quote token's smallest unit (USDG=6dp, WETH=18dp). */
+  /**
+   * Amount of the INPUT token, in its smallest unit. On a `buy` the input is the
+   * quote token (spend N USDG/WETH → receive `token`); on a `sell` the input is
+   * `token` itself (sell N token units → receive the quote token).
+   */
   amountIn: bigint
   /** Which token `amountIn` is denominated in (what leaves the wallet on a buy). */
   quoteToken: Address
@@ -44,12 +48,16 @@ export interface Position {
   tokenSymbol: string
   /** Token units held (smallest unit). */
   amount: bigint
-  /** Quote token spent to open, smallest unit. */
+  /** Quote token spent to open (net of sells), smallest unit. */
   costBasis: bigint
+  /** USD cost basis at time of each buy (net of proportional sells) — the number the position cap bounds. */
+  investedUsd: number
   quoteToken: Address
   quoteSymbol: string
   /** ms epoch the position opened. */
   openedAt: number
+  /** Marked exit value in USD at last tick (null until first mark). */
+  markUsd: number | null
   /** Strategy metadata carried from the opening intent. */
   meta: Record<string, unknown>
 }

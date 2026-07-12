@@ -1,0 +1,136 @@
+{
+  "pages": [
+    {
+      "slug": "01-what-is-robinhood-chain",
+      "file": "01-what-is-robinhood-chain.md",
+      "title": "What Robinhood Chain actually is",
+      "navTitle": "What it actually is",
+      "section": "Foundations",
+      "description": "Architecture, chain IDs, and what's real vs hype — the no-token fact, the US-person restriction, and permissionless deployment, all sourced.",
+      "time": "10 min",
+      "whatYouBuild": "A correct mental model of the chain: what it is, what it is *not*, and the two facts that trip up every newcomer.",
+      "prerequisites": ["Curiosity. No wallet or code yet."]
+    },
+    {
+      "slug": "02-connect-and-read",
+      "file": "02-connect-and-read.md",
+      "title": "Connect and read the chain in 5 minutes",
+      "navTitle": "Connect & read",
+      "section": "Foundations",
+      "description": "Add the network to a wallet, get testnet funds, and make your first read against mainnet with viem — a real block number and gas price in your terminal.",
+      "time": "5 min",
+      "whatYouBuild": "A tiny script that connects to Robinhood Chain and prints the live block height, chain ID, and gas price.",
+      "prerequisites": ["[Node.js](https://nodejs.org) ≥ 20 and a terminal", "Any code editor"]
+    },
+    {
+      "slug": "03-stock-tokens-explained",
+      "file": "03-stock-tokens-explained.md",
+      "title": "Stock Tokens explained for developers",
+      "navTitle": "Stock Tokens",
+      "section": "Foundations",
+      "description": "ERC-20 + a Chainlink feed + ERC-8056 uiMultiplier(). The split/dividend trap, with a worked example showing the wrong and the right valuation.",
+      "time": "12 min",
+      "whatYouBuild": "The one piece of domain knowledge that separates a correct Robinhood Chain app from a subtly broken one.",
+      "prerequisites": ["[Tutorial 2](../02-connect-and-read/) — you can read the chain", "Comfort with `bigint` in JavaScript"]
+    },
+    {
+      "slug": "04-live-price-ticker",
+      "file": "04-live-price-ticker.md",
+      "title": "Your first app: a live price ticker",
+      "navTitle": "Live price ticker",
+      "section": "Building",
+      "description": "Build a terminal price ticker that streams multiplier-adjusted Chainlink quotes for any Stock Token, with staleness handling done right.",
+      "time": "15 min",
+      "whatYouBuild": "A live-updating terminal ticker for AAPL, TSLA, NVDA and SPY — real prices, refreshing on an interval.",
+      "prerequisites": ["[Tutorial 3](../03-stock-tokens-explained/) — you understand feeds and multipliers", "Node ≥ 20"]
+    },
+    {
+      "slug": "05-portfolio-tracker",
+      "file": "05-portfolio-tracker.md",
+      "title": "Portfolio tracker done right",
+      "navTitle": "Portfolio tracker",
+      "section": "Building",
+      "description": "Value any address's Stock Token holdings in one multicall — and understand exactly why a naive tracker reports the wrong number after a split.",
+      "time": "15 min",
+      "whatYouBuild": "A portfolio valuation tool that is correct after corporate actions, cross-checked against the token's own on-chain share accounting.",
+      "prerequisites": ["[Tutorial 3](../03-stock-tokens-explained/) — the multiplier trap", "Node ≥ 20"]
+    },
+    {
+      "slug": "06-swapping-on-chain",
+      "file": "06-swapping-on-chain.md",
+      "title": "Swapping on-chain: quotes, slippage, execution",
+      "navTitle": "Swapping on-chain",
+      "section": "Building",
+      "description": "Quote a Uniswap v3 swap across every fee tier, set slippage correctly, and execute on testnet — with a Stock Token eligibility sidebar.",
+      "time": "20 min",
+      "whatYouBuild": "A working swap: a real mainnet quote you can run now, and the exact, safe path to a real testnet swap transaction.",
+      "prerequisites": ["[Tutorial 2](../02-connect-and-read/)", "A wallet private key in an env var for the write step (testnet)"]
+    },
+    {
+      "slug": "07-streaming-the-chain",
+      "file": "07-streaming-the-chain.md",
+      "title": "Streaming the chain: launchpads + firehose",
+      "navTitle": "Streaming the chain",
+      "section": "Building",
+      "description": "Watch NOXA and The Odyssey for new memecoin launches, then tap the raw sequencer firehose to see transactions ~100ms before they're queryable.",
+      "time": "18 min",
+      "whatYouBuild": "Two live streams: a launch watcher printing new tokens as they deploy, and a firehose counter clocking hundreds of transactions per second.",
+      "prerequisites": ["[Tutorial 2](../02-connect-and-read/)", "Node ≥ 20 (the firehose uses WebSockets)"]
+    },
+    {
+      "slug": "08-sell-your-api-for-usdg",
+      "file": "08-sell-your-api-for-usdg.md",
+      "title": "Sell your API for USDG with x402",
+      "navTitle": "Sell your API",
+      "section": "Monetizing & agents",
+      "description": "Put a Stock Token data endpoint behind an HTTP 402 paywall settled in USDG, and take your first real on-chain payment — from zero to a paid request.",
+      "time": "25 min",
+      "whatYouBuild": "A paid API: an endpoint that returns 402 Payment Required, verifies a USDG payment on-chain, and then serves the data.",
+      "prerequisites": ["[Tutorial 4](../04-live-price-ticker/) — you have data worth selling", "Understanding of USDG's 6 decimals (Tutorial 3)"]
+    },
+    {
+      "slug": "09-ai-agent-chain-access",
+      "file": "09-ai-agent-chain-access.md",
+      "title": "Give your AI agent chain access with MCP",
+      "navTitle": "AI agent access (MCP)",
+      "section": "Monetizing & agents",
+      "description": "Build a Model Context Protocol server that exposes Robinhood Chain reads as tools, then wire it into Claude Code, Claude Desktop, or Cursor — with a real transcript.",
+      "time": "22 min",
+      "whatYouBuild": "An MCP server your AI assistant can call to quote Stock Tokens and read portfolios live, plus the exact config to connect it.",
+      "prerequisites": ["[Tutorial 4](../04-live-price-ticker/) and [5](../05-portfolio-tracker/)", "Claude Code, Claude Desktop, or Cursor installed"]
+    },
+    {
+      "slug": "10-autonomous-trading-agent",
+      "file": "10-autonomous-trading-agent.md",
+      "title": "Build an autonomous trading agent",
+      "navTitle": "Autonomous agent",
+      "section": "Monetizing & agents",
+      "description": "A paper-mode trading agent with a real strategy, hard spend caps, and a kill switch — risk-first framing before a single lira of real capital.",
+      "time": "30 min",
+      "whatYouBuild": "An agent that loops over live quotes, evaluates a strategy, and would trade — running safely in paper mode with real market data.",
+      "prerequisites": ["[Tutorial 6](../06-swapping-on-chain/) — quotes and execution", "You have read the risk section. Twice."]
+    },
+    {
+      "slug": "11-launch-a-coin",
+      "file": "11-launch-a-coin.md",
+      "title": "Launch a coin programmatically",
+      "navTitle": "Launch a coin",
+      "section": "Monetizing & agents",
+      "description": "How Robinhood Chain's launchpads work, how to decode their events, and the responsible path to launching a token on testnet from code.",
+      "time": "20 min",
+      "whatYouBuild": "A launch monitor that decodes real NOXA and Odyssey events, and a clear, responsibly-framed recipe for launching your own test token.",
+      "prerequisites": ["[Tutorial 7](../07-streaming-the-chain/) — launch events", "A funded testnet wallet for the write step"]
+    },
+    {
+      "slug": "12-ship-it",
+      "file": "12-ship-it.md",
+      "title": "Ship it: deploy and go mainnet",
+      "navTitle": "Ship it",
+      "section": "Capstone",
+      "description": "Deploy your static app to Pages, your API to Cloud Run, and walk the going-mainnet checklist: funding, keys, spend caps, and monitoring.",
+      "time": "18 min",
+      "whatYouBuild": "A deployment plan and a mainnet-readiness checklist you can actually tick off before you flip the switch.",
+      "prerequisites": ["Anything you built in Tutorials 4–11", "A deploy target (GitHub Pages and/or Google Cloud Run)"]
+    }
+  ]
+}

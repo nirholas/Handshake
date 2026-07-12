@@ -46,8 +46,10 @@ export async function loadPaywallMiddleware(
 
   try {
     // Resolved dynamically so hood402 stays an OPTIONAL dependency — its
-    // absence must never break the free server.
-    const mod = (await import(/* @vite-ignore */ 'hood402/server')) as {
+    // absence must never break the free server. The specifier is built at
+    // runtime so the type-checker does not require the module to be present.
+    const specifier = ['hood402', 'server'].join('/')
+    const mod = (await import(specifier)) as {
       paywall?: (opts: { price: string; payTo: string; network: string }) => (
         req: IncomingMessage,
         res: ServerResponse,
