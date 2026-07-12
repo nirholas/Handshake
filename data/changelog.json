@@ -3,6 +3,22 @@
 	"entries": [
 		{
 			"date": "2026-07-12",
+			"title": "Closed a path-traversal hole in the API router",
+			"summary": "The server that routes every /api request to its handler split the URL into path segments before decoding them, so a specially encoded request could smuggle a '../' into a single segment and reach a file outside the API folder — or an internal helper meant to be unreachable — and run it without authentication. The router now rejects any decoded segment that contains a path separator and, as a second line of defense, refuses to load any handler that resolves outside the API directory. Normal routes are unaffected; a regression test locks the fix in place.",
+			"tags": [
+				"security"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"title": "Your session token no longer reaches the analytics provider",
+			"summary": "The analytics proxy that forwards page events to PostHog was passing along your browser's full set of request headers — including the login session cookie and any authorization token — to that third-party host on every event. It now strips the app's own session and CSRF cookies and the authorization header before forwarding, and lets only PostHog's own cookies through. Analytics keep working exactly as before; your credentials stay on three.ws.",
+			"tags": [
+				"security"
+			]
+		},
+		{
+			"date": "2026-07-12",
 			"title": "New driving jobs in /play — Cross-Town Delivery and East-West Express",
 			"summary": "Two real driving missions landed on the /play jobs board. Grab a car parked at any of the four avenue depots, run the rush order to the depot on the other side of town, and get paid — the delivery only counts if you actually drove it, not walked it. Pairs with the world's existing drivable vehicles and cash economy for a real 'drive around, do jobs, spend the cash' loop.",
 			"tags": [

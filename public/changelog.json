@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-12T08:10:24.157Z",
+	"generated_at": "2026-07-12T08:57:33.006Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -48,6 +48,16 @@
 				"improvement",
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "update",
+			"title": "Closed a path-traversal hole in the API router",
+			"summary": "The server that routes every /api request to its handler split the URL into path segments before decoding them, so a specially encoded request could smuggle a '../' into a single segment and reach a file outside the API folder — or an internal helper meant to be unreachable — and run it without authentication. The router now rejects any decoded segment that contains a path separator and, as a second line of defense, refuses to load any handler that resolves outside the API directory. Normal routes are unaffected; a regression test locks the fix in place.",
+			"link": null,
+			"tags": [
+				"security"
 			]
 		},
 		{
@@ -124,6 +134,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "update",
+			"title": "Your session token no longer reaches the analytics provider",
+			"summary": "The analytics proxy that forwards page events to PostHog was passing along your browser's full set of request headers — including the login session cookie and any authorization token — to that third-party host on every event. It now strips the app's own session and CSRF cookies and the authorization header before forwarding, and lets only PostHog's own cookies through. Analytics keep working exactly as before; your credentials stay on three.ws.",
+			"link": null,
+			"tags": [
+				"security"
 			]
 		},
 		{

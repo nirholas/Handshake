@@ -15,3 +15,12 @@ coverage
 playwright-report
 test-results
 *.local
+
+# Secrets and local dumps — never bake into an image. The root holds live config
+# JSON (vercel.json, cors.json, server*.json) the runtime needs, so exclude by
+# specific name/glob, never a blanket *.json.
+.x402-ring-secrets.json
+*-log-export-*.json
+three.ws-log-export-*.json
+*.pem
+*.key

@@ -39,6 +39,14 @@
 			<description>Every AI-powered feature on three.ws (fact checks, agent chat, persona extraction, scene composing) routes through one shared brain that tries free providers first and falls back automatically. That chain just got much deeper: Groq now has a second lane with its own separate quota, OpenRouter gets a zero-credit free lane so an empty account no longer kills it, optional Cerebras and Google AI Studio lanes activate the moment a key is added, and — the anchor — Gemini on the platform's own Google Cloud now backs the whole chain with no third-party quota to exhaust. Previously a rare bad hour where every free tier was exhausted at once could surface an error; now the request rides through. The fact-checker was also corrected to stop favoring a paid key ahead of the free lanes.</description>
 		</item>
 		<item>
+			<title>Closed a path-traversal hole in the API router</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-12:Closed a path-traversal hole in the API router</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>The server that routes every /api request to its handler split the URL into path segments before decoding them, so a specially encoded request could smuggle a '../' into a single segment and reach a file outside the API folder — or an internal helper meant to be unreachable — and run it without authentication. The router now rejects any decoded segment that contains a path separator and, as a second line of defense, refuses to load any handler that resolves outside the API directory. Normal routes are unaffected; a regression test locks the fix in place.</description>
+		</item>
+		<item>
 			<title>New driving jobs in /play — Cross-Town Delivery and East-West Express</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-07-12:New driving jobs in /play — Cross-Town Delivery and East-West Express</guid>
@@ -93,6 +101,14 @@
 			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Payment directories like x402scan verify an endpoint by poking it without paying and expecting the HTTP 402 payment challenge back. A July registration run rejected 33 three.ws endpoints because probes were answered with the wrong thing: method or input mistakes returned plain errors before the challenge, and per-item priced endpoints (asset downloads, marketplace skills, fact checks) demanded a valid item id before quoting a price. Now any credential-less request on a paid route receives the full 402 challenge — wrong method, missing id, or empty body included — while real paying callers keep strict validation before any money moves. The free crypto-data endpoints under /api/v1/x are now correctly advertised as free in /openapi.json instead of failing paid-endpoint probes, so agents see them for what they are: no-signup data with a pay-as-you-go overflow lane.</description>
+		</item>
+		<item>
+			<title>Your session token no longer reaches the analytics provider</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-12:Your session token no longer reaches the analytics provider</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>The analytics proxy that forwards page events to PostHog was passing along your browser's full set of request headers — including the login session cookie and any authorization token — to that third-party host on every event. It now strips the app's own session and CSRF cookies and the authorization header before forwarding, and lets only PostHog's own cookies through. Analytics keep working exactly as before; your credentials stay on three.ws.</description>
 		</item>
 		<item>
 			<title>Dashboard · Billing &amp; Passes</title>

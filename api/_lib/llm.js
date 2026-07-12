@@ -401,8 +401,23 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 		}
 	}
 
+	// `timeoutMs` is the OVERALL budget for the whole chain, not a per-provider
+	// allowance. Applying it per fetch let a single hung lane consume the entire
+	// budget: a healthy free provider that stops responding (observed live on the
+	// diorama composer — one lane hung ~30s while the Vertex anchor sat two rungs
+	// later, ready to answer in ~1s) turned a request that SHOULD fail over in a
+	// second into a 32s wait. Cap each attempt so a stall fails over fast, and
+	// stop trying once the shared budget is spent. Most non-answers here are fast
+	// (429/402 in <1s); the cap only bites a genuine stall. Env-tunable; floored so
+	// a fat-fingered value can't strangle a legitimately-slow completion.
+	const perProviderMs = Math.max(4_000, Number(process.env.LLM_PER_PROVIDER_TIMEOUT_MS) || 12_000);
+	const deadline = Date.now() + timeoutMs;
 	let lastErr;
 	for (const p of chain) {
+		const remaining = deadline - Date.now();
+		// Out of overall budget — stop rather than start an attempt we can't finish.
+		if (remaining <= 500) break;
+		const attemptMs = Math.min(perProviderMs, remaining);
 		const startedAt = Date.now();
 		let upstream;
 		try {
@@ -414,7 +429,7 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 				method: 'POST',
 				headers,
 				body: JSON.stringify(p.buildBody(system, user, maxTokens)),
-				signal: AbortSignal.timeout(timeoutMs),
+				signal: AbortSignal.timeout(attemptMs),
 			});
 		} catch (e) {
 			lastErr = Object.assign(new Error(`${p.name} unreachable: ${e.message}`), { status: 502, code: 'upstream_unreachable' });

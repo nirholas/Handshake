@@ -209,16 +209,21 @@ probe surfaced two classes of issue, fixed in code on 2026-07-12:
   paying callers with bad input still get the strict 400/404. Wrong-method
   credential-less probes get the challenge too (`x402-paid-endpoint.js`
   method gate).
-- **`permit2-paid-demo` stays unregistered by design** until
-  `CDP_API_KEY_ID`/`CDP_API_KEY_SECRET` land on the Cloud Run service: its
-  402 deliberately advertises only the Permit2 accept (USE-18 forces the
-  gasless path), which is empty without CDP creds. Those same creds are the
-  gate on Bazaar indexing (section 2) and Base settlement generally —
-  highest-leverage owner action on this whole page.
+- **CDP credentials: RESOLVED 2026-07-12.** Owner created a CDP secret key
+  (Ed25519, no retail scopes, no IP allowlist — Cloud Run egress is dynamic)
+  and it now lives on the Cloud Run service (`CDP_API_KEY_ID` /
+  `CDP_API_KEY_SECRET`, set via `--update-env-vars`; never `--set-env-vars`,
+  which wipes the other ~89 vars). Verified live: `permit2-paid-demo`
+  advertises a real Permit2 accept, and every paid endpoint now carries Base
+  EIP-3009 + Base permit2 accepts alongside Solana. This unblocks Bazaar
+  indexing (section 2) — the remaining step there is one CDP-facilitator
+  settle per endpoint, which needs Base USDC in a payer wallet.
 
-After deploying challenge-shape changes, re-run the x402scan probe (Add API
-on <https://www.x402scan.com> for the three.ws origin, or per-resource
-re-registration) — it does not immediately re-crawl on its own.
+All of the above was verified live on production on 2026-07-12 (vanity's
+header went 16 KB+ → 4.4 KB; the four probe-failing endpoints all answer
+bare probes with a valid 402). After any future challenge-shape change,
+re-run the x402scan probe (Add API on <https://www.x402scan.com> for the
+three.ws origin) — it does not re-crawl on its own.
 
 ## Sources
 

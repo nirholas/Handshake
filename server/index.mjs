@@ -116,10 +116,13 @@ function compileHasValue(value) {
 // semantics: only when the first non-continue dest for a path is external does
 // it proxy; otherwise it falls through untouched.
 
-// Hop-by-hop headers (RFC 9110 §7.6.1) plus fields the proxied hop recomputes.
+// Hop-by-hop headers (RFC 9110 §7.6.1) plus fields the proxied hop recomputes,
+// plus `authorization` — this app's bearer/session credential must never leak to
+// an external analytics upstream (PostHog). Node lowercases header keys.
 const PROXY_SKIP_REQ = new Set([
 	'host', 'connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization',
 	'te', 'trailer', 'transfer-encoding', 'upgrade', 'content-length', 'accept-encoding',
+	'authorization',
 ]);
 const PROXY_SKIP_RES = new Set([
 	'connection', 'keep-alive', 'transfer-encoding', 'content-encoding', 'content-length',
@@ -130,6 +133,14 @@ async function proxyExternal(req, res, dest) {
 	for (const [k, v] of Object.entries(req.headers)) {
 		if (!PROXY_SKIP_REQ.has(k)) headers[k] = v;
 	}
+	// Forward only PostHog's own cookies to the analytics upstream; the app's
+	// session (`__Host-sid`) and CSRF cookies must never reach an external host.
+	const safeCookie = (req.headers.cookie || '')
+		.split(';').map((c) => c.trim()).filter(Boolean)
+		.filter((c) => c.startsWith('ph_') || /^__ph/i.test(c))
+		.join('; ');
+	if (safeCookie) headers.cookie = safeCookie;
+	else delete headers.cookie;
 	const hasBody = req.method !== 'GET' && req.method !== 'HEAD';
 	try {
 		const upstream = await fetch(dest, {
@@ -146,13 +157,20 @@ async function proxyExternal(req, res, dest) {
 		}
 		if (upstream.body) {
 			const { Readable } = await import('node:stream');
-			Readable.fromWeb(upstream.body).pipe(res);
+			const { pipeline } = await import('node:stream/promises');
+			// `.pipe()` does not propagate source errors — an upstream reset
+			// mid-body would emit an unhandled 'error' and crash the instance.
+			// `pipeline` forwards errors and tears both sides down cleanly.
+			await pipeline(Readable.fromWeb(upstream.body), res);
 		} else {
 			res.end();
 		}
 	} catch (err) {
-		console.error(`[proxy] ${req.method} ${req.url} → ${new URL(dest).host} failed:`, err.message);
+		// Client aborts and mid-stream upstream resets land here once the body
+		// has begun streaming; the status/headers are already sent, so just end
+		// the response. Only a pre-stream failure can still emit a 502.
 		if (!res.headersSent) {
+			console.error(`[proxy] ${req.method} ${req.url} → ${new URL(dest).host} failed:`, err.message);
 			res.status(502).json({ error: 'bad_gateway', message: 'Upstream request failed.' });
 		} else if (!res.writableEnded) {
 			res.end();
@@ -247,12 +265,26 @@ async function dispatchApi(req, res, pathname, extraQuery) {
 		res.status(400).json({ error: 'bad_request', message: 'Malformed URL encoding.' });
 		return true;
 	}
-	if (segments.length === 0 || segments.some((s) => !isRoutable(s) || s === '..')) return false;
+	// Reject empty, non-routable ("_"/"."-prefixed), and traversal segments.
+	// decodeURIComponent runs per-segment, so a legit segment can never hold a
+	// raw "/" or "\" — an embedded separator means an encoded "%2f"/"%5c" was
+	// used to smuggle a compound path past the split. Rejecting it here (and the
+	// containment check below) stops "%2f..%2f..%2fvite.config" from escaping
+	// API_ROOT to import() an arbitrary server-side .js.
+	if (
+		segments.length === 0 ||
+		segments.some(
+			(s) => !isRoutable(s) || s === '..' || s.includes('/') || s.includes('\\'),
+		)
+	)
+		return false;
 
 	const cacheKey = segments.join('/');
 	let route = routeCache.get(cacheKey);
 	if (route === undefined) {
 		route = resolveApi(API_ROOT, segments, {});
+		// Defense in depth: never route to a file that resolved outside API_ROOT.
+		if (route && !route.file.startsWith(API_ROOT + path.sep)) route = null;
 		routeCache.set(cacheKey, route);
 	}
 	if (!route) return false;
@@ -495,6 +527,14 @@ app.use((err, req, res, next) => {
 
 process.on('unhandledRejection', (reason) => {
 	console.error('[server] unhandled rejection:', reason);
+});
+
+// Last-resort backstop: a stray synchronous throw or an un-listened stream
+// 'error' (e.g. an upstream socket reset outside the proxy's own await path)
+// must not terminate the container — it would drop every other in-flight
+// request. Log and keep serving; Cloud Run recycles unhealthy instances.
+process.on('uncaughtException', (err) => {
+	console.error('[server] uncaught exception:', err);
 });
 
 const server = app.listen(PORT, () => {

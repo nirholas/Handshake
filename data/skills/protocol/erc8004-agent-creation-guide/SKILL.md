@@ -44,7 +44,10 @@ const agentIdentity = {
     "risk-assessment",
     "trade-execution"
   ],
-  model: "claude-3.5-sonnet",
+  // Resolve at mint time from platform config or the caller's selection —
+  // never hardcode a model id. This string is uploaded to IPFS and minted
+  // into immutable NFT metadata, so a stale id becomes permanent and public.
+  model: resolveDefaultModel(),  // e.g. "<current-default-model>"
   version: "1.0.0"
 };
 ```
@@ -60,7 +63,7 @@ const agentIdentity = {
   "attributes": [
     { "trait_type": "Category", "value": "DeFi" },
     { "trait_type": "Chain", "value": "Arbitrum" },
-    { "trait_type": "Model", "value": "Claude 3.5 Sonnet" },
+    { "trait_type": "Model", "value": "<current-default-model>" },
     { "trait_type": "Tools", "value": 12 },
     { "trait_type": "Reputation", "display_type": "number", "value": 0 }
   ],

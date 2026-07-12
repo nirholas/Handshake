@@ -11,6 +11,7 @@
 //
 // Run: node workers/agent-orders  (npm run worker:orders / worker:orders:live)
 
+import http from 'node:http';
 import { sql } from '../../api/_lib/db.js';
 import { loadConfig } from './config.js';
 import { runOrderSweep } from './sweep.js';
@@ -18,6 +19,23 @@ import { log } from './log.js';
 
 const BOOT_AT = new Date().toISOString();
 const WORKER = 'agent-orders';
+
+// Cloud Run services must answer a startup/health probe on $PORT. This worker is
+// a background daemon — its real work is the sweep timer, not HTTP — so bind a
+// tiny liveness endpoint only when PORT is set (matches workers/agent-sniper and
+// workers/agora-citizens). Deployed as a Cloud Run Job (no probe) nothing sets
+// PORT and nothing listens; the loop is unaffected either way.
+const _live = { mode: null, network: null, globalKill: null };
+function startHealthServer() {
+	const port = Number(process.env.PORT);
+	if (!Number.isFinite(port) || port <= 0) return;
+	http
+		.createServer((_req, res) => {
+			res.writeHead(200, { 'content-type': 'application/json' });
+			res.end(JSON.stringify({ ok: true, worker: WORKER, bootAt: BOOT_AT, ..._live }));
+		})
+		.listen(port, () => log.info('health server listening', { port }));
+}
 
 async function heartbeat(cfg, extra) {
 	try {

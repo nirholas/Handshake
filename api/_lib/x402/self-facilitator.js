@@ -148,6 +148,12 @@ export function validateRingTransaction({ txBase64, requirement, feePayerPubkey,
 	const keys = msg.staticAccountKeys;
 	if (!keys || keys.length === 0) return { ok: false, reason: 'no_account_keys' };
 
+	// Every account index in a (possibly adversarial) compiled instruction must
+	// resolve to a real static key. An out-of-range index would dereference
+	// undefined and throw a TypeError, breaking the "never throws" contract this
+	// facilitator's security model relies on — treat any bad index as a refusal.
+	const idxInRange = (i) => Number.isInteger(i) && i >= 0 && i < keys.length;
+
 	// Fee payer is always account index 0. Whether it must equal the configured
 	// sponsor (sponsor mode) or may be the buyer itself (self-pay, 1 signature) is
 	// decided AFTER we learn the transfer authority below.
@@ -173,7 +179,11 @@ export function validateRingTransaction({ txBase64, requirement, feePayerPubkey,
 	let ataCreatePresent = false;
 
 	const ixs = msg.compiledInstructions;
+	try {
 	for (const ix of ixs) {
+		if (!idxInRange(ix.programIdIndex)) {
+			return { ok: false, reason: 'malformed_instruction' };
+		}
 		const programId = keys[ix.programIdIndex];
 		const data = ix.data; // Uint8Array
 		const accts = ix.accountKeyIndexes;
@@ -197,6 +207,9 @@ export function validateRingTransaction({ txBase64, requirement, feePayerPubkey,
 		if (programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID)) {
 			// Only permit creating OUR recipient's ATA, funded by the sponsor.
 			// Accounts: [funder, ata, owner, mint, systemProgram, tokenProgram].
+			if (accts.length < 4 || !accts.slice(0, 4).every(idxInRange)) {
+				return { ok: false, reason: 'malformed_instruction' };
+			}
 			const funder = keys[accts[0]];
 			const ata = keys[accts[1]];
 			const owner = keys[accts[2]];
