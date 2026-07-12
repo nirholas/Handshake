@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-07-12T01:57:46.072Z",
+	"generated_at": "2026-07-12T02:09:06.437Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-12",
+			"type": "update",
+			"title": "Agent discovery fixed: six paid endpoints were invisible to x402 scanners",
+			"summary": "The machine-readable catalog at /openapi.json — what AI agents and x402 scanners like x402scan and AgentCash read to find and pay for three.ws APIs — had six paid endpoints (agent bouncer, verifiable vanity keys, crypto intel, cosmetic purchase, animation download, club cover) accidentally buried inside another entry, making them undiscoverable. All 61 payable routes now list correctly and the document passes the AgentCash discovery validator. The Permit2 gasless-payment demo is now only advertised when its settlement lane is actually live, so agents are never quoted a payment path that can't settle.",
+			"link": "/openapi.json",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-07-11",
 			"type": "launch",

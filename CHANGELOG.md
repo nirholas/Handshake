@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-07-12
+
+- **Agent discovery fixed: six paid endpoints were invisible to x402 scanners** — The machine-readable catalog at /openapi.json — what AI agents and x402 scanners like x402scan and AgentCash read to find and pay for three.ws APIs — had six paid endpoints (agent bouncer, verifiable vanity keys, crypto intel, cosmetic purchase, animation download, club cover) accidentally buried inside another entry, making them undiscoverable. All 61 payable routes now list correctly and the document passes the AgentCash discovery validator. The Permit2 gasless-payment demo is now only advertised when its settlement lane is actually live, so agents are never quoted a payment path that can't settle. (`/openapi.json`) `[fix, improvement]`
+
 ## 2026-07-11
 
 - **Dashboard · Billing & Passes** (`/dashboard/billing`) — Manage subscriptions and paid services — Premium pass status, on-chain payment history, API keys, and creator subscriptions.

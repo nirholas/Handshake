@@ -107,6 +107,44 @@ describe('GET /openapi.json — aggregator coverage', () => {
 		expect(doc.paths['/api/x402/skill-marketplace']).toBeTruthy();
 	});
 
+	it('never nests a path inside another path item', () => {
+		// Regression guard: six /api/x402/* paths once shipped nested inside the
+		// /api/x402/skill-call path item, making them invisible to discovery
+		// (x402scan / AgentCash read paths at the top level only).
+		for (const [path, pathItem] of Object.entries(doc.paths)) {
+			for (const key of Object.keys(pathItem)) {
+				expect(
+					key.startsWith('/'),
+					`path item ${path} contains nested path-like key ${key}`,
+				).toBe(false);
+			}
+		}
+	});
+
+	it('omits the Permit2 demo when CDP credentials are absent', () => {
+		// Permit2 settlement requires CDP creds; without them the route's 402
+		// carries an empty accepts[] (unpayable), so discovery must not
+		// advertise it. Test env has no CDP_API_KEY_ID/SECRET.
+		if (process.env.CDP_API_KEY_ID && process.env.CDP_API_KEY_SECRET) return;
+		expect(doc.paths['/api/x402/permit2-paid-demo']).toBeUndefined();
+	});
+
+	it('exposes the once-hidden x402 endpoints at the top level', () => {
+		for (const path of [
+			'/api/x402/agent-bouncer',
+			'/api/x402/vanity-verifiable',
+			'/api/x402/crypto-intel',
+			'/api/x402/cosmetic-purchase',
+			'/api/x402/animation-download',
+			'/api/x402/club-cover',
+		]) {
+			const op = doc.paths[path]?.get ?? doc.paths[path]?.post;
+			expect(op, `missing top-level path ${path}`).toBeTruthy();
+			expect(op['x-payment-info']?.protocols).toBeTruthy();
+			expect(op['x-payment-info']?.price).toBeTruthy();
+		}
+	});
+
 	it('free-tier endpoints note their quota in x-payment-info', () => {
 		const priced = doc.paths['/api/v1/x/coingecko/price']?.get;
 		expect(priced['x-payment-info'].note).toMatch(/30\/min/);

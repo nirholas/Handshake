@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws — the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-07-12",
+			"title": "Agent discovery fixed: six paid endpoints were invisible to x402 scanners",
+			"summary": "The machine-readable catalog at /openapi.json — what AI agents and x402 scanners like x402scan and AgentCash read to find and pay for three.ws APIs — had six paid endpoints (agent bouncer, verifiable vanity keys, crypto intel, cosmetic purchase, animation download, club cover) accidentally buried inside another entry, making them undiscoverable. All 61 payable routes now list correctly and the document passes the AgentCash discovery validator. The Permit2 gasless-payment demo is now only advertised when its settlement lane is actually live, so agents are never quoted a payment path that can't settle.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/openapi.json"
+		},
+		{
 			"date": "2026-07-11",
 			"title": "The datapoint fabric: 480,000+ standalone paid endpoints",
 			"summary": "Every individual market datapoint three.ws aggregates is now its own standalone paid endpoint — one URL, one value, one micro-payment of $0.0005 USDC over x402. Bitcoin's spot price, Lido's TVL, one yield pool's APY, USDT's peg deviation in basis points, BTC dominance, the standard gas tier — each of roughly 484,000 combinations of ~17,500 coins, ~15,500 yield pools, ~6,000 protocols, plus chains, stablecoins, exchanges, and the global market gauges, across 68 metrics, is individually addressable and individually buyable by any agent with a wallet. A free catalog at /api/x402/d lists every family and metric with prices and can page through each family's entire live id space, so a crawler can walk the whole endpoint universe. Asking for a datapoint that doesn't exist never triggers a payment request, and a failed fetch never charges the buyer.",

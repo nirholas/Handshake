@@ -696,22 +696,31 @@ export default wrap(async (req, res) => {
 						},
 					},
 				},
-				'/api/x402/permit2-paid-demo': {
-					get: {
-						operationId: 'x402_permit2_paid_demo',
-						summary: 'Paid: Gasless Permit2 + EIP-2612 settlement demo',
-						description:
-							"Pay $0.001 USDC via the Permit2-only path so a wallet holding USDC but zero ETH can complete the flow. CDP's x402ExactPermit2Proxy submits the EIP-2612 permit + Permit2 transfer atomically; the response surfaces the on-chain tx hash and a Basescan link.",
-						responses: {
-							200: { description: 'Settlement summary with tx hash' },
-							402: { description: 'Payment Required (x402)' },
-						},
-						'x-payment-info': {
-							price: { mode: 'fixed', currency: 'USD', amount: '0.001' },
-							protocols: X402_PROTOCOLS,
-						},
-					},
-				},
+				// Permit2 settlement runs exclusively through CDP's
+				// x402ExactPermit2Proxy, so without CDP credentials the route's 402
+				// carries an empty accepts[] — unpayable. Advertise it only when the
+				// lane is actually honorable (same principle as omitting MPP above).
+				...(env.CDP_API_KEY_ID && env.CDP_API_KEY_SECRET
+					? {
+							'/api/x402/permit2-paid-demo': {
+								get: {
+									operationId: 'x402_permit2_paid_demo',
+									summary: 'Paid: Gasless Permit2 + EIP-2612 settlement demo',
+									description:
+										"Pay $0.001 USDC via the Permit2-only path so a wallet holding USDC but zero ETH can complete the flow. CDP's x402ExactPermit2Proxy submits the EIP-2612 permit + Permit2 transfer atomically; the response surfaces the on-chain tx hash and a Basescan link.",
+									parameters: [],
+									responses: {
+										200: { description: 'Settlement summary with tx hash' },
+										402: { description: 'Payment Required (x402)' },
+									},
+									'x-payment-info': {
+										price: { mode: 'fixed', currency: 'USD', amount: '0.001' },
+										protocols: X402_PROTOCOLS,
+									},
+								},
+							},
+						}
+					: {}),
 				'/api/x402/three-intel': {
 					get: {
 						operationId: 'x402_three_intel',
@@ -721,6 +730,7 @@ export default wrap(async (req, res) => {
 							'liquidity, 24 h volume, and a bullish / bearish / neutral signal with a ' +
 							'two-sentence rationale. Powered by live DexScreener data — the same oracle ' +
 							'behind the paid intel kiosk in the $THREE town on three.ws/play.',
+						parameters: [],
 						responses: {
 							200: { description: '$THREE market intel JSON' },
 							402: { description: 'Payment Required (x402)' },
@@ -1232,6 +1242,7 @@ export default wrap(async (req, res) => {
 						summary: 'Paid: Pole Club cover charge (24h entry token)',
 						description:
 							'Pay $0.01 USDC to access the three.ws Pole Club. Once payment settles the caller receives an entry token granting access to the live club scene for 24 hours.',
+						parameters: [],
 						responses: {
 							200: { description: 'Entry token JSON with expiry' },
 							402: { description: 'Payment Required (x402)' },

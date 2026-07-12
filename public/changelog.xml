@@ -7,6 +7,14 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Agent discovery fixed: six paid endpoints were invisible to x402 scanners</title>
+			<link>https://three.ws/openapi.json</link>
+			<guid isPermaLink="false">2026-07-12:Agent discovery fixed: six paid endpoints were invisible to x402 scanners</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The machine-readable catalog at /openapi.json — what AI agents and x402 scanners like x402scan and AgentCash read to find and pay for three.ws APIs — had six paid endpoints (agent bouncer, verifiable vanity keys, crypto intel, cosmetic purchase, animation download, club cover) accidentally buried inside another entry, making them undiscoverable. All 61 payable routes now list correctly and the document passes the AgentCash discovery validator. The Permit2 gasless-payment demo is now only advertised when its settlement lane is actually live, so agents are never quoted a payment path that can't settle.</description>
+		</item>
+		<item>
 			<title>Dashboard · Billing &amp; Passes</title>
 			<link>https://three.ws/dashboard/billing</link>
 			<guid isPermaLink="false">2026-07-11:Dashboard · Billing &amp; Passes</guid>
