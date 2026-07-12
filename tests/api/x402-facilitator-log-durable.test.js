@@ -50,10 +50,12 @@ describe('self-facilitator log durability', () => {
 		const res = makeRes();
 		const done = handler(makeReq({ action: 'verify', body: REQ_BODY }), res);
 
-		// Let the handler run up to the awaited logOp. The INSERT promise is still
-		// pending (we haven't resolved it), so the response must NOT have been sent.
-		await Promise.resolve();
-		await Promise.resolve();
+		// Let the handler run up to the awaited logOp. It first awaits the two
+		// rate-limit buckets (per-IP + global), then verify, then the log INSERT.
+		// Drain enough microtasks to clear the limiter awaits and reach the log
+		// await; the INSERT promise is still pending (we haven't resolved it), so
+		// the response must NOT have been sent.
+		for (let i = 0; i < 6; i++) await Promise.resolve();
 		expect(res.ended).toBe(false);
 		expect(pendingResolvers.length).toBe(1); // the log INSERT is in flight
 
