@@ -52,13 +52,27 @@ function adjacentMonths(month) {
 export async function resolveStory(month, id) {
 	if (!validStoryKey(month, id)) return null;
 
+	const inMonthArchive = async () => {
+		const records = await loadMonth(month).catch(() => null);
+		return records?.find((a) => a.id === id) || null;
+	};
+
 	if (recentMonths().includes(month)) {
 		const live = await findArticle({ id }).catch(() => null);
-		if (live) return { article: live, origin: 'live' };
+		if (live) {
+			if ((live.pub_date || '').slice(0, 7) === month) return { article: live, origin: 'live' };
+			// The live record disagrees with the requested month. If the archive
+			// has the story filed under the REQUESTED month, that durable record
+			// wins — redirecting toward a live-feed month here while the archive
+			// redirects back would loop the two URLs forever (seen in prod when a
+			// publisher's bogus future date met a hand-corrected archive record).
+			const archived = await inMonthArchive();
+			if (archived) return { article: archived, origin: 'archive' };
+			return { article: live, origin: 'live' };
+		}
 	}
 
-	const records = await loadMonth(month).catch(() => null);
-	const archived = records?.find((a) => a.id === id) || null;
+	const archived = await inMonthArchive();
 	if (archived) return { article: archived, origin: 'archive' };
 
 	for (const near of adjacentMonths(month)) {

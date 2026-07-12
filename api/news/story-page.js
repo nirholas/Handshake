@@ -261,9 +261,12 @@ export default wrap(async (req, res) => {
 	if (canonical && !canonical.startsWith(`/markets/news/${month}/`)) {
 		// The story exists but lives in a different month (boundary drift or a
 		// revised pub_date) — send crawlers and readers to the canonical URL.
+		// Kept short-lived at the CDN: the canonical month is derived from a
+		// record that can be corrected (live feed refresh, archive backfill),
+		// and a cached wrong-direction redirect is worse than a re-resolve.
 		res.statusCode = 301;
 		res.setHeader('location', canonical);
-		res.setHeader('cache-control', 'public, max-age=300, s-maxage=3600');
+		res.setHeader('cache-control', 'public, max-age=300, s-maxage=600');
 		res.end();
 		return;
 	}

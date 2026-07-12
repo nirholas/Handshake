@@ -107,6 +107,39 @@ describe('GET /api/news/story-page', () => {
 		expect(res.headers.location).toMatch(new RegExp(`^/markets/news/${prev}/${ARTICLE.id}`));
 	});
 
+	it('never loops: requested-month archive record beats a month-drifted live record', async () => {
+		// Prod incident: live feed carried the story with a bogus future month
+		// while the archive held it under the correct month — /2026-07 301'd to
+		// /2026-08 (live) and /2026-08 301'd back to /2026-07 (archive), forever.
+		const nowMonth = new Date().toISOString().slice(0, 7);
+		const next = (() => {
+			const d = new Date(`${nowMonth}-01T00:00:00Z`);
+			d.setUTCMonth(d.getUTCMonth() + 1);
+			return d.toISOString().slice(0, 7);
+		})();
+		// own id: the handler memoizes rendered pages per month/id
+		const id = 'feedfacefeedface';
+		const archivedNow = { ...ARTICLE, id, pub_date: `${nowMonth}-08T09:00:00.000Z` };
+		const bogusLive = { ...ARTICLE, id, pub_date: `${next}-30T10:00:00.000Z` };
+		findArticle.mockResolvedValue(bogusLive);
+		loadMonth.mockImplementation(async (m) => (m === nowMonth ? [archivedNow] : []));
+		// the URL the archive considers canonical must serve, not bounce away
+		const res = await call(`/api/news/story-page?month=${nowMonth}&id=${id}`);
+		expect(res.statusCode).toBe(200);
+		// and the other month's URL must terminate too — 200 or a redirect to a
+		// terminal page, never back toward a URL that redirects here
+		const other = await call(`/api/news/story-page?month=${next}&id=${id}`);
+		if (other.statusCode === 301) {
+			expect(other.headers.location).not.toContain(`/markets/news/${next}/`);
+			const followed = await call(
+				`/api/news/story-page?month=${other.headers.location.split('/')[3]}&id=${id}`,
+			);
+			expect(followed.statusCode).toBe(200);
+		} else {
+			expect(other.statusCode).toBe(200);
+		}
+	});
+
 	it('a future-month URL (publisher-stamped bogus date) still finds the live story and 301s', async () => {
 		const nowMonth = new Date().toISOString().slice(0, 7);
 		const next = (() => {
