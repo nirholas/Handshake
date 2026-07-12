@@ -1,0 +1,13 @@
+{
+  "name": "rh-example-07-live-price-webpage",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Single-file client-side webpage showing live Robinhood Chain Stock Token prices.",
+  "scripts": {
+    "start": "node serve.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

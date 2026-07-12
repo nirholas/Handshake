@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Robinhood Chain · Live Stock Token Prices</title>
+    <meta name="description" content="Live Chainlink prices for Robinhood Chain Stock Tokens, read client-side from the public RPC. No backend, no build step." />
+    <style>
+      :root {
+        --bg: #0a0b0f;
+        --panel: #14161d;
+        --panel-2: #191c25;
+        --line: #262a36;
+        --text: #e8eaf0;
+        --muted: #8b90a0;
+        --accent-a: #6d5efc;
+        --accent-b: #21d4a8;
+        --up: #21d4a8;
+        --down: #ff5a7a;
+        --radius: 14px;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; }
+      body {
+        background: radial-gradient(1200px 600px at 70% -10%, #1a1330 0%, var(--bg) 55%) fixed;
+        color: var(--text);
+        font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+      }
+      .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 20px 64px; }
+      header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+      h1 {
+        font-size: 22px; margin: 0; letter-spacing: -0.02em;
+        background: linear-gradient(90deg, var(--accent-a), var(--accent-b));
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+      .sub { color: var(--muted); font-size: 13px; margin-top: 6px; }
+      .status {
+        display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted);
+        border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; background: var(--panel);
+      }
+      .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+      .dot.live { background: var(--up); box-shadow: 0 0 0 0 rgba(33,212,168,0.7); animation: pulse 2s infinite; }
+      .dot.err { background: var(--down); }
+      @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(33,212,168,0.5); } 70% { box-shadow: 0 0 0 7px rgba(33,212,168,0); } 100% { box-shadow: 0 0 0 0 rgba(33,212,168,0); } }
+      .grid {
+        margin-top: 28px; display: grid; gap: 14px;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      }
+      .card {
+        background: linear-gradient(180deg, var(--panel-2), var(--panel));
+        border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 18px 16px;
+        transition: border-color 0.2s ease, transform 0.2s ease;
+      }
+      .card:focus-within, .card:hover { border-color: #3a3f52; transform: translateY(-2px); }
+      .card .sym { font-weight: 650; letter-spacing: 0.02em; font-size: 15px; }
+      .card .name { color: var(--muted); font-size: 12px; margin-top: 2px; height: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .card .price { font-size: 27px; font-variant-numeric: tabular-nums; margin-top: 14px; letter-spacing: -0.02em; }
+      .card .price.flash-up { animation: flashUp 0.7s ease; }
+      .card .price.flash-down { animation: flashDown 0.7s ease; }
+      @keyframes flashUp { 0% { color: var(--up); } 100% { color: var(--text); } }
+      @keyframes flashDown { 0% { color: var(--down); } 100% { color: var(--text); } }
+      .card .meta { margin-top: 10px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+      .card.skeleton .price, .card.skeleton .name { color: transparent; background: linear-gradient(90deg, #1d2029, #23272f, #1d2029); background-size: 200% 100%; border-radius: 6px; animation: shimmer 1.4s infinite; }
+      @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+      .card.error .price { font-size: 15px; color: var(--down); }
+      footer { margin-top: 40px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); padding-top: 18px; }
+      a { color: #9b8dff; text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      code { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div>
+          <h1>Robinhood Chain · Live Stock Token Prices</h1>
+          <div class="sub">Chainlink feeds read client-side from the public RPC. No backend, no build step, no API key.</div>
+        </div>
+        <div class="status" id="status" role="status" aria-live="polite">
+          <span class="dot" id="dot"></span><span id="statusText">connecting…</span>
+        </div>
+      </header>
+
+      <div class="grid" id="grid" aria-label="Stock Token prices"></div>
+
+      <footer>
+        Prices are the token's total-return Chainlink answer (already
+        corporate-action adjusted). Feeds follow US market hours 24/5, so a
+        weekend answer can be a day or two old — the age is shown per card.
+        Stock Tokens are tokenized debt securities and may not be offered to US
+        persons; this page displays data only.
+        <br /><br />
+        Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+        <a href="https://three.ws">three.ws</a> · powered by the
+        <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a> registry
+      </footer>
+    </div>
+
+    <script type="module">
+      // --- config (self-contained: real feed addresses from the hoodchain registry) ---
+      const RPC = 'https://rpc.mainnet.chain.robinhood.com'
+      const CHAIN_ID = 4663
+      const REFRESH_MS = 15000
+      // AggregatorV3Interface.latestRoundData() selector.
+      const SELECTOR = '0xfeaf968c'
+      const FEEDS = [
+        { sym: 'AAPL', name: 'Apple', feed: '0x6B22A786bAa607d76728168703a39Ea9C99f2cD0' },
+        { sym: 'TSLA', name: 'Tesla', feed: '0x4A1166a659A55625345e9515b32adECea5547C38' },
+        { sym: 'NVDA', name: 'NVIDIA', feed: '0x379EC4f7C378F34a1B47E4F3cbeBCbAC3E8E9F15' },
+        { sym: 'MSFT', name: 'Microsoft', feed: '0x45C3C877C15E6BA2EBB19eA114Ea508d14C1Af2E' },
+        { sym: 'AMZN', name: 'Amazon', feed: '0xD5a1508ceD74c084eBf3cBe853e2C968fB2a651C' },
+        { sym: 'GOOGL', name: 'Alphabet', feed: '0xF6f373a037c30F0e5010d854385cA89185AE638b' },
+        { sym: 'META', name: 'Meta Platforms', feed: '0x7C38C00C30BEe9378381E7B6135d7283356D71b1' },
+        { sym: 'AMD', name: 'Advanced Micro Devices', feed: '0x943A29E7ae51A4798823ca9eEd2ed533B2A22C72' },
+        { sym: 'COIN', name: 'Coinbase', feed: '0xA3a468A452940B7D6b69991207B508c609a98Ef2' },
+        { sym: 'PLTR', name: 'Palantir', feed: '0x820ABedFF239034956B7A9d2F0a331f9F075eB4c' },
+        { sym: 'SPCX', name: 'SpaceX (private)', feed: '0xB265810950ba6c5C0Ff821c9963014a56fD8Bffb' },
+      ]
+
+      const grid = document.getElementById('grid')
+      const dot = document.getElementById('dot')
+      const statusText = document.getElementById('statusText')
+      const last = new Map()
+
+      // Render skeleton cards up front (designed loading state).
+      for (const f of FEEDS) {
+        const el = document.createElement('div')
+        el.className = 'card skeleton'
+        el.id = `card-${f.sym}`
+        el.tabIndex = 0
+        el.innerHTML =
+          `<div class="sym">${f.sym}</div><div class="name">${f.name}</div>` +
+          `<div class="price">$000.00</div><div class="meta">loading…</div>`
+        grid.appendChild(el)
+      }
+
+      function setStatus(kind, text) {
+        dot.className = 'dot' + (kind ? ' ' + kind : '')
+        statusText.textContent = text
+      }
+
+      // Decode int256 answer (word[1]) and updatedAt (word[3]) from a 5-word return.
+      function decode(result) {
+        const hex = result.slice(2)
+        if (hex.length < 64 * 4) throw new Error('short return')
+        const answer = BigInt('0x' + hex.slice(64, 128))
+        const updatedAt = Number(BigInt('0x' + hex.slice(192, 256)))
+        return { price: Number(answer) / 1e8, updatedAt }
+      }
+
+      async function readFeed(f) {
+        const res = await fetch(RPC, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0', id: 1, method: 'eth_call',
+            params: [{ to: f.feed, data: SELECTOR }, 'latest'],
+          }),
+        })
+        const json = await res.json()
+        if (json.error) throw new Error(json.error.message)
+        return decode(json.result)
+      }
+
+      function ageLabel(updatedAt) {
+        const s = Math.max(0, Math.floor(Date.now() / 1000) - updatedAt)
+        if (s < 90) return `${s}s ago`
+        if (s < 5400) return `${Math.round(s / 60)}m ago`
+        if (s < 172800) return `${(s / 3600).toFixed(1)}h ago`
+        return `${(s / 86400).toFixed(1)}d ago`
+      }
+
+      function paint(f, data) {
+        const el = document.getElementById(`card-${f.sym}`)
+        el.className = 'card'
+        const priceEl = document.createElement('div')
+        priceEl.className = 'price'
+        const prev = last.get(f.sym)
+        priceEl.textContent = `$${data.price.toFixed(2)}`
+        if (prev !== undefined && data.price !== prev) {
+          priceEl.classList.add(data.price > prev ? 'flash-up' : 'flash-down')
+        }
+        last.set(f.sym, data.price)
+        el.innerHTML = `<div class="sym">${f.sym}</div><div class="name">${f.name}</div>`
+        el.appendChild(priceEl)
+        const meta = document.createElement('div')
+        meta.className = 'meta'
+        meta.textContent = `updated ${ageLabel(data.updatedAt)}`
+        el.appendChild(meta)
+      }
+
+      function paintError(f, message) {
+        const el = document.getElementById(`card-${f.sym}`)
+        el.className = 'card error'
+        el.innerHTML =
+          `<div class="sym">${f.sym}</div><div class="name">${f.name}</div>` +
+          `<div class="price">unavailable</div><div class="meta">${message}</div>`
+      }
+
+      let ok = 0
+      async function refresh() {
+        const results = await Promise.allSettled(FEEDS.map(readFeed))
+        ok = 0
+        results.forEach((r, i) => {
+          if (r.status === 'fulfilled') { paint(FEEDS[i], r.value); ok++ }
+          else paintError(FEEDS[i], r.reason?.message ?? 'read failed')
+        })
+        if (ok === 0) setStatus('err', 'RPC unreachable — retrying')
+        else setStatus('live', `live · chain ${CHAIN_ID} · ${ok}/${FEEDS.length} feeds · every ${REFRESH_MS / 1000}s`)
+      }
+
+      refresh()
+      setInterval(refresh, REFRESH_MS)
+    </script>
+  </body>
+</html>

@@ -1,8 +1,12 @@
 import { HoodError, toHoodError } from './errors.js'
 import { geckoNetwork } from './state.js'
 
-/** One trending coin returned by {@link coins}. */
-export interface TrendingCoin {
+/**
+ * A coin as reported by GeckoTerminal's public onchain index for Robinhood
+ * Chain — the same provider that already covers chain 4663. Used by both
+ * {@link coins} (trending) and {@link import('./index').launches} (new pools).
+ */
+export interface Coin {
   /** Base-token ticker, e.g. `"HOODBOT"`. */
   symbol: string
   /** Human name of the pool pairing, e.g. `"HOODBOT / WETH 1%"`. */
@@ -28,6 +32,11 @@ export interface TrendingCoin {
   /** GeckoTerminal page for the pool. */
   url: string
 }
+
+/** Alias for {@link Coin} in trending contexts. */
+export type TrendingCoin = Coin
+/** Alias for {@link Coin} in new-launch contexts. */
+export type NewCoin = Coin
 
 /** Options for {@link coins}. */
 export interface CoinsOptions {
@@ -76,33 +85,24 @@ function num(value: string | null | undefined): number | null {
 }
 
 /**
- * Trending memecoins on Robinhood Chain, aggregated across the launchpad
- * (NOXA / The Odyssey) and Uniswap pools by GeckoTerminal's public onchain
- * index — the same data provider that already covers chain 4663. Returns
- * live USD price, 24h change, volume, and liquidity. No key, no wallet.
- *
- * @example
- * ```js
- * const top = await hood.coins()
- * for (const c of top) console.log(c.symbol, `$${c.priceUsd}`, `${c.change24h}%`)
- * ```
+ * Fetch a page of pools from a GeckoTerminal onchain endpoint and map them to
+ * {@link Coin}s. Shared by {@link coins} and the new-pools discovery used by
+ * {@link import('./index').launches}.
  */
-export async function coins(options: CoinsOptions = {}): Promise<TrendingCoin[]> {
-  const limit = options.limit ?? 20
-  const window = options.window ?? '24h'
-  const timeoutMs = options.timeoutMs ?? 10_000
+export async function fetchPools(
+  endpoint: 'trending_pools' | 'new_pools',
+  params: Record<string, string>,
+  timeoutMs: number,
+): Promise<Coin[]> {
   const network = geckoNetwork()
-
-  const url = `${GECKO_BASE}/networks/${network}/trending_pools?include=base_token,dex&duration=${window}&page=1`
+  const query = new URLSearchParams({ include: 'base_token,dex', page: '1', ...params }).toString()
+  const url = `${GECKO_BASE}/networks/${network}/${endpoint}?${query}`
 
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   let res: Response
   try {
-    res = await fetch(url, {
-      headers: { accept: 'application/json' },
-      signal: controller.signal,
-    })
+    res = await fetch(url, { headers: { accept: 'application/json' }, signal: controller.signal })
   } catch (err) {
     throw toHoodError(err)
   } finally {
@@ -111,25 +111,24 @@ export async function coins(options: CoinsOptions = {}): Promise<TrendingCoin[]>
 
   if (res.status === 429) {
     throw new HoodError(
-      'GeckoTerminal is rate-limiting trending-coin requests (free tier is ~30/min). Slow down or add your own API key upstream.',
+      'GeckoTerminal is rate-limiting requests (free tier is ~30/min). Slow down or add your own API key upstream.',
       'NETWORK',
     )
   }
   if (!res.ok) {
     throw new HoodError(
-      `Couldn't load trending coins for network "${network}" (HTTP ${res.status}). If Robinhood Chain isn't indexed yet, set hood.config({ geckoNetwork }) to the correct slug.`,
+      `Couldn't load ${endpoint} for network "${network}" (HTTP ${res.status}). If Robinhood Chain isn't indexed yet, set hood.config({ geckoNetwork }) to the correct slug.`,
       'NETWORK',
     )
   }
 
   const body = (await res.json()) as { data?: GeckoPool[]; included?: GeckoIncluded[] }
-  const pools = body.data ?? []
   const tokenById = new Map<string, GeckoIncluded>()
   for (const inc of body.included ?? []) {
     if (inc.type === 'token') tokenById.set(inc.id, inc)
   }
 
-  return pools.slice(0, limit).map((pool): TrendingCoin => {
+  return (body.data ?? []).map((pool): Coin => {
     const a = pool.attributes
     const baseId = pool.relationships?.base_token?.data?.id
     const base = baseId ? tokenById.get(baseId) : undefined
@@ -148,4 +147,30 @@ export async function coins(options: CoinsOptions = {}): Promise<TrendingCoin[]>
       url: `https://www.geckoterminal.com/${network}/pools/${a.address}`,
     }
   })
+}
+
+/**
+ * Trending memecoins on Robinhood Chain, aggregated across the launchpad and
+ * Uniswap pools by GeckoTerminal's public onchain index. Returns live USD
+ * price, 24h change, volume, and liquidity. No key, no wallet.
+ *
+ * @example
+ * ```js
+ * const top = await hood.coins()
+ * for (const c of top) console.log(c.symbol, `$${c.priceUsd}`, `${c.change24h}%`)
+ * ```
+ */
+export async function coins(options: CoinsOptions = {}): Promise<TrendingCoin[]> {
+  const limit = options.limit ?? 20
+  const list = await fetchPools(
+    'trending_pools',
+    { duration: options.window ?? '24h' },
+    options.timeoutMs ?? 10_000,
+  )
+  return list.slice(0, limit)
+}
+
+/** Fetch the newest pools (freshest launches first). */
+export async function fetchNewCoins(timeoutMs: number): Promise<NewCoin[]> {
+  return fetchPools('new_pools', {}, timeoutMs)
 }

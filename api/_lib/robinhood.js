@@ -187,6 +187,64 @@ export async function chainlinkSnapshot() {
 	});
 }
 
+const GET_ROUND_DATA_ABI = [
+	{
+		type: 'function',
+		name: 'getRoundData',
+		stateMutability: 'view',
+		inputs: [{ name: '_roundId', type: 'uint80' }],
+		outputs: [
+			{ name: 'roundId', type: 'uint80' },
+			{ name: 'answer', type: 'int256' },
+			{ name: 'startedAt', type: 'uint256' },
+			{ name: 'updatedAt', type: 'uint256' },
+			{ name: 'answeredInRound', type: 'uint80' },
+		],
+	},
+];
+
+/**
+ * Recent Chainlink NAV history for one feed — the last `count` rounds ending at
+ * the current latestRound, read in ONE multicall. Chainlink packs round IDs as
+ * (phaseId << 64) | aggregatorRound, so decrementing stays inside the current
+ * phase for a short window. Returns [{ roundId, priceUsd, updatedAt }] oldest
+ * first; failed/empty rounds are dropped. Cached 60s.
+ */
+export async function feedRoundHistory(feed, count = 24) {
+	const addr = String(feed || '').toLowerCase();
+	if (!/^0x[0-9a-f]{40}$/.test(addr)) return [];
+	return cacheWrap(`rh:feed:hist:${addr}:${count}`, 60, async () => {
+		const client = publicClient(false);
+		let latest;
+		try {
+			latest = await client.readContract({ address: feed, abi: AGGREGATOR_ABI, functionName: 'latestRoundData' });
+		} catch {
+			return [];
+		}
+		const latestId = latest[0];
+		const ids = [];
+		for (let i = BigInt(count) - 1n; i >= 0n; i--) {
+			const id = latestId - i;
+			if (id <= 0n) continue;
+			ids.push(id);
+		}
+		const results = await client.multicall({
+			contracts: ids.map((id) => ({ address: feed, abi: GET_ROUND_DATA_ABI, functionName: 'getRoundData', args: [id] })),
+			allowFailure: true,
+		});
+		const out = [];
+		for (let i = 0; i < results.length; i++) {
+			const r = results[i];
+			if (r?.status !== 'success') continue;
+			const answer = r.result[1];
+			const updatedAt = Number(r.result[3]);
+			if (answer == null || !updatedAt) continue;
+			out.push({ roundId: ids[i].toString(), priceUsd: Number(answer) / 10 ** FEED_DECIMALS, updatedAt });
+		}
+		return out;
+	});
+}
+
 // ── DexScreener (chainId "robinhood") ──────────────────────────────────────
 async function fetchJson(url, ttl, key, { headers } = {}) {
 	return cacheWrap(key, ttl, async () => {

@@ -578,15 +578,6 @@ export const limits = {
 	// zauth's paid x402 endpoint and each GET polls a scan session; cap per IP
 	// so one caller can't use the proxy as a relay to hammer their upstream.
 	zauthScanIp: (ip) => getLimiter('zauthscan:ip', { limit: 30, window: '1 m' }).limit(ip),
-	// Robinhood Chain market data (api/v1/robinhood/*). Every response is served
-	// from a short-TTL snapshot cache (cacheWrap), so this only gates cache-miss
-	// origin work — a multicall sweep over the 95 Stock Tokens or a DefiLlama /
-	// CoinGecko fetch. Its OWN bucket (never public:ip — the play-lobby-429
-	// lesson) so a busy board never drains the shared read budget other pages
-	// need. Generous for an interactive board + detail views; `local` (per
-	// instance) because it only bounds scripted scraping of cache-fronted reads,
-	// and a distributed Redis command per poll is what drained the Upstash quota.
-	robinhoodIp: (ip) => getLimiter('robinhood:ip', { limit: 120, window: '1 m', local: true }).limit(ip),
 	// aixbt intelligence bridge (api/aixbt/*). Each call may fall through to the
 	// upstream aixbt REST API, which is rate-limited per key — cap per IP so one
 	// caller can't drain the shared key's budget. Reads are cached, so this is

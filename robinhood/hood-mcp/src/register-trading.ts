@@ -235,16 +235,26 @@ export function registerTradingTools(
         const bps = slippageBps ?? 50
         const minOut = (quote.amountOut * BigInt(10_000 - bps)) / 10_000n
 
-        // Gate 2: value the spend and enforce caps. Fail closed if unvaluable.
+        // Gate 2: value the spend and enforce caps. On mainnet, fail closed if
+        // the spend cannot be valued (real money — never spend an unvaluable
+        // asset under an automated cap). On testnet, assets are valueless play
+        // money with no USD price, so an unvaluable spend counts as $0 notional
+        // and the confirm gate below remains the real guard.
         const usd = await valueInUsd(client, ti, amountInRaw)
+        let usdForCap: number
         if (usd === null) {
-          return toError(
-            `Cannot value ${amountIn} ${ti.symbol} in USD (no price route), so the spend cap cannot be enforced.`,
-            'Swaps whose input has no USDG price route are blocked for safety.',
-          )
+          if (network === 'mainnet') {
+            return toError(
+              `Cannot value ${amountIn} ${ti.symbol} in USD (no price route), so the spend cap cannot be enforced.`,
+              'Swaps whose input has no USDG price route are blocked for safety on mainnet.',
+            )
+          }
+          usdForCap = 0
+        } else {
+          usdForCap = usd
         }
         try {
-          ledger.assertWithinCaps(usd)
+          ledger.assertWithinCaps(usdForCap)
         } catch (capErr) {
           return toError(errMessage(capErr))
         }
@@ -254,7 +264,8 @@ export function registerTradingTools(
           network,
           from: walletAddress,
           spend: `${amountIn} ${ti.symbol}`,
-          spendValueUsd: round(usd, 4),
+          spendValueUsd: usd === null ? null : round(usd, 4),
+          spendValueNote: usd === null ? 'testnet — no USD price available' : undefined,
           receiveEstimate: `${formatUnits(quote.amountOut, to.decimals)} ${to.symbol}`,
           minReceived: `${formatUnits(minOut, to.decimals)} ${to.symbol}`,
           route: quote.route.path,

@@ -135,6 +135,106 @@ export async function getDexStats(
   }
 }
 
+const ZERO = '0x0000000000000000000000000000000000000000'
+
+/**
+ * Bulk DEX stats for many tokens in a bounded number of RPC round-trips:
+ * one multicall discovers every token/USDG and token/WETH pool across fee
+ * tiers, one multicall reads their reserves, then a mid-price is quoted only
+ * for tokens that actually have a pool. This is what list endpoints use — it
+ * never does per-token pool discovery.
+ */
+export async function getBulkDexStats(
+  client: HoodClient,
+  tokens: Address[],
+  ethPriceUsd: number | null,
+): Promise<Map<string, DexStats>> {
+  const out = new Map<string, DexStats>()
+  for (const t of tokens) {
+    out.set(t.toLowerCase(), { priceUsd: null, pool: null, feeTier: null, quoteAsset: null, liquidityUsd: null })
+  }
+  if (tokens.length === 0) return out
+
+  const quotes: Array<{ quote: 'USDG' | 'WETH'; quoteToken: Address }> = [
+    { quote: 'USDG', quoteToken: USDG },
+    { quote: 'WETH', quoteToken: WETH },
+  ]
+  const probes = tokens.flatMap((token) =>
+    V3_FEE_TIERS.flatMap((fee) => quotes.map((q) => ({ token, fee, quote: q.quote, quoteToken: q.quoteToken }))),
+  )
+
+  const poolResults = await client.public.multicall({
+    contracts: probes.map((p) => ({
+      address: FACTORY,
+      abi: uniswapV3FactoryAbi,
+      functionName: 'getPool' as const,
+      args: [p.token, p.quoteToken, p.fee] as const,
+    })),
+    allowFailure: true,
+  })
+
+  const found: Array<{ token: Address; pool: Address; fee: number; quote: 'USDG' | 'WETH'; quoteToken: Address }> = []
+  poolResults.forEach((r, i) => {
+    if (r.status === 'success' && r.result && (r.result as Address) !== ZERO) {
+      const p = probes[i]!
+      found.push({ token: p.token, pool: r.result as Address, fee: p.fee, quote: p.quote, quoteToken: p.quoteToken })
+    }
+  })
+  if (found.length === 0) return out
+
+  const reserves = await client.public.multicall({
+    contracts: found.map((f) => ({
+      address: f.quoteToken,
+      abi: erc20Abi,
+      functionName: 'balanceOf' as const,
+      args: [f.pool] as const,
+    })),
+    allowFailure: false,
+  })
+
+  // Deepest pool per token by USD-valued quote reserve.
+  const bestPerToken = new Map<string, { pool: Address; fee: number; quote: 'USDG' | 'WETH'; quoteBalUsd: number }>()
+  found.forEach((f, i) => {
+    const dec = f.quote === 'USDG' ? 6 : 18
+    const amt = Number(formatUnits(reserves[i] as bigint, dec))
+    const usd = f.quote === 'USDG' ? amt : amt * (ethPriceUsd ?? 0)
+    const key = f.token.toLowerCase()
+    const prev = bestPerToken.get(key)
+    if (!prev || usd > prev.quoteBalUsd) {
+      bestPerToken.set(key, { pool: f.pool, fee: f.fee, quote: f.quote, quoteBalUsd: usd })
+    }
+  })
+
+  // Mid price for each token that has a pool (concurrent; viem batches the quoter calls).
+  const priced = [...bestPerToken.keys()]
+  const prices = await Promise.all(
+    priced.map(async (key) => {
+      try {
+        const q = await quoteSwap(client, {
+          tokenIn: key as Address,
+          tokenOut: USDG,
+          amountIn: parseUnits('1', 18),
+        })
+        return [key, Number(formatUnits(q.amountOut, 6))] as const
+      } catch {
+        return [key, null] as const
+      }
+    }),
+  )
+  const priceMap = new Map(prices)
+
+  for (const [key, best] of bestPerToken) {
+    out.set(key, {
+      priceUsd: priceMap.get(key) ?? null,
+      pool: best.pool,
+      feeTier: best.fee,
+      quoteAsset: best.quote,
+      liquidityUsd: best.quoteBalUsd > 0 ? best.quoteBalUsd * 2 : null,
+    })
+  }
+  return out
+}
+
 export interface Candle {
   /** Bucket start, unix seconds. */
   t: number
