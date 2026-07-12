@@ -43,6 +43,8 @@ const OPENROUTER_HOST = 'openrouter.ai';
 const NVIDIA_HOST = 'integrate.api.nvidia.com';
 const ANTHROPIC_HOST = 'api.anthropic.com';
 const OPENAI_HOST = 'api.openai.com';
+const OVH_HOST = 'oai.endpoints.kepler.ai.cloud.ovh.net';
+const POLLINATIONS_HOST = 'text.pollinations.ai';
 
 const openaiShape = (content) => okJson({
 	choices: [{ message: { content } }],
@@ -65,8 +67,8 @@ afterEach(() => {
 });
 
 describe('llmConfigured', () => {
-	it('false when no free key and no BYOK key', () => {
-		expect(llm.llmConfigured()).toBe(false);
+	it('true even with no free key and no BYOK key — OVH/Pollinations keyless lanes are unconditional', () => {
+		expect(llm.llmConfigured()).toBe(true);
 	});
 	it('true when GROQ_API_KEY is set', () => {
 		process.env.GROQ_API_KEY = 'g';
@@ -149,6 +151,27 @@ describe('llmComplete — free platform providers', () => {
 		expect(out.provider).toBe('groq');
 		expect(out.text).toBe('from groq');
 		expect(calls[0].url).toContain(NVIDIA_HOST);
+	});
+
+	it('serves from OVH (keyless, no Authorization header) when no provider keys are configured at all', async () => {
+		const calls = installFetch({ [OVH_HOST]: openaiShape('from ovh anonymous') });
+		const out = await llm.llmComplete({ system: 's', user: 'u' });
+		expect(out.provider).toBe('ovh');
+		expect(out.text).toBe('from ovh anonymous');
+		// No key configured anywhere → no Authorization header sent at all, not
+		// "Bearer undefined" — the keyless tiers reject a bogus auth header.
+		expect(calls[0].headers.authorization).toBeUndefined();
+	});
+
+	it('falls back to Pollinations (also keyless) when OVH errors and nothing else is configured', async () => {
+		const calls = installFetch({
+			[OVH_HOST]: errResp(429, 'API rate limit exceeded'),
+			[POLLINATIONS_HOST]: openaiShape('from pollinations'),
+		});
+		const out = await llm.llmComplete({ system: 's', user: 'u' });
+		expect(out.provider).toBe('pollinations');
+		expect(out.text).toBe('from pollinations');
+		expect(calls.map((c) => (c.url.includes(OVH_HOST) ? 'ovh' : 'pollinations'))).toEqual(['ovh', 'pollinations']);
 	});
 });
 
