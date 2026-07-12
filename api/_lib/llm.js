@@ -5,10 +5,13 @@
 //   • FREE PROVIDERS FIRST, ALWAYS. Groq, Cerebras, OpenRouter (paid model,
 //     then the :free variant on the same key), Gemini AI Studio, and NVIDIA
 //     NIM are platform-funded free tiers — the server holds those keys and
-//     callers use them at zero marginal cost. They form the default chain,
-//     tried in order, 70B-class models before any capability step-down, and
-//     every flow must survive on them alone: the paid keys in prod are
-//     routinely invalid or out of quota, so a chain that depends on them fails.
+//     callers use them at zero marginal cost. OVH AI Endpoints and Pollinations
+//     need no key at all (anonymous/keyless tiers) and are always in the chain,
+//     so llmConfigured() is never false even with zero env vars set. They form
+//     the default chain, tried in order, 70B-class models before any capability
+//     step-down, and every flow must survive on them alone: the paid keys in
+//     prod are routinely invalid or out of quota, so a chain that depends on
+//     them fails.
 //
 //   • VERTEX GEMINI IS THE RELIABILITY ANCHOR. When GOOGLE_CLOUD_PROJECT is
 //     set (every Cloud Run deploy), Gemini Flash-Lite on Vertex — service
@@ -119,7 +122,7 @@ export async function checkUserLlmSpendCap(userId, { anthropicKey } = {}) {
 				AND kind = 'llm'
 				AND provider NOT LIKE 'groq%'
 				AND provider NOT LIKE 'openrouter%'
-				AND provider NOT IN ('nvidia', 'cerebras', 'gemini')
+				AND provider NOT IN ('nvidia', 'cerebras', 'gemini', 'ovh', 'pollinations')
 				AND created_at > NOW() - INTERVAL '24 hours'
 		`;
 		const spent = Number(row?.spent ?? 0);
@@ -131,8 +134,10 @@ export async function checkUserLlmSpendCap(userId, { anthropicKey } = {}) {
 	}
 }
 
-// Thrown when no provider is available at all (no free key configured and no
-// BYOK key supplied). Carries an HTTP status so handlers can surface it as 503.
+// Thrown when no provider is available at all. In practice this should never
+// fire — the OVH and Pollinations keyless lanes are unconditional — but the
+// class stays as a defensive fallback in case those calls are ever removed.
+// Carries an HTTP status so handlers can surface it as 503.
 export class LlmUnavailableError extends Error {
 	constructor(message = 'No LLM provider available. Configure GROQ_API_KEY, OPENROUTER_API_KEY, or NVIDIA_API_KEY (free), or ANTHROPIC_API_KEY / OPENAI_API_KEY (paid backstop), or supply a BYOK Anthropic key.') {
 		super(message);
@@ -346,6 +351,15 @@ export function providerChain({ anthropicKey, anthropicModel, preferNvidia = fal
 			timeoutMs: nvidiaLaneTimeoutMs(),
 		}));
 	}
+	// OVH AI Endpoints anonymous tier — no key required, always available.
+	// Last of the 70B-class free rungs because its per-model anonymous quota
+	// (2 req/min/IP) is the tightest in the chain; everything with a real key
+	// gets tried first.
+	chain.push(openaiCompatProvider({
+		name: 'ovh',
+		url: 'https://oai.endpoints.kepler.ai.cloud.ovh.net/v1/chat/completions',
+		model: OVH_MODEL,
+	}));
 	// Gemini Flash-Lite, twice: the AI Studio free tier when a key is
 	// configured, then the Vertex lane on the GCP service account (billed to
 	// platform credits — effectively free while the credit grant runs, and the
@@ -362,6 +376,14 @@ export function providerChain({ anthropicKey, anthropicModel, preferNvidia = fal
 	if (process.env.GOOGLE_CLOUD_PROJECT) {
 		chain.push(vertexGeminiProvider());
 	}
+	// Pollinations keyless anonymous tier — no key required, always available.
+	// Smaller model than the 70B rungs above, so it sits in the
+	// capability-step-down group rather than leading.
+	chain.push(openaiCompatProvider({
+		name: 'pollinations',
+		url: 'https://text.pollinations.ai/openai',
+		model: POLLINATIONS_MODEL,
+	}));
 	// Last free rung: Groq's instant lane. Smaller model (a capability
 	// step-down), but its per-model quota is separate from the 70B lane and it
 	// still beats erroring out or landing on a dead paid key.

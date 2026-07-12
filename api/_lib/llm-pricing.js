@@ -30,8 +30,9 @@ const PRICE_PER_MTOK = {
 };
 
 // Providers whose marginal cost to the platform is zero (platform-funded free
-// tiers). vertex-gemini is deliberately NOT here — it draws down GCP credits.
-const FREE_PROVIDERS = new Set(['groq', 'openrouter', 'nvidia', 'cerebras', 'gemini']);
+// tiers, or keyless anonymous tiers). vertex-gemini is deliberately NOT here —
+// it draws down GCP credits.
+const FREE_PROVIDERS = new Set(['groq', 'openrouter', 'nvidia', 'cerebras', 'gemini', 'ovh', 'pollinations']);
 
 function priceForModel(model) {
 	if (!model) return null;
