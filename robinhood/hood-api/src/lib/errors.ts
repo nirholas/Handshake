@@ -66,6 +66,22 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Shared `defaultHook` for `OpenAPIHono` instances: turns a failed zod request
+ * validation (bad param/query) into the same `{ error, hint, docs }` shape as
+ * every other error path, instead of zod-openapi's raw `ZodError` JSON.
+ */
+export function apiValidationHook(
+  result: { success: true } | { success: false; error: { issues: Array<{ message: string; path: PropertyKey[] }> } },
+  c: { json: (body: ApiErrorBody, status: 400) => Response },
+) {
+  if (result.success) return
+  const first = result.error.issues[0]
+  const field = first?.path.join('.') || 'request'
+  const err = ApiError.badRequest(`Invalid ${field}: ${first?.message ?? 'validation failed'}`, 'invalid_request')
+  return c.json(err.toBody(), 400)
+}
+
 /** Convert any thrown value into an ApiError, mapping known SDK error names. */
 export function toApiError(err: unknown): ApiError {
   if (err instanceof ApiError) return err

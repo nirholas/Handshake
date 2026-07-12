@@ -1,0 +1,109 @@
+<title>Install — hood-mcp</title>
+<meta name="description" content="Install hood-mcp in Claude Code, Claude Desktop, Cursor, or any stdio MCP client." />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏹</text></svg>" />
+<link rel="stylesheet" href="site.css" />
+
+<nav class="top">
+  <div class="wrap">
+    <div class="brand"><span class="tick">hood</span>-mcp</div>
+    <div class="links">
+      <a href="index.html">Overview</a>
+      <a href="install.html" aria-current="page">Install</a>
+      <a href="tools.html">Tools</a>
+      <a href="safety.html">Safety model</a>
+      <a href="https://github.com/nirholas/hood-mcp">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap prose">
+  <section style="border-top:none; padding-top:48px;">
+    <h2 style="font-size:30px;">Install matrix</h2>
+    <p class="section-lede">
+      No API key, wallet, or config needed for the data server. Requires Node ≥ 20.
+    </p>
+  </section>
+
+  <section>
+    <h2>Claude Code</h2>
+    <pre>claude mcp add hood-mcp -- npx -y hood-mcp</pre>
+    <p style="color:var(--text-dim)">Verify: <code>claude mcp list</code> should show <code>hood-mcp</code> connected.</p>
+  </section>
+
+  <section>
+    <h2>Claude Desktop</h2>
+    <p style="color:var(--text-dim)">Edit your config file:</p>
+    <ul style="color:var(--text-dim)">
+      <li>macOS: <code>~/Library/Application Support/Claude/claude_desktop_config.json</code></li>
+      <li>Windows: <code>%APPDATA%\Claude\claude_desktop_config.json</code></li>
+    </ul>
+    <pre>{
+  "mcpServers": {
+    "hood-mcp": {
+      "command": "npx",
+      "args": ["-y", "hood-mcp"]
+    }
+  }
+}</pre>
+    <p style="color:var(--text-dim)">Restart Claude Desktop after saving.</p>
+  </section>
+
+  <section>
+    <h2>Cursor</h2>
+    <p style="color:var(--text-dim)">Add to <code>.cursor/mcp.json</code> in your project (or the global Cursor MCP settings):</p>
+    <pre>{
+  "mcpServers": {
+    "hood-mcp": {
+      "command": "npx",
+      "args": ["-y", "hood-mcp"]
+    }
+  }
+}</pre>
+  </section>
+
+  <section>
+    <h2>Any stdio MCP client</h2>
+    <pre>npx -y hood-mcp</pre>
+    <p style="color:var(--text-dim)">Speaks MCP over stdio. Pair with any client that supports a stdio transport.</p>
+  </section>
+
+  <section>
+    <h2>Streamable HTTP</h2>
+    <p style="color:var(--text-dim)">
+      For a hosted deployment or a browser-based client, run the same package over HTTP instead:
+    </p>
+    <pre>HOOD_MCP_TRANSPORT=http HOOD_MCP_PORT=8730 npx -y hood-mcp</pre>
+    <p style="color:var(--text-dim)">
+      Serves <code>POST /mcp</code> (JSON-RPC, stateless — a fresh server per request) and
+      <code>GET /health</code>. Point any Streamable-HTTP-capable client at
+      <code>http://localhost:8730/mcp</code>.
+    </p>
+  </section>
+
+  <section>
+    <h2>Trading server (opt-in)</h2>
+    <p style="color:var(--text-dim)">
+      Separate binary, stdio only. Read the <a href="safety.html">safety model</a> first.
+    </p>
+    <pre>{
+  "mcpServers": {
+    "hood-mcp-trading": {
+      "command": "npx",
+      "args": ["-y", "hood-mcp-trading"],
+      "env": {
+        "HOOD_MCP_ENABLE_TRADING": "1",
+        "ROBINHOOD_CHAIN_PRIVATE_KEY": "0xYOUR_KEY",
+        "HOOD_MCP_MAX_SPEND_USDG": "25",
+        "HOOD_MCP_MAX_SESSION_USDG": "100"
+      }
+    }
+  }
+}</pre>
+  </section>
+
+  <footer>
+    MIT © 2026 nirholas · Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+    <a href="https://three.ws">three.ws</a>
+  </footer>
+</main>

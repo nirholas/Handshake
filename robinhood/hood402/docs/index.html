@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hood402 — the x402 payment rail for USDG on Robinhood Chain</title>
+<meta name="description" content="Spec-conformant x402 exact/EIP-3009 server middleware, client, and a self-hostable facilitator for USDG on Robinhood Chain (chain 4663). Interoperates with any standard x402 client.">
+<link rel="stylesheet" href="./site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%B8%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<nav class="top" aria-label="Site">
+  <div class="wrap">
+    <a class="brand" href="./index.html">hood<span class="tick">402</span></a>
+    <div class="links">
+      <a href="#quickstart">Quickstart</a>
+      <a href="#flow" class="hide-sm">How it works</a>
+      <a href="#conformance">Conformance</a>
+      <a href="#compare">vs. r0x</a>
+      <a href="https://github.com/nirholas/hood402">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <h1>The x402 payment rail<br>for <span class="grad">USDG on Robinhood Chain</span></h1>
+  <p class="lede">
+    Spec-conformant <code>exact</code>/EIP-3009 server middleware, a paying client, and a
+    self-hostable facilitator — gasless USDG micropayments over plain HTTP 402, chain 4663.
+    No vendor lock-in: any standard x402 client can pay a hood402 server, and hood402's
+    client can pay any standard x402 server.
+  </p>
+  <div class="cta">
+    <span class="install"><span class="dollar">$</span> npm install hood402 viem</span>
+    <a class="btn primary" href="#quickstart">Get started</a>
+    <a href="#flow" class="btn">See the flow</a>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section class="block" id="flow">
+  <div class="flow-head">
+    <h2>Request → 402 → pay → 200</h2>
+  </div>
+  <p class="sub">
+    The whole protocol in one round trip. The server never asks for a card, an API key, or
+    an account — it prices the resource and the client pays for it in-band.
+  </p>
+  <div class="flow" role="img" aria-label="Animated diagram: client requests a resource, server replies 402 Payment Required with a price, client signs a USDG payment and retries, server settles and returns 200 with the resource.">
+    <div class="actor">
+      <div class="avatar">🧑‍💻</div>
+      <div class="label">Client</div>
+    </div>
+    <div class="wire">
+      <div class="track"></div>
+      <div class="caption c1">1. GET /resource</div>
+      <div class="caption c2">2. 402 Payment Required</div>
+      <div class="caption c3">3. GET /resource + X-PAYMENT</div>
+      <div class="caption c4">4. 200 OK + X-PAYMENT-RESPONSE</div>
+      <div class="packet req"></div>
+      <div class="packet pay"></div>
+    </div>
+    <div class="actor">
+      <div class="avatar">🖥️</div>
+      <div class="label">Resource server</div>
+    </div>
+  </div>
+  <div class="flow-legend">
+    <span><span class="dot req"></span> request leg</span>
+    <span><span class="dot pay"></span> paid retry (EIP-3009 signature in the X-PAYMENT header)</span>
+  </div>
+</section>
+
+<section class="block" id="quickstart">
+  <h2>Quickstart</h2>
+  <p class="sub">Node ≥ 20. <code>viem</code> is a peer dependency.</p>
+
+  <div class="tabs" role="tablist" aria-label="Quickstart by package">
+    <button class="tab-btn" role="tab" aria-selected="true" aria-controls="tab-server" id="btn-server">Server</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-client" id="btn-client">Client</button>
+    <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-facilitator" id="btn-facilitator">Facilitator</button>
+  </div>
+
+  <div class="tab-panel active" id="tab-server" role="tabpanel" aria-labelledby="btn-server">
+<pre><code>import express from 'express'
+import { paywall } from 'hood402/server'
+
+const app = express()
+
+app.get('/premium', paywall({
+  price: '0.01',                              // USDG
+  payTo: '0xYourReceivingAddress',
+  network: 'robinhood',                        // or 'robinhood-testnet'
+  facilitator: 'https://your-facilitator.example.com',
+}), (req, res) =&gt; {
+  res.json({ data: 'unlocked after a settled USDG payment' })
+})</code></pre>
+    <p class="sub">
+      No <code>facilitator</code>? Pass <code>wallet</code> (a viem <code>WalletClient</code>
+      with a gas key), <code>account</code>, and <code>reader</code> (a viem
+      <code>PublicClient</code>) instead — the server settles locally.
+    </p>
+  </div>
+
+  <div class="tab-panel" id="tab-client" role="tabpanel" aria-labelledby="btn-client">
+<pre><code>import { Hood402Client, fromAccount } from 'hood402/client'
+import { privateKeyToAccount } from 'viem/accounts'
+
+const account = privateKeyToAccount(process.env.ROBINHOOD_CHAIN_PRIVATE_KEY)
+const client = new Hood402Client({
+  signer: fromAccount(account),
+  maxSpendPerOrigin: '1.00',                   // hard cap, USDG
+})
+
+const res = await client.fetch('https://api.example.com/premium')
+console.log(await res.json())                  // the 402 was paid automatically</code></pre>
+  </div>
+
+  <div class="tab-panel" id="tab-facilitator" role="tabpanel" aria-labelledby="btn-facilitator">
+<pre><code>git clone https://github.com/nirholas/hood402.git &amp;&amp; cd hood402
+npm install &amp;&amp; npm run build
+cd facilitator &amp;&amp; npm install &amp;&amp; npm run build
+
+FACILITATOR_PRIVATE_KEY=0x... \
+FACILITATOR_NETWORKS=robinhood,robinhood-testnet \
+npm start
+# -&gt; GET  /healthz    /supported    /metrics
+# -&gt; POST /verify      /settle</code></pre>
+    <p class="sub">Or build the Docker image — see the <a href="https://github.com/nirholas/hood402/tree/main/facilitator">facilitator README</a>.</p>
+  </div>
+</section>
+
+<section class="block" id="conformance">
+  <h2>Spec conformance</h2>
+  <p class="sub">
+    hood402 implements x402 v1's <code>exact</code> scheme for EVM verbatim — the
+    <code>X-PAYMENT</code>/<code>X-PAYMENT-RESPONSE</code> header pair, the
+    <code>PaymentRequirements</code> shape, and the facilitator <code>/verify</code>,
+    <code>/settle</code>, <code>/supported</code> endpoints — so it interoperates with the
+    wider x402 client ecosystem out of the box, not just its own client.
+  </p>
+  <div class="grid">
+    <div class="card">
+      <h3>Settlement mechanism</h3>
+      <p>
+        USDG is a facet/diamond stablecoin. Its base implementation doesn't expose
+        EIP-3009, but <code>getFacet(bytes4)</code> proves <code>transferWithAuthorization</code>,
+        <code>receiveWithAuthorization</code>, and <code>authorizationState</code> are all
+        registered — verified live on both networks. hood402 settles with the standard
+        gasless EIP-3009 path; the facilitator pays gas, the payer signs and needs no ETH.
+      </p>
+    </div>
+    <div class="card">
+      <h3>Domain separator</h3>
+      <p>
+        Reconstructed to match the on-chain <code>DOMAIN_SEPARATOR()</code> exactly:
+        <code>name="Global Dollar"</code>, <code>version="1"</code>, the chain's own
+        <code>chainId</code>, and the USDG proxy as <code>verifyingContract</code>.
+      </p>
+    </div>
+    <div class="card">
+      <h3>Replay protection</h3>
+      <p>
+        Every authorization carries a random 32-byte nonce. The facilitator checks
+        <code>authorizationState(payer, nonce)</code> before broadcasting and claims an
+        idempotency slot in its ledger first — a retried <code>/settle</code> for the same
+        signed payment returns the original transaction instead of double-spending gas.
+      </p>
+    </div>
+    <div class="card">
+      <h3>Networks</h3>
+      <p>
+        Mainnet <code>robinhood</code> (chain 4663) and testnet <code>robinhood-testnet</code>
+        (chain 46630) — both with live, verified USDG deployments.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="compare">
+  <h2>hood402 vs. r0x</h2>
+  <p class="sub">
+    <a href="https://github.com/nhevers/project-r0x">r0x</a> is a hosted facilitator plus an
+    agent-OS SDK and MCP plugin — you call r0x's service and its skill catalog. hood402 is
+    the other end of that spectrum: protocol primitives you self-host, with no dependency on
+    any one operator.
+  </p>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr><th></th><th>hood402</th><th>r0x</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>What it is</td><td>Middleware + client + facilitator you run yourself</td><td>Hosted facilitator + agent SDK + MCP plugin</td></tr>
+        <tr><td>x402 wire format</td><td>v1 — <code>X-PAYMENT</code> / <code>X-PAYMENT-RESPONSE</code>, matches the deployed client ecosystem (<code>x402-fetch</code>, <code>x402-axios</code>, etc.)</td><td>v2-style CAIP-2 network naming (<code>eip155:4663</code>) and a <code>PAYMENT-RESPONSE</code> header</td></tr>
+        <tr><td>Settlement</td><td class="yes">EIP-3009 <code>transferWithAuthorization</code></td><td class="yes">EIP-3009 <code>TransferWithAuthorization</code></td></tr>
+        <tr><td>Run your own facilitator</td><td class="yes">Yes — Dockerfile + Cloud Run docs included</td><td class="no">No — r0x operates the facilitator</td></tr>
+        <tr><td>Skill catalog / agent OS</td><td class="no">Out of scope — protocol only</td><td class="yes">18 MCP tools (trade, bridge, liquidity, …)</td></tr>
+        <tr><td>License</td><td>MIT</td><td>MIT</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="sub" style="margin-top:14px">
+    They're complementary, not competing: an r0x agent can pay a hood402-protected endpoint,
+    and a hood402 client can pay an r0x-facilitated one — both speak <code>exact</code>/EIP-3009
+    USDG under the hood.
+  </p>
+</section>
+
+<div class="disclosure">
+  Stock Tokens on Robinhood Chain are tokenized debt securities and may not be offered to US
+  persons (plus Canada, UK, Switzerland). hood402 moves USDG, Robinhood Chain's dollar
+  stablecoin — not a security — so this restriction doesn't apply to payments made with it.
+</div>
+
+</main>
+
+<footer class="wrap">
+  <span>MIT licensed. Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
+  <span><a href="https://github.com/nirholas/hood402">GitHub</a> · <a href="https://github.com/nirholas/hood402/blob/main/facilitator/README.md">Facilitator docs</a></span>
+</footer>
+
+<script>
+  const tabs = document.querySelectorAll('.tab-btn');
+  tabs.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      tabs.forEach((b) => b.setAttribute('aria-selected', 'false'));
+      document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
+      btn.setAttribute('aria-selected', 'true');
+      document.getElementById(btn.getAttribute('aria-controls')).classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -1,5 +1,5 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
-import { ApiError, toApiError } from '../lib/errors.js'
+import { ApiError, apiValidationHook, toApiError } from '../lib/errors.js'
 import { nowIso } from '../lib/response.js'
 import { SymbolParam, AddressParam, LaunchesQuery, CoinsQuery, ErrorSchema, LOOKBACK_BLOCKS } from '../schemas.js'
 import { getChain } from '../services/chain.js'
@@ -10,7 +10,7 @@ import { mainnetClient } from '../upstreams/rpc.js'
 import { env } from '../lib/env.js'
 import pkg from '../../package.json' with { type: 'json' }
 
-export const freeRoutes = new OpenAPIHono()
+export const freeRoutes = new OpenAPIHono({ defaultHook: apiValidationHook })
 
 const JsonBody = z.record(z.string(), z.unknown())
 const errorResponse = { content: { 'application/json': { schema: ErrorSchema } }, description: 'Error' } as const
