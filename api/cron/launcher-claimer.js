@@ -86,7 +86,7 @@ async function processMint(run) {
 	// 1. Fetch live claimable balance.
 	const feeRes = await agentFetch(
 		userId,
-		`/api/pump?action=fee-info&mint=${encodeURIComponent(mint)}&network=${encodeURIComponent(network)}`,
+		`/api/pump/fee-info?mint=${encodeURIComponent(mint)}&network=${encodeURIComponent(network)}`,
 	);
 	if (!feeRes || !feeRes.ok) return { runId, status: 'fee-info-failed' };
 	const feeInfo = await feeRes.json().catch(() => null);
@@ -98,7 +98,7 @@ async function processMint(run) {
 	}
 
 	// 2. Claim — the agent signs its own fee claim (same identity that created the coin).
-	const claimRes = await agentFetch(userId, '/api/pump?action=collect-creator-fee-agent', {
+	const claimRes = await agentFetch(userId, '/api/pump/collect-creator-fee-agent', {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({ agentId, mint, network }),

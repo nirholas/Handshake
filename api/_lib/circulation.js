@@ -752,7 +752,7 @@ async function actionLaunch(ctx) {
 	await ensureFunded(conn, treasuryKp, agent, LAUNCH_FLOOR);
 
 	const theme = pick(COIN_THEMES);
-	const meta = await postAs(origin, agent.userId, '/api/pump?action=build-metadata', {
+	const meta = await postAs(origin, agent.userId, '/api/pump/build-metadata', {
 		name: theme.name,
 		symbol: theme.symbol,
 		description: theme.description,
@@ -764,7 +764,7 @@ async function actionLaunch(ctx) {
 		throw new Skip(`metadata build ${meta.status}: ${meta.body?.error || 'no url'}`);
 	}
 
-	const launch = await postAs(origin, agent.userId, '/api/pump?action=launch-agent', {
+	const launch = await postAs(origin, agent.userId, '/api/pump/launch-agent', {
 		agent_id: agent.id,
 		name: theme.name,
 		symbol: theme.symbol,

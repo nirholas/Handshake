@@ -2987,6 +2987,14 @@
 			"dest": "/api/pump/[action]?action=build-metadata"
 		},
 		{
+			"src": "/api/pump/fee-info",
+			"dest": "/api/pump/[action]?action=fee-info"
+		},
+		{
+			"src": "/api/pump/collect-creator-fee-agent",
+			"dest": "/api/pump/[action]?action=collect-creator-fee-agent"
+		},
+		{
 			"src": "/api/pump/channel-feed",
 			"dest": "/api/pump/[action]?action=channel-feed"
 		},

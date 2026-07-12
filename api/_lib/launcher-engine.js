@@ -325,7 +325,7 @@ async function launchCoin(cfg, agent, coin) {
 	// Forward the agent's own socials when it has them; the metadata builder falls
 	// back to the agent profile page (website) and the three.ws X/Telegram otherwise,
 	// so every coin carries the fullest set of links we can supply autonomously.
-	const meta = await postAs(agent.user_id, '/api/pump?action=build-metadata', {
+	const meta = await postAs(agent.user_id, '/api/pump/build-metadata', {
 		name: coin.name,
 		symbol: coin.symbol,
 		description: coin.description,
@@ -340,7 +340,7 @@ async function launchCoin(cfg, agent, coin) {
 		throw new Error(`metadata build ${meta.status}: ${meta.body?.error || 'no url'}`);
 	}
 
-	const launch = await postAs(agent.user_id, '/api/pump?action=launch-agent', {
+	const launch = await postAs(agent.user_id, '/api/pump/launch-agent', {
 		agent_id: agent.id,
 		name: coin.name,
 		symbol: coin.symbol,
