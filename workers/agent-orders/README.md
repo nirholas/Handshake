@@ -76,7 +76,25 @@ npm run worker:orders:live     # ORDERS_MODE=live (real fills)
 | `ORDERS_GLOBAL_KILL` | `0` | halt all fires (orders untouched; cancel still works via the API) |
 | `ORDERS_HEARTBEAT_MS` | `30000` | `bot_heartbeat` liveness write (0 disables) |
 
-Deploy like `agent-sniper` (Cloud Run, `--no-cpu-throttling`). The migration is
+## Deploy
+
+Deployed on Cloud Run as a **background-daemon service**, like `agent-sniper`. It
+isn't request-driven, but `index.js` binds a liveness endpoint on `$PORT` so the
+startup probe passes; `--no-cpu-throttling` + `--min-instances=1` keep the sweep
+timer ticking between probes. Build and deploy from the repo root:
+
+```bash
+# one-time secret setup is documented in cloudbuild.yaml
+gcloud builds submit --config workers/agent-orders/cloudbuild.yaml .
+```
+
+It ships in `ORDERS_MODE=simulate` (real quotes, no broadcast). Flip
+`_ORDERS_MODE=live` (build substitution) or update the running service's
+`ORDERS_MODE` only after the RPC secret is set and agent wallets are funded. It
+can equally run as a Cloud Run **Job** — jobs get no startup probe, so `PORT` is
+unset and no listener binds; the sweep loop is unaffected either way.
+
+The migration is
 `api/_lib/migrations/20260623160000_programmable_orders.sql` (`npm run db:migrate`).
 The owner-facing surface is the **Orders** tab in the agent wallet hub
 (`src/agent-wallet-hub/tabs/orders.js`), backed by `/api/agents/:id/orders`.

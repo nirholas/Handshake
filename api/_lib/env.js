@@ -251,6 +251,12 @@ export const env = {
 	get VERCEL_ENV() {
 		return opt('VERCEL_ENV');
 	},
+	// True on real production deployments (Cloud Run/Vercel set NODE_ENV or
+	// VERCEL_ENV to 'production'); false in tests and local dev, which leave both
+	// unset. Use to fence prod-only posture like HTTPS-only outbound fetches.
+	get isProduction() {
+		return opt('NODE_ENV') === 'production' || opt('VERCEL_ENV') === 'production';
+	},
 
 	// Resolved from DATABASE_URL or any standard Vercel-Postgres/Neon integration
 	// alias (see DATABASE_URL_SOURCES). Still throws when NONE is set so the

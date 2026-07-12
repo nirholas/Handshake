@@ -69,6 +69,18 @@ export const SPONSOR_SOL_FLOOR_LAMPORTS = Number(
 	process.env.X402_SPONSOR_SOL_FLOOR_LAMPORTS || 20_000_000,
 );
 
+// Minimum atomic amount (USDC, 6-decimals) a SPONSOR-mode settle must move. Each
+// sponsor co-sign burns ~5000 lamports (≈0.001 USDC) of our SOL, so settling a
+// 1-atomic dust transfer is a pure fee-burn grief: the attacker donates a
+// sub-fee amount while we pay to broadcast it. Requiring the settle to at least
+// cover its own base fee means a settle can never be net-negative for the
+// platform. Default 1000 atomic = $0.001; raise via env if micro-tips aren't a
+// concern. Self-pay settles pay their own fee, so this floor does not apply.
+export const MIN_SPONSOR_SETTLE_ATOMIC = Math.max(
+	0,
+	Number(process.env.X402_SELF_FAC_MIN_SETTLE_ATOMIC || 1000),
+);
+
 let _feePayerCache = null;
 // Load the sponsor (fee-payer) keypair the facilitator co-signs with. Its public
 // key MUST equal env.X402_FEE_PAYER_SOLANA (the address the 402 challenge
@@ -234,6 +246,10 @@ export function validateRingTransaction({ txBase64, requirement, feePayerPubkey,
 			transferCount += 1;
 			if (transferCount > 1) return { ok: false, reason: 'multiple_transfers' };
 
+			// Accounts: [source, mint, destination, authority].
+			if (accts.length < 4 || !accts.slice(0, 4).every(idxInRange)) {
+				return { ok: false, reason: 'malformed_instruction' };
+			}
 			const source = keys[accts[0]];
 			const ixMint = keys[accts[1]];
 			const dest = keys[accts[2]];
@@ -264,6 +280,11 @@ export function validateRingTransaction({ txBase64, requirement, feePayerPubkey,
 
 		// Any other program touching this transaction is disallowed.
 		return { ok: false, reason: `program_not_allowed:${programId.toBase58()}` };
+	}
+	} catch (err) {
+		// Totality backstop: any unexpected throw while decoding adversarial
+		// instruction bytes becomes a clean refusal, never a 5xx.
+		return { ok: false, reason: `decode_error:${err?.message || err}` };
 	}
 
 	if (transferCount !== 1) return { ok: false, reason: 'no_usdc_transfer' };
@@ -389,6 +410,17 @@ export async function settleRingPayment({ paymentPayload, requirement, conn, fee
 	const decoded = validation.decoded;
 	const { tx, payer, estFeeLamports, selfPay } = decoded;
 
+	// Anti fee-burn: a sponsor-mode settle must move at least enough to cover the
+	// SOL fee we're about to burn co-signing it. Blocks the dust-transfer grief
+	// (1-atomic allowlisted transfers spammed to pump down sponsor SOL). Self-pay
+	// settles pay their own fee, so a dust self-pay costs us nothing — exempt them.
+	if (!selfPay && decoded.amountAtomic < MIN_SPONSOR_SETTLE_ATOMIC) {
+		return {
+			success: false,
+			reason: `amount_below_min_settle:${decoded.amountAtomic}<${MIN_SPONSOR_SETTLE_ATOMIC}`,
+		};
+	}
+
 	// Hard stop: never settle if the fee-paying wallet is below its SOL floor.
 	// Self-pay → the payer pays its own fee; sponsor mode → the sponsor pays.
 	const feeWallet = new PublicKey(decoded.feePayer);
@@ -465,8 +497,69 @@ export async function settleRingPayment({ paymentPayload, requirement, conn, fee
 	return { success: true, transaction: signature, network, payer, feeLamports };
 }
 
-// Verify shape for /verify — validate without broadcasting.
-export function verifyRingPayment({ paymentPayload, requirement, feePayerPubkey }) {
+// Prove a shape-valid payment can ACTUALLY settle before /verify returns valid.
+//
+// validateRingTransaction() is a static decode: it proves the tx is SHAPED right
+// (amount ≥ required, correct mint/recipient/authority, bounded fee) but not that
+// broadcasting it would succeed. Without this check a buyer can sign a perfectly-
+// formed TransferChecked from a source ATA holding ZERO USDC — static validation
+// passes, the paid flow (verify → run handler → settle) executes the expensive
+// handler and pays the upstream provider, then settle reverts `insufficient funds`
+// and the buyer gets a 502 having paid nothing. The platform ate the provider cost.
+// This closes that deliver-before-settle drain: the handler never runs unless the
+// payment can settle. The external PayAI facilitator simulates on /verify for the
+// same reason; the in-house one must not be weaker.
+//
+// Primary check is a full simulation (sigVerify:false so the sponsor's co-signature
+// isn't required yet; replaceRecentBlockhash:true so an aged blockhash isn't the
+// failure) — it catches a zero/low source balance, a frozen ATA, and an unfundable
+// fee payer in one RPC. If simulation itself is unavailable (RPC blip) we fall back
+// to a direct source-ATA balance read so the zero-balance vector stays closed, and
+// fail CLOSED only when neither can run — an unverifiable payment must never reach
+// the handler.
+async function assertSettleable({ tx, connection, requirement, decoded }) {
+	try {
+		const sim = await connection.simulateTransaction(tx, {
+			sigVerify: false,
+			replaceRecentBlockhash: true,
+			commitment: 'confirmed',
+		});
+		const simErr = sim?.value?.err ?? null;
+		if (simErr) {
+			const s = typeof simErr === 'object' ? JSON.stringify(simErr) : String(simErr);
+			return { ok: false, reason: `simulation_failed:${s}`.slice(0, 160) };
+		}
+		return { ok: true };
+	} catch (simUnavailable) {
+		// Simulation RPC unreachable — do not fail open. Read the source ATA balance
+		// directly; this alone still stops a transfer signed from a zero-balance ATA.
+		try {
+			const mint = new PublicKey(decoded.mint);
+			const authority = new PublicKey(decoded.payer);
+			const sourceAta = getAssociatedTokenAddressSync(
+				mint, authority, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+			);
+			const bal = await connection.getTokenAccountBalance(sourceAta, 'confirmed');
+			const have = BigInt(bal?.value?.amount ?? '0');
+			const need = BigInt(requirement.amount);
+			if (have < need) {
+				return { ok: false, reason: `insufficient_source_balance:${have}<${need}` };
+			}
+			return { ok: true };
+		} catch (balUnavailable) {
+			return {
+				ok: false,
+				reason: `settle_precheck_unavailable:${String(
+					balUnavailable?.message || simUnavailable?.message || balUnavailable,
+				).slice(0, 100)}`,
+			};
+		}
+	}
+}
+
+// Verify shape for /verify — validate statically, then prove settleability on-chain
+// WITHOUT broadcasting. Async: the settleability proof is one RPC round-trip.
+export async function verifyRingPayment({ paymentPayload, requirement, feePayerPubkey, conn }) {
 	const txBase64 = txBase64FromPayload(paymentPayload);
 	if (!txBase64) return { isValid: false, invalidReason: 'missing_transaction' };
 	const validation = validateRingTransaction({
@@ -476,6 +569,17 @@ export function verifyRingPayment({ paymentPayload, requirement, feePayerPubkey 
 		allowlist: payToAllowlist(),
 	});
 	if (!validation.ok) return { isValid: false, invalidReason: validation.reason };
+
+	const connection =
+		conn || solanaConnection({ url: env.SOLANA_RPC_URL, commitment: 'confirmed' });
+	const settleable = await assertSettleable({
+		tx: validation.decoded.tx,
+		connection,
+		requirement,
+		decoded: validation.decoded,
+	});
+	if (!settleable.ok) return { isValid: false, invalidReason: settleable.reason };
+
 	return {
 		isValid: true,
 		network: requirement.network,

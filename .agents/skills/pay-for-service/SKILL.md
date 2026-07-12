@@ -1,6 +1,6 @@
 ---
 name: pay-for-service
-description: Make a paid API request to an x402 endpoint with automatic USDC payment. Use when you or the user want to call a paid API, make an x402 request, use a paid service, or pay for an API call. Use after finding a service with search-for-service.
+description: Make a paid API request to an x402 endpoint with automatic USDC payment. Use when you or the user want to call a paid API, make an x402 request, use a paid service, or pay for an API call. Use after finding a service with search-for-service. This is the three.ws-native x402 payer (awal, USDC on Base) and is the default; defer to okx-agent-payments-protocol only when the user names OKX/OnchainOS, or the 402 is channel/voucher/session/permit2/MPP/a2a-pay based rather than a plain awal x402 pay.
 user-invocable: true
 disable-model-invocation: false
 allowed-tools: ["Bash(npx awal@2.10.0 status*)", "Bash(npx awal@2.10.0 balance*)", "Bash(npx awal@2.10.0 x402 pay *)"]
@@ -13,6 +13,13 @@ metadata:
 # Making Paid x402 Requests
 
 Use the `npx awal@2.10.0 x402 pay` command to call paid API endpoints with automatic USDC payment on Base.
+
+## Which payment stack (arbitration)
+
+three.ws runs two x402/payment stacks. Pick one deterministically — never settle a payment through a signing path the user didn't ask for:
+
+- **This stack (awal / three.ws-native)** — the default. Use it for a plain x402 402 that settles with a one-shot USDC-on-Base payment.
+- **OKX `onchainos` stack** (`okx-agent-payments-protocol`) — use *only* when the user names OKX/OnchainOS, or the 402 is one OKX handles specifically: a payment channel / voucher / session, `permit2`, `upto`/metered billing, MPP charge, or an a2a-pay `paymentId`. Hand off there and do not pay from here.
 
 ## Confirm wallet is initialized and authed
 

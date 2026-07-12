@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { Keypair, PublicKey } from '@solana/web3.js';
+import { Keypair, PublicKey, VersionedTransaction } from '@solana/web3.js';
 import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
 // Fee-floor regression + self-pay + ATA-reclaim safety for the closed x402 ring.
@@ -137,6 +137,71 @@ describe('self-pay build → facilitator validate roundtrip (zero sponsor)', () 
 		expect(v.decoded.selfPay).toBe(false);
 		expect(v.decoded.feePayer).toBe(sponsor.publicKey.toBase58());
 		expect(v.decoded.estFeeLamports).toBeLessThanOrEqual(10_100);
+	});
+});
+
+describe('validateRingTransaction — totality: malformed input is a clean refusal, never a throw', () => {
+	const buyer = Keypair.generate();
+	const treasury = Keypair.generate();
+	const sponsor = Keypair.generate();
+	const blockhash = '11111111111111111111111111111111';
+	const accept = {
+		network: 'solana:mainnet',
+		asset: USDC,
+		payTo: treasury.publicKey.toBase58(),
+		amount: '1000000',
+		extra: { feePayer: sponsor.publicKey.toBase58() },
+	};
+	const requirement = { network: 'solana:mainnet', asset: USDC, payTo: accept.payTo, amount: '1000000' };
+	const allowlist = new Set([accept.payTo]);
+
+	// Deserialize a valid ring tx, mutate its message, re-serialize to base64.
+	// The facilitator never verifies signatures, so a tampered message still
+	// exercises the decode path — exactly the adversarial surface at issue.
+	const tamperedTxBase64 = (mutate) => {
+		const good = buildPaymentTx({
+			accept, buyer, blockhash,
+			mintInfo: { decimals: 6 }, receiverAtaExists: true, nonce: 0, selfPay: true,
+		});
+		const tx = VersionedTransaction.deserialize(Buffer.from(good, 'base64'));
+		mutate(tx.message);
+		return Buffer.from(tx.serialize()).toString('base64');
+	};
+
+	it('an out-of-range programIdIndex refuses cleanly instead of throwing a TypeError', () => {
+		const txBase64 = tamperedTxBase64((msg) => {
+			msg.compiledInstructions[0].programIdIndex = msg.staticAccountKeys.length + 5;
+		});
+		let v;
+		expect(() => {
+			v = validateRingTransaction({ txBase64, requirement, feePayerPubkey: null, allowlist });
+		}).not.toThrow();
+		expect(v.ok).toBe(false);
+		expect(v.reason).toMatch(/malformed_instruction|decode_error/);
+	});
+
+	it('a truncated account-index list on the transfer instruction refuses cleanly', () => {
+		const txBase64 = tamperedTxBase64((msg) => {
+			// Find the SPL TransferChecked instruction (data[0] === 12) and starve it.
+			const ix = msg.compiledInstructions.find((i) => i.data?.[0] === 12);
+			if (ix) ix.accountKeyIndexes = ix.accountKeyIndexes.slice(0, 1);
+		});
+		let v;
+		expect(() => {
+			v = validateRingTransaction({ txBase64, requirement, feePayerPubkey: null, allowlist });
+		}).not.toThrow();
+		expect(v.ok).toBe(false);
+		expect(v.reason).toMatch(/malformed_instruction|decode_error/);
+	});
+
+	it('the valid self-pay path is unaffected by the bounds guards', () => {
+		const good = buildPaymentTx({
+			accept, buyer, blockhash,
+			mintInfo: { decimals: 6 }, receiverAtaExists: true, nonce: 0, selfPay: true,
+		});
+		const v = validateRingTransaction({ txBase64: good, requirement, feePayerPubkey: null, allowlist });
+		expect(v.ok).toBe(true);
+		expect(v.decoded.payer).toBe(buyer.publicKey.toBase58());
 	});
 });
 

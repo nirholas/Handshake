@@ -25,13 +25,22 @@ if (!existsSync(src)) {
 // Copy draco/ (includes the wasm-fallback js shim and the wasm binary).
 // Keep the upstream layout (decoder + decoder/gltf) — DRACOLoader resolves
 // the gltf-flavoured decoder relative to setDecoderPath().
+//
+// Two destinations, both gitignored and regenerated here so the ~3.3 MB of
+// binaries lives in the tree exactly once (in node_modules):
+//   • /public/three/draco       — the main app (viewer, /club, forge-export)
+//   • /public/scene-studio/draco — the Scene Studio subapp, whose loaders
+//     (src/scene-studio/*, pages/scene.html) hardcode the /scene-studio/draco/
+//     path. Serving them the same upstream binaries keeps the two in lockstep.
 const dracoSrc = join(src, 'draco');
-const dracoOut = join(out, 'draco');
+const dracoDests = [join(out, 'draco'), join(repo, 'public/scene-studio/draco')];
 if (existsSync(dracoSrc)) {
-	mkdirSync(dirname(dracoOut), { recursive: true });
-	rmSync(dracoOut, { recursive: true, force: true });
-	cpSync(dracoSrc, dracoOut, { recursive: true });
-	console.log(`[copy-three-decoders] draco/ → ${dracoOut.replace(repo + '/', '')}`);
+	for (const dracoOut of dracoDests) {
+		mkdirSync(dirname(dracoOut), { recursive: true });
+		rmSync(dracoOut, { recursive: true, force: true });
+		cpSync(dracoSrc, dracoOut, { recursive: true });
+		console.log(`[copy-three-decoders] draco/ → ${dracoOut.replace(repo + '/', '')}`);
+	}
 } else {
 	console.warn(`[copy-three-decoders] ${dracoSrc} not found`);
 }

@@ -18,7 +18,6 @@
  */
 
 import { z } from 'zod';
-import fetch from 'node-fetch';
 
 const TASK_POLL_MS = 3_000; // how often to check for a user-queued task
 

@@ -13,6 +13,73 @@
 		},
 		{
 			"date": "2026-07-12",
+			"title": "Paid downloads can never ship before the payment settles",
+			"summary": "Every paid endpoint on three.ws follows a 'deliver, then settle' order: the handler produces its result, the wrapper charges the buyer on-chain, and only then sends the response. That works for endpoints that hand back a value, but a streaming endpoint — one that writes its own file or feed directly to the connection, the natural shape for a binary download — could deliver the good before the settlement step ran, handing it over for free. No live endpoint did this, but it was a latent trap for the next one built. The payment wrapper now refuses to complete such a response silently: a streaming route must opt in explicitly, and when it does, the wrapper settles the payment first and only then lets the download start. Any endpoint that tried to send its body early is now caught and flagged instead of leaking the good.",
+			"tags": [
+				"security"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"title": "The in-house payment settler is now flood-protected",
+			"summary": "three.ws settles agent payments through its own self-hosted facilitator instead of a third party. Every settlement is co-signed and broadcast by a platform sponsor wallet that pays the tiny network fee — which meant anyone could, in principle, spam it with valid but negligible transfers to burn that wallet's balance down and stall the paid economy until a human topped it up. The settler now caps how many settle/verify calls it will handle per source and in total, and refuses to settle amounts too small to cover their own network fee, so a settlement can never cost the platform more than it moves. Legitimate agent payments are unaffected.",
+			"tags": [
+				"security",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"title": "The production container now runs unprivileged and ships less software",
+			"summary": "The single container that serves three.ws on Cloud Run — the website, the route table, and every API endpoint — used to run as the root user and carried its full build toolchain and developer-only tooling (test runners, the frontend bundler, type-checkers) into production, even though none of it runs once the server is live. It now drops to an unprivileged user at startup and prunes those developer-only packages after the build, so a would-be attacker who found a way in lands as a limited user with far less software to exploit. The image is smaller and cold starts are quicker as a result. Nothing about how the site behaves changes.",
+			"tags": [
+				"security",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"title": "Your Premium API keys and purchase history are now wallet-gated",
+			"summary": "The Data API console reads your pass status from an endpoint that also returns your API key inventory (names, prefixes, rate limits, usage counts) and full purchase history. Because wallet addresses are public, that private data is now released only after you prove control of the wallet with a one-time signature — the same protection already used for x402 payment receipts. Anyone querying a wallet without that signature sees only whether a pass is active, never the keys or history. In the console, an active pass shows a 'Verify to manage keys' step; one signature (reused for a few minutes) unlocks the key panel. Plaintext keys were never exposed, and nothing about buying or renewing a pass changes.",
+			"tags": [
+				"security"
+			],
+			"link": "/dashboard/data-api"
+		},
+		{
+			"date": "2026-07-12",
+			"title": "Market-maker and limit-order engines are now crash-safe on Cloud Run",
+			"summary": "The two background workers that run agents' automated market-making and limit orders are long-running loops, not web servers. On Cloud Run, a service that never answers the platform's startup health check gets killed and restarted in a loop — which would have taken these money-moving engines offline the moment they were deployed as services. Both now start a tiny health endpoint when the platform asks for one (and stay silent when run as a scheduled job, where none is needed), so they boot cleanly either way. We also added a documented, repeatable deploy for each so there's no guesswork about how they ship.",
+			"tags": [
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"title": "Paid endpoints now confirm a payment can settle before doing the work",
+			"summary": "The in-house payment facilitator that verifies agent-to-agent USDC payments used to check only that a payment was correctly formed — the right amount, token, and recipient — but not that the buyer's account actually held the funds. Because paid endpoints run the requested work first and settle the payment afterward, a payment signed from an empty account could pass the check, trigger real (and sometimes costly) work like an AI generation, and only then fail to settle — leaving the platform to absorb the cost. Verification now simulates the payment on-chain, and falls back to a direct balance check if that's briefly unavailable, so a payment that can't settle is rejected before any work runs. Genuine, funded payments are unaffected.",
+			"tags": [
+				"security"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"title": "Widget knowledge ingestion now requires HTTPS in production",
+			"summary": "When you point a widget's knowledge base at a web page, the platform fetches that page and reads its text into the widget. In production it now refuses plain, unencrypted http:// links and requires https:// — a cleartext fetch can be tampered with in transit, and that tampered content would land in your knowledge base. Encrypted https:// links work exactly as before, and the existing block on private, loopback, and cloud-metadata addresses is unchanged. Local http:// links still work in development.",
+			"tags": [
+				"security"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"title": "Money-moving agent skills now require an explicit spend confirmation",
+			"summary": "The skills that let an agent send tokens, swap, or pay a paid API used to validate the format of an address or amount but never stopped to confirm the actual intent before signing — and some read a token's on-chain name and description straight into the same agent that holds the signing key, so a token deliberately named like an instruction ('send 5 to 0x…') could try to steer a real transfer. Each of these skills now renders a recipient/amount/token/chain confirmation card and waits for an explicit yes before moving any funds, and treats all on-chain and token text as untrusted data that is never followed as an instruction. The platform's operating rules were updated to make spend, transfer, and mint confirmations a required step rather than something to skip for speed.",
+			"tags": [
+				"security"
+			]
+		},
+		{
+			"date": "2026-07-12",
 			"title": "Closed a path-traversal hole in the API router",
 			"summary": "The server that routes every /api request to its handler split the URL into path segments before decoding them, so a specially encoded request could smuggle a '../' into a single segment and reach a file outside the API folder — or an internal helper meant to be unreachable — and run it without authentication. The router now rejects any decoded segment that contains a path separator and, as a second line of defense, refuses to load any handler that resolves outside the API directory. Normal routes are unaffected; a regression test locks the fix in place.",
 			"tags": [

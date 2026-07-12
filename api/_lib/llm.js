@@ -65,6 +65,13 @@ const NVIDIA_MODEL = 'meta/llama-3.3-70b-instruct';
 // enough for a single prompt-refine turn; the rest of the free chain still
 // backs it up if the NIM lane is down.
 const NVIDIA_NEMOTRON_MODEL = 'nvidia/nvidia-nemotron-nano-9b-v2';
+// The NVIDIA free NIM lane sits behind a shared queue that, under load, holds a
+// request far longer than a fallback rung should block the chain (observed live
+// 2026-07-12: 25s hang on a 900-token compose prompt while groq/openrouter
+// 402/429'd in <0.5s). As a fallback it gets a tight per-lane cap so the chain
+// fails over to the reliable Vertex anchor in seconds; env-tunable, floored so a
+// bad value can't disable the guard, and never longer than a real completion needs.
+const NVIDIA_LANE_TIMEOUT_MS = Math.max(2_000, Number(process.env.NVIDIA_LANE_TIMEOUT_MS) || 6_000);
 const ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001';
 // Paid last-resort tail (see policy above). Mini keeps the backstop cheap; the
 // repo-wide OpenAI default (api/_lib/chat-models.js) uses the same model.
@@ -198,11 +205,18 @@ function vertexGeminiProvider() {
 	};
 }
 
-function openaiCompatProvider({ name, key, url, model, extraHeaders = {} }) {
+function openaiCompatProvider({ name, key, url, model, extraHeaders = {}, timeoutMs = null }) {
 	return {
 		name,
 		model,
 		url,
+		// Optional per-provider timeout cap, tighter than the chain-wide one. For a
+		// lane that is known to QUEUE rather than fail fast (NVIDIA's free NIM sits
+		// behind a shared queue and was observed hanging 25s on a 900-token prompt
+		// while every other free lane 402/429'd in <0.5s), so the chain shouldn't
+		// spend the general per-provider budget waiting on it before reaching a
+		// reliable rung. Null = use the caller's general cap.
+		...(timeoutMs ? { timeoutMs } : {}),
 		headers: { 'content-type': 'application/json', authorization: `Bearer ${key}`, ...extraHeaders },
 		buildBody: (system, user, maxTokens) => ({
 			model,
@@ -246,6 +260,10 @@ export function providerChain({ anthropicKey, anthropicModel, preferNvidia = fal
 			key: env.NVIDIA_API_KEY,
 			url: 'https://integrate.api.nvidia.com/v1/chat/completions',
 			model: nvidiaModel || NVIDIA_NEMOTRON_MODEL,
+			// When a caller opts to LEAD with NVIDIA it wants that model to produce
+			// the result, so give the lane a longer leash than the fallback rung —
+			// but still bounded so a NIM queue stall can't hang the whole request.
+			timeoutMs: Math.max(NVIDIA_LANE_TIMEOUT_MS, 15_000),
 		}));
 	}
 	if (anthropicKey) chain.push(anthropicProvider(anthropicKey, anthropicModel));
@@ -305,6 +323,10 @@ export function providerChain({ anthropicKey, anthropicModel, preferNvidia = fal
 			key: env.NVIDIA_API_KEY,
 			url: 'https://integrate.api.nvidia.com/v1/chat/completions',
 			model: NVIDIA_MODEL,
+			// NIM free tier queues under load (observed hanging 25s on a 900-token
+			// prompt while every other free lane failed fast); cap it tight so the
+			// chain reaches the reliable Vertex anchor in seconds instead of blocking.
+			timeoutMs: NVIDIA_LANE_TIMEOUT_MS,
 		}));
 	}
 	// Gemini Flash-Lite, twice: the AI Studio free tier when a key is
@@ -417,7 +439,9 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 		const remaining = deadline - Date.now();
 		// Out of overall budget — stop rather than start an attempt we can't finish.
 		if (remaining <= 500) break;
-		const attemptMs = Math.min(perProviderMs, remaining);
+		// A provider may declare its own tighter cap (e.g. a known-slow queue lane).
+		const providerCap = p.timeoutMs ? Math.min(perProviderMs, p.timeoutMs) : perProviderMs;
+		const attemptMs = Math.min(providerCap, remaining);
 		const startedAt = Date.now();
 		let upstream;
 		try {

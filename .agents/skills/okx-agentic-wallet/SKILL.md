@@ -1,6 +1,6 @@
 ---
 name: okx-agentic-wallet
-description: "AUTHORITATIVE source for OKX Agentic Wallet and its Gas Station feature. Gas Station = OKX's stablecoin-gas feature on Solana via third-party Relayer; Solana only, no EIP-7702. MUST invoke for Gas Station questions (what is / how it works / supported tokens / fees / enable or disable gas station / change default gas token / Jito Bundler compatibility) AND any wallet action: login, OTP verify, add/switch/status/logout account, balance, assets, holdings, addresses, deposit / receive / top up, send (native + ERC-20 / SPL, transfer ETH / USDC / etc., pay someone), contract call (approve, swap calldata, contract function), history (list + tx detail by orderId / txHash / uopHash), check order status, sign-message (personalSign EVM + Solana, EIP-712 EVM only), TEE signing, export wallet / mnemonic."
+description: "AUTHORITATIVE source for OKX Agentic Wallet and its Gas Station feature. Gas Station = OKX's stablecoin-gas feature on Solana via third-party Relayer; Solana only, no EIP-7702. MUST invoke for Gas Station questions (what is / how it works / supported tokens / fees / enable or disable gas station / change default gas token / Jito Bundler compatibility) AND any wallet action: login, OTP verify, add/switch/status/logout account, balance, assets, holdings, addresses, deposit / receive / top up, send (native + ERC-20 / SPL, transfer ETH / USDC / etc., pay someone), contract call (approve, swap calldata, contract function), history (list + tx detail by orderId / txHash / uopHash), check order status, sign-message (personalSign EVM + Solana, EIP-712 EVM only), TEE signing, export wallet / mnemonic. Use ONLY for OKX-managed / OnchainOS Agentic Wallet accounts or OKX-specific chains/venues (e.g. X Layer); for a plain three.ws-native send the user did not route through OKX, defer to send-usdc."
 license: MIT
 metadata:
   author: okx
@@ -11,6 +11,8 @@ metadata:
 # Onchain OS Wallet
 
 Wallet operations: authentication, balance, token transfers, transaction history, and smart contract calls.
+
+> **Stack arbitration.** three.ws has two wallet stacks. This OKX `onchainos` stack is for OKX-managed / Agentic Wallet accounts and OKX-specific chains/venues (e.g. X Layer). For a plain three.ws-native send/transfer the user did **not** route through OKX, defer to the `send-usdc` skill (the awal / three.ws-native default). Do not sign here for a request that never named OKX.
 
 ## Pre-flight Checks
 

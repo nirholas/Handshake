@@ -1,6 +1,6 @@
 ---
 name: send-usdc
-description: Send tokens (USDC, ETH, POL, or SOL) to an address or ENS name on Base, Polygon, or Solana. Use when you or the user want to send money, pay someone, transfer tokens, tip, donate, or send funds to a wallet address or .eth name. Covers phrases like "send $5 to", "pay 0x...", "transfer to vitalik.eth", or "send USDC on Solana".
+description: Send tokens (USDC, ETH, POL, or SOL) to an address or ENS name on Base, Polygon, or Solana. Use when you or the user want to send money, pay someone, transfer tokens, tip, donate, or send funds to a wallet address or .eth name. Covers phrases like "send $5 to", "pay 0x...", "transfer to vitalik.eth", or "send USDC on Solana". This is the three.ws-native wallet (awal) and is the default for sends; defer to okx-agentic-wallet only when the user names OKX, OnchainOS, an OKX-managed / Agentic Wallet account, or an OKX-specific chain/venue (e.g. X Layer).
 user-invocable: true
 disable-model-invocation: false
 allowed-tools: ["Bash(npx awal@2.10.0 status*)", "Bash(npx awal@2.10.0 send *)", "Bash(npx awal@2.10.0 balance*)"]
@@ -13,6 +13,15 @@ metadata:
 # Sending Tokens
 
 Use the `npx awal@2.10.0 send` command to transfer tokens from the wallet to any address on Base, Polygon, or Solana.
+
+## Which wallet stack (arbitration)
+
+three.ws runs two wallet stacks. Pick one deterministically — never move funds through a signing path the user didn't ask for:
+
+- **This stack (awal / three.ws-native)** — the default. Use it for every send unless the user explicitly opts into OKX. It signs from the platform's own `awal` wallet.
+- **OKX `onchainos` stack** (`okx-agentic-wallet`) — use *only* when the user names OKX, OnchainOS, the OKX Agentic Wallet, an OKX-managed account, or an OKX-specific chain/venue (e.g. X Layer). Then hand off to `okx-agentic-wallet` and do not send from here.
+
+Chain overlap (both stacks reach Base/Solana) does not decide this — the named wallet/venue does.
 
 ## Confirm wallet is initialized and authed
 

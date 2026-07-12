@@ -43,8 +43,22 @@ RUN npm ci --ignore-scripts --no-audit --no-fund
 COPY . .
 RUN npm rebuild && npm run postinstall
 
+# 3. Shed devDependencies (playwright, vite, typescript, vitest, esbuild, jsdom…)
+#    now that the SDK builds above are done. The server and every api/** handler
+#    import only production deps at runtime — the frontend is pre-built into
+#    dist/ and served as static files — so nothing here is load-bearing at boot.
+#    --ignore-scripts: the lifecycle hooks already ran; prune must not re-trigger
+#    a workspace rebuild against a now-partial tree.
+RUN npm prune --omit=dev --ignore-scripts --no-audit --no-fund
+
 ENV NODE_ENV=production \
     NODE_OPTIONS=--no-deprecation
+
+# Drop root: Cloud Run has no reason to run this as uid 0. The node:24 base ships
+# an unprivileged `node` user (uid 1000). The app never writes to /app at
+# runtime — persona/ledger disk fallbacks target os.tmpdir(), and headless
+# chromium downloads to /tmp — so a read-only, root-owned app tree is fine.
+USER node
 
 EXPOSE 8080
 CMD ["node", "server/index.mjs"]

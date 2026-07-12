@@ -3,7 +3,6 @@
 // interrupt trading. Import this in index.js and call screenPush()
 // alongside existing log() calls.
 
-import fetch from 'node-fetch';
 
 const PUSH_URL = process.env.PUSH_URL || 'https://three.ws/api/agent-screen-push';
 const AGENT_JWT = process.env.AGENT_JWT;

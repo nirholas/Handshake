@@ -5,7 +5,6 @@
 // per-launcher threshold (default 0.5 SOL), claims them via the platform
 // fee-collect API. In simulate mode the claim is logged but not POSTed.
 
-import fetch from 'node-fetch';
 import { sql } from '../../api/_lib/db.js';
 import { log } from './log.js';
 import { screenPush } from './screen-push.js';

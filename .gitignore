@@ -59,6 +59,9 @@ public/animations/clips/.input-hashes.json
 # scripts/copy-three-decoders.mjs (postinstall). Recreated every install;
 # do not commit so the lockfile-pinned three.js version stays authoritative.
 public/three/
+# Scene Studio's copy of the Draco decoders — same source, same script, so it
+# is generated too rather than committed as a byte-for-byte duplicate.
+public/scene-studio/draco/
 Handshake
 
 # Sandbox clones — see experiments/README.md

@@ -276,6 +276,16 @@ export function paidEndpoint(spec) {
 		networks = ['solana', 'base'],
 		description,
 		mimeType = 'application/json',
+		// Response shape. Default (false) is deliver-then-settle: the handler
+		// RETURNS a value and the wrapper settles, then serialises + flushes it.
+		// A handler on a default route that ends its own response is a bug — the
+		// good would ship before settlement — and is rejected loudly below.
+		// Set `streaming: true` for routes that must write their own body
+		// (binary download, res.pipe, SSE): the wrapper then settles BEFORE
+		// invoking the handler (settle-then-stream) and emits the
+		// x-payment-response header up-front, so a self-flushing handler is paid
+		// by construction. Streamed responses are never idempotency-cached.
+		streaming = false,
 		bazaar,
 		handler,
 		// ERC-8021 builder-code attribution. Optional per-route service codes
@@ -874,6 +884,218 @@ export function paidEndpoint(spec) {
 			return respondError(res, err.status || 502, err.code || 'verify_failed', err);
 		}
 
+		// Settle the verified payment and build the x-payment-response header
+		// (SIWX grant + signed receipts). Invoked with the response NOT yet
+		// flushed in BOTH paths: settle-then-stream calls it before the handler
+		// runs; deliver-then-settle calls it after the handler returned a value.
+		// On any settle/SIWX fault it writes the error response and returns null,
+		// and the caller returns immediately.
+		async function settleAndBuildResponse() {
+			let settled;
+			try {
+				settled = await settlePayment({ verified });
+			} catch (err) {
+				logPaymentEvent({
+					eventType: 'payment_failed',
+					route,
+					resourceUrl,
+					payer: verified.payer || null,
+					network: verified.requirement?.network || null,
+					amountAtomics: verified.requirement?.amount || null,
+					asset: verified.requirement?.asset || null,
+					settlementStatus: 'failed',
+					durationMs: Date.now() - requestStartTime,
+					ipAddress: clientIp(req),
+					userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
+					metadata: { error: err.message, code: err.code },
+				});
+				recordPaymentMetric({
+					kind: 'x402',
+					status: 'failed',
+					network: verified.requirement?.network,
+					amountUsd: atomicsToUsd(verified.requirement?.amount),
+					latencyMs: Date.now() - requestStartTime,
+					reason: err.code || 'settle_failed',
+				});
+				if (ownsReservation) await releaseSlot({ route, paymentId });
+				respondError(res, err.status || 502, err.code || 'settle_failed', err);
+				return null;
+			}
+
+			// Record the SIWX grant so the wallet can re-access via signature next
+			// time. siwx-storage.recordPayment is idempotent (upsert on PK), so a
+			// retried settle is safe. The on-chain payment is final; if Neon
+			// hiccups we surface 502 — the buyer can retry without paying twice.
+			if (siwx && verified.payer) {
+				try {
+					await recordSiwxPayment({
+						resourceUrl,
+						payer: normalizeAddress(verified.requirement.network, verified.payer),
+						network: verified.requirement.network,
+						ttlSeconds: siwx.ttlSeconds ?? null,
+					});
+					logPaymentEvent({
+						eventType: 'siwx_grant',
+						route,
+						resourceUrl,
+						payer: verified.payer,
+						network: verified.requirement.network,
+						ipAddress: clientIp(req),
+						userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
+						metadata: { ttlSeconds: siwx.ttlSeconds ?? null },
+					});
+				} catch (err) {
+					respondError(res, 502, 'siwx_record_failed', err);
+					return null;
+				}
+			}
+
+			// USE-17: issue a signed receipt for the settled payment and stash it
+			// in the response extensions envelope. Persist asynchronously so the
+			// /api/x402/my-receipts buyer-lookup path can serve it later — the
+			// recordReceipt write is fire-and-forget so a Neon hiccup never
+			// surfaces as a 5xx on a payment that already settled on-chain.
+			let responseExtensions;
+			if (offerReceipt !== false) {
+				try {
+					// Facilitators may omit payer/network from the settle response (backward-
+					// compat). Fall back to verified context so the receipt is still issued.
+					// BSC `direct` flows have verified.payer = null (contract event, no signed
+					// payload) — buildReceiptExtension returns null in that case gracefully.
+					const receiptSettled = {
+						...settled,
+						payer: settled.payer || verified.payer || null,
+						network: settled.network || verified.requirement?.network || null,
+					};
+					const receiptBuilt = await buildReceiptExtension(
+						resourceUrl,
+						receiptSettled,
+						offerReceipt || {},
+					);
+					if (receiptBuilt) {
+						responseExtensions = receiptBuilt.extensionFragment;
+						recordReceipt({
+							resourceUrl,
+							signedReceipt: receiptBuilt.signedReceipt,
+							settled,
+						});
+					}
+				} catch (err) {
+					// A receipt sign failure must not break the 200 — the payment settled
+					// and the work ran. Log and continue with an unsigned response.
+					console.error('x402_receipt_sign_failed', err);
+				}
+			}
+
+			// New-stack receipt: keyed by X402_RECEIPT_SIGNING_KEY. Returns null when
+			// unset (byte-identical to current behaviour) or when payer/network absent
+			// (e.g. BSC direct with no decoded event payer). Merged as `signedReceipt`
+			// alongside any `info.receipt` produced by the old-stack above.
+			try {
+				const sr = await signReceipt({
+					resourceUrl,
+					payer: settled.payer || verified.payer || null,
+					network: settled.network || verified.requirement?.network || null,
+					txHash: settled.transaction,
+					includeTxHash: offerReceipt?.includeTxHash === true,
+				});
+				if (sr) {
+					responseExtensions = responseExtensions ?? {};
+					const existing = responseExtensions['offer-receipt'];
+					responseExtensions['offer-receipt'] = existing
+						? { ...existing, signedReceipt: sr }
+						: { signedReceipt: sr };
+				}
+			} catch (err) {
+				console.error('x402_receipt_sign_failed', err);
+			}
+
+			const paymentResponseHeader = encodePaymentResponseHeader(settled, responseExtensions);
+			return { settled, paymentResponseHeader };
+		}
+
+		// Success telemetry for a settled payment — logged once the good has been
+		// delivered (after res.end in the buffered path, after the handler streamed
+		// in the streaming path).
+		function recordSettledSuccess(settled) {
+			logPaymentEvent({
+				eventType: 'payment_settled',
+				route,
+				resourceUrl,
+				payer: settled.payer || verified.payer || null,
+				network: settled.network || verified.requirement?.network || null,
+				amountAtomics: verified.requirement?.amount || null,
+				asset: verified.requirement?.asset || null,
+				txHash: settled.transaction || null,
+				settlementStatus: 'success',
+				facilitatorResponse: settled,
+				durationMs: Date.now() - requestStartTime,
+				ipAddress: clientIp(req),
+				userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
+			});
+			// Axiom payment metric — success rate + per-network latency the audit DB
+			// can't aggregate live. Fire-and-forget no-op until AXIOM_* is set; carries
+			// only on-chain identifiers (route, network, tx signature), never PII.
+			recordPaymentMetric({
+				kind: 'x402',
+				status: 'ok',
+				network: settled.network || verified.requirement?.network,
+				amountUsd: atomicsToUsd(verified.requirement?.amount),
+				latencyMs: Date.now() - requestStartTime,
+				signature: settled.transaction || undefined,
+			});
+		}
+
+		// STREAMING routes deliver the good by flushing their own body (binary
+		// download, res.pipe, SSE). Settle FIRST and emit the payment-response
+		// header up-front — headers must precede the streamed body — so the
+		// buyer is charged before a single byte of the good ships. A streamed
+		// body isn't buffered, so no idempotency cache entry is stored; the
+		// reservation is released once the handler finishes.
+		if (streaming) {
+			const outcome = await settleAndBuildResponse();
+			if (!outcome) return;
+			const { settled, paymentResponseHeader } = outcome;
+
+			res.setHeader('x-payment-response', paymentResponseHeader);
+			res.setHeader('cache-control', 'no-store');
+
+			let result;
+			try {
+				result = await handler({
+					req,
+					res,
+					requirement: verified.requirement,
+					payer: verified.payer,
+					settled,
+				});
+			} catch (err) {
+				if (ownsReservation) await releaseSlot({ route, paymentId });
+				// The payment already settled on-chain. If the handler already began
+				// streaming we can only record the settlement and stop; otherwise
+				// surface the fault so the buyer sees an actionable error.
+				if (res.writableEnded) {
+					recordSettledSuccess(settled);
+					return;
+				}
+				if (err instanceof X402Error && err.status === 402) {
+					return await send402(res, { ...challenge, error: err.message });
+				}
+				return respondError(res, err.status || 500, err.code || 'internal_error', err);
+			}
+
+			if (ownsReservation) await releaseSlot({ route, paymentId });
+			// A streaming handler that returned a value instead of flushing gets
+			// the same buffered emission as the default path (content-type from the
+			// route mime), so streaming is a superset — not a different contract.
+			if (!res.writableEnded) {
+				res.setHeader('content-type', `${mimeType}; charset=utf-8`);
+				res.end(typeof result === 'string' ? result : JSON.stringify(result));
+			}
+			recordSettledSuccess(settled);
+			return;
+		}
+
 		let result;
 		try {
 			result = await handler({
@@ -890,21 +1112,17 @@ export function paidEndpoint(spec) {
 			return respondError(res, err.status || 500, err.code || 'internal_error', err);
 		}
 
-		// Handler may end the response itself (e.g. binary body); only settle +
-		// emit JSON when it returned a value and didn't already flush. This path
-		// stores no cache entry, so release the in-flight reservation rather than
-		// leaving a marker that would wedge same-payment retries for the full TTL.
+		// Deliver-then-settle: the handler MUST return a value and leave the
+		// response unflushed so settlement runs below before the body ships. A
+		// handler that ended its own response has delivered the good WITHOUT
+		// settling — the buyer would get it for free. Fail loudly: release the
+		// slot, record the leak, and throw so wrap() alerts. A route that needs
+		// to write its own body must set `streaming: true` (settle-then-stream)
+		// so payment is captured before delivery.
 		if (res.writableEnded) {
 			if (ownsReservation) await releaseSlot({ route, paymentId });
-			return;
-		}
-
-		let settled;
-		try {
-			settled = await settlePayment({ verified });
-		} catch (err) {
 			logPaymentEvent({
-				eventType: 'payment_failed',
+				eventType: 'payment_unsettled_flush',
 				route,
 				resourceUrl,
 				payer: verified.payer || null,
@@ -915,7 +1133,7 @@ export function paidEndpoint(spec) {
 				durationMs: Date.now() - requestStartTime,
 				ipAddress: clientIp(req),
 				userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
-				metadata: { error: err.message, code: err.code },
+				metadata: { reason: 'handler flushed response before settlement; set streaming:true to settle first' },
 			});
 			recordPaymentMetric({
 				kind: 'x402',
@@ -923,100 +1141,17 @@ export function paidEndpoint(spec) {
 				network: verified.requirement?.network,
 				amountUsd: atomicsToUsd(verified.requirement?.amount),
 				latencyMs: Date.now() - requestStartTime,
-				reason: err.code || 'settle_failed',
+				reason: 'unsettled_flush',
 			});
-			if (ownsReservation) await releaseSlot({ route, paymentId });
-			return respondError(res, err.status || 502, err.code || 'settle_failed', err);
+			throw new Error(
+				`paidEndpoint(${route}): handler flushed its response before settlement — set streaming:true for routes that write their own body`,
+			);
 		}
 
-		// Record the SIWX grant so the wallet can re-access via signature next
-		// time. siwx-storage.recordPayment is idempotent (upsert on PK), so a
-		// retried settle is safe. The on-chain payment is final; if Neon
-		// hiccups we surface 502 — the buyer can retry without paying twice.
-		if (siwx && verified.payer) {
-			try {
-				await recordSiwxPayment({
-					resourceUrl,
-					payer: normalizeAddress(verified.requirement.network, verified.payer),
-					network: verified.requirement.network,
-					ttlSeconds: siwx.ttlSeconds ?? null,
-				});
-				logPaymentEvent({
-					eventType: 'siwx_grant',
-					route,
-					resourceUrl,
-					payer: verified.payer,
-					network: verified.requirement.network,
-					ipAddress: clientIp(req),
-					userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
-					metadata: { ttlSeconds: siwx.ttlSeconds ?? null },
-				});
-			} catch (err) {
-				return respondError(res, 502, 'siwx_record_failed', err);
-			}
-		}
+		const outcome = await settleAndBuildResponse();
+		if (!outcome) return;
+		const { settled, paymentResponseHeader } = outcome;
 
-		// USE-17: issue a signed receipt for the settled payment and stash it
-		// in the response extensions envelope. Persist asynchronously so the
-		// /api/x402/my-receipts buyer-lookup path can serve it later — the
-		// recordReceipt write is fire-and-forget so a Neon hiccup never
-		// surfaces as a 5xx on a payment that already settled on-chain.
-		let responseExtensions;
-		if (offerReceipt !== false) {
-			try {
-				// Facilitators may omit payer/network from the settle response (backward-
-				// compat). Fall back to verified context so the receipt is still issued.
-				// BSC `direct` flows have verified.payer = null (contract event, no signed
-				// payload) — buildReceiptExtension returns null in that case gracefully.
-				const receiptSettled = {
-					...settled,
-					payer: settled.payer || verified.payer || null,
-					network: settled.network || verified.requirement?.network || null,
-				};
-				const receiptBuilt = await buildReceiptExtension(
-					resourceUrl,
-					receiptSettled,
-					offerReceipt || {},
-				);
-				if (receiptBuilt) {
-					responseExtensions = receiptBuilt.extensionFragment;
-					recordReceipt({
-						resourceUrl,
-						signedReceipt: receiptBuilt.signedReceipt,
-						settled,
-					});
-				}
-			} catch (err) {
-				// A receipt sign failure must not break the 200 — the payment settled
-				// and the work ran. Log and continue with an unsigned response.
-				console.error('x402_receipt_sign_failed', err);
-			}
-		}
-
-		// New-stack receipt: keyed by X402_RECEIPT_SIGNING_KEY. Returns null when
-		// unset (byte-identical to current behaviour) or when payer/network absent
-		// (e.g. BSC direct with no decoded event payer). Merged as `signedReceipt`
-		// alongside any `info.receipt` produced by the old-stack above.
-		try {
-			const sr = await signReceipt({
-				resourceUrl,
-				payer: settled.payer || verified.payer || null,
-				network: settled.network || verified.requirement?.network || null,
-				txHash: settled.transaction,
-				includeTxHash: offerReceipt?.includeTxHash === true,
-			});
-			if (sr) {
-				responseExtensions = responseExtensions ?? {};
-				const existing = responseExtensions['offer-receipt'];
-				responseExtensions['offer-receipt'] = existing
-					? { ...existing, signedReceipt: sr }
-					: { signedReceipt: sr };
-			}
-		} catch (err) {
-			console.error('x402_receipt_sign_failed', err);
-		}
-
-		const paymentResponseHeader = encodePaymentResponseHeader(settled, responseExtensions);
 		const contentType = `${mimeType}; charset=utf-8`;
 		const body = typeof result === 'string' ? result : JSON.stringify(result);
 
@@ -1025,32 +1160,7 @@ export function paidEndpoint(spec) {
 		res.setHeader('content-type', contentType);
 		res.end(body);
 
-		logPaymentEvent({
-			eventType: 'payment_settled',
-			route,
-			resourceUrl,
-			payer: settled.payer || verified.payer || null,
-			network: settled.network || verified.requirement?.network || null,
-			amountAtomics: verified.requirement?.amount || null,
-			asset: verified.requirement?.asset || null,
-			txHash: settled.transaction || null,
-			settlementStatus: 'success',
-			facilitatorResponse: settled,
-			durationMs: Date.now() - requestStartTime,
-			ipAddress: clientIp(req),
-			userAgent: req.headers?.['user-agent']?.slice(0, 512) || null,
-		});
-		// Axiom payment metric — success rate + per-network latency the audit DB
-		// can't aggregate live. Fire-and-forget no-op until AXIOM_* is set; carries
-		// only on-chain identifiers (route, network, tx signature), never PII.
-		recordPaymentMetric({
-			kind: 'x402',
-			status: 'ok',
-			network: settled.network || verified.requirement?.network,
-			amountUsd: atomicsToUsd(verified.requirement?.amount),
-			latencyMs: Date.now() - requestStartTime,
-			signature: settled.transaction || undefined,
-		});
+		recordSettledSuccess(settled);
 
 		if (paymentId) {
 			await storeResponse({

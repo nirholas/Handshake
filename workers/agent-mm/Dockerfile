@@ -6,8 +6,10 @@
 #   docker build -f workers/agent-mm/Dockerfile -t agent-mm .
 #   docker run --env-file .env agent-mm
 #
-# Deploy target is Cloud Run (no HTTP port — it's a background worker; deploy
-# with --no-cpu-throttling so the sweep timer keeps running between requests).
+# Deploy target is Cloud Run as a background-daemon SERVICE. It's not
+# request-driven, but index.js binds a tiny liveness endpoint on $PORT so the
+# startup probe passes. Deploy with --no-cpu-throttling and --min-instances=1 so
+# the sweep timer keeps ticking between probes. See workers/agent-mm/cloudbuild.yaml.
 
 FROM node:24-slim
 

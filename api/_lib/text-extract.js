@@ -13,6 +13,7 @@
 
 import { parse } from 'node-html-parser';
 import { fetchSafePublicUrl, SsrfBlockedError } from './ssrf-guard.js';
+import { env } from './env.js';
 
 const FETCH_TIMEOUT_MS = 12_000;
 const MAX_BYTES = 4 * 1024 * 1024; // 4 MB hard cap per source
@@ -48,7 +49,10 @@ export async function fetchAndExtract(url) {
 				},
 				signal: controller.signal,
 			},
-			{ allowHttp: true },
+			// Production requires HTTPS: cleartext http:// public fetches are
+			// MITM-tamperable, and ingested content lands in the knowledge base.
+			// Plaintext stays allowed in dev/tests for local sources.
+			{ allowHttp: !env.isProduction },
 		);
 	} catch (err) {
 		clearTimeout(timer);

@@ -48,6 +48,17 @@ Cloud Scheduler: 76 jobs (one per vercel.json cron) → GET /api/cron/* with
   `01B467-A61905-9A97D2` — the $100k credits pool; owner-confirmed 2026-07-07).
 - **Region:** `us-central1` for everything (same as the model workers).
 - **Image:** `us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/cloud-run-source-deploy/three-ws-api:latest`
+  Built from the repo-root [`Dockerfile`](../../Dockerfile). It runs as the
+  unprivileged `node` user (not root) and prunes devDependencies after the SDK
+  build (`npm prune --omit=dev`), so the runtime image carries only production
+  deps. The container never writes to `/app` at runtime — the persona/ledger
+  disk fallbacks and headless-chromium download both target `/tmp` — so the
+  root-owned, read-only app tree is expected. Still single-stage: the
+  `python3/make/g++` toolchain stays because `cloudbuild.yaml`'s inline-cache
+  path (`BUILDKIT_INLINE_CACHE=1` + `--cache-from`) only restores the final
+  stage's layers, so a multi-stage split would forfeit the cached `npm ci` and
+  regress rebuilds from ~3 min to ~12 min. A future move to `docker buildx` with
+  a registry cache would unlock the multi-stage drop of the toolchain.
 
 ### Production database (verified 2026-07-07)
 

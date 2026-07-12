@@ -2248,6 +2248,32 @@ Each asset has its own SIWX grant key: the endpoint passes a `resourceUrlBuilder
 
 ---
 
+## x402 Paid Endpoints — response shape (`streaming: true`)
+
+`paidEndpoint()` has two response contracts, chosen by the `streaming` flag.
+
+**Default — deliver-then-settle (`streaming: false`).** The handler **returns a value** (object → JSON, or a string). The wrapper settles the payment, then serialises and flushes the body. This is the shape every current `/api/x402/*` route uses. A default-route handler that ends its own response is a bug: the good would ship before the settlement runs. The wrapper detects it, logs a `payment_unsettled_flush` audit event, and throws — it never silently returns an unsettled response. If you see that error, the fix is to switch the route to streaming mode below.
+
+**Streaming — settle-then-stream (`streaming: true`).** For routes that must write their own body — binary downloads, `res.pipe`, Server-Sent Events — the wrapper settles **before** invoking the handler and emits the `x-payment-response` header up-front (HTTP headers must precede the streamed body). The buyer is charged before a single byte of the good ships, so a self-flushing handler is paid by construction. The handler receives the settlement context and streams the good itself:
+
+```js
+paidEndpoint({
+	route: '/api/x402/animation-download',
+	mimeType: 'application/octet-stream',
+	streaming: true, // settle first, then hand the response to the handler
+	// …other fields…
+	async handler({ req, res, requirement, payer, settled }) {
+		// `x-payment-response` is already set; payment is final.
+		res.setHeader('content-type', 'application/octet-stream');
+		clipStream(req).pipe(res); // handler owns the body + res.end()
+	},
+});
+```
+
+Streamed responses are never idempotency-cached (a streamed body isn't buffered), so a streaming route releases its in-flight reservation once the handler finishes rather than storing a replayable entry. If a `streaming: true` handler returns a value instead of flushing, it still gets the normal buffered emission — streaming is a superset of the default contract, not a different one. If settlement fails, the handler never runs and the buyer is not charged.
+
+---
+
 ## Multi-rail x402 payments (X Layer / OKX Agent Payments Protocol)
 
 Paid MCP and A2MCP endpoints advertise **every settlement rail the deployment can serve** in a single 402 challenge — one `accepts[]` array, one entry per rail. A buyer picks the rail it can pay on.

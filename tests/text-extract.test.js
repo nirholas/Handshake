@@ -6,8 +6,9 @@
 // tests pin the extraction contract (noise stripping, entity decoding, title
 // resolution, whitespace normalization) so a future parser swap can't regress it.
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { parse } from 'node-html-parser';
+import { fetchAndExtract } from '../api/_lib/text-extract.js';
 
 // Mirror of the extraction performed inside fetchAndExtract() for already-fetched
 // HTML, so we can assert behavior without a network round trip.
@@ -85,5 +86,24 @@ describe('text-extract HTML extraction', () => {
 			`<html><body><article><p>a    b\t\tc</p>\n\n\n\n<p>d</p></article></body></html>`,
 		);
 		expect(text).toBe('a b c\n\nd');
+	});
+});
+
+// The http-scheme check in the SSRF guard runs before any DNS/network hop, so a
+// cleartext public URL is refused purely on protocol when allowHttp is false —
+// which is exactly what fetchAndExtract gates on the production environment.
+describe('text-extract cleartext-http gate', () => {
+	const prev = process.env.NODE_ENV;
+	afterEach(() => {
+		if (prev === undefined) delete process.env.NODE_ENV;
+		else process.env.NODE_ENV = prev;
+	});
+
+	it('refuses plaintext http:// public URLs in production (no network round trip)', async () => {
+		process.env.NODE_ENV = 'production';
+		await expect(fetchAndExtract('http://example.com/')).rejects.toMatchObject({
+			status: 400,
+			message: 'URL must be publicly reachable',
+		});
 	});
 });

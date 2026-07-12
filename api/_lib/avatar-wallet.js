@@ -23,6 +23,7 @@ import {
 } from '@solana/web3.js';
 import { solanaConnection } from './solana/connection.js';
 import { submitProtected } from './execution-engine.js';
+import { solPriceUsd } from './sol-price.js';
 import bs58 from 'bs58';
 
 const bs58decode = bs58.default ? bs58.default.decode : bs58.decode;
@@ -124,24 +125,20 @@ export function getConnection(rpcUrl) {
 	return _connByUrl.get(url);
 }
 
-/** Live SOL/USD price (Jupiter Lite primary, CoinGecko fallback). */
+/**
+ * Live SOL/USD price. Delegates to the canonical 7-source failover in
+ * api/_lib/sol-price.js (Kraken/Coinbase/Bitfinex/CoinGecko/Jupiter/DefiLlama/DIA,
+ * cached 60s) instead of the old two-source inline fetch. Preserves this
+ * function's throw-on-failure contract: money-moving callers (send-sol, deal,
+ * settle-fee) rely on a thrown `price_unavailable` to refuse a send rather than
+ * value it against a zero price — solPriceUsd() returns 0 on total failure, so we
+ * translate that back into the throw the callers expect.
+ */
 export async function solUsdPrice() {
-	const SOL_MINT = 'So11111111111111111111111111111111111111112';
-	try {
-		const r = await fetch(`https://lite-api.jup.ag/price/v3?ids=${SOL_MINT}`);
-		if (r.ok) {
-			const data = await r.json();
-			const usd = data?.[SOL_MINT]?.usdPrice ?? data?.[SOL_MINT]?.price ?? 0;
-			if (Number(usd) > 0) return Number(usd);
-		}
-	} catch {
-		/* fall through */
+	const usd = await solPriceUsd();
+	if (!(Number(usd) > 0)) {
+		throw Object.assign(new Error('SOL price unavailable'), { code: 'price_unavailable' });
 	}
-	const cg = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
-	if (!cg.ok) throw Object.assign(new Error('SOL price unavailable'), { code: 'price_unavailable' });
-	const j = await cg.json();
-	const usd = j?.solana?.usd ?? 0;
-	if (!(Number(usd) > 0)) throw Object.assign(new Error('SOL price unavailable'), { code: 'price_unavailable' });
 	return Number(usd);
 }
 

@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@browserbasehq/stagehand": "^3.6.0",
-    "node-fetch": "^3",
     "zod": "^3"
   }
 }

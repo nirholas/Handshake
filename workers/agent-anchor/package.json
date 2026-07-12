@@ -8,9 +8,6 @@
   "scripts": {
     "start": "node index.js"
   },
-  "dependencies": {
-    "node-fetch": "^3.3.2"
-  },
   "optionalDependencies": {
     "canvas": "^2.11.2"
   },

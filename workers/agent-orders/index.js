@@ -53,6 +53,10 @@ async function heartbeat(cfg, extra) {
 async function main() {
 	const cfg = loadConfig();
 	log.info('boot', { network: cfg.network, mode: cfg.mode, pollMs: cfg.pollMs, globalKill: cfg.globalKill });
+	_live.mode = cfg.mode;
+	_live.network = cfg.network;
+	_live.globalKill = cfg.globalKill;
+	startHealthServer();
 
 	let draining = false;
 	let sweeping = false;

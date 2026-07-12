@@ -5,7 +5,6 @@
 // (lower-third over a desk gradient) when the package is available, falling back
 // to a text-only frame otherwise.
 
-import fetch from 'node-fetch';
 
 const PUSH_URL = process.env.PUSH_URL || 'https://three.ws/api/agent-screen-push';
 const AGENT_JWT = process.env.AGENT_JWT;

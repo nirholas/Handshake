@@ -20,7 +20,8 @@
 //   /verify  → { isValid, network, asset, payer }  |  { isValid:false, invalidReason }
 //   /settle  → { success:true, transaction, network, payer }  |  { success:false, errorReason }
 
-import { cors, json, method, wrap, readJson } from '../_lib/http.js';
+import { cors, json, method, wrap, readJson, rateLimited } from '../_lib/http.js';
+import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { env } from '../_lib/env.js';
 import { NETWORK_SOLANA_MAINNET, X402_VERSION } from '../_lib/x402-spec.js';
@@ -101,6 +102,16 @@ export default wrap(async (req, res) => {
 		});
 	}
 
+	// Flood guard on the money-moving path. /supported (public probe) and the
+	// disabled-503 above are exempt — only real verify/settle work reaches here,
+	// and each settle burns sponsor SOL, so cap per-IP and globally. Both CRITICAL
+	// (fail closed): a throttled settle just leaves the buyer to retry.
+	const ip = clientIp(req);
+	const ipRl = await limits.x402FacilitatorIp(ip);
+	if (!ipRl.success) return rateLimited(res, ipRl);
+	const globalRl = await limits.x402FacilitatorGlobal();
+	if (!globalRl.success) return rateLimited(res, globalRl);
+
 	const body = await getBody(req);
 	const paymentPayload = body?.paymentPayload;
 	const requirement = body?.paymentRequirements;
@@ -124,7 +135,7 @@ export default wrap(async (req, res) => {
 	}
 
 	if (action === 'verify') {
-		const result = verifyRingPayment({ paymentPayload, requirement });
+		const result = await verifyRingPayment({ paymentPayload, requirement });
 		await logOp({
 			action: 'verify',
 			network: requirement.network,

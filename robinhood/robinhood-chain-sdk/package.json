@@ -1,0 +1,77 @@
+{
+  "name": "hoodchain",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for Robinhood Chain (chain ID 4663): Stock Tokens, Chainlink quotes, multiplier-correct portfolios, Uniswap v3 swaps, USDG, launchpad watchers, and the sequencer firehose.",
+  "keywords": [
+    "robinhood",
+    "robinhood-chain",
+    "stock-tokens",
+    "tokenized-equities",
+    "usdg",
+    "viem",
+    "arbitrum-orbit",
+    "chainlink",
+    "uniswap",
+    "web3"
+  ],
+  "license": "MIT",
+  "author": "nirholas (https://x.com/nichxbt)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/robinhood-chain-sdk.git"
+  },
+  "homepage": "https://nirholas.github.io/robinhood-chain-sdk/",
+  "bugs": {
+    "url": "https://github.com/nirholas/robinhood-chain-sdk/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./registry/stock-tokens.json": "./dist/registry/stock-tokens.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup && node scripts/copy-registry.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run tests/unit",
+    "test:live": "vitest run tests/live --testTimeout 120000",
+    "refresh-registry": "node scripts/refresh-registry.mjs",
+    "docs:api": "typedoc",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "peerDependencies": {
+    "viem": "^2.55.0",
+    "ws": "^8.18.0"
+  },
+  "peerDependenciesMeta": {
+    "ws": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/ws": "^8.18.0",
+    "tsup": "^8.5.0",
+    "typedoc": "^0.28.0",
+    "typescript": "^5.9.0",
+    "viem": "^2.55.0",
+    "vitest": "^3.2.0",
+    "ws": "^8.18.0"
+  }
+}

@@ -70,6 +70,16 @@ const X402_VERIFY_GLOBAL_PER_HOUR = Math.max(
 	Number(process.env.X402_VERIFY_GLOBAL_PER_HOUR) || 12000,
 );
 
+// Global settle/verify ceiling for OUR self-hosted facilitator
+// (api/x402-facilitator). Every co-signed settle burns sponsor SOL (~5000
+// lamports base fee), so an unbounded flood of tiny allowlisted transfers could
+// grind the sponsor down to SPONSOR_SOL_FLOOR_LAMPORTS and halt the whole paid
+// loop. Bound it. Same floor rationale as the verify ceiling above.
+const X402_FACILITATOR_GLOBAL_PER_HOUR = Math.max(
+	600,
+	Number(process.env.X402_FACILITATOR_GLOBAL_PER_HOUR) || 12000,
+);
+
 // A limiter that always denies. Used in production for cost/money-moving buckets
 // when Redis is absent: better to 503 a paid action than to silently allow
 // unbounded spend across serverless instances.
@@ -969,6 +979,23 @@ export const limits = {
 	x402VerifyGlobal: () =>
 		getLimiter('x402:verify:global', {
 			limit: X402_VERIFY_GLOBAL_PER_HOUR,
+			window: '1 h',
+			critical: true,
+		}).limit('global'),
+	// OUR self-hosted facilitator (api/x402-facilitator/verify+settle). Its public
+	// URL means anyone with a few cents of USDC can spam /settle with valid tiny
+	// allowlisted transfers, each forcing a sponsor co-sign that burns ~5000
+	// lamports — a fee-burn grief that can pause the paid economy at the SOL floor.
+	// Per-IP is generous (60/min, NOT the tighter 20/min verify cap): legit settle
+	// traffic loops back through the platform's own egress IP via callFacilitator,
+	// so a small cap here would self-DoS; 60/min still bounds a single direct
+	// attacker IP. CRITICAL like verify — fail closed, since rejecting a settle just
+	// leaves the buyer holding funds to retry, which beats unbounded fee burn.
+	x402FacilitatorIp: (ip) =>
+		getLimiter('x402:facilitator:ip', { limit: 60, window: '1 m', critical: true }).limit(ip),
+	x402FacilitatorGlobal: () =>
+		getLimiter('x402:facilitator:global', {
+			limit: X402_FACILITATOR_GLOBAL_PER_HOUR,
 			window: '1 h',
 			critical: true,
 		}).limit('global'),

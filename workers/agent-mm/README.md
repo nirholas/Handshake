@@ -56,6 +56,24 @@ npm run worker:mm:live     # live fills from agent wallets
 | `MM_HEARTBEAT_MS` | `30000` | `bot_heartbeat` liveness (0 disables) |
 | `MM_VOLUME_WINDOW_S` | `300` | window for the live-volume cap |
 
-`DATABASE_URL` + `JWT_SECRET` are required (DB + wallet decryption).
+`DATABASE_URL` + `JWT_SECRET` (or `WALLET_ENCRYPTION_KEY`) are required (DB +
+wallet decryption). When Cloud Run sets `PORT`, the worker also binds a tiny
+liveness endpoint on it so the startup probe passes.
 
-Deploy on Cloud Run via the `Dockerfile` (background worker, no HTTP port).
+## Deploy
+
+Deployed on Cloud Run as a **background-daemon service**. It isn't request-driven,
+but `index.js` binds a liveness endpoint on `$PORT` so the startup probe passes;
+`--no-cpu-throttling` + `--min-instances=1` keep the sweep timer ticking between
+probes. Build and deploy from the repo root:
+
+```bash
+# one-time secret setup is documented in cloudbuild.yaml
+gcloud builds submit --config workers/agent-mm/cloudbuild.yaml .
+```
+
+It ships in `MM_MODE=simulate` (real quotes, no broadcast). Flip
+`_MM_MODE=live` (build substitution) or update the running service's `MM_MODE`
+only after the RPC secret is set and agent wallets are funded. It can equally run
+as a Cloud Run **Job** — jobs get no startup probe, so `PORT` is unset and no
+listener binds; the sweep loop is unaffected either way.

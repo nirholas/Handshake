@@ -49,7 +49,6 @@ import { mountKolTradesWidget } from './widgets/kol-trades.js';
 import { mountLiveTradesCanvas } from './widgets/live-trades-canvas.js';
 import { mountBondingCurve } from './widgets/bonding-curve.js';
 import { mountPassport } from './widgets/passport.js';
-import queryString from 'query-string';
 import { ScreenshotModal } from './components/screenshot-modal.js';
 import { NextLayout } from './next-layout.js';
 
@@ -181,7 +180,9 @@ class App {
 	 * @param  {Location} location
 	 */
 	constructor(el, location) {
-		const hash = location.hash ? queryString.parse(location.hash) : {};
+		const hash = location.hash
+			? Object.fromEntries(new URLSearchParams(location.hash.replace(/^#/, '')))
+			: {};
 		const qp = new URLSearchParams(location.search);
 		// agentQuery: from ?agent= query param → editing mode (main UI with save-back)
 		// agentHash:  from #agent= hash → legacy embed mode

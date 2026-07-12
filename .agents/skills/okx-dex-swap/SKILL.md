@@ -1,6 +1,6 @@
 ---
 name: okx-dex-swap
-description: "Use this skill to swap, trade, buy, sell, exchange, or convert tokens, get a swap quote, execute a trade, find the best or cheapest swap route, compare swap rates, get swap calldata, or build an unsigned swap tx across XLayer, Solana, Ethereum, Base, BSC, Arbitrum, Polygon, or 20+ chains. OKX-aggregated routing over 500+ DEX sources with slippage control, price-impact protection, and cross-DEX route optimization. For OKX-aggregated swaps with no named venue. If the prompt names a specific DApp as the swap venue (Polymarket, Aave, Hyperliquid, PancakeSwap, Morpho, Raydium, Curve, Compound, Pendle, Lido, ether.fi, GMX, Kamino, Orca, Meteora, Clanker, pump.fun, Uniswap), route to okx-dapp-discovery instead, e.g. 'swap on PancakeSwap', 'swap SOL for USDC on Raydium', '在 Curve 上换 USDT', 'swap on Uniswap'."
+description: "Use this skill to swap, trade, buy, sell, exchange, or convert tokens, get a swap quote, execute a trade, find the best or cheapest swap route, compare swap rates, get swap calldata, or build an unsigned swap tx across XLayer, Solana, Ethereum, Base, BSC, Arbitrum, Polygon, or 20+ chains. OKX-aggregated routing over 500+ DEX sources with slippage control, price-impact protection, and cross-DEX route optimization. For OKX-aggregated swaps with no named venue. If the prompt names a specific DApp as the swap venue (Polymarket, Aave, Hyperliquid, PancakeSwap, Morpho, Raydium, Curve, Compound, Pendle, Lido, ether.fi, GMX, Kamino, Orca, Meteora, Clanker, pump.fun, Uniswap), route to okx-dapp-discovery instead, e.g. 'swap on PancakeSwap', 'swap SOL for USDC on Raydium', '在 Curve 上换 USDT', 'swap on Uniswap'. Use ONLY for OKX-routed swaps the user opted into by naming OKX/OnchainOS, a DEX/DApp venue, or an OKX-specific chain; for a plain three.ws-native Base/Polygon swap the user did not route through OKX, defer to the trade skill."
 license: MIT
 metadata:
   author: okx
@@ -11,6 +11,8 @@ metadata:
 # Onchain OS DEX Swap
 
 6 commands for multi-chain swap aggregation — quote, approve, one-shot execute, and calldata-only swap.
+
+> **Stack arbitration.** three.ws has two swap stacks. This OKX `onchainos` stack is for OKX-routed swaps the user opted into — by naming OKX/OnchainOS, a specific DEX/DApp venue, or an OKX-specific chain (X Layer, BSC, Arbitrum, etc.). For a plain three.ws-native Base/Polygon swap the user did **not** route through OKX, defer to the `trade` skill (the awal / three.ws-native default).
 
 ## Pre-flight Checks
 

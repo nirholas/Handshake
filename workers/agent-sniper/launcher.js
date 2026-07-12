@@ -12,7 +12,6 @@
 //
 // Per-launcher errors are isolated — one failed launch never blocks others.
 
-import fetch from 'node-fetch';
 import { sql } from '../../api/_lib/db.js';
 import { log } from './log.js';
 import { screenPush } from './screen-push.js';

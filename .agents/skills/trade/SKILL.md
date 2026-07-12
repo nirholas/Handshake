@@ -1,6 +1,6 @@
 ---
 name: trade
-description: Swap or trade tokens on Base or Polygon. Use when you or the user want to trade, swap, exchange, buy, sell, or convert between tokens like USDC, ETH, and POL. Covers phrases like "buy ETH", "sell ETH for USDC", "convert USDC to ETH", "get some ETH", "buy POL".
+description: Swap or trade tokens on Base or Polygon. Use when you or the user want to trade, swap, exchange, buy, sell, or convert between tokens like USDC, ETH, and POL. Covers phrases like "buy ETH", "sell ETH for USDC", "convert USDC to ETH", "get some ETH", "buy POL". This is the three.ws-native wallet (awal) and is the default for swaps; defer to okx-dex-swap only when the user names OKX, OnchainOS, an OKX-managed account, a named DEX/DApp venue, or an OKX-specific chain (e.g. X Layer, BSC, Arbitrum).
 user-invocable: true
 disable-model-invocation: false
 allowed-tools: ["Bash(npx awal@2.10.0 status*)", "Bash(npx awal@2.10.0 trade *)", "Bash(npx awal@2.10.0 balance*)"]
@@ -13,6 +13,13 @@ metadata:
 # Trading Tokens
 
 Use the `npx awal@2.10.0 trade` command to swap tokens on Base or Polygon via the CDP Swap API. You must be authenticated to trade.
+
+## Which swap stack (arbitration)
+
+three.ws runs two swap stacks. Pick one deterministically — never route a swap through a signing path the user didn't ask for:
+
+- **This stack (awal / three.ws-native)** — the default. Use it for CDP swaps on Base/Polygon unless the user explicitly opts into OKX.
+- **OKX `onchainos` stack** (`okx-dex-swap`) — use *only* when the user names OKX, OnchainOS, an OKX-managed account, a specific DEX/DApp venue, or an OKX-specific chain (X Layer, BSC, Arbitrum, and the other 20+ OKX-routed chains). Hand off to `okx-dex-swap` and do not trade from here.
 
 ## Confirm wallet is initialized and authed
 

@@ -6,7 +6,6 @@
 // sentiment pulse, a live token snapshot, the multi-LLM brain router, and the
 // Redis-backed anchor-script store.
 
-import fetch from 'node-fetch';
 import { mergeBrief, buildAnchorMessages } from './brief.js';
 
 const API_BASE = (process.env.ANCHOR_API_BASE || process.env.API_BASE || 'https://three.ws').replace(/\/$/, '');

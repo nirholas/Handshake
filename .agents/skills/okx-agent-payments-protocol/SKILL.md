@@ -1,6 +1,6 @@
 ---
 name: okx-agent-payments-protocol
-description: "Use when an agent hits HTTP 402 / payment-required, or the user mentions x402, x402Version, X-PAYMENT, PAYMENT-REQUIRED, PAYMENT-SIGNATURE, WWW-Authenticate: Payment, permit2, upto, metered billing, a payment channel / voucher / session, channelId / channel_id, opening / closing / topping up / settling / refunding a channel, a paymentId or a2a_ link, creating / checking a payment link, A2MCP / an A2MCP endpoint, or sending a request to / calling an Agent's endpoint with a concrete endpoint URL. Covers x402 (exact, exact+Permit2, upto, aggr_deferred), MPP (charge / session), and a2a-pay paymentId flows. Any close / topup / settle / voucher / refund near a channel_id or session is an MPP mid-session op. The full bilingual trigger list (including Chinese) lives in the skill body."
+description: "Use when an agent hits HTTP 402 / payment-required, or the user mentions x402, x402Version, X-PAYMENT, PAYMENT-REQUIRED, PAYMENT-SIGNATURE, WWW-Authenticate: Payment, permit2, upto, metered billing, a payment channel / voucher / session, channelId / channel_id, opening / closing / topping up / settling / refunding a channel, a paymentId or a2a_ link, creating / checking a payment link, A2MCP / an A2MCP endpoint, or sending a request to / calling an Agent's endpoint with a concrete endpoint URL. Covers x402 (exact, exact+Permit2, upto, aggr_deferred), MPP (charge / session), and a2a-pay paymentId flows. Any close / topup / settle / voucher / refund near a channel_id or session is an MPP mid-session op. The full bilingual trigger list (including Chinese) lives in the skill body. Use ONLY when the user named OKX/OnchainOS or the 402 is an OKX-specific scheme (payment channel / voucher / session, permit2, upto/metered, MPP, a2a-pay paymentId); for a plain x402 402 that settles with a one-shot USDC-on-Base payment and did not name OKX, defer to the pay-for-service / x402 skills."
 license: MIT
 metadata:
   author: okx
@@ -9,6 +9,8 @@ metadata:
 ---
 
 # OKX Agent Payments Protocol (Dispatcher)
+
+> **Stack arbitration (decide before activating).** three.ws has two x402/payment stacks. This OKX `onchainos` stack owns 402s the user routed through OKX — by naming OKX/OnchainOS, or when the 402 is an OKX-specific scheme (payment channel / voucher / session, `permit2`, `upto`/metered, MPP charge, a2a-pay `paymentId`). For a plain x402 402 that settles with a one-shot USDC-on-Base payment and did not name OKX, defer to the `pay-for-service` / `x402` skills (the awal / three.ws-native default).
 
 > **⚠️ READ FIRST — ZERO-TEXT-ON-TRIGGER + NEVER-SKIP-USER-GATES.**
 >

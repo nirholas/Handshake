@@ -1,0 +1,84 @@
+# Cloud Build → Cloud Run for the programmable-orders engine (workers/agent-orders).
+#
+# Background daemon deployed as a SERVICE: it runs the sweep timer continuously
+# and binds a tiny liveness endpoint on $PORT (index.js) so the Cloud Run startup
+# probe passes. Deployed with --no-cpu-throttling and --min-instances=1 so the
+# timer keeps ticking between probes. Build context is the REPO ROOT (the
+# Dockerfile copies api/, src/, and compiles the agent-payments-sdk workspace).
+#
+# Ships in ORDERS_MODE=simulate (real quotes, no broadcast). Flip
+# ORDERS_MODE=live only after the RPC secret is set and agent wallets are funded.
+#
+# ── ONE-TIME SECRET SETUP (never commit these) ────────────────────────────────
+#   printf '%s' "$DATABASE_URL"    | gcloud secrets create agent-orders-database-url --data-file=-
+#   printf '%s' "$JWT_SECRET"      | gcloud secrets create agent-orders-jwt-secret   --data-file=-
+#   printf '%s' "$WALLET_ENCRYPTION_KEY" | gcloud secrets create wallet-encryption-key --data-file=-  # or reuse existing
+#   printf '%s' "$SOLANA_RPC_URL"  | gcloud secrets create agent-orders-solana-rpc-url --data-file=-  # live only
+#   printf '%s' "$UPSTASH_REDIS_REST_URL"   | gcloud secrets create upstash-redis-rest-url   --data-file=-
+#   printf '%s' "$UPSTASH_REDIS_REST_TOKEN" | gcloud secrets create upstash-redis-rest-token --data-file=-
+#   for s in agent-orders-database-url agent-orders-jwt-secret wallet-encryption-key \
+#            agent-orders-solana-rpc-url upstash-redis-rest-url upstash-redis-rest-token; do \
+#     gcloud secrets add-iam-policy-binding "$s" \
+#       --member=serviceAccount:three-ws@$PROJECT_ID.iam.gserviceaccount.com \
+#       --role=roles/secretmanager.secretAccessor; done
+#
+#   gcloud builds submit --config workers/agent-orders/cloudbuild.yaml .
+
+substitutions:
+  _REGION: us-central1
+  _SERVICE: agent-orders
+  _REPO: workers
+  _MIN_INSTANCES: "1"
+  _MAX_INSTANCES: "1"
+  _ORDERS_MODE: simulate
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --file
+      - workers/agent-orders/Dockerfile
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+      - --cache-from
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+      - .
+    timeout: 1200s
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - --region=${_REGION}
+      - --platform=managed
+      - --no-cpu-throttling
+      - --cpu=1
+      - --memory=1Gi
+      - --min-instances=${_MIN_INSTANCES}
+      - --max-instances=${_MAX_INSTANCES}
+      - --no-allow-unauthenticated
+      - --service-account=three-ws@$PROJECT_ID.iam.gserviceaccount.com
+      - --set-env-vars=NODE_ENV=production,ORDERS_MODE=${_ORDERS_MODE},ORDERS_NETWORK=mainnet,ORDERS_GLOBAL_KILL=0,ORDERS_HEARTBEAT_MS=30000
+      - --set-secrets=DATABASE_URL=agent-orders-database-url:latest,JWT_SECRET=agent-orders-jwt-secret:latest,WALLET_ENCRYPTION_KEY=wallet-encryption-key:latest,SOLANA_RPC_URL=agent-orders-solana-rpc-url:latest,UPSTASH_REDIS_REST_URL=upstash-redis-rest-url:latest,UPSTASH_REDIS_REST_TOKEN=upstash-redis-rest-token:latest
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:latest
+
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
