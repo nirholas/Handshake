@@ -1465,21 +1465,101 @@ export async function build402Body({
 // 8 KB leaves comfortable room for the ~0.5 KB of ordinary headers.
 const PAYMENT_REQUIRED_HEADER_MAX = 8 * 1024;
 
-// The base64 header value mirroring a 402 envelope — or a spec-valid slimmed
-// mirror ({x402Version, error, resource, accepts} without `extensions`, which
-// is where the bulk lives: bazaar schemas, signed offers, SIWX declarations)
-// when the full envelope would blow the header budget, or null when even the
-// slim form is too large (many-accept endpoints). Header-only readers still
-// get everything needed to pay (accepts is complete); the JSON body remains
-// the canonical, complete envelope per the v2 spec.
+const isPlainRecord = (v) => v != null && typeof v === 'object' && !Array.isArray(v);
+
+// Drop the human-facing `info` examples from a bazaar extension, keeping the
+// machine-readable `schema` that discovery validators actually parse. Returns
+// null when nothing worth advertising survives.
+function bazaarWithoutInfo(bazaar) {
+	if (!isPlainRecord(bazaar)) return null;
+	const { info, ...rest } = bazaar;
+	return isPlainRecord(rest.schema) ? rest : null;
+}
+
+// A structurally-valid but compact bazaar mirror for the header: it preserves
+// the input (queryParams/body) and output presence that agent-discovery
+// crawlers key on (agentcash's extractSchemas2 / x402scan's Bazaar probe read
+// `schema.properties.input.properties.{body|queryParams}` and
+// `schema.properties.output.properties.example`), but replaces the potentially
+// large per-field JSON Schemas with `{ type: 'object' }`. The canonical JSON
+// body still carries the full, detailed schema — this is only the size-capped
+// header fallback for routes whose real schema is too big to mirror verbatim.
+function compactDiscoveryBazaar(bazaar) {
+	const schema = bazaar?.schema;
+	const inputProps = schema?.properties?.input?.properties;
+	if (!isPlainRecord(inputProps)) return null;
+	const input = {
+		type: inputProps.type ?? { type: 'string', const: 'http' },
+		method: inputProps.method ?? { type: 'string' },
+		...(isPlainRecord(inputProps.body)
+			? { body: { type: 'object' } }
+			: isPlainRecord(inputProps.queryParams)
+				? { queryParams: { type: 'object' } }
+				: {}),
+	};
+	const hasOutput = isPlainRecord(schema?.properties?.output);
+	return {
+		discoverable: bazaar.discoverable !== undefined ? bazaar.discoverable : true,
+		schema: {
+			...(schema.$schema ? { $schema: schema.$schema } : {}),
+			type: 'object',
+			properties: {
+				input: {
+					type: 'object',
+					properties: input,
+					...(Array.isArray(schema.properties.input.required)
+						? { required: schema.properties.input.required }
+						: {}),
+					additionalProperties: false,
+				},
+				...(hasOutput
+					? {
+						output: {
+							type: 'object',
+							properties: {
+								type: { type: 'string' },
+								example: { type: 'object' },
+							},
+							required: ['type'],
+						},
+					}
+					: {}),
+			},
+			...(Array.isArray(schema.required) ? { required: schema.required } : {}),
+		},
+	};
+}
+
+// The base64 header value mirroring a 402 envelope. When the full envelope
+// fits the budget it ships verbatim. Otherwise we shed the heavy
+// payment-execution extensions (signed offers, gas-sponsoring hints, SIWX /
+// auth-hints, builder-code) but KEEP the `bazaar` discovery extension, because
+// agent-discovery crawlers (agentcash, x402scan's Bazaar) read the challenge
+// from THIS header, not the JSON body — dropping bazaar makes every paid route
+// look schema-less to them. We try, in order: full bazaar, bazaar without the
+// `info` examples, then a compact bazaar with `{type:'object'}` field schemas —
+// picking the first that fits — before falling back to the extension-less slim
+// mirror, then null. Header-only payers still get everything needed to pay
+// (accepts is always complete); the JSON body remains the canonical, complete
+// envelope with the full detailed schemas per the v2 spec.
 export function paymentRequiredHeaderValue(body) {
-	const full = Buffer.from(JSON.stringify(body), 'utf8').toString('base64');
+	const encode = (obj) => Buffer.from(JSON.stringify(obj), 'utf8').toString('base64');
+	const full = encode(body);
 	if (full.length <= PAYMENT_REQUIRED_HEADER_MAX) return full;
-	const { x402Version, error, resource, accepts } = body;
-	const slim = Buffer.from(
-		JSON.stringify({ x402Version, error, resource, accepts }),
-		'utf8',
-	).toString('base64');
+
+	const { x402Version, error, resource, accepts, extensions } = body;
+	const slimBase = { x402Version, error, resource, accepts };
+	const bazaar = extensions?.bazaar;
+	if (isPlainRecord(bazaar)) {
+		const candidates = [bazaar, bazaarWithoutInfo(bazaar), compactDiscoveryBazaar(bazaar)];
+		for (const candidate of candidates) {
+			if (!candidate) continue;
+			const mirror = encode({ ...slimBase, extensions: { bazaar: candidate } });
+			if (mirror.length <= PAYMENT_REQUIRED_HEADER_MAX) return mirror;
+		}
+	}
+
+	const slim = encode(slimBase);
 	return slim.length <= PAYMENT_REQUIRED_HEADER_MAX ? slim : null;
 }
 

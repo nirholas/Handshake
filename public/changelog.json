@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-12T09:06:40.738Z",
+	"generated_at": "2026-07-12T09:50:29.602Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -119,6 +119,17 @@
 			"link": null,
 			"tags": [
 				"security"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "update",
+			"title": "Paid endpoints are fully discoverable by payment crawlers again",
+			"summary": "Agent-payment directories like AgentCash and x402scan discover a paid API by reading its 402 'payment required' challenge and checking that each endpoint declares what it takes in and what it returns. three.ws sends that challenge two ways — a complete JSON body and a compact copy in a response header — and crawlers read the header. To stay under strict header-size limits, the header copy had been dropping its entire discovery block on richer endpoints, so those endpoints looked schema-less to crawlers even though the full body was correct. The header now keeps the discovery block, shrinking only the parts a crawler doesn't need (and falling back to a compact placeholder schema for the largest endpoints) so every paid route advertises its input and output shape while the header stays small. All 21 paid endpoints now pass AgentCash's discovery validator cleanly.",
+			"link": "/openapi.json",
+			"tags": [
+				"improvement",
+				"infra"
 			]
 		},
 		{

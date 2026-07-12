@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-12",
+			"title": "Paid endpoints are fully discoverable by payment crawlers again",
+			"summary": "Agent-payment directories like AgentCash and x402scan discover a paid API by reading its 402 'payment required' challenge and checking that each endpoint declares what it takes in and what it returns. three.ws sends that challenge two ways — a complete JSON body and a compact copy in a response header — and crawlers read the header. To stay under strict header-size limits, the header copy had been dropping its entire discovery block on richer endpoints, so those endpoints looked schema-less to crawlers even though the full body was correct. The header now keeps the discovery block, shrinking only the parts a crawler doesn't need (and falling back to a compact placeholder schema for the largest endpoints) so every paid route advertises its input and output shape while the header stays small. All 21 paid endpoints now pass AgentCash's discovery validator cleanly.",
+			"tags": [
+				"improvement",
+				"infra"
+			],
+			"link": "/openapi.json"
+		},
+		{
+			"date": "2026-07-12",
 			"title": "News story links no longer go dead",
 			"summary": "Every article on the news feed gets a permanent link, but stories published near a month boundary could slip through the hourly archiver and their links would eventually 404. The archiver now files each story under its real publication month (and no longer caps how many articles it sweeps per run), story pages look in neighboring months and redirect to the right address when a link's month is off by one, and a link that truly can't be found now offers a one-click archive search for that story's title instead of a dead end.",
 			"tags": [

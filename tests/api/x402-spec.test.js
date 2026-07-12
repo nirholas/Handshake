@@ -515,9 +515,14 @@ describe('send402 PAYMENT-REQUIRED header', () => {
 	// Endpoints with rich bazaar schemas + per-accept signed offers were
 	// emitting 11–17 KB header mirrors; the production LB dropped them
 	// outright and x402scan flagged HEADERS_OVERFLOW on registration. The
-	// header is capped at 8 KB: full mirror when it fits, an extensions-free
-	// slim mirror when it doesn't, no header at all when even that overflows.
-	// The JSON body always carries the complete envelope.
+	// header is capped at 8 KB. Because agent-discovery crawlers (agentcash,
+	// x402scan's Bazaar) read the challenge from THIS header — not the JSON
+	// body — the overflow fallback KEEPS the `bazaar` discovery extension while
+	// shedding the heavy payment-execution extensions, degrading it in tiers
+	// (full bazaar → drop `info` examples → compact `{type:'object'}` field
+	// schemas) so input/output schema presence survives even for big schemas.
+	// Only when no bazaar tier fits do we fall to an extension-less slim mirror,
+	// then to no header. The JSON body always carries the complete envelope.
 	describe('paymentRequiredHeaderValue cap', () => {
 		function envelopeWithExtensions(extBytes, acceptsCount = 1) {
 			return {
@@ -535,6 +540,78 @@ describe('send402 PAYMENT-REQUIRED header', () => {
 			};
 		}
 
+		// A realistic schema-bearing bazaar. `infoBytes` pads the human-facing
+		// `info` examples; `fieldBytes` pads the per-field JSON Schemas inside
+		// `schema` — letting a test force each degradation tier deterministically.
+		function envelopeWithBazaarSchema({ infoBytes = 0, fieldBytes = 0 } = {}) {
+			const pad = (n) => (n > 0 ? { description: 'x'.repeat(n) } : {});
+			const queryParams = {
+				type: 'object',
+				properties: { id: { type: 'string', ...pad(fieldBytes) } },
+			};
+			const example = {
+				type: 'object',
+				properties: { ok: { type: 'boolean', ...pad(fieldBytes) } },
+			};
+			return {
+				x402Version: 2,
+				error: 'X-PAYMENT header is required',
+				resource: { url: 'https://three.ws/api/x402/foo', description: 'demo', mimeType: 'application/json' },
+				accepts: [{
+					scheme: 'exact',
+					network: 'eip155:8453',
+					amount: '1000',
+					payTo: '0x0000000000000000000000000000000000000000',
+					asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+				}],
+				extensions: {
+					bazaar: {
+						discoverable: true,
+						info: {
+							input: { type: 'http', method: 'GET', ...pad(infoBytes) },
+							output: { type: 'json', example: { ok: true } },
+						},
+						schema: {
+							$schema: 'https://json-schema.org/draft/2020-12/schema',
+							type: 'object',
+							properties: {
+								input: {
+									type: 'object',
+									properties: {
+										type: { type: 'string', const: 'http' },
+										method: { type: 'string' },
+										queryParams,
+									},
+									required: ['type', 'method'],
+									additionalProperties: false,
+								},
+								output: {
+									type: 'object',
+									properties: { type: { type: 'string' }, example },
+									required: ['type'],
+								},
+							},
+							required: ['input'],
+						},
+					},
+					eip2612GasSponsoring: { info: { version: '1' } },
+				},
+			};
+		}
+
+		// Mirror of the agentcash validator's extractSchemas2: the discovery
+		// crawler considers a challenge complete when it can read an input schema
+		// (`schema.properties.input.properties.{body|queryParams}`) and an output
+		// schema (`schema.properties.output.properties.example`).
+		function discoverySchemasResolvable(decoded) {
+			const schema = decoded?.extensions?.bazaar?.schema;
+			const inProps = schema?.properties?.input?.properties;
+			const input = inProps?.body ?? inProps?.queryParams;
+			const output = schema?.properties?.output?.properties?.example;
+			const isRec = (v) => v != null && typeof v === 'object' && !Array.isArray(v);
+			return isRec(input) && isRec(output);
+		}
+
 		it('mirrors the full envelope when it fits', async () => {
 			const { paymentRequiredHeaderValue } = await loadSpec();
 			const body = envelopeWithExtensions(100);
@@ -542,8 +619,52 @@ describe('send402 PAYMENT-REQUIRED header', () => {
 			expect(JSON.parse(Buffer.from(header, 'base64').toString('utf8'))).toEqual(body);
 		});
 
-		it('drops extensions when the full mirror exceeds 8 KB, keeping a payable slim envelope', async () => {
+		it('keeps the full bazaar (info + schema) when a schema-bearing envelope fits', async () => {
 			const { paymentRequiredHeaderValue } = await loadSpec();
+			const body = envelopeWithBazaarSchema();
+			const header = paymentRequiredHeaderValue(body);
+			expect(header.length).toBeLessThanOrEqual(8 * 1024);
+			const decoded = JSON.parse(Buffer.from(header, 'base64').toString('utf8'));
+			// Full envelope fit — bazaar and its info both survive verbatim.
+			expect(decoded.extensions.bazaar.info).toBeDefined();
+			expect(decoded.extensions.eip2612GasSponsoring).toBeDefined();
+			expect(discoverySchemasResolvable(decoded)).toBe(true);
+		});
+
+		it('drops the bazaar info examples (keeping the real schema) when the full mirror overflows', async () => {
+			const { paymentRequiredHeaderValue } = await loadSpec();
+			const body = envelopeWithBazaarSchema({ infoBytes: 20_000 });
+			const header = paymentRequiredHeaderValue(body);
+			expect(header.length).toBeLessThanOrEqual(8 * 1024);
+			const decoded = JSON.parse(Buffer.from(header, 'base64').toString('utf8'));
+			// Heavy payment extensions and the bloated info are gone; the machine
+			// schema the discovery crawler needs stays, verbatim.
+			expect(decoded.extensions.bazaar.info).toBeUndefined();
+			expect(decoded.extensions.eip2612GasSponsoring).toBeUndefined();
+			expect(decoded.extensions.bazaar.schema.properties.input.properties.queryParams.properties)
+				.toBeDefined();
+			expect(discoverySchemasResolvable(decoded)).toBe(true);
+		});
+
+		it('compacts the bazaar field schemas when even the schema alone overflows', async () => {
+			const { paymentRequiredHeaderValue } = await loadSpec();
+			const body = envelopeWithBazaarSchema({ fieldBytes: 20_000 });
+			const header = paymentRequiredHeaderValue(body);
+			expect(header.length).toBeLessThanOrEqual(8 * 1024);
+			const decoded = JSON.parse(Buffer.from(header, 'base64').toString('utf8'));
+			// Field schemas collapse to a compact `{type:'object'}` placeholder,
+			// but input/output presence — all the crawler keys on — survives.
+			expect(decoded.extensions.bazaar.schema.properties.input.properties.queryParams)
+				.toEqual({ type: 'object' });
+			expect(decoded.extensions.bazaar.schema.properties.output.properties.example)
+				.toEqual({ type: 'object' });
+			expect(discoverySchemasResolvable(decoded)).toBe(true);
+		});
+
+		it('falls to an extension-less slim mirror when no bazaar tier fits', async () => {
+			const { paymentRequiredHeaderValue } = await loadSpec();
+			// Schema-less bazaar that is itself far too big — no discovery tier
+			// can shrink it, so only the payable slim envelope survives.
 			const body = envelopeWithExtensions(20_000);
 			const header = paymentRequiredHeaderValue(body);
 			expect(header.length).toBeLessThanOrEqual(8 * 1024);

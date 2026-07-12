@@ -95,6 +95,14 @@
 			<description>Every paid endpoint on three.ws follows a 'deliver, then settle' order: the handler produces its result, the wrapper charges the buyer on-chain, and only then sends the response. That works for endpoints that hand back a value, but a streaming endpoint — one that writes its own file or feed directly to the connection, the natural shape for a binary download — could deliver the good before the settlement step ran, handing it over for free. No live endpoint did this, but it was a latent trap for the next one built. The payment wrapper now refuses to complete such a response silently: a streaming route must opt in explicitly, and when it does, the wrapper settles the payment first and only then lets the download start. Any endpoint that tried to send its body early is now caught and flagged instead of leaking the good.</description>
 		</item>
 		<item>
+			<title>Paid endpoints are fully discoverable by payment crawlers again</title>
+			<link>https://three.ws/openapi.json</link>
+			<guid isPermaLink="false">2026-07-12:Paid endpoints are fully discoverable by payment crawlers again</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Agent-payment directories like AgentCash and x402scan discover a paid API by reading its 402 'payment required' challenge and checking that each endpoint declares what it takes in and what it returns. three.ws sends that challenge two ways — a complete JSON body and a compact copy in a response header — and crawlers read the header. To stay under strict header-size limits, the header copy had been dropping its entire discovery block on richer endpoints, so those endpoints looked schema-less to crawlers even though the full body was correct. The header now keeps the discovery block, shrinking only the parts a crawler doesn't need (and falling back to a compact placeholder schema for the largest endpoints) so every paid route advertises its input and output shape while the header stays small. All 21 paid endpoints now pass AgentCash's discovery validator cleanly.</description>
+		</item>
+		<item>
 			<title>Paid endpoints now confirm a payment can settle before doing the work</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-12:Paid endpoints now confirm a payment can settle before doing the work</guid>
