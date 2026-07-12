@@ -59,20 +59,32 @@ function aggregatorPaths() {
 				summary: `${provider.name}: ${ep.summary}`,
 				description,
 				tags: ['Crypto API (aggregator)'],
-				security: [{}, { bearerAuth: [] }, { apiKeyAuth: [] }],
+				// Free-tier endpoints declare `security: []` (explicitly public) and
+				// carry NO x-payment-info: discovery auditors (x402scan's crawler,
+				// @agentcash/discovery inferAuthMode) classify any operation with
+				// x-payment-info as "paid" and then require a 402 on a bare probe —
+				// but these answer a bare probe 200 from the free lane, so the paid
+				// classification got all 29 skipped as "no valid x402 response"
+				// during x402scan registration. Public + the billing prose above
+				// registers them as public endpoints; the x402 overage lane still
+				// exists at runtime and stays documented in `description`. Endpoints
+				// with no free tier ARE pay-first (bare probe → 402), so they keep
+				// structured x-payment-info (AgentCash) and the optional-auth modes.
+				...(ep.free
+					? { security: [] }
+					: {
+							security: [{}, { bearerAuth: [] }, { apiKeyAuth: [] }],
+							'x-payment-info': {
+								price: { mode: 'fixed', currency: 'USD', amount: priceUsd },
+								protocols: X402_PROTOCOLS,
+							},
+						}),
 				responses: {
 					200: { description: 'Normalized upstream response, wrapped as { data, _meta }' },
 					400: { description: 'Missing or invalid parameter' },
 					402: { description: 'Payment Required (x402) — no credentials and free quota (if any) exhausted' },
 					404: { description: 'Unknown provider/endpoint pair' },
 					429: { description: 'Rate limited' },
-				},
-				'x-payment-info': {
-					price: { mode: 'fixed', currency: 'USD', amount: priceUsd },
-					protocols: X402_PROTOCOLS,
-					note: ep.free
-						? `Free before payment: ${ep.free.perMin}/min, ${ep.free.perDay}/day per IP, no credentials required.`
-						: undefined,
 				},
 			};
 

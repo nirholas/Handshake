@@ -502,13 +502,22 @@ export default wrap(async function handler(req, res) {
 	if (paymentPresent) return paidHandler()(req, res);
 
 	// Parse/validate against the boundary so genuinely broken input never
-	// becomes a payment prompt or burns a free-quota slot.
+	// becomes a payment prompt or burns a free-quota slot: malformed JSON and
+	// a present-but-invalid claim stay hard 400s. The one exception is a
+	// well-formed body with NO claim at all — that is the shape discovery
+	// probes (x402scan's registration crawler POSTs `{}`) send, and registries
+	// require a valid 402 challenge on a bare probe. Those fall through to the
+	// paid rail, whose challenge carries the bazaar schema that tells the
+	// caller how to build a valid body. No quota is spent and nothing can
+	// settle here — a paid retry parses its body inside the handler, after
+	// verification, against the same validator.
 	let body;
 	try {
 		body = parseJsonBody(buf);
 	} catch (e) {
 		return error(res, e.status || 400, e.code || 'invalid_json', e.message);
 	}
+	if (body?.claim === undefined) return paidHandler()(req, res);
 	let parsed;
 	try {
 		parsed = parseFactCheckBody(body);

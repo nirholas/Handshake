@@ -161,6 +161,20 @@ export default wrap(async (req, res) => {
 
 	const isHead = req.method === 'HEAD' && endpoint.method === 'GET';
 	if (req.method !== endpoint.method && !isHead) {
+		// Same probe-friendliness rule as api/_lib/x402-paid-endpoint.js: a
+		// wrong-method request carrying no payment or auth credentials is a
+		// discovery probe (x402scan, Bazaar validators) that wants the 402
+		// challenge, so hand it to the paid rail — its own method gate serves
+		// the challenge for exactly this case. Credentialed callers still get
+		// the strict 405.
+		const hasCredentials =
+			!!req.headers['x-payment'] ||
+			!!req.headers['payment-signature'] ||
+			!!req.headers['sign-in-with-x'] ||
+			!!req.headers.authorization ||
+			!!req.headers['x-api-key'] ||
+			(provider.byokHeader && !!req.headers[provider.byokHeader]);
+		if (!hasCredentials) return getPaidHandler(provider, endpoint)(req, res);
 		res.setHeader('allow', `${endpoint.method}, OPTIONS`);
 		return error(res, 405, 'method_not_allowed', `use ${endpoint.method}`);
 	}

@@ -177,12 +177,23 @@ describe('POST /api/x402/fact-check — free daily lane', () => {
 		expect(res.json().lane).not.toBe('free');
 	});
 
-	it('GET (or any non-POST) is left entirely to the paid rail\'s own method guard', async () => {
-		const req = Readable.from([]);
-		req.method = 'GET';
-		req.url = '/api/x402/fact-check';
-		req.headers = { ...freshIp() };
-		const res = await callFactCheck(req);
-		expect(res.statusCode).toBe(405);
+	it('GET (or any non-POST) is left entirely to the paid rail', async () => {
+		// Credential-less wrong-method requests are discovery probes and receive
+		// the 402 challenge (x402-paid-endpoint.js method gate); a request
+		// carrying payment/auth credentials still gets the strict 405.
+		const probe = Readable.from([]);
+		probe.method = 'GET';
+		probe.url = '/api/x402/fact-check';
+		probe.headers = { ...freshIp() };
+		const probeRes = await callFactCheck(probe);
+		expect(probeRes.statusCode).toBe(402);
+		expect(Array.isArray(probeRes.json().accepts)).toBe(true);
+
+		const paying = Readable.from([]);
+		paying.method = 'GET';
+		paying.url = '/api/x402/fact-check';
+		paying.headers = { 'x-payment': 'abc', ...freshIp() };
+		const payingRes = await callFactCheck(paying);
+		expect(payingRes.statusCode).toBe(405);
 	});
 });

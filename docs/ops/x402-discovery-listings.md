@@ -179,6 +179,47 @@ CDP/x402 team. Not ERC-8004-based. Burden: none beyond section 2.
    A2A agent card with the x402 extension — all generated from the service
    catalog, never hand-maintained.
 
+## Registration log
+
+**2026-07-11 — x402scan registration (owner, SIWX signature): 23/23 resources
+registered** for origin three.ws; 2 stale resources auto-deprecated. The
+probe surfaced two classes of issue, fixed in code on 2026-07-12:
+
+- **Oversized `PAYMENT-REQUIRED` headers** (agent-reputation, pump-launch,
+  vanity — >16 KB with signed offers + bazaar schemas mirrored into the
+  header; the production LB dropped the header outright).
+  `paymentRequiredHeaderValue()` in `api/_lib/x402-spec.js` now caps the
+  mirror at 8 KB: full envelope when it fits, extensions-free slim envelope
+  when it doesn't, no header when even that overflows. The JSON body always
+  carries the complete envelope. This also clears the "no auth mode"
+  warnings on the same three resources — that was a side-effect of
+  x402scan's header-overflow fallback probe, which skips the OpenAPI merge.
+- **`/api/mcp` WWW-Authenticate warning**: x402scan audits any
+  WWW-Authenticate on a 402 as an MPP header and flags the missing
+  `Payment` challenge. We speak x402, not MPP/Tempo, so the 402 branch of
+  `api/_mcp/auth.js sendAuthChallenge()` no longer sends WWW-Authenticate
+  (the 401 OAuth branch keeps it).
+- **Skipped "unprotected" endpoints**: the 29 free-tier `/api/v1/x/*`
+  aggregator endpoints now declare `security: []` with no `x-payment-info`
+  in `/openapi.json` (the auditor classifies x-payment-info as paid and then
+  demands a 402 the free lane can't give) — they register as public
+  endpoints on the next probe. `skill-call`, `asset-download` (bare probes
+  hit input validation before the paywall) and `fact-check` (claim-less
+  probe body) now answer credential-less probes with a valid 402 challenge;
+  paying callers with bad input still get the strict 400/404. Wrong-method
+  credential-less probes get the challenge too (`x402-paid-endpoint.js`
+  method gate).
+- **`permit2-paid-demo` stays unregistered by design** until
+  `CDP_API_KEY_ID`/`CDP_API_KEY_SECRET` land on the Cloud Run service: its
+  402 deliberately advertises only the Permit2 accept (USE-18 forces the
+  gasless path), which is empty without CDP creds. Those same creds are the
+  gate on Bazaar indexing (section 2) and Base settlement generally —
+  highest-leverage owner action on this whole page.
+
+After deploying challenge-shape changes, re-run the x402scan probe (Add API
+on <https://www.x402scan.com> for the three.ws origin, or per-resource
+re-registration) — it does not immediately re-crawl on its own.
+
 ## Sources
 
 CDP Bazaar docs · Bazaar extension spec · x402 v2 spec · x402 v2 launch post ·

@@ -15,6 +15,22 @@
 			<description>The machine-readable catalog at /openapi.json — what AI agents and x402 scanners like x402scan and AgentCash read to find and pay for three.ws APIs — had six paid endpoints (agent bouncer, verifiable vanity keys, crypto intel, cosmetic purchase, animation download, club cover) accidentally buried inside another entry, making them undiscoverable. All 61 payable routes now list correctly and the document passes the AgentCash discovery validator. The Permit2 gasless-payment demo is now only advertised when its settlement lane is actually live, so agents are never quoted a payment path that can't settle.</description>
 		</item>
 		<item>
+			<title>Oversized x402 payment headers fixed</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-12:Oversized x402 payment headers fixed</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Three paid endpoints (vanity, pump launch, agent reputation) mirrored their entire payment challenge — schemas, signed offers and all — into a single HTTP header that grew past 16 KB, the point where proxies and many clients drop or fail to parse the response. The header mirror is now capped at 8 KB: it slims down or steps aside when the challenge is large, while the response body always carries the complete challenge. Payment tooling that reads only headers still gets everything it needs to pay.</description>
+		</item>
+		<item>
+			<title>x402 registration probes now always get a real payment challenge</title>
+			<link>https://three.ws/openapi.json</link>
+			<guid isPermaLink="false">2026-07-12:x402 registration probes now always get a real payment challenge</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Payment directories like x402scan verify an endpoint by poking it without paying and expecting the HTTP 402 payment challenge back. A July registration run rejected 33 three.ws endpoints because probes were answered with the wrong thing: method or input mistakes returned plain errors before the challenge, and per-item priced endpoints (asset downloads, marketplace skills, fact checks) demanded a valid item id before quoting a price. Now any credential-less request on a paid route receives the full 402 challenge — wrong method, missing id, or empty body included — while real paying callers keep strict validation before any money moves. The free crypto-data endpoints under /api/v1/x are now correctly advertised as free in /openapi.json instead of failing paid-endpoint probes, so agents see them for what they are: no-signup data with a pay-as-you-go overflow lane.</description>
+		</item>
+		<item>
 			<title>Dashboard · Billing &amp; Passes</title>
 			<link>https://three.ws/dashboard/billing</link>
 			<guid isPermaLink="false">2026-07-11:Dashboard · Billing &amp; Passes</guid>

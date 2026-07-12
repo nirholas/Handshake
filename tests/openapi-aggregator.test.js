@@ -79,11 +79,22 @@ describe('GET /openapi.json — aggregator coverage', () => {
 				expect(operation.summary).toContain(provider.name);
 				expect(operation.responses?.['402']).toBeTruthy();
 
-				// Price in the OpenAPI doc must match the registry's priceAtomics,
-				// not a hand-copied number that can drift.
-				const expectedUsd = (Number(ep.price_usdc_atomics) / 1e6).toString();
-				const declaredUsd = operation['x-payment-info']?.price?.amount;
-				expect(Number(declaredUsd)).toBeCloseTo(Number(expectedUsd), 6);
+				if (ep.free) {
+					// Free-tier endpoints are explicitly public: `security: []`, no
+					// x-payment-info. Discovery auditors classify x-payment-info as
+					// "paid" and then demand a 402 on a bare probe — which the free
+					// lane answers 200 — so x402scan skipped all 29 as invalid. The
+					// x402 overage lane stays documented in the description prose.
+					expect(operation.security, `${ep.path} security`).toEqual([]);
+					expect(operation['x-payment-info']).toBeUndefined();
+					expect(operation.description).toMatch(/free tier/);
+				} else {
+					// Pay-first endpoints keep the structured price, which must match
+					// the registry's priceAtomics, not a hand-copied number.
+					const expectedUsd = (Number(ep.price_usdc_atomics) / 1e6).toString();
+					const declaredUsd = operation['x-payment-info']?.price?.amount;
+					expect(Number(declaredUsd)).toBeCloseTo(Number(expectedUsd), 6);
+				}
 
 				if (ep.method === 'GET') {
 					expect(Array.isArray(operation.parameters)).toBe(true);
@@ -145,9 +156,11 @@ describe('GET /openapi.json — aggregator coverage', () => {
 		}
 	});
 
-	it('free-tier endpoints note their quota in x-payment-info', () => {
+	it('free-tier endpoints note their quota in the description and declare security: []', () => {
 		const priced = doc.paths['/api/v1/x/coingecko/price']?.get;
-		expect(priced['x-payment-info'].note).toMatch(/30\/min/);
-		expect(priced['x-payment-info'].note).toMatch(/2000\/day/);
+		expect(priced.description).toMatch(/30\/min/);
+		expect(priced.description).toMatch(/2000\/day/);
+		expect(priced.security).toEqual([]);
+		expect(priced['x-payment-info']).toBeUndefined();
 	});
 });

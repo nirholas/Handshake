@@ -1456,18 +1456,47 @@ export async function build402Body({
 	};
 }
 
+// Ceiling for the base64 PAYMENT-REQUIRED header mirror. Node's default
+// http client limit is 16 KB for the ENTIRE header block, and x402scan's
+// registration probe flags any response whose headers exceed 16 KB
+// (HEADERS_OVERFLOW — "some clients will fail to parse this response").
+// Endpoints with rich bazaar schemas + per-accept signed offers were
+// emitting 11–17 KB headers, which the production LB then dropped entirely.
+// 8 KB leaves comfortable room for the ~0.5 KB of ordinary headers.
+const PAYMENT_REQUIRED_HEADER_MAX = 8 * 1024;
+
+// The base64 header value mirroring a 402 envelope — or a spec-valid slimmed
+// mirror ({x402Version, error, resource, accepts} without `extensions`, which
+// is where the bulk lives: bazaar schemas, signed offers, SIWX declarations)
+// when the full envelope would blow the header budget, or null when even the
+// slim form is too large (many-accept endpoints). Header-only readers still
+// get everything needed to pay (accepts is complete); the JSON body remains
+// the canonical, complete envelope per the v2 spec.
+export function paymentRequiredHeaderValue(body) {
+	const full = Buffer.from(JSON.stringify(body), 'utf8').toString('base64');
+	if (full.length <= PAYMENT_REQUIRED_HEADER_MAX) return full;
+	const { x402Version, error, resource, accepts } = body;
+	const slim = Buffer.from(
+		JSON.stringify({ x402Version, error, resource, accepts }),
+		'utf8',
+	).toString('base64');
+	return slim.length <= PAYMENT_REQUIRED_HEADER_MAX ? slim : null;
+}
+
 export async function send402(res, opts = {}) {
 	res.statusCode = 402;
 	res.setHeader('content-type', 'application/json; charset=utf-8');
 	res.setHeader('cache-control', 'no-store');
 	// v2 spec: the full envelope ({x402Version, error, resource, accepts,
-	// extensions}) ships in the response body. `@x402/fetch` and other SDK
-	// clients read it from there. We ALSO base64-encode the same envelope as
-	// the `PAYMENT-REQUIRED` HTTP header — agentic.market's Bazaar validator
-	// pulls discovery off the header during its probe and rejects entries
-	// where the two differ.
+	// extensions}) ships in the response body — that is the canonical read
+	// for `@x402/fetch` and other SDK clients. The `PAYMENT-REQUIRED` header
+	// carries a base64 mirror for header-only crawlers, capped by
+	// paymentRequiredHeaderValue() so the total header block stays parseable
+	// (oversized mirrors were silently dropped by the production LB and
+	// flagged by x402scan's registration probe).
 	const body = await build402Body(opts);
-	res.setHeader('PAYMENT-REQUIRED', Buffer.from(JSON.stringify(body), 'utf8').toString('base64'));
+	const headerValue = paymentRequiredHeaderValue(body);
+	if (headerValue) res.setHeader('PAYMENT-REQUIRED', headerValue);
 	res.end(JSON.stringify(body));
 }
 

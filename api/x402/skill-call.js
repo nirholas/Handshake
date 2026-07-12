@@ -18,7 +18,7 @@
 // /api/skills/:id.
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
-import { buildBazaarSchema } from '../_lib/x402-spec.js';
+import { buildBazaarSchema, paymentRequirements, send402 } from '../_lib/x402-spec.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { priceFor } from '../_lib/x402-prices.js';
 import { sql } from '../_lib/db.js';
@@ -129,10 +129,39 @@ function usdToAtomics(usd) {
 	return String(Math.max(1, Math.round(Number(usd) * 1_000_000)));
 }
 
+// Discovery probes (x402scan registration, Bazaar validators) hit the bare
+// route with no ?skill= and expect a valid 402 challenge, not a 400. Without
+// a slug there is no per-skill price, so this advertises the endpoint at a
+// representative default (env-overridable via X402_PRICE_SKILL_CALL — the
+// per-skill env slugs are `skill-call-<slug>`, so the bare slug is free for
+// this) with the full bazaar schema. No money can settle against it: a paid
+// retry still needs ?skill=<slug> (the paymentPresent branches below keep
+// their 400/404), and an X-PAYMENT envelope is only an authorization — USDC
+// moves at settle, which this path never reaches.
+function sendDiscoveryChallenge(res, errText) {
+	const resourceUrl = `${env.APP_ORIGIN}${ROUTE}`;
+	return send402(res, {
+		resourceUrl,
+		accepts: paymentRequirements(resourceUrl, { amount: priceFor('skill-call', '10000') }),
+		description: DESCRIPTION,
+		bazaar: BAZAAR,
+		error: errText,
+		serviceName: 'three.ws Skill Call',
+		tags: ['skill', 'agent', 'tool', 'pay-per-call'],
+	});
+}
+
 export default async function handler(req, res) {
 	const slug = req.query?.skill ? String(req.query.skill).trim() : '';
+	const paymentPresent = Boolean(req.headers['x-payment'] || req.headers['payment-signature']);
 	if (!slug) {
-		return error(res, 400, 'skill_required', 'query parameter "skill" is required');
+		if (paymentPresent) {
+			return error(res, 400, 'skill_required', 'query parameter "skill" is required');
+		}
+		return sendDiscoveryChallenge(
+			res,
+			'query parameter "skill" is required — retry with ?skill=<slug> from the marketplace catalog for that skill’s exact price',
+		);
 	}
 
 	let skill;
@@ -142,7 +171,13 @@ export default async function handler(req, res) {
 		return error(res, 502, 'skill_lookup_failed', err.message);
 	}
 	if (!skill) {
-		return error(res, 404, 'skill_not_found', `no public skill with slug "${slug}"`);
+		if (paymentPresent) {
+			return error(res, 404, 'skill_not_found', `no public skill with slug "${slug}"`);
+		}
+		return sendDiscoveryChallenge(
+			res,
+			`no public skill with slug "${slug}" — browse /api/skills for available slugs`,
+		);
 	}
 	if (!(Number(skill.price_per_call_usd) > 0)) {
 		return error(

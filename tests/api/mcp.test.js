@@ -140,6 +140,9 @@ vi.mock('../../api/_lib/x402-spec.js', () => ({
 			extensions: { bazaar: { method: 'POST', bodyType: 'json' } },
 		};
 	}),
+	paymentRequiredHeaderValue: vi.fn((body) =>
+		Buffer.from(JSON.stringify(body), 'utf8').toString('base64'),
+	),
 	resolveResourceUrl: vi.fn((req, path) => `https://app.test${path}`),
 }));
 

@@ -10,7 +10,8 @@
 // real GLBs. The client fetches the file directly from R2 with the URL.
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
-import { buildBazaarSchema } from '../_lib/x402-spec.js';
+import { buildBazaarSchema, paymentRequirements, send402 } from '../_lib/x402-spec.js';
+import { priceFor } from '../_lib/x402-prices.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { sql } from '../_lib/db.js';
 import { presignGet } from '../_lib/r2.js';
@@ -126,12 +127,40 @@ function buildPayToOverride(asset) {
 	return Object.keys(out).length ? out : undefined;
 }
 
+// Discovery probes (x402scan registration, Bazaar validators) hit the bare
+// route with no ?slug= and expect a valid 402 challenge, not a 400. Without a
+// slug there is no per-asset price, so this advertises the endpoint at a
+// representative default (env-overridable via X402_PRICE_ASSET_DOWNLOAD) with
+// the full bazaar schema. No money can settle against it: a paid retry still
+// needs ?slug=<slug> (the paymentPresent branches below keep their 400/404),
+// and an X-PAYMENT envelope is only an authorization — USDC moves at settle,
+// which this path never reaches.
+function sendDiscoveryChallenge(res, errText) {
+	const resourceUrl = `${env.APP_ORIGIN}${ROUTE}`;
+	return send402(res, {
+		resourceUrl,
+		accepts: paymentRequirements(resourceUrl, { amount: priceFor('asset-download', '1000000') }),
+		description: DESCRIPTION,
+		bazaar: BAZAAR,
+		error: errText,
+		serviceName: 'three.ws Asset Bazaar',
+		tags: ['3d', 'asset', 'glb', 'avatar', 'download'],
+	});
+}
+
 // Per-asset paidEndpoint built on the fly. The slug picks the row, which
 // dictates price + payout overrides + R2 key — everything else is shared.
 export default async function handler(req, res) {
 	const slug = req.query?.slug ? String(req.query.slug).trim() : '';
+	const paymentPresent = Boolean(req.headers['x-payment'] || req.headers['payment-signature']);
 	if (!slug) {
-		return error(res, 400, 'slug_required', 'query parameter "slug" is required');
+		if (paymentPresent) {
+			return error(res, 400, 'slug_required', 'query parameter "slug" is required');
+		}
+		return sendDiscoveryChallenge(
+			res,
+			'query parameter "slug" is required — retry with ?slug=<slug> from the paid_assets catalog for that asset’s exact price',
+		);
 	}
 
 	let asset;
@@ -141,7 +170,13 @@ export default async function handler(req, res) {
 		return error(res, 502, 'paid_assets_lookup_failed', err.message);
 	}
 	if (!asset) {
-		return error(res, 404, 'asset_not_found', `no paid_assets row with slug "${slug}"`);
+		if (paymentPresent) {
+			return error(res, 404, 'asset_not_found', `no paid_assets row with slug "${slug}"`);
+		}
+		return sendDiscoveryChallenge(
+			res,
+			`no paid_assets row with slug "${slug}" — browse /api/assets for available slugs`,
+		);
 	}
 
 	const inner = paidEndpoint({

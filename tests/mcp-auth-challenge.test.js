@@ -81,10 +81,9 @@ describe('sendAuthChallenge status negotiation', () => {
 		expect(res.statusCode).toBe(401);
 	});
 
-	it('always ships the x402 envelope and discovery headers, on both statuses', async () => {
+	it('always ships the x402 envelope on both statuses', async () => {
 		for (const headers of [{}, { accept: 'text/event-stream' }]) {
 			const res = await challengeFor(headers);
-			expect(res.getHeader('www-authenticate')).toContain('resource_metadata=');
 			const envelope = JSON.parse(
 				Buffer.from(res.getHeader('payment-required'), 'base64').toString('utf8'),
 			);
@@ -93,5 +92,19 @@ describe('sendAuthChallenge status negotiation', () => {
 			const body = JSON.parse(res.body);
 			expect(body.accepts).toHaveLength(REQUIREMENTS.length);
 		}
+	});
+
+	it('sends WWW-Authenticate only on the 401 (OAuth/MCP-client) branch', async () => {
+		// On a 402, WWW-Authenticate would carry no `Payment` challenge (we speak
+		// x402, not MPP/Tempo) and x402scan's audit flags any WWW-Authenticate on
+		// a 402 as a malformed MPP header. OAuth clients are detected by request
+		// headers and always land on the 401 branch, which keeps the header.
+		const oauthRes = await challengeFor({ accept: 'text/event-stream' });
+		expect(oauthRes.statusCode).toBe(401);
+		expect(oauthRes.getHeader('www-authenticate')).toContain('resource_metadata=');
+
+		const crawlerRes = await challengeFor({});
+		expect(crawlerRes.statusCode).toBe(402);
+		expect(crawlerRes.getHeader('www-authenticate')).toBeUndefined();
 	});
 });

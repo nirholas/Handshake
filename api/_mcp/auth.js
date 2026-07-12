@@ -5,6 +5,7 @@ import {
 	verifyPayment,
 	send402,
 	build402Body,
+	paymentRequiredHeaderValue,
 	resolveResourceUrl,
 } from '../_lib/x402-spec.js';
 import { sendX402Error } from './payments.js';
@@ -50,15 +51,21 @@ export function isMcpProtocolClient(req) {
 // probe spin; a blanket 401 made x402 crawlers misclassify the endpoints.)
 //
 // Both shapes ship the x402 payment envelope in the body + PAYMENT-REQUIRED
-// header, and both carry WWW-Authenticate, so either kind of client can
-// recover from a mismatched guess.
+// header. WWW-Authenticate rides ONLY on the 401: on a 402 it would carry no
+// `Payment` challenge (we speak x402, not MPP/Tempo), and x402scan's audit
+// treats any WWW-Authenticate on a 402 as an MPP header and flags the missing
+// Payment challenge. A plain client that actually wants OAuth can still find
+// the metadata at /.well-known/oauth-protected-resource.
 export async function sendAuthChallenge(res, { req, resourceUrl, requirements, challenge }) {
 	const resource = env.MCP_RESOURCE;
-	res.statusCode = isMcpProtocolClient(req) ? 401 : 402;
-	res.setHeader(
-		'www-authenticate',
-		`Bearer resource_metadata=${quoteString(`${env.APP_ORIGIN}/.well-known/oauth-protected-resource`)}, resource=${quoteString(resource)}`,
-	);
+	const isProtocolClient = isMcpProtocolClient(req);
+	res.statusCode = isProtocolClient ? 401 : 402;
+	if (isProtocolClient) {
+		res.setHeader(
+			'www-authenticate',
+			`Bearer resource_metadata=${quoteString(`${env.APP_ORIGIN}/.well-known/oauth-protected-resource`)}, resource=${quoteString(resource)}`,
+		);
+	}
 	// `challenge` (optional) lets a dedicated MCP endpoint advertise its own
 	// service metadata + bazaar discovery in the 402 envelope (the Granite
 	// server at /api/ibm-mcp, the 3D Studio at /api/mcp-3d). Omitted →
@@ -66,7 +73,8 @@ export async function sendAuthChallenge(res, { req, resourceUrl, requirements, c
 	// build402Body is async (it signs per-accept offer receipts), so await it —
 	// stringifying the unresolved Promise shipped an empty `{}` envelope before.
 	const body = await build402Body({ resourceUrl, accepts: requirements, ...(challenge || {}) });
-	res.setHeader('PAYMENT-REQUIRED', Buffer.from(JSON.stringify(body), 'utf8').toString('base64'));
+	const headerValue = paymentRequiredHeaderValue(body);
+	if (headerValue) res.setHeader('PAYMENT-REQUIRED', headerValue);
 	res.setHeader('content-type', 'application/json; charset=utf-8');
 	res.setHeader('cache-control', 'no-store');
 	res.end(JSON.stringify(body));

@@ -511,6 +511,77 @@ describe('send402 PAYMENT-REQUIRED header', () => {
 		// Header and body must agree byte-for-byte to satisfy the validator.
 		expect(JSON.stringify(decoded)).toBe(JSON.stringify(body));
 	});
+
+	// Endpoints with rich bazaar schemas + per-accept signed offers were
+	// emitting 11–17 KB header mirrors; the production LB dropped them
+	// outright and x402scan flagged HEADERS_OVERFLOW on registration. The
+	// header is capped at 8 KB: full mirror when it fits, an extensions-free
+	// slim mirror when it doesn't, no header at all when even that overflows.
+	// The JSON body always carries the complete envelope.
+	describe('paymentRequiredHeaderValue cap', () => {
+		function envelopeWithExtensions(extBytes, acceptsCount = 1) {
+			return {
+				x402Version: 2,
+				error: 'X-PAYMENT header is required',
+				resource: { url: 'https://three.ws/api/x402/foo', description: 'demo', mimeType: 'application/json' },
+				accepts: Array.from({ length: acceptsCount }, (_, i) => ({
+					scheme: 'exact',
+					network: 'eip155:8453',
+					amount: '1000',
+					payTo: `0x000000000000000000000000000000000000000${i}`,
+					asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+				})),
+				extensions: { bazaar: { blob: 'x'.repeat(extBytes) } },
+			};
+		}
+
+		it('mirrors the full envelope when it fits', async () => {
+			const { paymentRequiredHeaderValue } = await loadSpec();
+			const body = envelopeWithExtensions(100);
+			const header = paymentRequiredHeaderValue(body);
+			expect(JSON.parse(Buffer.from(header, 'base64').toString('utf8'))).toEqual(body);
+		});
+
+		it('drops extensions when the full mirror exceeds 8 KB, keeping a payable slim envelope', async () => {
+			const { paymentRequiredHeaderValue } = await loadSpec();
+			const body = envelopeWithExtensions(20_000);
+			const header = paymentRequiredHeaderValue(body);
+			expect(header.length).toBeLessThanOrEqual(8 * 1024);
+			const decoded = JSON.parse(Buffer.from(header, 'base64').toString('utf8'));
+			expect(decoded.extensions).toBeUndefined();
+			// Everything a header-only payer needs survives.
+			expect(decoded.x402Version).toBe(2);
+			expect(decoded.accepts).toEqual(body.accepts);
+			expect(decoded.resource).toEqual(body.resource);
+		});
+
+		it('returns null when even the slim envelope overflows', async () => {
+			const { paymentRequiredHeaderValue } = await loadSpec();
+			const body = envelopeWithExtensions(100, 80); // ~80 accepts ≫ 8 KB alone
+			expect(paymentRequiredHeaderValue(body)).toBeNull();
+		});
+
+		it('send402 omits the header instead of emitting an oversized one', async () => {
+			const { send402 } = await loadSpec();
+			const res = makeRes();
+			await send402(res, {
+				resourceUrl: 'https://three.ws/api/x402/foo',
+				accepts: Array.from({ length: 80 }, (_, i) => ({
+					scheme: 'exact',
+					network: 'eip155:8453',
+					amount: '1000',
+					payTo: `0x000000000000000000000000000000000000000${i}`,
+					asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+				})),
+				description: 'demo',
+			});
+			expect(res.statusCode).toBe(402);
+			expect(res.headers['payment-required']).toBeUndefined();
+			// The body still ships the complete envelope.
+			const body = JSON.parse(res.body);
+			expect(body.accepts).toHaveLength(80);
+		});
+	});
 });
 
 describe('baseSettleable', () => {

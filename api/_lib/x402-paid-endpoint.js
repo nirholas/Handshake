@@ -368,7 +368,21 @@ export function paidEndpoint(spec) {
 		const requestStartTime = Date.now();
 		if (cors(req, res, { methods: allowMethods, origins: '*' })) return;
 		const isHead = req.method === 'HEAD' && httpMethod === 'GET';
-		if (req.method !== httpMethod && !isHead) {
+		// Discovery probes (x402scan, 402index, agent crawlers) hit paid routes
+		// with whatever method they like and expect the 402 challenge — the
+		// x402 discovery spec treats runtime 402 behavior as the source of
+		// truth, and a 405 reads as "not an x402 endpoint". A request on the
+		// wrong method that carries NO payment or auth credentials can only
+		// ever want the challenge, so serve it; anything carrying credentials
+		// intended to redeem the resource still gets the strict 405.
+		const hasCredentials =
+			!!req.headers?.['x-payment'] ||
+			!!req.headers?.['payment-signature'] ||
+			!!req.headers?.['sign-in-with-x'] ||
+			!!req.headers?.authorization ||
+			!!req.headers?.['x-api-key'];
+		const challengeOnly = req.method !== httpMethod && !isHead && !hasCredentials;
+		if (req.method !== httpMethod && !isHead && hasCredentials) {
 			res.setHeader('allow', allowMethods);
 			return error(res, 405, 'method_not_allowed', `use ${httpMethod}`);
 		}
@@ -531,6 +545,14 @@ export function paidEndpoint(spec) {
 			...(Array.isArray(service?.tags) && service.tags.length ? { tags: service.tags } : {}),
 			...(service?.iconUrl ? { iconUrl: service.iconUrl } : {}),
 		};
+
+		// Credential-less request on the wrong method (see the 405 gate above):
+		// answer with the challenge and stop — there is nothing to redeem, so
+		// none of the bypass/SIWX/settlement paths below apply.
+		if (challengeOnly) {
+			res.setHeader('allow', allowMethods);
+			return await send402(res, challenge);
+		}
 
 		// USE-21: auth-hints fast path. If the endpoint declared OAuth/SIWX as
 		// payment alternatives and the request carries a valid Authorization
