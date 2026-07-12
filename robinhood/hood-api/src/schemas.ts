@@ -85,14 +85,12 @@ export const ErrorSchema = z
   })
   .openapi('ApiError')
 
+/** Blocks-per-lookback at ~100ms/block (Robinhood Chain's measured cadence). */
 export const LOOKBACK_BLOCKS: Record<string, bigint> = {
   '15m': 9_000n,
   '1h': 36_000n,
   '6h': 216_000n,
   '24h': 864_000n,
-  '1h_hist': 36_000n,
-  '6h_hist': 216_000n,
-  '24h_hist': 864_000n,
   '7d': 6_048_000n,
   '30d': 25_920_000n,
 }

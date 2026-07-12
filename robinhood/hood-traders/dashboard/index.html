@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>hood-traders — live fleet</title>
+  <meta name="description" content="Autonomous trading agents on Robinhood Chain — live P&amp;L, decision journal, kill switch." />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <div class="brand">
+        <span class="dot"></span>
+        hood-traders
+        <span id="mode-badge" class="badge">…</span>
+        <span id="killed-badge" class="badge killed" hidden>⛔ killed</span>
+      </div>
+      <div class="topbar-right">
+        <span id="network-label" class="badge">…</span>
+        <button id="kill-btn" class="kill-btn" title="Trip the global kill switch — halts all new orders immediately">
+          ⏻ Kill switch
+        </button>
+      </div>
+    </header>
+
+    <section id="summary" class="summary-grid" aria-label="Fleet summary"></section>
+
+    <h2 class="section-title">Agents</h2>
+    <section id="agents" class="agents-grid" aria-label="Agent fleet"></section>
+
+    <h2 class="section-title">Recent fleet trades</h2>
+    <section id="fleet-trades"></section>
+
+    <footer class="footer">
+      <span>hood-traders · Robinhood Chain (4663 / 46630) autonomous trading fleet</span>
+      <span>Built by <a href="https://x.com/nichxbt" target="_blank" rel="noopener">nirholas</a> · <a href="https://three.ws" target="_blank" rel="noopener">three.ws</a></span>
+    </footer>
+  </div>
+
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

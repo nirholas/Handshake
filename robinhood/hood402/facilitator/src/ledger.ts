@@ -60,7 +60,7 @@ export class Ledger {
     const row = this.db
       .prepare('SELECT * FROM settlements WHERE id = ?')
       .get(Ledger.key(network, payer, nonce))
-    return row as SettlementRow | undefined
+    return row as unknown as SettlementRow | undefined
   }
 
   /**
@@ -97,7 +97,7 @@ export class Ledger {
     } catch {
       // UNIQUE violation — someone already claimed it.
       const existing = this.db.prepare('SELECT * FROM settlements WHERE id = ?').get(id)
-      return { claimed: false, existing: existing as SettlementRow }
+      return { claimed: false, existing: existing as unknown as SettlementRow }
     }
   }
 
