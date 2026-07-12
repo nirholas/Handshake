@@ -69,9 +69,12 @@ const NVIDIA_NEMOTRON_MODEL = 'nvidia/nvidia-nemotron-nano-9b-v2';
 // request far longer than a fallback rung should block the chain (observed live
 // 2026-07-12: 25s hang on a 900-token compose prompt while groq/openrouter
 // 402/429'd in <0.5s). As a fallback it gets a tight per-lane cap so the chain
-// fails over to the reliable Vertex anchor in seconds; env-tunable, floored so a
-// bad value can't disable the guard, and never longer than a real completion needs.
-const NVIDIA_LANE_TIMEOUT_MS = Math.max(2_000, Number(process.env.NVIDIA_LANE_TIMEOUT_MS) || 6_000);
+// fails over to the reliable Vertex anchor in seconds. Read per-call (not a
+// load-time const) so it's tunable via env without a redeploy; floored so a bad
+// value can't disable the guard.
+function nvidiaLaneTimeoutMs() {
+	return Math.max(2_000, Number(process.env.NVIDIA_LANE_TIMEOUT_MS) || 6_000);
+}
 const ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001';
 // Paid last-resort tail (see policy above). Mini keeps the backstop cheap; the
 // repo-wide OpenAI default (api/_lib/chat-models.js) uses the same model.
@@ -263,7 +266,7 @@ export function providerChain({ anthropicKey, anthropicModel, preferNvidia = fal
 			// When a caller opts to LEAD with NVIDIA it wants that model to produce
 			// the result, so give the lane a longer leash than the fallback rung —
 			// but still bounded so a NIM queue stall can't hang the whole request.
-			timeoutMs: Math.max(NVIDIA_LANE_TIMEOUT_MS, 15_000),
+			timeoutMs: Math.max(nvidiaLaneTimeoutMs(), 15_000),
 		}));
 	}
 	if (anthropicKey) chain.push(anthropicProvider(anthropicKey, anthropicModel));
@@ -326,7 +329,7 @@ export function providerChain({ anthropicKey, anthropicModel, preferNvidia = fal
 			// NIM free tier queues under load (observed hanging 25s on a 900-token
 			// prompt while every other free lane failed fast); cap it tight so the
 			// chain reaches the reliable Vertex anchor in seconds instead of blocking.
-			timeoutMs: NVIDIA_LANE_TIMEOUT_MS,
+			timeoutMs: nvidiaLaneTimeoutMs(),
 		}));
 	}
 	// Gemini Flash-Lite, twice: the AI Studio free tier when a key is

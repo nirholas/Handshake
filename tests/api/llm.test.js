@@ -246,6 +246,53 @@ describe('llmComplete — a hung provider fails over within the cap, not the who
 
 		delete process.env.LLM_PER_PROVIDER_TIMEOUT_MS;
 	}, 15_000);
+
+	// The NVIDIA free NIM lane queues under load and was observed hanging 25s while
+	// the reliable Vertex anchor sat one rung later. It carries a tight per-lane cap
+	// so the chain fails over fast, independent of the (looser) chain-wide cap.
+	it('the NVIDIA lane honors its tight per-provider cap and fails over fast', async () => {
+		// openrouter (402, fast) → nvidia (hangs) → … → openai (paid tail, serves).
+		process.env.OPENROUTER_API_KEY = 'or';
+		process.env.NVIDIA_API_KEY = 'nvapi-x';
+		process.env.OPENAI_API_KEY = 'sk-openai';
+		process.env.NVIDIA_LANE_TIMEOUT_MS = '2000'; // its own tight cap
+
+		const order = [];
+		globalThis.fetch = vi.fn((url, opts) => {
+			const u = String(url);
+			if (u.includes(OPENROUTER_HOST)) {
+				order.push('openrouter');
+				return Promise.resolve(errResp(402, 'insufficient credits'));
+			}
+			if (u.includes(NVIDIA_HOST)) {
+				order.push('nvidia');
+				return new Promise((_, reject) => {
+					opts.signal?.addEventListener('abort', () => {
+						reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+					});
+				});
+			}
+			if (u.includes(OPENAI_HOST)) {
+				order.push('openai');
+				return Promise.resolve(openaiShape('served by the tail'));
+			}
+			throw new Error(`unexpected fetch: ${u}`);
+		});
+
+		const t0 = Date.now();
+		// 30s budget; the NVIDIA lane's own 2s cap must bound its hang, not the budget.
+		const out = await llm.llmComplete({ system: 's', user: 'u', timeoutMs: 30_000 });
+		const elapsed = Date.now() - t0;
+
+		expect(order).toContain('nvidia'); // it was tried
+		expect(out.provider).toBe('openai'); // …and the chain failed over past it
+		expect(out.text).toBe('served by the tail');
+		// NVIDIA hung, but its 2s cap (read per-call from env, not the 30s budget)
+		// bounded the stall.
+		expect(elapsed).toBeLessThan(5_000);
+
+		delete process.env.NVIDIA_LANE_TIMEOUT_MS;
+	}, 15_000);
 });
 
 describe('llmComplete — BYOK Anthropic leads when supplied', () => {
