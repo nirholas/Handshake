@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-11T22:01:34.847Z",
+	"generated_at": "2026-07-11T22:52:12.691Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -120,6 +120,16 @@
 		{
 			"date": "2026-07-11",
 			"type": "update",
+			"title": "Fortune's Folly — a Wheel of Fortune landed in the /play plaza",
+			"summary": "Walk up to the wheel in the Mainland plaza and spin: one free spin every 12 hours, or pay $3 in $THREE for another shot — split 50% to the holder-rewards pool and 50% to the treasury, verified on-chain before any prize is granted. Twenty equal-odds wedges hand out wood, stone, coal, or cash, and a won prize is never lost to a full pack. Requires a little in-world progress first (average skill level 3) to keep it a bonus for players, not a bot target.",
+			"link": "/play",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-11",
+			"type": "update",
 			"title": "Market data no longer rides on a single source",
 			"summary": "The numbers on the markets pages used to blank out whenever CoinGecko rate-limited us. Now every core datapoint fails over across free, keyless backup APIs before it ever shows an error. The global stats bar falls back CoinGecko → CoinPaprika → CoinLore, the coins table backs up on CoinLore, the ETH price on the gas tracker and the BTC price on the exchanges page fail over to DefiLlama, the SOL price now draws on seven independent feeds, and the Solana token panels gained DefiLlama as a fourth source. Same numbers, same pages — they just stay up through an upstream outage instead of going blank.",
 			"link": "/coins",
@@ -158,6 +168,26 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-11",
+			"type": "update",
+			"title": "Send a sealed wallet as a gift — end-to-end encrypted, right from /vanity-wallet",
+			"summary": "Fund a fresh Solana wallet — optionally vanity-ground with a custom prefix or suffix — wrap it in a sealed link, and send it to someone. A bearer link carries the claim key in the URL itself for simple sharing, or seal it to a specific recipient's key so only they can ever open it. Claiming happens entirely in the recipient's browser at their own link — three.ws never sees the plaintext key at any point. Track what you've sent and reclaim anything that expires unclaimed from the same page.",
+			"link": "/vanity-wallet",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-11",
+			"type": "update",
+			"title": "The datapoint fabric: 480,000+ standalone paid endpoints",
+			"summary": "Every individual market datapoint three.ws aggregates is now its own standalone paid endpoint — one URL, one value, one micro-payment of $0.0005 USDC over x402. Bitcoin's spot price, Lido's TVL, one yield pool's APY, USDT's peg deviation in basis points, BTC dominance, the standard gas tier — each of roughly 484,000 combinations of ~17,500 coins, ~15,500 yield pools, ~6,000 protocols, plus chains, stablecoins, exchanges, and the global market gauges, across 68 metrics, is individually addressable and individually buyable by any agent with a wallet. A free catalog at /api/x402/d lists every family and metric with prices and can page through each family's entire live id space, so a crawler can walk the whole endpoint universe. Asking for a datapoint that doesn't exist never triggers a payment request, and a failed fetch never charges the buyer.",
+			"link": "/docs/market-data-api",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -17699,7 +17729,7 @@
 			"date": "2026-04-29",
 			"type": "launch",
 			"title": "Solana Vanity Wallet",
-			"summary": "Grind a Solana address with a custom prefix — entirely in your browser, across your CPU cores.",
+			"summary": "Grind a Solana address with a custom prefix — entirely in your browser, across your CPU cores. Also send sealed wallet gifts: fund a fresh (optionally vanity-ground) wallet and wrap it in an end-to-end sealed claim link only the recipient can open.",
 			"link": "/vanity-wallet",
 			"tags": [
 				"launch"

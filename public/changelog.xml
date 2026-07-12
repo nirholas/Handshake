@@ -95,6 +95,14 @@
 			<description>Agents can now pay fractions of a cent for answers, not just data: a one-call DeFi radar (TVL movers, top fee earners, top DEX volumes), a yield scanner with per-pool risk flags across 15,000+ live pools, a stablecoin peg monitor with depeg alerts, an exploit-history check for any protocol, a top-coins momentum heatmap with market-breadth stats, a multi-chain gas oracle covering Ethereum, Base, and Solana in one call, a market-mood index that blends Fear &amp; Greed with live sentiment from 192 news feeds, and a per-ticker news pulse measuring coverage velocity. Prices run $0.001–$0.005 USDC per call, settled instantly via x402 on Solana or Base, and every endpoint refuses payment when its live data source is down — you are never charged for a missing answer.</description>
 		</item>
 		<item>
+			<title>Fortune's Folly — a Wheel of Fortune landed in the /play plaza</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-07-11:Fortune's Folly — a Wheel of Fortune landed in the /play plaza</guid>
+			<pubDate>Sat, 11 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Walk up to the wheel in the Mainland plaza and spin: one free spin every 12 hours, or pay $3 in $THREE for another shot — split 50% to the holder-rewards pool and 50% to the treasury, verified on-chain before any prize is granted. Twenty equal-odds wedges hand out wood, stone, coal, or cash, and a won prize is never lost to a full pack. Requires a little in-world progress first (average skill level 3) to keep it a bonus for players, not a bot target.</description>
+		</item>
+		<item>
 			<title>Market data no longer rides on a single source</title>
 			<link>https://three.ws/coins</link>
 			<guid isPermaLink="false">2026-07-11:Market data no longer rides on a single source</guid>
@@ -125,6 +133,22 @@
 			<pubDate>Sat, 11 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Every coin page now shows far more of what the data already offers: a 1h-to-1y price-performance matrix, a circulating-vs-max supply bar with the market-cap/FDV ratio, all-time high and low with the drawdown and recovery multiple, the community bullish/bearish sentiment split, GitHub and social activity, and a full exchange-listings table with spread, order-book depth, and a trust rating for each venue. Exchanges and crypto categories, which used to only send you off-site or filter a table, now have their own detail pages — an exchange page with a trust badge, wash-volume-adjusted volume, a volume-history chart, and its markets, and a category page with the sector's rank, stats, and full coin list. And a brand-new DeFi Yields explorer covers roughly 15,000 live pools across every chain and protocol, filterable and sortable, each with its own APY and TVL history chart. All of it is real, key-free data.</description>
+		</item>
+		<item>
+			<title>Send a sealed wallet as a gift — end-to-end encrypted, right from /vanity-wallet</title>
+			<link>https://three.ws/vanity-wallet</link>
+			<guid isPermaLink="false">2026-07-11:Send a sealed wallet as a gift — end-to-end encrypted, right from /vanity-wallet</guid>
+			<pubDate>Sat, 11 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Fund a fresh Solana wallet — optionally vanity-ground with a custom prefix or suffix — wrap it in a sealed link, and send it to someone. A bearer link carries the claim key in the URL itself for simple sharing, or seal it to a specific recipient's key so only they can ever open it. Claiming happens entirely in the recipient's browser at their own link — three.ws never sees the plaintext key at any point. Track what you've sent and reclaim anything that expires unclaimed from the same page.</description>
+		</item>
+		<item>
+			<title>The datapoint fabric: 480,000+ standalone paid endpoints</title>
+			<link>https://three.ws/docs/market-data-api</link>
+			<guid isPermaLink="false">2026-07-11:The datapoint fabric: 480,000+ standalone paid endpoints</guid>
+			<pubDate>Sat, 11 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every individual market datapoint three.ws aggregates is now its own standalone paid endpoint — one URL, one value, one micro-payment of $0.0005 USDC over x402. Bitcoin's spot price, Lido's TVL, one yield pool's APY, USDT's peg deviation in basis points, BTC dominance, the standard gas tier — each of roughly 484,000 combinations of ~17,500 coins, ~15,500 yield pools, ~6,000 protocols, plus chains, stablecoins, exchanges, and the global market gauges, across 68 metrics, is individually addressable and individually buyable by any agent with a wallet. A free catalog at /api/x402/d lists every family and metric with prices and can page through each family's entire live id space, so a crawler can walk the whole endpoint universe. Asking for a datapoint that doesn't exist never triggers a payment request, and a failed fetch never charges the buyer.</description>
 		</item>
 		<item>
 			<title>The Market Data API: every market feed, now buyable per call</title>
@@ -13652,7 +13676,7 @@
 			<guid isPermaLink="false">2026-04-29:Solana Vanity Wallet</guid>
 			<pubDate>Wed, 29 Apr 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Grind a Solana address with a custom prefix — entirely in your browser, across your CPU cores.</description>
+			<description>Grind a Solana address with a custom prefix — entirely in your browser, across your CPU cores. Also send sealed wallet gifts: fund a fresh (optionally vanity-ground) wallet and wrap it in an end-to-end sealed claim link only the recipient can open.</description>
 		</item>
 		<item>
 			<title>On-chain agents on Solana and EVM</title>

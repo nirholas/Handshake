@@ -9,13 +9,13 @@
 		"https://three.ws/api/x402/agent-reputation": {
 			"ok": false,
 			"status": 422,
-			"at": "2026-07-11T21:25:18.935Z",
+			"at": "2026-07-11T23:27:45.558Z",
 			"response": "{\"error\":\"x402 verification failed\",\"detail\":\"Endpoint returned 402 but no valid x402 challenge was detected.\",\"probe\":{\"httpStatus\":402,\"headersPresent\":{\"WWW-Authenticate\":false,\"PAYMENT-REQUIRED\":false},\"bodySnippet\":null,\"detectedProtocols\":[]}}"
 		},
 		"https://three.ws/api/x402/agent-bouncer": {
 			"ok": false,
 			"status": 422,
-			"at": "2026-07-11T21:25:19.848Z",
+			"at": "2026-07-11T23:27:46.623Z",
 			"response": "{\"error\":\"x402 verification failed\",\"detail\":\"Endpoint returned 402 but no valid x402 challenge was detected.\",\"probe\":{\"httpStatus\":402,\"headersPresent\":{\"WWW-Authenticate\":false,\"PAYMENT-REQUIRED\":false},\"bodySnippet\":null,\"detectedProtocols\":[]}}"
 		},
 		"https://three.ws/api/x402/onchain-identity-verify": {
@@ -47,6 +47,72 @@
 			"status": 201,
 			"at": "2026-07-11T21:25:29.065Z",
 			"response": "{\"message\":\"Service registered and live\",\"service\":{\"id\":\"1b32e918-ec64-44dd-a952-060ac7eca156\",\"name\":\"three.ws mint-to-mesh-batch\",\"description\":\"Mint to Mesh (Batch) — resolve 1–10 Solana SPL mints to themed glTF (GLB) cubes in a single paid call instead of paying for N round-trips.\",\"url\":\"https"
+		},
+		"https://three.ws/api/x402/skill-marketplace": {
+			"ok": true,
+			"status": 201,
+			"at": "2026-07-11T22:26:09.415Z",
+			"response": "{\"message\":\"Service registered and live\",\"service\":{\"id\":\"5807380c-32f3-4ba2-b145-8a645a6f699a\",\"name\":\"three.ws skill-marketplace\",\"description\":\"Skill Marketplace — list active skill listings with prices across all three.ws agents.\",\"url\":\"https://three.ws/api/x402/skill-marketplace\",\"protocol\":\"x"
+		},
+		"https://three.ws/api/x402/symbol-availability": {
+			"ok": true,
+			"status": 201,
+			"at": "2026-07-11T22:26:10.317Z",
+			"response": "{\"message\":\"Service registered and live\",\"service\":{\"id\":\"941f6d5c-7280-442a-947d-03e2fb9d8ae0\",\"name\":\"three.ws symbol-availability\",\"description\":\"Symbol Availability — pre-launch ticker collision check against three.ws's pump.fun mint index.\",\"url\":\"https://three.ws/api/x402/symbol-availability\","
+		},
+		"https://three.ws/api/x402/vanity": {
+			"ok": true,
+			"status": 201,
+			"at": "2026-07-11T22:26:11.418Z",
+			"response": "{\"message\":\"Service registered and pending review. Verify your domain for instant approval.\",\"service\":{\"id\":\"c23b9668-84f3-4d37-85fd-f29d8272e012\",\"name\":\"three.ws vanity\",\"description\":\"Vanity Grinder — put your brand on-chain: get a Solana address that starts with your ticker/prefix and/or ends w"
+		},
+		"https://three.ws/api/x402/vanity-verifiable": {
+			"ok": true,
+			"status": 201,
+			"at": "2026-07-11T22:26:12.434Z",
+			"response": "{\"message\":\"Service registered and pending review. Verify your domain for instant approval.\",\"service\":{\"id\":\"c9b81d7c-bb98-43aa-8e42-35ef923e23f5\",\"name\":\"three.ws vanity-verifiable\",\"description\":\"Provably-Fair Vanity Grinder — generate a brand-new Solana keypair whose Base58 address starts with a"
+		},
+		"https://three.ws/api/x402/permit2-paid-demo": {
+			"ok": false,
+			"status": 422,
+			"at": "2026-07-11T23:27:48.131Z",
+			"response": "{\"error\":\"x402 verification failed\",\"detail\":\"Endpoint returned 402 but no valid x402 challenge was detected.\",\"probe\":{\"httpStatus\":402,\"headersPresent\":{\"WWW-Authenticate\":false,\"PAYMENT-REQUIRED\":true},\"bodySnippet\":null,\"detectedProtocols\":[]}}"
+		},
+		"https://three.ws/api/x402/remix-asset": {
+			"ok": true,
+			"status": 201,
+			"at": "2026-07-11T22:26:14.868Z",
+			"response": "{\"message\":\"Service registered and pending review. Verify your domain for instant approval.\",\"service\":{\"id\":\"32b3b796-ede3-4b26-a52b-510947191979\",\"name\":\"three.ws remix-asset\",\"description\":\"Remix a published 3D model by describing a change; a creator-set royalty of the fee routes on-chain to the "
+		},
+		"https://three.ws/api/x402/token-intel": {
+			"ok": true,
+			"status": 201,
+			"at": "2026-07-11T23:27:49.172Z",
+			"response": "{\"message\":\"Service registered and pending review. Verify your domain for instant approval.\",\"service\":{\"id\":\"b579dfc6-089f-4024-83ea-36bd2cad7a04\",\"name\":\"three.ws token-intel\",\"description\":\"three.ws Token Oracle — pay $0.01 USDC per call for live market intel on ANY token by contract address: pri"
+		},
+		"https://three.ws/api/x402/defi-radar": {
+			"ok": true,
+			"status": 201,
+			"at": "2026-07-11T23:27:50.417Z",
+			"response": "{\"message\":\"Service registered and pending review. Verify your domain for instant approval.\",\"service\":{\"id\":\"e1e4680d-0cec-462d-b2ba-572fdd526c35\",\"name\":\"three.ws defi-radar\",\"description\":\"three.ws DeFi Radar — one $0.005 USDC call returns the whole DeFi market at a glance: total TVL with the big"
+		},
+		"https://three.ws/api/x402/yield-scan": {
+			"ok": true,
+			"status": 201,
+			"at": "2026-07-11T23:27:51.493Z",
+			"response": "{\"message\":\"Service registered and pending review. Verify your domain for instant approval.\",\"service\":{\"id\":\"b7755009-3000-427a-95f6-20ac2d11cfeb\",\"name\":\"three.ws yield-scan\",\"description\":\"three.ws Yield Scanner — $0.005 USDC per call filters 15,000+ live DeFi yield pools by chain, TVL floor, and"
+		},
+		"https://three.ws/api/x402/stablecoin-health": {
+			"ok": true,
+			"status": 201,
+			"at": "2026-07-11T23:27:52.570Z",
+			"response": "{\"message\":\"Service registered and pending review. Verify your domain for instant approval.\",\"service\":{\"id\":\"f3f46143-8b09-4cee-8d1f-f4e49bfcd1a7\",\"name\":\"three.ws stablecoin-health\",\"description\":\"three.ws Stablecoin Peg Monitor — $0.005 USDC per call returns live peg deviation, supply, and 24 h /"
+		},
+		"https://three.ws/api/x402/hack-check": {
+			"ok": true,
+			"status": 201,
+			"at": "2026-07-11T23:27:53.639Z",
+			"response": "{\"message\":\"Service registered and pending review. Verify your domain for instant approval.\",\"service\":{\"id\":\"9c23ed88-b281-417f-96a3-df358d5bf44a\",\"name\":\"three.ws hack-check\",\"description\":\"three.ws Exploit History Check — $0.002 USDC per call searches the full DeFi exploit database for a protocol"
 		}
 	}
 }

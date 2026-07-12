@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8">
+	<title>Claim your sealed gift · three.ws</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Claim a sealed wallet gift. Opened entirely in your browser — three.ws never sees the key.">
+	<meta name="robots" content="noindex">
+	<link rel="icon" href="/favicon.ico">
+	<link rel="stylesheet" href="/footer.css">
+	<link rel="stylesheet" href="/nav.css">
+	<link rel="stylesheet" href="/fonts/fonts.css" />
+	<script defer src="/footer-newsletter.js"></script>
+	<style>
+		* { box-sizing: border-box; }
+		:root {
+			--fg: #f0f0f0; --muted: #888; --dim: #666; --border: rgba(255,255,255,0.08);
+			--card-bg: #0e0e10; --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+			--radius: 12px;
+		}
+		body { font: 15px/1.5 'Inter', system-ui, -apple-system, sans-serif; background: #000; color: var(--fg); margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
+		a { color: inherit; }
+		.skip-link { position: absolute; left: -999px; }
+		.skip-link:focus { left: 1rem; top: 1rem; background: #fff; color: #000; padding: .4rem .8rem; border-radius: 6px; z-index: 100; }
+		main { flex: 1; max-width: 480px; width: 100%; margin: 0 auto; padding: 3rem 1rem 4rem; }
+
+		#dc-stage { border: 1px solid var(--border); border-radius: var(--radius); background: var(--card-bg); padding: 1.4rem; }
+
+		/* The gift reveal card, themed per drop.theme */
+		.gift { text-align: center; padding: 1rem .5rem 1.4rem; }
+		.gift-glyph { font-size: 2.6rem; line-height: 1; margin-bottom: .6rem; }
+		.gift-from { font-size: .82rem; color: var(--muted); margin-bottom: .3rem; }
+		.gift-amount { font-family: var(--font-display); font-size: 2.1rem; font-weight: 800; letter-spacing: -0.02em; }
+		.gift-amount span { font-size: 1.1rem; color: var(--muted); font-weight: 600; margin-left: .2rem; }
+		.gift-msg { margin: .8rem 0 .4rem; font-style: italic; color: #ddd; font-size: .95rem; }
+		.gift-addr { font-size: .74rem; color: var(--dim); margin-top: .4rem; }
+		.gift-badge { display: inline-block; margin-top: .9rem; font-size: .74rem; color: #86efac; background: rgba(74,222,128,.08); border: 1px solid rgba(74,222,128,.25); border-radius: 999px; padding: .3rem .8rem; }
+		.theme-birthday .gift-glyph, .theme-congrats .gift-glyph { animation: pop .5s ease; }
+		@keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+
+		label.fl { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--dim); margin: .9rem 0 .3rem; }
+		input.t { width: 100%; font: inherit; background: #161616; color: var(--fg); border: 1px solid rgba(255,255,255,.12); border-radius: 8px; padding: .6rem .8rem; }
+		.mono { font-family: ui-monospace, monospace; word-break: break-all; }
+		.note { font-size: .8rem; color: var(--muted); margin: .4rem 0 0; }
+
+		button.primary, a.primary { appearance: none; font: inherit; font-weight: 700; border-radius: 8px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: .4rem; background: #fff; color: #000; border: 1px solid #fff; padding: .55rem 1.1rem; transition: transform .1s, background .15s; }
+		button.primary:hover, a.primary:hover { transform: translateY(-1px); background: #e8e8e8; }
+		button.primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+		button.ghost, a.ghost { appearance: none; font: inherit; font-weight: 700; border-radius: 8px; cursor: pointer; text-decoration: none; background: transparent; color: var(--fg); border: 1px solid rgba(255,255,255,.12); padding: .5rem .9rem; transition: border-color .15s; }
+		button.ghost:hover, a.ghost:hover { border-color: rgba(255,255,255,.3); }
+		button.small, a.small { font-size: .78rem; padding: .4rem .7rem; }
+		button.big { font-size: 1rem; padding: .8rem 1.4rem; width: 100%; }
+		.row { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .6rem; }
+
+		.okbox, .warnbox, .errbox { margin-top: .9rem; padding: .7rem .9rem; border-radius: 8px; font-size: .85rem; }
+		.okbox { border: 1px solid rgba(74,222,128,.4); background: rgba(74,222,128,.08); color: #86efac; }
+		.warnbox { border: 1px solid rgba(255,176,32,.4); background: rgba(255,176,32,.08); color: #fcd34d; }
+		.errbox { border: 1px solid rgba(248,113,113,.4); background: rgba(248,113,113,.08); color: #fca5a5; }
+		.okbox.show, .warnbox.show, .errbox.show { display: block; }
+
+		.keybox { background: #0a0a0a; border: 1px solid rgba(255,176,32,.35); border-radius: 8px; padding: .8rem; margin-top: .8rem; }
+		.keybox code { display: block; word-break: break-all; font-family: ui-monospace, monospace; font-size: .78rem; color: #fcd34d; background: #111; padding: .5rem; border-radius: 6px; margin: .4rem 0; }
+
+		.statebox { text-align: center; padding: 1.6rem 1rem; }
+		.se-glyph { font-size: 2.4rem; margin-bottom: .5rem; }
+		.statebox h3 { font-family: var(--font-display); margin: 0 0 .5rem; font-size: 1.15rem; }
+		.statebox p { color: var(--muted); font-size: .88rem; margin: 0 0 1rem; }
+		.statebox.claimed .se-glyph { color: #4ade80; }
+		.statebox.expired .se-glyph, .statebox.reclaimed .se-glyph { color: #888; }
+		.statebox.error .se-glyph { color: #f87171; }
+
+		.skel-gift { padding: 1.6rem .5rem; text-align: center; }
+		.skel-line { height: 14px; border-radius: 6px; background: #161616; margin: 0 auto .6rem; position: relative; overflow: hidden; }
+		.skel-line::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent); animation: sweep 1.3s infinite; }
+		.skel-line.w40 { width: 40%; height: 34px; } .skel-line.w70 { width: 70%; } .skel-line.w70.big { height: 30px; } .skel-line.w50 { width: 50%; }
+		@keyframes sweep { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+		.spin { width: 14px; height: 14px; border: 2px solid rgba(0,0,0,.2); border-top-color: #000; border-radius: 50%; display: inline-block; animation: rot .7s linear infinite; vertical-align: -2px; }
+		button.ghost .spin { border-color: rgba(255,255,255,.2); border-top-color: #fff; }
+		@keyframes rot { to { transform: rotate(360deg); } }
+
+		#drop-toast.toast { position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%) translateY(120%); background: #1a1a1a; border: 1px solid var(--border); color: #fff; padding: .6rem 1rem; border-radius: 8px; font-size: .85rem; transition: transform .3s ease; z-index: 50; max-width: 90vw; }
+		#drop-toast.toast.show { transform: translateX(-50%) translateY(0); }
+	</style>
+
+	<meta name="theme-color" content="#000000">
+	<script src="/model-viewer-meshopt.js"></script>
+</head>
+<body>
+	<a href="#main-content" class="skip-link">Skip to main content</a>
+	<header>
+		<div id="nav-container"></div>
+	</header>
+	<script src="/nav.js"></script>
+
+	<main id="main-content">
+		<div id="drop-claim">
+			<div id="dc-stage"></div>
+		</div>
+	</main>
+
+	<footer class="h-footer-horizon">
+		<div class="h-footer-glow-line" aria-hidden="true"></div>
+		<div class="h-footer-floor" aria-hidden="true"></div>
+		<div class="h-footer-haze" aria-hidden="true"></div>
+		<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
+		<div class="h-footer-cta">
+			<div class="h-footer-newsletter">
+				<h3>Stay in the loop</h3>
+				<p>Get updates on new features, agent tooling, and protocol changes.</p>
+				<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
+					<input type="email" class="h-footer-newsletter-input" name="email" placeholder="Enter your email" aria-label="Email address" autocomplete="email" required />
+					<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
+						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4"/></svg>
+					</button>
+				</form>
+				<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
+			</div>
+			<div class="h-footer-resources">
+				<h3>Resources</h3>
+				<p>Read the docs, join the community, and get help.</p>
+				<a class="h-footer-community-btn" href="/docs" target="_blank" rel="noopener">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+					Docs
+				</a>
+			</div>
+		</div>
+		<div class="h-footer-inner">
+			<div class="h-footer-brand-col">
+				<div class="h-footer-brand">
+					<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
+					<span class="wordmark-dot" aria-hidden="true" style="width:8px;height:8px;border-radius:50%;background:#fff;display:inline-block"></span>
+					<span>three.ws</span>
+				</div>
+				<p class="h-footer-tagline">Give your AI a body.</p>
+			</div>
+			<nav class="h-footer-links" aria-label="Footer">
+				<div class="h-footer-link-col">
+					<h4 class="h-footer-link-heading">Product</h4>
+					<a href="/vanity-wallet">Vanity wallet</a>
+					<a href="/create">Create</a>
+				</div>
+				<div class="h-footer-link-col">
+					<h4 class="h-footer-link-heading">Developers</h4>
+					<a href="/docs">Docs</a>
+				</div>
+			</nav>
+		</div>
+		<div class="h-footer-bottom">
+			<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+			<div class="h-footer-legal-links">
+				<a href="/legal/privacy">Privacy Policy</a>
+				<a href="/legal/tos">Terms of Use</a>
+			</div>
+		</div>
+	</footer>
+
+	<script type="module" src="/src/pages/sealed-drops.js"></script>
+	<script src="/brand.js" defer></script>
+	<div id="footer-container"></div>
+	<script src="/footer.js"></script>
+</body>
+</html>

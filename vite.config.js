@@ -465,6 +465,7 @@ const appConfig = {
 				'coin-intel': resolve(__dirname, 'pages/coin-intel.html'),
 				coins: resolve(__dirname, 'pages/coins.html'),
 				coin: resolve(__dirname, 'pages/coin.html'),
+				drop: resolve(__dirname, 'pages/drop.html'),
 				markets: resolve(__dirname, 'pages/markets.html'),
 				'markets-news': resolve(__dirname, 'pages/markets-news.html'),
 				'news-digest': resolve(__dirname, 'pages/news-digest.html'),
@@ -1519,6 +1520,10 @@ support: resolve(__dirname, 'pages/support.html'),
 						/^\/coin\/[a-zA-Z0-9][a-zA-Z0-9_-]{0,99}\/?$/.test(path)
 					)
 						filePath = resolve(root, 'pages/coin.html');
+					// /drop/:id  → sealed wallet gift claim page (24 lowercase hex chars,
+					// matching api/vanity/drops.js's id format)
+					else if (!filePath && /^\/drop\/[0-9a-f]{24}\/?$/.test(path))
+						filePath = resolve(root, 'pages/drop.html');
 					// /exchange/:id  → exchange detail page (CoinGecko exchange slug)
 					else if (!filePath && /^\/exchange\/[a-z0-9_-]{1,60}\/?$/i.test(path))
 						filePath = resolve(root, 'pages/exchange.html');

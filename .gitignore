@@ -368,3 +368,5 @@ public/_qa-probe-*.js
 # secrets that must never land in git.
 solana-mobile/build/
 *.keystore
+main.zip
+.x402-directory-credentials.json

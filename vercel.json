@@ -1065,6 +1065,10 @@
 			"dest": "/coin.html"
 		},
 		{
+			"src": "/drop/([0-9a-f]{24})/?",
+			"dest": "/drop.html"
+		},
+		{
 			"src": "/compose/?",
 			"dest": "/compose.html"
 		},

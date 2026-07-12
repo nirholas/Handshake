@@ -11,6 +11,7 @@
 	<link rel="stylesheet" href="/nav.css">
 	<link rel="stylesheet" href="/fonts/fonts.css" />
 	<script defer src="/footer-newsletter.js"></script>
+	<script src="/x402.js" type="module"></script>
 	<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js" integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw" crossorigin="anonymous"></script>
 	<style>
 		* { box-sizing: border-box; }
@@ -159,6 +160,66 @@
 		.tier-free { background: rgba(74,222,128,0.12); color: #4ade80; }
 		.tier-paid { background: linear-gradient(90deg,rgba(255,213,79,0.15),rgba(255,138,101,0.15)); color: #fbbf24; border: 1px solid rgba(255,213,79,0.2); }
 
+		/* ── Sealed gift drops (shared visual language with /vanity/bounties) ── */
+		.section-divider { margin: 2.6rem 0 1.6rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+		.section-divider h2 { font-family: var(--font-display); font-size: 1.25rem; margin: 0 0 .25rem; letter-spacing: -0.01em; }
+		.section-divider p.lede { font-size: .85rem; margin-bottom: 1.1rem; }
+		label.fl { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: #666; margin: .9rem 0 .3rem; }
+		input.t, textarea.t, select.t { width: 100%; font: inherit; background: #1a1a1a; color: var(--fg); border: 1px solid rgba(255,255,255,.12); border-radius: 6px; padding: .6rem .8rem; }
+		textarea.t { min-height: 70px; resize: vertical; }
+		.gift-row { display: flex; gap: .7rem; flex-wrap: wrap; }
+		.gift-row > div { flex: 1; min-width: 140px; }
+		.chk { display: flex; align-items: flex-start; gap: .5rem; margin-top: .7rem; font-size: .82rem; color: #ccc; cursor: pointer; }
+		.chk input { margin-top: 2px; }
+		.mono { font-family: ui-monospace, monospace; word-break: break-all; }
+		.errbox, .okbox, .warnbox { display: none; margin-top: .9rem; padding: .7rem .9rem; border-radius: 8px; font-size: .85rem; }
+		.errbox.show { display: block; border: 1px solid rgba(248,113,113,.4); background: rgba(248,113,113,.08); color: #fca5a5; }
+		.okbox.show { display: block; border: 1px solid rgba(74,222,128,.4); background: rgba(74,222,128,.08); color: #86efac; }
+		.warnbox.show { display: block; border: 1px solid rgba(255,176,32,.4); background: rgba(255,176,32,.08); color: #fcd34d; }
+		/* Same warning visuals as .warnbox, but visibility is driven purely by the
+		   inline style="display:none" sealed-drops.js toggles directly — unlike
+		   .errbox/.okbox/.warnbox above (which need a .show class added), this one
+		   has no hidden-by-default class rule to fight the JS's own toggle. */
+		.keynote { padding: .7rem .9rem; border-radius: 8px; font-size: .85rem; border: 1px solid rgba(255,176,32,.4); background: rgba(255,176,32,.08); color: #fcd34d; margin-top: .6rem; }
+		.keybox { background: #0a0a0a; border: 1px solid rgba(255,176,32,.35); border-radius: 8px; padding: .8rem; margin-top: .8rem; }
+		.keybox code { display: block; word-break: break-all; font-family: ui-monospace, monospace; font-size: .78rem; color: #fcd34d; background: #111; padding: .5rem; border-radius: 6px; margin: .4rem 0; }
+		.kv { display: flex; justify-content: space-between; gap: 1rem; padding: .35rem 0; border-bottom: 1px solid var(--border); font-size: .86rem; }
+		.kv:last-child { border-bottom: none; } .kv .k { color: #666; } .kv .v { font-weight: 700; font-family: ui-monospace, monospace; }
+		.qrwrap { display: flex; flex-direction: column; align-items: center; gap: .3rem; margin-top: .9rem; }
+		.qrbox { background: #fff; padding: .6rem; border-radius: 8px; line-height: 0; }
+		.qrbox svg { width: 160px; height: 160px; display: block; }
+		.qrcap { font-size: .72rem; color: #666; }
+		details > summary { cursor: pointer; font-size: .82rem; color: #999; }
+		details p.note { font-size: .78rem; color: #666; margin: .5rem 0 0; }
+		#drop-toast.toast { position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%) translateY(120%); background: #1a1a1a; border: 1px solid var(--border); color: #fff; padding: .6rem 1rem; border-radius: 8px; font-size: .85rem; transition: transform .3s ease; z-index: 50; max-width: 90vw; }
+		#drop-toast.toast.show { transform: translateX(-50%) translateY(0); }
+		.spin { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.2); border-top-color: #fff; border-radius: 50%; display: inline-block; animation: rot .7s linear infinite; vertical-align: -2px; }
+		@keyframes rot { to { transform: rotate(360deg); } }
+		.empty { text-align: center; padding: 2.5rem 1rem; border: 1px dashed var(--border); border-radius: 10px; color: var(--muted); }
+		.empty .glyph { font-size: 2.2rem; margin-bottom: .5rem; opacity: .5; }
+		.empty h3 { font-family: var(--font-display); margin: .2rem 0 .4rem; color: #ccc; font-size: 1rem; }
+		.minerow { display: flex; justify-content: space-between; align-items: center; gap: .8rem; padding: .8rem 0; border-bottom: 1px solid var(--border); }
+		.minerow:last-child { border-bottom: none; }
+		.mr-amt { font-weight: 700; font-family: var(--font-display); }
+		.mr-meta { font-size: .74rem; color: #666; margin-top: .2rem; }
+		.mr-meta .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; margin-right: .3rem; }
+		.mr-meta .dot.open { background: #4ade80; } .mr-meta .dot.claimed { background: #38bdf8; } .mr-meta .dot.reclaimed { background: #666; } .mr-meta .dot.expired { background: #f87171; }
+		.mr-actions { display: flex; gap: .4rem; flex-shrink: 0; }
+		.skel { position: relative; overflow: hidden; background: #161616; border-radius: 8px; }
+		.skel::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent); animation: sweep 1.3s infinite; }
+		@keyframes sweep { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+		/* sealed-drops.js renders bare .primary/.ghost buttons (not .btn-prefixed
+		   like the grinder above) — matching /vanity/bounties' own button pattern
+		   so the two sibling pages read as one design language. */
+		button.primary, button.ghost, a.primary, a.ghost { appearance: none; font: inherit; font-weight: 700; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: .4rem; transition: transform .1s, background .15s, border-color .15s; }
+		button.primary, a.primary { background: #fff; color: #000; border: 1px solid #fff; padding: .55rem 1.1rem; }
+		button.primary:hover, a.primary:hover { transform: translateY(-1px); background: #e8e8e8; }
+		button.primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+		button.ghost, a.ghost { background: transparent; color: var(--fg); border: 1px solid rgba(255,255,255,.12); padding: .5rem .9rem; }
+		button.ghost:hover, a.ghost:hover { border-color: rgba(255,255,255,.3); }
+		button.small, a.small { font-size: .78rem; padding: .4rem .7rem; }
+		button.big, a.big { font-size: 1rem; padding: .8rem 1.4rem; width: 100%; justify-content: center; }
+
 		/* ── Site nav ── */
 		.skip-link {
 			position: absolute; left: -9999px; top: auto; width: 1px; height: 1px; overflow: hidden;
@@ -301,6 +362,107 @@
 
 			<div id="error" hidden class="error"></div>
 			<div id="result" hidden></div>
+		</div>
+
+		<div class="section-divider" id="drop-create">
+			<h2>🎁 Send a sealed gift</h2>
+			<p class="lede">
+				Fund a fresh wallet — optionally vanity-ground with the pattern above — and wrap it in an end-to-end sealed link.
+				Only the recipient can ever open it; three.ws never sees the key.
+			</p>
+			<div class="card">
+				<div class="gift-row">
+					<div>
+						<label class="fl" for="dc-asset">Asset</label>
+						<select class="t" id="dc-asset">
+							<option value="SOL">SOL</option>
+							<option value="USDC">USDC</option>
+							<option value="THREE">$THREE</option>
+						</select>
+					</div>
+					<div>
+						<label class="fl" for="dc-amount">Amount</label>
+						<input class="t" id="dc-amount" type="text" inputmode="decimal" placeholder="e.g. 0.1" autocomplete="off" />
+					</div>
+				</div>
+
+				<label class="fl">Vanity pattern (optional)</label>
+				<p class="note" style="font-size:.78rem;color:#666;margin:0 0 .4rem">Reuses the prefix/suffix above — leave blank to skip grinding and fund instantly.</p>
+				<div class="gift-row">
+					<div>
+						<input class="t mono" id="dc-prefix" type="text" maxlength="6" placeholder="Starts with" autocomplete="off" spellcheck="false" />
+					</div>
+					<div>
+						<input class="t mono" id="dc-suffix" type="text" maxlength="6" placeholder="Ends with" autocomplete="off" spellcheck="false" />
+					</div>
+				</div>
+
+				<label class="fl">Key export format</label>
+				<select class="t" id="dc-format">
+					<option value="mnemonic">Seed phrase (mnemonic)</option>
+					<option value="base58">Secret key (Base58)</option>
+				</select>
+
+				<label class="fl">How should this be sealed?</label>
+				<label class="chk"><input type="radio" name="dc-seal" value="claim-time" checked /><span><strong>Bearer link</strong> — anyone with the full link can claim it once. Simplest to share.</span></label>
+				<label class="chk"><input type="radio" name="dc-seal" value="direct" /><span><strong>Sealed to a key</strong> — only the holder of a specific X25519 private key can open it, even with the link.</span></label>
+				<p class="note" id="dc-bearer-note" style="font-size:.78rem;color:#666;margin:.5rem 0 0">The claim link itself carries the key — send it privately, the same way you'd send cash.</p>
+
+				<div id="dc-direct-wrap" style="display:none">
+					<label class="fl" for="dc-recipient">Recipient's X25519 public key</label>
+					<input class="t mono" id="dc-recipient" type="text" placeholder="Paste a public key, or generate a fresh pair" autocomplete="off" />
+					<div class="actions" style="margin-top:.5rem"><button class="ghost small" id="dc-genkey" type="button">Generate a key pair for them</button></div>
+					<div id="dc-genkey-note" class="keynote" style="display:none"></div>
+				</div>
+
+				<label class="fl" for="dc-message">Message (optional)</label>
+				<textarea class="t" id="dc-message" maxlength="200" placeholder="Happy birthday!"></textarea>
+
+				<div class="gift-row">
+					<div>
+						<label class="fl" for="dc-theme">Theme</label>
+						<select class="t" id="dc-theme">
+							<option value="default">🎁 Default</option>
+							<option value="birthday">🎂 Birthday</option>
+							<option value="congrats">🎉 Congrats</option>
+							<option value="thanks">🙏 Thanks</option>
+							<option value="welcome">👋 Welcome</option>
+							<option value="tip">⚡ Tip</option>
+						</select>
+					</div>
+					<div>
+						<label class="fl" for="dc-sender">Your name (optional)</label>
+						<input class="t" id="dc-sender" type="text" maxlength="40" placeholder="Shown to the recipient" autocomplete="off" />
+					</div>
+				</div>
+
+				<div class="gift-row">
+					<div>
+						<label class="fl" for="dc-expiry">Expires in (hours)</label>
+						<input class="t" id="dc-expiry" type="number" min="1" max="2160" value="168" />
+					</div>
+					<div>
+						<label class="fl" for="dc-reclaim">Reclaim address (optional)</label>
+						<input class="t mono" id="dc-reclaim" type="text" placeholder="Defaults to your connected wallet" autocomplete="off" />
+					</div>
+				</div>
+
+				<div class="actions">
+					<button class="primary" id="dc-submit" type="button">Create sealed gift</button>
+				</div>
+				<p class="note" id="dc-hint" style="font-size:.8rem;color:#666;margin-top:.6rem">Loading pricing…</p>
+				<div class="errbox" id="dc-err"></div>
+				<div id="dc-result" hidden></div>
+			</div>
+		</div>
+
+		<div class="section-divider" id="drop-mine">
+			<a id="mine"></a>
+			<h2>My sealed drops</h2>
+			<p class="lede">Gifts you've sent from this browser — reclaim any that expire unclaimed.</p>
+			<div class="card">
+				<div id="dm-list"></div>
+			</div>
 		</div>
 	</main>
 
@@ -897,6 +1059,7 @@
 			});
 		}
 	</script>
+	<script type="module" src="/src/pages/sealed-drops.js"></script>
 	<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>

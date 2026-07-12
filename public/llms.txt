@@ -152,7 +152,7 @@ On-chain features: pay-per-call, token launches, vanity wallets.
 - [Pump Dashboard](https://three.ws/pump-dashboard): Pump.fun trading desk: watchlists, scanner, quotes, portfolio, and live charts.
 - [Strategy Lab](https://three.ws/strategy-lab): Build DCA and subscription strategies that trade on-chain on your behalf.
 - [Strategy Objects](https://three.ws/strategies): A marketplace of how agents trade: ownable, forkable, leaderboard-ranked trade strategies your agent can equip and run on-chain within your spend policy.
-- [Solana Vanity Wallet](https://three.ws/vanity-wallet): Grind a Solana address with a custom prefix — entirely in your browser, across your CPU cores.
+- [Solana Vanity Wallet](https://three.ws/vanity-wallet): Grind a Solana address with a custom prefix — entirely in your browser, across your CPU cores. Also send sealed wallet gifts: fund a fresh (optionally vanity-ground) wallet and wrap it in an end-to-end sealed claim link only the recipient can open.
 - [Fact Check](https://three.ws/fact-check): Sourced fact-checking with cryptographic attestations — a published, checkable accuracy benchmark plus a live free-check box. 3 free checks/day per IP, then $0.10 USDC via x402.
 - [Verify a Vanity Receipt](https://three.ws/vanity/verify): Independently verify a three.ws provably-fair vanity wallet receipt — entirely in your browser. Prove the key was generated fresh under a committed seed and the operator never kept a copy.
 - [Proof-of-Grind Gallery](https://three.ws/vanity/gallery): A public gallery and leaderboard of the rarest Solana vanity addresses ground on three.ws — each provably-fair, verified, and shareable. Appraise any address to see its honest rarity tier and grind cost.

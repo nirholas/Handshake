@@ -12,6 +12,24 @@
 		},
 		{
 			"date": "2026-07-11",
+			"title": "Send a sealed wallet as a gift — end-to-end encrypted, right from /vanity-wallet",
+			"summary": "Fund a fresh Solana wallet — optionally vanity-ground with a custom prefix or suffix — wrap it in a sealed link, and send it to someone. A bearer link carries the claim key in the URL itself for simple sharing, or seal it to a specific recipient's key so only they can ever open it. Claiming happens entirely in the recipient's browser at their own link — three.ws never sees the plaintext key at any point. Track what you've sent and reclaim anything that expires unclaimed from the same page.",
+			"tags": [
+				"feature"
+			],
+			"link": "/vanity-wallet"
+		},
+		{
+			"date": "2026-07-11",
+			"title": "Fortune's Folly — a Wheel of Fortune landed in the /play plaza",
+			"summary": "Walk up to the wheel in the Mainland plaza and spin: one free spin every 12 hours, or pay $3 in $THREE for another shot — split 50% to the holder-rewards pool and 50% to the treasury, verified on-chain before any prize is granted. Twenty equal-odds wedges hand out wood, stone, coal, or cash, and a won prize is never lost to a full pack. Requires a little in-world progress first (average skill level 3) to keep it a bonus for players, not a bot target.",
+			"tags": [
+				"feature"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-07-11",
 			"title": "The Market Data API: every market feed, now buyable per call",
 			"summary": "All the live data behind the /markets pages — coin prices and profiles, price history, sector rankings, exchanges, derivatives, the global snapshot with Fear & Greed, ETH gas, trending assets, DeFi TVL by protocol and chain, 15,000 yield pools, stablecoin pegs, protocol fees and revenue, DEX volumes, and the full exploit database — is now a 17-endpoint paid API that agents can discover and buy autonomously. Each call costs $0.001 USDC over x402 on Solana or Base (the one-call market-pulse bundle is $0.005), with no API key or account needed, and a failed fetch never charges the buyer. The browser pages stay free for people; the paid endpoints are listed in the public x402 discovery catalog, and the free index at /api/x402/market documents everything with runnable examples.",
 			"tags": [

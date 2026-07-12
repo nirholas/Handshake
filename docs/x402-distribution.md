@@ -76,7 +76,20 @@ search results after 30 days without a settle**.
   not-yet-deployed route burns a slot), and records results in
   [`data/x402-directory-registrations.json`](../data/x402-directory-registrations.json).
   Re-run hourly until it reports 0 remaining, and after every deploy that adds
-  endpoints. `--dry-run` previews.
+  endpoints. `--dry-run` previews. The hourly cron
+  [`api/cron/x402-directory-registrar.js`](../api/cron/x402-directory-registrar.js)
+  supersedes manual runs: it re-upserts a rotating window of 8 catalog entries
+  per tick (registration is an upsert by URL), so new endpoints auto-register
+  and description drift self-heals.
+- **Domain verification (ranks ALL our listings first):** three.ws is claimed —
+  the challenge hash is served at `/.well-known/402index-verify.txt` (in
+  `public/.well-known/`). After a deploy makes it live, complete with
+  `curl -X POST https://402index.io/api/v1/claim/verify -H 'Content-Type: application/json' -d '{"domain": "three.ws"}'`.
+  The claim's `verification_token` (the ongoing credential for editing
+  listings) is in the gitignored `.x402-directory-credentials.json` at the
+  repo root — never commit it. Claims expire 72 h after issuance if unverified
+  (re-claim with `POST /api/v1/claim {"domain":"three.ws"}` and update the
+  hash file).
 
 ### x402-list.com
 
