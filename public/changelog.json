@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-12T03:18:20.594Z",
+	"generated_at": "2026-07-12T03:20:50.207Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -20,10 +20,33 @@
 		{
 			"date": "2026-07-12",
 			"type": "update",
+			"title": "Agent profiles, redesigned",
+			"summary": "Agent profile pages got a ground-up redesign. Instead of one endless column of cards, everything is now organized into clear sections — Overview, Capabilities, Economy, Activity, Trust & Identity, Reviews, and Developers — with a sticky navigation bar that follows you as you scroll and hides sections that have nothing to show. The hero is a compact identity band with the live 3D avatar beside the agent's name, description, and actions, and secondary view modes now live in a tidy menu instead of a wall of buttons. Pages are roughly 40% shorter and much easier to scan. Prefer the old look? Every profile keeps a “Classic layout” link that serves the previous design unchanged.",
+			"link": "/agents",
+			"tags": [
+				"improvement",
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "update",
 			"title": "Oversized x402 payment headers fixed",
 			"summary": "Three paid endpoints (vanity, pump launch, agent reputation) mirrored their entire payment challenge — schemas, signed offers and all — into a single HTTP header that grew past 16 KB, the point where proxies and many clients drop or fail to parse the response. The header mirror is now capped at 8 KB: it slims down or steps aside when the challenge is large, while the response body always carries the complete challenge. Payment tooling that reads only headers still gets everything it needs to pay.",
 			"link": null,
 			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "update",
+			"title": "The npm package fleet gets a professional-grade overhaul",
+			"summary": "All 60 published @three-ws packages were audited end to end — every test suite run, every install verified, every doc checked against the code. The most-used packages gained serious test coverage: the React embed component went from zero tests to 28, agent payment sessions from zero to 29 (fixing two real bugs found along the way, including tool safety-annotations that were silently dropped so clients could not tell read-only tools from destructive ones), and the pump.fun, Brain, IBM Granite, and marketplace MCP servers roughly tripled their suites. READMEs for the five most-downloaded packages were rewritten or corrected to match the code exactly — phantom tools removed, missing tools and required setup documented, error semantics added. Broken metadata (dead homepage links, a missing license file, a stale repository pointer) was fixed across the fleet.",
+			"link": null,
+			"tags": [
+				"sdk",
+				"improvement",
 				"fix"
 			]
 		},
