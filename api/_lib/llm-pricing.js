@@ -23,10 +23,15 @@ const PRICE_PER_MTOK = {
 	'claude-haiku-4-5': [1, 5],
 	'gpt-4o-mini': [0.15, 0.6],
 	'gpt-4o': [2.5, 10],
+	// Vertex Gemini (model id carries the publisher prefix) — billed to the GCP
+	// credit grant, so it's metered like a paid model rather than priced to 0.
+	'google/gemini-2.5-flash-lite': [0.1, 0.4],
+	'gemini-2.5-flash-lite': [0.1, 0.4],
 };
 
-// Providers whose marginal cost to the platform is zero (platform-funded keys).
-const FREE_PROVIDERS = new Set(['groq', 'openrouter', 'nvidia']);
+// Providers whose marginal cost to the platform is zero (platform-funded free
+// tiers). vertex-gemini is deliberately NOT here — it draws down GCP credits.
+const FREE_PROVIDERS = new Set(['groq', 'openrouter', 'nvidia', 'cerebras', 'gemini']);
 
 function priceForModel(model) {
 	if (!model) return null;
@@ -43,9 +48,11 @@ function priceForModel(model) {
 // or 0 when the provider is free or the model is unpriced — never null, so the
 // caller can always record a numeric cost.
 export function costMicroUsd({ provider, model, input = 0, output = 0 } = {}) {
-	// Multi-key providers carry a #n suffix (openrouter#2) — strip it so every
-	// key of a free provider prices to zero.
-	if (provider && FREE_PROVIDERS.has(String(provider).split('#')[0])) return 0;
+	// Provider names carry rung suffixes — '#n' for multi-key (openrouter#2),
+	// ':variant' for same-key model variants (openrouter:free), '#instant' for
+	// the Groq step-down. Strip them so every rung of a free provider prices
+	// to zero.
+	if (provider && FREE_PROVIDERS.has(String(provider).split(/[#:]/)[0])) return 0;
 	const price = priceForModel(model);
 	if (!price) return 0;
 	const [inPerM, outPerM] = price;

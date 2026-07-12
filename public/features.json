@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-12T03:20:50.190Z",
+	"generated_at": "2026-07-12T03:47:51.372Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2222,6 +2222,16 @@
 					"title": "Docs · Crypto Data API",
 					"description": "Developer reference for the free, keyless Crypto Data API bundle: the one-call discovery endpoint (GET /api/crypto), the generated OpenAPI 3.1 spec, and every endpoint's inputs, outputs, states, and curl examples — token snapshots, bonding status, whales, trending, wallet portfolios, and symbol availability.",
 					"added": "2026-07-07",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/autonomous-economy",
+					"title": "Docs · The autonomous economy",
+					"description": "How the three.ws on-chain treasury funds itself and where every dollar flows: the funding-root and engine wallets, the topup/sweepback loop, the allowlist- and destination-locks that keep money inside platform-owned wallets, and the two leak scanners that audit every signer wallet on-chain every minute — plus how to verify there's no leak yourself.",
+					"added": "2026-07-12",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

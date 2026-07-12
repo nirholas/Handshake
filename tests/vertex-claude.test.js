@@ -14,9 +14,12 @@ import { providerChain } from '../api/_lib/llm.js';
 const TOUCHED = [
 	'GOOGLE_CLOUD_PROJECT',
 	'GOOGLE_CLOUD_LOCATION_CLAUDE',
+	'GOOGLE_CLOUD_LOCATION_GEMINI',
 	'VERTEX_CLAUDE_ENABLED',
 	'VERTEX_CLAUDE_PRIMARY',
 	'GROQ_API_KEY',
+	'CEREBRAS_API_KEY',
+	'GEMINI_API_KEY',
 	'OPENROUTER_API_KEY',
 	'OPENROUTER_FALLBACK_KEYS',
 	'NVIDIA_API_KEY',
@@ -161,19 +164,22 @@ describe('providerChain ordering under the four flag combinations', () => {
 
 	const names = () => providerChain().map((p) => p.name);
 
-	it('off/off: no vertex lane; byte-identical free-first chain', () => {
-		expect(names()).toEqual(['groq', 'anthropic']);
+	// GOOGLE_CLOUD_PROJECT alone (no Claude flags) always contributes the
+	// vertex-gemini reliability rung after the free lanes, plus groq#instant as
+	// the free-tier capability step-down — both precede the paid backstops.
+	it('off/off: no vertex-CLAUDE lane; free lanes → vertex-gemini → step-down → paid tail', () => {
+		expect(names()).toEqual(['groq', 'vertex-gemini', 'groq#instant', 'anthropic']);
 	});
 
-	it('enabled/off: vertex is a paid backstop AHEAD of first-party anthropic, behind free lanes', () => {
+	it('enabled/off: vertex claude is a paid backstop AHEAD of first-party anthropic, behind free lanes', () => {
 		process.env.VERTEX_CLAUDE_ENABLED = '1';
 		const n = names();
-		expect(n).toEqual(['groq', 'vertex-anthropic', 'anthropic']);
+		expect(n).toEqual(['groq', 'vertex-gemini', 'groq#instant', 'vertex-anthropic', 'anthropic']);
 		expect(n.indexOf('groq')).toBeLessThan(n.indexOf('vertex-anthropic'));
 		expect(n.indexOf('vertex-anthropic')).toBeLessThan(n.indexOf('anthropic'));
 	});
 
-	it('enabled/primary: vertex LEADS the chain, before the free lanes', () => {
+	it('enabled/primary: vertex claude LEADS the chain, before the free lanes', () => {
 		process.env.VERTEX_CLAUDE_ENABLED = '1';
 		process.env.VERTEX_CLAUDE_PRIMARY = '1';
 		const n = names();
@@ -183,9 +189,9 @@ describe('providerChain ordering under the four flag combinations', () => {
 		expect(n.filter((x) => x === 'vertex-anthropic')).toHaveLength(1);
 	});
 
-	it('primary flag alone (enabled unset) leaves the chain unchanged', () => {
+	it('primary flag alone (enabled unset) adds no vertex-claude lane', () => {
 		process.env.VERTEX_CLAUDE_PRIMARY = '1';
-		expect(names()).toEqual(['groq', 'anthropic']);
+		expect(names()).toEqual(['groq', 'vertex-gemini', 'groq#instant', 'anthropic']);
 	});
 
 	it('a caller BYOK key still leads even when vertex is primary', () => {
@@ -194,5 +200,51 @@ describe('providerChain ordering under the four flag combinations', () => {
 		const n = providerChain({ anthropicKey: 'byok' }).map((p) => p.name);
 		expect(n[0]).toBe('anthropic'); // BYOK anthropicProvider leads
 		expect(n[1]).toBe('vertex-anthropic');
+	});
+});
+
+describe('providerChain free-tier resilience rungs', () => {
+	beforeEach(() => {
+		process.env.GROQ_API_KEY = 'g';
+		process.env.OPENROUTER_API_KEY = 'or-primary';
+		process.env.NVIDIA_API_KEY = 'nv';
+	});
+
+	it('the primary OpenRouter key gets a :free-variant rung behind its paid rung', () => {
+		const chain = providerChain();
+		const paid = chain.find((p) => p.name === 'openrouter');
+		const free = chain.find((p) => p.name === 'openrouter:free');
+		expect(paid.model).toBe('meta-llama/llama-3.3-70b-instruct');
+		expect(free.model).toBe('meta-llama/llama-3.3-70b-instruct:free');
+		expect(chain.indexOf(paid)).toBeLessThan(chain.indexOf(free));
+	});
+
+	it('cerebras and gemini rungs appear only when their keys are configured', () => {
+		const before = providerChain().map((p) => p.name);
+		expect(before).not.toContain('cerebras');
+		expect(before).not.toContain('gemini');
+		process.env.CEREBRAS_API_KEY = 'cb';
+		process.env.GEMINI_API_KEY = 'gm';
+		const n = providerChain().map((p) => p.name);
+		// Cerebras is 70B-class: right after groq, before openrouter. AI Studio
+		// Gemini sits after the 70B rungs (nvidia last of them), before the
+		// groq#instant step-down.
+		expect(n.indexOf('groq')).toBeLessThan(n.indexOf('cerebras'));
+		expect(n.indexOf('cerebras')).toBeLessThan(n.indexOf('openrouter'));
+		expect(n.indexOf('nvidia')).toBeLessThan(n.indexOf('gemini'));
+		expect(n.indexOf('gemini')).toBeLessThan(n.indexOf('groq#instant'));
+	});
+
+	it('every 70B-class free rung precedes the groq#instant capability step-down', () => {
+		process.env.OPENROUTER_FALLBACK_KEYS = 'or-fb1,or-fb2';
+		const n = providerChain().map((p) => p.name);
+		const stepDown = n.indexOf('groq#instant');
+		for (const seventyB of ['groq', 'openrouter', 'openrouter:free', 'openrouter#2', 'openrouter#3', 'nvidia']) {
+			expect(n.indexOf(seventyB), `${seventyB} should precede groq#instant`).toBeLessThan(stepDown);
+		}
+	});
+
+	it('without GOOGLE_CLOUD_PROJECT there is no vertex-gemini rung', () => {
+		expect(providerChain().map((p) => p.name)).not.toContain('vertex-gemini');
 	});
 });

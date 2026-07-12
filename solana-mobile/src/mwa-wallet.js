@@ -208,6 +208,11 @@ export class MwaWallet {
 	 * Sign a single Uint8Array message. Mirrors Phantom's
 	 *   provider.signMessage(bytes, 'utf8') → { signature: Uint8Array }
 	 * shape.
+	 *
+	 * The web3js transact() hands the callback an AUGMENTED wallet proxy:
+	 * signMessages takes Uint8Array payloads and returns Uint8Array[] of
+	 * signed payloads directly (message with the 64-byte ed25519 signature
+	 * appended) — NOT the raw protocol's { signed_payloads } envelope.
 	 */
 	async signMessage(messageBytes /* , _displayEncoding */) {
 		await this.#ensureConnected();
@@ -222,15 +227,12 @@ export class MwaWallet {
 				identity: APP_IDENTITY,
 			});
 			this.#applyAuthResult(reauth);
-			const out = await wallet.signMessages({
+			const signed = await wallet.signMessages({
 				addresses: [this.#authResultAddressBase64()],
-				payloads: [bytesToBase64(messageBytes)],
+				payloads: [messageBytes],
 			});
-			const first = Array.isArray(out?.signed_payloads) ? out.signed_payloads[0] : null;
-			if (typeof first !== 'string') throw new Error('MWA returned no signed payload');
-			// `signed_payloads` returns the original message concatenated with
-			// the 64-byte ed25519 signature appended at the end.
-			const combined = base64ToBytes(first);
+			const combined = Array.isArray(signed) ? signed[0] : null;
+			if (!(combined instanceof Uint8Array)) throw new Error('MWA returned no signed payload');
 			signatureBytes = combined.slice(combined.length - 64);
 		});
 		if (!signatureBytes) throw new Error('MWA signMessage produced no signature');
@@ -252,30 +254,22 @@ export class MwaWallet {
 		}
 		await this.#ensureConnected();
 		const transact = await loadTransact();
-		const serialized = transactions.map((tx) => {
-			if (typeof tx.serialize === 'function') {
-				const bytes = tx.serialize({ requireAllSignatures: false, verifySignatures: false });
-				return bytesToBase64(bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes));
-			}
-			throw new TypeError('Transaction is missing .serialize()');
-		});
-		let signedBase64 = [];
+		// web3js wallet proxy: signTransactions takes { transactions } of real
+		// web3.js Transaction / VersionedTransaction objects and returns
+		// deserialized signed transaction objects — no manual serialization.
+		let signed = [];
 		await transact(async (wallet) => {
 			const reauth = await wallet.reauthorize({
 				auth_token: this.#authToken,
 				identity: APP_IDENTITY,
 			});
 			this.#applyAuthResult(reauth);
-			const out = await wallet.signTransactions({ payloads: serialized });
-			signedBase64 = Array.isArray(out?.signed_payloads) ? out.signed_payloads : [];
+			signed = await wallet.signTransactions({ transactions });
 		});
-		if (signedBase64.length !== transactions.length) {
+		if (!Array.isArray(signed) || signed.length !== transactions.length) {
 			throw new Error('MWA returned mismatched signed transaction count');
 		}
-		return transactions.map((tx, i) => {
-			const bytes = base64ToBytes(signedBase64[i]);
-			return rehydrateTransaction(tx, bytes);
-		});
+		return signed;
 	}
 
 	/**
@@ -286,6 +280,8 @@ export class MwaWallet {
 	async signAndSendTransaction(transaction, { minContextSlot } = {}) {
 		await this.#ensureConnected();
 		const transact = await loadTransact();
+		// web3js wallet proxy: signAndSendTransactions takes { transactions }
+		// and returns base58 signature strings (Phantom-compatible).
 		let signature = null;
 		await transact(async (wallet) => {
 			const reauth = await wallet.reauthorize({
@@ -293,12 +289,11 @@ export class MwaWallet {
 				identity: APP_IDENTITY,
 			});
 			this.#applyAuthResult(reauth);
-			const bytes = transaction.serialize({ requireAllSignatures: false, verifySignatures: false });
-			const out = await wallet.signAndSendTransactions({
-				payloads: [bytesToBase64(bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes))],
-				options: minContextSlot ? { min_context_slot: minContextSlot } : undefined,
+			const signatures = await wallet.signAndSendTransactions({
+				transactions: [transaction],
+				...(minContextSlot ? { minContextSlot } : null),
 			});
-			const first = Array.isArray(out?.signatures) ? out.signatures[0] : null;
+			const first = Array.isArray(signatures) ? signatures[0] : null;
 			if (typeof first !== 'string') throw new Error('MWA returned no signature');
 			signature = first;
 		});
@@ -355,18 +350,3 @@ function decodeAccountAddress(rawAddress) {
 	return addressFromBase64(rawAddress);
 }
 
-function rehydrateTransaction(template, signedBytes) {
-	// VersionedTransaction.deserialize lives on the same web3.js entry the
-	// caller already imported. We deliberately avoid importing
-	// VersionedTransaction here to keep the public surface narrow — instead
-	// we let the caller hand us back a constructed transaction and we copy
-	// the signatures into it.
-	const ctor = template?.constructor;
-	if (ctor && typeof ctor.deserialize === 'function') {
-		return ctor.deserialize(signedBytes);
-	}
-	if (ctor && typeof ctor.from === 'function') {
-		return ctor.from(signedBytes);
-	}
-	throw new Error('Cannot rehydrate transaction: unknown constructor');
-}

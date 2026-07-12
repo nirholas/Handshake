@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-07-12T03:20:50.207Z",
+	"generated_at": "2026-07-12T03:47:51.388Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-12",
+			"type": "launch",
+			"title": "Docs · The autonomous economy",
+			"summary": "How the three.ws on-chain treasury funds itself and where every dollar flows: the funding-root and engine wallets, the topup/sweepback loop, the allowlist- and destination-locks that keep money inside platform-owned wallets, and the two leak scanners that audit every signer wallet on-chain every minute — plus how to verify there's no leak yourself.",
+			"link": "/docs/autonomous-economy",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-07-12",
 			"type": "update",
@@ -31,10 +41,44 @@
 		{
 			"date": "2026-07-12",
 			"type": "update",
+			"title": "AI features can no longer go down when one provider does",
+			"summary": "Every AI-powered feature on three.ws (fact checks, agent chat, persona extraction, scene composing) routes through one shared brain that tries free providers first and falls back automatically. That chain just got much deeper: Groq now has a second lane with its own separate quota, OpenRouter gets a zero-credit free lane so an empty account no longer kills it, optional Cerebras and Google AI Studio lanes activate the moment a key is added, and — the anchor — Gemini on the platform's own Google Cloud now backs the whole chain with no third-party quota to exhaust. Previously a rare bad hour where every free tier was exhausted at once could surface an error; now the request rides through. The fact-checker was also corrected to stop favoring a paid key ahead of the free lanes.",
+			"link": "/changelog",
+			"tags": [
+				"improvement",
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "update",
 			"title": "Oversized x402 payment headers fixed",
 			"summary": "Three paid endpoints (vanity, pump launch, agent reputation) mirrored their entire payment challenge — schemas, signed offers and all — into a single HTTP header that grew past 16 KB, the point where proxies and many clients drop or fail to parse the response. The header mirror is now capped at 8 KB: it slims down or steps aside when the challenge is large, while the response body always carries the complete challenge. Payment tooling that reads only headers still gets everything it needs to pay.",
 			"link": null,
 			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "update",
+			"title": "Seeker wallet signing fixed before it ever shipped",
+			"summary": "Automated testing of the Solana Seeker app in an Android emulator against Solana Mobile's reference wallet caught four bugs in our Mobile Wallet Adapter integration: the app icon was sent in a format the wallet spec rejects, and message signing, transaction signing, and send-transaction all read the wallet's response in the wrong shape. All four are fixed — wallet connect was verified end to end, returning a real public key through the on-device signing flow.",
+			"link": null,
+			"tags": [
+				"fix",
+				"security"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "update",
+			"title": "The autonomous coin launcher learned taste",
+			"summary": "The Memetic Launcher's picks got a full quality overhaul. Its cultural radar was half-blind — the pump.fun intel feed was silenced by a miscalibrated quality bar and generic sector words like 'meme' drowned out actual memes — so most picks fell back to random word-salad names. Now the radar reads live meme culture properly (Know Your Meme, Google Trends, Hacker News, Wikipedia attention, and pump.fun's own breakout data), each launch rides a specific rising narrative, the launcher remembers its recent picks so it never re-mints the same joke, coin descriptions are no longer cut off mid-sentence, and a quality gate refuses to spend real SOL on a filler pick when no genuine signal exists. Launch previews in the user launcher now refresh hourly instead of every minute.",
+			"link": "/launcher",
+			"tags": [
+				"improvement",
 				"fix"
 			]
 		},

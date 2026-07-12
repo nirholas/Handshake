@@ -10,10 +10,13 @@ import { llmComplete } from '../../../api/_lib/llm.js';
 const TIMEOUT_MS = 30_000;
 
 async function callLlm(prompt, maxTokens = 1024) {
+	// No anthropicKey here: passing the SERVER's ANTHROPIC_API_KEY would be
+	// treated as caller BYOK and jump a paid (and routinely dead) key to the
+	// FRONT of the chain, ahead of the free providers. llm.js already appends
+	// the server Anthropic key as a tail backstop on its own.
 	const { text, usage } = await llmComplete({
 		user: prompt,
 		maxTokens,
-		anthropicKey: process.env.ANTHROPIC_API_KEY,
 		timeoutMs: TIMEOUT_MS,
 	});
 	return { text, inputTokens: usage?.input || 0, outputTokens: usage?.output || 0 };

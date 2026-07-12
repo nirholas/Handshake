@@ -2,11 +2,19 @@
 //
 // Policy (do not re-implement per endpoint — that is how this drifted before):
 //
-//   • FREE PROVIDERS FIRST, ALWAYS. Groq, OpenRouter, and NVIDIA NIM are
-//     platform-funded free tiers — the server holds those keys and callers use
-//     them at zero marginal cost. They form the default chain, tried in order,
-//     and every flow must survive on them alone: the paid keys in prod are
+//   • FREE PROVIDERS FIRST, ALWAYS. Groq, Cerebras, OpenRouter (paid model,
+//     then the :free variant on the same key), Gemini AI Studio, and NVIDIA
+//     NIM are platform-funded free tiers — the server holds those keys and
+//     callers use them at zero marginal cost. They form the default chain,
+//     tried in order, 70B-class models before any capability step-down, and
+//     every flow must survive on them alone: the paid keys in prod are
 //     routinely invalid or out of quota, so a chain that depends on them fails.
+//
+//   • VERTEX GEMINI IS THE RELIABILITY ANCHOR. When GOOGLE_CLOUD_PROJECT is
+//     set (every Cloud Run deploy), Gemini Flash-Lite on Vertex — service
+//     account auth, GCP-credit billing, no third-party quota — sits between
+//     the free tiers and the paid tail, so exhausting every free quota at
+//     once still cannot produce an error.
 //
 //   • Paid server keys are the LAST-RESORT tier, automatically. When
 //     ANTHROPIC_API_KEY or OPENAI_API_KEY is configured, those providers are
@@ -35,7 +43,19 @@ import {
 } from './vertex-claude.js';
 
 const GROQ_MODEL = 'llama-3.3-70b-versatile';
+// Second Groq rung on a different model: Groq free-tier quotas are PER MODEL,
+// so when the 70B lane is exhausted the instant lane usually still has budget.
+// Smaller model, so it sits at the END of the free section — every 70B-class
+// provider gets tried before the chain steps down in capability.
+const GROQ_INSTANT_MODEL = 'llama-3.1-8b-instant';
+// Same Llama 3.3 70B on Cerebras' free tier (cloud.cerebras.ai) — optional
+// rung, active when CEREBRAS_API_KEY is configured.
+const CEREBRAS_MODEL = 'llama-3.3-70b';
 const OPENROUTER_MODEL = 'meta-llama/llama-3.3-70b-instruct';
+// Gemini Flash-Lite: the AI Studio free tier (GEMINI_API_KEY) and the Vertex
+// lane (GCP service account, billed to platform credits) run the same model.
+const GEMINI_MODEL = 'gemini-2.5-flash-lite';
+const VERTEX_GEMINI_MODEL = 'google/gemini-2.5-flash-lite';
 // Same Llama 3.3 70B family on NVIDIA NIM (build.nvidia.com) — one free nvapi
 // key, OpenAI-compatible, so the chain degrades across providers without
 // changing model behavior.
@@ -76,7 +96,9 @@ export async function checkUserLlmSpendCap(userId, { anthropicKey } = {}) {
 			FROM usage_events
 			WHERE user_id = ${userId}
 				AND kind = 'llm'
-				AND provider NOT IN ('groq', 'openrouter', 'nvidia')
+				AND provider NOT LIKE 'groq%'
+				AND provider NOT LIKE 'openrouter%'
+				AND provider NOT IN ('nvidia', 'cerebras', 'gemini')
 				AND created_at > NOW() - INTERVAL '24 hours'
 		`;
 		const spent = Number(row?.spent ?? 0);
@@ -145,6 +167,37 @@ function vertexAnthropicProvider(model) {
 	};
 }
 
+// Gemini on Vertex AI through its OpenAI-compatible endpoint, authenticated
+// with the GCP service account (no API key) and billed to platform credits.
+// Unlike Vertex Claude this needs no Model Garden acceptance — Gemini is
+// first-party on Vertex, so any deployment with GOOGLE_CLOUD_PROJECT and
+// aiplatform access (the Cloud Run SA already drives the image lane) can use
+// it. That makes this the chain's most reliable rung: it survives every
+// third-party free-tier quota reset cycle. Token-exchange failures throw in
+// getHeaders and fall through the chain like any other provider error.
+function vertexGeminiProvider() {
+	const project = process.env.GOOGLE_CLOUD_PROJECT;
+	const location = process.env.GOOGLE_CLOUD_LOCATION_GEMINI || 'global';
+	const host =
+		location === 'global' ? 'aiplatform.googleapis.com' : `${location}-aiplatform.googleapis.com`;
+	return {
+		name: 'vertex-gemini',
+		model: VERTEX_GEMINI_MODEL,
+		url: `https://${host}/v1beta1/projects/${project}/locations/${location}/endpoints/openapi/chat/completions`,
+		getHeaders: vertexRequestHeaders,
+		buildBody: (system, user, maxTokens) => ({
+			model: VERTEX_GEMINI_MODEL,
+			max_tokens: maxTokens,
+			messages: [
+				...(system ? [{ role: 'system', content: system }] : []),
+				{ role: 'user', content: user },
+			],
+		}),
+		extractText: (r) => r.choices?.[0]?.message?.content || '',
+		extractUsage: (r) => ({ input: r.usage?.prompt_tokens ?? 0, output: r.usage?.completion_tokens ?? 0 }),
+	};
+}
+
 function openaiCompatProvider({ name, key, url, model, extraHeaders = {} }) {
 	return {
 		name,
@@ -210,10 +263,23 @@ export function providerChain({ anthropicKey, anthropicModel, preferNvidia = fal
 			model: GROQ_MODEL,
 		}));
 	}
+	// Same 70B family on Cerebras' free tier — a distinct quota pool from Groq,
+	// so one provider's daily cap doesn't take the whole 70B class down.
+	if (env.CEREBRAS_API_KEY) {
+		chain.push(openaiCompatProvider({
+			name: 'cerebras',
+			key: env.CEREBRAS_API_KEY,
+			url: 'https://api.cerebras.ai/v1/chat/completions',
+			model: CEREBRAS_MODEL,
+		}));
+	}
 	// One provider entry per OpenRouter key: when the primary account runs out
 	// of credits (402) or hits a rate limit, the next key takes over. Fallback
 	// keys are typically unfunded free-tier accounts, so they get the model's
-	// :free variant — the paid model would 402 on them unconditionally.
+	// :free variant — the paid model would 402 on them unconditionally. The
+	// primary key ALSO gets a :free rung right behind its paid rung: an
+	// out-of-credits primary account (the July 2026 prod state) can still serve
+	// the :free variant, so exhausted credits cost one fast 402, not the lane.
 	const openrouterKeys = [...new Set([env.OPENROUTER_API_KEY, ...env.OPENROUTER_FALLBACK_KEYS].filter(Boolean))];
 	openrouterKeys.forEach((key, i) => {
 		chain.push(openaiCompatProvider({
@@ -223,6 +289,15 @@ export function providerChain({ anthropicKey, anthropicModel, preferNvidia = fal
 			model: i === 0 ? OPENROUTER_MODEL : `${OPENROUTER_MODEL}:free`,
 			extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws' },
 		}));
+		if (i === 0) {
+			chain.push(openaiCompatProvider({
+				name: 'openrouter:free',
+				key,
+				url: 'https://openrouter.ai/api/v1/chat/completions',
+				model: `${OPENROUTER_MODEL}:free`,
+				extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws' },
+			}));
+		}
 	});
 	if (env.NVIDIA_API_KEY) {
 		chain.push(openaiCompatProvider({
@@ -230,6 +305,33 @@ export function providerChain({ anthropicKey, anthropicModel, preferNvidia = fal
 			key: env.NVIDIA_API_KEY,
 			url: 'https://integrate.api.nvidia.com/v1/chat/completions',
 			model: NVIDIA_MODEL,
+		}));
+	}
+	// Gemini Flash-Lite, twice: the AI Studio free tier when a key is
+	// configured, then the Vertex lane on the GCP service account (billed to
+	// platform credits — effectively free while the credit grant runs, and the
+	// only rung with no third-party quota to exhaust). Both sit after the
+	// 70B-class free rungs and before the capability step-down below.
+	if (env.GEMINI_API_KEY) {
+		chain.push(openaiCompatProvider({
+			name: 'gemini',
+			key: env.GEMINI_API_KEY,
+			url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+			model: GEMINI_MODEL,
+		}));
+	}
+	if (process.env.GOOGLE_CLOUD_PROJECT) {
+		chain.push(vertexGeminiProvider());
+	}
+	// Last free rung: Groq's instant lane. Smaller model (a capability
+	// step-down), but its per-model quota is separate from the 70B lane and it
+	// still beats erroring out or landing on a dead paid key.
+	if (env.GROQ_API_KEY) {
+		chain.push(openaiCompatProvider({
+			name: 'groq#instant',
+			key: env.GROQ_API_KEY,
+			url: 'https://api.groq.com/openai/v1/chat/completions',
+			model: GROQ_INSTANT_MODEL,
 		}));
 	}
 	// VERTEX_CLAUDE_ENABLED (without PRIMARY): Vertex Claude is a paid-tier

@@ -1828,6 +1828,14 @@
 					"added": "2026-07-07"
 				},
 				{
+					"path": "/docs/autonomous-economy",
+					"title": "Docs · The autonomous economy",
+					"description": "How the three.ws on-chain treasury funds itself and where every dollar flows: the funding-root and engine wallets, the topup/sweepback loop, the allowlist- and destination-locks that keep money inside platform-owned wallets, and the two leak scanners that audit every signer wallet on-chain every minute — plus how to verify there's no leak yourself.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-07-12"
+				},
+				{
 					"path": "/docs/walk",
 					"title": "Docs · Walk Avatar",
 					"description": "Developer and user documentation for the three.ws walking-avatar system: the /walk page, iframe embeds, the JavaScript SDK, the postMessage event contract, companion mode, analytics, and the Chrome extension.",

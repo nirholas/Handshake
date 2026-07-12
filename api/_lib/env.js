@@ -514,6 +514,21 @@ export const env = {
 		return opt('GROQ_API_KEY');
 	},
 
+	// Cerebras API key (cloud.cerebras.ai) — free-tier OpenAI-compatible Llama
+	// 3.3 70B inference, extremely fast. Optional rung in the shared LLM chain
+	// (api/_lib/llm.js); when unset the chain simply skips it.
+	get CEREBRAS_API_KEY() {
+		return opt('CEREBRAS_API_KEY');
+	},
+
+	// Google AI Studio key (aistudio.google.com) — free-tier Gemini via its
+	// OpenAI-compatible endpoint. Optional rung in the shared LLM chain;
+	// distinct from the Vertex Gemini lane, which authenticates with the GCP
+	// service account and needs no key here.
+	get GEMINI_API_KEY() {
+		return opt('GEMINI_API_KEY');
+	},
+
 	// NVIDIA NIM API key (build.nvidia.com) — free OpenAI-compatible inference for
 	// 100+ hosted models (Nemotron, DeepSeek, Kimi, GLM, Llama 4, Qwen). Used by
 	// brain/chat as selectable native providers and by the embed we-pay proxy
