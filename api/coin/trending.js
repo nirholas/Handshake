@@ -97,11 +97,71 @@ function shape(raw) {
 	return { coins, categories, nfts };
 }
 
+// Fallback trending signal when CoinGecko /search/trending is down. CoinGecko's
+// list is search-interest across all chains; the only FREE, keyless equivalent
+// is GeckoTerminal's on-chain trending — a different signal (pool activity, not
+// searches). We scope it to Solana so every token's address is a mint the
+// /coin/:id detail page can resolve (link integrity), and map the included
+// base-token metadata into the same coin shape the page renders. Categories and
+// NFTs have no on-chain analogue, so they come back empty (the page hides empty
+// sections) — a populated coins list beats a blank trending page during an
+// upstream outage. The `source` marker lets the client badge the degraded feed.
+async function trendingFromGeckoTerminal() {
+	const resp = await fetch(
+		'https://api.geckoterminal.com/api/v2/networks/solana/trending_pools?include=base_token&page=1',
+		{ headers: { accept: 'application/json' }, signal: AbortSignal.timeout(8000) },
+	);
+	if (!resp.ok) throw new Error(`geckoterminal ${resp.status}`);
+	const d = await resp.json();
+	const included = new Map((Array.isArray(d?.included) ? d.included : []).map((i) => [i.id, i.attributes || {}]));
+	const seen = new Set();
+	const coins = [];
+	for (const p of Array.isArray(d?.data) ? d.data : []) {
+		const a = p?.attributes || {};
+		const tok = included.get(p?.relationships?.base_token?.data?.id) || {};
+		const mint = str(tok.address);
+		// Dedup: one token can head several trending pools; keep its first (deepest).
+		if (!mint || !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(mint) || seen.has(mint)) continue;
+		seen.add(mint);
+		const img = str(tok.image_url);
+		coins.push({
+			id: mint, // base58 mint → /coin/:id resolves it via the contract lookup
+			name: str(tok.name) || str(tok.symbol) || mint,
+			symbol: str(tok.symbol)?.toUpperCase() ?? null,
+			image: img && /^https?:\/\//i.test(img) ? img : null,
+			rank: null,
+			score: coins.length, // trending position (0 = hottest)
+			// GeckoTerminal returns every numeric attribute as a string — coerce.
+			// Prefer market cap, fall back to FDV; a missing value coerces to 0, so
+			// null it out (0 means "unknown" here, not a real $0 cap).
+			price_usd: num(Number(a.base_token_price_usd)),
+			change_24h_pct: num(Number(a.price_change_percentage?.h24)),
+			market_cap_usd: num(Number(a.market_cap_usd ?? a.fdv_usd)) || null,
+			volume_24h_usd: num(Number(a.volume_usd?.h24)) || null,
+			sparkline_url: null,
+		});
+		if (coins.length >= 15) break;
+	}
+	if (!coins.length) throw new Error('geckoterminal: no trending tokens');
+	return { coins, categories: [], nfts: [], source: 'geckoterminal' };
+}
+
 // Exported for the paid Market Data API (api/_lib/market-data/) — the x402
 // market-trending endpoint sells the same trending lists this page renders.
 export async function buildTrending() {
-	const raw = await geckoFetch('/search/trending', { ttlMs: 120_000, timeoutMs: 10_000 });
-	return shape(raw);
+	try {
+		const raw = await geckoFetch('/search/trending', { ttlMs: 120_000, timeoutMs: 10_000 });
+		return { ...shape(raw), source: 'coingecko' };
+	} catch (err) {
+		// CoinGecko down/rate-limited — fall back to on-chain trending rather than
+		// blanking the page. If that's also down, surface the original error so the
+		// handler renders its designed "retry shortly" state.
+		try {
+			return await trendingFromGeckoTerminal();
+		} catch {
+			throw err;
+		}
+	}
 }
 
 export default wrap(async (req, res) => {

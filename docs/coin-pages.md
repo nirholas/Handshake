@@ -98,10 +98,16 @@ through the shared [`failover-fetch`](../src/shared/failover-fetch.js) primitive
   Coinbase, DefiLlama, DIA, Bitfinex) and four browser-side, CORS-safe ones.
 - **Solana token panels** — Birdeye → DexScreener → GeckoTerminal → DefiLlama
   (see [`api/_lib/market/token-market.js`](../api/_lib/market/token-market.js)).
+- **Trending** (`/api/coin/trending`) — CoinGecko `/search/trending` → GeckoTerminal
+  on-chain trending. CoinGecko ranks by search interest across all chains; the
+  free fallback ranks by on-chain pool activity, scoped to Solana so every
+  token's mint resolves on the `/coin/:id` detail page. It's a different signal
+  (the response carries a `source` marker so the client can badge it) and only
+  fills the coins list — categories and NFTs have no on-chain analogue and come
+  back empty, which the page hides. A populated list still beats a blank page.
 
 Every fallback is free and keyless (Binance is excluded — it geo-blocks US
-datacenter IPs). `/trending` stays CoinGecko-only by nature: "most-searched on
-CoinGecko" has no free equivalent elsewhere.
+datacenter IPs).
 
 ## The market tools
 

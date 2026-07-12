@@ -1043,203 +1043,203 @@ export default wrap(async (req, res) => {
 							note: 'Per-call price is set per skill; the live 402 challenge reflects the exact skill price.',
 						},
 					},
-					'/api/x402/agent-bouncer': {
-						get: {
-							operationId: 'x402_agent_bouncer',
-							summary: 'Paid: Admit/refuse a counterparty agent at the door',
-							description:
-								"Pay $0.01 USDC to run the Pole Club door check against a three.ws agent's Solana reputation: confirmed on-chain payments, distinct payers, failure rate, distribute/buyback follow-through, signed attestations, and Club ban/tip ledger. Returns an admit/refuse verdict with a door tier (newcomer / regular / trusted / vip). Vet before you pay, hire, or delegate.",
-							parameters: [
-								{
-									name: 'agent_id',
-									in: 'query',
-									required: true,
-									schema: { type: 'string', format: 'uuid' },
-								},
-								{
-									name: 'min_payments',
-									in: 'query',
-									required: false,
-									schema: { type: 'integer' },
-								},
-								{
-									name: 'min_distinct_payers',
-									in: 'query',
-									required: false,
-									schema: { type: 'integer' },
-								},
-								{
-									name: 'max_failure_rate',
-									in: 'query',
-									required: false,
-									schema: { type: 'number' },
-								},
-							],
-							responses: {
-								200: { description: 'Verdict JSON: admitted, tier, reasons, reputation' },
-								400: { description: 'Missing or invalid agent_id' },
-								402: { description: 'Payment Required (x402)' },
-								404: { description: 'agent_id not found' },
+				},
+				'/api/x402/agent-bouncer': {
+					get: {
+						operationId: 'x402_agent_bouncer',
+						summary: 'Paid: Admit/refuse a counterparty agent at the door',
+						description:
+							"Pay $0.01 USDC to run the Pole Club door check against a three.ws agent's Solana reputation: confirmed on-chain payments, distinct payers, failure rate, distribute/buyback follow-through, signed attestations, and Club ban/tip ledger. Returns an admit/refuse verdict with a door tier (newcomer / regular / trusted / vip). Vet before you pay, hire, or delegate.",
+						parameters: [
+							{
+								name: 'agent_id',
+								in: 'query',
+								required: true,
+								schema: { type: 'string', format: 'uuid' },
 							},
-							'x-payment-info': {
-								price: { mode: 'fixed', currency: 'USD', amount: '0.01' },
-								protocols: X402_PROTOCOLS,
-							},
-						},
-					},
-					'/api/x402/vanity-verifiable': {
-						get: {
-							operationId: 'x402_vanity_verifiable',
-							summary: 'Paid: Provably-fair Solana vanity keypair + signed receipt',
-							description:
-								'Grind a fresh Solana keypair whose Base58 address matches a chosen prefix/suffix, with a commit–reveal receipt signed by the service key (published at /.well-known/three-vanity.json) so the buyer can prove the key was ground fresh and never kept. Pass sealTo=<X25519 pubkey> to ECIES-seal the secret. Difficulty-tiered $0.02–$0.40; combined pattern ≤3 Base58 chars; settlement runs only after a successful grind.',
-							parameters: [
-								{
-									name: 'prefix',
-									in: 'query',
-									required: false,
-									schema: { type: 'string', maxLength: 3 },
-									description: 'Base58 prefix the address must start with (excludes 0,O,I,l).',
-								},
-								{
-									name: 'suffix',
-									in: 'query',
-									required: false,
-									schema: { type: 'string', maxLength: 3 },
-									description: 'Base58 suffix the address must end with. Combined with prefix ≤3.',
-								},
-								{
-									name: 'sealTo',
-									in: 'query',
-									required: false,
-									schema: { type: 'string' },
-									description:
-										'Recommended. Your X25519 public key; when set the secret is sealed to it and omitted from the response.',
-								},
-							],
-							responses: {
-								200: { description: 'Keypair + signed grind receipt JSON' },
-								400: { description: 'Missing prefix/suffix or pattern too long' },
-								402: { description: 'Payment Required (x402)' },
-							},
-							'x-payment-info': {
-								price: { mode: 'dynamic', currency: 'USD', min: '0.02', max: '0.40' },
-								protocols: X402_PROTOCOLS,
-								note: 'Difficulty-tiered by pattern length; the live 402 challenge quotes the exact price.',
-							},
-						},
-					},
-					'/api/x402/crypto-intel': {
-						post: {
-							operationId: 'x402_crypto_intel',
-							summary: 'Paid: Live crypto market signal (agent-to-agent intel)',
-							description:
-								'Pay $0.01 USDC per call for a live market signal (bullish / bearish / neutral) on a token with current price, 24h change, and a two-sentence rationale. Powered by CoinGecko live prices.',
-							requestBody: {
+							{
+								name: 'min_payments',
+								in: 'query',
 								required: false,
-								content: {
-									'application/json': {
-										schema: {
-											type: 'object',
-											properties: {
-												topic: {
-													type: 'string',
-													default: 'sol',
-													description: 'Token ticker or CoinGecko id: btc, sol, eth, doge, …',
-												},
+								schema: { type: 'integer' },
+							},
+							{
+								name: 'min_distinct_payers',
+								in: 'query',
+								required: false,
+								schema: { type: 'integer' },
+							},
+							{
+								name: 'max_failure_rate',
+								in: 'query',
+								required: false,
+								schema: { type: 'number' },
+							},
+						],
+						responses: {
+							200: { description: 'Verdict JSON: admitted, tier, reasons, reputation' },
+							400: { description: 'Missing or invalid agent_id' },
+							402: { description: 'Payment Required (x402)' },
+							404: { description: 'agent_id not found' },
+						},
+						'x-payment-info': {
+							price: { mode: 'fixed', currency: 'USD', amount: '0.01' },
+							protocols: X402_PROTOCOLS,
+						},
+					},
+				},
+				'/api/x402/vanity-verifiable': {
+					get: {
+						operationId: 'x402_vanity_verifiable',
+						summary: 'Paid: Provably-fair Solana vanity keypair + signed receipt',
+						description:
+							'Grind a fresh Solana keypair whose Base58 address matches a chosen prefix/suffix, with a commit–reveal receipt signed by the service key (published at /.well-known/three-vanity.json) so the buyer can prove the key was ground fresh and never kept. Pass sealTo=<X25519 pubkey> to ECIES-seal the secret. Difficulty-tiered $0.02–$0.40; combined pattern ≤3 Base58 chars; settlement runs only after a successful grind.',
+						parameters: [
+							{
+								name: 'prefix',
+								in: 'query',
+								required: false,
+								schema: { type: 'string', maxLength: 3 },
+								description: 'Base58 prefix the address must start with (excludes 0,O,I,l).',
+							},
+							{
+								name: 'suffix',
+								in: 'query',
+								required: false,
+								schema: { type: 'string', maxLength: 3 },
+								description: 'Base58 suffix the address must end with. Combined with prefix ≤3.',
+							},
+							{
+								name: 'sealTo',
+								in: 'query',
+								required: false,
+								schema: { type: 'string' },
+								description:
+									'Recommended. Your X25519 public key; when set the secret is sealed to it and omitted from the response.',
+							},
+						],
+						responses: {
+							200: { description: 'Keypair + signed grind receipt JSON' },
+							400: { description: 'Missing prefix/suffix or pattern too long' },
+							402: { description: 'Payment Required (x402)' },
+						},
+						'x-payment-info': {
+							price: { mode: 'dynamic', currency: 'USD', min: '0.02', max: '0.40' },
+							protocols: X402_PROTOCOLS,
+							note: 'Difficulty-tiered by pattern length; the live 402 challenge quotes the exact price.',
+						},
+					},
+				},
+				'/api/x402/crypto-intel': {
+					post: {
+						operationId: 'x402_crypto_intel',
+						summary: 'Paid: Live crypto market signal (agent-to-agent intel)',
+						description:
+							'Pay $0.01 USDC per call for a live market signal (bullish / bearish / neutral) on a token with current price, 24h change, and a two-sentence rationale. Powered by CoinGecko live prices.',
+						requestBody: {
+							required: false,
+							content: {
+								'application/json': {
+									schema: {
+										type: 'object',
+										properties: {
+											topic: {
+												type: 'string',
+												default: 'sol',
+												description: 'Token ticker or CoinGecko id: btc, sol, eth, doge, …',
 											},
 										},
 									},
 								},
 							},
-							responses: {
-								200: { description: 'Signal JSON: signal, price_usd, change_24h, rationale, confidence' },
-								402: { description: 'Payment Required (x402)' },
-							},
-							'x-payment-info': {
-								price: { mode: 'fixed', currency: 'USD', amount: '0.01' },
-								protocols: X402_PROTOCOLS,
-							},
+						},
+						responses: {
+							200: { description: 'Signal JSON: signal, price_usd, change_24h, rationale, confidence' },
+							402: { description: 'Payment Required (x402)' },
+						},
+						'x-payment-info': {
+							price: { mode: 'fixed', currency: 'USD', amount: '0.01' },
+							protocols: X402_PROTOCOLS,
 						},
 					},
-					'/api/x402/cosmetic-purchase': {
-						get: {
-							operationId: 'x402_cosmetic_purchase',
-							summary: 'Paid: Unlock a premium avatar cosmetic',
-							description:
-								'Pay once in USDC to unlock a premium avatar cosmetic (skin or emote) for an account, wearable across /play and /walk. Price varies by rarity ($0.25–$3.00). Wallets that already purchased re-confirm for free via SIWX (CAIP-122).',
-							parameters: [
-								{
-									name: 'id',
-									in: 'query',
-									required: true,
-									schema: { type: 'string', minLength: 1, maxLength: 64 },
-									description: 'Premium cosmetic id from /api/cosmetics/catalog.',
-								},
-								{
-									name: 'account',
-									in: 'query',
-									required: true,
-									schema: { type: 'string', minLength: 3, maxLength: 64 },
-									description: 'Solana wallet address or guest id (g_…) the cosmetic is granted to.',
-								},
-							],
-							responses: {
-								200: { description: 'Ownership grant JSON' },
-								400: { description: 'Missing or invalid id/account' },
-								402: { description: 'Payment Required (x402)' },
-								404: { description: 'Cosmetic not found' },
+				},
+				'/api/x402/cosmetic-purchase': {
+					get: {
+						operationId: 'x402_cosmetic_purchase',
+						summary: 'Paid: Unlock a premium avatar cosmetic',
+						description:
+							'Pay once in USDC to unlock a premium avatar cosmetic (skin or emote) for an account, wearable across /play and /walk. Price varies by rarity ($0.25–$3.00). Wallets that already purchased re-confirm for free via SIWX (CAIP-122).',
+						parameters: [
+							{
+								name: 'id',
+								in: 'query',
+								required: true,
+								schema: { type: 'string', minLength: 1, maxLength: 64 },
+								description: 'Premium cosmetic id from /api/cosmetics/catalog.',
 							},
-							'x-payment-info': {
-								price: { mode: 'dynamic', currency: 'USD', min: '0.25', max: '3.00' },
-								protocols: X402_PROTOCOLS,
-								note: 'Per-rarity pricing; the live 402 challenge quotes the exact price for the cosmetic.',
+							{
+								name: 'account',
+								in: 'query',
+								required: true,
+								schema: { type: 'string', minLength: 3, maxLength: 64 },
+								description: 'Solana wallet address or guest id (g_…) the cosmetic is granted to.',
 							},
+						],
+						responses: {
+							200: { description: 'Ownership grant JSON' },
+							400: { description: 'Missing or invalid id/account' },
+							402: { description: 'Payment Required (x402)' },
+							404: { description: 'Cosmetic not found' },
+						},
+						'x-payment-info': {
+							price: { mode: 'dynamic', currency: 'USD', min: '0.25', max: '3.00' },
+							protocols: X402_PROTOCOLS,
+							note: 'Per-rarity pricing; the live 402 challenge quotes the exact price for the cosmetic.',
 						},
 					},
-					'/api/x402/animation-download': {
-						get: {
-							operationId: 'x402_animation_download',
-							summary: 'Paid: Unlock a 3D avatar animation (GLB)',
-							description:
-								'Pay once in USDC to unlock a 3D avatar animation (GLB). Each animation has its own price; the response carries a short-lived presigned URL the client fetches directly. Wallets that already paid re-download for free via SIWX.',
-							parameters: [
-								{
-									name: 'id',
-									in: 'query',
-									required: true,
-									schema: { type: 'string', minLength: 1, maxLength: 128 },
-									description: 'Animation slug or UUID from the animations catalog.',
-								},
-							],
-							responses: {
-								200: { description: 'Presigned download URL JSON' },
-								400: { description: 'Missing or invalid id' },
-								402: { description: 'Payment Required (x402)' },
-								404: { description: 'Animation not found' },
+				},
+				'/api/x402/animation-download': {
+					get: {
+						operationId: 'x402_animation_download',
+						summary: 'Paid: Unlock a 3D avatar animation (GLB)',
+						description:
+							'Pay once in USDC to unlock a 3D avatar animation (GLB). Each animation has its own price; the response carries a short-lived presigned URL the client fetches directly. Wallets that already paid re-download for free via SIWX.',
+						parameters: [
+							{
+								name: 'id',
+								in: 'query',
+								required: true,
+								schema: { type: 'string', minLength: 1, maxLength: 128 },
+								description: 'Animation slug or UUID from the animations catalog.',
 							},
-							'x-payment-info': {
-								price: { mode: 'dynamic', currency: 'USD', min: '0.001', max: '10.00' },
-								protocols: X402_PROTOCOLS,
-								note: 'Per-animation pricing; the live 402 challenge quotes the exact price.',
-							},
+						],
+						responses: {
+							200: { description: 'Presigned download URL JSON' },
+							400: { description: 'Missing or invalid id' },
+							402: { description: 'Payment Required (x402)' },
+							404: { description: 'Animation not found' },
+						},
+						'x-payment-info': {
+							price: { mode: 'dynamic', currency: 'USD', min: '0.001', max: '10.00' },
+							protocols: X402_PROTOCOLS,
+							note: 'Per-animation pricing; the live 402 challenge quotes the exact price.',
 						},
 					},
-					'/api/x402/club-cover': {
-						get: {
-							operationId: 'x402_club_cover',
-							summary: 'Paid: Pole Club cover charge (24h entry token)',
-							description:
-								'Pay $0.01 USDC to access the three.ws Pole Club. Once payment settles the caller receives an entry token granting access to the live club scene for 24 hours.',
-							responses: {
-								200: { description: 'Entry token JSON with expiry' },
-								402: { description: 'Payment Required (x402)' },
-								403: { description: 'Caller is banned from the club' },
-							},
-							'x-payment-info': {
-								price: { mode: 'fixed', currency: 'USD', amount: '0.01' },
-								protocols: X402_PROTOCOLS,
-							},
+				},
+				'/api/x402/club-cover': {
+					get: {
+						operationId: 'x402_club_cover',
+						summary: 'Paid: Pole Club cover charge (24h entry token)',
+						description:
+							'Pay $0.01 USDC to access the three.ws Pole Club. Once payment settles the caller receives an entry token granting access to the live club scene for 24 hours.',
+						responses: {
+							200: { description: 'Entry token JSON with expiry' },
+							402: { description: 'Payment Required (x402)' },
+							403: { description: 'Caller is banned from the club' },
+						},
+						'x-payment-info': {
+							price: { mode: 'fixed', currency: 'USD', amount: '0.01' },
+							protocols: X402_PROTOCOLS,
 						},
 					},
 				},
