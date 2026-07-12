@@ -1211,7 +1211,12 @@ export class WalkRoom extends Room {
 		const id = zone ? zone.id : null;
 		if (id === profile._zone) return; // no transition
 		profile._zone = id;
-		if (id) this._questEvent(client, profile, { type: 'enter-zone', zone: id });
+		if (id) {
+			// Authoritative: was this session in the driver's seat of a vehicle at the
+			// moment it crossed the zone boundary? Never trusted from the client.
+			const inVehicle = !!this._vehicleDrivenBy(client.sessionId);
+			this._questEvent(client, profile, { type: 'enter-zone', zone: id, inVehicle });
+		}
 	}
 
 	// --- Quests, jobs & heists (W05) -------------------------------------------
@@ -1303,7 +1308,8 @@ export class WalkRoom extends Room {
 			client.send('notice', { kind: 'quest', text: 'There’s nothing to use here.' });
 			return;
 		}
-		this._questEvent(client, profile, { type: 'interact', zone: zone.id, action: zone.action });
+		const inVehicle = !!this._vehicleDrivenBy(client.sessionId);
+		this._questEvent(client, profile, { type: 'interact', zone: zone.id, action: zone.action, inVehicle });
 	}
 
 	// Feed one real gameplay event (a catch, a zone entry, an interact) into every
@@ -2138,6 +2144,11 @@ export class WalkRoom extends Room {
 			player.y = Math.max(0, Math.min(3, v.y + vehicleSpec(v.type).seat.y));
 			player.motion = 'idle';
 			player.tsServer = v.tsServer;
+			// The ordinary 'move' handler drives zone-entry detection, but a seated
+			// driver never sends 'move' — they stream 'vsync' instead. Without this, a
+			// vehicle-flagged goto objective could never be reached by driving through
+			// it. Check here too so cross-town delivery jobs actually progress.
+			this._checkZoneEntry(client);
 		}
 	}
 

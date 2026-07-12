@@ -128,6 +128,41 @@ export const MISSIONS = {
 		reward: { gold: 60, xp: { skill: 'fishing', amount: 40 } },
 	},
 
+	// — Vehicle deliveries: the actual "drive around, go on missions" loop. Both
+	//   legs are `goto` objectives flagged `vehicle: true`, so entering the depot
+	//   zone on foot doesn't count — you have to actually be behind the wheel
+	//   (validated server-side off the authoritative vehicle-driver map, never the
+	//   client). Depots sit at the four avenue vehicle spawns (vehicles.js
+	//   VEHICLE_SPAWNS), so a real car is always parked right where the job starts. —
+	'cross-town-delivery': {
+		id: 'cross-town-delivery',
+		title: 'Cross-Town Delivery',
+		giver: 'Dispatcher Vance',
+		summary: 'Take a car from the North Depot and run the rush order down to the South Depot.',
+		kind: 'job',
+		repeat: 'repeatable',
+		party: 1,
+		objectives: [
+			{ type: 'goto', zone: 'depot-north', vehicle: true, label: '🚗 Load the order — drive to the North Depot' },
+			{ type: 'goto', zone: 'depot-south', vehicle: true, label: '🚗 Drop it off — drive to the South Depot' },
+		],
+		reward: { gold: 220 },
+	},
+	'east-west-express': {
+		id: 'east-west-express',
+		title: 'East-West Express',
+		giver: 'Dispatcher Vance',
+		summary: 'Same job, other axis: East Depot to West Depot, full speed.',
+		kind: 'job',
+		repeat: 'repeatable',
+		party: 1,
+		objectives: [
+			{ type: 'goto', zone: 'depot-east', vehicle: true, label: '🚗 Load the order — drive to the East Depot' },
+			{ type: 'goto', zone: 'depot-west', vehicle: true, label: '🚗 Drop it off — drive to the West Depot' },
+		],
+		reward: { gold: 220 },
+	},
+
 	// — Co-op heist: the flagship multi-stage crew job. Stage 1 disables both alarm
 	//   terminals (either crew member can tap either terminal — SHARED progress);
 	//   the finale cracks the vault and only completes with the full crew assembled
@@ -404,11 +439,17 @@ export function objectiveMatches(obj, event) {
 		return event.type === 'collect' && event.item === obj.item;
 	}
 	if (obj.type === 'goto') {
-		return event.type === 'enter-zone' && event.zone === obj.zone;
+		if (event.type !== 'enter-zone' || event.zone !== obj.zone) return false;
+		// A `vehicle: true` goto is a driving leg — walking through the zone doesn't
+		// count, only crossing it in the driver's seat (event.inVehicle, set by the
+		// room from the authoritative vehicle-driver map).
+		if (obj.vehicle && !event.inVehicle) return false;
+		return true;
 	}
 	if (obj.type === 'interact') {
 		if (event.type !== 'interact') return false;
 		if (obj.action && event.action !== obj.action) return false;
+		if (obj.vehicle && !event.inVehicle) return false;
 		// A multi-zone objective (e.g. two terminals) matches any of its zones.
 		if (Array.isArray(obj.zones)) return obj.zones.includes(event.zone);
 		return !obj.zone || event.zone === obj.zone;

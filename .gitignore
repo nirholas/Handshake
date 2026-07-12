@@ -370,3 +370,4 @@ solana-mobile/build/
 *.keystore
 main.zip
 .x402-directory-credentials.json
+robinhood-chain-prompts.zip

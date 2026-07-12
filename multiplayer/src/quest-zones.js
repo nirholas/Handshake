@@ -27,6 +27,14 @@ export const QUEST_ZONES = [
 	{ id: 'dock-east', kind: 'interact', action: 'pickup', x: 34, z: 0, r: 3.0, label: 'East Dock', glyph: '📦' },
 	{ id: 'market-stall', kind: 'interact', action: 'dropoff', x: -16, z: -22, r: 3.0, label: 'Market Stall', glyph: '🏷️' },
 
+	// Vehicle depots: cross-town delivery jobs. Sit right on the avenue vehicle
+	// spawns (vehicles.js VEHICLE_SPAWNS) so a car is always parked at the start of
+	// the run; wide radius since you're arriving by car, not walking up to a mark.
+	{ id: 'depot-north', kind: 'goto', x: 6, z: -90, r: 8, label: 'North Depot', glyph: '🚚' },
+	{ id: 'depot-south', kind: 'goto', x: -6, z: 90, r: 8, label: 'South Depot', glyph: '🚚' },
+	{ id: 'depot-east', kind: 'goto', x: 90, z: 6, r: 8, label: 'East Depot', glyph: '🚚' },
+	{ id: 'depot-west', kind: 'goto', x: -90, z: -6, r: 8, label: 'West Depot', glyph: '🚚' },
+
 	// Vault heist district: two alarm terminals flanking the vault door.
 	{ id: 'vault-terminal-a', kind: 'interact', action: 'terminal', x: 50, z: 16, r: 2.8, label: 'Alarm Terminal A', glyph: '🖥️' },
 	{ id: 'vault-terminal-b', kind: 'interact', action: 'terminal', x: 50, z: -16, r: 2.8, label: 'Alarm Terminal B', glyph: '🖥️' },
