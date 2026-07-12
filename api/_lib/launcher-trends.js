@@ -245,21 +245,29 @@ async function cached(key, ttl, fn) {
 async function coinIntelSignals({ network, categories }) {
 	const out = [];
 	try {
+		// Gate on the venue's OBSERVED score distribution, not an absolute bar:
+		// pump.fun intel scores cluster in the single digits (24h avg ~7, p90 ~4,
+		// max ~45), so the old >= 55 threshold silenced this provider entirely.
+		// A modest junk floor + top-N by score keeps it live on quiet days and
+		// selective on hot ones.
 		const rows = await sql`
 			select category, tags, narrative, quality_score
 			from pump_coin_intel
 			where network = ${network}
 			  and first_seen_at > now() - interval '24 hours'
-			  and quality_score is not null and quality_score >= 55
+			  and quality_score is not null and quality_score >= 12
 			  ${categories?.length ? sql`and category = any(${categories})` : sql``}
 			order by quality_score desc nulls last
 			limit 60
 		`;
 		for (const r of rows) {
 			const q = Math.max(0.4, Math.min(1.4, Number(r.quality_score || 55) / 70));
+			// Categories are generic sector words ('meme', 'animal') repeated on most
+			// rows — useful direction, terrible coin themes. Emit them faint so the
+			// specific tags/narratives always outrank them.
 			if (r.category && r.category !== 'unknown') {
 				const n = normTerm(r.category);
-				if (n) out.push({ term: n.toLowerCase(), weight: q * 1.2, kind: 'category' });
+				if (n) out.push({ term: n.toLowerCase(), weight: q * 0.4, kind: 'category' });
 			}
 			if (Array.isArray(r.tags)) {
 				for (const t of r.tags.slice(0, 5)) {
@@ -536,12 +544,23 @@ export async function rankNarratives({ network = 'mainnet', sources, categories 
 
 	/** @type {Map<string, {term:string, score:number, sources:Set<string>, kind:string, kinds:Map<string,number>}>} */
 	const merged = new Map();
+	// A single source may emit the same term on many rows (60 intel rows all
+	// categorised 'meme'). Cap each source's total contribution per term so raw
+	// repetition inside one channel can't drown genuinely distinct narratives —
+	// cross-SOURCE agreement (the diversity boost below) is the signal, not
+	// within-source volume.
+	const PER_SOURCE_TERM_CAP = 2;
+	const contributed = new Map();
 	for (const { id, rows } of settled) {
 		const sw = SOURCE_WEIGHT[id] ?? 1;
 		for (const r of rows) {
 			const term = String(r.term || '').trim();
 			if (!term) continue;
-			const add = (Number(r.weight) || 0.6) * sw;
+			const ck = `${id} ${term}`;
+			const already = contributed.get(ck) || 0;
+			if (already >= PER_SOURCE_TERM_CAP) continue;
+			const add = Math.min((Number(r.weight) || 0.6) * sw, PER_SOURCE_TERM_CAP - already);
+			contributed.set(ck, already + add);
 			const cur = merged.get(term);
 			if (cur) {
 				cur.score += add;
@@ -568,9 +587,13 @@ export async function rankNarratives({ network = 'mainnet', sources, categories 
 			let kind = m.kind;
 			let best = -1;
 			for (const [k, w] of m.kinds) if (w > best) { best = w; kind = k; }
+			// Sector words ('meme', 'animal') are confirmed by every venue precisely
+			// because they're generic — damp them below any SPECIFIC narrative so the
+			// coiner rides "erling haaland running", never "animal".
+			const kindDamp = kind === 'category' ? 0.35 : 1;
 			return {
 				term: m.term,
-				score: Number((m.score * diversity).toFixed(3)),
+				score: Number((m.score * diversity * kindDamp).toFixed(3)),
 				sources: [...m.sources],
 				kind,
 			};

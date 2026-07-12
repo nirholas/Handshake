@@ -55,6 +55,15 @@ const FAIL_BREAK = 5;
 // skip (operator tops up the master), never a breaker trip.
 const MASTER_FEE_BUFFER_SOL = 0.01;
 
+// Floor on how often a dry_run scope re-picks. Each pick costs an LLM call and
+// launches nothing; at the old 60s cadence the dry-run scopes alone demanded
+// ~6× Groq's entire 100k-token/day free tier, starving the REAL launches into
+// wordlist fallback. Hourly previews cost ~1% of that. Also: how far back the
+// novelty guard remembers picks so the meme lane can't converge on one joke.
+const DRY_RUN_MIN_CADENCE_S = 3600;
+const NOVELTY_LOOKBACK_DAYS = 14;
+const NOVELTY_LIMIT = 60;
+
 // FUNDING MODEL PER SCOPE. Global: the platform master wallet tops the next agent
 // up per launch (launcher-funding.js). User: SELF-FUNDED — the user's own agent
 // wallet pays its launch (base cost + dev buy) from SOL the user deposited to it;
@@ -385,17 +394,28 @@ async function runScopeTick(cfg) {
 
 	const userFilter = cfg.scope === 'user' ? sql`and user_id = ${cfg.user_id}` : sql``;
 
-	// Cadence gate — only one launch attempt per target_cadence_seconds.
+	// Cadence gate — only one launch attempt per target_cadence_seconds. Two
+	// deliberate extras:
+	//   · dry_run cadence is floored: a preview scope re-picking every 60s burned
+	//     ~5.8k LLM calls/week on runs nobody launches, exhausting the free-LLM
+	//     quota the REAL picks need. 15 min keeps the preview fresh at ~1% of the
+	//     cost.
+	//   · quality-gate skips count as attempts: when the LLM lane is down, retrying
+	//     every tick is the same quota burn in a tighter loop — wait a cadence out.
+	const cadenceS = cfg.dry_run
+		? Math.max(cfg.target_cadence_seconds, DRY_RUN_MIN_CADENCE_S)
+		: cfg.target_cadence_seconds;
 	const [last] = await sql`
 		select created_at from launcher_runs
 		where scope = ${cfg.scope} ${userFilter}
-		  and status in ('dry_run', 'funded', 'launched', 'confirmed')
+		  and (status in ('dry_run', 'funded', 'launched', 'confirmed')
+		       or (status = 'skipped' and error like 'quality gate%'))
 		order by created_at desc limit 1
 	`;
 	if (last) {
 		const elapsed = (Date.now() - new Date(last.created_at).getTime()) / 1000;
-		if (elapsed < cfg.target_cadence_seconds) {
-			return { scope: cfg.scope, skipped: `cadence (${Math.round(elapsed)}s/${cfg.target_cadence_seconds}s)` };
+		if (elapsed < cadenceS) {
+			return { scope: cfg.scope, skipped: `cadence (${Math.round(elapsed)}s/${cadenceS}s)` };
 		}
 	}
 
@@ -427,12 +447,34 @@ async function runScopeTick(cfg) {
 	if (!agent) return { scope: cfg.scope, skipped: 'no eligible agent this tick' };
 
 	// Decide WHAT to launch — narrative-driven (launcher-trends via pickSource).
+	// The recent pick history rides along so the LLM can't re-mint an identity
+	// it already used (the KEKWZ-189-times failure mode).
+	const recentPicks = await sql`
+		select symbol, name from launcher_runs
+		where created_at > now() - make_interval(days => ${NOVELTY_LOOKBACK_DAYS})
+		  and symbol is not null
+		group by symbol, name
+		order by max(created_at) desc
+		limit ${NOVELTY_LIMIT}
+	`;
 	const coin = await pickSource({
 		mode: cfg.mode,
 		network: cfg.network,
 		categories: Array.isArray(cfg.categories) ? cfg.categories : [],
 		sources: Array.isArray(cfg.sources) ? cfg.sources : undefined,
+		avoid: recentPicks,
 	});
+
+	// Quality gate for LIVE scopes: a degraded pick means the LLM lane failed and
+	// pickSource fell back to wordlist filler. Dry runs may record it (it shows
+	// the operator the lane is degraded), but real SOL never mints "Neon Walrus" —
+	// unless the operator explicitly chose mode 'random'.
+	if (!cfg.dry_run && cfg.mode !== 'random' && (coin.degraded || coin.kind === 'random')) {
+		const reason = `quality gate: ${coin.degraded || 'random filler'} — no narrative-backed pick this tick`;
+		const gateRunId = await insertRun(cfg, coin, agent);
+		await setRun(gateRunId, { status: 'skipped', error: reason });
+		return { scope: cfg.scope, skipped: reason };
+	}
 
 	const runId = await insertRun(cfg, coin, agent);
 

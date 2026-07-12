@@ -58,6 +58,7 @@ vi.mock('../api/_lib/avatar-wallet.js', () => ({
 
 import { runLauncherTick } from '../api/_lib/launcher-engine.js';
 import { fundAgentForLaunch } from '../api/_lib/launcher-funding.js';
+import { pickSource } from '../api/_lib/launcher-sources.js';
 
 function makeConfig(over = {}) {
 	return {
@@ -108,6 +109,31 @@ describe('runLauncherTick — dry run', () => {
 		expect(r.name).toBe('Turbo Otter');
 		expect(r.symbol).toBe('TURBOTTR');
 		expect(fundAgentForLaunch).not.toHaveBeenCalled(); // the safety contract
+	});
+
+	it('floors the dry_run cadence so previews cannot burn an LLM call per minute', async () => {
+		H.configs = [makeConfig({ dry_run: true, target_cadence_seconds: 60 })];
+		// Last dry run 5 minutes ago: past the configured 60s, inside the 900s floor.
+		H.lastRun = [{ created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString() }];
+		const out = await runLauncherTick();
+		expect(out.results[0].skipped).toMatch(/cadence/);
+		expect(pickSource).not.toHaveBeenCalled();
+	});
+
+	it('does not floor the cadence for live scopes', async () => {
+		H.configs = [makeConfig({ dry_run: false, target_cadence_seconds: 60 })];
+		H.lastRun = [{ created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString() }];
+		const fetchMock = vi.fn(async (url) => {
+			const u = String(url);
+			if (u.includes('action=build-metadata')) return { status: 200, json: async () => ({ metadata_url: 'ipfs://meta' }) };
+			if (u.includes('action=launch-agent')) return { status: 200, json: async () => ({ mint: 'MINTlive', signature: 'sig' }) };
+			return { status: 404, json: async () => ({}) };
+		});
+		vi.stubGlobal('fetch', fetchMock);
+
+		const out = await runLauncherTick();
+		expect(out.results[0].mint).toBe('MINTlive'); // 5 min > 60s cadence ⇒ proceeds
+		vi.unstubAllGlobals();
 	});
 });
 
@@ -167,6 +193,40 @@ describe('runLauncherTick — live', () => {
 		expect(bodies.meta.twitter).toBe('https://x.com/nova_agent');
 		expect(bodies.meta.website).toBe('https://nova.example');
 		expect(bodies.meta).not.toHaveProperty('telegram');
+
+		vi.unstubAllGlobals();
+	});
+
+	it('refuses to spend on a degraded (filler) pick in live non-random mode', async () => {
+		H.configs = [makeConfig({ dry_run: false, mode: 'hybrid' })];
+		pickSource.mockResolvedValueOnce({
+			kind: 'random', name: 'Neon Walrus', symbol: 'NEONWALR',
+			description: 'filler', trigger_source: 'random', trigger_detail: {},
+			degraded: 'llm_error',
+		});
+		const fetchMock = vi.fn();
+		vi.stubGlobal('fetch', fetchMock);
+
+		const out = await runLauncherTick();
+		expect(out.results[0].skipped).toMatch(/quality gate/);
+		expect(fundAgentForLaunch).not.toHaveBeenCalled();
+		expect(fetchMock).not.toHaveBeenCalled();
+
+		vi.unstubAllGlobals();
+	});
+
+	it('still launches wordlist coins when the operator explicitly chose mode random', async () => {
+		H.configs = [makeConfig({ dry_run: false, mode: 'random' })];
+		const fetchMock = vi.fn(async (url) => {
+			const u = String(url);
+			if (u.includes('action=build-metadata')) return { status: 200, json: async () => ({ metadata_url: 'ipfs://meta' }) };
+			if (u.includes('action=launch-agent')) return { status: 200, json: async () => ({ mint: 'MINTrand', signature: 'sig' }) };
+			return { status: 404, json: async () => ({}) };
+		});
+		vi.stubGlobal('fetch', fetchMock);
+
+		const out = await runLauncherTick();
+		expect(out.results[0].mint).toBe('MINTrand');
 
 		vi.unstubAllGlobals();
 	});

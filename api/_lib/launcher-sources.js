@@ -115,7 +115,8 @@ const SYNTH_SYSTEM =
 	'(1) Never copy, reference, or imitate the name or ticker of any existing real ' +
 	'cryptocurrency or token — riff on the CULTURE, invent a fresh identity. ' +
 	'(2) name ≤ 32 chars; symbol 3-8 uppercase letters/digits, no spaces, instantly ' +
-	'readable and tickerable. (3) Playful, internet-native, culturally sharp — never ' +
+	'readable and tickerable, and an OBVIOUS contraction of the name (a trader who ' +
+	'sees only the ticker should guess the name). (3) Playful, internet-native, culturally sharp — never ' +
 	'offensive, hateful, or referencing real tragedies/victims. ' +
 	'(4) The description is one punchy line that makes the meme legible at a glance. ' +
 	'Respond with STRICT JSON only: {"name":"","symbol":"","description":""}.';
@@ -127,23 +128,48 @@ function parseCoinJson(text) {
 	try {
 		const o = JSON.parse(m[0]);
 		if (!o || typeof o !== 'object' || !o.name || !o.symbol) return null;
+		// Descriptions get their own hygiene — sanitizeName caps at the 32-char
+		// pump.fun NAME limit and was truncating every description mid-word.
+		const description = String(o.description || '').replace(/\s+/g, ' ').trim().slice(0, 180);
 		return {
 			name: sanitizeName(o.name),
 			symbol: sanitizeSymbol(o.symbol),
-			description: sanitizeName(String(o.description || '')).slice(0, 180) || `${sanitizeName(o.name)} on three.ws`,
+			description: description || `${sanitizeName(o.name)} on three.ws`,
 		};
 	} catch {
 		return null;
 	}
 }
 
+// Normalise a name/symbol for repeat detection: case- and punctuation-blind.
+function noveltyKey(s) {
+	return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+/**
+ * True when the coin repeats an identity in the avoid list (same symbol or same
+ * normalised name). This is what stopped the meme lane re-minting "KEKWZ" 189
+ * times in a week: without memory of its own picks the model converges on the
+ * same joke every tick.
+ * @param {{name:string, symbol:string}} coin
+ * @param {Array<{name?:string, symbol?:string}>} avoid
+ */
+export function isRepeatPick(coin, avoid = []) {
+	if (!avoid.length) return false;
+	const sym = noveltyKey(coin.symbol);
+	const name = noveltyKey(coin.name);
+	return avoid.some((a) => (a.symbol && noveltyKey(a.symbol) === sym) || (a.name && noveltyKey(a.name) === name));
+}
+
 /**
  * Ask the LLM to coin an original token, riding the ranked live narratives when
- * supplied. Degrades to randomCoin() on any LLM failure — never throws, never
- * blocks a tick.
- * @param {{narratives?:Array<{term:string,score:number,sources:string[],kind:string}>, themes?:string[], flavor?:'trend'|'meme', triggerSource?:string}} opts
+ * supplied. `avoid` (recent picks) is fed into the prompt and enforced after
+ * parsing — a repeat gets ONE retry with the collision named, then degrades.
+ * Degrades to randomCoin() on any LLM failure — never throws, never blocks a
+ * tick. Callers that must not ship filler check `.degraded` on the result.
+ * @param {{narratives?:Array<{term:string,score:number,sources:string[],kind:string}>, themes?:string[], flavor?:'trend'|'meme', triggerSource?:string, avoid?:Array<{name?:string, symbol?:string}>}} opts
  */
-export async function synthesizeCoin({ narratives = [], themes = [], flavor = 'meme', triggerSource } = {}) {
+export async function synthesizeCoin({ narratives = [], themes = [], flavor = 'meme', triggerSource, avoid = [] } = {}) {
 	if (!llmConfigured()) return { ...randomCoin(), degraded: 'llm_unconfigured' };
 
 	// Prefer the ranked narratives (momentum + confirming sources) so the model
@@ -167,16 +193,30 @@ export async function synthesizeCoin({ narratives = [], themes = [], flavor = 'm
 	} else {
 		userPrompt = 'Coin ONE original, funny, internet-native memecoin from current meme culture. Make the ticker instantly memeable.';
 	}
+	const avoidTickers = [...new Set(avoid.map((a) => sanitizeSymbol(a.symbol || '')).filter((s) => s && s !== 'THREE3'))].slice(0, 40);
+	if (avoidTickers.length) {
+		userPrompt += `\n\nAlready launched recently — your pick must not reuse or resemble any of these tickers: ${avoidTickers.join(', ')}.`;
+	}
 
-	let out;
+	const attempt = async (prompt) => {
+		const out = await llmComplete({ system: SYNTH_SYSTEM, user: prompt, maxTokens: 220, timeoutMs: 12_000 });
+		return parseCoinJson(out?.text);
+	};
+
+	let coin;
 	try {
-		out = await llmComplete({ system: SYNTH_SYSTEM, user: userPrompt, maxTokens: 220, timeoutMs: 12_000 });
+		coin = await attempt(userPrompt);
+		if (coin && isRepeatPick(coin, avoid)) {
+			coin = await attempt(
+				`${userPrompt}\n\nYou already minted "${coin.name}" (${coin.symbol}). Pick a DIFFERENT current or a genuinely different angle — a fresh name and ticker.`,
+			);
+		}
 	} catch {
 		return { ...randomCoin(), degraded: 'llm_error' };
 	}
 
-	const coin = parseCoinJson(out?.text);
 	if (!coin) return { ...randomCoin(), degraded: 'llm_unparseable' };
+	if (isRepeatPick(coin, avoid)) return { ...randomCoin(), degraded: 'repeat_pick' };
 
 	return {
 		kind: flavor === 'trend' ? 'trend' : 'meme',
@@ -193,29 +233,47 @@ export async function synthesizeCoin({ narratives = [], themes = [], flavor = 'm
 	};
 }
 
+// Weighted-sample one of the strongest currents to LEAD the prompt. The model
+// anchors hard on whichever narrative is named first, so always sending the #1
+// term made every launch of the day ride the same theme; rotating the lead
+// across the top of the ranking gives a slate variety while staying on-signal.
+function rotateLead(narratives) {
+	if (narratives.length <= 1) return narratives;
+	const top = narratives.slice(0, 6);
+	const total = top.reduce((sum, n) => sum + Math.max(0.1, n.score), 0);
+	let roll = Math.random() * total;
+	let lead = top[top.length - 1];
+	for (const n of top) {
+		roll -= Math.max(0.1, n.score);
+		if (roll <= 0) { lead = n; break; }
+	}
+	return [lead, ...narratives.filter((n) => n !== lead)];
+}
+
 // ── dispatcher ────────────────────────────────────────────────────────────────
 
 /**
  * Choose a coin for a tick given the configured mode. Hybrid prefers a live
  * trend, falls back to a meme, and injects random filler when no signal exists.
  * `sources` selects which narrative providers feed trend/hybrid mode (see
- * launcher-trends.js); empty ⇒ the default internal set.
- * @param {{mode:string, network?:string, categories?:string[], sources?:string[]}} cfg
+ * launcher-trends.js); empty ⇒ the default internal set. `avoid` is the recent
+ * pick history the LLM must not repeat (see synthesizeCoin).
+ * @param {{mode:string, network?:string, categories?:string[], sources?:string[], avoid?:Array<{name?:string, symbol?:string}>}} cfg
  */
-export async function pickSource({ mode, network = 'mainnet', categories = [], sources } = {}) {
+export async function pickSource({ mode, network = 'mainnet', categories = [], sources, avoid = [] } = {}) {
 	if (mode === 'random') return randomCoin();
-	if (mode === 'meme') return synthesizeCoin({ flavor: 'meme' });
+	if (mode === 'meme') return synthesizeCoin({ flavor: 'meme', avoid });
 
 	if (mode === 'trend') {
 		const narratives = await gatherNarratives({ network, categories, sources });
-		if (narratives.length >= 2) return synthesizeCoin({ narratives, flavor: 'trend' });
+		if (narratives.length >= 2) return synthesizeCoin({ narratives: rotateLead(narratives), flavor: 'trend', avoid });
 		// No live trend → still honour 'trend' intent with a meme rather than stall.
-		return synthesizeCoin({ flavor: 'meme', triggerSource: 'trend-fallback' });
+		return synthesizeCoin({ flavor: 'meme', triggerSource: 'trend-fallback', avoid });
 	}
 
 	// hybrid (default): trend first, meme second, occasional random filler.
 	const narratives = await gatherNarratives({ network, categories, sources });
-	if (narratives.length >= 2) return synthesizeCoin({ narratives, flavor: 'trend' });
-	if (Math.random() < 0.5) return synthesizeCoin({ flavor: 'meme', triggerSource: 'hybrid' });
+	if (narratives.length >= 2) return synthesizeCoin({ narratives: rotateLead(narratives), flavor: 'trend', avoid });
+	if (Math.random() < 0.5) return synthesizeCoin({ flavor: 'meme', triggerSource: 'hybrid', avoid });
 	return randomCoin();
 }
