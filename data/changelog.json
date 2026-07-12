@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-12",
+			"title": "Follow creators site-wide and see who's following you",
+			"summary": "Every profile at /u/:username now has a Follow button, plus follower and following counts you can open into full lists. Following someone is one-directional and needs no approval — the right model for keeping up with a creator, not the mutual-friend system that already powers /play and /walk DMs. You get a notification when someone follows you, and following people now feeds your home feed (GET /api/users/me/feed) with their new avatars, agents, coins, models, and worlds as they post them. Logged-out visitors are sent to sign in instead of the button silently doing nothing.",
+			"tags": [
+				"feature"
+			],
+			"link": "/profile"
+		},
+		{
+			"date": "2026-07-12",
 			"title": "Your creator portfolio: every forged model and world, in one place",
 			"summary": "Your profile at /u/:username (or just /profile for your own) now has a Creations tab that pulls together everything you've made on three.ws: forged 3D models, saved worlds from Scene Studio, avatars, agents, and coins — each card a real, live, spinning 3D thumbnail linking straight to the model or world. Forging a model or saving a world while signed in now credits it to your account automatically; do it signed out and it stays anonymous like always. Diorama viewers and forge result pages now show \"by @you\" with a link back to your profile when a creation has a known creator, and prolific creators get a Load more button instead of a wall of cards.",
 			"tags": [

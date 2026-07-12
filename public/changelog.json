@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-12T15:56:33.792Z",
+	"generated_at": "2026-07-12T16:06:40.049Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -88,6 +88,16 @@
 			"link": "/play",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-12",
+			"type": "update",
+			"title": "Follow creators site-wide and see who's following you",
+			"summary": "Every profile at /u/:username now has a Follow button, plus follower and following counts you can open into full lists. Following someone is one-directional and needs no approval — the right model for keeping up with a creator, not the mutual-friend system that already powers /play and /walk DMs. You get a notification when someone follows you, and following people now feeds your home feed (GET /api/users/me/feed) with their new avatars, agents, coins, models, and worlds as they post them. Logged-out visitors are sent to sign in instead of the button silently doing nothing.",
+			"link": "/profile",
+			"tags": [
+				"feature"
 			]
 		},
 		{
