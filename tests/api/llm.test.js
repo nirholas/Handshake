@@ -169,8 +169,12 @@ describe('llmComplete — multiple OpenRouter keys', () => {
 		const out = await llm.llmComplete({ system: 's', user: 'u' });
 		expect(out.provider).toBe('openrouter#2');
 		expect(out.text).toBe('served by fallback key');
+		// The primary key gets a :free rung right behind its paid rung, so an
+		// out-of-credits primary account still tries its own free variant (also 402
+		// here) before the chain rotates to the fallback key's :free model.
 		expect(calls).toEqual([
 			{ auth: 'Bearer or-primary', model: 'meta-llama/llama-3.3-70b-instruct' },
+			{ auth: 'Bearer or-primary', model: 'meta-llama/llama-3.3-70b-instruct:free' },
 			{ auth: 'Bearer or-fallback', model: 'meta-llama/llama-3.3-70b-instruct:free' },
 		]);
 	});
@@ -184,13 +188,64 @@ describe('llmComplete — multiple OpenRouter keys', () => {
 			return errResp(500);
 		});
 		await expect(llm.llmComplete({ system: 's', user: 'u' })).rejects.toMatchObject({ status: 502 });
-		expect(n).toBe(2); // or-same once, or-extra once — not three calls
+		// or-same is deduped to a single key, but the primary key legitimately has
+		// two rungs (paid model + its :free variant), then or-extra's :free rung —
+		// three fetches. Without dedup or-same would be tried as a fallback too (four).
+		expect(n).toBe(3);
 	});
 
 	it('llmConfigured is true with only fallback keys set', () => {
 		process.env.OPENROUTER_FALLBACK_KEYS = 'or-only-fallback';
 		expect(llm.llmConfigured()).toBe(true);
 	});
+});
+
+describe('llmComplete — a hung provider fails over within the cap, not the whole budget', () => {
+	// Live regression (diorama composer, 2026-07-12): the per-fetch timeout was the
+	// WHOLE budget (timeoutMs), so one free lane that stopped responding held the
+	// request for ~30s while the reliable Vertex anchor two rungs later would have
+	// answered in ~1s. The chain must cap each attempt so a stall fails over fast.
+	it('aborts a stalled lead provider at the per-provider cap and serves from the next', async () => {
+		process.env.GROQ_API_KEY = 'g';
+		process.env.NVIDIA_API_KEY = 'nvapi-x';
+		// The cap is floored at 4s so a fat-fingered env value can't strangle a
+		// legitimately-slow completion; use the floor here so the stalled lane
+		// aborts at ~4s — far below the 30s budget it used to consume whole.
+		process.env.LLM_PER_PROVIDER_TIMEOUT_MS = '4000';
+
+		const order = [];
+		globalThis.fetch = vi.fn((url, opts) => {
+			const u = String(url);
+			if (u.includes(GROQ_HOST)) {
+				order.push('groq');
+				// Hang until the request's own AbortSignal fires, then reject like a
+				// real aborted fetch — exactly what a stalled upstream looks like.
+				return new Promise((_, reject) => {
+					opts.signal?.addEventListener('abort', () => {
+						reject(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+					});
+				});
+			}
+			if (u.includes(NVIDIA_HOST)) {
+				order.push('nvidia');
+				return Promise.resolve(openaiShape('served after failover'));
+			}
+			throw new Error(`unexpected fetch: ${u}`);
+		});
+
+		const t0 = Date.now();
+		// 30s budget — the prod value that a single stalled lane used to eat whole.
+		const out = await llm.llmComplete({ system: 's', user: 'u', timeoutMs: 30_000 });
+		const elapsed = Date.now() - t0;
+
+		expect(out.provider).toBe('nvidia');
+		expect(out.text).toBe('served after failover');
+		expect(order).toEqual(['groq', 'nvidia']); // tried the stalled lane, then failed over
+		// Bounded by the per-provider cap (~4s), nowhere near the 30s budget.
+		expect(elapsed).toBeLessThan(9_000);
+
+		delete process.env.LLM_PER_PROVIDER_TIMEOUT_MS;
+	}, 15_000);
 });
 
 describe('llmComplete — BYOK Anthropic leads when supplied', () => {
