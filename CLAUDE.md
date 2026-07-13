@@ -53,6 +53,16 @@ Before writing a single line of code, answer these questions internally:
   1. Generic, coin-agnostic plumbing where a mint is supplied at runtime by the user (e.g. the pump.fun launcher accepting an arbitrary mint as input).
   2. Platform launch directories that render coins users launched through three.ws from the platform's own launch records at runtime (the `/launches` feed, agent-profile launch history, `/api/pump/launches` over `pump_agent_mints`). These are product features, not endorsements — do not remove them.
 
+## Solana first (chain priority)
+
+**Solana is the home chain. `$THREE` lives on Solana, our ecosystem lives on Solana, our users and wallets are Solana-native. Base and every other EVM chain (X Layer, BSC, Robinhood Chain, and whatever comes next) are secondary: additional surfaces for attention and revenue, never the center of gravity.**
+
+- **Default to Solana in every design.** When a feature, payment rail, integration, or fix has to be built on one chain first, build it on Solana first. Ship it on Solana, verify it on Solana, and only then consider extending to an EVM chain.
+- **Never let an EVM blocker stall or reframe Solana work.** Missing CDP credentials, an unfunded EVM wallet, or a third-party directory that only indexes Base are NOT reasons to pause, downgrade, or re-scope the Solana path. Solana runs on our own self-hosted rail and needs no third-party unlock. Route around EVM blockers; do not wait on them.
+- **Do not present a Base-only answer when a Solana path exists.** If some external surface (a catalog, an indexer, a facilitator) only supports Base, state that plainly and treat listing there as a nice-to-have, not as the goal. The goal is always the Solana ecosystem.
+- **Lead with Solana when reporting.** Status, verification, and next steps should state the Solana position first. EVM chains are a footnote unless the owner asked about them specifically.
+- **Never migrate, re-point, or de-prioritize Solana infrastructure toward an EVM chain without explicit owner approval.** Adding an EVM leg alongside Solana is fine. Replacing or demoting the Solana leg is not.
+
 ## Engineering excellence
 
 ### Architecture
