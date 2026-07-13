@@ -30,6 +30,7 @@ import { verifyHolderPass } from '../holder-pass.js';
 import { socialHub } from '../social-hub.js';
 import { verifyPresenceTicket } from '../presence-token.js';
 import { verifyPlayPass } from '../play-pass.js';
+import { installUnknownMessageGuard, PLAY_PASS_EVICT_CODE } from '../room-compat.js';
 import {
 	restoreProfile, serializeProfile, profileSnapshot,
 	addItem, hasRoomFor, resolveSlot, grantXp, consumeSlot,
@@ -489,6 +490,10 @@ export class WalkRoom extends Room {
 		this.setState(new WalkState());
 		this.setPatchRate(PATCH_RATE_MS);
 		this.autoDispose = true;
+		// Version-skew tolerance: a message type this build doesn't know must be
+		// ignored, never close the session (Colyseus's default 4002 kill looked
+		// like "session expired" to pre-fix clients). See room-compat.js.
+		installUnknownMessageGuard(this, 'walk_world');
 
 		// The first client to land in this coin's instance seeds its identity.
 		this.state.coin = cleanCoin(options?.coin);
@@ -675,7 +680,7 @@ export class WalkRoom extends Room {
 				for (const client of this.clients) {
 					const exp = client.userData?.playExp;
 					if (typeof exp === 'number' && exp < nowS) {
-						try { client.leave(4002, 'play_pass_required'); } catch {}
+						try { client.leave(PLAY_PASS_EVICT_CODE, 'play_pass_required'); } catch {}
 					}
 				}
 			}, 60_000);

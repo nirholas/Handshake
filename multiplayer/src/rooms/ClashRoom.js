@@ -21,6 +21,7 @@ import { ClashMatch, ClashPhase, CLASH_DEFAULTS } from '../clash.js';
 import { selectTarget } from '../combat.js';
 import { verifyHolderPass } from '../holder-pass.js';
 import { verifyPlayPass } from '../play-pass.js';
+import { installUnknownMessageGuard } from '../room-compat.js';
 import { cleanAvatarUrl } from '../avatar-url.js';
 import { reportBattle } from '../war-report.js';
 
@@ -81,6 +82,8 @@ export class ClashRoom extends Room {
 		this.setPatchRate(PATCH_RATE_MS);
 		this.maxClients = MAX_CLIENTS;
 		this.autoDispose = true;
+		// Unknown message types are ignored, never a session kill (room-compat.js).
+		installUnknownMessageGuard(this, 'clash');
 
 		// The two communities are fixed at creation from the matchKey's options. The
 		// engine owns the authoritative match; the schema mirrors it for clients.

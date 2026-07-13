@@ -22,6 +22,7 @@ import { Room } from '@colyseus/core';
 
 import { IrlViewer, IrlState } from '../irl-schemas.js';
 import { encodeGeohash, decodeGeohash } from '../geohash.js';
+import { installUnknownMessageGuard } from '../room-compat.js';
 import {
 	isReactionType,
 	reactionAllowed,
@@ -69,6 +70,8 @@ export class IrlRoom extends Room {
 		this.state.geocell = this.geocell;
 		this.setPatchRate(PATCH_RATE_MS);
 		this.autoDispose = true;
+		// Unknown message types are ignored, never a session kill (room-compat.js).
+		installUnknownMessageGuard(this, 'irl');
 
 		// D3 — a viewer interacted with a pin in this cell. Fan an ambient `reaction`
 		// to everyone here so the agent visibly emotes for bystanders. This is the

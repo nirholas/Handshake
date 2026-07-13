@@ -23,6 +23,14 @@
 			<description>The three.ws GitHub README now opens with the platform mascot as a real, draggable 3D model that GitHub renders natively (no image, no video: an interactive viewer in plain markdown). The pipeline that made it is now an open-source package, readme-3d: a CLI and library that converts any GLB, glTF, OBJ, or STL into the ASCII-STL markdown blocks GitHub renders, simplifies meshes to fit GitHub's 512 KB markdown limit, and size-checks your files so they never silently stop rendering. It ships with five tutorials, live examples, a docs site, a Claude Code skill, and copy-paste agent prompts, and pairs with the free Forge text-to-3D API so anyone can go from a one-line prompt to a 3D model in their README in five minutes.</description>
 		</item>
 		<item>
+			<title>Fixed: entering a /play world no longer kicks you out with a false 'session expired'</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-07-13:Fixed: entering a /play world no longer kicks you out with a false 'session expired'</guid>
+			<pubDate>Mon, 13 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Joining any coin world briefly showed the world and then bounced you back to the lobby with a 'your session expired' message, even though signing in was never required. The real cause was a version mismatch between the game client and the world server: the client asked for a newer feature the deployed server did not recognise, the server dropped the connection with a generic error code, and the client misread that code as a login-expiry eviction. Worlds now tolerate version differences in both directions: the server ignores messages it does not understand instead of dropping the player, and the client only shows the sign-in gate when the server actually says the session ended. Agent desks inside worlds are also back for everyone: they now load the platform's most recently active public agents instead of a signed-in-only list that failed silently for guests.</description>
+		</item>
+		<item>
 			<title>Paid API clients are no longer rate-limited for paying</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-13:Paid API clients are no longer rate-limited for paying</guid>

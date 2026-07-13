@@ -452,13 +452,20 @@ export class CommunityNet {
 			this.worldTime = Number(this.room.state.worldTime) || 0;
 			$state?.listen?.('worldTime', (v) => { this.worldTime = Number(v) || 0; this._emit('worldtime', this.worldTime); });
 
-			this.room.onLeave((code) => {
+			this.room.onLeave((code, reason) => {
 				this._setStatus('offline');
-				// 4002: the server evicted us because our play pass expired without a
-				// refresh (the wallet may have dropped below the token floor). Reconnecting
-				// would just fail onAuth again — surface it as a terminal denial so the
-				// scene routes the player back to the sign-in gate.
-				if (code === 4002) { this._setStatus('denied', 'play_pass_required'); this._emit('denied', 'play_pass_required'); return; }
+				// A play-pass eviction (the server dropped us because our pass expired
+				// without a refresh — the wallet may have fallen below the token floor) is
+				// terminal: reconnecting would just fail onAuth again, so surface it as a
+				// denial and route the player back to the sign-in gate. Detect it by the
+				// server's close REASON, never by the bare close code: the legacy eviction
+				// code 4002 is also Colyseus's own WS_CLOSE_WITH_ERROR, which the server
+				// sends for any internal error (e.g. a message type this room build doesn't
+				// know) — treating those as "session expired" kicked healthy players to a
+				// sign-in gate that wasn't even enabled. Anything else non-consented is a
+				// connection fault: reconnect with backoff.
+				if (/play_pass/i.test(reason || '')) { this._setStatus('denied', 'play_pass_required'); this._emit('denied', 'play_pass_required'); return; }
+				if (code === 4002) log.warn('[community-net] server closed with error:', reason || '(no reason)');
 				if (!this._destroyed && code !== 1000) this._scheduleReconnect();
 			});
 			this.room.onError((code, message) => log.warn('[community-net] room.onError', code, message));

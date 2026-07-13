@@ -1292,12 +1292,15 @@ export class CoinCommunities {
 			ui: this.ui,
 			coin,
 		});
-		// Agent desks — visible in every world. Fetches the world's top registered
-		// agents from /api/agents and seats them at working desks with live
-		// CanvasTexture monitors streaming their real activity. Players can walk up
-		// and press E (or tap) to open the full 2D watch view.
+		// Agent desks — visible in every world. Seats the platform's most recently
+		// ACTIVE public agents (the same ranking as the /agents-live wall) at
+		// working desks with live CanvasTexture monitors streaming their real
+		// activity. Players can walk up and press E (or tap) to open the full 2D
+		// watch view. Must be the public directory, not /api/agents: that route
+		// lists the CALLER'S OWN agents and 401s for the anonymous players who make
+		// up most of /play, which silently left every world deskless.
 		this._agentDesks = [];
-		fetch(`/api/agents?limit=3`, { credentials: 'include' })
+		fetch(`/api/agents/public?sort=live&limit=3`)
 			.then((r) => r.ok ? r.json() : null)
 			.then((d) => {
 				const agents = d?.agents || d?.data || [];
@@ -1307,7 +1310,6 @@ export class CoinCommunities {
 					const desk = createAgentDesk(this.scene, {
 						agentId: a.id,
 						agentName: a.name || 'Agent',
-						avatarUrl: a.avatar_glb_url || a.avatar_model_url || '',
 					}, {
 						position: offsets[i],
 						rotationY: rotations[i],

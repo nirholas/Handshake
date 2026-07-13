@@ -61,8 +61,9 @@ describe('IrlRoom message surface — exactly presence + reactions, never a pin 
 	it('registers exactly the three privacy-clean handlers — and nothing that could publish a pin', () => {
 		// If a future edit adds onMessage('publish', …) / onMessage('pin', …) to re-open
 		// a pin broadcast, this set changes and the test fails. The room's whole socket
-		// surface is these three types; none of them transports a coordinate roster.
-		expect(booted.messageTypes.slice().sort()).toEqual(['heartbeat', 'interaction', 'set_ghost']);
+		// surface is these three types plus the '*' compat fallback (room-compat.js),
+		// which ignores unknown types and can never publish anything.
+		expect(booted.messageTypes.slice().sort()).toEqual(['*', 'heartbeat', 'interaction', 'set_ghost']);
 		// Defensive: no message type even mentions a pin/publish/window concept.
 		for (const t of booted.messageTypes) {
 			expect(/pin|publish|window|roster|feed/i.test(t)).toBe(false);

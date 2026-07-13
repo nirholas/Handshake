@@ -29,6 +29,7 @@ import { StageState, StageAudience, StageTipper } from '../stage-schemas.js';
 import { ShowDirector, BEAT } from '../stage-show.js';
 import { registerStage, unregisterStage } from '../stage-registry.js';
 import { signStageRequest } from '../presence-token.js';
+import { installUnknownMessageGuard } from '../room-compat.js';
 
 const PATCH_RATE_MS = 100; // 10 Hz — snappy enough for the tip ticker + captions
 const MAX_CLIENTS = 200; // a busy venue; bound so a flood degrades gracefully
@@ -71,6 +72,8 @@ export class StageRoom extends Room {
 		this.state.phase = 'preshow';
 		this.setPatchRate(PATCH_RATE_MS);
 		this.autoDispose = false; // a scheduled show outlives an empty crowd between beats
+		// Unknown message types are ignored, never a session kill (room-compat.js).
+		installUnknownMessageGuard(this, 'stage');
 
 		this._director = new ShowDirector({ stageId: this.stageId });
 

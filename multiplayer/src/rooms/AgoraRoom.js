@@ -17,6 +17,7 @@ import { Room } from '@colyseus/core';
 import { Schema, MapSchema, defineTypes } from '@colyseus/schema';
 import { Player } from '../schemas.js';
 import { cleanAvatarUrl } from '../avatar-url.js';
+import { installUnknownMessageGuard } from '../room-compat.js';
 
 const MAX_CLIENTS = 50; // the server's proven per-room ceiling (WalkRoom)
 const PATCH_RATE_HZ = 15;
@@ -88,6 +89,8 @@ export class AgoraRoom extends Room {
 		this.setState(new AgoraState());
 		this.setPatchRate(PATCH_RATE_MS);
 		this.autoDispose = true;
+		// Unknown message types are ignored, never a session kill (room-compat.js).
+		installUnknownMessageGuard(this, 'agora_world');
 
 		this.onMessage('move', (client, payload) => this._handleMove(client, payload));
 		this.onMessage('rename', (client, payload) => this._handleRename(client, payload));

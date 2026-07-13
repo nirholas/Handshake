@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-13T07:44:21.397Z",
+	"generated_at": "2026-07-13T23:16:23.828Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -28,6 +28,16 @@
 				"feature",
 				"docs",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-07-13",
+			"type": "update",
+			"title": "Fixed: entering a /play world no longer kicks you out with a false 'session expired'",
+			"summary": "Joining any coin world briefly showed the world and then bounced you back to the lobby with a 'your session expired' message, even though signing in was never required. The real cause was a version mismatch between the game client and the world server: the client asked for a newer feature the deployed server did not recognise, the server dropped the connection with a generic error code, and the client misread that code as a login-expiry eviction. Worlds now tolerate version differences in both directions: the server ignores messages it does not understand instead of dropping the player, and the client only shows the sign-in gate when the server actually says the session ended. Agent desks inside worlds are also back for everyone: they now load the platform's most recently active public agents instead of a signed-in-only list that failed silently for guests.",
+			"link": "/play",
+			"tags": [
+				"fix"
 			]
 		},
 		{
