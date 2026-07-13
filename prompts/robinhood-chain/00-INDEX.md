@@ -9,7 +9,7 @@ independent and can run concurrently. Every agent reads `_shared.md` first, then
 ## Wave 1 — foundation (run first, alone)
 | Prompt | Product | Folder | Status |
 |---|---|---|---|
-| [01-sdk-core.md](01-sdk-core.md) | Core TypeScript SDK (`hoodchain`) | `robinhood/robinhood-chain-sdk/` | BUILT 2026-07-12 (testnet-swap E2E owner-blocked on faucet login) |
+| [01-sdk-core.md](01-sdk-core.md) | Core TypeScript SDK (`hoodchain`) | `robinhood/robinhood-chain-sdk/` | DONE 2026-07-13 — write-path E2E proven with REAL MONEY on mainnet 4663 (swap tx `0x20ab04a4…2085`, WETH→USDG via SwapRouter02, 1.606331 USDG received). Supersedes the faucet-blocked testnet swap. |
 
 ## Wave 2 — SDK consumers (run after 01 completes; all concurrent)
 | Prompt | Product | Folder |

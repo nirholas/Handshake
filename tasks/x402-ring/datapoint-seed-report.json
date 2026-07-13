@@ -1,0 +1,20 @@
+{
+  "generatedAt": "2026-07-13T07:36:23.905Z",
+  "origin": "https://three.ws",
+  "seeded": 1,
+  "settled": 1,
+  "skipped": 0,
+  "failed": 0,
+  "spentUsdc": 0.0005,
+  "rows": [
+    {
+      "fam": "fear-greed",
+      "url": "https://three.ws/api/x402/d/fear-greed/index",
+      "paid": true,
+      "success": true,
+      "amountAtomic": 500,
+      "txSig": "4nD1rBR31jjKgqCALJAWMXZRki7oWDKZxPL2MeuYLLkrWNX2qjP4emsX1m7uHJ7cRc8h578ChHfKzwDmfwicXDiC",
+      "error": null
+    }
+  ]
+}

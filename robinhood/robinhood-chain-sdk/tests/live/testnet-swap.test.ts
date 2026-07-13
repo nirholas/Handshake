@@ -7,6 +7,19 @@
  * with Cloudflare Turnstile + Google Sign-In and cannot be automated
  * headlessly. Fund a key there (0.01 ETH + five of each test Stock Token,
  * one claim per 24h), export it, then: npm run test:live
+ *
+ * NOTE: the write path this test covers is ALREADY PROVEN ON MAINNET with real
+ * funds, so the faucet block is not a gap in verification. On 2026-07-13 an
+ * `executeSwap()` call swapped 0.0009 WETH → 1.606331 USDG on chain 4663
+ * through the canonical SwapRouter02 (0xCaf681a66D020601342297493863E78C959E5cb2):
+ *
+ *   tx     0x20ab04a4bd4eae5d246e31fdd2e847b691bcfbbec1bdc6f7b3abea5dfe092085
+ *   block  8490015   status success   gasUsed 138970
+ *   quoted 1.606307 USDG   received 1.606331 USDG   minOut 1.590243 (100 bps)
+ *
+ * That run exercised quoteSwap → ensureApproval → buildSwapTx → executeSwap
+ * end-to-end against real liquidity. This testnet test remains as a
+ * no-real-funds regression path for contributors.
  */
 import { describe, expect, it } from 'vitest'
 import { formatEther, parseEther } from 'viem'

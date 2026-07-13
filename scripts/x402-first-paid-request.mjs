@@ -18,7 +18,7 @@
 
 import { wrapFetchWithPayment } from '@x402/fetch';
 import { x402Client } from '@x402/core/client';
-import { registerExactEvmScheme } from '@x402/evm/exact/client/index.js';
+import { registerExactEvmScheme } from '@x402/evm/exact/client';
 import { privateKeyToAccount } from 'viem/accounts';
 import { base, arbitrum } from 'viem/chains';
 import { installIdempotency } from '../api/_lib/x402/payment-identifier-client.js';
