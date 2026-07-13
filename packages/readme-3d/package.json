@@ -16,7 +16,8 @@
     "bin",
     "src",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "NOTICE"
   ],
   "scripts": {
     "test": "node --test test/*.test.js"
@@ -49,7 +50,7 @@
     "url": "https://github.com/nirholas/readme-3d/issues"
   },
   "author": "three.ws (https://three.ws)",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "engines": {
     "node": ">=18"
   },

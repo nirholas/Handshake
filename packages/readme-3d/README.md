@@ -4352,4 +4352,4 @@ This repo ships a [Claude Code skill](skills/3d-in-readme/SKILL.md) and [ready-m
 
 ## License
 
-[MIT](LICENSE). Built by [three.ws](https://three.ws) - the browser-native 3D AI agent platform. The technique follows GitHub's [ASCII STL markdown support](https://github.blog/changelog/2022-03-17-mermaid-topojson-geojson-and-ascii-stl-diagrams-are-now-supported-in-markdown-and-as-files/), popularized by [Matthijs van der Veer](https://www.vanderveer.io/github-markdown-render-stl/).
+[Apache-2.0](LICENSE). Built by [three.ws](https://three.ws) - the browser-native 3D AI agent platform. The technique follows GitHub's [ASCII STL markdown support](https://github.blog/changelog/2022-03-17-mermaid-topojson-geojson-and-ascii-stl-diagrams-are-now-supported-in-markdown-and-as-files/), popularized by [Matthijs van der Veer](https://www.vanderveer.io/github-markdown-render-stl/).

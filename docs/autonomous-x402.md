@@ -45,6 +45,8 @@ Payments are real on chain — no mocks, no simulations.
 | `X402_AUTONOMOUS_DAILY_CAP_ATOMIC` | `15000000` ($15) | Daily USDC cap across the whole loop, in 6-decimal atomics. Raised from $5 so the higher per-tick throughput isn't money-starved mid-day; still a hard, env-tunable ceiling enforced per tick. |
 | `X402_VOLUME_BATCH_PER_RUN` | `6` | Volume Bootstrap Loop: endpoints swept per run (cursor advances by this). Default sized so a default-cadence hour covers the full autobuy rotation — trailing-30-day settle activity is what keeps endpoints ranked on the x402 discovery surfaces. |
 | `X402_VOLUME_PER_RUN_CAP_ATOMIC` | `50000` ($0.05) | Volume Bootstrap Loop: self-imposed per-run cap, on top of the daily cap, so one tick can't drain the day. |
+| `X402_DATAPOINT_SWEEP_BATCH` | `6` | Datapoint Fabric Volume Sweep: distinct datapoint URLs settled per run (cursor advances by this over the ~5k-URL live pool). |
+| `X402_DATAPOINT_SWEEP_CAP_ATOMIC` | `50000` ($0.05) | Datapoint Fabric Volume Sweep: self-imposed per-run cap, on top of the shared daily cap. |
 | `CRON_SECRET` | _(required)_ | Shared secret authorizing cron invocations (Cloud Scheduler). |
 | `X402_ASSET_MINT_SOLANA` | USDC mint | The asset paid with (Solana USDC). |
 | `SOLANA_RPC_URL` | — | RPC used to build and submit the payment. |
@@ -127,6 +129,35 @@ automatically (and `tests/x402-ring-catalog.test.js` fails until it is cataloged
 > Drive *real* volume through external demand (the
 > [Circulation engine](circulation-engine.md), real `agent_hire` commerce,
 > discovery), not a heavier self-paid sweep.
+
+## The Datapoint Fabric Volume Sweep
+
+One registry entry — `datapoint-volume-sweep`, pipeline `datapoint`, cooldown
+300s — settles real on-chain USDC against the [datapoint fabric](market-data-api.md#the-datapoint-fabric)
+(the 1,000,000+ endpoints served by the single `api/x402/d/[...path].js` route),
+which the Volume Bootstrap Loop above never touches (its rotation is the ~60
+*named* catalog endpoints). On each run it advances its own Redis-backed cursor
+over a pool of concrete datapoint URLs — resolved at runtime from the same cached
+feeds the paid route reads, so no third-party id is hardcoded — and pays the next
+`X402_DATAPOINT_SWEEP_BATCH` (default 6) of them on Solana through the shared
+[`pipelines/volume-shared.js`](../api/_lib/x402/pipelines/volume-shared.js)
+`settleAndRecord` path. A datapoint is the cheapest call in the catalog
+($0.0005), so this is the most transactions-per-dollar-efficient sweep; over
+successive runs the cursor walks the whole ~5k-URL pool, giving each distinct
+datapoint URL its own on-chain settlement history. It draws from the **same**
+daily cap the main loop respects (`remainingCap`) plus its own
+`X402_DATAPOINT_SWEEP_CAP_ATOMIC` per-run cap, so it cannot increase total ring
+spend — it only routes a slice of the capped budget at the cheapest endpoints.
+No-op (graceful skip, no spend) when the wallet/RPC is unconfigured. See
+[`pipelines/datapoint-volume-sweep.js`](../api/_lib/x402/pipelines/datapoint-volume-sweep.js).
+
+> **Same synthetic-vs-organic caveat as the Volume Bootstrap Loop applies.** This
+> pays our **own** datapoint endpoints from our **own** seed wallet; the USDC
+> round-trips to the treasury. It proves the fabric's payment path settles and
+> gives x402scan per-resource settlement history, but it is **canary volume, not
+> demand**. Do not publish it as marketplace volume, and do not read a high
+> datapoint settle count as external traction — that would be wash volume. Real
+> ranking comes from external buyers, not a heavier self-paid sweep.
 
 ## Reconciliation (`self/027`)
 

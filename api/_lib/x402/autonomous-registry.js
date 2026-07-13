@@ -44,6 +44,7 @@ import { run as reputationRefresh } from './pipelines/reputation-refresh.js';
 import { run as tokenIntelPreSnipeGate } from './pipelines/token-intel-gate.js';
 import { run as sniperIntelEnrich } from './pipelines/sniper-intel-enrich.js';
 import { run as volumeBootstrapLoop } from './pipelines/volume-bootstrap-loop.js';
+import { run as datapointVolumeSweep } from './pipelines/datapoint-volume-sweep.js';
 import { run as ringRebalance, floatTopUp as ringFloatTopUp } from './pipelines/ring-rebalance.js';
 import { run as ringAgentBuyers } from './agents/index.js';
 import { run as feeAudit } from './pipelines/fee-audit.js';
@@ -2669,6 +2670,29 @@ const SELF_ENDPOINTS = [
 		pipeline: 'volume',
 		enabled: true,
 		run: (ctx) => volumeBootstrapLoop(ctx),
+	},
+
+	// ── Datapoint Fabric Volume Sweep ──────────────────────────────────────────
+	// Settles real on-chain USDC against the datapoint fabric (the 1M+ endpoints
+	// served by api/x402/d/[...path].js), which the main volume loop never touches.
+	// run() cursors a live-resolved pool of concrete datapoint URLs and pays the
+	// next window on Solana via the shared settleAndRecord path — the cheapest call
+	// in the catalog ($0.0005), so it is the most tx-per-dollar-efficient volume
+	// generator and gives x402scan per-resource settlement history for the fabric.
+	// Draws from the same daily cap as the main loop (can't blow spend); no-op when
+	// the wallet/RPC is unconfigured. Sweeps thousands of distinct URLs over time.
+	// See pipelines/datapoint-volume-sweep.js. Batch: X402_DATAPOINT_SWEEP_BATCH.
+	{
+		id: 'datapoint-volume-sweep',
+		name: 'Datapoint Fabric Volume Sweep',
+		path: '/api/x402/d/*',
+		method: 'GET',
+		body: null,
+		cooldown_s: 300,
+		priority: 25,
+		pipeline: 'datapoint',
+		enabled: true,
+		run: (ctx) => datapointVolumeSweep(ctx),
 	},
 
 	// ── Ring Rebalancer ────────────────────────────────────────────────────────
