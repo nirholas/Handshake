@@ -179,6 +179,54 @@ CDP/x402 team. Not ERC-8004-based. Burden: none beyond section 2.
    A2A agent card with the x402 extension — all generated from the service
    catalog, never hand-maintained.
 
+## 6. The datapoint fabric: seeding settlements on ~4.4k granular URLs
+
+Most of our payable surface is not the ~68 named endpoints in `ring-catalog.js`. It
+is the **datapoint fabric**: one route (`api/x402/d/[...path].js`) that fans out a
+per-metric paid URL for every entity in every family defined in
+`api/_lib/market-data/datapoints.js`, at $0.0005 a call. `/.well-known/x402.json`
+advertises 4,419 of them.
+
+URL shapes (note metric slugs are **hyphenated**; a wrong slug 404s instead of 402ing):
+
+```
+/api/x402/d/coin/bitcoin/market-cap     entity families: /d/<family>/<id>/<metric>
+/api/x402/d/gas/standard                singleton families (gas, global, fear-greed):
+/api/x402/d/global/btc-dominance                         /d/<family>/<metric>
+```
+
+Until 2026-07-13 not one of these had ever been paid: the coverage sweep only walks
+`RING_CATALOG`, so to an indexer the fabric looked like a large static list with zero
+settlement history. `scripts/x402-seed-datapoints.mjs` closes that gap.
+
+```bash
+node scripts/x402-seed-datapoints.mjs --dry-run            # plan, no spend
+node scripts/x402-seed-datapoints.mjs --max-usd=0.15       # real settlements, capped
+node scripts/x402-seed-datapoints.mjs --only=coin,protocol --per-family=25
+```
+
+It pulls its seed list **live from the discovery doc**, so there is no hand-maintained
+URL list to drift, buckets by family, and settles core metrics (price, tvl, supply,
+volume) first so a bounded budget proves the whole surface is live. Payments are
+circular: the payer wallet pays our own treasury, so the USDC round-trips and only the
+Solana network fee (~$0.000005/tx) is actually burned. An `onAccept` gate refuses any
+payment whose `payTo` is not our configured treasury, so a compromised or mis-set
+challenge cannot redirect funds. Report lands in
+`tasks/x402-ring/datapoint-seed-report.json`.
+
+**Seeding this surface is what exposed the per-IP throttle on paying clients** (fixed
+2026-07-13): the verify budget metered every payment *attempt* at 20/min, so a buyer
+pulling 50 metrics got 429s despite paying for each one. It is now failure-weighted, a
+settled payment costs 1 token against 300/min and a failed verify costs 15. Tune with
+`X402_VERIFY_IP_PER_MIN`, `X402_PROBE_IP_PER_MIN`, `X402_VERIFY_FAIL_PENALTY`.
+
+**Caveat, and it is the important one:** this seeds **Solana** settlements through our
+own self-facilitator. **Bazaar only counts payments settled through the CDP facilitator
+on Base** (see section 2), so Solana seeding alone will *not* get the fabric into
+Bazaar or agentic.market. The datapoints do advertise a Base accept (`eip155:8453`),
+but prod has no `X402_BUYER_PRIVATE_KEY`, so there is currently no Base wallet to pay
+*from*. Seeding the Bazaar leg needs a funded Base buyer (USDC + a little ETH for gas).
+
 ## Registration log
 
 **2026-07-11 — x402scan registration (owner, SIWX signature): 23/23 resources
