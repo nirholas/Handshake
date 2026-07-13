@@ -8,6 +8,14 @@
 		<language>en</language>
 		<item>
 			<title>A live 3D avatar in the GitHub README, and readme-3d: an open toolkit for 3D in markdown</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-13:A live 3D avatar in the GitHub README, and readme-3d: an open toolkit for 3D in markdown</guid>
+			<pubDate>Mon, 13 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The three.ws GitHub README now opens with the platform mascot as a real, draggable 3D model that GitHub renders natively (no image, no video: an interactive viewer in plain markdown). The pipeline that made it is now an open-source package, readme-3d: a CLI and library that converts any GLB, glTF, OBJ, or STL into the ASCII-STL markdown blocks GitHub renders, simplifies meshes to fit GitHub's 512 KB markdown limit, and size-checks your files so they never silently stop rendering. It ships with five tutorials, live examples, a docs site, a Claude Code skill, and copy-paste agent prompts, and pairs with the free Forge text-to-3D API so anyone can go from a one-line prompt to a 3D model in their README in five minutes.</description>
+		</item>
+		<item>
+			<title>A live 3D avatar in the GitHub README, and readme-3d: an open toolkit for 3D in markdown</title>
 			<link>https://three.wshttps://github.com/nirholas/three.ws/tree/main/packages/readme-3d</link>
 			<guid isPermaLink="false">2026-07-13:A live 3D avatar in the GitHub README, and readme-3d: an open toolkit for 3D in markdown</guid>
 			<pubDate>Mon, 13 Jul 2026 12:00:00 GMT</pubDate>
