@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASCII STL playground - preview what GitHub will render | readme-3d</title>
+<meta name="description" content="Paste ASCII STL and preview the interactive 3D model exactly as GitHub markdown renders it. Part of readme-3d: put 3D models in your GitHub README.">
+<link rel="canonical" href="https://nirholas.github.io/readme-3d/playground.html">
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+         background: #0d1117; color: #e6edf3; display: flex; flex-direction: column; min-height: 100vh; }
+  header { padding: 14px 20px; border-bottom: 1px solid #30363d; display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0; }
+  header a { color: #58a6ff; text-decoration: none; }
+  header a:hover, header a:focus { text-decoration: underline; }
+  main { flex: 1; display: grid; grid-template-columns: minmax(280px, 1fr) minmax(280px, 1.4fr); gap: 0; }
+  @media (max-width: 760px) { main { grid-template-columns: 1fr; grid-template-rows: 40vh 50vh; } }
+  #input { display: flex; flex-direction: column; border-right: 1px solid #30363d; }
+  #stl { flex: 1; width: 100%; resize: none; border: 0; padding: 14px; background: #0d1117; color: #e6edf3;
+         font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; outline: none; }
+  #stl:focus-visible { box-shadow: inset 0 0 0 2px #1f6feb; }
+  #bar { padding: 10px 14px; border-top: 1px solid #30363d; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  #bar button { background: #238636; color: #fff; border: 0; border-radius: 6px; padding: 6px 14px; font-size: 14px; cursor: pointer; }
+  #bar button:hover { background: #2ea043; }
+  #bar button:focus-visible { outline: 2px solid #58a6ff; outline-offset: 2px; }
+  #stats { color: #8b949e; font-size: 13px; }
+  #viewer { position: relative; min-height: 300px; }
+  #viewer canvas { display: block; }
+  #hint { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); color: #8b949e; font-size: 12px;
+          background: rgba(13,17,23,.7); padding: 4px 10px; border-radius: 12px; pointer-events: none; }
+  #error { position: absolute; top: 12px; left: 12px; right: 12px; background: #da3633; color: #fff;
+           padding: 8px 12px; border-radius: 6px; display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ASCII STL playground</h1>
+  <span>preview what a <code>```stl</code> block will look like on GitHub</span>
+  <a href="index.html">← readme-3d docs</a>
+  <a href="https://github.com/nirholas/readme-3d">GitHub</a>
+</header>
+<main>
+  <section id="input" aria-label="STL source">
+    <textarea id="stl" spellcheck="false" aria-label="Paste ASCII STL here"></textarea>
+    <div id="bar">
+      <button id="render" type="button">Render</button>
+      <span id="stats" role="status"></span>
+    </div>
+  </section>
+  <section id="viewer" aria-label="3D preview">
+    <div id="error" role="alert"></div>
+    <span id="hint">drag to rotate · scroll to zoom</span>
+  </section>
+</main>
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+
+const viewer = document.getElementById('viewer');
+const errBox = document.getElementById('error');
+const stats = document.getElementById('stats');
+const textarea = document.getElementById('stl');
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(devicePixelRatio);
+viewer.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d1117);
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 5000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x404060, 1.4));
+const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+dir.position.set(1, 2, 1.5);
+scene.add(dir);
+let mesh = null;
+
+function resize() {
+  const w = viewer.clientWidth, h = viewer.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+
+function render() {
+  errBox.style.display = 'none';
+  const text = textarea.value.trim();
+  if (!text) return;
+  try {
+    const geo = new STLLoader().parse(text);
+    geo.computeVertexNormals();
+    // STL is Z-up; three.js is Y-up - same correction GitHub applies
+    geo.rotateX(-Math.PI / 2);
+    geo.computeBoundingSphere();
+    if (mesh) { scene.remove(mesh); mesh.geometry.dispose(); }
+    mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x9aa7b5, metalness: 0.1, roughness: 0.75, flatShading: true }));
+    const { center, radius } = geo.boundingSphere;
+    mesh.position.set(-center.x, -center.y, -center.z);
+    scene.add(mesh);
+    camera.position.set(radius * 1.6, radius * 1.1, radius * 1.6);
+    controls.target.set(0, 0, 0);
+    controls.update();
+    const facets = (text.match(/facet normal/g) || []).length;
+    const kb = (new Blob([text]).size / 1024).toFixed(1);
+    stats.textContent = `${facets.toLocaleString()} facets · ${kb} KB` +
+      (new Blob([text]).size > 524288 ? ' - over GitHub’s 512 KB markdown limit!' : '');
+  } catch (e) {
+    errBox.textContent = 'Could not parse STL: ' + e.message;
+    errBox.style.display = 'block';
+  }
+}
+document.getElementById('render').addEventListener('click', render);
+
+(function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
+
+// seed with a pyramid so the page is alive on load
+textarea.value = `solid pyramid
+ facet normal 0.00 0.00 -1.00
+  outer loop
+   vertex -10.00 -10.00 0.00
+   vertex 10.00 10.00 0.00
+   vertex 10.00 -10.00 0.00
+  endloop
+ endfacet
+ facet normal 0.00 0.00 -1.00
+  outer loop
+   vertex -10.00 -10.00 0.00
+   vertex -10.00 10.00 0.00
+   vertex 10.00 10.00 0.00
+  endloop
+ endfacet
+ facet normal 0.00 -0.89 0.45
+  outer loop
+   vertex -10.00 -10.00 0.00
+   vertex 10.00 -10.00 0.00
+   vertex 0.00 0.00 20.00
+  endloop
+ endfacet
+ facet normal 0.89 0.00 0.45
+  outer loop
+   vertex 10.00 -10.00 0.00
+   vertex 10.00 10.00 0.00
+   vertex 0.00 0.00 20.00
+  endloop
+ endfacet
+ facet normal 0.00 0.89 0.45
+  outer loop
+   vertex 10.00 10.00 0.00
+   vertex -10.00 10.00 0.00
+   vertex 0.00 0.00 20.00
+  endloop
+ endfacet
+ facet normal -0.89 0.00 0.45
+  outer loop
+   vertex -10.00 10.00 0.00
+   vertex -10.00 -10.00 0.00
+   vertex 0.00 0.00 20.00
+  endloop
+ endfacet
+endsolid pyramid`;
+resize();
+render();
+</script>
+</body>
+</html>

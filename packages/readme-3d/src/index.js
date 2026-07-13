@@ -63,7 +63,7 @@ export async function loadTriangles(path, { up } = {}) {
  * Convert a model file into GitHub-renderable ASCII STL.
  *
  * Options:
- *   facets     max facet count (default 1500 — a good README default)
+ *   facets     max facet count (default 1500 - a good README default)
  *   budget     max output bytes (e.g. '200kb'); overrides facets downward
  *   name       solid name written into the STL
  *   precision  decimals per coordinate (default 2)

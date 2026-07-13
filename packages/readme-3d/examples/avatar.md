@@ -1,3 +1,13 @@
+# AI-generated avatar - 10,194 → 1,200 facets
+
+This avatar started as a one-line text prompt on [three.ws Forge](https://three.ws/forge) ("a friendly humanoid robot mascot standing upright, rounded smooth body panels, big head, glossy white and teal plastic, full body"). The 10,194-triangle GLB was simplified to 1,200 facets (172 KB) with:
+
+```bash
+npx readme-3d avatar.glb --facets 1200 --name threews_avatar
+```
+
+Drag to rotate:
+
 ```stl
 solid threews_avatar
  facet normal -0.15 -0.99 0.06
@@ -8402,3 +8412,5 @@ solid threews_avatar
  endfacet
 endsolid threews_avatar
 ```
+
+Source ASCII STL: [models/avatar.stl](models/avatar.stl) · Full tutorial: [text → 3D → README](../docs/tutorials/03-text-to-3d-avatar.md)

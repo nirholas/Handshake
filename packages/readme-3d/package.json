@@ -1,7 +1,7 @@
 {
   "name": "readme-3d",
   "version": "0.1.0",
-  "description": "Put interactive, rotatable 3D models in your GitHub README. Converts GLB, glTF, OBJ, and binary STL into the ASCII STL markdown blocks GitHub renders natively — with mesh simplification to fit the 512 KB markdown budget.",
+  "description": "Put interactive, rotatable 3D models in your GitHub README. Converts GLB, glTF, OBJ, and binary STL into the ASCII STL markdown blocks GitHub renders natively - with mesh simplification to fit the 512 KB markdown budget.",
   "type": "module",
   "bin": {
     "readme-3d": "./bin/readme3d.js",

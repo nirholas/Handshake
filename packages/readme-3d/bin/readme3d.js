@@ -9,7 +9,7 @@ import {
   GITHUB_MARKDOWN_LIMIT,
 } from '../src/index.js';
 
-const HELP = `readme-3d — put interactive 3D models in your GitHub README
+const HELP = `readme-3d - put interactive 3D models in your GitHub README
 
 Usage:
   readme-3d <model.(glb|gltf|stl|ast|obj)> [options]   convert a model
@@ -66,10 +66,10 @@ try {
       console.log(`  stl block ${i + 1}: ${b.facets} facets, ${kb(b.bytes)}`)
     );
     if (report.ok) {
-      console.log(`OK — ${kb(report.headroom)} of headroom left.`);
+      console.log(`OK - ${kb(report.headroom)} of headroom left.`);
     } else {
       console.error(
-        `TOO BIG — GitHub will show this file as raw text. Trim ${kb(-report.headroom)} (lower --facets or --precision).`
+        `TOO BIG - GitHub will show this file as raw text. Trim ${kb(-report.headroom)} (lower --facets or --precision).`
       );
       process.exit(2);
     }
@@ -93,7 +93,7 @@ try {
     console.error(
       `${input}: ${result.sourceFacets} → ${result.facets} facets, ${kb(result.bytes)}` +
         (result.bytes > GITHUB_MARKDOWN_LIMIT / 2
-          ? ` (large — run "readme-3d check" on the target file)`
+          ? ` (large - run "readme-3d check" on the target file)`
           : '')
     );
     if (values.out) console.error(`wrote ${values.out}`);

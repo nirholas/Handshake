@@ -106,7 +106,7 @@ export async function simplifyTriangles(triangles, targetFacets) {
   return out;
 }
 
-/** Serialize triangles as ASCII STL — the exact dialect GitHub markdown renders. */
+/** Serialize triangles as ASCII STL - the exact dialect GitHub markdown renders. */
 export function writeAsciiStl(triangles, { name = 'model', precision = 2 } = {}) {
   const f = (v) => {
     let s = v.toFixed(precision);

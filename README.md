@@ -8,9 +8,9 @@ https://github.com/user-attachments/assets/d52515d1-cb04-4dd6-98bd-fef233312dc4
 
 > **Try it in 60 seconds:** open [three.ws/forge](https://three.ws/forge), type *"a brass steampunk owl, full body"*, and download the GLB. Text→3D, image→3D, and sketch→3D — free draft tier, no account. [Jump to the Forge section ↓](#forge--text--image-to-3d)
 
-### Meet the avatar — a live 3D model, right here in markdown
+### Meet the avatar: a live 3D model, right here in markdown
 
-Drag to rotate. This is not an image or a video: it is an interactive 3D model rendered natively by GitHub. The avatar was generated from a one-line text prompt on [three.ws Forge](https://three.ws/forge) (free tier), decimated to 1,200 triangles, and embedded as ASCII STL with [readme-3d](https://github.com/nirholas/readme-3d) — our open-source toolkit for putting 3D models in any GitHub README, issue, or discussion.
+Drag to rotate. This is not an image or a video: it is an interactive 3D model rendered natively by GitHub. The avatar was generated from a one-line text prompt on [three.ws Forge](https://three.ws/forge) (free tier), decimated to 1,200 triangles, and embedded as ASCII STL with [readme-3d](packages/readme-3d), our open-source toolkit for putting 3D models in any GitHub README, issue, or discussion.
 
 ```stl
 solid threews_avatar
@@ -8417,7 +8417,7 @@ solid threews_avatar
 endsolid threews_avatar
 ```
 
-<sub>Want your own? `npx readme-3d your-model.glb` converts any GLB into a paste-ready markdown block. [How it works →](https://github.com/nirholas/readme-3d)</sub>
+<sub>Want your own? `npx readme-3d your-model.glb` converts any GLB into a paste-ready markdown block. [How it works →](packages/readme-3d)</sub>
 
 ### $THREE
 

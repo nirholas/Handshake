@@ -5,7 +5,7 @@ export function parseStl(buffer) {
 }
 
 /**
- * "solid" at byte 0 is not enough — some binary exporters write it into the
+ * "solid" at byte 0 is not enough - some binary exporters write it into the
  * 80-byte header. Cross-check the binary facet-count math against file size.
  */
 export function isAsciiStl(buf) {

@@ -1,0 +1,17 @@
+title: readme-3d
+description: >-
+  Put interactive, rotatable 3D models in your GitHub README. Convert GLB,
+  glTF, OBJ, and STL into the ASCII STL markdown blocks GitHub renders
+  natively - with mesh simplification to fit the 512 KB limit.
+url: "https://nirholas.github.io"
+baseurl: "/readme-3d"
+theme: jekyll-theme-cayman
+plugins:
+  - jekyll-seo-tag
+  - jekyll-relative-links
+  - jekyll-sitemap
+defaults:
+  - scope:
+      path: ""
+    values:
+      image: /readme-3d/assets/avatar-preview.png

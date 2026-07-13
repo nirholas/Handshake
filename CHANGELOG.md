@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-07-13
+
+- **A live 3D avatar in the GitHub README, and readme-3d: an open toolkit for 3D in markdown** — The three.ws GitHub README now opens with the platform mascot as a real, draggable 3D model that GitHub renders natively (no image, no video: an interactive viewer in plain markdown). The pipeline that made it is now an open-source package, readme-3d: a CLI and library that converts any GLB, glTF, OBJ, or STL into the ASCII-STL markdown blocks GitHub renders, simplifies meshes to fit GitHub's 512 KB markdown limit, and size-checks your files so they never silently stop rendering. It ships with five tutorials, live examples, a docs site, a Claude Code skill, and copy-paste agent prompts, and pairs with the free Forge text-to-3D API so anyone can go from a one-line prompt to a 3D model in their README in five minutes. (`https://github.com/nirholas/three.ws/tree/main/packages/readme-3d`) `[feature, docs, sdk]`
+
 ## 2026-07-12
 
 - **Docs · The autonomous economy** (`/docs/autonomous-economy`) — How the three.ws on-chain treasury funds itself and where every dollar flows: the funding-root and engine wallets, the topup/sweepback loop, the allowlist- and destination-locks that keep money inside platform-owned wallets, and the two leak scanners that audit every signer wallet on-chain every minute — plus how to verify there's no leak yourself.
