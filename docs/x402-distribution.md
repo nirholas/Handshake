@@ -15,6 +15,21 @@ what we automate, and what needs a human.
 
 ---
 
+## Chain priority: Solana first
+
+**Solana is the home chain.** `$THREE` and our ecosystem live there, and our x402
+rail settles Solana through our OWN self-hosted facilitator, with no third-party
+credential required. Every paid endpoint already advertises Solana USDC (and
+`$THREE`) accepts, and x402scan attributes on-chain Solana settlements to us
+natively.
+
+Base is a secondary surface. It is worth having, because the CDP Bazaar (and
+therefore agentic.market) indexes only endpoints that settle through the CDP
+facilitator on Base. But that is an *additional* listing, not the goal, and a
+Base blocker (missing CDP creds, an unfunded EVM buyer) must never stall or
+re-scope Solana work. Treat everything below about CDP/Base as a nice-to-have
+distribution channel. See the Solana-first rule in `CLAUDE.md`.
+
 ## The one rule of ranking
 
 Every major surface ranks the same way: **settled transaction count and
@@ -40,9 +55,12 @@ search results after 30 days without a settle**.
   from each service-catalog descriptor.
 - **Ranking:** relevance × quality = distinct buyers (30 d), settled volume
   (30 d), recency, metadata completeness. Recomputed every 6 hours.
-- **Ops required:** `CDP_API_KEY_ID`/`CDP_API_KEY_SECRET` on the Cloud Run
+- **Ops required (secondary priority — see Chain priority above):**
+  `CDP_API_KEY_ID`/`CDP_API_KEY_SECRET` on the Cloud Run
   service so Base settles through the CDP facilitator, then ≥1 settled payment
-  per endpoint (point one ring rotation at the CDP rail). Verify presence via
+  per endpoint (point one ring rotation at the CDP rail). Note the ring payer
+  (`api/_lib/x402/pay.js`) is Solana-only today, so a Base settle leg would have
+  to be built and funded first. Do not let that block Solana work. Verify presence via
   `GET https://api.cdp.coinbase.com/platform/v2/x402/discovery/resources` —
   do **not** trust the `EXTENSION-RESPONSES` header alone (known upstream bug:
   x402-foundation/x402#2112 — it is sometimes never emitted).
