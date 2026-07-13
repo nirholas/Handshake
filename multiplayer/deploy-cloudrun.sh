@@ -59,7 +59,10 @@ UPSTASH_REDIS_REST_URL="${UPSTASH_REDIS_REST_URL:-}"
 UPSTASH_REDIS_REST_TOKEN="${UPSTASH_REDIS_REST_TOKEN:-}"
 
 # Assemble env vars (@-delimited so values containing commas are safe). Redis +
-# monitor creds are only passed when provided.
+# monitor creds are only passed when provided. Applied with --update-env-vars
+# (NOT --set-env-vars): a redeploy from a shell without HOLDER_PASS_SECRET or
+# the Upstash creds must merge into the service's existing env, never replace
+# it — --set-env-vars silently wipes every var not named here.
 ENV_VARS="NODE_ENV=production@ALLOWED_ORIGINS=${ALLOWED_ORIGINS}"
 [[ -n "${REDIS_URI}" ]] && ENV_VARS="${ENV_VARS}@REDIS_URI=${REDIS_URI}"
 [[ -n "${UPSTASH_REDIS_REST_URL}" ]] && ENV_VARS="${ENV_VARS}@UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL}"
@@ -67,10 +70,11 @@ ENV_VARS="NODE_ENV=production@ALLOWED_ORIGINS=${ALLOWED_ORIGINS}"
 [[ -n "${MONITOR_USER:-}" ]] && ENV_VARS="${ENV_VARS}@MONITOR_USER=${MONITOR_USER}"
 [[ -n "${MONITOR_PASS:-}" ]] && ENV_VARS="${ENV_VARS}@MONITOR_PASS=${MONITOR_PASS}"
 
-# Warn loudly if durable build storage isn't configured — without it, every coin
-# world's build is memory-only and a redeploy wipes it.
+# Warn if durable build storage isn't configured in this shell. With
+# --update-env-vars a value already set on the service survives the redeploy,
+# so this only bites a FIRST deploy (or a service that never had them).
 if [[ -z "${UPSTASH_REDIS_REST_URL}" || -z "${UPSTASH_REDIS_REST_TOKEN}" ]]; then
-	echo "  ⚠ UPSTASH_REDIS_REST_URL/_TOKEN not set — builds will be MEMORY-ONLY (lost on redeploy)." >&2
+	echo "  ⚠ UPSTASH_REDIS_REST_URL/_TOKEN not set in this shell — kept from the service's current env if present, else builds are MEMORY-ONLY." >&2
 fi
 
 echo "Deploying '${SERVICE}' to Cloud Run (project=${PROJECT}, region=${REGION})..."
@@ -110,7 +114,7 @@ gcloud run deploy "${SERVICE}" \
 	--cpu "${CPU}" \
 	--timeout 3600 \
 	--session-affinity \
-	--set-env-vars "^@^${ENV_VARS}"
+	--update-env-vars "^@^${ENV_VARS}"
 
 URL="$(gcloud run services describe "${SERVICE}" --region "${REGION}" --format 'value(status.url)')"
 WSS="${URL/https:/wss:}"
