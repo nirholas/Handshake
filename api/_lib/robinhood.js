@@ -540,6 +540,11 @@ export async function walletStockPortfolio(owner) {
  * percentage (positive = DEX trades above NAV). Both inputs already USD.
  */
 export function premiumPct(dexUsd, navUsd) {
+	// Reject null/undefined BEFORE Number() coercion — Number(null) is 0 (finite),
+	// so a missing DEX price silently priced as "-100% premium" instead of
+	// leaving the field unset, which is exactly what happened for every Stock
+	// Token whose DEX pool doesn't exist yet.
+	if (dexUsd == null || navUsd == null) return null;
 	const d = Number(dexUsd);
 	const n = Number(navUsd);
 	if (!Number.isFinite(d) || !Number.isFinite(n) || n <= 0) return null;

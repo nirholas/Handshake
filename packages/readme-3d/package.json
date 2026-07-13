@@ -1,0 +1,62 @@
+{
+  "name": "readme-3d",
+  "version": "0.1.0",
+  "description": "Put interactive, rotatable 3D models in your GitHub README. Converts GLB, glTF, OBJ, and binary STL into the ASCII STL markdown blocks GitHub renders natively — with mesh simplification to fit the 512 KB markdown budget.",
+  "type": "module",
+  "bin": {
+    "readme-3d": "./bin/readme3d.js",
+    "readme3d": "./bin/readme3d.js"
+  },
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "readme",
+    "github",
+    "markdown",
+    "3d",
+    "stl",
+    "ascii-stl",
+    "glb",
+    "gltf",
+    "obj",
+    "3d-model",
+    "github-readme",
+    "embed",
+    "viewer",
+    "mesh-simplification",
+    "meshoptimizer",
+    "three-js",
+    "3d-printing"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/readme-3d.git"
+  },
+  "homepage": "https://nirholas.github.io/readme-3d/",
+  "bugs": {
+    "url": "https://github.com/nirholas/readme-3d/issues"
+  },
+  "author": "three.ws (https://three.ws)",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@gltf-transform/core": "^4.4.0",
+    "@gltf-transform/extensions": "^4.4.0",
+    "draco3dgltf": "^1.5.7",
+    "meshoptimizer": "^1.1.1"
+  }
+}

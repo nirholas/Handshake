@@ -221,3 +221,5 @@ When the user asks you to push (or to commit + push): `git push threews main`. O
 ## Tone
 
 Professional. No filler. No "great question!" No emojis unless the user asks. Short sentences. Ship work.
+
+**Never use the em-dash character ("—").** Not in chat replies, code, comments, docs, UI copy, commit messages, changelog entries, or anywhere else you write. Rephrase with a period, comma, colon, or parentheses instead. This applies to the en-dash ("–") too; a plain hyphen (-) for hyphenated words and ranges is fine.

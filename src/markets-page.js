@@ -157,6 +157,7 @@ const SUITE = [
 	{ href: '/hacks', glyph: 'shield', title: 'Hacks Database', desc: 'Every major DeFi exploit — amount, technique, chain, source.' },
 	{ href: '/markets/trending', glyph: 'fire', title: 'Trending', desc: 'The most-searched coins, categories, and NFTs right now.' },
 	{ href: '/coin-intel', glyph: 'radar', title: 'Coin Intelligence', desc: 'Every launch classified — organic vs bundle, with a learning score.' },
+	{ href: '/markets/robinhood', glyph: 'bank', title: 'Robinhood Chain', desc: 'The 24/7 tokenized-equity board — Chainlink NAV vs. DEX premium, a memecoin screener, and a real buy flow.' },
 ];
 
 function renderSuite(stats = {}) {

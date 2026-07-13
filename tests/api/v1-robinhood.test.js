@@ -62,6 +62,7 @@ vi.mock('../../api/_lib/robinhood.js', () => ({
 	publicClient: () => ({ getBlockNumber: async () => 7700000n }),
 	BLOCKSCOUT_BASE: 'https://robinhoodchain.blockscout.com',
 	premiumPct: (dexUsd, navUsd) => {
+		if (dexUsd == null || navUsd == null) return null;
 		const d = Number(dexUsd), n = Number(navUsd);
 		if (!Number.isFinite(d) || !Number.isFinite(n) || n <= 0) return null;
 		return ((d - n) / n) * 100;
