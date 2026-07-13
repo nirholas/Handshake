@@ -62,3 +62,30 @@ test('simplifyTriangles is a no-op below target', async () => {
   const out = await simplifyTriangles(tris, 100);
   assert.equal(out.length, 12);
 });
+
+test('simplifyTriangles hits the target on heavily-disconnected meshes (sloppy fallback)', async () => {
+  // 200 separate far-apart cubes: topology-preserving simplification cannot
+  // merge components, so only the sloppy fallback can reach the budget.
+  const tris = [];
+  for (let i = 0; i < 200; i++) {
+    const ox = (i % 20) * 3, oy = Math.floor(i / 20) * 3;
+    for (const t of cubeTriangles()) {
+      tris.push(t.map(([x, y, z]) => [x + ox, y + oy, z]));
+    }
+  }
+  const out = await simplifyTriangles(tris, 300); // 2400 -> 300
+  assert.ok(out.length <= 330, `expected <=330, got ${out.length}`);
+  assert.ok(out.length >= 3, 'mesh must not vanish');
+});
+
+test('simplifyTriangles prunes tiny floaters but keeps the main body', async () => {
+  const tris = gridTriangles(24); // 1152 facets, 24x24 units
+  // add 20 microscopic distant triangles (debris typical of AI meshes)
+  for (let i = 0; i < 20; i++) {
+    const o = 100 + i;
+    tris.push([[o, o, 0], [o + 0.01, o, 0], [o, o + 0.01, 0]]);
+  }
+  const out = await simplifyTriangles(tris, 400);
+  const { max } = bounds(out);
+  assert.ok(max[0] < 50, `floaters should be pruned, max x = ${max[0]}`);
+});

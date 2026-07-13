@@ -4248,7 +4248,7 @@ endsolid cube
 Two things make this awkward to use by hand, and `readme-3d` fixes both:
 
 1. **Real models aren't ASCII STL.** They're GLBs, binary STLs, OBJs - often with hundreds of thousands of triangles. `readme-3d` parses all of these (including Draco- and meshopt-compressed glTF), bakes node transforms, and re-serializes to the exact ASCII dialect GitHub renders.
-2. **ASCII STL is huge and GitHub stops rendering markdown files over 512 KB.** `readme-3d` welds and simplifies the mesh with [meshoptimizer](https://github.com/zeux/meshoptimizer) down to a facet or byte budget, normalizes coordinates to a compact range, and trims float precision - a 10 MB GLB becomes a ~150 KB block that still looks like the model.
+2. **ASCII STL is huge and GitHub stops rendering markdown files over 512 KB.** `readme-3d` welds the mesh, prunes tiny disconnected debris, and simplifies with [meshoptimizer](https://github.com/zeux/meshoptimizer) down to a facet or byte budget (quadric simplification first, with a topology-ignoring sloppy pass as fallback so the budget is always reached), then normalizes coordinates to a compact range and trims float precision - a 10 MB GLB becomes a ~150 KB block that still looks like the model.
 
 It also rotates Y-up assets (glTF, OBJ) into the Z-up convention STL viewers expect, so your model stands upright instead of lying on its face.
 

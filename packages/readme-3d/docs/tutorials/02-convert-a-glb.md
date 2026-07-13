@@ -50,7 +50,7 @@ npx readme-3d check README.md
 ## 4. What the converter actually does
 
 1. **Parses** GLB/glTF (including Draco- and meshopt-compressed), OBJ, or binary/ASCII STL into a triangle soup, baking every node transform.
-2. **Welds** duplicate vertices and **simplifies** with [meshoptimizer](https://github.com/zeux/meshoptimizer)'s quadric simplifier, progressively loosening the error tolerance until it hits your target - this is what tames disconnected AI-generated meshes.
+2. **Welds** duplicate vertices, **prunes** tiny disconnected floaters (typical AI-mesh debris), and **simplifies** with [meshoptimizer](https://github.com/zeux/meshoptimizer): the quadric simplifier runs first with a progressively loosened error tolerance, and a topology-ignoring sloppy pass finishes the job when a heavily-disconnected mesh will not collapse cleanly - so your `--facets`/`--budget` target is always reached.
 3. **Rotates** Y-up sources to STL's Z-up convention, **normalizes** to a compact 100-unit scale, grounds the model at z=0, and centers it.
 4. **Serializes** ASCII STL with fixed 2-decimal precision and recomputed facet normals.
 

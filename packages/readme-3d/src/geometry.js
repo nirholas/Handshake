@@ -52,10 +52,16 @@ export function normalize(triangles, { size = 100 } = {}) {
 }
 
 /**
- * Weld exact-duplicate vertices into an indexed mesh, run meshoptimizer's
- * simplifier down to ~targetFacets, and return a triangle soup again.
- * The error tolerance is loosened progressively when the simplifier stalls,
- * which is what lets heavily-disconnected AI-generated meshes collapse.
+ * Weld exact-duplicate vertices into an indexed mesh, simplify down to
+ * ~targetFacets with meshoptimizer, and return a triangle soup again.
+ *
+ * Three stages, each only if the previous one left us over target:
+ * 1. prune  - drop tiny disconnected floaters (AI meshes are full of them)
+ *             so the facet budget goes to the silhouette;
+ * 2. quality - topology-preserving quadric simplification with a
+ *              progressively loosened error tolerance;
+ * 3. sloppy  - topology-ignoring pass that always reaches the target, for
+ *              heavily-disconnected meshes the quality pass cannot collapse.
  */
 export async function simplifyTriangles(triangles, targetFacets) {
   if (triangles.length <= targetFacets) return triangles;
@@ -79,8 +85,18 @@ export async function simplifyTriangles(triangles, targetFacets) {
   }
   const pos = new Float32Array(positions);
 
+  // 1. prune: components smaller than ~2% of the model scale are visual
+  // noise at README size. Skip the result if pruning ate a big share of the
+  // mesh - then the "floaters" ARE the model (e.g. a particle swarm).
+  const pruned = MeshoptSimplifier.simplifyPrune(indices, pos, 3, 0.02);
+  if (pruned.length >= indices.length * 0.5 && pruned.length > 0) {
+    indices = pruned;
+  }
+
+  // 2. quality: loosen the tolerance when the simplifier stalls, but stay
+  // in a range where the shape survives.
   let error = 1e-4;
-  while (indices.length / 3 > targetFacets && error <= 0.5) {
+  while (indices.length / 3 > targetFacets && error <= 0.25) {
     const [next] = MeshoptSimplifier.simplify(
       indices,
       pos,
@@ -91,7 +107,19 @@ export async function simplifyTriangles(triangles, targetFacets) {
     );
     if (next.length >= indices.length * 0.98) error *= 4;
     indices = next;
-    if (next.length / 3 <= targetFacets) break;
+  }
+
+  // 3. sloppy: guaranteed to hit the budget whatever the topology.
+  if (indices.length / 3 > targetFacets) {
+    const [sloppy] = MeshoptSimplifier.simplifySloppy(
+      indices,
+      pos,
+      3,
+      null,
+      targetFacets * 3,
+      1.0
+    );
+    if (sloppy.length > 0) indices = sloppy;
   }
 
   const out = [];
