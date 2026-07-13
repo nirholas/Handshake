@@ -6,12 +6,12 @@
 // volume and gets picked up by the public x402 indexers (x402scan, Bazaar,
 // 402index). The datapoint fabric advertises ~4,400 payable URLs in the
 // discovery doc but the ring coverage sweep only pays the ~68 named
-// RING_CATALOG endpoints — the granular URLs have never settled, so indexers
+// RING_CATALOG endpoints, the granular URLs have never settled, so indexers
 // treat them as a dead static list. This closes that gap.
 //
 // The seed list is pulled LIVE from the platform's own discovery doc
 // (/.well-known/x402.json), so every URL is guaranteed to be a real advertised
-// resource — no hand-maintained list to drift. It is bucketed by family and
+// resource, no hand-maintained list to drift. It is bucketed by family and
 // capped per-family (core metrics like price/tvl/supply/volume first) so a
 // bounded budget proves the whole surface is live rather than over-settling
 // one family.
@@ -19,10 +19,10 @@
 // Payments are circular: the payer wallet (X402_SEED_SOLANA_SECRET_BASE58)
 // pays the platform treasury (X402_PAY_TO_SOLANA). Both are platform-owned, so
 // the USDC round-trips and only the Solana network fee is truly spent. An
-// onAccept gate refuses any payment whose payTo is not the expected treasury —
+// onAccept gate refuses any payment whose payTo is not the expected treasury, so
 // money never moves to an address we did not configure.
 //
-// Real payments only — no mocks. Requires a funded, env-complete context:
+// Real payments only, no mocks. Requires a funded, env-complete context:
 //   X402_SEED_SOLANA_SECRET_BASE58  funded with USDC + a little SOL
 //   X402_ASSET_MINT_SOLANA          USDC mint (settlement asset)
 //   X402_PAY_TO_SOLANA              expected treasury (recipient gate)
@@ -63,7 +63,7 @@ const ONLY = (opt('only', '') || '').split(',').map((s) => s.trim()).filter(Bool
 const ORIGIN = (opt('origin', process.env.APP_ORIGIN || 'https://three.ws')).replace(/\/$/, '');
 const DELAY_MS = Number(opt('delay-ms', '250'));
 
-// Core metrics settled first when a family is capped — the ones an indexer's
+// Core metrics settled first when a family is capped, the ones an indexer's
 // sample call is most likely to hit, and the ones buyers actually want.
 const CORE_METRICS = new Set([
 	'price', 'tvl', 'supply', 'volume-24h', 'market-cap', 'apy', 'index',
@@ -130,7 +130,7 @@ async function main() {
 	}
 
 	const expectedPayTo = process.env.X402_PAY_TO_SOLANA;
-	if (!expectedPayTo) throw new Error('X402_PAY_TO_SOLANA (recipient gate) not set — refusing to pay');
+	if (!expectedPayTo) throw new Error('X402_PAY_TO_SOLANA (recipient gate) not set, refusing to pay');
 
 	const buyer = loadSeedKeypair();
 	const ctx = await bootstrapSolanaContext({ buyer });
@@ -152,7 +152,7 @@ async function main() {
 	for (const { fam, url } of seeds) {
 		const remainingCap = capAtomics - spentAtomics;
 		if (remainingCap <= 0) {
-			console.log(`\nspend cap $${MAX_USD} reached — stopping (${ok} settled).`);
+			console.log(`\nspend cap $${MAX_USD} reached, stopping (${ok} settled).`);
 			break;
 		}
 		let r;

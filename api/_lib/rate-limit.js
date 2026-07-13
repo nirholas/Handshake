@@ -70,6 +70,19 @@ const X402_VERIFY_GLOBAL_PER_HOUR = Math.max(
 	Number(process.env.X402_VERIFY_GLOBAL_PER_HOUR) || 12000,
 );
 
+// Per-IP ceilings for the same family, tunable by env for the same reason. The
+// verify bucket is failure-weighted (see limits.x402VerifyIp / x402VerifyPenalty):
+// a settled payment costs 1 token, a failed verify costs X402_VERIFY_FAIL_PENALTY.
+// The defaults let one paying client pull 300 datapoints/min while still cutting a
+// junk-payment flood off after ~20 failures/min. Floored so a bad env value cannot
+// throttle paying traffic to a crawl, or (for the penalty) disable the guard.
+const X402_PROBE_IP_PER_MIN = Math.max(120, Number(process.env.X402_PROBE_IP_PER_MIN) || 600);
+const X402_VERIFY_IP_PER_MIN = Math.max(20, Number(process.env.X402_VERIFY_IP_PER_MIN) || 300);
+const X402_VERIFY_FAIL_PENALTY = Math.max(
+	1,
+	Number(process.env.X402_VERIFY_FAIL_PENALTY) || 15,
+);
+
 // Global settle/verify ceiling for OUR self-hosted facilitator
 // (api/x402-facilitator). Every co-signed settle burns sponsor SOL (~5000
 // lamports base fee), so an unbounded flood of tiny allowlisted transfers could
@@ -971,20 +984,55 @@ export const limits = {
 	// x402 checkout analytics record (api/x402-checkout-record). Public + write,
 	// so bound per-IP to stop an attacker scripting fabricated revenue rows.
 	x402RecordIp: (ip) => getLimiter('x402:record:ip', { limit: 30, window: '1 m' }).limit(ip),
-	// Generic paid x402 endpoints (~18 routes via paidEndpoint()). Two tiers:
+	// Generic paid x402 endpoints (paidEndpoint(), incl. the ~4.4k-URL datapoint
+	// fabric). Two tiers:
 	//  • probe — every anonymous request (price-discovery 402 + paid retry).
 	//    Generous + NON-critical so a Redis outage never blocks discovery or a
 	//    legitimate paid call; authenticated/subscription callers skip it entirely
 	//    (they have their own access-control gating). Pure anonymous-flood guard.
 	//  • verify — only requests carrying an X-PAYMENT header reach the facilitator
 	//    /verify round-trip. Without this, one cheap inbound request amplifies into
-	//    one outbound facilitator call at our expense (cost/DDoS vector). Tight
+	//    one outbound facilitator call at our expense (cost/DDoS vector). Bounded
 	//    per-IP AND a global circuit breaker, both CRITICAL (fail closed in prod):
 	//    during a Redis outage, rejecting a payment retry (buyer keeps funds and
 	//    retries) beats letting the amplification run unbounded.
-	x402ProbeIp: (ip) => getLimiter('x402:probe:ip', { limit: 120, window: '1 m' }).limit(ip),
+	//
+	// The per-IP verify bucket is FAILURE-WEIGHTED, not attempt-weighted. Metering
+	// every attempt equally capped a *paying* client at 20 calls/min, which is
+	// incoherent for a per-datapoint API whose whole value is bulk reads: a buyer
+	// pulling 50 metrics got 429s despite paying for every one. The amplification
+	// vector is a junk X-PAYMENT flood, and junk payments FAIL verify. So a
+	// successful (settled) verify costs 1 token, while a failed verify costs
+	// X402_VERIFY_FAIL_PENALTY (default 15) via x402VerifyPenalty(). At 300/min a
+	// legitimate payer gets 300 paid calls/min, while a pure junk flood drains the
+	// bucket after ~20 failures/min, the same bound as the old flat cap, still
+	// enforced by the pre-verify gate BEFORE any facilitator call is made.
+	x402ProbeIp: (ip) =>
+		getLimiter('x402:probe:ip', { limit: X402_PROBE_IP_PER_MIN, window: '1 m' }).limit(ip),
 	x402VerifyIp: (ip) =>
-		getLimiter('x402:verify:ip', { limit: 20, window: '1 m', critical: true }).limit(ip),
+		getLimiter('x402:verify:ip', {
+			limit: X402_VERIFY_IP_PER_MIN,
+			window: '1 m',
+			critical: true,
+		}).limit(ip),
+	// Burn the extra tokens that make a failed verify expensive. Called ONLY on the
+	// verify-failure path; the one token for the attempt itself was already spent by
+	// x402VerifyIp() at the pre-verify gate. Best-effort: a limiter fault here must
+	// never convert a payment error into a 500, so it swallows its own errors.
+	x402VerifyPenalty: async (ip) => {
+		const extra = Math.max(0, X402_VERIFY_FAIL_PENALTY - 1);
+		if (!extra) return;
+		const bucket = getLimiter('x402:verify:ip', {
+			limit: X402_VERIFY_IP_PER_MIN,
+			window: '1 m',
+			critical: true,
+		});
+		try {
+			await Promise.all(Array.from({ length: extra }, () => bucket.limit(ip)));
+		} catch {
+			/* penalty is best-effort; the pre-verify gate is the hard bound */
+		}
+	},
 	x402VerifyGlobal: () =>
 		getLimiter('x402:verify:global', {
 			limit: X402_VERIFY_GLOBAL_PER_HOUR,

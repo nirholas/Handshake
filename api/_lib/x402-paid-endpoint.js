@@ -870,6 +870,16 @@ export function paidEndpoint(spec) {
 		try {
 			verified = await verifyPayment({ paymentHeader, requirements, builderCode });
 		} catch (err) {
+			// A failed verify is the amplification vector this family guards against: a
+			// junk X-PAYMENT header turns one cheap inbound request into one outbound
+			// facilitator call at our expense. So failure, not mere attempt, is what the
+			// per-IP verify bucket meters. Burn the extra penalty tokens here. A client
+			// that keeps paying successfully is never throttled for it, while a flood of
+			// invalid proofs drains its bucket and gets cut off at the pre-verify gate
+			// above, before the next facilitator round-trip. Rejected proofs (402) and
+			// upstream verify faults (502) both count, because an attacker chooses the
+			// shape of the garbage they send; exempting either would reopen the vector.
+			await limits.x402VerifyPenalty(ip);
 			// Verify is a payment outcome too — record it so the invalid/rejected-
 			// payment rate is visible alongside settlements. A 402 here is a rejected
 			// proof (insufficient/invalid), distinct from an upstream verify fault.

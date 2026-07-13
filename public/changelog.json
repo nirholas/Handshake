@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-13T03:20:57.570Z",
+	"generated_at": "2026-07-13T07:44:21.397Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -28,6 +28,17 @@
 				"feature",
 				"docs",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-07-13",
+			"type": "update",
+			"title": "Paid API clients are no longer rate-limited for paying",
+			"summary": "The per-IP budget on every paid three.ws endpoint used to count each payment attempt the same whether it succeeded or failed, which capped a paying client at 20 calls a minute. That is backwards for the market-data API, where the whole point is pulling many individual data points at a fraction of a cent each: a buyer fetching 50 metrics got rejected partway through despite paying for every one. The budget now counts failures instead of attempts. A settled payment costs a single token against a much larger allowance (300 calls a minute), while an invalid-payment flood, the abuse this guard exists to stop, drains the allowance quickly and is still cut off before it can cost us anything. Bulk buyers get the throughput they are paying for, and the abuse protection is unchanged.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
