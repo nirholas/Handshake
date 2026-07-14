@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-14T13:48:01.603Z",
+	"generated_at": "2026-07-14T14:08:29.792Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -842,7 +842,7 @@
 				{
 					"path": "/viewer",
 					"title": "glTF / GLB Viewer",
-					"description": "Paste any public glTF/GLB URL and preview it inline — the lightweight, unauthenticated model viewer every 3D Studio tool's shared asset link opens.",
+					"description": "Preview any public glTF/GLB inline, then take it further: pose and animate it, restyle the material, build a scene, place it in AR, embed it on your site, or launch it as a pump.fun coin.",
 					"added": "2026-07-08",
 					"auth": null,
 					"indexable": true,

@@ -516,7 +516,7 @@ Standalone Three.js viewer for avatar artifacts — embeddable and shareable wit
 
 URL: https://three.ws/viewer
 
-Paste any public glTF/GLB URL and preview it inline — the lightweight, unauthenticated model viewer every 3D Studio tool's shared asset link opens.
+Preview any public glTF/GLB inline, then take it further: pose and animate it, restyle the material, build a scene, place it in AR, embed it on your site, or launch it as a pump.fun coin.
 
 ### AR Forge
 

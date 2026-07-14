@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-14T13:50:21.208Z",
+	"generated_at": "2026-07-14T14:08:29.808Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -146,6 +146,17 @@
 			"link": "/viewer",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
+			"title": "The 3D viewer now funnels every model into a next step",
+			"summary": "Every generated model's share page grew a \"Do more with this model\" panel: pose and animate it in Pose Studio (rigged models are detected automatically), restyle the material, drop it into Scene Studio or Parts Studio, place it in your room in AR, copy a paste-anywhere embed iframe, or launch it as a pump.fun coin with a rendered snapshot pre-filled as the token image. The viewer can now also be embedded on any site.",
+			"link": "/viewer",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{
@@ -1679,7 +1690,7 @@
 			"date": "2026-07-08",
 			"type": "launch",
 			"title": "glTF / GLB Viewer",
-			"summary": "Paste any public glTF/GLB URL and preview it inline — the lightweight, unauthenticated model viewer every 3D Studio tool's shared asset link opens.",
+			"summary": "Preview any public glTF/GLB inline, then take it further: pose and animate it, restyle the material, build a scene, place it in AR, embed it on your site, or launch it as a pump.fun coin.",
 			"link": "/viewer",
 			"tags": [
 				"launch"

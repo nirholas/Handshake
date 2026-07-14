@@ -13691,6 +13691,16 @@
 				"fix",
 				"improvement"
 			]
+		},
+		{
+			"date": "2026-07-14",
+			"title": "The 3D viewer now funnels every model into a next step",
+			"summary": "Every generated model's share page grew a \"Do more with this model\" panel: pose and animate it in Pose Studio (rigged models are detected automatically), restyle the material, drop it into Scene Studio or Parts Studio, place it in your room in AR, copy a paste-anywhere embed iframe, or launch it as a pump.fun coin with a rendered snapshot pre-filled as the token image. The viewer can now also be embedded on any site.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/viewer"
 		}
 	]
 }

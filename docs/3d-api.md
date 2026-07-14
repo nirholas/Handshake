@@ -202,6 +202,16 @@ The `glbUrl` is a real, durable GLB — open `viewerUrl` in a browser to inspect
 or load `model.glb` in any glTF-capable engine (three.js, Babylon, Unity, Godot,
 Blender).
 
+`viewerUrl` (`https://three.ws/viewer?src=<https GLB url>&title=<label>`) is more
+than a preview. Its "Do more with this model" panel funnels the model into the
+rest of the platform: Pose Studio (`/pose?src=`, shown when the GLB carries a
+skeleton), material restyling (`/restyle?url=`), Scene Studio (`/scene?model=`),
+Parts Studio (`/compose?glb=`), AR placement (`/ar?src=`), a pump.fun coin
+launch pre-filled with a rendered snapshot of the model, and a copyable embed
+iframe. The viewer page itself is embeddable on any site: it is served with
+`frame-ancestors *`, so an `<iframe src="https://three.ws/viewer?src=...">` works
+anywhere.
+
 ### Upgrade path
 
 | Need                                   | Endpoint                              |

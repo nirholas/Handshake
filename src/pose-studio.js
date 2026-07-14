@@ -1859,10 +1859,6 @@ function boot() {
 	const requestedSrc = isSafeQueryModelUrl(rawSrc) ? rawSrc : '';
 	const requestedAnim = _params.get('anim');
 
-	if (rawSrc && !requestedSrc) {
-		setStatus('That model link is not from a trusted host. Pick an avatar instead.', 'error');
-	}
-
 	// An explicit ?anim= or model deep-link wins over any recovered draft;
 	// otherwise we offer back last session's unsaved work.
 	const recovered = !requestedAnim && !requestedSrc && autosave?.tryRestore();
@@ -1892,10 +1888,12 @@ function boot() {
 	} else if (requestedSrc) {
 		// /viewer funnel: animate a freshly generated GLB by URL. A model with no
 		// humanoid skeleton can't be posed; say so and fall back to the mannequin.
+		// (Mannequin first: switchToMannequin writes its own status line, and the
+		// error explaining WHY has to be the one left visible.)
 		loadAvatarFromUrl(requestedSrc, { name: _params.get('title') || 'Imported model' })
 			.catch((err) => {
-				setStatus(`${err?.message || 'Could not load that model.'} Showing the mannequin instead.`, 'error');
 				switchToMannequin();
+				setStatus(`${err?.message || 'Could not load that model.'} Showing the mannequin instead.`, 'error');
 			})
 			.then(() => {
 				if (requestedAnim) openRequestedAnim(requestedAnim);
@@ -1913,6 +1911,10 @@ function boot() {
 				switchToMannequin();
 			})
 			.then(() => openRequestedAnim(requestedAnim));
+	} else if (rawSrc) {
+		// A ?src= deep-link that failed the trusted-host gate: say why instead of
+		// silently opening an empty studio.
+		setStatus('That model link is not from a trusted host. Pick an avatar instead.', 'error');
 	} else {
 		if (!recovered) setStatus('Ready. Click a body part to pose, or load an avatar.');
 	}
