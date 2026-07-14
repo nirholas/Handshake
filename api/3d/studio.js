@@ -77,7 +77,7 @@ export function shapeSubmit(job, base, prompt) {
 }
 
 // Shape a forge poll response into { status:'pending'|'done'|'error', ... }.
-export function shapePoll(data, base, jobId) {
+export function shapePoll(data, base, jobId, title) {
 	const glbUrl = typeof data?.glb_url === 'string' ? data.glb_url : '';
 	if (data?.status === 'done' && glbUrl) {
 		return {
@@ -85,7 +85,7 @@ export function shapePoll(data, base, jobId) {
 			job: jobId,
 			glbUrl,
 			viewerUrl: viewerUrl(base, glbUrl),
-			arUrl: arLaunchUrl(base, glbUrl),
+			arUrl: arLaunchUrl(base, glbUrl, title),
 			format: 'glb',
 		};
 	}
@@ -98,8 +98,10 @@ export function shapePoll(data, base, jobId) {
 			error: data?.error || '3D generation hit a snag upstream — it costs nothing to try again.',
 		};
 	}
-	// queued / running / anything transient → still pending.
-	return { status: 'pending', job: jobId, poll: `/api/3d/studio?job=${encodeURIComponent(jobId)}` };
+	// queued / running / anything transient → still pending; keep the title on the
+	// poll URL so it survives to the done response.
+	const t = typeof title === 'string' && title.trim() ? `&title=${encodeURIComponent(title.trim().slice(0, 80))}` : '';
+	return { status: 'pending', job: jobId, poll: `/api/3d/studio?job=${encodeURIComponent(jobId)}${t}` };
 }
 
 // Map a startForge lane failure to an honest boundary response. A well-formed
@@ -205,7 +207,7 @@ async function generate(req, res) {
 	return json(res, 200, shapeSubmit(job, base, prompt));
 }
 
-async function poll(req, res, jobId) {
+async function poll(req, res, jobId, title) {
 	if (!JOB_HANDLE_RE.test(jobId)) {
 		return json(res, 400, { error: 'invalid_job', message: 'Malformed job id. Pass the "job" value from the generate response.' });
 	}
