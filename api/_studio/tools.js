@@ -32,6 +32,10 @@ const PUBLIC_BASE = (process.env.STUDIO_PUBLIC_BASE || 'https://three.ws').repla
 
 const viewerUrl = (glbUrl) => `${PUBLIC_BASE}/viewer?src=${encodeURIComponent(glbUrl)}`;
 const poseUrl = (glbUrl) => `${PUBLIC_BASE}/pose?src=${encodeURIComponent(glbUrl)}`;
+// Device-aware AR launch (/api/ar): iPhone → Quick Look, Android → Scene
+// Viewer, desktop → WebGL viewer. The SAME one-tap "place it in your home"
+// flow the forge site uses; every generation response carries it.
+const arUrl = (glbUrl) => buildArLaunchUrl(PUBLIC_BASE, glbUrl);
 
 // Generation annotations (per Apps SDK guidance): these tools mint a fresh
 // external artifact, so they are writes, non-destructive, non-idempotent, and
@@ -126,6 +130,7 @@ const forgeFree = {
 			kind: 'mesh',
 			glbUrl: r.glbUrl,
 			viewerUrl: viewerUrl(r.glbUrl),
+			arUrl: arUrl(r.glbUrl),
 			prompt: r.prompt,
 			tier: r.tier,
 			durationMs: r.durationMs,
@@ -172,6 +177,7 @@ const textToAvatar = {
 			kind: 'avatar',
 			glbUrl: r.glbUrl,
 			viewerUrl: viewerUrl(r.glbUrl),
+			arUrl: arUrl(r.glbUrl),
 			prompt: r.prompt,
 			durationMs: r.durationMs,
 		};
@@ -231,6 +237,7 @@ const meshForge = {
 			mode: r.mode,
 			glbUrl: r.glbUrl,
 			viewerUrl: viewerUrl(r.glbUrl),
+			arUrl: arUrl(r.glbUrl),
 			prompt: r.prompt,
 			viewsUsed: r.viewsUsed,
 			durationMs: r.durationMs,
