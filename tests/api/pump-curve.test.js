@@ -171,6 +171,45 @@ describe('GET /api/pump/curve', () => {
 		expect(body.graduatedPrice.marketCapUsd).toBeCloseTo(0.0035 * 1_000_000_000, 3);
 	});
 
+	it('502 upstream_error (well-formed JSON, not a raw 500) when every RPC lane fails cold', async () => {
+		// A mint never successfully read on this instance: nothing in the
+		// last-good tier, so the outage surfaces as the same typed 502 that
+		// api/pump/price-history uses (clients already render it).
+		const FLAKY_MINT = '2'.repeat(32) + 'pump';
+		getBondingCurveState.mockRejectedValueOnce(new Error('503 Service Unavailable'));
+		getTokenPrice.mockRejectedValueOnce(new Error('503 Service Unavailable'));
+		getGraduationProgress.mockRejectedValueOnce(new Error('503 Service Unavailable'));
+		const res = makeRes();
+		await curveHandler(makeReq({ url: `/api/pump/curve?mint=${FLAKY_MINT}` }), res);
+		expect(res.statusCode).toBe(502);
+		expect(getJson(res).error).toBe('upstream_error');
+	});
+
+	it('200 stale view from the last-good tier when RPC fails after a good read', async () => {
+		const STALE_MINT = '3'.repeat(32) + 'pump';
+		// First read succeeds and is remembered.
+		getBondingCurveState.mockResolvedValueOnce({ complete: false, creator: 'CRE' });
+		getTokenPrice.mockResolvedValueOnce({ priceSol: '0.0002' });
+		getGraduationProgress.mockResolvedValueOnce({ progressBps: 1200 });
+		const okRes = makeRes();
+		await curveHandler(makeReq({ url: `/api/pump/curve?mint=${STALE_MINT}` }), okRes);
+		expect(okRes.statusCode).toBe(200);
+
+		// Second read: every lane down, so the remembered view is served, marked stale.
+		getBondingCurveState.mockRejectedValueOnce(new Error('rpc down'));
+		getTokenPrice.mockRejectedValueOnce(new Error('rpc down'));
+		getGraduationProgress.mockRejectedValueOnce(new Error('rpc down'));
+		const res = makeRes();
+		await curveHandler(makeReq({ url: `/api/pump/curve?mint=${STALE_MINT}` }), res);
+		expect(res.statusCode).toBe(200);
+		const body = getJson(res);
+		expect(body.stale).toBe(true);
+		expect(typeof body.as_of).toBe('number');
+		expect(body.curve.creator).toBe('CRE');
+		expect(body.price.priceSol).toBe('0.0002');
+		expect(res.getHeader('cache-control')).toMatch(/max-age=10/);
+	});
+
 	it('honors network=devnet', async () => {
 		getBondingCurveState.mockResolvedValueOnce({ creator: 'X' });
 		getTokenPrice.mockResolvedValueOnce(null);

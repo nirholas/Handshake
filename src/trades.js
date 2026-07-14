@@ -133,6 +133,13 @@ function wireControls() {
 // ── selection ─────────────────────────────────────────────────────────────────
 function select(mint, seed, { push = true } = {}) {
 	if (!MINT_RE.test(mint)) return;
+	// Re-selecting the mounted coin is a no-op: a full remount would re-fire
+	// every detail fetch (5 endpoints) for data already on screen.
+	if (detail && state.selected === mint) {
+		highlightRow(mint);
+		if (push) writeUrl();
+		return;
+	}
 	state.selected = mint;
 	highlightRow(mint);
 	if (push) writeUrl();

@@ -1068,16 +1068,26 @@ export class RegisterUI {
 		const step = this.wizardStep;
 		const pageMode = this._isPageMode();
 		const stepLabels = ['Identity', 'Services', 'Avatar', 'Deploy'];
+		// Completed steps render as real <button>s so they are keyboard-operable
+		// and get a visible focus ring; the current step carries aria-current.
 		const stepBar = `
-			<ol class="erc8004-steps deploy-steps" role="list">
+			<ol class="erc8004-steps deploy-steps" role="list" aria-label="Deploy steps">
 				${[1, 2, 3, 4]
 					.map((n) => {
 						const state = n === step ? 'active' : (n < step ? 'done' : '');
-						const clickable = n < step ? 'data-role="goto-step" data-step="' + n + '"' : '';
+						const cls = `erc8004-step deploy-step ${state ? 'deploy-step--' + state : ''} ${n === step ? 'erc8004-step--active' : ''} ${n < step ? 'erc8004-step--done' : ''}`;
+						const inner = `
+							<span class="erc8004-step-num" aria-hidden="true">${n < step ? '✓' : n}</span>
+							<span class="erc8004-step-lbl">${stepLabels[n - 1]}</span>`;
+						if (n < step) {
+							return `
+						<li class="${cls}">
+							<button type="button" class="deploy-step-btn" data-role="goto-step" data-step="${n}" aria-label="Back to step ${n}: ${stepLabels[n - 1]} (completed)">${inner}</button>
+						</li>`;
+						}
 						return `
-						<li class="erc8004-step deploy-step ${state ? 'deploy-step--' + state : ''} ${n === step ? 'erc8004-step--active' : ''} ${n < step ? 'erc8004-step--done' : ''}" ${clickable}>
-							<span class="erc8004-step-num">${n < step ? '✓' : n}</span>
-							<span class="erc8004-step-lbl">${stepLabels[n - 1]}</span>
+						<li class="${cls}"${n === step ? ' aria-current="step"' : ''}>
+							<span class="deploy-step-static">${inner}</span>
 						</li>`;
 					})
 					.join('')}
@@ -1137,10 +1147,7 @@ export class RegisterUI {
 		body.querySelectorAll('[data-role="goto-step"]').forEach((el) => {
 			el.addEventListener('click', () => {
 				const n = Number(el.dataset.step);
-				if (n >= 1 && n < this.wizardStep) {
-					this.wizardStep = n;
-					this._renderActiveTab();
-				}
+				if (n >= 1 && n < this.wizardStep) this._goToStep(n);
 			});
 		});
 		const wbody = body.querySelector('[data-role="wizard-body"]');
@@ -1148,6 +1155,24 @@ export class RegisterUI {
 		else if (step === 2) this._renderStepServices(wbody);
 		else if (step === 3) this._renderStepConfig(wbody);
 		else this._renderStepDeploy(wbody);
+	}
+
+	/**
+	 * Navigate the wizard to step `n` and move keyboard/screen-reader focus to
+	 * the new step's heading, so keyboard users aren't dumped back at the top
+	 * of the document after each transition.
+	 */
+	_goToStep(n) {
+		this.wizardStep = n;
+		this._renderActiveTab();
+		this._focusWizardHeading();
+	}
+
+	_focusWizardHeading() {
+		const h = this.el.querySelector('[data-role="wizard-body"] .erc8004-h3');
+		if (!h) return;
+		h.setAttribute('tabindex', '-1');
+		h.focus();
 	}
 
 	/**
@@ -1211,37 +1236,68 @@ export class RegisterUI {
 	_renderStepIdentity(body) {
 		body.innerHTML = `
 			<h3 class="erc8004-h3">Agent Identity</h3>
-			<p class="erc8004-p">Define your agent's core identity — name, description, and image.</p>
+			<p class="erc8004-p">Define your agent's core identity: name, description, and image.</p>
 
 			<label class="erc8004-label">Agent Name <span class="erc8004-req">*</span>
-				<input class="erc8004-input" name="name" maxlength="100" placeholder="e.g., DeFi Yield Optimizer" value="${esc(this.form.name)}" />
+				<input class="erc8004-input" name="name" maxlength="100" placeholder="e.g., DeFi Yield Optimizer"
+					autocomplete="off" spellcheck="false" aria-required="true"
+					aria-describedby="deploy-name-hint deploy-name-error" value="${esc(this.form.name)}" />
 			</label>
-			<p class="erc8004-hint">A short, memorable name (max 100 chars)</p>
+			<p class="erc8004-field-error" id="deploy-name-error" hidden>Give your agent a name before continuing.</p>
+			<p class="erc8004-hint erc8004-hint-row" id="deploy-name-hint"><span>A short, memorable name</span><span class="erc8004-count" data-role="name-count" aria-hidden="true">${this.form.name.length}/100</span></p>
 
 			<label class="erc8004-label">Description <span class="erc8004-req">*</span>
-				<textarea class="erc8004-input erc8004-textarea" name="description" maxlength="1000" rows="4" placeholder="Describe what your agent does, capabilities, pricing…">${esc(this.form.description)}</textarea>
+				<textarea class="erc8004-input erc8004-textarea" name="description" maxlength="1000" rows="4"
+					aria-required="true" aria-describedby="deploy-desc-hint deploy-desc-error"
+					placeholder="Describe what your agent does, capabilities, pricing…">${esc(this.form.description)}</textarea>
 			</label>
-			<p class="erc8004-hint">Required before deploying on-chain (max 1000 chars)</p>
+			<p class="erc8004-field-error" id="deploy-desc-error" hidden>Add a description: it is written into the on-chain record.</p>
+			<p class="erc8004-hint erc8004-hint-row" id="deploy-desc-hint"><span>Required before deploying on-chain</span><span class="erc8004-count" data-role="desc-count" aria-hidden="true">${this.form.description.length}/1000</span></p>
 
 			<label class="erc8004-label">Image URL
 				<div class="erc8004-image-row">
-					<input class="erc8004-input" name="imageUrl" placeholder="https://example.com/avatar.png or ipfs://…" value="${esc(this.form.imageUrl)}" />
+					<input class="erc8004-input" name="imageUrl" inputmode="url" autocomplete="off" spellcheck="false"
+						aria-describedby="deploy-image-hint" placeholder="https://example.com/avatar.png or ipfs://…" value="${esc(this.form.imageUrl)}" />
 					${this._viewer ? `<button type="button" class="erc8004-btn erc8004-btn--ghost erc8004-capture-btn btn btn--ghost" data-role="capture3d" title="Snapshot the current 3D viewer and use it as the agent image">📸 Use 3D view</button>` : ''}
 				</div>
 			</label>
-			<p class="erc8004-hint">Avatar or logo for your agent NFT</p>
+			<p class="erc8004-hint" id="deploy-image-hint">Avatar or logo for your agent NFT. Optional: leave blank to auto-render one from your 3D model.</p>
 
 			<div class="erc8004-wizard-nav">
 				<span></span>
 				<button class="erc8004-btn erc8004-btn--primary btn btn--primary" data-role="next">Next: Services →</button>
 			</div>
 		`;
-		body.querySelector('[name="name"]').addEventListener('input', (e) => {
+		const nameInput = body.querySelector('[name="name"]');
+		const descInput = body.querySelector('[name="description"]');
+		const nameError = body.querySelector('#deploy-name-error');
+		const descError = body.querySelector('#deploy-desc-error');
+		const nameCount = body.querySelector('[data-role="name-count"]');
+		const descCount = body.querySelector('[data-role="desc-count"]');
+		const clearInvalid = (input, error) => {
+			error.hidden = true;
+			input.removeAttribute('aria-invalid');
+			input.classList.remove('erc8004-input--invalid');
+		};
+		const markInvalid = (input, error) => {
+			error.hidden = false;
+			input.setAttribute('aria-invalid', 'true');
+			input.classList.add('erc8004-input--invalid');
+		};
+		const updateCount = (el, len, max) => {
+			el.textContent = `${len}/${max}`;
+			el.classList.toggle('erc8004-count--limit', len >= max * 0.9);
+		};
+		nameInput.addEventListener('input', (e) => {
 			this.form.name = e.target.value;
+			updateCount(nameCount, e.target.value.length, 100);
+			if (e.target.value.trim()) clearInvalid(nameInput, nameError);
 			this._refreshPreview();
 		});
-		body.querySelector('[name="description"]').addEventListener('input', (e) => {
+		descInput.addEventListener('input', (e) => {
 			this.form.description = e.target.value;
+			updateCount(descCount, e.target.value.length, 1000);
+			if (e.target.value.trim()) clearInvalid(descInput, descError);
 			this._refreshPreview();
 		});
 		body.querySelector('[name="imageUrl"]').addEventListener('input', (e) => {
@@ -1252,12 +1308,17 @@ export class RegisterUI {
 			this._captureFromViewer(body);
 		});
 		body.querySelector('[data-role="next"]').addEventListener('click', () => {
-			if (!this.form.name.trim()) {
-				this._toast('Agent name is required.', true);
+			// Inline validation next to the fields (both are minted on-chain, so
+			// catching them here beats a failed deploy three steps later).
+			const invalid = [];
+			if (!this.form.name.trim()) invalid.push([nameInput, nameError]);
+			if (!this.form.description.trim()) invalid.push([descInput, descError]);
+			if (invalid.length) {
+				invalid.forEach(([input, error]) => markInvalid(input, error));
+				invalid[0][0].focus();
 				return;
 			}
-			this.wizardStep = 2;
-			this._renderActiveTab();
+			this._goToStep(2);
 		});
 	}
 
@@ -1342,17 +1403,22 @@ export class RegisterUI {
 		`;
 		const list = body.querySelector('[data-role="list"]');
 		const renderList = () => {
+			if (!this.form.services.length) {
+				list.innerHTML = `<div class="erc8004-svc-empty">No endpoints yet. They're optional: add one if other agents should reach yours over A2A, MCP, or x402.</div>`;
+				return;
+			}
 			list.innerHTML = this.form.services
 				.map(
 					(svc, i) => `
 				<div class="erc8004-svc-row" data-i="${i}">
-					<select class="erc8004-input erc8004-input--tight" data-field="type">
+					<select class="erc8004-input erc8004-input--tight" data-field="type" aria-label="Service type">
 						${SERVICE_TYPES.map((t) => `<option value="${t}" ${svc.type === t ? 'selected' : ''}>${t}</option>`).join('')}
 					</select>
-					<input class="erc8004-input" data-field="name" placeholder="Name" value="${esc(svc.name)}" />
-					<input class="erc8004-input" data-field="endpoint" placeholder="https://… or ipfs://…" value="${esc(svc.endpoint)}" />
-					<button class="erc8004-btn erc8004-btn--ghost erc8004-btn--x btn btn--ghost btn--icon" data-role="rm" title="Remove">✕</button>
+					<input class="erc8004-input" data-field="name" placeholder="Name" aria-label="Service name" autocomplete="off" spellcheck="false" value="${esc(svc.name)}" />
+					<input class="erc8004-input" data-field="endpoint" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://… or ipfs://…" aria-label="Service endpoint URL" value="${esc(svc.endpoint)}" />
+					<button class="erc8004-btn erc8004-btn--ghost erc8004-btn--x btn btn--ghost btn--icon" data-role="rm" title="Remove endpoint" aria-label="Remove endpoint ${i + 1}">✕</button>
 				</div>
+				<p class="erc8004-field-error" data-role="svc-error" data-i="${i}" hidden>Endpoint must be an http(s)://, ipfs:// or ar:// URL.</p>
 			`,
 				)
 				.join('');
@@ -1362,6 +1428,12 @@ export class RegisterUI {
 				row.querySelectorAll('[data-field]').forEach((input) => {
 					input.addEventListener('input', (e) => {
 						this.form.services[i][e.target.dataset.field] = e.target.value;
+						if (e.target.dataset.field === 'endpoint') {
+							const err = list.querySelector(`[data-role="svc-error"][data-i="${i}"]`);
+							if (err) err.hidden = true;
+							e.target.removeAttribute('aria-invalid');
+							e.target.classList.remove('erc8004-input--invalid');
+						}
 					});
 				});
 				row.querySelector('[data-role="rm"]').addEventListener('click', () => {
@@ -1375,17 +1447,35 @@ export class RegisterUI {
 		body.querySelector('[data-role="add"]').addEventListener('click', () => {
 			this.form.services.push({ type: 'A2A', name: '', endpoint: '' });
 			renderList();
+			// Land the keyboard in the new row so the user can type immediately.
+			const rows = list.querySelectorAll('.erc8004-svc-row');
+			rows[rows.length - 1]?.querySelector('[data-field="name"]')?.focus();
 		});
 		body.querySelector('[data-role="x402"]').addEventListener('change', (e) => {
 			this.form.x402Support = e.target.checked;
 		});
 		body.querySelector('[data-role="back"]').addEventListener('click', () => {
-			this.wizardStep = 1;
-			this._renderActiveTab();
+			this._goToStep(1);
 		});
 		body.querySelector('[data-role="next"]').addEventListener('click', () => {
-			this.wizardStep = 3;
-			this._renderActiveTab();
+			// Non-empty endpoints must look like a real URL before they're minted
+			// into the registration JSON. Empty rows are simply skipped at deploy.
+			const badIndex = this.form.services.findIndex((s) => {
+				const v = (s.endpoint || '').trim();
+				return v && !/^(https?:\/\/|ipfs:\/\/|ar:\/\/)\S+$/i.test(v);
+			});
+			if (badIndex !== -1) {
+				const err = list.querySelector(`[data-role="svc-error"][data-i="${badIndex}"]`);
+				if (err) err.hidden = false;
+				const input = list.querySelector(`.erc8004-svc-row[data-i="${badIndex}"] [data-field="endpoint"]`);
+				if (input) {
+					input.setAttribute('aria-invalid', 'true');
+					input.classList.add('erc8004-input--invalid');
+					input.focus();
+				}
+				return;
+			}
+			this._goToStep(3);
 		});
 	}
 
@@ -1419,7 +1509,7 @@ export class RegisterUI {
 			<div class="erc8004-avatar-panel" data-role="panel"></div>
 
 			<label class="erc8004-label">IPFS Pinning Token (optional)
-				<input class="erc8004-input" type="password" name="apiToken" placeholder="Pinata JWT — leave blank to use built-in R2 storage" value="${esc(this.form.apiToken)}" />
+				<input class="erc8004-input" type="password" name="apiToken" autocomplete="off" placeholder="Pinata JWT — leave blank to use built-in R2 storage" value="${esc(this.form.apiToken)}" />
 			</label>
 			<p class="erc8004-hint">Without a token, uploads go through our backend (R2). Paste a Pinata JWT to pin directly to IPFS.</p>
 
@@ -1506,7 +1596,7 @@ export class RegisterUI {
 			} else if (s === 'url') {
 				panel.innerHTML = `
 					<div class="erc8004-url-paste">
-						<input class="erc8004-input" type="url" placeholder="https://… or ipfs://… or ar://…" value="${esc(this.form.pastedGlbUrl)}" data-role="glb-url-input" />
+						<input class="erc8004-input" type="url" inputmode="url" autocomplete="off" spellcheck="false" aria-label="GLB file URL" placeholder="https://… or ipfs://… or ar://…" value="${esc(this.form.pastedGlbUrl)}" data-role="glb-url-input" />
 						<p class="erc8004-hint">The GLB must include <strong>ARKit / Oculus viseme morph targets</strong> for lip-sync to work.</p>
 					</div>
 				`;
@@ -1561,8 +1651,7 @@ export class RegisterUI {
 			(e) => (this.form.apiToken = e.target.value),
 		);
 		body.querySelector('[data-role="back"]').addEventListener('click', () => {
-			this.wizardStep = 2;
-			this._renderActiveTab();
+			this._goToStep(2);
 		});
 		body.querySelector('[data-role="next"]').addEventListener('click', () => {
 			// Validate the selected source before advancing.
@@ -1583,8 +1672,7 @@ export class RegisterUI {
 				this._toast('Pick a default avatar, or choose another option.', true);
 				return;
 			}
-			this.wizardStep = 4;
-			this._renderActiveTab();
+			this._goToStep(4);
 		});
 	}
 
@@ -1609,8 +1697,8 @@ export class RegisterUI {
 				<dt>Registry</dt>    <dd><code>${esc(REGISTRY_DEPLOYMENTS[this.selectedChainId].identityRegistry)}</code></dd>
 			</dl>
 
-			${!walletOk ? `<div class="erc8004-alert">Connect a wallet before deploying.</div>` : ''}
-			${walletOk && !chainOk ? `<div class="erc8004-alert">Your wallet is on chain ${this.wallet.chainId}. <button class="erc8004-link" data-role="switch">Switch to ${esc(meta.name)}</button></div>` : ''}
+			${!walletOk ? `<div class="erc8004-alert">${window.ethereum ? 'Connect a wallet before deploying.' : 'No EVM wallet detected. Install <a class="erc8004-link" href="https://metamask.io/download/" target="_blank" rel="noopener">MetaMask</a>, then reload this page.'} ${window.ethereum ? '<button type="button" class="erc8004-link" data-role="connect-inline">Connect wallet</button>' : ''}</div>` : ''}
+			${walletOk && !chainOk ? `<div class="erc8004-alert">Your wallet is on ${esc(CHAIN_META[this.wallet.chainId]?.name || `chain ${this.wallet.chainId}`)}, but this deploy targets ${esc(meta.name)}. <button type="button" class="erc8004-link" data-role="switch">Switch to ${esc(meta.name)}</button></div>` : ''}
 
 			${this.selectedChainId === BSC_TESTNET_CHAIN_ID ? `
 				<div class="erc8004-gasless-panel" data-role="gasless-panel">
@@ -1679,32 +1767,47 @@ export class RegisterUI {
 				</div>
 			</div>
 
-			<div class="erc8004-log" data-role="log"></div>
+			<div class="erc8004-log" data-role="log" role="log" aria-live="polite" aria-label="Deploy log"></div>
 
-			<div class="erc8004-result deploy-result" data-role="result" style="display:none">
+			<div class="deploy-error-panel" data-role="deploy-error" role="alert" hidden>
+				<div class="deploy-error-panel-title">Deploy failed</div>
+				<p class="deploy-error-panel-msg" data-role="deploy-error-msg"></p>
+				<button type="button" class="erc8004-btn btn btn--secondary" data-role="deploy-retry">Try again</button>
+			</div>
+
+			<div class="erc8004-result deploy-result" data-role="result" style="display:none" tabindex="-1">
 				<div class="deploy-result-badge" data-role="res-badge"></div>
-				<h4 class="erc8004-h4 deploy-result-heading">Agent registered on-chain</h4>
+				<h4 class="erc8004-h4 deploy-result-heading">🎉 Agent registered on-chain</h4>
 				<dl class="erc8004-result-dl">
 					<dt>Agent ID</dt> <dd data-role="res-id"></dd>
 					<dt>Metadata</dt> <dd data-role="res-uri"></dd>
 					<dt>Tx Hash</dt>  <dd data-role="res-tx"></dd>
 				</dl>
 				<div class="erc8004-row">
-					<button class="erc8004-btn btn btn--secondary" data-role="view-3d">View in 3D</button>
-					<a class="erc8004-btn btn btn--secondary" data-role="view-explorer" target="_blank" rel="noopener">Explorer ↗</a>
+					<a class="erc8004-btn erc8004-btn--primary btn btn--primary" data-role="view-explorer" target="_blank" rel="noopener">View on explorer ↗</a>
+					<button class="erc8004-btn btn btn--secondary" data-role="view-3d">View agent page →</button>
+					<button class="erc8004-btn btn btn--secondary" data-role="res-embed">Embed &lt;/&gt;</button>
+					<a class="erc8004-btn btn btn--secondary" data-role="res-launch" style="display:none">Launch a coin 🚀</a>
 					<a class="erc8004-btn btn btn--secondary" href="/showcase">Browse showcase ↗</a>
 				</div>
 			</div>
 
 			<div class="erc8004-wizard-nav">
 				<button class="erc8004-btn btn btn--secondary" data-role="back">← Back</button>
-				<button class="erc8004-btn erc8004-btn--primary btn btn--primary" data-role="deploy" ${walletOk ? '' : 'disabled'}>🚀 Register Agent On-Chain</button>
+				<button class="erc8004-btn erc8004-btn--primary btn btn--primary" data-role="deploy" ${walletOk ? '' : 'disabled title="Connect a wallet first"'}>🚀 Register Agent On-Chain</button>
 			</div>
 		`;
 		body.querySelector('[data-role="back"]').addEventListener('click', () => {
-			this.wizardStep = 3;
-			this._renderActiveTab();
+			this._goToStep(3);
 		});
+
+		body.querySelector('[data-role="connect-inline"]')?.addEventListener('click', () =>
+			this._connectWallet(),
+		);
+
+		body.querySelector('[data-role="deploy-retry"]').addEventListener('click', () =>
+			this._doDeploy(body),
+		);
 
 		const switchBtn = body.querySelector('[data-role="switch"]');
 		if (switchBtn) {
@@ -1850,7 +1953,7 @@ export class RegisterUI {
 
 			${
 				!hasSolanaWallet
-					? `<div class="erc8004-alert">No Solana wallet detected. Install <a class="erc8004-link" href="https://phantom.app" target="_blank" rel="noopener">Phantom</a> to deploy.</div>`
+					? `<div class="erc8004-alert">No Solana wallet detected. Install <a class="erc8004-link" href="https://phantom.app" target="_blank" rel="noopener">Phantom</a> (or Backpack / Solflare), then reload this page and click Mint.</div>`
 					: ''
 			}
 			<div class="erc8004-alert erc8004-alert--note">

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-14T12:42:05.570Z",
+	"generated_at": "2026-07-14T13:48:01.626Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -39,6 +39,36 @@
 		{
 			"date": "2026-07-14",
 			"type": "update",
+			"title": "\"Deploy onchain\" now opens the real deploy flow with your model loaded",
+			"summary": "After forging a model, the \"Deploy onchain\" shortcut used to drop you on Launchpad Studio (the white-label site builder), which ignored your model entirely. It now opens the on-chain deploy wizard with your model and its name already filled in, so you go straight from forge to a permanent on-chain agent identity. The search palette's \"Launch a coin\" action was also mispointed and now opens the pump.fun coin launch flow.",
+			"link": "/deploy",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
+			"title": "3D previews stop erroring on the scanner and every plain page footer",
+			"summary": "The walking robot in the site footer failed to appear on plain pages like /hydrate and /login because its compressed 3D model needed a decoder the page never loaded; the decoder is now wired in before the viewer starts, so the robot renders everywhere. The 3D scanner also downloaded a 748KB placeholder avatar the moment the page opened, even for visitors who never started a scan, and logged a fetch error on every visit to the old /scan address; the placeholder now loads only when the build step is actually on screen, and if its download ever fails the progress view stays clean instead of showing a dead black panel.",
+			"link": "/create/selfie",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
+			"title": "Agent and coin art always renders on the Activity and Deployments feeds",
+			"summary": "Avatars on the /activity trading floor and the /deployments on-chain feed come from wherever the agent's creator hosted them, and browsers were silently blocking many of those hosts (IPFS gateways serving metadata instead of an image, dead image servers), leaving blank tiles and repeated failed requests. Every third-party image now loads through the platform's own image resolver, which finds the real artwork across multiple IPFS gateways and shows a clean generated placeholder when the original is truly gone.",
+			"link": "/activity",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
 			"title": "Agent brains upgraded to the newest OpenAI models",
 			"summary": "Every OpenAI-powered surface on the platform now runs the GPT-5.6 family released this month. The Brain page and agent model pickers offer three tiers: Sol (flagship reasoning), Terra (balanced), and Luna (fast and cost-efficient), each with a 1M-token context window, up from 128K. Vision fallbacks, the copilot, widgets, and the marketplace default to Luna, and anything still pointed at the retired GPT-4o models is transparently upgraded, so nothing breaks and every answer gets smarter.",
 			"link": "/brain",
@@ -54,6 +84,26 @@
 			"link": "/ar",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
+			"title": "Cleaner pages: sitemap header fits, stray glow clipped, quieter console",
+			"summary": "A site-wide polish pass on cosmetic issues found in a full-site sweep. The /sitemap page now uses the standard site header instead of a cramped custom top bar that pushed the navigation past the right edge of the screen. The walk companion's caption bubble and the decorative glow on /x402-revenue are both capped so they can never spill outside the viewport or cause sideways scrolling. The companion's expected avatar fallback (a non-humanoid model handing off to the robot) no longer prints a warning on every page view, and the live demo frames on /labs and /integrations no longer trigger a browser sandbox warning.",
+			"link": "/sitemap",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
+			"title": "Coin Clash, coin worlds, and the sign-in page fail gracefully",
+			"summary": "When the community battle service is offline, /clash and the /temporary world picker used to keep retrying and logging failed requests in the background. Both now recognize the outage on the first response, stop polling, and show a clear notice with live places to go instead (launches, markets, or walking the default world solo). The sign-in page also no longer throws a background error if its 3D greeter can't load; the form works exactly the same without him.",
+			"link": "/clash",
+			"tags": [
+				"fix"
 			]
 		},
 		{
@@ -90,6 +140,17 @@
 		{
 			"date": "2026-07-14",
 			"type": "update",
+			"title": "The Agora and City worlds survive OpenStreetMap outages",
+			"summary": "The 3D city on /agora and /city is built from live OpenStreetMap data, and a single overloaded map server used to mean an empty world with no buildings. Map data now fails over across three independent OpenStreetMap mirrors, and if every mirror is down the world rebuilds from the last map snapshot saved in your browser, so Manhattan stays standing even when the map providers do not.",
+			"link": "/agora",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
 			"title": "The AR placement button is visible again on /irl",
 			"summary": "On phones, the strip of actions under the camera view had quietly scrolled itself past its own first button, so \"Place in AR\" (the one-tap way to stand your agent on a real floor) sat just off the left edge of the screen, where almost nobody would swipe back to find it. The strip now opens on its true first action, so AR placement leads the row as intended. Every other control on the page was re-checked for overlap at phone, small-phone, and landscape sizes: nothing is covering anything else.",
 			"link": "/irl",
@@ -110,12 +171,43 @@
 		{
 			"date": "2026-07-14",
 			"type": "update",
+			"title": "The trade terminal stops throwing 404s and rides out RPC outages",
+			"summary": "The deep-dive on /trades asked the platform for holder cohorts and a smart-money score on every coin, including coins three.ws never launched or scored, so the browser logged a guaranteed failed request for almost every selection. Both panels now know the difference between \"no data exists for this coin\" and a real error: unscored coins get an honest \"not scored yet\" card that links to the Smart Money radar, and coins launched elsewhere get a direct link to their on-chain holder list. Live price and bonding-curve reads also became outage-proof: when every Solana RPC provider fails at once, the terminal serves the last real curve data it saw (clearly marked stale) instead of a server error and a blank strip.",
+			"link": "/trades",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
 			"title": "Tour and Walk SDK update: switch between Stroll and Platformer from the tour controls",
 			"summary": "Embedded tours built with the Tour Builder now include a labeled Stroll / Platformer toggle right in the tour controls next to Exit, so visitors can switch how they explore (tap it or press M) instead of hunting for a hidden corner button. Published as @three-ws/walk 0.2.1 and @three-ws/tour 0.5.1 on npm; the Tour Builder's exported embed snippet now uses the new versions automatically, and also picks up the latest @three-ws/page-agent with its five persona presets.",
 			"link": "/tour-builder",
 			"tags": [
 				"sdk",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
+			"title": "Vanity wallet page loads cleanly again",
+			"summary": "Opening /vanity-wallet on desktop threw two script errors the moment the page loaded, which broke the sealed-drop claim and gifting features on that page. The page now ships fully bundled code, so it loads without errors and every feature on it, from the in-browser grinder to sealed drops, works as intended.",
+			"link": "/vanity-wallet",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
+			"title": "Wallet and session lists load again across the dashboard",
+			"summary": "Signed-in pages that show your linked wallets or active sessions (wallets, account, settings, sessions, voice, and more) were failing to load their lists because the server rejected the request outright. The lists now load correctly, and the settings page's revoke-all-other-sessions button now actually revokes them. The BNB hub page also no longer fires a failing request on every visit.",
+			"link": "/dashboard/wallets",
+			"tags": [
+				"fix"
 			]
 		},
 		{

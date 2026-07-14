@@ -39,6 +39,24 @@ export function isPlausibleMint(s) {
 	return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(s);
 }
 
+// Last good curve view per network:mint, kept so an RPC flake degrades the read
+// to slightly-old real data instead of an unhandled 500. Same serve-stale tier
+// as api/pump/price-history: never fabricated, only ever a body a healthy read
+// really produced.
+const _lastGood = new Map(); // `${network}:${mint}` → { body, at }
+const STALE_MAX_MS = 10 * 60_000;
+
+function rememberGood(network, mint, body) {
+	_lastGood.set(`${network}:${mint}`, { body, at: Date.now() });
+	if (_lastGood.size > 256) _lastGood.delete(_lastGood.keys().next().value);
+}
+
+function recallGood(network, mint) {
+	const hit = _lastGood.get(`${network}:${mint}`);
+	if (!hit || Date.now() - hit.at > STALE_MAX_MS) return null;
+	return hit;
+}
+
 async function jupiterPriceFallback(mint) {
 	try {
 		const r = await fetch(`https://lite-api.jup.ag/price/v3?ids=${mint}`, { signal: AbortSignal.timeout(6000) });
@@ -93,14 +111,39 @@ export async function getCurveView({ mint, network = 'mainnet' }) {
 	}
 
 	const rpc = rpcFallbackFromEnv({ network });
-	const result = await rpc.withFallback(async (connection) => {
-		const [curve, price, grad] = await Promise.all([
-			getBondingCurveState(connection, mint),
-			getTokenPrice(connection, mint),
-			getGraduationProgress(connection, mint),
-		]);
-		return { curve, price, graduation: grad };
-	});
+	let result;
+	try {
+		result = await rpc.withFallback(async (connection) => {
+			const [curve, price, grad] = await Promise.all([
+				getBondingCurveState(connection, mint),
+				getTokenPrice(connection, mint),
+				getGraduationProgress(connection, mint),
+			]);
+			return { curve, price, graduation: grad };
+		});
+	} catch (err) {
+		// Every RPC lane failed. That is an upstream outage, not an answer about
+		// the coin, so degrade like price-history does: serve the last good view
+		// for this mint marked stale, else a well-formed 502 the clients' existing
+		// error states already render.
+		console.error('[pump-curve-view] all RPC lanes failed', err?.message);
+		const stale = recallGood(network, mint);
+		if (stale) {
+			return {
+				httpStatus: 200,
+				cacheControl: 'public, max-age=10, s-maxage=10',
+				body: { ...stale.body, stale: true, as_of: Math.floor(stale.at / 1000) },
+			};
+		}
+		return {
+			httpStatus: 502,
+			cacheControl: null,
+			body: {
+				error: 'upstream_error',
+				error_description: 'bonding-curve state is temporarily unavailable for this mint',
+			},
+		};
+	}
 
 	if (!result.curve) {
 		// No on-chain bonding curve account. Two cases to disambiguate:
@@ -114,18 +157,20 @@ export async function getCurveView({ mint, network = 'mainnet' }) {
 		const graduatedPrice = await jupiterPriceFallback(mint);
 		if (graduatedPrice) {
 			const marketCapUsd = graduatedPrice.priceUsd * PUMP_TOTAL_SUPPLY;
+			const body = {
+				mint,
+				network,
+				curve: null,
+				graduated: true,
+				price: null,
+				graduation: { isGraduated: true, progressBps: 10_000 },
+				graduatedPrice: { ...graduatedPrice, marketCapUsd },
+			};
+			rememberGood(network, mint, body);
 			return {
 				httpStatus: 200,
 				cacheControl: 'public, max-age=15, s-maxage=30, stale-while-revalidate=60',
-				body: {
-					mint,
-					network,
-					curve: null,
-					graduated: true,
-					price: null,
-					graduation: { isGraduated: true, progressBps: 10_000 },
-					graduatedPrice: { ...graduatedPrice, marketCapUsd },
-				},
+				body,
 			};
 		}
 		return {
@@ -151,17 +196,19 @@ export async function getCurveView({ mint, network = 'mainnet' }) {
 		}
 	}
 
+	const body = {
+		mint,
+		network,
+		curve: result.curve,
+		...(curveComplete ? { graduated: true } : {}),
+		price: pricePayload,
+		graduation: result.graduation ? serializeBNs(result.graduation) : null,
+		...(graduatedPrice ? { graduatedPrice } : {}),
+	};
+	rememberGood(network, mint, body);
 	return {
 		httpStatus: 200,
 		cacheControl: 'public, max-age=5, s-maxage=10, stale-while-revalidate=30',
-		body: {
-			mint,
-			network,
-			curve: result.curve,
-			...(curveComplete ? { graduated: true } : {}),
-			price: pricePayload,
-			graduation: result.graduation ? serializeBNs(result.graduation) : null,
-			...(graduatedPrice ? { graduatedPrice } : {}),
-		},
+		body,
 	};
 }

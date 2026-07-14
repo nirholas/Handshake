@@ -26,13 +26,22 @@
 		});
 	}
 
+	// Resolves once the script has loaded so callers can order dependent scripts
+	// behind it. A tag that is already in the document resolves immediately:
+	// parser-inserted classic scripts have executed by the time footer.js runs
+	// (they block parsing, and footer.js initializes at DOMContentLoaded or
+	// later), and the only dynamic inserter of these URLs is this file itself.
 	function ensureScript({ src, type, attr }) {
-		if (document.querySelector(`script[src="${src}"]`)) return;
-		const s = document.createElement('script');
-		s.src = src;
-		if (type) s.type = type;
-		if (attr) s.setAttribute(attr, '');
-		document.head.appendChild(s);
+		if (document.querySelector(`script[src="${src}"]`)) return Promise.resolve();
+		return new Promise((resolve) => {
+			const s = document.createElement('script');
+			s.src = src;
+			if (type) s.type = type;
+			if (attr) s.setAttribute(attr, '');
+			s.addEventListener('load', resolve, { once: true });
+			s.addEventListener('error', resolve, { once: true });
+			document.head.appendChild(s);
+		});
 	}
 
 	function init() {
@@ -50,21 +59,30 @@
 						ensureScript({ src: '/footer-bot.js', type: 'module' });
 					} else {
 						// Plain HTML page (login, register, etc.) — fall back to model-viewer.
-						ensureScript({
-							src: 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js',
-							type: 'module',
+						// robotexpressive.glb ships EXT_meshopt_compression, which stock
+						// model-viewer cannot decode: without the meshopt shim it throws
+						// "THREE.GLTFLoader: setMeshoptDecoder must be called before
+						// loading compressed files" the moment the footer scrolls into
+						// view. The shim must EXECUTE before model-viewer defines the
+						// element (it intercepts customElements.define), so chain the
+						// model-viewer load and the element injection behind it.
+						ensureScript({ src: '/model-viewer-meshopt.js' }).then(() => {
+							ensureScript({
+								src: 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js',
+								type: 'module',
+							});
+							// model-viewer needs a <model-viewer> element; swap the canvas for one.
+							const avatar = container.querySelector('.h-footer-avatar');
+							if (avatar) {
+								avatar.innerHTML = `<model-viewer
+									src="/animations/robotexpressive.glb"
+									auto-rotate auto-rotate-delay="0" rotation-per-second="20deg"
+									interaction-prompt="none" camera-controls="false" disable-zoom
+									shadow-intensity="0" exposure="0.7" environment-image="neutral"
+									camera-orbit="0deg 80deg 9m" field-of-view="35deg" loading="lazy"
+								></model-viewer>`;
+							}
 						});
-						// model-viewer needs a <model-viewer> element; swap the canvas for one.
-						const avatar = container.querySelector('.h-footer-avatar');
-						if (avatar) {
-							avatar.innerHTML = `<model-viewer
-								src="/animations/robotexpressive.glb"
-								auto-rotate auto-rotate-delay="0" rotation-per-second="20deg"
-								interaction-prompt="none" camera-controls="false" disable-zoom
-								shadow-intensity="0" exposure="0.7" environment-image="neutral"
-								camera-orbit="0deg 80deg 9m" field-of-view="35deg" loading="lazy"
-							></model-viewer>`;
-						}
 					}
 				}
 

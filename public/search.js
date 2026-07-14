@@ -209,7 +209,7 @@
 		{ title: 'Scan yourself to 3D', desc: 'Turn a selfie into a 3D model', href: '/scan', icon: '📸', keys: 'scan selfie photo capture me face camera' },
 		{ title: 'Forge from text', desc: 'Generate a 3D model from a prompt', href: '/forge', icon: '✨', keys: 'forge generate text prompt ai model create' },
 		{ title: 'Deploy an agent on-chain', desc: 'Register an agent on-chain', href: '/deploy', icon: '🚀', keys: 'deploy register onchain erc8004 publish ship launch agent' },
-		{ title: 'Launch a coin', desc: 'Launch a token on pump.fun', href: '/launchpad', icon: '🪙', keys: 'launch coin token mint pump fun money $three' },
+		{ title: 'Launch a coin', desc: 'Launch a token on pump.fun', href: '/launch', icon: '🪙', keys: 'launch coin token mint pump fun money $three' },
 		{ title: 'Embed an agent', desc: 'Get an embed snippet for your site', href: '/embed.html', icon: '🔗', keys: 'embed iframe widget snippet share script integrate' },
 		{ title: 'Browse all pages', desc: 'The full three.ws directory, filterable', href: '/sitemap', icon: '🗺️', keys: 'sitemap site map all pages everything directory index list browse find' },
 	];

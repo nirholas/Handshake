@@ -7,8 +7,12 @@
  *   /api/pump/launch-detail   registry · agent · economics · intel · outcome · trader
  *   /api/pump/curve           price · market cap · graduation progress
  *   /api/pump/intel           wallet footprint · funder clusters (drives the bubblemap)
- *   /api/pump/smart-money      money pedigree of who is in
- *   /api/coin/:mint/cohorts    holder count · concentration · cohort distribution
+ *   /api/pump/smart-money      money pedigree of who is in (found:false = not scored yet)
+ *   /api/coin/:mint/cohorts    holder count · concentration · cohort distribution.
+ *                              Only fetched for coins the platform tracks (a
+ *                              three.ws launch or agent token, per launch-detail);
+ *                              anything else renders its designed no-data state
+ *                              instead of a guaranteed 404 round-trip.
  *
  * Plus three self-fetching live widgets: the candlestick chart (reused from
  * Mission Control), the bonding-curve ring, and the trade tape.
@@ -144,11 +148,13 @@ export function mountDetail(host, opts = {}) {
 	try { teardowns.push(mountTradeTape($('[data-host="tape"]'), { mint })); } catch { /* tape optional */ }
 
 	// ── data fetches ──────────────────────────────────────────────────────────────
-	loadDetail();
+	// Cohorts are chained on launch-detail: the platform only holds holder-cohort
+	// data for its own launches, so the answer to "is this ours?" decides whether
+	// the fetch happens at all.
+	loadDetail().then(loadCohorts);
 	loadCurve();
 	loadIntel();
 	loadSmart();
-	loadCohorts();
 
 	async function loadCurve() {
 		const stripEl = $('[data-host="strip"]');
@@ -178,13 +184,15 @@ export function mountDetail(host, opts = {}) {
 			const r = await fetch(`/api/pump/launch-detail?mint=${encodeURIComponent(mint)}&network=${network}`, { headers: { accept: 'application/json' } });
 			if (!r.ok) throw new Error(String(r.status));
 			const d = await r.json();
-			if (destroyed) return;
+			if (destroyed) return null;
 			renderIdentityFromIntel(d.intel);
 			renderFootprint(d.intel);
 			renderOutcome(d.outcome);
 			renderAgent(d);
+			return d;
 		} catch {
 			if (!destroyed) markUnavailable(['footprint', 'outcome', 'agent']);
+			return null;
 		}
 	}
 
@@ -206,18 +214,27 @@ export function mountDetail(host, opts = {}) {
 	async function loadSmart() {
 		try {
 			const r = await fetch(`/api/pump/smart-money?mint=${encodeURIComponent(mint)}`, { headers: { accept: 'application/json' } });
+			if (r.status === 404) { if (!destroyed) renderSmartNotScored(); return; } // pre-convention deploys
 			if (!r.ok) throw new Error(String(r.status));
 			const d = await r.json();
 			if (destroyed) return;
+			if (d.found === false || !d.coin) { renderSmartNotScored(); return; }
 			renderSmart(d.coin, d.notable);
 		} catch {
 			if (!destroyed) markUnavailable(['smart']);
 		}
 	}
 
-	async function loadCohorts() {
+	// Only coins the platform launched carry a holder-cohort snapshot; asking for
+	// anyone else's mint is a guaranteed not-found. Decide from the launch-detail
+	// answer and render the designed no-data state without a doomed round-trip.
+	async function loadCohorts(detailBody) {
+		if (destroyed) return;
+		if (!detailBody) { markUnavailable(['holders']); return; }
+		if (!detailBody.found && !detailBody.agent) { renderHoldersNotTracked(); return; }
 		try {
 			const r = await fetch(`/api/coin/${encodeURIComponent(mint)}/cohorts`, { headers: { accept: 'application/json' } });
+			if (r.status === 404) { if (!destroyed) renderHoldersNotTracked(); return; }
 			if (!r.ok) throw new Error(String(r.status));
 			const d = await r.json();
 			if (destroyed) return;
@@ -307,6 +324,25 @@ export function mountDetail(host, opts = {}) {
 					<span class="dd-cohort-bar"><i style="width:${Math.round((Number(c.count) / maxCount) * 100)}%"></i></span>
 					<span class="dd-cohort-n">${compact(c.count)}</span>
 				</div>`).join('')}</div>` : '<p class="dd-note">Holder cohort breakdown will populate as the holder set is indexed.</p>'}`;
+	}
+
+	// Designed no-data state: the platform tracks holder cohorts for its own
+	// launches only, so point elsewhere-launched coins at the on-chain truth.
+	function renderHoldersNotTracked() {
+		const body = $('[data-section="holders"] .dd-card-b');
+		if (!body) return;
+		body.innerHTML = `
+			<p class="dd-note dd-note--na">No holder-cohort snapshot exists for this coin. Cohorts are indexed for coins launched on three.ws; the full holder list lives on-chain.</p>
+			<div style="text-align:center"><a href="https://solscan.io/token/${encodeURIComponent(mint)}#holders" target="_blank" rel="noopener" class="dd-btn">View holders on Solscan ↗</a></div>`;
+	}
+
+	// Designed no-data state: the radar has not scored this coin (yet).
+	function renderSmartNotScored() {
+		const body = $('[data-section="smart"] .dd-card-b');
+		if (!body) return;
+		body.innerHTML = `
+			<p class="dd-note dd-note--na">No smart-money read for this coin yet. The radar scores a coin once proven wallets touch it, usually within minutes of real activity.</p>
+			<div style="text-align:center"><a href="/radar" class="dd-btn">Open the Smart Money radar →</a></div>`;
 	}
 
 	function renderBubblemap(coin, wallets, clusters) {

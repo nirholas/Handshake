@@ -73,7 +73,11 @@ async function main() {
 	try {
 		osmData = await fetchOSMData((frac, label) => progress(20 + frac * 34, label));
 	} catch (err) {
-		log.error('[agora] OSM fetch failed — empty world', err);
+		// Every Overpass instance is down and there is no cached payload. The
+		// plaza still opens: citizens, economy layer, and play mode all work
+		// without building geometry. Handled degradation, so warn (not error).
+		log.warn('[agora] OSM unavailable on every instance with no cache - opening the plaza without city geometry', err);
+		progress(54, 'Live map unavailable - opening the plaza without buildings…');
 		osmData = { elements: [] };
 	}
 

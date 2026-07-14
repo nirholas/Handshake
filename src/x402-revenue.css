@@ -16,11 +16,19 @@
 	color: var(--ink, #d8d8d8);
 }
 
-/* ambient glow behind the hero */
+/* ambient glow behind the hero. The side bleed is capped at the viewport:
+   the shell is centered, so (100% - 100vw) / 2 is exactly the negative offset
+   that reaches the viewport edge; the extra 12px stays clear of the scrollbar
+   gutter so the glow can never create horizontal scroll. The mask fades the
+   capped edges so the clamp is invisible at any width. */
 .xr-glow {
 	position: absolute;
-	inset: -10% -20% auto -20%;
+	inset: -10% auto auto auto;
+	left: max(-20%, calc((100% - 100vw) / 2 + 12px));
+	right: max(-20%, calc((100% - 100vw) / 2 + 12px));
 	height: 420px;
+	mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent);
+	-webkit-mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent);
 	background:
 		radial-gradient(
 			60% 80% at 20% 0%,

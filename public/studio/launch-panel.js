@@ -391,6 +391,45 @@ const LP_CSS = `
   color:rgba(255,255,255,.52);margin-top:.1rem}
 .lp-ok-stamp-sub{font-size:.7rem;color:rgba(255,255,255,.35);line-height:1.5;
   margin:-.3rem 0 0;text-align:center}
+
+/* Field counters + inline validation */
+.lp-frow{display:flex;align-items:baseline;gap:.5rem}
+.lp-frow input{flex:1;min-width:0}
+.lp-count{flex-shrink:0;font-size:.62rem;color:rgba(255,255,255,.26);
+  font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.lp-count.warn{color:#f6c498}
+.lp-lrow{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem}
+.lp-field-msg{font-size:.66rem;color:#f6b3b3;margin-top:.2rem}
+.lp-field-msg[hidden]{display:none}
+.lp input[aria-invalid="true"],.lp textarea[aria-invalid="true"]{border-color:rgba(246,140,140,.5)}
+.lp-iname[aria-invalid="true"]{border-bottom-color:rgba(246,140,140,.5)}
+.lp-img-err{font-size:.7rem;color:#f6b3b3;padding:.45rem .65rem;border-radius:8px;line-height:1.45;
+  background:rgba(246,179,179,.07);border:1px solid rgba(246,179,179,.18)}
+.lp-img-err[hidden]{display:none}
+
+/* Launch progress stepper */
+.lp-steps{display:flex;gap:.35rem;list-style:none;margin:.4rem 0 0;padding:0}
+.lp-steps li{flex:1;display:flex;flex-direction:column;align-items:center;gap:.28rem;
+  font-size:.6rem;color:rgba(255,255,255,.26);letter-spacing:.02em;text-align:center;line-height:1.2}
+.lp-steps li::before{content:'';width:100%;height:3px;border-radius:2px;
+  background:rgba(255,255,255,.08);transition:background .3s}
+.lp-steps li.done{color:rgba(164,240,188,.72)}
+.lp-steps li.done::before{background:rgba(164,240,188,.5)}
+.lp-steps li.active{color:rgba(255,255,255,.82)}
+.lp-steps li.active::before{background:linear-gradient(90deg,rgba(164,240,188,.6),rgba(164,240,188,.16))}
+
+/* Focus visibility, touch targets, reduced motion */
+.lp button:focus-visible,.lp a:focus-visible,.lp input:focus-visible,.lp textarea:focus-visible,
+.lp-dep button:focus-visible,.lp-dep [role="button"]:focus-visible{
+  outline:2px solid rgba(164,240,188,.55);outline-offset:2px}
+@media (pointer:coarse){
+  .lp-wbtn,.lp-copy,.lp-link-btn,.lp-tbtn,.lp-cap-btn,.lp-ex-new,.lp-again{min-height:44px}
+  .lp-ex-link,.lp-ext{display:inline-flex;align-items:center;min-height:44px;box-sizing:border-box}
+}
+@media (prefers-reduced-motion:reduce){
+  .lp *,.lp-dep-bd *{transition-duration:.01ms !important}
+  .lp-steps li::before{transition:none}
+}
 `;
 
 let _cssInjected = false;
@@ -423,7 +462,10 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		name: '', symbol: '', description: '',
 		initialBuy: '0', buybackBps: 500,
 		imageFile: null, imagePreviewUrl: null,
+		imageError: '',
 		_symbolEdited: false,
+		// Which required fields the user has visited, for inline "required" hints.
+		_touched: { name: false, symbol: false, description: false },
 
 		// coin type: 'agent' (default — buyback-bound), 'regular' (plain pump.fun coin),
 		// 'mayhem' (pump.fun mayhem mode), 'usdc' (USDC-denominated agent — coming soon)
@@ -457,7 +499,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		errorMsg: '',
 
 		// success
-		mint: null, resolvedAgentId: null,
+		mint: null, resolvedAgentId: null, launchSig: null,
 
 		// timeout escape hatch
 		pendingConfirm: null, // { prepId, sig, network }
@@ -822,19 +864,26 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 	async function openAgentDepositModal() {
 		const addr = s.agentWallet?.address;
 		if (!addr) return;
+
+		const prevActive = document.activeElement;
+		const prevOverflow = document.body.style.overflow;
+		document.body.style.overflow = 'hidden';
+
 		const bd = document.createElement('div');
 		bd.className = 'lp-dep-bd';
-		bd.innerHTML = `<div class="lp-dep" role="dialog" aria-label="Fund agent wallet">
+		bd.innerHTML = `<div class="lp-dep" role="dialog" aria-modal="true" aria-labelledby="lp-dep-title">
 			<div class="lp-dep-head">
 				<div>
-					<p class="lp-dep-title">Fund agent wallet</p>
+					<p class="lp-dep-title" id="lp-dep-title">Fund agent wallet</p>
 					<p class="lp-dep-sub">Send SOL to your agent's custodial wallet. The agent signs and pays for its own launch.</p>
 				</div>
 				<button class="lp-dep-x" id="lp-dep-close" aria-label="Close">✕</button>
 			</div>
 			<span class="lp-dep-net">SOLANA · MAINNET</span>
-			<div class="lp-dep-qr" id="lp-dep-qr"></div>
-			<div class="lp-dep-addr" id="lp-dep-addr" role="button" tabindex="0" title="Click to copy">
+			<div class="lp-dep-qr" id="lp-dep-qr">
+				<div class="lp-dep-qr-load" role="status" aria-live="polite" aria-label="Loading QR code"></div>
+			</div>
+			<div class="lp-dep-addr" id="lp-dep-addr" role="button" tabindex="0" aria-label="Copy agent wallet address">
 				<code>${esc(addr)}</code>
 				<span class="lp-dep-addr-copy" id="lp-dep-addr-label">Copy</span>
 			</div>
@@ -843,11 +892,37 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		</div>`;
 		document.body.appendChild(bd);
 
-		const close = () => { bd.remove(); document.removeEventListener('keydown', onKey); };
-		const onKey = (e) => { if (e.key === 'Escape') close(); };
+		let closed = false;
+		const close = () => {
+			if (closed) return;
+			closed = true;
+			bd.remove();
+			document.removeEventListener('keydown', onKey);
+			document.body.style.overflow = prevOverflow;
+			if (prevActive && prevActive.isConnected && typeof prevActive.focus === 'function') {
+				prevActive.focus();
+			}
+		};
+
+		// Focus trap: cycle Tab/Shift+Tab between the modal's interactive elements.
+		const FOCUSABLE = '#lp-dep-close, #lp-dep-addr';
+		const onKey = (e) => {
+			if (e.key === 'Escape') { close(); return; }
+			if (e.key !== 'Tab') return;
+			const items = Array.from(bd.querySelectorAll(FOCUSABLE));
+			if (items.length === 0) return;
+			const first = items[0], last = items[items.length - 1];
+			const active = document.activeElement;
+			if (e.shiftKey && (active === first || !bd.contains(active))) {
+				e.preventDefault(); last.focus();
+			} else if (!e.shiftKey && (active === last || !bd.contains(active))) {
+				e.preventDefault(); first.focus();
+			}
+		};
 		document.addEventListener('keydown', onKey);
 		bd.addEventListener('click', (e) => { if (e.target === bd) close(); });
 		bd.querySelector('#lp-dep-close').addEventListener('click', close);
+		bd.querySelector('#lp-dep-close').focus();
 
 		const copyAddr = async () => {
 			try { await navigator.clipboard.writeText(addr); } catch { return; }
@@ -863,14 +938,18 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 
 		try {
 			const mod = await import('https://esm.sh/qrcode@1.5.3');
+			if (closed) return;
 			const QRCode = mod.default ?? mod;
 			const canvas = document.createElement('canvas');
 			await QRCode.toCanvas(canvas, addr, { width: 220, margin: 1, color: { dark: '#0c0c0c', light: '#ffffff' } });
+			if (closed) return;
 			const slot = bd.querySelector('#lp-dep-qr');
 			if (slot) { slot.innerHTML = ''; slot.appendChild(canvas); }
-		} catch {
+		} catch (err) {
+			console.warn('[launch-panel] QR render failed', err);
+			if (closed) return;
 			const slot = bd.querySelector('#lp-dep-qr');
-			if (slot) slot.innerHTML = `<div style="padding:1rem;font-size:.72rem;color:#666">QR unavailable — copy address below</div>`;
+			if (slot) slot.innerHTML = `<div class="lp-dep-qr-err">QR unavailable.<br>Copy the address below.</div>`;
 		}
 	}
 
@@ -897,10 +976,28 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 
 	// ── Image handling ─────────────────────────────────────────────────────
 
+	// Inline image error, DOM-patched so showing it never re-renders the form
+	// (a full render would drop focus mid-typing).
+	function setImageError(msg) {
+		s.imageError = msg || '';
+		const el = container.querySelector('#lp-img-err');
+		if (el) { el.textContent = s.imageError; el.hidden = !s.imageError; }
+	}
+
 	function handleImageFile(file) {
-		if (!file?.type.startsWith('image/')) return;
-		if (file.size > 4 * 1024 * 1024) { alert('Image must be under 4 MB'); return; }
+		if (!file) return;
+		if (!file.type.startsWith('image/')) {
+			setImageError('That file is not an image. Use a PNG, JPG, GIF, or WebP.');
+			return;
+		}
+		if (file.size > 4 * 1024 * 1024) {
+			setImageError('Image must be under 4 MB. Resize it and try again.');
+			return;
+		}
+		setImageError('');
 		s.imageFile = file;
+		// A new image invalidates any cached metadata upload.
+		s._metaUrl = null; s._metaKey = null;
 		const reader = new FileReader();
 		reader.onload = (e) => {
 			s.imagePreviewUrl = e.target.result;
@@ -924,13 +1021,13 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		const camera   = viewer?.activeCamera || viewer?.camera;
 		const srcCanvas = renderer?.domElement;
 		if (!renderer || !scene || !camera || !srcCanvas) {
-			alert('Preview not ready yet — wait for the avatar to load.');
+			setImageError('Preview not ready yet. Wait for the avatar to load, then try again.');
 			return;
 		}
 		try {
 			renderer.render(scene, camera);
 		} catch {
-			alert('Could not capture preview.');
+			setImageError('Could not capture the 3D preview. Try again in a moment.');
 			return;
 		}
 		// Crop to a centered square so the token image is balanced.
@@ -942,7 +1039,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		const ctx = out.getContext('2d');
 		ctx.drawImage(srcCanvas, sx, sy, size, size, 0, 0, out.width, out.height);
 		const blob = await new Promise((r) => out.toBlob(r, 'image/png'));
-		if (!blob) { alert('Could not capture preview.'); return; }
+		if (!blob) { setImageError('Could not capture the 3D preview. Try again in a moment.'); return; }
 		const file = new File([blob], `avatar-${Date.now()}.png`, { type: 'image/png' });
 		handleImageFile(file);
 	}
@@ -983,7 +1080,12 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			// Preserve the symbol exactly as entered (whitespace/emoji/special chars), cap at 10 codepoints.
 			const symTrim  = [...s.symbol].slice(0, 10).join('');
 			const descTrim = s.description.trim().slice(0, 500);
-			const metaKey = `${nameTrim}|${symTrim}|${descTrim}|${!!s.imageFile}`;
+			// Key includes the file's identity, not just its presence, so swapping
+			// the image after a failed attempt never reuses stale metadata.
+			const fileKey = s.imageFile
+				? `${s.imageFile.name}:${s.imageFile.size}:${s.imageFile.lastModified || 0}`
+				: 'none';
+			const metaKey = `${nameTrim}|${symTrim}|${descTrim}|${fileKey}`;
 
 			if (s._metaKey !== metaKey || !s._metaUrl) {
 				let imageDataUrl = null;
@@ -1135,6 +1237,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 
 		const conn = new Connection(RPC_URL, 'confirmed');
 		const sig  = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: false });
+		s.launchSig = sig;
 
 		try {
 			await pollConfirmation(conn, sig);
@@ -1182,6 +1285,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 
 		s.resolvedAgentId = data.agent_id;
 		s.mint = data.mint;
+		s.launchSig = data.signature || null;
 		s.phase = 'success';
 		// Refresh agent balance so the UI reflects the launch spend.
 		refreshAgentBalance();

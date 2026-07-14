@@ -59,9 +59,15 @@ async function loadAvatars() {
 	let avatars = [];
 	try {
 		const res = await apiFetch('/api/avatars');
-		if (res.ok) avatars = (await res.json()) ?? [];
+		if (res.ok) {
+			// GET /api/avatars responds with an envelope: { avatars: [...], next_cursor }.
+			// Unwrap it, tolerating a bare array so the page keeps working either way.
+			const data = await res.json().catch(() => null);
+			if (Array.isArray(data?.avatars)) avatars = data.avatars;
+			else if (Array.isArray(data)) avatars = data;
+		}
 	} catch {
-		// fall through — show default avatar only
+		// fall through: show default avatar only
 	}
 
 	barLoading.remove();
@@ -72,12 +78,30 @@ async function loadAvatars() {
 	}
 
 	for (const av of avatars) {
-		addThumb(av.id, av.glb_url ?? av.storage_url, av.thumbnail_url, av.display_name || 'Avatar');
+		addThumb(av.id, avatarGlbUrl(av), av.thumbnail_url, av.name || 'Avatar');
 	}
 
 	// Auto-select the first one.
 	const first = avatars[0];
-	selectAvatar(first.id, first.glb_url ?? first.storage_url, first.thumbnail_url);
+	selectAvatar(first.id, avatarGlbUrl(first), first.thumbnail_url);
+}
+
+// The list endpoint only carries a CDN model_url for public/unlisted avatars;
+// private ones come back with model_url null and need a short-lived signed URL
+// from the single-avatar endpoint (resolved lazily in selectAvatar).
+function avatarGlbUrl(av) {
+	return av.model_url || av.base_model_url || null;
+}
+
+async function fetchSignedGlbUrl(id) {
+	try {
+		const res = await apiFetch(`/api/avatars/${encodeURIComponent(id)}`);
+		if (!res.ok) return null;
+		const data = await res.json().catch(() => null);
+		return data?.avatar?.url || data?.avatar?.model_url || null;
+	} catch {
+		return null;
+	}
 }
 
 function addDefaultThumb() {
@@ -100,7 +124,7 @@ function createThumb(id, glbUrl, thumbUrl, label) {
 	el.setAttribute('tabindex', '0');
 	el.setAttribute('aria-label', `Select ${label}`);
 	el.dataset.id = id;
-	el.dataset.glb = glbUrl;
+	el.dataset.glb = glbUrl || '';
 	el.dataset.thumb = thumbUrl || '';
 
 	if (thumbUrl) {
@@ -119,17 +143,31 @@ function createThumb(id, glbUrl, thumbUrl, label) {
 	return el;
 }
 
-function selectAvatar(id, glbUrl, thumbUrl) {
+async function selectAvatar(id, glbUrl, thumbUrl) {
 	selectedAvatarId  = id;
-	selectedGlbUrl    = glbUrl;
+	selectedGlbUrl    = null;
 	selectedThumbnail = thumbUrl;
-
-	viewer.src = glbUrl;
 
 	document.querySelectorAll('.avatar-thumb').forEach((el) => {
 		el.classList.toggle('is-selected', el.dataset.id === String(id));
 	});
+	updateGenerateBtn();
 
+	// Private avatars have no CDN URL in the list payload: resolve a signed one.
+	if (!glbUrl && id !== 'default') glbUrl = await fetchSignedGlbUrl(id);
+	if (selectedAvatarId !== id) return; // user picked a different avatar meanwhile
+
+	if (!glbUrl) {
+		showToast('Could not load this avatar\'s 3D model. Pick another one.', 'error');
+		updateGenerateBtn();
+		return;
+	}
+
+	selectedGlbUrl = glbUrl;
+	// setAttribute (not the .src property): if model-viewer hasn't upgraded yet,
+	// a property assignment lands on the plain element and is shadowed once the
+	// custom element upgrades, leaving the default GLB on screen.
+	viewer.setAttribute('src', glbUrl);
 	updateGenerateBtn();
 }
 

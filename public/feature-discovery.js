@@ -69,7 +69,9 @@
 		'/embed':          { label: 'Embed',          desc: 'Put your live agent on any website.' },
 		'/embed.html':     { label: 'Embed Editor',   desc: 'Tune mode, size, and position — then copy the snippet.' },
 		'/docs':           { label: 'Docs',            desc: 'SDKs, API reference, and integration guides.' },
-		'/launchpad':      { label: 'Deploy Onchain',  desc: 'Build a white-label 3D token launchpad and go live onchain.' },
+		'/launchpad':      { label: 'Launchpad Studio', desc: 'Build a white-label 3D token launchpad and go live onchain.' },
+		'/deploy':         { label: 'Deploy Onchain',  desc: 'Register your model as a permanent on-chain agent identity.' },
+		'/launch':         { label: 'Launch a Coin',   desc: 'Mint a pump.fun coin for your agent in one flow.' },
 		'/marketplace':    { label: 'Marketplace',    desc: 'Buy, sell, and remix agents built by the community.' },
 	};
 
@@ -91,7 +93,7 @@
 		forge: { kicker: 'Nice model — what now?', links: [
 			{ route: '/scene',    label: 'Open in Scene Studio', primary: true, modelParam: 'model', nameParam: 'name' },
 			{ route: '/embed.html', label: 'Embed editor', modelParam: 'avatar' },
-			{ route: '/launchpad', label: 'Deploy onchain', modelParam: 'avatar' },
+			{ route: '/deploy',   label: 'Deploy onchain', idParam: 'avatar', modelParam: 'model', nameParam: 'name' },
 			{ route: '/play',     label: 'Drop it in a world', modelParam: 'avatar' },
 		] },
 		segment: { kicker: 'Parts split — what now?', links: [
@@ -114,11 +116,11 @@
 		] },
 		studio: { kicker: 'Widget ready — share it?', links: [
 			{ route: '/embed.html', label: 'Embed editor', primary: true },
-			{ route: '/launchpad',  label: 'Deploy onchain' },
+			{ route: '/deploy',     label: 'Deploy onchain', idParam: 'avatar', modelParam: 'model', nameParam: 'name' },
 			{ route: '/docs',       label: 'Integration guide' },
 		] },
 		embed: { kicker: 'Embedded — what else?', links: [
-			{ route: '/launchpad',  label: 'Deploy onchain', primary: true },
+			{ route: '/deploy',     label: 'Deploy onchain', primary: true, idParam: 'avatar', modelParam: 'model', nameParam: 'name' },
 			{ route: '/marketplace', label: 'List on marketplace' },
 			{ route: '/docs',       label: 'API reference' },
 		] },
@@ -412,8 +414,12 @@
 				return { href: href, label: l.label, primary: l.primary };
 			});
 		links.push({ href: EXPLORE_MORE, label: 'Explore more' });
+		// Name the model in the card so the deep-link promise is concrete: the
+		// user sees WHICH model each tool will open with, not an abstract claim.
+		var modelLabel = model && model.label ? String(model.label).slice(0, 60) : '';
 		renderCard({
 			kicker: cfg.kicker,
+			title: carried && modelLabel ? modelLabel : null,
 			desc: carried ? 'Each tool opens with this model already loaded.' : null,
 			links: links,
 		});

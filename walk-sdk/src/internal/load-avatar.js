@@ -103,7 +103,9 @@ export async function loadWalkAvatar(entry, opts = {}) {
 		//   2. fall back to the default rig (the caller's fallbackEntry).
 		if (err?.code === RIG_UNSUPPORTED) {
 			if (gltf.animations && gltf.animations.length) {
-				log.warn(
+				// Same expected-fallback path: baked clips are a designed recovery,
+				// not a failure worth a warning on every page view.
+				log.debug(
 					`avatar "${active.id}" isn't a retargetable humanoid — driving its ${gltf.animations.length} baked clip(s) instead`,
 				);
 				// The shared `clips` map names manifest clips, not embedded ones, so
@@ -111,7 +113,9 @@ export async function loadWalkAvatar(entry, opts = {}) {
 				// fallback (which never freezes).
 				controller = makeEmbeddedController(model, gltf.animations, {}, { waveMs });
 			} else if (fallbackEntry && fallbackEntry.id !== active.id) {
-				log.warn(
+				// Expected, handled behavior (non-humanoid rigs fall back by design),
+				// so log at debug, not warn, to keep every page view's console clean.
+				log.debug(
 					`avatar "${active.id}" can't be animated (non-humanoid rig, no baked clips) — falling back to "${fallbackEntry.id}"`,
 				);
 				disposeModel(model);

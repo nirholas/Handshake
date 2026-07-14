@@ -832,6 +832,7 @@
 			openDrawer('Loading…', '<div class="skel" style="height:120px"></div>');
 			try {
 				const { coin, notable } = await getJSON(`${API}?mint=${encodeURIComponent(mint)}`);
+				if (!coin) throw new Error('not scored yet'); // 200 + found:false → the designed "Not scored yet" state below
 				$('drTitle').textContent = coin.symbol || 'Coin';
 				const share = shareOf(coin);
 				const rows = (notable || []).map((n) => `<div class="nwallet" data-wallet="${esc(n.wallet)}" role="button" tabindex="0">

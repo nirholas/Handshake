@@ -134,17 +134,21 @@ function extractText(el) {
 // A live-region caption mounted into the companion host, stacked above the SDK's
 // own greeting bubble so the two never overwrite each other. Styled to match the
 // SDK bubble (same surface/typography) using design tokens where they apply.
+// Width is clamped border-box: the bubble is centered over a host whose center
+// sits 116px from the right viewport edge (host right:16px, width 200px), so any
+// total width above 2 x (116 - 8) = 216px would escape the viewport. The mobile
+// host (right:10px, width 148px) puts the center 84px in, hence the 156px cap.
 const CAPTION_STYLE_ID = 'walk-companion-narrate-style';
 function ensureCaptionStyles() {
 	if (document.getElementById(CAPTION_STYLE_ID)) return;
 	const s = document.createElement('style');
 	s.id = CAPTION_STYLE_ID;
 	s.textContent = `
-.walk-companion-caption{position:absolute;left:50%;bottom:calc(100% - 30px);z-index:4;transform:translateX(-50%) translateY(8px);max-width:240px;width:max-content;background:var(--surface-glass,rgba(18,20,28,.95));backdrop-filter:blur(var(--blur-sm,8px));-webkit-backdrop-filter:blur(var(--blur-sm,8px));color:var(--ink-bright,#f2f4f8);font:var(--weight-medium,500) var(--text-sm,12.5px)/var(--leading-tight,1.4) var(--font-body,system-ui,-apple-system,'Segoe UI',sans-serif);padding:8px 11px;border-radius:var(--radius-md,12px);border:1px solid var(--stroke-strong,rgba(255,255,255,.14));box-shadow:var(--shadow-2,0 10px 28px rgba(0,0,0,.35));pointer-events:none;opacity:0;transition:opacity .3s ease,transform .3s ease;text-align:left}
+.walk-companion-caption{position:absolute;left:50%;bottom:calc(100% - 30px);z-index:4;transform:translateX(-50%) translateY(8px);box-sizing:border-box;max-width:min(216px,calc(100vw - 16px));width:max-content;background:var(--surface-glass,rgba(18,20,28,.95));backdrop-filter:blur(var(--blur-sm,8px));-webkit-backdrop-filter:blur(var(--blur-sm,8px));color:var(--ink-bright,#f2f4f8);font:var(--weight-medium,500) var(--text-sm,12.5px)/var(--leading-tight,1.4) var(--font-body,system-ui,-apple-system,'Segoe UI',sans-serif);padding:8px 11px;border-radius:var(--radius-md,12px);border:1px solid var(--stroke-strong,rgba(255,255,255,.14));box-shadow:var(--shadow-2,0 10px 28px rgba(0,0,0,.35));pointer-events:none;opacity:0;transition:opacity .3s ease,transform .3s ease;text-align:left}
 .walk-companion-caption.is-in{opacity:1;transform:translateX(-50%) translateY(0)}
 .walk-companion-caption::after{content:'';position:absolute;left:50%;top:100%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--surface-glass,rgba(18,20,28,.95))}
 .walk-companion-caption .wcn-speaker{display:inline-block;margin-right:5px;opacity:.7;font-size:11px}
-@media (max-width:520px){.walk-companion-caption{font-size:11.5px;max-width:170px}}
+@media (max-width:520px){.walk-companion-caption{font-size:11.5px;max-width:min(156px,calc(100vw - 12px))}}
 @media (prefers-reduced-motion:reduce){.walk-companion-caption{transition:none}}
 .walk-companion-narrate{position:absolute;top:2px;right:106px;z-index:3;width:22px;height:22px;border:none;border-radius:50%;background:rgba(12,14,20,.55);color:#fff;font-size:12px;line-height:1;cursor:pointer;pointer-events:auto;opacity:0;transition:opacity .2s ease,background .2s ease;display:grid;place-items:center;padding:0}
 .walk-companion:hover .walk-companion-narrate,.walk-companion:focus-within .walk-companion-narrate{opacity:1}

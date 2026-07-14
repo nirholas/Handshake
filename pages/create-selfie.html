@@ -1618,7 +1618,11 @@
 				</div>
 
 				<div class="build-viewer" aria-hidden="true">
+					<!-- loading="lazy": this viewer is decoration inside a hidden step.
+					     It must not cost 748KB on first paint, so it only starts
+					     fetching once the building step is actually shown. -->
 					<model-viewer
+						id="build-model"
 						src="/avatars/default.glb"
 						auto-rotate
 						rotation-per-second="12deg"
@@ -1629,7 +1633,7 @@
 						environment-image="neutral"
 						exposure="0.9"
 						camera-orbit="0deg 78deg auto"
-						loading="eager"
+						loading="lazy"
 					></model-viewer>
 					<img id="build-preview" class="build-preview" alt="" />
 					<div class="build-veil">
@@ -2125,6 +2129,15 @@
 			let _docTitleBase = document.title;
 			let _notifyPermission =
 				typeof Notification !== 'undefined' ? Notification.permission : 'denied';
+
+			// The build-step viewer is pure decoration (the placeholder avatar
+			// spinning behind the veil while reconstruction runs). If its GLB fetch
+			// fails (transient network drop, navigation mid-download), fall back to
+			// the designed state (the captured-photo preview and progress veil)
+			// instead of leaving a dead black canvas behind them.
+			document.getElementById('build-model')?.addEventListener('error', (e) => {
+				/** @type {HTMLElement} */ (e.currentTarget).style.visibility = 'hidden';
+			});
 
 			document.addEventListener('selfie:preview', (e) => {
 				const dataUrl = /** @type {CustomEvent} */ (e).detail?.dataUrl;

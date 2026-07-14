@@ -100,8 +100,14 @@ function manifestRoutes() {
 		const pages = JSON.parse(readFileSync(resolve(ROOT, 'data/pages.json'), 'utf8'));
 		const out = [];
 		for (const s of pages.sections || []) {
+			// `machine` section = non-HTML endpoints (.xml/.txt/.json/.well-known);
+			// no DOM, no console. Not part of a browser sweep.
+			if (s.id === 'machine') continue;
 			for (const p of s.pages || []) {
-				if (p.path && p.path.startsWith('/') && !/[:*]/.test(p.path)) out.push(p.path);
+				if (!p.path || !p.path.startsWith('/') || /[:*]/.test(p.path)) continue;
+				// Skip anything that resolves to a static file rather than an HTML page.
+				if (!isHtmlRoute(p.path)) continue;
+				out.push(p.path);
 			}
 		}
 		return out;
@@ -117,9 +123,9 @@ const STATIC_AUTHED_ROUTES = [
 	'/dashboard',
 	'/dashboard/actions',
 	'/dashboard/sessions',
-	'/dashboard/usage',
+	'/dashboard/analytics',
 	'/dashboard/wallets',
-	'/dashboard/storage',
+	'/dashboard/settings',
 	'/dashboard/memory',
 	'/dashboard/strategy',
 	'/dashboard/voice',
@@ -132,7 +138,7 @@ const STATIC_AUTHED_ROUTES = [
 	'/profile',
 	'/settings',
 	'/my-agents',
-	'/api-keys',
+	'/dashboard/developers',
 ];
 
 async function seedDynamicRoutes(ctx) {
@@ -154,8 +160,15 @@ async function seedDynamicRoutes(ctx) {
 	return routes;
 }
 
+// Machine-readable endpoints (.xml/.txt/.json/...) have no DOM to audit.
+const isHtmlRoute = (path) => !/\.[a-z0-9]+$/i.test(path) || /\.html$/i.test(path);
+
 function buildRouteList(dynamic) {
-	if (explicitRoutes.length) return [...new Set(explicitRoutes)];
+	if (explicitRoutes.length) {
+		const skipped = explicitRoutes.filter((r) => !isHtmlRoute(r));
+		for (const r of skipped) console.log(`  skipping ${r} (non-HTML endpoint, nothing to audit)`);
+		return [...new Set(explicitRoutes.filter(isHtmlRoute))];
+	}
 	const authed = existsSync(AUTH_STATE) ? STATIC_AUTHED_ROUTES : [];
 	return [...new Set([...manifestRoutes(), ...authed, ...dynamic])];
 }
@@ -313,7 +326,14 @@ async function auditRoute(ctx, route, viewport) {
 	});
 	page.on('response', (res) => {
 		const s = res.status();
-		if (s >= 400) push('http-' + s, s >= 500 ? 'error' : 'warn', `HTTP ${s} ${res.url()}`);
+		if (s < 400) return;
+		// x402 payment-gated endpoints correctly answer 402 to a non-paying
+		// browser; that is the product working, not a defect.
+		if (s === 402 && new URL(res.url()).pathname.startsWith('/api/')) {
+			push('payment-gated', 'info', `HTTP 402 ${res.url()} (x402 payment required, expected)`);
+			return;
+		}
+		push('http-' + s, s >= 500 ? 'error' : 'warn', `HTTP ${s} ${res.url()}`);
 	});
 
 	let navStatus = null;

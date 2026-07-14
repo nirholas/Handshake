@@ -115,9 +115,12 @@ function attachPreview(card) {
 		obs.disconnect();
 
 		const iframe = document.createElement('iframe');
+		// No sandbox: previews frame our own first-party pages (paths come from
+		// /features.json), which need their real origin for API and storage
+		// access. Sandboxing same-origin content with allow-scripts is escapable
+		// anyway, so the attribute added nothing but a console warning.
 		iframe.src = path;
 		iframe.setAttribute('loading', 'lazy');
-		iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
 		iframe.setAttribute('tabindex', '-1');
 		iframe.setAttribute('aria-hidden', 'true');
 		iframe.setAttribute('title', '');

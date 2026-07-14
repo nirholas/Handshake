@@ -40,7 +40,17 @@ const nonceBody = z.object({
 });
 
 export default wrap(async (req, res) => {
-	const action = req.query?.action ?? new URL(req.url, 'http://x').pathname.split('/').filter(Boolean).pop();
+	// action arrives via the route table (?action=$1) when a subpath was hit.
+	// Behind the Cloud Run rewrite the bare index path keeps its ORIGINAL
+	// pathname on req.url (see server/index.mjs), so the URL fallback must map
+	// the endpoint's own directory segment ("wallets") back to "no action";
+	// otherwise GET/POST /api/auth/wallets dispatches to the DELETE-only
+	// unlink branch and 405s.
+	let action = req.query?.action;
+	if (action === undefined) {
+		const last = new URL(req.url, 'http://x').pathname.split('/').filter(Boolean).pop();
+		action = last === 'wallets' ? undefined : last;
+	}
 
 	// /api/auth/wallets — list (GET) or link (POST)
 	if (action === undefined || action === '' || action === null) {

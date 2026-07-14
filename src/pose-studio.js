@@ -63,6 +63,7 @@ import {
 import { PoseLibrary } from './pose-library.js';
 import { AnimationLibrary } from './animation-library.js';
 import { putSceneHandoff } from './shared/scene-handoff.js';
+import { isSafeQueryModelUrl } from './shared/safe-model-url.js';
 import { log } from './shared/log.js';
 
 // ─── DOM helpers ────────────────────────────────────────────────────────
@@ -1849,14 +1850,22 @@ function boot() {
 	state.library = library;
 	library.mount();
 
-	// ── Boot: honor ?avatar= and ?anim= ─────────────────────────────────────
+	// ── Boot: honor ?avatar=, ?src= and ?anim= ───────────────────────────────
 	const _params = new URL(window.location.href).searchParams;
 	const requestedAvatar = _params.get('avatar');
+	// ?src=<glb url> loads a model straight off its URL (the /viewer "Animate"
+	// funnel). Same trusted-host gate as every other model-URL query param.
+	const rawSrc = _params.get('src') || '';
+	const requestedSrc = isSafeQueryModelUrl(rawSrc) ? rawSrc : '';
 	const requestedAnim = _params.get('anim');
 
-	// An explicit ?anim= deep-link opens a specific saved clip and wins over any
-	// recovered draft; otherwise we offer back last session's unsaved work.
-	const recovered = !requestedAnim && autosave?.tryRestore();
+	if (rawSrc && !requestedSrc) {
+		setStatus('That model link is not from a trusted host. Pick an avatar instead.', 'error');
+	}
+
+	// An explicit ?anim= or model deep-link wins over any recovered draft;
+	// otherwise we offer back last session's unsaved work.
+	const recovered = !requestedAnim && !requestedSrc && autosave?.tryRestore();
 
 	// A 36-char UUID is a saved community clip (PoseLibrary.openById); anything
 	// else is a built-in preset name from the animation library (AnimationLibrary
@@ -1880,6 +1889,17 @@ function boot() {
 		}).then(() => {
 			if (requestedAnim) openRequestedAnim(requestedAnim);
 		});
+	} else if (requestedSrc) {
+		// /viewer funnel: animate a freshly generated GLB by URL. A model with no
+		// humanoid skeleton can't be posed; say so and fall back to the mannequin.
+		loadAvatarFromUrl(requestedSrc, { name: _params.get('title') || 'Imported model' })
+			.catch((err) => {
+				setStatus(`${err?.message || 'Could not load that model.'} Showing the mannequin instead.`, 'error');
+				switchToMannequin();
+			})
+			.then(() => {
+				if (requestedAnim) openRequestedAnim(requestedAnim);
+			});
 	} else if (requestedAnim) {
 		// Deep-linked to an animation with no avatar chosen (the /animations
 		// gallery "Open in Studio" path). Presets need a rigged figure to play on,

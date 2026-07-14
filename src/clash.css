@@ -298,6 +298,14 @@
 .cl-state h2 { margin: 0 0 var(--space-2, 8px); font: 700 var(--text-lg) var(--font-display); color: var(--ink-bright); }
 .cl-state p { margin: 0 auto; max-width: 44ch; line-height: 1.5; }
 .cl-state .cl-fight { margin-top: var(--space-4, 16px); display: inline-block; }
+.cl-state-links {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: var(--space-3, 12px);
+	flex-wrap: wrap;
+}
+.cl-state-links .cl-fight { text-decoration: none; }
 .cl-skel {
 	height: 110px;
 	border-radius: var(--radius-lg);

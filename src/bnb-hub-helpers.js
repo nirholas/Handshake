@@ -40,8 +40,9 @@ export function deltaFromTarget(measuredMs, targetMs) {
  * A track "exists" the moment its route/API resolves — regardless of which
  * status it answers with. A 404 means the file genuinely isn't deployed yet
  * (Vercel/Cloud Run route table has no match). A 405 means the route exists
- * but the probe method isn't what it wants (expected for POST-only APIs
- * probed with GET/HEAD) — that still counts as live. Any 2xx/3xx/4xx other
+ * but the probe method isn't what it wants: that still counts as live
+ * (defensive only, since the hub probes POST-only APIs with OPTIONS precisely
+ * so no 405 ever shows up in the console). Any 2xx/3xx/4xx other
  * than 404 counts as live; a network failure (status === null) or a 5xx
  * fails closed to "coming-soon" — an unreachable/erroring dependency should
  * never read as a shipped feature.

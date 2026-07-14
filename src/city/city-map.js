@@ -1,14 +1,42 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { fetchFirst } from '../shared/failover-fetch.js';
+import { log } from '../shared/log.js';
 
 // Manhattan — Times Square area centre
 const CENTER_LAT = 40.7580;
 const CENTER_LON = -73.9855;
 const RADIUS_METERS = 700; // ~10 city blocks
 
-// OSM localStorage cache (24h TTL)
+// OSM localStorage cache (24h TTL). A payload for this bbox is ~2.2 MB of
+// JSON, comfortably inside the ~5 MB localStorage quota.
 const CACHE_KEY = 'city-osm-manhattan-v2';
 const CACHE_TTL_MS = 86_400_000;
+
+// Public Overpass instances, tried in order. overpass-api.de is a free shared
+// instance that routinely 504s under load; the mirrors keep the city alive
+// when it does. One flaky third-party host must never mean an empty world.
+const OVERPASS_INSTANCES = [
+	{ name: 'overpass-api.de', base: 'https://overpass-api.de/api/interpreter' },
+	{ name: 'overpass.kumi.systems', base: 'https://overpass.kumi.systems/api/interpreter' },
+	{ name: 'maps.mail.ru', base: 'https://maps.mail.ru/osm/tools/overpass/api/interpreter' },
+];
+const INSTANCE_TIMEOUT_MS = 20_000; // per instance; worst case ~60s across all three
+
+// Read the cached payload without judging its age. Returns { ts, data } or
+// null; freshness is the caller's call (fresh reads honour the TTL, the
+// all-instances-down path reuses a stale payload rather than render nothing).
+function readOSMCache() {
+	try {
+		const raw = localStorage.getItem(CACHE_KEY);
+		if (!raw) return null;
+		const { ts, data } = JSON.parse(raw);
+		if (!Number.isFinite(ts) || !Array.isArray(data?.elements)) return null;
+		return { ts, data };
+	} catch {
+		return null; // bad or inaccessible cache
+	}
+}
 
 export const CITY_HALF = RADIUS_METERS;
 
@@ -22,18 +50,16 @@ function project(lat, lon) {
 	};
 }
 
-// Fetch building footprints from OpenStreetMap Overpass API (free, no key)
+// Fetch building footprints from OpenStreetMap Overpass API (free, no key).
+// Resilience ladder: fresh cache -> each Overpass instance in order (bounded
+// per-instance timeout via the shared failover chain) -> stale cache. Only a
+// cold cache with every instance down throws.
 export async function fetchOSMData(onProgress) {
-	try {
-		const raw = localStorage.getItem(CACHE_KEY);
-		if (raw) {
-			const { ts, data } = JSON.parse(raw);
-			if (Date.now() - ts < CACHE_TTL_MS) {
-				onProgress?.(0.5, 'Using cached city data…');
-				return data;
-			}
-		}
-	} catch { /* ignore bad cache */ }
+	const cached = readOSMCache();
+	if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+		onProgress?.(0.5, 'Using cached city data…');
+		return cached.data;
+	}
 
 	const lat1 = CENTER_LAT - RADIUS_METERS / 111_000;
 	const lat2 = CENTER_LAT + RADIUS_METERS / 111_000;
@@ -41,27 +67,53 @@ export async function fetchOSMData(onProgress) {
 	const lon1 = CENTER_LON - RADIUS_METERS / (111_000 * cosC);
 	const lon2 = CENTER_LON + RADIUS_METERS / (111_000 * cosC);
 
-	// Query buildings + roads in bounding box
+	// Query buildings + roads in bounding box. The server-side [timeout:20]
+	// matches the client-side per-instance abort so we never wait on a query
+	// the server has already given up on.
 	const query =
-		`[out:json][timeout:30];` +
+		`[out:json][timeout:20];` +
 		`(way["building"](${lat1},${lon1},${lat2},${lon2});` +
 		`way["highway"]["highway"~"^(primary|secondary|tertiary|residential|unclassified)$"](${lat1},${lon1},${lat2},${lon2});` +
 		`);out body;>;out skel qt;`;
 
 	onProgress?.(0.1, 'Fetching Manhattan map data…');
-	const res = await fetch(
-		`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`,
-	);
-	if (!res.ok) throw new Error(`Overpass API ${res.status}`);
-
-	onProgress?.(0.4, 'Parsing city geometry…');
-	const data = await res.json();
-
 	try {
-		localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
-	} catch { /* quota exceeded */ }
+		const { value: data, source } = await fetchFirst(
+			OVERPASS_INSTANCES.map(({ name, base }) => ({
+				name,
+				url: `${base}?data=${encodeURIComponent(query)}`,
+				parse: async (res) => {
+					const body = await res.json();
+					if (!Array.isArray(body?.elements)) throw new Error('malformed Overpass response');
+					return body;
+				},
+			})),
+			{ timeoutMs: INSTANCE_TIMEOUT_MS, label: 'overpass' },
+		);
+		if (source !== OVERPASS_INSTANCES[0].name) {
+			log.warn(`[city-map] Primary Overpass instance unavailable - served by mirror ${source}`);
+		}
 
-	return data;
+		onProgress?.(0.4, 'Parsing city geometry…');
+		try {
+			localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+		} catch { /* quota exceeded - render without caching */ }
+
+		return data;
+	} catch (err) {
+		// Every instance failed. A stale snapshot of Manhattan beats an empty
+		// void: reuse the last good payload past its TTL. Handled degradation,
+		// so warn (not error).
+		if (cached) {
+			log.warn(
+				`[city-map] All Overpass instances failed - reusing saved city data from ${new Date(cached.ts).toISOString()}`,
+				err,
+			);
+			onProgress?.(0.5, 'Live map unavailable - using saved city data…');
+			return cached.data;
+		}
+		throw err;
+	}
 }
 
 // Build the city scene from parsed OSM data.

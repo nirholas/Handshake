@@ -546,10 +546,10 @@ function ensureStyles() {
 .walk-companion-close:hover{background:rgba(220,60,60,.85)}
 .walk-companion-swap:hover{background:rgba(122,162,255,.85)}
 .walk-companion-close:focus-visible,.walk-companion-swap:focus-visible{outline:2px solid #7aa2ff;outline-offset:2px;opacity:1}
-.walk-companion-bubble{position:absolute;left:50%;bottom:calc(100% - 38px);z-index:2;transform:translateX(-50%) translateY(6px);max-width:230px;width:max-content;background:rgba(18,20,28,.94);color:#f2f4f8;font:500 12.5px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif;padding:8px 11px;border-radius:12px;border:1px solid rgba(255,255,255,.1);box-shadow:0 10px 28px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .3s ease,transform .3s ease;text-align:center}
+.walk-companion-bubble{position:absolute;left:50%;bottom:calc(100% - 38px);z-index:2;transform:translateX(-50%) translateY(6px);box-sizing:border-box;max-width:min(216px,calc(100vw - 16px));width:max-content;background:rgba(18,20,28,.94);color:#f2f4f8;font:500 12.5px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif;padding:8px 11px;border-radius:12px;border:1px solid rgba(255,255,255,.1);box-shadow:0 10px 28px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .3s ease,transform .3s ease;text-align:center}
 .walk-companion-bubble.is-in{opacity:1;transform:translateX(-50%) translateY(0)}
 .walk-companion-bubble::after{content:'';position:absolute;left:50%;top:100%;transform:translateX(-50%);border:6px solid transparent;border-top-color:rgba(18,20,28,.94)}
-@media (max-width:520px){.walk-companion{width:148px;height:208px;right:10px;bottom:10px}.walk-companion-bubble{font-size:11.5px;max-width:170px}}
+@media (max-width:520px){.walk-companion{width:148px;height:208px;right:10px;bottom:10px}.walk-companion-bubble{font-size:11.5px;max-width:min(156px,calc(100vw - 12px))}}
 @media (pointer:coarse){.walk-companion-close,.walk-companion-swap{opacity:1;width:26px;height:26px}.walk-companion-swap{right:32px}}
 @keyframes walk-companion-shimmer{to{transform:translateX(120%)}}
 @media (prefers-reduced-motion:reduce){.walk-companion,.walk-companion-bubble{transition:none}.walk-companion__skel::after{animation:none;opacity:.5}}

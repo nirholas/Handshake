@@ -450,6 +450,8 @@ const appConfig = {
 				'a-edit': resolve(__dirname, 'pages/a-edit.html'),
 				'a-me': resolve(__dirname, 'pages/a-me.html'),
 				labs: resolve(__dirname, 'pages/labs.html'),
+				search: resolve(__dirname, 'pages/search.html'),
+				rankings: resolve(__dirname, 'pages/rankings.html'),
 				'fact-checker': resolve(__dirname, 'pages/fact-checker.html'),
 				unstoppable: resolve(__dirname, 'pages/unstoppable.html'),
 				shopper: resolve(__dirname, 'pages/shopper.html'),
@@ -1266,6 +1268,10 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/bazaar/': resolve(root, 'public/bazaar.html'),
 					'/labs': resolve(root, 'pages/labs.html'),
 					'/labs/': resolve(root, 'pages/labs.html'),
+					'/search': resolve(root, 'pages/search.html'),
+					'/search/': resolve(root, 'pages/search.html'),
+					'/rankings': resolve(root, 'pages/rankings.html'),
+					'/rankings/': resolve(root, 'pages/rankings.html'),
 					'/forever': resolve(root, 'public/forever.html'),
 					'/forever/': resolve(root, 'public/forever.html'),
 					'/arbitrage': resolve(root, 'public/arbitrage.html'),
@@ -2294,6 +2300,11 @@ support: resolve(__dirname, 'pages/support.html'),
 					['dist/public/demos/3d-home.html', 'dist/demos/3d-home.html'],
 					['dist/public/eth-vanity.html', 'dist/eth-vanity.html'],
 					['dist/public/evm-wallet.html', 'dist/evm-wallet.html'],
+					// /vanity-wallet: its sealed-drops controller pulls bare deps
+					// (bs58, @noble/*, qrcode) that only resolve through the bundler.
+					// Serving the raw publicDir copy threw "Failed to resolve module
+					// specifier bs58" in production; promote the bundled output.
+					['dist/public/vanity-wallet.html', 'dist/vanity-wallet.html'],
 					// Grind-bounty market: its controller pulls bare deps (bs58, @noble,
 					// sealed-envelope) through the bundler, so the BUNDLED output must be
 					// served — promote it over the raw publicDir copy before dist/public

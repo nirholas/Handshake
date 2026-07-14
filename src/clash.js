@@ -21,6 +21,7 @@ const API = '/api/clash';
 const game = {
 	state: null, // last /state payload
 	tab: 'arena',
+	ccUnavailable: false, // server answered cc_unconfigured: stop all polling
 	pollTimer: null,
 	timerRaf: null,
 	enlist: null, // { token, symbol, image, warPass, amount, walletPower, cap }
@@ -193,14 +194,55 @@ function errorMessage(err, fallback) {
 	return err?.message || fallback;
 }
 
+// Designed state for that deployment gap: no retry loop (a retry can't conjure
+// the missing key), just an explanation and live surfaces to move on to.
+function unavailableState() {
+	return el('div', { class: 'cl-state' }, [
+		el('h2', { text: 'Coin Clash is temporarily unavailable' }),
+		el('p', {
+			text: 'The community battle service isn’t connected on this deployment yet. The armies will muster as soon as it comes online. In the meantime, the rest of the platform is live.',
+		}),
+		el('div', { class: 'cl-state-links' }, [
+			el('a', { class: 'cl-fight', href: '/launches', text: 'See live launches →' }),
+			el('a', { class: 'cl-fight', href: '/markets', text: 'Browse markets →' }),
+		]),
+	]);
+}
+
+// First cc_unconfigured answer wins: kill the 5s poll loop and pin every tab on
+// the designed unavailable state, so one page view issues exactly one request.
+function markUnavailable() {
+	if (game.ccUnavailable) return;
+	game.ccUnavailable = true;
+	if (game.pollTimer) {
+		clearInterval(game.pollTimer);
+		game.pollTimer = null;
+	}
+	setLiveDot($('cl-live'), 'error', 'offline');
+	const arena = $('cl-arena');
+	arena.replaceChildren(unavailableState());
+	arena.setAttribute('aria-busy', 'false');
+	$('cl-standings').replaceChildren(unavailableState());
+}
+
 // ── Render: standings ────────────────────────────────────────────────────────
 async function renderStandings() {
 	const root = $('cl-standings');
+	if (game.ccUnavailable) {
+		// Deployment-wide outage already established: don't issue another
+		// request that can only 503 the same way.
+		root.replaceChildren(unavailableState());
+		return;
+	}
 	root.replaceChildren(el('div', { class: 'cl-skel' }), el('div', { class: 'cl-skel' }), el('div', { class: 'cl-skel' }));
 	let data;
 	try {
 		data = await apiGet('leaderboard');
 	} catch (err) {
+		if (err?.code === 'cc_unconfigured') {
+			markUnavailable();
+			return;
+		}
 		root.replaceChildren(errorState(errorMessage(err), () => renderStandings()));
 		return;
 	}
@@ -242,6 +284,7 @@ async function renderStandings() {
 
 // ── State polling + round timer ──────────────────────────────────────────────
 async function poll() {
+	if (game.ccUnavailable) return;
 	try {
 		const data = await apiGet('state');
 		game.state = data;
@@ -256,6 +299,11 @@ async function poll() {
 		}
 		setLiveDot($('cl-live'), 'live', 'live');
 	} catch (err) {
+		if (err?.code === 'cc_unconfigured') {
+			markUnavailable();
+			log.warn('clash: CoinCommunities unconfigured, polling stopped', err);
+			return;
+		}
 		setLiveDot($('cl-live'), game.state ? 'connecting' : 'error', game.state ? 'reconnecting' : 'offline');
 		if (game.tab === 'arena' && !game.state) {
 			$('cl-arena').replaceChildren(

@@ -10,7 +10,8 @@
 //
 // Real endpoints:
 //   GET  /api/auth/sessions                 { sessions: [...] }
-//   DELETE /api/auth/sessions/:id
+//   DELETE /api/auth/sessions/:id           revoke one session
+//   DELETE /api/auth/sessions               revoke all others + rotate current
 //   GET  /api/notifications                 { notifications: [...], unread: N }
 //   POST /api/notifications/read-all
 //   GET  /api/billing/summary               { usage: { total_bytes, avatar_count, ... } }
@@ -238,7 +239,9 @@ function renderSessions(resp, onRetry) {
 		revokeAllBtn.disabled = true;
 		revokeAllBtn.textContent = 'Revoking…';
 		try {
-			await post('/api/auth/sessions/revoke-others', {});
+			// DELETE on the index revokes every other session and rotates the
+			// current one (api/auth/sessions/[action].js handleIndex).
+			await del('/api/auth/sessions');
 			toast('All other sessions revoked');
 			const updated = sessions.filter((s) => s.is_current || s.current);
 			renderList(updated);

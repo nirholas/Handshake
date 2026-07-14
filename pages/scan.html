@@ -1624,7 +1624,14 @@
 				</div>
 
 				<div class="build-viewer" aria-hidden="true">
+					<!-- loading="lazy": this viewer is decoration inside a hidden step,
+					     and this page immediately location.replace()s to /create/selfie.
+					     An eager load here starts a 748KB GLB fetch that the redirect
+					     then kills mid-flight, making model-viewer log
+					     "TypeError: Failed to fetch" on every visit. Lazy means the
+					     fetch only ever starts if the step actually becomes visible. -->
 					<model-viewer
+						id="build-model"
 						src="/avatars/default.glb"
 						auto-rotate
 						rotation-per-second="12deg"
@@ -1635,7 +1642,7 @@
 						environment-image="neutral"
 						exposure="0.9"
 						camera-orbit="0deg 78deg auto"
-						loading="eager"
+						loading="lazy"
 					></model-viewer>
 					<img id="build-preview" class="build-preview" alt="" />
 					<div class="build-veil">
@@ -1879,6 +1886,15 @@
 				showViewerError(
 					'This scan couldn’t be displayed. Try downloading the .GLB instead.',
 				);
+			});
+
+			// The build-step viewer is pure decoration (the placeholder avatar
+			// spinning behind the veil while reconstruction runs). If its GLB fetch
+			// fails (transient network drop, navigation mid-download), fall back to
+			// the designed state (the captured-photo preview and progress veil)
+			// instead of leaving a dead black canvas behind them.
+			document.getElementById('build-model')?.addEventListener('error', (e) => {
+				e.currentTarget.style.visibility = 'hidden';
 			});
 
 			document.addEventListener('selfie:preview', (e) => {

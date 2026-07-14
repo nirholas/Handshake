@@ -8,8 +8,15 @@
 
 const BASE = '/api/community';
 
+// Once the proxy answers cc_unconfigured (503: no CoinCommunities key on this
+// deployment), every further call this page load would 503 identically; the
+// state only changes with a redeploy. Remember the first such error and fail
+// every later call fast, so one page view never spams the endpoint.
+let _unconfiguredErr = null;
+
 /** Unwrap the { data, error } envelope the proxy speaks, throwing on error. */
 async function call(path, init) {
+	if (_unconfiguredErr) throw _unconfiguredErr;
 	const res = await fetch(`${BASE}${path}`, init);
 	let body = null;
 	try {
@@ -21,6 +28,7 @@ async function call(path, init) {
 		const err = new Error(body?.error_description || body?.error || `HTTP ${res.status}`);
 		err.status = res.status;
 		err.code = body?.error;
+		if (err.code === 'cc_unconfigured') _unconfiguredErr = err;
 		throw err;
 	}
 	return body?.data ?? null;
@@ -31,10 +39,20 @@ export function fetchCapabilities() {
 	return call('/capabilities');
 }
 
+// One in-flight /worlds request serves every concurrent caller (the lobby and
+// coin-world-boot's enrich() can both want it during a single boot).
+let _worldsInflight = null;
+
 /** The lobby of live coin-worlds, most active first. */
-export async function fetchWorlds() {
-	const data = await call('/worlds');
-	return data?.worlds ?? [];
+export function fetchWorlds() {
+	if (!_worldsInflight) {
+		_worldsInflight = call('/worlds')
+			.then((data) => data?.worlds ?? [])
+			.finally(() => {
+				_worldsInflight = null;
+			});
+	}
+	return _worldsInflight;
 }
 
 /** Recent messages for a coin's community (newest first). */

@@ -80,6 +80,53 @@
   .badge.tampered { color: #ffc2c2; background: rgba(255,86,86,.13); border-color: rgba(255,86,86,.36); }
   .badge.unknown  { color: #9aa3b2; background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.12); }
   .badge:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ── "Do more" funnel sheet ─────────────────────────────────────────── */
+  #more-btn { position: relative; }
+  #more-btn.pulse::after {
+    content: ""; position: absolute; inset: -3px; border-radius: 13px;
+    border: 2px solid rgba(110,168,254,.55); animation: morepulse 1.6s ease-out 2; pointer-events: none;
+  }
+  @keyframes morepulse { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.12); } }
+  @media (prefers-reduced-motion: reduce) { #more-btn.pulse::after { animation: none; display: none; } }
+  #sheet-wrap { position: fixed; inset: 0; z-index: 40; }
+  #sheet-backdrop { position: absolute; inset: 0; background: rgba(4,5,8,.55); backdrop-filter: blur(2px); opacity: 0; transition: opacity .22s ease; }
+  #sheet {
+    position: absolute; left: 50%; bottom: 0; transform: translate(-50%, 24px);
+    width: min(780px, 100%); max-height: min(78dvh, 640px); overflow-y: auto;
+    background: #12141a; border: 1px solid rgba(255,255,255,.1); border-bottom: 0;
+    border-radius: 18px 18px 0 0; padding: 18px 18px calc(18px + env(safe-area-inset-bottom));
+    box-shadow: 0 -18px 60px rgba(0,0,0,.5);
+    opacity: 0; transition: opacity .22s ease, transform .22s ease;
+  }
+  #sheet-wrap.open #sheet-backdrop { opacity: 1; }
+  #sheet-wrap.open #sheet { opacity: 1; transform: translate(-50%, 0); }
+  @media (prefers-reduced-motion: reduce) { #sheet, #sheet-backdrop { transition: none; } }
+  .sheet-head { display: flex; align-items: baseline; gap: 10px; margin: 2px 2px 14px; }
+  .sheet-title { font-size: 16px; font-weight: 700; }
+  .sheet-sub { flex: 1 1 auto; color: #9aa3b2; font-size: 12.5px; }
+  .sheet-close {
+    appearance: none; cursor: pointer; border: 0; background: rgba(255,255,255,.07); color: #aeb6c4;
+    width: 28px; height: 28px; border-radius: 50%; font-size: 13px; line-height: 1; flex: 0 0 auto;
+    transition: background .15s, color .15s; align-self: center;
+  }
+  .sheet-close:hover { background: rgba(255,255,255,.14); color: #fff; }
+  .sheet-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 10px; }
+  .card {
+    display: flex; flex-direction: column; gap: 4px; text-align: left; text-decoration: none;
+    appearance: none; cursor: pointer; font: inherit; color: #e8eaf0;
+    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1);
+    border-radius: 13px; padding: 13px 14px;
+    transition: background .15s, border-color .15s, transform .12s;
+  }
+  .card:hover { background: rgba(110,168,254,.09); border-color: rgba(110,168,254,.4); transform: translateY(-1px); }
+  .card:active { transform: translateY(0); }
+  .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .card[disabled] { opacity: .55; cursor: progress; transform: none; }
+  .card .k { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; }
+  .card .k .glyph { color: var(--accent); font-size: 15px; width: 18px; text-align: center; flex: 0 0 auto; }
+  .card .d { color: #9aa3b2; font-size: 12px; line-height: 1.45; }
 </style>
 
 	<link rel="canonical" href="https://three.ws/viewer">
@@ -135,8 +182,54 @@
     <button id="ar-btn" class="btn" type="button" aria-label="View this model in augmented reality">View in AR</button>
     <div class="spacer"></div>
     <a id="download" class="btn" download aria-label="Download the GLB file">Download GLB</a>
-    <a class="btn primary" href="https://three.ws" aria-label="Create your own 3D model at three.ws">Make your own →</a>
+    <a id="make-own" class="btn primary" href="https://three.ws" aria-label="Create your own 3D model at three.ws">Make your own →</a>
+    <button id="more-btn" class="btn primary hidden" type="button" aria-haspopup="dialog" aria-controls="sheet-wrap" aria-expanded="false">Do more with this model</button>
   </footer>
+
+  <div id="sheet-wrap" class="hidden" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div id="sheet-backdrop"></div>
+    <div id="sheet">
+      <div class="sheet-head">
+        <div id="sheet-title" class="sheet-title">Do more with this model</div>
+        <div class="sheet-sub">It's yours. Take it further.</div>
+        <button class="sheet-close" type="button" aria-label="Close">✕</button>
+      </div>
+      <div class="cards">
+        <a class="card hidden" id="act-animate">
+          <span class="k"><span class="glyph" aria-hidden="true">▶</span>Pose &amp; animate</span>
+          <span class="d">Open it in Pose Studio and drive it with the animation library.</span>
+        </a>
+        <a class="card" id="act-restyle">
+          <span class="k"><span class="glyph" aria-hidden="true">◈</span>Restyle it</span>
+          <span class="d">Keep the mesh, re-skin the material: chrome, wood, neon, anything.</span>
+        </a>
+        <a class="card" id="act-scene">
+          <span class="k"><span class="glyph" aria-hidden="true">⬢</span>Build a scene</span>
+          <span class="d">Drop it into Scene Studio and compose a world around it.</span>
+        </a>
+        <a class="card" id="act-compose">
+          <span class="k"><span class="glyph" aria-hidden="true">⧉</span>Combine parts</span>
+          <span class="d">Mix it with other models and forge new parts onto it.</span>
+        </a>
+        <button class="card" id="act-ar" type="button">
+          <span class="k"><span class="glyph" aria-hidden="true">◎</span>See it in your room</span>
+          <span class="d">Place it in AR: straight from your phone, or scan a QR from desktop.</span>
+        </button>
+        <button class="card" id="act-coin" type="button">
+          <span class="k"><span class="glyph" aria-hidden="true">◉</span>Launch it as a coin</span>
+          <span class="d" id="coin-d">Open a pump.fun launch with this model as the token image.</span>
+        </button>
+        <button class="card" id="act-embed" type="button">
+          <span class="k"><span class="glyph" aria-hidden="true">&lt;/&gt;</span>Embed it anywhere</span>
+          <span class="d" id="embed-d">Copy an iframe snippet that shows this exact viewer on your site.</span>
+        </button>
+        <a class="card" id="act-forge" href="/forge">
+          <span class="k"><span class="glyph" aria-hidden="true">✦</span>Forge another</span>
+          <span class="d">Describe anything and get a new 3D model, free.</span>
+        </a>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -175,11 +268,184 @@
     mv.classList.remove('veiled');
     // Expose the AR button only when the device/model can actually enter AR.
     if (mv.canActivateAR) { arBtn.style.display = 'inline-flex'; }
+    revealFunnel();
   });
   mv.addEventListener('error', function () {
     fail('The 3D model could not be displayed. You can still download the GLB file.');
   });
   arBtn.addEventListener('click', function () { try { mv.activateAR(); } catch (e) {} });
+
+  // ── "Do more" funnel: every generated model funnels into a next step:
+  // animate, restyle, scene, parts, AR, a pump.fun coin, or an embed. ──────
+  var moreBtn = document.getElementById('more-btn');
+  var makeOwn = document.getElementById('make-own');
+  var sheetWrap = document.getElementById('sheet-wrap');
+  var sheetBackdrop = document.getElementById('sheet-backdrop');
+  var sheetClose = sheetWrap.querySelector('.sheet-close');
+  var enc = encodeURIComponent;
+  var tOpt = title ? '&title=' + enc(title) : '';
+
+  document.getElementById('act-animate').href = '/pose?src=' + enc(src) + tOpt;
+  document.getElementById('act-restyle').href = '/restyle?url=' + enc(src);
+  document.getElementById('act-scene').href = '/scene?model=' + enc(src) + (title ? '&name=' + enc(title) : '');
+  document.getElementById('act-compose').href = '/compose?glb=' + enc(src);
+
+  function revealFunnel() {
+    makeOwn.classList.add('hidden');
+    moreBtn.classList.remove('hidden');
+    moreBtn.classList.add('pulse');
+    probeSkeleton();
+  }
+
+  var lastFocus = null;
+  function openSheet() {
+    lastFocus = document.activeElement;
+    sheetWrap.classList.remove('hidden');
+    void sheetWrap.offsetWidth; // commit the hidden→shown frame so the transition runs
+    sheetWrap.classList.add('open');
+    moreBtn.classList.remove('pulse');
+    moreBtn.setAttribute('aria-expanded', 'true');
+    sheetClose.focus();
+  }
+  function closeSheet() {
+    sheetWrap.classList.remove('open');
+    moreBtn.setAttribute('aria-expanded', 'false');
+    setTimeout(function () { sheetWrap.classList.add('hidden'); }, 240);
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  moreBtn.addEventListener('click', openSheet);
+  sheetClose.addEventListener('click', closeSheet);
+  sheetBackdrop.addEventListener('click', closeSheet);
+  document.addEventListener('keydown', function (e) {
+    if (sheetWrap.classList.contains('hidden')) return;
+    if (e.key === 'Escape') { closeSheet(); return; }
+    if (e.key !== 'Tab') return;
+    // Keep Tab inside the dialog.
+    var focusables = Array.prototype.filter.call(
+      sheetWrap.querySelectorAll('button:not([disabled]), a[href]'),
+      function (n) { return n.offsetParent !== null; }
+    );
+    if (!focusables.length) return;
+    var first = focusables[0], last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+
+  // Pose Studio can only animate a model that ships a skeleton. Read just the
+  // GLB's JSON chunk (from the HTTP cache; model-viewer already fetched it)
+  // and reveal the Animate card unless the model positively has no skins.
+  function probeSkeleton() {
+    var animateCard = document.getElementById('act-animate');
+    fetch(src, { cache: 'force-cache' })
+      .then(function (r) {
+        if (!r.ok || !r.body) throw new Error('unreadable');
+        var reader = r.body.getReader();
+        var buf = new Uint8Array(0);
+        var need = 20; // 12-byte GLB header + first chunk header
+        function pump() {
+          return reader.read().then(function (step) {
+            if (step.value) {
+              var merged = new Uint8Array(buf.length + step.value.length);
+              merged.set(buf); merged.set(step.value, buf.length);
+              buf = merged;
+            }
+            if (buf.length >= 20 && need === 20) {
+              var dv = new DataView(buf.buffer, buf.byteOffset, buf.length);
+              if (dv.getUint32(0, true) !== 0x46546c67) return null; // not binary glTF: assume rigged-capable
+              var jsonLen = dv.getUint32(12, true);
+              if (jsonLen > 48e6) return null;
+              need = 20 + jsonLen;
+            }
+            if (buf.length >= need && need > 20) {
+              var json = JSON.parse(new TextDecoder().decode(buf.subarray(20, need)));
+              return Array.isArray(json.skins) && json.skins.length > 0;
+            }
+            if (step.done) return null;
+            return pump();
+          });
+        }
+        return pump().finally(function () { reader.cancel().catch(function () {}); });
+      })
+      .then(function (hasSkins) {
+        // Show on true or unknown (null); hide only when provably unrigged.
+        if (hasSkins !== false) animateCard.classList.remove('hidden');
+      })
+      .catch(function () { animateCard.classList.remove('hidden'); });
+  }
+
+  // AR: device AR when this browser can enter it, else the /ar page
+  // (which QR-hands-off to a phone from desktop).
+  document.getElementById('act-ar').addEventListener('click', function () {
+    if (mv.canActivateAR) { closeSheet(); try { mv.activateAR(); } catch (e) {} return; }
+    location.href = '/ar?src=' + enc(src) + tOpt;
+  });
+
+  // Coin launch: snapshot the rendered model into a token image, hand it to
+  // /launch via sessionStorage (a data URL never fits in a query string).
+  var coinCard = document.getElementById('act-coin');
+  var coinDesc = document.getElementById('coin-d');
+  function captureTokenImage() {
+    return new Promise(function (resolve, reject) {
+      var raw;
+      try { raw = mv.toDataURL('image/png'); } catch (e) { reject(e); return; }
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var size = 512;
+          var c = document.createElement('canvas');
+          c.width = size; c.height = size;
+          var ctx = c.getContext('2d');
+          ctx.fillStyle = '#0b0c10'; ctx.fillRect(0, 0, size, size);
+          var s = Math.min(img.width, img.height) || 1;
+          ctx.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, size, size);
+          resolve(c.toDataURL('image/webp', 0.9));
+        } catch (e) { reject(e); }
+      };
+      img.onerror = reject;
+      img.src = raw;
+    });
+  }
+  coinCard.addEventListener('click', function () {
+    if (coinCard.disabled) return;
+    coinCard.disabled = true;
+    coinDesc.textContent = 'Rendering the token image…';
+    var name = (title || 'My 3D creation').slice(0, 32);
+    var desc = (title ? title + '. ' : '') + 'Forged in 3D on three.ws.';
+    var q = '/launch?name=' + enc(name) + '&description=' + enc(desc.slice(0, 500));
+    captureTokenImage()
+      .then(function (dataUrl) {
+        try { sessionStorage.setItem('twx.launch.image', dataUrl); q += '&imageSession=1'; } catch (e) {}
+      })
+      .catch(function () { /* no snapshot: the launch form still opens, user uploads an image */ })
+      .then(function () { location.href = q; });
+  });
+
+  // Embed: copy a paste-anywhere iframe of this exact viewer.
+  var embedCard = document.getElementById('act-embed');
+  var embedDesc = document.getElementById('embed-d');
+  var embedDefault = embedDesc.textContent;
+  function escAttr(s) { return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+  embedCard.addEventListener('click', function () {
+    var pageUrl = location.origin + '/viewer?src=' + enc(src) + tOpt;
+    var snippet = '<iframe src="' + escAttr(pageUrl) + '" width="640" height="480" '
+      + 'style="border:0;border-radius:12px;background:#0b0c10" loading="lazy" '
+      + 'allow="xr-spatial-tracking; fullscreen" title="' + escAttr(title || '3D model') + ' · three.ws 3D viewer"></iframe>';
+    function done(ok) {
+      embedDesc.textContent = ok ? 'Copied. Paste it into any HTML page.' : 'Copy failed: select and copy the address bar URL instead.';
+      setTimeout(function () { embedDesc.textContent = embedDefault; }, 2600);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(snippet).then(function () { done(true); }, function () { done(false); });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = snippet; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      ta.remove();
+      done(ok);
+    }
+  });
 
   // Provenance badge — ask the free verify endpoint whether this model carries a
   // genuine, untampered three.ws content credential. Designed verified / tampered

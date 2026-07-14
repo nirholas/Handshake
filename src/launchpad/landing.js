@@ -205,6 +205,36 @@ const STYLE = `
 	@media (max-width:880px) {
 		.lp-tpl-grid, .lp-gal { grid-template-columns:1fr; }
 	}
+	@media (max-width:480px) {
+		.lp-wrap { padding:0 16px; }
+		.lp-hero { padding:44px 0 32px; }
+		.lp-sec { padding:40px 0; }
+	}
+
+	/* Keyboard focus — every interactive element gets a visible ring */
+	.lp-btn:focus-visible, .lp-coin:focus-visible, .lp-card:focus-visible,
+	.lp-sec-head a.more:focus-visible, .lp-cta-row a:focus-visible {
+		outline:2px solid #ec4899; outline-offset:2px;
+	}
+	.lp-tpl:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+
+	.lp-cta-row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:22px; }
+
+	/* Studio handoff states (shown while the editor module loads, or if it fails) */
+	.lp-studio-wait { min-height:100vh; display:flex; flex-direction:column; gap:16px;
+		align-items:center; justify-content:center; text-align:center; padding:24px;
+		background:#0b0d10; color:#a1a1aa; font:15px/1.5 system-ui,-apple-system,sans-serif; }
+	.lp-studio-wait .spin { width:30px; height:30px; border-radius:50%;
+		border:3px solid #262b32; border-top-color:#f4f4f5; animation:lp-spin .8s linear infinite; }
+	@keyframes lp-spin { to { transform:rotate(360deg); } }
+	.lp-studio-wait h2 { margin:0; font-size:18px; color:#f4f4f5; letter-spacing:-0.01em; }
+	.lp-studio-wait .fail-actions { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+
+	@media (prefers-reduced-motion: reduce) {
+		.lp-land *, .lp-land *::before, .lp-studio-wait * {
+			animation:none !important; transition:none !important;
+		}
+	}
 `;
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -275,9 +305,13 @@ function shellHTML() {
 				<h1>Launch your coin — <em>hosted by a 3D agent</em>.</h1>
 				<p class="sub">Mint a Pump.fun coin in one flow, right here. Pick your agent, set the name, ticker, and image, then launch straight from your wallet. Creator fees route to you.</p>
 				<div class="lp-stats" data-stats>
-					<div class="lp-stat"><div class="n"><span class="skl"></span></div><div class="l">Coins launched</div></div>
-					<div class="lp-stat"><div class="n"><span class="skl"></span></div><div class="l">Pages live</div></div>
+					<div class="lp-stat"><div class="n"><span class="skl" aria-hidden="true"></span></div><div class="l">Coins launched</div></div>
+					<div class="lp-stat"><div class="n"><span class="skl" aria-hidden="true"></span></div><div class="l">Pages live</div></div>
 					<div class="lp-stat"><div class="n">∞</div><div class="l">Your wallet, your fees</div></div>
+				</div>
+				<div class="lp-cta-row">
+					<a class="lp-btn ghost" href="#lp-templates">Build a hosted page ↓</a>
+					<a class="lp-btn ghost" href="#lp-showcase">See live examples ↓</a>
 				</div>
 			</div>
 			<div class="lp-wrap">
@@ -296,13 +330,13 @@ function shellHTML() {
 					</div>
 					<a class="more" href="/launches">All launches →</a>
 				</div>
-				<div class="lp-feed" data-live-feed>
-					${Array.from({ length: 5 }).map(() => '<div class="lp-skel-row"></div>').join('')}
+				<div class="lp-feed" data-live-feed aria-busy="true" aria-label="Live coin launches">
+					${Array.from({ length: 5 }).map(() => '<div class="lp-skel-row" aria-hidden="true"></div>').join('')}
 				</div>
 			</div>
 		</section>
 
-		<section class="lp-sec">
+		<section class="lp-sec" id="lp-templates">
 			<div class="lp-wrap">
 				<div class="lp-sec-head">
 					<div>
@@ -314,7 +348,7 @@ function shellHTML() {
 			</div>
 		</section>
 
-		<section class="lp-sec">
+		<section class="lp-sec" id="lp-showcase">
 			<div class="lp-wrap">
 				<div class="lp-sec-head">
 					<div>
@@ -323,8 +357,8 @@ function shellHTML() {
 					</div>
 					<a class="more" href="#" data-action="build">Build yours →</a>
 				</div>
-				<div class="lp-gal" data-gallery>
-					${Array.from({ length: 6 }).map(() => '<div class="lp-gal-skel"></div>').join('')}
+				<div class="lp-gal" data-gallery aria-busy="true" aria-label="Published launchpad pages">
+					${Array.from({ length: 6 }).map(() => '<div class="lp-gal-skel" aria-hidden="true"></div>').join('')}
 				</div>
 			</div>
 		</section>
@@ -366,6 +400,8 @@ async function loadLiveFeed(root) {
 	} catch (err) {
 		log.warn('[launchpad-landing] live feed failed:', err.message);
 		feed.innerHTML = `<a class="lp-empty" href="/launches" style="padding:24px;display:block;text-decoration:none">Live feed unavailable — see all launches →</a>`;
+	} finally {
+		feed.removeAttribute('aria-busy');
 	}
 }
 
@@ -414,6 +450,8 @@ async function loadGallery(root, galleryTotalRef) {
 				<div>Couldn't load the showcase right now.</div>
 				<button class="lp-btn primary em-cta" type="button" data-action="build">Build yours anyway →</button>
 			</div>`;
+	} finally {
+		gal.removeAttribute('aria-busy');
 	}
 }
 
@@ -454,11 +492,33 @@ export function mountLaunchpadLanding(root) {
 		loadGallery(root, galleryTotalRef);
 	}
 
+	let lastStudioOpts = null;
 	async function mountStudio(opts) {
-		root.innerHTML = '';
-		const { mountLaunchpadStudio } = await import('../editor/launchpad-studio.js');
-		mountLaunchpadStudio(root, opts);
+		lastStudioOpts = opts;
 		document.title = 'Launchpad Studio — three.ws';
+		// Real loading state while the (heavy) editor module loads — a blank
+		// screen here reads as a broken page on slow connections.
+		root.innerHTML = `
+			<div class="lp-studio-wait" role="status" aria-live="polite">
+				<div class="spin" aria-hidden="true"></div>
+				<div>Opening the studio${opts.slug ? ` for /p/${esc(opts.slug)}` : ''}…</div>
+			</div>`;
+		try {
+			const { mountLaunchpadStudio } = await import('../editor/launchpad-studio.js');
+			root.innerHTML = '';
+			mountLaunchpadStudio(root, opts);
+		} catch (err) {
+			log.warn('[launchpad-landing] studio failed to load:', err.message);
+			root.innerHTML = `
+				<div class="lp-studio-wait" role="alert">
+					<h2>The studio didn't load</h2>
+					<div>${esc(err.message || 'Network error while loading the editor module.')}</div>
+					<div class="fail-actions">
+						<button class="lp-btn primary" type="button" data-action="studio-retry">Try again</button>
+						<button class="lp-btn ghost" type="button" data-action="studio-home">Back to the launchpad</button>
+					</div>
+				</div>`;
+		}
 	}
 
 	function enterStudio(opts = {}) {
@@ -481,6 +541,17 @@ export function mountLaunchpadLanding(root) {
 		if (act) {
 			e.preventDefault();
 			enterStudio({});
+			return;
+		}
+		if (e.target.closest('[data-action="studio-retry"]')) {
+			e.preventDefault();
+			mountStudio(lastStudioOpts || studioOptionsFromUrl(new URL(location.href)));
+			return;
+		}
+		if (e.target.closest('[data-action="studio-home"]')) {
+			e.preventDefault();
+			history.pushState({}, '', '/launchpad');
+			renderLanding();
 		}
 	});
 

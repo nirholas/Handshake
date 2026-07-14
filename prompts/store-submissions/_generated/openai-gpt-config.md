@@ -128,19 +128,25 @@ STYLE
 
 ## 5. Conversation starters
 
-Each reliably produces a model on the first call:
+Four chips, one per audience: game developers, tabletop players, designers, and
+the merely curious. Specific beats general here (a chip is a one-click demo, not
+a filter), but the set must span use cases instead of four samey desk trinkets.
+The first three subjects are verified live against `/api/3d/studio` (fox is the
+smoke-test prompt; dragon and car re-verified 2026-07-14, both done inline). The
+fourth is open-ended by design: the instructions make the GPT rewrite it into
+one concrete subject before calling.
 
 ```
-Make me a low-poly fox
+Make me a low-poly fox for my game
 ```
 ```
-Generate a cute ceramic robot figurine
+Create a dragon miniature for my tabletop campaign
 ```
 ```
-I need a 3D model of a medieval treasure chest
+Design a sleek futuristic concept car
 ```
 ```
-Create a cartoon mushroom house
+Surprise me with something cool in 3D
 ```
 
 ## 6. Capabilities

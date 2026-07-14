@@ -11,11 +11,19 @@ import { recordEvent, logger } from '../_lib/usage.js';
 import { sanitizeToolError } from '../_lib/mcp-error-sanitize.js';
 import { TOOL_CATALOG, TOOLS } from './tools.js';
 import { PERSONA_TOOL_CATALOG, PERSONA_TOOLS } from './persona-tools.js';
-import { COMPONENT_HTML, COMPONENT_URI, COMPONENT_MIME, COMPONENT_CSP } from './component.js';
+import {
+	COMPONENT_HTML,
+	COMPONENT_URI,
+	COMPONENT_MIME,
+	componentCsp,
+	PERSONA_COMPONENT_HTML,
+	PERSONA_COMPONENT_URI,
+	personaComponentCsp,
+} from './component.js';
 
 // The full catalog the free studio advertises: five generation tools + three
-// embodiment/persona tools. The persona tools return their living-body view as an
-// inline resource (they don't use the model-viewer widget), so they aren't in the
+// embodiment/persona tools. The persona tools render the persona widget (the
+// living-body embed) rather than the model-viewer widget, and they aren't in the
 // generation-quota set — see api/mcp-studio.js callsGenerationTool.
 const ALL_TOOL_CATALOG = [...TOOL_CATALOG, ...PERSONA_TOOL_CATALOG];
 const ALL_TOOLS = { ...TOOLS, ...PERSONA_TOOLS };
@@ -35,19 +43,39 @@ const INSTRUCTIONS = [
 	'idles between turns.',
 ].join(' ');
 
-// The Apps SDK widget resource — one HTML template all generation tools render.
-const RESOURCE = {
-	uri: COMPONENT_URI,
-	name: 'three.ws 3D model viewer',
-	description: 'Interactive 3D viewer that renders a generated GLB model inline.',
-	mimeType: COMPONENT_MIME,
-	_meta: {
-		'openai/widgetDescription': 'Interactive 3D viewer for a generated model — rotate, view, and download the GLB.',
-		'openai/widgetCSP': COMPONENT_CSP,
-		'openai/widgetDomain': 'https://three.ws',
-		'openai/widgetPrefersBorder': true,
-	},
-};
+// The Apps SDK widget resources: the model viewer every generation tool renders,
+// and the living-body persona widget the embodiment tools render. _meta (incl.
+// the CSP) is built per call so the storage origin always tracks env.
+function widgetResources() {
+	return [
+		{
+			uri: COMPONENT_URI,
+			name: 'three.ws 3D model viewer',
+			description: 'Interactive 3D viewer that renders a generated GLB model inline.',
+			mimeType: COMPONENT_MIME,
+			text: COMPONENT_HTML,
+			_meta: {
+				'openai/widgetDescription': 'Interactive 3D viewer for a generated model — rotate, view, and download the GLB.',
+				'openai/widgetCSP': componentCsp(),
+				'openai/widgetDomain': 'https://three.ws',
+				'openai/widgetPrefersBorder': true,
+			},
+		},
+		{
+			uri: PERSONA_COMPONENT_URI,
+			name: 'three.ws living agent',
+			description: 'Live agent body that idles between turns, lip-syncs replies, and emotes.',
+			mimeType: COMPONENT_MIME,
+			text: PERSONA_COMPONENT_HTML,
+			_meta: {
+				'openai/widgetDescription': 'A live 3D agent body — it idles between turns, lip-syncs each reply, and shows emotion.',
+				'openai/widgetCSP': personaComponentCsp(),
+				'openai/widgetDomain': 'https://three.ws',
+				'openai/widgetPrefersBorder': true,
+			},
+		},
+	];
+}
 
 const log = logger('mcp-studio');
 
@@ -111,11 +139,14 @@ export async function dispatch(msg, auth, req) {
 		if (method === 'notifications/initialized') return null;
 		if (method === 'tools/list') return ok(id, { tools: ALL_TOOL_CATALOG });
 		if (method === 'tools/call') return ok(id, await onToolCall(msg.params, auth, started, req));
-		if (method === 'resources/list') return ok(id, { resources: [RESOURCE] });
+		if (method === 'resources/list') {
+			return ok(id, { resources: widgetResources().map(({ text: _t, ...r }) => r) });
+		}
 		if (method === 'resources/read') {
 			const uri = msg.params?.uri;
-			if (uri !== COMPONENT_URI) throw rpcError(-32602, `unknown resource: ${uri}`);
-			return ok(id, { contents: [{ uri: COMPONENT_URI, mimeType: COMPONENT_MIME, text: COMPONENT_HTML, _meta: RESOURCE._meta }] });
+			const res = widgetResources().find((r) => r.uri === uri);
+			if (!res) throw rpcError(-32602, `unknown resource: ${uri}`);
+			return ok(id, { contents: [{ uri: res.uri, mimeType: res.mimeType, text: res.text, _meta: res._meta }] });
 		}
 		if (method === 'resources/templates/list') return ok(id, { resourceTemplates: [] });
 		if (method === 'prompts/list') return ok(id, { prompts: [] });

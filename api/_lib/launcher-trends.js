@@ -556,7 +556,7 @@ export async function rankNarratives({ network = 'mainnet', sources, categories 
 		for (const r of rows) {
 			const term = String(r.term || '').trim();
 			if (!term) continue;
-			const ck = `${id} ${term}`;
+			const ck = `${id}\u0000${term}`;
 			const already = contributed.get(ck) || 0;
 			if (already >= PER_SOURCE_TERM_CAP) continue;
 			const add = Math.min((Number(r.weight) || 0.6) * sw, PER_SOURCE_TERM_CAP - already);

@@ -142,6 +142,7 @@
 		"guard:hidden": "node scripts/inject-hidden-guard.mjs --write",
 		"check:images": "node scripts/audit-image-loading.mjs --strict",
 		"audit:web": "node scripts/page-audit.mjs",
+		"audit:web:login": "node scripts/page-audit.mjs --login",
 		"snapshot": "node scripts/page-snapshot.mjs",
 		"build:news": "node scripts/build-news.mjs",
 		"prebuild": "(node scripts/build-news.mjs & node scripts/build-skill-metadata.mjs & node scripts/build-local-skill-packs.mjs & node scripts/build-discovery-cards.mjs & npm run build:club-assets & npm run build:walk-environments & wait) && node scripts/inject-blog-seo.mjs --write && node scripts/inject-hidden-guard.mjs --write && (node scripts/build-page-index.mjs && node scripts/audit-page-index.mjs --strict && node scripts/audit-empty-handlers.mjs && node scripts/audit-hidden-guard.mjs) && node scripts/inject-seo-meta.mjs --write && node scripts/inject-theme-boot.mjs --write",

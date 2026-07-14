@@ -425,6 +425,8 @@
 
 	<script src="/brand.js" defer></script>
 	<script type="module">
+		import { proxiedImageURL } from '/src/ipfs.js';
+
 		const API        = '/api/oracle/activity';
 		const STATS_API  = '/api/oracle/stats';
 		const REFRESH_MS = 60_000;
@@ -435,6 +437,16 @@
 		const sign = (n) => n > 0 ? '+' : '';
 		const esc  = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 		const imgErr = `this.onerror=null;this.style.visibility='hidden'`;
+		// Agent and token art URLs come from third-party data (pump.fun IPFS
+		// metadata, per-agent hosts) and routinely fail ORB/CORS when loaded
+		// directly as <img> sources: some are metadata JSON documents, some are
+		// dead hosts. Route every remote URL through the same-origin /api/img
+		// proxy: it retries across IPFS gateways, follows a metadata doc one hop
+		// to the real image, and always answers 200 with a valid image
+		// (deterministic placeholder on failure) so the page never logs a failed
+		// request. Missing URLs keep the favicon tile; the seed keeps placeholders
+		// stable per agent/coin.
+		const imgSrc = (url, seed) => proxiedImageURL(String(url || ''), String(seed || '')) || '/favicon.ico';
 		function usdc(n) {
 			if (n == null || !isFinite(n)) return null;
 			const a = Math.abs(n);
@@ -477,7 +489,7 @@
 			const peakHtml = item.peak_multiple && item.peak_multiple >= 2
 				? `<span style="font-size:10.5px;color:var(--ac-up);font-family:var(--font-mono,monospace)">${Number(item.peak_multiple).toFixed(1)}×</span>` : '';
 
-			const av = item.agent_image || item.agent_avatar || '/favicon.ico';
+			const av = imgSrc(item.agent_image || item.agent_avatar, item.agent_id || item.mint);
 			const coinUrl = `/oracle/coin/${encodeURIComponent(item.mint)}`;
 			const verb = outcome === 'win' ? 'closed ↑' : outcome === 'loss' ? 'closed ↓' : outcome === 'flat' ? 'closed' : 'entered';
 
@@ -958,7 +970,7 @@
 					const wr = a.win_rate != null ? a.win_rate + '%' : '—';
 					const roi = a.roi_pct != null ? `${a.roi_pct >= 0 ? '+' : ''}${a.roi_pct}% ROI` : `${a.total} calls`;
 					const roiCls = a.roi_pct != null ? (a.roi_pct >= 0 ? 'up' : 'dn') : '';
-					const av = a.image_url || '/favicon.ico';
+					const av = imgSrc(a.image_url, a.agent_id);
 					return `<a class="ac-li" href="/trader/${encodeURIComponent(a.agent_id)}">
 						<span class="ac-li-rank ${a.rank <= 3 ? 'top' : ''}">${a.rank}</span>
 						<img class="ac-li-av round" src="${esc(av)}" alt="" onerror="${imgErr}" loading="lazy" />
@@ -986,7 +998,7 @@
 				}
 				b.innerHTML = items.map((m) => {
 					const sym = (m.symbol || m.mint.slice(0, 6)).toUpperCase();
-					const av = m.image_uri || '/favicon.ico';
+					const av = imgSrc(m.image_uri, m.mint);
 					const up = (m.delta || 0) >= 0;
 					return `<a class="ac-li" href="/oracle/coin/${encodeURIComponent(m.mint)}">
 						<img class="ac-li-av" src="${esc(av)}" alt="" onerror="${imgErr}" loading="lazy" />
@@ -1014,7 +1026,7 @@
 				}
 				b.innerHTML = items.map((w) => {
 					const sym = (w.symbol || w.mint.slice(0, 6)).toUpperCase();
-					const av = w.image_uri || '/favicon.ico';
+					const av = imgSrc(w.image_uri, w.mint);
 					const ath = w.ath_multiple != null ? w.ath_multiple.toFixed(1) + '×' : '—';
 					return `<a class="ac-li" href="${esc(w.pump_url)}" target="_blank" rel="noopener">
 						<img class="ac-li-av" src="${esc(av)}" alt="" onerror="${imgErr}" loading="lazy" />

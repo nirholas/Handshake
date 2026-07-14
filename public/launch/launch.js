@@ -175,11 +175,22 @@ export function mountLaunchCoin(root) {
 	// here with the coin's configured name, symbol, description, image, and
 	// initial buy so the launch form opens ready to go instead of blank.
 	const params = new URL(location.href).searchParams;
+	// ?imageSession=1 pulls the token image out of sessionStorage instead of a
+	// URL: the /viewer "Launch a coin" funnel snapshots the 3D model to a data
+	// URL, which is far too long to survive as a query param. The key is left
+	// in place so a refresh keeps the prefill (sessionStorage is tab-scoped).
+	let prefillImage = params.get('image') || '';
+	if (!prefillImage && params.get('imageSession')) {
+		try {
+			const stored = sessionStorage.getItem('twx.launch.image') || '';
+			if (stored.startsWith('data:image/')) prefillImage = stored;
+		} catch { /* storage blocked: launch still works, user uploads an image */ }
+	}
 	const prefill = {
 		name: params.get('name') || '',
 		symbol: params.get('symbol') || '',
 		description: params.get('description') || '',
-		imageUrl: params.get('image') || '',
+		imageUrl: prefillImage,
 		initialBuy: params.get('initialBuy') || '',
 	};
 	const hasPrefill = Object.values(prefill).some(Boolean);

@@ -14,6 +14,8 @@
 // (a client-side revert view — every version's GLB is already in the lineage).
 // No identifiers, no payment, no crypto — only what is needed to show the model.
 
+import { env } from '../_lib/env.js';
+
 const MODEL_VIEWER_CDN =
 	'https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js';
 
@@ -262,22 +264,176 @@ export const COMPONENT_URI = 'ui://widget/three-studio-model.html';
 // Established Apps SDK skybridge MIME for HTML widget resources.
 export const COMPONENT_MIME = 'text/html+skybridge';
 
+// The public origin generated GLBs are actually served from (the R2 public
+// bucket, e.g. https://pub-<hash>.r2.dev). ChatGPT ENFORCES the widget CSP
+// inside its sandbox, so leaving this origin out blocks every model fetch and
+// the widget error-states on 100% of generations — even though the same widget
+// works in permissive test harnesses. Resolved lazily because S3_PUBLIC_DOMAIN
+// is a required-env getter (throws when storage isn't configured, e.g. tests).
+function glbStorageOrigin() {
+	try {
+		let v = env.S3_PUBLIC_DOMAIN;
+		if (!/^https?:\/\//i.test(v)) v = `https://${v}`;
+		const origin = new URL(v).origin;
+		return origin.startsWith('https://') ? origin : null;
+	} catch {
+		return null;
+	}
+}
+
 // CSP for the widget iframe: where it may connect (fetch GLBs) and load resources
 // (the model-viewer script + GLB assets). Declared on the resource _meta so the
-// ChatGPT host can enforce it.
-export const COMPONENT_CSP = {
-	connect_domains: [
+// ChatGPT host can enforce it. Built per-read so the storage origin tracks env.
+export function componentCsp() {
+	const domains = [
 		'https://three.ws',
 		'https://*.three.ws',
 		'https://cdn.jsdelivr.net',
 		'https://replicate.delivery',
 		'https://*.replicate.delivery',
-	],
-	resource_domains: [
-		'https://three.ws',
-		'https://*.three.ws',
-		'https://cdn.jsdelivr.net',
-		'https://replicate.delivery',
-		'https://*.replicate.delivery',
-	],
-};
+	];
+	const storage = glbStorageOrigin();
+	if (storage && !domains.includes(storage)) domains.push(storage);
+	return { connect_domains: [...domains], resource_domains: [...domains] };
+}
+
+// ── persona widget ──────────────────────────────────────────────────────────
+//
+// ChatGPT only renders a widget when the TOOL's _meta["openai/outputTemplate"]
+// points at a registered ui:// resource — a result-level template on an inline
+// artifact is ignored, so the persona tools rendered nothing there. This widget
+// closes that gap: it reads the persona structuredContent (embed_url, name,
+// status) and mounts the hosted embodiment embed — the same living body the
+// inline artifact shows in other MCP hosts. frame_domains opts the widget into
+// framing the app origin.
+
+export const PERSONA_COMPONENT_HTML = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>three.ws living agent</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(120% 120% at 50% 0%, #1a1a24 0%, #0c0c12 70%);
+    color: #e8eaf0;
+  }
+  .wrap { position: relative; width: 100%; height: 100%; min-height: 420px; }
+  iframe { width: 100%; height: 100%; border: 0; display: block; opacity: 0; transition: opacity .3s ease; }
+  iframe.ready { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { iframe { transition: none; } }
+  .overlay {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 12px; text-align: center; padding: 24px;
+  }
+  .spinner {
+    width: 34px; height: 34px; border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.14); border-top-color: #a78bfa;
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+  .title { font-size: 14px; font-weight: 600; }
+  .muted { color: #9aa3b2; font-size: 13px; line-height: 1.45; max-width: 38ch; }
+  .name {
+    position: absolute; left: 12px; bottom: 10px;
+    font-size: 12px; font-weight: 600; color: #cbd5e1;
+    background: rgba(12,12,18,0.66); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 999px; padding: 4px 11px; backdrop-filter: blur(6px);
+  }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <iframe id="stage" title="Live agent" allow="autoplay"
+    sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+  <span id="name" class="name hidden"></span>
+
+  <div id="loading" class="overlay">
+    <div class="spinner" aria-hidden="true"></div>
+    <div class="title">Waking your agent…</div>
+    <div class="muted">The living body loads, then idles between turns and lip-syncs each reply.</div>
+  </div>
+
+  <div id="empty" class="overlay hidden">
+    <div class="title">No agent yet</div>
+    <div class="muted">Create one with create_agent_persona from a rigged model (forge_avatar makes one), or reload a saved persona_id.</div>
+  </div>
+
+  <div id="error" class="overlay hidden">
+    <div class="title">Couldn't load the agent</div>
+    <div id="errmsg" class="muted">Something went wrong bringing this persona to life.</div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var stage = document.getElementById('stage');
+  var nameEl = document.getElementById('name');
+  var loading = document.getElementById('loading');
+  var empty = document.getElementById('empty');
+  var errEl = document.getElementById('error');
+  var errMsg = document.getElementById('errmsg');
+
+  function show(el) { [loading, empty, errEl].forEach(function (n) { n.classList.add('hidden'); }); if (el) el.classList.remove('hidden'); }
+
+  function isHttps(u) { return typeof u === 'string' && /^https:\\/\\//.test(u); }
+
+  function render(out) {
+    if (!out) { show(empty); return; }
+    if (out.error) {
+      errMsg.textContent = out.message || 'Something went wrong bringing this persona to life.';
+      show(errEl);
+      return;
+    }
+    var url = out.embed_url;
+    if (!isHttps(url)) { show(empty); return; }
+    if (out.name) { nameEl.textContent = out.name; nameEl.classList.remove('hidden'); }
+    if (stage.getAttribute('src') !== url) {
+      show(loading);
+      stage.classList.remove('ready');
+      stage.setAttribute('src', url);
+    }
+  }
+
+  stage.addEventListener('load', function () {
+    if (!stage.getAttribute('src')) return;
+    show(null);
+    stage.classList.add('ready');
+  });
+
+  function current() {
+    try { return (window.openai && window.openai.toolOutput) || null; } catch (e) { return null; }
+  }
+
+  render(current());
+  window.addEventListener('openai:set_globals', function () { render(current()); });
+  window.addEventListener('message', function (ev) {
+    var d = ev && ev.data;
+    if (d && d.type === 'openai:set_globals') render(current());
+    if (d && d.params && d.params.structuredContent) render(d.params.structuredContent);
+  });
+})();
+</script>
+</body>
+</html>`;
+
+export const PERSONA_COMPONENT_URI = 'ui://widget/three-studio-persona.html';
+
+// The persona widget frames the hosted embodiment embed; everything the body
+// needs (GLB, animation, lip-sync) loads inside that nested document under the
+// app origin's own policies, so the widget itself only needs frame access.
+export function personaComponentCsp() {
+	const origin = env.APP_ORIGIN;
+	return {
+		connect_domains: [origin],
+		resource_domains: [origin],
+		frame_domains: [origin],
+	};
+}

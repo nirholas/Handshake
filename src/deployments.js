@@ -11,6 +11,7 @@
 
 import { createLogger } from './shared/log.js';
 import { updateValue, enterRow, liveDot, setLiveDot } from './ui-juice.js';
+import { proxiedImageURL } from './ipfs.js';
 
 const log = createLogger('deployments');
 
@@ -191,9 +192,18 @@ function skeleton() {
 
 function rowHTML(r) {
 	const dpId = `${r.chain_id}:${esc(r.agent_id)}`;
-	const av = r.image
-		? `<img class="dp-av" src="${esc(r.image)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'" />`
-		: `<span class="dp-av dp-av--mono" aria-hidden="true">${esc((r.name || '#').charAt(0).toUpperCase())}</span>`;
+	// Registry image URLs are third-party data (ERC-8004 metadata) hosted on
+	// arbitrary domains and IPFS gateways that routinely fail ORB/CORS checks or
+	// serve non-image bodies. Route every remote URL through the same-origin
+	// /api/img proxy: it resolves IPFS across gateways, follows metadata docs to
+	// the real art, and always answers 200 with a valid image (deterministic
+	// placeholder on failure), so the row never fires a failed request. Anything
+	// that is not a remote http(s)/ipfs/ar URL degrades to the monogram tile.
+	const mono = `<span class="dp-av dp-av--mono" aria-hidden="true">${esc((r.name || '#').charAt(0).toUpperCase())}</span>`;
+	const remote = r.image && /^(https?|ipfs|ar):\/\//i.test(String(r.image));
+	const av = remote
+		? `<img class="dp-av" src="${esc(proxiedImageURL(String(r.image), dpId))}" alt="" loading="lazy" onerror="this.onerror=null;this.style.visibility='hidden'" />`
+		: mono;
 	const title = r.name || `Agent #${esc(r.agent_id)}`;
 	const nameEl = r.agent_explorer
 		? `<a class="dp-row-name" href="${esc(r.agent_explorer)}" target="_blank" rel="noopener">${esc(title)}</a>`

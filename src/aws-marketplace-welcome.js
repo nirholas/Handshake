@@ -64,8 +64,8 @@ async function issueApiKey() {
 
 async function linkAndIssue() {
 	await linkSubscription();
-	// Surface the API key alongside success. Failures here are recoverable —
-	// the user can rotate from /api-keys — but log so we notice patterns.
+	// Surface the API key alongside success. Failures here are recoverable
+	// (the user can rotate from /dashboard/developers), but log so we notice patterns.
 	try {
 		return await issueApiKey();
 	} catch (err) {

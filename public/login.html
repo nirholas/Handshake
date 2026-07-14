@@ -1220,109 +1220,126 @@
 			const emailInput = document.getElementById('email');
 			const passwordInput = document.getElementById('password');
 
-			const agent = await createAgentUI({
-				canvas: document.getElementById('avatar-canvas'),
-				// Plant him: no camera parallax means he holds his mark and never
-				// drifts after the cursor.
-				parallax: false,
-				clips: ['idle', 'covereyes', 'facepalm', 'dance'],
-				subclips: {
-					covereyes: { start: 0, end: 48, fps: 30 },
-				},
-			});
-
-			const AVATAR_ANCHOR = { anchor: 'bottom-center', offsetY: -50 };
-
-			// Park him on his mark in the idle pose for the initial frame.
-			agent.standOn(avatarWrap, AVATAR_ANCHOR);
-			avatarWrap?.classList.remove('loading');
-
-			// The avatar lives on a viewport-fixed overlay canvas, so left alone he
-			// would stay glued to the screen and trail the viewport down into the
-			// footer as you scroll. Re-pin him to his anchor in the panel on every
-			// scroll/resize so he holds his place in the login card and slides away
-			// with it instead. Only his position is updated — the active clip is left
-			// untouched so idle / cover-eyes / facepalm / celebrate keep playing.
-			function repinAvatar() {
-				if (!agent.avatar) return;
-				// When the panel is collapsed (short-viewport breakpoint hides it)
-				// the wrap has no layout box — leave him where he is rather than
-				// snapping to the corner.
-				if (!avatarWrap.offsetParent) return;
-				const target = agent.worldOfElement(avatarWrap, AVATAR_ANCHOR);
-				agent.avatar.position.x = target.x;
-				agent.avatar.position.y = target.y;
-			}
-
-			let repinQueued = false;
-			function scheduleRepin() {
-				if (repinQueued) return;
-				repinQueued = true;
-				requestAnimationFrame(() => {
-					repinQueued = false;
-					repinAvatar();
+			// The avatar's GLB and clip JSONs arrive over the network inside
+			// createAgentUI. Awaited at module top level, a transient fetch failure
+			// used to reject the whole module and surface as an uncaught
+			// "Failed to fetch". The avatar is decoration: if it can't load, hide
+			// its stage and let the form carry on (every caller reaches the
+			// __avatarReact / __avatarFall / __avatarCelebrate hooks via optional
+			// chaining, so their absence is already designed for).
+			let agent;
+			try {
+				agent = await createAgentUI({
+					canvas: document.getElementById('avatar-canvas'),
+					// Plant him: no camera parallax means he holds his mark and never
+					// drifts after the cursor.
+					parallax: false,
+					clips: ['idle', 'covereyes', 'facepalm', 'dance'],
+					subclips: {
+						covereyes: { start: 0, end: 48, fps: 30 },
+					},
 				});
+			} catch (err) {
+				avatarWrap?.classList.remove('loading');
+				if (avatarWrap) avatarWrap.style.display = 'none';
+				console.warn('[login] avatar unavailable, continuing without it:', err);
 			}
 
-			window.addEventListener('scroll', scheduleRepin, { passive: true });
-			window.addEventListener('resize', scheduleRepin);
+			if (agent) {
 
-			// The avatar shields its eyes whenever the user is typing a
-			// credential — email or password — so it never "peeks" at what
-			// you enter. It stays covered while focus moves between the two
-			// fields (or to the password show/hide toggle) and only relaxes
-			// back to idle once you leave the credential inputs entirely.
-			const credentialFields = [emailInput, passwordInput];
+				const AVATAR_ANCHOR = { anchor: 'bottom-center', offsetY: -50 };
 
-			function coverEyes() {
-				if (agent.currentClip === 'covereyes') return;
-				agent.play('covereyes', { loop: false, hold: true });
-				agent.faceFront();
+				// Park him on his mark in the idle pose for the initial frame.
+				agent.standOn(avatarWrap, AVATAR_ANCHOR);
+				avatarWrap?.classList.remove('loading');
+
+				// The avatar lives on a viewport-fixed overlay canvas, so left alone he
+				// would stay glued to the screen and trail the viewport down into the
+				// footer as you scroll. Re-pin him to his anchor in the panel on every
+				// scroll/resize so he holds his place in the login card and slides away
+				// with it instead. Only his position is updated — the active clip is left
+				// untouched so idle / cover-eyes / facepalm / celebrate keep playing.
+				function repinAvatar() {
+					if (!agent.avatar) return;
+					// When the panel is collapsed (short-viewport breakpoint hides it)
+					// the wrap has no layout box — leave him where he is rather than
+					// snapping to the corner.
+					if (!avatarWrap.offsetParent) return;
+					const target = agent.worldOfElement(avatarWrap, AVATAR_ANCHOR);
+					agent.avatar.position.x = target.x;
+					agent.avatar.position.y = target.y;
+				}
+
+				let repinQueued = false;
+				function scheduleRepin() {
+					if (repinQueued) return;
+					repinQueued = true;
+					requestAnimationFrame(() => {
+						repinQueued = false;
+						repinAvatar();
+					});
+				}
+
+				window.addEventListener('scroll', scheduleRepin, { passive: true });
+				window.addEventListener('resize', scheduleRepin);
+
+				// The avatar shields its eyes whenever the user is typing a
+				// credential — email or password — so it never "peeks" at what
+				// you enter. It stays covered while focus moves between the two
+				// fields (or to the password show/hide toggle) and only relaxes
+				// back to idle once you leave the credential inputs entirely.
+				const credentialFields = [emailInput, passwordInput];
+
+				function coverEyes() {
+					if (agent.currentClip === 'covereyes') return;
+					agent.play('covereyes', { loop: false, hold: true });
+					agent.faceFront();
+				}
+				function uncoverEyes(e) {
+					const to = e.relatedTarget;
+					if (to && (credentialFields.includes(to) || to.closest?.('.password-wrap'))) return;
+					agent.play('idle', { loop: true });
+				}
+
+				credentialFields.forEach((field) => {
+					field.addEventListener('focus', coverEyes);
+					field.addEventListener('blur', uncoverEyes);
+				});
+
+				// Settle back to a resting pose after a one-shot reaction. If the
+				// user is still in a credential field, the eyes stay shielded;
+				// otherwise the avatar relaxes to idle.
+				function settle() {
+					const active = document.activeElement;
+					if (active && credentialFields.includes(active)) coverEyes();
+					else agent.play('idle', { loop: true });
+				}
+
+				// Empty field — a quick facepalm nudge, no full collapse.
+				window.__avatarReact = function () {
+					agent.faceFront();
+					agent.play('facepalm', { loop: false });
+					const dur = agent.clip('facepalm') * 1000;
+					setTimeout(() => {
+						if (agent.currentClip === 'facepalm') settle();
+					}, dur - 150);
+				};
+
+				// Wrong credentials — same upright facepalm nudge as an empty field.
+				// He reacts with character but stays on his feet and on his mark;
+				// he never topples or wanders.
+				window.__avatarFall = window.__avatarReact;
+
+				// Successful sign-in — a happy dance while we redirect.
+				window.__avatarCelebrate = function () {
+					agent.faceFront();
+					agent.play('dance', { loop: true });
+					// Report one dance-cycle length (ms) so the redirect can wait for a
+					// natural beat of the animation rather than a hard-coded delay.
+					const cycle = agent.clip('dance');
+					return cycle ? cycle * 1000 : 0;
+				};
 			}
-			function uncoverEyes(e) {
-				const to = e.relatedTarget;
-				if (to && (credentialFields.includes(to) || to.closest?.('.password-wrap'))) return;
-				agent.play('idle', { loop: true });
-			}
-
-			credentialFields.forEach((field) => {
-				field.addEventListener('focus', coverEyes);
-				field.addEventListener('blur', uncoverEyes);
-			});
-
-			// Settle back to a resting pose after a one-shot reaction. If the
-			// user is still in a credential field, the eyes stay shielded;
-			// otherwise the avatar relaxes to idle.
-			function settle() {
-				const active = document.activeElement;
-				if (active && credentialFields.includes(active)) coverEyes();
-				else agent.play('idle', { loop: true });
-			}
-
-			// Empty field — a quick facepalm nudge, no full collapse.
-			window.__avatarReact = function () {
-				agent.faceFront();
-				agent.play('facepalm', { loop: false });
-				const dur = agent.clip('facepalm') * 1000;
-				setTimeout(() => {
-					if (agent.currentClip === 'facepalm') settle();
-				}, dur - 150);
-			};
-
-			// Wrong credentials — same upright facepalm nudge as an empty field.
-			// He reacts with character but stays on his feet and on his mark;
-			// he never topples or wanders.
-			window.__avatarFall = window.__avatarReact;
-
-			// Successful sign-in — a happy dance while we redirect.
-			window.__avatarCelebrate = function () {
-				agent.faceFront();
-				agent.play('dance', { loop: true });
-				// Report one dance-cycle length (ms) so the redirect can wait for a
-				// natural beat of the animation rather than a hard-coded delay.
-				const cycle = agent.clip('dance');
-				return cycle ? cycle * 1000 : 0;
-			};
 		</script>
 		<script src="/brand.js" defer></script>
 </body>

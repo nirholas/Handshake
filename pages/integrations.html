@@ -1192,7 +1192,10 @@
 			</button>
 		</div>
 		<div class="modal-body">
-			<iframe id="demo-iframe" title="Live widget demo" allow="autoplay; microphone" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+			<!-- No sandbox: the modal frames our own same-origin /widget page, which
+			     needs its real origin for API and storage access. Sandboxing
+			     same-origin content with allow-scripts is escapable anyway. -->
+			<iframe id="demo-iframe" title="Live widget demo" allow="autoplay; microphone"></iframe>
 		</div>
 	</div>
 </div>

@@ -7,6 +7,8 @@
  *       &label=smart_money&min_coins=8&limit=50
  *   GET /api/pump/smart-money?wallet=<addr>          → one wallet's reputation card
  *   GET /api/pump/smart-money?mint=<addr>            → one coin: who's in it + score
+ *       (a coin the rollup has not scored resolves 200 + found:false, matching
+ *        the intel / launch-detail convention, so detail pages never 404)
  *
  * The edge: judge a coin by WHO is buying it. The rollup cron
  * (api/cron/smart-money-rollup) crosses every coin's per-wallet footprint with
@@ -147,7 +149,19 @@ async function coinDetail(res, mint) {
 		WHERE network = ${NETWORK} AND mint = ${mint}
 		LIMIT 1
 	`;
-	if (!coin) return json(res, 404, { error: 'not_found', message: 'this coin has not been scored yet' });
+	if (!coin) {
+		// Not scored yet (too new, or outside the rollup's observation window).
+		// That is an answer about the coin, not a missing resource, so resolve it
+		// the way the other pump detail endpoints (intel, launch-detail) do:
+		// 200 + found:false. Cacheable so repeat probes for hot unscored mints
+		// are absorbed at the edge.
+		return json(
+			res,
+			200,
+			{ found: false, mint, coin: null, notable: [] },
+			{ 'cache-control': 'public, max-age=30, s-maxage=60' },
+		);
+	}
 
 	// Resolve the notable wallets' live labels (in case they ranked up since).
 	const notable = Array.isArray(coin.notable) ? coin.notable : [];
@@ -164,6 +178,7 @@ async function coinDetail(res, mint) {
 		res,
 		200,
 		{
+			found: true,
 			coin: shapeCoin(coin),
 			notable: notable.map((n) => {
 				const live = labels.get(n.wallet);

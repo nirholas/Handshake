@@ -178,10 +178,30 @@ export class Town {
 		e.appendChild(el('div', 'town__state-emoji', '⚠️'));
 		e.appendChild(el('div', 'town__state-title', 'Could not load the feed'));
 		e.appendChild(el('div', 'town__state-sub', msg || 'Something went wrong.'));
-		const btn = el('button', 'town__retry', 'Try again');
-		btn.type = 'button';
-		btn.addEventListener('click', retry);
-		e.appendChild(btn);
+		if (retry) {
+			const btn = el('button', 'town__retry', 'Try again');
+			btn.type = 'button';
+			btn.addEventListener('click', retry);
+			e.appendChild(btn);
+		}
+		this.list.appendChild(e);
+	}
+
+	// Deployment-level outage (no CoinCommunities key): retrying can't fix it,
+	// so the state explains itself and leaves the visitor free to keep walking
+	// the 3D world behind this panel.
+	_renderUnavailable() {
+		this.list.innerHTML = '';
+		const e = el('div', 'town__state');
+		e.appendChild(el('div', 'town__state-emoji', '🔌'));
+		e.appendChild(el('div', 'town__state-title', 'Community chat is temporarily unavailable'));
+		e.appendChild(
+			el(
+				'div',
+				'town__state-sub',
+				'The community service isn’t connected on this deployment yet. The world itself is live, so keep exploring while chat comes online.',
+			),
+		);
 		this.list.appendChild(e);
 	}
 
@@ -494,9 +514,7 @@ export class Town {
 		if (msgs.status === 'rejected') {
 			const err = msgs.reason;
 			if (err?.code === 'cc_unconfigured') {
-				this._renderError('This deployment has no CoinCommunities key yet.', () =>
-					this._load(),
-				);
+				this._renderUnavailable();
 			} else {
 				this._renderError(err?.message, () => this._load());
 			}

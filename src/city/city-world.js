@@ -38,7 +38,11 @@ async function main() {
 			progress(22 + frac * 30, label);
 		});
 	} catch (err) {
-		log.error('OSM fetch failed — loading empty world:', err);
+		// Every Overpass instance is down and there is no cached payload. The
+		// city still opens (ground, lights, avatar); only the OSM buildings and
+		// roads are missing. Handled degradation, so warn (not error).
+		log.warn('[city] OSM unavailable on every instance with no cache - loading city without buildings:', err);
+		progress(52, 'Live map unavailable - loading city without buildings…');
 		osmData = { elements: [] };
 	}
 

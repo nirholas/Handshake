@@ -116,16 +116,16 @@ export class CoinLobby {
 		}
 	}
 
-	_renderState(emoji, title, sub, retry) {
+	_renderState(emoji, title, sub, action) {
 		this.grid.innerHTML = '';
 		const e = el('div', 'clobby__state');
 		e.appendChild(el('div', 'clobby__state-emoji', emoji));
 		e.appendChild(el('div', 'clobby__state-title', title));
 		if (sub) e.appendChild(el('div', 'clobby__state-sub', sub));
-		if (retry) {
-			const b = el('button', 'clobby__retry', 'Try again');
+		if (action) {
+			const b = el('button', 'clobby__retry', action.label);
 			b.type = 'button';
-			b.addEventListener('click', retry);
+			b.addEventListener('click', action.onClick);
 			e.appendChild(b);
 		}
 		this.grid.appendChild(e);
@@ -218,16 +218,22 @@ export class CoinLobby {
 			this.worlds = await fetchWorlds();
 		} catch (err) {
 			if (err?.code === 'cc_unconfigured') {
+				// Deployment state, not a transient failure: no retry loop. Offer
+				// the live surface instead: the walk scene already running behind
+				// this overlay.
 				this._renderState(
 					'🔌',
-					'Worlds are coming online',
-					'CoinCommunities isn’t connected on this deployment yet.',
-					null,
+					'Coin worlds are temporarily unavailable',
+					'The community service isn’t connected on this deployment yet. You can still walk the default world while it comes online.',
+					{ label: 'Walk solo →', onClick: () => this._skip() },
 				);
 			} else {
-				this._renderState('⚠️', 'Could not load worlds', err?.message || '', () => {
-					this._renderSkeleton();
-					this._load();
+				this._renderState('⚠️', 'Could not load worlds', err?.message || '', {
+					label: 'Try again',
+					onClick: () => {
+						this._renderSkeleton();
+						this._load();
+					},
 				});
 			}
 			return;

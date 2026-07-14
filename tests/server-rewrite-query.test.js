@@ -74,6 +74,35 @@ describe('rewrite-dest query params reach handlers on req.url', () => {
 		expect(res.headers.get('location')).toBeTruthy();
 	}, 15000);
 
+	it('bare [action] index paths dispatch to the index, not the catch-all branch', async () => {
+		// /api/auth/wallets and /api/auth/sessions rewrite to their [action]
+		// handlers with NO ?action= in the dest, and req.url keeps the ORIGINAL
+		// pathname. The dispatcher's URL fallback must not mistake the endpoint's
+		// own directory segment ("wallets"/"sessions") for an address/session id,
+		// which routed GET to the DELETE-only branch and 405'd every dashboard
+		// page that lists wallets or sessions. Unauthenticated, the healthy index
+		// answer is 401 (sign in required); the regression answer was 405.
+		for (const path of ['/api/auth/wallets', '/api/auth/sessions']) {
+			const res = await fetch(`${BASE}${path}`);
+			expect(res.status, path).toBe(401);
+		}
+	}, 15000);
+
+	it('[action] subpaths still reach their per-action branch', async () => {
+		// A concrete session id must still land in the revoke-one branch, whose
+		// method gate rejects GET with 405 (it is DELETE-only). Guards against
+		// over-correcting the index fix into swallowing real actions.
+		const res = await fetch(`${BASE}/api/auth/sessions/00000000-0000-4000-8000-000000000000`);
+		expect(res.status).toBe(405);
+	}, 15000);
+
+	it('OPTIONS on a POST-only API resolves without a 405 (the /bnb liveness probe)', async () => {
+		// src/bnb.js probes /api/bnb/register-agent with OPTIONS to check the
+		// route is deployed without triggering the POST-only 405 console error.
+		const res = await fetch(`${BASE}/api/bnb/register-agent`, { method: 'OPTIONS' });
+		expect(res.status).toBe(204);
+	}, 15000);
+
 	it('handlers behind a [param].js dest still see the ORIGINAL pathname on req.url', async () => {
 		// /api/marketplace/categories → dest /api/marketplace/[action]?action=categories.
 		// api/marketplace/[action].js routes by parsing req.url's path segments, so if

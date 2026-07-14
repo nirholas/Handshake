@@ -848,7 +848,7 @@ async function renderOracleConviction() {
 // it's "who else is in, and do they win." The Smart Money Radar answers it: it
 // crosses every wallet's footprint in this coin against which coins those same
 // wallets historically graduated, scoring the *pedigree of the money* buying in.
-// Data: /api/pump/smart-money?mint= (404 until the rollup has scored this coin).
+// Data: /api/pump/smart-money?mint= (found:false until the rollup scores the coin).
 // ════════════════════════════════════════════════════════════════════════════
 
 const WALLET_LABEL = {
@@ -898,24 +898,33 @@ async function renderSmartMoney() {
 		return;
 	}
 
-	let data = null;
-	try {
-		data = await fetchJson(`/api/pump/smart-money?mint=${encodeURIComponent(state.mint)}`);
-	} catch {
-		// 404 = the rollup hasn't scored this coin yet (too new, or pre-dates the
-		// engine). Render an honest "not scored yet" rather than hiding the panel.
+	// The rollup hasn't scored this coin yet (too new, or pre-dates the engine).
+	// Modern API answers 200 + found:false; a fetch failure (or a pre-convention
+	// deploy's 404) lands in the same honest "not scored yet" panel.
+	function renderNotScored() {
 		section(
 			target,
 			'Smart money',
 			el('div', { class: 'ld-empty ld-empty-sm' }, [
 				el('p', { class: 'ld-empty-title', text: 'No smart-money read yet.' }),
 				el('p', {
-					text: 'The radar scores a coin once proven wallets touch it. New launches are picked up within minutes — check back, or watch the live radar.',
+					text: 'The radar scores a coin once proven wallets touch it. New launches are picked up within minutes. Check back, or watch the live radar.',
 				}),
 				el('a', { class: 'ld-btn ld-btn-ghost', href: '/radar', text: 'Open the Smart Money radar →' }),
 			]),
 			{ tag: 'wallet pedigree' },
 		);
+	}
+
+	let data = null;
+	try {
+		data = await fetchJson(`/api/pump/smart-money?mint=${encodeURIComponent(state.mint)}`);
+	} catch {
+		renderNotScored();
+		return;
+	}
+	if (!data || data.found === false || !data.coin) {
+		renderNotScored();
 		return;
 	}
 

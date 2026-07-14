@@ -31,6 +31,30 @@
 			<description>License terms for the three.ws Seeker/Saga app.</description>
 		</item>
 		<item>
+			<title>&quot;Deploy onchain&quot; now opens the real deploy flow with your model loaded</title>
+			<link>https://three.ws/deploy</link>
+			<guid isPermaLink="false">2026-07-14:&quot;Deploy onchain&quot; now opens the real deploy flow with your model loaded</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>After forging a model, the &quot;Deploy onchain&quot; shortcut used to drop you on Launchpad Studio (the white-label site builder), which ignored your model entirely. It now opens the on-chain deploy wizard with your model and its name already filled in, so you go straight from forge to a permanent on-chain agent identity. The search palette's &quot;Launch a coin&quot; action was also mispointed and now opens the pump.fun coin launch flow.</description>
+		</item>
+		<item>
+			<title>3D previews stop erroring on the scanner and every plain page footer</title>
+			<link>https://three.ws/create/selfie</link>
+			<guid isPermaLink="false">2026-07-14:3D previews stop erroring on the scanner and every plain page footer</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The walking robot in the site footer failed to appear on plain pages like /hydrate and /login because its compressed 3D model needed a decoder the page never loaded; the decoder is now wired in before the viewer starts, so the robot renders everywhere. The 3D scanner also downloaded a 748KB placeholder avatar the moment the page opened, even for visitors who never started a scan, and logged a fetch error on every visit to the old /scan address; the placeholder now loads only when the build step is actually on screen, and if its download ever fails the progress view stays clean instead of showing a dead black panel.</description>
+		</item>
+		<item>
+			<title>Agent and coin art always renders on the Activity and Deployments feeds</title>
+			<link>https://three.ws/activity</link>
+			<guid isPermaLink="false">2026-07-14:Agent and coin art always renders on the Activity and Deployments feeds</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Avatars on the /activity trading floor and the /deployments on-chain feed come from wherever the agent's creator hosted them, and browsers were silently blocking many of those hosts (IPFS gateways serving metadata instead of an image, dead image servers), leaving blank tiles and repeated failed requests. Every third-party image now loads through the platform's own image resolver, which finds the real artwork across multiple IPFS gateways and shows a clean generated placeholder when the original is truly gone.</description>
+		</item>
+		<item>
 			<title>Agent brains upgraded to the newest OpenAI models</title>
 			<link>https://three.ws/brain</link>
 			<guid isPermaLink="false">2026-07-14:Agent brains upgraded to the newest OpenAI models</guid>
@@ -45,6 +69,22 @@
 			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>A new mobile-first app at /ar turns a one-line prompt into a real, downloadable 3D model on the free generation lane, then puts it in your space with one tap: WebXR or Scene Viewer on Android, Quick Look on iPhone. On a desktop it shows a QR code that hands the finished model straight to your phone's camera app, and every creation gets a shareable viewer link. No account, no payment, fair-use rate limits only.</description>
+		</item>
+		<item>
+			<title>Cleaner pages: sitemap header fits, stray glow clipped, quieter console</title>
+			<link>https://three.ws/sitemap</link>
+			<guid isPermaLink="false">2026-07-14:Cleaner pages: sitemap header fits, stray glow clipped, quieter console</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A site-wide polish pass on cosmetic issues found in a full-site sweep. The /sitemap page now uses the standard site header instead of a cramped custom top bar that pushed the navigation past the right edge of the screen. The walk companion's caption bubble and the decorative glow on /x402-revenue are both capped so they can never spill outside the viewport or cause sideways scrolling. The companion's expected avatar fallback (a non-humanoid model handing off to the robot) no longer prints a warning on every page view, and the live demo frames on /labs and /integrations no longer trigger a browser sandbox warning.</description>
+		</item>
+		<item>
+			<title>Coin Clash, coin worlds, and the sign-in page fail gracefully</title>
+			<link>https://three.ws/clash</link>
+			<guid isPermaLink="false">2026-07-14:Coin Clash, coin worlds, and the sign-in page fail gracefully</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>When the community battle service is offline, /clash and the /temporary world picker used to keep retrying and logging failed requests in the background. Both now recognize the outage on the first response, stop polling, and show a clear notice with live places to go instead (launches, markets, or walking the default world solo). The sign-in page also no longer throws a background error if its 3D greeter can't load; the form works exactly the same without him.</description>
 		</item>
 		<item>
 			<title>IRL placement grows up: true AR anchoring leads the dock, and you can pinch-resize your agent</title>
@@ -71,6 +111,14 @@
 			<description>Opening a shared model link at /viewer could hang on the loading spinner forever even though the model file itself was fine. The viewer now reveals the model as soon as it finishes rendering, and if a model genuinely cannot display, you get a clear message and a working download button instead of an endless spinner.</description>
 		</item>
 		<item>
+			<title>The Agora and City worlds survive OpenStreetMap outages</title>
+			<link>https://three.ws/agora</link>
+			<guid isPermaLink="false">2026-07-14:The Agora and City worlds survive OpenStreetMap outages</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The 3D city on /agora and /city is built from live OpenStreetMap data, and a single overloaded map server used to mean an empty world with no buildings. Map data now fails over across three independent OpenStreetMap mirrors, and if every mirror is down the world rebuilds from the last map snapshot saved in your browser, so Manhattan stays standing even when the map providers do not.</description>
+		</item>
+		<item>
 			<title>The AR placement button is visible again on /irl</title>
 			<link>https://three.ws/irl</link>
 			<guid isPermaLink="false">2026-07-14:The AR placement button is visible again on /irl</guid>
@@ -87,12 +135,36 @@
 			<description>The best forge models are now published to the official three.ws account on Sketchfab, the largest public 3D model site: weekly Forge-Off winners first, then top-voted board models, then creations their makers explicitly accepted. It is a curated showcase, not a firehose: a few validated models a week, each clearly tagged as AI-generated, with its generation prompt and a link back to the creation on three.ws so anyone who finds it can remix it or forge their own. Every link is tagged so we can measure how many visitors the showcase actually brings in.</description>
 		</item>
 		<item>
+			<title>The trade terminal stops throwing 404s and rides out RPC outages</title>
+			<link>https://three.ws/trades</link>
+			<guid isPermaLink="false">2026-07-14:The trade terminal stops throwing 404s and rides out RPC outages</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The deep-dive on /trades asked the platform for holder cohorts and a smart-money score on every coin, including coins three.ws never launched or scored, so the browser logged a guaranteed failed request for almost every selection. Both panels now know the difference between &quot;no data exists for this coin&quot; and a real error: unscored coins get an honest &quot;not scored yet&quot; card that links to the Smart Money radar, and coins launched elsewhere get a direct link to their on-chain holder list. Live price and bonding-curve reads also became outage-proof: when every Solana RPC provider fails at once, the terminal serves the last real curve data it saw (clearly marked stale) instead of a server error and a blank strip.</description>
+		</item>
+		<item>
 			<title>Tour and Walk SDK update: switch between Stroll and Platformer from the tour controls</title>
 			<link>https://three.ws/tour-builder</link>
 			<guid isPermaLink="false">2026-07-14:Tour and Walk SDK update: switch between Stroll and Platformer from the tour controls</guid>
 			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
 			<category>sdk</category>
 			<description>Embedded tours built with the Tour Builder now include a labeled Stroll / Platformer toggle right in the tour controls next to Exit, so visitors can switch how they explore (tap it or press M) instead of hunting for a hidden corner button. Published as @three-ws/walk 0.2.1 and @three-ws/tour 0.5.1 on npm; the Tour Builder's exported embed snippet now uses the new versions automatically, and also picks up the latest @three-ws/page-agent with its five persona presets.</description>
+		</item>
+		<item>
+			<title>Vanity wallet page loads cleanly again</title>
+			<link>https://three.ws/vanity-wallet</link>
+			<guid isPermaLink="false">2026-07-14:Vanity wallet page loads cleanly again</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Opening /vanity-wallet on desktop threw two script errors the moment the page loaded, which broke the sealed-drop claim and gifting features on that page. The page now ships fully bundled code, so it loads without errors and every feature on it, from the in-browser grinder to sealed drops, works as intended.</description>
+		</item>
+		<item>
+			<title>Wallet and session lists load again across the dashboard</title>
+			<link>https://three.ws/dashboard/wallets</link>
+			<guid isPermaLink="false">2026-07-14:Wallet and session lists load again across the dashboard</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Signed-in pages that show your linked wallets or active sessions (wallets, account, settings, sessions, voice, and more) were failing to load their lists because the server rejected the request outright. The lists now load correctly, and the settings page's revoke-all-other-sessions button now actually revokes them. The BNB hub page also no longer fires a failing request on every visit.</description>
 		</item>
 		<item>
 			<title>Your profile no longer asks you to sign in when you already are</title>

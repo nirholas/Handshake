@@ -1332,6 +1332,12 @@
 		},
 		{
 			"src": "/viewer/?",
+			"headers": {
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; report-uri /api/client-errors",
+				"x-content-type-options": "nosniff",
+				"referrer-policy": "strict-origin-when-cross-origin",
+				"cross-origin-resource-policy": "cross-origin"
+			},
 			"dest": "/viewer.html"
 		},
 		{
@@ -2033,6 +2039,20 @@
 			"status": 301
 		},
 		{
+			"src": "/dashboard/usage",
+			"headers": {
+				"Location": "/dashboard/analytics"
+			},
+			"status": 301
+		},
+		{
+			"src": "/dashboard/storage",
+			"headers": {
+				"Location": "/dashboard/settings"
+			},
+			"status": 301
+		},
+		{
 			"src": "/dashboard/x402-admin",
 			"dest": "/dashboard/x402-admin.html"
 		},
@@ -2424,13 +2444,6 @@
 		{
 			"src": "/api/agents/([^/]+)/pumpfun/([^/]+)",
 			"dest": "/api/agents/pumpfun/[action]?id=$1&action=$2"
-		},
-		{
-			"src": "/dashboard/storage",
-			"headers": {
-				"Location": "/dashboard/settings"
-			},
-			"status": 301
 		},
 		{
 			"src": "/api/agents/([^/]+)/embed-policy",
@@ -4037,13 +4050,6 @@
 			"dest": "/api/llm/anthropic.js"
 		},
 		{
-			"src": "/dashboard/usage",
-			"headers": {
-				"Location": "/dashboard/analytics"
-			},
-			"status": 301
-		},
-		{
 			"src": "/api/erc8004/register-confirm",
 			"dest": "/api/erc8004/register-confirm"
 		},
@@ -4825,6 +4831,22 @@
 		{
 			"src": "/labs/",
 			"dest": "/labs.html"
+		},
+		{
+			"src": "/search",
+			"dest": "/search.html"
+		},
+		{
+			"src": "/search/",
+			"dest": "/search.html"
+		},
+		{
+			"src": "/rankings",
+			"dest": "/rankings.html"
+		},
+		{
+			"src": "/rankings/",
+			"dest": "/rankings.html"
 		},
 		{
 			"src": "/fact-check",

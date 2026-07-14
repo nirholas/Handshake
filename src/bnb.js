@@ -96,7 +96,11 @@ const TRACKS = [
 			production implementation), with an automatic self-pay fallback.`,
 		caveat: 'MegaFuel is one operator (NodeReal); BEP-414 is still Draft status. Sponsorship decline always falls through to self-pay — it never blocks registration.',
 		primary: { label: 'Register an agent gaslessly', href: '/create-agent' },
+		// register-agent is POST-only: a HEAD/GET probe 405s (a console error on
+		// every page load). OPTIONS resolves the route without invoking it - the
+		// handler's CORS preflight answers 204 when deployed, 404 when not.
 		primaryCheck: '/api/bnb/register-agent',
+		primaryCheckMethod: 'OPTIONS',
 		secondary: { label: 'Read the payments guide', href: '/docs/bnb-payments' },
 		secondaryCheck: '/docs/bnb-payments.md',
 	},
@@ -162,10 +166,14 @@ function cardHtml(track) {
 		</article>`;
 }
 
-/** Probe a URL and resolve to an HTTP status, or null on network failure/timeout. */
-async function probe(url) {
+/**
+ * Probe a URL and resolve to an HTTP status, or null on network failure/timeout.
+ * HEAD by default (pages, docs); POST-only APIs pass OPTIONS via the track's
+ * *CheckMethod so the probe never triggers a 405 console error.
+ */
+async function probe(url, probeMethod = 'HEAD') {
 	try {
-		const res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(4000) });
+		const res = await fetch(url, { method: probeMethod, signal: AbortSignal.timeout(4000) });
 		return res.status;
 	} catch {
 		return null;
@@ -173,11 +181,12 @@ async function probe(url) {
 }
 
 async function checkTrack(track) {
-	const checks = [track.primaryCheck, track.secondaryCheck].filter(Boolean);
-	const statuses = await Promise.all(checks.map(probe));
-	const states = statuses.map(trackLiveness);
-	const primaryState = trackLiveness(statuses[0]);
-	const secondaryState = track.secondaryCheck ? trackLiveness(statuses[1]) : 'coming-soon';
+	const [primaryStatus, secondaryStatus] = await Promise.all([
+		probe(track.primaryCheck, track.primaryCheckMethod),
+		track.secondaryCheck ? probe(track.secondaryCheck, track.secondaryCheckMethod) : null,
+	]);
+	const primaryState = trackLiveness(primaryStatus);
+	const secondaryState = track.secondaryCheck ? trackLiveness(secondaryStatus) : 'coming-soon';
 	return { cardState: combineTrackStates([primaryState]), primaryState, secondaryState };
 }
 
