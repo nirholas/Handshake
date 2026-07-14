@@ -24,6 +24,7 @@ import {
 	runForgeAvatar,
 } from '../../mcp-server/src/tools/_studio-core.js';
 import { renderModelViewerHtml } from '../_mcp/render.js';
+import { buildArLaunchUrl } from '../_lib/ar-launch.js';
 
 // Public origin used to build viewer / pose-studio links in the SANITIZED
 // response — independent of whichever internal origin the cores call. Always a
@@ -64,6 +65,7 @@ function ok(structured, glbUrl, name) {
 				width: '100%',
 				autoRotate: true,
 				ar: true,
+				arHref: arUrl(glbUrl),
 			}),
 		},
 	};

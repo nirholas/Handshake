@@ -193,7 +193,7 @@ async function generate(req, res) {
 		return failFromLane(res, err);
 	}
 
-	return json(res, 200, shapeSubmit(job, base));
+	return json(res, 200, shapeSubmit(job, base, prompt));
 }
 
 async function poll(req, res, jobId) {
