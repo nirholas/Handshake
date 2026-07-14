@@ -9,11 +9,10 @@
 // age-13+ content-safety gate before any GPU work starts.
 //
 // It is a thin shaper, not a second pipeline: generation runs through the SAME
-// forge-client → /api/forge router at the high tier (platform-funded via the
-// internal seed token; the free-first router picks the engine — Hunyuan3D at
-// high, with a standard-tier fallback if the gate refuses) and draws from the
-// SAME per-IP quota buckets as /api/3d/generate, so adding this surface creates
-// no new capacity and no new limiter.
+// forge-client → /api/forge free lane (NVIDIA NIM TRELLIS, standard tier) and
+// draws from the SAME per-IP quota buckets as /api/3d/generate, so adding this
+// surface creates no new capacity and no new limiter. (High tier waits on the
+// async self-host Hunyuan3D worker — see the dispatch comment below.)
 //
 //   POST { prompt }
 //     → 200 { status:'done',  glbUrl, viewerUrl, format }   (finished inline)
@@ -155,12 +154,15 @@ async function generate(req, res) {
 	const base = originFromReq(req);
 	let job;
 	try {
-		// High tier, platform-funded: the internal seed token clears the premium-tier
-		// gate server-side (nothing user-visible), and omitting `backend` lets the
-		// free-first router pick the best engine for the tier (Hunyuan3D at high,
-		// self-host fallbacks). Per-IP metering above still bounds spend. If the
-		// gate refuses, startForge falls back to the ungated standard tier.
-		job = await startForge(base, { prompt, path: 'image', tier: 'high', internal: true });
+		// Pinned to the fast free lane: ChatGPT Actions abandon the HTTP call at
+		// ~45s, and the only high-tier free engine currently deployed (Hunyuan3D
+		// via HF Spaces) BLOCKS the submit for 50-280s with no poll handle, so a
+		// high request here can never answer in time. To raise quality later:
+		// deploy the async self-host Hunyuan3D worker (workers/model-hunyuan3d,
+		// forge lane already wired behind GCP_HUNYUAN3D_URL), then request tier
+		// 'high' with internal: true — startForge degrades to standard on
+		// 402/timeout.
+		job = await startForge(base, { prompt, backend: 'nvidia', path: 'image', tier: 'standard' });
 	} catch (err) {
 		return failFromLane(res, err);
 	}

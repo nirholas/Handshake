@@ -182,10 +182,13 @@ async function handleForgeFree(args, _auth, req) {
 	if (prompt.length < 3) return toolError('Provide a text prompt of at least 3 characters.');
 	const safety = checkPromptSafety(prompt);
 	if (!safety.allowed) return toolError(safety.message);
-	// Highest quality by default: high tier runs platform-funded through the
-	// internal seed token (see forge-client.startForge), with a standard-tier
-	// fallback if the gate refuses. Callers can still request a faster tier.
-	const tier = VALID_TIER.has(args.tier) ? args.tier : 'high';
+	// Fast free lane by default. The deployed high-tier free engine (Hunyuan3D
+	// via HF Spaces) blocks the submit for 50-280s with no poll handle, which no
+	// ChatGPT tool call survives — an explicit tier:'high' request still tries it
+	// (internal token clears the gate) and startForge degrades to standard on
+	// 402/timeout. True high-by-default lands when the async self-host Hunyuan3D
+	// worker deploys (GCP_HUNYUAN3D_URL).
+	const tier = VALID_TIER.has(args.tier) ? args.tier : 'standard';
 	let job;
 	try {
 		job = await generate(base, { prompt, path: 'image', tier, internal: true }, { timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS' });
@@ -214,7 +217,7 @@ async function handleTextToAvatar(args, _auth, req) {
 	try {
 		job = await generate(
 			base,
-			{ prompt: prompt || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: 'high', internal: true },
+			{ prompt: prompt || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: 'standard', internal: true },
 			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS' },
 		);
 	} catch (err) {
@@ -248,7 +251,7 @@ async function handleMeshForge(args, _auth, req) {
 	try {
 		job = await generate(
 			base,
-			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: 'high', internal: true },
+			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: 'standard', internal: true },
 			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS' },
 		);
 	} catch (err) {
@@ -306,7 +309,7 @@ async function handleForgeAvatar(args, _auth, req) {
 	try {
 		gen = await generate(
 			base,
-			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: 'high', internal: true },
+			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: 'standard', internal: true },
 			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS' },
 		);
 	} catch (err) {
@@ -413,8 +416,8 @@ async function handleRefineModel(args, _auth, req) {
 		job = await generate(
 			base,
 			refImageUrl
-				? { prompt: composed, imageUrls: [refImageUrl], aspect: '1:1', tier: 'high', internal: true }
-				: { prompt: composed, tier: 'high', internal: true },
+				? { prompt: composed, imageUrls: [refImageUrl], aspect: '1:1', tier: 'standard', internal: true }
+				: { prompt: composed, tier: 'standard', internal: true },
 			{ timeoutEnv: 'STUDIO_REFINE_TIMEOUT_MS' },
 		);
 	} catch (err) {
@@ -458,8 +461,8 @@ const DEFS = [
 		description:
 			'Turn a text prompt into a textured, downloadable 3D model (GLB) — free. Describe a single object, ' +
 			'character, or creature; the studio generates an interactive model you can rotate, view, and download. ' +
-			'Defaults to the highest quality tier; pass tier "draft" or "standard" only when speed matters more ' +
-			'than fidelity. Renders inline in an interactive 3D viewer.',
+			'Optional quality tier (draft, standard, high); high is slower and may fall back to standard under load. ' +
+			'Renders inline in an interactive 3D viewer.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,
@@ -474,7 +477,7 @@ const DEFS = [
 				tier: {
 					type: 'string',
 					enum: ['draft', 'standard', 'high'],
-					description: 'Detail level: high (default, best quality), standard, or draft (fastest). Lower tiers finish sooner.',
+					description: 'Detail level: draft (fastest), standard (default), or high (best, slower; may fall back to standard under load).',
 				},
 			},
 		},

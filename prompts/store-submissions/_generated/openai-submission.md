@@ -28,12 +28,14 @@ package through the partner portal. Schema note for the smoke test: `forge_free`
 `{"prompt": "...", "tier"?: "draft"|"standard"|"high"}`; other extra properties are rejected with
 `-32602`.
 
-**Quality upgrade (2026-07-14, pending deploy):** every studio generation tool now defaults to the
-platform's highest quality tier (high: dense geometry + PBR textures, served by the free-for-us
-Hunyuan3D lane), operator-funded via an internal server-to-server token that never appears on the
-wire. The compliance surface is unchanged (still keyless, still free, still zero payment strings);
-generations take longer (typically 1-3 minutes), and the §5 smoke test should be re-run against the
-deployed revision before submitting so the captured timings match.
+**Quality note (2026-07-14):** the studio generation tools default to the standard tier (up from
+draft). A first attempt at defaulting to the high tier was rolled back the same day: the only
+deployed free high-quality engine (Hunyuan3D via HF Spaces) blocks the submit for 50-280s with no
+poll handle, which no ChatGPT surface survives — a live E2E probe confirmed `lane_timeout`. The
+plumbing is in place (internal server-to-server token clears the premium gate; explicit
+`tier:"high"` requests degrade to standard on 402/timeout), and high-by-default lands once the
+async self-host Hunyuan3D worker (`workers/model-hunyuan3d`, forge lane behind `GCP_HUNYUAN3D_URL`)
+is deployed. Compliance surface unchanged: keyless, free, zero payment strings on the wire.
 
 The two sections below are kept as the historical record of the defects and their fixes.
 

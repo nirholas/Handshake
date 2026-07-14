@@ -3,9 +3,10 @@
 	"entries": [
 		{
 			"date": "2026-07-14",
-			"title": "ChatGPT generations now come out at maximum quality",
-			"summary": "Every 3D model generated through the free ChatGPT surfaces (the three.ws 3D Studio app and custom GPT) now bakes at the platform's highest quality tier: dense geometry plus full PBR textures, the same tier holders unlock on the site. It is still completely free inside ChatGPT, with the platform covering the premium generation. Expect a generation to take a minute or three instead of seconds; the result is worth the wait.",
+			"title": "The three.ws 3D Studio is live in ChatGPT",
+			"summary": "You can now generate three.ws 3D models without leaving ChatGPT: the three.ws 3D Studio custom GPT is published publicly in the GPT Store. Describe an object and it comes back as a real downloadable GLB with a link to spin it in the browser viewer, free, no account needed. The generation lane behind it also moved up from the draft tier to standard, and the plumbing for a premium-quality tier inside ChatGPT is in place for a follow-up release.",
 			"tags": [
+				"feature",
 				"improvement"
 			],
 			"link": "/studio"
