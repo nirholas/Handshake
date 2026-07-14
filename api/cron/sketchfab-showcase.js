@@ -192,7 +192,13 @@ async function refreshProcessing() {
 export default wrapCron(async (req, res) => {
 	if (!method(req, res, ['GET'])) return;
 	if (!requireCron(req, res)) return;
-	if (!sketchfabConfigured()) {
+
+	const url = new URL(req.url || '/', 'https://three.ws');
+	const dryRun = url.searchParams.get('dry_run') === '1';
+
+	// Dry-run only reads the DB, so it works before the Sketchfab token is
+	// wired: it previews exactly what the next real run would pick.
+	if (!dryRun && !sketchfabConfigured()) {
 		return json(res, 200, {
 			ok: false,
 			reason: 'not_configured',
@@ -200,8 +206,6 @@ export default wrapCron(async (req, res) => {
 		});
 	}
 
-	const url = new URL(req.url || '/', 'https://three.ws');
-	const dryRun = url.searchParams.get('dry_run') === '1';
 	const limit = uploadsPerRun();
 	const candidates = await selectCandidates(limit);
 
@@ -209,6 +213,7 @@ export default wrapCron(async (req, res) => {
 		return json(res, 200, {
 			ok: true,
 			dry_run: true,
+			configured: sketchfabConfigured(),
 			limit,
 			candidates: candidates.map((c) => ({
 				id: c.id,
