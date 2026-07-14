@@ -5,28 +5,32 @@
 
 This is the copy-paste-ready answer sheet for submitting the free three.ws 3D Studio to the
 OpenAI ChatGPT App Directory, plus an evidence-backed compliance audit. Every field is filled
-except items marked `[HUMAN: …]` (identity verification, support contact, final submit) and the
-two **blockers** below, which must be cleared before the app can pass review.
+except items marked `[HUMAN: …]` (identity verification, support contact, final submit).
 
 ---
 
-## 0. Submission verdict — NOT READY (2 blockers)
+## 0. Submission verdict — READY (blockers cleared 2026-07-14)
 
-The app **passes every OpenAI content/privacy/annotation policy** (§2 audit: all PASS). It is **not
-submittable today** because two live-production defects would make a reviewer's test fail:
+The app **passes every OpenAI content/privacy/annotation policy** (§2 audit: all PASS). The two
+production defects found on 2026-07-07 are both **fixed and re-verified live on 2026-07-14**:
 
-| # | Blocker | Impact on review | Owner | Fix |
-|---|---------|------------------|-------|-----|
-| **B1** | **Rate-limiter store over monthly quota** → every `tools/call` generation returns HTTP 429 `rate_limiter_unavailable`. | A reviewer's first generation attempt fails. Auto-rejection ("apps must reliably do what they promise"). | ops / owner | Restore Upstash quota (§B1). |
-| **B2** | **`/viewer?src=<glb>` returns 404** — the `viewerUrl` every tool returns (and the widget's "Open in three.ws" button) is a dead link. | Reviewer clicks the returned link → 404 page. Quality/broken-link rejection. | eng | Add the missing route (§B2). |
+| # | Was | Verified fixed (2026-07-14) |
+|---|-----|------------------------------|
+| **B1** | Rate-limiter store over monthly quota: every `tools/call` generation returned HTTP 429 `rate_limiter_unavailable`. | Live `forge_free` call completed end-to-end: real 1.6 MB GLB (`model/gltf-binary`) on R2 plus working `viewerUrl`. Root cause ended permanently by the self-hosted Redis rail (Memorystore + SRH) that replaced the capped Upstash store. |
+| **B2** | `/viewer?src=<glb>` returned 404: the `viewerUrl` every tool returns was a dead link. | `https://three.ws/viewer?src=<glb>` returns 200 and serves the standalone studio viewer, which reads `?src=`. |
 
-Discovery (`initialize`, `tools/list`, `resources/list`) works; the generation pipeline itself works
-(proven in §2.4 via the free lane); the widget renders real models (§4 screenshots). The blockers are
-an infra quota and a missing route, not the app logic. **Clear B1 + B2, redeploy, then submit.**
+Additionally, three.ws was **accepted into the OpenAI Partner Network on 2026-07-14** (welcome email
+to nich@three.ws), which unlocks the partner portal for the submission itself.
+
+**Remaining steps are owner-only:** re-run the §5 reviewer smoke test if desired, then submit this
+package through the partner portal. Schema note for the smoke test: `forge_free` accepts
+`{"prompt": "..."}` only; extra properties (e.g. `quality`) are rejected with `-32602`.
+
+The two sections below are kept as the historical record of the defects and their fixes.
 
 ---
 
-### B1 — Rate-limiter store over quota (generation 429s)
+### B1 — Rate-limiter store over quota (generation 429s) — RESOLVED 2026-07-14
 
 **Evidence (live, 2026-07-07):**
 ```
@@ -55,11 +59,13 @@ Note: `authIp`/login use `degradeToMemory` and stay up; only cost/money-moving b
 generation, chat, x402-verify, auto-rig) fail closed. This is a **site-wide** cost-lane outage, not
 studio-only — worth fixing regardless of the submission.
 
-`[HUMAN: restore Upstash limiter quota, then re-run the §5 reviewer smoke test to confirm 200s.]`
+**Resolution (verified 2026-07-14):** the limiter no longer runs on the capped Upstash store; it runs
+on the platform's self-hosted Redis (Memorystore behind an SRH proxy, no monthly command cap). A live
+`forge_free` `tools/call` completed a real generation end-to-end. No action left.
 
 ---
 
-### B2 — `/viewer?src=<glb>` returns 404 (broken link in every tool response)
+### B2 — `/viewer?src=<glb>` returns 404 (broken link in every tool response) — RESOLVED 2026-07-14
 
 **Evidence (live, 2026-07-07):**
 ```
@@ -94,11 +100,9 @@ studio-viewer bundle's own fallback), so this is a platform-wide dead link, not 
 4. Verify: `curl -s -o /dev/null -w '%{http_code}' "https://three.ws/viewer?src=<glb>"` → `200`, and the
    page renders the model.
 
-> **Not fixed in this task on purpose.** This touches a shared build artifact and the 1047-route
-> `vercel.json` while other agents are actively editing adjacent files (`api/_okx3d/identity.js`,
-> `apps-sdk/…` were dirty in `git status`), and the fix only reaches a reviewer after a deploy that was
-> not requested here. It belongs in its own focused change with owner awareness.
-> `[HUMAN: apply the §B2 fix (or confirm the intended /viewer target), redeploy, re-verify 200.]`
+**Resolution (verified 2026-07-14):** `https://three.ws/viewer?src=<glb>` returns 200 and serves the
+standalone studio viewer, and the `viewerUrl` returned by a live `forge_free` call uses exactly that
+shape. No action left.
 
 ---
 
