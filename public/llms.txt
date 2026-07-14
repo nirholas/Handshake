@@ -278,6 +278,7 @@ Docs, tutorials, and reference.
 - [Docs · Embedding](https://three.ws/docs/embedding): Embed an agent via iframe, oEmbed, or the <agent-3d> web component.
 - [Docs · <agent-3d>](https://three.ws/docs/web-component): Reference for the <agent-3d> custom element.
 - [Docs · MCP](https://three.ws/docs/mcp): Expose your agent as an MCP server for Claude, ChatGPT, and other clients.
+- [Docs · 3D Studio MCP (free)](https://three.ws/docs/mcp-studio): The free, no-auth MCP server behind the ChatGPT 3D Studio app: text and image to 3D, rigged avatars, conversational refinement, and living agent personas.
 - [Docs · Scenes MCP](https://three.ws/docs/mcp-scenes): Speak a placed 3D diorama into being from one sentence, then browse the gallery.
 - [Docs · x402 Wallet MCP](https://three.ws/docs/mcp-x402): Give an AI agent a self-custodial Solana wallet that finds, inspects, and pays any x402 service in USDC.
 - [Docs · Intel MCP](https://three.ws/docs/mcp-intel): Coin smart-money scores, wallet reputation, signal feeds, and KOL leaderboards over MCP.

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-14T15:53:50.382Z",
+	"generated_at": "2026-07-14T15:55:23.642Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "AR Forge",
 			"summary": "Type a prompt, get a real 3D model, and place it in your room: free text-to-3D with one-tap AR on any phone (WebXR, Scene Viewer, Quick Look) and a QR handoff from desktop.",
 			"link": "/ar",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "launch",
+			"title": "Docs · 3D Studio MCP (free)",
+			"summary": "The free, no-auth MCP server behind the ChatGPT 3D Studio app: text and image to 3D, rigged avatars, conversational refinement, and living agent personas.",
+			"link": "/docs/mcp-studio",
 			"tags": [
 				"launch"
 			]
@@ -105,6 +115,17 @@
 			"link": "/clash",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
+			"title": "Everything OpenAI, brought up to the GPT-5.6 era",
+			"summary": "The whole OpenAI surface caught up with the current model family. The agent-brain tutorial, API reference, and architecture docs now describe the real lineup (GPT-5.6 Sol, Terra, and Luna, plus the GPT-5.5 and 5.4 tiers and o3), the agent-creation wizard offers GPT-5.6 Sol as its OpenAI pick, and the built-in chat app now recognizes GPT-5.x models properly: vision input, reasoning-effort controls, and the right token limits. The ChatGPT 3D Studio docs also grew: how the inline persona widget renders a living agent body, and the full REST contract behind the three.ws 3D Studio custom GPT. Old model names like gpt-4o keep working everywhere as aliases.",
+			"link": "/docs/mcp-studio",
+			"tags": [
+				"improvement",
+				"docs"
 			]
 		},
 		{

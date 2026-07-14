@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-14T15:53:50.358Z",
+	"generated_at": "2026-07-14T15:55:23.621Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2562,6 +2562,16 @@
 					"title": "Docs · MCP",
 					"description": "Expose your agent as an MCP server for Claude, ChatGPT, and other clients.",
 					"added": "2026-04-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/mcp-studio",
+					"title": "Docs · 3D Studio MCP (free)",
+					"description": "The free, no-auth MCP server behind the ChatGPT 3D Studio app: text and image to 3D, rigged avatars, conversational refinement, and living agent personas.",
+					"added": "2026-07-14",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

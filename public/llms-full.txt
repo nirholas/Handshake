@@ -1570,6 +1570,12 @@ URL: https://three.ws/docs/mcp
 
 Expose your agent as an MCP server for Claude, ChatGPT, and other clients.
 
+### Docs · 3D Studio MCP (free)
+
+URL: https://three.ws/docs/mcp-studio
+
+The free, no-auth MCP server behind the ChatGPT 3D Studio app: text and image to 3D, rigged avatars, conversational refinement, and living agent personas.
+
 ### Docs · Scenes MCP
 
 URL: https://three.ws/docs/mcp-scenes

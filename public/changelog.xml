@@ -15,6 +15,14 @@
 			<description>Type a prompt, get a real 3D model, and place it in your room: free text-to-3D with one-tap AR on any phone (WebXR, Scene Viewer, Quick Look) and a QR handoff from desktop.</description>
 		</item>
 		<item>
+			<title>Docs · 3D Studio MCP (free)</title>
+			<link>https://three.ws/docs/mcp-studio</link>
+			<guid isPermaLink="false">2026-07-14:Docs · 3D Studio MCP (free)</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The free, no-auth MCP server behind the ChatGPT 3D Studio app: text and image to 3D, rigged avatars, conversational refinement, and living agent personas.</description>
+		</item>
+		<item>
 			<title>Docs · Sketchfab Showcase</title>
 			<link>https://three.ws/docs/sketchfab</link>
 			<guid isPermaLink="false">2026-07-14:Docs · Sketchfab Showcase</guid>
@@ -85,6 +93,14 @@
 			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>When the community battle service is offline, /clash and the /temporary world picker used to keep retrying and logging failed requests in the background. Both now recognize the outage on the first response, stop polling, and show a clear notice with live places to go instead (launches, markets, or walking the default world solo). The sign-in page also no longer throws a background error if its 3D greeter can't load; the form works exactly the same without him.</description>
+		</item>
+		<item>
+			<title>Everything OpenAI, brought up to the GPT-5.6 era</title>
+			<link>https://three.ws/docs/mcp-studio</link>
+			<guid isPermaLink="false">2026-07-14:Everything OpenAI, brought up to the GPT-5.6 era</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The whole OpenAI surface caught up with the current model family. The agent-brain tutorial, API reference, and architecture docs now describe the real lineup (GPT-5.6 Sol, Terra, and Luna, plus the GPT-5.5 and 5.4 tiers and o3), the agent-creation wizard offers GPT-5.6 Sol as its OpenAI pick, and the built-in chat app now recognizes GPT-5.x models properly: vision input, reasoning-effort controls, and the right token limits. The ChatGPT 3D Studio docs also grew: how the inline persona widget renders a living agent body, and the full REST contract behind the three.ws 3D Studio custom GPT. Old model names like gpt-4o keep working everywhere as aliases.</description>
 		</item>
 		<item>
 			<title>IRL avatars now move in iPhone AR</title>
