@@ -305,6 +305,94 @@
 				padding: 4rem 1rem;
 			}
 
+			/* ── Claim handle (signed in, no username yet) ───────────────────── */
+			.up-claim {
+				max-width: 430px;
+				margin: 0 auto;
+				padding: 4rem 1rem;
+				text-align: center;
+			}
+			.up-claim-title {
+				font-size: 1.4rem;
+				font-weight: 700;
+				letter-spacing: -0.02em;
+				margin: 0 0 0.75rem;
+			}
+			.up-claim-sub {
+				color: rgba(255, 255, 255, 0.5);
+				font-size: 0.9rem;
+				line-height: 1.6;
+				margin: 0 0 1.5rem;
+			}
+			.up-claim-url {
+				color: rgba(255, 255, 255, 0.75);
+				font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+				font-size: 0.85em;
+				white-space: nowrap;
+			}
+			.up-claim-row {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 0.5rem;
+			}
+			.up-claim-at {
+				color: rgba(255, 255, 255, 0.35);
+				font-size: 1rem;
+			}
+			.up-claim-row input {
+				background: rgba(255, 255, 255, 0.05);
+				border: 1px solid rgba(255, 255, 255, 0.14);
+				border-radius: 8px;
+				padding: 0.55rem 0.75rem;
+				color: #fff;
+				font-size: 0.95rem;
+				font-family: inherit;
+				width: min(220px, 55vw);
+				transition: border-color 0.15s;
+			}
+			.up-claim-row input:focus {
+				outline: none;
+				border-color: #69e16f;
+			}
+			.up-claim-row button {
+				background: #69e16f;
+				color: #0a0c10;
+				border: none;
+				border-radius: 8px;
+				padding: 0.55rem 1.1rem;
+				font-size: 0.95rem;
+				font-weight: 600;
+				font-family: inherit;
+				cursor: pointer;
+				transition: opacity 0.15s;
+			}
+			.up-claim-row button:hover {
+				opacity: 0.88;
+			}
+			.up-claim-row button:focus-visible {
+				outline: 2px solid #69e16f;
+				outline-offset: 2px;
+			}
+			.up-claim-row button:disabled {
+				opacity: 0.5;
+				cursor: default;
+			}
+			.up-claim-err {
+				color: #ff7a7a;
+				font-size: 0.8rem;
+				min-height: 1.1em;
+				margin: 0.75rem 0 0;
+			}
+			.up-claim-hint {
+				color: rgba(255, 255, 255, 0.3);
+				font-size: 0.75rem;
+				margin: 0.35rem 0 0;
+			}
+			.up-claim-hint a {
+				color: rgba(255, 255, 255, 0.5);
+			}
+
 			/* ── Copy button ─────────────────────────────────────────────────── */
 			.profile-copy-btn {
 				background: transparent;
@@ -1440,7 +1528,7 @@
 			const shareMenu = document.getElementById('share-menu');
 
 			if (!slug) {
-				// Bare /profile — resolve the signed-in user and show their own profile.
+				// Bare /profile: resolve the signed-in user and show their own profile.
 				root.innerHTML = `<div class="up-loading-shimmer"></div>`;
 				fetch('/api/auth/me', { credentials: 'include' })
 					.then((r) => (r.ok ? r.json() : null))
@@ -1448,14 +1536,17 @@
 						const me = j?.user || null;
 						if (me?.username) {
 							location.replace(`/u/${encodeURIComponent(me.username)}`);
-						} else if (me?.address) {
-							location.replace(`/u/${me.address}`);
+						} else if (me) {
+							// Signed in, but usernames are claimed after signup, so the
+							// /u/<handle> URL doesn't exist yet. Claim it right here
+							// instead of dead-ending at a sign-in wall.
+							renderClaimHandle(root, me);
 						} else {
-							root.innerHTML = `<div class="up-error">Sign in to view your profile. <a href="/login" style="color:#69e16f">Sign in →</a></div>`;
+							root.innerHTML = `<div class="up-error">Sign in to view your profile. <a href="/login?next=%2Fprofile" style="color:#69e16f">Sign in →</a></div>`;
 						}
 					})
 					.catch(() => {
-						root.innerHTML = `<div class="up-error">Sign in to view your profile. <a href="/login" style="color:#69e16f">Sign in →</a></div>`;
+						root.innerHTML = `<div class="up-error">Couldn't check who's signed in. <a href="/profile" style="color:#69e16f">Retry →</a></div>`;
 					});
 			} else if (/^0x[0-9a-fA-F]{40}$/.test(slug)) {
 				// Legacy: on-chain wallet address profile
@@ -1478,6 +1569,74 @@
 				// Username-based profile
 				mountUsernameProfile(root, slug).catch((err) => {
 					root.innerHTML = `<div class="up-error">Could not load profile: ${esc(err.message)}</div>`;
+				});
+			}
+
+			// Signed-in users without a username have no /u/<handle> URL yet.
+			// Claiming one here mirrors the editor in /dashboard/account
+			// (PATCH /api/auth/profile, username settable but never clearable).
+			function renderClaimHandle(rootEl, me) {
+				const USERNAME_RE = /^[a-zA-Z0-9_-]{3,30}$/;
+				const seed = (me.display_name || (me.email || '').split('@')[0] || '')
+					.toLowerCase()
+					.replace(/[^a-z0-9_-]+/g, '-')
+					.replace(/^[-_]+|[-_]+$/g, '')
+					.slice(0, 30);
+				const suggestion = USERNAME_RE.test(seed) ? seed : '';
+				document.title = 'Claim your handle · three.ws';
+				rootEl.innerHTML = `
+					<div class="up-claim">
+						<h1 class="up-claim-title">Claim your handle</h1>
+						<p class="up-claim-sub">You're signed in. Your creator profile just needs a public name: everything you make shows up at <span class="up-claim-url">three.ws/u/<span id="claim-preview">${esc(suggestion || 'yourname')}</span></span></p>
+						<form class="up-claim-row" id="claim-form">
+							<span class="up-claim-at" aria-hidden="true">@</span>
+							<input id="claim-input" type="text" value="${attr(suggestion)}" maxlength="30" placeholder="username" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Username" />
+							<button type="submit" id="claim-save">Claim</button>
+						</form>
+						<p class="up-claim-err" id="claim-err" role="alert"></p>
+						<p class="up-claim-hint">3 to 30 characters. Letters, numbers, _ or - only. You can change it later in <a href="/dashboard/account">account settings</a>.</p>
+					</div>`;
+				const input = rootEl.querySelector('#claim-input');
+				const btn = rootEl.querySelector('#claim-save');
+				const errEl = rootEl.querySelector('#claim-err');
+				const preview = rootEl.querySelector('#claim-preview');
+				input.addEventListener('input', () => {
+					preview.textContent = input.value.trim() || 'yourname';
+					errEl.textContent = '';
+				});
+				input.focus();
+				rootEl.querySelector('#claim-form').addEventListener('submit', async (e) => {
+					e.preventDefault();
+					const next = input.value.trim();
+					if (!USERNAME_RE.test(next)) {
+						errEl.textContent = '3 to 30 characters, using letters, numbers, _ or - only.';
+						return;
+					}
+					btn.disabled = true;
+					btn.textContent = 'Claiming…';
+					try {
+						const r = await apiFetch('/api/auth/profile', {
+							method: 'PATCH',
+							credentials: 'include',
+							headers: { 'content-type': 'application/json' },
+							body: JSON.stringify({ username: next }),
+						});
+						const j = await r.json().catch(() => ({}));
+						if (!r.ok) {
+							errEl.textContent =
+								r.status === 409
+									? 'That username is already taken. Try another.'
+									: j.error_description || j.issues?.[0]?.message || 'Could not save. Try again.';
+							btn.disabled = false;
+							btn.textContent = 'Claim';
+							return;
+						}
+						location.replace(`/u/${encodeURIComponent(j.user?.username || next)}`);
+					} catch {
+						errEl.textContent = 'Network error. Check your connection and try again.';
+						btn.disabled = false;
+						btn.textContent = 'Claim';
+					}
 				});
 			}
 
