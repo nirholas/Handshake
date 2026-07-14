@@ -3,7 +3,9 @@ import {
 	buildModelName,
 	buildDescription,
 	buildTags,
+	promptDenyMatch,
 	showcaseLink,
+	DENY_SQL_PATTERN,
 	GLB_MAX_BYTES,
 } from '../api/_lib/sketchfab.js';
 
@@ -57,6 +59,7 @@ describe('buildDescription', () => {
 	it('names the curation source', () => {
 		expect(buildDescription(base)).toContain('Forge-Off winner');
 		expect(buildDescription({ ...base, source: 'top_voted' })).toContain('top-voted');
+		expect(buildDescription({ ...base, source: 'accepted' })).toContain('Curated pick');
 	});
 
 	it('clamps a huge prompt without ever losing the backlinks', () => {
@@ -71,6 +74,25 @@ describe('showcaseLink', () => {
 	it('appends UTM params with ? on a bare path and & when a query exists', () => {
 		expect(showcaseLink('/forge')).toMatch(/\/forge\?utm_source=sketchfab/);
 		expect(showcaseLink('/viewer?src=x')).toMatch(/\/viewer\?src=x&utm_source=sketchfab/);
+	});
+});
+
+describe('promptDenyMatch (brand-safety gate)', () => {
+	it('blocks firearm and explicit prompts on word boundaries', () => {
+		expect(promptDenyMatch('Glock with a switch')).toBe('glock');
+		expect(promptDenyMatch('a futuristic RIFLE on a stand')).toBe('rifle');
+		expect(promptDenyMatch('nude figure study')).toBe('nude');
+	});
+
+	it('does not block safe prompts, including substring lookalikes', () => {
+		expect(promptDenyMatch('a crystal dragon')).toBeNull();
+		expect(promptDenyMatch('sussex county cottage')).toBeNull();
+		expect(promptDenyMatch('gunmetal grey sports car')).toBeNull();
+	});
+
+	it('keeps the SQL pattern in sync with the same term list', () => {
+		expect(DENY_SQL_PATTERN).toContain('glock');
+		expect(DENY_SQL_PATTERN).toMatch(/^\\m\(/);
 	});
 });
 

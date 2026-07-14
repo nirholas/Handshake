@@ -26,6 +26,32 @@ export const GLB_MAX_BYTES = 45 * 1024 * 1024;
 
 const SHOWCASE_UTM = 'utm_source=sketchfab&utm_medium=referral&utm_campaign=showcase';
 
+// Brand-safety denylist for the OFFICIAL showcase account. Users can forge
+// what the forge allows; the brand account does not publish firearms or
+// explicit content under the three.ws name. Word-boundary matched, so
+// "bullet train" style false positives are accepted as the cost of a
+// conservative gate. This local list is always on; the NemoGuard classifier
+// (api/_lib/moderation.js) runs as a second, fail-open layer in the cron.
+const DENY_TERMS = [
+	'glock', 'gun', 'guns', 'firearm', 'firearms', 'rifle', 'pistol', 'shotgun',
+	'revolver', 'ammo', 'bullet', 'bullets', 'grenade', 'bomb', 'explosive',
+	'suppressor', 'silencer', 'nsfw', 'nude', 'naked', 'sex', 'sexy', 'porn',
+	'hentai', 'swastika',
+];
+
+const DENY_RE = new RegExp(`\\b(${DENY_TERMS.join('|')})\\b`, 'i');
+
+// Returns the matched term when the prompt is brand-unsafe, else null.
+export function promptDenyMatch(prompt) {
+	const m = String(prompt || '').match(DENY_RE);
+	return m ? m[1].toLowerCase() : null;
+}
+
+// Same list as a POSIX regex for `prompt !~* ...` in selection SQL, so
+// obviously unsafe models never even appear as candidates (dry-run included).
+// \m and \M are postgres word boundaries.
+export const DENY_SQL_PATTERN = `\\m(${DENY_TERMS.join('|')})\\M`;
+
 export function sketchfabConfigured() {
 	return Boolean(env.SKETCHFAB_API_TOKEN);
 }
@@ -68,7 +94,9 @@ export function buildDescription({ prompt, creationId, source }) {
 	const pickLine =
 		source === 'board_winner'
 			? 'Weekly Forge-Off winner, crowned by community vote.'
-			: 'Community pick: one of the top-voted models on the forge board.';
+			: source === 'top_voted'
+				? 'Community pick: one of the top-voted models on the forge board.'
+				: 'Curated pick from the three.ws forge gallery.';
 	const share = showcaseLink(`/forge/share/${creationId}`);
 	const forge = showcaseLink('/forge');
 	const fixed = [

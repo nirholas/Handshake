@@ -60,7 +60,7 @@
 			<guid isPermaLink="false">2026-07-14:The best community models now go to Sketchfab</guid>
 			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
-			<description>Weekly Forge-Off winners and the top-voted forge board models are now published to the official three.ws account on Sketchfab, the largest public 3D model site. It is a curated showcase, not a firehose: a few community-validated models a week, each clearly tagged as AI-generated, with its generation prompt and a link back to the creation on three.ws so anyone who finds it can remix it or forge their own. Every link is tagged so we can measure how many visitors the showcase actually brings in.</description>
+			<description>The best forge models are now published to the official three.ws account on Sketchfab, the largest public 3D model site: weekly Forge-Off winners first, then top-voted board models, then creations their makers explicitly accepted. It is a curated showcase, not a firehose: a few validated models a week, each clearly tagged as AI-generated, with its generation prompt and a link back to the creation on three.ws so anyone who finds it can remix it or forge their own. Every link is tagged so we can measure how many visitors the showcase actually brings in.</description>
 		</item>
 		<item>
 			<title>Tour and Walk SDK update: switch between Stroll and Platformer from the tour controls</title>

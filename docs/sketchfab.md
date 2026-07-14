@@ -18,10 +18,22 @@ Selection runs three times a week (Mon/Wed/Fri) and takes up to
    week on the [forge board](/forge) is the strongest curation signal on the
    platform and always goes first.
 2. **Top-voted board models.** Anything with at least one community upvote,
-   highest votes first. Raw unreviewed output is never pushed.
+   highest votes first.
+3. **Creator-validated models.** Creations whose maker explicitly accepted
+   the result or downloaded the GLB, newest first. This tier keeps the
+   showcase alive while board voting ramps up. Raw unreviewed output is
+   never pushed.
 
 A model is skipped when its GLB exceeds the Sketchfab upload cap (45 MB
 guard), when it was already uploaded, or when it failed three times.
+
+**Brand safety.** The official account never publishes firearms or explicit
+content, regardless of what the forge itself allows. A conservative
+word-boundary denylist filters the selection query and re-checks before
+upload, and the platform's NemoGuard content classifier runs as a second
+layer. Blocked creations are parked in the ledger (`blocked`) and never
+re-picked. Refinement children are also excluded from the creator-validated
+tier, since their prompts are instructions, not titles.
 
 ## What an upload looks like
 

@@ -8,7 +8,19 @@
 //   1. Weekly Forge-Off winners (forge_board_winners) not yet uploaded: the
 //      strongest human-curation signal on the platform.
 //   2. Top-voted board models (forge_creations.vote_count >= 1): at least one
-//      real community vote, never raw unreviewed output.
+//      real community vote.
+//   3. Creator-validated models (outcome = 'accepted' or downloaded = true):
+//      the creator explicitly accepted the generation or took the GLB. This
+//      tier seeds the showcase while board voting ramps up; raw unreviewed
+//      output is never pushed. Refinement children (parent_creation_id set)
+//      are excluded: their prompts are instructions ("add robot legs"), not
+//      titles.
+//
+// Brand safety: the official account never publishes firearms or explicit
+// content. A local denylist filters the selection SQL itself (dry-run
+// included) and re-checks before upload; the NemoGuard classifier
+// (moderation.js) runs as a second, fail-open layer. A blocked creation is
+// parked in the ledger with status 'blocked' so it is never re-picked.
 //
 // Every upload is tagged `ai-generated`, carries the source prompt, and
 // backlinks to the creation's share page + /forge with UTM parameters
@@ -27,14 +39,17 @@ import { env } from '../_lib/env.js';
 import { sql } from '../_lib/db.js';
 import { constantTimeEquals } from '../_lib/crypto.js';
 import {
+	DENY_SQL_PATTERN,
 	GLB_MAX_BYTES,
 	buildDescription,
 	buildModelName,
 	buildTags,
 	getProcessingStatus,
+	promptDenyMatch,
 	sketchfabConfigured,
 	uploadModel,
 } from '../_lib/sketchfab.js';
+import { moderateAnonInput } from '../_lib/moderation.js';
 
 const MAX_ATTEMPTS = 3;
 
@@ -70,6 +85,7 @@ async function selectCandidates(limit) {
 		where fc.status = 'done'
 		  and fc.glb_url is not null
 		  and (fc.outcome is null or fc.outcome != 'rejected')
+		  and fc.prompt !~* ${DENY_SQL_PATTERN}
 		  and coalesce(fc.size_bytes, 0) <= ${GLB_MAX_BYTES}
 		  and not exists (
 		    select 1 from sketchfab_uploads su
@@ -81,7 +97,7 @@ async function selectCandidates(limit) {
 	`;
 	if (winners.length >= limit) return winners;
 
-	const winnerIds = winners.map((w) => w.id);
+	const taken = winners.map((w) => w.id);
 	const topVoted = await sql`
 		select fc.id, fc.prompt, fc.glb_url, fc.model_category, 'top_voted' as source
 		from forge_creations fc
@@ -89,8 +105,9 @@ async function selectCandidates(limit) {
 		  and fc.glb_url is not null
 		  and (fc.outcome is null or fc.outcome != 'rejected')
 		  and fc.vote_count >= 1
+		  and fc.prompt !~* ${DENY_SQL_PATTERN}
 		  and coalesce(fc.size_bytes, 0) <= ${GLB_MAX_BYTES}
-		  and fc.id != all(${winnerIds}::uuid[])
+		  and fc.id != all(${taken}::uuid[])
 		  and not exists (
 		    select 1 from sketchfab_uploads su
 		    where su.creation_id = fc.id
@@ -99,7 +116,37 @@ async function selectCandidates(limit) {
 		order by fc.vote_count desc, fc.created_at desc
 		limit ${limit - winners.length}
 	`;
-	return [...winners, ...topVoted];
+	const picked = [...winners, ...topVoted];
+	if (picked.length >= limit) return picked;
+
+	taken.push(...topVoted.map((t) => t.id));
+	const accepted = await sql`
+		select fc.id, fc.prompt, fc.glb_url, fc.model_category, 'accepted' as source
+		from forge_creations fc
+		where fc.status = 'done'
+		  and fc.glb_url is not null
+		  and (fc.outcome = 'accepted' or fc.downloaded = true)
+		  and fc.prompt is not null
+		  and fc.prompt !~* ${DENY_SQL_PATTERN}
+		  and fc.parent_creation_id is null
+		  -- Title quality: skip placeholder prompts from the image path and
+		  -- instruction-shaped prompts ("add robot legs"), which make
+		  -- meaningless public model names. Winners/voted tiers are already
+		  -- human-curated and skip this heuristic.
+		  and length(fc.prompt) >= 12
+		  and fc.prompt != 'image-to-3d'
+		  and fc.prompt !~* '^(add|remove|make|change|fix|update)\\M'
+		  and coalesce(fc.size_bytes, 0) <= ${GLB_MAX_BYTES}
+		  and fc.id != all(${taken}::uuid[])
+		  and not exists (
+		    select 1 from sketchfab_uploads su
+		    where su.creation_id = fc.id
+		      and (su.status != 'failed' or su.attempts >= ${MAX_ATTEMPTS})
+		  )
+		order by fc.created_at desc
+		limit ${limit - picked.length}
+	`;
+	return [...picked, ...accepted];
 }
 
 // Claim the creation in the ledger before touching the network so concurrent
@@ -120,9 +167,30 @@ async function claimCreation(candidate) {
 	return row?.id || null;
 }
 
+// Local denylist + NemoGuard verdict. Returns a block reason or null.
+async function contentBlockReason(prompt) {
+	const term = promptDenyMatch(prompt);
+	if (term) return `denylist:${term}`;
+	const verdict = await moderateAnonInput(prompt).catch(() => ({ flagged: false }));
+	if (verdict?.flagged) {
+		return `moderation:${(verdict.categories || []).join(',') || 'unsafe'}`;
+	}
+	return null;
+}
+
 async function pushCandidate(candidate) {
 	const ledgerId = await claimCreation(candidate);
 	if (!ledgerId) return { id: candidate.id, status: 'skipped', reason: 'already_claimed' };
+
+	const blockReason = await contentBlockReason(candidate.prompt);
+	if (blockReason) {
+		await sql`
+			update sketchfab_uploads
+			set status = 'blocked', error = ${blockReason}, updated_at = now()
+			where id = ${ledgerId}
+		`;
+		return { id: candidate.id, status: 'blocked', source: candidate.source, reason: blockReason };
+	}
 
 	try {
 		const name = buildModelName(candidate.prompt);
@@ -235,6 +303,7 @@ export default wrapCron(async (req, res) => {
 		ok: true,
 		uploaded: results.filter((r) => r.status === 'uploaded').length,
 		failed: results.filter((r) => r.status === 'failed').length,
+		blocked: results.filter((r) => r.status === 'blocked').length,
 		refreshed,
 		results,
 	});
