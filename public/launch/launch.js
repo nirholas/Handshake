@@ -49,16 +49,32 @@ const PICKER_CSS = `
   background-size:200% 100%;animation:lc-shimmer 1.3s linear infinite}
 @keyframes lc-shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-.lc-pick-cta{margin-top:.35rem;display:block;text-align:center;padding:.55rem;border-radius:9px;
+.lc-pick-cta{margin-top:.35rem;display:flex;align-items:center;justify-content:center;
+  min-height:44px;box-sizing:border-box;text-align:center;padding:.55rem;border-radius:9px;
   font-size:.78rem;text-decoration:none;color:rgba(255,255,255,.5);background:rgba(255,255,255,.025);
   border:1px dashed rgba(255,255,255,.12);transition:all .15s}
 .lc-pick-cta:hover{color:rgba(164,240,188,.85);border-color:rgba(164,240,188,.3);
   background:rgba(164,240,188,.05)}
+.lc-pick-cta:focus-visible,.lc-cta-primary:focus-visible{outline:2px solid rgba(164,240,188,.6);outline-offset:2px}
+
+.lc-cta-primary{display:flex;align-items:center;justify-content:center;min-height:44px;
+  box-sizing:border-box;padding:.6rem .8rem;border-radius:9px;font-size:.82rem;font-weight:500;
+  text-decoration:none;text-align:center;color:rgba(164,240,188,.9);
+  background:rgba(164,240,188,.08);border:1px solid rgba(164,240,188,.26);
+  transition:background .15s,border-color .15s,color .15s}
+.lc-cta-primary:hover{background:rgba(164,240,188,.14);border-color:rgba(164,240,188,.42);color:#c8f0d8}
+
+.lc-count{margin-left:.45rem;font-weight:600;color:rgba(164,240,188,.6)}
 
 .lc-signin{font-size:.74rem;color:rgba(255,255,255,.45);line-height:1.55;padding:.6rem .7rem;
   border-radius:9px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.07)}
 .lc-signin a{color:rgba(164,240,188,.8);text-decoration:none}
 .lc-signin a:hover{color:#a4f0bc}
+
+@media (prefers-reduced-motion:reduce){
+  .lc-skel{animation:none;background:rgba(255,255,255,.045)}
+  .lc-card,.lc-pick-cta,.lc-cta-primary{transition:none}
+}
 `;
 
 const esc = (s) =>
@@ -106,16 +122,17 @@ function renderPicker() {
 		return;
 	}
 
-	// Signed out, or signed in with no avatars → let the panel's guided state
-	// lead; the picker just nudges the next concrete action.
+	// Signed out, or signed in with no avatars: let the panel's guided state
+	// lead; the picker names the exact next action with a real CTA.
 	if (!state.avatars.length) {
 		pickerEl.innerHTML =
 			'<p class="lc-col-h">Choose your agent</p>' +
 			(state.user
-				? '<a class="lc-pick-cta" href="/create-agent">+ Create your first agent</a>'
-				: '<div class="lc-signin">A coin launches for one of your agents. ' +
-				  '<a href="/login?next=/launch">Sign in</a> to pick an agent, or ' +
-				  '<a href="/create-agent">create one</a> first.</div>');
+				? '<div class="lc-signin">No agents yet. A coin always launches for one of your agents, so create one first (it takes about a minute).</div>' +
+				  '<a class="lc-cta-primary" href="/create-agent">+ Create your first agent</a>'
+				: '<div class="lc-signin">A coin launches for one of your agents. Sign in to pick one, or create a new agent first.</div>' +
+				  '<a class="lc-cta-primary" href="/login?next=/launch">Sign in to pick an agent</a>' +
+				  '<a class="lc-pick-cta" href="/create-agent">+ Create an agent</a>');
 		return;
 	}
 
@@ -136,19 +153,46 @@ function renderPicker() {
 		.join('');
 
 	pickerEl.innerHTML =
-		'<p class="lc-col-h">Choose your agent</p>' +
+		`<p class="lc-col-h">Choose your agent<span class="lc-count">${state.avatars.length}</span></p>` +
 		cards +
 		'<a class="lc-pick-cta" href="/create-agent">+ New agent</a>';
 
-	for (const btn of pickerEl.querySelectorAll('.lc-card')) {
+	const cardEls = [...pickerEl.querySelectorAll('.lc-card')];
+	cardEls.forEach((btn, i) => {
 		btn.addEventListener('click', () => selectAvatar(btn.dataset.id));
+		// Arrow-key movement between agent cards (wraps at the ends).
+		btn.addEventListener('keydown', (e) => {
+			let to = null;
+			if (e.key === 'ArrowDown' || e.key === 'ArrowRight')    to = cardEls[(i + 1) % cardEls.length];
+			else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft')  to = cardEls[(i - 1 + cardEls.length) % cardEls.length];
+			else if (e.key === 'Home')                              to = cardEls[0];
+			else if (e.key === 'End')                               to = cardEls[cardEls.length - 1];
+			if (to) { e.preventDefault(); to.focus(); }
+		});
+	});
+
+	// A dead thumbnail URL must never show a broken-image icon: swap it for
+	// the same initial placeholder the no-thumbnail case uses.
+	for (const img of pickerEl.querySelectorAll('img.lc-thumb')) {
+		img.addEventListener('error', () => {
+			const name = img.closest('.lc-card')?.querySelector('.lc-name')?.textContent || 'A';
+			const ph = document.createElement('span');
+			ph.className = 'lc-thumb-ph';
+			ph.setAttribute('aria-hidden', 'true');
+			ph.textContent = (name.trim().charAt(0) || 'A').toUpperCase();
+			img.replaceWith(ph);
+		}, { once: true });
 	}
 }
 
 function selectAvatar(id) {
 	if (id === state.avatarId) return;
+	// Re-rendering replaces the focused card; put focus back on the newly
+	// selected one so keyboard flow is unbroken.
+	const hadFocus = pickerEl?.contains(document.activeElement);
 	state.avatarId = id;
 	renderPicker();
+	if (hadFocus) pickerEl.querySelector(`.lc-card[data-id="${CSS.escape(id)}"]`)?.focus();
 	launchPanel?.avatarChanged();
 }
 

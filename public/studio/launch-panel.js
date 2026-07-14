@@ -1077,7 +1077,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			s.phase = 'building'; s.phaseLabel = 'Uploading metadata…'; render();
 
 			const nameTrim = s.name.trim().slice(0, 32);
-			// Preserve the symbol exactly as entered (whitespace/emoji/special chars), cap at 10 codepoints.
+			// Symbol was normalized (uppercased, emoji/special chars kept) at input time; cap at 10 codepoints.
 			const symTrim  = [...s.symbol].slice(0, 10).join('');
 			const descTrim = s.description.trim().slice(0, 500);
 			// Key includes the file's identity, not just its presence, so swapping
@@ -1629,35 +1629,49 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		</div>`;
 	}
 
+	// Progressive stage tracker shown while a launch is in flight. The agent
+	// wallet path has no local signing step (the server signs), so it shows
+	// three stages instead of four. Decorative twin of the aria-live phase
+	// label below it, so it stays aria-hidden to avoid double announcements.
+	function launchStepsHtml() {
+		const steps = s.walletSource === 'agent'
+			? [['building', 'Metadata'], ['stamping', 'Brand mark'], ['confirming', 'On-chain']]
+			: [['building', 'Metadata'], ['stamping', 'Brand mark'], ['signing', 'Sign'], ['confirming', 'Confirm']];
+		const idx = steps.findIndex(([id]) => id === s.phase);
+		return `<ol class="lp-steps" aria-hidden="true">${steps
+			.map(([, label], i) => `<li class="${i < idx ? 'done' : i === idx ? 'active' : ''}">${label}</li>`)
+			.join('')}</ol>`;
+	}
+
 	function renderForm() {
 		const busy = s.phase !== 'idle' && s.phase !== 'error';
 		const dis  = busy ? 'disabled' : '';
 		const cost = estimatedCost();
 
-		const sourceToggleHtml = `<div class="lp-src" role="tablist" aria-label="Launch wallet">
-			<button type="button" role="tab" data-src="connected" class="${s.walletSource === 'connected' ? 'on' : ''}" ${busy ? 'disabled' : ''}>
+		const sourceToggleHtml = `<div class="lp-src" role="radiogroup" aria-label="Launch wallet">
+			<button type="button" role="radio" aria-checked="${s.walletSource === 'connected'}" data-src="connected" class="${s.walletSource === 'connected' ? 'on' : ''}" ${busy ? 'disabled' : ''}>
 				Connected wallet<span class="lp-src-sub">Phantom / Backpack</span>
 			</button>
-			<button type="button" role="tab" data-src="agent" class="${s.walletSource === 'agent' ? 'on' : ''}" ${busy ? 'disabled' : ''}>
+			<button type="button" role="radio" aria-checked="${s.walletSource === 'agent'}" data-src="agent" class="${s.walletSource === 'agent' ? 'on' : ''}" ${busy ? 'disabled' : ''}>
 				Agent wallet<span class="lp-src-sub">Custodial · server-signed</span>
 			</button>
 		</div>`;
 
 		const ct = s.coinType;
-		const coinTypeHtml = `<div class="lp-coin" role="tablist" aria-label="Coin type">
-			<button type="button" role="tab" data-coin="regular" class="regular ${ct === 'regular' ? 'on' : ''}" ${busy ? 'disabled' : ''}>
+		const coinTypeHtml = `<div class="lp-coin" role="radiogroup" aria-label="Coin type">
+			<button type="button" role="radio" aria-checked="${ct === 'regular'}" data-coin="regular" class="regular ${ct === 'regular' ? 'on' : ''}" ${busy ? 'disabled' : ''}>
 				<span class="lp-coin-emoji">🪙</span>Regular<span class="lp-coin-sub">Plain pump.fun</span>
 			</button>
-			<button type="button" role="tab" data-coin="mayhem" class="mayhem ${ct === 'mayhem' ? 'on' : ''}" ${busy ? 'disabled' : ''}>
+			<button type="button" role="radio" aria-checked="${ct === 'mayhem'}" data-coin="mayhem" class="mayhem ${ct === 'mayhem' ? 'on' : ''}" ${busy ? 'disabled' : ''}>
 				<span class="lp-coin-emoji">🔥</span>Mayhem<span class="lp-coin-sub">High-volatility</span>
 			</button>
-			<button type="button" role="tab" data-coin="agent" class="agent ${ct === 'agent' ? 'on' : ''}" ${busy ? 'disabled' : ''}>
+			<button type="button" role="radio" aria-checked="${ct === 'agent'}" data-coin="agent" class="agent ${ct === 'agent' ? 'on' : ''}" ${busy ? 'disabled' : ''}>
 				<span class="lp-coin-emoji">🤖</span>Agent<span class="lp-coin-sub">SOL buyback</span>
 			</button>
-			<button type="button" role="tab" data-coin="usdc" class="usdc ${ct === 'usdc' ? 'on' : ''}" ${busy ? 'disabled' : ''} title="USDC-paired agent coin — trades and pays out in USDC instead of SOL.">
+			<button type="button" role="radio" aria-checked="${ct === 'usdc'}" data-coin="usdc" class="usdc ${ct === 'usdc' ? 'on' : ''}" ${busy ? 'disabled' : ''} title="USDC-paired agent coin: trades and pays out in USDC instead of SOL.">
 				<span class="lp-coin-emoji">💵</span>USDC<span class="lp-coin-sub">Stablecoin pair</span>
 			</button>
-			<button type="button" role="tab" data-coin="reward" class="reward ${ct === 'reward' ? 'on' : ''}" ${busy ? 'disabled' : ''} title="Open-source / GitHub reward coin — creator fees are delegated and split to a team or repo contributors who each claim their share.">
+			<button type="button" role="radio" aria-checked="${ct === 'reward'}" data-coin="reward" class="reward ${ct === 'reward' ? 'on' : ''}" ${busy ? 'disabled' : ''} title="Open-source / GitHub reward coin: creator fees are delegated and split to a team or repo contributors who each claim their share.">
 				<span class="lp-coin-emoji">🎁</span>Reward<span class="lp-coin-sub">Delegated fees</span>
 			</button>
 		</div>`;
@@ -1716,28 +1730,52 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 
 		const imgSrc = s.imagePreviewUrl || av?.thumbnail_url;
 
+		// Live character counters against the real pump.fun caps (name 32,
+		// symbol 10 codepoints, description 500); warn tint from 90% up.
+		const countHtml = (id, n, max) =>
+			`<span class="lp-count${n >= max * 0.9 ? ' warn' : ''}" id="${id}" aria-hidden="true">${n}/${max}</span>`;
+		const nameBad = s._touched.name && !s.name.trim();
+		const symBad  = s._touched.symbol && s.symbol.length === 0;
+		const descBad = s._touched.description && !s.description.trim();
+
 		container.innerHTML = `<div class="lp">
 			<div class="lp-card">
 				<div class="lp-img-zone" id="lp-zone" title="Drop a PNG/JPG/GIF here, or click to pick a file. This becomes the token's avatar on pump.fun.">
 					${imgSrc ? `<img src="${esc(imgSrc)}" alt="" />` : `<div class="lp-img-ph">Drop image<br>or click</div>`}
-					<input type="file" class="lp-img-file" id="lp-img" accept="image/*" ${dis} />
+					<input type="file" class="lp-img-file" id="lp-img" accept="image/*" aria-label="Token image upload" ${dis} />
 				</div>
 				<div class="lp-card-fields">
-					<input class="lp-iname" id="lp-name" type="text" maxlength="32"
-						placeholder="Token name" value="${esc(s.name)}" ${dis}
-						title="Shown on pump.fun. Up to 32 chars." />
-					<input class="lp-isymbol" id="lp-sym" type="text" maxlength="80"
-						placeholder="SYMBOL" value="${esc(s.symbol)}" ${dis}
-						title="Ticker symbol (the $ in $CZ). Any characters — emoji and symbols allowed, up to 10." />
+					<div class="lp-frow">
+						<input class="lp-iname" id="lp-name" type="text" maxlength="32"
+							placeholder="Token name" value="${esc(s.name)}" ${dis}
+							aria-label="Token name" aria-required="true" aria-invalid="${nameBad}" aria-describedby="lp-name-msg"
+							title="Shown on pump.fun. Up to 32 chars." />
+						${countHtml('lp-name-count', s.name.length, 32)}
+					</div>
+					<div class="lp-field-msg" id="lp-name-msg" ${nameBad ? '' : 'hidden'}>Token name is required.</div>
+					<div class="lp-frow">
+						<input class="lp-isymbol" id="lp-sym" type="text" maxlength="80"
+							placeholder="SYMBOL" value="${esc(s.symbol)}" ${dis}
+							aria-label="Ticker symbol" aria-required="true" aria-invalid="${symBad}" aria-describedby="lp-sym-msg"
+							title="Ticker symbol (the $ in $CZ). Uppercased automatically; emoji and symbols allowed, up to 10." />
+						${countHtml('lp-sym-count', [...s.symbol].length, 10)}
+					</div>
+					<div class="lp-field-msg" id="lp-sym-msg" ${symBad ? '' : 'hidden'}>Symbol is required.</div>
 					<div class="lp-img-hint">Click image to replace · drag &amp; drop</div>
 					${getPreviewViewer ? `<button type="button" class="lp-cap-btn" id="lp-capture" ${dis} title="Snapshot the current 3D preview and use it as the token image.">📸 Use 3D view</button>` : ''}
 				</div>
 			</div>
+			<div class="lp-img-err" id="lp-img-err" role="alert" ${s.imageError ? '' : 'hidden'}>${esc(s.imageError)}</div>
 			<div>
-				<label for="lp-desc">Description</label>
+				<div class="lp-lrow">
+					<label for="lp-desc">Description</label>
+					${countHtml('lp-desc-count', s.description.length, 500)}
+				</div>
 				<textarea id="lp-desc" rows="3" maxlength="500"
 					placeholder="What does this agent do?" ${dis}
+					aria-required="true" aria-invalid="${descBad}" aria-describedby="lp-desc-msg"
 					title="Short pitch (up to 500 chars). Shown on pump.fun and on your agent page.">${esc(s.description)}</textarea>
+				<div class="lp-field-msg" id="lp-desc-msg" ${descBad ? '' : 'hidden'}>Description is required.</div>
 			</div>
 			${coinTypeHtml}
 			${coinNoteHtml}
@@ -1761,7 +1799,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 						<div>${buyField}</div>
 						<div>
 							<div class="lp-slider-head">
-								<label title="Share of your agent's paid-endpoint revenue (in ${buybackUnit}) that automatically buys back and burns this token on-chain.">Buyback share</label>
+								<label for="lp-bps" title="Share of your agent's paid-endpoint revenue (in ${buybackUnit}) that automatically buys back and burns this token on-chain.">Buyback share</label>
 								<span class="lp-bps-val" id="lp-bps-val">${(s.buybackBps / 100).toFixed(1)}%</span>
 							</div>
 							<input type="range" class="lp-slider" id="lp-bps"
@@ -1775,8 +1813,9 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			})()}
 			${sourceToggleHtml}
 			${walletHtml}
-			${s.phase === 'error' ? `<div class="lp-err">${esc(s.errorMsg)}<div class="lp-err-sub">Adjust the details above and try again — nothing has been minted yet.</div></div>` : ''}
+			${s.phase === 'error' ? `<div class="lp-err" role="alert"><b>Launch failed.</b> ${esc(s.errorMsg)}<div class="lp-err-sub">Nothing was minted. Fix the issue, then press the launch button to retry.</div></div>` : ''}
 			<button class="lp-launch${busy ? ' busy' : ''}" id="lp-go" data-action="${btnAction}"${btnTitle ? ` title="${esc(btnTitle)}"` : ''} ${btnDis ? 'disabled' : ''}>${btnText}</button>
+			${busy ? launchStepsHtml() : ''}
 			${busy ? `<div class="lp-phase" role="status" aria-live="polite">${esc(s.phaseLabel)}</div>` : ''}
 			${s.phase === 'stamping' ? `<div class="lp-stamp-live" id="lp-stamp-live" role="status" aria-live="polite" aria-atomic="false"><span class="lp-spspin" aria-hidden="true"></span>Stamping the three.ws mark <strong>3ws</strong>…</div>` : ''}
 		</div>`;
@@ -1814,6 +1853,7 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 			<div class="lp-ok-links">
 				<a class="lp-ext" href="${esc(PUMP_URL(mint))}" target="_blank" rel="noopener">pump.fun ↗</a>
 				<a class="lp-ext" href="https://solscan.io/token/${esc(mint)}" target="_blank" rel="noopener">Solscan ↗</a>
+				${s.launchSig ? `<a class="lp-ext" href="${esc(SOLSCAN(s.launchSig))}" target="_blank" rel="noopener">Launch tx ↗</a>` : ''}
 				${agentId ? `<a class="lp-ext" href="/agents/${esc(agentId)}">Agent page ↗</a>` : ''}
 			</div>
 			<button class="lp-share" id="lp-share">📋 Copy launch announcement</button>
@@ -1831,8 +1871,8 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		copyBtn('#lp-copy-mint', mint);
 		copyBtn('#lp-share', shareText);
 		container.querySelector('#lp-again')?.addEventListener('click', () => {
-			s.phase = 'idle'; s.mint = null; s.errorMsg = '';
-			s.imageFile = null; s.imagePreviewUrl = null;
+			s.phase = 'idle'; s.mint = null; s.errorMsg = ''; s.launchSig = null;
+			s.imageFile = null; s.imagePreviewUrl = null; s.imageError = '';
 			s._metaUrl = null; s._metaKey = null;
 			s.existingMint = null; s.forceNew = false;
 			render();
@@ -1847,19 +1887,55 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		q('#lp-zone')?.addEventListener('drop',      (e) => { e.preventDefault(); q('#lp-zone')?.classList.remove('dragover'); handleImageFile(e.dataTransfer?.files?.[0]); });
 		q('#lp-img')?.addEventListener('change', (e) => handleImageFile(e.target.files?.[0]));
 
+		const setCount = (sel, n, max) => {
+			const el = q(sel); if (!el) return;
+			el.textContent = `${n}/${max}`;
+			el.classList.toggle('warn', n >= max * 0.9);
+		};
+
+		// Inline "required" hints: appear once a field is visited and left empty,
+		// clear live as soon as the user types. DOM-patched, never a full render.
+		const wireRequired = (key, inputSel, msgSel, isEmpty) => {
+			const el = q(inputSel); if (!el) return;
+			const apply = () => {
+				const bad = s._touched[key] && isEmpty();
+				el.setAttribute('aria-invalid', String(bad));
+				const m = q(msgSel); if (m) m.hidden = !bad;
+			};
+			el.addEventListener('blur',  () => { s._touched[key] = true; apply(); });
+			el.addEventListener('input', apply);
+		};
+
 		q('#lp-name')?.addEventListener('input', (e) => {
 			s.name = e.target.value;
+			setCount('#lp-name-count', s.name.length, 32);
 			if (!s._symbolEdited) {
 				s.symbol = toSymbol(s.name);
 				const se = q('#lp-sym'); if (se) se.value = s.symbol;
+				setCount('#lp-sym-count', [...s.symbol].length, 10);
 			}
 		});
 		q('#lp-sym')?.addEventListener('input', (e) => {
-			// Permissive: allow any characters (emoji, lowercase, symbols), cap at 10 codepoints.
-			const raw = [...e.target.value].slice(0, 10).join('');
+			// Tickers are conventionally uppercase: uppercase letters live, keep
+			// emoji and symbols as typed, cap at 10 codepoints. Restore the caret
+			// since assigning .value moves it to the end.
+			const caret = e.target.selectionStart;
+			const raw = [...e.target.value.toUpperCase()].slice(0, 10).join('');
 			e.target.value = raw; s.symbol = raw; s._symbolEdited = true;
+			if (caret != null) {
+				try { e.target.setSelectionRange(Math.min(caret, raw.length), Math.min(caret, raw.length)); }
+				catch { /* not applicable on this input type */ }
+			}
+			setCount('#lp-sym-count', [...raw].length, 10);
 		});
-		q('#lp-desc')?.addEventListener('input', (e) => { s.description = e.target.value; });
+		q('#lp-desc')?.addEventListener('input', (e) => {
+			s.description = e.target.value;
+			setCount('#lp-desc-count', s.description.length, 500);
+		});
+
+		wireRequired('name',        '#lp-name', '#lp-name-msg', () => !s.name.trim());
+		wireRequired('symbol',      '#lp-sym',  '#lp-sym-msg',  () => s.symbol.length === 0);
+		wireRequired('description', '#lp-desc', '#lp-desc-msg', () => !s.description.trim());
 
 		q('#lp-buy')?.addEventListener('input', (e) => {
 			s.initialBuy = e.target.value;
@@ -1887,15 +1963,27 @@ export function mountLaunchPanel(container, { getAvatar, getUser, getPreviewView
 		q('#lp-link-wallet')?.addEventListener('click', () => linkConnectedWallet(false));
 		q('#lp-link-transfer')?.addEventListener('click', () => linkConnectedWallet(true));
 
-		// Wallet-source toggle
-		container.querySelectorAll('.lp-src button[data-src]').forEach((btn) => {
-			btn.addEventListener('click', () => switchSource(btn.dataset.src));
-		});
-
-		// Coin-type selector
-		container.querySelectorAll('.lp-coin button[data-coin]').forEach((btn) => {
-			btn.addEventListener('click', () => switchCoinType(btn.dataset.coin));
-		});
+		// Wallet-source toggle + coin-type selector: radiogroup semantics with
+		// arrow-key movement. Selecting re-renders the panel, so focus is put
+		// back on the freshly rendered button for the chosen value.
+		const wireRadioGroup = (groupSel, dataAttr, apply) => {
+			const btns = [...container.querySelectorAll(`${groupSel} button[data-${dataAttr}]`)];
+			const choose = (value) => {
+				apply(value);
+				container.querySelector(`${groupSel} button[data-${dataAttr}="${value}"]`)?.focus();
+			};
+			btns.forEach((btn, i) => {
+				btn.addEventListener('click', () => choose(btn.dataset[dataAttr]));
+				btn.addEventListener('keydown', (e) => {
+					let to = null;
+					if (e.key === 'ArrowRight' || e.key === 'ArrowDown')     to = btns[(i + 1) % btns.length];
+					else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp')   to = btns[(i - 1 + btns.length) % btns.length];
+					if (to && !to.disabled) { e.preventDefault(); choose(to.dataset[dataAttr]); }
+				});
+			});
+		};
+		wireRadioGroup('.lp-src',  'src',  switchSource);
+		wireRadioGroup('.lp-coin', 'coin', switchCoinType);
 
 		// Agent-wallet bar
 		q('#lp-agent-retry')?.addEventListener('click', () => loadAgentWallet());

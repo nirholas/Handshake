@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-14T14:08:29.808Z",
+	"generated_at": "2026-07-14T14:39:05.335Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -131,6 +131,28 @@
 		{
 			"date": "2026-07-14",
 			"type": "update",
+			"title": "Launching a coin is clearer at every step",
+			"summary": "The coin launch page now guides you properly: signed-out and no-agents states have one obvious button instead of buried links, the agent picker supports arrow keys and never shows a broken thumbnail, and the form has live character counters against pump.fun's real limits, auto-uppercased tickers, and inline validation. While a launch runs you see each stage progress, and success now links the actual transaction on Solscan next to your coin page. A subtle bug is also gone: retrying a launch after swapping the image no longer reuses the old image's metadata.",
+			"link": "/launch",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
+			"title": "Launchpad Studio: loading, saving, and publishing you can trust",
+			"summary": "The studio now shows a real loading state while it fetches a saved launchpad and a clear recovery screen if that fetch fails, instead of silently dropping you into a blank draft. Publishing validates your slug and wallet address inline before any network call, success puts your live URL front and center with a copy button, and a failure keeps your last live URL and offers retry. Edits to a published page warn before you navigate away, the editor finally works on phones with a stacked layout, and the Publish button is no longer white text on a white background.",
+			"link": "/launchpad",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
 			"title": "New doc: IRL, agents in the real world",
 			"summary": "The IRL layer finally has a front door in the docs: one page that explains the whole vision and how the shipped pieces fit together. It covers placing an agent at a real GPS spot from your phone, walk-up discovery with proof of presence, paying agents in person via x402, Money Drops (real SOL, USDC, or $THREE escrowed at a place and claimable only by walking up), World Lines (agent-signed proofs that you were really there), and the privacy model that makes it all safe. The docs sidebar now also links the hands-on IRL tutorial, which was previously unreachable from the navigation.",
 			"link": "/docs/irl",
@@ -188,6 +210,16 @@
 			"link": "/docs/sketchfab",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
+			"title": "The on-chain deploy wizard got a full polish pass",
+			"summary": "Deploying an agent on-chain is now smoother end to end. The step bar is keyboard-navigable and screen-reader friendly, form fields validate inline with live character counters instead of failing three steps later, and bad service endpoints are caught before they can be minted into your agent's on-chain record. Wallet problems now say exactly what to do (install, unlock, connect, or switch network). A failed mint shows a clear error panel with a working retry, and success promotes the explorer link plus one-click next steps: view your agent page, launch a coin, or embed it. The whole wizard works down to small phones, and a 3D preview that cannot render falls back to a clear notice instead of an empty box.",
+			"link": "/deploy",
+			"tags": [
+				"improvement"
 			]
 		},
 		{

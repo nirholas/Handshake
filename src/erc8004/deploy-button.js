@@ -151,7 +151,7 @@ export class DeployButton {
 		this._root.innerHTML = `
 			<div class="deploy-chain-row">
 				<select class="deploy-chain-select" title="Choose chain to deploy to" aria-label="Target chain">
-					<optgroup label="Solana">${solanaOptionFor(SOLANA_MAINNET)}${solanaOptionFor(SOLANA_DEVNET)}</optgroup>
+					<optgroup label="Solana (recommended)">${solanaOptionFor(SOLANA_MAINNET)}${solanaOptionFor(SOLANA_DEVNET)}</optgroup>
 					<optgroup label="EVM Mainnets">${evmOptionsFor(mainnets)}</optgroup>
 					<optgroup label="EVM Testnets">${evmOptionsFor(testnets)}</optgroup>
 				</select>
@@ -275,6 +275,14 @@ export class DeployButton {
 				.db-cancel{margin-top:14px;font-size:12.5px;font-weight:600;background:transparent;border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:8px 16px;cursor:pointer;color:#9ca3af;transition:border-color .15s,color .15s,background .15s}
 				.db-cancel:hover{border-color:rgba(248,113,113,.6);color:#fca5a5;background:rgba(248,113,113,.08)}
 				.db-cancel:focus-visible{outline:2px solid rgba(165,180,252,.8);outline-offset:2px}
+				.db-spinner{animation:db-spin .85s linear infinite}
+				.db-detail--busy{animation:db-blink 1.6s ease-in-out infinite}
+				@media (prefers-reduced-motion: reduce){
+					.db-step--active{animation:none}
+					.db-connector--flow{animation:none;background:rgba(99,102,241,.7)}
+					.db-status{animation:none}
+					.db-detail--busy{animation:none}
+				}
 			`;
 			document.head.appendChild(style);
 		}
@@ -289,7 +297,7 @@ export class DeployButton {
 			const icon = done
 				? `<span style="font-size:16px;line-height:1;width:18px;text-align:center;flex-shrink:0">✓</span>`
 				: active
-					? `<svg width="18" height="18" viewBox="0 0 18 18" style="animation:db-spin .85s linear infinite;flex-shrink:0"><circle cx="9" cy="9" r="7" fill="none" stroke="rgba(165,180,252,.22)" stroke-width="2"/><path d="M9 2A7 7 0 0 1 16 9" fill="none" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/></svg>`
+					? `<svg width="18" height="18" viewBox="0 0 18 18" class="db-spinner" style="flex-shrink:0" aria-hidden="true"><circle cx="9" cy="9" r="7" fill="none" stroke="rgba(165,180,252,.22)" stroke-width="2"/><path d="M9 2A7 7 0 0 1 16 9" fill="none" stroke="#c7d2fe" stroke-width="2" stroke-linecap="round"/></svg>`
 					: `<span style="width:18px;height:18px;flex-shrink:0;display:inline-block;border-radius:50%;border:1.5px solid rgba(255,255,255,.1)"></span>`;
 			const tile = `<div class="db-step ${cls}">${icon}<span>${_esc(s)}</span></div>`;
 			if (i === steps.length - 1) return tile;
@@ -309,8 +317,8 @@ export class DeployButton {
 				${rows}
 			</div>
 			<div class="db-status ${isDone ? 'db-status--done' : ''}">${_esc(liveText)}</div>
-			<div class="deploy-progress-detail" aria-live="polite"
-				style="margin-top:7px;font-size:11.5px;color:#6b7280;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;min-height:1.2em;letter-spacing:.01em${extra?.text ? ';animation:db-blink 1.6s ease-in-out infinite' : ''}">
+			<div class="deploy-progress-detail${extra?.text ? ' db-detail--busy' : ''}" aria-live="polite"
+				style="margin-top:7px;font-size:11.5px;color:#6b7280;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;min-height:1.2em;letter-spacing:.01em">
 				${extra?.text ? _esc(extra.text) : ''}
 			</div>
 			${extra?.cancelable ? `<button class="db-cancel deploy-cancel-btn" type="button">⊘ Stop grinding</button>` : ''}
@@ -327,7 +335,7 @@ export class DeployButton {
 			: '<button class="deploy-action-btn deploy-action-btn--reset">Try again</button>';
 		this._root.innerHTML = `
 			<div class="deploy-error" role="alert">
-				<span class="deploy-error-msg">${_esc(msg)}</span>
+				<span class="deploy-error-msg" title="${_esc(msg)}">${_esc(msg)}</span>
 				${actionHtml}
 			</div>
 		`;

@@ -3360,6 +3360,175 @@ body.deploy-page {
 	}
 }
 
+/* Error phase: the in-flight phase turns red when a deploy fails, so the user
+ * can see exactly which stage stopped. Cleared on retry. */
+.deploy-phase--error {
+	opacity: 1;
+}
+
+.deploy-phase--error .deploy-phase-dot {
+	background: rgba(248, 113, 113, 0.85);
+	border-color: rgba(248, 113, 113, 0.85);
+	box-shadow: 0 0 0 4px rgba(248, 113, 113, 0.12);
+	animation: none;
+}
+
+.deploy-phase--error .deploy-phase-label {
+	color: #fca5a5;
+}
+
+/* ── Deploy failure panel (message + working retry) ── */
+.deploy-error-panel {
+	margin-top: var(--space-md);
+	padding: var(--space-md);
+	background: rgba(127, 29, 29, 0.14);
+	border: 1px solid rgba(248, 113, 113, 0.32);
+	border-radius: var(--radius-md);
+}
+
+.deploy-error-panel-title {
+	margin-bottom: 4px;
+	font-size: var(--text-sm);
+	font-weight: 600;
+	color: #fca5a5;
+}
+
+.deploy-error-panel-msg {
+	margin: 0 0 var(--space-sm);
+	font-size: var(--text-sm);
+	line-height: 1.5;
+	color: rgba(252, 165, 165, 0.9);
+	word-break: break-word;
+}
+
+/* ── Step bar: completed steps are real buttons (keyboard + focus ring) ── */
+.deploy-step-btn,
+.deploy-step-static {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+}
+
+.deploy-step-btn {
+	padding: 2px;
+	margin: 0;
+	background: none;
+	border: 0;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	border-radius: var(--radius-sm);
+}
+
+.deploy-step-btn:hover .erc8004-step-num {
+	border-color: rgba(74, 222, 128, 0.85);
+}
+
+.deploy-step-btn:focus-visible {
+	outline: 2px solid rgba(255, 255, 255, 0.6);
+	outline-offset: 3px;
+}
+
+/* Step headings receive focus programmatically on step change; the move is
+ * announced by AT, a visible ring on a heading is just noise. */
+.deploy-wizard .erc8004-h3[tabindex='-1']:focus,
+.erc8004-wizard-body .erc8004-h3[tabindex='-1']:focus {
+	outline: none;
+}
+
+/* ── Inline field validation + character counters ── */
+.erc8004-field-error {
+	margin: 4px 0 0;
+	font-size: var(--text-xs);
+	color: var(--danger);
+}
+
+.erc8004-input--invalid,
+.deploy-wizard .erc8004-input--invalid {
+	border-color: rgba(248, 113, 113, 0.6);
+}
+
+.erc8004-input--invalid:focus,
+.deploy-wizard .erc8004-input--invalid:focus {
+	border-color: rgba(248, 113, 113, 0.8);
+	box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15);
+}
+
+.erc8004-hint-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: var(--space-sm);
+}
+
+.erc8004-count {
+	flex-shrink: 0;
+	color: rgba(255, 255, 255, 0.35);
+	font-variant-numeric: tabular-nums;
+	transition: color 0.15s ease;
+}
+
+.erc8004-count--limit {
+	color: rgba(245, 158, 11, 0.9);
+}
+
+/* ── Services: designed empty state ── */
+.erc8004-svc-empty {
+	padding: var(--space-sm) var(--space-md);
+	border: 1px dashed rgba(255, 255, 255, 0.12);
+	border-radius: var(--radius-md);
+	color: rgba(255, 255, 255, 0.45);
+	font-size: var(--text-sm);
+	line-height: 1.5;
+}
+
+/* ── Deploy success entrance ── */
+.deploy-result--in {
+	animation: deploy-result-in 0.35s ease both;
+}
+
+.deploy-result:focus {
+	outline: none;
+}
+
+@keyframes deploy-result-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.deploy-result--in {
+		animation: none;
+	}
+}
+
+/* ── Touch targets: 44px minimum on coarse pointers ── */
+@media (pointer: coarse) {
+	.deploy-qs-chip {
+		min-height: 44px;
+		padding: 10px 14px;
+	}
+	.deploy-wizard .erc8004-btn,
+	.erc8004-wizard-nav .erc8004-btn,
+	.deploy-wallet-btn,
+	.deploy-step-btn {
+		min-height: 44px;
+	}
+	.deploy-shell .erc8004-chain-select {
+		min-height: 44px;
+	}
+	.deploy-wizard .erc8004-input {
+		min-height: 44px;
+	}
+}
+
 /* ── Deploy success result panel ── */
 .deploy-result {
 	margin-top: var(--space-md);

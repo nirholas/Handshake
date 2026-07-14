@@ -58,6 +58,10 @@ const DRAFT_KEY = 'launchpadStudio:draft';
 const SECRETS_KEY = 'launchpadStudio:secrets';   // { [slug]: ownerSecret }
 const RECENT_KEY = 'launchpadStudio:recent';     // [{slug, template, headline, updatedAt}, ...]
 
+// Single active beforeunload guard: remounting the studio (landing to studio
+// SPA navigation and back) must not stack stale listeners with dead closures.
+let activeBeforeUnload = null;
+
 // Bundled starter avatars — real GLBs shipped in /public, so the gallery is
 // never empty even before the public-avatars API responds. { src, name, thumb }.
 const STARTER_AVATARS = [
@@ -364,6 +368,102 @@ const STYLE = `
 	.stage-frame.dark .hero-copy p { color: #cbd5e1; }
 	.stage-frame.dark .price-chip { color: #94a3b8; }
 	.stage-frame.dark footer { border-top-color: rgba(255,255,255,0.05); color: #64748b; }
+
+	/* Primary button: near-white gradient background needs dark text (was
+	   inheriting the light foreground color and rendering white-on-white). */
+	.btn.primary, .btn.primary:hover { color: #0b0d10; }
+
+	/* Template cards are real buttons (keyboard operable) */
+	.template-card { width: calc(100% - 32px); text-align: left; font: inherit; color: inherit; }
+
+	/* Visible keyboard focus everywhere */
+	.btn:focus-visible, .template-card:focus-visible, .skill-remove:focus-visible,
+	.dropdown-item .di-open:focus-visible, .stage-frame .cta:focus-visible {
+		outline: 2px solid #f4f4f5; outline-offset: 2px;
+	}
+	.field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible,
+	.share-url input:focus-visible, .skill-row input:focus-visible, .skill-row select:focus-visible {
+		border-color: #ffffff; box-shadow: 0 0 0 2px rgba(255,255,255,0.22);
+	}
+
+	/* Topbar save/publish state */
+	.topbar .save-state { font-size: 12px; color: #71717a; white-space: nowrap; }
+	.topbar .save-state.saved { color: #4ade80; }
+	.topbar .save-state.dirty { color: #fbbf24; }
+	.topbar .save-state.busy { color: #a1a1aa; }
+
+	/* Inline field validation */
+	.field input.invalid, .field textarea.invalid, .field select.invalid { border-color: #f87171; }
+	.field-error { color: #f87171; font-size: 11px; margin-top: 4px; line-height: 1.4; }
+
+	/* Notice banner (hydration 404, informational states) */
+	.studio-notice { width: 100%; max-width: 980px; margin-bottom: 14px; padding: 10px 14px;
+		border-radius: 10px; font-size: 13px; line-height: 1.5;
+		display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+	.studio-notice.info { background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.3); color: #c7d2fe; }
+	.studio-notice.err { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.3); color: #fca5a5; }
+
+	/* Hydration loading / error states */
+	.stage-loading { display: flex; flex-direction: column; align-items: center; justify-content: center;
+		gap: 12px; min-height: 50vh; padding: 24px; color: #a1a1aa; font-size: 14px; text-align: center; }
+	.stage-loading .spin { width: 30px; height: 30px; border-radius: 50%;
+		border: 3px solid #262b32; border-top-color: #f4f4f5; animation: lsp-spin 0.8s linear infinite; }
+	@keyframes lsp-spin { to { transform: rotate(360deg); } }
+	.stage-loading-title { font-size: 16px; font-weight: 600; color: #f4f4f5; }
+	.stage-loading-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+	.stage { position: relative; }
+	.stage-veil { position: absolute; inset: 0; z-index: 5; display: flex; align-items: center;
+		justify-content: center; background: rgba(11,13,16,0.78); }
+	.rail-skel { height: 36px; border-radius: 8px; margin-bottom: 10px;
+		background: linear-gradient(90deg, #181b21 25%, #20252c 50%, #181b21 75%);
+		background-size: 200% 100%; animation: lsp-shimmer 1.2s ease-in-out infinite; }
+
+	/* Publish success card: the live URL is the payoff, make it unmissable */
+	.publish-live { padding: 12px; border-radius: 10px;
+		background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.25); }
+	.publish-live-head { display: flex; align-items: center; gap: 7px;
+		font-size: 12px; font-weight: 600; color: #4ade80; margin-bottom: 8px; }
+	.publish-live-head .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; }
+	.publish-live .share-url { margin-top: 0; }
+	.publish-retry { margin-top: 8px; }
+
+	/* Recent-launchpads dropdown rows are buttons, not divs */
+	.dropdown-item { display: flex; align-items: flex-start; gap: 8px; justify-content: space-between; }
+	.dropdown-item .di-open { flex: 1; min-width: 0; text-align: left; background: transparent;
+		border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; }
+
+	/* Responsive: the fixed 3-pane grid degrades to a stacked, document-scrolled
+	   layout on small screens (320px must work with zero horizontal scroll). */
+	@media (max-width: 1100px) {
+		.studio-root { grid-template-columns: 260px 1fr 340px; }
+	}
+	@media (max-width: 880px) {
+		.studio-root { position: static; display: block; min-height: 100vh; }
+		.topbar { position: sticky; top: 0; z-index: 40; height: auto; min-height: 56px;
+			padding: 10px 12px; flex-wrap: wrap; row-gap: 8px; }
+		.topbar .actions { flex-wrap: wrap; row-gap: 8px; }
+		.sidebar, .rail { border-right: 0; border-left: 0; border-bottom: 1px solid #1c2128; overflow: visible; }
+		.stage { padding: 20px 12px; border-bottom: 1px solid #1c2128; }
+		.stage-frame { min-height: 0; }
+		.stage-frame .hero { grid-template-columns: 1fr; padding: 28px 20px 20px; gap: 24px; }
+		.stage-frame .avatar-stage { min-height: 280px; }
+		.stage-frame header { padding: 16px 20px; }
+		.stage-frame .token-strip { padding: 14px 20px; }
+		.stage-frame .skills-row { padding: 12px 20px 20px; }
+		.stage-frame footer { padding: 14px 20px; }
+	}
+	@media (pointer: coarse) {
+		.btn { min-height: 44px; }
+		.field input, .field select { min-height: 44px; }
+		.skill-row { grid-template-columns: 1fr 84px 76px 44px; }
+		.skill-row .skill-remove { width: 44px; height: 44px; }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.studio-root *, .studio-root, .stage-loading *, .rail-skel {
+			animation: none !important; transition: none !important;
+		}
+	}
 `;
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -539,6 +639,7 @@ function extraCopyFor(state, tpl) {
 // viewer.js with "Cannot read properties of null (reading 'reset')").
 function buildStageSkeleton() {
 	return `
+		<div class="studio-notice" data-notice hidden role="status"></div>
 		<div class="stage-frame" data-stage-frame>
 			<header>
 				<div class="brand">
@@ -551,7 +652,7 @@ function buildStageSkeleton() {
 				<div class="hero-copy">
 					<h1 data-tagline></h1>
 					<p data-extra-copy></p>
-					<button class="cta" type="button" data-preview-cta></button>
+					<button class="cta" type="button" data-preview-cta aria-label="Preview of your call-to-action button"></button>
 					<span class="price-chip" data-price-chip></span>
 				</div>
 				<div class="avatar-stage" data-avatar-mount></div>
@@ -724,6 +825,31 @@ export function mountLaunchpadStudio(root, options = {}) {
 
 	const state = mergeOptions(loadDraft() || defaultStateFor(options.template || 'token-launchpad'), options);
 
+	// Dirty tracking. "Dirty" means edits not yet published. Drafts auto-save to
+	// localStorage on every render, so a never-published draft survives leaving
+	// the page; edits to an already-published page are clobbered by the next
+	// ?slug= re-hydration, so only those get the beforeunload warning.
+	let dirty = false;
+	let publishing = false;
+	let publishError = null;
+	const markDirty = () => { dirty = true; updateSaveState(); };
+	function updateSaveState() {
+		const el = root.querySelector('[data-save-state]');
+		if (!el) return;
+		if (publishing) { el.textContent = 'Publishing…'; el.className = 'save-state busy'; return; }
+		if (dirty && state.isEditing) { el.textContent = 'Unpublished changes'; el.className = 'save-state dirty'; return; }
+		if (dirty) { el.textContent = 'Draft saved'; el.className = 'save-state saved'; return; }
+		el.textContent = '';
+		el.className = 'save-state';
+	}
+	if (activeBeforeUnload) window.removeEventListener('beforeunload', activeBeforeUnload);
+	activeBeforeUnload = (e) => {
+		if (!dirty || !state.isEditing) return;
+		e.preventDefault();
+		e.returnValue = '';
+	};
+	window.addEventListener('beforeunload', activeBeforeUnload);
+
 	root.innerHTML = `
 		<div class="studio-root">
 			<div class="topbar">
@@ -733,9 +859,10 @@ export function mountLaunchpadStudio(root, options = {}) {
 					<span class="pill" data-mode-pill>Template-driven</span>
 				</div>
 				<div class="actions">
+					<span class="save-state" data-save-state role="status" aria-live="polite"></span>
 					<a class="btn ghost" href="/launches" title="Public feed of every coin launched by a three.ws agent">See all launched coins →</a>
 					<a class="btn ghost" href="/embed" title="The original place-and-scale embed editor">Open classic editor</a>
-					<button class="btn" data-action="open-recent">My launchpads ▾</button>
+					<button class="btn" data-action="open-recent" aria-haspopup="true" aria-expanded="false">My launchpads ▾</button>
 					<button class="btn" data-action="new-draft" title="Start a new draft (current draft cleared)">New</button>
 					<button class="btn primary" data-action="publish">Publish</button>
 				</div>
@@ -751,14 +878,14 @@ export function mountLaunchpadStudio(root, options = {}) {
 		</div>
 	`;
 
-	// Templates list
+	// Templates list (real buttons: keyboard operable, aria-pressed reflects choice)
 	const tplWrap = $('[data-templates]', root);
 	tplWrap.innerHTML = TEMPLATES.map((t) => `
-		<div class="template-card ${t.id === state.template ? 'active' : ''}" data-template-id="${t.id}">
+		<button type="button" class="template-card ${t.id === state.template ? 'active' : ''}" data-template-id="${t.id}" aria-pressed="${t.id === state.template}">
 			<div class="label">${esc(t.label)}</div>
 			<div class="tagline">${esc(t.tagline)}</div>
 			<div class="hint">${esc(t.hint)}</div>
-		</div>
+		</button>
 	`).join('');
 	tplWrap.addEventListener('click', (e) => {
 		const card = e.target.closest('[data-template-id]');
@@ -769,6 +896,7 @@ export function mountLaunchpadStudio(root, options = {}) {
 		state.copy.tagline = tpl.defaultTagline;
 		state.copy.cta = tpl.defaultCta;
 		state.monetize = { kind: tpl.monetize.kind, price: tpl.monetize.defaultPrice, currency: tpl.monetize.currency, chain: tpl.monetize.chain };
+		markDirty();
 		render();
 	});
 
@@ -829,6 +957,7 @@ export function mountLaunchpadStudio(root, options = {}) {
 				<summary>Or enter a URL →</summary>
 				<div class="lsp-custom-body">
 					<input type="url" data-avatar-url spellcheck="false" placeholder="https://.../avatar.glb"
+						aria-label="Custom avatar model URL"
 						value="${isCustomUrl(state.avatar.src) ? esc(state.avatar.src) : ''}" />
 					<div class="lsp-hint">Direct link to a hosted .glb or .gltf model.</div>
 				</div>
@@ -892,6 +1021,7 @@ export function mountLaunchpadStudio(root, options = {}) {
 		const card = e.target.closest('[data-avatar-src]');
 		if (!card) return;
 		state.avatar = { src: card.dataset.avatarSrc, name: card.dataset.avatarName || 'Avatar' };
+		markDirty();
 		render();
 	});
 	pickerEl.addEventListener('input', (e) => {
@@ -899,6 +1029,7 @@ export function mountLaunchpadStudio(root, options = {}) {
 		if (!inp) return;
 		const url = inp.value.trim();
 		state.avatar = url ? { src: url, name: 'Custom URL' } : { src: DEFAULT_AVATAR_SRC, name: 'Default' };
+		markDirty();
 		render();
 	});
 	// Remember a manual expand so a gallery "Show more" rebuild doesn't collapse it.
@@ -918,6 +1049,13 @@ export function mountLaunchpadStudio(root, options = {}) {
 
 	// Topbar + global actions (delegated)
 	let recentDropdown = null;
+	let recentBtn = null;
+	root.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape' && recentDropdown) {
+			closeRecent();
+			recentBtn?.focus();
+		}
+	});
 	root.addEventListener('click', async (e) => {
 		const action = e.target.closest('[data-action]')?.dataset.action;
 		if (!action) {
@@ -928,8 +1066,29 @@ export function mountLaunchpadStudio(root, options = {}) {
 			if (!confirm('Discard current draft and start fresh?')) return;
 			localStorage.removeItem(DRAFT_KEY);
 			Object.assign(state, defaultStateFor(state.template));
+			dirty = false;
+			publishError = null;
 			history.replaceState(null, '', '/launchpad');
-			render();
+			render({ force: true });
+			return;
+		}
+		if (action === 'retry-hydrate') {
+			const slug = e.target.closest('[data-slug]')?.dataset.slug;
+			if (slug) hydrateFromSlug(slug);
+			return;
+		}
+		if (action === 'hydrate-fresh') {
+			const slug = e.target.closest('[data-slug]')?.dataset.slug || '';
+			Object.assign(state, defaultStateFor(state.template));
+			state.identity.slug = slug;
+			dirty = false;
+			publishError = null;
+			render({ force: true });
+			return;
+		}
+		if (action === 'dismiss-notice') {
+			const n = root.querySelector('[data-notice]');
+			if (n) n.hidden = true;
 			return;
 		}
 		if (action === 'open-recent') {
@@ -953,7 +1112,20 @@ export function mountLaunchpadStudio(root, options = {}) {
 		}
 		if (action === 'publish') {
 			const btn = e.target.closest('[data-action="publish"]');
+			// Inline validation before the network round-trip: mark the offending
+			// fields, focus the first one, and surface the reason in the publish panel.
+			const errors = validateForPublish(state);
+			if (errors.length) {
+				publishError = errors[0].message;
+				const pub = root.querySelector('[data-publish-block]');
+				if (pub) pub.innerHTML = publishStatusHTML(state, publishError);
+				applyFieldErrors(root, errors);
+				return;
+			}
+			publishing = true;
+			updateSaveState();
 			btn.disabled = true;
+			btn.setAttribute('aria-busy', 'true');
 			const orig = btn.textContent;
 			btn.textContent = 'Publishing…';
 			try {
@@ -963,19 +1135,35 @@ export function mountLaunchpadStudio(root, options = {}) {
 					url: result.url || `${AGENT_3D_HOST}/p/${result.slug}`,
 					publishedAt: result.publishedAt,
 				};
+				publishError = null;
+				dirty = false;
 				state.isEditing = true;
 				history.replaceState(null, '', `/launchpad?slug=${encodeURIComponent(result.slug)}`);
 			} catch (err) {
-				state.published = { error: err.message || String(err) };
+				publishError = err.message || String(err);
 			} finally {
+				publishing = false;
 				btn.disabled = false;
+				btn.removeAttribute('aria-busy');
 				btn.textContent = orig;
 				render();
+				const pub = root.querySelector('[data-publish-block]');
+				if (!publishError) {
+					// Success: put the live URL front and center. Scroll it into
+					// view and pre-select it for an instant copy.
+					const share = pub?.querySelector('.share-url input');
+					share?.closest('.panel')?.scrollIntoView({ block: 'nearest' });
+					share?.focus();
+					share?.select();
+				} else {
+					pub?.scrollIntoView({ block: 'nearest' });
+				}
 			}
 			return;
 		}
 		if (action === 'add-skill') {
 			state.agentSkills.push({ name: '', price: 0.001, currency: 'USDC', chain: 'solana', description: '' });
+			markDirty();
 			render();
 			return;
 		}
@@ -983,6 +1171,7 @@ export function mountLaunchpadStudio(root, options = {}) {
 			const idx = Number(e.target.closest('[data-skill-idx]')?.dataset.skillIdx);
 			if (Number.isFinite(idx)) {
 				state.agentSkills.splice(idx, 1);
+				markDirty();
 				render();
 			}
 			return;
@@ -1014,6 +1203,8 @@ export function mountLaunchpadStudio(root, options = {}) {
 	// "My launchpads" dropdown
 	function toggleRecent(button) {
 		if (recentDropdown) { closeRecent(); return; }
+		recentBtn = button;
+		button.setAttribute('aria-expanded', 'true');
 		recentDropdown = document.createElement('div');
 		recentDropdown.className = 'dropdown';
 		button.parentElement.appendChild(recentDropdown);
@@ -1022,6 +1213,7 @@ export function mountLaunchpadStudio(root, options = {}) {
 	function closeRecent() {
 		if (recentDropdown?.parentElement) recentDropdown.parentElement.removeChild(recentDropdown);
 		recentDropdown = null;
+		recentBtn?.setAttribute('aria-expanded', 'false');
 	}
 	function renderRecentDropdown() {
 		if (!recentDropdown) return;
@@ -1031,36 +1223,107 @@ export function mountLaunchpadStudio(root, options = {}) {
 			return;
 		}
 		recentDropdown.innerHTML = list.map((e) => `
-			<div class="dropdown-item" data-action="load-recent" data-slug="${esc(e.slug)}" style="display:flex;align-items:flex-start;gap:8px;justify-content:space-between">
-				<div style="min-width:0;flex:1">
+			<div class="dropdown-item">
+				<button type="button" class="di-open" data-action="load-recent" data-slug="${esc(e.slug)}">
 					<div class="di-title">${esc(e.headline || e.slug)}</div>
 					<div class="di-meta">/${esc(e.slug)} · ${esc(e.template)} · updated ${esc(new Date(e.updatedAt).toLocaleString())}</div>
-				</div>
-				<button class="btn tiny ghost" data-action="forget-recent" data-slug="${esc(e.slug)}" title="Remove from this list (does not unpublish)">×</button>
+				</button>
+				<button type="button" class="btn tiny ghost" data-action="forget-recent" data-slug="${esc(e.slug)}" title="Remove from this list (does not unpublish)" aria-label="Remove ${esc(e.slug)} from this list">×</button>
 			</div>
 		`).join('');
 	}
 
+	// Hydration loading state, shown while /api/launchpad/get resolves so a
+	// ?slug= visit never opens on a blank stage or a flash of default content.
+	// When the studio is already on screen (loading a recent launchpad) the
+	// stage keeps its DOM and gets a veil instead: wiping it would disconnect
+	// the live <agent-3d> element mid-load and can crash the viewer.
+	function hydrateStatusHTML(inner, role) {
+		return `
+			<div class="stage-loading" role="${role}"${role === 'status' ? ' aria-live="polite"' : ''}>
+				${inner}
+			</div>`;
+	}
+	function renderHydrating(slug) {
+		const stage = $('[data-stage]', root);
+		const inner = `
+			<div class="spin" aria-hidden="true"></div>
+			<div>Loading /p/${esc(slug)}…</div>`;
+		if (stageMounted) {
+			ensureStageVeil(stage).innerHTML = hydrateStatusHTML(inner, 'status');
+		} else {
+			stage.innerHTML = hydrateStatusHTML(inner, 'status');
+		}
+		$('[data-rail]', root).innerHTML = `
+			<div class="panel" aria-hidden="true">${'<div class="rail-skel"></div>'.repeat(6)}</div>`;
+		lastTemplate = null; // rail was wiped, force a rebuild on the next render
+		const pill = root.querySelector('[data-mode-pill]');
+		pill.textContent = 'Loading…';
+		pill.classList.remove('editing');
+	}
+
+	// Hydration failure: say what happened and offer a way forward instead of
+	// silently dropping the visitor into an unrelated blank draft.
+	function renderHydrateError(slug, err) {
+		const stage = $('[data-stage]', root);
+		const inner = `
+			<div class="stage-loading-title">Couldn't load /p/${esc(slug)}</div>
+			<div>${esc(err.message || 'Network error while fetching the saved page.')}</div>
+			<div class="stage-loading-actions">
+				<button type="button" class="btn primary" data-action="retry-hydrate" data-slug="${esc(slug)}">Retry</button>
+				<button type="button" class="btn" data-action="hydrate-fresh" data-slug="${esc(slug)}">Start a fresh draft</button>
+			</div>`;
+		if (stageMounted) {
+			ensureStageVeil(stage).innerHTML = hydrateStatusHTML(inner, 'alert');
+		} else {
+			stage.innerHTML = hydrateStatusHTML(inner, 'alert');
+		}
+	}
+
+	function ensureStageVeil(stage) {
+		let veil = stage.querySelector('[data-hydrate-veil]');
+		if (!veil) {
+			veil = document.createElement('div');
+			veil.className = 'stage-veil';
+			veil.setAttribute('data-hydrate-veil', '');
+			stage.appendChild(veil);
+		}
+		return veil;
+	}
+
+	function showNotice(kind, html) {
+		const n = root.querySelector('[data-notice]');
+		if (!n) return;
+		n.className = `studio-notice ${kind}`;
+		n.innerHTML = `
+			<div class="notice-body">${html}</div>
+			<button type="button" class="btn tiny ghost" data-action="dismiss-notice" aria-label="Dismiss notice">×</button>`;
+		n.hidden = false;
+	}
+
 	// Edit-mode hydration: ?slug=foo or options.slug
 	async function hydrateFromSlug(slug) {
+		renderHydrating(slug);
 		try {
 			const payload = await fetchLaunchpad(slug);
 			if (!payload) {
 				// No row yet — pre-fill the slug into a fresh draft so the user
-				// can publish a new page at that URL.
+				// can publish a new page at that URL, and say so.
 				state.identity.slug = slug;
 				state.isEditing = false;
-				render();
+				dirty = false;
+				render({ force: true });
+				showNotice('info', `Nothing is published at <strong>/p/${esc(slug)}</strong> yet. Fill in the page and hit Publish to claim that URL.`);
 				return;
 			}
 			Object.assign(state, stateFromPayload(payload));
+			dirty = false;
+			publishError = null;
 			history.replaceState(null, '', `/launchpad?slug=${encodeURIComponent(slug)}`);
-			render();
+			render({ force: true });
 		} catch (err) {
 			log.warn('[launchpad-studio] hydrate failed:', err.message);
-			// Network failure shouldn't blow up the editor — start clean.
-			state.identity.slug = slug;
-			render();
+			renderHydrateError(slug, err);
 		}
 	}
 
@@ -1096,6 +1359,7 @@ export function mountLaunchpadStudio(root, options = {}) {
 	let stageMounted = false;
 	function renderStage() {
 		const stage = $('[data-stage]', root);
+		stage.querySelector('[data-hydrate-veil]')?.remove();
 		if (!stageMounted) {
 			stage.innerHTML = buildStageSkeleton();
 			stage.querySelector('[data-avatar-mount]').appendChild(ensureAvatarEl());
@@ -1118,15 +1382,15 @@ export function mountLaunchpadStudio(root, options = {}) {
 			skillCount !== lastSkillCount ||
 			state.isEditing !== lastEditing;
 		if (needsRebuild) {
-			$('[data-rail]', root).innerHTML = buildRailHTML(state);
-			bindRailInputs(root, state, render);
+			$('[data-rail]', root).innerHTML = buildRailHTML(state, publishError);
+			bindRailInputs(root, state, render, markDirty);
 			lastTemplate = state.template;
 			lastSkillCount = skillCount;
 			lastEditing = state.isEditing;
 		} else {
 			// Lightweight refresh: only the publish-status block + share URL.
 			const pub = root.querySelector('[data-publish-block]');
-			if (pub) pub.innerHTML = publishStatusHTML(state);
+			if (pub) pub.innerHTML = publishStatusHTML(state, publishError);
 		}
 	}
 
@@ -1135,9 +1399,12 @@ export function mountLaunchpadStudio(root, options = {}) {
 		pill.textContent = state.isEditing ? 'Editing' : 'New draft';
 		pill.classList.toggle('editing', !!state.isEditing);
 		root.querySelectorAll('[data-template-id]').forEach((el) => {
-			el.classList.toggle('active', el.dataset.templateId === state.template);
+			const active = el.dataset.templateId === state.template;
+			el.classList.toggle('active', active);
+			el.setAttribute('aria-pressed', String(active));
 		});
 		syncPickerSelection();
+		updateSaveState();
 	}
 
 	function render({ force = false } = {}) {
@@ -1147,9 +1414,11 @@ export function mountLaunchpadStudio(root, options = {}) {
 		syncTopbar();
 	}
 
-	// Initial render
+	// Initial render. hydrateFromSlug owns its own loading / error / success
+	// rendering; a trailing render() here would paint default state over the
+	// hydration-failure screen.
 	if (options.slug) {
-		hydrateFromSlug(slugify(options.slug)).finally(render);
+		hydrateFromSlug(slugify(options.slug));
 	} else {
 		render();
 	}
@@ -1164,7 +1433,7 @@ export function mountLaunchpadStudio(root, options = {}) {
 // ──────────────────────────────────────────────────────────────────────────
 // Right-rail (form panels per template + publish + snippets)
 // ──────────────────────────────────────────────────────────────────────────
-function buildRailHTML(state) {
+function buildRailHTML(state, publishError = null) {
 	const tpl = TEMPLATES.find((t) => t.id === state.template) || TEMPLATES[0];
 
 	const identityPanel = `
@@ -1252,14 +1521,14 @@ function buildRailHTML(state) {
 				? `<div class="help" style="color:#71717a;font-size:11px">No paid skills configured. Add one to charge visitors per call via x402 — each skill becomes its own pricing pill on your /p/ page.</div>`
 				: state.agentSkills.map((s, i) => `
 					<div class="skill-row" data-skill-idx="${i}">
-						<input type="text" data-bind="agentSkills.${i}.name" value="${esc(s.name)}" placeholder="skill name" />
-						<input type="number" step="0.001" data-bind="agentSkills.${i}.price" value="${s.price}" />
-						<select data-bind="agentSkills.${i}.currency">
+						<input type="text" data-bind="agentSkills.${i}.name" value="${esc(s.name)}" placeholder="skill name" aria-label="Skill ${i + 1} name" />
+						<input type="number" step="0.001" data-bind="agentSkills.${i}.price" value="${s.price}" aria-label="Skill ${i + 1} price" />
+						<select data-bind="agentSkills.${i}.currency" aria-label="Skill ${i + 1} currency">
 							<option value="USDC" ${s.currency === 'USDC' ? 'selected' : ''}>USDC</option>
 							<option value="SOL" ${s.currency === 'SOL' ? 'selected' : ''}>SOL</option>
 							<option value="ETH" ${s.currency === 'ETH' ? 'selected' : ''}>ETH</option>
 						</select>
-						<button type="button" class="skill-remove" data-action="remove-skill" data-skill-idx="${i}" title="Remove">×</button>
+						<button type="button" class="skill-remove" data-action="remove-skill" data-skill-idx="${i}" title="Remove" aria-label="Remove skill ${i + 1}">×</button>
 					</div>
 				`).join('')}
 		</div>
@@ -1268,7 +1537,7 @@ function buildRailHTML(state) {
 	const publishPanel = `
 		<div class="panel">
 			<h4>Publish</h4>
-			<div data-publish-block>${publishStatusHTML(state)}</div>
+			<div data-publish-block aria-live="polite">${publishStatusHTML(state, publishError)}</div>
 		</div>
 	`;
 	const snippetsPanel = `
@@ -1291,37 +1560,108 @@ function buildRailHTML(state) {
 	return identityPanel + socialsPanel + copyPanel + templatePanel + skillsPanel + publishPanel + snippetsPanel;
 }
 
-function publishStatusHTML(state) {
-	if (!state.published) {
-		return `<div class="publish-status">Set a slug + payout wallet, then hit Publish to mint your hosted page at ${AGENT_3D_HOST}/p/&lt;slug&gt;.</div>`;
+function publishStatusHTML(state, publishError = null) {
+	// A publish failure must not erase the last-known live URL, so the error
+	// travels separately from state.published (state.published.error is only
+	// read here for drafts persisted by older builds).
+	const error = publishError || state.published?.error || null;
+	const live = state.published && !state.published.error ? state.published : null;
+	let html = '';
+	if (error) {
+		html += `
+			<div class="publish-status err" role="alert">${esc(error)}</div>
+			<div class="publish-retry"><button type="button" class="btn" data-action="publish">Retry publish</button></div>
+		`;
 	}
-	if (state.published.error) {
-		return `<div class="publish-status err">${esc(state.published.error)}</div>`;
+	if (live) {
+		const url = live.url || `${AGENT_3D_HOST}/p/${live.slug}`;
+		html += `
+			<div class="publish-live">
+				<div class="publish-live-head"><span class="live-dot" aria-hidden="true"></span>${state.isEditing ? 'Live · updated' : 'Live'}</div>
+				<div class="share-url">
+					<input type="text" readonly value="${esc(url)}" aria-label="Live page URL" />
+					<button type="button" class="btn" data-action="copy-share">Copy</button>
+					<a class="btn" href="${esc(url)}" target="_blank" rel="noopener">Open</a>
+				</div>
+			</div>
+		`;
+	} else if (!error) {
+		html = `<div class="publish-status">Set a slug + payout wallet, then hit Publish to mint your hosted page at ${AGENT_3D_HOST}/p/&lt;slug&gt;.</div>`;
 	}
-	const url = state.published.url || `${AGENT_3D_HOST}/p/${state.published.slug}`;
-	return `
-		<div class="publish-status ok">${state.isEditing ? 'Updated · ' : 'Live at '}${esc(url)}</div>
-		<div class="share-url">
-			<input type="text" readonly value="${esc(url)}" />
-			<button class="btn" data-action="copy-share">Copy</button>
-		</div>
-	`;
+	return html;
 }
 
+// Pre-publish validation. Returns [{ bind, message }] keyed by data-bind path.
+const SOL_ADDR_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+const EVM_ADDR_RE = /^0x[a-fA-F0-9]{40}$/;
+function validateForPublish(state) {
+	const errors = [];
+	if (!slugify(state.identity.slug)) {
+		errors.push({ bind: 'identity.slug', message: 'Choose a URL slug. It becomes your page address.' });
+	}
+	const wallet = String(state.identity.wallet || '').trim();
+	if (!wallet) {
+		errors.push({ bind: 'identity.wallet', message: 'Add your payout wallet address.' });
+	} else if (state.monetize.chain === 'solana' && !SOL_ADDR_RE.test(wallet)) {
+		errors.push({ bind: 'identity.wallet', message: 'That does not look like a Solana address (base58, 32 to 44 characters).' });
+	} else if (state.monetize.chain === 'base' && !EVM_ADDR_RE.test(wallet)) {
+		errors.push({ bind: 'identity.wallet', message: 'That does not look like an EVM address (0x followed by 40 hex characters).' });
+	}
+	return errors;
+}
+
+// Mark invalid fields inline and move focus to the first one.
+function applyFieldErrors(root, errors) {
+	root.querySelectorAll('.field-error').forEach((n) => n.remove());
+	root.querySelectorAll('[data-bind].invalid').forEach((n) => {
+		n.classList.remove('invalid');
+		n.removeAttribute('aria-invalid');
+	});
+	let first = null;
+	for (const { bind, message } of errors) {
+		const input = root.querySelector(`[data-bind="${bind}"]:not([type=color])`);
+		if (!input) continue;
+		input.classList.add('invalid');
+		input.setAttribute('aria-invalid', 'true');
+		const holder = input.closest('.field') || input.parentElement;
+		const msg = document.createElement('div');
+		msg.className = 'field-error';
+		msg.textContent = message;
+		holder.appendChild(msg);
+		if (!first) first = input;
+	}
+	if (first) {
+		first.scrollIntoView({ block: 'center' });
+		first.focus({ preventScroll: true });
+	}
+}
+
+// Each field gets a generated id wired to its <label> so screen readers and
+// label-clicks work. The id is injected into the first form control in the
+// markup string (color pickers have two inputs; the swatch gets the label).
+let fieldSeq = 0;
 function field(label, input, help) {
+	const id = `lsf-${++fieldSeq}`;
+	const wired = input.replace(/<(input|select|textarea)(?![^>]*\bid=)/, `<$1 id="${id}"`);
 	return `
 		<div class="field">
-			<label>${esc(label)}</label>
-			${input}
+			<label for="${id}">${esc(label)}</label>
+			${wired}
 			${help ? `<div class="help">${esc(help)}</div>` : ''}
 		</div>
 	`;
 }
 
-function bindRailInputs(root, state, render) {
+function bindRailInputs(root, state, render, markDirty) {
 	root.querySelectorAll('[data-bind]').forEach((el) => {
 		const path = el.dataset.bind.split('.');
 		el.addEventListener('input', () => {
+			// Typing clears this field's inline validation error immediately.
+			if (el.classList.contains('invalid')) {
+				el.classList.remove('invalid');
+				el.removeAttribute('aria-invalid');
+				el.closest('.field')?.querySelector('.field-error')?.remove();
+			}
 			let cur = state;
 			for (let i = 0; i < path.length - 1; i++) {
 				const key = path[i];
@@ -1335,9 +1675,16 @@ function bindRailInputs(root, state, render) {
 					cur = cur[key];
 				}
 			}
-			let value = el.type === 'number' ? Number(el.value) : el.value;
+			let value = el.value;
+			if (el.type === 'number') {
+				// An emptied or mid-edit number field must not persist NaN; it
+				// would render as the literal string "NaN" on the next rebuild.
+				const n = Number(el.value);
+				value = el.value === '' || Number.isNaN(n) ? '' : n;
+			}
 			if (path[path.length - 1] === 'slug') value = slugify(value);
 			cur[path[path.length - 1]] = value;
+			markDirty();
 			// Brand color: keep both inputs in sync, hot-update preview without re-render.
 			if (el.dataset.bind === 'identity.brand') {
 				root.querySelectorAll('[data-bind="identity.brand"]').forEach((peer) => {

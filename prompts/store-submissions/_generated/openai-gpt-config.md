@@ -128,22 +128,25 @@ STYLE
 
 ## 5. Conversation starters
 
-Four chips, one per audience: game developers, tabletop players, designers, and
-the merely curious. Specific beats general here (a chip is a one-click demo, not
-a filter), but the set must span use cases instead of four samey desk trinkets.
-The first three subjects are verified live against `/api/3d/studio` (fox is the
-smoke-test prompt; dragon and car re-verified 2026-07-14, both done inline). The
-fourth is open-ended by design: the instructions make the GPT rewrite it into
-one concrete subject before calling.
+Four chips, one per audience: game developers, communities that run on mascot
+culture, tabletop players, and the merely curious. Specific beats general here
+(a chip is a one-click demo, not a filter), but the set must span use cases
+instead of four samey desk trinkets. The mascot chip is the bridge to our
+home audience while staying inside this listing's zero-crypto vocabulary (see
+the compliance audit below); do NOT sharpen it with coin/token/community-token
+wording. The first three subjects are verified live against `/api/3d/studio`
+(fox is the smoke-test prompt; dragon and a mascot re-verified 2026-07-14, both
+done inline). The fourth is open-ended by design: the instructions make the GPT
+rewrite it into one concrete subject before calling.
 
 ```
 Make me a low-poly fox for my game
 ```
 ```
+Create a 3D mascot for my community
+```
+```
 Create a dragon miniature for my tabletop campaign
-```
-```
-Design a sleek futuristic concept car
 ```
 ```
 Surprise me with something cool in 3D

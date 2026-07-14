@@ -600,25 +600,55 @@ export class RegisterUI {
 	// -----------------------------------------------------------------------
 
 	async _connectWallet() {
+		// Connect-in-progress affordance: the button reports what's happening
+		// and can't be double-clicked while the wallet popup is open.
+		const walletBtn = this.el.querySelector('.erc8004-btn--wallet');
+		const setBusy = (on) => {
+			if (!walletBtn) return;
+			walletBtn.disabled = on;
+			if (on) walletBtn.textContent = 'Connecting…';
+		};
 		// On Solana, route to Phantom instead of MetaMask.
 		if (_isSolana(this.selectedChainId)) {
 			try {
 				const provider = detectSolanaWallet();
 				if (!provider) {
+					this._toast(
+						'No Solana wallet found. Install Phantom, then reload this page and reconnect.',
+						true,
+					);
 					window.open('https://phantom.app/', '_blank', 'noopener');
 					return;
 				}
+				setBusy(true);
 				const res = await provider.connect();
 				const pk = res?.publicKey?.toBase58?.() || provider.publicKey?.toBase58?.();
 				if (pk) this._toast('Connected ' + shortAddr(pk));
-				this._refreshWalletButton();
 				this._renderActiveTab();
 			} catch (err) {
-				this._toast('Phantom: ' + (err?.message || String(err)), true);
+				const msg = err?.message || String(err);
+				this._toast(
+					/locked/i.test(msg)
+						? 'Your Solana wallet is locked. Unlock it in the extension, then reconnect.'
+						: 'Phantom: ' + msg,
+					true,
+				);
+			} finally {
+				setBusy(false);
+				this._refreshWalletButton();
 			}
 			return;
 		}
+		if (!window.ethereum) {
+			this._toast(
+				'No EVM wallet found. Install MetaMask, then reload this page and reconnect.',
+				true,
+			);
+			window.open('https://metamask.io/download/', '_blank', 'noopener');
+			return;
+		}
 		try {
+			setBusy(true);
 			const { address, chainId } = await connectWallet();
 			this.wallet = { address, chainId: Number(chainId) };
 
@@ -633,11 +663,13 @@ export class RegisterUI {
 				if (sel) sel.value = String(this.selectedChainId);
 			}
 
-			this._refreshWalletButton();
 			this._renderActiveTab();
 			this._refreshMainnetBanner();
 		} catch (err) {
 			this._toast('Wallet: ' + err.message, true);
+		} finally {
+			setBusy(false);
+			this._refreshWalletButton();
 		}
 	}
 
@@ -720,7 +752,7 @@ export class RegisterUI {
 		const mainnets = ids.filter((id) => !CHAIN_META[id].testnet);
 		const testnets = ids.filter((id) => CHAIN_META[id].testnet);
 		const groupS = document.createElement('optgroup');
-		groupS.label = 'Solana';
+		groupS.label = 'Solana (recommended)';
 		for (const id of [SOLANA_MAINNET, SOLANA_DEVNET]) {
 			const opt = document.createElement('option');
 			opt.value = id;
@@ -949,7 +981,24 @@ export class RegisterUI {
 				</div>
 			`;
 			this._lastPreviewThumbKey = thumbKey;
-			if (thumb.kind === 'glb') this._ensureModelViewer();
+			if (thumb.kind === 'glb') {
+				this._ensureModelViewer();
+				// Some GLBs (meshopt-compressed) exceed what the CDN model-viewer
+				// build can decode. Swap a failed 3D preview for a designed
+				// placeholder instead of leaving a silently empty viewer.
+				const mv = rail.querySelector('.deploy-preview-mv');
+				mv?.addEventListener(
+					'error',
+					() => {
+						const holder = rail.querySelector('[data-role="thumb"]');
+						if (holder) {
+							holder.innerHTML =
+								'<div class="deploy-preview-ph">3D preview unavailable for this file. Your model still deploys unchanged.</div>';
+						}
+					},
+					{ once: true },
+				);
+			}
 		} else {
 			const info = rail.querySelector('[data-role="info"]');
 			if (info) info.innerHTML = infoHtml;
@@ -1509,7 +1558,7 @@ export class RegisterUI {
 			<div class="erc8004-avatar-panel" data-role="panel"></div>
 
 			<label class="erc8004-label">IPFS Pinning Token (optional)
-				<input class="erc8004-input" type="password" name="apiToken" autocomplete="off" placeholder="Pinata JWT — leave blank to use built-in R2 storage" value="${esc(this.form.apiToken)}" />
+				<input class="erc8004-input" type="password" name="apiToken" autocomplete="off" placeholder="Pinata JWT (leave blank to use built-in R2 storage)" value="${esc(this.form.apiToken)}" />
 			</label>
 			<p class="erc8004-hint">Without a token, uploads go through our backend (R2). Paste a Pinata JWT to pin directly to IPFS.</p>
 
@@ -1709,7 +1758,7 @@ export class RegisterUI {
 							<p class="erc8004-p erc8004-muted">Mints your agent from a brand-new wallet holding <b>0 tBNB</b> — sponsored by MegaFuel's paymaster, no faucet, no funding, no wallet connection needed.</p>
 						</div>
 					</div>
-					<div class="erc8004-log" data-role="gasless-log"></div>
+					<div class="erc8004-log" data-role="gasless-log" role="log" aria-live="polite"></div>
 					<div class="erc8004-result deploy-result" data-role="gasless-result" style="display:none"></div>
 					<button type="button" class="erc8004-btn btn btn--secondary" data-role="gasless-deploy">⚡ Register gasless (0 tBNB wallet)</button>
 				</div>
@@ -1985,31 +2034,41 @@ export class RegisterUI {
 				</div>
 			</div>
 
-			<div class="erc8004-log" data-role="log"></div>
+			<div class="erc8004-log" data-role="log" role="log" aria-live="polite" aria-label="Deploy log"></div>
 
-			<div class="erc8004-result deploy-result" data-role="result" style="display:none">
+			<div class="deploy-error-panel" data-role="deploy-error" role="alert" hidden>
+				<div class="deploy-error-panel-title">Mint failed</div>
+				<p class="deploy-error-panel-msg" data-role="deploy-error-msg"></p>
+				<button type="button" class="erc8004-btn btn btn--secondary" data-role="deploy-retry">Try again</button>
+			</div>
+
+			<div class="erc8004-result deploy-result" data-role="result" style="display:none" tabindex="-1">
 				<div class="deploy-result-badge" data-role="res-badge"></div>
-				<h4 class="erc8004-h4 deploy-result-heading">Agent minted on Solana</h4>
+				<h4 class="erc8004-h4 deploy-result-heading">🎉 Agent minted on Solana</h4>
 				<dl class="erc8004-result-dl">
 					<dt>Asset</dt>      <dd data-role="res-id"></dd>
 					<dt>Network</dt>    <dd data-role="res-uri"></dd>
 					<dt>Tx Signature</dt><dd data-role="res-tx"></dd>
 				</dl>
 				<div class="erc8004-row">
-					<a class="erc8004-btn btn btn--secondary" data-role="view-explorer" target="_blank" rel="noopener">Explorer ↗</a>
+					<a class="erc8004-btn erc8004-btn--primary btn btn--primary" data-role="view-explorer" target="_blank" rel="noopener">View on explorer ↗</a>
+					<a class="erc8004-btn btn btn--secondary" data-role="res-agent" style="display:none">View agent page →</a>
+					<a class="erc8004-btn btn btn--secondary" data-role="res-launch" style="display:none">Launch a coin 🚀</a>
 					<a class="erc8004-btn btn btn--secondary" href="/showcase">Browse showcase ↗</a>
 				</div>
 			</div>
 
 			<div class="erc8004-wizard-nav">
 				<button class="erc8004-btn btn btn--secondary" data-role="back">← Back</button>
-				<button class="erc8004-btn erc8004-btn--primary btn btn--primary" data-role="deploy" ${hasSolanaWallet ? '' : 'disabled'}>🚀 Mint on ${esc(chainLabel)}</button>
+				<button class="erc8004-btn erc8004-btn--primary btn btn--primary" data-role="deploy" ${hasSolanaWallet ? '' : 'disabled title="Install a Solana wallet first"'}>🚀 Mint on ${esc(chainLabel)}</button>
 			</div>
 		`;
 		body.querySelector('[data-role="back"]').addEventListener('click', () => {
-			this.wizardStep = 3;
-			this._renderActiveTab();
+			this._goToStep(3);
 		});
+		body.querySelector('[data-role="deploy-retry"]').addEventListener('click', () =>
+			this._doSolanaDeploy(body),
+		);
 		body.querySelector('[data-role="deploy"]').addEventListener('click', () =>
 			this._doSolanaDeploy(body),
 		);
@@ -2202,12 +2261,16 @@ export class RegisterUI {
 			log.scrollTop = log.scrollHeight;
 		};
 		const deployBtn = body.querySelector('[data-role="deploy"]');
+		const idleLabel = deployBtn.textContent;
 		deployBtn.disabled = true;
+		deployBtn.textContent = 'Minting…';
+		this._hideDeployFailure(body);
 
 		// Guard: name + description are required before any on-chain transaction.
 		if (!this.form.name.trim() || !this.form.description.trim()) {
 			this._toast('Name and description are required before deploying.', true);
 			deployBtn.disabled = false;
+			deployBtn.textContent = idleLabel;
 			return;
 		}
 
@@ -2250,8 +2313,8 @@ export class RegisterUI {
 			say(`Minted asset ${result.assetPubkey}`);
 			say(`Tx ${result.txSignature}`);
 			setPhase('done');
+			deployBtn.textContent = 'Minted ✓';
 
-			body.querySelector('[data-role="result"]').style.display = '';
 			body.querySelector('[data-role="res-id"]').textContent = result.assetPubkey;
 			body.querySelector('[data-role="res-uri"]').textContent = network;
 			body.querySelector('[data-role="res-tx"]').textContent = result.txSignature;
@@ -2259,6 +2322,22 @@ export class RegisterUI {
 				network,
 				result.txSignature,
 			);
+
+			// Next actions: the agent's public page and the coin launcher, when we
+			// have real ids to point them at (never synthesize URLs).
+			const agentLink = body.querySelector('[data-role="res-agent"]');
+			const backendAgentId = result.agent?.id || this._backendAgentId;
+			if (agentLink && backendAgentId && backendAgentId !== 'wizard') {
+				agentLink.href = `/agent/${encodeURIComponent(backendAgentId)}`;
+				agentLink.style.display = '';
+			}
+			const launchLink = body.querySelector('[data-role="res-launch"]');
+			const launchAvatarId = avatar?.avatarId || this._avatarId;
+			if (launchLink && launchAvatarId) {
+				launchLink.href = `/launch?avatar=${encodeURIComponent(launchAvatarId)}`;
+				launchLink.style.display = '';
+			}
+			this._revealDeployResult(body);
 
 			const badgeEl = body.querySelector('[data-role="res-badge"]');
 			if (badgeEl) {
@@ -2278,17 +2357,19 @@ export class RegisterUI {
 				chainId: this.selectedChainId,
 			});
 		} catch (err) {
+			let friendly;
 			if (err?.code === 'forbidden') {
-				say(
-					'Wallet not linked — sign in with your Solana wallet first, then retry.',
-					true,
-				);
+				friendly =
+					'Wallet not linked: sign in with your Solana wallet first, then retry.';
 			} else if (err?.code === 'payment_required') {
-				say(`${err.message || 'Paid plan required'} — upgrade to use 5+ char vanity prefixes.`, true);
+				friendly = `${err.message || 'Paid plan required'}: upgrade to use 5+ char vanity prefixes.`;
 			} else {
-				say(_classifyDeployError(err.message || String(err), err), true);
+				friendly = _classifyDeployError(err.message || String(err), err);
 			}
+			say(friendly, true);
+			this._showDeployFailure(body, setPhase, friendly);
 			deployBtn.disabled = false;
+			deployBtn.textContent = idleLabel;
 		}
 	}
 
@@ -2357,19 +2438,66 @@ export class RegisterUI {
 			track.hidden = false;
 			if (phase === 'done') {
 				track.querySelectorAll('[data-phase]').forEach((el) => {
-					el.classList.remove('deploy-phase--pending', 'deploy-phase--active');
+					el.classList.remove(
+						'deploy-phase--pending',
+						'deploy-phase--active',
+						'deploy-phase--error',
+					);
 					el.classList.add('deploy-phase--done');
+				});
+				return;
+			}
+			// 'error' freezes the track and paints the in-flight phase red so the
+			// user can see exactly where the deploy stopped.
+			if (phase === 'error') {
+				track.querySelectorAll('.deploy-phase--active').forEach((el) => {
+					el.classList.remove('deploy-phase--active');
+					el.classList.add('deploy-phase--error');
 				});
 				return;
 			}
 			const idx = order.indexOf(phase);
 			track.querySelectorAll('[data-phase]').forEach((el) => {
+				el.classList.remove('deploy-phase--error');
 				const pi = order.indexOf(el.dataset.phase);
 				el.classList.toggle('deploy-phase--done', pi < idx);
 				el.classList.toggle('deploy-phase--active', pi === idx);
 				el.classList.toggle('deploy-phase--pending', pi > idx);
 			});
 		};
+	}
+
+	/**
+	 * Show the designed deploy-failure panel (message + working retry) and
+	 * paint the phase track red. The raw error still lands in the log via
+	 * `say` at the call site; this is the human-readable layer on top.
+	 */
+	_showDeployFailure(body, setPhase, message) {
+		setPhase('error');
+		const panel = body.querySelector('[data-role="deploy-error"]');
+		if (!panel) return;
+		panel.querySelector('[data-role="deploy-error-msg"]').textContent = message;
+		panel.hidden = false;
+	}
+
+	_hideDeployFailure(body) {
+		const panel = body.querySelector('[data-role="deploy-error"]');
+		if (panel) panel.hidden = true;
+	}
+
+	/**
+	 * Reveal the success panel with an entrance animation and move focus into
+	 * it, so screen readers announce the result and the explorer link is one
+	 * Tab away. Smooth-scroll only when the user hasn't asked for reduced motion.
+	 */
+	_revealDeployResult(body) {
+		const result = body.querySelector('[data-role="result"]');
+		if (!result) return;
+		result.style.display = '';
+		result.classList.add('deploy-result--in');
+		const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+		result.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' });
+		result.focus({ preventScroll: true });
 	}
 
 	/**
@@ -2491,12 +2619,16 @@ export class RegisterUI {
 			log.scrollTop = log.scrollHeight;
 		};
 		const deployBtn = body.querySelector('[data-role="deploy"]');
+		const idleLabel = deployBtn.textContent;
 		deployBtn.disabled = true;
+		deployBtn.textContent = 'Deploying…';
+		this._hideDeployFailure(body);
 
 		// Guard: name + description are required before any on-chain transaction.
 		if (!this.form.name.trim() || !this.form.description.trim()) {
 			this._toast('Name and description are required before deploying.', true);
 			deployBtn.disabled = false;
+			deployBtn.textContent = idleLabel;
 			return;
 		}
 
@@ -2515,7 +2647,7 @@ export class RegisterUI {
 			const result = await this._doRegister(phaseSay);
 
 			setPhase('done');
-			body.querySelector('[data-role="result"]').style.display = '';
+			deployBtn.textContent = 'Deployed ✓';
 			body.querySelector('[data-role="res-id"]').textContent = String(result.agentId);
 			body.querySelector('[data-role="res-uri"]').textContent = result.registrationUrl;
 			body.querySelector('[data-role="res-tx"]').textContent = result.txHash;
@@ -2528,6 +2660,19 @@ export class RegisterUI {
 				this.selectedChainId,
 				result.txHash,
 			);
+			body.querySelector('[data-role="res-embed"]')?.addEventListener('click', () =>
+				this._openEmbedModal({
+					agentId: result.agentId,
+					name: this.form.name,
+					glbUrl: this.form.glbUrl || this.form.pastedGlbUrl || null,
+				}),
+			);
+			const launchLink = body.querySelector('[data-role="res-launch"]');
+			if (launchLink && this._avatarId) {
+				launchLink.href = `/launch?avatar=${encodeURIComponent(this._avatarId)}`;
+				launchLink.style.display = '';
+			}
+			this._revealDeployResult(body);
 
 			const badgeEl = body.querySelector('[data-role="res-badge"]');
 			if (badgeEl) {
@@ -2548,7 +2693,9 @@ export class RegisterUI {
 			const raw = err.shortMessage || err.message || String(err);
 			const errMsg = _classifyDeployError(raw, err);
 			say(errMsg, true);
+			this._showDeployFailure(body, setPhase, errMsg);
 			deployBtn.disabled = false;
+			deployBtn.textContent = idleLabel;
 		}
 	}
 
@@ -3071,7 +3218,7 @@ export class RegisterUI {
 					<input class="erc8004-input" name="apiToken" placeholder="leave blank for R2 backend" />
 				</label>
 
-				<div class="erc8004-log" data-role="log"></div>
+				<div class="erc8004-log" data-role="log" role="log" aria-live="polite"></div>
 
 				<div class="erc8004-row" style="justify-content:flex-end">
 					<button class="erc8004-btn btn btn--secondary" data-role="cancel">Cancel</button>
@@ -3244,7 +3391,7 @@ export class RegisterUI {
 				<label class="erc8004-label">Recipient address
 					<input class="erc8004-input" name="to" placeholder="0x…" />
 				</label>
-				<div class="erc8004-log" data-role="log"></div>
+				<div class="erc8004-log" data-role="log" role="log" aria-live="polite"></div>
 				<div class="erc8004-row" style="justify-content:flex-end">
 					<button class="erc8004-btn btn btn--secondary" data-role="cancel">Cancel</button>
 					<button class="erc8004-btn erc8004-btn--primary btn btn--primary" data-role="go">Transfer</button>
@@ -3326,7 +3473,7 @@ export class RegisterUI {
 				<label class="erc8004-label">Pinata JWT (optional)
 					<input class="erc8004-input" name="apiToken" placeholder="leave blank for R2 backend" />
 				</label>
-				<div class="erc8004-log" data-role="log"></div>
+				<div class="erc8004-log" data-role="log" role="log" aria-live="polite"></div>
 				<div class="erc8004-row" style="justify-content:flex-end">
 					<button class="erc8004-btn btn btn--secondary" data-role="cancel">Cancel</button>
 					<button class="erc8004-btn erc8004-btn--primary btn btn--primary" data-role="go">Deploy</button>
@@ -3647,6 +3794,7 @@ export class RegisterUI {
 	_toast(msg, isError = false) {
 		const t = document.createElement('div');
 		t.className = 'erc8004-toast' + (isError ? ' erc8004-toast--error' : '');
+		t.setAttribute('role', isError ? 'alert' : 'status');
 		t.textContent = msg;
 		this.el.appendChild(t);
 		setTimeout(() => t.remove(), 4000);

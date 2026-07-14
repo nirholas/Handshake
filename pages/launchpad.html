@@ -53,7 +53,14 @@
 	<meta name="twitter:site" content="@trythreews">
 </head>
 	<body>
-		<div id="root"></div>
+		<div id="root">
+			<noscript>
+				<div style="max-width:560px;margin:15vh auto 0;padding:0 24px;text-align:center;font:15px/1.6 system-ui,sans-serif;color:#a1a1aa">
+					<h1 style="font-size:22px;color:#fff;margin:0 0 10px">Launchpad Studio needs JavaScript</h1>
+					<p style="margin:0">The studio is an interactive 3D editor and cannot run with JavaScript disabled. Enable JavaScript and reload, or browse published pages from the <a href="/launches" style="color:#ec4899">launches feed</a>.</p>
+				</div>
+			</noscript>
+		</div>
 		<script type="module">
 			// The landing decides what to show: a live discovery front door, or —
 			// when the URL deep-links the editor (?slug, ?template, ?wallet, ?avatar,

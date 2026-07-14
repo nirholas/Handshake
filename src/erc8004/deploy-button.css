@@ -109,6 +109,15 @@
 	color: #fff;
 }
 
+.deploy-btn:active:not(:disabled) {
+	background: rgba(255, 255, 255, 0.12);
+}
+
+.deploy-btn:focus-visible {
+	outline: 2px solid rgba(255, 255, 255, 0.5);
+	outline-offset: 2px;
+}
+
 .deploy-btn--disabled,
 .deploy-btn:disabled {
 	opacity: 0.45;
@@ -140,6 +149,11 @@
 
 .deploy-chip--success:hover {
 	opacity: 0.82;
+}
+
+.deploy-chip:focus-visible {
+	outline: 2px solid rgba(74, 222, 128, 0.6);
+	outline-offset: 2px;
 }
 
 /* ── Progress bar ────────────────────────────────────────────────────────── */
@@ -235,6 +249,12 @@
 	color: #fecaca;
 }
 
+.deploy-action-btn:focus-visible,
+.deploy-vanity-link:focus-visible {
+	outline: 2px solid rgba(252, 165, 165, 0.7);
+	outline-offset: 2px;
+}
+
 /* ── Tooltip ─────────────────────────────────────────────────────────────── */
 
 .deploy-tooltip {
@@ -242,6 +262,17 @@
 	font-size: 0.75rem;
 	color: #888;
 	font-style: italic;
+}
+
+/* ── Touch targets: 44px minimum on coarse pointers ─────────────────────── */
+
+@media (pointer: coarse) {
+	.deploy-btn,
+	.deploy-chain-select,
+	.deploy-chip,
+	.deploy-action-btn {
+		min-height: 44px;
+	}
 }
 
 /* No light-mode block: three.ws is a dark-only product (no prefers-color-scheme

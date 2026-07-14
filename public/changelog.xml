@@ -103,6 +103,22 @@
 			<description>Placing an avatar in the real world through /irl now feels like a native AR app. On phones with a real AR surface the new Place in AR button leads the dock: a floor-finding reticle, a tap to anchor the agent to the actual detected surface, and now a two-finger pinch to resize it live, from a 25% desk figurine to a 400% statue. The size you choose saves with the pin, so everyone who walks up sees your agent exactly where and how big you left it. iPhones open the same placement in ARKit Quick Look. The compass-and-GPS pin path is unchanged and remains the fallback everywhere else.</description>
 		</item>
 		<item>
+			<title>Launching a coin is clearer at every step</title>
+			<link>https://three.ws/launch</link>
+			<guid isPermaLink="false">2026-07-14:Launching a coin is clearer at every step</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The coin launch page now guides you properly: signed-out and no-agents states have one obvious button instead of buried links, the agent picker supports arrow keys and never shows a broken thumbnail, and the form has live character counters against pump.fun's real limits, auto-uppercased tickers, and inline validation. While a launch runs you see each stage progress, and success now links the actual transaction on Solscan next to your coin page. A subtle bug is also gone: retrying a launch after swapping the image no longer reuses the old image's metadata.</description>
+		</item>
+		<item>
+			<title>Launchpad Studio: loading, saving, and publishing you can trust</title>
+			<link>https://three.ws/launchpad</link>
+			<guid isPermaLink="false">2026-07-14:Launchpad Studio: loading, saving, and publishing you can trust</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The studio now shows a real loading state while it fetches a saved launchpad and a clear recovery screen if that fetch fails, instead of silently dropping you into a blank draft. Publishing validates your slug and wallet address inline before any network call, success puts your live URL front and center with a copy button, and a failure keeps your last live URL and offers retry. Edits to a published page warn before you navigate away, the editor finally works on phones with a stacked layout, and the Publish button is no longer white text on a white background.</description>
+		</item>
+		<item>
 			<title>New doc: IRL, agents in the real world</title>
 			<link>https://three.ws/docs/irl</link>
 			<guid isPermaLink="false">2026-07-14:New doc: IRL, agents in the real world</guid>
@@ -149,6 +165,14 @@
 			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The best forge models are now published to the official three.ws account on Sketchfab, the largest public 3D model site: weekly Forge-Off winners first, then top-voted board models, then creations their makers explicitly accepted. It is a curated showcase, not a firehose: a few validated models a week, each clearly tagged as AI-generated, with its generation prompt and a link back to the creation on three.ws so anyone who finds it can remix it or forge their own. Every link is tagged so we can measure how many visitors the showcase actually brings in.</description>
+		</item>
+		<item>
+			<title>The on-chain deploy wizard got a full polish pass</title>
+			<link>https://three.ws/deploy</link>
+			<guid isPermaLink="false">2026-07-14:The on-chain deploy wizard got a full polish pass</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Deploying an agent on-chain is now smoother end to end. The step bar is keyboard-navigable and screen-reader friendly, form fields validate inline with live character counters instead of failing three steps later, and bad service endpoints are caught before they can be minted into your agent's on-chain record. Wallet problems now say exactly what to do (install, unlock, connect, or switch network). A failed mint shows a clear error panel with a working retry, and success promotes the explorer link plus one-click next steps: view your agent page, launch a coin, or embed it. The whole wizard works down to small phones, and a 3D preview that cannot render falls back to a clear notice instead of an empty box.</description>
 		</item>
 		<item>
 			<title>The trade terminal stops throwing 404s and rides out RPC outages</title>
