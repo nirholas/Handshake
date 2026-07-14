@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-14",
+			"title": "Short prompts now generate what you actually meant",
+			"summary": "A terse prompt like a two-word meme reference used to go straight to the image model and come back as something unrecognizable. The art-director step that expands your idea into a precise single-object spec (shape, materials, framing) was silently failing on every ChatGPT, MCP, and API generation; it now runs on every one of them. On top of that, well-known logos and brand marks resolve to their real geometry deterministically, so asking for a famous mark gives you the actual shape instead of a garbled badge.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/studio"
+		},
+		{
+			"date": "2026-07-14",
 			"title": "The three.ws 3D Studio is live in ChatGPT",
 			"summary": "You can now generate three.ws 3D models without leaving ChatGPT: the three.ws 3D Studio custom GPT is published publicly in the GPT Store. Describe an object and it comes back as a real downloadable GLB with a link to spin it in the browser viewer, free, no account needed. The generation lane behind it also moved up from the draft tier to standard, and the plumbing for a premium-quality tier inside ChatGPT is in place for a follow-up release.",
 			"tags": [

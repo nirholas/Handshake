@@ -232,6 +232,22 @@ describe('POST /api/3d/studio — response contract', () => {
 		expect(JSON.parse(opts.body)).toMatchObject({ prompt: 'a small ceramic robot figurine', backend: 'nvidia', path: 'image', tier: 'standard' });
 	});
 
+	it('submits a known brand-mark prompt as image→3D against the deployment-hosted reference view', async () => {
+		globalThis.fetch = vi.fn(async () => jsonResponse(SUBMIT_DONE));
+		const { res, body } = await dispatch(makeReq({ body: { prompt: 'pumpfun logo' } }), makeRes());
+		expect(res.statusCode).toBe(200);
+		expect(body.status).toBe('done');
+		expectCleanWire(body);
+		const sent = JSON.parse(globalThis.fetch.mock.calls[0][1].body);
+		// The reference view is served by the same deployment the job is submitted
+		// to, and the raw brand text never reaches the generator (it would be
+		// lettered onto the mesh as garbled noise).
+		expect(sent.image_urls).toEqual(['https://three.ws/marks/pump-fun.png']);
+		expect(sent.prompt).toMatch(/capsule/i);
+		expect(sent.prompt.toLowerCase()).not.toContain('pumpfun');
+		expect(sent.backend).toBeUndefined();
+	});
+
 	it('startForge attaches the internal seed token on internal requests when CRON_SECRET is set', async () => {
 		process.env.CRON_SECRET = 'test-seed-secret';
 		try {

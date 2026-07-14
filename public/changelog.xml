@@ -159,6 +159,14 @@
 			<description>Opening a shared model link at /viewer could hang on the loading spinner forever even though the model file itself was fine. The viewer now reveals the model as soon as it finishes rendering, and if a model genuinely cannot display, you get a clear message and a working download button instead of an endless spinner.</description>
 		</item>
 		<item>
+			<title>Short prompts now generate what you actually meant</title>
+			<link>https://three.ws/studio</link>
+			<guid isPermaLink="false">2026-07-14:Short prompts now generate what you actually meant</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A terse prompt like a two-word meme reference used to go straight to the image model and come back as something unrecognizable. The art-director step that expands your idea into a precise single-object spec (shape, materials, framing) was silently failing on every ChatGPT, MCP, and API generation; it now runs on every one of them. On top of that, well-known logos and brand marks resolve to their real geometry deterministically, so asking for a famous mark gives you the actual shape instead of a garbled badge.</description>
+		</item>
+		<item>
 			<title>The 3D viewer now funnels every model into a next step</title>
 			<link>https://three.ws/viewer</link>
 			<guid isPermaLink="false">2026-07-14:The 3D viewer now funnels every model into a next step</guid>

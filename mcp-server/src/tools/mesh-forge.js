@@ -18,8 +18,9 @@
 //
 // Environment (all optional — sensible prod defaults):
 //   MESH_FORGE_API_BASE       — three.ws origin. Default https://three.ws
-//   MESH_FORGE_DIRECTOR       — "0" to skip the Granite director stage. Default on.
-//   MESH_FORGE_DIRECTOR_MODEL — watsonx model id for direction. Default server default.
+//   MESH_FORGE_DIRECTOR       — "0" to skip the prompt-director stage. Default on.
+//   MESH_FORGE_DIRECTOR_MODEL — model id for direction, resolved by the server's
+//                               anonymous chat chain. Default server default.
 //   MESH_FORGE_TIMEOUT_MS     — overall reconstruct poll budget. Default 180000.
 //   MESH_FORGE_POLL_MS        — poll interval. Default 3000.
 

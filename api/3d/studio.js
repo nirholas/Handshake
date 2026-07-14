@@ -33,6 +33,7 @@ import { cors, wrap, method, json, error, readJson, rateLimited } from '../_lib/
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { startForge, originFromReq, viewerUrl } from '../_mcp-studio/forge-client.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
+import { resolveLogoPrompt } from '../_lib/forge-director-prompts.js';
 
 const PROMPT_MIN = 3; // the generation lane needs a subject to condition on
 const PROMPT_MAX = 1000; // matches /api/forge's own prompt ceiling
@@ -152,6 +153,12 @@ async function generate(req, res) {
 	}
 
 	const base = originFromReq(req);
+	// Known brand-mark prompts ("<brand name> logo") resolve to a deterministic
+	// geometric spec of the real mark. This lane runs no LLM director (the ~45s
+	// Actions deadline leaves no headroom), so without the lexicon a raw brand
+	// name reconstructs as a generic badge covered in garbled lettering.
+	const knownMark = resolveLogoPrompt(prompt);
+	const subject = knownMark ? knownMark.prompt : prompt;
 	let job;
 	try {
 		// Pinned to the fast free lane: ChatGPT Actions abandon the HTTP call at
@@ -161,8 +168,14 @@ async function generate(req, res) {
 		// deploy the async self-host Hunyuan3D worker (workers/model-hunyuan3d,
 		// forge lane already wired behind GCP_HUNYUAN3D_URL), then request tier
 		// 'high' with internal: true — startForge degrades to standard on
-		// 402/timeout.
-		job = await startForge(base, { prompt, backend: 'nvidia', path: 'image', tier: 'standard' });
+		// 402/timeout. A known mark with a reference view goes image→3D unpinned
+		// (image jobs return a poll handle, which the Actions contract handles).
+		job = await startForge(
+			base,
+			knownMark?.imagePath
+				? { prompt: subject, imageUrls: [`${base}${knownMark.imagePath}`], tier: 'standard' }
+				: { prompt: subject, backend: 'nvidia', path: 'image', tier: 'standard' },
+		);
 	} catch (err) {
 		return failFromLane(res, err);
 	}

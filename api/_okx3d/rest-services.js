@@ -26,7 +26,7 @@ import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 
 import { catalogEntry } from '../_lib/okx-catalog.js';
-import { MESH_DIRECTOR } from '../_lib/forge-director-prompts.js';
+import { MESH_DIRECTOR, resolveLogoPrompt } from '../_lib/forge-director-prompts.js';
 import {
 	originFromReq,
 	viewerUrl,
@@ -134,12 +134,22 @@ const HANDLERS = {
 	},
 
 	// $0.30 — Granite director (fail-soft) + the standard/high generation lane.
+	// Known brand marks skip the director for the deterministic lexicon spec.
 	async 'text-to-3d-pro'(args, ctx) {
 		const tier = args.tier === 'high' ? 'high' : 'standard';
 		let effective = args.prompt;
-		const directed = await directPrompt(ctx.base, MESH_DIRECTOR, args.prompt);
-		if (directed) effective = directed;
-		const job = await startForge(ctx.base, { prompt: effective, aspect: args.aspect_ratio });
+		const knownMark = resolveLogoPrompt(args.prompt);
+		if (knownMark) {
+			effective = knownMark.prompt;
+		} else {
+			const directed = await directPrompt(MESH_DIRECTOR, args.prompt);
+			if (directed) effective = directed;
+		}
+		const job = await startForge(ctx.base, {
+			prompt: effective,
+			imageUrls: knownMark?.imagePath ? [`${ctx.base}${knownMark.imagePath}`] : undefined,
+			aspect: args.aspect_ratio,
+		});
 		return queuedResponse(job, { mode: 'text_to_3d', tier });
 	},
 

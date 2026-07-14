@@ -776,7 +776,7 @@ free, so a failed job costs nothing to retry).
 
 | Status | Code                             | Meaning                                                              |
 | ------ | -------------------------------- | -------------------------------------------------------------------- |
-| `400`  | `invalid_prompt` / `bad_request` | `prompt` missing, outside 3–1000 chars, or malformed JSON            |
+| `400`  | `invalid_prompt` / `bad_request` | `prompt` missing, outside 3-1000 chars, or malformed JSON            |
 | `400`  | `prompt_rejected`                | The age-13+ safety gate refused the prompt; `message` says why       |
 | `429`  | `rate_limited`                   | Free lane saturated; retry after `retry_after` seconds               |
 | `502`  | `generation_failed`              | The lane could not start the job; retry is free                      |

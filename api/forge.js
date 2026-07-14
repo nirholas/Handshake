@@ -126,8 +126,8 @@ import {
 	cacheKeyForJob,
 } from './_lib/forge-cache.js';
 import { shouldRetryForQuality } from './_lib/glb-quality.js';
-import { directPrompt, originFromReq } from './_mcp-studio/forge-client.js';
-import { MESH_DIRECTOR } from './_lib/forge-director-prompts.js';
+import { directPrompt } from './_mcp-studio/forge-client.js';
+import { MESH_DIRECTOR, resolveLogoPrompt } from './_lib/forge-director-prompts.js';
 
 // Circuit-breaker key + window for the free NVIDIA NIM TRELLIS text→3D lane. The
 // hosted NVCF gateway can degrade so a submit neither completes nor hands back a
@@ -1527,8 +1527,16 @@ async function startJob(req, res) {
 			// opting in can only ever help, never break, a generation.
 			let directedPrompt = prompt;
 			if (body?.director === true) {
-				const directed = await directPrompt(originFromReq(req), MESH_DIRECTOR, prompt).catch(() => null);
-				if (directed) directedPrompt = directed;
+				// Known brand marks resolve deterministically before the LLM gets a
+				// say: no model reliably knows a niche mark's geometry, and the
+				// lexicon spec is already a tight single-subject description.
+				const knownMark = resolveLogoPrompt(prompt);
+				if (knownMark) {
+					directedPrompt = knownMark.prompt;
+				} else {
+					const directed = await directPrompt(MESH_DIRECTOR, prompt).catch(() => null);
+					if (directed) directedPrompt = directed;
+				}
 			}
 			const synthesized = await textToImage(directedPrompt, {
 				aspectRatio: aspect,

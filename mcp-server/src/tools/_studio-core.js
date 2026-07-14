@@ -21,6 +21,7 @@
 
 import { classifyHumanoidPrompt } from './_humanoid.js';
 import { composeRefinement, seedLineage, appendVersion, buildLineageChain, branchFrom } from './_lineage.js';
+import { resolveLogoPrompt, BRAND_MARK_DIRECTIVE } from './_logo-lexicon.js';
 
 // Standard tool error envelope — identical shape to payments.js `toolError`, so
 // a core's error is indistinguishable whether it is surfaced through the paid
@@ -180,9 +181,16 @@ async function startRig({ base, glbUrl }) {
 	return data;
 }
 
-// IBM Granite prompt director over the deployed /api/chat SSE endpoint. Returns
-// the refined prompt string, or null on ANY failure so the caller falls back to
-// the original prompt (fail-soft, never fabricated).
+// Prompt director over the deployed /api/chat SSE endpoint. Returns the refined
+// prompt string, or null on ANY failure so the caller falls back to the
+// original prompt (fail-soft, never fabricated).
+//
+// No provider is pinned: this client is anonymous, and /api/chat rejects every
+// non-free provider for anonymous callers with 401 (pinning watsonx here used
+// to kill the director on every call). Unpinned, the deployment routes the
+// request through its anonymous free-provider chain. MESH_FORGE_DIRECTOR_MODEL
+// stays available as an explicit override for callers who know their
+// deployment's model catalog.
 async function directPrompt({ base, rawPrompt, instruction, model }) {
 	let res;
 	try {
@@ -190,7 +198,6 @@ async function directPrompt({ base, rawPrompt, instruction, model }) {
 			method: 'POST',
 			headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
 			body: JSON.stringify({
-				provider: 'watsonx',
 				...(model ? { model } : {}),
 				message: `${instruction}\n\nIdea: ${rawPrompt}`,
 			}),
@@ -229,7 +236,10 @@ async function directPrompt({ base, rawPrompt, instruction, model }) {
 		return null;
 	}
 
-	const refined = acc.trim().replace(/^["']|["']$/g, '').split('\n')[0].trim();
+	// First line only, then strip wrapping quotes; the reverse order leaves a
+	// dangling quote when the model adds commentary lines after a quoted prompt.
+	const firstLine = acc.trim().split('\n')[0].trim();
+	const refined = firstLine.replace(/^["'“”]+|["'“”]+$/g, '').trim();
 	return refined.length >= 3 && refined.length <= 1000 ? refined : null;
 }
 
@@ -255,8 +265,10 @@ function normalizeViews({ image_url, image_urls }) {
 const MESH_DIRECTOR_INSTRUCTION =
 	"You are a 3D asset art director. Rewrite the user's idea into ONE concise prompt for a " +
 	'text-to-3D generator. Describe a SINGLE isolated subject on a plain background, naming form, ' +
-	'materials, color, and surface detail. No scenes, no multiple objects, no text or logos, no ' +
-	'background environment. Output ONLY the rewritten prompt as a single line — no preamble, no quotes.';
+	'materials, color, and surface detail. No scenes, no multiple objects, no rendered text, no ' +
+	'background environment. ' +
+	BRAND_MARK_DIRECTIVE +
+	'Output ONLY the rewritten prompt as a single line — no preamble, no quotes.';
 
 const AVATAR_DIRECTOR_INSTRUCTION =
 	"You are a 3D character art director. Rewrite the user's idea into ONE concise prompt for a text-to-3D " +
@@ -274,7 +286,17 @@ export async function runForgeFree({ prompt, tier }) {
 		return coreError('invalid_input', 'Provide a text prompt of at least 3 characters.');
 	}
 	const tierId = VALID_TIER.has(tier) ? tier : 'draft';
+	// Known brand-mark prompts ("<brand name> logo") resolve to a deterministic
+	// geometric spec of the real mark; this lane has no LLM director, so without
+	// it the raw brand name reconstructs as a garbled generic badge. The user's
+	// original prompt stays on the response metadata unchanged.
+	const knownMark = resolveLogoPrompt(trimmed);
+	const subject = knownMark ? knownMark.prompt : trimmed;
 	const base = apiBaseFrom(['FORGE_FREE_API_BASE']);
+	// A pre-rendered reference view beats any text draw for a known mark: the
+	// text lane rolls a random colorway per run, the reference reconstructs the
+	// exact mark. Served by the same deployment the job is submitted to.
+	const markImageUrls = knownMark?.imagePath ? [`${base}${knownMark.imagePath}`] : undefined;
 	const startedAt = Date.now();
 	// The free lane's happy path is the durable NVIDIA NIM (R2-persisted) result.
 	// When NIM is cold it degrades to a HuggingFace Space whose gradio /tmp URL
@@ -303,7 +325,7 @@ export async function runForgeFree({ prompt, tier }) {
 	for (let attempt = 1; attempt <= maxAttempts; attempt++) {
 		let gen;
 		try {
-			gen = await forgeFreeOnce({ base, prompt: trimmed, tierId });
+			gen = await forgeFreeOnce({ base, prompt: subject, tierId, imageUrls: markImageUrls });
 		} catch (err) {
 			// Transient contention on the shared free lane (the generator is busy):
 			// honor the server's retryAfter (capped 1–8s), back off, and retry
@@ -378,13 +400,19 @@ export async function runForgeFree({ prompt, tier }) {
 // One forge_free generation attempt: submit to the pinned free NVIDIA NIM lane,
 // then (when queued) poll to a terminal state. Returns { data, jobId } or throws
 // a coded error (with optional `.extra`/`.retryAfter`) the retry loop acts on.
-async function forgeFreeOnce({ base, prompt, tierId }) {
+async function forgeFreeOnce({ base, prompt, tierId, imageUrls }) {
 	const job = await submitForge({
 		base,
 		// Pin the free NVIDIA NIM (TRELLIS) lane so the happy path is always the
 		// zero-cost engine; path:"image" is the only path NVIDIA serves. NVCF can
 		// finish inside the generous submit window, so accept a synchronous done.
-		payload: { prompt, tier: tierId, backend: 'nvidia', path: 'image' },
+		// With a reference view (known brand marks) the submit goes image→3D
+		// unpinned: the forge router owns image-mode engine selection, and the
+		// prompt rides along as the caption.
+		payload:
+			Array.isArray(imageUrls) && imageUrls.length
+				? { image_urls: imageUrls, prompt: prompt || undefined, tier: tierId }
+				: { prompt, tier: tierId, backend: 'nvidia', path: 'image' },
 		submitTimeoutMs: 90_000,
 		allowSyncDone: true,
 	});
@@ -464,8 +492,12 @@ export async function runMeshForge({ prompt, image_url, image_urls, aspect_ratio
 	const base = apiBaseFrom(['MESH_FORGE_API_BASE']);
 	const started = Date.now();
 
+	// A known brand-mark prompt resolves deterministically and skips the LLM
+	// director: the lexicon spec is already a tight, correct description of the
+	// real mark, and a rewrite could only degrade it.
+	const knownMark = !imageMode && trimmedPrompt ? resolveLogoPrompt(trimmedPrompt) : null;
 	const runDirector =
-		!imageMode && trimmedPrompt && direct !== false && env('MESH_FORGE_DIRECTOR', '1') !== '0';
+		!imageMode && !knownMark && trimmedPrompt && direct !== false && env('MESH_FORGE_DIRECTOR', '1') !== '0';
 	let directedPrompt = null;
 	if (runDirector) {
 		directedPrompt = await directPrompt({
@@ -475,15 +507,19 @@ export async function runMeshForge({ prompt, image_url, image_urls, aspect_ratio
 			model: env('MESH_FORGE_DIRECTOR_MODEL'),
 		});
 	}
-	const effectivePrompt = directedPrompt || trimmedPrompt;
+	const effectivePrompt = knownMark?.prompt || directedPrompt || trimmedPrompt;
+	// Known marks with a pre-rendered reference view go image→3D: the reference
+	// reconstructs the exact mark, while a text draw rolls a random colorway.
+	const markViews = knownMark?.imagePath ? [`${base}${knownMark.imagePath}`] : null;
 
 	let job;
 	try {
 		job = await submitForge({
 			base,
-			payload: imageMode
-				? { image_urls: views, prompt: effectivePrompt || undefined, aspect_ratio: aspect }
-				: { prompt: effectivePrompt, aspect_ratio: aspect },
+			payload:
+				imageMode || markViews
+					? { image_urls: imageMode ? views : markViews, prompt: effectivePrompt || undefined, aspect_ratio: aspect }
+					: { prompt: effectivePrompt, aspect_ratio: aspect },
 			submitTimeoutMs: 30_000,
 			allowSyncDone: false,
 		});

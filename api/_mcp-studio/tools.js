@@ -16,7 +16,7 @@ import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 
 import { assertSafePublicUrl, SsrfBlockedError } from '../_lib/ssrf-guard.js';
-import { MESH_DIRECTOR, AVATAR_DIRECTOR } from '../_lib/forge-director-prompts.js';
+import { MESH_DIRECTOR, AVATAR_DIRECTOR, resolveLogoPrompt } from '../_lib/forge-director-prompts.js';
 import { checkPromptSafety } from './safety.js';
 import {
 	originFromReq,
@@ -241,17 +241,34 @@ async function handleMeshForge(args, _auth, req) {
 	} catch (err) {
 		return toolError(err.userMessage ? err.message : 'That image URL could not be used.');
 	}
-	// Granite prompt director (text mode only; fail-soft — original prompt on any failure).
+	// Known brand marks resolve deterministically (no LLM knows a niche mark's
+	// geometry; the lexicon spec is already tight, so a rewrite could only hurt)
+	// and, when a pre-rendered reference view ships with the mark, go image→3D
+	// for an exact reconstruction. Everything else runs the Granite prompt
+	// director (text mode only; fail-soft — original prompt on any failure).
 	let effective = prompt;
+	let markImageUrls;
 	if (prompt && !imageUrl) {
-		const directed = await directPrompt(base, MESH_DIRECTOR, prompt);
-		if (directed) effective = directed;
+		const knownMark = resolveLogoPrompt(prompt);
+		if (knownMark) {
+			effective = knownMark.prompt;
+			if (knownMark.imagePath) markImageUrls = [`${base}${knownMark.imagePath}`];
+		} else {
+			const directed = await directPrompt(MESH_DIRECTOR, prompt);
+			if (directed) effective = directed;
+		}
 	}
 	let job;
 	try {
 		job = await generate(
 			base,
-			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: 'standard', internal: true },
+			{
+				prompt: effective || undefined,
+				imageUrls: imageUrl ? [imageUrl] : markImageUrls,
+				aspect: '1:1',
+				tier: 'standard',
+				internal: true,
+			},
 			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS' },
 		);
 	} catch (err) {
@@ -302,7 +319,7 @@ async function handleForgeAvatar(args, _auth, req) {
 	// Stage 1 — generate the mesh (Granite director in text mode, fail-soft).
 	let effective = prompt;
 	if (prompt && !imageUrl) {
-		const directed = await directPrompt(base, AVATAR_DIRECTOR, prompt);
+		const directed = await directPrompt(AVATAR_DIRECTOR, prompt);
 		if (directed) effective = directed;
 	}
 	let gen;

@@ -1,12 +1,19 @@
 // Shared IBM Granite "art director" prompt specs — the LLM rewrite step that
 // turns a rough user idea into a tight, information-dense spec for the
 // text-to-3D reconstruction pipeline (see api/_mcp-studio/forge-client.js's
-// directPrompt(), which sends one of these as the system instruction over
-// /api/chat, provider=watsonx). Centralized here so every surface that runs
+// directPrompt(), which sends one of these as the system message to watsonx
+// Granite in process, free-chain fallback). Centralized here so every surface that runs
 // the director — the free MCP tools (api/_mcp-studio/tools.js), the paid
 // OKX REST twin (api/_okx3d/rest-services.js), and the public /api/forge
 // opt-in `director:true` param — stays in sync on one copy instead of three
 // hand-maintained duplicates drifting apart.
+
+import { BRAND_MARK_DIRECTIVE, resolveLogoPrompt } from '../../mcp-server/src/tools/_logo-lexicon.js';
+
+// Deterministic brand-mark resolution ("<brand name> logo" → the real mark's
+// geometry). Re-exported here so every api/ director call-site gets the
+// lexicon from the same module it already imports the director prompts from.
+export { resolveLogoPrompt };
 
 // For a single object/prop/creature — one isolated subject, its construction,
 // per-part PBR materials, one held art style, and fine surface detail, ending
@@ -19,7 +26,12 @@ export const MESH_DIRECTOR =
 	'leather, glossy lacquer, rough stone) so surfaces reconstruct with the right roughness/metalness, (4) a ' +
 	'coherent, consistent art style held across the whole subject (pick one: photoreal, stylized, low-poly, ' +
 	'hand-painted — never mix styles), (5) fine surface detail (seams, panel lines, weathering, grain) that ' +
-	'gives the reconstructor texture to latch onto. Always end with these composition constraints so the ' +
+	'gives the reconstructor texture to latch onto. If the idea names a brand, meme, app, or term you do not ' +
+	'recognize, keep the user\'s concrete object noun as the subject and describe its canonical physical form ' +
+	'(a pill is a two-tone medicine capsule, a rocket is a finned cylinder with a nose cone); never substitute ' +
+	'a different object. ' +
+	BRAND_MARK_DIRECTIVE +
+	'Always end with these composition constraints so the ' +
 	'reference image reconstructs cleanly: full subject in frame, centered, isolated on a plain neutral ' +
 	'background, one camera angle, even studio lighting, no cropping, no motion blur, no text or watermark, no ' +
 	'collage or multi-view grid, no second subject. Output ONLY the rewritten prompt as a single line — no ' +
@@ -36,7 +48,9 @@ export const AVATAR_DIRECTOR =
 	'material cues (e.g. brushed metal armor, worn leather straps, matte cloth, glossy visor) so surfaces ' +
 	'reconstruct with correct roughness/metalness, (4) one coherent, consistent art style held across the ' +
 	'whole character (pick one: photoreal, stylized, low-poly, hand-painted — never mix styles), (5) key ' +
-	'identifying features (hair, face, color scheme, accessories). Always end with these composition ' +
+	'identifying features (hair, face, color scheme, accessories). If the idea names a brand, meme, or term ' +
+	'you do not recognize, keep the user\'s stated character concept as the subject and render its canonical ' +
+	'look; never substitute a different character. Always end with these composition ' +
 	'constraints: full body in frame head-to-toe, centered, isolated on a plain neutral background, no props ' +
 	'gripped or crossing the silhouette, one camera angle facing the character, even studio lighting, no ' +
 	'cropping, no motion blur, no text or watermark, no collage or multi-view grid, no second character. ' +

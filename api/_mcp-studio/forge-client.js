@@ -12,6 +12,8 @@
 // front door and the generation pipeline are always the same deployment.
 
 import { env } from '../_lib/env.js';
+import { watsonxConfig, watsonxChatComplete } from '../_lib/watsonx.js';
+import { llmComplete } from '../_lib/llm.js';
 
 const DEFAULT_TIMEOUT_MS = 180_000;
 const DEFAULT_POLL_MS = 3_000;
@@ -180,50 +182,68 @@ export async function rig(base, glbUrl, { timeoutEnv } = {}) {
 	});
 }
 
-// IBM Granite prompt director (via /api/chat, provider=watsonx). Rewrites a
-// rough idea into a tight single-subject 3D spec. Fail-soft: returns null on any
-// failure so the caller forwards the original prompt unchanged — never faked.
-export async function directPrompt(base, instruction, rawPrompt) {
-	let res;
-	try {
-		res = await fetch(`${base}/api/chat`, {
-			method: 'POST',
-			headers: { 'content-type': 'application/json', accept: 'text/event-stream' },
-			body: JSON.stringify({ provider: 'watsonx', message: `${instruction}\n\nIdea: ${rawPrompt}` }),
-			signal: AbortSignal.timeout(30_000),
-		});
-	} catch {
-		return null;
-	}
-	if (!res.ok || !res.body) return null;
-	let acc = '';
-	try {
-		const reader = res.body.getReader();
-		const decoder = new TextDecoder();
-		let buf = '';
-		for (;;) {
-			const { value, done } = await reader.read();
-			if (done) break;
-			buf += decoder.decode(value, { stream: true });
-			const lines = buf.split('\n');
-			buf = lines.pop() ?? '';
-			for (const line of lines) {
-				if (!line.startsWith('data: ')) continue;
-				let evt;
-				try {
-					evt = JSON.parse(line.slice(6));
-				} catch {
-					continue;
-				}
-				if (evt.type === 'chunk' && typeof evt.text === 'string') acc += evt.text;
-				else if (evt.type === 'error') return null;
-				else if (evt.type === 'done' && typeof evt.text === 'string' && !acc) acc = evt.text;
-			}
+// IBM Granite prompt director. Rewrites a rough idea into a tight single-subject
+// 3D spec. Runs IN PROCESS: watsonx Granite leads, and the shared free-first LLM
+// chain (llmComplete, the same one forge-enhance rides) is the fallback. The
+// previous implementation POSTed provider=watsonx to its own /api/chat, which
+// the anonymous-provider gate 401s (chat.js pins anon callers to the free
+// providers), so the director silently never ran on any surface. Fail-soft:
+// returns null on any failure so the caller forwards the original prompt
+// unchanged, never faked.
+const DIRECTOR_MAX_TOKENS = 200;
+const DIRECTOR_TIMEOUT_MS = 20_000;
+
+export async function directPrompt(instruction, rawPrompt) {
+	const user = `Idea: ${rawPrompt}`;
+	let text = null;
+
+	// watsonxChatComplete carries no abort signal of its own, so cap it here; a
+	// hung IAM or inference call must degrade to the free chain, not stall the
+	// whole generation submit.
+	const cfg = watsonxConfig();
+	if (cfg.configured) {
+		let timer;
+		try {
+			const result = await Promise.race([
+				watsonxChatComplete(cfg, {
+					messages: [
+						{ role: 'system', content: instruction },
+						{ role: 'user', content: user },
+					],
+					maxTokens: DIRECTOR_MAX_TOKENS,
+				}),
+				new Promise((_, reject) => {
+					timer = setTimeout(() => reject(new Error('watsonx director timed out')), DIRECTOR_TIMEOUT_MS);
+				}),
+			]);
+			text = result?.text || null;
+		} catch {
+			text = null;
+		} finally {
+			clearTimeout(timer);
 		}
-	} catch {
-		return null;
 	}
-	const refined = acc.trim().replace(/^["']|["']$/g, '').split('\n')[0].trim();
+
+	if (!text) {
+		try {
+			const result = await llmComplete({
+				system: instruction,
+				user,
+				maxTokens: DIRECTOR_MAX_TOKENS,
+				timeoutMs: DIRECTOR_TIMEOUT_MS,
+				track: { tool: 'forge-director' },
+			});
+			text = result?.text || null;
+		} catch {
+			return null;
+		}
+	}
+
+	if (!text) return null;
+	// First line only, then strip wrapping quotes; the reverse order leaves a
+	// dangling quote when the model adds commentary lines after a quoted prompt.
+	const firstLine = text.trim().split('\n')[0].trim();
+	const refined = firstLine.replace(/^["'“”]+|["'“”]+$/g, '').trim();
 	return refined.length >= 3 && refined.length <= 1000 ? refined : null;
 }
 
