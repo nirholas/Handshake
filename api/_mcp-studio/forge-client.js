@@ -41,6 +41,15 @@ export function viewerUrl(base, glbUrl) {
 	return `${base}/viewer?src=${encodeURIComponent(glbUrl)}`;
 }
 
+// Device-aware AR launch link (api/ar.js): Android 302s straight into Scene
+// Viewer, iOS gets a Quick Look launch page (GLB→USDZ converted in-page), and
+// desktop falls back to the WebGL viewer. One URL places the model in the
+// user's real room on any phone — the same lane the /ar and /forge pages use.
+export function arUrl(base, glbUrl, title) {
+	const t = typeof title === 'string' && title.trim() ? `&title=${encodeURIComponent(title.trim().slice(0, 80))}` : '';
+	return `${base}/api/ar?src=${encodeURIComponent(glbUrl)}${t}`;
+}
+
 // Device-aware "place it in your room" launcher (api/ar.js): Android gets a
 // Scene Viewer intent, iOS a Quick Look launch page, desktop a WebGL fallback.
 // One URL serves every device, which is exactly what a ChatGPT surface needs.

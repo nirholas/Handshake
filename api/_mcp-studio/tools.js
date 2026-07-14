@@ -21,6 +21,7 @@ import { checkPromptSafety } from './safety.js';
 import {
 	originFromReq,
 	viewerUrl,
+	arLaunchUrl,
 	generate,
 	rig,
 	directPrompt,
@@ -60,10 +61,12 @@ function firstPartyGlbUrl(glbUrl, base) {
 function ok({ glbUrl, base, kind, prompt, rigged }) {
 	glbUrl = firstPartyGlbUrl(glbUrl, base);
 	const vUrl = viewerUrl(base, glbUrl);
+	const aUrl = arLaunchUrl(base, glbUrl, prompt);
 	const structured = {
 		kind,
 		glbUrl,
 		viewerUrl: vUrl,
+		arUrl: aUrl,
 		format: 'glb',
 		...(prompt ? { prompt } : {}),
 		...(rigged ? { rigged: true } : {}),
