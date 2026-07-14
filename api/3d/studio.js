@@ -65,10 +65,13 @@ export function shapeSubmit(job, base, prompt) {
 		};
 	}
 	const handle = job?.job_id ?? null;
+	// The poll URL carries the prompt as `title` so the eventual done response
+	// can label the AR/viewer pages without the GPT having to resend anything.
+	const t = typeof prompt === 'string' && prompt.trim() ? `&title=${encodeURIComponent(prompt.trim().slice(0, 80))}` : '';
 	return {
 		status: 'pending',
 		job: handle,
-		poll: handle ? `/api/3d/studio?job=${encodeURIComponent(handle)}` : null,
+		poll: handle ? `/api/3d/studio?job=${encodeURIComponent(handle)}${t}` : null,
 		format: 'glb',
 	};
 }
