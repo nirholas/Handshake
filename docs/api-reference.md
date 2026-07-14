@@ -586,12 +586,14 @@ Server-Sent Events stream from a unified multi-provider LLM gateway. Used by the
 | `claude-opus-4-7`   | Anthropic        | flagship |
 | `claude-sonnet-4-6` | Anthropic        | balanced |
 | `claude-haiku-4-5`  | Anthropic        | fast     |
-| `gpt-4o`            | OpenAI           | flagship |
-| `gpt-4o-mini`       | OpenAI           | fast     |
+| `gpt-5.6-sol`       | OpenAI           | flagship |
+| `gpt-5.6-terra`     | OpenAI           | balanced |
+| `gpt-5.6-luna`      | OpenAI           | fast     |
+| `o3` / `o3-pro`     | OpenAI           | reasoning |
 | `qwen-*`            | Qwen / Alibaba   | varies   |
 | `openrouter:*`      | OpenRouter (any) | varies   |
 
-Call `GET /api/brain/chat` for the live list of providers actually available on the current deployment (depends on which provider keys are configured).
+Legacy ids `gpt-4o`, `gpt-4o-mini`, and `o3-mini` are accepted and alias forward to `gpt-5.6-sol`, `gpt-5.6-luna`, and `o3`. Call `GET /api/brain/chat` for the live list of providers actually available on the current deployment (depends on which provider keys are configured).
 
 **Response (SSE)**
 
@@ -729,6 +731,56 @@ curl -s -X POST https://three.ws/api/v1/ai/text-to-3d \
 | `429`       | `quota_exceeded`              | Daily free quota spent; see `X-RateLimit-Reset` and `upgrade.endpoint` (`/api/x402/forge`) |
 | `503`       | `not_configured`              | The NVIDIA NIM lane isn't configured on this deployment (`NVIDIA_API_KEY`)                 |
 | `502`/`504` | `lane_error` / `lane_timeout` | The generation lane failed or timed out — retry                                            |
+
+### Text→3D (ChatGPT Actions surface)
+
+```
+POST /api/3d/studio
+GET  /api/3d/studio?job=<id>
+```
+
+Public, CORS-open, no auth. The REST contract behind the **"three.ws 3D Studio"**
+custom GPT (its OpenAPI Actions schema lives at
+`prompts/store-submissions/_generated/openai-actions.yaml`). It is a thin shaper
+over the same free NVIDIA NIM TRELLIS lane as `/api/v1/ai/text-to-3d` (same
+per-IP quota buckets, no extra capacity), with two store-specific rules:
+responses carry only model URLs and job state (no upsell block, no pricing
+paths, no internal identifiers), and every prompt passes an age-13+
+content-safety gate before any GPU work starts.
+
+**Request body**
+
+```json
+{ "prompt": "a small ceramic robot figurine" }
+```
+
+**Response, finished inline**
+
+```json
+{ "status": "done", "glbUrl": "https://cdn.three.ws/forge/anon/<id>.glb", "viewerUrl": "https://three.ws/viewer?src=…", "format": "glb" }
+```
+
+**Response, queued** (ChatGPT Actions time out at ~45s; the lane bounds its
+synchronous hold to 30s, so a slow job always returns `pending` plus a poll
+handle before the Action deadline)
+
+```json
+{ "status": "pending", "job": "f1.<signed-token>", "poll": "/api/3d/studio?job=f1.<signed-token>", "format": "glb" }
+```
+
+Poll `GET /api/3d/studio?job=<id>` until `status` is `"done"` (same shape as
+above) or `"error"` (`{ "status": "error", "job", "error" }`; generation is
+free, so a failed job costs nothing to retry).
+
+**Errors**
+
+| Status | Code                             | Meaning                                                              |
+| ------ | -------------------------------- | -------------------------------------------------------------------- |
+| `400`  | `invalid_prompt` / `bad_request` | `prompt` missing, outside 3–1000 chars, or malformed JSON            |
+| `400`  | `prompt_rejected`                | The age-13+ safety gate refused the prompt; `message` says why       |
+| `429`  | `rate_limited`                   | Free lane saturated; retry after `retry_after` seconds               |
+| `502`  | `generation_failed`              | The lane could not start the job; retry is free                      |
+| `503`  | `not_configured` / `lane_timeout`| Lane unavailable on this deployment, or slow to accept; retry later  |
 
 ---
 

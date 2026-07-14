@@ -85,7 +85,7 @@ Three modes, all configurable per agent:
 | **Self-hosted proxy** | You want to manage cost or use a private model | Set `key-proxy="/api/llm"` to point at your own serverless function that injects keys before forwarding to the provider. Keys never reach the client. |
 | **Direct (advanced)** | Local-only experiments | The runtime can call providers directly if you pass an API key explicitly. Don't ship this to a public page. |
 
-The brain proxy at [`/api/brain/chat`](./api-reference.md) supports Anthropic, OpenAI, Qwen, and OpenRouter — so the brain attribute can be `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5`, `gpt-4o`, `gpt-4o-mini`, and others.
+The brain proxy at [`/api/brain/chat`](./api-reference.md) supports Anthropic, OpenAI, Qwen, and OpenRouter — so the brain attribute can be `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, and others.
 
 ---
 

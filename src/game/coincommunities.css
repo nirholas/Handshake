@@ -807,6 +807,22 @@ html[data-bg="transparent"] #cc-lobby {
 	.cc-label.cc-speaking::before { animation: none; }
 }
 
+/* power saver — under the voice toggle, same visual family */
+.cc-power-btn {
+	position: fixed; top: 140px; right: 14px; z-index: 22;
+	display: inline-flex; align-items: center; gap: 8px;
+	background: var(--cc-panel); border: 1px solid var(--cc-edge); border-radius: var(--cc-radius);
+	padding: 8px 13px 8px 11px; color: var(--cc-dim); cursor: pointer;
+	font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+	box-shadow: var(--cc-shadow); backdrop-filter: blur(10px);
+	transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+.cc-power-btn:hover { border-color: var(--cc-edge-hi); color: var(--cc-text); background: rgba(255, 255, 255, 0.05); }
+.cc-power-btn:focus-visible { outline: none; border-color: var(--cc-edge-hi); box-shadow: 0 0 0 1px var(--cc-edge-hi); }
+.cc-power-btn[aria-pressed="true"] { color: #b8ffce; border-color: rgba(140, 255, 180, 0.55); }
+.cc-power-ico { line-height: 1; }
+.cc-power-label { line-height: 1; }
+
 /* chat sidebar — dockable, minimizable, persistent log */
 #cc-chat {
 	position: fixed; right: 14px; bottom: 14px; width: min(340px, 82vw);

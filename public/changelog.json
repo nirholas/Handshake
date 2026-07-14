@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-14T15:44:46.402Z",
+	"generated_at": "2026-07-14T15:53:50.382Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -110,6 +110,17 @@
 		{
 			"date": "2026-07-14",
 			"type": "update",
+			"title": "IRL avatars now move in iPhone AR",
+			"summary": "Tapping Place in AR on the IRL page from an iPhone now bakes your agent's idle animation into the AR preview, so it breathes and shifts on your real floor instead of standing frozen in a T-pose. If an avatar's rig can't take the animation, the proven static preview still opens, so AR always works.",
+			"link": "/irl",
+			"tags": [
+				"improvement",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
 			"title": "IRL placement grows up: true AR anchoring leads the dock, and you can pinch-resize your agent",
 			"summary": "Placing an avatar in the real world through /irl now feels like a native AR app. On phones with a real AR surface the new Place in AR button leads the dock: a floor-finding reticle, a tap to anchor the agent to the actual detected surface, and now a two-finger pinch to resize it live, from a 25% desk figurine to a 400% statue. The size you choose saves with the pin, so everyone who walks up sees your agent exactly where and how big you left it. iPhones open the same placement in ARKit Quick Look. The compass-and-GPS pin path is unchanged and remains the fallback everywhere else.",
 			"link": "/irl",
@@ -148,6 +159,17 @@
 			"link": "/docs/irl",
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
+			"title": "Play and Club run cooler: smart frame caps and a power-saver toggle",
+			"summary": "The 3D worlds on /play and /club used to render at your monitor's full refresh rate (up to 144+ frames a second) and kept working at full quality even when you clicked over to another window, which made laptops run hot with fans spinning. Both pages now cap rendering at 60fps, drop to 30fps whenever the window is in the background, and /play stops rendering the hidden 3D arena behind the coin-picker lobby entirely. There's also a new Eco toggle (the lightning button in /play, a checkbox in the /club panel) that holds everything at 30fps with lighter effects for a cooler, quieter machine; the setting is shared across both pages.",
+			"link": "/play",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{

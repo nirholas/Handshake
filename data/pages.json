@@ -2061,6 +2061,12 @@
 					"added": "2026-04-27"
 				},
 				{
+					"path": "/docs/mcp-studio",
+					"title": "Docs · 3D Studio MCP (free)",
+					"description": "The free, no-auth MCP server behind the ChatGPT 3D Studio app: text and image to 3D, rigged avatars, conversational refinement, and living agent personas.",
+					"added": "2026-07-14"
+				},
+				{
 					"path": "/docs/mcp-scenes",
 					"title": "Docs · Scenes MCP",
 					"description": "Speak a placed 3D diorama into being from one sentence, then browse the gallery.",

@@ -41,9 +41,30 @@ function injectStyles() {
 	_stylesInjected = true;
 	const css = `
 .irl-room-fab.is-active{background:rgba(124,92,255,.22);border-color:rgba(124,92,255,.7);color:#fff}
-#irl-aim-hud{position:fixed;inset:0;z-index:6;pointer-events:none;display:none;
+/* z-index 12 clears the main dock (10) and the joystick (9), which anchor to the
+   same bottom edge as .irl-aim-panel below. It stays under the modal sheets (19+)
+   so an error/consent sheet still covers the aim HUD, which is the right order. */
+#irl-aim-hud{position:fixed;inset:0;z-index:12;pointer-events:none;display:none;
   font:inherit;color:#fff}
 #irl-aim-hud.is-open{display:block}
+/* While aiming, the aim panel IS the bottom of the screen. Every other control
+   anchored down there (the dock, the joystick, the right-edge FABs) would land on
+   top of the distance slider and the Place/Face/Done row and eat the taps this mode
+   exists for. Worst of all is the dock's own "Place agents" pill, which sits directly
+   over the Place button and toggles this mode straight back off when you reach for
+   it. Fold them away for the duration; exit() drops the class and they return.
+   visibility (not display) keeps the footer's layout box, so the live --irl-dock-h
+   measurement in irl.js keeps reporting a real height. */
+body.irl-room-mode .irl-bottom,
+body.irl-room-mode #irl-joystick,
+body.irl-room-mode .irl-immersive-toggle,
+body.irl-room-mode .irl-immersive-hint,
+body.irl-room-mode .irl-drops-fab,
+/* The "be the first to pin here" empty-state prompt sits dead centre, right over
+   the aim reticle and its distance readout. You are already placing an agent, so
+   the invitation to place one is both moot and in the way. */
+body.irl-room-mode .irl-dx-empty{
+  opacity:0;visibility:hidden;pointer-events:none;transition:opacity .18s ease}
 .irl-aim-reticle{position:absolute;top:46%;left:50%;width:74px;height:74px;
   margin:-37px 0 0 -37px;border-radius:50%;border:2px solid rgba(255,255,255,.9);
   box-shadow:0 0 0 2px rgba(0,0,0,.35),0 0 18px rgba(124,92,255,.55);

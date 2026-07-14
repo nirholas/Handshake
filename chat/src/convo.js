@@ -115,7 +115,7 @@ export async function complete(convo, onupdate, onabort) {
 						param.reasoningEffort['range'] > 0)
 						? undefined
 						: param.temperature,
-				...(model.provider === 'OpenAI' && (model.id === 'o4-mini' || model.id === 'o3')
+				...(model.provider === 'OpenAI' && model.kind === 'reasoner'
 					? {
 							max_completion_tokens:
 								param.maxTokens != null && param.maxTokens > 0 ? param.maxTokens : undefined,

@@ -25,7 +25,11 @@ answers every request synchronously over `POST`. `OPTIONS` is handled for CORS.
 
 Add the connector with the URL above and **No authentication**. Each generation
 tool renders its result inline in an interactive 3D viewer widget
-(`ui://widget/three-studio-model.html`).
+(`ui://widget/three-studio-model.html`); the persona tools render a living agent
+body in their own widget (`ui://widget/three-studio-persona.html`). Both widgets
+declare an `openai/widgetCSP` whose allowlist includes the GLB storage origin,
+so models load inside real ChatGPT (which enforces the CSP), not just in
+permissive test harnesses.
 
 ### Any MCP client
 
@@ -34,6 +38,15 @@ curl -s https://three.ws/api/mcp-studio \
   -H 'content-type: application/json' \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
+
+### ChatGPT custom GPT (Actions)
+
+The same free lane also ships as a REST Actions surface for the **"three.ws 3D
+Studio"** custom GPT: `POST /api/3d/studio` submits a prompt and
+`GET /api/3d/studio?job=<id>` polls it, with an age-13+ safety gate and
+store-clean responses (model URLs and job state only). Full contract in the
+[API reference](./api-reference.md). Use the MCP connector above when you want
+inline 3D widgets; the custom GPT covers plans without connector support.
 
 ## Tools
 
@@ -120,8 +133,14 @@ or payments.
 Annotations: `create_agent_persona` and `persona_say` are writes
 (`readOnlyHint:false`); `get_agent_persona` is a pure read (`readOnlyHint:true`).
 
-**How it renders.** Each persona tool returns an inline `text/html` resource that
-frames the hosted embodiment page — `https://three.ws/embodiment/embed` — with the
+**How it renders.** In ChatGPT (Apps SDK), each persona tool points its tool-level
+`_meta["openai/outputTemplate"]` at the registered
+`ui://widget/three-studio-persona.html` widget, which reads the tool's
+`structuredContent` and mounts the hosted embodiment page (a result-level template
+on an inline artifact is ignored by the Apps SDK, so the tool-level link is what
+makes the body appear). In every other MCP host the tool result carries an inline
+`text/html` resource that frames the same hosted page,
+`https://three.ws/embodiment/embed`, with the
 persona id and the turn's speak/emotion payload as query params. That page mounts
 `EmbodimentStage` (Three.js), which rides the platform's universal
 canonicalize/retarget pipeline so the baked idle + gesture clip library drives any

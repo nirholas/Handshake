@@ -175,10 +175,12 @@ const capabilities = {
 				'text-moderation-007',
 			].includes(id) ||
 			id.includes('realtime-preview') ||
-			id.includes('audio-preview'),
+			id.includes('audio-preview') ||
+			id.startsWith('gpt-image'),
 
 		isMultimodal: (id) =>
 			id === 'chatgpt-4o-latest' ||
+			id.startsWith('gpt-5') ||
 			id.startsWith('gpt-4o') ||
 			(id.startsWith('gpt-4-turbo') && id !== 'gpt-4-turbo-preview') ||
 			id === 'o3' ||
@@ -187,12 +189,14 @@ const capabilities = {
 				!id.startsWith('o1-mini') &&
 				!id.startsWith('o1-preview')),
 
-		isReasoner: (id) => id.startsWith('o1') || id.startsWith('o3') || id.startsWith('o4'),
+		isReasoner: (id) =>
+			id.startsWith('gpt-5') || id.startsWith('o1') || id.startsWith('o3') || id.startsWith('o4'),
 
 		isImageGenerator: (id) => ['dall-e-3'].includes(id),
 
 		reasoningEffortControls: (id) =>
 			(!id.startsWith('o1-preview') && !id.startsWith('o1-mini') && id.startsWith('o1')) ||
+			id.startsWith('gpt-5') ||
 			id.startsWith('o3') ||
 			id.startsWith('o4')
 				? 'low-medium-high'
@@ -387,6 +391,8 @@ export const priorityOrder = [
 		],
 	},
 	{ exactly: ['deepseek/deepseek-r1', 'deepseek/deepseek-chat'] },
+	{ startsWith: ['gpt-5.6', 'openai/gpt-5.6'] },
+	{ startsWith: ['gpt-5', 'openai/gpt-5'] },
 	{
 		exactly: [
 			'openai/o4-mini',

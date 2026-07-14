@@ -87,6 +87,14 @@
 			<description>When the community battle service is offline, /clash and the /temporary world picker used to keep retrying and logging failed requests in the background. Both now recognize the outage on the first response, stop polling, and show a clear notice with live places to go instead (launches, markets, or walking the default world solo). The sign-in page also no longer throws a background error if its 3D greeter can't load; the form works exactly the same without him.</description>
 		</item>
 		<item>
+			<title>IRL avatars now move in iPhone AR</title>
+			<link>https://three.ws/irl</link>
+			<guid isPermaLink="false">2026-07-14:IRL avatars now move in iPhone AR</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Tapping Place in AR on the IRL page from an iPhone now bakes your agent's idle animation into the AR preview, so it breathes and shifts on your real floor instead of standing frozen in a T-pose. If an avatar's rig can't take the animation, the proven static preview still opens, so AR always works.</description>
+		</item>
+		<item>
 			<title>IRL placement grows up: true AR anchoring leads the dock, and you can pinch-resize your agent</title>
 			<link>https://three.ws/irl</link>
 			<guid isPermaLink="false">2026-07-14:IRL placement grows up: true AR anchoring leads the dock, and you can pinch-resize your agent</guid>
@@ -117,6 +125,14 @@
 			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>The IRL layer finally has a front door in the docs: one page that explains the whole vision and how the shipped pieces fit together. It covers placing an agent at a real GPS spot from your phone, walk-up discovery with proof of presence, paying agents in person via x402, Money Drops (real SOL, USDC, or $THREE escrowed at a place and claimable only by walking up), World Lines (agent-signed proofs that you were really there), and the privacy model that makes it all safe. The docs sidebar now also links the hands-on IRL tutorial, which was previously unreachable from the navigation.</description>
+		</item>
+		<item>
+			<title>Play and Club run cooler: smart frame caps and a power-saver toggle</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-07-14:Play and Club run cooler: smart frame caps and a power-saver toggle</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The 3D worlds on /play and /club used to render at your monitor's full refresh rate (up to 144+ frames a second) and kept working at full quality even when you clicked over to another window, which made laptops run hot with fans spinning. Both pages now cap rendering at 60fps, drop to 30fps whenever the window is in the background, and /play stops rendering the hidden 3D arena behind the coin-picker lobby entirely. There's also a new Eco toggle (the lightning button in /play, a checkbox in the /club panel) that holds everything at 30fps with lighter effects for a cooler, quieter machine; the setting is shared across both pages.</description>
 		</item>
 		<item>
 			<title>Shared 3D viewer links load again</title>

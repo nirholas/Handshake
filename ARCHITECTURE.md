@@ -611,7 +611,7 @@ Representative endpoints:
 | `POST /api/tts/speak` | NVIDIA Magpie (primary), OpenAI TTS (backstop) | Text → speech |
 | `POST /api/asr` | NVIDIA Riva (gRPC) | Speech → text |
 | `POST /api/a2f` | NVIDIA Audio2Face-3D (gRPC) | Audio → ARKit 52 blendshapes |
-| `POST /api/vision` | NVIDIA NIM VLM → OpenAI gpt-4o-mini (backstop) | Image understanding |
+| `POST /api/vision` | NVIDIA NIM VLM → OpenAI gpt-5.4-nano (backstop) | Image understanding |
 | `POST /api/cosmos` | NVIDIA Cosmos | Text → world video (MP4, async) |
 
 #### Memory (`api/agent-memory.js`, `api/memory/*`)
@@ -1429,7 +1429,7 @@ flowchart TD
     B["OpenRouter\nmeta-llama/llama-3.3-70b:free · openai/gpt-oss-120b:free"]
     C["NVIDIA NIM\nnemotron-super-120b · nemotron-super-49b · deepseek-v4-pro"]
     D["Anthropic\nclaude-sonnet-4-6"]
-    E["OpenAI\ngpt-4o-mini"]
+    E["OpenAI\ngpt-5.4-nano"]
     F["IBM watsonx Orchestrate"]
     A -->|fallback| B -->|fallback| C -->|fallback| D -->|fallback| E -->|fallback| F
 ```
@@ -1441,7 +1441,7 @@ flowchart TD
 | Tier | Models |
 |------|--------|
 | Anthropic | claude-fable-5, claude-mythos-5 (restricted, moderation-gated, never auto-selected), claude-opus-4-7, claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5 (native `claude-haiku-4-5-20251001`) |
-| OpenAI | gpt-4o, gpt-4o-mini, o3-mini |
+| OpenAI | gpt-5.6-sol, gpt-5.6-terra, gpt-5.6-luna, gpt-5.5, gpt-5.5-pro, gpt-5.4 (+ pro/mini/nano), gpt-5.3-codex, o3, o3-pro (legacy gpt-4o/gpt-4o-mini/o3-mini ids alias forward) |
 | NVIDIA NIM | `nvidia/nemotron-3-super-120b-a12b`, `nvidia/nvidia-nemotron-nano-9b-v2`, `deepseek-ai/deepseek-v4-pro`, `moonshotai/kimi-k2.6`, `meta/llama-4-maverick-17b-128e-instruct`, `minimaxai/minimax-m2.7` |
 | IBM watsonx | `ibm-granite` (Granite 3.8B Instruct) |
 | Groq | llama-3.3-70b-versatile, llama-3.1-8b-instant |
@@ -1505,7 +1505,7 @@ flowchart TD
     VLM -->|"lane 2"| VLM2["meta/llama-3.2-11b-vision-instruct"]
     VLM --> DESC["description"]
     VLM2 --> DESC
-    VLM2 -->|"backstop"| MINI["OpenAI gpt-4o-mini"]
+    VLM2 -->|"backstop"| MINI["OpenAI gpt-5.4-nano"]
     MINI --> DESC
 ```
 
@@ -2196,7 +2196,7 @@ sequenceDiagram
 | Service | Models / Usage |
 |---------|---------------|
 | Anthropic | claude-fable-5, claude-mythos-5, claude-opus-4-7, claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5 (chat, brain, reflect) |
-| OpenAI | gpt-4o, gpt-4o-mini, o3-mini, text-embedding-3-small, TTS |
+| OpenAI | GPT-5.6 family (sol/terra/luna), GPT-5.5 + GPT-5.4 tiers, gpt-5.3-codex, o3/o3-pro, text-embedding-3-small, TTS |
 | NVIDIA NIM | Nemotron-super-120b, DeepSeek-v4-pro, Kimi-k2.6, Llama-4-Maverick, MiniMax-M2.7, nv-embedqa-e5-v5 |
 | NVIDIA NIM Vision | Nemotron-nano-12B-v2-VL, Llama-3.2-11B-vision |
 | NVIDIA Magpie TTS | gRPC/NVCF, multilingual TTS |
@@ -2814,7 +2814,7 @@ The Python/FastAPI workers in `workers/` run on Google Cloud Run (GPU). Each exp
 | `POST /api/tts/eleven` · `eleven-clone` | `api/tts/eleven*.js` | ElevenLabs premium TTS + voice cloning |
 | `POST /api/asr` | NVIDIA Riva (gRPC) | Free speech-to-text (voice in) |
 | `POST /api/a2f` | NVIDIA Audio2Face-3D (gRPC) | Free audio → ARKit-52 facial animation |
-| `POST /api/vision` | NVIDIA NIM VLM → OpenAI gpt-4o-mini | Public image understanding |
+| `POST /api/vision` | NVIDIA NIM VLM → OpenAI gpt-5.4-nano | Public image understanding |
 | `POST /api/cosmos` | NVIDIA Cosmos | Text → ~5s 1280×704@24fps world video (async MP4) |
 
 gRPC protobufs are vendored under `api/_lib/riva-protos/` and `api/_lib/a2f-protos/`; these endpoints require the Node runtime (not Edge).

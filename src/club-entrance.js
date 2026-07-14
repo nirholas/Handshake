@@ -56,6 +56,7 @@ import { gltfLoader } from './loaders/gltf.js';
 import { AnimationManager } from './animation-manager.js';
 import { ClubCrowd } from './club-crowd.js';
 import { detectProfile, PROFILES, createFrameWatchdog } from './club-perf.js';
+import { getPowerSaver } from './shared/frame-governor.js';
 import { log } from './shared/log.js';
 import { isExpressEntry } from './shared/club-express.js';
 
@@ -807,7 +808,9 @@ async function start(canvasEl) {
 	// no visible benefit — the dominant cause of the fans spinning up. Simulation
 	// still steps every animation frame; only the expensive composer.render is
 	// gated, so movement stays smooth.
-	const FRAME_BUDGET_MS = 1000 / 60 - 1; // -1ms slack so a 60Hz panel never skips
+	// Under the shared power-saver preference (see shared/frame-governor.js —
+	// same toggle as the main club floor and /play) the cap halves to 30fps.
+	const FRAME_BUDGET_MS = () => (getPowerSaver() ? 1000 / 30 : 1000 / 60) - 1; // -1ms slack so a 60Hz panel never skips
 	// Sustained-slow-frame watchdog: drops pixel ratio one tier (and finally the
 	// SMAA pass) when frames stay above budget, so a struggling GPU cools off
 	// instead of grinding. Never upgrades — see club-perf.js.
@@ -927,7 +930,7 @@ async function start(canvasEl) {
 		// Draw at most ~60 fps, and never while the tab is hidden — the GPU
 		// shouldn't keep rendering a club nobody is looking at. Simulation above
 		// already ran this frame; here we only decide whether to paint it.
-		if (!document.hidden && now - lastDraw >= FRAME_BUDGET_MS) {
+		if (!document.hidden && now - lastDraw >= FRAME_BUDGET_MS()) {
 			// Clamp like the sim dt so the first draw after a hidden tab (interval
 			// of seconds) can't single-handedly trip the slow-frame watchdog.
 			const drawDt = Math.min((now - lastDraw) / 1000, 0.1);

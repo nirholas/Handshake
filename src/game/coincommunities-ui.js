@@ -16,6 +16,7 @@ import { GUEST_SENTINEL, playAs } from './play-handoff.js';
 import { COMPOSITE_PIECES } from './build-voxels.js';
 import { PROP_CATALOG, GALLERY_PROP_PREFIX, registerGalleryProp } from './world-objects.js';
 import { makeIntroReopener } from './play-intro.js';
+import { getPowerSaver, setPowerSaver, onPowerSaverChange } from '../shared/frame-governor.js';
 import { log } from '../shared/log.js';
 
 // localStorage throws in private mode and in third-party iframe contexts where
@@ -1303,6 +1304,22 @@ export class CommunityUI {
 			this.voiceLabel,
 		]);
 
+		// Power saver — one shared preference across every three.ws 3D surface
+		// (also read by /club). Caps the render loop at 30fps and drops to the
+		// cheapest render state so laptops stay cool and quiet. The button both
+		// toggles and mirrors the preference, so a change made on another page
+		// (or another tab) is reflected here live.
+		this.powerBtn = el('button', {
+			class: 'cc-power-btn', type: 'button',
+			'aria-pressed': getPowerSaver() ? 'true' : 'false',
+			'aria-label': 'Power saver', title: 'Power saver — 30fps + lighter rendering, for a cooler, quieter machine',
+			onclick: () => setPowerSaver(this.powerBtn.getAttribute('aria-pressed') !== 'true'),
+		}, [
+			el('span', { class: 'cc-power-ico', 'aria-hidden': 'true', text: '⚡' }),
+			el('span', { class: 'cc-power-label', text: 'Eco' }),
+		]);
+		onPowerSaverChange((on) => this.powerBtn.setAttribute('aria-pressed', on ? 'true' : 'false'));
+
 		// Dance floor button — hidden until the player steps onto the pad.
 		this.danceBtnLabel = el('span', { class: 'cc-dance-label', text: 'Dance' });
 		this.danceBtn = el('button', {
@@ -1321,7 +1338,7 @@ export class CommunityUI {
 
 		this._buildTagHud();
 		this._buildKingHud();
-		this.hud = el('div', { id: 'cc-hud', hidden: true }, [banner, leave, this.statusPill, this.voiceBtn, this.danceBtn, chat, this.emoteTray, this.reactionBar, hint, this.joystick]);
+		this.hud = el('div', { id: 'cc-hud', hidden: true }, [banner, leave, this.statusPill, this.voiceBtn, this.powerBtn, this.danceBtn, chat, this.emoteTray, this.reactionBar, hint, this.joystick]);
 		document.body.appendChild(this.hud);
 	}
 

@@ -72,7 +72,7 @@ The fastest path to a talking agent is a built-in TTS voice. The catalog lives i
 | `shimmer` | Light and airy |
 | `verse` | Dynamic and conversational |
 
-The default is `nova`. These are synthesized by `POST /api/tts/speak` ([`api/tts/speak.js`](../../api/tts/speak.js)), which tries the free NVIDIA NIM Magpie lane first and falls back to OpenAI's `/v1/audio/speech`. You don't choose the provider — you choose the voice id, and the endpoint renders it on whichever lane is configured.
+The default is `nova`. These are synthesized by `POST /api/tts/speak` ([`api/tts/speak.js`](../../api/tts/speak.js)), which tries the free NVIDIA NIM Magpie lane first and falls back to the OpenAI `/v1/audio/speech` endpoint. You don't choose the provider — you choose the voice id, and the endpoint renders it on whichever lane is configured.
 
 You can hear all of these immediately in the next step.
 

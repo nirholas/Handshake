@@ -27,6 +27,11 @@ import { createWorldEnvironment, seedFromString } from './world-env.js';
 import { createDistrict } from './district.js';
 import { DISTRICT, clampToBounds } from './world-zones.js';
 import { PhysicsWorld } from '../physics/physics-world.js';
+import { detectProfile, createFrameWatchdog } from '../club-perf.js';
+import {
+	createFrameGovernor, trackWindowFocus, getPowerSaver, onPowerSaverChange,
+	FPS_ACTIVE, FPS_IDLE, FPS_SAVER,
+} from '../shared/frame-governor.js';
 import { createDayNightCycle } from './day-night.js';
 import { worldClock } from '../shared/world-clock.js';
 import { createCameraModeController, CAMERA_MODE_LABELS } from './camera-modes.js';
@@ -392,6 +397,31 @@ export class CoinCommunities {
 		this._last = performance.now();
 		this._lastKick = 0; // R05: timestamp of last ball:kick intent (client-side rate limit)
 
+		// Heat control (same system as /club): rAF fires at the display refresh
+		// rate, so an uncapped loop on a 120/144Hz panel renders 2-2.4x the
+		// frames of a 60Hz one for no visible gain — that alone makes laptops
+		// run hot. The governor caps real frame work at 60fps in-world, 30 when
+		// the window loses focus, 30 under the shared power-saver preference,
+		// and a near-idle trickle while the opaque lobby fully covers the
+		// canvas (the arena keeps rendering behind it otherwise, pure waste).
+		this._governor = createFrameGovernor();
+		this._focus = trackWindowFocus();
+		this._powerSaver = getPowerSaver();
+		// Boot-time quality tier from real capability signals (deviceMemory,
+		// cores, coarse pointer — same detector /club uses), then a watchdog
+		// that steps the tier down on sustained slow frames. Applied to the
+		// renderer in _initRenderer / _applyPerfTier.
+		this._perfTier = detectProfile();
+		this._watchdog = createFrameWatchdog({
+			initialTier: this._perfTier,
+			onDowngrade: (tier) => {
+				this._perfTier = tier;
+				this._applyPerfTier();
+				log.info('[coincommunities] downgrading render tier to', tier);
+			},
+		});
+		onPowerSaverChange((on) => { this._powerSaver = on; this._applyPerfTier(); });
+
 		// W01: real Rapier collision. A single physics world + character controller
 		// persist for the whole session (Rapier's WASM init is memoized globally);
 		// district building colliders are rebuilt per coin in enter(). Movement in
@@ -636,10 +666,9 @@ export class CoinCommunities {
 			e.code = 'NO_WEBGL';
 			throw e;
 		}
-		r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 		r.setSize(window.innerWidth, window.innerHeight);
 		if (this._transparentBg) r.setClearColor(0x000000, 0);
-		r.shadowMap.enabled = true; r.shadowMap.type = PCFShadowMap;
+		r.shadowMap.type = PCFShadowMap;
 		r.outputColorSpace = SRGBColorSpace;
 		// ACES keeps the cool moonlight key and the bright avatars from clipping;
 		// exposure is tuned for the dark monochrome arena (the LDR gradient backdrop
@@ -647,7 +676,25 @@ export class CoinCommunities {
 		r.toneMapping = ACESFilmicToneMapping;
 		r.toneMappingExposure = 1.0;
 		this.renderer = r;
+		this._applyPerfTier();
 		window.addEventListener('resize', () => this._onResize());
+	}
+
+	// Apply the current quality tier (or the power-saver floor) to the renderer.
+	// Tier caps pixel ratio — the single biggest GPU cost on high-DPI screens —
+	// and gates shadow maps. Power saver overrides everything with the cheapest
+	// state; turning it off restores the tier the watchdog last settled on.
+	_applyPerfTier() {
+		const r = this.renderer;
+		if (!r) return;
+		if (this._powerSaver) {
+			r.setPixelRatio(1);
+			r.shadowMap.enabled = false;
+			return;
+		}
+		const dprCap = this._perfTier === 'high' ? 2 : this._perfTier === 'medium' ? 1.5 : 1;
+		r.setPixelRatio(Math.min(window.devicePixelRatio || 1, dprCap));
+		r.shadowMap.enabled = this._perfTier !== 'low';
 	}
 
 	_initScene() {
@@ -3310,11 +3357,26 @@ export class CoinCommunities {
 	}
 
 	// ---------------------------------------------------------------- loop
-	_loop() {
+	_loop(frameNow) {
 		requestAnimationFrame(this._loop);
-		const now = performance.now();
+		const now = frameNow ?? performance.now();
+		// Frame cap (see constructor): 60 in-world, 30 blurred or power-saving,
+		// and a 4fps trickle while the opaque lobby hides the canvas entirely
+		// (the transparent embed keeps 30 — its arena stays visible behind the
+		// grid). Skipped frames are cheap: everything below is dt-based.
+		const lobbyHidden = this.phase === 'lobby' && !this._transparentBg;
+		let fpsCap = !this._focus.focused ? FPS_IDLE
+			: lobbyHidden ? 4
+			: this.phase === 'world' ? FPS_ACTIVE
+			: FPS_IDLE;
+		if (this._powerSaver) fpsCap = Math.min(fpsCap, FPS_SAVER);
+		if (!this._governor.shouldRun(now, fpsCap)) return;
 		const dt = Math.min(0.05, (now - this._last) / 1000);
 		this._last = now;
+		// Only judge frame health at the full-rate cap — a deliberately
+		// throttled frame (blur, lobby, saver) is slow by design, not a
+		// struggling GPU.
+		if (this.phase === 'world' && fpsCap >= FPS_ACTIVE) this._watchdog.tick(dt);
 
 		if (this.phase === 'world') {
 			// W02: while driving, the vehicle IS the local player's movement — skip

@@ -3279,12 +3279,31 @@ async function resolveQuickLookUrl() {
 	if (_usdzObjectUrl && _usdzObjectUrlFor === glbUrl) return _usdzObjectUrl;
 	const res = await fetch(glbUrl);
 	if (!res.ok) throw new Error(`GLB fetch failed: ${res.status}`);
-	const { glbBlobToUsdzBlob } = await import('./usdz-pipeline.js');
-	const usdzBlob = await glbBlobToUsdzBlob(await res.blob());
+	const glbBlob = await res.blob();
+	const usdzBlob = await bakeQuickLookUsdz(glbBlob);
 	if (_usdzObjectUrl) URL.revokeObjectURL(_usdzObjectUrl);
 	_usdzObjectUrl = URL.createObjectURL(usdzBlob);
 	_usdzObjectUrlFor = glbUrl;
 	return _usdzObjectUrl;
+}
+
+// Prefer a living, animated avatar in Quick Look (same policy as /ar): bake the
+// idle clip into the USDZ so the agent breathes on the real floor instead of
+// standing frozen in its bind pose. Fall back to the static bake if the rig
+// can't take the clip or the animation fetch fails — animation is upside,
+// never a gate.
+async function bakeQuickLookUsdz(glbBlob) {
+	try {
+		const { glbBlobToAnimatedUsdzBlob, DEFAULT_AR_ANIMATION } = await import('./usdz-animated.js');
+		const animResp = await fetch(DEFAULT_AR_ANIMATION);
+		if (!animResp.ok) throw new Error(`animation fetch ${animResp.status}`);
+		const animationGlbBlob = await animResp.blob();
+		return await glbBlobToAnimatedUsdzBlob(glbBlob, { animationGlbBlob });
+	} catch (err) {
+		log.warn('[irl] animated USDZ unavailable, using static:', err?.message);
+		const { glbBlobToUsdzBlob } = await import('./usdz-pipeline.js');
+		return glbBlobToUsdzBlob(glbBlob);
+	}
 }
 
 async function enterQuickLookPlacement() {

@@ -45,7 +45,7 @@ The rest of this tutorial assumes you've decided yes, two agents.
 
 A SaaS pricing page. Two agents:
 
-- **Riley (Sales)** — front-of-stage. Greets visitors, answers high-level pricing/positioning questions, sniffs intent. Cheap LLM (Claude Haiku or GPT-4o-mini class).
+- **Riley (Sales)** — front-of-stage. Greets visitors, answers high-level pricing/positioning questions, sniffs intent. Cheap LLM (Claude Haiku or GPT-5.6 Luna class).
 - **Devon (Engineer)** — stays in the background until summoned. Answers integration, security, architecture, and SDK questions. More expensive LLM (Claude Sonnet/Opus class) because the answers must be technically accurate.
 
 The handoff rule is concrete: when Riley detects a "deep technical" question, Riley narrates the handoff and Devon steps forward. When Devon's done, control returns to Riley. There's a shared scratch memory so Devon knows what Riley already covered.

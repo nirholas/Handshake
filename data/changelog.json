@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-14",
+			"title": "IRL avatars now move in iPhone AR",
+			"summary": "Tapping Place in AR on the IRL page from an iPhone now bakes your agent's idle animation into the AR preview, so it breathes and shifts on your real floor instead of standing frozen in a T-pose. If an avatar's rig can't take the animation, the proven static preview still opens, so AR always works.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/irl"
+		},
+		{
+			"date": "2026-07-14",
 			"title": "The on-chain deploy wizard got a full polish pass",
 			"summary": "Deploying an agent on-chain is now smoother end to end. The step bar is keyboard-navigable and screen-reader friendly, form fields validate inline with live character counters instead of failing three steps later, and bad service endpoints are caught before they can be minted into your agent's on-chain record. Wallet problems now say exactly what to do (install, unlock, connect, or switch network). A failed mint shows a clear error panel with a working retry, and success promotes the explorer link plus one-click next steps: view your agent page, launch a coin, or embed it. The whole wizard works down to small phones, and a 3D preview that cannot render falls back to a clear notice instead of an empty box.",
 			"tags": [
@@ -13730,6 +13740,26 @@
 				"improvement"
 			],
 			"link": "/viewer"
+		},
+		{
+			"date": "2026-07-14",
+			"title": "Play and Club run cooler: smart frame caps and a power-saver toggle",
+			"summary": "The 3D worlds on /play and /club used to render at your monitor's full refresh rate (up to 144+ frames a second) and kept working at full quality even when you clicked over to another window, which made laptops run hot with fans spinning. Both pages now cap rendering at 60fps, drop to 30fps whenever the window is in the background, and /play stops rendering the hidden 3D arena behind the coin-picker lobby entirely. There's also a new Eco toggle (the lightning button in /play, a checkbox in the /club panel) that holds everything at 30fps with lighter effects for a cooler, quieter machine; the setting is shared across both pages.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-07-14",
+			"title": "Everything OpenAI, brought up to the GPT-5.6 era",
+			"summary": "The whole OpenAI surface caught up with the current model family. The agent-brain tutorial, API reference, and architecture docs now describe the real lineup (GPT-5.6 Sol, Terra, and Luna, plus the GPT-5.5 and 5.4 tiers and o3), the agent-creation wizard offers GPT-5.6 Sol as its OpenAI pick, and the built-in chat app now recognizes GPT-5.x models properly: vision input, reasoning-effort controls, and the right token limits. The ChatGPT 3D Studio docs also grew: how the inline persona widget renders a living agent body, and the full REST contract behind the three.ws 3D Studio custom GPT. Old model names like gpt-4o keep working everywhere as aliases.",
+			"tags": [
+				"improvement",
+				"docs"
+			],
+			"link": "/docs/mcp-studio"
 		}
 	]
 }

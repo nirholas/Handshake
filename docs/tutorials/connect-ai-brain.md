@@ -2,11 +2,11 @@
 
 The agent's body is the avatar. The agent's voice is the TTS. The agent's *brain* is whatever LLM is generating its replies. By default the platform routes through a managed Claude endpoint, which works out of the box but bills against your free tier. The moment you want real production traffic, full control over which model runs, or your own usage observability, you bring your own API key.
 
-This tutorial covers the whole brain layer. Where the LLM call actually happens (and why your key never ends up in HTML), how to attach your Anthropic or OpenAI key in My Agents, choosing between Claude Sonnet 4.6, Claude Opus 4.7, GPT-4o, GPT-5, and the smaller models, the latency and cost tradeoffs, configuring streaming and system prompts, tool-use support per model, and where to watch your token spend. The embed snippet doesn't change when you switch models — every config is on the agent record.
+This tutorial covers the whole brain layer. Where the LLM call actually happens (and why your key never ends up in HTML), how to attach your Anthropic or OpenAI key in My Agents, choosing between Claude Sonnet 4.6, Claude Opus 4.7, the GPT-5.6 family, and the smaller models, the latency and cost tradeoffs, configuring streaming and system prompts, tool-use support per model, and where to watch your token spend. The embed snippet doesn't change when you switch models — every config is on the agent record.
 
 **What you'll build:**
 - An agent powered by your own Anthropic key, with model selection
-- An agent powered by your own OpenAI key, switchable to GPT-5
+- An agent powered by your own OpenAI key, switchable across the GPT-5.6 family
 - A working understanding of which model fits which use case (cost, latency, capability)
 - A streaming-enabled brain so replies feel responsive
 - An observability dashboard you can use to monitor spend per agent
@@ -31,7 +31,7 @@ This matters for three reasons:
 
 - **Keys stay secret.** Even a "view source" attack on your page reveals nothing. The key lives only in the platform's key store.
 - **Rate-limit shaping happens once, server-side.** The platform manages backoff and retries for you.
-- **The embed snippet doesn't know which model is running.** You can swap from Claude Sonnet 4.6 to GPT-5 in My Agents and every page that embeds your agent picks up the change on next load. No code edits anywhere.
+- **The embed snippet doesn't know which model is running.** You can swap from Claude Sonnet 4.6 to GPT-5.6 Sol in My Agents and every page that embeds your agent picks up the change on next load. No code edits anywhere.
 
 The corollary: setting `api-key="sk-ant-..."` directly on the `<agent-3d>` tag is supported but discouraged. It exposes your key in DOM. Use it only for local prototypes that never get deployed. Production agents store their key on the platform side.
 
@@ -95,23 +95,36 @@ The current production-ready models, with the tradeoffs that actually matter for
 
 ### OpenAI models
 
-**GPT-4o** (`gpt-4o`) — the comparable peer to Sonnet 4.6.
+**GPT-5.6 Terra** (`gpt-5.6-terra`) is the comparable peer to Sonnet 4.6.
 
-- **Cost:** $2.50 per million input, $10 per million output. Slightly cheaper than Sonnet.
+- **Cost:** $2.50 per million input, $15 per million output. The same band as Sonnet.
 - **Latency:** First token in ~700ms.
-- **Capability:** Strong at multimodal input (vision, audio) and at general chat. Tool use is reliable.
+- **Capability:** Strong at multimodal input and general chat. Tool use is reliable. The right OpenAI default for support, sales, and concierge agents.
+- **Context window:** 1M tokens.
 
-**GPT-5** (`gpt-5`) — OpenAI's reasoning-grade model, comparable to Opus.
+**GPT-5.6 Sol** (`gpt-5.6-sol`) is the reasoning-grade OpenAI flagship, comparable to Opus.
 
-- **Cost:** Premium. Comparable to Opus per token.
-- **Latency:** Higher than GPT-4o; first token in ~1.5s, more if reasoning is engaged.
-- **Capability:** Excellent at hard tasks, math, code, complex tool chains. Overkill for casual chat.
+- **Cost:** Premium ($5 per million input, $30 per million output). Comparable to Opus per token.
+- **Latency:** Higher than Terra; first token in ~1.5s, more if reasoning is engaged.
+- **Capability:** Frontier reasoning, coding, and agentic work. Excellent at hard tasks, math, and complex tool chains. Overkill for casual chat.
+- **Context window:** 1M tokens.
 
-**GPT-4o-mini** (`gpt-4o-mini`) — the budget option.
+**GPT-5.6 Luna** (`gpt-5.6-luna`) is the budget pick of the 5.6 family.
 
-- **Cost:** Lowest in the OpenAI lineup.
+- **Cost:** $1 per million input, $6 per million output.
 - **Latency:** Fast.
-- **Capability:** Roughly comparable to Haiku for short interactions. Less coherent on long conversations.
+- **Capability:** Vision-capable, and roughly comparable to Haiku for short interactions. Less coherent on long conversations.
+- **Context window:** 1M tokens.
+
+**o3** (`o3`) is the reasoning specialist, with `o3-pro` above it.
+
+- **Cost:** Reasoning tokens bill as output, so replies cost more than their visible length suggests.
+- **Latency:** Variable; it thinks before the first token arrives.
+- **Capability:** Deep chain-of-thought for math, logic, and structured planning. Not a general chat pick; reach for it when the agent's job is to reason, not to converse.
+
+The platform also carries the wider OpenAI lineup: GPT-5.5 and GPT-5.5 Pro, the more affordable GPT-5.4 tier (`gpt-5.4`, `gpt-5.4-pro`, `gpt-5.4-mini`, `gpt-5.4-nano`, the cheapest current GPT), and GPT-5.3 Codex (`gpt-5.3-codex`) for code-centric agents. The three 5.6 models above cover almost every agent use case; the rest are there when you want a specific cost or capability point.
+
+Legacy ids keep working: `gpt-4o`, `gpt-4o-mini`, and `o3-mini` are accepted as aliases and resolve to `gpt-5.6-sol`, `gpt-5.6-luna`, and `o3` (the GPT-4o family was deprecated upstream in July 2026), so existing agents upgrade in place with no config change.
 
 ### Picking a model
 
@@ -119,15 +132,15 @@ A practical rule of thumb:
 
 | Use case | Recommended model |
 |---|---|
-| Support / FAQ agent for a SaaS | Sonnet 4.6 or GPT-4o |
+| Support / FAQ agent for a SaaS | Sonnet 4.6 or GPT-5.6 Terra |
 | Personal-website-me agent | Sonnet 4.6 |
 | Onboarding co-pilot, sales bot | Sonnet 4.6 |
 | Museum tour guide, long-form domain agent | Sonnet 4.6, escalate to Opus only if needed |
-| Legal, medical, financial assistant | Opus 4.7 or GPT-5 |
-| Status-check, wave-and-greet, micro-interaction | Haiku 4.5 or GPT-4o-mini |
-| Multi-step tool chains, code assistance | Opus 4.7 or GPT-5 |
+| Legal, medical, financial assistant | Opus 4.7 or GPT-5.6 Sol |
+| Status-check, wave-and-greet, micro-interaction | Haiku 4.5 or GPT-5.6 Luna |
+| Multi-step tool chains, code assistance | Opus 4.7 or GPT-5.6 Sol |
 
-Start at Sonnet 4.6 for almost everything. Move to Haiku if latency is the bottleneck. Move to Opus or GPT-5 only when you have a specific quality issue that the smaller model can't fix with prompt iteration.
+Start at Sonnet 4.6 for almost everything. Move to Haiku if latency is the bottleneck. Move to Opus or GPT-5.6 Sol only when you have a specific quality issue that the smaller model can't fix with prompt iteration.
 
 ---
 
@@ -135,15 +148,15 @@ Start at Sonnet 4.6 for almost everything. Move to Haiku if latency is the bottl
 
 The system prompt and the model are configured separately. You can swap models without touching the prompt, and vice versa.
 
-In **Brain → System prompt**, paste your full prompt. The same prompt works across all the models above, with one caveat: smaller models (Haiku, GPT-4o-mini) follow instructions less precisely, so prompts written for them benefit from being shorter and more explicit. A 600-word prompt that Sonnet handles cleanly may overflow Haiku's instruction-following budget.
+In **Brain → System prompt**, paste your full prompt. The same prompt works across all the models above, with one caveat: smaller models (Haiku, GPT-5.6 Luna) follow instructions less precisely, so prompts written for them benefit from being shorter and more explicit. A 600-word prompt that Sonnet handles cleanly may overflow Haiku's instruction-following budget.
 
-If you're targeting Haiku or GPT-4o-mini specifically, trim:
+If you're targeting Haiku or GPT-5.6 Luna specifically, trim:
 
 - Cut the longer "voice" descriptions to 2-3 traits
 - Reduce the rules list to 3-4 hard bans
 - Keep fallback responses but cut any explanatory commentary
 
-For Sonnet, Opus, GPT-4o, and GPT-5, the full prompt template from the [agent personality](/tutorials/agent-personality) tutorial works without modification.
+For Sonnet, Opus, GPT-5.6 Terra, and GPT-5.6 Sol, the full prompt template from the [agent personality](/tutorials/agent-personality) tutorial works without modification.
 
 A few configuration knobs alongside the prompt:
 
@@ -196,11 +209,11 @@ Tool use (the model invoking a function you've defined — a `searchProducts(que
 | Claude Opus 4.7 | Excellent. Handles complex multi-tool chains and ambiguous tool selection cleanly. |
 | Claude Sonnet 4.6 | Excellent. Indistinguishable from Opus for most tool flows. The default recommendation. |
 | Claude Haiku 4.5 | Good for single-tool flows. Struggles with chains that require 3+ sequential tool calls. |
-| GPT-5 | Excellent, similar to Opus. Strong at parallel tool calls. |
-| GPT-4o | Very good. Slightly more prone to mis-formatting tool arguments than Sonnet. |
-| GPT-4o-mini | Functional. Avoid for anything with 2+ tools or non-trivial schemas. |
+| GPT-5.6 Sol | Excellent, similar to Opus. Strong at parallel tool calls. |
+| GPT-5.6 Terra | Very good. Slightly more prone to mis-formatting tool arguments than Sonnet. |
+| GPT-5.6 Luna | Functional. Avoid for anything with 2+ tools or non-trivial schemas. |
 
-If you're building a skill-heavy agent — one that needs to look up products, check inventory, search documentation, and place orders, all in one conversation — pick Sonnet or GPT-4o at minimum. Haiku and mini are acceptable for single-purpose lookups but get confused on chains.
+If you're building a skill-heavy agent — one that needs to look up products, check inventory, search documentation, and place orders, all in one conversation — pick Sonnet or GPT-5.6 Terra at minimum. Haiku and Luna are acceptable for single-purpose lookups but get confused on chains.
 
 See the [custom skill tutorial](/tutorials/custom-skill) for the full skill-writing workflow.
 
@@ -238,13 +251,13 @@ If you have:
 <agent-3d agent-id="YOUR_AGENT_ID" id="agent"></agent-3d>
 ```
 
-…on a thousand pages, you can switch the brain from Sonnet to Opus to GPT-5 entirely from the dashboard. No deploy. No code edit. The next page load picks up the new model.
+…on a thousand pages, you can switch the brain from Sonnet to Opus to GPT-5.6 Sol entirely from the dashboard. No deploy. No code edit. The next page load picks up the new model.
 
 This makes A/B testing painless. Common patterns:
 
 - **Cost optimisation pass.** Move a low-stakes agent from Sonnet to Haiku, watch the quality and spend for a week, decide whether to keep the change.
 - **Capability spike.** Promote an agent to Opus for a busy week (a launch, a marketing campaign), then dial back down to Sonnet for steady-state.
-- **Provider failover.** If Anthropic has a brief outage, you can switch the agent to GPT-4o in the dashboard and keep traffic moving while you wait. Both keys are stored, both providers are reachable from the same agent record.
+- **Provider failover.** If Anthropic has a brief outage, you can switch the agent to GPT-5.6 Terra in the dashboard and keep traffic moving while you wait. Both keys are stored, both providers are reachable from the same agent record.
 
 The trick to making this work cleanly is to write your system prompt in a model-agnostic style. Prompts that lean hard on Claude-specific quirks ("respond in XML tags") can produce slightly different output on GPT. The prompt template in the [agent personality](/tutorials/agent-personality) tutorial is intentionally portable across providers — use that style and your switch-day surprises are minimal.
 
@@ -300,7 +313,7 @@ The brain layer in full:
 
 - LLM calls happen server-side; your key never leaves the platform's backend
 - Keys are stored per-account in My Agents; one key serves all your agents from that provider
-- Sonnet 4.6 is the default; Opus 4.7 and GPT-5 are the reasoning-grade upgrades; Haiku and mini are the latency picks
+- Sonnet 4.6 is the default; Opus 4.7 and GPT-5.6 Sol are the reasoning-grade upgrades; Haiku and GPT-5.6 Luna are the latency picks
 - Streaming is on by default and matters more than total latency for perceived speed
 - Tool-use quality varies by model — pick Sonnet or larger for skill-heavy agents
 - Usage and cost are visible in the dashboard, with alerts available for spend caps

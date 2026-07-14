@@ -54,6 +54,10 @@ import { ClubCamera } from './club-camera.js';
 import { ClubAudio, styleAudioFor, TRACK_LABELS } from './club-audio.js';
 import { playSequence, ticketSteps } from './club-sequence.js';
 import { detectProfile, PROFILES, createFrameWatchdog, isMobileLayout } from './club-perf.js';
+import {
+	createFrameGovernor, trackWindowFocus, getPowerSaver, setPowerSaver, onPowerSaverChange,
+	FPS_ACTIVE, FPS_IDLE, FPS_SAVER,
+} from './shared/frame-governor.js';
 import { log } from './shared/log.js';
 import { emptyStateHTML } from './shared/state-kit.js';
 import { createRenderer } from './webgl-support.js';
@@ -2272,10 +2276,12 @@ const watchdog = createFrameWatchdog({
 		if (!next) return;
 		activeProfile = next;
 		if (typeof window !== 'undefined') window.__clubProfile = next;
-		renderer.setPixelRatio(next.pixelRatio);
-		renderer.shadowMap.enabled = next.shadows;
-		for (const station of stations) {
-			if (station.spot) station.spot.castShadow = next.shadows;
+		if (!powerSaver) {
+			renderer.setPixelRatio(next.pixelRatio);
+			renderer.shadowMap.enabled = next.shadows;
+			for (const station of stations) {
+				if (station.spot) station.spot.castShadow = next.shadows;
+			}
 		}
 		// Trim disco lights to the new cap so we render fewer point lights.
 		while (disco.children.length > next.discoLights) {
@@ -2286,15 +2292,58 @@ const watchdog = createFrameWatchdog({
 	},
 });
 
+// ── Power saver ──────────────────────────────────────────────────────────
+// A machine can hold 60fps and still run hot — the watchdog above only
+// reacts to SLOW frames, never to a GPU that is merely working flat out.
+// Power saver is the user's direct lever: hard 30fps cap plus the cheapest
+// render state (1x pixel ratio, no shadows), persisted across every three.ws
+// 3D surface through one shared preference.
+let powerSaver = getPowerSaver();
+function applyPowerSaver(on) {
+	powerSaver = on;
+	const dprCap = on ? 1 : activeProfile.pixelRatio;
+	const shadows = on ? false : activeProfile.shadows;
+	renderer.setPixelRatio(dprCap);
+	renderer.shadowMap.enabled = shadows;
+	for (const station of stations) {
+		if (station.spot) station.spot.castShadow = shadows;
+	}
+}
+if (powerSaver) applyPowerSaver(true);
+onPowerSaverChange((on) => {
+	applyPowerSaver(on);
+	const cb = document.getElementById('club-power-saver');
+	if (cb) cb.checked = on;
+});
+{
+	const cb = document.getElementById('club-power-saver');
+	if (cb) {
+		cb.checked = powerSaver;
+		cb.addEventListener('change', () => setPowerSaver(cb.checked));
+	}
+}
+
 // ── Render loop ──────────────────────────────────────────────────────────
+// rAF fires at the display refresh rate (144Hz panels would render 2.4x the
+// frames of a 60Hz one, for pure heat); the governor caps real work at 60fps,
+// drops to 30 when the window loses focus (visible but not in front), and
+// holds 30 under power saver. Skipped frames fold into the next dt.
+const governor = createFrameGovernor();
+const focusState = trackWindowFocus();
 const clock = new Timer();
 let rafId = null;
-function animate() {
+function animate(frameNow) {
+	rafId = requestAnimationFrame(animate);
+	const fpsCap = powerSaver ? FPS_SAVER : (focusState.focused ? FPS_ACTIVE : FPS_IDLE);
+	if (!governor.shouldRun(frameNow ?? performance.now(), fpsCap)) return;
 	clock.update();
 	const dt = Math.min(clock.getDelta(), 0.066);
 	const t = clock.getElapsed();
 
-	watchdog.tick(dt);
+	// Only judge frame health at the full-rate cap — a deliberately throttled
+	// frame (blur, power saver) is slow by design, not a struggling GPU, and
+	// the watchdog never upgrades back.
+	if (fpsCap >= FPS_ACTIVE) watchdog.tick(dt);
 
 	// Beat level — drives both the bloom and the volumetric beams this frame.
 	const peak = audio.getPeak();
@@ -2350,7 +2399,6 @@ function animate() {
 	if (!prefersReducedMotion) bloomEffect.intensity = 1.0 + peak * 1.5;
 
 	composer.render(dt);
-	rafId = requestAnimationFrame(animate);
 }
 
 renderPoles();
