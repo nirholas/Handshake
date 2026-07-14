@@ -93,6 +93,9 @@
 		"api/cron/{recompute-reputation,smart-money-graph}.js": {
 			"maxDuration": 300
 		},
+		"api/cron/sketchfab-showcase.js": {
+			"maxDuration": 300
+		},
 		"api/cron/[name].js": {
 			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
 			"maxDuration": 300
@@ -5252,6 +5255,10 @@
 		{
 			"path": "/api/cron/forge-seed-cron",
 			"schedule": "* * * * *"
+		},
+		{
+			"path": "/api/cron/sketchfab-showcase",
+			"schedule": "0 15 * * 1,3,5"
 		},
 		{
 			"path": "/api/cron/avatar-thumbnail-render",

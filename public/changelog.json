@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-14T09:20:07.194Z",
+	"generated_at": "2026-07-14T09:31:47.837Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "AR Forge",
 			"summary": "Type a prompt, get a real 3D model, and place it in your room: free text-to-3D with one-tap AR on any phone (WebXR, Scene Viewer, Quick Look) and a QR handoff from desktop.",
 			"link": "/ar",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "launch",
+			"title": "Docs · Sketchfab Showcase",
+			"summary": "How the best community forge models get published to the official three.ws Sketchfab account: what gets picked, AI disclosure, and the backlinks that make referrals measurable.",
+			"link": "/docs/sketchfab",
 			"tags": [
 				"launch"
 			]
@@ -55,6 +65,16 @@
 			"link": "/docs/irl",
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
+			"title": "The best community models now go to Sketchfab",
+			"summary": "Weekly Forge-Off winners and the top-voted forge board models are now published to the official three.ws account on Sketchfab, the largest public 3D model site. It is a curated showcase, not a firehose: a few community-validated models a week, each clearly tagged as AI-generated, with its generation prompt and a link back to the creation on three.ws so anyone who finds it can remix it or forge their own. Every link is tagged so we can measure how many visitors the showcase actually brings in.",
+			"link": "/docs/sketchfab",
+			"tags": [
+				"feature"
 			]
 		},
 		{

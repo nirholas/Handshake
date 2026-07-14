@@ -644,6 +644,17 @@ export const env = {
 		return opt('CRON_SECRET');
 	},
 
+	// Sketchfab Data API token of the official three.ws showcase account
+	// (api/cron/sketchfab-showcase.js). Unset: the showcase cron self-disables
+	// and skips cleanly, like the other optional credentials.
+	get SKETCHFAB_API_TOKEN() {
+		return opt('SKETCHFAB_API_TOKEN');
+	},
+	// Models pushed per showcase run (default 2, clamped 1-5 in the handler).
+	get SKETCHFAB_UPLOADS_PER_RUN() {
+		return opt('SKETCHFAB_UPLOADS_PER_RUN');
+	},
+
 	// ── multiplayer bridge (presence + live DM delivery) ─────────────────────
 	// Shared HMAC secret between this API and the standalone Colyseus server. The
 	// API mints short-lived presence tickets (api/friends/presence-ticket) the

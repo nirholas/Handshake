@@ -1911,6 +1911,14 @@
 					"added": "2026-06-05"
 				},
 				{
+					"path": "/docs/sketchfab",
+					"title": "Docs · Sketchfab Showcase",
+					"description": "How the best community forge models get published to the official three.ws Sketchfab account: what gets picked, AI disclosure, and the backlinks that make referrals measurable.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-14"
+				},
+				{
 					"path": "/docs/do-i-need-crypto",
 					"title": "Docs · Do I Need Crypto?",
 					"description": "Honest answers to the wallet and payment questions — what requires crypto, what doesn’t, and how payments work.",

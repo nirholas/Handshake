@@ -15,6 +15,14 @@
 			<description>Type a prompt, get a real 3D model, and place it in your room: free text-to-3D with one-tap AR on any phone (WebXR, Scene Viewer, Quick Look) and a QR handoff from desktop.</description>
 		</item>
 		<item>
+			<title>Docs · Sketchfab Showcase</title>
+			<link>https://three.ws/docs/sketchfab</link>
+			<guid isPermaLink="false">2026-07-14:Docs · Sketchfab Showcase</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the best community forge models get published to the official three.ws Sketchfab account: what gets picked, AI disclosure, and the backlinks that make referrals measurable.</description>
+		</item>
+		<item>
 			<title>End-User License Agreement</title>
 			<link>https://three.ws/legal/eula</link>
 			<guid isPermaLink="false">2026-07-14:End-User License Agreement</guid>
@@ -45,6 +53,14 @@
 			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>The IRL layer finally has a front door in the docs: one page that explains the whole vision and how the shipped pieces fit together. It covers placing an agent at a real GPS spot from your phone, walk-up discovery with proof of presence, paying agents in person via x402, Money Drops (real SOL, USDC, or $THREE escrowed at a place and claimable only by walking up), World Lines (agent-signed proofs that you were really there), and the privacy model that makes it all safe. The docs sidebar now also links the hands-on IRL tutorial, which was previously unreachable from the navigation.</description>
+		</item>
+		<item>
+			<title>The best community models now go to Sketchfab</title>
+			<link>https://three.ws/docs/sketchfab</link>
+			<guid isPermaLink="false">2026-07-14:The best community models now go to Sketchfab</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Weekly Forge-Off winners and the top-voted forge board models are now published to the official three.ws account on Sketchfab, the largest public 3D model site. It is a curated showcase, not a firehose: a few community-validated models a week, each clearly tagged as AI-generated, with its generation prompt and a link back to the creation on three.ws so anyone who finds it can remix it or forge their own. Every link is tagged so we can measure how many visitors the showcase actually brings in.</description>
 		</item>
 		<item>
 			<title>Tour and Walk SDK update: switch between Stroll and Platformer from the tour controls</title>

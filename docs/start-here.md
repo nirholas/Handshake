@@ -58,6 +58,8 @@ If you're here to create and share agents rather than write code, follow this pa
 3. **[Share & embed](./share-and-embed.md)** — get the embed snippet and put your agent anywhere
 4. **[Do I need crypto?](./do-i-need-crypto.md)** — honest answers to the wallet and payment questions
 
+Make something the community upvotes and it can reach beyond three.ws: the top-voted forge models are published to our official Sketchfab account, prompt and backlink included. See [Sketchfab showcase](./sketchfab.md).
+
 ---
 
 ## Ready to build?

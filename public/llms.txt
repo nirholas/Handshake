@@ -254,6 +254,7 @@ Docs, tutorials, and reference.
 - [Docs · Start Here](https://three.ws/docs/start-here): Plain-language introduction to three.ws for creators and non-developers — what it is, who it’s for, and where to begin.
 - [Docs · Make Your First Agent](https://three.ws/docs/make-your-agent): Step-by-step guide to creating a 3D AI agent in the browser with no code required.
 - [Docs · Share & Embed](https://three.ws/docs/share-and-embed): Three ways to put your agent in front of people: share a link, embed an iframe, or use the web component.
+- [Docs · Sketchfab Showcase](https://three.ws/docs/sketchfab): How the best community forge models get published to the official three.ws Sketchfab account: what gets picked, AI disclosure, and the backlinks that make referrals measurable.
 - [Docs · Do I Need Crypto?](https://three.ws/docs/do-i-need-crypto): Honest answers to the wallet and payment questions — what requires crypto, what doesn’t, and how payments work.
 - [Docs · Quick Start](https://three.ws/docs/quick-start): Five-minute walkthrough: create an agent, embed it, get a paid call.
 - [Docs · Agent System](https://three.ws/docs/agent-system): How agents, avatars, skills, and memories fit together.

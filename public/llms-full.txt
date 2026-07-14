@@ -1426,6 +1426,12 @@ URL: https://three.ws/docs/share-and-embed
 
 Three ways to put your agent in front of people: share a link, embed an iframe, or use the web component.
 
+### Docs · Sketchfab Showcase
+
+URL: https://three.ws/docs/sketchfab
+
+How the best community forge models get published to the official three.ws Sketchfab account: what gets picked, AI disclosure, and the backlinks that make referrals measurable.
+
 ### Docs · Do I Need Crypto?
 
 URL: https://three.ws/docs/do-i-need-crypto
