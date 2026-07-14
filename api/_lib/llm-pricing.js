@@ -24,9 +24,19 @@ const PRICE_PER_MTOK = {
 	'gpt-5.6-sol': [5, 30],
 	'gpt-5.6-terra': [2.5, 15],
 	'gpt-5.6-luna': [1, 6],
+	'gpt-5.5-pro': [30, 180],
+	'gpt-5.5': [5, 30],
+	'gpt-5.4-pro': [30, 180],
+	'gpt-5.4-mini': [0.75, 4.5],
+	'gpt-5.4-nano': [0.2, 1.25],
+	'gpt-5.4': [2.5, 15],
+	'gpt-5.3-codex': [1.75, 14],
+	'o3-pro': [20, 80],
+	'o3': [2, 8],
 	// Deprecated OpenAI family — kept so historical usage_events still price.
 	'gpt-4o-mini': [0.15, 0.6],
 	'gpt-4o': [2.5, 10],
+	'o3-mini': [1.1, 4.4],
 	// Vertex Gemini (model id carries the publisher prefix) — billed to the GCP
 	// credit grant, so it's metered like a paid model rather than priced to 0.
 	'google/gemini-2.5-flash-lite': [0.1, 0.4],

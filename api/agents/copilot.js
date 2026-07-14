@@ -76,7 +76,7 @@ function providerChain() {
 		chain.push({ name: 'nvidia', url: 'https://integrate.api.nvidia.com/v1/chat/completions', key: env.NVIDIA_API_KEY, model: 'meta/llama-3.3-70b-instruct' });
 	}
 	if (env.OPENAI_API_KEY) {
-		chain.push({ name: 'openai', url: 'https://api.openai.com/v1/chat/completions', key: env.OPENAI_API_KEY, model: 'gpt-5.6-luna' });
+		chain.push({ name: 'openai', url: 'https://api.openai.com/v1/chat/completions', key: env.OPENAI_API_KEY, model: 'gpt-5.4-nano' });
 	}
 	return chain;
 }

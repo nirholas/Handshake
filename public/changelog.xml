@@ -63,14 +63,6 @@
 			<description>Avatars on the /activity trading floor and the /deployments on-chain feed come from wherever the agent's creator hosted them, and browsers were silently blocking many of those hosts (IPFS gateways serving metadata instead of an image, dead image servers), leaving blank tiles and repeated failed requests. Every third-party image now loads through the platform's own image resolver, which finds the real artwork across multiple IPFS gateways and shows a clean generated placeholder when the original is truly gone.</description>
 		</item>
 		<item>
-			<title>Agent brains upgraded to the newest OpenAI models</title>
-			<link>https://three.ws/brain</link>
-			<guid isPermaLink="false">2026-07-14:Agent brains upgraded to the newest OpenAI models</guid>
-			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
-			<category>improvement</category>
-			<description>Every OpenAI-powered surface on the platform now runs the GPT-5.6 family released this month. The Brain page and agent model pickers offer three tiers: Sol (flagship reasoning), Terra (balanced), and Luna (fast and cost-efficient), each with a 1M-token context window, up from 128K. Vision fallbacks, the copilot, widgets, and the marketplace default to Luna, and anything still pointed at the retired GPT-4o models is transparently upgraded, so nothing breaks and every answer gets smarter.</description>
-		</item>
-		<item>
 			<title>AR Forge: type a prompt, place the model in your room</title>
 			<link>https://three.ws/ar</link>
 			<guid isPermaLink="false">2026-07-14:AR Forge: type a prompt, place the model in your room</guid>
@@ -165,6 +157,14 @@
 			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The best forge models are now published to the official three.ws account on Sketchfab, the largest public 3D model site: weekly Forge-Off winners first, then top-voted board models, then creations their makers explicitly accepted. It is a curated showcase, not a firehose: a few validated models a week, each clearly tagged as AI-generated, with its generation prompt and a link back to the creation on three.ws so anyone who finds it can remix it or forge their own. Every link is tagged so we can measure how many visitors the showcase actually brings in.</description>
+		</item>
+		<item>
+			<title>The full current OpenAI lineup, now selectable everywhere</title>
+			<link>https://three.ws/brain</link>
+			<guid isPermaLink="false">2026-07-14:The full current OpenAI lineup, now selectable everywhere</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Every OpenAI-powered surface on the platform moves off the retired GPT-4o family and gains the complete current lineup: the brand-new GPT-5.6 tiers Sol, Terra, and Luna (1M-token context), GPT-5.5 and GPT-5.4 with their Pro, mini, and nano variants, the agentic coding specialist GPT-5.3 Codex, and the o3 reasoning models. All twelve are selectable on the Brain page, in agent chat pickers, and in the agent editor. Behind the scenes, automatic fallbacks and vision now use GPT-5.4 nano, the cheapest current model that still sees images, and anything saved against a retired model is transparently upgraded so nothing breaks.</description>
 		</item>
 		<item>
 			<title>The on-chain deploy wizard got a full polish pass</title>

@@ -11,7 +11,7 @@
 //     consumer must survive on them alone.
 //
 //   • Paid vision-capable backstop LAST, automatically. When OPENAI_API_KEY is
-//     configured, gpt-5.6-luna (vision-capable) is appended to the tail so a
+//     configured, gpt-5.4-nano (vision-capable) is appended to the tail so a
 //     request that exhausted the free lanes still succeeds. It never leads, and
 //     no consumer hard-fails when it is absent.
 //
@@ -39,9 +39,9 @@ const NVIDIA_VISION_MODELS = [
 	'nvidia/nemotron-nano-12b-v2-vl',
 	'meta/llama-3.2-11b-vision-instruct',
 ];
-// Paid last-resort tail. gpt-5.6-luna is vision-capable and already priced in
+// Paid last-resort tail. gpt-5.4-nano is vision-capable and already priced in
 // llm-pricing.js, keeping the backstop cheap and the spend ledger truthful.
-const OPENAI_VISION_MODEL = 'gpt-5.6-luna';
+const OPENAI_VISION_MODEL = 'gpt-5.4-nano';
 
 // Thrown when no vision provider is available at all. Carries an HTTP status so
 // a handler that *chose* to surface it can return 503 — but consumers should

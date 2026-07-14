@@ -102,6 +102,8 @@ const MODEL_OPTIONS = [
 		model: 'nousresearch/hermes-3-llama-3.1-405b:free',
 	},
 	{ id: 'groq:llama-70b', label: 'Groq Llama 3.3 70B', provider: 'groq', model: 'llama-3.3-70b-versatile' },
+	{ id: 'openai:gpt-5.6-sol', label: 'GPT-5.6 Sol', provider: 'openai', model: 'gpt-5.6-sol' },
+	{ id: 'openai:gpt-5.6-terra', label: 'GPT-5.6 Terra', provider: 'openai', model: 'gpt-5.6-terra' },
 	{ id: 'openai:gpt-5.6-luna', label: 'GPT-5.6 Luna', provider: 'openai', model: 'gpt-5.6-luna' },
 	{ id: 'watsonx:granite', label: 'IBM Granite 3 (watsonx)', provider: 'watsonx', model: 'ibm/granite-3-8b-instruct' },
 	{ id: 'orchestrate:agent', label: 'watsonx Orchestrate', provider: 'orchestrate', model: 'orchestrate-agent' },

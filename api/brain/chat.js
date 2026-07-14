@@ -29,7 +29,7 @@ import {
 
 // Providers an anonymous (signed-out) caller may use: only the genuinely free
 // tiers — the OpenRouter-routed open-weight default and the free NVIDIA NIM
-// models. Every paid first-party model (Claude, GPT-4o, o3, DashScope, DeepSeek)
+// models. Every paid first-party model (Claude, GPT-5.x, o3, DashScope, DeepSeek)
 // requires sign-in so an unauthenticated script can't drain the server's billed
 // API keys. Mirrors the anon-provider gate in api/chat.js.
 export const ANON_BRAIN_PROVIDERS = new Set([
@@ -56,7 +56,7 @@ const PROVIDERS = {
 		network: 'OpenAI · OpenRouter',
 		tier: 'balanced',
 		maxOutput: 8192,
-		description: "OpenAI's open-weight 120B. Fast, capable, free tier. Platform default.",
+		description: 'Open-weight 120B from OpenAI. Fast, capable, free tier. Platform default.',
 		// OpenRouter-only — no first-party key for the free tier.
 		openrouterModel: 'openai/gpt-oss-120b:free',
 	},
@@ -134,14 +134,86 @@ const PROVIDERS = {
 		native: () => (env.OPENAI_API_KEY ? createOpenAI({ apiKey: env.OPENAI_API_KEY }).chat('gpt-5.6-luna') : null),
 		openrouterModel: 'openai/gpt-5.6-luna',
 	},
-	'o3-mini': {
-		label: 'o3-mini',
+	'gpt-5.5': {
+		label: 'GPT-5.5',
+		network: 'OpenAI',
+		tier: 'flagship',
+		maxOutput: 16384,
+		description: 'A new class of intelligence for coding and professional work.',
+		native: () => (env.OPENAI_API_KEY ? createOpenAI({ apiKey: env.OPENAI_API_KEY }).chat('gpt-5.5') : null),
+		openrouterModel: 'openai/gpt-5.5',
+	},
+	'gpt-5.5-pro': {
+		label: 'GPT-5.5 Pro',
+		network: 'OpenAI',
+		tier: 'pro',
+		maxOutput: 16384,
+		description: 'Maximum-compute GPT-5.5. Smarter, more precise responses.',
+		native: () => (env.OPENAI_API_KEY ? createOpenAI({ apiKey: env.OPENAI_API_KEY }).chat('gpt-5.5-pro') : null),
+		openrouterModel: 'openai/gpt-5.5-pro',
+	},
+	'gpt-5.4': {
+		label: 'GPT-5.4',
+		network: 'OpenAI',
+		tier: 'balanced',
+		maxOutput: 16384,
+		description: 'Affordable model for coding and professional work.',
+		native: () => (env.OPENAI_API_KEY ? createOpenAI({ apiKey: env.OPENAI_API_KEY }).chat('gpt-5.4') : null),
+		openrouterModel: 'openai/gpt-5.4',
+	},
+	'gpt-5.4-pro': {
+		label: 'GPT-5.4 Pro',
+		network: 'OpenAI',
+		tier: 'pro',
+		maxOutput: 16384,
+		description: 'Maximum-compute GPT-5.4. Smarter, more precise responses.',
+		native: () => (env.OPENAI_API_KEY ? createOpenAI({ apiKey: env.OPENAI_API_KEY }).chat('gpt-5.4-pro') : null),
+		openrouterModel: 'openai/gpt-5.4-pro',
+	},
+	'gpt-5.4-mini': {
+		label: 'GPT-5.4 mini',
+		network: 'OpenAI',
+		tier: 'fast',
+		maxOutput: 16384,
+		description: 'Strong mini model for coding, computer use, and subagents.',
+		native: () => (env.OPENAI_API_KEY ? createOpenAI({ apiKey: env.OPENAI_API_KEY }).chat('gpt-5.4-mini') : null),
+		openrouterModel: 'openai/gpt-5.4-mini',
+	},
+	'gpt-5.4-nano': {
+		label: 'GPT-5.4 nano',
+		network: 'OpenAI',
+		tier: 'fast',
+		maxOutput: 16384,
+		description: 'Cheapest current GPT. Simple, high-volume tasks.',
+		native: () => (env.OPENAI_API_KEY ? createOpenAI({ apiKey: env.OPENAI_API_KEY }).chat('gpt-5.4-nano') : null),
+		openrouterModel: 'openai/gpt-5.4-nano',
+	},
+	'gpt-5.3-codex': {
+		label: 'GPT-5.3 Codex',
+		network: 'OpenAI',
+		tier: 'coding',
+		maxOutput: 16384,
+		description: 'Agentic coding specialist behind Codex.',
+		native: () => (env.OPENAI_API_KEY ? createOpenAI({ apiKey: env.OPENAI_API_KEY }).chat('gpt-5.3-codex') : null),
+		openrouterModel: 'openai/gpt-5.3-codex',
+	},
+	'o3': {
+		label: 'o3',
 		network: 'OpenAI',
 		tier: 'reasoning',
 		maxOutput: 16384,
-		description: 'Reasoning-optimized. Fast chain-of-thought.',
-		native: () => (env.OPENAI_API_KEY ? createOpenAI({ apiKey: env.OPENAI_API_KEY }).chat('o3-mini') : null),
-		openrouterModel: 'openai/o3-mini',
+		description: 'Reasoning model for complex tasks.',
+		native: () => (env.OPENAI_API_KEY ? createOpenAI({ apiKey: env.OPENAI_API_KEY }).chat('o3') : null),
+		openrouterModel: 'openai/o3',
+	},
+	'o3-pro': {
+		label: 'o3-pro',
+		network: 'OpenAI',
+		tier: 'reasoning',
+		maxOutput: 16384,
+		description: 'o3 with more compute for better responses.',
+		native: () => (env.OPENAI_API_KEY ? createOpenAI({ apiKey: env.OPENAI_API_KEY }).chat('o3-pro') : null),
+		openrouterModel: 'openai/o3-pro',
 	},
 	'groq-llama': {
 		label: 'Llama 3.3 70B',
@@ -564,6 +636,7 @@ export function getAvailableProviders() {
 const PROVIDER_ALIASES = {
 	'gpt-4o': 'gpt-5.6-sol',
 	'gpt-4o-mini': 'gpt-5.6-luna',
+	'o3-mini': 'o3',
 };
 
 export function resolveBrain(providerKey) {

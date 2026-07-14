@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-14T14:39:05.335Z",
+	"generated_at": "2026-07-14T15:44:46.402Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -75,16 +75,6 @@
 			"link": "/activity",
 			"tags": [
 				"fix"
-			]
-		},
-		{
-			"date": "2026-07-14",
-			"type": "update",
-			"title": "Agent brains upgraded to the newest OpenAI models",
-			"summary": "Every OpenAI-powered surface on the platform now runs the GPT-5.6 family released this month. The Brain page and agent model pickers offer three tiers: Sol (flagship reasoning), Terra (balanced), and Luna (fast and cost-efficient), each with a 1M-token context window, up from 128K. Vision fallbacks, the copilot, widgets, and the marketplace default to Luna, and anything still pointed at the retired GPT-4o models is transparently upgraded, so nothing breaks and every answer gets smarter.",
-			"link": "/brain",
-			"tags": [
-				"improvement"
 			]
 		},
 		{
@@ -210,6 +200,16 @@
 			"link": "/docs/sketchfab",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
+			"title": "The full current OpenAI lineup, now selectable everywhere",
+			"summary": "Every OpenAI-powered surface on the platform moves off the retired GPT-4o family and gains the complete current lineup: the brand-new GPT-5.6 tiers Sol, Terra, and Luna (1M-token context), GPT-5.5 and GPT-5.4 with their Pro, mini, and nano variants, the agentic coding specialist GPT-5.3 Codex, and the o3 reasoning models. All twelve are selectable on the Brain page, in agent chat pickers, and in the agent editor. Behind the scenes, automatic fallbacks and vision now use GPT-5.4 nano, the cheapest current model that still sees images, and anything saved against a retired model is transparently upgraded so nothing breaks.",
+			"link": "/brain",
+			"tags": [
+				"improvement"
 			]
 		},
 		{

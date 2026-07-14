@@ -21,6 +21,15 @@ const PROVIDERS = [
 	{ key: 'gpt-5.6-sol',       label: 'GPT-5.6 Sol',        short: 'Sol',         network: 'OpenAI',     color: '#74c0fc', ctx: '1M',   tier: 'Flagship' },
 	{ key: 'gpt-5.6-terra',     label: 'GPT-5.6 Terra',      short: 'Terra',       network: 'OpenAI',     color: '#82c6fc', ctx: '1M',   tier: 'Balanced' },
 	{ key: 'gpt-5.6-luna',      label: 'GPT-5.6 Luna',       short: 'Luna',        network: 'OpenAI',     color: '#90ccfc', ctx: '1M',   tier: 'Fast' },
+	{ key: 'gpt-5.5',           label: 'GPT-5.5',            short: 'GPT-5.5',     network: 'OpenAI',     color: '#6bb8f7', ctx: '1M',   tier: 'Flagship' },
+	{ key: 'gpt-5.5-pro',       label: 'GPT-5.5 Pro',        short: '5.5 Pro',     network: 'OpenAI',     color: '#5fb0f2', ctx: '1M',   tier: 'Pro'      },
+	{ key: 'gpt-5.4',           label: 'GPT-5.4',            short: 'GPT-5.4',     network: 'OpenAI',     color: '#9cd2fd', ctx: '1M',   tier: 'Balanced' },
+	{ key: 'gpt-5.4-pro',       label: 'GPT-5.4 Pro',        short: '5.4 Pro',     network: 'OpenAI',     color: '#57a8ee', ctx: '1M',   tier: 'Pro'      },
+	{ key: 'gpt-5.4-mini',      label: 'GPT-5.4 mini',       short: '5.4 mini',    network: 'OpenAI',     color: '#a8d8fe', ctx: '400K', tier: 'Fast'     },
+	{ key: 'gpt-5.4-nano',      label: 'GPT-5.4 nano',       short: '5.4 nano',    network: 'OpenAI',     color: '#b4defe', ctx: '400K', tier: 'Fast'     },
+	{ key: 'gpt-5.3-codex',     label: 'GPT-5.3 Codex',      short: 'Codex',       network: 'OpenAI',     color: '#4da0ea', ctx: '400K', tier: 'Coding'   },
+	{ key: 'o3',                label: 'o3',                 short: 'o3',          network: 'OpenAI',     color: '#c0e4ff', ctx: '200K', tier: 'Reasoning' },
+	{ key: 'o3-pro',            label: 'o3-pro',             short: 'o3-pro',      network: 'OpenAI',     color: '#cce9ff', ctx: '200K', tier: 'Reasoning' },
 	{ key: 'o3-mini',           label: 'o3-mini',            short: 'o3-mini',     network: 'OpenAI',     color: '#5cb0f4', ctx: '128K', tier: 'Reasoning' },
 	{ key: 'groq-llama',        label: 'Llama 3.3 70B',      short: 'Llama 3.3',   network: 'Groq',       color: '#ff9a3c', ctx: '128K', tier: 'Fast' },
 	{ key: 'qwen-plus',         label: 'Qwen Plus',           short: 'Qwen+',       network: 'DashScope',  color: '#69db7c', ctx: '131K', tier: 'Balanced' },
@@ -29,7 +38,7 @@ const PROVIDERS = [
 ];
 const PMAP = new Map(PROVIDERS.map(p => [p.key, p]));
 
-const TIER_ICON = { Flagship: '★', Balanced: '◆', Fast: '⚡', Reasoning: '⚙' };
+const TIER_ICON = { Flagship: '★', Balanced: '◆', Fast: '⚡', Reasoning: '⚙', Pro: '✦', Coding: '⌨' };
 
 // ── Interview ────────────────────────────────────────────────────────────
 

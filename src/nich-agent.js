@@ -940,6 +940,8 @@ const MODEL_OPTIONS = [
 		provider: 'groq',
 		model: 'llama-3.3-70b-versatile',
 	},
+	{ id: 'openai:gpt-5.6-sol', label: 'GPT-5.6 Sol', provider: 'openai', model: 'gpt-5.6-sol' },
+	{ id: 'openai:gpt-5.6-terra', label: 'GPT-5.6 Terra', provider: 'openai', model: 'gpt-5.6-terra' },
 	{ id: 'openai:gpt-5.6-luna', label: 'GPT-5.6 Luna', provider: 'openai', model: 'gpt-5.6-luna' },
 	{
 		id: 'watsonx:granite',

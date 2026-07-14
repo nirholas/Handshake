@@ -82,6 +82,15 @@ export const MODEL_CATALOG = {
 	'gpt-5.6-sol':                { provider: 'openai', tools: true },
 	'gpt-5.6-terra':              { provider: 'openai', tools: true },
 	'gpt-5.6-luna':               { provider: 'openai', tools: true },
+	'gpt-5.5':                    { provider: 'openai', tools: true },
+	'gpt-5.5-pro':                { provider: 'openai', tools: true },
+	'gpt-5.4':                    { provider: 'openai', tools: true },
+	'gpt-5.4-pro':                { provider: 'openai', tools: true },
+	'gpt-5.4-mini':               { provider: 'openai', tools: true },
+	'gpt-5.4-nano':               { provider: 'openai', tools: true },
+	'gpt-5.3-codex':              { provider: 'openai', tools: true },
+	'o3':                         { provider: 'openai', tools: true },
+	'o3-pro':                     { provider: 'openai', tools: true },
 };
 
 /**
@@ -144,7 +153,7 @@ export const PROVIDER_MODEL_DEFAULTS = {
 	openrouter: DEFAULT_FREE_MODEL,
 	groq: 'llama-3.3-70b-versatile',
 	nvidia: 'meta/llama-3.3-70b-instruct',
-	openai: 'gpt-5.6-luna',
+	openai: 'gpt-5.4-nano',
 };
 
 /**

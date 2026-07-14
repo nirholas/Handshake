@@ -1078,7 +1078,7 @@ const FALLBACK_SIBLINGS = {
 	// next fallback slot to a different provider.
 	nvidia: ['meta/llama-3.3-70b-instruct'],
 	anthropic: ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001'],
-	openai: ['gpt-5.6-luna'],
+	openai: ['gpt-5.4-nano'],
 };
 
 // A model is eligible for an *auto-built* fallback slot only when it can serve

@@ -92,7 +92,7 @@ function nvidiaLaneTimeoutMs() {
 const ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001';
 // Paid last-resort tail (see policy above). Mini keeps the backstop cheap; the
 // repo-wide OpenAI default (api/_lib/chat-models.js) uses the same model.
-const OPENAI_MODEL = 'gpt-5.6-luna';
+const OPENAI_MODEL = 'gpt-5.4-nano';
 
 // Per-user daily LLM spend cap, in micro-USD. Callers on the host's paid keys
 // (ANTHROPIC_API_KEY / OPENAI_API_KEY) are metered; BYOK callers and free-tier
