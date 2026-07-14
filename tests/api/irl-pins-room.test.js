@@ -24,7 +24,7 @@ const sqlMock = vi.fn((strings, ...values) => {
 		const [
 			user_id, agent_id, device_token, lat, lng, heading,
 			avatar_url, avatar_name, caption, x402_endpoint, expires_at,
-			anchor_height_m, anchor_yaw_deg, anchor_quat,
+			anchor_height_m, anchor_yaw_deg, anchor_quat, anchor_scale,
 			gps_accuracy_m, altitude_m, anchor_source, geocell7,
 			room_id, rel_east_m, rel_north_m, origin_lat, origin_lng, origin_yaw_deg,
 		] = values;
@@ -32,7 +32,7 @@ const sqlMock = vi.fn((strings, ...values) => {
 			id: 'pin-new', user_id, agent_id, device_token, lat, lng, heading,
 			avatar_url, avatar_name, caption, x402_endpoint,
 			placed_at: '2026-06-17T00:00:00Z', expires_at,
-			anchor_height_m, anchor_yaw_deg, anchor_quat,
+			anchor_height_m, anchor_yaw_deg, anchor_quat, anchor_scale,
 			gps_accuracy_m, altitude_m, anchor_source, geocell7,
 			room_id, rel_east_m, rel_north_m, origin_lat, origin_lng, origin_yaw_deg,
 			view_count: 0, avatar_version: 0,

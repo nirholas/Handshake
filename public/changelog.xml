@@ -31,6 +31,14 @@
 			<description>A new mobile-first app at /ar turns a one-line prompt into a real, downloadable 3D model on the free generation lane, then puts it in your space with one tap: WebXR or Scene Viewer on Android, Quick Look on iPhone. On a desktop it shows a QR code that hands the finished model straight to your phone's camera app, and every creation gets a shareable viewer link. No account, no payment, fair-use rate limits only.</description>
 		</item>
 		<item>
+			<title>IRL placement grows up: true AR anchoring leads the dock, and you can pinch-resize your agent</title>
+			<link>https://three.ws/irl</link>
+			<guid isPermaLink="false">2026-07-14:IRL placement grows up: true AR anchoring leads the dock, and you can pinch-resize your agent</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Placing an avatar in the real world through /irl now feels like a native AR app. On phones with a real AR surface the new Place in AR button leads the dock: a floor-finding reticle, a tap to anchor the agent to the actual detected surface, and now a two-finger pinch to resize it live, from a 25% desk figurine to a 400% statue. The size you choose saves with the pin, so everyone who walks up sees your agent exactly where and how big you left it. iPhones open the same placement in ARKit Quick Look. The compass-and-GPS pin path is unchanged and remains the fallback everywhere else.</description>
+		</item>
+		<item>
 			<title>New doc: IRL, agents in the real world</title>
 			<link>https://three.ws/docs/irl</link>
 			<guid isPermaLink="false">2026-07-14:New doc: IRL, agents in the real world</guid>

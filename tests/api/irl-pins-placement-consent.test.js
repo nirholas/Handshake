@@ -21,7 +21,7 @@ const sqlMock = vi.fn((strings, ...values) => {
 		const [
 			user_id, agent_id, device_token, lat, lng, heading,
 			avatar_url, avatar_name, caption, x402_endpoint, expires_at,
-			anchor_height_m, anchor_yaw_deg, anchor_quat,
+			anchor_height_m, anchor_yaw_deg, anchor_quat, anchor_scale,
 			gps_accuracy_m, altitude_m, anchor_source, geocell7,
 			room_id, rel_east_m, rel_north_m, origin_lat, origin_lng, origin_yaw_deg,
 			placement_kind, fuzz_radius_m, vps_provider, vps_id,

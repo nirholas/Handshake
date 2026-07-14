@@ -25,14 +25,14 @@ const sqlMock = vi.fn((strings, ...values) => {
 		const [
 			user_id, agent_id, device_token, lat, lng, heading,
 			avatar_url, avatar_name, caption, x402_endpoint, expires_at,
-			anchor_height_m, anchor_yaw_deg, anchor_quat,
+			anchor_height_m, anchor_yaw_deg, anchor_quat, anchor_scale,
 			gps_accuracy_m, altitude_m, anchor_source, geocell7,
 		] = values;
 		return Promise.resolve([{
 			id: 'pin-new', user_id, agent_id, device_token, lat, lng, heading,
 			avatar_url, avatar_name, caption, x402_endpoint,
 			placed_at: '2026-06-17T00:00:00Z', expires_at,
-			anchor_height_m, anchor_yaw_deg, anchor_quat,
+			anchor_height_m, anchor_yaw_deg, anchor_quat, anchor_scale,
 			gps_accuracy_m, altitude_m, anchor_source, geocell7,
 			view_count: 0, avatar_version: 0,
 		}]);
@@ -168,6 +168,26 @@ describe('POST /api/irl/pins — anchor pose persistence (A2)', () => {
 		// Any unknown source collapses to the safe gyro default.
 		const { body: weird } = await post({ ...basePin(), anchor: { source: 'made-up' } });
 		expect(weird.pin.anchor_source).toBe('gyro-gps');
+	});
+
+	it('persists a pinch-resized scale, clamped to the 0.25–4 band', async () => {
+		const { body: ok } = await post({ ...basePin(), anchor: { source: 'webxr', scale: 2.5 } });
+		expect(ok.pin.anchor_scale).toBe(2.5);
+		const { body: huge } = await post({ ...basePin(), anchor: { source: 'webxr', scale: 50 } });
+		expect(huge.pin.anchor_scale).toBe(4);
+		const { body: tiny } = await post({ ...basePin(), anchor: { source: 'webxr', scale: 0.01 } });
+		expect(tiny.pin.anchor_scale).toBe(0.25);
+	});
+
+	it('stores NULL scale for natural size, absent scale, and garbage — never noise', async () => {
+		const { body: natural } = await post({ ...basePin(), anchor: { source: 'webxr', scale: 1 } });
+		expect(natural.pin.anchor_scale).toBeNull();
+		const { body: absent } = await post({ ...basePin(), anchor: { source: 'webxr' } });
+		expect(absent.pin.anchor_scale).toBeNull();
+		const { body: garbage } = await post({ ...basePin(), anchor: { source: 'webxr', scale: 'big' } });
+		expect(garbage.pin.anchor_scale).toBeNull();
+		const { body: negative } = await post({ ...basePin(), anchor: { source: 'webxr', scale: -3 } });
+		expect(negative.pin.anchor_scale).toBeNull();
 	});
 
 	it('persists pose for an authenticated owner and marks the pin permanent', async () => {

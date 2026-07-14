@@ -42,6 +42,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import nipplejs from 'nipplejs';
 import { AnimationManager } from './animation-manager.js';
 import { WebXRSession } from './ar/webxr.js';
+import { clampPinScale } from './ar/pinch-scale.js';
 import { resolvePlacementCapability } from './ar/placement-capability.js';
 import { openQuickLook } from './ar/quick-look.js';
 import { createPersistGate, placementHint } from './ar/anchor-lifecycle.js';
@@ -1587,6 +1588,11 @@ function pinYawRad(pin) {
 		: (pin.heading != null ? pin.heading : 0);
 	return -(deg * Math.PI / 180);
 }
+// Pinch-resized render scale — the owner's chosen size, honoured for every
+// viewer. clampPinScale() maps a legacy/absent column to natural size (1).
+function pinScale(pin) {
+	return clampPinScale(pin.anchor_scale);
+}
 function pinHeightM(pin) {
 	const h = pin.anchor_height_m;
 	// Honour only a small, genuine floor offset — a deliberate calibrate height
@@ -2333,6 +2339,9 @@ async function postRoomPin({ lat, lng, heading, room, anchor, vps = null }) {
 					gpsAccuracyM: anchor?.gpsAccuracyM ?? gpsState.accuracy,
 					altitudeM: anchor?.altitudeM ?? gpsState.altitude,
 					source: anchor?.source || 'gyro-gps',
+					// Pinch-resized size (WebXR path) — omitted at natural scale so
+					// non-XR placements are byte-identical to before.
+					scale: Number.isFinite(anchor?.scale) && anchor.scale !== 1 ? anchor.scale : undefined,
 				},
 				// Visual-positioning identity (Epic M) — present only on a marker
 				// placement; the server persists it to vps_provider/vps_id and ignores it
@@ -2363,6 +2372,7 @@ async function postRoomPin({ lat, lng, heading, room, anchor, vps = null }) {
 			heading: h, anchor_yaw_deg: anchor?.yawDeg ?? h,
 			anchor_height_m: anchor?.heightM ?? 0,
 			anchor_quat: quat,
+			anchor_scale: Number.isFinite(anchor?.scale) && anchor.scale !== 1 ? anchor.scale : null,
 			anchor_source: anchor?.source || 'gyro-gps',
 			vps_provider: vps?.id ? (vps.provider || 'qr') : null, vps_id: vps?.id || null,
 			room_id: room.id, rel_east_m: room.relEast, rel_north_m: room.relNorth,
@@ -2378,7 +2388,7 @@ async function postRoomPin({ lat, lng, heading, room, anchor, vps = null }) {
 			updateNearbyBadge();
 			revealMyPinsBtn();
 		}
-		return { ok: true, id: pin.id };
+		return { ok: true, id: pin.id, permanent: data.pin.permanent === true };
 	} catch {
 		return { ok: false, error: 'network', message: saveErrorFallback('network') };
 	}
@@ -2847,6 +2857,38 @@ let markerModeApi = null;
 // enterFloorPlacement clears it so a plain "Place on floor" never re-targets a stale
 // pin. Bounds-checked server-side — refine only sharpens this one agent's offset.
 let _refinePin = null;
+// Pinch-resize state for the live WebXR session. _xrScale is the current uniform
+// scale the user pinched to (1 = natural); it rides into the pin persisted on the
+// placement tap. A pinch AFTER the tap (the usual order — place first, then size)
+// lands as an owner-gated PATCH against _xrPlacedPinId, so the final size always
+// wins no matter which order the gestures happened in.
+let _xrScale = 1;
+let _xrPlacedPinId = null;
+
+function onXrScaled(scale, { final } = {}) {
+	_xrScale = scale;
+	setXrResting(`Size ${Math.round(scale * 100)}% — pinch to resize`);
+	if (!final || !_xrPlacedPinId) return;
+	const pinId = _xrPlacedPinId;
+	fetch('/api/irl/pins', {
+		method: 'PATCH', credentials: 'include',
+		headers: deviceHeaders({ 'Content-Type': 'application/json' }),
+		body: JSON.stringify({ id: pinId, deviceToken: _deviceToken, scale }),
+	}).then((r) => {
+		if (!r.ok) { setXrResting('Placed — the new size couldn’t be saved, pinch again to retry'); return; }
+		// Commit onto the live local pin so the size holds after the session ends
+		// (the XR exit restores the avatar rig itself to its pre-AR transform).
+		const pin = nearbyPins.find((p) => p.id === pinId);
+		if (pin) {
+			pin.anchor_scale = scale;
+			if (pin.group && pin._spawnT >= SPAWN_DURATION) pin.group.scale.setScalar(pinScale(pin));
+		}
+		setXrResting(`Saved at ${Math.round(scale * 100)}% size — nearby viewers see it this big too`);
+	}).catch(() => {
+		setXrResting('Placed — the new size couldn’t be saved (offline?), pinch again to retry');
+	});
+}
+
 // A floor anchor placed before the first GPS fix is held here and persisted the
 // instant onGPSPosition() lands real coordinates (mirrors _pendingGpsLock for the
 // gyro path). The in-session XRAnchor already glues the agent; this rescues its
@@ -2907,6 +2949,9 @@ async function detectFloorAnchorSupport() {
 	anchorBtn.setAttribute('aria-label', _placementCapability === 'quicklook'
 		? 'View your agent on the floor in AR (iOS Quick Look)'
 		: 'Place agent on the floor with AR');
+	// This device has a true AR surface — lead with it. The gyro Pin path stays
+	// one pill away, but the flagship placement should be the first thing seen.
+	anchorBtn.parentElement?.prepend(anchorBtn);
 	anchorBtn.hidden = false;
 }
 
@@ -2969,12 +3014,16 @@ async function enterFloorAnchor() {
 	if (anchorBtn) anchorBtn.classList.add('is-active');
 	if (xrOverlay) xrOverlay.hidden = false;
 	resetXrHint();
+	// Fresh session, fresh size: the pinch composes from natural scale, and there
+	// is no placed pin yet for a resize PATCH to target.
+	_xrScale = 1;
+	_xrPlacedPinId = null;
 
 	let failedStart = false;
 	try {
 		xrSession = new WebXRSession(xrViewer, {
 			domOverlayRoot: xrOverlay,
-			onHit: (has) => setXrResting(has ? 'Looks good — tap to place your agent' : SEARCHING_HINT),
+			onHit: (has) => setXrResting(has ? 'Looks good — tap to place, pinch to resize' : SEARCHING_HINT),
 			// Tracking loss / recovery is a transient, higher-priority overlay on the
 			// resting hint — recoverable, self-clearing, never a dead reticle.
 			onTracking: (ok) => { xrHintState.trackingLost = !ok; renderXrHint(); },
@@ -2982,6 +3031,9 @@ async function enterFloorAnchor() {
 			// resume hint and restore the resting line when foregrounded again.
 			onVisibility: (visible) => { xrHintState.paused = !visible; renderXrHint(); },
 			onAnchored: (pose, meta) => onFloorAnchored(pose, meta),
+			// Two-finger pinch resizes the agent live; the final value persists onto
+			// the placed pin (or rides into the tap's pin when sized before placing).
+			onScale: (scale, meta) => onXrScaled(scale, meta),
 			onEnd: () => {
 				xrSession = null;
 				// Drop any anchor still waiting on a GPS fix — the user left this
@@ -3125,13 +3177,16 @@ function persistFloorAnchor(pose, degraded = false) {
 		anchor: {
 			heightM: placement.heightM, yawDeg: placement.relYawDeg, quat: placement.quat,
 			gpsAccuracyM: gpsState.accuracy, altitudeM: gpsState.altitude, source: 'webxr',
+			scale: _xrScale,
 		},
 	}).then(result => {
 		if (result?.ok) {
+			// Later pinches in this session resize THIS pin (owner-gated PATCH).
+			_xrPlacedPinId = result.id;
 			roomModeApi?.notePlacement();
 			setXrResting(result.permanent
-				? 'Saved on the floor — your agent is here for everyone nearby'
-				: 'Saved on the floor — people nearby can see your agent for 7 days');
+				? 'Saved on the floor — pinch to resize; your agent is here for everyone nearby'
+				: 'Saved on the floor — pinch to resize; people nearby can see your agent for 7 days');
 		} else {
 			// Surface the moderation/cap/rate reason; the in-session anchor still holds.
 			setXrResting(result?.message || 'Placed — couldn’t save the pin yet, retry on exit');
@@ -6417,9 +6472,10 @@ function updateAgentAwareness(dt) {
 			if (pin.popT >= POP_DURATION) {
 				pin.popT = -1;
 				pin._popAmp = 0;
-				pin.group.scale.y = 1;
+				pin.group.scale.y = pinScale(pin);
 			} else {
-				pin.group.scale.y = 1 + amp * Math.sin(Math.PI * pin.popT / POP_DURATION);
+				// The pop rides on top of the pin's persisted size (scale.x/z untouched).
+				pin.group.scale.y = pinScale(pin) * (1 + amp * Math.sin(Math.PI * pin.popT / POP_DURATION));
 			}
 		}
 
@@ -6755,14 +6811,15 @@ function tick() {
 		if (pin.group && pin._spawnT < SPAWN_DURATION) {
 			pin._spawnT += dt;
 			const t = Math.min(1, pin._spawnT / SPAWN_DURATION);
-			pin.group.scale.setScalar(1 - Math.pow(1 - t, 3));
+			// Ease up to the owner's pinch-resized size, not a hardcoded 1.
+			pin.group.scale.setScalar((1 - Math.pow(1 - t, 3)) * pinScale(pin));
 		}
 	}
 	for (let i = _despawningPins.length - 1; i >= 0; i--) {
 		const pin = _despawningPins[i];
 		pin._despawnT += dt;
 		const t = Math.min(1, pin._despawnT / DESPAWN_DURATION);
-		if (pin.group) pin.group.scale.setScalar(Math.max(0.001, (1 - t) * (1 - t)));
+		if (pin.group) pin.group.scale.setScalar(Math.max(0.001, (1 - t) * (1 - t) * pinScale(pin)));
 		if (t >= 1) { disposePin(pin); _despawningPins.splice(i, 1); }
 	}
 

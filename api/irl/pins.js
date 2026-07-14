@@ -396,6 +396,7 @@ async function runMigrations() {
 	await sql`ALTER TABLE irl_pins ADD COLUMN IF NOT EXISTS gps_accuracy_m  DOUBLE PRECISION`;
 	await sql`ALTER TABLE irl_pins ADD COLUMN IF NOT EXISTS altitude_m      DOUBLE PRECISION`;
 	await sql`ALTER TABLE irl_pins ADD COLUMN IF NOT EXISTS anchor_source   TEXT`;             // 'webxr' | 'gyro-gps'
+	await sql`ALTER TABLE irl_pins ADD COLUMN IF NOT EXISTS anchor_scale    DOUBLE PRECISION`; // pinch-resized render scale (0.25–4), NULL = natural size
 	await sql`ALTER TABLE irl_pins ADD COLUMN IF NOT EXISTS vps_provider    TEXT`;             // reserved for visual positioning
 	await sql`ALTER TABLE irl_pins ADD COLUMN IF NOT EXISTS vps_id          TEXT`;             // reserved
 	// Moderation + density (D4). geocell7 is the ~150m density key (precision-7
@@ -545,6 +546,39 @@ export function isExpiredOrHidden(pin, now = Date.now()) {
 	if (pin.expires_at == null) return false;
 	const t = new Date(pin.expires_at).getTime();
 	return Number.isFinite(t) && t <= now;
+}
+
+// Owner-gated render-scale update. A pinch during the WebXR placement session
+// lands AFTER the pin was persisted on the placement tap, so the final size
+// arrives as this small follow-up PATCH. Same ownership + liveness gates as
+// calibrate; the clamp matches the POST path and the client gesture bounds.
+async function handleScale(res, { id, session, body, deviceToken = null }) {
+	const raw = Number(body.scale);
+	if (!Number.isFinite(raw) || raw <= 0) {
+		return json(res, 400, { error: 'invalid scale' });
+	}
+	const scale = Math.min(4, Math.max(0.25, raw));
+
+	const [pin] = await sql`
+		SELECT id, user_id, device_token, expires_at, hidden_at
+		FROM irl_pins
+		WHERE id = ${id}
+	`;
+	if (!pin) return json(res, 404, { error: 'not found' });
+	const owns =
+		(!!session?.id && !!pin.user_id && pin.user_id === session.id) ||
+		(!!pin.device_token && !!deviceToken && pin.device_token === deviceToken);
+	if (!owns) return json(res, 403, { error: 'only the owner can resize this agent' });
+	if (isExpiredOrHidden(pin)) return json(res, 404, { error: 'not found' });
+
+	// Scale 1 is "natural size" — store NULL so legacy readers see no change.
+	const stored = scale === 1 ? null : scale;
+	const [updated] = await sql`
+		UPDATE irl_pins SET anchor_scale = ${stored}
+		WHERE id = ${id}
+		RETURNING id, anchor_scale
+	`;
+	return json(res, 200, { pin: updated });
 }
 
 // Owner-gated, bounds-checked pose correction. Mutates the A2 pose columns so the
@@ -905,7 +939,7 @@ export default wrap(async (req, res) => {
 		const rows = await sql`
 			SELECT id, lat, lng, heading, avatar_url, avatar_name, caption, agent_id,
 			       placed_at, expires_at, view_count,
-			       anchor_height_m, anchor_yaw_deg, anchor_quat,
+			       anchor_height_m, anchor_yaw_deg, anchor_quat, anchor_scale,
 			       gps_accuracy_m, altitude_m, anchor_source,
 			       avatar_manifest, avatar_base_url, avatar_version,
 			       placement_kind, fuzz_radius_m
@@ -963,7 +997,7 @@ export default wrap(async (req, res) => {
 		const rows = await sql`
 			SELECT id, user_id, device_token, agent_id, lat, lng, heading,
 			       avatar_url, avatar_name, caption, x402_endpoint, placed_at, view_count,
-			       anchor_height_m, anchor_yaw_deg, anchor_quat,
+			       anchor_height_m, anchor_yaw_deg, anchor_quat, anchor_scale,
 			       gps_accuracy_m, altitude_m, anchor_source, avatar_version,
 			       placement_kind, fuzz_radius_m, published,
 			       vps_provider, vps_id,
@@ -997,6 +1031,7 @@ export default wrap(async (req, res) => {
 			anchor_height_m: r.anchor_height_m,
 			anchor_yaw_deg:  r.anchor_yaw_deg,
 			anchor_quat:     r.anchor_quat,
+			anchor_scale:    r.anchor_scale,
 			gps_accuracy_m:  r.gps_accuracy_m,
 			altitude_m:      r.altitude_m,
 			anchor_source:   r.anchor_source,
@@ -1074,7 +1109,7 @@ export default wrap(async (req, res) => {
 		const rows = await sql`
 			SELECT id, user_id, device_token, agent_id, lat, lng, heading,
 			       avatar_url, avatar_name, caption, x402_endpoint, placed_at, view_count,
-			       anchor_height_m, anchor_yaw_deg, anchor_quat,
+			       anchor_height_m, anchor_yaw_deg, anchor_quat, anchor_scale,
 			       gps_accuracy_m, altitude_m, anchor_source, avatar_version,
 			       placement_kind, fuzz_radius_m, published,
 			       room_id, rel_east_m, rel_north_m, origin_lat, origin_lng, origin_yaw_deg
@@ -1111,6 +1146,7 @@ export default wrap(async (req, res) => {
 				anchor_height_m: r.anchor_height_m,
 				anchor_yaw_deg:  r.anchor_yaw_deg,
 				anchor_quat:     r.anchor_quat,
+				anchor_scale:    r.anchor_scale,
 				gps_accuracy_m:  r.gps_accuracy_m,
 				altitude_m:      r.altitude_m,
 				anchor_source:   r.anchor_source,
@@ -1293,6 +1329,10 @@ export default wrap(async (req, res) => {
 		const gpsAccuracyM  = Number.isFinite(pose.gpsAccuracyM)
 			? Math.min(500, Math.max(0, pose.gpsAccuracyM)) : null;
 		const altitudeM     = Number.isFinite(pose.altitudeM) ? pose.altitudeM : null;
+		// Pinch-resized render scale — clamped to the same band the client gesture
+		// enforces (desk figurine ↔ statue). Absent/1 stores NULL = natural size.
+		const anchorScale   = Number.isFinite(pose.scale) && pose.scale > 0 && pose.scale !== 1
+			? Math.min(4, Math.max(0.25, pose.scale)) : null;
 		// 'webxr' (A1) · 'gyro-gps' (absolute compass heading) · 'gyro-gps:rel'
 		// (page-relative heading only — A3 down-weights its cross-user bearing) ·
 		// 'map' (L2: a point chosen on the map, not a live fix — its bearing isn't
@@ -1355,7 +1395,7 @@ export default wrap(async (req, res) => {
 			INSERT INTO irl_pins
 				(user_id, agent_id, device_token, lat, lng, heading,
 				 avatar_url, avatar_name, caption, x402_endpoint, expires_at,
-				 anchor_height_m, anchor_yaw_deg, anchor_quat,
+				 anchor_height_m, anchor_yaw_deg, anchor_quat, anchor_scale,
 				 gps_accuracy_m, altitude_m, anchor_source, geocell7,
 				 room_id, rel_east_m, rel_north_m, origin_lat, origin_lng, origin_yaw_deg,
 				 placement_kind, fuzz_radius_m, vps_provider, vps_id, published)
@@ -1373,6 +1413,7 @@ export default wrap(async (req, res) => {
 				${anchorHeightM},
 				${anchorYawDeg},
 				${anchorQuat},
+				${anchorScale},
 				${gpsAccuracyM},
 				${altitudeM},
 				${anchorSource},
@@ -1431,6 +1472,13 @@ export default wrap(async (req, res) => {
 		// nudge bounds are enforced inside handleCalibrate.
 		if (body.calibrate && typeof body.calibrate === 'object') {
 			return handleCalibrate(res, { id, session, body, deviceToken: readDeviceToken(req) });
+		}
+
+		// ── Resize — owner-gated pinch scale follow-up (same gate as calibrate) ──
+		// Routed before the auth gate below: the anonymous placing device may resize
+		// its own agent; ownership is enforced inside handleScale.
+		if ('scale' in body && !('caption' in body) && !('avatarUrl' in body) && !('lat' in body)) {
+			return handleScale(res, { id, session, body, deviceToken: readDeviceToken(req) });
 		}
 
 		// Field edits (caption / avatar / location / heading / x402) require auth.

@@ -30,8 +30,8 @@ Everything below is live on [/irl](/irl) and exposed by the [`@three-ws/irl`](ht
 
 Open /irl on your phone, pick one of your agents (or try it anonymously), and drop a pin:
 
+- **Place in AR** is the flagship path on devices with a real AR surface. On Chrome for Android (ARCore) a WebXR hit-test reticle finds the floor; tap to anchor the agent to the detected surface, then **pinch with two fingers to resize it** — from a desk figurine (25%) to a statue (400%). The placement and the chosen size both save to the pin, so everyone nearby sees the agent exactly where and how big you left it. On iOS the same button opens the agent in ARKit Quick Look. This button leads the dock whenever the device supports it.
 - **Pin here** places it at your current GPS spot using the camera and gyroscope. Works on every supported phone, including iOS Safari.
-- **Place on floor** uses a WebXR hit-test to anchor the agent to a real detected surface (Chrome on Android with ARCore).
 - **Place on map** puts an agent somewhere you are not currently standing.
 
 Anonymous pins work immediately from a device token and expire after 7 days. Signed-in pins are permanent until you remove them. The full walkthrough is in [Place a 3D agent in your real environment](/docs/tutorials/place-agent-irl).

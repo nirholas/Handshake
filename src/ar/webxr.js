@@ -17,6 +17,7 @@ import {
 	advancePulse, isXrVisible, nextTrackingState, reticleVisual, TRACKING_LOSS_FRAMES,
 } from './anchor-lifecycle.js';
 import { DepthOcclusion } from './depth-occlusion.js';
+import { createPinchState, pinchEnd, pinchMove, pinchStart } from './pinch-scale.js';
 
 /** prefers-reduced-motion: calm, static reticle/confirm states when set. */
 function _prefersReducedMotion() {
@@ -66,8 +67,13 @@ export class WebXRSession {
 	 *   is foregrounded/backgrounded (lock, incoming call, app switch).
 	 * @param {Element}  [opts.domOverlayRoot] Element to surface as the WebXR
 	 *   `dom-overlay` root (in-session hint + exit affordance). Optional.
+	 * @param {Function} [opts.onScale] Called with the new uniform scale as a
+	 *   two-finger pinch resizes the agent (and once more with the settled value
+	 *   when the pinch ends, flagged `{ final: true }`). Pinch-to-resize needs a
+	 *   dom-overlay root (touches are only observable through it) — without one
+	 *   the gesture is quietly unavailable, exactly as before.
 	 */
-	constructor(viewer, { onEnd, halfBody = false, onAnchored, onHit, onTracking, onVisibility, domOverlayRoot } = {}) {
+	constructor(viewer, { onEnd, halfBody = false, onAnchored, onHit, onTracking, onVisibility, domOverlayRoot, onScale } = {}) {
 		this._viewer = viewer;
 		this._halfBody = halfBody;
 		this._onEnd = onEnd;
@@ -76,6 +82,18 @@ export class WebXRSession {
 		this._onTracking = onTracking;
 		this._onVisibility = onVisibility;
 		this._domOverlayRoot = domOverlayRoot ?? null;
+		this._onScale = onScale;
+		/** Pinch-to-resize state (pure math in ./pinch-scale.js). */
+		this._pinch = createPinchState();
+		/** Wall-clock of the last pinch end — a tap right after a pinch is the
+		 * second finger lifting, not a placement intent. */
+		this._pinchEndedAt = 0;
+		/** Content scale captured at session start, restored on exit. */
+		this._savedScale = null;
+		this._handleTouchStart = this._handleTouchStart.bind(this);
+		this._handleTouchMove = this._handleTouchMove.bind(this);
+		this._handleTouchEnd = this._handleTouchEnd.bind(this);
+		this._handleBeforeSelect = this._handleBeforeSelect.bind(this);
 		this._session = null;
 		this._hitTestSource = null;
 		this._localSpace = null;
@@ -217,6 +235,20 @@ export class WebXRSession {
 		const content = viewer.content;
 		this._savedPos = content?.position.clone() ?? null;
 		this._savedRot = content?.rotation.clone() ?? null;
+		this._savedScale = content?.scale.clone() ?? null;
+
+		// Pinch-to-resize rides the dom-overlay: during immersive-ar, screen touches
+		// are only observable as DOM events on the overlay root. Two fingers resize
+		// the agent; `beforexrselect` suppresses the placement tap while (and just
+		// after) a pinch so the second finger can't accidentally place/anchor.
+		if (this._domOverlayRoot) {
+			const root = this._domOverlayRoot;
+			root.addEventListener('touchstart', this._handleTouchStart, { passive: true });
+			root.addEventListener('touchmove', this._handleTouchMove, { passive: true });
+			root.addEventListener('touchend', this._handleTouchEnd, { passive: true });
+			root.addEventListener('touchcancel', this._handleTouchEnd, { passive: true });
+			root.addEventListener('beforexrselect', this._handleBeforeSelect);
+		}
 
 		// Half-body mode is opt-in. The live AR button never sets it; only the
 		// /demos/halfbody preview passes halfBody:true.
@@ -333,11 +365,62 @@ export class WebXRSession {
 		renderer.render(viewer.scene, viewer.activeCamera);
 	}
 
+	// ── Pinch-to-resize ────────────────────────────────────────────────────────
+	// Raw touch geometry → the pure pinch state machine → a uniform scale on the
+	// content group (and its contact shadow, so the grounding grows with it).
+
+	static _touchDist(touches) {
+		const dx = touches[0].clientX - touches[1].clientX;
+		const dy = touches[0].clientY - touches[1].clientY;
+		return Math.hypot(dx, dy);
+	}
+
+	_handleTouchStart(e) {
+		if (e.touches.length !== 2) return;
+		const base = this._viewer.content?.scale?.x ?? 1;
+		pinchStart(this._pinch, WebXRSession._touchDist(e.touches), base);
+	}
+
+	_handleTouchMove(e) {
+		if (!this._pinch.active || e.touches.length !== 2) return;
+		const s = pinchMove(this._pinch, WebXRSession._touchDist(e.touches));
+		if (s == null) return;
+		this._applyContentScale(s);
+		this._onScale?.(s, { final: false });
+	}
+
+	_handleTouchEnd() {
+		const s = pinchEnd(this._pinch);
+		if (s == null) return;
+		this._pinchEndedAt = performance.now();
+		this._onScale?.(s, { final: true });
+	}
+
+	// While a pinch is live (or a beat after it ends), the tap must not place —
+	// the "tap" is just the second finger. Cancels the upcoming XR select event.
+	_handleBeforeSelect(e) {
+		if (this._pinch.active || performance.now() - this._pinchEndedAt < 350) {
+			e.preventDefault();
+		}
+	}
+
+	_applyContentScale(s) {
+		const content = this._viewer.content;
+		if (!content) return;
+		content.scale.setScalar(s);
+		// The contact shadow grounds the agent — grow it with the body so a
+		// statue-sized avatar doesn't stand on a coin-sized shadow.
+		if (this._shadow) this._shadow.scale.setScalar(s);
+	}
+
 	// First tap anchors the agent at the current hit-test position. Creates a real
 	// XRAnchor when the device supports it (survives the small tracking corrections
 	// a raw hit pose does not); falls back to frozen hit-follow otherwise.
 	async _handleSelect() {
 		if (this._anchored || !this._latestHit) return;
+		// Belt-and-braces with _handleBeforeSelect: some browsers deliver the select
+		// anyway — a pinch (or its trailing finger-lift) is never a placement.
+		if (this._pinch.active || performance.now() - this._pinchEndedAt < 350) return;
 		this._anchored = true;
 		// Capture the tap-moment pose now — before the anchor's own drift correction
 		// nudges it — so the persisted GPS pin matches where the user actually tapped.
@@ -601,6 +684,16 @@ export class WebXRSession {
 		// Stop listening before tearing down so a late visibilitychange during
 		// teardown can't re-pause a session that's already gone.
 		this._session?.removeEventListener('visibilitychange', this._handleVisibilityChange);
+		if (this._domOverlayRoot) {
+			const root = this._domOverlayRoot;
+			root.removeEventListener('touchstart', this._handleTouchStart);
+			root.removeEventListener('touchmove', this._handleTouchMove);
+			root.removeEventListener('touchend', this._handleTouchEnd);
+			root.removeEventListener('touchcancel', this._handleTouchEnd);
+			root.removeEventListener('beforexrselect', this._handleBeforeSelect);
+		}
+		this._pinch = createPinchState();
+		this._pinchEndedAt = 0;
 
 		renderer.setAnimationLoop(null);
 		renderer.xr.enabled = false;
@@ -631,9 +724,11 @@ export class WebXRSession {
 		viewer.scene.background = this._savedBg;
 		renderer.setClearColor(0x000000, 1);
 
-		// Restore agent content to its pre-AR transform
+		// Restore agent content to its pre-AR transform (a pinch-resized scale is
+		// persisted on the pin, not carried back into the non-AR view).
 		if (viewer.content && this._savedPos) viewer.content.position.copy(this._savedPos);
 		if (viewer.content && this._savedRot) viewer.content.rotation.copy(this._savedRot);
+		if (viewer.content && this._savedScale) viewer.content.scale.copy(this._savedScale);
 
 		// Restore full-body bone scales captured at XR start (no-op when halfBody
 		// mode was never entered — _halfBodyBones is empty).
