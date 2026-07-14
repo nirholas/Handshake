@@ -8,6 +8,8 @@ Place any three.ws avatar or Forge model into the real world through the camera 
 
 Every avatar page has an **AR** tab. Every Forge model has a **View in AR** button in its result toolbar. On mobile, tapping **Place in your space** triggers native AR. On desktop, the same screen shows a **QR code** — scan it with your phone and the AR session opens in one tap.
 
+The fastest way to try the whole loop is **[AR Forge](/ar)** (`/ar`): type a prompt, a real GLB is generated on the free lane, and the result opens straight into AR on a phone (or shows the QR handoff on desktop). It also accepts a deep link, `/ar?src=<glb-url>&title=<name>`, to reopen any shared model. Under the hood it uses the same `POST /api/forge` lane and the `GET /api/ar?src=` launcher described below.
+
 ---
 
 ## AR methods — which one fires

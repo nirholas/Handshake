@@ -93,7 +93,8 @@
 			background: rgba(255,255,255,0.025); min-height: min(52dvh, 460px);
 			display: flex; flex-direction: column;
 		}
-		model-viewer { width: 100%; flex: 1 1 auto; min-height: min(48dvh, 420px); --poster-color: transparent; --progress-bar-color: var(--accent); background: transparent; }
+		model-viewer { width: 100%; flex: 1 1 auto; min-height: min(48dvh, 420px); --poster-color: transparent; --progress-bar-color: var(--accent); background: transparent; opacity: 1; transition: opacity .35s ease; }
+		model-viewer.veiled { opacity: 0; }
 		.overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 13px; text-align: center; padding: 28px; }
 		.spinner { width: 38px; height: 38px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.14); border-top-color: var(--accent); animation: spin .9s linear infinite; }
 		@keyframes spin { to { transform: rotate(360deg); } }
@@ -171,7 +172,7 @@
 		</div>
 
 		<div class="stage" id="stage">
-			<model-viewer id="mv" class="hidden" camera-controls auto-rotate touch-action="pan-y"
+			<model-viewer id="mv" class="veiled" camera-controls auto-rotate touch-action="pan-y"
 				rotation-per-second="16deg" interaction-prompt="none"
 				shadow-intensity="1" shadow-softness="0.85" exposure="1.05" environment-image="neutral" tone-mapping="aces"
 				ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" reveal="auto" alt="Generated 3D model">
@@ -306,7 +307,7 @@
 			if (prompt.length < 3) { input.focus(); return; }
 			var seq = ++runSeq;
 			setBusy(true);
-			mv.classList.add('hidden');
+			mv.classList.add('veiled');
 			actions.classList.add('hidden');
 			handoff.classList.remove('show');
 			workTitle.textContent = 'Forging "' + (prompt.length > 60 ? prompt.slice(0, 57) + '…' : prompt) + '"';
@@ -352,7 +353,7 @@
 			if (!current || mv.getAttribute('src') !== current.glb) return;
 			overlay(null);
 			setBusy(false);
-			mv.classList.remove('hidden');
+			mv.classList.remove('veiled');
 			actions.classList.remove('hidden');
 			meta.textContent = current.prompt || 'Untitled model';
 			meta.title = current.prompt || '';
@@ -413,15 +414,9 @@
 		// ── Desktop → phone QR handoff (lazy; page works fine without it) ──
 		var qrLibPromise = null;
 		function loadQrLib() {
-			if (window.QRCode) return Promise.resolve(window.QRCode);
 			if (!qrLibPromise) {
-				qrLibPromise = new Promise(function (resolve, reject) {
-					var s = document.createElement('script');
-					s.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.js';
-					s.onload = function () { window.QRCode ? resolve(window.QRCode) : reject(new Error('qr lib missing')); };
-					s.onerror = function () { reject(new Error('qr lib failed')); };
-					document.head.appendChild(s);
-				});
+				qrLibPromise = import('https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm')
+					.then(function (m) { return m.default || m; });
 			}
 			return qrLibPromise;
 		}
