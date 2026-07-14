@@ -267,7 +267,7 @@ export const COMPONENT_MIME = 'text/html+skybridge';
 // The public origin generated GLBs are actually served from (the R2 public
 // bucket, e.g. https://pub-<hash>.r2.dev). ChatGPT ENFORCES the widget CSP
 // inside its sandbox, so leaving this origin out blocks every model fetch and
-// the widget error-states on 100% of generations — even though the same widget
+// the widget error-states on 100% of generations, even though the same widget
 // works in permissive test harnesses. Resolved lazily because S3_PUBLIC_DOMAIN
 // is a required-env getter (throws when storage isn't configured, e.g. tests).
 function glbStorageOrigin() {
@@ -300,10 +300,10 @@ export function componentCsp() {
 // ── persona widget ──────────────────────────────────────────────────────────
 //
 // ChatGPT only renders a widget when the TOOL's _meta["openai/outputTemplate"]
-// points at a registered ui:// resource — a result-level template on an inline
+// points at a registered ui:// resource; a result-level template on an inline
 // artifact is ignored, so the persona tools rendered nothing there. This widget
 // closes that gap: it reads the persona structuredContent (embed_url, name,
-// status) and mounts the hosted embodiment embed — the same living body the
+// status) and mounts the hosted embodiment embed, the same living body the
 // inline artifact shows in other MCP hosts. frame_domains opts the widget into
 // framing the app origin.
 

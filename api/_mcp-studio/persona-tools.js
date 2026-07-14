@@ -31,7 +31,8 @@ import {
 	isPersonaId,
 } from '../_lib/persona-store.js';
 import { expressionForText, expressionFor } from '../../src/embodiment/emotion.js';
-import { embodimentArtifact } from '../_lib/embodiment-artifact.js';
+import { embodimentArtifact, buildEmbedUrl } from '../_lib/embodiment-artifact.js';
+import { PERSONA_COMPONENT_URI } from './component.js';
 
 const MAX_GLB_BYTES = 64 * 1024 * 1024;
 
@@ -124,7 +125,7 @@ async function handleCreatePersona(args, _auth, req) {
 			},
 			embodimentArtifact({ persona, state: 'idle' }),
 		],
-		structuredContent: { ...persona, status: 'created' },
+		structuredContent: { ...persona, status: 'created', embed_url: buildEmbedUrl({ persona, state: 'idle' }) },
 	};
 }
 
@@ -146,7 +147,7 @@ async function handleGetPersona(args) {
 			},
 			embodimentArtifact({ persona, state: 'idle' }),
 		],
-		structuredContent: { ...persona, status: 'loaded' },
+		structuredContent: { ...persona, status: 'loaded', embed_url: buildEmbedUrl({ persona, state: 'idle' }) },
 	};
 }
 
@@ -194,6 +195,14 @@ async function handlePersonaSay(args, _auth, req) {
 			gesture: expr.gesture,
 			turn_count: persona.turn_count,
 			status: 'spoken',
+			embed_url: buildEmbedUrl({
+				persona,
+				state: 'speaking',
+				text,
+				emotion: expr.emotion,
+				intensity: expr.intensity,
+				gesture: expr.gesture,
+			}),
 		},
 	};
 }
@@ -205,11 +214,13 @@ const CREATE_ANNOTATIONS = { readOnlyHint: false, destructiveHint: false, idempo
 const READ_ANNOTATIONS = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false };
 const SAY_ANNOTATIONS = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false };
 
-// The persona tools return their living-body artifact as an inline text/html
-// resource (embodimentArtifact carries its own openai/outputTemplate), so the
-// tool-level _meta only advertises the invocation labels + widget accessibility.
+// Apps SDK hosts only render a widget declared on the TOOL descriptor, so each
+// persona tool links the registered persona widget (which frames the hosted
+// embodiment embed from structuredContent.embed_url). The inline text/html
+// artifact stays in content[] for hosts that render inline resources instead.
 function personaMeta(invoking, invoked) {
 	return {
+		'openai/outputTemplate': PERSONA_COMPONENT_URI,
 		'openai/toolInvocation/invoking': invoking,
 		'openai/toolInvocation/invoked': invoked,
 		'openai/widgetAccessible': true,

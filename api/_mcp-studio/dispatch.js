@@ -68,7 +68,7 @@ function widgetResources() {
 			mimeType: COMPONENT_MIME,
 			text: PERSONA_COMPONENT_HTML,
 			_meta: {
-				'openai/widgetDescription': 'A live 3D agent body — it idles between turns, lip-syncs each reply, and shows emotion.',
+				'openai/widgetDescription': 'A live 3D agent body: it idles between turns, lip-syncs each reply, and shows emotion.',
 				'openai/widgetCSP': personaComponentCsp(),
 				'openai/widgetDomain': 'https://three.ws',
 				'openai/widgetPrefersBorder': true,

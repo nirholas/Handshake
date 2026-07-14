@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TOOL_CATALOG, TOOL_NAMES } from '../api/_mcp-studio/tools.js';
 import { PERSONA_TOOL_CATALOG, PERSONA_TOOL_NAMES } from '../api/_mcp-studio/persona-tools.js';
 import { dispatch } from '../api/_mcp-studio/dispatch.js';
-import { COMPONENT_URI } from '../api/_mcp-studio/component.js';
+import { COMPONENT_URI, PERSONA_COMPONENT_URI, componentCsp } from '../api/_mcp-studio/component.js';
 
 // The generation tools (render the model-viewer widget) + the three embodiment /
 // persona tools (render the living-body embed).
@@ -88,6 +88,12 @@ describe('mcp-studio embodiment (persona) tools', () => {
 	it('carries ZERO crypto / payment surface', () => {
 		expect(FORBIDDEN.test(JSON.stringify(PERSONA_TOOL_CATALOG))).toBe(false);
 	});
+
+	it('every persona tool links the persona widget template (ChatGPT only renders tool-level templates)', () => {
+		for (const t of PERSONA_TOOL_CATALOG) {
+			expect(t._meta?.['openai/outputTemplate']).toBe(PERSONA_COMPONENT_URI);
+		}
+	});
 });
 
 describe('mcp-studio dispatch', () => {
@@ -110,15 +116,50 @@ describe('mcp-studio dispatch', () => {
 		expect(r.result.tools.map((t) => t.name).sort()).toEqual([...ALL].sort());
 	});
 
-	it('serves the Apps SDK widget resource', async () => {
+	it('serves both Apps SDK widget resources', async () => {
 		const list = await dispatch({ jsonrpc: '2.0', id: 3, method: 'resources/list' }, auth, mkReq());
-		expect(list.result.resources[0].uri).toBe(COMPONENT_URI);
+		const uris = list.result.resources.map((r) => r.uri);
+		expect(uris).toEqual([COMPONENT_URI, PERSONA_COMPONENT_URI]);
+		// resources/list is metadata only; the HTML body ships via resources/read.
+		for (const r of list.result.resources) expect(r.text).toBeUndefined();
 		const read = await dispatch(
 			{ jsonrpc: '2.0', id: 4, method: 'resources/read', params: { uri: COMPONENT_URI } },
 			auth,
 			mkReq(),
 		);
 		expect(read.result.contents[0].text).toContain('model-viewer');
+		const readPersona = await dispatch(
+			{ jsonrpc: '2.0', id: 14, method: 'resources/read', params: { uri: PERSONA_COMPONENT_URI } },
+			auth,
+			mkReq(),
+		);
+		expect(readPersona.result.contents[0].text).toContain('embed_url');
+		expect(readPersona.result.contents[0]._meta['openai/widgetCSP'].frame_domains).toContain('https://three.ws');
+	});
+
+	it('widget CSP allowlists the GLB storage origin (ChatGPT enforces it in the sandbox)', () => {
+		const prev = process.env.S3_PUBLIC_DOMAIN;
+		process.env.S3_PUBLIC_DOMAIN = 'https://pub-abc123.r2.dev';
+		try {
+			const csp = componentCsp();
+			expect(csp.connect_domains).toContain('https://pub-abc123.r2.dev');
+			expect(csp.resource_domains).toContain('https://pub-abc123.r2.dev');
+		} finally {
+			if (prev === undefined) delete process.env.S3_PUBLIC_DOMAIN;
+			else process.env.S3_PUBLIC_DOMAIN = prev;
+		}
+	});
+
+	it('widget CSP stays valid when storage is unconfigured', () => {
+		const prev = process.env.S3_PUBLIC_DOMAIN;
+		delete process.env.S3_PUBLIC_DOMAIN;
+		try {
+			const csp = componentCsp();
+			expect(csp.connect_domains).toContain('https://three.ws');
+			expect(csp.connect_domains.every((d) => d.startsWith('https://'))).toBe(true);
+		} finally {
+			if (prev !== undefined) process.env.S3_PUBLIC_DOMAIN = prev;
+		}
 	});
 
 	it('unknown tool returns an error', async () => {

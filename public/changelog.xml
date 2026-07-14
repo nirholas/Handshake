@@ -39,6 +39,14 @@
 			<description>After forging a model, the &quot;Deploy onchain&quot; shortcut used to drop you on Launchpad Studio (the white-label site builder), which ignored your model entirely. It now opens the on-chain deploy wizard with your model and its name already filled in, so you go straight from forge to a permanent on-chain agent identity. The search palette's &quot;Launch a coin&quot; action was also mispointed and now opens the pump.fun coin launch flow.</description>
 		</item>
 		<item>
+			<title>3D models now render inside ChatGPT</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-14:3D models now render inside ChatGPT</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Fixed the free 3D Studio app for ChatGPT so generated models actually display in the conversation. The inline viewer's security allowlist was missing the storage domain models are served from, so ChatGPT blocked every model from loading; it is now included automatically. Living agent personas (create, reload, speak) also gained their own inline view in ChatGPT, so a saved agent body idles, lip-syncs, and emotes right in the chat.</description>
+		</item>
+		<item>
 			<title>3D previews stop erroring on the scanner and every plain page footer</title>
 			<link>https://three.ws/create/selfie</link>
 			<guid isPermaLink="false">2026-07-14:3D previews stop erroring on the scanner and every plain page footer</guid>

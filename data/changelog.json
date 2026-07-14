@@ -13682,6 +13682,15 @@
 				"fix"
 			],
 			"link": "/sitemap"
+		},
+		{
+			"date": "2026-07-14",
+			"title": "3D models now render inside ChatGPT",
+			"summary": "Fixed the free 3D Studio app for ChatGPT so generated models actually display in the conversation. The inline viewer's security allowlist was missing the storage domain models are served from, so ChatGPT blocked every model from loading; it is now included automatically. Living agent personas (create, reload, speak) also gained their own inline view in ChatGPT, so a saved agent body idles, lip-syncs, and emotes right in the chat.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
 		}
 	]
 }
