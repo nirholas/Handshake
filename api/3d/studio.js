@@ -15,14 +15,20 @@
 // async self-host Hunyuan3D worker — see the dispatch comment below.)
 //
 //   POST { prompt }
-//     → 200 { status:'done',  glbUrl, viewerUrl, format }   (finished inline)
-//     → 200 { status:'pending', job, poll, format }          (queued — poll below)
-//     → 400 { error:'prompt_rejected', message }             (safety gate refusal)
+//     → 200 { status:'done',  glbUrl, viewerUrl, arUrl, format }  (finished inline)
+//     → 200 { status:'pending', job, poll, format }               (queued — poll below)
+//     → 400 { error:'prompt_rejected', message }                  (safety gate refusal)
 //
-//   GET ?job=<id>
-//     → 200 { status:'pending', job, poll }                  (still generating)
-//     → 200 { status:'done',  glbUrl, viewerUrl, format }    (GLB ready)
-//     → 200 { status:'error', error }                        (upstream failed — retry is free)
+//   GET ?job=<id>&title=<prompt>   (title optional — labels the AR/viewer pages)
+//     → 200 { status:'pending', job, poll }                       (still generating)
+//     → 200 { status:'done',  glbUrl, viewerUrl, arUrl, format }  (GLB ready)
+//     → 200 { status:'error', error }                             (upstream failed — retry is free)
+//
+// arUrl is the flagship link: the device-aware AR launch (api/ar.js) that puts
+// the model in the user's real room — Scene Viewer on Android, Quick Look on
+// iOS (GLB→USDZ converted in-page), WebGL viewer on desktop. It is the same
+// place-in-your-space lane the /forge and /ar pages use, surfaced first-class
+// so the GPT can offer "put it in your room" on every generation.
 //
 // ChatGPT Actions time out at ~45s; the forge lane bounds its synchronous hold
 // to 30s (NVCF_POLL_SECONDS in api/_providers/nvidia.js), so a slow job always
