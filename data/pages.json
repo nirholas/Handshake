@@ -2538,6 +2538,14 @@
 					"added": "2026-04-27"
 				},
 				{
+					"path": "/legal/eula",
+					"title": "End-User License Agreement",
+					"description": "License terms for the three.ws Seeker/Saga app.",
+					"priority": 0.2,
+					"changefreq": "yearly",
+					"added": "2026-07-14"
+				},
+				{
 					"path": "/legal/tos",
 					"title": "Terms of Use",
 					"description": "Terms of service for three.ws.",

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-14",
+			"title": "New doc: IRL, agents in the real world",
+			"summary": "The IRL layer finally has a front door in the docs: one page that explains the whole vision and how the shipped pieces fit together. It covers placing an agent at a real GPS spot from your phone, walk-up discovery with proof of presence, paying agents in person via x402, Money Drops (real SOL, USDC, or $THREE escrowed at a place and claimable only by walking up), World Lines (agent-signed proofs that you were really there), and the privacy model that makes it all safe. The docs sidebar now also links the hands-on IRL tutorial, which was previously unreachable from the navigation.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/irl"
+		},
+		{
+			"date": "2026-07-14",
 			"title": "Tour and Walk SDK update: switch between Stroll and Platformer from the tour controls",
 			"summary": "Embedded tours built with the Tour Builder now include a labeled Stroll / Platformer toggle right in the tour controls next to Exit, so visitors can switch how they explore (tap it or press M) instead of hunting for a hidden corner button. Published as @three-ws/walk 0.2.1 and @three-ws/tour 0.5.1 on npm; the Tour Builder's exported embed snippet now uses the new versions automatically, and also picks up the latest @three-ws/page-agent with its five persona presets.",
 			"tags": [

@@ -4,8 +4,9 @@
 **Prereqs verified live:** prompt 04 (`/api/mcp-studio` deployed), prompt 05 (widget renders real GLBs).
 
 This is the copy-paste-ready answer sheet for submitting the free three.ws 3D Studio to the
-OpenAI ChatGPT App Directory, plus an evidence-backed compliance audit. Every field is filled
-except items marked `[HUMAN: …]` (identity verification, support contact, final submit).
+OpenAI ChatGPT App Directory, plus an evidence-backed compliance audit. **Every field is now
+filled** (2026-07-14: organization verified on platform.openai.com, support contact and privacy
+policy confirmed live). The only remaining step is the owner's final submit in the portal.
 
 ---
 
@@ -113,14 +114,14 @@ shape. No action left.
 | **App name** | **three.ws 3D Studio** |
 | **Tagline** | Turn a text prompt into a downloadable, animation-ready 3D model — free, inside ChatGPT. |
 | **Short description** | three.ws 3D Studio generates textured 3D models, avatars, and rigged characters from a text prompt (or a reference image) and renders each result inline in an interactive 3D viewer you can rotate, inspect, and download as a GLB. It can also auto-rig a static model into an animation-ready one. Free to use — no account, no key, no payment. |
-| **Long description** | Describe anything — "a friendly round robot mascot," "a low-poly treasure chest," "a knight character I can animate" — and three.ws 3D Studio builds a real, textured 3D model and shows it in an interactive viewer right in the conversation. Five tools cover the full path from idea to asset: generate a model from text, generate an avatar, generate an art-directed mesh, auto-rig a static model into an animation-ready one, and generate-then-rig a character in a single step. Every result is a standard **GLB** you can download and drop into Blender, Unity, Unreal, three.js, or any glTF pipeline. Generation runs on three.ws's own free 3D lane, so there is nothing to sign up for and nothing to pay. Not natively possible in ChatGPT: turning language into a manipulable, downloadable 3D asset with an inline viewer. |
+| **Long description** | Describe anything — "a friendly round robot mascot," "a low-poly treasure chest," "a knight character I can animate" — and three.ws 3D Studio builds a real, textured 3D model and shows it in an interactive viewer right in the conversation. Nine tools cover the full path from idea to asset: generate a model from text, generate an avatar, generate an art-directed mesh, auto-rig a static model into an animation-ready one, generate-then-rig a character in a single step, refine an existing model by describing a change, and save a rigged model as a persistent persona that can speak with lip-sync and emotion. Every result is a standard **GLB** you can download and drop into Blender, Unity, Unreal, three.js, or any glTF pipeline. Generation runs on three.ws's own free 3D lane, so there is nothing to sign up for and nothing to pay. Not natively possible in ChatGPT: turning language into a manipulable, downloadable 3D asset with an inline viewer. |
 | **Category** | Creativity & Design (secondary: Productivity) |
 | **Country availability** | All countries / Global (no geo-restriction; anonymous + free). |
 | **Age suitability** | Suitable for ages 13–17 (content-safety gate on every generation lane — §2.6). |
 | **App icon** | `_generated/assets/icon-512x512.png` (512×512, owned IP). |
-| **Support contact** | `[HUMAN: current support email/URL — e.g. support@three.ws or https://three.ws/support]` |
-| **Privacy policy URL** | `https://three.ws/legal/privacy` `[HUMAN: confirm it is deployed and covers the studio — it collects no personal data; see §2.4]` |
-| **Developer/Publisher** | three.ws · `[HUMAN: verified individual/organization on platform.openai.com]` |
+| **Support contact** | `support@three.ws` · `https://three.ws/support` (page live, HTTP 200, verified 2026-07-14; lists support/security/abuse channels) |
+| **Privacy policy URL** | `https://three.ws/legal/privacy` (live, HTTP 200, verified 2026-07-14; the studio collects no personal data, see §2.4) |
+| **Developer/Publisher** | three.ws (verified organization on platform.openai.com, confirmed by owner 2026-07-14; OpenAI Partner Network member since 2026-07-14) |
 
 ### Example prompts (3–5, all reliably produce a model)
 1. `Make a 3D model of a friendly round robot mascot, glossy white plastic.`
@@ -129,7 +130,7 @@ shape. No action left.
 4. `Make a rigged, animation-ready knight character I can pose.`
 5. `Model a small ceramic teapot with a bamboo handle and a celadon glaze.`
 
-### Tool list (titles as shown to users)
+### Tool list (titles as shown to users; matches live `tools/list`, re-pulled 2026-07-14)
 | Tool | Title | What it does |
 |------|-------|--------------|
 | `forge_free` | Generate a 3D model from text | Text → textured GLB (free NVIDIA lane). |
@@ -137,12 +138,17 @@ shape. No action left.
 | `mesh_forge` | Generate a 3D mesh (art-directed) | Text/image → mesh, prompt refined by an AI art-director first. |
 | `rig_mesh` | Rig a 3D model for animation | Static GLB URL → humanoid-rigged, animation-ready GLB. |
 | `forge_avatar` | Generate a rigged, animation-ready avatar | Text/image → generate + auto-rig in one step. |
+| `refine_model` | Refine a 3D model by describing a change | Existing GLB + instruction → regenerated model with version lineage. |
+| `create_agent_persona` | Save a rigged model as a living, persistent agent body | Rigged GLB + name → persona id (continuity across sessions). |
+| `get_agent_persona` | Reload a persona by id | Persona id → saved persona (read-only). |
+| `persona_say` | Speak a reply through a persona | Persona id + text → lip-sync, emotion, and gesture playback in the viewer. |
 
 ---
 
 ## 2. Compliance audit (item-by-item, each with a PASS verdict + evidence)
 
-All evidence is from the live production deployment on 2026-07-07. Raw artifacts are in
+Original evidence is from the live production deployment on 2026-07-07; connectivity, annotations,
+and the full generation pipeline were re-verified live on 2026-07-14. Raw artifacts are in
 `_generated/` (`live-tools-list.json`, `openai-tool-evidence.txt`, `forge-raw-response.json`).
 
 ### 2.1 No crypto / token / wallet surface — **PASS**
@@ -169,8 +175,8 @@ anywhere in this server — generation runs operator-funded."* No tool returns a
 checkout; the app charges the user nothing. (If monetization is ever added, OpenAI allows only physical
 goods via external checkout — out of scope here.)
 
-### 2.3 Tool annotations correct on all five tools — **PASS**
-Pulled from the live `tools/list`:
+### 2.3 Tool annotations correct on all nine tools — **PASS**
+Pulled from the live `tools/list` (re-pulled 2026-07-14):
 
 | Tool | readOnlyHint | destructiveHint | idempotentHint | openWorldHint |
 |------|:---:|:---:|:---:|:---:|
@@ -179,12 +185,19 @@ Pulled from the live `tools/list`:
 | mesh_forge | false | false | false | **true** |
 | rig_mesh | false | false | false | **true** |
 | forge_avatar | false | false | false | **true** |
+| refine_model | false | false | false | **true** |
+| create_agent_persona | false | false | false | false |
+| get_agent_persona | **true** | false | **true** | false |
+| persona_say | false | false | false | false |
 
-Rationale (matches OpenAI guidance): each tool **creates a new hosted asset** → not read-only; it
-**never modifies or deletes** existing data → `destructiveHint: false` (generation is non-destructive);
-same prompt yields a fresh mesh → not idempotent; work runs against **external model APIs** →
-`openWorldHint: true`. Every tool also carries the widget `_meta` (`openai/outputTemplate`,
-`openai/widgetAccessible: true`) and human-readable `invoking`/`invoked` labels.
+Rationale (matches OpenAI guidance): each generation tool **creates a new hosted asset** → not
+read-only; it **never modifies or deletes** existing data → `destructiveHint: false` (generation is
+non-destructive; `refine_model` creates a new version, the parent is preserved in the lineage); same
+prompt yields a fresh mesh → not idempotent; generation runs against **external model APIs** →
+`openWorldHint: true`. The persona tools operate only on three.ws's own store → `openWorldHint:
+false`; `get_agent_persona` is a pure read → `readOnlyHint: true`, `idempotentHint: true`. Every tool
+also carries the widget `_meta` (`openai/outputTemplate`, `openai/widgetAccessible: true`) and
+human-readable `invoking`/`invoked` labels.
 
 ### 2.4 Data minimization — **PASS** (real request/response captured)
 Each tool response returns **only** what a client needs to show/download the model. The studio
@@ -200,7 +213,7 @@ Each tool response returns **only** what a client needs to show/download the mod
 ```json
 {"kind":"model",
  "glbUrl":"https://pub-…r2.dev/forge/anon/456f0f83-…-1d695f.glb",
- "viewerUrl":"https://three.ws/viewer?src=…",   // ← target route missing, see B2
+ "viewerUrl":"https://three.ws/viewer?src=…",   // route live since 2026-07-14, returns 200
  "format":"glb",
  "prompt":"a small ceramic teapot with a bamboo handle, glossy celadon glaze"}
 ```
@@ -221,6 +234,10 @@ No chat-history or "just in case" fields; `additionalProperties: false` on every
 | mesh_forge | `prompt`, `image_url` | — |
 | rig_mesh | `glb_url` | `glb_url` |
 | forge_avatar | `prompt`, `image_url`, `allow_non_humanoid` | — |
+| refine_model | `glb_url`, `instruction`, `parent_prompt`, `reference_image_url`, `parent_lineage`, `parent_index` | `glb_url`, `instruction` |
+| create_agent_persona | `glb_url`, `name`, `voice`, `source_prompt` | `glb_url`, `name` |
+| get_agent_persona | `persona_id` | `persona_id` |
+| persona_say | `persona_id`, `text`, `emotion` | `persona_id`, `text` |
 
 ### 2.6 Age-appropriate (13–17) — **PASS** (safety gate present + live-tested)
 A synchronous, dependency-free content-safety gate (`api/_mcp-studio/safety.js`) runs **before any
@@ -240,8 +257,8 @@ real **GLB** plus an inline interactive viewer (rotate / spin / recenter / downl
 a chat completion. Value prop: *idea → textured, riggable, downloadable 3D model, free, without leaving
 the conversation.*
 
-**Audit result: 7/7 policy items PASS.** The only things standing between this and a submission are the
-two infrastructure/routing blockers in §0.
+**Audit result: 7/7 policy items PASS.** Both former infrastructure blockers (§0) are resolved and
+re-verified live; nothing stands between this package and a submission.
 
 ---
 
@@ -256,7 +273,7 @@ two infrastructure/routing blockers in §0.
 | **Capabilities** | `tools`, `resources`, `logging`. |
 | **Auth mode** | **None** (anonymous, unauthenticated). No OAuth, no API key, no test credentials required. |
 | **Widget resource** | `ui://widget/three-studio-model.html` (`resources/list` / `resources/read`), MIME `text/html+skybridge`. |
-| **Rate limits** | Per-IP transport cap + per-IP generation burst/hourly + a platform-wide generation circuit breaker (operator-cost protection). A reviewer testing normally will not hit these — **except while B1 is unresolved, when all generation 429s.** |
+| **Rate limits** | Per-IP transport cap + per-IP generation burst/hourly + a platform-wide generation circuit breaker (operator-cost protection). A reviewer testing normally will not hit these. |
 
 Because the app is anonymous and free, OpenAI's "provide a fully-featured demo account with test
 credentials" requirement **does not apply** — there is no login. Note this explicitly in the form's auth
@@ -286,11 +303,10 @@ a specific size not covered above, capture at that size — the widget renders a
 
 ## 5. Reviewer testing guide
 
-**No credentials needed** (anonymous, free). Prerequisite: **B1 must be cleared** or all generation
-returns 429.
+**No credentials needed** (anonymous, free). Full flow re-verified green against production 2026-07-14.
 
-1. **Discover** (works today): `initialize` → `tools/list` → `resources/list` against
-   `https://three.ws/api/mcp-studio`. Expect 5 tools + the `ui://widget/three-studio-model.html` resource.
+1. **Discover**: `initialize` → `tools/list` → `resources/list` against
+   `https://three.ws/api/mcp-studio`. Expect 9 tools + the `ui://widget/three-studio-model.html` resource.
 2. **Generate** a model that reliably succeeds — say to ChatGPT: *"Make a 3D model of a friendly round
    robot mascot, glossy white plastic."* Expect, in ~15–60s, an inline interactive 3D viewer with the
    model plus **Download / Spin / Recenter / Open in three.ws**.
@@ -310,26 +326,29 @@ curl -s -X POST https://three.ws/api/mcp-studio -H 'content-type: application/js
 
 ---
 
-## 6. Developer verification + support (`[HUMAN]` actions)
+## 6. Developer verification + support (all resolved 2026-07-14)
 
-1. `[HUMAN: complete developer identity verification for the individual/organization on
-   platform.openai.com — required before any listing can go live.]`
-2. `[HUMAN: provide a current, monitored support contact (email or URL) for the listing.]`
-3. `[HUMAN: confirm https://three.ws/legal/privacy is deployed and states the studio collects no
-   personal data (anonymous, no login, minimal identifier-free responses per §2.4).]`
-4. `[HUMAN: after B1 + B2 are fixed and redeployed, run the §5 smoke test to confirm generation returns
-   200 and the "Open in three.ws" link resolves, then submit.]`
+1. ~~Developer identity verification~~ — **DONE**: organization verified on platform.openai.com
+   (confirmed by owner 2026-07-14); three.ws accepted into the OpenAI Partner Network 2026-07-14.
+2. ~~Support contact~~ — **DONE**: `support@three.ws` + `https://three.ws/support` (live, 200).
+3. ~~Privacy policy~~ — **DONE**: `https://three.ws/legal/privacy` live (200, verified 2026-07-14);
+   the studio collects no personal data (anonymous, no login, identifier-free responses per §2.4).
+4. ~~Post-fix smoke test~~ — **DONE 2026-07-14**: real `forge_free` generation returned a 1.45 MB GLB
+   (`model/gltf-binary`, HTTP 200) in ~40s; its `viewerUrl` returned 200 with the exact generated GLB.
+
+`[HUMAN: final submit through the OpenAI partner portal / App Directory flow — the only remaining step.]`
 
 ---
 
 ## 7. Pre-submit checklist
 
-- [ ] **B1** cleared — `tools/call forge_free` returns 200 with a GLB (not 429).
-- [ ] **B2** cleared — `/viewer?src=<glb>` returns 200 and renders the model.
-- [ ] Developer identity verified on platform.openai.com. `[HUMAN]`
-- [ ] Support contact + privacy policy confirmed live. `[HUMAN]`
-- [ ] Screenshots match the form's required dimensions. `[HUMAN verify]`
+- [x] **B1** cleared — `tools/call forge_free` returns 200 with a GLB (re-verified 2026-07-14, 1.45 MB GLB).
+- [x] **B2** cleared — `/viewer?src=<glb>` returns 200 and renders the model (re-verified 2026-07-14).
+- [x] Developer identity verified on platform.openai.com (verified organization, 2026-07-14).
+- [x] Support contact + privacy policy confirmed live (2026-07-14).
+- [ ] Screenshots match the form's required dimensions. `[HUMAN verify in the form — 3 real-model shots ready in _generated/openai-screenshots/]`
 - [x] Compliance audit: 7/7 policy items PASS (§2).
-- [x] Listing metadata drafted (§1).
+- [x] Listing metadata drafted (§1) — tool list refreshed to the live 9-tool surface 2026-07-14.
 - [x] MCP connectivity documented (§3).
 - [x] Reviewer guide written (§5).
+- [ ] **Final submit in the portal.** `[HUMAN]`

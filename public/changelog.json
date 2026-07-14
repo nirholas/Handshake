@@ -1,11 +1,31 @@
 {
-	"generated_at": "2026-07-14T03:27:23.831Z",
+	"generated_at": "2026-07-14T07:25:19.655Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-14",
+			"type": "launch",
+			"title": "End-User License Agreement",
+			"summary": "License terms for the three.ws Seeker/Saga app.",
+			"link": "/legal/eula",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
+			"title": "New doc: IRL, agents in the real world",
+			"summary": "The IRL layer finally has a front door in the docs: one page that explains the whole vision and how the shipped pieces fit together. It covers placing an agent at a real GPS spot from your phone, walk-up discovery with proof of presence, paying agents in person via x402, Money Drops (real SOL, USDC, or $THREE escrowed at a place and claimable only by walking up), World Lines (agent-signed proofs that you were really there), and the privacy model that makes it all safe. The docs sidebar now also links the hands-on IRL tutorial, which was previously unreachable from the navigation.",
+			"link": "/docs/irl",
+			"tags": [
+				"docs"
+			]
+		},
 		{
 			"date": "2026-07-14",
 			"type": "update",

@@ -4553,6 +4553,10 @@
 			"dest": "/legal/privacy.html"
 		},
 		{
+			"src": "/legal/eula/?",
+			"dest": "/legal/eula.html"
+		},
+		{
 			"src": "/legal/tos/?",
 			"dest": "/legal/tos.html"
 		},

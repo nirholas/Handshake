@@ -345,6 +345,7 @@ Long-form announcements, launches, and writing from three.ws.
 ## Legal
 
 - [Privacy Policy](https://three.ws/legal/privacy): How three.ws handles user data.
+- [End-User License Agreement](https://three.ws/legal/eula): License terms for the three.ws Seeker/Saga app.
 - [Terms of Use](https://three.ws/legal/tos): Terms of service for three.ws.
 - [Risk Disclosure](https://three.ws/legal/risk): Risk disclosure for real-funds features: experimental software, total-loss risk, autonomous agents, no liability.
 

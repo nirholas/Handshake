@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-14T03:27:23.809Z",
+	"generated_at": "2026-07-14T07:25:19.640Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3166,6 +3166,16 @@
 					"title": "Privacy Policy",
 					"description": "How three.ws handles user data.",
 					"added": "2026-04-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/legal/eula",
+					"title": "End-User License Agreement",
+					"description": "License terms for the three.ws Seeker/Saga app.",
+					"added": "2026-07-14",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

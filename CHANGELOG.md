@@ -6,6 +6,8 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-07-14
 
+- **End-User License Agreement** (`/legal/eula`) — License terms for the three.ws Seeker/Saga app.
+- **New doc: IRL, agents in the real world** — The IRL layer finally has a front door in the docs: one page that explains the whole vision and how the shipped pieces fit together. It covers placing an agent at a real GPS spot from your phone, walk-up discovery with proof of presence, paying agents in person via x402, Money Drops (real SOL, USDC, or $THREE escrowed at a place and claimable only by walking up), World Lines (agent-signed proofs that you were really there), and the privacy model that makes it all safe. The docs sidebar now also links the hands-on IRL tutorial, which was previously unreachable from the navigation. (`/docs/irl`) `[docs]`
 - **Tour and Walk SDK update: switch between Stroll and Platformer from the tour controls** — Embedded tours built with the Tour Builder now include a labeled Stroll / Platformer toggle right in the tour controls next to Exit, so visitors can switch how they explore (tap it or press M) instead of hunting for a hidden corner button. Published as @three-ws/walk 0.2.1 and @three-ws/tour 0.5.1 on npm; the Tour Builder's exported embed snippet now uses the new versions automatically, and also picks up the latest @three-ws/page-agent with its five persona presets. (`/tour-builder`) `[sdk, improvement]`
 
 ## 2026-07-13

@@ -7,6 +7,22 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>End-User License Agreement</title>
+			<link>https://three.ws/legal/eula</link>
+			<guid isPermaLink="false">2026-07-14:End-User License Agreement</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>License terms for the three.ws Seeker/Saga app.</description>
+		</item>
+		<item>
+			<title>New doc: IRL, agents in the real world</title>
+			<link>https://three.ws/docs/irl</link>
+			<guid isPermaLink="false">2026-07-14:New doc: IRL, agents in the real world</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The IRL layer finally has a front door in the docs: one page that explains the whole vision and how the shipped pieces fit together. It covers placing an agent at a real GPS spot from your phone, walk-up discovery with proof of presence, paying agents in person via x402, Money Drops (real SOL, USDC, or $THREE escrowed at a place and claimable only by walking up), World Lines (agent-signed proofs that you were really there), and the privacy model that makes it all safe. The docs sidebar now also links the hands-on IRL tutorial, which was previously unreachable from the navigation.</description>
+		</item>
+		<item>
 			<title>Tour and Walk SDK update: switch between Stroll and Platformer from the tour controls</title>
 			<link>https://three.ws/tour-builder</link>
 			<guid isPermaLink="false">2026-07-14:Tour and Walk SDK update: switch between Stroll and Platformer from the tour controls</guid>

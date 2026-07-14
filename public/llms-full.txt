@@ -1930,6 +1930,12 @@ URL: https://three.ws/legal/privacy
 
 How three.ws handles user data.
 
+### End-User License Agreement
+
+URL: https://three.ws/legal/eula
+
+License terms for the three.ws Seeker/Saga app.
+
 ### Terms of Use
 
 URL: https://three.ws/legal/tos
