@@ -1,0 +1,18 @@
+{
+  "name": "rh-example-12-telegram-price-bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Telegram bot for Robinhood Chain Stock Token prices and launch alerts, deployable on a free tier.",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "grammy": "^1.31.0",
+    "hoodchain": "^0.1.0",
+    "viem": "^2.55.0"
+  }
+}

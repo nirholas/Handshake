@@ -1,4 +1,0 @@
-{"timestamp":1783865969900,"rail":"direct","network":"testnet","symbol":"HLPROBE99Z","token":null,"seedWei":"10000000000000000","launchTx":null,"status":"rejected","reason":"dry-run"}
-{"timestamp":1783866091614,"rail":"direct","network":"testnet","symbol":"HLPROBE99Z","token":null,"seedWei":"10000000000000000","launchTx":null,"status":"rejected","reason":"dry-run"}
-{"timestamp":1783866113217,"rail":"direct","network":"testnet","symbol":"HLPROBE99Z","token":null,"seedWei":"10000000000000000","launchTx":null,"status":"rejected","reason":"Account balance 0 wei is below the estimated requirement 10000000000000000 wei (seed + deploy gas)."}
-{"timestamp":1783866146127,"rail":"direct","network":"testnet","symbol":"HLPROBE99Z","token":null,"seedWei":"10000000000000000","launchTx":null,"status":"rejected","reason":"Account balance 0 wei is below the estimated requirement 10000000000000000 wei (seed + deploy gas)."}

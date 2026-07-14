@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Launch a coin (testnet) · Robinhood Chain Examples</title>
+    <meta name="description" content="Launchpad direct rail" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../hljs-theme.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../index.html">Robinhood Chain Examples</a>
+      <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
+    </div>
+    <div class="wrap"><div class="readme"><h1>13 · Launch a coin (testnet) — blocked on siblings</h1>
+<p><strong>Status: not built.</strong> This example is supposed to launch a memecoin on
+Robinhood Chain testnet (46630) via <code>hood-launcher</code>&#39;s direct rail. That
+package doesn&#39;t exist yet in the <code>robinhood/</code> workspace — see the root
+README&#39;s SDK feedback for the full picture of what&#39;s shipped vs. pending.</p>
+<h2>What&#39;s missing</h2>
+<p><strong><code>hood-launcher</code></strong> — a launch client for NOXA and The Odyssey (prompt 08 in
+<code>prompts/robinhood-chain/</code>), wrapping the raw factory calldata documented in
+<code>hoodchain</code>&#39;s <code>launchpads.ts</code> (<code>NOXA_ADDRESSES.launchFactory</code>,
+<code>ODYSSEY_ADDRESSES.bondingCurveFactory</code>) into a single <code>launch({ name, symbol, initialBuy })</code> call.</p>
+<h2>What this example will do once it exists</h2>
+<pre><code class="hljs language-bash">ROBINHOOD_CHAIN_PRIVATE_KEY=0x... node index.js --name <span class="hljs-string">&quot;Test Coin&quot;</span> --symbol TEST
+</code></pre><p>launching a real token on testnet 46630 from faucet-funded ETH, printing the
+new token address, the launch tx hash, and an explorer link — the same
+funded-key pattern as <a href="../04-swap-memecoin">example 04</a>.</p>
+<h2>Owner action</h2>
+<p>Build <code>hood-launcher</code> (prompt 08), then this example becomes a real testnet
+launch script. Note the faucet is currently owner-blocked (Turnstile + Google
+Sign-In gate) independent of this — see example 04&#39;s README for that detail.</p>
+<hr>
+<p>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></p>
+</div></div>
+    <footer>
+      Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+      <a href="https://three.ws">three.ws</a> ·
+      powered by <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a>
+    </footer>
+  </body>
+</html>

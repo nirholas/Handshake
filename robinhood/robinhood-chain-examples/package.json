@@ -1,0 +1,20 @@
+{
+  "name": "robinhood-chain-examples",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Build tooling for the docs/ gallery site. Each example under examples/ installs and runs standalone — this root package.json is repo tooling only, not a shipped package.",
+  "type": "module",
+  "license": "UNLICENSED",
+  "author": "nirholas (https://x.com/nichxbt)",
+  "scripts": {
+    "docs:build": "node tools/build-docs.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "highlight.js": "^11.11.1",
+    "marked": "^18.0.6",
+    "marked-highlight": "^2.2.4"
+  }
+}

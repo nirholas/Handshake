@@ -6,7 +6,7 @@ Two servers, one package: a **zero-config data server** any MCP client can add i
 an **explicitly opt-in trading server** for wallets that want to act. Built on
 [`hoodchain`](https://nirholas.github.io/robinhood-chain-sdk/), the TypeScript SDK for the chain.
 
-Docs: **https://nirholas.github.io/hood-mcp/**
+Docs: **https://nirholas.github.io/robinhood-chain-mcp/**
 
 ## Why
 

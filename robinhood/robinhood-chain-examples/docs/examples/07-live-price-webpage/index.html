@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Live price webpage · Robinhood Chain Examples</title>
+    <meta name="description" content="Client-side JSON-RPC" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../hljs-theme.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../index.html">Robinhood Chain Examples</a>
+      <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
+    </div>
+    <div class="wrap"><div class="readme"><h1>07 · Live price webpage (client-side, no backend)</h1>
+<p>A single <code>index.html</code> that shows <strong>live Chainlink prices for 11 Stock Tokens</strong>,
+read entirely in the browser via JSON-RPC <code>eth_call</code> against the public
+Robinhood Chain RPC. No backend, no build step, no API key, <strong>no dependencies</strong>
+— which is exactly why it runs on GitHub Pages and is embedded, running, in this
+repo&#39;s <a href="../../docs/index.html">docs gallery</a>.</p>
+<p><strong>What it proves:</strong> read-only chain calls work straight from a static page.
+Prices tick every 15s with up/down flash, per-card answer age, and designed
+loading / error / empty states.</p>
+<h2>Prerequisites</h2>
+<ul>
+<li>A browser. Node ≥ 20 only if you want the convenience <code>npm start</code> server.</li>
+</ul>
+<h2>Run</h2>
+<pre><code class="hljs language-bash">npm start                 <span class="hljs-comment"># → http://localhost:8007  (zero-dep node:http server)</span>
+<span class="hljs-comment"># — or just —</span>
+open index.html           <span class="hljs-comment"># the page is fully self-contained</span>
+</code></pre><h2>What you see</h2>
+<p>A responsive grid of price cards:</p>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Price</th>
+<th>Age</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AAPL</td>
+<td>$315.50</td>
+<td>updated 1.6d ago</td>
+</tr>
+<tr>
+<td>TSLA</td>
+<td>$407.82</td>
+<td>updated 1.6d ago</td>
+</tr>
+<tr>
+<td>NVDA</td>
+<td>$210.19</td>
+<td>updated 1.8d ago</td>
+</tr>
+<tr>
+<td>…</td>
+<td>…</td>
+<td>…</td>
+</tr>
+</tbody></table>
+<p>(Live values captured from the RPC while building — all 11 feeds returned real
+prices: AAPL 315.50, TSLA 407.82, NVDA 210.19, MSFT 384.69, AMZN 245.57, GOOGL
+356.72, META 670.67, AMD 558.21, COIN 159.43, PLTR 126.56, SPCX 145.72.)</p>
+<p>The status pill reads <code>live · chain 4663 · 11/11 feeds · every 15s</code> when
+healthy, and flips to a red <code>RPC unreachable — retrying</code> state if every read
+fails. The 15s answer ages reflect the 24/5 feed schedule (weekend reads are a
+day or two old — expected, not a bug).</p>
+<h2>How it works (the whole trick)</h2>
+<p><code>latestRoundData()</code> has selector <code>0xfeaf968c</code> and returns five 32-byte words;
+the price is word #1 (<code>int256</code>, 8 decimals) and the timestamp is word #3. The
+page hard-codes the 11 feed addresses from the <code>hoodchain</code> registry and decodes
+the answer with three lines of <code>BigInt</code> math — no ABI library needed.</p>
+<hr>
+<p>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></p>
+</div></div>
+    <footer>
+      Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+      <a href="https://three.ws">three.ws</a> ·
+      powered by <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a>
+    </footer>
+  </body>
+</html>

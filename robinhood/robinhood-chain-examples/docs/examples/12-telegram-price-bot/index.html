@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Telegram price bot · Robinhood Chain Examples</title>
+    <meta name="description" content="grammY + hoodchain" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../hljs-theme.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../index.html">Robinhood Chain Examples</a>
+      <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
+    </div>
+    <div class="wrap"><div class="readme"><h1>12 · Telegram price bot</h1>
+<p>A <a href="https://grammy.dev">grammY</a> bot backed by <code>hoodchain</code>: <code>/price AAPL</code> reads a
+Chainlink feed, <code>/trending</code> lists the newest NOXA / Odyssey launches. Long-
+polling, no webhook, no server — deployable on any free-tier host (Railway,
+Fly.io, Render) or your own machine.</p>
+<p><strong>What it proves:</strong> a full user-facing bot is ~70 lines once the SDK does the
+chain work, and the read surface (<code>getQuote</code>, <code>getRecentLaunches</code>) is the same
+one used by examples 02 and 05.</p>
+<h2>Prerequisites</h2>
+<ul>
+<li>Node ≥ 20.</li>
+<li>A Telegram bot token from <a href="https://t.me/BotFather">@BotFather</a> (<code>/newbot</code>,
+free, instant).</li>
+</ul>
+<h2>Run</h2>
+<pre><code class="hljs language-bash">npm install &amp;&amp; npm install ../../../robinhood-chain-sdk
+TELEGRAM_BOT_TOKEN=123456:ABC-your-token node index.js
+</code></pre><p>Then message your bot <code>/price AAPL</code> or <code>/trending</code> on Telegram.</p>
+<h2>Verified behavior</h2>
+<p>Without a token, the bot fails immediately with a helpful message instead of
+hanging (tested):</p>
+<pre><code>✗ TELEGRAM_BOT_TOKEN is not set.
+  Create a bot with @BotFather on Telegram, then:
+  TELEGRAM_BOT_TOKEN=123456:ABC-... node index.js
+</code></pre><p>Import and registry load were verified live:</p>
+<pre><code>grammy Bot: function
+registry size 95
+</code></pre><blockquote>
+<p><strong>Live Telegram session: pending a bot token.</strong> This repo doesn&#39;t hold a
+Telegram bot credential, so the long-polling session itself (the actual
+<code>/price</code> reply screenshot) is the one piece not captured here — everything
+up to that boundary (SDK reads, grammY wiring, the failure path) is real and
+tested. Owner: run the command above with a <code>@BotFather</code> token to go live.</p>
+</blockquote>
+<h2>Deploy for free</h2>
+<p>Any Node ≥ 20 host works — set <code>TELEGRAM_BOT_TOKEN</code> as an environment
+variable and run <code>npm start</code>. No inbound port needed (long-polling), which is
+why this fits comfortably inside every major free tier.</p>
+<hr>
+<p>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></p>
+</div></div>
+    <footer>
+      Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+      <a href="https://three.ws">three.ws</a> ·
+      powered by <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a>
+    </footer>
+  </body>
+</html>

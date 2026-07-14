@@ -3,9 +3,9 @@
   "name": "io.github.nirholas/hood-mcp",
   "description": "Robinhood Chain data + guarded trading for AI agents: Stock Token quotes, portfolios, launches",
   "version": "0.1.0",
-  "websiteUrl": "https://nirholas.github.io/hood-mcp/",
+  "websiteUrl": "https://nirholas.github.io/robinhood-chain-mcp/",
   "repository": {
-    "url": "https://github.com/nirholas/hood-mcp",
+    "url": "https://github.com/nirholas/robinhood-chain-mcp",
     "source": "github"
   },
   "packages": [
@@ -38,7 +38,7 @@
       "productName": "hood-mcp (data server)",
       "tradingServer": {
         "note": "A second, explicitly opt-in wallet server ships in the same package as bin `hood-mcp-trading`. It is NOT auto-installed by MCP clients and requires HOOD_MCP_ENABLE_TRADING=1 plus ROBINHOOD_CHAIN_PRIVATE_KEY. See README.md#trading-server.",
-        "docs": "https://nirholas.github.io/hood-mcp/safety.html"
+        "docs": "https://nirholas.github.io/robinhood-chain-mcp/safety.html"
       },
       "categories": ["blockchain", "market-data", "defi", "robinhood-chain"]
     }

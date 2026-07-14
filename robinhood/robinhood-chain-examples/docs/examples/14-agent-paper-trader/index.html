@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agent paper trader · Robinhood Chain Examples</title>
+    <meta name="description" content="Strategy loop, simulated" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../hljs-theme.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../index.html">Robinhood Chain Examples</a>
+      <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
+    </div>
+    <div class="wrap"><div class="readme"><h1>14 · Agent paper trader</h1>
+<p>A minimal momentum strategy loop: poll real Chainlink prices via <code>hoodchain</code>,
+simulate buys on a dip and sells on a bounce against a virtual USDG balance.
+<strong>No wallet, no real funds, no on-chain transaction</strong> — every fill is logged
+and tracked in memory only (&quot;paper mode&quot;).</p>
+<p><strong>What it proves:</strong> the read surface (<code>getQuote</code>) is enough to wire a strategy
+loop end to end; swapping in real execution later (<code>executeSwap</code>, from example
+04) is a few lines, not a rewrite.</p>
+<h2>Prerequisites</h2>
+<ul>
+<li>Node ≥ 20. No wallet, no key, no funds — this never sends a transaction.</li>
+</ul>
+<h2>Run</h2>
+<pre><code class="hljs language-bash">npm install &amp;&amp; npm install ../../../robinhood-chain-sdk
+npm start           <span class="hljs-comment"># 60s session, polls every 15s</span>
+node index.js 0     <span class="hljs-comment"># run until Ctrl-C</span>
+</code></pre><h2>Expected output</h2>
+<pre><code>[03:26:45] Paper trading AAPL, TSLA, NVDA — starting book $10000.00 USDG (simulated).
+[03:26:45] Strategy: buy on 0.10% dip, sell on 0.10% gain. No real funds, no on-chain tx.
+
+--- session summary ---
+fills: 0
+cash (USDG): $10000.00
+open positions (at entry price): $0.00
+estimated total: $10000.00 (started at $10000.00)
+</code></pre><p>Captured live, over a real 35-second session. <strong>Zero fills is the honest
+result</strong>, not a bug: Robinhood&#39;s stock Chainlink feeds update on real market
+moves (often on the order of minutes to hours between ticks, per example 01&#39;s
+&quot;answer age&quot;), so a 15-second polling window rarely straddles two different
+answers. Widen the window (<code>node index.js 0</code> and leave it running through a
+trading session) to see real <code>BUY</code>/<code>SELL</code> lines print as the feed actually
+moves — the strategy logic itself fires correctly whenever <code>price</code> changes
+between polls, it&#39;s the market that was quiet during the capture above.</p>
+<h2>The awkward part (and the fix)</h2>
+<p>The mission for this example was &quot;a minimal <code>hood-traders</code> strategy in paper
+mode&quot; — but <strong><code>hood-traders</code> doesn&#39;t exist yet</strong> (see the root README&#39;s SDK
+feedback: it&#39;s a Wave-2 sibling that hasn&#39;t been built). This example is
+therefore hand-rolled directly on <code>hoodchain</code>&#39;s <code>getQuote</code>. It&#39;s designed so a
+future <code>hood-traders</code> package slots in as the strategy object without touching
+the polling/logging scaffold around it.</p>
+<hr>
+<p>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></p>
+</div></div>
+    <footer>
+      Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+      <a href="https://three.ws">three.ws</a> ·
+      powered by <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a>
+    </footer>
+  </body>
+</html>

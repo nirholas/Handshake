@@ -1,5 +1,5 @@
 # hood-launcher
-
+ 
 **An autonomous coin launcher for [Robinhood Chain](https://docs.robinhood.com/chain/) (chain ID 4663).**
 Concept → 3D logo → deploy on a real launchpad or a clean-room Uniswap v3 rail → announce.
 The pump.fun-launcher playbook, ported to chain 4663 — nothing like it existed there before this.

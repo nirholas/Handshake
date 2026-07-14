@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Read a stock price · Robinhood Chain Examples</title>
+    <meta name="description" content="viem only, no SDK" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../hljs-theme.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../index.html">Robinhood Chain Examples</a>
+      <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
+    </div>
+    <div class="wrap"><div class="readme"><h1>01 · Read a Stock Token price (viem only)</h1>
+<p>The &quot;hello chain&quot; baseline. Connect to Robinhood Chain mainnet, read one
+tokenized stock&#39;s <strong>Chainlink price feed</strong>, print the price — using nothing but
+<a href="https://viem.sh"><code>viem</code></a>. No SDK. This is the raw version so you can see
+exactly what <a href="../02-stock-price-sdk"><code>hoodchain</code></a> does for you in three lines.</p>
+<p><strong>What it proves:</strong> the chain is a normal EVM L2 (chain ID <code>4663</code>), viem ships
+its official chain definition (<code>import { robinhood } from &#39;viem/chains&#39;</code>), and
+every Stock Token has a live Chainlink <code>latestRoundData()</code> feed.</p>
+<h2>Prerequisites</h2>
+<ul>
+<li>Node ≥ 20. No wallet, no key, no funds — public RPC reads only.</li>
+</ul>
+<h2>Run</h2>
+<pre><code class="hljs language-bash">npm install
+npm start            <span class="hljs-comment"># AAPL</span>
+node index.js NVDA   <span class="hljs-comment"># or TSLA, NVDA</span>
+</code></pre><h2>Expected output</h2>
+<pre><code>Robinhood Chain (4663) — block 7729451
+AAPL token 0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9
+  Chainlink feed 0x6B22A786bAa607d76728168703a39Ea9C99f2cD0
+  price: $315.50  (answer age 39.3h)
+
+Note: Robinhood feeds are already corporate-action adjusted — this is the
+total-return token price, not the raw share price. See example 03.
+</code></pre><p>(Captured live. Feeds follow US market hours 24/5, so a weekend read shows an
+answer that is a day or two old — that is expected, not stale.)</p>
+<h2>Why the &quot;already adjusted&quot; note matters</h2>
+<p>Robinhood&#39;s Chainlink feeds return the <strong>total-return token price</strong>, with the
+ERC-8056 <code>uiMultiplier()</code> corporate-action factor already applied upstream. The
+number one bug in third-party trackers is multiplying the feed price by the
+multiplier a second time. Don&#39;t. <a href="../03-portfolio-valuation">Example 03</a> shows
+the correct math for share-equivalent balances.</p>
+<h2>The awkward part (and the fix)</h2>
+<p>This baseline hard-codes token + feed addresses for a handful of symbols. There
+are <strong>95</strong> Stock Tokens. Maintaining that table by hand is exactly the job the
+SDK&#39;s bundled registry does — see <a href="../02-stock-price-sdk">example 02</a>.</p>
+<hr>
+<p>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></p>
+</div></div>
+    <footer>
+      Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+      <a href="https://three.ws">three.ws</a> ·
+      powered by <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a>
+    </footer>
+  </body>
+</html>

@@ -3,9 +3,7 @@
 # ---- full install + typecheck/build (needs devDependencies for tsc) ----
 FROM node:22-slim AS build
 WORKDIR /app
-COPY package.json package-lock.json hoodchain-0.1.0.tgz ./
-# `hoodchain` isn't on the npm registry yet — package.json pins it to this
-# checked-in tarball. Once published, drop the tgz and switch to "^0.1.0".
+COPY package.json package-lock.json ./
 RUN npm install
 COPY tsconfig.json ./
 COPY src ./src
@@ -15,7 +13,7 @@ RUN npm run build
 # ---- production-only node_modules (no typescript/vitest/tsx) ----
 FROM node:22-slim AS prod-deps
 WORKDIR /app
-COPY package.json package-lock.json hoodchain-0.1.0.tgz ./
+COPY package.json package-lock.json ./
 RUN npm install --omit=dev
 
 # ---- runtime (distroless, no shell, no package manager) ----

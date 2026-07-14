@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Portfolio dashboard · Robinhood Chain Examples</title>
+    <meta name="description" content="React + polling hook" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../hljs-theme.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../index.html">Robinhood Chain Examples</a>
+      <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
+    </div>
+    <div class="wrap"><div class="readme"><h1>08 · Portfolio dashboard</h1>
+<p>A small Vite + React dashboard wrapping <a href="../03-portfolio-valuation">example 03</a>&#39;s
+multiplier-correct portfolio logic in a polling hook, with designed loading,
+empty, and error states — an address lookup form, a total-value header, and a
+card grid per holding.</p>
+<p><strong>What it proves:</strong> the same <code>getPortfolio</code> call from example 03 is a thin
+<code>useHoodPortfolio</code> hook away from a real dashboard UI.</p>
+<h2>Prerequisites</h2>
+<ul>
+<li>Node ≥ 20. Reads only — no wallet, no key.</li>
+</ul>
+<h2>Run</h2>
+<pre><code class="hljs language-bash">npm install &amp;&amp; npm install ../../../robinhood-chain-sdk
+npm run dev      <span class="hljs-comment"># → http://localhost:5183</span>
+</code></pre><p>Enter any address in the lookup field (defaults to a live holder) and the
+dashboard polls its Stock Token portfolio every 20 seconds.</p>
+<h2>Verified</h2>
+<p><code>npm run build</code> was run against this exact source and succeeded:</p>
+<pre><code>vite v6.4.3 building for production...
+✓ 1236 modules transformed.
+dist/index.html                   0.42 kB │ gzip:   0.28 kB
+dist/assets/index-DbmVh8zP.css    2.89 kB │ gzip:   1.15 kB
+dist/assets/index-FD-SwolM.js   510.84 kB │ gzip: 157.30 kB
+✓ built in 3.09s
+</code></pre><p><code>npm run preview</code> served the built app and returned the expected HTML shell
+with the built asset script tag wired in.</p>
+<h2>About <code>useHoodPortfolio</code></h2>
+<p><code>hoodkit</code> (the SDK&#39;s planned React bindings) hasn&#39;t been built yet — see the
+root README&#39;s SDK feedback. <code>src/useHoodPortfolio.js</code> is a local stand-in
+shaped exactly like the hook <code>hoodkit</code> is expected to ship, so upgrading later
+is a one-line import swap (<code>from &#39;./useHoodPortfolio.js&#39;</code> → <code>from &#39;hoodkit&#39;</code>),
+documented in the file itself.</p>
+<hr>
+<p>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></p>
+</div></div>
+    <footer>
+      Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+      <a href="https://three.ws">three.ws</a> ·
+      powered by <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a>
+    </footer>
+  </body>
+</html>

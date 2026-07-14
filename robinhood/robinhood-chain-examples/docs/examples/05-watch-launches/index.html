@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Watch launches · Robinhood Chain Examples</title>
+    <meta name="description" content="NOXA + Odyssey event streams" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../hljs-theme.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../index.html">Robinhood Chain Examples</a>
+      <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
+    </div>
+    <div class="wrap"><div class="readme"><h1>05 · Watch launches live</h1>
+<p>Stream Robinhood Chain memecoin launches to the console. Two launchpads run on
+mainnet: <strong>NOXA</strong> (one tx deploys the ERC-20, opens a Uniswap v3 pool, and locks
+the LP) and <strong>The Odyssey</strong> (a native-ETH bonding curve that graduates to
+Uniswap). The example prints recent launch history, then watches for new ones in
+real time. Reads only.</p>
+<p><strong>What it proves:</strong> <code>getRecentLaunches</code> (historical log scan, RPC-chunked) and
+<code>watchLaunches</code> (live poll) decode both launchpads into one <code>Launch</code> shape.</p>
+<h2>Prerequisites</h2>
+<ul>
+<li>Node ≥ 20. No wallet or key. See <a href="../02-stock-price-sdk">example 02</a> for the
+local <code>hoodchain</code> install note.</li>
+</ul>
+<h2>Run</h2>
+<pre><code class="hljs language-bash">npm install &amp;&amp; npm install ../../../robinhood-chain-sdk
+npm start        <span class="hljs-comment"># 20s live window after the history dump</span>
+node index.js 0  <span class="hljs-comment"># stream forever (Ctrl-C to stop)</span>
+</code></pre><h2>Expected output</h2>
+<pre><code>Recent launches (scanning back ~1M blocks)…
+  noxa    0xdB9B…8296  by 0x7249…374A  blk 6880192  pool 0xFC05…340D
+  noxa    0x4C60…285D  by 0x8359…c3A1  blk 6880259  pool 0xbD98…5576
+  ...
+  noxa    0x955b…6B44  by 0x4Ba0…bdc2  blk 6880646  pool 0xEFD7…6272
+  … 4356 launches total in range.
+
+Streaming new launches for 8s…
+</code></pre><p>New launches appear as <code>NEW …</code> lines with an explorer link the moment they land.
+The 1M-block window above held <strong>4,356</strong> launches — mainnet is busy in bursts, so
+a short live window may show none (as here); widen the window or run with <code>0</code>.</p>
+<hr>
+<p>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></p>
+</div></div>
+    <footer>
+      Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+      <a href="https://three.ws">three.ws</a> ·
+      powered by <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a>
+    </footer>
+  </body>
+</html>

@@ -20,11 +20,11 @@
   "author": "nirholas (https://x.com/nichxbt)",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nirholas/hood-mcp.git"
+    "url": "git+https://github.com/nirholas/robinhood-chain-mcp.git"
   },
-  "homepage": "https://nirholas.github.io/hood-mcp/",
+  "homepage": "https://nirholas.github.io/robinhood-chain-mcp/",
   "bugs": {
-    "url": "https://github.com/nirholas/hood-mcp/issues"
+    "url": "https://github.com/nirholas/robinhood-chain-mcp/issues"
   },
   "type": "module",
   "engines": {

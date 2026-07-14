@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Stock price with the SDK · Robinhood Chain Examples</title>
+    <meta name="description" content="hoodchain basics" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../hljs-theme.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../index.html">Robinhood Chain Examples</a>
+      <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
+    </div>
+    <div class="wrap"><div class="readme"><h1>02 · Stock Token price with the SDK</h1>
+<p>Exactly what <a href="../01-read-stock-price">example 01</a> does — one <code>import</code>, one
+<code>createHoodClient()</code>, one <code>getQuote()</code>. The <a href="https://github.com/nirholas/robinhood-chain-sdk"><code>hoodchain</code></a>
+SDK bundles the full <strong>95-token registry</strong>, the Chainlink decode, staleness
+handling, and typed errors, so you never hand-maintain an address table.</p>
+<p><strong>What it proves:</strong> the SDK collapses example 01 to three meaningful lines and
+covers all 95 Stock Tokens instead of a hard-coded handful.</p>
+<h2>Prerequisites</h2>
+<ul>
+<li>Node ≥ 20. Reads only — no wallet, no key, no funds.</li>
+<li><code>hoodchain</code> is not on npm yet. Until it is, install the local sibling build:<pre><code class="hljs language-bash">npm install                       <span class="hljs-comment"># installs viem</span>
+npm install ../../../robinhood-chain-sdk   <span class="hljs-comment"># the hoodchain build (or: npm i hoodchain once published)</span>
+</code></pre>When both repos are extracted as siblings, the path is <code>../robinhood-chain-sdk</code>.</li>
+</ul>
+<h2>Run</h2>
+<pre><code class="hljs language-bash">npm start                     <span class="hljs-comment"># AAPL TSLA NVDA</span>
+node index.js MSFT GOOGL AMD  <span class="hljs-comment"># any registry symbols</span>
+</code></pre><h2>Expected output</h2>
+<pre><code>AAPL   $   315.50   feed 0x6B22A786bAa607d76728168703a39Ea9C99f2cD0   age 39.3h
+TSLA   $   407.82   feed 0x4A1166a659A55625345e9515b32adECea5547C38   age 38.5h
+NVDA   $   210.19   feed 0x379EC4f7C378F34a1B47E4F3cbeBCbAC3E8E9F15   age 42.0h
+</code></pre><p>Unknown symbols surface a typed <code>UnknownSymbolError</code>:</p>
+<pre><code>FOOBAR —  UnknownSymbolError: Unknown Stock Token symbol &quot;FOOBAR&quot;. Symbols are
+case-insensitive tickers as listed on-chain (e.g. &quot;AAPL&quot;, &quot;TSLA&quot;). ...
+</code></pre><p>The SDK also throws <code>FeedNotFoundError</code> (token has no feed) and <code>StaleFeedError</code>
+(answer older than the tolerance) — catch by class, not by string.</p>
+<hr>
+<p>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></p>
+</div></div>
+    <footer>
+      Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+      <a href="https://three.ws">three.ws</a> ·
+      powered by <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a>
+    </footer>
+  </body>
+</html>

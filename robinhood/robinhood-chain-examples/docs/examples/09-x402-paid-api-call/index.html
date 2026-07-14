@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pay for an API call · Robinhood Chain Examples</title>
+    <meta name="description" content="x402 client" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../hljs-theme.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../index.html">Robinhood Chain Examples</a>
+      <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
+    </div>
+    <div class="wrap"><div class="readme"><h1>09 · x402 paid API call — blocked on siblings</h1>
+<p><strong>Status: not built.</strong> This example is supposed to show a client paying a
+<code>hood-api</code> endpoint via <code>hood402</code>. Neither package exists yet in the
+<code>robinhood/</code> workspace as of this writing — only the core SDK
+(<a href="https://github.com/nirholas/robinhood-chain-sdk"><code>hoodchain</code></a>) has shipped.
+Per this repo&#39;s mission (&quot;check which siblings exist and cover what&#39;s
+actually there; note any gaps&quot;), this folder is a placeholder-free gap note,
+not a stub implementation.</p>
+<h2>What&#39;s missing</h2>
+<ul>
+<li><strong><code>hood-api</code></strong> — a market-data API server for Robinhood Chain (Stock Token
+quotes, portfolios, launches) with metered endpoints.</li>
+<li><strong><code>hood402</code></strong> — an <a href="https://github.com/coinbase/x402">x402</a> payment client
+and middleware for USDG on Robinhood Chain (the payment rail this example
+would use).</li>
+</ul>
+<h2>What this example will do once they exist</h2>
+<pre><code>Client → GET /api/quote/AAPL on a hood-api endpoint
+       → 402 Payment Required (x402 challenge, USDG on Robinhood Chain)
+       → hood402 client signs and attaches payment
+       → retry → 200 OK with the priced quote
+</code></pre><p>The general x402 pattern is proven elsewhere on three.ws (see the
+<a href="https://three.ws"><code>pay-for-service</code></a> skill and <code>x402</code> catalog) — the gap here
+is Robinhood-Chain-specific: a <code>hood402</code> client that speaks USDG (6 decimals,
+no EIP-2612 <code>permit</code>, so approvals are on-chain — see <code>hoodchain</code>&#39;s <code>usdg.ts</code>)
+instead of the USDC flow those examples use.</p>
+<h2>Owner action</h2>
+<p>Build <code>hood-api</code> and <code>hood402</code> (prompts 04 and 05 in
+<code>prompts/robinhood-chain/</code>), then this example becomes a ~40-line client
+script. No further action needed from this repo until then.</p>
+<hr>
+<p>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></p>
+</div></div>
+    <footer>
+      Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+      <a href="https://three.ws">three.ws</a> ·
+      powered by <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a>
+    </footer>
+  </body>
+</html>

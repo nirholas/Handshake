@@ -44,10 +44,8 @@ quotes) — it is a real simulation, not fake data. No wallet, no key, no config
 
 ```bash
 git clone https://github.com/nirholas/hood-traders.git
-git clone https://github.com/nirholas/robinhood-chain-sdk.git   # sibling checkout — see "Why two repos?" below
 cd hood-traders
 npm install
-npm i ../robinhood-chain-sdk   # until hoodchain is published to npm (see below)
 npm run build
 npm run fleet
 ```
@@ -62,15 +60,14 @@ cd hood-traders
 docker compose up --build
 ```
 
-### Why two repos?
+### About `hoodchain`
 
-`hood-traders` depends on [`hoodchain`](../robinhood-chain-sdk), which has not been published to
-npm yet (the owner holds the publish token — see that repo's README). Until it ships,
-`package.json` points at it via `file:../robinhood-chain-sdk`, so both repos need to be checked
-out as siblings on disk (exactly what the two `git clone` lines above do, and what
-`docker-compose.yml`'s build context assumes). Once `hoodchain` is on npm, change the dependency
-in `package.json` to `"hoodchain": "^0.1.0"` and drop the sibling checkout — nothing else in this
-repo changes.
+`hood-traders` depends on [`hoodchain`](https://www.npmjs.com/package/hoodchain), the Robinhood
+Chain TypeScript SDK, as a normal published npm dependency (`^0.1.1`) — `npm install` resolves it
+from the registry like any other package. If you're developing the SDK and this fleet together,
+clone [`robinhood-chain-sdk`](https://github.com/nirholas/robinhood-chain-sdk) as a sibling and
+point `package.json` at `file:../robinhood-chain-sdk` for local iteration; revert to the published
+semver before shipping.
 
 ## Going live
 
@@ -210,8 +207,4 @@ always-on container host instead.
 
 ## License
 
-Apache-2.0 — see [LICENSE](LICENSE).
-
----
-
-Built by [nirholas](https://x.com/nichxbt) · [three.ws](https://three.ws)
+All rights reserved. See [LICENSE](LICENSE).

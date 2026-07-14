@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Portfolio valuation · Robinhood Chain Examples</title>
+    <meta name="description" content="ERC-8056 multiplier math" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../hljs-theme.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../index.html">Robinhood Chain Examples</a>
+      <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
+    </div>
+    <div class="wrap"><div class="readme"><h1>03 · Multiplier-correct portfolio valuation</h1>
+<p><strong>The correctness showpiece.</strong> Robinhood Stock Tokens carry an ERC-8056
+<code>uiMultiplier()</code> corporate-action factor, and generic trackers get the math
+wrong in two ways:</p>
+<ol>
+<li><strong>Double-counting the multiplier.</strong> The Chainlink feed is <em>already</em>
+multiplier-adjusted, so USD value is <code>balance × feedPrice</code> — not
+<code>× uiMultiplier</code> on top. Applying it twice mis-states value after every
+split or reinvested dividend.</li>
+<li><strong>Reporting raw balance as &quot;shares.&quot;</strong> The true share-equivalent is
+<code>balance × uiMultiplier ÷ 1e18</code>. After a corporate action it diverges from
+the raw ERC-20 balance.</li>
+</ol>
+<p><code>getPortfolio()</code> returns <strong>both</strong> numbers per position, values only priced
+holdings, and sweeps all 95 tokens in a single multicall. Reads only.</p>
+<h2>Prerequisites</h2>
+<ul>
+<li>Node ≥ 20. No wallet or key. See <a href="../02-stock-price-sdk">example 02</a> for the
+local <code>hoodchain</code> install note.</li>
+</ul>
+<h2>Run</h2>
+<pre><code class="hljs language-bash">npm install &amp;&amp; npm install ../../../robinhood-chain-sdk
+npm start                                    <span class="hljs-comment"># a live default holder</span>
+node index.js 0xYourAddress                  <span class="hljs-comment"># any address</span>
+</code></pre><h2>Expected output</h2>
+<pre><code>Stock Token portfolio — 0xA953CA88ff430e9487c60cA34d757414f4efdA07
+
+  SYMBOL        BALANCE       SHARE-EQUIV        VALUE
+  ----------------------------------------------------------
+  TSLA         0.027608         0.027608       $11.26
+  ----------------------------------------------------------
+  Total priced value: $11.26
+</code></pre><p>A multi-position address prices each holding independently:</p>
+<pre><code>  AAPL         0.000854         0.000854        $0.27
+  AMD          0.000455         0.000455        $0.25
+  NVDA         0.001250         0.001250        $0.26
+  SPCX         0.001755         0.001755        $0.26
+  TSLA         0.000631         0.000631        $0.26
+  Total priced value: $1.30
+</code></pre><p>Right now every <code>uiMultiplier</code> is <code>1e18</code> (the chain is new — no corporate
+actions have happened yet), so <code>SHARE-EQUIV</code> equals <code>BALANCE</code>. The code path is
+already correct: when a token&#39;s multiplier moves, the two columns diverge and
+the row is flagged <code>← corporate-action adjusted</code>. The SDK&#39;s live test cross-
+checks <code>shareEquivalent</code> against the token&#39;s own on-chain <code>balanceOfUI()</code>.</p>
+<hr>
+<p>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></p>
+</div></div>
+    <footer>
+      Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+      <a href="https://three.ws">three.ws</a> ·
+      powered by <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a>
+    </footer>
+  </body>
+</html>

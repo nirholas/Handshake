@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Swap a token · Robinhood Chain Examples</title>
+    <meta name="description" content="Uniswap v3 quote + execute" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../hljs-theme.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../index.html">Robinhood Chain Examples</a>
+      <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
+    </div>
+    <div class="wrap"><div class="readme"><h1>04 · Quote &amp; execute a swap (testnet)</h1>
+<p>Quote a Uniswap v3 route and — with a funded key — execute it, on Robinhood
+Chain <strong>testnet (46630)</strong>. The quote is a read (no wallet needed); execution is
+guarded behind <code>ROBINHOOD_CHAIN_PRIVATE_KEY</code> and a balance check, and never
+fabricates a transaction.</p>
+<p>Testnet has one liquid pool (WETH/NFLX 0.05%), so the example swaps a little
+WETH for NFLX. <strong>The identical code swaps memecoins on mainnet</strong> — pass a NOXA
+or Odyssey token as <code>tokenOut</code> and drop <code>chain: &#39;testnet&#39;</code>.</p>
+<p><strong>What it proves:</strong> <code>quoteSwap</code> → <code>executeSwap</code> is the whole trade path, and the
+SDK transparently handles the testnet router flavor (classic <code>SwapRouter</code> with a
+struct deadline) vs. mainnet&#39;s <code>SwapRouter02</code> (deadline via <code>multicall</code>).</p>
+<h2>Prerequisites</h2>
+<ul>
+<li>Node ≥ 20 for the quote.</li>
+<li>To execute: a testnet key in <code>ROBINHOOD_CHAIN_PRIVATE_KEY</code> funded with testnet
+ETH from the <a href="https://faucet.testnet.chain.robinhood.com/">faucet</a>.</li>
+</ul>
+<h2>Run</h2>
+<pre><code class="hljs language-bash">npm install &amp;&amp; npm install ../../../robinhood-chain-sdk
+npm start                                              <span class="hljs-comment"># quote only</span>
+ROBINHOOD_CHAIN_PRIVATE_KEY=0x... node index.js --execute   <span class="hljs-comment"># quote + swap</span>
+</code></pre><h2>Expected output (quote)</h2>
+<pre><code>Robinhood Chain testnet (46630) — Uniswap v3 quote
+  in : 0.001 WETH  (0x7943e237c7F95DA44E0301572D358911207852Fa)
+  out: 2.149898526134466783 NFLX  (0x3b8262A63d25f0477c4DDE23F83cfe22Cb768C93)
+  route: 1 hop, fee tier(s) 500
+  quoter gas estimate: 1208171
+
+Quote only. Re-run with --execute and a funded ROBINHOOD_CHAIN_PRIVATE_KEY to swap.
+</code></pre><p>Without a key, <code>--execute</code> fails helpfully instead of pretending:</p>
+<pre><code>✗ --execute needs ROBINHOOD_CHAIN_PRIVATE_KEY set to a funded testnet key.
+  Get testnet ETH: https://faucet.testnet.chain.robinhood.com/
+</code></pre><blockquote>
+<p><strong>On-chain execute: pending funding.</strong> The public testnet faucet currently
+gates drips behind Turnstile + Google Sign-In in a real browser, so this repo
+ships the live quote (verified above) and the guarded execute path. When a
+funded testnet key is available, <code>--execute</code> prints a real tx hash and an
+explorer link — no output is faked here.</p>
+</blockquote>
+<h2>Mainnet &amp; the eligibility gate</h2>
+<p>On mainnet, any swap whose <strong>output</strong> is a canonical Stock Token throws
+<code>StockTokenEligibilityError</code> unless you create the client with
+<code>acknowledgeStockTokenEligibility: true</code> — your affirmation that you are not a
+US person (Stock Tokens are tokenized debt securities barred to US persons).
+Memecoins and selling are never gated.</p>
+<hr>
+<p>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></p>
+</div></div>
+    <footer>
+      Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+      <a href="https://three.ws">three.ws</a> ·
+      powered by <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MCP agent session · Robinhood Chain Examples</title>
+    <meta name="description" content="Model Context Protocol" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../hljs-theme.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../index.html">Robinhood Chain Examples</a>
+      <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
+    </div>
+    <div class="wrap"><div class="readme"><h1>11 · MCP agent session — blocked on siblings</h1>
+<p><strong>Status: not built.</strong> This example is supposed to be a scripted MCP client
+driving <code>hood-mcp</code> tools (quote, portfolio, launches, swap exposed as MCP tool
+calls for an LLM agent). <code>hood-mcp</code> doesn&#39;t exist yet in the <code>robinhood/</code>
+workspace — see the root README&#39;s SDK feedback for the full picture.</p>
+<h2>What&#39;s missing</h2>
+<p><strong><code>hood-mcp</code></strong> — an MCP server wrapping <code>hoodchain</code> (prompt 06 in
+<code>prompts/robinhood-chain/</code>), exposing tools like <code>get_stock_quote</code>,
+<code>get_portfolio</code>, <code>get_recent_launches</code>, <code>quote_swap</code> to any MCP-speaking
+agent host (Claude Code, Claude Desktop, etc.) — the same pattern three.ws&#39;s
+own <code>3d-agent-local</code> MCP server uses for its tools.</p>
+<h2>What this example will do once it exists</h2>
+<p>A minimal Node script using <code>@modelcontextprotocol/sdk</code>&#39;s client to connect to
+a locally-spawned <code>hood-mcp</code> server over stdio, list its tools, and call
+<code>get_stock_quote</code> for a symbol — printing the same kind of output as
+<a href="../02-stock-price-sdk">example 02</a>, but routed through MCP instead of a
+direct SDK import.</p>
+<h2>Owner action</h2>
+<p>Build <code>hood-mcp</code> (prompt 06), then this example becomes a ~30-line MCP client
+script — no further action needed from this repo until then.</p>
+<hr>
+<p>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></p>
+</div></div>
+    <footer>
+      Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+      <a href="https://three.ws">three.ws</a> ·
+      powered by <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a>
+    </footer>
+  </body>
+</html>

@@ -1,19 +1,28 @@
 {
   "name": "hood402-facilitator",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Self-hostable x402 facilitator for USDG on Robinhood Chain — verify + settle endpoints, idempotent SQLite ledger, metrics. Built on the hood402 protocol package.",
-  "keywords": ["x402", "facilitator", "robinhood-chain", "usdg", "eip-3009"],
-  "license": "MIT",
+  "keywords": [
+    "x402",
+    "facilitator",
+    "robinhood-chain",
+    "usdg",
+    "eip-3009"
+  ],
+  "license": "Apache-2.0",
   "author": "nirholas (https://x.com/nichxbt)",
   "type": "module",
   "engines": {
     "node": ">=22"
   },
   "bin": {
-    "hood402-facilitator": "./dist/index.js"
+    "hood402-facilitator": "dist/index.js"
   },
   "main": "./dist/server.js",
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx watch src/index.ts",
@@ -23,7 +32,7 @@
   },
   "dependencies": {
     "express": "^4.21.2",
-    "hood402": "file:..",
+    "hood402": "^0.1.0",
     "viem": "^2.55.0"
   },
   "devDependencies": {

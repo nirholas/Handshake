@@ -144,16 +144,14 @@ cp .env.example .env   # every var has a sane default — the free tier needs no
 npm run dev            # tsx watch, :8787
 ```
 
-**`hoodchain` isn't on the npm registry yet.** `package.json` currently pins it to a checked-in
-tarball (`hoodchain-0.1.0.tgz`), not a version range — `npm install` resolves it straight from
-that file. If you're iterating on the SDK alongside this API, rebuild and repack it, then
-reinstall here:
+`hoodchain` is published on npm (`^0.1.1`), so a plain `npm install` resolves it from the
+registry. If you're iterating on the SDK alongside this API, link the sibling checkout
+instead of waiting on a publish:
 
 ```bash
-cd ../robinhood-chain-sdk   # or wherever the sibling SDK checkout lives
-npm run build && npm pack   # produces hoodchain-0.1.0.tgz
-cp hoodchain-0.1.0.tgz ../hood-api/
-cd ../hood-api && npm install
+npm i ../robinhood-chain-sdk   # rewrites package.json's hoodchain entry to a file: link
+# ...iterate, then before committing:
+git checkout package.json package-lock.json   # revert to the published ^0.1.1 range
 ```
 
 ```bash
@@ -200,13 +198,6 @@ docker build -t gcr.io/YOUR_PROJECT/hood-api .
 docker push gcr.io/YOUR_PROJECT/hood-api
 gcloud run deploy hood-api --image gcr.io/YOUR_PROJECT/hood-api --region us-central1 --allow-unauthenticated
 ```
-
-**Pre-publish note:** `hoodchain-0.1.0.tgz` is checked into this repo and `package.json`
-already points its `hoodchain` dependency at that file, so `docker build` / `gcloud run
-deploy --source .` work as-is with no extra step. If you bump the SDK, repack it (`npm run
-build && npm pack` in the sibling `robinhood-chain-sdk` checkout), overwrite
-`hoodchain-0.1.0.tgz` here, and commit both the new tarball and the regenerated
-`package-lock.json` before deploying.
 
 ### Vercel (alternative)
 

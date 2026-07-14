@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gallery · Robinhood Chain Examples</title>
+    <meta name="description" content="Runnable Robinhood Chain examples, from a raw viem read to a live dashboard." />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="hljs-theme.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="./index.html">Robinhood Chain Examples</a>
+      <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
+    </div>
+    <div class="wrap">
+<h1>Robinhood Chain Examples</h1>
+<p class="hero-sub">14 small, runnable projects for Robinhood Chain (mainnet 4663 / testnet 46630) —
+from a raw viem read to a live dashboard, a Telegram bot, and a paper trader. Every read below is real.</p>
+
+<div class="embed-frame">
+  <iframe src="embed/07-live-price-webpage.html" title="Live Robinhood Chain Stock Token prices" loading="lazy"></iframe>
+  <div class="embed-label">
+    <span>Example 07, running live — client-side JSON-RPC, no backend.</span>
+    <a href="examples/07-live-price-webpage/index.html">How it works →</a>
+  </div>
+</div>
+
+<div class="section-title">Which package do I need?</div>
+<table>
+  <thead><tr><th>You want to…</th><th>Use</th><th>Try</th></tr></thead>
+  <tbody>
+    <tr><td>Read one price, no dependency</td><td><code>viem</code> only</td><td>Example 01</td></tr>
+    <tr><td>Read prices / portfolios in a Node script</td><td><code>hoodchain</code></td><td>Examples 02, 03</td></tr>
+    <tr><td>Ship a static page with live prices</td><td><code>hoodchain</code>-derived raw RPC (no build step)</td><td>Example 07</td></tr>
+    <tr><td>Build a React app</td><td><code>hoodchain</code> + a local hook (hoodkit not shipped yet)</td><td>Example 08</td></tr>
+    <tr><td>Trade or launch on-chain</td><td><code>hoodchain</code>'s <code>swap</code> / <code>launchpads</code> modules</td><td>Examples 04, 05, 14</td></tr>
+    <tr><td>Charge or pay for an API call</td><td><code>hood402</code> (not shipped yet)</td><td>Examples 09, 10</td></tr>
+    <tr><td>Give an LLM agent chain tools</td><td><code>hood-mcp</code> (not shipped yet)</td><td>Example 11</td></tr>
+  </tbody>
+</table>
+
+<div class="section-title">All examples</div>
+<div class="grid">
+<a class="card" href="examples/01-read-stock-price/index.html">
+      <div class="num">01</div>
+      <div class="title">Read a stock price</div>
+      <div class="concept">viem only, no SDK</div>
+      <div class="proves">Robinhood Chain is a normal EVM L2 — viem ships its chain def, Chainlink feeds are a plain readContract.</div>
+      <span class="badge Beginner">Beginner</span>
+    </a>
+<a class="card" href="examples/02-stock-price-sdk/index.html">
+      <div class="num">02</div>
+      <div class="title">Stock price with the SDK</div>
+      <div class="concept">hoodchain basics</div>
+      <div class="proves">hoodchain collapses example 01 to 3 lines and covers all 95 registry tokens.</div>
+      <span class="badge Beginner">Beginner</span>
+    </a>
+<a class="card" href="examples/03-portfolio-valuation/index.html">
+      <div class="num">03</div>
+      <div class="title">Portfolio valuation</div>
+      <div class="concept">ERC-8056 multiplier math</div>
+      <div class="proves">The correct way to value Stock Token holdings without double-counting corporate actions.</div>
+      <span class="badge Intermediate">Intermediate</span>
+    </a>
+<a class="card" href="examples/04-swap-memecoin/index.html">
+      <div class="num">04</div>
+      <div class="title">Swap a token</div>
+      <div class="concept">Uniswap v3 quote + execute</div>
+      <div class="proves">One code path quotes and (with a funded key) executes swaps on testnet and mainnet alike.</div>
+      <span class="badge Intermediate">Intermediate</span>
+    </a>
+<a class="card" href="examples/05-watch-launches/index.html">
+      <div class="num">05</div>
+      <div class="title">Watch launches</div>
+      <div class="concept">NOXA + Odyssey event streams</div>
+      <div class="proves">Two different launchpad contract shapes decode into one Launch type.</div>
+      <span class="badge Intermediate">Intermediate</span>
+    </a>
+<a class="card" href="examples/06-firehose/index.html">
+      <div class="num">06</div>
+      <div class="title">Sequencer firehose</div>
+      <div class="concept">Raw Nitro feed decoding</div>
+      <div class="proves">Transactions are visible ~100–300ms before they hit RPC, straight off the public feed socket.</div>
+      <span class="badge Advanced">Advanced</span>
+    </a>
+<a class="card" href="examples/07-live-price-webpage/index.html">
+      <div class="num">07</div>
+      <div class="title">Live price webpage</div>
+      <div class="concept">Client-side JSON-RPC</div>
+      <div class="proves">Read-only chain calls work from a static page — no backend, no build step, live on this gallery below.</div>
+      <span class="badge Beginner">Beginner</span>
+    </a>
+<a class="card" href="examples/08-portfolio-dashboard/index.html">
+      <div class="num">08</div>
+      <div class="title">Portfolio dashboard</div>
+      <div class="concept">React + polling hook</div>
+      <div class="proves">A production-shaped dashboard (loading/empty/error states) is a thin wrapper over example 03.</div>
+      <span class="badge Intermediate">Intermediate</span>
+    </a>
+<a class="card" href="examples/09-x402-paid-api-call/index.html">
+      <div class="num">09</div>
+      <div class="title">Pay for an API call</div>
+      <div class="concept">x402 client</div>
+      <div class="proves">Blocked on: <code>hood-api, hood402</code> (not built yet — see the README for the gap).</div>
+      <span class="badge blocked">blocked</span>
+    </a>
+<a class="card" href="examples/10-x402-sell-your-api/index.html">
+      <div class="num">10</div>
+      <div class="title">Sell your API</div>
+      <div class="concept">x402 server middleware</div>
+      <div class="proves">Blocked on: <code>hood402</code> (not built yet — see the README for the gap).</div>
+      <span class="badge blocked">blocked</span>
+    </a>
+<a class="card" href="examples/11-mcp-agent-session/index.html">
+      <div class="num">11</div>
+      <div class="title">MCP agent session</div>
+      <div class="concept">Model Context Protocol</div>
+      <div class="proves">Blocked on: <code>hood-mcp</code> (not built yet — see the README for the gap).</div>
+      <span class="badge blocked">blocked</span>
+    </a>
+<a class="card" href="examples/12-telegram-price-bot/index.html">
+      <div class="num">12</div>
+      <div class="title">Telegram price bot</div>
+      <div class="concept">grammY + hoodchain</div>
+      <div class="proves">A full user-facing bot is ~70 lines once the SDK does the chain work.</div>
+      <span class="badge Intermediate">Intermediate</span>
+    </a>
+<a class="card" href="examples/13-launch-a-coin-testnet/index.html">
+      <div class="num">13</div>
+      <div class="title">Launch a coin (testnet)</div>
+      <div class="concept">Launchpad direct rail</div>
+      <div class="proves">Blocked on: <code>hood-launcher</code> (not built yet — see the README for the gap).</div>
+      <span class="badge blocked">blocked</span>
+    </a>
+<a class="card" href="examples/14-agent-paper-trader/index.html">
+      <div class="num">14</div>
+      <div class="title">Agent paper trader</div>
+      <div class="concept">Strategy loop, simulated</div>
+      <div class="proves">A strategy loop is just getQuote on a timer — real execution slots in later without a rewrite.</div>
+      <span class="badge Intermediate">Intermediate</span>
+    </a>
+</div>
+</div>
+    <footer>
+      Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+      <a href="https://three.ws">three.ws</a> ·
+      powered by <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a>
+    </footer>
+  </body>
+</html>

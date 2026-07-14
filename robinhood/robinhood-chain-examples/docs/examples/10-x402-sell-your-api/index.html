@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sell your API · Robinhood Chain Examples</title>
+    <meta name="description" content="x402 server middleware" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../hljs-theme.css" />
+  </head>
+  <body>
+    <div class="topbar">
+      <a class="brand" href="../index.html">Robinhood Chain Examples</a>
+      <a class="ghlink" href="https://github.com/nirholas/robinhood-chain-examples">GitHub ↗</a>
+    </div>
+    <div class="wrap"><div class="readme"><h1>10 · Sell your API with x402 — blocked on siblings</h1>
+<p><strong>Status: not built.</strong> This example is supposed to be a ~20-line paid
+endpoint using <code>hood402</code> middleware. That package doesn&#39;t exist yet in the
+<code>robinhood/</code> workspace — see <a href="../09-x402-paid-api-call">example 09</a> for the
+same gap on the client side, and the root README&#39;s SDK feedback for the full
+picture of what&#39;s shipped vs. pending.</p>
+<h2>What&#39;s missing</h2>
+<p><strong><code>hood402</code></strong> — the Wave-2 payment package (prompt 05 in
+<code>prompts/robinhood-chain/</code>). This example needs its server-side middleware:
+something like</p>
+<pre><code class="hljs language-js"><span class="hljs-keyword">import</span> { hood402 } <span class="hljs-keyword">from</span> <span class="hljs-string">&#x27;hood402&#x27;</span>
+app.<span class="hljs-title function_">get</span>(<span class="hljs-string">&#x27;/quote/:symbol&#x27;</span>, <span class="hljs-title function_">hood402</span>({ <span class="hljs-attr">priceUsdg</span>: <span class="hljs-string">&#x27;0.01&#x27;</span> }), <span class="hljs-title function_">async</span> (req, res) =&gt; {
+  res.<span class="hljs-title function_">json</span>(<span class="hljs-keyword">await</span> <span class="hljs-title function_">getQuote</span>(hood, req.<span class="hljs-property">params</span>.<span class="hljs-property">symbol</span>))
+})
+</code></pre><p>wrapping any Express/Fastify/Hono route in a USDG-denominated x402 paywall.</p>
+<h2>Owner action</h2>
+<p>Build <code>hood402</code> (prompt 05), then this example becomes a real deployable
+endpoint (Cloud Run, matching this campaign&#39;s existing serverless pattern) —
+no further action needed from this repo until then.</p>
+<hr>
+<p>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></p>
+</div></div>
+    <footer>
+      Built by <a href="https://x.com/nichxbt">nirholas</a> ·
+      <a href="https://three.ws">three.ws</a> ·
+      powered by <a href="https://github.com/nirholas/robinhood-chain-sdk">hoodchain</a>
+    </footer>
+  </body>
+</html>
