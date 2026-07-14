@@ -3,14 +3,16 @@
 // Places a desk in the scene with:
 //   • A flat-screen monitor whose face is a live CanvasTexture. When the agent
 //     has a Playwright process pushing frames the monitor shows those verbatim.
-//     When no frames arrive it paints a real-time activity canvas drawn from
-//     /api/agent-actions — same data the 2D watch panel uses.
+//     When no frames arrive it paints a real-time activity canvas from the
+//     public /api/agent-screen-stream SSE feed's `log` events — the same
+//     stream the 2D watch panel and the live wall use, which backfills from
+//     the agent's real agent_actions rows server-side.
 //   • A keyboard + mouse prop on the desk surface.
 //   • An agent avatar seated behind the desk (idle-animated, driven by the
 //     same retargeting pipeline as every other avatar in the world).
 //   • Proximity detection: when the local player walks within NEAR_DIST units
-//     the monitor "wakes up" (brighter emissive, faster poll) and a HUD prompt
-//     appears offering to open the full 2D watch view.
+//     the monitor "wakes up" (brighter emissive) and a HUD prompt appears
+//     offering to open the full 2D watch view.
 //
 // Follows chart-screen.js in every structural detail — CanvasTexture updated
 // per-frame, update(dt) called from the scene loop, dispose() for cleanup.
@@ -35,12 +37,7 @@ import {
 } from 'three';
 import { createAgentScreenClient } from '../shared/agent-screen-client.js';
 
-const ACTIVITY_URL = (id) =>
-	`/api/agent-actions?agent_id=${encodeURIComponent(id)}&limit=12`;
-
 const NEAR_DIST   = 8;    // units — player proximity to activate
-const POLL_MS     = 4000; // activity poll interval (far)
-const POLL_NEAR_MS = 1500; // activity poll interval (near)
 const REDRAW_MS   = 100;  // ~10fps canvas repaint
 // Canvas resolution — 16:9 to match the 2D panel.
 const CW = 1280, CH = 720;
@@ -304,7 +301,6 @@ export function createAgentDesk(scene, agent, opts = {}) {
 	let status     = 'idle';
 	let destroyed  = false;
 	let near       = false;
-	let pollTimer  = null;
 	let acc        = 0;
 	let t          = 0;
 
@@ -335,22 +331,6 @@ export function createAgentDesk(scene, agent, opts = {}) {
 		onError() { status = 'idle'; },
 	});
 
-	async function fetchActivity() {
-		if (destroyed) return;
-		try {
-			const r = await fetch(ACTIVITY_URL(agent.agentId));
-			if (r.ok) {
-				const d = await r.json();
-				const rows = d?.data?.actions || d?.actions || [];
-				if (rows.length) actions = rows;
-			}
-		} catch { /* non-critical */ }
-		if (!destroyed) {
-			const delay = near ? POLL_NEAR_MS : POLL_MS;
-			pollTimer = setTimeout(fetchActivity, delay);
-		}
-	}
-
 	// Signal that this desk's agent is being watched so the on-demand caster pool
 	// upgrades it to a live browser feed. Throttled; fired while the player is near.
 	let lastWatchPing = 0;
@@ -368,8 +348,12 @@ export function createAgentDesk(scene, agent, opts = {}) {
 		} catch { /* */ }
 	}
 
+	// The SSE stream is the desk's single activity source: its `log` events
+	// backfill from the caster's Redis log or the agent's real DB actions (the
+	// server re-polls dark agents every ~8s), and it is public. The old direct
+	// /api/agent-actions REST poll here 401'd forever for anonymous players
+	// (that route is owner-only) — pure wasted requests, so it's gone.
 	screenClient.connect();
-	fetchActivity();
 
 	// ── public API ────────────────────────────────────────────────────────────
 	return {
@@ -390,9 +374,6 @@ export function createAgentDesk(scene, agent, opts = {}) {
 				const wasNear = near;
 				near = dist < NEAR_DIST;
 				if (near !== wasNear) {
-					// Swap poll frequency.
-					clearTimeout(pollTimer);
-					fetchActivity();
 					// Screen emissive boost.
 					screenMat.opacity = near ? 1.0 : 0.92;
 				}
@@ -417,7 +398,6 @@ export function createAgentDesk(scene, agent, opts = {}) {
 
 		dispose() {
 			destroyed = true;
-			clearTimeout(pollTimer);
 			screenClient.disconnect();
 			scene.remove(group);
 			group.traverse((n) => {
