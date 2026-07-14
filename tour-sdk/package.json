@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/tour",
-	"version": "0.5.0",
+	"version": "0.5.1",
 	"description": "A 3D guide avatar that walks across your live site, spotlights real features, points at them, and narrates each one — a guided product tour that runs on the real DOM, not a slideshow. Powered by Three.js and @three-ws/walk.",
 	"keywords": [
 		"3d",

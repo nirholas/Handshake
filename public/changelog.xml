@@ -7,6 +7,14 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Tour and Walk SDK update: switch between Stroll and Platformer from the tour controls</title>
+			<link>https://three.ws/tour-builder</link>
+			<guid isPermaLink="false">2026-07-14:Tour and Walk SDK update: switch between Stroll and Platformer from the tour controls</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>sdk</category>
+			<description>Embedded tours built with the Tour Builder now include a labeled Stroll / Platformer toggle right in the tour controls next to Exit, so visitors can switch how they explore (tap it or press M) instead of hunting for a hidden corner button. Published as @three-ws/walk 0.2.1 and @three-ws/tour 0.5.1 on npm; the Tour Builder's exported embed snippet now uses the new versions automatically, and also picks up the latest @three-ws/page-agent with its five persona presets.</description>
+		</item>
+		<item>
 			<title>A live 3D avatar in the GitHub README, and readme-3d: an open toolkit for 3D in markdown</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-13:A live 3D avatar in the GitHub README, and readme-3d: an open toolkit for 3D in markdown</guid>

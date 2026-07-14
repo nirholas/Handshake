@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/walk",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "A diverse, animated 3D avatar that walks and talks over your web pages — corner companion + full-page playground, with a built-in avatar picker. Powered by Three.js.",
 	"keywords": [
 		"3d",

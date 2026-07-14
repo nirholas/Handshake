@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws — the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-07-14",
+			"title": "Tour and Walk SDK update: switch between Stroll and Platformer from the tour controls",
+			"summary": "Embedded tours built with the Tour Builder now include a labeled Stroll / Platformer toggle right in the tour controls next to Exit, so visitors can switch how they explore (tap it or press M) instead of hunting for a hidden corner button. Published as @three-ws/walk 0.2.1 and @three-ws/tour 0.5.1 on npm; the Tour Builder's exported embed snippet now uses the new versions automatically, and also picks up the latest @three-ws/page-agent with its five persona presets.",
+			"tags": [
+				"sdk",
+				"improvement"
+			],
+			"link": "/tour-builder"
+		},
+		{
 			"date": "2026-07-13",
 			"title": "Fixed: entering a /play world no longer kicks you out with a false 'session expired'",
 			"summary": "Joining any coin world briefly showed the world and then bounced you back to the lobby with a 'your session expired' message, even though signing in was never required. The real cause was a version mismatch between the game client and the world server: the client asked for a newer feature the deployed server did not recognise, the server dropped the connection with a generic error code, and the client misread that code as a login-expiry eviction. Worlds now tolerate version differences in both directions: the server ignores messages it does not understand instead of dropping the player, and the client only shows the sign-in gate when the server actually says the session ended. Agent desks inside worlds are also back for everyone: they now load the platform's most recently active public agents instead of a signed-in-only list that failed silently for guests.",

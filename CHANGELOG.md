@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-07-14
+
+- **Tour and Walk SDK update: switch between Stroll and Platformer from the tour controls** — Embedded tours built with the Tour Builder now include a labeled Stroll / Platformer toggle right in the tour controls next to Exit, so visitors can switch how they explore (tap it or press M) instead of hunting for a hidden corner button. Published as @three-ws/walk 0.2.1 and @three-ws/tour 0.5.1 on npm; the Tour Builder's exported embed snippet now uses the new versions automatically, and also picks up the latest @three-ws/page-agent with its five persona presets. (`/tour-builder`) `[sdk, improvement]`
+
 ## 2026-07-13
 
 - **A live 3D avatar in the GitHub README, and readme-3d: an open toolkit for 3D in markdown** — The three.ws GitHub README now opens with the platform mascot as a real, draggable 3D model that GitHub renders natively (no image, no video: an interactive viewer in plain markdown). The pipeline that made it is now an open-source package, readme-3d: a CLI and library that converts any GLB, glTF, OBJ, or STL into the ASCII-STL markdown blocks GitHub renders, simplifies meshes to fit GitHub's 512 KB markdown limit, and size-checks your files so they never silently stop rendering. It ships with five tutorials, live examples, a docs site, a Claude Code skill, and copy-paste agent prompts, and pairs with the free Forge text-to-3D API so anyone can go from a one-line prompt to a 3D model in their README in five minutes. `[feature, docs, sdk]`
