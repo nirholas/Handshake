@@ -38,7 +38,11 @@
     width: 100%; height: 100%;
     --poster-color: transparent; --progress-bar-color: var(--accent);
     background: transparent;
+    transition: opacity .4s ease;
   }
+  /* Veil with opacity, never display:none — a display:none model-viewer has zero
+     layout size, defers loading, and its "load" event never fires. */
+  model-viewer.veiled { opacity: 0; pointer-events: none; }
   .overlay {
     position: absolute; inset: 0; display: flex; flex-direction: column;
     align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 28px;
@@ -103,7 +107,7 @@
   </header>
 
   <div class="stage">
-    <model-viewer id="mv" class="hidden" camera-controls auto-rotate touch-action="pan-y"
+    <model-viewer id="mv" class="veiled" camera-controls auto-rotate touch-action="pan-y"
       rotation-per-second="14deg" interaction-prompt="none"
       shadow-intensity="1" shadow-softness="0.85" exposure="1.05" environment-image="neutral" tone-mapping="aces"
       ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" reveal="auto" alt="Generated 3D model">
@@ -148,7 +152,7 @@
   var arBtn = document.getElementById('ar-btn');
 
   function show(el) { [loading, empty, errEl].forEach(function (n) { n.classList.add('hidden'); }); if (el) el.classList.remove('hidden'); }
-  function fail(msg) { mv.classList.add('hidden'); errMsg.textContent = msg || 'The 3D model failed to load.'; show(errEl); }
+  function fail(msg) { mv.classList.add('veiled'); errMsg.textContent = msg || 'The 3D model failed to load.'; show(errEl); }
 
   var params = new URLSearchParams(location.search);
   var src = params.get('src') || '';
@@ -168,7 +172,7 @@
 
   mv.addEventListener('load', function () {
     show(null);
-    mv.classList.remove('hidden');
+    mv.classList.remove('veiled');
     // Expose the AR button only when the device/model can actually enter AR.
     if (mv.canActivateAR) { arBtn.style.display = 'inline-flex'; }
   });
@@ -204,6 +208,15 @@
       fail('The 3D viewer could not load in this browser. Download the GLB and open it in any 3D viewer.');
     }
   }, 12000);
+
+  // Watchdog for a load that hangs after the element upgraded (stalled fetch,
+  // decoder wedge): surface the error state with the download link instead of
+  // an infinite spinner. 90s clears even huge GLBs on slow connections.
+  setTimeout(function () {
+    if (loading && !loading.classList.contains('hidden')) {
+      fail('This model is taking too long to display. Download the GLB and open it in any 3D viewer.');
+    }
+  }, 90000);
 })();
 </script>
 </body>

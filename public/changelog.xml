@@ -63,6 +63,22 @@
 			<description>The IRL layer finally has a front door in the docs: one page that explains the whole vision and how the shipped pieces fit together. It covers placing an agent at a real GPS spot from your phone, walk-up discovery with proof of presence, paying agents in person via x402, Money Drops (real SOL, USDC, or $THREE escrowed at a place and claimable only by walking up), World Lines (agent-signed proofs that you were really there), and the privacy model that makes it all safe. The docs sidebar now also links the hands-on IRL tutorial, which was previously unreachable from the navigation.</description>
 		</item>
 		<item>
+			<title>Shared 3D viewer links load again</title>
+			<link>https://three.ws/viewer</link>
+			<guid isPermaLink="false">2026-07-14:Shared 3D viewer links load again</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Opening a shared model link at /viewer could hang on the loading spinner forever even though the model file itself was fine. The viewer now reveals the model as soon as it finishes rendering, and if a model genuinely cannot display, you get a clear message and a working download button instead of an endless spinner.</description>
+		</item>
+		<item>
+			<title>The AR placement button is visible again on /irl</title>
+			<link>https://three.ws/irl</link>
+			<guid isPermaLink="false">2026-07-14:The AR placement button is visible again on /irl</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>On phones, the strip of actions under the camera view had quietly scrolled itself past its own first button, so &quot;Place in AR&quot; (the one-tap way to stand your agent on a real floor) sat just off the left edge of the screen, where almost nobody would swipe back to find it. The strip now opens on its true first action, so AR placement leads the row as intended. Every other control on the page was re-checked for overlap at phone, small-phone, and landscape sizes: nothing is covering anything else.</description>
+		</item>
+		<item>
 			<title>The best community models now go to Sketchfab</title>
 			<link>https://three.ws/docs/sketchfab</link>
 			<guid isPermaLink="false">2026-07-14:The best community models now go to Sketchfab</guid>
@@ -77,6 +93,14 @@
 			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
 			<category>sdk</category>
 			<description>Embedded tours built with the Tour Builder now include a labeled Stroll / Platformer toggle right in the tour controls next to Exit, so visitors can switch how they explore (tap it or press M) instead of hunting for a hidden corner button. Published as @three-ws/walk 0.2.1 and @three-ws/tour 0.5.1 on npm; the Tour Builder's exported embed snippet now uses the new versions automatically, and also picks up the latest @three-ws/page-agent with its five persona presets.</description>
+		</item>
+		<item>
+			<title>Your profile no longer asks you to sign in when you already are</title>
+			<link>https://three.ws/profile</link>
+			<guid isPermaLink="false">2026-07-14:Your profile no longer asks you to sign in when you already are</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>New creators who finished making an avatar and tapped &quot;See your profile&quot; were greeted by a sign-in wall, even while signed in. The cause: profile pages live at your @handle, and fresh accounts don't have one yet. That dead end is now a one-field claim screen: pick your handle (we suggest one from your name), press Claim, and you land straight on your new public portfolio at three.ws/u/yourname. And if you really are signed out, the sign-in link now brings you back to your profile afterward instead of dropping you on the dashboard.</description>
 		</item>
 		<item>
 			<title>A live 3D avatar in the GitHub README, and readme-3d: an open toolkit for 3D in markdown</title>

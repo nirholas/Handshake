@@ -34,14 +34,11 @@ paths:
       operationId: generate3DModel
       x-openai-isConsequential: false
       summary: Generate a 3D model (GLB) from a text prompt
-      description: |
+      description: >-
         Start a free text-to-3D generation. Describe ONE subject concretely
-        (shape, colors, style), e.g. "a low-poly orange fox sitting down".
-        If the response status is "done", present glbUrl (download) and
-        viewerUrl (interactive browser preview) to the user. If it is
-        "pending", poll checkModelJob with the returned "job" value every few
-        seconds until it completes. Prompts describing adult, gory, hateful,
-        or real-weapon content are refused with error "prompt_rejected".
+        (shape, colors, style). Returns status "done" with glbUrl (download)
+        and viewerUrl (browser preview), or "pending" with a "job" handle to
+        poll via checkModelJob. Unsafe prompts return error "prompt_rejected".
       requestBody:
         required: true
         content:

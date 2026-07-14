@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-14T11:37:43.347Z",
+	"generated_at": "2026-07-14T12:15:36.431Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -80,6 +80,26 @@
 		{
 			"date": "2026-07-14",
 			"type": "update",
+			"title": "Shared 3D viewer links load again",
+			"summary": "Opening a shared model link at /viewer could hang on the loading spinner forever even though the model file itself was fine. The viewer now reveals the model as soon as it finishes rendering, and if a model genuinely cannot display, you get a clear message and a working download button instead of an endless spinner.",
+			"link": "/viewer",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
+			"title": "The AR placement button is visible again on /irl",
+			"summary": "On phones, the strip of actions under the camera view had quietly scrolled itself past its own first button, so \"Place in AR\" (the one-tap way to stand your agent on a real floor) sat just off the left edge of the screen, where almost nobody would swipe back to find it. The strip now opens on its true first action, so AR placement leads the row as intended. Every other control on the page was re-checked for overlap at phone, small-phone, and landscape sizes: nothing is covering anything else.",
+			"link": "/irl",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
 			"title": "The best community models now go to Sketchfab",
 			"summary": "The best forge models are now published to the official three.ws account on Sketchfab, the largest public 3D model site: weekly Forge-Off winners first, then top-voted board models, then creations their makers explicitly accepted. It is a curated showcase, not a firehose: a few validated models a week, each clearly tagged as AI-generated, with its generation prompt and a link back to the creation on three.ws so anyone who finds it can remix it or forge their own. Every link is tagged so we can measure how many visitors the showcase actually brings in.",
 			"link": "/docs/sketchfab",
@@ -95,6 +115,17 @@
 			"link": "/tour-builder",
 			"tags": [
 				"sdk",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
+			"title": "Your profile no longer asks you to sign in when you already are",
+			"summary": "New creators who finished making an avatar and tapped \"See your profile\" were greeted by a sign-in wall, even while signed in. The cause: profile pages live at your @handle, and fresh accounts don't have one yet. That dead end is now a one-field claim screen: pick your handle (we suggest one from your name), press Claim, and you land straight on your new public portfolio at three.ws/u/yourname. And if you really are signed out, the sign-in link now brings you back to your profile afterward instead of dropping you on the dashboard.",
+			"link": "/profile",
+			"tags": [
+				"fix",
 				"improvement"
 			]
 		},
