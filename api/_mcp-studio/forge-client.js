@@ -41,6 +41,14 @@ export function viewerUrl(base, glbUrl) {
 	return `${base}/viewer?src=${encodeURIComponent(glbUrl)}`;
 }
 
+// Device-aware "place it in your room" launcher (api/ar.js): Android gets a
+// Scene Viewer intent, iOS a Quick Look launch page, desktop a WebGL fallback.
+// One URL serves every device, which is exactly what a ChatGPT surface needs.
+export function arLaunchUrl(base, glbUrl, title) {
+	const t = title ? `&title=${encodeURIComponent(String(title).slice(0, 80))}` : '';
+	return `${base}/api/ar?src=${encodeURIComponent(glbUrl)}${t}`;
+}
+
 function failure(code, message, extra = {}) {
 	const e = new Error(message);
 	e.code = code;

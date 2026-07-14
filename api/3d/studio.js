@@ -31,7 +31,7 @@
 
 import { cors, wrap, method, json, error, readJson, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { startForge, originFromReq, viewerUrl } from '../_mcp-studio/forge-client.js';
+import { startForge, originFromReq, viewerUrl, arLaunchUrl } from '../_mcp-studio/forge-client.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
 import { resolveLogoPrompt } from '../_lib/forge-director-prompts.js';
 
