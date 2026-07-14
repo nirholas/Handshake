@@ -11249,10 +11249,4 @@ Want your name here? Open a PR — see [Contributing](#contributing).
 
 ## License
 
-Apache 2.0 — see [LICENSE](LICENSE).
-
-The three.js library (`node_modules/three`) is MIT licensed. The gltf-validator (`node_modules/gltf-validator`) is Apache 2.0. See each dependency's license for details.
-
----
-
-_Built with [three.js](https://threejs.org), [Claude](https://claude.ai), and a belief that AI deserves a body._
+All rights reserved. See [LICENSE](LICENSE).
