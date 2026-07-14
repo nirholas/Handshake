@@ -86,7 +86,9 @@ function ok({ glbUrl, base, kind, prompt, rigged }) {
 		content: [
 			{
 				type: 'text',
-				text: `Generated a ${label} (GLB). View it: ${structured.viewerUrl}\nDownload: ${glbUrl}`,
+				text:
+					`Generated a ${label} (GLB). View it: ${structured.viewerUrl}\n` +
+					`Place it in your room (AR, open on a phone): ${aUrl}\nDownload: ${glbUrl}`,
 			},
 		],
 		structuredContent: structured,
@@ -109,19 +111,22 @@ function toolError(message) {
 function refineOk({ glbUrl, base, prompt, instruction, lineage, activeIndex }) {
 	glbUrl = firstPartyGlbUrl(glbUrl, base);
 	const vUrl = viewerUrl(base, glbUrl);
+	const aUrl = arLaunchUrl(base, glbUrl, instruction || prompt);
 	const structured = {
 		kind: 'refined model',
 		glbUrl,
 		viewerUrl: vUrl,
+		arUrl: aUrl,
 		format: 'glb',
 		...(prompt ? { prompt } : {}),
 		...(instruction ? { instruction } : {}),
 		// Version chips swap GLBs inside the same sandboxed iframe, so every
-		// lineage URL needs the CDN form too.
-		lineage: summarizeLineage(lineage, activeIndex).map((v) => ({
-			...v,
-			glbUrl: firstPartyGlbUrl(v.glbUrl, base),
-		})),
+		// lineage URL needs the CDN form too — and its own AR launch link so the
+		// Place-in-AR button tracks the selected version.
+		lineage: summarizeLineage(lineage, activeIndex).map((v) => {
+			const vGlb = firstPartyGlbUrl(v.glbUrl, base);
+			return { ...v, glbUrl: vGlb, arUrl: arLaunchUrl(base, vGlb, v.instruction || prompt) };
+		}),
 		activeIndex,
 		// Conformant Spatial MCP artifact (specs/SPATIAL_MCP.md) for the refined model.
 		spatial: buildSpatialArtifact({ glbUrl, kind: 'model', viewerUrl: vUrl, prompt: prompt || undefined, title: instruction || undefined }),
@@ -131,7 +136,9 @@ function refineOk({ glbUrl, base, prompt, instruction, lineage, activeIndex }) {
 		content: [
 			{
 				type: 'text',
-				text: `Refined the model (v${versionNo}: "${instruction}"). View it: ${structured.viewerUrl}\nDownload: ${glbUrl}`,
+				text:
+					`Refined the model (v${versionNo}: "${instruction}"). View it: ${structured.viewerUrl}\n` +
+					`Place it in your room (AR, open on a phone): ${aUrl}\nDownload: ${glbUrl}`,
 			},
 		],
 		structuredContent: structured,

@@ -108,6 +108,8 @@ export const COMPONENT_HTML = `<!doctype html>
   a.btn:hover, button.btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.28); }
   a.btn:active, button.btn:active { transform: translateY(1px); }
   a.btn:focus-visible, button.btn:focus-visible { outline: 2px solid #6ea8fe; outline-offset: 2px; }
+  a.btn.ar { color: #0b0c10; font-weight: 700; background: #6ea8fe; border-color: transparent; }
+  a.btn.ar:hover { background: #83b5ff; border-color: transparent; }
   .hidden { display: none !important; }
 </style>
 </head>
@@ -142,6 +144,7 @@ export const COMPONENT_HTML = `<!doctype html>
     <span id="kind" class="chip">model</span>
     <span id="prompt" class="prompt"></span>
     <div class="actions">
+      <a id="arlink" class="btn ar hidden" target="_blank" rel="noopener noreferrer">View in your space</a>
       <a id="open" class="btn" target="_blank" rel="noopener noreferrer">Open viewer</a>
       <a id="download" class="btn" download>Download GLB</a>
     </div>
@@ -160,6 +163,7 @@ export const COMPONENT_HTML = `<!doctype html>
   var kindEl = document.getElementById('kind');
   var openEl = document.getElementById('open');
   var downloadEl = document.getElementById('download');
+  var arEl = document.getElementById('arlink');
   var versionsEl = document.getElementById('versions');
 
   // Tracks whether the next model-viewer 'load' is a fresh render (show the
@@ -220,6 +224,7 @@ export const COMPONENT_HTML = `<!doctype html>
         chip.classList.add('active');
         openEl.href = v.viewerUrl || v.glbUrl;
         downloadEl.href = v.glbUrl;
+        if (v.arUrl) { arEl.href = v.arUrl; arEl.classList.remove('hidden'); }
         if (v.instruction) { promptEl.textContent = v.instruction; promptEl.title = v.instruction; }
         swapTo(v.glbUrl);
       });
@@ -248,6 +253,11 @@ export const COMPONENT_HTML = `<!doctype html>
     else { promptEl.textContent = ''; }
     openEl.href = out.viewerUrl || glb;
     downloadEl.href = glb;
+    // Device-aware AR launch (/api/ar): the same one-tap "place it in your
+    // home" flow the forge site uses. ChatGPT opens it in the system browser,
+    // where iPhone enters Quick Look and Android enters Scene Viewer.
+    if (out.arUrl) { arEl.href = out.arUrl; arEl.classList.remove('hidden'); }
+    else { arEl.classList.add('hidden'); }
     bar.classList.remove('hidden');
     renderVersions(out.lineage, glb);
   }

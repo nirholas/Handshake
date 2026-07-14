@@ -227,7 +227,7 @@ async function poll(req, res, jobId, title) {
 	} catch {
 		// A transient network blip on the self-call is not a job failure — tell the
 		// caller it's still pending so its poll loop retries.
-		return json(res, 200, shapePoll({ status: 'running' }, base, jobId));
+		return json(res, 200, shapePoll({ status: 'running' }, base, jobId, title));
 	}
 
 	const data = await upstream.json().catch(() => ({}));
@@ -241,10 +241,10 @@ async function poll(req, res, jobId, title) {
 	}
 	if (!upstream.ok) {
 		// Upstream hiccup mid-poll — keep the job alive as pending so the loop retries.
-		return json(res, 200, shapePoll({ status: 'running' }, base, jobId));
+		return json(res, 200, shapePoll({ status: 'running' }, base, jobId, title));
 	}
 
-	return json(res, 200, shapePoll(data, base, jobId));
+	return json(res, 200, shapePoll(data, base, jobId, title));
 }
 
 export default wrap(async (req, res) => {
@@ -258,7 +258,8 @@ export default wrap(async (req, res) => {
 	if (!jobId) {
 		return error(res, 400, 'missing_job', 'Pass ?job=<id> to poll a generation, or POST { prompt } to start one.');
 	}
-	return poll(req, res, jobId);
+	const title = (url.searchParams.get('title') || '').trim().slice(0, 120);
+	return poll(req, res, jobId, title);
 });
 
 // The free NIM draft often finishes inside the submit window; startForge waits up
