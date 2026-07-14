@@ -638,6 +638,13 @@
 			scroll-snap-type: x proximity;
 			-webkit-overflow-scrolling: touch;
 			scrollbar-width: none;
+			/* Pills are inserted at the HEAD of this strip at runtime (the AR
+			   placement pill leads the row once floor-anchor support resolves, see
+			   detectFloorAnchorSupport in src/irl.js). Scroll anchoring would then
+			   shift scrollLeft by the inserted width to hold the old content still,
+			   parking the brand-new lead pill just off the left edge where nobody
+			   scrolls back to find it. Pin the strip to its true start instead. */
+			overflow-anchor: none;
 			max-width: 100%;
 			padding: 2px 4px;
 			margin: 0 -4px;

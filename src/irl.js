@@ -2951,8 +2951,13 @@ async function detectFloorAnchorSupport() {
 		: 'Place agent on the floor with AR');
 	// This device has a true AR surface — lead with it. The gyro Pin path stays
 	// one pill away, but the flagship placement should be the first thing seen.
-	anchorBtn.parentElement?.prepend(anchorBtn);
+	const row = anchorBtn.parentElement;
+	row?.prepend(anchorBtn);
 	anchorBtn.hidden = false;
+	// Capability detection resolves after first layout, so this prepend lands in a
+	// scroll strip the browser has already laid out. Return it to its start once the
+	// new pill has been measured, or the lead action sits off the left edge unseen.
+	if (row) requestAnimationFrame(() => { row.scrollLeft = 0; });
 }
 
 function setXrHint(text) {
