@@ -44,9 +44,21 @@ const VALID_TIER = new Set(['draft', 'standard', 'high']);
 
 // ── result helpers ──────────────────────────────────────────────────────────
 
+// The bucket's public r2.dev domain only answers CORS for our own origin, but
+// ChatGPT renders the widget in a sandboxed cross-origin iframe — model-viewer
+// there can only fetch a GLB served with open CORS. /cdn/<key> (api/cdn-object.js)
+// streams the same object first-party with `access-control-allow-origin: *`, so
+// every URL a widget must fetch goes out in its CDN form.
+function firstPartyGlbUrl(glbUrl, base) {
+	const pub = process.env.S3_PUBLIC_DOMAIN;
+	if (!pub || !base || typeof glbUrl !== 'string' || !glbUrl.startsWith(`${pub}/`)) return glbUrl;
+	return `${base}/cdn/${glbUrl.slice(pub.length + 1)}`;
+}
+
 // Minimal, identifier-free success envelope. structuredContent is the contract
 // the widget + model read; content is the human/agent-readable narration.
 function ok({ glbUrl, base, kind, prompt, rigged }) {
+	glbUrl = firstPartyGlbUrl(glbUrl, base);
 	const vUrl = viewerUrl(base, glbUrl);
 	const structured = {
 		kind,
@@ -92,6 +104,7 @@ function toolError(message) {
 // the next refinement (parent_lineage) so branch/revert work without any
 // server-side session — a pointer move over an immutable array, never a mutation.
 function refineOk({ glbUrl, base, prompt, instruction, lineage, activeIndex }) {
+	glbUrl = firstPartyGlbUrl(glbUrl, base);
 	const vUrl = viewerUrl(base, glbUrl);
 	const structured = {
 		kind: 'refined model',
@@ -100,7 +113,12 @@ function refineOk({ glbUrl, base, prompt, instruction, lineage, activeIndex }) {
 		format: 'glb',
 		...(prompt ? { prompt } : {}),
 		...(instruction ? { instruction } : {}),
-		lineage: summarizeLineage(lineage, activeIndex),
+		// Version chips swap GLBs inside the same sandboxed iframe, so every
+		// lineage URL needs the CDN form too.
+		lineage: summarizeLineage(lineage, activeIndex).map((v) => ({
+			...v,
+			glbUrl: firstPartyGlbUrl(v.glbUrl, base),
+		})),
 		activeIndex,
 		// Conformant Spatial MCP artifact (specs/SPATIAL_MCP.md) for the refined model.
 		spatial: buildSpatialArtifact({ glbUrl, kind: 'model', viewerUrl: vUrl, prompt: prompt || undefined, title: instruction || undefined }),

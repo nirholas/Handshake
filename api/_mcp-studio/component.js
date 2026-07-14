@@ -45,6 +45,9 @@ export const COMPONENT_HTML = `<!doctype html>
     transition: opacity .28s ease;
   }
   model-viewer.fading { opacity: 0; }
+  /* Reveal veil: model-viewer defers loading (and never fires 'load') while
+     display:none, so the pre-load hide must be opacity, never .hidden. */
+  model-viewer.veiled { opacity: 0; pointer-events: none; }
   @media (prefers-reduced-motion: reduce) { model-viewer { transition: none; } }
   .overlay {
     position: absolute; inset: 0;
@@ -111,7 +114,7 @@ export const COMPONENT_HTML = `<!doctype html>
 <body>
 <div class="wrap">
   <div class="stage">
-    <model-viewer id="mv" class="hidden" camera-controls auto-rotate touch-action="pan-y"
+    <model-viewer id="mv" class="veiled" camera-controls auto-rotate touch-action="pan-y"
       shadow-intensity="1" exposure="1.05" environment-image="neutral"
       ar ar-modes="webxr scene-viewer quick-look" alt="Generated 3D model">
     </model-viewer>
@@ -163,10 +166,21 @@ export const COMPONENT_HTML = `<!doctype html>
   // stage, hide overlays) or a cross-fade swap between versions (just fade in).
   var swapping = false;
 
+  // A GLB that never finishes (network stall, bad asset) must end in the
+  // designed error state, not an eternal spinner. 90s covers cold storage reads.
+  var loadWatchdog = null;
+  function armWatchdog() {
+    clearTimeout(loadWatchdog);
+    loadWatchdog = setTimeout(function () {
+      if (!mv.loaded) fail('The 3D model is taking too long to load. You can still download the GLB file.');
+    }, 90000);
+  }
+
   function show(el) { [loading, empty, errEl].forEach(function (n) { n.classList.add('hidden'); }); if (el) el.classList.remove('hidden'); }
 
   function fail(msg) {
-    mv.classList.add('hidden');
+    clearTimeout(loadWatchdog);
+    mv.classList.add('veiled');
     bar.classList.add('hidden');
     versionsEl.classList.add('hidden');
     errMsg.textContent = msg || 'Something went wrong displaying this model.';
@@ -181,7 +195,7 @@ export const COMPONENT_HTML = `<!doctype html>
     if (!isHttps(glb) || mv.getAttribute('src') === glb) return;
     swapping = true;
     mv.classList.add('fading');
-    setTimeout(function () { mv.setAttribute('src', glb); }, 200);
+    setTimeout(function () { mv.setAttribute('src', glb); armWatchdog(); }, 200);
   }
 
   // Build the version strip from a lineage. Each chip swaps its GLB in on click;
@@ -215,16 +229,17 @@ export const COMPONENT_HTML = `<!doctype html>
   }
 
   function render(out) {
-    if (!out) { mv.classList.add('hidden'); bar.classList.add('hidden'); versionsEl.classList.add('hidden'); show(empty); return; }
+    if (!out) { mv.classList.add('veiled'); bar.classList.add('hidden'); versionsEl.classList.add('hidden'); show(empty); return; }
     if (out.error || out.message && !out.glbUrl) { fail(out.message || 'Generation did not return a model.'); return; }
     var glb = out.glbUrl;
-    if (!isHttps(glb)) { mv.classList.add('hidden'); bar.classList.add('hidden'); versionsEl.classList.add('hidden'); show(empty); return; }
+    if (!isHttps(glb)) { mv.classList.add('veiled'); bar.classList.add('hidden'); versionsEl.classList.add('hidden'); show(empty); return; }
 
     swapping = false;
     show(loading);
     mv.classList.remove('fading');
-    mv.classList.add('hidden');
+    mv.classList.add('veiled');
     mv.setAttribute('src', glb);
+    armWatchdog();
 
     var kind = (out.kind || 'model').replace(/_/g, ' ');
     kindEl.textContent = out.rigged ? 'rigged ' + kind : kind;
@@ -238,8 +253,9 @@ export const COMPONENT_HTML = `<!doctype html>
   }
 
   mv.addEventListener('load', function () {
+    clearTimeout(loadWatchdog);
     if (swapping) { swapping = false; mv.classList.remove('fading'); return; }
-    show(null); mv.classList.remove('hidden');
+    show(null); mv.classList.remove('veiled');
   });
   mv.addEventListener('error', function () { fail('The 3D model could not be displayed. You can still download the GLB file.'); });
 

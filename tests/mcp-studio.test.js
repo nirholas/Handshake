@@ -200,6 +200,44 @@ describe('mcp-studio dispatch', () => {
 		expect(serialized).not.toContain('creation_id');
 	});
 
+	it('rewrites bucket-domain GLB URLs to the first-party /cdn proxy (sandboxed widgets need open CORS)', async () => {
+		// The public r2.dev domain only answers CORS for our own origin; ChatGPT's
+		// widget iframe is cross-origin, so tool results must carry the /cdn form.
+		const prev = process.env.S3_PUBLIC_DOMAIN;
+		process.env.S3_PUBLIC_DOMAIN = 'https://pub-test.r2.dev';
+		try {
+			globalThis.fetch = vi.fn(async () => ({
+				ok: true,
+				status: 200,
+				json: async () => ({ status: 'done', glb_url: 'https://pub-test.r2.dev/forge/anon/abc.glb' }),
+			}));
+			const r = await dispatch(
+				{ jsonrpc: '2.0', id: 61, method: 'tools/call', params: { name: 'forge_free', arguments: { prompt: 'a friendly round robot mascot' } } },
+				auth,
+				mkReq(),
+			);
+			const sc = r.result.structuredContent;
+			expect(sc.glbUrl).toBe('https://three.ws/cdn/forge/anon/abc.glb');
+			expect(sc.viewerUrl).toContain(encodeURIComponent('https://three.ws/cdn/forge/anon/abc.glb'));
+		} finally {
+			if (prev === undefined) delete process.env.S3_PUBLIC_DOMAIN;
+			else process.env.S3_PUBLIC_DOMAIN = prev;
+		}
+	});
+
+	it('widget veils the model-viewer with opacity, never display:none (display:none defers load forever)', async () => {
+		const read = await dispatch(
+			{ jsonrpc: '2.0', id: 62, method: 'resources/read', params: { uri: COMPONENT_URI } },
+			auth,
+			mkReq(),
+		);
+		const html = read.result.contents[0].text;
+		const mvTag = html.match(/<model-viewer[^>]*>/)[0];
+		expect(mvTag).toContain('class="veiled"');
+		expect(mvTag).not.toContain('hidden');
+		expect(html).toMatch(/model-viewer\.veiled\s*\{[^}]*opacity:\s*0/);
+	});
+
 	it('refuses age-inappropriate prompts before any generation', async () => {
 		const spy = vi.fn();
 		globalThis.fetch = spy;
