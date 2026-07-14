@@ -518,6 +518,12 @@ URL: https://three.ws/viewer
 
 Paste any public glTF/GLB URL and preview it inline — the lightweight, unauthenticated model viewer every 3D Studio tool's shared asset link opens.
 
+### AR Forge
+
+URL: https://three.ws/ar
+
+Type a prompt, get a real 3D model, and place it in your room: free text-to-3D with one-tap AR on any phone (WebXR, Scene Viewer, Quick Look) and a QR handoff from desktop.
+
 ### Spatial MCP — reference renderer
 
 URL: https://three.ws/spatial-mcp

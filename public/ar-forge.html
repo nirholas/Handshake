@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>AR Forge · three.ws</title>
+	<meta name="description" content="Type a prompt, get a 3D model, and place it in your room. Free text-to-3D with instant AR on your phone (WebXR, Scene Viewer, Quick Look)." />
+	<link rel="canonical" href="https://three.ws/ar" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:type" content="website" />
+	<meta property="og:url" content="https://three.ws/ar" />
+	<meta property="og:title" content="AR Forge · three.ws" />
+	<meta property="og:description" content="Type a prompt, get a 3D model, and place it in your room. Free text-to-3D with instant AR." />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=labs&t=AR+Forge&d=Type+a+prompt%2C+get+a+3D+model%2C+and+place+it+in+your+room.+Free+text-to-3D+with+instant+AR.&p=%2Far" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta property="og:image:type" content="image/png" />
+	<meta property="og:image:alt" content="AR Forge, three.ws" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="twitter:title" content="AR Forge · three.ws" />
+	<meta name="twitter:description" content="Type a prompt, get a 3D model, and place it in your room. Free text-to-3D with instant AR." />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&t=AR+Forge&d=Type+a+prompt%2C+get+a+3D+model%2C+and+place+it+in+your+room.+Free+text-to-3D+with+instant+AR.&p=%2Far" />
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"AR Forge","url":"https://three.ws/ar","applicationCategory":"DesignApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Type a prompt, get a 3D model, and place it in your room. Free text-to-3D with instant AR on your phone.","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+	<!-- Meshopt decoder must register before <model-viewer> starts loading (Forge GLBs are meshopt-compressed). Classic script runs during parse, before the model-viewer module. -->
+	<script src="/model-viewer-meshopt.js"></script>
+	<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+	<style>
+		:root { color-scheme: dark; --accent: #6ea8fe; --ink: #e8eaf0; --muted: #9aa3b2; --line: rgba(255,255,255,0.09); }
+		* { box-sizing: border-box; }
+		html, body { margin: 0; height: 100%; }
+		body {
+			font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+			background: radial-gradient(130% 130% at 50% 0%, #14161c 0%, #0b0c10 60%, #08090c 100%);
+			color: var(--ink);
+			min-height: 100dvh;
+			display: flex;
+			flex-direction: column;
+		}
+		header.bar {
+			display: flex; align-items: center; gap: 12px;
+			padding: 12px 16px; border-bottom: 1px solid var(--line);
+			background: rgba(10,11,14,0.55); backdrop-filter: blur(8px);
+			position: sticky; top: 0; z-index: 5;
+		}
+		.brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: var(--ink); font-weight: 700; letter-spacing: .01em; }
+		.brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+		.brand:hover { color: #fff; }
+		.crumb { color: var(--muted); font-size: 13px; }
+		.spacer { flex: 1 1 auto; }
+		a.top { color: var(--muted); font-size: 13px; text-decoration: none; }
+		a.top:hover { color: var(--ink); }
+		main { flex: 1 1 auto; width: 100%; max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; display: flex; flex-direction: column; gap: 18px; }
+
+		.hero h1 { font-size: clamp(26px, 6vw, 38px); margin: 10px 0 6px; letter-spacing: -0.02em; }
+		.hero h1 .grad { background: linear-gradient(92deg, #dbe9ff 0%, var(--accent) 55%, #b18cff 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+		.hero p { color: var(--muted); font-size: 14.5px; line-height: 1.55; margin: 0; max-width: 52ch; }
+
+		form.ask { display: flex; gap: 8px; align-items: stretch; }
+		.ask input {
+			flex: 1 1 auto; min-width: 0; font: inherit; font-size: 15px; color: var(--ink);
+			background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.16);
+			border-radius: 12px; padding: 12px 14px; transition: border-color .15s, background .15s;
+		}
+		.ask input::placeholder { color: #737d8d; }
+		.ask input:hover { border-color: rgba(255,255,255,0.26); }
+		.ask input:focus { outline: none; border-color: rgba(110,168,254,0.65); background: rgba(110,168,254,0.06); }
+		button.go {
+			appearance: none; cursor: pointer; font: inherit; font-size: 14.5px; font-weight: 700;
+			color: #0b0c10; background: var(--accent); border: 0; border-radius: 12px; padding: 12px 18px;
+			display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+			transition: filter .15s, transform .05s;
+		}
+		button.go:hover { filter: brightness(1.1); }
+		button.go:active { transform: translateY(1px); }
+		button.go:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+		button.go[disabled] { opacity: .55; cursor: not-allowed; filter: none; }
+
+		.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+		.chips .label { color: #737d8d; font-size: 12px; align-self: center; }
+		button.chip {
+			appearance: none; cursor: pointer; font: inherit; font-size: 12.5px; color: #c3cad6;
+			background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.13);
+			border-radius: 999px; padding: 6px 12px; transition: background .15s, border-color .15s, color .15s;
+		}
+		button.chip:hover { background: rgba(110,168,254,0.12); border-color: rgba(110,168,254,0.4); color: #dbe9ff; }
+		button.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+		.stage {
+			position: relative; border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
+			background: rgba(255,255,255,0.025); min-height: min(52dvh, 460px);
+			display: flex; flex-direction: column;
+		}
+		model-viewer { width: 100%; flex: 1 1 auto; min-height: min(48dvh, 420px); --poster-color: transparent; --progress-bar-color: var(--accent); background: transparent; }
+		.overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 13px; text-align: center; padding: 28px; }
+		.spinner { width: 38px; height: 38px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.14); border-top-color: var(--accent); animation: spin .9s linear infinite; }
+		@keyframes spin { to { transform: rotate(360deg); } }
+		@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } .hero h1 .grad { background: none; color: var(--ink); -webkit-text-fill-color: currentColor; } }
+		.h { font-size: 15px; font-weight: 600; }
+		.muted { color: var(--muted); font-size: 13px; line-height: 1.55; max-width: 44ch; }
+		.elapsed { font-variant-numeric: tabular-nums; color: #737d8d; font-size: 12px; }
+		.idleart { font-size: 44px; line-height: 1; filter: saturate(.9); }
+
+		.actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--line); background: rgba(10,11,14,0.45); }
+		.actions .meta { flex: 1 1 100%; color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		a.btn, button.btn {
+			appearance: none; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 7px;
+			font: inherit; font-size: 13px; font-weight: 600; color: var(--ink);
+			background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+			border-radius: 10px; padding: 8px 13px; transition: background .15s, border-color .15s, transform .05s;
+		}
+		a.btn:hover, button.btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.28); }
+		a.btn:active, button.btn:active { transform: translateY(1px); }
+		a.btn:focus-visible, button.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.btn.primary { background: rgba(110,168,254,0.16); border-color: rgba(110,168,254,0.42); color: #dbe9ff; }
+		.btn.primary:hover { background: rgba(110,168,254,0.26); }
+		.hidden { display: none !important; }
+
+		.handoff { display: none; border: 1px solid var(--line); border-radius: 16px; padding: 16px; gap: 16px; align-items: center; background: rgba(255,255,255,0.025); }
+		.handoff.show { display: flex; }
+		.handoff canvas, .handoff img { width: 132px; height: 132px; border-radius: 10px; background: #fff; padding: 8px; flex: 0 0 auto; }
+		.handoff .txt { min-width: 0; }
+		.handoff .txt .h { margin-bottom: 4px; }
+		@media (max-width: 480px) { .handoff.show { display: none; } }
+
+		section.recent h2 { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 0 0 10px; }
+		.rail { display: flex; gap: 8px; flex-wrap: wrap; }
+		button.mem {
+			appearance: none; cursor: pointer; font: inherit; font-size: 12.5px; color: #c3cad6; max-width: 100%;
+			background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 10px; padding: 7px 11px;
+			display: inline-flex; align-items: center; gap: 7px; transition: background .15s, border-color .15s;
+		}
+		button.mem:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.24); }
+		button.mem:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		button.mem .cube { color: var(--accent); }
+		button.mem .p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 32ch; }
+
+		footer.foot { border-top: 1px solid var(--line); padding: 14px 16px; text-align: center; color: #737d8d; font-size: 12px; }
+		footer.foot a { color: var(--muted); }
+		footer.foot a:hover { color: var(--ink); }
+	</style>
+</head>
+<body>
+	<header class="bar">
+		<a class="brand" href="/"><span class="dot" aria-hidden="true"></span>three.ws</a>
+		<span class="crumb">/ AR Forge</span>
+		<span class="spacer"></span>
+		<a class="top" href="/forge">Full studio →</a>
+	</header>
+
+	<main>
+		<div class="hero">
+			<h1>Imagine it. <span class="grad">Place it in your room.</span></h1>
+			<p>Describe any object and AR Forge generates a real 3D model, free, no account. On a phone, one tap puts it in your space through the camera.</p>
+		</div>
+
+		<form class="ask" id="ask" autocomplete="off">
+			<input id="prompt" name="prompt" type="text" inputmode="text" enterkeyhint="go" maxlength="600"
+				placeholder="a bonsai tree in a glowing glass cube" aria-label="Describe the 3D model to generate" required minlength="3" />
+			<button class="go" id="go" type="submit">Forge<span aria-hidden="true">✦</span></button>
+		</form>
+
+		<div class="chips" id="chips" aria-label="Prompt ideas">
+			<span class="label">Try:</span>
+			<button type="button" class="chip">a retro arcade cabinet</button>
+			<button type="button" class="chip">a koi fish made of stained glass</button>
+			<button type="button" class="chip">a tiny robot barista</button>
+			<button type="button" class="chip">a crystal chess knight</button>
+		</div>
+
+		<div class="stage" id="stage">
+			<model-viewer id="mv" class="hidden" camera-controls auto-rotate touch-action="pan-y"
+				rotation-per-second="16deg" interaction-prompt="none"
+				shadow-intensity="1" shadow-softness="0.85" exposure="1.05" environment-image="neutral" tone-mapping="aces"
+				ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" reveal="auto" alt="Generated 3D model">
+			</model-viewer>
+
+			<div id="idle" class="overlay">
+				<div class="idleart" aria-hidden="true">🛋️✨</div>
+				<div class="h">Your model appears here</div>
+				<div class="muted">Type a prompt above, or tap an idea. Generation takes about a minute and the result is a real, downloadable GLB.</div>
+			</div>
+
+			<div id="working" class="overlay hidden" aria-live="polite">
+				<div class="spinner" aria-hidden="true"></div>
+				<div class="h" id="worktitle">Forging your model…</div>
+				<div class="muted" id="workmsg">Sending your prompt to the forge.</div>
+				<div class="elapsed" id="elapsed"></div>
+			</div>
+
+			<div id="failed" class="overlay hidden">
+				<div class="h">That one didn't make it</div>
+				<div class="muted" id="failmsg">Generation failed.</div>
+				<button class="btn primary" id="retry" type="button">Try again</button>
+			</div>
+
+			<div class="actions hidden" id="actions">
+				<div class="meta" id="meta"></div>
+				<button class="btn primary" id="ar-btn" type="button" aria-label="View this model in augmented reality">📱 View in your space</button>
+				<a class="btn" id="download" download aria-label="Download the GLB file">Download GLB</a>
+				<button class="btn" id="share" type="button" aria-label="Share a link to this model">Share</button>
+				<span class="spacer"></span>
+				<a class="btn" id="open-viewer" target="_blank" rel="noopener" aria-label="Open this model in the full 3D viewer">Open in viewer</a>
+			</div>
+		</div>
+
+		<div class="handoff" id="handoff" aria-label="Continue on your phone">
+			<canvas id="qr" width="132" height="132" role="img" aria-label="QR code that opens this model in AR on a phone"></canvas>
+			<div class="txt">
+				<div class="h">No AR on this device? Send it to your phone.</div>
+				<div class="muted">Scan with your phone camera. It opens straight into AR: Scene Viewer on Android, Quick Look on iPhone.</div>
+			</div>
+		</div>
+
+		<section class="recent hidden" id="recent">
+			<h2>Recent forges</h2>
+			<div class="rail" id="rail"></div>
+		</section>
+	</main>
+
+	<footer class="foot">
+		Free lane, fair-use rate limited · Models are meshopt-compressed glTF binaries ·
+		<a href="/forge">Forge studio</a> · <a href="/viewer">GLB viewer</a> · <a href="/features/ar">How AR works</a>
+	</footer>
+
+	<script>
+	(function () {
+		'use strict';
+		var $ = function (id) { return document.getElementById(id); };
+		var mv = $('mv'), idle = $('idle'), working = $('working'), failed = $('failed');
+		var actions = $('actions'), meta = $('meta'), arBtn = $('ar-btn'), downloadEl = $('download');
+		var shareBtn = $('share'), openViewer = $('open-viewer'), handoff = $('handoff');
+		var form = $('ask'), input = $('prompt'), go = $('go');
+		var workTitle = $('worktitle'), workMsg = $('workmsg'), elapsedEl = $('elapsed'), failMsg = $('failmsg');
+		var recentWrap = $('recent'), rail = $('rail');
+
+		var POLL_MS = 3000, MAX_POLL_MS = 300000, LS_KEY = 'twx_ar_forge_recent';
+		var runSeq = 0, elapsedTimer = null, current = null; // { glb, prompt }
+
+		function overlay(el) {
+			[idle, working, failed].forEach(function (n) { n.classList.add('hidden'); });
+			if (el) el.classList.remove('hidden');
+		}
+		function setBusy(b) {
+			go.disabled = b;
+			go.textContent = b ? 'Forging…' : 'Forge';
+			if (!b) { var s = document.createElement('span'); s.setAttribute('aria-hidden', 'true'); s.textContent = '✦'; go.appendChild(s); }
+		}
+		function startElapsed() {
+			var t0 = Date.now();
+			stopElapsed();
+			elapsedTimer = setInterval(function () {
+				elapsedEl.textContent = Math.round((Date.now() - t0) / 1000) + 's';
+			}, 1000);
+		}
+		function stopElapsed() { if (elapsedTimer) { clearInterval(elapsedTimer); elapsedTimer = null; } elapsedEl.textContent = ''; }
+
+		function isHttps(u) { try { return new URL(u).protocol === 'https:'; } catch (e) { return false; } }
+
+		// ── Forge API (free NVIDIA lane, same contract the MCP forge_free tool uses) ──
+		function startJob(prompt) {
+			return fetch('/api/forge', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ prompt: prompt, backend: 'nvidia' })
+			}).then(function (res) {
+				return res.json().catch(function () { return {}; }).then(function (data) {
+					if (res.status === 503 || data.error === 'unconfigured') {
+						throw new Error('The generator is offline right now. Try again in a few minutes.');
+					}
+					if (res.status === 429 || data.error === 'rate_limited') {
+						var secs = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 15;
+						throw new Error(data.message || ('The forge is busy. Try again in about ' + secs + ' seconds.'));
+					}
+					if (!res.ok) throw new Error(data.message || ('The generator returned ' + res.status + '.'));
+					return data; // {status:'done', glb_url} or {job_id, status:'queued'}
+				});
+			});
+		}
+
+		function pollUntilDone(jobId, seq) {
+			var deadline = Date.now() + MAX_POLL_MS;
+			function tick() {
+				if (seq !== runSeq) return Promise.resolve(null);
+				if (Date.now() > deadline) return Promise.reject(new Error('Generation timed out. Try a simpler, single-object prompt.'));
+				return new Promise(function (r) { setTimeout(r, POLL_MS); }).then(function () {
+					if (seq !== runSeq) return null;
+					return fetch('/api/forge?job=' + encodeURIComponent(jobId)).then(function (res) {
+						return res.json().catch(function () { return {}; });
+					}).then(function (data) {
+						if (seq !== runSeq) return null;
+						if (data.status === 'done' && data.glb_url) return data;
+						if (data.status === 'failed') throw new Error(data.error || 'Generation failed. Try rephrasing the prompt.');
+						if (data.status === 'running') workMsg.textContent = 'Sculpting geometry and painting textures. Usually under a minute.';
+						return tick();
+					});
+				});
+			}
+			return tick();
+		}
+
+		function forge(prompt) {
+			prompt = String(prompt || '').trim();
+			if (prompt.length < 3) { input.focus(); return; }
+			var seq = ++runSeq;
+			setBusy(true);
+			mv.classList.add('hidden');
+			actions.classList.add('hidden');
+			handoff.classList.remove('show');
+			workTitle.textContent = 'Forging "' + (prompt.length > 60 ? prompt.slice(0, 57) + '…' : prompt) + '"';
+			workMsg.textContent = 'Sending your prompt to the forge.';
+			overlay(working);
+			startElapsed();
+
+			startJob(prompt).then(function (job) {
+				if (seq !== runSeq) return null;
+				if (job.status === 'done' && job.glb_url) return job;
+				if (!job.job_id) throw new Error('The forge did not accept the job. Try again.');
+				workMsg.textContent = 'Queued. Sculpting starts in a moment.';
+				return pollUntilDone(job.job_id, seq);
+			}).then(function (done) {
+				if (!done || seq !== runSeq) return;
+				stopElapsed();
+				remember(prompt, done.glb_url);
+				showResult(done.glb_url, prompt);
+			}).catch(function (err) {
+				if (seq !== runSeq) return;
+				stopElapsed();
+				setBusy(false);
+				failMsg.textContent = (err && err.message) || 'Generation failed.';
+				overlay(failed);
+			});
+		}
+
+		// ── Result ──
+		function showResult(glbUrl, prompt) {
+			if (!isHttps(glbUrl)) {
+				failMsg.textContent = 'The forge returned an invalid model link.';
+				overlay(failed); setBusy(false); return;
+			}
+			current = { glb: glbUrl, prompt: prompt };
+			overlay(working);
+			workTitle.textContent = 'Loading your model…';
+			workMsg.textContent = 'Almost there.';
+			mv.setAttribute('alt', prompt ? '3D model: ' + prompt : 'Generated 3D model');
+			mv.setAttribute('src', glbUrl);
+		}
+
+		mv.addEventListener('load', function () {
+			if (!current || mv.getAttribute('src') !== current.glb) return;
+			overlay(null);
+			setBusy(false);
+			mv.classList.remove('hidden');
+			actions.classList.remove('hidden');
+			meta.textContent = current.prompt || 'Untitled model';
+			meta.title = current.prompt || '';
+			downloadEl.href = current.glb;
+			downloadEl.setAttribute('download', fileName(current.prompt) + '.glb');
+			openViewer.href = '/viewer?src=' + encodeURIComponent(current.glb) + '&title=' + encodeURIComponent((current.prompt || '').slice(0, 80));
+			if (mv.canActivateAR) {
+				arBtn.textContent = '📱 View in your space';
+				handoff.classList.remove('show');
+			} else {
+				arBtn.textContent = '📱 Open AR on your phone';
+				renderHandoff(arLink());
+			}
+		});
+		mv.addEventListener('error', function () {
+			if (!current) return;
+			setBusy(false);
+			failMsg.textContent = 'The model was generated but could not be displayed. You can still download the GLB.';
+			overlay(failed);
+			actions.classList.remove('hidden');
+		});
+
+		function arLink() {
+			if (!current) return location.origin + '/ar';
+			return location.origin + '/api/ar?src=' + encodeURIComponent(current.glb) +
+				'&title=' + encodeURIComponent((current.prompt || '').slice(0, 80));
+		}
+		function fileName(prompt) {
+			var s = (prompt || 'ar-forge').replace(/[^a-z0-9]+/gi, '-').slice(0, 48).replace(/^-|-$/g, '');
+			return s || 'ar-forge';
+		}
+
+		arBtn.addEventListener('click', function () {
+			if (mv.canActivateAR) { try { mv.activateAR(); return; } catch (e) {} }
+			// Desktop / unsupported browser: the server-side launcher routes any device correctly.
+			window.open(arLink(), '_blank', 'noopener');
+		});
+
+		shareBtn.addEventListener('click', function () {
+			if (!current) return;
+			var url = location.origin + '/viewer?src=' + encodeURIComponent(current.glb) +
+				'&title=' + encodeURIComponent((current.prompt || '').slice(0, 80));
+			var payload = { title: 'AR Forge · three.ws', text: current.prompt || '3D model', url: url };
+			if (navigator.share) { navigator.share(payload).catch(function () {}); return; }
+			navigator.clipboard.writeText(url).then(function () {
+				var old = shareBtn.textContent;
+				shareBtn.textContent = 'Link copied ✓';
+				setTimeout(function () { shareBtn.textContent = old; }, 1600);
+			}).catch(function () { window.prompt('Copy this link:', url); });
+		});
+
+		$('retry').addEventListener('click', function () {
+			overlay(idle);
+			if (input.value.trim().length >= 3) forge(input.value);
+			else input.focus();
+		});
+
+		// ── Desktop → phone QR handoff (lazy; page works fine without it) ──
+		var qrLibPromise = null;
+		function loadQrLib() {
+			if (window.QRCode) return Promise.resolve(window.QRCode);
+			if (!qrLibPromise) {
+				qrLibPromise = new Promise(function (resolve, reject) {
+					var s = document.createElement('script');
+					s.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.js';
+					s.onload = function () { window.QRCode ? resolve(window.QRCode) : reject(new Error('qr lib missing')); };
+					s.onerror = function () { reject(new Error('qr lib failed')); };
+					document.head.appendChild(s);
+				});
+			}
+			return qrLibPromise;
+		}
+		function renderHandoff(url) {
+			loadQrLib().then(function (QRCode) {
+				return QRCode.toCanvas($('qr'), url, { width: 132, margin: 1, color: { dark: '#0b0c10', light: '#ffffff' } });
+			}).then(function () {
+				handoff.classList.add('show');
+			}).catch(function () { /* QR is a bonus; the AR button already opens the launcher link. */ });
+		}
+
+		// ── Recent forges (this browser only) ──
+		function readRecent() {
+			try {
+				var v = JSON.parse(localStorage.getItem(LS_KEY) || '[]');
+				return Array.isArray(v) ? v.filter(function (e) { return e && isHttps(e.glb) && e.prompt; }) : [];
+			} catch (e) { return []; }
+		}
+		function remember(prompt, glb) {
+			try {
+				var list = readRecent().filter(function (e) { return e.glb !== glb; });
+				list.unshift({ prompt: String(prompt).slice(0, 200), glb: glb, ts: Date.now() });
+				localStorage.setItem(LS_KEY, JSON.stringify(list.slice(0, 8)));
+			} catch (e) {}
+			renderRecent();
+		}
+		function renderRecent() {
+			var list = readRecent();
+			rail.innerHTML = '';
+			if (!list.length) { recentWrap.classList.add('hidden'); return; }
+			list.forEach(function (e) {
+				var b = document.createElement('button');
+				b.type = 'button';
+				b.className = 'mem';
+				b.title = e.prompt;
+				var cube = document.createElement('span'); cube.className = 'cube'; cube.setAttribute('aria-hidden', 'true'); cube.textContent = '◆';
+				var p = document.createElement('span'); p.className = 'p'; p.textContent = e.prompt;
+				b.appendChild(cube); b.appendChild(p);
+				b.addEventListener('click', function () {
+					runSeq++;
+					stopElapsed();
+					input.value = e.prompt;
+					setBusy(false);
+					overlay(working);
+					workTitle.textContent = 'Loading "' + (e.prompt.length > 60 ? e.prompt.slice(0, 57) + '…' : e.prompt) + '"';
+					workMsg.textContent = 'Reopening a previous forge.';
+					showResult(e.glb, e.prompt);
+				});
+				rail.appendChild(b);
+			});
+			recentWrap.classList.remove('hidden');
+		}
+
+		// ── Wire up ──
+		form.addEventListener('submit', function (ev) { ev.preventDefault(); forge(input.value); });
+		Array.prototype.forEach.call(document.querySelectorAll('#chips .chip'), function (chip) {
+			chip.addEventListener('click', function () { input.value = chip.textContent; forge(chip.textContent); });
+		});
+
+		// Deep link: /ar?src=<glb>&title=<prompt> reopens a shared model directly.
+		(function fromQuery() {
+			var q = new URLSearchParams(location.search);
+			var src = q.get('src') || q.get('glb') || '';
+			if (src && isHttps(src)) {
+				var title = q.get('title') || q.get('prompt') || 'Shared model';
+				overlay(working);
+				workTitle.textContent = 'Loading shared model…';
+				workMsg.textContent = '';
+				showResult(src, title);
+			}
+		})();
+
+		renderRecent();
+
+		// If model-viewer never upgrades (script blocked), surface it instead of spinning forever.
+		setTimeout(function () {
+			if (!customElements.get('model-viewer') && current) {
+				failMsg.textContent = 'The 3D viewer could not load in this browser. Download the GLB and open it in any 3D viewer.';
+				overlay(failed);
+			}
+		}, 12000);
+	})();
+	</script>
+</body>
+</html>

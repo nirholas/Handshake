@@ -1332,6 +1332,13 @@
 			"dest": "/viewer.html"
 		},
 		{
+			"src": "/ar/?",
+			"headers": {
+				"permissions-policy": "xr-spatial-tracking=*, camera=(self), microphone=(self)"
+			},
+			"dest": "/ar-forge.html"
+		},
+		{
 			"src": "/spatial-mcp/?",
 			"dest": "/spatial-mcp/index.html"
 		},

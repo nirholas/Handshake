@@ -7,12 +7,28 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>AR Forge</title>
+			<link>https://three.ws/ar</link>
+			<guid isPermaLink="false">2026-07-14:AR Forge</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Type a prompt, get a real 3D model, and place it in your room: free text-to-3D with one-tap AR on any phone (WebXR, Scene Viewer, Quick Look) and a QR handoff from desktop.</description>
+		</item>
+		<item>
 			<title>End-User License Agreement</title>
 			<link>https://three.ws/legal/eula</link>
 			<guid isPermaLink="false">2026-07-14:End-User License Agreement</guid>
 			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>License terms for the three.ws Seeker/Saga app.</description>
+		</item>
+		<item>
+			<title>AR Forge: type a prompt, place the model in your room</title>
+			<link>https://three.ws/ar</link>
+			<guid isPermaLink="false">2026-07-14:AR Forge: type a prompt, place the model in your room</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new mobile-first app at /ar turns a one-line prompt into a real, downloadable 3D model on the free generation lane, then puts it in your space with one tap: WebXR or Scene Viewer on Android, Quick Look on iPhone. On a desktop it shows a QR code that hands the finished model straight to your phone's camera app, and every creation gets a shareable viewer link. No account, no payment, fair-use rate limits only.</description>
 		</item>
 		<item>
 			<title>New doc: IRL, agents in the real world</title>

@@ -13534,6 +13534,15 @@
 				"feature"
 			],
 			"link": "/rankings"
+		},
+		{
+			"date": "2026-07-14",
+			"title": "AR Forge: type a prompt, place the model in your room",
+			"summary": "A new mobile-first app at /ar turns a one-line prompt into a real, downloadable 3D model on the free generation lane, then puts it in your space with one tap: WebXR or Scene Viewer on Android, Quick Look on iPhone. On a desktop it shows a QR code that hands the finished model straight to your phone's camera app, and every creation gets a shareable viewer link. No account, no payment, fair-use rate limits only.",
+			"tags": [
+				"feature"
+			],
+			"link": "/ar"
 		}
 	]
 }

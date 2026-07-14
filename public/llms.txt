@@ -100,6 +100,7 @@ Experimental features actively shipping. Expect fast iteration.
 - [Lipsync (Mic)](https://three.ws/lipsync/mic): Feed live mic audio through the viseme analyser and watch the avatar's mouth track your voice in real time.
 - [Avatar Artifact](https://three.ws/avatar-artifact): Standalone Three.js viewer for avatar artifacts — embeddable and shareable without any wrapper page.
 - [glTF / GLB Viewer](https://three.ws/viewer): Paste any public glTF/GLB URL and preview it inline — the lightweight, unauthenticated model viewer every 3D Studio tool's shared asset link opens.
+- [AR Forge](https://three.ws/ar): Type a prompt, get a real 3D model, and place it in your room: free text-to-3D with one-tap AR on any phone (WebXR, Scene Viewer, Quick Look) and a QR handoff from desktop.
 - [Spatial MCP — reference renderer](https://three.ws/spatial-mcp): The open standard for returning a live, interactive 3D scene as a first-class MCP tool result, with a framework-free reference renderer that displays any conformant artifact — including ones transformed from other tools.
 - [Playground](https://three.ws/playground): Sandbox for experimenting with agents, prompts, and 3D scenes.
 - [Labs Showcase](https://three.ws/labs): A curated gallery of three.ws's most powerful — and most hidden — features. Find and try things you didn't know existed.

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-14T07:25:19.640Z",
+	"generated_at": "2026-07-14T07:31:01.382Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -848,6 +848,16 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": false
+				},
+				{
+					"path": "/ar",
+					"title": "AR Forge",
+					"description": "Type a prompt, get a real 3D model, and place it in your room: free text-to-3D with one-tap AR on any phone (WebXR, Scene Viewer, Quick Look) and a QR handoff from desktop.",
+					"added": "2026-07-14",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
 				},
 				{
 					"path": "/spatial-mcp",

@@ -698,6 +698,15 @@
 					"added": "2026-07-08"
 				},
 				{
+					"path": "/ar",
+					"title": "AR Forge",
+					"description": "Type a prompt, get a real 3D model, and place it in your room: free text-to-3D with one-tap AR on any phone (WebXR, Scene Viewer, Quick Look) and a QR handoff from desktop.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-07-14",
+					"showcase": true
+				},
+				{
 					"path": "/spatial-mcp",
 					"title": "Spatial MCP — reference renderer",
 					"description": "The open standard for returning a live, interactive 3D scene as a first-class MCP tool result, with a framework-free reference renderer that displays any conformant artifact — including ones transformed from other tools.",
