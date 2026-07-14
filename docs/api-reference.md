@@ -757,20 +757,30 @@ content-safety gate before any GPU work starts.
 **Response, finished inline**
 
 ```json
-{ "status": "done", "glbUrl": "https://cdn.three.ws/forge/anon/<id>.glb", "viewerUrl": "https://three.ws/viewer?src=…", "format": "glb" }
+{ "status": "done", "glbUrl": "https://cdn.three.ws/forge/anon/<id>.glb", "viewerUrl": "https://three.ws/viewer?src=…", "arUrl": "https://three.ws/api/ar?src=…&title=a%20small%20ceramic%20robot%20figurine", "format": "glb" }
 ```
+
+`arUrl` is the place-in-your-room link (`GET /api/ar`, documented below):
+opened on a phone it launches AR directly — Scene Viewer on Android, Quick
+Look on iOS (the GLB converts to USDZ in-page) — and on desktop it falls back
+to the interactive viewer. The prompt rides along as `title` to label the AR
+page. This is the same lane the `/forge` and `/ar` pages use; surface it to
+end users as "place it in your room".
 
 **Response, queued** (ChatGPT Actions time out at ~45s; the lane bounds its
 synchronous hold to 30s, so a slow job always returns `pending` plus a poll
 handle before the Action deadline)
 
 ```json
-{ "status": "pending", "job": "f1.<signed-token>", "poll": "/api/3d/studio?job=f1.<signed-token>", "format": "glb" }
+{ "status": "pending", "job": "f1.<signed-token>", "poll": "/api/3d/studio?job=f1.<signed-token>&title=a%20small%20ceramic%20robot%20figurine", "format": "glb" }
 ```
 
-Poll `GET /api/3d/studio?job=<id>` until `status` is `"done"` (same shape as
-above) or `"error"` (`{ "status": "error", "job", "error" }`; generation is
-free, so a failed job costs nothing to retry).
+Poll `GET /api/3d/studio?job=<id>&title=<label>` until `status` is `"done"`
+(same shape as above, `arUrl` included) or `"error"` (`{ "status": "error",
+"job", "error" }`; generation is free, so a failed job costs nothing to
+retry). `title` is optional — the pending response's `poll` path already
+carries it, so following that path verbatim keeps the finished AR page
+labeled with the prompt.
 
 **Errors**
 

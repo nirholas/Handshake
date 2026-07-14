@@ -13,13 +13,18 @@
 // wire contract is new: a clean, minimal agent shape.
 //
 //   POST { prompt, format?:'glb' }
-//     → 200 { status:'done',  glbUrl, viewerUrl, ... }   (draft finished inline)
-//     → 200 { status:'pending', job, poll, ... }         (queued — poll below)
+//     → 200 { status:'done',  glbUrl, viewerUrl, arUrl, ... }  (draft finished inline)
+//     → 200 { status:'pending', job, poll, ... }               (queued — poll below)
 //
-//   GET ?job=<id>
-//     → 200 { status:'pending' }                         (still generating)
-//     → 200 { status:'done',  glbUrl, viewerUrl }        (GLB ready)
-//     → 200 { status:'error', error }                    (upstream failed; free = no charge)
+//   GET ?job=<id>&title=<prompt>   (title optional — labels the AR/viewer pages)
+//     → 200 { status:'pending' }                               (still generating)
+//     → 200 { status:'done',  glbUrl, viewerUrl, arUrl }       (GLB ready)
+//     → 200 { status:'error', error }                          (upstream failed; free = no charge)
+//
+// arUrl is the device-aware AR launch (api/ar.js): opened on a phone it places
+// the model in the caller's real room (Scene Viewer on Android, Quick Look on
+// iOS); on desktop it falls back to the WebGL viewer. Same lane as /forge and
+// /ar — surface it to end users as "place it in your room".
 //
 // Free = the draft/NIM tier only, and we say so honestly: single-subject prompts,
 // ~draft-fidelity geometry, no rigging. Higher quality + rigging live behind the
@@ -27,7 +32,7 @@
 
 import { cors, wrap, method, json, error, readJson, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { startForge, originFromReq, viewerUrl } from '../_mcp-studio/forge-client.js';
+import { startForge, originFromReq, viewerUrl, arLaunchUrl } from '../_mcp-studio/forge-client.js';
 
 const PROMPT_MIN = 3; // the draft lane needs a subject to condition on
 const PROMPT_MAX = 1000; // matches /api/forge's own prompt ceiling
@@ -53,13 +58,14 @@ const UPGRADE = Object.freeze({
 // Shape a /api/forge draft-lane submit response into this route's agent contract.
 // Pure + exported so the boundary is pinned in tests against real captured forge
 // shapes (inline-done vs queued) without any network.
-export function shapeSubmit(job, base) {
+export function shapeSubmit(job, base, prompt) {
 	const glbUrl = typeof job?.glb_url === 'string' ? job.glb_url : '';
 	if (job?.status === 'done' && glbUrl) {
 		return {
 			status: 'done',
 			glbUrl,
 			viewerUrl: viewerUrl(base, glbUrl),
+			arUrl: arLaunchUrl(base, glbUrl, prompt),
 			format: 'glb',
 			tier: 'draft',
 			free: true,
@@ -67,10 +73,13 @@ export function shapeSubmit(job, base) {
 		};
 	}
 	const token = job?.job_id ?? null;
+	// The poll URL carries the prompt as `title` so the eventual done response
+	// labels the AR/viewer pages without the caller resending anything.
+	const t = typeof prompt === 'string' && prompt.trim() ? `&title=${encodeURIComponent(prompt.trim().slice(0, 80))}` : '';
 	return {
 		status: 'pending',
 		job: token,
-		poll: token ? `/api/3d/generate?job=${encodeURIComponent(token)}` : null,
+		poll: token ? `/api/3d/generate?job=${encodeURIComponent(token)}${t}` : null,
 		format: 'glb',
 		tier: 'draft',
 		free: true,
@@ -80,7 +89,7 @@ export function shapeSubmit(job, base) {
 
 // Shape a /api/forge poll response into { status:'pending'|'done'|'error', ... }.
 // Pure + exported for the same reason as shapeSubmit.
-export function shapePoll(data, base, jobId) {
+export function shapePoll(data, base, jobId, title) {
 	const glbUrl = typeof data?.glb_url === 'string' ? data.glb_url : '';
 	if (data?.status === 'done' && glbUrl) {
 		return {
@@ -88,6 +97,7 @@ export function shapePoll(data, base, jobId) {
 			job: jobId,
 			glbUrl,
 			viewerUrl: viewerUrl(base, glbUrl),
+			arUrl: arLaunchUrl(base, glbUrl, title),
 			format: 'glb',
 			tier: 'draft',
 			free: true,
@@ -104,11 +114,13 @@ export function shapePoll(data, base, jobId) {
 			upgrade: UPGRADE,
 		};
 	}
-	// queued / running / anything transient → still pending.
+	// queued / running / anything transient → still pending; keep the title on the
+	// poll URL so it survives to the done response.
+	const t = typeof title === 'string' && title.trim() ? `&title=${encodeURIComponent(title.trim().slice(0, 80))}` : '';
 	return {
 		status: 'pending',
 		job: jobId,
-		poll: `/api/3d/generate?job=${encodeURIComponent(jobId)}`,
+		poll: `/api/3d/generate?job=${encodeURIComponent(jobId)}${t}`,
 		free: true,
 	};
 }
@@ -208,10 +220,10 @@ async function generate(req, res) {
 		return failFromLane(res, err);
 	}
 
-	return json(res, 200, shapeSubmit(job, base));
+	return json(res, 200, shapeSubmit(job, base, prompt));
 }
 
-async function poll(req, res, jobId) {
+async function poll(req, res, jobId, title) {
 	if (!JOB_HANDLE_RE.test(jobId)) {
 		return json(res, 400, { error: 'invalid_job', message: 'Malformed job id. Pass the "job" value from the generate response.' });
 	}
@@ -231,7 +243,7 @@ async function poll(req, res, jobId) {
 	} catch {
 		// A transient network blip on the self-call is not a job failure — tell the
 		// caller it's still pending so its poll loop retries.
-		return json(res, 200, shapePoll({ status: 'running' }, base, jobId));
+		return json(res, 200, shapePoll({ status: 'running' }, base, jobId, title));
 	}
 
 	const data = await upstream.json().catch(() => ({}));
@@ -245,10 +257,10 @@ async function poll(req, res, jobId) {
 	}
 	if (!upstream.ok) {
 		// Upstream hiccup mid-poll — keep the job alive as pending so the loop retries.
-		return json(res, 200, shapePoll({ status: 'running' }, base, jobId));
+		return json(res, 200, shapePoll({ status: 'running' }, base, jobId, title));
 	}
 
-	return json(res, 200, shapePoll(data, base, jobId));
+	return json(res, 200, shapePoll(data, base, jobId, title));
 }
 
 export default wrap(async (req, res) => {
@@ -262,7 +274,8 @@ export default wrap(async (req, res) => {
 	if (!jobId) {
 		return error(res, 400, 'missing_job', 'Pass ?job=<id> to poll a generation, or POST { prompt } to start one.');
 	}
-	return poll(req, res, jobId);
+	const title = (url.searchParams.get('title') || '').trim().slice(0, 120);
+	return poll(req, res, jobId, title);
 });
 
 // The free NIM draft often finishes inside the submit window; startForge waits up

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-14T23:13:58.101Z",
+	"generated_at": "2026-07-14T23:51:46.820Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -95,6 +95,17 @@
 			"link": "/ar",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
+			"title": "ChatGPT generations now place straight into your room",
+			"summary": "Every 3D model generated through the ChatGPT app and the three.ws 3D Studio GPT now comes back with a one-tap AR link, the same place-it-in-your-home flow the forge has. Open it on a phone and the model appears in your real space: iPhone uses Quick Look, Android uses Scene Viewer, and a computer falls back to the interactive viewer. The inline widget also grew a View in your space button, and refined versions each carry their own AR link.",
+			"link": "/ar",
+			"tags": [
+				"feature",
+				"improvement"
 			]
 		},
 		{

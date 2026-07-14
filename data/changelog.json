@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-14",
+			"title": "ChatGPT generations now place straight into your room",
+			"summary": "Every 3D model generated through the ChatGPT app and the three.ws 3D Studio GPT now comes back with a one-tap AR link, the same place-it-in-your-home flow the forge has. Open it on a phone and the model appears in your real space: iPhone uses Quick Look, Android uses Scene Viewer, and a computer falls back to the interactive viewer. The inline widget also grew a View in your space button, and refined versions each carry their own AR link.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/ar"
+		},
+		{
+			"date": "2026-07-14",
 			"title": "Short prompts now generate what you actually meant",
 			"summary": "A terse prompt like a two-word meme reference used to go straight to the image model and come back as something unrecognizable. The art-director step that expands your idea into a precise single-object spec (shape, materials, framing) was silently failing on every ChatGPT, MCP, and API generation; it now runs on every one of them. On top of that, well-known logos and brand marks resolve to their real geometry deterministically, so asking for a famous mark gives you the actual shape instead of a garbled badge.",
 			"tags": [

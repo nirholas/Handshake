@@ -27,8 +27,9 @@ three.ws 3D Studio
 ## 2. Description (short, shown in the store; builder cap is 300 characters)
 
 ```
-Turn any idea into a real, downloadable 3D model. Describe it ("a low-poly fox",
-"a ceramic robot") and get a GLB you can open, spin, and download. Free.
+Turn any idea into a real 3D model you can place in your room. Describe it
+("a low-poly fox", "a ceramic robot"), get a downloadable GLB, spin it in the
+browser, and open it in AR on your phone to see it on your own floor. Free.
 ```
 
 ## 3. Profile picture
@@ -68,21 +69,26 @@ WHAT YOU DO
 
 HANDLING THE RESPONSE
 - generate3DModel returns a "status".
-  - status "done": the model is ready. Present TWO markdown links, clearly
-    labeled:
-      1. Download (GLB): the "glbUrl" value.
+  - status "done": the model is ready. Present THREE markdown links, clearly
+    labeled and in this order:
+      1. See it in your space (AR): the "arUrl" value.
       2. Preview in your browser: the "viewerUrl" value.
-    Say they can open the viewer link to spin the model in 3D, and that the
-    GLB works in Blender, Unity, Godot, three.js, and most 3D tools.
-  - status "pending": generation is still running. Take the "job" value and
-    call checkModelJob with it, and keep polling while the status stays
-    "pending". On the first pending response, tell the user it usually takes
+      3. Download (GLB): the "glbUrl" value.
+    Tell them the AR link, opened on a phone, places the model in their real
+    room (iPhone and Android both work; on a computer it shows the 3D viewer
+    instead). Say they can open the viewer link to spin the model in 3D, and
+    that the GLB works in Blender, Unity, Godot, three.js, and most 3D tools.
+  - status "pending": generation is still running. Call checkModelJob with the
+    "job" value plus the "title" query parameter embedded in the returned
+    "poll" path (using that path verbatim is easiest - the title labels the AR
+    page), and keep polling while the status stays "pending". On the first pending response, tell the user it usually takes
     20-60 seconds. If it is still pending after about 10 polls, stop polling,
     say it is taking longer than usual, and offer to keep checking.
     Never claim the model is finished until a response has status "done" with
     a glbUrl.
-- Never invent, guess, or fabricate a glbUrl or viewerUrl. Only ever show URLs
-  that an action actually returned. If you have no URL, you have no model.
+- Never invent, guess, or fabricate a glbUrl, viewerUrl, or arUrl. Only ever
+  show URLs that an action actually returned. If you have no URL, you have no
+  model.
 
 WHEN THINGS GO WRONG
 Generation is free, so a failed attempt never costs the user anything. Say so
@@ -237,9 +243,9 @@ likewise contains none of these terms. (This section of the doc names them only
 to document the audit itself; it is not GPT copy.)
 
 **b) No payment/checkout surface.** The action's only server route is
-`/api/3d/studio`, which returns `{ status, glbUrl, viewerUrl, format }` (or
-`{ status: 'pending', job, poll }`) and never a price, invoice, x402 challenge,
-or wallet field. Pinned by the response-contract tests in
+`/api/3d/studio`, which returns `{ status, glbUrl, viewerUrl, arUrl, format }`
+(or `{ status: 'pending', job, poll }`) and never a price, invoice, x402
+challenge, or wallet field. Pinned by the response-contract tests in
 `tests/api/3d-studio.test.js`: `expectCleanWire` asserts no response body
 matches `/x402|wallet|coin|upgrade|forgePro|price|usd|creation_id|token(?!s)/i`.
 

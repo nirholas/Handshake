@@ -79,6 +79,7 @@ function ok({ glbUrl, base, kind, prompt, rigged }) {
 			viewerUrl: vUrl,
 			prompt: prompt || undefined,
 			rigged: Boolean(rigged),
+			ar: { glbUrl, launchUrl: aUrl },
 		}),
 	};
 	const label = rigged ? 'rigged 3D model' : '3D model';
@@ -129,7 +130,14 @@ function refineOk({ glbUrl, base, prompt, instruction, lineage, activeIndex }) {
 		}),
 		activeIndex,
 		// Conformant Spatial MCP artifact (specs/SPATIAL_MCP.md) for the refined model.
-		spatial: buildSpatialArtifact({ glbUrl, kind: 'model', viewerUrl: vUrl, prompt: prompt || undefined, title: instruction || undefined }),
+		spatial: buildSpatialArtifact({
+			glbUrl,
+			kind: 'model',
+			viewerUrl: vUrl,
+			prompt: prompt || undefined,
+			title: instruction || undefined,
+			ar: { glbUrl, launchUrl: aUrl },
+		}),
 	};
 	const versionNo = activeIndex; // 0 = original, 1 = first refinement, …
 	return {

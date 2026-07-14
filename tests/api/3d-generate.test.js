@@ -195,18 +195,30 @@ describe('POST /api/3d/generate — response contract', () => {
 		expect(body.status).toBe('done');
 		expect(body.glbUrl).toBe(SUBMIT_DONE.glb_url);
 		expect(body.viewerUrl).toBe('https://three.ws/viewer?src=' + encodeURIComponent(SUBMIT_DONE.glb_url));
+		// The place-in-your-room AR link rides along, labeled with the prompt.
+		expect(body.arUrl).toBe(
+			'https://three.ws/api/ar?src=' +
+				encodeURIComponent(SUBMIT_DONE.glb_url) +
+				'&title=' +
+				encodeURIComponent('a small ceramic robot figurine'),
+		);
 		// The lane was submitted with the pinned free NVIDIA draft params.
 		const [, opts] = globalThis.fetch.mock.calls[0];
 		expect(JSON.parse(opts.body)).toMatchObject({ prompt: 'a small ceramic robot figurine', backend: 'nvidia', path: 'image', tier: 'draft' });
 	});
 
-	it('returns { status: pending, job, poll } when the lane queues the job', async () => {
+	it('returns { status: pending, job, poll } when the lane queues the job, carrying the AR title', async () => {
 		globalThis.fetch = vi.fn(async () => jsonResponse(SUBMIT_QUEUED));
 		const { res, body } = await dispatch(makeReq({ body: { prompt: 'a small ceramic robot figurine' } }), makeRes());
 		expect(res.statusCode).toBe(200);
 		expect(body.status).toBe('pending');
 		expect(body.job).toBe(SUBMIT_QUEUED.job_id);
-		expect(body.poll).toBe('/api/3d/generate?job=' + encodeURIComponent(SUBMIT_QUEUED.job_id));
+		expect(body.poll).toBe(
+			'/api/3d/generate?job=' +
+				encodeURIComponent(SUBMIT_QUEUED.job_id) +
+				'&title=' +
+				encodeURIComponent('a small ceramic robot figurine'),
+		);
 	});
 
 	it('surfaces a 503 not_configured when the lane is unconfigured', async () => {

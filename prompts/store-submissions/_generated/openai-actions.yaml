@@ -14,9 +14,12 @@ info:
     prevention. Full policy: https://three.ws/legal/privacy.html
 
     Contract: POST /api/3d/studio either finishes inline (status "done" with
-    glbUrl + viewerUrl) or returns status "pending" with a "job" handle. Poll
-    GET /api/3d/studio?job=... every few seconds until status is "done" or
-    "error". Generation typically takes 20-60 seconds.
+    glbUrl + viewerUrl + arUrl) or returns status "pending" with a "job"
+    handle. Poll GET /api/3d/studio?job=... every few seconds until status is
+    "done" or "error". Generation typically takes 20-60 seconds. arUrl is the
+    augmented-reality launch link: opened on a phone it places the model in
+    the user's real room (Quick Look on iPhone, Scene Viewer on Android);
+    always offer it alongside the viewer link.
   contact:
     name: three.ws
     url: https://three.ws
@@ -36,9 +39,10 @@ paths:
       summary: Generate a 3D model (GLB) from a text prompt
       description: >-
         Start a free text-to-3D generation. Describe ONE subject concretely
-        (shape, colors, style). Returns status "done" with glbUrl (download)
-        and viewerUrl (browser preview), or "pending" with a "job" handle to
-        poll via checkModelJob. Unsafe prompts return error "prompt_rejected".
+        (shape, colors, style). Returns status "done" with glbUrl (download),
+        viewerUrl (preview), and arUrl (see it in your room in AR), or
+        "pending" with a "job" handle for checkModelJob. Unsafe prompts return
+        error "prompt_rejected".
       requestBody:
         required: true
         content:
@@ -74,13 +78,14 @@ paths:
                     status: done
                     glbUrl: https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/04818491-d43e-4576-b245-22743bf125a6.glb
                     viewerUrl: https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F04818491-d43e-4576-b245-22743bf125a6.glb
+                    arUrl: https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2F04818491-d43e-4576-b245-22743bf125a6.glb&title=a%20low-poly%20orange%20fox
                     format: glb
                 pending:
                   summary: Queued - poll with the job handle
                   value:
                     status: pending
                     job: f1.eyJwIjoibnZpZGlhIn0.c2ln
-                    poll: /api/3d/studio?job=f1.eyJwIjoibnZpZGlhIn0.c2ln
+                    poll: /api/3d/studio?job=f1.eyJwIjoibnZpZGlhIn0.c2ln&title=a%20low-poly%20orange%20fox
                     format: glb
         "400":
           description: >-
@@ -112,11 +117,12 @@ paths:
       operationId: checkModelJob
       x-openai-isConsequential: false
       summary: Check a pending 3D generation job
-      description: |
-        Poll a generation started by generate3DModel. Pass the "job" value from
-        the pending response. Keep polling every few seconds while status is
-        "pending"; stop on "done" (present glbUrl + viewerUrl) or "error"
-        (tell the user it failed and offer to try again - generation is free).
+      description: >-
+        Poll a generation started by generate3DModel. Use the "poll" path from
+        the pending response verbatim (it carries the job handle and title).
+        Keep polling every few seconds while "pending"; stop on "done"
+        (present glbUrl + viewerUrl + arUrl) or "error" (offer to retry -
+        generation is free).
       parameters:
         - name: job
           in: query
@@ -127,6 +133,16 @@ paths:
             maxLength: 1024
             pattern: "^[A-Za-z0-9._-]+$"
           description: The job handle returned by generate3DModel.
+        - name: title
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 120
+          description: >-
+            Short label for the finished model (usually the prompt) - it names
+            the AR and viewer pages. Already embedded in the "poll" path of a
+            pending response, so it never needs to be added by hand.
       responses:
         "200":
           description: Current job state.
@@ -142,6 +158,7 @@ paths:
                     job: f1.eyJwIjoibnZpZGlhIn0.c2ln
                     glbUrl: https://pub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev/forge/anon/done.glb
                     viewerUrl: https://three.ws/viewer?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fdone.glb
+                    arUrl: https://three.ws/api/ar?src=https%3A%2F%2Fpub-2534e921bf9c4314addcd4d8a6e98b7b.r2.dev%2Fforge%2Fanon%2Fdone.glb
                     format: glb
                 failed:
                   summary: Upstream failure - retrying is free
@@ -179,6 +196,15 @@ components:
           type: string
           format: uri
           description: Interactive three.ws browser viewer for the model (present when done).
+        arUrl:
+          type: string
+          format: uri
+          description: >-
+            Augmented-reality launch link (present when done). Opened on a
+            phone it places the model in the user's real room: Quick Look on
+            iPhone, Scene Viewer on Android; on desktop it falls back to the
+            interactive viewer. Always present it to the user alongside the
+            viewer link.
         format:
           type: string
           const: glb

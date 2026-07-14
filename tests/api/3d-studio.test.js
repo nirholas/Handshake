@@ -118,38 +118,56 @@ function expectCleanWire(body) {
 }
 
 describe('shape helpers — Actions wire contract', () => {
-	it('shapeSubmit maps inline-done to { done, glbUrl, viewerUrl } with nothing else attached', async () => {
+	it('shapeSubmit maps inline-done to { done, glbUrl, viewerUrl, arUrl } with nothing else attached', async () => {
 		const { shapeSubmit } = await import('../../api/3d/studio.js');
-		const out = shapeSubmit(SUBMIT_DONE, 'https://three.ws');
+		const out = shapeSubmit(SUBMIT_DONE, 'https://three.ws', 'a small ceramic robot figurine');
 		expect(out).toEqual({
 			status: 'done',
 			glbUrl: SUBMIT_DONE.glb_url,
 			viewerUrl: 'https://three.ws/viewer?src=' + encodeURIComponent(SUBMIT_DONE.glb_url),
+			arUrl:
+				'https://three.ws/api/ar?src=' +
+				encodeURIComponent(SUBMIT_DONE.glb_url) +
+				'&title=' +
+				encodeURIComponent('a small ceramic robot figurine'),
 			format: 'glb',
 		});
 		expectCleanWire(out);
 	});
 
-	it('shapeSubmit maps queued to { pending, job, poll } pointing at the studio route', async () => {
+	it('shapeSubmit maps queued to { pending, job, poll } carrying the prompt as the AR title', async () => {
 		const { shapeSubmit } = await import('../../api/3d/studio.js');
-		const out = shapeSubmit(SUBMIT_QUEUED, 'https://three.ws');
+		const out = shapeSubmit(SUBMIT_QUEUED, 'https://three.ws', 'a small ceramic robot figurine');
 		expect(out.status).toBe('pending');
 		expect(out.job).toBe(SUBMIT_QUEUED.job_id);
-		expect(out.poll).toBe('/api/3d/studio?job=' + encodeURIComponent(SUBMIT_QUEUED.job_id));
+		expect(out.poll).toBe(
+			'/api/3d/studio?job=' +
+				encodeURIComponent(SUBMIT_QUEUED.job_id) +
+				'&title=' +
+				encodeURIComponent('a small ceramic robot figurine'),
+		);
 		expectCleanWire(out);
 	});
 
-	it('shapePoll maps done/running/failed forge shapes cleanly', async () => {
+	it('shapePoll maps done/running/failed forge shapes cleanly, echoing the title into arUrl', async () => {
 		const { shapePoll } = await import('../../api/3d/studio.js');
-		const done = shapePoll(POLL_DONE, 'https://three.ws', SUBMIT_QUEUED.job_id);
+		const done = shapePoll(POLL_DONE, 'https://three.ws', SUBMIT_QUEUED.job_id, 'a tiny fox');
 		expect(done.status).toBe('done');
 		expect(done.glbUrl).toBe(POLL_DONE.glb_url);
 		expect(done.viewerUrl).toContain('/viewer?src=');
+		expect(done.arUrl).toBe(
+			'https://three.ws/api/ar?src=' + encodeURIComponent(POLL_DONE.glb_url) + '&title=' + encodeURIComponent('a tiny fox'),
+		);
 		expectCleanWire(done);
 
-		const pending = shapePoll(POLL_RUNNING, 'https://three.ws', SUBMIT_QUEUED.job_id);
+		// No title (a caller polling with the bare job handle) → arUrl still present.
+		const doneBare = shapePoll(POLL_DONE, 'https://three.ws', SUBMIT_QUEUED.job_id);
+		expect(doneBare.arUrl).toBe('https://three.ws/api/ar?src=' + encodeURIComponent(POLL_DONE.glb_url));
+
+		const pending = shapePoll(POLL_RUNNING, 'https://three.ws', SUBMIT_QUEUED.job_id, 'a tiny fox');
 		expect(pending.status).toBe('pending');
 		expect(pending.poll).toContain('/api/3d/studio?job=');
+		expect(pending.poll).toContain('&title=' + encodeURIComponent('a tiny fox'));
 		expectCleanWire(pending);
 
 		const err = shapePoll(POLL_FAILED, 'https://three.ws', SUBMIT_QUEUED.job_id);
@@ -220,13 +238,21 @@ describe('POST /api/3d/studio — validation + rate limit', () => {
 });
 
 describe('POST /api/3d/studio — response contract', () => {
-	it('returns { done, glbUrl, viewerUrl } inline with the pinned fast free-lane params', async () => {
+	it('returns { done, glbUrl, viewerUrl, arUrl } inline with the pinned fast free-lane params', async () => {
 		globalThis.fetch = vi.fn(async () => jsonResponse(SUBMIT_DONE));
 		const { res, body } = await dispatch(makeReq({ body: { prompt: 'a small ceramic robot figurine' } }), makeRes());
 		expect(res.statusCode).toBe(200);
 		expect(body.status).toBe('done');
 		expect(body.glbUrl).toBe(SUBMIT_DONE.glb_url);
 		expect(body.viewerUrl).toBe('https://three.ws/viewer?src=' + encodeURIComponent(SUBMIT_DONE.glb_url));
+		// The place-in-your-room link is first-class on every finished generation,
+		// labeled with the user's prompt.
+		expect(body.arUrl).toBe(
+			'https://three.ws/api/ar?src=' +
+				encodeURIComponent(SUBMIT_DONE.glb_url) +
+				'&title=' +
+				encodeURIComponent('a small ceramic robot figurine'),
+		);
 		expectCleanWire(body);
 		const [, opts] = globalThis.fetch.mock.calls[0];
 		expect(JSON.parse(opts.body)).toMatchObject({ prompt: 'a small ceramic robot figurine', backend: 'nvidia', path: 'image', tier: 'standard' });
@@ -283,13 +309,18 @@ describe('POST /api/3d/studio — response contract', () => {
 		expect(JSON.parse(globalThis.fetch.mock.calls[1][1].body).tier).toBe('standard');
 	});
 
-	it('returns { pending, job, poll } when the lane queues the job', async () => {
+	it('returns { pending, job, poll } when the lane queues the job, carrying the AR title', async () => {
 		globalThis.fetch = vi.fn(async () => jsonResponse(SUBMIT_QUEUED));
 		const { res, body } = await dispatch(makeReq({ body: { prompt: 'a small ceramic robot figurine' } }), makeRes());
 		expect(res.statusCode).toBe(200);
 		expect(body.status).toBe('pending');
 		expect(body.job).toBe(SUBMIT_QUEUED.job_id);
-		expect(body.poll).toBe('/api/3d/studio?job=' + encodeURIComponent(SUBMIT_QUEUED.job_id));
+		expect(body.poll).toBe(
+			'/api/3d/studio?job=' +
+				encodeURIComponent(SUBMIT_QUEUED.job_id) +
+				'&title=' +
+				encodeURIComponent('a small ceramic robot figurine'),
+		);
 		expectCleanWire(body);
 	});
 
@@ -333,13 +364,26 @@ describe('GET /api/3d/studio?job= — poll lifecycle', () => {
 		expectCleanWire(body);
 	});
 
-	it('returns done with glbUrl + viewerUrl when the job finishes', async () => {
+	it('returns done with glbUrl + viewerUrl + arUrl when the job finishes', async () => {
 		globalThis.fetch = vi.fn(async () => jsonResponse(POLL_DONE));
 		const { res, body } = await dispatch(makeReq({ method: 'GET', url: `/api/3d/studio?job=${SUBMIT_QUEUED.job_id}` }), makeRes());
 		expect(res.statusCode).toBe(200);
 		expect(body.status).toBe('done');
 		expect(body.glbUrl).toBe(POLL_DONE.glb_url);
 		expect(body.viewerUrl).toContain('/viewer?src=');
+		expect(body.arUrl).toContain('/api/ar?src=');
+		expectCleanWire(body);
+	});
+
+	it('echoes the poll title into the done arUrl so the AR page stays labeled', async () => {
+		globalThis.fetch = vi.fn(async () => jsonResponse(POLL_DONE));
+		const { res, body } = await dispatch(
+			makeReq({ method: 'GET', url: `/api/3d/studio?job=${SUBMIT_QUEUED.job_id}&title=${encodeURIComponent('a tiny fox')}` }),
+			makeRes(),
+		);
+		expect(res.statusCode).toBe(200);
+		expect(body.status).toBe('done');
+		expect(body.arUrl).toContain('&title=' + encodeURIComponent('a tiny fox'));
 		expectCleanWire(body);
 	});
 
