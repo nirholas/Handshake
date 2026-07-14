@@ -390,7 +390,7 @@ describe('llmComplete — paid server keys are the automatic last resort', () =>
 		expect(out.text).toBe('openai backstop');
 		const openaiCall = calls.find((c) => c.url.includes(OPENAI_HOST));
 		expect(openaiCall.headers.authorization).toBe('Bearer sk-oai');
-		expect(openaiCall.body.model).toBe('gpt-4o-mini');
+		expect(openaiCall.body.model).toBe('gpt-5.6-luna');
 	});
 
 	it('does not add server Anthropic when a BYOK key already leads', async () => {

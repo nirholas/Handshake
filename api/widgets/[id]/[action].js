@@ -89,7 +89,7 @@ const PROVIDERS = {
 	},
 	openai: {
 		envKey: 'OPENAI_API_KEY',
-		defaultModel: 'gpt-4o-mini',
+		defaultModel: 'gpt-5.6-luna',
 		url: 'https://api.openai.com/v1/chat/completions',
 		style: 'openai',
 	},

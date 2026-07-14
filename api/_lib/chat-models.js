@@ -79,7 +79,9 @@ export const MODEL_CATALOG = {
 	'nvidia/llama-3.3-nemotron-super-49b-v1.5':  { provider: 'nvidia', tools: true },
 
 	// ── OpenAI (paid) — see operational note above; ranked last ───────────────
-	'gpt-4o-mini':                { provider: 'openai', tools: true },
+	'gpt-5.6-sol':                { provider: 'openai', tools: true },
+	'gpt-5.6-terra':              { provider: 'openai', tools: true },
+	'gpt-5.6-luna':               { provider: 'openai', tools: true },
 };
 
 /**
@@ -142,7 +144,7 @@ export const PROVIDER_MODEL_DEFAULTS = {
 	openrouter: DEFAULT_FREE_MODEL,
 	groq: 'llama-3.3-70b-versatile',
 	nvidia: 'meta/llama-3.3-70b-instruct',
-	openai: 'gpt-4o-mini',
+	openai: 'gpt-5.6-luna',
 };
 
 /**

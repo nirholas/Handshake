@@ -32,9 +32,9 @@ const PROBE_TIMEOUT_MS = 5_000;
 
 // Cheapest live model per provider — a max_tokens:1 completion costs a fraction
 // of a cent and the probe only reads the HTTP status, not the body.
-const OPENROUTER_MODEL = 'openai/gpt-4o-mini';
+const OPENROUTER_MODEL = 'openai/gpt-5.6-luna';
 const ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001';
-const OPENAI_MODEL = 'gpt-4o-mini';
+const OPENAI_MODEL = 'gpt-5.6-luna';
 
 // fetch with a hard 5s timeout; returns the Response (or null on transport
 // error) plus the measured round-trip so the report can surface latency.

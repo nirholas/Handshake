@@ -107,23 +107,32 @@ const PROVIDERS = {
 		native: () => (env.ANTHROPIC_API_KEY ? createAnthropic({ apiKey: env.ANTHROPIC_API_KEY })('claude-haiku-4-5-20251001') : null),
 		openrouterModel: 'anthropic/claude-haiku-4.5',
 	},
-	'gpt-4o': {
-		label: 'GPT-4o',
+	'gpt-5.6-sol': {
+		label: 'GPT-5.6 Sol',
 		network: 'OpenAI',
 		tier: 'flagship',
 		maxOutput: 16384,
-		description: 'OpenAI flagship. Strong multimodal reasoning.',
-		native: () => (env.OPENAI_API_KEY ? createOpenAI({ apiKey: env.OPENAI_API_KEY }).chat('gpt-4o') : null),
-		openrouterModel: 'openai/gpt-4o',
+		description: 'OpenAI flagship. Frontier reasoning, coding, and agentic work.',
+		native: () => (env.OPENAI_API_KEY ? createOpenAI({ apiKey: env.OPENAI_API_KEY }).chat('gpt-5.6-sol') : null),
+		openrouterModel: 'openai/gpt-5.6-sol',
 	},
-	'gpt-4o-mini': {
-		label: 'GPT-4o-mini',
+	'gpt-5.6-terra': {
+		label: 'GPT-5.6 Terra',
+		network: 'OpenAI',
+		tier: 'balanced',
+		maxOutput: 16384,
+		description: 'Balanced intelligence and cost. Best for most tasks.',
+		native: () => (env.OPENAI_API_KEY ? createOpenAI({ apiKey: env.OPENAI_API_KEY }).chat('gpt-5.6-terra') : null),
+		openrouterModel: 'openai/gpt-5.6-terra',
+	},
+	'gpt-5.6-luna': {
+		label: 'GPT-5.6 Luna',
 		network: 'OpenAI',
 		tier: 'fast',
 		maxOutput: 16384,
-		description: 'Fast, affordable GPT. Great for simple tasks.',
-		native: () => (env.OPENAI_API_KEY ? createOpenAI({ apiKey: env.OPENAI_API_KEY }).chat('gpt-4o-mini') : null),
-		openrouterModel: 'openai/gpt-4o-mini',
+		description: 'Fast, cost-efficient GPT. Great for simple tasks.',
+		native: () => (env.OPENAI_API_KEY ? createOpenAI({ apiKey: env.OPENAI_API_KEY }).chat('gpt-5.6-luna') : null),
+		openrouterModel: 'openai/gpt-5.6-luna',
 	},
 	'o3-mini': {
 		label: 'o3-mini',
@@ -550,8 +559,15 @@ export function getAvailableProviders() {
 // exists. Returns { ok: false, status, code, message, available? } when the key
 // is unknown or no route is configured, so every caller (the brain page handler
 // and the live Q&A concierge) reports the same errors identically.
+// Retired provider keys still stored in user prefs resolve to their successor
+// model instead of a 400 (gpt-4o family deprecated upstream July 2026).
+const PROVIDER_ALIASES = {
+	'gpt-4o': 'gpt-5.6-sol',
+	'gpt-4o-mini': 'gpt-5.6-luna',
+};
+
 export function resolveBrain(providerKey) {
-	const spec = PROVIDERS[providerKey];
+	const spec = PROVIDERS[PROVIDER_ALIASES[providerKey] || providerKey];
 	if (!spec) {
 		return {
 			ok: false,

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-14",
+			"title": "Agent brains upgraded to the newest OpenAI models",
+			"summary": "Every OpenAI-powered surface on the platform now runs the GPT-5.6 family released this month. The Brain page and agent model pickers offer three tiers: Sol (flagship reasoning), Terra (balanced), and Luna (fast and cost-efficient), each with a 1M-token context window, up from 128K. Vision fallbacks, the copilot, widgets, and the marketplace default to Luna, and anything still pointed at the retired GPT-4o models is transparently upgraded, so nothing breaks and every answer gets smarter.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/brain"
+		},
+		{
+			"date": "2026-07-14",
 			"title": "The best community models now go to Sketchfab",
 			"summary": "The best forge models are now published to the official three.ws account on Sketchfab, the largest public 3D model site: weekly Forge-Off winners first, then top-voted board models, then creations their makers explicitly accepted. It is a curated showcase, not a firehose: a few validated models a week, each clearly tagged as AI-generated, with its generation prompt and a link back to the creation on three.ws so anyone who finds it can remix it or forge their own. Every link is tagged so we can measure how many visitors the showcase actually brings in.",
 			"tags": [

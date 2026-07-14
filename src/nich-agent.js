@@ -940,7 +940,7 @@ const MODEL_OPTIONS = [
 		provider: 'groq',
 		model: 'llama-3.3-70b-versatile',
 	},
-	{ id: 'openai:gpt-4o-mini', label: 'GPT-4o mini', provider: 'openai', model: 'gpt-4o-mini' },
+	{ id: 'openai:gpt-5.6-luna', label: 'GPT-5.6 Luna', provider: 'openai', model: 'gpt-5.6-luna' },
 	{
 		id: 'watsonx:granite',
 		label: 'IBM Granite 3 (watsonx)',

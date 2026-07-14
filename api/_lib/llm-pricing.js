@@ -21,6 +21,10 @@ const PRICE_PER_MTOK = {
 	'claude-sonnet-4-6': [3, 15],
 	'claude-sonnet-4-5': [3, 15],
 	'claude-haiku-4-5': [1, 5],
+	'gpt-5.6-sol': [5, 30],
+	'gpt-5.6-terra': [2.5, 15],
+	'gpt-5.6-luna': [1, 6],
+	// Deprecated OpenAI family — kept so historical usage_events still price.
 	'gpt-4o-mini': [0.15, 0.6],
 	'gpt-4o': [2.5, 10],
 	// Vertex Gemini (model id carries the publisher prefix) — billed to the GCP

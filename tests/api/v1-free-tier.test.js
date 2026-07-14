@@ -246,7 +246,7 @@ describe('free tier — a non-free endpoint never engages the free lane', () => 
 		const req = makeReq({
 			method: 'POST',
 			url: '/api/v1/x/openai/chat',
-			body: { model: 'gpt-4o-mini', messages: [{ role: 'user', content: 'hi' }] },
+			body: { model: 'gpt-5.6-luna', messages: [{ role: 'user', content: 'hi' }] },
 		});
 		const res = makeRes();
 		const { body } = await dispatch(req, res);

@@ -27,9 +27,9 @@ const ANTHROPIC_MODELS = [
 	{ id: 'claude-opus-4-7', label: 'Claude Opus 4.7' },
 ];
 const OPENAI_MODELS = [
-	{ id: 'gpt-4o-2024-11-20', label: 'GPT-4o (Nov 2024)' },
-	{ id: 'gpt-4o-mini', label: 'GPT-4o mini' },
-	{ id: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
+	{ id: 'gpt-5.6-sol', label: 'GPT-5.6 Sol' },
+	{ id: 'gpt-5.6-terra', label: 'GPT-5.6 Terra' },
+	{ id: 'gpt-5.6-luna', label: 'GPT-5.6 Luna' },
 ];
 const BRAIN_PROVIDERS = ['anthropic', 'openai', 'local', 'none'];
 const TTS_PROVIDERS = ['browser', 'neural', 'elevenlabs', 'openai', 'none'];
