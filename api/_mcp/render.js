@@ -41,7 +41,7 @@ export function safeHttpsUrl(s) {
 	}
 }
 
-export function renderModelViewerHtml({ src, name, poster, background, height, width, autoRotate, ar, cameraOrbit }) {
+export function renderModelViewerHtml({ src, name, poster, background, height, width, autoRotate, ar, arHref, cameraOrbit }) {
 	const attrs = [
 		`src="${attr(src)}"`,
 		'camera-controls',
@@ -56,14 +56,27 @@ export function renderModelViewerHtml({ src, name, poster, background, height, w
 	]
 		.filter(Boolean)
 		.join(' ');
+	// arHref: the device-aware /api/ar launch link. model-viewer's own AR button
+	// only appears on AR-capable browsers and never inside an embedding host's
+	// sandboxed iframe, so a plain visible link is what makes "place it in your
+	// home" one tap from anywhere (ChatGPT opens it in the system browser).
+	const arLink = arHref
+		? '<a class="ar" href="' + attr(arHref) + '" target="_blank" rel="noopener">View in your space</a>'
+		: '';
 	return [
 		'<!doctype html>',
 		'<html><head><meta charset="utf-8"><title>' + esc(name || 'Avatar') + '</title>',
 		'<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"></script>',
 		'<style>html,body{margin:0;height:100%;background:' + attr(background) + '}',
-		'model-viewer{width:' + attr(width) + ';height:' + attr(height) + ';--progress-bar-color:#6a5cff}</style>',
+		'model-viewer{width:' + attr(width) + ';height:' + attr(height) + ';--progress-bar-color:#6a5cff}',
+		'a.ar{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;font-family:ui-sans-serif,system-ui,sans-serif;' +
+			'font-size:13px;font-weight:700;color:#0b0c10;background:#6ea8fe;border-radius:999px;padding:9px 16px;' +
+			'text-decoration:none;box-shadow:0 2px 10px rgba(0,0,0,.35)}',
+		'a.ar:hover{filter:brightness(1.08)}a.ar:active{transform:translateX(-50%) translateY(1px)}',
+		'a.ar:focus-visible{outline:2px solid #fff;outline-offset:2px}</style>',
 		'</head><body>',
 		'<model-viewer ' + attrs + '></model-viewer>',
+		arLink,
 		'</body></html>',
 	].join('\n');
 }

@@ -47,10 +47,16 @@ const JOB_HANDLE_RE = /^[A-Za-z0-9._-]{8,1024}$/;
 // Shape a forge submit response into the Actions contract: model URLs and job
 // state only. Pure + exported so tests pin the boundary against real captured
 // forge shapes without any network.
-export function shapeSubmit(job, base) {
+export function shapeSubmit(job, base, prompt) {
 	const glbUrl = typeof job?.glb_url === 'string' ? job.glb_url : '';
 	if (job?.status === 'done' && glbUrl) {
-		return { status: 'done', glbUrl, viewerUrl: viewerUrl(base, glbUrl), format: 'glb' };
+		return {
+			status: 'done',
+			glbUrl,
+			viewerUrl: viewerUrl(base, glbUrl),
+			arUrl: arLaunchUrl(base, glbUrl, prompt),
+			format: 'glb',
+		};
 	}
 	const handle = job?.job_id ?? null;
 	return {
@@ -65,7 +71,14 @@ export function shapeSubmit(job, base) {
 export function shapePoll(data, base, jobId) {
 	const glbUrl = typeof data?.glb_url === 'string' ? data.glb_url : '';
 	if (data?.status === 'done' && glbUrl) {
-		return { status: 'done', job: jobId, glbUrl, viewerUrl: viewerUrl(base, glbUrl), format: 'glb' };
+		return {
+			status: 'done',
+			job: jobId,
+			glbUrl,
+			viewerUrl: viewerUrl(base, glbUrl),
+			arUrl: arLaunchUrl(base, glbUrl),
+			format: 'glb',
+		};
 	}
 	if (data?.status === 'failed') {
 		return {
