@@ -277,6 +277,7 @@ const rigMesh = {
 			glbUrl: r.riggedGlbUrl,
 			sourceGlbUrl: r.sourceGlbUrl,
 			viewerUrl: viewerUrl(r.riggedGlbUrl),
+			arUrl: arUrl(r.riggedGlbUrl),
 			poseStudioUrl: poseUrl(r.riggedGlbUrl),
 			durationMs: r.durationMs,
 		};
@@ -346,6 +347,7 @@ const forgeAvatar = {
 			glbUrl: r.riggedGlbUrl,
 			meshGlbUrl: r.meshGlbUrl,
 			viewerUrl: viewerUrl(r.riggedGlbUrl),
+			arUrl: arUrl(r.riggedGlbUrl),
 			poseStudioUrl: poseUrl(r.riggedGlbUrl),
 			prompt: r.prompt,
 			animationReady: true,
