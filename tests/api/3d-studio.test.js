@@ -220,7 +220,7 @@ describe('POST /api/3d/studio — validation + rate limit', () => {
 });
 
 describe('POST /api/3d/studio — response contract', () => {
-	it('returns { done, glbUrl, viewerUrl } inline with the pinned free draft lane params', async () => {
+	it('returns { done, glbUrl, viewerUrl } inline with the platform-funded high-tier params', async () => {
 		globalThis.fetch = vi.fn(async () => jsonResponse(SUBMIT_DONE));
 		const { res, body } = await dispatch(makeReq({ body: { prompt: 'a small ceramic robot figurine' } }), makeRes());
 		expect(res.statusCode).toBe(200);
@@ -229,7 +229,36 @@ describe('POST /api/3d/studio — response contract', () => {
 		expect(body.viewerUrl).toBe('https://three.ws/viewer?src=' + encodeURIComponent(SUBMIT_DONE.glb_url));
 		expectCleanWire(body);
 		const [, opts] = globalThis.fetch.mock.calls[0];
-		expect(JSON.parse(opts.body)).toMatchObject({ prompt: 'a small ceramic robot figurine', backend: 'nvidia', path: 'image', tier: 'draft' });
+		const sent = JSON.parse(opts.body);
+		expect(sent).toMatchObject({ prompt: 'a small ceramic robot figurine', path: 'image', tier: 'high' });
+		expect(sent.backend).toBeUndefined();
+	});
+
+	it('attaches the internal seed token to the forge submit when CRON_SECRET is set', async () => {
+		process.env.CRON_SECRET = 'test-seed-secret';
+		try {
+			globalThis.fetch = vi.fn(async () => jsonResponse(SUBMIT_DONE));
+			const { res } = await dispatch(makeReq({ body: { prompt: 'a small ceramic robot figurine' } }), makeRes());
+			expect(res.statusCode).toBe(200);
+			expect(globalThis.fetch.mock.calls[0][1].headers['x-forge-seed']).toBe('test-seed-secret');
+		} finally {
+			delete process.env.CRON_SECRET;
+		}
+	});
+
+	it('falls back to the ungated standard tier when the high-tier gate returns 402', async () => {
+		globalThis.fetch = vi
+			.fn()
+			.mockResolvedValueOnce(jsonResponse({ error: 'three_hold_required' }, { status: 402 }))
+			.mockResolvedValueOnce(jsonResponse(SUBMIT_DONE));
+		const { res, body } = await dispatch(makeReq({ body: { prompt: 'a small ceramic robot figurine' } }), makeRes());
+		expect(res.statusCode).toBe(200);
+		expect(body.status).toBe('done');
+		expectCleanWire(body);
+		expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+		const retry = JSON.parse(globalThis.fetch.mock.calls[1][1].body);
+		expect(retry.tier).toBe('standard');
+		expect(globalThis.fetch.mock.calls[1][1].headers['x-forge-seed']).toBeUndefined();
 	});
 
 	it('returns { pending, job, poll } when the lane queues the job', async () => {

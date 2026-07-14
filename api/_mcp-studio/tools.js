@@ -182,10 +182,13 @@ async function handleForgeFree(args, _auth, req) {
 	if (prompt.length < 3) return toolError('Provide a text prompt of at least 3 characters.');
 	const safety = checkPromptSafety(prompt);
 	if (!safety.allowed) return toolError(safety.message);
-	const tier = VALID_TIER.has(args.tier) ? args.tier : 'draft';
+	// Highest quality by default: high tier runs platform-funded through the
+	// internal seed token (see forge-client.startForge), with a standard-tier
+	// fallback if the gate refuses. Callers can still request a faster tier.
+	const tier = VALID_TIER.has(args.tier) ? args.tier : 'high';
 	let job;
 	try {
-		job = await generate(base, { prompt, backend: 'nvidia', path: 'image', tier }, { timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS' });
+		job = await generate(base, { prompt, path: 'image', tier, internal: true }, { timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS' });
 	} catch (err) {
 		return toolError(failureMessage(err));
 	}
@@ -211,7 +214,7 @@ async function handleTextToAvatar(args, _auth, req) {
 	try {
 		job = await generate(
 			base,
-			{ prompt: prompt || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1' },
+			{ prompt: prompt || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: 'high', internal: true },
 			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS' },
 		);
 	} catch (err) {
@@ -245,7 +248,7 @@ async function handleMeshForge(args, _auth, req) {
 	try {
 		job = await generate(
 			base,
-			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1' },
+			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: 'high', internal: true },
 			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS' },
 		);
 	} catch (err) {
@@ -303,7 +306,7 @@ async function handleForgeAvatar(args, _auth, req) {
 	try {
 		gen = await generate(
 			base,
-			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1' },
+			{ prompt: effective || undefined, imageUrls: imageUrl ? [imageUrl] : undefined, aspect: '1:1', tier: 'high', internal: true },
 			{ timeoutEnv: 'STUDIO_FORGE_TIMEOUT_MS' },
 		);
 	} catch (err) {
@@ -409,7 +412,9 @@ async function handleRefineModel(args, _auth, req) {
 	try {
 		job = await generate(
 			base,
-			refImageUrl ? { prompt: composed, imageUrls: [refImageUrl], aspect: '1:1' } : { prompt: composed },
+			refImageUrl
+				? { prompt: composed, imageUrls: [refImageUrl], aspect: '1:1', tier: 'high', internal: true }
+				: { prompt: composed, tier: 'high', internal: true },
 			{ timeoutEnv: 'STUDIO_REFINE_TIMEOUT_MS' },
 		);
 	} catch (err) {
@@ -453,7 +458,8 @@ const DEFS = [
 		description:
 			'Turn a text prompt into a textured, downloadable 3D model (GLB) — free. Describe a single object, ' +
 			'character, or creature; the studio generates an interactive model you can rotate, view, and download. ' +
-			'Choose a quality tier (draft = fast, standard, high). Renders inline in an interactive 3D viewer.',
+			'Defaults to the highest quality tier; pass tier "draft" or "standard" only when speed matters more ' +
+			'than fidelity. Renders inline in an interactive 3D viewer.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,
@@ -468,7 +474,7 @@ const DEFS = [
 				tier: {
 					type: 'string',
 					enum: ['draft', 'standard', 'high'],
-					description: 'Detail level: draft (fast, default), standard, or high. Higher tiers take longer.',
+					description: 'Detail level: high (default, best quality), standard, or draft (fastest). Lower tiers finish sooner.',
 				},
 			},
 		},

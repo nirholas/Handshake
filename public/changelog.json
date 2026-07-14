@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-14T15:55:23.642Z",
+	"generated_at": "2026-07-14T19:55:00.237Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -95,6 +95,16 @@
 			"link": "/ar",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-14",
+			"type": "update",
+			"title": "ChatGPT generations now come out at maximum quality",
+			"summary": "Every 3D model generated through the free ChatGPT surfaces (the three.ws 3D Studio app and custom GPT) now bakes at the platform's highest quality tier: dense geometry plus full PBR textures, the same tier holders unlock on the site. It is still completely free inside ChatGPT, with the platform covering the premium generation. Expect a generation to take a minute or three instead of seconds; the result is worth the wait.",
+			"link": "/studio",
+			"tags": [
+				"improvement"
 			]
 		},
 		{

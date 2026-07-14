@@ -9,9 +9,11 @@
 // age-13+ content-safety gate before any GPU work starts.
 //
 // It is a thin shaper, not a second pipeline: generation runs through the SAME
-// forge-client → /api/forge free draft lane (NVIDIA NIM TRELLIS) and draws from
-// the SAME per-IP quota buckets as /api/3d/generate, so adding this surface
-// creates no new capacity and no new limiter.
+// forge-client → /api/forge router at the high tier (platform-funded via the
+// internal seed token; the free-first router picks the engine — Hunyuan3D at
+// high, with a standard-tier fallback if the gate refuses) and draws from the
+// SAME per-IP quota buckets as /api/3d/generate, so adding this surface creates
+// no new capacity and no new limiter.
 //
 //   POST { prompt }
 //     → 200 { status:'done',  glbUrl, viewerUrl, format }   (finished inline)
@@ -33,7 +35,7 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { startForge, originFromReq, viewerUrl } from '../_mcp-studio/forge-client.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
 
-const PROMPT_MIN = 3; // the draft lane needs a subject to condition on
+const PROMPT_MIN = 3; // the generation lane needs a subject to condition on
 const PROMPT_MAX = 1000; // matches /api/forge's own prompt ceiling
 const MAX_BODY_BYTES = 8_000;
 
@@ -153,8 +155,12 @@ async function generate(req, res) {
 	const base = originFromReq(req);
 	let job;
 	try {
-		// Pin the free draft lane exactly: NVIDIA NIM TRELLIS, image path, draft tier.
-		job = await startForge(base, { prompt, backend: 'nvidia', path: 'image', tier: 'draft' });
+		// High tier, platform-funded: the internal seed token clears the premium-tier
+		// gate server-side (nothing user-visible), and omitting `backend` lets the
+		// free-first router pick the best engine for the tier (Hunyuan3D at high,
+		// self-host fallbacks). Per-IP metering above still bounds spend. If the
+		// gate refuses, startForge falls back to the ungated standard tier.
+		job = await startForge(base, { prompt, path: 'image', tier: 'high', internal: true });
 	} catch (err) {
 		return failFromLane(res, err);
 	}

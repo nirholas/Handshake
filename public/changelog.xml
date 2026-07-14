@@ -79,6 +79,14 @@
 			<description>A new mobile-first app at /ar turns a one-line prompt into a real, downloadable 3D model on the free generation lane, then puts it in your space with one tap: WebXR or Scene Viewer on Android, Quick Look on iPhone. On a desktop it shows a QR code that hands the finished model straight to your phone's camera app, and every creation gets a shareable viewer link. No account, no payment, fair-use rate limits only.</description>
 		</item>
 		<item>
+			<title>ChatGPT generations now come out at maximum quality</title>
+			<link>https://three.ws/studio</link>
+			<guid isPermaLink="false">2026-07-14:ChatGPT generations now come out at maximum quality</guid>
+			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Every 3D model generated through the free ChatGPT surfaces (the three.ws 3D Studio app and custom GPT) now bakes at the platform's highest quality tier: dense geometry plus full PBR textures, the same tier holders unlock on the site. It is still completely free inside ChatGPT, with the platform covering the premium generation. Expect a generation to take a minute or three instead of seconds; the result is worth the wait.</description>
+		</item>
+		<item>
 			<title>Cleaner pages: sitemap header fits, stray glow clipped, quieter console</title>
 			<link>https://three.ws/sitemap</link>
 			<guid isPermaLink="false">2026-07-14:Cleaner pages: sitemap header fits, stray glow clipped, quieter console</guid>

@@ -76,9 +76,11 @@ HANDLING THE RESPONSE
     GLB works in Blender, Unity, Godot, three.js, and most 3D tools.
   - status "pending": generation is still running. Take the "job" value and
     call checkModelJob with it, and keep polling while the status stays
-    "pending". On the first pending response, tell the user it usually takes
-    20-60 seconds. If it is still pending after about 10 polls, stop polling,
-    say it is taking longer than usual, and offer to keep checking.
+    "pending". On the first pending response, tell the user the studio bakes
+    at its highest quality tier (dense geometry + PBR textures), which usually
+    takes one to three minutes. If it is still pending after about 20 polls,
+    stop polling, say it is taking longer than usual, and offer to keep
+    checking.
     Never claim the model is finished until a response has status "done" with
     a glbUrl.
 - Never invent, guess, or fabricate a glbUrl or viewerUrl. Only ever show URLs

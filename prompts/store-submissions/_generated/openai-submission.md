@@ -25,7 +25,15 @@ to nich@three.ws), which unlocks the partner portal for the submission itself.
 
 **Remaining steps are owner-only:** re-run the §5 reviewer smoke test if desired, then submit this
 package through the partner portal. Schema note for the smoke test: `forge_free` accepts
-`{"prompt": "..."}` only; extra properties (e.g. `quality`) are rejected with `-32602`.
+`{"prompt": "...", "tier"?: "draft"|"standard"|"high"}`; other extra properties are rejected with
+`-32602`.
+
+**Quality upgrade (2026-07-14, pending deploy):** every studio generation tool now defaults to the
+platform's highest quality tier (high: dense geometry + PBR textures, served by the free-for-us
+Hunyuan3D lane), operator-funded via an internal server-to-server token that never appears on the
+wire. The compliance surface is unchanged (still keyless, still free, still zero payment strings);
+generations take longer (typically 1-3 minutes), and the §5 smoke test should be re-run against the
+deployed revision before submitting so the captured timings match.
 
 The two sections below are kept as the historical record of the defects and their fixes.
 
@@ -133,7 +141,7 @@ shape. No action left.
 ### Tool list (titles as shown to users; matches live `tools/list`, re-pulled 2026-07-14)
 | Tool | Title | What it does |
 |------|-------|--------------|
-| `forge_free` | Generate a 3D model from text | Text → textured GLB (free NVIDIA lane). |
+| `forge_free` | Generate a 3D model from text | Text → textured GLB. Defaults to the highest quality tier (dense geometry + PBR textures), platform-funded; caller may request a faster tier. |
 | `text_to_avatar` | Generate a 3D avatar | Text or reference image → avatar GLB. |
 | `mesh_forge` | Generate a 3D mesh (art-directed) | Text/image → mesh, prompt refined by an AI art-director first. |
 | `rig_mesh` | Rig a 3D model for animation | Static GLB URL → humanoid-rigged, animation-ready GLB. |

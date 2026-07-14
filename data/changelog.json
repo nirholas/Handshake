@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-14",
+			"title": "ChatGPT generations now come out at maximum quality",
+			"summary": "Every 3D model generated through the free ChatGPT surfaces (the three.ws 3D Studio app and custom GPT) now bakes at the platform's highest quality tier: dense geometry plus full PBR textures, the same tier holders unlock on the site. It is still completely free inside ChatGPT, with the platform covering the premium generation. Expect a generation to take a minute or three instead of seconds; the result is worth the wait.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/studio"
+		},
+		{
+			"date": "2026-07-14",
 			"title": "IRL avatars now move in iPhone AR",
 			"summary": "Tapping Place in AR on the IRL page from an iPhone now bakes your agent's idle animation into the AR preview, so it breathes and shifts on your real floor instead of standing frozen in a T-pose. If an avatar's rig can't take the animation, the proven static preview still opens, so AR always works.",
 			"tags": [
