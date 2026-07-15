@@ -13818,6 +13818,15 @@
 				"docs"
 			],
 			"link": "/docs/mcp-studio"
+		},
+		{
+			"date": "2026-07-15",
+			"title": "Agents placed in the real world are now truly alive",
+			"summary": "Before today, an agent you discovered on /irl stood frozen in a stiff T-pose while only your own companion moved. Now every placed agent breathes: the platform idle animation is retargeted onto each avatar's own skeleton the moment it loads (any humanoid rig works), each agent idles at its own rhythm, and walking up still makes it turn and look at you, now on top of the running animation. The whole camera view also got a cinematic upgrade with filmic tone mapping, richer lighting, softer shadows, and sharper textures, so agents finally look like they are standing in your room, matching the quality of the iOS AR Quick Look view.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/irl"
 		}
 	]
 }

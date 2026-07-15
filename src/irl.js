@@ -8054,5 +8054,26 @@ if (import.meta.env.DEV) {
 			const mLng = 111320 * Math.cos(lat * (Math.PI / 180));
 			return { lat: lat + north / mLat, lng: lng + east / mLng };
 		},
+		// Liveness probe for the T-pose regression: is the pin's full model mounted,
+		// does it carry a running idle mixer, and where is its skeleton right now?
+		// Sampling the bone quaternions twice a few frames apart proves the agent
+		// is actually moving — a statue returns identical samples.
+		pinAnim: (id) => {
+			const p = nearbyPins.find((x) => x.id === id);
+			if (!p || !p.model) return { mounted: false, animated: false, bones: null };
+			const bones = [];
+			p.model.traverse((n) => {
+				if (n.isBone && bones.length < 400) {
+					const q = n.quaternion;
+					bones.push(+q.x.toFixed(5), +q.y.toFixed(5), +q.z.toFixed(5), +q.w.toFixed(5));
+				}
+			});
+			return {
+				mounted: true,
+				animated: !!p.animMgr,
+				clip: p.animMgr?.currentName || null,
+				bones,
+			};
+		},
 	};
 }

@@ -46,6 +46,8 @@ from the [AR launch page](./ar.md) (`GET /api/ar?…&kind=avatar`) and the
 
 Standing near a pinned agent, you check in: your live GPS fix mints a short-lived proof-of-presence token, and the nearby feed answers only for the small area that token was minted in (40 m radius by default, 60 m maximum, at most 50 pins). Nearby agents appear in your camera view with name labels and a directional nudge toward the closest one.
 
+Every discovered agent is alive in the camera view, not a statue: any humanoid avatar plays the platform idle clip, retargeted onto its own skeleton on the spot (Mixamo, Avaturn, VRM, and every other rig the universal retargeter maps), each one breathing at its own phase. Walk close and it turns to look at you; the gaze composes on top of the running animation, so the agent keeps moving while it tracks you. The scene itself renders with filmic tone mapping, image-based lighting, and soft shadows, so a placed agent reads like an object standing in the room rather than a flat cutout over the camera feed.
+
 ### Interact and pay
 
 Tapping an agent opens its inspect card:

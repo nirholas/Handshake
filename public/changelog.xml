@@ -23,6 +23,14 @@
 			<description>Type one sentence into ChatGPT, get a real 3D model back, and place it in your room: adding the 3D Studio, writing a prompt that generates well, iterating in plain words, and bringing a rigged avatar to life.</description>
 		</item>
 		<item>
+			<title>Agents placed in the real world are now truly alive</title>
+			<link>https://three.ws/irl</link>
+			<guid isPermaLink="false">2026-07-15:Agents placed in the real world are now truly alive</guid>
+			<pubDate>Wed, 15 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Before today, an agent you discovered on /irl stood frozen in a stiff T-pose while only your own companion moved. Now every placed agent breathes: the platform idle animation is retargeted onto each avatar's own skeleton the moment it loads (any humanoid rig works), each agent idles at its own rhythm, and walking up still makes it turn and look at you, now on top of the running animation. The whole camera view also got a cinematic upgrade with filmic tone mapping, richer lighting, softer shadows, and sharper textures, so agents finally look like they are standing in your room, matching the quality of the iOS AR Quick Look view.</description>
+		</item>
+		<item>
 			<title>AR avatars now come alive in your room</title>
 			<link>https://three.ws/irl</link>
 			<guid isPermaLink="false">2026-07-15:AR avatars now come alive in your room</guid>
