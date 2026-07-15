@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-15T12:03:37.462Z",
+	"generated_at": "2026-07-15T16:34:23.253Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -72,6 +72,16 @@
 			"type": "update",
 			"title": "iPhone AR placement now hands you back to the pin",
 			"summary": "On iPhone, placing an agent in AR opens Apple's Quick Look viewer, which is sealed: the page can't put buttons inside it. It does allow one banner, and that banner is now wired: it shows your agent's name in the AR view, and tapping it brings you back to IRL with the Pin here button pulsing, so the exact spot you liked in AR becomes a durable pin other people can walk up to, in one tap.",
+			"link": "/irl",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-15",
+			"type": "update",
+			"title": "Pinch-to-resize now works in plain camera AR too",
+			"summary": "Two-finger pinch-to-resize was already live in the WebXR floor-anchor flow (Chrome for Android); it now works the same way in plain camera-mode AR, including iOS Safari's Pin here path. Pinch before or after placing your agent, from a desk figurine to a statue, and the size saves to the pin so everyone nearby sees it exactly as big as you left it.",
 			"link": "/irl",
 			"tags": [
 				"improvement"

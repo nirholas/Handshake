@@ -17,7 +17,7 @@ import {
 	advancePulse, isXrVisible, nextTrackingState, reticleVisual, TRACKING_LOSS_FRAMES,
 } from './anchor-lifecycle.js';
 import { DepthOcclusion } from './depth-occlusion.js';
-import { createPinchState, pinchEnd, pinchMove, pinchStart } from './pinch-scale.js';
+import { createPinchState, pinchEnd, pinchMove, pinchStart, touchDist } from './pinch-scale.js';
 
 /** prefers-reduced-motion: calm, static reticle/confirm states when set. */
 function _prefersReducedMotion() {
@@ -371,21 +371,15 @@ export class WebXRSession {
 	// Raw touch geometry → the pure pinch state machine → a uniform scale on the
 	// content group (and its contact shadow, so the grounding grows with it).
 
-	static _touchDist(touches) {
-		const dx = touches[0].clientX - touches[1].clientX;
-		const dy = touches[0].clientY - touches[1].clientY;
-		return Math.hypot(dx, dy);
-	}
-
 	_handleTouchStart(e) {
 		if (e.touches.length !== 2) return;
 		const base = this._viewer.content?.scale?.x ?? 1;
-		pinchStart(this._pinch, WebXRSession._touchDist(e.touches), base);
+		pinchStart(this._pinch, touchDist(e.touches), base);
 	}
 
 	_handleTouchMove(e) {
 		if (!this._pinch.active || e.touches.length !== 2) return;
-		const s = pinchMove(this._pinch, WebXRSession._touchDist(e.touches));
+		const s = pinchMove(this._pinch, touchDist(e.touches));
 		if (s == null) return;
 		this._applyContentScale(s);
 		this._onScale?.(s, { final: false });

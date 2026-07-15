@@ -43,7 +43,9 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import nipplejs from 'nipplejs';
 import { AnimationManager } from './animation-manager.js';
 import { WebXRSession } from './ar/webxr.js';
-import { clampPinScale } from './ar/pinch-scale.js';
+import {
+	clampPinScale, createPinchState, pinchEnd, pinchMove, pinchStart, touchDist,
+} from './ar/pinch-scale.js';
 import { resolvePlacementCapability } from './ar/placement-capability.js';
 import { openQuickLook } from './ar/quick-look.js';
 import { withQuickLookBanner } from './ar/quicklook-banner.js';
@@ -799,6 +801,9 @@ canvas.addEventListener('pointerdown', e => {
 	// The WebXR floor-anchor session (and its failed-start error card) layers a modal
 	// overlay over the canvas; don't arm a long-press behind it.
 	if (xrOverlay && !xrOverlay.hidden) return;
+	// A camera-mode pinch owns both fingers — the second finger's pointerdown is
+	// never the start of a long-press.
+	if (camPinchBlocking()) return;
 	tapDownX = e.clientX; tapDownY = e.clientY; armLongPress(e);
 });
 canvas.addEventListener('pointerup', e => {
@@ -809,6 +814,9 @@ canvas.addEventListener('pointerup', e => {
 	// stray sheets). The overlay is display:none whenever AR/gyro mode is active, so
 	// this only gates during an actual XR session or its error state.
 	if (xrOverlay && !xrOverlay.hidden) return;
+	// A pinch (or a finger lifting right after one) is never a tap — mirrors the
+	// WebXR session's own _handleBeforeSelect debounce.
+	if (camPinchBlocking()) return;
 	// While calibrating, taps belong to the nudge gesture — never re-open a sheet.
 	if (calibrateActive) return;
 	if (Math.hypot(e.clientX - tapDownX, e.clientY - tapDownY) > TAP_THRESHOLD) return;
@@ -935,11 +943,59 @@ window.addEventListener('keyup', e => {
 	}
 });
 
+// ── Pinch-to-resize (camera-mode AR, no WebXR) ────────────────────────────
+// The WebXR floor-anchor lane has had two-finger pinch-resize since its own
+// session controller (src/ar/webxr.js) shipped; plain camera-mode AR (no
+// device support for immersive-ar, or the user never opened the floor-anchor
+// flow) never got the gesture. Same pure state machine, but there's no XR
+// content group to scale here — it drives avatarRig directly, since the
+// owner's own AR avatar renders through avatarRig, not as one of nearbyPins
+// (savePin's local pin literal never spawns a group for the owner's own pin).
+// A short post-pinch debounce (mirroring WebXRSession's _handleBeforeSelect)
+// keeps the second finger's lift from misfiring drag-to-orbit or a tap.
+const _camPinch = createPinchState();
+let _camScale = 1;
+let _camPinchEndedAt = -Infinity;
+function camPinchBlocking() {
+	return _camPinch.active || performance.now() - _camPinchEndedAt < 350;
+}
+canvas.addEventListener('touchstart', e => {
+	if (!arActive || xrSession || calibrateActive || placeModeActive) return;
+	if (e.touches.length !== 2) return;
+	pinchStart(_camPinch, touchDist(e.touches), avatarRig.scale.x);
+}, { passive: true });
+canvas.addEventListener('touchmove', e => {
+	if (!_camPinch.active || e.touches.length !== 2) return;
+	const s = pinchMove(_camPinch, touchDist(e.touches));
+	if (s == null) return;
+	_camScale = s;
+	avatarRig.scale.setScalar(s);
+	setStatus(`Size ${Math.round(s * 100)}% — pinch to resize`);
+}, { passive: true });
+canvas.addEventListener('touchend', () => {
+	const s = pinchEnd(_camPinch);
+	if (s == null) return;
+	_camPinchEndedAt = performance.now();
+	_camScale = s;
+	if (!gpsPin?.id) {
+		setStatus(`Size ${Math.round(s * 100)}% — tap Pin here to save your agent at this size`);
+		return;
+	}
+	fetch('/api/irl/pins', {
+		method: 'PATCH', credentials: 'include',
+		headers: deviceHeaders({ 'Content-Type': 'application/json' }),
+		body: JSON.stringify({ id: gpsPin.id, deviceToken: _deviceToken, scale: s }),
+	}).then(r => {
+		if (!r.ok) { setStatus('Size couldn’t be saved, pinch again to retry', { error: true }); return; }
+		setStatus(`Saved at ${Math.round(s * 100)}% size — nearby viewers see it this big too`);
+	}).catch(() => setStatus('Size couldn’t be saved (offline?), pinch again to retry', { error: true }));
+}, { passive: true });
+
 // ── Drag-to-orbit (disabled in place mode so taps don't orbit) ───────────
 {
 	let dragging = false, lastX = 0, lastY = 0, downId = -1;
 	canvas.addEventListener('pointerdown', e => {
-		if (placeModeActive || calibrateActive) return;
+		if (placeModeActive || calibrateActive || camPinchBlocking()) return;
 		// Don't orbit the (paused, hidden) IRL camera behind the WebXR overlay.
 		if (xrOverlay && !xrOverlay.hidden) return;
 		const r = joystickEl.getBoundingClientRect();
@@ -951,6 +1007,9 @@ window.addEventListener('keyup', e => {
 		// Calibration may engage mid-drag (long-press fires while still held) — yield
 		// the pointer to the nudge gesture instead of orbiting the camera.
 		if (calibrateActive) { dragging = false; return; }
+		// A second finger landing mid-drag turns this into a pinch — the first
+		// finger's already-armed drag must yield instead of also panning the camera.
+		if (camPinchBlocking()) { dragging = false; return; }
 		if (!dragging || e.pointerId !== downId) return;
 		cameraYaw   -= (e.clientX - lastX) * 0.005;
 		cameraPitch  = Math.max(PITCH_MIN, Math.min(PITCH_MAX, cameraPitch - (e.clientY - lastY) * 0.0035));
@@ -1002,6 +1061,10 @@ function _clearAvatar() {
 		disposeObject3D(avatar);
 		avatar = null;
 	}
+	// A freshly swapped-in avatar starts at natural size — the old one's
+	// pinch-resize (camera-mode AR) shouldn't carry over onto a different model.
+	_camScale = 1;
+	avatarRig.scale.setScalar(1);
 }
 
 // Attach the embodied-finance glow to the carried avatar and start its live feed.
@@ -1407,6 +1470,10 @@ async function setLocked(next) {
 			}
 			gpsPin = null;
 			gpsModeActive = false;
+			// Unpinning deletes the placement outright — the next "Pin here" is a
+			// fresh session, so the pinch-resize resets to natural size with it.
+			_camScale = 1;
+			avatarRig.scale.setScalar(1);
 		}
 	}
 	// In AR the lock path owns its own status — the deferred-GPS "Waiting…",
@@ -2272,6 +2339,9 @@ async function savePin(lat, lng, heading = 0, caption = '', anchor = null, place
 			gpsAccuracyM: src === 'map' ? null : gpsState.accuracy,
 			altitudeM:    src === 'map' ? null : gpsState.altitude,
 			source:       src,
+			// Pinch-resized size (camera-mode AR, mirrors the WebXR anchor.scale) —
+			// omitted at natural scale so a plain placement stays byte-identical.
+			scale:        Number.isFinite(a.scale) && a.scale !== 1 ? a.scale : undefined,
 		};
 		const r = await fetch('/api/irl/pins', {
 			method: 'POST',
@@ -2658,7 +2728,9 @@ function commitPin(pinLat, pinLng, headingDeg, caption, source = 'gyro-gps') {
 	// yawDeg is the absolute compass heading; source carries the absolute-vs-relative
 	// distinction ('gyro-gps' | 'gyro-gps:rel') for A3. accuracy / altitude are filled
 	// from the live GPS fix inside savePin().
-	const anchor = { heightM: 0, yawDeg: headingDeg, source };
+	// scale: any camera-mode pinch that happened before "Pin here" rides straight
+	// into the placement instead of requiring a separate PATCH after the fact.
+	const anchor = { heightM: 0, yawDeg: headingDeg, source, scale: _camScale };
 	// Tell the truth about precision: a noisy fix (>25 m) is an approximate spot, not a
 	// pinpoint. The exact metres ride the stored gpsAccuracyM (savePin); here we surface
 	// a subtle note so the success copy never implies more accuracy than the fix had.

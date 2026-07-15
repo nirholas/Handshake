@@ -84,3 +84,17 @@ export function clampPinScale(v) {
 	if (!Number.isFinite(n) || n <= 0) return 1;
 	return Math.min(PINCH_SCALE_MAX, Math.max(PINCH_SCALE_MIN, n));
 }
+
+/**
+ * Euclidean distance between two touch points, in CSS pixels — the raw
+ * geometry both AR pinch lanes (WebXR's dom-overlay and camera-mode's plain
+ * canvas) feed into pinchStart/pinchMove.
+ *
+ * @param {TouchList|Touch[]} touches
+ * @returns {number}
+ */
+export function touchDist(touches) {
+	const dx = touches[0].clientX - touches[1].clientX;
+	const dy = touches[0].clientY - touches[1].clientY;
+	return Math.hypot(dx, dy);
+}
