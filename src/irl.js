@@ -5,6 +5,7 @@
 // Walking + joystick from walk-embed. Camera mode makes the real floor the stage.
 
 import {
+	ACESFilmicToneMapping,
 	AmbientLight,
 	Box3,
 	BoxGeometry,
@@ -19,7 +20,7 @@ import {
 	MeshStandardMaterial,
 	OctahedronGeometry,
 	OrthographicCamera,
-	PCFShadowMap,
+	PCFSoftShadowMap,
 	PerspectiveCamera,
 	PlaneGeometry,
 	PMREMGenerator,
@@ -55,6 +56,7 @@ import { startOnboarding, ensurePermission, needsMotionGesture, setPermissionSta
 import { reserveWebGLContext, releaseWebGLContext } from './webgl-budget.js';
 import { detectTier, BUDGETS, TIER_ORDER, shiftTier } from './irl/perf-budget.js';
 import { sharedGLTFLoader, createLoadQueue } from './irl/load-queue.js';
+import { mountPinIdle, getIdleClipJson } from './irl/pin-idle.js';
 import { createWealthAura3D } from './shared/wealth-aura-3d.js';
 import { fetchWealthState } from './shared/agent-wealth-state.js';
 import { trackLevelUp, installLevelUpCelebrations } from './shared/wealth-levelup.js';
@@ -199,18 +201,27 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.setClearColor(0x000000, 0);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = PCFShadowMap;
+renderer.shadowMap.type = PCFSoftShadowMap;
+// Filmic tone mapping is what separates "sticker pasted on the camera feed"
+// from "object standing in the room" — highlight rolloff + midtone contrast,
+// the same treatment Quick Look applies to a USDZ. Exposure compensates for
+// ACES's overall darkening at these light levels.
+renderer.toneMapping = ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
 
 const scene = new Scene();
 const pmrem = new PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
-const ambientLight = new AmbientLight(0xffffff, 0.55);
+// Keyed like a studio portrait, not a flood: the IBL carries the specular/rim
+// detail, the sun carries shape + shadow. The old 0.55 ambient + 0.6 hemi fill
+// flattened every model into a cardboard cutout.
+const ambientLight = new AmbientLight(0xffffff, 0.3);
 scene.add(ambientLight);
-const hemi = new HemisphereLight(0xbcd6ff, 0x202830, 0.6);
+const hemi = new HemisphereLight(0xbcd6ff, 0x202830, 0.45);
 hemi.position.set(0, 5, 0);
 scene.add(hemi);
-const sun = new DirectionalLight(0xffffff, 1.4);
+const sun = new DirectionalLight(0xffffff, 1.55);
 sun.position.set(4, 8, 6);
 sun.castShadow = true;
 sun.shadow.mapSize.set(1024, 1024);
@@ -247,6 +258,32 @@ const glbQueue = createLoadQueue({
 	maxActive: budget.maxGLB,
 	priorityOf: (pin) => (pin._lodDist != null ? pin._lodDist : (pin.distance_m != null ? pin.distance_m : 1e9)),
 });
+
+// Warm the shared idle clip while the first GLBs are still downloading, so a
+// freshly mounted pin can start breathing on its very first frame.
+getIdleClipJson();
+
+// Anisotropic filtering on every model texture — cloth/skin detail stays sharp
+// at the oblique angles an avatar standing on the real floor is actually seen
+// from. Capped at 8: past that the visual gain is nil and the bandwidth isn't.
+const _maxAniso = Math.min(8, renderer.capabilities.getMaxAnisotropy() || 1);
+const _ANISO_SLOTS = ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap'];
+function sharpenModelTextures(root) {
+	root.traverse((n) => {
+		if (!n.isMesh) return;
+		const mats = Array.isArray(n.material) ? n.material : [n.material];
+		for (const m of mats) {
+			if (!m) continue;
+			for (const slot of _ANISO_SLOTS) {
+				const tex = m[slot];
+				if (tex && tex.anisotropy < _maxAniso) {
+					tex.anisotropy = _maxAniso;
+					tex.needsUpdate = true;
+				}
+			}
+		}
+	});
+}
 
 // Apply the active tier to the renderer + load queue. Called at boot and each
 // time the watchdog steps the tier. Idempotent.
@@ -1057,6 +1094,7 @@ async function loadAvatar(idOrUrl, nameOverride) {
 			if (n.material?.envMapIntensity !== undefined) n.material.envMapIntensity = 0.85;
 		}
 	});
+	sharpenModelTextures(avatar);
 	const box = new Box3().setFromObject(avatar);
 	avatar.position.y -= box.min.y;
 	avatarRig.add(avatar);
@@ -2737,6 +2775,11 @@ const xrViewer = {
 	_updateRenderLoop() { startTick(); },
 };
 
+// While an immersive WebXR session runs, ITS loop renders the scene and IRL's
+// tick is parked — pins would freeze mid-idle without this hook (the XR loop
+// calls each after-animate hook with dt every frame).
+xrViewer._afterAnimateHooks.push((dt) => updatePinIdles(dt));
+
 // Single owner of the IRL render loop's RAF handle so WebXRSession can pause it
 // (cancelAnimationFrame on xrViewer._rafId) while the XR animation loop runs,
 // then resume it on exit via _updateRenderLoop().
@@ -3656,6 +3699,8 @@ function flashPinLabel(pin) {
 // drop the DOM label. The single place that knows the full E2 resource set.
 function disposePin(p) {
 	cancelPinGLB(p);
+	// Idle mixer first — its actions bind the skeleton the group disposal frees.
+	if (p.animMgr) { p.animMgr.detach(); p.animMgr = null; }
 	// Tear the impostor down FIRST, in the correct order (null the sprite material's
 	// texture ref → dispose material → dispose RT + its texture). If the group
 	// traversal below reached the sprite instead, it would dispose the RT's texture
@@ -4233,8 +4278,10 @@ function _ensureSnapRig() {
 	if (_snapScene) return;
 	_snapScene = new Scene();
 	_snapCam = new OrthographicCamera(-1, 1, 1, -1, 0.01, 100);
-	_snapScene.add(new AmbientLight(0xffffff, 0.9));
-	const key = new DirectionalLight(0xffffff, 1.25);
+	// Balanced against the main scene's ambient/hemi/sun + IBL (the environment
+	// is assigned per-bake below) so an impostor reads like the model it replaces.
+	_snapScene.add(new AmbientLight(0xffffff, 0.45));
+	const key = new DirectionalLight(0xffffff, 1.4);
 	key.position.set(2, 4, 5);
 	_snapScene.add(key);
 }
@@ -4247,6 +4294,9 @@ const _snapCenter = new Vector3();
 // the impostor's feet land where the model's did.
 function bakeImpostor(model) {
 	_ensureSnapRig();
+	// Share the live scene's IBL (re-read each bake — it's rebuilt on context
+	// restore) so a billboard's shading matches the full model it stands in for.
+	_snapScene.environment = scene.environment;
 	_snapBox.setFromObject(model);
 	_snapBox.getSize(_snapSize);
 	_snapBox.getCenter(_snapCenter);
@@ -4326,14 +4376,27 @@ function requestPinGLB(pin, bakeOnly = false) {
 		});
 }
 
-function onPinGLBLoaded(pin, gltf) {
+async function onPinGLBLoaded(pin, gltf) {
 	// The pin may have been removed (walked out of the fetch radius) mid-flight.
 	if (!pin.group) { disposeObject3D(gltf.scene); return; }
 	const model = gltf.scene;
 	const castShadow = budget.shadow > 0;
 	model.traverse(n => { if (n.isMesh) { n.castShadow = castShadow; n.frustumCulled = false; } });
+	sharpenModelTextures(model);
 	const box = new Box3().setFromObject(model);
 	model.position.y -= box.min.y;   // feet to ground
+
+	// Bring the rig to life BEFORE the impostor bake so the snapshot (and the
+	// mounted model) show a natural idle stance, never the bind-pose T. The await
+	// is bounded: the clip JSON is one page-wide cached fetch. A rig that can't
+	// be driven (prop, non-humanoid) returns null and stays static as before.
+	const animMgrForPin = await mountPinIdle(model, { avatarUrl: pin.avatar_url });
+	// Re-check: the pin may have been disposed while the clip was fetching.
+	if (!pin.group) {
+		animMgrForPin?.detach();
+		disposeObject3D(model);
+		return;
+	}
 
 	// Bake the impostor once; reused whenever this agent later recedes past lodNear.
 	if (!pin._impostorRT) {
@@ -4346,6 +4409,7 @@ function onPinGLBLoaded(pin, gltf) {
 	// If the viewer receded past lodNear during the load (or this was a bake-only
 	// request), don't mount the skinned mesh — the impostor we just baked covers it.
 	if (pin._bakeOnly || pin._lod !== 'full') {
+		animMgrForPin?.detach();
 		disposeObject3D(model);
 		if (pin._lod === 'impostor') { hideDot(pin); showImpostor(pin); }
 		return;
@@ -4355,6 +4419,7 @@ function onPinGLBLoaded(pin, gltf) {
 	hideDot(pin); hideImpostor(pin);
 	pin.group.add(model);
 	pin.model = model;
+	pin.animMgr = animMgrForPin;
 	pin.glbLoaded = true;
 	pin.group.rotation.y = pinYawRad(pin);
 	pin.group.position.y = pinHeightM(pin);
@@ -4385,6 +4450,9 @@ function onPinGLBLoaded(pin, gltf) {
 // memory regardless of how many pins the user walks past.
 function evictPinGLB(pin) {
 	if (!pin.glbLoaded || !pin.model) return;
+	// Stop the idle mixer FIRST so no orphaned action keeps binding the skeleton
+	// we're about to dispose (same ordering the carried avatar's _clearAvatar uses).
+	if (pin.animMgr) { pin.animMgr.detach(); pin.animMgr = null; }
 	pin.group.remove(pin.model);
 	disposeObject3D(pin.model);
 	pin.model = null;
@@ -6377,6 +6445,16 @@ const _gazeTargetLocal = new Quaternion();
 
 function _byAwareDist(a, b) { return a._dist2D - b._dist2D; }
 
+// Advance each mounted pin's idle mixer. Cost is bounded by the LOD budget:
+// only pins at the 'full' band ever hold an animMgr (≤ budget.maxGLB of them).
+// Runs from tick() in the normal loop and from the WebXR after-animate hook
+// while an immersive session drives rendering instead.
+function updatePinIdles(dt) {
+	for (const pin of nearbyPins) {
+		if (pin.animMgr) pin.animMgr.update(dt);
+	}
+}
+
 // Rotate a head/torso bone so its neutral (rest) orientation is offset by a
 // clamped yaw + pitch about WORLD axes — natural neck movement that reads right
 // on any rig without knowing the bone's local "face" axis. `_gazePitchAxis`
@@ -6392,6 +6470,23 @@ function driveGazeBone(bone, restLocalQuat, yaw, pitch, slerpT) {
 	_gazeParentInv.copy(_gazeParentWorld).invert();
 	_gazeTargetLocal.multiplyQuaternions(_gazeParentInv, _gazeTargetWorld);
 	bone.quaternion.slerp(_gazeTargetLocal, slerpT);
+}
+
+// Same clamped world-axis yaw+pitch offset as driveGazeBone, but composed ON TOP
+// of whatever pose the pin's idle mixer wrote this frame — newLocal = Wp⁻¹·O·Wp·L,
+// so worldAfter = O·worldBefore. driveGazeBone slerps from a captured rest pose,
+// which a running mixer would overwrite every frame; this variant is stateless
+// per frame (the easing lives in the caller's pin._gazeYaw/_gazePitch scalars).
+// `_gazePitchAxis` must already hold the horizontal axis to pitch about.
+function applyGazeOffset(bone, yaw, pitch) {
+	bone.parent.getWorldQuaternion(_gazeParentWorld);
+	_gazeYawQuat.setFromAxisAngle(upY, yaw);
+	_gazePitchQuat.setFromAxisAngle(_gazePitchAxis, pitch);
+	_gazeOffsetQuat.multiplyQuaternions(_gazeYawQuat, _gazePitchQuat);
+	_gazeParentInv.copy(_gazeParentWorld).invert();
+	_gazeTargetWorld.multiplyQuaternions(_gazeOffsetQuat, _gazeParentWorld);
+	_gazeTargetLocal.multiplyQuaternions(_gazeParentInv, _gazeTargetWorld);
+	bone.quaternion.premultiply(_gazeTargetLocal);
 }
 
 // Turn loaded nearby agents toward the viewer. Called from tick() right after
@@ -6444,7 +6539,7 @@ function updateAgentAwareness(dt) {
 			pin.group.rotation.y = lerpAngle(pin.group.rotation.y, wantYaw, BODY_SLERP);
 
 			// 2) Head/torso: lead the body toward the camera inside a natural cone.
-			if (gazeBone && restQuat) {
+			if (gazeBone && (pin.animMgr || restQuat)) {
 				// Yaw the head should add beyond the body's current facing.
 				let resYaw = ((wantYaw - pin.group.rotation.y + Math.PI) % (Math.PI * 2)) - Math.PI;
 				if (resYaw < -Math.PI) resYaw += Math.PI * 2;
@@ -6457,16 +6552,39 @@ function updateAgentAwareness(dt) {
 				);
 				const inv = 1 / Math.max(dist, 1e-6);
 				_gazePitchAxis.set(-dz * inv, 0, dx * inv); // = cross(toward-camera, up)
-				driveGazeBone(gazeBone, restQuat, resYaw, pitch,
-					pin.noticeT > 0 ? HEAD_SLERP_NOTICE : HEAD_SLERP);
+				const rate = pin.noticeT > 0 ? HEAD_SLERP_NOTICE : HEAD_SLERP;
+				if (pin.animMgr) {
+					// The idle mixer rewrites this bone every frame, so a persistent
+					// slerp can never accumulate. Ease scalar offsets instead and stamp
+					// the full clamped offset onto the mixer's pose each frame.
+					pin._gazeYaw   = (pin._gazeYaw   || 0) + (resYaw - (pin._gazeYaw   || 0)) * rate;
+					pin._gazePitch = (pin._gazePitch || 0) + (pitch  - (pin._gazePitch || 0)) * rate;
+					applyGazeOffset(gazeBone, pin._gazeYaw, pin._gazePitch);
+				} else {
+					driveGazeBone(gazeBone, restQuat, resYaw, pitch, rate);
+				}
 			}
 			pin.idleT = 0;
 		} else {
 			// Not engaged: ease the body back to its placed heading...
 			const baseYaw = pin.baseYaw != null ? pin.baseYaw : pin.group.rotation.y;
 			pin.group.rotation.y = lerpAngle(pin.group.rotation.y, baseYaw, BODY_RETURN_SLERP);
-			// ...and play a slow gaze drift so an idle agent never reads as frozen.
-			if (gazeBone && restQuat) {
+			if (gazeBone && pin.animMgr) {
+				// The idle clip already carries natural head motion; just bleed any
+				// leftover engaged-gaze offset back to zero so disengaging never snaps.
+				const gy = pin._gazeYaw || 0, gp = pin._gazePitch || 0;
+				if (Math.abs(gy) > 0.002 || Math.abs(gp) > 0.002) {
+					pin._gazeYaw   = gy * (1 - HEAD_SLERP * 0.5);
+					pin._gazePitch = gp * (1 - HEAD_SLERP * 0.5);
+					const fy = pin.group.rotation.y; // body forward = (sin fy, 0, cos fy)
+					_gazePitchAxis.set(-Math.cos(fy), 0, Math.sin(fy)); // cross(forward, up)
+					applyGazeOffset(gazeBone, pin._gazeYaw, pin._gazePitch);
+				} else {
+					pin._gazeYaw = pin._gazePitch = 0;
+				}
+			} else if (gazeBone && restQuat) {
+				// No mixer on this rig — play the old scripted gaze drift so a static
+				// (non-humanoid / unriggable) agent still never reads as frozen.
 				pin.idleT = (pin.idleT || 0) + dt;
 				const driftYaw   = Math.sin(pin.idleT * 0.4) * 0.12;
 				const driftPitch = Math.sin(pin.idleT * 0.27 + 1.3) * 0.05;
@@ -6853,6 +6971,9 @@ function tick() {
 	_lodAccum += dt;
 	if (_lodAccum >= LOD_INTERVAL) { _lodAccum = 0; enforceLOD(); }
 
+	// Advance every mounted pin's idle mixer BEFORE awareness, so the gaze offset
+	// composes on top of this frame's animated pose instead of being overwritten.
+	updatePinIdles(dt);
 	// Nearby agents notice the viewer — body/head turn, idle drift, greet pop.
 	updateAgentAwareness(dt);
 

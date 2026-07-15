@@ -17,6 +17,7 @@ import fs from 'node:fs';
 import {
 	Bone,
 	Object3D,
+	PropertyBinding,
 	SkinnedMesh,
 	Skeleton,
 	BufferGeometry,
@@ -65,7 +66,12 @@ export function buildBoneGraph(gltf) {
 	const gltfNodes = Array.isArray(gltf.nodes) ? gltf.nodes : [];
 	const nodes = gltfNodes.map((n) => {
 		const bone = new Bone();
-		bone.name = typeof n.name === 'string' ? n.name : '';
+		// GLTFLoader sanitizes every node name for PropertyBinding compatibility
+		// (e.g. Mixamo's "mixamorig:Hips" → "mixamorigHips") before anything else
+		// sees it. Mirror that here, or an AnimationMixer bound to this graph
+		// silently fails to resolve any colon-named track — a fixture-only failure
+		// the production loader never exhibits.
+		bone.name = typeof n.name === 'string' ? PropertyBinding.sanitizeNodeName(n.name) : '';
 		if (Array.isArray(n.matrix) && n.matrix.length === 16) {
 			bone.matrix.fromArray(n.matrix);
 			bone.matrix.decompose(bone.position, bone.quaternion, bone.scale);

@@ -17,6 +17,7 @@ import {
 	RingGeometry, Mesh, MeshBasicMaterial, Group,
 } from 'three';
 import { getMeshoptDecoder } from '../viewer/internal.js';
+import { mountPinIdle } from './pin-idle.js';
 
 // ── Agent voice (TTS) ────────────────────────────────────────────────────────
 let _voiceAudio = null;
@@ -299,10 +300,21 @@ export class WorldLineCeremony {
 			const gltf = await loader.loadAsync(this.avatarUrl);
 			root.add(gltf.scene);
 			gltf.scene.position.y = -1.2;
+			// Breathe: play the retargeted idle clip so the quest agent greets you
+			// mid-motion, not frozen in a bind-pose T. Null for unriggable models.
+			const idleMgr = await mountPinIdle(gltf.scene, { avatarUrl: this.avatarUrl });
 			let raf;
-			const tick = () => { root.rotation.y += 0.01; renderer.render(scene, cam); raf = requestAnimationFrame(tick); };
+			let prevMs = performance.now();
+			const tick = () => {
+				const nowMs = performance.now();
+				idleMgr?.update(Math.min((nowMs - prevMs) / 1000, 0.05));
+				prevMs = nowMs;
+				root.rotation.y += 0.01;
+				renderer.render(scene, cam);
+				raf = requestAnimationFrame(tick);
+			};
 			tick();
-			this._previewStop = () => { cancelAnimationFrame(raf); renderer.dispose(); };
+			this._previewStop = () => { cancelAnimationFrame(raf); idleMgr?.detach(); renderer.dispose(); };
 		} catch {
 			/* preview is decoration; the orb fallback already rendered */
 		}
@@ -334,11 +346,16 @@ export class WorldLineCeremony {
 			reticle.visible = false; reticle.matrixAutoUpdate = false; scene.add(reticle);
 
 			const root = new Group(); root.visible = false; scene.add(root);
+			let arIdleMgr = null;
 			import('three/addons/loaders/GLTFLoader.js').then(async ({ GLTFLoader }) => {
 				if (!this.avatarUrl) return;
 				const loader = new GLTFLoader();
 				loader.setMeshoptDecoder(await getMeshoptDecoder());
-				loader.loadAsync(this.avatarUrl).then((g) => root.add(g.scene)).catch(() => {});
+				loader.loadAsync(this.avatarUrl).then(async (g) => {
+					root.add(g.scene);
+					// Idle in place on the real floor — same living treatment as /irl pins.
+					arIdleMgr = await mountPinIdle(g.scene, { avatarUrl: this.avatarUrl });
+				}).catch(() => {});
 			});
 
 			const overlay = document.createElement('div');
@@ -375,7 +392,12 @@ export class WorldLineCeremony {
 				// Hand off to the panel interaction (rendered into the dom-overlay) once placed.
 				setTimeout(() => { end(); this._begin(); }, 600);
 			});
-			renderer.setAnimationLoop((_, frame) => {
+			let prevLoopMs = null;
+			renderer.setAnimationLoop((timeMs, frame) => {
+				if (arIdleMgr) {
+					arIdleMgr.update(prevLoopMs == null ? 0 : Math.min((timeMs - prevLoopMs) / 1000, 0.05));
+				}
+				prevLoopMs = timeMs;
 				if (frame && !placed) {
 					const hits = frame.getHitTestResults(hitSource);
 					if (hits.length) {
@@ -388,6 +410,7 @@ export class WorldLineCeremony {
 			});
 			session.addEventListener('end', () => {
 				renderer.setAnimationLoop(null);
+				arIdleMgr?.detach();
 				renderer.domElement.remove();
 				overlay.remove();
 				renderer.dispose();
