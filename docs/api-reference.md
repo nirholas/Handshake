@@ -2282,6 +2282,7 @@ GET    /api/irl/pins?lat=&lng=&radius=     nearby agents (fix-gated, radius 10�
 GET    /api/irl/pins?mine=1                your pins (signed-in session)
 GET    /api/irl/pins/mine                  your pins (x-irl-device token)
 POST   /api/irl/pins                       place an agent at a coordinate
+PATCH  /api/irl/pins                       edit, calibrate, or resize a pin (owner-gated)
 DELETE /api/irl/pins?id=<uuid>             remove one pin
 DELETE /api/irl/pins?all=1                 purge every pin owned by the device token
 ```
@@ -2293,6 +2294,16 @@ The nearby feed returns an allow-list projection (never owner ids), coordinates 
 (`precise` | `approximate` + `fuzzRadiusM`). Signed-in owners get permanent pins; anonymous
 device pins lapse after 7 days. Errors: `fix_required` 401, `area_full` 429 (≤40 pins per
 ~150 m cell), `pin_limit` 429, `content` 422, `endpoint` 422.
+
+PATCH bodies (ownership = the signed-in owner, or the `x-irl-device` token that placed the
+pin; non-owners get 403):
+
+- `{ id, caption?, avatarUrl?, avatarName?, lat?, lng? }` edits pin fields (session auth).
+- `{ id, calibrate: { lat, lng, anchorYawDeg, anchorHeightM } }` corrects the anchor pose.
+- `{ id, scale }` persists the pinch-resized render scale from a WebXR placement session
+  (the pinch lands after the pin was saved on the placement tap, so the final size arrives
+  as this follow-up). `scale` is clamped to 0.25–4; `1` means natural size and is stored as
+  `NULL` (`anchor_scale`). Returns `{ pin: { id, anchor_scale } }`.
 
 ---
 

@@ -6,6 +6,11 @@ spend, and the economy volume dashboard built on top of it. They are distinct
 layers with distinct sources — this page maps them so you know where any given
 event lives.
 
+> Not to be confused with the **personal activity feed** on `/feed`
+> (`GET /api/users/me/feed`) — that one shows who created what and who followed
+> whom, and is documented in [The social layer](./social-layer.md). This page is
+> about value movement only. The two share a URL word ("feed") and nothing else.
+
 ---
 
 ## The three layers

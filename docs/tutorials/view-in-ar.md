@@ -54,11 +54,13 @@ The model stays anchored as you move — if you step back, it doesn't follow you
 Three different AR systems power this feature, selected automatically:
 
 ### iPhone (Safari) → iOS Quick Look
-Safari intercepts a click on a special `<a rel="ar">` link and opens Apple's native AR viewer. The model renders at true scale using ARKit. No app required because Quick Look is built into iOS. The tradeoff: no animations, no conversation with the agent.
+Safari intercepts a click on a special `<a rel="ar">` link and opens Apple's native AR viewer. The model renders at true scale using ARKit. No app required because Quick Look is built into iOS. Rigged avatars arrive with their idle animation baked in, so they breathe and sway instead of standing frozen. The tradeoff: only that one clip plays, and there's no conversation with the agent.
 
 To make this work, three.ws either:
 - Serves a pre-generated **USDZ file** (Apple's AR format) if one exists
-- Converts the GLB to USDZ **in-browser** using the three.js USDZExporter if not — this takes a few seconds
+- Bakes an **animated USDZ in-browser** (the avatar's idle clip sampled into
+  Quick Look's native time-sampled format) if not — this takes a few seconds,
+  and falls back to a static-pose conversion if the model has no usable rig
 
 ### Android (Chrome) → Scene Viewer
 Chrome launches Google's **Scene Viewer** via an ARCore intent URL. Scene Viewer is a Google app that comes pre-installed on most Android phones with Google Play. It supports GLB files directly and plays animations. No conversion step needed.

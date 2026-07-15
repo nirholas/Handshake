@@ -77,6 +77,7 @@ belong to their creators, and the showcase does not relicense them.
 | `SKETCHFAB_UPLOADS_PER_RUN` | Models per run, default 2, clamped 1-5. At the Mon/Wed/Fri schedule the default publishes up to 6 models a week. |
 
 State lives in the `sketchfab_uploads` table (one row per creation:
-`pending`, `uploaded`, `live`, or `failed` with the error recorded). Code:
+`pending`, `uploaded`, `live`, `failed` with the error recorded, or `blocked`
+when the brand-safety gate parked it). Code:
 [`api/cron/sketchfab-showcase.js`](https://github.com/nirholas/three.ws/blob/main/api/cron/sketchfab-showcase.js)
 and [`api/_lib/sketchfab.js`](https://github.com/nirholas/three.ws/blob/main/api/_lib/sketchfab.js).

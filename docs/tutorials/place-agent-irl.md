@@ -129,8 +129,11 @@ The agent locks to its spot. The status line confirms with something like *"Pinn
 
 There are a few placement paths depending on your device and intent:
 
-- **Pin here** — drops the agent at your current GPS spot using the camera + gyro. This is the default and works on every supported phone, including iOS Safari.
-- **Place on floor** — appears only when your browser supports a WebXR `immersive-ar` session (Chrome on Android with ARCore). It uses real hit-test surface detection: sweep your phone slowly to find the floor, and the agent anchors to the detected plane. A green check confirms the anchor took.
+- **Place in AR** — leads the dock whenever the device has a real AR surface.
+  - On Chrome for Android (ARCore) it opens a WebXR `immersive-ar` session with real hit-test surface detection: sweep your phone slowly, a reticle finds the floor, and a tap anchors the agent to the detected plane. A green check confirms the anchor took.
+  - **Pinch with two fingers to resize** the anchored agent, anywhere from 25% (a desk figurine) to 400% (a statue). The size persists to the pin (the pinch lands as a follow-up `PATCH /api/irl/pins { id, scale }` after the placement tap), so everyone who walks up later sees the agent exactly as big as you left it. Natural size is the default.
+  - On iOS the same button opens the agent in ARKit Quick Look with its idle animation baked into the USDZ, so it moves in your room instead of standing in a T-pose.
+- **Pin here** — drops the agent at your current GPS spot using the camera + gyro. Works on every supported phone, including iOS Safari.
 - **Place on map** — pick a spot on a map instead of using your live position, useful for placing an agent somewhere you're not standing.
 
 ### Signed-in vs anonymous pins

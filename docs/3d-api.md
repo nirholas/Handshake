@@ -231,6 +231,44 @@ anywhere.
 
 ---
 
+### Prompt art direction (`director: true`) and brand marks
+
+Text→3D runs text→image→mesh, so prompt quality decides mesh quality. Two
+layers improve it, both shared across every generation surface (the studio MCP
+tools, the paid REST twin, and this lane):
+
+**The art director.** Pass `director: true` to `POST /api/forge` and an IBM
+Granite "art director" pass rewrites your rough idea into one
+information-dense spec before generation: the single subject and its
+silhouette, its construction and part joins, per-part PBR material cues, one
+held art style, fine surface detail, and composition constraints tuned for
+clean image→mesh reconstruction (centered, isolated, no text, no collage).
+It is off by default on this endpoint and fail-soft: if the director LLM is
+unavailable, the raw prompt proceeds untouched. The prompt specs live in one
+module, [api/_lib/forge-director-prompts.js](../api/_lib/forge-director-prompts.js)
+(`MESH_DIRECTOR` for objects and props, `AVATAR_DIRECTOR` for rig-ready
+humanoids), so the free and paid lanes cannot drift apart.
+
+**The brand-mark lexicon.** Neither the director LLM nor the image model
+reliably knows what a niche brand mark looks like, so "pumpfun logo" used to
+reconstruct as a generic badge covered in garbled lettering. Prompts that are
+essentially "<known brand> logo" (or the bare brand name) now resolve
+deterministically
+([mcp-server/src/tools/_logo-lexicon.js](../mcp-server/src/tools/_logo-lexicon.js),
+`resolveLogoPrompt`): the lexicon returns a concrete geometric description of
+the real mark, written so the image model draws shapes and never letterforms
+(rendered text reconstructs as noise, so the emitted spec never contains the
+brand name itself). Marks with a pre-rendered reference view under
+`public/marks/` skip the text→image gamble entirely and submit image→3D
+against the reference. Anything more specific than brand-plus-mark words falls
+through to the director, whose instructions carry the same brand-mark
+directive. The lexicon currently covers pump.fun and the major-chain marks.
+
+Tests: [tests/api/forge-director.test.js](../tests/api/forge-director.test.js),
+[tests/api/logo-lexicon.test.js](../tests/api/logo-lexicon.test.js).
+
+---
+
 ## Forge Pro — paid quality tiers (`/api/x402/forge`)
 
 **`POST /api/x402/forge`** — the pay-per-call twin of the free draft lane. Same

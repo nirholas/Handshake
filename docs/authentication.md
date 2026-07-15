@@ -233,7 +233,24 @@ await fetch('/api/auth/logout-everywhere', {
 });
 ```
 
----
+### Coin-community sessions (Town, `/play` worlds)
+
+The coin-community surfaces (Town posting, holder passes, world gates) ride a
+separate session from the main site: an X-OAuth sign-in against the
+CoinCommunities upstream, kept in two httpOnly cookies scoped to
+`Path=/api/community` so page scripts never see them:
+
+| Cookie  | Lifetime | Role                          |
+| ------- | -------- | ----------------------------- |
+| `cc_at` | 1 hour   | Access token (a JWT)          |
+| `cc_rt` | 30 days  | Refresh token                 |
+
+Expiry is handled transparently: every authenticated community endpoint runs
+through `withAuthRefresh()` ([api/_lib/coin-communities.js](../api/_lib/coin-communities.js)),
+which retries a failed upstream call once after exchanging `cc_rt` for a fresh
+access token and re-setting both cookies on the response. Callers only appear
+signed out when the 30-day refresh token itself is missing or expired, so an
+open `/play` tab no longer kicks you out after the first hour.
 
 ## API Keys
 

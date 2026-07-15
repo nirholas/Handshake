@@ -89,6 +89,12 @@ passes bought wallet-only over the raw API authenticate with the key itself
 and can be re-keyed by renewing. Your purchase history and subscriptions live
 at [/dashboard/billing](/dashboard/billing).
 
+The dashboards ride two raw endpoints you can also call directly:
+`POST /api/premium/keys` with `{ action: "rotate" | "revoke", id }`
+(session + CSRF; rotate returns the fresh plaintext exactly once) and
+`GET /api/premium/mine` (session-authenticated; your passes and keys,
+including passes bought directly by your linked Solana wallet).
+
 ## Rules and edge cases
 
 - A quote is redeemable for 30 minutes; after that, request a fresh one

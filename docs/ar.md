@@ -31,7 +31,7 @@ three.ws selects the right AR method automatically based on the device and brows
 | | Quick Look | Scene Viewer | WebXR |
 |---|---|---|---|
 | Platform | iOS Safari | Android Chrome | Any WebXR browser |
-| Animations | No — static pose | Yes | Yes |
+| Animations | Baked idle clip (static pose only if the bake fails) | Yes | Yes |
 | Agent conversation | No | No | Yes — mic + chat live |
 | `lookAt('user')` | No | No | Yes — tracks XR camera |
 | Agent skills / tools | No | No | Yes — full runtime |
@@ -39,7 +39,7 @@ three.ws selects the right AR method automatically based on the device and brows
 | Draco-compressed GLBs | May fail | May fail | Yes |
 | Max practical size | ~15 MB | ~20 MB | No hard limit |
 
-WebXR is the only method where the agent stays fully alive. If you need conversation, skills, or animations, WebXR is required.
+WebXR is the only method where the agent stays fully alive. Quick Look now ships with a baked idle loop, but if you need conversation, skills, or live animation switching, WebXR is required.
 
 ---
 
@@ -132,7 +132,9 @@ The child `<img>` element is required — without it, Safari won't intercept a p
 - No DRM-protected assets
 
 **Limitations:**
-- Static pose only — animations don't play
+- Only the one baked clip plays (the idle loop): Quick Look can't switch
+  animations or react, and if the bake fails the model falls back to a static
+  pose (see the USDZ pipeline below)
 - No conversation (native OS viewer, outside the browser context)
 - Cannot customize the Quick Look UI beyond the model itself
 
@@ -217,11 +219,14 @@ navigator.xr.isSessionSupported('immersive-ar')
 For avatars on three.ws, the USDZ is handled automatically:
 
 1. **Pre-generated USDZ:** If the avatar record has a `usdz_url`, it's set as `ios-src` immediately — no conversion needed.
-2. **In-browser conversion:** If not, the AR page downloads the GLB and runs `USDZExporter` from three.js in a Web Worker, then creates a `blob:` URL. This typically takes 2–8 seconds depending on model complexity.
-3. **Persistent storage:** After the first conversion, the USDZ is uploaded to R2 and saved back to the avatar record so subsequent AR visits are instant.
+2. **In-browser animated bake:** If not, the page downloads the GLB and bakes an *animated* USDZ via [src/usdz-animated.js](../src/usdz-animated.js) (`glbBlobToAnimatedUsdzBlob`): the avatar is driven through its idle clip, the skinned vertices are sampled at keyframes, and the samples are written into the USDA as time-sampled points that Quick Look loops natively. So a rigged avatar breathes and idles in your room instead of standing in a frozen pose. This runs inline (a dynamic import, not a Web Worker) and typically takes a few seconds depending on model complexity.
+3. **Static fallback:** Any bake failure (no rig, no usable clip) falls back to the plain `USDZExporter` path in [src/usdz-pipeline.js](../src/usdz-pipeline.js), which produces a static frame-0 pose. AR never regresses below static.
+4. **Persistent storage:** After the first conversion, the USDZ is uploaded to R2 and saved back to the avatar record so subsequent AR visits are instant.
+
+The same animated bake serves the `/irl` Place-in-AR button, the `/avatars/:id/ar` page ([src/ar-page.js](../src/ar-page.js)), and the create flow ([src/account.js](../src/account.js)), which pre-bakes the animated USDZ.
 
 **USDZ limitations to know:**
-- Skinned meshes (rigged avatars) export to USDZ as static poses — animations are lost
+- Quick Look plays exactly one baked clip; the full animation library and live retargeting need WebXR
 - Draco-compressed geometry must be decompressed first (the exporter handles this)
 - USDZ files over ~30 MB may fail to open in Quick Look on older devices
 
@@ -428,6 +433,14 @@ The endpoint branches on the request's **User-Agent**, server-side:
 
 Bad input (non-https, non-GLB, missing) returns a clean, designed error page — never a crash.
 
+**Shared links unfurl with the model itself.** The launch page sets its
+`og:image` / `twitter:image` to `GET /api/render/glb?glbUrl=…&width=1200&height=630`,
+a server-side PNG render of the actual GLB (CDN-cached for a day), so pasting
+an AR link into a chat or timeline shows the model, not a generic card. The
+page also converts: it carries "Create your own" (into [/ar](/ar)) and "Open
+in 3D viewer" calls to action. See `GET|POST /api/render/glb` in the
+[API reference](./api-reference.md) for the renderer's parameters and limits.
+
 **For agents (MCP):** the free, read-only `export_ar` tool on the [3D Studio server](/docs/mcp) turns a GLB into the AR launch link plus a conformant [Spatial MCP](/docs/spatial-mcp) artifact (with the `ar` handoff populated):
 
 ```jsonc
@@ -442,6 +455,8 @@ Bad input (non-https, non-GLB, missing) returns a clean, designed error page —
 The avatar-producing studio tools (`text_to_avatar`, `rig_mesh`, `forge_avatar`) return `irlUrl` automatically, on both the free and paid tracks.
 
 The response carries no payment, wallet, token, or internal-id surface, so it ships on both the Claude and OpenAI tracks.
+
+How this link ships through ChatGPT end to end (the app connector, the custom GPT, the title-carrying poll, and link unfurls) is documented in [AR in ChatGPT](/docs/chatgpt-ar).
 
 ---
 

@@ -168,16 +168,17 @@ Shared auth concepts:
 - **Prerequisites / gates:** Signed-in required (`requireUser()`; 401 → `/login?return=…`).
 - **Steps (N):**
   1. Boot: `mountShell()` → `requireUser()`; 4 skeletons while data loads.
-  2. Parallel fetch: `GET /api/auth/sessions`, `GET /api/notifications?limit=20`, `GET /api/billing/summary` (storage), `GET /api/usage/summary` (LLM usage), plus dashboard prefs.
-  3. Render sections: **Appearance/theme**, **Active sessions**, **Notifications**, **Default payment network**, **Storage usage**, **LLM usage**, **Vanity wallet tools**, **Preferences**, **Data export**, **About**.
+  2. Parallel fetch: `GET /api/auth/sessions`, `GET /api/notifications?limit=20`, `GET /api/notifications/preferences`, `GET /api/billing/summary` (storage), `GET /api/usage/summary` (LLM usage), plus dashboard prefs.
+  3. Render sections: **Appearance/theme**, **Active sessions**, **Notifications**, **Notification preferences**, **Default payment network**, **Storage usage**, **LLM usage**, **Vanity wallet tools**, **Preferences**, **Data export**, **About**.
   4. **(optional) Theme:** click Dark/Light/Auto → `localStorage['twx_theme']` (+ `window.threeTheme.set`) → toast "Theme applied" (no API).
   5. **(optional) Sessions:** "Revoke" → `DELETE /api/auth/sessions/{id}` → toast + row removed; "Revoke all other" → `POST /api/auth/sessions/revoke-others` → toast.
-  6. **(optional) Notifications:** "Mark all read" → `POST /api/notifications/read-all` → toast.
+  6. **(optional) Notifications:** "Mark all read" → `POST /api/notifications/read-all` → toast. The inbox covers the full bell vocabulary (sales, purchases, follows, remixes, DMs, coin-launch graduations, IRL, market, account).
+  6b. **(optional) Notification preferences:** the category × channel matrix (categories: sales, purchases, social, IRL, market, account; channels: in-app, push, email, Telegram) → `PATCH /api/notifications/preferences` per toggle → toast. The in-app channel is always on and rendered disabled.
   7. **(optional) Default network:** Base/Solana/Polygon → `localStorage['twx_default_network']` + best-effort `PATCH /api/dashboard/prefs` `{ prefs: { default_network } }` → toast.
   8. **(optional) Preferences:** toggle email notifications / show tips / compact sidebar → **Save preferences** → `PATCH /api/dashboard/prefs` `{ prefs }` → toast "Preferences saved".
   9. **(optional) Data export:** Agents / Avatars / All → fetch `GET /api/agents`, `GET /api/avatars?limit=100`, `GET /api/widgets` → build JSON blob → browser download → toast "Data exported".
 - **Decision points / branches:** Theme, default network, and privacy-style toggles are local-first (localStorage) with best-effort prefs sync; sessions/notifications/export hit live APIs. Read-only meters for storage/LLM usage.
-- **External calls / dependencies:** `GET /api/auth/me`, `GET /api/auth/sessions`, `DELETE /api/auth/sessions/{id}`, `POST /api/auth/sessions/revoke-others`, `GET /api/notifications`, `POST /api/notifications/read-all`, `GET /api/billing/summary`, `GET /api/usage/summary`, `PATCH /api/dashboard/prefs`, `GET /api/agents`, `GET /api/avatars`, `GET /api/widgets`.
+- **External calls / dependencies:** `GET /api/auth/me`, `GET /api/auth/sessions`, `DELETE /api/auth/sessions/{id}`, `POST /api/auth/sessions/revoke-others`, `GET /api/notifications`, `POST /api/notifications/read-all`, `GET /api/notifications/preferences`, `PATCH /api/notifications/preferences`, `GET /api/billing/summary`, `GET /api/usage/summary`, `PATCH /api/dashboard/prefs`, `GET /api/agents`, `GET /api/avatars`, `GET /api/widgets`.
 - **Success state:** Toasts on each action (Theme applied / Session revoked / All notifications marked read / Default network set / Preferences saved / Data exported); sections reflect new state.
 - **Empty / error states:** "No session data", "No notifications" / "You're all caught up", "No usage data"; per-action error toasts with button re-enable for retry; skeletons during load.
 - **Step count:** 3 required (boot + fetch + render) (+6 optional setting flows)

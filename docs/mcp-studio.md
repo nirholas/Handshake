@@ -31,6 +31,12 @@ declare an `openai/widgetCSP` whose allowlist includes the GLB storage origin,
 so models load inside real ChatGPT (which enforces the CSP), not just in
 permissive test harnesses.
 
+Reliability on the ChatGPT lanes: generations are pinned to the fast standard
+tier so a result always lands inside ChatGPT's patience window. When a call
+explicitly requests the high tier, the submit degrades gracefully back to
+standard on a 402 (the operator-funded high lane is out of credit) or on a
+submit timeout, rather than failing the conversation.
+
 ### Any MCP client
 
 ```bash
