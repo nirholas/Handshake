@@ -128,6 +128,7 @@ model comes straight back:
   "status": "done",
   "glbUrl": "https://cdn.three.ws/forge/anon/a1b2c3d4.glb",
   "viewerUrl": "https://three.ws/viewer?src=https%3A%2F%2Fcdn.three.ws%2Fforge%2Fanon%2Fa1b2c3d4.glb",
+  "arUrl": "https://three.ws/api/ar?src=https%3A%2F%2Fcdn.three.ws%2Fforge%2Fanon%2Fa1b2c3d4.glb&title=a%20small%20ceramic%20robot%20figurine",
   "format": "glb",
   "tier": "draft",
   "free": true,
@@ -135,15 +136,22 @@ model comes straight back:
 }
 ```
 
+`arUrl` is the place-in-your-room link (`/api/ar`): opened on a phone it
+launches AR directly — Scene Viewer on Android, Quick Look on iOS (GLB→USDZ
+converted in-page) — and on desktop it falls back to the interactive viewer.
+The prompt rides along as `title` so the AR page is labeled. Show it to end
+users as "place it in your room".
+
 ### Response — queued (poll)
 
-Otherwise you get a job token and a poll URL:
+Otherwise you get a job token and a poll URL (the prompt is carried as
+`title` so the finished AR page stays labeled):
 
 ```json
 {
   "status": "pending",
   "job": "f1.eyJwIjoibnZpZGlh...",
-  "poll": "/api/3d/generate?job=f1.eyJwIjoibnZpZGlh...",
+  "poll": "/api/3d/generate?job=f1.eyJwIjoibnZpZGlh...&title=a%20small%20ceramic%20robot%20figurine",
   "format": "glb",
   "tier": "draft",
   "free": true
@@ -153,14 +161,15 @@ Otherwise you get a job token and a poll URL:
 Poll the `poll` URL until the status is terminal:
 
 ```json
-GET /api/3d/generate?job=f1.eyJwIjoibnZpZGlh...
+GET /api/3d/generate?job=f1.eyJwIjoibnZpZGlh...&title=a%20small%20ceramic%20robot%20figurine
 
 // still working
-{ "status": "pending", "job": "f1...", "poll": "/api/3d/generate?job=f1..." }
+{ "status": "pending", "job": "f1...", "poll": "/api/3d/generate?job=f1...&title=..." }
 
 // ready
 { "status": "done", "job": "f1...", "glbUrl": "https://cdn.three.ws/forge/anon/done.glb",
-  "viewerUrl": "https://three.ws/viewer?src=...", "format": "glb", "tier": "draft", "free": true }
+  "viewerUrl": "https://three.ws/viewer?src=...", "arUrl": "https://three.ws/api/ar?src=...&title=...",
+  "format": "glb", "tier": "draft", "free": true }
 
 // upstream failed — free lane, so no charge; just retry
 { "status": "error", "job": "f1...", "error": "3D generation hit a snag upstream — no charge; try again.", "free": true }
@@ -173,7 +182,7 @@ GET /api/3d/generate?job=f1.eyJwIjoibnZpZGlh...
 | Empty / too-short / oversized prompt | `400 invalid_prompt`                                    |
 | Unsupported `format`          | `400 unsupported_format`                                       |
 | Queued                        | `200 { status: "pending", job, poll }`                        |
-| Ready                         | `200 { status: "done", glbUrl, viewerUrl }`                   |
+| Ready                         | `200 { status: "done", glbUrl, viewerUrl, arUrl }`            |
 | Generation failed upstream    | `200 { status: "error", error }` — free, **no charge**        |
 | GPU lane saturated / rate-limited | `429` with `Retry-After` + an upgrade pointer             |
 | Lane not configured on this deployment | `503 not_configured`                                 |
