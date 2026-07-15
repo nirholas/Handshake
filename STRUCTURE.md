@@ -226,6 +226,7 @@ npm).
 - **On-chain identity & contracts** — [contracts/](contracts), [packages/avatar-schema/](packages/avatar-schema)
 - **API endpoints** — [api/](api) (serverless-style handlers, served in production by the [server/](server) Cloud Run container), [workers/](workers) (long-running workers)
 - **Examples & demos** — [examples/](examples), [multiplayer/](multiplayer)
+- **Marketing assets** — [marketing/](marketing) (produced promo videos + re-render scripts, e.g. [marketing/imessage-video/](marketing/imessage-video); source-of-truth assets, not shipped to production)
 - **Cross-chain SDKs** — [sdk/](sdk), [solana-agent-sdk/](solana-agent-sdk), [agent-payments-sdk/](agent-payments-sdk), [agent-protocol-sdk/](agent-protocol-sdk)
 - **MCP integration** — [mcp-server/](mcp-server), [mcp-bridge/](mcp-bridge)
 - **Specs & protocol docs** — [specs/](specs)
