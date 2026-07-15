@@ -86,8 +86,10 @@ export class WebXRSession {
 		/** Pinch-to-resize state (pure math in ./pinch-scale.js). */
 		this._pinch = createPinchState();
 		/** Wall-clock of the last pinch end — a tap right after a pinch is the
-		 * second finger lifting, not a placement intent. */
-		this._pinchEndedAt = 0;
+		 * second finger lifting, not a placement intent. -Infinity means "never":
+		 * 0 would swallow real taps while performance.now() is still under the
+		 * 350ms suppression window (young clocks: fresh workers, tests). */
+		this._pinchEndedAt = -Infinity;
 		/** Content scale captured at session start, restored on exit. */
 		this._savedScale = null;
 		this._handleTouchStart = this._handleTouchStart.bind(this);
@@ -693,7 +695,7 @@ export class WebXRSession {
 			root.removeEventListener('beforexrselect', this._handleBeforeSelect);
 		}
 		this._pinch = createPinchState();
-		this._pinchEndedAt = 0;
+		this._pinchEndedAt = -Infinity;
 
 		renderer.setAnimationLoop(null);
 		renderer.xr.enabled = false;

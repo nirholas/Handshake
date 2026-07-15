@@ -1919,6 +1919,14 @@
 					"added": "2026-07-14"
 				},
 				{
+					"path": "/docs/social-layer",
+					"title": "Docs · The Social Layer",
+					"description": "The activity feed, follow graph, notification bell, rankings, creator portfolios, and cross-entity search: the pages, the APIs, and how the pieces feed each other.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-15"
+				},
+				{
 					"path": "/docs/do-i-need-crypto",
 					"title": "Docs · Do I Need Crypto?",
 					"description": "Honest answers to the wallet and payment questions — what requires crypto, what doesn’t, and how payments work.",

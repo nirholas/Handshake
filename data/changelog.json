@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-07-15",
+			"title": "iPhone AR placement now hands you back to the pin",
+			"summary": "On iPhone, placing an agent in AR opens Apple's Quick Look viewer, which is sealed: the page can't put buttons inside it. It does allow one banner, and that banner is now wired: it shows your agent's name in the AR view, and tapping it brings you back to IRL with the Pin here button pulsing, so the exact spot you liked in AR becomes a durable pin other people can walk up to, in one tap.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/irl"
+		},
+		{
+			"date": "2026-07-15",
+			"title": "Docs catch-up: the social layer, living AR, and everything July shipped",
+			"summary": "One documentation pass across everything that shipped this month. A new Social Layer guide covers the activity feed, follows, the notification bell, rankings, creator portfolios, and cross-entity search, and every one of those endpoints is now in the API reference. The AR docs caught up with reality: iPhone Quick Look now plays your avatar's idle animation (the old docs still said static pose), pinch-to-resize and the bring-it-to-life handoff are in the IRL guides, and the way shared AR links unfurl with a real model render is spelled out. Also new: how the prompt art director and the brand-mark lexicon make 3D generations cleaner, how ChatGPT generations stay fast under load, Sketchfab showcase states, and premium key management.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/social-layer"
+		},
+		{
+			"date": "2026-07-15",
 			"title": "The ChatGPT AR pipeline, fully documented",
 			"summary": "New docs tell the whole story of how a sentence typed into ChatGPT becomes a 3D model standing in your room: the free generation lane ChatGPT calls, the one-tap AR link every generation carries, what happens on iPhone, Android, and a computer when you open it, and how a shared link unfurls with a real render of the model. A companion tutorial walks a first-timer from their first prompt to a model on their desk in about five minutes.",
 			"tags": [
@@ -188,16 +206,6 @@
 			"tags": [
 				"fix",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-07-13",
-			"title": "A live 3D avatar in the GitHub README, and readme-3d: an open toolkit for 3D in markdown",
-			"summary": "The three.ws GitHub README now opens with the platform mascot as a real, draggable 3D model that GitHub renders natively (no image, no video: an interactive viewer in plain markdown). The pipeline that made it is now an open-source package, readme-3d: a CLI and library that converts any GLB, glTF, OBJ, or STL into the ASCII-STL markdown blocks GitHub renders, simplifies meshes to fit GitHub's 512 KB markdown limit, and size-checks your files so they never silently stop rendering. It ships with five tutorials, live examples, a docs site, a Claude Code skill, and copy-paste agent prompts, and pairs with the free Forge text-to-3D API so anyone can go from a one-line prompt to a 3D model in their README in five minutes.",
-			"tags": [
-				"feature",
-				"docs",
-				"sdk"
 			]
 		},
 		{

@@ -64,7 +64,9 @@ describe('start() — session bring-up', () => {
 	});
 
 	it('surfaces a dom-overlay root when one is supplied', async () => {
-		const root = { nodeType: 1 };
+		// A real overlay root is a DOM element; the session subscribes its pinch
+		// touch listeners on it, so the fake must be a working EventTarget.
+		const root = Object.assign(new EventTarget(), { nodeType: 1 });
 		const { xrSession } = await mount({ domOverlayRoot: root });
 		expect(xrSession.init.optionalFeatures).toContain('dom-overlay');
 		expect(xrSession.init.domOverlay).toEqual({ root });

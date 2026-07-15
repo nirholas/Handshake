@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-15T11:24:15.470Z",
+	"generated_at": "2026-07-15T12:03:37.462Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Docs · AR in ChatGPT",
 			"summary": "How a sentence typed into ChatGPT becomes a 3D model standing in your room: the free generation lane, the arUrl contract, the device-aware AR launcher, living avatars, and link unfurls.",
 			"link": "/docs/chatgpt-ar",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-15",
+			"type": "launch",
+			"title": "Docs · The Social Layer",
+			"summary": "The activity feed, follow graph, notification bell, rankings, creator portfolios, and cross-entity search: the pages, the APIs, and how the pieces feed each other.",
+			"link": "/docs/social-layer",
 			"tags": [
 				"launch"
 			]
@@ -44,6 +54,26 @@
 			"link": "/irl",
 			"tags": [
 				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-15",
+			"type": "update",
+			"title": "Docs catch-up: the social layer, living AR, and everything July shipped",
+			"summary": "One documentation pass across everything that shipped this month. A new Social Layer guide covers the activity feed, follows, the notification bell, rankings, creator portfolios, and cross-entity search, and every one of those endpoints is now in the API reference. The AR docs caught up with reality: iPhone Quick Look now plays your avatar's idle animation (the old docs still said static pose), pinch-to-resize and the bring-it-to-life handoff are in the IRL guides, and the way shared AR links unfurl with a real model render is spelled out. Also new: how the prompt art director and the brand-mark lexicon make 3D generations cleaner, how ChatGPT generations stay fast under load, Sketchfab showcase states, and premium key management.",
+			"link": "/docs/social-layer",
+			"tags": [
+				"docs"
+			]
+		},
+		{
+			"date": "2026-07-15",
+			"type": "update",
+			"title": "iPhone AR placement now hands you back to the pin",
+			"summary": "On iPhone, placing an agent in AR opens Apple's Quick Look viewer, which is sealed: the page can't put buttons inside it. It does allow one banner, and that banner is now wired: it shows your agent's name in the AR view, and tapping it brings you back to IRL with the Pin here button pulsing, so the exact spot you liked in AR becomes a durable pin other people can walk up to, in one tap.",
+			"link": "/irl",
+			"tags": [
 				"improvement"
 			]
 		},
@@ -410,18 +440,6 @@
 			"tags": [
 				"fix",
 				"improvement"
-			]
-		},
-		{
-			"date": "2026-07-13",
-			"type": "update",
-			"title": "A live 3D avatar in the GitHub README, and readme-3d: an open toolkit for 3D in markdown",
-			"summary": "The three.ws GitHub README now opens with the platform mascot as a real, draggable 3D model that GitHub renders natively (no image, no video: an interactive viewer in plain markdown). The pipeline that made it is now an open-source package, readme-3d: a CLI and library that converts any GLB, glTF, OBJ, or STL into the ASCII-STL markdown blocks GitHub renders, simplifies meshes to fit GitHub's 512 KB markdown limit, and size-checks your files so they never silently stop rendering. It ships with five tutorials, live examples, a docs site, a Claude Code skill, and copy-paste agent prompts, and pairs with the free Forge text-to-3D API so anyone can go from a one-line prompt to a 3D model in their README in five minutes.",
-			"link": null,
-			"tags": [
-				"feature",
-				"docs",
-				"sdk"
 			]
 		},
 		{

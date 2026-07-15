@@ -15,6 +15,14 @@
 			<description>How a sentence typed into ChatGPT becomes a 3D model standing in your room: the free generation lane, the arUrl contract, the device-aware AR launcher, living avatars, and link unfurls.</description>
 		</item>
 		<item>
+			<title>Docs · The Social Layer</title>
+			<link>https://three.ws/docs/social-layer</link>
+			<guid isPermaLink="false">2026-07-15:Docs · The Social Layer</guid>
+			<pubDate>Wed, 15 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The activity feed, follow graph, notification bell, rankings, creator portfolios, and cross-entity search: the pages, the APIs, and how the pieces feed each other.</description>
+		</item>
+		<item>
 			<title>Tutorial · Your First Prompt to 3D in ChatGPT</title>
 			<link>https://three.ws/tutorials/first-prompt-to-3d</link>
 			<guid isPermaLink="false">2026-07-15:Tutorial · Your First Prompt to 3D in ChatGPT</guid>
@@ -37,6 +45,22 @@
 			<pubDate>Wed, 15 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Avatars no longer land in AR as frozen statues. Every rigged avatar generated on three.ws now carries a Bring it to life link that opens IRL: the agent walks, animates, and talks with you through your camera, standing in your real space. Static placement is still one tap away for props or anyone who just wants the model on a desk. The living link ships everywhere avatars are made: the AR launch page, the 3D Studio tools in ChatGPT and Claude, and the developer MCP tools.</description>
+		</item>
+		<item>
+			<title>Docs catch-up: the social layer, living AR, and everything July shipped</title>
+			<link>https://three.ws/docs/social-layer</link>
+			<guid isPermaLink="false">2026-07-15:Docs catch-up: the social layer, living AR, and everything July shipped</guid>
+			<pubDate>Wed, 15 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>One documentation pass across everything that shipped this month. A new Social Layer guide covers the activity feed, follows, the notification bell, rankings, creator portfolios, and cross-entity search, and every one of those endpoints is now in the API reference. The AR docs caught up with reality: iPhone Quick Look now plays your avatar's idle animation (the old docs still said static pose), pinch-to-resize and the bring-it-to-life handoff are in the IRL guides, and the way shared AR links unfurl with a real model render is spelled out. Also new: how the prompt art director and the brand-mark lexicon make 3D generations cleaner, how ChatGPT generations stay fast under load, Sketchfab showcase states, and premium key management.</description>
+		</item>
+		<item>
+			<title>iPhone AR placement now hands you back to the pin</title>
+			<link>https://three.ws/irl</link>
+			<guid isPermaLink="false">2026-07-15:iPhone AR placement now hands you back to the pin</guid>
+			<pubDate>Wed, 15 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>On iPhone, placing an agent in AR opens Apple's Quick Look viewer, which is sealed: the page can't put buttons inside it. It does allow one banner, and that banner is now wired: it shows your agent's name in the AR view, and tapping it brings you back to IRL with the Pin here button pulsing, so the exact spot you liked in AR becomes a durable pin other people can walk up to, in one tap.</description>
 		</item>
 		<item>
 			<title>Shared AR links now unfurl with the model itself</title>
@@ -317,14 +341,6 @@
 			<pubDate>Tue, 14 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>New creators who finished making an avatar and tapped &quot;See your profile&quot; were greeted by a sign-in wall, even while signed in. The cause: profile pages live at your @handle, and fresh accounts don't have one yet. That dead end is now a one-field claim screen: pick your handle (we suggest one from your name), press Claim, and you land straight on your new public portfolio at three.ws/u/yourname. And if you really are signed out, the sign-in link now brings you back to your profile afterward instead of dropping you on the dashboard.</description>
-		</item>
-		<item>
-			<title>A live 3D avatar in the GitHub README, and readme-3d: an open toolkit for 3D in markdown</title>
-			<link>https://three.ws/changelog</link>
-			<guid isPermaLink="false">2026-07-13:A live 3D avatar in the GitHub README, and readme-3d: an open toolkit for 3D in markdown</guid>
-			<pubDate>Mon, 13 Jul 2026 12:00:00 GMT</pubDate>
-			<category>feature</category>
-			<description>The three.ws GitHub README now opens with the platform mascot as a real, draggable 3D model that GitHub renders natively (no image, no video: an interactive viewer in plain markdown). The pipeline that made it is now an open-source package, readme-3d: a CLI and library that converts any GLB, glTF, OBJ, or STL into the ASCII-STL markdown blocks GitHub renders, simplifies meshes to fit GitHub's 512 KB markdown limit, and size-checks your files so they never silently stop rendering. It ships with five tutorials, live examples, a docs site, a Claude Code skill, and copy-paste agent prompts, and pairs with the free Forge text-to-3D API so anyone can go from a one-line prompt to a 3D model in their README in five minutes.</description>
 		</item>
 		<item>
 			<title>A live 3D avatar in the GitHub README, and readme-3d: an open toolkit for 3D in markdown</title>

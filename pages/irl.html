@@ -698,6 +698,15 @@
 			background: rgba(251,191,36,0.1);
 		}
 		#irl-lock-btn.is-active:hover { background: rgba(251,191,36,0.18); }
+		/* Quick Look banner handoff: the tap inside Apple's sealed AR viewer can't
+		   pin by itself, so when the user lands back here, Pin here pulses to catch
+		   the intent they just signaled in-AR. */
+		#irl-lock-btn.is-banner-nudge { animation: irl-lock-nudge 1.5s ease-in-out 4; }
+		@keyframes irl-lock-nudge {
+			0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,0); transform: scale(1); }
+			50%      { box-shadow: 0 0 0 8px rgba(251,191,36,0.25); transform: scale(1.04); }
+		}
+		@media (prefers-reduced-motion: reduce) { #irl-lock-btn.is-banner-nudge { animation: none; box-shadow: 0 0 0 3px rgba(251,191,36,0.35); } }
 			/* "Move here" carry mode — teal active state matches the floor reticle the
 			   gesture drives, so the armed control and the on-floor ring read as one thing. */
 			#irl-carry-btn.is-active {

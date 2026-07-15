@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-15T11:24:15.457Z",
+	"generated_at": "2026-07-15T12:03:37.446Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2332,6 +2332,16 @@
 					"title": "Docs · Sketchfab Showcase",
 					"description": "How the best community forge models get published to the official three.ws Sketchfab account: what gets picked, AI disclosure, and the backlinks that make referrals measurable.",
 					"added": "2026-07-14",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/social-layer",
+					"title": "Docs · The Social Layer",
+					"description": "The activity feed, follow graph, notification bell, rankings, creator portfolios, and cross-entity search: the pages, the APIs, and how the pieces feed each other.",
+					"added": "2026-07-15",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

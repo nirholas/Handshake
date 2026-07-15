@@ -46,6 +46,7 @@ import { WebXRSession } from './ar/webxr.js';
 import { clampPinScale } from './ar/pinch-scale.js';
 import { resolvePlacementCapability } from './ar/placement-capability.js';
 import { openQuickLook } from './ar/quick-look.js';
+import { withQuickLookBanner } from './ar/quicklook-banner.js';
 import { createPersistGate, placementHint } from './ar/anchor-lifecycle.js';
 import { IrlNet } from './irl-net.js';
 import { wireShareButton } from './irl/share-frame.js';
@@ -3349,12 +3350,32 @@ async function bakeQuickLookUsdz(glbBlob) {
 	}
 }
 
+// The Quick Look banner tap arrives without user activation (iOS would reject
+// the motion/location permission prompts the pin flow needs), so it can't pin
+// directly. Instead it converts the intent: the moment the viewer closes, the
+// status points at Pin here and the button pulses, so the spot they liked in
+// AR becomes a durable, shareable pin in one deliberate tap.
+function onQuickLookBannerTap() {
+	setStatus('Like that spot? Tap Pin here to leave your agent there for people nearby.', { sticky: true });
+	if (lockBtn && !avatarLocked) {
+		lockBtn.classList.add('is-banner-nudge');
+		setTimeout(() => lockBtn.classList.remove('is-banner-nudge'), 6000);
+	}
+}
+
 async function enterQuickLookPlacement() {
 	if (anchorBtn) { anchorBtn.classList.add('is-active'); anchorBtn.disabled = true; }
 	setStatus('Preparing your agent for AR…', { loading: true, sticky: true });
 	try {
 		const usdzUrl = await resolveQuickLookUrl();
-		openQuickLook(usdzUrl);
+		// The banner is the only page-controlled UI Apple allows inside the sealed
+		// viewer: it names the agent in-AR and its tap is the one signal Quick Look
+		// can send back to us (a `message` event on the launching anchor).
+		openQuickLook(withQuickLookBanner(usdzUrl, {
+			title: nameEl.textContent || 'Your agent',
+			subtitle: 'Living agent on three.ws',
+			callToAction: 'Pin it here for people nearby',
+		}), { onBannerTap: onQuickLookBannerTap });
 		// Quick Look is a separate system viewer — it places-and-views the agent on
 		// your real floor but can't hand a pose back to our canvas, so the durable,
 		// shareable pin still comes from the Pin path. State that, no silent gap.
