@@ -14,7 +14,7 @@
 			"descHead": "dynamic",
 			"descHash": "dynamic",
 			"annotations": "ref:GEN_ANNOTATIONS",
-			"schemaHash": "324b0832b9e2"
+			"schemaHash": "c515ce38f402"
 		},
 		{
 			"name": "mesh_forge",
@@ -500,7 +500,7 @@
 				"idempotentHint": true,
 				"openWorldHint": false
 			},
-			"schemaHash": "e5d96ef9555d"
+			"schemaHash": "4f88431f681a"
 		}
 	],
 	"api/_mcp3d/tools/persona-identity.js": [

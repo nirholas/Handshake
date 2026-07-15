@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws — the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-07-15",
+			"title": "AR avatars now come alive in your room",
+			"summary": "Avatars no longer land in AR as frozen statues. Every rigged avatar generated on three.ws now carries a Bring it to life link that opens IRL: the agent walks, animates, and talks with you through your camera, standing in your real space. Static placement is still one tap away for props or anyone who just wants the model on a desk. The living link ships everywhere avatars are made: the AR launch page, the 3D Studio tools in ChatGPT and Claude, and the developer MCP tools.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/irl"
+		},
+		{
 			"date": "2026-07-14",
 			"title": "ChatGPT generations now place straight into your room",
 			"summary": "Every 3D model generated through the ChatGPT app and the three.ws 3D Studio GPT now comes back with a one-tap AR link, the same place-it-in-your-home flow the forge has. Open it on a phone and the model appears in your real space: iPhone uses Quick Look, Android uses Scene Viewer, and a computer falls back to the interactive viewer. The inline widget also grew a View in your space button, and refined versions each carry their own AR link.",

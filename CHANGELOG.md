@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-07-15
+
+- **AR avatars now come alive in your room** — Avatars no longer land in AR as frozen statues. Every rigged avatar generated on three.ws now carries a Bring it to life link that opens IRL: the agent walks, animates, and talks with you through your camera, standing in your real space. Static placement is still one tap away for props or anyone who just wants the model on a desk. The living link ships everywhere avatars are made: the AR launch page, the 3D Studio tools in ChatGPT and Claude, and the developer MCP tools. (`/irl`) `[feature, improvement]`
+
 ## 2026-07-14
 
 - **AR Forge** (`/ar`) — Type a prompt, get a real 3D model, and place it in your room: free text-to-3D with one-tap AR on any phone (WebXR, Scene Viewer, Quick Look) and a QR handoff from desktop.

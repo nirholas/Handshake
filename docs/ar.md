@@ -413,6 +413,7 @@ Any generated model (or any public https `.glb`/`.gltf`) gets a device-aware "Vi
 
 ```
 https://three.ws/api/ar?src=<glbUrl>&title=<name>
+https://three.ws/api/ar?src=<glbUrl>&title=<name>&kind=avatar   // living agent
 ```
 
 The endpoint branches on the request's **User-Agent**, server-side:
@@ -423,6 +424,8 @@ The endpoint branches on the request's **User-Agent**, server-side:
 | **Android** | `302` → Google **Scene Viewer** ARCore intent (the GLB is the source), with a browser fallback to the WebGL viewer. |
 | **Desktop** | Launch page → interactive **WebGL** viewer (no AR hardware). |
 
+**`kind=avatar`: the living-agent lane.** AR on three.ws is not a prop viewer; it is how agents cross into physical space. When the GLB is a rigged avatar (an agent's body), add `kind=avatar`: the launch page then leads with a **Bring it to life** handoff into [`/irl?avatar=<glbUrl>`](/irl), where the avatar walks, animates, and talks with the user through their camera in their real room. Static placement stays available alongside it, and Android serves the launch page instead of the blind Scene Viewer redirect so the living path is always visible.
+
 Bad input (non-https, non-GLB, missing) returns a clean, designed error page — never a crash.
 
 **For agents (MCP):** the free, read-only `export_ar` tool on the [3D Studio server](/docs/mcp) turns a GLB into the AR launch link plus a conformant [Spatial MCP](/docs/spatial-mcp) artifact (with the `ar` handoff populated):
@@ -430,7 +433,13 @@ Bad input (non-https, non-GLB, missing) returns a clean, designed error page —
 ```jsonc
 // tools/call → export_ar { "glb_url": "https://three.ws/cdn/creations/model.glb", "title": "Robot" }
 // → { arLaunchUrl: "https://three.ws/api/ar?src=…", viewerUrl: "…", sceneViewerUrl: "intent://…", spatial: { … } }
+
+// Rigged avatar? Pass kind:"avatar" to also get the living-agent link:
+// tools/call → export_ar { "glb_url": "…/scout.glb", "title": "Scout", "kind": "avatar" }
+// → { arLaunchUrl: "…&kind=avatar", irlUrl: "https://three.ws/irl?avatar=…", … }
 ```
+
+The avatar-producing studio tools (`text_to_avatar`, `rig_mesh`, `forge_avatar`) return `irlUrl` automatically, on both the free and paid tracks.
 
 The response carries no payment, wallet, token, or internal-id surface, so it ships on both the Claude and OpenAI tracks.
 

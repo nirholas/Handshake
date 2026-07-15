@@ -224,7 +224,7 @@ export const COMPONENT_HTML = `<!doctype html>
         chip.classList.add('active');
         openEl.href = v.viewerUrl || v.glbUrl;
         downloadEl.href = v.glbUrl;
-        if (v.arUrl) { arEl.href = v.arUrl; arEl.classList.remove('hidden'); }
+        if (v.arUrl) { arEl.href = v.arUrl; arEl.textContent = 'View in your space'; arEl.classList.remove('hidden'); }
         if (v.instruction) { promptEl.textContent = v.instruction; promptEl.title = v.instruction; }
         swapTo(v.glbUrl);
       });
@@ -255,8 +255,14 @@ export const COMPONENT_HTML = `<!doctype html>
     downloadEl.href = glb;
     // Device-aware AR launch (/api/ar): the same one-tap "place it in your
     // home" flow the forge site uses. ChatGPT opens it in the system browser,
-    // where iPhone enters Quick Look and Android enters Scene Viewer.
-    if (out.arUrl) { arEl.href = out.arUrl; arEl.classList.remove('hidden'); }
+    // where iPhone enters Quick Look and Android enters Scene Viewer. An
+    // avatar's launch (irlUrl present) leads with the IRL living experience,
+    // so the button says what it does.
+    if (out.arUrl) {
+      arEl.href = out.arUrl;
+      arEl.textContent = isHttps(out.irlUrl) ? 'Bring it to life' : 'View in your space';
+      arEl.classList.remove('hidden');
+    }
     else { arEl.classList.add('hidden'); }
     bar.classList.remove('hidden');
     renderVersions(out.lineage, glb);

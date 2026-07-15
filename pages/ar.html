@@ -331,6 +331,50 @@
 				flex-shrink: 0;
 			}
 
+			/* Living-agent handoff: the avatar walks and talks in your room on /irl. */
+			.ar-live-btn {
+				width: 100%;
+				max-width: 380px;
+				height: 52px;
+				margin-top: 10px;
+				background: rgba(255, 255, 255, 0.08);
+				color: #ffffff;
+				border: 1px solid rgba(255, 255, 255, 0.22);
+				border-radius: 16px;
+				font-family: 'Space Grotesk', system-ui, sans-serif;
+				font-size: 15.5px;
+				font-weight: 700;
+				letter-spacing: -0.01em;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 9px;
+				text-decoration: none;
+				transition:
+					transform 0.12s,
+					background 0.2s,
+					border-color 0.2s;
+			}
+			.ar-live-btn:hover {
+				transform: translateY(-2px);
+				background: rgba(255, 255, 255, 0.14);
+				border-color: rgba(255, 255, 255, 0.34);
+			}
+			.ar-live-btn:active {
+				transform: translateY(0);
+			}
+			.ar-live-btn:focus-visible {
+				outline: 2px solid #ffffff;
+				outline-offset: 2px;
+			}
+			.ar-live-btn[hidden] {
+				display: none;
+			}
+			.ar-live-btn svg {
+				flex-shrink: 0;
+			}
+
 			/* ── Footer links ─────────────────────────────── */
 			.ar-footer-links {
 				display: flex;
@@ -444,6 +488,31 @@
 					</svg>
 					Place in your space
 				</button>
+				<a
+					class="ar-live-btn"
+					id="ar-live-link"
+					href="/irl"
+					aria-label="Bring this avatar to life: it walks and talks with you through your camera"
+					hidden
+				>
+					<svg
+						width="19"
+						height="19"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<circle cx="12" cy="5" r="3" />
+						<path d="M12 8v6" />
+						<path d="M9 22l3-8 3 8" />
+						<path d="M8 12h8" />
+					</svg>
+					Bring it to life
+				</a>
 				<div class="ar-footer-links">
 					<a href="/features/ar" class="ar-footer-link">AR feature overview</a>
 					<span class="ar-footer-sep" aria-hidden="true">·</span>

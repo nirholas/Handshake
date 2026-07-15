@@ -24,7 +24,7 @@ import {
 	runForgeAvatar,
 } from '../../mcp-server/src/tools/_studio-core.js';
 import { renderModelViewerHtml } from '../_mcp/render.js';
-import { buildArLaunchUrl } from '../_lib/ar-launch.js';
+import { buildArLaunchUrl, buildIrlUrl } from '../_lib/ar-launch.js';
 
 // Public origin used to build viewer / pose-studio links in the SANITIZED
 // response — independent of whichever internal origin the cores call. Always a
@@ -35,8 +35,14 @@ const viewerUrl = (glbUrl) => `${PUBLIC_BASE}/viewer?src=${encodeURIComponent(gl
 const poseUrl = (glbUrl) => `${PUBLIC_BASE}/pose?src=${encodeURIComponent(glbUrl)}`;
 // Device-aware AR launch (/api/ar): iPhone → Quick Look, Android → Scene
 // Viewer, desktop → WebGL viewer. The SAME one-tap "place it in your home"
-// flow the forge site uses; every generation response carries it.
-const arUrl = (glbUrl) => buildArLaunchUrl(PUBLIC_BASE, glbUrl);
+// flow the forge site uses; every generation response carries it. `live`
+// marks an avatar (an agent's body): the launch page then leads with the
+// IRL living handoff instead of static placement.
+const arUrl = (glbUrl, live = false) => buildArLaunchUrl(PUBLIC_BASE, glbUrl, '', { live });
+// IRL living-agent link: the avatar walks, animates, and talks with the user
+// through their camera in their real room. AR here bridges the agent economy
+// into physical space; static placement is for props.
+const irlUrl = (glbUrl) => buildIrlUrl(PUBLIC_BASE, glbUrl);
 
 // Generation annotations (per Apps SDK guidance): these tools mint a fresh
 // external artifact, so they are writes, non-destructive, non-idempotent, and
@@ -51,7 +57,7 @@ const GEN_ANNOTATIONS = {
 // Build the MCP CallToolResult for a SUCCESSFUL generation. `structured` is the
 // already-sanitized public payload; `glbUrl` drives the inline 3D artifact and
 // the human-readable text mirror. The component reads `structuredContent.glbUrl`.
-function ok(structured, glbUrl, name) {
+function ok(structured, glbUrl, name, { live = false } = {}) {
 	const artifact = {
 		type: 'resource',
 		resource: {
@@ -65,7 +71,7 @@ function ok(structured, glbUrl, name) {
 				width: '100%',
 				autoRotate: true,
 				ar: true,
-				arHref: arUrl(glbUrl),
+				arHref: arUrl(glbUrl, live),
 			}),
 		},
 	};
@@ -179,11 +185,12 @@ const textToAvatar = {
 			kind: 'avatar',
 			glbUrl: r.glbUrl,
 			viewerUrl: viewerUrl(r.glbUrl),
-			arUrl: arUrl(r.glbUrl),
+			arUrl: arUrl(r.glbUrl, true),
+			irlUrl: irlUrl(r.glbUrl),
 			prompt: r.prompt,
 			durationMs: r.durationMs,
 		};
-		return ok(structured, r.glbUrl, args.prompt || 'avatar');
+		return ok(structured, r.glbUrl, args.prompt || 'avatar', { live: true });
 	},
 };
 
@@ -279,11 +286,12 @@ const rigMesh = {
 			glbUrl: r.riggedGlbUrl,
 			sourceGlbUrl: r.sourceGlbUrl,
 			viewerUrl: viewerUrl(r.riggedGlbUrl),
-			arUrl: arUrl(r.riggedGlbUrl),
+			arUrl: arUrl(r.riggedGlbUrl, true),
+			irlUrl: irlUrl(r.riggedGlbUrl),
 			poseStudioUrl: poseUrl(r.riggedGlbUrl),
 			durationMs: r.durationMs,
 		};
-		return ok(structured, r.riggedGlbUrl, 'rigged model');
+		return ok(structured, r.riggedGlbUrl, 'rigged model', { live: true });
 	},
 };
 
@@ -349,13 +357,14 @@ const forgeAvatar = {
 			glbUrl: r.riggedGlbUrl,
 			meshGlbUrl: r.meshGlbUrl,
 			viewerUrl: viewerUrl(r.riggedGlbUrl),
-			arUrl: arUrl(r.riggedGlbUrl),
+			arUrl: arUrl(r.riggedGlbUrl, true),
+			irlUrl: irlUrl(r.riggedGlbUrl),
 			poseStudioUrl: poseUrl(r.riggedGlbUrl),
 			prompt: r.prompt,
 			animationReady: true,
 			durationMs: r.durationMs,
 		};
-		return ok(structured, r.riggedGlbUrl, args.prompt || 'avatar');
+		return ok(structured, r.riggedGlbUrl, args.prompt || 'avatar', { live: true });
 	},
 };
 

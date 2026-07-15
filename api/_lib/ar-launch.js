@@ -11,6 +11,14 @@
 //                Scene Viewer source), with a browser fallback to the WebGL viewer.
 //   • desktop  → the interactive WebGL viewer (no AR hardware).
 //
+// AR here is not a prop viewer: it is how three.ws agents cross into physical
+// space. A static object gets Quick Look / Scene Viewer placement; a LIVE asset
+// (a rigged avatar, an agent's body) additionally gets the IRL handoff
+// (/irl?avatar=<glb>): camera passthrough, animation, movement, and conversation
+// with the AI in the user's real room. `live: true` in planArLaunch marks that
+// lane; it keeps Android on the launch page (instead of the blind Scene Viewer
+// redirect) so the living-agent path is always visible.
+//
 // It is dependency-free and side-effect-free so the routing decision is unit-
 // tested in isolation, and carries ZERO payment/wallet/coin surface — AR is pure
 // consumer value and ships on both the Claude and OpenAI tracks.
@@ -70,26 +78,42 @@ export function buildViewerUrl(origin, glbUrl, title = '') {
 	return `${base}/viewer?src=${encodeURIComponent(glbUrl)}${t}`;
 }
 
-/** The device-aware AR launch URL (this endpoint) for a GLB. */
-export function buildArLaunchUrl(origin, glbUrl, title = '') {
+/** The device-aware AR launch URL (this endpoint) for a GLB. `live` marks a rigged avatar. */
+export function buildArLaunchUrl(origin, glbUrl, title = '', { live = false } = {}) {
 	const base = String(origin || 'https://three.ws').replace(/\/$/, '');
 	const t = title ? `&title=${encodeURIComponent(title)}` : '';
-	return `${base}/api/ar?src=${encodeURIComponent(glbUrl)}${t}`;
+	const k = live ? '&kind=avatar' : '';
+	return `${base}/api/ar?src=${encodeURIComponent(glbUrl)}${t}${k}`;
+}
+
+/**
+ * The IRL living-agent URL for an avatar GLB: /irl loads it as the user's agent
+ * body: camera AR passthrough, retargeted animation, joystick movement, and
+ * conversation. The full digital-to-physical experience, not a frozen placement.
+ */
+export function buildIrlUrl(origin, glbUrl) {
+	const base = String(origin || 'https://three.ws').replace(/\/$/, '');
+	return `${base}/irl?avatar=${encodeURIComponent(glbUrl)}`;
 }
 
 /**
  * Resolve the launch plan for a request. Returns:
- *   { target, action:'redirect', url }   — Android: 302 to Scene Viewer
- *   { target, action:'page' }            — iOS/desktop: serve the launch page
- * plus the resolved viewer + scene-viewer URLs for the page/tool to use.
+ *   { target, action:'redirect', url }   Android static model: 302 to Scene Viewer
+ *   { target, action:'page' }            iOS/desktop, and any live avatar
+ * plus the resolved viewer + scene-viewer URLs for the page/tool to use, and
+ * `irlUrl` when live (a rigged avatar) so the launch surface can offer the
+ * walking, talking agent experience alongside static placement.
  */
-export function planArLaunch({ glbUrl, userAgent, origin, title = '' }) {
+export function planArLaunch({ glbUrl, userAgent, origin, title = '', live = false }) {
 	const asset = assertArAssetUrl(glbUrl);
 	const target = detectArTarget(userAgent);
 	const viewerUrl = buildViewerUrl(origin, asset, title);
 	const sceneViewerUrl = buildSceneViewerUrl(asset, { title, fallbackUrl: viewerUrl });
-	if (target === 'android') {
-		return { target, action: 'redirect', url: sceneViewerUrl, asset, viewerUrl, sceneViewerUrl };
+	const irlUrl = live ? buildIrlUrl(origin, asset) : '';
+	// Live avatars always get the launch page: a straight Scene Viewer redirect
+	// would place a frozen body and hide the "bring it to life" path entirely.
+	if (target === 'android' && !live) {
+		return { target, action: 'redirect', url: sceneViewerUrl, asset, viewerUrl, sceneViewerUrl, irlUrl };
 	}
-	return { target, action: 'page', asset, viewerUrl, sceneViewerUrl };
+	return { target, action: 'page', asset, viewerUrl, sceneViewerUrl, irlUrl, live };
 }

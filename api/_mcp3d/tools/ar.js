@@ -15,6 +15,7 @@ import {
 	buildArLaunchUrl,
 	buildViewerUrl,
 	buildSceneViewerUrl,
+	buildIrlUrl,
 } from '../../_lib/ar-launch.js';
 
 const DEFAULT_ORIGIN = 'https://three.ws';
@@ -40,7 +41,9 @@ export const toolDefs = [
 			'Turn a generated 3D model (GLB URL) into a one-tap "View in your space" AR experience. Returns a ' +
 			'device-aware AR launch link (iOS Quick Look, Android Scene Viewer, desktop WebGL — branched on the ' +
 			"viewer's device), the interactive viewer link, and a conformant Spatial MCP artifact with the AR handoff " +
-			'populated. Use it after generating a model so the user can place it on their desk through their phone.',
+			'populated. Use it after generating a model so the user can place it on their desk through their phone. ' +
+			'For a rigged avatar (an agent\'s body) pass kind:"avatar": the response then also carries irlUrl, a ' +
+			'living-agent link that walks, animates, and talks with the user through their camera in their real room.',
 		inputSchema: {
 			type: 'object',
 			additionalProperties: false,
@@ -48,6 +51,11 @@ export const toolDefs = [
 			properties: {
 				glb_url: { type: 'string', format: 'uri', description: 'Public https URL of a .glb (or .gltf) model to export for AR.' },
 				title: { type: 'string', maxLength: 120, description: 'Optional name shown in the AR/viewer experience.' },
+				kind: {
+					type: 'string',
+					enum: ['model', 'avatar'],
+					description: 'What the GLB is. "avatar" (a rigged agent body) adds the IRL living-agent link (irlUrl) and makes the AR launch page lead with it. Default "model".',
+				},
 			},
 		},
 		async handler(args, _auth, req) {
@@ -63,13 +71,15 @@ export const toolDefs = [
 			}
 			const origin = originFrom(req);
 			const title = typeof args.title === 'string' ? args.title.slice(0, 120) : '';
-			const arLaunchUrl = buildArLaunchUrl(origin, asset, title);
+			const live = args.kind === 'avatar';
+			const arLaunchUrl = buildArLaunchUrl(origin, asset, title, { live });
 			const viewerUrl = buildViewerUrl(origin, asset, title);
 			const sceneViewerUrl = buildSceneViewerUrl(asset, { title, fallbackUrl: viewerUrl });
+			const irlUrl = live ? buildIrlUrl(origin, asset) : '';
 
 			const spatial = buildSpatialArtifact({
 				glbUrl: asset,
-				kind: 'model',
+				kind: live ? 'avatar' : 'model',
 				viewerUrl,
 				title: title || undefined,
 				ar: { glbUrl: asset, launchUrl: arLaunchUrl },
@@ -79,7 +89,10 @@ export const toolDefs = [
 				content: [
 					{
 						type: 'text',
-						text: `Ready for AR. Open on a phone to place it in your space: ${arLaunchUrl}\nInteractive viewer: ${viewerUrl}`,
+						text: live
+							? `Ready for AR. Bring it to life in the real room (it moves and talks through the camera, open on a phone): ${irlUrl}\n` +
+								`Place a static copy in your space: ${arLaunchUrl}\nInteractive viewer: ${viewerUrl}`
+							: `Ready for AR. Open on a phone to place it in your space: ${arLaunchUrl}\nInteractive viewer: ${viewerUrl}`,
 					},
 				],
 				structuredContent: {
@@ -87,6 +100,7 @@ export const toolDefs = [
 					arLaunchUrl,
 					viewerUrl,
 					sceneViewerUrl,
+					...(irlUrl ? { irlUrl } : {}),
 					format: 'glb',
 					spatial,
 				},

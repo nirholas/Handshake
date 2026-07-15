@@ -200,6 +200,32 @@ describe('mcp-studio dispatch', () => {
 		expect(serialized).not.toContain('creation_id');
 	});
 
+	it('avatar results carry the IRL living-agent handoff; props stay static (AR bridges agents into the real world)', async () => {
+		globalThis.fetch = vi.fn(async () => ({
+			ok: true,
+			status: 200,
+			json: async () => ({ status: 'done', glb_url: 'https://three.ws/cdn/creations/scout.glb' }),
+		}));
+		const avatar = await dispatch(
+			{ jsonrpc: '2.0', id: 63, method: 'tools/call', params: { name: 'text_to_avatar', arguments: { prompt: 'a friendly robot scout' } } },
+			auth,
+			mkReq(),
+		);
+		const sc = avatar.result.structuredContent;
+		expect(sc.irlUrl).toBe(`https://three.ws/irl?avatar=${encodeURIComponent('https://three.ws/cdn/creations/scout.glb')}`);
+		expect(sc.arUrl).toContain('kind=avatar');
+		// The narration offers the living experience, not just static placement.
+		expect(avatar.result.content[0].text).toContain(sc.irlUrl);
+
+		const model = await dispatch(
+			{ jsonrpc: '2.0', id: 64, method: 'tools/call', params: { name: 'forge_free', arguments: { prompt: 'a ceramic vase' } } },
+			auth,
+			mkReq(),
+		);
+		expect(model.result.structuredContent.irlUrl).toBeUndefined();
+		expect(model.result.structuredContent.arUrl).not.toContain('kind=avatar');
+	});
+
 	it('rewrites bucket-domain GLB URLs to the first-party /cdn proxy (sandboxed widgets need open CORS)', async () => {
 		// The public r2.dev domain only answers CORS for our own origin; ChatGPT's
 		// widget iframe is cross-origin, so tool results must carry the /cdn form.

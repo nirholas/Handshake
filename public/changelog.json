@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-07-14T23:51:46.820Z",
+	"generated_at": "2026-07-15T00:05:54.372Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-15",
+			"type": "update",
+			"title": "AR avatars now come alive in your room",
+			"summary": "Avatars no longer land in AR as frozen statues. Every rigged avatar generated on three.ws now carries a Bring it to life link that opens IRL: the agent walks, animates, and talks with you through your camera, standing in your real space. Static placement is still one tap away for props or anyone who just wants the model on a desk. The living link ships everywhere avatars are made: the AR launch page, the 3D Studio tools in ChatGPT and Claude, and the developer MCP tools.",
+			"link": "/irl",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-07-14",
 			"type": "launch",

@@ -77,6 +77,14 @@ function renderPage(avatar, glbUrl) {
 
 	const id = avatar.id || avatarId;
 	$('ar-back-link').href = `/avatars/${encodeURIComponent(id)}`;
+	// Living-agent handoff: /irl loads this avatar as the agent's body in the
+	// user's real space (camera passthrough, animation, conversation). Static
+	// placement is one option; alive is the point.
+	const liveLink = $('ar-live-link');
+	if (liveLink) {
+		liveLink.href = `/irl?avatar=${encodeURIComponent(id)}`;
+		liveLink.hidden = false;
+	}
 	mountViewSwitcher($('view-switch-slot'), { kind: 'avatar', id, active: 'ar' });
 
 	$('ar-share-btn').addEventListener('click', () => shareAvatar(avatar));

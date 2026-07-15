@@ -6,6 +6,7 @@ import {
 	buildSceneViewerUrl,
 	buildViewerUrl,
 	buildArLaunchUrl,
+	buildIrlUrl,
 	planArLaunch,
 } from '../api/_lib/ar-launch.js';
 import { toolDefs as arDefs } from '../api/_mcp3d/tools/ar.js';
@@ -78,6 +79,52 @@ describe('planArLaunch — device routing', () => {
 	});
 });
 
+describe('GET /api/ar — response caching is UA-safe', () => {
+	function makeReq(ua) {
+		return {
+			method: 'GET',
+			url: `/api/ar?src=${encodeURIComponent(GLB)}&title=Robot`,
+			headers: { 'user-agent': ua, host: 'three.ws' },
+		};
+	}
+	function makeRes() {
+		return {
+			statusCode: 200,
+			_h: {},
+			writableEnded: false,
+			headersSent: false,
+			setHeader(k, v) {
+				this._h[k.toLowerCase()] = v;
+			},
+			getHeader(k) {
+				return this._h[k.toLowerCase()];
+			},
+			end(body) {
+				this._body = body;
+				this.writableEnded = true;
+			},
+		};
+	}
+
+	it('the launch page varies on User-Agent so a CDN never serves a desktop page to a phone', async () => {
+		const { default: handler } = await import('../api/ar.js');
+		const res = makeRes();
+		await handler(makeReq(IOS), res);
+		expect(res.statusCode).toBe(200);
+		expect(res.getHeader('vary')).toMatch(/user-agent/i);
+		expect(res.getHeader('cache-control')).toContain('public');
+	});
+
+	it('the Android Scene Viewer redirect stays uncached (no-store)', async () => {
+		const { default: handler } = await import('../api/ar.js');
+		const res = makeRes();
+		await handler(makeReq(ANDROID), res);
+		expect(res.statusCode).toBe(302);
+		expect(res.getHeader('location')).toContain('scene-viewer');
+		expect(res.getHeader('cache-control')).toBe('no-store');
+	});
+});
+
 describe('buildViewerUrl / buildArLaunchUrl', () => {
 	it('build https viewer and AR launch URLs', () => {
 		expect(buildViewerUrl('https://three.ws', GLB)).toBe(`https://three.ws/viewer?src=${encodeURIComponent(GLB)}`);
@@ -118,5 +165,109 @@ describe('export_ar MCP tool', () => {
 		const r = await tool.handler({ glb_url: GLB }, null, req);
 		const FORBIDDEN = /x402|payment|wallet|usdc|\$three|\btoken\b|\bcoin\b|price|\bpaid\b|onchain|web3|mint|session|trace|job_id|creation_id/i;
 		expect(FORBIDDEN.test(JSON.stringify(r))).toBe(false);
+	});
+
+	it('kind:"avatar" adds the IRL living-agent link and marks the launch as live', async () => {
+		const r = await tool.handler({ glb_url: GLB, title: 'Scout', kind: 'avatar' }, null, req);
+		const sc = r.structuredContent;
+		expect(sc.irlUrl).toBe(`https://three.ws/irl?avatar=${encodeURIComponent(GLB)}`);
+		expect(sc.arLaunchUrl).toContain('kind=avatar');
+		expect(sc.spatial.kind).toBe('avatar');
+		expect(validateSpatialArtifact(sc.spatial).valid).toBe(true);
+		// The narration leads with the living experience, not the static placement.
+		expect(r.content[0].text).toContain(sc.irlUrl);
+	});
+
+	it('plain models stay static: no irlUrl, no live flag on the launch link', async () => {
+		const r = await tool.handler({ glb_url: GLB }, null, req);
+		expect(r.structuredContent.irlUrl).toBeUndefined();
+		expect(r.structuredContent.arLaunchUrl).not.toContain('kind=avatar');
+	});
+});
+
+describe('live (avatar) AR lane: the agent-economy bridge into physical space', () => {
+	it('buildIrlUrl builds the /irl living handoff for a GLB', () => {
+		expect(buildIrlUrl('https://three.ws', GLB)).toBe(`https://three.ws/irl?avatar=${encodeURIComponent(GLB)}`);
+		expect(buildIrlUrl('https://three.ws/', GLB)).toBe(`https://three.ws/irl?avatar=${encodeURIComponent(GLB)}`);
+	});
+
+	it('buildArLaunchUrl marks live launches with kind=avatar', () => {
+		expect(buildArLaunchUrl('https://three.ws', GLB, '', { live: true })).toContain('&kind=avatar');
+		expect(buildArLaunchUrl('https://three.ws', GLB)).not.toContain('kind=avatar');
+	});
+
+	it('planArLaunch live: Android gets the page (never a blind Scene Viewer redirect), with irlUrl', () => {
+		const p = planArLaunch({ glbUrl: GLB, userAgent: ANDROID, origin: 'https://three.ws', live: true });
+		expect(p.action).toBe('page');
+		expect(p.irlUrl).toContain('/irl?avatar=');
+	});
+
+	it('planArLaunch live: iOS and desktop carry irlUrl on the page plan', () => {
+		for (const ua of [IOS, DESKTOP]) {
+			const p = planArLaunch({ glbUrl: GLB, userAgent: ua, origin: 'https://three.ws', live: true });
+			expect(p.action).toBe('page');
+			expect(p.irlUrl).toContain('/irl?avatar=');
+		}
+	});
+
+	it('planArLaunch static: Android redirect unchanged, no irlUrl anywhere', () => {
+		const android = planArLaunch({ glbUrl: GLB, userAgent: ANDROID, origin: 'https://three.ws' });
+		expect(android.action).toBe('redirect');
+		expect(android.irlUrl).toBe('');
+		const ios = planArLaunch({ glbUrl: GLB, userAgent: IOS, origin: 'https://three.ws' });
+		expect(ios.irlUrl).toBe('');
+	});
+});
+
+describe('GET /api/ar?kind=avatar: living-agent launch page', () => {
+	function makeReq(ua, extra = '') {
+		return {
+			method: 'GET',
+			url: `/api/ar?src=${encodeURIComponent(GLB)}&title=Scout${extra}`,
+			headers: { 'user-agent': ua, host: 'three.ws' },
+		};
+	}
+	function makeRes() {
+		return {
+			statusCode: 200,
+			_h: {},
+			writableEnded: false,
+			headersSent: false,
+			setHeader(k, v) {
+				this._h[k.toLowerCase()] = v;
+			},
+			getHeader(k) {
+				return this._h[k.toLowerCase()];
+			},
+			end(body) {
+				this._body = body;
+				this.writableEnded = true;
+			},
+		};
+	}
+
+	it('an avatar launch serves the page on Android with the Bring-it-to-life handoff', async () => {
+		const { default: handler } = await import('../api/ar.js');
+		const res = makeRes();
+		await handler(makeReq(ANDROID, '&kind=avatar'), res);
+		expect(res.statusCode).toBe(200);
+		expect(res._body).toContain('Bring it to life');
+		expect(res._body).toContain('/irl?avatar=');
+	});
+
+	it('an avatar launch on iOS offers both the living handoff and static placement', async () => {
+		const { default: handler } = await import('../api/ar.js');
+		const res = makeRes();
+		await handler(makeReq(IOS, '&kind=avatar'), res);
+		expect(res._body).toContain('Bring it to life');
+		expect(res._body).toContain('Place in your space');
+	});
+
+	it('a static model launch page has no living-agent surface', async () => {
+		const { default: handler } = await import('../api/ar.js');
+		const res = makeRes();
+		await handler(makeReq(IOS), res);
+		expect(res._body).not.toContain('Bring it to life');
+		expect(res._body).not.toContain('/irl?avatar=');
 	});
 });

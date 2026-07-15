@@ -1,6 +1,6 @@
 /**
- * Device-aware AR launch — GET /api/ar?src=<glbUrl>&title=<name>
- * -------------------------------------------------------------
+ * Device-aware AR launch: GET /api/ar?src=<glbUrl>&title=<name>&kind=<avatar?>
+ * -----------------------------------------------------------------------------
  * Places a generated GLB in the user's space, branching on the request's
  * User-Agent (server-side, from the header — no client round-trip):
  *
@@ -11,6 +11,12 @@
  *     GLB on the fly (a real conversion via three.js USDZExporter, in-page).
  *   • desktop → the same launch page, which falls back to the interactive WebGL
  *     viewer (no AR hardware).
+ *
+ * `kind=avatar` marks a LIVE asset (a rigged avatar, an agent's body). AR is how
+ * three.ws agents cross into the physical world, so an avatar launch always
+ * serves the page (Android included) with a "Bring it to life" handoff into
+ * /irl?avatar=<glb>: camera passthrough, animation, movement, and conversation
+ * with the AI in the user's real room, alongside the static AR placement.
  *
  * Bad input (non-https, non-GLB, missing) is rejected at the boundary with a
  * clean, designed error page — never a crash. Zero payment/coin surface.
@@ -41,8 +47,8 @@ border-radius:10px;padding:9px 14px;text-decoration:none;font-weight:600;font-si
 <a href="https://three.ws">Create a 3D model</a></div></body></html>`;
 }
 
-function launchPage({ target, asset, viewerUrl, title }) {
-	const t = title ? esc(title) : '3D model';
+function launchPage({ target, asset, viewerUrl, title, irlUrl }) {
+	const t = title ? esc(title) : irlUrl ? '3D avatar' : '3D model';
 	return `<!doctype html><html lang="en"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>View ${t} in AR · three.ws</title><meta name="robots" content="noindex"/>
@@ -55,6 +61,8 @@ model-viewer{width:100%;height:100%;--progress-bar-color:var(--accent);backgroun
 .bar{display:flex;gap:10px;align-items:center;justify-content:center;padding:14px 16px;border-top:1px solid rgba(255,255,255,.07);background:rgba(10,11,14,.55);backdrop-filter:blur(8px)}
 button.ar,a.ar{appearance:none;cursor:pointer;text-decoration:none;font-size:14px;font-weight:700;color:#0b0c10;background:var(--accent);border:0;border-radius:12px;padding:12px 20px;display:inline-flex;align-items:center;gap:8px}
 button.ar:active{transform:translateY(1px)}button.ar:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.ghost{appearance:none;cursor:pointer;text-decoration:none;font-size:14px;font-weight:700;color:var(--accent);background:rgba(110,168,254,.14);border:1px solid rgba(110,168,254,.45);border-radius:12px;padding:11px 18px;display:inline-flex;align-items:center;gap:8px;transition:background .15s ease}
+.ghost:hover{background:rgba(110,168,254,.24)}.ghost:active{transform:translateY(1px)}.ghost:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .hint{position:absolute;left:0;right:0;bottom:16px;text-align:center;color:#9aa3b2;font-size:12px;pointer-events:none}
 a.alt{color:#aeb6c4;font-size:12.5px;text-decoration:underline}</style></head>
 <body><div class="wrap"><div class="stage">
@@ -62,15 +70,15 @@ a.alt{color:#aeb6c4;font-size:12.5px;text-decoration:underline}</style></head>
  environment-image="neutral" exposure="1.05" shadow-intensity="1" tone-mapping="aces"
  ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" ${target === 'ios' ? 'reveal="auto"' : ''}>
 </model-viewer>
-<div class="hint" id="hint">Move your phone to place the model in your space.</div>
+<div class="hint" id="hint">${irlUrl ? 'This is a living agent. Bring it to life to walk and talk with it in your room.' : 'Move your phone to place the model in your space.'}</div>
 </div>
 <div class="bar">
-<button class="ar" id="ar-btn" type="button" aria-label="View this model in augmented reality">📱 View in your space</button>
+${irlUrl ? `<a class="ar" href="${esc(irlUrl)}" aria-label="Bring this avatar to life in your room: it moves and talks through your camera">🤖 Bring it to life</a>\n<button class="ghost" id="ar-btn" type="button" aria-label="Place a static copy of this avatar in augmented reality">📱 Place in your space</button>` : `<button class="ar" id="ar-btn" type="button" aria-label="View this model in augmented reality">📱 View in your space</button>`}
 <a class="alt" href="${esc(viewerUrl)}">Open in 3D viewer</a>
 </div></div>
 <script>
-(function(){var mv=document.getElementById('mv'),btn=document.getElementById('ar-btn'),hint=document.getElementById('hint');
-function sync(){ if(!mv.canActivateAR){ btn.textContent='View in 3D'; hint.style.display='none'; } }
+(function(){var mv=document.getElementById('mv'),btn=document.getElementById('ar-btn'),hint=document.getElementById('hint'),live=${irlUrl ? 'true' : 'false'};
+function sync(){ if(!mv.canActivateAR){ btn.textContent='View in 3D'; if(!live){ hint.style.display='none'; } } }
 mv.addEventListener('load',sync);
 btn.addEventListener('click',function(){ if(mv.canActivateAR){ try{mv.activateAR();}catch(e){} } else { window.location.href='${esc(viewerUrl)}'; } });
 })();
@@ -83,10 +91,12 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://x');
 	const src = url.searchParams.get('src') || '';
 	const title = (url.searchParams.get('title') || '').slice(0, 120);
+	// kind=avatar marks a rigged agent body; it unlocks the IRL living handoff.
+	const live = url.searchParams.get('kind') === 'avatar';
 
 	let plan;
 	try {
-		plan = planArLaunch({ glbUrl: src, userAgent: req.headers['user-agent'], origin: originFrom(req), title });
+		plan = planArLaunch({ glbUrl: src, userAgent: req.headers['user-agent'], origin: originFrom(req), title, live });
 	} catch (err) {
 		res.statusCode = 400;
 		res.setHeader('content-type', 'text/html; charset=utf-8');
@@ -105,6 +115,11 @@ export default wrap(async (req, res) => {
 
 	res.statusCode = 200;
 	res.setHeader('content-type', 'text/html; charset=utf-8');
+	// The page is UA-branched (iOS Quick Look vs desktop fallback) while Android
+	// gets a 302 above — without Vary a CDN-cached desktop page can be served to
+	// an Android phone and swallow the straight-into-AR redirect. Vary keeps the
+	// browser cache (one UA per browser) and stops the cross-device bleed.
+	res.setHeader('vary', 'user-agent');
 	res.setHeader('cache-control', 'public, max-age=60, s-maxage=600');
-	res.end(launchPage({ target: plan.target, asset: plan.asset, viewerUrl: plan.viewerUrl, title }));
+	res.end(launchPage({ target: plan.target, asset: plan.asset, viewerUrl: plan.viewerUrl, title, irlUrl: plan.irlUrl }));
 });

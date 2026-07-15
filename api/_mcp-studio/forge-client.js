@@ -45,9 +45,20 @@ export function viewerUrl(base, glbUrl) {
 // Viewer, iOS gets a Quick Look launch page (GLB→USDZ converted in-page), and
 // desktop falls back to the WebGL viewer. One URL places the model in the
 // user's real room on any phone — the same lane the /ar and /forge pages use.
-export function arLaunchUrl(base, glbUrl, title) {
+// `live: true` marks a rigged avatar (an agent's body): the launch page then
+// leads with the IRL living handoff instead of static placement.
+export function arLaunchUrl(base, glbUrl, title, { live = false } = {}) {
 	const t = typeof title === 'string' && title.trim() ? `&title=${encodeURIComponent(title.trim().slice(0, 80))}` : '';
-	return `${base}/api/ar?src=${encodeURIComponent(glbUrl)}${t}`;
+	const k = live ? '&kind=avatar' : '';
+	return `${base}/api/ar?src=${encodeURIComponent(glbUrl)}${t}${k}`;
+}
+
+// IRL living-agent link: /irl loads the avatar as an agent body in the user's
+// real space: camera passthrough, animation, movement, conversation. This is
+// the digital-to-physical bridge for the agent economy; static AR placement is
+// the fallback for props, not the destination for avatars.
+export function irlUrl(base, glbUrl) {
+	return `${base}/irl?avatar=${encodeURIComponent(glbUrl)}`;
 }
 
 function failure(code, message, extra = {}) {

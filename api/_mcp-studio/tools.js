@@ -22,6 +22,7 @@ import {
 	originFromReq,
 	viewerUrl,
 	arLaunchUrl,
+	irlUrl,
 	generate,
 	rig,
 	directPrompt,
@@ -60,8 +61,12 @@ function firstPartyGlbUrl(glbUrl, base) {
 // the widget + model read; content is the human/agent-readable narration.
 function ok({ glbUrl, base, kind, prompt, rigged }) {
 	glbUrl = firstPartyGlbUrl(glbUrl, base);
+	// An avatar (rigged or humanoid) is an agent's body, not a prop: it also gets
+	// the IRL living handoff: walk it, talk to it, camera AR in the real room.
+	const live = Boolean(rigged) || kind === 'avatar';
 	const vUrl = viewerUrl(base, glbUrl);
-	const aUrl = arLaunchUrl(base, glbUrl, prompt);
+	const aUrl = arLaunchUrl(base, glbUrl, prompt, { live });
+	const iUrl = live ? irlUrl(base, glbUrl) : '';
 	const structured = {
 		kind,
 		glbUrl,
@@ -70,6 +75,7 @@ function ok({ glbUrl, base, kind, prompt, rigged }) {
 		format: 'glb',
 		...(prompt ? { prompt } : {}),
 		...(rigged ? { rigged: true } : {}),
+		...(iUrl ? { irlUrl: iUrl } : {}),
 		// Spatial MCP artifact — the open, coin-clean shape for a 3D-native tool
 		// result (specs/SPATIAL_MCP.md). Additive to the fields the widget already
 		// reads, so any Spatial-MCP renderer can display this model, not just ours.
@@ -87,9 +93,12 @@ function ok({ glbUrl, base, kind, prompt, rigged }) {
 		content: [
 			{
 				type: 'text',
-				text:
-					`Generated a ${label} (GLB). View it: ${structured.viewerUrl}\n` +
-					`Place it in your room (AR, open on a phone): ${aUrl}\nDownload: ${glbUrl}`,
+				text: iUrl
+					? `Generated a ${label} (GLB). View it: ${structured.viewerUrl}\n` +
+						`Bring it to life in your real room (it moves and talks through the camera, open on a phone): ${iUrl}\n` +
+						`Place a static copy in AR: ${aUrl}\nDownload: ${glbUrl}`
+					: `Generated a ${label} (GLB). View it: ${structured.viewerUrl}\n` +
+						`Place it in your room (AR, open on a phone): ${aUrl}\nDownload: ${glbUrl}`,
 			},
 		],
 		structuredContent: structured,
