@@ -1576,6 +1576,12 @@ URL: https://three.ws/docs/mcp-studio
 
 The free, no-auth MCP server behind the ChatGPT 3D Studio app: text and image to 3D, rigged avatars, conversational refinement, and living agent personas.
 
+### Docs · AR in ChatGPT
+
+URL: https://three.ws/docs/chatgpt-ar
+
+How a sentence typed into ChatGPT becomes a 3D model standing in your room: the free generation lane, the arUrl contract, the device-aware AR launcher, living avatars, and link unfurls.
+
 ### Docs · Scenes MCP
 
 URL: https://three.ws/docs/mcp-scenes
@@ -1671,6 +1677,12 @@ A copy-paste prompt cookbook for 3D generation: game props, furniture, character
 URL: https://three.ws/tutorials/generate-3d-api
 
 Use the Forge as a plain HTTP API: submit prompts, poll jobs, download GLBs, batch asset packs, and pay per call with x402.
+
+### Tutorial · Your First Prompt to 3D in ChatGPT
+
+URL: https://three.ws/tutorials/first-prompt-to-3d
+
+Type one sentence into ChatGPT, get a real 3D model back, and place it in your room: adding the 3D Studio, writing a prompt that generates well, iterating in plain words, and bringing a rigged avatar to life.
 
 ### Tutorial · Read an agent's reputation
 

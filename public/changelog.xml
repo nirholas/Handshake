@@ -7,6 +7,22 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · AR in ChatGPT</title>
+			<link>https://three.ws/docs/chatgpt-ar</link>
+			<guid isPermaLink="false">2026-07-15:Docs · AR in ChatGPT</guid>
+			<pubDate>Wed, 15 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How a sentence typed into ChatGPT becomes a 3D model standing in your room: the free generation lane, the arUrl contract, the device-aware AR launcher, living avatars, and link unfurls.</description>
+		</item>
+		<item>
+			<title>Tutorial · Your First Prompt to 3D in ChatGPT</title>
+			<link>https://three.ws/tutorials/first-prompt-to-3d</link>
+			<guid isPermaLink="false">2026-07-15:Tutorial · Your First Prompt to 3D in ChatGPT</guid>
+			<pubDate>Wed, 15 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Type one sentence into ChatGPT, get a real 3D model back, and place it in your room: adding the 3D Studio, writing a prompt that generates well, iterating in plain words, and bringing a rigged avatar to life.</description>
+		</item>
+		<item>
 			<title>AR avatars now come alive in your room</title>
 			<link>https://three.ws/irl</link>
 			<guid isPermaLink="false">2026-07-15:AR avatars now come alive in your room</guid>
@@ -21,6 +37,14 @@
 			<pubDate>Wed, 15 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>Paste a place-in-your-room link into a chat and it now shows a real rendered picture of that exact model instead of a bare URL. The AR page also shows the model's name, a proper loading state, and a Create your own link, so a friend who receives a model can make one of their own in a tap. Behind it, the public model renderer gained a URL form: point any image tag at /api/render/glb with a public GLB link and get a PNG back.</description>
+		</item>
+		<item>
+			<title>The ChatGPT AR pipeline, fully documented</title>
+			<link>https://three.ws/docs/chatgpt-ar</link>
+			<guid isPermaLink="false">2026-07-15:The ChatGPT AR pipeline, fully documented</guid>
+			<pubDate>Wed, 15 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>New docs tell the whole story of how a sentence typed into ChatGPT becomes a 3D model standing in your room: the free generation lane ChatGPT calls, the one-tap AR link every generation carries, what happens on iPhone, Android, and a computer when you open it, and how a shared link unfurls with a real render of the model. A companion tutorial walks a first-timer from their first prompt to a model on their desk in about five minutes.</description>
 		</item>
 		<item>
 			<title>AR Forge</title>

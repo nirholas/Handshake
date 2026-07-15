@@ -6,8 +6,11 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-07-15
 
+- **Docs · AR in ChatGPT** (`/docs/chatgpt-ar`) — How a sentence typed into ChatGPT becomes a 3D model standing in your room: the free generation lane, the arUrl contract, the device-aware AR launcher, living avatars, and link unfurls.
+- **Tutorial · Your First Prompt to 3D in ChatGPT** (`/tutorials/first-prompt-to-3d`) — Type one sentence into ChatGPT, get a real 3D model back, and place it in your room: adding the 3D Studio, writing a prompt that generates well, iterating in plain words, and bringing a rigged avatar to life.
 - **AR avatars now come alive in your room** — Avatars no longer land in AR as frozen statues. Every rigged avatar generated on three.ws now carries a Bring it to life link that opens IRL: the agent walks, animates, and talks with you through your camera, standing in your real space. Static placement is still one tap away for props or anyone who just wants the model on a desk. The living link ships everywhere avatars are made: the AR launch page, the 3D Studio tools in ChatGPT and Claude, and the developer MCP tools. (`/irl`) `[feature, improvement]`
 - **Shared AR links now unfurl with the model itself** — Paste a place-in-your-room link into a chat and it now shows a real rendered picture of that exact model instead of a bare URL. The AR page also shows the model's name, a proper loading state, and a Create your own link, so a friend who receives a model can make one of their own in a tap. Behind it, the public model renderer gained a URL form: point any image tag at /api/render/glb with a public GLB link and get a PNG back. (`/ar`) `[improvement]`
+- **The ChatGPT AR pipeline, fully documented** — New docs tell the whole story of how a sentence typed into ChatGPT becomes a 3D model standing in your room: the free generation lane ChatGPT calls, the one-tap AR link every generation carries, what happens on iPhone, Android, and a computer when you open it, and how a shared link unfurls with a real render of the model. A companion tutorial walks a first-timer from their first prompt to a model on their desk in about five minutes. (`/docs/chatgpt-ar`) `[docs]`
 
 ## 2026-07-14
 

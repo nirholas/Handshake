@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-15T10:05:51.931Z",
+	"generated_at": "2026-07-15T10:34:44.277Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2578,6 +2578,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/chatgpt-ar",
+					"title": "Docs · AR in ChatGPT",
+					"description": "How a sentence typed into ChatGPT becomes a 3D model standing in your room: the free generation lane, the arUrl contract, the device-aware AR launcher, living avatars, and link unfurls.",
+					"added": "2026-07-15",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/docs/mcp-scenes",
 					"title": "Docs · Scenes MCP",
 					"description": "Speak a placed 3D diorama into being from one sentence, then browse the gallery.",
@@ -2732,6 +2742,16 @@
 					"title": "Tutorial · Generate 3D Models from Code",
 					"description": "Use the Forge as a plain HTTP API: submit prompts, poll jobs, download GLBs, batch asset packs, and pay per call with x402.",
 					"added": "2026-06-12",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/tutorials/first-prompt-to-3d",
+					"title": "Tutorial · Your First Prompt to 3D in ChatGPT",
+					"description": "Type one sentence into ChatGPT, get a real 3D model back, and place it in your room: adding the 3D Studio, writing a prompt that generates well, iterating in plain words, and bringing a rigged avatar to life.",
+					"added": "2026-07-15",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

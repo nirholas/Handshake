@@ -48,6 +48,10 @@ store-clean responses (model URLs and job state only). Full contract in the
 [API reference](./api-reference.md). Use the MCP connector above when you want
 inline 3D widgets; the custom GPT covers plans without connector support.
 
+How AR rides both ChatGPT surfaces (the `arUrl` contract, the device-aware
+launcher, living avatars, link unfurls) is documented end to end in
+[AR in ChatGPT](./chatgpt-ar.md).
+
 ## Tools
 
 All six generation tools are free and run operator-funded on the platform's own
@@ -74,10 +78,17 @@ needs to display the model — no internal identifiers:
   "kind": "model",
   "glbUrl": "https://three.ws/cdn/creations/…/model.glb",
   "viewerUrl": "https://three.ws/viewer?src=…",
+  "arUrl": "https://three.ws/api/ar?src=…&title=…",
   "format": "glb",
   "prompt": "a friendly round robot mascot, glossy white plastic"
 }
 ```
+
+`arUrl` is the one-tap place-in-your-room link (see [AR in ChatGPT](./chatgpt-ar.md)).
+Rigged avatars additionally carry `irlUrl`, the living-agent handoff into
+[IRL](./irl.md), and the inline widget's AR button becomes **Bring it to life**.
+Every result also includes a `spatial` field, the open Spatial MCP artifact
+(`specs/SPATIAL_MCP.md`) so any Spatial-MCP renderer can display the model.
 
 ### Conversational refinement (`refine_model`)
 

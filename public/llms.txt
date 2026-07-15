@@ -279,6 +279,7 @@ Docs, tutorials, and reference.
 - [Docs · <agent-3d>](https://three.ws/docs/web-component): Reference for the <agent-3d> custom element.
 - [Docs · MCP](https://three.ws/docs/mcp): Expose your agent as an MCP server for Claude, ChatGPT, and other clients.
 - [Docs · 3D Studio MCP (free)](https://three.ws/docs/mcp-studio): The free, no-auth MCP server behind the ChatGPT 3D Studio app: text and image to 3D, rigged avatars, conversational refinement, and living agent personas.
+- [Docs · AR in ChatGPT](https://three.ws/docs/chatgpt-ar): How a sentence typed into ChatGPT becomes a 3D model standing in your room: the free generation lane, the arUrl contract, the device-aware AR launcher, living avatars, and link unfurls.
 - [Docs · Scenes MCP](https://three.ws/docs/mcp-scenes): Speak a placed 3D diorama into being from one sentence, then browse the gallery.
 - [Docs · x402 Wallet MCP](https://three.ws/docs/mcp-x402): Give an AI agent a self-custodial Solana wallet that finds, inspects, and pays any x402 service in USDC.
 - [Docs · Intel MCP](https://three.ws/docs/mcp-intel): Coin smart-money scores, wallet reputation, signal feeds, and KOL leaderboards over MCP.
@@ -295,6 +296,7 @@ Docs, tutorials, and reference.
 - [Tutorial · Photos to 3D Model](https://three.ws/tutorials/image-to-3d): Photograph a real object from up to four angles and reconstruct it as a textured 3D model — photo tips, guidance prompts, troubleshooting.
 - [Tutorial · Prompt Recipes for 3D Generation](https://three.ws/tutorials/prompts-for-3d): A copy-paste prompt cookbook for 3D generation: game props, furniture, characters, vehicles, food — and the four rules behind every good prompt.
 - [Tutorial · Generate 3D Models from Code](https://three.ws/tutorials/generate-3d-api): Use the Forge as a plain HTTP API: submit prompts, poll jobs, download GLBs, batch asset packs, and pay per call with x402.
+- [Tutorial · Your First Prompt to 3D in ChatGPT](https://three.ws/tutorials/first-prompt-to-3d): Type one sentence into ChatGPT, get a real 3D model back, and place it in your room: adding the 3D Studio, writing a prompt that generates well, iterating in plain words, and bringing a rigged avatar to life.
 - [Tutorial · Read an agent's reputation](https://three.ws/tutorials/agent-reputation): Read any registered agent's ERC-8004 reputation from the UI, the REST API, the MCP tool, the SDK, or the contract.
 - [Tutorial · Read a Solana agent's reputation](https://three.ws/tutorials/solana-agent-reputation): Read a Solana agent's A–D trust grade and the attestations behind it, then leave your own on-chain vouch.
 - [Tour Builder — design a 3D store guide, no code](https://three.ws/tour-builder): A live, no-code playground: point and click on a demo storefront to build a 3D guide that walks and narrates it, preview it instantly, then copy the exact snippet into your Shopify theme.

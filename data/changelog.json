@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-15",
+			"title": "The ChatGPT AR pipeline, fully documented",
+			"summary": "New docs tell the whole story of how a sentence typed into ChatGPT becomes a 3D model standing in your room: the free generation lane ChatGPT calls, the one-tap AR link every generation carries, what happens on iPhone, Android, and a computer when you open it, and how a shared link unfurls with a real render of the model. A companion tutorial walks a first-timer from their first prompt to a model on their desk in about five minutes.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/chatgpt-ar"
+		},
+		{
+			"date": "2026-07-15",
 			"title": "Shared AR links now unfurl with the model itself",
 			"summary": "Paste a place-in-your-room link into a chat and it now shows a real rendered picture of that exact model instead of a bare URL. The AR page also shows the model's name, a proper loading state, and a Create your own link, so a friend who receives a model can make one of their own in a tap. Behind it, the public model renderer gained a URL form: point any image tag at /api/render/glb with a public GLB link and get a PNG back.",
 			"tags": [

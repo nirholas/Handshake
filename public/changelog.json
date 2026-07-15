@@ -1,11 +1,31 @@
 {
-	"generated_at": "2026-07-15T10:05:51.944Z",
+	"generated_at": "2026-07-15T10:34:44.291Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-15",
+			"type": "launch",
+			"title": "Docs · AR in ChatGPT",
+			"summary": "How a sentence typed into ChatGPT becomes a 3D model standing in your room: the free generation lane, the arUrl contract, the device-aware AR launcher, living avatars, and link unfurls.",
+			"link": "/docs/chatgpt-ar",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-15",
+			"type": "launch",
+			"title": "Tutorial · Your First Prompt to 3D in ChatGPT",
+			"summary": "Type one sentence into ChatGPT, get a real 3D model back, and place it in your room: adding the 3D Studio, writing a prompt that generates well, iterating in plain words, and bringing a rigged avatar to life.",
+			"link": "/tutorials/first-prompt-to-3d",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-07-15",
 			"type": "update",
@@ -25,6 +45,16 @@
 			"link": "/ar",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-15",
+			"type": "update",
+			"title": "The ChatGPT AR pipeline, fully documented",
+			"summary": "New docs tell the whole story of how a sentence typed into ChatGPT becomes a 3D model standing in your room: the free generation lane ChatGPT calls, the one-tap AR link every generation carries, what happens on iPhone, Android, and a computer when you open it, and how a shared link unfurls with a real render of the model. A companion tutorial walks a first-timer from their first prompt to a model on their desk in about five minutes.",
+			"link": "/docs/chatgpt-ar",
+			"tags": [
+				"docs"
 			]
 		},
 		{

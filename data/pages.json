@@ -2067,6 +2067,12 @@
 					"added": "2026-07-14"
 				},
 				{
+					"path": "/docs/chatgpt-ar",
+					"title": "Docs · AR in ChatGPT",
+					"description": "How a sentence typed into ChatGPT becomes a 3D model standing in your room: the free generation lane, the arUrl contract, the device-aware AR launcher, living avatars, and link unfurls.",
+					"added": "2026-07-15"
+				},
+				{
 					"path": "/docs/mcp-scenes",
 					"title": "Docs · Scenes MCP",
 					"description": "Speak a placed 3D diorama into being from one sentence, then browse the gallery.",
@@ -2171,6 +2177,14 @@
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-06-12"
+				},
+				{
+					"path": "/tutorials/first-prompt-to-3d",
+					"title": "Tutorial · Your First Prompt to 3D in ChatGPT",
+					"description": "Type one sentence into ChatGPT, get a real 3D model back, and place it in your room: adding the 3D Studio, writing a prompt that generates well, iterating in plain words, and bringing a rigged avatar to life.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-15"
 				},
 				{
 					"path": "/tutorials/agent-reputation",
