@@ -2098,6 +2098,156 @@ Public directory of ERC-8004 agents with 3D avatars, for homepage and gallery us
 
 ---
 
+## Social & Community API
+
+The endpoints behind the platform's social layer: the activity feed, the follow graph, notifications, the unified leaderboard, creator portfolios, and cross-entity search. Overview and how the pieces interconnect: [The social layer](social-layer.md).
+
+### Activity feed
+
+```
+GET /api/users/me/feed
+```
+
+Reverse-chronological creation events (avatars, agents, coins, forged models, saved worlds) plus follow activity. Powers `/feed` and `/community`.
+
+**Query parameters**
+
+| Parameter | Type    | Description                                                                 |
+| --------- | ------- | --------------------------------------------------------------------------- |
+| `scope`   | string  | `following` (default; requires session, anonymous → 401) or `all` (public)  |
+| `limit`   | integer | 1..50 (default: 30)                                                          |
+| `before`  | string  | ISO timestamp cursor; pass the last item's `created_at` for the next page   |
+
+**Response**
+
+```json
+{
+	"items": [
+		{
+			"kind": "model",
+			"id": "fc_abc123",
+			"created_at": "2026-07-12T10:00:00Z",
+			"actor": { "username": "nix", "display_name": "Nix", "avatar_url": "https://…" },
+			"title": "a bronze dragon statue",
+			"href": "/viewer?src=…",
+			"image": "https://…",
+			"isRemix": false
+		}
+	]
+}
+```
+
+Items of `kind: "follow"` also carry a `target` shaped like `actor`. `actor.username` is `null` for creations made while signed out.
+
+Not the same endpoint as `GET /api/feed`, the public Money Pulse ticker ([Money Feed](money-feed.md)).
+
+---
+
+### Cross-entity search
+
+```
+GET /api/search
+```
+
+One query across avatars, on-chain/Solana agents, forged models, worlds, and coins. Public, rate-limited per IP.
+
+**Query parameters**
+
+| Parameter | Type    | Description                                                        |
+| --------- | ------- | ------------------------------------------------------------------ |
+| `q`       | string  | Search text                                                        |
+| `type`    | string  | `all` (default), `avatar`, `agent`, `model`, `world`, or `coin`    |
+| `limit`   | integer | 4..48 (default: 18)                                                |
+
+**Response:** `{ q, type, items: [...] }`. Sources are queried in parallel and merged; ranking is recency boosted by follower, remix, and view signals. Model items carry a `remix` block wired to `POST /api/x402/remix-asset`.
+
+---
+
+### Unified leaderboard
+
+```
+GET /api/leaderboard/unified
+```
+
+The cross-surface leaderboard behind `/rankings`. Public; sending a session cookie or Bearer token pins your own row into the response even when you rank outside the page window.
+
+**Query parameters**
+
+| Parameter | Type    | Description                                                                             |
+| --------- | ------- | ---------------------------------------------------------------------------------------- |
+| `metric`  | string  | `creations` (default), `remixes_received`, `launches`, `followers`, or `walk_distance`  |
+| `limit`   | integer | 1..100 (default: 50)                                                                     |
+| `offset`  | integer | Pagination offset                                                                        |
+
+---
+
+### Follow / unfollow a user
+
+```
+GET    /api/users/:username/follow
+POST   /api/users/:username/follow
+DELETE /api/users/:username/follow
+```
+
+The social-graph edge for a public profile. GET is viewer-specific (never cached). POST and DELETE are idempotent, require a session + CSRF token, block self-follows (400), and return the same envelope as GET so one round-trip updates both the button and the counts. A genuinely new edge notifies the followed user exactly once.
+
+**Response (all three methods)**
+
+```json
+{
+	"following": true,
+	"followed_by": false,
+	"followers_count": 42,
+	"following_count": 7
+}
+```
+
+---
+
+### List followers / following
+
+```
+GET /api/users/:username/follows
+```
+
+**Query parameters**
+
+| Parameter | Type    | Description                                   |
+| --------- | ------- | --------------------------------------------- |
+| `type`    | string  | `followers` or `following`                    |
+| `limit`   | integer | 1..100                                        |
+| `offset`  | integer | Pagination offset                             |
+
+Each row carries `is_following` (does the signed-in viewer follow that row's user) for follow-back buttons.
+
+---
+
+### Creator portfolio
+
+```
+GET /api/users/:username
+GET /api/users/:username/creations
+```
+
+Public profile and the cursor-paginated portfolio of forged models and saved worlds attributed to that creator. Powers `/u/:username`.
+
+---
+
+### Notifications
+
+```
+GET   /api/notifications?limit=…
+POST  /api/notifications/:id/read
+POST  /api/notifications/read-all
+POST  /api/notifications/track
+GET   /api/notifications/preferences
+PATCH /api/notifications/preferences
+```
+
+The bell inbox and its per-user preference matrix. Session required. Event types include `remix`, `dm_received`, `pump_launch_filled` (bonding-curve graduation), and `follow`. Preferences are a category × channel matrix: categories `sales`, `purchases`, `social`, `irl`, `market`, `account`; channels `in_app`, `push`, `email`, `telegram`. The `in_app` channel is always on and cannot be disabled.
+
+---
+
 ## IRL API — presence, pins, money drops, world lines
 
 The real-world layer behind [three.ws/irl](https://three.ws/irl): place 3D agents at GPS
