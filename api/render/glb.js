@@ -10,6 +10,13 @@
 //     background: "#0a0a0a" | "transparent"      // default #0a0a0a
 //   }
 //
+// GET /api/render/glb?glbUrl=…&width=…&height=…&background=… — the same
+// render addressable by URL, for consumers that can only follow a link:
+// og:image / twitter:image unfurls (the AR launch page points its share
+// card here), <img> tags, markdown embeds. Identical validation, limits,
+// and rate budget as POST; responses CDN-cache for a day, so social
+// crawlers hit chromium once per model, not once per share.
+//
 // Response: image/png bytes on success; JSON error otherwise.
 //
 // Safety:
@@ -47,8 +54,8 @@ function rateCheck(ip) {
 }
 
 export default wrap(async function handler(req, res) {
-	if (cors(req, res, { methods: 'POST,OPTIONS' })) return;
-	if (!method(req, res, ['POST'])) return;
+	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
+	if (!method(req, res, ['GET', 'POST'])) return;
 
 	const ip = clientIp(req);
 	const rl = rateCheck(ip);
@@ -56,11 +63,22 @@ export default wrap(async function handler(req, res) {
 		return rateLimited(res, rl, `Too many render requests. Limit: ${RATE_LIMIT_MAX} per ${RATE_LIMIT_WINDOW_MS / 60000}m.`);
 	}
 
+	// GET carries the same fields as query params; POST keeps the JSON body.
 	let body;
-	try {
-		body = await readJson(req, 5000);
-	} catch (e) {
-		return error(res, e.status || 400, 'bad_request', e.message);
+	if (req.method === 'GET') {
+		const q = new URL(req.url, 'http://x').searchParams;
+		body = {
+			glbUrl: q.get('glbUrl') || q.get('src') || '',
+			width: q.get('width'),
+			height: q.get('height'),
+			background: q.get('background') || undefined,
+		};
+	} else {
+		try {
+			body = await readJson(req, 5000);
+		} catch (e) {
+			return error(res, e.status || 400, 'bad_request', e.message);
+		}
 	}
 
 	const glbUrl = typeof body.glbUrl === 'string' ? body.glbUrl.trim() : '';

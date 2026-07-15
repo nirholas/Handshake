@@ -792,6 +792,44 @@ labeled with the prompt.
 | `502`  | `generation_failed`              | The lane could not start the job; retry is free                      |
 | `503`  | `not_configured` / `lane_timeout`| Lane unavailable on this deployment, or slow to accept; retry later  |
 
+### AR launch — `GET /api/ar`
+
+```
+GET /api/ar?src=<glbUrl>&title=<label>&kind=<avatar?>
+```
+
+Public, keyless. The device-aware place-in-your-room lane behind every `arUrl`
+the 3D endpoints return, and the same one the `/forge` and `/ar` pages use:
+
+- **Android** → `302` straight into Google Scene Viewer (ARCore `intent://`
+  URL with the GLB as the source and a browser fallback).
+- **iOS** → an HTML launch page; "View in your space" enters Apple Quick Look
+  (the GLB converts to USDZ in-page via the three.js `USDZExporter`).
+- **Desktop** → the same page, falling back to the interactive WebGL viewer.
+
+`src` must be a public `https` GLB/glTF URL; `title` (optional, ≤120 chars)
+labels the page; `kind=avatar` marks a rigged agent body and adds the
+"Bring it to life" handoff into `/irl` (camera passthrough, animation, and
+conversation in the user's room). Bad input returns a designed error page,
+never a crash. Pasting an `/api/ar` link into a chat app unfurls as a share
+card whose image is a real render of that exact model (see the renderer
+below).
+
+### Model renderer — `GET|POST /api/render/glb`
+
+```
+GET  /api/render/glb?glbUrl=<url>&width=1200&height=630&background=%230a0a0a
+POST /api/render/glb   { "glbUrl": "...", "width": 1024, "height": 1024, "background": "#0a0a0a" }
+```
+
+Public renderer: any public GLB URL in, a PNG out (headless chromium +
+`<model-viewer>`, the same pipeline the OG cards use). The GET form makes a
+render URL-addressable for `og:image` unfurls, `<img>` tags, and markdown
+embeds; responses CDN-cache for a day so crawlers hit chromium once per
+model. Dimensions clamp to 64-2048; GLBs over 10 MB are rejected before the
+browser boots; only public http(s) sources are fetched (SSRF-guarded);
+60 renders / 10 min / IP.
+
 ---
 
 ## Material Studio API

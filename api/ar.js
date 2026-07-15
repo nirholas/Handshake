@@ -47,18 +47,36 @@ border-radius:10px;padding:9px 14px;text-decoration:none;font-weight:600;font-si
 <a href="https://three.ws">Create a 3D model</a></div></body></html>`;
 }
 
-function launchPage({ target, asset, viewerUrl, title, irlUrl }) {
+function launchPage({ target, asset, viewerUrl, title, irlUrl, origin, pageUrl }) {
 	const t = title ? esc(title) : irlUrl ? '3D avatar' : '3D model';
+	// Share card: a real render of THIS model (GET /api/render/glb, CDN-cached a
+	// day), so a pasted AR link unfurls with the object itself, not a logo.
+	const ogImage = `${origin}/api/render/glb?glbUrl=${encodeURIComponent(asset)}&width=1200&height=630`;
+	const ogDesc = irlUrl
+		? 'A living AI agent. Open on your phone to place it in your room, or bring it to life to walk and talk with it.'
+		: 'Open on your phone to place this 3D model in your room at real size. Made on three.ws: type a sentence, get a 3D model.';
 	return `<!doctype html><html lang="en"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
 <title>View ${t} in AR · three.ws</title><meta name="robots" content="noindex"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="three.ws"/>
+<meta property="og:title" content="Place ${t} in your room"/>
+<meta property="og:description" content="${esc(ogDesc)}"/>
+<meta property="og:image" content="${esc(ogImage)}"/>
+<meta property="og:url" content="${esc(pageUrl)}"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="Place ${t} in your room"/>
+<meta name="twitter:description" content="${esc(ogDesc)}"/>
+<meta name="twitter:image" content="${esc(ogImage)}"/>
 <script src="/model-viewer-meshopt.js"></script>
 <script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
 <style>:root{color-scheme:dark;--accent:#6ea8fe}*{box-sizing:border-box}html,body{margin:0;height:100%}
 body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:radial-gradient(130% 130% at 50% 0%,#14161c,#08090c);color:#e8eaf0;overflow:hidden}
 .wrap{display:flex;flex-direction:column;height:100dvh}.stage{position:relative;flex:1 1 auto;min-height:0}
 model-viewer{width:100%;height:100%;--progress-bar-color:var(--accent);background:transparent}
-.bar{display:flex;gap:10px;align-items:center;justify-content:center;padding:14px 16px;border-top:1px solid rgba(255,255,255,.07);background:rgba(10,11,14,.55);backdrop-filter:blur(8px)}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;padding:14px 16px;border-top:1px solid rgba(255,255,255,.07);background:rgba(10,11,14,.55);backdrop-filter:blur(8px)}
+.name{position:absolute;top:14px;left:50%;transform:translateX(-50%);max-width:min(86vw,48ch);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#cdd3de;font-size:13px;font-weight:600;background:rgba(10,11,14,.5);border:1px solid rgba(255,255,255,.07);border-radius:999px;padding:6px 14px;backdrop-filter:blur(8px);pointer-events:none}
+.loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#9aa3b2;font-size:13px;pointer-events:none;transition:opacity .3s ease}
 button.ar,a.ar{appearance:none;cursor:pointer;text-decoration:none;font-size:14px;font-weight:700;color:#0b0c10;background:var(--accent);border:0;border-radius:12px;padding:12px 20px;display:inline-flex;align-items:center;gap:8px}
 button.ar:active{transform:translateY(1px)}button.ar:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .ghost{appearance:none;cursor:pointer;text-decoration:none;font-size:14px;font-weight:700;color:var(--accent);background:rgba(110,168,254,.14);border:1px solid rgba(110,168,254,.45);border-radius:12px;padding:11px 18px;display:inline-flex;align-items:center;gap:8px;transition:background .15s ease}
@@ -70,16 +88,20 @@ a.alt{color:#aeb6c4;font-size:12.5px;text-decoration:underline}</style></head>
  environment-image="neutral" exposure="1.05" shadow-intensity="1" tone-mapping="aces"
  ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" ${target === 'ios' ? 'reveal="auto"' : ''}>
 </model-viewer>
+${title ? `<div class="name">${t}</div>` : ''}
+<div class="loading" id="loading">Loading your model…</div>
 <div class="hint" id="hint">${irlUrl ? 'This is a living agent. Bring it to life to walk and talk with it in your room.' : 'Move your phone to place the model in your space.'}</div>
 </div>
 <div class="bar">
 ${irlUrl ? `<a class="ar" href="${esc(irlUrl)}" aria-label="Bring this avatar to life in your room: it moves and talks through your camera">🤖 Bring it to life</a>\n<button class="ghost" id="ar-btn" type="button" aria-label="Place a static copy of this avatar in augmented reality">📱 Place in your space</button>` : `<button class="ar" id="ar-btn" type="button" aria-label="View this model in augmented reality">📱 View in your space</button>`}
 <a class="alt" href="${esc(viewerUrl)}">Open in 3D viewer</a>
+<a class="alt" href="/ar" aria-label="Create your own 3D model from a sentence, free">Create your own</a>
 </div></div>
 <script>
-(function(){var mv=document.getElementById('mv'),btn=document.getElementById('ar-btn'),hint=document.getElementById('hint'),live=${irlUrl ? 'true' : 'false'};
-function sync(){ if(!mv.canActivateAR){ btn.textContent='View in 3D'; if(!live){ hint.style.display='none'; } } }
+(function(){var mv=document.getElementById('mv'),btn=document.getElementById('ar-btn'),hint=document.getElementById('hint'),loading=document.getElementById('loading'),live=${irlUrl ? 'true' : 'false'};
+function sync(){ loading.style.opacity='0'; if(!mv.canActivateAR){ btn.textContent='View in 3D'; if(!live){ hint.style.display='none'; } } }
 mv.addEventListener('load',sync);
+mv.addEventListener('error',function(){ loading.textContent='This model could not load. Try the 3D viewer below.'; });
 btn.addEventListener('click',function(){ if(mv.canActivateAR){ try{mv.activateAR();}catch(e){} } else { window.location.href='${esc(viewerUrl)}'; } });
 })();
 </script></body></html>`;
@@ -121,5 +143,16 @@ export default wrap(async (req, res) => {
 	// browser cache (one UA per browser) and stops the cross-device bleed.
 	res.setHeader('vary', 'user-agent');
 	res.setHeader('cache-control', 'public, max-age=60, s-maxage=600');
-	res.end(launchPage({ target: plan.target, asset: plan.asset, viewerUrl: plan.viewerUrl, title, irlUrl: plan.irlUrl }));
+	const origin = originFrom(req);
+	res.end(
+		launchPage({
+			target: plan.target,
+			asset: plan.asset,
+			viewerUrl: plan.viewerUrl,
+			title,
+			irlUrl: plan.irlUrl,
+			origin,
+			pageUrl: `${origin}${req.url}`,
+		}),
+	);
 });

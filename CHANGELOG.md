@@ -7,6 +7,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 ## 2026-07-15
 
 - **AR avatars now come alive in your room** — Avatars no longer land in AR as frozen statues. Every rigged avatar generated on three.ws now carries a Bring it to life link that opens IRL: the agent walks, animates, and talks with you through your camera, standing in your real space. Static placement is still one tap away for props or anyone who just wants the model on a desk. The living link ships everywhere avatars are made: the AR launch page, the 3D Studio tools in ChatGPT and Claude, and the developer MCP tools. (`/irl`) `[feature, improvement]`
+- **Shared AR links now unfurl with the model itself** — Paste a place-in-your-room link into a chat and it now shows a real rendered picture of that exact model instead of a bare URL. The AR page also shows the model's name, a proper loading state, and a Create your own link, so a friend who receives a model can make one of their own in a tap. Behind it, the public model renderer gained a URL form: point any image tag at /api/render/glb with a public GLB link and get a PNG back. (`/ar`) `[improvement]`
 
 ## 2026-07-14
 

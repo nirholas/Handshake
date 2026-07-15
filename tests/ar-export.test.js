@@ -123,6 +123,68 @@ describe('GET /api/ar — response caching is UA-safe', () => {
 		expect(res.getHeader('location')).toContain('scene-viewer');
 		expect(res.getHeader('cache-control')).toBe('no-store');
 	});
+
+	it('the launch page unfurls as a share card: og/twitter meta with a real model render', async () => {
+		const { default: handler } = await import('../api/ar.js');
+		const res = makeRes();
+		await handler(makeReq(IOS), res);
+		const html = res._body;
+		expect(html).toContain('og:title');
+		expect(html).toContain('Place Robot in your room');
+		expect(html).toContain('summary_large_image');
+		// og:image is the GET renderer pointed at THIS model, sized for unfurls.
+		expect(html).toContain('/api/render/glb?glbUrl=' + encodeURIComponent(GLB));
+		expect(html).toContain('width=1200&amp;height=630');
+	});
+
+	it('the launch page shows the model name and invites the viewer to create their own', async () => {
+		const { default: handler } = await import('../api/ar.js');
+		const res = makeRes();
+		await handler(makeReq(DESKTOP), res);
+		const html = res._body;
+		expect(html).toContain('class="name">Robot<');
+		expect(html).toContain('Create your own');
+		expect(html).toContain('Loading your model');
+	});
+});
+
+describe('GET /api/render/glb — URL-addressable render (share cards)', () => {
+	function makeReq(url) {
+		return { method: 'GET', url, headers: { host: 'three.ws' } };
+	}
+	function makeRes() {
+		return {
+			statusCode: 200,
+			_h: {},
+			writableEnded: false,
+			headersSent: false,
+			setHeader(k, v) {
+				this._h[k.toLowerCase()] = v;
+			},
+			getHeader(k) {
+				return this._h[k.toLowerCase()];
+			},
+			end(body) {
+				this._body = body;
+				this.writableEnded = true;
+			},
+		};
+	}
+
+	it('400s a GET without glbUrl (no chromium spin-up on junk)', async () => {
+		const { default: handler } = await import('../api/render/glb.js');
+		const res = makeRes();
+		await handler(makeReq('/api/render/glb'), res);
+		expect(res.statusCode).toBe(400);
+		expect(JSON.parse(res._body).error).toBe('bad_request');
+	});
+
+	it('400s a GET pointing at a private address (SSRF guard holds on the GET path)', async () => {
+		const { default: handler } = await import('../api/render/glb.js');
+		const res = makeRes();
+		await handler(makeReq('/api/render/glb?glbUrl=' + encodeURIComponent('https://10.0.0.8/a.glb')), res);
+		expect(res.statusCode).toBe(400);
+	});
 });
 
 describe('buildViewerUrl / buildArLaunchUrl', () => {
