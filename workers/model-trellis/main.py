@@ -27,6 +27,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import io
+import json
 import logging
 import os
 import time
@@ -43,6 +44,7 @@ from typing import Optional
 
 import torch
 from fastapi import FastAPI, HTTPException, Header, BackgroundTasks
+from google.api_core.exceptions import NotFound
 from google.cloud import storage
 from PIL import Image
 from pydantic import BaseModel, Field
@@ -70,6 +72,12 @@ _bucket: Optional[storage.Bucket] = None
 _sem: Optional[asyncio.Semaphore] = None
 _ready: Optional[asyncio.Event] = None
 _load_error: Optional[str] = None
+# In-memory cache only — Cloud Run runs this service across up to _MAX_INSTANCES
+# containers with no session affinity, so a POST /infer and a later GET
+# /tasks/:id can land on different instances. The durable source of truth is
+# the `tasks/{task_id}.json` blob in GCS (see _update_task / get_task); this
+# dict just avoids a GCS round-trip when a poll happens to hit the same warm
+# instance that ran the job.
 _tasks: dict[str, dict] = {}
 
 
@@ -144,24 +152,43 @@ def _decode_image(src: str) -> Image.Image:
     raise ValueError(f"unsupported image source: {src[:60]}")
 
 
+def _task_blob(task_id: str):
+    return _bucket.blob(f"tasks/{task_id}.json")
+
+
+async def _update_task(task_id: str, **fields) -> dict:
+    """Merge `fields` into the task, then persist to GCS as the source of truth
+    (see the comment on `_tasks`)."""
+    task = _tasks.setdefault(task_id, {"task_id": task_id})
+    task.update(fields)
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(
+        None,
+        lambda: _task_blob(task_id).upload_from_string(
+            json.dumps(task), content_type="application/json"
+        ),
+    )
+    return task
+
+
 async def _run_inference(task_id: str, images: list[str], body_type: str) -> None:
     # Wait for the background pipeline load before touching the GPU. Warm
     # instances pass instantly; a cold one waits out the load rather than
     # NoneType-crashing. A failed load surfaces as a designed task error.
     if _load_error:
-        _tasks[task_id].update({"status": "failed", "error": f"pipeline unavailable: {_load_error}"})
+        await _update_task(task_id, status="failed", error=f"pipeline unavailable: {_load_error}")
         return
     try:
         await asyncio.wait_for(_ready.wait(), timeout=600)
     except asyncio.TimeoutError:
-        _tasks[task_id].update({"status": "failed", "error": "pipeline not ready (model load timed out)"})
+        await _update_task(task_id, status="failed", error="pipeline not ready (model load timed out)")
         return
     if _load_error:
-        _tasks[task_id].update({"status": "failed", "error": f"pipeline unavailable: {_load_error}"})
+        await _update_task(task_id, status="failed", error=f"pipeline unavailable: {_load_error}")
         return
 
     async with _sem:
-        _tasks[task_id]["status"] = "running"
+        await _update_task(task_id, status="running")
         loop = asyncio.get_event_loop()
         t0 = time.time()
         try:
@@ -199,19 +226,21 @@ async def _run_inference(task_id: str, images: list[str], body_type: str) -> Non
             gcs_url = f"https://storage.googleapis.com/{GCS_BUCKET}/{blob_name}"
 
             elapsed = time.time() - t0
-            _tasks[task_id].update({
-                "status": "done",
-                "result_gcs_url": gcs_url,
-                "elapsed_ms": int(elapsed * 1000),
-            })
+            await _update_task(
+                task_id,
+                status="done",
+                result_gcs_url=gcs_url,
+                elapsed_ms=int(elapsed * 1000),
+            )
             log.info("[%s] done in %.1fs — %d bytes → %s", task_id, elapsed, len(glb_bytes), gcs_url)
 
         except Exception as exc:
-            _tasks[task_id].update({
-                "status": "failed",
-                "error": safe_error(exc, context=f"[{task_id}] inference"),
-                "elapsed_ms": int((time.time() - t0) * 1000),
-            })
+            await _update_task(
+                task_id,
+                status="failed",
+                error=safe_error(exc, context=f"[{task_id}] inference"),
+                elapsed_ms=int((time.time() - t0) * 1000),
+            )
 
 
 class InferRequest(BaseModel):
@@ -228,7 +257,10 @@ async def infer(
 ) -> dict:
     _require_api_key(authorization)
     task_id = str(uuid.uuid4())
-    _tasks[task_id] = {"task_id": task_id, "status": "queued", "model": "trellis-large"}
+    # Persist the "queued" record before responding — a poll can reach a
+    # different instance than this one the moment the 202 lands, and that
+    # instance has nothing in its local `_tasks` dict to fall back on.
+    await _update_task(task_id, status="queued", model="trellis-large")
     background_tasks.add_task(_run_inference, task_id, body.images, body.body_type)
     return {"task_id": task_id, "status": "queued"}
 
@@ -237,8 +269,21 @@ async def infer(
 async def get_task(task_id: str, authorization: str = Header(...)) -> dict:
     _require_api_key(authorization)
     task = _tasks.get(task_id)
-    if task is None:
+    if task is not None:
+        return task
+    # Not in this instance's local cache — fall back to the durable GCS
+    # record, which every instance writes to on every state transition.
+    loop = asyncio.get_event_loop()
+    try:
+        data = await loop.run_in_executor(None, _task_blob(task_id).download_as_bytes)
+    except NotFound:
         raise HTTPException(status_code=404, detail="task not found")
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail=safe_error(exc, context="task lookup")
+        ) from exc
+    task = json.loads(data)
+    _tasks[task_id] = task
     return task
 
 
