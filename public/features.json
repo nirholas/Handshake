@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-16T21:21:54.639Z",
+	"generated_at": "2026-07-16T21:48:37.931Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -298,7 +298,7 @@
 				{
 					"path": "/partners",
 					"title": "Partner Ecosystem",
-					"description": "three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, QuickNode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.",
+					"description": "three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, Quicknode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.",
 					"added": "2026-06-27",
 					"auth": null,
 					"indexable": true,
@@ -2936,8 +2936,8 @@
 			"pages": [
 				{
 					"path": "/blog/three-ws-quicknode-startup-program",
-					"title": "three.ws Joins the QuickNode Startup Program",
-					"description": "three.ws has been accepted into the QuickNode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.",
+					"title": "three.ws Joins the Quicknode Startup Program",
+					"description": "three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.",
 					"added": "2026-07-16",
 					"auth": null,
 					"indexable": true,
@@ -3407,8 +3407,8 @@
 				},
 				{
 					"path": "/news/quicknode-startup-program",
-					"title": "three.ws Joins the QuickNode Startup Program",
-					"description": "three.ws has been accepted into the QuickNode Startup Program and approved for free infrastructure credits: more RPC headroom for the Solana-first agent economy, provider redundancy, and QuickNode's founder network.",
+					"title": "three.ws Joins the Quicknode Startup Program",
+					"description": "three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits: more RPC headroom for the Solana-first agent economy, provider redundancy, and Quicknode's founder network.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

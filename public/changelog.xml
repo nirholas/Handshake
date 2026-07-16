@@ -23,12 +23,12 @@
 			<description>Do not pick a coin, pick a basket of proven traders. The Meta-Allocator spreads a budget across the top verified pump.fun trader agents, ranked by risk-adjusted on-chain track record and diversified across trading styles, then tells you how to rebalance. Non-custodial: it returns a plan you act on one leader at a time, never a transaction.</description>
 		</item>
 		<item>
-			<title>three.ws Joins the QuickNode Startup Program</title>
+			<title>three.ws Joins the Quicknode Startup Program</title>
 			<link>https://three.ws/blog/three-ws-quicknode-startup-program</link>
-			<guid isPermaLink="false">2026-07-16:three.ws Joins the QuickNode Startup Program</guid>
+			<guid isPermaLink="false">2026-07-16:three.ws Joins the Quicknode Startup Program</guid>
 			<pubDate>Thu, 16 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws has been accepted into the QuickNode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.</description>
+			<description>three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.</description>
 		</item>
 		<item>
 			<title>3D generation now switches engines by itself when one fails</title>
@@ -71,6 +71,14 @@
 			<description>Every generic &quot;create an agent&quot; button (marketplace, memory tab, search) now points at the guided /create-agent wizard instead of a stale /agent/new link; that route stays reserved for the avatar hand-off it powers. The search page's avatar CTA no longer points at a route that never existed. /scan and /create/selfie (the two photo-to-avatar paths) now cross-link each other, and Build &gt; Start here in the nav leads with &quot;Create anything&quot; straight to the /create hub.</description>
 		</item>
 		<item>
+			<title>Forge is smoother to use: starter prompts, clearer quality picker, and visible engine switching</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-07-16:Forge is smoother to use: starter prompts, clearer quality picker, and visible engine switching</guid>
+			<pubDate>Thu, 16 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The Forge got a usability pass. First-time visitors now see three one-click starter prompts right on the empty canvas. Hovering Draft, Standard, or High shows exactly what each quality tier trades off: detail, typical generation time, and polygon budget, pulled live from the engine catalog. If an engine hits a snag mid-generation, the progress panel now tells you which backup engine took over instead of switching silently. Hitting your generation limit reads as a wait with a countdown, not a failure. And keyboard flow is tighter across the board: Enter generates (Shift+Enter for a new line), Escape cancels an in-flight generation, and focus lands where the next action is.</description>
+		</item>
+		<item>
 			<title>Free 3D generation got a lot more reliable</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-07-16:Free 3D generation got a lot more reliable</guid>
@@ -101,6 +109,14 @@
 			<pubDate>Thu, 16 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Generations started from the homepage were quietly landing on a fallback engine that produced untextured gray models. The homepage now lets the platform's health-aware router choose the strongest live engine (currently the GPU-hosted TRELLIS lane), so homepage creations come back fully textured, the same quality as the full Forge page. In a side-by-side check the same kind of prompt went from a flagged low-quality untextured mesh to a fully textured model scoring near the top of the quality scale.</description>
+		</item>
+		<item>
+			<title>New realism gate scores every generated 3D model and auto-retries the bad ones</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-16:New realism gate scores every generated 3D model and auto-retries the bad ones</guid>
+			<pubDate>Thu, 16 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>We added an automated quality gate that looks at every model the generator produces and grades how real and complete it is. It renders the model, sends the image to a vision AI with a subject-aware rubric (a person, a car, and a burger are each judged by the right standard), and returns a score plus a plain-language reason and a list of any defects: plastic-toy look, melted or blobby geometry, missing parts, duplicated limbs, floating fragments. Models that fall below the bar get one or two automatic retries with a tightened prompt and more geometry budget before anything reaches you, so a bad result rarely makes it to the screen. The check runs on Google's Gemini vision on our own cloud credits (no new paid keys), and it is fail-open by design: if the grader is ever unavailable, generation is never blocked. Developers can also score any model on demand via the new POST /api/forge-quality-check endpoint.</description>
 		</item>
 		<item>
 			<title>Text-to-3D now aims for a real photograph of your subject</title>
@@ -5052,7 +5068,7 @@
 			<guid isPermaLink="false">2026-06-27:Partner Ecosystem</guid>
 			<pubDate>Sat, 27 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, QuickNode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.</description>
+			<description>three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, Quicknode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.</description>
 		</item>
 		<item>
 			<title>Recording Pipeline — the data loop, live</title>

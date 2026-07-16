@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-16",
+			"title": "New realism gate scores every generated 3D model and auto-retries the bad ones",
+			"summary": "We added an automated quality gate that looks at every model the generator produces and grades how real and complete it is. It renders the model, sends the image to a vision AI with a subject-aware rubric (a person, a car, and a burger are each judged by the right standard), and returns a score plus a plain-language reason and a list of any defects: plastic-toy look, melted or blobby geometry, missing parts, duplicated limbs, floating fragments. Models that fall below the bar get one or two automatic retries with a tightened prompt and more geometry budget before anything reaches you, so a bad result rarely makes it to the screen. The check runs on Google's Gemini vision on our own cloud credits (no new paid keys), and it is fail-open by design: if the grader is ever unavailable, generation is never blocked. Developers can also score any model on demand via the new POST /api/forge-quality-check endpoint.",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-16",
 			"title": "Forge is smoother to use: starter prompts, clearer quality picker, and visible engine switching",
 			"summary": "The Forge got a usability pass. First-time visitors now see three one-click starter prompts right on the empty canvas. Hovering Draft, Standard, or High shows exactly what each quality tier trades off: detail, typical generation time, and polygon budget, pulled live from the engine catalog. If an engine hits a snag mid-generation, the progress panel now tells you which backup engine took over instead of switching silently. Hitting your generation limit reads as a wait with a countdown, not a failure. And keyboard flow is tighter across the board: Enter generates (Shift+Enter for a new line), Escape cancels an in-flight generation, and focus lands where the next action is.",
 			"tags": [

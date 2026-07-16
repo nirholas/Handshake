@@ -185,7 +185,7 @@ Live avatars, agents, 3D models, worlds, and launches across three.ws — filter
 
 URL: https://three.ws/partners
 
-three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, QuickNode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.
+three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, Quicknode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.
 
 ## Build
 
@@ -1790,11 +1790,11 @@ The complete map of every agent ability, researched from the shipped code: body,
 
 Long-form announcements, launches, and writing from three.ws.
 
-### three.ws Joins the QuickNode Startup Program
+### three.ws Joins the Quicknode Startup Program
 
 URL: https://three.ws/blog/three-ws-quicknode-startup-program
 
-three.ws has been accepted into the QuickNode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.
+three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.
 
 ### three.ws Joins the Alibaba Cloud Partner Network
 
@@ -2079,11 +2079,11 @@ URL: https://three.ws/news/
 
 Product launches, integrations, and announcements from three.ws.
 
-### three.ws Joins the QuickNode Startup Program
+### three.ws Joins the Quicknode Startup Program
 
 URL: https://three.ws/news/quicknode-startup-program
 
-three.ws has been accepted into the QuickNode Startup Program and approved for free infrastructure credits: more RPC headroom for the Solana-first agent economy, provider redundancy, and QuickNode's founder network.
+three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits: more RPC headroom for the Solana-first agent economy, provider redundancy, and Quicknode's founder network.
 
 ### Text to 3D Is Live — Type a Prompt, Download a 3D Model
 

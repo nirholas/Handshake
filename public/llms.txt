@@ -39,7 +39,7 @@ Entry points into the product.
 - [Guided Tour](https://three.ws/tour): A 3D guide walks across the live site, points at every feature, and narrates what each one does and how to use it — voice plus an on-screen chat bubble, paced by you.
 - [Walk Anywhere on the Web](https://three.ws/walk): Your 3D avatar walks anywhere on the web. Live demos across six environments, a Chrome extension, one-tag embeds, and a global distance leaderboard.
 - [Feed](https://three.ws/feed): Live avatars, agents, 3D models, worlds, and launches across three.ws — filter to everyone or just the people you follow.
-- [Partner Ecosystem](https://three.ws/partners): three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, QuickNode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.
+- [Partner Ecosystem](https://three.ws/partners): three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, Quicknode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.
 
 ## Build
 
@@ -319,7 +319,7 @@ Docs, tutorials, and reference.
 
 Long-form announcements, launches, and writing from three.ws.
 
-- [three.ws Joins the QuickNode Startup Program](https://three.ws/blog/three-ws-quicknode-startup-program): three.ws has been accepted into the QuickNode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.
+- [three.ws Joins the Quicknode Startup Program](https://three.ws/blog/three-ws-quicknode-startup-program): three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.
 - [three.ws Joins the Alibaba Cloud Partner Network](https://three.ws/blog/three-ws-alibaba-cloud-partnership): three.ws is now an Alibaba Cloud Partner, bringing Qwen foundation models and Asia-Pacific cloud infrastructure to the three.ws 3D AI agent platform.
 - [Blog](https://three.ws/blog): Editorial index of three.ws launches and long-form posts.
 - [The Stripe of x402: How three.ws Turned Agent Payments Into One Line of Code](https://three.ws/blog/x402-stripe-for-agent-payments): HTTP 402 sat unused for thirty years. Agents revived it. three.ws built the drop in payment modal that makes x402 a one liner, on top of a full stack of agent wallets, wallet intents, on-chain reputation, sniping, and $THREE.
@@ -363,7 +363,7 @@ Long-form announcements, launches, and writing from three.ws.
 Product launches, integrations, and announcements from three.ws.
 
 - [News & Announcements](https://three.ws/news/): Product launches, integrations, and announcements from three.ws.
-- [three.ws Joins the QuickNode Startup Program](https://three.ws/news/quicknode-startup-program): three.ws has been accepted into the QuickNode Startup Program and approved for free infrastructure credits: more RPC headroom for the Solana-first agent economy, provider redundancy, and QuickNode's founder network.
+- [three.ws Joins the Quicknode Startup Program](https://three.ws/news/quicknode-startup-program): three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits: more RPC headroom for the Solana-first agent economy, provider redundancy, and Quicknode's founder network.
 - [Text to 3D Is Live — Type a Prompt, Download a 3D Model](https://three.ws/news/text-to-3d-is-live): Forge is live at three.ws/forge: type a description, get a textured, interactive 3D model you can orbit, view in AR, and download as a GLB. Image to 3D from photos works too — and agents can call the same pipeline over MCP.
 - [three.ws Wins DEXTools Social Boost — $5,543 $three Buyback](https://three.ws/news/three-ws-dextools-social-boost-buyback): three.ws is DEXTools' Social Boost winner of the week, earning a $5,543 buyback of $three. The DEXTools wallet now holds a total of 2.47M $three.
 - [three.ws Featured on the Alibaba Cloud Marketplace Blog](https://three.ws/news/three-ws-featured-on-alibaba-cloud-marketplace-blog): Alibaba Cloud Marketplace published an editorial introducing three.ws — Render, Embody, Register, Embed: browser-native 3D AI agents deployed with a single <agent-3d> tag, with a Claude-powered runtime, ERC-8004 identity, and an Apache 2.0 open-source stack.
