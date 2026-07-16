@@ -93,6 +93,12 @@ const MODELS = {
 		provider: 'nvidia',
 		envKey: 'NVIDIA_API_KEY',
 	},
+
+	// xAI Grok (paid, host's key). OpenAI-compatible and tool-call capable, so
+	// it shares the 'openai' branch. Selectable only; never a free fallback.
+	'grok-4.5': { kind: 'openai', provider: 'grok', envKey: 'GROK_API_KEY' },
+	'grok-4.3': { kind: 'openai', provider: 'grok', envKey: 'GROK_API_KEY' },
+	'grok-4.1-fast': { kind: 'openai', provider: 'grok', envKey: 'GROK_API_KEY' },
 };
 
 const UPSTREAM_URL = {
@@ -100,6 +106,7 @@ const UPSTREAM_URL = {
 	openrouter: 'https://openrouter.ai/api/v1/chat/completions',
 	groq: 'https://api.groq.com/openai/v1/chat/completions',
 	nvidia: 'https://integrate.api.nvidia.com/v1/chat/completions',
+	grok: 'https://api.x.ai/v1/chat/completions',
 };
 
 const FIRST_PARTY = ['three.ws', 'localhost'];

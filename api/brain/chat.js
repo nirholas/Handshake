@@ -215,6 +215,42 @@ const PROVIDERS = {
 		native: () => (env.OPENAI_API_KEY ? createOpenAI({ apiKey: env.OPENAI_API_KEY }).chat('o3-pro') : null),
 		openrouterModel: 'openai/o3-pro',
 	},
+	'grok-4.5': {
+		label: 'Grok 4.5',
+		network: 'xAI',
+		tier: 'flagship',
+		maxOutput: 16384,
+		description: 'xAI flagship. Frontier reasoning with real-time X knowledge.',
+		native: () =>
+			env.GROK_API_KEY
+				? createOpenAI({ apiKey: env.GROK_API_KEY, baseURL: 'https://api.x.ai/v1' }).chat('grok-4.5')
+				: null,
+		openrouterModel: 'x-ai/grok-4.5',
+	},
+	'grok-4.3': {
+		label: 'Grok 4.3',
+		network: 'xAI',
+		tier: 'balanced',
+		maxOutput: 16384,
+		description: 'Long-context Grok (1M tokens) at a lower price than 4.5.',
+		native: () =>
+			env.GROK_API_KEY
+				? createOpenAI({ apiKey: env.GROK_API_KEY, baseURL: 'https://api.x.ai/v1' }).chat('grok-4.3')
+				: null,
+		openrouterModel: 'x-ai/grok-4.3',
+	},
+	'grok-4.1-fast': {
+		label: 'Grok 4.1 Fast',
+		network: 'xAI',
+		tier: 'fast',
+		maxOutput: 8192,
+		description: 'Budget Grok with a 2M-token context. Fast, cheap workhorse.',
+		native: () =>
+			env.GROK_API_KEY
+				? createOpenAI({ apiKey: env.GROK_API_KEY, baseURL: 'https://api.x.ai/v1' }).chat('grok-4.1-fast')
+				: null,
+		openrouterModel: 'x-ai/grok-4.1-fast',
+	},
 	'groq-llama': {
 		label: 'Llama 3.3 70B',
 		network: 'Groq',

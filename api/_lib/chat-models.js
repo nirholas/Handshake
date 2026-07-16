@@ -78,6 +78,11 @@ export const MODEL_CATALOG = {
 	'meta/llama-3.3-70b-instruct':               { provider: 'nvidia', tools: true },
 	'nvidia/llama-3.3-nemotron-super-49b-v1.5':  { provider: 'nvidia', tools: true },
 
+	// ── xAI Grok (paid; host or BYOK key) — OpenAI-compatible at api.x.ai ─────
+	'grok-4.5':                   { provider: 'grok', tools: true },
+	'grok-4.3':                   { provider: 'grok', tools: true },
+	'grok-4.1-fast':              { provider: 'grok', tools: true },
+
 	// ── OpenAI (paid) — see operational note above; ranked last ───────────────
 	'gpt-5.6-sol':                { provider: 'openai', tools: true },
 	'gpt-5.6-terra':              { provider: 'openai', tools: true },
@@ -154,6 +159,7 @@ export const PROVIDER_MODEL_DEFAULTS = {
 	groq: 'llama-3.3-70b-versatile',
 	nvidia: 'meta/llama-3.3-70b-instruct',
 	openai: 'gpt-5.4-nano',
+	grok: 'grok-4.5',
 };
 
 /**
@@ -170,11 +176,13 @@ export const PROVIDER_MODEL_DEFAULTS = {
  *   4. anthropic  — paid backstop; only reached when every free lane failed
  *                   (and currently 401s in prod — see operational note).
  *   5. openai     — paid backstop; account over quota (see operational note).
+ *   6. grok       — paid backstop (xAI); usually reached only via an explicit
+ *                   provider/model request or a BYOK key.
  * Providers without a configured key are skipped, so the effective ladder is
  * short in the common case. A provider in a health cooldown (see
  * api/_lib/provider-health.js) is also skipped for the cooldown window.
  */
-export const DEFAULT_PROVIDER_ORDER = ['groq', 'openrouter', 'nvidia', 'anthropic', 'openai'];
+export const DEFAULT_PROVIDER_ORDER = ['groq', 'openrouter', 'nvidia', 'anthropic', 'openai', 'grok'];
 
 /**
  * OpenRouter sibling models for per-model rate-limit failover. OpenRouter's

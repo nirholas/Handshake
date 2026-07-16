@@ -98,6 +98,14 @@ const ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001';
 // Paid last-resort tail (see policy above). Mini keeps the backstop cheap; the
 // repo-wide OpenAI default (api/_lib/chat-models.js) uses the same model.
 const OPENAI_MODEL = 'gpt-5.4-nano';
+// xAI Grok, OpenAI-compatible (api.x.ai). Paid, so it rides in the paid tail
+// when the server GROK_API_KEY is set; a caller-supplied BYOK `grokKey` leads
+// the chain instead (the caller's explicit model choice on their own billing).
+// The budget 4.1-fast tier keeps the server backstop cheap; BYOK callers get
+// the flagship via `grokModel`.
+const GROK_URL = 'https://api.x.ai/v1/chat/completions';
+const GROK_MODEL = 'grok-4.1-fast';
+const GROK_BYOK_MODEL = 'grok-4.5';
 
 // Per-user daily LLM spend cap, in micro-USD. Callers on the host's paid keys
 // (ANTHROPIC_API_KEY / OPENAI_API_KEY) are metered; BYOK callers and free-tier
@@ -114,10 +122,10 @@ function dailyCapMicroUsd() {
 // doesn't apply. Returns { exceeded: true, spentMicroUsd, capMicroUsd } when
 // blocked, or { exceeded: false } when allowed. Never throws — fails open so a
 // DB hiccup never silently denies a user.
-export async function checkUserLlmSpendCap(userId, { anthropicKey } = {}) {
+export async function checkUserLlmSpendCap(userId, { anthropicKey, grokKey } = {}) {
 	if (!userId) return { exceeded: false };
-	if (anthropicKey) return { exceeded: false }; // BYOK — not our billing
-	if (!env.ANTHROPIC_API_KEY && !env.OPENAI_API_KEY) return { exceeded: false }; // no paid keys at all
+	if (anthropicKey || grokKey) return { exceeded: false }; // BYOK — not our billing
+	if (!env.ANTHROPIC_API_KEY && !env.OPENAI_API_KEY && !env.GROK_API_KEY) return { exceeded: false }; // no paid keys at all
 	const cap = dailyCapMicroUsd();
 	try {
 		const [row] = await sql`
@@ -273,7 +281,7 @@ function openaiCompatProvider({ name, key = null, url, model, extraHeaders = {},
 // free provider: the prod paid keys are routinely invalid or out of quota, so
 // platform spend never leads and nothing depends on it — but when a key does
 // work, a request that exhausted the free tier still succeeds.
-export function providerChain({ anthropicKey, anthropicModel, preferNvidia = false, nvidiaModel = null } = {}) {
+export function providerChain({ anthropicKey, anthropicModel, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null } = {}) {
 	const chain = [];
 	// Opt-in: lead with the NVIDIA NIM lane on a chosen Nemotron model. Used by
 	// features that want the NVIDIA-native model to actually produce the result
@@ -294,6 +302,17 @@ export function providerChain({ anthropicKey, anthropicModel, preferNvidia = fal
 		}));
 	}
 	if (anthropicKey) chain.push(anthropicProvider(anthropicKey, anthropicModel));
+	// BYOK Grok leads for the same reason a BYOK Anthropic key does: the caller
+	// chose the model and pays for it. Flagship by default; still degrades to
+	// the free chain below when x.ai errors.
+	if (grokKey) {
+		chain.push(openaiCompatProvider({
+			name: 'grok',
+			key: grokKey,
+			url: GROK_URL,
+			model: grokModel || GROK_BYOK_MODEL,
+		}));
+	}
 	// VERTEX_CLAUDE_PRIMARY: real Claude on GCP credits leads the chain, before
 	// the free lanes — the platform's default brain becomes Vertex Claude. It
 	// still sits behind a caller BYOK key (the caller's explicit billing choice)
@@ -421,6 +440,16 @@ export function providerChain({ anthropicKey, anthropicModel, preferNvidia = fal
 			model: OPENAI_MODEL,
 		}));
 	}
+	// Server Grok is a paid backstop like OpenAI above; skipped when a BYOK
+	// grokKey already leads (the caller chose their own xAI billing).
+	if (!grokKey && env.GROK_API_KEY) {
+		chain.push(openaiCompatProvider({
+			name: 'grok',
+			key: env.GROK_API_KEY,
+			url: GROK_URL,
+			model: grokModel || GROK_MODEL,
+		}));
+	}
 	return chain;
 }
 
@@ -450,14 +479,14 @@ export function llmConfigured(opts = {}) {
 // { userId, agentId, avatarId, clientId, apiKeyId, tool } — are all optional;
 // pass whatever the call site knows. Recording is fire-and-forget (see
 // recordEvent), so it never delays or fails the completion.
-export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey = null, anthropicModel = null, preferNvidia = false, nvidiaModel = null, timeoutMs = 30_000, track = null }) {
-	const chain = providerChain({ anthropicKey, anthropicModel, preferNvidia, nvidiaModel });
+export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey = null, anthropicModel = null, grokKey = null, grokModel = null, preferNvidia = false, nvidiaModel = null, timeoutMs = 30_000, track = null }) {
+	const chain = providerChain({ anthropicKey, anthropicModel, grokKey, grokModel, preferNvidia, nvidiaModel });
 	if (!chain.length) throw new LlmUnavailableError();
 
 	// Per-user daily spend cap on platform-paid keys. Only runs when a userId is
 	// known and there are paid keys configured — free-only installs skip the check.
 	if (track?.userId) {
-		const cap = await checkUserLlmSpendCap(track.userId, { anthropicKey });
+		const cap = await checkUserLlmSpendCap(track.userId, { anthropicKey, grokKey });
 		if (cap.exceeded) {
 			const usd = (cap.capMicroUsd / 1_000_000).toFixed(2);
 			throw Object.assign(

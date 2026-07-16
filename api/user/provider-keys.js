@@ -1,6 +1,6 @@
 // GET  /api/user/provider-keys  — returns which keys are set (never returns values)
 // PATCH /api/user/provider-keys  — set or clear individual provider keys
-//   body: { anthropic?, openai?, meshy?, tripo?, rodin?, stability?, replicate? } — each string | null
+//   body: { anthropic?, openai?, grok?, meshy?, tripo?, rodin?, stability?, replicate? } — each string | null
 //   null = delete that key; string = store encrypted
 
 import { sql } from '../_lib/db.js';
@@ -14,6 +14,7 @@ import { parse } from '../_lib/validate.js';
 const patchSchema = z.object({
 	anthropic: z.string().min(1).max(512).nullable().optional(),
 	openai:    z.string().min(1).max(512).nullable().optional(),
+	grok:      z.string().min(1).max(512).nullable().optional(),
 	meshy:     z.string().min(1).max(512).nullable().optional(),
 	tripo:     z.string().min(1).max(512).nullable().optional(),
 	rodin:     z.string().min(1).max(512).nullable().optional(),

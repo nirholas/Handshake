@@ -520,6 +520,15 @@ export const env = {
 		return opt('GROQ_API_KEY');
 	},
 
+	// xAI Grok API key (console.x.ai): paid OpenAI-compatible inference
+	// (grok-4.5 flagship, grok-4.3 long-context, grok-4.1-fast budget).
+	// Used by brain/chat, viewer chat, the shared LLM chain, and the embed
+	// we-pay proxy. Accepts XAI_API_KEY as an alias. Optional: when unset,
+	// Grok rungs are skipped and only BYOK Grok keys work.
+	get GROK_API_KEY() {
+		return opt('GROK_API_KEY') || opt('XAI_API_KEY');
+	},
+
 	// Cerebras API key (cloud.cerebras.ai) — free-tier OpenAI-compatible Llama
 	// 3.3 70B inference, extremely fast. Optional rung in the shared LLM chain
 	// (api/_lib/llm.js); when unset the chain simply skips it.
@@ -1133,7 +1142,7 @@ export const env = {
 	},
 
 	// Solana RPC URL — single source of truth for all Solana RPC calls.
-	// Set to a Helius/QuickNode/Triton URL in production to avoid public RPC rate limits.
+	// Set to a Helius/Quicknode/Triton URL in production to avoid public RPC rate limits.
 	get SOLANA_RPC_URL() {
 		// Coalesce to the public endpoint when unset OR when a configured value is
 		// malformed beyond repair — every direct consumer (fetch / new Connection)

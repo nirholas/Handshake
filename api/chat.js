@@ -119,6 +119,15 @@ const PROVIDERS = {
 		url: 'https://api.openai.com/v1/chat/completions',
 		style: 'openai',
 	},
+	// xAI Grok (api.x.ai): paid, OpenAI-compatible. Reached via an explicit
+	// provider/model request or a stored BYOK key (Settings > AI Provider Keys);
+	// the server GROK_API_KEY, when set, serves it platform-side too.
+	grok: {
+		envKey: 'GROK_API_KEY',
+		defaultModel: PROVIDER_MODEL_DEFAULTS.grok,
+		url: 'https://api.x.ai/v1/chat/completions',
+		style: 'openai',
+	},
 	// IBM watsonx.ai (Granite). URL + headers are derived in makeRoute from the
 	// shared watsonx client (region host, version param, IAM bearer token), so
 	// no static `url` here. Requires WATSONX_API_KEY + a project/space id.
@@ -168,7 +177,7 @@ const chatBody = z.object({
 	persona_override: z.string().trim().min(1).max(16000).optional(),
 	agentId: z.string().uuid().optional(),
 	provider: z
-		.enum(['anthropic', 'openrouter', 'groq', 'nvidia', 'openai', 'watsonx', 'orchestrate'])
+		.enum(['anthropic', 'openrouter', 'groq', 'nvidia', 'openai', 'grok', 'watsonx', 'orchestrate'])
 		.optional(),
 	model: z.string().min(1).max(120).optional(),
 	history: z
@@ -1079,6 +1088,7 @@ const FALLBACK_SIBLINGS = {
 	nvidia: ['meta/llama-3.3-70b-instruct'],
 	anthropic: ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001'],
 	openai: ['gpt-5.4-nano'],
+	grok: ['grok-4.5', 'grok-4.1-fast'],
 };
 
 // A model is eligible for an *auto-built* fallback slot only when it can serve

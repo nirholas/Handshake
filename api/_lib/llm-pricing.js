@@ -33,6 +33,10 @@ const PRICE_PER_MTOK = {
 	'gpt-5.3-codex': [1.75, 14],
 	'o3-pro': [20, 80],
 	'o3': [2, 8],
+	// xAI Grok list prices (docs.x.ai, July 2026). 4.1-fast is the budget tier.
+	'grok-4.5': [2, 6],
+	'grok-4.3': [1.25, 2.5],
+	'grok-4.1-fast': [0.2, 0.5],
 	// Deprecated OpenAI family — kept so historical usage_events still price.
 	'gpt-4o-mini': [0.15, 0.6],
 	'gpt-4o': [2.5, 10],

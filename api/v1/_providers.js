@@ -120,7 +120,7 @@ function slimDexProfileList(data, cap = 30) {
 // ── Solana JSON-RPC helpers ──────────────────────────────────────────────────
 
 // Solana RPC URL — same env resolution the rest of the platform uses
-// (api/_lib/env.js SOLANA_RPC_URL: configured Helius/QuickNode/Triton URL, or
+// (api/_lib/env.js SOLANA_RPC_URL: configured Helius/Quicknode/Triton URL, or
 // the public mainnet endpoint). Computed once at module load per the registry
 // contract — a deploy that sets SOLANA_RPC_URL later needs a redeploy to pick
 // it up, same as every other provider `base`.
@@ -738,6 +738,42 @@ export const PROVIDERS = [
 		],
 	},
 	{
+		id: 'grok',
+		name: 'Grok (xAI)',
+		category: 'ai-inference',
+		base: 'https://api.x.ai/v1',
+		requiresKey: true,
+		envVar: 'GROK_API_KEY',
+		byokHeader: 'x-provider-key',
+		applyKey: (headers, _url, key) => {
+			if (key) headers['authorization'] = `Bearer ${key}`;
+		},
+		endpoints: [
+			{
+				id: 'chat',
+				method: 'POST',
+				path: '/chat/completions',
+				body: (b) => {
+					if (!b || typeof b !== 'object' || !Array.isArray(b.messages)) {
+						const err = new Error('body must include a "messages" array');
+						err.status = 400;
+						err.code = 'validation_error';
+						throw err;
+					}
+					return b;
+				},
+				priceAtomics: '5000',
+				scope: 'agents:write',
+				summary: 'Chat completions against xAI Grok models (grok-4.5, grok-4.3, grok-4.1-fast; BYOK supported).',
+				params: {
+					model: 'Grok model id, e.g. "grok-4.5" (required)',
+					messages: 'array of {role, content} (required)',
+					'…': 'any other OpenAI chat-completions parameter is forwarded',
+				},
+			},
+		],
+	},
+	{
 		id: 'dexscreener',
 		name: 'DexScreener',
 		category: 'crypto-market-data',
@@ -831,7 +867,7 @@ export const PROVIDERS = [
 		name: 'Solana RPC',
 		category: 'onchain-data',
 		// Same env resolution every other Solana caller on the platform uses
-		// (api/_lib/env.js) — a configured Helius/QuickNode/Triton URL, or the
+		// (api/_lib/env.js) — a configured Helius/Quicknode/Triton URL, or the
 		// public mainnet endpoint as a working fallback.
 		base: SOLANA_RPC_BASE,
 		requiresKey: false,
