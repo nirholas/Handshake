@@ -121,7 +121,10 @@ export function isConfigured() {
 // own override before falling back to the shared location.
 function imageLaneLocation() {
   return (
-    readEnv('VERTEX_IMAGEN_LOCATION') || readEnv('GOOGLE_CLOUD_LOCATION') || DEFAULT_LOCATION
+    readEnv('VERTEX_IMAGEN_LOCATION') ||
+    readEnv('GOOGLE_CLOUD_LOCATION_IMAGE') ||
+    readEnv('GOOGLE_CLOUD_LOCATION') ||
+    DEFAULT_LOCATION
   );
 }
 

@@ -67,7 +67,10 @@ const DEFAULT_MODEL = process.env.VERTEX_IMAGEN_MODEL || 'gemini-2.5-flash-image
 // live 2026-07-16. Separate from the text lanes so the image lane can be pinned
 // independently.
 const DEFAULT_LOCATION =
-	process.env.GOOGLE_CLOUD_LOCATION_IMAGE || process.env.GOOGLE_CLOUD_LOCATION || 'global';
+	process.env.GOOGLE_CLOUD_LOCATION_IMAGE ||
+	process.env.VERTEX_IMAGEN_LOCATION ||
+	process.env.GOOGLE_CLOUD_LOCATION ||
+	'global';
 // Request the highest resolution the model tier serves. "2K" is accepted today
 // and currently renders at 1024px on this project's tier (harmless, and it
 // upgrades automatically when the tier serves true 2K). Force 1K with
