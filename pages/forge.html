@@ -1382,7 +1382,7 @@
 				color: var(--ink);
 				font-weight: 600;
 			}
-			/* Lane-switch notice — shown when the server (or the client's automatic
+			/* Lane-switch notice, shown when the server (or the client's automatic
 			   retry) moved this generation onto a backup engine mid-flight, so a
 			   failover is informative rather than silent. Filled by forge.js. */
 			.gen-note {
@@ -2552,7 +2552,7 @@
 				color: var(--ink-dim);
 				margin: 0;
 			}
-			/* Starter prompts inside the empty stage — a first-time visitor sees
+			/* Starter prompts inside the empty stage: a first-time visitor sees
 			   exactly what to type and can generate in one click. Reuses the .chip
 			   look; wired in forge.js (fills the prompt and submits). */
 			.forge-empty-starters {
@@ -2800,10 +2800,20 @@
 					<div class="fq-row">
 						<span class="fq-label" id="tier-label">Quality</span>
 						<div class="aspect" role="group" aria-labelledby="tier-label" id="tier">
-							<button type="button" data-tier="draft" aria-pressed="false">
+							<button
+								type="button"
+								data-tier="draft"
+								aria-pressed="false"
+								title="Draft: fastest and low-poly. Good for blockout and iteration."
+							>
 								Draft
 							</button>
-							<button type="button" data-tier="standard" aria-pressed="true">
+							<button
+								type="button"
+								data-tier="standard"
+								aria-pressed="true"
+								title="Standard: balanced detail, photoreal reference views, 2K textures. The default for most assets."
+							>
 								Standard
 							</button>
 							<button
@@ -2812,6 +2822,7 @@
 								data-access="locked"
 								aria-pressed="false"
 								aria-label="High quality — $THREE holder feature"
+								title="High: maximum detail and PBR textures on self-hosted GPU workers. Slower; $THREE holder feature or pay per generation."
 							>
 								<span class="tier-name">High</span>
 								<span class="tier-lock" data-state="locked" title="High quality is a $THREE holder feature">
@@ -2873,9 +2884,9 @@
 						<button type="button" data-aspect="16:9" aria-pressed="false">16:9</button>
 					</div>
 				</div>
-				<button class="btn" id="generate" type="submit">
+				<button class="btn" id="generate" type="submit" title="Generate (Enter). Shift+Enter for a new line.">
 					<span id="generate-label">Generate</span>
-					<kbd class="gen-kbd" aria-hidden="true">⌘↵</kbd>
+					<kbd class="gen-kbd" aria-hidden="true">↵</kbd>
 				</button>
 
 				<!-- Quiet holder line under Generate: an active free-quota perk for $THREE
@@ -2932,6 +2943,12 @@
 						</svg>
 					</div>
 					<p class="forge-empty-label">Enter a prompt to generate</p>
+					<div class="forge-empty-starters" id="empty-starters" role="group" aria-label="Starter prompts: click one to generate">
+						<button class="chip" type="button">a glazed ceramic teapot</button>
+						<button class="chip" type="button">a sci-fi combat helmet, brushed metal</button>
+						<button class="chip" type="button">a low-poly red fox, sitting</button>
+					</div>
+					<p class="forge-empty-hint">Or click a starter above: it generates immediately.</p>
 				</div>
 
 				<!-- Generating -->
@@ -2942,7 +2959,7 @@
 					<div class="gen-steps">
 						<div class="step" id="step-image" data-state="active">
 							<span class="dot" aria-hidden="true"></span>
-							<span>Painting reference image</span>
+							<span>Painting photoreal reference image</span>
 						</div>
 						<div class="step" id="step-mesh" data-state="pending">
 							<span class="dot" aria-hidden="true"></span>
@@ -2964,6 +2981,7 @@
 							<div class="gen-progress-fill" id="gen-progress-fill"></div>
 						</div>
 						<div class="gen-meta" id="gen-meta">Elapsed 0s</div>
+						<div class="gen-note is-hidden" id="gen-note" role="status" aria-live="polite"></div>
 						<div style="margin-top: var(--space-sm)">
 							<button class="btn btn-ghost" type="button" id="cancel">Cancel</button>
 						</div>
@@ -3258,7 +3276,7 @@
 				<!-- Error -->
 				<div class="panel notice error is-hidden" id="state-error">
 					<span class="glyph" aria-hidden="true">⚠</span>
-					<h3>Generation failed</h3>
+					<h3 id="error-title">Generation failed</h3>
 					<p id="error-message">
 						Something went wrong. Try a simpler, single-subject prompt.
 					</p>
@@ -3339,7 +3357,7 @@
 			</section>
 
 			<p class="hint-foot">
-				Multi-engine pipeline — Free uses NVIDIA-hosted generation; Fast, Meshy, Tripo, Rodin, Stability, and Replicate require an API key. Best results: one clearly described subject with a material and lighting cue. Photo mode accepts up to 4 views for multi-view reconstruction. The same pipeline is available to agents over MCP at <a href="/docs">/api/mcp-3d</a>.
+				Multi-engine pipeline. Engines marked FREE run with no key: NVIDIA-hosted generation plus our own self-hosted GPU workers (TRELLIS, Hunyuan3D, TripoSG). Meshy, Tripo, Rodin, Stability, and Replicate run on your own API key. Best results: one clearly described subject with a material and lighting cue. Photo mode accepts up to 4 views for multi-view reconstruction. The same pipeline is available to agents over MCP at <a href="/docs">/api/mcp-3d</a>.
 			</p>
 				</div><!-- /.forge-stage -->
 				</div><!-- /.forge-workspace -->

@@ -65,6 +65,7 @@ const els = {
 	},
 	genPreview: document.getElementById('gen-preview'),
 	genMeta: document.getElementById('gen-meta'),
+	genNote: document.getElementById('gen-note'),
 	genProgress: document.getElementById('gen-progress'),
 	genProgressFill: document.getElementById('gen-progress-fill'),
 	steps: {
@@ -92,7 +93,9 @@ const els = {
 	sketchReqTag: document.getElementById('sketch-req-tag'),
 	generateAnyway: document.getElementById('generate-anyway'),
 	refineLocally: document.getElementById('refine-locally'),
+	errorTitle: document.getElementById('error-title'),
 	errorMessage: document.getElementById('error-message'),
+	emptyStarters: document.getElementById('empty-starters'),
 	forgeShareBtn: document.getElementById('forge-share-btn'),
 	segmentBtn: document.getElementById('forge-segment-btn'),
 	openInComposer: document.getElementById('open-in-composer'),
@@ -276,6 +279,25 @@ function setStepLabel(step, text) {
 	const node = els.steps[step]?.querySelector('span:last-child');
 	if (node) node.textContent = text;
 }
+
+// Human label for a backend id, from the short-label map or the live catalog.
+function engineLabel(id) {
+	return ENGINE_LABELS[id] || catalog?.backends?.find((b) => b.id === id)?.label || id;
+}
+
+// Lane-switch notice in the generating panel: makes a mid-flight engine
+// failover (server poll-time redispatch, or the client's own automatic retry
+// hop) visible instead of silent. Empty text hides the line.
+function setLaneNote(text) {
+	if (!els.genNote) return;
+	els.genNote.textContent = text || '';
+	els.genNote.classList.toggle('is-hidden', !text);
+}
+
+// Set by the automatic lane-hop retry just before it re-runs the job, consumed
+// by run() when it resets the generating panel, so the notice survives the
+// panel reset that a re-run performs.
+let pendingLaneNote = '';
 
 // The typical end-to-end time for the current engine+tier, straight from the
 // catalog's real estimate matrix (estimateEtaSeconds). Null when no catalog or
@@ -871,6 +893,25 @@ function updateEstimate() {
 	else if (mode === 'image') parts.push('builds from your reference photos');
 	else parts.push('renders a preview image, then builds 3D');
 	els.estimate.innerHTML = parts.join(' · ');
+	updateTierTitles();
+}
+
+// Stamp each tier button's tooltip with the catalog's real blurb, the typical
+// time on the currently selected engine, and the polygon budget, so the
+// quality/time tradeoff is legible before a tier is ever selected. The static
+// HTML titles remain as the pre-catalog fallback.
+function updateTierTitles() {
+	if (!els.tier || !catalog) return;
+	const backend = catalog.backends?.find((b) => b.id === selectedEngine.backend);
+	for (const btn of els.tier.querySelectorAll('button[data-tier]')) {
+		const t = catalog.tiers?.find((x) => x.id === btn.dataset.tier);
+		if (!t) continue;
+		const est = (backend?.estimates?.[selectedEngine.path] || []).find((e) => e.tier === t.id);
+		const parts = [t.blurb];
+		if (est?.eta_seconds) parts.push(`usually ~${est.eta_seconds}s on ${backend.label}`);
+		if (Number(t.polycount) > 0) parts.push(`up to ${t.polycount.toLocaleString()} polygons`);
+		btn.title = `${t.label}: ${parts.filter(Boolean).join(' · ')}`;
+	}
 }
 
 // View slots ------------------------------------------------------------------
@@ -1455,7 +1496,18 @@ async function pollUntilDone(jobId) {
 			}
 			throw e;
 		}
-		if (data.status === 'running') setStep('mesh', 'active');
+		if (data.status === 'running') {
+			setStep('mesh', 'active');
+			// Poll-time failover: the server moved this job onto a backup lane and
+			// keeps it running under the same id. Surface the switch so the user
+			// sees which engine is now serving, rather than a silent swap.
+			if (data.failover_from && data.backend && data.backend !== data.failover_from) {
+				setLaneNote(
+					`${engineLabel(data.failover_from)} hit a snag. Continuing on ${engineLabel(data.backend)}, no action needed.`,
+				);
+				setStepLabel('mesh', `Reconstructing on ${engineLabel(data.backend)}`);
+			}
+		}
 	}
 	if (pollAbort) return null;
 	throw new Error(
@@ -1694,6 +1746,13 @@ function showResult(glbUrl, label, meta, { autoSaved = false } = {}) {
 	currentResultTier = meta?.tier || selectedTier;
 	updateRefineButton();
 	showState('result');
+	// Manage focus across the async transition: land on the primary next action
+	// (Download), but never steal focus from a user already working elsewhere,
+	// e.g. a gallery card click or someone mid-typing a new prompt.
+	const ax = document.activeElement;
+	if (els.download && (!ax || ax === document.body || ax === els.generate)) {
+		els.download.focus({ preventScroll: true });
+	}
 	playMaterialize(glbUrl);
 	// Hand the live model to the Stylize panel (src/forge-stylize.js) so its
 	// one-click geometric filters operate on the current source mesh.
@@ -1880,9 +1939,10 @@ async function openSharedCreation(shareId) {
 	}
 }
 
-function showError(message, { allowOverride = false } = {}) {
+function showError(message, { allowOverride = false, title = 'Generation failed' } = {}) {
 	stopElapsed();
 	stopRateLimitCountdown();
+	if (els.errorTitle) els.errorTitle.textContent = title;
 	els.errorMessage.textContent = message;
 	// The "Generate anyway" affordance only exists for the vision pre-check
 	// rejection; every other error hides it so it can't leak across states.
@@ -1897,6 +1957,12 @@ function showError(message, { allowOverride = false } = {}) {
 	}
 	if (els.retry) els.retry.disabled = false;
 	showState('error');
+	// The async flow just landed on an error: put keyboard focus on the primary
+	// recovery action, unless the user is already typing somewhere else.
+	const ax = document.activeElement;
+	if (els.retry && (!ax || ax === document.body || ax === els.generate)) {
+		els.retry.focus({ preventScroll: true });
+	}
 }
 
 // Every automatic backup lane is exhausted — the one moment the user may see
@@ -1904,7 +1970,9 @@ function showError(message, { allowOverride = false } = {}) {
 // one-click button per remaining configured engine: clicking flips the picker
 // (visible switch) and re-runs the same composer inputs, nothing re-entered.
 function showLaneFailed(message, backends) {
-	showError(message || 'That engine hit a snag mid-generation.');
+	showError(message || 'That engine hit a snag mid-generation.', {
+		title: 'Engine hit a snag',
+	});
 	if (!els.errorLanes || !lastJob) return;
 	const buttons = (backends || []).filter((id) => ENGINE_LABELS[id] || catalog?.backends?.some((b) => b.id === id));
 	if (!buttons.length) return;
@@ -1952,6 +2020,16 @@ function showRateLimited({ retryAfter = 10, unavailable = false, busy = false })
 	// wants to keep improving without waiting on the paid lane.
 	const canRefineLocally = Boolean(lastShownGlb && els.viewer.getAttribute('src'));
 	if (els.refineLocally) els.refineLocally.classList.toggle('is-hidden', !canRefineLocally);
+
+	// This is a wait state, not a failure. The heading must say so, or a quota
+	// pause reads as a broken product.
+	if (els.errorTitle) {
+		els.errorTitle.textContent = busy
+			? 'High demand right now'
+			: unavailable
+				? 'Temporarily unavailable'
+				: 'Generation limit reached';
+	}
 
 	let remaining = Math.max(1, Math.ceil(retryAfter));
 	const base = busy
@@ -2035,13 +2113,17 @@ async function run(cfg) {
 		setStep('mesh', 'active');
 		els.genPreview.innerHTML = '<div class="shimmer" aria-hidden="true"></div>';
 	} else {
-		setStepLabel('image', 'Painting reference image');
+		setStepLabel('image', 'Painting photoreal reference image');
 		setStepLabel('mesh', 'Reconstructing textured mesh');
 		els.genPreview.innerHTML = '<div class="shimmer" aria-hidden="true"></div>';
 		setStep('image', 'active');
 		setStep('mesh', 'pending');
 	}
 	setStep('finish', 'pending');
+	// A fresh panel starts with no lane notice, unless an automatic engine hop
+	// queued one for this very re-run.
+	setLaneNote(pendingLaneNote);
+	pendingLaneNote = '';
 	startElapsed();
 	showState('generating');
 
@@ -2177,10 +2259,16 @@ async function run(cfg) {
 		// surface one-click engine switches. The user never dead-ends.
 		if (err.kind === 'lane_failed' && Array.isArray(err.retryBackends) && err.retryBackends.length) {
 			stopElapsed();
-			if (lastJob && autoLaneHops < 1 && selectEngineByBackend(err.retryBackends[0])) {
-				autoLaneHops += 1;
-				run(lastJob);
-				return;
+			if (lastJob && autoLaneHops < 1) {
+				const failedId = selectedEngine.backend;
+				if (selectEngineByBackend(err.retryBackends[0])) {
+					autoLaneHops += 1;
+					// Queue the switch notice for the re-run's generating panel, so the
+					// automatic hop is visible (picker flip + an in-panel line), never silent.
+					pendingLaneNote = `${engineLabel(failedId)} hit a snag. Retrying on ${engineLabel(err.retryBackends[0])}, no action needed.`;
+					run(lastJob);
+					return;
+				}
 			}
 			showLaneFailed(err.message, err.retryBackends);
 			return;
@@ -2381,16 +2469,17 @@ els.form.addEventListener('submit', (e) => {
 	submit();
 });
 
-// Cmd/Ctrl+Enter submits from either text box.
-function submitOnModifierEnter(e) {
-	if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-		e.preventDefault();
-		submit();
-	}
+// Enter submits from any prompt box. Shift+Enter inserts a newline, and an
+// in-progress IME composition is never hijacked. Cmd/Ctrl+Enter still submits
+// too, so the long-standing shortcut keeps working.
+function submitOnEnter(e) {
+	if (e.key !== 'Enter' || e.isComposing || e.shiftKey || e.altKey) return;
+	e.preventDefault();
+	submit();
 }
-els.prompt.addEventListener('keydown', submitOnModifierEnter);
-els.imagePrompt.addEventListener('keydown', submitOnModifierEnter);
-els.sketchPrompt?.addEventListener('keydown', submitOnModifierEnter);
+els.prompt.addEventListener('keydown', submitOnEnter);
+els.imagePrompt.addEventListener('keydown', submitOnEnter);
+els.sketchPrompt?.addEventListener('keydown', submitOnEnter);
 
 // Typing into the sketch prompt clears the "required" warning state.
 els.sketchPrompt?.addEventListener('input', () => {
@@ -2413,13 +2502,26 @@ els.aspect.addEventListener('click', (e) => {
 	}
 });
 
-els.examples.addEventListener('click', (e) => {
-	const chip = e.target.closest('.chip');
-	if (!chip) return;
+// Fill the prompt with an example and generate immediately. Shared by the
+// composer's example chips and the empty-stage starter prompts.
+function runExamplePrompt(text) {
+	if (!text) return;
 	setMode('text');
-	els.prompt.value = chip.textContent.trim();
+	els.prompt.value = text;
 	els.prompt.focus();
 	submit();
+}
+
+els.examples.addEventListener('click', (e) => {
+	const chip = e.target.closest('.chip');
+	if (chip) runExamplePrompt(chip.textContent.trim());
+});
+
+// Starter prompts inside the empty stage: a first-time visitor's one-click
+// path from a blank canvas to a real model.
+els.emptyStarters?.addEventListener('click', (e) => {
+	const chip = e.target.closest('.chip');
+	if (chip) runExamplePrompt(chip.textContent.trim());
 });
 
 // Independence Day (July 1–5): a few festive single-object prompts so the
@@ -2462,6 +2564,10 @@ els.cancel.addEventListener('click', () => {
 	setBusy(false);
 	if (els.categoryPicker) els.categoryPicker.hidden = true;
 	showState('empty');
+	// Return focus to the composer so the keyboard flow continues where it began.
+	if (mode === 'text') els.prompt.focus();
+	else if (mode === 'sketch') els.sketchPrompt?.focus();
+	else els.imagePrompt?.focus();
 });
 
 els.again.addEventListener('click', () => {
@@ -2597,9 +2703,16 @@ els.download.addEventListener('click', async (e) => {
 els.cinema?.addEventListener('click', () => setCinema(!cinemaOn));
 
 document.addEventListener('keydown', (e) => {
-	if (e.key === 'Escape' && cinemaOn) {
-		setCinema(false);
-		return;
+	if (e.key === 'Escape') {
+		if (cinemaOn) {
+			setCinema(false);
+			return;
+		}
+		// Escape cancels an in-flight generation, same path as the Cancel button.
+		if (!els.states.generating.classList.contains('is-hidden')) {
+			els.cancel.click();
+			return;
+		}
 	}
 	if (e.metaKey || e.ctrlKey || e.altKey) return;
 	const active = document.activeElement;
