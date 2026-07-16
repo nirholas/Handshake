@@ -440,7 +440,7 @@ export function cacheBackend() {
  * @returns {{ backend: string, configured: boolean, degraded: boolean,
  *   circuitOpen: boolean, circuitReopensInMs: number, setSuppressed: boolean,
  *   consecutiveFailures: number, consecutiveSetFailures: number,
- *   totalSetFailures: number, totalCircuitOpens: number }}
+ *   totalSetFailures: number, totalCircuitOpens: number, quotaExhausted: boolean }}
  */
 export function cacheHealth() {
 	const now = Date.now();
