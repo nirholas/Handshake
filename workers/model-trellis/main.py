@@ -66,6 +66,17 @@ API_KEY = os.environ["API_KEY"]
 GCS_BUCKET = os.environ["GCS_BUCKET"]
 WEIGHTS_DIR = os.environ.get("WEIGHTS_DIR", "/weights/trellis-large")
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "1"))
+# Optional: stage the ~3 GB weight tree from GCS to fast local disk at startup,
+# then load from there instead of the Cloud Storage FUSE mount. The FUSE mount
+# serves the model's random-access reads over the network, and a cold load
+# routinely stalls on it ("stalled read-req cancelled", "context deadline
+# exceeded") — turning a ~50s warm load into 15+ minutes, or a hard timeout. The
+# storage client streams each object with a plain sequential HTTP GET, which does
+# not suffer that stall. When WEIGHTS_GCS_URI is unset, or staging fails for any
+# reason, the loader falls back to WEIGHTS_DIR unchanged — this can only add
+# reliability, never remove the existing path.
+WEIGHTS_GCS_URI = os.environ.get("WEIGHTS_GCS_URI", "")  # e.g. gs://bucket/trellis-large
+WEIGHTS_LOCAL_DIR = os.environ.get("WEIGHTS_LOCAL_DIR", "/tmp/trellis-weights")
 
 _pipeline = None
 _bucket: Optional[storage.Bucket] = None
@@ -81,12 +92,55 @@ _load_error: Optional[str] = None
 _tasks: dict[str, dict] = {}
 
 
+def _stage_weights_local() -> Optional[str]:
+    """Download the weight tree from GCS to local disk with the storage client,
+    bypassing the FUSE mount. Returns the local dir on success, or None to signal
+    "load from WEIGHTS_DIR as before". Never raises — a staging failure must
+    degrade to the existing FUSE-mount load, not crash the loader."""
+    if not WEIGHTS_GCS_URI.startswith("gs://"):
+        return None
+    try:
+        from concurrent.futures import ThreadPoolExecutor
+
+        bucket_name, _, prefix = WEIGHTS_GCS_URI[len("gs://"):].partition("/")
+        client = storage.Client()
+        blobs = [b for b in client.list_blobs(bucket_name, prefix=prefix) if not b.name.endswith("/")]
+        if not blobs:
+            log.warning("weights staging: no objects under %s; using FUSE mount", WEIGHTS_GCS_URI)
+            return None
+
+        def _download(blob) -> int:
+            rel = blob.name[len(prefix):].lstrip("/")
+            dest = os.path.join(WEIGHTS_LOCAL_DIR, rel)
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            # Reuse an already-staged object (same-instance warm restart) when its
+            # size matches, so a reload doesn't re-pull 3 GB.
+            if os.path.exists(dest) and blob.size is not None and os.path.getsize(dest) == blob.size:
+                return blob.size or 0
+            blob.download_to_filename(dest)
+            return blob.size or os.path.getsize(dest)
+
+        os.makedirs(WEIGHTS_LOCAL_DIR, exist_ok=True)
+        t0 = time.time()
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            total = sum(pool.map(_download, blobs))
+        log.info(
+            "weights staged to %s in %.1fs (%d objects, %.2f GiB)",
+            WEIGHTS_LOCAL_DIR, time.time() - t0, len(blobs), total / (1024 ** 3),
+        )
+        return WEIGHTS_LOCAL_DIR
+    except Exception as exc:  # noqa: BLE001 — degrade to the FUSE mount, never crash
+        log.warning("weights staging failed (%s); falling back to FUSE mount %s", exc, WEIGHTS_DIR)
+        return None
+
+
 def _load_pipeline():
     global _pipeline
     from trellis.pipelines import TrellisImageTo3DPipeline
 
-    log.info("Loading TRELLIS pipeline from %s", WEIGHTS_DIR)
-    _pipeline = TrellisImageTo3DPipeline.from_pretrained(WEIGHTS_DIR)
+    weights_path = _stage_weights_local() or WEIGHTS_DIR
+    log.info("Loading TRELLIS pipeline from %s", weights_path)
+    _pipeline = TrellisImageTo3DPipeline.from_pretrained(weights_path)
     # TRELLIS exposes .cuda() (not .to()) to move every sub-model to the GPU.
     _pipeline.cuda()
     log.info("TRELLIS pipeline loaded")
