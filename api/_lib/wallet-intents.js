@@ -560,6 +560,28 @@ async function callOpenRouterCompile({ apiKey, system, messages }) {
 	return JSON.parse(call.function.arguments);
 }
 
+async function callGrokCompile({ apiKey, system, messages }) {
+	const resp = await fetchWithTimeout('https://api.x.ai/v1/chat/completions', {
+		method: 'POST',
+		headers: {
+			Authorization: `Bearer ${apiKey}`,
+			'content-type': 'application/json',
+		},
+		body: JSON.stringify({
+			model: 'grok-4.1-fast',
+			max_tokens: 700,
+			messages: [{ role: 'system', content: system }, ...messages],
+			tools: [OPENAI_COMPILE_TOOL],
+			tool_choice: { type: 'function', function: { name: COMPILE_TOOL.name } },
+		}),
+	});
+	if (!resp.ok) throw new Error(`grok ${resp.status}`);
+	const j = await resp.json();
+	const call = j.choices?.[0]?.message?.tool_calls?.[0];
+	if (!call?.function?.arguments) throw new Error('grok: no tool_call');
+	return JSON.parse(call.function.arguments);
+}
+
 /**
  * Compile a plain-language rule into a validated structured intent. The model is
  * forced to emit the tool schema; the server then re-validates every field. A
@@ -575,8 +597,9 @@ export async function compileIntentFromText(text, ctx = {}) {
 	if (utterance.length > 1000) return { ok: false, error: 'too_long', message: 'that is too long — shorten the rule' };
 
 	const anthropicKey = ctx.anthropicKey || process.env.ANTHROPIC_API_KEY;
+	const grokKey = ctx.grokKey || process.env.GROK_API_KEY;
 	const openrouterKey = ctx.openrouterKey || process.env.OPENROUTER_API_KEY;
-	if (!anthropicKey && !openrouterKey) {
+	if (!anthropicKey && !grokKey && !openrouterKey) {
 		return { ok: false, error: 'unavailable', message: 'the rule compiler is not configured on this deployment — build the rule with the form instead' };
 	}
 
@@ -596,6 +619,10 @@ export async function compileIntentFromText(text, ctx = {}) {
 	if (anthropicKey) {
 		try { raw = await callAnthropicCompile({ apiKey: anthropicKey, system, messages }); provider = 'anthropic'; }
 		catch (e) { tried.push(`anthropic:${e.message}`); }
+	}
+	if (!raw && grokKey) {
+		try { raw = await callGrokCompile({ apiKey: grokKey, system, messages }); provider = 'grok'; }
+		catch (e) { tried.push(`grok:${e.message}`); }
 	}
 	if (!raw && openrouterKey) {
 		try { raw = await callOpenRouterCompile({ apiKey: openrouterKey, system, messages }); provider = 'openrouter'; }

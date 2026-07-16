@@ -147,6 +147,7 @@ async function compileContext(req, owned, network) {
 		limits: getSpendLimits(owned.meta),
 		tradeLimits: getTradeLimits(owned.meta),
 		anthropicKey: userKeys.anthropic,
+		grokKey: userKeys.grok,
 		openrouterKey: userKeys.openrouter,
 	};
 }

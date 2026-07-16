@@ -93,6 +93,14 @@ const PROVIDERS = {
 		url: 'https://api.openai.com/v1/chat/completions',
 		style: 'openai',
 	},
+	// xAI Grok (api.x.ai): paid, OpenAI-compatible; last-resort backstop like
+	// Anthropic/OpenAI. Required here because it is in DEFAULT_PROVIDER_ORDER.
+	grok: {
+		envKey: 'GROK_API_KEY',
+		defaultModel: PROVIDER_MODEL_DEFAULTS.grok,
+		url: 'https://api.x.ai/v1/chat/completions',
+		style: 'openai',
+	},
 	// IBM watsonx.ai. Granite 3.x speaks OpenAI-shaped tool calls over the chat
 	// API, so a Granite-brained widget animates and gestures like the others; the
 	// IAM token + project scoping live in callWatsonx (auth is async, so it can't
@@ -106,11 +114,11 @@ const PROVIDERS = {
 
 // Brain settings that surface in widget config. `auto` picks the first
 // configured provider; `custom`/`none` keep their legacy meanings.
-const BRAIN_PROVIDERS = new Set(['auto', 'anthropic', 'openrouter', 'groq', 'nvidia', 'openai', 'watsonx']);
+const BRAIN_PROVIDERS = new Set(['auto', 'anthropic', 'openrouter', 'groq', 'nvidia', 'openai', 'grok', 'watsonx']);
 
 const chatBody = z.object({
 	message: z.string().trim().min(1).max(4000),
-	provider: z.enum(['auto', 'anthropic', 'openrouter', 'groq', 'nvidia', 'openai', 'watsonx']).optional(),
+	provider: z.enum(['auto', 'anthropic', 'openrouter', 'groq', 'nvidia', 'openai', 'grok', 'watsonx']).optional(),
 	model: z.string().min(1).max(160).optional(),
 	history: z
 		.array(

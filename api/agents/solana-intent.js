@@ -296,6 +296,28 @@ async function callOpenRouter({ apiKey, system, messages }) {
 	return JSON.parse(call.function.arguments);
 }
 
+async function callGrok({ apiKey, system, messages }) {
+	const resp = await fetchWithTimeout('https://api.x.ai/v1/chat/completions', {
+		method: 'POST',
+		headers: {
+			Authorization: `Bearer ${apiKey}`,
+			'content-type': 'application/json',
+		},
+		body: JSON.stringify({
+			model: 'grok-4.1-fast',
+			max_tokens: 600,
+			messages: [{ role: 'system', content: system }, ...messages],
+			tools: [OPENAI_TOOL],
+			tool_choice: { type: 'function', function: { name: INTENT_TOOL.name } },
+		}),
+	});
+	if (!resp.ok) throw new Error(`grok ${resp.status}`);
+	const j = await resp.json();
+	const call = j.choices?.[0]?.message?.tool_calls?.[0];
+	if (!call?.function?.arguments) throw new Error('grok: no tool_call');
+	return JSON.parse(call.function.arguments);
+}
+
 // ── handler ──────────────────────────────────────────────────────────────────────
 
 export async function handleIntent(req, res, id) {
@@ -353,6 +375,7 @@ export async function handleIntent(req, res, id) {
 		userKeys = {};
 	}
 	const anthropicKey = userKeys.anthropic || process.env.ANTHROPIC_API_KEY;
+	const grokKey = userKeys.grok || process.env.GROK_API_KEY;
 	const openrouterKey = userKeys.openrouter || process.env.OPENROUTER_API_KEY;
 
 	let rawIntent = null;
@@ -366,6 +389,14 @@ export async function handleIntent(req, res, id) {
 			tried.push(`anthropic:${e.message}`);
 		}
 	}
+	if (!rawIntent && grokKey) {
+		try {
+			rawIntent = await callGrok({ apiKey: grokKey, system, messages });
+			provider = 'grok';
+		} catch (e) {
+			tried.push(`grok:${e.message}`);
+		}
+	}
 	if (!rawIntent && openrouterKey) {
 		try {
 			rawIntent = await callOpenRouter({ apiKey: openrouterKey, system, messages });
@@ -376,7 +407,7 @@ export async function handleIntent(req, res, id) {
 	}
 
 	if (!rawIntent) {
-		if (!anthropicKey && !openrouterKey) {
+		if (!anthropicKey && !grokKey && !openrouterKey) {
 			// Honest signal so the client can fall back to the manual HUD form rather
 			// than fake a parse.
 			return error(res, 503, 'intent_unavailable', 'voice trading is not configured on this deployment — use the wallet form');

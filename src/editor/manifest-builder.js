@@ -26,6 +26,13 @@ const ANTHROPIC_MODELS = [
 	{ id: 'claude-opus-4-6', label: 'Claude Opus 4.6' },
 	{ id: 'claude-opus-4-7', label: 'Claude Opus 4.7' },
 ];
+// xAI Grok, routed through the same we-pay proxy (OpenAI-compatible upstream;
+// the proxy translates shapes server-side). Paid on the host's GROK_API_KEY.
+const GROK_MODELS = [
+	{ id: 'grok-4.5', label: 'Grok 4.5 (xAI)' },
+	{ id: 'grok-4.3', label: 'Grok 4.3 (xAI · 1M context)' },
+	{ id: 'grok-4.1-fast', label: 'Grok 4.1 Fast (xAI · budget)' },
+];
 const OPENAI_MODELS = [
 	{ id: 'gpt-5.6-sol', label: 'GPT-5.6 Sol' },
 	{ id: 'gpt-5.6-terra', label: 'GPT-5.6 Terra' },
@@ -992,10 +999,11 @@ export function mountManifestBuilder(rootEl, options = {}) {
 			models = OPENAI_MODELS;
 			sel.innerHTML = models.map(optHtml).join('');
 		} else {
-			models = [...FREE_MODELS, ...ANTHROPIC_MODELS];
+			models = [...FREE_MODELS, ...ANTHROPIC_MODELS, ...GROK_MODELS];
 			sel.innerHTML = `
 				<optgroup label="Free — host-paid (recommended)">${FREE_MODELS.map(optHtml).join('')}</optgroup>
 				<optgroup label="Paid Claude (host's Anthropic key)">${ANTHROPIC_MODELS.map(optHtml).join('')}</optgroup>
+				<optgroup label="Paid Grok (host's xAI key)">${GROK_MODELS.map(optHtml).join('')}</optgroup>
 			`;
 		}
 		if (models.find((m) => m.id === state.brainModel)) {
