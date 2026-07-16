@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-16",
+			"title": "pump.fun published a feature article on $THREE",
+			"summary": "pump.fun published \"Three Builds With Tech Giants\", a feature article on the official $THREE coin page profiling the platform: browser-native 3D AI agents with onchain identities, the Animations and Poses Studio, the 3D Studio MCP server, and the AWS and IBM milestones. Read it on the $THREE coin page on pump.fun; it is also tracked with all our other coverage on the listings page.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/listings"
+		},
+		{
+			"date": "2026-07-16",
 			"title": "New realism gate scores every generated 3D model and auto-retries the bad ones",
 			"summary": "We added an automated quality gate that looks at every model the generator produces and grades how real and complete it is. It renders the model, sends the image to a vision AI with a subject-aware rubric (a person, a car, and a burger are each judged by the right standard), and returns a score plus a plain-language reason and a list of any defects: plastic-toy look, melted or blobby geometry, missing parts, duplicated limbs, floating fragments. Models that fall below the bar get one or two automatic retries with a tightened prompt and more geometry budget before anything reaches you, so a bad result rarely makes it to the screen. The check runs on Google's Gemini vision on our own cloud credits (no new paid keys), and it is fail-open by design: if the grader is ever unavailable, generation is never blocked. Developers can also score any model on demand via the new POST /api/forge-quality-check endpoint.",
 			"tags": [
