@@ -185,6 +185,9 @@
 			.market-card-avatar .title-row .title {
 				flex: 1;
 				min-width: 0;
+				display: inline-flex;
+				align-items: center;
+				min-height: 32px;
 			}
 			.market-card-avatar .desc {
 				font-size: 12px;
@@ -466,17 +469,28 @@
 				margin-top: 10px;
 			}
 			.market-hero-dots button {
+				/* Visual indicator stays a thin 26x4 bar (background-clip: content-box
+				   paints only that area); the invisible padding grows the actual
+				   tappable box to the 32px accessibility floor without changing how
+				   it looks. box-sizing pinned so the padding math holds regardless
+				   of any global reset. */
+				box-sizing: content-box;
 				width: 26px;
 				height: 4px;
+				padding: 14px 6px;
+				background-clip: content-box;
 				border-radius: 2px;
 				border: 0;
-				background: rgba(255, 255, 255, 0.12);
-				padding: 0;
+				background-color: rgba(255, 255, 255, 0.12);
 				cursor: pointer;
 				transition: background 0.2s ease;
 			}
 			.market-hero-dots button.active {
-				background: #fafafa;
+				/* background-color, not the shorthand: the shorthand resets
+				   background-clip to border-box, which would grow this dot to fill
+				   its whole (invisibly padded) tap-target box instead of staying a
+				   thin bar. */
+				background-color: #fafafa;
 			}
 			.market-hero-dots button:focus-visible {
 				outline: 2px solid #ffffff;

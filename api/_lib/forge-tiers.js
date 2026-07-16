@@ -52,7 +52,8 @@ export const TIERS = Object.freeze({
 	standard: Object.freeze({
 		id: 'standard',
 		label: 'Standard',
-		blurb: 'Balanced detail. The default for most assets.',
+		blurb:
+			'Balanced detail, photoreal reference views fused from multiple angles, 2K textures. The default for most assets.',
 		polycount: 30_000,
 		pbr: false,
 		hd: false,
@@ -62,7 +63,8 @@ export const TIERS = Object.freeze({
 	high: Object.freeze({
 		id: 'high',
 		label: 'High',
-		blurb: 'Maximum geometric detail + PBR textures. Slower, pricier.',
+		blurb:
+			'Maximum geometric detail, multi-view fusion at the deepest sampler budget + PBR textures. Slower, pricier.',
 		polycount: 200_000,
 		pbr: true,
 		hd: true,

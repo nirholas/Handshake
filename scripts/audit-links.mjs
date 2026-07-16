@@ -268,7 +268,14 @@ function danglingRoutes() {
 		if (!dest.endsWith('.html')) continue;
 		if (dest.includes('$')) continue; // dest uses a capture group — resolved per-request
 		const p = dest.replace(/^\/+/, '');
-		const exists = fileExists(join(ROOT, 'pages', p)) || fileExists(join(ROOT, 'public', p));
+		// pages/ and public/ cover most dests, but a few top-level content trees
+		// (docs/, blog/) sit directly at the repo root as siblings of pages/ —
+		// check there too, or every one of their vercel.json routes false-positives
+		// as dangling despite serving real 200s in production.
+		const exists =
+			fileExists(join(ROOT, 'pages', p)) ||
+			fileExists(join(ROOT, 'public', p)) ||
+			fileExists(join(ROOT, p));
 		if (!exists) out.push({ src: r.src, dest: r.dest });
 	}
 	return out;

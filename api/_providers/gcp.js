@@ -12,6 +12,12 @@
 //                  Native single-image→3D via Microsoft TRELLIS. Standard task
 //                  shape: POST /infer → { task_id }  GET /tasks/:id → result_gcs_url.
 //
+//   hunyuan      → GCP_HUNYUAN3D_URL        (workers/model-hunyuan3d)
+//                  Image→3D via Tencent Hunyuan3D-2 (shape DiT + multiview
+//                  paint). Same standard task shape as the TRELLIS worker:
+//                  POST /infer → { task_id }  GET /tasks/:id → result_gcs_url.
+//                  NOT the avatar controller's /reconstruct + /jobs/:id shape.
+//
 //   remesh       → GCP_REMESH_URL           (workers/remesh)
 //   stylize      → GCP_STYLIZE_URL          (workers/stylize)
 //   retex        → GCP_TEXTURE_URL          (workers/texture)
@@ -82,6 +88,10 @@ function serviceUrlForMode(mode) {
 			// the avatar pipeline's `reconstruct` (face-only, /reconstruct + /jobs/:id);
 			// this worker speaks the standard /infer + /tasks/:id task shape.
 			return readEnv('MODEL_TRELLIS_URL');
+		case 'hunyuan':
+			// Self-hosted Hunyuan3D-2 image→3D worker (workers/model-hunyuan3d).
+			// Same standard /infer + /tasks/:id task shape as the TRELLIS worker.
+			return readEnv('GCP_HUNYUAN3D_URL');
 		case 'text2motion':
 			return readEnv('GCP_TEXT2MOTION_URL');
 		case 'video2scene':
@@ -138,6 +148,30 @@ function buildWorkerRequest(request) {
 		if (params?.quality && typeof params.quality === 'object') {
 			body.quality = params.quality;
 		}
+		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
+		return {
+			path: '/infer',
+			resultKey: 'result_gcs_url',
+			body,
+		};
+	}
+
+	if (mode === 'hunyuan') {
+		// Self-hosted Hunyuan3D-2 image→3D (workers/model-hunyuan3d). Shape DiT
+		// conditions on the primary reference view; the worker isolates the
+		// subject (rembg), cleans the mesh, decimates to the poly budget, and
+		// paints it with the multiview texture pipeline.
+		const photos = Array.isArray(params?.images) && params.images.length
+			? params.images
+			: [sourceUrl].filter(Boolean);
+		const body = { images: photos, body_type: params?.bodyType || 'neutral' };
+		if (Number.isFinite(Number(params?.target_polycount))) {
+			body.target_polycount = Math.round(Number(params.target_polycount));
+		}
+		// Tier + path select the worker's per-tier generation budget and record
+		// provenance; absent fields mean its high-quality defaults.
+		if (params?.tier) body.tier = params.tier;
+		if (params?.path) body.path = params.path;
 		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
 		return {
 			path: '/infer',
@@ -332,6 +366,9 @@ function buildWorkerRequest(request) {
 const MODE_ETA = {
 	reconstruct: 120,
 	trellis: 60,
+	// 50-step shape diffusion + multiview paint on the L4 — much heavier than
+	// TRELLIS's single pass.
+	hunyuan: 300,
 	remesh: 30,
 	stylize: 25,
 	retex: 180,
@@ -344,10 +381,11 @@ const MODE_ETA = {
 	video2scene: 240,
 };
 
-// `reconstructUrl` overrides where `reconstruct` jobs go — the forge Hunyuan3D
-// lane runs on its own worker (GCP_HUNYUAN3D_URL), not the avatar pipeline
-// controller, whose face pipeline rejects non-face images. Polling needs no
-// override: the job envelope packs the base URL it was submitted to.
+// `reconstructUrl` overrides where `reconstruct` jobs go. The forge Hunyuan3D
+// lane no longer needs it (it has its own `hunyuan` mode above); this remains
+// as an escape hatch for pointing `reconstruct` at an alternate controller.
+// Polling needs no override: the job envelope packs the base URL it was
+// submitted to.
 export function createRegenProvider({ reconstructUrl } = {}) {
 	const apiKey = readEnv('GCP_RECONSTRUCTION_KEY');
 	if (!apiKey) {
@@ -425,11 +463,15 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 			}
 
 			// Report how the job was conditioned. For reconstruct the worker fuses
-			// every image in the body; other modes are single-source.
+			// every image in the body; the Hunyuan3D worker conditions on the
+			// primary view only (report 1 so a multi-view request is never
+			// silently claimed as fused); other modes are single-source.
 			const viewsUsed =
-				(mode === 'reconstruct' || mode === 'trellis') && Array.isArray(workerReq.body.images)
-					? workerReq.body.images.length
-					: 0;
+				mode === 'hunyuan'
+					? 1
+					: (mode === 'reconstruct' || mode === 'trellis') && Array.isArray(workerReq.body.images)
+						? workerReq.body.images.length
+						: 0;
 
 			return {
 				extJobId: packJobId({ mode, taskId, baseUrl, resultKey: workerReq.resultKey }),

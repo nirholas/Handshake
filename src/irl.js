@@ -20,7 +20,6 @@ import {
 	MeshStandardMaterial,
 	OctahedronGeometry,
 	OrthographicCamera,
-	PCFSoftShadowMap,
 	PerspectiveCamera,
 	PlaneGeometry,
 	PMREMGenerator,
@@ -36,6 +35,7 @@ import {
 	TorusGeometry,
 	Vector2,
 	Vector3,
+	VSMShadowMap,
 	WebGLRenderer,
 	WebGLRenderTarget,
 } from 'three';
@@ -204,7 +204,10 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.setClearColor(0x000000, 0);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = PCFSoftShadowMap;
+// PCFSoftShadowMap is deprecated in three.js and silently downgrades to hard
+// PCFShadowMap at runtime (console warning, worse shadow edges). VSMShadowMap
+// is the still-supported soft-shadow type — same intent, actually honored.
+renderer.shadowMap.type = VSMShadowMap;
 // Filmic tone mapping is what separates "sticker pasted on the camera feed"
 // from "object standing in the room" — highlight rolloff + midtone contrast,
 // the same treatment Quick Look applies to a USDZ. Exposure compensates for

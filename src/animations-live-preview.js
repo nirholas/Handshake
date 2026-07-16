@@ -68,7 +68,10 @@ export class AnimationLivePreview {
 			const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
 			renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 			renderer.shadowMap.enabled = true;
-			renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+			// PCFSoftShadowMap is deprecated and silently downgrades to hard
+			// PCFShadowMap at runtime (console warning, worse shadow edges).
+			// VSMShadowMap is the still-supported soft-shadow type.
+			renderer.shadowMap.type = THREE.VSMShadowMap;
 			renderer.toneMapping = THREE.ACESFilmicToneMapping;
 			renderer.toneMappingExposure = 1.05;
 			renderer.domElement.className = 'alp-canvas';

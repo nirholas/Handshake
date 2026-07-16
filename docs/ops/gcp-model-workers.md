@@ -25,10 +25,19 @@ result_* }` — and authenticate with one shared bearer secret.
 | `hunyuan3d`         | `workers/model-hunyuan3d`| `model-hunyuan3d`| `image`  | High-poly image-conditioned reconstruction (Tencent Hunyuan3D). Poly-budget aware. |
 | `triposg`           | `workers/model-triposg`  | `model-triposg`  | `sketch` | Sketch→3D (TripoSG-scribble): a drawing + a prompt naming it → untextured geometry. |
 
-All three are `provider: 'gcp'`, `free: true`, scale-to-zero
-(`_MIN_INSTANCES: "0"`). Scale-to-zero is why a **cold start** is real: a request
-that lands on a spun-down container pays a one-time model-load before the job
-runs. We surface that honestly (see *Cold start*), never as a fake timer.
+All three are `provider: 'gcp'`, `free: true`. `model-trellis` and
+`model-hunyuan3d` pin one always-warm instance (`_MIN_INSTANCES: "1"`) — a cold
+FUSE-mounted weight load can stall for many minutes, and the GCP credit budget
+covers the standing GPU-hour; `model-triposg` scales to zero. A **cold start**
+on a scale-to-zero worker pays a one-time model-load before the job runs. We
+surface that honestly (see *Cold start*), never as a fake timer.
+
+Wire shapes: `model-trellis` and `model-hunyuan3d` both speak the standard task
+shape (`POST /infer` → `{ task_id }`, `GET /tasks/:id` → `result_gcs_url`) —
+the gcp provider drives them with modes `trellis` and `hunyuan` respectively.
+The Hunyuan worker also aliases `/reconstruct` + `/jobs/:id` (returning
+`glb_url`) for callers still on the avatar-controller contract; new code should
+use the `hunyuan` mode.
 
 The `remesh`, `stylize`, `texture`, `rembg`, `segment` workers back
 post-generation tools (Game-Ready export, retexture, etc.), not the primary
@@ -125,6 +134,36 @@ scale-to-zero container spinning up), the response carries `cold_start: true` an
 the `eta_seconds` is widened by that worker's cold-start budget
 (`coldStartSeconds` in the registry). This only widens the **estimate** — actual
 progress still comes from real polling of `GET /api/forge?job=<id>`.
+
+---
+
+## The realism pipeline (text→3D)
+
+Everything below runs on GCP credits; no third-party API is involved.
+
+1. **Prompt direction.** The Granite art-director pass runs by default on text
+   prompts (`director: false` opts out): it rewrites the raw prompt into a
+   single-subject spec with photoreal-by-default material cues
+   (`api/_lib/forge-director-prompts.js`). Fail-soft — a dead LLM lane keeps
+   the raw prompt.
+2. **Reference image.** `textToImage()` leads with the Vertex Gemini image
+   model (`gemini-2.5-flash-image`) when `GOOGLE_CLOUD_PROJECT` is set —
+   materially more photoreal than 4-step distilled FLUX. `VERTEX_IMAGEN_FIRST=0`
+   restores the legacy NIM-first order. `enhanceFluxPrompt()` appends realism +
+   isolation cues unless the caller named an art style or composition.
+3. **Turnaround views.** For the fusing self-host TRELLIS lane at standard/high
+   tier, `synthesizeTurnaroundViews()` rotates the reference into side + back
+   views via the Vertex Gemini edit lane (identity-preserving instructions).
+   Best-effort: a failed view means fewer views, never a failed job.
+4. **Multi-view fusion.** `workers/model-trellis` fuses all supplied views of
+   one subject (`TrellisImageTo3DPipeline.run_multi_image`) so unseen sides
+   stop being hallucinated. Single view uses the plain `run()` path.
+5. **Per-tier sampler/export budgets.** `SELFHOST_TRELLIS_QUALITY`
+   (`api/_lib/forge-tiers.js`) scales diffusion steps, kept geometry and baked
+   texture size per tier (draft 12 steps/1K, standard 25/2K, high 45/2K); the
+   worker clamps every knob server-side (`_clamped_quality`, defaults 25 steps
+   / 2K texture / 0.90 simplify). The Hunyuan3D worker maps `tier` +
+   `target_polycount` to its own generation budgets.
 
 ---
 

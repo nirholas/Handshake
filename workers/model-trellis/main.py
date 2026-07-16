@@ -3,8 +3,13 @@ TRELLIS inference service — single-image to textured 3D mesh via structured
 latent representations (Microsoft, MIT license).
 
 API contract (consumed by the Pipeline Controller):
-  POST /infer   { images: [data-uri|url, ...], body_type?: str, job_id?: str }
+  POST /infer   { images: [data-uri|url, ...], body_type?: str, job_id?: str,
+                  seed?: int, quality?: {…} }
              →  202 { task_id, status: "queued" }
+
+  Multiple images are FUSED as multi-view conditioning of one asset
+  (TrellisImageTo3DPipeline.run_multi_image): send turnaround views
+  (front/side/back) of the same subject, not unrelated photos.
 
   GET  /tasks/:id → { task_id, status, result_gcs_url?, error? }
 
@@ -281,7 +286,11 @@ def _clamped_quality(q: dict | None) -> dict:
 
 
 async def _run_inference(
-    task_id: str, images: list[str], body_type: str, quality: dict | None = None
+    task_id: str,
+    images: list[str],
+    body_type: str,
+    quality: dict | None = None,
+    seed: int | None = None,
 ) -> None:
     # Wait for the background pipeline load before touching the GPU. Warm
     # instances pass instantly; a cold one waits out the load rather than
@@ -305,7 +314,7 @@ async def _run_inference(
         loop = asyncio.get_event_loop()
         t0 = time.time()
         try:
-            img = await loop.run_in_executor(None, _decode_image, images[0])
+            imgs = [await loop.run_in_executor(None, _decode_image, src) for src in images]
 
             def _generate():
                 # GLB export lives in trellis.utils.postprocessing_utils.to_glb —
@@ -314,14 +323,21 @@ async def _run_inference(
                 # the structured-latent generation).
                 from trellis.utils import postprocessing_utils
 
-                outputs = _pipeline.run(
-                    img,
-                    seed=42,
+                sampler_kwargs = dict(
+                    seed=seed if seed is not None else 42,
                     formats=["gaussian", "mesh"],
                     preprocess_image=True,
                     sparse_structure_sampler_params={"steps": q["ss_steps"], "cfg_strength": q["ss_cfg"]},
                     slat_sampler_params={"steps": q["slat_steps"], "cfg_strength": q["slat_cfg"]},
                 )
+                if len(imgs) > 1:
+                    # Turnaround views of one subject fuse into a single asset —
+                    # geometry the primary view can't see (backs, sides) stops
+                    # being hallucinated. 'stochastic' is upstream's default and
+                    # the cheaper of the two fusion modes.
+                    outputs = _pipeline.run_multi_image(imgs, mode="stochastic", **sampler_kwargs)
+                else:
+                    outputs = _pipeline.run(imgs[0], **sampler_kwargs)
                 glb = postprocessing_utils.to_glb(
                     outputs["gaussian"][0],
                     outputs["mesh"][0],
@@ -345,6 +361,7 @@ async def _run_inference(
                 task_id,
                 status="done",
                 result_gcs_url=gcs_url,
+                views_used=len(imgs),
                 elapsed_ms=int(elapsed * 1000),
             )
             log.info("[%s] done in %.1fs — %d bytes → %s", task_id, elapsed, len(glb_bytes), gcs_url)
@@ -366,6 +383,8 @@ class InferRequest(BaseModel):
     # ss_cfg, slat_cfg, simplify, texture_size) — see _clamped_quality. Omitted
     # or partial fields fall back to the platform quality-bar defaults.
     quality: dict | None = None
+    # Deterministic sampling seed; omitted keeps the historical default (42).
+    seed: int | None = None
 
 
 @app.post("/infer", status_code=202)
@@ -380,7 +399,9 @@ async def infer(
     # different instance than this one the moment the 202 lands, and that
     # instance has nothing in its local `_tasks` dict to fall back on.
     await _update_task(task_id, status="queued", model="trellis-large")
-    background_tasks.add_task(_run_inference, task_id, body.images, body.body_type, body.quality)
+    background_tasks.add_task(
+        _run_inference, task_id, body.images, body.body_type, body.quality, body.seed
+    )
     return {"task_id": task_id, "status": "queued"}
 
 

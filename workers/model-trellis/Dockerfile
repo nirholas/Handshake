@@ -80,7 +80,12 @@ RUN pip install \
 # plain clone leaves that dir a bare gitlink, so `from .flexicubes.flexicubes
 # import FlexiCubes` fails at model load with ModuleNotFoundError and the worker
 # crashes on startup before binding the port.
-RUN git clone --recurse-submodules https://github.com/microsoft/TRELLIS.git /app/TRELLIS
+# Pinned (2026-07-16): a moving `main` broke this worker's rebuild once already
+# (the transformers pin below exists for the same reason). This sha is verified
+# to carry run_multi_image, which main.py uses for multi-view fusion.
+RUN git clone --recurse-submodules https://github.com/microsoft/TRELLIS.git /app/TRELLIS \
+    && git -C /app/TRELLIS checkout 442aa1e1afb9014e80681d3bf604e8d728a86ee7 \
+    && git -C /app/TRELLIS submodule update --init --recursive
 
 WORKDIR /app
 COPY worker_security.py /app/worker_security.py

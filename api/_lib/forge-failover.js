@@ -167,15 +167,15 @@ export async function submitFailoverJob({ backend, imageUrl, prompt, tierId, pat
 
 	if (backend === 'hunyuan3d') {
 		const { createRegenProvider } = await import('../_providers/gcp.js');
-		const job = await createRegenProvider({ reconstructUrl: process.env.GCP_HUNYUAN3D_URL }).submit({
-			mode: 'reconstruct',
+		// The Hunyuan3D worker speaks the standard /infer + /tasks/:id task shape
+		// (gcp provider mode 'hunyuan'), not the avatar controller's /reconstruct.
+		const job = await createRegenProvider().submit({
+			mode: 'hunyuan',
 			sourceUrl: imageUrl,
 			params: {
 				images: [imageUrl],
 				prompt: prompt || undefined,
 				target_polycount: tier.polycount,
-				tier: tier.id,
-				path: path || 'image',
 			},
 		});
 		return { extJobId: job.extJobId, handle: encodeJobToken({ provider: 'gcp', kind: null, taskId: job.extJobId }) };

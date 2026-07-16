@@ -576,3 +576,50 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 	}
 	return logImageProvider({ imageUrl: url, predictionId: data.id, model: modelRef });
 }
+
+// Turnaround-view instructions for multi-view 3D conditioning. Each rotates the
+// SAME subject; the identity-preservation phrasing ("this exact same subject,
+// identical materials/wear/lighting") is what keeps the Gemini edit from
+// redesigning the object between views — verified live 2026-07-16 (front/side/
+// back of one worn leather chair kept its chassis, scuffs and lighting).
+const TURNAROUND_VIEW_INSTRUCTIONS = [
+	'Show this exact same subject in direct left side profile view (rotated 90 degrees). Keep the identical subject with identical materials, colors, wear marks and details, identical lighting, and the identical plain background. Same camera distance and framing.',
+	'Show this exact same subject from directly behind (rotated 180 degrees). Keep the identical subject with identical materials, colors, wear marks and details, identical lighting, and the identical plain background. Same camera distance and framing.',
+];
+
+// Synthesize additional turnaround views (side, then back) of the subject in
+// `primaryImageUrl` for multi-view 3D reconstruction. The self-host TRELLIS
+// worker fuses up to 6 views of one asset — geometry the primary view can't
+// see (backs, sides) stops being hallucinated when real views cover it.
+//
+// Runs only on the Vertex Gemini edit lane (image+instruction), the same GCP
+// credit pool as the primary reference image; there is no NIM/Replicate
+// fallback for edits. Strictly best-effort: any per-view failure (lane
+// unconfigured, safety block, throttle) just yields fewer views — the primary
+// view alone is always a complete input, so this can only ever add quality.
+export async function synthesizeTurnaroundViews(primaryImageUrl, { count = 2 } = {}) {
+	const wanted = TURNAROUND_VIEW_INSTRUCTIONS.slice(0, Math.max(0, count));
+	if (!wanted.length) return [];
+	let editImage;
+	try {
+		const vertex = await import('./vertex-imagen.js');
+		if (!vertex.isConfigured() || !vertexImagenEnabled()) return [];
+		editImage = vertex.editImage;
+	} catch {
+		return [];
+	}
+	const results = await Promise.allSettled(
+		wanted.map((instruction) =>
+			editImage(primaryImageUrl, instruction).then(persistDataUriImage),
+		),
+	);
+	const views = [];
+	for (const r of results) {
+		if (r.status === 'fulfilled' && r.value?.imageUrl) {
+			views.push(r.value.imageUrl);
+		} else if (r.status === 'rejected') {
+			console.warn(`[text-to-image] turnaround view failed, continuing: ${r.reason?.message}`);
+		}
+	}
+	return views;
+}

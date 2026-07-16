@@ -26,8 +26,13 @@ RUN pip install torch==2.3.1 torchvision==0.18.1 --index-url https://download.py
 
 # TripoSG is not a pip package (no setup.py/pyproject) — clone it, install its
 # own deps (incl. diso, which compiles here), and put it on PYTHONPATH.
+# --no-build-isolation: diso's sdist build needs torch (already installed
+# above) visible to detect CUDA capability; pip's default isolated build env
+# hides it, failing with "ModuleNotFoundError: No module named 'torch'".
+# Every other requirement here resolves to a prebuilt wheel (no build step),
+# so this only changes behavior for the one package that needs it.
 RUN git clone --depth 1 https://github.com/VAST-AI-Research/TripoSG.git /opt/triposg \
-    && pip install -r /opt/triposg/requirements.txt
+    && pip install --no-build-isolation -r /opt/triposg/requirements.txt
 
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt

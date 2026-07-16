@@ -54,7 +54,7 @@
 import { randomUUID } from 'node:crypto';
 import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
-import { textToImage } from './_mcp3d/text-to-image.js';
+import { textToImage, synthesizeTurnaroundViews } from './_mcp3d/text-to-image.js';
 import { createRegenProvider } from './_providers/replicate.js';
 import { createRegenProvider as createGcpProvider } from './_providers/gcp.js';
 import { BYOK_PROVIDER_FACTORIES } from './_providers/byok-registry.js';
@@ -1445,9 +1445,11 @@ async function startJob(req, res) {
 			let provider;
 			try {
 				if (backendId === 'hunyuan3d') {
-					const hunyuanUrl = process.env.GCP_HUNYUAN3D_URL;
-					if (!hunyuanUrl) throw new Error('GCP_HUNYUAN3D_URL is not set');
-					provider = createGcpProvider({ reconstructUrl: hunyuanUrl });
+					// The gcp provider's `hunyuan` mode routes to GCP_HUNYUAN3D_URL
+					// (workers/model-hunyuan3d, /infer + /tasks/:id) — fail here only
+					// so an unconfigured deployment gets the branchable 501 below.
+					if (!process.env.GCP_HUNYUAN3D_URL) throw new Error('GCP_HUNYUAN3D_URL is not set');
+					provider = createGcpProvider();
 				} else if (backendId === 'replicate_byok') {
 					provider = createRegenProvider({ apiToken: byokReplicateKey });
 				} else if (backendId === 'huggingface') {
@@ -1560,6 +1562,17 @@ async function startJob(req, res) {
 			referenceImageUrl = synthesized.imageUrl;
 			textToImageModel = synthesized.model;
 			views = [referenceImageUrl];
+			// Multi-view conditioning: rotate the synthesized reference into side +
+			// back turnaround views (Vertex Gemini edit lane) so the self-host
+			// TRELLIS worker fuses real coverage instead of hallucinating the
+			// subject's unseen sides. Only the fusing lane benefits — every other
+			// reconstruct lane conditions on the primary view alone — and draft
+			// keeps its single-view speed. Best-effort: a failed view just means
+			// fewer views, never a failed generation.
+			if (backendId === 'trellis_selfhost' && tier.id !== 'draft') {
+				const turnaround = await synthesizeTurnaroundViews(referenceImageUrl).catch(() => []);
+				if (turnaround.length) views = [referenceImageUrl, ...turnaround];
+			}
 		}
 
 		// Explicitly chosen free HuggingFace lane. Unlike the trellis free-first
@@ -1681,7 +1694,7 @@ async function startJob(req, res) {
 			// lane that actually runs, so the failover is never silent.
 			if (process.env.GCP_HUNYUAN3D_URL && process.env.GCP_RECONSTRUCTION_KEY) {
 				backendId = 'hunyuan3d';
-				provider = createGcpProvider({ reconstructUrl: process.env.GCP_HUNYUAN3D_URL });
+				provider = createGcpProvider();
 			} else {
 				backendId = 'trellis';
 				try {
@@ -1797,7 +1810,10 @@ async function startJob(req, res) {
 				});
 			}
 			job = await provider.submit({
-				mode: 'reconstruct',
+				// The self-host Hunyuan3D worker speaks the standard /infer +
+				// /tasks/:id task shape (gcp provider mode 'hunyuan'), not the
+				// avatar controller's /reconstruct + /jobs/:id contract.
+				mode: backendId === 'hunyuan3d' ? 'hunyuan' : 'reconstruct',
 				sourceUrl: referenceImageUrl,
 				params: reconstructParams,
 			});
@@ -1871,14 +1887,14 @@ async function startJob(req, res) {
 					`[forge] platform TRELLIS lane unavailable (${submitErr?.providerStatus || submitErr?.code}); degrading ${mode3d} to self-hosted Hunyuan3D`,
 				);
 				backendId = 'hunyuan3d';
-				provider = createGcpProvider({ reconstructUrl: hunyuanUrl });
+				provider = createGcpProvider();
 				// Hunyuan3D is poly-aware — supply the tier budget the TRELLIS params omit.
 				reconstructParams.target_polycount = opts.targetPolycount ?? tier.polycount;
 				reconstructParams.tier = tier.id;
 				reconstructParams.path = path;
 				if (opts.textureSize) reconstructParams.texture_size = opts.textureSize;
 				job = await provider.submit({
-					mode: 'reconstruct',
+					mode: 'hunyuan',
 					sourceUrl: referenceImageUrl,
 					params: reconstructParams,
 				});
