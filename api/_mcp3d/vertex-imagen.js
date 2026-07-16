@@ -264,10 +264,12 @@ export async function editImage(imageUrl, prompt, { maskUrl = null } = {}) {
 
 async function imageToBase64(imageUrl) {
   if (imageUrl.startsWith('data:')) return imageUrl.split(',')[1];
-  const { fetch_remote_bytes } = await import('../_lib/fetch-bytes.js').catch(() => ({}));
-  if (!fetch_remote_bytes) throw new Error('cannot fetch image for editing');
-  const bytes = await fetch_remote_bytes(imageUrl);
-  return Buffer.from(bytes).toString('base64');
+  // SSRF-guarded fetch (redirect hops re-validated): the source URL is
+  // caller-supplied and the response is render-only input to the edit model.
+  const { fetchSafePublicUrl } = await import('../_lib/ssrf-guard.js');
+  const res = await fetchSafePublicUrl(imageUrl);
+  if (!res.ok) throw new Error(`cannot fetch image for editing (upstream ${res.status})`);
+  return Buffer.from(await res.arrayBuffer()).toString('base64');
 }
 
 async function editViaGemini({ sourceB64, prompt, project, location, model, token }) {
