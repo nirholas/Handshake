@@ -3,7 +3,15 @@
 # Dockerfile clones the repo to /opt/triposg and puts it (plus its scripts/ dir,
 # for image_process + briarmbg helpers) on PYTHONPATH. Its own deps — diffusers,
 # transformers, diso (CUDA-compiled), pymeshlab, etc. — come from
-# /opt/triposg/requirements.txt.
+# /opt/triposg/requirements.txt, which pins neither transformers nor diffusers.
+# This file installs AFTER that one (see Dockerfile), so the pins below reinstall
+# both to the torch-2.3.1-compatible releases already proven on model-trellis and
+# model-hunyuan3d — unpinned, pip resolves a torch>=2.4-era transformers that
+# silently disables itself at import time ("PyTorch >= 2.4 is required but found
+# 2.3.1"), which cascades into a dead diffusers import and a container that never
+# starts (crashes before listening on $PORT).
+diffusers==0.31.0
+transformers==4.46.3
 
 torch>=2.3.0
 trimesh>=4.4.0

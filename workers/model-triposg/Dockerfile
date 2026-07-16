@@ -10,7 +10,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     DEBIAN_FRONTEND=noninteractive \
     TORCH_CUDA_ARCH_LIST="8.9+PTX" \
-    PYTHONPATH=/opt/triposg:/opt/triposg/scripts
+    PYTHONPATH=/opt/triposg:/opt/triposg/scripts \
+    FORCE_CUDA=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         python3.10 python3.10-dev python3-pip \
