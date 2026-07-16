@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pay - hood-pay</title>
+  <meta name="description" content="A hosted hood-pay checkout. The payment request is encoded in this page's URL fragment and never leaves your browser." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="pay-page">
+    <div class="pay-shell">
+      <a class="pay-back" href="index.html">← hood-pay</a>
+      <div id="checkout"></div>
+      <div id="fallback" style="display:none" class="pay-error">
+        <h2>No payment request</h2>
+        <p id="fallback-msg">This link is missing its payment details. A valid hood-pay link looks like <code class="inline">pay.html#1.&lt;encoded&gt;</code>. Generate one on the <a href="links.html">payment links</a> page.</p>
+      </div>
+      <p class="hero-actions" style="margin-top:16px; justify-content:center;">
+        <span class="badge">Non-custodial · your wallet signs</span>
+      </p>
+    </div>
+  </div>
+
+  <script src="hood-pay.min.js"></script>
+  <script>
+    // The request is in the URL fragment (never sent to any server). We decode
+    // it client-side and mount the checkout. This page holds no keys.
+    (function () {
+      function showError(message) {
+        document.getElementById('checkout').style.display = 'none';
+        document.getElementById('fallback').style.display = 'block';
+        if (message) document.getElementById('fallback-msg').textContent = message;
+      }
+      function boot() {
+        if (!window.HoodPay) { setTimeout(boot, 60); return; }
+        var frag = window.location.hash.replace(/^#/, '');
+        if (!frag) { showError(null); return; }
+        var request;
+        try {
+          request = window.HoodPay.decodePaymentRequest(frag);
+        } catch (e) {
+          showError('This payment link is malformed: ' + e.message);
+          return;
+        }
+        document.title = 'Pay ' + (request.amount === 'dynamic' ? '' : request.amount + ' ') +
+          (request.token ? request.token.symbol : 'USDG') + ' - hood-pay';
+        try {
+          var config = {
+            payTo: request.payTo,
+            amount: request.amount,
+            network: request.network
+          };
+          if (request.token) config.token = request.token;
+          if (request.memo) config.memo = request.memo;
+          if (request.reference) config.reference = request.reference;
+          if (request.router) config.router = request.router;
+          window.HoodPay.mount('#checkout', config);
+        } catch (e) {
+          showError('Could not render this checkout: ' + e.message);
+        }
+      }
+      boot();
+      // Re-render if the fragment changes (e.g. a new link pasted in place).
+      window.addEventListener('hashchange', function () { window.location.reload(); });
+    })();
+  </script>
+</body>
+</html>

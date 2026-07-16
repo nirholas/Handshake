@@ -1,0 +1,13 @@
+node_modules/
+dist/
+contracts/out/
+contracts/cache/
+*.tgz
+*.log
+.env
+.env.*
+!.env.example
+examples/shop/*.sqlite
+examples/shop/*.sqlite-*
+tests/**/*.sqlite
+coverage/

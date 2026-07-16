@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>hood-pay - USDG checkout for Robinhood Chain</title>
+  <meta name="description" content="Stripe-Checkout-grade USDG payments on Robinhood Chain: an embeddable checkout widget, hosted payment links that run entirely on GitHub Pages, and a reorg-safe merchant verification library." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="nav">
+    <div class="wrap nav-inner">
+      <span class="brand">hood<b>pay</b></span>
+      <div class="nav-links">
+        <a href="#demo">Demo</a>
+        <a href="#embed">Embed</a>
+        <a href="links.html">Payment links</a>
+        <a href="verify.html">Verify</a>
+        <a href="security.html">Security</a>
+        <a class="cta" href="https://github.com/nirholas/hood-pay">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow"><span class="dot"></span> USDG · Robinhood Chain · 4663</span>
+        <h1>Accept <span class="grad">USDG</span> like Stripe accepts cards.</h1>
+        <p class="lede">An embeddable checkout widget, hosted payment links that run with no backend, and a reorg-safe verifier with webhooks. Non-custodial by construction.</p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#demo">Try the live demo</a>
+          <a class="btn" href="#embed">Copy the embed</a>
+        </div>
+        <div class="status-strip">
+          <span class="chip"><span class="live">●</span> mainnet <b id="mainnet-block">…</b></span>
+          <span class="chip">testnet <b id="testnet-block">…</b></span>
+          <span class="chip">USDG <b id="usdg-info">…</b></span>
+        </div>
+      </div>
+
+      <div id="demo" class="demo-card">
+        <h3>Live testnet checkout</h3>
+        <p class="muted">Real widget, real chain 46630. Connect an EIP-6963 wallet, switch to Robinhood testnet, pay test USDG. Nothing here is a mock.</p>
+        <div id="checkout"></div>
+      </div>
+    </div>
+  </header>
+
+  <section id="features">
+    <div class="wrap">
+      <h2 class="section-title">Three pieces, each usable alone</h2>
+      <p class="section-sub">Ship a whole checkout, or drop in just the part you need. Every module is typed, tree-shakeable, and verified against on-chain USDG.</p>
+      <div class="grid">
+        <div class="feature">
+          <div class="ic">W</div>
+          <h4>Checkout widget</h4>
+          <p>One <code class="inline">&lt;script&gt;</code> and one div. Connect wallet, ensure chain 4663, pay USDG. Under 27 kB gzipped, every visual state designed.</p>
+        </div>
+        <div class="feature">
+          <div class="ic">L</div>
+          <h4>Hosted payment links</h4>
+          <p>The request is encoded in the URL fragment, so a link is a full checkout that runs entirely client-side. No server, no database, no fee.</p>
+        </div>
+        <div class="feature">
+          <div class="ic">V</div>
+          <h4>Merchant verify</h4>
+          <p>A reorg-safe watcher confirms amounts on-chain (never from the DOM), fires signed webhooks, and records to an idempotent SQLite ledger.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="embed">
+    <div class="wrap">
+      <h2 class="section-title">Embed in two lines</h2>
+      <p class="section-sub">Point <code class="inline">data-pay-to</code> at your address, set an amount, done. The buyer's wallet signs; funds go straight to you.</p>
+      <div class="codewrap">
+        <button class="copy" data-copy="embed-code">Copy</button>
+        <pre id="embed-code"><span class="c">&lt;!-- your merchant address + the amount you want to charge --&gt;</span>
+<span class="k">&lt;div</span> data-hoodpay
+     data-pay-to=<span class="s">"0x4022de2D36C334E73C7a108805Cea11C0564f402"</span>
+     data-amount=<span class="s">"25.00"</span>
+     data-memo=<span class="s">"Order 1042"</span><span class="k">&gt;&lt;/div&gt;</span>
+<span class="k">&lt;script</span> src=<span class="s">"https://nirholas.github.io/hood-pay/hood-pay.min.js"</span><span class="k">&gt;&lt;/script&gt;</span></pre>
+      </div>
+
+      <h3 style="margin-top:28px; font-size:1.15rem; letter-spacing:-0.01em;">Or mount it programmatically</h3>
+      <div class="codewrap">
+        <button class="copy" data-copy="js-code">Copy</button>
+        <pre id="js-code"><span class="k">import</span> { mountCheckout } <span class="k">from</span> <span class="s">'hood-pay/widget'</span>
+
+mountCheckout(<span class="s">'#checkout'</span>, {
+  payTo: <span class="s">'0x4022de2D36C334E73C7a108805Cea11C0564f402'</span>,
+  amount: <span class="s">'25.00'</span>,          <span class="c">// or 'dynamic' for tips / pay-what-you-want</span>
+  memo: <span class="s">'Order 1042'</span>,
+  onSuccess: (receipt) =&gt; console.log(<span class="s">'paid'</span>, receipt.txHash)
+})</pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="verify-cta">
+    <div class="wrap split">
+      <div class="prose">
+        <h3>Confirm payments on your server</h3>
+        <p>The widget never decides whether a payment is real - your verifier does, by reading the chain. <code class="inline">awaitPayment</code> watches for the transfer (or router event), waits out reorgs, and returns a terminal status your shop can trust.</p>
+        <ul>
+          <li><strong>paid / underpaid / overpaid / expired</strong> - every outcome is explicit.</li>
+          <li>Signed webhooks, Stripe-style, with an idempotent SQLite ledger.</li>
+          <li>Refund helpers for overages and abandoned invoices.</li>
+        </ul>
+        <p><a href="verify.html">Read the verify + webhook guide →</a></p>
+      </div>
+      <div class="codewrap">
+        <button class="copy" data-copy="verify-code">Copy</button>
+        <pre id="verify-code"><span class="k">import</span> { networkInfo } <span class="k">from</span> <span class="s">'hood-pay'</span>
+<span class="k">import</span> { awaitPayment, createReader } <span class="k">from</span> <span class="s">'hood-pay/verify'</span>
+<span class="k">import</span> { parseUnits } <span class="k">from</span> <span class="s">'viem'</span>
+
+<span class="k">const</span> info = networkInfo(<span class="s">'mainnet'</span>)
+<span class="k">const</span> reader = createReader(<span class="s">'mainnet'</span>)
+
+<span class="k">const</span> result = <span class="k">await</span> awaitPayment(
+  {
+    token: info.usdg.address,
+    payTo: <span class="s">'0x4022de2D36C334E73C7a108805Cea11C0564f402'</span>,
+    expectedRaw: parseUnits(<span class="s">'25.00'</span>, info.usdg.decimals)
+  },
+  { reader, fromBlock: <span class="k">await</span> reader.getBlockNumber() }
+)
+<span class="c">// result.status === 'paid'</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
+      <span>MIT · USDG is a plain ERC-20 (6 decimals, no permit) on Robinhood Chain 4663</span>
+    </div>
+  </footer>
+
+  <script src="live.js"></script>
+  <script src="hood-pay.min.js"></script>
+  <script>
+    // Live testnet demo. Uses test USDG on chain 46630 - the widget builds an
+    // unsigned transfer for the buyer's own wallet to sign; this page holds no
+    // keys and moves no funds on its own.
+    (function () {
+      var TESTNET_USDG = { address: '0x7E955252E15c84f5768B83c41a71F9eba181802F', symbol: 'USDG', decimals: 6 };
+      function mount() {
+        if (!window.HoodPay) { setTimeout(mount, 60); return; }
+        try {
+          window.HoodPay.mount('#checkout', {
+            payTo: '0x4022de2D36C334E73C7a108805Cea11C0564f402',
+            amount: '1.00',
+            network: 'testnet',
+            token: TESTNET_USDG,
+            memo: 'hood-pay live demo (testnet)'
+          });
+        } catch (e) {
+          document.getElementById('checkout').textContent = 'demo failed to mount: ' + e.message;
+        }
+      }
+      mount();
+    })();
+
+    // Copy buttons.
+    document.querySelectorAll('.copy').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var el = document.getElementById(btn.getAttribute('data-copy'));
+        navigator.clipboard.writeText(el.innerText).then(function () {
+          btn.textContent = 'Copied';
+          btn.classList.add('ok');
+          setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('ok'); }, 1400);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

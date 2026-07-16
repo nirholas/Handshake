@@ -1,0 +1,91 @@
+{
+  "name": "hood-pay",
+  "version": "0.1.0",
+  "description": "Stripe-Checkout-grade USDG payments on Robinhood Chain (chain 4663): an embeddable checkout widget, hosted payment links that run entirely on GitHub Pages, and a reorg-safe merchant verification library with webhooks, an idempotent SQLite ledger, and refund helpers.",
+  "keywords": [
+    "robinhood",
+    "robinhood-chain",
+    "usdg",
+    "checkout",
+    "payments",
+    "payment-links",
+    "stablecoin",
+    "commerce",
+    "web3",
+    "viem",
+    "webhook"
+  ],
+  "license": "MIT",
+  "author": "nirholas (https://x.com/nichxbt)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/hood-pay.git"
+  },
+  "homepage": "https://nirholas.github.io/hood-pay/",
+  "bugs": {
+    "url": "https://github.com/nirholas/hood-pay/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "hood-pay": "./bin/hood-pay.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./verify": {
+      "types": "./dist/verify/index.d.ts",
+      "import": "./dist/verify/index.js",
+      "require": "./dist/verify/index.cjs"
+    },
+    "./widget": {
+      "types": "./dist/widget/index.d.ts",
+      "import": "./dist/widget/index.js",
+      "require": "./dist/widget/index.cjs"
+    },
+    "./widget.js": "./dist/hood-pay.min.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup && node scripts/build-widget.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run tests/unit",
+    "test:live": "vitest run tests/live --testTimeout 240000",
+    "forge:build": "forge build --root contracts",
+    "forge:test": "forge test --root contracts -vv",
+    "forge:test:fork": "forge test --root contracts --match-path 'test/*.fork.t.sol' --fork-url https://rpc.mainnet.chain.robinhood.com -vv",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "hood-connect": "file:../hood-connect",
+    "hoodchain": "^0.1.1"
+  },
+  "peerDependencies": {
+    "viem": "^2.55.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.25.0",
+    "express": "^5.1.0",
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.0",
+    "viem": "^2.55.0",
+    "vitest": "^3.2.0"
+  }
+}

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Payment links - hood-pay</title>
+  <meta name="description" content="Generate a hosted USDG payment link for Robinhood Chain. Entirely client-side: the request is encoded into a URL fragment you can share anywhere." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="nav">
+    <div class="wrap nav-inner">
+      <span class="brand"><a href="index.html" style="color:inherit;text-decoration:none;">hood<b>pay</b></a></span>
+      <div class="nav-links">
+        <a href="index.html#demo">Demo</a>
+        <a href="index.html#embed">Embed</a>
+        <a href="links.html">Payment links</a>
+        <a href="verify.html">Verify</a>
+        <a href="security.html">Security</a>
+        <a class="cta" href="https://github.com/nirholas/hood-pay">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <section style="border-top:0;">
+    <div class="wrap">
+      <h1 style="font-size:clamp(1.8rem,4vw,2.6rem);letter-spacing:-0.03em;margin:0 0 8px;">Payment links</h1>
+      <p class="section-sub">Encode a merchant address, amount, and memo into a shareable link. It renders a full checkout with no backend - the request lives in the URL fragment, which never leaves the browser.</p>
+
+      <div class="split">
+        <form id="form" class="card" autocomplete="off">
+          <div class="field">
+            <label for="payTo">Pay to (merchant address)</label>
+            <input id="payTo" type="text" placeholder="0x…" spellcheck="false" />
+            <div class="hint">Checksum-validated. A mistyped mixed-case address is rejected before a link is made.</div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="amount">Amount</label>
+              <input id="amount" type="text" placeholder="25.00" inputmode="decimal" />
+              <div class="hint">A decimal, or the word <code class="inline">dynamic</code> for tips.</div>
+            </div>
+            <div class="field">
+              <label for="network">Network</label>
+              <select id="network">
+                <option value="mainnet">mainnet · 4663</option>
+                <option value="testnet">testnet · 46630</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="memo">Memo (optional, off-chain)</label>
+            <input id="memo" type="text" placeholder="Invoice 7" maxlength="280" />
+          </div>
+          <div class="field">
+            <label for="baseUrl">Checkout host</label>
+            <input id="baseUrl" type="text" value="https://nirholas.github.io/hood-pay/pay.html" spellcheck="false" />
+            <div class="hint">Any host that serves <code class="inline">pay.html</code> works - self-host it for free on your own Pages.</div>
+          </div>
+        </form>
+
+        <div>
+          <div class="card">
+            <label style="display:block;font-size:13px;color:var(--dim);margin-bottom:8px;font-weight:500;">Payment link</label>
+            <div id="linkOut" class="out">Fill the form to generate a link.</div>
+            <div class="hero-actions" style="margin-top:14px;">
+              <button id="copyLink" class="btn" type="button">Copy link</button>
+              <a id="openLink" class="btn primary" href="#" target="_blank" rel="noopener" style="pointer-events:none;opacity:0.5;">Open checkout</a>
+            </div>
+          </div>
+          <div class="card">
+            <label style="display:block;font-size:13px;color:var(--dim);margin-bottom:8px;font-weight:500;">Raw fragment (host it anywhere)</label>
+            <div id="fragOut" class="out">#…</div>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:36px;font-size:1.15rem;letter-spacing:-0.01em;">Or from the CLI</h3>
+      <div class="codewrap">
+        <button class="copy" data-copy="cli-code">Copy</button>
+        <pre id="cli-code"><span class="c"># prints the hosted link, plus the raw fragment on stderr</span>
+npx hood-pay link --to 0x4022de2D36C334E73C7a108805Cea11C0564f402 --amount 25 --memo <span class="s">"invoice 7"</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
+      <span>MIT</span>
+    </div>
+  </footer>
+
+  <script src="hood-pay.min.js"></script>
+  <script>
+    (function () {
+      var ids = ['payTo', 'amount', 'network', 'memo', 'baseUrl'];
+      var els = {};
+      ids.forEach(function (id) { els[id] = document.getElementById(id); });
+      var linkOut = document.getElementById('linkOut');
+      var fragOut = document.getElementById('fragOut');
+      var openLink = document.getElementById('openLink');
+      var currentLink = '';
+
+      function regenerate() {
+        var payTo = els.payTo.value.trim();
+        var amount = els.amount.value.trim();
+        if (!payTo || !amount) {
+          linkOut.className = 'out';
+          linkOut.textContent = 'Fill the form to generate a link.';
+          fragOut.textContent = '#…';
+          openLink.style.pointerEvents = 'none';
+          openLink.style.opacity = '0.5';
+          currentLink = '';
+          return;
+        }
+        var request = { v: 1, network: els.network.value, payTo: payTo, amount: amount };
+        if (els.memo.value.trim()) request.memo = els.memo.value.trim();
+        try {
+          var base = els.baseUrl.value.trim() || 'https://nirholas.github.io/hood-pay/pay.html';
+          var url = window.HoodPay.paymentLinkUrl(request, base);
+          var fragment = window.HoodPay.encodePaymentRequest(request);
+          linkOut.className = 'out';
+          linkOut.textContent = url;
+          fragOut.textContent = '#' + fragment;
+          openLink.href = url;
+          openLink.style.pointerEvents = 'auto';
+          openLink.style.opacity = '1';
+          currentLink = url;
+        } catch (e) {
+          linkOut.className = 'out err';
+          linkOut.textContent = e.message;
+          fragOut.textContent = '#…';
+          openLink.style.pointerEvents = 'none';
+          openLink.style.opacity = '0.5';
+          currentLink = '';
+        }
+      }
+
+      function bind() {
+        if (!window.HoodPay) { setTimeout(bind, 60); return; }
+        ids.forEach(function (id) {
+          els[id].addEventListener('input', regenerate);
+          els[id].addEventListener('change', regenerate);
+        });
+        document.getElementById('copyLink').addEventListener('click', function () {
+          if (!currentLink) return;
+          navigator.clipboard.writeText(currentLink);
+          var b = document.getElementById('copyLink');
+          b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy link'; }, 1400);
+        });
+        document.querySelectorAll('.copy').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            var el = document.getElementById(btn.getAttribute('data-copy'));
+            navigator.clipboard.writeText(el.innerText).then(function () {
+              btn.textContent = 'Copied'; btn.classList.add('ok');
+              setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('ok'); }, 1400);
+            });
+          });
+        });
+        regenerate();
+      }
+      bind();
+    })();
+  </script>
+</body>
+</html>
