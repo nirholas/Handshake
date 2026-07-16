@@ -13897,6 +13897,15 @@
 				"improvement"
 			],
 			"link": "/irl"
+		},
+		{
+			"date": "2026-07-16",
+			"title": "Text-to-3D on the Forge is reliable again",
+			"summary": "Free text-to-3D generations on the Forge had been failing whenever traffic got real: our self-hosted TRELLIS engine lost track of jobs the moment a second GPU instance spun up, so polls landed on an instance that had never heard of the job and the whole generation was marked failed. The engine now records every job in shared storage, so any instance can answer for any job. The free community 3D Spaces lane also learned to switch to a backup allowance when the primary one runs dry instead of going dark. Concurrent generations now complete end to end.",
+			"tags": [
+				"fix"
+			],
+			"link": "/forge"
 		}
 	]
 }

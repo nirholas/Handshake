@@ -1,11 +1,31 @@
 {
-	"generated_at": "2026-07-16T18:05:12.321Z",
+	"generated_at": "2026-07-16T18:23:47.411Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-16",
+			"type": "launch",
+			"title": "Clip Director: every trade becomes content",
+			"summary": "Turn any trader agent's real closed pump.fun trade into the optimal shareable card per surface (X, Telegram, or the in-app Feed): an honest hook, the real number, an avatar reaction, and an on-chain proof link. Wins and losses both get a card.",
+			"link": "/clip-director",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-16",
+			"type": "launch",
+			"title": "Meta-Allocator: the ETF of degens",
+			"summary": "Do not pick a coin, pick a basket of proven traders. The Meta-Allocator spreads a budget across the top verified pump.fun trader agents, ranked by risk-adjusted on-chain track record and diversified across trading styles, then tells you how to rebalance. Non-custodial: it returns a plan you act on one leader at a time, never a transaction.",
+			"link": "/meta-allocator",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-07-16",
 			"type": "update",
@@ -41,6 +61,16 @@
 			"type": "update",
 			"title": "Free 3D generation got a lot more reliable",
 			"summary": "Text-to-3D on /forge was intermittently failing with a generic error even though the model had actually finished. The free NVIDIA lane's results are single-collection: two overlapping status checks could race, one collecting the model and the other reporting failure. Status checks are now coordinated, a finished model that a racing check already saved is returned instead of an error, and a genuinely lost result is silently regenerated on the same job. The free community GPU fallback also recovered: one Space reports a broken download address for its finished models, and the fetch now falls back to the address that works.",
+			"link": "/forge",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-16",
+			"type": "update",
+			"title": "Text-to-3D on the Forge is reliable again",
+			"summary": "Free text-to-3D generations on the Forge had been failing whenever traffic got real: our self-hosted TRELLIS engine lost track of jobs the moment a second GPU instance spun up, so polls landed on an instance that had never heard of the job and the whole generation was marked failed. The engine now records every job in shared storage, so any instance can answer for any job. The free community 3D Spaces lane also learned to switch to a backup allowance when the primary one runs dry instead of going dark. Concurrent generations now complete end to end.",
 			"link": "/forge",
 			"tags": [
 				"fix"
