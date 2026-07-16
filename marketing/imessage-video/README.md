@@ -3,7 +3,7 @@
 A 9:16 vertical video of a fake iMessage thread: one friend asks "miss you bro, you
 been so locked in, what have you been working on?", the other replies with a photo of
 the AR Forge (a real three.ws/ar screenshot with a TRELLIS-generated house plant),
-then the conversation lands the OpenAI partnership beat and the unicorn line, and
+then the conversation lands the OpenAI collaboration beat and the unicorn line, and
 closes on a callback ("miss you too bro"). Built for X/TikTok/Reels distribution in
 the deadpan-undersell voice.
 
