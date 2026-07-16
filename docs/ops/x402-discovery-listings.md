@@ -227,6 +227,42 @@ Bazaar or agentic.market. The datapoints do advertise a Base accept (`eip155:845
 but prod has no `X402_BUYER_PRIVATE_KEY`, so there is currently no Base wallet to pay
 *from*. Seeding the Bazaar leg needs a funded Base buyer (USDC + a little ETH for gas).
 
+## 7. Getting our Solana volume counted on x402scan (facilitator indexing)
+
+x402scan's per-server transaction and volume numbers are NOT crawled from chain
+generically: its sync service only attributes transactions to the facilitator
+fee-payer addresses hardcoded in the open-source registry
+(`packages/external/facilitators/src/facilitators/*.ts` in
+[Merit-Systems/x402scan](https://github.com/Merit-Systems/x402scan)). Our
+self-hosted facilitator is not in that registry, so none of our Solana
+settlements count, no matter how many settle. Resource registration (above)
+only gets endpoints *listed*; it does not feed the counters.
+
+The path to being counted, all Solana, no Base required:
+
+1. **One attributable fee payer.** Run the ring in sponsor mode
+   (`X402_RING_SELF_PAY=false` on the Cloud Run service) so the facilitator
+   sponsor `GGf9qBhJDCe1UUz4s4Vxq1uPPvcv7UW7sJTuj2Yo5XQj` co-signs and pays the
+   fee on every settle (2 signatures, ~10k lamports each). In self-pay mode
+   every buyer is its own fee payer and there is nothing stable to index.
+   Flipped live 2026-07-16 (revision 00143); 402 challenges now advertise the
+   sponsor in `accepts[].extra.feePayer`. Sponsor SOL is auto-refilled by the
+   treasury-topup cron (floor 0.03 SOL).
+2. **PR the facilitator into x402scan.** Add
+   `packages/external/facilitators/src/facilitators/threews.ts` (config url
+   `https://three.ws/api/x402-facilitator`, the sponsor address above, USDC,
+   first tx 2026-07-09), export it from `facilitators/index.ts`, register it in
+   `lists/all.ts`, and add a 180x180 logo at `apps/scan/public/three-ws.png`.
+   Once merged, their sync backfills from `dateOfFirstTransaction`.
+3. **Keep the ring settling.** The ring payer (`x402-ring-payer`,
+   `X4o2UuVNMxnrgkzVy97kPF5gmS6CLRCVJGB48VastML`) spends USDC into the treasury,
+   the treasury sweeps to the economy master, and the payer is refilled by the
+   economy-rebalance cron swapping a slice of its own SOL to USDC ($3/swap,
+   30-min cadence, $10 USDC floor, 0.03 SOL reserve). The cron must be armed
+   with `ECONOMY_REBALANCE_ENABLED=1` (owner spend approval) or the payer
+   drains and the whole ring halts with `insufficient_payer_usdc`, which is
+   exactly what happened 2026-07-15.
+
 ## Registration log
 
 **2026-07-11 — x402scan registration (owner, SIWX signature): 23/23 resources
