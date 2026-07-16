@@ -212,7 +212,7 @@ describe('POST /api/auth/register', () => {
 		sqlState.queue.push([{ id: 'user-new', display_name: 'Bob', plan: 'free', created_at: '2024-01-01' }]);
 		const { status, body, res } = await invoke({
 			action: 'register',
-			body: { email: 'bob@example.com', password: 'supersecret123', display_name: 'Bob' },
+			body: { email: 'bob@example.com', password: 'supersecret123', display_name: 'Bob', tosAccepted: true },
 		});
 		expect(status).toBe(201);
 		expect(body.user).toBeDefined();
@@ -221,11 +221,46 @@ describe('POST /api/auth/register', () => {
 		expect(cookie).toContain('__Host-sid=test-session-token-abc');
 	});
 
+	it('rejects registration without Terms acceptance (clickwrap gate)', async () => {
+		const { status, body } = await invoke({
+			action: 'register',
+			body: { email: 'bob@example.com', password: 'supersecret123' },
+		});
+		expect(status).toBe(400);
+		expect(body.error).toBe('tos_required');
+		// The gate must fire before any user row can be created.
+		const inserts = sqlState.calls.filter((c) => /insert into users/.test(c.query));
+		expect(inserts).toHaveLength(0);
+	});
+
+	it('rejects a non-boolean tosAccepted (must be literal true)', async () => {
+		const { status, body } = await invoke({
+			action: 'register',
+			body: { email: 'bob@example.com', password: 'supersecret123', tosAccepted: 'yes' },
+		});
+		expect(status).toBe(400);
+		expect(body.error).toBe('tos_required');
+	});
+
+	it('stamps the accepted Terms version on the new user', async () => {
+		sqlState.queue.push([]); // no existing user
+		sqlState.queue.push([{ id: 'user-new', display_name: 'Bob', plan: 'free', created_at: '2024-01-01' }]);
+		await invoke({
+			action: 'register',
+			body: { email: 'bob@example.com', password: 'supersecret123', tosAccepted: true },
+		});
+		// recordTosAcceptance is fire-and-forget (queueMicrotask); flush it.
+		await new Promise((resolve) => setImmediate(resolve));
+		const stamps = sqlState.calls.filter((c) => /update users\s+set tos_accepted_version/.test(c.query));
+		expect(stamps).toHaveLength(1);
+		expect(stamps[0].values).toContain('user-new');
+	});
+
 	it('returns 409 when email is already registered', async () => {
 		sqlState.queue.push([{ id: 'existing-user' }]); // existing user found
 		const { status, body } = await invoke({
 			action: 'register',
-			body: { email: 'alice@example.com', password: 'supersecret123' },
+			body: { email: 'alice@example.com', password: 'supersecret123', tosAccepted: true },
 		});
 		expect(status).toBe(409);
 		expect(body.error).toBe('conflict');
@@ -234,7 +269,7 @@ describe('POST /api/auth/register', () => {
 	it('returns 400 for short password (< 10 chars)', async () => {
 		const { status, body } = await invoke({
 			action: 'register',
-			body: { email: 'new@example.com', password: 'short' },
+			body: { email: 'new@example.com', password: 'short', tosAccepted: true },
 		});
 		expect(status).toBe(400);
 		expect(body.error).toBeDefined();
@@ -269,7 +304,7 @@ describe('POST /api/auth/register', () => {
 
 		const { status, body } = await invoke({
 			action: 'register',
-			body: { email: 'carol@example.com', password: 'supersecret123', display_name: 'Carol' },
+			body: { email: 'carol@example.com', password: 'supersecret123', display_name: 'Carol', tosAccepted: true },
 		});
 
 		expect(status).toBe(201);
@@ -294,7 +329,7 @@ describe('POST /api/auth/register', () => {
 
 		const { status, body } = await invoke({
 			action: 'register',
-			body: { email: 'dora@example.com', password: 'supersecret123', display_name: 'Dora' },
+			body: { email: 'dora@example.com', password: 'supersecret123', display_name: 'Dora', tosAccepted: true },
 		});
 
 		expect(status).toBe(500);

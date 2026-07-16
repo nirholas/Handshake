@@ -59,7 +59,7 @@ export async function signInWithSolana({
 	const message = [
 		`${domain} wants you to sign in with your Solana account:`,
 		address, '',
-		'Sign in to three.ws. This request will not trigger any transaction.',
+		'Sign in to three.ws. This request will not trigger any transaction. By signing, you agree to the Terms of Service (https://three.ws/legal/tos) and Privacy Policy (https://three.ws/legal/privacy).',
 		'',
 		`URI: ${uri}`, 'Version: 1', `Chain ID: ${chainId}`,
 		`Nonce: ${nonce}`, `Issued At: ${issuedAt}`, `Expiration Time: ${expirationTime}`,
@@ -73,7 +73,9 @@ export async function signInWithSolana({
 		method: 'POST',
 		credentials: 'include',
 		headers: { 'content-type': 'application/json', 'x-csrf-token': csrf },
-		body: JSON.stringify({ message, signature: sigBase64 }),
+		// tosAccepted: the signed statement carries the agreement; the flag
+		// tells the server to stamp acceptance on the user record.
+		body: JSON.stringify({ message, signature: sigBase64, tosAccepted: true }),
 	});
 	const data = await verifyRes.json().catch(() => ({}));
 	if (!verifyRes.ok) throw new Error(data.error_description || 'SIWS verification failed');

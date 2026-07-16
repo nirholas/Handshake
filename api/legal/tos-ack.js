@@ -1,4 +1,4 @@
-// /api/legal/tos-ack — record a user's acceptance of the Terms of Service.
+// /api/legal/tos-ack: record a user's acceptance of the Terms of Service.
 //
 //   POST /api/legal/tos-ack   { version?, context?, path? }   → 200 { ok: true, version }
 //
@@ -8,9 +8,10 @@
 // an already-signed-in user accepting an updated Terms version, and
 // pre-auth surfaces that show the agreement before an account exists.
 //
-// Mirrors /api/legal/risk-ack: every acceptance lands in audit_log (no
-// retention pruning — records persist); signed-in acceptances additionally
-// stamp users.tos_accepted_version / users.tos_accepted_at.
+// Mirrors /api/legal/risk-ack: every acceptance lands in audit_log (the
+// audit-log-cleanup cron exempts 'tos-accept' rows from its 365-day
+// retention, so acceptance records persist indefinitely); signed-in
+// acceptances additionally stamp users.tos_accepted_version / tos_accepted_at.
 
 import { getSessionUser } from '../_lib/auth.js';
 import { cors, error, json, method, readJson, wrap, rateLimited } from '../_lib/http.js';

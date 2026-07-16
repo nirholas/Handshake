@@ -50,79 +50,95 @@
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:image:alt" content="Privacy Policy — three.ws">
+	<meta property="og:image:alt" content="Privacy Policy - three.ws">
 	<meta name="twitter:site" content="@trythreews">
 </head>
 <body>
 <div class="wrap">
 	<a class="brand" href="/"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a>
 	<h1>Privacy Policy</h1>
-	<p class="meta">Effective: April 27, 2026 &nbsp;·&nbsp; <a href="/legal/tos.html">Terms of Service</a></p>
+	<p class="meta">Effective: July 16, 2026 &nbsp;·&nbsp; Version 2 &nbsp;·&nbsp; <a href="/legal/tos">Terms of Service</a></p>
 
 	<p>This Privacy Policy explains how three.ws ("we", "us", "our") collects, uses, and shares information about you when you use three.ws (the "Service"). We take your privacy seriously and collect only what we need to operate.</p>
 
 	<h2>1. Information We Collect</h2>
 	<table>
 		<tr><th>Category</th><th>Examples</th><th>Why</th></tr>
-		<tr><td>Account identifiers</td><td>Wallet address, email (optional), display name</td><td>Authentication &amp; account management</td></tr>
+		<tr><td>Account identifiers</td><td>Wallet address, email (optional), username, display name</td><td>Authentication &amp; account management</td></tr>
 		<tr><td>Content you upload</td><td>3D models (GLB/glTF), thumbnails, agent metadata</td><td>Service delivery, CDN delivery to viewers</td></tr>
 		<tr><td>On-chain data</td><td>ERC-8004 agent registrations, Metaplex NFT mints, USDC payment tx hashes</td><td>Identity verification, subscription status</td></tr>
 		<tr><td>Usage data</td><td>API calls, widget load events (no IPs, no fingerprints)</td><td>Quota enforcement, abuse prevention, aggregate analytics</td></tr>
 		<tr><td>Session data</td><td>Hashed session token, IP address (hashed), user agent</td><td>Authentication, security</td></tr>
+		<tr><td>Legal acceptance records</td><td>Terms of Service version accepted, Risk Disclosure version accepted, timestamp, IP address, user agent, which flow recorded it</td><td>Proof of agreement, legal compliance</td></tr>
 		<tr><td>Email (if provided)</td><td>Email address for transactional messages</td><td>Account notices, subscription receipts</td></tr>
 	</table>
-	<p>We do <strong>not</strong> collect advertising identifiers, third-party tracking pixels, or sell personal data to any third party.</p>
+	<p>We do <strong>not</strong> collect advertising identifiers, use third-party tracking pixels, or sell personal data to any third party.</p>
 
 	<h2>2. How We Use Your Information</h2>
 	<ul>
 		<li>To authenticate you and maintain your session.</li>
-		<li>To store and serve your 3D content via Cloudflare R2.</li>
-		<li>To send transactional emails (welcome, subscription receipts, security alerts) via Resend.</li>
+		<li>To store and serve your 3D content via our CDN.</li>
+		<li>To send transactional emails (welcome, subscription receipts, security alerts).</li>
 		<li>To enforce plan quotas and rate limits.</li>
 		<li>To detect and prevent abuse, fraud, and security incidents.</li>
+		<li>To keep records of your acceptance of our legal agreements.</li>
 		<li>To improve the Service using aggregate, anonymized analytics.</li>
 	</ul>
 
 	<h2>3. On-Chain Data</h2>
-	<p>Wallet addresses and on-chain registrations are public by nature of blockchain technology. We index publicly available on-chain data (ERC-8004 events, Metaplex metadata) to power the agent directory. We do not create profiles that link on-chain identity to off-chain personal information beyond what you explicitly provide.</p>
+	<p>Wallet addresses and on-chain registrations are public by nature of blockchain technology. We index publicly available on-chain data (ERC-8004 events, Metaplex metadata) to power the agent directory. We do not create profiles that link on-chain identity to off-chain personal information beyond what you explicitly provide. Note that anything written to a public blockchain is permanent and outside our control; we cannot delete it.</p>
 
-	<h2>4. Sharing & Disclosure</h2>
-	<p>We do not sell your personal data. We share information only with:</p>
+	<h2>4. Sharing &amp; Disclosure</h2>
+	<p>We do not sell your personal data, and we do not share it for cross-context behavioral advertising. We share information only with:</p>
 	<ul>
-		<li><strong>Infrastructure providers:</strong> Vercel (hosting), Neon (database), Upstash (rate limiting), Cloudflare R2 (storage), Resend (email). Each is bound by their own privacy policy and data processing agreements.</li>
-		<li><strong>Legal obligations:</strong> If required by law, court order, or to protect the rights and safety of three.ws or others.</li>
-		<li><strong>Business transfers:</strong> In connection with a merger, acquisition, or sale of assets, with notice to affected users.</li>
+		<li><strong>Infrastructure providers:</strong> Google Cloud Platform (hosting and compute), Neon (database), Cloudflare (storage and CDN), Resend (transactional email), and Privy (optional sign-in). Each processes data on our behalf under its own privacy policy and data-processing terms.</li>
+		<li><strong>Payment facilitators:</strong> for paid features settled on-chain (x402), payment verification runs through a facilitator such as Coinbase Developer Platform or the public x402.org facilitator. They see your public wallet address and transaction signatures, never private keys.</li>
+		<li><strong>AI model providers:</strong> generation features forward your prompts and asset URLs to upstream model APIs (see Section 10).</li>
+		<li><strong>Legal obligations:</strong> if required by law, court order, or to protect the rights and safety of three.ws or others.</li>
+		<li><strong>Business transfers:</strong> in connection with a merger, acquisition, or sale of assets, with notice to affected users.</li>
 	</ul>
 
 	<h2>5. Data Retention</h2>
 	<p>We retain your account data for as long as your account is active. Deleted accounts are soft-deleted for 30 days (for recovery), then permanently purged. Session tokens expire after 30 days. Nonces expire after 5 minutes and are purged within 24 hours.</p>
-	<p>Usage events are retained for 90 days for quota and abuse analysis, then deleted. Widget view events (no personal data) are retained for 12 months.</p>
+	<p>Usage events are retained for 90 days for quota and abuse analysis, then deleted. Widget view events (no personal data) are retained for 12 months. Security audit logs are retained for 365 days.</p>
+	<p><strong>Legal acceptance records</strong> (your acceptance of the Terms of Service and Risk Disclosure) are retained for the life of your account and afterward for as long as needed to establish or defend legal claims. This retention is a legal obligation and survives an account-deletion request.</p>
 
 	<h2>6. Your Rights</h2>
-	<p>Depending on your jurisdiction you may have rights to access, correct, delete, or export your personal data. To exercise any of these rights, email <a href="mailto:privacy@three.ws">privacy@three.ws</a> from the email address associated with your account, or sign a message with your wallet address confirming the request.</p>
-	<p>We will respond within 30 days. Requests to delete your account will remove all content stored on our servers; on-chain data cannot be deleted by us.</p>
+	<p>Depending on your jurisdiction you may have rights to access, correct, delete, or export your personal data, and to object to or restrict certain processing. To exercise any of these rights, email <a href="mailto:privacy@three.ws">privacy@three.ws</a> from the email address associated with your account, or sign a message with your wallet address confirming the request.</p>
+	<p>We will respond within 30 days (or sooner where the law requires). Requests to delete your account will remove all content stored on our servers, except records we must keep (Section 5); on-chain data cannot be deleted by us. We will never discriminate against you for exercising a privacy right.</p>
 
-	<h2>7. GDPR (EEA & UK Users)</h2>
-	<p>For users in the European Economic Area or United Kingdom, our legal bases for processing are: <strong>contract performance</strong> (account operation, content delivery), <strong>legitimate interests</strong> (security, abuse prevention, aggregate analytics), and <strong>consent</strong> (optional email marketing, if you opt in).</p>
-	<p>You have the right to lodge a complaint with your local supervisory authority.</p>
+	<h2>7. GDPR (EEA &amp; UK Users)</h2>
+	<p>For users in the European Economic Area or United Kingdom, our legal bases for processing are: <strong>contract performance</strong> (account operation, content delivery), <strong>legitimate interests</strong> (security, abuse prevention, aggregate analytics), <strong>legal obligation</strong> (records of legal acceptance, lawful requests), and <strong>consent</strong> (optional email marketing, if you opt in).</p>
+	<p>You have the right to lodge a complaint with your local supervisory authority. You may also contact us first at <a href="mailto:privacy@three.ws">privacy@three.ws</a>; we would welcome the chance to resolve your concern directly.</p>
 
-	<h2>8. Cookies & Local Storage</h2>
+	<h2>8. California Privacy Rights (CCPA/CPRA)</h2>
+	<p>If you are a California resident: the categories of personal information we collect are listed in Section 1, the purposes in Section 2, and the recipients in Section 4. We do <strong>not</strong> sell personal information and do <strong>not</strong> share it for cross-context behavioral advertising, so there is nothing to opt out of; browser opt-out signals such as Global Privacy Control are honored by default because there is no sale or sharing to stop. We do not use or disclose sensitive personal information for purposes requiring a right to limit.</p>
+	<p>You have the rights to know, access, correct, delete, and port your personal information, and to not be discriminated against for exercising them. Exercise them via <a href="mailto:privacy@three.ws">privacy@three.ws</a> (Section 6). We verify requests using your signed-in session, your account email, or a message signed by your wallet. An authorized agent may act for you with written permission.</p>
+
+	<h2>9. International Transfers</h2>
+	<p>The Service is operated from the United States and data is processed on infrastructure located in the United States. If you use the Service from outside the U.S., your information is transferred to and processed in the U.S. Where GDPR applies, transfers to our processors rely on their standard contractual clauses or an applicable adequacy framework.</p>
+
+	<h2>9a. Security &amp; Breach Notification</h2>
+	<p>We protect your data with industry-standard measures: TLS in transit, encrypted storage, hashed session tokens and IP addresses, scoped credentials, and audit logging. No system is perfectly secure; if we learn of a breach affecting your personal data we will notify you and, where required, regulators without undue delay and within the timelines applicable law requires (for example, 72 hours to supervisory authorities under GDPR).</p>
+
+	<h2>9b. Children's Privacy</h2>
+	<p>The Service is not directed to children under 13. We do not knowingly collect personal information from children under 13. If we learn we have collected such information, we will delete it promptly. Features that move real funds additionally require users to be at least 18 (see the <a href="/legal/tos">Terms of Service</a>).</p>
+
+	<h2>Cookies &amp; Local Storage</h2>
 	<p>We use the following browser storage:</p>
 	<ul>
 		<li><strong>Session cookie</strong> (<code>__Host-session</code>): HttpOnly, Secure, SameSite=Strict. Required for authentication.</li>
 		<li><strong>CSRF cookies</strong> (<code>__Host-csrf-siwe</code>, <code>__Host-csrf-siws</code>): Short-lived, for SIWE/SIWS replay protection.</li>
 		<li><strong>localStorage</strong> (<code>3dagent:auth-hint</code>): Stores a non-sensitive login hint for faster page loads. Cleared on sign-out.</li>
+		<li><strong>localStorage</strong> (<code>threews:risk-ack</code>): Remembers which Risk Disclosure version you accepted so you are not re-prompted on every action; the durable record lives server-side.</li>
 	</ul>
 	<p>We do not use third-party advertising cookies.</p>
-
-	<h2>9. Children's Privacy</h2>
-	<p>The Service is not directed to children under 13. We do not knowingly collect personal information from children under 13. If we learn we have collected such information, we will delete it promptly.</p>
 
 	<h2>10. MCP Connectors, AI Processing &amp; Payments</h2>
 	<p>three.ws exposes Model Context Protocol (MCP) connectors (e.g. <code>https://three.ws/api/mcp</code> and <code>https://three.ws/api/mcp-3d</code>) that AI clients such as Claude and ChatGPT can call on your behalf. This section explains how data flows through those connectors.</p>
 	<ul>
-		<li><strong>Tool inputs we receive:</strong> the arguments you (or your AI client) send to a tool — text prompts, reference image URLs, GLB/glTF model URLs, wallet or agent addresses, token mints, and search terms. We process these to fulfill the request and log them only as needed for quota, abuse prevention, and debugging.</li>
-		<li><strong>Third-party AI model providers:</strong> generation and editing tools forward your prompts and asset URLs to upstream model APIs to produce results. Depending on the tool, these may include NVIDIA NIM (Microsoft TRELLIS), Meshy, Replicate, Stability, Hugging Face, OpenAI, Anthropic, and IBM (Granite). Each provider processes the input under its own privacy policy. Do not submit confidential or personal data in tool prompts.</li>
+		<li><strong>Tool inputs we receive:</strong> the arguments you (or your AI client) send to a tool: text prompts, reference image URLs, GLB/glTF model URLs, wallet or agent addresses, token mints, and search terms. We process these to fulfill the request and log them only as needed for quota, abuse prevention, and debugging.</li>
+		<li><strong>Third-party AI model providers:</strong> generation and editing tools forward your prompts and asset URLs to upstream model APIs to produce results. Depending on the tool, these may include NVIDIA NIM (Microsoft TRELLIS), Meshy, Replicate, Stability, Hugging Face, OpenAI, Anthropic, Google (Vertex AI), and IBM (Granite). Each provider processes the input under its own privacy policy. Do not submit confidential or personal data in tool prompts.</li>
 		<li><strong>Payment data (x402):</strong> paid tools settle in USDC via the x402 payment protocol. When you pay per call we receive your public wallet address and the payment/settlement transaction signature, verified through a payment facilitator (Coinbase CDP and/or the public x402.org facilitator). We never receive, request, or store your private keys or seed phrase. The only token three.ws itself references is <code>$THREE</code>; USDC is used purely for settlement.</li>
 		<li><strong>OAuth-scoped access:</strong> when you connect via OAuth, the connector can read and write only the three.ws account data covered by the scopes you grant (avatars, agents, memory, profile). It cannot access your AI client's chat history, memory, or local files.</li>
 		<li><strong>Retention of tool inputs:</strong> tool-call inputs and outputs follow the usage-data retention in Section 5 (90 days), except content you explicitly save (e.g. a saved avatar), which is retained as account content until you delete it.</li>
@@ -133,18 +149,18 @@
 	<ul>
 		<li><strong>What we receive:</strong> only the text prompt you send. We do not ask for, receive, or store any name, email, wallet address, or other personal information through this endpoint.</li>
 		<li><strong>How the prompt is used:</strong> the prompt is forwarded to our generation provider (NVIDIA NIM / Microsoft TRELLIS) solely to produce the model. Do not include personal or confidential information in the prompt.</li>
-		<li><strong>What we return:</strong> a public URL to the generated GLB model (hosted on our Cloudflare R2 CDN) and a link to view it. The response contains no account identifiers or personal data. Generated model files are served from public URLs so you can download and share them; treat a model URL as public.</li>
+		<li><strong>What we return:</strong> a public URL to the generated GLB model (hosted on our CDN) and a link to view it. The response contains no account identifiers or personal data. Generated model files are served from public URLs so you can download and share them; treat a model URL as public.</li>
 		<li><strong>Abuse prevention:</strong> requests are rate-limited by IP address, used only to prevent abuse of the free lane, and prompts are screened by an automated content-safety filter so the service stays appropriate for all ages.</li>
 	</ul>
 
 	<h2>11. Changes to This Policy</h2>
-	<p>We may update this Privacy Policy. We will notify you of material changes by email or a prominent notice on the Service. The "Effective" date at the top reflects the most recent revision.</p>
+	<p>We may update this Privacy Policy. We will notify you of material changes by email or a prominent notice on the Service. The "Effective" date and version at the top reflect the most recent revision.</p>
 
 	<h2>12. Contact</h2>
 	<p>Privacy questions: <a href="mailto:privacy@three.ws">privacy@three.ws</a></p>
 
 	<hr>
-	<p class="foot">three.ws &nbsp;·&nbsp; <a href="/legal/tos.html">Terms of Service</a> &nbsp;·&nbsp; <a href="/marketplace?tab=mine">Home</a></p>
+	<p class="foot">three.ws &nbsp;·&nbsp; <a href="/legal/tos">Terms of Service</a> &nbsp;·&nbsp; <a href="/legal/risk">Risk Disclosure</a> &nbsp;·&nbsp; <a href="/">Home</a></p>
 </div>
 	<script src="/brand.js" defer></script>
 </body>

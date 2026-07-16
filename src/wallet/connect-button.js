@@ -55,7 +55,7 @@ function defaultMessageBuilder(address, chainId, nonce, { domain, uri, issuedAt,
 		`${domain} wants you to sign in with your Ethereum account:`,
 		address,
 		'',
-		'Sign in to three.ws. This does not cost anything and proves wallet ownership.',
+		'Sign in to three.ws. This does not cost anything and proves wallet ownership. By signing, you agree to the Terms of Service (https://three.ws/legal/tos) and Privacy Policy (https://three.ws/legal/privacy).',
 		'',
 		`URI: ${uri}`,
 		'Version: 1',
@@ -351,7 +351,9 @@ export class ConnectWalletController extends EventTarget {
 				method: 'POST',
 				credentials: 'include',
 				headers: { 'content-type': 'application/json', 'x-csrf-token': csrf },
-				body: JSON.stringify({ message, signature }),
+				// tosAccepted: the signed statement carries the agreement; the flag
+				// tells the server to stamp acceptance on the user record.
+				body: JSON.stringify({ message, signature, tosAccepted: true }),
 			});
 			const data = await verifyRes.json();
 			if (!verifyRes.ok) throw new Error(data.error_description || 'Verification failed');

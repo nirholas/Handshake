@@ -104,7 +104,7 @@ export async function signInWithWalletConnect({ projectId, chains } = {}) {
 		`${domain} wants you to sign in with your Ethereum account:`,
 		address,
 		'',
-		'Sign in to three.ws.',
+		'Sign in to three.ws. By signing, you agree to the Terms of Service (https://three.ws/legal/tos) and Privacy Policy (https://three.ws/legal/privacy).',
 		'',
 		`URI: ${uri}`,
 		'Version: 1',
@@ -131,7 +131,9 @@ export async function signInWithWalletConnect({ projectId, chains } = {}) {
 			method: 'POST',
 			credentials: 'include',
 			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ message, signature }),
+			// tosAccepted: the signed statement carries the agreement; the flag
+			// tells the server to stamp acceptance on the user record.
+			body: JSON.stringify({ message, signature, tosAccepted: true }),
 		});
 		result = await vr.json();
 		if (!vr.ok) throw new Error(result.error_description || `HTTP ${vr.status}`);

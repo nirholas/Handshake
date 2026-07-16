@@ -236,6 +236,15 @@
 				font-size: 13px;
 				color: #666;
 			}
+			.signin-legal {
+				margin-top: 10px;
+				text-align: center;
+				font-size: 11px;
+				line-height: 1.55;
+				color: #555;
+			}
+			.signin-legal a { color: #888; }
+			.signin-legal a:hover { color: #ccc; }
 			.brand {
 				margin: 0 0 18px;
 				text-decoration: none;
@@ -676,6 +685,7 @@
 				</div>
 
 				<p class="foot">No account? <a href="/register">Create one</a></p>
+			<p class="signin-legal">By signing in (with a password, Privy, SSO, or a connected wallet) you agree to the <a href="/legal/tos" target="_blank" rel="noopener">Terms of Service</a> and <a href="/legal/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
 			</form>
 			<div class="panel">
 				<a href="/" class="panel-brand" aria-label="three.ws home">three.ws</a>
@@ -1136,7 +1146,10 @@
 							method: 'POST',
 							credentials: 'include',
 							headers: loginHeaders,
-							body: JSON.stringify({ email, password, remember: document.getElementById('remember')?.checked || false }),
+							// tosAccepted: the sign-in-wrap notice under the form ("By signing
+						// in you agree…") makes each sign-in an affirmation of the current
+						// Terms; the server re-stamps the user's accepted version.
+						body: JSON.stringify({ email, password, remember: document.getElementById('remember')?.checked || false, tosAccepted: true }),
 							signal: loginTimeout.signal,
 						});
 					} catch (err) {

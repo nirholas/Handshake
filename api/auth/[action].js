@@ -68,7 +68,7 @@ async function handleLogin(req, res) {
 	res.setHeader('set-cookie', sessionCookie(token));
 	logAudit({ userId: user.id, action: 'login', req });
 	// The login form carries a "By signing in you agree…" notice, so each
-	// sign-in re-affirms the current Terms — this is how pre-clickwrap
+	// sign-in re-affirms the current Terms: this is how pre-clickwrap
 	// accounts converge onto a recorded acceptance.
 	const tos = tosAcceptanceFromBody(raw);
 	if (tos) recordTosAcceptance({ userId: user.id, version: tos.version, context: 'login', req });

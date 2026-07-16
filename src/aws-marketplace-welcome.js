@@ -212,7 +212,14 @@ async function handleSignup(e) {
 			method: 'POST',
 			credentials: 'include',
 			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ email, password }),
+			// Clickwrap: the required checkbox in the signup form (welcome.html).
+			// Native form validation blocks submit until it is checked, and the
+			// server rejects account creation without it.
+			body: JSON.stringify({
+				email,
+				password,
+				tosAccepted: document.getElementById('su-tos')?.checked === true,
+			}),
 		});
 		const data = await resp.json().catch(() => ({}));
 		if (!resp.ok) throw new Error(data.error || data.message || 'Registration failed');
@@ -240,7 +247,9 @@ async function handleSignin(e) {
 			method: 'POST',
 			credentials: 'include',
 			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ email, password }),
+			// tosAccepted: the sign-in form shows the "By signing in you agree…"
+			// notice; each sign-in re-affirms the current Terms.
+			body: JSON.stringify({ email, password, tosAccepted: true }),
 		});
 		const data = await resp.json().catch(() => ({}));
 		if (!resp.ok) throw new Error(data.error || data.message || 'Sign in failed');

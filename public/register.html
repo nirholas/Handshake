@@ -245,6 +245,31 @@
 				font-size: 11px;
 				color: #555;
 			}
+			.legal a { color: #888; }
+			.tos-row {
+				display: flex;
+				align-items: flex-start;
+				gap: 8px;
+				margin: 14px 0 12px;
+				font-size: 12.5px;
+				line-height: 1.5;
+				color: #999;
+				cursor: pointer;
+			}
+			.tos-row input[type='checkbox'] {
+				width: 15px;
+				height: 15px;
+				margin: 2px 0 0;
+				flex: none;
+				accent-color: #7c8cff;
+				cursor: pointer;
+			}
+			.tos-row a { color: #ccc; }
+			.tos-row a:hover { color: #fff; }
+			.tos-row input[type='checkbox']:focus-visible {
+				outline: 2px solid #7c8cff;
+				outline-offset: 2px;
+			}
 			.brand {
 				font-size: 12px;
 				letter-spacing: 0.1em;
@@ -551,6 +576,10 @@
 			<p class="caps-warn" id="caps-warn">Caps Lock is on</p>
 			<div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
 			<p class="strength-label" id="strength-label">Minimum 10 characters</p>
+			<label class="tos-row" for="tos-accept">
+				<input id="tos-accept" name="tos-accept" type="checkbox" required aria-describedby="err" />
+				<span>I have read and agree to the <a href="/legal/tos" target="_blank" rel="noopener">Terms of Service</a> and <a href="/legal/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span>
+			</label>
 			<button id="submit" type="submit">Create account</button>
 
 			<div class="err" id="err" role="alert" aria-live="polite"></div>
@@ -577,7 +606,7 @@
 			</div>
 
 			<p class="foot">Already have an account? <a href="/login">Sign in</a></p>
-			<p class="legal">By creating an account you agree to our <a href="/legal/tos">Terms of Service</a> and <a href="/legal/privacy">Privacy Policy</a>.</p>
+			<p class="legal">By creating an account (including with Privy or a connected wallet) you agree to the <a href="/legal/tos" target="_blank" rel="noopener">Terms of Service</a> and <a href="/legal/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
 		</form>
 			<div class="panel">
 				<a href="/" class="panel-brand" aria-label="three.ws home"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a>
@@ -831,6 +860,10 @@
 						body: JSON.stringify({
 							username: document.getElementById('username').value,
 							password: document.getElementById('password').value,
+							// Clickwrap: the required checkbox above the submit button.
+							// Native form validation blocks submit until it is checked,
+							// and the server rejects account creation without it.
+							tosAccepted: document.getElementById('tos-accept').checked === true,
 						}),
 					});
 					const data = await res.json().catch(() => ({}));

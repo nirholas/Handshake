@@ -37,6 +37,10 @@
 
 		/* ── auth form ── */
 		.form-group { margin-bottom: 16px; }
+		.tos-row { display: flex; align-items: flex-start; gap: 8px; margin: 14px 0 4px; font-size: 12.5px; line-height: 1.5; color: var(--muted); cursor: pointer; }
+		.tos-row input[type='checkbox'] { width: 15px; height: 15px; margin: 2px 0 0; flex: none; accent-color: var(--accent); cursor: pointer; }
+		.tos-row a, .tos-note a { color: var(--text); }
+		.tos-note { margin-top: 10px; font-size: 11.5px; line-height: 1.5; color: var(--muted); text-align: center; }
 		label { display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
 		input { width: 100%; padding: 11px 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; outline: none; transition: border-color 0.15s; }
 		input:focus { border-color: var(--accent); }
@@ -139,6 +143,10 @@
 					<label for="su-password">Password</label>
 					<input id="su-password" type="password" name="password" placeholder="Min. 8 characters" required autocomplete="new-password" />
 				</div>
+				<label class="tos-row" for="su-tos">
+					<input id="su-tos" type="checkbox" required />
+					<span>I have read and agree to the <a href="/legal/tos" target="_blank" rel="noopener">Terms of Service</a>, <a href="/legal/privacy" target="_blank" rel="noopener">Privacy Policy</a>, and <a href="/legal/aws-marketplace-eula" target="_blank" rel="noopener">AWS Marketplace EULA</a>.</span>
+				</label>
 				<button class="btn" id="btn-signup" type="submit">Create account &amp; activate</button>
 			</form>
 
@@ -153,6 +161,7 @@
 					<input id="si-password" type="password" name="password" placeholder="Your password" required autocomplete="current-password" />
 				</div>
 				<button class="btn" id="btn-signin" type="submit">Sign in &amp; activate</button>
+				<p class="tos-note">By signing in you agree to the <a href="/legal/tos" target="_blank" rel="noopener">Terms of Service</a> and <a href="/legal/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
 			</form>
 		</div>
 

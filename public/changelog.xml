@@ -39,6 +39,22 @@
 			<description>A 3D generation that dies mid-flight no longer dead-ends. The platform now re-runs the same job on the next available engine automatically (up to three backups, free engines first) while your progress bar just keeps going — most failures become invisible. In the rare case every automatic backup is exhausted, the error screen on /forge now offers one-click &quot;Try on …&quot; buttons for the engines still available, so you never have to re-enter your prompt or photos. Avatar tools got the same treatment: a rig step that fails no longer throws away the finished 3D model, and the avatar generator falls back to the platform's own free engines when its primary vendor is down.</description>
 		</item>
 		<item>
+			<title>3D models are now built from multiple angles at once</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-07-16:3D models are now built from multiple angles at once</guid>
+			<pubDate>Thu, 16 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Text-to-3D generations at Standard and High quality now photograph the subject from the front, side, and back before building the model, and the 3D engine fuses all three views into one asset on our own GPUs. The parts of an object the old single view could never see (the back of a chair, the far side of a character) are now generated from real coverage instead of guessed, so models read as true to life from every angle. A second self-hosted engine (Tencent Hunyuan3D) also joins the fleet for high-fidelity reconstructions, with automatic failover between the two.</description>
+		</item>
+		<item>
+			<title>Clearer legal terms, and you now actually agree to them</title>
+			<link>https://three.ws/legal/tos</link>
+			<guid isPermaLink="false">2026-07-16:Clearer legal terms, and you now actually agree to them</guid>
+			<pubDate>Thu, 16 Jul 2026 12:00:00 GMT</pubDate>
+			<category>security</category>
+			<description>Creating an account now includes a real agreement step: the signup form has a required checkbox, wallet sign-ins carry the agreement right inside the message you sign, and the platform keeps a durable record of which Terms version you accepted and when. The Terms of Service (version 2) and Privacy Policy were rewritten to be clearer and stronger: real-funds features are explicitly 18+, disputes are handled by individual arbitration with a 30-day opt-out, the privacy policy now lists our actual infrastructure providers and your California and EU rights, and legal acceptance records are exempt from routine log cleanup so your agreement is never lost.</description>
+		</item>
+		<item>
 			<title>Creation tools now hand off down the pipeline</title>
 			<link>https://three.ws/create</link>
 			<guid isPermaLink="false">2026-07-16:Creation tools now hand off down the pipeline</guid>

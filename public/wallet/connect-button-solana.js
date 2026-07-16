@@ -51,7 +51,7 @@ function buildSiwsMessage(address, nonce, { domain, uri, issuedAt, expirationTim
 		`${domain} wants you to sign in with your Solana account:`,
 		address,
 		'',
-		'Sign in to three.ws. This request will not trigger any blockchain transaction or cost any fees.',
+		'Sign in to three.ws. This request will not trigger any blockchain transaction or cost any fees. By signing, you agree to the Terms of Service (https://three.ws/legal/tos) and Privacy Policy (https://three.ws/legal/privacy).',
 		'',
 		`URI: ${uri}`,
 		'Version: 1',
@@ -160,7 +160,9 @@ export class SolanaWalletController extends EventTarget {
 				method: 'POST',
 				credentials: 'include',
 				headers: { 'content-type': 'application/json', 'x-csrf-token': csrf },
-				body: JSON.stringify({ message, signature: sigBase64 }),
+				// tosAccepted: the signed statement carries the agreement; the flag
+				// tells the server to stamp acceptance on the user record.
+				body: JSON.stringify({ message, signature: sigBase64, tosAccepted: true }),
 			});
 			const data = await verifyRes.json();
 			if (!verifyRes.ok) throw new Error(data.error_description || 'Verification failed');

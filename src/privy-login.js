@@ -114,7 +114,9 @@ async function verifyWithBackend(identity_token) {
 		method: 'POST',
 		credentials: 'include',
 		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ token: identity_token }),
+		// tosAccepted: the login/register pages show the agreement notice next
+		// to the Privy controls, so completing the flow affirms the Terms.
+		body: JSON.stringify({ token: identity_token, tosAccepted: true }),
 	});
 	const data = await res.json().catch(() => ({}));
 	if (!res.ok) throw new Error(data.error_description || 'Sign-in failed.');
@@ -376,7 +378,7 @@ function mountPrivyUI(privy, captchaConfigPromise) {
 				`${domain} wants you to sign in with your Solana account:`,
 				address,
 				'',
-				'Sign in to three.ws. This request will not trigger any blockchain transaction or cost any fees.',
+				'Sign in to three.ws. This request will not trigger any blockchain transaction or cost any fees. By signing, you agree to the Terms of Service (https://three.ws/legal/tos) and Privacy Policy (https://three.ws/legal/privacy).',
 				'',
 				`URI: ${uri}`,
 				'Version: 1',
@@ -399,7 +401,9 @@ function mountPrivyUI(privy, captchaConfigPromise) {
 				method: 'POST',
 				credentials: 'include',
 				headers: { 'content-type': 'application/json', 'x-csrf-token': csrf },
-				body: JSON.stringify({ message, signature }),
+				// tosAccepted: the signed statement carries the agreement; the flag
+				// tells the server to stamp acceptance on the user record.
+				body: JSON.stringify({ message, signature, tosAccepted: true }),
 			});
 			const data = await verifyRes.json().catch(() => ({}));
 			if (!verifyRes.ok) throw new Error(data.error_description || 'Sign-in failed.');

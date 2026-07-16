@@ -3299,9 +3299,14 @@ async function handleSettleRoyalties(req, res) {
 
 // ═══════════════════════════════════════════════════════════════════════════
 // audit-log-cleanup — retention policy: keep 365 days of audit_log rows.
+// Legal acceptance records (Terms of Service and Risk Disclosure clickwrap,
+// written by api/legal/tos-ack.js, api/legal/risk-ack.js, and the auth
+// endpoints) are exempt: they are the durable evidence that a user agreed,
+// and must survive for the life of the account and beyond.
 // ═══════════════════════════════════════════════════════════════════════════
 
 const AUDIT_LOG_RETENTION_DAYS = 365;
+const AUDIT_LOG_RETENTION_EXEMPT_ACTIONS = ['tos-accept', 'risk-ack-accept'];
 
 async function handleAuditLogCleanup(req, res) {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
@@ -3311,6 +3316,7 @@ async function handleAuditLogCleanup(req, res) {
 	const result = await sql`
 		delete from audit_log
 		where created_at < now() - (${AUDIT_LOG_RETENTION_DAYS} || ' days')::interval
+			and action != all(${AUDIT_LOG_RETENTION_EXEMPT_ACTIONS})
 		returning id
 	`;
 	return json(res, 200, { deleted: result.length, retention_days: AUDIT_LOG_RETENTION_DAYS });

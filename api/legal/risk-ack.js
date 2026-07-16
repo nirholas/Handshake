@@ -7,7 +7,9 @@
 // browser (localStorage, versioned); this endpoint writes the durable
 // server-side record into audit_log — who (when signed in), which disclosure
 // version, from which feature ('trade', 'snipe', 'x402-pay', …), when, from
-// where. audit_log has no retention pruning, so acceptance records persist.
+// where. The audit-log-cleanup cron exempts 'risk-ack-accept' (and
+// 'tos-accept') rows from its 365-day retention, so acceptance records
+// persist indefinitely.
 //
 // Anonymous acceptances are recorded too (userId null): the gate also runs in
 // third-party x402 embeds and pre-auth flows where no session exists.

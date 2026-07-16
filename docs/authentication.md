@@ -101,11 +101,12 @@ const { nonce, csrf, expiresAt } = await fetch('/api/auth/siwe/nonce', {
   credentials: 'include'
 }).then(r => r.json());
 
-// 2. Build the EIP-4361 message
+// 2. Build the EIP-4361 message. Put the Terms agreement in the signed
+//    statement so the signature itself evidences acceptance.
 const message = new SiweMessage({
   domain: window.location.host,
   address: walletAddress,
-  statement: 'Sign in to three.ws. This does not cost anything and proves wallet ownership.',
+  statement: 'Sign in to three.ws. This does not cost anything and proves wallet ownership. By signing, you agree to the Terms of Service (https://three.ws/legal/tos) and Privacy Policy (https://three.ws/legal/privacy).',
   uri: window.location.origin,
   version: '1',
   chainId: 1,
@@ -116,7 +117,10 @@ const message = new SiweMessage({
 // 3. Sign
 const signature = await provider.getSigner().signMessage(message);
 
-// 4. Verify — include the CSRF token in the header
+// 4. Verify: include the CSRF token in the header. Send tosAccepted: true
+//    when your UI displayed the Terms agreement (statement above or a notice
+//    next to the sign-in control); the server records the acceptance and the
+//    Terms version on the user record.
 const res = await fetch('/api/auth/siwe/verify', {
   method: 'POST',
   credentials: 'include',
@@ -124,12 +128,21 @@ const res = await fetch('/api/auth/siwe/verify', {
     'Content-Type': 'application/json',
     'X-CSRF-Token': csrf,
   },
-  body: JSON.stringify({ message, signature }),
+  body: JSON.stringify({ message, signature, tosAccepted: true }),
 });
 const { user, wallet } = await res.json();
 ```
 
 > **Security note:** Never submit the SIWE message to a domain other than where the nonce was issued. The backend validates that `domain` and `uri` in the message match the deployment's `APP_ORIGIN`. Replaying a valid signature from a phishing page is rejected.
+
+### Terms of Service acceptance
+
+Every auth endpoint accepts an optional `tosAccepted: true` body field. Send it whenever your UI showed the user the [Terms of Service](https://three.ws/legal/tos) agreement (a checkbox, a "By signing in you agree" notice, or the agreement sentence inside the signed wallet statement). The server writes a durable acceptance record (audit log + the accepted Terms version on the user row). Two rules:
+
+- `POST /api/auth/register` **requires** `tosAccepted: true`; account creation without it fails with `400 tos_required`. Registration UIs must show a real agreement control.
+- Wallet and Privy verifies (`/api/auth/siwe/verify`, `/api/auth/siws/verify`, `/api/auth/privy/verify`) and `POST /api/auth/login` treat it as an affirmation: acceptance is recorded on every sign-in, so users converge onto the current Terms version over time.
+
+An already-signed-in user can also record acceptance directly with `POST /api/legal/tos-ack { version?, context? }`, which mirrors the risk-acknowledgment endpoint (`/api/legal/risk-ack`).
 
 ---
 
@@ -167,12 +180,14 @@ Get both values from [dashboard.privy.io](https://dashboard.privy.io). The serve
 ### Verify endpoint
 
 ```js
-// After Privy client gives you an idToken:
+// After Privy client gives you an idToken. Send tosAccepted: true when your
+// UI displayed the Terms of Service agreement next to the sign-in control;
+// the server records the acceptance and the Terms version on the user record.
 const res = await fetch('/api/auth/privy/verify', {
   method: 'POST',
   credentials: 'include',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ idToken }),
+  body: JSON.stringify({ idToken, tosAccepted: true }),
 });
 const { user, wallet } = await res.json();
 // user: { id, email, display_name, plan, avatar_url }

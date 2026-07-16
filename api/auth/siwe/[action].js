@@ -281,7 +281,7 @@ async function handleVerify(req, res) {
 	}
 
 	// Terms acceptance: first-party sign-in surfaces put the agreement in the
-	// signed SIWE statement and send tosAccepted alongside — record it for both
+	// signed SIWE statement and send tosAccepted alongside: record it for both
 	// brand-new and returning wallets so acceptance converges on every sign-in.
 	const tos = tosAcceptanceFromBody(raw);
 	if (tos) recordTosAcceptance({ userId, version: tos.version, context: 'siwe', req });

@@ -219,7 +219,7 @@ export class SolanaAdapter {
 			`${domain} wants you to sign in with your Solana account:`,
 			this.#address,
 			'',
-			'Link this wallet to deploy your agent on Solana. No fees, no transaction.',
+			'Link this wallet to deploy your agent on Solana. No fees, no transaction. By signing, you agree to the Terms of Service (https://three.ws/legal/tos) and Privacy Policy (https://three.ws/legal/privacy).',
 			'',
 			`URI: ${uri}`,
 			'Version: 1',
@@ -247,7 +247,9 @@ export class SolanaAdapter {
 			method: 'POST',
 			credentials: 'include',
 			headers: { 'content-type': 'application/json', 'x-csrf-token': csrf },
-			body: JSON.stringify({ message, signature: toBase64(sig) }),
+			// tosAccepted: the signed statement carries the agreement; the flag
+			// tells the server to stamp acceptance on the user record.
+			body: JSON.stringify({ message, signature: toBase64(sig), tosAccepted: true }),
 		});
 		if (!verifyRes.ok) {
 			const data = await verifyRes.json().catch(() => ({}));

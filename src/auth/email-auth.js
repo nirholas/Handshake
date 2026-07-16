@@ -25,7 +25,10 @@ export async function signInWithEmail(emailOrUsername, password) {
 		method: 'POST',
 		credentials: 'include',
 		headers: { 'content-type': 'application/json' },
-		body: JSON.stringify({ email: emailOrUsername, password }),
+		// tosAccepted: every surface that mounts this sign-in shows the
+		// "By signing in you agree…" notice, so each sign-in re-affirms the
+		// current Terms and the server re-stamps the accepted version.
+		body: JSON.stringify({ email: emailOrUsername, password, tosAccepted: true }),
 	});
 	const data = await res.json().catch(() => ({}));
 	if (!res.ok) {
@@ -40,9 +43,15 @@ export async function signInWithEmail(emailOrUsername, password) {
  * Register a new account with email and password (no wallet needed).
  * Creates a session immediately — the user is signed in on success.
  *
+ * Clickwrap contract: the server rejects registration without tosAccepted,
+ * so every surface that calls this MUST display the Terms of Service and
+ * Privacy Policy agreement (checkbox or "By creating an account you agree…"
+ * notice adjacent to the submit control) and pass `tosAccepted: true` only
+ * after showing it.
+ *
  * @param {string} email
  * @param {string} password
- * @param {{ displayName?: string, referralCode?: string }} [opts]
+ * @param {{ displayName?: string, referralCode?: string, tosAccepted?: boolean }} [opts]
  * @returns {Promise<{ user: object }>}
  */
 export async function registerWithEmail(email, password, opts = {}) {
@@ -53,6 +62,7 @@ export async function registerWithEmail(email, password, opts = {}) {
 		body: JSON.stringify({
 			email,
 			password,
+			tosAccepted: opts.tosAccepted === true,
 			...(opts.displayName ? { display_name: opts.displayName } : {}),
 			...(opts.referralCode ? { referralCode: opts.referralCode } : {}),
 		}),
