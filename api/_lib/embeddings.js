@@ -2,8 +2,13 @@
 //
 // Provider policy (free-first, per the platform LLM policy): NVIDIA NIM's
 // nv-embedqa-e5-v5 (1024-dim, free with one nvapi key) is the default for new
-// ingests; OpenAI text-embedding-3-small @ 256 dims (Matryoshka truncation)
-// is the paid backstop and the space every pre-tagging row lives in.
+// ingests; Vertex AI's text-embedding-005 (768-dim, service-account auth,
+// billed to the platform's GCP credit pool — no vendor quota to exhaust) is
+// the second-choice ingest lane when NIM is unconfigured; OpenAI
+// text-embedding-3-small @ 256 dims (Matryoshka truncation) is the last-resort
+// paid backstop and, critically, the space every pre-tagging legacy row lives
+// in (LEGACY_EMBED_TAG) — its entry in EMBEDDERS must never be removed even
+// if it stops being used for new ingests, or legacy-row resolution breaks.
 //
 // THE TRAP this module exists to prevent: embeddings from different models are
 // different vector spaces. A query embedded with model A compared against
@@ -22,6 +27,16 @@
 const NIM_EMBED_URL = 'https://integrate.api.nvidia.com/v1/embeddings';
 const OPENAI_EMBED_URL = 'https://api.openai.com/v1/embeddings';
 
+// text-embedding-005 is a regional model (verified live: us-central1 serves
+// it; "global" does not for this model family, unlike the Gemini chat/image
+// models elsewhere in the codebase) — default to the region every other
+// GCP-hosted worker in this platform already runs in.
+function vertexEmbedUrl() {
+	const project = process.env.GOOGLE_CLOUD_PROJECT;
+	const location = process.env.GOOGLE_CLOUD_LOCATION_EMBED || 'us-central1';
+	return `https://${location}-aiplatform.googleapis.com/v1/projects/${project}/locations/${location}/publishers/google/models/text-embedding-005:predict`;
+}
+
 // NIM nv-embedqa-e5-v5 hard-caps inputs at 512 tokens (probed: longer inputs
 // 400 with "exceeds maximum allowed token size"). The chunker already targets
 // ≤512 estimated tokens (4 chars/token), but dense text (code, CJK) can run
@@ -31,10 +46,13 @@ const NIM_MAX_TOKENS = 512;
 const NIM_SAFE_CHARS = NIM_MAX_TOKENS * 3;
 
 export const NIM_EMBED_TAG = 'nvidia/nv-embedqa-e5-v5@1024';
+export const VERTEX_EMBED_TAG = 'vertex/text-embedding-005@768';
 export const OPENAI_EMBED_TAG = 'text-embedding-3-small@256';
 
 // Rows written before embedder tagging existed were embedded with OpenAI
 // text-embedding-3-small @ 256 — encode that assumption in exactly one place.
+// This tag (and its EMBEDDERS entry below) must never be removed, even after
+// it stops being the ingest default, or legacy-row resolution breaks.
 export const LEGACY_EMBED_TAG = OPENAI_EMBED_TAG;
 
 const EMBEDDERS = Object.freeze({
@@ -46,6 +64,17 @@ const EMBEDDERS = Object.freeze({
 		free: true,
 		configured: () => !!process.env.NVIDIA_API_KEY,
 	}),
+	[VERTEX_EMBED_TAG]: Object.freeze({
+		tag: VERTEX_EMBED_TAG,
+		provider: 'vertex',
+		model: 'text-embedding-005',
+		dim: 768,
+		// Not vendor-free like NIM, but billed to the platform's GCP credit pool
+		// rather than a metered API key — no quota to exhaust, same reasoning
+		// api/_lib/llm.js's vertexGeminiProvider() documents for the LLM chain.
+		free: false,
+		configured: () => !!process.env.GOOGLE_CLOUD_PROJECT,
+	}),
 	[OPENAI_EMBED_TAG]: Object.freeze({
 		tag: OPENAI_EMBED_TAG,
 		provider: 'openai',
@@ -56,8 +85,9 @@ const EMBEDDERS = Object.freeze({
 	}),
 });
 
-// Free lane first, paid backstop last.
-const INGEST_PREFERENCE = Object.freeze([NIM_EMBED_TAG, OPENAI_EMBED_TAG]);
+// Free lane first, then the credit-funded Vertex lane (no vendor quota to
+// exhaust), OpenAI as the true last-resort paid backstop.
+const INGEST_PREFERENCE = Object.freeze([NIM_EMBED_TAG, VERTEX_EMBED_TAG, OPENAI_EMBED_TAG]);
 
 /** True when at least one embedding provider can actually serve. */
 export function embeddingsConfigured() {
@@ -123,9 +153,9 @@ export async function embedWith(tag, texts, inputType) {
 	}
 	if (!texts.length) return [];
 
-	return embedder.provider === 'nim'
-		? embedNim(embedder, texts, inputType)
-		: embedOpenAi(embedder, texts);
+	if (embedder.provider === 'nim') return embedNim(embedder, texts, inputType);
+	if (embedder.provider === 'vertex') return embedVertex(embedder, texts, inputType);
+	return embedOpenAi(embedder, texts);
 }
 
 /** Convenience: embed corpus chunks at ingest time. */
@@ -166,6 +196,45 @@ async function embedNim(embedder, texts, inputType, { truncated = false } = {}) 
 		throw upstreamError('nim', upstream.status, body);
 	}
 	return parseEmbeddings(await upstream.json(), texts.length, 'nim');
+}
+
+// Vertex AI text-embedding-005 — service-account/metadata-server auth (same
+// helper api/_lib/vertex-claude.js and api/_mcp3d/vertex-imagen.js already
+// use), billed to the platform's GCP credit pool. Asymmetric like NIM: a
+// document/passage and a query embed differently, so `task_type` carries the
+// same distinction NIM's `input_type` does. Verified live 2026-07-16 (batch
+// request, both task types, 768-dim output confirmed).
+async function embedVertex(embedder, texts, inputType) {
+	const project = process.env.GOOGLE_CLOUD_PROJECT;
+	if (!project) {
+		throw Object.assign(new Error('vertex embedder not configured (GOOGLE_CLOUD_PROJECT missing)'), {
+			code: 'no_embedder',
+		});
+	}
+	const { getGcpAccessToken } = await import('./gcp-auth.js');
+	const token = await getGcpAccessToken();
+	const taskType = inputType === 'query' ? 'RETRIEVAL_QUERY' : 'RETRIEVAL_DOCUMENT';
+	const upstream = await fetch(vertexEmbedUrl(), {
+		method: 'POST',
+		headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+		body: JSON.stringify({
+			instances: texts.map((content) => ({ content, task_type: taskType })),
+			parameters: { outputDimensionality: embedder.dim },
+		}),
+		signal: AbortSignal.timeout(30_000),
+	});
+	if (!upstream.ok) {
+		const body = await upstream.text().catch(() => '');
+		throw upstreamError('vertex', upstream.status, body);
+	}
+	const data = await upstream.json();
+	const rows = data?.predictions || [];
+	if (rows.length !== texts.length || rows.some((r) => !Array.isArray(r?.embeddings?.values))) {
+		throw Object.assign(new Error('vertex embedding response shape mismatch'), {
+			code: 'embedder_error',
+		});
+	}
+	return rows.map((row) => Float64Array.from(row.embeddings.values));
 }
 
 async function embedOpenAi(embedder, texts) {

@@ -9,8 +9,13 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
+vi.mock('../../api/_lib/gcp-auth.js', () => ({
+	getGcpAccessToken: vi.fn(async () => 'fake-access-token'),
+}));
+
 import {
 	NIM_EMBED_TAG,
+	VERTEX_EMBED_TAG,
 	OPENAI_EMBED_TAG,
 	LEGACY_EMBED_TAG,
 	embeddingsConfigured,
@@ -27,8 +32,8 @@ import {
 
 const NIM_URL = 'https://integrate.api.nvidia.com/v1/embeddings';
 const OPENAI_URL = 'https://api.openai.com/v1/embeddings';
-
-const fetchMock = vi.fn();
+const VERTEX_URL =
+	'https://us-central1-aiplatform.googleapis.com/v1/projects/test-project/locations/us-central1/publishers/google/models/text-embedding-005:predict';
 
 function okEmbeddings(vectors) {
 	return {
@@ -39,9 +44,21 @@ function okEmbeddings(vectors) {
 	};
 }
 
+function okVertexEmbeddings(vectors) {
+	return {
+		ok: true,
+		status: 200,
+		json: async () => ({ predictions: vectors.map((values) => ({ embeddings: { values } })) }),
+		text: async () => '',
+	};
+}
+
+const fetchMock = vi.fn();
+
 function clearKeys() {
 	delete process.env.NVIDIA_API_KEY;
 	delete process.env.OPENAI_API_KEY;
+	delete process.env.GOOGLE_CLOUD_PROJECT;
 }
 
 beforeEach(() => {
@@ -72,7 +89,13 @@ describe('provider configuration (free-first)', () => {
 		expect(defaultIngestEmbedderTag()).toBe(NIM_EMBED_TAG);
 	});
 
-	it('falls back to OpenAI for new ingests only when NIM is keyless', () => {
+	it('prefers Vertex over OpenAI when NIM is keyless but GCP is configured', () => {
+		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
+		process.env.OPENAI_API_KEY = 'sk-test';
+		expect(defaultIngestEmbedderTag()).toBe(VERTEX_EMBED_TAG);
+	});
+
+	it('falls back to OpenAI for new ingests only when NIM and Vertex are both unavailable', () => {
 		process.env.OPENAI_API_KEY = 'sk-test';
 		expect(defaultIngestEmbedderTag()).toBe(OPENAI_EMBED_TAG);
 	});
@@ -98,6 +121,11 @@ describe('embedder tag resolution (vector-space identity)', () => {
 			dim: 1024,
 			free: true,
 		});
+		expect(embedderInfo(VERTEX_EMBED_TAG)).toMatchObject({
+			model: 'text-embedding-005',
+			dim: 768,
+			free: false,
+		});
 		expect(embedderInfo(OPENAI_EMBED_TAG)).toMatchObject({
 			model: 'text-embedding-3-small',
 			dim: 256,
@@ -107,8 +135,15 @@ describe('embedder tag resolution (vector-space identity)', () => {
 	it('embedderConfigured tracks the provider key for the tag, not any key', () => {
 		process.env.NVIDIA_API_KEY = 'nvapi-test';
 		expect(embedderConfigured(NIM_EMBED_TAG)).toBe(true);
+		expect(embedderConfigured(VERTEX_EMBED_TAG)).toBe(false);
 		expect(embedderConfigured(OPENAI_EMBED_TAG)).toBe(false);
 		expect(embedderConfigured(null)).toBe(false); // legacy = OpenAI, no key
+	});
+
+	it('embedderConfigured recognizes Vertex via GOOGLE_CLOUD_PROJECT alone', () => {
+		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
+		expect(embedderConfigured(VERTEX_EMBED_TAG)).toBe(true);
+		expect(embedderConfigured(NIM_EMBED_TAG)).toBe(false);
 	});
 });
 
@@ -224,6 +259,67 @@ describe('embedWith — OpenAI lane', () => {
 	it('throws unknown_embedder for a tag this build does not know', async () => {
 		await expect(embedPassages('mystery@1', ['x'])).rejects.toMatchObject({
 			code: 'unknown_embedder',
+		});
+	});
+});
+
+describe('embedWith — Vertex lane', () => {
+	beforeEach(() => {
+		process.env.GOOGLE_CLOUD_PROJECT = 'test-project';
+	});
+
+	it('sends the 768-dim output request and the REQUIRED task_type for passages', async () => {
+		fetchMock.mockResolvedValueOnce(okVertexEmbeddings([[0.1, 0.2]]));
+		const out = await embedPassages(VERTEX_EMBED_TAG, ['one']);
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+		expect(fetchMock.mock.calls[0][0]).toBe(VERTEX_URL);
+		expect(lastBody()).toEqual({
+			instances: [{ content: 'one', task_type: 'RETRIEVAL_DOCUMENT' }],
+			parameters: { outputDimensionality: 768 },
+		});
+		expect(out).toHaveLength(1);
+		expect(out[0]).toBeInstanceOf(Float64Array);
+	});
+
+	it('embeds search strings with task_type RETRIEVAL_QUERY', async () => {
+		fetchMock.mockResolvedValueOnce(okVertexEmbeddings([[0.5, 0.6]]));
+		const vec = await embedQuery(VERTEX_EMBED_TAG, 'what is three.ws?');
+		expect(lastBody().instances[0].task_type).toBe('RETRIEVAL_QUERY');
+		expect(Array.from(vec)).toEqual([0.5, 0.6]);
+	});
+
+	it('batches multiple texts into one request, aligned with the input order', async () => {
+		fetchMock.mockResolvedValueOnce(okVertexEmbeddings([[1, 1], [2, 2]]));
+		const out = await embedPassages(VERTEX_EMBED_TAG, ['a', 'b']);
+		expect(Array.from(out[0])).toEqual([1, 1]);
+		expect(Array.from(out[1])).toEqual([2, 2]);
+	});
+
+	it('throws no_embedder when GOOGLE_CLOUD_PROJECT is absent', async () => {
+		delete process.env.GOOGLE_CLOUD_PROJECT;
+		await expect(embedPassages(VERTEX_EMBED_TAG, ['x'])).rejects.toMatchObject({
+			code: 'no_embedder',
+		});
+		expect(fetchMock).not.toHaveBeenCalled();
+	});
+
+	it('surfaces upstream failures with status for backoff routing', async () => {
+		fetchMock.mockResolvedValueOnce({ ok: false, status: 429, text: async () => 'slow down' });
+		await expect(embedPassages(VERTEX_EMBED_TAG, ['x'])).rejects.toMatchObject({
+			code: 'embedder_error',
+			status: 429,
+		});
+	});
+
+	it('rejects a malformed response shape', async () => {
+		fetchMock.mockResolvedValueOnce({
+			ok: true,
+			status: 200,
+			json: async () => ({ predictions: [] }),
+			text: async () => '',
+		});
+		await expect(embedPassages(VERTEX_EMBED_TAG, ['x'])).rejects.toMatchObject({
+			code: 'embedder_error',
 		});
 	});
 });
