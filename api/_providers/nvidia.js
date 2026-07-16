@@ -330,7 +330,15 @@ export function createNvidiaProvider() {
 		// instead of timing out our socket and losing the request id (see above).
 		'nvcf-poll-seconds': String(NVCF_POLL_SECONDS),
 	};
-	const pollHeaders = { ...authHeader, accept: 'application/json' };
+	// NVCF pexec results are CONSUME-ONCE: the first status GET that receives the
+	// 200 body takes the artifact with it — a later poll 404s. Without an explicit
+	// poll window the gateway may long-hold the status connection until the job
+	// finishes; if our own POLL_TIMEOUT_MS abort fires while that 200 is being
+	// delivered, the result is consumed by a socket nobody read and the job is
+	// unrecoverable ("NVCF request not found or expired"). A short explicit window
+	// makes every status call answer fast (202 or the ready 200) long before the
+	// abort backstop, closing that loss window.
+	const pollHeaders = { ...authHeader, accept: 'application/json', 'nvcf-poll-seconds': '10' };
 
 	// Decode a base64 GLB and store it in R2, returning a durable public URL —
 	// the same persist the Vertex inline-PNG path uses, but for model bytes.
@@ -512,7 +520,12 @@ export function createNvidiaProvider() {
 				return { status: 'failed', error: 'NVIDIA rejected the API key' };
 			}
 			if (res.status === 404) {
-				return { status: 'failed', error: 'NVCF request not found or expired' };
+				// The request id is gone: either the consume-once result was taken by a
+				// racing/aborted poll, or NVCF's retention window lapsed. Tagged with a
+				// machine-readable code so the forge poll layer can attempt recovery
+				// (re-check the store for a racing completion, then resubmit) instead of
+				// dead-ending the user's generation.
+				return { status: 'failed', error: 'NVCF request not found or expired', code: 'nvcf_expired' };
 			}
 			// 429 / 5xx mid-flight: the job may still be alive — keep polling.
 			if (res.status === 429) {

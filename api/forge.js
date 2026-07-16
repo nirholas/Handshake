@@ -115,6 +115,7 @@ import {
 	refundCredits,
 } from './_lib/credits.js';
 import { markProviderCooldown, providersInCooldown } from './_lib/provider-health.js';
+import { acquireLock, releaseLock, cacheGet, cacheSet } from './_lib/cache.js';
 import { sanitizeJobError } from './_lib/provider-job-error.js';
 import { normalizeForgeOptions, providerReconstructParams, summarizeForgeOptions } from './_lib/forge-options.js';
 import { bindJobToOptions, optionsForJob } from './_lib/forge-job-options.js';
@@ -2196,6 +2197,84 @@ async function startRigJob(req, res) {
 	}
 }
 
+// ── NVCF poll robustness ─────────────────────────────────────────────────────
+// NVCF pexec results are consume-once: the FIRST status GET that lands after
+// completion receives the artifact and every later GET for that request id
+// 404s. Two production consequences (53 of 134 nvidia jobs in one 36h window
+// failed with "NVCF request not found or expired"):
+//   1. Concurrent polls for the same job (overlapping browser timers, a second
+//      tab, a retried request) race — one consumes the result, the other 404s
+//      and flips the creation to failed even though the mesh exists.
+//   2. A result that expires out of NVCF's retention window (throttled
+//      background tab, closed laptop) is genuinely gone.
+// Recovery below: single-flight the upstream poll per task id so only one
+// request ever touches NVCF at a time; on a 404, first re-check the store for
+// a completion a racing poll already materialized, then — because the prompt
+// is recorded on the creation row — resubmit the SAME generation once and
+// alias the old task id to the new one so the client's existing poll handle
+// keeps working. The alias lives in the shared cache; the creation row keeps
+// its original replicate_job_id, so findByJob/materializeCreation are untouched.
+const NVCF_ALIAS_TTL_S = 3600;
+const NVCF_POLL_LOCK_TTL_S = 70; // > provider poll timeout (60s) so a dead holder can't wedge the job
+
+function nvcfAliasKey(taskId) {
+	return `nvcf:alias:${taskId}`;
+}
+
+async function pollNvidiaStatus({ nv, upstreamId, clientKey }) {
+	// A previous recovery may have resubmitted this job under a new NVCF id.
+	const alias = await cacheGet(nvcfAliasKey(upstreamId)).catch(() => null);
+	const taskId = typeof alias === 'string' && alias ? alias : upstreamId;
+
+	// Single-flight across instances: whoever loses the race reports running and
+	// lets the client's next poll pick up the winner's outcome from the store.
+	const lockKey = `nvcf:poll-lock:${taskId}`;
+	if (!(await acquireLock(lockKey, NVCF_POLL_LOCK_TTL_S))) {
+		return { status: 'running' };
+	}
+
+	let result;
+	try {
+		result = await nv.status({ taskId });
+	} finally {
+		await releaseLock(lockKey);
+	}
+	if (result?.code !== 'nvcf_expired') return result;
+
+	// The request id is dead. A racing poll may have already materialized the
+	// creation — that's a success, not a failure.
+	const row = await findByJob({ replicateJobId: upstreamId, clientKey });
+	if (row?.status === 'done' && row.glb_url) {
+		return { status: 'done', resultGlbUrl: row.glb_url };
+	}
+
+	// Genuinely lost (expired / consumed by an aborted socket). The never-dead-end
+	// rule: regenerate server-side rather than surface a failure the user can only
+	// answer by re-clicking Generate. Once per job — the resub lock outlives the
+	// alias so a second expiry reports the failure honestly.
+	if (!row?.prompt) return result;
+	if (!(await acquireLock(`nvcf:resub:${upstreamId}`, NVCF_ALIAS_TTL_S))) {
+		return { status: 'running' };
+	}
+	try {
+		const tier = resolveTier(row.tier);
+		const resub = await nv.textTo3d({ prompt: row.prompt, tier });
+		if (!resub.taskId && resub.resultGlbUrl) {
+			return { status: 'done', resultGlbUrl: resub.resultGlbUrl };
+		}
+		if (resub.taskId) {
+			await cacheSet(nvcfAliasKey(upstreamId), resub.taskId, NVCF_ALIAS_TTL_S);
+			console.warn(
+				`[forge] NVCF request expired; resubmitted job under a new request id (creation ${row.id})`,
+			);
+			return { status: 'running' };
+		}
+	} catch (err) {
+		console.warn(`[forge] NVCF expiry resubmit failed: ${err?.message || err}`);
+	}
+	return result;
+}
+
 async function pollJob(req, res, jobId) {
 	// A job handle is either a bare Replicate prediction id (legacy / image-
 	// TRELLIS path) or a forge token encoding the geometry/GCP provider + the
@@ -2282,7 +2361,7 @@ async function pollJob(req, res, jobId) {
 					message: 'The free NVIDIA NIM 3D lane is not available on this deployment yet.',
 				});
 			}
-			result = await nv.status({ taskId: upstreamId });
+			result = await pollNvidiaStatus({ nv, upstreamId, clientKey });
 		} else if (provider === 'gcp') {
 			// Serves every self-host lane (Hunyuan3D, TripoSG sketch) — the job
 			// envelope carries the worker URL it was submitted to.
