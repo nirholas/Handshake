@@ -128,6 +128,9 @@
 		"api/irl/*.js": {
 			"maxDuration": 20
 		},
+		"api/irl/share/[token].js": {
+			"maxDuration": 20
+		},
 		"{api/agent-vanity-grind,api/agent-collab,api/x402/forge,api/forge}.js": {
 			"includeFiles": "{examples/skills/**,data/pages.json,data/archives/**,data/rss/**,data/_generated/**,sdk/src/sas-config.json}",
 			"maxDuration": 300
@@ -1132,6 +1135,10 @@
 			"dest": "/admin/ops.html"
 		},
 		{
+			"src": "/admin/irl-analytics/?",
+			"dest": "/admin/irl-analytics.html"
+		},
+		{
 			"src": "/api/ops/health",
 			"dest": "/api/ops/health"
 		},
@@ -1233,6 +1240,10 @@
 		{
 			"src": "/marketplace-walk/?",
 			"dest": "/marketplace-walk.html"
+		},
+		{
+			"src": "/irl/s/([^/]+)/?",
+			"dest": "/api/irl/share/[token]?token=$1"
 		},
 		{
 			"src": "/irl/?",
@@ -4495,6 +4506,20 @@
 		{
 			"src": "/create/prompt/",
 			"dest": "/create-prompt.html"
+		},
+		{
+			"src": "/create/character/?",
+			"status": 301,
+			"headers": {
+				"Location": "/play"
+			}
+		},
+		{
+			"src": "/create-character/?",
+			"status": 301,
+			"headers": {
+				"Location": "/play"
+			}
 		},
 		{
 			"src": "/genesis",
