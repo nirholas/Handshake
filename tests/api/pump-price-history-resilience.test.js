@@ -52,13 +52,22 @@ function ohlcvResponse() {
 	};
 }
 
+// Base58 alphabet (no 0/O/I/l) so a generated test mint always passes
+// isPlausibleMint's base58 regex.
+const BASE58_SAFE = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz123456789';
+function safeSuffix(n) {
+	let s = '', x = n + 1;
+	for (let i = 0; i < 6; i++) { s += BASE58_SAFE[x % BASE58_SAFE.length]; x = Math.floor(x / BASE58_SAFE.length); }
+	return s;
+}
+
 // A fresh mint AND a fresh, un-bucket-collided window per test so neither the
 // pool-address cache nor the candle/in-flight cache (both module-level, keyed
 // by mint) can leak state between tests.
 let seq = 0;
 function freshQuery(mint) {
 	seq += 1;
-	const m = mint || `${MINT.slice(0, -8)}${String(seq).padStart(4, '0')}pump`;
+	const m = mint || `${MINT.slice(0, 34)}${safeSuffix(seq)}pump`;
 	const now = Math.floor(Date.now() / 1000) + seq * 10_000; // force a new snapWindow bucket
 	const { from, to } = snapWindow({ interval: '5m', from: now - 3600, to: now });
 	return `mint=${m}&interval=5m&from=${from}&to=${to}`;
@@ -150,7 +159,7 @@ describe('concurrency gate', () => {
 
 		// 10 distinct mints (distinct pool-cache keys) fired at once — a realistic
 		// stand-in for a page mounting several chart widgets simultaneously.
-		const mints = Array.from({ length: 10 }, (_, i) => `${MINT.slice(0, -5)}${String(i).padStart(4, '0')}pump`);
+		const mints = Array.from({ length: 10 }, (_, i) => `${MINT.slice(0, 34)}${safeSuffix(10_000 + i)}pump`);
 		await Promise.all(mints.map((m) => {
 			const res = makeRes();
 			return handler(makeReq(freshQuery(m)), res).then(() => res);
