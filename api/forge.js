@@ -1529,14 +1529,18 @@ async function startJob(req, res) {
 			referenceImageUrl = imageUrls[0];
 			textToImageModel = null;
 		} else {
-			// Optional Granite art-director pass (off by default): rewrites the raw
-			// prompt into a richer, single-subject spec (form, per-part materials,
-			// one held style, composition constraints) before it drives the FLUX
-			// reference image — the same director the free MCP tools use. Fail-soft:
-			// any failure (chat lane down, timeout) silently keeps the raw prompt, so
-			// opting in can only ever help, never break, a generation.
+			// Granite art-director pass (on by default; pass director:false to skip):
+			// rewrites the raw prompt into a richer, single-subject spec (form,
+			// per-part PBR materials, photoreal-by-default cues, composition
+			// constraints) before it drives the FLUX/Vertex reference image — the
+			// same director the free MCP tools use. Fail-soft: any failure (chat
+			// lane down, timeout) silently keeps the raw prompt, so running it by
+			// default can only ever help, never break, a generation — and it rides
+			// the free-first LLM chain, so it costs no GCP/vendor spend. This is the
+			// single biggest lever on "does this look like a real photograph"
+			// available before the reference image is even generated.
 			let directedPrompt = prompt;
-			if (body?.director === true) {
+			if (body?.director !== false) {
 				// Known brand marks resolve deterministically before the LLM gets a
 				// say: no model reliably knows a niche mark's geometry, and the
 				// lexicon spec is already a tight single-subject description.
