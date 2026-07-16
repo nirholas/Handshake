@@ -3,12 +3,30 @@
 	"entries": [
 		{
 			"date": "2026-07-16",
+			"title": "Sketch-to-3D is now live: draw it, get a 3D model",
+			"summary": "The Forge's sketch mode, where you draw a quick outline and describe it to get a 3D model, is now fully operational on our own GPU fleet. The engine behind it had never successfully started in production; two separate startup defects were found and fixed, and its multi-gigabyte model weights now download in parallel at boot instead of streaming through a slow mount, taking the worker from never-ready to serving in under four minutes from a cold start. A hand-drawn mug sketch now returns a clean, watertight 3D model in about two minutes.",
+			"tags": [
+				"feature",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-16",
 			"title": "pump.fun published a feature article on $THREE",
 			"summary": "pump.fun published \"Three Builds With Tech Giants\", a feature article on the official $THREE coin page profiling the platform: browser-native 3D AI agents with onchain identities, the Animations and Poses Studio, the 3D Studio MCP server, and the AWS and IBM milestones. Read it on the $THREE coin page on pump.fun; it is also tracked with all our other coverage on the listings page.",
 			"tags": [
 				"docs"
 			],
 			"link": "/docs/listings"
+		},
+		{
+			"date": "2026-07-16",
+			"title": "Grok (xAI) is now a selectable brain everywhere, including bring-your-own-key",
+			"summary": "You can now power your agents and chats with xAI's Grok models: Grok 4.5 (flagship), Grok 4.3 (1M-token context), and Grok 4.1 Fast (budget, 2M-token context). Add your own xAI API key under Settings, AI Provider Keys, and every agent you own can use it: the 3D avatar chat, embeddable widgets, the Brain model playground, the agent manifest builder, and the conversational wallet all list Grok alongside Claude and GPT. Your key is stored encrypted, never shown back, and calls made with it bill your xAI account directly instead of counting against platform limits.",
+			"tags": [
+				"feature"
+			],
+			"link": "/brain"
 		},
 		{
 			"date": "2026-07-16",
