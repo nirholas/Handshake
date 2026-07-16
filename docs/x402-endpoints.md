@@ -125,9 +125,30 @@ upstream is down — a buyer is never charged for missing data.
 | `/api/x402/market-mood`         | $0.002  | Fear & Greed × 192-feed news sentiment composite (0–100) with divergence flag + driver headlines. |
 | `/api/x402/news-pulse`          | $0.002  | Per-ticker news coverage: mentions, velocity vs prior window, sentiment split, top headlines.    |
 
-There is also a registry-derived `market-*` family (`/api/x402/market-coins`,
-`market-chart`, `market-yields`, …) — one endpoint per raw data category,
-projected from `api/_lib/market-data/registry.js`.
+There is also a registry-derived `market-*` family — one endpoint per raw data
+category, projected from `api/_lib/market-data/registry.js`. Each is $0.001
+USDC per call unless noted, and every one has a free counterpart at the path
+named in its description:
+
+| Endpoint                        | Default | Returns                                                                                          |
+| -------------------------------- | ------- | ------------------------------------------------------------------------------------------------ |
+| `/api/x402/market-coins`        | $0.001  | Ranked coin market table — price, market cap, 24h volume, 24h/7d change, 7-day sparkline for up to 250 coins, with sector scoping and id search. |
+| `/api/x402/market-coin`         | $0.001  | Full profile for one coin by CoinGecko id or Solana contract — market stats, ATH/ATL, supply, links, dev/community metrics, sentiment. |
+| `/api/x402/market-chart`        | $0.001  | Historical USD price series for any coin — `[timestamp, price]` pairs over 1/7/30/90/365 days.  |
+| `/api/x402/market-categories`   | $0.001  | CoinGecko sector leaderboard (AI, layer-1, memecoins, DeFi, RWA, …) ranked by market cap, each with 24h cap/volume change and its top-3 coins. |
+| `/api/x402/market-global`       | $0.001  | Whole-market snapshot — total market cap, 24h volume, BTC/ETH dominance, active coins, Fear & Greed index. |
+| `/api/x402/market-trending`     | $0.001  | Last 24h's most-searched coins, categories, and NFT collections — early attention signal before it shows up in price. |
+| `/api/x402/market-exchanges`    | $0.001  | Top 100 spot exchanges by CoinGecko trust score — 24h volume in BTC/USD, country, year established. |
+| `/api/x402/market-derivatives`  | $0.001  | Top 100 perp futures by 24h volume (price, funding rate, open interest); `?view=exchanges` for the derivatives-venue leaderboard. |
+| `/api/x402/market-gas`          | $0.001  | Live ETH gas in slow/standard/fast tiers from real `eth_feeHistory`, with USD cost estimates for transfer/swap/mint. |
+| `/api/x402/market-defi`         | $0.001  | Top 100 DeFi protocols by TVL (DeFiLlama) with 1d/7d change, chains, category, plus whole-market TVL totals. |
+| `/api/x402/market-chains`       | $0.001  | Cross-chain TVL leaderboard — top 100 chains with native token and % share of locked value.      |
+| `/api/x402/market-yields`       | $0.001  | ~15,000 DeFi yield pools, filterable by chain/project/stablecoin/search, sortable by TVL or dust-guarded APY. |
+| `/api/x402/market-stablecoins`  | $0.001  | Top 100 stablecoins by circulating supply with live price (peg health), mechanism, and chain deployments. |
+| `/api/x402/market-fees`         | $0.001  | Top 100 protocols by 24h fees or revenue (`?type=`) with 1d/7d/30d totals and whole-market chart. |
+| `/api/x402/market-dex-volumes`  | $0.001  | Top 100 DEXes by 24h volume, with 7d volume, WoW change, chains, and market-share.               |
+| `/api/x402/market-hacks`        | $0.001  | Full DeFiLlama hack history — amount stolen, technique, chains, funds returned; searchable, with all-time/12mo loss stats. |
+| `/api/x402/market-pulse`        | $0.005  | Flagship one-call market bundle: global stats, Fear & Greed, top-10 coins, trending, ETH gas, DeFi TVL, stablecoin supply, DEX volume, protocol fees — each section degrades independently. |
 
 ## Agent & reputation endpoints
 
