@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>hood-alerts · Robinhood Chain alert bots</title>
+  <meta name="description" content="Real-time Telegram and Discord alerts for Robinhood Chain (4663): memecoin launches, graduations, whale trades, Stock Token price moves, on-chain premium/discount arbitrage, holder milestones, and liquidity-pull rug warnings." />
+  <link rel="preconnect" href="https://rpc.mainnet.chain.robinhood.com" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="nav">
+    <div class="wrap">
+      <span class="brand"><span class="dot"></span> hood-alerts</span>
+      <a class="link" href="index.html">Live feed</a>
+      <a class="link hide-sm" href="commands.html">Commands</a>
+      <a class="link" href="premium.html">Premium</a>
+      <a class="link hide-sm" href="self-host.html">Self-host</a>
+      <span class="spacer"></span>
+      <a class="gh" href="https://github.com/nirholas/hood-alerts" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap">
+      <span class="chip"><span class="live"></span> Live · Robinhood Chain · ID 4663</span>
+      <h1>Alerts for the chain that<br /><span class="grad">never sleeps.</span></h1>
+      <p class="sub">Telegram and Discord bots that watch Robinhood Chain in real time: launches, graduations, whale trades, Stock Token moves, on-chain premium/discount arbitrage, holder milestones, and liquidity-pull rug warnings.</p>
+      <div class="cta">
+        <a class="btn primary" href="commands.html">See the commands</a>
+        <a class="btn ghost" href="#live">Watch it live ↓</a>
+      </div>
+    </div>
+  </header>
+
+  <section id="live">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="kicker">Live premium detector</div>
+        <h2>What would be alerting right now</h2>
+        <p>The Stock Token arbitrage signal, computed in your browser from the public RPC. When a token's DEX mid drifts from its Chainlink oracle, premium subscribers get a card like this.</p>
+      </div>
+      <div class="feed-meta">
+        <span>Chain head <b id="live-block">…</b></span>
+        <span><b id="live-count">…</b> markets tracked</span>
+        <span>Updated <b id="live-updated">…</b></span>
+      </div>
+      <div id="live-error" class="feed-error" style="display:none"></div>
+      <div id="live-cards" class="cards">
+        <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+      </div>
+      <p class="feed-note">Read-only, live from <code>rpc.mainnet.chain.robinhood.com</code>. Prices are already Chainlink multiplier-adjusted. This is display data, not investment advice.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <div class="kicker">Real alerts, real chain</div>
+        <h2>Seven detectors, one stream</h2>
+        <p>Captured from live mainnet during the build. Each renders as an inline card in Telegram and a rich embed in Discord.</p>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <div class="row"><span class="sym">New launch: on NOXA</span><span class="badge flat">launch</span></div>
+          <div class="prices"><span>Instant Uniswap v3 pool, no bonding curve</span><span>Creator, first pool, and block, the moment it lists</span></div>
+        </div>
+        <div class="card">
+          <div class="row"><span class="sym">Whale buy</span><span class="badge prem">≥ threshold</span></div>
+          <div class="prices"><span>Configurable USD floor, per-token or chain-wide</span><span>Odyssey bonding curve and Uniswap v3, valued in USD</span></div>
+        </div>
+        <div class="card">
+          <div class="row"><span class="sym">RKLB premium</span><span class="badge prem">+12.15%</span></div>
+          <div class="prices"><span>DEX mid <b>$75.32</b> vs Chainlink <b>$67.16</b></span><span>On-chain buyers paying above the oracle</span></div>
+        </div>
+        <div class="card">
+          <div class="row"><span class="sym">MSTR discount</span><span class="badge disc">-8.65%</span></div>
+          <div class="prices"><span>DEX mid <b>$85.81</b> vs Chainlink <b>$93.94</b></span><span>Trading below oracle on-chain</span></div>
+        </div>
+        <div class="card">
+          <div class="row"><span class="sym">Liquidity pull</span><span class="badge disc">rug warning</span></div>
+          <div class="prices"><span>Quote reserves dropped past your threshold</span><span>An early warning, minutes before the chart</span></div>
+        </div>
+        <div class="card">
+          <div class="row"><span class="sym">Holder milestone</span><span class="badge flat">1,000</span></div>
+          <div class="prices"><span>Crossed a holder-count milestone</span><span>Growth signal from Blockscout counters</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <div class="kicker">How it works</div>
+        <h2>One engine. Both platforms. Your rules.</h2>
+      </div>
+      <div class="grid">
+        <div class="feat"><span class="tag">detect</span><h3>Every event, deduped</h3><p>A single stream consumer fans out to every subscriber with per-event dedup, so you hear about a launch once, not once per pool.</p></div>
+        <div class="feat"><span class="tag">route</span><h3>Thresholds you set</h3><p>Whale floors in USD, price moves in percent, premium and rug thresholds per subscription. Watch a ticker, a token address, or the whole chain.</p></div>
+        <div class="feat"><span class="tag">respect</span><h3>Quiet hours and digests</h3><p>Batch alerts into a digest, mute overnight in your timezone, and stay under a hard per-minute cap so you are never flooded.</p></div>
+        <div class="feat"><span class="tag">group</span><h3>Group-chat ready</h3><p>Add the bot to a Telegram group or Discord server; config commands are admin-only, alerts land for everyone.</p></div>
+        <div class="feat"><span class="tag">premium</span><h3>Arb and rug detectors</h3><p>The Stock Token premium/discount signal and the liquidity-pull rug warning are the premium tier. Free tier covers launches, whales, and moves.</p></div>
+        <div class="feat"><span class="tag">host</span><h3>One container</h3><p>Engine plus both bots plus a health endpoint in a single process. Deploy to Cloud Run with min-instances 1 and go.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div>
+        <span class="brand"><span class="dot"></span> hood-alerts</span>
+        <p class="legal">Stock Tokens are tokenized debt securities (issuer: Robinhood Assets (Jersey) Ltd) and may not be offered, sold, or delivered to US persons (with further limits in Canada, the UK, and Switzerland). hood-alerts displays public on-chain data only and does not offer, solicit, or facilitate any purchase of Stock Tokens. Not investment advice.</p>
+      </div>
+      <div>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

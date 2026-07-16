@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Self-host · hood-alerts</title>
+  <meta name="description" content="Run your own hood-alerts instance: one container with the engine and both bots, deploy to Google Cloud Run, wire premium payments." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="nav">
+    <div class="wrap">
+      <span class="brand"><span class="dot"></span> hood-alerts</span>
+      <a class="link" href="index.html">Live feed</a>
+      <a class="link hide-sm" href="commands.html">Commands</a>
+      <a class="link" href="premium.html">Premium</a>
+      <a class="link" href="self-host.html">Self-host</a>
+      <span class="spacer"></span>
+      <a class="gh" href="https://github.com/nirholas/hood-alerts" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </nav>
+
+  <main class="wrap doc">
+    <h2>Self-host</h2>
+    <p class="lead">hood-alerts is one long-running process: the detection engine, an HTTP server (<code>/healthz</code> plus the premium endpoints), and both bots, each enabled by the presence of its token. It is a service, not a cron job.</p>
+
+    <h3>Run it locally</h3>
+    <pre><code>git clone https://github.com/nirholas/hood-alerts
+cd hood-alerts
+# Until the sibling packages are on npm, link them locally:
+npm i ../robinhood-chain-sdk ../hoodkit ../hood402
+npm install
+cp .env.example .env      # fill in what you use (all optional)
+npm run build && npm start</code></pre>
+    <p>With zero configuration it runs the engine plus the console transport, printing every alert it detects to stdout. That is the smoke test:</p>
+    <pre><code>npm run probe             # 90s live detection against mainnet 4663, no tokens
+npm run probe -- --token 0xTOKEN --seconds 300</code></pre>
+
+    <h3>Add the bots</h3>
+    <table>
+      <thead><tr><th>Env var</th><th>How to get it</th></tr></thead>
+      <tbody>
+        <tr><td><code>HOOD_ALERTS_TELEGRAM_TOKEN</code></td><td>Message <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a>, run <code>/newbot</code>, copy the token.</td></tr>
+        <tr><td><code>HOOD_ALERTS_DISCORD_TOKEN</code><br /><code>HOOD_ALERTS_DISCORD_APP_ID</code></td><td>Create an app at the <a href="https://discord.com/developers/applications" target="_blank" rel="noopener">Discord Developer Portal</a>; copy the Bot token and Application ID. Invite it with <code>applications.commands</code> + <code>bot</code> scopes.</td></tr>
+      </tbody>
+    </table>
+    <p>Each transport is optional: set only the tokens you want. The others stay disabled and log a warning.</p>
+
+    <h3>Premium payments</h3>
+    <p>Premium purchase endpoints stay off (returning a helpful <code>503</code>) until you set a receiving address and one settlement mode:</p>
+    <table>
+      <thead><tr><th>Env var</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><code>HOOD402_PAY_TO</code></td><td>Address that receives premium USDG. Required to sell premium.</td></tr>
+        <tr><td><code>HOOD402_FACILITATOR_URL</code></td><td>Settlement mode A: delegate verify + settle to a hood402 facilitator. No gas key on this box.</td></tr>
+        <tr><td><code>HOOD402_SETTLER_KEY</code></td><td>Settlement mode B: self-settle by broadcasting <code>transferWithAuthorization</code> yourself. A funded gas key.</td></tr>
+        <tr><td><code>HOOD_ALERTS_PREMIUM_PRICE_USDG</code><br /><code>HOOD_ALERTS_PREMIUM_DAYS</code></td><td>Price and duration of one purchase. Defaults: 5 USDG for 30 days.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout warn">Prefer facilitator mode. If you use a settler key, treat it like any hot wallet: fund it with only the ETH gas it needs, and never commit it. Every wallet key comes from the environment; nothing is read from code.</div>
+
+    <p>To comp a chat or test premium delivery before wiring a rail:</p>
+    <pre><code>npm run grant-premium -- grant telegram &lt;chatId&gt; --days 30
+npm run grant-premium -- status telegram &lt;chatId&gt;
+npm run grant-premium -- revoke telegram &lt;chatId&gt;</code></pre>
+
+    <h3>Deploy to Cloud Run</h3>
+    <p>The build context is the parent <code>robinhood/</code> directory so the local <code>file:</code> siblings resolve.</p>
+    <pre><code># From robinhood/ (the parent of hood-alerts/)
+docker build -f hood-alerts/Dockerfile -t hood-alerts .
+
+# Push and deploy (long-running service: keep one warm instance)
+gcloud run deploy hood-alerts \
+  --image=REGION-docker.pkg.dev/PROJECT/repo/hood-alerts:latest \
+  --min-instances=1 --no-cpu-throttling \
+  --set-env-vars=HOOD_ALERTS_TELEGRAM_TOKEN=…,HOOD_ALERTS_DISCORD_TOKEN=…,HOOD_ALERTS_DISCORD_APP_ID=… \
+  --set-env-vars=HOOD402_PAY_TO=0x… \
+  --port=8080</code></pre>
+    <p>Mount a persistent volume at <code>/data</code> (the default <code>HOOD_ALERTS_DB</code> path) so subscriptions, entitlements, and the delivery log survive restarts. The container answers <code>GET /healthz</code> with uptime, the last event time, and per-type event counts; graceful shutdown on <code>SIGTERM</code> flushes any pending digests.</p>
+
+    <h3>Configuration reference</h3>
+    <p>Every knob is an environment variable with a sensible default; see <code>.env.example</code> in the repo for the full annotated list, including detector thresholds (<code>HOOD_ALERTS_WHALE_FLOOR_USD</code>, <code>HOOD_ALERTS_PRICE_WINDOW_S</code>, <code>HOOD_ALERTS_RUG_DEFAULT_PCT</code>, and more).</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div><span class="brand"><span class="dot"></span> hood-alerts</span></div>
+      <div>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></div>
+    </div>
+  </footer>
+</body>
+</html>

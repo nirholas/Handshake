@@ -6,8 +6,8 @@ caller straight to the merchant and emits
 `PaymentReceived(reference, payer, payTo, token, amount)`. The contract
 never holds a balance, has no owner, and cannot be paused or upgraded.
 
-Why it exists: USDG has no memo field and no EIP-2612 permit (verified
-on-chain), so a bare `transfer` cannot say which invoice it settles. See
+Why it exists: USDG's `transfer` carries no memo or invoice-reference
+field, so a bare `transfer` cannot say which invoice it settles. See
 `docs/security.html` for the full reference-scheme design and collision
 math.
 

@@ -7,8 +7,9 @@ pragma solidity 0.8.30;
  * @notice Stateless, non-custodial payment attribution for plain ERC-20s.
  *
  * USDG (Paxos Global Dollar, Robinhood Chain's dollar stablecoin) is a
- * plain ERC-20: no memo field, no EIP-2612 permit. A bare `transfer`
- * therefore cannot say WHICH invoice it settles. `pay` fixes that in one
+ * plain ERC-20 whose `transfer` carries no memo or invoice-reference
+ * field. A bare `transfer` therefore cannot say WHICH invoice it settles.
+ * `pay` fixes that in one
  * hop: it pulls `amount` of `token` from the caller STRAIGHT to `payTo`
  * (this contract never holds a balance, has no owner, no pause, no
  * upgrade path, and no way to move funds that were not just approved for
@@ -40,9 +41,9 @@ contract HoodPayRouter {
 
     /**
      * @notice Pay `amount` of `token` to `payTo`, attributed to `reference`.
-     * @dev Requires a prior `approve(router, amount)` on `token` - USDG has
-     *      no permit, so the two-step approve + pay is the only flow.
-     *      Reverts unless the token both succeeds and (when it returns
+     * @dev Requires a prior `approve(router, amount)` on `token`: the caller
+     *      grants an explicit allowance, so the two-step approve + pay is the
+     *      flow. Reverts unless the token both succeeds and (when it returns
      *      data) returns true.
      */
     function pay(address token, address payTo, uint256 amount, bytes32 ref) external {

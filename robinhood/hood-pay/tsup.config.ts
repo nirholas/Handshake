@@ -12,5 +12,8 @@ export default defineConfig({
   clean: true,
   target: 'es2022',
   platform: 'neutral',
+  // `node:sqlite` is imported through an indirect specifier in
+  // src/verify/ledger.ts so esbuild cannot strip its `node:` prefix (it has no
+  // bare builtin alias). `node:crypto` / `node:events` alias fine bare.
   external: ['viem', 'hoodchain', 'hood-connect', 'node:sqlite', 'node:crypto', 'node:events'],
 })

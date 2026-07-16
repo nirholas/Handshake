@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Verify + webhooks - hood-pay</title>
+  <meta name="description" content="Confirm USDG payments on your server with hood-pay/verify: a reorg-safe on-chain watcher, signed webhooks, an idempotent SQLite ledger, and refund helpers." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="nav">
+    <div class="wrap nav-inner">
+      <span class="brand"><a href="index.html" style="color:inherit;text-decoration:none;">hood<b>pay</b></a></span>
+      <div class="nav-links">
+        <a href="index.html#demo">Demo</a>
+        <a href="index.html#embed">Embed</a>
+        <a href="links.html">Payment links</a>
+        <a href="verify.html">Verify</a>
+        <a href="security.html">Security</a>
+        <a class="cta" href="https://github.com/nirholas/hood-pay">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <section style="border-top:0;">
+    <div class="wrap">
+      <h1 style="font-size:clamp(1.8rem,4vw,2.6rem);letter-spacing:-0.03em;margin:0 0 8px;">Verify + webhooks</h1>
+      <p class="section-sub">The widget builds unsigned transactions; it never decides whether a payment happened. Your server does, by reading the chain with <code class="inline">hood-pay/verify</code> (Node-only). Install with <code class="inline">npm install hood-pay</code>.</p>
+
+      <div class="prose">
+        <h3>Await a payment</h3>
+        <p><code class="inline">awaitPayment</code> polls the chain until the invoice settles, the timeout elapses, or an <code class="inline">AbortSignal</code> fires. It never rejects on settlement grounds - the returned result carries a terminal status you handle explicitly.</p>
+        <div class="codewrap">
+          <button class="copy" data-copy="await-code">Copy</button>
+          <pre id="await-code"><span class="k">import</span> { networkInfo } <span class="k">from</span> <span class="s">'hood-pay'</span>
+<span class="k">import</span> { awaitPayment, createReader } <span class="k">from</span> <span class="s">'hood-pay/verify'</span>
+<span class="k">import</span> { parseUnits } <span class="k">from</span> <span class="s">'viem'</span>
+
+<span class="k">const</span> info = networkInfo(<span class="s">'mainnet'</span>)
+<span class="k">const</span> reader = createReader(<span class="s">'mainnet'</span>)
+
+<span class="k">const</span> result = <span class="k">await</span> awaitPayment(
+  {
+    token: info.usdg.address,
+    payTo: <span class="s">'0x4022de2D36C334E73C7a108805Cea11C0564f402'</span>,
+    expectedRaw: parseUnits(<span class="s">'25.00'</span>, info.usdg.decimals)
+  },
+  {
+    reader,
+    fromBlock: <span class="k">await</span> reader.getBlockNumber(),
+    confirmations: <span class="s">30</span>,        <span class="c">// reorg depth before a log counts</span>
+    timeoutMs: <span class="s">600_000</span>,
+    onState: (r) =&gt; console.log(r.status, r.receivedRaw)
+  }
+)</pre>
+        </div>
+      </div>
+
+      <div class="prose">
+        <h3>Payment statuses</h3>
+        <div class="card" style="padding:0;overflow-x:auto;">
+          <table>
+            <thead><tr><th>status</th><th>meaning</th><th>merchant action</th></tr></thead>
+            <tbody>
+              <tr><td><code>pending</code></td><td>nothing attributable received yet</td><td>keep waiting</td></tr>
+              <tr><td><code>underpaid</code></td><td>received, but less than expected</td><td>ask for the balance, or refund the received amount</td></tr>
+              <tr><td><code>paid</code></td><td>exactly the expected amount</td><td>fulfil the order</td></tr>
+              <tr><td><code>overpaid</code></td><td>more than expected</td><td>fulfil, then refund the overage</td></tr>
+              <tr><td><code>expired</code></td><td>window closed with nothing received</td><td>cancel the invoice</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="split">
+        <div class="prose">
+          <h3>Signed webhooks</h3>
+          <p>Deliveries carry a <code class="inline">hood-pay-signature: t=&lt;unix&gt;,v1=&lt;hmac-sha256&gt;</code> header over <code class="inline">"&lt;t&gt;.&lt;body&gt;"</code>. Verify it constant-time and reject stale timestamps. The payload is a hint - the ledger and watcher remain the source of truth for amounts.</p>
+        </div>
+        <div class="codewrap">
+          <button class="copy" data-copy="wh-code">Copy</button>
+          <pre id="wh-code"><span class="k">import</span> { verifyWebhookSignature, SIGNATURE_HEADER } <span class="k">from</span> <span class="s">'hood-pay/verify'</span>
+
+app.post(<span class="s">'/hooks/hood-pay'</span>, (req, res) =&gt; {
+  <span class="k">const</span> ok = verifyWebhookSignature(
+    process.env.HOOD_PAY_WEBHOOK_SECRET,
+    req.rawBody,                 <span class="c">// the exact bytes received</span>
+    req.get(SIGNATURE_HEADER)
+  )
+  <span class="k">if</span> (!ok) <span class="k">return</span> res.sendStatus(<span class="s">400</span>)
+  <span class="c">// event.payment.status is authoritative because the emitter read it on-chain</span>
+  res.sendStatus(<span class="s">200</span>)
+})</pre>
+        </div>
+      </div>
+
+      <div class="prose">
+        <h3>Idempotent ledger</h3>
+        <p>The SQLite ledger (<code class="inline">node:sqlite</code>, no native deps) keys transfers on <code class="inline">(txHash, logIndex)</code>, so replaying a webhook or re-running the watcher can never double-credit. Direct-mode invoices atomically reserve a unique fingerprint amount, so two invoices at the same price can never collide.</p>
+        <div class="codewrap">
+          <button class="copy" data-copy="ledger-code">Copy</button>
+          <pre id="ledger-code"><span class="k">import</span> { createLedger } <span class="k">from</span> <span class="s">'hood-pay/verify'</span>
+
+<span class="k">const</span> ledger = <span class="k">await</span> createLedger(<span class="s">'./shop.sqlite'</span>)
+<span class="k">const</span> invoice = ledger.createDirectInvoice({
+  network: <span class="s">'mainnet'</span>,
+  payTo: <span class="s">'0x4022de2D36C334E73C7a108805Cea11C0564f402'</span>,
+  token: info.usdg.address,
+  baseRaw: parseUnits(<span class="s">'25.00'</span>, <span class="s">6</span>),   <span class="c">// low 4 decimals free for the fingerprint</span>
+  memo: <span class="s">'Order 1042'</span>
+})
+<span class="c">// invoice.expectedRaw carries a unique dust fingerprint the verifier matches</span></pre>
+        </div>
+      </div>
+
+      <div class="prose">
+        <h3>Refunds</h3>
+        <p>hood-pay never holds the merchant's keys. Refund helpers build the unsigned ERC-20 transfer; <code class="inline">sendRefund</code> drives a viem wallet client the merchant supplies (key from <code class="inline">ROBINHOOD_CHAIN_PRIVATE_KEY</code>, never from this library).</p>
+        <ul>
+          <li><strong>Overpaid</strong> - <code class="inline">refundOverageTx(token, result)</code> returns the overage back to the payer.</li>
+          <li><strong>Underpaid / abandoned</strong> - <code class="inline">refundReceivedTx(token, result)</code> returns everything received.</li>
+          <li><strong>Full refund</strong> - <code class="inline">buildRefundTx(token, payer, expectedRaw)</code> for any signer.</li>
+        </ul>
+      </div>
+
+      <div class="prose">
+        <h3>Runnable example</h3>
+        <p>A complete Express shop selling one digital good - ledger, verifier, and a signed webhook - lives in <code class="inline">examples/shop/</code> in the repo. <code class="inline">npm start</code> there, open the printed URL, pay in the widget, and watch the webhook fire.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
+      <span>All rights reserved</span>
+    </div>
+  </footer>
+
+  <script>
+    document.querySelectorAll('.copy').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var el = document.getElementById(btn.getAttribute('data-copy'));
+        navigator.clipboard.writeText(el.innerText).then(function () {
+          btn.textContent = 'Copied'; btn.classList.add('ok');
+          setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('ok'); }, 1400);
+        });
+      });
+    });
+  </script>
+</body>
+</html>

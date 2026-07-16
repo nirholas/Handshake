@@ -1,6 +1,6 @@
 # hood-alerts
 
-[![license](https://img.shields.io/badge/license-proprietary-93a1af?labelColor=101418)](./LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-93a1af?labelColor=101418)](./LICENSE)
 
 The alert layer for **Robinhood Chain** (chain ID 4663): Telegram and Discord bots backed by one
 shared detection engine that watches launches, graduations, whale trades, Stock Token price moves,
@@ -168,19 +168,57 @@ npm test            # vitest: dedup/rate-limit gate, digest batching, topic pars
 npm run build       # tsc -> dist/
 ```
 
+The `whale-classify` and `detectors` suites run against **real captured mainnet event streams** in
+`tests/fixtures/` (real Uniswap v3 swaps, Odyssey bonding-curve trades, and Chainlink prices).
+Refresh them any time with `npm run capture-fixtures`, which re-reads live chain 4663.
+
 `npm run test:live` and `npm run probe` exercise the live detector set against real Robinhood Chain
 RPC and, for `probe`, the console transport; they need real network access and are not part of the
-offline unit suite above.
+offline unit suite above. `npm run grant-premium` comps or inspects a premium entitlement directly
+in the database (handy for testing premium delivery before a payment rail is wired).
 
 ### Local sibling packages
 
 `hood402`, `hoodkit`, and `hoodchain` are consumed as `file:` dependencies of the other Robinhood
 Chain repos in this workspace (`../hood402`, `../hoodkit`, `../robinhood-chain-sdk`) rather than
 their published npm versions, so a change to any of them is picked up on the next `npm install`
-here. Keep `viem` pinned to the exact version those sibling packages resolve (currently `2.55.1`):
-a newer patch on only one side of a `file:` link makes viem's structural types for `Chain` and
-`WalletClient` diverge across the two copies and breaks the type check in `src/premium/paywall.ts`
-and `src/index.ts`.
+here. A `file:` link keeps each sibling's own `viem` copy, so a patch-level skew (e.g. `2.55.2`
+here vs `2.55.1` in `hood402`) makes viem's structural `Chain` / `WalletClient` types diverge across
+the two copies. `src/premium/paywall.ts` bridges that boundary explicitly (casting the local viem
+clients to `hood402`'s `HoodBroadcaster` / `HoodConfirmer`), so the build stays green across a patch
+skew; the runtime objects are the same correct viem clients. Once the siblings are on npm and a
+single `viem` resolves, the cast is a no-op.
+
+## Deploy
+
+hood-alerts is one long-running process (engine + HTTP server + both bots), so run it as a service
+with a warm instance, not a job.
+
+Because the sibling packages are `file:` links, the Docker build context is the **parent
+`robinhood/` directory** so they resolve:
+
+```sh
+# from robinhood/ (the parent of hood-alerts/)
+docker build -f hood-alerts/Dockerfile -t hood-alerts .
+
+gcloud run deploy hood-alerts \
+  --image=REGION-docker.pkg.dev/PROJECT/repo/hood-alerts:latest \
+  --min-instances=1 --no-cpu-throttling --port=8080 \
+  --set-env-vars=HOOD_ALERTS_TELEGRAM_TOKEN=…,HOOD_ALERTS_DISCORD_TOKEN=…,HOOD_ALERTS_DISCORD_APP_ID=…
+```
+
+Mount a volume at `/data` (the default `HOOD_ALERTS_DB` path) so subscriptions, entitlements, and
+the delivery log survive restarts. The container answers `GET /healthz`; `SIGTERM` flushes pending
+digests before exit. Once the siblings are published to npm, switch the `file:` specs in
+`package.json` and the image builds from the `hood-alerts/` directory alone. Full self-host and
+premium-wiring guide: the `docs/` site.
+
+## Docs site (GitHub Pages)
+
+`docs/` is a static, hand-built site (no framework, no build step): open `docs/index.html` locally,
+or serve it from GitHub Pages. Its landing page renders a **live** premium/discount feed client-side
+straight from the public RPC (real Chainlink feeds vs real DEX pools, no server). One-time setup:
+Settings -> Pages -> Deploy from a branch -> `main` -> `/docs`.
 
 ## Architecture notes
 
@@ -213,7 +251,11 @@ src/premium/paywall.ts       the hood402 x402 purchase flow
 src/transports/              Telegram (grammY), Discord (discord.js), and console transports
 src/commands/commands.ts     the shared, platform-neutral command router
 src/format/cards.ts          alert -> platform-neutral card -> per-platform rendering
-tests/                       vitest unit suite (see Development above)
+tests/                       vitest unit suite + tests/fixtures (real captured chain events) +
+                             tests/live (opt-in on-chain reads)
+scripts/                     capture-fixtures, live-probe, grant-premium (see Development above)
+docs/                        static GitHub Pages site with a live client-side premium feed
+Dockerfile                   one-container build (engine + both bots), build from robinhood/
 ```
 
 ## Notes
@@ -228,6 +270,6 @@ tests/                       vitest unit suite (see Development above)
 
 ## License
 
-Proprietary, all rights reserved. See [LICENSE](./LICENSE).
+MIT. See [LICENSE](./LICENSE).
 
 Built by [nirholas](https://x.com/nichxbt) · [three.ws](https://three.ws)

@@ -124,6 +124,7 @@ upstream is down — a buyer is never charged for missing data.
 | `/api/x402/gas-oracle`          | $0.001  | Live fee tiers for Ethereum + Base (real `eth_feeHistory`) and Solana priority-fee percentiles.  |
 | `/api/x402/market-mood`         | $0.002  | Fear & Greed × 192-feed news sentiment composite (0–100) with divergence flag + driver headlines. |
 | `/api/x402/news-pulse`          | $0.002  | Per-ticker news coverage: mentions, velocity vs prior window, sentiment split, top headlines.    |
+| `/api/x402/robinhood-portfolio` | $0.002  | Multiplier-correct Stock Token portfolio for a Robinhood Chain wallet: each symbol's true position (balance x ERC-8056 uiMultiplier) at on-chain Chainlink NAV, plus total USD value. |
 
 There is also a registry-derived `market-*` family — one endpoint per raw data
 category, projected from `api/_lib/market-data/registry.js`. Each is $0.001

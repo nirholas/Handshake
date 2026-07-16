@@ -13,8 +13,8 @@ usable on its own:
 - **Verify** (`hood-pay/verify`, Node-only): a reorg-safe on-chain payment watcher, an idempotent
   SQLite ledger, signed webhooks, and refund helpers for the merchant side.
 
-USDG (Robinhood Chain's dollar stablecoin) is a plain ERC-20: no memo field, no EIP-2612 permit.
-A bare `transfer` cannot say which invoice it settles. hood-pay solves that two ways: **router
+USDG (Robinhood Chain's dollar stablecoin) is a plain ERC-20 whose `transfer` carries no memo or
+invoice-reference field. A bare `transfer` cannot say which invoice it settles. hood-pay solves that two ways: **router
 mode**, where the buyer pays through the stateless, non-custodial `HoodPayRouter` contract
 (`contracts/src/HoodPayRouter.sol`) which emits `PaymentReceived(reference, payer, payTo, token,
 amount)` for exact attribution regardless of amount; and **direct mode**, where the invoice
@@ -236,7 +236,7 @@ and auto-mounts every `[data-hoodpay]` element on `DOMContentLoaded`.
 
 `contracts/src/HoodPayRouter.sol` is the stateless, non-custodial router: `pay(token, payTo,
 amount, ref)` pulls `amount` of `token` from the caller straight to `payTo` via `transferFrom`
-(requires a prior `approve` - USDG has no permit) and emits `PaymentReceived`. It never holds a
+(requires a prior `approve`) and emits `PaymentReceived`. It never holds a
 balance, has no owner, no pause, and no upgrade path; it tolerates non-reverting tokens that
 signal failure by returning `false` and legacy tokens that return no data at all.
 

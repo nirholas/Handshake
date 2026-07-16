@@ -1,0 +1,18 @@
+{
+  "name": "hood-pay-shop-example",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A tiny real merchant demo: an Express store selling one digital good for USDG, using hood-pay's widget, ledger, verifier, and signed webhooks end-to-end.",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "hood-pay": "file:../..",
+    "viem": "^2.55.0"
+  }
+}

@@ -318,19 +318,23 @@ export class LiveDetectors {
     })
     const eth = await this.ethPrice.get()
     const at = nowS()
-    slots.forEach((res, i) => {
+    // Type the multicall result explicitly so this compiles regardless of how
+    // viem's version-dependent generics infer `slot0`'s tuple.
+    const results = slots as ReadonlyArray<{ status: 'success'; result: unknown } | { status: 'failure'; error: unknown }>
+    for (let i = 0; i < results.length; i++) {
+      const res = results[i]
       const p = this.stockPools[i]
-      if (!p || res.status !== 'success') return
+      if (!p || !res || res.status !== 'success') continue
       const [sqrtPriceX96] = res.result as readonly [bigint, number, number, number, number, number, boolean]
       const spot0In1 = sqrtPriceX96ToPrice(sqrtPriceX96, p.decimals0, p.decimals1)
-      if (spot0In1 <= 0) return
+      if (spot0In1 <= 0) continue
       const stockInQuote = p.stockIs0 ? spot0In1 : 1 / spot0In1
       const dexUsd = p.quoteAsset === 'USDG' ? stockInQuote : eth !== null ? stockInQuote * eth : null
       const feedUsd = this.lastFeedUsd.get(p.symbol)
-      if (dexUsd === null || feedUsd === undefined) return
+      if (dexUsd === null || feedUsd === undefined) continue
       const event = this.premiumLadder.update(p.symbol, p.token, p.pool, dexUsd, feedUsd, at)
       if (event) this.push(event)
-    })
+    }
   }
 
   // ---- liquidity pulls ----------------------------------------------------

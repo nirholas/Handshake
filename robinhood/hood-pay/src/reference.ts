@@ -3,10 +3,9 @@ import type { Hex } from 'viem'
 /**
  * The hood-pay reference scheme.
  *
- * USDG is a plain ERC-20 with no memo field and no EIP-2612 permit (verified
- * on the Blockscout-verified implementation during the `hoodchain` SDK
- * build), so a bare `transfer` carries no way to say WHICH invoice a payment
- * settles. hood-pay solves attribution two ways:
+ * USDG is a plain ERC-20 whose `transfer` carries no memo or invoice-
+ * reference field, so a bare `transfer` has no way to say WHICH invoice a
+ * payment settles. hood-pay solves attribution two ways:
  *
  * 1. **Router mode** (exact attribution): the buyer pays through the
  *    stateless, non-custodial `HoodPayRouter` contract, which moves the

@@ -105,7 +105,7 @@ async function captureCurveTrades(client: ReturnType<typeof createHoodClient>): 
         .getLogs({ address: factory, event: odysseyTradedEvent, fromBlock: from, toBlock: to })
         .catch(() => [])
       for (const log of logs) {
-        const a = log.args as { token?: Address; trader?: Address; isBuy?: boolean; tokenAmount?: bigint; ethAmount?: bigint; fee?: bigint }
+        const a = log.args as { token?: Address; trader?: Address; isBuy?: boolean; tokenAmount?: bigint; quoteAmount?: bigint; fee?: bigint }
         if (!a.token || !a.trader || a.tokenAmount === undefined) continue
         trades.push({
           launchpad: 'odyssey',
@@ -113,7 +113,7 @@ async function captureCurveTrades(client: ReturnType<typeof createHoodClient>): 
           trader: a.trader,
           isBuy: Boolean(a.isBuy),
           tokenAmount: a.tokenAmount,
-          quoteAmount: a.ethAmount ?? 0n,
+          quoteAmount: a.quoteAmount ?? 0n,
           fee: a.fee ?? 0n,
           blockNumber: log.blockNumber,
           transactionHash: log.transactionHash,

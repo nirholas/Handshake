@@ -1,26 +1,15 @@
 {
-  "capturedAt": "2026-07-16T17:02:47.527Z",
+  "capturedAt": "2026-07-16T17:07:25.852Z",
   "chainId": 4663,
   "ethUsd": 1877.94,
   "trades": [
     {
       "launchpad": "odyssey",
       "token": "0x6b21b4567EfAd992B65f8a92457B45a74ed59486",
-      "trader": "0x6A85b75E240D67783Ea85375be5E0f5BF3697051",
-      "isBuy": true,
-      "tokenAmount": "21546882935256",
-      "quoteAmount": "0",
-      "fee": "3838099598115792",
-      "blockNumber": "11022832",
-      "transactionHash": "0xefad0bfc174d9b11237a845ab71ab0ae889845a252dfd59002e5efc3b43cc25a"
-    },
-    {
-      "launchpad": "odyssey",
-      "token": "0x6b21b4567EfAd992B65f8a92457B45a74ed59486",
       "trader": "0x6Fe4054eB7Df2a752132dD1DDEA919921A3CccB7",
       "isBuy": true,
       "tokenAmount": "8748016421282",
-      "quoteAmount": "0",
+      "quoteAmount": "85137810235045981",
       "fee": "1702756204700920",
       "blockNumber": "11025696",
       "transactionHash": "0x0c5ce7566a997a178b223b84a6cab83ff9e5a8ecb2b24f2274b263233f57a729"
@@ -31,7 +20,7 @@
       "trader": "0x7B70E60Cd3806907AF0F4aEe47FF597f47EBF3CE",
       "isBuy": true,
       "tokenAmount": "11136388196935",
-      "quoteAmount": "0",
+      "quoteAmount": "115211085405890523",
       "fee": "2304221708117811",
       "blockNumber": "11090913",
       "transactionHash": "0x9815c87a9a7a69a0c54b787fecd9fab849f90c3e717385a7231549eec3cbf1b7"
@@ -42,7 +31,7 @@
       "trader": "0x7B70E60Cd3806907AF0F4aEe47FF597f47EBF3CE",
       "isBuy": false,
       "tokenAmount": "11136388196935",
-      "quoteAmount": "0",
+      "quoteAmount": "115211085405890523",
       "fee": "2304221708117810",
       "blockNumber": "11105367",
       "transactionHash": "0xf1f4b5bd8918d1bb94f466428a2bf9c75df07e60f96ffe076aafa492dc676750"
@@ -53,7 +42,7 @@
       "trader": "0x6977109374fc923213CE42f9c5809DCe1066f4B3",
       "isBuy": true,
       "tokenAmount": "1369028774047",
-      "quoteAmount": "0",
+      "quoteAmount": "13738035822325315",
       "fee": "274760716446507",
       "blockNumber": "11109989",
       "transactionHash": "0xa876d7706717db7f18c73c17278ca7833eafa5a213323b51f99dace233dae17e"
@@ -64,7 +53,7 @@
       "trader": "0x130F46a76Bf1D89Cc45Eb9Ad97Cb3370863492DB",
       "isBuy": true,
       "tokenAmount": "286876861731",
-      "quoteAmount": "0",
+      "quoteAmount": "2893439041734888",
       "fee": "57868780834698",
       "blockNumber": "11122837",
       "transactionHash": "0x741c7c8fcbf4e9571a645331d3fc765c80362b30e1c5b8155ff87c85b86a7702"
@@ -75,7 +64,7 @@
       "trader": "0xfe28285fd95Bc897bc3E4c4566088698611aF8aD",
       "isBuy": true,
       "tokenAmount": "1878326387753",
-      "quoteAmount": "0",
+      "quoteAmount": "3338054687736137",
       "fee": "66761093754723",
       "blockNumber": "11159252",
       "transactionHash": "0xfeb7a468aabb4fd7d018e160acf13c0c3c50c6716f44eadabb65448d7f6ccb31"
@@ -86,10 +75,21 @@
       "trader": "0xC50723b547d1337667493Af50B1a8Ea856Ef66B4",
       "isBuy": true,
       "tokenAmount": "17851557670618",
-      "quoteAmount": "0",
+      "quoteAmount": "190681446066987801",
       "fee": "3813628921339757",
       "blockNumber": "11155901",
       "transactionHash": "0x6ba554fc0d91835fbb951332c4e17f785f696a68baa78cb6c7b9cc2f6d778ab7"
+    },
+    {
+      "launchpad": "odyssey",
+      "token": "0x6b21b4567EfAd992B65f8a92457B45a74ed59486",
+      "trader": "0x7B70E60Cd3806907AF0F4aEe47FF597f47EBF3CE",
+      "isBuy": true,
+      "tokenAmount": "11841440633768",
+      "quoteAmount": "139199742370364745",
+      "fee": "2783994847407295",
+      "blockNumber": "11201737",
+      "transactionHash": "0x925fd42748e53ba88951ee01a897059b2d19b7f4db71582b9e555f3f5dc4d1e7"
     }
   ]
 }

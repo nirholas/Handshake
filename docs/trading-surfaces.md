@@ -131,6 +131,8 @@ Agents wanting the same intel over MCP: see [docs/mcp.md](mcp.md) (`@three-ws/in
 
 ## Related
 
+- [Meta-Allocator: the ETF of degens](meta-allocator.md): diversify a budget across the top verified leaders
+- [Clip Director: every trade becomes content](clip-director.md): turn any closed trade into shareable cards per surface
 - [The Trading Copilot — talk to your wallet](trading-copilot.md) — conversational trading over these same numbers
 - [Oracle — the conviction engine](oracle.md) · [/oracle/docs](https://three.ws/oracle/docs)
 - [The autonomous trading experiment](trading-experiment.md)

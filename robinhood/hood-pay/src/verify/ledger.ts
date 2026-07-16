@@ -147,7 +147,11 @@ function rowToInvoice(row: InvoiceRow): LedgerInvoice {
 export async function createLedger(path: string): Promise<Ledger> {
   let DatabaseSync: new (path: string) => SqliteDatabase
   try {
-    ;({ DatabaseSync } = (await import('node:sqlite')) as unknown as {
+    // Indirect specifier: keeps esbuild from statically analyzing (and
+    // stripping the `node:` prefix off) this import. `node:sqlite` has no
+    // bare-name builtin alias, so the prefix must survive into the bundle.
+    const sqliteSpecifier = 'node:sqlite'
+    ;({ DatabaseSync } = (await import(sqliteSpecifier)) as unknown as {
       DatabaseSync: new (path: string) => SqliteDatabase
     })
   } catch {

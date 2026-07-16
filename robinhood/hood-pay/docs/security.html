@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Security - hood-pay</title>
+  <meta name="description" content="hood-pay's security model: the widget never holds keys or custodies funds, amounts are verified on-chain not in the DOM, plus the reorg-depth policy and reference-collision math." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="nav">
+    <div class="wrap nav-inner">
+      <span class="brand"><a href="index.html" style="color:inherit;text-decoration:none;">hood<b>pay</b></a></span>
+      <div class="nav-links">
+        <a href="index.html#demo">Demo</a>
+        <a href="index.html#embed">Embed</a>
+        <a href="links.html">Payment links</a>
+        <a href="verify.html">Verify</a>
+        <a href="security.html">Security</a>
+        <a class="cta" href="https://github.com/nirholas/hood-pay">GitHub</a>
+      </div>
+    </div>
+  </nav>
+
+  <section style="border-top:0;">
+    <div class="wrap">
+      <h1 style="font-size:clamp(1.8rem,4vw,2.6rem);letter-spacing:-0.03em;margin:0 0 8px;">Security model</h1>
+      <p class="section-sub">hood-pay is non-custodial by construction. It moves no money on its own and stores no keys. Here is exactly what each piece can and cannot do.</p>
+
+      <div class="split">
+        <div class="card prose">
+          <h3 style="color:var(--accent-2);">The widget CAN</h3>
+          <ul>
+            <li>Discover EIP-6963 wallets already installed in the buyer's browser.</li>
+            <li>Ask the wallet to switch to Robinhood Chain (4663 / 46630).</li>
+            <li>Read the buyer's token balance and allowance (read-only <code class="inline">eth_call</code>).</li>
+            <li>Build an <strong>unsigned</strong> <code class="inline">transfer</code> (or <code class="inline">approve</code> + router <code class="inline">pay</code>) and hand it to the wallet to sign.</li>
+            <li>Watch for the transaction receipt and show a confirmation state.</li>
+          </ul>
+        </div>
+        <div class="card prose">
+          <h3 style="color:var(--danger);">The widget CANNOT</h3>
+          <ul>
+            <li>Hold, request, or see a private key or seed phrase - ever.</li>
+            <li>Custody funds. Payments go buyer → merchant (or buyer → router → merchant) in one atomic transaction; the router never holds a balance.</li>
+            <li>Move funds the buyer did not just approve for that exact call.</li>
+            <li>Decide, at settlement, that a payment "counts" from the DOM. The merchant's verifier re-reads the amount on-chain.</li>
+            <li>Approve unlimited allowance - router mode approves the <em>exact</em> invoice amount.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="prose">
+        <h3>Amounts are verified on-chain, never in the DOM</h3>
+        <p>A malicious page could change what a buyer sees, but it cannot forge a settled transfer. The merchant side (<code class="inline">hood-pay/verify</code>) reads <code class="inline">Transfer</code> / <code class="inline">PaymentReceived</code> logs directly from the chain and sums the attributed value in BigInt. The webhook body and the widget's <code class="inline">onSuccess</code> receipt are hints; the ledger and watcher are the source of truth.</p>
+      </div>
+
+      <div class="prose">
+        <h3>Reorg-depth policy</h3>
+        <p>Robinhood Chain is an Arbitrum Orbit L2 with ~100 ms blocks. The watcher defends against reorgs two ways:</p>
+        <ul>
+          <li><strong>Confirmation depth.</strong> Only blocks at depth ≥ <code class="inline">confirmations</code> below the head are ever scanned (default 30, roughly 3 seconds of blocks). A log must survive that many blocks before it can count.</li>
+          <li><strong>Canonical re-check.</strong> Every candidate log's block hash is re-fetched by number and compared. If the block was reorged out after the scan, the hash mismatches and the log is dropped.</li>
+        </ul>
+        <p>Together, a confirmed result is stable under any reorg shallower than <code class="inline">confirmations</code>, and immune to deeper ones that occur between scanning and re-checking. Raise <code class="inline">confirmations</code> for higher-value invoices.</p>
+      </div>
+
+      <div class="prose">
+        <h3>Reference scheme + collision math</h3>
+        <p>USDG is a plain ERC-20 whose <code class="inline">transfer</code> carries no memo or invoice-reference field, so a bare transfer cannot say which invoice it settles. hood-pay attributes payments two ways. (Note: current mainnet USDG also exposes an EIP-2612 <code class="inline">permit</code>, but hood-pay does not use it - it approves the exact amount explicitly, so there is one auditable allowance path.)</p>
+
+        <div class="card">
+          <p style="margin-top:0;"><strong>Router mode (exact attribution).</strong> The buyer pays through the stateless <code class="inline">HoodPayRouter</code>, which emits <code class="inline">PaymentReceived(reference, payer, payTo, token, amount)</code>. The reference is 32 random bytes per checkout, drawn uniformly from 2<sup>256</sup>. By the birthday bound, the probability any two of <em>k</em> references collide is about <code class="inline">k² / 2²⁵⁷</code> - at a trillion payments (k = 10¹²) that is ~8.6 × 10⁻⁵⁴. Attribution is exact regardless of amount, so partial payments and overpayments are summed per reference.</p>
+        </div>
+
+        <div class="card">
+          <p style="margin-top:0;"><strong>Direct mode (amount fingerprinting, zero contracts).</strong> USDG has 6 decimals; retail prices use at most 2, leaving the low 4 decimal digits (9,999 usable slots, each worth 0.0001 USDG) as a fingerprint. The verifier matches <code class="inline">Transfer(to = payTo, value = base + dust)</code> exactly.</p>
+          <ul>
+            <li><strong>With a ledger</strong>, the dust slot is atomically reserved per (payTo, token, base amount) while an invoice is open - collisions are impossible by construction, not by probability.</li>
+            <li><strong>Without a ledger</strong> (static payment links), dust is random and the birthday bound applies: <code class="inline">k(k-1) / (2 × 9999)</code> for k concurrent open invoices at the <em>same</em> price to the <em>same</em> merchant - about 0.45% at k = 10. Static links suit low-concurrency sellers; a ledger or router suits everyone else.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="prose">
+        <h3>Merchant key handling</h3>
+        <p>Refunds are the only operation that needs the merchant's key, and hood-pay never touches it. <code class="inline">buildRefundTx</code> produces an unsigned transfer; <code class="inline">sendRefund</code> drives a wallet client the merchant supplies. Keep the key in <code class="inline">ROBINHOOD_CHAIN_PRIVATE_KEY</code> (or a signer service), never in code, and never in a client bundle.</p>
+      </div>
+
+      <div class="prose">
+        <h3>Stock Tokens are out of scope, on purpose</h3>
+        <p>hood-pay settles in USDG and other non-security tokens. It does not buy, sell, or route Robinhood <strong>Stock Tokens</strong>. Stock Tokens are tokenized debt securities (issuer: Robinhood Assets (Jersey) Ltd) and may not be offered, sold, or delivered to US persons (with extra limits in Canada, the UK, and Switzerland). If you point a checkout at a Stock Token as the payment asset, that eligibility restriction is yours to enforce; USDG and memecoin payments carry no such restriction.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
+      <span>MIT</span>
+    </div>
+  </footer>
+</body>
+</html>

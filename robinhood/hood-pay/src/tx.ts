@@ -25,10 +25,9 @@ export function buildTransferTx(token: Address, payTo: Address, rawAmount: bigin
 }
 
 /**
- * Router mode, step 1: `approve(router, rawAmount)` on the token. USDG has
- * no EIP-2612 permit (verified on-chain), so an explicit approve is the
- * only allowance mechanism. hood-pay approves the EXACT invoice amount,
- * never unlimited.
+ * Router mode, step 1: `approve(router, rawAmount)` on the token. hood-pay
+ * uses an explicit approve for the router allowance (never a permit
+ * signature), approving the EXACT invoice amount, never unlimited.
  */
 export function buildApproveTx(token: Address, router: Address, rawAmount: bigint): UnsignedCall {
   return {

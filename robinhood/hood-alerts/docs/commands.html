@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Commands · hood-alerts</title>
+  <meta name="description" content="Full command reference for the hood-alerts Telegram and Discord bots on Robinhood Chain." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="nav">
+    <div class="wrap">
+      <span class="brand"><span class="dot"></span> hood-alerts</span>
+      <a class="link" href="index.html">Live feed</a>
+      <a class="link" href="commands.html">Commands</a>
+      <a class="link" href="premium.html">Premium</a>
+      <a class="link hide-sm" href="self-host.html">Self-host</a>
+      <span class="spacer"></span>
+      <a class="gh" href="https://github.com/nirholas/hood-alerts" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </nav>
+
+  <main class="wrap doc">
+    <h2>Command reference</h2>
+    <p class="lead">The same commands work on Telegram (as <code>/watch …</code>) and Discord (as slash commands). In a group or server, config commands are limited to admins; anyone can run <code>list</code>, <code>premium</code>, and <code>help</code>.</p>
+
+    <h3>Watch targets</h3>
+    <table>
+      <thead><tr><th>Target</th><th>What you get</th><th>Tier</th></tr></thead>
+      <tbody>
+        <tr><td><code>launches</code></td><td>Every new token on NOXA and The Odyssey. Add <code>noxa</code> or <code>odyssey</code> to filter.</td><td>Free</td></tr>
+        <tr><td><code>graduations</code></td><td>Odyssey bonding curves that fill and migrate to a locked Uniswap v3 pool.</td><td>Free</td></tr>
+        <tr><td><code>whales [usd]</code></td><td>Trades at or above a USD threshold, chain-wide. Default $5,000.</td><td>Free</td></tr>
+        <tr><td><code>&lt;TICKER&gt;</code></td><td>A Stock Token (e.g. <code>TSLA</code>): Chainlink price moves and on-chain premium/discount crossings.</td><td>Free</td></tr>
+        <tr><td><code>&lt;0x address&gt;</code></td><td>A specific memecoin: its whale trades, graduation, holder milestones, and liquidity pulls.</td><td>Free</td></tr>
+        <tr><td><code>premiums [pct]</code></td><td>The Stock Token arbitrage signal: any token trading past a premium/discount threshold vs its oracle. Default 2%.</td><td>Premium</td></tr>
+        <tr><td><code>rugs [pct]</code></td><td>Liquidity-pull rug early-warning: quote reserves dropping past a threshold. Default 30%.</td><td>Premium</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Managing your watches</h3>
+    <table>
+      <thead><tr><th>Command</th><th>Does</th></tr></thead>
+      <tbody>
+        <tr><td><code>watch &lt;target&gt; [n]</code></td><td>Start watching. Optional threshold: USD for whales/tokens, percent for premiums/rugs/stocks.</td></tr>
+        <tr><td><code>unwatch &lt;target&gt;</code></td><td>Stop watching one target. <code>unwatch all</code> clears everything.</td></tr>
+        <tr><td><code>list</code></td><td>Your subscriptions, thresholds, tier, digest, and quiet-hour settings.</td></tr>
+        <tr><td><code>threshold &lt;target&gt; &lt;n&gt;</code></td><td>Change a subscription's threshold, e.g. <code>threshold whales 25000</code>.</td></tr>
+        <tr><td><code>digest on [min]</code> / <code>digest off</code></td><td>Batch alerts into a periodic digest (default every 60 minutes) instead of delivering each one.</td></tr>
+        <tr><td><code>quiet &lt;from&gt; &lt;to&gt;</code></td><td>Quiet hours in UTC, e.g. <code>quiet 22 7</code>. Alerts batch and deliver after. <code>quiet off</code> to disable.</td></tr>
+        <tr><td><code>premium</code></td><td>Your premium status and how to upgrade.</td></tr>
+        <tr><td><code>help</code></td><td>The full reference, in-chat.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Examples</h3>
+    <pre><code>watch launches noxa        # only NOXA launches
+watch whales 10000         # chain-wide trades ≥ $10k
+watch TSLA                 # TSLA moves + on-chain premium
+watch 0x…                  # one memecoin, fully
+watch premiums 3           # Stock Tokens ≥ 3% off oracle (premium)
+digest on 120              # one digest every 2 hours
+quiet 23 8                 # mute 23:00-08:00 UTC</code></pre>
+
+    <div class="callout">Every command answers, always. Unknown commands return help, empty states tell you what to try next ("you watch nothing yet, try <code>watch launches</code>"), and you never see raw JSON.</div>
+
+    <h3>Free vs premium at a glance</h3>
+    <p>Free: up to 3 subscriptions, alerts batched to a 60-second minimum. Premium: unlimited subscriptions, real-time delivery, and the <code>premiums</code> and <code>rugs</code> detectors. See <a href="premium.html">pricing</a>.</p>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div><span class="brand"><span class="dot"></span> hood-alerts</span></div>
+      <div>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></div>
+    </div>
+  </footer>
+</body>
+</html>
