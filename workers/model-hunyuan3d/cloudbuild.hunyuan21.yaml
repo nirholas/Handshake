@@ -1,0 +1,80 @@
+substitutions:
+  _REGION: us-central1
+  _RUN_SA: avatar-reconstruction-sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+  _SERVICE: model-hunyuan3d-21
+  _REPO: model-hunyuan3d-21
+  _GCS_BUCKET: three-ws-avatar-reconstructions
+  _WEIGHTS_BUCKET: three-ws-model-weights
+  # min=1: the 2.1 shape DiT (6.9 GiB .ckpt) + paint UNet (3.7 GiB) + DINOv2
+  # stage ~18 GiB from GCS and load in minutes; keep one instance warm so no
+  # request ever pays that. GCP credit budget covers the always-on GPU-hour.
+  # max=1: one L4 fits exactly one in-flight generation.
+  _MIN_INSTANCES: "1"
+  _MAX_INSTANCES: "1"
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    dir: workers/model-hunyuan3d
+    args:
+      - build
+      - --file
+      - Dockerfile.hunyuan21
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+      - --cache-from
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+      - .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+      - --region=${_REGION}
+      - --service-account=${_RUN_SA}
+      - --platform=managed
+      - --port=8080
+      - --gpu=1
+      - --gpu-type=nvidia-l4
+      - --no-gpu-zonal-redundancy
+      - --no-cpu-throttling
+      - --cpu=8
+      - --memory=32Gi
+      - --min-instances=${_MIN_INSTANCES}
+      - --max-instances=${_MAX_INSTANCES}
+      - --timeout=900
+      - --allow-unauthenticated
+      - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET}
+      - --add-volume-mount=volume=weights,mount-path=/weights
+      - --set-env-vars=^;^GCS_BUCKET=${_GCS_BUCKET};HUNYUAN3D_MODEL=2.1;WEIGHTS_DIR=/weights/hunyuan3d-2.1;WEIGHTS_GCS_URI=gs://${_WEIGHTS_BUCKET}/hunyuan3d-2.1;WEIGHTS_LOCAL_DIR=/tmp/hunyuan3d-2.1;DINO_DIR=/weights/dinov2-giant;DINO_GCS_URI=gs://${_WEIGHTS_BUCKET}/dinov2-giant;DINO_LOCAL_DIR=/tmp/dinov2-giant;MAX_CONCURRENT=1
+      - --set-secrets=API_KEY=avatar-reconstruction-key:latest
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+
+options:
+  machineType: E2_HIGHCPU_32
+  logging: CLOUD_LOGGING_ONLY
+
+# The project's default compute service account was deleted (see
+# docs/ops/gcp-production.md) — every Cloud Build must pin the build SA
+# explicitly or the submit fails with "Unknown service account".
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
+# The custom_rasterizer CUDA compile + the bpy/torch install push the build well
+# past the 10-minute default.
+timeout: 3600s

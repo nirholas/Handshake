@@ -1,0 +1,82 @@
+# Hunyuan3D-2.1 PBR image-to-3D worker.
+#
+# CUDA 12.4 devel base (matches Tencent's own docker/Dockerfile): the paint
+# stack compiles two in-tree extensions at build time — custom_rasterizer (CUDA)
+# and DifferentiableRenderer's mesh_inpaint_processor (pybind11) — and needs
+# nvcc + a C++ toolchain. TORCH_CUDA_ARCH_LIST targets the Cloud Run L4 (compute
+# capability 8.9) so the kernels build for it.
+FROM nvidia/cuda:12.4.1-devel-ubuntu22.04
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    TORCH_CUDA_ARCH_LIST="8.9+PTX" \
+    CUDA_NVCC_FLAGS="-allow-unsupported-compiler" \
+    CUDA_HOME=/usr/local/cuda \
+    PYOPENGL_PLATFORM=egl
+
+# System libs: build toolchain for the extensions, plus the GL/EGL/X stack that
+# headless Blender (bpy, imported by DifferentiableRenderer.mesh_utils) and the
+# EGL rasterizer link against at import/runtime.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3.10 python3.10-dev python3-pip \
+        git curl wget build-essential ninja-build cmake pkg-config \
+        libeigen3-dev \
+        libgl1 libglib2.0-0 libegl1 libgles2 libglvnd0 libglvnd-dev \
+        libgl1-mesa-dev libegl1-mesa-dev libgles2-mesa-dev \
+        libxrender1 libxi6 libsm6 libxext6 libxkbcommon0 libxfixes3 \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3.10 /usr/bin/python3 \
+    && ln -sf /usr/bin/python3.10 /usr/bin/python \
+    && pip install --upgrade pip setuptools wheel
+
+# torch first (cached layer), from the CUDA 12.4 wheel index to match the base.
+RUN pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 \
+        --index-url https://download.pytorch.org/whl/cu124
+
+COPY requirements.hunyuan21.txt /app/requirements.txt
+RUN pip install -r /app/requirements.txt
+
+# The 2.1 code (hy3dshape + hy3dpaint packages) is cloned in-tree from a pinned
+# Tencent-Hunyuan/Hunyuan3D-2.1 commit — the texgen extensions must be compiled
+# from this tree, and a moving `main` breaks the reproducibility bar. Build the
+# CUDA rasterizer (editable, so its .so lives in-tree) and the pybind11 mesh
+# inpaint processor, then fetch the RealESRGAN super-res checkpoint the paint
+# pass upscales its PBR views with.
+RUN git clone https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1.git /opt/hunyuan3d21 \
+    && cd /opt/hunyuan3d21 \
+    && git checkout 82920d643c0dc2f7bfd7255f45f62d386edfe60c \
+    && cd hy3dpaint/custom_rasterizer \
+    && pip install --no-build-isolation -e . \
+    && cd ../DifferentiableRenderer \
+    && bash compile_mesh_painter.sh \
+    && cd /opt/hunyuan3d21/hy3dpaint \
+    && mkdir -p ckpt \
+    && wget -q https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth -P ckpt
+
+# Fail the BUILD (not a live deploy) if the dependency stack drifts: every
+# import the loader pulls before it touches the GPU must resolve. CUDA is not
+# initialised here (no GPU at build), so the smoke test stays to pure-python +
+# .so loads and skips modules that init CUDA on import.
+RUN cd /opt/hunyuan3d21 && python -c "\
+import sys; sys.path.insert(0,'.'); sys.path.insert(0,'hy3dshape'); sys.path.insert(0,'hy3dpaint'); \
+import torch, torchvision, transformers, diffusers, trimesh, bpy, cv2, pygltflib, custom_rasterizer; \
+from torchvision_fix import apply_fix; apply_fix(); \
+from hy3dshape.pipelines import Hunyuan3DDiTFlowMatchingPipeline; \
+from hy3dpaint.convert_utils import create_glb_with_pbr_materials; \
+print('deps ok:', torch.__version__, torchvision.__version__, transformers.__version__, diffusers.__version__)"
+
+# The worker runs from the repo root: the paint config references cfg/ckpt files
+# by repo-relative path, so cwd must be /opt/hunyuan3d21.
+WORKDIR /opt/hunyuan3d21
+COPY worker_security.py /opt/hunyuan3d21/worker_security.py
+COPY app21.py /opt/hunyuan3d21/app21.py
+
+EXPOSE 8080
+
+CMD ["uvicorn", "app21:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8080", \
+     "--workers", "1", \
+     "--timeout-keep-alive", "300"]
