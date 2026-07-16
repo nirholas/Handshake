@@ -299,6 +299,29 @@ async def infer(
     return {"task_id": task_id, "status": "queued"}
 
 
+# api/_providers/gcp.js drives this lane in `reconstruct` mode
+# (GCP_HUNYUAN3D_URL + mode:'reconstruct'), which speaks the avatar
+# controller's wire shape: POST /reconstruct → { job_id }, GET /jobs/:id.
+# These aliases accept that shape verbatim so the worker URL can be wired
+# directly into the API env; the poll reader is field-tolerant
+# (task_id|job_id, glb_url|result_gcs_url) so the same records serve both.
+@app.post("/reconstruct", status_code=202)
+async def reconstruct(
+    body: InferRequest,
+    background_tasks: BackgroundTasks,
+    authorization: str = Header(...),
+) -> dict:
+    result = await infer(body, background_tasks, authorization)
+    return {**result, "job_id": result["task_id"]}
+
+
+@app.get("/jobs/{task_id}")
+async def get_job(task_id: str, authorization: str = Header(...)) -> dict:
+    task = await get_task(task_id, authorization)
+    glb = task.get("result_gcs_url")
+    return {**task, "job_id": task.get("task_id"), **({"glb_url": glb} if glb else {})}
+
+
 @app.get("/tasks/{task_id}")
 async def get_task(task_id: str, authorization: str = Header(...)) -> dict:
     _require_api_key(authorization)
