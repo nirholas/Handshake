@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-16T21:21:54.657Z",
+	"generated_at": "2026-07-16T21:41:24.270Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -111,6 +111,39 @@
 		{
 			"date": "2026-07-16",
 			"type": "update",
+			"title": "High-quality 3D now runs on our best photoreal engines, with an automatic quality check",
+			"summary": "Ask for a High-quality model and the generator now reaches for our most photoreal self-hosted engines first: Hunyuan3D for people, creatures, and detailed organic subjects, and our own high-detail TRELLIS engine for hard-surface and mechanical subjects, picked automatically from what you describe. If a heavy engine is warming up or busy, it falls through to the next one and finally to the always-on free engine, so a High request never dead-ends. Every finished High model is scored for quality and, if it comes back weak, quietly regenerated once for a better result before you ever see it. The fast free tier is untouched and just as quick as before.",
+			"link": "/forge",
+			"tags": [
+				"improvement",
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-16",
+			"type": "update",
+			"title": "Homepage 3D generator now always picks the best live engine",
+			"summary": "Generations started from the homepage were quietly landing on a fallback engine that produced untextured gray models. The homepage now lets the platform's health-aware router choose the strongest live engine (currently the GPU-hosted TRELLIS lane), so homepage creations come back fully textured, the same quality as the full Forge page. In a side-by-side check the same kind of prompt went from a flagged low-quality untextured mesh to a fully textured model scoring near the top of the quality scale.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-16",
+			"type": "update",
+			"title": "Text-to-3D now aims for a real photograph of your subject",
+			"summary": "The prompt helper that rewrites what you type before a model is built now steers every generation toward looking like a real photo of a real object or person: one centered subject on a plain studio backdrop, real materials and surface detail, and soft even lighting, which is exactly what our 3D engine reconstructs most cleanly. It also recognizes what you asked for (a person, an animal, a vehicle, a food, or an object) and guards against the mistakes each kind is prone to, like warped hands on people or the wrong number of wheels on a car. Ask for a cartoon, voxel, or other style and that is still respected. Under the hood the reference image can now be drawn on Google's higher-resolution image model tuned for this clean studio look, with automatic fallback so nothing ever stalls.",
+			"link": "/forge",
+			"tags": [
+				"improvement",
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-16",
+			"type": "update",
 			"title": "Text-to-3D on the Forge is reliable again",
 			"summary": "Free text-to-3D generations on the Forge had been failing whenever traffic got real: our self-hosted TRELLIS engine lost track of jobs the moment a second GPU instance spun up, so polls landed on an instance that had never heard of the job and the whole generation was marked failed. The engine now records every job in shared storage, so any instance can answer for any job. The free community 3D Spaces lane also learned to switch to a backup allowance when the primary one runs dry instead of going dark. Concurrent generations now complete end to end.",
 			"link": "/forge",
@@ -126,6 +159,16 @@
 			"link": "/world",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-16",
+			"type": "update",
+			"title": "Your finished 3D model now reflects real studio light",
+			"summary": "The viewer that shows every text-to-3D and photo-to-3D result now lights your model with a real self-hosted studio environment instead of a flat neutral fill. Metal, glass, polished plastic, and painted surfaces catch and reflect light the way they would on a photo table, so a chrome robot reads as chrome instead of a dark blob and the metallic and roughness detail in our new higher-fidelity materials actually shows. The same lighting now applies on the Forge page, Forge Studio, and every embedded model, alongside the filmic tone mapping and soft ground shadows already in place. Nothing to switch on.",
+			"link": "/forge",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
