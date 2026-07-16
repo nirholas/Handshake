@@ -34,7 +34,11 @@ ensureStateKitStyles();
 // honest elapsed counter. Nothing fakes progress.
 
 const POLL_INTERVAL_MS = 2500;
-const MAX_POLL_MS = 5 * 60 * 1000; // generous ceiling for reconstruction
+// Ceiling for a single reconstruction run. Max-tier texture bakes legitimately
+// run past 10 minutes at full quality; the ceiling must sit above the slowest
+// real generation or the client abandons jobs the server finishes. Queue wait
+// does not count against this window (see pollUntilDone).
+const MAX_POLL_MS = 12 * 60 * 1000;
 const MAX_VIEWS = 4;
 const VIEW_LABELS = ['Front', 'Back', 'Left', 'Right'];
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
@@ -1399,7 +1403,13 @@ async function startJob({ prompt, imageUrls, skipValidation, payment }) {
 }
 
 async function pollUntilDone(jobId) {
-	const deadline = performance.now() + MAX_POLL_MS;
+	let deadline = performance.now() + MAX_POLL_MS;
+	// Queue-state tracking: a job waiting for a GPU is alive, so say so (after a
+	// short grace that filters dispatch latency) and never spend the run budget
+	// on line time.
+	let queuedPolls = 0;
+	let inQueue = false;
+	let preQueueMeshLabel = null;
 	while (!pollAbort && performance.now() < deadline) {
 		await sleep(POLL_INTERVAL_MS);
 		if (pollAbort) return null;
@@ -1424,7 +1434,24 @@ async function pollUntilDone(jobId) {
 			}
 			throw e;
 		}
-		if (data.status === 'running') setStep('mesh', 'active');
+		if (data.status === 'queued') {
+			setStep('mesh', 'active');
+			deadline = performance.now() + MAX_POLL_MS;
+			queuedPolls += 1;
+			if (!inQueue && queuedPolls >= 3) {
+				inQueue = true;
+				preQueueMeshLabel = els.steps?.mesh?.querySelector('span:last-child')?.textContent || null;
+				setStepLabel('mesh', 'In line for a GPU');
+			}
+		}
+		if (data.status === 'running') {
+			setStep('mesh', 'active');
+			queuedPolls = 0;
+			if (inQueue) {
+				inQueue = false;
+				if (preQueueMeshLabel) setStepLabel('mesh', preQueueMeshLabel);
+			}
+		}
 	}
 	if (pollAbort) return null;
 	throw new Error(

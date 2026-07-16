@@ -32,7 +32,11 @@ ensureStateKitStyles();
 // honest elapsed counter. Nothing fakes progress.
 
 const POLL_INTERVAL_MS = 2500;
-const MAX_POLL_MS = 5 * 60 * 1000; // generous ceiling for reconstruction
+// Ceiling for a single reconstruction run. Max-tier texture bakes legitimately
+// run past 10 minutes at full quality; the ceiling must sit above the slowest
+// real generation, not the average one, or the client abandons jobs the server
+// finishes. Queue wait does not count against this window (see pollUntilDone).
+const MAX_POLL_MS = 12 * 60 * 1000;
 const MAX_VIEWS = 4;
 const VIEW_LABELS = ['Front', 'Back', 'Left', 'Right'];
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
@@ -1528,10 +1532,13 @@ async function startJob({ prompt, imageUrls, skipValidation, payment }) {
 }
 
 async function pollUntilDone(jobId) {
-	const deadline = performance.now() + MAX_POLL_MS;
+	let deadline = performance.now() + MAX_POLL_MS;
 	// Queue-state tracking: when the engine reports the job is waiting for a GPU
 	// (healthy but busy, one generation per instance), say so instead of showing
 	// a silent spinner that reads as a hang. Restored when the job starts running.
+	// A short grace (a few polls) filters out dispatch latency: every job passes
+	// through "queued" for a beat even when a GPU is free.
+	let queuedPolls = 0;
 	let inQueue = false;
 	let preQueueMeshLabel = null;
 	while (!pollAbort && performance.now() < deadline) {
@@ -1561,8 +1568,29 @@ async function pollUntilDone(jobId) {
 			}
 			throw e;
 		}
+		if (data.status === 'queued') {
+			setStep('mesh', 'active');
+			// Time spent in line must not consume the run budget: a queued job is
+			// alive and will get the full window once a GPU picks it up.
+			deadline = performance.now() + MAX_POLL_MS;
+			queuedPolls += 1;
+			if (!inQueue && queuedPolls >= 3) {
+				inQueue = true;
+				preQueueMeshLabel = els.steps.mesh?.querySelector('span:last-child')?.textContent || null;
+				setStepLabel('mesh', 'In line for a GPU');
+				setLaneNote(
+					'The engine is finishing earlier jobs. Yours is queued and will run at full quality, nothing is downgraded.',
+				);
+			}
+		}
 		if (data.status === 'running') {
 			setStep('mesh', 'active');
+			queuedPolls = 0;
+			if (inQueue) {
+				inQueue = false;
+				if (preQueueMeshLabel) setStepLabel('mesh', preQueueMeshLabel);
+				setLaneNote('');
+			}
 			// Poll-time failover: the server moved this job onto a backup lane and
 			// keeps it running under the same id. Surface the switch so the user
 			// sees which engine is now serving, rather than a silent swap.

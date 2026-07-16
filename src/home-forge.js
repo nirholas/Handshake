@@ -33,7 +33,10 @@ import {
 } from './forge-embed-snippets.js';
 
 const POLL_INTERVAL_MS = 2500;
-const MAX_POLL_MS = 5 * 60 * 1000;
+// Max-tier texture bakes legitimately run past 10 minutes at full quality; the
+// ceiling must sit above the slowest real generation. Queue wait does not count
+// against this window (see pollUntilDone).
+const MAX_POLL_MS = 12 * 60 * 1000;
 const MODEL_VIEWER_SRC =
 	'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
 const HISTORY_KEY = 'forge:home:history';
@@ -343,7 +346,7 @@ async function startJob(prompt) {
 }
 
 async function pollUntilDone(jobId, seq) {
-	const deadline = performance.now() + MAX_POLL_MS;
+	let deadline = performance.now() + MAX_POLL_MS;
 	while (!pollAbort && seq === runSeq && performance.now() < deadline) {
 		await sleep(POLL_INTERVAL_MS);
 		if (pollAbort || seq !== runSeq) return null;
@@ -353,6 +356,12 @@ async function pollUntilDone(jobId, seq) {
 		const data = await res.json().catch(() => ({}));
 		if (data.status === 'done' && data.glb_url) return data;
 		if (data.status === 'failed') throw new Error(data.error || 'Generation failed.');
+		if (data.status === 'queued') {
+			// A queued job is alive and waiting for a GPU: keep the step live and
+			// never spend the run budget on line time.
+			setStep('mesh', 'active');
+			deadline = performance.now() + MAX_POLL_MS;
+		}
 		if (data.status === 'running') setStep('mesh', 'active');
 	}
 	if (pollAbort || seq !== runSeq) return null;

@@ -2365,11 +2365,11 @@ async function boot(id) {
 		} catch { /* best-effort broadcast — a non-owner viewer simply can't push */ }
 	}
 	async function pollForgeJob(jobId, narrate) {
-		// Matches the 5-minute ceiling used by every other forge poll loop
-		// (src/forge.js, home-forge.js, forge-studio/forge.js, scene-compose.js) —
-		// higher-quality self-host inference (more diffusion steps, larger texture
-		// bake) runs longer than the old 3-minute budget assumed.
-		const deadline = Date.now() + 5 * 60 * 1000;
+		// Matches the 12-minute ceiling used by every other forge poll loop
+		// (src/forge.js, home-forge.js, forge-studio/forge.js, scene-compose.js):
+		// max-tier full-quality bakes legitimately run past 10 minutes, and queue
+		// wait must not spend the run budget (a queued job is alive).
+		let deadline = Date.now() + 12 * 60 * 1000;
 		let lastStatus = 'queued';
 		while (Date.now() < deadline) {
 			await new Promise((r) => setTimeout(r, 3000)); // real poll interval, not fake progress
@@ -2382,6 +2382,7 @@ async function boot(id) {
 			if (data.status && data.status !== lastStatus) { lastStatus = data.status; narrate(data); }
 			if (data.status === 'done' && data.glb_url) return data;
 			if (data.status === 'failed') throw new Error(data.error || 'generation failed');
+			if (data.status === 'queued') deadline = Date.now() + 12 * 60 * 1000;
 		}
 		throw new Error('generation timed out — try again');
 	}

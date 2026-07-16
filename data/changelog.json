@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-16",
+			"title": "Forge now waits out long full-quality generations and shows queue state",
+			"summary": "Two fixes for anyone forging at the highest quality settings. First, the Forge page no longer gives up while a generation is still running: the old 5-minute client timeout could declare a timeout even though the engine finished your model moments later. The wait ceiling now covers the slowest full-quality texture bakes, and time spent waiting in line never counts against it. Second, when the GPU is busy finishing earlier jobs, the page now says your job is in line rather than showing a silent spinner, so a queued generation no longer looks like a hang. Quality settings are untouched: nothing is downgraded to make things faster, and a second always-on GPU now serves the text-to-3D lane to shorten the line itself.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-07-16",
 			"title": "Changelog updates now reach Telegram and X on their own",
 			"summary": "Every entry in this changelog is now delivered to the holder channels automatically. Once the release an entry describes is live in production, an autonomous job spots it and posts it to the holders' Telegram channel (@three_ws) and to the running release thread on X (@trythreews), usually within 20 minutes. No human has to remember to announce anything, and nothing is ever announced before it is actually live. The full history stays at three.ws/changelog and in the RSS and JSON feeds as always.",
 			"tags": [

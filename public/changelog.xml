@@ -47,6 +47,14 @@
 			<description>Text-to-3D generations at Standard and High quality now photograph the subject from the front, side, and back before building the model, and the 3D engine fuses all three views into one asset on our own GPUs. The parts of an object the old single view could never see (the back of a chair, the far side of a character) are now generated from real coverage instead of guessed, so models read as true to life from every angle. A second self-hosted engine (Tencent Hunyuan3D) also joins the fleet for high-fidelity reconstructions, with automatic failover between the two.</description>
 		</item>
 		<item>
+			<title>Changelog updates now reach Telegram and X on their own</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-16:Changelog updates now reach Telegram and X on their own</guid>
+			<pubDate>Thu, 16 Jul 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>Every entry in this changelog is now delivered to the holder channels automatically. Once the release an entry describes is live in production, an autonomous job spots it and posts it to the holders' Telegram channel (@three_ws) and to the running release thread on X (@trythreews), usually within 20 minutes. No human has to remember to announce anything, and nothing is ever announced before it is actually live. The full history stays at three.ws/changelog and in the RSS and JSON feeds as always.</description>
+		</item>
+		<item>
 			<title>Clearer legal terms, and you now actually agree to them</title>
 			<link>https://three.ws/legal/tos</link>
 			<guid isPermaLink="false">2026-07-16:Clearer legal terms, and you now actually agree to them</guid>
@@ -77,6 +85,14 @@
 			<pubDate>Thu, 16 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The Forge got a usability pass. First-time visitors now see three one-click starter prompts right on the empty canvas. Hovering Draft, Standard, or High shows exactly what each quality tier trades off: detail, typical generation time, and polygon budget, pulled live from the engine catalog. If an engine hits a snag mid-generation, the progress panel now tells you which backup engine took over instead of switching silently. Hitting your generation limit reads as a wait with a countdown, not a failure. And keyboard flow is tighter across the board: Enter generates (Shift+Enter for a new line), Escape cancels an in-flight generation, and focus lands where the next action is.</description>
+		</item>
+		<item>
+			<title>Forge now waits out long full-quality generations and shows queue state</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-07-16:Forge now waits out long full-quality generations and shows queue state</guid>
+			<pubDate>Thu, 16 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two fixes for anyone forging at the highest quality settings. First, the Forge page no longer gives up while a generation is still running: the old 5-minute client timeout could declare a timeout even though the engine finished your model moments later. The wait ceiling now covers the slowest full-quality texture bakes, and time spent waiting in line never counts against it. Second, when the GPU is busy finishing earlier jobs, the page now says your job is in line rather than showing a silent spinner, so a queued generation no longer looks like a hang. Quality settings are untouched: nothing is downgraded to make things faster, and a second always-on GPU now serves the text-to-3D lane to shorten the line itself.</description>
 		</item>
 		<item>
 			<title>Free 3D generation got a lot more reliable</title>
@@ -117,6 +133,14 @@
 			<pubDate>Thu, 16 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Generations started from the homepage were quietly landing on a fallback engine that produced untextured gray models. The homepage now lets the platform's health-aware router choose the strongest live engine (currently the GPU-hosted TRELLIS lane), so homepage creations come back fully textured, the same quality as the full Forge page. In a side-by-side check the same kind of prompt went from a flagged low-quality untextured mesh to a fully textured model scoring near the top of the quality scale.</description>
+		</item>
+		<item>
+			<title>Leave the page while your 3D model generates. We'll finish it and let you know</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-07-16:Leave the page while your 3D model generates. We'll finish it and let you know</guid>
+			<pubDate>Thu, 16 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Generations no longer need a babysitter. If you close the tab or wander off mid-forge, the server now tracks your job to completion on its own: the finished model lands in your gallery automatically, and signed-in creators get a notification (bell, push, and email, each with its own switch in the preference center) the moment it's ready. Come back to /forge and an interrupted generation picks up right where it left off, with an honest elapsed timer. We also cleared over a thousand old generations that had been stuck in limbo and gave the busiest 3D engine room to scale to three GPUs, so queue waits drop too.</description>
 		</item>
 		<item>
 			<title>New realism gate scores every generated 3D model and auto-retries the bad ones</title>

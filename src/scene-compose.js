@@ -238,7 +238,10 @@ let forgeJobId = null;
 let forgePollTimer = null;
 let forgePollStart = 0;
 let forgeIntent = '';
-const FORGE_TIMEOUT = 5 * 60 * 1000;
+// Max-tier full-quality bakes legitimately run past 10 minutes; the ceiling
+// must sit above the slowest real generation. Queue wait restarts the window
+// (see pollForge), so line time never eats the run budget.
+const FORGE_TIMEOUT = 12 * 60 * 1000;
 
 // ── Undo / Redo ───────────────────────────────────────────────────────────────
 const hist = { stack: [], cursor: -1 };
@@ -1131,6 +1134,12 @@ function pollForge() {
 				loadGallery();
 			} else if (data.status === 'failed') {
 				throw new Error(data.error || 'Generation failed');
+			} else if (data.status === 'queued') {
+				// A queued job is alive and waiting for a GPU; restart the timeout
+				// window so line time never counts against the run budget.
+				forgePollStart = Date.now();
+				showForgeProgress('In line for a GPU…', 8);
+				pollForge();
 			} else {
 				const elapsed = Date.now() - forgePollStart;
 				const pct = Math.min(8 + (elapsed / FORGE_TIMEOUT) * 82, 92);

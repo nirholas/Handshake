@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-16T22:23:06.594Z",
+	"generated_at": "2026-07-16T22:48:23.762Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -60,6 +60,17 @@
 		{
 			"date": "2026-07-16",
 			"type": "update",
+			"title": "Changelog updates now reach Telegram and X on their own",
+			"summary": "Every entry in this changelog is now delivered to the holder channels automatically. Once the release an entry describes is live in production, an autonomous job spots it and posts it to the holders' Telegram channel (@three_ws) and to the running release thread on X (@trythreews), usually within 20 minutes. No human has to remember to announce anything, and nothing is ever announced before it is actually live. The full history stays at three.ws/changelog and in the RSS and JSON feeds as always.",
+			"link": "/changelog",
+			"tags": [
+				"infra",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-16",
+			"type": "update",
 			"title": "Clearer legal terms, and you now actually agree to them",
 			"summary": "Creating an account now includes a real agreement step: the signup form has a required checkbox, wallet sign-ins carry the agreement right inside the message you sign, and the platform keeps a durable record of which Terms version you accepted and when. The Terms of Service (version 2) and Privacy Policy were rewritten to be clearer and stronger: real-funds features are explicitly 18+, disputes are handled by individual arbitration with a 30-day opt-out, the privacy policy now lists our actual infrastructure providers and your California and EU rights, and legal acceptance records are exempt from routine log cleanup so your agreement is never lost.",
 			"link": "/legal/tos",
@@ -95,6 +106,17 @@
 			"summary": "The Forge got a usability pass. First-time visitors now see three one-click starter prompts right on the empty canvas. Hovering Draft, Standard, or High shows exactly what each quality tier trades off: detail, typical generation time, and polygon budget, pulled live from the engine catalog. If an engine hits a snag mid-generation, the progress panel now tells you which backup engine took over instead of switching silently. Hitting your generation limit reads as a wait with a countdown, not a failure. And keyboard flow is tighter across the board: Enter generates (Shift+Enter for a new line), Escape cancels an in-flight generation, and focus lands where the next action is.",
 			"link": "/forge",
 			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-16",
+			"type": "update",
+			"title": "Forge now waits out long full-quality generations and shows queue state",
+			"summary": "Two fixes for anyone forging at the highest quality settings. First, the Forge page no longer gives up while a generation is still running: the old 5-minute client timeout could declare a timeout even though the engine finished your model moments later. The wait ceiling now covers the slowest full-quality texture bakes, and time spent waiting in line never counts against it. Second, when the GPU is busy finishing earlier jobs, the page now says your job is in line rather than showing a silent spinner, so a queued generation no longer looks like a hang. Quality settings are untouched: nothing is downgraded to make things faster, and a second always-on GPU now serves the text-to-3D lane to shorten the line itself.",
+			"link": "/forge",
+			"tags": [
+				"fix",
 				"improvement"
 			]
 		},
@@ -147,6 +169,17 @@
 			"link": null,
 			"tags": [
 				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-16",
+			"type": "update",
+			"title": "Leave the page while your 3D model generates. We'll finish it and let you know",
+			"summary": "Generations no longer need a babysitter. If you close the tab or wander off mid-forge, the server now tracks your job to completion on its own: the finished model lands in your gallery automatically, and signed-in creators get a notification (bell, push, and email, each with its own switch in the preference center) the moment it's ready. Come back to /forge and an interrupted generation picks up right where it left off, with an honest elapsed timer. We also cleared over a thousand old generations that had been stuck in limbo and gave the busiest 3D engine room to scale to three GPUs, so queue waits drop too.",
+			"link": "/forge",
+			"tags": [
+				"feature",
 				"improvement"
 			]
 		},
