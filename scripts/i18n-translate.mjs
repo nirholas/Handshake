@@ -14,6 +14,8 @@
 //
 // Backends (real APIs, selected by `provider` in .i18nrc.json):
 //   gemini    → Generative Language API   (GEMINI_API_KEY | GOOGLE_API_KEY)
+//   vertex    → Vertex AI (Gemini)        (GOOGLE_CLOUD_PROJECT + GCP creds; billed to
+//                                          platform GCP credits, no free-tier quota to exhaust)
 //   openai    → Chat Completions          (OPENAI_API_KEY [+ OPENAI_BASE_URL])
 //   anthropic → Messages                  (ANTHROPIC_API_KEY)
 //
@@ -123,6 +125,7 @@ function chunkKeys(keys, budgetChars) {
 
 const PROVIDER_DEFAULT_MODEL = {
 	gemini: 'gemini-2.5-flash',
+	vertex: 'google/gemini-2.5-flash',
 	groq: 'llama-3.3-70b-versatile',
 	openrouter: 'meta-llama/llama-3.3-70b-instruct:free',
 	nvidia: 'meta/llama-3.3-70b-instruct',
@@ -254,6 +257,58 @@ async function callAnthropic(prompt) {
 	return data?.content?.map((b) => b.text || '').join('') || '';
 }
 
+// Vertex AI Gemini — service-account/metadata-server auth, billed to the
+// platform's GCP credit pool instead of a free-tier key. No quota to exhaust
+// (unlike groq/gemini-aistudio/nvidia's shared free tiers, which can 429
+// mid-batch and leave a run partially translated), so this is the reliability
+// option when the free lanes are flaky. Same OpenAI-compatible endpoint shape
+// api/_lib/llm.js's vertexGeminiProvider() and api/_mcp3d/vertex-imagen.js
+// already use, so there is no new wire format to trust. Verified live
+// 2026-07-16 (translated a real key through the endpoint end-to-end).
+//
+// Gotcha (verified live): Gemini 2.5 Flash spends part of its budget on
+// internal "reasoning" tokens before emitting any visible content — a tight
+// max_tokens (as the chat-completion callers elsewhere use) can burn the
+// whole budget on reasoning and return empty content with
+// finish_reason:"length". Use a generous ceiling, matching callAnthropic's.
+async function callVertex(prompt) {
+	const project = process.env.GOOGLE_CLOUD_PROJECT;
+	if (!project) {
+		throw new Error(
+			'GOOGLE_CLOUD_PROJECT not set — vertex needs the same GCP project + credentials ' +
+				'(GCP_SERVICE_ACCOUNT_JSON, or the Cloud Run/GCE metadata server) as the rest of the ' +
+				'platform\'s Vertex AI callers.',
+		);
+	}
+	const { getGcpAccessToken } = await import('../api/_lib/gcp-auth.js');
+	const location = process.env.GOOGLE_CLOUD_LOCATION_GEMINI || 'global';
+	const host = location === 'global' ? 'aiplatform.googleapis.com' : `${location}-aiplatform.googleapis.com`;
+	const token = await getGcpAccessToken();
+	const res = await fetch(
+		`https://${host}/v1beta1/projects/${project}/locations/${location}/endpoints/openapi/chat/completions`,
+		{
+			method: 'POST',
+			headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+			body: JSON.stringify({
+				model: modelName(),
+				temperature: cfg.temperature ?? 0.2,
+				top_p: cfg.topP ?? 0.9,
+				max_tokens: 8192,
+				messages: [{ role: 'user', content: prompt }],
+			}),
+		},
+	);
+	if (!res.ok)
+		throw httpError('vertex', res.status, await res.text(), Number(res.headers.get('retry-after')) || 0);
+	const data = await res.json();
+	const content = data?.choices?.[0]?.message?.content || '';
+	if (!content) {
+		const reason = data?.choices?.[0]?.finish_reason;
+		throw new Error(`vertex returned no content${reason ? ` (finish_reason: ${reason})` : ''}`);
+	}
+	return content;
+}
+
 async function callOpenAICompat(prompt) {
 	const spec = OPENAI_COMPAT[cfg.provider];
 	const key = process.env[spec.envKey];
@@ -288,9 +343,10 @@ async function callOpenAICompat(prompt) {
 function backend() {
 	if (cfg.provider === 'gemini') return callGemini;
 	if (cfg.provider === 'anthropic') return callAnthropic;
+	if (cfg.provider === 'vertex') return callVertex;
 	if (OPENAI_COMPAT[cfg.provider]) return callOpenAICompat;
 	throw new Error(
-		`unknown provider: ${cfg.provider} (use gemini, groq, openrouter, nvidia, openai, or anthropic)`,
+		`unknown provider: ${cfg.provider} (use gemini, groq, openrouter, nvidia, vertex, openai, or anthropic)`,
 	);
 }
 

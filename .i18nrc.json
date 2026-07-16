@@ -18,7 +18,7 @@
 		"ru": "Русский"
 	},
 	"rtlLocales": ["ar", "he", "fa", "ur"],
-	"provider": "groq",
+	"provider": "vertex",
 	"temperature": 0.2,
 	"topP": 0.9,
 	"concurrency": 2,

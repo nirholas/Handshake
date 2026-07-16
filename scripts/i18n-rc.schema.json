@@ -36,8 +36,8 @@
 			"description": "Locale codes that render right-to-left."
 		},
 		"provider": {
-			"enum": ["gemini", "groq", "openrouter", "nvidia", "openai", "anthropic"],
-			"description": "LLM backend. Free lanes: groq, gemini (free tier), openrouter (:free models), nvidia."
+			"enum": ["gemini", "vertex", "groq", "openrouter", "nvidia", "openai", "anthropic"],
+			"description": "LLM backend. Free lanes: groq, gemini (free tier), openrouter (:free models), nvidia. vertex bills to the platform's GCP credit pool (GOOGLE_CLOUD_PROJECT + GCP creds) with no free-tier quota to exhaust."
 		},
 		"modelName": {
 			"type": "string"
