@@ -421,13 +421,21 @@ def _clamped_quality(q: dict | None, tier: str | None = None) -> dict:
             return base[key]
         return max(lo, min(hi, val))
 
+    # nvdiffrast's texture bake builds a mip stack and hard-fails on any
+    # non-power-of-two extent (proven live 2026-07-16: a 3072 request killed
+    # every generation at the bake step). Snap the requested size down to the
+    # nearest power of two inside the clamp envelope so no caller value can
+    # crash the bake.
+    tex = num("texture_size", 512, 4096, int)
+    tex = 1 << (int(tex).bit_length() - 1)
+
     return {
         "ss_steps": num("ss_steps", 8, 50, int),
         "slat_steps": num("slat_steps", 8, 50, int),
         "ss_cfg": num("ss_cfg", 1.0, 15.0),
         "slat_cfg": num("slat_cfg", 1.0, 10.0),
         "simplify": num("simplify", 0.5, 0.98),
-        "texture_size": num("texture_size", 512, 4096, int),
+        "texture_size": tex,
     }
 
 

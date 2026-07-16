@@ -639,8 +639,12 @@ export function selfHostPrimary() {
 // own etaMultiplier: 2.2 headroom — steps moved the least (biggest linear
 // time cost), texture/simplify moved the most (near-free export-time cost).
 export const SELFHOST_TRELLIS_QUALITY = Object.freeze({
+	// texture_size MUST be a power of two: TRELLIS's nvdiffrast texture bake
+	// builds a mip stack and hard-fails on any other extent ("Mip-map size
+	// error", proven live 2026-07-16 when standard briefly shipped 3072 and
+	// every standard-tier generation failed at the bake step).
 	draft: Object.freeze({ ss_steps: 12, slat_steps: 12, simplify: 0.95, texture_size: 1024 }),
-	standard: Object.freeze({ ss_steps: 35, slat_steps: 35, simplify: 0.82, texture_size: 3072 }),
+	standard: Object.freeze({ ss_steps: 35, slat_steps: 35, simplify: 0.82, texture_size: 2048 }),
 	high: Object.freeze({ ss_steps: 50, slat_steps: 50, simplify: 0.65, texture_size: 4096 }),
 });
 
