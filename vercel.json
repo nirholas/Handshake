@@ -5176,6 +5176,10 @@
 			"schedule": "30 9 * * *"
 		},
 		{
+			"path": "/api/cron/forge-finalize",
+			"schedule": "* * * * *"
+		},
+		{
 			"path": "/api/llm/health",
 			"schedule": "0 * * * *"
 		},

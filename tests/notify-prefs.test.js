@@ -18,9 +18,9 @@ import {
 } from '../api/_lib/notify-prefs.js';
 
 describe('category model', () => {
-	it('exposes the six display categories and four channels', () => {
+	it('exposes the seven display categories and four channels', () => {
 		expect(CATEGORIES.map((c) => c.key)).toEqual([
-			'sales', 'purchases', 'social', 'irl', 'alerts', 'account',
+			'sales', 'purchases', 'social', 'irl', 'alerts', 'creations', 'account',
 		]);
 		expect(CHANNELS).toEqual(['in_app', 'push', 'email', 'telegram']);
 	});
@@ -42,6 +42,8 @@ describe('categoryForType', () => {
 		expect(categoryForType('remix')).toBe('social');
 		expect(categoryForType('irl_interaction')).toBe('irl');
 		expect(categoryForType('pump_alert')).toBe('alerts');
+		expect(categoryForType('forge_complete')).toBe('creations');
+		expect(categoryForType('forge_failed')).toBe('creations');
 		expect(categoryForType('withdrawal_failed')).toBe('account');
 	});
 
@@ -69,11 +71,14 @@ describe('defaultMatrix / mergeWithDefaults', () => {
 		}
 	});
 
-	it('email defaults on only for money + security categories', () => {
+	it('email defaults on only for money, security, and unattended creations', () => {
 		const m = defaultMatrix();
 		expect(m.sales.email).toBe(true);
 		expect(m.purchases.email).toBe(true);
 		expect(m.account.email).toBe(true);
+		// Creations email only ever fires for an unattended completion (the
+		// finalizer path), so defaulting on is the feature the user asked for.
+		expect(m.creations.email).toBe(true);
 		expect(m.social.email).toBe(false);
 		expect(m.irl.email).toBe(false);
 		expect(m.alerts.email).toBe(false);
@@ -160,6 +165,25 @@ describe('pushPayloadFor', () => {
 		expect(p.notificationId).toBe('n-123');
 		expect(p.category).toBe('sales');
 		expect(p.tag).toBe('skill_purchased');
+	});
+
+	it('builds forge completion copy with the prompt and the share link', () => {
+		const p = pushPayloadFor(
+			'forge_complete',
+			{ prompt: 'a brass desk lamp', link: '/forge?share=abc-123' },
+			'n-9',
+		);
+		expect(p.title).toMatch(/ready/i);
+		expect(p.body).toContain('a brass desk lamp');
+		expect(p.url).toBe('/forge?share=abc-123');
+		expect(p.category).toBe('creations');
+	});
+
+	it('builds forge failure copy that points back at the forge', () => {
+		const p = pushPayloadFor('forge_failed', { prompt: 'a lamp', link: '/forge' });
+		expect(p.title).toMatch(/failed/i);
+		expect(p.url).toBe('/forge');
+		expect(p.category).toBe('creations');
 	});
 
 	it('prefers an explicit safe link and rejects javascript: urls', () => {

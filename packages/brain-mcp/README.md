@@ -16,7 +16,7 @@
 
 ---
 
-> A [Model Context Protocol](https://modelcontextprotocol.io) server that gives any AI assistant the three.ws **multi-provider LLM router** over stdio. Discover which models are available — Claude, the GPT-5.6 family, o3, Qwen, DeepSeek, NVIDIA Nemotron, IBM Granite, and more — and run a chat completion through whichever one fits, without wiring each vendor SDK yourself.
+> A [Model Context Protocol](https://modelcontextprotocol.io) server that gives any AI assistant the three.ws **multi-provider LLM router** over stdio. Discover which models are available — Claude, the GPT-5.6 family, o3, Grok, Qwen, DeepSeek, NVIDIA Nemotron, IBM Granite, and more — and run a chat completion through whichever one fits, without wiring each vendor SDK yourself.
 
 The router fronts every provider behind one endpoint and transparently falls back across mirrors and free tiers if the chosen model is briefly down. The free open-weight tiers (GPT-OSS 120B, NVIDIA NIM models) work with **no key**; the paid first-party flagships unlock with a three.ws API key.
 

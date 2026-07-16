@@ -943,6 +943,8 @@ const MODEL_OPTIONS = [
 	{ id: 'openai:gpt-5.6-sol', label: 'GPT-5.6 Sol', provider: 'openai', model: 'gpt-5.6-sol' },
 	{ id: 'openai:gpt-5.6-terra', label: 'GPT-5.6 Terra', provider: 'openai', model: 'gpt-5.6-terra' },
 	{ id: 'openai:gpt-5.6-luna', label: 'GPT-5.6 Luna', provider: 'openai', model: 'gpt-5.6-luna' },
+	{ id: 'grok:grok-4.5', label: 'Grok 4.5 (xAI)', provider: 'grok', model: 'grok-4.5' },
+	{ id: 'grok:grok-4.1-fast', label: 'Grok 4.1 Fast (xAI)', provider: 'grok', model: 'grok-4.1-fast' },
 	{
 		id: 'watsonx:granite',
 		label: 'IBM Granite 3 (watsonx)',

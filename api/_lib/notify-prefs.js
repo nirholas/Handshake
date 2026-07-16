@@ -42,6 +42,11 @@ export const CATEGORIES = [
 		description: 'Pump.fun rules and token signals you configured.',
 	},
 	{
+		key: 'creations',
+		label: 'Creations',
+		description: 'A 3D generation you started finished (or failed) while you were away.',
+	},
+	{
 		key: 'account',
 		label: 'Account & security',
 		description: 'Withdrawals, payment issues, and security-sensitive events.',
@@ -84,6 +89,9 @@ const TYPE_CATEGORY = {
 
 	pump_alert: 'alerts',
 
+	forge_complete: 'creations',
+	forge_failed: 'creations',
+
 	withdrawal_completed: 'account',
 	withdrawal_failed: 'account',
 	payment_mismatch: 'account',
@@ -109,6 +117,10 @@ const DEFAULTS = {
 	social:    { in_app: true,  push: true,  email: false, telegram: false },
 	irl:       { in_app: true,  push: true,  email: false, telegram: false },
 	alerts:    { in_app: true,  push: true,  email: false, telegram: true  },
+	// Only unattended completions notify (api/cron/forge-finalize.js), so email
+	// defaulting on is the feature, not spam: the user left the page and asked
+	// to hear back.
+	creations: { in_app: true,  push: true,  email: true,  telegram: false },
 	account:   { in_app: true,  push: true,  email: true,  telegram: false },
 };
 
@@ -210,6 +222,8 @@ const PUSH_COPY = {
 	irl_interaction:          (p) => ['Met in person 📍', p.message ? `“${p.message}”` : 'Someone interacted with your agent in person'],
 	irl_reply:                (p) => ['Agent replied 💬', p.message ? `“${p.message}”` : 'An agent replied to your message'],
 	pump_alert:               (p) => ['Market alert 📈', p.summary || 'A token alert you configured just fired'],
+	forge_complete:           (p) => ['Your 3D model is ready ✨', p.prompt ? `"${String(p.prompt).slice(0, 80)}" finished generating` : 'Your generation finished. Tap to view it'],
+	forge_failed:             (p) => ['Generation failed ⚠️', p.prompt ? `"${String(p.prompt).slice(0, 80)}" could not be generated. Tap to retry` : 'A generation could not be completed. Tap to retry'],
 	withdrawal_completed:     ()  => ['Withdrawal complete ✅', 'Your withdrawal has been sent'],
 	withdrawal_failed:        ()  => ['Withdrawal failed ⚠️', 'A withdrawal could not be completed — tap to review'],
 	payment_mismatch:         ()  => ['Payment mismatch ⚠️', 'Check your agent payment settings'],

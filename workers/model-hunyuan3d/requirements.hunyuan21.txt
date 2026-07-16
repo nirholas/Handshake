@@ -4,11 +4,19 @@
 # torchaudio are installed separately in the Dockerfile from the cu124 wheel
 # index (they must match the base image's CUDA 12.4).
 #
-# Deliberately excluded from upstream's list: gradio (demo UI only) and
-# deepspeed (training-only; its sole import in the shape stack sits inside a
-# training-EMA branch that inference never reaches). Added on top: httpx (the
-# SSRF guard in worker_security), google-cloud-storage (task state + weight
-# staging + result upload).
+# Deliberately excluded from upstream's list:
+#   - gradio: demo UI only.
+#   - deepspeed: training-only; its sole import in the shape stack sits inside a
+#     training-EMA branch that inference never reaches.
+#   - bpy (Blender): has no cp310 wheel on PyPI, and it is only reached through
+#     DifferentiableRenderer.mesh_utils.convert_obj_to_glb (the save_glb=True OBJ
+#     to GLB exporter). This worker never calls it — it paints with
+#     save_glb=False and assembles the final PBR GLB with pygltflib via
+#     hy3dpaint.convert_utils.create_glb_with_pbr_materials. The Dockerfile
+#     drops a tiny stub `bpy` module so the top-level `import bpy` in
+#     mesh_utils resolves; no bpy function is ever executed.
+# Added on top: httpx (the SSRF guard in worker_security), google-cloud-storage
+# (task state + weight staging + result upload).
 
 # ── Build tools (custom_rasterizer CUDA ext + mesh_inpaint_processor pybind11) ─
 ninja==1.11.1.1
@@ -64,8 +72,8 @@ torchdiffeq
 # ── GPU computing ────────────────────────────────────────────────────────────
 cupy-cuda12x==13.4.1
 
-# ── Blender (headless, used by DifferentiableRenderer.mesh_utils on import) ───
-bpy==4.0
+# ── Blender (bpy): intentionally NOT installed — stubbed in the Dockerfile ────
+# (only reachable via the unused save_glb OBJ->GLB exporter; see header note).
 
 # ── ONNX runtime (rembg background removal) ──────────────────────────────────
 onnxruntime==1.16.3

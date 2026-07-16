@@ -1,4 +1,4 @@
-# Connect Anthropic or OpenAI as the brain
+# Connect Anthropic, OpenAI, or xAI (Grok) as the brain
 
 The agent's body is the avatar. The agent's voice is the TTS. The agent's *brain* is whatever LLM is generating its replies. By default the platform routes through a managed Claude endpoint, which works out of the box but bills against your free tier. The moment you want real production traffic, full control over which model runs, or your own usage observability, you bring your own API key.
 
@@ -11,7 +11,7 @@ This tutorial covers the whole brain layer. Where the LLM call actually happens 
 - A streaming-enabled brain so replies feel responsive
 - An observability dashboard you can use to monitor spend per agent
 
-**Prerequisites:** You have an agent at [three.ws/my-agents](https://three.ws/my-agents). You have an API key from Anthropic ([console.anthropic.com](https://console.anthropic.com)) or OpenAI ([platform.openai.com](https://platform.openai.com)). Familiarity with the concept of system prompts (see [agent personality](/tutorials/agent-personality)).
+**Prerequisites:** You have an agent at [three.ws/my-agents](https://three.ws/my-agents). You have an API key from Anthropic ([console.anthropic.com](https://console.anthropic.com)), OpenAI ([platform.openai.com](https://platform.openai.com)), or xAI ([console.x.ai](https://console.x.ai)). Familiarity with the concept of system prompts (see [agent personality](/tutorials/agent-personality)).
 
 ---
 
@@ -58,7 +58,15 @@ For OpenAI:
 4. In three.ws My Agents, **API Keys → OpenAI → Add key.**
 5. Paste, save.
 
-You can store both keys at once and route different agents to different providers.
+For xAI (Grok):
+
+1. Open [console.x.ai](https://console.x.ai).
+2. **API Keys → Create API key.** Label it.
+3. Copy (starts with `xai-`).
+4. In three.ws My Agents, **API Keys → Grok (xAI) → Add key.**
+5. Paste, save.
+
+You can store all three keys at once and route different agents to different providers.
 
 After saving, the keys are stored encrypted at rest. The dashboard shows the last four characters and a creation timestamp; the full key is never displayed back. If you suspect a leak, rotate the key on the provider side and replace it in the dashboard — the platform invalidates the old one immediately.
 
@@ -125,6 +133,19 @@ The current production-ready models, with the tradeoffs that actually matter for
 The platform also carries the wider OpenAI lineup: GPT-5.5 and GPT-5.5 Pro, the more affordable GPT-5.4 tier (`gpt-5.4`, `gpt-5.4-pro`, `gpt-5.4-mini`, `gpt-5.4-nano`, the cheapest current GPT), and GPT-5.3 Codex (`gpt-5.3-codex`) for code-centric agents. The three 5.6 models above cover almost every agent use case; the rest are there when you want a specific cost or capability point.
 
 Legacy ids keep working: `gpt-4o`, `gpt-4o-mini`, and `o3-mini` are accepted as aliases and resolve to `gpt-5.6-sol`, `gpt-5.6-luna`, and `o3` (the GPT-4o family was deprecated upstream in July 2026), so existing agents upgrade in place with no config change.
+
+### xAI (Grok) models
+
+**Grok 4.5** (`grok-4.5`) is the xAI flagship.
+
+- **Cost:** $2 per million input, $6 per million output. Cheaper than Sonnet per token.
+- **Latency:** First token in roughly a second.
+- **Capability:** Frontier reasoning with strong real-time knowledge of X. Tool use is reliable. A good pick for agents that discuss current events or social sentiment.
+- **Context window:** 500K tokens.
+
+**Grok 4.3** (`grok-4.3`) is the long-context option ($1.25 in / $2.50 out, 1M-token window). Reach for it when the agent carries very large system prompts or memory.
+
+**Grok 4.1 Fast** (`grok-4.1-fast`) is the budget workhorse ($0.20 in / $0.50 out, 2M-token window). Comparable to Haiku for short interactions and dramatically cheaper.
 
 ### Picking a model
 

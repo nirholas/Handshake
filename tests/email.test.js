@@ -386,4 +386,27 @@ describe('email — template wrappers compose payloads via buildPayload', () => 
 		expect(payload.html).toContain('Solana');
 		expect(payload.html).toContain('tx-1');
 	});
+
+	it('forge completion payload carries the prompt, share link, and preview', () => {
+		const rendered = mod.renderForgeComplete({
+			prompt: 'a brass desk lamp, articulated arm',
+			creationPath: '/forge?share=abc-123',
+			previewImageUrl: 'https://cdn.example.test/preview.webp',
+		});
+		const payload = mod.buildPayload({ to: 'a@example.test', ...rendered });
+		expect(payload.subject).toContain('a brass desk lamp');
+		expect(payload.html).toContain('/forge?share=abc-123');
+		expect(payload.html).toContain('https://cdn.example.test/preview.webp');
+		expect(payload.text).toContain('/forge?share=abc-123');
+	});
+
+	it('forge completion payload escapes a hostile prompt and stands without a preview', () => {
+		const rendered = mod.renderForgeComplete({
+			prompt: '<script>alert(1)</script>',
+			creationPath: '/forge?share=abc-123',
+			previewImageUrl: null,
+		});
+		expect(rendered.html).not.toContain('<script>alert(1)</script>');
+		expect(rendered.html).not.toContain('<img');
+	});
 });

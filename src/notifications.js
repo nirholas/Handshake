@@ -85,6 +85,8 @@ const TYPE_ICON = {
 	dm_received:              '💬',
 	pump_launch_filled:       '🚀',
 	agent_review:             '⭐',
+	forge_complete:           '✨',
+	forge_failed:             '⚠️',
 };
 
 function notifLabel(n) {
@@ -141,6 +143,14 @@ function notifLabel(n) {
 				: `Someone messaged your agent in person`;
 		case 'irl_reply':
 			return p.message ? `An agent replied: “${p.message}”` : `An agent replied to your message`;
+		case 'forge_complete':
+			return p.prompt
+				? `Your 3D model "${String(p.prompt).slice(0, 60)}" is ready`
+				: `Your 3D model finished generating`;
+		case 'forge_failed':
+			return p.prompt
+				? `Your generation "${String(p.prompt).slice(0, 60)}" failed. Tap to retry`
+				: `A 3D generation failed. Tap to retry`;
 		default:
 			return n.type.replace(/_/g, ' ');
 	}

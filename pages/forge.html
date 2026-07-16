@@ -1382,6 +1382,15 @@
 				color: var(--ink);
 				font-weight: 600;
 			}
+			/* Leave-the-page reassurance: the generation is server-tracked, so the
+			   user is free to navigate away and pick the result up from the gallery
+			   (or a notification) later. */
+			.gen-leave-hint {
+				margin: var(--space-xs) 0 0;
+				font-size: var(--text-xs);
+				line-height: 1.5;
+				color: var(--ink-dim);
+			}
 			/* Lane-switch notice, shown when the server (or the client's automatic
 			   retry) moved this generation onto a backup engine mid-flight, so a
 			   failover is informative rather than silent. Filled by forge.js. */
@@ -2981,6 +2990,11 @@
 							<div class="gen-progress-fill" id="gen-progress-fill"></div>
 						</div>
 						<div class="gen-meta" id="gen-meta">Elapsed 0s</div>
+						<p class="gen-leave-hint">
+							Feel free to leave this page. Your model keeps generating, lands in
+							your gallery automatically, and signed-in creators get notified when
+							it's ready.
+						</p>
 						<div class="gen-note is-hidden" id="gen-note" role="status" aria-live="polite"></div>
 						<div style="margin-top: var(--space-sm)">
 							<button class="btn btn-ghost" type="button" id="cancel">Cancel</button>

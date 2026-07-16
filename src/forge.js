@@ -258,6 +258,64 @@ const CLIENT_ID = (() => {
 
 const CLIENT_HEADERS = { 'x-forge-client': CLIENT_ID };
 
+// Leave-the-page continuity. The active async job persists here so a reload,
+// a navigation away, or a closed tab does not lose the generation: returning
+// to /forge inside RESUME_WINDOW_MS resumes polling the same job id (all real
+// state lives server-side). Cleared on completion, terminal failure, or
+// cancel. Even a user who never comes back is covered: the server-side
+// finalizer (api/cron/forge-finalize.js) completes the row into their gallery
+// and notifies signed-in creators.
+const INFLIGHT_KEY = 'forge:inflight';
+const RESUME_WINDOW_MS = 30 * 60 * 1000;
+
+function saveInflight(job, label) {
+	if (!job?.job_id) return;
+	try {
+		localStorage.setItem(
+			INFLIGHT_KEY,
+			JSON.stringify({
+				jobId: job.job_id,
+				creationId: job.creation_id || null,
+				label: label || '',
+				previewImageUrl: job.preview_image_url || null,
+				backend: job.backend || null,
+				tier: job.tier || null,
+				path: job.path || null,
+				startedAt: Date.now(),
+			}),
+		);
+	} catch {
+		// Private mode / storage blocked: resume simply won't be available.
+	}
+}
+
+function readInflight() {
+	try {
+		const raw = localStorage.getItem(INFLIGHT_KEY);
+		if (!raw) return null;
+		const j = JSON.parse(raw);
+		if (!j?.jobId || !Number.isFinite(j.startedAt)) {
+			clearInflight();
+			return null;
+		}
+		if (Date.now() - j.startedAt > RESUME_WINDOW_MS) {
+			clearInflight();
+			return null;
+		}
+		return j;
+	} catch {
+		return null;
+	}
+}
+
+function clearInflight() {
+	try {
+		localStorage.removeItem(INFLIGHT_KEY);
+	} catch {
+		/* storage blocked */
+	}
+}
+
 const REDUCED_MOTION =
 	typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -329,8 +387,10 @@ function setProgress(pct) {
 	els.genProgress.setAttribute('aria-valuenow', String(Math.round(clamped)));
 }
 
-function startElapsed() {
-	const started = performance.now();
+function startElapsed(offsetMs = 0) {
+	// `offsetMs` backdates the counter for a resumed job, so the elapsed line
+	// stays honest about how long the generation has really been running.
+	const started = performance.now() - Math.max(0, offsetMs);
 	stopElapsed();
 	const typical = currentEtaSeconds();
 	// Reset the meter to a clean running state for this job.
@@ -2153,8 +2213,11 @@ async function run(cfg) {
 		// itself returns the finished model with a null job_id. Polling that
 		// null id would loop on invalid_job until the timeout, losing a result
 		// that already succeeded.
-		const done = job.status === 'done' && job.glb_url ? job : await pollUntilDone(job.job_id);
+		const isAsync = !(job.status === 'done' && job.glb_url);
+		if (isAsync) saveInflight(job, label);
+		const done = !isAsync ? job : await pollUntilDone(job.job_id);
 		if (pollAbort || !done) return; // cancelled
+		clearInflight();
 
 		// A pay-per-use proof is single-use and now redeemed on the server — drop it
 		// so a later Retry/Refine of this job never replays a spent payment.
@@ -2195,6 +2258,11 @@ async function run(cfg) {
 		}
 	} catch (err) {
 		if (pollAbort) return;
+		// Every catch path either terminates this job with a designed state or
+		// re-runs (which writes a fresh inflight record), so the old record is
+		// dead either way. The server-side finalizer still completes the row
+		// into the gallery if the lane actually finished after our timeout.
+		clearInflight();
 		if (err.kind === 'unconfigured') {
 			stopElapsed();
 			showState('unconfigured');
@@ -2299,6 +2367,72 @@ async function run(cfg) {
 	} finally {
 		setBusy(false);
 	}
+}
+
+// Resume an in-flight generation persisted before a reload/navigation. The
+// server holds all job state, so picking it back up is just polling the same
+// job id; the panel restores in its mesh phase with an honest elapsed count.
+async function resumeInflight() {
+	const inflight = readInflight();
+	if (!inflight) return false;
+
+	pollAbort = false;
+	currentCreationId = inflight.creationId || null;
+	setBusy(true);
+	setStepLabel('image', 'Reference ready');
+	setStep('image', 'done');
+	setStepLabel('mesh', 'Reconstructing textured mesh');
+	setStep('mesh', 'active');
+	setStep('finish', 'pending');
+	els.genPreview.innerHTML = '<div class="shimmer" aria-hidden="true"></div>';
+	if (inflight.previewImageUrl) {
+		const img = new Image();
+		img.alt = 'Reference image';
+		img.src = inflight.previewImageUrl;
+		img.onload = () => {
+			els.genPreview.innerHTML = '';
+			els.genPreview.appendChild(img);
+		};
+	}
+	setLaneNote('Welcome back. This generation kept running while you were away.');
+	startElapsed(Date.now() - inflight.startedAt);
+	showState('generating');
+
+	try {
+		const done = await pollUntilDone(inflight.jobId);
+		if (pollAbort || !done) return true;
+		clearInflight();
+		if (done.creation_id) currentCreationId = done.creation_id;
+		setStep('mesh', 'done');
+		setStep('finish', 'done');
+		markProgressDone();
+		showResult(
+			done.glb_url,
+			inflight.label || 'Forged model',
+			{
+				views_used: done.views_used,
+				multiview: done.multiview,
+				backend: done.backend ?? inflight.backend,
+				tier: done.tier ?? inflight.tier,
+				path: done.path ?? inflight.path,
+			},
+			{ autoSaved: !!done.creation_id },
+		);
+		loadGallery();
+		if (!done.preview_image_url && !inflight.previewImageUrl) {
+			capturePoster(currentCreationId);
+		}
+	} catch (err) {
+		if (pollAbort) return true;
+		clearInflight();
+		showError(
+			err.message ||
+				'Something went wrong resuming your generation. Check your gallery: finished models land there automatically.',
+		);
+	} finally {
+		setBusy(false);
+	}
+	return true;
 }
 
 // Gather + validate the active mode's composer inputs into a run cfg, or null
@@ -2560,6 +2694,7 @@ els.providerKey?.addEventListener('input', () => {
 
 els.cancel.addEventListener('click', () => {
 	pollAbort = true;
+	clearInflight();
 	stopElapsed();
 	setBusy(false);
 	if (els.categoryPicker) els.categoryPicker.hidden = true;
@@ -2816,8 +2951,15 @@ window.addEventListener('wallet:changed', () => {
 	updatePerkLine();
 });
 
-// Surface any previously forged models for this browser on load.
+// Surface any previously forged models for this browser on load, then pick an
+// interrupted generation back up. A share link wins over a resume: the visitor
+// explicitly asked to see that creation, and the resumed job stays pollable in
+// storage for the next plain visit.
 loadGallery().then(() => {
 	const shareId = window.__forgeShareId;
-	if (shareId) openSharedCreation(shareId);
+	if (shareId) {
+		openSharedCreation(shareId);
+		return;
+	}
+	resumeInflight();
 });

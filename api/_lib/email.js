@@ -142,6 +142,34 @@ export function sendReferralCommissionEmail({ to, amount, currency, fromHandle, 
 	return sendEmail({ to, ...renderReferralCommission({ amount, currency, fromHandle, skillName, date }) });
 }
 
+// Unattended forge completion: sent only by the server-side finalizer when a
+// generation finished after the creator left the page. `creationPath` is the
+// site-relative share path (/forge?share=<id>).
+export function renderForgeComplete({ prompt, creationPath, previewImageUrl }) {
+	const url = `${APP_URL}${creationPath}`;
+	const subjectPrompt = prompt ? `"${prompt.length > 60 ? `${prompt.slice(0, 57)}…` : prompt}"` : 'your model';
+	const preview = previewImageUrl
+		? `<img src="${esc(previewImageUrl)}" alt="Model preview" style="width:100%;max-width:456px;border-radius:12px;border:1px solid #2a2a36;margin:0 0 16px" />`
+		: '';
+	return {
+		subject: `Your 3D model is ready: ${subjectPrompt}`,
+		html: layout('Your 3D model is ready', `
+    <p class="brand">three.ws</p>
+    <h1>Your 3D model is ready</h1>
+    ${prompt ? `<p>Your generation ${esc(subjectPrompt)} finished while you were away. It's saved to your gallery and ready to view, share, or refine.</p>` : `<p>Your 3D generation finished while you were away. It's saved to your gallery and ready to view, share, or refine.</p>`}
+    ${preview}
+    <a class="btn" href="${esc(url)}">View your model</a>
+    <hr>
+    <p class="muted">You're getting this because a generation you started on three.ws finished after you left the page. Turn these off any time in your <a href="${APP_URL}/dashboard/" style="color:#6a5cff">notification preferences</a>.</p>
+  `),
+		text: `Your 3D model is ready\n\n${prompt ? `Your generation ${subjectPrompt} finished while you were away.` : 'Your 3D generation finished while you were away.'} It's saved to your gallery.\n\nView it: ${url}\n\nManage notifications: ${APP_URL}/dashboard/`,
+	};
+}
+
+export function sendForgeCompleteEmail({ to, prompt, creationPath, previewImageUrl }) {
+	return sendEmail({ to, ...renderForgeComplete({ prompt, creationPath, previewImageUrl }) });
+}
+
 // Double opt-in newsletter confirmation. Minimal localization (prompt 38) so a
 // subscriber confirms in their own language; unknown locales fall back to en.
 const NEWSLETTER_I18N = {

@@ -74,11 +74,11 @@ describe('usableModels (route selector)', () => {
 describe('free-first ordering', () => {
 	it('every free provider ranks ahead of every paid provider', () => {
 		// Free providers (Groq → OpenRouter → NVIDIA NIM) always lead; the paid
-		// keys (Anthropic, OpenAI) are last-resort backstops only reached when
-		// all three free lanes have failed.
-		expect(DEFAULT_PROVIDER_ORDER).toEqual(['groq', 'openrouter', 'nvidia', 'anthropic', 'openai']);
+		// keys (Anthropic, OpenAI, Grok) are last-resort backstops only reached
+		// when all three free lanes have failed.
+		expect(DEFAULT_PROVIDER_ORDER).toEqual(['groq', 'openrouter', 'nvidia', 'anthropic', 'openai', 'grok']);
 		const free = ['groq', 'openrouter', 'nvidia'];
-		const paid = ['anthropic', 'openai'];
+		const paid = ['anthropic', 'openai', 'grok'];
 		for (const f of free) {
 			for (const p of paid) {
 				expect(DEFAULT_PROVIDER_ORDER.indexOf(f), `${f} before ${p}`).toBeLessThan(DEFAULT_PROVIDER_ORDER.indexOf(p));
