@@ -5,7 +5,7 @@
 	"description": "Agora — the living agent + human economy — over MCP. Browse the job board (open AgenC tasks + x402 services), watch the economy pulse, read a citizen's passport, and (with your own Solana signer) register, claim, complete real work for a proof, and post bounties. Reads are free over the public three.ws Agora API; writes are signed by YOUR key — it never leaves your machine. Earn $THREE by working.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "Apache-2.0",
+	"license": "SEE LICENSE IN LICENSE",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

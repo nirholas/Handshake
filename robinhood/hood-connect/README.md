@@ -2,7 +2,7 @@
 
 [![Add Robinhood Chain](https://img.shields.io/badge/Robinhood_Chain-Add_to_wallet-00c805?logo=ethereum&logoColor=white&labelColor=101418)](https://nirholas.github.io/hood-connect/add.html)
 [![npm](https://img.shields.io/badge/npm-hood--connect-cb3837?logo=npm&labelColor=101418)](https://www.npmjs.com/package/hood-connect)
-[![license](https://img.shields.io/badge/license-MIT-93a1af?labelColor=101418)](./LICENSE)
+[![license](https://img.shields.io/badge/license-proprietary-93a1af?labelColor=101418)](./LICENSE)
 
 The wallet + onboarding kit for Robinhood Chain dApps.
 
@@ -179,6 +179,6 @@ npm publish --access public
 
 ## License
 
-MIT, see [LICENSE](./LICENSE).
+All rights reserved. See [LICENSE](./LICENSE).
 
 Built by [nirholas](https://x.com/nichxbt) · [three.ws](https://three.ws)

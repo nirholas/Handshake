@@ -183,7 +183,7 @@ the owner should take:
 
 ## License
 
-Apache License 2.0 © 2026 nirholas
+All rights reserved. See [LICENSE](./LICENSE).
 
 ---
 

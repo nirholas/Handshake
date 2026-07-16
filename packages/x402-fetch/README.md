@@ -96,4 +96,4 @@ const pay = wrapFetchWithPayment(fetch, wallet);
 
 ## License
 
-MIT © three.ws
+All rights reserved. See [LICENSE](./LICENSE).

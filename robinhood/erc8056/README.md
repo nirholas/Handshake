@@ -163,6 +163,6 @@ npm publish --access public
 
 ## License
 
-MIT
+All rights reserved. See [LICENSE](./LICENSE).
 
 Built by [nirholas](https://x.com/nichxbt) · [three.ws](https://three.ws)

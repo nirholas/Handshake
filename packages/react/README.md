@@ -118,4 +118,4 @@ its own React.
 
 ## License
 
-Apache-2.0 © three.ws
+All rights reserved. See [LICENSE](./LICENSE).

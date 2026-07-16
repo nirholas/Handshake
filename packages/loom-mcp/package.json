@@ -5,7 +5,7 @@
 	"description": "Loom — the three.ws community 3D-creation gallery from any AI agent. Browse the public feed of community-forged GLB creations, fetch one with its viewer URL, and submit your own. Public API, no key required.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "Apache-2.0",
+	"license": "SEE LICENSE IN LICENSE",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

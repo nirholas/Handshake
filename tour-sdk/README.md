@@ -300,4 +300,4 @@ any humanoid rig animates correctly and never freezes in a T-pose.
 
 ## License
 
-Apache-2.0 © three.ws
+All rights reserved. See [LICENSE](./LICENSE).

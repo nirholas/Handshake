@@ -302,5 +302,5 @@ configurable home.
 
 ## License
 
-[Apache-2.0](./LICENSE) © three.ws. Part of the [three.ws](https://three.ws)
+All rights reserved, see [LICENSE](./LICENSE). Part of the [three.ws](https://three.ws)
 platform for building, animating, rigging, and monetizing 3D AI agents.

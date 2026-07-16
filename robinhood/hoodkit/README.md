@@ -422,7 +422,7 @@ covered by a unit test in [`tests/unit`](./tests/unit) and documented here.
 
 ## License
 
-Apache-2.0 © 2026 nirholas
+All rights reserved. See [LICENSE](./LICENSE).
 
 ---
 

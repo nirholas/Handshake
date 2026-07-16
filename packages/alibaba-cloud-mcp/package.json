@@ -4,7 +4,7 @@
 	"description": "MCP server for Alibaba Cloud DashScope by three.ws — Qwen chat, embeddings, and model discovery using your own Alibaba Cloud API key.",
 	"type": "module",
 	"author": "nirholas",
-	"license": "Apache-2.0",
+	"license": "SEE LICENSE IN LICENSE",
 	"homepage": "https://three.ws",
 	"mcpName": "io.github.nirholas/alibaba-cloud",
 	"repository": {

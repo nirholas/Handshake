@@ -415,4 +415,4 @@ npm test            # vitest run
 
 ## License
 
-MIT — see [LICENSE](./LICENSE). Copyright © three.ws.
+All rights reserved. See [LICENSE](./LICENSE).

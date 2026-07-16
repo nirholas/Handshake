@@ -5,7 +5,7 @@
 	"description": "MCP tools for the 3d-agent stack — free text→3D (TRELLIS) plus paid 3D/avatar/rigging, pump.fun snapshots, ERC-8004 reputation, vanity grinder. Paid calls settled in USDC via x402.",
 	"type": "module",
 	"author": "nirholas",
-	"license": "Apache-2.0",
+	"license": "SEE LICENSE IN LICENSE",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

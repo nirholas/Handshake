@@ -3,7 +3,7 @@
   "type": "module",
   "description": "WASM-backed Solana ed25519 vanity address grinder",
   "version": "0.1.0",
-  "license": "Apache-2.0",
+  "license": "SEE LICENSE IN LICENSE",
   "files": [
     "vanity_grinder_bg.wasm",
     "vanity_grinder.js",

@@ -4,7 +4,7 @@
 	"description": "x402 pay-per-use MCP server for IBM Granite AI — chat, code, embeddings, analysis, and time-series forecasting. Pay USDC on Solana per call. No IBM Cloud account required.",
 	"type": "module",
 	"author": "nirholas",
-	"license": "Apache-2.0",
+	"license": "SEE LICENSE IN LICENSE",
 	"homepage": "https://three.ws",
 	"mcpName": "io.github.nirholas/ibm-x402-mcp",
 	"repository": {

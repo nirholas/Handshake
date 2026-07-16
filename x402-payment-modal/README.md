@@ -340,7 +340,7 @@ Modern evergreen browsers (ES2020, `BigInt`, dynamic `import()`, `fetch`,
 
 ## License
 
-[Apache-2.0](LICENSE) © three.ws
+All rights reserved. See [LICENSE](./LICENSE).
 
 > Maintained inside the [three.ws](https://three.ws) monorepo and published as a
 > standalone package. Issues and PRs:

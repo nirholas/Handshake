@@ -14,7 +14,7 @@
     "serve:docs": "node scripts/serve-docs.mjs"
   },
   "author": "nirholas (https://x.com/nichxbt)",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
     "better-sqlite3": "^12.2.0",
     "ws": "^8.18.0"

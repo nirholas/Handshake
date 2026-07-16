@@ -243,7 +243,7 @@ executes a swap, transfer, or acquisition of any kind.
 
 ## License
 
-Apache-2.0 © 2026 nirholas
+All rights reserved. See [LICENSE](./LICENSE).
 
 ---
 

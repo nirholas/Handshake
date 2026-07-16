@@ -5,7 +5,7 @@
 	"description": "Play three.ws Coin Clash — the community faction war backed by real holdings + pump.fun data — from any AI agent. Read the live battle board and leaderboard (public), or enlist your wallet and rally power for a faction (Solana-signed writes).",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "Apache-2.0",
+	"license": "SEE LICENSE IN LICENSE",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

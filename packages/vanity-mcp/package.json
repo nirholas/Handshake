@@ -5,7 +5,7 @@
 	"description": "Read the three.ws vanity-address grind-bounty market and proof-of-grind rarity gallery from any AI agent. Quote a pattern's difficulty + USDC price, appraise any address's rarity, and browse the bounty board, claimable queue, stats, leaderboard, config, and gallery. Read-only — no key, no signer, no payment.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "Apache-2.0",
+	"license": "SEE LICENSE IN LICENSE",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

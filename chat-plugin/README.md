@@ -186,4 +186,4 @@ Output: `dist/bundle.js` — tree-shaken, browser-targeted. React and react-dom 
 
 ## License
 
-Apache-2.0 — see [LICENSE](LICENSE).
+All rights reserved. See [LICENSE](./LICENSE).

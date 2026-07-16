@@ -64,7 +64,7 @@
 		"nft",
 		"metaplex"
 	],
-	"license": "Apache-2.0",
+	"license": "SEE LICENSE IN LICENSE",
 	"peerDependencies": {
 		"ethers": "^6.0.0",
 		"@solana/web3.js": "^1.0.0"

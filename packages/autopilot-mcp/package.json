@@ -5,7 +5,7 @@
 	"description": "An AI agent's own autonomous-execution control plane over MCP — set autopilot scopes, a daily SOL spend cap, and auto-execute, then run the propose → execute → undo loop. The agent spends SOL and never sells $THREE. Authenticated, write-heavy; scope + spend enforcement is server-side.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "Apache-2.0",
+	"license": "SEE LICENSE IN LICENSE",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

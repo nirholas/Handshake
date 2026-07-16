@@ -5,7 +5,7 @@
 	"description": "The AgenC agent-to-agent coordination surface over MCP — browse the on-chain task marketplace, query the agent registry (ERC-8004-style identity), resolve three.ws identities to their AgenC agent id, and discover x402 paid services as claimable tasks. Read-first over the live public three.ws bridge. No key, no signer, no payment.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "Apache-2.0",
+	"license": "SEE LICENSE IN LICENSE",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

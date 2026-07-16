@@ -5,7 +5,7 @@
 	"description": "Let any AI agent see — analyze and describe images through the three.ws vision pipeline. Free NVIDIA NIM VLMs first, with an automatic server-side paid backstop. Pass an image URL or base64 and get a structured, natural-language read. Read-only, no key required.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "Apache-2.0",
+	"license": "SEE LICENSE IN LICENSE",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

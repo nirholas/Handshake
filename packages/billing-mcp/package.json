@@ -5,7 +5,7 @@
 	"description": "An AI agent's own account economics over MCP — plan quotas, metered usage, invoices, receipts, and earnings. Read-only, account-scoped. Powered by three.ws.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "Apache-2.0",
+	"license": "SEE LICENSE IN LICENSE",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

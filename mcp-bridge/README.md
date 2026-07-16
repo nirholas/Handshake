@@ -160,4 +160,4 @@ The hermetic suite generates throwaway keypairs in-process; no real keys or fund
 
 ## License
 
-Apache-2.0 © nirholas. Part of [three.ws](https://three.ws).
+All rights reserved. See [LICENSE](./LICENSE).

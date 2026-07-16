@@ -5,7 +5,7 @@
 	"description": "Give 3D AI agents a voice and a face from any MCP client — text-to-speech, speech-to-text, audio-to-face lipsync (ARKit blendshapes), and the motion-capture clip library. Read-only over the live three.ws API; free NVIDIA lanes, no key required.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "Apache-2.0",
+	"license": "SEE LICENSE IN LICENSE",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",

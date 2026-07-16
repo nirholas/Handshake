@@ -243,4 +243,4 @@ The companion honours these query params (via `bootstrap()`):
 
 ## License
 
-[Apache‑2.0](./LICENSE) © three.ws
+All rights reserved. See [LICENSE](./LICENSE).

@@ -4,7 +4,7 @@
 	"description": "MCP server for IBM watsonx.ai by three.ws — chat, text generation, embeddings, tokenization, and model discovery with IBM Granite foundation models. Uses your own IBM Cloud credentials.",
 	"type": "module",
 	"author": "nirholas",
-	"license": "Apache-2.0",
+	"license": "SEE LICENSE IN LICENSE",
 	"homepage": "https://three.ws",
 	"mcpName": "io.github.nirholas/ibm-watsonx",
 	"repository": {

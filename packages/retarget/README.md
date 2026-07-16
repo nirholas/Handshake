@@ -109,4 +109,4 @@ Hit a skeleton convention it doesn't know? Add the bone-name mapping to the cano
 
 ## License
 
-Apache-2.0 © three.ws
+All rights reserved. See [LICENSE](./LICENSE).

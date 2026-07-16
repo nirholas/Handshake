@@ -5,7 +5,7 @@
 	"description": "three.ws live discovery surface from any AI agent — trending agents and coins, the $THREE holder leaderboard with tiers, and the site-wide activity ticker. Read-only over the live public API. No key, no signer, no payment.",
 	"type": "module",
 	"author": "nirholas <support@three.ws>",
-	"license": "Apache-2.0",
+	"license": "SEE LICENSE IN LICENSE",
 	"homepage": "https://three.ws",
 	"repository": {
 		"type": "git",
