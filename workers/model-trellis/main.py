@@ -286,6 +286,7 @@ async def _update_task(task_id: str, **fields) -> dict:
     (see the comment on `_tasks`)."""
     task = _tasks.setdefault(task_id, {"task_id": task_id})
     task.update(fields)
+    task["updated_at"] = time.time()
     loop = asyncio.get_event_loop()
     await loop.run_in_executor(
         None,
@@ -293,6 +294,59 @@ async def _update_task(task_id: str, **fields) -> dict:
             json.dumps(task), content_type="application/json"
         ),
     )
+    return task
+
+
+# A queued/running record with no state transition for this long is orphaned:
+# its runner instance died (or lost the background task) and nothing resumes
+# persisted tasks. The ceiling covers the 900s pipeline-ready wait plus the
+# longest real generation with margin; expiring it turns an endless client
+# poll into a designed failure the router's poll-time failover can act on.
+_PENDING_TTL_SECS = 1800
+_TERMINAL_STATUSES = frozenset({"done", "failed"})
+
+
+async def _resolve_task(task_id: str) -> dict:
+    """Shared poll reader. The instance-local cache is only trusted for
+    terminal records — caching a queued/running record would freeze that
+    status on this instance forever while the runner instance advances the
+    durable GCS record (polls have no session affinity). Non-terminal records
+    are always re-read from GCS and expired once orphaned."""
+    task = _tasks.get(task_id)
+    if task is not None and task.get("status") in _TERMINAL_STATUSES:
+        return task
+    loop = asyncio.get_event_loop()
+    try:
+        data = await loop.run_in_executor(None, _task_blob(task_id).download_as_bytes)
+    except NotFound:
+        if task is not None:
+            # Local-only record (the initial persist raced or failed) — serve
+            # the in-memory view rather than 404ing a task we know exists.
+            return task
+        raise HTTPException(status_code=404, detail="task not found")
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail=safe_error(exc, context="task lookup")
+        ) from exc
+    task = json.loads(data)
+    status = task.get("status")
+    if status in _TERMINAL_STATUSES:
+        _tasks[task_id] = task
+        return task
+    # Records written before updated_at existed can't prove liveness; after a
+    # deploy their runner instances are gone, so treat them as orphaned too.
+    updated_at = task.get("updated_at")
+    stale = (
+        not isinstance(updated_at, (int, float))
+        or time.time() - updated_at > _PENDING_TTL_SECS
+    )
+    if status in ("queued", "running") and stale:
+        return await _update_task(
+            task_id,
+            status="failed",
+            error="task orphaned: no progress within 30 minutes "
+            "(runner instance likely restarted mid-job); retry the request",
+        )
     return task
 
 
@@ -550,23 +604,7 @@ async def infer(
 @app.get("/tasks/{task_id}")
 async def get_task(task_id: str, authorization: str = Header(...)) -> dict:
     _require_api_key(authorization)
-    task = _tasks.get(task_id)
-    if task is not None:
-        return task
-    # Not in this instance's local cache — fall back to the durable GCS
-    # record, which every instance writes to on every state transition.
-    loop = asyncio.get_event_loop()
-    try:
-        data = await loop.run_in_executor(None, _task_blob(task_id).download_as_bytes)
-    except NotFound:
-        raise HTTPException(status_code=404, detail="task not found")
-    except Exception as exc:
-        raise HTTPException(
-            status_code=502, detail=safe_error(exc, context="task lookup")
-        ) from exc
-    task = json.loads(data)
-    _tasks[task_id] = task
-    return task
+    return await _resolve_task(task_id)
 
 
 @app.get("/health")
