@@ -225,7 +225,49 @@ async def _update_task(task_id: str, **fields) -> dict:
     return task
 
 
-async def _run_inference(task_id: str, images: list[str], body_type: str) -> None:
+# Per-request quality knobs, clamped to safe envelopes for a 24 GB L4.
+# Defaults are the platform's production quality bar, not the TRELLIS demo's
+# (steps=12, simplify=0.95, texture_size=1024): GPU time is cheap against the
+# platform's GCP credit budget, so both diffusion stages run ~2x the demo step
+# count and the texture bake runs at 2x resolution by default. Callers may
+# still override per request (e.g. a lower-cost preview lane).
+# `simplify` is the FRACTION OF TRIANGLES REMOVED by to_glb's decimation —
+# lower keeps more geometry. Raising steps sharpens structure and appearance
+# at roughly linear GPU-time cost; the L4 has headroom (MAX_CONCURRENT=1).
+_QUALITY_DEFAULTS = {
+    "ss_steps": 25,
+    "slat_steps": 25,
+    "ss_cfg": 7.5,
+    "slat_cfg": 3.0,
+    "simplify": 0.90,
+    "texture_size": 2048,
+}
+
+
+def _clamped_quality(q: dict | None) -> dict:
+    src = q or {}
+
+    def num(key, lo, hi, cast=float):
+        raw = src.get(key)
+        try:
+            val = cast(raw)
+        except (TypeError, ValueError):
+            return _QUALITY_DEFAULTS[key]
+        return max(lo, min(hi, val))
+
+    return {
+        "ss_steps": num("ss_steps", 8, 50, int),
+        "slat_steps": num("slat_steps", 8, 50, int),
+        "ss_cfg": num("ss_cfg", 1.0, 15.0),
+        "slat_cfg": num("slat_cfg", 1.0, 10.0),
+        "simplify": num("simplify", 0.5, 0.98),
+        "texture_size": num("texture_size", 512, 4096, int),
+    }
+
+
+async def _run_inference(
+    task_id: str, images: list[str], body_type: str, quality: dict | None = None
+) -> None:
     # Wait for the background pipeline load before touching the GPU. Warm
     # instances pass instantly; a cold one waits out the load rather than
     # NoneType-crashing. A failed load surfaces as a designed task error.
@@ -240,6 +282,8 @@ async def _run_inference(task_id: str, images: list[str], body_type: str) -> Non
     if _load_error:
         await _update_task(task_id, status="failed", error=f"pipeline unavailable: {_load_error}")
         return
+
+    q = _clamped_quality(quality)
 
     async with _sem:
         await _update_task(task_id, status="running")
@@ -260,12 +304,14 @@ async def _run_inference(task_id: str, images: list[str], body_type: str) -> Non
                     seed=42,
                     formats=["gaussian", "mesh"],
                     preprocess_image=True,
+                    sparse_structure_sampler_params={"steps": q["ss_steps"], "cfg_strength": q["ss_cfg"]},
+                    slat_sampler_params={"steps": q["slat_steps"], "cfg_strength": q["slat_cfg"]},
                 )
                 glb = postprocessing_utils.to_glb(
                     outputs["gaussian"][0],
                     outputs["mesh"][0],
-                    simplify=0.95,
-                    texture_size=1024,
+                    simplify=q["simplify"],
+                    texture_size=q["texture_size"],
                 )
                 return glb.export(file_type="glb")
 
@@ -301,6 +347,10 @@ class InferRequest(BaseModel):
     images: list[str] = Field(..., min_length=1, max_length=6)
     body_type: str = "neutral"
     job_id: str | None = None
+    # Optional per-request override of _QUALITY_DEFAULTS (ss_steps, slat_steps,
+    # ss_cfg, slat_cfg, simplify, texture_size) — see _clamped_quality. Omitted
+    # or partial fields fall back to the platform quality-bar defaults.
+    quality: dict | None = None
 
 
 @app.post("/infer", status_code=202)
@@ -315,7 +365,7 @@ async def infer(
     # different instance than this one the moment the 202 lands, and that
     # instance has nothing in its local `_tasks` dict to fall back on.
     await _update_task(task_id, status="queued", model="trellis-large")
-    background_tasks.add_task(_run_inference, task_id, body.images, body.body_type)
+    background_tasks.add_task(_run_inference, task_id, body.images, body.body_type, body.quality)
     return {"task_id": task_id, "status": "queued"}
 
 
