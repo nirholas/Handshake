@@ -5394,6 +5394,10 @@
 		{
 			"path": "/api/cron/leaderboard-rollup",
 			"schedule": "0 9 * * *"
+		},
+		{
+			"path": "/api/cron/changelog-push",
+			"schedule": "*/20 * * * *"
 		}
 	]
 }

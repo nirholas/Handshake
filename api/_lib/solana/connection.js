@@ -184,11 +184,27 @@ function extraFallbackUrls() {
 		.filter(Boolean);
 }
 
+// Operator-supplied LAST-RESORT URLs (comma-separated SOLANA_RPC_LAST_RESORT_URLS).
+// The inverse economics of SOLANA_RPC_FALLBACK_URLS: paid metered endpoints
+// (e.g. the Quicknode credit-funded endpoint) whose quota should be PRESERVED,
+// not load-balanced. They sit after every free/keyless public node, so they are
+// only hit when the entire free chain is down or throttled — the endpoint acts
+// as an insurance rung and its monthly credits stretch as long as possible.
+function lastResortUrls() {
+	return (process.env.SOLANA_RPC_LAST_RESORT_URLS || '')
+		.split(',')
+		.map((s) => normalizeRpcUrl(s))
+		.filter(Boolean);
+}
+
 /**
  * Priority-ordered endpoint list for a network. An explicit `url` (the value a
  * call site already resolved) is pinned first; keyed providers, then any
  * operator-supplied SOLANA_RPC_FALLBACK_URLS, then the keyless public endpoints
- * follow as fallbacks. The most-throttled public endpoint is always last.
+ * follow as fallbacks, with the most-throttled public endpoint at the end of the
+ * free set. Any SOLANA_RPC_LAST_RESORT_URLS (paid metered endpoints held in
+ * reserve) come after ALL free endpoints, so they only serve when everything
+ * free is down.
  */
 export function solanaRpcEndpoints(network = 'mainnet', url = null) {
 	const key = process.env.HELIUS_API_KEY;
@@ -253,6 +269,10 @@ export function solanaRpcEndpoints(network = 'mainnet', url = null) {
 		'https://solana-mainnet.gateway.tatum.io',
 		'https://solana.therpc.io',
 		PUBLIC_MAINNET,
+		// Paid metered reserve (mainnet only — devnet URLs would cross clusters).
+		// Dead last BY DESIGN: these bill against a monthly quota, so they serve
+		// only when every free lane above is down or throttled at once.
+		...lastResortUrls(),
 		// .filter(isHttpUrl) is the hard guarantee: only a value `new Connection`
 		// accepts survives, so a malformed env entry can never reach the constructor.
 	]).filter(isHttpUrl);

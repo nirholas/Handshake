@@ -638,6 +638,11 @@ const PUBLIC_RPCS = {
 
 function idxRpcUrls(chainId) {
 	const envUrl = process.env[`RPC_URL_${chainId}`];
+	// Paid metered reserve (e.g. a Quicknode credit-funded endpoint) appended
+	// AFTER every free public fallback: it bills against a monthly quota, so it
+	// should only serve when the whole free chain is down or throttled — the
+	// inverse of RPC_URL_<chainId>, which is tried first.
+	const lastResortUrl = process.env[`RPC_URL_${chainId}_LAST_RESORT`];
 	const ankrKey = process.env.ANKR_API_KEY;
 	// Ankr sunset keyless access: every https://rpc.ankr.com/<chain> call now
 	// returns "Unauthorized: authenticate with an API key", so a keyless entry
@@ -657,7 +662,9 @@ function idxRpcUrls(chainId) {
 			return ankrKey ? `${url}/${ankrKey}` : null;
 		})
 		.filter(Boolean);
-	return envUrl ? [envUrl, ...fallbacks] : fallbacks;
+	const urls = envUrl ? [envUrl, ...fallbacks] : fallbacks;
+	if (lastResortUrl && !urls.includes(lastResortUrl)) urls.push(lastResortUrl);
+	return urls;
 }
 
 async function handleIndexDelegations(req, res) {

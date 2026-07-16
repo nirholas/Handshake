@@ -60,6 +60,8 @@ If you're here to create and share agents rather than write code, follow this pa
 
 Make something the community upvotes and it can reach beyond three.ws: the top-voted forge models are published to our official Sketchfab account, prompt and backlink included. See [Sketchfab showcase](./sketchfab.md).
 
+Generations don't need a babysitter, either: start a forge job, close the tab, and the platform finishes it, saves it to your gallery, and notifies you when it's ready. See [Background generation](./forge-background-generation.md).
+
 ---
 
 ## Ready to build?

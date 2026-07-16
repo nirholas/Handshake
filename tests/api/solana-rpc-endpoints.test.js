@@ -23,6 +23,7 @@ const KEYS = [
 	'DRPC_API_KEY',
 	'SOLANA_RPC_URL',
 	'SOLANA_RPC_FALLBACK_URLS',
+	'SOLANA_RPC_LAST_RESORT_URLS',
 ];
 
 describe('solanaRpcEndpoints', () => {
@@ -112,6 +113,31 @@ describe('solanaRpcEndpoints', () => {
 		);
 		// And the public mainnet-beta endpoint is still last.
 		expect(eps[eps.length - 1]).toBe('https://api.mainnet-beta.solana.com');
+	});
+
+	it('places SOLANA_RPC_LAST_RESORT_URLS after EVERY free endpoint (paid quota preserved)', () => {
+		// The paid metered reserve (e.g. the Quicknode credit-funded endpoint) must
+		// only serve when the whole free chain is down — so it sits dead last, even
+		// behind the most-throttled public mainnet-beta endpoint.
+		process.env.HELIUS_API_KEY = 'h_test';
+		process.env.SOLANA_RPC_FALLBACK_URLS = 'https://free-a.example/sol';
+		process.env.SOLANA_RPC_LAST_RESORT_URLS =
+			'https://paid.quiknode.example/abc , https://paid-2.example/sol';
+		const eps = solanaRpcEndpoints('mainnet');
+		expect(eps[eps.length - 2]).toBe('https://paid.quiknode.example/abc');
+		expect(eps[eps.length - 1]).toBe('https://paid-2.example/sol');
+		expect(eps.indexOf('https://api.mainnet-beta.solana.com')).toBeLessThan(
+			eps.indexOf('https://paid.quiknode.example/abc'),
+		);
+		expect(eps.indexOf('https://free-a.example/sol')).toBeLessThan(
+			eps.indexOf('https://paid.quiknode.example/abc'),
+		);
+	});
+
+	it('never leaks SOLANA_RPC_LAST_RESORT_URLS into the devnet list (no cluster bleed)', () => {
+		process.env.SOLANA_RPC_LAST_RESORT_URLS = 'https://paid.quiknode.example/abc';
+		const eps = solanaRpcEndpoints('devnet');
+		expect(eps).not.toContain('https://paid.quiknode.example/abc');
 	});
 });
 

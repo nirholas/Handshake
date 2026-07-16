@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-16",
+			"title": "Leave the page while your 3D model generates. We'll finish it and let you know",
+			"summary": "Generations no longer need a babysitter. If you close the tab or wander off mid-forge, the server now tracks your job to completion on its own: the finished model lands in your gallery automatically, and signed-in creators get a notification (bell, push, and email, each with its own switch in the preference center) the moment it's ready. Come back to /forge and an interrupted generation picks up right where it left off, with an honest elapsed timer. We also cleared over a thousand old generations that had been stuck in limbo and gave the busiest 3D engine room to scale to three GPUs, so queue waits drop too.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-07-16",
 			"title": "Sketch-to-3D is now live: draw it, get a 3D model",
 			"summary": "The Forge's sketch mode, where you draw a quick outline and describe it to get a 3D model, is now fully operational on our own GPU fleet. The engine behind it had never successfully started in production; two separate startup defects were found and fixed, and its multi-gigabyte model weights now download in parallel at boot instead of streaming through a slow mount, taking the worker from never-ready to serving in under four minutes from a cold start. A hand-drawn mug sketch now returns a clean, watertight 3D model in about two minutes.",
 			"tags": [

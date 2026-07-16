@@ -1529,6 +1529,11 @@ async function startJob({ prompt, imageUrls, skipValidation, payment }) {
 
 async function pollUntilDone(jobId) {
 	const deadline = performance.now() + MAX_POLL_MS;
+	// Queue-state tracking: when the engine reports the job is waiting for a GPU
+	// (healthy but busy, one generation per instance), say so instead of showing
+	// a silent spinner that reads as a hang. Restored when the job starts running.
+	let inQueue = false;
+	let preQueueMeshLabel = null;
 	while (!pollAbort && performance.now() < deadline) {
 		await sleep(POLL_INTERVAL_MS);
 		if (pollAbort) return null;
