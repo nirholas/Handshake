@@ -95,6 +95,14 @@
 			<description>Free text-to-3D generations on the Forge had been failing whenever traffic got real: our self-hosted TRELLIS engine lost track of jobs the moment a second GPU instance spun up, so polls landed on an instance that had never heard of the job and the whole generation was marked failed. The engine now records every job in shared storage, so any instance can answer for any job. The free community 3D Spaces lane also learned to switch to a backup allowance when the primary one runs dry instead of going dark. Concurrent generations now complete end to end.</description>
 		</item>
 		<item>
+			<title>The 3D world no longer risks crashing when you join</title>
+			<link>https://three.ws/world</link>
+			<guid isPermaLink="false">2026-07-16:The 3D world no longer risks crashing when you join</guid>
+			<pubDate>Thu, 16 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>world.three.ws had been carrying eight broken app definitions whose media files were permanently lost in an earlier storage incident. Nothing in the scene used them, but every visitor's client still tried to load their dead files on join, which could crash the session. The broken definitions are now removed (with a database backup taken first), every remaining asset in the world verifies as present, and the world keeps its edit protection.</description>
+		</item>
+		<item>
 			<title>Docs · AR in ChatGPT</title>
 			<link>https://three.ws/docs/chatgpt-ar</link>
 			<guid isPermaLink="false">2026-07-15:Docs · AR in ChatGPT</guid>

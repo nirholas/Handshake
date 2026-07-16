@@ -13935,6 +13935,15 @@
 				"improvement"
 			],
 			"link": "/legal/tos"
+		},
+		{
+			"date": "2026-07-16",
+			"title": "The 3D world no longer risks crashing when you join",
+			"summary": "world.three.ws had been carrying eight broken app definitions whose media files were permanently lost in an earlier storage incident. Nothing in the scene used them, but every visitor's client still tried to load their dead files on join, which could crash the session. The broken definitions are now removed (with a database backup taken first), every remaining asset in the world verifies as present, and the world keeps its edit protection.",
+			"tags": [
+				"fix"
+			],
+			"link": "/world"
 		}
 	]
 }
