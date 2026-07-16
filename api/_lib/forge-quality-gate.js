@@ -1,4 +1,4 @@
-// Forge realism / quality gate — the vision-model half of "raise the floor".
+// Forge realism / quality gate - the vision-model half of "raise the floor".
 //
 // glb-quality.js (scoreGlbQuality) answers the CHEAP, deterministic question
 // from the glTF JSON chunk alone: is this a valid, dense, textured mesh, or a
@@ -21,8 +21,8 @@
 // "ship what we have".
 //
 // ── Provider order ────────────────────────────────────────────────────────────
-//   1. Vertex Gemini (gemini-2.5-flash) — the intended lane, bills GCP credits.
-//   2. Platform vision chain (describeImageJson: free NVIDIA NIM VLMs) — used
+//   1. Vertex Gemini (gemini-2.5-flash) - the intended lane, bills GCP credits.
+//   2. Platform vision chain (describeImageJson: free NVIDIA NIM VLMs) - used
 //      when Vertex is unconfigured or errors, so the gate still functions off the
 //      free lanes rather than silently disabling itself.
 //   3. Neither available → fail-open pass with qa_available:false.
@@ -128,22 +128,30 @@ function rubricPrompt(subject, prompt) {
 		? `The model was generated from this request: "${String(prompt).slice(0, 400)}".`
 		: 'No source prompt was provided.';
 	return [
-		'You are a strict quality inspector for an AI 3D-model generator. You are shown a render of ONE generated 3D model.',
+		'You are a quality inspector for an AI 3D-model generator (text-to-3D). You are shown a render of ONE generated 3D model.',
 		promptLine,
 		`This model is a ${subject}. For this subject, a good result shows: ${rule.cues}.`,
 		'',
-		'OUR BAR is photoreal: the render should look like a real photograph of a real physical object or being, not a video-game asset, not a plastic toy, not a clay sculpt.',
+		'Your job is to RAISE THE FLOOR: catch and reject genuinely broken output while passing clean, complete, correctly-proportioned models. Photorealism is the aspiration, but do NOT hold generated 3D assets to the standard of a literal photograph. A clean, complete model of the correct subject is GOOD even if its materials look slightly matte or game-ready.',
 		'',
-		'Reject (low score) any of these failure modes if present: blobby/melted/undefined geometry; a plastic or toy-like look when the subject should be real; incomplete or partial mesh (missing parts, holes, cut-off body); duplicated or fused parts (two heads, extra limbs, merged copies); floating disconnected fragments; garbled or smeared textures; flat untextured gray/white surfaces; wildly wrong proportions.',
+		'IMPORTANT: the render uses fixed studio lighting on a plain gray backdrop, and the subject may look dark. Do NOT lower the score for the render\'s exposure, brightness, shadows, or background. If the geometry and proportions are correct and complete, that alone earns a passing score even when fine surface detail is hard to see.',
 		'',
-		'Reply with ONLY this JSON object and nothing else:',
+		'Score the OVERALL quality on this calibrated 0-100 scale:',
+		'  85-100 = excellent: complete, clean, correct proportions, convincingly real materials.',
+		'  65-84  = good: complete, correct subject and proportions, decent materials (may be slightly matte or low-detail). THIS IS A PASS.',
+		'  45-64  = borderline: recognizable and mostly complete but noticeably coarse, or missing a requested part, or a plastic-toy look on something that should be real.',
+		'  20-44  = poor: badly wrong proportions, largely incomplete, or unrecognizable as the intended subject.',
+		'  0-19   = broken: a blob, melted or fused mass, duplicated parts, floating disconnected fragments, or an unrecognizable mess.',
+		'Reserve scores under 30 for genuinely broken output. A complete, correctly-shaped object of the right subject should score 65 or higher.',
+		'',
+		'Reply with ONLY this JSON object and nothing else. Keep "reason" under 30 words and "retry_hint" under 15 words:',
 		'{',
-		'  "score": <int 0-100, overall how photoreal and correct this is>,',
+		'  "score": <int 0-100, overall quality on the calibrated scale above>,',
 		'  "realism": <int 0-100, how photographic vs toy/plastic/CG the materials and shading look>,',
 		'  "completeness": <int 0-100, how complete and single-subject the geometry is (100 = one whole subject, low = missing/partial/duplicated/fragmented)>,',
 		'  "is_photoreal": <true|false>,',
 		'  "subject_detected": "<what you actually see>",',
-		'  "defects": [<zero or more short tags from: blob, melted, plastic, toy, incomplete, partial, holes, duplicated, fused, extra_limbs, floating_fragments, garbled_texture, untextured, wrong_proportions, low_detail>],',
+		'  "defects": [<zero or more short tags, ONLY for issues actually present, from: blob, melted, plastic, toy, incomplete, partial, holes, duplicated, fused, extra_limbs, floating_fragments, garbled_texture, untextured, wrong_proportions, low_detail>],',
 		'  "reason": "<one concrete sentence on the main quality issue, or why it is good>",',
 		'  "retry_hint": "<one short instruction to improve a regeneration, or empty string if it is already good>"',
 		'}',
@@ -175,7 +183,7 @@ function assertSafeUrl(rawUrl) {
 	return url;
 }
 
-// Fetch an image URL and return { base64, mimeType }. Guarded + size-capped.
+// Fetch an image URL and return { imageBase64, mimeType }. Guarded + size-capped.
 async function fetchImageBase64(rawUrl, timeoutMs) {
 	assertSafeUrl(rawUrl);
 	const res = await fetch(rawUrl, { signal: AbortSignal.timeout(timeoutMs) });
@@ -183,22 +191,26 @@ async function fetchImageBase64(rawUrl, timeoutMs) {
 	const ct = (res.headers.get('content-type') || 'image/png').split(';')[0].trim();
 	const buf = Buffer.from(await res.arrayBuffer());
 	if (buf.byteLength > 16 * 1024 * 1024) throw new Error('render image exceeds 16 MB');
-	return { base64: buf.toString('base64'), mimeType: ct.startsWith('image/') ? ct : 'image/png' };
+	return { imageBase64: buf.toString('base64'), mimeType: ct.startsWith('image/') ? ct : 'image/png' };
 }
 
-// Render a GLB to a PNG and return { base64, mimeType }. Uses the shared headless
-// pipeline (avatar-render.js) with a full-body framing on a neutral dark
-// background so the whole subject is judged, not a cropped portrait.
+// Render a GLB to a PNG and return { imageBase64, mimeType }. Uses the shared
+// headless pipeline (avatar-render.js) with a full-body framing so the whole
+// subject is judged, not a cropped portrait. A neutral mid-gray studio backdrop
+// (not black) gives the vision model contrast against dark subjects - a dark GLB
+// on a dark background reads as "underexposed" and skews the verdict. The
+// pipeline's lighting is fixed, so the rubric explicitly tells the model to judge
+// the mesh, not the render's exposure.
 async function renderGlbBase64(glbUrl, size) {
 	assertSafeUrl(glbUrl);
 	const { png } = await renderAvatarScene({
 		glbUrl,
 		width: size,
 		height: size,
-		background: '#101014',
+		background: '#6a6d75',
 		scenePreset: SCENE_PRESETS['full-body'],
 	});
-	return { base64: Buffer.from(png).toString('base64'), mimeType: 'image/png' };
+	return { imageBase64: Buffer.from(png).toString('base64'), mimeType: 'image/png' };
 }
 
 // Resolve a GCP OAuth bearer token. Primary path is the shared service-account /
@@ -220,7 +232,7 @@ export function vertexQualityConfigured() {
 	return Boolean(readEnv('GOOGLE_CLOUD_PROJECT'));
 }
 
-// True when the gate can score at all — Vertex OR the free platform vision chain.
+// True when the gate can score at all - Vertex OR the free platform vision chain.
 // Use to decide whether to bother rendering (a cheap pre-check the router can run).
 export function qualityGateConfigured() {
 	return vertexQualityConfigured() || visionConfigured();
@@ -246,7 +258,19 @@ async function scoreViaVertex({ imageBase64, mimeType, prompt, subject, timeoutM
 				],
 			},
 		],
-		generationConfig: { temperature: 0, responseMimeType: 'application/json', maxOutputTokens: 700 },
+		// thinkingBudget:0 disables gemini-2.5 extended reasoning. It is essential
+		// here: the thinking tokens count against maxOutputTokens but are NOT returned
+		// as text, so on a complex render the model can burn the whole budget thinking
+		// and hit MAX_TOKENS with the JSON reply truncated mid-object (finishReason
+		// MAX_TOKENS at ~49 visible tokens). A deterministic scoring rubric needs no
+		// chain-of-thought, so turning it off makes the reply complete, cheaper, and
+		// faster. temperature:0 for a stable verdict; JSON mime for a clean parse.
+		generationConfig: {
+			temperature: 0,
+			responseMimeType: 'application/json',
+			maxOutputTokens: 800,
+			thinkingConfig: { thinkingBudget: 0 },
+		},
 	};
 
 	const res = await fetch(endpoint, {
@@ -276,7 +300,7 @@ async function scoreViaPlatformVision({ imageBase64, mimeType, prompt, subject, 
 		prompt: rubricPrompt(subject, prompt),
 		imageBase64,
 		mimeType,
-		maxTokens: 700,
+		maxTokens: 1536,
 		timeoutMs,
 		deadlineMs: timeoutMs + 4000,
 		track: { ...(track || {}), tool: 'api/_lib/forge-quality-gate' },
@@ -284,12 +308,17 @@ async function scoreViaPlatformVision({ imageBase64, mimeType, prompt, subject, 
 	return { json: out.json, provider: out.provider, model: out.model };
 }
 
-// Normalize a raw model reply into the public verdict shape, applying our pass
-// threshold. A model that flags a critical structural defect fails even if it
-// reported a generous score, because those defects are exactly what users must
-// never see.
-const CRITICAL_DEFECTS = new Set(['blob', 'melted', 'incomplete', 'partial', 'holes', 'duplicated', 'fused', 'extra_limbs', 'floating_fragments']);
+// The structural-failure floor: below this completeness the mesh is broken
+// (incomplete, duplicated, fragmented) regardless of a generous overall score, so
+// it fails the gate. Env-tunable alongside the pass score.
+const COMPLETENESS_FLOOR = intEnv('FORGE_QUALITY_COMPLETENESS_FLOOR', 40);
 
+// Normalize a raw model reply into the public verdict shape and apply our pass
+// decision. The decision trusts the recalibrated overall score (which already
+// folds in structure and materials) plus a hard completeness floor that catches
+// broken geometry even if the model was generous on the headline number. Defect
+// tags are informational and drive the retry hint; a single over-eager tag does
+// NOT by itself fail an otherwise-complete, well-scored model.
 function normalizeVerdict(raw, { subject, provider, model, passScore, renderSource }) {
 	const score = score100(raw?.score);
 	const realism = score100(raw?.realism);
@@ -297,13 +326,13 @@ function normalizeVerdict(raw, { subject, provider, model, passScore, renderSour
 	const defects = Array.isArray(raw?.defects)
 		? raw.defects.map((d) => String(d).toLowerCase().trim().replace(/\s+/g, '_')).filter(Boolean).slice(0, 12)
 		: [];
-	const hasCritical = defects.some((d) => CRITICAL_DEFECTS.has(d));
 	const hint = typeof raw?.retry_hint === 'string' ? raw.retry_hint.trim() : '';
-	// Pass requires clearing the score threshold AND not carrying a critical
-	// structural defect. A null score (unparseable field) fails closed to a retry
-	// only if the provider still answered; a total outage is handled upstream by
-	// fail-open.
-	const pass = score != null && score >= passScore && !hasCritical;
+	// Pass requires clearing the score threshold AND not being structurally broken
+	// (completeness below the floor). A null score (unparseable field) means the
+	// provider answered but malformed - fail closed to a retry rather than pass a
+	// blind result; a total provider/render outage is handled upstream by fail-open.
+	const structurallyBroken = completeness != null && completeness < COMPLETENESS_FLOOR;
+	const pass = score != null && score >= passScore && !structurallyBroken;
 	return {
 		pass,
 		score,
@@ -323,7 +352,7 @@ function normalizeVerdict(raw, { subject, provider, model, passScore, renderSour
 }
 
 // A fail-open pass verdict, returned whenever scoring cannot run. The router MUST
-// ship this (qa_available:false) rather than retry — a QA outage is not a quality
+// ship this (qa_available:false) rather than retry - a QA outage is not a quality
 // failure of the model.
 function failOpen(reason, { subject = 'object', renderSource = 'none' } = {}) {
 	return {
@@ -360,7 +389,7 @@ function failOpen(reason, { subject = 'object', renderSource = 'none' } = {}) {
  * @param {string} [opts.subject]       explicit subject category override
  * @param {number} [opts.passScore]     override the pass threshold
  * @param {object} [opts.track]         spend-ledger attribution passed to platform vision
- * @returns {Promise<object>} verdict (never throws — fail-open on any error)
+ * @returns {Promise<object>} verdict (never throws - fail-open on any error)
  */
 export async function runQualityGate({
 	glbUrl = null,
@@ -384,7 +413,7 @@ export async function runQualityGate({
 	try {
 		if (renderBase64) {
 			const m = String(renderBase64).match(/^data:(image\/[a-z+]+);base64,(.*)$/i);
-			image = { base64: m ? m[2] : String(renderBase64).replace(/^data:[^,]*,/, ''), mimeType: m ? m[1].toLowerCase() : mimeType };
+			image = { imageBase64: m ? m[2] : String(renderBase64).replace(/^data:[^,]*,/, ''), mimeType: m ? m[1].toLowerCase() : mimeType };
 			renderSource = 'provided_base64';
 		} else if (renderUrl) {
 			image = await fetchImageBase64(renderUrl, QUALITY_GATE_DEFAULTS.timeoutMs);
@@ -396,7 +425,7 @@ export async function runQualityGate({
 			return failOpen('no glbUrl, renderUrl, or renderBase64 supplied', { subject: subj });
 		}
 	} catch (e) {
-		// A render / fetch failure is a QA outage, not a model failure — fail open.
+		// A render / fetch failure is a QA outage, not a model failure - fail open.
 		return failOpen(`could not obtain a render: ${e?.message || e}`, { subject: subj });
 	}
 
@@ -490,7 +519,7 @@ export function buildRetryDirective(verdict, base = {}) {
 	const tier = wantsMoreGeometry ? nextTier(base.tier || 'standard') : (base.tier || 'standard');
 	// Switch to the image path on a structural failure: a reference image grounds
 	// the reconstruction and cuts blob/duplication failure modes. Leave a non-
-	// structural (material-only) failure on its current path — a tighter prompt
+	// structural (material-only) failure on its current path - a tighter prompt
 	// alone usually fixes plastic/toy looks.
 	const path = wantsMoreGeometry ? 'image' : (base.path || 'image');
 

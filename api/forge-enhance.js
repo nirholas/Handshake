@@ -208,7 +208,7 @@ export function buildSystem(style, subject = 'object') {
 			? `\n- Apply this target aesthetic to every prompt you write: ${STYLE_PRESETS[style]}.`
 			: '';
 	const realismBlock = isRealistic ? DEFAULT_REALISM_BLOCK : '';
-	// Subject-specific realism guidance only when the result should look real —
+	// Subject-specific realism guidance only when the result should look real:
 	// for an opted-in non-real style the subject hint would fight the user's ask.
 	const subjectBlock =
 		isRealistic && SUBJECT_REALISM_HINT[subject] ? `\n- ${SUBJECT_REALISM_HINT[subject]}` : '';
@@ -222,14 +222,14 @@ A great prompt for this pipeline describes a SINGLE, SOLID physical subject (an 
 person/creature) with clear geometry, CENTERED on a plain seamless background as if shot for a \
 product or portrait catalog. Rewrite the user's idea following every rule:
 - Exactly one subject, centered and fully in frame. If the user named several things, pick the \
-most central one — for a person or character, that means the person themselves, not props \
+most central one; for a person or character, that means the person themselves, not props \
 scattered around them.
 - Add concrete REAL-WORLD material, surface and color cues that photograph well AND reconstruct \
 well, e.g. “brushed aluminium with visible machining marks”, “worn oak with tight grain”, \
 “matte ceramic with slight subsurface glow”, “cast iron with rust-speckled patina”, or for a \
 person: “weathered tan skin with faint freckles”, “close-cropped grey stubble”, “fine wool knit \
-with visible stitching”. Name the surface micro-detail (grain, weave, pores, brush marks, wear) \
-— it is what makes the reconstruction bake dense, clean geometry and a convincing, true-to-life \
+with visible stitching”. Name the surface micro-detail (grain, weave, pores, brush marks, wear): \
+it is what makes the reconstruction bake dense, clean geometry and a convincing, true-to-life \
 texture rather than a smooth plastic one.
 - Prefer opaque, solid materials (metal, wood, stone, ceramic, hard plastic, skin, hair, cloth). \
 AVOID transparent, translucent, or mirror-reflective surfaces (glass, crystal, mirror, water) — \
@@ -335,7 +335,7 @@ export default wrap(async (req, res) => {
 	const userPrompt = raw.slice(0, MAX_IN);
 
 	let result;
-	// Preferred lane: Vertex Gemini on GCP credits for a higher-quality rewrite —
+	// Preferred lane: Vertex Gemini on GCP credits for a higher-quality rewrite,
 	// but only when the caller did not opt into the Nemotron lane, and always with
 	// automatic fallthrough to the free-first chain below. A Vertex failure here is
 	// swallowed so it can never regress the endpoint.

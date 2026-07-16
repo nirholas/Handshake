@@ -1,9 +1,9 @@
-// POST /api/forge-quality-check — score a generated 3D model's realism / quality.
+// POST /api/forge-quality-check - score a generated 3D model's realism / quality.
 //
 // A thin HTTP surface over the reusable gate in api/_lib/forge-quality-gate.js.
 // All provider policy (Vertex Gemini first, free NVIDIA NIM vision backup),
 // rendering, the subject-aware rubric, fail-open behavior, and the retry-directive
-// logic live in the lib — this file only reads the request, meters it, and shapes
+// logic live in the lib - this file only reads the request, meters it, and shapes
 // the response. The generation router (api/forge.js) imports the lib directly; this
 // endpoint exists so a client, an external agent, or an ops probe can score any
 // GLB (or an existing render) on demand.
@@ -20,7 +20,7 @@
 //   buildRetryDirective() object (or null). A GET returns a capability probe.
 //
 // Fail-open: a scoring/render/provider outage returns 200 with
-// verdict.qa_available:false and verdict.pass:true — the gate never blocks a
+// verdict.qa_available:false and verdict.pass:true - the gate never blocks a
 // generation, and neither does this endpoint.
 
 import { cors, method, readJson, error, json, wrap, rateLimited } from './_lib/http.js';
@@ -43,7 +43,7 @@ export default wrap(async function handler(req, res) {
 	if (cors(req, res, { methods: 'GET,POST,OPTIONS' })) return;
 	if (!method(req, res, ['GET', 'POST'])) return;
 
-	// Capability probe — lets a UI decide whether to surface a "check quality"
+	// Capability probe - lets a UI decide whether to surface a "check quality"
 	// affordance, and reports which lane will serve.
 	if (req.method === 'GET' || req.method === 'HEAD') {
 		return json(

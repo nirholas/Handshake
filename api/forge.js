@@ -360,7 +360,7 @@ function readForgeEnv(name) {
 // falls back to the standing text→image provider (the FLUX/Imagen/NIM chain) when
 // the module is absent or Vertex is unavailable. Returns { imageUrl, model } —
 // exactly textToImage()'s shape — so the call site is a drop-in swap.
-async function seedReferenceImage({ prompt, aspect, seed, skipNim }) {
+export async function seedReferenceImage({ prompt, aspect, seed, skipNim }) {
 	if (readForgeEnv('FORGE_REFERENCE_IMAGE') !== 'off') {
 		try {
 			const mod = await import('./_lib/forge-reference-image.js');
@@ -368,19 +368,20 @@ async function seedReferenceImage({ prompt, aspect, seed, skipNim }) {
 				mod.generateReferenceImage ||
 				mod.reconstructionReferenceImage ||
 				mod.photorealReferenceImage ||
-				mod.referenceImageForPrompt ||
 				(typeof mod.default === 'function' ? mod.default : null);
 			if (typeof fn === 'function') {
-				const out = await fn({ prompt, aspect, aspectRatio: aspect, seed, skipNim });
-				const imageUrl =
-					(out && (out.imageUrl || out.image_url || out.url)) ||
-					(typeof out === 'string' ? out : null);
+				// Positional signature: (prompt, { aspectRatio, seed, skipNim }). The module
+				// itself falls through to the standing text→image provider on a Vertex
+				// failure, so a returned result already reflects the best available lane.
+				const out = await fn(prompt, { aspectRatio: aspect, seed, skipNim });
+				const imageUrl = out && (out.imageUrl || out.image_url || out.url);
 				if (imageUrl) {
-					return { imageUrl, model: (out && (out.model || out.provider)) || 'vertex-reference', referenceModule: true };
+					return { imageUrl, model: out.model || 'vertex-reference', referenceModule: true };
 				}
 			}
 		} catch (err) {
-			// Module not landed yet, or Vertex down — fall through to the standing lane.
+			// Module not landed yet, or both Vertex AND its internal fallthrough failed.
+			// Make one more standing-provider attempt below so this path never dead-ends.
 			console.warn(`[forge] reference-image module unavailable, using standing provider: ${err?.message || err}`);
 		}
 	}
@@ -392,11 +393,11 @@ async function seedReferenceImage({ prompt, aspect, seed, skipNim }) {
 // vision-QA latency, so the free draft/standard default lane is left untouched),
 // 'all' (score every tier), or 'off'. Env-tunable so ops widen/disable with no
 // code change.
-function qualityGateScope() {
+export function qualityGateScope() {
 	const v = (readForgeEnv('FORGE_QUALITY_GATE') || 'high').toLowerCase();
 	return v === 'all' || v === 'off' ? v : 'high';
 }
-function qualityGateAppliesTo(tierId) {
+export function qualityGateAppliesTo(tierId) {
 	const s = qualityGateScope();
 	if (s === 'off') return false;
 	if (s === 'all') return true;
@@ -404,8 +405,10 @@ function qualityGateAppliesTo(tierId) {
 }
 // Bounded retry cap — default 1, clamped 0..2 so a quality retry can never turn one
 // generation into an unbounded credit/latency sink.
-function qualityGateMaxRetries() {
-	const n = Number(readForgeEnv('FORGE_QUALITY_GATE_MAX_RETRIES'));
+export function qualityGateMaxRetries() {
+	const raw = readForgeEnv('FORGE_QUALITY_GATE_MAX_RETRIES');
+	if (raw == null) return 1; // unset → default 1 (Number(null) is 0, so guard first)
+	const n = Number(raw);
 	if (!Number.isFinite(n)) return 1;
 	return Math.max(0, Math.min(2, Math.floor(n)));
 }
@@ -414,34 +417,36 @@ function qualityGateMaxRetries() {
 // absent module or a vision outage returns a passing verdict, so scoring can never
 // block or fail a delivered model. Returns the module's verdict object
 // ({ score, pass, defects, suggested_retry_hint, ... }) or a skipped pass.
-async function scoreQualityGate({ glbUrl, prompt, tier, backend, referenceImageUrl }) {
+export async function scoreQualityGate({ glbUrl, prompt, tier, backend, referenceImageUrl }) {
 	try {
 		const mod = await import('./_lib/forge-quality-gate.js');
 		const fn =
+			mod.runQualityGate ||
 			mod.scoreForgeQuality ||
 			mod.scoreGeneration ||
 			mod.qualityGateScore ||
-			mod.gradeGeneration ||
 			(typeof mod.default === 'function' ? mod.default : null);
 		if (typeof fn === 'function') {
+			// runQualityGate renders the delivered GLB itself and scores exactly one
+			// view of it; it never throws (fail-open) and returns a verdict carrying
+			// pass / score / defects / suggested_retry_hint / qa_available. Score the
+			// OUTPUT model (glbUrl), never the input reference, so the gate judges what
+			// was actually produced.
 			const verdict = await fn({
 				glbUrl,
-				glb_url: glbUrl,
 				prompt: prompt || null,
-				tier: tier?.id || tier || null,
-				backend: backend || null,
-				referenceImageUrl: referenceImageUrl || null,
+				subject: null,
 			});
 			if (verdict && typeof verdict === 'object') return verdict;
 		}
 	} catch (err) {
 		console.warn(`[forge] quality-gate scoring unavailable (fail-open pass): ${err?.message || err}`);
 	}
-	return { pass: true, skipped: true };
+	return { pass: true, skipped: true, qa_available: false };
 }
 
 // True only for an explicit failing verdict — a skipped/absent gate never retries.
-function qualityGateFailed(verdict) {
+export function qualityGateFailed(verdict) {
 	return Boolean(verdict) && verdict.skipped !== true && verdict.pass === false;
 }
 // Numeric quality score used to keep the best result across retries. A passing
@@ -460,7 +465,7 @@ function qualityScoreValue(verdict) {
 // the module exposes its own auto-retry helper it owns the loop instead (it holds
 // the hint interpretation); either way this is fail-open and never discards a
 // delivered model for a worse one. Returns { durable, verdict, retried }.
-async function qualityGateFinalize({ tierId, prompt, backend, referenceImageUrl, durable, regenerate }) {
+async function qualityGateFinalize({ tierId, prompt, path, backend, referenceImageUrl, durable, regenerate }) {
 	if (!qualityGateAppliesTo(tierId) || !durable?.glbUrl) {
 		return { durable, verdict: null, retried: false };
 	}
@@ -470,56 +475,43 @@ async function qualityGateFinalize({ tierId, prompt, backend, referenceImageUrl,
 	let retried = false;
 	const maxRetries = qualityGateMaxRetries();
 
-	// Prefer the module's own auto-retry helper when present — it owns the cap +
-	// hint interpretation. It receives the verdict, context, the same bounded
-	// regenerate closure, and the cap; a returned improved result is adopted.
+	// The module's buildRetryDirective owns the retry decision: it returns the next
+	// adjusted directive ({ prompt, tier, path, attempt }) or null when a retry must
+	// NOT happen (verdict passed, QA outage, or the cap is reached), so it enforces
+	// both the hint (tightened prompt / negative guidance) and the cap. Absent module
+	// falls back to the verdict's suggested_retry_hint under our own env cap.
+	let buildDirective = null;
 	try {
 		const mod = await import('./_lib/forge-quality-gate.js');
-		const helper =
-			mod.autoRetryForQuality || mod.withQualityRetry || mod.runQualityRetry || mod.qualityAutoRetry || null;
-		if (typeof helper === 'function' && qualityGateFailed(bestVerdict) && maxRetries > 0) {
-			const out = await helper({
-				verdict: bestVerdict,
-				glbUrl: bestDurable.glbUrl,
-				prompt: prompt || null,
-				tier: tierId,
-				backend,
-				referenceImageUrl: referenceImageUrl || null,
-				maxRetries,
-				regenerate,
-			});
-			if (out && (out.glbUrl || out.durable)) {
-				return {
-					durable: out.durable || bestDurable,
-					verdict: out.verdict || bestVerdict,
-					retried: Boolean(out.retried ?? true),
-				};
-			}
-		}
+		if (typeof mod.buildRetryDirective === 'function') buildDirective = mod.buildRetryDirective;
 	} catch {
-		// No helper / module absent — fall through to the local bounded loop below.
+		// Module absent: the local hint path below drives the (bounded) retry.
 	}
 
-	let attempts = 0;
-	while (qualityGateFailed(bestVerdict) && attempts < maxRetries && typeof regenerate === 'function') {
-		attempts += 1;
+	let attempt = 0;
+	while (attempt < maxRetries && typeof regenerate === 'function') {
+		let directive;
+		if (buildDirective) {
+			directive = buildDirective(bestVerdict, { prompt, tier: tierId, path, attempt, maxRetries });
+			if (!directive) break; // module says stop (passed / QA outage / cap reached)
+		} else {
+			if (!qualityGateFailed(bestVerdict)) break;
+			directive = { prompt, hint: bestVerdict?.suggested_retry_hint || null };
+		}
+		attempt += 1;
+		const retryPrompt = directive.prompt || prompt;
 		let next;
 		try {
-			next = await regenerate({ hint: bestVerdict?.suggested_retry_hint || null });
+			next = await regenerate({ prompt: retryPrompt, hint: directive.hint || bestVerdict?.suggested_retry_hint || null });
 		} catch (err) {
 			console.warn(`[forge] quality-gate retry regenerate failed, keeping best result: ${err?.message || err}`);
 			break;
 		}
 		if (!next?.durable?.glbUrl) break;
 		retried = true;
-		const nextVerdict = await scoreQualityGate({
-			glbUrl: next.durable.glbUrl,
-			prompt,
-			tier: tierId,
-			backend,
-			referenceImageUrl,
-		});
+		const nextVerdict = await scoreQualityGate({ glbUrl: next.durable.glbUrl, prompt: retryPrompt, tier: tierId, backend, referenceImageUrl });
 		const nextScore = qualityScoreValue(nextVerdict);
+		// Keep the higher-scoring result; a passing verdict always wins and ends the loop.
 		if (nextVerdict?.pass === true || nextScore > bestScore) {
 			bestDurable = next.durable;
 			bestVerdict = nextVerdict;
@@ -643,6 +635,42 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 			}
 		}
 
+		// Vision-QA quality gate (High/realism tier by default; env-tunable via
+		// FORGE_QUALITY_GATE). Score the delivered model and, on a failing verdict,
+		// run a bounded best-of retry on this same free lane keeping the higher-
+		// scoring result. Dormant for draft/standard by default, so the free default
+		// lane pays no extra latency. Fail-open end to end.
+		const gated = await qualityGateFinalize({
+			tierId: tier.id,
+			prompt,
+			path,
+			backend: backendId,
+			referenceImageUrl: null,
+			durable,
+			regenerate: async ({ prompt: retryPrompt } = {}) => {
+				const useP = retryPrompt || prompt;
+				const nvr = await loadNvidiaProvider();
+				const r = await nvr.textTo3d({ prompt: useP, tier, seed: opts?.seed ?? undefined });
+				if (r.taskId || !r.resultGlbUrl) return null;
+				const rj = randomUUID().replace(/-/g, '');
+				await createCreation({
+					clientKey, userId: await sessionUserIdFromReq(req), ipHash: hashIp(ip),
+					prompt: useP, aspect, previewImageUrl: null, replicateJobId: rj,
+					textToImageModel: null, viewsRequested: 0, viewsUsed: null, multiview: false,
+					backend: backendId, tier: tier.id, path,
+				});
+				const rd = await materializeCreation({
+					replicateJobId: rj, clientKey, userId: await sessionUserIdFromReq(req),
+					glbUrl: r.resultGlbUrl, quality: true,
+					compress: opts?.compression && opts.compression !== 'none' ? opts.compression : null,
+				});
+				return rd ? { glbUrl: rd.glbUrl, durable: rd } : null;
+			},
+		});
+		if (gated.durable) durable = gated.durable;
+		if (gated.retried) retried = true;
+		const qualityGate = gated.verdict;
+
 		if (cacheKey && durable?.glbUrl) {
 			await putCachedForgeResult(cacheKey, {
 				glb_url: durable.glbUrl,
@@ -661,6 +689,7 @@ async function runNvidiaTextLane({ req, res, ip, prompt, aspect, tier, path, opt
 			durable: Boolean(durable),
 			quality: durable?.quality || null,
 			quality_retried: retried,
+			quality_gate: qualityGate || undefined,
 			compression: durable?.compression || null,
 			options: opts?.hasOptions ? summarizeForgeOptions(opts) : undefined,
 			...provenance,
@@ -880,6 +909,52 @@ async function runHfImageLane({
 		}
 	}
 
+	// Vision-QA quality gate (High/realism tier by default; env-tunable). Bounded
+	// best-of retry on this same free lane. Each retry must claim a free
+	// concurrency slot first, so a busy fleet keeps the first result rather than
+	// starving other callers. Fail-open end to end.
+	const gated = await qualityGateFinalize({
+		tierId: tier.id,
+		prompt,
+		path,
+		backend: backendId,
+		referenceImageUrl: preview,
+		durable,
+		regenerate: async ({ prompt: retryPrompt } = {}) => {
+			const useP = retryPrompt || prompt;
+			const rslot = await acquireBlockingSlot('hf', { max: SCALE_LIMITS.hfConcurrent, ttlMs: SCALE_LIMITS.hfSlotTtlMs });
+			if (!rslot.ok) return null;
+			try {
+				const rs = await provider.submit({
+					mode: 'reconstruct',
+					sourceUrl: imageUrls[0],
+					params: { images: imageUrls, prompt: useP || undefined, seed: opts?.seed ?? undefined },
+				});
+				const rf = await provider.status(rs.extJobId);
+				if (!rf?.resultGlbUrl) return null;
+				const rj = randomUUID().replace(/-/g, '');
+				await createCreation({
+					clientKey, userId: await sessionUserIdFromReq(req), ipHash: hashIp(ip),
+					prompt: useP || (isImageMode ? 'image-to-3d' : ''), aspect,
+					previewImageUrl: preview, replicateJobId: rj,
+					textToImageModel: isImageMode ? null : textToImageModel,
+					viewsRequested: imageUrls.length, viewsUsed: imageUrls.length,
+					multiview: imageUrls.length > 1, backend: backendId, tier: tier.id, path,
+				});
+				const rd = await materializeCreation({
+					replicateJobId: rj, clientKey, userId: await sessionUserIdFromReq(req),
+					glbUrl: rf.resultGlbUrl, quality: true, compress: wantCompress,
+				});
+				return rd ? { glbUrl: rd.glbUrl, durable: rd } : null;
+			} finally {
+				await rslot.release();
+			}
+		},
+	});
+	if (gated.durable) durable = gated.durable;
+	if (gated.retried) retried = true;
+	const qualityGate = gated.verdict;
+
 	if (cacheKey && !isImageMode && durable?.glbUrl) {
 		await putCachedForgeResult(cacheKey, {
 			glb_url: durable.glbUrl,
@@ -898,6 +973,7 @@ async function runHfImageLane({
 		durable: Boolean(durable),
 		quality: durable?.quality || null,
 		quality_retried: retried,
+		quality_gate: qualityGate || undefined,
 		compression: durable?.compression || null,
 		options: opts?.hasOptions ? summarizeForgeOptions(opts) : undefined,
 		mode,
@@ -2683,6 +2759,22 @@ async function pollJob(req, res, jobId) {
 				quality: durable.quality || null,
 			});
 		}
+		// Post-generation vision-QA verdict for the async self-host lanes: the
+		// High/MAX realism path (self-host TRELLIS / Hunyuan3D) completes here.
+		// Tier-scoped (default High only) and fail-open, so draft/standard pay no
+		// scoring latency and a vision outage never withholds the delivered model.
+		// Surfaced so the client can show the score and offer a one-click regenerate
+		// on a failing verdict.
+		let qualityGate;
+		if (durable?.glbUrl && qualityGateAppliesTo(meta?.tier)) {
+			qualityGate = await scoreQualityGate({
+				glbUrl: durable.glbUrl,
+				prompt: meta?.prompt || null,
+				tier: meta?.tier || null,
+				backend: meta?.backend || null,
+				referenceImageUrl: meta?.preview_image_url || null,
+			});
+		}
 		return json(res, 200, {
 			job_id: jobId,
 			creation_id: durable?.id ?? meta?.id ?? null,
@@ -2690,6 +2782,7 @@ async function pollJob(req, res, jobId) {
 			glb_url: durable?.glbUrl ?? result.resultGlbUrl,
 			durable: Boolean(durable),
 			quality: durable?.quality || null,
+			quality_gate: qualityGate || undefined,
 			compression: durable?.compression || null,
 			...metaFields,
 		});

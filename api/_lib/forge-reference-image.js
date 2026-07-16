@@ -21,7 +21,7 @@
 //
 // It is ADDITIVE and never a gate: if the Vertex lane is unconfigured or fails
 // for any reason, it falls through to the existing reference-image provider
-// (api/_mcp3d/text-to-image.js — NIM FLUX free lane, Vertex Imagen, Replicate
+// (api/_mcp3d/text-to-image.js - NIM FLUX free lane, Vertex Imagen, Replicate
 // backstop), so nothing regresses relative to today's behavior.
 //
 // ── Router seam ──────────────────────────────────────────────────────────────
@@ -34,7 +34,7 @@
 //     });
 //
 // The router agent (which owns forge.js) can drop this module in as a direct
-// replacement — the return shape { imageUrl, model } is identical, so nothing
+// replacement - the return shape { imageUrl, model } is identical, so nothing
 // else in that function changes:
 //
 //     import { generateReferenceImage } from './_lib/forge-reference-image.js';
@@ -104,8 +104,8 @@ export function buildReferenceInstruction(prompt, negativePrompt) {
 	const subject = String(prompt || '').trim();
 	// The instruction never names the downstream use ("for 3D reconstruction"):
 	// telling an image model its output feeds a reconstructor measurably nudges it
-	// toward a CGI/render aesthetic. It only ever describes the desired LOOK — a
-	// real studio photograph — and the composition a reconstructor happens to need.
+	// toward a CGI/render aesthetic. It only ever describes the desired LOOK - a
+	// real studio photograph - and the composition a reconstructor happens to need.
 	const lines = [
 		'A single photorealistic studio photograph of the following subject, shot on a professional camera.',
 		`Subject: ${subject}.`,
@@ -213,7 +213,7 @@ async function generateViaVertex({ instruction, aspectRatio }) {
 //
 // Vertex-first (high-res, reference-tuned), then automatic fallthrough to the
 // existing provider chain. Returns { imageUrl, model, lane }. Never throws for a
-// recoverable Vertex issue — only the fallthrough's terminal error surfaces when
+// recoverable Vertex issue - only the fallthrough's terminal error surfaces when
 // every lane is exhausted, exactly as textToImage does today.
 export async function generateReferenceImage(
 	prompt,
@@ -233,7 +233,7 @@ export async function generateReferenceImage(
 			return { imageUrl, model, lane: 'vertex-reference' };
 		} catch (err) {
 			// Any Vertex failure (unconfigured token, safety block, throttle, tier
-			// change) degrades to the existing chain — the reference image still gets
+			// change) degrades to the existing chain - the reference image still gets
 			// made, just on the prior path. Warn, don't error.
 			console.warn(`[forge-reference-image] vertex lane failed, falling through: ${err?.message}`);
 		}
