@@ -15,7 +15,7 @@
 
 import { wrap, cors, error } from '../../_lib/http.js';
 import { sql } from '../../_lib/db.js';
-import { recordShareView } from '../../_lib/irl-analytics.js';
+import { recordShareView, ensureIrlAnalyticsSchema } from '../../_lib/irl-analytics.js';
 
 function esc(s) {
 	return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -86,6 +86,13 @@ export default wrap(async (req, res) => {
 		res.statusCode = 404;
 		return res.end(notFoundPage());
 	}
+
+	// Self-provisioning schema (matches api/irl/share.js's create path): on a
+	// fresh database no share has ever been created, so irl_pin_shares may not
+	// exist yet. Without this guard the SELECT below 500s with a bare Postgres
+	// "relation does not exist" instead of the designed not-found page —
+	// exactly the failure this endpoint exists to never show a visitor.
+	await ensureIrlAnalyticsSchema();
 
 	const [row] = await sql`
 		SELECT s.image_url, p.avatar_name, p.caption, p.published, p.hidden_at
