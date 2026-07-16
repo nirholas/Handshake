@@ -20,6 +20,7 @@ import {
 	WebGLRenderer,
 	SRGBColorSpace,
 	ACESFilmicToneMapping,
+	PCFSoftShadowMap,
 	Scene,
 	PMREMGenerator,
 	AmbientLight,
@@ -27,6 +28,9 @@ import {
 	PerspectiveCamera,
 	AnimationMixer,
 	Box3,
+	PlaneGeometry,
+	ShadowMaterial,
+	Mesh,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -99,6 +103,13 @@ export class TalkScene {
 		this.renderer.outputColorSpace = SRGBColorSpace;
 		this.renderer.toneMapping = ACESFilmicToneMapping;
 		this.renderer.toneMappingExposure = 1.0;
+		// Soft ground-contact shadow, matching the IRL placement viewer's
+		// PCFSoftShadowMap upgrade — a ShadowMaterial catcher (added once the
+		// avatar loads, see _setupGroundShadow) renders invisible except where
+		// the key light casts a shadow, so it doesn't break this scene's
+		// transparent background.
+		this.renderer.shadowMap.enabled = true;
+		this.renderer.shadowMap.type = PCFSoftShadowMap;
 
 		const { width, height } = sizeOf(container);
 		this.renderer.setSize(width, height, false);
@@ -117,6 +128,15 @@ export class TalkScene {
 		this.scene.add(new AmbientLight(0xffffff, 0.4));
 		const key = new DirectionalLight(0xffffff, 1.4);
 		key.position.set(2, 4, 3);
+		key.castShadow = true;
+		key.shadow.mapSize.set(1024, 1024);
+		key.shadow.camera.near = 0.5;
+		key.shadow.camera.far = 10;
+		key.shadow.camera.left = -1.5;
+		key.shadow.camera.right = 1.5;
+		key.shadow.camera.top = 2.5;
+		key.shadow.camera.bottom = -1.5;
+		key.shadow.bias = -0.0015;
 		this.scene.add(key);
 		const rim = new DirectionalLight(0x90a0ff, 0.6);
 		rim.position.set(-3, 2, -2);
@@ -158,6 +178,10 @@ export class TalkScene {
 		this.gltf = gltf;
 		this.root = gltf.scene;
 		this.scene.add(this.root);
+		this.root.traverse((node) => {
+			if (node.isMesh) node.castShadow = true;
+		});
+		this._setupGroundShadow();
 
 		// Frame the avatar: aim the camera at its head (estimated as the top
 		// 15% of the bounding box) and back off proportional to its height.
@@ -267,6 +291,9 @@ export class TalkScene {
 			});
 		}
 
+		this._groundShadow?.geometry?.dispose?.();
+		this._groundShadow?.material?.dispose?.();
+		this._groundShadow = null;
 		this.scene?.environment?.dispose?.();
 		this.renderer?.dispose?.();
 
@@ -300,6 +327,27 @@ export class TalkScene {
 
 	getCameraPreset() {
 		return this._cameraPreset;
+	}
+
+	// A ShadowMaterial plane renders fully invisible except where a shadow
+	// falls on it, so it adds a soft ground-contact shadow at the avatar's
+	// feet without introducing a visible floor — this scene stays transparent
+	// (see `this.scene.background = null` in mount()). Sized/positioned from
+	// the loaded model's own bounding box, so it works for any avatar height.
+	_setupGroundShadow() {
+		if (!this.root) return;
+		const b = new Box3().setFromObject(this.root);
+		if (!Number.isFinite(b.min.y)) return; // empty/degenerate bounds — nothing to catch a shadow
+		const footprint = Math.max(b.max.x - b.min.x, b.max.z - b.min.z, 1);
+		const size = footprint * 6;
+		if (!this._groundShadow) {
+			this._groundShadow = new Mesh(new PlaneGeometry(1, 1), new ShadowMaterial({ opacity: 0.35 }));
+			this._groundShadow.rotation.x = -Math.PI / 2;
+			this._groundShadow.receiveShadow = true;
+			this.scene.add(this._groundShadow);
+		}
+		this._groundShadow.scale.set(size, size, 1);
+		this._groundShadow.position.set((b.min.x + b.max.x) / 2, b.min.y, (b.min.z + b.max.z) / 2);
 	}
 
 	_frameAvatar() {

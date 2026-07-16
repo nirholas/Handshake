@@ -684,8 +684,8 @@ function renderLibrary() {
 		);
 		const retry = document.createElement('button');
 		retry.type = 'button';
-		retry.className = 'lib-load-more';
-		retry.style = 'grid-column:1/-1;margin-top:6px;padding:6px 12px;font-size:0.75rem;opacity:0.6;cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:inherit;transition:opacity 0.15s';
+		retry.className = 'btn btn--ghost';
+		retry.style = 'grid-column:1/-1;margin-top:6px;justify-self:start';
 		retry.textContent = 'Try again';
 		retry.addEventListener('click', () => {
 			libraryState = 'idle';
@@ -726,8 +726,8 @@ function renderLibrary() {
 	if (libraryHasMore) {
 		const more = document.createElement('button');
 		more.type = 'button';
-		more.className = 'lib-load-more';
-		more.style = 'grid-column:1/-1;margin-top:6px;padding:6px 12px;font-size:0.75rem;opacity:0.6;cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,0.2);border-radius:6px;color:inherit;transition:opacity 0.15s';
+		more.className = 'btn btn--ghost';
+		more.style = 'grid-column:1/-1;margin-top:6px;justify-self:start';
 		more.textContent = 'Load more';
 		more.addEventListener('click', () => loadLibraryAvatars({ append: true }));
 		grid.appendChild(more);
@@ -900,8 +900,10 @@ function syncModelPreview() {
 	mv.setAttribute('rotation-per-second', '18deg');
 	mv.setAttribute('camera-controls', '');
 	mv.setAttribute('interaction-prompt', 'none');
-	mv.setAttribute('shadow-intensity', '0.4');
-	mv.setAttribute('exposure', '0.95');
+	mv.setAttribute('shadow-intensity', '1.0');
+	mv.setAttribute('shadow-softness', '0.9');
+	mv.setAttribute('exposure', '1.5');
+	mv.setAttribute('tone-mapping', 'aces');
 	mv.setAttribute('environment-image', 'neutral');
 	mv.setAttribute('camera-orbit', '15deg 80deg auto');
 	mv.setAttribute('loading', 'eager');
@@ -1324,8 +1326,10 @@ function succeed(agent) {
 		mv.setAttribute('rotation-per-second', '20deg');
 		mv.setAttribute('interaction-prompt', 'none');
 		mv.setAttribute('disable-zoom', '');
-		mv.setAttribute('shadow-intensity', '0.4');
-		mv.setAttribute('exposure', '0.95');
+		mv.setAttribute('shadow-intensity', '1.0');
+		mv.setAttribute('shadow-softness', '0.9');
+		mv.setAttribute('exposure', '1.5');
+		mv.setAttribute('tone-mapping', 'aces');
 		mv.setAttribute('environment-image', 'neutral');
 		mv.setAttribute('camera-orbit', '15deg 80deg auto');
 		box.appendChild(mv);

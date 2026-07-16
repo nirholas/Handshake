@@ -433,8 +433,10 @@
 					viewer = document.createElement('model-viewer');
 					viewer.setAttribute('camera-controls', '');
 					viewer.setAttribute('auto-rotate', '');
-					viewer.setAttribute('shadow-intensity', '1');
-					viewer.setAttribute('exposure', '1');
+					viewer.setAttribute('shadow-intensity', '1.0');
+					viewer.setAttribute('shadow-softness', '0.9');
+					viewer.setAttribute('exposure', '1.5');
+					viewer.setAttribute('tone-mapping', 'aces');
 					viewer.setAttribute('environment-image', 'neutral');
 					viewer.setAttribute('ar', '');
 					viewer.setAttribute('alt', 'Generated 3D model');
