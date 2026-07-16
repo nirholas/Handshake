@@ -1,0 +1,245 @@
+{
+  "capturedAt": "2026-07-16T17:00:55.408Z",
+  "chainId": 4663,
+  "count": 34,
+  "prices": [
+    {
+      "symbol": "AAPL",
+      "priceUsd": 331.48485,
+      "feed": "0x6B22A786bAa607d76728168703a39Ea9C99f2cD0",
+      "roundId": "18446744073709551825",
+      "updatedAt": 1784216858
+    },
+    {
+      "symbol": "AMD",
+      "priceUsd": 502.475,
+      "feed": "0x943A29E7ae51A4798823ca9eEd2ed533B2A22C72",
+      "roundId": "18446744073709552638",
+      "updatedAt": 1784220982
+    },
+    {
+      "symbol": "AMZN",
+      "priceUsd": 255.43425,
+      "feed": "0xD5a1508ceD74c084eBf3cBe853e2C968fB2a651C",
+      "roundId": "18446744073709551887",
+      "updatedAt": 1784213513
+    },
+    {
+      "symbol": "ASML",
+      "priceUsd": 1807.4,
+      "feed": "0xB4106147E8cce40b7d46124090d373A71b70f87D",
+      "roundId": "18446744073709552361",
+      "updatedAt": 1784218227
+    },
+    {
+      "symbol": "BABA",
+      "priceUsd": 118.47,
+      "feed": "0x62Cc8F9b5f56a33c9C8A60c8B92779f523c4E984",
+      "roundId": "18446744073709552261",
+      "updatedAt": 1784217394
+    },
+    {
+      "symbol": "CLSK",
+      "priceUsd": 13.175,
+      "feed": "0x810c12D3a554Bc47fd39597Fe3b3AAC4941F50eF",
+      "roundId": "18446744073709553290",
+      "updatedAt": 1784221066
+    },
+    {
+      "symbol": "COIN",
+      "priceUsd": 164.4236,
+      "feed": "0xA3a468A452940B7D6b69991207B508c609a98Ef2",
+      "roundId": "18446744073709552523",
+      "updatedAt": 1784221185
+    },
+    {
+      "symbol": "CRCL",
+      "priceUsd": 62.46,
+      "feed": "0x6652eDf64bA3731C4F2D3ce821A0Fb1f1f6b482a",
+      "roundId": "18446744073709552928",
+      "updatedAt": 1784220922
+    },
+    {
+      "symbol": "CRWV",
+      "priceUsd": 73.6776,
+      "feed": "0xe1b3aABCAFAd1c94708dc1367dcfF8Aa4407487C",
+      "roundId": "18446744073709552788",
+      "updatedAt": 1784220975
+    },
+    {
+      "symbol": "EWY",
+      "priceUsd": 164.59345,
+      "feed": "0xEFdf54610B62A7753Ec30bDc380847c12D32e1D1",
+      "roundId": "18446744073709552959",
+      "updatedAt": 1784221008
+    },
+    {
+      "symbol": "GME",
+      "priceUsd": 22.225,
+      "feed": "0x27C71df6A64fB476468EdF256CF72c038baB5B67",
+      "roundId": "18446744073709551834",
+      "updatedAt": 1784220705
+    },
+    {
+      "symbol": "GOOGL",
+      "priceUsd": 372.0727,
+      "feed": "0xF6f373a037c30F0e5010d854385cA89185AE638b",
+      "roundId": "18446744073709551878",
+      "updatedAt": 1784220785
+    },
+    {
+      "symbol": "INTC",
+      "priceUsd": 96.98695,
+      "feed": "0x3f390C5C24628Ac7C489515402235FeAD71D1913",
+      "roundId": "18446744073709553042",
+      "updatedAt": 1784220941
+    },
+    {
+      "symbol": "IONQ",
+      "priceUsd": 35.51595,
+      "feed": "0x22EfeC4919baf55F360E0EDee4AbEB26DE4971eb",
+      "roundId": "18446744073709552920",
+      "updatedAt": 1784220951
+    },
+    {
+      "symbol": "META",
+      "priceUsd": 669.24,
+      "feed": "0x7C38C00C30BEe9378381E7B6135d7283356D71b1",
+      "roundId": "18446744073709552004",
+      "updatedAt": 1784218822
+    },
+    {
+      "symbol": "MSFT",
+      "priceUsd": 403.01,
+      "feed": "0x45C3C877C15E6BA2EBB19eA114Ea508d14C1Af2E",
+      "roundId": "18446744073709551881",
+      "updatedAt": 1784220475
+    },
+    {
+      "symbol": "MSTR",
+      "priceUsd": 94.41655,
+      "feed": "0x396118bdFB181e6240E74D243F266B061c0edc3D",
+      "roundId": "18446744073709553174",
+      "updatedAt": 1784220698
+    },
+    {
+      "symbol": "MU",
+      "priceUsd": 852.77,
+      "feed": "0x425EEFdCf05ed6526C3cE61Af99429A228a6d596",
+      "roundId": "18446744073709553686",
+      "updatedAt": 1784220994
+    },
+    {
+      "symbol": "NBIS",
+      "priceUsd": 176.093,
+      "feed": "0xE1D87B116Ba0fe898998f1D140339D1fA1E09705",
+      "roundId": "18446744073709553619",
+      "updatedAt": 1784221049
+    },
+    {
+      "symbol": "NVDA",
+      "priceUsd": 207.2811,
+      "feed": "0x379EC4f7C378F34a1B47E4F3cbeBCbAC3E8E9F15",
+      "roundId": "18446744073709551961",
+      "updatedAt": 1784215916
+    },
+    {
+      "symbol": "ORCL",
+      "priceUsd": 126.3172,
+      "feed": "0x0e6a64a2B58A6693a531E6c555f3A5d042eEA844",
+      "roundId": "18446744073709552202",
+      "updatedAt": 1784218644
+    },
+    {
+      "symbol": "PLTR",
+      "priceUsd": 134.17,
+      "feed": "0x820ABedFF239034956B7A9d2F0a331f9F075eB4c",
+      "roundId": "18446744073709552298",
+      "updatedAt": 1784221007
+    },
+    {
+      "symbol": "QQQ",
+      "priceUsd": 707.8,
+      "feed": "0x80901d846d5D7B030F26B480776EE3b29374C2ae",
+      "roundId": "18446744073709551752",
+      "updatedAt": 1784218404
+    },
+    {
+      "symbol": "RGTI",
+      "priceUsd": 14.285,
+      "feed": "0x2A045cF1C49c61c166C036d2f06FA2D2d984f765",
+      "roundId": "18446744073709552969",
+      "updatedAt": 1784220303
+    },
+    {
+      "symbol": "RKLB",
+      "priceUsd": 67.235,
+      "feed": "0x045477BF65Aef6f4F2386ad0164579e48381CC74",
+      "roundId": "18446744073709553118",
+      "updatedAt": 1784221159
+    },
+    {
+      "symbol": "SGOV",
+      "priceUsd": 100.65101945,
+      "feed": "0xa0DF4ee0fFf975306345875E3548Fcc519577A11",
+      "roundId": "18446744073709551629",
+      "updatedAt": 1784160054
+    },
+    {
+      "symbol": "SLV",
+      "priceUsd": 50.645,
+      "feed": "0x209b73908e92Ae021826eD79609845451Ecba2ce",
+      "roundId": "18446744073709552173",
+      "updatedAt": 1784218418
+    },
+    {
+      "symbol": "SNDK",
+      "priceUsd": 1450.88,
+      "feed": "0xfb133Fa4B7b385802B693a293606682Df47109A3",
+      "roundId": "18446744073709554132",
+      "updatedAt": 1784220992
+    },
+    {
+      "symbol": "SPCX",
+      "priceUsd": 133.23215,
+      "feed": "0xB265810950ba6c5C0Ff821c9963014a56fD8Bffb",
+      "roundId": "18446744073709552742",
+      "updatedAt": 1784220968
+    },
+    {
+      "symbol": "SPY",
+      "priceUsd": 753.34505,
+      "feed": "0x319724394D3A0e3669269846abE664Cd621f9f6A",
+      "roundId": "18446744073709551659",
+      "updatedAt": 1784214441
+    },
+    {
+      "symbol": "TSLA",
+      "priceUsd": 389.245,
+      "feed": "0x4A1166a659A55625345e9515b32adECea5547C38",
+      "roundId": "18446744073709551990",
+      "updatedAt": 1784218313
+    },
+    {
+      "symbol": "TSM",
+      "priceUsd": 406.96045,
+      "feed": "0x874cF94aa8eC88Fd9560094dD065f2fB3E41Fc2F",
+      "roundId": "18446744073709552232",
+      "updatedAt": 1784220995
+    },
+    {
+      "symbol": "USAR",
+      "priceUsd": 15.825,
+      "feed": "0xA994d3684e8400A6c8078226925779FdeE682DD9",
+      "roundId": "18446744073709552100",
+      "updatedAt": 1784221013
+    },
+    {
+      "symbol": "USO",
+      "priceUsd": 119.144,
+      "feed": "0x75a9c76Ef439e2C7c2E5a34Ab105EcFe3766431c",
+      "roundId": "18446744073709552062",
+      "updatedAt": 1784220953
+    }
+  ]
+}

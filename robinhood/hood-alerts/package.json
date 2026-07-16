@@ -1,0 +1,82 @@
+{
+  "name": "hood-alerts",
+  "version": "0.1.0",
+  "description": "The alert layer for Robinhood Chain (chain ID 4663): Telegram + Discord bots and a shared detection engine for memecoin launches, graduations, whale trades, price moves, Stock Token premium/discount arbitrage, holder milestones, and liquidity-pull rug warnings. Free tier + x402 USDG premium.",
+  "keywords": [
+    "robinhood",
+    "robinhood-chain",
+    "alerts",
+    "telegram-bot",
+    "discord-bot",
+    "memecoin",
+    "stock-tokens",
+    "x402",
+    "usdg",
+    "whale-alerts"
+  ],
+  "license": "SEE LICENSE IN LICENSE",
+  "author": "nirholas (https://x.com/nichxbt)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/hood-alerts.git"
+  },
+  "homepage": "https://nirholas.github.io/hood-alerts/",
+  "bugs": {
+    "url": "https://github.com/nirholas/hood-alerts/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "bin": {
+    "hood-alerts": "./dist/src/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    ".env.example",
+    "Dockerfile"
+  ],
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/src/index.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run tests --exclude 'tests/live/**'",
+    "test:live": "vitest run tests/live --testTimeout 180000",
+    "capture-fixtures": "tsx scripts/capture-fixtures.ts",
+    "probe": "tsx scripts/live-probe.ts",
+    "grant-premium": "tsx scripts/grant-premium.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.0",
+    "better-sqlite3": "^12.11.0",
+    "discord.js": "^14.27.0",
+    "grammy": "^1.44.0",
+    "hono": "^4.12.0",
+    "hood402": "file:../hood402",
+    "hoodchain": "file:../robinhood-chain-sdk",
+    "hoodkit": "file:../hoodkit",
+    "pino": "^10.3.0",
+    "viem": "2.55.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}
