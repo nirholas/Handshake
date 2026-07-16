@@ -25,7 +25,8 @@ import {
 	MeshBasicMaterial,
 	MeshStandardMaterial,
 	OrthographicCamera,
-	PCFShadowMap,
+	ACESFilmicToneMapping,
+	PCFSoftShadowMap,
 	PerspectiveCamera,
 	PlaneGeometry,
 	PMREMGenerator,
@@ -454,7 +455,11 @@ const renderer = new WebGLRenderer({
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight, false);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = PCFShadowMap;
+renderer.shadowMap.type = PCFSoftShadowMap;
+// Filmic response to match the IRL/avatar-sdk render stack — the IBL below
+// already supplies real ambient light; ACES keeps its highlights from clipping.
+renderer.toneMapping = ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
 
 const scene = new Scene();
 

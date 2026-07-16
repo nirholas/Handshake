@@ -238,9 +238,12 @@ function setupScene(canvas, hudStatus) {
 		controls.enabled = !e.value;
 	});
 
-	const hemi = new HemisphereLight('#f1f5f9', '#0a0a0f', 0.55);
+	// The RoomEnvironment IBL above now supplies the ambient base, so the fill
+	// lights step down from their pre-IBL values (hemi 0.55 / ambient 0.18) to
+	// keep overall exposure where it was — the key stays the shadow-caster.
+	const hemi = new HemisphereLight('#f1f5f9', '#0a0a0f', 0.4);
 	scene.add(hemi);
-	const ambient = new AmbientLight('#ffffff', 0.18);
+	const ambient = new AmbientLight('#ffffff', 0.1);
 	scene.add(ambient);
 
 	const key = new DirectionalLight('#ffffff', 1.4);

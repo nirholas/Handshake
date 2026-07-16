@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-16T20:08:38.956Z",
+	"generated_at": "2026-07-16T20:12:52.121Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -74,6 +74,16 @@
 			"link": "/forge",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-16",
+			"type": "update",
+			"title": "Generations look real by default, and every viewer renders them right",
+			"summary": "Two quality upgrades across the whole 3D pipeline. First, text prompts now produce photoreal results by default: the reference image every generation is built from is drawn with photographic detail cues on a higher-fidelity image model, unless you explicitly ask for a style like cartoon or voxel, which is respected as before. Second, the pose studio, walk companion, and character studio now render models with the same filmic tone mapping and real image-based lighting as the rest of the site, so materials, skin, and metals no longer look flat or washed out in some viewers and right in others.",
+			"link": "/forge",
+			"tags": [
+				"improvement"
 			]
 		},
 		{

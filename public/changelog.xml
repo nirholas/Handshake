@@ -63,6 +63,14 @@
 			<description>Text-to-3D on /forge was intermittently failing with a generic error even though the model had actually finished. The free NVIDIA lane's results are single-collection: two overlapping status checks could race, one collecting the model and the other reporting failure. Status checks are now coordinated, a finished model that a racing check already saved is returned instead of an error, and a genuinely lost result is silently regenerated on the same job. The free community GPU fallback also recovered: one Space reports a broken download address for its finished models, and the fetch now falls back to the address that works.</description>
 		</item>
 		<item>
+			<title>Generations look real by default, and every viewer renders them right</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-07-16:Generations look real by default, and every viewer renders them right</guid>
+			<pubDate>Thu, 16 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Two quality upgrades across the whole 3D pipeline. First, text prompts now produce photoreal results by default: the reference image every generation is built from is drawn with photographic detail cues on a higher-fidelity image model, unless you explicitly ask for a style like cartoon or voxel, which is respected as before. Second, the pose studio, walk companion, and character studio now render models with the same filmic tone mapping and real image-based lighting as the rest of the site, so materials, skin, and metals no longer look flat or washed out in some viewers and right in others.</description>
+		</item>
+		<item>
 			<title>Text-to-3D on the Forge is reliable again</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-07-16:Text-to-3D on the Forge is reliable again</guid>

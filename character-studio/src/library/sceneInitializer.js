@@ -68,8 +68,15 @@ export function sceneInitializer(canvasId) {
 
     window.addEventListener("resize", handleResize);
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    // Cap DPR: an uncapped ratio renders 3x+ pixels on retina/mobile for no
+    // visible gain and tanks the frame rate the look-at/animation loop needs.
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    // Filmic response to match the rest of the platform's viewers (IRL,
+    // avatar-sdk): the HDR IBL above supplies real dynamic range, and without
+    // a tone map its highlights clip to flat white on skin and metals.
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
 
     const clock = new THREE.Timer();
 

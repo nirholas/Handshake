@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-16",
+			"title": "Generations look real by default, and every viewer renders them right",
+			"summary": "Two quality upgrades across the whole 3D pipeline. First, text prompts now produce photoreal results by default: the reference image every generation is built from is drawn with photographic detail cues on a higher-fidelity image model, unless you explicitly ask for a style like cartoon or voxel, which is respected as before. Second, the pose studio, walk companion, and character studio now render models with the same filmic tone mapping and real image-based lighting as the rest of the site, so materials, skin, and metals no longer look flat or washed out in some viewers and right in others.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-07-16",
 			"title": "3D generation now switches engines by itself when one fails",
 			"summary": "A 3D generation that dies mid-flight no longer dead-ends. The platform now re-runs the same job on the next available engine automatically (up to three backups, free engines first) while your progress bar just keeps going — most failures become invisible. In the rare case every automatic backup is exhausted, the error screen on /forge now offers one-click \"Try on …\" buttons for the engines still available, so you never have to re-enter your prompt or photos. Avatar tools got the same treatment: a rig step that fails no longer throws away the finished 3D model, and the avatar generator falls back to the platform's own free engines when its primary vendor is down.",
 			"tags": [
