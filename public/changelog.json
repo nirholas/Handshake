@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-16T16:49:59.121Z",
+	"generated_at": "2026-07-16T18:05:12.321Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -9,11 +9,41 @@
 		{
 			"date": "2026-07-16",
 			"type": "update",
+			"title": "3D generation now switches engines by itself when one fails",
+			"summary": "A 3D generation that dies mid-flight no longer dead-ends. The platform now re-runs the same job on the next available engine automatically (up to three backups, free engines first) while your progress bar just keeps going — most failures become invisible. In the rare case every automatic backup is exhausted, the error screen on /forge now offers one-click \"Try on …\" buttons for the engines still available, so you never have to re-enter your prompt or photos. Avatar tools got the same treatment: a rig step that fails no longer throws away the finished 3D model, and the avatar generator falls back to the platform's own free engines when its primary vendor is down.",
+			"link": "/forge",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-16",
+			"type": "update",
+			"title": "Creation tools now hand off down the pipeline",
+			"summary": "Finishing one creation step now offers the next one instead of dropping you at a dead end. A fresh selfie avatar gets a \"Turn this into an agent\" button that carries the 3D body straight into the agent builder. The agent builder's success screen adds a \"Take it further\" row: give it a voice, embed it anywhere, put it in a world, or launch its token. And a freshly cloned voice now offers \"Add to an agent\". Avatar to agent to deploy, with no manual re-navigation.",
+			"link": "/create",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-16",
+			"type": "update",
 			"title": "Fewer dead ends in the creation flow",
 			"summary": "Every generic \"create an agent\" button (marketplace, memory tab, search) now points at the guided /create-agent wizard instead of a stale /agent/new link; that route stays reserved for the avatar hand-off it powers. The search page's avatar CTA no longer points at a route that never existed. /scan and /create/selfie (the two photo-to-avatar paths) now cross-link each other, and Build > Start here in the nav leads with \"Create anything\" straight to the /create hub.",
 			"link": "/create",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-16",
+			"type": "update",
+			"title": "Free 3D generation got a lot more reliable",
+			"summary": "Text-to-3D on /forge was intermittently failing with a generic error even though the model had actually finished. The free NVIDIA lane's results are single-collection: two overlapping status checks could race, one collecting the model and the other reporting failure. Status checks are now coordinated, a finished model that a racing check already saved is returned instead of an error, and a genuinely lost result is silently regenerated on the same job. The free community GPU fallback also recovered: one Space reports a broken download address for its finished models, and the fetch now falls back to the address that works.",
+			"link": "/forge",
+			"tags": [
+				"fix"
 			]
 		},
 		{

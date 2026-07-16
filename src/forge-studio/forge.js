@@ -91,6 +91,7 @@ const els = {
 	refine: document.getElementById('refine'),
 	refineLabel: document.getElementById('refine-label'),
 	retry: document.getElementById('retry'),
+	errorLanes: document.getElementById('error-lanes'),
 	viewsCounter: document.getElementById('views-counter'),
 	viewsCounterText: document.getElementById('views-counter-text'),
 	viewsPips: document.getElementById('views-pips'),
@@ -128,6 +129,10 @@ let elapsedTimer = null;
 let pollAbort = false;
 let mode = 'text'; // 'text' | 'image' | 'sketch' — input mode (prompt vs photos vs drawing)
 let lastJob = null; // { prompt, imageUrls } — for retry
+// Automatic engine hops taken for the current submission (lane_failed → switch
+// to the first suggested backup and re-run). Budget of 1 per user submit; the
+// server's own poll-time failover already walked the async lanes before this.
+let autoLaneHops = 0;
 let currentCreationId = null;
 // The quality tier the on-screen result was produced at — drives the "Refine"
 // affordance, which re-runs the same job exactly one tier higher.
@@ -196,6 +201,7 @@ const ENGINE_LABELS = {
 	nvidia: 'NVIDIA',
 	huggingface: 'Hunyuan3D',
 	trellis: 'Fast',
+	trellis_selfhost: 'TRELLIS',
 	meshy: 'Meshy',
 	tripo: 'Tripo',
 	rodin: 'Rodin',
@@ -552,6 +558,17 @@ function updateEngineAvailability() {
 		);
 		if (target) selectEngine(target);
 	}
+}
+
+// Flip the engine picker to a backend by id (used by the lane-failover retry
+// affordances, so a switch is always VISIBLE in the composer — never silent).
+// Returns false when that engine has no live button on this deployment.
+function selectEngineByBackend(backendId) {
+	const btn = els.engine?.querySelector(`button[data-backend="${backendId}"]:not(:disabled)`);
+	if (!btn) return false;
+	userPickedEngine = true;
+	selectEngine(btn);
+	return true;
 }
 
 function selectEngine(btn, silent) {
@@ -1396,7 +1413,17 @@ async function pollUntilDone(jobId) {
 			throw e;
 		}
 		if (data.status === 'done' && data.glb_url) return data;
-		if (data.status === 'failed') throw new Error(data.error || 'Generation failed.');
+		if (data.status === 'failed') {
+			// The server names the configured lanes that can still serve a fresh
+			// retry of this request (retry_backends) — carry them so the catch can
+			// auto-hop to a backup engine instead of dead-ending.
+			const e = new Error(data.error || 'Generation failed.');
+			if (data.retryable && Array.isArray(data.retry_backends) && data.retry_backends.length) {
+				e.kind = 'lane_failed';
+				e.retryBackends = data.retry_backends;
+			}
+			throw e;
+		}
 		if (data.status === 'running') setStep('mesh', 'active');
 	}
 	if (pollAbort) return null;
@@ -1825,8 +1852,43 @@ function showError(message, { allowOverride = false } = {}) {
 	if (els.generateAnyway) els.generateAnyway.classList.toggle('is-hidden', !allowOverride);
 	// The local-refine escape hatch belongs only to the rate-limit state.
 	if (els.refineLocally) els.refineLocally.classList.add('is-hidden');
+	// Lane-switch buttons belong only to the lane-failed state (showLaneFailed
+	// re-reveals them after this reset).
+	if (els.errorLanes) {
+		els.errorLanes.classList.add('is-hidden');
+		els.errorLanes.innerHTML = '';
+	}
 	if (els.retry) els.retry.disabled = false;
 	showState('error');
+}
+
+// Every automatic backup lane is exhausted — the one moment the user may see
+// an error, so it must not be a dead end. Alongside Try again, render a
+// one-click button per remaining configured engine: clicking flips the picker
+// (visible switch) and re-runs the same composer inputs, nothing re-entered.
+function showLaneFailed(message, backends) {
+	showError(message || 'That engine hit a snag mid-generation.');
+	if (!els.errorLanes || !lastJob) return;
+	const buttons = (backends || []).filter((id) => ENGINE_LABELS[id] || catalog?.backends?.some((b) => b.id === id));
+	if (!buttons.length) return;
+	for (const id of buttons) {
+		const info = catalog?.backends?.find((b) => b.id === id);
+		const label = ENGINE_LABELS[id] || info?.label || id;
+		const btn = document.createElement('button');
+		btn.type = 'button';
+		btn.className = 'btn btn-ghost';
+		btn.textContent = info?.free ? `Try on ${label} (free)` : `Try on ${label}`;
+		btn.addEventListener('click', () => {
+			if (!lastJob) return;
+			// The picker flip is the affordance: the user sees exactly which engine
+			// serves the retry. Fall back to a plain same-lane retry if the button
+			// for that engine isn't live on this deployment.
+			selectEngineByBackend(id);
+			run(lastJob);
+		});
+		els.errorLanes.appendChild(btn);
+	}
+	els.errorLanes.classList.remove('is-hidden');
 }
 
 // Rate-limit state: a designed, recoverable treatment for a 429. Instead of a
@@ -2067,6 +2129,21 @@ async function run(cfg) {
 			onGate(err.gate, gateOpts());
 			return;
 		}
+		// A lane died mid-generation and the server has no async lane left to
+		// continue on itself — but it told us which configured engines can still
+		// serve this request. Hop automatically once (visible: the picker flips)
+		// so a backup kicks in with zero user action; if the hop also fails,
+		// surface one-click engine switches. The user never dead-ends.
+		if (err.kind === 'lane_failed' && Array.isArray(err.retryBackends) && err.retryBackends.length) {
+			stopElapsed();
+			if (lastJob && autoLaneHops < 1 && selectEngineByBackend(err.retryBackends[0])) {
+				autoLaneHops += 1;
+				run(lastJob);
+				return;
+			}
+			showLaneFailed(err.message, err.retryBackends);
+			return;
+		}
 		// A presented pay-per-use proof was already spent — drop the stale payment so
 		// Retry doesn't replay it, and re-open the pay flow for a fresh generation.
 		if (err.kind === 'payment_used') {
@@ -2167,6 +2244,9 @@ function submit() {
 		return;
 	}
 	const cfg = collectComposerCfg();
+	// A fresh user-initiated generation resets the automatic lane-hop budget —
+	// the single silent hop belongs to one submission, never accumulates.
+	autoLaneHops = 0;
 	if (cfg) run(cfg);
 }
 

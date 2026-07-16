@@ -104,7 +104,30 @@ export async function buildForgeAvatarTool() {
 				durationMs: 144000,
 			},
 		},
-		(args) => runForgeAvatar(args),
+		async (args) => {
+			const r = await runForgeAvatar(args);
+			// The shared core degrades a rig-stage failure to a mesh-only SUCCESS —
+			// right for the free hosted studio lane, but on this PAID transport the
+			// advertised contract is "you are not charged if no rigged avatar is
+			// produced". Remap that degrade to the no-charge error envelope with the
+			// mesh still attached, so the caller keeps the asset without settling.
+			if (r?.ok === true && r.rigged === false) {
+				return {
+					ok: false,
+					error: r.rigError?.code || 'rig_failed',
+					message:
+						`The mesh generated but rigging failed (${r.rigError?.message || 'no detail'}). ` +
+						'You were NOT charged. The unrigged mesh URL is attached — rig it separately with rig_mesh once the rig lane recovers.',
+					meshGlbUrl: r.meshGlbUrl,
+					viewerUrl: r.viewerUrl,
+					backend: r.backend ?? null,
+					meshCreationId: r.meshCreationId ?? null,
+					...(r.rigError?.rigJobId ? { rigJobId: r.rigError.rigJobId } : {}),
+					...(r.rigError?.resumeUrl ? { resumeUrl: r.rigError.resumeUrl } : {}),
+				};
+			}
+			return r;
+		},
 	);
 
 	return {

@@ -32,7 +32,7 @@ import { runTextToAvatar } from './_studio-core.js';
 
 const TOOL_NAME = 'text_to_avatar';
 const TOOL_DESCRIPTION =
-	'Generate a textured 3D GLB avatar from a text prompt or one or more reference image URLs. Drives Replicate (Hunyuan-3D 3.1 by default, configurable) and polls the prediction synchronously until a GLB is produced or the timeout fires. Returns the GLB URL, the source prompt/images, the picked model version, the prediction id, and timing metadata. Paid: $0.15 USDC.';
+	'Generate a textured 3D GLB avatar from a text prompt or one or more reference image URLs. Drives Replicate (Hunyuan-3D 3.1 by default, configurable) and polls the prediction synchronously until a GLB is produced or the timeout fires. When the Replicate lane is unconfigured or fails, the request automatically falls over to the platform forge chain (free lanes + auto-rig) and reports the switch via lane/fallback_from — the result may then arrive rigged. Returns the GLB URL, the source prompt/images, the picked model version, the prediction id, and timing metadata. Paid: $0.15 USDC.';
 
 // Single source of truth: Zod shape carries descriptions + bounds; JSON Schema
 // derived. (No required fields — the handler enforces "prompt OR images".)

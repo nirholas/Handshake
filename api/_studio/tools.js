@@ -350,21 +350,29 @@ const forgeAvatar = {
 			allow_non_humanoid: args.allow_non_humanoid,
 		});
 		if (r.ok === false) return fail(r);
+		// A rig-stage failure degrades to the unrigged mesh (rigged:false in the
+		// shared core) instead of discarding finished work — reflect it honestly:
+		// the caller still gets a viewable GLB, flagged not-animation-ready, with
+		// the rig error attached so they can rig_mesh it once the lane recovers.
+		const rigged = r.rigged !== false;
+		const glbUrl = r.riggedGlbUrl || r.meshGlbUrl;
 		const structured = {
 			ok: true,
-			kind: 'rigged_avatar',
+			kind: rigged ? 'rigged_avatar' : 'avatar_mesh',
 			mode: r.mode,
-			glbUrl: r.riggedGlbUrl,
+			glbUrl,
 			meshGlbUrl: r.meshGlbUrl,
-			viewerUrl: viewerUrl(r.riggedGlbUrl),
-			arUrl: arUrl(r.riggedGlbUrl, true),
-			irlUrl: irlUrl(r.riggedGlbUrl),
-			poseStudioUrl: poseUrl(r.riggedGlbUrl),
+			viewerUrl: viewerUrl(glbUrl),
+			arUrl: arUrl(glbUrl, rigged),
+			irlUrl: irlUrl(glbUrl),
+			...(rigged
+				? { poseStudioUrl: poseUrl(glbUrl) }
+				: { rigError: r.rigError?.message || 'rigging failed — retry with rig_mesh' }),
 			prompt: r.prompt,
-			animationReady: true,
+			animationReady: rigged,
 			durationMs: r.durationMs,
 		};
-		return ok(structured, r.riggedGlbUrl, args.prompt || 'avatar', { live: true });
+		return ok(structured, glbUrl, args.prompt || 'avatar', { live: true });
 	},
 };
 

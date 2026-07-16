@@ -3778,6 +3778,9 @@
 					<p id="error-message">
 						Something went wrong. Try a simpler, single-subject prompt.
 					</p>
+					<!-- One-click engine switches, populated only when a lane failed and
+					     other configured engines can still serve the same request. -->
+					<div class="actions is-hidden" id="error-lanes" role="group" aria-label="Retry on another engine"></div>
 					<div class="actions">
 						<button class="btn" type="button" id="retry">Try again</button>
 						<button class="btn btn-ghost is-hidden" type="button" id="refine-locally">Refine current model instead</button>

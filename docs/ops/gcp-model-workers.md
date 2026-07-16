@@ -101,6 +101,23 @@ so a TripoSG failure returns a designed, retryable `503` rather than a dead erro
 Every response reports the `backend` that actually served it, so a failover is
 never silent.
 
+### Poll-time failover
+
+A worker can also accept a task and then fail it asynchronously — the failure
+only surfaces on a later `GET /api/forge?job=<id>` poll. That poll
+(`api/_lib/forge-failover.js`) cools the failed lane, recovers the original
+inputs from the creation row (prompt + reference image), resubmits to the next
+configured async lane (`trellis_selfhost` → `hunyuan3d` → paid Replicate, up to
+3 backups per job), and binds old-handle → new-handle in Redis. The client
+keeps polling the same id and sees `status: "running"` with the new `backend`
+plus `failover_from` — the failure never reaches the user. When no automatic
+lane remains, the terminal `failed` response names the still-configured lanes
+in `retry_backends` so the forge UI offers one-click engine switches (and hops
+to the first one automatically). HuggingFace can't be driven from a poll (its
+provider blocks through the generation), so it appears only in the
+suggestions, served by the client's fresh resubmit. Without Redis the
+successor chain disables cleanly and only the suggestion layer applies.
+
 ### Cold start
 
 When the liveness probe reaches a self-host worker but it answers slowly (a

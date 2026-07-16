@@ -127,6 +127,14 @@ import {
 	cacheKeyForJob,
 } from './_lib/forge-cache.js';
 import { shouldRetryForQuality } from './_lib/glb-quality.js';
+import {
+	resolveLiveJob,
+	bindJobSuccessor,
+	pickRedispatchLane,
+	retryBackendSuggestions,
+	submitFailoverJob,
+	MAX_FAILOVER_HOPS,
+} from './_lib/forge-failover.js';
 import { directPrompt } from './_mcp-studio/forge-client.js';
 import { MESH_DIRECTOR, resolveLogoPrompt } from './_lib/forge-director-prompts.js';
 
@@ -2298,8 +2306,17 @@ async function pollJob(req, res, jobId) {
 		return pollPipeline(res, token.taskId, jobId);
 	}
 
-	const provider = token?.provider || 'replicate';
-	const upstreamId = token?.taskId || jobId;
+	// Poll-time failover may have re-dispatched this generation onto another
+	// lane during an earlier poll (see _lib/forge-failover.js). The client keeps
+	// polling the ORIGINAL id; chase the successor chain to the live handle
+	// before resolving which provider owns the job. No failover (the common
+	// case) leaves everything as decoded above.
+	const live = await resolveLiveJob(jobId);
+	const liveHandle = live?.handle || jobId;
+	const liveToken = live ? decodeJobToken(liveHandle) : token;
+
+	const provider = liveToken?.provider || 'replicate';
+	const upstreamId = liveToken?.taskId || liveHandle;
 	const clientKey = clientKeyFrom(req);
 
 	// How this job was conditioned (path + tier + backend + view count), recorded
@@ -2332,7 +2349,7 @@ async function pollJob(req, res, jobId) {
 				});
 			}
 			const gp = BYOK_PROVIDER_FACTORIES[provider](key);
-			result = await gp.status({ kind: token.kind, taskId: upstreamId });
+			result = await gp.status({ kind: liveToken.kind, taskId: upstreamId });
 		} else if (provider === 'replicate_byok') {
 			// Replicate BYOK polls the caller's own account (key name 'replicate').
 			const key = await resolveProviderKey(req, null, 'replicate');
@@ -2382,7 +2399,9 @@ async function pollJob(req, res, jobId) {
 			} catch {
 				return unconfigured(res);
 			}
-			result = await rep.status(jobId);
+			// liveHandle, not jobId: a failover successor on the paid default lane
+			// keeps Replicate's bare prediction id as its handle.
+			result = await rep.status(liveHandle);
 		}
 	} catch {
 		// A transient poll error shouldn't fail the job — report running so the
@@ -2440,11 +2459,93 @@ async function pollJob(req, res, jobId) {
 		// adapter strings can name the vendor ("meshy task not found"), its billing
 		// state, a task id, an IP, or a leaked key. Mask to neutral copy on the wire.
 		await markFailed({ replicateJobId: upstreamId, clientKey, error: result.error });
+
+		// Cool the platform lane that actually failed so health-aware routing
+		// steers new submits away immediately — the poll-time twin of the
+		// submit-side cooldown. BYOK lanes are excluded (never auto-selected).
+		const failedBackend = meta?.backend || null;
+		const platformLaneFailed = Boolean(failedBackend && BACKENDS[failedBackend] && !BACKENDS[failedBackend].byok);
+		if (platformLaneFailed) await markLaneUnhealthy(failedBackend);
+
+		// Automatic redispatch (see _lib/forge-failover.js): recover the original
+		// inputs from the creation row and continue the SAME job on the next
+		// configured lane — the client keeps polling this id and sees
+		// status:"running" with a new backend instead of a dead end. Scoped to
+		// platform image-path jobs with a stored reference view; sketch stays on
+		// its purpose-built lane and BYOK vendors are never silently swapped.
+		const attempted = [...new Set([...(live?.attempted || []), failedBackend].filter(Boolean))];
+		const hop = live?.hop || 0;
+		const redispatchable =
+			platformLaneFailed && hop < MAX_FAILOVER_HOPS && meta?.preview_image_url && meta?.path !== 'sketch';
+		if (redispatchable) {
+			const nextLane = await pickRedispatchLane({ attempted });
+			if (nextLane) {
+				try {
+					const submitted = await submitFailoverJob({
+						backend: nextLane,
+						imageUrl: meta.preview_image_url,
+						prompt: meta.prompt,
+						tierId: meta.tier,
+						path: meta.path,
+					});
+					// Provenance row for the successor so later polls resolve its meta
+					// and the success path materializes into the store as usual. The
+					// redispatch reconstructs from the primary stored view, so a
+					// multi-view original degrades visibly (views_used: 1), never silently.
+					await createCreation({
+						clientKey,
+						userId: await sessionUserIdFromReq(req),
+						ipHash: hashIp(clientIp(req)),
+						prompt: meta.prompt,
+						previewImageUrl: meta.preview_image_url,
+						replicateJobId: submitted.extJobId,
+						viewsRequested: 1,
+						viewsUsed: 1,
+						multiview: false,
+						backend: nextLane,
+						tier: meta.tier,
+						path: meta.path,
+					});
+					// Report "running" ONLY once the successor is durably chaseable —
+					// otherwise the client would poll a dead handle forever.
+					const bound = await bindJobSuccessor(jobId, {
+						handle: submitted.handle,
+						backend: nextLane,
+						hop: hop + 1,
+						attempted,
+					});
+					if (bound) {
+						console.warn(
+							`[forge] job failed on ${failedBackend}; auto-failover #${hop + 1} → ${nextLane}`,
+						);
+						return json(res, 200, {
+							job_id: jobId,
+							status: 'running',
+							...metaFields,
+							backend: nextLane,
+							failover_from: failedBackend,
+						});
+					}
+				} catch (err) {
+					console.warn(`[forge] poll-time failover redispatch failed: ${err?.message || err}`);
+				}
+			}
+		}
+
+		// Terminal — but never a bare dead end: name the configured lanes that can
+		// still serve a fresh retry of this request, so a client can offer a
+		// one-click engine switch instead of a bare error. Sketch keeps its single
+		// purpose-built lane (reconstruct models do badly on drawings).
+		const suggestions =
+			meta?.path === 'sketch'
+				? []
+				: retryBackendSuggestions({ attempted, hasImage: Boolean(meta?.preview_image_url) });
 		return json(res, 200, {
 			job_id: jobId,
 			status: 'failed',
 			error: sanitizeJobError(result.error) || '3D generation hit a snag — please try again.',
 			...metaFields,
+			...(suggestions.length ? { retryable: true, retry_backends: suggestions } : {}),
 		});
 	}
 	return json(res, 200, { job_id: jobId, status: result.status || 'running', ...metaFields });

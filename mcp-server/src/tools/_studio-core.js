@@ -749,18 +749,42 @@ export async function runForgeAvatar({
 	const meshGlbUrl = gen.glb_url;
 	const generationMs = Date.now() - genStarted;
 
-	// Stage 2 — auto-rig. Failures still surface meshGlbUrl so generation is not lost.
+	// Rig-stage degrade: the mesh is real, finished work — a rig failure must
+	// never discard it. Mirror the embody chain's behavior (forge-client.js
+	// runEmbodyChain): deliver the unrigged mesh as a SUCCESS with rigged:false
+	// and the rig error attached, so the caller keeps the asset and can retry
+	// rigging alone (rig_mesh) once the rig lane recovers.
+	const meshOnlyResult = (rigError) => ({
+		ok: true,
+		mode: imageMode ? 'image_to_avatar' : 'text_to_avatar',
+		riggedGlbUrl: null,
+		meshGlbUrl,
+		viewerUrl: `${base}/viewer?src=${encodeURIComponent(meshGlbUrl)}`,
+		animationReady: false,
+		rigged: false,
+		rigError,
+		prompt: trimmedPrompt || null,
+		imageUrls: imageMode ? views : null,
+		viewsUsed: (gen.views_used ?? genJob.views_used) ?? (imageMode ? views.length : 0),
+		backend: (gen.backend ?? genJob.backend) ?? null,
+		directedPrompt: directedPrompt || null,
+		directed: Boolean(directedPrompt),
+		humanoid: humanoidInfo,
+		meshCreationId: gen.creation_id ?? genJob.creation_id ?? null,
+		generationMs,
+		durationMs: Date.now() - started,
+		fetchedAt: new Date().toISOString(),
+	});
+
+	// Stage 2 — auto-rig. Failures degrade to the unrigged mesh, never a dead end.
 	const rigStarted = Date.now();
 	let rigJob;
 	try {
 		rigJob = await startRig({ base, glbUrl: meshGlbUrl });
 	} catch (err) {
-		return coreError(err.code || 'provider_error', `rigging could not start: ${err.message}`, {
-			stage: 'rig',
-			meshGlbUrl,
-			meshViewerUrl: `${base}/viewer?src=${encodeURIComponent(meshGlbUrl)}`,
-			generationMs,
-			durationMs: Date.now() - started,
+		return meshOnlyResult({
+			code: err.code || 'provider_error',
+			message: `rigging could not start: ${err.message}`,
 			...(err.retryAfter ? { retryAfter: err.retryAfter } : {}),
 		});
 	}
@@ -775,24 +799,18 @@ export async function runForgeAvatar({
 			failCode: 'rig_failed',
 		});
 	} catch (err) {
-		return coreError(err.code || 'provider_error', `rigging failed: ${err.message}`, {
-			stage: 'rig',
-			meshGlbUrl,
-			meshViewerUrl: `${base}/viewer?src=${encodeURIComponent(meshGlbUrl)}`,
+		return meshOnlyResult({
+			code: err.code || 'provider_error',
+			message: `rigging failed: ${err.message}`,
 			rigJobId: rigJob.job_id,
-			generationMs,
-			durationMs: Date.now() - started,
 		});
 	}
 	if (rig._timedOut) {
-		return coreError('timeout', `rigging did not finish within ${rigTimeout}ms`, {
-			stage: 'rig',
-			meshGlbUrl,
-			meshViewerUrl: `${base}/viewer?src=${encodeURIComponent(meshGlbUrl)}`,
+		return meshOnlyResult({
+			code: 'timeout',
+			message: `rigging did not finish within ${rigTimeout}ms — it may still complete; poll resumeUrl`,
 			rigJobId: rigJob.job_id,
 			resumeUrl: `${base}/api/forge?job=${rigJob.job_id}`,
-			generationMs,
-			durationMs: Date.now() - started,
 		});
 	}
 
@@ -802,6 +820,7 @@ export async function runForgeAvatar({
 		mode: imageMode ? 'image_to_avatar' : 'text_to_avatar',
 		riggedGlbUrl,
 		meshGlbUrl,
+		rigged: true,
 		poseStudioUrl: `${base}/pose?src=${encodeURIComponent(riggedGlbUrl)}`,
 		viewerUrl: `${base}/viewer?src=${encodeURIComponent(riggedGlbUrl)}`,
 		animationReady: true,
@@ -930,16 +949,57 @@ async function rehostIfRequested(glbUrl, { prompt, images }) {
 	}
 }
 
-export async function runTextToAvatar({ prompt, images, seed, texture }) {
-	const version = env('REPLICATE_TEXT_TO_AVATAR_MODEL');
-	if (!version) {
-		return coreError(
-			'not_configured',
-			'REPLICATE_TEXT_TO_AVATAR_MODEL is not set on the server. Pin a commercial-OK image/text-to-3D version (e.g. tencent/hunyuan-3d-3.1 latest).',
-		);
+// The platform's own free-first forge chain (mesh + auto-rig via /api/forge) —
+// the standing backup when the pinned Replicate lane is unconfigured or fails
+// mid-flight. Maps the chain result onto text_to_avatar's output shape with the
+// lane switch reported honestly (`lane`, `fallback_from`, `fallbackReason`);
+// when the rig stage succeeds the caller even gets a RIGGED avatar — strictly
+// more than the Replicate lane's raw mesh, never less.
+async function textToAvatarViaForgeChain({ prompt, images, reason }) {
+	const chain = await runForgeAvatar({
+		prompt,
+		image_urls: images && images.length ? images : undefined,
+		// text_to_avatar has no humanoid restriction (Hunyuan reconstructs any
+		// subject), so the chain's humanoid gate must not narrow it.
+		allow_non_humanoid: true,
+	});
+	if (!chain.ok) {
+		// Both lanes down. Lead with the Replicate failure (it names what an
+		// operator must fix); attach the chain's own error for completeness.
+		return coreError('all_lanes_failed', `${reason}; forge-chain fallback also failed: ${chain.message || chain.error}`, {
+			fallbackError: chain.error || null,
+		});
 	}
+	const glbUrl = chain.riggedGlbUrl || chain.meshGlbUrl;
+	return {
+		ok: true,
+		glbUrl,
+		rigged: Boolean(chain.riggedGlbUrl),
+		lane: 'three-ws-forge-chain',
+		fallback_from: 'replicate',
+		fallbackReason: reason,
+		prompt: prompt || null,
+		images: images && images.length ? images : null,
+		model: chain.backend ? `three-ws/${chain.backend}` : 'three-ws/forge',
+		durationMs: chain.durationMs ?? null,
+		preview: chain.viewerUrl || `https://three.ws/viewer?src=${encodeURIComponent(glbUrl)}`,
+		fetchedAt: new Date().toISOString(),
+	};
+}
+
+export async function runTextToAvatar({ prompt, images, seed, texture }) {
 	if (!prompt && (!images || images.length === 0)) {
 		return coreError('invalid_input', 'Provide either prompt or images[].');
+	}
+	const version = env('REPLICATE_TEXT_TO_AVATAR_MODEL');
+	if (!version || !env('REPLICATE_API_TOKEN')) {
+		// The pinned Replicate lane isn't configured — serve the request on the
+		// platform's own forge chain instead of dead-ending a paid tool.
+		return textToAvatarViaForgeChain({
+			prompt,
+			images,
+			reason: !version ? 'REPLICATE_TEXT_TO_AVATAR_MODEL is not set' : 'REPLICATE_API_TOKEN is not set',
+		});
 	}
 	const input = {
 		prompt: prompt || undefined,
@@ -955,7 +1015,9 @@ export async function runTextToAvatar({ prompt, images, seed, texture }) {
 	try {
 		submitted = await submitPrediction({ version, input });
 	} catch (err) {
-		return coreError(err.code || 'provider_error', err.message);
+		// Replicate rejected the submit (auth, quota, outage) — hop to the forge
+		// chain rather than dead-ending a paid tool on a vendor problem.
+		return textToAvatarViaForgeChain({ prompt, images, reason: `replicate submit failed: ${err.message}` });
 	}
 
 	const timeoutMs = Number(env('MCP_TEXT_TO_AVATAR_TIMEOUT_MS', '110000'));
@@ -964,11 +1026,18 @@ export async function runTextToAvatar({ prompt, images, seed, texture }) {
 	try {
 		finalState = await pollPrediction(submitted.id, { timeoutMs, intervalMs });
 	} catch (err) {
-		return coreError(err.code || 'provider_error', err.message, { predictionId: submitted.id });
+		return textToAvatarViaForgeChain({
+			prompt,
+			images,
+			reason: `replicate poll failed (prediction ${submitted.id}): ${err.message}`,
+		});
 	}
 
 	const durationMs = Date.now() - started;
 	if (finalState._timedOut) {
+		// The prediction may still complete — resumeUrl lets the caller pick it
+		// up, so a timeout is NOT "nothing" and does not trigger a second full
+		// generation on the fallback chain.
 		return coreError('timeout', `prediction did not finish within ${timeoutMs}ms`, {
 			predictionId: submitted.id,
 			status: finalState.status,
@@ -977,19 +1046,19 @@ export async function runTextToAvatar({ prompt, images, seed, texture }) {
 		});
 	}
 	if (finalState.status === 'failed' || finalState.status === 'canceled') {
-		return coreError(
-			'prediction_failed',
-			finalState.error || `prediction ended with status ${finalState.status}`,
-			{ predictionId: submitted.id, durationMs },
-		);
+		return textToAvatarViaForgeChain({
+			prompt,
+			images,
+			reason: `replicate prediction ${finalState.status}: ${finalState.error || 'no detail'}`,
+		});
 	}
 
 	const glbUrl = extractGlbUrl(finalState.output);
 	if (!glbUrl) {
-		return coreError('no_glb_in_output', 'prediction succeeded but no GLB url was found in output', {
-			rawOutput: finalState.output,
-			predictionId: submitted.id,
-			durationMs,
+		return textToAvatarViaForgeChain({
+			prompt,
+			images,
+			reason: `replicate prediction ${submitted.id} succeeded but returned no GLB`,
 		});
 	}
 

@@ -715,6 +715,15 @@ silently.
 
 Poll with `GET /api/forge?job=<job>` — it returns `{ status: "queued" | "done" | "failed", glb_url? }`.
 
+A generation that fails mid-flight on one engine is automatically re-dispatched
+to the next configured free lane (up to 3 backups); the poll keeps reporting
+`status: "running"` with the new `backend` plus a `failover_from` field, so the
+switch is visible but never terminal. Only when every automatic lane is
+exhausted does the poll return `status: "failed"` — and when other configured
+engines could still serve a fresh retry, it carries `retryable: true` and
+`retry_backends: ["huggingface", …]` so a client can resubmit the same request
+with an explicit `backend` instead of dead-ending.
+
 **Example**
 
 ```bash
