@@ -128,10 +128,10 @@ This is the holder-visible moment. Work the list top to bottom.
    with tag `feature`, in plain holder-readable language, then:
    ```bash
    npm run build:pages          # validates the entry; fails the build if malformed
-   npm run changelog:push       # Telegram  (needs TELEGRAM_BOT_TOKEN + TELEGRAM_CHANGELOG_CHAT_ID)
-   npm run changelog:push:x     # X / @trythreews — the primary holder channel
    ```
-   Both push scripts accept `--dry-run`. They skip silently when credentials are absent.
+   Delivery to Telegram (@three_ws) and X (@trythreews) is automatic: the
+   `/api/cron/changelog-push` cron posts the entry once the deploy that ships
+   it is live. No manual push step.
 
 4. **Set the agent's own avatar live** if WO-06's dogfood upload was deferred (it was — the
    asset is generated but never written on-chain). This is an on-chain write: OTP required.

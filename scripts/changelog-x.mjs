@@ -2,6 +2,12 @@
 // Push new changelog entries to the @trythreews X (Twitter) account as one
 // continuous thread.
 //
+// NOTE: routine delivery is AUTOMATIC now: /api/cron/changelog-push (Cloud
+// Scheduler) posts new entries after every deploy, with its own DB state
+// (including the thread ids). This script's file state is separate, so a
+// manual push here can double-post or fork the thread. Use it for --dry-run
+// previews and owner-directed backfills only (see api/_lib/changelog-push.js).
+//
 // Instead of bloating the profile feed with a standalone tweet per release,
 // the account keeps a single anchor post ("everything we ship lands in this
 // thread") and every changelog entry is posted as a reply chained to the

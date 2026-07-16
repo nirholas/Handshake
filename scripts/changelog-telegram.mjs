@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 // Push new changelog entries to the $THREE holders Telegram channel.
 //
+// NOTE: routine delivery is AUTOMATIC now: /api/cron/changelog-push (Cloud
+// Scheduler) posts new entries after every deploy, with its own DB state.
+// This script's file state is separate, so a manual push here can double-post
+// what the cron also sees. Use it for --dry-run previews and owner-directed
+// backfills only (see api/_lib/changelog-push.js).
+//
 // Reads the generated feed (public/changelog.json — run `npm run build:pages`
 // first if it's stale), diffs it against data/changelog-telegram-state.json,
 // and posts each unposted entry to Telegram via the Bot API. Successfully

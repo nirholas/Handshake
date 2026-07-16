@@ -109,7 +109,7 @@ function cutoffDate() {
 	return new Date(Date.now() - CUTOFF_DAYS * 86400000).toISOString().slice(0, 10);
 }
 
-function pendingEntries(feed, posted, limit, { newestWin = false } = {}) {
+export function pendingEntries(feed, posted, limit, { newestWin = false } = {}) {
 	const cutoff = cutoffDate();
 	const unposted = feed.entries
 		.filter((e) => !posted.has(entryKey(e)) && e.date >= cutoff && e.type !== 'launch')
@@ -128,7 +128,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const escapeHtml = (s) =>
 	String(s).replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c]);
 
-function formatTelegramMessage(e) {
+export function formatTelegramMessage(e) {
 	const detailUrl = `https://three.ws/changelog/${slugify(e.title, e.date)}`;
 	const label = e.type === 'launch' ? 'New on three.ws' : 'Update';
 	const hashtags = (e.type === 'launch' ? ['launch'] : e.tags).map((t) => `#${t}`).join(' ');
@@ -196,9 +196,9 @@ export async function pushTelegramLane(feed) {
 // codepoint as 2. Compose title + summary + link within the 280 budget,
 // trimming the summary on a word boundary when it overflows.
 const URL_WEIGHT = 23;
-const weightedLength = (s) => [...s].reduce((n, ch) => n + (ch.codePointAt(0) > 0xffff ? 2 : 1), 0);
+export const weightedLength = (s) => [...s].reduce((n, ch) => n + (ch.codePointAt(0) > 0xffff ? 2 : 1), 0);
 
-function formatTweet(e) {
+export function formatTweet(e) {
 	const detailUrl = `https://three.ws/changelog/${slugify(e.title, e.date)}`;
 	const suffix = `\n\n${detailUrl}`;
 	const suffixWeight = 2 + URL_WEIGHT;

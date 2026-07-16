@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-16",
+			"title": "Changelog updates now reach Telegram and X on their own",
+			"summary": "Every entry in this changelog is now delivered to the holder channels automatically. Once the release an entry describes is live in production, an autonomous job spots it and posts it to the holders' Telegram channel (@three_ws) and to the running release thread on X (@trythreews), usually within 20 minutes. No human has to remember to announce anything, and nothing is ever announced before it is actually live. The full history stays at three.ws/changelog and in the RSS and JSON feeds as always.",
+			"tags": [
+				"infra",
+				"improvement"
+			],
+			"link": "/changelog"
+		},
+		{
+			"date": "2026-07-16",
 			"title": "Leave the page while your 3D model generates. We'll finish it and let you know",
 			"summary": "Generations no longer need a babysitter. If you close the tab or wander off mid-forge, the server now tracks your job to completion on its own: the finished model lands in your gallery automatically, and signed-in creators get a notification (bell, push, and email, each with its own switch in the preference center) the moment it's ready. Come back to /forge and an interrupted generation picks up right where it left off, with an honest elapsed timer. We also cleared over a thousand old generations that had been stuck in limbo and gave the busiest 3D engine room to scale to three GPUs, so queue waits drop too.",
 			"tags": [

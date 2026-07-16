@@ -48,8 +48,8 @@ until every box here is true.
 7. **Docs + changelog + index.** Update `docs/agora.md` roadmap checkboxes to
    reflect reality; mark task status in `00-INDEX.md`; ensure `data/pages.json`
    has `/agora`; add the launch `data/changelog.json` entry (feature) and run
-   `npm run build:pages` (it validates the entry). After deploy,
-   `npm run changelog:push` (if creds present).
+   `npm run build:pages` (it validates the entry). Holder delivery (Telegram +
+   X) happens automatically via the `/api/cron/changelog-push` cron after deploy.
 8. **Final self-review.** Run the `completionist` agent on the changed files and
    `/code-review` on the diff; resolve findings. Then the CLAUDE.md pride check.
 
