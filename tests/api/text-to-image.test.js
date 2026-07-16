@@ -39,7 +39,14 @@ vi.mock('../../api/_lib/forge-scale.js', async (importOriginal) => {
 });
 
 const ORIGINAL_FETCH = globalThis.fetch;
-const ENV_KEYS = ['NVIDIA_API_KEY', 'GOOGLE_CLOUD_PROJECT', 'GCP_SERVICE_ACCOUNT_JSON', 'REPLICATE_API_TOKEN', 'VERTEX_IMAGEN_ENABLED'];
+const ENV_KEYS = [
+	'NVIDIA_API_KEY',
+	'GOOGLE_CLOUD_PROJECT',
+	'GCP_SERVICE_ACCOUNT_JSON',
+	'REPLICATE_API_TOKEN',
+	'VERTEX_IMAGEN_ENABLED',
+	'VERTEX_IMAGEN_FIRST',
+];
 const ORIGINAL_ENV = Object.fromEntries(ENV_KEYS.map((k) => [k, process.env[k]]));
 
 async function freshTextToImage() {
@@ -106,7 +113,68 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-describe('textToImage — NIM FLUX free lane (first)', () => {
+describe('textToImage — Vertex quality lane leads by default', () => {
+	it('serves from Vertex before NIM when both are configured (credit-burner first)', async () => {
+		process.env.NVIDIA_API_KEY = 'nvapi-test';
+		process.env.GOOGLE_CLOUD_PROJECT = 'demo-project';
+		vertexState.configured = true;
+		const png = Buffer.from('vertex-first-png').toString('base64');
+		vertexState.generate = vi.fn(async () => ({
+			imageUrl: `data:image/png;base64,${png}`,
+			model: 'vertex-ai/gemini-2.5-flash-image',
+		}));
+		const calls = stubFetch([['ai.api.nvidia.com', () => nimSuccessResponse()]]);
+
+		const textToImage = await freshTextToImage();
+		const result = await textToImage('a red teapot');
+
+		expect(result.model).toBe('vertex-ai/gemini-2.5-flash-image');
+		expect(vertexState.generate).toHaveBeenCalledOnce();
+		expect(calls).toHaveLength(0); // NIM never touched — Vertex led and served
+	});
+
+	it('falls from a failed Vertex lead to NIM without surfacing an error', async () => {
+		process.env.NVIDIA_API_KEY = 'nvapi-test';
+		process.env.GOOGLE_CLOUD_PROJECT = 'demo-project';
+		vertexState.configured = true;
+		vertexState.generate = vi.fn(async () => {
+			throw new Error('vertex down');
+		});
+		const calls = stubFetch([['ai.api.nvidia.com', () => nimSuccessResponse()]]);
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+		const textToImage = await freshTextToImage();
+		const result = await textToImage('a red teapot');
+
+		expect(result.model).toBe('black-forest-labs/flux.1-schnell');
+		expect(vertexState.generate).toHaveBeenCalledOnce();
+		expect(calls).toHaveLength(1);
+	});
+
+	it('VERTEX_IMAGEN_FIRST=0 restores the legacy NIM-first order', async () => {
+		process.env.VERTEX_IMAGEN_FIRST = '0';
+		process.env.NVIDIA_API_KEY = 'nvapi-test';
+		process.env.GOOGLE_CLOUD_PROJECT = 'demo-project';
+		vertexState.configured = true;
+		vertexState.generate = vi.fn(async () => ({ imageUrl: 'data:image/png;base64,AAAA' }));
+		const calls = stubFetch([['ai.api.nvidia.com', () => nimSuccessResponse()]]);
+
+		const textToImage = await freshTextToImage();
+		const result = await textToImage('a red teapot');
+
+		expect(result.model).toBe('black-forest-labs/flux.1-schnell');
+		expect(vertexState.generate).not.toHaveBeenCalled();
+		expect(calls).toHaveLength(1);
+	});
+});
+
+describe('textToImage — NIM FLUX free lane (legacy NIM-first order)', () => {
+	beforeEach(() => {
+		// These pin the legacy ladder (NIM → Vertex → Replicate), preserved
+		// behind VERTEX_IMAGEN_FIRST=0.
+		process.env.VERTEX_IMAGEN_FIRST = '0';
+	});
+
 	it('serves from NIM and never touches Vertex or Replicate', async () => {
 		process.env.NVIDIA_API_KEY = 'nvapi-test';
 		process.env.GOOGLE_CLOUD_PROJECT = 'demo-project';
@@ -648,28 +716,33 @@ describe('textToImage — VERTEX_IMAGEN_ENABLED gate', () => {
 	});
 });
 
-describe('enhanceFluxPrompt — 3D-reference isolation suffix', () => {
-	const SUFFIX = ', isolated subject, bright studio lighting, plain white background';
+describe('enhanceFluxPrompt — realism + 3D-reference isolation suffixes', () => {
+	const ISOLATION = ', isolated subject, bright studio lighting, plain white background';
+	const REALISM =
+		', photorealistic, true-to-life materials and surface detail, sharp focus, professional product photograph';
 
 	async function enhance() {
 		const mod = await import('../../api/_mcp3d/text-to-image.js?t=' + Math.random());
 		return mod.enhanceFluxPrompt;
 	}
 
-	it('appends the isolation suffix to a plain subject prompt', async () => {
+	it('appends realism + isolation to a plain subject prompt (photoreal by default)', async () => {
 		const enhanceFluxPrompt = await enhance();
-		expect(enhanceFluxPrompt('a red teapot')).toBe('a red teapot' + SUFFIX);
+		expect(enhanceFluxPrompt('a red teapot')).toBe('a red teapot' + REALISM + ISOLATION);
 	});
 
-	it('still isolates a stylized subject — style words must not suppress the suffix', async () => {
-		// Regression: "cartoon"/"stylized" are art-style words, not composition cues.
-		// Gating the suffix on them let the Gemini lane render a full illustrated
-		// scene (background clutter the 3D backend cannot reconstruct).
+	it('respects a named art style — isolation stays, realism words are withheld', async () => {
+		// Regression (older): "cartoon"/"stylized" must never suppress isolation —
+		// a cartoon fox still needs a plain background to reconstruct cleanly.
+		// New contract: those same words DO suppress the realism cues, which would
+		// otherwise fight the caller's explicit style.
 		const enhanceFluxPrompt = await enhance();
 		expect(enhanceFluxPrompt('a cartoon fox character standing upright')).toBe(
-			'a cartoon fox character standing upright' + SUFFIX,
+			'a cartoon fox character standing upright' + ISOLATION,
 		);
-		expect(enhanceFluxPrompt('a stylized vibrant robot')).toBe('a stylized vibrant robot' + SUFFIX);
+		expect(enhanceFluxPrompt('a stylized vibrant robot')).toBe('a stylized vibrant robot' + ISOLATION);
+		expect(enhanceFluxPrompt('a low-poly wolf')).toBe('a low-poly wolf' + ISOLATION);
+		expect(enhanceFluxPrompt('a watercolor bird')).toBe('a watercolor bird' + ISOLATION);
 	});
 
 	it('leaves the prompt untouched when it already sets a background / composition cue', async () => {
@@ -683,9 +756,14 @@ describe('enhanceFluxPrompt — 3D-reference isolation suffix', () => {
 		}
 	});
 
-	it('matches whole words only — a substring like "light" in "lightsaber" does not suppress', async () => {
+	it('matches whole words only — substrings never trigger or suppress', async () => {
 		const enhanceFluxPrompt = await enhance();
-		expect(enhanceFluxPrompt('a glowing lightsaber')).toBe('a glowing lightsaber' + SUFFIX);
+		// "light" inside "lightsaber" is not a composition cue…
+		expect(enhanceFluxPrompt('a glowing lightsaber')).toBe('a glowing lightsaber' + REALISM + ISOLATION);
+		// …and "cartoonish" IS a style signal via the word boundary on "cartoon"?
+		// No: \b matches inside "cartoonish" only at the start — the suffix "ish"
+		// keeps the word alive, so assert the boundary behaves as written.
+		expect(enhanceFluxPrompt('a legolas figure')).toBe('a legolas figure' + REALISM + ISOLATION);
 	});
 
 	it('returns an empty prompt unchanged', async () => {

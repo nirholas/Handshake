@@ -299,10 +299,35 @@ const COMPOSITION_CUE_WORDS = [
 const COMPOSITION_CUE_RE = new RegExp(`\\b(?:${COMPOSITION_CUE_WORDS.join('|')})\\b`, 'i');
 const FLUX_STYLE_SUFFIX = ', isolated subject, bright studio lighting, plain white background';
 
+// Deliberate art-style words — when the caller names a rendering style
+// (cartoon, voxel, watercolor…) the realism cues below must NOT fight it. This
+// list is only ever consulted to SKIP adding realism words; it never suppresses
+// the isolation suffix (see the regression note above — a cartoon fox still
+// needs a plain background to reconstruct cleanly).
+const ART_STYLE_WORDS = [
+	'cartoon', 'anime', 'manga', 'toon', 'chibi', 'stylized', 'low[- ]poly', 'voxel',
+	'pixel[- ]art', '8[- ]bit', '16[- ]bit', 'claymation', 'plasticine', 'illustration',
+	'illustrated', 'painting', 'painterly', 'watercolor', 'sketch', 'hand[- ]drawn',
+	'comic', 'cel[- ]shaded', 'origami', 'papercraft', 'plush', 'crochet', 'knitted',
+	'lego', 'minecraft', 'abstract',
+];
+const ART_STYLE_RE = new RegExp(`\\b(?:${ART_STYLE_WORDS.join('|')})\\b`, 'i');
+
+// Realism cues, added by default: the reference image is the sole source of the
+// 3D model's texture and proportions, so photographic language here is what
+// makes the final mesh read as a real object/person rather than a render.
+// Skipped when the caller named an art style (respect the ask) — and the whole
+// suffix pipeline stays untouched when the prompt already carries composition
+// cues, exactly as before.
+const REALISM_SUFFIX =
+	', photorealistic, true-to-life materials and surface detail, sharp focus, professional product photograph';
+
 export function enhanceFluxPrompt(raw) {
 	const text = String(raw || '').trim();
 	if (!text) return text;
-	return COMPOSITION_CUE_RE.test(text) ? text : text + FLUX_STYLE_SUFFIX;
+	if (COMPOSITION_CUE_RE.test(text)) return text;
+	const realism = ART_STYLE_RE.test(text) ? '' : REALISM_SUFFIX;
+	return text + realism + FLUX_STYLE_SUFFIX;
 }
 
 // Generate a single image from a text prompt.
@@ -319,7 +344,39 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 	const hasSeed = Number.isInteger(seed) && seed >= 0;
 	const token = readEnv('REPLICATE_API_TOKEN');
 	const hasVertex = !!readEnv('GOOGLE_CLOUD_PROJECT') && vertexImagenEnabled();
-	const hasFallback = hasVertex || !!token;
+	// Quality-first ordering: the Vertex Gemini image model outdraws 4-step
+	// distilled FLUX for photoreal reference images, and it burns the GCP credit
+	// pool the platform is funded to spend — so when the lane is configured it
+	// leads by default. The reference image is the sole source of the 3D model's
+	// texture and proportions; this is the cheapest quality lever in the chain.
+	// VERTEX_IMAGEN_FIRST=0 restores the legacy NIM-first order without touching
+	// the lane's on/off gate (VERTEX_IMAGEN_ENABLED).
+	const vertexFirst = hasVertex && readEnv('VERTEX_IMAGEN_FIRST') !== '0';
+	// What remains DOWNSTREAM of the NIM lane. When Vertex leads it has already
+	// been consumed by the time NIM runs, so it no longer counts as a fallback —
+	// otherwise a NIM failure after a Vertex failure would "fall through" to a
+	// lane that was already tried and surface the wrong terminal error.
+	const hasFallback = (!vertexFirst && hasVertex) || !!token;
+
+	// One attempt at the Vertex lane, shared by both ladder positions. Returns
+	// null to mean "hand off to the next lane" (unconfigured, or a failure with a
+	// lane left to try); throws only when nothing remains downstream.
+	const tryVertex = async (laneRemains) => {
+		try {
+			const { generateImage, isConfigured } = await import('./vertex-imagen.js');
+			if (!isConfigured()) return null;
+			return logImageProvider(await persistDataUriImage(await generateImage(prompt, { aspectRatio })));
+		} catch (err) {
+			if (!laneRemains) throw err;
+			console.warn(`vertex imagen failed, falling back: ${err?.message}`);
+			return null;
+		}
+	};
+
+	if (vertexFirst) {
+		const served = await tryVertex(!!readEnv('NVIDIA_API_KEY') || !!token);
+		if (served) return served;
+	}
 
 	// ── NVIDIA NIM FLUX (free, first) ─────────────────────────────────────────
 	// Skip the NIM lane when a fallback exists AND either the caller just watched a
@@ -348,17 +405,10 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 		}
 	}
 
-	// ── Vertex AI Imagen path ────────────────────────────────────────────────
-	if (hasVertex) {
-		try {
-			const { generateImage, isConfigured } = await import('./vertex-imagen.js');
-			if (isConfigured()) {
-				return logImageProvider(await persistDataUriImage(await generateImage(prompt, { aspectRatio })));
-			}
-		} catch (err) {
-			if (!token) throw err;
-			console.error(`vertex imagen failed, falling back to replicate: ${err?.message}`);
-		}
+	// ── Vertex AI Imagen path (legacy position — only when not already led) ──
+	if (hasVertex && !vertexFirst) {
+		const served = await tryVertex(!!token);
+		if (served) return served;
 	}
 
 	// ── Replicate fallback ───────────────────────────────────────────────────
