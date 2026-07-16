@@ -900,6 +900,13 @@ const PREVIEW_PROVIDERS = {
 		defaultModel: 'gpt-5.4-nano',
 		style: 'openai',
 	},
+	// xAI Grok: paid backstop, OpenAI-compatible. Budget tier keeps previews cheap.
+	grok: {
+		envKey: 'GROK_API_KEY',
+		url: 'https://api.x.ai/v1/chat/completions',
+		defaultModel: 'grok-4.1-fast',
+		style: 'openai',
+	},
 };
 
 const previewBody = z.object({
@@ -1063,8 +1070,9 @@ async function handlePreview(req, res, id) {
 //   3. nvidia     — NVIDIA NIM free tier, independent third lane
 //   4. anthropic  — paid backstop
 //   5. openai     — paid backstop (account may be over quota)
+//   6. grok       — paid backstop (xAI, budget tier)
 function buildPreviewRoutes() {
-	const order = ['groq', 'openrouter', 'nvidia', 'anthropic', 'openai'];
+	const order = ['groq', 'openrouter', 'nvidia', 'anthropic', 'openai', 'grok'];
 	const routes = [];
 	for (const name of order) {
 		const cfg = PREVIEW_PROVIDERS[name];
