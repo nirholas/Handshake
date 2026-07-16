@@ -78,7 +78,8 @@ export default wrapCron(async (req, res) => {
 	for (const cfg of USDC_WALLETS) {
 		const spec = SOLANA_SIGNERS.find((s) => s.name === cfg.role);
 		if (!spec) continue;
-		const pubkey = await resolveSignerPubkey(spec).catch(() => null);
+		const resolved = await resolveSignerPubkey(spec).catch(() => null);
+		const pubkey = resolved?.pubkey;
 		if (!pubkey) continue;
 		const { sol, usdc } = await readWallet(connection, pubkey);
 		const floorUsd = Number(process.env[cfg.floorEnv]) || cfg.floorDflt;
