@@ -1,0 +1,100 @@
+{
+  "name": "hood-connect",
+  "version": "0.1.0",
+  "description": "Wallet + onboarding kit for Robinhood Chain (chain ID 4663): EIP-6963 wallet discovery, add/switch network, a drop-in React connect button with live ETH/USDG balances, and a funding funnel that bridges from any chain via LI.FI with Relay fallback.",
+  "keywords": [
+    "robinhood",
+    "robinhood-chain",
+    "wallet",
+    "connect",
+    "onboarding",
+    "eip-6963",
+    "eip-3085",
+    "wagmi",
+    "bridge",
+    "lifi",
+    "relay",
+    "usdg",
+    "web3"
+  ],
+  "license": "MIT",
+  "author": "nirholas (https://x.com/nichxbt)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/hood-connect.git"
+  },
+  "homepage": "https://nirholas.github.io/hood-connect/",
+  "bugs": {
+    "url": "https://github.com/nirholas/hood-connect/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js",
+      "require": "./dist/react/index.cjs"
+    },
+    "./wagmi": {
+      "types": "./dist/wagmi/index.d.ts",
+      "import": "./dist/wagmi/index.js",
+      "require": "./dist/wagmi/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "!dist/docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup && node scripts/build-docs-bundle.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run tests --exclude 'tests/live/**'",
+    "test:live": "vitest run tests/live --testTimeout 120000",
+    "test:e2e": "playwright test -c e2e/playwright.config.ts",
+    "demo": "npm --prefix examples/demo run dev",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "hoodchain": "^0.1.1",
+    "viem": "^2.55.0"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "wagmi": ">=2"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "wagmi": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.0",
+    "@tanstack/react-query": "^5.62.0",
+    "@tenkeylabs/dappwright": "^2.13.6",
+    "@types/node": "^24.0.0",
+    "@types/react": "^18.3.0",
+    "happy-dom": "^15.11.0",
+    "react": "^18.3.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0",
+    "wagmi": "^2.16.0"
+  }
+}

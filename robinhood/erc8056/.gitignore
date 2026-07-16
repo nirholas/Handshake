@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.tgz
+.env
+.env.*
+
+# Foundry (dependencies restored by `forge soldeer install`; soldeer.lock is committed)
+contracts/cache/
+contracts/out/
+contracts/lib/
+contracts/dependencies/
+contracts/broadcast/

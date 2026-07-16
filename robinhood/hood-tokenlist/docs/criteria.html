@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inclusion criteria · hood-tokenlist</title>
+<meta name="description" content="The published, rules-based inclusion criteria for the Robinhood Chain token list. Objective checks, no editorial picks.">
+<link rel="icon" href="./logos/list.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="./"><span class="mark">H</span> hood-tokenlist</a>
+    <nav class="site-nav" aria-label="Site">
+      <a href="./">Directory</a>
+      <a href="./criteria.html" aria-current="page">Criteria</a>
+      <a href="./extensions.html">Extensions</a>
+      <a href="https://github.com/nirholas/hood-tokenlist">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap prose">
+  <h1>Inclusion criteria</h1>
+  <p class="subtitle">
+    This list is neutral infrastructure. Inclusion is decided by the rules on this page,
+    executed by <code>scripts/refresh.mjs</code> against live chain state, and nothing else.
+    There is no editorial override in either direction. The same rules are unit-tested in
+    <code>tests/criteria.test.mjs</code>.
+  </p>
+
+  <h2>Canonical assets</h2>
+  <div class="rule-card">
+    <h3><span class="num">1</span>Stock Tokens</h3>
+    <p>
+      A Stock Token is included when, at refresh time, it (a) resolves through Robinhood's shared
+      EIP-1967 beacon <code>0xe10b6f6B275de231345c20D14Ab812db62151b00</code>, (b) answers
+      <code>symbol()</code>, <code>name()</code>, <code>decimals()</code>, and the ERC-8056
+      <code>uiMultiplier()</code> on-chain, (c) reconciles with the
+      <a href="https://docs.robinhood.com/chain/contracts">official contracts registry</a>, and
+      (d) if it has a Chainlink feed, that feed answers <code>latestRoundData()</code> with a
+      positive price. Candidates come from full Blockscout discovery, so the set is the complete
+      on-chain universe, not a curated subset.
+    </p>
+  </div>
+  <div class="rule-card">
+    <h3><span class="num">2</span>Base assets</h3>
+    <p>
+      USDG (the chain's dollar stablecoin, 6 decimals) and WETH are included from the official
+      contracts registry, identity re-verified on-chain every refresh. Other bridged assets are
+      added only when Robinhood's registry lists them; none currently qualify.
+    </p>
+  </div>
+
+  <h2 id="memecoins">Memecoins</h2>
+  <p>
+    A launchpad token is included only when it passes <strong>all</strong> of the following at
+    refresh time. Failing any one rule excludes it, and every exclusion is logged with its reason
+    in <code>data/refresh-report.json</code>.
+  </p>
+
+  <div class="rule-card">
+    <h3><span class="num">1</span>Provenance</h3>
+    <p>
+      Launched by the NOXA launch factory (<code>TokenLaunched</code> event) or graduated from an
+      Odyssey bonding-curve factory (<code>PoolMigrated</code> event). The full event history of
+      both launchpads is scanned from genesis on every refresh; nothing is added by hand.
+    </p>
+  </div>
+  <div class="rule-card">
+    <h3><span class="num">2</span>Known quote asset</h3>
+    <p>The token's Uniswap v3 pool must be quoted in WETH or USDG.</p>
+  </div>
+  <div class="rule-card">
+    <h3><span class="num">3</span>Liquidity of at least $2,500</h3>
+    <p>
+      Total pool value, computed as twice the quote-side reserves, valued live via the on-chain
+      Chainlink ETH/USD and USDG/USD feeds, must be at least $2,500.
+    </p>
+  </div>
+  <div class="rule-card">
+    <h3><span class="num">4</span>At least 7 days old</h3>
+    <p>Launch (NOXA) or graduation (Odyssey) must be at least 7 days before the refresh.</p>
+  </div>
+  <div class="rule-card">
+    <h3><span class="num">5</span>At least 50 holders</h3>
+    <p>Blockscout must report 50 or more holders.</p>
+  </div>
+  <div class="rule-card">
+    <h3><span class="num">6</span>Sellable and transferable</h3>
+    <p>
+      Two live simulations must succeed: a QuoterV2 quote selling one whole token into the quote
+      asset through the token's own pool, and an <code>eth_call</code> of
+      <code>transfer(recipient, 1)</code> from the token's current top holder. A token whose
+      holders cannot sell or move it is a honeypot and is out.
+    </p>
+  </div>
+  <div class="rule-card">
+    <h3><span class="num">7</span>Schema-valid identity</h3>
+    <p>
+      The on-chain symbol must be 20 characters or fewer with no whitespace; the name must fit the
+      standard's 60-character cap (Stock Token names longer than that drop only the
+      <code>• Robinhood Token</code> suffix). Unreadable identity means exclusion.
+    </p>
+  </div>
+  <div class="rule-card">
+    <h3><span class="num">8</span>No ticker spoofing</h3>
+    <p>
+      A memecoin whose symbol matches any canonical ticker (a Stock Token, USDG, or WETH,
+      case-insensitive) is excluded outright.
+    </p>
+  </div>
+  <div class="rule-card">
+    <h3><span class="num">9</span>One token per symbol</h3>
+    <p>
+      When two qualifying memecoins share a symbol, the one with the deeper quote-side liquidity
+      stays; ties break deterministically to the lower address.
+    </p>
+  </div>
+
+  <h2>Removal</h2>
+  <p>
+    The same rules govern removal: a listed memecoin that no longer passes (liquidity drained,
+    holders collapsed, sell simulation fails) is dropped on the next refresh, and the list's
+    <strong>major</strong> version increments per the token-lists standard. Stock Tokens are
+    removed only if they stop resolving through the official beacon or vanish from Robinhood's
+    registry.
+  </p>
+
+  <h2>Refresh cadence</h2>
+  <p>
+    <code>npm run refresh</code> re-verifies every entry live (a full launchpad history rescan,
+    identity multicalls, feed reads, and the memecoin funnel) and rewrites
+    <code>tokenlist.json</code> deterministically: an unchanged list is byte-identical, so a
+    no-op refresh produces no diff. Recommended cadence is weekly, or after notable launchpad
+    activity.
+  </p>
+
+  <h2 id="eligibility">Stock Token eligibility</h2>
+  <p>
+    Stock Tokens are tokenized debt securities issued by Robinhood Assets (Jersey) Ltd and
+    <strong>may not be offered, sold, or delivered to US persons</strong>, with additional
+    restrictions in Canada, the UK, and Switzerland. Displaying their data is unrestricted;
+    acquiring them is not available to everyone. Every stock entry carries
+    <code>extensions.eligibility = "not-for-us-persons"</code> so integrators can gate buy flows.
+    This list is data, not an offer of securities.
+  </p>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>Criteria version: see <code>scripts/lib/criteria.mjs</code> in the repo.</span>
+    <span class="spacer"></span>
+    <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

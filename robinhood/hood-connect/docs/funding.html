@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>hood-connect funding funnel: bridge onto Robinhood Chain</title>
+  <meta name="description" content="How the hood-connect funding funnel moves ETH from any chain onto Robinhood Chain 4663: live LI.FI quotes, Relay fallback, and the Robinhood-app withdrawal path." />
+  <link rel="stylesheet" href="site.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%230b0e11'/%3E%3Cpath d='M6 9.5A2.5 2.5 0 0 1 8.5 7h7A2.5 2.5 0 0 1 18 9.5v5a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 6 14.5v-5Z' stroke='%2300c805' stroke-width='1.5' fill='none'/%3E%3Ccircle cx='14.5' cy='12' r='1.25' fill='%2300c805'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <header class="site">
+    <div class="wrap">
+      <a class="logo" href="index.html">hood<span class="tick">-</span>connect</a>
+      <nav class="main" aria-label="Site">
+        <a href="index.html">Overview</a>
+        <a href="guide.html">Integration guide</a>
+        <a href="funding.html" aria-current="page">Funding funnel</a>
+        <a href="add.html">Add-network button</a>
+        <a href="https://github.com/nirholas/hood-connect" rel="noreferrer noopener">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div class="wrap">
+        <h1>The <span class="grad">funding funnel</span></h1>
+        <p class="lede">
+          Adding chain 4663 gets a user connected; it does not get them gas. The funnel closes that
+          gap: live bridge quotes and one-transaction route execution from any major chain, without
+          leaving the dApp, plus a documented path for money already inside the Robinhood app.
+        </p>
+      </div>
+    </div>
+
+    <section aria-labelledby="how-title">
+      <div class="wrap">
+        <h2 id="how-title">How routing works</h2>
+        <ol class="steps">
+          <li><strong>Quote via LI.FI</strong> (<code>li.quest/v1/quote</code>). LI.FI aggregates bridges and listed Robinhood Chain (id 4663) at build time; its live quotes for 4663 route through Relay's depository. Keyless and CORS-open, so quoting works client-side on GitHub Pages.</li>
+          <li><strong>Fallback to Relay</strong> (<code>api.relay.link/quote</code>) when LI.FI has no route. Relay lists Robinhood Chain with deposits enabled and quotes ETH into 4663 in about 2 seconds of bridge time.</li>
+          <li><strong>Execute from the user's wallet.</strong> The quote contains a ready-to-send transaction for the source chain; the kit switches the wallet there, sends it (plus an ERC-20 approval first when bridging tokens like USDC), and polls the provider's status API until funds land on 4663.</li>
+        </ol>
+        <div class="callout">
+          <strong>Verified live.</strong> Both APIs were probed against chain 4663 during the build
+          (2026-07-15): LI.FI listed the chain and quoted 0.002 ETH Arbitrum to Robinhood Chain
+          (tool <code>relaydepository</code>); Relay listed <code>depositEnabled: true</code> and
+          quoted the same route with a 2s ETA. The test suite re-verifies both on every
+          <code>npm run test:live</code>.
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="code-title">
+      <div class="wrap">
+        <h2 id="code-title">Core API</h2>
+<pre><code>import { getFundingQuote, getFundingStatus, listFundingChains } from 'hood-connect'
+
+const chains = await listFundingChains()   // source chains, live from LI.FI
+
+const quote = await getFundingQuote({
+  fromChainId: 42161,                      // Arbitrum One
+  fromAddress: account,
+  amount: 10_000_000_000_000_000n,         // 0.01 ETH in wei
+})
+
+// quote.toAmountFormatted  -&gt; ETH received on 4663
+// quote.etaSeconds         -&gt; bridge duration estimate
+// quote.approval           -&gt; ERC-20 approve tx when needed (USDC etc.)
+// quote.tx                 -&gt; { chainId, to, data, value } ready to send
+
+const txHash = await wallet.request({
+  method: 'eth_sendTransaction',
+  params: [{ from: account, to: quote.tx.to, data: quote.tx.data, value: toHex(quote.tx.value) }],
+})
+await getFundingStatus(quote, txHash)      // 'pending' | 'done' | 'failed'</code></pre>
+        <p class="sub">
+          Or drop in the React component; it renders the whole flow (chain picker, debounced live
+          quotes, execution progress, designed error and success states):
+        </p>
+<pre><code>import { FundWallet } from 'hood-connect/react'
+
+&lt;FundWallet onFunded={() =&gt; refetchBalances()} /&gt;</code></pre>
+      </div>
+    </section>
+
+    <section aria-labelledby="app-title">
+      <div class="wrap">
+        <h2 id="app-title">From the Robinhood app</h2>
+        <p class="sub">
+          Users who already keep crypto in the Robinhood app or Robinhood Wallet can skip bridges
+          entirely; the app withdraws ETH straight onto Robinhood Chain.
+        </p>
+        <ol class="steps">
+          <li>Open the Robinhood app (or Robinhood Wallet) and go to the <strong>ETH</strong> holding.</li>
+          <li>Choose <strong>Send</strong>, then pick the <strong>Robinhood Chain</strong> network. Picking Ethereum mainnet here sends to a different chain; the address is the same, the network choice is what matters.</li>
+          <li>Paste the connected wallet address (the <code>FundWallet</code> component displays it with a copy control).</li>
+          <li>Confirm. Funds arrive on chain 4663 in about a minute, and <code>checkBootstrap</code> flips to <code>funded: true</code>.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section aria-labelledby="testnet-title">
+      <div class="wrap">
+        <h2 id="testnet-title">Testnet (chain 46630)</h2>
+        <p class="sub">There is nothing to bridge on testnet; funds come from faucets. <code>FundWallet network="testnet"</code> renders these automatically:</p>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Faucet</th><th>Drips</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><a href="https://faucet.testnet.chain.robinhood.com/" rel="noreferrer noopener">Official faucet</a></td>
+                <td>Testnet ETH + test Stock Tokens (TSLA, AMZN, PLTR, NFLX, AMD)</td>
+                <td>Requires Google sign-in in a real browser</td>
+              </tr>
+              <tr>
+                <td><a href="https://faucets.chain.link/robinhood-testnet" rel="noreferrer noopener">Chainlink faucet</a></td>
+                <td>Testnet ETH</td>
+                <td>Alternative when the official faucet is gated</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn">
+          <strong>Stock Token note.</strong> Stock Tokens are tokenized debt securities issued by
+          Robinhood Assets (Jersey) Ltd and may not be offered, sold, or delivered to US persons
+          (additional limits apply in Canada, the UK, and Switzerland). The funding funnel moves
+          ETH and stablecoins only; it never acquires Stock Tokens.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      Built by <a href="https://x.com/nichxbt" rel="noreferrer noopener">nirholas</a> ·
+      <a href="https://three.ws" rel="noreferrer noopener">three.ws</a> · MIT licensed ·
+      Not affiliated with Robinhood Markets.
+    </div>
+  </footer>
+</body>
+</html>

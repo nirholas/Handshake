@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="LCH">
+  <defs><linearGradient id="g42ba48ef" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="hsl(2 45% 24%)"/>
+    <stop offset="1" stop-color="hsl(42 55% 14%)"/>
+  </linearGradient></defs>
+  <rect width="64" height="64" rx="14" fill="url(#g42ba48ef)"/>
+  <rect width="64" height="64" rx="14" fill="none" stroke="hsl(2 45% 42%)" stroke-opacity="0.55"/>
+  <text x="32" y="32" dy="0.36em" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="0.02em" fill="hsl(2 70% 88%)">LCH</text>
+</svg>

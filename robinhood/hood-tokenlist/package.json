@@ -1,0 +1,54 @@
+{
+  "name": "hood-tokenlist",
+  "version": "0.1.0",
+  "description": "The canonical Uniswap-standard token list for Robinhood Chain (chain ID 4663): every Stock Token, USDG, WETH, and rules-vetted launchpad memecoins, all verified on-chain.",
+  "type": "module",
+  "main": "./src/index.mjs",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.mjs"
+    },
+    "./tokenlist.json": "./tokenlist.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "tokenlist.json",
+    "logos",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "refresh": "node scripts/refresh.mjs",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "keywords": [
+    "robinhood-chain",
+    "tokenlist",
+    "token-list",
+    "uniswap",
+    "stock-tokens",
+    "chainlink",
+    "erc20",
+    "4663"
+  ],
+  "author": "nirholas (https://x.com/nichxbt)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/hood-tokenlist.git"
+  },
+  "homepage": "https://nirholas.github.io/hood-tokenlist/",
+  "dependencies": {
+    "hoodchain": "file:../robinhood-chain-sdk"
+  },
+  "devDependencies": {
+    "@uniswap/token-lists": "^1.0.0-beta.34",
+    "ajv": "^8.17.0",
+    "ajv-formats": "^3.0.0",
+    "viem": "^2.55.0"
+  }
+}

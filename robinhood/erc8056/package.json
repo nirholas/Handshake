@@ -1,0 +1,67 @@
+{
+  "name": "erc8056",
+  "version": "0.1.0",
+  "description": "Reference implementation of ERC-8056 (Scaled UI Amount, uiMultiplier): read, watch, and value corporate-action multipliers on tokenized equities. Verified against live Stock Tokens on Robinhood Chain.",
+  "keywords": [
+    "erc8056",
+    "erc-8056",
+    "uiMultiplier",
+    "scaled-ui-amount",
+    "tokenized-equities",
+    "stock-tokens",
+    "corporate-actions",
+    "stock-split",
+    "robinhood-chain",
+    "chainlink",
+    "viem"
+  ],
+  "license": "MIT",
+  "author": "nirholas (https://x.com/nichxbt)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/erc8056.git"
+  },
+  "homepage": "https://nirholas.github.io/erc8056/",
+  "bugs": {
+    "url": "https://github.com/nirholas/erc8056/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "contracts/src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run tests/unit",
+    "test:live": "vitest run tests/live --testTimeout 120000",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "peerDependencies": {
+    "viem": "^2.55.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.0",
+    "viem": "^2.55.0",
+    "vitest": "^3.2.0"
+  }
+}

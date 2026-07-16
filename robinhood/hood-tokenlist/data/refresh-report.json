@@ -1,0 +1,2639 @@
+{
+  "stats": {
+    "stockCandidates": 95,
+    "stockVerified": 95,
+    "docsCrossChecked": 25,
+    "launchpadCandidates": 60147,
+    "excludedUnknownQuote": 0,
+    "excludedLiquidityPrefilter": 59614,
+    "memecoinsIncluded": 244,
+    "checkedAtBlock": 10815491,
+    "tokensTotal": 341,
+    "byClass": {
+      "memecoin": 244,
+      "stock-token": 95,
+      "stablecoin": 1,
+      "wrapped-native": 1
+    },
+    "version": {
+      "major": 5,
+      "minor": 0,
+      "patch": 0
+    },
+    "changed": true,
+    "added": [
+      "4663:0x829ae11687c87d357fabd9938e31cf3eb40b3662",
+      "4663:0x55796b27aa48444fa2caef2bf902e12e9c280dc9"
+    ],
+    "removed": [
+      "4663:0xfb4729659eef22bfc1c2b680f6f873f8147aaaab",
+      "4663:0xd53feee9c73572107fb48c40a7a29232793b14c6"
+    ],
+    "modified": [],
+    "durationSeconds": 832
+  },
+  "exclusions": [
+    {
+      "stage": "memecoin-verification",
+      "address": "0x7e86381A763F0Ecca2bDF27C54eAC403ddD48123",
+      "symbol": "GME",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol spoofs a canonical asset ticker"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x5DD537De9d7149aD7B5318Ea3BA2718B34f5AB3C",
+      "symbol": "MEMESTOCK",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 40 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xC5758c76F2cD9F2aA2Cd09882Ed1fa50d75F91A3",
+      "symbol": "DIAMOND",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 40 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xdDc0B0e504f000a607C9a680C4F9dC3aDA001A29",
+      "symbol": "NVDA",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol spoofs a canonical asset ticker"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x77Bd112a399F833F76cad118a74b7Fcc8108Dcc2",
+      "symbol": "CHAD",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 45 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xD9F671B981C2BC68CBC7006ae7C066140Cc78f56",
+      "symbol": "SHIV VERMA",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol contains whitespace"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x2c327bd2FFb87F135b1201CA0b1041a38048E27D",
+      "symbol": "MUMU",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 34 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xfAD9Cb5D1F782a59684F5113101A0FB64df6B2Cd",
+      "symbol": "STOCK",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 40 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xafb14C013DAA8b5e4B04d66405500b4033a17a5d",
+      "symbol": "💚",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 40 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x63519Eb1B67b86125837345f6e7251bB8CF47d54",
+      "symbol": "COIN",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol spoofs a canonical asset ticker"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x7Ca1DDa42B40fA20Ff72403da97b7B1a0a256775",
+      "symbol": "BITSTAMP DOG",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol contains whitespace"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x89084e93de71a9817BC2D28a5A5922BB199AD793",
+      "symbol": "GOLD",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 41 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x42d2159Ba64F3b3A77d2fab49E36EAE2e76e19DE",
+      "symbol": "CAT",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 45 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xF197e42db5E7178fd8A58eA21a6A5A48B09173Eb",
+      "symbol": "AHOY",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 44 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xF9605b45b1cb8eA68BD3b18Eda4Fab64E24164a4",
+      "symbol": "WEN",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 40 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xbBceA2F3AAEB131044bf4eFdAAC99e5e4d0B737a",
+      "symbol": "AmunPhantom",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 27 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xad9f0f0302aD1AE212980c38fAB878eBB1ACb923",
+      "symbol": "ANTH",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 33 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xbA112C12433174e1e9A51504a21DdB5B5062e3e3",
+      "symbol": "CELERIS",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 45 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x2355431b83B1A8E40172D099d90243D8D666b56B",
+      "symbol": "VIBE CAT",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol contains whitespace"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xccB237eFc4FD89Ea932c2e68E87639f81c9D765D",
+      "symbol": "GALAXYBRAIN",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 25 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xa5B0c566E1aeA3B06FC593D91bFC0B066Af9d9BF",
+      "symbol": "CLAUDE",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 32 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xe1b03e4Ca43b2CE346796fb4Ba7CEB73270cEf3d",
+      "symbol": "ROBINHOOD",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 34 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x166ac8e890ac4B47843ED86FDD6AB0bc56690F26",
+      "symbol": "Camel",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 32 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x7BCBEF4efc30A2f242470f65619B652A06Abdc73",
+      "symbol": "SPCX",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol spoofs a canonical asset ticker"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xeBFAa53e870354dBaBE11d667FC20f4a8F9A6bFd",
+      "symbol": "CCDog",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 44 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x5724b69Bc8C59f1C5cF94d0C1c2109B64a5a0F0D",
+      "symbol": "TSLA",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol spoofs a canonical asset ticker"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x3E886fB080B2b498484124E04C0034E798AF710B",
+      "symbol": "APU",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 47 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x142C409e630407f1c0d5aC9ed64435D8cC2a5B12",
+      "symbol": "AHCHOO",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 44 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x96f530C7b37e52Ef5AcF13Cf47B057CC3cDBf49A",
+      "symbol": "MCGA",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 17 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x83E4087523bf65eBF586888D13E148796fFc5bf6",
+      "symbol": "GOAT",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 49 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xeE885951791B24AC6Be1d9633302Fd892b209627",
+      "symbol": "ARG",
+      "launchpad": "noxa",
+      "reasons": [
+        "holders 40 below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x5de4a4ad3c5d198156A1456E4d1cC89d40F7bCD7",
+      "symbol": "suck my nuts robinhood",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol longer than 20 chars",
+        "symbol contains whitespace"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x99A34aedAb8b5f08EBA397a2D247188603b150D6",
+      "symbol": "GME",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol spoofs a canonical asset ticker"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xB314D5C8047975a140cF01Bb5327c46f0Bd59B65",
+      "symbol": "kirkhood",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T00:26:42.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x55Ccf4b84BF4dEF30df661219A9beadAf8850d5b",
+      "symbol": "CALLIE",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T00:43:15.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xD91C6416E2507719492b02EC8D8BFEfD11A69CA6",
+      "symbol": "AUTIST",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T00:46:35.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x76599765904C38d5d7aC0D7307224eca635945a3",
+      "symbol": "ROBINHOUSE",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T02:16:49.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x51a5a8fE2059509dC65372f0dEA3e6592227AAb6",
+      "symbol": "GLORP",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T02:19:12.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x19deb2f745A36f3D80c2eA7F100B4361453C62f1",
+      "symbol": "DCA",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T02:20:44.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x4C5d8Cf4956A3d82fdd2C6Fe3F7827821e695e6e",
+      "symbol": "Yee",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T02:50:59.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x9c8E390D7F578c76566e3899e7AF8633bB7acbD1",
+      "symbol": "CHUNGUS",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T03:55:40.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x58B8470EFFA580DdB99a1561a015bd202652A1A5",
+      "symbol": "Emilio",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T05:05:07.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x8319550Cbb515B05044E8389AE4ef10651452c7a",
+      "symbol": "RSC",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T05:45:52.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xEFE5587bf64F5c0A7e62DcC0B19860050bFD2cae",
+      "symbol": "HIH",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T06:28:26.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x2cC202465E6CeAF4B005FECa674415Fa8EDB4FFE",
+      "symbol": "DATBOI",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T08:04:17.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x888Dbb2f675433d94CBA8437D88Fdd111c6Bade9",
+      "symbol": "AI",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T08:16:49.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xA56605E4c65e702F72830bf6880E821588BAb836",
+      "symbol": "FINANCEBRO",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T08:18:13.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xe6e1e0191beBD44d3293e65f5f5902B653E9d7f9",
+      "symbol": "Meowpin",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T08:18:35.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x59bbBE1AfB09e9AC5ed59Af49F85BA46472968Bf",
+      "symbol": "Maneki-neko",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T08:44:09.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x6F2dbc56625f473fB10AAF51456EB56E4731f5f9",
+      "symbol": "NotCat",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T09:55:41.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x35bb1375bF7B08F83af2b02d61c6b809021BE27E",
+      "symbol": "OPOR",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T10:07:48.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x01827e2A9E1C4071C55167Cf29Ecb5E29D599464",
+      "symbol": "KESTREL",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T10:21:13.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x4DA8e2F6f915b177B1287B5f89299a52Bb172CE6",
+      "symbol": "chickenshit",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T11:35:25.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x0C0eEfc5f679490eEc6e898d11774993634E93d4",
+      "symbol": "BOMB",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T12:28:19.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x90079857237dA767c38D1d261a39848ea424319E",
+      "symbol": "DATABEAR",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T12:32:21.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xC47abc72CB99FfC81DA7D349aE010426E9b3CB9e",
+      "symbol": "FIRE",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T12:34:47.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xf55F03Ea76c4e21F263631b1860b55E255ACb339",
+      "symbol": "MOG",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T12:37:08.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xB9FB8416651FC2075353865524d07aBeb484aD82",
+      "symbol": "HOBBS",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T12:40:40.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x63AFe1cB82e160B7A16918D381787BFF5300F796",
+      "symbol": "DORKY",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T13:21:30.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xEA0f049a89E5237E8c36eA15221A56b0D4eb9F2b",
+      "symbol": "Loxley",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T13:48:52.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x0CE65dc2A27Adb692b77E0228AE4DbE1553c09D4",
+      "symbol": "TITS",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T14:04:28.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x5157fa410744Dd1a13f0345D741831A0Bd6269D7",
+      "symbol": "BANDIT",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T14:19:00.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x82aAf8782c26b637393B757d7BccDeF47d423700",
+      "symbol": "HENRY",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T14:35:02.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xeaa9abB805Db03b6859662354aBfE0C2A30902ae",
+      "symbol": "SUIT",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T15:08:36.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xF9d686d05c426Bc10cF7CFE7E05b78F54c4b08Fc",
+      "symbol": "Hedge",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T15:11:43.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x75Cb98a79D00E4FE9EEf8f3d1bbDD79927201561",
+      "symbol": "Ape",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T15:20:09.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x57a1AB439e8C24B90Ecc6534C05621d6E68ED35A",
+      "symbol": "BABYCASHCAT",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T15:28:25.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x5d35f7c2b99fcf35dE8ca47FD1c80e4FfE32eCDE",
+      "symbol": "Hoodbot",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T15:32:27.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x7edB2CbCc409a74Af441A27a27fce374C6BE4C33",
+      "symbol": "natedogg",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T15:36:43.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x6f1E5Acf1B3e06B2878b30725657bE4ba96978e7",
+      "symbol": "HOES",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T15:47:39.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x516c0878acca15E7eB2f6a401b5B6cd2a0f9f455",
+      "symbol": "RYM",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T16:16:17.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xd2511e5ecc9E4CCBFdCFcc8B7cB67e3251f491ab",
+      "symbol": "Cuck",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T16:19:03.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x44d43a46A95C6250fCe06D6A005a7d962aE6F11B",
+      "symbol": "MOONDOGE",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T16:30:06.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x7c8ed8DF385aB4d9F790BAE658D5EBeBF865151d",
+      "symbol": "TTDC",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T16:30:14.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x6F85DF9841963434cd626D3859b69C8b19C5C87e",
+      "symbol": "CONFETTI",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T16:42:59.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xD324517135902bAC4e2C9764377f184E93C41561",
+      "symbol": "angrychicken",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T16:58:02.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x6903A76C1A69dD38FfBa1CE433349c78ee4d608f",
+      "symbol": "RLP",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T16:59:52.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xB3b78ca800C5327a21F03f0636d9A08A103787fD",
+      "symbol": "SHERWOOD",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T17:00:21.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xD538b4774e42ABDC86cD4b1A3014B7620471Ca6d",
+      "symbol": "MemeTest",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T17:04:29.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x0e846D1a056eB9a48dF85329691E26dbD042EFB8",
+      "symbol": "BOBA",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T17:19:06.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xdB4210b7091C92680E51397BfB4e9907f1fd19aC",
+      "symbol": "PENNY",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T17:44:20.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xA1F846CEf4c14578cBFec25b51204DBeb21c03D5",
+      "symbol": "CC",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T17:46:37.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xf16a3E2FedbAbDBe6853EC57341177634a1d88d9",
+      "symbol": "POOR",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T17:50:47.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x1794Fb848B6c00498533B0CbC603bB8a4D9D6884",
+      "symbol": "ProfessorX",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T18:05:55.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xE412D3b4751513603CF65110240207Bab82F85FC",
+      "symbol": "FOMO",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T18:35:36.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xfc5ABD01E4Def799549eee154449Ff6a7ae0cAc7",
+      "symbol": "Cate",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T18:38:00.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x0BE480865398E93060eb761148f3f93Adb12eF95",
+      "symbol": "NUTS",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T18:46:08.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x57C0CACf11F268db2b38e731e7295f1ea6A43ED5",
+      "symbol": "BROTHER",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T18:59:35.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x5d4284dd05857455d0d736Fd8793C7e014cEe143",
+      "symbol": "UNIPCS",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T19:03:44.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x53873444febaca380B5Cd7587ca094b04705a285",
+      "symbol": "unc",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T19:10:08.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xd9099e480Ac2A4d976DF94E7689274dE210552b4",
+      "symbol": "HET",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T19:25:22.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xa5cc095519e6e9342D3FA069b933E0d150681496",
+      "symbol": "WOLVES",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T19:43:25.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xfE19b82d49507C7f7027343f0cFDc96BdEF068F4",
+      "symbol": "P3",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T20:02:27.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x118501c8755ce5C5F54b2D58D8164f7D5d048946",
+      "symbol": "HOODMARKET",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T20:12:01.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xE9e1972271D138363320E132e53A75ccAeacc9D8",
+      "symbol": "SNCK",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T20:24:21.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xc0eecE5BABE870a940219519F37d3Dd632d68122",
+      "symbol": "Nuvoletta",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T20:35:54.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x047c776bF83fBF56155A06570ef94378169E8ae7",
+      "symbol": "Riptrump",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T20:49:16.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xC283e3825599966e2c517b3555cd7c84AF3b742f",
+      "symbol": "HOODMAXXING",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T21:12:39.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xCDdB2d9838b7eDab2F04aF4943a6EFE42C2f9F49",
+      "symbol": "$Stag",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T22:07:10.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x34F3269208fB35C59F2CBF28a0C12E300b9c93d1",
+      "symbol": "ADMIRALS",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T22:08:24.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x5fd01bE233D5E4Bc117236054a3506737a9e4BD8",
+      "symbol": "NORM",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T22:11:25.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xE7A7c2E12ff4c3AD280425cBE56C4C88bbBe09E7",
+      "symbol": "CASHCAT",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T23:21:25.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x43019Cd483FC23745E3D813EB18741f8bBd904f7",
+      "symbol": "NVIDIA",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T23:26:42.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x0f1D468A4Bc12b99F04A0e83AB18704614f61868",
+      "symbol": "POTATO",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T23:31:44.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xd8e25CEd04F51eFa18fa94b460F6E924c3Aa23ae",
+      "symbol": "BabyJugger",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-09T23:38:15.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x4Bf506E38121171537Fbc6bD412d02842E6353b1",
+      "symbol": "coms",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T00:52:00.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x04f8A8B2F3f49C9b3cd3303272cDc216bD1cDffd",
+      "symbol": "Yuri",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T00:52:26.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x742Fa2694712b96caa0244EbAbFF2300955D9d2E",
+      "symbol": "ROBIN",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T00:55:13.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x0339f5459FC690aC85F1782e15782A151b4A9E1b",
+      "symbol": "WALLET",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T01:02:04.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x258640BB18B6fE33391F806d7ac0c9eBE1441d25",
+      "symbol": "BEL",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T01:06:27.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x47eE684E52e5d92De0B24D4E00aD45c7Af7Db9A3",
+      "symbol": "HD",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T01:06:33.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x26996EDc9F2D81BF24a07AA7A2A9F06e5Ac506a3",
+      "symbol": "kekw",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T01:37:40.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x3ef6E1AF781B2C55f97098c3d1abfCb7EE18fcEA",
+      "symbol": "CHUD",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T01:51:21.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x6571a36D937b3e9587d60A0Dc86fA8009333Bef2",
+      "symbol": "DOGE",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T01:59:37.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x1d424B64EB8E9d54eFe4276863CD736e99D3DA9A",
+      "symbol": "CASHBIRD",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T02:02:51.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x9914F79bB351174232AD00aF85C8189eeA39cE5a",
+      "symbol": "Storms.MD",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T02:36:07.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x610940d78155239a0Ac4dcF74eCF9FDb603cdCa1",
+      "symbol": "CATS",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T02:38:34.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x687f467659899B4eD2a8383AC144c49D6B8bb9D4",
+      "symbol": "Cyclosporiasis",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T02:40:27.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xa614C13b18B5C754B34fF51E4775Ab19568e0536",
+      "symbol": "Snoofi",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T02:46:54.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x76188b2975f01a372111238aeB8B14F129F25bE3",
+      "symbol": "VLAD",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T02:50:29.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x251c8ED9171bce58252753672b299f7C66197269",
+      "symbol": "Robinhood Era",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol contains whitespace"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x99c33E11148a83904b044E49187483d6ECEb5e7d",
+      "symbol": "DREAM",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T03:48:17.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xbd433ecAB074AE6A740959Fb5e7bf1d02f6F57f6",
+      "symbol": "uhood",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T04:28:51.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xFe2112b4569D3a131E7964dCF45c155d7907534e",
+      "symbol": "POOCH",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T04:34:05.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xc26a7D916B43c00ddd815c7b2188001b4eefa2Ae",
+      "symbol": "LIKELIHOOD",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T05:21:01.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x3c3Ac95AAA50cA0aBE0FA8180F30921a0C142f9b",
+      "symbol": "💚",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T05:25:21.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x3dbB397DF2eAbb4139Ed1855C7115bbe2658010D",
+      "symbol": "WHLR",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T05:43:36.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x97Cd151027d7100F03bCCA4ADac1172E1F0d5e5b",
+      "symbol": "TCAT",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T05:57:43.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xa2C71ca691459Bd637ce3CB12C510a5E5A948F57",
+      "symbol": "招财猫",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T05:58:08.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x7f6b4B2E013453789722876758f85A743F1d36eB",
+      "symbol": "HAMMY",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T06:37:07.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xa44aEF8c21C0Cf49c7f1b5b3D57D02f7a4d24C72",
+      "symbol": "Artcoin",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T06:40:10.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x37C46383913Bf7deb2174E4Bb8E832d6c91e18c5",
+      "symbol": "hud",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T06:42:42.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x63e0ca3841Bff47A191949417aB64F82CFA3314B",
+      "symbol": "pooɥ",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T06:50:50.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xc79c2207e1f4E7dB75bef2a4E668cB4241ff0164",
+      "symbol": "MOONDOGE",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T07:29:58.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xef898Ab8f4f26A39538e03f207888B880132bDcf",
+      "symbol": "WSB",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T08:08:10.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xaC9BBA3f724dFbd6EC677684783D2DE2AAE05ad3",
+      "symbol": "NASDOG",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T08:46:18.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xcc68447A5aE88a563AF55b9b78eeDE4C9DC3eaa3",
+      "symbol": "RWALESS",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T09:01:22.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x4949d7251dFFdf7fd2C5EA624AA4d913329613E3",
+      "symbol": "FARTCOIN",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T09:19:33.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xd58343d8e240d66C6eB32685D0E1dDC07FFA5e72",
+      "symbol": "RWA",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T09:19:47.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xd4E4b6E7a198F9cc72791206bBd73C8B4EBc7e41",
+      "symbol": "YES",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T09:50:59.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x473C2D32E28c66d7EF55a9c9f392325007366dDf",
+      "symbol": "CashDog",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T09:57:35.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x000FEfc1d65443a6aF0b543874304e9c014F697B",
+      "symbol": "GreenWhale",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T10:34:22.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x9830682D26541d2D77FCa2379B2394479d887cd0",
+      "symbol": "2",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T11:10:06.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xd536685b94f75666e9e0493940Ff35cC2d75c64a",
+      "symbol": "Bingus",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T11:29:45.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xA177d02273dcB6BF7fF1cde27aBEd3Cfb0fd7a3D",
+      "symbol": "RIBBIN",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T11:31:29.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xD1f10cA2426DB0fAF4eCc7775C66bD3e27B3bcA0",
+      "symbol": "GOLDLATTICE",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T11:49:28.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xDbdcA5d63f1bacd3491B22E3fa2b5A9F664bDCFe",
+      "symbol": "WSB",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T11:50:19.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xBbd9CFA014992689297eEb33aE406974528e9083",
+      "symbol": "CRAMER",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T11:53:55.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x4606Bd72EbA7259c40F910ECD76CF82950C0428C",
+      "symbol": "$WIFH",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T12:05:47.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x8f69fADecDbD632ef2dCbd32e3D3FCF76dAE8FCb",
+      "symbol": "PUBERT",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T12:38:24.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xdEbbe91C3c74186Eb0F71b382C576F5b11183177",
+      "symbol": "WATER",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T13:04:50.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x69956df1a959AA660c6B9455FaA68674414FFE0a",
+      "symbol": "WINKCAT",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T13:10:00.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xcC46cbCe574fd48754F3a2f79A6b3Ec3802Cbf7A",
+      "symbol": "finance",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T13:26:42.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xEafA804083A4886a9460b5B19557334A652bEBa8",
+      "symbol": "NAVEN",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T13:33:26.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xe70dEfFd04b4eA92847FDA6B29ef72268182fcD1",
+      "symbol": "RobinhoodieLife",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T13:34:12.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x79AD79D01B86E0C25C7969B6a05342574497296E",
+      "symbol": "infiniti",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T13:35:24.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xC0b57404486baE3deCd0f47c49406214A303daC8",
+      "symbol": "Cap",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T13:40:07.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xE78F4bDA1e731c92df8032CaD54c38a878694fB0",
+      "symbol": "YNT",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T14:10:30.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xF2c5C2BCa68E3F1c4017Ea306541B3F9C33Fcc53",
+      "symbol": "TRASH",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T14:14:07.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x479E441f4Ba76eaEa2e9bf0755c128ADE99f8396",
+      "symbol": "WOF",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T14:15:20.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xdf8116804E43f1179ADbaa7d59a523Da8d5CC389",
+      "symbol": "mogcat",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T14:46:34.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x0173dDE5D1445C43e1b045B54417Ae945C88205E",
+      "symbol": "cxmt",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T14:52:30.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x1BD7707c6B48c304DC6B2874BB2ab32A50f510d4",
+      "symbol": "MONKEYROCKET",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T15:03:57.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x641495AcE41Cbf93F2520f1715786cf9e926e37e",
+      "symbol": "LOCKIN",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T15:11:12.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x529AB69BfC12A61b62531DC4AE1141Aa1c63041E",
+      "symbol": "WIZARD",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T15:31:35.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x8B6b34796f3DBccAEC0Ef7a3De8fDFe477C15AC3",
+      "symbol": "Rocks",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T15:33:43.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x6Ab24D36fa76395142e05Cb622e81AE2d3cd4d73",
+      "symbol": "Ape",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T15:33:45.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xae3Ff4fdc7133e4a7E0aFA33b2fACe9703af6b05",
+      "symbol": "NORACHAN",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T15:40:26.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x3D0a2e4763EeE58a7c631ACF7fF13Ad6398A5141",
+      "symbol": "ARCHER",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T15:52:31.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xE0D05EA83582f97599211E9a321449aDCbe05573",
+      "symbol": "CRUMBS",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T16:02:13.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x52046A35BAdc16e91Fd7a063184c2e741B90d6F1",
+      "symbol": "KIMCHI",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T16:25:34.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xF847aF8e73Cfd74292265796F9Ef2007dF3b7de2",
+      "symbol": "INDIE",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T16:28:19.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x62e45fe8b2644d906C67EcC0f191b4C3Ae0E38F9",
+      "symbol": "GAINZ",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T16:29:06.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xb08534Ad0C71b87d5826f3Ad971bD94a898Cc5c3",
+      "symbol": "TREAT",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T16:30:48.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xBcE7A68F332D3cf355507Aa661c84A66a86aA12A",
+      "symbol": "MARKS",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T16:42:50.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xE6F8f41c7B795b420905bd10fe3DC207Fe14732F",
+      "symbol": "THROBBIN",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T16:58:37.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x602701bA362035F52FCdcEdcF33fA7B1049ADb52",
+      "symbol": "USDG",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol spoofs a canonical asset ticker"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xF132Bd1D1770D42CF4Ec8659b9077D0d1c197CC1",
+      "symbol": "RANGER",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T17:30:17.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x0aa3d6585425384155B185A1A3fD26ee856001Aa",
+      "symbol": "MOBY",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T17:34:08.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xfB1bcB6817F7b8fA86896D3253b16aEB7Bd6A5A8",
+      "symbol": "worth",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T17:39:25.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x19B7791b26DbF0fCf23c0db9DE89c937b33fD20e",
+      "symbol": "KITTY",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T17:48:47.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x9DFA94104C389fBa90F54dc90eF6E2fBFbB76F43",
+      "symbol": "ARROW",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T18:07:05.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x682a15EA19763acEca8008d1402cBBC0c4DAbfA4",
+      "symbol": "nothing",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T18:07:17.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xc24F1fA02299a104bFac9FE5311d9da097F378dd",
+      "symbol": "BELEAF",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T18:16:48.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xBD8e0244791B67547b4aE8cFc9463AB19f6e9c08",
+      "symbol": "BOE",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T18:41:02.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xb35660a7580e68EEe546606D0021f3F278a3066f",
+      "symbol": "HOODBULL",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T18:42:47.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x62145Aed5CE6FE96d63eeBE133ACE2c68f043c46",
+      "symbol": "DIPcoin",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T19:22:02.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x7f3d6B93809Fd4534Bf3C5B25dEEAeC0aab5a1D8",
+      "symbol": "RANDY",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T19:32:09.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x4bDF010409A0180746326B357Fb21e55bf2D817B",
+      "symbol": "0x",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T19:47:23.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x3f74555B87cFCbfC60B3FDbe020b1FC51a84161a",
+      "symbol": "GOYBEAM",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T20:01:14.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x745C1C97551204F10cd5Eb51c1B6902FeCe13b0E",
+      "symbol": "UNK0",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T20:01:37.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x3a5d59762F7ec830D50065B07115ade504EeA1C5",
+      "symbol": "MARA",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T20:20:55.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x133f1bc183E20bbc4AAc114E4ef6C893576DADc0",
+      "symbol": "MONSIEUR",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T20:30:15.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xc111c54c3410ec3c6374a481A6782aad34802FEB",
+      "symbol": "QUEEN",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T20:35:32.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x2E897ABb6BF1d77c61eB3fa6c093ae71DE0Efd2D",
+      "symbol": "NASDAQ",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T20:58:07.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x339695E93d132481235877cB9f0ee3ac08E35E5A",
+      "symbol": "Shrek",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T21:04:24.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x0C085e19432976B4be927DC3A9f5d6514cC2B3aE",
+      "symbol": "S&P500",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T21:27:39.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x0717Fe91E5d70F91f57d7caEc4E50d8B30b2185b",
+      "symbol": "KURUMI",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T21:40:54.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xc7F2ea4CA49cdE1E121d1dbA4A40BD14B76e4a97",
+      "symbol": "HOODSCAN",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T21:49:15.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x4D0A4421D06876052b03CAD968ff6F1Ca1A913f5",
+      "symbol": "BANANA",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T21:52:15.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x685cc6f7F51a6608DAF19d0065d37757f0950884",
+      "symbol": "BLYTHE",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T22:20:51.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xa59CdbA947Ba5736820ac281465DadDd84670598",
+      "symbol": "NOOT",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T22:23:24.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xb77b47cB92EE6aBFa0446dfD3be76070e873Bf80",
+      "symbol": "ROBIN",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T22:28:10.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x2103faA9D1762e27a716C61718b3aCf3Ec1F9bf1",
+      "symbol": "FOX",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T22:29:23.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x218EEc7d0C6A26bA119063B3228B8D04085545D3",
+      "symbol": "LMEOW",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T22:36:30.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x1E9Cf275e974c384Ad4F733f9f99C5044ce21178",
+      "symbol": "WOOF",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T23:03:18.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x1CD3E1523BC8AC03AA95f8f84cb95b051B3A27ac",
+      "symbol": "RobinLiquid",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T23:09:08.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x94FEf3763ED87051267dCd7FfC5DF416B6C03a7E",
+      "symbol": "RPP402",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T23:13:44.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x5d6Fa71583E40d6a40AB09Cd071F24F6603b0970",
+      "symbol": "Yarrow",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T23:16:08.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xaBE4f382b8faF20c3fE2aeEf6801420ff5912f72",
+      "symbol": "APIMart",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T23:22:47.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x088B0128209CF84606aa688506Fa87717BA8695B",
+      "symbol": "LARRY",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-10T23:41:01.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xdBE2F8e942eAE38CeCfA09573D58B7e84F5C7767",
+      "symbol": "WINKCAT",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T00:16:56.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x669537DF9d92368d32de5CBe9C584c28f1E8926b",
+      "symbol": "finkd",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T00:39:31.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xE0f28cEF00921754aa900B06A4998607C26344D1",
+      "symbol": "ROBOT",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T01:24:00.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xDbD7d9ca173b334c6c2681E7a7AF1B48316bD057",
+      "symbol": "lilguy",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T01:42:11.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x4a038ED8AAb3877D5EF7E064959930e85eefB862",
+      "symbol": "FLOW",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T01:54:00.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xE87441EaeCe999c052EdE6094ad3d18991b42da0",
+      "symbol": "AVOCADO",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T02:12:41.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xD8d1C08A8bA4fc64BAC744f74290B89ADcb6Bf25",
+      "symbol": "seedcoin",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T02:56:14.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x51F5AAd5aA89A65068834260F898D6079ea81e23",
+      "symbol": "HOODETF",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T03:02:58.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x268490680Be0d319F6824CAb74c7558042DD210D",
+      "symbol": "ARBHOOD",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T03:03:04.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x2b2963ed82d0fe8473EdC2F891beE0AC0a83fBbb",
+      "symbol": "JUGGERHOUSE",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T03:11:05.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xab070DD2bC3dDbffF36900e89B578b1db824D1ba",
+      "symbol": "HA",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T04:18:08.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x232CDFc415D10b673845D83Dc02ba2eaBe7e30d1",
+      "symbol": "IF",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T04:32:42.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xB035433102605446884c41c6253bD9DA4552A8F9",
+      "symbol": "13",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T04:36:07.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x5d3C65E7DCA8fB1f5674BDCcA5725168977159B0",
+      "symbol": "UP",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T05:09:31.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xe1aeC4512fedA547E3e98d2a7C94303E8c8db09F",
+      "symbol": "Hoodlums",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T05:12:51.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xa79e6Db2549c541b6CAe25e99021728425b9d0E9",
+      "symbol": "frogcat",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T05:56:55.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x9e3F0680559dcd3E1cC792De506A6927D03dc2D3",
+      "symbol": "#stealfromtherich",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T06:37:12.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x16Ee43c17Cd956e9355342532cc4F34783E485E6",
+      "symbol": "HOOT",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T06:46:50.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x5aD6028569Bc68677931B42eAB47beeaA2a0cA83",
+      "symbol": "John",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T06:54:12.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x401A4FA79f95cD60bB588DCe658FEC3CD1772572",
+      "symbol": "115",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T07:03:15.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xFE1265896D0e6F1B1Ac16Feca143dDf30868896e",
+      "symbol": "DIAMOND",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T07:12:19.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x26cf0ba1EC3C59ff9b7856fd5C1127a8eE70f690",
+      "symbol": "FEE",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T07:29:15.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xcAfc183A7F37f5B792B354405be9cDC147ab38ac",
+      "symbol": "NOXA",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T07:42:54.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xe2E8E0B7C736d9CbeD05F63437Dc0Dca9c8D52C8",
+      "symbol": "TYLEE",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T07:46:40.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x32758ae8e02B0A2CB6b802B6aAEaF74158C169F7",
+      "symbol": "HOODBOT",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T07:59:30.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x1d2cf10B32321B3bccbe6f9F6953921416f558cF",
+      "symbol": "UTILITY",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T08:03:46.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x324f2Ae1b1273fC312981f2D770e7F78107dcDFC",
+      "symbol": "GUH",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T08:04:35.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x971804e85821e94d351cee39458DA07e0D10Faea",
+      "symbol": "Betmore",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T08:13:07.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xB6c4A1440447475F0e3fc3e51AD9416D8381B1D3",
+      "symbol": "Goma",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T08:23:09.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x92AcB3294DcfdA4b926665d738eCDF59499b6461",
+      "symbol": "AGI",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T08:41:07.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xF08a4DA92a4302F9bBcAb7B78B2a4a70a8aCDeAb",
+      "symbol": "DEBTDOG",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T09:04:00.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x71a9835b8c4DF70bDae613b1CFa91Bf35240DE4E",
+      "symbol": "Pointless",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T09:12:00.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x75C8258eAa6d0f94b82951194191cA3efB0bCBe2",
+      "symbol": "meow",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T09:14:34.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xfe04CD8bF7AA500f45F08Ac79A794E2311f36d28",
+      "symbol": "HOODNIK",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T09:47:44.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x9fb101579e716B2571aB069c2718cd06b69ffdD7",
+      "symbol": "BOW",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T10:00:57.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x10aE2F9345Dd9C8bB0853971f41c9b4e9F9F3bf2",
+      "symbol": "Merrymen",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T10:12:59.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x8355ECF33364E7493aE9570fe2af1d7eD48bF0e4",
+      "symbol": "meow",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T10:39:28.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0x955b339944CbD4834156366D766C260C80956B44",
+      "symbol": "doginhood",
+      "launchpad": "noxa",
+      "reasons": [
+        "younger than 7 days (launched 2026-07-11T10:44:33.000Z)"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xfB4729659eeF22Bfc1c2B680F6F873f8147aaaab",
+      "symbol": "ROBIN",
+      "launchpad": "odyssey",
+      "reasons": [
+        "no holder available for transfer simulation"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xD53feee9C73572107FB48C40A7A29232793b14c6",
+      "symbol": "SPX4663",
+      "launchpad": "odyssey",
+      "reasons": [
+        "no holder available for transfer simulation"
+      ]
+    },
+    {
+      "stage": "memecoin-verification",
+      "address": "0xA138975B14f1F6BB595715C77e22ea9eD2732A99",
+      "symbol": "VLAD",
+      "launchpad": "odyssey",
+      "reasons": [
+        "holders unknown below 50"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x1E963A1539681d0B877570F8bdC000cbE8404fC4",
+      "symbol": "JOHN",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol JOHN collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x411bD444b94D70E3B0709D449c9F86Ac5dAf0486",
+      "symbol": "HOOD",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol HOOD collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x6C5C8e11A1b16265dFb8F93Cd30cB0Fe3EbB1403",
+      "symbol": "CHUD",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol CHUD collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x10D87d37C880c996b8193E95dD7E750CB7E888c6",
+      "symbol": "ROBIN",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol ROBIN collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0xb67eC815CC8Ba4B8aA41701Ff24f575437Cae6D0",
+      "symbol": "RWA",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol RWA collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x47b17581546a9815376037812b1A125692657916",
+      "symbol": "HOODRAT",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol HOODRAT collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0xe7bF081A11667eeE57D1Ac1AAB7bCB6922914f45",
+      "symbol": "DOGE",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol DOGE collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x171790A5a00c1E37133f01C53c276f1F5B4edDdF",
+      "symbol": "COELO",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol COELO collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x91B853180E9fFA6976A2d50D181A7c3d5C8979aA",
+      "symbol": "TYGR",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol TYGR collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x0dEF98084D624215d65eD449419344bF4B534B6F",
+      "symbol": "SUMMER",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol SUMMER collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x79D2234Ed4Ee24880835F261DF9A98FcEfC7600e",
+      "symbol": "HOOD",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol HOOD collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x913b55723E208aD33a807207A62CfEb2a4BD4fdE",
+      "symbol": "AMC",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol AMC collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0xb91a68F23C9bA7B3548AAe3ef5693b19AdFF9755",
+      "symbol": "TA",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol TA collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x08AEbdF2140bc05FD27A507ede5af2428044B9b4",
+      "symbol": "ROBIN",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol ROBIN collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0xDF2B44Fe43d4C7a6677D40Eb4b0D8BDa8F3cf9fe",
+      "symbol": "GOAT",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol GOAT collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x909fd3633Bb55FB784078672945E2fbA67A4f6eF",
+      "symbol": "HOODRAT",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol HOODRAT collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x261478084F01da1F4dD779BA33501B48Fb2afE15",
+      "symbol": "PEPE",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol PEPE collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x5ad6FAd7794f4118fa119dC6F5652F360f3B8EB5",
+      "symbol": "VLAD",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol VLAD collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0xc11237A10177145082572d8A3A6BFDf737BdfabD",
+      "symbol": "WIF",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol WIF collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x838cbD4053C0cEcA77e2390fEa18884CBcD21061",
+      "symbol": "VLAD",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol VLAD collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0xe4e08A1D973546e399A730c903e750E4C17aEC15",
+      "symbol": "PEPE",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol PEPE collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x4c92177Dc03430058929f1E115E0d51a3D1d62bA",
+      "symbol": "ROBIN",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol ROBIN collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x166CA92C1fDCd3620918c1709BFe848431a8Fddf",
+      "symbol": "RETAIL",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol RETAIL collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x6924315C4bf46E4b43c980fbD98c87914eCA787e",
+      "symbol": "PENNY",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol PENNY collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0xe04A6D12B0D1b11d188fEbE5B511a6ceCD73C5c1",
+      "symbol": "VLAD",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol VLAD collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x53d2e1225AaCe4551194eCBB6bbE5c44d94AA5fa",
+      "symbol": "ROBINHOOD",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol ROBINHOOD collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x250dcD8c49d05Dbb0dC266A5DDbFB263C7e58D80",
+      "symbol": "530A",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol 530A collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x5336954532F66eC82a01D61BF70B26b07EFB4C80",
+      "symbol": "Stockcoin",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol Stockcoin collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0xf77de157D8468D936AAbD2Bf3DA9De36449a8694",
+      "symbol": "GM",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol GM collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x324f316e1e933509131F555BcF0047cc2ECe4b63",
+      "symbol": "John",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol John collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x9192ee782f48Ba53DA0A333712FA4bf18988537c",
+      "symbol": "doge",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol doge collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x98dffC1D362c4ef2CAa177D9F56c884baa465F90",
+      "symbol": "Vlad",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol Vlad collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0xfDBb27E971E72E38C41b1C772FB409C94dd92789",
+      "symbol": "VLAD",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol VLAD collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0xDd1EE388789907ca2c289B4E7182d5Ed1BdEbfa2",
+      "symbol": "RWA",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol RWA collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x42e2937ad5758b3A73a1A3E1628f59d8Ffc79eBc",
+      "symbol": "VLAD",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol VLAD collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0xFEf671D362db8e92dFE110518CfbA6acD3B8d7e9",
+      "symbol": "VLAD",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol VLAD collision lost to deeper pool"
+      ]
+    },
+    {
+      "stage": "memecoin-symbol-collision",
+      "address": "0x700b39808590cB666Be8005bE79C2AfB69aF071e",
+      "symbol": "ZA",
+      "launchpad": "noxa",
+      "reasons": [
+        "symbol ZA collision lost to deeper pool"
+      ]
+    }
+  ]
+}

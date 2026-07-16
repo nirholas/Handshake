@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Methodology · Robinhood Chain Status</title>
+  <meta name="description" content="Exactly how hood-status decides operational, degraded, and down for every Robinhood Chain component. Published thresholds, flap suppression, and honest limitations.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2300d18f'/%3E%3Crect x='8' y='14' width='4' height='10' rx='1.5' fill='%230b0e12'/%3E%3Crect x='14' y='9' width='4' height='15' rx='1.5' fill='%230b0e12'/%3E%3Crect x='20' y='12' width='4' height='12' rx='1.5' fill='%230b0e12'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/style.css">
+  <script>
+    (function () {
+      var saved = localStorage.getItem('hood-status:theme');
+      if (saved === 'light' || (!saved && matchMedia('(prefers-color-scheme: light)').matches)) {
+        document.documentElement.dataset.theme = 'light';
+      }
+    })();
+  </script>
+</head>
+<body>
+  <header>
+    <div class="wrap header-inner">
+      <a class="brand" href="./">
+        <span class="brand-dot" aria-hidden="true"></span>
+        Robinhood Chain Status
+        <small>chain 4663</small>
+      </a>
+      <nav aria-label="Site">
+        <a href="./">Status</a>
+        <a href="https://robinhoodchain.blockscout.com" target="_blank" rel="noopener">Explorer</a>
+        <button id="theme-toggle" type="button" aria-label="Toggle color theme">Theme</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap prose">
+    <h1>Methodology</h1>
+    <p>
+      A status page is only worth trusting if it publishes its rules. This page documents exactly
+      how <code>hood-status</code> decides what is <strong>operational</strong>,
+      <strong>degraded</strong>, or <strong>down</strong>, and where its blind spots are. The
+      thresholds below are not a paraphrase: the same
+      <code>status-core.js</code> module containing these numbers runs in the probe worker and in
+      this page's direct-probe fallback.
+    </p>
+
+    <h2>How probing works</h2>
+    <p>
+      A small worker probes the public Robinhood Chain surface every <strong>30 seconds</strong>
+      and keeps a rolling <strong>90 days</strong> of samples in SQLite. Every probe is a real
+      request against the real endpoint: no synthetic data, no cached green. If the page cannot
+      reach the worker, it flips to <strong>direct probe mode</strong> and runs the same
+      measurements from your browser (the public RPC, feed, and explorer all allow cross-origin
+      reads), evaluated with the same thresholds. Direct mode has no memory, so uptime bars and
+      incident history pause until the worker is reachable.
+    </p>
+
+    <h2>No fake green</h2>
+    <p>
+      If a probe cannot run, its component reports <strong>unknown</strong>, never operational.
+      Days without collected data render gray in the uptime bars, not green. A brand-new worker
+      says so on the page instead of implying 90 days of perfection.
+    </p>
+
+    <h2>Component rules</h2>
+    <table>
+      <thead>
+        <tr><th>Component</th><th>Measurement</th><th>Degraded</th><th>Down</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Public RPC</td>
+          <td><code>eth_blockNumber</code> round trip, 8s timeout</td>
+          <td>median latency over ~5 min &gt; 1500 ms</td>
+          <td>request fails or times out</td>
+        </tr>
+        <tr>
+          <td>Block production</td>
+          <td>latest block height, timestamp age, blocks/min</td>
+          <td>head older than 120 s, or &lt; 1 block/min with a &gt; 60 s-old head</td>
+          <td>head older than 300 s</td>
+        </tr>
+        <tr>
+          <td>Sequencer feed</td>
+          <td>WebSocket connect, message rate, sequence number vs RPC head</td>
+          <td>silent &gt; 60 s while the chain advanced, or &gt; 50 blocks behind the RPC head</td>
+          <td>not connected</td>
+        </tr>
+        <tr>
+          <td>Settlement (L1 view)</td>
+          <td>latest block's <code>l1BlockNumber</code> vs the real Ethereum head</td>
+          <td>&ge; 50 L1 blocks behind (~10 min)</td>
+          <td>&ge; 300 L1 blocks behind (~1 h)</td>
+        </tr>
+        <tr>
+          <td>Blockscout explorer</td>
+          <td><code>GET /api/v2/stats</code>, 10 s timeout</td>
+          <td>request fails</td>
+          <td>never: the explorer is not consensus-critical, so it caps at degraded</td>
+        </tr>
+        <tr>
+          <td>Chainlink stock feeds</td>
+          <td><code>latestRoundData()</code> age on 5 Stock Token feeds (AAPL, TSLA, NVDA, MSFT, AMZN), sampled every 5 min</td>
+          <td>stalest feed &gt; 30 min old <strong>during US market hours</strong></td>
+          <td>never: caps at degraded (see limitations)</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>
+      Gas base fee (current, p50, p95 over the last 128 blocks) is reported as an
+      <strong>informational metric only</strong>. Base fee moves with organic demand; a spike is
+      not an outage, so it never opens an incident.
+    </p>
+
+    <h2>Incidents and flap suppression</h2>
+    <ul>
+      <li>A bad evaluation must persist <strong>3 consecutive probe cycles</strong> (~90 s) before an incident opens. A single failed probe never pages anyone.</li>
+      <li>Recovery must persist <strong>4 consecutive cycles</strong> (~2 min) before an incident closes. Flapping endpoints stay visibly broken instead of blinking.</li>
+      <li>Severity changes inside an open incident (degraded escalating to down and back) are recorded on the same incident with timestamps.</li>
+      <li><strong>Unknown never opens or closes an incident.</strong> If the prober itself breaks mid-incident, the incident stays open rather than being silently resolved.</li>
+      <li>The overall banner is the worst component status. Unknown components are excluded unless everything is unknown.</li>
+    </ul>
+
+    <h2>Why "Settlement (L1 view)"</h2>
+    <p>
+      Robinhood Chain is an Arbitrum Orbit L2 settling to Ethereum. Every L2 block records the
+      parent-chain block the sequencer has ingested (<code>l1BlockNumber</code>). In healthy
+      operation this trails the real Ethereum head by 0 to 2 blocks. If the gap grows, the
+      sequencer has stopped following Ethereum: deposits stall first, then finality. Comparing
+      that view against an independent public Ethereum RPC is a bridge-path heartbeat that needs
+      no privileged infrastructure and cannot be faked by the chain itself.
+    </p>
+
+    <h2>Honest limitations</h2>
+    <ul>
+      <li><strong>Market hours, not market calendar:</strong> the Chainlink check knows NYSE hours (09:30 to 16:00 ET, DST-correct, weekends closed) but ships no exchange-holiday calendar. On a US market holiday the feeds legitimately idle during "market hours", which can show as degraded. That is why this component caps at degraded and never contributes a "down" banner.</li>
+      <li><strong>Weekend feed staleness is expected:</strong> Stock Token feeds go quiet from Friday close to Monday open. The page labels this state instead of alarming on it.</li>
+      <li><strong>One vantage point:</strong> probes run from a single region (plus your browser in direct mode). A regional network issue between the worker and the chain can look like a chain issue. Cross-checking with direct probe mode from your own connection is the built-in second opinion.</li>
+      <li><strong>Block production nuance:</strong> Arbitrum-lineage chains mint blocks on demand. Robinhood Chain has produced hundreds of blocks per minute continuously since launch, so sustained silence is treated as a stall. If organic activity ever drops to near zero, this rule would need revisiting; the threshold requires both a stale head and near-zero production before degrading.</li>
+      <li><strong>History durability:</strong> the worker stores samples in SQLite on its instance disk. On Cloud Run, redeploying or replacing the instance resets history (see the README's data-retention notes). The page says "young worker" instead of hiding it.</li>
+    </ul>
+
+    <h2>Verify it yourself</h2>
+    <pre># the same calls the prober makes, from any terminal:
+curl -s -X POST https://rpc.mainnet.chain.robinhood.com \
+  -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"eth_blockNumber","params":[]}'
+
+curl -s https://robinhoodchain.blockscout.com/api/v2/stats
+
+# Chainlink AAPL feed, latestRoundData():
+curl -s -X POST https://rpc.mainnet.chain.robinhood.com \
+  -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"eth_call","params":[{"to":"0x6B22A786bAa607d76728168703a39Ea9C99f2cD0","data":"0xfeaf968c"},"latest"]}'</pre>
+  </main>
+
+  <footer>
+    <div class="wrap" style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;width:100%">
+      <span>Community-run status page. Not affiliated with Robinhood Markets.</span>
+      <span>
+        Built by <a href="https://x.com/nichxbt" target="_blank" rel="noopener">nirholas</a> ·
+        <a href="https://three.ws" target="_blank" rel="noopener">three.ws</a> ·
+        <a href="https://github.com/nirholas/hood-status" target="_blank" rel="noopener">Source</a>
+      </span>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('theme-toggle').addEventListener('click', function () {
+      var next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem('hood-status:theme', next);
+    });
+  </script>
+</body>
+</html>

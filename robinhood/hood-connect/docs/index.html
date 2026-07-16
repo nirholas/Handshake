@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>hood-connect: wallet + onboarding kit for Robinhood Chain</title>
+  <meta name="description" content="EIP-6963 wallet discovery, add/switch chain 4663, a drop-in React connect button with live ETH/USDG balances, and a bridge funding funnel via LI.FI and Relay." />
+  <link rel="stylesheet" href="site.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%230b0e11'/%3E%3Cpath d='M6 9.5A2.5 2.5 0 0 1 8.5 7h7A2.5 2.5 0 0 1 18 9.5v5a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 6 14.5v-5Z' stroke='%2300c805' stroke-width='1.5' fill='none'/%3E%3Ccircle cx='14.5' cy='12' r='1.25' fill='%2300c805'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <header class="site">
+    <div class="wrap">
+      <a class="logo" href="index.html">hood<span class="tick">-</span>connect</a>
+      <nav class="main" aria-label="Site">
+        <a href="index.html" aria-current="page">Overview</a>
+        <a href="guide.html">Integration guide</a>
+        <a href="funding.html">Funding funnel</a>
+        <a href="add.html">Add-network button</a>
+        <a href="https://github.com/nirholas/hood-connect" rel="noreferrer noopener">GitHub</a>
+        <a href="https://www.npmjs.com/package/hood-connect" rel="noreferrer noopener">npm</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div class="wrap">
+        <h1>Wallet onboarding for <span class="grad">Robinhood Chain</span>, in one component.</h1>
+        <p class="lede">
+          Chain 4663 ships in no wallet by default, so every dApp rebuilds the same flow: add network,
+          fund via bridge, connect. hood-connect makes it one call: EIP-6963 discovery, EIP-3085
+          add-network derived from viem's official chain defs, live ETH/USDG balances, and a bridge
+          funding funnel routed through LI.FI with Relay fallback.
+        </p>
+        <div class="install">
+          <span id="install-cmd">npm install hood-connect</span>
+          <button type="button" id="copy-install" aria-label="Copy install command">copy</button>
+        </div>
+
+        <div class="stats" aria-label="Live Robinhood Chain data">
+          <div class="stat"><div class="k">Chain ID</div><div class="v" id="stat-chain">4663</div></div>
+          <div class="stat"><div class="k">Block height</div><div class="v live" id="stat-block">loading</div></div>
+          <div class="stat"><div class="k">USDG supply</div><div class="v" id="stat-usdg">loading</div></div>
+          <div class="stat"><div class="k">Gas token</div><div class="v" id="stat-gas">ETH</div></div>
+        </div>
+      </div>
+    </div>
+
+    <section aria-labelledby="try-title">
+      <div class="wrap">
+        <h2 id="try-title">Try it, right here</h2>
+        <p class="sub">
+          This button is the framework-free core running live on this page: it discovers your
+          installed wallets, connects, adds Robinhood Chain if your wallet does not know it, switches,
+          and reads your real ETH and USDG balances from the public RPC.
+        </p>
+        <div class="demo-box">
+          <div id="connect-demo"></div>
+          <p class="note">
+            Read-only: the page never asks for a signature and never moves funds. No wallet installed?
+            You will get install links instead.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="features-title">
+      <div class="wrap">
+        <h2 id="features-title">What is in the kit</h2>
+        <div class="grid">
+          <div class="card">
+            <span class="tag">hood-connect</span>
+            <h3>ensureChain()</h3>
+            <p>Connect, add chain 4663 if missing (EIP-3085, params derived from viem, never hand-copied), switch, verify. Typed states for every phase and typed errors for every rejection path.</p>
+          </div>
+          <div class="card">
+            <span class="tag">hood-connect</span>
+            <h3>EIP-6963 discovery</h3>
+            <p>Every installed wallet announces itself; no more fighting over window.ethereum. Legacy injection still works as a fallback.</p>
+          </div>
+          <div class="card">
+            <span class="tag">hood-connect</span>
+            <h3>Balance bootstrap</h3>
+            <p>checkBootstrap() detects the empty-wallet-on-4663 state every new user hits and returns concrete funding options to render.</p>
+          </div>
+          <div class="card">
+            <span class="tag">hood-connect</span>
+            <h3>Funding funnel</h3>
+            <p>Live bridge quotes and route execution into Robinhood Chain via the LI.FI API, with Relay as automatic fallback. Both verified live against chain 4663.</p>
+          </div>
+          <div class="card">
+            <span class="tag">hood-connect/react</span>
+            <h3>&lt;HoodConnectButton /&gt;</h3>
+            <p>The whole flow in one component with a styled default skin: wallet picker, add/switch progress, address pill with live ETH/USDG balances, designed empty and error states.</p>
+          </div>
+          <div class="card">
+            <span class="tag">hood-connect/wagmi</span>
+            <h3>wagmi config</h3>
+            <p>hoodWagmiConfig() for teams already on wagmi v2: Robinhood Chain transports and EIP-6963 connectors, one import.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="quick-title">
+      <div class="wrap">
+        <h2 id="quick-title">60-second quickstart</h2>
+        <p class="sub">Framework-free core. React and wagmi variants live in the <a href="guide.html">integration guide</a>.</p>
+<pre><code>import { discoverWallets, ensureChain, checkBootstrap } from 'hood-connect'
+
+const [wallet] = await discoverWallets()          // EIP-6963 (+ legacy fallback)
+const { address } = await ensureChain(wallet.provider)  // connect + add 4663 + switch
+
+const status = await checkBootstrap(address)      // live ETH + USDG read
+if (!status.funded) {
+  console.log(status.fundingOptions)              // bridge + Robinhood-app paths
+}</code></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      Built by <a href="https://x.com/nichxbt" rel="noreferrer noopener">nirholas</a> ·
+      <a href="https://three.ws" rel="noreferrer noopener">three.ws</a> · MIT licensed ·
+      Not affiliated with Robinhood Markets.
+    </div>
+  </footer>
+
+  <script src="hood-connect.iife.js"></script>
+  <script src="connect-widget.js"></script>
+  <script>
+    (function () {
+      'use strict'
+      var HC = window.HoodConnect
+
+      mountConnectWidget(document.getElementById('connect-demo'), { network: 'mainnet' })
+
+      document.getElementById('copy-install').addEventListener('click', function () {
+        navigator.clipboard.writeText('npm install hood-connect').then(function () {
+          var button = document.getElementById('copy-install')
+          button.textContent = 'copied'
+          setTimeout(function () { button.textContent = 'copy' }, 1500)
+        })
+      })
+
+      // Live chain stats from the public RPC (read-only). The public RPC's
+      // CDN occasionally returns a malformed CORS header from one backend;
+      // viem retries, and a stale-but-real value beats an error string, so
+      // failures only show when no reading ever succeeded.
+      var hood = HC.createHoodClient({ chain: 'mainnet' })
+      var blockEl = document.getElementById('stat-block')
+      var usdgEl = document.getElementById('stat-usdg')
+      var haveBlock = false
+      var haveUsdg = false
+
+      function refreshBlock() {
+        hood.public.getBlockNumber().then(function (block) {
+          haveBlock = true
+          blockEl.textContent = block.toLocaleString('en-US')
+        }).catch(function () {
+          if (!haveBlock) blockEl.textContent = 'rpc busy'
+        })
+      }
+      function refreshUsdg() {
+        HC.getUsdgTotalSupply(hood).then(function (supply) {
+          haveUsdg = true
+          var formatted = Number(HC.formatUsdg(supply))
+          usdgEl.textContent = '$' + formatted.toLocaleString('en-US', { maximumFractionDigits: 0 })
+        }).catch(function () {
+          if (!haveUsdg) usdgEl.textContent = 'rpc busy'
+        })
+      }
+      refreshBlock()
+      refreshUsdg()
+      setInterval(refreshBlock, 12000)
+      setInterval(refreshUsdg, 120000)
+    })()
+  </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+.env.*
+*.tgz
+test-results/
+playwright-report/
+.dappwright/
+examples/demo/dist/

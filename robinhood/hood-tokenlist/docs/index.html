@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hood-tokenlist · The Robinhood Chain token list</title>
+<meta name="description" content="The canonical Uniswap-standard token list for Robinhood Chain (4663): every Stock Token, USDG, WETH, and rules-vetted memecoins, all verified on-chain.">
+<link rel="icon" href="./logos/list.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="./">
+      <span class="mark">H</span>
+      hood-tokenlist
+      <span id="list-version" style="color:var(--text-faint);font-weight:500;font-size:13px"></span>
+    </a>
+    <nav class="site-nav" aria-label="Site">
+      <a href="./" aria-current="page">Directory</a>
+      <a href="./criteria.html">Criteria</a>
+      <a href="./extensions.html">Extensions</a>
+      <a href="https://github.com/nirholas/hood-tokenlist">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <section class="hero">
+      <h1>Every token on Robinhood Chain,<br><span class="grad">verified on-chain.</span></h1>
+      <p class="lede">
+        The canonical token list for Robinhood Chain (chain ID 4663) in the Uniswap token-lists
+        standard. Every Stock Token, USDG, WETH, and every memecoin that passes the published
+        rules-based criteria. No editorial picks, no unverified addresses.
+      </p>
+      <div class="stat-row" role="group" aria-label="List statistics">
+        <div class="stat"><div class="n" id="stat-tokens">·</div><div class="l">Tokens</div></div>
+        <div class="stat"><div class="n" id="stat-stocks">·</div><div class="l">Stock Tokens</div></div>
+        <div class="stat"><div class="n" id="stat-memes">·</div><div class="l">Memecoins</div></div>
+        <div class="stat"><div class="n live" id="stat-eth">·</div><div class="l">ETH / USD live</div></div>
+        <div class="stat"><div class="n live" id="stat-block">·</div><div class="l">Chain height</div></div>
+      </div>
+      <div class="url-bar">
+        <span style="color:var(--text-faint);font-size:13px;white-space:nowrap">Stable URL</span>
+        <code id="stable-url">https://nirholas.github.io/hood-tokenlist/tokenlist.json</code>
+        <button class="copy-btn" id="copy-url" aria-label="Copy the stable token list URL">Copy</button>
+      </div>
+    </section>
+
+    <div class="controls">
+      <input id="search" type="search" placeholder="Search ticker, name, or address ( / to focus )" aria-label="Search tokens">
+      <div class="seg" id="class-filter" role="group" aria-label="Filter by asset class">
+        <button data-class="all" aria-pressed="true">All</button>
+        <button data-class="stock-token" aria-pressed="false">Stocks</button>
+        <button data-class="memecoin" aria-pressed="false">Memecoins</button>
+        <button data-class="stablecoin" aria-pressed="false">Stable</button>
+        <button data-class="wrapped-native" aria-pressed="false">WETH</button>
+      </div>
+      <span class="result-count" id="result-count" aria-live="polite"></span>
+    </div>
+
+    <div class="table-scroll">
+      <table class="dir">
+        <thead>
+          <tr><th scope="col">Token</th><th scope="col">Class</th><th scope="col">Address</th><th scope="col">Chainlink price</th></tr>
+        </thead>
+        <tbody id="rows">
+          <tr class="skeleton-row"><td><div style="width:60%"></div></td><td><div style="width:70px"></div></td><td><div style="width:110px"></div></td><td><div style="width:70px"></div></td></tr>
+          <tr class="skeleton-row"><td><div style="width:45%"></div></td><td><div style="width:70px"></div></td><td><div style="width:110px"></div></td><td><div style="width:70px"></div></td></tr>
+          <tr class="skeleton-row"><td><div style="width:55%"></div></td><td><div style="width:70px"></div></td><td><div style="width:110px"></div></td><td><div style="width:70px"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="state" id="table-state" hidden></div>
+    <p style="color:var(--text-faint);font-size:13px">
+      Last refreshed <span id="list-updated">·</span>. Prices stream live from each token's
+      Chainlink feed on Robinhood Chain. Click any row for details.
+    </p>
+  </div>
+
+  <section class="page-block" id="use">
+    <div class="wrap">
+      <h2>Use this list</h2>
+      <p>
+        One stable URL serves the always-current list. Point a DEX UI, wallet, or aggregator at
+        it, or install the npm package for typed access.
+      </p>
+      <div class="snippet-grid">
+        <div>
+          <h3>Uniswap and compatible interfaces</h3>
+<pre class="block"><span class="c">Manage token lists &gt; paste the URL:</span>
+<span class="s">https://nirholas.github.io/hood-tokenlist/tokenlist.json</span></pre>
+        </div>
+        <div>
+          <h3>JavaScript / TypeScript</h3>
+<pre class="block">npm i hood-tokenlist
+
+<span class="c">// typed helpers</span>
+import { stockTokens, memecoins, getToken } from 'hood-tokenlist'
+
+<span class="c">// or the raw JSON</span>
+import list from 'hood-tokenlist/tokenlist.json' with { type: 'json' }</pre>
+        </div>
+        <div>
+          <h3>Anything that speaks HTTP</h3>
+<pre class="block">curl -s https://nirholas.github.io/hood-tokenlist/tokenlist.json \
+  | jq '.tokens[] | select(.symbol=="AAPL")'</pre>
+        </div>
+        <div>
+          <h3>Stock Token positions, done right</h3>
+<pre class="block"><span class="c">// ERC-8056: true position = raw balance x uiMultiplier()</span>
+<span class="c">// Every stock entry sets extensions.supportsUiMultiplier</span>
+const truePosition = rawBalance * uiMultiplier / 10n**18n</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="drawer" id="drawer" data-open="false" role="dialog" aria-modal="true" aria-label="Token details">
+  <div class="scrim"></div>
+  <div class="panel"></div>
+</div>
+
+<footer class="site">
+  <div class="wrap">
+    <span>Data verified against <a href="https://rpc.mainnet.chain.robinhood.com">mainnet RPC</a>, <a href="https://robinhoodchain.blockscout.com">Blockscout</a>, and <a href="https://docs.robinhood.com/chain/contracts">Robinhood's contract registry</a> on every refresh.</span>
+    <span class="spacer"></span>
+    <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
+  </div>
+</footer>
+
+<script src="./tokenlist.data.js"></script>
+<script src="./app.js"></script>
+<script>
+  document.getElementById('copy-url').addEventListener('click', async (event) => {
+    const button = event.currentTarget
+    try {
+      await navigator.clipboard.writeText(document.getElementById('stable-url').textContent)
+      button.textContent = 'Copied'
+      setTimeout(() => { button.textContent = 'Copy' }, 1600)
+    } catch {
+      const range = document.createRange()
+      range.selectNodeContents(document.getElementById('stable-url'))
+      const selection = getSelection()
+      selection.removeAllRanges()
+      selection.addRange(range)
+    }
+  })
+</script>
+</body>
+</html>

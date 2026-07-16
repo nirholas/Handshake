@@ -1,0 +1,13 @@
+node_modules
+data
+*.log
+.env
+.env.*
+docs/index.html
+docs/methodology.html
+docs/config.js
+docs/assets/style.css
+docs/assets/app.js
+tests
+scripts
+.git

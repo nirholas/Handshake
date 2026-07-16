@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>hood-connect integration guide: vanilla, React, wagmi</title>
+  <meta name="description" content="Integrate Robinhood Chain onboarding in vanilla JS, React, or wagmi: discovery, ensureChain, connect button, balances, and error handling." />
+  <link rel="stylesheet" href="site.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%230b0e11'/%3E%3Cpath d='M6 9.5A2.5 2.5 0 0 1 8.5 7h7A2.5 2.5 0 0 1 18 9.5v5a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 6 14.5v-5Z' stroke='%2300c805' stroke-width='1.5' fill='none'/%3E%3Ccircle cx='14.5' cy='12' r='1.25' fill='%2300c805'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <header class="site">
+    <div class="wrap">
+      <a class="logo" href="index.html">hood<span class="tick">-</span>connect</a>
+      <nav class="main" aria-label="Site">
+        <a href="index.html">Overview</a>
+        <a href="guide.html" aria-current="page">Integration guide</a>
+        <a href="funding.html">Funding funnel</a>
+        <a href="add.html">Add-network button</a>
+        <a href="https://github.com/nirholas/hood-connect" rel="noreferrer noopener">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div class="wrap">
+        <h1>Integration <span class="grad">guide</span></h1>
+        <p class="lede">
+          Three ways in, smallest first: the framework-free core, the React kit, and the wagmi
+          config. All three share the same guarantees: chain parameters derived from viem's official
+          definitions, typed errors for every wallet rejection, and real reads against the public RPC.
+        </p>
+      </div>
+    </div>
+
+    <section aria-labelledby="vanilla-title">
+      <div class="wrap">
+        <h2 id="vanilla-title">Vanilla JS (framework-free core)</h2>
+        <p class="sub">No React, no wagmi, ~5 KB of logic on top of viem. This is what powers the live button on the <a href="index.html">overview page</a>.</p>
+<pre><code>import {
+  discoverWallets,   // EIP-6963 multi-wallet discovery (+ legacy fallback)
+  ensureChain,       // connect -&gt; add 4663 if missing -&gt; switch -&gt; verify
+  checkBootstrap,    // live ETH + USDG balances, funding options when empty
+  addNetwork,        // bare EIP-3085 add, no connection required
+} from 'hood-connect'
+
+const wallets = await discoverWallets()
+if (wallets.length === 0) {
+  // Designed empty state: render install links, not a dead button.
+}
+
+const { address, chainId } = await ensureChain(wallets[0].provider, {
+  network: 'mainnet',           // or 'testnet' (chain 46630)
+  onState: (state) =&gt; {
+    // 'connecting' | 'switching' | 'adding' | 'connected' | 'error'
+    updateButtonLabel(state.status)
+  },
+})
+
+const status = await checkBootstrap(address)
+if (!status.funded) {
+  // status.fundingOptions: bridge funnel + Robinhood-app withdrawal path
+}</code></pre>
+
+        <h3>Error handling</h3>
+        <p class="sub">Every rejection path is a typed error; no string matching on wallet messages.</p>
+<pre><code>import {
+  ConnectionRejectedError,   // user rejected eth_requestAccounts (4001)
+  ChainAddRejectedError,     // user or wallet refused wallet_addEthereumChain
+  ChainSwitchRejectedError,  // refusal, or wallet stayed on the wrong chain
+  NoProviderError,
+} from 'hood-connect'
+
+try {
+  await ensureChain(provider)
+} catch (error) {
+  if (error instanceof ConnectionRejectedError) showToast('Connection cancelled.')
+  else if (error instanceof ChainAddRejectedError && error.rejectedByUser)
+    showToast('You declined adding Robinhood Chain.')
+  else showToast(error.message)
+}</code></pre>
+      </div>
+    </section>
+
+    <section aria-labelledby="react-title">
+      <div class="wrap">
+        <h2 id="react-title">React</h2>
+        <p class="sub">One component for the whole flow, or headless hooks for a custom UI. React is an optional peer dependency; installing the core alone never pulls it in.</p>
+<pre><code>import { HoodConnectButton, FundWallet } from 'hood-connect/react'
+
+export function Header() {
+  return (
+    &lt;HoodConnectButton
+      network="mainnet"
+      showBalances                 // live ETH + USDG in the connected pill
+      onConnected={({ address }) =&gt; analytics.identify(address)}
+      onFund={() =&gt; openFundingModal()}   // shown when the wallet is empty
+    /&gt;
+  )
+}
+
+export function FundingModal() {
+  // Live LI.FI/Relay bridge quotes + execution, plus the Robinhood-app path.
+  return &lt;FundWallet onFunded={() =&gt; closeModal()} /&gt;
+}</code></pre>
+
+        <h3>Headless hooks</h3>
+<pre><code>import { useHoodAccount, useEnsureChain, useWallets } from 'hood-connect/react'
+
+function CustomConnect() {
+  const { wallets, ready } = useWallets()
+  const account = useHoodAccount()
+  // account.status: 'disconnected' | 'connecting' | 'switching' |
+  //                 'adding' | 'connected' | 'error'
+  // account.bootstrap: live balances + funding options
+  // account.wrongChain: connected but the user switched away
+
+  if (!ready) return &lt;Skeleton /&gt;
+  if (account.status === 'connected') return &lt;Pill address={account.address} /&gt;
+  return &lt;button onClick={() =&gt; account.connect(wallets[0])}&gt;Connect&lt;/button&gt;
+}</code></pre>
+
+        <div class="callout">
+          <strong>Styling.</strong> Components inject a namespaced skin (all rules under
+          <code>.hc-</code>, themable via CSS custom properties like <code>--hc-accent</code>).
+          Pass <code>unstyled</code> to skip injection and bring your own CSS.
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="wagmi-title">
+      <div class="wrap">
+        <h2 id="wagmi-title">wagmi</h2>
+        <p class="sub">Already on wagmi v2? One import wires Robinhood Chain into your existing provider tree. EIP-6963 connector discovery stays on.</p>
+<pre><code>import { WagmiProvider } from 'wagmi'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { hoodWagmiConfig } from 'hood-connect/wagmi'
+
+const config = hoodWagmiConfig({
+  includeTestnet: true,                       // optional chain 46630
+  rpcUrl: import.meta.env.VITE_ALCHEMY_RPC,   // optional paid RPC
+})
+const queryClient = new QueryClient()
+
+export function App({ children }) {
+  return (
+    &lt;WagmiProvider config={config}&gt;
+      &lt;QueryClientProvider client={queryClient}&gt;{children}&lt;/QueryClientProvider&gt;
+    &lt;/WagmiProvider&gt;
+  )
+}</code></pre>
+        <p class="sub">
+          The core utilities still work alongside wagmi; <code>checkBootstrap</code> and the
+          funding funnel take any address, and <code>toAddChainParams</code> accepts any viem chain.
+        </p>
+      </div>
+    </section>
+
+    <section aria-labelledby="api-title">
+      <div class="wrap">
+        <h2 id="api-title">API surface</h2>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Export</th><th>Entry</th><th>What it does</th></tr></thead>
+            <tbody>
+              <tr><td><code>discoverWallets / watchWallets</code></td><td>hood-connect</td><td>EIP-6963 discovery, one-shot or streaming, legacy fallback included</td></tr>
+              <tr><td><code>ensureChain</code></td><td>hood-connect</td><td>connect + add + switch + verify with typed states</td></tr>
+              <tr><td><code>addNetwork / toAddChainParams</code></td><td>hood-connect</td><td>EIP-3085 add, params derived from viem chain defs</td></tr>
+              <tr><td><code>checkBootstrap / fundingOptionsFor</code></td><td>hood-connect</td><td>live ETH/USDG balances, empty-wallet funding options</td></tr>
+              <tr><td><code>getFundingQuote / getFundingStatus / listFundingChains</code></td><td>hood-connect</td><td>live bridge routing, LI.FI primary + Relay fallback</td></tr>
+              <tr><td><code>HoodConnectButton / FundWallet</code></td><td>hood-connect/react</td><td>drop-in components, every visual state designed</td></tr>
+              <tr><td><code>useHoodAccount / useEnsureChain / useWallets</code></td><td>hood-connect/react</td><td>headless hooks over the shared connection store</td></tr>
+              <tr><td><code>hoodWagmiConfig</code></td><td>hood-connect/wagmi</td><td>ready-made wagmi v2 config for chain 4663 (+ 46630)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      Built by <a href="https://x.com/nichxbt" rel="noreferrer noopener">nirholas</a> ·
+      <a href="https://three.ws" rel="noreferrer noopener">three.ws</a> · MIT licensed ·
+      Not affiliated with Robinhood Markets.
+    </div>
+  </footer>
+</body>
+</html>

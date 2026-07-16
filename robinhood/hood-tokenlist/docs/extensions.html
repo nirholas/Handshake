@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Extension schema · hood-tokenlist</title>
+<meta name="description" content="The extensions field schema for the Robinhood Chain token list: Chainlink feeds, uiMultiplier support, asset classes, launchpads, and eligibility markers.">
+<link rel="icon" href="./logos/list.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <a class="brand" href="./"><span class="mark">H</span> hood-tokenlist</a>
+    <nav class="site-nav" aria-label="Site">
+      <a href="./">Directory</a>
+      <a href="./criteria.html">Criteria</a>
+      <a href="./extensions.html" aria-current="page">Extensions</a>
+      <a href="https://github.com/nirholas/hood-tokenlist">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap prose">
+  <h1>Extension schema</h1>
+  <p class="subtitle">
+    Every entry carries an <code>extensions</code> object with Robinhood-Chain-specific facts
+    that plain token lists cannot express. All values are verified on-chain at refresh time.
+    Typed definitions ship with the npm package (<code>hood-tokenlist</code>, see
+    <code>src/index.d.ts</code>).
+  </p>
+
+  <h2>Fields</h2>
+  <table>
+    <thead><tr><th>Field</th><th>Type</th><th>Applies to</th><th>Meaning</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>assetClass</td>
+        <td>string</td>
+        <td>all</td>
+        <td><code>stock-token</code>, <code>memecoin</code>, <code>stablecoin</code>, or <code>wrapped-native</code></td>
+      </tr>
+      <tr>
+        <td>chainlinkFeed</td>
+        <td>address | null</td>
+        <td>all</td>
+        <td>Chainlink price feed proxy on chain 4663, or null when none exists. Feed answers are already uiMultiplier-adjusted; never re-apply the multiplier to a feed price.</td>
+      </tr>
+      <tr>
+        <td>chainlinkFeedDecimals</td>
+        <td>number | null</td>
+        <td>priced tokens</td>
+        <td>Decimals of the feed answer (8 for USD feeds)</td>
+      </tr>
+      <tr>
+        <td>supportsUiMultiplier</td>
+        <td>boolean</td>
+        <td>all</td>
+        <td>True when the token implements ERC-8056 <code>uiMultiplier()</code>. True for every Stock Token: raw balance times uiMultiplier (1e18-scaled) equals the true position after splits and stock dividends. Ignoring it misstates positions.</td>
+      </tr>
+      <tr>
+        <td>eligibility</td>
+        <td>string</td>
+        <td>stock tokens</td>
+        <td><code>not-for-us-persons</code>: acquisition is restricted, see <a href="./criteria.html#eligibility">eligibility</a>. Display of data is unrestricted.</td>
+      </tr>
+      <tr>
+        <td>launchpad</td>
+        <td>string</td>
+        <td>memecoins</td>
+        <td><code>noxa</code> (instant Uniswap v3 listing) or <code>odyssey</code> (bonding curve, listed after graduation)</td>
+      </tr>
+      <tr>
+        <td>uniswapV3Pool</td>
+        <td>address</td>
+        <td>memecoins</td>
+        <td>The token's canonical Uniswap v3 pool (created at launch or graduation, LP locked by the launchpad)</td>
+      </tr>
+      <tr>
+        <td>uniswapV3PoolFee</td>
+        <td>number</td>
+        <td>memecoins</td>
+        <td>Pool fee tier in hundredths of a bip (10000 = 1%)</td>
+      </tr>
+      <tr>
+        <td>launchBlock</td>
+        <td>number</td>
+        <td>memecoins</td>
+        <td>Block of the NOXA launch or Odyssey graduation event</td>
+      </tr>
+      <tr>
+        <td>launchRestrictionsEndBlock</td>
+        <td>number</td>
+        <td>NOXA memecoins</td>
+        <td>Block at which NOXA's launch anti-snipe restrictions expire (NOXA stamps a far-future constant; tradability is verified live by simulation instead, see <a href="./criteria.html#memecoins">criteria rule 6</a>)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Example: a Stock Token entry</h2>
+<pre class="block">{
+  "chainId": 4663,
+  "address": "0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9",
+  "symbol": "AAPL",
+  "name": "Apple • Robinhood Token",
+  "decimals": 18,
+  "logoURI": "https://nirholas.github.io/hood-tokenlist/logos/0xaF3D…93f9.svg",
+  "tags": ["stock", "priced"],
+  "extensions": {
+    "assetClass": "stock-token",
+    "chainlinkFeed": "0x6B22A786bAa607d76728168703a39Ea9C99f2cD0",
+    "chainlinkFeedDecimals": 8,
+    "supportsUiMultiplier": true,
+    "eligibility": "not-for-us-persons"
+  }
+}</pre>
+
+  <h2>Reading a live price</h2>
+<pre class="block"><span class="c">// viem, against the public RPC (read-only, no key)</span>
+import { createPublicClient, http, parseAbi } from 'viem'
+import { robinhood } from 'viem/chains'
+import { getToken } from 'hood-tokenlist'
+
+const client = createPublicClient({ chain: robinhood, transport: http() })
+const aapl = getToken('0xaF3D76f1834A1d425780943C99Ea8A608f8a93f9')
+
+const [, answer] = await client.readContract({
+  address: aapl.extensions.chainlinkFeed,
+  abi: parseAbi(['function latestRoundData() view returns (uint80,int256,uint256,uint256,uint80)']),
+  functionName: 'latestRoundData',
+})
+console.log(`AAPL: $${Number(answer) / 1e8}`)</pre>
+
+  <h2>Tags</h2>
+  <p>
+    Tags mirror the extension facts for interfaces that filter by tag:
+    <code>stock</code>, <code>memecoin</code>, <code>stablecoin</code>, <code>wnative</code>,
+    <code>priced</code> (has a live Chainlink feed), <code>noxa</code>, and
+    <code>odyssey</code>. Definitions live in the list's top-level <code>tags</code> map.
+  </p>
+
+  <h2>Logos</h2>
+  <p>
+    Stock Tokens get deterministic ticker-monogram SVGs (a consistent generated system; company
+    trademarks are never shipped). Memecoins self-host a copy of their own artwork where it is
+    resolvable, with the monogram as fallback. All assets live in this repo under
+    <code>logos/</code>, keyed by checksummed address, and are served from the same stable origin
+    as the list.
+  </p>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <span>Schema source of truth: <code>src/index.d.ts</code> in the repo.</span>
+    <span class="spacer"></span>
+    <span>Built by <a href="https://x.com/nichxbt">nirholas</a> · <a href="https://three.ws">three.ws</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

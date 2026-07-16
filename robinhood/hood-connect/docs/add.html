@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Add Robinhood Chain to your wallet</title>
+  <meta name="description" content="One click adds Robinhood Chain (chain ID 4663) to your wallet via EIP-3085, with parameters from viem's official chain definition. Linkable from any README badge." />
+  <link rel="stylesheet" href="site.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%230b0e11'/%3E%3Cpath d='M6 9.5A2.5 2.5 0 0 1 8.5 7h7A2.5 2.5 0 0 1 18 9.5v5a2.5 2.5 0 0 1-2.5 2.5h-7A2.5 2.5 0 0 1 6 14.5v-5Z' stroke='%2300c805' stroke-width='1.5' fill='none'/%3E%3Ccircle cx='14.5' cy='12' r='1.25' fill='%2300c805'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <header class="site">
+    <div class="wrap">
+      <a class="logo" href="index.html">hood<span class="tick">-</span>connect</a>
+      <nav class="main" aria-label="Site">
+        <a href="index.html">Overview</a>
+        <a href="guide.html">Integration guide</a>
+        <a href="funding.html">Funding funnel</a>
+        <a href="add.html" aria-current="page">Add-network button</a>
+        <a href="https://github.com/nirholas/hood-connect" rel="noreferrer noopener">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div class="wrap">
+        <h1>Add <span class="grad" id="page-chain-name">Robinhood Chain</span> to your wallet</h1>
+        <p class="lede" id="page-lede">
+          One click sends your wallet the official EIP-3085 parameters for chain 4663 (RPC, explorer,
+          ETH gas token), derived at runtime from viem's chain definition. Nothing else: no
+          connection request, no signature, no tracking.
+        </p>
+        <div class="demo-box">
+          <div class="hcw" id="add-widget">
+            <div class="hcw-row" id="add-row"></div>
+            <p class="hcw-msg" id="add-msg"></p>
+          </div>
+          <p class="note" id="add-note">
+            Adding the testnet instead? <a href="add.html?network=testnet">add.html?network=testnet</a>
+            registers chain 46630.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <section aria-labelledby="badge-title">
+      <div class="wrap">
+        <h2 id="badge-title">Button-as-a-service</h2>
+        <p class="sub">
+          Link this page from anywhere ("Add to wallet" in a README, a docs footer, a dApp 404 page)
+          and visitors get a working add-network button. Copy a badge:
+        </p>
+
+        <h3>Markdown badge</h3>
+        <div class="badge-row">
+          <img alt="Add Robinhood Chain badge preview" src="https://img.shields.io/badge/Robinhood_Chain-Add_to_wallet-00c805?logo=ethereum&logoColor=white&labelColor=101418" />
+        </div>
+<pre><code>[![Add Robinhood Chain](https://img.shields.io/badge/Robinhood_Chain-Add_to_wallet-00c805?logo=ethereum&amp;logoColor=white&amp;labelColor=101418)](https://nirholas.github.io/hood-connect/add.html)</code></pre>
+
+        <h3>Testnet badge</h3>
+        <div class="badge-row">
+          <img alt="Add Robinhood Chain testnet badge preview" src="https://img.shields.io/badge/Robinhood_Chain_Testnet-Add_to_wallet-93a1af?logo=ethereum&logoColor=white&labelColor=101418" />
+        </div>
+<pre><code>[![Add Robinhood Chain Testnet](https://img.shields.io/badge/Robinhood_Chain_Testnet-Add_to_wallet-93a1af?logo=ethereum&amp;logoColor=white&amp;labelColor=101418)](https://nirholas.github.io/hood-connect/add.html?network=testnet)</code></pre>
+
+        <h3>Plain HTML link</h3>
+<pre><code>&lt;a href="https://nirholas.github.io/hood-connect/add.html"&gt;Add Robinhood Chain to your wallet&lt;/a&gt;</code></pre>
+
+        <h3>Iframe embed</h3>
+        <p class="sub">Embed the button directly; the page is self-contained and styles itself.</p>
+<pre><code>&lt;iframe src="https://nirholas.github.io/hood-connect/add.html?embed=1"
+        title="Add Robinhood Chain" width="360" height="120"
+        style="border:0;border-radius:12px"&gt;&lt;/iframe&gt;</code></pre>
+
+        <div class="callout">
+          <strong>What the wallet receives</strong> (mainnet): chain ID <code>0x1237</code> (4663),
+          RPC <code>https://rpc.mainnet.chain.robinhood.com</code>, explorer
+          <code>https://robinhoodchain.blockscout.com</code>, native currency ETH (18 decimals).
+          All four values come from <code>viem/chains</code> at runtime; this page never hardcodes them.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site">
+    <div class="wrap">
+      Built by <a href="https://x.com/nichxbt" rel="noreferrer noopener">nirholas</a> ·
+      <a href="https://three.ws" rel="noreferrer noopener">three.ws</a> · MIT licensed ·
+      Not affiliated with Robinhood Markets.
+    </div>
+  </footer>
+
+  <script src="hood-connect.iife.js"></script>
+  <script>
+    (function () {
+      'use strict'
+      var HC = window.HoodConnect
+      var params = new URLSearchParams(location.search)
+      var network = params.get('network') === 'testnet' ? 'testnet' : 'mainnet'
+      var chain = HC.chainForNetwork(network)
+
+      if (params.get('embed') === '1') {
+        document.querySelector('header.site').style.display = 'none'
+        document.querySelector('footer.site').style.display = 'none'
+        document.querySelectorAll('section').forEach(function (s) { s.style.display = 'none' })
+        document.getElementById('page-lede').style.display = 'none'
+        document.getElementById('add-note').style.display = 'none'
+        document.querySelector('.hero').style.padding = '8px 0'
+        document.querySelector('.hero h1').style.display = 'none'
+        document.querySelector('.demo-box').style.margin = '0'
+        document.querySelector('.demo-box').style.padding = '18px'
+      }
+
+      if (network === 'testnet') {
+        document.getElementById('page-chain-name').textContent = chain.name
+        document.getElementById('page-lede').textContent =
+          'One click sends your wallet the official EIP-3085 parameters for chain ' + chain.id +
+          ' (testnet RPC, explorer, ETH gas token), derived at runtime from viem\'s chain definition.'
+        document.title = 'Add ' + chain.name + ' to your wallet'
+      }
+
+      var row = document.getElementById('add-row')
+      var msg = document.getElementById('add-msg')
+
+      function setMessage(text, isError) {
+        msg.textContent = text || ''
+        msg.className = 'hcw-msg' + (isError ? ' err' : '')
+      }
+
+      function render(label, busy) {
+        row.textContent = ''
+        var button = document.createElement('button')
+        button.className = 'hcw-primary'
+        if (busy) {
+          button.disabled = true
+          var spinner = document.createElement('span')
+          spinner.className = 'hcw-spinner'
+          button.appendChild(spinner)
+        }
+        button.appendChild(document.createTextNode(label))
+        if (!busy) button.addEventListener('click', add)
+        row.appendChild(button)
+      }
+
+      function add() {
+        setMessage('')
+        render('Confirm in your wallet', true)
+        HC.discoverWallets({ timeoutMs: 400 }).then(function (wallets) {
+          if (wallets.length === 0) {
+            render('Add ' + chain.name + ' to wallet', false)
+            setMessage('No wallet extension found. Install MetaMask, Rabby, or Coinbase Wallet and reload.', true)
+            return
+          }
+          // EIP-3085 needs no prior connection; use the first wallet.
+          HC.addNetwork(wallets[0].provider, { network: network })
+            .then(function () {
+              render('Added', true)
+              setMessage(chain.name + ' (chain ' + chain.id + ') is now in your wallet. You can close this page.')
+            })
+            .catch(function (error) {
+              render('Add ' + chain.name + ' to wallet', false)
+              setMessage(error && error.message ? error.message : String(error), true)
+            })
+        })
+      }
+
+      render('Add ' + chain.name + ' to wallet', false)
+    })()
+  </script>
+</body>
+</html>
