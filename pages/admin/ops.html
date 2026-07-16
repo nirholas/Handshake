@@ -49,13 +49,13 @@
 		.alerts-hd-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: rgba(255,255,255,0.3); }
 		.alerts-hd-counts { display: flex; gap: 0.4rem; }
 		.alert-count-pill { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 99px; border: 1px solid; }
-		.alert-count-pill.critical { color: #f87171; background: rgba(248,113,113,0.1); border-color: rgba(248,113,113,0.25); }
+		.alert-count-pill.critical { color: var(--danger); background: rgba(248,113,113,0.1); border-color: rgba(248,113,113,0.25); }
 		.alert-count-pill.warn { color: #f0a93b; background: rgba(240,169,59,0.1); border-color: rgba(240,169,59,0.25); }
 		.alert-count-pill.info { color: #60a5fa; background: rgba(96,165,250,0.1); border-color: rgba(96,165,250,0.25); }
 		.alerts-empty { display: flex; align-items: center; gap: 0.6rem; padding: 1.1rem 1.4rem; border-radius: 12px; background: rgba(47,191,113,0.06); border: 1px solid rgba(47,191,113,0.16); color: #2fbf71; font-size: 13.5px; font-weight: 600; }
 		.alert-card { display: grid; grid-template-columns: 4px 1fr auto; gap: 0 1rem; align-items: start; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 0.9rem 1.1rem 0.9rem 0; margin-bottom: 0.65rem; overflow: hidden; }
 		.alert-card .rail { grid-row: 1 / -1; align-self: stretch; border-radius: 4px 0 0 4px; }
-		.alert-card.critical .rail { background: #f87171; }
+		.alert-card.critical .rail { background: var(--danger); }
 		.alert-card.warn .rail { background: #f0a93b; }
 		.alert-card.info .rail { background: #60a5fa; }
 		.alert-body { min-width: 0; }
@@ -65,7 +65,7 @@
 		.alert-detail.clamped::after { content: '… more'; position: absolute; right: 0; bottom: 0; padding-left: 1.5rem; background: linear-gradient(90deg, transparent, #131318 40%); color: rgba(255,255,255,0.4); font-weight: 600; }
 		.alert-meta { display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem; margin-top: 0.5rem; font-size: 11px; color: rgba(255,255,255,0.32); }
 		.alert-meta .sev { font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-		.alert-card.critical .sev { color: #f87171; }
+		.alert-card.critical .sev { color: var(--danger); }
 		.alert-card.warn .sev { color: #f0a93b; }
 		.alert-card.info .sev { color: #60a5fa; }
 		.alert-count-badge { font-variant-numeric: tabular-nums; }
