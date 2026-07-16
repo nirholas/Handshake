@@ -4,9 +4,11 @@ FastAPI inference service that turns **one image into a textured GLB** using
 [Microsoft TRELLIS](https://github.com/microsoft/TRELLIS) (`TRELLIS-image-large`,
 MIT license). TRELLIS represents shape and appearance as *structured latents*,
 decodes them to both a Gaussian appearance field and a mesh, then fuses the two
-into a single textured GLB (`postprocessing_utils.to_glb`, `simplify=0.95`,
-`texture_size=1024`, fixed `seed=42`). It runs on one NVIDIA L4 (24 GB) on Cloud
-Run and is the self-hosted TRELLIS mesh backend for the `/forge` image→3D lane.
+into a single textured GLB (`postprocessing_utils.to_glb`). Quality is tiered
+(`draft` → `max`); the default bakes a 4096px texture and keeps most geometry,
+and the `max` tier pushes the samplers to their ceiling and mattes the subject
+first. It runs on one NVIDIA L4 (24 GB) on Cloud Run and is the self-hosted
+TRELLIS mesh backend for the `/forge` image→3D lane.
 
 Work is asynchronous: `POST /infer` returns `202` with a `task_id`, and the
 caller polls `GET /tasks/{id}` until the mesh is written to Cloud Storage. The
@@ -26,16 +28,65 @@ Request:
 {
 	"images": ["https://example.com/chair.png"],
 	"body_type": "neutral",
-	"job_id": "abc123"
+	"job_id": "abc123",
+	"tier": "max",
+	"matte": true,
+	"rembg_model": "u2net_human_seg",
+	"quality": { "texture_size": 4096 },
+	"seed": 42
 }
 ```
 
 - `images` — 1 to 6 entries, each a `data:image/…;base64,…` URI or an `https://`
-  URL. **Only the first is used.** `https` sources are pulled through the SSRF
-  guard in [`worker_security.py`](./worker_security.py) (https-only; private,
-  loopback, link-local, and cloud-metadata IPs rejected on every redirect hop).
+  URL. A single image reconstructs one asset; multiple entries are FUSED as
+  turnaround views (front/side/back) of the **same** subject via
+  `run_multi_image`. `https` sources are pulled through the SSRF guard in
+  [`worker_security.py`](./worker_security.py) (https-only; private, loopback,
+  link-local, and cloud-metadata IPs rejected on every redirect hop).
 - `body_type` — optional, default `"neutral"` (accepted, not used by TRELLIS).
 - `job_id` — optional correlation string.
+- `tier` — optional named quality preset: `draft` | `standard` | `high` | `max`
+  (see table below). Omitted keeps the historical default (equivalent to
+  `high`). A `quality` dict still overrides individual fields on top of a tier.
+- `matte` — optional. Run the subject through the sibling
+  [`rembg-service`](../rembg/) before reconstruction so the background stops
+  bleeding into the mesh. Defaults **on** for `tier: "max"`, **off** otherwise.
+  Requires `REMBG_SERVICE_URL` to be set; if unset or the call fails, TRELLIS's
+  own internal background removal still runs, so matting only ever improves the
+  result, never gates it.
+- `rembg_model` — optional model for the pre-matte: `isnet-general-use`
+  (default), `u2net`, `u2net_human_seg` (best for people/portraits), `silueta`.
+- `quality` — optional per-field override of the resolved tier (`ss_steps`,
+  `slat_steps`, `ss_cfg`, `slat_cfg`, `simplify`, `texture_size`), each clamped
+  to a safe L4 envelope.
+- `seed` — optional deterministic sampling seed (default `42`).
+
+### Quality tiers
+
+| tier | ss/slat steps | ss/slat cfg | simplify (tris removed) | texture | matte default | use |
+|---|---|---|---|---|---|---|
+| `draft` | 12 / 12 | 7.5 / 3.0 | 0.95 | 1024 | off | fast previews / latency lane |
+| `standard` | 25 / 25 | 7.5 / 3.0 | 0.90 | 2048 | off | balanced |
+| `high` *(default)* | 40 / 40 | 7.5 / 3.0 | 0.75 | 4096 | off | production quality bar |
+| `max` | 50 / 50 | 8.5 / 4.5 | 0.50 | 4096 | on | maximum realism (photo → 3D) |
+
+`simplify` is the **fraction of triangles removed** by `to_glb`'s decimation, so
+a lower value keeps more geometry: `max` keeps ~all of it. Steps drive both
+diffusion stages (structure + structured-latent) and cost scales roughly
+linearly with them; `max` runs both at the sampler ceiling. Cost is not the
+constraint here (the L4 runs one job at a time against the platform's GCP credit
+budget) — realism is.
+
+### Image → 3D from a real user photo
+
+The MAX tier is built for turning a real photo of an object or a person into a
+textured 3D asset. For a clean reconstruction, matte the subject first: `matte:
+true` sends the image to the sibling `rembg-service`, which returns an RGBA
+cutout that TRELLIS uses directly as the subject mask (its alpha channel is
+respected, bypassing a second internal rembg pass). For people, pass
+`rembg_model: "u2net_human_seg"`. Send a single clear, front-facing photo; add
+side/back views of the same subject to the `images` array to fill in geometry
+the front view cannot see.
 
 Response:
 
@@ -71,7 +122,10 @@ stays in the container log). Unknown ids return `404`.
 	"gpu_name": "NVIDIA L4",
 	"pipeline_loaded": true,
 	"ready": true,
-	"load_error": null
+	"load_error": null,
+	"tiers": ["draft", "standard", "high", "max"],
+	"default_quality": { "ss_steps": 40, "slat_steps": 40, "ss_cfg": 7.5, "slat_cfg": 3.0, "simplify": 0.75, "texture_size": 4096 },
+	"rembg_matte": true
 }
 ```
 
@@ -89,6 +143,9 @@ window wait for `ready` (up to 600 s) rather than failing.
 | `MAX_CONCURRENT` | no | `1` | In-flight inferences; one L4 fits exactly one |
 | `ATTN_BACKEND` | no | `xformers` | TRELLIS attention backend, read at import time |
 | `SPCONV_ALGO` | no | `native` | Sparse-conv algorithm, read at import time |
+| `REMBG_SERVICE_URL` | no | — | Sibling [`rembg-service`](../rembg/) base URL for the `matte` pre-step. Unset disables matting (TRELLIS still removes the background internally). |
+| `REMBG_MODEL` | no | `isnet-general-use` | Default rembg model for the pre-matte |
+| `REMBG_TIMEOUT_S` | no | `90` | Max seconds to wait on the rembg-service round-trip before falling back to the un-matted image |
 
 Weights are **not** baked into the image — the `three-ws-model-weights` bucket
 is mounted at `/weights`, so refreshing weights needs no rebuild. Pre-populate

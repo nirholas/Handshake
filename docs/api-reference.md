@@ -801,6 +801,93 @@ labeled with the prompt.
 | `502`  | `generation_failed`              | The lane could not start the job; retry is free                      |
 | `503`  | `not_configured` / `lane_timeout`| Lane unavailable on this deployment, or slow to accept; retry later  |
 
+### Model quality gate — `POST /api/forge-quality-check`
+
+```
+GET  /api/forge-quality-check          → capability probe
+POST /api/forge-quality-check          → score a model's realism / quality
+```
+
+Public, CORS-open, metered on the free vision buckets (sign in for a higher
+limit). Scores how photoreal and complete a generated 3D model is, so a bad
+result (a plastic toy, a melted blob, an incomplete or duplicated mesh) can be
+caught and regenerated before a user ever sees it. It renders the GLB, sends the
+render to **Vertex Gemini** (`gemini-2.5-flash`, GCP-credit-funded) with a
+subject-aware photoreal rubric, and returns a structured verdict. When Vertex is
+unconfigured it falls back to the free NVIDIA NIM vision lane; when no vision
+provider answers at all it **fails open** (`verdict.pass: true`,
+`verdict.qa_available: false`) so quality gating can never block a generation.
+
+**Request body** — supply exactly one of `glbUrl`, `renderUrl`, or `image`:
+
+```json
+{
+  "glbUrl": "https://cdn.three.ws/forge/anon/<id>.glb",
+  "prompt": "a medieval knight in full plate steel armor",
+  "subject": "person",
+  "tier": "standard",
+  "path": "image",
+  "attempt": 0
+}
+```
+
+- `glbUrl` — a public GLB, rendered here for scoring (preferred).
+- `renderUrl` — a public image URL of an existing render.
+- `image` — base64 or `data:` URI of a render.
+- `prompt` — the source generation request; steers the rubric and the retry hint.
+- `subject` — optional override (`person`, `animal`, `food`, `vehicle`, `plant`,
+  `building`, `object`); auto-detected from the prompt otherwise.
+- `tier` / `path` / `attempt` — optional; when present and the model fails the
+  gate, the response includes a ready-to-run `retry` directive.
+
+**Response**
+
+```json
+{
+  "verdict": {
+    "pass": false,
+    "score": 34,
+    "realism": 30,
+    "completeness": 45,
+    "subject": "person",
+    "is_photoreal": false,
+    "defects": ["plastic", "wrong_proportions"],
+    "reason": "The armor reads as flat plastic and the proportions are off.",
+    "suggested_retry_hint": "add realistic metal PBR materials and correct human proportions",
+    "provider": "vertex",
+    "model": "vertex-ai/gemini-2.5-flash",
+    "qa_available": true,
+    "render_source": "rendered_glb"
+  },
+  "retry": {
+    "prompt": "a medieval knight in full plate steel armor, photorealistic, real photograph, high detail, accurate proportions, realistic PBR materials. Avoid: plastic or toy-like materials.",
+    "tier": "standard",
+    "path": "image",
+    "attempt": 1,
+    "reason": "retry 1/2: The armor reads as flat plastic and the proportions are off."
+  }
+}
+```
+
+`score` is 0-100; the pass threshold is `FORGE_QUALITY_PASS_SCORE` (default 60),
+and any critical structural defect (blob, incomplete, duplicated, floating
+fragments) fails the gate regardless of score. `retry` is `null` when the model
+passes, when QA was unavailable (never retry on an outage), or when the retry cap
+(`FORGE_QUALITY_MAX_RETRIES`, default 2) is reached. The same logic is importable
+for server-side use as `runQualityGate` + `buildRetryDirective` from
+`api/_lib/forge-quality-gate.js` — the generation router uses it directly.
+
+**Errors**
+
+| Status | Code                | Meaning                                                                        |
+| ------ | ------------------- | ------------------------------------------------------------------------------ |
+| `400`  | `bad_request`       | None of `glbUrl` / `renderUrl` / `image` supplied, or malformed JSON           |
+| `413`  | `payload_too_large` | Request body over 20 MB                                                         |
+| `429`  | `rate_limited`      | Free vision quota spent; see `X-RateLimit-Reset` (sign in for a higher limit)  |
+
+A provider or render outage does **not** error — it returns `200` with
+`verdict.qa_available: false`.
+
 ### AR launch — `GET /api/ar`
 
 ```

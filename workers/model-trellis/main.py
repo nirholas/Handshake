@@ -4,16 +4,24 @@ latent representations (Microsoft, MIT license).
 
 API contract (consumed by the Pipeline Controller):
   POST /infer   { images: [data-uri|url, ...], body_type?: str, job_id?: str,
-                  seed?: int, quality?: {…} }
+                  seed?: int, quality?: {…}, tier?: str, matte?: bool,
+                  rembg_model?: str }
              →  202 { task_id, status: "queued" }
 
   Multiple images are FUSED as multi-view conditioning of one asset
   (TrellisImageTo3DPipeline.run_multi_image): send turnaround views
   (front/side/back) of the same subject, not unrelated photos.
 
-  GET  /tasks/:id → { task_id, status, result_gcs_url?, error? }
+  tier selects a named quality preset (draft | standard | high | max); an
+  explicit `quality` dict still overrides individual fields on top. matte runs
+  the subject through the sibling rembg-service first (defaults on for tier=max)
+  so the background stops bleeding into the mesh. Both are additive: with no
+  tier and no matte the behaviour is byte-for-byte the historical default.
 
-  GET  /health    → { ok, model, gpu_available }
+  GET  /tasks/:id → { task_id, status, result_gcs_url?, tier?, matted_views?,
+                      quality?, error? }
+
+  GET  /health    → { ok, model, gpu_available, tiers, rembg_matte }
 
 Model weights pre-population:
   pip install huggingface_hub
@@ -37,6 +45,8 @@ import logging
 import os
 import time
 import uuid
+
+import httpx
 
 # TRELLIS reads its attention + sparse-conv backends from the environment at
 # import time. The Dockerfile sets these as ENV; default them here too so the
@@ -82,6 +92,17 @@ MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "1"))
 # reliability, never remove the existing path.
 WEIGHTS_GCS_URI = os.environ.get("WEIGHTS_GCS_URI", "")  # e.g. gs://bucket/trellis-large
 WEIGHTS_LOCAL_DIR = os.environ.get("WEIGHTS_LOCAL_DIR", "/tmp/trellis-weights")
+# Optional sibling background-removal worker (workers/rembg). When set, the
+# image path can matte the subject before reconstruction so the background stops
+# leaking into the mesh. It shares this worker's bearer secret (both read the
+# `avatar-reconstruction-key` Secret Manager value) and writes its cutout PNG to
+# the same GCS bucket, served back as a public https URL we re-fetch. Unset, or
+# unreachable, the pre-matte is skipped and TRELLIS's own internal preprocessing
+# (preprocess_image=True) still removes the background — the pre-matte only ever
+# improves the cut, never gates the reconstruction.
+REMBG_SERVICE_URL = os.environ.get("REMBG_SERVICE_URL", "").rstrip("/")
+REMBG_DEFAULT_MODEL = os.environ.get("REMBG_MODEL", "isnet-general-use")
+REMBG_TIMEOUT_S = float(os.environ.get("REMBG_TIMEOUT_S", "90"))
 
 _pipeline = None
 _bucket: Optional[storage.Bucket] = None
@@ -196,10 +217,15 @@ def _require_api_key(authorization: str) -> None:
         raise HTTPException(status_code=401, detail=str(exc)) from exc
 
 
-def _decode_image(src: str) -> Image.Image:
+def _decode_image(src: str, keep_alpha: bool = False) -> Image.Image:
+    # keep_alpha=True preserves an RGBA cutout's transparency so TRELLIS uses the
+    # supplied alpha as the subject mask (its preprocess_image path respects an
+    # existing alpha channel and only falls back to internal rembg for RGB). The
+    # text/free lane keeps the historical RGB decode.
+    mode = "RGBA" if keep_alpha else "RGB"
     if src.startswith("data:image"):
         b64 = src.split(",", 1)[1]
-        return Image.open(io.BytesIO(base64.b64decode(b64))).convert("RGB")
+        return Image.open(io.BytesIO(base64.b64decode(b64))).convert(mode)
     if src.startswith("https://"):
         # SSRF-hardened: https-only, private/loopback/link-local/metadata IPs
         # rejected after DNS resolution, redirects re-validated per hop, bounded.
@@ -207,8 +233,48 @@ def _decode_image(src: str) -> Image.Image:
             data = fetch_remote_bytes(src, timeout=30)
         except UnsafeUrlError as exc:
             raise ValueError(f"refused to fetch image source: {exc}") from exc
-        return Image.open(io.BytesIO(data)).convert("RGB")
+        return Image.open(io.BytesIO(data)).convert(mode)
     raise ValueError(f"unsupported image source: {src[:60]}")
+
+
+async def _matte_via_rembg(src: str, model: str) -> tuple[str, bool]:
+    """Send one image to the sibling rembg-service, poll it to completion, and
+    return (cutout_https_url, True). On any failure return (src, False) so the
+    caller reconstructs from the original image — matting is a fidelity boost,
+    never a hard dependency. Never raises."""
+    if not REMBG_SERVICE_URL:
+        return src, False
+    headers = {"Authorization": f"Bearer {API_KEY}"}
+    deadline = time.time() + REMBG_TIMEOUT_S
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
+                f"{REMBG_SERVICE_URL}/remove",
+                headers=headers,
+                json={"image": src, "model": model},
+            )
+            resp.raise_for_status()
+            task_id = resp.json()["task_id"]
+            while time.time() < deadline:
+                await asyncio.sleep(2)
+                poll = await client.get(
+                    f"{REMBG_SERVICE_URL}/tasks/{task_id}", headers=headers
+                )
+                poll.raise_for_status()
+                state = poll.json()
+                status = state.get("status")
+                if status == "done":
+                    url = state.get("result_url")
+                    if url:
+                        log.info("rembg matte ok -> %s", url)
+                        return url, True
+                    return src, False
+                if status == "failed":
+                    log.warning("rembg matte failed (%s); using original image", state.get("error"))
+                    return src, False
+    except Exception as exc:  # noqa: BLE001 — degrade to the un-matted image
+        log.warning("rembg matte error (%s); using original image", exc)
+    return src, False
 
 
 def _task_blob(task_id: str):
@@ -263,16 +329,42 @@ _QUALITY_DEFAULTS = {
     "texture_size": 4096,
 }
 
+# Named quality tiers. A caller sends `tier` to pick one preset; an explicit
+# `quality` dict still overrides individual fields on top of it. When no tier is
+# sent the base stays _QUALITY_DEFAULTS, so the existing lane's behaviour is
+# byte-for-byte unchanged — tiers are purely additive.
+#   draft    — latency lane: demo-grade steps, aggressive decimation, 1K texture.
+#   standard — the platform's prior default (steps 25, 2K texture, simplify 0.90).
+#   high     — the current default (steps 40, 4K texture, simplify 0.75).
+#   max      — maximum fidelity: steps at the sampler ceiling, near-zero geometry
+#              decimation (keep ~all triangles), firmer guidance, 4K texture.
+# `simplify` is the FRACTION OF TRIANGLES REMOVED, so a lower value keeps MORE
+# geometry. texture_size caps at 4096 (the clamp ceiling and TRELLIS's practical
+# bake limit on the L4). max is meant to be paired with rembg pre-matting.
+_TIER_PRESETS = {
+    "draft":    {"ss_steps": 12, "slat_steps": 12, "ss_cfg": 7.5, "slat_cfg": 3.0, "simplify": 0.95, "texture_size": 1024},
+    "standard": {"ss_steps": 25, "slat_steps": 25, "ss_cfg": 7.5, "slat_cfg": 3.0, "simplify": 0.90, "texture_size": 2048},
+    "high":     {"ss_steps": 40, "slat_steps": 40, "ss_cfg": 7.5, "slat_cfg": 3.0, "simplify": 0.75, "texture_size": 4096},
+    "max":      {"ss_steps": 50, "slat_steps": 50, "ss_cfg": 8.5, "slat_cfg": 4.5, "simplify": 0.50, "texture_size": 4096},
+}
 
-def _clamped_quality(q: dict | None) -> dict:
-    src = q or {}
+
+def _clamped_quality(q: dict | None, tier: str | None = None) -> dict:
+    # Base = the named tier preset when a valid one is given, else the historical
+    # defaults. An explicit `quality` dict then overrides field-by-field.
+    base = dict(_QUALITY_DEFAULTS)
+    if tier:
+        preset = _TIER_PRESETS.get(str(tier).strip().lower())
+        if preset:
+            base = dict(preset)
+    src = {**base, **(q or {})}
 
     def num(key, lo, hi, cast=float):
         raw = src.get(key)
         try:
             val = cast(raw)
         except (TypeError, ValueError):
-            return _QUALITY_DEFAULTS[key]
+            return base[key]
         return max(lo, min(hi, val))
 
     return {
@@ -291,6 +383,9 @@ async def _run_inference(
     body_type: str,
     quality: dict | None = None,
     seed: int | None = None,
+    tier: str | None = None,
+    matte: bool | None = None,
+    rembg_model: str | None = None,
 ) -> None:
     # Wait for the background pipeline load before touching the GPU. Warm
     # instances pass instantly; a cold one waits out the load rather than
@@ -307,14 +402,36 @@ async def _run_inference(
         await _update_task(task_id, status="failed", error=f"pipeline unavailable: {_load_error}")
         return
 
-    q = _clamped_quality(quality)
+    q = _clamped_quality(quality, tier)
+    # Matting defaults on for the MAX tier (paired for maximum fidelity) and off
+    # everywhere else, preserving the free/default lane. An explicit `matte`
+    # value always wins. It only actually runs when REMBG_SERVICE_URL is set.
+    tier_key = str(tier).strip().lower() if tier else None
+    do_matte = matte if matte is not None else (tier_key == "max")
 
     async with _sem:
         await _update_task(task_id, status="running")
         loop = asyncio.get_event_loop()
         t0 = time.time()
         try:
-            imgs = [await loop.run_in_executor(None, _decode_image, src) for src in images]
+            matted_count = 0
+            sources = list(images)
+            if do_matte and REMBG_SERVICE_URL:
+                model = rembg_model or REMBG_DEFAULT_MODEL
+                resolved = []
+                for src in sources:
+                    new_src, ok = await _matte_via_rembg(src, model)
+                    resolved.append((new_src, ok))
+                    matted_count += 1 if ok else 0
+                sources = [s for s, _ in resolved]
+                # Decode a successful cutout as RGBA (its alpha is the mask);
+                # anything that fell back to the original stays RGB.
+                imgs = [
+                    await loop.run_in_executor(None, _decode_image, s, ok)
+                    for (s, ok) in resolved
+                ]
+            else:
+                imgs = [await loop.run_in_executor(None, _decode_image, src) for src in sources]
 
             def _generate():
                 # GLB export lives in trellis.utils.postprocessing_utils.to_glb —
@@ -362,9 +479,15 @@ async def _run_inference(
                 status="done",
                 result_gcs_url=gcs_url,
                 views_used=len(imgs),
+                tier=tier_key or "default",
+                matted_views=matted_count,
+                quality=q,
                 elapsed_ms=int(elapsed * 1000),
             )
-            log.info("[%s] done in %.1fs — %d bytes → %s", task_id, elapsed, len(glb_bytes), gcs_url)
+            log.info(
+                "[%s] done in %.1fs (tier=%s matted=%d q=%s) — %d bytes -> %s",
+                task_id, elapsed, tier_key or "default", matted_count, q, len(glb_bytes), gcs_url,
+            )
 
         except Exception as exc:
             await _update_task(
@@ -383,6 +506,17 @@ class InferRequest(BaseModel):
     # ss_cfg, slat_cfg, simplify, texture_size) — see _clamped_quality. Omitted
     # or partial fields fall back to the platform quality-bar defaults.
     quality: dict | None = None
+    # Named quality tier: draft | standard | high | max. Seeds the base quality
+    # preset; an explicit `quality` dict still overrides individual fields. Omitted
+    # keeps the historical default (equivalent to "high").
+    tier: str | None = None
+    # Run the subject through the sibling rembg-service before reconstruction.
+    # Omitted defaults on for tier="max", off otherwise. A matted (RGBA) cutout
+    # reconstructs with far less background bleed. Requires REMBG_SERVICE_URL.
+    matte: bool | None = None
+    # rembg model for the pre-matte: isnet-general-use (default), u2net,
+    # u2net_human_seg (better for people/portraits), or silueta.
+    rembg_model: str | None = None
     # Deterministic sampling seed; omitted keeps the historical default (42).
     seed: int | None = None
 
@@ -400,7 +534,15 @@ async def infer(
     # instance has nothing in its local `_tasks` dict to fall back on.
     await _update_task(task_id, status="queued", model="trellis-large")
     background_tasks.add_task(
-        _run_inference, task_id, body.images, body.body_type, body.quality, body.seed
+        _run_inference,
+        task_id,
+        body.images,
+        body.body_type,
+        body.quality,
+        body.seed,
+        body.tier,
+        body.matte,
+        body.rembg_model,
     )
     return {"task_id": task_id, "status": "queued"}
 
@@ -437,4 +579,7 @@ async def health() -> dict:
         "pipeline_loaded": _pipeline is not None,
         "ready": bool(_ready and _ready.is_set()),
         "load_error": _load_error,
+        "tiers": list(_TIER_PRESETS),
+        "default_quality": _QUALITY_DEFAULTS,
+        "rembg_matte": bool(REMBG_SERVICE_URL),
     }

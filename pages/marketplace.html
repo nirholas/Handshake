@@ -2103,6 +2103,12 @@
 				color: inherit;
 				text-decoration: none;
 				display: block;
+				/* line-height (not padding) both grows the single-line box to the
+				   32px tap-target floor and keeps the text vertically centered in
+				   it — padding would push the text off-center against the ellipsis
+				   truncation. */
+				min-height: 32px;
+				line-height: 32px;
 				white-space: nowrap;
 				overflow: hidden;
 				text-overflow: ellipsis;

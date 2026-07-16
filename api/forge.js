@@ -68,6 +68,7 @@ import {
 	resolveBackendId,
 	resolveBackendIdWithHealth,
 	freeLaneCandidates,
+	classifyForgeSubject,
 	isSelfHostBackend,
 	coldStartSecondsFor,
 	estimateEtaSeconds,
@@ -334,6 +335,199 @@ function isPaidCreditFailure(err) {
 	if (err?.providerStatus === 402) return true;
 	const text = `${err?.message || ''} ${err?.providerDetail || ''}`.toLowerCase();
 	return /insufficient credit|purchase credit|account\/billing|out of credit|not enough credit/.test(text);
+}
+
+// ── Realism modules (land concurrently; imported lazily + fail-open) ───────────
+// Two dedicated modules sharpen the realism path without ever becoming a hard
+// dependency of it:
+//   • forge-reference-image.js — seeds text→3D reconstruction with a Vertex-Gemini
+//     photoreal reference image (falls back to the standing text→image provider).
+//   • forge-quality-gate.js    — scores a finished generation (vision QA) and
+//     supplies the retry hint that drives a bounded auto-retry.
+// Both are consumed through the lazy, fail-open shims below: an absent module (not
+// yet deployed) or a down Vertex backend degrades to the standing behaviour, so
+// the free/default lane never regresses and a delivered model is never blocked.
+// These shims are the ONLY coupling forge.js has to those modules.
+
+function readForgeEnv(name) {
+	if (typeof process !== 'undefined' && process.env && process.env[name] != null && process.env[name] !== '') {
+		return process.env[name];
+	}
+	return null;
+}
+
+// Photoreal reconstruction reference. Prefers the dedicated Vertex-Gemini module;
+// falls back to the standing text→image provider (the FLUX/Imagen/NIM chain) when
+// the module is absent or Vertex is unavailable. Returns { imageUrl, model } —
+// exactly textToImage()'s shape — so the call site is a drop-in swap.
+async function seedReferenceImage({ prompt, aspect, seed, skipNim }) {
+	if (readForgeEnv('FORGE_REFERENCE_IMAGE') !== 'off') {
+		try {
+			const mod = await import('./_lib/forge-reference-image.js');
+			const fn =
+				mod.generateReferenceImage ||
+				mod.reconstructionReferenceImage ||
+				mod.photorealReferenceImage ||
+				mod.referenceImageForPrompt ||
+				(typeof mod.default === 'function' ? mod.default : null);
+			if (typeof fn === 'function') {
+				const out = await fn({ prompt, aspect, aspectRatio: aspect, seed, skipNim });
+				const imageUrl =
+					(out && (out.imageUrl || out.image_url || out.url)) ||
+					(typeof out === 'string' ? out : null);
+				if (imageUrl) {
+					return { imageUrl, model: (out && (out.model || out.provider)) || 'vertex-reference', referenceModule: true };
+				}
+			}
+		} catch (err) {
+			// Module not landed yet, or Vertex down — fall through to the standing lane.
+			console.warn(`[forge] reference-image module unavailable, using standing provider: ${err?.message || err}`);
+		}
+	}
+	const synthesized = await textToImage(prompt, { aspectRatio: aspect, skipNim, seed });
+	return { imageUrl: synthesized.imageUrl, model: synthesized.model, referenceModule: false };
+}
+
+// Quality-gate scope: 'high' (default — only the paid/realism ceiling pays the
+// vision-QA latency, so the free draft/standard default lane is left untouched),
+// 'all' (score every tier), or 'off'. Env-tunable so ops widen/disable with no
+// code change.
+function qualityGateScope() {
+	const v = (readForgeEnv('FORGE_QUALITY_GATE') || 'high').toLowerCase();
+	return v === 'all' || v === 'off' ? v : 'high';
+}
+function qualityGateAppliesTo(tierId) {
+	const s = qualityGateScope();
+	if (s === 'off') return false;
+	if (s === 'all') return true;
+	return tierId === 'high';
+}
+// Bounded retry cap — default 1, clamped 0..2 so a quality retry can never turn one
+// generation into an unbounded credit/latency sink.
+function qualityGateMaxRetries() {
+	const n = Number(readForgeEnv('FORGE_QUALITY_GATE_MAX_RETRIES'));
+	if (!Number.isFinite(n)) return 1;
+	return Math.max(0, Math.min(2, Math.floor(n)));
+}
+
+// Score a finished generation via the dedicated vision-QA module. Fail-open: an
+// absent module or a vision outage returns a passing verdict, so scoring can never
+// block or fail a delivered model. Returns the module's verdict object
+// ({ score, pass, defects, suggested_retry_hint, ... }) or a skipped pass.
+async function scoreQualityGate({ glbUrl, prompt, tier, backend, referenceImageUrl }) {
+	try {
+		const mod = await import('./_lib/forge-quality-gate.js');
+		const fn =
+			mod.scoreForgeQuality ||
+			mod.scoreGeneration ||
+			mod.qualityGateScore ||
+			mod.gradeGeneration ||
+			(typeof mod.default === 'function' ? mod.default : null);
+		if (typeof fn === 'function') {
+			const verdict = await fn({
+				glbUrl,
+				glb_url: glbUrl,
+				prompt: prompt || null,
+				tier: tier?.id || tier || null,
+				backend: backend || null,
+				referenceImageUrl: referenceImageUrl || null,
+			});
+			if (verdict && typeof verdict === 'object') return verdict;
+		}
+	} catch (err) {
+		console.warn(`[forge] quality-gate scoring unavailable (fail-open pass): ${err?.message || err}`);
+	}
+	return { pass: true, skipped: true };
+}
+
+// True only for an explicit failing verdict — a skipped/absent gate never retries.
+function qualityGateFailed(verdict) {
+	return Boolean(verdict) && verdict.skipped !== true && verdict.pass === false;
+}
+// Numeric quality score used to keep the best result across retries. A passing
+// verdict floors at 1; an explicit numeric score wins; a bare fail is 0.
+function qualityScoreValue(verdict) {
+	const n = Number(verdict?.score);
+	if (Number.isFinite(n)) return n;
+	if (verdict?.pass === true) return 1;
+	return 0;
+}
+
+// Post-generation quality stage for the synchronous lanes: score the delivered
+// model and, on a failing verdict, run a bounded best-of retry that keeps the
+// higher-scoring result. `regenerate({ hint })` re-runs the SAME lane and returns
+// { glbUrl, durable }; it is called at most qualityGateMaxRetries() times. When
+// the module exposes its own auto-retry helper it owns the loop instead (it holds
+// the hint interpretation); either way this is fail-open and never discards a
+// delivered model for a worse one. Returns { durable, verdict, retried }.
+async function qualityGateFinalize({ tierId, prompt, backend, referenceImageUrl, durable, regenerate }) {
+	if (!qualityGateAppliesTo(tierId) || !durable?.glbUrl) {
+		return { durable, verdict: null, retried: false };
+	}
+	let bestDurable = durable;
+	let bestVerdict = await scoreQualityGate({ glbUrl: durable.glbUrl, prompt, tier: tierId, backend, referenceImageUrl });
+	let bestScore = qualityScoreValue(bestVerdict);
+	let retried = false;
+	const maxRetries = qualityGateMaxRetries();
+
+	// Prefer the module's own auto-retry helper when present — it owns the cap +
+	// hint interpretation. It receives the verdict, context, the same bounded
+	// regenerate closure, and the cap; a returned improved result is adopted.
+	try {
+		const mod = await import('./_lib/forge-quality-gate.js');
+		const helper =
+			mod.autoRetryForQuality || mod.withQualityRetry || mod.runQualityRetry || mod.qualityAutoRetry || null;
+		if (typeof helper === 'function' && qualityGateFailed(bestVerdict) && maxRetries > 0) {
+			const out = await helper({
+				verdict: bestVerdict,
+				glbUrl: bestDurable.glbUrl,
+				prompt: prompt || null,
+				tier: tierId,
+				backend,
+				referenceImageUrl: referenceImageUrl || null,
+				maxRetries,
+				regenerate,
+			});
+			if (out && (out.glbUrl || out.durable)) {
+				return {
+					durable: out.durable || bestDurable,
+					verdict: out.verdict || bestVerdict,
+					retried: Boolean(out.retried ?? true),
+				};
+			}
+		}
+	} catch {
+		// No helper / module absent — fall through to the local bounded loop below.
+	}
+
+	let attempts = 0;
+	while (qualityGateFailed(bestVerdict) && attempts < maxRetries && typeof regenerate === 'function') {
+		attempts += 1;
+		let next;
+		try {
+			next = await regenerate({ hint: bestVerdict?.suggested_retry_hint || null });
+		} catch (err) {
+			console.warn(`[forge] quality-gate retry regenerate failed, keeping best result: ${err?.message || err}`);
+			break;
+		}
+		if (!next?.durable?.glbUrl) break;
+		retried = true;
+		const nextVerdict = await scoreQualityGate({
+			glbUrl: next.durable.glbUrl,
+			prompt,
+			tier: tierId,
+			backend,
+			referenceImageUrl,
+		});
+		const nextScore = qualityScoreValue(nextVerdict);
+		if (nextVerdict?.pass === true || nextScore > bestScore) {
+			bestDurable = next.durable;
+			bestVerdict = nextVerdict;
+			bestScore = nextScore;
+		}
+		if (bestVerdict?.pass === true) break;
+	}
+	return { durable: bestDurable, verdict: bestVerdict, retried };
 }
 
 // Free NVIDIA NIM TRELLIS text→3D lane, extracted so it serves two callers:
@@ -756,7 +950,14 @@ async function startJob(req, res) {
 	// expensive work below (image moderation, FLUX, reconstruction).
 	let path = parsePath(body);
 	const tier = resolveTier(parseTier(body));
-	let backendId = resolveBackendId({ path, tier, backend: body?.backend, userImages: isImageMode });
+	// Subject class (organic / hard-surface / null) steers the High realism tier's
+	// self-host lane order: Hunyuan3D-2.1 leads on people / creatures / detailed
+	// organics, self-host TRELLIS leads on hard-surface / mechanical subjects. Pure
+	// keyword heuristic on the prompt — zero latency, no LLM — and a no-op for every
+	// tier below High (see freeLaneCandidates). An image submission with no guidance
+	// prompt classifies to null and keeps the default order.
+	const subjectClass = classifyForgeSubject(prompt);
+	let backendId = resolveBackendId({ path, tier, backend: body?.backend, userImages: isImageMode, subjectClass });
 	// Tracks whether the free NVIDIA NIM lane has already been attempted this
 	// request, so the paid-lane fallback below never retries a lane that just
 	// failed (draft already tries nvidia first; standard/high reach it only as a
@@ -796,7 +997,7 @@ async function startJob(req, res) {
 		const defaultByok = BACKENDS[backendId]?.byok;
 		if (defaultByok && !(await resolveProviderKey(req, body, defaultByok))) {
 			path = 'image';
-			backendId = resolveBackendId({ path, tier, userImages: isImageMode });
+			backendId = resolveBackendId({ path, tier, userImages: isImageMode, subjectClass });
 		}
 	}
 
@@ -810,7 +1011,7 @@ async function startJob(req, res) {
 	// reused below to decide an honest cold-start ETA without a second probe.
 	if (!backendExplicit && (path === 'image' || path === 'sketch')) {
 		try {
-			const candidates = freeLaneCandidates(path, tier.id, isImageMode);
+			const candidates = freeLaneCandidates(path, tier.id, isImageMode, subjectClass);
 			if (candidates.length) {
 				const snap = await laneHealthSnapshot(candidates);
 				const healthAware = resolveBackendIdWithHealth({
@@ -818,6 +1019,7 @@ async function startJob(req, res) {
 					tier,
 					userImages: isImageMode,
 					health: snap.statusMap,
+					subjectClass,
 				});
 				if (BACKENDS[healthAware]) backendId = healthAware;
 			}
@@ -1554,8 +1756,14 @@ async function startJob(req, res) {
 					if (directed) directedPrompt = directed;
 				}
 			}
-			const synthesized = await textToImage(directedPrompt, {
-				aspectRatio: aspect,
+			// Seed the reconstruction reference from the dedicated Vertex-Gemini
+			// photoreal module when it is live, so a text prompt reconstructs from the
+			// most photoreal single view we can synthesize. Fail-open: an absent module
+			// or a Vertex outage transparently falls back to the standing text→image
+			// provider (FLUX/Imagen/NIM), so this path runs identically either way.
+			const synthesized = await seedReferenceImage({
+				prompt: directedPrompt,
+				aspect,
 				skipNim: nimGatewayDegraded,
 				seed: opts.seed ?? undefined,
 			});

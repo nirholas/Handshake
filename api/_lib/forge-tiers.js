@@ -398,11 +398,40 @@ export const FREE_DEFAULT_FOR_TIERS = Object.freeze({
 // of a paid engine. First configured + capable lane wins, and our OWN GPU workers
 // come first so the platform leans on the credits we control before any external
 // free lane: self-hosted TRELLIS (native single-hop image→3D), then self-hosted
-// Hunyuan3D, then the free HuggingFace Spaces lane. Every entry is env-gated, so
-// the list degrades cleanly on deployments that configure only some of them.
+// Hunyuan3D, then the free HuggingFace Spaces lane. The free NVIDIA NIM TRELLIS
+// lane trails as the final health-gated fallthrough so a text prompt still
+// returns a model when every GPU worker (and HuggingFace) is cold or down — this
+// is the realism-tier safety net that guarantees the High/MAX path never dead-ends
+// on a cold self-host worker. NIM is text-only (userImages:false), so a photo
+// submission filters it out and stops at HuggingFace, exactly as before. Every
+// entry is env-gated, so the list degrades cleanly on partial deployments.
 export const FREE_FALLBACK_FOR_PATH = Object.freeze({
-	image: Object.freeze(['trellis_selfhost', 'hunyuan3d', 'huggingface']),
+	image: Object.freeze(['trellis_selfhost', 'hunyuan3d', 'huggingface', 'nvidia']),
 });
+
+// Realism subject classes. The two self-host PBR lanes have different strengths:
+// Hunyuan3D-2.1 (shape DiT + multiview PBR paint) leads on people / organic /
+// highly-detailed subjects, while self-host TRELLIS's single-hop reconstruction
+// is crisp on hard-surface / mechanical / geometric subjects. The High tier keeps
+// Hunyuan3D first by default (the safest realism bet) and only swaps TRELLIS ahead
+// of it when the prompt clearly reads hard-surface — a stable, reversible reorder
+// that never touches the draft/standard free-default ordering. Returns 'organic',
+// 'hardsurface', or null (unknown → keep the default order).
+const HARDSURFACE_SUBJECT_RE = /\b(robot|mech|mecha|drone|vehicle|car|truck|tank|spaceship|spacecraft|starship|rocket|weapon|gun|rifle|sword|blade|knife|armor|armour|helmet|shield|machine|engine|turbine|gear|building|architecture|house|tower|bridge|furniture|chair|table|desk|lamp|tool|wrench|hammer|gadget|device|console|controller|phone|laptop|camera|watch|ring|coin|logo|emblem|badge|crystal|gem|geometric|hard-surface|hardsurface|metallic|chrome|sci-?fi\s+prop)\b/i;
+const ORGANIC_SUBJECT_RE = /\b(person|people|man|woman|boy|girl|child|human|face|portrait|character|avatar|figure|hero|warrior|knight|wizard|elf|orc|goblin|monster|creature|beast|dragon|animal|cat|dog|horse|bird|fish|lion|tiger|bear|wolf|fox|dinosaur|plant|tree|flower|body|anatomy|muscle|skin|hair|fur|organic)\b/i;
+
+export function classifyForgeSubject(prompt) {
+	if (typeof prompt !== 'string' || !prompt.trim()) return null;
+	const p = prompt.toLowerCase();
+	const organic = ORGANIC_SUBJECT_RE.test(p);
+	const hard = HARDSURFACE_SUBJECT_RE.test(p);
+	// A prompt that trips both signals (e.g. "knight in mecha armor") is treated
+	// as organic — Hunyuan3D's people/creature strength is the higher-value bet and
+	// stays first. Only an unambiguously hard-surface subject reorders the lanes.
+	if (organic) return 'organic';
+	if (hard) return 'hardsurface';
+	return null;
+}
 
 // Our own GPU workers, by provider. A "self-host" lane runs on infrastructure we
 // operate (Cloud Run + GPU) against substantial GCP credits, so it is the lane we
@@ -448,11 +477,24 @@ function freeLaneUsable(id, p, userImages) {
 // free external Spaces). De-duplicated; only configured + capable lanes survive.
 // This is the single ordering both the env-only default and the health-aware
 // resolver walk, so they can never drift apart.
-export function freeLaneCandidates(p, tierId, userImages) {
+export function freeLaneCandidates(p, tierId, userImages, subjectClass = null) {
 	const ordered = [];
 	const named = FREE_DEFAULT_FOR_TIERS[tierId]?.[p];
 	if (named) ordered.push(named);
 	for (const id of FREE_FALLBACK_FOR_PATH[p] || []) ordered.push(id);
+	// Subject-aware realism reorder (High tier only): an unambiguously hard-surface
+	// subject puts self-host TRELLIS ahead of Hunyuan3D. Stable — it swaps only
+	// those two ids relative to each other and leaves every other lane's position
+	// (and the whole draft/standard ordering) untouched. A null/organic subject is
+	// a no-op, so the default Hunyuan3D-first realism order stands.
+	if (tierId === 'high' && subjectClass === 'hardsurface') {
+		const hi = ordered.indexOf('hunyuan3d');
+		const ti = ordered.indexOf('trellis_selfhost');
+		if (hi !== -1 && ti !== -1 && ti > hi) {
+			ordered.splice(ti, 1);
+			ordered.splice(hi, 0, 'trellis_selfhost');
+		}
+	}
 	// FORGE_SELFHOST_PRIMARY: when our own Cloud Run GPU fleet is live, hoist the
 	// self-host lanes ahead of every hosted free lane (NVIDIA NIM / HuggingFace) so
 	// the platform spends the GCP credits it controls before any external free
@@ -478,8 +520,8 @@ export function freeLaneCandidates(p, tierId, userImages) {
 // Resolve the default backend for a (path, tier) when the caller didn't name one.
 // Free-for-us policy: the first configured free lane in the candidate ordering,
 // and only the paid standing default when NO free lane is live on this deployment.
-function defaultBackendFor(p, tierId, userImages) {
-	const candidates = freeLaneCandidates(p, tierId, userImages);
+function defaultBackendFor(p, tierId, userImages, subjectClass = null) {
+	const candidates = freeLaneCandidates(p, tierId, userImages, subjectClass);
 	return candidates[0] || DEFAULT_BACKEND_FOR_PATH[p];
 }
 
@@ -497,8 +539,8 @@ function defaultBackendFor(p, tierId, userImages) {
 //   3. Only when every free lane is confirmed down, the paid standing default.
 // With an empty/undefined health map this returns exactly what defaultBackendFor
 // would, so callers with no telemetry are unaffected.
-export function defaultBackendForHealthAware(p, tierId, userImages, health) {
-	const candidates = freeLaneCandidates(p, tierId, userImages);
+export function defaultBackendForHealthAware(p, tierId, userImages, health, subjectClass = null) {
+	const candidates = freeLaneCandidates(p, tierId, userImages, subjectClass);
 	if (!candidates.length) return DEFAULT_BACKEND_FOR_PATH[p];
 	const statusOf = (id) => health?.[id];
 	const preferred = candidates.find((id) => {
@@ -517,13 +559,13 @@ export function defaultBackendForHealthAware(p, tierId, userImages, health) {
 // the resolved default must be a backend that accepts them. An explicitly named
 // backend is always honored here — the forge handler rejects an unsupported
 // (backend, input) combination with a designed error at the boundary instead.
-export function resolveBackendId({ path, tier, backend, userImages = false }) {
+export function resolveBackendId({ path, tier, backend, userImages = false, subjectClass = null }) {
 	const p = PATHS.includes(path) ? path : DEFAULT_PATH;
 	if (backend && BACKENDS[backend] && BACKENDS[backend].paths.includes(p)) {
 		return backend;
 	}
 	const tierId = tier?.id || tier || DEFAULT_TIER;
-	return defaultBackendFor(p, tierId, userImages);
+	return defaultBackendFor(p, tierId, userImages, subjectClass);
 }
 
 // Health-aware twin of resolveBackendId: an explicitly named backend is always
@@ -533,13 +575,13 @@ export function resolveBackendId({ path, tier, backend, userImages = false }) {
 // laneId → status map (see defaultBackendForHealthAware). Pure — the caller
 // gathers the (cached) snapshot and passes it in, so this stays trivially
 // testable and adds no I/O of its own.
-export function resolveBackendIdWithHealth({ path, tier, backend, userImages = false, health }) {
+export function resolveBackendIdWithHealth({ path, tier, backend, userImages = false, health, subjectClass = null }) {
 	const p = PATHS.includes(path) ? path : DEFAULT_PATH;
 	if (backend && BACKENDS[backend] && BACKENDS[backend].paths.includes(p)) {
 		return backend;
 	}
 	const tierId = tier?.id || tier || DEFAULT_TIER;
-	return defaultBackendForHealthAware(p, tierId, userImages, health);
+	return defaultBackendForHealthAware(p, tierId, userImages, health, subjectClass);
 }
 
 function readEnv(name) {

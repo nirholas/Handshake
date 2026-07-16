@@ -1224,74 +1224,6 @@
 				flex: 1;
 			}
 
-			/* Idle — a live model, not a void. The newest community forge (or a
-			   labeled first-party sample) stands here so the first thing a visitor
-			   sees is the product's output. Markup in #state-empty; data wiring in
-			   the inline idle-teaser module at the end of the page. */
-			.idle-viewer-wrap {
-				position: relative;
-			}
-			.idle-viewer-wrap model-viewer {
-				width: 100%;
-				height: min(52vh, 480px);
-				background: radial-gradient(120% 120% at 50% 0%, #1a1612 0%, #0b0a09 70%);
-				--poster-color: transparent;
-			}
-			html[data-theme='light'] .idle-viewer-wrap model-viewer {
-				background: radial-gradient(120% 120% at 50% 0%, #f3eee9 0%, #e7e2dc 70%);
-			}
-			.idle-tag {
-				position: absolute;
-				top: 10px;
-				left: 12px;
-				font-family: var(--font-mono);
-				font-size: 0.65rem;
-				text-transform: uppercase;
-				letter-spacing: 0.08em;
-				color: var(--ink-dim);
-				background: rgba(0, 0, 0, 0.45);
-				border: 1px solid var(--stroke);
-				border-radius: 999px;
-				padding: 2px 9px;
-				backdrop-filter: blur(4px);
-			}
-			.idle-bar {
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-				gap: var(--space-sm);
-				padding: var(--space-sm) var(--space-md);
-				border-top: 1px solid var(--stroke);
-				flex-wrap: wrap;
-			}
-			.idle-caption {
-				display: flex;
-				flex-direction: column;
-				gap: 0.15rem;
-				min-width: 0;
-				flex: 1 1 16rem;
-			}
-			.idle-kicker {
-				font-family: var(--font-mono);
-				font-size: var(--text-xs);
-				text-transform: uppercase;
-				letter-spacing: 0.06em;
-				color: var(--accent);
-			}
-			.idle-prompt {
-				color: var(--ink);
-				font-size: var(--text-sm);
-				overflow: hidden;
-				text-overflow: ellipsis;
-				white-space: nowrap;
-			}
-			.idle-hint {
-				flex-basis: 100%;
-				margin: 0;
-				color: var(--ink-dim);
-				font-size: var(--text-xs);
-				line-height: var(--leading-normal);
-			}
 			.panel {
 				background: var(--surface-glass);
 				border: 1px solid var(--stroke);
@@ -1449,6 +1381,27 @@
 			.gen-meta strong {
 				color: var(--ink);
 				font-weight: 600;
+			}
+			/* Lane-switch notice — shown when the server (or the client's automatic
+			   retry) moved this generation onto a backup engine mid-flight, so a
+			   failover is informative rather than silent. Filled by forge.js. */
+			.gen-note {
+				display: flex;
+				align-items: baseline;
+				gap: 0.45rem;
+				margin-top: var(--space-xs);
+				font-size: var(--text-xs);
+				line-height: 1.5;
+				color: var(--warning, #e0a93e);
+			}
+			.gen-note::before {
+				content: '';
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: var(--warning, #e0a93e);
+				flex: none;
+				transform: translateY(-1px);
 			}
 
 			/* Honest elapsed-vs-typical meter. The fill maps real elapsed time
@@ -2596,6 +2549,21 @@
 				font-size: var(--text-xs);
 				letter-spacing: 0.08em;
 				text-transform: uppercase;
+				color: var(--ink-dim);
+				margin: 0;
+			}
+			/* Starter prompts inside the empty stage — a first-time visitor sees
+			   exactly what to type and can generate in one click. Reuses the .chip
+			   look; wired in forge.js (fills the prompt and submits). */
+			.forge-empty-starters {
+				display: flex;
+				flex-wrap: wrap;
+				justify-content: center;
+				gap: var(--space-xs);
+				padding: 0 var(--space-md);
+			}
+			.forge-empty-hint {
+				font-size: var(--text-xs);
 				color: var(--ink-dim);
 				margin: 0;
 			}

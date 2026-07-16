@@ -14,6 +14,11 @@ substitutions:
   # task-state sharing.
   _MAX_INSTANCES: "1"
   _WEIGHTS_BUCKET_PREFIX: trellis-large
+  # Sibling background-removal worker. Set so the MAX tier (and any matte=true
+  # request) mattes the subject before reconstruction. Shares this worker's
+  # bearer secret and GCS bucket. Optional: unset degrades to TRELLIS's own
+  # internal background removal, never a failure.
+  _REMBG_SERVICE_URL: https://rembg-service-lp642k3kpa-uc.a.run.app
 
 steps:
   - id: build
@@ -60,7 +65,7 @@ steps:
       - --allow-unauthenticated
       - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET}
       - --add-volume-mount=volume=weights,mount-path=/weights
-      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},WEIGHTS_DIR=/weights/trellis-large,MAX_CONCURRENT=1,WEIGHTS_GCS_URI=gs://${_WEIGHTS_BUCKET}/${_WEIGHTS_BUCKET_PREFIX},WEIGHTS_LOCAL_DIR=/tmp/trellis-weights
+      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},WEIGHTS_DIR=/weights/trellis-large,MAX_CONCURRENT=1,WEIGHTS_GCS_URI=gs://${_WEIGHTS_BUCKET}/${_WEIGHTS_BUCKET_PREFIX},WEIGHTS_LOCAL_DIR=/tmp/trellis-weights,REMBG_SERVICE_URL=${_REMBG_SERVICE_URL}
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest
 
 images:

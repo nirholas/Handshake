@@ -12,6 +12,13 @@
 # starts (crashes before listening on $PORT).
 diffusers==0.31.0
 transformers==4.46.3
+# Upstream also leaves peft and huggingface_hub unpinned; a bad transitive
+# resolve of those crashed revision 00001 at import time (diffusers.loaders.peft
+# raised "name 'torch' is not defined" before the server could bind $PORT).
+# These two versions are proven against the pins above in a py3.10 import test
+# of the full TripoSGPipeline chain: pin them so a rebuild can never regress.
+peft==0.19.1
+huggingface_hub==0.36.2
 
 torch>=2.3.0
 trimesh>=4.4.0

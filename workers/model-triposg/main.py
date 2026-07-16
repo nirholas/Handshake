@@ -92,6 +92,7 @@ _rmbg_net = None
 _scribble_lock = threading.Lock()
 _bucket: Optional[storage.Bucket] = None
 _sem: Optional[asyncio.Semaphore] = None
+_ready: Optional[asyncio.Event] = None
 _tasks: dict[str, dict] = {}
 
 
@@ -128,14 +129,31 @@ def _ensure_scribble_pipe():
     return _scribble_pipe
 
 
+async def _load_models_bg() -> None:
+    loop = asyncio.get_event_loop()
+    try:
+        await loop.run_in_executor(None, _load_models)
+        _ready.set()
+        log.info("Service ready, max_concurrent=%d", MAX_CONCURRENT)
+    except Exception as exc:
+        log.error("TripoSG model load FAILED: %s", exc)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _bucket, _sem
+    global _bucket, _sem, _ready
     _bucket = storage.Client().bucket(GCS_BUCKET)
     _sem = asyncio.Semaphore(MAX_CONCURRENT)
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, _load_models)
-    log.info("Service ready — max_concurrent=%d", MAX_CONCURRENT)
+    _ready = asyncio.Event()
+    # Load the pipelines in the BACKGROUND and yield immediately. uvicorn runs
+    # the ASGI lifespan BEFORE it binds the socket, and the full load (TripoSG
+    # pipeline + RMBG from the GCS FUSE mount, then the CUDA transfer) runs
+    # well past Cloud Run's 240s startup TCP-probe window on a cold instance:
+    # revision 00002 died exactly this way (DEADLINE_EXCEEDED mid-load).
+    # Backgrounding opens the port at once; tasks that arrive before the load
+    # completes wait on _ready in _run_inference. Same pattern as model-trellis.
+    asyncio.create_task(_load_models_bg())
+    log.info("Service starting, models loading in background (max_concurrent=%d)", MAX_CONCURRENT)
     yield
 
 
@@ -211,6 +229,14 @@ async def _run_inference(
     scribble_confidence: float,
     target_polycount: int | None,
 ) -> None:
+    try:
+        await asyncio.wait_for(_ready.wait(), timeout=600)
+    except asyncio.TimeoutError:
+        _tasks[task_id].update({
+            "status": "failed",
+            "error": "pipeline not ready (model load timed out)",
+        })
+        return
     async with _sem:
         _tasks[task_id]["status"] = "running"
         loop = asyncio.get_event_loop()
