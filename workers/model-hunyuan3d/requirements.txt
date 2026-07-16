@@ -1,14 +1,29 @@
-# ── Hunyuan3D-2.1 ─────────────────────────────────────────────────────────────
-# Install from the official Tencent repo. The hy3dgen package includes both the
-# shape generation (DiT) and texture painting (Paint) pipelines.
-hy3dgen @ git+https://github.com/Tencent/Hunyuan3D-2.git@main#subdirectory=hy3dgen
+# hy3dgen itself is installed in the Dockerfile from a pinned clone of
+# Tencent/Hunyuan3D-2 (its texgen CUDA/pybind11 extensions must be compiled
+# in-tree; a bare pip VCS install of the package subdirectory does not build
+# them). Everything here is pinned or bounded: the 2026-07-16 model-trellis
+# outage proved an unpinned transformers resolves a torch-2.5-era release
+# (DTensor import) that fails to load on the torch pinned below.
 
-torch>=2.3.0
-diffusers>=0.31.0
-transformers>=4.44.0
-accelerate>=0.34.0
+# ── Model stack (torch 2.3.1/cu121 era, matching the Dockerfile pin) ─────────
+diffusers==0.31.0
+transformers==4.46.3
+accelerate==0.34.2
 safetensors>=0.4.0
-trimesh>=4.4.0
+einops==0.8.0
+omegaconf==2.3.0
+numpy==1.26.4
+
+# ── Geometry / texture processing (hy3dgen shapegen + texgen runtime deps) ───
+trimesh==4.5.3
+pymeshlab==2023.12.post2
+pygltflib==1.16.2
+xatlas==0.0.9
+opencv-python-headless==4.10.0.84
+
+# ── Input preprocessing (hy3dgen.rembg background removal) ───────────────────
+rembg==2.0.59
+onnxruntime==1.20.1
 
 # ── Image processing ──────────────────────────────────────────────────────────
 Pillow>=10.3.0

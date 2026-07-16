@@ -27,6 +27,22 @@ RUN pip install torch==2.3.1 torchvision==0.18.1 --index-url https://download.py
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 
+# hy3dgen from a pinned Tencent/Hunyuan3D-2 clone (moving `main` broke the
+# reproducibility bar today on model-trellis; never build from a branch). The
+# texgen pipeline needs two in-tree extensions compiled against the image's
+# torch: custom_rasterizer (CUDA) and differentiable_renderer's mesh_processor
+# (pybind11). --no-build-isolation is REQUIRED — their setup.py imports torch
+# at build time and PEP517 isolation would hide the one installed above.
+RUN git clone https://github.com/Tencent/Hunyuan3D-2.git /tmp/hy3d \
+    && cd /tmp/hy3d \
+    && git checkout f8db63096c8282cb27354314d896feba5ba6ff8a \
+    && pip install --no-build-isolation . \
+    && cd hy3dgen/texgen/custom_rasterizer \
+    && pip install --no-build-isolation . \
+    && cd ../differentiable_renderer \
+    && pip install --no-build-isolation . \
+    && rm -rf /tmp/hy3d
+
 WORKDIR /app
 COPY worker_security.py /app/worker_security.py
 COPY main.py /app/main.py
