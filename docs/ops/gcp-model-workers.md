@@ -26,14 +26,14 @@ result_* }` — and authenticate with one shared bearer secret.
 | `triposg`           | `workers/model-triposg`  | `model-triposg`  | `sketch` | Sketch→3D (TripoSG-scribble): a drawing + a prompt naming it → untextured geometry. |
 
 All three are `provider: 'gcp'`, `free: true`. `model-trellis` and
-`model-hunyuan3d` pin one always-warm instance (`_MIN_INSTANCES: "1"`) — a cold
+`model-hunyuan3d` pin one always-warm instance (`_MIN_INSTANCES: "1"`): a cold
 FUSE-mounted weight load can stall for many minutes, and the GCP credit budget
 covers the standing GPU-hour; `model-triposg` scales to zero. A **cold start**
 on a scale-to-zero worker pays a one-time model-load before the job runs. We
 surface that honestly (see *Cold start*), never as a fake timer.
 
 Wire shapes: `model-trellis` and `model-hunyuan3d` both speak the standard task
-shape (`POST /infer` → `{ task_id }`, `GET /tasks/:id` → `result_gcs_url`) —
+shape (`POST /infer` → `{ task_id }`, `GET /tasks/:id` → `result_gcs_url`);
 the gcp provider drives them with modes `trellis` and `hunyuan` respectively.
 The Hunyuan worker also aliases `/reconstruct` + `/jobs/:id` (returning
 `glb_url`) for callers still on the avatar-controller contract; new code should
@@ -144,10 +144,10 @@ Everything below runs on GCP credits; no third-party API is involved.
 1. **Prompt direction.** The Granite art-director pass runs by default on text
    prompts (`director: false` opts out): it rewrites the raw prompt into a
    single-subject spec with photoreal-by-default material cues
-   (`api/_lib/forge-director-prompts.js`). Fail-soft — a dead LLM lane keeps
+   (`api/_lib/forge-director-prompts.js`). Fail-soft: a dead LLM lane keeps
    the raw prompt.
 2. **Reference image.** `textToImage()` leads with the Vertex Gemini image
-   model (`gemini-2.5-flash-image`) when `GOOGLE_CLOUD_PROJECT` is set —
+   model (`gemini-2.5-flash-image`) when `GOOGLE_CLOUD_PROJECT` is set,
    materially more photoreal than 4-step distilled FLUX. `VERTEX_IMAGEN_FIRST=0`
    restores the legacy NIM-first order. `enhanceFluxPrompt()` appends realism +
    isolation cues unless the caller named an art style or composition.

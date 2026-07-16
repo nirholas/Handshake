@@ -366,7 +366,7 @@ function buildWorkerRequest(request) {
 const MODE_ETA = {
 	reconstruct: 120,
 	trellis: 60,
-	// 50-step shape diffusion + multiview paint on the L4 — much heavier than
+	// 50-step shape diffusion + multiview paint on the L4: much heavier than
 	// TRELLIS's single pass.
 	hunyuan: 300,
 	remesh: 30,

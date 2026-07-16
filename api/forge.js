@@ -1446,7 +1446,7 @@ async function startJob(req, res) {
 			try {
 				if (backendId === 'hunyuan3d') {
 					// The gcp provider's `hunyuan` mode routes to GCP_HUNYUAN3D_URL
-					// (workers/model-hunyuan3d, /infer + /tasks/:id) — fail here only
+					// (workers/model-hunyuan3d, /infer + /tasks/:id); fail here only
 					// so an unconfigured deployment gets the branchable 501 below.
 					if (!process.env.GCP_HUNYUAN3D_URL) throw new Error('GCP_HUNYUAN3D_URL is not set');
 					provider = createGcpProvider();
@@ -1565,8 +1565,8 @@ async function startJob(req, res) {
 			// Multi-view conditioning: rotate the synthesized reference into side +
 			// back turnaround views (Vertex Gemini edit lane) so the self-host
 			// TRELLIS worker fuses real coverage instead of hallucinating the
-			// subject's unseen sides. Only the fusing lane benefits — every other
-			// reconstruct lane conditions on the primary view alone — and draft
+			// subject's unseen sides. Only the fusing lane benefits (every other
+			// reconstruct lane conditions on the primary view alone) and draft
 			// keeps its single-view speed. Best-effort: a failed view just means
 			// fewer views, never a failed generation.
 			if (backendId === 'trellis_selfhost' && tier.id !== 'draft') {

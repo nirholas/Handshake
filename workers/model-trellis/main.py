@@ -331,7 +331,7 @@ async def _run_inference(
                     slat_sampler_params={"steps": q["slat_steps"], "cfg_strength": q["slat_cfg"]},
                 )
                 if len(imgs) > 1:
-                    # Turnaround views of one subject fuse into a single asset —
+                    # Turnaround views of one subject fuse into a single asset:
                     # geometry the primary view can't see (backs, sides) stops
                     # being hallucinated. 'stochastic' is upstream's default and
                     # the cheaper of the two fusion modes.
