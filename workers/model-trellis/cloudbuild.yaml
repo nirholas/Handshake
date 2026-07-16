@@ -74,3 +74,8 @@ options:
 # CUDA extension compiles (nvdiffrast / diffoctreerast / diff-gaussian-rasterization)
 # push the image build well past Cloud Build's 10-minute default. Give it an hour.
 timeout: 3600s
+
+# The project's default compute SA was deleted — builds must pin the dedicated
+# build account (same as the other worker configs) or submits fail with
+# "Unknown service account".
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
