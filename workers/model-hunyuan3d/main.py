@@ -186,7 +186,28 @@ def _decode_image(src: str) -> Image.Image:
     raise ValueError(f"unsupported image source: {src[:60]}")
 
 
-async def _run_inference(task_id: str, images: list[str], body_type: str) -> None:
+# Tier → generation budget for callers that speak forge tiers (the gcp
+# provider's reconstruct mode forwards `tier` verbatim). The defaults match
+# the high bar below; draft trades octree resolution + steps for latency.
+# max_facenum bounds the cleanup decimation before painting.
+_TIER_QUALITY = {
+    "draft": {"steps": 30, "octree_resolution": 256, "max_facenum": 20_000},
+    "standard": {"steps": 40, "octree_resolution": 320, "max_facenum": 40_000},
+    "high": {"steps": 50, "octree_resolution": 384, "max_facenum": 40_000},
+}
+_DEFAULT_QUALITY = _TIER_QUALITY["high"]
+
+
+def _quality_for(tier: str | None, target_polycount: int | None) -> dict:
+    q = dict(_TIER_QUALITY.get((tier or "").strip().lower(), _DEFAULT_QUALITY))
+    # A poly-aware caller's explicit budget wins over the tier preset, clamped
+    # to what the multiview paint pass handles well on the L4.
+    if isinstance(target_polycount, int) and target_polycount > 0:
+        q["max_facenum"] = max(5_000, min(target_polycount, 200_000))
+    return q
+
+
+async def _run_inference(task_id: str, images: list[str], body_type: str, quality: dict | None = None) -> None:
     # Wait for the background pipeline load before touching the GPU. Warm
     # instances pass instantly; a cold one waits out the load rather than
     # NoneType-crashing. A failed load surfaces as a designed task error.
@@ -209,6 +230,8 @@ async def _run_inference(task_id: str, images: list[str], body_type: str) -> Non
         try:
             img = await loop.run_in_executor(None, _decode_image, images[0])
 
+            q = quality or _DEFAULT_QUALITY
+
             def _generate():
                 from hy3dgen.shapegen.postprocessors import (
                     DegenerateFaceRemover,
@@ -222,15 +245,17 @@ async def _run_inference(task_id: str, images: list[str], body_type: str) -> Non
                 subject = img if img.mode == "RGBA" else _pipeline["rembg"](img)
 
                 # Quality over speed (GPU time is cheap against the platform's
-                # GCP credit budget): 50 steps at 384 octree resolution — above
-                # the quickstart defaults (30 steps, 256) — for sharper geometry
-                # on realistic human/object subjects. The pipeline returns a
-                # list of trimesh objects; single image → take the first.
+                # GCP credit budget): the default budget runs 50 steps at 384
+                # octree resolution — above the quickstart defaults (30 steps,
+                # 256) — for sharper geometry on realistic human/object
+                # subjects. Tiered callers scale this down via _TIER_QUALITY.
+                # The pipeline returns a list of trimesh objects; single
+                # image → take the first.
                 mesh = _pipeline["shape"](
                     image=subject,
-                    num_inference_steps=50,
+                    num_inference_steps=q["steps"],
                     guidance_scale=5.5,
-                    octree_resolution=384,
+                    octree_resolution=q["octree_resolution"],
                 )[0]
 
                 # Upstream's standard cleanup chain before painting: drop
@@ -240,7 +265,7 @@ async def _run_inference(task_id: str, images: list[str], body_type: str) -> Non
                 # still textures in one pass on the L4.
                 mesh = FloaterRemover()(mesh)
                 mesh = DegenerateFaceRemover()(mesh)
-                mesh = FaceReducer()(mesh, max_facenum=40_000)
+                mesh = FaceReducer()(mesh, max_facenum=q["max_facenum"])
 
                 # Paint takes (mesh, image) positionally and manages its own
                 # diffusion schedule — it accepts no step/guidance kwargs.
@@ -281,6 +306,12 @@ class InferRequest(BaseModel):
     images: list[str] = Field(..., min_length=1, max_length=6)
     body_type: str = "neutral"
     job_id: str | None = None
+    # Forge reconstruct-mode provenance: the gcp provider forwards the resolved
+    # tier and (for poly-aware callers) a target polycount — they select the
+    # generation budget via _quality_for. Absent fields mean the high default.
+    tier: str | None = None
+    path: str | None = None
+    target_polycount: int | None = None
 
 
 @app.post("/infer", status_code=202)
@@ -295,7 +326,13 @@ async def infer(
     # different instance than this one the moment the 202 lands, and that
     # instance has nothing in its local `_tasks` dict to fall back on.
     await _update_task(task_id, status="queued", model="hunyuan3d-2")
-    background_tasks.add_task(_run_inference, task_id, body.images, body.body_type)
+    background_tasks.add_task(
+        _run_inference,
+        task_id,
+        body.images,
+        body.body_type,
+        _quality_for(body.tier, body.target_polycount),
+    )
     return {"task_id": task_id, "status": "queued"}
 
 
