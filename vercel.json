@@ -915,6 +915,14 @@
 			"dest": "/claim-wallet.html"
 		},
 		{
+			"src": "/meta-allocator/?",
+			"dest": "/meta-allocator.html"
+		},
+		{
+			"src": "/clip-director/?",
+			"dest": "/clip-director.html"
+		},
+		{
 			"src": "/oracle/coin/([1-9A-HJ-NP-Za-km-z]{32,44})/?",
 			"dest": "/api/oracle-share?mint=$1"
 		},

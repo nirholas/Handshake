@@ -436,6 +436,8 @@ const appConfig = {
 				'signal-detail': resolve(__dirname, 'pages/signal-detail.html'),
 				trades: resolve(__dirname, 'pages/trades.html'),
 				'claim-wallet': resolve(__dirname, 'pages/claim-wallet.html'),
+				'meta-allocator': resolve(__dirname, 'pages/meta-allocator.html'),
+				'clip-director': resolve(__dirname, 'pages/clip-director.html'),
 				'avatar-embed': resolve(__dirname, 'pages/avatar-embed.html'),
 				'avatar-wallet-chat': resolve(__dirname, 'pages/avatar-wallet-chat.html'),
 				'agent-exchange': resolve(__dirname, 'pages/agent-exchange.html'),

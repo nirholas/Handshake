@@ -1237,6 +1237,26 @@
 				flex-wrap: wrap;
 			}
 
+			.success-deploy {
+				margin-top: 22px;
+				padding-top: 20px;
+				border-top: 1px solid var(--border);
+			}
+			.success-deploy-label {
+				margin: 0 0 12px;
+				font-size: 0.78rem;
+				font-weight: 600;
+				letter-spacing: 0.04em;
+				text-transform: uppercase;
+				color: var(--muted);
+			}
+			.success-deploy-actions {
+				display: flex;
+				gap: 10px;
+				justify-content: center;
+				flex-wrap: wrap;
+			}
+
 			@media (max-width: 640px) {
 				main.stage {
 					padding: 28px 14px 72px;
@@ -1786,6 +1806,23 @@
 								<a class="btn btn--ghost btn--lg" href="/profile"
 									>View my profile</a
 								>
+							</div>
+							<div class="success-deploy">
+								<p class="success-deploy-label">Take it further</p>
+								<div class="success-deploy-actions">
+									<a class="btn btn--ghost" id="success-voice" href="/voice"
+										>Give it a voice</a
+									>
+									<a class="btn btn--ghost" id="success-embed" href="/studio"
+										>Embed it anywhere</a
+									>
+									<a class="btn btn--ghost" id="success-world" href="/play"
+										>Put it in a world</a
+									>
+									<a class="btn btn--ghost" id="success-token" href="/launchpad"
+										>Launch its token</a
+									>
+								</div>
 							</div>
 						</section>
 					</div>

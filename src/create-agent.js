@@ -1301,6 +1301,16 @@ function succeed(agent) {
 	const fund = $('success-fund');
 	if (fund) fund.href = `/agent/${agent.id}/wallet#deposit`;
 
+	// Pipeline handoffs: the agent is the hub, deployment is the next stage.
+	// Each link opens the next-stage surface; the embed link pre-loads this
+	// agent's 3D body into Widget Studio when the model is publicly readable.
+	const embed = $('success-embed');
+	if (embed) {
+		embed.href = agent.avatar_model_url
+			? `/studio?model=${encodeURIComponent(agent.avatar_model_url)}`
+			: '/studio';
+	}
+
 	// Show the 3D body if it's publicly readable.
 	const modelUrl = agent.avatar_model_url;
 	if (modelUrl) {

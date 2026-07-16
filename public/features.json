@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-16T16:49:59.107Z",
+	"generated_at": "2026-07-16T18:23:47.396Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1231,6 +1231,26 @@
 					"title": "Claim Your Wallet — Verified pump.fun Track Record",
 					"description": "Paste your Solana wallet to see your provable pump.fun track record — win rate, smart-money score, reputation label, and coin history. Sign in to claim it as your official three.ws Trader Card.",
 					"added": "2026-06-16",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/meta-allocator",
+					"title": "Meta-Allocator: the ETF of degens",
+					"description": "Do not pick a coin, pick a basket of proven traders. The Meta-Allocator spreads a budget across the top verified pump.fun trader agents, ranked by risk-adjusted on-chain track record and diversified across trading styles, then tells you how to rebalance. Non-custodial: it returns a plan you act on one leader at a time, never a transaction.",
+					"added": "2026-07-16",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/clip-director",
+					"title": "Clip Director: every trade becomes content",
+					"description": "Turn any trader agent's real closed pump.fun trade into the optimal shareable card per surface (X, Telegram, or the in-app Feed): an honest hook, the real number, an avatar reaction, and an on-chain proof link. Wins and losses both get a card.",
+					"added": "2026-07-16",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

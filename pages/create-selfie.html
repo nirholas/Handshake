@@ -1702,6 +1702,9 @@
 					<button id="done-save-btn" class="btn-save" type="button">
 						Open my avatar →
 					</button>
+					<button id="done-agent-btn" class="btn-secondary" type="button">
+						Turn this into an agent
+					</button>
 					<button id="done-list-btn" class="btn-secondary" type="button">
 						List on marketplace
 					</button>
@@ -2145,6 +2148,7 @@
 			// In 'platform' mode the camera step is already the default active step.
 
 			let _avatarId = null;
+			let _modelUrl = null;
 			let _docTitleBase = document.title;
 			let _notifyPermission =
 				typeof Notification !== 'undefined' ? Notification.permission : 'denied';
@@ -2218,6 +2222,7 @@
 						const { avatar } = await res.json();
 						const modelEl = document.getElementById('done-model');
 						const modelUrl = avatar?.model_url || avatar?.url;
+						_modelUrl = modelUrl || null;
 						if (modelEl && modelUrl) {
 							modelEl.addEventListener(
 								'load',
@@ -2409,6 +2414,38 @@
 				}
 
 				window.location.assign(`/avatars/${encodeURIComponent(_avatarId)}`);
+			});
+
+			// Pipeline handoff: an avatar is only the first stage. Carry it straight
+			// into the agent builder with the body pre-selected, matching the
+			// marketplace "Start an agent with this avatar" hand-off.
+			document.getElementById('done-agent-btn')?.addEventListener('click', async () => {
+				if (!_avatarId) return;
+				const btn = /** @type {HTMLButtonElement} */ (
+					document.getElementById('done-agent-btn')
+				);
+				btn.disabled = true;
+				btn.textContent = 'Opening the agent builder…';
+
+				const nameEl = /** @type {HTMLInputElement|null} */ (
+					document.getElementById('done-name')
+				);
+				const name = nameEl?.value?.trim();
+				if (name) {
+					try {
+						await fetch(`/api/avatars/${encodeURIComponent(_avatarId)}`, {
+							method: 'PATCH',
+							credentials: 'include',
+							headers: { 'content-type': 'application/json' },
+							body: JSON.stringify({ name }),
+						});
+					} catch (_) {}
+				}
+
+				const params = new URLSearchParams({ avatar_id: _avatarId });
+				if (name) params.set('avatar_name', name);
+				if (_modelUrl) params.set('avatar_glb', _modelUrl);
+				window.location.assign(`/agent/new?${params.toString()}`);
 			});
 
 			document.getElementById('done-editor-btn')?.addEventListener('click', () => {

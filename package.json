@@ -139,6 +139,7 @@
 		"audit:mcp-golden": "node scripts/audit-mcp-golden.mjs",
 		"audit:hidden-guard": "node scripts/audit-hidden-guard.mjs",
 		"audit:tokens": "node scripts/audit-token-drift.mjs",
+		"export:examples": "node scripts/export-examples.mjs",
 		"guard:hidden": "node scripts/inject-hidden-guard.mjs --write",
 		"check:images": "node scripts/audit-image-loading.mjs --strict",
 		"audit:web": "node scripts/page-audit.mjs",

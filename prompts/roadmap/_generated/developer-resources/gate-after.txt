@@ -1,0 +1,79 @@
+
+> 3d-agent@1.5.2 gate
+> npm run test:gate && npm run test:gate-3d && npm run audit:mcp && npm run audit:mcp-golden && npm run audit:routes && npm run audit:handlers && npm run audit:pages && npm run audit:hidden-guard && npm run audit:x402-catalog && npm run audit:tokens
+
+
+> 3d-agent@1.5.2 test:gate
+> node scripts/test-gate.mjs
+
+[test-gate] running 7 critical-path test files…
+
+ RUN  v4.1.9 /workspaces/three.ws
+
+
+ Test Files  7 passed (7)
+      Tests  86 passed (86)
+   Start at  18:21:39
+   Duration  2.67s (transform 1.07s, setup 0ms, import 2.37s, tests 2.68s, environment 1ms)
+
+[test-gate] ✓ all critical-path tests passed
+
+> 3d-agent@1.5.2 test:gate-3d
+> vitest run tests/glb-canonicalize.test.js tests/animation-retarget.test.js tests/animation-retarget-rest-pollution.test.js tests/viewer-framing.test.js
+
+
+ RUN  v4.1.9 /workspaces/three.ws
+
+
+ Test Files  4 passed (4)
+      Tests  244 passed (244)
+   Start at  18:21:42
+   Duration  384ms (transform 260ms, setup 0ms, import 528ms, tests 218ms, environment 1ms)
+
+
+> 3d-agent@1.5.2 audit:mcp
+> node scripts/audit-mcp-manifests.mjs
+
+[audit:mcp] 16 MCP manifests consistent
+
+> 3d-agent@1.5.2 audit:mcp-golden
+> node scripts/audit-mcp-golden.mjs
+
+[audit:mcp-golden] 236 hosted MCP tool contracts match the golden fixture
+
+> 3d-agent@1.5.2 audit:routes
+> node scripts/verify-routes.mjs
+
+Route verify — 330 catalog pages, 1112 main routes, 1 post-filesystem routes.
+  modeled dist files: 1627 · canonical-covered: 330 · literal page routes checked for shadows: 481
+  filesystem boundary (handle:filesystem) present: yes
+
+✓ static checks pass: every catalog page reachable, unknown paths → designed 404, no shadowed page routes.
+
+> 3d-agent@1.5.2 audit:handlers
+> node scripts/audit-empty-handlers.mjs
+
+✓ audit-empty-handlers: all API handlers export a body (1759 checked)
+
+> 3d-agent@1.5.2 audit:pages
+> node scripts/audit-page-index.mjs
+
+Route audit: 145 auditable page routes, 330 documented in pages.json.
+✓ Every auditable page route is documented.
+
+ℹ 6 manifest page(s) have no `added` date (omitted from /changelog). Fine for legacy pages; add dates as you touch them.
+
+> 3d-agent@1.5.2 audit:hidden-guard
+> node scripts/audit-hidden-guard.mjs
+
+✓ audit-hidden-guard: all 293 pages resolve the [hidden] guard
+
+> 3d-agent@1.5.2 audit:x402-catalog
+> node scripts/audit-x402-catalog.mjs
+
+✓ audit-x402-catalog: all 92 x402 endpoints are documented
+
+> 3d-agent@1.5.2 audit:tokens
+> node scripts/audit-token-drift.mjs
+
+✓ token drift unchanged: 0 hardcoded token-hex(es) (baseline 0).

@@ -1,6 +1,6 @@
 # Creation Surface Consolidation — Audit & Plan
 
-**Status:** Phase 1 (additive hub) shipped 2026-07-08. Phase 2 executed 2026-07-16 for everything that survived re-verification against the live tree; several table rows turned out stale or unsafe (see the 07-16 note).
+**Status:** Phase 1 (additive hub) shipped 2026-07-08. Phase 2 executed 2026-07-16 for everything that survived re-verification against the live tree; several table rows turned out stale or unsafe (see the 07-16 note). Phase 3 (§3.3 pipeline handoffs) executed 2026-07-16 (see the Phase 3 note).
 **Audited:** 2026-06-12
 
 ---
@@ -49,7 +49,22 @@ Every §2/§4 cluster was re-verified against the tree before acting; the June a
 - **C5:** `/create-prompt` is not stranded; it is the nav-linked "Describe it to 3D" surface served at `/create/prompt`. `/create-review` is the live review step of the create flow (`src/create.js` navigates to it). `/avatar-studio-demo` is already deleted (no page, no route). `/avatar-embed` is the iframe target behind `/embed/avatar` used by SDK embeds; it must not be retired.
 - **C4:** `/avatar-edit` is orphaned but Avatar Studio has no edit mode (`avatar-studio.html` reads no URL params), so `301 /avatar-edit -> /avatar-studio?mode=edit&id=` has no working destination; redirecting would silently lose edit-by-id for bookmarked URLs. Left live. `/import/rpm` stays as a page: the hub links it as the import option and it supports URL import the hub's upload card does not.
 
-**Still open for future passes:** the `/agent/new` 301 (blocked until `/create-agent` supports the avatar handoff params), the C1 single-URL merge (§5.1 owner decision), `/avatar-edit` retirement (needs an Avatar Studio edit mode), the `/embed` -> `/studio` merge (needs feature parity in `/studio`), and the remaining Phase 3 handoffs.
+**Still open for future passes:** the `/agent/new` 301 (blocked until `/create-agent` supports the avatar handoff params), the C1 single-URL merge (§5.1 owner decision), `/avatar-edit` retirement (needs an Avatar Studio edit mode), the `/embed` -> `/studio` merge (needs feature parity in `/studio`).
+
+## Progress note: 2026-07-16 (Phase 3 pass — pipeline handoffs, §3.3)
+
+Phase 3 wires the completion-state handoffs from §3.3 that were still missing, all additive (new CTAs on existing "done" states; no routes, redirects, or existing behavior changed):
+
+**Executed:**
+- **Row 1 (photo->avatar -> agent):** the `/create/selfie` done state gains a "Turn this into an agent" button that PATCHes the avatar name (when set) then navigates to `/agent/new?avatar_id=&avatar_name=&avatar_glb=` with the just-built body pre-selected, reusing the exact hand-off the marketplace's `startAgentFromAvatar()` already uses (agent-edit.js consumes those params). `/scan` inherits this automatically since it now `location.replace()`s to `/create/selfie`.
+- **Row 2 (agent -> deploy):** the `/create-agent` wizard success screen gains a "Take it further" row with four next-stage links: "Give it a voice" -> `/voice`, "Embed it anywhere" -> `/studio` (pre-loaded with the agent's 3D body via `?model=` when publicly readable), "Put it in a world" -> `/play`, "Launch its token" -> `/launchpad`.
+- **Row 3 (voice -> agent):** the `/voice` clone-done state gains an "Add to an agent" link to `/dashboard`, where any agent's editor voice tab picks up the new clone.
+
+**Found already done (no action):**
+- **Row 4 (studio snippet -> playground + agent detail):** `/studio` already links `/playground` (shipped in the 07-16 Phase 2 commit).
+- **Row 5 (avatar detail -> edit):** `avatar-page.js` already offers an owner "Edit avatar" button to `/create/studio?edit=ID` (Avatar Studio's edit mode), plus Voice Lab and "Open in Studio" CTAs.
+
+**Still open:** the same route-level items listed in the Phase 2 note (the `/agent/new` 301, the C1 single-URL merge, `/avatar-edit` retirement, and the `/embed` -> `/studio` merge) all remain owner/parity-gated and were not touched.
 
 ---
 
