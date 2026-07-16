@@ -172,6 +172,41 @@ describe('huggingface provider — durable GLB re-host', () => {
 		expect(putObject).not.toHaveBeenCalled();
 	});
 
+	it('recovers the mesh via the canonical /file= route when the Space\'s self-reported url is a stale proxy path', async () => {
+		setS3();
+		// Observed live on stabilityai/TripoSR (2026-07-16): the FileData `url`
+		// carries a replica-router prefix ("/ca/file=...") that 404s, while the
+		// same file serves fine at `${spaceUrl}/file=${path}`. The provider must
+		// build the canonical route from `path` instead of dying on the bad url.
+		const base = spaceUrl('foo/A');
+		const fetchMock = vi.fn(async (url) => {
+			if (url === `${base}/call/generation_all`) return jsonResp({ event_id: 'evt-A' });
+			if (url === `${base}/call/generation_all/evt-A`) {
+				return sseStream([
+					{ path: '/tmp/gradio/abc/mesh.obj', url: `${base}/ca/file=/tmp/gradio/abc/mesh.obj` },
+					{ path: '/tmp/gradio/abc/mesh.glb', url: `${base}/ca/file=/tmp/gradio/abc/mesh.glb` },
+				]);
+			}
+			if (url === `${base}/file=/tmp/gradio/abc/mesh.glb`) {
+				return new Response(glbBytes(), { status: 200, headers: { 'content-type': 'model/gltf-binary' } });
+			}
+			// The stale proxy-prefixed url 404s, as it does live.
+			if (url === `${base}/ca/file=/tmp/gradio/abc/mesh.glb`) return new Response('', { status: 404 });
+			throw new Error(`unexpected url ${url}`);
+		});
+		globalThis.fetch = fetchMock;
+
+		const { createRegenProvider } = await import('../../api/_providers/huggingface.js');
+		const out = await createRegenProvider().submit({
+			mode: 'reconstruct',
+			params: { images: ['data:image/jpeg;base64,AAA'] },
+		});
+
+		const decoded = JSON.parse(Buffer.from(out.extJobId, 'base64url').toString('utf8'));
+		expect(decoded.resultGlbUrl).toMatch(/^https:\/\/cdn\.example\/hf-recon\/[0-9a-f-]+\.glb$/);
+		expect(putObject).toHaveBeenCalledTimes(1);
+	});
+
 	it('skips re-host entirely (no mesh fetch, no upload) when storage is unconfigured', async () => {
 		clearS3();
 		const fetchMock = vi.fn(async (url) => {

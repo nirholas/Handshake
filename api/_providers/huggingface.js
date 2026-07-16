@@ -112,16 +112,40 @@ function withTimeout(promise, ms, message) {
 	return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
 }
 
-// Walk a Gradio output tree for the first GLB-looking URL. The Space returns
-// outputs like:
+// Walk a Gradio output tree for the first GLB-looking file and return every
+// address that file might be reachable at, in order of reliability. The Space
+// returns outputs like:
 //   [ { path: "/tmp/x.glb", url: "https://...hf.space/file=/tmp/x.glb", ... },
 //     { ...white-mesh file...}, "Output text", {...stats...}, 1234 ]
 // We want the *first* file: it's the textured mesh from /generation_all.
-function extractFirstGlbUrl(data) {
+//
+// Multiple candidates exist because a FileData's self-reported `url` is not
+// trustworthy: Spaces behind HF's replica router stamp it with a stale proxy
+// prefix (observed live on stabilityai/TripoSR: url ".../ca/file=/tmp/...glb"
+// 404s while ".../file=/tmp/...glb" serves the same file). Building the URL
+// from `path` with the canonical /file= route (Gradio ≤4) is the proven-good
+// form, so it goes first; the reported url and the Gradio 5 /gradio_api/file=
+// route follow as fallbacks.
+function extractFirstGlbCandidates(data, spaceUrl) {
+	const fromFileData = (node) => {
+		const path = typeof node.path === 'string' && /\.glb($|\?)/i.test(node.path) ? node.path : null;
+		const url = typeof node.url === 'string' && /\.glb($|\?)/i.test(node.url) ? node.url : null;
+		if (!path && !url) return null;
+		const candidates = [];
+		if (path) {
+			if (/^https?:\/\//i.test(path)) candidates.push(path);
+			else {
+				const rel = path.startsWith('/') ? path : `/${path}`;
+				candidates.push(`${spaceUrl}/file=${rel}`, `${spaceUrl}/gradio_api/file=${rel}`);
+			}
+		}
+		if (url && /^https?:\/\//i.test(url)) candidates.push(url);
+		return candidates.length ? candidates : null;
+	};
 	const visit = (node) => {
 		if (!node) return null;
 		if (typeof node === 'string') {
-			if (/^https?:\/\/.+\.glb($|\?)/i.test(node)) return node;
+			if (/^https?:\/\/.+\.glb($|\?)/i.test(node)) return [node];
 			return null;
 		}
 		if (Array.isArray(node)) {
@@ -132,8 +156,8 @@ function extractFirstGlbUrl(data) {
 			return null;
 		}
 		if (typeof node === 'object') {
-			if (typeof node.url === 'string' && /\.glb($|\?)/i.test(node.url)) return node.url;
-			if (typeof node.path === 'string' && /\.glb($|\?)/i.test(node.path)) return node.path;
+			const direct = fromFileData(node);
+			if (direct) return direct;
 			for (const v of Object.values(node)) {
 				const found = visit(v);
 				if (found) return found;
@@ -303,7 +327,7 @@ const BUILDERS = {
 	// stabilityai/TripoSR /generate: (image filepath, marching-cubes resolution
 	// float) → [OBJ, GLB]. We pass the reference view straight through — the forge
 	// image lane already supplies a clean subject view — and take the GLB output;
-	// extractFirstGlbUrl skips the OBJ and returns the .glb.
+	// extractFirstGlbCandidates skips the OBJ and returns the .glb.
 	triposr: ({ photos, params }) => [toFileData(photos[0]), Number(params?.mc_resolution ?? 256)],
 };
 
@@ -337,33 +361,40 @@ function r2Configured() {
 //     function exists to prevent. Throwing lets the failover loop regenerate on
 //     the next Space, and if the chain is exhausted the caller surfaces a
 //     designed error instead of a doomed URL.
-async function rehostGlbToR2(glbUrl, token) {
+async function rehostGlbToR2(glbUrls, token) {
 	if (!r2Configured()) return null;
 
+	const candidates = Array.isArray(glbUrls) ? glbUrls : [glbUrls];
 	let buf = null;
 	let lastErr = null;
-	for (let attempt = 1; attempt <= REHOST_MAX_ATTEMPTS; attempt++) {
-		try {
-			const resp = await fetch(glbUrl, { headers: { authorization: `Bearer ${token}` } });
-			if (!resp.ok) {
-				lastErr = Object.assign(new Error(`GLB fetch ${resp.status}`), { status: resp.status });
-				// 404/410 = the temp file is already gone; retrying can't recover it.
-				if (resp.status === 404 || resp.status === 410) break;
-			} else {
-				const bytes = Buffer.from(await resp.arrayBuffer());
-				if (bytes.length === 0) { lastErr = new Error('GLB body was empty'); break; }
-				if (bytes.length > REHOST_MAX_GLB_BYTES) {
-					lastErr = new Error(`GLB too large: ${bytes.length} bytes`);
-					break;
+	candidateLoop:
+	for (const glbUrl of candidates) {
+		for (let attempt = 1; attempt <= REHOST_MAX_ATTEMPTS; attempt++) {
+			try {
+				const resp = await fetch(glbUrl, { headers: { authorization: `Bearer ${token}` } });
+				if (!resp.ok) {
+					lastErr = Object.assign(new Error(`GLB fetch ${resp.status}`), { status: resp.status });
+					// 404/410 on this address = wrong route or the temp file is gone;
+					// retrying the same URL can't recover it, but another candidate
+					// address for the same file still might (a stale proxy-prefixed
+					// `url` 404s while the canonical /file= route serves the bytes).
+					if (resp.status === 404 || resp.status === 410) continue candidateLoop;
+				} else {
+					const bytes = Buffer.from(await resp.arrayBuffer());
+					if (bytes.length === 0) { lastErr = new Error('GLB body was empty'); break candidateLoop; }
+					if (bytes.length > REHOST_MAX_GLB_BYTES) {
+						lastErr = new Error(`GLB too large: ${bytes.length} bytes`);
+						break candidateLoop;
+					}
+					buf = bytes;
+					break candidateLoop;
 				}
-				buf = bytes;
-				break;
+			} catch (err) {
+				lastErr = err;
 			}
-		} catch (err) {
-			lastErr = err;
-		}
-		if (attempt < REHOST_MAX_ATTEMPTS) {
-			await new Promise((r) => setTimeout(r, REHOST_RETRY_BASE_MS * attempt));
+			if (attempt < REHOST_MAX_ATTEMPTS) {
+				await new Promise((r) => setTimeout(r, REHOST_RETRY_BASE_MS * attempt));
+			}
 		}
 	}
 	if (!buf) {
@@ -440,12 +471,10 @@ async function runOnSpace({ token, target, photos, params }) {
 		throw tag(err);
 	});
 
-	let glbUrl = extractFirstGlbUrl(output);
-	if (!glbUrl) {
+	const glbCandidates = extractFirstGlbCandidates(output, spaceUrl);
+	if (!glbCandidates) {
 		throw tag(Object.assign(new Error('no GLB in output'), { code: 'provider_error', status: 502 }));
 	}
-	if (glbUrl.startsWith('/')) glbUrl = `${spaceUrl}${glbUrl}`;
-	else if (!/^https?:\/\//i.test(glbUrl)) glbUrl = `${spaceUrl}/file=${glbUrl}`;
 
 	// Re-host the ephemeral gradio temp file to durable storage right now, while
 	// it's freshest, so no consumer ever re-fetches the expiring Space URL. When
@@ -456,7 +485,7 @@ async function runOnSpace({ token, target, photos, params }) {
 	// null and we keep the raw URL — the only option where there's nowhere durable.
 	let durableUrl;
 	try {
-		durableUrl = await rehostGlbToR2(glbUrl, token);
+		durableUrl = await rehostGlbToR2(glbCandidates, token);
 	} catch (err) {
 		throw tag(Object.assign(
 			new Error(`GLB produced but not persistable: ${err?.message}`),
@@ -464,7 +493,7 @@ async function runOnSpace({ token, target, photos, params }) {
 		));
 	}
 
-	return { resultGlbUrl: durableUrl || glbUrl, space, api };
+	return { resultGlbUrl: durableUrl || glbCandidates[0], space, api };
 }
 
 export function createRegenProvider() {
