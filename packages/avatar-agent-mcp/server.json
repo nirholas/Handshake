@@ -31,7 +31,7 @@
 			"environmentVariables": [
 				{
 					"name": "SOLANA_RPC_URL",
-					"description": "Solana mainnet RPC endpoint. Defaults to https://api.mainnet-beta.solana.com — bring your own (Helius / QuickNode / Triton) for production traffic.",
+					"description": "Solana mainnet RPC endpoint. Defaults to https://api.mainnet-beta.solana.com — bring your own (Helius / Quicknode / Triton) for production traffic.",
 					"format": "string",
 					"isRequired": false,
 					"default": "https://api.mainnet-beta.solana.com"

@@ -50,7 +50,7 @@ function validateRpcUrl(raw) {
 	);
 }
 
-// Solana RPC. Bring your own (Helius / QuickNode / Triton) for production.
+// Solana RPC. Bring your own (Helius / Quicknode / Triton) for production.
 export const SOLANA_RPC_URL = validateRpcUrl(env('SOLANA_RPC_URL', 'https://api.mainnet-beta.solana.com'));
 
 // Max USD value of $THREE a single burn may destroy. Default 100 — bounds a

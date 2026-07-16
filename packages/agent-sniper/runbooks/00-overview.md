@@ -23,7 +23,7 @@ and what access they need.
   - `scripts/reel.js` — Playwright recorder. Films a `SCENE_FILE` of scenes to one `.webm` + per-scene screenshots, with a self-narrating caption bar. `CAST=1` also broadcasts each frame to a three.ws agent screen (cut 03).
 - **Two inputs every live cut needs from you:**
   1. **3 SOL** sent to the fleet funder wallet (printed by `fleet.js gen`/`plan`).
-  2. A **mainnet RPC URL** (Helius/Triton/QuickNode). Live mode **refuses a public RPC** — it 429s under the new-mint firehose. Pass `--rpc <url>` or set `SOLANA_RPC_URL` / `HELIUS_API_KEY`.
+  2. A **mainnet RPC URL** (Helius/Triton/Quicknode). Live mode **refuses a public RPC** — it 429s under the new-mint firehose. Pass `--rpc <url>` or set `SOLANA_RPC_URL` / `HELIUS_API_KEY`.
 
 ## Economics & safety (all cuts)
 

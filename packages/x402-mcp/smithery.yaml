@@ -17,7 +17,7 @@ startCommand:
         type: string
         title: Solana RPC URL
         default: https://api.mainnet-beta.solana.com
-        description: HTTPS Solana RPC endpoint. Bring your own (Helius / QuickNode / Triton) for production.
+        description: HTTPS Solana RPC endpoint. Bring your own (Helius / Quicknode / Triton) for production.
       MAX_PAY_USD:
         type: number
         title: Max USD per call

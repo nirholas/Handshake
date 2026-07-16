@@ -140,7 +140,7 @@ The server pre-checks your $THREE balance and fails fast with a clear error if i
 ## Requirements
 
 - **Node.js >= 20.**
-- A Solana mainnet RPC endpoint (the public cluster works for read-only; bring your own — Helius / QuickNode / Triton — for burn traffic). The endpoint must be `https` (only `http://localhost` is accepted, for local dev validators).
+- A Solana mainnet RPC endpoint (the public cluster works for read-only; bring your own — Helius / Quicknode / Triton — for burn traffic). The endpoint must be `https` (only `http://localhost` is accepted, for local dev validators).
 - For burns: a wallet holding $THREE, provided as a base58 `SOLANA_SECRET_KEY` (or a per-call `secret`).
 
 ### Environment variables

@@ -164,7 +164,7 @@ Per-tool environment variables (all optional — set only what you use):
 
 | Variable                         | Required for                              | Notes                                                                                                                   |
 | -------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `SOLANA_RPC_URL`                 | All Solana ops                            | Defaults to `https://api.mainnet-beta.solana.com`. Bring your own (Helius / QuickNode / Triton) for production traffic. |
+| `SOLANA_RPC_URL`                 | All Solana ops                            | Defaults to `https://api.mainnet-beta.solana.com`. Bring your own (Helius / Quicknode / Triton) for production traffic. |
 | `ETH_RPC_URL`                    | `ens_sns_resolve`                         | Optional — falls back to ethers' default public providers. Alias: `MAINNET_RPC_URL`.                                    |
 | `HELIUS_API_KEY`                 | `pump_snapshot` (enhanced)                | Adds exact supply + DAS data.                                                                                           |
 | `NVIDIA_API_KEY`                 | `speak` (free lane)                       | NVIDIA NIM key (`nvapi-…`) — leads the TTS provider chain with Magpie TTS.                                              |

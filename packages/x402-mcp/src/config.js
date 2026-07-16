@@ -47,7 +47,7 @@ function validateRpcUrl(raw) {
 	);
 }
 
-// Solana mainnet RPC. Bring your own (Helius / QuickNode / Triton) for production.
+// Solana mainnet RPC. Bring your own (Helius / Quicknode / Triton) for production.
 export const SOLANA_RPC_URL = validateRpcUrl(env('SOLANA_RPC_URL', 'https://api.mainnet-beta.solana.com'));
 
 // Optional default signer (base58 secret key, or a JSON byte array). pay_and_call
