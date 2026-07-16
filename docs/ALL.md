@@ -37269,7 +37269,7 @@ A confirmed canary asset shows `inCollection=true`, `royalty=500bps`, `attrs=11`
 | `Missing required env var: JWT_SECRET` | A wallet-less agent tried to generate a custodial wallet. Either run on production (where `JWT_SECRET` lives) for per-agent wallets, or accept authority custody — the module falls back to custody automatically when the key is absent. |
 | `funder needs ~0.005 SOL to deploy the collection` | First-run collection deploy needs SOL. Top up the authority wallet. |
 | Run pauses: `funder wallet is low on SOL` | Top up and re-run; already-deployed agents are skipped. |
-| `solana rpc 429` / send timeouts | The public endpoint is rate-limited. Set `SOLANA_RPC_URL` to a Helius/QuickNode/Triton endpoint for the full run. |
+| `solana rpc 429` / send timeouts | The public endpoint is rate-limited. Set `SOLANA_RPC_URL` to a Helius/Quicknode/Triton endpoint for the full run. |
 | Manifest URI doesn't resolve | `PINATA_JWT` missing/invalid and no R2 configured. Set a valid `PINATA_JWT` (or `WEB3_STORAGE_TOKEN`, or the `S3_*` set). |
 | An agent re-deploys unexpectedly | It shouldn't — `meta.sol_mint_address IS NULL` is the skip guard. If you intentionally re-mint, clear `sol_mint_address`/`onchain` from its `meta` first. |
 
@@ -43283,7 +43283,7 @@ Registering the credential and schemas is idempotent — existing accounts are l
 | `SOLANA_RPC_URL` | Mainnet RPC endpoint. | `https://api.mainnet-beta.solana.com` |
 | `SOLANA_RPC_URL_DEVNET` | Devnet RPC endpoint. | `https://api.devnet.solana.com` |
 
-A custom RPC (Helius, Triton, QuickNode) is strongly recommended for mainnet — the public endpoint is rate-limited and will fail under load.
+A custom RPC (Helius, Triton, Quicknode) is strongly recommended for mainnet — the public endpoint is rate-limited and will fail under load.
 
 ---
 
@@ -46087,7 +46087,7 @@ Agent record shape (`agent_identities.meta`):
 | `mainnet` | mainnet-beta | `SOLANA_RPC_URL` env, falls back to `https://api.mainnet-beta.solana.com` |
 | `devnet` | devnet | `SOLANA_RPC_URL_DEVNET` env, falls back to `https://api.devnet.solana.com` |
 
-Public RPCs are rate-limited. For production, set `SOLANA_RPC_URL` to a Helius, QuickNode, or Triton endpoint.
+Public RPCs are rate-limited. For production, set `SOLANA_RPC_URL` to a Helius, Quicknode, or Triton endpoint.
 
 ---
 

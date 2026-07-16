@@ -49,7 +49,7 @@ Agent record shape (`agent_identities.meta`):
 | `mainnet` | mainnet-beta | `SOLANA_RPC_URL` env, falls back to `https://api.mainnet-beta.solana.com` |
 | `devnet` | devnet | `SOLANA_RPC_URL_DEVNET` env, falls back to `https://api.devnet.solana.com` |
 
-Public RPCs are rate-limited. For production, set `SOLANA_RPC_URL` to a Helius, QuickNode, or Triton endpoint.
+Public RPCs are rate-limited. For production, set `SOLANA_RPC_URL` to a Helius, Quicknode, or Triton endpoint.
 
 ---
 

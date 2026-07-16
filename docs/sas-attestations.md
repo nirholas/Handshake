@@ -109,7 +109,7 @@ Registering the credential and schemas is idempotent — existing accounts are l
 | `SOLANA_RPC_URL` | Mainnet RPC endpoint. | `https://api.mainnet-beta.solana.com` |
 | `SOLANA_RPC_URL_DEVNET` | Devnet RPC endpoint. | `https://api.devnet.solana.com` |
 
-A custom RPC (Helius, Triton, QuickNode) is strongly recommended for mainnet — the public endpoint is rate-limited and will fail under load.
+A custom RPC (Helius, Triton, Quicknode) is strongly recommended for mainnet — the public endpoint is rate-limited and will fail under load.
 
 ---
 

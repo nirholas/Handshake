@@ -25,7 +25,7 @@ Infrastructure programs that back three.ws with credits, tooling, and founder ne
 
 | Program | Status | Details |
 |---|---|---|
-| **QuickNode** Startup Program | Accepted (2026-07) | three.ws is accepted into the QuickNode Startup Program and approved for free infrastructure credits. QuickNode's globally distributed RPC endpoints (Solana first, plus the EVM chains x402 settles on) add capacity and redundancy behind agent wallets, settlement verification, and live market data. Announcement: [three.ws Joins the QuickNode Startup Program](/blog/three-ws-quicknode-startup-program). |
+| **Quicknode** Startup Program | Accepted (2026-07) | three.ws is accepted into the Quicknode Startup Program and approved for free infrastructure credits. Quicknode's globally distributed RPC endpoints (Solana first, plus the EVM chains x402 settles on) add capacity and redundancy behind agent wallets, settlement verification, and live market data. Announcement: [three.ws Joins the Quicknode Startup Program](/blog/three-ws-quicknode-startup-program). |
 | **Google Cloud** for Web3 Startups | Member | Production runs on Google Cloud Run; the program backs compute and Vertex AI usage. Announcement: [three.ws Joins Google Cloud for Web3 Startups](/blog/three-ws-google-cloud-partnership). |
 
 ---
