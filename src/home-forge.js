@@ -324,6 +324,9 @@ async function startJob(prompt) {
 			path: 'image',
 			tier: 'standard',
 			backend: 'trellis',
+			// Granite art-director pass (fail-soft): same photoreal-biased prompt
+			// rewrite the full /forge page and every MCP tool already get.
+			director: true,
 		}),
 	});
 	const data = await res.json().catch(() => ({}));

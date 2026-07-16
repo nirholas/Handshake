@@ -1299,7 +1299,12 @@ async function startJob({ prompt, imageUrls, skipValidation, payment }) {
 	const body =
 		Array.isArray(imageUrls) && imageUrls.length
 			? { image_urls: imageUrls, prompt: prompt || undefined, ...base }
-			: { prompt, aspect_ratio: aspectRatio, ...base };
+			// Granite art-director pass (server-side, fail-soft): rewrites the raw
+			// prompt into a richer single-subject spec with per-part PBR materials
+			// and photoreal cues before it drives the reference image. Text-to-3D
+			// only — the director rewrites a prompt, and an image submission has
+			// none to rewrite.
+			: { prompt, aspect_ratio: aspectRatio, director: true, ...base };
 	// Caller already saw the vision warning and chose to proceed (Consumer 1).
 	if (skipValidation) body.skip_validation = true;
 	// Pay-per-use proof: a non-holder who paid $THREE for this High generation
