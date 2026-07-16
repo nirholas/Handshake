@@ -66,3 +66,7 @@ options:
 
 # diso / CUDA mesh-extraction compiles push past the 10-minute default.
 timeout: 3600s
+
+# The project's default compute SA was deleted; builds must pin the dedicated
+# build SA (same pattern as server/ and model-trellis).
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
