@@ -3210,19 +3210,6 @@ async function boot(id) {
 		todReadout.textContent = `${TOD_ICON[label] || '·'} ${label}`;
 	}
 
-	// Owners (and the first-party caster) land each host line in the live log +
-	// stream backfill so late joiners replay it; for a non-owner viewer the push
-	// 403s and we swallow it — the channel still hosts locally.
-	async function pushNarration(text) {
-		try {
-			await fetch('/api/agent-screen-push', {
-				method: 'POST', credentials: 'include',
-				headers: { 'content-type': 'application/json' },
-				body: JSON.stringify({ agentId: id, frame: { activity: text, type: 'activity' } }),
-			});
-		} catch { /* local-only narration is fine */ }
-	}
-
 	function tickDj() {
 		if (!ambientOn || !ambientWorld || !ambientDj || document.hidden) return;
 		const line = ambientDj.observe(ambientWorld.getState(), Date.now());

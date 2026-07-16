@@ -43,9 +43,9 @@ test('normalizeCurveTrade: real Odyssey Traded log → pump-compatible trade', (
 	assert.equal(out.trader, raw.args.trader);
 	assert.equal(out.user, raw.args.trader); // chart-screen reads `user`
 	assert.equal(out.tx, raw.transactionHash); // chart-screen dedupe key
-	// quoteAmount 90044474151232482 wei = 0.090044474151232482 ETH
-	assert.ok(Math.abs(out.sol_amount - 0.090044474151232482) < 1e-9);
-	assert.ok(Math.abs(out.usd_amount - 0.090044474151232482 * 3000) < 1e-6);
+	// quoteAmount 90044474151232482 wei = 0.09004447415123248 ETH (double-precision-exact)
+	assert.ok(Math.abs(out.sol_amount - 0.09004447415123248) < 1e-9);
+	assert.ok(Math.abs(out.usd_amount - 0.09004447415123248 * 3000) < 1e-6);
 	assert.equal(out.usd_amount, out.sol_value_usd);
 	assert.equal(out.quote_symbol, 'ETH');
 	assert.ok(Number.isFinite(out.price_usd));
