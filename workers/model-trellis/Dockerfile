@@ -38,10 +38,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install torch==2.4.0 torchvision==0.19.0 --index-url https://download.pytorch.org/whl/cu121
 
 # ── 2. setup.sh --basic + utils3d ─────────────────────────────────────────────
+# transformers MUST stay pinned to a torch-2.4-compatible release. Unpinned, the
+# 2026-07-16 rebuild resolved a version whose CLIP modeling imports DTensor from
+# torch.distributed.tensor (public only since torch 2.5), so the pipeline failed
+# to load at boot and every inference on the revision failed. 4.46.3 is the
+# TRELLIS-era release verified against torch 2.4.0/cu121.
 RUN pip install \
         pillow imageio imageio-ffmpeg tqdm easydict opencv-python-headless \
         scipy ninja rembg onnxruntime trimesh open3d xatlas pyvista pymeshfix \
-        igraph transformers \
+        igraph "transformers==4.46.3" \
     && pip install git+https://github.com/EasternJournalist/utils3d.git@9a4eb15e4021b67b12c460c7057d642626897ec8
 
 # ── 3. setup.sh --xformers / --spconv / --kaolin (prebuilt wheels) ────────────
