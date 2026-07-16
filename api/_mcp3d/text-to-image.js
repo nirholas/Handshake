@@ -322,11 +322,32 @@ const ART_STYLE_RE = new RegExp(`\\b(?:${ART_STYLE_WORDS.join('|')})\\b`, 'i');
 const REALISM_SUFFIX =
 	', photorealistic, true-to-life materials and surface detail, sharp focus, professional product photograph';
 
+// A human/humanoid subject needs portrait-photography language, not
+// product-photography language — "professional product photograph" reads
+// wrong for a person and steers FLUX toward glossy-mannequin skin instead of
+// the pores/asymmetry/texture that make a reconstructed avatar look like an
+// actual IRL person. Matched as whole words so "personality" or "manatee"
+// can't false-positive off "person"/"man".
+const PERSON_SUBJECT_WORDS = [
+	'person', 'human', 'man', 'woman', 'guy', 'girl', 'boy', 'lady', 'gentleman',
+	'people', 'face', 'portrait', 'selfie', 'model(?!s? of)', 'character(?!\\s+prop)',
+	'warrior', 'knight', 'soldier', 'wizard', 'ninja', 'astronaut', 'pirate',
+	'king', 'queen', 'hero', 'villain', 'avatar',
+];
+const PERSON_SUBJECT_RE = new RegExp(`\\b(?:${PERSON_SUBJECT_WORDS.join('|')})\\b`, 'i');
+const PERSON_REALISM_SUFFIX =
+	', photorealistic human, natural skin texture with visible pores and subtle asymmetry, ' +
+	'realistic hair strands, natural catchlight in the eyes, portrait photography, shot on a DSLR ' +
+	'with an 85mm lens, sharp focus';
+
 export function enhanceFluxPrompt(raw) {
 	const text = String(raw || '').trim();
 	if (!text) return text;
 	if (COMPOSITION_CUE_RE.test(text)) return text;
-	const realism = ART_STYLE_RE.test(text) ? '' : REALISM_SUFFIX;
+	let realism = '';
+	if (!ART_STYLE_RE.test(text)) {
+		realism = PERSON_SUBJECT_RE.test(text) ? PERSON_REALISM_SUFFIX : REALISM_SUFFIX;
+	}
 	return text + realism + FLUX_STYLE_SUFFIX;
 }
 

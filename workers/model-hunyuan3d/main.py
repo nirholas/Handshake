@@ -29,6 +29,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import io
+import json
 import logging
 import os
 import time
@@ -38,6 +39,7 @@ from typing import Optional
 
 import torch
 from fastapi import FastAPI, HTTPException, Header, BackgroundTasks
+from google.api_core.exceptions import NotFound
 from google.cloud import storage
 from PIL import Image
 from pydantic import BaseModel, Field
@@ -63,7 +65,32 @@ MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "1"))
 _pipeline = None
 _bucket: Optional[storage.Bucket] = None
 _sem: Optional[asyncio.Semaphore] = None
+_ready: Optional[asyncio.Event] = None
+_load_error: Optional[str] = None
+# In-memory cache only — Cloud Run runs this service across multiple instances
+# with no session affinity, so a POST /infer and a later GET /tasks/:id can
+# land on different instances. The durable source of truth is the
+# `tasks/{task_id}.json` blob in GCS (see _update_task / get_task); this dict
+# just avoids a GCS round-trip when a poll happens to hit the same warm
+# instance that ran the job. (Same pattern as workers/model-trellis.)
 _tasks: dict[str, dict] = {}
+
+
+def _task_blob(task_id: str):
+    return _bucket.blob(f"tasks/{task_id}.json")
+
+
+async def _update_task(task_id: str, **fields) -> dict:
+    task = _tasks.setdefault(task_id, {"task_id": task_id})
+    task.update(fields)
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(
+        None,
+        lambda: _task_blob(task_id).upload_from_string(
+            json.dumps(task), content_type="application/json"
+        ),
+    )
+    return task
 
 
 def _load_pipeline():
@@ -93,14 +120,30 @@ def _load_pipeline():
     log.info("Hunyuan3D-2.1 pipelines loaded")
 
 
+async def _load_pipeline_bg():
+    """Load the ~10 GB pipeline off the request path and signal readiness when
+    done. Runs in a worker thread so the event loop (and the HTTP port) stay
+    live — a blocking lifespan load here would delay the port past Cloud Run's
+    startup TCP-probe window and the revision would be marked failed."""
+    global _load_error
+    loop = asyncio.get_event_loop()
+    try:
+        await loop.run_in_executor(None, _load_pipeline)
+        _ready.set()
+        log.info("Hunyuan3D-2.1 pipeline ready")
+    except Exception as exc:  # noqa: BLE001 — surfaced via /health + task status
+        _load_error = safe_error(exc, context="model load")
+        log.error("Hunyuan3D-2.1 pipeline load FAILED: %s", exc)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _bucket, _sem
+    global _bucket, _sem, _ready
     _bucket = storage.Client().bucket(GCS_BUCKET)
     _sem = asyncio.Semaphore(MAX_CONCURRENT)
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, _load_pipeline)
-    log.info("Service ready — max_concurrent=%d", MAX_CONCURRENT)
+    _ready = asyncio.Event()
+    asyncio.create_task(_load_pipeline_bg())
+    log.info("Service starting — pipeline loading in background (max_concurrent=%d)", MAX_CONCURRENT)
     yield
 
 
@@ -130,24 +173,44 @@ def _decode_image(src: str) -> Image.Image:
 
 
 async def _run_inference(task_id: str, images: list[str], body_type: str) -> None:
+    # Wait for the background pipeline load before touching the GPU. Warm
+    # instances pass instantly; a cold one waits out the load rather than
+    # NoneType-crashing. A failed load surfaces as a designed task error.
+    if _load_error:
+        await _update_task(task_id, status="failed", error=f"pipeline unavailable: {_load_error}")
+        return
+    try:
+        await asyncio.wait_for(_ready.wait(), timeout=900)
+    except asyncio.TimeoutError:
+        await _update_task(task_id, status="failed", error="pipeline not ready (model load timed out)")
+        return
+    if _load_error:
+        await _update_task(task_id, status="failed", error=f"pipeline unavailable: {_load_error}")
+        return
+
     async with _sem:
-        _tasks[task_id]["status"] = "running"
+        await _update_task(task_id, status="running")
         loop = asyncio.get_event_loop()
         t0 = time.time()
         try:
             img = await loop.run_in_executor(None, _decode_image, images[0])
 
             def _generate():
+                # Quality over speed (GPU time is cheap against the platform's GCP
+                # credit budget): 50/30 steps and a 384 octree resolution — well
+                # above Hunyuan3D's own quickstart defaults (30/20 steps, 256
+                # octree) — for materially sharper geometry and texture detail on
+                # realistic human/object subjects.
                 mesh = _pipeline["shape"](
                     image=img,
-                    num_inference_steps=30,
+                    num_inference_steps=50,
                     guidance_scale=5.5,
-                    octree_resolution=256,
+                    octree_resolution=384,
                 )
                 textured = _pipeline["texture"](
                     mesh=mesh,
                     image=img,
-                    num_inference_steps=20,
+                    num_inference_steps=30,
                     guidance_scale=7.5,
                 )
                 buf = io.BytesIO()
@@ -165,19 +228,21 @@ async def _run_inference(task_id: str, images: list[str], body_type: str) -> Non
             gcs_url = f"https://storage.googleapis.com/{GCS_BUCKET}/{blob_name}"
 
             elapsed = time.time() - t0
-            _tasks[task_id].update({
-                "status": "done",
-                "result_gcs_url": gcs_url,
-                "elapsed_ms": int(elapsed * 1000),
-            })
+            await _update_task(
+                task_id,
+                status="done",
+                result_gcs_url=gcs_url,
+                elapsed_ms=int(elapsed * 1000),
+            )
             log.info("[%s] done in %.1fs — %d bytes → %s", task_id, elapsed, len(glb_bytes), gcs_url)
 
         except Exception as exc:
-            _tasks[task_id].update({
-                "status": "failed",
-                "error": safe_error(exc, context=f"[{task_id}] inference"),
-                "elapsed_ms": int((time.time() - t0) * 1000),
-            })
+            await _update_task(
+                task_id,
+                status="failed",
+                error=safe_error(exc, context=f"[{task_id}] inference"),
+                elapsed_ms=int((time.time() - t0) * 1000),
+            )
 
 
 class InferRequest(BaseModel):
@@ -194,7 +259,10 @@ async def infer(
 ) -> dict:
     _require_api_key(authorization)
     task_id = str(uuid.uuid4())
-    _tasks[task_id] = {"task_id": task_id, "status": "queued", "model": "hunyuan3d-2.1"}
+    # Persist the "queued" record before responding — a poll can reach a
+    # different instance than this one the moment the 202 lands, and that
+    # instance has nothing in its local `_tasks` dict to fall back on.
+    await _update_task(task_id, status="queued", model="hunyuan3d-2.1")
     background_tasks.add_task(_run_inference, task_id, body.images, body.body_type)
     return {"task_id": task_id, "status": "queued"}
 
@@ -203,8 +271,21 @@ async def infer(
 async def get_task(task_id: str, authorization: str = Header(...)) -> dict:
     _require_api_key(authorization)
     task = _tasks.get(task_id)
-    if task is None:
+    if task is not None:
+        return task
+    # Not in this instance's local cache — fall back to the durable GCS
+    # record, which every instance writes to on every state transition.
+    loop = asyncio.get_event_loop()
+    try:
+        data = await loop.run_in_executor(None, _task_blob(task_id).download_as_bytes)
+    except NotFound:
         raise HTTPException(status_code=404, detail="task not found")
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502, detail=safe_error(exc, context="task lookup")
+        ) from exc
+    task = json.loads(data)
+    _tasks[task_id] = task
     return task
 
 
@@ -216,4 +297,6 @@ async def health() -> dict:
         "gpu_available": torch.cuda.is_available(),
         "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
         "pipeline_loaded": _pipeline is not None,
+        "ready": bool(_ready and _ready.is_set()),
+        "load_error": _load_error,
     }

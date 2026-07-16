@@ -2365,7 +2365,11 @@ async function boot(id) {
 		} catch { /* best-effort broadcast — a non-owner viewer simply can't push */ }
 	}
 	async function pollForgeJob(jobId, narrate) {
-		const deadline = Date.now() + 180000;
+		// Matches the 5-minute ceiling used by every other forge poll loop
+		// (src/forge.js, home-forge.js, forge-studio/forge.js, scene-compose.js) —
+		// higher-quality self-host inference (more diffusion steps, larger texture
+		// bake) runs longer than the old 3-minute budget assumed.
+		const deadline = Date.now() + 5 * 60 * 1000;
 		let lastStatus = 'queued';
 		while (Date.now() < deadline) {
 			await new Promise((r) => setTimeout(r, 3000)); // real poll interval, not fake progress
