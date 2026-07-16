@@ -78,6 +78,17 @@ SCRIBBLE_WEIGHTS_DIR = os.environ.get("SCRIBBLE_WEIGHTS_DIR", "/weights/triposg-
 RMBG_WEIGHTS_DIR = os.environ.get("RMBG_WEIGHTS_DIR", "/weights/rmbg-1.4")
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "1"))
 
+# Weight staging (same pattern as model-trellis): reading multi-GiB weight trees
+# through the GCS FUSE volume stalls for many minutes on a cold instance (rev
+# 00006 sat in from_pretrained/.to(cuda) for 10+ min streaming 7.4 GiB), while
+# an 8-way parallel storage-client download of the same tree lands in tens of
+# seconds. When the *_GCS_URI env is unset or staging fails, loading degrades to
+# the FUSE mount path exactly as before.
+WEIGHTS_GCS_URI = os.environ.get("WEIGHTS_GCS_URI", "")
+SCRIBBLE_WEIGHTS_GCS_URI = os.environ.get("SCRIBBLE_WEIGHTS_GCS_URI", "")
+RMBG_WEIGHTS_GCS_URI = os.environ.get("RMBG_WEIGHTS_GCS_URI", "")
+WEIGHTS_LOCAL_ROOT = os.environ.get("WEIGHTS_LOCAL_ROOT", "/tmp/triposg-weights")
+
 DTYPE = torch.float16
 
 # Upstream inference defaults (scripts/inference_triposg*.py in the TripoSG repo).
@@ -96,6 +107,49 @@ _ready: Optional[asyncio.Event] = None
 _tasks: dict[str, dict] = {}
 
 
+def _stage_tree(gcs_uri: str, name: str, fuse_dir: str) -> str:
+    """Download one weight tree from GCS to local disk with the storage client,
+    bypassing the FUSE mount. Returns the local dir on success, or the FUSE dir
+    to signal "load exactly as before". Never raises: a staging failure must
+    degrade to the mount, not crash the loader."""
+    if not gcs_uri.startswith("gs://"):
+        return fuse_dir
+    try:
+        from concurrent.futures import ThreadPoolExecutor
+
+        bucket_name, _, prefix = gcs_uri[len("gs://"):].partition("/")
+        client = storage.Client()
+        blobs = [b for b in client.list_blobs(bucket_name, prefix=prefix) if not b.name.endswith("/")]
+        if not blobs:
+            log.warning("weights staging: no objects under %s; using FUSE mount", gcs_uri)
+            return fuse_dir
+        local_dir = os.path.join(WEIGHTS_LOCAL_ROOT, name)
+
+        def _download(blob) -> int:
+            rel = blob.name[len(prefix):].lstrip("/")
+            dest = os.path.join(local_dir, rel)
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            # Reuse an already-staged object (same-instance warm restart) when
+            # its size matches, so a reload doesn't re-pull the tree.
+            if os.path.exists(dest) and blob.size is not None and os.path.getsize(dest) == blob.size:
+                return blob.size or 0
+            blob.download_to_filename(dest)
+            return blob.size or os.path.getsize(dest)
+
+        os.makedirs(local_dir, exist_ok=True)
+        t0 = time.time()
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            total = sum(pool.map(_download, blobs))
+        log.info(
+            "%s weights staged to %s in %.1fs (%d objects, %.2f GiB)",
+            name, local_dir, time.time() - t0, len(blobs), total / (1024 ** 3),
+        )
+        return local_dir
+    except Exception as exc:  # noqa: BLE001, degrade to the FUSE mount, never crash
+        log.warning("%s weights staging failed (%s); falling back to %s", name, exc, fuse_dir)
+        return fuse_dir
+
+
 def _load_models():
     """Load the image pipeline + RMBG at startup. The scribble pipeline is
     loaded lazily on the first scribble task so cold start pays for one model."""
@@ -103,10 +157,12 @@ def _load_models():
     from triposg.pipelines.pipeline_triposg import TripoSGPipeline
     from briarmbg import BriaRMBG
 
-    log.info("Loading TripoSG pipeline from %s", WEIGHTS_DIR)
-    _pipe = TripoSGPipeline.from_pretrained(WEIGHTS_DIR).to("cuda", DTYPE)
-    log.info("Loading RMBG-1.4 from %s", RMBG_WEIGHTS_DIR)
-    _rmbg_net = BriaRMBG.from_pretrained(RMBG_WEIGHTS_DIR).to("cuda")
+    weights_path = _stage_tree(WEIGHTS_GCS_URI, "triposg", WEIGHTS_DIR)
+    log.info("Loading TripoSG pipeline from %s", weights_path)
+    _pipe = TripoSGPipeline.from_pretrained(weights_path).to("cuda", DTYPE)
+    rmbg_path = _stage_tree(RMBG_WEIGHTS_GCS_URI, "rmbg-1.4", RMBG_WEIGHTS_DIR)
+    log.info("Loading RMBG-1.4 from %s", rmbg_path)
+    _rmbg_net = BriaRMBG.from_pretrained(rmbg_path).to("cuda")
     _rmbg_net.eval()
     log.info("TripoSG ready")
 
@@ -121,9 +177,12 @@ def _ensure_scribble_pipe():
                 TripoSGScribblePipeline,
             )
 
-            log.info("Loading TripoSG-scribble pipeline from %s", SCRIBBLE_WEIGHTS_DIR)
+            scribble_path = _stage_tree(
+                SCRIBBLE_WEIGHTS_GCS_URI, "triposg-scribble", SCRIBBLE_WEIGHTS_DIR
+            )
+            log.info("Loading TripoSG-scribble pipeline from %s", scribble_path)
             _scribble_pipe = TripoSGScribblePipeline.from_pretrained(
-                SCRIBBLE_WEIGHTS_DIR
+                scribble_path
             ).to("cuda", DTYPE)
             log.info("TripoSG-scribble ready")
     return _scribble_pipe

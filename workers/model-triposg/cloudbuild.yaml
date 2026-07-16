@@ -53,7 +53,7 @@ steps:
       - --allow-unauthenticated
       - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET}
       - --add-volume-mount=volume=weights,mount-path=/weights
-      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},WEIGHTS_DIR=/weights/triposg,SCRIBBLE_WEIGHTS_DIR=/weights/triposg-scribble,RMBG_WEIGHTS_DIR=/weights/rmbg-1.4,MAX_CONCURRENT=1
+      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},WEIGHTS_DIR=/weights/triposg,SCRIBBLE_WEIGHTS_DIR=/weights/triposg-scribble,RMBG_WEIGHTS_DIR=/weights/rmbg-1.4,MAX_CONCURRENT=1,WEIGHTS_GCS_URI=gs://${_WEIGHTS_BUCKET}/triposg,SCRIBBLE_WEIGHTS_GCS_URI=gs://${_WEIGHTS_BUCKET}/triposg-scribble,RMBG_WEIGHTS_GCS_URI=gs://${_WEIGHTS_BUCKET}/rmbg-1.4,WEIGHTS_LOCAL_ROOT=/tmp/triposg-weights
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest
 
 images:
