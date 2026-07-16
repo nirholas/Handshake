@@ -233,6 +233,7 @@ npm).
 - **API endpoints** — [api/](api) (serverless-style handlers, served in production by the [server/](server) Cloud Run container), [workers/](workers) (long-running workers)
 - **Examples & demos** — [examples/](examples), [multiplayer/](multiplayer)
 - **Marketing assets** — [marketing/](marketing) (produced promo videos + re-render scripts, e.g. [marketing/imessage-video/](marketing/imessage-video); source-of-truth assets, not shipped to production)
+- **Robinhood Chain (4663) developer tooling** — [robinhood/](robinhood), standalone packages published to their own `nirholas/*` GitHub repos (each with its own README): `erc8056` (ERC-8056 Scaled UI Amount reference impl), `hood-connect` (wallet onboarding kit), `hood-pay` (USDG checkout + payment links), `hood-alerts` (Telegram/Discord launch + whale alerts), `hood-status` (chain status page), `hood-tokenlist` (canonical token list), `hoodkit`/`hood402`/`robinhood-chain-sdk` (shared chain + x402 primitives other packages depend on), `hood-cli`, `hood-launcher`, `hood-mcp`, `hood-api`, `hood-js`, `hood-traders`, `robinhood-chain-examples`, `learn-robinhood-chain`. Distinct from the in-repo `/play` and `/markets/robinhood` product surfaces above, which live in this repo's own `api/`/`src/`.
 - **Cross-chain SDKs** — [sdk/](sdk), [solana-agent-sdk/](solana-agent-sdk), [agent-payments-sdk/](agent-payments-sdk), [agent-protocol-sdk/](agent-protocol-sdk)
 - **MCP integration** — [mcp-server/](mcp-server), [mcp-bridge/](mcp-bridge)
 - **Specs & protocol docs** — [specs/](specs)
