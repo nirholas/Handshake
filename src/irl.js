@@ -2377,6 +2377,7 @@ async function savePin(lat, lng, heading = 0, caption = '', anchor = null, place
 			};
 		}
 		const data = await r.json();
+		if (data.pin) _lastPlacedPinId = data.pin.id;
 		return data.pin
 			? { ok: true, id: data.pin.id, permanent: !!data.pin.permanent }
 			: { ok: false, error: 'error', message: saveErrorFallback() };
@@ -2497,6 +2498,7 @@ async function postRoomPin({ lat, lng, heading, room, anchor, vps = null }) {
 			updateNearbyBadge();
 			revealMyPinsBtn();
 		}
+		_lastPlacedPinId = pin.id;
 		return { ok: true, id: pin.id, permanent: data.pin.permanent === true };
 	} catch {
 		return { ok: false, error: 'network', message: saveErrorFallback('network') };
@@ -3493,6 +3495,11 @@ wireShareButton($('irl-share-btn'), {
 	getCanvas: () => canvas,
 	getVideo:  () => videoEl,
 	getIsAR:   () => arActive,
+	// When the caller has an active placement, the capture is minted into a
+	// permanent, unfurlable /irl/s/<token> link (api/irl/share.js) instead of a
+	// bare file — the growth loop back to /irl.
+	getPinId:       () => _lastPlacedPinId,
+	getDeviceToken: () => _deviceToken,
 	filename:  'three-ws-irl.png',
 	title:     'IRL · three.ws',
 });
@@ -7117,6 +7124,9 @@ let _roomCal = null;             // active one-gesture room-calibrate session, o
 // gold "your agent" label. The server re-checks ownership on every PATCH, so this
 // is convenience, not a security boundary.
 const _myPinIds = new Set();
+// The most recently placed pin this session — what the share button turns into a
+// permanent, unfurlable link (POST /api/irl/share). Null until a placement lands.
+let _lastPlacedPinId = null;
 function isOwnPin(pin) {
 	return _myPinIds.has(pin.id) || (gpsPin?.id != null && pin.id === gpsPin.id);
 }

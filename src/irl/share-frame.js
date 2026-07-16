@@ -39,6 +39,53 @@ export async function captureComposite({ canvas, video, isAR }) {
 }
 
 /**
+ * Upload a captured composite to POST /api/irl/share so it becomes a permanent,
+ * unfurlable link (og:image on X/Discord/iMessage) instead of a bare file that
+ * dead-ends in the recipient's Photos app. Best-effort: any failure (network,
+ * the pin got unpublished mid-share, rate limit) resolves to null so the caller
+ * falls straight back to the plain native-file share — minting a share link is
+ * a nice-to-have on top of sharing, never a blocker to it.
+ *
+ * @param {Blob} blob
+ * @param {object} opts
+ * @param {string} opts.pinId
+ * @param {string} [opts.deviceToken]
+ * @returns {Promise<string|null>} the permanent https://…/irl/s/<token> URL, or null
+ */
+export async function mintShareLink(blob, { pinId, deviceToken }) {
+	if (!pinId) return null;
+	try {
+		const headers = { 'content-type': 'application/octet-stream' };
+		if (deviceToken) headers['x-irl-device'] = deviceToken;
+		const r = await fetch(`/api/irl/share?pinId=${encodeURIComponent(pinId)}`, {
+			method: 'POST',
+			credentials: 'include',
+			headers,
+			body: blob,
+		});
+		if (!r.ok) return null;
+		const data = await r.json();
+		return typeof data.url === 'string' ? data.url : null;
+	} catch {
+		return null;
+	}
+}
+
+/** Share a URL through the native sheet, falling back to clipboard copy. */
+async function shareUrlOrCopy(url, { title = 'IRL · three.ws' } = {}) {
+	if (navigator.share) {
+		try {
+			await navigator.share({ title, url });
+			return 'shared';
+		} catch (err) {
+			if (err?.name === 'AbortError') throw err;
+		}
+	}
+	await navigator.clipboard.writeText(url);
+	return 'copied';
+}
+
+/**
  * Share a blob through the native sheet, falling back to a desktop download.
  *
  * @param {Blob} blob
@@ -81,11 +128,15 @@ function setButtonLabel(btn, text) {
  * @param {() => HTMLCanvasElement} opts.getCanvas
  * @param {() => HTMLVideoElement}  [opts.getVideo]
  * @param {() => boolean}           opts.getIsAR
+ * @param {() => string|null}       [opts.getPinId] the caller's currently-placed pin id, if any —
+ *   when present the capture is minted into a permanent share link (see mintShareLink) instead
+ *   of a bare file share.
+ * @param {() => string|null}       [opts.getDeviceToken]
  * @param {string}                  [opts.filename]
  * @param {string}                  [opts.title]
  * @returns {() => void} disposer
  */
-export function wireShareButton(btn, { getCanvas, getVideo, getIsAR, filename = 'three-ws-irl.png', title = 'IRL · three.ws' }) {
+export function wireShareButton(btn, { getCanvas, getVideo, getIsAR, getPinId, getDeviceToken, filename = 'three-ws-irl.png', title = 'IRL · three.ws' }) {
 	if (!btn) return () => {};
 
 	const onClick = async () => {
@@ -102,6 +153,16 @@ export function wireShareButton(btn, { getCanvas, getVideo, getIsAR, filename = 
 				isAR: !!getIsAR(),
 			});
 			if (blob) {
+				const pinId = getPinId?.();
+				if (pinId) {
+					const shareUrl = await mintShareLink(blob, { pinId, deviceToken: getDeviceToken?.() });
+					if (shareUrl) {
+						const result = await shareUrlOrCopy(shareUrl, { title });
+						setButtonLabel(btn, result === 'shared' ? 'Shared!' : 'Copied!');
+						restore();
+						return;
+					}
+				}
 				const result = await shareOrDownload(blob, { filename, title });
 				setButtonLabel(btn, result === 'shared' ? 'Shared!' : 'Saved!');
 				restore();

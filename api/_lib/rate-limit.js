@@ -540,6 +540,11 @@ export const limits = {
 	//   · irlInteractIp — log a tap/view/message (lighter; legit viewing fans out)
 	irlPinIp: (ip) => getLimiter('irl:pin:ip', { limit: 20, window: '10 m' }).limit(ip),
 	irlInteractIp: (ip) => getLimiter('irl:interact:ip', { limit: 60, window: '1 m' }).limit(ip),
+	// IRL shareable pin cards (api/irl/share.js) — uploads a real image to R2 per
+	// call, so this sits between irlPinIp and irlInteractIp: generous enough for a
+	// few reshares of the same moment, tight enough that scripting the upload path
+	// can't be used as free image-hosting.
+	irlShareIp: (ip) => getLimiter('irl:share:ip', { limit: 10, window: '10 m' }).limit(ip),
 	// Living Stages tip recording (api/stage/tip.js). Each call carries a real
 	// on-chain settlement signature and is deduped per signature, so the limiter
 	// only blunts a forger spamming distinct fake signatures at the recorder — a
