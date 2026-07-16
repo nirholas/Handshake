@@ -14,11 +14,15 @@
 //                                   bot must be an admin of the channel.
 //
 // Usage:
-//   node scripts/changelog-telegram.mjs                 # push unposted entries from the last 7 days
+//   node scripts/changelog-telegram.mjs                 # push unposted entries from the last 2 days
 //   node scripts/changelog-telegram.mjs --since=2026-06-01
 //   node scripts/changelog-telegram.mjs --all           # push every unposted entry (full backfill)
 //   node scripts/changelog-telegram.mjs --dry-run       # print what would be sent, send nothing
 //   node scripts/changelog-telegram.mjs --limit=5       # cap messages per run
+//   node scripts/changelog-telegram.mjs --seed-before=2026-07-14
+//                                       # mark every entry dated before 2026-07-14 as
+//                                       # posted WITHOUT sending — use once to retire a
+//                                       # backlog so only new entries ever go out
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -62,7 +66,7 @@ const limit = Number(opt('limit') || 10);
 
 const botToken = process.env.TELEGRAM_BOT_TOKEN;
 const chatId = process.env.TELEGRAM_CHANGELOG_CHAT_ID;
-if (!dryRun && (!botToken || !chatId)) {
+if (!dryRun && !opt('seed-before') && (!botToken || !chatId)) {
 	console.error('TELEGRAM_BOT_TOKEN and TELEGRAM_CHANGELOG_CHAT_ID must be set (see .env.example). Use --dry-run to preview without credentials.');
 	process.exit(1);
 }
@@ -85,16 +89,40 @@ const posted = new Set(state.posted);
 
 const entryKey = (e) => `${e.date}:${e.title}`;
 
+const seedBefore = opt('seed-before');
+if (seedBefore) {
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(seedBefore)) {
+		console.error('--seed-before expects a YYYY-MM-DD date.');
+		process.exit(1);
+	}
+	let seeded = 0;
+	for (const e of feed.entries) {
+		if (e.date < seedBefore && !posted.has(entryKey(e))) {
+			posted.add(entryKey(e));
+			seeded++;
+		}
+	}
+	writeFileSync(stateFile, JSON.stringify({ posted: [...posted] }, null, '\t') + '\n');
+	console.log(`Seeded ${seeded} entr${seeded === 1 ? 'y' : 'ies'} dated before ${seedBefore} as posted (nothing sent). State saved — commit data/changelog-telegram-state.json.`);
+	process.exit(0);
+}
+
 const defaultSince = (() => {
 	const d = new Date(Date.now() - 2 * 86400000);
 	return d.toISOString().slice(0, 10);
 })();
 const cutoff = pushAll ? '0000-00-00' : (since || defaultSince);
 
-const pending = feed.entries
+const unposted = feed.entries
 	.filter((e) => !posted.has(entryKey(e)) && e.date >= cutoff && (includeLaunches || e.type !== 'launch'))
-	.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
-	.slice(0, limit);
+	.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+// Keep the NEWEST entries when over the limit (posted in chronological order).
+// Taking the oldest here made every capped run drain the backlog and never
+// reach current updates.
+const pending = unposted.slice(-limit);
+if (unposted.length > pending.length) {
+	console.log(`Backlog: ${unposted.length - pending.length} older unposted entr${unposted.length - pending.length === 1 ? 'y' : 'ies'} skipped by --limit=${limit} (newest win). Use --limit or --since to include them, or seed them into the state file.`);
+}
 
 if (pending.length === 0) {
 	console.log(`Nothing new to post (cutoff ${cutoff}, ${posted.size} already posted).`);
