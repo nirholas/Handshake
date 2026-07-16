@@ -28,7 +28,7 @@
 //         then the public faucet. If all return 429 ("airdrop limit / dry"),
 //         fund manually at https://faucet.solana.com (devnet) — the script
 //         prints the address — or point --rpc at a premium devnet endpoint
-//         (Helius/Triton/QuickNode) whose faucet isn't exhausted.
+//         (Helius/Triton/Quicknode) whose faucet isn't exhausted.
 //   USDC: the USDC legs need devnet USDC (mint 4zMMC9srt5Ri5X14GAgXhaHii3Gn
 //         PAEERYPJgZJDncDU — the only quote mint the devnet program whitelists).
 //         Its mint authority is an external faucet, so fund manually at

@@ -562,7 +562,7 @@ const BLOCKS_PER_DAY = {
 };
 
 // Public RPC fallbacks per chain — tried in order. Override primary via env
-// RPC_URL_<chainId> with a keyed provider (Alchemy/Infura/QuickNode); the env
+// RPC_URL_<chainId> with a keyed provider (Alchemy/Infura/Quicknode); the env
 // URL is always tried first (see idxRpcUrls). The public fallbacks below are a
 // best-effort safety net only, so prod SHOULD still set RPC_URL_1 / RPC_URL_8453
 // for the most reliable indexing — but the keyless set is curated to ones that

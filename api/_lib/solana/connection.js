@@ -136,7 +136,7 @@ function cooldownMsFor(status, bodyText) {
 			: RATE_LIMIT_COOLDOWN_MS;
 	}
 	if (status === 401 || status === 403) return AUTH_COOLDOWN_MS;
-	// 404/410: the endpoint URL is dead or misrouted (expired QuickNode/Alchemy
+	// 404/410: the endpoint URL is dead or misrouted (expired Quicknode/Alchemy
 	// app, wrong path) — a persistent misconfiguration, so park it like an auth
 	// failure rather than re-probing every few minutes.
 	if (status === 404 || status === 410) return AUTH_COOLDOWN_MS;
@@ -174,7 +174,7 @@ function inferNetwork(url) {
 // Operator-supplied extra fallback URLs (comma-separated SOLANA_RPC_FALLBACK_URLS).
 // This is the zero-deploy lever for "spread load across as many free tiers as
 // possible": sign up for free-tier keys at several providers (Alchemy, dRPC,
-// QuickNode, Chainstack, Triton…), drop their URLs here, and EVERY Solana
+// Quicknode, Chainstack, Triton…), drop their URLs here, and EVERY Solana
 // connection rotates across them — so no single free quota becomes the bottleneck
 // and a provider running dry transparently fails over to the next.
 function extraFallbackUrls() {
