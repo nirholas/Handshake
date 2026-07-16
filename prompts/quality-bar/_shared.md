@@ -43,9 +43,14 @@ HF Spaces) stay as fallbacks. Never downgrade model quality or reasoning effort 
   - `model-trellis` LIVE (min=max=1, 8 CPU/32Gi). Self-hosted TRELLIS, primary free/standard lane.
   - `model-triposr` LIVE (min=1). Fast, lower quality. Holds a GPU permanently.
   - `unirig` LIVE. Auto-rigging (skeleton/skinning/ARKit-52).
-  - `model-hunyuan3d` deploy IN FLIGHT (rev 00005 waiting on GPU quota). Highest-quality lane.
-  - `model-triposg` FAILING to start (HealthCheckContainerError: likely model load exceeding
-    startup timeout; extend `--timeout` / add startup probe / lazy-load weights after bind).
+  - `model-hunyuan3d` LIVE (rev 00005+, min=1, wired as `GCP_HUNYUAN3D_URL`). Highest-quality lane.
+  - `model-triposg` LIVE as of 21:50 UTC (rev 00006, wired as `GCP_TRIPOSG_URL` on three-ws-api
+    rev 00142). It was failing for TWO stacked reasons, both fixed: (1) upstream leaves
+    peft/huggingface_hub unpinned and a bad transitive resolve crashed the diffusers import
+    chain (now pinned: peft==0.19.1, huggingface_hub==0.36.2); (2) its lifespan awaited the
+    full model load before uvicorn bound the port, so Cloud Run's 240s startup probe killed
+    it (now bind-first + background load + _ready gate, same pattern as model-trellis; use
+    that pattern in ANY new GPU worker).
   - `model-text2motion`, `workers/texture`, `workers/rembg`, `workers/segment`, `workers/stylize`,
     `workers/remesh`: sources in `workers/`, some live as `*-service`.
 - GPU quota: Cloud Run L4 = `NvidiaL4GpuAllocNoZonalRedundancyPerProjectRegion`, granted 3,
