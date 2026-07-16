@@ -19,8 +19,8 @@ const TYPE_LABELS = {
 };
 
 const TYPE_CREATE_CTA = {
-	avatar: { label: 'Create an avatar', href: '/create-avatar' },
-	agent: { label: 'Create an agent', href: '/agent/new' },
+	avatar: { label: 'Create an avatar', href: '/create#avatar-options' },
+	agent: { label: 'Create an agent', href: '/create-agent' },
 	model: { label: 'Forge a 3D model', href: '/forge' },
 	world: { label: 'Build a world', href: '/diorama' },
 	coin: { label: 'Launch a coin', href: '/launch' },

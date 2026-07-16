@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-07-16
+
+- **Fewer dead ends in the creation flow** — Every generic "create an agent" button (marketplace, memory tab, search) now points at the guided /create-agent wizard instead of a stale /agent/new link; that route stays reserved for the avatar hand-off it powers. The search page's avatar CTA no longer points at a route that never existed. /scan and /create/selfie (the two photo-to-avatar paths) now cross-link each other, and Build > Start here in the nav leads with "Create anything" straight to the /create hub. (`/create`) `[improvement]`
+
 ## 2026-07-15
 
 - **Docs · AR in ChatGPT** (`/docs/chatgpt-ar`) — How a sentence typed into ChatGPT becomes a 3D model standing in your room: the free generation lane, the arUrl contract, the device-aware AR launcher, living avatars, and link unfurls.

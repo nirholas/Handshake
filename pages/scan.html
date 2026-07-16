@@ -148,6 +148,22 @@
 				line-height: 1.55;
 			}
 
+			.alt-path {
+				color: var(--muted);
+				font-size: 0.88rem;
+				margin: -10px 0 24px;
+				line-height: 1.55;
+			}
+			.alt-path a {
+				color: var(--scan);
+				text-decoration: none;
+				font-weight: 500;
+			}
+			.alt-path a:hover,
+			.alt-path a:focus-visible {
+				text-decoration: underline;
+			}
+
 			.step {
 				display: none;
 				opacity: 0;
@@ -1381,6 +1397,11 @@
 					Point your camera and hold still. In about a minute you get a rigged 3D model of
 					yourself that drops into any app, game, or stream. Photos are downscaled in your
 					browser — nothing is stored on disk.
+				</p>
+				<p class="alt-path">
+					Rather upload a single photo?
+					<a href="/create/selfie">Selfie to avatar</a> builds the same rigged model from
+					one picture.
 				</p>
 
 				<div class="steps-strip" aria-hidden="true">

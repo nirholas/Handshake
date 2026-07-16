@@ -4271,7 +4271,7 @@ function renderMemoryTab() {
 				<p class="memory-intro-sub">Agents accumulate four types of memory as they interact — user context, feedback, project state, and references. This persistent layer makes every conversation smarter than the last.</p>
 			</div>
 			<div class="memory-intro-cta">
-				<a href="/agent/new" class="market-memory-cta-btn">+ New Agent</a>
+				<a href="/create-agent" class="market-memory-cta-btn">+ New Agent</a>
 			</div>
 		</div>
 
@@ -4358,7 +4358,7 @@ function renderMineGrid() {
 			],
 		});
 		grid.querySelector('[data-sk-action="mine-empty-new"]')?.addEventListener('click', () => {
-			location.href = '/agent/new';
+			location.href = '/create-agent';
 		});
 		return;
 	}
@@ -6050,7 +6050,7 @@ function bindEvents() {
 
 	// New Agent CTA on Mine tab
 	$('market-new-agent-btn')?.addEventListener('click', () => {
-		location.href = '/agent/new';
+		location.href = '/create-agent';
 	});
 
 	// Sidebar nav: intercept marketplace links so we route via SPA

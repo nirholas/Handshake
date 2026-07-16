@@ -128,6 +128,21 @@
 				margin: 0 0 28px;
 				line-height: 1.55;
 			}
+			.alt-path {
+				color: var(--muted);
+				font-size: 0.88rem;
+				margin: -14px 0 28px;
+				line-height: 1.55;
+			}
+			.alt-path a {
+				color: var(--accent);
+				text-decoration: none;
+				font-weight: 500;
+			}
+			.alt-path a:hover,
+			.alt-path a:focus-visible {
+				text-decoration: underline;
+			}
 			.step {
 				display: none;
 				opacity: 0;
@@ -1398,6 +1413,10 @@
 				<p class="sub">
 					Front-facing, good light, plain background. We downscale and upload locally —
 					your photo never sits on disk.
+				</p>
+				<p class="alt-path">
+					Prefer to use your camera live? The
+					<a href="/scan">3D Scanner</a> reconstructs you in real time from a quick scan.
 				</p>
 
 				<div class="hero-slot-wrap">

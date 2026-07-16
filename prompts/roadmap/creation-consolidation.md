@@ -1,6 +1,6 @@
 # Creation Surface Consolidation — Audit & Plan
 
-**Status:** Phase 1 (additive hub) shipped 2026-07-08. Phase 2 not started — see note below.
+**Status:** Phase 1 (additive hub) shipped 2026-07-08. Phase 2 executed 2026-07-16 for everything that survived re-verification against the live tree; several table rows turned out stale or unsafe (see the 07-16 note).
 **Audited:** 2026-06-12
 
 ---
@@ -33,6 +33,26 @@ redirects — it needs a dedicated pass with explicit owner review of the C1–C
 (especially the open decisions in §5: which photo→avatar implementation wins, what happens to
 `/start`, where `/pose` lives) before any code changes. A future session should pick up Phase 2
 here, not assume this consolidation is fully executed.
+## Progress note: 2026-07-16 (Phase 2 pass)
+
+Every §2/§4 cluster was re-verified against the tree before acting; the June audit had gone stale in several places. What was executed, and what was deliberately not:
+
+**Executed:**
+- **C3:** `/create/character` and `/create-character` had already been deleted (no pages, no routes; both hit the designed 404). The redirect-table 301s to `/play` now exist in `vercel.json`, so old links land on the character-capable worlds surface instead of a 404.
+- **C2 (links, not the 301):** the table's `301 /agent/new -> /create-agent` is unsafe and was NOT added. The §1.1 claim "(routes to same flow)" is stale: `/agent/new` routes to `pages/agent-edit.html`, which immediately creates a draft agent, and it is the target of the marketplace "Start an agent with this avatar" handoff (`/agent/new?avatar_id=&avatar_glb=&avatar_name=`, `startAgentFromAvatar()` in `src/marketplace.js`). A 301 breaks that handoff. Instead every generic "create an agent" entry link now converges on the canonical wizard: the marketplace "+ Create Agent" / "+ New Agent" CTAs (`pages/marketplace.html`, three call sites in `src/marketplace.js`) and the search-page agent CTA (`src/search-page.js`) point at `/create-agent`; the avatar handoff keeps `/agent/new`. Bonus fix: the search-page avatar CTA pointed at `/create-avatar`, a route that has never existed (dead link); it now points at `/create#avatar-options`.
+- **C1 (cross-link, not the merge):** both photo->avatar surfaces stay. Re-inspection shows they are distinct input methods, not duplicates: `/scan` is live-camera real-time reconstruction, `/create/selfie` is single-photo upload; the same "different input methods" logic §2 already applies to `/mocap-studio` vs `/pose`. Each hero now cross-links the other (`.alt-path` line under the subtitle), so they behave as one product with two input modes. Nav links `/create/selfie`; `/scan` stays reachable via `/features/scan`, search, tutorials, and the new cross-link. The §5.1 hard merge (one implementation at one URL) remains an owner decision.
+- **Nav (finishes Phase 1 step 2):** the `/create` hub itself was missing from the nav. Build > Start here now opens with "Create anything" -> `/create`. The `/create-agent` item was also relabeled from "Create an avatar" (a mislabel that collided with the avatar column) to "Create an agent".
+- **C6 (cross-link, not the merge):** the `/studio` "Your widget is live" modal now links `/playground` (§3.3 handoff). The `/embed` -> `/studio` 301 was NOT done: `/embed` is a live editor linked from 10+ surfaces (`features`, `create-next`, `marketplace`, `search`, `feature-discovery`, `getting-started`, `coincommunities-ui`) and `/studio` has no equivalent of its mode/size/position tuning, so the redirect would destroy working UX.
+
+**Found already done or stale (no action):**
+- **Step 10:** `/bulk-launch` is already admin-gated at `/admin/bulk-launch`; no public route exists.
+- **C5:** `/create-prompt` is not stranded; it is the nav-linked "Describe it to 3D" surface served at `/create/prompt`. `/create-review` is the live review step of the create flow (`src/create.js` navigates to it). `/avatar-studio-demo` is already deleted (no page, no route). `/avatar-embed` is the iframe target behind `/embed/avatar` used by SDK embeds; it must not be retired.
+- **C4:** `/avatar-edit` is orphaned but Avatar Studio has no edit mode (`avatar-studio.html` reads no URL params), so `301 /avatar-edit -> /avatar-studio?mode=edit&id=` has no working destination; redirecting would silently lose edit-by-id for bookmarked URLs. Left live. `/import/rpm` stays as a page: the hub links it as the import option and it supports URL import the hub's upload card does not.
+
+**Still open for future passes:** the `/agent/new` 301 (blocked until `/create-agent` supports the avatar handoff params), the C1 single-URL merge (§5.1 owner decision), `/avatar-edit` retirement (needs an Avatar Studio edit mode), the `/embed` -> `/studio` merge (needs feature parity in `/studio`), and the remaining Phase 3 handoffs.
+
+---
+
 **Problem:** 28 creation-related surfaces (18 nav-linked, 10 orphaned) presented as a flat menu of peer options. Users can't tell which tools are products, which are steps, and which are duplicates. The platform has no creation funnel — it has a pile of doors.
 
 **Goal:** One front door (`/create` hub organized by user intent), one canonical surface per capability, every tool's "done" state handing off to the next stage of the pipeline: **avatar → agent → deploy (embed / world / token)**.

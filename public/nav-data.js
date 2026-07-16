@@ -39,7 +39,12 @@ export const NAV_GROUPS = [
 				label: 'Start here',
 				items: [
 					{
-						title: 'Create an avatar',
+						title: 'Create anything',
+						href: '/create',
+						desc: 'The front door: pick agent, avatar, 3D model, or token world',
+					},
+					{
+						title: 'Create an agent',
 						href: '/create-agent',
 						desc: 'Guided wizard: name, 3D body, skills, personality → ship it',
 					},
