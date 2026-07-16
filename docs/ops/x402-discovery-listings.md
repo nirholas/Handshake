@@ -241,17 +241,21 @@ only gets endpoints *listed*; it does not feed the counters.
 The path to being counted, all Solana, no Base required:
 
 1. **One attributable fee payer.** Run the ring in sponsor mode
-   (`X402_RING_SELF_PAY=false` on the Cloud Run service) so the facilitator
-   sponsor `GGf9qBhJDCe1UUz4s4Vxq1uPPvcv7UW7sJTuj2Yo5XQj` co-signs and pays the
-   fee on every settle (2 signatures, ~10k lamports each). In self-pay mode
-   every buyer is its own fee payer and there is nothing stable to index.
-   Flipped live 2026-07-16 (revision 00143); 402 challenges now advertise the
-   sponsor in `accepts[].extra.feePayer`. Sponsor SOL is auto-refilled by the
-   treasury-topup cron (floor 0.03 SOL).
+   (`X402_RING_SELF_PAY=false` on the Cloud Run service) so one facilitator
+   sponsor address co-signs and pays the fee on every settle (2 signatures,
+   ~10k lamports each). In self-pay mode every buyer is its own fee payer and
+   there is nothing stable to index. Flipped live 2026-07-16 (revision 00143);
+   402 challenges advertise the sponsor in `accepts[].extra.feePayer`.
+   Owner picked the economy master `WwwuGbqHrwF5RG89KhUbmRWEvjnRH9k5kVM5p7T3WwW`
+   as the sponsor (rev 00149, secret version 2 of
+   `x402-fee-payer-secret-base58`); the original sponsor
+   `GGf9qBhJDCe1UUz4s4Vxq1uPPvcv7UW7sJTuj2Yo5XQj` carried ~4,100 settlements
+   2026-07-09 to 2026-07-16 and is listed as a deprecated address in the PR so
+   that history still counts. Sponsor SOL floor 0.03 (treasury-topup cron).
 2. **PR the facilitator into x402scan.** Add
    `packages/external/facilitators/src/facilitators/threews.ts` (config url
-   `https://three.ws/api/x402-facilitator`, the sponsor address above, USDC,
-   first tx 2026-07-09), export it from `facilitators/index.ts`, register it in
+   `https://three.ws/api/x402-facilitator`, both sponsor addresses above,
+   USDC), export it from `facilitators/index.ts`, register it in
    `lists/all.ts`, and add a 180x180 logo at `apps/scan/public/three-ws.png`.
    Once merged, their sync backfills from `dateOfFirstTransaction`.
 3. **Keep the ring settling.** The ring payer (`x402-ring-payer`,
