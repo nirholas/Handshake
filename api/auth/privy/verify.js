@@ -22,6 +22,7 @@ import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { parse } from '../../_lib/validate.js';
 import { seedDefaultAgent } from '../../_lib/seed-default-agent.js';
 import { logAudit } from '../../_lib/audit.js';
+import { tosAcceptanceFromBody, recordTosAcceptance } from '../../_lib/legal.js';
 
 const bodySchema = z.object({
 	token: z.string().min(10),
@@ -37,7 +38,8 @@ export default wrap(async (req, res) => {
 
 	if (!env.PRIVY_APP_ID) return error(res, 503, 'not_configured', 'Privy is not configured on this server');
 
-	const { token } = parse(bodySchema, await readJson(req));
+	const raw = await readJson(req);
+	const { token } = parse(bodySchema, raw);
 
 	let payload;
 	try {
@@ -121,6 +123,10 @@ export default wrap(async (req, res) => {
 	});
 	res.setHeader('set-cookie', sessionCookie(sessionToken));
 	logAudit({ userId, action: 'login:privy', req });
+	// Terms acceptance: the login/register pages show the agreement notice next
+	// to the Privy buttons and send tosAccepted with the verify call.
+	const tos = tosAcceptanceFromBody(raw);
+	if (tos) recordTosAcceptance({ userId, version: tos.version, context: 'privy', req });
 
 	const [userRow] = await sql`
 		select id, email, display_name, plan, avatar_url, created_at

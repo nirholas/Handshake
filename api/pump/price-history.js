@@ -134,15 +134,59 @@ function geckoParams(interval) {
 const _poolCache = new Map(); // mint → { address, expiresAt }
 const POOL_TTL_MS = 10 * 60_000;
 
-// GeckoTerminal answers 429 when the free tier's per-minute budget is spent.
-// One short retry rides out a burst rather than failing the whole request.
+// Concurrency gate for outbound GeckoTerminal calls — bounds how many of OUR
+// OWN requests are in flight at once. /terminal, /trades, and /pump-dashboard
+// each mount several chart widgets that poll different mints simultaneously,
+// so a single page load is itself a burst; without this gate that burst alone
+// can spend the free tier's per-minute budget before any external traffic is
+// involved. Excess callers queue briefly rather than firing in parallel.
+const GECKO_MAX_CONCURRENT = 4;
+let _geckoActive = 0;
+const _geckoQueue = [];
+
+function withGeckoSlot(fn) {
+	return new Promise((resolve, reject) => {
+		const run = () => {
+			_geckoActive++;
+			Promise.resolve()
+				.then(fn)
+				.then(resolve, reject)
+				.finally(() => {
+					_geckoActive--;
+					_geckoQueue.shift()?.();
+				});
+		};
+		if (_geckoActive < GECKO_MAX_CONCURRENT) run();
+		else _geckoQueue.push(run);
+	});
+}
+
+// GeckoTerminal answers 429 when the free tier's per-minute budget is spent,
+// and — under the same load — occasionally a transient 5xx or a dropped
+// connection. All three are worth riding out with a retry; only a real
+// non-transient response (200, 404, a real 4xx) is treated as final. Two
+// retries (three attempts total) with increasing backoff, on top of the
+// concurrency gate above, is deliberately more resilient than the single
+// 429-only retry this replaced — that version still 502'd under a genuine
+// poll-storm burst (observed live on /terminal and /trades 2026-07-16).
+const GECKO_RETRY_BACKOFFS_MS = [400, 900];
+
 async function geckoFetch(url, { timeoutMs }) {
-	for (let attempt = 0; attempt < 2; attempt++) {
-		const resp = await fetch(url, { headers: GECKO_HEADERS, signal: AbortSignal.timeout(timeoutMs) });
-		if (resp.status !== 429 || attempt === 1) return resp;
-		await new Promise((r) => setTimeout(r, 400));
+	let lastErr;
+	for (let attempt = 0; attempt <= GECKO_RETRY_BACKOFFS_MS.length; attempt++) {
+		try {
+			const resp = await withGeckoSlot(() =>
+				fetch(url, { headers: GECKO_HEADERS, signal: AbortSignal.timeout(timeoutMs) }),
+			);
+			const transient = resp.status === 429 || (resp.status >= 500 && resp.status < 600);
+			if (!transient || attempt === GECKO_RETRY_BACKOFFS_MS.length) return resp;
+		} catch (err) {
+			lastErr = err;
+			if (attempt === GECKO_RETRY_BACKOFFS_MS.length) throw err;
+		}
+		await new Promise((r) => setTimeout(r, GECKO_RETRY_BACKOFFS_MS[attempt]));
 	}
-	throw new Error('unreachable');
+	throw lastErr || new Error('unreachable');
 }
 
 // Thrown when the token genuinely has no market to chart — an honest empty
@@ -227,6 +271,51 @@ function recallGood(mint, interval) {
 	return hit;
 }
 
+// In-flight de-duplication, keyed the same as the fresh-data cache. A page
+// mounting several chart widgets (or two tabs open on the same chart) can
+// issue several near-simultaneous requests for the IDENTICAL mint+interval+
+// window before the first one has resolved — each of those used to run its
+// own independent Birdeye→Gecko→stale chain. Now every caller for the same
+// key shares one resolution, which — combined with the concurrency gate and
+// wider retry above — is what actually closes the poll-storm 502 rather than
+// just shrinking its blast radius.
+const _inflight = new Map(); // key → Promise<result descriptor>
+
+// Runs the Birdeye → GeckoTerminal → stale-cache chain once and returns a
+// plain descriptor the caller turns into an HTTP response. Never throws —
+// every failure mode is represented in the descriptor.
+async function resolveCandles({ mint, interval, from, to, key, now }) {
+	if (birdeyeConfigured()) {
+		try {
+			const data = await fetchBirdeyeOhlcv({ mint, interval, from, to });
+			_cache.set(key, { value: data, source: 'birdeye', expiresAt: now + TTL_MS });
+			if (_cache.size > 256) _cache.delete(_cache.keys().next().value);
+			rememberGood(mint, interval, data, 'birdeye');
+			return { kind: 'ok', data, source: 'birdeye' };
+		} catch {
+			// Fall through to GeckoTerminal.
+		}
+	}
+
+	try {
+		const data = await fetchGeckoOhlcv({ mint, interval, from, to });
+		_cache.set(key, { value: data, source: 'gecko', expiresAt: now + TTL_MS });
+		if (_cache.size > 256) _cache.delete(_cache.keys().next().value);
+		rememberGood(mint, interval, data, 'gecko');
+		return { kind: 'ok', data, source: 'gecko' };
+	} catch (err) {
+		// A token with no market has nothing to chart — say so plainly. This is a
+		// designed empty state, not an outage, so it is never served from stale.
+		if (err instanceof NoPoolError) return { kind: 'no_market' };
+		// Both live sources exhausted — fall through to the stale tier.
+	}
+
+	const stale = recallGood(mint, interval);
+	if (stale) return { kind: 'ok', data: stale.value, source: stale.source, stale: true, as_of: Math.floor(stale.at / 1000) };
+
+	return { kind: 'error' };
+}
+
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
 	if (!method(req, res, ['GET'])) return;
@@ -263,45 +352,26 @@ export default wrap(async (req, res) => {
 		);
 	}
 
-	// ── Attempt 1: Birdeye ─────────────────────────────────────────────────────
-	if (birdeyeConfigured()) {
-		try {
-			const data = await fetchBirdeyeOhlcv({ mint, interval, from, to });
-			_cache.set(key, { value: data, source: 'birdeye', expiresAt: now + TTL_MS });
-			if (_cache.size > 256) _cache.delete(_cache.keys().next().value);
-			rememberGood(mint, interval, data, 'birdeye');
-			return json(res, 200, { data, source: 'birdeye' }, { 'cache-control': 'public, max-age=15, s-maxage=30' });
-		} catch {
-			// Fall through to GeckoTerminal.
-		}
+	// Share one resolution across every concurrent caller for this exact key.
+	let pending = _inflight.get(key);
+	if (!pending) {
+		pending = resolveCandles({ mint, interval, from, to, key, now }).finally(() => _inflight.delete(key));
+		_inflight.set(key, pending);
 	}
+	const result = await pending;
 
-	// ── Attempt 2: GeckoTerminal (free, no API key) ───────────────────────────
-	try {
-		const data = await fetchGeckoOhlcv({ mint, interval, from, to });
-		_cache.set(key, { value: data, source: 'gecko', expiresAt: now + TTL_MS });
-		if (_cache.size > 256) _cache.delete(_cache.keys().next().value);
-		rememberGood(mint, interval, data, 'gecko');
-		return json(res, 200, { data, source: 'gecko' }, { 'cache-control': 'public, max-age=15, s-maxage=30' });
-	} catch (err) {
-		// A token with no market has nothing to chart — say so plainly. This is a
-		// designed empty state, not an outage, so it is never served from stale.
-		if (err instanceof NoPoolError) {
-			return error(res, 404, 'no_market', 'No liquidity pool exists for this coin yet, so it has no price history.');
-		}
-		// Both live sources exhausted — fall through to the stale tier.
+	if (result.kind === 'no_market') {
+		return error(res, 404, 'no_market', 'No liquidity pool exists for this coin yet, so it has no price history.');
 	}
-
-	// ── Attempt 3: the last real candles we hold ───────────────────────────────
-	const stale = recallGood(mint, interval);
-	if (stale) {
-		return json(
-			res,
-			200,
-			{ data: stale.value, source: stale.source, stale: true, as_of: Math.floor(stale.at / 1000) },
-			{ 'cache-control': 'public, max-age=10, s-maxage=10' },
-		);
+	if (result.kind === 'error') {
+		return error(res, 502, 'upstream_error', 'Price history is unavailable for this coin right now');
 	}
-
-	return error(res, 502, 'upstream_error', 'Price history is unavailable for this coin right now');
+	return json(
+		res,
+		200,
+		result.stale
+			? { data: result.data, source: result.source, stale: true, as_of: result.as_of }
+			: { data: result.data, source: result.source },
+		{ 'cache-control': result.stale ? 'public, max-age=10, s-maxage=10' : 'public, max-age=15, s-maxage=30' },
+	);
 });

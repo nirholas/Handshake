@@ -20,6 +20,7 @@ import { referralCodeCandidates, normalizeReferralCode } from '../_lib/referrals
 import { seedDefaultAgent } from '../_lib/seed-default-agent.js';
 import { recordEvent } from '../_lib/usage.js';
 import { logAudit } from '../_lib/audit.js';
+import { tosAcceptanceFromBody, recordTosAcceptance } from '../_lib/legal.js';
 import { z } from 'zod';
 
 const APP_ORIGIN = process.env.APP_ORIGIN || 'https://three.ws';
@@ -47,7 +48,8 @@ async function handleLogin(req, res) {
 		const rl = await limits.authIp(ip);
 		if (!rl.success) return rateLimited(res, rl, 'too many attempts; try again later', { captcha_available: true });
 	}
-	const body = parse(loginBody, await readJson(req));
+	const raw = await readJson(req);
+	const body = parse(loginBody, raw);
 	const isEmail = body.email.includes('@');
 	const rows = isEmail
 		? await sql`select id, email, password_hash, display_name, plan, avatar_url, referral_code from users where email = ${body.email} and deleted_at is null limit 1`
@@ -65,6 +67,11 @@ async function handleLogin(req, res) {
 	const token = await createSession({ userId: user.id, userAgent: req.headers['user-agent'], ip });
 	res.setHeader('set-cookie', sessionCookie(token));
 	logAudit({ userId: user.id, action: 'login', req });
+	// The login form carries a "By signing in you agree…" notice, so each
+	// sign-in re-affirms the current Terms — this is how pre-clickwrap
+	// accounts converge onto a recorded acceptance.
+	const tos = tosAcceptanceFromBody(raw);
+	if (tos) recordTosAcceptance({ userId: user.id, version: tos.version, context: 'login', req });
 	const { password_hash: _p, ...safe } = user;
 	return json(res, 200, { user: safe });
 }
@@ -138,6 +145,13 @@ async function handleRegister(req, res) {
 	const rl = await limits.registerIp(ip);
 	if (!rl.success) return rateLimited(res, rl, 'too many signups from this IP');
 	const raw = await readJson(req);
+	// Clickwrap gate: account creation requires explicit Terms acceptance.
+	// The register form gates its submit button on the agreement checkbox and
+	// sends tosAccepted; a request without it never creates an account.
+	const tos = tosAcceptanceFromBody(raw);
+	if (!tos) {
+		return error(res, 400, 'tos_required', 'you must accept the Terms of Service and Privacy Policy to create an account');
+	}
 	let email_val, displayName_val, passwordVal, referralCode;
 	if (raw.username && !raw.email) {
 		const body = parse(usernameRegisterBody, raw);
@@ -188,6 +202,7 @@ async function handleRegister(req, res) {
 			meta: { referred_user_id: String(user.id), source: 'signup' },
 		});
 	}
+	recordTosAcceptance({ userId: user.id, version: tos.version, context: 'register', req });
 	// Fire-and-forget: every new account gets a starter draft agent so the
 	// marketplace's "My Agents" tab and onboarding flow have something to show.
 	queueMicrotask(() => seedDefaultAgent(user.id));

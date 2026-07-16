@@ -23,6 +23,14 @@
 			<description>Do not pick a coin, pick a basket of proven traders. The Meta-Allocator spreads a budget across the top verified pump.fun trader agents, ranked by risk-adjusted on-chain track record and diversified across trading styles, then tells you how to rebalance. Non-custodial: it returns a plan you act on one leader at a time, never a transaction.</description>
 		</item>
 		<item>
+			<title>three.ws Joins the QuickNode Startup Program</title>
+			<link>https://three.ws/blog/three-ws-quicknode-startup-program</link>
+			<guid isPermaLink="false">2026-07-16:three.ws Joins the QuickNode Startup Program</guid>
+			<pubDate>Thu, 16 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>three.ws has been accepted into the QuickNode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.</description>
+		</item>
+		<item>
 			<title>3D generation now switches engines by itself when one fails</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-07-16:3D generation now switches engines by itself when one fails</guid>
@@ -4980,7 +4988,7 @@
 			<guid isPermaLink="false">2026-06-27:Partner Ecosystem</guid>
 			<pubDate>Sat, 27 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle. The cloud and AI platforms powering 3D AI agents at enterprise scale.</description>
+			<description>three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, QuickNode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.</description>
 		</item>
 		<item>
 			<title>Recording Pipeline — the data loop, live</title>

@@ -53,6 +53,12 @@ alter table users add column if not exists account_tier text
 alter table users add column if not exists onboarding_tour_seen_at timestamptz;
 alter table users add column if not exists onboarding_tour_completed_at timestamptz;
 
+-- Terms of Service clickwrap state (api/_lib/migrations/20260716100000_users_tos_acceptance.sql).
+-- Stamped at signup and re-stamped on later sign-ins; the append-only
+-- evidentiary record is the audit_log 'tos-accept' row. See api/_lib/legal.js.
+alter table users add column if not exists tos_accepted_version int;
+alter table users add column if not exists tos_accepted_at timestamptz;
+
 -- ── user_follows — the social graph ──────────────────────────────────────────
 -- A directed follow edge: follower_id follows following_id. Composite PK makes
 -- a follow idempotent (one edge per pair) and the toggle a single upsert/delete.

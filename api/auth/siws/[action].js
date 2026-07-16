@@ -12,6 +12,7 @@ import { parse } from '../../_lib/validate.js';
 import { randomToken, hmacSha256, sha256, constantTimeEquals } from '../../_lib/crypto.js';
 import { parseSiwsMessage, verifySiwsSignature } from '../../_lib/siws.js';
 import { seedDefaultAgent } from '../../_lib/seed-default-agent.js';
+import { tosAcceptanceFromBody, recordTosAcceptance } from '../../_lib/legal.js';
 
 const NONCE_TTL_SEC = 5 * 60;
 const CSRF_COOKIE = '__Host-csrf-siws';
@@ -109,7 +110,8 @@ async function handleVerify(req, res) {
 	const rl = await limits.authIp(ip);
 	if (!rl.success) return rateLimited(res, rl, 'too many attempts');
 
-	const body = parse(verifyBody, await readJson(req));
+	const raw = await readJson(req);
+	const body = parse(verifyBody, raw);
 
 	// 1. Parse SIWS message.
 	const fields = parseSiwsMessage(body.message);
@@ -248,6 +250,12 @@ async function handleVerify(req, res) {
 			}
 		}
 	}
+
+	// Terms acceptance: first-party sign-in surfaces put the agreement in the
+	// signed SIWS statement and send tosAccepted alongside — record it for both
+	// brand-new and returning wallets so acceptance converges on every sign-in.
+	const tos = tosAcceptanceFromBody(raw);
+	if (tos) recordTosAcceptance({ userId, version: tos.version, context: 'siws', req });
 
 	// 8. Issue session.
 	await destroySession(req);

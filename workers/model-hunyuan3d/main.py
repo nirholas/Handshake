@@ -1,5 +1,6 @@
 """
-Hunyuan3D-2.1 inference service — single-image to textured 3D mesh.
+Hunyuan3D-2 inference service — single-image to textured 3D mesh
+(shape DiT → cleanup → multiview paint, via Tencent's hy3dgen).
 
 API contract (consumed by the Pipeline Controller):
   POST /infer   { images: [data-uri|url, ...], body_type?: str, job_id?: str }
@@ -10,17 +11,19 @@ API contract (consumed by the Pipeline Controller):
   GET  /health    → { ok, model, gpu_available }
 
 The model weights are loaded from a GCS volume mount at /weights to avoid
-re-downloading ~10 GB on every cold start. Pre-populate the bucket:
+re-downloading tens of GB on every cold start. Pre-populate the bucket
+(hy3dgen loads hunyuan3d-dit-v2-0, hunyuan3d-delight-v2-0 and
+hunyuan3d-paint-v2-0 from this tree):
 
   # One-time setup (run locally or in Cloud Shell):
   pip install huggingface_hub
-  huggingface-cli download tencent/Hunyuan3D-2.1 --local-dir /tmp/hunyuan3d-2.1
-  gsutil -m cp -r /tmp/hunyuan3d-2.1 gs://three-ws-model-weights/hunyuan3d-2.1/
+  hf download tencent/Hunyuan3D-2 --local-dir /tmp/hunyuan3d-2
+  gcloud storage rsync --recursive /tmp/hunyuan3d-2 gs://three-ws-model-weights/hunyuan3d-2
 
 Environment variables:
   API_KEY           — shared bearer secret
   GCS_BUCKET        — Cloud Storage bucket for output meshes
-  WEIGHTS_DIR       — local path to model weights (default: /weights/hunyuan3d-2.1)
+  WEIGHTS_DIR       — local path to model weights (default: /weights/hunyuan3d-2)
   MAX_CONCURRENT    — max parallel inferences (default: 1)
 """
 
@@ -59,7 +62,7 @@ log = logging.getLogger("hunyuan3d")
 
 API_KEY = os.environ["API_KEY"]
 GCS_BUCKET = os.environ["GCS_BUCKET"]
-WEIGHTS_DIR = os.environ.get("WEIGHTS_DIR", "/weights/hunyuan3d-2.1")
+WEIGHTS_DIR = os.environ.get("WEIGHTS_DIR", "/weights/hunyuan3d-2")
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "1"))
 
 _pipeline = None
@@ -95,29 +98,40 @@ async def _update_task(task_id: str, **fields) -> dict:
 
 def _load_pipeline():
     global _pipeline
+    # hy3dgen (Tencent/Hunyuan3D-2, pinned in the Dockerfile) — the 2.0 package
+    # whose class registry matches the hunyuan3d-*-v2-0 checkpoints staged in
+    # the weights bucket. The 2.1 checkpoints target hy3dshape.* classes from a
+    # different repo and do NOT load through hy3dgen.
+    from hy3dgen.rembg import BackgroundRemover
     from hy3dgen.shapegen import Hunyuan3DDiTFlowMatchingPipeline
     from hy3dgen.texgen import Hunyuan3DPaintPipeline
 
     log.info("Loading shape generation pipeline from %s", WEIGHTS_DIR)
+    # from_pretrained takes hy3dgen kwargs (dtype/device), not diffusers'
+    # torch_dtype, and loads straight onto the device — no .to() afterwards.
     shape_pipe = Hunyuan3DDiTFlowMatchingPipeline.from_pretrained(
         WEIGHTS_DIR,
-        subfolder="hunyuan3d-dit-v2-1",
-        torch_dtype=torch.float16,
+        subfolder="hunyuan3d-dit-v2-0",
+        device="cuda",
+        dtype=torch.float16,
         use_safetensors=True,
+        variant="fp16",
     )
-    shape_pipe = shape_pipe.to("cuda")
 
     log.info("Loading texture generation pipeline from %s", WEIGHTS_DIR)
+    # Full-quality paint (not -turbo): the platform's realism bar over speed.
+    # Loads the delight model from WEIGHTS_DIR/hunyuan3d-delight-v2-0 itself.
     tex_pipe = Hunyuan3DPaintPipeline.from_pretrained(
         WEIGHTS_DIR,
-        subfolder="hunyuan3d-paint-v2-1",
-        torch_dtype=torch.float16,
-        use_safetensors=True,
+        subfolder="hunyuan3d-paint-v2-0",
     )
-    tex_pipe = tex_pipe.to("cuda")
 
-    _pipeline = {"shape": shape_pipe, "texture": tex_pipe}
-    log.info("Hunyuan3D-2.1 pipelines loaded")
+    _pipeline = {
+        "shape": shape_pipe,
+        "texture": tex_pipe,
+        "rembg": BackgroundRemover(),
+    }
+    log.info("Hunyuan3D-2 pipelines loaded")
 
 
 async def _load_pipeline_bg():
@@ -130,10 +144,10 @@ async def _load_pipeline_bg():
     try:
         await loop.run_in_executor(None, _load_pipeline)
         _ready.set()
-        log.info("Hunyuan3D-2.1 pipeline ready")
+        log.info("Hunyuan3D-2 pipeline ready")
     except Exception as exc:  # noqa: BLE001 — surfaced via /health + task status
         _load_error = safe_error(exc, context="model load")
-        log.error("Hunyuan3D-2.1 pipeline load FAILED: %s", exc)
+        log.error("Hunyuan3D-2 pipeline load FAILED: %s", exc)
 
 
 @asynccontextmanager
@@ -196,23 +210,41 @@ async def _run_inference(task_id: str, images: list[str], body_type: str) -> Non
             img = await loop.run_in_executor(None, _decode_image, images[0])
 
             def _generate():
-                # Quality over speed (GPU time is cheap against the platform's GCP
-                # credit budget): 50/30 steps and a 384 octree resolution — well
-                # above Hunyuan3D's own quickstart defaults (30/20 steps, 256
-                # octree) — for materially sharper geometry and texture detail on
-                # realistic human/object subjects.
+                from hy3dgen.shapegen.postprocessors import (
+                    DegenerateFaceRemover,
+                    FaceReducer,
+                    FloaterRemover,
+                )
+
+                # The shape DiT is conditioned on the isolated subject; a busy
+                # background bleeds into geometry. Match the upstream demo: cut
+                # the background first unless the caller already sent RGBA.
+                subject = img if img.mode == "RGBA" else _pipeline["rembg"](img)
+
+                # Quality over speed (GPU time is cheap against the platform's
+                # GCP credit budget): 50 steps at 384 octree resolution — above
+                # the quickstart defaults (30 steps, 256) — for sharper geometry
+                # on realistic human/object subjects. The pipeline returns a
+                # list of trimesh objects; single image → take the first.
                 mesh = _pipeline["shape"](
-                    image=img,
+                    image=subject,
                     num_inference_steps=50,
                     guidance_scale=5.5,
                     octree_resolution=384,
-                )
-                textured = _pipeline["texture"](
-                    mesh=mesh,
-                    image=img,
-                    num_inference_steps=30,
-                    guidance_scale=7.5,
-                )
+                )[0]
+
+                # Upstream's standard cleanup chain before painting: drop
+                # floating debris and degenerate faces, then decimate to a
+                # budget the multiview paint pipeline handles well. 40k faces
+                # keeps far more surface detail than the demo's default and
+                # still textures in one pass on the L4.
+                mesh = FloaterRemover()(mesh)
+                mesh = DegenerateFaceRemover()(mesh)
+                mesh = FaceReducer()(mesh, max_facenum=40_000)
+
+                # Paint takes (mesh, image) positionally and manages its own
+                # diffusion schedule — it accepts no step/guidance kwargs.
+                textured = _pipeline["texture"](mesh, subject)
                 buf = io.BytesIO()
                 textured.export(buf, file_type="glb")
                 return buf.getvalue()
@@ -262,7 +294,7 @@ async def infer(
     # Persist the "queued" record before responding — a poll can reach a
     # different instance than this one the moment the 202 lands, and that
     # instance has nothing in its local `_tasks` dict to fall back on.
-    await _update_task(task_id, status="queued", model="hunyuan3d-2.1")
+    await _update_task(task_id, status="queued", model="hunyuan3d-2")
     background_tasks.add_task(_run_inference, task_id, body.images, body.body_type)
     return {"task_id": task_id, "status": "queued"}
 
@@ -293,7 +325,7 @@ async def get_task(task_id: str, authorization: str = Header(...)) -> dict:
 async def health() -> dict:
     return {
         "ok": True,
-        "model": "hunyuan3d-2.1",
+        "model": "hunyuan3d-2",
         "gpu_available": torch.cuda.is_available(),
         "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
         "pipeline_loaded": _pipeline is not None,

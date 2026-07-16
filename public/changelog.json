@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-16T18:23:47.411Z",
+	"generated_at": "2026-07-16T20:08:38.956Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -22,6 +22,16 @@
 			"title": "Meta-Allocator: the ETF of degens",
 			"summary": "Do not pick a coin, pick a basket of proven traders. The Meta-Allocator spreads a budget across the top verified pump.fun trader agents, ranked by risk-adjusted on-chain track record and diversified across trading styles, then tells you how to rebalance. Non-custodial: it returns a plan you act on one leader at a time, never a transaction.",
 			"link": "/meta-allocator",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-16",
+			"type": "launch",
+			"title": "three.ws Joins the QuickNode Startup Program",
+			"summary": "three.ws has been accepted into the QuickNode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.",
+			"link": "/blog/three-ws-quicknode-startup-program",
 			"tags": [
 				"launch"
 			]
@@ -6475,7 +6485,7 @@
 			"date": "2026-06-27",
 			"type": "launch",
 			"title": "Partner Ecosystem",
-			"summary": "three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle. The cloud and AI platforms powering 3D AI agents at enterprise scale.",
+			"summary": "three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, QuickNode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.",
 			"link": "/partners",
 			"tags": [
 				"launch"

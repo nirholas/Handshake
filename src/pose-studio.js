@@ -5,6 +5,7 @@
 // and PNG export. Task 2 layers a keyframe timeline on top of this foundation.
 
 import {
+	ACESFilmicToneMapping,
 	AmbientLight,
 	Box3,
 	BoxGeometry,
@@ -18,9 +19,10 @@ import {
 	Mesh,
 	MeshBasicMaterial,
 	MeshStandardMaterial,
-	PCFShadowMap,
+	PCFSoftShadowMap,
 	PerspectiveCamera,
 	Plane,
+	PMREMGenerator,
 	Quaternion,
 	Raycaster,
 	Scene,
@@ -30,6 +32,7 @@ import {
 	Vector3,
 	WebGLRenderer,
 } from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -204,7 +207,14 @@ function setupScene(canvas, hudStatus) {
 	});
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 	renderer.shadowMap.enabled = true;
-	renderer.shadowMap.type = PCFShadowMap;
+	renderer.shadowMap.type = PCFSoftShadowMap;
+	// Filmic response + image-based lighting, matching the IRL/avatar-sdk render
+	// stack — PBR materials read flat and plasticky under bare analytic lights.
+	renderer.toneMapping = ACESFilmicToneMapping;
+	renderer.toneMappingExposure = 1.1;
+
+	const pmrem = new PMREMGenerator(renderer);
+	scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
 	const controls = new OrbitControls(camera, canvas);
 	controls.enableDamping = true;

@@ -228,19 +228,34 @@ async def _update_task(task_id: str, **fields) -> dict:
 # Per-request quality knobs, clamped to safe envelopes for a 24 GB L4.
 # Defaults are the platform's production quality bar, not the TRELLIS demo's
 # (steps=12, simplify=0.95, texture_size=1024): GPU time is cheap against the
-# platform's GCP credit budget, so both diffusion stages run ~2x the demo step
-# count and the texture bake runs at 2x resolution by default. Callers may
-# still override per request (e.g. a lower-cost preview lane).
+# platform's GCP credit budget ($100k+ provisioned, owner has explicitly signed
+# off on spending it here), so both diffusion stages run well past the demo
+# step count and the texture bake runs at the model's max resolution by
+# default. Callers may still override per request (e.g. a lower-cost preview
+# lane). Measured warm cost at the PRIOR defaults (steps=25/25, texture=2048,
+# simplify=0.90) was ~50s/asset (docs/ops/gcp-credits.md) against a 300s client
+# poll budget (src/home-forge.js MAX_POLL_MS) — ample headroom to push further:
+#   - ss_steps/slat_steps 25→40: sharper structure and surface detail. Cost
+#     scales roughly linearly with steps, so ~1.6x the diffusion time.
+#   - texture_size 2048→4096 (the clamp ceiling): texture baking is a
+#     resize/encode pass, not a diffusion stage, so this is a small time cost
+#     for a large perceptual win — resolution is one of the single biggest
+#     levers on whether a result reads as "real" vs "generated."
+#   - simplify 0.90→0.75: keeps meaningfully more geometry (25% of triangles
+#     removed instead of 90%) — low-poly faceting is one of the most obvious
+#     tells of AI-generated 3D, and this is otherwise-idle GPU decimation cost.
+# Together these land well inside the poll budget (est. ~90-120s warm) while
+# meaningfully closing the gap toward a photograph-real result.
 # `simplify` is the FRACTION OF TRIANGLES REMOVED by to_glb's decimation —
 # lower keeps more geometry. Raising steps sharpens structure and appearance
 # at roughly linear GPU-time cost; the L4 has headroom (MAX_CONCURRENT=1).
 _QUALITY_DEFAULTS = {
-    "ss_steps": 25,
-    "slat_steps": 25,
+    "ss_steps": 40,
+    "slat_steps": 40,
     "ss_cfg": 7.5,
     "slat_cfg": 3.0,
-    "simplify": 0.90,
-    "texture_size": 2048,
+    "simplify": 0.75,
+    "texture_size": 4096,
 }
 
 

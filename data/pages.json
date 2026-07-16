@@ -246,7 +246,7 @@
 				{
 					"path": "/partners",
 					"title": "Partner Ecosystem",
-					"description": "three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle. The cloud and AI platforms powering 3D AI agents at enterprise scale.",
+					"description": "three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, QuickNode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.",
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-06-27"
@@ -2317,6 +2317,15 @@
 			"title": "Blog",
 			"description": "Long-form announcements, launches, and writing from three.ws.",
 			"pages": [
+				{
+					"path": "/blog/three-ws-quicknode-startup-program",
+					"title": "three.ws Joins the QuickNode Startup Program",
+					"description": "three.ws has been accepted into the QuickNode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"lastmod": "2026-07-16",
+					"added": "2026-07-16"
+				},
 				{
 					"path": "/blog/three-ws-alibaba-cloud-partnership",
 					"title": "three.ws Joins the Alibaba Cloud Partner Network",

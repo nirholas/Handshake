@@ -2,6 +2,23 @@
   "_readme": "Curated RSS items for https://three.ws/rss/announcements.xml. Edit this file to control exactly what HackerNoon (and any RSS reader) sees. Each entry needs: id (stable slug), title, date (ISO 8601), body_html. Optional: link, author, summary, tags. Items are served newest-first by date; cap is 80. Last merged from data/archives/trythreews_tweets_2026-06-03.json on 2026-06-05 (102 total items, merged June 2026 posts).",
   "items": [
     {
+      "id": "quicknode-startup-program",
+      "slug": "quicknode-startup-program",
+      "title": "three.ws Joins the QuickNode Startup Program",
+      "date": "2026-07-16T12:00:00.000Z",
+      "author": "three.ws",
+      "link": "https://three.ws/blog/three-ws-quicknode-startup-program",
+      "summary": "three.ws has been accepted into the QuickNode Startup Program and approved for free infrastructure credits: more RPC headroom for the Solana-first agent economy, provider redundancy, and QuickNode's founder network.",
+      "body_html": "<p><strong>three.ws has been accepted into the QuickNode Startup Program</strong> and approved for free infrastructure credits. QuickNode is one of the most trusted blockchain infrastructure platforms in the industry: globally distributed RPC endpoints, real-time data streams, and APIs across the major chains.</p>\n<h2>Why it matters</h2>\n<p>Everything on three.ws that touches a chain touches an RPC endpoint. Agents hold real Solana wallets and sign real transactions; the platform verifies x402 micropayment settlements on-chain, streams pump.fun trade activity into agent reactions, snapshots token state for the markets pages, and confirms $three payments for premium passes and in-world purchases. Every one of those paths is a steady stream of RPC calls.</p>\n<ul>\n<li><strong>More Solana headroom</strong> for the wallet crawls, settlement verification, and live token data the agent economy runs on. Solana is the home chain of three.ws.</li>\n<li><strong>Provider redundancy.</strong> The platform already routes around degraded RPC providers automatically; another first-class provider means fewer degraded minutes.</li>\n<li><strong>Multi-chain reach</strong> across the EVM rails (Base, Polygon) that x402 payments also settle on.</li>\n<li><strong>Founder network:</strong> QuickNode's private web3 founder community and partner discounts.</li>\n</ul>\n<p>three.ws now builds with infrastructure support from AWS, Google Cloud, IBM, Alibaba Cloud, NVIDIA, and QuickNode. Full announcement: <a href=\"https://three.ws/blog/three-ws-quicknode-startup-program\" rel=\"noopener\">three.ws/blog</a> · Partner ecosystem: <a href=\"https://three.ws/partners\" rel=\"noopener\">three.ws/partners</a></p>",
+      "tags": [
+        "partnership",
+        "quicknode",
+        "infrastructure",
+        "solana",
+        "rpc"
+      ]
+    },
+    {
       "id": "text-to-3d-is-live",
       "slug": "text-to-3d-is-live",
       "title": "Text to 3D Is Live — Type a Prompt, Download a 3D Model",

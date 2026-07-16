@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-16T18:23:47.396Z",
+	"generated_at": "2026-07-16T20:08:38.942Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -298,7 +298,7 @@
 				{
 					"path": "/partners",
 					"title": "Partner Ecosystem",
-					"description": "three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle. The cloud and AI platforms powering 3D AI agents at enterprise scale.",
+					"description": "three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, QuickNode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.",
 					"added": "2026-06-27",
 					"auth": null,
 					"indexable": true,
@@ -2935,6 +2935,16 @@
 			"description": "Long-form announcements, launches, and writing from three.ws.",
 			"pages": [
 				{
+					"path": "/blog/three-ws-quicknode-startup-program",
+					"title": "three.ws Joins the QuickNode Startup Program",
+					"description": "three.ws has been accepted into the QuickNode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.",
+					"added": "2026-07-16",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/blog/three-ws-alibaba-cloud-partnership",
 					"title": "three.ws Joins the Alibaba Cloud Partner Network",
 					"description": "three.ws is now an Alibaba Cloud Partner, bringing Qwen foundation models and Asia-Pacific cloud infrastructure to the three.ws 3D AI agent platform.",
@@ -3389,6 +3399,16 @@
 					"path": "/news/",
 					"title": "News & Announcements",
 					"description": "Product launches, integrations, and announcements from three.ws.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/news/quicknode-startup-program",
+					"title": "three.ws Joins the QuickNode Startup Program",
+					"description": "three.ws has been accepted into the QuickNode Startup Program and approved for free infrastructure credits: more RPC headroom for the Solana-first agent economy, provider redundancy, and QuickNode's founder network.",
 					"added": null,
 					"auth": null,
 					"indexable": true,

@@ -12,6 +12,7 @@ import { randomToken, hmacSha256, constantTimeEquals } from '../../_lib/crypto.j
 import { env } from '../../_lib/env.js';
 import { parse } from '../../_lib/validate.js';
 import { seedDefaultAgent } from '../../_lib/seed-default-agent.js';
+import { tosAcceptanceFromBody, recordTosAcceptance } from '../../_lib/legal.js';
 
 const NONCE_TTL_SEC = 5 * 60;
 const CSRF_COOKIE = '__Host-csrf-siwe';
@@ -108,7 +109,8 @@ async function handleVerify(req, res) {
 	const rl = await limits.authIp(ip);
 	if (!rl.success) return rateLimited(res, rl, 'too many attempts');
 
-	const body = parse(verifyBody, await readJson(req));
+	const raw = await readJson(req);
+	const body = parse(verifyBody, raw);
 
 	// 1. Parse SIWE message.
 	const fields = parseSiweMessage(body.message);
@@ -277,6 +279,12 @@ async function handleVerify(req, res) {
 			}
 		}
 	}
+
+	// Terms acceptance: first-party sign-in surfaces put the agreement in the
+	// signed SIWE statement and send tosAccepted alongside — record it for both
+	// brand-new and returning wallets so acceptance converges on every sign-in.
+	const tos = tosAcceptanceFromBody(raw);
+	if (tos) recordTosAcceptance({ userId, version: tos.version, context: 'siwe', req });
 
 	// 7. Issue session.
 	await destroySession(req);
