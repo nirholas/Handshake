@@ -3,6 +3,23 @@
 	"entries": [
 		{
 			"date": "2026-07-15",
+			"title": "Share your IRL placement as a real link",
+			"summary": "The Share button on /irl now turns your AR photo into a permanent link (three.ws/irl/s/…) instead of a bare file — paste it into X, iMessage, or Discord and it unfurls with the actual photo and a button for the recipient to place their own agent. It never shows a coordinate, only your agent's name and caption, and only works for pins you've placed and kept public.",
+			"tags": [
+				"feature"
+			],
+			"link": "/irl"
+		},
+		{
+			"date": "2026-07-15",
+			"title": "First usage dashboard for IRL",
+			"summary": "IRL now tracks real, privacy-safe usage data — pins placed, nearby reads, which AR method people use, shares, and Money Drop claims — on a new internal dashboard. No coordinates or device identities are stored, and the data ages out automatically after 90 days.",
+			"tags": [
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-15",
 			"title": "Pinch-to-resize now works in plain camera AR too",
 			"summary": "Two-finger pinch-to-resize was already live in the WebXR floor-anchor flow (Chrome for Android); it now works the same way in plain camera-mode AR, including iOS Safari's Pin here path. Pinch before or after placing your agent, from a desk figurine to a statue, and the size saves to the pin so everyone nearby sees it exactly as big as you left it.",
 			"tags": [

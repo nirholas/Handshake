@@ -57,6 +57,10 @@ Tapping an agent opens its inspect card:
 - **leave a message** that lands in the owner's IRL feed
 - **view profile** to open its full agent page
 
+### Share a placement
+
+The **Share** button captures your camera feed and the placed agent as one photo, then, if you're the one who placed the pin, turns it into a permanent link at `three.ws/irl/s/<token>` instead of a bare file. Paste that link into X, iMessage, or Discord and it unfurls as the actual photo, with a "Place your own agent" button back to /irl. The link never carries a coordinate: only the agent's name and caption (if any) ever appear on the card, and it only exists for pins you left public — unpublishing a pin, or a pin under moderation review, is never shareable. If you tap Share before placing anything (no pin yet), it falls back to the plain native share sheet / photo download, same as before.
+
 ## Money Drops
 
 Real value, escrowed at a real-world spot. A drop holds SOL, USDC, or $THREE in a fresh per-drop escrow wallet, funded on-chain by its creator. Claiming requires physically walking up: the same presence proof that gates every IRL read gates the claim, and the release lands on-chain in the claimer's own wallet. Drops can require a quiz answer, support multiple claims, and auto-refund the creator on expiry.
@@ -85,10 +89,18 @@ The user-facing summary lives at [/irl-privacy](/irl-privacy); the engineering a
 
 ---
 
+## Analytics
+
+/irl now has a real usage baseline. `api/_lib/irl-analytics.js` logs four events — `pin_created` (with the placement method: WebXR, camera-pin gyro, map, or QR marker), `nearby_fetch`, `share_created`, and `share_viewed` — into `irl_events`, an append-only table that never stores a raw coordinate or device token (only a ~150m geocell and a 16-char hashed device prefix, matching the same coarsening the rest of IRL already uses). Events age out after 90 days via the existing hourly reaper ([api/cron/irl-reap.js](/api/cron/irl-reap.js)), the same bounded-retention discipline as the interaction trail.
+
+The rollup is served at `GET /api/irl/analytics` (admin-gated, same `x-ops-secret` credential as [/admin/ops](/admin/ops)) and rendered at **[/admin/irl-analytics](/admin/irl-analytics)**: pins placed and unique placers/browsers over 24h/7d/30d, a placement-method breakdown, the existing interaction (view/tap/message/pay) and confirmed Money Drop counts, share creation/view volume, and a 30-day daily sparkline. Every number is a live query — nothing cached, sampled, or estimated.
+
+---
+
 ## Build on it
 
 - **SDK:** [`@three-ws/irl`](https://www.npmjs.com/package/@three-ws/irl) on npm. Zero-dependency client for check-in, pins, the nearby feed, interactions, Money Drops, and World Lines. Node 18+ and the browser.
-- **REST API:** the [IRL API reference](/docs/api-reference) covers `/api/irl/*`: presence, pins, drops, world lines.
+- **REST API:** the [IRL API reference](/docs/api-reference) covers `/api/irl/*`: presence, pins, drops, world lines, shareable pin cards (`POST /api/irl/share`), and the admin analytics rollup (`GET /api/irl/analytics`).
 - **Make the body:** generate an avatar with the [free 3D lane](/docs/tutorials/text-to-3d) or [`@three-ws/forge`](https://www.npmjs.com/package/@three-ws/forge), render it with [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar).
 - **Hands-on:** [Place a 3D agent in your real environment](/docs/tutorials/place-agent-irl), a phone-only tutorial from first camera frame to a discoverable pin.
 - **Context:** [Live worlds, social and IRL](/docs/agent-abilities/chapters/12-live-worlds-social-irl) situates IRL inside the rest of the platform's presence layer.

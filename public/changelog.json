@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-15T16:34:23.253Z",
+	"generated_at": "2026-07-15T22:30:32.293Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -70,6 +70,16 @@
 		{
 			"date": "2026-07-15",
 			"type": "update",
+			"title": "First usage dashboard for IRL",
+			"summary": "IRL now tracks real, privacy-safe usage data — pins placed, nearby reads, which AR method people use, shares, and Money Drop claims — on a new internal dashboard. No coordinates or device identities are stored, and the data ages out automatically after 90 days.",
+			"link": null,
+			"tags": [
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-15",
+			"type": "update",
 			"title": "iPhone AR placement now hands you back to the pin",
 			"summary": "On iPhone, placing an agent in AR opens Apple's Quick Look viewer, which is sealed: the page can't put buttons inside it. It does allow one banner, and that banner is now wired: it shows your agent's name in the AR view, and tapping it brings you back to IRL with the Pin here button pulsing, so the exact spot you liked in AR becomes a durable pin other people can walk up to, in one tap.",
 			"link": "/irl",
@@ -85,6 +95,16 @@
 			"link": "/irl",
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-15",
+			"type": "update",
+			"title": "Share your IRL placement as a real link",
+			"summary": "The Share button on /irl now turns your AR photo into a permanent link (three.ws/irl/s/…) instead of a bare file — paste it into X, iMessage, or Discord and it unfurls with the actual photo and a button for the recipient to place their own agent. It never shows a coordinate, only your agent's name and caption, and only works for pins you've placed and kept public.",
+			"link": "/irl",
+			"tags": [
+				"feature"
 			]
 		},
 		{

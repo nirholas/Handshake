@@ -2320,6 +2320,25 @@ pin's owner and agent are always taken from the pin, never the caller.
 
 ---
 
+### Shareable pin cards
+
+```
+POST /api/irl/share?pinId=<uuid>    mint a permanent, unfurlable link for a placement
+GET  /api/irl/share/:token          the unfurl page itself (also served at /irl/s/:token)
+```
+
+`POST` body is the raw PNG bytes of a client-captured AR composite (`content-type:
+application/octet-stream`; the client sends octet-stream rather than `image/png` so the
+server's body-parser handles it byte-for-byte — see the `readBody()` note in
+`api/_lib/http.js`). Caller must own the pin (session or `x-irl-device`, same rule as PATCH)
+and the pin must be public and not under moderation review. Returns `{ token, url, imageUrl }`
+where `url` is `https://three.ws/irl/s/<token>`. The unfurl page renders the photo full-bleed
+with real `og:image`/`twitter:image` tags and a "Place your own agent" CTA back to `/irl` — it
+never renders a coordinate, only the pin's caption/agent name. Rate limit: 10 shares / 10 min
+per IP.
+
+---
+
 ### Money Drops — value escrowed at a real-world spot
 
 ```
@@ -2370,6 +2389,20 @@ check against the anchor pin, ≤80 m) → `challenge` returns a nonce + the rev
 message carries only the quest id, a ~1.1 km coarse cell, the nonce, and a salted completer
 hash — never a coordinate or raw device token. Anyone can re-verify a proof at
 `/verify/:proofId` (returns `{ verified, proof }`).
+
+---
+
+### Analytics (admin)
+
+```
+GET /api/irl/analytics
+```
+
+Admin-gated (signed-in platform admin, or `x-ops-secret` — same rule as `/api/admin/ops-alerts`).
+Returns 24h/7d/30d windows of `{ pins_placed, unique_placers, nearby_fetches, unique_browsers,
+interactions, shares_created, share_views, drops_claimed }`, a 30-day placement-method
+breakdown, and a 30-day daily series for the `/admin/irl-analytics` dashboard. Backed by
+`irl_events` — see `docs/irl.md#analytics`.
 
 ---
 

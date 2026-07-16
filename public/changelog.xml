@@ -55,6 +55,14 @@
 			<description>One documentation pass across everything that shipped this month. A new Social Layer guide covers the activity feed, follows, the notification bell, rankings, creator portfolios, and cross-entity search, and every one of those endpoints is now in the API reference. The AR docs caught up with reality: iPhone Quick Look now plays your avatar's idle animation (the old docs still said static pose), pinch-to-resize and the bring-it-to-life handoff are in the IRL guides, and the way shared AR links unfurl with a real model render is spelled out. Also new: how the prompt art director and the brand-mark lexicon make 3D generations cleaner, how ChatGPT generations stay fast under load, Sketchfab showcase states, and premium key management.</description>
 		</item>
 		<item>
+			<title>First usage dashboard for IRL</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-15:First usage dashboard for IRL</guid>
+			<pubDate>Wed, 15 Jul 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>IRL now tracks real, privacy-safe usage data — pins placed, nearby reads, which AR method people use, shares, and Money Drop claims — on a new internal dashboard. No coordinates or device identities are stored, and the data ages out automatically after 90 days.</description>
+		</item>
+		<item>
 			<title>iPhone AR placement now hands you back to the pin</title>
 			<link>https://three.ws/irl</link>
 			<guid isPermaLink="false">2026-07-15:iPhone AR placement now hands you back to the pin</guid>
@@ -69,6 +77,14 @@
 			<pubDate>Wed, 15 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>Two-finger pinch-to-resize was already live in the WebXR floor-anchor flow (Chrome for Android); it now works the same way in plain camera-mode AR, including iOS Safari's Pin here path. Pinch before or after placing your agent, from a desk figurine to a statue, and the size saves to the pin so everyone nearby sees it exactly as big as you left it.</description>
+		</item>
+		<item>
+			<title>Share your IRL placement as a real link</title>
+			<link>https://three.ws/irl</link>
+			<guid isPermaLink="false">2026-07-15:Share your IRL placement as a real link</guid>
+			<pubDate>Wed, 15 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Share button on /irl now turns your AR photo into a permanent link (three.ws/irl/s/…) instead of a bare file — paste it into X, iMessage, or Discord and it unfurls with the actual photo and a button for the recipient to place their own agent. It never shows a coordinate, only your agent's name and caption, and only works for pins you've placed and kept public.</description>
 		</item>
 		<item>
 			<title>Shared AR links now unfurl with the model itself</title>
