@@ -17,6 +17,10 @@
 //      minimization should not let accumulate. We cascade-delete it the moment its
 //      pin dies, and age it out at INTERACTION_RETENTION_DAYS so even a permanent
 //      (signed-in) pin's encounter trail can't grow unbounded.
+//   4. Usage-analytics events (irl_events, api/_lib/irl-analytics.js) older than 90
+//      days, regardless of pin state — coarse telemetry (geocell7 + hashed device
+//      prefix, no FK to irl_pins by design) but still a passive trail, so it's
+//      bounded the same way interactions are.
 //
 // Retention window — interactions: 180 days. Rationale: long enough that an owner's
 // dashboard inbox + the earnings history a `pay` row backs stay useful across a
@@ -51,7 +55,7 @@ export const REAP_SPIKE_THRESHOLD = 1000;
 // compares to the threshold. Exported for unit testing — no I/O, no clock.
 export function reapTotal(counts) {
 	return (counts?.pins || 0) + (counts?.reports || 0) + (counts?.interactions || 0) +
-		(counts?.worldLines || 0) + (counts?.proofs || 0);
+		(counts?.worldLines || 0) + (counts?.proofs || 0) + (counts?.events || 0);
 }
 export function isReapSpike(counts, threshold = REAP_SPIKE_THRESHOLD) {
 	return reapTotal(counts) >= threshold;
@@ -82,13 +86,14 @@ export default wrapCron(async (req, res) => {
 	// they may not exist yet. A reaper that hard-depended on them would throw
 	// `relation does not exist` and 500 the hourly cron. Probe with to_regclass
 	// and treat a missing table as "nothing to reap" rather than an error.
-	const [{ pins, reports, interactions, worldlines, proofs }] = await sql`
+	const [{ pins, reports, interactions, worldlines, proofs, events }] = await sql`
 		SELECT
 			to_regclass('public.irl_pins')             AS pins,
 			to_regclass('public.irl_pin_reports')      AS reports,
 			to_regclass('public.irl_interactions')     AS interactions,
 			to_regclass('public.irl_world_lines')      AS worldlines,
-			to_regclass('public.irl_presence_proofs')  AS proofs
+			to_regclass('public.irl_presence_proofs')  AS proofs,
+			to_regclass('public.irl_events')           AS events
 	`;
 
 	// Expired anon pins, ≥ 1 day past expiry. expires_at IS NULL ⇒ permanent ⇒ kept.
@@ -167,12 +172,27 @@ export default wrapCron(async (req, res) => {
 			: await sql`DELETE FROM irl_presence_proofs RETURNING id`;
 	}
 
+	// Usage-analytics events (api/_lib/irl-analytics.js) — coarse telemetry
+	// (geocell7 + a hashed device prefix, never a raw coordinate or token) with
+	// no FK to irl_pins by design: a pin can expire while its historical placement
+	// trend stays queryable. Still bounded like every other passive trail here —
+	// aged out at 90 days regardless of pin state.
+	let reapedEvents = [];
+	if (events) {
+		reapedEvents = await sql`
+			DELETE FROM irl_events
+			WHERE created_at < NOW() - INTERVAL '90 days'
+			RETURNING id
+		`;
+	}
+
 	const counts = {
 		pins: reapedPins.length,
 		reports: reapedReports.length,
 		interactions: reapedInteractions.length,
 		worldLines: reapedWorldLines.length,
 		proofs: reapedProofs.length,
+		events: reapedEvents.length,
 	};
 	const total = reapTotal(counts);
 
@@ -188,7 +208,7 @@ export default wrapCron(async (req, res) => {
 	if (isReapSpike(counts)) {
 		sendOpsAlert(
 			'IRL reaper spike',
-			`The IRL reaper deleted ${total} rows in one run (pins ${counts.pins}, reports ${counts.reports}, interactions ${counts.interactions}, worldLines ${counts.worldLines}, proofs ${counts.proofs}) — above the ${REAP_SPIKE_THRESHOLD} anomaly threshold. Possible mass-expiry, backfill, or delete bug.`,
+			`The IRL reaper deleted ${total} rows in one run (pins ${counts.pins}, reports ${counts.reports}, interactions ${counts.interactions}, worldLines ${counts.worldLines}, proofs ${counts.proofs}, events ${counts.events}) — above the ${REAP_SPIKE_THRESHOLD} anomaly threshold. Possible mass-expiry, backfill, or delete bug.`,
 			{ signature: `irl-reap:spike:${Math.floor(Date.now() / 3_600_000)}` },
 		);
 	}
@@ -200,6 +220,7 @@ export default wrapCron(async (req, res) => {
 		reapedInteractions: counts.interactions,
 		reapedWorldLines: counts.worldLines,
 		reapedProofs: counts.proofs,
+		reapedEvents: counts.events,
 		ts: Date.now(),
 	});
 });

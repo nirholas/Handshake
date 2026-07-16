@@ -188,6 +188,43 @@ describe('irl-reap cron', () => {
 		expect(sendOpsAlert).not.toHaveBeenCalled();
 	});
 
+	it('ages out irl_events past 90 days when the table exists (undated when absent)', async () => {
+		sqlMock
+			.mockResolvedValueOnce([{ pins: 'irl_pins', reports: 'irl_pin_reports', interactions: 'irl_interactions', worldlines: null, proofs: null, events: 'irl_events' }]) // probe
+			.mockResolvedValueOnce([]) // pins delete
+			.mockResolvedValueOnce([]) // reports delete
+			.mockResolvedValueOnce([]) // interactions orphan delete
+			.mockResolvedValueOnce([]) // interactions age-out delete
+			.mockResolvedValueOnce([{ id: 1 }, { id: 2 }]); // events age-out delete
+
+		const { req, res } = makeReqRes();
+		await handler(req, res);
+
+		expect(res.statusCode).toBe(200);
+		expect(res.body).toMatchObject({ ok: true, reapedEvents: 2 });
+		const eventsCall = sqlMock.mock.calls.find(([s]) => {
+			const q = Array.isArray(s) ? s.join(' ') : String(s);
+			return /DELETE FROM irl_events/i.test(q) && /90 days/i.test(q);
+		});
+		expect(eventsCall).toBeTruthy();
+	});
+
+	it('skips the events sweep entirely when irl_events does not exist yet', async () => {
+		sqlMock
+			.mockResolvedValueOnce([{ pins: 'irl_pins', reports: 'irl_pin_reports', interactions: 'irl_interactions', worldlines: null, proofs: null, events: null }]) // probe
+			.mockResolvedValueOnce([]) // pins delete
+			.mockResolvedValueOnce([]) // reports delete
+			.mockResolvedValueOnce([]) // interactions orphan delete
+			.mockResolvedValueOnce([]); // interactions age-out delete
+
+		const { req, res } = makeReqRes();
+		await handler(req, res);
+
+		expect(res.statusCode).toBe(200);
+		expect(res.body).toMatchObject({ ok: true, reapedEvents: 0 });
+		expect(sqlMock).toHaveBeenCalledTimes(5); // no extra DELETE issued against a missing relation
+	});
+
 	it('rejects an unauthenticated request with 401', async () => {
 		const { req, res } = makeReqRes();
 		req.headers.authorization = 'Bearer wrong';

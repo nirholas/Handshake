@@ -29,6 +29,7 @@ import { sha256 } from '../_lib/crypto.js';
 import { readDeviceToken } from '../_lib/irl-auth.js';
 import { verifyFixToken, fixEnforced } from '../_lib/irl-presence.js';
 import { calibrateRoomOrigin, pinAbsoluteFromOrigin } from '../../src/irl/room-anchor.js';
+import { logIrlEvent } from '../_lib/irl-analytics.js';
 
 // ── Moderation, safety & density caps (D4) ──────────────────────────────────
 // Everything below makes the public, shared IRL world safe to launch: content
@@ -1187,6 +1188,9 @@ export default wrap(async (req, res) => {
 		// alert past the threshold. Best-effort and fire-and-forget — never awaited
 		// into the response path, never carries a coordinate.
 		recordCellRead(clientIp(req), encodeGeohash(lat, lng, GEOCELL_PRECISION));
+		// Usage analytics (fire-and-forget, never awaited into the response path —
+		// same discipline as recordCellRead above). See api/_lib/irl-analytics.js.
+		logIrlEvent({ type: 'nearby_fetch', lat, lng, deviceToken: myTok, metadata: { count: pins.length } });
 
 		return json(res, 200, { pins });
 	}
@@ -1436,6 +1440,7 @@ export default wrap(async (req, res) => {
 		// No realtime fan-out: a new placement is never broadcast as a roster. It
 		// surfaces to a viewer only on their next proximity poll, and only once they
 		// are physically within the nearby radius of where it was dropped.
+		logIrlEvent({ type: 'pin_created', pinId: pin.id, lat, lng, deviceToken, metadata: { mode: anchorSource } });
 		return json(res, 201, { pin: { ...pin, permanent: expiresAt === null } });
 	}
 

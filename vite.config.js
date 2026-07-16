@@ -416,6 +416,7 @@ const appConfig = {
 				'admin-seeder': resolve(__dirname, 'pages/admin/seeder.html'),
 				'admin-ring': resolve(__dirname, 'pages/admin/ring.html'),
 				'admin-ops': resolve(__dirname, 'pages/admin/ops.html'),
+				'admin-irl-analytics': resolve(__dirname, 'pages/admin/irl-analytics.html'),
 				launcher: resolve(__dirname, 'pages/launcher.html'),
 				'launch-detail': resolve(__dirname, 'pages/launch-detail.html'),
 				watchlist: resolve(__dirname, 'pages/watchlist.html'),
