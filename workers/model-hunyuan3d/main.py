@@ -83,8 +83,13 @@ _STAGE_PREFIXES = (
     "hunyuan3d-paint-v2-0/",
     "hunyuan3d-delight-v2-0/",
 )
-# Duplicate checkpoint spellings the fp16-safetensors load never opens.
+# Duplicate checkpoint spellings the fp16-safetensors load never opens. Only
+# safe to drop in directories that actually ship model.fp16.safetensors: the
+# delight tree's text_encoder ships model.safetensors ALONE, and skipping it
+# unconditionally left the staged copy without any checkpoint (load_error
+# "no file named pytorch_model.bin, model.safetensors, ..." on rev 00008).
 _STAGE_SKIP_BASENAMES = frozenset({"model.ckpt", "model.safetensors", "model_fp16.ckpt", "model.fp16.ckpt"})
+_STAGE_FP16_BASENAME = "model.fp16.safetensors"
 
 
 def _stage_weights_local() -> Optional[str]:
@@ -101,16 +106,26 @@ def _stage_weights_local() -> Optional[str]:
         bucket_name, _, prefix = WEIGHTS_GCS_URI[len("gs://"):].partition("/")
         prefix = prefix.rstrip("/") + "/"
         client = storage.Client()
-        blobs = []
+        candidates = []
+        fp16_dirs = set()
         for blob in client.list_blobs(bucket_name, prefix=prefix):
             rel = blob.name[len(prefix):]
             if not rel or rel.endswith("/"):
                 continue
             if not rel.startswith(_STAGE_PREFIXES):
                 continue
-            if rel.rsplit("/", 1)[-1] in _STAGE_SKIP_BASENAMES:
-                continue
-            blobs.append(blob)
+            parent, _, base = rel.rpartition("/")
+            if base == _STAGE_FP16_BASENAME:
+                fp16_dirs.add(parent)
+            candidates.append((rel, blob))
+        # Drop a duplicate spelling only where the fp16 checkpoint it
+        # duplicates is present in the same directory; a directory whose only
+        # checkpoint matches a "duplicate" name keeps it.
+        blobs = [
+            blob
+            for rel, blob in candidates
+            if not (rel.rsplit("/", 1)[-1] in _STAGE_SKIP_BASENAMES and rel.rpartition("/")[0] in fp16_dirs)
+        ]
         if not blobs:
             log.warning("weights staging: no objects under %s; using FUSE mount", WEIGHTS_GCS_URI)
             return None
