@@ -61,7 +61,7 @@ steps:
       - --allow-unauthenticated
       - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET}
       - --add-volume-mount=volume=weights,mount-path=/weights
-      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},WEIGHTS_DIR=/weights/hunyuan3d-2,MAX_CONCURRENT=1
+      - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},WEIGHTS_DIR=/weights/hunyuan3d-2,MAX_CONCURRENT=1,WEIGHTS_GCS_URI=gs://${_WEIGHTS_BUCKET}/hunyuan3d-2,WEIGHTS_LOCAL_DIR=/tmp/hunyuan3d-2
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest
 
 images:

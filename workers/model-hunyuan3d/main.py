@@ -64,6 +64,80 @@ API_KEY = os.environ["API_KEY"]
 GCS_BUCKET = os.environ["GCS_BUCKET"]
 WEIGHTS_DIR = os.environ.get("WEIGHTS_DIR", "/weights/hunyuan3d-2")
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "1"))
+# Stage the needed weight subtrees from GCS to local disk at startup and load
+# from there instead of the Cloud Storage FUSE mount. FUSE stalls indefinitely
+# on the 4.6 GB DiT safetensors read (observed live 2026-07-16: two instances
+# sat 20+ minutes on "Loading model from …model.fp16.safetensors"), exactly the
+# failure model-trellis hit at 3 GB. The storage client streams each object
+# with a plain sequential GET, which does not stall. Only the four subfolders
+# the 2.0 pipelines read are staged, and the DiT/VAE fp32 + .ckpt duplicates
+# are skipped (~18 GiB staged instead of the tree's ~70 GiB) so the tmpfs
+# footprint fits the instance's 32 GiB memory. Unset WEIGHTS_GCS_URI, or any
+# staging failure, falls back to the FUSE mount unchanged.
+WEIGHTS_GCS_URI = os.environ.get("WEIGHTS_GCS_URI", "")  # e.g. gs://bucket/hunyuan3d-2
+WEIGHTS_LOCAL_DIR = os.environ.get("WEIGHTS_LOCAL_DIR", "/tmp/hunyuan3d-2")
+# Subtrees the shape + paint pipelines actually read.
+_STAGE_PREFIXES = (
+    "hunyuan3d-dit-v2-0/",
+    "hunyuan3d-vae-v2-0/",
+    "hunyuan3d-paint-v2-0/",
+    "hunyuan3d-delight-v2-0/",
+)
+# Duplicate checkpoint spellings the fp16-safetensors load never opens.
+_STAGE_SKIP_BASENAMES = frozenset({"model.ckpt", "model.safetensors", "model_fp16.ckpt", "model.fp16.ckpt"})
+
+
+def _stage_weights_local() -> Optional[str]:
+    """Download the needed weight subtrees from GCS to local disk with the
+    storage client, bypassing the FUSE mount. Returns the local dir on success,
+    or None to signal "load from WEIGHTS_DIR as before". Never raises — a
+    staging failure must degrade to the existing FUSE-mount load, not crash
+    the loader. (Same pattern as workers/model-trellis.)"""
+    if not WEIGHTS_GCS_URI.startswith("gs://"):
+        return None
+    try:
+        from concurrent.futures import ThreadPoolExecutor
+
+        bucket_name, _, prefix = WEIGHTS_GCS_URI[len("gs://"):].partition("/")
+        prefix = prefix.rstrip("/") + "/"
+        client = storage.Client()
+        blobs = []
+        for blob in client.list_blobs(bucket_name, prefix=prefix):
+            rel = blob.name[len(prefix):]
+            if not rel or rel.endswith("/"):
+                continue
+            if not rel.startswith(_STAGE_PREFIXES):
+                continue
+            if rel.rsplit("/", 1)[-1] in _STAGE_SKIP_BASENAMES:
+                continue
+            blobs.append(blob)
+        if not blobs:
+            log.warning("weights staging: no objects under %s; using FUSE mount", WEIGHTS_GCS_URI)
+            return None
+
+        def _download(blob) -> int:
+            rel = blob.name[len(prefix):]
+            dest = os.path.join(WEIGHTS_LOCAL_DIR, rel)
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            # Reuse an already-staged object (same-instance warm restart) when
+            # its size matches, so a reload doesn't re-pull 18 GiB.
+            if os.path.exists(dest) and blob.size is not None and os.path.getsize(dest) == blob.size:
+                return blob.size or 0
+            blob.download_to_filename(dest)
+            return blob.size or os.path.getsize(dest)
+
+        os.makedirs(WEIGHTS_LOCAL_DIR, exist_ok=True)
+        t0 = time.time()
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            total = sum(pool.map(_download, blobs))
+        log.info(
+            "weights staged to %s in %.1fs (%d objects, %.2f GiB)",
+            WEIGHTS_LOCAL_DIR, time.time() - t0, len(blobs), total / (1024 ** 3),
+        )
+        return WEIGHTS_LOCAL_DIR
+    except Exception as exc:  # noqa: BLE001 — degrade to the FUSE mount, never crash
+        log.warning("weights staging failed (%s); falling back to FUSE mount %s", exc, WEIGHTS_DIR)
+        return None
 
 _pipeline = None
 _bucket: Optional[storage.Bucket] = None
@@ -106,11 +180,12 @@ def _load_pipeline():
     from hy3dgen.shapegen import Hunyuan3DDiTFlowMatchingPipeline
     from hy3dgen.texgen import Hunyuan3DPaintPipeline
 
-    log.info("Loading shape generation pipeline from %s", WEIGHTS_DIR)
+    weights_path = _stage_weights_local() or WEIGHTS_DIR
+    log.info("Loading shape generation pipeline from %s", weights_path)
     # from_pretrained takes hy3dgen kwargs (dtype/device), not diffusers'
     # torch_dtype, and loads straight onto the device — no .to() afterwards.
     shape_pipe = Hunyuan3DDiTFlowMatchingPipeline.from_pretrained(
-        WEIGHTS_DIR,
+        weights_path,
         subfolder="hunyuan3d-dit-v2-0",
         device="cuda",
         dtype=torch.float16,
@@ -118,11 +193,11 @@ def _load_pipeline():
         variant="fp16",
     )
 
-    log.info("Loading texture generation pipeline from %s", WEIGHTS_DIR)
+    log.info("Loading texture generation pipeline from %s", weights_path)
     # Full-quality paint (not -turbo): the platform's realism bar over speed.
-    # Loads the delight model from WEIGHTS_DIR/hunyuan3d-delight-v2-0 itself.
+    # Loads the delight model from <weights_path>/hunyuan3d-delight-v2-0 itself.
     tex_pipe = Hunyuan3DPaintPipeline.from_pretrained(
-        WEIGHTS_DIR,
+        weights_path,
         subfolder="hunyuan3d-paint-v2-0",
     )
 
