@@ -41,6 +41,10 @@ const PRICE_PER_MTOK = {
 	// credit grant, so it's metered like a paid model rather than priced to 0.
 	'google/gemini-2.5-flash-lite': [0.1, 0.4],
 	'gemini-2.5-flash-lite': [0.1, 0.4],
+	'google/gemini-2.5-flash': [0.3, 2.5],
+	'gemini-2.5-flash': [0.3, 2.5],
+	'google/gemini-2.5-pro': [1.25, 10],
+	'gemini-2.5-pro': [1.25, 10],
 };
 
 // Providers whose marginal cost to the platform is zero (platform-funded free

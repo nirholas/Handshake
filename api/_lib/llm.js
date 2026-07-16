@@ -55,10 +55,15 @@ const GROQ_INSTANT_MODEL = 'llama-3.1-8b-instant';
 // rung, active when CEREBRAS_API_KEY is configured.
 const CEREBRAS_MODEL = 'llama-3.3-70b';
 const OPENROUTER_MODEL = 'meta-llama/llama-3.3-70b-instruct';
-// Gemini Flash-Lite: the AI Studio free tier (GEMINI_API_KEY) and the Vertex
-// lane (GCP service account, billed to platform credits) run the same model.
+// Gemini Flash-Lite on the AI Studio FREE tier (GEMINI_API_KEY): an external
+// free quota, so it stays on the cheapest model.
 const GEMINI_MODEL = 'gemini-2.5-flash-lite';
-const VERTEX_GEMINI_MODEL = 'google/gemini-2.5-flash-lite';
+// The Vertex lane is different: it bills to the platform's own GCP credits
+// (standing owner-approved spend, 2026-07-16), so it runs full Flash — a
+// strict quality upgrade over Flash-Lite on the chain's most reliable rung —
+// and stays env-tunable (e.g. google/gemini-2.5-pro for a quality-over-latency
+// deployment) without a code change.
+const VERTEX_GEMINI_MODEL = process.env.VERTEX_GEMINI_MODEL || 'google/gemini-2.5-flash';
 // Same Llama 3.3 70B family on NVIDIA NIM (build.nvidia.com) — one free nvapi
 // key, OpenAI-compatible, so the chain degrades across providers without
 // changing model behavior.
