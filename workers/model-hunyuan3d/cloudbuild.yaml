@@ -17,6 +17,15 @@ substitutions:
   _MAX_INSTANCES: "1"
 
 steps:
+  # --cache-from only consults images already present on the builder — without
+  # this pull every rebuild recompiles the CUDA extensions (~35 min) from
+  # scratch and blows the build timeout. Best-effort: a missing :latest (first
+  # build) just skips the cache.
+  - id: pull-cache
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args: ['-c', 'docker pull ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest || exit 0']
+
   - id: build
     name: gcr.io/cloud-builders/docker
     dir: workers/model-hunyuan3d
