@@ -73,7 +73,7 @@ Honest-docs rule: any "only on BNB Chain" claim you write must trace to the veri
 | opBNB | out of scope this campaign (note gaps in PROGRESS if relevant) |
 | Greenfield mainnet / testnet | chain `greenfield_1017-1` / `greenfield_5600-1`; SP + RPC endpoints per `@bnb-chain/greenfield-js-sdk` docs |
 | MegaFuel | mainnet `https://bsc-megafuel.nodereal.io`, testnet `https://bsc-megafuel-testnet.nodereal.io` (confirm exact paths in docs.nodereal.io/docs/megafuel) |
-| tBNB faucet | `https://www.bnbchain.org/en/testnet-faucet` (alternatives: QuickNode/Chainlink faucets) |
+| tBNB faucet | `https://www.bnbchain.org/en/testnet-faucet` (alternatives: Quicknode/Chainlink faucets) |
 
 ## The codebase map (so you never have to hunt)
 
