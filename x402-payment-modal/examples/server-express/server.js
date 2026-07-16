@@ -24,7 +24,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
 
 // A public Solana mainnet RPC works for a quick try, but it is rate-limited.
-// Use a dedicated RPC (Helius, Triton, QuickNode, …) for anything real.
+// Use a dedicated RPC (Helius, Triton, Quicknode, …) for anything real.
 const SOLANA_RPC_URL =
   process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 

@@ -222,7 +222,7 @@ function rpcListFor(network, opts = {}) {
 		console.warn(
 			'[x402-payment-modal] No rpcUrl/rpcUrls configured — falling back to the public ' +
 				'Solana RPC, which is heavily rate-limited and will fail under load. Pass a ' +
-				'dedicated RPC (Helius/Triton/QuickNode) via { rpcUrls: [...] }.',
+				'dedicated RPC (Helius/Triton/Quicknode) via { rpcUrls: [...] }.',
 		);
 	}
 	return [devnet ? DEFAULT_DEVNET_RPC : DEFAULT_MAINNET_RPC];
