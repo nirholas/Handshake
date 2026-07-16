@@ -268,6 +268,12 @@ async function consumeSseUntilComplete(response) {
 		throw Object.assign(new Error(`huggingface inference failed: ${errorMessage}`), {
 			code: 'provider_error',
 			status: 502,
+			// The no-detail error (and any explicit quota message) is the signature
+			// of ZeroGPU quota exhaustion. It is scoped to the *identity* making the
+			// call: an exhausted account fails while the same request succeeds
+			// anonymously on per-IP quota. runOnSpace uses this to retry once
+			// without the bearer token before advancing the failover chain.
+			quotaLike: /quota/i.test(errorMessage) || errorMessage.startsWith('Space error event with no detail'),
 		});
 	}
 	if (result === null) {
@@ -371,7 +377,7 @@ async function rehostGlbToR2(glbUrls, token) {
 	for (const glbUrl of candidates) {
 		for (let attempt = 1; attempt <= REHOST_MAX_ATTEMPTS; attempt++) {
 			try {
-				const resp = await fetch(glbUrl, { headers: { authorization: `Bearer ${token}` } });
+				const resp = await fetch(glbUrl, { headers: spaceAuthHeaders(token) });
 				if (!resp.ok) {
 					lastErr = Object.assign(new Error(`GLB fetch ${resp.status}`), { status: resp.status });
 					// 404/410 on this address = wrong route or the temp file is gone;
@@ -416,10 +422,32 @@ async function rehostGlbToR2(glbUrls, token) {
 	return publicUrl(key);
 }
 
-// Try one Space end-to-end: enqueue → consume SSE → extract GLB url.
-// Throws with a tagged error containing the Space slug so the failover loop
-// can decide whether to advance to the next entry.
+// Authorization header set for a Space call. Anonymous calls (token=null) must
+// omit the header entirely — "Bearer null" is an invalid credential, not anon.
+function spaceAuthHeaders(token) {
+	return token ? { authorization: `Bearer ${token}` } : {};
+}
+
+// Try one Space end-to-end, first with the platform HF token, and once more
+// anonymously when the authed run dies with the ZeroGPU quota signature.
+// Public Spaces meter anonymous callers per-IP, a separate allowance from the
+// account's — so an exhausted platform account (observed live 2026-07-16: the
+// same TripoSR request errored with the token and produced a GLB without it)
+// must not take the whole rung down. Throws with a tagged error containing the
+// Space slug so the failover loop can decide whether to advance.
 async function runOnSpace({ token, target, photos, params }) {
+	try {
+		return await attemptOnSpace({ token, target, photos, params });
+	} catch (err) {
+		if (!token || !err?.quotaLike) throw err;
+		console.warn(
+			`[hf] ${target.space} hit the quota signature with the platform token; retrying anonymously on per-IP quota`,
+		);
+		return attemptOnSpace({ token: null, target, photos, params });
+	}
+}
+
+async function attemptOnSpace({ token, target, photos, params }) {
 	const { space, api, builder } = target;
 	const spaceUrl = spaceBaseUrl(space);
 	const payloadBuilder = BUILDERS[builder] || BUILDERS.single;
@@ -432,7 +460,7 @@ async function runOnSpace({ token, target, photos, params }) {
 	try {
 		queueRes = await fetch(`${spaceUrl}/call/${api}`, {
 			method: 'POST',
-			headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+			headers: { ...spaceAuthHeaders(token), 'content-type': 'application/json' },
 			body: JSON.stringify({ data: payload }),
 		});
 	} catch (err) {
@@ -458,7 +486,7 @@ async function runOnSpace({ token, target, photos, params }) {
 	let streamRes;
 	try {
 		streamRes = await fetch(`${spaceUrl}/call/${api}/${eventId}`, {
-			headers: { authorization: `Bearer ${token}`, accept: 'text/event-stream' },
+			headers: { ...spaceAuthHeaders(token), accept: 'text/event-stream' },
 		});
 	} catch (err) {
 		throw tag(Object.assign(new Error(`SSE GET failed: ${err?.message}`), {

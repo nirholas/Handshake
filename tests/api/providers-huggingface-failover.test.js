@@ -147,6 +147,56 @@ describe('huggingface provider — failover chain', () => {
 		expect(fetchMock.mock.calls.length).toBe(3); // one enqueue per Space
 	});
 
+	it('retries a Space anonymously when the authed run dies with the ZeroGPU quota signature', async () => {
+		process.env.HF_RECONSTRUCT_SPACES = 'foo/A,bar/B';
+		// Gradio's quota death: event: error with data: null. Authed attempt hits
+		// it (exhausted account allowance); the anonymous retry on per-IP quota
+		// succeeds. Observed live on stabilityai/TripoSR 2026-07-16.
+		const errorStream = () => {
+			const text = `event: error\ndata: null\n\n`;
+			const encoder = new TextEncoder();
+			const stream = new ReadableStream({
+				start(controller) {
+					controller.enqueue(encoder.encode(text));
+					controller.close();
+				},
+			});
+			return new Response(stream, { status: 200, headers: { 'content-type': 'text/event-stream' } });
+		};
+		let enqueueCount = 0;
+		const fetchMock = vi.fn(async (url, opts) => {
+			if (url === `${spaceUrl('foo/A')}/call/generation_all`) {
+				enqueueCount += 1;
+				if (enqueueCount === 1) {
+					expect(opts?.headers?.authorization).toBe('Bearer hf_test_token');
+					return jsonResp({ event_id: 'evt-authed' });
+				}
+				// Anonymous retry must omit the authorization header entirely.
+				expect(opts?.headers?.authorization).toBeUndefined();
+				return jsonResp({ event_id: 'evt-anon' });
+			}
+			if (url === `${spaceUrl('foo/A')}/call/generation_all/evt-authed`) return errorStream();
+			if (url === `${spaceUrl('foo/A')}/call/generation_all/evt-anon`) {
+				expect(opts?.headers?.authorization).toBeUndefined();
+				return sseStream([{ url: 'https://files/anon.glb' }]);
+			}
+			throw new Error(`unexpected url ${url}`);
+		});
+		globalThis.fetch = fetchMock;
+
+		const { createRegenProvider } = await import('../../api/_providers/huggingface.js');
+		const out = await createRegenProvider().submit({
+			mode: 'reconstruct',
+			params: { images: ['data:image/jpeg;base64,AAA'] },
+		});
+
+		const decoded = JSON.parse(Buffer.from(out.extJobId, 'base64url').toString('utf8'));
+		expect(decoded.resultGlbUrl).toBe('https://files/anon.glb');
+		expect(decoded.space).toBe('foo/A');
+		// Same Space recovered — no failover to bar/B.
+		expect(decoded.fellBackFrom).toEqual([]);
+	});
+
 	it('legacy HF_RECONSTRUCT_SPACE env still works as a single-Space chain', async () => {
 		process.env.HF_RECONSTRUCT_SPACE = 'legacy/only';
 		const fetchMock = vi.fn(async (url) => {
