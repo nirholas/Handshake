@@ -584,10 +584,22 @@ export function selfHostPrimary() {
 // GPU time runs against platform GCP credits (the L4 is already reserved at
 // minScale 1), so tiers price the USER for quality, not us for compute.
 // Draft stays at the worker's fast defaults for iteration speed.
+//
+// Owner directive 2026-07-16: burn the $100k GCP credit pool for realism, no
+// ceiling concern on compute. Raised standard (the free default most users
+// actually get) and high (the paid ceiling) again on top of the same-day
+// swarm pass: standard's texture and geometry-retention budgets were still
+// well under the worker's clamp ceiling (texture_size ≤ 4096 as of the
+// same-day worker quality-clamp raise), and high shared standard's 2048
+// texture cap despite costing 3.3x more — a paying customer's asset should
+// visibly outresolve the free tier, not just out-sample it. Verified against
+// the client's 300s poll budget (src/home-forge.js MAX_POLL_MS) and high's
+// own etaMultiplier: 2.2 headroom — steps moved the least (biggest linear
+// time cost), texture/simplify moved the most (near-free export-time cost).
 export const SELFHOST_TRELLIS_QUALITY = Object.freeze({
 	draft: Object.freeze({ ss_steps: 12, slat_steps: 12, simplify: 0.95, texture_size: 1024 }),
-	standard: Object.freeze({ ss_steps: 25, slat_steps: 25, simplify: 0.9, texture_size: 2048 }),
-	high: Object.freeze({ ss_steps: 45, slat_steps: 45, simplify: 0.85, texture_size: 2048 }),
+	standard: Object.freeze({ ss_steps: 35, slat_steps: 35, simplify: 0.82, texture_size: 3072 }),
+	high: Object.freeze({ ss_steps: 50, slat_steps: 50, simplify: 0.65, texture_size: 4096 }),
 });
 
 export function selfhostQualityForTier(tierId) {

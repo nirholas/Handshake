@@ -209,11 +209,12 @@ describe('forge-tiers — self-host TRELLIS per-tier quality budgets', () => {
 		expect(standard.simplify).toBeLessThan(draft.simplify);
 		expect(high.simplify).toBeLessThan(standard.simplify);
 		expect(high.texture_size).toBeGreaterThanOrEqual(standard.texture_size);
-		// Worker clamps: stay inside the envelope it accepts.
+		// Worker clamps: stay inside the envelope it accepts (texture ceiling
+		// raised 2048→4096 alongside the worker's own quality-clamp bump).
 		for (const q of [draft, standard, high]) {
 			expect(q.ss_steps).toBeLessThanOrEqual(50);
 			expect(q.slat_steps).toBeLessThanOrEqual(50);
-			expect(q.texture_size).toBeLessThanOrEqual(2048);
+			expect(q.texture_size).toBeLessThanOrEqual(4096);
 		}
 	});
 
