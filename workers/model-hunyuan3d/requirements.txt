@@ -20,6 +20,15 @@ pymeshlab==2023.12.post2
 pygltflib==1.16.2
 xatlas==0.0.9
 opencv-python-headless==4.10.0.84
+# hy3dgen's surface extractor does `from skimage import measure` at module
+# import time (marching cubes), so scikit-image is a hard runtime dep even
+# though the upstream requirements file comments it out.
+scikit-image==0.24.0
+# The in-tree extension builds run with --no-build-isolation (see Dockerfile),
+# so their build-time imports must already be installed: differentiable_renderer
+# imports pybind11 in setup.py; ninja parallelizes the CUDA compile.
+pybind11==2.13.6
+ninja==1.11.1.1
 
 # ── Input preprocessing (hy3dgen.rembg background removal) ───────────────────
 rembg==2.0.59
