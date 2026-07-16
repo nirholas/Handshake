@@ -68,5 +68,10 @@ options:
   machineType: E2_HIGHCPU_32
   logging: CLOUD_LOGGING_ONLY
 
+# The project's default compute service account was deleted (see
+# docs/ops/gcp-production.md) — every Cloud Build must pin the build SA
+# explicitly or the submit fails with "Unknown service account".
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+
 # CUDA custom-rasterizer + mesh-processor compiles push past the 10-minute default.
 timeout: 3600s
