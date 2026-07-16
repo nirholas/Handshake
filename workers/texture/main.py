@@ -326,7 +326,13 @@ def _generate_view_texture(
         negative_prompt=negative_prompt,
         image=depth_img.resize((size, size)),
         controlnet_conditioning_scale=0.6,
-        num_inference_steps=20,
+        # 20→35 steps: same lever as model-trellis's quality bump (docs/ops/
+        # gcp-credits.md) — roughly linear GPU-time cost for a sharper,
+        # less-noisy view per the model's usual diminishing-returns curve
+        # past ~40-50. guidance_scale stays at SDXL's well-behaved default;
+        # pushing it up (unlike steps) oversaturates and adds artifacts
+        # rather than detail, so it is not part of this quality pass.
+        num_inference_steps=35,
         guidance_scale=7.5,
         width=size,
         height=size,
@@ -601,7 +607,7 @@ def _inpaint_region(
         image=init_small,
         mask_image=mask_small,
         strength=float(strength),
-        num_inference_steps=30,
+        num_inference_steps=40,  # 30→40, same steps-for-detail tradeoff as the full retexture pass above
         guidance_scale=7.5,
         width=infer[0],
         height=infer[1],
@@ -760,7 +766,16 @@ class TextureRequest(BaseModel):
     prompt: str = Field(..., min_length=3, max_length=500)
     negative_prompt: str = Field(default="blurry, low quality, distorted, watermark")
     num_views: int = Field(default=8, ge=4, le=8)
-    texture_size: int = Field(default=1024)
+    # Default 1024→2048: this value drives BOTH the depth-render size and the
+    # per-view SDXL+ControlNet generation resolution (see _run_texturing), not
+    # just a post-hoc texture-bake resize — unlike model-trellis's texture_size,
+    # this one costs real diffusion-model compute per step. 2048 is already a
+    # validated, supported value (not a new untested path) and is within SDXL's
+    # comfortably-generates-coherently range; going to 4096 here would mean 8
+    # native SDXL generations per mesh at 4x the resolution the model was
+    # trained at, risking both L4 VRAM headroom and per-view coherence, so it
+    # is deliberately left off the accepted set below.
+    texture_size: int = Field(default=2048)
 
     @field_validator("texture_size")
     @classmethod
@@ -802,7 +817,12 @@ class RegionTextureRequest(BaseModel):
     mask_b64: Optional[str] = Field(default=None, description="UV-space mask PNG, base64 (white = edit)")
     mask: Optional[str] = Field(default=None, description="Public https URL to the UV mask PNG")
     color: Optional[str] = Field(default=None, max_length=9, description='Target colour "#rrggbb"')
-    texture_size: int = Field(default=1024)
+    # Matches the /texture pass's new 2048 default so a magic-brush follow-up
+    # edit works on an atlas of the same resolution as the mesh's full
+    # retexture — the actual inpaint diffusion still runs at the fixed,
+    # SDXL-native INPAINT_INFER_SIZE regardless of this value, so raising it
+    # costs compositing/resize time only, not extra diffusion compute.
+    texture_size: int = Field(default=2048)
     strength: float = Field(default=0.85, ge=0.2, le=1.0)
     feather: int = Field(default=24, ge=1, le=128)
     seed: int = Field(default=0, ge=0)
