@@ -33,15 +33,29 @@ RUN pip install -r /app/requirements.txt
 # torch: custom_rasterizer (CUDA) and differentiable_renderer's mesh_processor
 # (pybind11). --no-build-isolation is REQUIRED — their setup.py imports torch
 # at build time and PEP517 isolation would hide the one installed above.
+# --no-deps is EQUALLY required: hy3dgen's own install_requires resolves
+# unpinned transformers/diffusers releases that silently REPLACE the pinned,
+# torch-2.3-compatible stack from requirements.txt (the first deploy shipped a
+# transformers that demands torch>=2.4 and a diffusers whose FLAX imports it
+# breaks — the paint pipeline import died at model load). Every runtime dep the
+# package needs is already pinned in requirements.txt.
 RUN git clone https://github.com/Tencent/Hunyuan3D-2.git /tmp/hy3d \
     && cd /tmp/hy3d \
     && git checkout f8db63096c8282cb27354314d896feba5ba6ff8a \
-    && pip install --no-build-isolation . \
+    && pip install --no-build-isolation --no-deps . \
     && cd hy3dgen/texgen/custom_rasterizer \
-    && pip install --no-build-isolation . \
+    && pip install --no-build-isolation --no-deps . \
     && cd ../differentiable_renderer \
-    && pip install --no-build-isolation . \
+    && pip install --no-build-isolation --no-deps . \
     && rm -rf /tmp/hy3d
+
+# Fail the BUILD (not the deploy) if the dependency stack ever drifts again:
+# every import the shape + paint pipelines pull at load time must resolve
+# against the pinned torch. A broken stack here costs a build retry; the same
+# break at model load costs a dead revision serving 500s.
+RUN python -c "import torch, torchvision, transformers, diffusers, skimage, cv2, pymeshlab, xatlas, trimesh, rembg; \
+import hy3dgen.shapegen, hy3dgen.texgen, hy3dgen.rembg; \
+print('deps ok:', torch.__version__, torchvision.__version__, transformers.__version__, diffusers.__version__)"
 
 WORKDIR /app
 COPY worker_security.py /app/worker_security.py
