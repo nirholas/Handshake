@@ -125,8 +125,8 @@ describe('runLauncherTick — dry run', () => {
 		H.lastRun = [{ created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString() }];
 		const fetchMock = vi.fn(async (url) => {
 			const u = String(url);
-			if (u.includes('action=build-metadata')) return { status: 200, json: async () => ({ metadata_url: 'ipfs://meta' }) };
-			if (u.includes('action=launch-agent')) return { status: 200, json: async () => ({ mint: 'MINTlive', signature: 'sig' }) };
+			if (u.includes('/api/pump/build-metadata')) return { status: 200, json: async () => ({ metadata_url: 'ipfs://meta' }) };
+			if (u.includes('/api/pump/launch-agent')) return { status: 200, json: async () => ({ mint: 'MINTlive', signature: 'sig' }) };
 			return { status: 404, json: async () => ({}) };
 		});
 		vi.stubGlobal('fetch', fetchMock);
@@ -144,10 +144,10 @@ describe('runLauncherTick — live', () => {
 		// build-metadata then launch-agent over the internal authenticated fetch.
 		const fetchMock = vi.fn(async (url) => {
 			const u = String(url);
-			if (u.includes('action=build-metadata')) {
+			if (u.includes('/api/pump/build-metadata')) {
 				return { status: 200, json: async () => ({ metadata_url: 'ipfs://meta' }) };
 			}
-			if (u.includes('action=launch-agent')) {
+			if (u.includes('/api/pump/launch-agent')) {
 				return { status: 200, json: async () => ({ mint: 'MINTxyz', signature: 'launch-sig' }) };
 			}
 			return { status: 404, json: async () => ({}) };
@@ -172,11 +172,11 @@ describe('runLauncherTick — live', () => {
 		const fetchMock = vi.fn(async (url, opts) => {
 			const u = String(url);
 			const body = opts?.body ? JSON.parse(opts.body) : {};
-			if (u.includes('action=build-metadata')) {
+			if (u.includes('/api/pump/build-metadata')) {
 				bodies.meta = body;
 				return { status: 200, json: async () => ({ metadata_url: 'ipfs://meta' }) };
 			}
-			if (u.includes('action=launch-agent')) {
+			if (u.includes('/api/pump/launch-agent')) {
 				bodies.launch = body;
 				return { status: 200, json: async () => ({ mint: 'MINTxyz', signature: 'launch-sig' }) };
 			}
@@ -219,8 +219,8 @@ describe('runLauncherTick — live', () => {
 		H.configs = [makeConfig({ dry_run: false, mode: 'random' })];
 		const fetchMock = vi.fn(async (url) => {
 			const u = String(url);
-			if (u.includes('action=build-metadata')) return { status: 200, json: async () => ({ metadata_url: 'ipfs://meta' }) };
-			if (u.includes('action=launch-agent')) return { status: 200, json: async () => ({ mint: 'MINTrand', signature: 'sig' }) };
+			if (u.includes('/api/pump/build-metadata')) return { status: 200, json: async () => ({ metadata_url: 'ipfs://meta' }) };
+			if (u.includes('/api/pump/launch-agent')) return { status: 200, json: async () => ({ mint: 'MINTrand', signature: 'sig' }) };
 			return { status: 404, json: async () => ({}) };
 		});
 		vi.stubGlobal('fetch', fetchMock);
@@ -244,10 +244,10 @@ describe('runLauncherTick — live user scope (self-funded)', () => {
 	function stubLaunchFetch(overrides = {}) {
 		const fetchMock = vi.fn(async (url) => {
 			const u = String(url);
-			if (u.includes('action=build-metadata')) {
+			if (u.includes('/api/pump/build-metadata')) {
 				return { status: 200, json: async () => ({ metadata_url: 'ipfs://meta' }) };
 			}
-			if (u.includes('action=launch-agent')) {
+			if (u.includes('/api/pump/launch-agent')) {
 				if (overrides.launch) return overrides.launch;
 				return { status: 200, json: async () => ({ mint: 'MINTuser', signature: 'launch-sig' }) };
 			}

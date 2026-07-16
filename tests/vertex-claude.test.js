@@ -168,13 +168,13 @@ describe('providerChain ordering under the four flag combinations', () => {
 	// vertex-gemini reliability rung after the free lanes, plus groq#instant as
 	// the free-tier capability step-down — both precede the paid backstops.
 	it('off/off: no vertex-CLAUDE lane; free lanes → vertex-gemini → step-down → paid tail', () => {
-		expect(names()).toEqual(['groq', 'vertex-gemini', 'groq#instant', 'anthropic']);
+		expect(names()).toEqual(['groq', 'ovh', 'vertex-gemini', 'pollinations', 'groq#instant', 'anthropic']);
 	});
 
 	it('enabled/off: vertex claude is a paid backstop AHEAD of first-party anthropic, behind free lanes', () => {
 		process.env.VERTEX_CLAUDE_ENABLED = '1';
 		const n = names();
-		expect(n).toEqual(['groq', 'vertex-gemini', 'groq#instant', 'vertex-anthropic', 'anthropic']);
+		expect(n).toEqual(['groq', 'ovh', 'vertex-gemini', 'pollinations', 'groq#instant', 'vertex-anthropic', 'anthropic']);
 		expect(n.indexOf('groq')).toBeLessThan(n.indexOf('vertex-anthropic'));
 		expect(n.indexOf('vertex-anthropic')).toBeLessThan(n.indexOf('anthropic'));
 	});
@@ -191,7 +191,7 @@ describe('providerChain ordering under the four flag combinations', () => {
 
 	it('primary flag alone (enabled unset) adds no vertex-claude lane', () => {
 		process.env.VERTEX_CLAUDE_PRIMARY = '1';
-		expect(names()).toEqual(['groq', 'vertex-gemini', 'groq#instant', 'anthropic']);
+		expect(names()).toEqual(['groq', 'ovh', 'vertex-gemini', 'pollinations', 'groq#instant', 'anthropic']);
 	});
 
 	it('a caller BYOK key still leads even when vertex is primary', () => {
