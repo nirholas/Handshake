@@ -17,6 +17,37 @@ is the best mesh+texture model we self-host; it is the difference between "decen
   (0c2cd1ec7), build deps (cc921f3d3), pinned ML stack (145c6b0fb), portrait realism cues
   (f131e51b0). Read `workers/model-hunyuan3d/main.py` and its cloudbuild before touching anything.
 
+## Live E2E findings (2026-07-16 21:45 UTC, from a real Vertex-image -> /infer run)
+
+A full direct-worker E2E was run against the ACTIVE revision (00005, Ready=True, L4 attached,
+GCP_HUNYUAN3D_URL already set on three-ws-api). Result: the task queued forever. Root causes,
+read before iterating on task 1:
+
+- **The deployed image's ML stack is incompatible.** Pipeline load fails at
+  `from hy3dgen.texgen import Hunyuan3DPaintPipeline` with
+  `ImportError: cannot import name 'FLAX_WEIGHTS_NAME' from 'transformers.utils'`
+  (diffusers pins an old transformers API), and transformers also logs
+  `PyTorch >= 2.4 is required but found 2.3.1+cu121` and missing torchvision. One instance
+  died with signal 11 after the failed load. Commit 145c6b0fb's pin fix may resolve this in the
+  NEXT image; revision 00006 already failed to go Ready, and 4+ builds were queued at 21:34.
+  Verify what the newest image actually contains before rebuilding blind: the fix must yield a
+  consistent trio (torch, transformers, diffusers) that hy3dgen.texgen imports cleanly.
+- **Queued tasks never fail.** When the background pipeline load dies, `/infer` keeps
+  accepting jobs and persisted tasks stay `queued` forever; pollers (and the router's
+  failover) get no failure signal. Fix in `main.py`: once `load_error` is set, fail all
+  queued tasks and 503 new `/infer` calls so poll-time failover can kick in.
+- **Cold pipeline load is 10+ minutes** even when imports succeed: the multi-GB DiT
+  safetensors are read through the GCS FUSE mount, which logs stalled-read retries
+  (`stalled read-req cancelled after 1.5s`). Mitigate with gcsfuse file-cache/parallel-download
+  mount options on the volume, or bake weights into the image. minScale 1 masks it in steady
+  state but every deploy and scale-up pays it; the E2E verification in task 3 must wait out or
+  eliminate this window.
+- Repro harness: a working Vertex `gemini-2.5-flash-image` -> `/infer` E2E script pattern is
+  simple: generate the reference via `:generateContent` with `responseModalities:["IMAGE"]`,
+  POST `{images:["data:image/png;base64,..."], tier:"high"}` with bearer key from Secret
+  Manager `avatar-reconstruction-key`, poll `/tasks/:id`. Health at `/health` reports
+  `pipeline_loaded`/`load_error`; poll that first and do not submit until `ready:true`.
+
 ## Tasks
 
 1. **Land the deploy.** Watch the quota preference; once granted (or after applying the
