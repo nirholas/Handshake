@@ -36,6 +36,16 @@
 //                                (default: gemini-2.5-flash-image)
 //   VERTEX_IMAGEN_EDIT_MODEL   — override the edit model
 //                                (default: gemini-2.5-flash-image)
+//   VERTEX_IMAGEN_LOCATION     — location for the image models only (falls back
+//                                to GOOGLE_CLOUD_LOCATION). Set to "global" to
+//                                run gemini-3-pro-image-preview, which is not
+//                                served regionally (E2E-verified 2026-07-16:
+//                                2048x2048 out of both generate and edit).
+//   VERTEX_IMAGE_SIZE          — requested output resolution, "1K"/"2K"/"4K"
+//                                (default: 2K). gemini-2.5-flash-image ignores
+//                                it (always 1024px); gemini-3-pro-image honors
+//                                it. Models that reject the knob get one retry
+//                                without it.
 //
 // Output: a base64 image returned inline as a data: URI. The caller
 // (text-to-image.js) uploads it to R2/S3 before handing it to the 3D backend.
@@ -105,6 +115,16 @@ export function isConfigured() {
 //
 // Returns { imageUrl, model } where imageUrl is a data: URI containing the
 // base64-encoded image. The caller uploads it to permanent storage.
+// Location for the image models specifically. Gemini 3 Pro Image is only
+// served from the `global` endpoint while the rest of our Vertex traffic
+// (Claude transport, embeddings) stays regional, so the image lane gets its
+// own override before falling back to the shared location.
+function imageLaneLocation() {
+  return (
+    readEnv('VERTEX_IMAGEN_LOCATION') || readEnv('GOOGLE_CLOUD_LOCATION') || DEFAULT_LOCATION
+  );
+}
+
 export async function generateImage(prompt, { aspectRatio = '1:1' } = {}) {
   const project = readEnv('GOOGLE_CLOUD_PROJECT');
   if (!project) {
@@ -114,7 +134,7 @@ export async function generateImage(prompt, { aspectRatio = '1:1' } = {}) {
     );
   }
 
-  const location = readEnv('GOOGLE_CLOUD_LOCATION') || DEFAULT_LOCATION;
+  const location = imageLaneLocation();
   const model = readEnv('VERTEX_IMAGEN_MODEL') || DEFAULT_MODEL;
   const token = await getGcpAccessToken();
 
@@ -130,15 +150,30 @@ async function generateViaGemini({ prompt, aspectRatio, project, location, model
     `${aiplatformHost(location)}/v1/projects/${project}` +
     `/locations/${location}/publishers/google/models/${model}:generateContent`;
 
+  // Reference-image resolution is the cheapest photoreal lever in the whole
+  // chain: the texture painter and multi-view fusion can never recover detail
+  // the reference never had. Default to 2K (the model's max) and let
+  // VERTEX_IMAGE_SIZE dial it back; credits absorb the price difference.
+  const imageSize = (readEnv('VERTEX_IMAGE_SIZE') || '2K').toUpperCase();
+
   const body = {
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
     generationConfig: {
       responseModalities: ['IMAGE'],
-      imageConfig: { aspectRatio: aspect },
+      imageConfig: { aspectRatio: aspect, imageSize },
     },
   };
 
-  const data = await postJson(endpoint, body, token, 'image generation');
+  let data;
+  try {
+    data = await postJson(endpoint, body, token, 'image generation');
+  } catch (err) {
+    // Older Gemini image models reject imageSize with INVALID_ARGUMENT. Retry
+    // once without it rather than failing the lane over an optional knob.
+    if (err?.providerStatus !== 400) throw err;
+    delete body.generationConfig.imageConfig.imageSize;
+    data = await postJson(endpoint, body, token, 'image generation');
+  }
   const parts = data?.candidates?.[0]?.content?.parts || [];
   const imgPart = parts.find((p) => p?.inlineData?.data);
   const b64 = imgPart?.inlineData?.data;
@@ -216,7 +251,7 @@ export async function editImage(imageUrl, prompt, { maskUrl = null } = {}) {
     );
   }
 
-  const location = readEnv('GOOGLE_CLOUD_LOCATION') || DEFAULT_LOCATION;
+  const location = imageLaneLocation();
   const model = readEnv('VERTEX_IMAGEN_EDIT_MODEL') || DEFAULT_EDIT_MODEL;
   const token = await getGcpAccessToken();
 
@@ -249,9 +284,22 @@ async function editViaGemini({ sourceB64, prompt, project, location, model, toke
         ],
       },
     ],
-    generationConfig: { responseModalities: ['IMAGE'] },
+    generationConfig: {
+      responseModalities: ['IMAGE'],
+      // Keep multi-view fusion frames at the same 2K bar as the primary
+      // reference (see generateViaGemini); retry below strips it for models
+      // that reject the knob.
+      imageConfig: { imageSize: (readEnv('VERTEX_IMAGE_SIZE') || '2K').toUpperCase() },
+    },
   };
-  const data = await postJson(endpoint, body, token, 'edit');
+  let data;
+  try {
+    data = await postJson(endpoint, body, token, 'edit');
+  } catch (err) {
+    if (err?.providerStatus !== 400) throw err;
+    delete body.generationConfig.imageConfig;
+    data = await postJson(endpoint, body, token, 'edit');
+  }
   const parts = data?.candidates?.[0]?.content?.parts || [];
   const imgPart = parts.find((p) => p?.inlineData?.data);
   const b64 = imgPart?.inlineData?.data;
