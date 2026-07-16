@@ -381,7 +381,13 @@ export const DEFAULT_BACKEND_FOR_PATH = Object.freeze({
 export const FREE_DEFAULT_FOR_TIERS = Object.freeze({
 	draft: Object.freeze({ image: 'nvidia' }),
 	standard: Object.freeze({ image: 'nvidia' }),
-	high: Object.freeze({ image: 'huggingface' }),
+	// High names our self-host Hunyuan3D worker — the highest-fidelity engine we
+	// can run on our own GPUs. Until GCP_HUNYUAN3D_URL is configured the candidate
+	// walk falls to the per-path chain (self-host TRELLIS first). The external
+	// HuggingFace Spaces lane (the previous name here) stays in the fallback chain
+	// but no longer leads: its Hunyuan Spaces sit GPU-quota-dead for most of the
+	// day, so naming it made the tier a coin-flip.
+	high: Object.freeze({ image: 'hunyuan3d' }),
 });
 
 // Free lanes to fall back to per path when the tier's named free engine can't
@@ -563,6 +569,27 @@ export function selfHostPrimary() {
 	const v = readEnv('FORGE_SELFHOST_PRIMARY');
 	if (v == null || v === '') return false;
 	return /^(1|true|on|yes)$/i.test(String(v).trim());
+}
+
+// Per-tier sampling/export budgets for the self-host TRELLIS worker
+// (workers/model-trellis /infer `quality` field). One shared map so the submit
+// site, the catalog, and tests can never disagree about what a tier buys:
+//   • ss/slat steps — diffusion sampler budget for structure and appearance.
+//     TRELLIS defaults to 12; quality keeps improving to ~50 at linear GPU cost.
+//   • simplify — fraction of triangles REMOVED by GLB export decimation
+//     (lower keeps more geometry).
+//   • texture_size — baked texture resolution.
+// GPU time runs against platform GCP credits (the L4 is already reserved at
+// minScale 1), so tiers price the USER for quality, not us for compute.
+// Draft stays at the worker's fast defaults for iteration speed.
+export const SELFHOST_TRELLIS_QUALITY = Object.freeze({
+	draft: Object.freeze({ ss_steps: 12, slat_steps: 12, simplify: 0.95, texture_size: 1024 }),
+	standard: Object.freeze({ ss_steps: 25, slat_steps: 25, simplify: 0.9, texture_size: 2048 }),
+	high: Object.freeze({ ss_steps: 45, slat_steps: 45, simplify: 0.85, texture_size: 2048 }),
+});
+
+export function selfhostQualityForTier(tierId) {
+	return SELFHOST_TRELLIS_QUALITY[tierId] || SELFHOST_TRELLIS_QUALITY[DEFAULT_TIER];
 }
 
 // A platform backend is "live" only when its required env is present. BYOK

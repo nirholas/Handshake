@@ -125,17 +125,24 @@ function buildWorkerRequest(request) {
 
 	if (mode === 'trellis') {
 		// Self-hosted TRELLIS image→3D (workers/model-trellis). Reconstructs a
-		// textured mesh from the primary reference view — a user photo, or the
-		// FLUX-synthesized view for a text prompt. The worker accepts an `images`
-		// array (it uses the first view); `body_type` rides along for parity with
-		// the shared worker request shape.
+		// textured mesh from the reference views — user photos, or the synthesized
+		// view for a text prompt. `body_type` rides along for parity with the
+		// shared worker request shape.
 		const photos = Array.isArray(params?.images) && params.images.length
 			? params.images
 			: [sourceUrl].filter(Boolean);
+		const body = { images: photos, body_type: params?.bodyType || 'neutral' };
+		// Per-tier sampler/export budgets (see SELFHOST_TRELLIS_QUALITY in
+		// forge-tiers.js). The worker clamps every knob server-side and treats an
+		// absent field as its own defaults, so this is pure opt-in quality.
+		if (params?.quality && typeof params.quality === 'object') {
+			body.quality = params.quality;
+		}
+		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
 		return {
 			path: '/infer',
 			resultKey: 'result_gcs_url',
-			body: { images: photos, body_type: params?.bodyType || 'neutral' },
+			body,
 		};
 	}
 

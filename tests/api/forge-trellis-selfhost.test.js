@@ -98,8 +98,9 @@ describe('forge-tiers — self-hosted TRELLIS routing precedence', () => {
 		// Text prompts at draft/standard still get NVIDIA's native single-hop lane.
 		expect(resolveBackendId({ path: 'image', tier: 'draft', userImages: false })).toBe('nvidia');
 		expect(resolveBackendId({ path: 'image', tier: 'standard', userImages: false })).toBe('nvidia');
-		// High tier keeps the higher-fidelity textured HuggingFace engine.
-		expect(resolveBackendId({ path: 'image', tier: 'high' })).toBe('huggingface');
+		// High names our self-host Hunyuan3D engine; unconfigured here, so the
+		// candidate walk falls to the self-host TRELLIS lane.
+		expect(resolveBackendId({ path: 'image', tier: 'high' })).toBe('trellis_selfhost');
 	});
 
 	it('degrades cleanly to HuggingFace when the worker URL is absent', () => {
@@ -185,5 +186,110 @@ describe('gcp provider — trellis mode wire contract', () => {
 		expect(status.resultGlbUrl).toBe(
 			'https://storage.googleapis.com/bucket/raw-meshes/trellis/task-xyz.glb',
 		);
+	});
+});
+
+// ── Tier-scaled quality budgets (SELFHOST_TRELLIS_QUALITY) ───────────────────
+// Standard/high must buy real sampler/export budget on our own GPU, and the
+// gcp provider must forward exactly that object to the worker's /infer body.
+describe('forge-tiers — self-host TRELLIS per-tier quality budgets', () => {
+	it('scales sampler steps, kept geometry, and texture size with the tier', async () => {
+		const { SELFHOST_TRELLIS_QUALITY, selfhostQualityForTier } = await import(
+			'../../api/_lib/forge-tiers.js'
+		);
+		const draft = selfhostQualityForTier('draft');
+		const standard = selfhostQualityForTier('standard');
+		const high = selfhostQualityForTier('high');
+
+		expect(draft).toBe(SELFHOST_TRELLIS_QUALITY.draft);
+		expect(standard.ss_steps).toBeGreaterThan(draft.ss_steps);
+		expect(high.ss_steps).toBeGreaterThan(standard.ss_steps);
+		expect(high.slat_steps).toBeGreaterThan(standard.slat_steps);
+		// simplify is the fraction REMOVED — higher tiers keep more triangles.
+		expect(standard.simplify).toBeLessThan(draft.simplify);
+		expect(high.simplify).toBeLessThan(standard.simplify);
+		expect(high.texture_size).toBeGreaterThanOrEqual(standard.texture_size);
+		// Worker clamps: stay inside the envelope it accepts.
+		for (const q of [draft, standard, high]) {
+			expect(q.ss_steps).toBeLessThanOrEqual(50);
+			expect(q.slat_steps).toBeLessThanOrEqual(50);
+			expect(q.texture_size).toBeLessThanOrEqual(2048);
+		}
+	});
+
+	it('falls back to the standard budget for an unknown tier id', async () => {
+		const { SELFHOST_TRELLIS_QUALITY, selfhostQualityForTier } = await import(
+			'../../api/_lib/forge-tiers.js'
+		);
+		expect(selfhostQualityForTier('nope')).toBe(SELFHOST_TRELLIS_QUALITY.standard);
+		expect(selfhostQualityForTier(undefined)).toBe(SELFHOST_TRELLIS_QUALITY.standard);
+	});
+
+	it('names hunyuan3d for the high tier and keeps huggingface only as fallback', async () => {
+		const { FREE_DEFAULT_FOR_TIERS, FREE_FALLBACK_FOR_PATH } = await import(
+			'../../api/_lib/forge-tiers.js'
+		);
+		expect(FREE_DEFAULT_FOR_TIERS.high.image).toBe('hunyuan3d');
+		expect(FREE_FALLBACK_FOR_PATH.image).toContain('huggingface');
+	});
+});
+
+describe('gcp provider — trellis quality forwarding', () => {
+	beforeEach(() => {
+		process.env.MODEL_TRELLIS_URL = 'https://model-trellis.example.run.app';
+		process.env.GCP_RECONSTRUCTION_KEY = 'test-worker-key';
+	});
+
+	it('forwards the quality object and seed verbatim in the /infer body', async () => {
+		const calls = [];
+		const origFetch = globalThis.fetch;
+		globalThis.fetch = vi.fn(async (url, opts) => {
+			calls.push({ url: String(url), body: JSON.parse(opts.body) });
+			return new Response(JSON.stringify({ task_id: 'tsk_1', status: 'queued' }), {
+				status: 202,
+				headers: { 'content-type': 'application/json' },
+			});
+		});
+		try {
+			const { createRegenProvider: mk } = await import('../../api/_providers/gcp.js');
+			const gcp = mk();
+			const quality = { ss_steps: 45, slat_steps: 45, simplify: 0.85, texture_size: 2048 };
+			await gcp.submit({
+				mode: 'trellis',
+				sourceUrl: 'https://cdn.three.ws/ref.png',
+				params: { images: ['https://cdn.three.ws/ref.png'], seed: 7, quality },
+			});
+			expect(calls).toHaveLength(1);
+			expect(calls[0].url).toContain('/infer');
+			expect(calls[0].body.quality).toEqual(quality);
+			expect(calls[0].body.seed).toBe(7);
+		} finally {
+			globalThis.fetch = origFetch;
+		}
+	});
+
+	it('omits quality/seed entirely when the caller sends none (worker defaults apply)', async () => {
+		const calls = [];
+		const origFetch = globalThis.fetch;
+		globalThis.fetch = vi.fn(async (url, opts) => {
+			calls.push({ body: JSON.parse(opts.body) });
+			return new Response(JSON.stringify({ task_id: 'tsk_2', status: 'queued' }), {
+				status: 202,
+				headers: { 'content-type': 'application/json' },
+			});
+		});
+		try {
+			const { createRegenProvider: mk } = await import('../../api/_providers/gcp.js');
+			const gcp = mk();
+			await gcp.submit({
+				mode: 'trellis',
+				sourceUrl: 'https://cdn.three.ws/ref.png',
+				params: { images: ['https://cdn.three.ws/ref.png'] },
+			});
+			expect(calls[0].body).not.toHaveProperty('quality');
+			expect(calls[0].body).not.toHaveProperty('seed');
+		} finally {
+			globalThis.fetch = origFetch;
+		}
 	});
 });

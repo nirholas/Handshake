@@ -75,6 +75,7 @@ import {
 	preferFreeReconstruct,
 	backendIsConfigured,
 	buildCatalog,
+	selfhostQualityForTier,
 } from './_lib/forge-tiers.js';
 import { laneHealthSnapshot, markLaneUnhealthy } from './_lib/forge-lane-health.js';
 import { resolveProviderKey } from './_lib/forge-provider-key.js';
@@ -1591,7 +1592,14 @@ async function startJob(req, res) {
 				job = await gcp.submit({
 					mode: 'trellis',
 					sourceUrl: referenceImageUrl,
-					params: { images: views, seed: opts.seed ?? undefined },
+					params: {
+						images: views,
+						seed: opts.seed ?? undefined,
+						// Tier-scaled sampler/export budgets — this is where standard/high
+						// actually buy more quality on our own GPU (steps, kept geometry,
+						// texture resolution) instead of only a bigger advertised polycount.
+						quality: selfhostQualityForTier(tier.id),
+					},
 				});
 			} catch (err) {
 				if (err?.code === 'mode_unconfigured') {
@@ -1832,7 +1840,11 @@ async function startJob(req, res) {
 						job = await gcp.submit({
 							mode: 'trellis',
 							sourceUrl: referenceImageUrl,
-							params: { images: views, seed: opts.seed ?? undefined },
+							params: {
+								images: views,
+								seed: opts.seed ?? undefined,
+								quality: selfhostQualityForTier(tier.id),
+							},
 						});
 						backendId = 'trellis_selfhost';
 						provider = gcp;
