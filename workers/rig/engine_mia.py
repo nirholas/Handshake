@@ -53,6 +53,23 @@ def init() -> None:
 
     import app as mia_app  # noqa: PLC0415  (heavy import by design, once)
 
+    # MIA replaces gradio.helpers.log_message with a version that reads
+    # LocalContext.blocks.get(); on current gradio that ContextVar has no
+    # default, so every Timing(print_fn=gr.Info) raises LookupError outside a
+    # live Gradio request. Re-replace it with a print-only logger: this
+    # service has no UI to toast to.
+    import warnings  # noqa: PLC0415
+
+    import gradio.helpers  # noqa: PLC0415
+
+    def _headless_log(message, level="info", *args, **kwargs):
+        if level == "warning":
+            warnings.warn(message)
+        else:
+            print(message)
+
+    gradio.helpers.log_message = _headless_log
+
     mia_app.init_models()
     # The stage functions return Gradio component-update dicts keyed by UI
     # globals that only exist after init_blocks(); build the (unlaunched)

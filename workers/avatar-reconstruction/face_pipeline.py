@@ -147,6 +147,70 @@ def _get_landmarks(img: Image.Image) -> Optional[list]:
     return None
 
 
+class _Landmark:
+    """Minimal stand-in for a MediaPipe NormalizedLandmark (x, y, z attributes)."""
+
+    __slots__ = ("x", "y", "z")
+
+    def __init__(self, x: float, y: float, z: float):
+        self.x, self.y, self.z = x, y, z
+
+
+def _get_landmarks_small_face(img: Image.Image) -> Optional[list]:
+    """
+    Rescue pass for images whose face is too small for FaceMesh's built-in
+    detector: full-body renders (the text-to-avatar lane generates head-to-feet
+    reference images) and selfies taken at a distance. BlazeFace's full-range
+    model still finds those small faces; crop around its box with generous
+    margin, upscale the crop to a size FaceMesh is reliable at, run FaceMesh on
+    the crop, then map the landmarks back to full-image normalised coordinates
+    so every downstream consumer (UV warp, skin/hair/eye sampling) is untouched.
+    """
+    arr = np.array(img)
+    with mp.solutions.face_detection.FaceDetection(
+        model_selection=1,  # full-range model: small faces in wide shots
+        min_detection_confidence=0.3,
+    ) as fd:
+        det = fd.process(arr)
+    if not det.detections:
+        return None
+    box = max(det.detections, key=lambda d: d.score[0]).location_data.relative_bounding_box
+
+    img_w, img_h = img.size
+    # FaceMesh needs forehead / chin / ear context around the raw face box.
+    margin = 0.75
+    left = int(max(0.0, box.xmin - box.width * margin) * img_w)
+    top = int(max(0.0, box.ymin - box.height * margin) * img_h)
+    right = int(min(1.0, box.xmin + box.width * (1 + margin)) * img_w)
+    bottom = int(min(1.0, box.ymin + box.height * (1 + margin)) * img_h)
+    crop_w, crop_h = right - left, bottom - top
+    if crop_w < 8 or crop_h < 8:
+        return None
+
+    crop = img.crop((left, top, right, bottom))
+    scale = 512 / min(crop_w, crop_h)
+    if scale > 1.0:
+        crop = crop.resize(
+            (max(1, round(crop_w * scale)), max(1, round(crop_h * scale))),
+            Image.LANCZOS,
+        )
+
+    crop_landmarks = _get_landmarks(crop)
+    if crop_landmarks is None:
+        return None
+    # Landmark coords are normalised to the crop; renormalise to the full image.
+    # z is normalised by image width like x, so rescale it proportionally (it is
+    # only used for the frontality heuristic, never for geometry).
+    return [
+        _Landmark(
+            (left + lm.x * crop_w) / img_w,
+            (top + lm.y * crop_h) / img_h,
+            lm.z * (crop_w / img_w),
+        )
+        for lm in crop_landmarks
+    ]
+
+
 # ── background removal ─────────────────────────────────────────────────────────
 
 def _remove_background(img: Image.Image) -> Image.Image:
@@ -402,6 +466,16 @@ def process(
     if landmarks is None:
         # No face detected in any image — try harder on the first image.
         landmarks = _get_landmarks(images[0])
+    if landmarks is None:
+        # Small-face rescue: full-body renders and distant selfies defeat
+        # FaceMesh's detector but not BlazeFace's full-range model. Crop, zoom,
+        # and retry on each image until one yields landmarks.
+        for idx, img in enumerate(images):
+            landmarks = _get_landmarks_small_face(img)
+            if landmarks is not None:
+                best_img = img
+                log.info("[%s] small-face rescue succeeded on image %d", job_id, idx)
+                break
     if landmarks is None:
         raise ValueError("no face detected in any of the provided photos")
     log.info("[%s] face selected (%.1fs)", job_id, time.time() - t0)

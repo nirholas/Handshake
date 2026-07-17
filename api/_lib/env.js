@@ -284,6 +284,19 @@ export const env = {
 		return trimSlash(req('S3_PUBLIC_DOMAIN'));
 	},
 
+	// GCS buckets our own GPU workers (avatar-reconstruction, unirig, remesh,
+	// stylize, model-*) upload result GLBs to. Consumed by the provider-result
+	// URL allowlist: a storage.googleapis.com result URL is only accepted when
+	// its bucket is in this set, so a forged provider payload cannot point the
+	// server at an arbitrary third-party bucket. Comma-separated; defaults to
+	// the production fleet's shared output bucket.
+	get GCS_RESULT_BUCKETS() {
+		return opt('GCS_RESULT_BUCKETS', 'three-ws-avatar-reconstructions')
+			.split(',')
+			.map((s) => s.trim())
+			.filter(Boolean);
+	},
+
 	// Resolved as an atomic pair (see pickPair) so URL and token always come from
 	// the SAME Upstash store — never a store-A URL with a store-B token (WRONGPASS).
 	get UPSTASH_REDIS_REST_URL() {

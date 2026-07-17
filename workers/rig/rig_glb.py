@@ -18,8 +18,10 @@ What `build_rigged_glb` produces, preserving all original geometry/materials:
 
 Robustness: model output is sanitized (NaN/Inf/negative weights dropped), every
 vertex is guaranteed a unit weight sum (no skinning collapse), JOINTS_0 uses the
-smallest legal integer width, and a non-identity skinned-node transform (which
-would silently misplace the skeleton) fails loudly instead of corrupting output.
+smallest legal integer width, a non-identity drawing-node transform is BAKED
+into world-space geometry (glTF ignores a skinned node's own transform, so
+local-space vertices would render misplaced), and a mesh instanced under
+divergent transforms fails loudly instead of corrupting output.
 
 This file began as workers/unirig/rig_glb.py and generalizes it: the caller
 supplies explicit `joint_names` (the rig worker passes Mixamo names, which the
@@ -88,24 +90,77 @@ def _add_accessor(glb, view: int, comp: int, count: int, typ: str,
     return len(glb.accessors) - 1
 
 
-def _read_positions(glb, blob: bytearray, acc_idx: int) -> np.ndarray:
-    """Decode a VEC3/FLOAT POSITION accessor from the binary buffer. Handles
-    both tightly packed and interleaved (byteStride) layouts, vectorized."""
+def _read_float_attr(glb, blob: bytearray, acc_idx: int, what: str) -> np.ndarray:
+    """Decode a float VEC3/VEC4 accessor from the binary buffer. Handles both
+    tightly packed and interleaved (byteStride) layouts, vectorized."""
     acc = glb.accessors[acc_idx]
-    if acc.componentType != _GLTF_FLOAT or acc.type != "VEC3":
+    ncomp = {"VEC3": 3, "VEC4": 4}.get(acc.type)
+    if acc.componentType != _GLTF_FLOAT or ncomp is None:
         raise RuntimeError(
-            f"unsupported POSITION accessor (componentType={acc.componentType}, type={acc.type}); "
-            "skinning expects float32 VEC3 positions"
+            f"unsupported {what} accessor (componentType={acc.componentType}, type={acc.type}); "
+            "expected float32 VEC3/VEC4"
         )
+    width = 4 * ncomp
     bv = glb.bufferViews[acc.bufferView]
     base = (bv.byteOffset or 0) + (acc.byteOffset or 0)
     n = acc.count
-    stride = bv.byteStride or 12
-    if stride == 12:
-        return np.frombuffer(bytes(blob[base:base + 12 * n]), dtype="<f4").reshape(n, 3).copy()
-    # Interleaved: lift the first 12 bytes (the VEC3) out of each stride slot.
+    stride = bv.byteStride or width
+    if stride == width:
+        return np.frombuffer(bytes(blob[base:base + width * n]), dtype="<f4").reshape(n, ncomp).copy()
+    # Interleaved: lift the attribute's bytes out of each stride slot.
     raw = np.frombuffer(bytes(blob[base:base + stride * n]), dtype=np.uint8).reshape(n, stride)
-    return raw[:, :12].copy().view("<f4").reshape(n, 3)
+    return raw[:, :width].copy().view("<f4").reshape(n, ncomp)
+
+
+def _read_positions(glb, blob: bytearray, acc_idx: int) -> np.ndarray:
+    return _read_float_attr(glb, blob, acc_idx, "POSITION")
+
+
+def _write_vec_accessor(glb, blob: bytearray, data: np.ndarray) -> int:
+    """Append a float VEC3/VEC4 accessor holding `data` and return its index."""
+    data = np.ascontiguousarray(data.astype(np.float32))
+    typ = "VEC3" if data.shape[1] == 3 else "VEC4"
+    return _add_accessor(
+        glb, _append_view(glb, blob, data.tobytes(), _GLTF_ARRAY_BUFFER),
+        _GLTF_FLOAT, data.shape[0], typ,
+        mn=data.min(axis=0).tolist(), mx=data.max(axis=0).tolist())
+
+
+def _bake_world_transform(glb, blob: bytearray, prim, wm: np.ndarray) -> np.ndarray:
+    """Bake the drawing node's world transform into a primitive's geometry.
+
+    glTF ignores a skinned node's own transform: vertices must live in the
+    same space as the skeleton (world). Positions, normals, and tangents are
+    rewritten into NEW accessors (never in place, so accessors shared with
+    other meshes stay untouched). Returns the world-space positions."""
+    rot = wm[:3, :3]
+    # Normals transform by the inverse-transpose of the linear part.
+    try:
+        nrm_mat = np.linalg.inv(rot).T
+    except np.linalg.LinAlgError as exc:
+        raise RuntimeError("mesh node transform is singular; cannot bake") from exc
+
+    pos = _read_positions(glb, blob, prim.attributes.POSITION)
+    world_pos = pos @ rot.T + wm[:3, 3]
+    prim.attributes.POSITION = _write_vec_accessor(glb, blob, world_pos)
+
+    nrm_acc = getattr(prim.attributes, "NORMAL", None)
+    if nrm_acc is not None:
+        nrm = _read_float_attr(glb, blob, nrm_acc, "NORMAL") @ nrm_mat.T
+        norms = np.linalg.norm(nrm, axis=1, keepdims=True)
+        nrm = np.divide(nrm, norms, out=np.zeros_like(nrm), where=norms > 1e-12)
+        prim.attributes.NORMAL = _write_vec_accessor(glb, blob, nrm)
+
+    tan_acc = getattr(prim.attributes, "TANGENT", None)
+    if tan_acc is not None:
+        tan = _read_float_attr(glb, blob, tan_acc, "TANGENT")
+        txyz = tan[:, :3] @ rot.T
+        norms = np.linalg.norm(txyz, axis=1, keepdims=True)
+        txyz = np.divide(txyz, norms, out=np.zeros_like(txyz), where=norms > 1e-12)
+        prim.attributes.TANGENT = _write_vec_accessor(
+            glb, blob, np.concatenate([txyz, tan[:, 3:4]], axis=1))
+
+    return world_pos
 
 
 def _quat_to_mat3(x, y, z, w):
@@ -299,25 +354,29 @@ def build_rigged_glb(mesh_bytes, mesh, joints, parents, weights,
     skinned_any = False
     for mi, gmesh in enumerate(glb.meshes):
         nodes = mesh_to_nodes.get(mi, [])
-        # Joints are world-space; if the drawing node carries a transform, the
-        # primitive's local positions live in a different frame. Honor that for
-        # weight matching, and refuse a non-identity transform we can't bake
-        # into the bind pose (our generators export identity, so this is a
-        # loud guard, not a silent corruption).
-        wm = world_mats[nodes[0]] if nodes else np.eye(4)
-        if not np.allclose(wm, np.eye(4), atol=1e-4):
+        # Joints are world-space, and glTF ignores a skinned node's own
+        # transform, so a mesh drawn under a non-identity transform gets that
+        # transform BAKED into fresh geometry accessors. A mesh instanced by
+        # several nodes with DIFFERENT world transforms cannot be skinned to
+        # one world-space skeleton: that stays a loud error.
+        node_mats = [world_mats[ni] for ni in nodes] or [np.eye(4)]
+        wm = node_mats[0]
+        if any(not np.allclose(m, wm, atol=1e-4) for m in node_mats[1:]):
             raise RuntimeError(
-                f"mesh {mi} is drawn by a node with a non-identity transform; "
-                "bake the transform into the geometry before rigging"
+                f"mesh {mi} is instanced by nodes with different transforms; "
+                "cannot rig one skeleton across divergent instances"
             )
+        bake = not np.allclose(wm, np.eye(4), atol=1e-4)
 
         mesh_targets = 0
         for prim in gmesh.primitives:
             pos_acc = getattr(prim.attributes, "POSITION", None)
             if pos_acc is None:
                 continue
-            verts = _read_positions(glb, blob, pos_acc)            # (M,3) primitive order
-            world_pos = verts @ wm[:3, :3].T + wm[:3, 3]
+            if bake:
+                world_pos = _bake_world_transform(glb, blob, prim, wm)
+            else:
+                world_pos = _read_positions(glb, blob, pos_acc)    # (M,3) primitive order
             _, nearest = kdt.query(world_pos, k=1)                 # (M,) -> mesh vertex index
             nearest = np.asarray(nearest).reshape(-1)
 
@@ -325,10 +384,10 @@ def build_rigged_glb(mesh_bytes, mesh, joints, parents, weights,
             w0 = np.ascontiguousarray(top_w[nearest].astype(np.float32))
             prim.attributes.JOINTS_0 = _add_accessor(
                 glb, _append_view(glb, blob, j0.tobytes(), _GLTF_ARRAY_BUFFER),
-                joint_comp, verts.shape[0], "VEC4")
+                joint_comp, world_pos.shape[0], "VEC4")
             prim.attributes.WEIGHTS_0 = _add_accessor(
                 glb, _append_view(glb, blob, w0.tobytes(), _GLTF_ARRAY_BUFFER),
-                _GLTF_FLOAT, verts.shape[0], "VEC4")
+                _GLTF_FLOAT, world_pos.shape[0], "VEC4")
 
             if bs_deltas is not None:
                 prim_deltas = bs_deltas[:, nearest, :]             # (K,M,3)
@@ -341,7 +400,7 @@ def build_rigged_glb(mesh_bytes, mesh, joints, parents, weights,
                         d = np.ascontiguousarray(np.asarray(d, dtype=np.float32))
                         acc = _add_accessor(
                             glb, _append_view(glb, blob, d.tobytes(), _GLTF_ARRAY_BUFFER),
-                            _GLTF_FLOAT, verts.shape[0], "VEC3",
+                            _GLTF_FLOAT, world_pos.shape[0], "VEC3",
                             mn=d.min(axis=0).tolist(), mx=d.max(axis=0).tolist())
                         targets.append(pygltflib.Attributes(POSITION=acc))
                     prim.targets = targets
@@ -359,7 +418,17 @@ def build_rigged_glb(mesh_bytes, mesh, joints, parents, weights,
             scene.nodes.append(new_ni)
         else:
             for ni in nodes:
-                glb.nodes[ni].skin = skin_idx
+                node = glb.nodes[ni]
+                node.skin = skin_idx
+                # The transform is baked into the geometry now. Clear it on
+                # childless nodes so non-spec-strict viewers agree with the
+                # baked positions; keep it when children depend on it (spec
+                # viewers ignore a skinned node's transform either way).
+                if bake and not node.children:
+                    node.matrix = None
+                    node.translation = None
+                    node.rotation = None
+                    node.scale = None
 
     if not skinned_any:
         raise RuntimeError("no mesh primitive with POSITION found; cannot rig")

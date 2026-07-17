@@ -1028,8 +1028,11 @@ const reconstructSchema = z
 // Steer Flux toward a single, evenly-lit, full-figure humanoid on a plain
 // background — that composition reconstructs and auto-rigs far more reliably
 // than a busy scene — without overriding the user's own subject description.
+// "clear detailed face" matters: the gcp reconstruct lane is a face pipeline
+// (it warps the render's face onto a template body), so a render whose face is
+// obscured or featureless fails detection outright.
 const AVATAR_PROMPT_SUFFIX =
-	', full body character, standing in a relaxed A-pose, facing forward, centered in frame, entire figure visible from head to feet, plain neutral studio background, soft even lighting, single subject, high detail, game-ready character render';
+	', full body character, standing in a relaxed A-pose, facing forward with a clear detailed face, centered in frame, entire figure visible from head to feet, plain neutral studio background, soft even lighting, single subject, high detail, game-ready character render';
 
 const handleReconstruct = wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;

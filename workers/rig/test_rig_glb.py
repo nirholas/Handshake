@@ -262,11 +262,12 @@ def test_dirty_weights_no_collapse():
     _check(checked >= 1, "weights validated")
 
 
-def test_nonidentity_node_rejected():
-    """A skinned mesh node with a non-identity transform must fail loudly rather
-    than silently misplacing the skeleton."""
-    print("test_nonidentity_node_rejected")
-    glb_bytes, mesh = _make_mesh_glb()
+def test_nonidentity_node_baked():
+    """A mesh drawn under a non-identity node transform gets that transform
+    baked into world-space geometry (glTF ignores a skinned node's own
+    transform, so local-space vertices would render misplaced)."""
+    print("test_nonidentity_node_baked")
+    glb_bytes, _ = _make_mesh_glb()
     g = pygltflib.GLTF2.load_from_bytes(glb_bytes)
     moved = False
     for node in g.nodes:
@@ -276,15 +277,54 @@ def test_nonidentity_node_rejected():
     _check(moved, "test set a transform on the mesh node")
     chunks = g.save_to_bytes()
     moved_bytes = b"".join(chunks) if isinstance(chunks, (list, tuple)) else chunks
+    # trimesh applies node transforms on load, so this mesh is in WORLD space:
+    # exactly the frame the predictor sees and the skeleton lives in.
     moved_mesh = trimesh.load(io.BytesIO(moved_bytes), file_type="glb", force="mesh")
     joints, parents, weights = _fake_prediction(moved_mesh, n_joints=3)
 
+    out = build_rigged_glb(moved_bytes, moved_mesh, joints, parents, weights, None)
+    glb = pygltflib.GLTF2.load_from_bytes(out)
+    blob = bytearray(glb.binary_blob())
+
+    checked = False
+    for gmesh in glb.meshes:
+        for prim in gmesh.primitives:
+            if getattr(prim.attributes, "POSITION", None) is None:
+                continue
+            pos = _decode(glb, blob, prim.attributes.POSITION)[:, :3].astype(np.float32)
+            # Baked positions must match trimesh's world-space vertices.
+            got = np.sort(pos.round(4).view([('x','<f4'),('y','<f4'),('z','<f4')]), axis=0)
+            want = np.sort(np.asarray(moved_mesh.vertices, np.float32).round(4)
+                           .view([('x','<f4'),('y','<f4'),('z','<f4')]), axis=0)
+            _check(np.array_equal(got, want), "positions baked to world space")
+            checked = True
+    _check(checked, "baked primitive validated")
+
+    for node in glb.nodes:
+        if node.mesh is not None and node.skin is not None and not node.children:
+            _check(not node.translation, "baked node transform cleared")
+
+
+def test_divergent_instances_rejected():
+    """One mesh instanced by nodes with DIFFERENT world transforms cannot be
+    skinned to a single world-space skeleton; that must fail loudly."""
+    print("test_divergent_instances_rejected")
+    glb_bytes, mesh = _make_mesh_glb()
+    g = pygltflib.GLTF2.load_from_bytes(glb_bytes)
+    scene = g.scenes[g.scene or 0]
+    src_ni = next(i for i, n in enumerate(g.nodes) if n.mesh is not None)
+    g.nodes.append(pygltflib.Node(mesh=g.nodes[src_ni].mesh, translation=[3.0, 0.0, 0.0]))
+    scene.nodes.append(len(g.nodes) - 1)
+    chunks = g.save_to_bytes()
+    twin_bytes = b"".join(chunks) if isinstance(chunks, (list, tuple)) else chunks
+    joints, parents, weights = _fake_prediction(mesh, n_joints=3)
+
     try:
-        build_rigged_glb(moved_bytes, moved_mesh, joints, parents, weights, None)
+        build_rigged_glb(twin_bytes, mesh, joints, parents, weights, None)
     except RuntimeError as exc:
-        _check("non-identity" in str(exc), "raised a clear non-identity transform error")
+        _check("instanced" in str(exc), "raised a clear divergent-instances error")
         return
-    _check(False, "expected RuntimeError for non-identity node transform")
+    _check(False, "expected RuntimeError for divergent instances")
 
 
 if __name__ == "__main__":
@@ -294,7 +334,8 @@ if __name__ == "__main__":
         test_blendshape_targets()
         test_zero_delta_primitives_skipped()
         test_dirty_weights_no_collapse()
-        test_nonidentity_node_rejected()
+        test_nonidentity_node_baked()
+        test_divergent_instances_rejected()
     except AssertionError:
         print("\nFAILED")
         sys.exit(1)

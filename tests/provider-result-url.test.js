@@ -116,6 +116,60 @@ describe('isAllowedProviderResultUrl — host allowlist (webhook semantics)', ()
 	});
 });
 
+describe('isAllowedProviderResultUrl — own GCS result buckets (gcp workers)', () => {
+	// The env getter reads process.env at call time, so each test can set the
+	// bucket list and restore it after.
+	let savedBuckets;
+	beforeEach(() => {
+		savedBuckets = process.env.GCS_RESULT_BUCKETS;
+		return () => {
+			if (savedBuckets === undefined) delete process.env.GCS_RESULT_BUCKETS;
+			else process.env.GCS_RESULT_BUCKETS = savedBuckets;
+		};
+	});
+
+	it('accepts a path-style URL for the default production bucket', () => {
+		delete process.env.GCS_RESULT_BUCKETS;
+		expect(
+			isAllowedProviderResultUrl(
+				'https://storage.googleapis.com/three-ws-avatar-reconstructions/reconstruct/x.glb',
+			),
+		).toBe(true);
+	});
+
+	it('accepts virtual-hosted-style URLs for an allowed bucket', () => {
+		process.env.GCS_RESULT_BUCKETS = 'bucket-a, bucket-b';
+		expect(
+			isAllowedProviderResultUrl('https://bucket-a.storage.googleapis.com/out/x.glb'),
+		).toBe(true);
+		expect(
+			isAllowedProviderResultUrl('https://storage.googleapis.com/bucket-b/out/x.glb'),
+		).toBe(true);
+	});
+
+	it('rejects any bucket not in the allowlist (host alone is never enough)', () => {
+		process.env.GCS_RESULT_BUCKETS = 'bucket-a';
+		expect(
+			isAllowedProviderResultUrl('https://storage.googleapis.com/attacker-bucket/x.glb'),
+		).toBe(false);
+		expect(
+			isAllowedProviderResultUrl('https://attacker-bucket.storage.googleapis.com/x.glb'),
+		).toBe(false);
+		// No object path at all: no bucket to match.
+		expect(isAllowedProviderResultUrl('https://storage.googleapis.com/')).toBe(false);
+	});
+
+	it('rejects look-alike hosts and http downgrades', () => {
+		process.env.GCS_RESULT_BUCKETS = 'bucket-a';
+		expect(
+			isAllowedProviderResultUrl('https://storage.googleapis.com.evil.com/bucket-a/x.glb'),
+		).toBe(false);
+		expect(
+			isAllowedProviderResultUrl('http://storage.googleapis.com/bucket-a/x.glb'),
+		).toBe(false);
+	});
+});
+
 describe('assertProviderResultUrl', () => {
 	it('returns the url on an allowed host', () => {
 		const u = 'https://pbxt.replicate.delivery/x.glb';

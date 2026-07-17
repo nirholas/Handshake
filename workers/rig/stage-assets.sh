@@ -17,10 +17,12 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 HERE="$(cd "$(dirname "$0")" && pwd)"
 
-echo "==> Make-It-Animatable checkpoints (HF: jasongzy/Make-It-Animatable)"
+echo "==> Make-It-Animatable checkpoints + demo data (HF: jasongzy/Make-It-Animatable)"
 GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 \
   https://huggingface.co/jasongzy/Make-It-Animatable "$WORK/hf-mia"
-git -C "$WORK/hf-mia" lfs pull -I output/best/new
+# data/ (Standard Run.fbx + examples/) is required too: MIA's init_blocks()
+# resolves those demo files at import and aborts startup when they're absent.
+git -C "$WORK/hf-mia" lfs pull -I output/best/new,data
 
 echo "==> Mixamo bone templates (HF dataset: jasongzy/Mixamo, gated: auto)"
 # The dataset is gated (auto-approve). Needs an HF token; the platform one
@@ -49,6 +51,8 @@ python3 "$HERE/build_arkit_template.py" \
 
 echo "==> Upload to $BUCKET"
 gcloud storage cp -r "$WORK/hf-mia/output/best/new" "$BUCKET/output/best/new"
+gcloud storage cp "$WORK/hf-mia/data/Standard Run.fbx" "$BUCKET/data/"
+gcloud storage cp -r "$WORK/hf-mia/data/examples" "$BUCKET/data/examples"
 gcloud storage cp "$WORK/hf-mixamo/bones.fbx" "$WORK/hf-mixamo/bones_vroid.fbx" \
   "$BUCKET/data/Mixamo/"
 gcloud storage cp "$WORK/arkit_template.npz" "$BUCKET/arkit_template.npz"

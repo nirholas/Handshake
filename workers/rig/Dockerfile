@@ -8,7 +8,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     DEBIAN_FRONTEND=noninteractive \
-    MPLBACKEND=Agg
+    MPLBACKEND=Agg \
+    GRADIO_ANALYTICS_ENABLED=False \
+    HF_HUB_DISABLE_TELEMETRY=1 \
+    DO_NOT_TRACK=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         python3.11 python3.11-dev python3.11-venv python3-pip \

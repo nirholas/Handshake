@@ -68,6 +68,34 @@ function ownPublicHost() {
 	}
 }
 
+// Our own GPU workers (the `gcp` provider: avatar-reconstruction, unirig,
+// remesh, stylize, model-*) upload their result GLBs to Cloud Storage and
+// report plain `https://storage.googleapis.com/<bucket>/<object>` URLs. The
+// host alone is NOT a safe allowlist entry: anyone can create a GCS bucket, so
+// accepting the whole host would let a forged payload aim the fetch at an
+// attacker-controlled object. Pin acceptance to OUR buckets (env
+// GCS_RESULT_BUCKETS), matching both URL styles GCS serves:
+//   path style:            https://storage.googleapis.com/<bucket>/<object>
+//   virtual-hosted style:  https://<bucket>.storage.googleapis.com/<object>
+function isOwnGcsResultUrl(u) {
+	let buckets;
+	try {
+		buckets = env.GCS_RESULT_BUCKETS;
+	} catch {
+		return false;
+	}
+	if (!buckets?.length) return false;
+	const host = u.hostname.toLowerCase();
+	if (host === 'storage.googleapis.com') {
+		const bucket = u.pathname.split('/').filter(Boolean)[0] ?? '';
+		return buckets.includes(bucket);
+	}
+	if (host.endsWith('.storage.googleapis.com')) {
+		return buckets.includes(host.slice(0, -'.storage.googleapis.com'.length));
+	}
+	return false;
+}
+
 // Narrow positive gate — exactly the webhook's original semantics: parse, require
 // https, lowercase the host, and accept an exact or `.`-suffix match against the
 // allowed hosts (the provider delivery hosts ∪ our own CDN host). Never throws;
@@ -81,6 +109,7 @@ export function isAllowedProviderResultUrl(raw) {
 		return false;
 	}
 	if (u.protocol !== 'https:') return false;
+	if (isOwnGcsResultUrl(u)) return true;
 	const host = u.hostname.toLowerCase();
 	const own = ownPublicHost();
 	const allowed = own ? [...PROVIDER_RESULT_HOSTS, own] : PROVIDER_RESULT_HOSTS;

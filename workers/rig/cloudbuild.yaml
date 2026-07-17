@@ -56,6 +56,10 @@ steps:
       - --min-instances=${_MIN_INSTANCES}
       - --max-instances=${_MAX_INSTANCES}
       - --timeout=900
+      # Model init (bpy kinematic trees + ~2.4 GB of checkpoints) takes a few
+      # minutes; the default 4-minute startup window killed healthy instances.
+      - --startup-probe=tcpSocket.port=8080,initialDelaySeconds=0,periodSeconds=60,timeoutSeconds=60,failureThreshold=15
+      - --cpu-boost
       - --allow-unauthenticated
       - --add-volume=name=weights,type=cloud-storage,bucket=${_WEIGHTS_BUCKET}
       - --add-volume-mount=volume=weights,mount-path=/weights
