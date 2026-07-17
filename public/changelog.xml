@@ -31,6 +31,14 @@
 			<description>The Forge realism engine (Hunyuan3D 2.1) is now live on a new flagship-class GPU (NVIDIA RTX PRO 6000 Blackwell, 96 GB). High-tier image-to-3D generations now come out with true physically-based materials: real metal, roughness, and color maps that catch light like photographed objects instead of flat plastic. The new hardware is also dramatically faster; the full shape-plus-texture pass finished in about a minute in our live verification, where the previous GPU class could not even load the model. Alongside it, every 3D generation service is healthy again and all of yesterday’s reliability fixes are fully rolled out across the fleet.</description>
 		</item>
 		<item>
+			<title>Prompt-to-avatar and selfie-to-avatar generation fixed end to end</title>
+			<link>https://three.ws/create/prompt</link>
+			<guid isPermaLink="false">2026-07-17:Prompt-to-avatar and selfie-to-avatar generation fixed end to end</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two bugs had been failing every avatar reconstruction job. First, the platform's own 3D worker delivers finished models from our Cloud Storage bucket, but a security allowlist introduced to keep forged URLs out only recognized third-party hosts, so even successful builds were marked failed at the last step. The allowlist now recognizes our own storage bucket (and only ours). Second, avatars generated from a text prompt use a full-body reference image, whose small face the face detector often missed, ending the job with 'no face detected'. The engine now finds the face with a wide-range detector, zooms in, and reads the facial detail from the zoomed view, so full-body renders and distant selfies both work. Describing a person in your prompt still matters: a subject with no human face gets a clear message asking you to reword.</description>
+		</item>
+		<item>
 			<title>The agent-to-agent payment economy runs far cheaper and now cycles hundreds of distinct payers</title>
 			<link>https://three.ws/admin/ring</link>
 			<guid isPermaLink="false">2026-07-17:The agent-to-agent payment economy runs far cheaper and now cycles hundreds of distinct payers</guid>
