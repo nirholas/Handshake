@@ -13,14 +13,14 @@
 	<meta property="og:url" content="https://three.ws/ar/studio" />
 	<meta property="og:title" content="AR Studio · three.ws" />
 	<meta property="og:description" content="Place any number of 3D models in your real space, and forge new ones by prompt without leaving the camera." />
-	<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=AR+Studio&amp;d=A+live+multi-model+AR+scene+through+your+camera%3A+place+any+GLB%2C+your+forge+creations%2C+or+community+models+together+in+your+room+%E2%80%94+and+generate+new+ones+by+prompt+without+leaving+the+view.&amp;p=%2Far%2Fstudio" />
+	<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=AR+Studio&amp;d=A+live+multi-model+AR+scene+through+your+camera%3A+place+any+number+of+3D+models+and+avatars+in+your+real+space%2C+pull+in+your+forge+creations%2C+community+models%2C+o&amp;p=%2Far%2Fstudio" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
 	<meta name="twitter:title" content="AR Studio · three.ws" />
 	<meta name="twitter:description" content="Place any number of 3D models in your real space, and forge new ones by prompt without leaving the camera." />
-	<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=AR+Studio&amp;d=A+live+multi-model+AR+scene+through+your+camera%3A+place+any+GLB%2C+your+forge+creations%2C+or+community+models+together+in+your+room+%E2%80%94+and+generate+new+ones+by+prompt+without+leaving+the+view.&amp;p=%2Far%2Fstudio" />
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=AR+Studio&amp;d=A+live+multi-model+AR+scene+through+your+camera%3A+place+any+number+of+3D+models+and+avatars+in+your+real+space%2C+pull+in+your+forge+creations%2C+community+models%2C+o&amp;p=%2Far%2Fstudio" />
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"AR Studio","url":"https://three.ws/ar/studio","applicationCategory":"DesignApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"A live multi-model AR studio: place any number of 3D models in your real space through your camera and generate new ones by prompt without leaving the view.","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -42,6 +42,9 @@
 			--font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 		}
 		* { box-sizing: border-box; }
+		/* Class display rules (flex/grid) must never override the hidden attribute —
+		   an invisible modal that still intercepts taps is a dead page. */
+		[hidden] { display: none !important; }
 		html, body { margin: 0; height: 100%; overscroll-behavior: none; }
 		body {
 			font-family: var(--font);
@@ -313,6 +316,9 @@
 			.ars-sel-name { max-width: 20vw; }
 		}
 	</style>
+
+	<meta property="og:locale" content="en_US">
+	<meta property="og:image:alt" content="AR Studio — three.ws">
 </head>
 <body>
 	<video id="ars-video" playsinline muted autoplay aria-hidden="true"></video>

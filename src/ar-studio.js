@@ -38,12 +38,13 @@ import {
 } from './ar/pinch-scale.js';
 import {
 	deserializeScene, fitTransform, MAX_PLACEMENTS, normalizeGlbUrl,
-	parseSrcParams, serializeScene, spawnPointInFront, studioShareUrl,
-	touchAngle, twistDelta,
+	parseSrcParams, serializeScene, SPAWN_DISTANCE_M, spawnPointInFront,
+	studioShareUrl, touchAngle, twistDelta,
 } from './ar/studio-scene.js';
 import { renderQRToSVG } from './erc8004/qr.js';
 import { deriveVerticalFovDeg, DEFAULT_DIAG_FOV_DEG } from './irl/camera-fov.js';
 import { createLoadQueue, sharedGLTFLoader } from './irl/load-queue.js';
+import { mountPinIdle } from './irl/pin-idle.js';
 import { clampPitch, isFiniteReading, resolveLockYaw, screenPitchDeg } from './irl/sensor-fusion.js';
 import { captureComposite, shareOrDownload } from './irl/share-frame.js';
 import { createLogger } from './shared/log.js';
@@ -322,7 +323,12 @@ function loadTemplate(src) {
 				(box.max.x - box.min.x) * fit.scale,
 				(box.max.z - box.min.z) * fit.scale,
 			) / 2;
-			return { gltf, skinned, fit, radius: Number.isFinite(radius) ? radius : 0.3 };
+			const height = (box.max.y - box.min.y) * fit.scale;
+			return {
+				gltf, skinned, fit,
+				radius: Number.isFinite(radius) ? radius : 0.3,
+				height: Number.isFinite(height) ? height : 0.75,
+			};
 		});
 		templates.set(src, t);
 		t.then((tpl) => tplReady.set(src, tpl))
@@ -334,7 +340,7 @@ function loadTemplate(src) {
 // Instantiate a template into a floor-ready group. Cloned per placement so ten
 // copies of one crate are ten independent models; SkeletonUtils handles skinned
 // avatars (plain .clone() breaks bone bindings).
-function instantiate(tpl) {
+function instantiate(tpl, src) {
 	const inner = cloneSkinnedScene(tpl.gltf.scene);
 	inner.scale.setScalar(tpl.fit.scale);
 	inner.position.y = tpl.fit.yOffset;
@@ -345,7 +351,14 @@ function instantiate(tpl) {
 		mixer = new AnimationMixer(inner);
 		mixer.clipAction(tpl.gltf.animations[0]).play();
 	}
-	return { group, mixer };
+	// A humanoid with no baked clips gets the universal idle retargeted onto its
+	// rig (same pipeline as /irl pins) — never a bind-pose T-pose statue. Async
+	// and best-effort: props and undriveable rigs resolve null and stay static.
+	let idlePromise = null;
+	if (!mixer && tpl.skinned) {
+		idlePromise = mountPinIdle(inner, { avatarUrl: src }).catch(() => null);
+	}
+	return { group, mixer, idlePromise };
 }
 
 function makeShadow(radius) {
@@ -401,11 +414,14 @@ async function addModel({ src, title = '' }, { x = null, z = null, yaw = null, s
 		return null;
 	}
 
-	const { group, mixer } = instantiate(tpl);
+	const { group, mixer, idlePromise } = instantiate(tpl, url);
 	let px = x, pz = z;
 	if (px === null || pz === null) {
+		// Tall models (avatars, statues) land further back so they don't fill
+		// the frame the moment they appear.
+		const dist = Math.max(SPAWN_DISTANCE_M, (tpl.height || 0) * 1.15);
 		const fwd = camera.getWorldDirection(new Vector3());
-		const spot = nudgeSpawn(spawnPointInFront(camera.position, fwd));
+		const spot = nudgeSpawn(spawnPointInFront(camera.position, fwd, dist));
 		px = spot.x;
 		pz = spot.z;
 	}
@@ -430,10 +446,17 @@ async function addModel({ src, title = '' }, { x = null, z = null, yaw = null, s
 		group,
 		shadow,
 		mixer,
+		idle: null,
 		yaw: yawV,
 		baseRadius: tpl.radius,
 		spawnT: reducedMotion ? 1 : 0,
 	};
+	idlePromise?.then((mgr) => {
+		if (!mgr) return;
+		// Removed before the idle clip arrived → release the manager, not leak it.
+		if (placements.includes(placement)) placement.idle = mgr;
+		else mgr.detach();
+	});
 	group.userData._targetScale = group.scale.x;
 	if (!reducedMotion) group.scale.setScalar(0.001);
 	placements.push(placement);
@@ -449,6 +472,8 @@ function removePlacement(p, { persist = true } = {}) {
 	const i = placements.indexOf(p);
 	if (i === -1) return;
 	placements.splice(i, 1);
+	p.idle?.detach();
+	p.idle = null;
 	xrSession?.release(p.group);
 	scene.remove(p.group);
 	if (p.shadow) {
@@ -1134,18 +1159,25 @@ xrBtn?.addEventListener('click', async () => {
 					setStatus('Model is still loading — one moment, then tap again.', { sticky: true });
 					return null;
 				}
-				const { group, mixer } = instantiate(tpl);
-				placements.push({
+				const { group, mixer, idlePromise } = instantiate(tpl, src);
+				const placement = {
 					id: `p-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
 					src,
 					title: armedSrc?.title || '',
 					group,
 					shadow: null,
 					mixer,
+					idle: null,
 					yaw: 0,
 					baseRadius: tpl.radius,
 					spawnT: 1,
+				};
+				idlePromise?.then((mgr) => {
+					if (!mgr) return;
+					if (placements.includes(placement)) placement.idle = mgr;
+					else mgr.detach();
 				});
+				placements.push(placement);
 				updateCount();
 				return group;
 			},
@@ -1170,7 +1202,10 @@ xrBtn?.addEventListener('click', async () => {
 				else setStatus(null);
 			},
 			onFrame: (dt) => {
-				for (const p of placements) p.mixer?.update(dt);
+				for (const p of placements) {
+					p.mixer?.update(dt);
+					p.idle?.update(dt);
+				}
 			},
 			onEnd: () => {
 				xrSession = null;
@@ -1258,6 +1293,7 @@ function tick(t) {
 
 	for (const p of placements) {
 		p.mixer?.update(dt);
+		p.idle?.update(dt);
 		if (p.spawnT < 1) {
 			p.spawnT = Math.min(1, p.spawnT + dt * 3.2);
 			const e = 1 - (1 - p.spawnT) ** 3; // ease-out cubic

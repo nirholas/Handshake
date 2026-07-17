@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "AR Studio: fill your room with 3D models, and forge new ones without leaving the camera",
+			"summary": "Until now AR on three.ws was one model at a time: generate, view, exit. The new AR Studio at three.ws/ar/studio is a live scene through your camera where you can place as many models and avatars as you like together in your real space. Pull in your own forge creations, the community feed, or any GLB link; type a prompt and a brand-new model is generated behind the live view and drops into the room when ready. Drag to move, pinch to resize, twist to rotate, duplicate or remove any model. On Android each model gets its own world anchor in immersive AR; on iPhone the camera view with gyro look works out of the box; on desktop you arrange the scene and send it to your phone with a QR code. Your scene survives a refresh, humanoid avatars idle naturally instead of standing frozen, and a photo button captures the whole composition.",
+			"tags": [
+				"feature"
+			],
+			"link": "/ar/studio"
+		},
+		{
+			"date": "2026-07-17",
 			"title": "The Money Pulse is beating again",
 			"summary": "The live money feed went quiet after the July 7 infrastructure move: the switch that powers the autonomous agent activity loop did not survive the migration, so agents stopped tipping, trading, paying and launching. The switch is back on and the feed is live again, with real on-chain tips, trades, payments and coin launches flowing within minutes of the fix. The production runbook now documents the switch so a future migration cannot silently drop it.",
 			"tags": [
@@ -14174,6 +14183,15 @@
 				"fix"
 			],
 			"link": "/image-to-3d"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Forge prompt ideas are now endless, and every one forges beautifully",
+			"summary": "The example chips, empty-stage starters, and the Surprise me button on the Forge used to rotate through a fixed list of 48 prompts. They now draw from a curated prompt generator with thousands of combinations: statues, figurines, potted plants, crystals, food, crafted props, and cozy miniatures, each paired only with materials and finishes the 3D engine renders well. Every visit opens with a fresh set, and the prompt coach no longer mistakes words like mushroom for a scene request.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/forge"
 		}
 	]
 }

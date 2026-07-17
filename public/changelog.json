@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T09:30:15.854Z",
+	"generated_at": "2026-07-17T09:35:27.119Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -24,6 +24,16 @@
 			"link": "/image-to-3d",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "AR Studio: fill your room with 3D models, and forge new ones without leaving the camera",
+			"summary": "Until now AR on three.ws was one model at a time: generate, view, exit. The new AR Studio at three.ws/ar/studio is a live scene through your camera where you can place as many models and avatars as you like together in your real space. Pull in your own forge creations, the community feed, or any GLB link; type a prompt and a brand-new model is generated behind the live view and drops into the room when ready. Drag to move, pinch to resize, twist to rotate, duplicate or remove any model. On Android each model gets its own world anchor in immersive AR; on iPhone the camera view with gyro look works out of the box; on desktop you arrange the scene and send it to your phone with a QR code. Your scene survives a refresh, humanoid avatars idle naturally instead of standing frozen, and a photo button captures the whole composition.",
+			"link": "/ar/studio",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -57,6 +67,16 @@
 			"link": "/changelog",
 			"tags": [
 				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "Forge prompt ideas are now endless, and every one forges beautifully",
+			"summary": "The example chips, empty-stage starters, and the Surprise me button on the Forge used to rotate through a fixed list of 48 prompts. They now draw from a curated prompt generator with thousands of combinations: statues, figurines, potted plants, crystals, food, crafted props, and cozy miniatures, each paired only with materials and finishes the 3D engine renders well. Every visit opens with a fresh set, and the prompt coach no longer mistakes words like mushroom for a scene request.",
+			"link": "/forge",
+			"tags": [
 				"improvement"
 			]
 		},

@@ -23,6 +23,14 @@
 			<description>Upload a photo (or up to 4 angles) and get a downloadable textured 3D model (GLB). The Forge's photo lane, opened directly — for objects and props; for faces, use Selfie to Avatar.</description>
 		</item>
 		<item>
+			<title>AR Studio: fill your room with 3D models, and forge new ones without leaving the camera</title>
+			<link>https://three.ws/ar/studio</link>
+			<guid isPermaLink="false">2026-07-17:AR Studio: fill your room with 3D models, and forge new ones without leaving the camera</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Until now AR on three.ws was one model at a time: generate, view, exit. The new AR Studio at three.ws/ar/studio is a live scene through your camera where you can place as many models and avatars as you like together in your real space. Pull in your own forge creations, the community feed, or any GLB link; type a prompt and a brand-new model is generated behind the live view and drops into the room when ready. Drag to move, pinch to resize, twist to rotate, duplicate or remove any model. On Android each model gets its own world anchor in immersive AR; on iPhone the camera view with gyro look works out of the box; on desktop you arrange the scene and send it to your phone with a QR code. Your scene survives a refresh, humanoid avatars idle naturally instead of standing frozen, and a photo button captures the whole composition.</description>
+		</item>
+		<item>
 			<title>Avatars you generate now come out truly animation-ready</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-07-17:Avatars you generate now come out truly animation-ready</guid>
@@ -45,6 +53,14 @@
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>A full automated sweep of every page and API endpoint on the site caught a bug that replaced creator profile pages (three.ws/u/yourname) with an error message. That is fixed. The sweep also repaired the login captcha for rate-limited sign-ins, fixed dead links in the dashboard and two blog posts, and added two dozen previously unlisted pages to the site index so search engines and the sitemap can find them. The audit now runs with deeper checks (blank-page detection, visible error detection, and link crawling) so regressions like these get caught before anyone hits them.</description>
+		</item>
+		<item>
+			<title>Forge prompt ideas are now endless, and every one forges beautifully</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-07-17:Forge prompt ideas are now endless, and every one forges beautifully</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The example chips, empty-stage starters, and the Surprise me button on the Forge used to rotate through a fixed list of 48 prompts. They now draw from a curated prompt generator with thousands of combinations: statues, figurines, potted plants, crystals, food, crafted props, and cozy miniatures, each paired only with materials and finishes the 3D engine renders well. Every visit opens with a fresh set, and the prompt coach no longer mistakes words like mushroom for a scene request.</description>
 		</item>
 		<item>
 			<title>Image to 3D gets its own front door</title>
