@@ -45,6 +45,13 @@ describe('buildIframeSnippet / buildWebComponentSnippet / buildAgentThreeDSnippe
 		expect(iframe).toContain(encodeURIComponent(GLB));
 		expect(component).toContain(GLB);
 		expect(component).toContain('<model-viewer');
+		// The pasted snippet must render at studio quality, not model-viewer's
+		// legacy-neutral defaults — same env HDR / tone mapping / exposure as
+		// the Forge studio viewer (pages/forge.html) and /forge/embed.
+		expect(component).toContain('tone-mapping="aces"');
+		expect(component).toContain('environment-image="https://three.ws/environments/gallery/env.hdr"');
+		expect(component).toContain('exposure="1.5"');
+		expect(component).toContain('shadow-softness="0.9"');
 		expect(agent3d).toContain(GLB);
 		expect(agent3d).toContain('<agent-3d');
 		expect(agent3d).toContain('viewer');

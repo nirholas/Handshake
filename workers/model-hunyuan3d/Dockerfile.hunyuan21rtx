@@ -45,14 +45,9 @@ RUN pip install -r /app/requirements.txt
 # save_glb OBJ->GLB exporter in DifferentiableRenderer.mesh_utils. Drop a tiny
 # stub module so the top-level `import bpy` in that file resolves; this worker
 # assembles the PBR GLB with pygltflib and never calls a bpy function.
-RUN python - <<'PY'
-import os, sysconfig
-dest = os.path.join(sysconfig.get_paths()["purelib"], "bpy.py")
-with open(dest, "w") as f:
-    f.write("# stub: real Blender bpy is only needed for the unused save_glb "
-            "OBJ->GLB exporter. This worker builds the PBR GLB with pygltflib.\n")
-print("wrote bpy stub to", dest)
-PY
+RUN DEST=$(python -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")/bpy.py \
+    && printf '%s\n' "# stub: real Blender bpy is only needed for the unused save_glb OBJ->GLB exporter. This worker builds the PBR GLB with pygltflib." > "$DEST" \
+    && echo "wrote bpy stub to $DEST"
 
 # The 2.1 code (hy3dshape + hy3dpaint packages) is cloned in-tree from a pinned
 # Tencent-Hunyuan/Hunyuan3D-2.1 commit: the texgen extensions must be compiled

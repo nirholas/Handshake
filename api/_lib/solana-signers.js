@@ -56,7 +56,20 @@ export const SOLANA_SIGNERS = [
 		name: 'pump-x402-launcher',
 		env: 'PUMP_X402_LAUNCHER_SECRET_KEY_B64',
 		minSol: 0.1,
-		purpose: 'fronts the ~0.022 SOL deploy cost for x402 pay-per-call pump.fun launches',
+		// CRITICAL: this env resolves to the SAME physical wallet as the x402 ring
+		// TREASURY / receiver (X402_PAY_TO_SOLANA / X402_TREASURY_SECRET_BASE58 →
+		// secret `wallet-x402-treasury-b64`, pubkey wwwww…ccrU). That wallet holds
+		// the ring's live USDC float and platform x402 revenue. Without holdsTokens,
+		// the excess-mode treasury-sweepback consolidated its USDC up to the master
+		// AND closed its USDC ATA every run — so every following ring settle had to
+		// recreate the ATA at ~2,039,280 lamports of rent, which is what dragged the
+		// per-settle fee to ~570k lamports (114× the 5k self-pay floor) and quietly
+		// drained the closed loop's float into the master. holdsTokens keeps the
+		// ring float where the ring's own rebalancer (treasury→payer) can
+		// recirculate it; only an explicit drain may still consolidate it.
+		holdsTokens: true,
+		purpose:
+			'fronts the ~0.022 SOL deploy cost for x402 pay-per-call pump.fun launches; ALSO the x402 ring treasury/receiver (holds USDC revenue + ring float) — holdsTokens protects it from excess-mode sweepback',
 		network: 'mainnet',
 	},
 	{

@@ -99,7 +99,7 @@ export function initWalkPreview(container) {
 	const sun = new DirectionalLight(0xffffff, 1.4);
 	sun.position.set(4, 8, 6);
 	sun.castShadow = true;
-	sun.shadow.mapSize.set(512, 512);
+	sun.shadow.mapSize.set(1024, 1024); // match walk.js / walk-embed.js so preview shadows don't stair-step
 	sun.shadow.camera.near = 0.5;
 	sun.shadow.camera.far = 30;
 	sun.shadow.camera.left = -8;

@@ -42,6 +42,23 @@ export function addLights(viewer) {
 	viewer.scene.add(rim);
 
 	viewer.lights.push(ambient, key, fill, rim);
+
+	// World-anchored overhead light whose only real job is the soft contact
+	// shadow on the ground catcher (see viewer.js _updateShadowCatcher). It is
+	// deliberately NOT the camera-riding key: a camera-space caster would spin
+	// the shadow around the model as the user orbits. Intensity stays low so
+	// the calibrated studio rig above still defines the look. Skipped on
+	// low-power devices along with the shadow map itself.
+	if (!viewer._lowPower) {
+		const shadowSun = new DirectionalLight('#FFFFFF', 0.25);
+		shadowSun.position.set(1.5, 4, 2.5);
+		shadowSun.castShadow = true;
+		shadowSun.shadow.mapSize.set(1024, 1024);
+		shadowSun.shadow.bias = -0.002;
+		shadowSun.name = 'shadow_light';
+		viewer.scene.add(shadowSun);
+		viewer.lights.push(shadowSun);
+	}
 }
 
 export function removeLights(viewer) {

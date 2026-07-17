@@ -24,6 +24,10 @@ import {
 	ACESFilmicToneMapping,
 	SRGBColorSpace,
 	PMREMGenerator,
+	PCFShadowMap,
+	PlaneGeometry,
+	ShadowMaterial,
+	Mesh,
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { getMeshoptDecoder } from './viewer/internal.js';
@@ -60,6 +64,24 @@ export class Act2Viewer {
 		sun.position.set(4, 8, 6);
 		this.scene.add(sun);
 
+		/* soft contact shadow so the model reads as grounded, matching the
+		 * shadow-intensity the model-viewer surfaces already ship. The catcher
+		 * is a ShadowMaterial plane: invisible except where the shadow falls,
+		 * so it works on this alpha-transparent canvas. */
+		this.renderer.shadowMap.enabled = true;
+		this.renderer.shadowMap.type = PCFShadowMap;
+		sun.castShadow = true;
+		sun.shadow.mapSize.set(1024, 1024);
+		sun.shadow.bias = -0.002;
+		this._sun = sun;
+		const catcher = new Mesh(
+			new PlaneGeometry(20, 20),
+			new ShadowMaterial({ opacity: 0.3 }),
+		);
+		catcher.rotation.x = -Math.PI / 2;
+		catcher.receiveShadow = true;
+		this.scene.add(catcher);
+
 		/** @type {Map<string, AnimationClip>} */
 		this.clips = new Map();
 		/** @type {THREE.AnimationAction|null} */
@@ -90,7 +112,32 @@ export class Act2Viewer {
 		this._disposed = false;
 		this._raf = null;
 		this._tick = this._tick.bind(this);
-		this._raf = requestAnimationFrame(this._tick);
+
+		/* Render only while the canvas is actually watchable: the homepage
+		 * keeps this section mounted while the user scrolls, so without these
+		 * gates the turntable burns GPU offscreen and in background tabs. */
+		this._inView = true;
+		this._onVisibility = () => this._syncRunning();
+		document.addEventListener('visibilitychange', this._onVisibility);
+		this._io = new IntersectionObserver(([entry]) => {
+			this._inView = !!entry?.isIntersecting;
+			this._syncRunning();
+		});
+		this._io.observe(canvas);
+		this._syncRunning();
+	}
+
+	_syncRunning() {
+		const shouldRun = !this._disposed && this._inView && !document.hidden;
+		if (shouldRun && this._raf === null) {
+			// Timer keeps accruing while paused; consume the backlog so the
+			// first resumed frame doesn't jump the animation.
+			this._clock.update();
+			this._raf = requestAnimationFrame(this._tick);
+		} else if (!shouldRun && this._raf !== null) {
+			cancelAnimationFrame(this._raf);
+			this._raf = null;
+		}
 	}
 
 	_resize() {
@@ -127,6 +174,8 @@ export class Act2Viewer {
 		if (this._raf) cancelAnimationFrame(this._raf);
 		this._raf = null;
 		this._ro?.disconnect();
+		this._io?.disconnect();
+		document.removeEventListener('visibilitychange', this._onVisibility);
 		if (this.mixer) { this.mixer.stopAllAction(); this.mixer = null; }
 		if (this.model) { this.scene.remove(this.model); this.model = null; }
 		// Release GPU-side geometry/material/texture handles before the context.
@@ -228,11 +277,26 @@ export class Act2Viewer {
 		await this._meshoptReady;
 		const gltf = await this._loader.loadAsync(url);
 		this.model = gltf.scene;
+		this.model.traverse((n) => {
+			if (n.isMesh) n.castShadow = true;
+		});
 		this.scene.add(this.model);
 
 		/* center horizontally + plant feet on ground */
 		const box = new Box3().setFromObject(this.model);
 		const size = box.getSize(new Vector3());
+
+		/* fit the sun's shadow frustum to this model so the contact shadow
+		 * stays crisp for a 30cm prop and still covers a 3m rig */
+		const shadowR = Math.max(size.x, size.y, size.z, 1) * 1.2;
+		const cam = this._sun.shadow.camera;
+		cam.left = -shadowR;
+		cam.right = shadowR;
+		cam.top = shadowR;
+		cam.bottom = -shadowR;
+		cam.near = 0.5;
+		cam.far = 30;
+		cam.updateProjectionMatrix();
 		const center = box.getCenter(new Vector3());
 		this.model.position.x -= center.x;
 		this.model.position.z -= center.z;

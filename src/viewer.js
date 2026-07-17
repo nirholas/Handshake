@@ -14,9 +14,12 @@ import {
 	Mesh,
 	PMREMGenerator,
 	PerspectiveCamera,
+	PCFShadowMap,
+	PlaneGeometry,
 	Points,
 	PointsMaterial,
 	Scene,
+	ShadowMaterial,
 	SkeletonHelper,
 	Spherical,
 	Vector3,
@@ -278,6 +281,13 @@ export class Viewer {
 		const dprCap = this._lowPower ? 1 : (options.maxPixelRatio ?? (options.kiosk ? 1.5 : 2));
 		this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprCap));
 		this.renderer.setSize(el.clientWidth, el.clientHeight);
+
+		// Ground contact shadow (the one rendering-quality gap vs the
+		// model-viewer surfaces). Cheap when nothing casts; skipped entirely on
+		// low-power devices, matching the MSAA/DPR degrade above.
+		this.renderer.shadowMap.enabled = !this._lowPower;
+		this.renderer.shadowMap.type = PCFShadowMap;
+		this.shadowCatcher = null;
 
 		this.pmremGenerator = new PMREMGenerator(this.renderer);
 		this.pmremGenerator.compileEquirectangularShader();
@@ -1156,6 +1166,44 @@ export class Viewer {
 	 * @param {THREE.Object3D} object
 	 * @param {Array<THREE.AnimationClip} clips
 	 */
+	// Soft ground contact shadow: a ShadowMaterial plane just under the
+	// recentered model (feet sit at -bbSize.y/2 after setContent recentering).
+	// Created once, then resized/repositioned per load; invisible except where
+	// the shadow_light's shadow falls, so it composes with any bgColor.
+	_updateShadowCatcher(bbSize) {
+		if (this._lowPower) return;
+		if (!isFinite(bbSize.x) || !isFinite(bbSize.y) || !isFinite(bbSize.z)) return;
+		if (!this.shadowCatcher) {
+			this.shadowCatcher = new Mesh(
+				new PlaneGeometry(1, 1),
+				new ShadowMaterial({ opacity: 0.25, depthWrite: false }),
+			);
+			this.shadowCatcher.rotation.x = -Math.PI / 2;
+			this.shadowCatcher.receiveShadow = true;
+			this.shadowCatcher.name = 'shadow_catcher';
+			this.scene.add(this.shadowCatcher);
+		}
+		const span = Math.max(bbSize.x, bbSize.z, 0.5) * 3;
+		this.shadowCatcher.scale.set(span, span, 1);
+		this.shadowCatcher.position.y = -bbSize.y / 2 + 0.002;
+
+		// Fit the caster's frustum to the model so shadow texels aren't wasted
+		// on a prop or clipped on an oversized scene.
+		const sun = this.lights.find((l) => l.name === 'shadow_light');
+		if (sun) {
+			const r = Math.max(bbSize.x, bbSize.y, bbSize.z, 0.5) * 1.2;
+			sun.position.set(r * 0.4, r * 1.6, r * 0.7); // keep the overhead angle at any scale
+			const cam = sun.shadow.camera;
+			cam.left = -r;
+			cam.right = r;
+			cam.top = r;
+			cam.bottom = -r;
+			cam.near = 0.1;
+			cam.far = r * 4;
+			cam.updateProjectionMatrix();
+		}
+	}
+
 	setContent(object, clips) {
 		this.clear();
 
@@ -1199,6 +1247,7 @@ export class Viewer {
 		object.traverse((node) => {
 			if (node.isMesh && node.geometry) {
 				node.geometry.computeBoundsTree();
+				node.castShadow = true;
 			}
 		});
 
@@ -1294,6 +1343,7 @@ export class Viewer {
 		this.controls.saveState();
 
 		this.updateLights();
+		this._updateShadowCatcher(bbSize); // after updateLights so shadow_light exists to fit
 		this.updateGUI();
 		this.updateEnvironment();
 		this.updateDisplay();
@@ -2343,6 +2393,13 @@ export class Viewer {
 
 		this.lights.forEach((light) => light.parent?.remove(light));
 		this.lights = [];
+
+		if (this.shadowCatcher) {
+			this.scene.remove(this.shadowCatcher);
+			this.shadowCatcher.geometry?.dispose();
+			this.shadowCatcher.material?.dispose();
+			this.shadowCatcher = null;
+		}
 
 		if (this.annotationEls.length) {
 			this.annotationEls.forEach((a) => a.el.remove());

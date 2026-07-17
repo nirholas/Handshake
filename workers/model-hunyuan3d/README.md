@@ -24,17 +24,30 @@ instant fallback lane: to roll back, repoint `GCP_HUNYUAN3D_URL` at the
 All three services speak the **same wire contract**, so any URL drops straight
 into the platform's `GCP_HUNYUAN3D_URL` env.
 
-**Why an RTX build exists.** All L4 services in us-central1 share one quota of
-3 GPUs, and the fleet is permanently at that ceiling; the RTX PRO 6000 quota in
-the same region is granted at 1000. `Dockerfile.hunyuan21rtx` is the same
-app21.py on a CUDA 12.8 / torch 2.7.1 (cu128) stack, because Blackwell is
-compute capability 12.0 and the cu124 wheels in the L4 image ship no sm_120
-kernels. Its extensions compile for both 8.9 and 12.0, so the RTX image also
-runs on an L4 if ever needed. Deploy with
+**Why an RTX build exists.** Two hard walls, found live on 2026-07-17:
+
+1. **The L4 2.1 service cannot finish loading at all.** app21 stages ~18 GiB
+   of weights into `/tmp`, which on Cloud Run is memory-backed, then loads the
+   ~14 GiB model on top; the L4 tier's 32 Gi memory ceiling SIGKILLs the
+   instance every time (`Container terminated on signal 9` mid-load). The port
+   binds and `/health` answers, but no 2.1 job can complete on an L4 with the
+   current staging design.
+2. **L4 quota.** All L4 services in us-central1 share one quota of 3 GPUs and
+   the fleet is permanently at that ceiling; the RTX PRO 6000 quota in the
+   same region is granted at 1000.
+
+`Dockerfile.hunyuan21rtx` is the same app21.py on a CUDA 12.8 / torch 2.7.1
+(cu128) stack, because Blackwell is compute capability 12.0 and the cu124
+wheels in the L4 image ship no sm_120 kernels. Its extensions compile for both
+8.9 and 12.0, so the image also boots on an L4 (though wall 1 above still
+applies there). Deploy with
 [`cloudbuild.hunyuan21rtx.yaml`](./cloudbuild.hunyuan21rtx.yaml) (BuildKit,
-inline layer cache); platform minimums for the GPU type are 20 CPU / 80 Gi. The
-RTX service runs warm (min 1, max 4) as the 2.1 primary; the L4 build stays
-deployed at min 0 as the instant fallback.
+inline layer cache); platform minimums for the GPU type are 20 CPU / 80 Gi,
+which also clears wall 1 with room to spare. The RTX service runs warm (min 1,
+max 4) as the 2.1 primary. Making the L4 build genuinely loadable (stage one
+weight subtree at a time and delete each after its `from_pretrained`) is the
+open follow-up if an L4 fallback for 2.1 is ever needed; until then the 2.0
+lane is the fallback.
 
 ## License
 

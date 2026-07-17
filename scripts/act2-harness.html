@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Act2Viewer harness (temporary, verification only)</title>
+<style>html,body{margin:0;height:100%;background:#101018}canvas{width:100vw;height:100vh;display:block}</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script type="module">
+import '/src/home-act2-viewer.js';
+const v = new window.Act2Viewer(document.getElementById('c'));
+await v.loadModel('/avatars/cesium-man.glb');
+window.__act2 = v;
+window.__act2Ready = true;
+</script>
+</body>
+</html>

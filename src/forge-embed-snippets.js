@@ -97,7 +97,10 @@ export function buildWebComponentSnippet(glbUrl, title, sizeId) {
 		`  src="${escEmbed(glbUrl)}"\n` +
 		`  alt="${alt}"\n` +
 		`  camera-controls auto-rotate ar\n` +
-		`  shadow-intensity="1"\n` +
+		`  tone-mapping="aces"\n` +
+		`  environment-image="${ORIGIN}/environments/gallery/env.hdr"\n` +
+		`  exposure="1.5"\n` +
+		`  shadow-intensity="1" shadow-softness="0.9"\n` +
 		`  style="width:${s.w}px;height:${s.h}px;max-width:100%;background:#0b0b0b;border-radius:14px">` +
 		`\n</model-viewer>`
 	);

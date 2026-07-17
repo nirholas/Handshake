@@ -12,7 +12,12 @@
 <meta property="og:type" content="website" />
 <!-- Meshopt decoder must register before <model-viewer> starts loading (Forge GLBs are meshopt-compressed). Classic script → runs during parse, before the model-viewer module. -->
 <script src="/model-viewer-meshopt.js"></script>
-<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
+<script
+  type="module"
+  src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"
+  integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw"
+  crossorigin="anonymous"
+></script>
 <style>
   :root { color-scheme: dark; --accent: #6ea8fe; }
   * { box-sizing: border-box; }
@@ -156,7 +161,7 @@
   <div class="stage">
     <model-viewer id="mv" class="veiled" camera-controls auto-rotate touch-action="pan-y"
       rotation-per-second="14deg" interaction-prompt="none"
-      shadow-intensity="1" shadow-softness="0.85" exposure="1.05" environment-image="neutral" tone-mapping="aces"
+      shadow-intensity="1" shadow-softness="0.9" exposure="1.5" environment-image="/environments/gallery/env.hdr" tone-mapping="aces"
       ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" reveal="auto" alt="Generated 3D model">
     </model-viewer>
 

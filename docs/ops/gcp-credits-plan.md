@@ -16,7 +16,7 @@ Six GPU services share those 3 GPUs:
 | model-triposg | image-to-3D | 0 | 2 |
 | unirig | auto-rigging | 1 | 2 |
 | avatar-reconstruction | photo-to-avatar | 1 | 3 |
-| model-hunyuan3d-21 | PBR realism lane, L4 fallback build (min 0 since 2026-07-17; a pinned min 1 here starved every other rollout) | 0 | 1 |
+| model-hunyuan3d-21 | PBR realism lane, L4 build (min 0 since 2026-07-17; a pinned min 1 here starved every other rollout). KNOWN-BROKEN for actual jobs: 18 GiB tmpfs weight staging + 14 GiB model OOMs the 32 Gi L4 ceiling (signal 9 mid-load); see workers/model-hunyuan3d/README.md | 0 | 1 |
 
 `model-hunyuan3d-21-rtx` (same 2.1 PBR lane, warm min 1 / max 4) does NOT draw
 from this pool; it runs on the RTX PRO 6000 quota below.

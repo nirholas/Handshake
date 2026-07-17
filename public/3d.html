@@ -219,8 +219,11 @@ curl https://three.ws/api/3d/openapi.json</code></pre>
 					alt="A rigged 3D character model rendered from a GLB file"
 					camera-controls
 					auto-rotate
+					tone-mapping="aces"
+					environment-image="/environments/gallery/env.hdr"
 					shadow-intensity="1"
-					exposure="1.05"
+					shadow-softness="0.9"
+					exposure="1.5"
 					ar
 					touch-action="pan-y"
 				></model-viewer>
