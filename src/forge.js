@@ -2747,6 +2747,13 @@ els.emptyStarters?.addEventListener('click', (e) => {
 	if (chip) runExamplePrompt(chip.textContent.trim());
 });
 
+// Let decoupled result-panel modules (e.g. "More like this") request a fresh
+// generation from a derived prompt, reusing the exact example-chip path.
+document.addEventListener('forge:run-prompt', (e) => {
+	const text = typeof e.detail?.prompt === 'string' ? e.detail.prompt.trim() : '';
+	if (text) runExamplePrompt(text);
+});
+
 // Independence Day (July 1–5): a few festive single-object prompts so the
 // seasonal moment reaches the Forge too. They carry the `.chip` class, so the
 // delegation above generates them one-click; the `.chip--festive` modifier both

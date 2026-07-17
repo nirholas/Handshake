@@ -90,6 +90,20 @@ function loadDiscovery() {
 	document.head.appendChild(s);
 }
 
+// Load the site-wide first-creation celebration (public/forge-celebrate.js):
+// the confetti + card moment when a visitor forges their first 3D model.
+// Listens for the same `tws:feature-done` signal the discovery layer uses, so
+// it covers every generation surface. Self-mounting + idempotent; fires at most
+// once per device; honours <html data-celebrate="off">.
+function loadForgeCelebrate() {
+	if (document.documentElement.getAttribute('data-celebrate') === 'off') return;
+	if (document.querySelector('script[src="/forge-celebrate.js"]')) return;
+	const s = document.createElement('script');
+	s.src = '/forge-celebrate.js';
+	s.defer = true;
+	document.head.appendChild(s);
+}
+
 // Load the site-wide theme switcher (public/theme-switcher.js): owns the
 // dark ⇄ light toggle wired to the nav button, persistence and cross-tab sync.
 // Self-mounting + idempotent. The inline boot script already applied the theme
@@ -186,6 +200,7 @@ function boot() {
 	loadSearch();
 	loadAgentBusDebug();
 	loadDiscovery();
+	loadForgeCelebrate();
 	loadGettingStarted();
 	loadThemeSwitcher();
 	initCompanionAutoStart();
