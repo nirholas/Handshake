@@ -31,6 +31,14 @@
 			<description>The studio avatar generator used to recolor one of five fixed body meshes, so a whole gallery of them read as the same handful of people in different colors. It now composes each avatar from modular parts: a hairstyle, top, bottom, footwear, and glasses mixed across the base bodies onto one shared skeleton, then recolored per part and scaled for height. This is the same one-skeleton-many-parts approach the best avatar platforms use, built in-house with no external service. Every generated avatar is fully rigged and carries facial expression blendshapes, and two of them almost never look the same. All platform-generated avatars continue to appear across the galleries.</description>
 		</item>
 		<item>
+			<title>AR Studio goes multiplayer: build a scene together in real time</title>
+			<link>https://three.ws/ar/studio</link>
+			<guid isPermaLink="false">2026-07-17:AR Studio goes multiplayer: build a scene together in real time</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The AR Studio can now be a shared space. Tap Share live to open a room with a short code, send it to a friend, and you both see the same scene update live: every model one of you adds, moves, resizes, rotates, or removes appears for everyone in the room instantly, with a running count of who's building alongside you. Forge a new model from a prompt and it drops into the shared room for everyone. Open the same room on two phones pointed at the same QR marker and the models pin to the same spot on your real table. It runs on the same realtime servers as our live worlds, with each person only able to edit their own models.</description>
+		</item>
+		<item>
 			<title>AR Studio: fill your room with 3D models, and forge new ones without leaving the camera</title>
 			<link>https://three.ws/ar/studio</link>
 			<guid isPermaLink="false">2026-07-17:AR Studio: fill your room with 3D models, and forge new ones without leaving the camera</guid>
@@ -119,6 +127,14 @@
 			<description>Connecting a wallet now gives real feedback: the button shows a Connecting state, a success confirmation when it links, and a plain-language message with a one-tap retry when something goes wrong instead of failing silently. If you have no wallet installed, you get a clear Get Phantom prompt rather than a surprise browser tab. On a Solana Seeker, signing in now takes a single tap instead of two: both login and wallet-linking use the Mobile Wallet Adapter's built-in Sign-In-With-Solana, so authorization and the signature happen in one Seed Vault prompt, and backing out is recognized as a clean cancel. Phantom, Backpack, and Solflare work exactly as before. The whole wallet layer is now covered by an automated test suite.</description>
 		</item>
 		<item>
+			<title>Forge a 3D model right from the homepage</title>
+			<link>https://three.ws/</link>
+			<guid isPermaLink="false">2026-07-17:Forge a 3D model right from the homepage</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The homepage now leads with a prompt bar: type what you want and a real textured 3D model starts building the moment you hit Enter, no navigation and no sign-up. The live generator that used to sit far down the page now sits directly under the headline, so you type at the top and watch your model take shape right below. Three one-tap example prompts and a rotating set of ideas make it easy to start.</description>
+		</item>
+		<item>
 			<title>Forge prompt ideas are now endless, and every one forges beautifully</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-07-17:Forge prompt ideas are now endless, and every one forges beautifully</guid>
@@ -141,6 +157,14 @@
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The Forge now greets you with a Roll &amp; Forge button that picks a great random prompt and generates a model in a single click, so you can reach a finished 3D object without thinking of what to type. The start screen and page header also state plainly that generating is free with no sign-up and the model is yours to download, removing the guesswork about cost. Roll &amp; Forge draws from the same curated prompt library as Surprise me, so every random model is one that reconstructs cleanly.</description>
+		</item>
+		<item>
+			<title>Forge: one-tap variations of any model</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-17:Forge: one-tap variations of any model</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every model you forge now shows a &quot;More like this&quot; row: one tap re-forges the same subject in a different material or finish (brushed brass, translucent glass, carved oak, and more), so you can explore a whole design space without retyping anything. A reshuffle button deals a fresh set of ideas. It appears for text prompts and runs on the free lane, so exploring costs nothing.</description>
 		</item>
 		<item>
 			<title>Free 3D API tells agents exactly when to check back</title>

@@ -32,6 +32,11 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { clone as cloneSkinnedScene } from 'three/addons/utils/SkeletonUtils.js';
 
 import { EstimatedLighting } from './ar/estimated-lighting.js';
+import {
+	generateRoomCode, localToShared, normalizeRoomCode, roomKeyForCode,
+	roomShareUrl, sharedToLocal,
+} from './ar/studio-coords.js';
+import { StudioNet } from './ar/studio-net.js';
 import { MultiPlaceSession } from './ar/multi-place.js';
 import {
 	createPinchState, pinchEnd, pinchMove, pinchStart, touchDist,
@@ -106,6 +111,8 @@ const trayBody = $('ars-tray-body');
 const trayClose = $('ars-tray-close');
 const emptyEl = $('ars-empty');
 const qrModal = $('ars-qr-modal');
+const roomBtn = $('ars-room-btn');
+const roomModal = $('ars-room-modal');
 
 if (!canvas || !hud) {
 	throw new Error('AR Studio: page skeleton missing');
@@ -227,6 +234,21 @@ let arTrackH = 0;
 let statusTimer = null;
 let undoItems = null;
 
+// ── Shared-room networking (purely additive; null = single-player) ────────────
+/** @type {import('./ar/studio-net.js').StudioNet|null} */
+let net = null;
+let roomCode = '';
+/** netId → placement, for reconciling remote models against local ones. */
+const netModelsById = new Map();
+let roomPresence = { count: 1, names: [] };
+
+// A placement I control: single-player models (no ownerId) and my own room
+// models. Others' room models are visible + live but not editable by me (the
+// server owner-gates edits too — this is the local UX guard).
+function isMine(p) {
+	return !p.ownerId || p.ownerId === CLIENT_ID;
+}
+
 // Template cache: one load per GLB source no matter how many copies are placed.
 /** @type {Map<string, Promise<{ gltf: any, skinned: boolean, fit: { scale: number, yOffset: number }, radius: number }>>} */
 const templates = new Map();
@@ -269,8 +291,7 @@ function setStatus(msg, { warn = false, sticky = false, actionLabel = '', onActi
 function updateCount() {
 	if (!countEl) return;
 	const n = placements.length;
-	countEl.textContent = n === 1 ? '1 model' : `${n} models`;
-	countEl.hidden = n === 0;
+	updatePresencePill(); // owns the count-pill text (folds in room presence)
 	if (clearBtn) clearBtn.hidden = n === 0;
 	if (emptyEl) emptyEl.hidden = n > 0;
 	if (photoBtn) photoBtn.disabled = n === 0;
@@ -287,9 +308,11 @@ function logicalScale(p) {
 }
 
 // ── Scene persistence ─────────────────────────────────────────────────────────
+// Only MY models persist to localStorage — never another participant's room
+// models, which would otherwise reappear as mine on a later solo visit.
 function saveScene() {
 	try {
-		localStorage.setItem(SCENE_KEY, serializeScene(placements.map((p) => ({
+		localStorage.setItem(SCENE_KEY, serializeScene(placements.filter(isMine).map((p) => ({
 			src: p.src,
 			title: p.title,
 			x: p.group.position.x,
@@ -408,7 +431,10 @@ function nudgeSpawn(pt) {
  * floor in front of the camera (or at the given transform on restore), selects
  * it, and persists. Resolves with the placement or null on failure.
  */
-async function addModel({ src, title = '' }, { x = null, z = null, yaw = null, scale = null, announce = true, persist = true } = {}) {
+async function addModel({ src, title = '' }, {
+	x = null, z = null, yaw = null, scale = null, announce = true, persist = true,
+	remote = false, netId = null, ownerId = null,
+} = {}) {
 	const url = normalizeGlbUrl(src);
 	if (!url) {
 		setStatus('That link is not a loadable https GLB.', { warn: true });
@@ -466,6 +492,13 @@ async function addModel({ src, title = '' }, { x = null, z = null, yaw = null, s
 		yaw: yawV,
 		baseRadius: tpl.radius,
 		spawnT: reducedMotion ? 1 : 0,
+		height: tpl.height || 0,
+		// Room fields: netId is the shared-scene id (null until broadcast); ownerId
+		// null = single-player / mine. Set for remote models so isMine() gates edits.
+		netId: netId || null,
+		ownerId: remote ? ownerId : null,
+		remote,
+		_lastNetSend: 0,
 	};
 	idlePromise?.then((mgr) => {
 		if (!mgr) return;
@@ -476,18 +509,337 @@ async function addModel({ src, title = '' }, { x = null, z = null, yaw = null, s
 	group.userData._targetScale = group.scale.x;
 	if (!reducedMotion) group.scale.setScalar(0.001);
 	placements.push(placement);
-	armedSrc = { src: url, title: placement.title };
+	if (placement.netId) netModelsById.set(placement.netId, placement);
+	if (!remote) armedSrc = { src: url, title: placement.title };
 	updateCount();
-	select(placement);
+	if (!remote) select(placement);
 	if (persist) saveScene();
-	if (announce) setStatus('Placed. Drag to move, pinch to resize, twist to rotate.');
+
+	// Broadcast a locally-added model to the shared room (once): mint a wire id,
+	// tag the placement with it, and send its shared-frame transform. Remote adds
+	// (reconciled from the room) never re-broadcast.
+	if (!remote && net && net.status === 'online') {
+		const wireId = `m${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`.slice(0, 40);
+		placement.netId = wireId;
+		placement.ownerId = CLIENT_ID;
+		netModelsById.set(wireId, placement);
+		net.spawn(placementWire(placement, wireId));
+	}
+
+	if (announce) {
+		setStatus(remote
+			? `${title || 'A model'} was added by someone in the room.`
+			: 'Placed. Drag to move, pinch to resize, twist to rotate.');
+	}
 	return placement;
 }
 
-function removePlacement(p, { persist = true } = {}) {
+// A placement's transform in the shared logical frame (for the wire).
+function placementShared(p) {
+	return localToShared({
+		x: p.group.position.x,
+		z: p.group.position.z,
+		yaw: p.yaw,
+		scale: logicalScale(p),
+		height: p.height || 0,
+	});
+}
+
+// The full spawn payload for the wire: source + title + shared-frame transform.
+function placementWire(p, wireId) {
+	return { id: wireId, src: p.src, title: p.title, ...placementShared(p) };
+}
+
+// Broadcast a transform change for one of MY room models, throttled to ~12 Hz so
+// a drag doesn't flood the socket. No-op single-player or for others' models.
+function netBroadcastTransform(p) {
+	if (!net || net.status !== 'online' || !p.netId || !isMine(p)) return;
+	const now = Date.now();
+	if (now - (p._lastNetSend || 0) < 80) return;
+	p._lastNetSend = now;
+	const s = placementShared(p);
+	net.update(p.netId, { relEast: s.relEast, relNorth: s.relNorth, yawDeg: s.yawDeg, scale: s.scale });
+}
+
+// Apply a shared-frame transform from the room to a placement's local group.
+function applySharedTransform(p, m) {
+	const l = sharedToLocal(m);
+	p.group.position.set(l.x, 0, l.z);
+	p.yaw = l.yaw;
+	p.group.rotation.y = l.yaw;
+	p.group.scale.setScalar(l.scale);
+	p.group.userData._targetScale = l.scale;
+	p.spawnT = 1; // an update is not a spawn — no scale-in pop
+	if (p.shadow) {
+		p.shadow.position.set(l.x, 0.004, l.z);
+		p.shadow.scale.setScalar(l.scale);
+	}
+	if (selected === p) positionSelRing();
+}
+
+// Reconcile the full shared model list against local placements: add models that
+// appeared (others' or my own from a prior session), drop REMOTE ones that left,
+// and refresh others' transforms. My own live models are authored locally — never
+// overwritten by their own echo.
+function reconcileRemoteModels(models) {
+	const serverIds = new Set(models.map((m) => m.id));
+	// Remove remote placements that vanished from the room (owner deleted / reaped).
+	for (const p of [...placements]) {
+		if (p.remote && p.netId && !serverIds.has(p.netId)) {
+			removePlacement(p, { persist: false, broadcast: false });
+		}
+	}
+	for (const m of models) {
+		const existing = netModelsById.get(m.id);
+		if (existing) {
+			if (!isMine(existing)) applySharedTransform(existing, m);
+			continue;
+		}
+		// New to me: reconcile it in. Mark mine when the server says I own it (a
+		// rejoin) so I keep control; otherwise it's someone else's, view-only.
+		const local = sharedToLocal(m);
+		const mine = !!m.mine || m.ownerId === CLIENT_ID;
+		addModel({ src: m.src, title: m.title }, {
+			x: local.x, z: local.z, yaw: local.yaw, scale: local.scale,
+			remote: true, netId: m.id, ownerId: mine ? CLIENT_ID : m.ownerId,
+			announce: false, persist: false,
+		});
+	}
+	updateCount();
+}
+
+// A single model changed (per-field delta) or was removed. Refresh others' live;
+// ignore echoes of my own.
+function applyRemoteModelChange(m) {
+	const p = netModelsById.get(m.id);
+	if (!p) return;
+	if (m.removed) {
+		if (p.remote) removePlacement(p, { persist: false, broadcast: false });
+		return;
+	}
+	if (!isMine(p)) applySharedTransform(p, m);
+}
+
+// ── Room lifecycle ────────────────────────────────────────────────────────────
+function updatePresencePill() {
+	if (!countEl) return;
+	// The count pill doubles as the presence indicator when in a room.
+	const n = placements.length;
+	if (net && net.status === 'online' && roomPresence.count > 1) {
+		countEl.textContent = `${roomPresence.count} here · ${n} ${n === 1 ? 'model' : 'models'}`;
+		countEl.hidden = false;
+	} else {
+		countEl.textContent = n === 1 ? '1 model' : `${n} models`;
+		countEl.hidden = n === 0;
+	}
+}
+
+function wireNet(n) {
+	n.on('status', ({ status }) => {
+		if (status === 'online') {
+			setStatus(`Shared room ${roomCode} is live — edits sync to everyone here.`);
+			document.body.classList.add('is-room');
+		} else if (status === 'connecting') {
+			setStatus(`Joining room ${roomCode}…`, { sticky: true });
+		} else if (status === 'unavailable' || status === 'failed') {
+			setStatus('Shared rooms are offline right now — you can still build solo.', { warn: true });
+			leaveRoom({ silent: true });
+		} else if (status === 'offline') {
+			setStatus('Reconnecting to the room…', { sticky: true });
+		}
+		updateRoomButton();
+	});
+	n.on('models', (models) => reconcileRemoteModels(models));
+	n.on('model', (m) => applyRemoteModelChange(m));
+	n.on('presence', (p) => { roomPresence = p; updatePresencePill(); });
+	n.on('reject', (msg) => {
+		const why = msg?.reason === 'room_full' ? 'the room is full'
+			: msg?.reason === 'owner_full' ? 'you have the max models in this room'
+			: 'the room declined it';
+		setStatus(`Couldn't share that model — ${why}.`, { warn: true });
+	});
+}
+
+// Push every model I ALREADY have into a freshly joined room, so a solo scene
+// becomes the shared starting point instead of vanishing.
+function seedRoomWithLocalScene() {
+	if (!net || net.status !== 'online') return;
+	for (const p of placements) {
+		if (p.netId) continue; // already shared
+		const wireId = `m${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`.slice(0, 40);
+		p.netId = wireId;
+		p.ownerId = CLIENT_ID;
+		p.remote = false;
+		netModelsById.set(wireId, p);
+		net.spawn(placementWire(p, wireId));
+	}
+}
+
+let _roomHeartbeat = null;
+
+// seed=true pushes my current scene into the room as its starting point — right
+// for CREATE (I'm the first one there). JOIN never seeds: entering a room means
+// entering ITS shared scene, so my solo models stay local (private) and can't
+// duplicate the server's authoritative copies on a refresh-rejoin.
+async function joinRoom(code, { seed = false } = {}) {
+	const norm = normalizeRoomCode(code);
+	if (!norm) {
+		setStatus('That room code looks off — check the 6 characters and try again.', { warn: true });
+		return;
+	}
+	leaveRoom({ silent: true });
+	roomCode = norm;
+	net = new StudioNet({
+		roomKey: roomKeyForCode(norm),
+		clientId: CLIENT_ID,
+		name: '',
+	});
+	wireNet(net);
+	await net.connect();
+	if (net.status === 'online') {
+		if (seed) seedRoomWithLocalScene();
+		_roomHeartbeat = setInterval(() => net?.heartbeat(), 15000);
+		try {
+			const url = new URL(location.href);
+			url.searchParams.set('room', norm);
+			history.replaceState(null, '', url);
+		} catch {}
+	}
+	updateRoomButton();
+}
+
+function createRoom() {
+	// Creating a room shares my current scene as its starting point.
+	joinRoom(generateRoomCode(), { seed: true });
+}
+
+function leaveRoom({ silent = false } = {}) {
+	if (_roomHeartbeat) { clearInterval(_roomHeartbeat); _roomHeartbeat = null; }
+	if (net) {
+		try { net.destroy(); } catch {}
+		net = null;
+	}
+	// Remote models leave with the room; my own stay as a local scene.
+	for (const p of [...placements]) {
+		if (p.remote && !isMine(p)) removePlacement(p, { persist: false, broadcast: false });
+		else { p.netId = null; p.remote = false; }
+	}
+	netModelsById.clear();
+	roomCode = '';
+	roomPresence = { count: 1, names: [] };
+	document.body.classList.remove('is-room');
+	try {
+		const url = new URL(location.href);
+		url.searchParams.delete('room');
+		history.replaceState(null, '', url);
+	} catch {}
+	updatePresencePill();
+	updateRoomButton();
+	if (!silent) setStatus('Left the shared room. Your models are still here.');
+}
+
+// ── Room modal UI ─────────────────────────────────────────────────────────────
+function updateRoomButton() {
+	if (!roomBtn) return;
+	const live = !!net && (net.status === 'online' || net.status === 'connecting');
+	roomBtn.classList.toggle('is-active', live);
+	roomBtn.textContent = live ? `👥 ${roomCode || 'Room'}` : '👥 Share live';
+	// Keep the live modal panel in sync if it's open.
+	if (roomModal && !roomModal.hidden) renderRoomModal();
+}
+
+function renderRoomModal() {
+	const idle = $('ars-room-idle');
+	const liveEl = $('ars-room-live');
+	const online = !!net && net.status === 'online';
+	if (idle) idle.hidden = online;
+	if (liveEl) liveEl.hidden = !online;
+	if (online) {
+		const codeEl = $('ars-room-code');
+		if (codeEl) codeEl.textContent = roomCode;
+		const pres = $('ars-room-presence');
+		if (pres) {
+			pres.textContent = roomPresence.count > 1
+				? `${roomPresence.count} people are building here.`
+				: "You're the only one here yet — share the code to invite someone.";
+		}
+		const box = $('ars-room-qr');
+		if (box) {
+			try {
+				box.innerHTML = renderQRToSVG(roomShareUrl('https://three.ws', roomCode), {
+					scale: 5, margin: 2, dark: '#0b0b0b', light: '#ffffff',
+				});
+			} catch { box.textContent = roomShareUrl('https://three.ws', roomCode); }
+		}
+	}
+}
+
+function openRoomModal() {
+	if (!roomModal) return;
+	roomModal.hidden = false;
+	renderRoomModal();
+	(net && net.status === 'online' ? $('ars-room-copy') : $('ars-room-create'))?.focus?.();
+}
+
+function closeRoomModal() {
+	if (roomModal) roomModal.hidden = true;
+}
+
+roomBtn?.addEventListener('click', openRoomModal);
+$('ars-room-close')?.addEventListener('click', closeRoomModal);
+roomModal?.addEventListener('click', (e) => { if (e.target === roomModal) closeRoomModal(); });
+
+$('ars-room-create')?.addEventListener('click', async () => {
+	await createRoom();
+	renderRoomModal();
+});
+
+$('ars-room-join-form')?.addEventListener('submit', async (e) => {
+	e.preventDefault();
+	const input = $('ars-room-join-input');
+	const code = normalizeRoomCode(input?.value);
+	if (!code) {
+		setStatus('That room code looks off — check the 6 characters.', { warn: true });
+		input?.focus?.();
+		return;
+	}
+	await joinRoom(code);
+	renderRoomModal();
+});
+
+$('ars-room-copy')?.addEventListener('click', () => {
+	const url = roomShareUrl(location.origin, roomCode);
+	const btn = $('ars-room-copy');
+	const done = () => {
+		if (!btn) return;
+		const old = btn.textContent;
+		btn.textContent = 'Link copied ✓';
+		setTimeout(() => { btn.textContent = old; }, 1600);
+	};
+	if (navigator.share) {
+		navigator.share({ title: 'Build with me in AR Studio', text: `Join my AR Studio room: ${roomCode}`, url }).catch(() => {});
+	} else if (navigator.clipboard) {
+		navigator.clipboard.writeText(url).then(done).catch(() => window.prompt('Copy this invite link:', url));
+	} else {
+		window.prompt('Copy this invite link:', url);
+	}
+});
+
+$('ars-room-leave')?.addEventListener('click', () => {
+	leaveRoom();
+	renderRoomModal();
+});
+
+function removePlacement(p, { persist = true, broadcast = true } = {}) {
 	const i = placements.indexOf(p);
 	if (i === -1) return;
 	placements.splice(i, 1);
+	if (p.netId) {
+		netModelsById.delete(p.netId);
+		// Tell the room, unless this removal CAME from the room (reconcile) or it's
+		// not mine to remove (the server would reject it anyway).
+		if (broadcast && net && net.status === 'online' && isMine(p)) net.remove(p.netId);
+	}
 	p.idle?.detach();
 	p.idle = null;
 	xrSession?.release(p.group);
@@ -509,18 +861,21 @@ function removePlacement(p, { persist = true } = {}) {
 // ── Restore + deep links ──────────────────────────────────────────────────────
 let armedSrc = null; // { src, title } — what an XR reticle tap places
 
-async function restoreScene() {
+async function restoreScene({ skipLocal = false } = {}) {
 	const params = new URLSearchParams(location.search);
 	const linked = parseSrcParams(params);
 
 	// A #s= hash is a FULL shared arrangement (models + transforms) — it opens
 	// like a document, replacing the working scene rather than merging into it.
-	const sharedScene = sceneFromHashParam(
+	// skipLocal (arriving via a ?room= link) means the shared ROOM is the source
+	// of truth, so we don't also restore the local/hash scene (which would
+	// duplicate the server's authoritative copies).
+	const sharedScene = skipLocal ? [] : sceneFromHashParam(
 		new URLSearchParams(location.hash.replace(/^#/, '')).get('s'),
 	);
 
 	let items = sharedScene;
-	if (!items.length) {
+	if (!items.length && !skipLocal) {
 		try {
 			items = deserializeScene(localStorage.getItem(SCENE_KEY));
 		} catch {}
@@ -825,8 +1180,8 @@ canvas.addEventListener('pointermove', (e) => {
 	if (Math.hypot(dx, dy) > 6) pointerDown.moved = true;
 	if (!pointerDown.moved) return;
 
-	if (pointerDown.placement) {
-		// Drag a model along the floor.
+	if (pointerDown.placement && isMine(pointerDown.placement)) {
+		// Drag a model along the floor (only models I own in a shared room).
 		const pt = floorPointAt(e.clientX, e.clientY);
 		if (!pt) return;
 		const p = pointerDown.placement;
@@ -834,7 +1189,8 @@ canvas.addEventListener('pointermove', (e) => {
 		p.group.position.z = pt.z;
 		if (p.shadow) p.shadow.position.set(pt.x, 0.004, pt.z);
 		if (selected === p) positionSelRing();
-	} else if (!(arActive && gyroBase)) {
+		netBroadcastTransform(p);
+	} else if (!pointerDown.placement && !(arActive && gyroBase)) {
 		// Drag-look: only when the gyro isn't already steering the view.
 		cameraYaw = pointerDown.lookYaw + dx * 0.0042;
 		cameraPitch = clampPitch(pointerDown.lookPitch + dy * 0.0032, PITCH_MIN, PITCH_MAX);
@@ -848,7 +1204,9 @@ function endPointer(e) {
 		&& !pinch.active && performance.now() - pinchEndedAt >= 350;
 	if (wasTap) {
 		select(pointerDown.placement); // null = deselect
-	} else if (pointerDown.placement && pointerDown.moved) {
+	} else if (pointerDown.placement && pointerDown.moved && isMine(pointerDown.placement)) {
+		pointerDown.placement._lastNetSend = 0; // force the settle broadcast through
+		netBroadcastTransform(pointerDown.placement);
 		saveScene();
 		setStatus(null);
 	}
@@ -857,9 +1215,10 @@ function endPointer(e) {
 canvas.addEventListener('pointerup', endPointer);
 canvas.addEventListener('pointercancel', () => { pointerDown = null; });
 
-// Two-finger pinch = scale, twist = rotate — on the selected (or last) model.
+// Two-finger pinch = scale, twist = rotate — on the selected (or last) model I own.
 function gestureTarget() {
-	return selected ?? placements[placements.length - 1] ?? null;
+	const t = selected ?? placements[placements.length - 1] ?? null;
+	return t && isMine(t) ? t : null;
 }
 
 canvas.addEventListener('touchstart', (e) => {
@@ -883,14 +1242,17 @@ canvas.addEventListener('touchmove', (e) => {
 	}
 	target.yaw = twist.baseYaw + twistDelta(twist.startAngle, touchAngle(e.touches));
 	target.group.rotation.y = target.yaw;
+	netBroadcastTransform(target);
 }, { passive: true });
 
 canvas.addEventListener('touchend', () => {
 	const s = pinchEnd(pinch);
+	const target = twist?.placement;
 	if (s != null) {
 		pinchEndedAt = performance.now();
 		saveScene();
 	}
+	if (target) { target._lastNetSend = 0; netBroadcastTransform(target); }
 	twist = null;
 }, { passive: true });
 
@@ -900,14 +1262,18 @@ selbar?.addEventListener('click', (e) => {
 	if (!btn || !selected) return;
 	const act = btn.dataset.act;
 	if (act === 'rotate') {
+		if (!isMine(selected)) { setStatus('That model belongs to someone else in the room.', { warn: true }); return; }
 		selected.yaw += Math.PI / 4;
 		selected.group.rotation.y = selected.yaw;
+		selected._lastNetSend = 0;
+		netBroadcastTransform(selected);
 		saveScene();
 	} else if (act === 'duplicate') {
 		addModel({ src: selected.src, title: selected.title }, {
 			yaw: selected.yaw, scale: logicalScale(selected),
 		});
 	} else if (act === 'remove') {
+		if (!isMine(selected)) { setStatus('That model belongs to someone else in the room.', { warn: true }); return; }
 		const removed = selected;
 		removePlacement(removed);
 		setStatus('Removed.', {
@@ -1080,6 +1446,7 @@ tray?.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => {
 	if (e.key === 'Escape') {
 		if (tray && !tray.hidden) closeTray();
+		else if (roomModal && !roomModal.hidden) closeRoomModal();
 		else if (qrModal && !qrModal.hidden) qrModal.hidden = true;
 		else select(null);
 	}
@@ -1092,9 +1459,12 @@ document.addEventListener('keydown', (e) => {
 	if (e.target.closest?.('input, textarea, select')) return;
 	if ((tray && !tray.hidden) || (qrModal && !qrModal.hidden) || xrSession) return;
 	if (!selected) return;
+	// Keyboard edits act on the selected model — only if it's mine in a room.
+	const editable = isMine(selected);
 
 	const key = e.key;
 	if (key.startsWith('Arrow')) {
+		if (!editable) return;
 		e.preventDefault();
 		const step = e.shiftKey ? 0.02 : 0.1;
 		const fwd = camera.getWorldDirection(new Vector3());
@@ -1109,10 +1479,14 @@ document.addEventListener('keydown', (e) => {
 		selected.group.position.addScaledVector(move, step);
 		selected.shadow?.position.set(selected.group.position.x, 0.004, selected.group.position.z);
 		positionSelRing();
+		netBroadcastTransform(selected);
 		saveScene();
 	} else if (key === 'r' || key === 'R') {
+		if (!editable) return;
 		selected.yaw += Math.PI / 4;
 		selected.group.rotation.y = selected.yaw;
+		selected._lastNetSend = 0;
+		netBroadcastTransform(selected);
 		saveScene();
 	} else if (key === 'd' || key === 'D') {
 		e.preventDefault();
@@ -1120,6 +1494,7 @@ document.addEventListener('keydown', (e) => {
 			yaw: selected.yaw, scale: logicalScale(selected),
 		});
 	} else if (key === 'Delete' || key === 'Backspace') {
+		if (!editable) return;
 		e.preventDefault();
 		const removed = selected;
 		removePlacement(removed);
@@ -1497,12 +1872,38 @@ window.addEventListener('resize', () => {
 window.addEventListener('pagehide', () => {
 	stopCamera();
 	xrSession?.end();
+	net?.destroy();
 });
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 updateCount();
+updateRoomButton();
 startLoop();
-restoreScene();
+{
+	let bootRoom = '';
+	try { bootRoom = normalizeRoomCode(new URLSearchParams(location.search).get('room') || ''); } catch {}
+	// Arriving via a ?room= link: the shared room is the scene, so skip the local
+	// restore and join straight in (no seed — I'm entering someone else's room).
+	restoreScene({ skipLocal: !!bootRoom }).then(() => {
+		if (bootRoom) joinRoom(bootRoom);
+	});
+}
+
+// Read-only introspection hook, enabled only with ?e2e=1 — used by the shared-
+// room sync test to observe remote model transforms. Never present in normal use.
+try {
+	if (new URLSearchParams(location.search).has('e2e')) {
+		window.__arsDebug = {
+			count: () => placements.length,
+			netStatus: () => net?.status ?? 'none',
+			netIds: () => placements.map((p) => p.netId),
+			remoteX: () => {
+				const p = placements.find((x) => x.remote && !isMine(x));
+				return p ? p.group.position.x : null;
+			},
+		};
+	}
+} catch {}
 
 // Mobile: lead with the camera (one tap, inside a user gesture via the empty
 // state CTA). Desktop: preview + QR chip.

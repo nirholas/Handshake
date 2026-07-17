@@ -24,6 +24,7 @@ import { AgoraRoom } from './rooms/AgoraRoom.js';
 import { IrlRoom } from './rooms/IrlRoom.js';
 import { ClashRoom } from './rooms/ClashRoom.js';
 import { StageRoom } from './rooms/StageRoom.js';
+import { StudioRoom } from './rooms/StudioRoom.js';
 import { getStageRoom } from './stage-registry.js';
 import { blockStore } from './block-store.js';
 import { worldPersistence } from './persistence.js';
@@ -256,12 +257,18 @@ gameServer.define('clash_arena', ClashRoom).filterBy(['matchKey']);
 // loads its host/title/format from /api/stage and reacts to real $THREE tips the
 // API injects over /internal/stage. See rooms/StageRoom.js + src/stage.js.
 gameServer.define('stage_world', StageRoom).filterBy(['stageId']);
+// Shared AR Studio (/ar/studio "Shared room"). One instance per roomKey — a
+// shared code or a QR-marker id — so everyone holding the same key builds one
+// live scene together: placed models delta-sync and a late joiner receives the
+// whole scene on join. An opted-into collaborative world (WalkRoom side of the
+// privacy line), never a broadcast of private irl pins. See rooms/StudioRoom.js.
+gameServer.define('studio_world', StudioRoom).filterBy(['roomKey']);
 
 gameServer
 	.listen(PORT, HOST)
 	.then(() => {
 		console.log(`[multiplayer] listening on ws://${HOST}:${PORT}`);
-		console.log(`[multiplayer] rooms: walk_world, agora_world, irl_world, clash_arena, stage_world`);
+		console.log(`[multiplayer] rooms: walk_world, agora_world, irl_world, clash_arena, stage_world, studio_world`);
 		console.log(`[multiplayer] allowed origins: ${ALLOWED_ORIGINS.join(', ')}`);
 	})
 	.catch((err) => {

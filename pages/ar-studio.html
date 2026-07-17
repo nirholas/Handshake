@@ -307,6 +307,32 @@
 		.ars-qr-box svg { width: 100%; height: 100%; display: block; }
 		.ars-qr-link { font-size: 12px; color: var(--accent-ink); word-break: break-all; }
 
+		/* ── Shared-room modal ── */
+		.ars-room-card { gap: 14px; }
+		.ars-room-card h2 { margin: 0 0 4px; }
+		.ars-room-card p { margin: 0 0 4px; }
+		#ars-room-btn.is-active { background: rgba(110, 231, 183, 0.18); border-color: rgba(110, 231, 183, 0.5); color: var(--good); }
+		.ars-room-start { width: 100%; }
+		.ars-room-or { display: flex; align-items: center; gap: 10px; color: var(--ink-faint); font-size: 12px; margin: 2px 0; width: 100%; }
+		.ars-room-or::before, .ars-room-or::after { content: ""; flex: 1 1 auto; height: 1px; background: var(--line); }
+		.ars-room-join { display: flex; gap: 8px; width: 100%; }
+		.ars-room-join input {
+			flex: 1 1 auto; min-width: 0; font: inherit; font-size: 15px; letter-spacing: 0.14em; text-align: center; text-transform: uppercase;
+			color: var(--ink); background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.14);
+			border-radius: 10px; padding: 11px 12px;
+		}
+		.ars-room-join input:focus { outline: none; border-color: rgba(139, 124, 248, 0.6); }
+		.ars-room-code {
+			font: 700 30px/1 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: 0.22em;
+			color: var(--accent-ink); background: rgba(139, 124, 248, 0.12); border: 1px solid rgba(139, 124, 248, 0.35);
+			border-radius: 12px; padding: 14px 10px; width: 100%; text-align: center; user-select: all;
+		}
+		#ars-room-presence { color: var(--good); font-weight: 650; }
+		.ars-room-actions { display: flex; gap: 8px; width: 100%; }
+		.ars-room-actions .ars-btn { flex: 1 1 auto; justify-content: center; }
+		.ars-room-close { width: 100%; justify-content: center; }
+		body.is-room #ars-room-btn { background: rgba(110, 231, 183, 0.18); border-color: rgba(110, 231, 183, 0.5); color: var(--good); }
+
 		@media (prefers-reduced-motion: reduce) {
 			.ars-chip, .ars-status, .ars-selbar, .ars-tray-sheet { animation: none; }
 			.ars-spinner { animation-duration: 2.4s; }
@@ -330,6 +356,7 @@
 			<span class="ars-title">AR Studio</span>
 			<span class="ars-count" id="ars-count" hidden>0 models</span>
 			<span class="ars-spacer"></span>
+			<button class="ars-icon-btn" id="ars-room-btn" type="button" aria-haspopup="dialog" aria-label="Build together in a shared room">👥 Share live</button>
 			<button class="ars-icon-btn" id="ars-photo-btn" type="button" disabled aria-label="Capture a photo of your scene">📸</button>
 			<button class="ars-icon-btn" id="ars-qr-btn" type="button" hidden aria-label="Send this scene to your phone">Phone ↗</button>
 		</header>
@@ -400,6 +427,35 @@
 			<p>Scan with your phone camera — your placed models come along and open straight into camera AR.</p>
 			<a class="ars-qr-link" id="ars-qr-link" href="/ar/studio" target="_blank" rel="noopener"></a>
 			<button class="ars-btn" id="ars-qr-close" type="button">Close</button>
+		</div>
+	</div>
+
+	<div class="ars-modal" id="ars-room-modal" hidden role="dialog" aria-modal="true" aria-label="Build together in a shared room" data-xr-ui>
+		<div class="ars-modal-card ars-room-card">
+			<!-- Idle: start or join a room -->
+			<div id="ars-room-idle">
+				<h2>Build together, live</h2>
+				<p>Open a shared room and everyone with the code sees the same scene update in real time — add, move, and forge models together.</p>
+				<button class="ars-btn ars-btn-primary ars-room-start" id="ars-room-create" type="button">Start a shared room</button>
+				<div class="ars-room-or"><span>or join one</span></div>
+				<form class="ars-room-join" id="ars-room-join-form">
+					<input id="ars-room-join-input" type="text" inputmode="latin" autocomplete="off" spellcheck="false"
+						maxlength="24" placeholder="Enter room code" aria-label="Room code to join" />
+					<button type="submit" class="ars-btn">Join</button>
+				</form>
+			</div>
+			<!-- Live: show the code + share + leave -->
+			<div id="ars-room-live" hidden>
+				<h2>Room is live</h2>
+				<p id="ars-room-presence">You're the only one here yet.</p>
+				<div class="ars-room-code" id="ars-room-code" aria-label="Room code">------</div>
+				<div class="ars-qr-box" id="ars-room-qr" aria-label="QR code to join this room"></div>
+				<div class="ars-room-actions">
+					<button class="ars-btn ars-btn-primary" id="ars-room-copy" type="button">Copy invite link</button>
+					<button class="ars-btn" id="ars-room-leave" type="button">Leave room</button>
+				</div>
+			</div>
+			<button class="ars-btn ars-room-close" id="ars-room-close" type="button">Close</button>
 		</div>
 	</div>
 

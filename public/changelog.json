@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T12:08:29.844Z",
+	"generated_at": "2026-07-17T12:22:07.940Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -35,6 +35,16 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "AR Studio goes multiplayer: build a scene together in real time",
+			"summary": "The AR Studio can now be a shared space. Tap Share live to open a room with a short code, send it to a friend, and you both see the same scene update live: every model one of you adds, moves, resizes, rotates, or removes appears for everyone in the room instantly, with a running count of who's building alongside you. Forge a new model from a prompt and it drops into the shared room for everyone. Open the same room on two phones pointed at the same QR marker and the models pin to the same spot on your real table. It runs on the same realtime servers as our live worlds, with each person only able to edit their own models.",
+			"link": "/ar/studio",
+			"tags": [
+				"feature"
 			]
 		},
 		{
@@ -158,6 +168,17 @@
 		{
 			"date": "2026-07-17",
 			"type": "update",
+			"title": "Forge a 3D model right from the homepage",
+			"summary": "The homepage now leads with a prompt bar: type what you want and a real textured 3D model starts building the moment you hit Enter, no navigation and no sign-up. The live generator that used to sit far down the page now sits directly under the headline, so you type at the top and watch your model take shape right below. Three one-tap example prompts and a rotating set of ideas make it easy to start.",
+			"link": "/",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
 			"title": "Forge prompt ideas are now endless, and every one forges beautifully",
 			"summary": "The example chips, empty-stage starters, and the Surprise me button on the Forge used to rotate through a fixed list of 48 prompts. They now draw from a curated prompt generator with thousands of combinations: statues, figurines, potted plants, crystals, food, crafted props, and cozy miniatures, each paired only with materials and finishes the 3D engine renders well. Every visit opens with a fresh set, and the prompt coach no longer mistakes words like mushroom for a scene request.",
 			"link": "/forge",
@@ -184,6 +205,16 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "Forge: one-tap variations of any model",
+			"summary": "Every model you forge now shows a \"More like this\" row: one tap re-forges the same subject in a different material or finish (brushed brass, translucent glass, carved oak, and more), so you can explore a whole design space without retyping anything. A reshuffle button deals a fresh set of ideas. It appears for text prompts and runs on the free lane, so exploring costs nothing.",
+			"link": null,
+			"tags": [
+				"feature"
 			]
 		},
 		{
