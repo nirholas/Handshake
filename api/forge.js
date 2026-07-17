@@ -137,6 +137,7 @@ import {
 	submitFailoverJob,
 	MAX_FAILOVER_HOPS,
 } from './_lib/forge-failover.js';
+import { decideSelfhostMissing } from './_lib/forge-selfhost-recovery.js';
 import { directPrompt } from './_mcp-studio/forge-client.js';
 import { MESH_DIRECTOR, resolveLogoPrompt } from './_lib/forge-director-prompts.js';
 
@@ -2648,6 +2649,32 @@ async function pollNvidiaStatus({ nv, upstreamId, clientKey }) {
 	return result;
 }
 
+// ── Self-host (GCP worker) poll recovery ─────────────────────────────────────
+// A self-host /tasks/:id or /jobs/:id poll can 404 ("task not found on gcp
+// service") when the durable task record isn't visible to the instance this
+// poll reached — the post-submit cross-instance window (worker at high
+// concurrency, no session affinity) or a completion write racing us. That was
+// the platform's single largest failure class (410 of 425 trellis failures, all
+// path='image'), and the router used to treat the FIRST 404 as terminal. The
+// GCP twin of pollNvidiaStatus: never dead-end on a recoverable signal —
+// re-check the store, grace a young job, and only surface failure once a missing
+// task is genuinely orphaned, where the poll handler's lane failover takes over.
+async function pollGcpStatus({ gcp, upstreamId, clientKey, createdAt }) {
+	const result = await gcp.status(upstreamId);
+	if (result?.code !== 'gcp_task_missing') return result;
+
+	const row = await findByJob({ replicateJobId: upstreamId, clientKey }).catch(() => null);
+	const ageMs = createdAt ? Date.now() - Date.parse(createdAt) : Infinity;
+	const decision = decideSelfhostMissing({ code: result.code, row, ageMs });
+	if (decision.action === 'done') {
+		return { status: 'done', resultGlbUrl: decision.glbUrl };
+	}
+	if (decision.action === 'running') {
+		return { status: 'running' };
+	}
+	return result; // genuinely orphaned → existing failover path acts on it
+}
+
 async function pollJob(req, res, jobId) {
 	// A job handle is either a bare Replicate prediction id (legacy / image-
 	// TRELLIS path) or a forge token encoding the geometry/GCP provider + the
@@ -2756,7 +2783,7 @@ async function pollJob(req, res, jobId) {
 					message: 'Self-hosted generation is not configured on this deployment.',
 				});
 			}
-			result = await gcp.status(upstreamId);
+			result = await pollGcpStatus({ gcp, upstreamId, clientKey, createdAt: meta?.created_at });
 		} else {
 			let rep;
 			try {

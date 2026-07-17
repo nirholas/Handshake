@@ -50,6 +50,32 @@ Three cooperating pieces:
    completions). Email delivery uses the platform Resend pipeline and skips
    undeliverable placeholder addresses.
 
+## Self-host poll recovery (the "task not found" grace)
+
+A self-host worker poll (`/tasks/:id` or `/jobs/:id`) can 404 when the durable
+task record is not yet visible to the instance the poll load-balanced to — the
+brief post-submit cross-instance window (workers run at high concurrency with no
+session affinity), or a completion write racing the poll. The worker persists
+each task's `queued` state to GCS before returning its 202 and re-reads GCS for
+non-terminal records, so a 404 is almost never a real loss.
+
+The router used to treat that first 404 as terminal, which made
+`task not found on gcp service` the platform's single largest generation-failure
+class (image→3D). Recovery now mirrors the NVCF path (never dead-end on a
+recoverable signal): the GCP provider tags a 404 with `code: 'gcp_task_missing'`
+([api/_providers/gcp.js](../api/_providers/gcp.js)) and the poll handler runs a
+pure decision ([api/_lib/forge-selfhost-recovery.js](../api/_lib/forge-selfhost-recovery.js)):
+
+1. **Store re-check** — if the creation row already materialized (`done` + a
+   glb), a racing poll or the completion write beat us; resolve as complete.
+2. **Grace window** — a job younger than `GCP_TASK_MISSING_GRACE_MS` (90s)
+   reports `running` so the client keeps polling; the durable record resolves
+   within seconds.
+3. **Terminal** — past the window a still-missing task is genuinely orphaned;
+   the failure surfaces and the existing lane failover redispatches to a healthy
+   lane. Nothing here disables failover — it just stops firing it on transient
+   404s.
+
 ## Operational notes
 
 - The finalizer needs `CRON_SECRET` (standard cron auth), `DATABASE_URL`, the

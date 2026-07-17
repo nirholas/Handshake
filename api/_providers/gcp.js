@@ -518,7 +518,12 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 			}
 
 			if (response.status === 404) {
-				return { status: 'failed', error: 'task not found on gcp service' };
+				// A 404 means the durable task record isn't visible to the instance
+				// this poll landed on — usually the post-submit cross-instance window
+				// (worker at high concurrency, no session affinity), not a real loss.
+				// Tag it recoverable so the router can grace/recover instead of failing
+				// on the first miss (see _lib/forge-selfhost-recovery.js).
+				return { status: 'failed', error: 'task not found on gcp service', code: 'gcp_task_missing' };
 			}
 
 			const data = await response.json().catch(() => ({}));
