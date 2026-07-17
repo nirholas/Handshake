@@ -1364,6 +1364,13 @@
 			"dest": "/viewer.html"
 		},
 		{
+			"src": "/ar/studio/?",
+			"headers": {
+				"permissions-policy": "xr-spatial-tracking=*, camera=(self), gyroscope=(self), accelerometer=(self), microphone=()"
+			},
+			"dest": "/ar-studio.html"
+		},
+		{
 			"src": "/ar/?",
 			"headers": {
 				"permissions-policy": "xr-spatial-tracking=*, camera=(self), microphone=(self)"

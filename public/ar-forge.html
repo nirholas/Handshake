@@ -204,6 +204,7 @@
 				<button class="btn primary" id="ar-btn" type="button" aria-label="View this model in augmented reality">📱 View in your space</button>
 				<a class="btn" id="download" download aria-label="Download the GLB file">Download GLB</a>
 				<button class="btn" id="share" type="button" aria-label="Share a link to this model">Share</button>
+				<a class="btn" id="open-studio" aria-label="Open this model in the AR Studio and place several models together">Add to AR Studio</a>
 				<span class="spacer"></span>
 				<a class="btn" id="open-viewer" target="_blank" rel="noopener" aria-label="Open this model in the full 3D viewer">Open in viewer</a>
 			</div>
@@ -225,7 +226,7 @@
 
 	<footer class="foot">
 		Free lane, fair-use rate limited · Models are meshopt-compressed glTF binaries ·
-		<a href="/forge">Forge studio</a> · <a href="/viewer">GLB viewer</a> · <a href="/features/ar">How AR works</a> ·
+		<a href="/ar/studio">AR Studio (multi-model)</a> · <a href="/forge">Forge studio</a> · <a href="/viewer">GLB viewer</a> · <a href="/features/ar">How AR works</a> ·
 		<a href="/irl">Living agents in AR</a>
 	</footer>
 
@@ -363,6 +364,8 @@
 			downloadEl.href = current.glb;
 			downloadEl.setAttribute('download', fileName(current.prompt) + '.glb');
 			openViewer.href = '/viewer?src=' + encodeURIComponent(current.glb) + '&title=' + encodeURIComponent((current.prompt || '').slice(0, 80));
+			var studioEl = $('open-studio');
+			if (studioEl) studioEl.href = '/ar/studio?src=' + encodeURIComponent(current.glb) + '&title=' + encodeURIComponent((current.prompt || '').slice(0, 80));
 			if (mv.canActivateAR) {
 				arBtn.textContent = '📱 View in your space';
 				handoff.classList.remove('show');

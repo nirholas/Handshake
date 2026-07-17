@@ -74,10 +74,16 @@ function qrMarkup(glbUrl) {
 
 const cubeIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 3 7v10l9 5 9-5V7l-9-5Z"/><path d="m3 7 9 5 9-5"/><path d="M12 12v10"/></svg>`;
 
+function studioLink(glbUrl, title) {
+	const u = `/ar/studio?src=${encodeURIComponent(glbUrl)}`;
+	return title ? `${u}&title=${encodeURIComponent(title.slice(0, 80))}` : u;
+}
+
 function bodyHtml({ glbUrl, title, touch }) {
 	const link = esc(arLink(glbUrl, title));
 	const nameHtml = title ? `<p class="tws-ar-name">${esc(title)}</p>` : '';
 	const qr = qrMarkup(glbUrl);
+	const studio = `<a class="tws-ar-link" href="${esc(studioLink(glbUrl, title))}">Arrange several models together in the AR Studio ↗</a>`;
 
 	const linkBtn = `<a class="tws-ar-cta" href="${link}" target="_blank" rel="noopener">${cubeIcon}<span>Open AR viewer</span></a>`;
 
@@ -95,6 +101,7 @@ function bodyHtml({ glbUrl, title, touch }) {
 				<p class="tws-ar-hint">Place this model in your room — point your camera at a flat surface and drop it in.</p>
 				<button class="tws-ar-cta" type="button" data-ar-launch>${cubeIcon}<span>View in your space</span></button>
 				<a class="tws-ar-link" href="${link}" target="_blank" rel="noopener">Open in a new tab instead ↗</a>
+				${studio}
 				${qrSecondary}
 			</div>
 		`;
@@ -107,6 +114,7 @@ function bodyHtml({ glbUrl, title, touch }) {
 			${qr}
 			<p class="tws-ar-hint">Scan with your phone camera to view this model in AR and place it in your room.</p>
 			${linkBtn}
+			${studio}
 		</div>
 	`;
 }
