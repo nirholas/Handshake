@@ -49,6 +49,14 @@ RUN DEST=$(python -c "import sysconfig; print(sysconfig.get_paths()['purelib'])"
     && printf '%s\n' "# stub: real Blender bpy is only needed for the unused save_glb OBJ->GLB exporter. This worker builds the PBR GLB with pygltflib." > "$DEST" \
     && echo "wrote bpy stub to $DEST"
 
+# compile_mesh_painter.sh names its output with `python3-config
+# --extension-suffix`, but only python3.10-config exists in this image; the
+# empty substitution produced an un-importable `mesh_inpaint_processor` (no
+# .so suffix) and the paint pass then failed at uv_inpaint with a NameError.
+# Link the unversioned name so the extension gets its real suffix. Kept as its
+# own layer (after the big pip installs) so cache reuse survives the fix.
+RUN ln -sf /usr/bin/python3.10-config /usr/bin/python3-config
+
 # The 2.1 code (hy3dshape + hy3dpaint packages) is cloned in-tree from a pinned
 # Tencent-Hunyuan/Hunyuan3D-2.1 commit: the texgen extensions must be compiled
 # from this tree, and a moving `main` breaks the reproducibility bar. Build the
@@ -76,6 +84,7 @@ import torch, torchvision, transformers, diffusers, trimesh, bpy, cv2, pygltflib
 from torchvision_fix import apply_fix; apply_fix(); \
 from hy3dshape.pipelines import Hunyuan3DDiTFlowMatchingPipeline; \
 from hy3dpaint.convert_utils import create_glb_with_pbr_materials; \
+from DifferentiableRenderer.mesh_inpaint_processor import meshVerticeInpaint; \
 print('deps ok:', torch.__version__, torchvision.__version__, transformers.__version__, diffusers.__version__)"
 
 # The worker runs from the repo root: the paint config references cfg/ckpt files

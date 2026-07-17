@@ -57,6 +57,14 @@ PY
 # CUDA rasterizer (editable, so its .so lives in-tree) and the pybind11 mesh
 # inpaint processor, then fetch the RealESRGAN super-res checkpoint the paint
 # pass upscales its PBR views with.
+# compile_mesh_painter.sh names its output with `python3-config
+# --extension-suffix`, but only python3.10-config exists in this image; the
+# empty substitution produces an un-importable `mesh_inpaint_processor` (no
+# .so suffix) and the paint pass then dies at uv_inpaint with a NameError
+# (found live on the RTX lane 2026-07-17; latent here too). Link the
+# unversioned name so the extension gets its real suffix.
+RUN ln -sf /usr/bin/python3.10-config /usr/bin/python3-config
+
 RUN git clone https://github.com/Tencent-Hunyuan/Hunyuan3D-2.1.git /opt/hunyuan3d21 \
     && cd /opt/hunyuan3d21 \
     && git checkout 82920d643c0dc2f7bfd7255f45f62d386edfe60c \
@@ -78,6 +86,7 @@ import torch, torchvision, transformers, diffusers, trimesh, bpy, cv2, pygltflib
 from torchvision_fix import apply_fix; apply_fix(); \
 from hy3dshape.pipelines import Hunyuan3DDiTFlowMatchingPipeline; \
 from hy3dpaint.convert_utils import create_glb_with_pbr_materials; \
+from DifferentiableRenderer.mesh_inpaint_processor import meshVerticeInpaint; \
 print('deps ok:', torch.__version__, torchvision.__version__, transformers.__version__, diffusers.__version__)"
 
 # The worker runs from the repo root: the paint config references cfg/ckpt files

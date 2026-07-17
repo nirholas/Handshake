@@ -14098,6 +14098,17 @@
 				"improvement"
 			],
 			"link": "/viewer"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Image-to-3D leaps forward: true PBR materials on a flagship GPU",
+			"summary": "The Forge realism engine (Hunyuan3D 2.1) is now live on a new flagship-class GPU (NVIDIA RTX PRO 6000 Blackwell, 96 GB). High-tier image-to-3D generations now come out with true physically-based materials: real metal, roughness, and color maps that catch light like photographed objects instead of flat plastic. The new hardware is also dramatically faster; the full shape-plus-texture pass finished in about a minute in our live verification, where the previous GPU class could not even load the model. Alongside it, every 3D generation service is healthy again and all of yesterday’s reliability fixes are fully rolled out across the fleet.",
+			"tags": [
+				"feature",
+				"improvement",
+				"infra"
+			],
+			"link": "/forge"
 		}
 	]
 }
