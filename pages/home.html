@@ -4799,6 +4799,9 @@
 	}
 
 	// Warm the browser cache for the next model's GLB so cycling feels instant.
+	// A bare rel=prefetch is a low-priority speculative hint: unlike as=fetch with
+	// a CORS mode, it never forces a preflight the CDN might reject, so it stays
+	// silent when a bucket omits cross-origin headers. Best-effort by design.
 	let prefetchLink = null;
 	function prefetchNext() {
 		if (models.length < 2) return;
@@ -4807,8 +4810,6 @@
 		if (!prefetchLink) {
 			prefetchLink = document.createElement('link');
 			prefetchLink.rel = 'prefetch';
-			prefetchLink.as = 'fetch';
-			prefetchLink.crossOrigin = 'anonymous';
 			document.head.appendChild(prefetchLink);
 		}
 		prefetchLink.href = next.glb_url;

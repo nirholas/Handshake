@@ -30,6 +30,7 @@ import { submitProtected } from '../execution-engine.js';
 import { SOLANA_USDC_MINT } from '../../payments/_config.js';
 import { TOKEN_MINT, TOKEN_DECIMALS } from './config.js';
 import { treasuryWallet, treasuryWalletOrNull } from './config.js';
+import { jupiterQuote as jupQuote, jupiterSwapTx as jupSwapTx } from './jupiter.js';
 import {
 	computeSpend,
 	deployedPct,
@@ -42,8 +43,6 @@ import {
 	atomicsToTokens,
 } from './buyback-math.js';
 
-const JUP_QUOTE_URL = 'https://lite-api.jup.ag/swap/v1/quote';
-const JUP_SWAP_URL = 'https://lite-api.jup.ag/swap/v1/swap';
 const MEMO_PROGRAM_ID = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
 
 // ── policy knobs (env, with safe defaults) ──────────────────────────────────
@@ -112,49 +111,19 @@ async function splBalanceAtomics(connection, ownerPk, mintPk) {
 	}
 }
 
-async function fetchJson(url, opts) {
-	const r = await fetch(url, opts);
-	const body = await r.json().catch(() => ({}));
-	if (!r.ok) {
-		throw Object.assign(new Error(`jupiter ${r.status}: ${JSON.stringify(body).slice(0, 200)}`), {
-			code: 'jupiter_error',
-			status: r.status,
-		});
-	}
-	return body;
-}
-
 /** ExactIn quote: how much $THREE `usdcAtomics` of USDC buys. */
 async function jupiterQuote(usdcAtomics) {
-	const u = new URL(JUP_QUOTE_URL);
-	u.searchParams.set('inputMint', SOLANA_USDC_MINT);
-	u.searchParams.set('outputMint', TOKEN_MINT);
-	u.searchParams.set('amount', String(usdcAtomics));
-	u.searchParams.set('slippageBps', String(slippageBps()));
-	u.searchParams.set('swapMode', 'ExactIn');
-	return fetchJson(u.toString(), { headers: { accept: 'application/json' } });
+	return jupQuote({
+		inputMint: SOLANA_USDC_MINT,
+		outputMint: TOKEN_MINT,
+		amount: usdcAtomics,
+		slippageBps: slippageBps(),
+	});
 }
 
-/** Build the signed-by-us swap transaction (base64) for `quote`. */
+/** Build the (unsigned) swap transaction (base64) for `quote`. */
 async function jupiterSwapTx(quote, userPublicKey) {
-	const data = await fetchJson(JUP_SWAP_URL, {
-		method: 'POST',
-		headers: { 'content-type': 'application/json', accept: 'application/json' },
-		body: JSON.stringify({
-			quoteResponse: quote,
-			userPublicKey,
-			// USDC→$THREE never touches wrapped SOL; let Jupiter manage the $THREE ATA.
-			wrapAndUnwrapSol: false,
-			dynamicComputeUnitLimit: true,
-			prioritizationFeeLamports: {
-				priorityLevelWithMaxLamports: { maxLamports: 1_000_000, priorityLevel: 'medium' },
-			},
-		}),
-	});
-	if (!data.swapTransaction) {
-		throw Object.assign(new Error('jupiter returned no swapTransaction'), { code: 'no_swap_tx' });
-	}
-	return data.swapTransaction;
+	return jupSwapTx({ quote, userPublicKey, wrapAndUnwrapSol: false });
 }
 
 // ── plan ──────────────────────────────────────────────────────────────────-

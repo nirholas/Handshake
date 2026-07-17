@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T23:32:41.630Z",
+	"generated_at": "2026-07-17T23:34:02.259Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -107,6 +107,17 @@
 			"link": null,
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "Avatars made from your photo now match your actual face shape",
+			"summary": "When you create an avatar from a selfie, it used to paint your face onto a generic head, so the shape (jaw, nose, brow, how wide your face is) stayed the same for everyone. Now the head is reshaped to your real face structure, so the avatar reads as you, not just your photo on a mannequin. The avatar still arrives fully rigged with all its facial expressions and lip-sync shapes intact, ready to animate. This is the first step of a bigger push toward photoreal, self-hosted avatars that beat the best avatar makers out there.",
+			"link": null,
+			"tags": [
+				"improvement",
+				"feature"
 			]
 		},
 		{
@@ -535,6 +546,17 @@
 		{
 			"date": "2026-07-17",
 			"type": "update",
+			"title": "The homepage Forge grew the full studio's brains",
+			"summary": "The mini-forge on the homepage is no longer just a prompt box on the free lane. An Options panel now unfolds under it with the same controls the full Forge runs on: choose a quality tier (Draft, Standard, or the $THREE-holder High tier, with hold-or-pay-per-generation built in), pick a specific engine or leave it on Auto (which routes to the best live lane and shows each engine's real up or down status), set the aspect ratio, and add your own provider key for keyed lanes. Two new one-tap helpers sit in the bar: Enhance rewrites your prompt into a richer, single-subject spec for sharper geometry, and Surprise rolls a fresh idea. The controls read the exact same catalog and health feed as the full page, so the two never drift, and the default view stays the clean single bar until you open Options.",
+			"link": "/",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
 			"title": "The homepage no longer greets you with an empty stage",
 			"summary": "The live 3D agent on the homepage is the first thing you see, but on a cold visit it could sit as a blank near-black panel for several seconds while the model and 3D engine loaded. That gap is now filled with a gently breathing agent silhouette and a \"summoning your agent\" cue, so the stage feels alive from the very first paint instead of looking broken. It fades out the instant the real avatar is ready, respects reduced-motion settings, and if the preview ever stalls it now surfaces a retry instead of hanging on the placeholder.",
 			"link": null,
@@ -594,6 +616,17 @@
 			"tags": [
 				"infra",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "The status page stopped falsely flagging Coin Intelligence",
+			"summary": "The public status page (three.ws/status) had a Coin Intelligence line that was permanently stuck on \"timeout\", even though the feed itself was healthy and updating on schedule. The economy heartbeat was pinging the Coin Intelligence firehose on a one-minute clock and giving up after 60 seconds, but that firehose is designed to listen to the live pump.fun launch stream for about 85 seconds each run and already runs on its own dedicated two-minute schedule. So the extra ping never once finished in time and always reported a false failure. We removed the duplicate ping. Coin Intelligence keeps running on its proper schedule, and the status page now reflects reality instead of a phantom outage.",
+			"link": "/status",
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{

@@ -938,6 +938,8 @@ export default async function handler(req, res) {
 	const view = url.searchParams.get('view') || 'feed';
 	const agentId = url.searchParams.get('agent_id') || null;
 	if (agentId && !isUuid(agentId)) return error(res, 400, 'validation_error', 'agent_id must be a uuid');
+	const mint = url.searchParams.get('mint') || null;
+	if (mint && !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(mint)) return error(res, 400, 'validation_error', 'mint must be a base58 address');
 	const typeRaw = url.searchParams.get('type') || 'all';
 	const type = TYPE_KINDS[typeRaw] ? typeRaw : 'all';
 	const cursor = url.searchParams.get('cursor');
@@ -988,7 +990,7 @@ export default async function handler(req, res) {
 		// Default: feed. A delta poll (`since`) is never cached — it must be live.
 		// A first page (no cursor/since) of the GLOBAL feed is cached briefly to
 		// shield the DB from a thundering herd of pollers.
-		const isFirstGlobalPage = !cursor && !since && !agentId;
+		const isFirstGlobalPage = !cursor && !since && !agentId && !mint;
 		if (isFirstGlobalPage) {
 			// `limit` is part of the cache key: handleFeed returns exactly `limit` rows
 			// (plus has_more / next_cursor computed from it), so two callers asking for
@@ -999,14 +1001,14 @@ export default async function handler(req, res) {
 			const cacheKey = `pulse:feed:${network}:${type}:${limit}`;
 			let body = await cacheGet(cacheKey);
 			if (body === null) {
-				body = await handleFeed(req, res, { network, type, agentId, cursor, since });
+				body = await handleFeed(req, res, { network, type, agentId, mint, cursor, since });
 				await cacheSet(cacheKey, body, FEED_TTL_S);
 			}
 			res.setHeader('cache-control', 'public, max-age=8');
 			return json(res, 200, { data: body });
 		}
 
-		const body = await handleFeed(req, res, { network, type, agentId, cursor, since });
+		const body = await handleFeed(req, res, { network, type, agentId, mint, cursor, since });
 		return json(res, 200, { data: body });
 	} catch (e) {
 		if (isDbUnavailableError(e)) {

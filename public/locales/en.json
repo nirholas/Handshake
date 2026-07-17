@@ -3447,6 +3447,7 @@
 		"gate_any_skill_wrap_any_mcp_tool": "<strong>Gate any skill</strong> — wrap any MCP tool or agent response behind a paywall",
 		"gate_skills_behind_pay_per_call_micropayment": "Gate skills behind <span data-term=\"pay-per-call\">pay-per-call (micropayments)</span> USDC payments. Keep 100% during open beta. Watch earnings flow in real-time from your dashboard.",
 		"generate_your_own_model": "Generate your own model →",
+		"open_this_model_in_ar": "Open this model in AR →",
 		"generate_yours": "Generate yours →",
 		"generation_failed": "Generation failed",
 		"get_api_key": "Get API key <span class=\"arrow\">&rarr;</span>",

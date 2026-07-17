@@ -87,6 +87,14 @@
 			<description>Every generated avatar and 3D identity is now rendered with real studio lighting. The image-based lighting the renderer was missing is the reason materials like leather, fabric, and metal used to crush to near-black; adding it, plus faithful color tone mapping, makes those surfaces read the way they look in a real 3D viewer. Faces are lit, boots and belts look like leather again, and the whole character stands out from the backdrop. This lifts the profile pictures and full-body shots the Agent Identity Studio produces, and the avatar thumbnails across the site.</description>
 		</item>
 		<item>
+			<title>Avatars made from your photo now match your actual face shape</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-17:Avatars made from your photo now match your actual face shape</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>When you create an avatar from a selfie, it used to paint your face onto a generic head, so the shape (jaw, nose, brow, how wide your face is) stayed the same for everyone. Now the head is reshaped to your real face structure, so the avatar reads as you, not just your photo on a mannequin. The avatar still arrives fully rigged with all its facial expressions and lip-sync shapes intact, ready to animate. This is the first step of a bigger push toward photoreal, self-hosted avatars that beat the best avatar makers out there.</description>
+		</item>
+		<item>
 			<title>Avatars you generate now come out truly animation-ready</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-07-17:Avatars you generate now come out truly animation-ready</guid>
@@ -407,6 +415,14 @@
 			<description>The strip of community models on the homepage used to be a fixed set of six. It is now a live feed you can actually browse: switch between Fresh and Trending, and press Show more to see more. New models made by anyone appear at the top on their own while you watch, with a live indicator so Right now stays honest. Each card still spins the real 3D model and opens it when clicked.</description>
 		</item>
 		<item>
+			<title>The homepage Forge grew the full studio's brains</title>
+			<link>https://three.ws/</link>
+			<guid isPermaLink="false">2026-07-17:The homepage Forge grew the full studio's brains</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The mini-forge on the homepage is no longer just a prompt box on the free lane. An Options panel now unfolds under it with the same controls the full Forge runs on: choose a quality tier (Draft, Standard, or the $THREE-holder High tier, with hold-or-pay-per-generation built in), pick a specific engine or leave it on Auto (which routes to the best live lane and shows each engine's real up or down status), set the aspect ratio, and add your own provider key for keyed lanes. Two new one-tap helpers sit in the bar: Enhance rewrites your prompt into a richer, single-subject spec for sharper geometry, and Surprise rolls a fresh idea. The controls read the exact same catalog and health feed as the full page, so the two never drift, and the default view stays the clean single bar until you open Options.</description>
+		</item>
+		<item>
 			<title>The homepage no longer greets you with an empty stage</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-17:The homepage no longer greets you with an empty stage</guid>
@@ -453,6 +469,14 @@
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>infra</category>
 			<description>The July payment-settlement bug ran for eight days before anyone noticed, because every health check reported the x402 rail as 'armed' and the discovery endpoint as 'up' while a third of real settlements were quietly failing. The public status page and /api/healthz now carry a new signal, x402 settlement success, that reads the actual settle outcomes over a rolling window and reports the success rate. It counts only genuine payment-rail faults (server errors, rejected payments, RPC failures) and ignores unrelated noise, and it pages operations the moment the rate drops, so a silent settlement regression surfaces in hours instead of days.</description>
+		</item>
+		<item>
+			<title>The status page stopped falsely flagging Coin Intelligence</title>
+			<link>https://three.ws/status</link>
+			<guid isPermaLink="false">2026-07-17:The status page stopped falsely flagging Coin Intelligence</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The public status page (three.ws/status) had a Coin Intelligence line that was permanently stuck on &quot;timeout&quot;, even though the feed itself was healthy and updating on schedule. The economy heartbeat was pinging the Coin Intelligence firehose on a one-minute clock and giving up after 60 seconds, but that firehose is designed to listen to the live pump.fun launch stream for about 85 seconds each run and already runs on its own dedicated two-minute schedule. So the extra ping never once finished in time and always reported a false failure. We removed the duplicate ping. Coin Intelligence keeps running on its proper schedule, and the status page now reflects reality instead of a phantom outage.</description>
 		</item>
 		<item>
 			<title>The viewer's Create buttons now take you straight to the Forge</title>

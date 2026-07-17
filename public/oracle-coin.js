@@ -363,9 +363,17 @@
 
 	// ── price chart ────────────────────────────────────────────────────────────
 	// A TradingView-grade candlestick view via the DexScreener embed (keyed by the
-	// mint, resolves the most-liquid pair itself), plus a native SVG line chart from
-	// /api/pump/price-history for coins still on the bonding curve with no DEX pair.
+	// mint, resolves the most-liquid pair itself), a native SVG line chart from
+	// /api/pump/price-history for coins still on the bonding curve with no DEX pair,
+	// and an "Agent trades" view that overlays every three.ws agent's buys and sells
+	// as bubbles on that native series — each plotted at the candle close nearest its
+	// on-chain timestamp (the same at-or-before-the-event technique the tweet-price
+	// chart uses), so you can see exactly where the machine economy moved this coin.
 	const CHART_KEY = 'oc_chart_view';
+
+	// Agent transactions for this coin (from /api/pulse?mint=…). Fetched once per
+	// mint, shared by the chart-marker overlay and the "Agent transactions" list.
+	let AGENT_TRADES = [];
 
 	function dexEmbedUrl(mint) {
 		const theme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
@@ -373,12 +381,51 @@
 		return `https://dexscreener.com/solana/${encodeURIComponent(mint)}?${p}`;
 	}
 
-	function areaChartSvg(points) {
+	// Every three.ws agent transaction in one coin, newest first. Normalised for
+	// both the marker overlay (needs tSec + side) and the list (needs labels). Never
+	// throws: a failure just yields an empty overlay and an empty list.
+	async function fetchAgentTrades(mint) {
+		try {
+			const { ok, data } = await api(`/api/pulse?type=trades&mint=${encodeURIComponent(mint)}&network=${NETWORK}&limit=50`, { timeout: 10000 });
+			const body = data && data.data; // /api/pulse wraps its payload as { data: { events } }
+			if (!ok || !body || !Array.isArray(body.events)) { AGENT_TRADES = []; return AGENT_TRADES; }
+			AGENT_TRADES = body.events.map((e) => {
+				const ms = new Date(e.ts).getTime();
+				return {
+					tSec: Math.floor(ms / 1000),
+					tsMs: ms,
+					side: e.side === 'sell' ? 'sell' : 'buy',
+					sol: e.sol != null ? Number(e.sol) : null,
+					usd: e.usd != null ? Number(e.usd) : null,
+					agent_name: e.agent?.name || 'Agent',
+					agent_url: e.agent?.url || null,
+					explorer: e.explorer || null,
+				};
+			}).filter((t) => Number.isFinite(t.tSec));
+			return AGENT_TRADES;
+		} catch { AGENT_TRADES = []; return AGENT_TRADES; }
+	}
+
+	// Price at (or just before) an epoch-seconds instant — the candle close at or
+	// immediately preceding it, so a marker sits on the line the way the trade saw
+	// the market. `pts` is ascending by `t`.
+	function priceAt(pts, tSec) {
+		let lo = 0, hi = pts.length - 1, ans = 0;
+		while (lo <= hi) { const mid = (lo + hi) >> 1; if (pts[mid].t <= tSec) { ans = mid; lo = mid + 1; } else hi = mid - 1; }
+		return pts[ans]?.c ?? pts[0]?.c ?? 0;
+	}
+
+	function areaChartSvg(points, markers = []) {
 		const w = 720, h = 240, volH = 38, priceH = h - volH, pad = { t: 12, r: 8, b: 4, l: 8 };
 		const closes = points.map((p) => p.c), vols = points.map((p) => p.v || 0);
 		const min = Math.min(...closes), max = Math.max(...closes), span = (max - min) || max || 1, maxVol = Math.max(...vols) || 1;
 		const innerW = w - pad.l - pad.r, innerH = priceH - pad.t - pad.b;
-		const x = (i) => pad.l + (i / Math.max(1, points.length - 1)) * innerW;
+		// Time-based x so on-chain trade timestamps land on the right spot, not on an
+		// evenly-spaced index. Falls back to index spacing if the series has no time.
+		const t0 = points[0].t, t1 = points[points.length - 1].t, tspan = (t1 - t0) || 1;
+		const hasTime = Number.isFinite(t0) && Number.isFinite(t1) && t1 > t0;
+		const xt = (tSec) => pad.l + ((Math.max(t0, Math.min(t1, tSec)) - t0) / tspan) * innerW;
+		const x = hasTime ? ((i) => xt(points[i].t)) : ((i) => pad.l + (i / Math.max(1, points.length - 1)) * innerW);
 		const y = (v) => pad.t + innerH - ((v - min) / span) * innerH;
 		const up = points.length > 1 && closes[closes.length - 1] >= closes[0];
 		const col = up ? 'var(--up)' : 'var(--down)';
@@ -389,35 +436,97 @@
 			const bh = Math.max(1, (p.v / maxVol) * (volH - 6)), bx = x(i) - barW / 2, by = h - bh - 2;
 			return `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="1" fill="${p.c >= p.o ? 'var(--up)' : 'var(--down)'}" opacity="0.45"/>`;
 		}).join('');
-		return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" class="oc-chart-svg" role="img" aria-label="Price history chart" style="color:${col}">
+		// Agent-trade bubbles. Cluster markers that collapse to the same ~9px column +
+		// side so a busy window reads as a few labelled dots, not a smear; a cluster of
+		// N shows a count. Buys sit just under the price line, sells just over it.
+		let markSvg = '';
+		if (hasTime && markers.length) {
+			const buckets = new Map();
+			for (const m of markers) {
+				if (m.tSec < t0 - tspan * 0.02) continue; // far left of window → skip
+				const px = xt(m.tSec), py = y(priceAt(points, m.tSec));
+				const key = `${Math.round(px / 9)}:${m.side}`;
+				const b = buckets.get(key);
+				if (b) { b.n++; b.usd += m.usd || 0; }
+				else buckets.set(key, { px, py, side: m.side, n: 1, usd: m.usd || 0, name: m.agent_name });
+			}
+			markSvg = [...buckets.values()].map((b) => {
+				const buy = b.side === 'buy';
+				const mc = buy ? 'var(--up)' : 'var(--down)';
+				const cy = b.py + (buy ? 8 : -8);
+				const label = b.n > 1
+					? `${b.n} agent ${buy ? 'buys' : 'sells'} · $${b.usd.toFixed(2)} total`
+					: `${b.name} ${buy ? 'bought' : 'sold'}${b.usd ? ` · $${b.usd.toFixed(2)}` : ''}`;
+				const badge = b.n > 1
+					? `<text x="${b.px.toFixed(1)}" y="${(cy + 2.6).toFixed(1)}" text-anchor="middle" font-size="6.5" font-weight="700" fill="#0b0f14">${b.n > 9 ? '9+' : b.n}</text>`
+					: '';
+				return `<g class="oc-mk"><title>${esc(label)}</title>`
+					+ `<line x1="${b.px.toFixed(1)}" y1="${b.py.toFixed(1)}" x2="${b.px.toFixed(1)}" y2="${cy.toFixed(1)}" stroke="${mc}" stroke-width="1" opacity="0.5"/>`
+					+ `<circle cx="${b.px.toFixed(1)}" cy="${cy.toFixed(1)}" r="${b.n > 1 ? 5.4 : 4}" fill="${mc}" stroke="var(--bg,#0b0f14)" stroke-width="1.4"/>`
+					+ badge + `</g>`;
+			}).join('');
+		}
+		return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" class="oc-chart-svg" role="img" aria-label="Price history with agent trades" style="color:${col}">
 			<defs><linearGradient id="ocgrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="currentColor" stop-opacity="0.25"/><stop offset="100%" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs>
 			${bars}
 			<line x1="${pad.l}" y1="${priceH}" x2="${w - pad.r}" y2="${priceH}" stroke="var(--line)" stroke-width="1"/>
 			<path d="${area}" fill="url(#ocgrad)" stroke="none"/>
 			<path d="${line}" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+			${markSvg}
 		</svg>`;
 	}
 
-	async function loadNativeChart(canvas, mint) {
+	// Choose an OHLC window + interval wide enough to contain the agent trades we
+	// want to plot, so markers never pile up against the right edge. Without markers
+	// it stays the tight 36h live view.
+	function chartWindow(markers) {
+		const now = Math.floor(Date.now() / 1000);
+		let from = now - 36 * 3600;
+		if (markers.length) {
+			const earliest = Math.min(...markers.map((m) => m.tSec));
+			from = Math.min(from, earliest - 3600); // one candle of lead-in
+		}
+		const span = now - from, DAY = 86400;
+		const cap = 30 * DAY;
+		if (span > cap) from = now - cap;
+		const s = now - from;
+		const interval = s <= 2 * DAY ? '15m' : s <= 7 * DAY ? '1h' : s <= 21 * DAY ? '4h' : '1D';
+		const label = s <= 2 * DAY ? `${Math.round(s / 3600)}h` : `${Math.round(s / DAY)}d`;
+		return { from, to: now, interval, label };
+	}
+
+	async function loadNativeChart(canvas, mint, opts = {}) {
+		const markers = opts.markers || [];
 		canvas.innerHTML = '<div class="oc-chart-skel"></div>';
-		const to = Math.floor(Date.now() / 1000), from = to - 36 * 3600;
-		const { ok, data } = await api(`/api/pump/price-history?mint=${encodeURIComponent(mint)}&interval=15m&from=${from}&to=${to}`, { timeout: 12000 });
+		const { from, to, interval, label } = chartWindow(markers);
+		const { ok, data } = await api(`/api/pump/price-history?mint=${encodeURIComponent(mint)}&interval=${interval}&from=${from}&to=${to}`, { timeout: 12000 });
 		const pts = ((data && data.data) || []).filter((p) => Number.isFinite(p.c));
 		if (!ok || pts.length < 2) { canvas.innerHTML = '<div class="state" style="padding:34px 0">Chart appears once this coin has trade history.</div>'; return; }
 		const first = pts[0].c, last = pts[pts.length - 1].c;
 		const chg = changeStr(first ? ((last - first) / first) * 100 : 0);
-		canvas.innerHTML = `<div class="oc-chart-readout"><span class="oc-chart-price">${fmtPrice(last)}</span><span class="mkt-${chg.cls}">${chg.txt} · 36h</span></div>${areaChartSvg(pts)}`;
+		const plotted = markers.filter((m) => m.tSec >= pts[0].t).length;
+		const legend = markers.length
+			? `<div class="oc-chart-legend"><span class="oc-lg buy"></span>agent buy<span class="oc-lg sell"></span>agent sell<span class="oc-lg-ct">${plotted} plotted</span></div>`
+			: '';
+		canvas.innerHTML = `<div class="oc-chart-readout"><span class="oc-chart-price">${fmtPrice(last)}</span><span class="mkt-${chg.cls}">${chg.txt} · ${label}</span></div>${areaChartSvg(pts, markers)}${legend}`;
 	}
 
 	function mountChart(container, mint) {
 		let stored = null; try { stored = localStorage.getItem(CHART_KEY); } catch {}
+		const hasTrades = AGENT_TRADES.length > 0;
 		const preCurve = BOOT.pump && !BOOT.pump.complete; // no DEX pair yet → native by default
-		const view = stored || (preCurve ? 'line' : 'candles');
+		// When agents have traded this coin, lead with the annotated view so their
+		// moves are on the chart the instant the page opens; otherwise honour the last
+		// choice, then default to candles (or native pre-DEX).
+		let view = stored || (hasTrades ? 'trades' : preCurve ? 'line' : 'candles');
+		if (view === 'trades' && !hasTrades) view = preCurve ? 'line' : 'candles';
+		const tradesBtn = hasTrades ? `<button type="button" class="oc-seg-btn${view === 'trades' ? ' on' : ''}" data-view="trades">Agent trades</button>` : '';
 		container.innerHTML = `<div class="dr-sec" style="margin-top:0">Price <span style="color:var(--faint);font-weight:400;font-size:10px">live</span></div>
 			<div class="oc-chart-controls">
 				<div class="oc-seg">
 					<button type="button" class="oc-seg-btn${view === 'candles' ? ' on' : ''}" data-view="candles">Candles</button>
 					<button type="button" class="oc-seg-btn${view === 'line' ? ' on' : ''}" data-view="line">Line</button>
+					${tradesBtn}
 				</div>
 				<a class="dr-act" href="https://dexscreener.com/solana/${encodeURIComponent(mint)}" target="_blank" rel="noopener">DexScreener ↗</a>
 			</div>
@@ -437,14 +546,48 @@
 			// Embed blocked / offline → fall back to the native line chart.
 			watchdog = setTimeout(() => { if (!canvas.classList.contains('ready')) loadNativeChart(canvas, mint); }, 9000);
 		}
+		function render(v) {
+			clearTimeout(watchdog);
+			if (v === 'candles') renderCandles();
+			else if (v === 'trades') loadNativeChart(canvas, mint, { markers: AGENT_TRADES });
+			else loadNativeChart(canvas, mint);
+		}
 		function apply(v) {
 			try { localStorage.setItem(CHART_KEY, v); } catch {}
 			container.querySelectorAll('.oc-seg-btn').forEach((b) => b.classList.toggle('on', b.dataset.view === v));
-			clearTimeout(watchdog);
-			if (v === 'candles') renderCandles(); else loadNativeChart(canvas, mint);
+			render(v);
 		}
 		container.querySelectorAll('.oc-seg-btn').forEach((b) => b.addEventListener('click', () => apply(b.dataset.view)));
-		if (view === 'candles') renderCandles(); else loadNativeChart(canvas, mint);
+		render(view);
+	}
+
+	// ── agent transactions list ─────────────────────────────────────────────────
+	// The same events the chart plots, as a scannable ledger: who traded, which way,
+	// how much, when, and a link out to the on-chain proof and the agent's profile.
+	function renderAgentTx(mint) {
+		const wrap = $('#ocAgentTx');
+		if (!wrap) return;
+		const trades = AGENT_TRADES;
+		if (!trades.length) { wrap.innerHTML = ''; return; }
+		const buys = trades.filter((t) => t.side === 'buy').length;
+		const rows = trades.slice(0, 12).map((t) => {
+			const buy = t.side === 'buy';
+			const amt = t.sol != null ? fmtSol(t.sol) : '';
+			const usd = t.usd != null ? `$${t.usd.toFixed(2)}` : '';
+			const name = esc(t.agent_name);
+			const nameEl = t.agent_url ? `<a class="oc-atx-agent" href="${esc(t.agent_url)}">${name}</a>` : `<span class="oc-atx-agent">${name}</span>`;
+			const tx = t.explorer ? `<a class="oc-atx-tx" href="${esc(t.explorer)}" target="_blank" rel="noopener">tx ↗</a>` : '';
+			return `<div class="oc-atx-row">
+				<span class="oc-atx-side ${buy ? 'buy' : 'sell'}">${buy ? '▲ BUY' : '▼ SELL'}</span>
+				${nameEl}
+				<span class="oc-atx-amt">${esc(amt)}${usd ? ` <span class="oc-atx-usd">${esc(usd)}</span>` : ''}</span>
+				<span class="oc-atx-time">${esc(ago(t.tsMs))}</span>
+				${tx}
+			</div>`;
+		}).join('');
+		wrap.innerHTML = `<div class="dr-sec">Agent transactions <span style="color:var(--faint);font-weight:400;font-size:10px">${trades.length} on three.ws · ${buys} buys / ${trades.length - buys} sells</span></div>
+			<div class="oc-atx-list">${rows}</div>
+			${trades.length > 12 ? `<a class="dr-act oc-atx-more" href="/pulse?mint=${encodeURIComponent(mint)}">Every agent transaction in this coin →</a>` : ''}`;
 	}
 
 	async function loadSentiment(mint) {
@@ -623,12 +766,13 @@
 	// The conviction-independent scaffold: identity is already in the SSR hero, so
 	// market + live trades render immediately for ANY mint. The conviction column
 	// fills in (or shows an "observing" state) once /api/oracle/coin resolves.
-	function buildScaffold(mint) {
+	async function buildScaffold(mint) {
 		const deep = $('#ocDeep');
 		if (!deep) return;
 		deep.innerHTML = `
 			<div id="ocTake"></div>
 			<div id="ocChart" class="oc-chart"></div>
+			<div id="ocAgentTx" class="oc-agent-tx"></div>
 			<div id="ocHistory"></div>
 			<div class="oc-cols">
 				<div id="ocConviction">
@@ -645,6 +789,11 @@
 					<div id="ocRelated"></div>
 				</div>
 			</div>`;
+		// Load this coin's agent transactions before the chart mounts so the annotated
+		// "Agent trades" view can lead by default and the list renders together. The
+		// fetch is fast and never throws; on failure both simply stay empty.
+		await fetchAgentTrades(mint);
+		renderAgentTx(mint);
 		const chartEl = $('#ocChart');
 		if (chartEl) mountChart(chartEl, mint);
 		loadMarket(mint);

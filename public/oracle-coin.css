@@ -218,7 +218,34 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .oc-chart-readout { display: flex; align-items: baseline; gap: 10px; padding: 12px 14px 0; font: 700 15px/1 var(--mono); }
 .oc-chart-readout .mkt-up, .oc-chart-readout .mkt-down, .oc-chart-readout .mkt-flat { font-size: 12px; }
 .oc-chart-price { color: var(--ink); }
-@media (prefers-reduced-motion: reduce) { .oc-chart-skel { animation: none; } }
+/* agent-trade markers on the native chart */
+.oc-chart-svg .oc-mk { cursor: default; }
+.oc-chart-svg .oc-mk circle { transition: r .12s ease; }
+.oc-chart-svg .oc-mk:hover circle { r: 6.4; }
+.oc-chart-legend { display: flex; align-items: center; gap: 7px; padding: 6px 14px 12px; font: 600 10.5px/1 var(--mono); color: var(--faint); text-transform: uppercase; letter-spacing: .04em; }
+.oc-chart-legend .oc-lg { width: 9px; height: 9px; border-radius: 50%; border: 1.4px solid var(--bg); display: inline-block; }
+.oc-chart-legend .oc-lg.buy { background: var(--up); margin-left: 4px; }
+.oc-chart-legend .oc-lg.sell { background: var(--down); margin-left: 12px; }
+.oc-chart-legend .oc-lg-ct { margin-left: auto; color: var(--muted); text-transform: none; letter-spacing: 0; }
+@media (prefers-reduced-motion: reduce) { .oc-chart-skel { animation: none; } .oc-chart-svg .oc-mk circle { transition: none; } }
+
+/* agent transactions list */
+.oc-agent-tx { margin-top: 22px; }
+.oc-agent-tx:empty { display: none; }
+.oc-atx-list { display: flex; flex-direction: column; gap: 3px; }
+.oc-atx-row { display: flex; align-items: center; gap: 10px; padding: 8px 11px; border-radius: 9px; background: rgba(255,255,255,0.035); border: 1px solid var(--line); font-size: 12.5px; }
+.oc-atx-side { font: 700 10.5px/1 var(--mono); letter-spacing: .04em; min-width: 52px; flex-shrink: 0; }
+.oc-atx-side.buy { color: var(--up); }
+.oc-atx-side.sell { color: var(--down); }
+.oc-atx-agent { flex: 1; min-width: 0; color: var(--ink); font-weight: 600; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+a.oc-atx-agent:hover { text-decoration: underline; }
+.oc-atx-amt { font: 600 12px/1 var(--mono); color: var(--ink); white-space: nowrap; flex-shrink: 0; }
+.oc-atx-amt .oc-atx-usd { color: var(--muted); }
+.oc-atx-time { color: var(--faint); font-size: 11px; white-space: nowrap; flex-shrink: 0; min-width: 40px; text-align: right; }
+.oc-atx-tx { color: var(--faint); font-size: 11px; text-decoration: none; flex-shrink: 0; }
+.oc-atx-tx:hover { color: var(--ink); }
+.oc-atx-more { display: inline-block; margin-top: 10px; }
+@media (max-width: 560px) { .oc-atx-time { display: none; } }
 
 /* states */
 .state { padding: 40px 22px; text-align: center; color: var(--muted); }

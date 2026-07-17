@@ -211,6 +211,18 @@ function shortMint(mint) {
 	return `${mint.slice(0, 4)}…${mint.slice(-4)}`;
 }
 
+// Where a row navigates. Coin-moving events (a trade, a snipe, a launch that
+// resolved a mint) link straight to that coin's rich detail page — so "traded
+// $three" is one click from the token's chart, market, and every agent that has
+// traded it. Everything else (tips, payments, skill purchases) links to the
+// agent whose wallet moved. The coin page is the same destination the ticker and
+// the coin-scoped feed use, so the linkage is consistent across every surface.
+function eventHref(ev) {
+	const coinKind = ev.kind === 'trade' || ev.kind === 'snipe' || ev.kind === 'launch';
+	if (coinKind && ev.mint) return `/oracle/coin/${ev.mint}`;
+	return ev.agent?.url || (ev.mint ? `/oracle/coin/${ev.mint}` : '#');
+}
+
 // The traded-token chip: "$SYMBOL" when the mint resolves to a known token,
 // otherwise the elided mint (e.g. "4h3K…9xQr"). Empty when no token is known
 // (generic SOL spends), so the sentence gracefully reads "traded ◎0.012".
@@ -284,9 +296,10 @@ function rowEl(ev) {
 	const k = KIND_META[ev.kind] || KIND_META.trade;
 	const a = document.createElement('a');
 	a.className = `mp-row ${k.cls}`;
-	a.href = ev.agent?.url || (ev.mint ? `/oracle/coin/${ev.mint}` : '#');
+	a.href = eventHref(ev);
 	a.dataset.id = ev.id;
-	a.setAttribute('aria-label', `${ev.agent?.name || 'Agent'} ${k.verb} — ${timeAgo(ev.ts)}`);
+	const coinPart = (ev.symbol || ev.coin_name) ? ` ${ev.symbol ? `$${ev.symbol}` : ev.coin_name}` : '';
+	a.setAttribute('aria-label', `${ev.agent?.name || 'Agent'} ${k.verb}${coinPart} — ${timeAgo(ev.ts)}`);
 
 	a.appendChild(avatarEl(ev.agent));
 
@@ -363,7 +376,7 @@ function tickEl(ev) {
 	const k = KIND_META[ev.kind] || KIND_META.trade;
 	const a = document.createElement('a');
 	a.className = `mp-tick ${k.cls}`;
-	a.href = ev.agent?.url || (ev.mint ? `/oracle/coin/${ev.mint}` : '/pulse');
+	a.href = eventHref(ev) === '#' ? '/pulse' : eventHref(ev);
 	const amt = fmtAmount(ev);
 	// Name the token on trade/snipe ticks too, mirroring the full feed row.
 	const tradeTok = (ev.kind === 'trade' || ev.kind === 'snipe') && (ev.symbol || ev.mint)
