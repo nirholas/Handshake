@@ -109,7 +109,9 @@ describe('write-build-info.mjs generator', () => {
 
 		// commit is a full 40-char sha (this is a git repo) or the explicit fallback
 		expect(info.commit === 'unknown' || /^[0-9a-f]{40}$/.test(info.commit)).toBe(true);
-		expect(info.commitShort).toBe(info.commit === 'unknown' ? 'unknown' : info.commit.slice(0, 9));
+		expect(info.commitShort).toBe(
+			info.commit === 'unknown' ? 'unknown' : info.commit.slice(0, 9),
+		);
 
 		// builtAt round-trips as ISO 8601
 		expect(new Date(info.builtAt).toISOString()).toBe(info.builtAt);

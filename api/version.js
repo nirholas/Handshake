@@ -31,7 +31,9 @@ let _buildInfo;
 function buildInfo() {
 	if (_buildInfo !== undefined) return _buildInfo;
 	try {
-		_buildInfo = JSON.parse(readFileSync(resolve(process.cwd(), 'dist/build-info.json'), 'utf8'));
+		_buildInfo = JSON.parse(
+			readFileSync(resolve(process.cwd(), 'dist/build-info.json'), 'utf8'),
+		);
 	} catch {
 		// No stamp: fall back to package version so `version` is still meaningful.
 		let version = 'unknown';

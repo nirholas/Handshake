@@ -45,7 +45,10 @@ function packageVersion() {
 // Prefer live git; fall back to CI-injected commit env vars (Vercel/Cloud Build);
 // finally 'unknown'. Never let a missing .git break the build.
 const fullSha =
-	git('rev-parse HEAD') || process.env.VERCEL_GIT_COMMIT_SHA || process.env.COMMIT_SHA || 'unknown';
+	git('rev-parse HEAD') ||
+	process.env.VERCEL_GIT_COMMIT_SHA ||
+	process.env.COMMIT_SHA ||
+	'unknown';
 const shortSha = fullSha === 'unknown' ? 'unknown' : fullSha.slice(0, 9);
 const commitTime = git('show -s --format=%cI HEAD') || null; // committer date, ISO 8601
 const branch =
