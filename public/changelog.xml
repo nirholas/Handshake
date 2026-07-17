@@ -135,6 +135,14 @@
 			<description>There's now a reason to come back tomorrow. Daily Forge at three.ws/daily gives everyone the same fresh creative theme each day — tiny robots, glass creatures, cozy objects, brave little knights — with a running day count and a few starter ideas. Forge your take on it (free, no sign-up, about a minute) and you light a daily streak; keep showing up and it grows, with a celebration when you hit 3, 7, 30 days and beyond. Miss a day and it resets, but your best is always remembered. Every creation you make lands one tap from viewing it in AR or dropping it into a shared AR Studio room, and a community strip shows what others are forging. It works entirely in your browser with no account needed.</description>
 		</item>
 		<item>
+			<title>Describe your agent and we build it, no sign-in needed</title>
+			<link>https://three.ws/create-agent</link>
+			<guid isPermaLink="false">2026-07-17:Describe your agent and we build it, no sign-in needed</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The create-agent wizard's one-line generator (describe it, we build it) used to require an account before it would do anything, even though the rest of the wizard now lets you build first and only sign in to ship. That gap is closed: signed-out visitors can generate a complete, ready-to-tweak agent (name, body, skills, personality, greeting, category) from a single sentence or the surprise-me button, then sign in only at the final step to mint it. Guests get a fair hourly generation budget, and the whole draft is saved and restored across sign-in so nothing is lost.</description>
+		</item>
+		<item>
 			<title>Embeddable 3D viewer now shows loading, progress, and errors on its own</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-17:Embeddable 3D viewer now shows loading, progress, and errors on its own</guid>

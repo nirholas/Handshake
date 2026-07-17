@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "Describe your agent and we build it, no sign-in needed",
+			"summary": "The create-agent wizard's one-line generator (describe it, we build it) used to require an account before it would do anything, even though the rest of the wizard now lets you build first and only sign in to ship. That gap is closed: signed-out visitors can generate a complete, ready-to-tweak agent (name, body, skills, personality, greeting, category) from a single sentence or the surprise-me button, then sign in only at the final step to mint it. Guests get a fair hourly generation budget, and the whole draft is saved and restored across sign-in so nothing is lost.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/create-agent"
+		},
+		{
+			"date": "2026-07-17",
 			"title": "The Money Pulse now tells you which token each trade was",
 			"summary": "Trade and snipe beats in the live Money Pulse at three.ws/pulse used to read only \"traded ◎0.012\" with no hint of what was bought or sold, while launches already named the coin. Every trade now leads with the token: its $SYMBOL when we can name it (resolved from our token cache and platform launches), or a short mint address when we can't, with the full mint on hover. Across the last 200 real trades, 198 resolve to a symbol. The same identity shows up in the compact pulse ticker embedded around the site.",
 			"tags": [

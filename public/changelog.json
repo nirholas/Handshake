@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T22:49:54.643Z",
+	"generated_at": "2026-07-17T22:55:10.490Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -172,6 +172,16 @@
 			"link": "/daily",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "Describe your agent and we build it, no sign-in needed",
+			"summary": "The create-agent wizard's one-line generator (describe it, we build it) used to require an account before it would do anything, even though the rest of the wizard now lets you build first and only sign in to ship. That gap is closed: signed-out visitors can generate a complete, ready-to-tweak agent (name, body, skills, personality, greeting, category) from a single sentence or the surprise-me button, then sign in only at the final step to mint it. Guests get a fair hourly generation budget, and the whole draft is saved and restored across sign-in so nothing is lost.",
+			"link": "/create-agent",
+			"tags": [
+				"improvement"
 			]
 		},
 		{
