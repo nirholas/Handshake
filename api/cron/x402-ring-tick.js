@@ -52,6 +52,7 @@ import { logger } from '../_lib/usage.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { priceFor } from '../_lib/x402-prices.js';
 import { loadSeedKeypair, payX402, USDC_MINT, SOLANA_RPC } from '../_lib/x402/pay.js';
+import { ringPoolEnabled, claimNextPayer } from '../_lib/x402/pool.js';
 import { validateRingConfig } from '../_lib/x402/ring-config.js';
 import { assertRingSpendInvariants } from '../_lib/x402/ring-allowlist.js';
 import {
@@ -321,7 +322,18 @@ export default wrapCron(async (req, res) => {
 	for (const idx of plan.cheapIndices) picks.push(CHEAP_ENDPOINTS[idx]);
 
 	// ── Pay each pick through the shared path ─────────────────────────────────
-	const payCtx = { buyer: payer, conn, blockhash, mintInfo };
+	// Payer pool: when enabled, each settle draws a DISTINCT least-recently-used
+	// pool wallet (self-pays its own 1-sig fee, so no shared fee wallet). The seed
+	// payer stays the fallback whenever the pool is empty/unavailable, so the ring
+	// never stalls. Pool wallets are inside ringAllowedAddresses(), so the onAccept
+	// allowlist gate and the leak scanner classify them internal.
+	const usePool = ringPoolEnabled();
+	const payCtx = {
+		buyer: payer, conn, blockhash, mintInfo,
+		...(usePool
+			? { buyerFor: async () => { const c = await claimNextPayer(sql).catch(() => null); return c?.keypair || payer; } }
+			: {}),
+	};
 	const results = [];
 	let paid = 0, calls = 0, errors = 0, spent = 0, lastTxSig = null;
 	let floorHit = false;

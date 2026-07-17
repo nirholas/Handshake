@@ -457,6 +457,91 @@ daily volume is an env change (`X402_PRICE_RING_SETTLE`,
 — in July 2026 a defaults-only lift to $35/settle put every tick into
 back-pressure and flat-lined the visible ring economy for hours.
 
+## Payer pool — many distinct payers, one reused set of wallets
+
+By default the ring pays from a single seed wallet. The **payer pool** lets it pay
+from hundreds-to-thousands of distinct, attributed wallets **at no extra per-settle
+cost**, so the economy reads as many participants instead of one cron. It is
+[api/_lib/x402/pool.js](../api/_lib/x402/pool.js) + the
+[ring-pool-fund](../api/_lib/x402/pipelines/ring-pool-fund.js) pipeline, off by
+default (`X402_RING_POOL_ENABLED`).
+
+**Reused, not throwaway — the efficiency call.** A fresh wallet per call would add
+a funding hop **and** a one-time USDC-ATA rent (~0.00204 SOL ≈ $0.15) on *every*
+settle, roughly tripling the per-settle cost, and the wallets would still cluster
+on-chain in one hop (they are all funded from the same float, the textbook cluster
+signature). A **reused pool** pays that rent once per wallet, keeps each settle on
+the 1-signature self-pay hot path (**1 tx/settle**, same as the single payer), and
+rotates least-recently-used-first so a few hundred wallets produce effectively
+unlimited distinct-payer sequences. 1,000 reused wallets rotating at the stock
+cadence means each pays only a few times a day — genuinely distinct — for ~$150 of
+one-time, reclaimable ATA rent.
+
+**How it wires in.**
+
+- **Storage.** Each wallet's key is secret-box-encrypted at rest (same scheme as
+  custodial agent wallets, `WALLET_ENCRYPTION_KEY`) in `x402_ring_pool`. A
+  500–1,000-wallet pool can't live in env vars, so the three role wallets stay in
+  env and the pool lives in the DB.
+- **Membership is automatic.** The generator mirrors every pool pubkey into
+  `x402_ring_wallets(role='pool')`, so `ringAllowedAddresses()` (the controlled
+  set), the on-chain leak scanner (classifies them **internal**), and the
+  facilitator allowlist all pick them up with no extra wiring. Pool wallets stay
+  labeled internal — they are dogfooding payers, never presented as organic demand.
+- **Sweepback-safe by construction.** Pool wallets are deliberately **not** in
+  [api/_lib/solana-signers.js](../api/_lib/solana-signers.js), so the excess-mode
+  `treasury-sweepback` never enumerates them. This is the same class of bug that
+  used to close the treasury's USDC ATA every run (see the box below) — it cannot
+  recur across 1,000 pool wallets because they are never in the sweepback set.
+- **Rotation.** `claimNextPayer()` atomically claims the least-recently-used enabled
+  wallet (`FOR UPDATE SKIP LOCKED`, so concurrent ticks never collide), and the ring
+  tick passes it per-settle via the shared driver's `buyerFor` hook. An empty or
+  unavailable pool falls back to the seed payer, so the ring never stalls.
+- **Funding.** `ring-pool-fund` (120s cooldown) reads all pool balances in
+  **batches** (`getMultipleAccountsInfo`, ≤100/call) and tops up in **batched**
+  transactions: SOL from the sponsor/master, USDC from the treasury, each below a
+  floor up to a target, sweeping overfull wallets back. Funding 500–1,000 wallets is
+  a handful of transactions per run, not one per wallet. Recirculation, not spend —
+  it never consumes the daily cap. The pure decision is `planPoolFunding()`
+  (unit-tested); the effectful execution batches and records each move to
+  `x402_ring_ledger` as `kind='fund'`.
+
+**Turning it on.**
+
+```bash
+# 1. Mint the pool (encrypts + stores keys, registers membership — no funding).
+node scripts/x402-ring-pool-setup.mjs --grow --size=750
+
+# 2. See exactly what to fund.
+node scripts/x402-ring-pool-setup.mjs --funding-plan --size=750
+
+# 3. Enable rotation + set the size on the service (config-only, pre-approved).
+gcloud run services update three-ws-api --region us-central1 \
+  --update-env-vars X402_RING_POOL_ENABLED=true,X402_RING_POOL_SIZE=750
+```
+
+**Env knobs:** `X402_RING_POOL_ENABLED` (off by default), `X402_RING_POOL_SIZE`
+(target), `X402_RING_POOL_SOL_FLOOR_LAMPORTS` / `_TARGET_LAMPORTS` (default
+0.008 / 0.012 SOL), `X402_RING_POOL_USDC_FLOOR_ATOMIC` / `_TARGET_ATOMIC` /
+`_CEIL_ATOMIC` (default $0.50 / $2 / $4), `X402_RING_POOL_FUND_MAX_PER_RUN`
+(default 60).
+
+> ### Fixed 2026-07-17 — the treasury-sweepback rent churn
+>
+> The ring treasury (`wwwww…ccrU`, `X402_PAY_TO_SOLANA`) is the **same physical
+> wallet** as the `pump-x402-launcher` signer (`PUMP_X402_LAUNCHER_SECRET_KEY_B64`
+> → secret `wallet-x402-treasury-b64`). That registry entry lacked `holdsTokens`,
+> so the excess-mode `treasury-sweepback` consolidated the treasury's USDC up to
+> the economy master **and closed its USDC ATA every run**. Every following ring
+> settle then had to recreate the ATA at **2,039,280 lamports** of rent — which
+> dragged the measured per-settle fee to ~570,000 lamports (114× the 5,000-lamport
+> self-pay floor) and quietly drained the closed loop's float into the master (why
+> `sweeps=0` on the rebalancer: the treasury was emptied before it could
+> recirculate). The fix is one line — `holdsTokens: true` on that registry entry —
+> so excess-mode sweepback never touches the ring float again; only an explicit
+> drain still consolidates it. Pair it with `X402_RING_SELF_PAY=true` (1 signature,
+> not 2) and the per-settle fee returns to the ~5,000-lamport floor.
+
 ## Agents in the ring — buyers with names, not a cron
 
 The cadence above keeps volume flowing, but volume alone still reads as "a cron

@@ -46,6 +46,7 @@ import { run as sniperIntelEnrich } from './pipelines/sniper-intel-enrich.js';
 import { run as volumeBootstrapLoop } from './pipelines/volume-bootstrap-loop.js';
 import { run as datapointVolumeSweep } from './pipelines/datapoint-volume-sweep.js';
 import { run as ringRebalance, floatTopUp as ringFloatTopUp } from './pipelines/ring-rebalance.js';
+import { run as ringPoolFund } from './pipelines/ring-pool-fund.js';
 import { run as ringAgentBuyers } from './agents/index.js';
 import { run as feeAudit } from './pipelines/fee-audit.js';
 import { run as liveFeedSeeder } from './pipelines/live-feed-seeder.js';
@@ -2770,6 +2771,27 @@ const SELF_ENDPOINTS = [
 		pipeline: 'agents',
 		enabled: true,
 		run: (ctx) => ringFloatTopUp(ctx),
+	},
+
+	// ── Ring Payer-Pool Funding ─────────────────────────────────────────────────
+	// Threshold top-up for the reused payer POOL (api/_lib/x402/pool.js): batched
+	// SOL from the sponsor/master and USDC from the treasury keep every rotating
+	// wallet above its floor, and overfull wallets are swept back to the treasury.
+	// No-op until X402_RING_POOL_ENABLED=true and the pool is provisioned. Balances
+	// are read in batches (getMultipleAccountsInfo) and top-ups batched into few
+	// transactions, so funding 500-1,000 wallets is a handful of tx per run.
+	// Recirculation, not spend — returns amountAtomic:0, never consumes the cap.
+	{
+		id: 'ring-pool-fund',
+		name: 'Ring Payer-Pool Funding',
+		path: '/api/x402/ring-settle',
+		method: 'POST',
+		body: null,
+		cooldown_s: 120,
+		priority: 22,
+		pipeline: 'agents',
+		enabled: true,
+		run: (ctx) => ringPoolFund(ctx),
 	},
 
 	// ── Fee Audit + ATA Rent Reclaim ─────────────────────────────────────────────

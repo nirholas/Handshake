@@ -44,7 +44,8 @@ applies there). Deploy with
 [`cloudbuild.hunyuan21rtx.yaml`](./cloudbuild.hunyuan21rtx.yaml) (BuildKit,
 inline layer cache); platform minimums for the GPU type are 20 CPU / 80 Gi,
 which also clears wall 1 with room to spare. The RTX service runs warm (min 1,
-max 4) as the 2.1 primary. Making the L4 build genuinely loadable (stage one
+max 1: the quota preference reads granted 1000, but live deploy enforcement
+allows exactly 1 RTX GPU in us-central1) as the 2.1 primary. Making the L4 build genuinely loadable (stage one
 weight subtree at a time and delete each after its `from_pretrained`) is the
 open follow-up if an L4 fallback for 2.1 is ever needed; until then the 2.0
 lane is the fallback.

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T06:48:03.813Z",
+	"generated_at": "2026-07-17T06:55:51.169Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -27,6 +27,18 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "The agent-to-agent payment economy runs far cheaper and now cycles hundreds of distinct payers",
+			"summary": "Two improvements to the closed-loop x402 agent economy that dogfoods every paid endpoint on the platform. First, a fix: a background wallet-consolidation job was quietly closing the ring's payment account after every settlement, forcing the next one to recreate it and pay account rent each time. That single bug had pushed the real fee cost to roughly a hundred times where it should be. With it fixed and single-signature settlement turned on, each settlement is back to the network floor of a few thousandths of a cent, and the ring's working balance stays in the loop instead of leaking away. Second, a new capability: the ring can now cycle payments through a reusable pool of hundreds to a thousand distinct wallets instead of one, so the economy reads as many participants rather than a single account, with no extra cost per payment. The pool is off until funded and activated, and every wallet in it stays clearly labeled internal dogfooding, not organic demand.",
+			"link": "/admin/ring",
+			"tags": [
+				"fix",
+				"improvement",
+				"infra"
 			]
 		},
 		{

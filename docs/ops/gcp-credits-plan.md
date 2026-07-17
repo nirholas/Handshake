@@ -28,17 +28,21 @@ Four warm instances against a quota of 3 means the fleet is permanently at its c
 
 ### The escape hatch that is ALREADY GRANTED: RTX PRO 6000
 
-`NvidiaRtxPro6000GpuAllocNoZonalRedundancyPerProjectRegion` is granted at
-**1000** for us-central1 (preference `rtx-pro-6000-uscentral1-3dpbr`). Cloud
-Run deploys with `--gpu-type=nvidia-rtx-pro-6000` there today (validated
-2026-07-17 with a live probe service); platform minimums for the type are
-**20 CPU / 80 Gi memory** per instance. Blackwell is compute capability 12.0,
-so images built for the L4 (cu121/cu124 stacks) do NOT run on it; a worker
-needs a CUDA 12.8 + torch 2.7 (cu128) rebuild. First mover:
-`workers/model-hunyuan3d/Dockerfile.hunyuan21rtx` (service
-`model-hunyuan3d-21-rtx`, warm min 1 / max 4). When an L4 lane needs headroom
-before the L4 grant lands, port it the same way rather than parking work on
-the quota.
+The preference `rtx-pro-6000-uscentral1-3dpbr` shows
+`NvidiaRtxPro6000GpuAllocNoZonalRedundancyPerProjectRegion` granted at
+**1000** for us-central1, BUT live deploy enforcement allows **1** RTX GPU
+(2026-07-17, deploy error: "requested: 4 allowed: 1"); treat the preference
+number as aspirational until a multi-instance deploy succeeds. Cloud Run does
+deploy with `--gpu-type=nvidia-rtx-pro-6000` there today (validated live);
+platform minimums for the type are **20 CPU / 80 Gi memory** per instance.
+Blackwell is compute capability 12.0, so images built for the L4 (cu121/cu124
+stacks) do NOT run on it; a worker needs a CUDA 12.8 + torch 2.7 (cu128)
+rebuild. First mover: `workers/model-hunyuan3d/Dockerfile.hunyuan21rtx`
+(service `model-hunyuan3d-21-rtx`, warm min 1 / max 1). One warm RTX PRO 6000
+(96 GB VRAM) still beats what the whole L4 pool could give the 2.1 PBR lane:
+the L4 build cannot even load (see the fleet table). When an L4 lane needs
+headroom before the L4 grant lands, port it the same way rather than parking
+work on the quota.
 - **When granted ≥ 8, execute immediately (no owner input needed):**
   ```sh
   gcloud run services update model-trellis   --region us-central1 --max-instances=3

@@ -219,13 +219,23 @@ export async function settleAndRecord({
 	const endpointUrl = `${origin}${ep.path}`;
 	const t0 = Date.now();
 
+	// Per-call payer rotation: when the caller supplies ctx.buyerFor (the ring tick
+	// does this once the payer pool is enabled), each settle draws a DISTINCT pool
+	// wallet on a least-recently-used rotation. Falls back to the shared ctx.buyer
+	// whenever the resolver returns nothing, so the ring never stalls on an empty or
+	// briefly-unavailable pool. The resolver is async and its throw is non-fatal.
+	let buyer = ctx.buyer;
+	if (typeof ctx.buyerFor === 'function') {
+		try { buyer = (await ctx.buyerFor(ep)) || ctx.buyer; } catch { buyer = ctx.buyer; }
+	}
+
 	let result;
 	try {
 		result = await payFn({
 			url: endpointUrl,
 			method: ep.method || 'POST',
 			body: ep.body,
-			buyer: ctx.buyer,
+			buyer,
 			conn: ctx.conn,
 			blockhash: ctx.blockhash,
 			mintInfo: ctx.mintInfo,
@@ -258,6 +268,10 @@ export async function settleAndRecord({
 		endpoint_key: ep.key,
 		paid: result.paid === true,
 		amount_atomic: paidAmount,
+		// The wallet that actually paid this call — the rotating pool wallet when
+		// ctx.buyerFor is active, else the shared buyer. Gives the dashboard true
+		// per-call payer attribution across the whole pool.
+		payer_address: (() => { try { return buyer?.publicKey?.toBase58?.() || null; } catch { return null; } })(),
 		liveness: summarizeResponse(result.responseBody),
 		...(metric ? {
 			cumulative_calls: Number(metric.call_count),
