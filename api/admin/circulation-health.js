@@ -20,6 +20,7 @@ import { cors, json, method, wrap } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { constantTimeEquals } from '../_lib/crypto.js';
 import { config as circulationConfig } from '../_lib/circulation.js';
+import { fuelStatus } from '../_lib/economy-fuel.js';
 
 // pulse-tick runs every 2 min. A tick that returns early (disabled, pool warming,
 // treasury too low) logs nothing, so a gap can mean either the cron is down OR the
@@ -51,7 +52,7 @@ export default wrap(async (req, res) => {
 	// One pass over the 24h ledger: per (kind, status) counts, the latest event time,
 	// and the most recent human-readable problem reason for the failing rows. The
 	// `.catch` guards a not-yet-migrated table the same way pump-cron-health does.
-	const [byKindStatus, liveness, pool] = await Promise.all([
+	const [byKindStatus, liveness, pool, quarantined, fuel] = await Promise.all([
 		sql`
 			select kind, status, count(*)::int as n, max(created_at) as last_at,
 			       (array_agg(coalesce(nullif(detail->>'reason',''), nullif(detail->>'error',''))
@@ -71,7 +72,14 @@ export default wrap(async (req, res) => {
 		sql`
 			select count(*)::int as n from agent_identities
 			where (meta->>'circulation') = 'true' and deleted_at is null
+			  and coalesce((meta->>'circulation_key_broken')::boolean, false) = false
 		`.catch(() => [{}]),
+		sql`
+			select count(*)::int as n from agent_identities
+			where (meta->>'circulation') = 'true' and deleted_at is null
+			  and coalesce((meta->>'circulation_key_broken')::boolean, false) = true
+		`.catch(() => [{}]),
+		fuelStatus({ limit: 5 }).catch(() => null),
 	]);
 
 	// Fold the (kind, status) rows into one record per kind.
@@ -123,6 +131,20 @@ export default wrap(async (req, res) => {
 			warnings.push(`${k}: 0 ok / ${s.skipped} skipped / ${s.error} error in 24h — last: ${s.last_problem || 'no reason recorded'}`);
 		}
 	}
+	const quarantinedCount = num(quarantined[0]?.n);
+	if (quarantinedCount > 0) {
+		warnings.push(
+			`${quarantinedCount} agent(s) quarantined for unrecoverable custodial keys; their wallets were encrypted under a rotated WALLET_ENCRYPTION_KEY and are excluded from the pool.`,
+		);
+	}
+	// Fuel is the SOL source of last resort. Flag it when it is off (the feed can
+	// then only run on manually-topped SOL) or when today's cap is spent while the
+	// engine is still starving.
+	if (fuel && !fuel.enabled) {
+		warnings.push('Economy fuel (USDC→SOL auto-refuel) is disabled; a drained funding root will stall the feed until SOL is added by hand.');
+	} else if (fuel && fuel.daily_remaining_usd <= 0 && cfg.enabled && stale) {
+		warnings.push('Economy fuel daily cap is spent and the feed is stale; raise ECONOMY_FUEL_DAILY_USDC or add SOL to the master.');
+	}
 
 	return json(res, 200, {
 		now: new Date().toISOString(),
@@ -135,6 +157,8 @@ export default wrap(async (req, res) => {
 			actions_per_tick: cfg.actionsPerTick,
 		},
 		pool_size: num(pool[0]?.n),
+		quarantined_agents: quarantinedCount,
+		fuel,
 		liveness: {
 			last_action_at: lastActionAt,
 			minutes_since: minutesSince,

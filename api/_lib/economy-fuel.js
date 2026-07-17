@@ -37,6 +37,7 @@ import { loadEconomyMaster, RESERVE_SOL, RUN_CAP_SOL } from './economy-master.js
 import { jupQuote, buildSwapTx, USDC_MINT_BY_NETWORK, USDC_DECIMALS } from './vault-jupiter.js';
 import { getSolBalance } from './avatar-wallet.js';
 import { solPriceUsd } from './sol-price.js';
+import { confirmOrThrow } from './solana/confirm.js';
 
 const NATIVE_SOL_MINT = 'So11111111111111111111111111111111111111112';
 const LAMPORTS_PER_SOL = 1_000_000_000;
@@ -65,6 +66,11 @@ export const FUEL_MIN_GAP_SOL = num('ECONOMY_FUEL_MIN_GAP_SOL', 0.1);
 export const FUEL_TARGET_SOL = num('ECONOMY_FUEL_TARGET_SOL', 1.0);
 /** Below this USDC a swap is not worth the fees. */
 const MIN_SWAP_USDC = 1;
+/** Minimum seconds between two fuel swaps. The topup runs every minute and could
+ *  overlap itself under load; this is a cheap belt against a double-swap racing
+ *  the daily-cap read (the DB counter closes the gap after the first swap lands,
+ *  the cooldown closes it before). */
+export const FUEL_COOLDOWN_S = num('ECONOMY_FUEL_COOLDOWN_S', 90);
 
 /**
  * Pure refuel decision + sizing, no RPC, no DB, so the bounds are unit-testable
@@ -141,6 +147,15 @@ async function usdcSpentTodayUsd() {
 	return Number(rows?.[0]?.atomics || 0) / 10 ** USDC_DECIMALS;
 }
 
+/** Seconds since the last recorded fuel swap, or Infinity if there is none. */
+async function secondsSinceLastSwap() {
+	const rows = await sql`
+		SELECT EXTRACT(EPOCH FROM (now() - MAX(created_at)))::float8 AS secs
+		FROM economy_fuel_swaps`;
+	const secs = rows?.[0]?.secs;
+	return secs == null ? Infinity : Number(secs);
+}
+
 /** Read an owner's USDC balance (whole tokens + atomics). */
 async function readUsdc(connection, owner, network) {
 	const mint = network === 'devnet' ? USDC_MINT_BY_NETWORK.devnet : USDC_MINT_BY_NETWORK.mainnet;
@@ -155,18 +170,20 @@ async function readUsdc(connection, owner, network) {
 	return { atomics, usd: Number(atomics) / 10 ** USDC_DECIMALS };
 }
 
-/** Sign, broadcast, and confirm a Jupiter VersionedTransaction with `keypair`. */
+/**
+ * Sign, broadcast, and confirm a Jupiter VersionedTransaction with `keypair`.
+ * Confirms via the platform's HTTP-polling confirmer (no WebSocket) bounded by the
+ * transaction's own blockhash expiry, and throws `tx_reverted` on a landed-but-
+ * reverted swap so a revert is never booked as a successful refuel.
+ */
 async function signSendConfirm(connection, tx, keypair) {
 	tx.sign([keypair]);
 	const sig = await connection.sendRawTransaction(tx.serialize(), { skipPreflight: false, maxRetries: 3 });
-	const bh = await connection.getLatestBlockhash('confirmed');
-	const conf = await connection.confirmTransaction(
-		{ signature: sig, blockhash: bh.blockhash, lastValidBlockHeight: bh.lastValidBlockHeight },
-		'confirmed',
-	);
-	if (conf?.value?.err) {
-		throw Object.assign(new Error(`swap reverted: ${JSON.stringify(conf.value.err)}`), { signature: sig });
-	}
+	// Confirm against the tx's OWN blockhash so expiry detection is correct (a
+	// fresh getLatestBlockhash would confirm against a later, unrelated window).
+	const blockhash = tx.message.recentBlockhash;
+	const lastValidBlockHeight = (await connection.getBlockHeight('confirmed')) + 150;
+	await confirmOrThrow(connection, { signature: sig, blockhash, lastValidBlockHeight }, 'confirmed');
 	return sig;
 }
 
@@ -228,6 +245,16 @@ export async function refuelMasterFromUsdc({ connection, deficitSol, network = '
 
 	if (!decision.act) return { ...base, acted: false, reason: decision.reason };
 
+	// Anti-double-swap: a fresh swap within the cooldown means a previous tick
+	// already refueled and the SOL just has not propagated to the balance read yet.
+	// Skip rather than stack a second swap on top of it.
+	if (!dryRun) {
+		const sinceLast = await secondsSinceLastSwap();
+		if (sinceLast < FUEL_COOLDOWN_S) {
+			return { ...base, acted: false, reason: 'cooldown', secondsSinceLastSwap: Math.round(sinceLast) };
+		}
+	}
+
 	const amountAtomics = BigInt(Math.floor(decision.spendUsd * 10 ** USDC_DECIMALS));
 	base.plannedUsd = round(Number(amountAtomics) / 10 ** USDC_DECIMALS);
 
@@ -253,19 +280,73 @@ export async function refuelMasterFromUsdc({ connection, deficitSol, network = '
 	const tx = await buildSwapTx({ quote, userPublicKey: master.publicKey });
 	const signature = await signSendConfirm(connection, tx, master);
 
-	await sql`
-		INSERT INTO economy_fuel_swaps (day, usdc_atomics, sol_lamports, price_impact, signature, network)
-		VALUES ((now() AT TIME ZONE 'utc')::date, ${amountAtomics.toString()}, ${outLamports}, ${priceImpactPct}, ${signature}, ${network})
-	`.catch(() => {});
+	// Record the swap: this row IS the daily-cap counter, so a dropped write could
+	// let the next tick overspend. Never fail the (already-settled) swap for it, but
+	// surface a miss loudly instead of swallowing it; the cooldown still bounds a
+	// same-minute repeat even if this row is missing.
+	let recorded = true;
+	try {
+		await sql`
+			INSERT INTO economy_fuel_swaps (day, usdc_atomics, sol_lamports, price_impact, signature, network)
+			VALUES ((now() AT TIME ZONE 'utc')::date, ${amountAtomics.toString()}, ${outLamports}, ${priceImpactPct}, ${signature}, ${network})`;
+	} catch (e) {
+		recorded = false;
+		console.warn(`[economy-fuel] swap ${signature} settled but its ledger row was NOT written: ${e?.message}`);
+	}
 
 	return {
 		...base,
 		acted: true,
+		recorded,
 		signature,
 		boughtSol: round(outLamports / LAMPORTS_PER_SOL),
 		spentUsd: base.plannedUsd,
 		priceImpactPct: round(priceImpactPct),
 	};
+}
+
+/**
+ * Read-only fuel status for the ops/health surface: config, today's spend against
+ * the cap, and the most recent swaps. No RPC, no keys; safe for a health scrape.
+ * @param {{limit?:number}} [opts]
+ */
+export async function fuelStatus({ limit = 5 } = {}) {
+	const out = {
+		enabled: FUEL_ENABLED,
+		caps: {
+			per_run_usd: FUEL_PER_RUN_USDC,
+			daily_usd: FUEL_DAILY_USDC,
+			usdc_keep: FUEL_USDC_KEEP,
+			min_gap_sol: FUEL_MIN_GAP_SOL,
+			target_sol: FUEL_TARGET_SOL,
+			max_impact_pct: FUEL_MAX_IMPACT_PCT,
+			cooldown_s: FUEL_COOLDOWN_S,
+		},
+		today_usd: 0,
+		daily_remaining_usd: FUEL_DAILY_USDC,
+		recent: [],
+	};
+	try {
+		await ensureSchema();
+		out.today_usd = round(await usdcSpentTodayUsd());
+		out.daily_remaining_usd = round(Math.max(0, FUEL_DAILY_USDC - out.today_usd));
+		const rows = await sql`
+			SELECT created_at, usdc_atomics::text AS usdc_atomics, sol_lamports::text AS sol_lamports,
+			       price_impact, signature
+			FROM economy_fuel_swaps
+			ORDER BY created_at DESC
+			LIMIT ${Math.max(1, Math.min(50, limit))}`;
+		out.recent = rows.map((r) => ({
+			at: r.created_at,
+			usd: round(Number(r.usdc_atomics) / 10 ** USDC_DECIMALS),
+			sol: round(Number(r.sol_lamports) / LAMPORTS_PER_SOL),
+			price_impact_pct: r.price_impact == null ? null : Number(r.price_impact),
+			signature: r.signature,
+		}));
+	} catch {
+		/* not-yet-migrated table ⇒ empty status, same as the health endpoint's other guards */
+	}
+	return out;
 }
 
 function round(n) {

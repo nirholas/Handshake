@@ -139,9 +139,19 @@ destination lock:
   page is suppressed — the shortage is being handled autonomously; the next tick
   distributes the freshly-bought SOL.
 
+The swap confirms through the platform's HTTP-polling confirmer
+([`api/_lib/solana/confirm.js`](../api/_lib/solana/confirm.js)) bound to the
+transaction's own blockhash, and a landed-but-reverted swap throws rather than
+being booked. A per-swap cooldown (`ECONOMY_FUEL_COOLDOWN_S`) plus the on-chain
+daily-cap read together stop two overlapping topup ticks from double-swapping.
+
 Set `ECONOMY_FUEL_ENABLED=0` to turn it off entirely (the fleet then falls back to
 the "fund the master" ops alert). The decision/sizing math is a pure function
 (`planRefuel`) covered by [`tests/economy-fuel.test.js`](../tests/economy-fuel.test.js).
+Live fuel state (today's spend against the cap, recent swaps, quarantined agents)
+is exposed on [`/api/admin/circulation-health`](../api/admin/circulation-health.js)
+alongside the circulation rails. The table is defined by migration
+`20260717230000_economy_fuel_swaps.sql` (and created lazily as a safety net).
 
 ## Lowest fees
 
@@ -163,6 +173,7 @@ congestion, clamped to a hard ceiling.
 | `ECONOMY_FUEL_USDC_KEEP` | no | USDC the refuel never spends below (revenue reserve). Default 0. |
 | `ECONOMY_FUEL_MIN_GAP_SOL` / `_TARGET_SOL` | no | Only refuel when the SOL gap is at least this (default 0.1); buy toward this spendable-SOL buffer (default 1.0). |
 | `ECONOMY_FUEL_MAX_IMPACT_PCT` / `_SLIPPAGE_BPS` | no | Reject a route above this price impact (default 3%); swap slippage (default 100 bps). |
+| `ECONOMY_FUEL_COOLDOWN_S` | no | Minimum seconds between fuel swaps (default 90), a belt against a double-swap when two topup ticks overlap. |
 | `CRON_SECRET` | yes | Bearer auth for the `treasury-topup` cron (shared with every other cron; Cloud Scheduler sends it). |
 | `SOLANA_RPC_URL` | no | Mainnet RPC (defaults to `api.mainnet-beta`). |
 
