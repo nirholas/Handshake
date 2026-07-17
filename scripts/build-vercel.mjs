@@ -126,6 +126,15 @@ const SDKS = [
 		// top-level `npm ci` never installs its devDeps (tsup, typescript). Its
 		// own deps must be installed before the dist can be rebuilt from source.
 		installDeps: true,
+		// Deploy needs only the JS bundle (the package is marked external in
+		// bundle-api.mjs and consumed as JS at runtime; nothing at deploy or boot
+		// reads its .d.ts). Its `build` script runs `tsup --dts`, whose rollup-dts
+		// declaration pass fails on a fresh checkout ("could not resolve entry
+		// module src/index.ts"), which took down clean-worktree deploys. `build:dist`
+		// is the same tsup invocation with `--no-dts`, so it produces the identical
+		// runtime JS without the declaration step. The npm-publish path still uses
+		// `build` (with types); only this deploy orchestrator skips them.
+		buildScript: 'build:dist',
 		entries: [
 			'solana-agent-sdk/dist/index.js',
 			'solana-agent-sdk/dist/wallet/index.js',
@@ -167,7 +176,7 @@ async function ensureSDKDist() {
 				env: { NODE_OPTIONS: '--no-deprecation' },
 			});
 		}
-		await run(`sdk-dist:${sdk.dir}`, `npm run build --prefix ${sdk.dir}`, {
+		await run(`sdk-dist:${sdk.dir}`, `npm run ${sdk.buildScript || 'build'} --prefix ${sdk.dir}`, {
 			env: { NODE_OPTIONS: '--no-deprecation' },
 		});
 		if (!sdkDistIsValid(sdk.entries)) {
