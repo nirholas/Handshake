@@ -26,6 +26,7 @@ import {
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { loadPercent, progressLabel, nextViewerState } from './viewer-state.js';
 
 const TAG = 'three-ws-viewer';
 
@@ -81,7 +82,7 @@ function prefersReducedMotion() {
 
 class ThreeWsViewerElement extends HTMLElement {
 	static get observedAttributes() {
-		return ['src', 'alt', 'background', 'wallet', 'agent-id', 'api-base', 'ar'];
+		return ['src', 'alt', 'background', 'wallet', 'agent-id', 'api-base', 'ar', 'auto-rotate'];
 	}
 
 	constructor() {
@@ -89,7 +90,10 @@ class ThreeWsViewerElement extends HTMLElement {
 		this._shadow = this.attachShadow({ mode: 'open' });
 		this._shadow.innerHTML = `<style>
 			:host { display: block; position: relative; width: 100%; height: 100%; min-height: 320px; }
-			canvas { display: block; width: 100%; height: 100%; outline: none; touch-action: none; }
+			/* The canvas fades in once the model is framed, so it materializes instead
+			   of popping. Starts transparent; .is-ready reveals it. */
+			canvas { display: block; width: 100%; height: 100%; outline: none; touch-action: none; opacity: 0; transition: opacity 0.55s ease; }
+			:host(.is-ready) canvas { opacity: 1; }
 			canvas:focus-visible { outline: 2px solid #6ee7b7; outline-offset: -2px; }
 			.label { position: absolute; inset: auto 0 8px 0; text-align: center; font: 12px system-ui, sans-serif; color: rgba(255,255,255,0.65); pointer-events: none; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
 			.ar-btn {
@@ -103,14 +107,56 @@ class ThreeWsViewerElement extends HTMLElement {
 			.ar-btn:hover { background: rgba(20,22,28,0.85); border-color: rgba(255,255,255,0.4); }
 			.ar-btn:active { transform: translateY(1px); }
 			.ar-btn:focus-visible { outline: 2px solid #6ee7b7; outline-offset: 2px; }
-			@media (prefers-reduced-motion: reduce) { .ar-btn { transition: none; } }
+			/* Designed load lifecycle: loading spinner, error card, empty placeholder.
+			   One overlay host, swapped by _setState; pointer-events only where a
+			   control lives so orbit drags pass through everywhere else. */
+			.tws-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; pointer-events: none; }
+			.tws-overlay[hidden] { display: none; }
+			.tws-inner { display: flex; flex-direction: column; align-items: center; gap: 12px; max-width: 280px; text-align: center; font: 13px/1.5 system-ui, sans-serif; color: rgba(255,255,255,0.82); }
+			.tws-spinner { width: 34px; height: 34px; border-radius: 50%; border: 2.5px solid rgba(255,255,255,0.14); border-top-color: #6ee7b7; animation: tws-spin 0.8s linear infinite; }
+			.tws-progress { font: 600 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: 0.04em; color: rgba(255,255,255,0.6); }
+			.tws-title { font-weight: 700; color: #fff; }
+			.tws-body { color: rgba(255,255,255,0.6); }
+			.tws-icon { color: rgba(255,255,255,0.34); }
+			.tws-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; pointer-events: auto; }
+			.tws-btn { appearance: none; cursor: pointer; border: 1px solid rgba(255,255,255,0.22); border-radius: 999px; padding: 8px 15px; background: rgba(255,255,255,0.06); color: #fff; font: 600 12.5px/1 system-ui, sans-serif; text-decoration: none; display: inline-flex; align-items: center; transition: background 0.15s, border-color 0.15s, transform 0.08s; }
+			.tws-btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.4); }
+			.tws-btn:active { transform: translateY(1px); }
+			.tws-btn:focus-visible { outline: 2px solid #6ee7b7; outline-offset: 2px; }
+			.tws-btn--primary { background: #6ee7b7; border-color: #6ee7b7; color: #04140d; }
+			.tws-btn--primary:hover { background: #5bd9a6; }
+			/* One-time "drag to rotate" cue, shown when a model first becomes ready. */
+			.tws-hint { position: absolute; left: 50%; top: 12px; transform: translate(-50%, -6px); z-index: 1; padding: 5px 12px; border-radius: 999px; background: rgba(10,11,14,0.66); border: 1px solid rgba(255,255,255,0.14); color: rgba(255,255,255,0.82); font: 500 11.5px/1 system-ui, sans-serif; backdrop-filter: blur(6px); pointer-events: none; opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; }
+			.tws-hint.is-visible { opacity: 1; transform: translate(-50%, 0); }
+			@keyframes tws-spin { to { transform: rotate(360deg); } }
+			@media (prefers-reduced-motion: reduce) {
+				.ar-btn, .tws-btn, .tws-hint { transition: none; }
+				canvas { transition: none; }
+				.tws-spinner { animation: none; border-top-color: rgba(255,255,255,0.5); }
+			}
 		</style>`;
 		this._canvas = document.createElement('canvas');
 		this._canvas.tabIndex = 0;
 		this._canvas.setAttribute('role', 'img');
 		this._shadow.appendChild(this._canvas);
+
+		// Overlay host for the loading / error / empty states, plus a transient
+		// interaction hint. Built once; content swapped by _setState.
+		this._overlay = document.createElement('div');
+		this._overlay.className = 'tws-overlay';
+		this._overlay.hidden = true;
+		this._shadow.appendChild(this._overlay);
+		this._hint = document.createElement('div');
+		this._hint.className = 'tws-hint';
+		this._hint.textContent = 'Drag to rotate';
+		this._hint.hidden = true;
+		this._shadow.appendChild(this._hint);
+
 		this._label = null;
 		this._arBtn = null;
+		this._state = null;
+		this._hintTimer = 0;
+		this._hintShown = false;
 
 		this._scene = null;
 		this._camera = null;
@@ -135,18 +181,25 @@ class ThreeWsViewerElement extends HTMLElement {
 		this._init();
 		this._render = this._render.bind(this);
 		this._raf = requestAnimationFrame(this._render);
+		this._applyAutoRotate();
 		const src = this.getAttribute('src');
 		if (src) this._loadModel(src);
+		else this._setState('empty'); // designed placeholder instead of a blank canvas
 		this._applyAlt(this.getAttribute('alt'));
 		this._applyWallet();
 		this._applyAr();
 		this._canvas.addEventListener('keydown', this._onKeydown);
+		// First real interaction retires the "drag to rotate" cue early.
+		this._dismissHint = this._dismissHint.bind(this);
+		this._canvas.addEventListener('pointerdown', this._dismissHint);
 	}
 
 	disconnectedCallback() {
 		cancelAnimationFrame(this._raf);
 		this._raf = 0;
+		clearTimeout(this._hintTimer);
 		this._canvas.removeEventListener('keydown', this._onKeydown);
+		if (this._dismissHint) this._canvas.removeEventListener('pointerdown', this._dismissHint);
 		if (this._resizeObs) {
 			this._resizeObs.disconnect();
 			this._resizeObs = null;
@@ -170,11 +223,15 @@ class ThreeWsViewerElement extends HTMLElement {
 
 	attributeChangedCallback(name, _old, value) {
 		if (!this._scene) return;
-		if (name === 'src') this._loadModel(value);
+		if (name === 'src') {
+			if (value) this._loadModel(value);
+			else this._setState('empty');
+		}
 		else if (name === 'alt') this._applyAlt(value);
 		else if (name === 'background') this._applyBackground(value);
 		else if (name === 'wallet' || name === 'agent-id' || name === 'api-base') this._applyWallet();
 		else if (name === 'ar') this._applyAr();
+		else if (name === 'auto-rotate') this._applyAutoRotate();
 	}
 
 	_init() {
@@ -267,25 +324,141 @@ class ThreeWsViewerElement extends HTMLElement {
 	}
 
 	async _loadModel(url) {
-		if (!url) return;
+		if (!url) { this._setState('empty'); return; }
 		this._currentSrc = url;
 		const token = ++this._loadToken;
+		this._setState('loading');
 		const loader = new GLTFLoader();
 		try {
 			const [meshoptDecoder, dracoLoader] = await Promise.all([getMeshoptDecoder(), getDracoLoader()]);
+			if (token !== this._loadToken) return; // superseded while decoders resolved
 			loader.setMeshoptDecoder(meshoptDecoder);
 			loader.setDRACOLoader(dracoLoader);
-			const gltf = await loader.loadAsync(url);
+			// Real byte progress: GLTFLoader forwards the XHR ProgressEvent, so the
+			// overlay shows an honest percent (indeterminate spinner when the server
+			// omits Content-Length) and a `progress` event fires for the host page.
+			const gltf = await new Promise((resolve, reject) => {
+				loader.load(
+					url,
+					resolve,
+					(evt) => {
+						if (token !== this._loadToken) return;
+						const pct = loadPercent(evt?.loaded, evt?.total);
+						this._setLoadProgress(pct);
+						this.dispatchEvent(new CustomEvent('progress', {
+							detail: { url, loaded: evt?.loaded ?? 0, total: evt?.total ?? 0, percent: pct },
+						}));
+					},
+					reject,
+				);
+			});
 			if (token !== this._loadToken || !this._scene) return;
 			if (this._model) { this._scene.remove(this._model); this._disposeModel(this._model); }
 			this._model = gltf.scene;
 			this._scene.add(this._model);
 			this._frameModel(this._model);
+			this._setState('ready');
 			this.dispatchEvent(new CustomEvent('load', { detail: { url } }));
 		} catch (err) {
 			if (token !== this._loadToken) return;
+			this._setState('error', err);
 			this.dispatchEvent(new CustomEvent('error', { detail: { url, error: err } }));
 		}
+	}
+
+	// ── Load-lifecycle overlays ──────────────────────────────────────────────
+	// Swap the overlay to match the load state, reveal/hide the canvas, and (on
+	// first ready) flash the interaction hint. All content is built here so the
+	// component ships one self-contained visual for every state instead of a blank
+	// canvas the embedding page has to paper over.
+	_setState(state, error) {
+		if (state === this._state && state !== 'error') return;
+		this._state = state;
+		this.classList.toggle('is-ready', state === 'ready');
+		if (state === 'ready') {
+			this._overlay.hidden = true;
+			this._showHintOnce();
+			return;
+		}
+		this._overlay.hidden = false;
+		if (state === 'loading') this._renderLoading();
+		else if (state === 'empty') this._renderEmpty();
+		else if (state === 'error') this._renderError(error);
+	}
+
+	_renderLoading() {
+		this._overlay.innerHTML =
+			'<div class="tws-inner"><div class="tws-spinner"></div>' +
+			'<div class="tws-progress" part="progress">Loading</div></div>';
+		this._progressEl = this._overlay.querySelector('.tws-progress');
+	}
+
+	_setLoadProgress(pct) {
+		if (this._state !== 'loading' || !this._progressEl) return;
+		this._progressEl.textContent = progressLabel(pct);
+	}
+
+	_renderEmpty() {
+		this._overlay.innerHTML =
+			'<div class="tws-inner">' +
+			'<svg class="tws-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+			'stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+			'<path d="M12 2 3 7v10l9 5 9-5V7l-9-5Z"/><path d="m3 7 9 5 9-5"/><path d="M12 12v10"/></svg>' +
+			'<div class="tws-body">No model to show yet. Set a <code>src</code> to a GLB to load one.</div></div>';
+	}
+
+	_renderError(err) {
+		const overlay = this._overlay;
+		overlay.innerHTML =
+			'<div class="tws-inner">' +
+			'<svg class="tws-icon" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+			'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+			'<circle cx="12" cy="12" r="10"/><path d="M12 8v5"/><path d="M12 16h.01"/></svg>' +
+			'<div class="tws-title">Couldn’t load this model</div>' +
+			'<div class="tws-body">The 3D file didn’t load. Check your connection, then try again.</div>' +
+			'<div class="tws-row"></div></div>';
+		const row = overlay.querySelector('.tws-row');
+		const retry = document.createElement('button');
+		retry.type = 'button';
+		retry.className = 'tws-btn tws-btn--primary';
+		retry.textContent = 'Try again';
+		retry.addEventListener('click', () => this._loadModel(this._currentSrc || this.getAttribute('src')));
+		row.appendChild(retry);
+		const src = this._currentSrc || this.getAttribute('src');
+		if (src) {
+			const dl = document.createElement('a');
+			dl.className = 'tws-btn';
+			dl.href = src;
+			dl.setAttribute('download', '');
+			dl.setAttribute('rel', 'noopener');
+			dl.textContent = 'Download GLB';
+			row.appendChild(dl);
+		}
+	}
+
+	_showHintOnce() {
+		if (this._hintShown || this._reducedMotion) return;
+		this._hintShown = true;
+		this._hint.hidden = false;
+		// Next frame so the transition runs from the hidden state.
+		requestAnimationFrame(() => this._hint.classList.add('is-visible'));
+		this._hintTimer = setTimeout(() => this._dismissHint(), 2600);
+	}
+
+	_dismissHint() {
+		if (!this._hint || this._hint.hidden) return;
+		clearTimeout(this._hintTimer);
+		this._hint.classList.remove('is-visible');
+		setTimeout(() => { if (this._hint) this._hint.hidden = true; }, 300);
+	}
+
+	// Opt-in idle spin (`auto-rotate` boolean attribute). Off by default so existing
+	// embeds are unchanged; when on, it both adds life and signals the model is
+	// interactive. Reduced-motion users never get the spin.
+	_applyAutoRotate() {
+		if (!this._controls) return;
+		this._controls.autoRotate = this.hasAttribute('auto-rotate') && !this._reducedMotion;
+		this._controls.autoRotateSpeed = 1.0;
 	}
 
 	_frameModel(obj) {

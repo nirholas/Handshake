@@ -163,14 +163,14 @@
 
   <div class="stage">
     <model-viewer id="mv" class="veiled" camera-controls auto-rotate touch-action="pan-y"
-      rotation-per-second="14deg" interaction-prompt="none"
+      rotation-per-second="14deg" interaction-prompt="auto"
       shadow-intensity="1" shadow-softness="0.9" exposure="1.5" environment-image="/environments/gallery/env.hdr" tone-mapping="aces"
       ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" reveal="auto" alt="Generated 3D model">
     </model-viewer>
 
     <div id="loading" class="overlay">
       <div class="spinner" aria-hidden="true"></div>
-      <div class="h">Loading model…</div>
+      <div class="h">Loading model<span id="load-pct"></span></div>
       <div class="muted">Fetching and rendering the GLB. Large or high-detail models take a few seconds.</div>
     </div>
 
@@ -275,7 +275,20 @@
   show(loading);
   mv.setAttribute('src', src);
 
+  // Real download progress: model-viewer emits `progress` with a 0..1
+  // totalProgress. Surface it as a live percent on the loading overlay so a big
+  // GLB on a slow connection reads as "62%", not an infinite spinner.
+  var loadPct = document.getElementById('load-pct');
+  mv.addEventListener('progress', function (e) {
+    var p = e && e.detail ? e.detail.totalProgress : 0;
+    if (!loadPct || typeof p !== 'number') return;
+    // model-viewer reports 1 at the end of the fetch, before render finishes;
+    // keep the label honest by capping the shown value at 99% until `load`.
+    var pct = Math.max(0, Math.min(99, Math.round(p * 100)));
+    loadPct.textContent = p >= 1 ? '' : ' · ' + pct + '%';
+  });
   mv.addEventListener('load', function () {
+    if (loadPct) loadPct.textContent = '';
     show(null);
     mv.classList.remove('veiled');
     // Expose the AR button only when the device/model can actually enter AR.
@@ -497,7 +510,9 @@
   // decoder wedge): surface the error state with the download link instead of
   // an infinite spinner. 90s clears even huge GLBs on slow connections.
   setTimeout(function () {
-    if (loading && !loading.classList.contains('hidden')) {
+    // Guard on mv.loaded too: a slow-but-successful load whose `load` event we
+    // somehow missed must not be flipped to an error after the fact.
+    if (loading && !loading.classList.contains('hidden') && !mv.loaded) {
       fail('This model is taking too long to display. Download the GLB and open it in any 3D viewer.');
     }
   }, 90000);

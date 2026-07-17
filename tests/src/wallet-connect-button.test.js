@@ -80,12 +80,50 @@ describe('connect-wallet button state', () => {
 		expect(() => updateWalletState(ADDR)).not.toThrow();
 	});
 
-	it('initWalletButton binds a click that points users at Phantom when no wallet is injected', () => {
+	it('offers an explicit Get-Phantom toast (no surprise tab) when no wallet is injected', () => {
 		const btn = mountIconButton();
 		const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
 		initWalletButton(); // window.solana undefined → no provider, auto-connect skipped
 		btn.click();
+
+		// Clicking Connect does NOT hijack the tab...
+		expect(openSpy).not.toHaveBeenCalled();
+		// ...it surfaces a dismissible toast with a Get Phantom action.
+		const toast = document.querySelector('.three-toast');
+		expect(toast).toBeTruthy();
+		const action = [...toast.querySelectorAll('button')].find((b) => /get phantom/i.test(b.textContent));
+		expect(action).toBeTruthy();
+
+		// The user chooses to open Phantom.
+		action.click();
 		expect(openSpy).toHaveBeenCalledWith('https://phantom.app/', '_blank', 'noopener');
 		expect(getConnectedWalletAddress()).toBe(null);
+	});
+
+	it('shows a Connecting… busy state during an in-flight connect, then the address', async () => {
+		const btn = mountIconButton();
+		let resolveConnect;
+		window.solana = {
+			isPhantom: true,
+			isConnected: false,
+			on: () => {},
+			connect: () => new Promise((r) => { resolveConnect = r; }),
+		};
+		initWalletButton();
+		btn.click();
+
+		// Mid-flight: disabled + busy + "Connecting…".
+		expect(btn.disabled).toBe(true);
+		expect(btn.getAttribute('aria-busy')).toBe('true');
+		expect(btn.querySelector('[data-wallet-label]').textContent).toBe('Connecting…');
+
+		resolveConnect({ publicKey: { toString: () => ADDR } });
+		await Promise.resolve();
+		await Promise.resolve();
+
+		expect(btn.disabled).toBe(false);
+		expect(btn.getAttribute('aria-busy')).toBe(null);
+		expect(btn.querySelector('[data-wallet-label]').textContent).toBe(SHORT);
+		delete window.solana;
 	});
 });

@@ -1,18 +1,18 @@
 #!/usr/bin/env node
-// i18n-annotate — automatically annotate static HTML copy for translation.
+// i18n-annotate, automatically annotate static HTML copy for translation.
 //
 // The i18n pipeline (docs/i18n.md) derives its source catalog from `data-i18n*`
 // attributes in the markup. Hand-adding those to 200+ pages is the bottleneck
 // that kept only the home hero translated. This tool closes that gap: it finds
 // user-visible static copy, injects the right annotation attribute with a
 // stable, human-readable key, and (optionally) wires the runtime script +
-// <lang-switcher> into the page — so `npm run i18n:extract && npm run
+// <lang-switcher> into the page, so `npm run i18n:extract && npm run
 // i18n:translate` then localize the whole page across every committed locale.
 //
 // Design guarantees that make auto-annotating hand-authored HTML safe:
 //   • Surgical, byte-precise edits. We parse to LOCATE elements (node-html-parser
 //     exposes source `.range` offsets), then splice ` data-i18n="…"` into the
-//     original string. Untouched bytes are preserved exactly — no whole-file
+//     original string. Untouched bytes are preserved exactly, no whole-file
 //     reserialization, so diffs are minimal and reviewable.
 //   • Idempotent. An element that already carries a data-i18n* attribute is left
 //     alone, so re-runs only pick up newly-added copy.
@@ -58,7 +58,7 @@ const COPY_TAGS = new Set([
 	'em', 'small', 'b', 'i', 'q', 'cite', 'mark',
 ]);
 
-// Inline formatting tags allowed *inside* a translated element — the value is
+// Inline formatting tags allowed *inside* a translated element, the value is
 // stored as innerHTML (data-i18n-html) so the markup round-trips. A child tag
 // outside this set means the element is a layout container, not a copy leaf.
 const INLINE_TAGS = new Set([
@@ -66,7 +66,7 @@ const INLINE_TAGS = new Set([
 	'u', 'mark', 'abbr', 'q', 'cite', 'time', 'wbr', 'kbd', 'samp', 'bdi', 'bdo',
 ]);
 
-// Never descend into these — their text is code, not copy.
+// Never descend into these, their text is code, not copy.
 const OPAQUE_ANCESTORS = new Set([
 	'script', 'style', 'svg', 'pre', 'code', 'textarea', 'template', 'noscript', 'math',
 ]);
@@ -138,7 +138,7 @@ function alreadyAnnotated(el) {
 	);
 }
 
-// True when a descendant already carries an annotation — that descendant is the
+// True when a descendant already carries an annotation, that descendant is the
 // translation unit, so wrapping it here would double-annotate and capture the
 // child's data-i18n* attribute into this element's innerHTML.
 function wrapsAnnotated(el) {
@@ -359,7 +359,7 @@ async function main() {
 
 	console.log(
 		`\ni18n-annotate: ${totalEdits} annotation(s) across ${filesChanged} file(s)` +
-			(APPLY ? ' (written)' : ' (dry-run — pass --apply to write)'),
+			(APPLY ? ' (written)' : ' (dry-run, pass --apply to write)'),
 	);
 }
 

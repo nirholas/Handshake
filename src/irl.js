@@ -60,6 +60,7 @@ import { reserveWebGLContext, releaseWebGLContext } from './webgl-budget.js';
 import { detectTier, BUDGETS, TIER_ORDER, shiftTier } from './irl/perf-budget.js';
 import { sharedGLTFLoader, createLoadQueue } from './irl/load-queue.js';
 import { mountPinIdle, getIdleClipJson } from './irl/pin-idle.js';
+import { celebrationRingFrame, CELEBRATION_DURATION } from './irl/pin-celebration.js';
 import { createWealthAura3D } from './shared/wealth-aura-3d.js';
 import { fetchWealthState } from './shared/agent-wealth-state.js';
 import { trackLevelUp, installLevelUpCelebrations } from './shared/wealth-levelup.js';
@@ -2760,6 +2761,8 @@ function commitPin(pinLat, pinLng, headingDeg, caption, source = 'gyro-gps') {
 		if (result?.ok && gpsPin) {
 			gpsPin.id = result.id;
 			_myPinIds.add(result.id);
+			// Anchored for real: ripple the lock-in celebration at the avatar's feet.
+			playPinCelebration();
 			const dir = compassLabel(headingDeg);
 			setStatus(result.permanent
 				? `Pinned facing ${dir}${accNote} — permanently visible to nearby users`
@@ -4301,6 +4304,56 @@ function updatePinRing(pin) {
 	m.color.setHex(low ? RING_LOW_COLOR : RING_OK_COLOR);
 	m.emissive.setHex(low ? RING_LOW_COLOR : RING_OK_COLOR);
 	m.opacity = low ? 0.62 : 0.5;
+}
+
+// ── Pin-success "lock-in" celebration ───────────────────────────────────────
+// Anchoring your agent into the real world is the payoff of the whole flow, and it
+// used to land as a single line of status text. Now two green rings ripple out from
+// the avatar's feet with a short haptic, so the moment feels earned. Green matches
+// the "live / anchored" language everywhere else in the UI. Self-disposing and
+// gated on reduced-motion (haptic still fires; the rings don't).
+const CELEBRATION_COLOR = 0x4ade80;
+const _celebrations = []; // [{ rings: Mesh[], t }] advanced by updateCelebrations(dt)
+
+function playPinCelebration() {
+	try { navigator.vibrate?.([12, 30, 24]); } catch { /* haptic is a bonus */ }
+	if (prefersReducedMotion()) return; // motion-sensitive users get the haptic only
+	const base = avatarRig.position;
+	const rings = [];
+	for (let i = 0; i < 2; i++) {
+		const ring = new Mesh(
+			new TorusGeometry(1, 0.028, 8, 48),
+			new MeshBasicMaterial({ color: CELEBRATION_COLOR, transparent: true, opacity: 0, depthWrite: false }),
+		);
+		ring.rotation.x = Math.PI / 2;
+		ring.position.set(base.x, 0.02, base.z);
+		ring.renderOrder = 3;
+		scene.add(ring);
+		rings.push(ring);
+	}
+	_celebrations.push({ rings, t: 0 });
+}
+
+// Advance every live ripple: age it, drive each ring's scale/opacity from the pure
+// frame math, and dispose the whole set once its life is spent. Early-outs cheaply
+// when nothing is celebrating.
+function updateCelebrations(dt) {
+	if (_celebrations.length === 0) return;
+	for (let i = _celebrations.length - 1; i >= 0; i--) {
+		const c = _celebrations[i];
+		c.t += dt / CELEBRATION_DURATION;
+		for (let r = 0; r < c.rings.length; r++) {
+			const ring = c.rings[r];
+			const f = celebrationRingFrame(c.t, r * 0.18);
+			ring.visible = f.visible;
+			ring.scale.set(f.scale, f.scale, 1);
+			ring.material.opacity = f.opacity;
+		}
+		if (c.t >= 1) {
+			for (const ring of c.rings) { scene.remove(ring); disposeObject3D(ring); }
+			_celebrations.splice(i, 1);
+		}
+	}
 }
 
 function spawnNearbyPin(pin) {
@@ -7157,6 +7210,8 @@ function tick() {
 	updateLabels();
 	// Advance any live ambient interaction reactions (D3): age, reproject, retire.
 	updateReactions(dt);
+	// Advance the pin-success "lock-in" ripple, if one is playing (cheap early-out).
+	updateCelebrations(dt);
 	// Gentle pulse on live presence ghosts (D2) — early-outs when none are present.
 	updateGhosts(dt);
 	// Non-map directional hint (task 03): point the edge glow toward the nearest

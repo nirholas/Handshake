@@ -28,6 +28,7 @@
 
 import { writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
+import JSON5 from 'json5';
 import {
 	ROOT,
 	loadConfig,
@@ -361,11 +362,16 @@ function parseModelJSON(raw) {
 	} catch {
 		const start = text.indexOf('{');
 		const end = text.lastIndexOf('}');
-		if (start !== -1 && end > start) {
-			const span = text.slice(start, end + 1).replace(/,\s*([}\]])/g, '$1');
-			return JSON.parse(span); // may throw — caller treats as a failed chunk
+		if (start === -1 || end <= start) throw new Error('no JSON object in response');
+		const span = text.slice(start, end + 1).replace(/,\s*([}\]])/g, '$1');
+		try {
+			return JSON.parse(span);
+		} catch {
+			// JSON5 tolerates single quotes, unquoted keys, and trailing commas that
+			// small models sometimes emit. It still can't fix a truly broken string
+			// (an unescaped quote) — that key drops to the per-key split retry.
+			return JSON5.parse(span);
 		}
-		throw new Error('no JSON object in response');
 	}
 }
 
@@ -432,9 +438,15 @@ async function translateLocale(code) {
 	const translatedFlat = {};
 	let done = 0;
 
-	let failedChunks = 0;
-	await pool(chunks, cfg.concurrency || 4, async (keys) => {
-		// Mask source values; remember tokens per key to restore afterwards.
+	let failedKeys = 0;
+
+	// Translate one set of keys. On a hard failure (a model reply that never
+	// parses, a persistent 5xx) the set is split in half and each half retried,
+	// down to a single key. This isolates the one value whose translation the
+	// model keeps mangling (a stray unescaped quote in Arabic, an empty Korean
+	// reply) so it can't sink the dozens of good keys chunked alongside it; only
+	// that lone key falls back to English, and the rest land.
+	async function translateKeySet(keys) {
 		const payload = {};
 		const tokenMap = {};
 		for (const k of keys) {
@@ -442,15 +454,25 @@ async function translateLocale(code) {
 			payload[k] = masked;
 			tokenMap[k] = tokens;
 		}
-		// Isolate each chunk: a chunk that fails every retry (bad JSON, 5xx, a
-		// model that won't return valid output) must not abort the whole run —
-		// its keys stay missing and the next incremental run retries just them.
 		let out;
 		try {
 			out = await translateChunk(langName, payload, 0);
 		} catch (err) {
-			failedChunks++;
-			console.warn(`  ! ${code}: chunk of ${keys.length} key(s) failed (${err.message}); left for next run`);
+			if (keys.length > 1) {
+				const mid = Math.ceil(keys.length / 2);
+				await translateKeySet(keys.slice(0, mid));
+				await translateKeySet(keys.slice(mid));
+				return;
+			}
+			// A lone key that fails every retry is one the model genuinely can't
+			// render as valid JSON (usually a value it mangles into an unescaped
+			// quote). Bake the English source so the catalog stays complete and
+			// lint-clean, the runtime shows English (the same graceful fallback an
+			// empty value would trigger), and re-runs don't loop on it forever.
+			failedKeys++;
+			translatedFlat[keys[0]] = getDeep(source, keys[0]);
+			if (cfg.saveImmediately) persist(code, existing, translatedFlat);
+			console.warn(`  ! ${code} ${keys[0]}: unrenderable after retries (${err.message}); English fallback baked`);
 			return;
 		}
 		for (const k of keys) {
@@ -463,12 +485,12 @@ async function translateLocale(code) {
 			translatedFlat[k] = masker.unmask(val, tokenMap[k]);
 		}
 		done += keys.length;
-		if (cfg.saveImmediately) {
-			persist(code, existing, translatedFlat);
-		}
+		if (cfg.saveImmediately) persist(code, existing, translatedFlat);
 		console.log(`  ${code}: ${done}/${todo.length}`);
-	});
-	if (failedChunks) console.warn(`  ⚠ ${code}: ${failedChunks} chunk(s) incomplete — re-run to fill`);
+	}
+
+	await pool(chunks, cfg.concurrency || 4, (keys) => translateKeySet(keys));
+	if (failedKeys) console.warn(`  ⚠ ${code}: ${failedKeys} key(s) left as English fallback — re-run to retry`);
 
 	persist(code, existing, translatedFlat);
 	return { code, translated: todo.length };

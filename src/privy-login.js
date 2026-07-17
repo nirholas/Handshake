@@ -366,47 +366,87 @@ function mountPrivyUI(privy, captchaConfigPromise) {
 			const address = resp.publicKey.toString();
 
 			setWalletStatus('Generating sign-in message…');
-			const nonceRes = await fetch('/api/auth/siws/nonce', { credentials: 'include' });
-			if (!nonceRes.ok) throw new Error('Failed to get nonce');
-			const { nonce, csrf, domain: serverDomain, uri: serverUri } = await nonceRes.json();
+			const fetchNonce = async () => {
+				const r = await fetch('/api/auth/siws/nonce', { credentials: 'include' });
+				if (!r.ok) throw new Error('Failed to get nonce');
+				return r.json();
+			};
+			let { nonce, csrf, domain: serverDomain, uri: serverUri } = await fetchNonce();
 
 			const domain          = serverDomain || location.host;
 			const uri             = serverUri    || location.origin;
+			const statement       = 'Sign in to three.ws. This request will not trigger any blockchain transaction or cost any fees. By signing, you agree to the Terms of Service (https://three.ws/legal/tos) and Privacy Policy (https://three.ws/legal/privacy).';
 			const issuedAt        = new Date().toISOString();
 			const expirationTime  = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-			const message = [
-				`${domain} wants you to sign in with your Solana account:`,
-				address,
-				'',
-				'Sign in to three.ws. This request will not trigger any blockchain transaction or cost any fees. By signing, you agree to the Terms of Service (https://three.ws/legal/tos) and Privacy Policy (https://three.ws/legal/privacy).',
-				'',
-				`URI: ${uri}`,
-				'Version: 1',
-				'Chain ID: mainnet',
-				`Nonce: ${nonce}`,
-				`Issued At: ${issuedAt}`,
-				`Expiration Time: ${expirationTime}`,
-			].join('\n');
 
-			setWalletStatus('Sign the message in your wallet…');
-			const { signature: sigBytes } = await withTimeout(
-				provider.signMessage(new TextEncoder().encode(message), 'utf8'),
-				60_000,
-				'Signature timed out. Check your wallet extension and try again.',
-			);
-			const signature = btoa(String.fromCharCode(...sigBytes));
-
-			setWalletStatus('Signing in…');
-			const verifyRes = await fetch('/api/auth/siws/verify', {
+			const postVerify = (message, signature, csrfToken) => fetch('/api/auth/siws/verify', {
 				method: 'POST',
 				credentials: 'include',
-				headers: { 'content-type': 'application/json', 'x-csrf-token': csrf },
+				headers: { 'content-type': 'application/json', 'x-csrf-token': csrfToken },
 				// tosAccepted: the signed statement carries the agreement; the flag
 				// tells the server to stamp acceptance on the user record.
 				body: JSON.stringify({ message, signature, tosAccepted: true }),
 			});
-			const data = await verifyRes.json().catch(() => ({}));
-			if (!verifyRes.ok) throw new Error(data.error_description || 'Sign-in failed.');
+
+			let data = null;
+			let verified = false;
+
+			// One-tap SIWS (Seeker / Seed Vault): authorization and the sign-in
+			// signature happen in a SINGLE wallet interaction. The wallet builds
+			// the canonical SIWS message and we forward the exact bytes it signed.
+			// Any wallet without supportsSignIn (Phantom/Backpack/Solflare) — or a
+			// one-tap failure that isn't a user cancel — falls through to the
+			// two-step path below with a fresh nonce.
+			if (provider.supportsSignIn && typeof provider.signIn === 'function') {
+				setWalletStatus('Approve sign-in in your wallet…');
+				try {
+					const siws = await withTimeout(
+						provider.signIn({ domain, statement, uri, version: '1', chainId: 'mainnet', nonce, issuedAt, expirationTime }),
+						60_000,
+						'Sign-in timed out. Try again.',
+					);
+					if (siws?.signedMessageText && siws.signature) {
+						const signature = btoa(String.fromCharCode(...siws.signature));
+						const res = await postVerify(siws.signedMessageText, signature, csrf);
+						data = await res.json().catch(() => ({}));
+						if (res.ok) verified = true;
+						else ({ nonce, csrf } = await fetchNonce()); // burned — refresh for fallback
+					}
+				} catch (e) {
+					if (/reject|denied|cancel|refused/i.test(e?.message || '') || e?.code === 4001) throw e;
+					// Non-cancel failure: refresh the nonce and fall through.
+					({ nonce, csrf } = await fetchNonce());
+				}
+			}
+
+			if (!verified) {
+				const message = [
+					`${domain} wants you to sign in with your Solana account:`,
+					address,
+					'',
+					statement,
+					'',
+					`URI: ${uri}`,
+					'Version: 1',
+					'Chain ID: mainnet',
+					`Nonce: ${nonce}`,
+					`Issued At: ${issuedAt}`,
+					`Expiration Time: ${expirationTime}`,
+				].join('\n');
+
+				setWalletStatus('Sign the message in your wallet…');
+				const { signature: sigBytes } = await withTimeout(
+					provider.signMessage(new TextEncoder().encode(message), 'utf8'),
+					60_000,
+					'Signature timed out. Check your wallet extension and try again.',
+				);
+				const signature = btoa(String.fromCharCode(...sigBytes));
+
+				setWalletStatus('Signing in…');
+				const verifyRes = await postVerify(message, signature, csrf);
+				data = await verifyRes.json().catch(() => ({}));
+				if (!verifyRes.ok) throw new Error(data.error_description || 'Sign-in failed.');
+			}
 
 			try {
 				localStorage.setItem(

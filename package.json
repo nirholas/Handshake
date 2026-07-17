@@ -377,6 +377,7 @@
 		"fbx2gltf": "^0.9.7-p1",
 		"glob": "^11.1.0",
 		"jsdom": "27.3.0",
+		"json5": "^2.2.3",
 		"playwright": "^1.45.1",
 		"prettier": "^3.8.4",
 		"typescript": "^5.9.3",

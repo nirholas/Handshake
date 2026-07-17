@@ -1,12 +1,12 @@
 /**
- * i18n auto-annotator — unit tests.
+ * i18n auto-annotator, unit tests.
  *
  * The annotator injects data-i18n* attributes into static copy so the extract →
  * translate pipeline can localize a page. These tests pin the two properties
  * that make auto-editing hand-authored HTML safe:
- *   1. edits are byte-surgical — output equals input plus only the inserted
+ *   1. edits are byte-surgical, output equals input plus only the inserted
  *      attribute strings (never a reserialization);
- *   2. selection is conservative and idempotent — code/dynamic/opt-out/nested
+ *   2. selection is conservative and idempotent, code/dynamic/opt-out/nested
  *      copy is skipped, and a second pass is a no-op.
  */
 
@@ -20,7 +20,7 @@ const annotate = (html, file = 'pages/sample.html') => {
 	return applyEdits(html, edits);
 };
 
-describe('planAnnotations — selection', () => {
+describe('planAnnotations, selection', () => {
 	it('annotates a plain-text copy element with data-i18n', () => {
 		const { keys } = plan('<h1>Build agents</h1>');
 		const [k, v] = [...keys][0];
@@ -91,7 +91,7 @@ describe('planAnnotations — selection', () => {
 	});
 });
 
-describe('planAnnotations — safety properties', () => {
+describe('planAnnotations, safety properties', () => {
 	const sample = `<!doctype html><html><head><title>Home</title></head>
 		<body>
 			<h1 class="hero">The <em>3D</em> agent layer</h1>
@@ -101,14 +101,14 @@ describe('planAnnotations — safety properties', () => {
 			<script>ignore("me")</script>
 		</body></html>`;
 
-	it('is byte-surgical — stripping inserted attrs reproduces the original', () => {
+	it('is byte-surgical, stripping inserted attrs reproduces the original', () => {
 		const out = annotate(sample);
 		const strip = (s) => s.replace(/ data-i18n(?:-html|-attr)?="[^"]*"/g, '');
 		expect(strip(out)).toBe(sample);
 		expect(out.length).toBeGreaterThan(sample.length);
 	});
 
-	it('is idempotent — a second pass finds nothing to do', () => {
+	it('is idempotent, a second pass finds nothing to do', () => {
 		const once = annotate(sample);
 		expect(plan(once).edits.length).toBe(0);
 	});

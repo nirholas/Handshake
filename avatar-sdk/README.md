@@ -105,9 +105,22 @@ A minimal viewer element: loads a GLB at `src`, frames it, and renders with
 | `src` | GLB URL to load. |
 | `alt` | Accessibility label; also rendered as an on-canvas caption. Defaults to `"3D model viewer"` when unset. |
 | `background` | CSS color, or `transparent` (default) for an alpha canvas. |
-| `ar` | Opt-in boolean. Adds a "View in AR" button that opens `three.ws/api/ar` in a new tab — device-aware AR (Android Scene Viewer / iOS Quick Look / desktop viewer fallback). Absent by default. |
+| `auto-rotate` | Opt-in boolean. Slowly spins the model when idle, which also signals it's interactive. Absent by default; ignored under `prefers-reduced-motion: reduce`. |
+| `ar` | Opt-in boolean. Adds a "View in AR" button that opens `three.ws/api/ar` in a new tab (device-aware AR: Android Scene Viewer / iOS Quick Look / desktop viewer fallback). Absent by default. |
 
-It dispatches a `load` event (`detail: { url }`) on success, an `error` event
+**Built-in states.** The viewer ships its own designed load lifecycle so the host
+page never has to paper over a blank canvas:
+
+- **Loading**: a spinner with a live byte-progress percent (an indeterminate
+  spinner when the server omits `Content-Length`).
+- **Error**: a card with a **Try again** button and a **Download GLB** fallback
+  link, shown when the model fails to load.
+- **Empty**: a placeholder prompt when no `src` is set.
+- **Ready**: the model fades in, and a one-time "Drag to rotate" cue appears.
+
+It dispatches a `progress` event (`detail: { url, loaded, total, percent }`,
+where `percent` is `null` when the download size is unknown) while loading, a
+`load` event (`detail: { url }`) on success, an `error` event
 (`detail: { url, error }`) on failure, and an `ar-launch` event
 (`detail: { src, launchUrl }`) when the AR button is activated.
 

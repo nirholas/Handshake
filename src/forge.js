@@ -14,6 +14,7 @@ import { injectFestivePresets } from './shared/festive-presets.js';
 import { renderLock, lockStateFromAccess } from './three-lock.js';
 import { payForHighGeneration } from './forge-pay.js';
 import { initWalletButton, getConnectedWalletAddress } from './wallet.js';
+import { generateForgePrompt } from './forge-prompt-gen.js';
 ensureStateKitStyles();
 //
 // Drives /api/forge. Three paths share one polling loop:
@@ -101,6 +102,7 @@ const els = {
 	errorTitle: document.getElementById('error-title'),
 	errorMessage: document.getElementById('error-message'),
 	emptyStarters: document.getElementById('empty-starters'),
+	rollForge: document.getElementById('roll-forge'),
 	forgeShareBtn: document.getElementById('forge-share-btn'),
 	segmentBtn: document.getElementById('forge-segment-btn'),
 	openInComposer: document.getElementById('open-in-composer'),
@@ -2752,6 +2754,18 @@ els.emptyStarters?.addEventListener('click', (e) => {
 document.addEventListener('forge:run-prompt', (e) => {
 	const text = typeof e.detail?.prompt === 'string' ? e.detail.prompt.trim() : '';
 	if (text) runExamplePrompt(text);
+});
+
+// Roll & Forge is the zero-typing path. One click picks a curated random prompt
+// (the same slot grammars behind "Surprise me", every one shaped to reconstruct
+// cleanly) and generates it immediately, so a first-timer reaches a real model
+// without ever facing a blank prompt box. The die spins for feedback (motion-safe).
+els.rollForge?.addEventListener('click', () => {
+	if (els.rollForge.dataset.busy === '1' || els.generate?.dataset.busy === '1') return;
+	els.rollForge.classList.remove('is-rolling');
+	void els.rollForge.offsetWidth; // reflow so the spin restarts on rapid clicks
+	els.rollForge.classList.add('is-rolling');
+	runExamplePrompt(generateForgePrompt());
 });
 
 // Independence Day (July 1–5): a few festive single-object prompts so the
