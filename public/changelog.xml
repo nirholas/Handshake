@@ -327,12 +327,28 @@
 			<description>Two improvements to the closed-loop x402 agent economy that dogfoods every paid endpoint on the platform. First, a fix: a background wallet-consolidation job was quietly closing the ring's payment account after every settlement, forcing the next one to recreate it and pay account rent each time. That single bug had pushed the real fee cost to roughly a hundred times where it should be. With it fixed and single-signature settlement turned on, each settlement is back to the network floor of a few thousandths of a cent, and the ring's working balance stays in the loop instead of leaking away. Second, a new capability: the ring can now cycle payments through a reusable pool of hundreds to a thousand distinct wallets instead of one, so the economy reads as many participants rather than a single account, with no extra cost per payment. The pool is off until funded and activated, and every wallet in it stays clearly labeled internal dogfooding, not organic demand.</description>
 		</item>
 		<item>
+			<title>The homepage community feed is now a live, browsable loop</title>
+			<link>https://three.ws/</link>
+			<guid isPermaLink="false">2026-07-17:The homepage community feed is now a live, browsable loop</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The strip of community models on the homepage used to be a fixed set of six. It is now a live feed you can actually browse: switch between Fresh and Trending, and press Show more to see more. New models made by anyone appear at the top on their own while you watch, with a live indicator so Right now stays honest. Each card still spins the real 3D model and opens it when clicked.</description>
+		</item>
+		<item>
 			<title>The homepage no longer greets you with an empty stage</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-17:The homepage no longer greets you with an empty stage</guid>
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The live 3D agent on the homepage is the first thing you see, but on a cold visit it could sit as a blank near-black panel for several seconds while the model and 3D engine loaded. That gap is now filled with a gently breathing agent silhouette and a &quot;summoning your agent&quot; cue, so the stage feels alive from the very first paint instead of looking broken. It fades out the instant the real avatar is ready, respects reduced-motion settings, and if the preview ever stalls it now surfaces a retry instead of hanging on the placeholder.</description>
+		</item>
+		<item>
+			<title>The live money feed now refuels itself</title>
+			<link>https://three.ws/pulse</link>
+			<guid isPermaLink="false">2026-07-17:The live money feed now refuels itself</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>The Money Pulse at three.ws/pulse streams real on-chain agent activity, so it only moves when the autonomous agents have SOL to spend. When that fuel ran out, the feed went quiet until someone topped it up by hand. It now keeps itself running: when the funding root can't cover the agents' costs, it converts a small, capped slice of the platform's own USDC revenue into SOL automatically, and agents whose wallets can no longer be signed for are retired from the pool instead of stalling it. The feed stays live without manual intervention.</description>
 		</item>
 		<item>
 			<title>The Money Pulse is beating again</title>
@@ -373,6 +389,14 @@
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>three.ws is now multilingual in 11 languages: English, Spanish, Simplified Chinese, Japanese, Korean, French, German, Brazilian Portuguese, Arabic, Hindi, and Russian. Translation went from the home page alone to the pages people actually read first: What is three.ws, Pricing, Partners, the pitch deck, the SDK and oracle docs, and more. Every page shows a language picker in the corner, your choice is remembered, and if your browser is set to one of these languages three.ws greets you in it automatically. Arabic lays out right-to-left. Brand and protocol terms like $THREE, USDC, and three.ws stay exact in every language, and search engines are told about each translated page so they can rank it. Behind the scenes a new tool annotates a page's copy for translation in one command, so adding the rest of the site is now fast.</description>
+		</item>
+		<item>
+			<title>You can now see exactly which build is live</title>
+			<link>https://three.ws/status</link>
+			<guid isPermaLink="false">2026-07-17:You can now see exactly which build is live</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>The status page at three.ws/status now shows the exact version running in production: the commit it was built from (linked to the source), the release version, the Cloud Run revision, and when it was built. Developers can read the same details as JSON from a new /api/version endpoint. It closes a real gap: before this, confirming that a deploy actually shipped meant cross-referencing server timestamps by hand. Now it's one glance, or one request.</description>
 		</item>
 		<item>
 			<title>Your first 3D creation gets a moment</title>

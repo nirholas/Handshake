@@ -3,6 +3,26 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "You can now see exactly which build is live",
+			"summary": "The status page at three.ws/status now shows the exact version running in production: the commit it was built from (linked to the source), the release version, the Cloud Run revision, and when it was built. Developers can read the same details as JSON from a new /api/version endpoint. It closes a real gap: before this, confirming that a deploy actually shipped meant cross-referencing server timestamps by hand. Now it's one glance, or one request.",
+			"tags": [
+				"infra",
+				"improvement"
+			],
+			"link": "/status"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "The live money feed now refuels itself",
+			"summary": "The Money Pulse at three.ws/pulse streams real on-chain agent activity, so it only moves when the autonomous agents have SOL to spend. When that fuel ran out, the feed went quiet until someone topped it up by hand. It now keeps itself running: when the funding root can't cover the agents' costs, it converts a small, capped slice of the platform's own USDC revenue into SOL automatically, and agents whose wallets can no longer be signed for are retired from the pool instead of stalling it. The feed stays live without manual intervention.",
+			"tags": [
+				"infra",
+				"fix"
+			],
+			"link": "/pulse"
+		},
+		{
+			"date": "2026-07-17",
 			"title": "Daily Forge: a new 3D challenge every day, and a streak worth keeping",
 			"summary": "There's now a reason to come back tomorrow. Daily Forge at three.ws/daily gives everyone the same fresh creative theme each day — tiny robots, glass creatures, cozy objects, brave little knights — with a running day count and a few starter ideas. Forge your take on it (free, no sign-up, about a minute) and you light a daily streak; keep showing up and it grows, with a celebration when you hit 3, 7, 30 days and beyond. Miss a day and it resets, but your best is always remembered. Every creation you make lands one tap from viewing it in AR or dropping it into a shared AR Studio room, and a community strip shows what others are forging. It works entirely in your browser with no account needed.",
 			"tags": [
@@ -14475,6 +14495,16 @@
 				"improvement"
 			],
 			"link": "/forge"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "The homepage community feed is now a live, browsable loop",
+			"summary": "The strip of community models on the homepage used to be a fixed set of six. It is now a live feed you can actually browse: switch between Fresh and Trending, and press Show more to see more. New models made by anyone appear at the top on their own while you watch, with a live indicator so Right now stays honest. Each card still spins the real 3D model and opens it when clicked.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/"
 		}
 	]
 }

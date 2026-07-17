@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T20:59:09.415Z",
+	"generated_at": "2026-07-17T21:28:28.386Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -429,11 +429,33 @@
 		{
 			"date": "2026-07-17",
 			"type": "update",
+			"title": "The homepage community feed is now a live, browsable loop",
+			"summary": "The strip of community models on the homepage used to be a fixed set of six. It is now a live feed you can actually browse: switch between Fresh and Trending, and press Show more to see more. New models made by anyone appear at the top on their own while you watch, with a live indicator so Right now stays honest. Each card still spins the real 3D model and opens it when clicked.",
+			"link": "/",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
 			"title": "The homepage no longer greets you with an empty stage",
 			"summary": "The live 3D agent on the homepage is the first thing you see, but on a cold visit it could sit as a blank near-black panel for several seconds while the model and 3D engine loaded. That gap is now filled with a gently breathing agent silhouette and a \"summoning your agent\" cue, so the stage feels alive from the very first paint instead of looking broken. It fades out the instant the real avatar is ready, respects reduced-motion settings, and if the preview ever stalls it now surfaces a retry instead of hanging on the placeholder.",
 			"link": null,
 			"tags": [
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "The live money feed now refuels itself",
+			"summary": "The Money Pulse at three.ws/pulse streams real on-chain agent activity, so it only moves when the autonomous agents have SOL to spend. When that fuel ran out, the feed went quiet until someone topped it up by hand. It now keeps itself running: when the funding root can't cover the agents' costs, it converts a small, capped slice of the platform's own USDC revenue into SOL automatically, and agents whose wallets can no longer be signed for are retired from the pool instead of stalling it. The feed stays live without manual intervention.",
+			"link": "/pulse",
+			"tags": [
+				"infra",
+				"fix"
 			]
 		},
 		{
@@ -487,6 +509,17 @@
 			"link": null,
 			"tags": [
 				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "You can now see exactly which build is live",
+			"summary": "The status page at three.ws/status now shows the exact version running in production: the commit it was built from (linked to the source), the release version, the Cloud Run revision, and when it was built. Developers can read the same details as JSON from a new /api/version endpoint. It closes a real gap: before this, confirming that a deploy actually shipped meant cross-referencing server timestamps by hand. Now it's one glance, or one request.",
+			"link": "/status",
+			"tags": [
+				"infra",
 				"improvement"
 			]
 		},

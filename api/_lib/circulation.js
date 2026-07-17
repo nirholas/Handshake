@@ -272,11 +272,21 @@ async function ensureFunded(conn, treasuryKp, agent, floor) {
 
 // ── pool management ───────────────────────────────────────────────────────────
 
+// After this many consecutive key-recovery failures an agent's custodial secret
+// is treated as unrecoverable (encrypted under a rotated/lost WALLET_ENCRYPTION_KEY)
+// and it is quarantined out of the pool. Its funds are orphaned regardless; the
+// point is to stop the selector re-picking a permanently-dead wallet every tick,
+// which silently starves the live feed (a handful of broken agents can absorb
+// every trade slot, exactly the July 2026 flatline). Deterministic once broken,
+// so the threshold only guards against a transient decrypt hiccup.
+const KEY_FAIL_QUARANTINE = clampInt(process.env.CIRCULATION_KEY_FAIL_QUARANTINE, 3, 1, 100);
+
 async function loadPool() {
 	const rows = await sql`
 		select id, user_id, name, avatar_id, meta
 		from agent_identities
 		where (meta->>'circulation') = 'true' and deleted_at is null
+		  and coalesce((meta->>'circulation_key_broken')::boolean, false) = false
 		order by created_at asc
 	`;
 	return rows
@@ -289,6 +299,53 @@ async function loadPool() {
 			address: r.meta?.solana_address || null,
 		}))
 		.filter((a) => a.address);
+}
+
+// Record the outcome of a custodial-key use for an agent. A failure increments a
+// consecutive-failure counter and, at the threshold, sets `circulation_key_broken`
+// so loadPool stops selecting it (and logs a one-off quarantine action). A success
+// clears the counter. Fire-and-forget by callers — never block the action path.
+async function recordKeyResult(agentId, agentName, ok) {
+	try {
+		if (ok) {
+			await sql`
+				update agent_identities
+				set meta = meta - 'circulation_key_fail_count'
+				where id = ${agentId} and (meta ? 'circulation_key_fail_count')`;
+			return;
+		}
+		const rows = await sql`
+			update agent_identities
+			set meta = jsonb_set(
+				coalesce(meta, '{}'::jsonb),
+				'{circulation_key_fail_count}',
+				to_jsonb(coalesce((meta->>'circulation_key_fail_count')::int, 0) + 1)
+			)
+			where id = ${agentId}
+			returning (meta->>'circulation_key_fail_count')::int as fails`;
+		const fails = rows?.[0]?.fails ?? 0;
+		if (fails >= KEY_FAIL_QUARANTINE) {
+			await sql`
+				update agent_identities
+				set meta = jsonb_set(
+					jsonb_set(coalesce(meta, '{}'::jsonb), '{circulation_key_broken}', 'true'::jsonb),
+					'{circulation_key_broken_at}', to_jsonb(now()::text)
+				)
+				where id = ${agentId}`;
+			await logAction({
+				kind: 'quarantine',
+				actorAgentId: agentId,
+				detail: { reason: 'key_recover_failed', consecutive_failures: fails, agent: agentName },
+			});
+		}
+	} catch (e) {
+		console.warn('[circulation] recordKeyResult failed', e?.message);
+	}
+}
+
+// True when a failed trade/tip result is an unrecoverable custodial-key failure.
+function isKeyRecoverFailure(result) {
+	return result?.code === 'key_recover_failed';
 }
 
 function slugify(s) {
@@ -447,12 +504,21 @@ async function senderKeypair(agent, reason) {
 	const full = await loadAgentMeta(agent.id);
 	const secret = full?.meta?.encrypted_solana_secret;
 	if (!secret) throw new Error('agent has no custodial secret');
-	return recoverSolanaAgentKeypair(secret, {
-		agentId: agent.id,
-		userId: agent.userId,
-		reason,
-		meta: { source: 'circulation' },
-	});
+	try {
+		const kp = await recoverSolanaAgentKeypair(secret, {
+			agentId: agent.id,
+			userId: agent.userId,
+			reason,
+			meta: { source: 'circulation' },
+		});
+		recordKeyResult(agent.id, agent.name, true).catch(() => {});
+		return kp;
+	} catch (e) {
+		// A decrypt failure here is the same unrecoverable-key condition the trade
+		// path reports as key_recover_failed; count it toward quarantine.
+		recordKeyResult(agent.id, agent.name, false).catch(() => {});
+		throw e;
+	}
 }
 
 // ── marketplace helpers ───────────────────────────────────────────────────────
@@ -519,7 +585,10 @@ async function ensureThree(ctx, agent, needAtomic) {
 		},
 		source: 'discretionary',
 	});
-	if (!result.ok) throw new Skip(`could not acquire $THREE: ${result.code || 'trade_error'}${result.message ? ` — ${result.message}` : ''}`);
+	if (!result.ok) {
+		if (isKeyRecoverFailure(result)) recordKeyResult(agent.id, agent.name, false).catch(() => {});
+		throw new Skip(`could not acquire $THREE: ${result.code || 'trade_error'}${result.message ? ` — ${result.message}` : ''}`);
+	}
 
 	// Give the buy a moment to settle, then re-read.
 	for (let i = 0; i < 6; i++) {
@@ -714,7 +783,11 @@ async function actionTrade(ctx) {
 		source: 'discretionary',
 	});
 
-	if (!result.ok) throw new Skip(`trade rejected: ${result.code || 'error'}${result.message ? ` — ${result.message}` : ''}`);
+	if (!result.ok) {
+		if (isKeyRecoverFailure(result)) recordKeyResult(agent.id, agent.name, false).catch(() => {});
+		throw new Skip(`trade rejected: ${result.code || 'error'}${result.message ? ` — ${result.message}` : ''}`);
+	}
+	recordKeyResult(agent.id, agent.name, true).catch(() => {});
 	await logAction({ kind: 'trade', network, actorAgentId: agent.id, signature: result.data?.signature, amountLamports: Math.round(amount * SOL), detail: { mint, agent: agent.name } });
 	return { kind: 'trade', agent: agent.name, mint, sol: amount, signature: result.data?.signature };
 }

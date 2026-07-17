@@ -105,6 +105,44 @@ when there was nothing to collect. Dust guard: a sweep below
 `ECONOMY_SWEEPBACK_MIN_SOL` (default 0.01 SOL) is skipped so fees never exceed
 the return.
 
+## Fuel: refilling the root from revenue
+
+Topup and sweepback only move SOL that already exists in the fleet. But the
+circulation engine is a **closed SOL loop** — agents fund each other and trade
+among themselves, and every tick leaks a little SOL to Solana network and DEX
+fees. A loop that only leaks eventually drains to zero no matter how the two crons
+shuffle the remaining SOL, and when it hits zero the Money Pulse
+([`/pulse`](../pages/pulse.html)) goes quiet. Historically the only cure was a
+human moving SOL in.
+
+**Fuel** ([`api/_lib/economy-fuel.js`](../api/_lib/economy-fuel.js)) closes that
+gap. It runs as a pre-step of the topup cron: before the master distributes, if
+its spendable SOL can't cover the engines' real deficit, it converts a small,
+bounded slice of the master's **own idle USDC revenue** into native SOL through a
+real Jupiter route, then lets the topup distribute the proceeds.
+
+Safe by construction, in the same spirit as the topup allowlist and the sweepback
+destination lock:
+
+- **Self-directed.** The master swaps *its own* USDC for *its own* SOL. There is
+  no recipient parameter — funds can't go anywhere but from one asset the root
+  holds into another. It is the least-privileged possible money move.
+- **Only on a genuine shortage.** No-op unless the master's spendable SOL falls
+  short of the pending run's deficit by at least `ECONOMY_FUEL_MIN_GAP_SOL`.
+- **Triple-bounded.** A per-swap cap (`ECONOMY_FUEL_PER_RUN_USDC`, default $25), a
+  per-UTC-day cap (`ECONOMY_FUEL_DAILY_USDC`, default $100), and a USDC keep-floor
+  (`ECONOMY_FUEL_USDC_KEEP`) the swap never spends below. A Jupiter route with
+  price impact above `ECONOMY_FUEL_MAX_IMPACT_PCT` (default 3%) is rejected, not
+  executed.
+- **Booked.** Every swap lands in `economy_fuel_swaps` (which drives the daily
+  cap) and fires an ops alert. When fuel *did* act, the "master could not refill"
+  page is suppressed — the shortage is being handled autonomously; the next tick
+  distributes the freshly-bought SOL.
+
+Set `ECONOMY_FUEL_ENABLED=0` to turn it off entirely (the fleet then falls back to
+the "fund the master" ops alert). The decision/sizing math is a pure function
+(`planRefuel`) covered by [`tests/economy-fuel.test.js`](../tests/economy-fuel.test.js).
+
 ## Lowest fees
 
 Every transfer routes through `submitProtected` with `tipMode: 'off'` — **no Jito
@@ -120,6 +158,11 @@ congestion, clamped to a hard ceiling.
 | `ECONOMY_MASTER_SECRET_BASE58` | yes | The master keypair (base58 of 64 raw bytes). Unset ⇒ the funding root is inert. Store it as a secret on the Cloud Run service (or your host's secret store), never plaintext; keep your own offline copy since secret values are unreadable after they are written. |
 | `ECONOMY_MASTER_ADDRESS` | no | Override the expected pubkey if the master is ever rotated. Defaults to the address above. |
 | `ECONOMY_MASTER_RESERVE_SOL` / `_PER_TOPUP_MAX_SOL` / `_RUN_CAP_SOL` | no | Guard caps (see table). |
+| `ECONOMY_FUEL_ENABLED` | no | `0` disables the USDC→SOL auto-refuel (default on). |
+| `ECONOMY_FUEL_PER_RUN_USDC` / `_DAILY_USDC` | no | Fuel caps: max USDC per swap (default 25) and per UTC day (default 100). |
+| `ECONOMY_FUEL_USDC_KEEP` | no | USDC the refuel never spends below (revenue reserve). Default 0. |
+| `ECONOMY_FUEL_MIN_GAP_SOL` / `_TARGET_SOL` | no | Only refuel when the SOL gap is at least this (default 0.1); buy toward this spendable-SOL buffer (default 1.0). |
+| `ECONOMY_FUEL_MAX_IMPACT_PCT` / `_SLIPPAGE_BPS` | no | Reject a route above this price impact (default 3%); swap slippage (default 100 bps). |
 | `CRON_SECRET` | yes | Bearer auth for the `treasury-topup` cron (shared with every other cron; Cloud Scheduler sends it). |
 | `SOLANA_RPC_URL` | no | Mainnet RPC (defaults to `api.mainnet-beta`). |
 

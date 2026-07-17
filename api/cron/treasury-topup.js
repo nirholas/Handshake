@@ -34,6 +34,7 @@ import { sendOpsAlert } from '../_lib/alerts.js';
 import { SOLANA_SIGNERS, resolveSignerPubkey } from '../_lib/solana-signers.js';
 import { sweepTopUps, RESERVE_SOL, RUN_CAP_SOL, PER_TOPUP_MAX_SOL } from '../_lib/economy-master.js';
 import { recordSweep } from '../_lib/economy-ledger.js';
+import { refuelMasterFromUsdc } from '../_lib/economy-fuel.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 // How high to lift an engine when it falls below its floor, unless the spec
@@ -104,6 +105,30 @@ export default wrapCron(async (req, res) => {
 	// no SOL moves, no ledger write, no alerts. Lets an operator inspect exactly
 	// what the next sweep would do (e.g. after adding a signer to the registry).
 	const dryRun = /[?&]dry=(1|true)\b/.test(req.url || '');
+
+	// Self-healing fuel: before the master distributes, if it cannot cover the
+	// engines' real SOL deficit, convert a small bounded slice of its own idle
+	// USDC into native SOL. The circulation loop leaks SOL to fees every tick, so
+	// without a source the funding root drains to zero and /pulse goes quiet —
+	// this keeps the tank full from revenue instead of waiting on a human. No-op
+	// unless there is a genuine shortage AND spare USDC (see economy-fuel.js).
+	const totalDeficitSol = targets.reduce((s, t) => s + Math.max(0, t.refillToSol - t.currentSol), 0);
+	let fuel = { acted: false, reason: 'not_needed' };
+	if (totalDeficitSol > 0) {
+		try {
+			fuel = await refuelMasterFromUsdc({ connection, deficitSol: totalDeficitSol, network: 'mainnet', dryRun });
+		} catch (e) {
+			fuel = { acted: false, reason: 'error', error: e?.message || 'refuel_failed' };
+		}
+	}
+	if (fuel.acted && fuel.signature) {
+		await sendOpsAlert(
+			`⛽ Economy master refueled from USDC`,
+			`swapped ~$${fuel.spentUsd} USDC → ${fuel.boughtSol} SOL (impact ${fuel.priceImpactPct}%) so the funding root can cover a ${totalDeficitSol.toFixed(3)} SOL deficit.\ntx: ${fuel.signature}`,
+			{ signature: `economy-fuel:${fuel.signature}` },
+		);
+	}
+
 	const result = await sweepTopUps({ connection, targets, network: 'mainnet', dryRun });
 	if (dryRun) {
 		return json(res, 200, {
@@ -117,6 +142,7 @@ export default wrapCron(async (req, res) => {
 			rejected: result.rejected || [],
 			master_sol: result.masterSol ?? null,
 			spendable_sol: result.spendableSol ?? null,
+			fuel,
 			read_errors: errors,
 		});
 	}
@@ -149,13 +175,21 @@ export default wrapCron(async (req, res) => {
 		}
 	}
 
-	// Alert when the master is configured but too drained to cover a real
-	// deficit — that is the one condition a human must act on (fund the root).
-	if (result.configured && targets.length > 0 && result.spentSol === 0 && result.funded.length === 0) {
+	// Alert when the master is configured but too drained to cover a real deficit
+	// AND self-healing could not rescue it (USDC exhausted, daily cap hit, or fuel
+	// disabled) — that is the one condition a human must act on (fund the root).
+	// When the refuel swap DID act, the shortage is being handled autonomously, so
+	// suppress the page: the next tick distributes the freshly-bought SOL.
+	if (result.configured && targets.length > 0 && result.spentSol === 0 && result.funded.length === 0 && !fuel.acted) {
+		const fuelNote =
+			fuel.reason === 'daily_cap_reached' ? ' Fuel daily cap reached; raise ECONOMY_FUEL_DAILY_USDC or fund SOL.'
+			: fuel.reason === 'no_spare_usdc' ? ' Master is also out of spare USDC to convert.'
+			: fuel.reason === 'disabled' ? ' Auto-refuel is disabled (ECONOMY_FUEL_ENABLED=0).'
+			: '';
 		await sendOpsAlert(
 			`⛽ Economy master could not refill ${targets.length} engine(s)`,
 			`master ${result.master} has ${result.masterSol} SOL (reserve ${result.reserveSol}). ` +
-				`Underfunded: ${targets.map((t) => t.name).join(', ')}. Fund the master on mainnet.`,
+				`Underfunded: ${targets.map((t) => t.name).join(', ')}. Fund the master on mainnet.${fuelNote}`,
 			{ signature: `economy-master-empty:${result.master}` },
 		);
 	}
@@ -188,6 +222,7 @@ export default wrapCron(async (req, res) => {
 		rejected: result.rejected || [],
 		spent_sol: result.spentSol,
 		master_sol: result.masterSol ?? null,
+		fuel,
 		read_errors: errors,
 		run_id: runId,
 		ledger,
