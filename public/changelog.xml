@@ -95,6 +95,14 @@
 			<description>The example chips, empty-stage starters, and the Surprise me button on the Forge used to rotate through a fixed list of 48 prompts. They now draw from a curated prompt generator with thousands of combinations: statues, figurines, potted plants, crystals, food, crafted props, and cozy miniatures, each paired only with materials and finishes the 3D engine renders well. Every visit opens with a fresh set, and the prompt coach no longer mistakes words like mushroom for a scene request.</description>
 		</item>
 		<item>
+			<title>Forge-Off: upvote community models and win the weekly board</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-07-17:Forge-Off: upvote community models and win the weekly board</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The 'Fresh from the Forge' strip on the Forge is now a live board. Every community model has an upvote button (no login — one vote per browser), and a Fresh / Top this week toggle re-sorts the strip between newest and most-voted. Each Monday the top-voted model of the week is crowned permanently, and those winners now feed the models that get published to our official Sketchfab account. Your own upvotes light up across the strip.</description>
+		</item>
+		<item>
 			<title>Free 3D API tells agents exactly when to check back</title>
 			<link>https://three.ws/docs/3d-api</link>
 			<guid isPermaLink="false">2026-07-17:Free 3D API tells agents exactly when to check back</guid>
@@ -215,12 +223,12 @@
 			<description>On the shared-model viewer page, the &quot;Create a 3D model&quot; button (shown when a link is missing its model) and the &quot;Make your own&quot; button in the footer used to drop you on the homepage, leaving you to hunt for the generator. Both now go directly to the free text-to-3D Forge so you can start creating in one click.</description>
 		</item>
 		<item>
-			<title>three.ws now speaks 11 languages</title>
+			<title>three.ws now speaks 11 languages, across the whole site</title>
 			<link>https://three.ws/changelog</link>
-			<guid isPermaLink="false">2026-07-17:three.ws now speaks 11 languages</guid>
+			<guid isPermaLink="false">2026-07-17:three.ws now speaks 11 languages, across the whole site</guid>
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
-			<description>The site's language switcher gained nine new languages on top of English and Spanish: Simplified Chinese, Japanese, Korean, French, German, Brazilian Portuguese, Arabic, Hindi, and Russian. Pick your language from the switcher and the copy re-renders instantly, with your choice remembered for next time; if your browser is already set to one of these, three.ws now greets you in it automatically. Arabic lays out right-to-left. Brand and protocol terms like $THREE, USDC, and three.ws stay exact in every language.</description>
+			<description>three.ws is now multilingual in 11 languages: English, Spanish, Simplified Chinese, Japanese, Korean, French, German, Brazilian Portuguese, Arabic, Hindi, and Russian. Translation went from the home page alone to the pages people actually read first: What is three.ws, Pricing, Partners, the pitch deck, the SDK and oracle docs, and more. Every page shows a language picker in the corner, your choice is remembered, and if your browser is set to one of these languages three.ws greets you in it automatically. Arabic lays out right-to-left. Brand and protocol terms like $THREE, USDC, and three.ws stay exact in every language, and search engines are told about each translated page so they can rank it. Behind the scenes a new tool annotates a page's copy for translation in one command, so adding the rest of the site is now fast.</description>
 		</item>
 		<item>
 			<title>Your models now look studio-quality everywhere, not just in the Forge</title>

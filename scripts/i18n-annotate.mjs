@@ -117,9 +117,11 @@ function openTagInsertPos(html, start) {
 	return -1;
 }
 
-// Is `el` inside an opaque ancestor (script/style/svg/…) or an opt-out subtree?
+// Is `el` itself, or any ancestor, opaque (script/style/svg/…) or opted out via
+// translate="no" / data-no-i18n? Walks from the element upward so a leaf that
+// carries the opt-out is skipped too, not just its descendants.
 function inSkippedSubtree(el) {
-	for (let p = el.parentNode; p && p.rawTagName !== undefined; p = p.parentNode) {
+	for (let p = el; p && p.rawTagName !== undefined; p = p.parentNode) {
 		const tag = (p.rawTagName || '').toLowerCase();
 		if (OPAQUE_ANCESTORS.has(tag)) return true;
 		if (p.getAttribute && (p.getAttribute('translate') === 'no' || p.hasAttribute?.('data-no-i18n')))

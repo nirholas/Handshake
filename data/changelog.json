@@ -28,10 +28,11 @@
 		},
 		{
 			"date": "2026-07-17",
-			"title": "three.ws now speaks 11 languages",
-			"summary": "The site's language switcher gained nine new languages on top of English and Spanish: Simplified Chinese, Japanese, Korean, French, German, Brazilian Portuguese, Arabic, Hindi, and Russian. Pick your language from the switcher and the copy re-renders instantly, with your choice remembered for next time; if your browser is already set to one of these, three.ws now greets you in it automatically. Arabic lays out right-to-left. Brand and protocol terms like $THREE, USDC, and three.ws stay exact in every language.",
+			"title": "three.ws now speaks 11 languages, across the whole site",
+			"summary": "three.ws is now multilingual in 11 languages: English, Spanish, Simplified Chinese, Japanese, Korean, French, German, Brazilian Portuguese, Arabic, Hindi, and Russian. Translation went from the home page alone to the pages people actually read first: What is three.ws, Pricing, Partners, the pitch deck, the SDK and oracle docs, and more. Every page shows a language picker in the corner, your choice is remembered, and if your browser is set to one of these languages three.ws greets you in it automatically. Arabic lays out right-to-left. Brand and protocol terms like $THREE, USDC, and three.ws stay exact in every language, and search engines are told about each translated page so they can rank it. Behind the scenes a new tool annotates a page's copy for translation in one command, so adding the rest of the site is now fast.",
 			"tags": [
-				"feature"
+				"feature",
+				"improvement"
 			]
 		},
 		{
@@ -14301,6 +14302,15 @@
 				"feature"
 			],
 			"link": "/image-to-3d"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Forge-Off: upvote community models and win the weekly board",
+			"summary": "The 'Fresh from the Forge' strip on the Forge is now a live board. Every community model has an upvote button (no login — one vote per browser), and a Fresh / Top this week toggle re-sorts the strip between newest and most-voted. Each Monday the top-voted model of the week is crowned permanently, and those winners now feed the models that get published to our official Sketchfab account. Your own upvotes light up across the strip.",
+			"tags": [
+				"feature"
+			],
+			"link": "/forge"
 		}
 	]
 }

@@ -947,6 +947,33 @@ model. Dimensions clamp to 64-2048; GLBs over 10 MB are rejected before the
 browser boots; only public http(s) sources are fetched (SSRF-guarded);
 60 renders / 10 min / IP.
 
+### Forge-Off votes — `POST /api/forge-vote`
+
+```
+POST /api/forge-vote
+x-forge-client: <stable browser id>
+{ "creation_id": "<uuid>", "vote": true }     # upvote  (vote:false removes it)
+→ { "ok": true, "creation_id": "<uuid>", "vote_count": 5, "voted": true }
+```
+
+Auth-free community curation for the Forge showcase: one vote per browser (keyed
+to the same `forge:cid` id used for "Your creations"), idempotent, toggleable.
+`vote_count` is the fresh authoritative tally; `voted` is your own state. Only
+public, finished, non-rejected creations are votable (`404 not_votable`
+otherwise); a missing/shared client id is `400 no_client_id`. 120 votes /
+10 min / IP.
+
+Read the board through the community gallery:
+
+```
+GET /api/forge-gallery?scope=community&sort=top&window=week&limit=24
+x-forge-client: <stable browser id>   # optional — resolves per-card `voted`
+```
+
+`sort=fresh` (default, newest-first) or `sort=top` (most-voted); `window=week`
+narrows Top to the current Forge-Off week (Monday→Monday UTC). Full feature
+docs: [docs/forge-off.md](./forge-off.md).
+
 ---
 
 ## Material Studio API
