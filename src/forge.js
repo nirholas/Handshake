@@ -2750,8 +2750,10 @@ els.emptyStarters?.addEventListener('click', (e) => {
 });
 
 // Let decoupled result-panel modules (e.g. "More like this") request a fresh
-// generation from a derived prompt, reusing the exact example-chip path.
+// generation from a derived prompt, reusing the exact example-chip path. Ignore
+// while a generation is already in flight, mirroring the Roll & Forge guard.
 document.addEventListener('forge:run-prompt', (e) => {
+	if (els.generate?.dataset.busy === '1') return;
 	const text = typeof e.detail?.prompt === 'string' ? e.detail.prompt.trim() : '';
 	if (text) runExamplePrompt(text);
 });
