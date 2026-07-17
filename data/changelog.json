@@ -3,16 +3,43 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
-			"title": "Forge: one-tap variations of any model",
-			"summary": "Every model you forge now shows a \"More like this\" row: one tap re-forges the same subject in a different material or finish (brushed brass, translucent glass, carved oak, and more), so you can explore a whole design space without retyping anything. A reshuffle button deals a fresh set of ideas. It appears for text prompts and runs on the free lane, so exploring costs nothing.",
+			"title": "Your first 3D creation gets a moment",
+			"summary": "Making your first 3D model on three.ws used to pass with a quiet three-second Saved note. Now it's a real moment: a burst of confetti and a card that marks what you just made, whether or not you're signed in. It celebrates only your first creation on a device, respects reduced-motion settings, and sits alongside the what-next suggestions so you always know where to go from there.",
 			"tags": [
-				"feature"
+				"feature",
+				"improvement"
 			]
 		},
 		{
 			"date": "2026-07-17",
-			"title": "One-tap Seed Vault sign-in on Solana Seeker",
-			"summary": "Signing in with a Solana Seeker's Seed Vault now takes a single tap instead of two. Linking your wallet used to pop the Seed Vault twice (once to connect, once to sign); three.ws now uses the Mobile Wallet Adapter's built-in Sign-In-With-Solana so authorization and the signature happen in one prompt. If you back out of that prompt, three.ws now recognizes it as a clean cancel instead of showing a generic error, and it reliably detects Seeker devices that don't announce themselves in the browser. Other wallets (Phantom, Backpack, Solflare) are unaffected. The whole wallet layer is now covered by an automated test suite.",
+			"title": "Pinning your agent into the real world now feels like a moment",
+			"summary": "Anchoring your agent to a real-world spot in IRL used to be confirmed by a single line of text. Now the instant it locks in, a green ring ripples out from your agent's feet with a soft haptic tap, so the payoff of placing an agent in your space actually lands. It respects reduced-motion settings (you still get the haptic), and it's purely a flourish: it never delays the pin.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/irl"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Embeddable 3D viewer now shows loading, progress, and errors on its own",
+			"summary": "The lightweight <three-ws-viewer> web component (the one you drop on any site for a 3D preview) used to render a blank canvas while a model loaded and a blank canvas if it failed. It now ships its own designed states: a spinner with a live download percentage, an error card with Try again and Download GLB, a friendly empty placeholder, and a fade-in when the model appears with a one-time 'drag to rotate' cue. A new optional auto-rotate attribute gently spins the model, and a progress event lets your page track loading. The hosted three.ws/viewer page also shows a real download percentage instead of an endless spinner and restores the swipe-to-rotate hint.",
+			"tags": [
+				"sdk",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Build your agent before signing in",
+			"summary": "The agent creator no longer asks you to sign in before you can do anything. Anyone can now name their agent, give it a 3D body, pick its skills, and set its personality straight away — the same try-first flow the Forge already has. You only sign in at the very end, when your agent needs its wallet and on-chain identity to ship. If you do sign in at that point, everything you built is saved and restored automatically, so you land right back on the final step and finish in one click with nothing lost.",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Faster, clearer wallet sign-in (one tap on Solana Seeker)",
+			"summary": "Connecting a wallet now gives real feedback: the button shows a Connecting state, a success confirmation when it links, and a plain-language message with a one-tap retry when something goes wrong instead of failing silently. If you have no wallet installed, you get a clear Get Phantom prompt rather than a surprise browser tab. On a Solana Seeker, signing in now takes a single tap instead of two: both login and wallet-linking use the Mobile Wallet Adapter's built-in Sign-In-With-Solana, so authorization and the signature happen in one Seed Vault prompt, and backing out is recognized as a clean cancel. Phantom, Backpack, and Solflare work exactly as before. The whole wallet layer is now covered by an automated test suite.",
 			"tags": [
 				"improvement"
 			]
@@ -14319,6 +14346,66 @@
 				"feature"
 			],
 			"link": "/forge"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Forge: one-click \"Roll & Forge\" and a clearer free-to-start welcome",
+			"summary": "The Forge now greets you with a Roll & Forge button that picks a great random prompt and generates a model in a single click, so you can reach a finished 3D object without thinking of what to type. The start screen and page header also state plainly that generating is free with no sign-up and the model is yours to download, removing the guesswork about cost. Roll & Forge draws from the same curated prompt library as Surprise me, so every random model is one that reconstructs cleanly.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Community models now show a real picture, not an empty tile",
+			"summary": "Most models made on the free lane are built directly as 3D geometry with no preview image, so across the site (Fresh from the Forge, the gallery, community, search, and creator profiles) the majority of cards were showing a blank gradient instead of the model. A new background job renders every finished model to a real thumbnail from the actual 3D file and fills it in, newest first, so browse pages fill up with real work instead of empty tiles. New models heal within minutes of finishing.",
+			"tags": [
+				"improvement",
+				"infra"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Photo-to-3D no longer fails when a generation server hands the job between machines",
+			"summary": "Turning a photo into a 3D model was failing far too often with a 'task not found' error. The cause was not the generation itself but the hand-off: our GPU workers run across several machines, and a status check made moments after starting could land on a machine that had not yet seen the job, which the site wrongly treated as a permanent failure. The site now recognizes this as the split-second timing gap it is: it re-checks for a finished result, waits out a short grace period so the job can be found, and only reports a real failure (and automatically retries on another engine) once a job is genuinely lost. Fewer dead ends, more finished models.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Make an avatar in one click with Surprise me",
+			"summary": "Creating an avatar used to mean typing a prompt and waiting, uploading a selfie, or picking a template. The gallery now has a Surprise me button that composes a unique, fully rigged avatar instantly, with nothing to type and no sign-in to see it. Reroll for another in a tap, copy a link to share the exact one you made, or make it yours to name and keep. Every result is one of a kind and animation-ready.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/gallery"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "The status page now shows whether 3D generations are actually succeeding",
+			"summary": "Until now the status page could only tell you the generation servers were online, not whether the models they produce are coming out successfully. Those are different things: a server can be up and still fail a large share of jobs, which is exactly what happened during a recent stretch where image-to-3D quietly failed far too often while every uptime check stayed green. The status page and health feed now report the live 3D generation success rate, and flag which engine and input type are struggling when it dips, so a bad patch surfaces in minutes instead of days.",
+			"tags": [
+				"infra",
+				"improvement"
+			],
+			"link": "/status"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Forge a 3D model right from the homepage",
+			"summary": "The homepage now leads with a prompt bar: type what you want and a real textured 3D model starts building the moment you hit Enter, no navigation and no sign-up. The live generator that used to sit far down the page now sits directly under the headline, so you type at the top and watch your model take shape right below. Three one-tap example prompts and a rotating set of ideas make it easy to start.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/"
 		}
 	]
 }

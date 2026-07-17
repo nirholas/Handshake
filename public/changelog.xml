@@ -63,12 +63,28 @@
 			<description>We rebuilt the auto-rigging engine that turns a generated 3D character into a living avatar. Rigging now finishes in seconds instead of stalling for 20 minutes, produces a full standard skeleton with fingers that our entire animation library (walk, wave, dance, emotes) can drive immediately, keeps the model's original textures perfectly intact, and adds the 52 facial expression shapes used for emotions and lip-sync. Every piece of the new pipeline is MIT-licensed open source, so it works for everyone, everywhere.</description>
 		</item>
 		<item>
+			<title>Build your agent before signing in</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-17:Build your agent before signing in</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The agent creator no longer asks you to sign in before you can do anything. Anyone can now name their agent, give it a 3D body, pick its skills, and set its personality straight away — the same try-first flow the Forge already has. You only sign in at the very end, when your agent needs its wallet and on-chain identity to ship. If you do sign in at that point, everything you built is saved and restored automatically, so you land right back on the final step and finish in one click with nothing lost.</description>
+		</item>
+		<item>
 			<title>Community feed hover previews no longer blend into the photo underneath</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-07-17:Community feed hover previews no longer blend into the photo underneath</guid>
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Hovering a card in the Fresh from the Forge strip spins the actual 3D model in place. The spinning model used to render on a nearly transparent background, so it visually collided with the card's photo thumbnail and looked broken, with a stray browser tooltip on top. The preview now draws on a solid backdrop, the redundant tooltip is gone, image-to-3D cards are labeled with their engine name (Hunyuan3D) instead of an internal id, and every card can now be opened from the keyboard.</description>
+		</item>
+		<item>
+			<title>Community models now show a real picture, not an empty tile</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-07-17:Community models now show a real picture, not an empty tile</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Most models made on the free lane are built directly as 3D geometry with no preview image, so across the site (Fresh from the Forge, the gallery, community, search, and creator profiles) the majority of cards were showing a blank gradient instead of the model. A new background job renders every finished model to a real thumbnail from the actual 3D file and fills it in, newest first, so browse pages fill up with real work instead of empty tiles. New models heal within minutes of finishing.</description>
 		</item>
 		<item>
 			<title>Creator profile pages work again, plus a site-wide reliability sweep</title>
@@ -79,12 +95,28 @@
 			<description>A full automated sweep of every page and API endpoint on the site caught a bug that replaced creator profile pages (three.ws/u/yourname) with an error message. That is fixed. The sweep also repaired the login captcha for rate-limited sign-ins, fixed dead links in the dashboard and two blog posts, and added two dozen previously unlisted pages to the site index so search engines and the sitemap can find them. The audit now runs with deeper checks (blank-page detection, visible error detection, and link crawling) so regressions like these get caught before anyone hits them.</description>
 		</item>
 		<item>
+			<title>Embeddable 3D viewer now shows loading, progress, and errors on its own</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-17:Embeddable 3D viewer now shows loading, progress, and errors on its own</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>sdk</category>
+			<description>The lightweight &lt;three-ws-viewer&gt; web component (the one you drop on any site for a 3D preview) used to render a blank canvas while a model loaded and a blank canvas if it failed. It now ships its own designed states: a spinner with a live download percentage, an error card with Try again and Download GLB, a friendly empty placeholder, and a fade-in when the model appears with a one-time 'drag to rotate' cue. A new optional auto-rotate attribute gently spins the model, and a progress event lets your page track loading. The hosted three.ws/viewer page also shows a real download percentage instead of an endless spinner and restores the swipe-to-rotate hint.</description>
+		</item>
+		<item>
 			<title>Every free 3D generation now gets an automatic quality check</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-07-17:Every free 3D generation now gets an automatic quality check</guid>
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The Forge already re-rolled broken meshes, but the deeper &quot;looks nothing like what I asked for&quot; check only ran on the paid High tier, so the free Draft and Standard lanes could still hand back a valid-but-wrong model. Now a smart adaptive gate covers the free lanes too: a clean, textured result ships instantly, and only an uncertain one is sent to the vision quality check and re-generated if it falls short. The result bar shows the outcome as a Verified, Checked, or Low confidence chip so you can see at a glance whether a model passed.</description>
+		</item>
+		<item>
+			<title>Faster, clearer wallet sign-in (one tap on Solana Seeker)</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-17:Faster, clearer wallet sign-in (one tap on Solana Seeker)</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Connecting a wallet now gives real feedback: the button shows a Connecting state, a success confirmation when it links, and a plain-language message with a one-tap retry when something goes wrong instead of failing silently. If you have no wallet installed, you get a clear Get Phantom prompt rather than a surprise browser tab. On a Solana Seeker, signing in now takes a single tap instead of two: both login and wallet-linking use the Mobile Wallet Adapter's built-in Sign-In-With-Solana, so authorization and the signature happen in one Seed Vault prompt, and backing out is recognized as a clean cancel. Phantom, Backpack, and Solflare work exactly as before. The whole wallet layer is now covered by an automated test suite.</description>
 		</item>
 		<item>
 			<title>Forge prompt ideas are now endless, and every one forges beautifully</title>
@@ -101,6 +133,14 @@
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The 'Fresh from the Forge' strip on the Forge is now a live board. Every community model has an upvote button (no login — one vote per browser), and a Fresh / Top this week toggle re-sorts the strip between newest and most-voted. Each Monday the top-voted model of the week is crowned permanently, and those winners now feed the models that get published to our official Sketchfab account. Your own upvotes light up across the strip.</description>
+		</item>
+		<item>
+			<title>Forge: one-click &quot;Roll &amp; Forge&quot; and a clearer free-to-start welcome</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-07-17:Forge: one-click &quot;Roll &amp; Forge&quot; and a clearer free-to-start welcome</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Forge now greets you with a Roll &amp; Forge button that picks a great random prompt and generates a model in a single click, so you can reach a finished 3D object without thinking of what to type. The start screen and page header also state plainly that generating is free with no sign-up and the model is yours to download, removing the guesswork about cost. Roll &amp; Forge draws from the same curated prompt library as Surprise me, so every random model is one that reconstructs cleanly.</description>
 		</item>
 		<item>
 			<title>Free 3D API tells agents exactly when to check back</title>
@@ -135,20 +175,20 @@
 			<description>The live IRL view stopped talking over itself. Before, you could see &quot;Turn on Camera AR&quot; and &quot;Agent pinned&quot; at the same time, which contradicted each other; now the guidance line and the status line always agree. The floating name tag above each nearby agent is kept clear of the top bar instead of colliding with the Back and Live chips, and when two agents line up front-to-back their tags fan out so both names stay legible rather than stacking into one smudge. The &quot;an agent is near, look around&quot; nudge no longer appears when that agent is already standing in front of you, and it clears itself the moment you turn to face them.</description>
 		</item>
 		<item>
+			<title>Make an avatar in one click with Surprise me</title>
+			<link>https://three.ws/gallery</link>
+			<guid isPermaLink="false">2026-07-17:Make an avatar in one click with Surprise me</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Creating an avatar used to mean typing a prompt and waiting, uploading a selfie, or picking a template. The gallery now has a Surprise me button that composes a unique, fully rigged avatar instantly, with nothing to type and no sign-in to see it. Reroll for another in a tap, copy a link to share the exact one you made, or make it yours to name and keep. Every result is one of a kind and animation-ready.</description>
+		</item>
+		<item>
 			<title>No more T-posed arms: avatars whose arms can't be animated now rest naturally</title>
 			<link>https://three.ws/irl</link>
 			<guid isPermaLink="false">2026-07-17:No more T-posed arms: avatars whose arms can't be animated now rest naturally</guid>
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Some avatars, especially older ones and GLBs imported from outside three.ws, carry arm bones under a naming scheme our animation engine doesn't recognize. The idle motion would then play on the body and legs while both arms stayed frozen straight out to the sides in the raw import pose, which looked broken. IRL now detects those un-driven arms and swings them down to a relaxed rest, so an avatar never stands there in a stiff T. Avatars rigged by three.ws already animated their arms correctly and are untouched; this is a safety net for everything else, in both your own carried avatar and the agents you find nearby.</description>
-		</item>
-		<item>
-			<title>One-tap Seed Vault sign-in on Solana Seeker</title>
-			<link>https://three.ws/changelog</link>
-			<guid isPermaLink="false">2026-07-17:One-tap Seed Vault sign-in on Solana Seeker</guid>
-			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
-			<category>improvement</category>
-			<description>Signing in with a Solana Seeker's Seed Vault now takes a single tap instead of two. Linking your wallet used to pop the Seed Vault twice (once to connect, once to sign); three.ws now uses the Mobile Wallet Adapter's built-in Sign-In-With-Solana so authorization and the signature happen in one prompt. If you back out of that prompt, three.ws now recognizes it as a clean cancel instead of showing a generic error, and it reliably detects Seeker devices that don't announce themselves in the browser. Other wallets (Phantom, Backpack, Solflare) are unaffected. The whole wallet layer is now covered by an automated test suite.</description>
 		</item>
 		<item>
 			<title>Paid API calls no longer fail when two agents buy the same-priced service at once</title>
@@ -165,6 +205,22 @@
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>Turning a single photo into a 3D model used to leave the model's unseen sides up to the AI's imagination, which often produced smeared textures and hollowed-out backs the moment you rotated the model. The forge now generates matching side and back views of your photo first and reconstructs from all three, so the whole model holds up from every angle. Text prompts already worked this way; photo uploads now get the same treatment.</description>
+		</item>
+		<item>
+			<title>Photo-to-3D no longer fails when a generation server hands the job between machines</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-07-17:Photo-to-3D no longer fails when a generation server hands the job between machines</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Turning a photo into a 3D model was failing far too often with a 'task not found' error. The cause was not the generation itself but the hand-off: our GPU workers run across several machines, and a status check made moments after starting could land on a machine that had not yet seen the job, which the site wrongly treated as a permanent failure. The site now recognizes this as the split-second timing gap it is: it re-checks for a finished result, waits out a short grace period so the job can be found, and only reports a real failure (and automatically retries on another engine) once a job is genuinely lost. Fewer dead ends, more finished models.</description>
+		</item>
+		<item>
+			<title>Pinning your agent into the real world now feels like a moment</title>
+			<link>https://three.ws/irl</link>
+			<guid isPermaLink="false">2026-07-17:Pinning your agent into the real world now feels like a moment</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Anchoring your agent to a real-world spot in IRL used to be confirmed by a single line of text. Now the instant it locks in, a green ring ripples out from your agent's feet with a soft haptic tap, so the payoff of placing an agent in your space actually lands. It respects reduced-motion settings (you still get the haptic), and it's purely a flourish: it never delays the pin.</description>
 		</item>
 		<item>
 			<title>Prompt-to-avatar and selfie-to-avatar generation fixed end to end</title>
@@ -207,6 +263,14 @@
 			<description>The live money feed went quiet after the July 7 infrastructure move: the switch that powers the autonomous agent activity loop did not survive the migration, so agents stopped tipping, trading, paying and launching. The switch is back on and the feed is live again, with real on-chain tips, trades, payments and coin launches flowing within minutes of the fix. The production runbook now documents the switch so a future migration cannot silently drop it.</description>
 		</item>
 		<item>
+			<title>The status page now shows whether 3D generations are actually succeeding</title>
+			<link>https://three.ws/status</link>
+			<guid isPermaLink="false">2026-07-17:The status page now shows whether 3D generations are actually succeeding</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>Until now the status page could only tell you the generation servers were online, not whether the models they produce are coming out successfully. Those are different things: a server can be up and still fail a large share of jobs, which is exactly what happened during a recent stretch where image-to-3D quietly failed far too often while every uptime check stayed green. The status page and health feed now report the live 3D generation success rate, and flag which engine and input type are struggling when it dips, so a bad patch surfaces in minutes instead of days.</description>
+		</item>
+		<item>
 			<title>The status page now tracks whether paid API calls actually settle, not just whether the payment rail is switched on</title>
 			<link>https://three.ws/status</link>
 			<guid isPermaLink="false">2026-07-17:The status page now tracks whether paid API calls actually settle, not just whether the payment rail is switched on</guid>
@@ -229,6 +293,14 @@
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>three.ws is now multilingual in 11 languages: English, Spanish, Simplified Chinese, Japanese, Korean, French, German, Brazilian Portuguese, Arabic, Hindi, and Russian. Translation went from the home page alone to the pages people actually read first: What is three.ws, Pricing, Partners, the pitch deck, the SDK and oracle docs, and more. Every page shows a language picker in the corner, your choice is remembered, and if your browser is set to one of these languages three.ws greets you in it automatically. Arabic lays out right-to-left. Brand and protocol terms like $THREE, USDC, and three.ws stay exact in every language, and search engines are told about each translated page so they can rank it. Behind the scenes a new tool annotates a page's copy for translation in one command, so adding the rest of the site is now fast.</description>
+		</item>
+		<item>
+			<title>Your first 3D creation gets a moment</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-17:Your first 3D creation gets a moment</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Making your first 3D model on three.ws used to pass with a quiet three-second Saved note. Now it's a real moment: a burst of confetti and a card that marks what you just made, whether or not you're signed in. It celebrates only your first creation on a device, respects reduced-motion settings, and sits alongside the what-next suggestions so you always know where to go from there.</description>
 		</item>
 		<item>
 			<title>Your models now look studio-quality everywhere, not just in the Forge</title>
