@@ -3780,9 +3780,9 @@
 		"show_more": "Show more",
 		"live": "live",
 		"hero_try": "Try",
-		"forge_it": "",
-		"hero_forge_placeholder": "",
-		"hero_forge_note": "",
+		"forge_it": "Forge it",
+		"hero_forge_placeholder": "describe anything: a brass compass, weathered…",
+		"hero_forge_note": "Free, no sign-up, a real textured model in about a minute. <a href=\"/forge\">Open the full Forge →</a>",
 		"feed_empty_top": "",
 		"feed_empty_fresh": ""
 	},

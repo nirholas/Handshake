@@ -175,9 +175,11 @@ async def get_job(job_id: str, authorization: str = Header(...)) -> dict:
 @app.get("/health")
 async def health() -> dict:
     uv_ready = (face_pipeline.HERE / "face_uv_map.json").exists()
+    geometry_ready = face_pipeline.GEOMETRY_MORPH_ENABLED and face_pipeline._get_face_map() is not None
     return {
         "ok": True,
-        "pipeline": "face_texture_transfer_v1",
+        "pipeline": "face_texture_transfer_v2" if geometry_ready else "face_texture_transfer_v1",
         "model_loaded": uv_ready,
         "uv_map_ready": uv_ready,
+        "geometry_morph": bool(geometry_ready),
     }

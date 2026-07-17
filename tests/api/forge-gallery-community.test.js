@@ -15,11 +15,13 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 const storeEnabledMock = vi.fn(() => true);
 const listCreationsMock = vi.fn(async () => []);
 const listShowcaseMock = vi.fn(async () => []);
+const countShowcaseMock = vi.fn(async () => 0);
 const hashClientMock = vi.fn(() => 'hashed-client');
 vi.mock('../../api/_lib/forge-store.js', () => ({
 	forgeStoreEnabled: (...a) => storeEnabledMock(...a),
 	listCreations: (...a) => listCreationsMock(...a),
 	listShowcase: (...a) => listShowcaseMock(...a),
+	countShowcase: (...a) => countShowcaseMock(...a),
 	hashClient: (...a) => hashClientMock(...a),
 }));
 
@@ -63,9 +65,11 @@ beforeEach(() => {
 	storeEnabledMock.mockReturnValue(true);
 	listCreationsMock.mockResolvedValue([]);
 	listShowcaseMock.mockResolvedValue([]);
+	countShowcaseMock.mockResolvedValue(0);
 	hashClientMock.mockClear();
 	listCreationsMock.mockClear();
 	listShowcaseMock.mockClear();
+	countShowcaseMock.mockClear();
 });
 
 describe('GET /api/forge-gallery?scope=community', () => {
@@ -74,13 +78,15 @@ describe('GET /api/forge-gallery?scope=community', () => {
 			{ id: 'c1', prompt: 'a glazed ceramic teapot', glb_url: 'https://cdn/x.glb', preview_image_url: 'https://cdn/x.png', vote_count: 0, voted: false },
 		];
 		listShowcaseMock.mockResolvedValue(rows);
+		countShowcaseMock.mockResolvedValue(137); // full community count — social proof
 
 		const res = mkRes();
 		// Deliberately no x-forge-client header — community (fresh) must not need one.
 		await handler(mkReq('/api/forge-gallery?scope=community&limit=12'), res);
 
 		expect(res.statusCode).toBe(200);
-		expect(parsed(res)).toEqual({ enabled: true, creations: rows, sort: 'fresh', window: 'all' });
+		// `total` carries the full community model count independent of the page.
+		expect(parsed(res)).toEqual({ enabled: true, creations: rows, total: 137, sort: 'fresh', window: 'all' });
 		// Anonymous read → no voter key resolved, default fresh/all ordering.
 		expect(listShowcaseMock).toHaveBeenCalledWith({ limit: 12, sort: 'fresh', window: 'all', voterKey: null });
 		expect(listCreationsMock).not.toHaveBeenCalled();
@@ -90,12 +96,13 @@ describe('GET /api/forge-gallery?scope=community', () => {
 	it('serves the Forge-Off board on sort=top&window=week', async () => {
 		const rows = [{ id: 'c2', prompt: 'a low-poly red fox', glb_url: 'https://cdn/f.glb', vote_count: 5, voted: false }];
 		listShowcaseMock.mockResolvedValue(rows);
+		countShowcaseMock.mockResolvedValue(42);
 
 		const res = mkRes();
 		await handler(mkReq('/api/forge-gallery?scope=community&sort=top&window=week&limit=24'), res);
 
 		expect(res.statusCode).toBe(200);
-		expect(parsed(res)).toEqual({ enabled: true, creations: rows, sort: 'top', window: 'week' });
+		expect(parsed(res)).toEqual({ enabled: true, creations: rows, total: 42, sort: 'top', window: 'week' });
 		expect(listShowcaseMock).toHaveBeenCalledWith({ limit: 24, sort: 'top', window: 'week', voterKey: null });
 	});
 
