@@ -14,7 +14,7 @@
  *
  * Exit codes: 0 = healthy or self-healing noise only; 1 = findings that need
  * action; 2 = usage error. Agents: run with --json, then follow the fix
- * playbook in .claude/skills/gcp-triage/SKILL.md.
+ * playbook in .agents/skills/gcp-triage/SKILL.md.
  */
 
 import { spawnSync } from 'node:child_process';

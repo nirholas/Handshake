@@ -12,6 +12,7 @@
 	"counts": {
 		"3d/creative": 3,
 		"intel/trading": 13,
+		"ops/production": 1,
 		"wallet/payments": 24
 	},
 	"skills": [
@@ -108,7 +109,7 @@
 		},
 		{
 			"name": "okx-dex-swap",
-			"description": "Use this skill to swap, trade, buy, sell, exchange, or convert tokens, get a swap quote, execute a trade, find the best or cheapest swap route, compare swap rates, get swap calldata, or build an unsigned swap tx across XLayer, Solana, Ethereum, Base, BSC, Arbitrum, Polygon, or 20+ chains. OKX-aggregated routing over 500+ DEX sources with slippage control, price-impact protection, and cross-DEX route optimization. For OKX-aggregated swaps with no named venue. If the prompt names a specific DApp as the swap venue (Polymarket, Aave, Hyperliquid, PancakeSwap, Morpho, Raydium, Curve, Compound, Pendle, Lido, ether.fi, GMX, Kamino, Orca, Meteora, Clanker, pump.fun, Uniswap), route to okx-dapp-discovery instead, e.g. 'swap on PancakeSwap', 'swap SOL for USDC on Raydium', '在 Curve 上换 USDT', 'swap on Uniswap'.",
+			"description": "Use this skill to swap, trade, buy, sell, exchange, or convert tokens, get a swap quote, execute a trade, find the best or cheapest swap route, compare swap rates, get swap calldata, or build an unsigned swap tx across XLayer, Solana, Ethereum, Base, BSC, Arbitrum, Polygon, or 20+ chains. OKX-aggregated routing over 500+ DEX sources with slippage control, price-impact protection, and cross-DEX route optimization. For OKX-aggregated swaps with no named venue. If the prompt names a specific DApp as the swap venue (Polymarket, Aave, Hyperliquid, PancakeSwap, Morpho, Raydium, Curve, Compound, Pendle, Lido, ether.fi, GMX, Kamino, Orca, Meteora, Clanker, pump.fun, Uniswap), route to okx-dapp-discovery instead, e.g. 'swap on PancakeSwap', 'swap SOL for USDC on Raydium', '在 Curve 上换 USDT', 'swap on Uniswap'. Use ONLY for OKX-routed swaps the user opted into by naming OKX/OnchainOS, a DEX/DApp venue, or an OKX-specific chain; for a plain three.ws-native Base/Polygon swap the user did not route through OKX, defer to the trade skill.",
 			"category": "intel/trading",
 			"origin": "okx",
 			"crossPlatformSafe": false,
@@ -147,6 +148,15 @@
 			"path": ".agents/skills/okx-growth-competition"
 		},
 		{
+			"name": "gcp-triage",
+			"description": "Monitor three.ws production on Google Cloud Run and fix what the sweep finds. Use when the user asks to check production, diagnose an outage or error, \"what's wrong with three.ws\", read production logs, or run the monitoring loop. Runs the triage monitor (healthz + all-service log sweep + known-signature classification), then applies the fixes each class allows.",
+			"whenToUse": "Production health checks, log diagnosis, error triage, and the recurring monitor-and-fix loop. For a raw log view only, `npm run logs` is enough without this skill.",
+			"category": "ops/production",
+			"origin": "three.ws",
+			"crossPlatformSafe": false,
+			"path": ".agents/skills/gcp-triage"
+		},
+		{
 			"name": "metamask-agent-wallet",
 			"description": "Use when the user asks anything about blockchain wallets, transactions, signing, token transfers, supported chains, wallet balances, perpetual futures trading, prediction markets, token swaps, cross-chain bridges, market data, token discovery, decoding EVM calldata, Aave V3 lending and borrowing, or authentication via the MetaMask Agentic CLI. Single entry point for all mm CLI operations.",
 			"category": "wallet/payments",
@@ -180,7 +190,7 @@
 		},
 		{
 			"name": "okx-agent-payments-protocol",
-			"description": "Use when an agent hits HTTP 402 / payment-required, or the user mentions x402, x402Version, X-PAYMENT, PAYMENT-REQUIRED, PAYMENT-SIGNATURE, WWW-Authenticate: Payment, permit2, upto, metered billing, a payment channel / voucher / session, channelId / channel_id, opening / closing / topping up / settling / refunding a channel, a paymentId or a2a_ link, creating / checking a payment link, A2MCP / an A2MCP endpoint, or sending a request to / calling an Agent's endpoint with a concrete endpoint URL. Covers x402 (exact, exact+Permit2, upto, aggr_deferred), MPP (charge / session), and a2a-pay paymentId flows. Any close / topup / settle / voucher / refund near a channel_id or session is an MPP mid-session op. The full bilingual trigger list (including Chinese) lives in the skill body.",
+			"description": "Use when an agent hits HTTP 402 / payment-required, or the user mentions x402, x402Version, X-PAYMENT, PAYMENT-REQUIRED, PAYMENT-SIGNATURE, WWW-Authenticate: Payment, permit2, upto, metered billing, a payment channel / voucher / session, channelId / channel_id, opening / closing / topping up / settling / refunding a channel, a paymentId or a2a_ link, creating / checking a payment link, A2MCP / an A2MCP endpoint, or sending a request to / calling an Agent's endpoint with a concrete endpoint URL. Covers x402 (exact, exact+Permit2, upto, aggr_deferred), MPP (charge / session), and a2a-pay paymentId flows. Any close / topup / settle / voucher / refund near a channel_id or session is an MPP mid-session op. The full bilingual trigger list (including Chinese) lives in the skill body. Use ONLY when the user named OKX/OnchainOS or the 402 is an OKX-specific scheme (payment channel / voucher / session, permit2, upto/metered, MPP, a2a-pay paymentId); for a plain x402 402 that settles with a one-shot USDC-on-Base payment and did not name OKX, defer to the pay-for-service / x402 skills.",
 			"category": "wallet/payments",
 			"origin": "okx",
 			"crossPlatformSafe": false,
@@ -196,7 +206,7 @@
 		},
 		{
 			"name": "okx-agentic-wallet",
-			"description": "AUTHORITATIVE source for OKX Agentic Wallet and its Gas Station feature. Gas Station = OKX's stablecoin-gas feature on Solana via third-party Relayer; Solana only, no EIP-7702. MUST invoke for Gas Station questions (what is / how it works / supported tokens / fees / enable or disable gas station / change default gas token / Jito Bundler compatibility) AND any wallet action: login, OTP verify, add/switch/status/logout account, balance, assets, holdings, addresses, deposit / receive / top up, send (native + ERC-20 / SPL, transfer ETH / USDC / etc., pay someone), contract call (approve, swap calldata, contract function), history (list + tx detail by orderId / txHash / uopHash), check order status, sign-message (personalSign EVM + Solana, EIP-712 EVM only), TEE signing, export wallet / mnemonic.",
+			"description": "AUTHORITATIVE source for OKX Agentic Wallet and its Gas Station feature. Gas Station = OKX's stablecoin-gas feature on Solana via third-party Relayer; Solana only, no EIP-7702. MUST invoke for Gas Station questions (what is / how it works / supported tokens / fees / enable or disable gas station / change default gas token / Jito Bundler compatibility) AND any wallet action: login, OTP verify, add/switch/status/logout account, balance, assets, holdings, addresses, deposit / receive / top up, send (native + ERC-20 / SPL, transfer ETH / USDC / etc., pay someone), contract call (approve, swap calldata, contract function), history (list + tx detail by orderId / txHash / uopHash), check order status, sign-message (personalSign EVM + Solana, EIP-712 EVM only), TEE signing, export wallet / mnemonic. Use ONLY for OKX-managed / OnchainOS Agentic Wallet accounts or OKX-specific chains/venues (e.g. X Layer); for a plain three.ws-native send the user did not route through OKX, defer to send-usdc.",
 			"category": "wallet/payments",
 			"origin": "okx",
 			"crossPlatformSafe": false,
@@ -292,7 +302,7 @@
 		},
 		{
 			"name": "pay-for-service",
-			"description": "Make a paid API request to an x402 endpoint with automatic USDC payment. Use when you or the user want to call a paid API, make an x402 request, use a paid service, or pay for an API call. Use after finding a service with search-for-service.",
+			"description": "Make a paid API request to an x402 endpoint with automatic USDC payment. Use when you or the user want to call a paid API, make an x402 request, use a paid service, or pay for an API call. Use after finding a service with search-for-service. This is the three.ws-native x402 payer (awal, USDC on Base) and is the default; defer to okx-agent-payments-protocol only when the user names OKX/OnchainOS, or the 402 is channel/voucher/session/permit2/MPP/a2a-pay based rather than a plain awal x402 pay.",
 			"category": "wallet/payments",
 			"origin": "three.ws",
 			"crossPlatformSafe": false,
@@ -316,7 +326,7 @@
 		},
 		{
 			"name": "send-usdc",
-			"description": "Send tokens (USDC, ETH, POL, or SOL) to an address or ENS name on Base, Polygon, or Solana. Use when you or the user want to send money, pay someone, transfer tokens, tip, donate, or send funds to a wallet address or .eth name. Covers phrases like \"send $5 to\", \"pay 0x...\", \"transfer to vitalik.eth\", or \"send USDC on Solana\".",
+			"description": "Send tokens (USDC, ETH, POL, or SOL) to an address or ENS name on Base, Polygon, or Solana. Use when you or the user want to send money, pay someone, transfer tokens, tip, donate, or send funds to a wallet address or .eth name. Covers phrases like \"send $5 to\", \"pay 0x...\", \"transfer to vitalik.eth\", or \"send USDC on Solana\". This is the three.ws-native wallet (awal) and is the default for sends; defer to okx-agentic-wallet only when the user names OKX, OnchainOS, an OKX-managed / Agentic Wallet account, or an OKX-specific chain/venue (e.g. X Layer).",
 			"category": "wallet/payments",
 			"origin": "three.ws",
 			"crossPlatformSafe": false,
@@ -324,7 +334,7 @@
 		},
 		{
 			"name": "trade",
-			"description": "Swap or trade tokens on Base or Polygon. Use when you or the user want to trade, swap, exchange, buy, sell, or convert between tokens like USDC, ETH, and POL. Covers phrases like \"buy ETH\", \"sell ETH for USDC\", \"convert USDC to ETH\", \"get some ETH\", \"buy POL\".",
+			"description": "Swap or trade tokens on Base or Polygon. Use when you or the user want to trade, swap, exchange, buy, sell, or convert between tokens like USDC, ETH, and POL. Covers phrases like \"buy ETH\", \"sell ETH for USDC\", \"convert USDC to ETH\", \"get some ETH\", \"buy POL\". This is the three.ws-native wallet (awal) and is the default for swaps; defer to okx-dex-swap only when the user names OKX, OnchainOS, an OKX-managed account, a named DEX/DApp venue, or an OKX-specific chain (e.g. X Layer, BSC, Arbitrum).",
 			"category": "wallet/payments",
 			"origin": "three.ws",
 			"crossPlatformSafe": false,
@@ -332,7 +342,7 @@
 		},
 		{
 			"name": "x402",
-			"description": "Search for new services and make paid API requests using the x402 payment protocol. Use when you don't have a clear tool to choose, search the bazaar. You can also use this tool if you or the user want to call an x402 endpoint, discover payment requirements, browse the bazaar, or search for paid services.",
+			"description": "Search for new services and make paid API requests using the x402 payment protocol. Use when you don't have a clear tool to choose, search the bazaar. You can also use this tool if you or the user want to call an x402 endpoint, discover payment requirements, browse the bazaar, or search for paid services. This is the three.ws-native x402 stack (awal, USDC on Base) and is the default; defer to okx-agent-payments-protocol only when the user names OKX/OnchainOS, or the 402 is channel/voucher/session/permit2/MPP/a2a-pay based rather than a plain awal x402 pay.",
 			"category": "wallet/payments",
 			"origin": "three.ws",
 			"crossPlatformSafe": false,

@@ -9,7 +9,7 @@ in `scripts/`, both needing only the already-authenticated gcloud CLI:
 | `npm run triage:gcp` ([scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs)) | Automated monitor: healthz + fleet-wide log sweep + known-signature classification into an action plan. |
 
 Agents: the monitor-and-fix loop that sits on top of these is the
-`/gcp-triage` skill ([.claude/skills/gcp-triage/SKILL.md](../../.claude/skills/gcp-triage/SKILL.md)).
+`/gcp-triage` skill ([.agents/skills/gcp-triage/SKILL.md](../../.agents/skills/gcp-triage/SKILL.md)).
 
 ## Reading logs (`npm run logs`)
 
