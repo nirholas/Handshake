@@ -236,14 +236,80 @@ function registerLangSwitcher() {
 	customElements.define('lang-switcher', LangSwitcher);
 }
 
+// Mount a compact, fixed-position language switcher on any page that ships the
+// runtime but doesn't already place a <lang-switcher> itself. This is what lets
+// the auto-annotator wire a page for translation without also hand-editing its
+// layout to add a picker: pages that DO place their own switcher (e.g. the home
+// nav) are left alone, and a page can opt out with <body data-no-lang-switcher>.
+// Self-hides on single-language deploys because <lang-switcher> renders nothing
+// when the manifest lists fewer than two locales.
+async function mountFloatingSwitcher() {
+	if (!hasDOM || !document.body) return;
+	if (document.querySelector('lang-switcher')) return; // page placed its own
+	if (document.body.hasAttribute('data-no-lang-switcher')) return;
+	const manifest = await loadManifest();
+	if (!manifest.locales || manifest.locales.length < 2) return;
+
+	const host = document.createElement('div');
+	host.className = 'twx-i18n-fab';
+	host.setAttribute('data-no-i18n', ''); // never annotate/translate the control itself
+	const style = document.createElement('style');
+	style.textContent = `
+		.twx-i18n-fab {
+			position: fixed; z-index: 2147483000;
+			inset-block-end: max(16px, env(safe-area-inset-bottom));
+			inset-inline-end: max(16px, env(safe-area-inset-right));
+			display: inline-flex;
+			filter: drop-shadow(0 4px 14px rgba(0,0,0,.35));
+			opacity: .92; transition: opacity .15s ease;
+		}
+		.twx-i18n-fab:hover { opacity: 1; }
+		@media print { .twx-i18n-fab { display: none; } }`;
+	document.head.appendChild(style);
+	host.appendChild(document.createElement('lang-switcher'));
+	document.body.appendChild(host);
+}
+
+// Inject <link rel="alternate" hreflang> tags into <head> for the current path,
+// one per committed locale plus x-default, so a page crawled directly (not just
+// via the sitemap) advertises its translations. The default locale and
+// x-default use the bare URL; others carry ?lang=xx, matching the URLs the
+// sitemap emits and that detectLocale() honors. Idempotent and dependency-free.
+async function injectHreflang() {
+	if (!hasDOM || !document.head) return;
+	if (document.querySelector('link[rel="alternate"][hreflang]')) return; // already present
+	const manifest = await loadManifest();
+	if (!manifest.locales || manifest.locales.length < 2) return;
+	const origin = location.origin;
+	const pathname = location.pathname;
+	const href = (code) =>
+		code === manifest.default ? `${origin}${pathname}` : `${origin}${pathname}?lang=${code}`;
+	const frag = document.createDocumentFragment();
+	const add = (hreflang, url) => {
+		const link = document.createElement('link');
+		link.rel = 'alternate';
+		link.hreflang = hreflang;
+		link.href = url;
+		frag.appendChild(link);
+	};
+	for (const l of manifest.locales) add(l.code, href(l.code));
+	add('x-default', `${origin}${pathname}`);
+	document.head.appendChild(frag);
+}
+
 // Auto-initialize on load so any page that ships this script is localized with
 // zero per-page wiring.
 if (hasDOM) {
 	registerLangSwitcher();
+	const boot = async () => {
+		await initI18n();
+		mountFloatingSwitcher();
+		injectHreflang();
+	};
 	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', () => initI18n());
+		document.addEventListener('DOMContentLoaded', boot);
 	} else {
-		initI18n();
+		boot();
 	}
 	window.threewsI18n = { t, setLocale, getLocale, initI18n };
 }

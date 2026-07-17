@@ -4,25 +4,25 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Avatar SDK — @three-ws/avatar · three.ws</title>
+		<title data-i18n="avatar_sdk.meta_title">Avatar SDK — @three-ws/avatar · three.ws</title>
 		<meta
 			name="description"
 			content="Drop-in 3D avatar SDK for the web. Web component, React bindings, iframe creator, GLB upload — a complete, open replacement for legacy avatar SDKs."
-		/>
+		 data-i18n-attr="content:avatar_sdk.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="@three-ws/avatar SDK" />
+		<meta property="og:title" content="@three-ws/avatar SDK"  data-i18n-attr="content:avatar_sdk.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Drop-in 3D avatar SDK for the web. &lt;agent-3d&gt; web component, React bindings, iframe creator, GLB upload — an open replacement for legacy avatar SDKs."
-		/>
+		 data-i18n-attr="content:avatar_sdk.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/avatar-sdk" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Avatar+SDK&amp;d=The+%40three-ws%2Favatar+package%3A+embed+the+platform+3D+avatars+in+any+site+with+a+few+lines+of+JavaScript.&amp;p=%2Favatar-sdk" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="@three-ws/avatar SDK · three.ws" />
-		<meta name="twitter:description" content="Drop-in 3D avatar SDK — web component, React, creator iframe, GLB upload." />
+		<meta name="twitter:title" content="@three-ws/avatar SDK · three.ws"  data-i18n-attr="content:avatar_sdk.meta_twitter_title"/>
+		<meta name="twitter:description" content="Drop-in 3D avatar SDK — web component, React, creator iframe, GLB upload."  data-i18n-attr="content:avatar_sdk.meta_twitter_description"/>
 
 		<link rel="canonical" href="https://three.ws/avatar-sdk" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -43,7 +43,7 @@
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="Avatar SDK — three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;amp;t=Avatar+SDK&amp;amp;d=The+%40three-ws%2Favatar+package%3A+embed+the+platform+3D+avatars+in+any+site+with+a+few+lines+of+JavaScript.&amp;amp;p=%2Favatar-sdk">
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Avatar+SDK&amp;d=The+%40three-ws%2Favatar+package%3A+embed+the+platform+3D+avatars+in+any+site+with+a+few+lines+of+JavaScript.&amp;p=%2Favatar-sdk">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Avatar SDK","description":"The @three-ws/avatar package: embed the platform 3D avatars in any site with a few lines of JavaScript.","url":"https://three.ws/avatar-sdk","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&amp;t=Avatar+SDK&amp;d=The+%40three-ws%2Favatar+package%3A+embed+the+platform+3D+avatars+in+any+site+with+a+few+lines+of+JavaScript.&amp;p=%2Favatar-sdk"}]}</script>
 </head>
 	<body>
@@ -65,10 +65,10 @@
 							<span class="sdk-hero-badge-dot" aria-hidden="true"></span>
 							npm · @three-ws/avatar
 						</div>
-						<h1 class="sdk-hero-h1" id="sdk-hero-title">
+						<h1 class="sdk-hero-h1" id="sdk-hero-title" data-i18n-html="avatar_sdk.the_3d_avatar_sdk_your_app_deserves">
 							The 3D Avatar SDK<br />your app <em>deserves</em>.
 						</h1>
-						<p class="sdk-hero-sub">
+						<p class="sdk-hero-sub" data-i18n-html="avatar_sdk.drop_in_web_component_react_bindings_iframe">
 							Drop-in <strong>web component</strong>, React bindings, iframe creator, and cloud upload — a complete <strong>open avatar SDK</strong>, self-hostable, with no vendor lock-in.
 						</p>
 
@@ -81,8 +81,8 @@
 								aria-label="Copy install command"
 							>
 								<span class="prompt" aria-hidden="true">$</span>
-								<span class="cmd-text" id="install-cmd">npm install @three-ws/avatar three</span>
-								<button class="sdk-install-copy sdk-copy-btn" data-target="install-cmd" aria-label="Copy">Copy</button>
+								<span class="cmd-text" id="install-cmd" data-i18n="avatar_sdk.npm_install_three_ws_avatar_three">npm install @three-ws/avatar three</span>
+								<button class="sdk-install-copy sdk-copy-btn" data-target="install-cmd" aria-label="Copy" data-i18n="avatar_sdk.copy" data-i18n-attr="aria-label:avatar_sdk.copy_arialabel">Copy</button>
 							</div>
 						</div>
 
@@ -91,7 +91,7 @@
 								Quick start
 								<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 							</a>
-							<a href="#playground" class="sdk-btn-ghost">
+							<a href="#playground" class="sdk-btn-ghost" data-i18n="avatar_sdk.try_playground">
 								Try playground
 							</a>
 							<a href="https://github.com/nirholas/three.ws/tree/main/avatar-sdk" class="sdk-btn-ghost" target="_blank" rel="noopener">
@@ -102,20 +102,20 @@
 
 						<div class="sdk-stats sdk-reveal">
 							<div class="sdk-stat">
-								<span class="sdk-stat-value">&lt;50<span class="sdk-stat-unit">KB</span></span>
-								<span class="sdk-stat-label">Viewer gzipped</span>
+								<span class="sdk-stat-value" data-i18n-html="avatar_sdk.50kb">&lt;50<span class="sdk-stat-unit">KB</span></span>
+								<span class="sdk-stat-label" data-i18n="avatar_sdk.viewer_gzipped">Viewer gzipped</span>
 							</div>
 							<div class="sdk-stat">
-								<span class="sdk-stat-value">0<span class="sdk-stat-unit"> deps</span></span>
-								<span class="sdk-stat-label">Beyond Three.js</span>
+								<span class="sdk-stat-value" data-i18n-html="avatar_sdk.0_deps">0<span class="sdk-stat-unit"> deps</span></span>
+								<span class="sdk-stat-label" data-i18n="avatar_sdk.beyond_three_js">Beyond Three.js</span>
 							</div>
 							<div class="sdk-stat">
 								<span class="sdk-stat-value">50+</span>
-								<span class="sdk-stat-label">Mixamo animations</span>
+								<span class="sdk-stat-label" data-i18n="avatar_sdk.mixamo_animations">Mixamo animations</span>
 							</div>
 							<div class="sdk-stat">
-								<span class="sdk-stat-value">2<span class="sdk-stat-unit"> lines</span></span>
-								<span class="sdk-stat-label">To render an avatar</span>
+								<span class="sdk-stat-value" data-i18n-html="avatar_sdk.2_lines">2<span class="sdk-stat-unit"> lines</span></span>
+								<span class="sdk-stat-label" data-i18n="avatar_sdk.to_render_an_avatar">To render an avatar</span>
 							</div>
 						</div>
 					</div>
@@ -137,7 +137,7 @@
 
 				<div class="sdk-hero-scroll" aria-hidden="true">
 					<div class="sdk-hero-scroll-line"></div>
-					<span>Scroll</span>
+					<span data-i18n="avatar_sdk.scroll">Scroll</span>
 				</div>
 			</section>
 
@@ -145,44 +145,44 @@
 			<section class="sdk-section" aria-labelledby="sdk-feat-title">
 				<div class="sdk-wrap">
 					<div class="sdk-section-label sdk-reveal" aria-hidden="true">Capabilities</div>
-					<h2 class="sdk-h2 sdk-reveal" id="sdk-feat-title">Everything in one package</h2>
-					<p class="sdk-lead sdk-reveal">Four building blocks — use what you need, tree-shake the rest.</p>
+					<h2 class="sdk-h2 sdk-reveal" id="sdk-feat-title" data-i18n="avatar_sdk.everything_in_one_package">Everything in one package</h2>
+					<p class="sdk-lead sdk-reveal" data-i18n="avatar_sdk.four_building_blocks_use_what_you_need">Four building blocks — use what you need, tree-shake the rest.</p>
 
 					<div class="sdk-feature-grid">
 						<div class="sdk-feat-card sdk-reveal sdk-reveal-delay-1" style="--card-accent:#a0a0a0;--icon-bg:rgba(160, 160, 160, 0.1);--icon-border:rgba(160, 160, 160, 0.2)">
 							<div class="sdk-feat-icon">
 								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="2" y="2" width="16" height="16" rx="3" stroke="#a0a0a0" stroke-width="1.5"/><path d="M2 7h16" stroke="#a0a0a0" stroke-width="1.5"/><circle cx="5" cy="4.5" r="1" fill="#a0a0a0"/><circle cx="8" cy="4.5" r="1" fill="#a0a0a0"/></svg>
 							</div>
-							<p class="sdk-feat-title">Web Component</p>
-							<p class="sdk-feat-desc">Drop <code>&lt;agent-3d&gt;</code> or the lightweight <code>&lt;three-ws-viewer&gt;</code> into any HTML page or framework. Self-registers on import.</p>
-							<span class="sdk-feat-tag">framework-agnostic</span>
+							<p class="sdk-feat-title" data-i18n="avatar_sdk.web_component">Web Component</p>
+							<p class="sdk-feat-desc" data-i18n-html="avatar_sdk.drop_or_the_lightweight_into_any_html">Drop <code>&lt;agent-3d&gt;</code> or the lightweight <code>&lt;three-ws-viewer&gt;</code> into any HTML page or framework. Self-registers on import.</p>
+							<span class="sdk-feat-tag" data-i18n="avatar_sdk.framework_agnostic">framework-agnostic</span>
 						</div>
 
 						<div class="sdk-feat-card sdk-reveal sdk-reveal-delay-2" style="--card-accent:#959595;--icon-bg:rgba(149, 149, 149, 0.1);--icon-border:rgba(149, 149, 149, 0.2)">
 							<div class="sdk-feat-icon">
 								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="3" stroke="#959595" stroke-width="1.5"/><path d="M10 3v2M10 15v2M3 10h2M15 10h2" stroke="#959595" stroke-width="1.5" stroke-linecap="round"/><path d="M5.64 5.64l1.42 1.42M12.94 12.94l1.42 1.42M5.64 14.36l1.42-1.42M12.94 7.06l1.42-1.42" stroke="#959595" stroke-width="1.3" stroke-linecap="round"/></svg>
 							</div>
-							<p class="sdk-feat-title">React Bindings</p>
-							<p class="sdk-feat-desc">First-class React 18+ components — <code>&lt;Avatar&gt;</code>, <code>&lt;AgentAvatar&gt;</code>, <code>&lt;AvatarCreator&gt;</code> and a <code>useAvatar(id)</code> hook.</p>
-							<span class="sdk-feat-tag">@three-ws/avatar/react</span>
+							<p class="sdk-feat-title" data-i18n="avatar_sdk.react_bindings">React Bindings</p>
+							<p class="sdk-feat-desc" data-i18n-html="avatar_sdk.first_class_react_18_components_and_a">First-class React 18+ components — <code>&lt;Avatar&gt;</code>, <code>&lt;AgentAvatar&gt;</code>, <code>&lt;AvatarCreator&gt;</code> and a <code>useAvatar(id)</code> hook.</p>
+							<span class="sdk-feat-tag" data-i18n="avatar_sdk.three_ws_avatar_react">@three-ws/avatar/react</span>
 						</div>
 
 						<div class="sdk-feat-card sdk-reveal sdk-reveal-delay-3" style="--card-accent:#c3c3c3;--icon-bg:rgba(195, 195, 195, 0.1);--icon-border:rgba(195, 195, 195, 0.2)">
 							<div class="sdk-feat-icon">
 								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2.5" stroke="#c3c3c3" stroke-width="1.5"/><path d="M8 3v14" stroke="#c3c3c3" stroke-width="1.3" stroke-dasharray="2 2"/><path d="M13 8l-3 4-2-2" stroke="#c3c3c3" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 							</div>
-							<p class="sdk-feat-title">Creator Iframe</p>
-							<p class="sdk-feat-desc">Open the three.ws Avatar Studio or Selfie Studio in a modal. Resolves with a GLB Blob via postMessage — no polling, no storage tokens required.</p>
-							<span class="sdk-feat-tag">AvatarCreator class</span>
+							<p class="sdk-feat-title" data-i18n="avatar_sdk.creator_iframe">Creator Iframe</p>
+							<p class="sdk-feat-desc" data-i18n="avatar_sdk.open_the_three_ws_avatar_studio_or">Open the three.ws Avatar Studio or Selfie Studio in a modal. Resolves with a GLB Blob via postMessage — no polling, no storage tokens required.</p>
+							<span class="sdk-feat-tag" data-i18n="avatar_sdk.avatarcreator_class">AvatarCreator class</span>
 						</div>
 
 						<div class="sdk-feat-card sdk-reveal sdk-reveal-delay-4" style="--card-accent:#a7a7a7;--icon-bg:rgba(167, 167, 167, 0.1);--icon-border:rgba(167, 167, 167, 0.2)">
 							<div class="sdk-feat-icon">
 								<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 3v10M10 3l-3 3M10 3l3 3" stroke="#a7a7a7" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 13v3a1 1 0 001 1h10a1 1 0 001-1v-3" stroke="#a7a7a7" stroke-width="1.5" stroke-linecap="round"/></svg>
 							</div>
-							<p class="sdk-feat-title">Cloud Upload</p>
-							<p class="sdk-feat-desc">One-call <code>saveBlob()</code> presigns to R2, uploads, registers the avatar, auto-generates USDZ for iOS and a half-body variant for VR.</p>
-							<span class="sdk-feat-tag">saveBlob() helper</span>
+							<p class="sdk-feat-title" data-i18n="avatar_sdk.cloud_upload">Cloud Upload</p>
+							<p class="sdk-feat-desc" data-i18n-html="avatar_sdk.one_call_presigns_to_r2_uploads_registers">One-call <code>saveBlob()</code> presigns to R2, uploads, registers the avatar, auto-generates USDZ for iOS and a half-body variant for VR.</p>
+							<span class="sdk-feat-tag" data-i18n="avatar_sdk.saveblob_helper">saveBlob() helper</span>
 						</div>
 					</div>
 				</div>
@@ -192,13 +192,13 @@
 			<section class="sdk-section" id="playground" aria-labelledby="sdk-pg-title">
 				<div class="sdk-wrap">
 					<div class="sdk-section-label sdk-reveal" aria-hidden="true">Playground</div>
-					<h2 class="sdk-h2 sdk-reveal" id="sdk-pg-title">Try it live</h2>
-					<p class="sdk-lead sdk-reveal">Configure the viewer, see the result in real time, copy the code.</p>
+					<h2 class="sdk-h2 sdk-reveal" id="sdk-pg-title" data-i18n="avatar_sdk.try_it_live">Try it live</h2>
+					<p class="sdk-lead sdk-reveal" data-i18n="avatar_sdk.configure_the_viewer_see_the_result_in">Configure the viewer, see the result in real time, copy the code.</p>
 
 					<div class="sdk-playground sdk-reveal" id="sdk-playground">
 						<div class="sdk-playground-layout">
 							<div class="sdk-playground-stage">
-								<span class="sdk-playground-stage-label">Preview</span>
+								<span class="sdk-playground-stage-label" data-i18n="avatar_sdk.preview">Preview</span>
 								<three-ws-viewer
 									id="pg-viewer"
 									src="/avatars/default.glb"
@@ -209,37 +209,37 @@
 							</div>
 							<div class="sdk-playground-controls">
 								<div class="sdk-playground-header">
-									<span class="sdk-playground-header-title">Configuration</span>
-									<button class="sdk-copy-btn" id="pg-copy-btn">Copy code</button>
+									<span class="sdk-playground-header-title" data-i18n="avatar_sdk.configuration">Configuration</span>
+									<button class="sdk-copy-btn" id="pg-copy-btn" data-i18n="avatar_sdk.copy_code">Copy code</button>
 								</div>
 								<div class="sdk-playground-config">
 									<div class="sdk-pg-field">
-										<label for="pg-avatar">Avatar</label>
+										<label for="pg-avatar" data-i18n="avatar_sdk.avatar">Avatar</label>
 										<select id="pg-avatar">
-											<option value="/avatars/default.glb">Default avatar</option>
-											<option value="/avatars/cz.glb">CZ avatar</option>
+											<option value="/avatars/default.glb" data-i18n="avatar_sdk.default_avatar">Default avatar</option>
+											<option value="/avatars/cz.glb" data-i18n="avatar_sdk.cz_avatar">CZ avatar</option>
 										</select>
 									</div>
 									<div class="sdk-pg-field">
-										<label for="pg-bg">Background</label>
+										<label for="pg-bg" data-i18n="avatar_sdk.background">Background</label>
 										<select id="pg-bg">
-											<option value="#090909">Dark (#090909)</option>
-											<option value="#1c1c1c">Charcoal (#1c1c1c)</option>
-											<option value="#171717">Graphite (#171717)</option>
-											<option value="transparent">Transparent</option>
-											<option value="#ffffff">White (#ffffff)</option>
+											<option value="#090909" data-i18n="avatar_sdk.dark_090909">Dark (#090909)</option>
+											<option value="#1c1c1c" data-i18n="avatar_sdk.charcoal_1c1c1c">Charcoal (#1c1c1c)</option>
+											<option value="#171717" data-i18n="avatar_sdk.graphite_171717">Graphite (#171717)</option>
+											<option value="transparent" data-i18n="avatar_sdk.transparent">Transparent</option>
+											<option value="#ffffff" data-i18n="avatar_sdk.white_ffffff">White (#ffffff)</option>
 										</select>
 									</div>
 									<div class="sdk-pg-field">
-										<label for="pg-component">Component</label>
+										<label for="pg-component" data-i18n="avatar_sdk.component">Component</label>
 										<select id="pg-component">
-											<option value="three-ws-viewer">three-ws-viewer (lightweight)</option>
-											<option value="agent-3d">agent-3d (full runtime)</option>
+											<option value="three-ws-viewer" data-i18n="avatar_sdk.three_ws_viewer_lightweight">three-ws-viewer (lightweight)</option>
+											<option value="agent-3d" data-i18n="avatar_sdk.agent_3d_full_runtime">agent-3d (full runtime)</option>
 										</select>
 									</div>
 									<div class="sdk-pg-field sdk-pg-toggle-row">
-										<label>Auto-rotate</label>
-										<button class="sdk-pg-toggle" id="pg-rotate" aria-label="Toggle auto-rotate" role="switch" aria-checked="false"></button>
+										<label data-i18n="avatar_sdk.auto_rotate">Auto-rotate</label>
+										<button class="sdk-pg-toggle" id="pg-rotate" aria-label="Toggle auto-rotate" role="switch" aria-checked="false" data-i18n-attr="aria-label:avatar_sdk.toggle_auto_rotate_arialabel"></button>
 									</div>
 								</div>
 								<div class="sdk-playground-code">
@@ -255,20 +255,20 @@
 			<section class="sdk-section" id="quickstart" aria-labelledby="sdk-qs-title">
 				<div class="sdk-wrap">
 					<div class="sdk-section-label sdk-reveal" aria-hidden="true">Quick start</div>
-					<h2 class="sdk-h2 sdk-reveal" id="sdk-qs-title">Up in 60 seconds</h2>
-					<p class="sdk-lead sdk-reveal">Three steps from zero to a live 3D avatar in your page.</p>
+					<h2 class="sdk-h2 sdk-reveal" id="sdk-qs-title" data-i18n="avatar_sdk.up_in_60_seconds">Up in 60 seconds</h2>
+					<p class="sdk-lead sdk-reveal" data-i18n="avatar_sdk.three_steps_from_zero_to_a_live">Three steps from zero to a live 3D avatar in your page.</p>
 
 					<div class="sdk-steps">
 						<!-- Step 1 -->
 						<div class="sdk-step sdk-reveal">
 							<div class="sdk-step-num" aria-hidden="true">1</div>
 							<div class="sdk-step-body">
-								<h3 class="sdk-step-title">Install</h3>
-								<p class="sdk-step-desc">Install the package and its peer dependency from npm. React is optional.</p>
+								<h3 class="sdk-step-title" data-i18n="avatar_sdk.install">Install</h3>
+								<p class="sdk-step-desc" data-i18n="avatar_sdk.install_the_package_and_its_peer_dependency">Install the package and its peer dependency from npm. React is optional.</p>
 								<div class="sdk-code-copy">
 									<div class="sdk-code-label">
-										<span class="sdk-code-filename">terminal</span>
-										<button class="sdk-copy-btn" data-target="code-install">Copy</button>
+										<span class="sdk-code-filename" data-i18n="avatar_sdk.terminal">terminal</span>
+										<button class="sdk-copy-btn" data-target="code-install" data-i18n="avatar_sdk.copy_2">Copy</button>
 									</div>
 									<pre class="sdk-pre" id="code-install"><span class="t-op">$</span> npm install @three-ws/avatar three</pre>
 								</div>
@@ -279,16 +279,16 @@
 						<div class="sdk-step sdk-reveal">
 							<div class="sdk-step-num" aria-hidden="true">2</div>
 							<div class="sdk-step-body">
-								<h3 class="sdk-step-title">Add the web component</h3>
-								<p class="sdk-step-desc">Import once to register the element. Then use <code>&lt;agent-3d&gt;</code> anywhere in your HTML — it handles the avatar by UUID or direct GLB URL.</p>
+								<h3 class="sdk-step-title" data-i18n="avatar_sdk.add_the_web_component">Add the web component</h3>
+								<p class="sdk-step-desc" data-i18n-html="avatar_sdk.import_once_to_register_the_element_then">Import once to register the element. Then use <code>&lt;agent-3d&gt;</code> anywhere in your HTML — it handles the avatar by UUID or direct GLB URL.</p>
 								<div class="sdk-tabs">
 									<div class="sdk-tab-list" role="tablist" aria-label="Framework examples">
-										<button class="sdk-tab-btn active" role="tab" aria-selected="true">HTML</button>
-										<button class="sdk-tab-btn" role="tab" aria-selected="false">React</button>
-										<button class="sdk-tab-btn" role="tab" aria-selected="false">Bundler (ESM)</button>
+										<button class="sdk-tab-btn active" role="tab" aria-selected="true" data-i18n="avatar_sdk.html">HTML</button>
+										<button class="sdk-tab-btn" role="tab" aria-selected="false" data-i18n="avatar_sdk.react">React</button>
+										<button class="sdk-tab-btn" role="tab" aria-selected="false" data-i18n="avatar_sdk.bundler_esm">Bundler (ESM)</button>
 									</div>
 									<div class="sdk-tab-copy-row">
-										<button class="sdk-copy-btn" data-target="code-tab-html">Copy</button>
+										<button class="sdk-copy-btn" data-target="code-tab-html" data-i18n="avatar_sdk.copy_3">Copy</button>
 									</div>
 									<div class="sdk-tab-panel" role="tabpanel">
 										<pre class="sdk-pre" id="code-tab-html"><span class="t-cmt">&lt;!-- load once from CDN / your bundler --&gt;</span>
@@ -333,12 +333,12 @@ document.body.<span class="t-fn">appendChild</span>(el)<span class="t-op">;</spa
 						<div class="sdk-step sdk-reveal">
 							<div class="sdk-step-num" aria-hidden="true">3</div>
 							<div class="sdk-step-body">
-								<h3 class="sdk-step-title">Let users build their avatar</h3>
-								<p class="sdk-step-desc">Open the Creator modal — it wraps the Character Builder iframe. The <code>onExport</code> callback receives a GLB <code>Blob</code> you can pass straight to <code>saveBlob()</code>.</p>
+								<h3 class="sdk-step-title" data-i18n="avatar_sdk.let_users_build_their_avatar">Let users build their avatar</h3>
+								<p class="sdk-step-desc" data-i18n-html="avatar_sdk.open_the_creator_modal_it_wraps_the">Open the Creator modal — it wraps the Character Builder iframe. The <code>onExport</code> callback receives a GLB <code>Blob</code> you can pass straight to <code>saveBlob()</code>.</p>
 								<div class="sdk-code-copy">
 									<div class="sdk-code-label">
-										<span class="sdk-code-filename">creator-flow.js</span>
-										<button class="sdk-copy-btn" data-target="code-creator">Copy</button>
+										<span class="sdk-code-filename" data-i18n="avatar_sdk.creator_flow_js">creator-flow.js</span>
+										<button class="sdk-copy-btn" data-target="code-creator" data-i18n="avatar_sdk.copy_4">Copy</button>
 									</div>
 									<pre class="sdk-pre" id="code-creator"><span class="t-kw">import</span> { AvatarCreator, saveBlob } <span class="t-kw">from</span> <span class="t-str">'@three-ws/avatar/creator'</span><span class="t-op">;</span>
 
@@ -368,13 +368,13 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 						<div>
 							<div class="sdk-section-label sdk-reveal" aria-hidden="true">Pure visual</div>
 							<h2 class="sdk-h2 sdk-reveal" id="sdk-viewer-title"><code>&lt;three-ws-viewer&gt;</code></h2>
-							<p class="sdk-lead sdk-reveal" style="margin-bottom:24px">
+							<p class="sdk-lead sdk-reveal" style="margin-bottom:24px" data-i18n-html="avatar_sdk.when_you_don_t_need_the_full">
 								When you don't need the full agent runtime — chat, voice, lipsync — use the lightweight viewer. It only loads Three.js and OrbitControls. <strong>No WebSocket. No AI.</strong>
 							</p>
 							<div class="sdk-code-copy sdk-reveal">
 								<div class="sdk-code-label">
-									<span class="sdk-code-filename">pure-viewer.html</span>
-									<button class="sdk-copy-btn" data-target="code-viewer">Copy</button>
+									<span class="sdk-code-filename" data-i18n="avatar_sdk.pure_viewer_html">pure-viewer.html</span>
+									<button class="sdk-copy-btn" data-target="code-viewer" data-i18n="avatar_sdk.copy_5">Copy</button>
 								</div>
 								<pre class="sdk-pre" id="code-viewer"><span class="t-tag">&lt;script</span> <span class="t-attr">type</span>=<span class="t-str">"module"</span><span class="t-tag">&gt;</span>
   <span class="t-kw">import</span> <span class="t-str">'@three-ws/avatar/viewer'</span><span class="t-op">;</span>
@@ -397,7 +397,7 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 									style="width:100%;height:100%"
 								></three-ws-viewer>
 							</div>
-							<p style="text-align:center;font-size:12px;color:var(--ink-dim);margin:0">
+							<p style="text-align:center;font-size:12px;color:var(--ink-dim);margin:0" data-i18n="avatar_sdk.live_drag_to_orbit_scroll_to_zoom">
 								Live — drag to orbit · scroll to zoom
 							</p>
 						</div>
@@ -411,12 +411,12 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 					<div class="sdk-code-section reversed">
 						<div>
 							<div class="sdk-section-label sdk-reveal" aria-hidden="true">Creator</div>
-							<h2 class="sdk-h2 sdk-reveal" id="sdk-creator-title">AvatarCreator</h2>
-							<p class="sdk-lead sdk-reveal" style="margin-bottom:24px">
+							<h2 class="sdk-h2 sdk-reveal" id="sdk-creator-title" data-i18n="avatar_sdk.avatarcreator">AvatarCreator</h2>
+							<p class="sdk-lead sdk-reveal" style="margin-bottom:24px" data-i18n-html="avatar_sdk.opens_the_three_ws_avatar_studio_in">
 								Opens the three.ws Avatar Studio in a fullscreen modal. The user builds their avatar and clicks Export — you receive a GLB <code>Blob</code> in the callback. No OAuth, no API keys needed for the modal itself.
 							</p>
 							<div class="sdk-creator-demo-card sdk-reveal">
-								<p class="sdk-creator-desc">
+								<p class="sdk-creator-desc" data-i18n="avatar_sdk.click_the_button_to_open_the_avatar">
 									Click the button to open the Avatar Studio right here. After you export an avatar the file size will appear below.
 								</p>
 								<button class="sdk-btn-primary" id="sdk-creator-open">
@@ -429,8 +429,8 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 						<div class="sdk-reveal">
 							<div class="sdk-code-copy">
 								<div class="sdk-code-label">
-									<span class="sdk-code-filename">creator-minimal.js</span>
-									<button class="sdk-copy-btn" data-target="code-creator-mini">Copy</button>
+									<span class="sdk-code-filename" data-i18n="avatar_sdk.creator_minimal_js">creator-minimal.js</span>
+									<button class="sdk-copy-btn" data-target="code-creator-mini" data-i18n="avatar_sdk.copy_6">Copy</button>
 								</div>
 								<pre class="sdk-pre" id="code-creator-mini"><span class="t-kw">import</span> { AvatarCreator } <span class="t-kw">from</span>
   <span class="t-str">'@three-ws/avatar/creator'</span><span class="t-op">;</span>
@@ -464,18 +464,18 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 			<section class="sdk-section" aria-labelledby="sdk-react-title">
 				<div class="sdk-wrap">
 					<div class="sdk-section-label sdk-reveal" aria-hidden="true">React</div>
-					<h2 class="sdk-h2 sdk-reveal" id="sdk-react-title">React 18+ bindings</h2>
-					<p class="sdk-lead sdk-reveal">All four exports are typed and tree-shakeable. Marked <code>'use client'</code> for Next.js App Router.</p>
+					<h2 class="sdk-h2 sdk-reveal" id="sdk-react-title" data-i18n="avatar_sdk.react_18_bindings">React 18+ bindings</h2>
+					<p class="sdk-lead sdk-reveal" data-i18n-html="avatar_sdk.all_four_exports_are_typed_and_tree">All four exports are typed and tree-shakeable. Marked <code>'use client'</code> for Next.js App Router.</p>
 
 					<div class="sdk-tabs sdk-reveal">
 						<div class="sdk-tab-list" role="tablist" aria-label="React component examples">
-							<button class="sdk-tab-btn active" role="tab" aria-selected="true">&lt;Avatar&gt;</button>
-							<button class="sdk-tab-btn" role="tab" aria-selected="false">&lt;AgentAvatar&gt;</button>
-							<button class="sdk-tab-btn" role="tab" aria-selected="false">&lt;AvatarCreator&gt;</button>
-							<button class="sdk-tab-btn" role="tab" aria-selected="false">useAvatar()</button>
+							<button class="sdk-tab-btn active" role="tab" aria-selected="true" data-i18n="avatar_sdk.text">&lt;Avatar&gt;</button>
+							<button class="sdk-tab-btn" role="tab" aria-selected="false" data-i18n="avatar_sdk.text_2">&lt;AgentAvatar&gt;</button>
+							<button class="sdk-tab-btn" role="tab" aria-selected="false" data-i18n="avatar_sdk.text_3">&lt;AvatarCreator&gt;</button>
+							<button class="sdk-tab-btn" role="tab" aria-selected="false" data-i18n="avatar_sdk.useavatar">useAvatar()</button>
 						</div>
 						<div class="sdk-tab-copy-row">
-							<button class="sdk-copy-btn" data-target="code-react-viewer">Copy</button>
+							<button class="sdk-copy-btn" data-target="code-react-viewer" data-i18n="avatar_sdk.copy_7">Copy</button>
 						</div>
 						<div class="sdk-tab-panel" role="tabpanel">
 							<pre class="sdk-pre" id="code-react-viewer"><span class="t-kw">import</span> { Avatar } <span class="t-kw">from</span> <span class="t-str">'@three-ws/avatar/react'</span><span class="t-op">;</span>
@@ -548,70 +548,70 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 			<section class="sdk-section" aria-labelledby="sdk-api-title">
 				<div class="sdk-wrap">
 					<div class="sdk-section-label sdk-reveal" aria-hidden="true">API Reference</div>
-					<h2 class="sdk-h2 sdk-reveal" id="sdk-api-title">Exports</h2>
-					<p class="sdk-lead sdk-reveal">Everything the package surfaces.</p>
+					<h2 class="sdk-h2 sdk-reveal" id="sdk-api-title" data-i18n="avatar_sdk.exports">Exports</h2>
+					<p class="sdk-lead sdk-reveal" data-i18n="avatar_sdk.everything_the_package_surfaces">Everything the package surfaces.</p>
 
 					<div class="sdk-api-grid">
 						<div class="sdk-api-card sdk-reveal sdk-reveal-delay-1">
 							<div class="sdk-api-card-head">
-								<span class="sdk-api-export-badge">element</span>
-								<span class="sdk-api-name">&lt;agent-3d&gt;</span>
+								<span class="sdk-api-export-badge" data-i18n="avatar_sdk.element">element</span>
+								<span class="sdk-api-name" data-i18n="avatar_sdk.text_4">&lt;agent-3d&gt;</span>
 							</div>
 							<div class="sdk-api-card-body">
-								<p class="sdk-api-desc">Full AI avatar runtime — chat loop, voice, lipsync, animation, skills. 3.5 MB bundle, lazy-loaded.</p>
+								<p class="sdk-api-desc" data-i18n="avatar_sdk.full_ai_avatar_runtime_chat_loop_voice">Full AI avatar runtime — chat loop, voice, lipsync, animation, skills. 3.5 MB bundle, lazy-loaded.</p>
 								<ul class="sdk-api-props">
-									<li><span class="sdk-api-prop-name">avatar-id</span><span class="sdk-api-prop-desc">three.ws avatar UUID — resolved via /api/avatars/:id</span></li>
-									<li><span class="sdk-api-prop-name">src</span><span class="sdk-api-prop-desc">Direct GLB URL</span></li>
-									<li><span class="sdk-api-prop-name">ios-src</span><span class="sdk-api-prop-desc">USDZ URL for iOS AR Quick Look</span></li>
-									<li><span class="sdk-api-prop-name">kiosk</span><span class="sdk-api-prop-desc">Boolean — hides the debug GUI</span></li>
+									<li data-i18n-html="avatar_sdk.avatar_idthree_ws_avatar_uuid_resolved_via"><span class="sdk-api-prop-name">avatar-id</span><span class="sdk-api-prop-desc">three.ws avatar UUID — resolved via /api/avatars/:id</span></li>
+									<li data-i18n-html="avatar_sdk.srcdirect_glb_url"><span class="sdk-api-prop-name">src</span><span class="sdk-api-prop-desc">Direct GLB URL</span></li>
+									<li data-i18n-html="avatar_sdk.ios_srcusdz_url_for_ios_ar_quick"><span class="sdk-api-prop-name">ios-src</span><span class="sdk-api-prop-desc">USDZ URL for iOS AR Quick Look</span></li>
+									<li data-i18n-html="avatar_sdk.kioskboolean_hides_the_debug_gui"><span class="sdk-api-prop-name">kiosk</span><span class="sdk-api-prop-desc">Boolean — hides the debug GUI</span></li>
 								</ul>
 							</div>
 						</div>
 
 						<div class="sdk-api-card sdk-reveal sdk-reveal-delay-2">
 							<div class="sdk-api-card-head">
-								<span class="sdk-api-export-badge">element</span>
-								<span class="sdk-api-name">&lt;three-ws-viewer&gt;</span>
+								<span class="sdk-api-export-badge" data-i18n="avatar_sdk.element_2">element</span>
+								<span class="sdk-api-name" data-i18n="avatar_sdk.text_5">&lt;three-ws-viewer&gt;</span>
 							</div>
 							<div class="sdk-api-card-body">
-								<p class="sdk-api-desc">Lightweight pure-visual viewer. Three.js + OrbitControls only. No AI, no WebSocket.</p>
+								<p class="sdk-api-desc" data-i18n="avatar_sdk.lightweight_pure_visual_viewer_three_js_orbi">Lightweight pure-visual viewer. Three.js + OrbitControls only. No AI, no WebSocket.</p>
 								<ul class="sdk-api-props">
-									<li><span class="sdk-api-prop-name">src</span><span class="sdk-api-prop-desc">GLB/GLTF URL — reacts to attribute changes</span></li>
-									<li><span class="sdk-api-prop-name">background</span><span class="sdk-api-prop-desc">CSS color or "transparent"</span></li>
-									<li><span class="sdk-api-prop-name">alt</span><span class="sdk-api-prop-desc">Accessibility label + caption</span></li>
-									<li><span class="sdk-api-prop-name">load / error</span><span class="sdk-api-prop-desc">Custom events with detail.url</span></li>
+									<li data-i18n-html="avatar_sdk.srcglb_gltf_url_reacts_to_attribute_changes"><span class="sdk-api-prop-name">src</span><span class="sdk-api-prop-desc">GLB/GLTF URL — reacts to attribute changes</span></li>
+									<li data-i18n-html="avatar_sdk.backgroundcss_color_or_transparent"><span class="sdk-api-prop-name">background</span><span class="sdk-api-prop-desc">CSS color or "transparent"</span></li>
+									<li data-i18n-html="avatar_sdk.altaccessibility_label_caption"><span class="sdk-api-prop-name">alt</span><span class="sdk-api-prop-desc">Accessibility label + caption</span></li>
+									<li data-i18n-html="avatar_sdk.load_errorcustom_events_with_detail_url"><span class="sdk-api-prop-name">load / error</span><span class="sdk-api-prop-desc">Custom events with detail.url</span></li>
 								</ul>
 							</div>
 						</div>
 
 						<div class="sdk-api-card sdk-reveal sdk-reveal-delay-3">
 							<div class="sdk-api-card-head">
-								<span class="sdk-api-export-badge">class</span>
-								<span class="sdk-api-name">AvatarCreator</span>
+								<span class="sdk-api-export-badge" data-i18n="avatar_sdk.class">class</span>
+								<span class="sdk-api-name" data-i18n="avatar_sdk.avatarcreator_2">AvatarCreator</span>
 							</div>
 							<div class="sdk-api-card-body">
-								<p class="sdk-api-desc">Imperative iframe modal. Resolves with a GLB Blob via postMessage. Works with Character Builder and Selfie Studio.</p>
+								<p class="sdk-api-desc" data-i18n="avatar_sdk.imperative_iframe_modal_resolves_with_a_glb">Imperative iframe modal. Resolves with a GLB Blob via postMessage. Works with Character Builder and Selfie Studio.</p>
 								<ul class="sdk-api-props">
-									<li><span class="sdk-api-prop-name">studioUrl</span><span class="sdk-api-prop-desc">Override the iframe origin (default: three.ws)</span></li>
-									<li><span class="sdk-api-prop-name">onExport(blob)</span><span class="sdk-api-prop-desc">Called with the GLB Blob on export</span></li>
-									<li><span class="sdk-api-prop-name">onClose()</span><span class="sdk-api-prop-desc">Called on user dismiss without export</span></li>
-									<li><span class="sdk-api-prop-name">open() / close()</span><span class="sdk-api-prop-desc">Lifecycle methods</span></li>
+									<li data-i18n-html="avatar_sdk.studiourloverride_the_iframe_origin_default"><span class="sdk-api-prop-name">studioUrl</span><span class="sdk-api-prop-desc">Override the iframe origin (default: three.ws)</span></li>
+									<li data-i18n-html="avatar_sdk.onexport_blob_called_with_the_glb_blob"><span class="sdk-api-prop-name">onExport(blob)</span><span class="sdk-api-prop-desc">Called with the GLB Blob on export</span></li>
+									<li data-i18n-html="avatar_sdk.onclose_called_on_user_dismiss_without_expor"><span class="sdk-api-prop-name">onClose()</span><span class="sdk-api-prop-desc">Called on user dismiss without export</span></li>
+									<li data-i18n-html="avatar_sdk.open_close_lifecycle_methods"><span class="sdk-api-prop-name">open() / close()</span><span class="sdk-api-prop-desc">Lifecycle methods</span></li>
 								</ul>
 							</div>
 						</div>
 
 						<div class="sdk-api-card sdk-reveal sdk-reveal-delay-4">
 							<div class="sdk-api-card-head">
-								<span class="sdk-api-export-badge">function</span>
-								<span class="sdk-api-name">saveBlob(blob, opts)</span>
+								<span class="sdk-api-export-badge" data-i18n="avatar_sdk.function">function</span>
+								<span class="sdk-api-name" data-i18n="avatar_sdk.saveblob_blob_opts">saveBlob(blob, opts)</span>
 							</div>
 							<div class="sdk-api-card-body">
-								<p class="sdk-api-desc">Presigns to R2, uploads the GLB, registers the avatar record. Returns <code>{ id, url, slug }</code>.</p>
+								<p class="sdk-api-desc" data-i18n-html="avatar_sdk.presigns_to_r2_uploads_the_glb_registers">Presigns to R2, uploads the GLB, registers the avatar record. Returns <code>{ id, url, slug }</code>.</p>
 								<ul class="sdk-api-props">
-									<li><span class="sdk-api-prop-name">bearerToken</span><span class="sdk-api-prop-desc">Required — avatars:write scope</span></li>
-									<li><span class="sdk-api-prop-name">name</span><span class="sdk-api-prop-desc">Avatar display name</span></li>
-									<li><span class="sdk-api-prop-name">visibility</span><span class="sdk-api-prop-desc">"public" | "unlisted" | "private"</span></li>
-									<li><span class="sdk-api-prop-name">apiOrigin</span><span class="sdk-api-prop-desc">Override API host (for self-hosting)</span></li>
+									<li data-i18n-html="avatar_sdk.bearertokenrequired_avatars_write_scope"><span class="sdk-api-prop-name">bearerToken</span><span class="sdk-api-prop-desc">Required — avatars:write scope</span></li>
+									<li data-i18n-html="avatar_sdk.nameavatar_display_name"><span class="sdk-api-prop-name">name</span><span class="sdk-api-prop-desc">Avatar display name</span></li>
+									<li data-i18n-html="avatar_sdk.visibility_public_unlisted_private"><span class="sdk-api-prop-name">visibility</span><span class="sdk-api-prop-desc">"public" | "unlisted" | "private"</span></li>
+									<li data-i18n-html="avatar_sdk.apioriginoverride_api_host_for_self_hosting"><span class="sdk-api-prop-name">apiOrigin</span><span class="sdk-api-prop-desc">Override API host (for self-hosting)</span></li>
 								</ul>
 							</div>
 						</div>
@@ -623,73 +623,73 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 			<section class="sdk-section" aria-labelledby="sdk-compare-title">
 				<div class="sdk-wrap">
 					<div class="sdk-section-label sdk-reveal" aria-hidden="true">Comparison</div>
-					<h2 class="sdk-h2 sdk-reveal" id="sdk-compare-title">vs. legacy avatar SDKs</h2>
-					<p class="sdk-lead sdk-reveal">Legacy avatar SDKs got acquired and closed their free tiers. Here's what you get when you migrate.</p>
+					<h2 class="sdk-h2 sdk-reveal" id="sdk-compare-title" data-i18n="avatar_sdk.vs_legacy_avatar_sdks">vs. legacy avatar SDKs</h2>
+					<p class="sdk-lead sdk-reveal" data-i18n="avatar_sdk.legacy_avatar_sdks_got_acquired_and_closed">Legacy avatar SDKs got acquired and closed their free tiers. Here's what you get when you migrate.</p>
 
 					<div class="sdk-table-wrap sdk-reveal" role="region" aria-label="Comparison table" tabindex="0">
 						<table class="sdk-table">
 							<thead>
 								<tr>
-									<th scope="col">Feature</th>
-									<th scope="col">Legacy SDKs</th>
-									<th scope="col" class="col-three">@three-ws/avatar</th>
+									<th scope="col" data-i18n="avatar_sdk.feature">Feature</th>
+									<th scope="col" data-i18n="avatar_sdk.legacy_sdks">Legacy SDKs</th>
+									<th scope="col" class="col-three" data-i18n="avatar_sdk.three_ws_avatar">@three-ws/avatar</th>
 								</tr>
 							</thead>
 							<tbody>
 								<tr>
-									<td>Photo → 3D avatar</td>
-									<td><span class="cross">✕</span> Closed</td>
-									<td class="col-three"><span class="check">✓</span> Selfie pipeline</td>
+									<td data-i18n="avatar_sdk.photo_3d_avatar">Photo → 3D avatar</td>
+									<td data-i18n-html="avatar_sdk.closed"><span class="cross">✕</span> Closed</td>
+									<td class="col-three" data-i18n-html="avatar_sdk.selfie_pipeline"><span class="check">✓</span> Selfie pipeline</td>
 								</tr>
 								<tr>
-									<td>In-browser avatar editor</td>
-									<td><span class="cross">✕</span> Closed to new apps</td>
-									<td class="col-three"><span class="check">✓</span> Character Builder</td>
+									<td data-i18n="avatar_sdk.in_browser_avatar_editor">In-browser avatar editor</td>
+									<td data-i18n-html="avatar_sdk.closed_to_new_apps"><span class="cross">✕</span> Closed to new apps</td>
+									<td class="col-three" data-i18n-html="avatar_sdk.character_builder"><span class="check">✓</span> Character Builder</td>
 								</tr>
 								<tr>
-									<td>Hosted CDN storage</td>
-									<td>Paid only</td>
-									<td class="col-three"><span class="check">✓</span> three.ws R2 (free public tier)</td>
+									<td data-i18n="avatar_sdk.hosted_cdn_storage">Hosted CDN storage</td>
+									<td data-i18n="avatar_sdk.paid_only">Paid only</td>
+									<td class="col-three" data-i18n-html="avatar_sdk.three_ws_r2_free_public_tier"><span class="check">✓</span> three.ws R2 (free public tier)</td>
 								</tr>
 								<tr>
-									<td>ARKit viseme morphs</td>
+									<td data-i18n="avatar_sdk.arkit_viseme_morphs">ARKit viseme morphs</td>
 									<td><span class="check">✓</span></td>
-									<td class="col-three"><span class="check">✓</span> Loaded automatically</td>
+									<td class="col-three" data-i18n-html="avatar_sdk.loaded_automatically"><span class="check">✓</span> Loaded automatically</td>
 								</tr>
 								<tr>
-									<td>Mixamo-compatible rig</td>
+									<td data-i18n="avatar_sdk.mixamo_compatible_rig">Mixamo-compatible rig</td>
 									<td><span class="check">✓</span></td>
-									<td class="col-three"><span class="check">✓</span> Same naming conventions</td>
+									<td class="col-three" data-i18n-html="avatar_sdk.same_naming_conventions"><span class="check">✓</span> Same naming conventions</td>
 								</tr>
 								<tr>
-									<td>Animation library</td>
-									<td>~30 clips</td>
-									<td class="col-three"><span class="check">✓</span> 50+ Mixamo clips bundled</td>
+									<td data-i18n="avatar_sdk.animation_library">Animation library</td>
+									<td data-i18n="avatar_sdk.30_clips">~30 clips</td>
+									<td class="col-three" data-i18n-html="avatar_sdk.50_mixamo_clips_bundled"><span class="check">✓</span> 50+ Mixamo clips bundled</td>
 								</tr>
 								<tr>
-									<td>iOS Quick Look USDZ</td>
+									<td data-i18n="avatar_sdk.ios_quick_look_usdz">iOS Quick Look USDZ</td>
 									<td><span class="cross">✕</span></td>
-									<td class="col-three"><span class="check">✓</span> Auto-generated server-side</td>
+									<td class="col-three" data-i18n-html="avatar_sdk.auto_generated_server_side"><span class="check">✓</span> Auto-generated server-side</td>
 								</tr>
 								<tr>
-									<td>WebXR / VR</td>
+									<td data-i18n="avatar_sdk.webxr_vr">WebXR / VR</td>
 									<td><span class="cross">✕</span></td>
-									<td class="col-three"><span class="check">✓</span> Half-body auto-generated</td>
+									<td class="col-three" data-i18n-html="avatar_sdk.half_body_auto_generated"><span class="check">✓</span> Half-body auto-generated</td>
 								</tr>
 								<tr>
-									<td>Web component</td>
+									<td data-i18n="avatar_sdk.web_component_2">Web component</td>
 									<td><span class="check">✓</span></td>
 									<td class="col-three"><span class="check">✓</span> <code>&lt;agent-3d&gt;</code></td>
 								</tr>
 								<tr>
-									<td>React bindings</td>
-									<td>Community only</td>
-									<td class="col-three"><span class="check">✓</span> Official, typed</td>
+									<td data-i18n="avatar_sdk.react_bindings_2">React bindings</td>
+									<td data-i18n="avatar_sdk.community_only">Community only</td>
+									<td class="col-three" data-i18n-html="avatar_sdk.official_typed"><span class="check">✓</span> Official, typed</td>
 								</tr>
 								<tr>
-									<td>Self-hostable</td>
+									<td data-i18n="avatar_sdk.self_hostable">Self-hostable</td>
 									<td><span class="cross">✕</span></td>
-									<td class="col-three"><span class="check">✓</span> Apache-2.0 open source</td>
+									<td class="col-three" data-i18n-html="avatar_sdk.apache_2_0_open_source"><span class="check">✓</span> Apache-2.0 open source</td>
 								</tr>
 							</tbody>
 						</table>
@@ -702,15 +702,15 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 				<div class="sdk-wrap">
 					<div class="sdk-cta-banner sdk-reveal">
 						<div class="sdk-cta-banner-copy">
-							<h2 id="sdk-cta-title">Ready to ship 3D avatars?</h2>
-							<p>Create your first avatar free. No credit card. Push to production in minutes.</p>
+							<h2 id="sdk-cta-title" data-i18n="avatar_sdk.ready_to_ship_3d_avatars">Ready to ship 3D avatars?</h2>
+							<p data-i18n="avatar_sdk.create_your_first_avatar_free_no_credit">Create your first avatar free. No credit card. Push to production in minutes.</p>
 						</div>
 						<div class="sdk-cta-banner-actions">
 							<a href="/create" class="sdk-btn-primary">
 								Create an avatar
 								<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 							</a>
-							<a href="https://github.com/nirholas/three.ws/tree/main/avatar-sdk" class="sdk-btn-ghost" target="_blank" rel="noopener">
+							<a href="https://github.com/nirholas/three.ws/tree/main/avatar-sdk" class="sdk-btn-ghost" target="_blank" rel="noopener" data-i18n="avatar_sdk.read_the_source">
 								Read the source
 							</a>
 						</div>
@@ -730,5 +730,7 @@ creator.<span class="t-fn">open</span>()<span class="t-op">;</span></pre>
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

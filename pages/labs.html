@@ -4,19 +4,19 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Labs — three.ws</title>
-	<meta name="description" content="A curated gallery of three.ws's most powerful — and most hidden — features. Find and try things you didn't know existed." />
+	<title data-i18n="labs.meta_title">Labs — three.ws</title>
+	<meta name="description" content="A curated gallery of three.ws's most powerful — and most hidden — features. Find and try things you didn't know existed."  data-i18n-attr="content:labs.meta_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
-	<meta property="og:title" content="Labs · Hidden Gems — three.ws" />
-	<meta property="og:description" content="Fact checker, AI tutor, lipsync, Bitcoin inscription, and more. All live. Most people have never found them." />
+	<meta property="og:title" content="Labs · Hidden Gems — three.ws"  data-i18n-attr="content:labs.meta_og_title"/>
+	<meta property="og:description" content="Fact checker, AI tutor, lipsync, Bitcoin inscription, and more. All live. Most people have never found them."  data-i18n-attr="content:labs.meta_og_description"/>
 	<meta property="og:url" content="https://three.ws/labs" />
 	<meta property="og:image" content="https://three.ws/og-image.png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Labs · Hidden Gems — three.ws" />
-	<meta name="twitter:description" content="Fact checker, AI tutor, lipsync, Bitcoin inscription. All live, most undiscovered." />
+	<meta name="twitter:title" content="Labs · Hidden Gems — three.ws"  data-i18n-attr="content:labs.meta_twitter_title"/>
+	<meta name="twitter:description" content="Fact checker, AI tutor, lipsync, Bitcoin inscription. All live, most undiscovered."  data-i18n-attr="content:labs.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/og-image.png" />
 	<link rel="canonical" href="https://three.ws/labs" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -400,17 +400,17 @@
 			<!-- Hero -->
 			<section class="labs-hero" aria-labelledby="labs-heading">
 				<div class="labs-hero-inner">
-					<p class="labs-eyebrow">Labs</p>
-					<h1 id="labs-heading">Hidden gems, now<br/>front and center.</h1>
-					<p>These features already exist. Most people have never found them. Fact-checker, AI tutor, Bitcoin inscription, lipsync demo, self-funding agent — all live, all real, all wired to on-chain payments.</p>
+					<p class="labs-eyebrow" data-i18n="labs.labs">Labs</p>
+					<h1 id="labs-heading" data-i18n-html="labs.hidden_gems_now_front_and_center">Hidden gems, now<br/>front and center.</h1>
+					<p data-i18n="labs.these_features_already_exist_most_people_hav">These features already exist. Most people have never found them. Fact-checker, AI tutor, Bitcoin inscription, lipsync demo, self-funding agent — all live, all real, all wired to on-chain payments.</p>
 					<div class="labs-stats">
 						<div class="labs-stat">
 							<strong id="labs-gem-count">—</strong>
-							<span>features</span>
+							<span data-i18n="labs.features">features</span>
 						</div>
 						<div class="labs-stat">
 							<strong id="labs-live-count">—</strong>
-							<span>verified live</span>
+							<span data-i18n="labs.verified_live">verified live</span>
 						</div>
 					</div>
 				</div>
@@ -418,12 +418,12 @@
 
 			<!-- Filter bar -->
 			<div class="labs-filters" role="group" aria-label="Filter by category">
-				<button class="labs-filter active" data-cat="all" type="button">All</button>
-				<button class="labs-filter" data-cat="x402" type="button">x402</button>
-				<button class="labs-filter" data-cat="voice" type="button">Voice</button>
-				<button class="labs-filter" data-cat="ai" type="button">AI</button>
-				<button class="labs-filter" data-cat="3d" type="button">3D Live</button>
-				<button class="labs-filter" data-cat="crypto" type="button">Crypto</button>
+				<button class="labs-filter active" data-cat="all" type="button" data-i18n="labs.all">All</button>
+				<button class="labs-filter" data-cat="x402" type="button" data-i18n="labs.x402">x402</button>
+				<button class="labs-filter" data-cat="voice" type="button" data-i18n="labs.voice">Voice</button>
+				<button class="labs-filter" data-cat="ai" type="button" data-i18n="labs.ai">AI</button>
+				<button class="labs-filter" data-cat="3d" type="button" data-i18n="labs.3d_live">3D Live</button>
+				<button class="labs-filter" data-cat="crypto" type="button" data-i18n="labs.crypto">Crypto</button>
 				<span class="labs-result-count" aria-live="polite" id="labs-result-count"></span>
 			</div>
 
@@ -482,14 +482,14 @@
 
 					<!-- Empty state (shown when no gems match filter) -->
 					<div class="labs-empty" id="labs-empty" aria-hidden="true" role="status">
-						<h2>No features match this filter</h2>
-						<p>Try "All" to see everything, or flag more pages with <code>"showcase": true</code> in data/pages.json.</p>
+						<h2 data-i18n="labs.no_features_match_this_filter">No features match this filter</h2>
+						<p data-i18n-html="labs.try_all_to_see_everything_or_flag">Try "All" to see everything, or flag more pages with <code>"showcase": true</code> in data/pages.json.</p>
 					</div>
 
 					<!-- Error state -->
 					<div class="labs-error" id="labs-error" aria-hidden="true" role="alert">
-						<p>Couldn't load the feature registry.</p>
-						<button class="labs-retry" id="labs-retry" type="button">Retry</button>
+						<p data-i18n="labs.couldn_t_load_the_feature_registry">Couldn't load the feature registry.</p>
+						<button class="labs-retry" id="labs-retry" type="button" data-i18n="labs.retry">Retry</button>
 					</div>
 				</div>
 			</section>
@@ -499,5 +499,7 @@
 	<div id="footer-container"></div>
 	<script type="module" src="/src/labs.js"></script>
 	<script src="/footer.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

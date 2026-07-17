@@ -37,6 +37,7 @@ import { fetchModel } from '../_lib/fetch-model.js';
 import { isFlagEnabled } from '../_lib/flags.js';
 import { pickDiversityProfile, describeProfile } from '../_lib/avaturn-seed.js';
 import { pickBaseBody, pickColorway, pickScale, recolorGlb } from '../_lib/studio-avatar.js';
+import { composeStudioAvatar } from '../_lib/avatar-composer/index.js';
 import { randomUUID } from 'node:crypto';
 
 const CIRCUIT_NAME = 'avaturn-seed';
@@ -120,21 +121,86 @@ async function runOnce() {
 	if (!user?.id) return { skipped: true, reason: 'user insert conflict — retry next tick' };
 
 	const seed = randomUUID();
-	// Draw a person from the diversity matrix, then recolor a matching rigged base
-	// body (skin / hair / outfit) into that person. Free, self-owned, no external
-	// service — Avaturn shut down their free public editor and their API is paid.
+	// Draw a person from the diversity matrix, then COMPOSE a rigged avatar for
+	// them: mix hair / top / bottom / footwear / glasses across the compatible
+	// RPM base bodies onto one shared skeleton, recolor each part, and scale for
+	// height. This is the modular Avatar Composer (api/_lib/avatar-composer) — the
+	// same one-skeleton-many-parts architecture Ready Player Me and Avaturn use —
+	// so two draws almost never land on the same body. Free, self-owned, no
+	// external service. If composition fails for any reason, fall back to the
+	// legacy single-base recolor so the tick still ships a valid rigged avatar.
 	const profile = pickDiversityProfile(seed);
-	const base = pickBaseBody(profile, seed);
 
 	try {
-		// Fetch the rigged base body (served from /avatars), recolor it in memory,
-		// and store the variant. The skeleton + blendshapes are untouched, so the
-		// result is a genuinely rigged, walk-ready avatar.
-		const baseUrl = `${ORIGIN()}/avatars/${base.file}`;
-		const { bytes } = await fetchModel(baseUrl, { maxBytes: 40 * 1024 * 1024 });
-		const colorway = pickColorway(profile, seed);
-		const scale = pickScale(profile, seed);
-		const { buffer: glbBytes, recolored } = recolorGlb(Buffer.from(bytes), colorway, scale);
+		let glbBytes;
+		let sourceMeta;
+		try {
+			// Fetch only the bases this recipe needs (identity + compatible donors),
+			// cached within the tick so a donor shared by two slots is fetched once.
+			const cache = new Map();
+			const loadBase = async (id) => {
+				if (cache.has(id)) return cache.get(id);
+				const { bytes } = await fetchModel(`${ORIGIN()}/avatars/${id}.glb`, { maxBytes: 40 * 1024 * 1024 });
+				const u8 = new Uint8Array(bytes);
+				cache.set(id, u8);
+				return u8;
+			};
+			const composed = await composeStudioAvatar({ profile, seed, loadBase });
+			glbBytes = Buffer.from(composed.bytes);
+			const rigInfo = inspectGlb(glbBytes);
+			sourceMeta = {
+				seed: true,
+				studio: true,
+				composed: true,
+				rig: 'wolf3d',
+				base_body: composed.descriptor.identity,
+				parts: composed.descriptor.parts,
+				glasses: composed.descriptor.glasses,
+				body_type: profile.gender,
+				is_rigged: rigInfo ? rigInfo.isRigged : true,
+				skeleton_joint_count: rigInfo?.skeletonJointCount ?? null,
+				skin_count: rigInfo?.skinCount ?? null,
+				recolored: composed.recolored,
+				scale: composed.descriptor.scale,
+				profile: {
+					gender: profile.gender,
+					age: profile.ageKey,
+					ethnicity: profile.ethnicityKey,
+					build: profile.build,
+				},
+			};
+		} catch (composeErr) {
+			// Legacy path: recolor one whole base body. Same rigged, walk-ready
+			// output, just without cross-base part variety.
+			console.warn('[avaturn-seed] compose failed, recolor fallback', composeErr?.message);
+			const base = pickBaseBody(profile, seed);
+			const { bytes } = await fetchModel(`${ORIGIN()}/avatars/${base.file}`, { maxBytes: 40 * 1024 * 1024 });
+			const colorway = pickColorway(profile, seed);
+			const scale = pickScale(profile, seed);
+			const { buffer, recolored } = recolorGlb(Buffer.from(bytes), colorway, scale);
+			glbBytes = buffer;
+			const rigInfo = inspectGlb(glbBytes);
+			sourceMeta = {
+				seed: true,
+				studio: true,
+				composed: false,
+				recolor_fallback: true,
+				rig: 'wolf3d',
+				base_body: base.id,
+				body_type: profile.gender,
+				is_rigged: rigInfo ? rigInfo.isRigged : true,
+				skeleton_joint_count: rigInfo?.skeletonJointCount ?? null,
+				skin_count: rigInfo?.skinCount ?? null,
+				recolored,
+				scale,
+				profile: {
+					gender: profile.gender,
+					age: profile.ageKey,
+					ethnicity: profile.ethnicityKey,
+					build: profile.build,
+				},
+			};
+		}
 
 		const slug = toSlug(displayName);
 		const storageKey = `u/${user.id}/${slug}.glb`;
@@ -144,29 +210,6 @@ async function runOnce() {
 			contentType: 'model/gltf-binary',
 			metadata: { source: 'studio-seed' },
 		});
-
-		// Confirm the recolor preserved the rig, and stamp the signal the gallery /
-		// marketplace "rigged" filter keys off (source_meta.is_rigged /
-		// skeleton_joint_count in searchPublicAvatars).
-		const rigInfo = inspectGlb(glbBytes);
-		const sourceMeta = {
-			seed: true,
-			studio: true,
-			rig: 'wolf3d',
-			base_body: base.id,
-			body_type: profile.gender,
-			is_rigged: rigInfo ? rigInfo.isRigged : true,
-			skeleton_joint_count: rigInfo?.skeletonJointCount ?? null,
-			skin_count: rigInfo?.skinCount ?? null,
-			recolored,
-			scale,
-			profile: {
-				gender: profile.gender,
-				age: profile.ageKey,
-				ethnicity: profile.ethnicityKey,
-				build: profile.build,
-			},
-		};
 
 		const description = `Rigged, walk-ready avatar — ${describeProfile(profile)} — forged on three.ws`;
 		const tags = ['avatar', 'studio', 'human', profile.gender];
@@ -197,7 +240,9 @@ async function runOnce() {
 			slug,
 			size_bytes: glbBytes.length,
 			body_type: profile.gender,
-			base_body: base.id,
+			base_body: sourceMeta.base_body,
+			composed: sourceMeta.composed,
+			parts: sourceMeta.parts,
 		};
 	} catch (err) {
 		await circuitRecordFailure(CIRCUIT_NAME, {

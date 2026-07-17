@@ -1,26 +1,28 @@
 // @ts-check
-// Avatar Composer — core composition engine.
+// Avatar Composer: core composition engine.
 //
 // Assembles a single rigged GLB by mixing skinned parts across the RPM base
 // bodies (see parts.js) onto one shared skeleton, then recolors each part and
-// scales the whole avatar. Buffer-in / buffer-out and deterministic — no I/O, no
+// scales the whole avatar. Buffer-in / buffer-out and deterministic: no I/O, no
 // GPU, no external service.
 //
-// The one rule that makes this correct (confirmed against gltf-transform's
-// source and RPM/Avaturn's architecture): body parts are NEVER fused into a
-// single mesh. `join()` refuses skinned/morph meshes for good reason — each part
-// stays its own skinned primitive, and they all reference ONE shared Skin. All
-// four bases share a byte-identical joint list, so re-pointing a borrowed part
-// to the identity base's skin transfers its skin weights without distortion.
+// Two rules make this correct (both learned the hard way, by rendering):
+//   * Parts are NEVER fused into one mesh. `join()` refuses skinned/morph meshes
+//     for good reason; each part stays its own skinned primitive.
+//   * A borrowed part keeps its OWN inverse-bind matrices (RPM bakes them per
+//     mesh, and only a part's own binds are correct for its region), but its
+//     skin's joints are remapped onto the identity skeleton's nodes. Joint order
+//     is byte-identical across bases, so slot i maps to slot i, and the whole
+//     avatar ends up driven by ONE skeleton while every part deforms correctly.
 //
 // Pipeline per compose():
 //   1. Start from the identity base (its head+body+eyes+teeth+beard + skeleton).
-//   2. For each swappable slot, either keep the identity's part, drop it, or
-//      merge a donor base's part and re-point it to the shared skin.
-//   3. Collapse every skinned mesh onto one shared Skin; prune orphans.
+//   2. For each swappable slot, keep the identity's part, drop it, or merge a
+//      donor base's part and remap its skin's joints onto the identity skeleton.
+//   3. Dispose the donor scenes; prune reclaims the donor skeletons + spare meshes.
 //   4. Recolor each part's material by its colorway channel.
 //   5. Scale the rig uniformly for height variety.
-//   6. dedup → prune → meshopt-compress → single buffer → write.
+//   6. dedup, prune, meshopt-compress, single buffer, write.
 
 import { NodeIO, Document } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
@@ -63,7 +65,7 @@ function nodeForMesh(doc, mesh) {
 
 // The skin borrowed parts bind to. It must be the identity BODY mesh's skin, not
 // the head's: RPM stores inverse-bind matrices per skin, and the head skin's
-// binds are only trustworthy for the head/arm joints it actually deforms — bind
+// binds are only trustworthy for the head/arm joints it actually deforms: bind
 // a shoe to it and the foot joints resolve wrong (the shoe flies to the
 // shoulders). The body mesh spans the whole skeleton, so its inverse binds are
 // correct for every region. Falls back to head, then the first skin.
@@ -124,7 +126,7 @@ export async function composeAvatar(recipe, bytesByBase) {
 	if (!bodySkin) throw new Error('composeAvatar: identity base has no body skin');
 	const identityJoints = bodySkin.listJoints();
 	const identitySkeleton = bodySkin.getSkeleton();
-	// The armature node identity meshes hang under — borrowed nodes join it so
+	// The armature node identity meshes hang under: borrowed nodes join it so
 	// their world matrix (three.js uses it as the skinning bind matrix) matches.
 	const bodyNode = target.getRoot().listNodes().find((n) => n.getMesh() && meshSlot(n.getMesh()) === 'body');
 	const armature = bodyNode?.getParentNode() || tScene.listChildren()[0] || tScene;
@@ -154,7 +156,7 @@ export async function composeAvatar(recipe, bytesByBase) {
 	}
 
 	// Graft each borrowed part: keep its OWN skin (its inverse-bind matrices are
-	// the only ones correct for that part's region — re-pointing to another skin
+	// the only ones correct for that part's region: re-pointing to another skin
 	// throws the part across the body), but remap that skin's joints onto the
 	// identity skeleton's nodes. Joint order is byte-identical across bases, so
 	// slot i maps to slot i; the part now deforms with the identity skeleton while

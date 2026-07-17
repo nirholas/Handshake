@@ -269,6 +269,36 @@ describe('gcp provider — trellis quality forwarding', () => {
 		}
 	});
 
+	it('forwards matte:true only when the caller requests background pre-matting', async () => {
+		const bodies = [];
+		const origFetch = globalThis.fetch;
+		globalThis.fetch = vi.fn(async (url, opts) => {
+			bodies.push(JSON.parse(opts.body));
+			return new Response(JSON.stringify({ task_id: 'tsk_m', status: 'queued' }), {
+				status: 202,
+				headers: { 'content-type': 'application/json' },
+			});
+		});
+		try {
+			const { createRegenProvider: mk } = await import('../../api/_providers/gcp.js');
+			const gcp = mk();
+			await gcp.submit({
+				mode: 'trellis',
+				sourceUrl: 'https://cdn.three.ws/ref.png',
+				params: { images: ['https://cdn.three.ws/ref.png'], matte: true },
+			});
+			await gcp.submit({
+				mode: 'trellis',
+				sourceUrl: 'https://cdn.three.ws/ref.png',
+				params: { images: ['https://cdn.three.ws/ref.png'] },
+			});
+			expect(bodies[0].matte).toBe(true);
+			expect(bodies[1]).not.toHaveProperty('matte');
+		} finally {
+			globalThis.fetch = origFetch;
+		}
+	});
+
 	it('omits quality/seed entirely when the caller sends none (worker defaults apply)', async () => {
 		const calls = [];
 		const origFetch = globalThis.fetch;

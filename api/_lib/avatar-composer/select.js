@@ -1,5 +1,5 @@
 // @ts-check
-// Avatar Composer — seeded recipe selection.
+// Avatar Composer: seeded recipe selection.
 //
 // Turns a diversity profile + seed into a concrete compose recipe: which base is
 // the identity, which base donates each swappable part, whether to wear glasses,
@@ -42,7 +42,7 @@ const GLASSES_CHANCE = 0.28;
  * Build a compose recipe from a diversity profile + seed.
  *
  * Part meshes are drawn from any base in the identity's rest-pose group (the
- * identity plus its compatible partner), regardless of the donor's gender — a
+ * identity plus its compatible partner), regardless of the donor's gender: a
  * jacket or hairstyle reads on either body, and the cross-sourcing plus per-part
  * recolor and scale is what produces the variety (vs. the five fixed bodies the
  * recolor lane had). The identity base (face + body + skin) matches the profile's

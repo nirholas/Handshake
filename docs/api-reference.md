@@ -877,6 +877,27 @@ passes, when QA was unavailable (never retry on an outage), or when the retry ca
 for server-side use as `runQualityGate` + `buildRetryDirective` from
 `api/_lib/forge-quality-gate.js` — the generation router uses it directly.
 
+#### Which generations are gated: `FORGE_QUALITY_GATE`
+
+`POST /api/forge` runs this gate automatically after producing a model. Two
+scorers stack: a **free deterministic** pass (`api/_lib/glb-quality.js`, reads the
+glTF JSON chunk: catches blobs, zero-volume and untextured meshes on **every**
+lane and reruns once) and the **vision** pass above (semantic: does it look like
+the prompt). `FORGE_QUALITY_GATE` chooses which lanes pay for the vision pass:
+
+| Value | Behavior |
+| --- | --- |
+| `adaptive` **(default)** | The paid **High** tier is always vision-scored. The **free Draft/Standard** lanes escalate to vision QA **only when the fast scorer can't vouch for the mesh** (a `low`/`degenerate`/untextured result, or an `ok` mesh below the `FORGE_QUALITY_ADAPTIVE_MIN` confidence score, default `0.6`). A clean, textured draft ships instantly with no vision latency, so the free lane gains a semantic quality floor without slowing the common case. |
+| `high` | Only the High tier is vision-scored; free lanes keep only the deterministic floor. |
+| `all` | Every tier is vision-scored unconditionally (no fast-scorer shortcut). |
+| `off` | No vision QA anywhere (the deterministic floor still runs). |
+
+On a failing verdict the router runs a bounded best-of retry
+(`FORGE_QUALITY_GATE_MAX_RETRIES`, default 1, clamped 0-2), keeping the
+higher-scoring result. The delivered generation carries a `quality` (deterministic)
+and, when scored, a `quality_gate` (vision verdict) field: the `/forge` result bar
+renders these as a **Verified NN% / Low NN% / Checked** confidence chip.
+
 **Errors**
 
 | Status | Code                | Meaning                                                                        |

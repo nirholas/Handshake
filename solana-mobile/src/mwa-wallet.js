@@ -12,6 +12,7 @@
 // — is loaded lazily on first use so desktop bundles don't pay for it.
 
 import { PublicKey } from '@solana/web3.js';
+import { normalizeMwaError } from './mwa-errors.js';
 
 const APP_IDENTITY = Object.freeze({
 	name: 'three.ws',
@@ -174,7 +175,7 @@ export class MwaWallet {
 					clearStoredAuth();
 					this.#authToken = null;
 				}
-				throw err;
+				throw normalizeMwaError(err);
 			}
 			return { publicKey: this.#publicKey };
 		})();
@@ -220,22 +221,27 @@ export class MwaWallet {
 			throw new TypeError('signMessage expects a Uint8Array');
 		}
 		const transact = await loadTransact();
-		let signatureBytes = null;
-		await transact(async (wallet) => {
-			const reauth = await wallet.reauthorize({
-				auth_token: this.#authToken,
-				identity: APP_IDENTITY,
+		let signed = null;
+		try {
+			await transact(async (wallet) => {
+				const reauth = await wallet.reauthorize({
+					auth_token: this.#authToken,
+					identity: APP_IDENTITY,
+				});
+				this.#applyAuthResult(reauth);
+				signed = await wallet.signMessages({
+					addresses: [this.#authResultAddressBase64()],
+					payloads: [messageBytes],
+				});
 			});
-			this.#applyAuthResult(reauth);
-			const signed = await wallet.signMessages({
-				addresses: [this.#authResultAddressBase64()],
-				payloads: [messageBytes],
-			});
-			const combined = Array.isArray(signed) ? signed[0] : null;
-			if (!(combined instanceof Uint8Array)) throw new Error('MWA returned no signed payload');
-			signatureBytes = combined.slice(combined.length - 64);
-		});
-		if (!signatureBytes) throw new Error('MWA signMessage produced no signature');
+		} catch (err) {
+			throw normalizeMwaError(err);
+		}
+		const combined = Array.isArray(signed) ? signed[0] : null;
+		if (!(combined instanceof Uint8Array)) throw new Error('MWA returned no signed payload');
+		// web3js signMessages returns the message with the 64-byte ed25519
+		// signature appended; take the trailing 64 bytes.
+		const signatureBytes = combined.slice(combined.length - 64);
 		return { signature: signatureBytes, publicKey: this.#publicKey };
 	}
 
@@ -258,14 +264,18 @@ export class MwaWallet {
 		// web3.js Transaction / VersionedTransaction objects and returns
 		// deserialized signed transaction objects — no manual serialization.
 		let signed = [];
-		await transact(async (wallet) => {
-			const reauth = await wallet.reauthorize({
-				auth_token: this.#authToken,
-				identity: APP_IDENTITY,
+		try {
+			await transact(async (wallet) => {
+				const reauth = await wallet.reauthorize({
+					auth_token: this.#authToken,
+					identity: APP_IDENTITY,
+				});
+				this.#applyAuthResult(reauth);
+				signed = await wallet.signTransactions({ transactions });
 			});
-			this.#applyAuthResult(reauth);
-			signed = await wallet.signTransactions({ transactions });
-		});
+		} catch (err) {
+			throw normalizeMwaError(err);
+		}
 		if (!Array.isArray(signed) || signed.length !== transactions.length) {
 			throw new Error('MWA returned mismatched signed transaction count');
 		}
@@ -282,23 +292,81 @@ export class MwaWallet {
 		const transact = await loadTransact();
 		// web3js wallet proxy: signAndSendTransactions takes { transactions }
 		// and returns base58 signature strings (Phantom-compatible).
-		let signature = null;
-		await transact(async (wallet) => {
-			const reauth = await wallet.reauthorize({
-				auth_token: this.#authToken,
-				identity: APP_IDENTITY,
+		let signatures = null;
+		try {
+			await transact(async (wallet) => {
+				const reauth = await wallet.reauthorize({
+					auth_token: this.#authToken,
+					identity: APP_IDENTITY,
+				});
+				this.#applyAuthResult(reauth);
+				signatures = await wallet.signAndSendTransactions({
+					transactions: [transaction],
+					...(minContextSlot ? { minContextSlot } : null),
+				});
 			});
-			this.#applyAuthResult(reauth);
-			const signatures = await wallet.signAndSendTransactions({
-				transactions: [transaction],
-				...(minContextSlot ? { minContextSlot } : null),
-			});
-			const first = Array.isArray(signatures) ? signatures[0] : null;
-			if (typeof first !== 'string') throw new Error('MWA returned no signature');
-			signature = first;
-		});
+		} catch (err) {
+			throw normalizeMwaError(err);
+		}
+		const signature = Array.isArray(signatures) ? signatures[0] : null;
+		if (typeof signature !== 'string') throw new Error('MWA returned no signature');
 		return { signature };
 	}
+
+	/**
+	 * One-tap Sign-In With Solana (SIWS). On the Seed Vault, authorization and
+	 * the sign-in signature happen in a SINGLE wallet interaction via the MWA
+	 * `sign_in_payload` — instead of the two prompts (connect, then sign) that
+	 * the generic connect()+signMessage() path costs. The wallet builds the
+	 * canonical SIWS (CAIP-122) message itself and returns the exact bytes it
+	 * signed, so the caller can hand `signedMessageText` + `signature` straight
+	 * to /api/auth/siws/verify.
+	 *
+	 * @param {object} input SIWS fields — domain, statement, uri, version,
+	 *   chainId, nonce, issuedAt, expirationTime, resources. `domain` defaults
+	 *   to the current host.
+	 * @returns {Promise<null | {
+	 *   address: string, publicKey: PublicKey,
+	 *   signature: Uint8Array, signedMessage: Uint8Array, signedMessageText: string
+	 * }>} null when the connected wallet does not support authorize-time
+	 *   sign-in (caller should fall back to connect()+signMessage()).
+	 */
+	async signIn(input = {}) {
+		const transact = await loadTransact();
+		const payload = {
+			domain: input.domain
+				|| (typeof location !== 'undefined' ? location.host : undefined),
+			...input,
+		};
+		let out = null;
+		try {
+			await transact(async (wallet) => {
+				const result = await wallet.authorize({
+					identity: APP_IDENTITY,
+					chain: this.#chain,
+					sign_in_payload: payload,
+				});
+				this.#applyAuthResult(result);
+				const signIn = result.sign_in_result;
+				if (signIn?.signed_message && signIn?.signature) {
+					const messageBytes = base64ToBytes(signIn.signed_message);
+					out = {
+						address: this.#address,
+						publicKey: this.#publicKey,
+						signature: base64ToBytes(signIn.signature),
+						signedMessage: messageBytes,
+						signedMessageText: new TextDecoder().decode(messageBytes),
+					};
+				}
+			});
+		} catch (err) {
+			throw normalizeMwaError(err);
+		}
+		return out;
+	}
+
+	/** Whether this provider can perform one-tap authorize-time sign-in. */
+	get supportsSignIn() { return true; }
 
 	#applyAuthResult(result) {
 		if (!result || typeof result !== 'object') throw new Error('MWA returned invalid auth result');

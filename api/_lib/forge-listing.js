@@ -30,7 +30,7 @@ export const FORGE_SERVICE_NAME = 'three.ws Forge: text/image to 3D'; // 32 char
 export const FORGE_TAGS = Object.freeze(['3d', 'ai', 'text-to-3d', 'image-to-3d', 'utility']);
 
 export const FORGE_ASPECT_RATIOS = Object.freeze(['1:1', '4:3', '3:4', '16:9', '9:16']);
-export const FORGE_MAX_VIEWS = 4;
+export const FORGE_MAX_VIEWS = 6;
 
 // Prices sourced from forge-tiers.js so the prose never carries a second copy of
 // a number the 402 could contradict.

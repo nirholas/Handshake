@@ -5,20 +5,20 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>Agent Economy — three.ws live demo</title>
-	<meta name="description" content="Watch two 3D AI agents transact on-chain. Agent A buys data from Agent B. Real SOL. Real Solana transaction. Live now." />
+	<title data-i18n="agent_economy.meta_title">Agent Economy — three.ws live demo</title>
+	<meta name="description" content="Watch two 3D AI agents transact on-chain. Agent A buys data from Agent B. Real SOL. Real Solana transaction. Live now."  data-i18n-attr="content:agent_economy.meta_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/agent-economy" />
-	<meta property="og:title" content="Agent Economy — three.ws live demo" />
-	<meta property="og:description" content="Watch two 3D AI agents transact on-chain. Agent A buys data from Agent B. Real SOL. Real Solana transaction. Live now." />
+	<meta property="og:title" content="Agent Economy — three.ws live demo"  data-i18n-attr="content:agent_economy.meta_og_title"/>
+	<meta property="og:description" content="Watch two 3D AI agents transact on-chain. Agent A buys data from Agent B. Real SOL. Real Solana transaction. Live now."  data-i18n-attr="content:agent_economy.meta_og_description"/>
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Economy+%E2%80%94+Live+Demo&amp;d=Watch+two+3D+AI+agents+transact+on-chain.+Agent+A+buys+data+from+Agent+B+%E2%80%94+real+SOL%2C+real+Solana+transaction%2C+live.&amp;p=%2Fagent-economy" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Agent Economy — three.ws live demo" />
-	<meta name="twitter:description" content="Watch two 3D AI agents transact on-chain. Agent A buys data from Agent B. Real SOL. Real Solana transaction. Live now." />
+	<meta name="twitter:title" content="Agent Economy — three.ws live demo"  data-i18n-attr="content:agent_economy.meta_twitter_title"/>
+	<meta name="twitter:description" content="Watch two 3D AI agents transact on-chain. Agent A buys data from Agent B. Real SOL. Real Solana transaction. Live now."  data-i18n-attr="content:agent_economy.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Economy+%E2%80%94+Live+Demo&amp;d=Watch+two+3D+AI+agents+transact+on-chain.+Agent+A+buys+data+from+Agent+B+%E2%80%94+real+SOL%2C+real+Solana+transaction%2C+live.&amp;p=%2Fagent-economy" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -480,7 +480,7 @@
 		<!-- Center: service catalog + tx feed -->
 		<div id="center">
 			<div id="center-head">
-				<h1><span class="live-dot"></span> Agent Economy</h1>
+				<h1 data-i18n-html="agent_economy.agent_economy"><span class="live-dot"></span> Agent Economy</h1>
 				<div id="center-sub">Agents paying agents · Real SOL · Solana mainnet</div>
 			</div>
 
@@ -488,21 +488,21 @@
 
 			<div id="catalog">
 				<div id="catalog-label">Services offered by Oracle</div>
-				<button class="svc-btn" type="button" data-service="market-analysis" aria-label="Buy Market Analysis from Oracle for $0.001 — live sentiment and trend read">
+				<button class="svc-btn" type="button" data-service="market-analysis" aria-label="Buy Market Analysis from Oracle for $0.001 — live sentiment and trend read" data-i18n-attr="aria-label:agent_economy.buy_market_analysis_from_ora_arialabel">
 					<div class="svc-btn-left">
 						<span class="svc-btn-name">Market Analysis</span>
 						<span class="svc-btn-tag">Live sentiment + trend read</span>
 					</div>
 					<span class="svc-btn-price">$0.001</span>
 				</button>
-				<button class="svc-btn" type="button" data-service="onchain-insight" aria-label="Buy On-Chain Insight from Oracle for $0.002 — wallet activity and holder data">
+				<button class="svc-btn" type="button" data-service="onchain-insight" aria-label="Buy On-Chain Insight from Oracle for $0.002 — wallet activity and holder data" data-i18n-attr="aria-label:agent_economy.buy_on_chain_insight_from_or_arialabel">
 					<div class="svc-btn-left">
 						<span class="svc-btn-name">On-Chain Insight</span>
 						<span class="svc-btn-tag">Wallet activity + holder data</span>
 					</div>
 					<span class="svc-btn-price">$0.002</span>
 				</button>
-				<button class="svc-btn" type="button" data-service="risk-score" aria-label="Buy Risk Score from Oracle for $0.003 — AI-generated protocol rating">
+				<button class="svc-btn" type="button" data-service="risk-score" aria-label="Buy Risk Score from Oracle for $0.003 — AI-generated protocol rating" data-i18n-attr="aria-label:agent_economy.buy_risk_score_from_oracle_f_arialabel">
 					<div class="svc-btn-left">
 						<span class="svc-btn-name">Risk Score</span>
 						<span class="svc-btn-tag">AI-generated protocol rating</span>
@@ -520,12 +520,12 @@
 					<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round">
 						<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
 					</svg>
-					<span>Pick a service above to watch the agents transact</span>
+					<span data-i18n="agent_economy.pick_a_service_above_to_watch_the">Pick a service above to watch the agents transact</span>
 				</div>
 			</div>
 
 			<div id="status-bar">
-				<span id="status-text">Ready — select a service to start</span>
+				<span id="status-text" data-i18n="agent_economy.ready_select_a_service_to_start">Ready — select a service to start</span>
 				<span id="tx-count"></span>
 			</div>
 		</div>
@@ -544,16 +544,18 @@
 		</div>
 
 		<div id="bottom-bar">
-			<a href="/galaxy">Galaxy showcase</a>
+			<a href="/galaxy" data-i18n="agent_economy.galaxy_showcase">Galaxy showcase</a>
 			<span class="sep">·</span>
-			<a href="/x402">x402 Bazaar</a>
+			<a href="/x402" data-i18n="agent_economy.x402_bazaar">x402 Bazaar</a>
 			<span class="sep">·</span>
-			<a href="https://three.ws" target="_blank" rel="noopener">three.ws</a>
+			<a href="https://three.ws" target="_blank" rel="noopener" data-i18n="agent_economy.three_ws">three.ws</a>
 			<span class="sep">·</span>
-			<span>Agent-to-agent value transfer · Solana</span>
+			<span data-i18n="agent_economy.agent_to_agent_value_transfer_solana">Agent-to-agent value transfer · Solana</span>
 		</div>
 	</div>
 
 	<script type="module" src="/src/agent-economy.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

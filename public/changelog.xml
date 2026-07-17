@@ -79,6 +79,14 @@
 			<description>A full automated sweep of every page and API endpoint on the site caught a bug that replaced creator profile pages (three.ws/u/yourname) with an error message. That is fixed. The sweep also repaired the login captcha for rate-limited sign-ins, fixed dead links in the dashboard and two blog posts, and added two dozen previously unlisted pages to the site index so search engines and the sitemap can find them. The audit now runs with deeper checks (blank-page detection, visible error detection, and link crawling) so regressions like these get caught before anyone hits them.</description>
 		</item>
 		<item>
+			<title>Every free 3D generation now gets an automatic quality check</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-07-17:Every free 3D generation now gets an automatic quality check</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The Forge already re-rolled broken meshes, but the deeper &quot;looks nothing like what I asked for&quot; check only ran on the paid High tier, so the free Draft and Standard lanes could still hand back a valid-but-wrong model. Now a smart adaptive gate covers the free lanes too: a clean, textured result ships instantly, and only an uncertain one is sent to the vision quality check and re-generated if it falls short. The result bar shows the outcome as a Verified, Checked, or Low confidence chip so you can see at a glance whether a model passed.</description>
+		</item>
+		<item>
 			<title>Forge prompt ideas are now endless, and every one forges beautifully</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-07-17:Forge prompt ideas are now endless, and every one forges beautifully</guid>
@@ -119,6 +127,22 @@
 			<description>The live IRL view stopped talking over itself. Before, you could see &quot;Turn on Camera AR&quot; and &quot;Agent pinned&quot; at the same time, which contradicted each other; now the guidance line and the status line always agree. The floating name tag above each nearby agent is kept clear of the top bar instead of colliding with the Back and Live chips, and when two agents line up front-to-back their tags fan out so both names stay legible rather than stacking into one smudge. The &quot;an agent is near, look around&quot; nudge no longer appears when that agent is already standing in front of you, and it clears itself the moment you turn to face them.</description>
 		</item>
 		<item>
+			<title>No more T-posed arms: avatars whose arms can't be animated now rest naturally</title>
+			<link>https://three.ws/irl</link>
+			<guid isPermaLink="false">2026-07-17:No more T-posed arms: avatars whose arms can't be animated now rest naturally</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Some avatars, especially older ones and GLBs imported from outside three.ws, carry arm bones under a naming scheme our animation engine doesn't recognize. The idle motion would then play on the body and legs while both arms stayed frozen straight out to the sides in the raw import pose, which looked broken. IRL now detects those un-driven arms and swings them down to a relaxed rest, so an avatar never stands there in a stiff T. Avatars rigged by three.ws already animated their arms correctly and are untouched; this is a safety net for everything else, in both your own carried avatar and the agents you find nearby.</description>
+		</item>
+		<item>
+			<title>One-tap Seed Vault sign-in on Solana Seeker</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-17:One-tap Seed Vault sign-in on Solana Seeker</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Signing in with a Solana Seeker's Seed Vault now takes a single tap instead of two. Linking your wallet used to pop the Seed Vault twice (once to connect, once to sign); three.ws now uses the Mobile Wallet Adapter's built-in Sign-In-With-Solana so authorization and the signature happen in one prompt. If you back out of that prompt, three.ws now recognizes it as a clean cancel instead of showing a generic error, and it reliably detects Seeker devices that don't announce themselves in the browser. Other wallets (Phantom, Backpack, Solflare) are unaffected. The whole wallet layer is now covered by an automated test suite.</description>
+		</item>
+		<item>
 			<title>Paid API calls no longer fail when two agents buy the same-priced service at once</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-17:Paid API calls no longer fail when two agents buy the same-priced service at once</guid>
@@ -149,6 +173,14 @@
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Since the July infrastructure move, the selfie and photo reconstruction pipeline was failing with a generic &quot;hit a snag&quot; message even though the 3D engine finished every job. The security check that vets where a finished model may be downloaded from did not yet trust our own Google Cloud Storage results, so completed avatars were rejected at the final step. The check now recognizes our own storage, and any generation that was wrongly marked failed has been recovered. If your selfie avatar failed recently, it should now appear, or simply retry.</description>
+		</item>
+		<item>
+			<title>Sharper, cleaner models from photos</title>
+			<link>https://three.ws/image-to-3d</link>
+			<guid isPermaLink="false">2026-07-17:Sharper, cleaner models from photos</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Four upgrades to photo-to-3D landed together. Uploaded photos now have their background cleanly removed before reconstruction, so a busy backdrop no longer bleeds into the model. You can supply up to 6 reference angles instead of 4 for fuller coverage. Every uploaded angle is now quality-checked, and a blurry or off-subject one is dropped instead of corrupting the result. And every finished model runs through an automatic geometry cleanup pass that welds and de-duplicates the mesh and trims redundant triangles, so models load faster and render cleaner with no loss of detail.</description>
 		</item>
 		<item>
 			<title>The agent-to-agent payment economy runs far cheaper and now cycles hundreds of distinct payers</title>

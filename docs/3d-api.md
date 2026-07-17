@@ -152,19 +152,31 @@ Otherwise you get a job token and a poll URL (the prompt is carried as
   "status": "pending",
   "job": "f1.eyJwIjoibnZpZGlh...",
   "poll": "/api/3d/generate?job=f1.eyJwIjoibnZpZGlh...&title=a%20small%20ceramic%20robot%20figurine",
+  "retryAfter": 5,
+  "etaSeconds": 20,
+  "creationId": "a1b2c3d4-0000-4000-8000-000000000002",
   "format": "glb",
   "tier": "draft",
   "free": true
 }
 ```
 
-Poll the `poll` URL until the status is terminal:
+`retryAfter` is the recommended number of seconds to wait before the next poll
+(also sent as the standard `Retry-After` header); honor it and your poll loop
+stays under the rate limit instead of tripping a `429`, and the shared free GPU
+lane carries less traffic. `etaSeconds` is the estimated time until the model is
+ready when the lane reports one, and `creationId` is a stable handle for
+correlating logs and referencing the generation across calls. Every field is
+additive — older clients that ignore them keep working unchanged.
+
+Poll the `poll` URL until the status is terminal, waiting `retryAfter` seconds
+between polls:
 
 ```json
 GET /api/3d/generate?job=f1.eyJwIjoibnZpZGlh...&title=a%20small%20ceramic%20robot%20figurine
 
 // still working
-{ "status": "pending", "job": "f1...", "poll": "/api/3d/generate?job=f1...&title=..." }
+{ "status": "pending", "job": "f1...", "poll": "/api/3d/generate?job=f1...&title=...", "retryAfter": 3 }
 
 // ready
 { "status": "done", "job": "f1...", "glbUrl": "https://cdn.three.ws/forge/anon/done.glb",
@@ -181,7 +193,7 @@ GET /api/3d/generate?job=f1.eyJwIjoibnZpZGlh...&title=a%20small%20ceramic%20robo
 |-------------------------------|----------------------------------------------------------------|
 | Empty / too-short / oversized prompt | `400 invalid_prompt`                                    |
 | Unsupported `format`          | `400 unsupported_format`                                       |
-| Queued                        | `200 { status: "pending", job, poll }`                        |
+| Queued                        | `200 { status: "pending", job, poll, retryAfter, etaSeconds?, creationId? }` |
 | Ready                         | `200 { status: "done", glbUrl, viewerUrl, arUrl }`            |
 | Generation failed upstream    | `200 { status: "error", error }` — free, **no charge**        |
 | GPU lane saturated / rate-limited | `429` with `Retry-After` + an upgrade pointer             |

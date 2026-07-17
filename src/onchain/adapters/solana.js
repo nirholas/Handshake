@@ -215,11 +215,66 @@ export class SolanaAdapter {
 		const uri = location.origin;
 		const issuedAt = new Date().toISOString();
 		const expirationTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+		const statement =
+			'Link this wallet to deploy your agent on Solana. No fees, no transaction. By signing, you agree to the Terms of Service (https://three.ws/legal/tos) and Privacy Policy (https://three.ws/legal/privacy).';
+
+		// One-tap path (Seeker / Seed Vault via MWA): authorize + SIWS signature
+		// in a single wallet interaction. The wallet builds the canonical SIWS
+		// message itself, so we forward the exact bytes it signed to /verify.
+		// Any wallet without supportsSignIn (Phantom, Backpack, Solflare) skips
+		// straight to the two-step path below; a one-tap failure that ISN'T a
+		// user rejection also falls through, so linking degrades gracefully.
+		if (this.#provider.supportsSignIn && typeof this.#provider.signIn === 'function') {
+			try {
+				const siws = await this.#provider.signIn({
+					domain, statement, uri, version: '1',
+					chainId: cluster, nonce, issuedAt, expirationTime,
+				});
+				if (siws?.signedMessageText && siws.signature) {
+					const verifyRes = await fetch('/api/auth/siws/verify', {
+						method: 'POST',
+						credentials: 'include',
+						headers: { 'content-type': 'application/json', 'x-csrf-token': csrf },
+						body: JSON.stringify({
+							message: siws.signedMessageText,
+							signature: toBase64(siws.signature),
+							tosAccepted: true,
+						}),
+					});
+					if (verifyRes.ok) return;
+					// Server couldn't verify the wallet-built message — burn was
+					// on the nonce, so re-fetch a fresh one for the fallback.
+					const retry = await fetch('/api/auth/siws/nonce', { credentials: 'include' });
+					if (retry.ok) {
+						const next = await retry.json();
+						return this.#linkWithSignMessage(cluster, next.nonce, next.csrf, {
+							domain, uri, statement,
+						});
+					}
+				}
+			} catch (e) {
+				if (e?.code === 4001 || e?.reason === 'USER_REJECTED' || /reject/i.test(e?.message || '')) {
+					const err = new Error('Wallet linking cancelled.');
+					err.code = 'USER_REJECTED';
+					throw err;
+				}
+				// Non-rejection failure: fall through to the two-step path.
+			}
+		}
+
+		return this.#linkWithSignMessage(cluster, nonce, csrf, { domain, uri, statement });
+	}
+
+	// Two-step SIWS: build the message, prompt signMessage, verify. Used by
+	// injected wallets and as the Seed Vault fallback.
+	async #linkWithSignMessage(cluster, nonce, csrf, { domain, uri, statement }) {
+		const issuedAt = new Date().toISOString();
+		const expirationTime = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 		const message = [
 			`${domain} wants you to sign in with your Solana account:`,
 			this.#address,
 			'',
-			'Link this wallet to deploy your agent on Solana. No fees, no transaction. By signing, you agree to the Terms of Service (https://three.ws/legal/tos) and Privacy Policy (https://three.ws/legal/privacy).',
+			statement,
 			'',
 			`URI: ${uri}`,
 			'Version: 1',

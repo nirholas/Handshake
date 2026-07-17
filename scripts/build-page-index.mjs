@@ -513,7 +513,29 @@ function writeIfChanged(file, content) {
 	return true;
 }
 
+// Which public pages carry translated copy — a page is localized once it has any
+// data-i18n annotation. The dynamic sitemap (api/sitemap/[type].js) reads this
+// list to emit <xhtml:link hreflang> alternates for exactly those routes, so
+// hreflang coverage tracks annotation automatically with no second list to keep
+// in sync. Path → file uses the same clean-URL convention the server serves
+// (/what-is → pages/what-is.html, / → pages/home.html).
+function buildLocalizedPages() {
+	const paths = [];
+	for (const p of allPages) {
+		if (!p.path || p.path.startsWith('http')) continue;
+		const slug = p.path === '/' ? 'home' : p.path.replace(/^\/+|\/+$/g, '');
+		const file = resolve(root, 'pages', `${slug}.html`);
+		try {
+			if (existsSync(file) && readFileSync(file, 'utf8').includes('data-i18n')) paths.push(p.path);
+		} catch {
+			// unreadable — treat as not localized
+		}
+	}
+	return JSON.stringify({ generated: true, count: paths.length, paths: paths.sort() }, null, '\t') + '\n';
+}
+
 const outputs = [
+	{ file: resolve(publicDir, 'locales/localized-pages.json'), content: buildLocalizedPages() },
 	{ file: resolve(publicDir, 'llms.txt'), content: buildLlmsTxt() },
 	{ file: resolve(publicDir, 'llms-full.txt'), content: buildLlmsFull() },
 	{ file: resolve(publicDir, 'sitemap/index.html'), content: buildSitemapHtml() },

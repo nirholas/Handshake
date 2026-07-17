@@ -10,9 +10,9 @@
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>three.ws — Launch Week Recap</title>
-<meta property="og:title" content="three.ws — Launch Week Recap">
-<meta property="og:description" content="Open-source 3D AI agent platform for the browser. Week one in numbers and what we shipped.">
+<title data-i18n="three_ws_launch_week.meta_title">three.ws — Launch Week Recap</title>
+<meta property="og:title" content="three.ws — Launch Week Recap" data-i18n-attr="content:three_ws_launch_week.meta_og_title">
+<meta property="og:description" content="Open-source 3D AI agent platform for the browser. Week one in numbers and what we shipped." data-i18n-attr="content:three_ws_launch_week.meta_og_description">
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/three-ws-launch-week" />
@@ -21,8 +21,8 @@
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="three.ws — Launch Week Recap" />
-	<meta name="twitter:description" content="Everything three.ws shipped during launch week — 3D avatars, agent payments, the x402 bazaar, and more." />
+	<meta name="twitter:title" content="three.ws — Launch Week Recap"  data-i18n-attr="content:three_ws_launch_week.meta_twitter_title"/>
+	<meta name="twitter:description" content="Everything three.ws shipped during launch week — 3D avatars, agent payments, the x402 bazaar, and more."  data-i18n-attr="content:three_ws_launch_week.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/og-image.png" />
 <link rel="stylesheet" href="/fonts/fonts.css" />
 <style>
@@ -753,19 +753,19 @@
       LAUNCH WEEK · APR 29 → MAY 9 · 2026
     </div>
 
-    <h1>Week one,<br><em>by the numbers.</em></h1>
+    <h1 data-i18n-html="three_ws_launch_week.week_one_by_the_numbers">Week one,<br><em>by the numbers.</em></h1>
 
-    <p class="hero-sub">
+    <p class="hero-sub" data-i18n="three_ws_launch_week.three_ws_is_an_open_source_browser">
       three.ws is an open-source, browser-native 3D AI agent platform. We shipped the full stack
       &mdash; viewer, agent runtime, on-chain identity, OAuth&nbsp;2.1 server, MCP endpoint, and an
       embeddable web component &mdash; then watched the launch land. Here&rsquo;s what happened.
     </p>
 
     <div class="hero-meta">
-      <span><strong>291</strong> commits</span>
-      <span><strong>Apache&nbsp;2.0</strong> license</span>
-      <span><strong>11</strong> following · <strong>3,675</strong> followers</span>
-      <span><strong>github.com/nirholas/three.ws</strong></span>
+      <span data-i18n-html="three_ws_launch_week.291_commits"><strong>291</strong> commits</span>
+      <span data-i18n-html="three_ws_launch_week.apache_2_0_license"><strong>Apache&nbsp;2.0</strong> license</span>
+      <span data-i18n-html="three_ws_launch_week.11_following_3_675_followers"><strong>11</strong> following · <strong>3,675</strong> followers</span>
+      <span data-i18n-html="three_ws_launch_week.github_com_nirholas_three_ws"><strong>github.com/nirholas/three.ws</strong></span>
     </div>
 
     <div class="hero-numbers">
@@ -799,8 +799,8 @@
   <div class="container">
     <div class="section-header reveal">
       <div class="section-eyebrow">01 · What we shipped</div>
-      <h2 class="section-title">The whole stack, <em>in one repo.</em></h2>
-      <p class="section-lede">
+      <h2 class="section-title" data-i18n-html="three_ws_launch_week.the_whole_stack_in_one_repo">The whole stack, <em>in one repo.</em></h2>
+      <p class="section-lede" data-i18n-html="three_ws_launch_week.three_ws_is_organized_as_four_communicating">
         three.ws is organized as four communicating layers, plus a backend and a contracts package.
         Every layer is in production at <a href="https://three.ws" style="color:var(--accent);text-decoration:underline;">three.ws</a>
         and ships as part of the open-source repo. Here&rsquo;s the inventory.
@@ -810,12 +810,12 @@
     <div class="layers reveal">
       <div class="layer">
         <div class="layer-id">
-          <span class="num">L4</span>
+          <span class="num" data-i18n="three_ws_launch_week.l4">L4</span>
           Embed &amp; Distribution
         </div>
         <div>
           <div class="layer-name">Drop-in 3D agents, anywhere on the web.</div>
-          <p class="layer-desc">
+          <p class="layer-desc" data-i18n-html="three_ws_launch_week.the_custom_element_loads_lazily_on_intersect">
             The <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">&lt;agent-3d&gt;</code>
             custom element loads lazily on intersection, supports five widget variants
             (turntable, animation gallery, talking agent, ERC-8004 passport card, hotspot tour),
@@ -824,24 +824,24 @@
             Versioned CDN bundles ship at <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">/agent-3d/x.y.z/</code>.
           </p>
           <div class="layer-pills">
-            <span class="pill">&lt;agent-3d&gt;</span>
-            <span class="pill">5 widget types</span>
-            <span class="pill">Open Graph + oEmbed</span>
-            <span class="pill">Widget Studio</span>
-            <span class="pill">Versioned CDN</span>
-            <span class="pill">postMessage API</span>
+            <span class="pill" data-i18n="three_ws_launch_week.text">&lt;agent-3d&gt;</span>
+            <span class="pill" data-i18n="three_ws_launch_week.5_widget_types">5 widget types</span>
+            <span class="pill" data-i18n="three_ws_launch_week.open_graph_oembed">Open Graph + oEmbed</span>
+            <span class="pill" data-i18n="three_ws_launch_week.widget_studio">Widget Studio</span>
+            <span class="pill" data-i18n="three_ws_launch_week.versioned_cdn">Versioned CDN</span>
+            <span class="pill" data-i18n="three_ws_launch_week.postmessage_api">postMessage API</span>
           </div>
         </div>
       </div>
 
       <div class="layer">
         <div class="layer-id">
-          <span class="num">L3</span>
+          <span class="num" data-i18n="three_ws_launch_week.l3">L3</span>
           Identity &amp; Persistence
         </div>
         <div>
           <div class="layer-name">On-chain identity. Signed action history.</div>
-          <p class="layer-desc">
+          <p class="layer-desc" data-i18n-html="three_ws_launch_week.three_solidity_contracts_make_up_the_erc">
             Three Solidity contracts make up the ERC-8004 implementation:
             <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">IdentityRegistry</code>
             (ERC-721 agent tokens with delegated EIP-712 signers),
@@ -855,25 +855,25 @@
             shape, no custom program required.
           </p>
           <div class="layer-pills">
-            <span class="pill">ERC-8004</span>
-            <span class="pill">ERC-721 tokens</span>
-            <span class="pill">EIP-712 signing</span>
-            <span class="pill">EIP-7710 delegation</span>
-            <span class="pill">Foundry tested</span>
-            <span class="pill solana">Solana SIWS + Metaplex</span>
-            <span class="pill">IPFS pinning</span>
+            <span class="pill" data-i18n="three_ws_launch_week.erc_8004">ERC-8004</span>
+            <span class="pill" data-i18n="three_ws_launch_week.erc_721_tokens">ERC-721 tokens</span>
+            <span class="pill" data-i18n="three_ws_launch_week.eip_712_signing">EIP-712 signing</span>
+            <span class="pill" data-i18n="three_ws_launch_week.eip_7710_delegation">EIP-7710 delegation</span>
+            <span class="pill" data-i18n="three_ws_launch_week.foundry_tested">Foundry tested</span>
+            <span class="pill solana" data-i18n="three_ws_launch_week.solana_siws_metaplex">Solana SIWS + Metaplex</span>
+            <span class="pill" data-i18n="three_ws_launch_week.ipfs_pinning">IPFS pinning</span>
           </div>
         </div>
       </div>
 
       <div class="layer">
         <div class="layer-id">
-          <span class="num">L2</span>
+          <span class="num" data-i18n="three_ws_launch_week.l2">L2</span>
           Agent Runtime
         </div>
         <div>
-          <div class="layer-name">An LLM brain, with a body that <em>feels</em>.</div>
-          <p class="layer-desc">
+          <div class="layer-name">An LLM brain, with a body that <em data-i18n="three_ws_launch_week.feels">feels</em>.</div>
+          <p class="layer-desc" data-i18n-html="three_ws_launch_week.the_runtime_drives_a_claude_tool_loop">
             The runtime drives a Claude tool-loop with up to eight iterations per turn and six
             built-in tools (<code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">wave</code>,
             <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">lookAt</code>,
@@ -888,24 +888,24 @@
             with four storage modes (local, IPFS, encrypted-IPFS, none).
           </p>
           <div class="layer-pills">
-            <span class="pill">Claude tool-loop</span>
-            <span class="pill">8-iteration limit</span>
-            <span class="pill">Empathy Layer</span>
-            <span class="pill">Skill registry</span>
-            <span class="pill">Web Speech + ElevenLabs</span>
-            <span class="pill">YAML-front-matter memory</span>
+            <span class="pill" data-i18n="three_ws_launch_week.claude_tool_loop">Claude tool-loop</span>
+            <span class="pill" data-i18n="three_ws_launch_week.8_iteration_limit">8-iteration limit</span>
+            <span class="pill" data-i18n="three_ws_launch_week.empathy_layer">Empathy Layer</span>
+            <span class="pill" data-i18n="three_ws_launch_week.skill_registry">Skill registry</span>
+            <span class="pill" data-i18n="three_ws_launch_week.web_speech_elevenlabs">Web Speech + ElevenLabs</span>
+            <span class="pill" data-i18n="three_ws_launch_week.yaml_front_matter_memory">YAML-front-matter memory</span>
           </div>
         </div>
       </div>
 
       <div class="layer">
         <div class="layer-id">
-          <span class="num">L1</span>
+          <span class="num" data-i18n="three_ws_launch_week.l1">L1</span>
           Viewer
         </div>
         <div>
           <div class="layer-name">three.js r184, Khronos-grade glTF.</div>
-          <p class="layer-desc">
+          <p class="layer-desc" data-i18n="three_ws_launch_week.webgl_2_0_rendering_with_full_gltf">
             WebGL 2.0 rendering with full glTF 2.0 / GLB support: Draco geometry compression,
             KTX2 texture compression, Meshopt mesh optimization, HDR environment maps, PBR materials,
             skinned animation, morph targets, and embedded cameras. Validation is line-level via the
@@ -913,24 +913,24 @@
             auto-rotation, and a real-time dat.GUI for live tweaking.
           </p>
           <div class="layer-pills">
-            <span class="pill">three.js r184</span>
-            <span class="pill">Draco / KTX2 / Meshopt</span>
-            <span class="pill">PBR + HDR</span>
-            <span class="pill">glTF validator</span>
-            <span class="pill">Drag-and-drop</span>
-            <span class="pill">dat.GUI</span>
+            <span class="pill" data-i18n="three_ws_launch_week.three_js_r184">three.js r184</span>
+            <span class="pill" data-i18n="three_ws_launch_week.draco_ktx2_meshopt">Draco / KTX2 / Meshopt</span>
+            <span class="pill" data-i18n="three_ws_launch_week.pbr_hdr">PBR + HDR</span>
+            <span class="pill" data-i18n="three_ws_launch_week.gltf_validator">glTF validator</span>
+            <span class="pill" data-i18n="three_ws_launch_week.drag_and_drop">Drag-and-drop</span>
+            <span class="pill" data-i18n="three_ws_launch_week.dat_gui">dat.GUI</span>
           </div>
         </div>
       </div>
 
       <div class="layer">
         <div class="layer-id">
-          <span class="num">B</span>
+          <span class="num" data-i18n="three_ws_launch_week.b">B</span>
           Backend
         </div>
         <div>
           <div class="layer-name">~153 serverless endpoints. ~3,600 lines of API.</div>
-          <p class="layer-desc">
+          <p class="layer-desc" data-i18n-html="three_ws_launch_week.vercel_functions_on_neon_postgres_cloudflare">
             Vercel functions on Neon Postgres, Cloudflare R2, and Upstash Redis. A full OAuth&nbsp;2.1
             server (RFC 6749 + PKCE, RFC 7591 dynamic registration, RFC 7009 revocation, RFC 7662
             introspection, RFC 8414 discovery, RFC 9728 protected-resource discovery). An MCP server
@@ -940,14 +940,14 @@
             and recurring on-chain subscriptions.
           </p>
           <div class="layer-pills">
-            <span class="pill">OAuth 2.1 + PKCE</span>
-            <span class="pill">MCP over HTTP</span>
-            <span class="pill">Listed on MCP Registry</span>
-            <span class="pill">Neon Postgres</span>
-            <span class="pill">Cloudflare R2</span>
-            <span class="pill">Upstash Redis</span>
-            <span class="pill">4 cron jobs</span>
-            <span class="pill">OpenAPI 3.1</span>
+            <span class="pill" data-i18n="three_ws_launch_week.oauth_2_1_pkce">OAuth 2.1 + PKCE</span>
+            <span class="pill" data-i18n="three_ws_launch_week.mcp_over_http">MCP over HTTP</span>
+            <span class="pill" data-i18n="three_ws_launch_week.listed_on_mcp_registry">Listed on MCP Registry</span>
+            <span class="pill" data-i18n="three_ws_launch_week.neon_postgres">Neon Postgres</span>
+            <span class="pill" data-i18n="three_ws_launch_week.cloudflare_r2">Cloudflare R2</span>
+            <span class="pill" data-i18n="three_ws_launch_week.upstash_redis">Upstash Redis</span>
+            <span class="pill" data-i18n="three_ws_launch_week.4_cron_jobs">4 cron jobs</span>
+            <span class="pill" data-i18n="three_ws_launch_week.openapi_3_1">OpenAPI 3.1</span>
           </div>
         </div>
       </div>
@@ -979,8 +979,8 @@
   <div class="container">
     <div class="section-header reveal">
       <div class="section-eyebrow">02 · Launch in numbers</div>
-      <h2 class="section-title">Eleven days <em>of signal.</em></h2>
-      <p class="section-lede">
+      <h2 class="section-title" data-i18n-html="three_ws_launch_week.eleven_days_of_signal">Eleven days <em>of signal.</em></h2>
+      <p class="section-lede" data-i18n-html="three_ws_launch_week.pulled_directly_from_x_analytics_for_trythre">
         Pulled directly from X analytics for <a href="https://x.com/trythreews" style="color:var(--accent);text-decoration:underline;">@trythreews</a>
         between April 29 and May 9. No filtering, no averaging tricks &mdash; the headline numbers below
         and the charts further down come from the same screenshot.
@@ -993,8 +993,8 @@
           Impressions
           <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
         </div>
-        <div class="metric-value">267.8<span class="unit">K</span></div>
-        <div class="metric-context">Tweet views during the launch window. Roughly <span class="accent">~24K/day average</span> across 11 days.</div>
+        <div class="metric-value">267.8<span class="unit" data-i18n="three_ws_launch_week.k">K</span></div>
+        <div class="metric-context">Tweet views during the launch window. Roughly <span class="accent" data-i18n="three_ws_launch_week.24k_day_average">~24K/day average</span> across 11 days.</div>
       </div>
 
       <div class="metric-card">
@@ -1003,7 +1003,7 @@
           <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
         </div>
         <div class="metric-value">9.4<span class="unit">%</span></div>
-        <div class="metric-context">For reference, X benchmarks <span class="accent">"good" at 0.5–1%</span>. We&rsquo;re an order of magnitude above that.</div>
+        <div class="metric-context">For reference, X benchmarks <span class="accent" data-i18n="three_ws_launch_week.good_at_0_5_1">"good" at 0.5–1%</span>. We&rsquo;re an order of magnitude above that.</div>
       </div>
 
       <div class="metric-card">
@@ -1011,8 +1011,8 @@
           Engagements
           <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-6 0v4"/><rect x="3" y="9" width="18" height="12" rx="2"/></svg>
         </div>
-        <div class="metric-value">25.3<span class="unit">K</span></div>
-        <div class="metric-context">Likes, replies, reposts, bookmarks, and shares combined. <span class="accent">~395 actions/day.</span></div>
+        <div class="metric-value">25.3<span class="unit" data-i18n="three_ws_launch_week.k_2">K</span></div>
+        <div class="metric-context">Likes, replies, reposts, bookmarks, and shares combined. <span class="accent" data-i18n="three_ws_launch_week.395_actions_day">~395 actions/day.</span></div>
       </div>
 
       <div class="metric-card">
@@ -1020,8 +1020,8 @@
           Profile Visits
           <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2"/></svg>
         </div>
-        <div class="metric-value">5.1<span class="unit">K</span></div>
-        <div class="metric-context">People who clicked through to <span class="accent">@trythreews</span> after seeing a tweet.</div>
+        <div class="metric-value">5.1<span class="unit" data-i18n="three_ws_launch_week.k_3">K</span></div>
+        <div class="metric-context">People who clicked through to <span class="accent" data-i18n="three_ws_launch_week.trythreews">@trythreews</span> after seeing a tweet.</div>
       </div>
 
       <div class="metric-card">
@@ -1029,7 +1029,7 @@
           Likes
           <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.5-1.5 3-3.5 3-6a4 4 0 0 0-7-2.7A4 4 0 0 0 8 8c0 2.5 1.5 4.5 3 6l5 5 3-5z"/></svg>
         </div>
-        <div class="metric-value">7.2<span class="unit">K</span></div>
+        <div class="metric-value">7.2<span class="unit" data-i18n="three_ws_launch_week.k_4">K</span></div>
         <div class="metric-context">The largest engagement category by volume.</div>
       </div>
 
@@ -1038,7 +1038,7 @@
           Reposts
           <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
         </div>
-        <div class="metric-value">1.5<span class="unit">K</span></div>
+        <div class="metric-value">1.5<span class="unit" data-i18n="three_ws_launch_week.k_5">K</span></div>
         <div class="metric-context">Second-degree reach &mdash; reposts are how strangers find the project.</div>
       </div>
 
@@ -1064,7 +1064,7 @@
     <!-- Charts -->
     <div class="charts-grid reveal">
       <div class="chart-card">
-        <h3>Daily impressions</h3>
+        <h3 data-i18n="three_ws_launch_week.daily_impressions">Daily impressions</h3>
         <div class="chart-sub">APR 29 → MAY 9 · 2026</div>
         <svg class="chart-svg" viewBox="0 0 700 280" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-label="Bar chart of daily X impressions from April 29 to May 9, 2026">
           <defs>
@@ -1153,14 +1153,14 @@
         <div class="chart-note">
           The May&nbsp;5 peak coincides with our Google Cloud partnership announcement (the single
           highest-performing tweet of the week, ~6.9K views and 263 likes on its own).
-          Steady-state baseline since launch sits at <span style="color:var(--accent)">~22K
+          Steady-state baseline since launch sits at <span style="color:var(--accent)" data-i18n="three_ws_launch_week.22k_impressions_day">~22K
           impressions/day</span> &mdash; the chart shape is a launch surge, exactly what week one
           should look like.
         </div>
       </div>
 
       <div class="chart-card">
-        <h3>Follows over time</h3>
+        <h3 data-i18n="three_ws_launch_week.follows_over_time">Follows over time</h3>
         <div class="chart-sub">NET NEW FOLLOWS · DAILY</div>
         <svg class="chart-svg" viewBox="0 0 500 280" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-label="Bar chart of daily new followers from April 29 to May 9, 2026">
           <defs>
@@ -1230,7 +1230,7 @@
         </svg>
 
         <div class="chart-note">
-          A clean <span style="color:var(--accent)">May 4–7 spike</span> drove most of the +359
+          A clean <span style="color:var(--accent)" data-i18n="three_ws_launch_week.may_4_7_spike">May 4–7 spike</span> drove most of the +359
           verified followers and the rise to 3,675 total. The cluster maps directly to the partnership
           announcements; week two is for converting that audience into users.
         </div>
@@ -1239,8 +1239,8 @@
 
     <div class="audience-band reveal">
       <div>
-        <h3>1,010 members in the X community.<br>From zero. In a week.</h3>
-        <p>
+        <h3 data-i18n-html="three_ws_launch_week.1_010_members_in_the_x_community">1,010 members in the X community.<br>From zero. In a week.</h3>
+        <p data-i18n-html="three_ws_launch_week.the_three_ws_x_community_is_the">
           The <a href="https://x.com/i/communities" style="color:var(--accent);text-decoration:underline;">three.ws X
           community</a> is the gathered audience &mdash; developers, agent-curious builders, and a
           crew of folks following along live. It&rsquo;s where the next wave of agent owners will come from.
@@ -1259,8 +1259,8 @@
   <div class="container">
     <div class="section-header reveal">
       <div class="section-eyebrow">03 · Outside signal</div>
-      <h2 class="section-title">Where <em>the project showed up.</em></h2>
-      <p class="section-lede">
+      <h2 class="section-title" data-i18n-html="three_ws_launch_week.where_the_project_showed_up">Where <em>the project showed up.</em></h2>
+      <p class="section-lede" data-i18n="three_ws_launch_week.beyond_the_analytics_dashboard_three_ws_land">
         Beyond the analytics dashboard, three.ws landed on the directories, registries, and platforms
         that matter most for an open-source developer tool.
       </p>
@@ -1268,9 +1268,9 @@
 
     <div class="next-grid reveal">
       <div class="next-card">
-        <div class="phase">MCP REGISTRY · <span class="status shipped">LIVE</span></div>
-        <h3>Listed on the official Model Context&nbsp;Protocol Registry.</h3>
-        <p>
+        <div class="phase">MCP REGISTRY · <span class="status shipped" data-i18n="three_ws_launch_week.live">LIVE</span></div>
+        <h3 data-i18n="three_ws_launch_week.listed_on_the_official_model_context_protoco">Listed on the official Model Context&nbsp;Protocol Registry.</h3>
+        <p data-i18n-html="three_ws_launch_week.three_ws_is_published_as_on_registry">
           three.ws is published as <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">io.github.nirholas/three.ws</code>
           on registry.modelcontextprotocol.io and discoverable via PulseMCP&rsquo;s curated directory.
           Any MCP-aware client (Claude Desktop included) can connect and drive avatars over JSON-RPC.
@@ -1278,9 +1278,9 @@
       </div>
 
       <div class="next-card">
-        <div class="phase">CLOUD MARKETPLACE · <span class="status shipped">LIVE</span></div>
-        <h3>Available on Alibaba Cloud Marketplace.</h3>
-        <p>
+        <div class="phase">CLOUD MARKETPLACE · <span class="status shipped" data-i18n="three_ws_launch_week.live_2">LIVE</span></div>
+        <h3 data-i18n="three_ws_launch_week.available_on_alibaba_cloud_marketplace">Available on Alibaba Cloud Marketplace.</h3>
+        <p data-i18n-html="three_ws_launch_week.the_platform_shipped_as_a_partner_listing">
           The platform shipped as a partner listing on Alibaba Cloud, our first cloud-marketplace
           distribution channel. The associated launch tweet pulled <strong>~7.1K impressions</strong>
           on its own.
@@ -1288,9 +1288,9 @@
       </div>
 
       <div class="next-card">
-        <div class="phase">PARTNERSHIP · <span class="status shipped">ANNOUNCED</span></div>
-        <h3>Joining forces with Google&nbsp;Cloud.</h3>
-        <p>
+        <div class="phase">PARTNERSHIP · <span class="status shipped" data-i18n="three_ws_launch_week.announced">ANNOUNCED</span></div>
+        <h3 data-i18n="three_ws_launch_week.joining_forces_with_google_cloud">Joining forces with Google&nbsp;Cloud.</h3>
+        <p data-i18n-html="three_ws_launch_week.the_google_cloud_announcement_was_the_single">
           The Google Cloud announcement was the single highest-engagement post of the week
           (<strong>~6.9K impressions, 263 likes, 24 reposts</strong>) and the cloud infrastructure
           backing the next phase of the platform.
@@ -1298,9 +1298,9 @@
       </div>
 
       <div class="next-card">
-        <div class="phase">AUDIO · <span class="status shipped">LIVE</span></div>
-        <h3>Featured on Amazon Music &amp; Spotify.</h3>
-        <p>
+        <div class="phase">AUDIO · <span class="status shipped" data-i18n="three_ws_launch_week.live_3">LIVE</span></div>
+        <h3 data-i18n="three_ws_launch_week.featured_on_amazon_music_spotify">Featured on Amazon Music &amp; Spotify.</h3>
+        <p data-i18n="three_ws_launch_week.the_inside_the_3d_agent_web_podcast">
           The &ldquo;Inside The 3D Agent Web&rdquo; podcast episode is published on Amazon Music and the
           companion blog &ldquo;Beyond Chatbots: Why Your AI Agent Needs a 3D Body&rdquo; went out via the
           Spotify-on-chain ecosystem. Two more distribution surfaces, one more week.
@@ -1315,8 +1315,8 @@
   <div class="container">
     <div class="section-header reveal">
       <div class="section-eyebrow">04 · What&rsquo;s next</div>
-      <h2 class="section-title">Phase&nbsp;0 is <em>shipped.</em><br>Phase&nbsp;1 is <em>in build.</em></h2>
-      <p class="section-lede">
+      <h2 class="section-title" data-i18n-html="three_ws_launch_week.phase_0_is_shipped_phase_1_is">Phase&nbsp;0 is <em>shipped.</em><br>Phase&nbsp;1 is <em>in build.</em></h2>
+      <p class="section-lede" data-i18n="three_ws_launch_week.the_roadmap_closes_the_gap_from_use">
         The roadmap closes the gap from &ldquo;use a 3D artist&rdquo; to &ldquo;take a selfie&rdquo;.
         Four phases, scoped end-to-end in the public README.
       </p>
@@ -1324,9 +1324,9 @@
 
     <div class="next-grid reveal">
       <div class="next-card">
-        <div class="phase">PHASE 0 · <span class="status shipped">SHIPPED</span></div>
-        <h3>Foundations.</h3>
-        <p>
+        <div class="phase">PHASE 0 · <span class="status shipped" data-i18n="three_ws_launch_week.shipped">SHIPPED</span></div>
+        <h3 data-i18n="three_ws_launch_week.foundations">Foundations.</h3>
+        <p data-i18n-html="three_ws_launch_week.webgl_viewer_llm_agent_runtime_erc_8004">
           WebGL viewer, LLM agent runtime, ERC-8004 identity contracts, OAuth&nbsp;2.1 server,
           MCP endpoint, and the <code style="font-family:'JetBrains Mono',monospace;color:var(--accent)">&lt;agent-3d&gt;</code>
           web component &mdash; everything you read about above. Live at three.ws today.
@@ -1334,9 +1334,9 @@
       </div>
 
       <div class="next-card">
-        <div class="phase">PHASE 1 · <span class="status">IN PROGRESS</span></div>
-        <h3>Selfie → Avatar engine.</h3>
-        <p>
+        <div class="phase">PHASE 1 · <span class="status" data-i18n="three_ws_launch_week.in_progress">IN PROGRESS</span></div>
+        <h3 data-i18n="three_ws_launch_week.selfie_avatar_engine">Selfie → Avatar engine.</h3>
+        <p data-i18n="three_ws_launch_week.three_selfies_left_center_right_gpu_backed">
           Three selfies (left, center, right), GPU-backed multi-view face reconstruction, and a rigged,
           animatable avatar minted as a draft ERC-8004 token in under sixty seconds. Mobile-first
           capture UX with realtime quality gates.
@@ -1344,9 +1344,9 @@
       </div>
 
       <div class="next-card">
-        <div class="phase">PHASE 2 · <span class="status">NEXT</span></div>
-        <h3>Agent personalization.</h3>
-        <p>
+        <div class="phase">PHASE 2 · <span class="status" data-i18n="three_ws_launch_week.next">NEXT</span></div>
+        <h3 data-i18n="three_ws_launch_week.agent_personalization">Agent personalization.</h3>
+        <p data-i18n-html="three_ws_launch_week.elevenlabs_voice_cloning_from_3_10_seconds">
           ElevenLabs voice cloning from 3&ndash;10 seconds of speech, persona extraction from a short
           onboarding interview, and consented memory seeding from connected accounts &mdash; the
           avatar isn&rsquo;t just <em>you</em>, the agent <em>acts like</em> you.
@@ -1354,9 +1354,9 @@
       </div>
 
       <div class="next-card">
-        <div class="phase">PHASE 3 · <span class="status">NEXT</span></div>
-        <h3>On-chain economy.</h3>
-        <p>
+        <div class="phase">PHASE 3 · <span class="status" data-i18n="three_ws_launch_week.next_2">NEXT</span></div>
+        <h3 data-i18n="three_ws_launch_week.on_chain_economy">On-chain economy.</h3>
+        <p data-i18n="three_ws_launch_week.reputation_markets_staking_on_agents_signed">
           Reputation markets staking on agents&rsquo; signed action histories, EIP-7710 skill
           royalties paid to skill authors per-call, and agent-to-agent autonomous payments through
           delegated signer wallets.
@@ -1372,16 +1372,16 @@
     <div class="foot-grid">
       <div>
         <div class="foot-brand">three<span class="dot">.</span>ws</div>
-        <p style="color:var(--text-muted); margin-top:0.6rem; max-width: 380px; font-size: 0.95rem;">
+        <p style="color:var(--text-muted); margin-top:0.6rem; max-width: 380px; font-size: 0.95rem;" data-i18n="three_ws_launch_week.open_source_3d_ai_agent_platform_apache">
           Open-source 3D AI agent platform. Apache 2.0. Built with three.js, Claude, and a belief
           that AI deserves a body.
         </p>
       </div>
       <div class="foot-links">
-        <a href="https://three.ws">three.ws</a>
-        <a href="https://github.com/nirholas/three.ws">GitHub</a>
-        <a href="https://x.com/trythreews">@trythreews</a>
-        <a href="https://registry.modelcontextprotocol.io/?q=three.ws">MCP Registry</a>
+        <a href="https://three.ws" data-i18n="three_ws_launch_week.three_ws">three.ws</a>
+        <a href="https://github.com/nirholas/three.ws" data-i18n="three_ws_launch_week.github">GitHub</a>
+        <a href="https://x.com/trythreews" data-i18n="three_ws_launch_week.trythreews_2">@trythreews</a>
+        <a href="https://registry.modelcontextprotocol.io/?q=three.ws" data-i18n="three_ws_launch_week.mcp_registry">MCP Registry</a>
       </div>
     </div>
     <div class="foot-meta">
@@ -1407,5 +1407,7 @@
 	<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -10,8 +10,9 @@ solana-mobile/
 ├── twa/twa-manifest.json     # Bubblewrap input — wraps three.ws as an Android TWA
 ├── well-known/               # assetlinks.json template (real file lives at /public/.well-known/)
 ├── src/                      # MWA wallet wrapper (drop-in for the existing Solana code)
-│   ├── seeker-detect.js      #   conservative "are we inside the TWA" detector
+│   ├── seeker-detect.js      #   TWA/Seeker detection + isMwaSupported() capability probe
 │   ├── mwa-wallet.js         #   Phantom-shaped wallet backed by the on-device Seed Vault
+│   ├── mwa-errors.js         #   normalizes MWA errors (user decline → code 4001)
 │   ├── index.js              #   single-import boot — sets window.solana when on Seeker
 │   └── package.json          #   declares MWA peer/runtime deps
 ├── scripts/
@@ -37,6 +38,14 @@ solana-mobile/
 The MWA wallet is already wired into the bundle — `src/wallet.js` and
 `src/game/play-auth.js` import `solana-mobile/src/index.js`, and
 `@solana-mobile/mobile-wallet-adapter-protocol-web3js` is a root dependency.
+`src/onchain/adapters/solana.js` uses the Seed Vault's **one-tap SIWS**
+(`signIn()`) for wallet linking, falling back to the two-step signMessage flow
+on injected wallets. The wrapper is unit-tested against a fake transport:
+
+```bash
+npx vitest run tests/solana-mobile-mwa-wallet.test.js \
+  tests/solana-mobile-mwa-errors.test.js tests/solana-mobile-seeker-detect.test.js
+```
 
 ```bash
 # 1. One-time: mint the on-chain Publisher + App NFTs (mainnet, costs ~0.05 SOL).

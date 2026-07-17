@@ -4,16 +4,16 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<title>Pricing · three.ws</title>
+		<title data-i18n="pricing.meta_title">Pricing · three.ws</title>
 		<meta
 			name="description"
 			content="Free during open beta. Pro and Enterprise plans for teams shipping 3D AI agents at scale. No view caps, no chat-turn limits."
-		/>
-		<meta property="og:title" content="Pricing · three.ws" />
+		 data-i18n-attr="content:pricing.meta_description"/>
+		<meta property="og:title" content="Pricing · three.ws"  data-i18n-attr="content:pricing.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Free during open beta. Pro and Enterprise plans for teams shipping 3D AI agents at scale."
-		/>
+		 data-i18n-attr="content:pricing.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/pricing" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Pricing&amp;d=Plans+and+pricing+for+three.ws%3A+free+forge+quota%2C+premium+passes%2C+and+pay-per-use+API+surfaces.&amp;p=%2Fpricing" />
 		<meta name="twitter:card" content="summary_large_image" />
@@ -38,13 +38,13 @@
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="Pricing — three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Pricing · three.ws">
-	<meta name="twitter:description" content="Plans and pricing for three.ws: free forge quota, premium passes, and pay-per-use API surfaces.">
-	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;amp;t=Pricing&amp;amp;d=Plans+and+pricing+for+three.ws%3A+free+forge+quota%2C+premium+passes%2C+and+pay-per-use+API+surfaces.&amp;amp;p=%2Fpricing">
+	<meta name="twitter:title" content="Pricing · three.ws" data-i18n-attr="content:pricing.meta_twitter_title">
+	<meta name="twitter:description" content="Plans and pricing for three.ws: free forge quota, premium passes, and pay-per-use API surfaces." data-i18n-attr="content:pricing.meta_twitter_description">
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Pricing&amp;d=Plans+and+pricing+for+three.ws%3A+free+forge+quota%2C+premium+passes%2C+and+pay-per-use+API+surfaces.&amp;p=%2Fpricing">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Pricing","description":"Plans and pricing for three.ws: free forge quota, premium passes, and pay-per-use API surfaces.","url":"https://three.ws/pricing","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&amp;t=Pricing&amp;d=Plans+and+pricing+for+three.ws%3A+free+forge+quota%2C+premium+passes%2C+and+pay-per-use+API+surfaces.&amp;p=%2Fpricing"}]}</script>
 </head>
 	<body>
-		<a href="#main-content" class="h-skip-link">Skip to main content</a>
+		<a href="#main-content" class="h-skip-link" data-i18n="pricing.skip_to_main_content">Skip to main content</a>
 
 		<header><div id="nav-container"></div></header>
 		<script src="/nav.js"></script>
@@ -52,16 +52,16 @@
 		<main id="main-content">
 			<!-- ── HERO ────────────────────────────────────────────────────── -->
 			<section class="pricing-hero">
-				<div class="eyebrow"><span class="eyebrow-dot"></span><span>Pricing</span></div>
-				<h1>Free to start.<br /><em>Scale when you&rsquo;re ready.</em></h1>
-				<p class="lead">
+				<div class="eyebrow"><span class="eyebrow-dot"></span><span data-i18n="pricing.pricing">Pricing</span></div>
+				<h1 data-i18n-html="pricing.free_to_start_scale_when_you_re">Free to start.<br /><em>Scale when you&rsquo;re ready.</em></h1>
+				<p class="lead" data-i18n="pricing.every_feature_is_free_during_open_beta">
 					Every feature is free during open beta &mdash; unlimited agents, embeds, voice,
 					animation, and x402 payments. Pro and Enterprise unlock higher limits and
 					dedicated support when you need them.
 				</p>
 
 				<div class="billing-toggle" id="billing-toggle">
-					<span class="label-monthly is-active" data-period="monthly">Monthly</span>
+					<span class="label-monthly is-active" data-period="monthly" data-i18n="pricing.monthly">Monthly</span>
 					<div
 						class="toggle-track"
 						role="switch"
@@ -72,7 +72,7 @@
 						<div class="toggle-thumb"></div>
 					</div>
 					<span class="label-annual" data-period="annual"
-						>Annual <span class="billing-save">Save 17%</span></span
+						 data-i18n-html="pricing.annual_save_17">Annual <span class="billing-save">Save 17%</span></span
 					>
 				</div>
 			</section>
@@ -93,19 +93,19 @@
 					<div class="pricing-amount">$0<sub>/forever</sub></div>
 					<div class="pricing-cycle-info">No credit card required</div>
 					<ul class="pricing-features">
-						<li>1 agent + 1 custom avatar</li>
-						<li>Unlimited &lt;agent-3d&gt; embeds</li>
-						<li>Default rig + 200 animation clips</li>
-						<li>Voice chat &amp; lipsync</li>
-						<li>Public deploy at three.ws/&lt;name&gt;</li>
-						<li>x402 paid skills (0% platform fee)</li>
-						<li>Community support</li>
+						<li data-i18n="pricing.1_agent_1_custom_avatar">1 agent + 1 custom avatar</li>
+						<li data-i18n="pricing.unlimited_embeds">Unlimited &lt;agent-3d&gt; embeds</li>
+						<li data-i18n="pricing.default_rig_200_animation_clips">Default rig + 200 animation clips</li>
+						<li data-i18n="pricing.voice_chat_lipsync">Voice chat &amp; lipsync</li>
+						<li data-i18n="pricing.public_deploy_at_three_ws">Public deploy at three.ws/&lt;name&gt;</li>
+						<li data-i18n="pricing.x402_paid_skills_0_platform_fee">x402 paid skills (0% platform fee)</li>
+						<li data-i18n="pricing.community_support">Community support</li>
 					</ul>
-					<a href="/create" class="pricing-cta">Start free</a>
+					<a href="/create" class="pricing-cta" data-i18n="pricing.start_free">Start free</a>
 				</div>
 
 				<div class="pricing-tier-card featured" data-tier="pro">
-					<span class="pricing-popular">Most popular</span>
+					<span class="pricing-popular" data-i18n="pricing.most_popular">Most popular</span>
 					<div class="pricing-tier-name">Pro</div>
 					<div class="pricing-amount" data-monthly="$49" data-annual="$40">
 						$49<sub>/mo</sub>
@@ -118,14 +118,14 @@
 						Billed monthly
 					</div>
 					<ul class="pricing-features">
-						<li>Everything in Free</li>
-						<li>Unlimited agents &amp; custom avatars</li>
-						<li>Custom voice cloning</li>
-						<li>Animation studio + memory seeds</li>
-						<li>Custom subdomain embed</li>
-						<li>Priority CDN &amp; GPU rendering</li>
-						<li>Advanced analytics dashboard</li>
-						<li>Priority email support &amp; SLA</li>
+						<li data-i18n="pricing.everything_in_free">Everything in Free</li>
+						<li data-i18n="pricing.unlimited_agents_custom_avatars">Unlimited agents &amp; custom avatars</li>
+						<li data-i18n="pricing.custom_voice_cloning">Custom voice cloning</li>
+						<li data-i18n="pricing.animation_studio_memory_seeds">Animation studio + memory seeds</li>
+						<li data-i18n="pricing.custom_subdomain_embed">Custom subdomain embed</li>
+						<li data-i18n="pricing.priority_cdn_gpu_rendering">Priority CDN &amp; GPU rendering</li>
+						<li data-i18n="pricing.advanced_analytics_dashboard">Advanced analytics dashboard</li>
+						<li data-i18n="pricing.priority_email_support_sla">Priority email support &amp; SLA</li>
 					</ul>
 					<!-- data-no-transition: the site-wide view-transition script intercepts
 					     internal links at capture phase and navigates programmatically,
@@ -136,11 +136,11 @@
 						class="pricing-cta primary"
 						id="pro-cta"
 						data-no-transition="1"
-						>Choose Pro</a
+						 data-i18n="pricing.choose_pro">Choose Pro</a
 					>
 					<div class="pricing-pay-assets" aria-label="Accepted payment assets">
-						Pay in <strong>USDC</strong>, <strong>SOL</strong>, or
-						<strong>$THREE</strong>
+						Pay in <strong data-i18n="pricing.usdc">USDC</strong>, <strong data-i18n="pricing.sol">SOL</strong>, or
+						<strong data-i18n="pricing.three">$THREE</strong>
 						<span class="pricing-three-discount" id="pro-three-discount" hidden></span>
 					</div>
 				</div>
@@ -152,18 +152,18 @@
 					</div>
 					<div class="pricing-cycle-info">Volume pricing · tailored SLA</div>
 					<ul class="pricing-features">
-						<li>Everything in Pro</li>
-						<li>Self-hosted runtime option</li>
-						<li>White-label embed &amp; API</li>
-						<li>On-chain identity (ERC-8004)</li>
-						<li>Custom rigs &amp; licensing</li>
-						<li>SSO, audit logs, embed-policy whitelisting</li>
-						<li>Dedicated infrastructure &amp; solutions engineer</li>
+						<li data-i18n="pricing.everything_in_pro">Everything in Pro</li>
+						<li data-i18n="pricing.self_hosted_runtime_option">Self-hosted runtime option</li>
+						<li data-i18n="pricing.white_label_embed_api">White-label embed &amp; API</li>
+						<li data-i18n="pricing.on_chain_identity_erc_8004">On-chain identity (ERC-8004)</li>
+						<li data-i18n="pricing.custom_rigs_licensing">Custom rigs &amp; licensing</li>
+						<li data-i18n="pricing.sso_audit_logs_embed_policy_whitelisting">SSO, audit logs, embed-policy whitelisting</li>
+						<li data-i18n="pricing.dedicated_infrastructure_solutions_engineer">Dedicated infrastructure &amp; solutions engineer</li>
 					</ul>
 					<a
 						href="mailto:support@three.ws?subject=three.ws%20Enterprise"
 						class="pricing-cta"
-						>Contact sales</a
+						 data-i18n="pricing.contact_sales">Contact sales</a
 					>
 				</div>
 			</div>
@@ -178,7 +178,7 @@
 					id="pc-dialog"
 					tabindex="-1"
 				>
-					<button class="pc-close" id="pc-close" aria-label="Close checkout">
+					<button class="pc-close" id="pc-close" aria-label="Close checkout" data-i18n-attr="aria-label:pricing.close_checkout_arialabel">
 						<svg viewBox="0 0 16 16" aria-hidden="true">
 							<path
 								d="M3 3l10 10M13 3L3 13"
@@ -188,8 +188,8 @@
 							/>
 						</svg>
 					</button>
-					<h3 id="pc-title">Upgrade to Pro</h3>
-					<p class="pc-sub" id="pc-sub">
+					<h3 id="pc-title" data-i18n="pricing.upgrade_to_pro">Upgrade to Pro</h3>
+					<p class="pc-sub" id="pc-sub" data-i18n="pricing.30_days_of_pro_settled_on_solana">
 						30 days of Pro, settled on Solana. Choose how you want to pay.
 					</p>
 
@@ -202,7 +202,7 @@
 								role="radio"
 								aria-checked="true"
 								data-asset="USDC"
-							>
+							 data-i18n-html="pricing.usdc_49_stable_pay_the_sticker_price">
 								<span class="pc-asset-name">USDC</span>
 								<span class="pc-asset-price" data-asset-price="USDC">$49</span>
 								<span class="pc-asset-note">Stable — pay the sticker price</span>
@@ -213,7 +213,7 @@
 								role="radio"
 								aria-checked="false"
 								data-asset="SOL"
-							>
+							 data-i18n-html="pricing.sol_49_quoted_at_the_live_price">
 								<span class="pc-asset-name">SOL</span>
 								<span class="pc-asset-price" data-asset-price="SOL">$49</span>
 								<span class="pc-asset-note">Quoted at the live price</span>
@@ -224,17 +224,17 @@
 								role="radio"
 								aria-checked="false"
 								data-asset="THREE"
-							>
+							 data-i18n-html="pricing.20_off_three_39_20_the_platform">
 								<span class="pc-asset-badge" data-three-badge>20% off</span>
 								<span class="pc-asset-name">$THREE</span>
 								<span class="pc-asset-price" data-asset-price="THREE">$39.20</span>
 								<span class="pc-asset-note">The platform coin — discounted</span>
 							</button>
 						</div>
-						<button class="pricing-cta primary pc-continue" id="pc-continue" type="button">
+						<button class="pricing-cta primary pc-continue" id="pc-continue" type="button" data-i18n="pricing.continue">
 							Continue
 						</button>
-						<p class="pc-fineprint">
+						<p class="pc-fineprint" data-i18n="pricing.payments_are_verified_on_chain_and_activate">
 							Payments are verified on-chain and activate instantly. SOL and $THREE
 							amounts are pinned when the quote is created.
 						</p>
@@ -259,18 +259,18 @@
 									id="pc-wallet-link"
 									href="#"
 									rel="noopener"
-									>Open in wallet</a
+									 data-i18n="pricing.open_in_wallet">Open in wallet</a
 								>
-								<button class="pricing-cta" type="button" id="pc-copy-url">
+								<button class="pricing-cta" type="button" id="pc-copy-url" data-i18n="pricing.copy_payment_link">
 									Copy payment link
 								</button>
-								<button class="pricing-cta" type="button" id="pc-copy-addr">
+								<button class="pricing-cta" type="button" id="pc-copy-addr" data-i18n="pricing.copy_address">
 									Copy address
 								</button>
 							</div>
 						</div>
 						<label class="pc-sig-label" for="pc-txsig"
-							>Paid from an exchange or CLI? Paste the transaction signature:</label
+							 data-i18n="pricing.paid_from_an_exchange_or_cli_paste">Paid from an exchange or CLI? Paste the transaction signature:</label
 						>
 						<div class="pc-sig-row">
 							<input
@@ -279,11 +279,11 @@
 								spellcheck="false"
 								placeholder="Transaction signature"
 							/>
-							<button class="pricing-cta primary" type="button" id="pc-confirm">
+							<button class="pricing-cta primary" type="button" id="pc-confirm" data-i18n="pricing.confirm">
 								Confirm
 							</button>
 						</div>
-						<button class="pc-back" type="button" id="pc-back">
+						<button class="pc-back" type="button" id="pc-back" data-i18n="pricing.change_payment_asset">
 							&larr; Change payment asset
 						</button>
 						<div class="pc-status" id="pc-status" role="status" aria-live="polite"></div>
@@ -292,9 +292,9 @@
 					<!-- Step 3 — done -->
 					<div class="pc-step pc-success" id="pc-step-done" hidden>
 						<div class="pc-success-mark" aria-hidden="true">✓</div>
-						<h4>You&rsquo;re Pro</h4>
+						<h4 data-i18n="pricing.you_re_pro">You&rsquo;re Pro</h4>
 						<p id="pc-done-detail"></p>
-						<a class="pricing-cta primary" href="/dashboard">Go to dashboard</a>
+						<a class="pricing-cta primary" href="/dashboard" data-i18n="pricing.go_to_dashboard">Go to dashboard</a>
 					</div>
 				</div>
 			</div>
@@ -314,8 +314,8 @@
 				id="pricing-payg"
 				aria-labelledby="payg-heading"
 			>
-				<h2 id="payg-heading">Pay only for what you generate</h2>
-				<p class="payg-lead">
+				<h2 id="payg-heading" data-i18n="pricing.pay_only_for_what_you_generate">Pay only for what you generate</h2>
+				<p class="payg-lead" data-i18n-html="pricing.no_subscription_needed_generation_and_comput">
 					No subscription needed. Generation and compute are billed per call &mdash;
 					quoted in USD, settled in <a href="/three">$THREE</a> at the live rate.
 					Drafts are always free.
@@ -327,7 +327,7 @@
 					aria-busy="true"
 					aria-live="polite"
 				></div>
-				<p class="payg-foot">
+				<p class="payg-foot" data-i18n-html="pricing.variable_items_rare_names_limited_collectibl">
 					Variable items &mdash; rare <code>.threews.sol</code> names, limited
 					collectibles, and creator-priced marketplace sales &mdash; are priced per
 					item at checkout. <a href="/three">See the full $THREE economy &rarr;</a>
@@ -336,174 +336,174 @@
 
 			<!-- ── FEATURE COMPARISON ──────────────────────────────────────── -->
 			<section class="pricing-comparison reveal-section">
-				<h2>Compare every feature</h2>
+				<h2 data-i18n="pricing.compare_every_feature">Compare every feature</h2>
 				<table class="comparison-table">
 					<thead>
 						<tr>
-							<th>Feature</th>
-							<th>Free</th>
-							<th class="featured-col">Pro</th>
-							<th>Enterprise</th>
+							<th data-i18n="pricing.feature">Feature</th>
+							<th data-i18n="pricing.free">Free</th>
+							<th class="featured-col" data-i18n="pricing.pro">Pro</th>
+							<th data-i18n="pricing.enterprise">Enterprise</th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr class="section-row">
-							<td colspan="4">Agents &amp; avatars</td>
+							<td colspan="4" data-i18n="pricing.agents_avatars">Agents &amp; avatars</td>
 						</tr>
 						<tr>
-							<td>Agents</td>
+							<td data-i18n="pricing.agents">Agents</td>
 							<td class="val">1</td>
-							<td class="val featured-col">Unlimited</td>
-							<td class="val">Unlimited</td>
+							<td class="val featured-col" data-i18n="pricing.unlimited">Unlimited</td>
+							<td class="val" data-i18n="pricing.unlimited_2">Unlimited</td>
 						</tr>
 						<tr>
-							<td>Custom avatars</td>
+							<td data-i18n="pricing.custom_avatars">Custom avatars</td>
 							<td class="val">1</td>
-							<td class="val featured-col">Unlimited</td>
-							<td class="val">Unlimited</td>
+							<td class="val featured-col" data-i18n="pricing.unlimited_3">Unlimited</td>
+							<td class="val" data-i18n="pricing.unlimited_4">Unlimited</td>
 						</tr>
 						<tr>
-							<td>Animation clips</td>
+							<td data-i18n="pricing.animation_clips">Animation clips</td>
 							<td class="val">200</td>
-							<td class="val featured-col">200 + custom</td>
-							<td class="val">Unlimited + custom rigs</td>
+							<td class="val featured-col" data-i18n="pricing.200_custom">200 + custom</td>
+							<td class="val" data-i18n="pricing.unlimited_custom_rigs">Unlimited + custom rigs</td>
 						</tr>
 						<tr>
-							<td>Memory seeds</td>
+							<td data-i18n="pricing.memory_seeds">Memory seeds</td>
 							<td><span class="check"></span></td>
 							<td class="featured-col"><span class="check yes"></span></td>
 							<td><span class="check yes"></span></td>
 						</tr>
 
 						<tr class="section-row">
-							<td colspan="4">Voice &amp; lipsync</td>
+							<td colspan="4" data-i18n="pricing.voice_lipsync">Voice &amp; lipsync</td>
 						</tr>
 						<tr>
-							<td>Voice chat</td>
+							<td data-i18n="pricing.voice_chat">Voice chat</td>
 							<td><span class="check yes"></span></td>
 							<td class="featured-col"><span class="check yes"></span></td>
 							<td><span class="check yes"></span></td>
 						</tr>
 						<tr>
-							<td>TTS lipsync</td>
+							<td data-i18n="pricing.tts_lipsync">TTS lipsync</td>
 							<td><span class="check yes"></span></td>
 							<td class="featured-col"><span class="check yes"></span></td>
 							<td><span class="check yes"></span></td>
 						</tr>
 						<tr>
-							<td>Custom voice cloning</td>
+							<td data-i18n="pricing.custom_voice_cloning_2">Custom voice cloning</td>
 							<td><span class="check"></span></td>
 							<td class="featured-col"><span class="check yes"></span></td>
 							<td><span class="check yes"></span></td>
 						</tr>
 
 						<tr class="section-row">
-							<td colspan="4">Embed &amp; deploy</td>
+							<td colspan="4" data-i18n="pricing.embed_deploy">Embed &amp; deploy</td>
 						</tr>
 						<tr>
-							<td>&lt;agent-3d&gt; embeds</td>
-							<td class="val">Unlimited</td>
-							<td class="val featured-col">Unlimited</td>
-							<td class="val">Unlimited</td>
+							<td data-i18n="pricing.embeds">&lt;agent-3d&gt; embeds</td>
+							<td class="val" data-i18n="pricing.unlimited_5">Unlimited</td>
+							<td class="val featured-col" data-i18n="pricing.unlimited_6">Unlimited</td>
+							<td class="val" data-i18n="pricing.unlimited_7">Unlimited</td>
 						</tr>
 						<tr>
-							<td>Custom domain embeds</td>
+							<td data-i18n="pricing.custom_domain_embeds">Custom domain embeds</td>
 							<td><span class="check"></span></td>
 							<td class="featured-col"><span class="check yes"></span></td>
 							<td><span class="check yes"></span></td>
 						</tr>
 						<tr>
-							<td>White-label theming</td>
+							<td data-i18n="pricing.white_label_theming">White-label theming</td>
 							<td><span class="check"></span></td>
 							<td><span class="check"></span></td>
 							<td><span class="check yes"></span></td>
 						</tr>
 						<tr>
-							<td>Embed-policy whitelisting</td>
+							<td data-i18n="pricing.embed_policy_whitelisting">Embed-policy whitelisting</td>
 							<td><span class="check"></span></td>
 							<td><span class="check"></span></td>
 							<td><span class="check yes"></span></td>
 						</tr>
 
 						<tr class="section-row">
-							<td colspan="4">Platform &amp; infra</td>
+							<td colspan="4" data-i18n="pricing.platform_infra">Platform &amp; infra</td>
 						</tr>
 						<tr>
-							<td>CDN delivery</td>
-							<td class="val">Shared</td>
-							<td class="val featured-col">Priority</td>
-							<td class="val">Dedicated</td>
+							<td data-i18n="pricing.cdn_delivery">CDN delivery</td>
+							<td class="val" data-i18n="pricing.shared">Shared</td>
+							<td class="val featured-col" data-i18n="pricing.priority">Priority</td>
+							<td class="val" data-i18n="pricing.dedicated">Dedicated</td>
 						</tr>
 						<tr>
-							<td>GPU rendering</td>
-							<td class="val">Shared</td>
-							<td class="val featured-col">Priority</td>
-							<td class="val">Dedicated</td>
+							<td data-i18n="pricing.gpu_rendering">GPU rendering</td>
+							<td class="val" data-i18n="pricing.shared_2">Shared</td>
+							<td class="val featured-col" data-i18n="pricing.priority_2">Priority</td>
+							<td class="val" data-i18n="pricing.dedicated_2">Dedicated</td>
 						</tr>
 						<tr>
-							<td>Analytics dashboard</td>
-							<td class="val">Basic</td>
-							<td class="val featured-col">Advanced</td>
-							<td class="val">Custom</td>
+							<td data-i18n="pricing.analytics_dashboard">Analytics dashboard</td>
+							<td class="val" data-i18n="pricing.basic">Basic</td>
+							<td class="val featured-col" data-i18n="pricing.advanced">Advanced</td>
+							<td class="val" data-i18n="pricing.custom">Custom</td>
 						</tr>
 						<tr>
-							<td>Self-hosted runtime</td>
+							<td data-i18n="pricing.self_hosted_runtime">Self-hosted runtime</td>
 							<td><span class="check"></span></td>
 							<td><span class="check"></span></td>
 							<td><span class="check yes"></span></td>
 						</tr>
 
 						<tr class="section-row">
-							<td colspan="4">Monetization &amp; identity</td>
+							<td colspan="4" data-i18n="pricing.monetization_identity">Monetization &amp; identity</td>
 						</tr>
 						<tr>
-							<td>x402 paid skills</td>
+							<td data-i18n="pricing.x402_paid_skills">x402 paid skills</td>
 							<td><span class="check yes"></span></td>
 							<td class="featured-col"><span class="check yes"></span></td>
 							<td><span class="check yes"></span></td>
 						</tr>
 						<tr>
-							<td>Platform fee</td>
-							<td class="val">0% (beta)</td>
+							<td data-i18n="pricing.platform_fee">Platform fee</td>
+							<td class="val" data-i18n="pricing.0_beta">0% (beta)</td>
 							<td class="val featured-col">2.9%</td>
-							<td class="val">Custom</td>
+							<td class="val" data-i18n="pricing.custom_2">Custom</td>
 						</tr>
 						<tr>
-							<td>On-chain identity (ERC-8004)</td>
+							<td data-i18n="pricing.on_chain_identity_erc_8004_2">On-chain identity (ERC-8004)</td>
 							<td><span class="check"></span></td>
 							<td><span class="check"></span></td>
 							<td><span class="check yes"></span></td>
 						</tr>
 
 						<tr class="section-row">
-							<td colspan="4">Support</td>
+							<td colspan="4" data-i18n="pricing.support">Support</td>
 						</tr>
 						<tr>
-							<td>Community (Discord)</td>
+							<td data-i18n="pricing.community_discord">Community (Discord)</td>
 							<td><span class="check yes"></span></td>
 							<td class="featured-col"><span class="check yes"></span></td>
 							<td><span class="check yes"></span></td>
 						</tr>
 						<tr>
-							<td>Priority email</td>
+							<td data-i18n="pricing.priority_email">Priority email</td>
 							<td><span class="check"></span></td>
 							<td class="featured-col"><span class="check yes"></span></td>
 							<td><span class="check yes"></span></td>
 						</tr>
 						<tr>
-							<td>SLA guarantee</td>
+							<td data-i18n="pricing.sla_guarantee">SLA guarantee</td>
 							<td><span class="check"></span></td>
 							<td class="featured-col"><span class="check yes"></span></td>
 							<td><span class="check yes"></span></td>
 						</tr>
 						<tr>
-							<td>Dedicated solutions engineer</td>
+							<td data-i18n="pricing.dedicated_solutions_engineer">Dedicated solutions engineer</td>
 							<td><span class="check"></span></td>
 							<td><span class="check"></span></td>
 							<td><span class="check yes"></span></td>
 						</tr>
 						<tr>
-							<td>SSO &amp; audit logs</td>
+							<td data-i18n="pricing.sso_audit_logs">SSO &amp; audit logs</td>
 							<td><span class="check"></span></td>
 							<td><span class="check"></span></td>
 							<td><span class="check yes"></span></td>
@@ -514,11 +514,11 @@
 
 			<!-- ── FAQ ─────────────────────────────────────────────────────── -->
 			<section class="pricing-faq reveal-section">
-				<h2>Frequently asked questions</h2>
+				<h2 data-i18n="pricing.frequently_asked_questions">Frequently asked questions</h2>
 
 				<details>
-					<summary>What's included in the free beta?</summary>
-					<p>
+					<summary data-i18n="pricing.what_s_included_in_the_free_beta">What's included in the free beta?</summary>
+					<p data-i18n="pricing.everything_unlimited_embeds_voice_animation">
 						Everything: unlimited embeds, voice, animation, mocap, AR, x402 paid skills,
 						the dashboard, and the API. We're intentionally not metering anything during
 						beta — we want to see how people actually use the platform before drawing
@@ -526,8 +526,8 @@
 					</p>
 				</details>
 				<details>
-					<summary>What happens when beta ends?</summary>
-					<p>
+					<summary data-i18n="pricing.what_happens_when_beta_ends">What happens when beta ends?</summary>
+					<p data-i18n="pricing.a_generous_free_tier_stays_free_forever">
 						A generous free tier stays free forever for hobby and open-source projects.
 						Paid tiers add higher agent limits, custom domains, priority infrastructure,
 						and dedicated support. Existing users get 60 days' notice and a
@@ -535,16 +535,16 @@
 					</p>
 				</details>
 				<details>
-					<summary>Can I monetize my own agents?</summary>
-					<p>
+					<summary data-i18n="pricing.can_i_monetize_my_own_agents">Can I monetize my own agents?</summary>
+					<p data-i18n="pricing.yes_the_x402_protocol_lets_you_charge">
 						Yes. The x402 protocol lets you charge per skill invocation (per chat turn,
 						per generation, per API call) in USDC. During beta you keep 100% of revenue.
 						After beta the platform fee is 2.9% on Pro and negotiable on Enterprise.
 					</p>
 				</details>
 				<details id="no-crypto" open>
-					<summary>Do I need crypto to use three.ws?</summary>
-					<p>
+					<summary data-i18n="pricing.do_i_need_crypto_to_use_three">Do I need crypto to use three.ws?</summary>
+					<p data-i18n="pricing.no_the_web_component_dashboard_and_api">
 						No. The web component, dashboard, and API work without a wallet. Crypto
 						unlocks: on-chain agent identity (ERC-8004), payable skills (x402), and
 						creator payouts. If you don't need those, the platform works like any other
@@ -552,24 +552,24 @@
 					</p>
 				</details>
 				<details>
-					<summary>Can I switch plans later?</summary>
-					<p>
+					<summary data-i18n="pricing.can_i_switch_plans_later">Can I switch plans later?</summary>
+					<p data-i18n="pricing.upgrade_or_downgrade_any_time_from_your">
 						Upgrade or downgrade any time from your dashboard. When upgrading, you're
 						prorated for the remainder of the current billing cycle. When downgrading,
 						the change takes effect at the start of the next cycle.
 					</p>
 				</details>
 				<details>
-					<summary>What about enterprise pricing?</summary>
-					<p>
+					<summary data-i18n="pricing.what_about_enterprise_pricing">What about enterprise pricing?</summary>
+					<p data-i18n="pricing.custom_subdomain_sso_audit_logs_embed_policy">
 						Custom subdomain, SSO, audit logs, embed-policy whitelisting, white-label
 						themes, self-hosted runtime, and SLA. Email support@three.ws and we'll set up
 						a call within 24 hours.
 					</p>
 				</details>
 				<details>
-					<summary>How does the annual discount work?</summary>
-					<p>
+					<summary data-i18n="pricing.how_does_the_annual_discount_work">How does the annual discount work?</summary>
+					<p data-i18n="pricing.annual_billing_saves_17_compared_to_monthly">
 						Annual billing saves 17% compared to monthly. You're billed once per year at
 						the discounted rate. If you cancel mid-year, your access continues through
 						the end of the paid period.
@@ -580,11 +580,11 @@
 			<!-- ── BOTTOM CTA ──────────────────────────────────────────────── -->
 			<section class="pricing-bottom-cta reveal-section">
 				<div class="cta-card">
-					<h2>Ready to give your<br />AI agent a body?</h2>
-					<p>Free during open beta. No credit card. Two lines of HTML.</p>
+					<h2 data-i18n-html="pricing.ready_to_give_your_ai_agent_a">Ready to give your<br />AI agent a body?</h2>
+					<p data-i18n="pricing.free_during_open_beta_no_credit_card">Free during open beta. No credit card. Two lines of HTML.</p>
 					<div class="cta-row">
-						<a href="/create" class="pricing-cta primary">Build your first agent</a>
-						<a href="/docs" class="pricing-cta">Read the docs</a>
+						<a href="/create" class="pricing-cta primary" data-i18n="pricing.build_your_first_agent">Build your first agent</a>
+						<a href="/docs" class="pricing-cta" data-i18n="pricing.read_the_docs">Read the docs</a>
 					</div>
 				</div>
 			</section>
@@ -598,8 +598,8 @@
 
 				<div class="h-footer-cta">
 					<div class="h-footer-newsletter">
-						<h3>Stay in the loop</h3>
-						<p>Get updates on new features, agent tooling, and protocol changes.</p>
+						<h3 data-i18n="pricing.stay_in_the_loop">Stay in the loop</h3>
+						<p data-i18n="pricing.get_updates_on_new_features_agent_tooling">Get updates on new features, agent tooling, and protocol changes.</p>
 						<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
 							<input
 								type="email"
@@ -614,7 +614,7 @@
 								type="submit"
 								class="h-footer-newsletter-btn"
 								aria-label="Subscribe"
-							>
+							 data-i18n-attr="aria-label:pricing.subscribe_arialabel">
 								<svg viewBox="0 0 16 16" aria-hidden="true">
 									<path
 										fill="none"
@@ -634,8 +634,8 @@
 						></p>
 					</div>
 					<div class="h-footer-community">
-						<h3>Join the community</h3>
-						<p>Follow along for builds, demos, and conversations with the team.</p>
+						<h3 data-i18n="pricing.join_the_community">Join the community</h3>
+						<p data-i18n="pricing.follow_along_for_builds_demos_and_conversati">Follow along for builds, demos, and conversations with the team.</p>
 						<a
 							class="h-footer-community-btn"
 							href="https://x.com/trythreews"
@@ -657,9 +657,9 @@
 						<div class="h-footer-brand">
 							<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
 							<span class="wordmark-dot" aria-hidden="true"></span>
-							<span>three.ws</span>
+							<span data-i18n="pricing.three_ws">three.ws</span>
 						</div>
-						<p class="h-footer-tagline">Give your AI a body.</p>
+						<p class="h-footer-tagline" data-i18n="pricing.give_your_ai_a_body">Give your AI a body.</p>
 						<div class="h-footer-socials">
 							<a
 								class="h-footer-social"
@@ -667,7 +667,7 @@
 								target="_blank"
 								rel="noopener noreferrer"
 								aria-label="three.ws on X"
-							>
+							 data-i18n-attr="aria-label:pricing.three_ws_on_x_arialabel">
 								<svg viewBox="0 0 24 24" aria-hidden="true">
 									<path
 										fill="currentColor"
@@ -681,7 +681,7 @@
 								target="_blank"
 								rel="noopener noreferrer"
 								aria-label="three.ws on GitHub"
-							>
+							 data-i18n-attr="aria-label:pricing.three_ws_on_github_arialabel">
 								<svg viewBox="0 0 16 16" aria-hidden="true">
 									<path
 										fill="currentColor"
@@ -693,48 +693,48 @@
 					</div>
 					<nav class="h-footer-links" aria-label="Footer">
 						<div class="h-footer-link-col">
-							<h4 class="h-footer-link-heading">Product</h4>
-							<a href="/create">Create</a>
-							<a href="/marketplace">Marketplace</a>
-							<a href="/studio">Studio</a>
-							<a href="/widgets">Widgets</a>
-							<a href="/pricing">Pricing</a>
+							<h4 class="h-footer-link-heading" data-i18n="pricing.product">Product</h4>
+							<a href="/create" data-i18n="pricing.create">Create</a>
+							<a href="/marketplace" data-i18n="pricing.marketplace">Marketplace</a>
+							<a href="/studio" data-i18n="pricing.studio">Studio</a>
+							<a href="/widgets" data-i18n="pricing.widgets">Widgets</a>
+							<a href="/pricing" data-i18n="pricing.pricing_2">Pricing</a>
 						</div>
 						<div class="h-footer-link-col">
-							<h4 class="h-footer-link-heading">Developers</h4>
-							<a href="/docs">Docs</a>
+							<h4 class="h-footer-link-heading" data-i18n="pricing.developers">Developers</h4>
+							<a href="/docs" data-i18n="pricing.docs">Docs</a>
 							<a
 								href="https://github.com/nirholas/three.ws"
 								target="_blank"
 								rel="noopener noreferrer"
-								>GitHub</a
+								 data-i18n="pricing.github">GitHub</a
 							>
-							<a href="/bazaar">x402 Bazaar</a>
+							<a href="/bazaar" data-i18n="pricing.x402_bazaar">x402 Bazaar</a>
 							<a
 								href="https://developers.metaplex.com/core"
 								target="_blank"
 								rel="noopener noreferrer"
-								>Metaplex Core</a
+								 data-i18n="pricing.metaplex_core">Metaplex Core</a
 							>
 						</div>
 						<div class="h-footer-link-col">
-							<h4 class="h-footer-link-heading">Company</h4>
-							<a href="/blog">Blog</a>
-							<a href="/community">Community</a>
-							<a href="/features">Features</a>
-							<a href="/dashboard">Dashboard</a>
+							<h4 class="h-footer-link-heading" data-i18n="pricing.company">Company</h4>
+							<a href="/blog" data-i18n="pricing.blog">Blog</a>
+							<a href="/community" data-i18n="pricing.community">Community</a>
+							<a href="/features" data-i18n="pricing.features">Features</a>
+							<a href="/dashboard" data-i18n="pricing.dashboard">Dashboard</a>
 						</div>
 						<div class="h-footer-link-col">
-							<h4 class="h-footer-link-heading">Legal</h4>
-							<a href="/legal/privacy">Privacy</a>
-							<a href="/legal/tos">Terms</a>
+							<h4 class="h-footer-link-heading" data-i18n="pricing.legal">Legal</h4>
+							<a href="/legal/privacy" data-i18n="pricing.privacy">Privacy</a>
+							<a href="/legal/tos" data-i18n="pricing.terms">Terms</a>
 						</div>
 					</nav>
 				</div>
 				<div class="h-footer-bottom">
-					<p class="h-footer-legal">&copy; 2026 three.ws &mdash; All rights reserved.</p>
+					<p class="h-footer-legal" data-i18n="pricing.2026_three_ws_all_rights_reserved">&copy; 2026 three.ws &mdash; All rights reserved.</p>
 					<div class="h-footer-badges">
-						<a href="/pay" class="h-footer-badge" aria-label="Built with x402 payments">
+						<a href="/pay" class="h-footer-badge" aria-label="Built with x402 payments" data-i18n-attr="aria-label:pricing.built_with_x402_payments_arialabel">
 							<svg viewBox="0 0 16 16" aria-hidden="true">
 								<circle
 									cx="8"
@@ -755,14 +755,14 @@
 							</svg>
 							Built with x402
 						</a>
-						<span class="h-footer-badge" aria-label="All systems operational">
+						<span class="h-footer-badge" aria-label="All systems operational" data-i18n-html="pricing.all_systems_operational" data-i18n-attr="aria-label:pricing.all_systems_operational_arialabel">
 							<span class="h-footer-status-dot"></span>
 							All systems operational
 						</span>
 					</div>
 					<div class="h-footer-legal-links">
-						<a href="/legal/privacy">Privacy Policy</a>
-						<a href="/legal/tos">Terms of Use</a>
+						<a href="/legal/privacy" data-i18n="pricing.privacy_policy">Privacy Policy</a>
+						<a href="/legal/tos" data-i18n="pricing.terms_of_use">Terms of Use</a>
 					</div>
 				</div>
 			</footer>
@@ -1580,5 +1580,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

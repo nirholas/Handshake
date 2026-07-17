@@ -1,9 +1,9 @@
 // @ts-check
-// Avatar Composer — parts catalog.
+// Avatar Composer: parts catalog.
 //
 // The four Ready-Player-Me / Wolf3D base bodies shipped in public/avatars
 // (realistic-male, realistic-female, default, selfie-girl) are not just five
-// fixed avatars — they are a MODULAR PARTS KIT. Every one is rigged to a
+// fixed avatars: they are a MODULAR PARTS KIT. Every one is rigged to a
 // byte-identical 67-joint skeleton with identical joint ordering (verified), and
 // every body part (hair, top, bottom, footwear, glasses) is a SEPARATE skinned
 // mesh identified by its material name. Because the skeletons match, a hair mesh
@@ -16,10 +16,10 @@
 // shipped before.
 //
 // Slots split into two groups:
-//   identity  — head, body, eyes, teeth, beard. These come as a set from ONE
+//   identity : head, body, eyes, teeth, beard. These come as a set from ONE
 //               base (the "identity base"); they carry the face + its 60+ ARKit
 //               blendshapes, so the composed avatar is expression-ready.
-//   swappable — hair, top, bottom, footwear, glasses. Each is sourced
+//   swappable: hair, top, bottom, footwear, glasses. Each is sourced
 //               independently from any base that provides it (or omitted).
 
 /** Material name → composer slot. A mesh's slot is the material it uses. */
@@ -81,7 +81,7 @@ export const SLOT_CHANNEL = {
  * translations) so the composer only ever mixes parts WITHIN a group, where the
  * fit is exact. Measured Hips bind heights: realistic-male 0.967, realistic-female
  * 1.009 (group "a"); default and selfie-girl 1.037 (group "b"). Cross-group mixing
- * needs true vertex rebinding — the planned v2.
+ * needs true vertex rebinding: the planned v2.
  *
  * @type {BaseBody[]}
  */

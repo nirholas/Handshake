@@ -16,8 +16,15 @@ let freeResult = { success: true, limit: 60, remaining: 59, reset: Date.now() + 
 vi.mock('../../api/_lib/rate-limit.js', () => ({
 	limits: {
 		mcp3dGenerateFree: async () =>
-			freeOk ? { success: true, limit: 60, remaining: 59, reset: Date.now() + 3_600_000 } : freeResult,
-		mcp3dStatus: async () => ({ success: true, limit: 240, remaining: 239, reset: Date.now() + 60_000 }),
+			freeOk
+				? { success: true, limit: 60, remaining: 59, reset: Date.now() + 3_600_000 }
+				: freeResult,
+		mcp3dStatus: async () => ({
+			success: true,
+			limit: 240,
+			remaining: 239,
+			reset: Date.now() + 60_000,
+		}),
 	},
 	clientIp: () => '203.0.113.7',
 }));
@@ -42,7 +49,12 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-function makeReq({ method = 'POST', url = '/api/3d/generate', body = null, host = 'three.ws' } = {}) {
+function makeReq({
+	method = 'POST',
+	url = '/api/3d/generate',
+	body = null,
+	host = 'three.ws',
+} = {}) {
 	const raw = body == null ? '' : JSON.stringify(body);
 	const stream = Readable.from(raw ? [Buffer.from(raw)] : []);
 	stream.method = method;
@@ -101,10 +113,21 @@ const SUBMIT_QUEUED = {
 	job_id: 'f1.eyJwIjoibnZpZGlhIiwiayI6InRleHQiLCJ0IjoibmltLXRhc2stMTIzIn0.c2lnbmF0dXJl',
 	creation_id: 'a1b2c3d4-0000-4000-8000-000000000002',
 	status: 'queued',
+	// forge's queued response spreads its provenance, which carries the lane ETA.
+	eta_seconds: 20,
 };
-const POLL_DONE = { job_id: SUBMIT_QUEUED.job_id, status: 'done', glb_url: 'https://cdn.three.ws/forge/anon/done.glb', durable: true };
+const POLL_DONE = {
+	job_id: SUBMIT_QUEUED.job_id,
+	status: 'done',
+	glb_url: 'https://cdn.three.ws/forge/anon/done.glb',
+	durable: true,
+};
 const POLL_RUNNING = { job_id: SUBMIT_QUEUED.job_id, status: 'running' };
-const POLL_FAILED = { job_id: SUBMIT_QUEUED.job_id, status: 'failed', error: 'the generator hit a snag' };
+const POLL_FAILED = {
+	job_id: SUBMIT_QUEUED.job_id,
+	status: 'failed',
+	error: 'the generator hit a snag',
+};
 
 describe('shape helpers — lane boundary contract', () => {
 	it('shapeSubmit maps the inline-done shape to a done payload with a viewer URL', async () => {
@@ -112,7 +135,9 @@ describe('shape helpers — lane boundary contract', () => {
 		const out = shapeSubmit(SUBMIT_DONE, 'https://three.ws');
 		expect(out.status).toBe('done');
 		expect(out.glbUrl).toBe(SUBMIT_DONE.glb_url);
-		expect(out.viewerUrl).toBe('https://three.ws/viewer?src=' + encodeURIComponent(SUBMIT_DONE.glb_url));
+		expect(out.viewerUrl).toBe(
+			'https://three.ws/viewer?src=' + encodeURIComponent(SUBMIT_DONE.glb_url),
+		);
 		expect(out.format).toBe('glb');
 		expect(out.tier).toBe('draft');
 		expect(out.free).toBe(true);
@@ -127,6 +152,39 @@ describe('shape helpers — lane boundary contract', () => {
 		expect(out.free).toBe(true);
 	});
 
+	it('shapeSubmit surfaces creationId, etaSeconds, and an ETA-derived retryAfter on pending', async () => {
+		const { shapeSubmit } = await import('../../api/3d/generate.js');
+		const out = shapeSubmit(SUBMIT_QUEUED, 'https://three.ws');
+		expect(out.creationId).toBe(SUBMIT_QUEUED.creation_id);
+		expect(out.etaSeconds).toBe(20);
+		expect(out.retryAfter).toBe(5); // round(20 / 4)
+	});
+
+	it('shapeSubmit surfaces creationId on the inline-done shape', async () => {
+		const { shapeSubmit } = await import('../../api/3d/generate.js');
+		const out = shapeSubmit(SUBMIT_DONE, 'https://three.ws');
+		expect(out.creationId).toBe(SUBMIT_DONE.creation_id);
+		expect(out.retryAfter).toBeUndefined(); // done carries no poll cadence
+	});
+
+	it('shapeSubmit defaults retryAfter to 3s when the lane reports no ETA', async () => {
+		const { shapeSubmit } = await import('../../api/3d/generate.js');
+		const out = shapeSubmit({ job_id: 'f1.abc.def', status: 'queued' }, 'https://three.ws');
+		expect(out.retryAfter).toBe(3);
+		expect(out.etaSeconds).toBeUndefined();
+		expect(out.creationId).toBeUndefined();
+	});
+
+	it('pollIntervalFromEta clamps to [2s, 10s] and defaults on junk input', async () => {
+		const { pollIntervalFromEta } = await import('../../api/3d/generate.js');
+		expect(pollIntervalFromEta(20)).toBe(5);
+		expect(pollIntervalFromEta(4)).toBe(2); // round(1) floored to min
+		expect(pollIntervalFromEta(200)).toBe(10); // clamped to max
+		expect(pollIntervalFromEta(0)).toBe(3);
+		expect(pollIntervalFromEta(NaN)).toBe(3);
+		expect(pollIntervalFromEta(undefined)).toBe(3);
+	});
+
 	it('shapePoll maps done/running/failed forge poll shapes', async () => {
 		const { shapePoll } = await import('../../api/3d/generate.js');
 		const done = shapePoll(POLL_DONE, 'https://three.ws', SUBMIT_QUEUED.job_id);
@@ -137,6 +195,7 @@ describe('shape helpers — lane boundary contract', () => {
 		const pending = shapePoll(POLL_RUNNING, 'https://three.ws', SUBMIT_QUEUED.job_id);
 		expect(pending.status).toBe('pending');
 		expect(pending.poll).toContain('/api/3d/generate?job=');
+		expect(pending.retryAfter).toBe(3); // no ETA on the running poll shape → default cadence
 
 		const err = shapePoll(POLL_FAILED, 'https://three.ws', SUBMIT_QUEUED.job_id);
 		expect(err.status).toBe('error');
@@ -159,13 +218,19 @@ describe('POST /api/3d/generate — validation', () => {
 	});
 
 	it('rejects an oversized prompt with 400', async () => {
-		const { res, body } = await dispatch(makeReq({ body: { prompt: 'x'.repeat(1001) } }), makeRes());
+		const { res, body } = await dispatch(
+			makeReq({ body: { prompt: 'x'.repeat(1001) } }),
+			makeRes(),
+		);
 		expect(res.statusCode).toBe(400);
 		expect(body.error).toBe('invalid_prompt');
 	});
 
 	it('rejects an unsupported format with 400', async () => {
-		const { res, body } = await dispatch(makeReq({ body: { prompt: 'a small ceramic robot figurine', format: 'obj' } }), makeRes());
+		const { res, body } = await dispatch(
+			makeReq({ body: { prompt: 'a small ceramic robot figurine', format: 'obj' } }),
+			makeRes(),
+		);
 		expect(res.statusCode).toBe(400);
 		expect(body.error).toBe('unsupported_format');
 	});
@@ -178,7 +243,10 @@ describe('POST /api/3d/generate — rate limit', () => {
 		globalThis.fetch = vi.fn(async () => {
 			throw new Error('lane should not be called when rate-limited');
 		});
-		const { res, body } = await dispatch(makeReq({ body: { prompt: 'a small ceramic robot figurine' } }), makeRes());
+		const { res, body } = await dispatch(
+			makeReq({ body: { prompt: 'a small ceramic robot figurine' } }),
+			makeRes(),
+		);
 		expect(res.statusCode).toBe(429);
 		expect(body.error).toBe('rate_limited');
 		expect(res.getHeader('retry-after')).toBeTruthy();
@@ -190,11 +258,16 @@ describe('POST /api/3d/generate — rate limit', () => {
 describe('POST /api/3d/generate — response contract', () => {
 	it('returns { status: done, glbUrl, viewerUrl } when the lane finishes inline', async () => {
 		globalThis.fetch = vi.fn(async () => jsonResponse(SUBMIT_DONE));
-		const { res, body } = await dispatch(makeReq({ body: { prompt: 'a small ceramic robot figurine' } }), makeRes());
+		const { res, body } = await dispatch(
+			makeReq({ body: { prompt: 'a small ceramic robot figurine' } }),
+			makeRes(),
+		);
 		expect(res.statusCode).toBe(200);
 		expect(body.status).toBe('done');
 		expect(body.glbUrl).toBe(SUBMIT_DONE.glb_url);
-		expect(body.viewerUrl).toBe('https://three.ws/viewer?src=' + encodeURIComponent(SUBMIT_DONE.glb_url));
+		expect(body.viewerUrl).toBe(
+			'https://three.ws/viewer?src=' + encodeURIComponent(SUBMIT_DONE.glb_url),
+		);
 		// The place-in-your-room AR link rides along, labeled with the prompt.
 		expect(body.arUrl).toBe(
 			'https://three.ws/api/ar?src=' +
@@ -204,12 +277,20 @@ describe('POST /api/3d/generate — response contract', () => {
 		);
 		// The lane was submitted with the pinned free NVIDIA draft params.
 		const [, opts] = globalThis.fetch.mock.calls[0];
-		expect(JSON.parse(opts.body)).toMatchObject({ prompt: 'a small ceramic robot figurine', backend: 'nvidia', path: 'image', tier: 'draft' });
+		expect(JSON.parse(opts.body)).toMatchObject({
+			prompt: 'a small ceramic robot figurine',
+			backend: 'nvidia',
+			path: 'image',
+			tier: 'draft',
+		});
 	});
 
 	it('returns { status: pending, job, poll } when the lane queues the job, carrying the AR title', async () => {
 		globalThis.fetch = vi.fn(async () => jsonResponse(SUBMIT_QUEUED));
-		const { res, body } = await dispatch(makeReq({ body: { prompt: 'a small ceramic robot figurine' } }), makeRes());
+		const { res, body } = await dispatch(
+			makeReq({ body: { prompt: 'a small ceramic robot figurine' } }),
+			makeRes(),
+		);
 		expect(res.statusCode).toBe(200);
 		expect(body.status).toBe('pending');
 		expect(body.job).toBe(SUBMIT_QUEUED.job_id);
@@ -219,18 +300,33 @@ describe('POST /api/3d/generate — response contract', () => {
 				'&title=' +
 				encodeURIComponent('a small ceramic robot figurine'),
 		);
+		// Poll-cadence hint rides in both the body and the standard Retry-After header.
+		expect(body.retryAfter).toBe(5);
+		expect(body.etaSeconds).toBe(20);
+		expect(body.creationId).toBe(SUBMIT_QUEUED.creation_id);
+		expect(res.getHeader('retry-after')).toBe('5');
 	});
 
 	it('surfaces a 503 not_configured when the lane is unconfigured', async () => {
-		globalThis.fetch = vi.fn(async () => jsonResponse({ message: '3D generation is not configured' }, { status: 503 }));
-		const { res, body } = await dispatch(makeReq({ body: { prompt: 'a small ceramic robot figurine' } }), makeRes());
+		globalThis.fetch = vi.fn(async () =>
+			jsonResponse({ message: '3D generation is not configured' }, { status: 503 }),
+		);
+		const { res, body } = await dispatch(
+			makeReq({ body: { prompt: 'a small ceramic robot figurine' } }),
+			makeRes(),
+		);
 		expect(res.statusCode).toBe(503);
 		expect(body.error).toBe('not_configured');
 	});
 
 	it('maps an upstream 429 (GPU lane saturated) to 429 + retry-after', async () => {
-		globalThis.fetch = vi.fn(async () => jsonResponse({ message: 'busy', retry_after: 12 }, { status: 429 }));
-		const { res, body } = await dispatch(makeReq({ body: { prompt: 'a small ceramic robot figurine' } }), makeRes());
+		globalThis.fetch = vi.fn(async () =>
+			jsonResponse({ message: 'busy', retry_after: 12 }, { status: 429 }),
+		);
+		const { res, body } = await dispatch(
+			makeReq({ body: { prompt: 'a small ceramic robot figurine' } }),
+			makeRes(),
+		);
 		expect(res.statusCode).toBe(429);
 		expect(body.error).toBe('rate_limited');
 		expect(res.getHeader('retry-after')).toBe('12');
@@ -239,34 +335,51 @@ describe('POST /api/3d/generate — response contract', () => {
 
 describe('GET /api/3d/generate?job= — poll lifecycle', () => {
 	it('400s when no job param is present', async () => {
-		const { res, body } = await dispatch(makeReq({ method: 'GET', url: '/api/3d/generate' }), makeRes());
+		const { res, body } = await dispatch(
+			makeReq({ method: 'GET', url: '/api/3d/generate' }),
+			makeRes(),
+		);
 		expect(res.statusCode).toBe(400);
 		expect(body.error).toBe('missing_job');
 	});
 
 	it('treats a whitespace-only job param as missing', async () => {
-		const { res, body } = await dispatch(makeReq({ method: 'GET', url: '/api/3d/generate?job=%20%20' }), makeRes());
+		const { res, body } = await dispatch(
+			makeReq({ method: 'GET', url: '/api/3d/generate?job=%20%20' }),
+			makeRes(),
+		);
 		expect(res.statusCode).toBe(400);
 		expect(body.error).toBe('missing_job');
 	});
 
 	it('400s on a malformed job handle', async () => {
-		const { res, body } = await dispatch(makeReq({ method: 'GET', url: '/api/3d/generate?job=bad*job*id' }), makeRes());
+		const { res, body } = await dispatch(
+			makeReq({ method: 'GET', url: '/api/3d/generate?job=bad*job*id' }),
+			makeRes(),
+		);
 		expect(res.statusCode).toBe(400);
 		expect(body.error).toBe('invalid_job');
 	});
 
 	it('returns pending while the job runs', async () => {
 		globalThis.fetch = vi.fn(async () => jsonResponse(POLL_RUNNING));
-		const { res, body } = await dispatch(makeReq({ method: 'GET', url: `/api/3d/generate?job=${SUBMIT_QUEUED.job_id}` }), makeRes());
+		const { res, body } = await dispatch(
+			makeReq({ method: 'GET', url: `/api/3d/generate?job=${SUBMIT_QUEUED.job_id}` }),
+			makeRes(),
+		);
 		expect(res.statusCode).toBe(200);
 		expect(body.status).toBe('pending');
 		expect(body.poll).toContain('/api/3d/generate?job=');
+		expect(body.retryAfter).toBe(3);
+		expect(res.getHeader('retry-after')).toBe('3');
 	});
 
 	it('returns done with glbUrl + viewerUrl when the job finishes', async () => {
 		globalThis.fetch = vi.fn(async () => jsonResponse(POLL_DONE));
-		const { res, body } = await dispatch(makeReq({ method: 'GET', url: `/api/3d/generate?job=${SUBMIT_QUEUED.job_id}` }), makeRes());
+		const { res, body } = await dispatch(
+			makeReq({ method: 'GET', url: `/api/3d/generate?job=${SUBMIT_QUEUED.job_id}` }),
+			makeRes(),
+		);
 		expect(res.statusCode).toBe(200);
 		expect(body.status).toBe('done');
 		expect(body.glbUrl).toBe(POLL_DONE.glb_url);
@@ -275,7 +388,10 @@ describe('GET /api/3d/generate?job= — poll lifecycle', () => {
 
 	it('returns status:error (no charge) when the job failed upstream', async () => {
 		globalThis.fetch = vi.fn(async () => jsonResponse(POLL_FAILED));
-		const { res, body } = await dispatch(makeReq({ method: 'GET', url: `/api/3d/generate?job=${SUBMIT_QUEUED.job_id}` }), makeRes());
+		const { res, body } = await dispatch(
+			makeReq({ method: 'GET', url: `/api/3d/generate?job=${SUBMIT_QUEUED.job_id}` }),
+			makeRes(),
+		);
 		expect(res.statusCode).toBe(200);
 		expect(body.status).toBe('error');
 		expect(body.error).toBe(POLL_FAILED.error);
@@ -286,7 +402,10 @@ describe('GET /api/3d/generate?job= — poll lifecycle', () => {
 		globalThis.fetch = vi.fn(async () => {
 			throw new Error('network blip');
 		});
-		const { res, body } = await dispatch(makeReq({ method: 'GET', url: `/api/3d/generate?job=${SUBMIT_QUEUED.job_id}` }), makeRes());
+		const { res, body } = await dispatch(
+			makeReq({ method: 'GET', url: `/api/3d/generate?job=${SUBMIT_QUEUED.job_id}` }),
+			makeRes(),
+		);
 		expect(res.statusCode).toBe(200);
 		expect(body.status).toBe('pending');
 	});

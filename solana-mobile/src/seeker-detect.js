@@ -52,6 +52,17 @@ function isFromTwaReferrer() {
 	return false;
 }
 
+// Any Android app referrer (not necessarily our exact package id). A TWA always
+// sets document.referrer to `android-app://<launcher-package>`; a plain
+// installed PWA has an empty referrer and desktop never sets this. Combined
+// with standalone + Android below, this catches real Seeker TWAs whose UA does
+// NOT carry a "Seeker"/"SAGA" hint — the previous AND-of-UA-hint gate
+// false-negatived those and silently dropped them onto the browser-wallet path.
+function isFromAnyAndroidAppReferrer() {
+	if (typeof document === 'undefined') return false;
+	return (document.referrer || '').startsWith('android-app://');
+}
+
 function isDeviceHintedSeeker() {
 	if (typeof navigator === 'undefined') return false;
 	const ua = navigator.userAgent || '';
@@ -82,12 +93,40 @@ export function isSolanaMobileTwa() {
 	if (typeof window === 'undefined') return false;
 	// Hard signal: direct referrer from our TWA package.
 	if (isFromTwaReferrer()) return true;
-	// Combined signal: standalone Android Chrome + device hint, or the MWA
-	// runtime is already present. Standalone alone isn't enough (installed
-	// PWAs on phones look identical) — we also need the Solana Mobile hint.
-	if (isStandalone() && isAndroidWebView() && isDeviceHintedSeeker()) return true;
-	if (isStandalone() && isAndroidWebView() && hasMwaIntent()) return true;
+	// Combined signals under standalone Android Chrome. Standalone alone isn't
+	// enough (installed PWAs on phones look identical) — each needs a second
+	// Android-app-context signal so desktop and plain mobile PWAs never match:
+	//   • launched from an Android app (TWA referrer, any package), or
+	//   • the device advertises a Seeker/SAGA hint, or
+	//   • the MWA runtime is already present.
+	if (isStandalone() && isAndroidWebView()) {
+		if (isFromAnyAndroidAppReferrer()) return true;
+		if (isDeviceHintedSeeker()) return true;
+		if (hasMwaIntent()) return true;
+	}
 	return false;
+}
+
+/**
+ * Async capability probe: "could Mobile Wallet Adapter actually be used here?"
+ * MWA needs a secure context, an Android browser, and the transport library to
+ * load. Unlike isSolanaMobileTwa() (which gates whether we OWN window.solana),
+ * this answers whether it's worth OFFERING a "Sign with Seed Vault" affordance
+ * — e.g. on a Seeker's regular browser outside the TWA shell.
+ *
+ * @returns {Promise<boolean>}
+ */
+export async function isMwaSupported() {
+	if (typeof window === 'undefined') return false;
+	if (!isAndroidMobile()) return false;
+	// MWA association requires a secure context (https or localhost).
+	if (window.isSecureContext === false) return false;
+	try {
+		const mod = await import('@solana-mobile/mobile-wallet-adapter-protocol-web3js');
+		return typeof mod.transact === 'function';
+	} catch {
+		return false;
+	}
 }
 
 /**

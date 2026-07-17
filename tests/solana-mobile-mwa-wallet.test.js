@@ -126,7 +126,10 @@ describe('MwaWallet.connect', () => {
 			reauthorize: vi.fn().mockRejectedValue(new Error('token revoked')),
 		});
 		const w = new MwaWallet();
-		await expect(w.signMessage(new Uint8Array([1, 2, 3]))).rejects.toThrow(/revoked/);
+		const err = await w.signMessage(new Uint8Array([1, 2, 3])).catch((e) => e);
+		// Normalized to a stable MwaError; original preserved as cause.
+		expect(err.name).toBe('MwaError');
+		expect(err.cause?.message).toMatch(/revoked/);
 	});
 });
 
@@ -254,6 +257,72 @@ describe('session persistence', () => {
 		const second = new MwaWallet();
 		expect(second.isConnected).toBe(true);
 		expect(second.publicKey.toBase58()).toBe(ADDR);
+	});
+});
+
+describe('MwaWallet.signIn (one-tap SIWS)', () => {
+	const SIWS_TEXT = 'three.ws wants you to sign in with your Solana account:\n' + ADDR;
+
+	it('authorizes and returns the wallet-built SIWS message + signature in one call', async () => {
+		const sig = new Uint8Array(64).fill(3);
+		h.state.wallet.authorize.mockResolvedValue({
+			accounts: [{ address: ADDR_B64 }],
+			auth_token: 'tok-siws',
+			sign_in_result: {
+				signed_message: Buffer.from(SIWS_TEXT, 'utf8').toString('base64'),
+				signature: Buffer.from(sig).toString('base64'),
+			},
+		});
+
+		const w = new MwaWallet();
+		const out = await w.signIn({ domain: 'three.ws', nonce: 'abc123', chainId: 'mainnet' });
+
+		expect(h.state.wallet.authorize).toHaveBeenCalledWith(
+			expect.objectContaining({ sign_in_payload: expect.objectContaining({ domain: 'three.ws', nonce: 'abc123' }) }),
+		);
+		expect(out.address).toBe(ADDR);
+		expect(out.signedMessageText).toBe(SIWS_TEXT);
+		expect(Array.from(out.signature)).toEqual(Array.from(sig));
+		expect(w.isConnected).toBe(true);
+	});
+
+	it('returns null when the wallet does not support authorize-time sign-in', async () => {
+		// authorize succeeds but omits sign_in_result (older wallet).
+		h.state.wallet.authorize.mockResolvedValue({
+			accounts: [{ address: ADDR_B64 }],
+			auth_token: 'tok-no-siws',
+		});
+		const w = new MwaWallet();
+		const out = await w.signIn({ nonce: 'n' });
+		expect(out).toBe(null);
+		// Still authorized as a side effect, so a fallback signMessage is cheap.
+		expect(w.isConnected).toBe(true);
+	});
+
+	it('advertises supportsSignIn', () => {
+		expect(new MwaWallet().supportsSignIn).toBe(true);
+	});
+});
+
+describe('error normalization', () => {
+	it('maps an MWA authorization decline (code -1) to a Phantom-style 4001', async () => {
+		const declined = Object.assign(new Error('authorization failed'), { code: -1 });
+		h.state.wallet.authorize.mockRejectedValue(declined);
+		const w = new MwaWallet();
+		const err = await w.connect().catch((e) => e);
+		expect(err.name).toBe('MwaError');
+		expect(err.code).toBe(4001);
+		expect(err.reason).toBe('USER_REJECTED');
+	});
+
+	it('maps ERROR_WALLET_NOT_FOUND to an actionable reason (no 4001)', async () => {
+		const notFound = Object.assign(new Error('no wallet'), { code: 'ERROR_WALLET_NOT_FOUND' });
+		h.state.wallet.authorize.mockRejectedValue(notFound);
+		const w = new MwaWallet();
+		const err = await w.connect().catch((e) => e);
+		expect(err.reason).toBe('WALLET_NOT_FOUND');
+		expect(err.code).toBeUndefined();
+		expect(err.userMessage).toMatch(/wallet app/i);
 	});
 });
 

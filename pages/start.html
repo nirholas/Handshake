@@ -5,8 +5,8 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title>Get started · three.ws</title>
-	<meta name="description" content="Create your 3D AI agent in minutes. Give it a body, a brain, and a revenue stream." />
+	<title data-i18n="start.meta_title">Get started · three.ws</title>
+	<meta name="description" content="Create your 3D AI agent in minutes. Give it a body, a brain, and a revenue stream."  data-i18n-attr="content:start.meta_description"/>
 	<meta name="robots" content="noindex" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -1006,21 +1006,21 @@
 <!-- ── Templates gallery (pre-wizard) ──────────────────────────────── -->
 <div id="templates-screen" class="tpl-hidden" aria-label="Choose an agent template">
 	<header class="tpl-header">
-		<a href="/" class="wz-logo" aria-label="three.ws home">
+		<a href="/" class="wz-logo" aria-label="three.ws home" data-i18n-attr="aria-label:start.three_ws_home_arialabel">
 			<img src="/three.svg" alt="" />
 			<span>three.ws</span>
 		</a>
-		<a href="/dashboard" class="wz-skip">Skip setup</a>
+		<a href="/dashboard" class="wz-skip" data-i18n="start.skip_setup">Skip setup</a>
 	</header>
 	<div class="tpl-scroll">
 		<main class="tpl-main">
-			<p class="tpl-eyebrow">Get started</p>
-			<h1 class="tpl-headline">Pick a starting point</h1>
-			<p class="tpl-sub">Choose a template to launch with a pre-built persona and skill set, or start from scratch.</p>
+			<p class="tpl-eyebrow" data-i18n="start.get_started">Get started</p>
+			<h1 class="tpl-headline" data-i18n="start.pick_a_starting_point">Pick a starting point</h1>
+			<p class="tpl-sub" data-i18n="start.choose_a_template_to_launch_with_a">Choose a template to launch with a pre-built persona and skill set, or start from scratch.</p>
 			<div class="tpl-grid" id="tpl-grid" role="list" aria-label="Agent templates">
 				<!-- Cards injected by start.js -->
 			</div>
-			<button type="button" class="tpl-blank-btn" id="btn-blank-start" aria-label="Start from scratch without a template">
+			<button type="button" class="tpl-blank-btn" id="btn-blank-start" aria-label="Start from scratch without a template" data-i18n-html="start.start_from_scratch" data-i18n-attr="aria-label:start.start_from_scratch_without_a_arialabel">
 				Start from scratch <span aria-hidden="true">→</span>
 			</button>
 		</main>
@@ -1030,7 +1030,7 @@
 <div id="wizard" class="wz-offstage">
 	<!-- Header -->
 	<header class="wz-header">
-		<a href="/" class="wz-logo" aria-label="three.ws home">
+		<a href="/" class="wz-logo" aria-label="three.ws home" data-i18n-attr="aria-label:start.three_ws_home_arialabel_2">
 			<img src="/three.svg" alt="" />
 			<span>three.ws</span>
 		</a>
@@ -1042,8 +1042,8 @@
 			<div class="wz-dot" data-step="5"></div>
 		</div>
 		<div style="display:flex;align-items:center;gap:12px">
-			<button type="button" class="wz-skip" id="btn-start-fresh" style="display:none">← Templates</button>
-			<a href="/dashboard" class="wz-skip" id="wz-header-skip">Skip setup</a>
+			<button type="button" class="wz-skip" id="btn-start-fresh" style="display:none" data-i18n="start.templates">← Templates</button>
+			<a href="/dashboard" class="wz-skip" id="wz-header-skip" data-i18n="start.skip_setup_2">Skip setup</a>
 		</div>
 	</header>
 
@@ -1053,9 +1053,9 @@
 		<!-- Step 1: Avatar -->
 		<section class="wz-step active" id="step-1" aria-label="Step 1: Create your avatar">
 			<div class="wz-step-inner">
-				<p class="wz-eyebrow">Step 1 of 5</p>
-				<h1 class="wz-headline">Give your agent a body</h1>
-				<p class="wz-sub">Start with a 3D avatar. Pick a creation method or skip and name your agent first.</p>
+				<p class="wz-eyebrow" data-i18n="start.step_1_of_5">Step 1 of 5</p>
+				<h1 class="wz-headline" data-i18n="start.give_your_agent_a_body">Give your agent a body</h1>
+				<p class="wz-sub" data-i18n="start.start_with_a_3d_avatar_pick_a">Start with a 3D avatar. Pick a creation method or skip and name your agent first.</p>
 
 				<div id="avatar-preview" hidden>
 					<div class="wz-avatar-preview">
@@ -1069,7 +1069,7 @@
 
 				<div class="wz-avatar-grid" id="avatar-method-grid">
 					<button class="wz-avatar-card" id="btn-selfie" type="button">
-						<span class="wz-avatar-card-badge">2 min</span>
+						<span class="wz-avatar-card-badge" data-i18n="start.2_min">2 min</span>
 						<span class="wz-avatar-card-icon">🤳</span>
 						<div class="wz-avatar-card-label">Take a selfie</div>
 						<div class="wz-avatar-card-desc">One photo → rigged 3D avatar</div>
@@ -1093,42 +1093,42 @@
 		<!-- Step 2: Name & Brain -->
 		<section class="wz-step" id="step-2" aria-label="Step 2: Name your agent">
 			<div class="wz-step-inner">
-				<p class="wz-eyebrow">Step 2 of 5</p>
-				<h1 class="wz-headline">Name your agent</h1>
-				<p class="wz-sub">Give it a personality. You can change this any time.</p>
+				<p class="wz-eyebrow" data-i18n="start.step_2_of_5">Step 2 of 5</p>
+				<h1 class="wz-headline" data-i18n="start.name_your_agent">Name your agent</h1>
+				<p class="wz-sub" data-i18n="start.give_it_a_personality_you_can_change">Give it a personality. You can change this any time.</p>
 
 				<div class="wz-field">
-					<label class="wz-label" for="agent-name">Agent name</label>
+					<label class="wz-label" for="agent-name" data-i18n="start.agent_name">Agent name</label>
 					<input class="wz-input" id="agent-name" type="text" placeholder="e.g. Luna, Apex, Nova" maxlength="100" autocomplete="off" />
 				</div>
 
 				<div class="wz-field">
-					<label class="wz-label" for="agent-bio">Personality &amp; bio <span style="color:var(--text-3);font-weight:400">(optional)</span></label>
+					<label class="wz-label" for="agent-bio" data-i18n-html="start.personality_bio_optional">Personality &amp; bio <span style="color:var(--text-3);font-weight:400">(optional)</span></label>
 					<textarea class="wz-textarea" id="agent-bio" placeholder="e.g. A crypto-savvy assistant that tracks Solana token launches and helps users make informed trading decisions." maxlength="500"></textarea>
 				</div>
 
-				<p class="wz-label" style="margin-bottom:10px">Quick personality</p>
+				<p class="wz-label" style="margin-bottom:10px" data-i18n="start.quick_personality">Quick personality</p>
 				<div class="wz-chips" id="personality-chips">
-					<button type="button" class="wz-chip" data-preset="researcher" aria-pressed="false">Web researcher</button>
-					<button type="button" class="wz-chip" data-preset="support" aria-pressed="false">Customer support</button>
-					<button type="button" class="wz-chip" data-preset="podcast" aria-pressed="false">Podcast host</button>
-					<button type="button" class="wz-chip" data-preset="artist" aria-pressed="false">Creative artist</button>
-					<button type="button" class="wz-chip" data-preset="assistant" aria-pressed="false">Helpful assistant</button>
+					<button type="button" class="wz-chip" data-preset="researcher" aria-pressed="false" data-i18n="start.web_researcher">Web researcher</button>
+					<button type="button" class="wz-chip" data-preset="support" aria-pressed="false" data-i18n="start.customer_support">Customer support</button>
+					<button type="button" class="wz-chip" data-preset="podcast" aria-pressed="false" data-i18n="start.podcast_host">Podcast host</button>
+					<button type="button" class="wz-chip" data-preset="artist" aria-pressed="false" data-i18n="start.creative_artist">Creative artist</button>
+					<button type="button" class="wz-chip" data-preset="assistant" aria-pressed="false" data-i18n="start.helpful_assistant">Helpful assistant</button>
 				</div>
 
-				<button type="button" class="wz-crypto-toggle-row" id="crypto-toggle" aria-expanded="false">
+				<button type="button" class="wz-crypto-toggle-row" id="crypto-toggle" aria-expanded="false" data-i18n-html="start.advanced_crypto">
 					<span class="wz-crypto-toggle-icon">›</span>
 					<span>Advanced / crypto</span>
 				</button>
 				<div class="wz-crypto-section" id="crypto-personality-section" hidden>
 					<div class="wz-chips">
-						<button type="button" class="wz-chip" data-preset="crypto" aria-pressed="false">Crypto advisor</button>
-						<button type="button" class="wz-chip" data-preset="defi" aria-pressed="false">DeFi expert</button>
-						<button type="button" class="wz-chip" data-preset="community" aria-pressed="false">Community manager</button>
+						<button type="button" class="wz-chip" data-preset="crypto" aria-pressed="false" data-i18n="start.crypto_advisor">Crypto advisor</button>
+						<button type="button" class="wz-chip" data-preset="defi" aria-pressed="false" data-i18n="start.defi_expert">DeFi expert</button>
+						<button type="button" class="wz-chip" data-preset="community" aria-pressed="false" data-i18n="start.community_manager">Community manager</button>
 					</div>
 				</div>
 
-				<p class="wz-label" style="margin-bottom:10px">AI model</p>
+				<p class="wz-label" style="margin-bottom:10px" data-i18n="start.ai_model">AI model</p>
 				<div class="wz-model-grid" id="model-grid">
 					<button type="button" class="wz-model-card active" data-model="claude-sonnet-4-5" aria-pressed="true">
 						<div class="wz-model-name">Claude Sonnet</div>
@@ -1149,9 +1149,9 @@
 		<!-- Step 3: Skills -->
 		<section class="wz-step" id="step-3" aria-label="Step 3: Choose skills">
 			<div class="wz-step-inner">
-				<p class="wz-eyebrow">Step 3 of 5</p>
-				<h1 class="wz-headline">Give it superpowers</h1>
-				<p class="wz-sub">Each skill extends what your agent can do. Enable any combination.</p>
+				<p class="wz-eyebrow" data-i18n="start.step_3_of_5">Step 3 of 5</p>
+				<h1 class="wz-headline" data-i18n="start.give_it_superpowers">Give it superpowers</h1>
+				<p class="wz-sub" data-i18n="start.each_skill_extends_what_your_agent_can">Each skill extends what your agent can do. Enable any combination.</p>
 
 				<div class="wz-skills-grid" id="skills-grid">
 					<button type="button" class="wz-skill-card active" data-skill="memory" aria-pressed="true">
@@ -1182,8 +1182,8 @@
 
 				<div class="wz-crypto-skills" id="crypto-skills-section" hidden>
 					<div class="wz-crypto-skills-header">
-						<span class="wz-crypto-skills-label">Crypto &amp; blockchain</span>
-						<button type="button" class="wz-crypto-hide-btn" id="crypto-skills-hide">Hide</button>
+						<span class="wz-crypto-skills-label" data-i18n="start.crypto_blockchain">Crypto &amp; blockchain</span>
+						<button type="button" class="wz-crypto-hide-btn" id="crypto-skills-hide" data-i18n="start.hide">Hide</button>
 					</div>
 					<div class="wz-skills-grid">
 						<button type="button" class="wz-skill-card" data-skill="pumpfun" aria-pressed="false">
@@ -1212,16 +1212,16 @@
 						</button>
 					</div>
 				</div>
-				<button type="button" class="wz-crypto-reveal-btn" id="crypto-skills-reveal">+ Enable crypto &amp; blockchain tools</button>
+				<button type="button" class="wz-crypto-reveal-btn" id="crypto-skills-reveal" data-i18n="start.enable_crypto_blockchain_tools">+ Enable crypto &amp; blockchain tools</button>
 			</div>
 		</section>
 
 		<!-- Step 4: Deploy -->
 		<section class="wz-step" id="step-4" aria-label="Step 4: Deploy your agent">
 			<div class="wz-step-inner">
-				<p class="wz-eyebrow">Step 4 of 5</p>
-				<h1 class="wz-headline">Your agent is live</h1>
-				<p class="wz-sub">We created your agent and generated an embeddable widget.</p>
+				<p class="wz-eyebrow" data-i18n="start.step_4_of_5">Step 4 of 5</p>
+				<h1 class="wz-headline" data-i18n="start.your_agent_is_live">Your agent is live</h1>
+				<p class="wz-sub" data-i18n="start.we_created_your_agent_and_generated_an">We created your agent and generated an embeddable widget.</p>
 
 				<div class="wz-deploy-status" id="deploy-status">
 					<div class="wz-deploy-spinner"></div>
@@ -1233,7 +1233,7 @@
 					<div class="wz-success-title" id="deploy-agent-name">Your agent is live</div>
 
 					<div>
-						<p class="wz-code-label">Live page</p>
+						<p class="wz-code-label" data-i18n="start.live_page">Live page</p>
 						<a class="wz-live-link" id="deploy-live-link" href="#" target="_blank" rel="noopener">
 							<span class="wz-live-link-icon">🔗</span>
 							<span class="wz-live-link-text" id="deploy-live-url">…</span>
@@ -1242,9 +1242,9 @@
 					</div>
 
 					<div>
-						<p class="wz-code-label">Embed snippet</p>
+						<p class="wz-code-label" data-i18n="start.embed_snippet">Embed snippet</p>
 						<div class="wz-code-block" id="embed-code-block">
-							<button class="wz-copy-btn" id="copy-embed" type="button">Copy</button>
+							<button class="wz-copy-btn" id="copy-embed" type="button" data-i18n="start.copy">Copy</button>
 							<code id="embed-code"></code>
 						</div>
 					</div>
@@ -1255,12 +1255,12 @@
 		<!-- Step 5: Finish -->
 		<section class="wz-step" id="step-5" aria-label="Step 5: Finish up">
 			<div class="wz-step-inner">
-				<p class="wz-eyebrow">Step 5 of 5</p>
+				<p class="wz-eyebrow" data-i18n="start.step_5_of_5">Step 5 of 5</p>
 
 				<!-- No-crypto: you're all set -->
 				<div id="step5-skip">
-					<h1 class="wz-headline">You're all set</h1>
-					<p class="wz-sub">Your agent is live and ready — no wallet needed. Head to your dashboard to start using it.</p>
+					<h1 class="wz-headline" data-i18n="start.you_re_all_set">You're all set</h1>
+					<p class="wz-sub" data-i18n="start.your_agent_is_live_and_ready_no">Your agent is live and ready — no wallet needed. Head to your dashboard to start using it.</p>
 					<div class="wz-no-wallet-panel">
 						<div class="wz-no-wallet-icon">🎉</div>
 						<div class="wz-no-wallet-hint">
@@ -1275,21 +1275,21 @@
 
 				<!-- Crypto-enabled: earn setup -->
 				<div id="step5-earn" hidden>
-					<h1 class="wz-headline">Start earning</h1>
-					<p class="wz-sub">Set a price for your agent's API and connect a wallet to receive payouts. Both are optional.</p>
+					<h1 class="wz-headline" data-i18n="start.start_earning">Start earning</h1>
+					<p class="wz-sub" data-i18n="start.set_a_price_for_your_agent_s">Set a price for your agent's API and connect a wallet to receive payouts. Both are optional.</p>
 
 					<div class="wz-earn-rows">
 						<div class="wz-earn-row">
 							<div class="wz-earn-icon">💰</div>
 							<div class="wz-earn-row-body">
 								<div class="wz-earn-row-label">Price per API call</div>
-								<div class="wz-earn-row-desc">Others pay <span data-term="usdc">USDC (a $1 digital dollar)</span> every time they call your agent's API</div>
+								<div class="wz-earn-row-desc">Others pay <span data-term="usdc" data-i18n="start.usdc_a_1_digital_dollar">USDC (a $1 digital dollar)</span> every time they call your agent's API</div>
 							</div>
 							<div>
 								<div class="wz-earn-input-wrap">
 									<span class="wz-earn-prefix">$</span>
 									<input type="number" class="wz-earn-num" id="earn-price" min="0" max="100" step="0.001" placeholder="0.001" />
-									<span class="wz-earn-suffix">USDC</span>
+									<span class="wz-earn-suffix" data-i18n="start.usdc">USDC</span>
 								</div>
 								<div class="wz-earn-usd-hint" id="earn-price-usd-hint"></div>
 							</div>
@@ -1305,14 +1305,14 @@
 						<div style="padding: 0 0 4px;">
 							<div class="wz-wallet-input-wrap">
 								<input type="text" class="wz-wallet-input" id="earn-wallet" placeholder="Solana or wallet address" />
-								<span class="wz-wallet-chain" id="earn-chain">SOL</span>
+								<span class="wz-wallet-chain" id="earn-chain" data-i18n="start.sol">SOL</span>
 							</div>
 						</div>
 					</div>
 
 					<div class="wz-divider"></div>
 
-					<p style="font-size:12px;color:var(--text-3);text-align:center;margin-bottom:16px">
+					<p style="font-size:12px;color:var(--text-3);text-align:center;margin-bottom:16px" data-i18n="start.you_can_always_update_pricing_and_wallets">
 						You can always update pricing and wallets from your dashboard.
 					</p>
 				</div>
@@ -1324,10 +1324,10 @@
 
 	<!-- Footer -->
 	<footer class="wz-footer" id="wz-footer">
-		<button type="button" class="wz-btn wz-btn-ghost" id="btn-back" hidden>Back</button>
+		<button type="button" class="wz-btn wz-btn-ghost" id="btn-back" hidden data-i18n="start.back">Back</button>
 		<div style="flex:1"></div>
-		<button type="button" class="wz-btn-skip" id="btn-skip-step" hidden>Skip this step</button>
-		<button type="button" class="wz-btn wz-btn-primary" id="btn-next">Continue</button>
+		<button type="button" class="wz-btn-skip" id="btn-skip-step" hidden data-i18n="start.skip_this_step">Skip this step</button>
+		<button type="button" class="wz-btn wz-btn-primary" id="btn-next" data-i18n="start.continue">Continue</button>
 	</footer>
 </div>
 
@@ -1336,5 +1336,7 @@
 <script type="module" src="/src/start.js"></script>
 	<script src="/brand.js" defer></script>
 	<script src="/getting-started.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

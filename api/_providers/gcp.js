@@ -148,6 +148,12 @@ function buildWorkerRequest(request) {
 		if (params?.quality && typeof params.quality === 'object') {
 			body.quality = params.quality;
 		}
+		// Opt-in background pre-matting: the worker routes each view through its
+		// sibling rembg service before reconstruction (workers/model-trellis
+		// main.py `do_matte`). Only forwarded when the caller asks — the worker
+		// otherwise defaults matte off for every tier below `max`, so the free/
+		// default lane is unchanged unless we explicitly request it here.
+		if (params?.matte === true) body.matte = true;
 		if (Number.isFinite(Number(params?.seed))) body.seed = Math.floor(Number(params.seed));
 		return {
 			path: '/infer',

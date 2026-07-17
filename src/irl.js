@@ -1177,6 +1177,10 @@ async function loadAvatar(idOrUrl, nameOverride) {
 	mountWealthAura(height);
 
 	animMgr.attach(avatar);
+	// Never let an avatar whose arm bones the clip can't drive stand here with its
+	// arms frozen out sideways in the authored T-pose. Swing any un-driven arms
+	// down to a relaxed rest. No-op for a correctly-rigged avatar (arms name-map).
+	animMgr.relaxUndrivenArms();
 	const manifest = await fetch(ANIMATIONS_MANIFEST_URL, { cache: 'force-cache' }).then(r => {
 		if (!r.ok) throw new Error(`HTTP ${r.status}`);
 		return r.json();

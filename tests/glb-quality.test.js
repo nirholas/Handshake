@@ -1,7 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { scoreGlbQuality, shouldRetryForQuality, QUALITY_THRESHOLDS } from '../api/_lib/glb-quality.js';
+import {
+	scoreGlbQuality,
+	shouldRetryForQuality,
+	shouldEscalateToVisionQA,
+	QUALITY_THRESHOLDS,
+} from '../api/_lib/glb-quality.js';
 
 // Build a minimal-but-valid binary glTF 2.0 from a JS glTF object. We only need
 // the JSON chunk to be well-formed — the quality scorer reads accessor counts and
@@ -142,4 +147,57 @@ describe('scoreGlbQuality', () => {
 			expect(q.metrics.triangleCount).toBeGreaterThan(0);
 		});
 	}
+});
+
+// The adaptive-gate decision that lets the FREE lanes gain a semantic quality
+// floor: a confidently-good cheap score is trusted (skip the costly vision pass),
+// everything ambiguous escalates. This is the gate that closes the "valid mesh
+// that still looks wrong" hole on the default draft lane.
+describe('shouldEscalateToVisionQA', () => {
+	it('does NOT escalate a confidently-good mesh (clean, textured, high score)', () => {
+		const q = scoreGlbQuality(buildGlb(healthyGltf()));
+		expect(q.flag).toBe('ok');
+		expect(q.score).toBeGreaterThan(0.6);
+		expect(shouldEscalateToVisionQA(q)).toBe(false);
+	});
+
+	it('escalates a low-poly (coarse) mesh even though it renders', () => {
+		const gltf = healthyGltf();
+		gltf.accessors[0].count = 150;
+		gltf.accessors[1].count = 300 * 3;
+		const q = scoreGlbQuality(buildGlb(gltf));
+		expect(q.flag).toBe('low');
+		expect(shouldEscalateToVisionQA(q)).toBe(true);
+	});
+
+	it('escalates a degenerate / blob mesh', () => {
+		const gltf = healthyGltf();
+		gltf.meshes = [];
+		expect(shouldEscalateToVisionQA(scoreGlbQuality(buildGlb(gltf)))).toBe(true);
+	});
+
+	it('escalates an untextured mesh', () => {
+		const gltf = healthyGltf();
+		delete gltf.materials;
+		delete gltf.textures;
+		delete gltf.images;
+		const q = scoreGlbQuality(buildGlb(gltf));
+		expect(q.metrics.hasTextures).toBe(false);
+		expect(shouldEscalateToVisionQA(q)).toBe(true);
+	});
+
+	it('escalates an ok-but-mediocre mesh below the trust threshold', () => {
+		// A well-scored ok mesh gates through only when its score clears the bar;
+		// a caller-supplied stricter threshold forces the escalation.
+		const q = scoreGlbQuality(buildGlb(healthyGltf()));
+		expect(q.flag).toBe('ok');
+		expect(shouldEscalateToVisionQA(q, { minScore: 0.99 })).toBe(true);
+		expect(shouldEscalateToVisionQA(q, { minScore: 0.1 })).toBe(false);
+	});
+
+	it('escalates when there is no quality signal at all (cannot vouch)', () => {
+		expect(shouldEscalateToVisionQA(null)).toBe(true);
+		expect(shouldEscalateToVisionQA(undefined)).toBe(true);
+		expect(shouldEscalateToVisionQA({})).toBe(true);
+	});
 });

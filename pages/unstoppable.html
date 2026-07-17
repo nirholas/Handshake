@@ -5,10 +5,10 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Unstoppable Agent — three.ws</title>
-	<meta name="description" content="A self-sustaining AI agent that owns its wallet, pays for tools via x402, earns USDC from a service it runs, and re-invests to survive." />
-	<meta property="og:title" content="Unstoppable Agent — three.ws" />
-	<meta property="og:description" content="An AI that earns its own living. Every query to its status API funds its continued existence." />
+	<title data-i18n="unstoppable.meta_title">Unstoppable Agent — three.ws</title>
+	<meta name="description" content="A self-sustaining AI agent that owns its wallet, pays for tools via x402, earns USDC from a service it runs, and re-invests to survive."  data-i18n-attr="content:unstoppable.meta_description"/>
+	<meta property="og:title" content="Unstoppable Agent — three.ws"  data-i18n-attr="content:unstoppable.meta_og_title"/>
+	<meta property="og:description" content="An AI that earns its own living. Every query to its status API funds its continued existence."  data-i18n-attr="content:unstoppable.meta_og_description"/>
 	<meta name="twitter:card" content="summary_large_image" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -456,8 +456,8 @@
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Unstoppable+Agent&amp;d=Live+dashboard+for+an+autonomous+agent+that+funds+itself+via+x402+micropayments.+Watch+its+balance%2C+earnings%2C+costs%2C+and+daily+reflections+in+real+time.&amp;p=%2Funstoppable">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
-	<meta name="twitter:title" content="Unstoppable Agent · three.ws">
-	<meta name="twitter:description" content="Live dashboard for an autonomous agent that funds itself via x402 micropayments. Watch its balance, earnings, costs, and daily reflections in real time.">
+	<meta name="twitter:title" content="Unstoppable Agent · three.ws" data-i18n-attr="content:unstoppable.meta_twitter_title">
+	<meta name="twitter:description" content="Live dashboard for an autonomous agent that funds itself via x402 micropayments. Watch its balance, earnings, costs, and daily reflections in real time." data-i18n-attr="content:unstoppable.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Unstoppable+Agent&amp;d=Live+dashboard+for+an+autonomous+agent+that+funds+itself+via+x402+micropayments.+Watch+its+balance%2C+earnings%2C+costs%2C+and+daily+reflections+in+real+time.&amp;p=%2Funstoppable">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Unstoppable Agent","description":"Live dashboard for an autonomous agent that funds itself via x402 micropayments. Watch its balance, earnings, costs, and daily reflections in real time.","url":"https://three.ws/unstoppable","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -470,18 +470,18 @@
 	<!-- NAV -->
 	<nav class="nav">
 		<div class="nav-inner">
-			<a href="/" class="brand">
+			<a href="/" class="brand" data-i18n-html="unstoppable.three_ws">
 				<span class="brand-mark"></span>
 				three.ws
 			</a>
 			<div class="nav-main">
-				<a href="/discover">Discover</a>
-				<a href="/marketplace">Marketplace</a>
-				<a href="/temporary">Walk</a>
-				<a href="/unstoppable" class="active">Unstoppable Agent</a>
+				<a href="/discover" data-i18n="unstoppable.discover">Discover</a>
+				<a href="/marketplace" data-i18n="unstoppable.marketplace">Marketplace</a>
+				<a href="/temporary" data-i18n="unstoppable.walk">Walk</a>
+				<a href="/unstoppable" class="active" data-i18n="unstoppable.unstoppable_agent">Unstoppable Agent</a>
 			</div>
 			<div class="nav-end">
-				<a href="/dashboard" class="console">Dashboard</a>
+				<a href="/dashboard" class="console" data-i18n="unstoppable.dashboard">Dashboard</a>
 			</div>
 		</div>
 	</nav>
@@ -496,21 +496,21 @@
 		<div class="balance-display" id="balanceDisplay" role="status" aria-live="polite" aria-label="Treasury balance">—</div>
 
 		<div class="hero-badges">
-			<span class="badge badge-running" id="statusBadge" aria-live="polite">
+			<span class="badge badge-running" id="statusBadge" aria-live="polite" data-i18n-html="unstoppable.loading">
 				<span class="badge-dot"></span>
 				<span id="statusText">Loading</span>
 			</span>
-			<span class="badge badge-runway" id="runwayBadge" aria-live="polite">Runway: —</span>
+			<span class="badge badge-runway" id="runwayBadge" aria-live="polite" data-i18n="unstoppable.runway">Runway: —</span>
 		</div>
 
 		<div class="hero-updated" id="heroUpdated" role="status" aria-live="polite">Fetching live data...</div>
 
 		<div class="payment-notice" id="paymentNotice" role="note" style="display:none">
-			<p>
+			<p data-i18n-html="unstoppable.live_data_costs_0_01_per_query">
 				Live data costs <span class="payment-price" id="priceDisplay">$0.01</span> per query.
 				<strong>Every request directly funds this agent's operation.</strong>
 			</p>
-			<p style="margin: 8px 0 0; color: var(--text-4);">
+			<p style="margin: 8px 0 0; color: var(--text-4);" data-i18n="unstoppable.showing_last_cached_reading_send_an_x402">
 				Showing last cached reading. Send an x402 payment to see live data.
 			</p>
 		</div>
@@ -544,12 +544,12 @@
 
 			<div class="donate-block" style="margin-top: 28px;">
 				<div class="donate-label" id="donateLabel">Keep it alive — donate $0.01 USDC to extend the agent's runway and unlock the live view.</div>
-				<button class="btn primary" id="donateBtn" type="button" aria-label="Donate $0.01 USDC to fund the agent" onclick="window.__unstoppable.donate()">
+				<button class="btn primary" id="donateBtn" type="button" aria-label="Donate $0.01 USDC to fund the agent" onclick="window.__unstoppable.donate()" data-i18n="unstoppable.donate_0_01" data-i18n-attr="aria-label:unstoppable.donate_0_01_usdc_to_fund_the_arialabel">
 					Donate $0.01
 				</button>
 				<div class="donate-retry" id="donateRetry" role="note">
 					Donation didn't go through. If your USDC balance was too low,
-					<a href="/pay" id="donateTopUp">top up USDC then retry</a>.
+					<a href="/pay" id="donateTopUp" data-i18n="unstoppable.top_up_usdc_then_retry">top up USDC then retry</a>.
 				</div>
 			</div>
 		</div>
@@ -569,8 +569,8 @@
 			<div class="earn-inner">
 				<div>
 					<div class="panel-title" style="margin-bottom: 16px;">How It Earns</div>
-					<h2 class="earn-heading">Query its status.<br>It earns USDC.</h2>
-					<p class="earn-sub">
+					<h2 class="earn-heading" data-i18n-html="unstoppable.query_its_status_it_earns_usdc">Query its status.<br>It earns USDC.</h2>
+					<p class="earn-sub" data-i18n="unstoppable.every_call_to_the_status_endpoint_is">
 						Every call to the status endpoint is a micropayment via x402.
 						The agent collects the revenue, re-invests in thinking, and survives.
 						No humans in the loop — just code and crypto.
@@ -593,10 +593,10 @@
 	<section class="mechanics">
 		<div class="wrap-1280">
 			<div class="panel-title" style="margin-bottom: 8px;">How It Works</div>
-			<h2 style="font-family: var(--font-display); font-size: clamp(28px,3.5vw,44px); font-weight:600; letter-spacing:-0.035em; margin:0;">
+			<h2 style="font-family: var(--font-display); font-size: clamp(28px,3.5vw,44px); font-weight:600; letter-spacing:-0.035em; margin:0;" data-i18n="unstoppable.fully_autonomous_economy">
 				Fully autonomous economy
 			</h2>
-			<p style="color: var(--text-2); margin: 16px 0 0; font-size:15.5px; max-width:540px; line-height:1.6;">
+			<p style="color: var(--text-2); margin: 16px 0 0; font-size:15.5px; max-width:540px; line-height:1.6;" data-i18n="unstoppable.every_5_minutes_this_agent_senses_thinks">
 				Every 5 minutes, this agent senses, thinks, earns, and re-invests.
 				Its entire economy runs on x402 micropayments.
 			</p>
@@ -638,5 +638,7 @@
 	<!-- DASHBOARD JS -->
 	<script type="module" src="/src/unstoppable-dashboard.js"></script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

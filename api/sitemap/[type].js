@@ -35,20 +35,65 @@ function xmlEscape(s) {
 }
 
 function urlsetXml(entries) {
+	// Advertise the xhtml namespace only when at least one entry carries hreflang
+	// alternates, so entity sitemaps that don't localize stay byte-identical.
+	const hasAlternates = entries.some((e) => e.alternates?.length);
+	const ns =
+		`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"` +
+		(hasAlternates ? ` xmlns:xhtml="http://www.w3.org/1999/xhtml"` : ``) +
+		`>`;
 	return (
 		`<?xml version="1.0" encoding="UTF-8"?>\n` +
-		`<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+		`${ns}\n` +
 		entries
 			.map((e) => {
 				const parts = [`\t\t<loc>${xmlEscape(e.loc)}</loc>`];
 				if (e.lastmod) parts.push(`\t\t<lastmod>${e.lastmod}</lastmod>`);
 				if (e.changefreq) parts.push(`\t\t<changefreq>${e.changefreq}</changefreq>`);
 				if (e.priority) parts.push(`\t\t<priority>${e.priority}</priority>`);
+				for (const alt of e.alternates || []) {
+					parts.push(
+						`\t\t<xhtml:link rel="alternate" hreflang="${xmlEscape(alt.hreflang)}" href="${xmlEscape(alt.href)}"/>`,
+					);
+				}
 				return `\t<url>\n${parts.join('\n')}\n\t</url>`;
 			})
 			.join('\n') +
 		`\n</urlset>\n`
 	);
+}
+
+// Load the committed locale manifest + the list of localized page paths so the
+// core sitemap can advertise each translated route's language alternates. Both
+// ship in public/locales; read defensively (missing files → no alternates,
+// never a 500 for the crawler).
+async function loadI18n() {
+	const readJson = async (rel) => {
+		for (const base of [path.join(process.cwd(), 'public'), process.cwd()]) {
+			try {
+				return JSON.parse(await readFile(path.join(base, rel), 'utf8'));
+			} catch {
+				// try next base
+			}
+		}
+		return null;
+	};
+	const manifest = await readJson('locales/manifest.json');
+	const localized = await readJson('locales/localized-pages.json');
+	const locales = manifest?.locales?.map((l) => l.code) || [];
+	const def = manifest?.default || 'en';
+	return { locales, def, paths: new Set(localized?.paths || []) };
+}
+
+// Build hreflang alternates for one path. Each locale gets a distinct URL
+// (?lang=xx); the default locale and x-default share the bare canonical URL.
+function alternatesFor(pathname, { locales, def }) {
+	if (locales.length < 2) return undefined;
+	const url = (code) =>
+		code === def ? `${ORIGIN}${pathname}` : `${ORIGIN}${pathname}?lang=${code}`;
+	const alts = locales.map((code) => ({ hreflang: code, href: url(code) }));
+	alts.push({ hreflang: 'x-default', href: `${ORIGIN}${pathname}` });
+	return alts;
 }
 
 function send(res, body) {
@@ -82,7 +127,7 @@ async function loadPagesManifest() {
 
 async function coreSitemap() {
 	const today = fmtDate(new Date());
-	const manifest = await loadPagesManifest();
+	const [manifest, i18n] = await Promise.all([loadPagesManifest(), loadI18n()]);
 	if (!manifest?.sections) {
 		// Fallback to the home page only — never 500 the crawler.
 		return [{ loc: `${ORIGIN}/`, lastmod: today, changefreq: 'daily', priority: '1.0' }];
@@ -100,6 +145,7 @@ async function coreSitemap() {
 				lastmod: p.lastmod || today,
 				changefreq: p.changefreq || 'weekly',
 				priority: typeof p.priority === 'number' ? p.priority.toFixed(1) : '0.6',
+				alternates: i18n.paths.has(p.path) ? alternatesFor(p.path, i18n) : undefined,
 			});
 		}
 	}

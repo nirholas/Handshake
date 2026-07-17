@@ -128,7 +128,7 @@ import {
 	bindJobToCacheKey,
 	cacheKeyForJob,
 } from './_lib/forge-cache.js';
-import { shouldRetryForQuality } from './_lib/glb-quality.js';
+import { shouldRetryForQuality, shouldEscalateToVisionQA } from './_lib/glb-quality.js';
 import {
 	resolveLiveJob,
 	bindJobSuccessor,
@@ -219,9 +219,11 @@ async function loadNvidiaProvider() {
 const VALID_ASPECT = new Set(['1:1', '4:3', '3:4', '16:9', '9:16']);
 
 // Multi-view reconstruction accepts up to four calibrated views of one object
-// (front / back / left / right). More than that yields diminishing returns and
-// risks overrunning the model's input budget.
-const MAX_VIEWS = 4;
+// (front / back / left / right / and two three-quarter angles). This matches the
+// self-host TRELLIS worker's own fusion ceiling (run_multi_image accepts up to 6
+// views, workers/model-trellis/main.py); capping lower than the worker just threw
+// away calibrated coverage the reconstructor could have fused.
+const MAX_VIEWS = 6;
 
 // Guard for caller-supplied reference image / source GLB URLs. http(s) only,
 // bounded length — we forward these to the reconstruction/rig provider, so we
@@ -389,19 +391,31 @@ export async function seedReferenceImage({ prompt, aspect, seed, skipNim }) {
 	return { imageUrl: synthesized.imageUrl, model: synthesized.model, referenceModule: false };
 }
 
-// Quality-gate scope: 'high' (default — only the paid/realism ceiling pays the
-// vision-QA latency, so the free draft/standard default lane is left untouched),
-// 'all' (score every tier), or 'off'. Env-tunable so ops widen/disable with no
-// code change.
+// Quality-gate scope, env-tunable via FORGE_QUALITY_GATE so ops widen/disable
+// with no code change:
+//   'adaptive' (default): the paid `high` tier is always vision-scored, and the
+//       FREE draft/standard lanes escalate to vision QA only when the cheap
+//       deterministic scorer cannot vouch for the mesh (shouldEscalateToVisionQA).
+//       This gives every lane a semantic quality floor while a clean, textured
+//       draft still ships instantly with no vision latency.
+//   'high': only the paid/realism ceiling is vision-scored; free lanes untouched.
+//   'all' : vision-score every tier unconditionally (no cheap-signal shortcut).
+//   'off' : no vision QA anywhere.
 export function qualityGateScope() {
-	const v = (readForgeEnv('FORGE_QUALITY_GATE') || 'high').toLowerCase();
-	return v === 'all' || v === 'off' ? v : 'high';
+	const v = (readForgeEnv('FORGE_QUALITY_GATE') || 'adaptive').toLowerCase();
+	return v === 'all' || v === 'off' || v === 'high' ? v : 'adaptive';
 }
-export function qualityGateAppliesTo(tierId) {
+// Decide whether the vision-QA gate runs for this tier. In 'adaptive' scope the
+// cheap deterministic quality signal (glb-quality.js, already computed for every
+// delivered mesh) decides for the non-high lanes: a confidently-good mesh is
+// trusted and skips vision; an ambiguous one escalates.
+export function qualityGateAppliesTo(tierId, quality = undefined) {
 	const s = qualityGateScope();
 	if (s === 'off') return false;
 	if (s === 'all') return true;
-	return tierId === 'high';
+	if (tierId === 'high') return true;
+	if (s === 'adaptive') return shouldEscalateToVisionQA(quality);
+	return false; // 'high' scope, non-high tier
 }
 // Bounded retry cap — default 1, clamped 0..2 so a quality retry can never turn one
 // generation into an unbounded credit/latency sink.
@@ -466,7 +480,10 @@ function qualityScoreValue(verdict) {
 // the hint interpretation); either way this is fail-open and never discards a
 // delivered model for a worse one. Returns { durable, verdict, retried }.
 async function qualityGateFinalize({ tierId, prompt, path, backend, referenceImageUrl, durable, regenerate }) {
-	if (!qualityGateAppliesTo(tierId) || !durable?.glbUrl) {
+	// In 'adaptive' scope the cheap deterministic signal on the delivered mesh
+	// decides whether a free-lane generation is worth a vision pass: a clean,
+	// textured draft is trusted and returns here with no added latency.
+	if (!qualityGateAppliesTo(tierId, durable?.quality) || !durable?.glbUrl) {
 		return { durable, verdict: null, retried: false };
 	}
 	let bestDurable = durable;
@@ -1001,7 +1018,7 @@ async function startJob(req, res) {
 	//     optional prompt may still guide the model where it accepts one.
 	//   • text→3D — no images; we synthesize the reference image from the prompt
 	//     with FLUX first, then reconstruct.
-	const imageUrls = parseImageUrls(body);
+	let imageUrls = parseImageUrls(body);
 	const isImageMode = imageUrls.length > 0;
 	const prompt = typeof body?.prompt === 'string' ? body.prompt.trim() : '';
 
@@ -1314,16 +1331,33 @@ async function startJob(req, res) {
 			// client — it has no row in oauth_clients, so it must never land in the
 			// FK-constrained usage_events.client_id (that fails the insert and the
 			// whole spend event is silently dropped). Attribute it via meta instead.
-			const check = await validateForgeImage(imageUrls[0], { track: { meta: { forgeClient: clientKeyFrom(req) } } });
-			if (!check.ok) {
+			// Every view is checked in parallel, not just the primary: a bad
+			// secondary angle (blurred, wrong subject, occluded) doesn't merely waste
+			// a slot, it actively corrupts multi-view fusion by voting for geometry
+			// that isn't there.
+			const track = { meta: { forgeClient: clientKeyFrom(req) } };
+			const checks = await Promise.all(imageUrls.map((u) => validateForgeImage(u, { track })));
+			// The primary view is load-bearing: if it can't be reconstructed the whole
+			// job can't, so reject with the one-click override as before.
+			if (!checks[0].ok) {
 				return json(res, 422, {
 					error: 'image_not_usable',
-					issue: check.issue,
-					message: check.message,
-					subject: check.subject || null,
+					issue: checks[0].issue,
+					message: checks[0].message,
+					subject: checks[0].subject || null,
 					// Surfaced so the UI can offer a one-click "generate anyway".
 					override: { field: 'skip_validation', value: true },
 				});
+			}
+			// Secondary views are additive coverage: drop any the checker flags
+			// rather than fail the job or feed a corrupting view into fusion. The
+			// primary always survives, so a single-photo upload is unaffected.
+			const usable = imageUrls.filter((_, i) => i === 0 || checks[i].ok);
+			if (usable.length < imageUrls.length) {
+				console.warn(
+					`[forge] pruned ${imageUrls.length - usable.length} unusable secondary view(s) before fusion; keeping ${usable.length}`,
+				);
+				imageUrls = usable;
 			}
 		}
 	} else if (prompt.length < 3 || prompt.length > 1000) {
@@ -1905,6 +1939,16 @@ async function startJob(req, res) {
 						// actually buy more quality on our own GPU (steps, kept geometry,
 						// texture resolution) instead of only a bigger advertised polycount.
 						quality: selfhostQualityForTier(tier.id),
+						// Background pre-matting via the worker's sibling rembg service
+						// (RMBG-2/isnet), for real user photos only. A photo carries a
+						// busy background (the classroom behind the subject) that TRELLIS's
+						// internal cutout separates poorly, bleeding the backdrop into the
+						// fused geometry; a clean alpha cutout of every view before fusion
+						// removes that. Skipped for text→3D, whose FLUX/Vertex reference is
+						// already synthesized on a plain background. Worker-side it's
+						// best-effort: a rembg miss falls back to the original image, never
+						// failing the generation. draft stays fast (single view, no matte).
+						matte: isImageMode && tier.id !== 'draft',
 					},
 				});
 			} catch (err) {

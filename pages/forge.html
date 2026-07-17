@@ -1061,8 +1061,8 @@
 				text-align: center;
 			}
 
-			/* Live multi-view counter — turns four anonymous empty boxes into a
-			   legible "0 of 4" progress with pips, and teaches that more views ⇒
+			/* Live multi-view counter: turns the anonymous empty boxes into a
+			   legible "0 of 6" progress with pips, and teaches that more views ⇒
 			   sharper mesh. Updated by src/forge.js as slots fill. */
 			.views-counter {
 				display: flex;
@@ -1167,6 +1167,46 @@
 				border-radius: 999px;
 				padding: 1px 7px;
 				margin-left: 0.5rem;
+			}
+
+			/* Automated quality-check chip: surfaces the confidence the vision QA
+			   gate assigned this generation. Color-coded by band; verified (passed
+			   the semantic gate) reads green, checked (trusted by the fast scorer)
+			   stays neutral, low warns amber. */
+			.quality-badge {
+				display: inline-flex;
+				align-items: center;
+				gap: 4px;
+				font-family: var(--font-mono);
+				font-size: 0.62rem;
+				text-transform: uppercase;
+				letter-spacing: 0.06em;
+				border-radius: 999px;
+				padding: 1px 8px;
+				margin-left: 0.4rem;
+				border: 1px solid var(--stroke);
+				color: var(--ink-dim);
+			}
+			.quality-badge::before {
+				content: '';
+				width: 6px;
+				height: 6px;
+				border-radius: 999px;
+				background: currentColor;
+				opacity: 0.9;
+			}
+			.quality-badge[data-band='verified'] {
+				color: #4ade80;
+				border-color: rgba(74, 222, 128, 0.4);
+				background: rgba(74, 222, 128, 0.08);
+			}
+			.quality-badge[data-band='low'] {
+				color: #fbbf24;
+				border-color: rgba(251, 191, 36, 0.4);
+				background: rgba(251, 191, 36, 0.08);
+			}
+			.quality-badge.is-hidden {
+				display: none;
 			}
 
 			/* Example chips ------------------------------------------------ */
@@ -2752,7 +2792,7 @@
 					<div class="views-counter" id="views-counter" aria-live="polite">
 						<span class="views-pips" id="views-pips" aria-hidden="true"></span>
 						<span class="vc-text" id="views-counter-text"
-							><strong>0</strong> of 4 views</span
+							><strong>0</strong> of 6 views</span
 						>
 					</div>
 					<input
@@ -2772,8 +2812,8 @@
 						placeholder="Optional guidance — e.g. “matte plastic, neutral pose, no background”"
 					></textarea>
 					<p class="views-hint">
-						Add 1–4 views of the <strong>same</strong> object (front · back · left ·
-						right). Drag to drop, click to browse, paste from the clipboard
+						Add 1-6 views of the <strong>same</strong> object (front · back · left ·
+						right · angles). Drag to drop, click to browse, paste from the clipboard
 						(<kbd class="gen-kbd">⌘V</kbd> / <kbd class="gen-kbd">Ctrl+V</kbd>), drag a thumbnail to reorder.
 						PNG/JPG/WebP, up to 8&nbsp;MB each.
 					</p>
@@ -3046,6 +3086,11 @@
 							class="views-badge is-hidden"
 							id="result-views"
 							title="Reference views fused"
+						></span>
+						<span
+							class="quality-badge is-hidden"
+							id="result-quality"
+							title="Automated quality check"
 						></span>
 						<div class="actions">
 							<button
@@ -3378,7 +3423,7 @@
 			</section>
 
 			<p class="hint-foot">
-				Multi-engine pipeline. Engines marked FREE run with no key: NVIDIA-hosted generation plus our own self-hosted GPU workers (TRELLIS, Hunyuan3D, TripoSG). Meshy, Tripo, Rodin, Stability, and Replicate run on your own API key. Best results: one clearly described subject with a material and lighting cue. Photo mode accepts up to 4 views for multi-view reconstruction. The same pipeline is available to agents over MCP at <a href="/docs">/api/mcp-3d</a>.
+				Multi-engine pipeline. Engines marked FREE run with no key: NVIDIA-hosted generation plus our own self-hosted GPU workers (TRELLIS, Hunyuan3D, TripoSG). Meshy, Tripo, Rodin, Stability, and Replicate run on your own API key. Best results: one clearly described subject with a material and lighting cue. Photo mode accepts up to 6 views for multi-view reconstruction. The same pipeline is available to agents over MCP at <a href="/docs">/api/mcp-3d</a>.
 			</p>
 				</div><!-- /.forge-stage -->
 				</div><!-- /.forge-workspace -->

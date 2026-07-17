@@ -300,3 +300,37 @@ export function shouldRetryForQuality(quality) {
 	if (quality.flag === 'invalid' || quality.flag === 'degenerate') return true;
 	return quality.flag === 'low' && quality.score < 0.3;
 }
+
+// The confidence threshold at or above which a clean, textured `ok` mesh is
+// trusted WITHOUT paying for a vision-QA pass. Env-tunable; 0..1.
+const ADAPTIVE_TRUST_SCORE = (() => {
+	const v = typeof process !== 'undefined' ? process.env?.FORGE_QUALITY_ADAPTIVE_MIN : null;
+	const n = v == null || v === '' ? NaN : Number(v);
+	return Number.isFinite(n) && n >= 0 && n <= 1 ? n : 0.6;
+})();
+
+// Adaptive gate decision for the FREE lanes: should this generation escalate
+// from the cheap deterministic score to the (slower, credit-spending) vision-QA
+// gate + reroll?
+//
+// The whole point is to keep fast drafts fast. A mesh the cheap scorer can
+// confidently vouch for (a valid, textured, `ok`-flagged reconstruction whose
+// composite score clears the trust threshold) skips vision entirely and ships
+// immediately. Everything the cheap signal CANNOT vouch for escalates:
+//   • flag `low`/`degenerate`/`invalid`: coarse, blobby, or untextured, exactly
+//     the outputs whose semantic quality a render-based judge should confirm;
+//   • an `ok` mesh scoring below the trust threshold: structurally fine but
+//     mediocre, the "valid but doesn't look like what I asked for" middle that
+//     the structural scorer alone can't catch.
+// A missing quality signal escalates (we cannot vouch for what we did not score).
+//
+// This is what lets the free lane gain a semantic quality floor without turning
+// every draft into a vision call: only the ambiguous fraction pays the latency.
+export function shouldEscalateToVisionQA(quality, { minScore = ADAPTIVE_TRUST_SCORE } = {}) {
+	if (!quality || typeof quality !== 'object') return true;
+	if (quality.flag !== 'ok') return true;
+	if (quality.metrics && quality.metrics.hasTextures === false) return true;
+	const score = Number(quality.score);
+	if (!Number.isFinite(score)) return true;
+	return score < minScore;
+}

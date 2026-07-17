@@ -802,6 +802,13 @@ export const limits = {
 	// its own generation gates; this bounds the composition/lineage wrapper
 	// itself. Non-critical: a Redis blip must never block an iteration.
 	forgeIterate: (key) => getLimiter('forge:iterate', { limit: 60, window: '1 h' }).limit(key),
+	// Forge-Off upvotes (api/forge-vote) — one cheap DB write per tap from an
+	// anonymous browser. Generous so a visitor can toggle and browse a full
+	// board without hitting a wall, tight enough to blunt a single IP carpeting
+	// votes across the catalogue (the per-(creation,voter) PRIMARY KEY already
+	// caps real influence at one vote each). Non-critical: a Redis blip must
+	// never block a vote — the vote itself is idempotent.
+	forgeVote: (key) => getLimiter('forge:vote', { limit: 120, window: '10 m' }).limit(key),
 	// Free text→3D lane (api/v1/ai/text-to-3d) — each generation drives one real
 	// NVIDIA NIM TRELLIS GPU inference, so the free tier is a per-IP daily quota
 	// (10/day). Above it the endpoint returns 429 + a pointer to the paid

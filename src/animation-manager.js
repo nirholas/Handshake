@@ -18,6 +18,7 @@ import {
 	hipsParentWorldQuat,
 	retargetClip,
 } from './animation-retarget.js';
+import { relaxUndrivenArms } from './animation-arm-relax.js';
 import { log } from './shared/log.js';
 
 // Past this many degrees off vertical, the rig's Hips have tipped onto their
@@ -379,6 +380,20 @@ export class AnimationManager {
 	 */
 	supportsCanonicalClips() {
 		return this._canonicalClipsSupported;
+	}
+
+	/**
+	 * Guard against frozen T-pose arms. When the attached rig's upper-arm bones
+	 * could NOT be name-mapped, the retargeted clip drives the torso and legs but
+	 * leaves both arms stuck out at the authored bind pose. Swing those un-driven
+	 * arms down to a relaxed rest so the avatar never reads as broken. No-op when
+	 * the arms name-mapped (the clip already drives them) or no model is attached.
+	 * Call once, after attach() and before the first play/crossfade.
+	 * @returns {number} arms relaxed (0, 1, or 2)
+	 */
+	relaxUndrivenArms() {
+		if (!this.model) return 0;
+		return relaxUndrivenArms(this.model, this._canonicalToNode);
 	}
 
 	/**

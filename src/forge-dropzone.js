@@ -171,7 +171,7 @@ function ensureOverlay() {
 		<div class="forge-drop-card">
 			<span class="glyph" aria-hidden="true">⇣</span>
 			<h3>Drop photos to forge in 3D</h3>
-			<p>1–4 views of one object. I'll switch to <strong>From photos</strong> and place them for you.</p>
+			<p>1–6 views of one object. I'll switch to <strong>From photos</strong> and place them for you.</p>
 		</div>`;
 	document.body.appendChild(overlay);
 	return overlay;

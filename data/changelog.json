@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "One-tap Seed Vault sign-in on Solana Seeker",
+			"summary": "Signing in with a Solana Seeker's Seed Vault now takes a single tap instead of two. Linking your wallet used to pop the Seed Vault twice (once to connect, once to sign); three.ws now uses the Mobile Wallet Adapter's built-in Sign-In-With-Solana so authorization and the signature happen in one prompt. If you back out of that prompt, three.ws now recognizes it as a clean cancel instead of showing a generic error, and it reliably detects Seeker devices that don't announce themselves in the browser. Other wallets (Phantom, Backpack, Solflare) are unaffected. The whole wallet layer is now covered by an automated test suite.",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
 			"title": "Free 3D API tells agents exactly when to check back",
 			"summary": "When a text-to-3D generation needs a moment and hands back a job to poll, the free /api/3d/generate API now includes how long to wait before checking again (a retryAfter value, also sent as the standard Retry-After header) plus an estimated time-to-ready and a stable creation id. Agents that honor the hint poll on a sensible schedule instead of hammering the endpoint, so they stop tripping the rate limit and the shared free GPU lane carries less needless traffic. Fully backward-compatible: existing callers keep working unchanged.",
 			"tags": [
@@ -25,6 +33,15 @@
 			"tags": [
 				"feature"
 			]
+		},
+		{
+			"date": "2026-07-17",
+			"title": "No more T-posed arms: avatars whose arms can't be animated now rest naturally",
+			"summary": "Some avatars, especially older ones and GLBs imported from outside three.ws, carry arm bones under a naming scheme our animation engine doesn't recognize. The idle motion would then play on the body and legs while both arms stayed frozen straight out to the sides in the raw import pose, which looked broken. IRL now detects those un-driven arms and swings them down to a relaxed rest, so an avatar never stands there in a stiff T. Avatars rigged by three.ws already animated their arms correctly and are untouched; this is a safety net for everything else, in both your own carried avatar and the agents you find nearby.",
+			"tags": [
+				"fix"
+			],
+			"link": "/irl"
 		},
 		{
 			"date": "2026-07-17",
@@ -14264,6 +14281,26 @@
 				"improvement"
 			],
 			"link": "/status"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Every free 3D generation now gets an automatic quality check",
+			"summary": "The Forge already re-rolled broken meshes, but the deeper \"looks nothing like what I asked for\" check only ran on the paid High tier, so the free Draft and Standard lanes could still hand back a valid-but-wrong model. Now a smart adaptive gate covers the free lanes too: a clean, textured result ships instantly, and only an uncertain one is sent to the vision quality check and re-generated if it falls short. The result bar shows the outcome as a Verified, Checked, or Low confidence chip so you can see at a glance whether a model passed.",
+			"tags": [
+				"improvement",
+				"feature"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Sharper, cleaner models from photos",
+			"summary": "Four upgrades to photo-to-3D landed together. Uploaded photos now have their background cleanly removed before reconstruction, so a busy backdrop no longer bleeds into the model. You can supply up to 6 reference angles instead of 4 for fuller coverage. Every uploaded angle is now quality-checked, and a blurry or off-subject one is dropped instead of corrupting the result. And every finished model runs through an automatic geometry cleanup pass that welds and de-duplicates the mesh and trims redundant triangles, so models load faster and render cleaner with no loss of detail.",
+			"tags": [
+				"improvement",
+				"feature"
+			],
+			"link": "/image-to-3d"
 		}
 	]
 }

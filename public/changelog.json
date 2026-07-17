@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T10:55:07.314Z",
+	"generated_at": "2026-07-17T11:01:51.523Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -105,6 +105,17 @@
 		{
 			"date": "2026-07-17",
 			"type": "update",
+			"title": "Every free 3D generation now gets an automatic quality check",
+			"summary": "The Forge already re-rolled broken meshes, but the deeper \"looks nothing like what I asked for\" check only ran on the paid High tier, so the free Draft and Standard lanes could still hand back a valid-but-wrong model. Now a smart adaptive gate covers the free lanes too: a clean, textured result ships instantly, and only an uncertain one is sent to the vision quality check and re-generated if it falls short. The result bar shows the outcome as a Verified, Checked, or Low confidence chip so you can see at a glance whether a model passed.",
+			"link": "/forge",
+			"tags": [
+				"improvement",
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
 			"title": "Forge prompt ideas are now endless, and every one forges beautifully",
 			"summary": "The example chips, empty-stage starters, and the Surprise me button on the Forge used to rotate through a fixed list of 48 prompts. They now draw from a curated prompt generator with thousands of combinations: statues, figurines, potted plants, crystals, food, crafted props, and cozy miniatures, each paired only with materials and finishes the 3D engine renders well. Every visit opens with a fresh set, and the prompt coach no longer mistakes words like mushroom for a scene request.",
 			"link": "/forge",
@@ -157,6 +168,26 @@
 		{
 			"date": "2026-07-17",
 			"type": "update",
+			"title": "No more T-posed arms: avatars whose arms can't be animated now rest naturally",
+			"summary": "Some avatars, especially older ones and GLBs imported from outside three.ws, carry arm bones under a naming scheme our animation engine doesn't recognize. The idle motion would then play on the body and legs while both arms stayed frozen straight out to the sides in the raw import pose, which looked broken. IRL now detects those un-driven arms and swings them down to a relaxed rest, so an avatar never stands there in a stiff T. Avatars rigged by three.ws already animated their arms correctly and are untouched; this is a safety net for everything else, in both your own carried avatar and the agents you find nearby.",
+			"link": "/irl",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "One-tap Seed Vault sign-in on Solana Seeker",
+			"summary": "Signing in with a Solana Seeker's Seed Vault now takes a single tap instead of two. Linking your wallet used to pop the Seed Vault twice (once to connect, once to sign); three.ws now uses the Mobile Wallet Adapter's built-in Sign-In-With-Solana so authorization and the signature happen in one prompt. If you back out of that prompt, three.ws now recognizes it as a clean cancel instead of showing a generic error, and it reliably detects Seeker devices that don't announce themselves in the browser. Other wallets (Phantom, Backpack, Solflare) are unaffected. The whole wallet layer is now covered by an automated test suite.",
+			"link": null,
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
 			"title": "Paid API calls no longer fail when two agents buy the same-priced service at once",
 			"summary": "Since July 9, a few hundred paid x402 calls a day were answered with a 502 after the buyer's USDC transfer was rejected on Solana. Two payments for the same price, signed in the same few-second window, could compile to byte-identical transactions, and only the first one could ever land. Every payment now carries its own tiny priority-fee fingerprint, so simultaneous same-priced purchases each settle cleanly, and settlement errors now name their real cause in our logs so future issues surface faster.",
 			"link": null,
@@ -193,6 +224,17 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "Sharper, cleaner models from photos",
+			"summary": "Four upgrades to photo-to-3D landed together. Uploaded photos now have their background cleanly removed before reconstruction, so a busy backdrop no longer bleeds into the model. You can supply up to 6 reference angles instead of 4 for fuller coverage. Every uploaded angle is now quality-checked, and a blurry or off-subject one is dropped instead of corrupting the result. And every finished model runs through an automatic geometry cleanup pass that welds and de-duplicates the mesh and trims redundant triangles, so models load faster and render cleaner with no loss of detail.",
+			"link": "/image-to-3d",
+			"tags": [
+				"improvement",
+				"feature"
 			]
 		},
 		{

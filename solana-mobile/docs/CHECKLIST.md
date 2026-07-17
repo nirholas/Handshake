@@ -29,12 +29,15 @@ Work top-to-bottom. Do not submit until every box is checked.
 
 ## 4. MWA integration
 
+- [x] Wrapper logic is unit-tested against a fake transport (`npx vitest run tests/solana-mobile-mwa-*.test.js tests/solana-mobile-seeker-detect.test.js`) — authorize/resume, one-tap `signIn`, sign/send, error normalization, disconnect, session persistence, detection boundaries.
 - [ ] `solana-mobile/src/index.js` is imported from a top-level entry point (see `docs/INTEGRATION.md`).
 - [ ] In a real TWA session, `window.threeWsWallet` is defined and `isSolanaMobileTwa()` returns `true`.
 - [ ] First sign-in triggers the Seed Vault sheet (no Phantom/Solflare prompts).
-- [ ] `signMessage` produces a valid ed25519 signature that `/api/auth/siws/verify` accepts.
+- [ ] One-tap SIWS: wallet linking via `signIn()` shows a SINGLE Seed Vault sheet (not connect-then-sign), and `/api/auth/siws/verify` accepts the wallet-built message.
+- [ ] `signMessage` produces a valid ed25519 signature that `/api/auth/siws/verify` accepts (two-step fallback path).
 - [ ] `signAndSendTransaction` lands on mainnet (test with a 0-lamport memo tx before mint flows).
 - [ ] Auth token survives app suspend/resume (test by switching apps for 60 s, then signing again — no second prompt).
+- [ ] A cancelled Seed Vault sheet surfaces as a clean "cancelled" state (error carries `code 4001` / `reason USER_REJECTED`), not a generic failure.
 - [ ] `disconnect()` removes the linked wallet from local state.
 
 ## 5. Listing copy

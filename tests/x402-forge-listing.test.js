@@ -88,7 +88,7 @@ describe('forge listing — schema completeness (call it blind)', () => {
 		const p = FORGE_INPUT_SCHEMA.properties;
 		expect(p.prompt).toBeTruthy(); // text→3D
 		expect(p.image_urls).toBeTruthy(); // image→3D (reference views)
-		expect(p.image_urls.maxItems).toBe(4);
+		expect(p.image_urls.maxItems).toBe(6);
 		expect(p.tier.enum).toEqual(['draft', 'standard', 'high']);
 		expect(p.aspect_ratio.enum).toContain('1:1');
 	});

@@ -22,6 +22,7 @@ import { recordDailyActivity, maybeAwardFirstCreation } from './streaks.js';
 import { recordGenerationEvent } from './forge-events.js';
 import { scoreGlbQuality } from './glb-quality.js';
 import { compressGlb } from './glb-compress.js';
+import { cleanupGlb } from './glb-cleanup.js';
 
 // Stable, non-secret salt so a leaked DB row can't be trivially reversed to the
 // raw browser-local id. The id is anonymous to begin with; this is hygiene, not
@@ -144,25 +145,50 @@ export async function findByJob({ replicateJobId, clientKey }) {
 const COPY_MAX_ATTEMPTS = 3;
 const COPY_RETRY_BASE_MS = 400;
 
-// Score + (optionally) compress a freshly-downloaded GLB before it lands in the
-// bucket. Both steps are pure, local, and best-effort: a scoring/compression
-// failure never blocks delivery — it just means the response carries no
-// quality signal, or ships the original uncompressed bytes. `compress` is one
-// of COMPRESSION_MODES ('draco' | 'meshopt') or falsy to skip.
-async function scoreAndCompress(buf, { computeQuality, compress }) {
+// Score, clean, and (optionally) compress a freshly-downloaded GLB before it
+// lands in the bucket. Every step is pure, local, and best-effort: a failure
+// never blocks delivery — it just means the response carries no quality signal,
+// or ships the un-cleaned / uncompressed bytes. `compress` is one of
+// COMPRESSION_MODES ('draco' | 'meshopt') or falsy to skip. `cleanup` runs the
+// codec-independent geometry cleanup (glb-cleanup.js) that tames the workers'
+// raw marching-cubes triangle soup; on by default for forge meshes.
+async function scoreAndCompress(buf, { computeQuality, compress, cleanup = false }) {
 	let quality = null;
 	let compression = null;
+	let cleaned = null;
+	let outBuf = buf;
+	// Cleanup FIRST: a welded, de-duplicated, decimated mesh both renders better
+	// and compresses better than the raw soup, so the codec below operates on the
+	// cleaned geometry. Skips itself if it would grow the file (tiny meshes).
+	if (cleanup) {
+		try {
+			const r = await cleanupGlb(outBuf);
+			if (!r.grew) {
+				outBuf = r.buffer;
+				cleaned = {
+					tris_before: r.trisBefore,
+					tris_after: r.trisAfter,
+					verts_before: r.vertsBefore,
+					verts_after: r.vertsAfter,
+					input_bytes: r.inputBytes,
+					output_bytes: r.outputBytes,
+					simplified: r.simplified,
+				};
+			}
+		} catch (err) {
+			console.warn('[forge-store] geometry cleanup failed, delivering as-is:', err?.message);
+		}
+	}
 	if (computeQuality) {
 		try {
-			quality = scoreGlbQuality(buf);
+			quality = scoreGlbQuality(outBuf);
 		} catch (err) {
 			console.warn('[forge-store] quality scoring failed:', err?.message);
 		}
 	}
-	let outBuf = buf;
 	if (compress) {
 		try {
-			const result = await compressGlb(buf, { mode: compress });
+			const result = await compressGlb(outBuf, { mode: compress });
 			if (result.grew) {
 				compression = { mode: result.mode, skipped: true, reason: 'no_size_benefit' };
 			} else {
@@ -179,10 +205,10 @@ async function scoreAndCompress(buf, { computeQuality, compress }) {
 			compression = { mode: compress, skipped: true, reason: 'compression_failed' };
 		}
 	}
-	return { buf: outBuf, quality, compression };
+	return { buf: outBuf, quality, compression, cleaned };
 }
 
-async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, computeQuality = false, compress = null, forceContentType = null }) {
+async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, computeQuality = false, compress = null, cleanup = false, forceContentType = null }) {
 	let lastErr;
 	for (let attempt = 1; attempt <= COPY_MAX_ATTEMPTS; attempt++) {
 		try {
@@ -209,14 +235,16 @@ async function copyToBucket({ sourceUrl, key, fallbackContentType, maxBytes, com
 				const contentType = forceContentType || resp.headers.get('content-type') || fallbackContentType;
 				let quality = null;
 				let compression = null;
-				if (computeQuality || compress) {
-					const scored = await scoreAndCompress(buf, { computeQuality, compress });
+				let cleaned = null;
+				if (computeQuality || compress || cleanup) {
+					const scored = await scoreAndCompress(buf, { computeQuality, compress, cleanup });
 					buf = scored.buf;
 					quality = scored.quality;
 					compression = scored.compression;
+					cleaned = scored.cleaned;
 				}
 				await putObject({ key, body: buf, contentType, metadata: { source: 'forge' } });
-				return { bytes: buf.length, publicUrl: publicUrl(key), quality, compression };
+				return { bytes: buf.length, publicUrl: publicUrl(key), quality, compression, cleaned };
 			}
 		} catch (err) {
 			// Permanent (404/410) or too-large: surface immediately. Network errors
@@ -253,7 +281,12 @@ function imageContentTypeFor(ext) {
 //              (glb-compress.js) instead of the raw provider bytes. Falls back
 //              to uncompressed on any compression failure — never blocks
 //              delivery. Omitted/null preserves today's uncompressed behavior.
-export async function materializeCreation({ replicateJobId, clientKey, glbUrl, quality = false, compress = null }) {
+//   cleanup  — run the codec-independent geometry cleanup (glb-cleanup.js:
+//              dedup/join/weld/simplify) on the delivered mesh. On by default:
+//              every forge mesh is raw marching-cubes output that benefits, and
+//              it's best-effort (any failure ships the original bytes). Pass
+//              false to deliver the provider geometry untouched.
+export async function materializeCreation({ replicateJobId, clientKey, glbUrl, quality = false, compress = null, cleanup = true }) {
 	if (!forgeStoreEnabled() || !replicateJobId || !glbUrl) return null;
 	const existing = await findByJob({ replicateJobId, clientKey });
 	if (!existing) return null;
@@ -265,6 +298,7 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 			previewImageUrl: existing.preview_image_url ?? null,
 			quality: null,
 			compression: null,
+			cleaned: null,
 		};
 	}
 
@@ -277,6 +311,7 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 			maxBytes: MAX_GLB_BYTES,
 			computeQuality: quality,
 			compress,
+			cleanup,
 		});
 
 		// Reference image is part of the training pair but never blocks the mesh.
@@ -335,6 +370,7 @@ export async function materializeCreation({ replicateJobId, clientKey, glbUrl, q
 			previewImageUrl: preview.url,
 			quality: glb.quality ?? null,
 			compression: glb.compression ?? null,
+			cleaned: glb.cleaned ?? null,
 		};
 	} catch (err) {
 		// A 404/410 means the provider's ephemeral asset (e.g. a HuggingFace Space's
@@ -690,23 +726,53 @@ export async function countCreationsByUser({ userId } = {}) {
 // explicitly discarded (outcome = 'rejected') are excluded — a model its own
 // maker rated as bad is not showcase material. No client_key in the SELECT, so
 // nothing identifying ever leaves the store.
-export async function listShowcase({ limit = 12 } = {}) {
+//
+// Two orderings, both over the same public-artifact set:
+//   • sort='fresh' (default) — visual-first, newest: the shop window. Rows with
+//     a preview image lead (geometry-first lanes paint none), recency breaks
+//     ties. This is the historical "Fresh from the Forge" strip.
+//   • sort='top' — the Forge-Off board: most community votes first, recency
+//     breaks ties, over the current Forge-Off week when window='week'. Served by
+//     idx_forge_creations_board.
+// Every row now carries vote_count and, when a voterKey is supplied, a per-row
+// `voted` flag so the UI can render the caller's own upvotes without a second
+// round-trip. voterKey is the hashed browser id (hashClient); pass null for an
+// anonymous read (voted is then false for every row).
+export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh', window = 'all' } = {}) {
 	if (!forgeStoreEnabled()) return [];
 	const capped = Math.min(Math.max(Number(limit) || 12, 1), 24);
+	// Empty string never matches a real voter_key (hashClient collapses missing
+	// ids to 'anon', a non-empty hash), so an anonymous read yields voted=false.
+	const vk = typeof voterKey === 'string' && voterKey ? voterKey : '';
+	const top = sort === 'top';
+	const weekStart = top && window === 'week' ? forgeOffWeekStart().toISOString() : null;
 	try {
-		// Visual-first: the showcase is a shop window, so rows that have a
-		// preview image lead; recency breaks ties. Geometry-first lanes paint
-		// no reference image — their cards still work (the GLB is the artifact)
-		// but they shouldn't bury the visual rows.
-		const rows = await sql`
-			select id, prompt, glb_url, preview_image_url,
-				views_used, multiview, backend, tier, path, model_category, created_at
-			from forge_creations
-			where status = 'done' and glb_url is not null
-				and (outcome is null or outcome != 'rejected')
-			order by (preview_image_url is not null) desc, created_at desc
-			limit ${capped}
-		`;
+		const rows = top
+			? await sql`
+				select fc.id, fc.prompt, fc.glb_url, fc.preview_image_url,
+					fc.views_used, fc.multiview, fc.backend, fc.tier, fc.path,
+					fc.model_category, fc.created_at, fc.vote_count,
+					(v.voter_key is not null) as voted
+				from forge_creations fc
+				left join forge_votes v on v.creation_id = fc.id and v.voter_key = ${vk}
+				where fc.status = 'done' and fc.glb_url is not null
+					and (fc.outcome is null or fc.outcome != 'rejected')
+					and (${weekStart}::timestamptz is null or fc.created_at >= ${weekStart}::timestamptz)
+				order by fc.vote_count desc, fc.created_at desc
+				limit ${capped}
+			`
+			: await sql`
+				select fc.id, fc.prompt, fc.glb_url, fc.preview_image_url,
+					fc.views_used, fc.multiview, fc.backend, fc.tier, fc.path,
+					fc.model_category, fc.created_at, fc.vote_count,
+					(v.voter_key is not null) as voted
+				from forge_creations fc
+				left join forge_votes v on v.creation_id = fc.id and v.voter_key = ${vk}
+				where fc.status = 'done' and fc.glb_url is not null
+					and (fc.outcome is null or fc.outcome != 'rejected')
+				order by (fc.preview_image_url is not null) desc, fc.created_at desc
+				limit ${capped}
+			`;
 		return rows.map((r) => ({
 			id: r.id,
 			prompt: r.prompt,
@@ -719,11 +785,90 @@ export async function listShowcase({ limit = 12 } = {}) {
 			path: r.path ?? null,
 			model_category: r.model_category ?? 'other',
 			created_at: r.created_at,
+			vote_count: Number(r.vote_count) || 0,
+			voted: Boolean(r.voted),
 		}));
 	} catch (err) {
 		if (isDbUnavailableError(err)) console.warn('[forge-store] listShowcase skipped (db unavailable):', err?.message);
 		else console.error('[forge-store] listShowcase failed:', err?.message);
 		return [];
+	}
+}
+
+// Monday 00:00:00 UTC of the Forge-Off week containing `ref` (default: now).
+// The weekly ritual runs Monday→Monday UTC; the crowning cron writes one
+// forge_board_winners row per completed week keyed by this Monday. Same idiom
+// used for weekly windows elsewhere (api/permissions/[action].js).
+export function forgeOffWeekStart(ref = new Date()) {
+	const d = new Date(ref);
+	const day = d.getUTCDay(); // 0=Sun
+	const diff = day === 0 ? -6 : 1 - day; // back to this week's Monday
+	d.setUTCDate(d.getUTCDate() + diff);
+	d.setUTCHours(0, 0, 0, 0);
+	return d;
+}
+
+// Cast an upvote for a creation from an anonymous browser. Idempotent: a second
+// vote from the same voter_key is a no-op (the PRIMARY KEY makes it a conflict),
+// so the button can be optimistic without creating duplicates. vote_count is
+// recomputed from the authoritative forge_votes tally via a correlated
+// subquery so the denormalized column can never drift (the Sketchfab showcase
+// cron reads it). Returns { creationId, voteCount, voted:true } or null when the
+// creation isn't a board-eligible public artifact / the store is unconfigured.
+export async function castVote({ creationId, voterKey, ipHash = null }) {
+	if (!forgeStoreEnabled() || !creationId || !voterKey) return null;
+	try {
+		// Only public, finished, non-rejected creations are votable — the same
+		// bar the board and showcase render. Blocks votes on nonexistent or
+		// private/failed ids before any write.
+		const eligible = await sql`
+			select id from forge_creations
+			where id = ${creationId} and status = 'done' and glb_url is not null
+				and (outcome is null or outcome != 'rejected')
+			limit 1
+		`;
+		if (eligible.length === 0) return null;
+		await sql`
+			insert into forge_votes (creation_id, voter_key, ip_hash)
+			values (${creationId}, ${voterKey}, ${ipHash})
+			on conflict (creation_id, voter_key) do nothing
+		`;
+		const rows = await sql`
+			update forge_creations
+			set vote_count = (select count(*) from forge_votes where creation_id = ${creationId})
+			where id = ${creationId}
+			returning vote_count
+		`;
+		return { creationId, voteCount: Number(rows[0]?.vote_count) || 0, voted: true };
+	} catch (err) {
+		if (isDbUnavailableError(err)) console.warn('[forge-store] castVote skipped (db unavailable):', err?.message);
+		else console.error('[forge-store] castVote failed:', err?.message);
+		return null;
+	}
+}
+
+// Remove the caller's upvote (toggle off). No-op when they hadn't voted.
+// Recomputes vote_count from the tally, same as castVote, and returns the fresh
+// count with voted:false. Returns null only on an unconfigured store / db fault.
+export async function removeVote({ creationId, voterKey }) {
+	if (!forgeStoreEnabled() || !creationId || !voterKey) return null;
+	try {
+		await sql`
+			delete from forge_votes
+			where creation_id = ${creationId} and voter_key = ${voterKey}
+		`;
+		const rows = await sql`
+			update forge_creations
+			set vote_count = (select count(*) from forge_votes where creation_id = ${creationId})
+			where id = ${creationId}
+			returning vote_count
+		`;
+		// No returned row → creation was pruned; report a zeroed, un-voted state.
+		return { creationId, voteCount: Number(rows[0]?.vote_count) || 0, voted: false };
+	} catch (err) {
+		if (isDbUnavailableError(err)) console.warn('[forge-store] removeVote skipped (db unavailable):', err?.message);
+		else console.error('[forge-store] removeVote failed:', err?.message);
+		return null;
 	}
 }
 

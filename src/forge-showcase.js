@@ -14,6 +14,68 @@
 
 import { skeletonHTML, errorStateHTML, ensureStateKitStyles } from './shared/state-kit.js';
 ensureStateKitStyles();
+ensureShowcaseVoteStyles();
+
+// ── Forge-Off voting ─────────────────────────────────────────────────────────
+// The community showcase doubles as the live Forge-Off board: every card can be
+// upvoted (auth-free, one vote per browser) and the strip can be re-sorted from
+// "Fresh" (newest) to "Top this week" (most-voted over the current Forge-Off
+// week). Votes settle through POST /api/forge-vote; the sort re-queries
+// /api/forge-gallery?scope=community&sort=…. The button is optimistic and
+// reconciles against the server's authoritative tally.
+
+let currentSort = 'fresh'; // 'fresh' | 'top'
+
+// The same browser-local id /forge scopes creations by (forge:cid). Sharing it
+// means a visitor's own votes light up across the strip and their "Your
+// creations" identity is one and the same. Generated once, then stable.
+let _clientId = null;
+function clientId() {
+	if (_clientId) return _clientId;
+	try {
+		const k = 'forge:cid';
+		let v = localStorage.getItem(k);
+		if (!v) {
+			v =
+				(typeof crypto !== 'undefined' && crypto.randomUUID?.()) ||
+				`c-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+			localStorage.setItem(k, v);
+		}
+		_clientId = v;
+	} catch {
+		// Private mode / storage blocked: an ephemeral per-load id still lets the
+		// user vote this session; it just won't persist across reloads.
+		_clientId = `c-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+	}
+	return _clientId;
+}
+
+// One-shot <style> injection so the module owns its own CSS and never races a
+// concurrent editor of the host page. Mirrors ensureStateKitStyles().
+function ensureShowcaseVoteStyles() {
+	if (document.getElementById('showcase-vote-styles')) return;
+	const style = document.createElement('style');
+	style.id = 'showcase-vote-styles';
+	style.textContent = `
+		.showcase-sort { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--stroke, rgba(255,255,255,.08)); border-radius: 999px; background: var(--surface-1, rgba(255,255,255,.03)); }
+		.showcase-sort-btn { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; letter-spacing: .03em; padding: 4px 12px; border-radius: 999px; border: 0; background: transparent; color: var(--ink-dim, #9aa0a6); cursor: pointer; transition: color .15s, background .15s; }
+		.showcase-sort-btn:hover { color: var(--ink, #fff); }
+		.showcase-sort-btn.is-active { background: var(--accent, #fff); color: var(--bg-0, #0a0a0a); }
+		.showcase-sort-btn:focus-visible { outline: 2px solid var(--accent, #fff); outline-offset: 2px; }
+		.showcase-foot-actions { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+		.showcase-vote { display: inline-flex; align-items: center; gap: 4px; font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; line-height: 1; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--stroke, rgba(255,255,255,.08)); background: transparent; color: var(--ink-dim, #9aa0a6); cursor: pointer; transition: color .15s, border-color .15s, background .15s; }
+		.showcase-vote:hover { color: var(--ink, #fff); border-color: var(--accent, #fff); }
+		.showcase-vote:focus-visible { outline: 2px solid var(--accent, #fff); outline-offset: 2px; }
+		.showcase-vote svg { width: 12px; height: 12px; display: block; }
+		.showcase-vote.is-voted { color: var(--bg-0, #0a0a0a); background: var(--accent, #fff); border-color: var(--accent, #fff); }
+		.showcase-vote[data-busy="1"] { opacity: .6; pointer-events: none; }
+		.showcase-vote-count { font-variant-numeric: tabular-nums; min-width: 6px; text-align: right; }
+		.showcase-vote.vote-bump { animation: showcase-vote-bump .32s ease; }
+		@keyframes showcase-vote-bump { 0% { transform: scale(1); } 40% { transform: scale(1.22); } 100% { transform: scale(1); } }
+		@media (prefers-reduced-motion: reduce) { .showcase-vote.vote-bump { animation: none; } }
+	`;
+	document.head.appendChild(style);
+}
 
 const ENGINE_LABELS = {
 	nvidia: 'Free',
@@ -194,6 +256,96 @@ function timeAgo(iso) {
 	return `${Math.floor(s / 86400)}d ago`;
 }
 
+// Upvote pill: chevron + live count, filled when the caller has voted. The
+// count reflects the whole community; the fill reflects only this browser.
+function buildVoteButton(c) {
+	const btn = document.createElement('button');
+	btn.type = 'button';
+	btn.className = 'showcase-vote' + (c.voted ? ' is-voted' : '');
+	btn.dataset.creationId = c.id;
+	const count = document.createElement('span');
+	count.className = 'showcase-vote-count';
+	count.textContent = String(Number(c.vote_count) || 0);
+	btn.innerHTML =
+		'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>';
+	btn.appendChild(count);
+	applyVoteA11y(btn, Boolean(c.voted), Number(c.vote_count) || 0);
+	btn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		toggleVote(c, btn);
+	});
+	return btn;
+}
+
+function applyVoteA11y(btn, voted, count) {
+	btn.setAttribute('aria-pressed', voted ? 'true' : 'false');
+	btn.title = voted ? 'Remove your vote' : 'Upvote this model';
+	btn.setAttribute(
+		'aria-label',
+		`${voted ? 'Remove your upvote' : 'Upvote'} — ${count} ${count === 1 ? 'vote' : 'votes'}`,
+	);
+}
+
+// Reflect a (voted, count) state onto the button, with a bump on increment.
+function setVoteState(btn, voted, count, { bump = false } = {}) {
+	btn.classList.toggle('is-voted', voted);
+	const countEl = btn.querySelector('.showcase-vote-count');
+	if (countEl) countEl.textContent = String(Math.max(0, count));
+	applyVoteA11y(btn, voted, Math.max(0, count));
+	if (bump) {
+		btn.classList.remove('vote-bump');
+		void btn.offsetWidth; // restart the animation on a rapid re-vote
+		btn.classList.add('vote-bump');
+	}
+}
+
+// Optimistic toggle: flip the UI immediately, POST, then reconcile against the
+// server's authoritative tally (or roll back on failure). Concurrent taps on
+// the same card are ignored while one is in flight.
+async function toggleVote(c, btn) {
+	if (btn.dataset.busy === '1') return;
+	const wasVoted = btn.classList.contains('is-voted');
+	const countEl = btn.querySelector('.showcase-vote-count');
+	const prevCount = Number(countEl?.textContent) || 0;
+	const nextVoted = !wasVoted;
+
+	setVoteState(btn, nextVoted, prevCount + (nextVoted ? 1 : -1), { bump: nextVoted });
+	btn.dataset.busy = '1';
+	try {
+		const res = await fetch('/api/forge-vote', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', 'x-forge-client': clientId() },
+			body: JSON.stringify({ creation_id: c.id, vote: nextVoted }),
+		});
+		const data = await res.json().catch(() => ({}));
+		if (!res.ok || !data?.ok) throw new Error(data?.message || 'vote failed');
+		// Reconcile to the real numbers — another voter may have moved the count.
+		setVoteState(btn, Boolean(data.voted), Number(data.vote_count) || 0);
+		c.voted = Boolean(data.voted);
+		c.vote_count = Number(data.vote_count) || 0;
+	} catch {
+		setVoteState(btn, wasVoted, prevCount); // roll back the optimistic change
+		showVoteToast("Couldn't save your vote — try again");
+	} finally {
+		btn.dataset.busy = '0';
+	}
+}
+
+function showVoteToast(message) {
+	const existing = document.querySelector('.remix-toast');
+	if (existing) existing.remove();
+	const toast = document.createElement('div');
+	toast.className = 'remix-toast';
+	const dot = document.createElement('span');
+	dot.className = 'toast-dot';
+	dot.setAttribute('aria-hidden', 'true');
+	toast.appendChild(dot);
+	toast.appendChild(document.createTextNode(message));
+	document.body.appendChild(toast);
+	setTimeout(() => toast.classList.add('fade-out'), 2400);
+	setTimeout(() => toast.remove(), 2800);
+}
+
 function buildCard(c) {
 	const card = document.createElement('div');
 	card.className = 'creation showcase-card';
@@ -280,6 +432,14 @@ function buildCard(c) {
 		foot.appendChild(catBadge);
 	}
 
+	// Right-aligned actions: upvote + Remix, kept together so the footer reads
+	// as [when · category] ……… [▲ votes] [Remix].
+	const actions = document.createElement('div');
+	actions.className = 'showcase-foot-actions';
+
+	// Upvote — every showcase row is a public artifact and therefore votable.
+	if (c.id) actions.appendChild(buildVoteButton(c));
+
 	// Remix — only meaningful when there is a prompt to start from.
 	if (c.prompt) {
 		const remix = document.createElement('button');
@@ -292,8 +452,9 @@ function buildCard(c) {
 			e.stopPropagation();
 			remixPrompt(c.prompt);
 		});
-		foot.appendChild(remix);
+		actions.appendChild(remix);
 	}
+	foot.appendChild(actions);
 	card.appendChild(foot);
 
 	const open = () =>
@@ -404,7 +565,15 @@ async function loadShowcase() {
 	try {
 		// Over-fetch, then dedupe near-identical prompts client-side — people
 		// re-roll the same prompt, and a feed of six teapots sells nothing.
-		const res = await fetch('/api/forge-gallery?scope=community&limit=24');
+		// The Top view narrows to the current Forge-Off week. Sending the forge
+		// client id resolves each card's own voted-state in one round-trip.
+		const qs =
+			currentSort === 'top'
+				? 'scope=community&sort=top&window=week&limit=24'
+				: 'scope=community&limit=24';
+		const res = await fetch(`/api/forge-gallery?${qs}`, {
+			headers: { 'x-forge-client': clientId() },
+		});
 		data = await res.json().catch(() => ({}));
 	} catch {
 		els.grid.removeAttribute('aria-busy');
@@ -436,9 +605,69 @@ async function loadShowcase() {
 	teardownHoverPreview();
 	els.grid.innerHTML = '';
 	for (const c of creations) els.grid.appendChild(buildCard(c));
-	if (els.count) els.count.textContent = `${creations.length} recent`;
+	if (els.count) {
+		const totalVotes = creations.reduce((n, c) => n + (Number(c.vote_count) || 0), 0);
+		els.count.textContent =
+			currentSort === 'top' && totalVotes > 0
+				? `${totalVotes} ${totalVotes === 1 ? 'vote' : 'votes'} this week`
+				: `${creations.length} recent`;
+	}
+	updateShowcaseCopy();
+}
+
+// Swap the section sub-copy to match the active sort so the strip reads as one
+// intentional surface rather than a relabelled list.
+function updateShowcaseCopy() {
+	const sub = document.querySelector('#showcase .showcase-sub');
+	if (!sub) return;
+	if (currentSort === 'top') {
+		sub.innerHTML =
+			'The most-voted models this week. <strong>Upvote</strong> your favorites — the weekly winner is crowned every Monday.';
+	} else {
+		sub.innerHTML =
+			'What other people just forged. Open one in the viewer, <strong>Remix</strong> its prompt, or <strong>upvote</strong> the best.';
+	}
+}
+
+// Build the Fresh / Top toggle from JS and mount it in the section header. Done
+// in code (not static markup) so this module owns the whole feature and never
+// races a concurrent editor of the host page; if the header isn't present the
+// feature degrades to Fresh-only with no error.
+function mountSortToggle() {
+	const headRight = document.querySelector('#showcase .showcase-head-right');
+	if (!headRight || headRight.querySelector('.showcase-sort')) return;
+	const nav = document.createElement('div');
+	nav.className = 'showcase-sort';
+	nav.setAttribute('role', 'tablist');
+	nav.setAttribute('aria-label', 'Sort community models');
+	for (const [sort, label] of [
+		['fresh', 'Fresh'],
+		['top', 'Top this week'],
+	]) {
+		const b = document.createElement('button');
+		b.type = 'button';
+		b.className = 'showcase-sort-btn' + (sort === currentSort ? ' is-active' : '');
+		b.dataset.sort = sort;
+		b.setAttribute('role', 'tab');
+		b.setAttribute('aria-selected', sort === currentSort ? 'true' : 'false');
+		b.textContent = label;
+		b.addEventListener('click', () => {
+			if (currentSort === sort) return;
+			currentSort = sort;
+			nav.querySelectorAll('.showcase-sort-btn').forEach((el) => {
+				const active = el.dataset.sort === sort;
+				el.classList.toggle('is-active', active);
+				el.setAttribute('aria-selected', active ? 'true' : 'false');
+			});
+			loadShowcase();
+		});
+		nav.appendChild(b);
+	}
+	// Lead the header controls (before "View all").
+	headRight.prepend(nav);
 }
 
 els.refresh?.addEventListener('click', loadShowcase);
 
+mountSortToggle();
 loadShowcase();

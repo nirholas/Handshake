@@ -83,7 +83,9 @@ afterEach(() => {
 });
 
 describe('materializeCreation — quality + compression (additive, opt-in)', () => {
-	it('defaults (no quality, no compress) return quality:null, compression:null — unchanged behavior', async () => {
+	it('defaults run the geometry cleanup pass, shrinking the delivered mesh', async () => {
+		// cleanup defaults ON: every forge mesh is raw marching-cubes geometry that
+		// dedup/join/weld/simplify improves. quality + compression stay opt-in.
 		stubFetch(FOX_GLB);
 		const out = await materializeCreation({
 			replicateJobId: 'job-1',
@@ -93,7 +95,23 @@ describe('materializeCreation — quality + compression (additive, opt-in)', () 
 		expect(out.glbUrl).toBe(`https://cdn.example.com/forge/client-1/${existingRow.id}.glb`);
 		expect(out.quality).toBeNull();
 		expect(out.compression).toBeNull();
-		// The uncompressed original bytes were written verbatim.
+		// The cleaned mesh is what ships, and it's smaller than the raw input.
+		expect(out.cleaned).not.toBeNull();
+		expect(out.cleaned.tris_after).toBeLessThanOrEqual(out.cleaned.tris_before);
+		const written = putObjectMock.mock.calls[0][0];
+		expect(written.body.length).toBeLessThan(FOX_GLB.length);
+		expect(written.body.length).toBe(out.cleaned.output_bytes);
+	});
+
+	it('cleanup:false delivers the provider bytes verbatim', async () => {
+		stubFetch(FOX_GLB);
+		const out = await materializeCreation({
+			replicateJobId: 'job-1b',
+			clientKey: 'client-1',
+			glbUrl: 'https://provider.example/fox.glb',
+			cleanup: false,
+		});
+		expect(out.cleaned).toBeNull();
 		const written = putObjectMock.mock.calls[0][0];
 		expect(written.body.length).toBe(FOX_GLB.length);
 	});

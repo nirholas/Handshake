@@ -5409,6 +5409,10 @@
 		{
 			"path": "/api/cron/changelog-push",
 			"schedule": "*/20 * * * *"
+		},
+		{
+			"path": "/api/cron/forge-off-crown",
+			"schedule": "7 0 * * 1"
 		}
 	]
 }

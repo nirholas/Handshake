@@ -89,6 +89,7 @@ vi.mock('../../api/_lib/rate-limit.js', async (importActual) => {
 });
 
 const { default: handler } = await import('../../api/forge.js');
+const { validateForgeImage } = await import('../../api/_lib/forge-image-validate.js');
 
 function makeReq(body) {
 	return {
@@ -121,6 +122,8 @@ const PHOTO = 'https://cdn.example/photo.png';
 beforeEach(() => {
 	gcpSubmit.mockClear();
 	synthesizeTurnaroundViews.mockClear();
+	validateForgeImage.mockReset();
+	validateForgeImage.mockResolvedValue({ ok: true });
 });
 
 describe('single-photo image→3D gains synthesized turnaround views on the fusing lane', () => {
@@ -143,9 +146,11 @@ describe('single-photo image→3D gains synthesized turnaround views on the fusi
 		expect(res.body.reference_image_urls).toHaveLength(3);
 		expect(res.body.reference_image_urls[0]).toBe(PHOTO);
 		expect(res.body.preview_image_url).toBe(PHOTO);
+		// Background pre-matting is requested for a real photo on the fusing lane.
+		expect(gcpSubmit.mock.calls[0][0].params.matte).toBe(true);
 	});
 
-	it('keeps draft single-view for speed (no synthesis call)', async () => {
+	it('keeps draft single-view for speed (no synthesis, no matte)', async () => {
 		const req = makeReq({ image_urls: [PHOTO], tier: 'draft', path: 'image', skip_validation: true });
 		const res = makeRes();
 		await handler(req, res);
@@ -154,6 +159,41 @@ describe('single-photo image→3D gains synthesized turnaround views on the fusi
 		expect(res.body.backend).toBe('trellis_selfhost');
 		expect(synthesizeTurnaroundViews).not.toHaveBeenCalled();
 		expect(gcpSubmit.mock.calls[0][0].params.images).toEqual([PHOTO]);
+		// Matte is a standard/high quality step; draft stays fast.
+		expect(gcpSubmit.mock.calls[0][0].params.matte).toBe(false);
+	});
+
+	it('prunes an unusable secondary view before fusion, keeping the primary', async () => {
+		const supplied = [PHOTO, 'https://cdn.example/photo-bad.png', 'https://cdn.example/photo-ok.png'];
+		// Primary usable, second unusable, third usable — the bad one must be dropped.
+		validateForgeImage
+			.mockResolvedValueOnce({ ok: true })
+			.mockResolvedValueOnce({ ok: false, issue: 'blurry', message: 'too blurry' })
+			.mockResolvedValueOnce({ ok: true });
+		const req = makeReq({ image_urls: supplied, tier: 'standard', path: 'image' });
+		const res = makeRes();
+		await handler(req, res);
+
+		expect(res.statusCode).toBe(200);
+		expect(validateForgeImage).toHaveBeenCalledTimes(3);
+		// Caller supplied multiple views, so no synthesis; the fused set is the two
+		// usable views with the corrupting one removed.
+		expect(gcpSubmit.mock.calls[0][0].params.images).toEqual([
+			PHOTO,
+			'https://cdn.example/photo-ok.png',
+		]);
+	});
+
+	it('rejects when the PRIMARY view is unusable, offering the override', async () => {
+		validateForgeImage.mockResolvedValueOnce({ ok: false, issue: 'no_subject', message: 'no clear subject' });
+		const req = makeReq({ image_urls: [PHOTO], tier: 'standard', path: 'image' });
+		const res = makeRes();
+		await handler(req, res);
+
+		expect(res.statusCode).toBe(422);
+		expect(res.body.error).toBe('image_not_usable');
+		expect(res.body.override).toEqual({ field: 'skip_validation', value: true });
+		expect(gcpSubmit).not.toHaveBeenCalled();
 	});
 
 	it('forwards caller-supplied multi-view inputs untouched (their views win)', async () => {

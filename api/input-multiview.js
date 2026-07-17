@@ -41,7 +41,7 @@ import { env } from './_lib/env.js';
 export const maxDuration = 90; // vision validation × N images + generation submit
 
 const MIN_VIEWS = 2;
-const MAX_VIEWS = 4;
+const MAX_VIEWS = 6;
 const HTTP_URL_RE = /^https?:\/\/.{1,2044}$/;
 const R2_KEY_RE = /^forge\/uploads\/[a-f0-9]{12}\/[a-f0-9-]{36}\.(png|jpg|webp)$/;
 

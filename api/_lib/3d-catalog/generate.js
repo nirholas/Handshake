@@ -41,8 +41,14 @@ export default {
 		type: 'object',
 		properties: {
 			status: { type: 'string', enum: ['done', 'pending', 'error'] },
-			glbUrl: { type: 'string', description: 'Durable URL to the generated GLB (when status=done).' },
-			viewerUrl: { type: 'string', description: 'three.ws viewer link for the GLB (when status=done).' },
+			glbUrl: {
+				type: 'string',
+				description: 'Durable URL to the generated GLB (when status=done).',
+			},
+			viewerUrl: {
+				type: 'string',
+				description: 'three.ws viewer link for the GLB (when status=done).',
+			},
 			arUrl: {
 				type: 'string',
 				description:
@@ -50,8 +56,31 @@ export default {
 					'(Scene Viewer on Android, Quick Look on iOS); on desktop it falls back to the viewer.',
 			},
 			job: { type: 'string', description: 'Opaque job token to poll (when status=pending).' },
-			poll: { type: 'string', description: 'GET this URL to poll the job (when status=pending). Carries the prompt as `title` to label the AR/viewer pages.' },
-			error: { type: 'string', description: 'Actionable message (when status=error). Free lane: no charge.' },
+			poll: {
+				type: 'string',
+				description:
+					'GET this URL to poll the job (when status=pending). Carries the prompt as `title` to label the AR/viewer pages.',
+			},
+			retryAfter: {
+				type: 'integer',
+				description:
+					'Recommended seconds to wait before the next poll (when status=pending). Also sent as the Retry-After header. ' +
+					'Honor it to stay under the poll rate limit and spare the shared free GPU lane.',
+			},
+			etaSeconds: {
+				type: 'integer',
+				description:
+					'Estimated seconds until the model is ready (when status=pending), when the lane reports one.',
+			},
+			creationId: {
+				type: 'string',
+				description:
+					'Stable forge creation handle for correlating/dedup and referencing the generation across calls.',
+			},
+			error: {
+				type: 'string',
+				description: 'Actionable message (when status=error). Free lane: no charge.',
+			},
 			format: { type: 'string' },
 			tier: { type: 'string' },
 			free: { type: 'boolean' },
@@ -61,7 +90,8 @@ export default {
 		method: 'GET',
 		path: '/api/3d/generate?job={job}&title={title}',
 		description:
-			'Poll a queued generation. Returns { status:pending|done|error, glbUrl?, viewerUrl?, arUrl?, error? }. ' +
+			'Poll a queued generation. Returns { status:pending|done|error, glbUrl?, viewerUrl?, arUrl?, retryAfter?, error? }. ' +
+			'While pending, wait `retryAfter` seconds (also the Retry-After header) between polls. ' +
 			'`title` is optional and labels the AR/viewer pages; the pending response embeds it in `poll` already.',
 	},
 	example: {
@@ -74,14 +104,25 @@ export default {
 			status: 'pending',
 			job: 'f1.eyJwIjoibnZpZGlhIiwiayI6InRleHQiLCJ0IjoibmltLXRhc2stMTIzIn0.c2ln',
 			poll: '/api/3d/generate?job=f1.eyJwIjoibnZpZGlhIiwiayI6InRleHQiLCJ0IjoibmltLXRhc2stMTIzIn0.c2ln&title=a%20small%20ceramic%20robot%20figurine',
+			retryAfter: 5,
+			etaSeconds: 20,
+			creationId: 'a1b2c3d4-0000-4000-8000-000000000002',
 			format: 'glb',
 			tier: 'draft',
 			free: true,
 		},
 	},
 	paidTiers: [
-		{ name: 'Forge Pro', path: '/api/x402/forge', why: 'Higher polygon budgets + PBR textures, quality tiers.' },
-		{ name: 'Rigged Avatars', path: '/api/forge?action=rig', why: 'Animation-ready skeleton + skin weights.' },
+		{
+			name: 'Forge Pro',
+			path: '/api/x402/forge',
+			why: 'Higher polygon budgets + PBR textures, quality tiers.',
+		},
+		{
+			name: 'Rigged Avatars',
+			path: '/api/forge?action=rig',
+			why: 'Animation-ready skeleton + skin weights.',
+		},
 	],
 	useCase:
 		'An agent building a game, a scene, or an NFT needs a 3D model from a text prompt — free, no key, no account. ' +

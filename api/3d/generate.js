@@ -13,13 +13,20 @@
 // wire contract is new: a clean, minimal agent shape.
 //
 //   POST { prompt, format?:'glb' }
-//     → 200 { status:'done',  glbUrl, viewerUrl, arUrl, ... }  (draft finished inline)
-//     → 200 { status:'pending', job, poll, ... }               (queued — poll below)
+//     → 200 { status:'done',  glbUrl, viewerUrl, arUrl, creationId, ... }   (draft finished inline)
+//     → 200 { status:'pending', job, poll, etaSeconds, retryAfter, creationId, ... }  (queued — poll below)
 //
 //   GET ?job=<id>&title=<prompt>   (title optional — labels the AR/viewer pages)
-//     → 200 { status:'pending' }                               (still generating)
+//     → 200 { status:'pending', retryAfter }                   (still generating — wait retryAfter s, then poll)
 //     → 200 { status:'done',  glbUrl, viewerUrl, arUrl }       (GLB ready)
 //     → 200 { status:'error', error }                          (upstream failed; free = no charge)
+//
+// Every pending/queued response carries a `retryAfter` (seconds) poll-cadence hint
+// — ETA-derived on submit, echoed on each poll — and sets the standard Retry-After
+// header. A well-behaved agent that honors it stays under the poll flood-guard
+// (limits.mcp3dStatus) instead of tripping its 429, and spares the shared free GPU
+// lane needless status traffic. `creationId` is the stable forge creation handle
+// for correlating logs, dedup, and referencing the generation across calls.
 //
 // arUrl is the device-aware AR launch (api/ar.js): opened on a phone it places
 // the model in the caller's real room (Scene Viewer on Android, Quick Look on
@@ -55,11 +62,28 @@ const UPGRADE = Object.freeze({
 	docs: '/docs/3d-api',
 });
 
+// Recommended seconds a polling agent should wait between polls. Derived from the
+// lane's ETA so a fast draft is polled promptly and a slow job sparingly: a
+// well-behaved agent that honors this stays under the poll flood-guard
+// (limits.mcp3dStatus) rather than tripping its 429, and the shared free GPU lane
+// carries less status traffic. Bounded to [POLL_MIN_S, POLL_MAX_S]; falls back to
+// the platform's own 3s cadence (forge-client DEFAULT_POLL_MS) when no ETA is known.
+const POLL_MIN_S = 2;
+const POLL_MAX_S = 10;
+const POLL_DEFAULT_S = 3;
+export function pollIntervalFromEta(etaSeconds) {
+	if (!Number.isFinite(etaSeconds) || etaSeconds <= 0) return POLL_DEFAULT_S;
+	return Math.max(POLL_MIN_S, Math.min(POLL_MAX_S, Math.round(etaSeconds / 4)));
+}
+
 // Shape a /api/forge draft-lane submit response into this route's agent contract.
 // Pure + exported so the boundary is pinned in tests against real captured forge
 // shapes (inline-done vs queued) without any network.
 export function shapeSubmit(job, base, prompt) {
 	const glbUrl = typeof job?.glb_url === 'string' ? job.glb_url : '';
+	// forge stamps a durable creation handle on both the inline-done and queued
+	// shapes; surface it so an agent can correlate, dedup, and reference the run.
+	const creationId = typeof job?.creation_id === 'string' ? job.creation_id : null;
 	if (job?.status === 'done' && glbUrl) {
 		return {
 			status: 'done',
@@ -69,17 +93,27 @@ export function shapeSubmit(job, base, prompt) {
 			format: 'glb',
 			tier: 'draft',
 			free: true,
+			...(creationId ? { creationId } : {}),
 			upgrade: UPGRADE,
 		};
 	}
 	const token = job?.job_id ?? null;
+	// forge's queued response spreads its provenance, which carries the lane ETA;
+	// turn it into a concrete poll-cadence hint (and echo the raw ETA for display).
+	const etaSeconds = Number.isFinite(job?.eta_seconds) ? job.eta_seconds : null;
 	// The poll URL carries the prompt as `title` so the eventual done response
 	// labels the AR/viewer pages without the caller resending anything.
-	const t = typeof prompt === 'string' && prompt.trim() ? `&title=${encodeURIComponent(prompt.trim().slice(0, 80))}` : '';
+	const t =
+		typeof prompt === 'string' && prompt.trim()
+			? `&title=${encodeURIComponent(prompt.trim().slice(0, 80))}`
+			: '';
 	return {
 		status: 'pending',
 		job: token,
 		poll: token ? `/api/3d/generate?job=${encodeURIComponent(token)}${t}` : null,
+		retryAfter: pollIntervalFromEta(etaSeconds),
+		...(etaSeconds != null ? { etaSeconds } : {}),
+		...(creationId ? { creationId } : {}),
 		format: 'glb',
 		tier: 'draft',
 		free: true,
@@ -91,6 +125,7 @@ export function shapeSubmit(job, base, prompt) {
 // Pure + exported for the same reason as shapeSubmit.
 export function shapePoll(data, base, jobId, title) {
 	const glbUrl = typeof data?.glb_url === 'string' ? data.glb_url : '';
+	const creationId = typeof data?.creation_id === 'string' ? data.creation_id : null;
 	if (data?.status === 'done' && glbUrl) {
 		return {
 			status: 'done',
@@ -101,6 +136,7 @@ export function shapePoll(data, base, jobId, title) {
 			format: 'glb',
 			tier: 'draft',
 			free: true,
+			...(creationId ? { creationId } : {}),
 		};
 	}
 	if (data?.status === 'failed') {
@@ -115,12 +151,20 @@ export function shapePoll(data, base, jobId, title) {
 		};
 	}
 	// queued / running / anything transient → still pending; keep the title on the
-	// poll URL so it survives to the done response.
-	const t = typeof title === 'string' && title.trim() ? `&title=${encodeURIComponent(title.trim().slice(0, 80))}` : '';
+	// poll URL so it survives to the done response, and echo the poll-cadence hint
+	// (ETA-derived when forge's poll shape carries one, else the default cadence).
+	const etaSeconds = Number.isFinite(data?.eta_seconds) ? data.eta_seconds : null;
+	const t =
+		typeof title === 'string' && title.trim()
+			? `&title=${encodeURIComponent(title.trim().slice(0, 80))}`
+			: '';
 	return {
 		status: 'pending',
 		job: jobId,
 		poll: `/api/3d/generate?job=${encodeURIComponent(jobId)}${t}`,
+		retryAfter: pollIntervalFromEta(etaSeconds),
+		...(etaSeconds != null ? { etaSeconds } : {}),
+		...(creationId ? { creationId } : {}),
 		free: true,
 	};
 }
@@ -141,7 +185,9 @@ function failFromLane(res, err) {
 			if (err.retryAfter) res.setHeader('retry-after', String(err.retryAfter));
 			return json(res, 429, {
 				error: 'rate_limited',
-				message: err.message || 'The free 3D GPU lane is momentarily saturated — try again shortly.',
+				message:
+					err.message ||
+					'The free 3D GPU lane is momentarily saturated — try again shortly.',
 				retry_after: err.retryAfter || 10,
 			});
 		case 'timeout':
@@ -170,7 +216,10 @@ async function generate(req, res) {
 	} catch (err) {
 		return json(res, err?.status === 413 ? 413 : 400, {
 			error: 'bad_request',
-			message: err?.status === 413 ? 'Request body too large.' : 'Send a JSON body: { "prompt": "..." }.',
+			message:
+				err?.status === 413
+					? 'Request body too large.'
+					: 'Send a JSON body: { "prompt": "..." }.',
 		});
 	}
 
@@ -206,9 +255,14 @@ async function generate(req, res) {
 	// is inherited automatically by routing through it — no new limiter invented.
 	const rl = await limits.mcp3dGenerateFree(ip);
 	if (!rl.success) {
-		return rateLimited(res, rl, 'Free 3D generation limit reached — try again shortly, or use paid Forge Pro (no per-IP cap).', {
-			upgrade: UPGRADE,
-		});
+		return rateLimited(
+			res,
+			rl,
+			'Free 3D generation limit reached — try again shortly, or use paid Forge Pro (no per-IP cap).',
+			{
+				upgrade: UPGRADE,
+			},
+		);
 	}
 
 	const base = originFromReq(req);
@@ -220,12 +274,24 @@ async function generate(req, res) {
 		return failFromLane(res, err);
 	}
 
-	return json(res, 200, shapeSubmit(job, base, prompt));
+	return sendShaped(res, shapeSubmit(job, base, prompt));
+}
+
+// Emit a shaped response, attaching the standard Retry-After header whenever the
+// body carries a poll-cadence hint so HTTP-aware clients honor it without parsing
+// the JSON. Non-pending shapes (done/error) carry no retryAfter and pass through.
+function sendShaped(res, shaped) {
+	if (shaped?.status === 'pending' && shaped.retryAfter)
+		res.setHeader('retry-after', String(shaped.retryAfter));
+	return json(res, 200, shaped);
 }
 
 async function poll(req, res, jobId, title) {
 	if (!JOB_HANDLE_RE.test(jobId)) {
-		return json(res, 400, { error: 'invalid_job', message: 'Malformed job id. Pass the "job" value from the generate response.' });
+		return json(res, 400, {
+			error: 'invalid_job',
+			message: 'Malformed job id. Pass the "job" value from the generate response.',
+		});
 	}
 
 	// Cheap, high-frequency poll — reuse the forge status limiter (per-instance,
@@ -243,24 +309,31 @@ async function poll(req, res, jobId, title) {
 	} catch {
 		// A transient network blip on the self-call is not a job failure — tell the
 		// caller it's still pending so its poll loop retries.
-		return json(res, 200, shapePoll({ status: 'running' }, base, jobId, title));
+		return sendShaped(res, shapePoll({ status: 'running' }, base, jobId, title));
 	}
 
 	const data = await upstream.json().catch(() => ({}));
 	if (upstream.status === 400) {
-		return json(res, 400, { error: 'invalid_job', message: data?.message || 'Unknown or malformed job id.' });
+		return json(res, 400, {
+			error: 'invalid_job',
+			message: data?.message || 'Unknown or malformed job id.',
+		});
 	}
 	if (upstream.status === 429) {
 		const retryAfter = Number(data?.retry_after) || 5;
 		res.setHeader('retry-after', String(retryAfter));
-		return json(res, 429, { error: 'rate_limited', message: 'Polling is rate-limited — retry shortly.', retry_after: retryAfter });
+		return json(res, 429, {
+			error: 'rate_limited',
+			message: 'Polling is rate-limited — retry shortly.',
+			retry_after: retryAfter,
+		});
 	}
 	if (!upstream.ok) {
 		// Upstream hiccup mid-poll — keep the job alive as pending so the loop retries.
-		return json(res, 200, shapePoll({ status: 'running' }, base, jobId, title));
+		return sendShaped(res, shapePoll({ status: 'running' }, base, jobId, title));
 	}
 
-	return json(res, 200, shapePoll(data, base, jobId, title));
+	return sendShaped(res, shapePoll(data, base, jobId, title));
 }
 
 export default wrap(async (req, res) => {
@@ -272,7 +345,12 @@ export default wrap(async (req, res) => {
 	const url = new URL(req.url, 'http://localhost');
 	const jobId = (url.searchParams.get('job') || '').trim();
 	if (!jobId) {
-		return error(res, 400, 'missing_job', 'Pass ?job=<id> to poll a generation, or POST { prompt } to start one.');
+		return error(
+			res,
+			400,
+			'missing_job',
+			'Pass ?job=<id> to poll a generation, or POST { prompt } to start one.',
+		);
 	}
 	const title = (url.searchParams.get('title') || '').trim().slice(0, 120);
 	return poll(req, res, jobId, title);

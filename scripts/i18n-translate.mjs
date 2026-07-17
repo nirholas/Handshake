@@ -350,11 +350,30 @@ function backend() {
 	);
 }
 
+// Parse the model's reply into an object, tolerating the usual LLM JSON noise:
+// code fences (stripped upstream), leading/trailing prose, and a trailing comma.
+// Falls back to the largest {...} span when a raw parse fails, so one stray
+// character doesn't discard an otherwise-good chunk.
+function parseModelJSON(raw) {
+	const text = stripFences(raw);
+	try {
+		return JSON.parse(text);
+	} catch {
+		const start = text.indexOf('{');
+		const end = text.lastIndexOf('}');
+		if (start !== -1 && end > start) {
+			const span = text.slice(start, end + 1).replace(/,\s*([}\]])/g, '$1');
+			return JSON.parse(span); // may throw — caller treats as a failed chunk
+		}
+		throw new Error('no JSON object in response');
+	}
+}
+
 async function translateChunk(langName, payload, attempt = 0) {
 	const call = backend();
 	try {
 		const raw = await call(buildPrompt(langName, payload));
-		const parsed = JSON.parse(stripFences(raw));
+		const parsed = parseModelJSON(raw);
 		if (!parsed || typeof parsed !== 'object') throw new Error('non-object response');
 		return parsed;
 	} catch (err) {
@@ -413,6 +432,7 @@ async function translateLocale(code) {
 	const translatedFlat = {};
 	let done = 0;
 
+	let failedChunks = 0;
 	await pool(chunks, cfg.concurrency || 4, async (keys) => {
 		// Mask source values; remember tokens per key to restore afterwards.
 		const payload = {};
@@ -422,7 +442,17 @@ async function translateLocale(code) {
 			payload[k] = masked;
 			tokenMap[k] = tokens;
 		}
-		const out = await translateChunk(langName, payload, 0);
+		// Isolate each chunk: a chunk that fails every retry (bad JSON, 5xx, a
+		// model that won't return valid output) must not abort the whole run —
+		// its keys stay missing and the next incremental run retries just them.
+		let out;
+		try {
+			out = await translateChunk(langName, payload, 0);
+		} catch (err) {
+			failedChunks++;
+			console.warn(`  ! ${code}: chunk of ${keys.length} key(s) failed (${err.message}); left for next run`);
+			return;
+		}
 		for (const k of keys) {
 			const val = out[k];
 			if (typeof val !== 'string') {
@@ -438,6 +468,7 @@ async function translateLocale(code) {
 		}
 		console.log(`  ${code}: ${done}/${todo.length}`);
 	});
+	if (failedChunks) console.warn(`  ⚠ ${code}: ${failedChunks} chunk(s) incomplete — re-run to fill`);
 
 	persist(code, existing, translatedFlat);
 	return { code, translated: todo.length };

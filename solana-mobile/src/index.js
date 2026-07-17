@@ -18,7 +18,8 @@
 //   if (wallet) { ... } else { ... use Phantom path ... }
 
 import { MwaWallet } from './mwa-wallet.js';
-import { isSolanaMobileTwa, isSolanaMobileDevice } from './seeker-detect.js';
+import { isSolanaMobileTwa, isSolanaMobileDevice, isMwaSupported } from './seeker-detect.js';
+import { normalizeMwaError, isUserRejection, MwaError } from './mwa-errors.js';
 
 let bootPromise = null;
 
@@ -68,4 +69,12 @@ queueMicrotask(() => {
 	});
 });
 
-export { MwaWallet, isSolanaMobileTwa, isSolanaMobileDevice };
+export {
+	MwaWallet,
+	isSolanaMobileTwa,
+	isSolanaMobileDevice,
+	isMwaSupported,
+	normalizeMwaError,
+	isUserRejection,
+	MwaError,
+};

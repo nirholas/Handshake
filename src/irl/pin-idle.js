@@ -70,6 +70,10 @@ export async function mountPinIdle(model, context = {}) {
 			mgr.detach();
 			return null;
 		}
+		// A pin whose arm bones didn't name-map would idle its torso + legs with both
+		// arms frozen out in a T. Swing those un-driven arms down first (no-op when the
+		// arms map), so a plaza of pins never shows a broken bind-pose silhouette.
+		mgr.relaxUndrivenArms();
 		mgr.injectClip(CLIP_IDLE, clipJson, { loop: true });
 		const playing = await mgr.play(CLIP_IDLE);
 		if (!playing) {

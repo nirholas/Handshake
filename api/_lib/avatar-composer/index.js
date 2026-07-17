@@ -1,5 +1,5 @@
 // @ts-check
-// Avatar Composer — public entry point.
+// Avatar Composer: public entry point.
 //
 // One call turns a diversity profile + seed into a rigged, expression-ready GLB
 // assembled from modular parts (see README.md). The caller supplies a `loadBase`
@@ -42,7 +42,7 @@ export async function composeStudioAvatar({ profile, seed, loadBase }) {
  * Rough count of distinct part-mesh combinations the catalog can produce, before
  * colorway/scale. Each identity draws swappable parts only from its own rest-pose
  * group, so the count sums over identities. Illustrative (docs/tests), not a hard
- * guarantee — the colorway (per-part tints across ~10 skin tones, 10 hair tints,
+ * guarantee: the colorway (per-part tints across ~10 skin tones, 10 hair tints,
  * 10 outfit tints each) multiplies this into the tens of thousands.
  * @returns {number}
  */

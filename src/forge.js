@@ -37,7 +37,7 @@ const POLL_INTERVAL_MS = 2500;
 // real generation, not the average one, or the client abandons jobs the server
 // finishes. Queue wait does not count against this window (see pollUntilDone).
 const MAX_POLL_MS = 12 * 60 * 1000;
-const MAX_VIEWS = 4;
+const MAX_VIEWS = 6;
 const VIEW_LABELS = ['Front', 'Back', 'Left', 'Right'];
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
@@ -84,6 +84,7 @@ const els = {
 	resultLabel: document.getElementById('result-label'),
 	resultCreator: document.getElementById('result-creator'),
 	resultViews: document.getElementById('result-views'),
+	resultQuality: document.getElementById('result-quality'),
 	verdict: document.getElementById('verdict'),
 	download: document.getElementById('download'),
 	again: document.getElementById('again'),
@@ -1079,7 +1080,7 @@ function buildViewsPips() {
 	}
 }
 
-// Live "N of 4 views" readout + pips. Teaches that more views sharpen the mesh,
+// Live "N of 6 views" readout + pips. Teaches that more views sharpen the mesh,
 // so users don't stop at a single photo thinking it's enough.
 function updateViewsCounter() {
 	if (!els.viewsCounter || !els.viewsCounterText) return;
@@ -1733,6 +1734,56 @@ function setViewsBadge(meta) {
 	els.resultViews.classList.remove('is-hidden');
 }
 
+// Surface the automated quality signal the server attached to this generation.
+// Two sources, in order of confidence:
+//   • quality_gate: the vision-QA verdict (semantic: does it look like the
+//     prompt). A pass with a numeric score reads "Verified NN%"; a fail that
+//     nonetheless shipped (best-of retry kept the top roll) reads a low-band
+//     warning so the user knows to regenerate.
+//   • quality: the fast deterministic scorer (structural). Used only when no
+//     vision verdict exists (the trusted fast-lane path), shown as a quiet
+//     "Checked" so a good draft still gets a confidence cue without a score.
+// Anything unscored (QA unavailable / older gallery model) shows nothing rather
+// than a fabricated number.
+function setQualityBadge(meta) {
+	const el = els.resultQuality;
+	if (!el) return;
+	const hide = () => {
+		el.classList.add('is-hidden');
+		el.removeAttribute('data-band');
+		el.textContent = '';
+		el.title = 'Automated quality check';
+	};
+	const gate = meta?.quality_gate;
+	// A real vision verdict: qa_available and a numeric score.
+	if (gate && gate.qa_available !== false && Number.isFinite(Number(gate.score))) {
+		const score = Math.round(Number(gate.score));
+		if (gate.pass === true) {
+			el.dataset.band = 'verified';
+			el.textContent = `Verified ${score}%`;
+			el.title = gate.reason ? `Quality check passed: ${gate.reason}` : 'Passed the automated quality check';
+		} else {
+			el.dataset.band = 'low';
+			el.textContent = `Low ${score}%`;
+			el.title = gate.reason
+				? `Below the quality bar: ${gate.reason}. Try Regenerate.`
+				: 'Below the automated quality bar: try Regenerate.';
+		}
+		el.classList.remove('is-hidden');
+		return;
+	}
+	// No vision verdict: fall back to the fast structural scorer if it vouched.
+	const q = meta?.quality;
+	if (q && q.flag === 'ok') {
+		el.removeAttribute('data-band');
+		el.textContent = 'Checked';
+		el.title = 'Passed the fast quality check';
+		el.classList.remove('is-hidden');
+		return;
+	}
+	hide();
+}
+
 // Materialize entrance — conceal the standing viewer, play the WebGL dissolve
 // reveal over it (src/forge-reveal.js), then crossfade back and hand the
 // final camera angle to model-viewer so the turntable continues seamlessly.
@@ -1810,6 +1861,7 @@ function showResult(glbUrl, label, meta, { autoSaved = false } = {}) {
 	// Hide the saved chip by default; caller re-shows it for fresh generations.
 	if (els.savedChip) els.savedChip.classList.add('is-hidden');
 	setViewsBadge(meta);
+	setQualityBadge(meta);
 	if (autoSaved && els.savedChip) {
 		// Re-trigger the animation by forcing a reflow.
 		els.savedChip.classList.remove('is-hidden');
@@ -2270,6 +2322,8 @@ async function run(cfg) {
 				backend: done.backend ?? job.backend,
 				tier: done.tier ?? job.tier,
 				path: done.path ?? job.path,
+				quality: done.quality ?? job.quality,
+				quality_gate: done.quality_gate ?? job.quality_gate,
 			},
 			{ autoSaved: !!done.creation_id },
 		);
@@ -2448,6 +2502,8 @@ async function resumeInflight() {
 				backend: done.backend ?? inflight.backend,
 				tier: done.tier ?? inflight.tier,
 				path: done.path ?? inflight.path,
+				quality: done.quality,
+				quality_gate: done.quality_gate,
 			},
 			{ autoSaved: !!done.creation_id },
 		);

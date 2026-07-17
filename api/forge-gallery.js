@@ -39,13 +39,23 @@ export default wrap(async (req, res) => {
 	const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 24, 1), 50);
 
 	if ((url.searchParams.get('scope') || '').trim() === 'community') {
-		const creations = await listShowcase({ limit });
-		return json(
-			res,
-			200,
-			{ enabled: true, creations },
-			{ 'cache-control': 'public, s-maxage=60, stale-while-revalidate=300' },
-		);
+		// Fresh (newest, visual-first) vs Top (Forge-Off board, most-voted). The
+		// `window=week` narrows Top to the current Forge-Off week.
+		const sort = (url.searchParams.get('sort') || '').trim() === 'top' ? 'top' : 'fresh';
+		const window = (url.searchParams.get('window') || '').trim() === 'week' ? 'week' : 'all';
+		// Resolve the caller's own voted-state per card when they send their
+		// forge id — the community feed carries no other identifying data, and a
+		// missing header just yields voted=false everywhere (anonymous read).
+		const rawClient = req.headers['x-forge-client'];
+		const hasClient = Array.isArray(rawClient) ? rawClient[0] : rawClient;
+		const voterKey = hasClient ? hashClient(hasClient) : null;
+		const creations = await listShowcase({ limit, sort, window, voterKey });
+		// Per-voter reads can't be shared across browsers, so only the anonymous
+		// (no client id) read is CDN-cacheable. A voted-state read is private.
+		const headers = voterKey
+			? { 'cache-control': 'private, no-store' }
+			: { 'cache-control': 'public, s-maxage=60, stale-while-revalidate=300' };
+		return json(res, 200, { enabled: true, creations, sort, window }, headers);
 	}
 
 	const rawClient = req.headers['x-forge-client'];
