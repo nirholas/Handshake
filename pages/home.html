@@ -215,6 +215,75 @@
 			}
 		}
 		.hero-bullets li strong { color: var(--text); font-weight: 550; }
+
+		/* ── Hero forge bar: the primary hero affordance ───────────────────── */
+		.hero-forge {
+			display: flex; align-items: center; gap: 10px;
+			width: 100%; max-width: 560px; margin: 4px 0 12px;
+			padding: 7px 7px 7px 16px; border-radius: 14px;
+			background:
+				linear-gradient(var(--surface-0), var(--surface-0)) padding-box,
+				linear-gradient(120deg, rgba(255,180,84,.55), rgba(255,106,213,.55) 38%, rgba(139,92,246,.55) 64%, rgba(79,195,255,.55)) border-box;
+			border: 1.5px solid transparent;
+			box-shadow: 0 1px 0 rgba(255,255,255,.02) inset, 0 8px 30px -18px rgba(139,92,246,.5);
+			transition: box-shadow .25s ease, transform .25s ease;
+		}
+		.hero-forge:focus-within {
+			box-shadow: 0 0 0 4px rgba(139,92,246,.16), 0 10px 34px -16px rgba(139,92,246,.6);
+			transform: translateY(-1px);
+		}
+		.hero-forge-glyph {
+			font-size: 15px; line-height: 1; flex: 0 0 auto;
+			background: linear-gradient(120deg, #ffb454, #ff6ad5 40%, #8b5cf6 66%, #4fc3ff);
+			-webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+			animation: hero-forge-glyph-spin 8s linear infinite;
+		}
+		@keyframes hero-forge-glyph-spin { to { transform: rotate(360deg); } }
+		.hero-forge-input {
+			flex: 1 1 auto; min-width: 0;
+			background: transparent; border: 0; outline: 0; padding: 8px 2px;
+			color: var(--text); font-family: var(--font-body); font-size: 15px; letter-spacing: -0.01em;
+		}
+		.hero-forge-input::placeholder { color: var(--text-3); }
+		.hero-forge-go {
+			flex: 0 0 auto; display: inline-flex; align-items: center; gap: 8px;
+			padding: 10px 16px; border-radius: 9px; cursor: pointer;
+			font-family: var(--font-display); font-weight: 600; font-size: 14px; letter-spacing: -0.01em;
+			color: #0a0a0a; border: 0;
+			background: linear-gradient(120deg, #ffb454, #ff6ad5 40%, #8b5cf6 66%, #4fc3ff);
+			background-size: 160% 160%; background-position: 0% 50%;
+			transition: background-position .5s ease, box-shadow .25s ease, transform .12s ease, opacity .2s ease;
+		}
+		.hero-forge-go .arrow { transition: transform .2s ease; }
+		.hero-forge-go:hover { background-position: 100% 50%; box-shadow: 0 0 22px -4px rgba(139,92,246,.55); }
+		.hero-forge-go:hover .arrow { transform: translateX(3px); }
+		.hero-forge-go:active { transform: translateY(1px); }
+		.hero-forge-go:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+		.hero-forge-go[data-busy="1"] { opacity: .72; cursor: progress; }
+		.hero-forge-go .btn-forge-dot { background: rgba(10,10,10,.85); }
+		.hero-forge-tries {
+			display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+			margin: 0 0 14px; font-size: 12.5px;
+		}
+		.hero-forge-tries-label {
+			font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.14em;
+			text-transform: uppercase; color: var(--text-4);
+		}
+		.hero-try {
+			padding: 5px 11px; border-radius: 999px; cursor: pointer;
+			background: var(--surface-0); border: 1px solid var(--hairline);
+			color: var(--text-2); font-family: var(--font-body); font-size: 12.5px;
+			transition: color .15s ease, border-color .15s ease, background .15s ease, transform .12s ease;
+		}
+		.hero-try:hover { color: var(--text); border-color: var(--hairline-strong); transform: translateY(-1px); }
+		.hero-try:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+		.hero-forge-note { font-size: 12.5px; color: var(--text-3); margin: 0 0 20px; }
+		.hero-forge-note a { color: var(--text-2); text-decoration: none; border-bottom: 1px solid var(--hairline-strong); }
+		.hero-forge-note a:hover { color: var(--text); }
+		@media (prefers-reduced-motion: reduce) {
+			.hero-forge-glyph { animation: none; }
+			.hero-forge:focus-within { transform: none; }
+		}
 		.hero-cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
 		.hero-reassure {
 			display: inline-flex; align-items: center; gap: 9px;
@@ -2534,9 +2603,28 @@
 			<li data-i18n-html="home.bullet_embed"><strong>Embed</strong> it on any website with two lines of HTML</li>
 			<li data-i18n-html="home.bullet_earn"><strong>Earn</strong> USDC per chat with x402 micropayments</li>
 		</ul>
+		<!-- Hero forge bar: the site's one job, right where the eye lands. Types
+		     straight into the live mini-forge below (relocated directly under the
+		     hero) and scrolls to watch it build, so first-magic is: land, type,
+		     Enter. Wired in src/home-forge.js (wireHeroBar). -->
+		<form class="hero-forge" id="hero-forge-form" autocomplete="off" role="search" aria-label="Generate a 3D model from a text description">
+			<span class="hero-forge-glyph" aria-hidden="true">◆</span>
+			<input type="text" id="hero-forge-input" class="hero-forge-input" maxlength="1000" autocomplete="off" spellcheck="false" aria-label="Describe a 3D model to generate" placeholder="describe anything: a brass compass, weathered…" />
+			<button type="submit" class="hero-forge-go" id="hero-forge-go" data-cta="hero_forge" data-cta-loc="hero">
+				<span class="btn-forge-dot" aria-hidden="true"></span>
+				<span data-hero-forge-label>Forge it</span>
+				<span class="arrow" aria-hidden="true">→</span>
+			</button>
+		</form>
+		<div class="hero-forge-tries" aria-label="Example prompts to try">
+			<span class="hero-forge-tries-label">Try</span>
+			<button type="button" class="hero-try" data-prompt="a low-poly red fox, sitting">low-poly fox</button>
+			<button type="button" class="hero-try" data-prompt="a sci-fi combat helmet, brushed metal">sci-fi helmet</button>
+			<button type="button" class="hero-try" data-prompt="a glazed ceramic teapot">ceramic teapot</button>
+		</div>
+		<p class="hero-forge-note">Free, no sign-up, a real textured model in about a minute. <a href="/forge">Open the full Forge →</a></p>
 		<div class="hero-cta-row">
-			<a class="btn btn--primary" href="/create" data-cta="build_agent" data-cta-loc="hero" data-i18n-html="home.cta_build">Build your agent <span class="arrow">→</span></a>
-			<a class="btn btn--forge" href="/forge" data-cta="text_to_3d" data-cta-loc="hero"><span class="btn-forge-dot" aria-hidden="true"></span><span data-i18n="home.cta_text3d">Text → 3D</span></a>
+			<a class="btn" href="/create" data-cta="build_agent" data-cta-loc="hero" data-i18n-html="home.cta_build">Build your agent <span class="arrow">→</span></a>
 			<a class="btn" href="#embed" data-cta="see_embed" data-cta-loc="hero" data-i18n="home.cta_embed">See the embed</a>
 			<a class="btn" href="/tour" id="hero-tour-start" data-cta="guided_tour" data-cta-loc="hero"><span aria-hidden="true">▶</span>&nbsp;<span data-i18n="common.take_tour">Take the tour</span></a>
 		</div>
@@ -2560,6 +2648,154 @@
 				<button type="button" class="hero-chip" data-anim="thriller" data-i18n="home.thriller">🧟 Thriller</button>
 				<button type="button" class="hero-chip" data-anim="pray" data-i18n="home.pray">🙏 Pray</button>
 			</div>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="home-forge">
+	<div class="wrap-1280">
+		<div class="block-head reveal">
+			<p class="block-eyebrow" data-i18n-html="home.forge"><span class="num">&bull;</span>Forge</p>
+			<h2 class="block-h" data-i18n-html="home.type_it_hold_it_in_3d">Type it. <em>Hold it in 3D.</em></h2>
+			<p class="block-lede" data-i18n-html="home.a_live_slice_of_forge_the_same">
+				A live slice of <a href="/forge">Forge</a> — the same text-to-3D pipeline that powers the full page, on its free standard lane. Describe an object and a textured, downloadable GLB takes shape right here, usually within a minute. The full Forge adds photo input, multi-view fusion, higher quality tiers, stylize filters, and retopology.
+			</p>
+		</div>
+		<div class="hf-chamber reveal reveal-d1" data-hf-chamber data-hf-state="idle">
+			<div class="hf-floor" aria-hidden="true"></div>
+			<div class="hf-ring-glow" aria-hidden="true"></div>
+			<div class="hf-ring" aria-hidden="true"></div>
+			<div class="hf-ground" aria-hidden="true"></div>
+
+			<div class="hf-hud"><span class="dot"></span>Live pipeline</div>
+			<div class="hf-telemetry" aria-live="polite">
+				<span data-hf-tel-state data-i18n="home.standby">standby</span>
+				<span class="hf-elapsed" data-hf-elapsed></span>
+				<span data-i18n="home.standard_free_lane">standard &middot; free lane</span>
+			</div>
+
+			<!-- Session history — real captured frames of models you forged here,
+			     persisted on this device. Click one to bring it back on stage. -->
+			<div class="hf-history" data-hf-history hidden>
+				<span class="hf-history-label" data-i18n="home.recent">Recent</span>
+				<div class="hf-history-track" data-hf-history-track role="list" aria-label="Models you forged this session"></div>
+			</div>
+			<div class="hf-toast" data-hf-toast role="status" aria-live="polite" hidden></div>
+
+			<div class="hf-state" data-hf-idle>
+				<h3 data-i18n="home.nothing_forged_yet">Nothing forged yet</h3>
+				<p data-i18n="home.type_a_description_or_take_the_suggestion">Type a description — or take the suggestion — and a real textured mesh lands here, usually within a minute.</p>
+				<span class="hf-idle-kbd" data-i18n-html="home.tab_takes_the_suggestion_forges"><kbd>Tab</kbd> takes the suggestion &middot; <kbd>&#8984;&#9166;</kbd> forges</span>
+			</div>
+
+			<div class="hf-state" data-hf-generating hidden>
+				<div class="hf-preview" data-hf-preview></div>
+				<div class="hf-steps" aria-live="polite">
+					<div class="hf-step" data-hf-step="mesh" data-state="pending"><span class="dot" aria-hidden="true"></span><span data-i18n="home.reconstructing_textured_mesh">Reconstructing textured mesh</span></div>
+					<div class="hf-step" data-hf-step="finish" data-state="pending"><span class="dot" aria-hidden="true"></span><span data-i18n="home.finalizing_glb">Finalizing GLB</span></div>
+				</div>
+				<button type="button" class="hf-btn" data-hf-cancel data-i18n="home.cancel">Cancel</button>
+			</div>
+
+			<div class="hf-result" data-hf-result hidden>
+				<div class="hf-viewer" data-hf-viewer-slot></div>
+				<div class="hf-scan" data-hf-scan aria-hidden="true"></div>
+				<div class="hf-result-bar" data-hf-result-region tabindex="-1" role="group" aria-label="Forged model — actions">
+					<span class="hf-result-meta" data-hf-result-meta></span>
+					<div class="hf-result-actions">
+						<button type="button" class="hf-btn hf-icon-btn" data-hf-spin aria-pressed="true" title="Pause auto-rotate" aria-label="Toggle auto-rotate" data-i18n-attr="aria-label:home.toggle_auto_rotate_arialabel;title:home.pause_auto_rotate_title">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
+						</button>
+						<button type="button" class="hf-btn" data-hf-vary>
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M19 14.5l.8 2 .2.5 2 .8-2 .8-.2.5-.8 2-.8-2-.2-.5-2-.8 2-.8.2-.5z"/></svg>
+							Variation
+						</button>
+						<a class="hf-btn hf-btn--accent" data-hf-scene target="_blank" rel="noopener">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5"/><path d="M12 12v10"/></svg>
+							Scene Studio
+						</a>
+						<button type="button" class="hf-btn hf-icon-btn" data-hf-embed-open title="Embed on any website" aria-label="Embed on any website" aria-haspopup="dialog" data-i18n-attr="aria-label:home.embed_on_any_website_arialabel;title:home.embed_on_any_website_title">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+						</button>
+						<button type="button" class="hf-btn hf-icon-btn" data-hf-share title="Copy share link" aria-label="Copy share link" data-i18n-attr="aria-label:home.copy_share_link_arialabel;title:home.copy_share_link_title">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg>
+						</button>
+						<a class="hf-btn" data-hf-download download>
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
+							GLB
+						</a>
+						<button type="button" class="hf-btn hf-icon-btn" data-hf-again title="Clear" aria-label="Clear and forge another" data-i18n-attr="aria-label:home.clear_and_forge_another_arialabel;title:home.clear_title">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<div class="hf-state hf-state--error" data-hf-error hidden>
+				<h3 data-i18n="home.generation_failed">Generation failed</h3>
+				<p data-hf-error-message data-i18n="home.something_went_wrong_try_a_simpler_single">Something went wrong. Try a simpler, single-subject prompt.</p>
+				<button type="button" class="hf-btn hf-btn--bright" data-hf-retry data-i18n="home.try_again">Try again</button>
+			</div>
+
+			<!-- Embed sheet — drop the forged model on any site. Snippet shapes are
+			     shared with the full Forge via src/forge-embed-snippets.js. -->
+			<div class="hf-embed" data-hf-embed hidden role="dialog" aria-modal="true" aria-label="Embed this model">
+				<div class="hf-embed-scrim" data-hf-embed-close aria-hidden="true"></div>
+				<div class="hf-embed-card" role="document">
+					<div class="hf-embed-head">
+						<div>
+							<p class="hf-embed-kicker" data-i18n="home.embed_3">Embed</p>
+							<h3 class="hf-embed-title" data-i18n="home.put_this_model_on_any_site">Put this model on any site</h3>
+						</div>
+						<button type="button" class="hf-btn hf-icon-btn" data-hf-embed-close title="Close" aria-label="Close embed panel" data-i18n-attr="aria-label:home.close_embed_panel_arialabel;title:home.close_title">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+						</button>
+					</div>
+
+					<div class="hf-embed-preview" data-hf-embed-preview>
+						<iframe class="hf-embed-frame" data-hf-embed-frame title="Embed preview" allow="xr-spatial-tracking; fullscreen" loading="lazy"></iframe>
+					</div>
+
+					<div class="hf-embed-controls">
+						<div class="hf-seg" data-hf-embed-tabs role="group" aria-label="Embed type">
+							<button type="button" class="hf-seg-btn" data-hf-embed-tab="iframe" aria-pressed="true" data-i18n="home.iframe">iframe</button>
+							<button type="button" class="hf-seg-btn" data-hf-embed-tab="component" aria-pressed="false" data-i18n="home.web_component">Web component</button>
+						</div>
+						<div class="hf-seg" data-hf-embed-sizes role="group" aria-label="Size">
+							<button type="button" class="hf-seg-btn" data-hf-embed-size="wide" aria-pressed="true">16 : 9</button>
+							<button type="button" class="hf-seg-btn" data-hf-embed-size="square" aria-pressed="false" data-i18n="home.square">Square</button>
+							<button type="button" class="hf-seg-btn" data-hf-embed-size="portrait" aria-pressed="false">4 : 5</button>
+						</div>
+					</div>
+
+					<label class="hf-embed-codelabel" for="hf-embed-code" data-i18n="home.paste_this_where_you_want_the_model">Paste this where you want the model</label>
+					<textarea id="hf-embed-code" class="hf-embed-code" data-hf-embed-code readonly spellcheck="false" rows="5"></textarea>
+
+					<button type="button" class="hf-forge-btn hf-embed-copy" data-hf-embed-copy>
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+						<span data-hf-embed-copy-label data-i18n="home.copy_embed_code">Copy embed code</span>
+					</button>
+
+					<p class="hf-embed-foot" data-i18n-html="home.live_orbitable_ar_ready_on_phones_open">Live, orbitable, AR-ready on phones &middot; <a data-hf-embed-standalone target="_blank" rel="noopener">open the standalone viewer &#8599;</a></p>
+				</div>
+			</div>
+
+			<form class="hf-dock" data-hf-form autocomplete="off">
+				<div class="hf-chips" data-hf-chips role="group" aria-label="Example prompts">
+					<button type="button" class="hf-chip" data-prompt="a low-poly red fox, sitting" data-i18n="home.low_poly_fox">low-poly fox</button>
+					<button type="button" class="hf-chip" data-prompt="a sci-fi combat helmet, brushed metal" data-i18n="home.sci_fi_helmet">sci-fi helmet</button>
+					<button type="button" class="hf-chip" data-prompt="a potted monstera plant" data-i18n="home.monstera_plant">monstera plant</button>
+					<button type="button" class="hf-chip" data-prompt="a vintage film camera" data-i18n="home.film_camera">film camera</button>
+				</div>
+				<div class="hf-bar">
+					<span class="hf-bar-glyph" aria-hidden="true">&#9670;</span>
+					<label class="sr-only" for="hf-prompt-input" data-i18n="home.describe_the_object_to_generate">Describe the object to generate</label>
+					<textarea id="hf-prompt-input" class="hf-prompt" data-hf-prompt rows="1" maxlength="1000" placeholder="describe an object&hellip;"></textarea>
+					<span class="hf-kbd" aria-hidden="true">&#8984;&#9166;</span>
+					<button class="hf-forge-btn" data-hf-generate type="submit" data-i18n-html="home.forge_2"><span data-hf-generate-label>Forge</span></button>
+				</div>
+				<p class="hf-dock-note" data-i18n-html="home.free_no_sign_up_lands_in_your">Free &middot; no sign-up &middot; lands in your full Forge gallery on this device &middot; <a href="/forge">open the full Forge &rarr;</a></p>
+			</form>
 		</div>
 	</div>
 </section>
@@ -3986,154 +4222,6 @@
 		#home-forge .hf-embed-preview { transition: none; }
 	}
 </style>
-<section class="block" id="home-forge">
-	<div class="wrap-1280">
-		<div class="block-head reveal">
-			<p class="block-eyebrow" data-i18n-html="home.forge"><span class="num">&bull;</span>Forge</p>
-			<h2 class="block-h" data-i18n-html="home.type_it_hold_it_in_3d">Type it. <em>Hold it in 3D.</em></h2>
-			<p class="block-lede" data-i18n-html="home.a_live_slice_of_forge_the_same">
-				A live slice of <a href="/forge">Forge</a> — the same text-to-3D pipeline that powers the full page, on its free standard lane. Describe an object and a textured, downloadable GLB takes shape right here, usually within a minute. The full Forge adds photo input, multi-view fusion, higher quality tiers, stylize filters, and retopology.
-			</p>
-		</div>
-		<div class="hf-chamber reveal reveal-d1" data-hf-chamber data-hf-state="idle">
-			<div class="hf-floor" aria-hidden="true"></div>
-			<div class="hf-ring-glow" aria-hidden="true"></div>
-			<div class="hf-ring" aria-hidden="true"></div>
-			<div class="hf-ground" aria-hidden="true"></div>
-
-			<div class="hf-hud"><span class="dot"></span>Live pipeline</div>
-			<div class="hf-telemetry" aria-live="polite">
-				<span data-hf-tel-state data-i18n="home.standby">standby</span>
-				<span class="hf-elapsed" data-hf-elapsed></span>
-				<span data-i18n="home.standard_free_lane">standard &middot; free lane</span>
-			</div>
-
-			<!-- Session history — real captured frames of models you forged here,
-			     persisted on this device. Click one to bring it back on stage. -->
-			<div class="hf-history" data-hf-history hidden>
-				<span class="hf-history-label" data-i18n="home.recent">Recent</span>
-				<div class="hf-history-track" data-hf-history-track role="list" aria-label="Models you forged this session"></div>
-			</div>
-			<div class="hf-toast" data-hf-toast role="status" aria-live="polite" hidden></div>
-
-			<div class="hf-state" data-hf-idle>
-				<h3 data-i18n="home.nothing_forged_yet">Nothing forged yet</h3>
-				<p data-i18n="home.type_a_description_or_take_the_suggestion">Type a description — or take the suggestion — and a real textured mesh lands here, usually within a minute.</p>
-				<span class="hf-idle-kbd" data-i18n-html="home.tab_takes_the_suggestion_forges"><kbd>Tab</kbd> takes the suggestion &middot; <kbd>&#8984;&#9166;</kbd> forges</span>
-			</div>
-
-			<div class="hf-state" data-hf-generating hidden>
-				<div class="hf-preview" data-hf-preview></div>
-				<div class="hf-steps" aria-live="polite">
-					<div class="hf-step" data-hf-step="mesh" data-state="pending"><span class="dot" aria-hidden="true"></span><span data-i18n="home.reconstructing_textured_mesh">Reconstructing textured mesh</span></div>
-					<div class="hf-step" data-hf-step="finish" data-state="pending"><span class="dot" aria-hidden="true"></span><span data-i18n="home.finalizing_glb">Finalizing GLB</span></div>
-				</div>
-				<button type="button" class="hf-btn" data-hf-cancel data-i18n="home.cancel">Cancel</button>
-			</div>
-
-			<div class="hf-result" data-hf-result hidden>
-				<div class="hf-viewer" data-hf-viewer-slot></div>
-				<div class="hf-scan" data-hf-scan aria-hidden="true"></div>
-				<div class="hf-result-bar" data-hf-result-region tabindex="-1" role="group" aria-label="Forged model — actions">
-					<span class="hf-result-meta" data-hf-result-meta></span>
-					<div class="hf-result-actions">
-						<button type="button" class="hf-btn hf-icon-btn" data-hf-spin aria-pressed="true" title="Pause auto-rotate" aria-label="Toggle auto-rotate" data-i18n-attr="aria-label:home.toggle_auto_rotate_arialabel;title:home.pause_auto_rotate_title">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>
-						</button>
-						<button type="button" class="hf-btn" data-hf-vary>
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M19 14.5l.8 2 .2.5 2 .8-2 .8-.2.5-.8 2-.8-2-.2-.5-2-.8 2-.8.2-.5z"/></svg>
-							Variation
-						</button>
-						<a class="hf-btn hf-btn--accent" data-hf-scene target="_blank" rel="noopener">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5"/><path d="M12 12v10"/></svg>
-							Scene Studio
-						</a>
-						<button type="button" class="hf-btn hf-icon-btn" data-hf-embed-open title="Embed on any website" aria-label="Embed on any website" aria-haspopup="dialog" data-i18n-attr="aria-label:home.embed_on_any_website_arialabel;title:home.embed_on_any_website_title">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-						</button>
-						<button type="button" class="hf-btn hf-icon-btn" data-hf-share title="Copy share link" aria-label="Copy share link" data-i18n-attr="aria-label:home.copy_share_link_arialabel;title:home.copy_share_link_title">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg>
-						</button>
-						<a class="hf-btn" data-hf-download download>
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M5 21h14"/></svg>
-							GLB
-						</a>
-						<button type="button" class="hf-btn hf-icon-btn" data-hf-again title="Clear" aria-label="Clear and forge another" data-i18n-attr="aria-label:home.clear_and_forge_another_arialabel;title:home.clear_title">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-						</button>
-					</div>
-				</div>
-			</div>
-
-			<div class="hf-state hf-state--error" data-hf-error hidden>
-				<h3 data-i18n="home.generation_failed">Generation failed</h3>
-				<p data-hf-error-message data-i18n="home.something_went_wrong_try_a_simpler_single">Something went wrong. Try a simpler, single-subject prompt.</p>
-				<button type="button" class="hf-btn hf-btn--bright" data-hf-retry data-i18n="home.try_again">Try again</button>
-			</div>
-
-			<!-- Embed sheet — drop the forged model on any site. Snippet shapes are
-			     shared with the full Forge via src/forge-embed-snippets.js. -->
-			<div class="hf-embed" data-hf-embed hidden role="dialog" aria-modal="true" aria-label="Embed this model">
-				<div class="hf-embed-scrim" data-hf-embed-close aria-hidden="true"></div>
-				<div class="hf-embed-card" role="document">
-					<div class="hf-embed-head">
-						<div>
-							<p class="hf-embed-kicker" data-i18n="home.embed_3">Embed</p>
-							<h3 class="hf-embed-title" data-i18n="home.put_this_model_on_any_site">Put this model on any site</h3>
-						</div>
-						<button type="button" class="hf-btn hf-icon-btn" data-hf-embed-close title="Close" aria-label="Close embed panel" data-i18n-attr="aria-label:home.close_embed_panel_arialabel;title:home.close_title">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-						</button>
-					</div>
-
-					<div class="hf-embed-preview" data-hf-embed-preview>
-						<iframe class="hf-embed-frame" data-hf-embed-frame title="Embed preview" allow="xr-spatial-tracking; fullscreen" loading="lazy"></iframe>
-					</div>
-
-					<div class="hf-embed-controls">
-						<div class="hf-seg" data-hf-embed-tabs role="group" aria-label="Embed type">
-							<button type="button" class="hf-seg-btn" data-hf-embed-tab="iframe" aria-pressed="true" data-i18n="home.iframe">iframe</button>
-							<button type="button" class="hf-seg-btn" data-hf-embed-tab="component" aria-pressed="false" data-i18n="home.web_component">Web component</button>
-						</div>
-						<div class="hf-seg" data-hf-embed-sizes role="group" aria-label="Size">
-							<button type="button" class="hf-seg-btn" data-hf-embed-size="wide" aria-pressed="true">16 : 9</button>
-							<button type="button" class="hf-seg-btn" data-hf-embed-size="square" aria-pressed="false" data-i18n="home.square">Square</button>
-							<button type="button" class="hf-seg-btn" data-hf-embed-size="portrait" aria-pressed="false">4 : 5</button>
-						</div>
-					</div>
-
-					<label class="hf-embed-codelabel" for="hf-embed-code" data-i18n="home.paste_this_where_you_want_the_model">Paste this where you want the model</label>
-					<textarea id="hf-embed-code" class="hf-embed-code" data-hf-embed-code readonly spellcheck="false" rows="5"></textarea>
-
-					<button type="button" class="hf-forge-btn hf-embed-copy" data-hf-embed-copy>
-						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-						<span data-hf-embed-copy-label data-i18n="home.copy_embed_code">Copy embed code</span>
-					</button>
-
-					<p class="hf-embed-foot" data-i18n-html="home.live_orbitable_ar_ready_on_phones_open">Live, orbitable, AR-ready on phones &middot; <a data-hf-embed-standalone target="_blank" rel="noopener">open the standalone viewer &#8599;</a></p>
-				</div>
-			</div>
-
-			<form class="hf-dock" data-hf-form autocomplete="off">
-				<div class="hf-chips" data-hf-chips role="group" aria-label="Example prompts">
-					<button type="button" class="hf-chip" data-prompt="a low-poly red fox, sitting" data-i18n="home.low_poly_fox">low-poly fox</button>
-					<button type="button" class="hf-chip" data-prompt="a sci-fi combat helmet, brushed metal" data-i18n="home.sci_fi_helmet">sci-fi helmet</button>
-					<button type="button" class="hf-chip" data-prompt="a potted monstera plant" data-i18n="home.monstera_plant">monstera plant</button>
-					<button type="button" class="hf-chip" data-prompt="a vintage film camera" data-i18n="home.film_camera">film camera</button>
-				</div>
-				<div class="hf-bar">
-					<span class="hf-bar-glyph" aria-hidden="true">&#9670;</span>
-					<label class="sr-only" for="hf-prompt-input" data-i18n="home.describe_the_object_to_generate">Describe the object to generate</label>
-					<textarea id="hf-prompt-input" class="hf-prompt" data-hf-prompt rows="1" maxlength="1000" placeholder="describe an object&hellip;"></textarea>
-					<span class="hf-kbd" aria-hidden="true">&#8984;&#9166;</span>
-					<button class="hf-forge-btn" data-hf-generate type="submit" data-i18n-html="home.forge_2"><span data-hf-generate-label>Forge</span></button>
-				</div>
-				<p class="hf-dock-note" data-i18n-html="home.free_no_sign_up_lands_in_your">Free &middot; no sign-up &middot; lands in your full Forge gallery on this device &middot; <a href="/forge">open the full Forge &rarr;</a></p>
-			</form>
-		</div>
-	</div>
-</section>
-
 <!-- ── AR — PLACE IT IN YOUR WORLD ───────────────────────────────── -->
 <section class="block" id="home-ar">
 	<div class="wrap-1280">

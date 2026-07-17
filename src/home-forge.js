@@ -804,9 +804,102 @@ function boot() {
 		});
 
 	wireEmbed();
+	wireHeroBar();
 	renderHistory();
 	startTypewriter();
 	startParallax();
+}
+
+// The hero prompt bar (pages/home.html, #hero-forge-form) is a remote control
+// for this chamber: it lets a visitor forge from the very first thing they see,
+// no scroll, no navigation. Submitting mirrors the text into the chamber's own
+// input and calls the same run() path the dock and chips use, then reveals and
+// scrolls the chamber into view so the model builds where the eye follows. The
+// chamber owns all generation state; the hero bar only kicks it off. Absent on
+// pages without the hero (defensive: the whole thing no-ops).
+function wireHeroBar() {
+	const heroForm = document.getElementById('hero-forge-form');
+	if (!heroForm) return;
+	const heroInput = document.getElementById('hero-forge-input');
+	const heroGo = document.getElementById('hero-forge-go');
+	const tries = document.querySelector('.hero-forge-tries');
+
+	// Reflect the chamber's busy state on the hero button so a visitor who stays
+	// at the top sees the generation is running and can't double-fire it.
+	const reflectBusy = () => {
+		if (heroGo) heroGo.dataset.busy = busy ? '1' : '0';
+	};
+
+	const forgeFromHero = (text) => {
+		const prompt = (text || '').trim();
+		if (!prompt || busy) return;
+		// Reveal the chamber (it may still be pre-scroll-reveal at opacity 0) and
+		// bring it into view so the build is watched, not hidden below the fold.
+		els.chamber.querySelectorAll('.reveal').forEach((el) => el.classList.add('vis'));
+		els.chamber.classList.add('vis');
+		els.prompt.value = prompt;
+		autoGrow();
+		els.chamber.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		run(prompt);
+		reflectBusy();
+	};
+
+	heroForm.addEventListener('submit', (e) => {
+		e.preventDefault();
+		const value = heroInput?.value || '';
+		if (value.trim()) forgeFromHero(value);
+		else if (suggestion) forgeFromHero(suggestion);
+		else heroInput?.focus();
+	});
+
+	tries?.addEventListener('click', (e) => {
+		const chip = e.target.closest('button[data-prompt]');
+		if (!chip) return;
+		if (heroInput) heroInput.value = chip.dataset.prompt;
+		forgeFromHero(chip.dataset.prompt);
+	});
+
+	// Keep the hero button's busy state honest as generation starts/ends by
+	// observing the chamber's state attribute (set by showState()/setBusy()).
+	if (window.MutationObserver && els.chamber) {
+		new MutationObserver(reflectBusy).observe(els.chamber, {
+			attributes: true,
+			attributeFilter: ['data-hf-state'],
+		});
+	}
+
+	// A rotating placeholder makes the empty bar feel alive and quietly teaches
+	// what a good prompt looks like (a subject + a material/finish cue). It cycles
+	// only while the field is empty and unfocused, pauses on focus/typing, and
+	// respects reduced-motion. Pure decoration, never touches the field's value.
+	if (heroInput) {
+		const HERO_EXAMPLES = [
+			'a brass compass, weathered',
+			'a low-poly red fox, sitting',
+			'a sci-fi combat helmet, brushed metal',
+			'a glazed ceramic teapot',
+			'a worn leather armchair',
+			'a potted monstera plant',
+			'a vintage film camera',
+			'a crystal geode, amethyst',
+		];
+		const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+		let idx = 0;
+		let paused = false;
+		const basePlaceholder = heroInput.getAttribute('placeholder') || '';
+		heroInput.addEventListener('focus', () => (paused = true));
+		heroInput.addEventListener('blur', () => {
+			paused = false;
+			if (!heroInput.value) heroInput.placeholder = basePlaceholder;
+		});
+		if (!reduce) {
+			setInterval(() => {
+				if (paused || heroInput.value || document.hidden) return;
+				idx = (idx + 1) % HERO_EXAMPLES.length;
+				heroInput.placeholder = `describe anything: ${HERO_EXAMPLES[idx]}…`;
+			}, 3200);
+		}
+	}
 }
 
 if (root && els.form) boot();
