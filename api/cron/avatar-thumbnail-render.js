@@ -27,6 +27,7 @@ import { constantTimeEquals } from '../_lib/crypto.js';
 import { logger } from '../_lib/usage.js';
 import { presignGet, putObject, publicUrl } from '../_lib/r2.js';
 import { renderGlbToPng } from '../_lib/render-glb.js';
+import { thumbBackdropFor } from '../_lib/avatar-thumbs.js';
 import {
 	ensureRegenSchema,
 	claimRegenJobs,
@@ -58,12 +59,15 @@ async function renderOne(job) {
 	// 1. Re-presign the durable source key (the loop's downloadUrl has expired).
 	const glbUrl = await presignGet({ key: job.r2_key, expiresIn: SOURCE_TTL_SECONDS });
 
-	// 2. Render the current model to a PNG.
+	// 2. Render the current model to a PNG. The per-asset tinted backdrop keeps
+	// regen renders interchangeable with backfill renders (avatar-thumbs.js);
+	// an explicit THUMBNAIL_RENDER_BG override still wins.
 	const png = await renderGlbToPng({
 		glbUrl,
 		width: job.width || 768,
 		height: job.height || 768,
 		background: BACKGROUND,
+		backdrop: process.env.THUMBNAIL_RENDER_BG ? null : thumbBackdropFor(job.asset_slug),
 	});
 
 	// 3. Upload the fresh thumbnail to R2.

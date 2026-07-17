@@ -40,6 +40,23 @@ import { presignGet, putObject, headObject, publicUrl, isLegacyOgThumbnailKey } 
 export const THUMB_SIZE = 768;
 export const THUMB_BACKGROUND = '#0a0a0a';
 
+// Every avatar gets its own tinted stage: a dark radial gradient whose hue is
+// derived from the avatar id. On a uniform #0a0a0a a grid of posters merges
+// into one black wall (dark meshes have zero separation from the backdrop);
+// the per-avatar tint keeps the gallery dark and on-brand while making each
+// card readable and distinct at a glance. Deterministic, so re-renders of the
+// same avatar always produce the same stage.
+export function thumbBackdropFor(avatarId) {
+	let h = 0;
+	const s = String(avatarId);
+	for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+	const hue = h % 360;
+	return {
+		inner: `hsl(${hue}, 30%, 17%)`,
+		outer: `hsl(${hue}, 42%, 6%)`,
+	};
+}
+
 // A GLB that fails to render this many times is almost certainly structurally
 // broken (corrupt, >25MB, non-glTF bytes). Stop paying chromium for it.
 export const MAX_ATTEMPTS = 3;
@@ -232,6 +249,7 @@ export async function renderThumbnail({ id, storage_key: storageKey }) {
 		width: THUMB_SIZE,
 		height: THUMB_SIZE,
 		background: THUMB_BACKGROUND,
+		backdrop: thumbBackdropFor(id),
 	});
 	if (!png?.length) throw new Error('renderer returned no bytes');
 

@@ -317,6 +317,12 @@ async function claimUsername(base) {
 // the coin launcher can use it as the token image. Returns the new avatar id or
 // null when no public avatar exists yet.
 //
+// Clones are inserted as 'unlisted', not 'public': they exist to give an agent
+// card a preview (agents/public.js treats unlisted thumbnails as card-visible),
+// not to be discovered. Public clones once made up a third of the gallery
+// (dozens of identical "My First Agent" cards) because every signup's draft
+// agent got a public copy of the same few source bodies.
+//
 // Exported: api/cron/agent-avatar-backfill.js reuses this to heal pre-existing
 // agents whose avatar_id is NULL, so every agent card can show a real preview.
 export async function cloneAvatarFor(userId, name) {
@@ -351,7 +357,7 @@ export async function cloneAvatarFor(userId, name) {
 			${userId}, ${slug}, ${name}, ${'Operated by a three.ws agent'},
 			${src.storage_key}, ${src.size_bytes ?? 0}, ${src.content_type || 'model/gltf-binary'},
 			${src.source || 'import'}, ${JSON.stringify({ circulation: true, cloned_from: src.id })}::jsonb,
-			${src.thumbnail_key ?? null}, 'public', ${src.tags ?? []}, ${src.model_category ?? null}, now(), now()
+			${src.thumbnail_key ?? null}, 'unlisted', ${src.tags ?? []}, ${src.model_category ?? null}, now(), now()
 		)
 		returning id
 	`;
@@ -379,7 +385,12 @@ async function createPoolAgent() {
 	const ownerWord = `${pick(OWNER_FIRST_NAMES)}${persona.handle}`.replace(/[^a-z0-9]/g, '');
 	const username = await claimUsername(slugify(ownerWord) || persona.handle);
 	const email = `${username}@agents.three.ws`;
-	const displayName = username.replace(/\d+$/, '').replace(/\b\w/g, (c) => c.toUpperCase());
+	// Drop claimUsername's collision suffixes (`_xxxx` uuid fallback, numbered
+	// slot) before titling; stripping digits alone left names like "Fog_".
+	const displayName = username
+		.replace(/_[0-9a-f]{4}$/, '')
+		.replace(/\d+$/, '')
+		.replace(/\b\w/g, (c) => c.toUpperCase());
 
 	const [user] = await sql`
 		insert into users (email, display_name, username, plan, email_verified, created_at, updated_at)

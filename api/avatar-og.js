@@ -24,6 +24,7 @@ import { getAvatar } from './_lib/avatars.js';
 import { cors, wrap } from './_lib/http.js';
 import { publicUrl, putObject, isLegacyOgThumbnailKey } from './_lib/r2.js';
 import { renderGlbToPng } from './_lib/render-glb.js';
+import { thumbBackdropFor } from './_lib/avatar-thumbs.js';
 
 const CACHE_CARD_OK = 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800';
 const CACHE_CARD_404 = 'public, max-age=60';
@@ -142,6 +143,7 @@ async function renderAndCache({ avatar }) {
 			width: 1200,
 			height: 630,
 			background: '#0a0a0a',
+			backdrop: thumbBackdropFor(avatar.id),
 		});
 
 		const ogKey = ogKeyFor(avatar);

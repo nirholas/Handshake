@@ -230,8 +230,13 @@ async function startNextJob(origin) {
 	}
 
 	const rawClientId = randomUUID();
-	// Display name is the word, capitalised — looks like a real account.
-	const displayName = username.replace(/\d+$/, '').replace(/\b\w/g, c => c.toUpperCase());
+	// Display name is the word, capitalised — looks like a real account. Drop
+	// claimUsername's collision suffixes (`_xxxx` uuid fallback, numbered slot)
+	// first; stripping digits alone turned "fog_1a2b" into "Fog_".
+	const displayName = username
+		.replace(/_[0-9a-f]{4}$/, '')
+		.replace(/\d+$/, '')
+		.replace(/\b\w/g, c => c.toUpperCase());
 	const email = `${username}@forge.three.ws`;
 
 	const [user] = await sql`

@@ -83,7 +83,12 @@ export const AVATAR_DIRECTOR =
 	"unless the user's own words clearly call for something else (anime, cartoon, chibi, voxel, robot, creature, " +
 	'toy, low-poly, hand-painted, etc.); never mix styles. When the character is a photoreal human, weave in ' +
 	'these cues: ' + PHOTOREAL_CUES + '; and specifically: ' + PHOTOREAL_HUMAN_CUES + '. (5) key identifying ' +
-	'features (hair, face, color scheme, accessories). If the idea names a brand, meme, or term you do not ' +
+	'features (hair, face, color scheme, accessories). When the idea is sparse or generic ("a woman", "a knight", ' +
+	'"a cool guy"), do NOT default to the same safe, average person: commit to specific, memorable choices the ' +
+	'user did not rule out: a particular age, build, and face character; a distinctive hairstyle and hair color; a ' +
+	'named 2-3 color palette; one signature garment, pattern, or accessory that makes this character instantly ' +
+	'recognizable in a lineup. Draw these choices from the mood and connotations of the words the user chose so two ' +
+	'different ideas never converge on the same person. If the idea names a brand, meme, or term you do not ' +
 	"recognize, keep the user's stated character concept as the subject and render its canonical look; never " +
 	'substitute a different character. Always end with these composition ' +
 	'constraints: full body in frame head-to-toe, centered, isolated on a plain neutral background, no props ' +

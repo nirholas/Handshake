@@ -102,7 +102,13 @@ async function runOnce() {
 	if (!username)
 		return { skipped: true, reason: 'could not claim OG username — retry next tick' };
 
-	const displayName = username.replace(/\d+$/, '').replace(/\b\w/g, (c) => c.toUpperCase());
+	// Drop claimUsername's collision suffixes before titling: the `_xxxx` uuid
+	// fallback first, then a numbered slot. Stripping digits alone turned
+	// "fog_1a2b" into the literal display name "Fog_".
+	const displayName = username
+		.replace(/_[0-9a-f]{4}$/, '')
+		.replace(/\d+$/, '')
+		.replace(/\b\w/g, (c) => c.toUpperCase());
 	const email = `${username}@avaturn.three.ws`;
 
 	const [user] = await sql`

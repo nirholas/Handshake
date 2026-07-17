@@ -35,6 +35,12 @@ const CHROMIUM_PACK = env.CHROMIUM_PACK_URL || DEFAULT_CHROMIUM_PACK;
 // behavior are all version-sensitive).
 const THREE_VERSION = '0.176.0';
 
+// Poster composition. A 26° yaw reads as a natural 3/4 portrait without hiding
+// the front of the model; 1.22 leaves enough margin that a T-pose's fingertips
+// stay inside even after the yaw shrinks the projected width.
+const CAMERA_YAW_DEG = 26;
+const FRAME_MARGIN = 1.22;
+
 // One browser per warm container. puppeteer.launch is the slow step
 // (~1s on warm chromium, ~3s cold); reusing the instance across renders
 // in the same lambda invocation amortizes it.
@@ -99,11 +105,17 @@ export function isBrowserInfrastructureError(err) {
 // Inline viewer HTML — bundled into the function so the renderer needs no
 // extra static assets. three.js + GLTFLoader load from unpkg pinned to the
 // installed version. window.__renderDone signals readiness to puppeteer.
-function viewerHtml({ glbBase64, width, height, background }) {
-	const bg = background === 'transparent' ? 'null' : JSON.stringify(background || '#0a0a0a');
+function viewerHtml({ glbBase64, width, height, background, backdrop }) {
+	// A gradient backdrop renders as page CSS behind a transparent canvas: the
+	// screenshot composites the two, so the scene itself stays background-free.
+	const useGradient = backdrop && backdrop.inner && backdrop.outer;
+	const bg = useGradient || background === 'transparent' ? 'null' : JSON.stringify(background || '#0a0a0a');
+	const bodyBg = useGradient
+		? `radial-gradient(ellipse 90% 70% at 50% 38%, ${backdrop.inner}, ${backdrop.outer})`
+		: 'transparent';
 	return `<!doctype html>
 <html><head><meta charset="utf-8" />
-<style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}</style>
+<style>html,body{margin:0;padding:0;background:${bodyBg};overflow:hidden}</style>
 </head><body>
 <canvas id="c" width="${width}" height="${height}" style="display:block;width:${width}px;height:${height}px"></canvas>
 <script>window.__GLB_B64=${JSON.stringify(glbBase64)};</script>
@@ -175,16 +187,25 @@ function onLoaded(gltf) {
 		const root = gltf.scene;
 		scene.add(root);
 		// Frame the model: compute bounds, center it, position camera so it
-		// fills the frame with a small margin.
+		// fills the frame with a small margin. The camera sits at a gentle 3/4
+		// yaw instead of dead-on: a straight frontal shot flattens T-posed
+		// avatars into identical paper cutouts, while the quarter turn shows
+		// depth and silhouette. Distance honors both fov axes so tight margins
+		// never crop on non-square frames.
 		const box = new THREE.Box3().setFromObject(root);
 		const size = new THREE.Vector3(); box.getSize(size);
 		const center = new THREE.Vector3(); box.getCenter(center);
 		root.position.sub(center);
 		root.position.y += size.y * 0.05; // tiny lift so feet aren't dead-center
 		const maxDim = Math.max(size.x, size.y, size.z);
-		const fov = THREE.MathUtils.degToRad(camera.fov);
-		const dist = (maxDim / 2) / Math.tan(fov / 2) * 1.45;
-		camera.position.set(0, size.y * 0.05, dist);
+		const fovV = THREE.MathUtils.degToRad(camera.fov);
+		const fovH = 2 * Math.atan(Math.tan(fovV / 2) * camera.aspect);
+		const dist = Math.max(
+			(maxDim / 2) / Math.tan(fovV / 2),
+			(maxDim / 2) / Math.tan(fovH / 2),
+		) * ${JSON.stringify(FRAME_MARGIN)};
+		const yaw = THREE.MathUtils.degToRad(${JSON.stringify(CAMERA_YAW_DEG)});
+		camera.position.set(Math.sin(yaw) * dist, size.y * 0.08, Math.cos(yaw) * dist);
 		camera.lookAt(0, 0, 0);
 		// Two paints guard against partial first-frame artifacts (textures
 		// still uploading, skinned meshes pre-bind). Cheap on a single GLB.
@@ -219,9 +240,12 @@ function onLoaded(gltf) {
  * @param {number} [opts.width=1200]
  * @param {number} [opts.height=630]
  * @param {string} [opts.background='#0a0a0a'] - 'transparent' or hex color
+ * @param {{inner: string, outer: string}} [opts.backdrop] - radial-gradient
+ *   backdrop (center → edge). Takes precedence over `background`; used by the
+ *   thumbnail pipeline to give every avatar its own tinted stage.
  * @returns {Promise<Buffer>} PNG buffer
  */
-export async function renderGlbToPng({ glbUrl, width = 1200, height = 630, background = '#0a0a0a', maxBytes = DEFAULT_MAX_GLB_BYTES } = {}) {
+export async function renderGlbToPng({ glbUrl, width = 1200, height = 630, background = '#0a0a0a', backdrop = null, maxBytes = DEFAULT_MAX_GLB_BYTES } = {}) {
 	if (!glbUrl || typeof glbUrl !== 'string') {
 		throw Object.assign(new Error('glbUrl required'), { status: 400, code: 'invalid_args' });
 	}
@@ -243,7 +267,7 @@ export async function renderGlbToPng({ glbUrl, width = 1200, height = 630, backg
 	const page = await browser.newPage();
 	try {
 		await page.setViewport({ width, height, deviceScaleFactor: 1 });
-		const html = viewerHtml({ glbBase64, width, height, background });
+		const html = viewerHtml({ glbBase64, width, height, background, backdrop });
 		// data: URL avoids needing a network fetch for the bootstrap page itself.
 		// importmap dependencies (three, GLTFLoader) still come from unpkg.
 		await page.setContent(html, { waitUntil: 'domcontentloaded' });
