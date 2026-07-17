@@ -212,7 +212,7 @@ function shortMint(mint) {
 }
 
 // Where a row navigates. Coin-moving events (a trade, a snipe, a launch that
-// resolved a mint) link straight to that coin's rich detail page — so "traded
+// resolved a mint) link straight to that coin's rich detail page, so "traded
 // $three" is one click from the token's chart, market, and every agent that has
 // traded it. Everything else (tips, payments, skill purchases) links to the
 // agent whose wallet moved. The coin page is the same destination the ticker and
@@ -299,7 +299,7 @@ function rowEl(ev) {
 	a.href = eventHref(ev);
 	a.dataset.id = ev.id;
 	const coinPart = (ev.symbol || ev.coin_name) ? ` ${ev.symbol ? `$${ev.symbol}` : ev.coin_name}` : '';
-	a.setAttribute('aria-label', `${ev.agent?.name || 'Agent'} ${k.verb}${coinPart} — ${timeAgo(ev.ts)}`);
+	a.setAttribute('aria-label', `${ev.agent?.name || 'Agent'} ${k.verb}${coinPart}, ${timeAgo(ev.ts)}`);
 
 	a.appendChild(avatarEl(ev.agent));
 

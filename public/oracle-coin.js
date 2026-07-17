@@ -366,7 +366,7 @@
 	// mint, resolves the most-liquid pair itself), a native SVG line chart from
 	// /api/pump/price-history for coins still on the bonding curve with no DEX pair,
 	// and an "Agent trades" view that overlays every three.ws agent's buys and sells
-	// as bubbles on that native series — each plotted at the candle close nearest its
+	// as bubbles on that native series, each plotted at the candle close nearest its
 	// on-chain timestamp (the same at-or-before-the-event technique the tweet-price
 	// chart uses), so you can see exactly where the machine economy moved this coin.
 	const CHART_KEY = 'oc_chart_view';
@@ -406,7 +406,7 @@
 		} catch { AGENT_TRADES = []; return AGENT_TRADES; }
 	}
 
-	// Price at (or just before) an epoch-seconds instant — the candle close at or
+	// Price at (or just before) an epoch-seconds instant: the candle close at or
 	// immediately preceding it, so a marker sits on the line the way the trade saw
 	// the market. `pts` is ascending by `t`.
 	function priceAt(pts, tSec) {
