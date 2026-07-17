@@ -57,7 +57,7 @@ function renderHead(s) {
 	$('rh-head').innerHTML = `
 		<div class="ch-hero">
 			<div class="ch-title-row">
-				${s.iconUrl ? `<img src="${esc(s.iconUrl)}" alt="" width="48" height="48" style="border-radius:50%" data-no-dark-filter />` : ''}
+				${s.iconUrl ? `<img loading="lazy" decoding="async" src="${esc(s.iconUrl)}" alt="" width="48" height="48" style="border-radius:50%" data-no-dark-filter />` : ''}
 				<h1 class="ch-title">${esc(s.name.replace(' • Robinhood Token', ''))}</h1>
 				<span class="cv-rank-badge">${esc(s.symbol)}</span>
 			</div>

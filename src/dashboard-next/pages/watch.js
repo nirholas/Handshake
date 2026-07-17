@@ -45,7 +45,7 @@ async function init() {
 	content.innerHTML = `
 <div class="watch-header">
   ${avatarImg
-		? `<img class="watch-header-avatar" src="${avatarImg}" alt="${agent.name || 'Agent'}">`
+		? `<img loading="lazy" decoding="async" class="watch-header-avatar" src="${avatarImg}" alt="${agent.name || 'Agent'}">`
 		: `<div class="watch-header-avatar"></div>`}
   <div>
     <div class="watch-header-name">${agent.name || 'Agent'}</div>

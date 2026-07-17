@@ -101,7 +101,7 @@ function renderChips() {
 			const d = c.detail;
 			const name = d ? `${esc(d.name)}` : esc(c.id);
 			const img = d?.image
-				? `<img src="${esc(d.image)}" alt="" width="18" height="18" data-no-dark-filter />`
+				? `<img loading="lazy" decoding="async" src="${esc(d.image)}" alt="" width="18" height="18" data-no-dark-filter />`
 				: `<span class="dot" style="background:${c.color}"></span>`;
 			return `<span class="cmp-chip" style="border-color:${c.color}55">
 				<span class="dot" style="background:${c.color}"></span>
@@ -361,7 +361,7 @@ function renderTable() {
 		.map(
 			(c) =>
 				`<th><a class="coin" href="/coin/${encodeURIComponent(c.id)}" style="text-decoration:none;color:inherit">
-					${c.detail.image ? `<img src="${esc(c.detail.image)}" alt="" data-no-dark-filter />` : ''}
+					${c.detail.image ? `<img loading="lazy" decoding="async" src="${esc(c.detail.image)}" alt="" data-no-dark-filter />` : ''}
 					<span style="color:${c.color}">${esc(c.detail.symbol || c.detail.name)}</span>
 				</a></th>`,
 		)
@@ -423,7 +423,7 @@ function wireSearch() {
 				.map(
 					(c, i) => `
 				<a href="#" role="option" data-id="${esc(c.id)}" data-active="${i === active ? 1 : 0}" aria-selected="${i === active}">
-					${c.thumb ? `<img src="${esc(c.thumb)}" alt="" width="20" height="20" data-no-dark-filter />` : ''}
+					${c.thumb ? `<img loading="lazy" decoding="async" src="${esc(c.thumb)}" alt="" width="20" height="20" data-no-dark-filter />` : ''}
 					<span>${esc(c.name)}</span>
 					<span class="sym">${esc(c.symbol)}</span>
 					${c.rank != null ? `<span class="rk">#${c.rank}</span>` : ''}

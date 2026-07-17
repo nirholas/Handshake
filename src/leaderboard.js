@@ -551,7 +551,7 @@ async function loadOracleLeaderboard() {
 
 	container.innerHTML = '';
 	for (const a of agents) {
-		// identicon() returns a data-URI for an <img src> — it must never be dropped
+		// identicon() returns a data-URI for an <img loading="lazy" decoding="async" src> — it must never be dropped
 		// into element text (that renders the raw "data:image/svg+xml…" string).
 		const img = `<img class="lb-avatar" src="${escapeHtml(a.image_url || identicon(a.agent_id))}" alt="" loading="lazy" onerror="this.src='${identicon(a.agent_id)}'" />`;
 		const name = escapeHtml(a.name || a.agent_id.slice(0, 8) + '…');

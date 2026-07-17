@@ -40,7 +40,7 @@ async function getJson(url) {
 
 function skeletonHtml(seed) {
 	return `
-		${seed.image ? `<div class="art-hero"><img src="${esc(seed.image)}" alt="" /></div>` : ''}
+		${seed.image ? `<div class="art-hero"><img loading="lazy" decoding="async" src="${esc(seed.image)}" alt="" /></div>` : ''}
 		<h1 class="art-title">${seed.title ? esc(seed.title) : '<span class="cv-skel" style="display:inline-block;height:2rem;width:70%"></span>'}</h1>
 		<div class="art-byline">
 			${seed.source ? `<span class="src">${esc(seed.source)}</span>` : ''}
@@ -203,7 +203,7 @@ function render(a, seed) {
 	const paragraphs = (a.paragraphs || []).slice(0, 60);
 	const isPreview = a.extraction === 'preview';
 	root.innerHTML = `
-		${image ? `<div class="art-hero"><img src="${esc(image)}" alt="" data-fallback="${esc((a.source || '?').slice(0, 2).toUpperCase())}" /></div>` : ''}
+		${image ? `<div class="art-hero"><img loading="lazy" decoding="async" src="${esc(image)}" alt="" data-fallback="${esc((a.source || '?').slice(0, 2).toUpperCase())}" /></div>` : ''}
 		<h1 class="art-title">${esc(a.title)}</h1>
 		${bylineHtml(a)}
 		<div class="art-layout">

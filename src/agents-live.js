@@ -223,7 +223,7 @@ function buildCard(agent) {
 </div>
 <div class="al-card-info">
   ${avatar
-		? `<img class="al-card-avatar" src="${esc(avatar)}" alt="${esc(name)}" onerror="this.style.display='none'">`
+		? `<img loading="lazy" decoding="async" class="al-card-avatar" src="${esc(avatar)}" alt="${esc(name)}" onerror="this.style.display='none'">`
 		: `<div class="al-card-avatar" style="background:rgba(255,255,255,0.06)"></div>`}
   <div class="al-card-meta">
     <div class="al-card-name">${esc(name)}</div>

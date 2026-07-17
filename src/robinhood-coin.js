@@ -47,7 +47,7 @@ function renderHead(c) {
 	$('rh-head').innerHTML = `
 		<div class="ch-hero">
 			<div class="ch-title-row">
-				${c.iconUrl ? `<img src="${esc(c.iconUrl)}" alt="" width="48" height="48" style="border-radius:50%" data-no-dark-filter />` : ''}
+				${c.iconUrl ? `<img loading="lazy" decoding="async" src="${esc(c.iconUrl)}" alt="" width="48" height="48" style="border-radius:50%" data-no-dark-filter />` : ''}
 				<h1 class="ch-title">${esc(c.name || symbol)}</h1>
 				<span class="cv-rank-badge">${esc(symbol)}</span>
 			</div>

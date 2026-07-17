@@ -250,7 +250,7 @@ function wireSearch() {
 				.map(
 					(c, i) => `
 				<a href="/coin/${encodeURIComponent(c.id)}" role="option" data-active="${i === active ? 1 : 0}" aria-selected="${i === active}">
-					${c.thumb ? `<img src="${esc(c.thumb)}" alt="" width="20" height="20" data-no-dark-filter />` : ''}
+					${c.thumb ? `<img loading="lazy" decoding="async" src="${esc(c.thumb)}" alt="" width="20" height="20" data-no-dark-filter />` : ''}
 					<span>${esc(c.name)}</span>
 					<span class="sym">${esc(c.symbol)}</span>
 					${c.rank != null ? `<span class="rk">#${c.rank}</span>` : ''}

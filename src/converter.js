@@ -135,7 +135,7 @@ function assetButtonInner(asset, side) {
 	if (!asset) return `<span class="cvt-asset-code">Select</span>${CHEVRON}`;
 	if (asset.kind === 'crypto') {
 		const icon = asset.image
-			? `<img src="${esc(asset.image)}" alt="" width="22" height="22" data-no-dark-filter />`
+			? `<img loading="lazy" decoding="async" src="${esc(asset.image)}" alt="" width="22" height="22" data-no-dark-filter />`
 			: `<span class="cvt-asset-glyph">${esc((asset.symbol || '?').slice(0, 1))}</span>`;
 		return `${icon}<span class="cvt-asset-code">${esc(asset.symbol)}</span>${CHEVRON}`;
 	}
@@ -401,7 +401,7 @@ function pickerCryptoRows(coins) {
 		.map(
 			(c) => `
 			<button type="button" class="cvt-pick-item" role="option" data-kind="crypto" data-id="${esc(c.id)}" data-symbol="${esc(c.symbol)}" data-name="${esc(c.name)}" data-thumb="${esc(c.thumb || '')}">
-				${c.thumb ? `<img src="${esc(c.thumb)}" alt="" width="22" height="22" data-no-dark-filter />` : `<span class="cvt-pick-glyph">${esc((c.symbol || '?').slice(0, 1))}</span>`}
+				${c.thumb ? `<img loading="lazy" decoding="async" src="${esc(c.thumb)}" alt="" width="22" height="22" data-no-dark-filter />` : `<span class="cvt-pick-glyph">${esc((c.symbol || '?').slice(0, 1))}</span>`}
 				<span class="cvt-pick-name">${esc(c.name)}</span>
 				<span class="cvt-pick-code">${esc(c.symbol)}</span>
 				${c.rank != null ? `<span class="cvt-pick-rank">#${c.rank}</span>` : ''}

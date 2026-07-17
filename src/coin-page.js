@@ -83,7 +83,7 @@ function renderHead(coin) {
 	$('cv-crumb-name').textContent = coin.name;
 	$('cv-head').innerHTML = `
 		<div class="cv-coin-head">
-			${coin.image ? `<img class="coin-icon" src="${esc(coin.image)}" alt="" width="64" height="64" data-no-dark-filter />` : ''}
+			${coin.image ? `<img loading="lazy" decoding="async" class="coin-icon" src="${esc(coin.image)}" alt="" width="64" height="64" data-no-dark-filter />` : ''}
 			<div style="flex:1;min-width:0">
 				<div class="title-row">
 					<h1>${esc(coin.name)}</h1>
