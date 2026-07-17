@@ -213,8 +213,16 @@ export const OPENROUTER_SIBLINGS = [
 	'nousresearch/hermes-3-llama-3.1-405b:free',
 ];
 
-/** Providers an anonymous (unauthenticated) caller may use — free tiers only. */
-export const ANON_PROVIDER_LIST = ['groq', 'openrouter', 'nvidia'];
+/**
+ * Providers an anonymous (unauthenticated) caller may use. The first three are
+ * third-party free tiers; when all of them are rate-limited an anon request
+ * would otherwise 503, so `vertex-gemini` (the credits-funded Vertex anchor,
+ * effectively free to the user and the only rung with no third-party quota to
+ * exhaust) is included as the last-resort anchor. Its rung carries its own
+ * fixed model, so it is never auto-selected as an initial route — it is only
+ * reached via failover once the free tiers are exhausted.
+ */
+export const ANON_PROVIDER_LIST = ['groq', 'openrouter', 'nvidia', 'vertex-gemini'];
 
 /**
  * Bounds on the fallback chain so a single request can't churn through every

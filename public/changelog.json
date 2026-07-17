@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T22:55:10.490Z",
+	"generated_at": "2026-07-17T23:01:07.025Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -55,6 +55,17 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "AI chat stays up when the free lanes are busy",
+			"summary": "The AI chat could return a capacity error when its free model lanes were all rate-limited at once, because signed-out chats had no funded backstop to fall to. Anonymous chat now finishes on our credits-funded Vertex Gemini anchor once the free tiers are exhausted, so a busy moment no longer turns into a dead end. We also removed a chat model route that had been failing every request, which was adding latency to every reply and could surface as an occasional error.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
 			]
 		},
 		{
@@ -444,6 +455,16 @@
 				"fix",
 				"improvement",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "The homepage AR showcase leads with the best models, and its QR places the exact one you see",
+			"summary": "The \"Your 3D agent, in your room\" section on the homepage now pulls from the top-voted community Forge gallery instead of a random newest-first bucket, so the model you land on is one of the best the community made, not a half-formed generation. And the desktop QR code finally keeps its promise: scanning it opens the exact model on screen in the AR studio and drops it into your space, instead of dumping you on a generic page.",
+			"link": "/",
+			"tags": [
+				"fix"
 			]
 		},
 		{

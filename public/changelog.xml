@@ -47,6 +47,14 @@
 			<description>The studio avatar generator used to recolor one of five fixed body meshes, so a whole gallery of them read as the same handful of people in different colors. It now composes each avatar from modular parts: a hairstyle, top, bottom, footwear, and glasses mixed across the base bodies onto one shared skeleton, then recolored per part and scaled for height. This is the same one-skeleton-many-parts approach the best avatar platforms use, built in-house with no external service. Every generated avatar is fully rigged and carries facial expression blendshapes, and two of them almost never look the same. All platform-generated avatars continue to appear across the galleries.</description>
 		</item>
 		<item>
+			<title>AI chat stays up when the free lanes are busy</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-17:AI chat stays up when the free lanes are busy</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The AI chat could return a capacity error when its free model lanes were all rate-limited at once, because signed-out chats had no funded backstop to fall to. Anonymous chat now finishes on our credits-funded Vertex Gemini anchor once the free tiers are exhausted, so a busy moment no longer turns into a dead end. We also removed a chat model route that had been failing every request, which was adding latency to every reply and could surface as an occasional error.</description>
+		</item>
+		<item>
 			<title>AR Studio goes multiplayer: build a scene together in real time</title>
 			<link>https://three.ws/ar/studio</link>
 			<guid isPermaLink="false">2026-07-17:AR Studio goes multiplayer: build a scene together in real time</guid>
@@ -341,6 +349,14 @@
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Two improvements to the closed-loop x402 agent economy that dogfoods every paid endpoint on the platform. First, a fix: a background wallet-consolidation job was quietly closing the ring's payment account after every settlement, forcing the next one to recreate it and pay account rent each time. That single bug had pushed the real fee cost to roughly a hundred times where it should be. With it fixed and single-signature settlement turned on, each settlement is back to the network floor of a few thousandths of a cent, and the ring's working balance stays in the loop instead of leaking away. Second, a new capability: the ring can now cycle payments through a reusable pool of hundreds to a thousand distinct wallets instead of one, so the economy reads as many participants rather than a single account, with no extra cost per payment. The pool is off until funded and activated, and every wallet in it stays clearly labeled internal dogfooding, not organic demand.</description>
+		</item>
+		<item>
+			<title>The homepage AR showcase leads with the best models, and its QR places the exact one you see</title>
+			<link>https://three.ws/</link>
+			<guid isPermaLink="false">2026-07-17:The homepage AR showcase leads with the best models, and its QR places the exact one you see</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The &quot;Your 3D agent, in your room&quot; section on the homepage now pulls from the top-voted community Forge gallery instead of a random newest-first bucket, so the model you land on is one of the best the community made, not a half-formed generation. And the desktop QR code finally keeps its promise: scanning it opens the exact model on screen in the AR studio and drops it into your space, instead of dumping you on a generic page.</description>
 		</item>
 		<item>
 			<title>The homepage community feed is now a live, browsable loop</title>

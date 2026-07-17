@@ -111,10 +111,16 @@ describe('free-first ordering', () => {
 		}
 	});
 
-	it('anonymous callers are clamped to free providers only', () => {
-		expect(ANON_PROVIDER_LIST).toEqual(['groq', 'openrouter', 'nvidia']);
+	it('anonymous callers are clamped to free tiers plus the credits-funded Vertex Gemini anchor', () => {
+		expect(ANON_PROVIDER_LIST).toEqual(['groq', 'openrouter', 'nvidia', 'vertex-gemini']);
+		// The free third-party lanes lead; the funded Vertex anchor is the
+		// last-resort rung so an anon caller never 503s just because every free
+		// tier is rate-limited at once.
+		expect(ANON_PROVIDER_LIST[ANON_PROVIDER_LIST.length - 1]).toBe('vertex-gemini');
+		// No paid third-party provider is ever exposed to anon callers.
 		expect(ANON_PROVIDER_LIST).not.toContain('openai');
 		expect(ANON_PROVIDER_LIST).not.toContain('anthropic');
+		expect(ANON_PROVIDER_LIST).not.toContain('vertex-anthropic');
 	});
 });
 
