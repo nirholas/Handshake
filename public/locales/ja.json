@@ -3774,7 +3774,17 @@
 		"your_agent_remembers_every_visitor_across_de": "あなたのエージェントは、デバイスやセッションを跨いで全ての訪問者を記憶。独自のデータソースに連携するか、組み込みのベクトルメモリを活用しよう。",
 		"your_agents_don_t_just_talk_they": "あなたのエージェントはただ話すだけではない。<em>彼らは取引する。</em>",
 		"your_ai_deserves_a_body": "あなたのAIに<br>体<em>を。</em>",
-		"your_visitors_walk_together": "あなたの訪問者は<br><em>一緒に歩く。</em>"
+		"your_visitors_walk_together": "あなたの訪問者は<br><em>一緒に歩く。</em>",
+		"fresh": "新着",
+		"trending": "トレンド",
+		"show_more": "もっと見る",
+		"live": "ライブ",
+		"hero_try": "試す",
+		"forge_it": "Forgeする",
+		"hero_forge_placeholder": "何でも説明してください：真鍮のコンパス、風化した…",
+		"hero_forge_note": "無料、サインアップ不要、約1分でリアルなテクスチャモデルが作成されます。<a href=\"/forge\">フルForgeを開く→</a>",
+		"feed_empty_top": "今週のトレンドモデルはまだありません。数票後に再チェックするか、新着をブラウズしてください。",
+		"feed_empty_fresh": "まだ何もありません。最初の作品を作ってみてください。"
 	},
 	"ibm_hello": {
 		"01forge": "<span class=\"n\">01</span>Forge",

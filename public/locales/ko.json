@@ -3774,7 +3774,17 @@
 		"your_agent_remembers_every_visitor_across_de": "당신의 에이전트는 모든 방문자를 기기와 세션에 걸쳐 기억합니다. 자체 데이터 소스에 연결하거나 내장된 벡터 메모리를 사용하세요.",
 		"your_agents_don_t_just_talk_they": "당신의 에이전트는 그저 말만 하지 않습니다. <em>거래도 하죠.</em>",
 		"your_ai_deserves_a_body": "당신의 AI는 <br>몸을<em> 가질 자격이 있습니다.</em>",
-		"your_visitors_walk_together": "당신의 방문자들은 <br><em>함께 걷습니다.</em>"
+		"your_visitors_walk_together": "당신의 방문자들은 <br><em>함께 걷습니다.</em>",
+		"fresh": "신선한",
+		"trending": "트렌딩",
+		"show_more": "더 보기",
+		"live": "실시간",
+		"hero_try": "시도해 보세요",
+		"forge_it": "Forge 해보세요",
+		"hero_forge_placeholder": "어떤 것이든 설명하세요: 황동 나침반, 낡은…",
+		"hero_forge_note": "무료, 가입 필요 없음, 약 1분 안에 실제 질감 모델 생성. <a href=\"/forge\"> 전체 Forge 열기 →</a>",
+		"feed_empty_top": "이번 주에는 트렌딩 모델이 없습니다. 몇 표 후에 다시 확인하거나 신선한 항목을 둘러보세요.",
+		"feed_empty_fresh": "아직 아무것도 없습니다. 첫 번째로 제작해 보세요."
 	},
 	"ibm_hello": {
 		"01forge": "<span class=\"n\">01</span>Forge",

@@ -3774,7 +3774,17 @@
 		"your_agent_remembers_every_visitor_across_de": "你的代理能记住跨设备和会话的每一位访客。连接你自己的数据源或使用内置的向量记忆。",
 		"your_agents_don_t_just_talk_they": "你的代理不只是会说话。<em>它们还会交易。</em>",
 		"your_ai_deserves_a_body": "你的 AI 值得拥有<br>一个<em>身体。</em>",
-		"your_visitors_walk_together": "你的访客可以<br><em>一起行走。</em>"
+		"your_visitors_walk_together": "你的访客可以<br><em>一起行走。</em>",
+		"fresh": "新鲜",
+		"trending": "趋势",
+		"show_more": "查看更多",
+		"live": "实时",
+		"hero_try": "试试",
+		"forge_it": "Forge 它",
+		"hero_forge_placeholder": "描述任何事物：一个黄铜指南针，风化的…",
+		"hero_forge_note": "免费，无需注册，约一分钟内生成真实的纹理模型。<a href=\"/forge\">打开完整的 Forge →</a>",
+		"feed_empty_top": "本周还没有流行模型。投票后再回来看看，或者浏览新鲜内容。",
+		"feed_empty_fresh": "这里还没有内容。成为第一个铸造它的人。"
 	},
 	"ibm_hello": {
 		"01forge": "<span class=\"n\">01</span>Forge",

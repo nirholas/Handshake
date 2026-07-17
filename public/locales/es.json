@@ -3774,7 +3774,17 @@
 		"your_agent_remembers_every_visitor_across_de": "Tu agente recuerda a cada visitante a través de dispositivos y sesiones. Conéctalo a tus propias fuentes de datos o usa la memoria vectorial integrada.",
 		"your_agents_don_t_just_talk_they": "Tus agentes no solo hablan. <em>Comercian.</em>",
 		"your_ai_deserves_a_body": "Tu IA merece<br>un <em>cuerpo.</em>",
-		"your_visitors_walk_together": "Tus visitantes caminan<br><em>juntos.</em>"
+		"your_visitors_walk_together": "Tus visitantes caminan<br><em>juntos.</em>",
+		"fresh": "Nuevo",
+		"trending": "Tendencias",
+		"show_more": "Ver más",
+		"live": "en vivo",
+		"hero_try": "Prueba",
+		"forge_it": "Forge it",
+		"hero_forge_placeholder": "describe cualquier cosa: una brújula de latón, desgastada…",
+		"hero_forge_note": "Gratis, sin registro, un modelo texturizado real en aproximadamente un minuto. <a href=\"/forge\">Abre el Forge completo →</a>",
+		"feed_empty_top": "No hay modelos en tendencia esta semana. Vuelve a consultar después de algunos votos, o explora Nuevos.",
+		"feed_empty_fresh": "Nada aquí todavía. Sé el primero en forjar uno."
 	},
 	"ibm_hello": {
 		"01forge": "<span class=\"n\">01</span>Forge",

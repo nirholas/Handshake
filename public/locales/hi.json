@@ -3774,7 +3774,17 @@
 		"your_agent_remembers_every_visitor_across_de": "आपका एजेंट डिवाइस और सेशन में हर विज़िटर को याद रखता है। अपने डेटा स्रोतों से जोड़ें या बिल्ट-इन वेक्टर मेमोरी का उपयोग करें।",
 		"your_agents_don_t_just_talk_they": "आपके एजेंट सिर्फ बात नहीं करते। <em>वे ट्रेड करते हैं।</em>",
 		"your_ai_deserves_a_body": "आपकी AI को<br> एक <em>शरीर मिलना चाहिए।</em>",
-		"your_visitors_walk_together": "आपके विज़िटर <br><em>एक साथ चलते हैं।</em>"
+		"your_visitors_walk_together": "आपके विज़िटर <br><em>एक साथ चलते हैं।</em>",
+		"fresh": "ताज़ा",
+		"trending": "प्रवृत्तियाँ",
+		"show_more": "और दिखाएँ",
+		"live": "सीधा",
+		"hero_try": "कोशिश करें",
+		"forge_it": "Forge इसे",
+		"hero_forge_placeholder": "कुछ भी वर्णन करें: एक पीतल का कंपास, पुराना…",
+		"hero_forge_note": "मुफ्त, कोई साइन-अप नहीं, लगभग एक मिनट में एक असली टेक्सचर्ड मॉडल। <a href=\"/forge\">पूर्ण Forge खोलें →</a>",
+		"feed_empty_top": "इस सप्ताह अभी तक कोई प्रवृत्त मॉडल नहीं हैं। कुछ वोट के बाद वापस जांचें, या ताज़ा ब्राउज़ करें।",
+		"feed_empty_fresh": "यहाँ अभी कुछ नहीं है। एक बनाने वाले पहले व्यक्ति बनें।"
 	},
 	"ibm_hello": {
 		"01forge": "<span class=\"n\">01</span>Forge",
