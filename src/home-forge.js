@@ -31,6 +31,7 @@ import {
 	embedPreviewUrl,
 	embedSize,
 } from './forge-embed-snippets.js';
+import { milestoneNote } from './forge-milestones.js';
 
 const POLL_INTERVAL_MS = 2500;
 // Max-tier texture bakes legitimately run past 10 minutes at full quality; the
@@ -41,6 +42,21 @@ const MODEL_VIEWER_SRC =
 	'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
 const HISTORY_KEY = 'forge:home:history';
 const HISTORY_MAX = 6;
+// Cumulative models forged on this device, driving the sparse milestone nudge
+// (src/forge-milestones.js). Distinct from HISTORY_KEY, which is capped at 6.
+const COUNT_KEY = 'forge:home:count';
+
+// Increment and return the device's lifetime forge count. Fail-open: a blocked
+// or full localStorage just means no milestone this time, never a broken forge.
+function bumpForgeCount() {
+	try {
+		const n = (parseInt(localStorage.getItem(COUNT_KEY), 10) || 0) + 1;
+		localStorage.setItem(COUNT_KEY, String(n));
+		return n;
+	} catch {
+		return 0;
+	}
+}
 const THUMB_SIZE = 96;
 
 const root = document.getElementById('home-forge');
@@ -506,6 +522,11 @@ function showResult(glbUrl, prompt, { fromHistory = false, creationId = '' } = {
 				detail: { feature: 'forge', model: { glbUrl, label: prompt } },
 			}),
 		);
+		// Retention beat: acknowledge a growing collection at a few milestones.
+		// Delayed so it follows the reveal rather than competing with it, and rare
+		// by design (most forges get nothing), so it stays special when it lands.
+		const note = milestoneNote(bumpForgeCount());
+		if (note) setTimeout(() => showToast(note), 1400);
 	}
 }
 

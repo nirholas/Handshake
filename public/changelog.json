@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T21:28:28.386Z",
+	"generated_at": "2026-07-17T21:45:12.618Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -34,6 +34,16 @@
 			"link": "/image-to-3d",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "A little nod when your forge collection grows",
+			"summary": "When you forge a few models from the homepage, three.ws now gives a quiet, occasional note as your on-device collection reaches a milestone (your 3rd, 10th, and so on). It is understated by design and never interrupts, just a small acknowledgement that you are building something.",
+			"link": "/",
+			"tags": [
+				"improvement"
 			]
 		},
 		{

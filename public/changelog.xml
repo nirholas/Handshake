@@ -31,6 +31,14 @@
 			<description>Upload a photo (or up to 4 angles) and get a downloadable textured 3D model (GLB). The Forge's photo lane, opened directly — for objects and props; for faces, use Selfie to Avatar.</description>
 		</item>
 		<item>
+			<title>A little nod when your forge collection grows</title>
+			<link>https://three.ws/</link>
+			<guid isPermaLink="false">2026-07-17:A little nod when your forge collection grows</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>When you forge a few models from the homepage, three.ws now gives a quiet, occasional note as your on-device collection reaches a milestone (your 3rd, 10th, and so on). It is understated by design and never interrupts, just a small acknowledgement that you are building something.</description>
+		</item>
+		<item>
 			<title>A new way to generate avatars: modular, and no two look alike</title>
 			<link>https://three.ws/gallery</link>
 			<guid isPermaLink="false">2026-07-17:A new way to generate avatars: modular, and no two look alike</guid>

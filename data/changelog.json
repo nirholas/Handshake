@@ -14505,6 +14505,15 @@
 				"improvement"
 			],
 			"link": "/"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "A little nod when your forge collection grows",
+			"summary": "When you forge a few models from the homepage, three.ws now gives a quiet, occasional note as your on-device collection reaches a milestone (your 3rd, 10th, and so on). It is understated by design and never interrupts, just a small acknowledgement that you are building something.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/"
 		}
 	]
 }
