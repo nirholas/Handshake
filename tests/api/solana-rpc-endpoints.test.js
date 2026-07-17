@@ -59,13 +59,14 @@ describe('solanaRpcEndpoints', () => {
 		// Helius/Alchemy/dRPC/Ankr all unset (the "paid plan lapsed" state): the
 		// chain must still resolve a usable node, never collapse to one throttled lane.
 		// Five independent public nodes were each verified answering live mainnet RPC,
-		// so a request only errors if all five are down at once.
+		// so a request only errors if all five are down at once. (solana.therpc.io was
+		// pruned 2026-07-17 after going fully unreachable; MagicBlock took its slot.)
 		const eps = solanaRpcEndpoints('mainnet');
 		const keyless = [
 			'https://solana-rpc.publicnode.com',
 			'https://solana.leorpc.com/?api_key=FREE',
 			'https://api.tatum.io/v3/blockchain/node/solana-mainnet',
-			'https://solana.therpc.io',
+			'https://rpc.magicblock.app/mainnet',
 			'https://api.mainnet-beta.solana.com',
 		];
 		for (const u of keyless) expect(eps).toContain(u);
