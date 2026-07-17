@@ -223,6 +223,10 @@
           <span class="k"><span class="glyph" aria-hidden="true">◎</span>See it in your room</span>
           <span class="d">Place it in AR: straight from your phone, or scan a QR from desktop.</span>
         </button>
+        <button class="card" id="act-ar-studio" type="button">
+          <span class="k"><span class="glyph" aria-hidden="true">▣</span>Open in AR Studio</span>
+          <span class="d">Place it alongside other models in a live camera scene — and forge more without leaving the view.</span>
+        </button>
         <button class="card" id="act-coin" type="button">
           <span class="k"><span class="glyph" aria-hidden="true">◉</span>Launch it as a coin</span>
           <span class="d" id="coin-d">Open a pump.fun launch with this model as the token image.</span>
@@ -386,6 +390,12 @@
   document.getElementById('act-ar').addEventListener('click', function () {
     if (mv.canActivateAR) { closeSheet(); try { mv.activateAR(); } catch (e) {} return; }
     location.href = '/ar?src=' + enc(src) + tOpt;
+  });
+
+  // AR Studio: the multi-model lane — this model joins (or starts) a live
+  // camera scene where more models can be placed and forged around it.
+  document.getElementById('act-ar-studio').addEventListener('click', function () {
+    location.href = '/ar/studio?src=' + enc(src) + tOpt;
   });
 
   // Coin launch: snapshot the rendered model into a token image, hand it to

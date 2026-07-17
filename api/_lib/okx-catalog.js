@@ -206,16 +206,15 @@ export const OKX_CATALOG = Object.freeze([
 	},
 	{
 		id: 'rig',
-		name: 'Auto-Rig a GLB',
+		name: 'GLB Auto-Rigging',
 		kind: 'rest',
 		describes: {
 			capability:
-				'Auto-rigs a static humanoid GLB into an animation-ready model: adds a skeleton and skin ' +
-				'weights so it can be posed and animated in any engine. Paid per call; job polling is ' +
-				'free.',
+				'Rigs a static humanoid GLB model into an animation-ready character: adds a skeleton and ' +
+				'skin weights so the model can be posed and animated in any engine.',
 			input:
-				'POST JSON with glb_url: public https URL of the static GLB to rig. Humanoid models rig ' +
-				'best. Returns job_id + poll_url; poll free until done.',
+				'Provide: 1. a public link to the static GLB model. Humanoid models rig best. Returns a ' +
+				'job you can check for free until the rigged model is ready.',
 		},
 		priceUsd: '0.25',
 		amountAtomics: usdToAtomics(0.25),
@@ -257,15 +256,16 @@ export const OKX_CATALOG = Object.freeze([
 	},
 	{
 		id: 'retarget',
-		name: 'Animation Retarget',
+		name: 'Animation Retargeting',
 		kind: 'rest',
 		describes: {
 			capability:
-				'Retargets a curated animation clip (idle, walk, dance and more) onto any rigged humanoid ' +
-				'GLB. Returns the clip keyed to the rig plus a bone-coverage report. Completes in-request.',
+				'Applies a curated animation clip such as idle, walk, or dance onto any rigged humanoid ' +
+				'GLB model, keyed to its skeleton, with a bone coverage report. Finishes within the ' +
+				'request.',
 			input:
-				'POST JSON with model_url (rigged GLB https URL) and animation (preset name); optional ' +
-				'format glb|clip and speed 0.25-2.5.',
+				'Provide: 1. a public link to the rigged GLB model 2. the animation name 3. an optional ' +
+				'output format and playback speed.',
 		},
 		priceUsd: '0.10',
 		amountAtomics: usdToAtomics(0.1),
@@ -336,14 +336,14 @@ export const OKX_CATALOG = Object.freeze([
 	},
 	{
 		id: 'catalog',
-		name: '3D Studio Catalog (free)',
+		name: '3D Studio Service Catalog',
 		kind: 'rest',
 		describes: {
 			capability:
 				'Free machine-readable index of every three.ws 3D Studio service on OKX.AI: names, ' +
-				'descriptions, prices, endpoints, and input schemas — generated from the module the ' +
-				'endpoints run on.',
-			input: 'GET with no parameters. No payment, no account.',
+				'descriptions, prices, endpoints, and input formats, always in sync with the live ' +
+				'services.',
+			input: 'Provide nothing. No parameters, no payment, no account required.',
 		},
 		priceUsd: '0',
 		amountAtomics: null,
@@ -353,13 +353,13 @@ export const OKX_CATALOG = Object.freeze([
 	},
 	{
 		id: 'health',
-		name: '3D Studio Health (free)',
+		name: '3D Studio Health Status',
 		kind: 'rest',
 		describes: {
 			capability:
-				'Free live health of the 3D studio lanes backing every paid service: generation, ' +
-				'rigging, rendering, and storage — real subsystem probes, not a hardcoded OK.',
-			input: 'GET with no parameters. No payment, no account.',
+				'Free live health status for the systems behind every paid service: generation, rigging, ' +
+				'rendering, storage, and the payment rail, from real checks rather than a fixed reply.',
+			input: 'Provide nothing. No parameters, no payment, no account required.',
 		},
 		priceUsd: '0',
 		amountAtomics: null,

@@ -38,8 +38,8 @@ import {
 } from './ar/pinch-scale.js';
 import {
 	deserializeScene, fitTransform, MAX_PLACEMENTS, normalizeGlbUrl,
-	parseSrcParams, serializeScene, SPAWN_DISTANCE_M, spawnPointInFront,
-	studioShareUrl, touchAngle, twistDelta,
+	parseSrcParams, sceneFromHashParam, serializeScene, SPAWN_DISTANCE_M,
+	spawnPointInFront, studioSceneUrl, studioShareUrl, touchAngle, twistDelta,
 } from './ar/studio-scene.js';
 import { renderQRToSVG } from './erc8004/qr.js';
 import { deriveVerticalFovDeg, DEFAULT_DIAG_FOV_DEG } from './irl/camera-fov.js';
@@ -131,8 +131,11 @@ try {
 	log.warn('environment map failed', err);
 }
 
-scene.add(new HemisphereLight(0xffffff, 0x444455, 1.0));
-const sun = new DirectionalLight(0xffffff, 1.15);
+const HEMI_BASE = 1.0;
+const SUN_BASE = 1.15;
+const hemi = new HemisphereLight(0xffffff, 0x444455, HEMI_BASE);
+scene.add(hemi);
+const sun = new DirectionalLight(0xffffff, SUN_BASE);
 sun.position.set(2.5, 6, 3);
 scene.add(sun);
 
@@ -494,12 +497,21 @@ function removePlacement(p, { persist = true } = {}) {
 let armedSrc = null; // { src, title } — what an XR reticle tap places
 
 async function restoreScene() {
-	let items = [];
-	try {
-		items = deserializeScene(localStorage.getItem(SCENE_KEY));
-	} catch {}
 	const params = new URLSearchParams(location.search);
 	const linked = parseSrcParams(params);
+
+	// A #s= hash is a FULL shared arrangement (models + transforms) — it opens
+	// like a document, replacing the working scene rather than merging into it.
+	const sharedScene = sceneFromHashParam(
+		new URLSearchParams(location.hash.replace(/^#/, '')).get('s'),
+	);
+
+	let items = sharedScene;
+	if (!items.length) {
+		try {
+			items = deserializeScene(localStorage.getItem(SCENE_KEY));
+		} catch {}
+	}
 
 	for (const it of items) {
 		await addModel({ src: it.src, title: it.title }, {
@@ -515,7 +527,11 @@ async function restoreScene() {
 	}
 	if (placements.length) {
 		select(placements[placements.length - 1]);
-		setStatus(linked.length ? 'Models loaded — tap the camera to see them in your space.' : 'Your scene is back.');
+		if (sharedScene.length) {
+			setStatus('Shared scene loaded, exactly as arranged. Clear to start fresh.');
+		} else {
+			setStatus(linked.length ? 'Models loaded — tap the camera to see them in your space.' : 'Your scene is back.');
+		}
 	}
 	saveScene();
 
@@ -543,6 +559,54 @@ function applyCameraFov() {
 		diagFovDeg: DEFAULT_DIAG_FOV_DEG,
 	});
 	camera.updateProjectionMatrix();
+}
+
+// ── Ambient light matching ────────────────────────────────────────────────────
+// Sample the live camera feed's mean luminance every couple of seconds and
+// ease the scene lights toward it, so a model placed in a dim bedroom doesn't
+// glow like it's under studio lights (and one on a sunny balcony isn't muddy).
+let lightTimer = null;
+const lightProbe = (() => {
+	try {
+		const cnv = document.createElement('canvas');
+		cnv.width = cnv.height = 16;
+		return { cnv, ctx: cnv.getContext('2d', { willReadFrequently: true }) };
+	} catch {
+		return null;
+	}
+})();
+
+function sampleCameraLight() {
+	if (!arActive || !lightProbe?.ctx || !videoEl?.videoWidth) return;
+	let data;
+	try {
+		lightProbe.ctx.drawImage(videoEl, 0, 0, 16, 16);
+		data = lightProbe.ctx.getImageData(0, 0, 16, 16).data;
+	} catch {
+		return; // frame not readable yet — try again next tick
+	}
+	let sum = 0;
+	for (let i = 0; i < data.length; i += 4) {
+		sum += 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+	}
+	const luma = sum / (data.length / 4) / 255; // 0 (black room) → 1 (blown out)
+	const target = Math.min(1.35, Math.max(0.4, 0.35 + luma * 1.25));
+	// Ease 40% per sample: adapts within a few seconds, never visibly pops.
+	hemi.intensity += (target * HEMI_BASE - hemi.intensity) * 0.4;
+	sun.intensity += (target * SUN_BASE - sun.intensity) * 0.4;
+}
+
+function startLightMatching() {
+	if (lightTimer || !lightProbe) return;
+	lightTimer = setInterval(sampleCameraLight, 2000);
+	sampleCameraLight();
+}
+
+function stopLightMatching() {
+	clearInterval(lightTimer);
+	lightTimer = null;
+	hemi.intensity = HEMI_BASE;
+	sun.intensity = SUN_BASE;
 }
 
 async function startCamera() {
@@ -579,6 +643,7 @@ async function startCamera() {
 		grid.visible = false;
 		videoEl?.play?.().catch(() => {});
 		applyCameraFov();
+		startLightMatching();
 		await startGyro();
 		setStatus('Camera on — your models are in the room. Look around.');
 	} finally {
@@ -593,6 +658,7 @@ function stopCamera() {
 	}
 	if (videoEl) videoEl.srcObject = null;
 	arActive = false;
+	stopLightMatching();
 	document.body.classList.remove('is-ar');
 	cameraBtn?.classList.remove('is-active');
 	cameraBtn?.setAttribute('aria-pressed', 'false');
@@ -999,6 +1065,54 @@ document.addEventListener('keydown', (e) => {
 	}
 });
 
+// ── Desktop keyboard controls ─────────────────────────────────────────────────
+// Arrows nudge the selected model camera-relative (Shift = fine), R rotates,
+// D duplicates, Delete removes — the mouse never has to leave the scene.
+document.addEventListener('keydown', (e) => {
+	if (e.target.closest?.('input, textarea, select')) return;
+	if ((tray && !tray.hidden) || (qrModal && !qrModal.hidden) || xrSession) return;
+	if (!selected) return;
+
+	const key = e.key;
+	if (key.startsWith('Arrow')) {
+		e.preventDefault();
+		const step = e.shiftKey ? 0.02 : 0.1;
+		const fwd = camera.getWorldDirection(new Vector3());
+		fwd.y = 0;
+		if (fwd.lengthSq() < 1e-6) fwd.set(0, 0, -1);
+		fwd.normalize();
+		const right = new Vector3(-fwd.z, 0, fwd.x);
+		const move = key === 'ArrowUp' ? fwd
+			: key === 'ArrowDown' ? fwd.negate()
+			: key === 'ArrowLeft' ? right.negate()
+			: right;
+		selected.group.position.addScaledVector(move, step);
+		selected.shadow?.position.set(selected.group.position.x, 0.004, selected.group.position.z);
+		positionSelRing();
+		saveScene();
+	} else if (key === 'r' || key === 'R') {
+		selected.yaw += Math.PI / 4;
+		selected.group.rotation.y = selected.yaw;
+		saveScene();
+	} else if (key === 'd' || key === 'D') {
+		e.preventDefault();
+		addModel({ src: selected.src, title: selected.title }, {
+			yaw: selected.yaw, scale: selected.group.scale.x,
+		});
+	} else if (key === 'Delete' || key === 'Backspace') {
+		e.preventDefault();
+		const removed = selected;
+		removePlacement(removed);
+		setStatus('Removed.', {
+			actionLabel: 'Undo',
+			onAction: () => addModel({ src: removed.src, title: removed.title }, {
+				x: removed.group.position.x, z: removed.group.position.z,
+				yaw: removed.yaw, scale: removed.group.scale.x,
+			}),
+		});
+	}
+});
+
 tray?.querySelectorAll('[data-tab]').forEach((btn) => {
 	btn.addEventListener('click', () => setTrayTab(btn.dataset.tab));
 });
@@ -1261,13 +1375,28 @@ photoBtn?.addEventListener('click', async () => {
 
 qrBtn?.addEventListener('click', () => {
 	if (!qrModal) return;
-	const url = studioShareUrl('https://three.ws', placements);
+	const url = studioSceneUrl('https://three.ws', placements.map((p) => ({
+		src: p.src,
+		title: p.title,
+		x: p.group.position.x,
+		z: p.group.position.z,
+		yaw: p.yaw,
+		scale: p.group.scale.x,
+	})));
 	const box = $('ars-qr-box');
 	if (box) {
 		try {
 			box.innerHTML = renderQRToSVG(url, { scale: 6, margin: 2, dark: '#0b0b0b', light: '#ffffff' });
 		} catch {
-			box.textContent = url;
+			// Arrangement hash too dense for the encoder → a models-only QR still
+			// beats a wall of text (the full link below keeps the arrangement).
+			try {
+				box.innerHTML = renderQRToSVG(studioShareUrl('https://three.ws', placements), {
+					scale: 6, margin: 2, dark: '#0b0b0b', light: '#ffffff',
+				});
+			} catch {
+				box.textContent = url;
+			}
 		}
 	}
 	const link = $('ars-qr-link');

@@ -212,6 +212,78 @@ export function parseSrcParams(params) {
 	return out;
 }
 
+// ── Full-scene links (#s= hash) ───────────────────────────────────────────────
+// The ?src= list reopens the same MODELS; the hash carries the whole
+// ARRANGEMENT (positions, yaw, scale) so a composed scene round-trips exactly.
+// base64url over the same validated JSON the localStorage scene uses — the
+// decoder funnels through deserializeScene, so a hostile hash degrades to an
+// empty scene exactly like a hostile storage blob.
+
+function toBase64Url(s) {
+	const bytes = new TextEncoder().encode(s);
+	let bin = '';
+	for (const b of bytes) bin += String.fromCharCode(b);
+	return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function fromBase64Url(s) {
+	const b64 = String(s).replace(/-/g, '+').replace(/_/g, '/');
+	const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4));
+	const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+	return new TextDecoder().decode(bytes);
+}
+
+/**
+ * Encode the current placements (sources + transforms) as a URL-hash payload.
+ *
+ * @param {Array<{ src: string, title?: string, x: number, z: number,
+ *   yaw: number, scale: number }>} placements
+ * @returns {string} base64url payload for `#s=`, or '' when nothing is shareable.
+ */
+export function sceneToHashParam(placements) {
+	const json = serializeScene(placements);
+	try {
+		return JSON.parse(json).items.length ? toBase64Url(json) : '';
+	} catch {
+		return '';
+	}
+}
+
+/**
+ * Decode a `#s=` payload back into validated scene items. Hostile, truncated,
+ * or foreign input degrades to an empty list — never a throw.
+ *
+ * @param {string|null|undefined} raw  The value after `#s=`.
+ * @returns {ReturnType<typeof deserializeScene>}
+ */
+export function sceneFromHashParam(raw) {
+	if (!raw) return [];
+	try {
+		return deserializeScene(fromBase64Url(raw));
+	} catch {
+		return [];
+	}
+}
+
+/**
+ * Full-fidelity share URL: the ?src= list (link previews + old clients) plus
+ * the `#s=` arrangement hash. Falls back to the plain source URL when the
+ * payload would push the link past QR-friendly length.
+ *
+ * @param {string} origin
+ * @param {Array<{ src: string, title?: string, x?: number, z?: number,
+ *   yaw?: number, scale?: number }>} placements
+ * @param {number} [maxUrlLength]
+ * @returns {string}
+ */
+export function studioSceneUrl(origin, placements, maxUrlLength = 1500) {
+	const base = studioShareUrl(origin, placements);
+	const hash = sceneToHashParam(placements);
+	if (!hash) return base;
+	const full = `${base}#s=${hash}`;
+	return full.length <= maxUrlLength ? full : base;
+}
+
 /**
  * Build the shareable /ar/studio URL that reopens the current scene's models
  * (sources only — transforms are device-local). Caps the payload so the QR

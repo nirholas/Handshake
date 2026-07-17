@@ -17,8 +17,11 @@ import {
 	PROP_TARGET_SIZE_M,
 	SCALE_MAX,
 	SCALE_MIN,
+	sceneFromHashParam,
+	sceneToHashParam,
 	serializeScene,
 	spawnPointInFront,
+	studioSceneUrl,
 	studioShareUrl,
 	touchAngle,
 	twistDelta,
@@ -171,6 +174,60 @@ describe('parseSrcParams', () => {
 	it('skips invalid sources without shifting the rest', () => {
 		const q = new URLSearchParams('src=javascript:x&src=https://x.co/b.glb');
 		expect(parseSrcParams(q)).toEqual([{ src: 'https://x.co/b.glb', title: '' }]);
+	});
+});
+
+describe('scene hash (#s=) codec', () => {
+	const scene = [
+		{ src: 'https://x.co/a.glb', title: 'crate ✦ 沙发', x: 1.25, z: -3.5, yaw: 0.7854, scale: 1.5 },
+		{ src: '/avatars/default.glb', title: 'avatar', x: -0.5, z: 2, yaw: -2.1, scale: 0.8 },
+	];
+
+	it('round-trips models AND transforms (unicode titles included)', () => {
+		const out = sceneFromHashParam(sceneToHashParam(scene));
+		expect(out).toEqual(scene);
+	});
+
+	it('is URL-safe (no +, /, =, or characters needing escapes)', () => {
+		const hash = sceneToHashParam(scene);
+		expect(hash).toMatch(/^[A-Za-z0-9_-]+$/);
+	});
+
+	it('returns "" for an empty or fully-invalid scene', () => {
+		expect(sceneToHashParam([])).toBe('');
+		expect(sceneToHashParam([{ src: 'javascript:x', x: 0, z: 0 }])).toBe('');
+	});
+
+	it('degrades hostile hash input to an empty scene', () => {
+		expect(sceneFromHashParam('!!!not-base64!!!')).toEqual([]);
+		expect(sceneFromHashParam('aGVsbG8')).toEqual([]); // valid b64, not a scene
+		expect(sceneFromHashParam('')).toEqual([]);
+		expect(sceneFromHashParam(null)).toEqual([]);
+	});
+
+	it('validated exactly like the storage path (bad URLs dropped)', () => {
+		const forged = sceneToHashParam([
+			...scene,
+			{ src: 'https://x.co/ok.glb', title: 'ok', x: 0, z: 0, yaw: 0, scale: 1 },
+		]);
+		expect(sceneFromHashParam(forged)).toHaveLength(3);
+	});
+});
+
+describe('studioSceneUrl', () => {
+	const scene = [{ src: 'https://x.co/a.glb', title: 'A', x: 1, z: 2, yaw: 0.5, scale: 1.2 }];
+
+	it('appends the arrangement hash to the src-list URL', () => {
+		const url = studioSceneUrl('https://three.ws', scene);
+		const [base, hash] = url.split('#s=');
+		expect(base).toBe(studioShareUrl('https://three.ws', scene));
+		expect(sceneFromHashParam(hash)).toEqual(scene);
+	});
+
+	it('falls back to the src-only URL when the payload would be QR-hostile', () => {
+		const url = studioSceneUrl('https://three.ws', scene, 40);
+		expect(url).toBe(studioShareUrl('https://three.ws', scene));
+		expect(url).not.toContain('#s=');
 	});
 });
 
