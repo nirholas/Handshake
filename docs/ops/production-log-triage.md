@@ -31,7 +31,7 @@ var or add quota · 🟢 self-healing, no action needed.
 > self-reports internal-dependency health: **[/status](https://three.ws/status)**
 > renders it with a plain-language fix for each degradation, and
 > **`/api/healthz`** carries a machine-readable `subsystems` block (cache, database,
-> Helius RPC, x402 ring, **x402 settlement success**, world, x402 config). The uptime cron
+> Helius RPC, x402 ring, **x402 settlement success**, **Forge 3D generation**, world, x402 config). The uptime cron
 > ([api/cron/uptime-check.js](../../api/cron/uptime-check.js)) parks a snapshot
 > each tick and re-pages a degradation that persists. Source of the roll-up:
 > [api/_lib/ops/subsystem-health.js](../../api/_lib/ops/subsystem-health.js). This

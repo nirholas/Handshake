@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "Forge: one-tap variations of any model",
+			"summary": "Every model you forge now shows a \"More like this\" row: one tap re-forges the same subject in a different material or finish (brushed brass, translucent glass, carved oak, and more), so you can explore a whole design space without retyping anything. A reshuffle button deals a fresh set of ideas. It appears for text prompts and runs on the free lane, so exploring costs nothing.",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-17",
 			"title": "One-tap Seed Vault sign-in on Solana Seeker",
 			"summary": "Signing in with a Solana Seeker's Seed Vault now takes a single tap instead of two. Linking your wallet used to pop the Seed Vault twice (once to connect, once to sign); three.ws now uses the Mobile Wallet Adapter's built-in Sign-In-With-Solana so authorization and the signature happen in one prompt. If you back out of that prompt, three.ws now recognizes it as a clean cancel instead of showing a generic error, and it reliably detects Seeker devices that don't announce themselves in the browser. Other wallets (Phantom, Backpack, Solflare) are unaffected. The whole wallet layer is now covered by an automated test suite.",
 			"tags": [

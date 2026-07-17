@@ -76,6 +76,20 @@ pure decision ([api/_lib/forge-selfhost-recovery.js](../api/_lib/forge-selfhost-
    lane. Nothing here disables failover — it just stops firing it on transient
    404s.
 
+## Generation success-rate health
+
+Lane liveness ("can a worker serve right now?") is not the same as outcome
+health ("are generations succeeding?"). A warm lane can still fail half its
+jobs — the 404 burst above ran ~48% failure for days while every liveness probe
+read healthy. The **Forge 3D generation** subsystem
+([api/_lib/ops/forge-health-sensor.js](../api/_lib/ops/forge-health-sensor.js))
+closes that: it reads `forge_creations` outcomes over a 6h window and reports the
+success rate (`done / (done + failed)`; running/queued excluded), naming the
+worst backend/path and top error class so a page is actionable. It rolls into
+`/api/healthz`, `/status`, and the uptime-cron escalation. States: `ok` ≥ 85%,
+`degraded` 60–85%, `down` < 60%, `unknown` below 15 finished generations
+in-window. This is the forge twin of the x402 settlement-success sensor.
+
 ## Operational notes
 
 - The finalizer needs `CRON_SECRET` (standard cron auth), `DATABASE_URL`, the
