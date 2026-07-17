@@ -1227,3 +1227,38 @@ catalog strings contain em-dash characters (house style violation, external-safe
 them in a normal deploy cycle after the listing is approved. Also review the agent-level
 profile description in the resubmission session via `agent get-agents --agent-ids 2632`
 (needs the interactive login; keep it unless it drew a finding).
+
+### 2026-07-17 addendum 2: listing strings rewritten; avatar-only-delta decision SUPERSEDED
+
+The owner challenged the "everything else passed" read: an avatar-only rejection does not
+prove the other fields passed review, because reviewers can stop at the first blocking
+issue. Re-audited every listing string against the OKX rules in
+`.claude/skills/okx-agent-identity/references/invariants.md` (not just our width
+validator) and found reviewer-findable violations:
+
+1. Every part-2 service description was written as API documentation ("POST JSON with
+   prompt", "Call create_identity with agent_name", "job_id + poll_url"). OKX's documented
+   format for part 2 is a plain numbered list of what the user provides, and tech-stack
+   details are an explicit rejection reason.
+2. "3D Studio Catalog (free)" and "3D Studio Health (free)" carried a price marker in the
+   service name (no-price-in-name rule).
+3. "an LLM art director" in the Pro row was a tech-stack detail; two names were verb
+   phrases ("Auto-Rig a GLB").
+
+**Fix (commit on main):** all 11 rows in `api/_lib/okx-catalog.js` rewritten: part 1 plain
+capability + who it serves, part 2 "Provide: 1. ... 2. ..." numbered lists, no wire jargon,
+no em/en dashes, every part within the 200 display-width limit. Renames: rig -> "GLB
+Auto-Rigging", retarget -> "Animation Retargeting", catalog -> "3D Studio Service Catalog",
+health -> "3D Studio Health Status". Endpoints, ids, prices, schemas unchanged.
+`validateCatalog()` + 56 tests green; `docs/okx-marketplace.md` headings synced.
+
+**Resubmission plan (replaces "avatar as the single delta"):**
+1. DEPLOY FIRST so the live `/api/okx/3d/catalog` serves the new strings (three-copy rule:
+   module == live == submission; the live endpoint still serves the old strings until then).
+2. In the interactive session: upload the new avatar, then ONE `agent update` carrying the
+   profile picture change plus per-service `operation:"update"` deltas (ids from
+   `agent service-list --agent-id 2632`) with the new names/descriptions, validated by
+   `validate-listing`, human-confirmed diff card, then activate (`--preferred-language
+   en-US`).
+3. Also eyeball the agent-level `--description` from `agent get-agents --agent-ids 2632`
+   against the same no-tech-jargon bar while in there.
