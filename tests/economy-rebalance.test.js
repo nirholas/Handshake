@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
+import bs58 from 'bs58';
+import { Keypair } from '@solana/web3.js';
 import { planRebalance } from '../api/_lib/economy-rebalance.js';
+import { loadSignerKeypair, SOLANA_SIGNERS } from '../api/_lib/solana-signers.js';
 
 // Fixed bounds so the test doesn't depend on env: $3/swap, $6/run, keep 0.03 SOL
 // and $2 USDC in reserve, skip needs under $0.50.
@@ -74,5 +77,59 @@ describe('planRebalance', () => {
 		});
 		expect(plan).toHaveLength(0);
 		expect(skipped[0].reason).toBe('no_sol_price');
+	});
+});
+
+// Regression guard for the ring-payer refill crash: the rebalance cron once
+// assigned loadSignerKeypair's WRAPPER ({ configured, keypair, decodeError }) to
+// `keypair` and then read `keypair.publicKey`, which is undefined — so every
+// executeSwap crashed with "Cannot read properties of undefined (reading
+// 'toBase58')" and the ring payer never got refilled. This pins the contract:
+// the signable Keypair lives on `.keypair`, and the wrapper itself has no
+// `.publicKey`. executeSwap must be handed `.keypair`, never the wrapper.
+describe('loadSignerKeypair return shape (ring-payer refill seam)', () => {
+	const ringSpec = SOLANA_SIGNERS.find((s) => s.name === 'x402-ring-payer');
+
+	it('names the x402-ring-payer signer with a decodable env', () => {
+		expect(ringSpec).toBeTruthy();
+		expect(ringSpec.env).toBe('X402_SEED_SOLANA_SECRET_BASE58');
+	});
+
+	it('returns { keypair } whose .keypair carries publicKey, not the wrapper', async () => {
+		// Deterministic key from a fixed 32-byte seed — no randomness.
+		const seed = new Uint8Array(32).fill(7);
+		const kp = Keypair.fromSeed(seed);
+		const prev = process.env[ringSpec.env];
+		process.env[ringSpec.env] = bs58.encode(kp.secretKey);
+		try {
+			const loaded = await loadSignerKeypair(ringSpec);
+			// The wrapper does NOT expose publicKey — reading it (the old bug) is undefined.
+			expect(loaded.publicKey).toBeUndefined();
+			// The signable Keypair is on .keypair, and it round-trips to the pubkey.
+			expect(loaded.configured).toBe(true);
+			expect(loaded.decodeError).toBe(false);
+			expect(loaded.keypair).toBeTruthy();
+			expect(loaded.keypair.publicKey.toBase58()).toBe(kp.publicKey.toBase58());
+		} finally {
+			if (prev === undefined) delete process.env[ringSpec.env];
+			else process.env[ringSpec.env] = prev;
+		}
+	});
+
+	it('reports unconfigured when the env is unset', async () => {
+		const prev = process.env[ringSpec.env];
+		const prevFallback = ringSpec.fallbackEnv ? process.env[ringSpec.fallbackEnv] : undefined;
+		delete process.env[ringSpec.env];
+		if (ringSpec.fallbackEnv) delete process.env[ringSpec.fallbackEnv];
+		try {
+			const loaded = await loadSignerKeypair(ringSpec);
+			expect(loaded.configured).toBe(false);
+			expect(loaded.keypair).toBeNull();
+		} finally {
+			if (prev !== undefined) process.env[ringSpec.env] = prev;
+			if (ringSpec.fallbackEnv && prevFallback !== undefined) {
+				process.env[ringSpec.fallbackEnv] = prevFallback;
+			}
+		}
 	});
 });
