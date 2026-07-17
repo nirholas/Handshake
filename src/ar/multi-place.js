@@ -153,7 +153,10 @@ export class MultiPlaceSession {
 
 		const sessionInit = {
 			requiredFeatures: ['hit-test'],
-			optionalFeatures: ['anchors', 'local-floor', 'depth-sensing'],
+			// `light-estimation` unlocks real-world lighting + reflections
+			// (src/ar/estimated-lighting.js); optional so devices without it fall
+			// back to the baked studio lights, exactly as before.
+			optionalFeatures: ['anchors', 'local-floor', 'depth-sensing', 'light-estimation'],
 			depthSensing: {
 				usagePreference: ['gpu-optimized', 'cpu-optimized'],
 				dataFormatPreference: ['luminance-alpha', 'float32'],

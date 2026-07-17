@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T10:23:33.686Z",
+	"generated_at": "2026-07-17T10:51:25.010Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -29,8 +29,19 @@
 		{
 			"date": "2026-07-17",
 			"type": "update",
+			"title": "A new way to generate avatars: modular, and no two look alike",
+			"summary": "The studio avatar generator used to recolor one of five fixed body meshes, so a whole gallery of them read as the same handful of people in different colors. It now composes each avatar from modular parts: a hairstyle, top, bottom, footwear, and glasses mixed across the base bodies onto one shared skeleton, then recolored per part and scaled for height. This is the same one-skeleton-many-parts approach the best avatar platforms use, built in-house with no external service. Every generated avatar is fully rigged and carries facial expression blendshapes, and two of them almost never look the same. All platform-generated avatars continue to appear across the galleries.",
+			"link": "/gallery",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
 			"title": "AR Studio: fill your room with 3D models, and forge new ones without leaving the camera",
-			"summary": "Until now AR on three.ws was one model at a time: generate, view, exit. The new AR Studio at three.ws/ar/studio is a live scene through your camera where you can place as many models and avatars as you like together in your real space. Pull in your own forge creations, the community feed, or any GLB link; type a prompt and a brand-new model is generated behind the live view and drops into the room when ready. Drag to move, pinch to resize, twist to rotate, duplicate or remove any model. On Android each model gets its own world anchor in immersive AR; on iPhone the camera view with gyro look works out of the box; on desktop you arrange the scene and send it to your phone with a QR code. Your scene survives a refresh, humanoid avatars idle naturally instead of standing frozen, and a photo button captures the whole composition.",
+			"summary": "Until now AR on three.ws was one model at a time: generate, view, exit. The new AR Studio at three.ws/ar/studio is a live scene through your camera where you can place as many models and avatars as you like together in your real space. Pull in your own forge creations, the community feed, or any GLB link; type a prompt and a brand-new model is generated behind the live view and drops into the room when ready. Drag to move, pinch to resize, twist to rotate, duplicate or remove any model, with keyboard shortcuts on desktop. The models look like they belong: on supported Android phones they are lit by your actual room light and reflect it on metal and glass, and they hide correctly behind your real furniture; on every phone the lighting matches your room's brightness and colour. On Android each model also gets its own world anchor; on iPhone the camera view with gyro look works out of the box; on desktop you arrange the scene and send it to your phone with a QR code that carries the exact arrangement, not just the model list. Your scene survives a refresh, humanoid avatars idle naturally instead of standing frozen, and a photo button captures the whole composition.",
 			"link": "/ar/studio",
 			"tags": [
 				"feature"

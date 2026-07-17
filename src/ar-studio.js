@@ -24,13 +24,14 @@
 // round-trips through ?src= links, so a desktop arrangement reopens on a phone.
 
 import {
-	AnimationMixer, Box3, CanvasTexture, DirectionalLight, GridHelper, Group,
+	AnimationMixer, Box3, CanvasTexture, Color, DirectionalLight, GridHelper, Group,
 	HemisphereLight, Mesh, MeshBasicMaterial, PerspectiveCamera, PlaneGeometry,
 	PMREMGenerator, Raycaster, RingGeometry, Scene, Vector2, Vector3, WebGLRenderer,
 } from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { clone as cloneSkinnedScene } from 'three/addons/utils/SkeletonUtils.js';
 
+import { EstimatedLighting } from './ar/estimated-lighting.js';
 import { MultiPlaceSession } from './ar/multi-place.js';
 import {
 	createPinchState, pinchEnd, pinchMove, pinchStart, touchDist,
@@ -219,6 +220,7 @@ let arActive = false;
 let mediaStream = null;
 let arTransitioning = false;
 let xrSession = null;
+let estimatedLight = null;
 let arTrackW = 0;
 let arTrackH = 0;
 let statusTimer = null;
@@ -576,6 +578,7 @@ function applyCameraFov() {
 // ease the scene lights toward it, so a model placed in a dim bedroom doesn't
 // glow like it's under studio lights (and one on a sunny balcony isn't muddy).
 let lightTimer = null;
+const roomTint = new Color(); // reused scratch — no per-sample allocation
 const lightProbe = (() => {
 	try {
 		const cnv = document.createElement('canvas');
@@ -586,6 +589,11 @@ const lightProbe = (() => {
 	}
 })();
 
+// Passthrough (iOS / no-WebXR) has no lighting-estimation API, so we read the
+// room ourselves: mean brightness AND mean colour of the camera feed. Brightness
+// drives light intensity (a dim room dims the model); colour drives a gentle
+// white-balance tint (a warm-lamp room warms the model's whites, a daylight room
+// cools them) so the model belongs to the room instead of glowing neutral on it.
 function sampleCameraLight() {
 	if (!arActive || !lightProbe?.ctx || !videoEl?.videoWidth) return;
 	let data;
@@ -595,15 +603,30 @@ function sampleCameraLight() {
 	} catch {
 		return; // frame not readable yet — try again next tick
 	}
-	let sum = 0;
+	let rSum = 0, gSum = 0, bSum = 0, lumaSum = 0;
+	const px = data.length / 4;
 	for (let i = 0; i < data.length; i += 4) {
-		sum += 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+		const r = data[i], g = data[i + 1], b = data[i + 2];
+		rSum += r; gSum += g; bSum += b;
+		lumaSum += 0.2126 * r + 0.7152 * g + 0.0722 * b;
 	}
-	const luma = sum / (data.length / 4) / 255; // 0 (black room) → 1 (blown out)
+	const luma = lumaSum / px / 255; // 0 (black room) → 1 (blown out)
 	const target = Math.min(1.35, Math.max(0.4, 0.35 + luma * 1.25));
-	// Ease 40% per sample: adapts within a few seconds, never visibly pops.
 	hemi.intensity += (target * HEMI_BASE - hemi.intensity) * 0.4;
 	sun.intensity += (target * SUN_BASE - sun.intensity) * 0.4;
+
+	// White-balance tint: normalize the mean colour to its own brightness, then
+	// pull it a third of the way toward the room's cast (never a full tint — the
+	// PBR albedo should still read as itself). Guard a black frame (mean ~0).
+	const mean = (rSum + gSum + bSum) / (px * 3);
+	if (mean > 6) {
+		const tr = 1 + ((rSum / px / mean) - 1) * 0.33;
+		const tg = 1 + ((gSum / px / mean) - 1) * 0.33;
+		const tb = 1 + ((bSum / px / mean) - 1) * 0.33;
+		roomTint.setRGB(tr, tg, tb);
+		hemi.color.lerp(roomTint, 0.4);
+		sun.color.lerp(roomTint, 0.4);
+	}
 }
 
 function startLightMatching() {
@@ -617,6 +640,8 @@ function stopLightMatching() {
 	lightTimer = null;
 	hemi.intensity = HEMI_BASE;
 	sun.intensity = SUN_BASE;
+	hemi.color.setHex(0xffffff);
+	sun.color.setHex(0xffffff);
 }
 
 async function startCamera() {
@@ -1333,6 +1358,8 @@ xrBtn?.addEventListener('click', async () => {
 			},
 			onEnd: () => {
 				xrSession = null;
+				estimatedLight?.dispose();
+				estimatedLight = null;
 				document.body.classList.remove('is-xr', 'xr-has-floor');
 				xrBtn.classList.remove('is-active');
 				xrBtn.setAttribute('aria-pressed', 'false');
@@ -1354,6 +1381,18 @@ xrBtn?.addEventListener('click', async () => {
 		stopLoop();
 		await session.start();
 		xrSession = session;
+		// Real-world lighting + reflections: replaces the baked hemi/sun with the
+		// room's actual light the moment the device starts estimating it. Created
+		// after start() so the addon's sessionstart listener requests the probe.
+		estimatedLight = new EstimatedLighting({
+			renderer,
+			scene,
+			baseLights: [hemi, sun],
+			onChange: (on) => {
+				if (on) setStatus('Lit by your room — reflections and shadows match the real light.');
+			},
+		});
+		estimatedLight.start();
 		document.body.classList.add('is-xr');
 		grid.visible = false;
 		selRing.visible = false;
@@ -1365,6 +1404,8 @@ xrBtn?.addEventListener('click', async () => {
 		setStatus('Point at the floor, then tap to place. Every tap adds another model.');
 	} catch (err) {
 		log.warn('XR session failed', err);
+		estimatedLight?.dispose();
+		estimatedLight = null;
 		startLoop();
 		setStatus('Couldn’t start immersive AR on this device. Camera mode still works.', { warn: true });
 	} finally {
