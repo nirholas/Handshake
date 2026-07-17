@@ -94,6 +94,35 @@ guard env violated:
 
 ---
 
+## 🔴 502 wave on `/api/x402/*` from `threews-x402-autonomous/1.0` (ring-duplicate-signature)
+
+```
+HTTP 502 POST /api/x402/<any endpoint>   ua: threews-x402-autonomous/1.0   (~334/day since 2026-07-09)
+```
+
+- **Source:** the x402 autonomous ring paying its own endpoints; the settle
+  step fails, so the paid handler returns 502 with a settle_failed body. No
+  app-level ERROR accompanies it (the handler responds, nothing crashes).
+- **Root cause (diagnosed 2026-07-17):** same-priced ring payments created in
+  the same tick share a blockhash and compile to byte-identical Solana
+  transactions, hence the same signature. Only the first lands; the rest die
+  at preflight as already-processed, surfaced by the RPC as a bare
+  "Transaction simulation failed" with empty logs.
+- **Triage tip:** settle_failed with empty simulation logs plus interleaved
+  on-chain successes means duplicate signature, not RPC or blockhash trouble.
+- **Fixed in code:** commit `93430b4fb` adds an auto-nonce to `payX402` so
+  every payment is byte-unique, and reports a precise
+  `broadcast_failed:already_processed` reason via a `getSignatureStatuses`
+  probe. The monitor (`npm run triage:gcp`) classifies this wave as `owner`
+  while the fix awaits deploy (signature `ring-duplicate-signature-502` in
+  [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs)).
+- **Resolve (owner, deploy):** ship the committed fix:
+  `npm run build:gcp && npm run deploy:gcp`. If the wave persists on the
+  revision carrying `93430b4fb`, remove the monitor signature and
+  re-investigate; do not let the classification mask a new failure.
+
+---
+
 ## 🟡 `[x402-audit] insert failed … db query exceeded 3000ms deadline`
 
 - **Source:** [api/_lib/x402/audit-log.js](../../api/_lib/x402/audit-log.js) `logPaymentEvent`.

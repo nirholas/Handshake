@@ -99,6 +99,19 @@ const KNOWN_SIGNATURES = [
 	},
 ];
 
+// Known signatures for request-log (5xx) groups. `test` sees the http group:
+// { service, status, path, userAgent }. First match wins; unmatched 5xx stays
+// `investigate`.
+const KNOWN_HTTP_SIGNATURES = [
+	{
+		id: 'ring-duplicate-signature-502',
+		test: (g) => g.status >= 500 && g.path.startsWith('/api/x402')
+			&& g.userAgent.includes('threews-x402-autonomous'),
+		class: 'owner',
+		action: `The x402 ring's settle_failed wave (since 2026-07-09): same-priced ring payments sharing a tick blockhash compile to byte-identical Solana txs, so only the first lands. Fixed in commit 93430b4fb (auto-nonce in payX402); awaiting deploy: npm run build:gcp && npm run deploy:gcp. If the wave persists on the revision that carries 93430b4fb, REMOVE this signature and re-investigate. ${RUNBOOK} §ring-duplicate-signature.`,
+	},
+];
+
 function parseArgs(argv) {
 	const opts = { since: '1h', json: false, limit: 1000, project: PROJECT };
 	for (let i = 0; i < argv.length; i++) {
@@ -218,10 +231,12 @@ export function buildFindings(entries) {
 		if (entry.httpRequest) {
 			const status = entry.httpRequest.status || 0;
 			if (status < 500 && status !== 429) continue; // 4xx is client behavior; 402 is the product
-			const key = `${service} ${status} ${entry.httpRequest.requestMethod} ${normalizePath(entry.httpRequest.requestUrl)}`;
+			const path = normalizePath(entry.httpRequest.requestUrl);
+			const key = `${service} ${status} ${entry.httpRequest.requestMethod} ${path}`;
 			const g = httpGroups.get(key) || {
-				kind: 'http', service, status,
-				title: `HTTP ${status} ${entry.httpRequest.requestMethod} ${normalizePath(entry.httpRequest.requestUrl)}`,
+				kind: 'http', service, status, path,
+				userAgent: entry.httpRequest.userAgent || '-',
+				title: `HTTP ${status} ${entry.httpRequest.requestMethod} ${path}`,
 				count: 0, firstSeen: ts, lastSeen: ts,
 				sample: `${entry.httpRequest.requestUrl} (ua: ${entry.httpRequest.userAgent || '-'})`,
 			};
@@ -266,10 +281,11 @@ export function buildFindings(entries) {
 		});
 	}
 	for (const g of httpGroups.values()) {
+		const sig = KNOWN_HTTP_SIGNATURES.find((s) => s.test(g));
 		findings.push({
 			kind: 'http',
-			class: g.status === 429 ? 'self-healing' : 'investigate',
-			signature: null,
+			class: sig ? sig.class : (g.status === 429 ? 'self-healing' : 'investigate'),
+			signature: sig ? sig.id : null,
 			title: g.title,
 			severity: g.status >= 500 ? 'ERROR' : 'WARNING',
 			count: g.count,
@@ -277,9 +293,11 @@ export function buildFindings(entries) {
 			firstSeen: g.firstSeen,
 			lastSeen: g.lastSeen,
 			sample: g.sample,
-			action: g.status === 429
-				? 'Rate limiter doing its job; only act on a legitimate-traffic spike.'
-				: `5xx on a served route. Correlate with app logs: npm run logs -- -s ${g.service} --errors --app --since 6h, and check forge_creations if it is a generation route.`,
+			action: sig
+				? sig.action
+				: (g.status === 429
+					? 'Rate limiter doing its job; only act on a legitimate-traffic spike.'
+					: `5xx on a served route. Correlate with app logs: npm run logs -- -s ${g.service} --errors --app --since 6h, and check forge_creations if it is a generation route.`),
 		});
 	}
 
