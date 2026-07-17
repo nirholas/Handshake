@@ -2,7 +2,7 @@
  * Geometry cleanup pass (api/_lib/glb-cleanup.js).
  *
  * Runs the REAL @gltf-transform + meshoptimizer pipeline against an actual
- * shipped GLB (public/avatars/fox.glb) — no mocks — and pins the contract the
+ * shipped GLB (public/avatars/fox.glb), no mocks, and pins the contract the
  * forge delivery path relies on: the output is a valid, smaller-or-equal,
  * still-INDEXED mesh (never the de-indexed vertex explosion a naive normals
  * recompute would cause), and a broken buffer throws rather than corrupting.
@@ -33,7 +33,7 @@ describe('cleanupGlb', () => {
 		expect(r.vertsAfter).toBeLessThanOrEqual(r.vertsBefore);
 	});
 
-	it('honors simplify:false — topological cleanup only, no decimation', async () => {
+	it('honors simplify:false (topological cleanup only, no decimation)', async () => {
 		const r = await cleanupGlb(FOX_GLB, { simplify: false });
 		expect(r.simplified).toBe(false);
 		// weld/dedup/join can only hold or reduce the triangle count, never raise it.

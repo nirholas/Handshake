@@ -8,7 +8,7 @@
 //
 // glb-compress.js already welds+prunes as a PREREQUISITE of the Draco/meshopt
 // codecs, but only when a caller explicitly asks for a compressed output_format
-// — the default `glb` delivery ships the raw soup untouched. This module runs a
+// (the default `glb` delivery ships the raw soup untouched). This module runs a
 // codec-independent cleanup on EVERY delivered mesh:
 //
 //   dedup      → collapse duplicate meshes/materials/textures/accessors

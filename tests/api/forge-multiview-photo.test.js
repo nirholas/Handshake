@@ -165,7 +165,7 @@ describe('single-photo image→3D gains synthesized turnaround views on the fusi
 
 	it('prunes an unusable secondary view before fusion, keeping the primary', async () => {
 		const supplied = [PHOTO, 'https://cdn.example/photo-bad.png', 'https://cdn.example/photo-ok.png'];
-		// Primary usable, second unusable, third usable — the bad one must be dropped.
+		// Primary usable, second unusable, third usable: the bad one must be dropped.
 		validateForgeImage
 			.mockResolvedValueOnce({ ok: true })
 			.mockResolvedValueOnce({ ok: false, issue: 'blurry', message: 'too blurry' })
