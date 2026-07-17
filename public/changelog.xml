@@ -380,7 +380,7 @@
 			<guid isPermaLink="false">2026-07-17:The autonomous-trading scoreboard now counts only real on-chain trades</guid>
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
-			<description>The homepage's live trading panel promises &quot;real positions, no simulation&quot; — so its headline numbers now come only from trades that actually landed on-chain. Winning exits, best run, best ROI, and open positions all exclude paper (simulated) fills, which the engine writes while it runs in practice mode. Nothing is inflated: the board shows the true count of profitable trades agents have closed for real, and it moves the instant a genuine winning exit lands.</description>
+			<description>The homepage's live trading panel promises &quot;real positions, no simulation&quot;, so its headline numbers now come only from trades that actually landed on-chain. Winning exits, best run, best ROI, and open positions all exclude paper (simulated) fills, which the engine writes while it runs in practice mode. Nothing is inflated: the board shows the true count of profitable trades agents have closed for real, and it moves the instant a genuine winning exit lands.</description>
 		</item>
 		<item>
 			<title>The avatar shop and animation bazaar are now discoverable by paying agents</title>
@@ -391,12 +391,12 @@
 			<description>Two paid endpoints, the premium cosmetic shop and the animation download bazaar, were being skipped during automated x402 discovery: a probe that arrived without a specific item id got a 400/404 before the payment layer could answer, so directory crawlers read them as &quot;not a paid endpoint&quot; and never listed them. They now return a proper payment challenge to any credential-less probe, so agents can find them, see the price, and pay, while real buyers still get precise errors for a missing or unknown item.</description>
 		</item>
 		<item>
-			<title>The homepage AR showcase leads with the best models, and its QR places the exact one you see</title>
+			<title>The homepage AR showcase is a real, live gallery now</title>
 			<link>https://three.ws/</link>
-			<guid isPermaLink="false">2026-07-17:The homepage AR showcase leads with the best models, and its QR places the exact one you see</guid>
+			<guid isPermaLink="false">2026-07-17:The homepage AR showcase is a real, live gallery now</guid>
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
-			<category>fix</category>
-			<description>The &quot;Your 3D agent, in your room&quot; section on the homepage now pulls from the top-voted community Forge gallery instead of a random newest-first bucket, so the model you land on is one of the best the community made, not a half-formed generation. And the desktop QR code finally keeps its promise: scanning it opens the exact model on screen in the AR studio and drops it into your space, instead of dumping you on a generic page.</description>
+			<category>improvement</category>
+			<description>The &quot;Your 3D agent, in your room&quot; section on the homepage got a full rebuild. It now leads with the top-voted community Forge models (deduped and interleaved by category, so every slide is a different subject instead of three of the same), rendered on a soft-lit floor so they read as sitting in a space rather than floating in a void. The gallery auto-advances with progress dots, a thumbnail paints instantly while each model streams in, and the next one is prefetched so browsing is seamless. The desktop QR and the new &quot;Open this model in AR&quot; link both drop the exact model on screen into your room, a live count shows how many models the community has forged, and the whole carousel is keyboard-navigable with screen-reader announcements.</description>
 		</item>
 		<item>
 			<title>The homepage community feed is now a live, browsable loop</title>
