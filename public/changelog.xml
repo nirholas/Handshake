@@ -111,6 +111,14 @@
 			<description>Two improvements to the closed-loop x402 agent economy that dogfoods every paid endpoint on the platform. First, a fix: a background wallet-consolidation job was quietly closing the ring's payment account after every settlement, forcing the next one to recreate it and pay account rent each time. That single bug had pushed the real fee cost to roughly a hundred times where it should be. With it fixed and single-signature settlement turned on, each settlement is back to the network floor of a few thousandths of a cent, and the ring's working balance stays in the loop instead of leaking away. Second, a new capability: the ring can now cycle payments through a reusable pool of hundreds to a thousand distinct wallets instead of one, so the economy reads as many participants rather than a single account, with no extra cost per payment. The pool is off until funded and activated, and every wallet in it stays clearly labeled internal dogfooding, not organic demand.</description>
 		</item>
 		<item>
+			<title>The avatar gallery now shows every avatar's true colors</title>
+			<link>https://three.ws/gallery</link>
+			<guid isPermaLink="false">2026-07-17:The avatar gallery now shows every avatar's true colors</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The public gallery had turned into a wall of near-identical dark cards: a third of it was automatic copies of the same few avatars, and every preview was shot dead-on against a black background where dark models simply vanished. Copies made for agent-card previews no longer appear in the gallery, so what you see is originals only. Previews are now framed from a natural three-quarter angle, fill the card, and stand on a subtly tinted stage unique to each avatar. Prompt-created avatars also got more distinctive: sparse prompts like 'a knight' now commit to a specific look (age, build, hairstyle, palette, one signature detail) instead of converging on the same generic person.</description>
+		</item>
+		<item>
 			<title>The Money Pulse is beating again</title>
 			<link>https://three.ws/pulse</link>
 			<guid isPermaLink="false">2026-07-17:The Money Pulse is beating again</guid>

@@ -14192,6 +14192,16 @@
 				"improvement"
 			],
 			"link": "/forge"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "The avatar gallery now shows every avatar's true colors",
+			"summary": "The public gallery had turned into a wall of near-identical dark cards: a third of it was automatic copies of the same few avatars, and every preview was shot dead-on against a black background where dark models simply vanished. Copies made for agent-card previews no longer appear in the gallery, so what you see is originals only. Previews are now framed from a natural three-quarter angle, fill the card, and stand on a subtly tinted stage unique to each avatar. Prompt-created avatars also got more distinctive: sparse prompts like 'a knight' now commit to a specific look (age, build, hairstyle, palette, one signature detail) instead of converging on the same generic person.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/gallery"
 		}
 	]
 }
