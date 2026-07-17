@@ -172,6 +172,22 @@ export async function releaseDailySpend(atomics) {
 	try { await redis.incrby(dailyKey(), -Number(BigInt(atomics))); } catch { /* non-fatal */ }
 }
 
+/**
+ * Cheap best-effort check: is there room under today's cap for at least one more
+ * buy? Used to refuse a call BEFORE quoting Jupiter when the day's budget is spent.
+ * The atomic reserve in executeMicrobuy remains the real guard; this only avoids
+ * needless work on the exhausted path. Fails OPEN (returns true) on a read error so
+ * a transient Redis/DB blip never wrongly halts buys — the reserve still enforces.
+ */
+export async function hasDailyBudget() {
+	try {
+		const spent = await dailySpentAtomics();
+		return spent + buyUsdcAtomics() <= usdToUsdcAtomics(dailyCapUsd());
+	} catch {
+		return true;
+	}
+}
+
 /** Today's micro-buy spend so far (atomics) for status/read paths. */
 export async function dailySpentAtomics() {
 	const redis = getRedis();

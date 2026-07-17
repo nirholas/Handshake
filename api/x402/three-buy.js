@@ -35,6 +35,7 @@ import { logger } from '../_lib/usage.js';
 import { TOKEN_MINT } from '../_lib/token/config.js';
 import {
 	isEnabled,
+	hasDailyBudget,
 	loadMicrobuySigner,
 	planMicrobuy,
 	executeMicrobuy,
@@ -153,6 +154,13 @@ export default paidEndpoint({
 		if (!signer) {
 			await record('skipped', { reason: 'not_configured' });
 			throw refuseToll('signer not configured (set THREE_MICROBUY_SECRET_KEY_B64 or THREE_BUYBACK_SECRET_KEY_B64)');
+		}
+
+		// Cheap pre-check: refuse the toll before quoting Jupiter once the day's
+		// budget is spent. The atomic reserve in executeMicrobuy is the real guard.
+		if (!(await hasDailyBudget())) {
+			await record('skipped', { reason: 'daily_cap_reached' });
+			throw refuseToll('daily_cap_reached');
 		}
 
 		let plan;

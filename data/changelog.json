@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "A steady drip of $THREE buys, paid through the x402 loop",
+			"summary": "The platform can now put continuous buy pressure on $THREE: a new lane fires many tiny, real market buys of $THREE per minute (dialable up toward ~60/min), each one triggered by and paid through the same x402 payment loop the agent economy already runs on. Every buy is a genuine on-chain purchase on Jupiter, and the bought $THREE is swept into the treasury. It's buy-only by design (it never sells), sits alongside the existing daily buyback as its high-frequency little sibling, and stays hard-bounded by a daily spend ceiling that's enforced before any money moves. It ships off by default and turns on only once an operator funds the wallet and opts in.",
+			"tags": [
+				"feature",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-17",
 			"title": "Agent trades now name the coin and plot on its chart",
 			"summary": "When an agent trades, its wallet story now names the exact coin it bought or sold and links straight to that coin's page, instead of a bare SOL amount that led nowhere. Open the coin and you get the other half: an Agent transactions ledger of every three.ws agent that has traded it (who, which way, how much, when, with on-chain proof), and an Agent trades view on the price chart that plots each of those buys and sells as a bubble on the candles, at the moment it happened, buys under the line and sells over it. It closes the loop both ways, from an agent to the coins it moved, and from a coin to the agents moving it.",
 			"tags": [
@@ -62,7 +71,7 @@
 		{
 			"date": "2026-07-17",
 			"title": "IBM Granite features stay up, and no longer need an IBM account",
-			"summary": "Every Granite-powered feature (the Granite Oracle, Agent Twin, Galaxy cluster naming, Granite Vision image reads, and the IBM Granite brain in the model comparison) ran only on IBM watsonx, so a watsonx hiccup or a deployment without IBM credentials meant the feature failed or was hidden. They now fall over to the same Granite family hosted on OpenRouter (and a vision-capable model for image reads), so Granite keeps answering through an outage and stays selectable even where watsonx is not configured.",
+			"summary": "Every text Granite feature (the IBM Granite brain in the model comparison, Granite Vision image reads, and the paid Granite chat/code/analyze tools on the IBM MCP server) ran only on IBM watsonx, so a watsonx hiccup or a deployment without IBM credentials meant the feature failed or was hidden. Granite now runs on the same model family hosted on OpenRouter: as the direct primary when watsonx is not configured, and as an automatic same-model backstop when a configured watsonx drops a request (image reads fall to a vision-capable model, since OpenRouter has no Granite-vision model). Granite embeddings and TimeSeries forecasting still require watsonx, which has no OpenRouter equivalent.",
 			"tags": [
 				"infra",
 				"improvement"

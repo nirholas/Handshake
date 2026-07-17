@@ -102,6 +102,20 @@ describe('ring-catalog schema', () => {
 		for (const e of RING_CATALOG) expect(bySlug(e.slug)).toBe(e);
 		expect(bySlug('does-not-exist')).toBeNull();
 	});
+
+	// SAFETY: the $THREE micro-buy endpoint spends real USDC on a live market buy
+	// every settled call. It must NEVER be swept by the generic ring rotation — only
+	// its dedicated driver (api/cron/three-buy-loop.js), which enforces the daily
+	// spend cap, may fire it. Flipping it to autobuy:true would unleash uncapped real
+	// buys through the ring; this pins the invariant.
+	it('three-buy is real-spend and excluded from the generic ring rotation', () => {
+		const entry = bySlug('three-buy');
+		expect(entry, 'three-buy is cataloged').toBeTruthy();
+		expect(entry.autobuy, 'three-buy must be autobuy:false').toBe(false);
+		expect(entry.weight, 'three-buy carries zero rotation weight').toBe(0);
+		expect(rotationPlan().some((e) => e.slug === 'three-buy')).toBe(false);
+		expect(autobuyEntries().some((e) => e.slug === 'three-buy')).toBe(false);
+	});
 });
 
 // ── 100% coverage: every paidEndpoint( construction site is cataloged ─────────

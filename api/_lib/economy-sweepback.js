@@ -291,6 +291,114 @@ export async function sweepBack({ connection, mode = 'excess', includeTokens = t
 	};
 }
 
+// Names that are the FEED SINK, not a reclaim source: pulling SOL out of the
+// circulation treasury just to have the topup put it straight back is pure fee
+// churn, so reclaim leaves it alone (topup funds it; reclaim feeds topup).
+const RECLAIM_EXEMPT_NAMES = new Set(['circulation-treasury']);
+
+/**
+ * Emergency consolidation: pull IDLE SOL sitting above each engine's true
+ * operating floor (`minSol`, not the topup `refillTo`) back to the master, SOL
+ * only — token floats are never touched. This is the automated form of the manual
+ * "drain the fleet to refund the feed" recovery: when the funding root is starved,
+ * SOL trapped in over-provisioned engines (a launcher floored at 3 SOL that isn't
+ * launching, say) flows to where the Money Pulse needs it, on its own.
+ *
+ * Non-oscillating by construction: it leaves each engine at minSol PLUS a buffer,
+ * and the topup only ever funds engines strictly BELOW minSol — so a reclaimed
+ * engine is never immediately re-funded, and the two crons cannot ping-pong. The
+ * feed sink (circulation-treasury) is exempt. Destination is the same hard-locked
+ * ECONOMY_MASTER_ADDRESS constant as sweepBack; no parameter can redirect it.
+ *
+ * @param {object} args
+ * @param {import('@solana/web3.js').Connection} args.connection
+ * @param {'mainnet'|'devnet'} [args.network]
+ * @param {boolean} [args.dryRun]
+ * @returns {Promise<{master:string, reclaimedSol:number, moves:Array, skipped:Array, failed:Array, readErrors:Array}>}
+ */
+export async function reclaimIdleSol({ connection, network = 'mainnet', dryRun = false }) {
+	const master = ECONOMY_MASTER_ADDRESS;
+	const moves = [];
+	const failed = [];
+	const skipped = [];
+	const readErrors = [];
+
+	// Merge registry entries that resolve to the same physical wallet. Keep the
+	// HIGHEST minSol among a wallet's roles so we never leave it under any role's
+	// operating floor, and treat the wallet as exempt if ANY of its roles is.
+	const wallets = new Map();
+	for (const spec of SOLANA_SIGNERS) {
+		if (spec.isMaster || spec.network === 'devnet') continue;
+		const { keypair, configured, decodeError } = await loadSignerKeypair(spec);
+		if (!configured) continue;
+		if (decodeError || !keypair) {
+			readErrors.push({ name: spec.name, reason: 'secret_decode_failed' });
+			continue;
+		}
+		const pubkey = keypair.publicKey.toBase58();
+		if (pubkey === master) continue;
+		const exempt = RECLAIM_EXEMPT_NAMES.has(spec.name);
+		const existing = wallets.get(pubkey);
+		if (existing) {
+			existing.names.push(spec.name);
+			existing.minSol = Math.max(existing.minSol, spec.minSol || 0);
+			existing.exempt = existing.exempt || exempt;
+		} else {
+			wallets.set(pubkey, { pubkey, keypair, names: [spec.name], minSol: spec.minSol || 0, exempt });
+		}
+	}
+
+	for (const w of wallets.values()) {
+		const name = w.names.join('+');
+		if (w.exempt) {
+			skipped.push({ name, reason: 'feed_sink_exempt' });
+			continue;
+		}
+		let currentSol;
+		try {
+			currentSol = round((await connection.getBalance(w.keypair.publicKey, 'confirmed')) / LAMPORTS_PER_SOL);
+		} catch (e) {
+			readErrors.push({ name, pubkey: w.pubkey, reason: `rpc_error: ${e?.message}` });
+			continue;
+		}
+		// Leave the engine its floor plus a comfortable buffer so fee jitter can't
+		// drop it below minSol (which would make the topup re-fund it and reopen the
+		// oscillation this design closes).
+		const keepSol = w.minSol + Math.max(0.005, w.minSol * 0.1);
+		const reclaimable = round(currentSol - keepSol);
+		if (reclaimable < MIN_SWEEP_SOL) {
+			skipped.push({ name, reason: 'at_or_below_floor' });
+			continue;
+		}
+		if (dryRun) {
+			moves.push({ name, pubkey: w.pubkey, sol: reclaimable, dryRun: true });
+			continue;
+		}
+		try {
+			const signature = await sendSol({
+				connection,
+				fromKeypair: w.keypair,
+				to: master,
+				lamports: Math.round(reclaimable * LAMPORTS_PER_SOL),
+				memo: `three.ws reclaim ${name} → economy-master`,
+				network,
+			});
+			moves.push({ name, pubkey: w.pubkey, sol: reclaimable, signature });
+		} catch (e) {
+			failed.push({ name, pubkey: w.pubkey, sol: reclaimable, reason: e?.message || 'send_failed' });
+		}
+	}
+
+	return {
+		master,
+		reclaimedSol: round(moves.reduce((s, m) => s + m.sol, 0)),
+		moves,
+		skipped,
+		failed,
+		readErrors,
+	};
+}
+
 function round(n) {
 	return Math.round(n * 1e9) / 1e9;
 }

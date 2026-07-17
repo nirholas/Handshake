@@ -32,9 +32,10 @@ import { env } from '../_lib/env.js';
 import { constantTimeEquals } from '../_lib/crypto.js';
 import { sendOpsAlert } from '../_lib/alerts.js';
 import { SOLANA_SIGNERS, resolveSignerPubkey } from '../_lib/solana-signers.js';
-import { sweepTopUps, RESERVE_SOL, RUN_CAP_SOL, PER_TOPUP_MAX_SOL } from '../_lib/economy-master.js';
+import { sweepTopUps, RESERVE_SOL, RUN_CAP_SOL, PER_TOPUP_MAX_SOL, ECONOMY_MASTER_ADDRESS } from '../_lib/economy-master.js';
 import { recordSweep } from '../_lib/economy-ledger.js';
 import { refuelMasterFromUsdc } from '../_lib/economy-fuel.js';
+import { reclaimIdleSol } from '../_lib/economy-sweepback.js';
 
 const LAMPORTS_PER_SOL = 1_000_000_000;
 // How high to lift an engine when it falls below its floor, unless the spec
@@ -113,6 +114,38 @@ export default wrapCron(async (req, res) => {
 	// this keeps the tank full from revenue instead of waiting on a human. No-op
 	// unless there is a genuine shortage AND spare USDC (see economy-fuel.js).
 	const totalDeficitSol = targets.reduce((s, t) => s + Math.max(0, t.refillToSol - t.currentSol), 0);
+
+	// Self-healing, step 1 (free SOL first): when there is a real deficit, reclaim
+	// idle SOL sitting above other engines' operating floors back to the master
+	// before spending any revenue. This is the automated form of the manual "drain
+	// the fleet to refund the feed" recovery, and it is non-oscillating (see
+	// reclaimIdleSol). Only runs when the master can't already cover the deficit, so
+	// a healthy fleet never churns fees.
+	let reclaim = { reclaimedSol: 0, moves: [], skipped: [], failed: [] };
+	if (totalDeficitSol > 0) {
+		try {
+			const masterSolNow = (await connection.getBalance(new PublicKey(ECONOMY_MASTER_ADDRESS), 'confirmed')) / 1e9;
+			if (Math.max(0, masterSolNow - RESERVE_SOL) < totalDeficitSol) {
+				reclaim = await reclaimIdleSol({ connection, network: 'mainnet', dryRun });
+			}
+		} catch (e) {
+			reclaim = { reclaimedSol: 0, moves: [], skipped: [], failed: [], error: e?.message || 'reclaim_failed' };
+		}
+	}
+	if (reclaim.reclaimedSol > 0 && !dryRun) {
+		await sendOpsAlert(
+			`♻️ Economy master reclaimed idle SOL`,
+			`pulled ${reclaim.reclaimedSol} SOL back from ${reclaim.moves.length} engine(s) to cover a ${totalDeficitSol.toFixed(3)} SOL deficit before spending revenue.`,
+			{ signature: `economy-reclaim:${reclaim.moves.map((m) => m.pubkey).join(',')}` },
+		);
+	}
+
+	// Self-healing, step 2 (revenue): if reclaim did not close the gap, convert a
+	// small bounded slice of the master's own idle USDC into native SOL. The
+	// circulation loop leaks SOL to fees every tick, so without a source the funding
+	// root drains to zero and /pulse goes quiet — this keeps the tank full from
+	// revenue instead of waiting on a human. No-op unless a genuine shortage remains
+	// AND there is spare USDC (see economy-fuel.js).
 	let fuel = { acted: false, reason: 'not_needed' };
 	if (totalDeficitSol > 0) {
 		try {
