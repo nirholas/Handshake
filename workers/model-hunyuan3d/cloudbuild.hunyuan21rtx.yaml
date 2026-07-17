@@ -1,32 +1,49 @@
 substitutions:
   _REGION: us-central1
   _RUN_SA: avatar-reconstruction-sa@aerial-vehicle-466722-p5.iam.gserviceaccount.com
-  _SERVICE: model-hunyuan3d-21
+  _SERVICE: model-hunyuan3d-21-rtx
   _REPO: model-hunyuan3d-21
   _GCS_BUCKET: three-ws-avatar-reconstructions
   _WEIGHTS_BUCKET: three-ws-model-weights
-  # min=0: this L4 build is the FALLBACK for the 2.1 lane; the warm primary is
-  # model-hunyuan3d-21-rtx (see cloudbuild.hunyuan21rtx.yaml), which runs on
-  # RTX PRO 6000 where the project quota is 1000 GPUs vs 3 L4s. A pinned L4
-  # here starved trellis/unirig/triposg rollouts of the 3-GPU regional budget.
-  # max=1: one L4 fits exactly one in-flight generation.
-  _MIN_INSTANCES: "0"
-  _MAX_INSTANCES: "1"
+  # The RTX PRO 6000 lane: Cloud Run's Blackwell GPU tier, where the project's
+  # quota is granted at 1000 (vs 3 for L4). Platform minimums for this GPU type
+  # are 20 CPU / 80Gi memory. min=1 keeps one instance warm so no request pays
+  # the ~18 GiB weight stage; max=4 gives real parallel PBR capacity.
+  _MIN_INSTANCES: "1"
+  _MAX_INSTANCES: "4"
 
 steps:
+  # Warm the layer cache: --cache-from only consults images already present on
+  # the builder, so pull rtx-latest first (tolerating its absence on the very
+  # first build) or every rebuild recompiles the CUDA extensions from scratch.
+  - id: pull-cache
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - docker pull ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:rtx-latest || exit 0
+
   - id: build
     name: gcr.io/cloud-builders/docker
     dir: workers/model-hunyuan3d
+    env:
+      # The bpy-stub step uses a heredoc (RUN python - <<'PY'), which only the
+      # BuildKit frontend parses; the legacy builder dies on it.
+      - DOCKER_BUILDKIT=1
     args:
       - build
       - --file
-      - Dockerfile.hunyuan21
+      - Dockerfile.hunyuan21rtx
+      # Embed cache metadata so the NEXT build's --cache-from can reuse layers
+      # (BuildKit images carry no cache manifest without this).
+      - --build-arg
+      - BUILDKIT_INLINE_CACHE=1
       - --tag
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:rtx-$SHORT_SHA
       - --tag
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:rtx-latest
       - --cache-from
-      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:rtx-latest
       - .
 
   - id: push
@@ -43,17 +60,17 @@ steps:
       - run
       - deploy
       - ${_SERVICE}
-      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:rtx-$SHORT_SHA
       - --region=${_REGION}
       - --service-account=${_RUN_SA}
       - --platform=managed
       - --port=8080
       - --gpu=1
-      - --gpu-type=nvidia-l4
+      - --gpu-type=nvidia-rtx-pro-6000
       - --no-gpu-zonal-redundancy
       - --no-cpu-throttling
-      - --cpu=8
-      - --memory=32Gi
+      - --cpu=20
+      - --memory=80Gi
       - --min-instances=${_MIN_INSTANCES}
       - --max-instances=${_MAX_INSTANCES}
       - --timeout=900
@@ -64,18 +81,17 @@ steps:
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest
 
 images:
-  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:$SHORT_SHA
-  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:latest
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:rtx-$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/server:rtx-latest
 
 options:
   machineType: E2_HIGHCPU_32
   logging: CLOUD_LOGGING_ONLY
 
 # The project's default compute service account was deleted (see
-# docs/ops/gcp-production.md) — every Cloud Build must pin the build SA
+# docs/ops/gcp-production.md): every Cloud Build must pin the build SA
 # explicitly or the submit fails with "Unknown service account".
 serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
 
-# The custom_rasterizer CUDA compile + the bpy/torch install push the build well
-# past the 10-minute default.
-timeout: 3600s
+# Full cold build compiles torch extensions for two CUDA archs; give it room.
+timeout: 7200s

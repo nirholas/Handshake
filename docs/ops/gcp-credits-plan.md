@@ -16,11 +16,29 @@ Six GPU services share those 3 GPUs:
 | model-triposg | image-to-3D | 0 | 2 |
 | unirig | auto-rigging | 1 | 2 |
 | avatar-reconstruction | photo-to-avatar | 1 | 3 |
+| model-hunyuan3d-21 | PBR realism lane, L4 fallback build (min 0 since 2026-07-17; a pinned min 1 here starved every other rollout) | 0 | 1 |
+
+`model-hunyuan3d-21-rtx` (same 2.1 PBR lane, warm min 1 / max 4) does NOT draw
+from this pool; it runs on the RTX PRO 6000 quota below.
 
 Four warm instances against a quota of 3 means the fleet is permanently at its ceiling: any concurrent generation forces failover to lower-quality lanes or queues. **This quota, not model parameters, is the current cap on 3D output quality and reliability.**
 
-- A quota preference exists: `l4-no-zonal-us-central1-8`, raised to **preferred 16** on 2026-07-16 (was 8). Google reviews asynchronously; check with:
+- A quota preference exists: `l4-no-zonal-us-central1-8`, raised to **preferred 16** on 2026-07-16 (was 8). Still reconciling as of 2026-07-17. Google reviews asynchronously; check with:
   `gcloud alpha quotas preferences list --project=aerial-vehicle-466722-p5`
+
+### The escape hatch that is ALREADY GRANTED: RTX PRO 6000
+
+`NvidiaRtxPro6000GpuAllocNoZonalRedundancyPerProjectRegion` is granted at
+**1000** for us-central1 (preference `rtx-pro-6000-uscentral1-3dpbr`). Cloud
+Run deploys with `--gpu-type=nvidia-rtx-pro-6000` there today (validated
+2026-07-17 with a live probe service); platform minimums for the type are
+**20 CPU / 80 Gi memory** per instance. Blackwell is compute capability 12.0,
+so images built for the L4 (cu121/cu124 stacks) do NOT run on it; a worker
+needs a CUDA 12.8 + torch 2.7 (cu128) rebuild. First mover:
+`workers/model-hunyuan3d/Dockerfile.hunyuan21rtx` (service
+`model-hunyuan3d-21-rtx`, warm min 1 / max 4). When an L4 lane needs headroom
+before the L4 grant lands, port it the same way rather than parking work on
+the quota.
 - **When granted ≥ 8, execute immediately (no owner input needed):**
   ```sh
   gcloud run services update model-trellis   --region us-central1 --max-instances=3

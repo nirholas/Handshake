@@ -71,7 +71,7 @@ const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.18;
@@ -89,7 +89,7 @@ pitchRig.add(camera);
 const yawRig = new THREE.Object3D();
 yawRig.add(pitchRig);
 yawRig.position.set(0, 1.62, 3.1);
-yawRig.rotation.y = Math.PI; // face the kitchen and the big window
+yawRig.rotation.y = 0; // face north: kitchen and the big window
 scene.add(yawRig);
 
 /* ------------------------------------------------------------------ */
@@ -207,7 +207,7 @@ const M = {
   steel:     new THREE.MeshStandardMaterial({ color: 0x9aa0a6, roughness: 0.35, metalness: 0.8 }),
   woodDark:  new THREE.MeshStandardMaterial({ color: 0x5a3a22, roughness: 0.6 }),
   woodMid:   new THREE.MeshStandardMaterial({ color: 0x8a5c34, roughness: 0.6 }),
-  doorPurple:new THREE.MeshStandardMaterial({ color: 0x6b4a86, roughness: 0.7 }),
+  doorPurple:new THREE.MeshStandardMaterial({ color: 0x5c3b7e, roughness: 0.7 }),
   doorWood:  new THREE.MeshStandardMaterial({ color: 0xcfbfa2, roughness: 0.75 }),
   frameYellow:new THREE.MeshStandardMaterial({ color: 0xe8b84b, roughness: 0.5 }),
   sofa:      new THREE.MeshStandardMaterial({ color: 0xb5806a, roughness: 0.95 }),   // dusty rose-tan
@@ -456,10 +456,10 @@ door('z', -HX, 1.2, M.doorWood);                        // Rachel's room
   }
   // open shelves with dishes on west wall
   for (let s = 0; s < 2; s++) {
-    box(0.9, 0.03, 0.26, M.woodMid, -HX + WT / 2 + 0.14, 1.6 + s * 0.42, -1.4, { shadow: false, ry: 0 });
+    box(0.26, 0.03, 0.7, M.woodMid, -HX + WT / 2 + 0.14, 1.6 + s * 0.42, -0.95, { shadow: false });
     for (let p = 0; p < 3; p++) {
       const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.085, 0.09, 14), M.appliance);
-      plate.position.set(-HX + WT / 2 + 0.14, 1.67 + s * 0.42, -1.68 + p * 0.28);
+      plate.position.set(-HX + WT / 2 + 0.14, 1.67 + s * 0.42, -1.2 + p * 0.25);
       scene.add(plate);
     }
   }
@@ -591,14 +591,14 @@ function chair(x, z, ry, seatMat) {
   const shadeS = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.16, 0.2, 16, 1, true), M.lampShade);
   shadeS.position.set(3.15, 0.98, -0.6); scene.add(shadeS);
 
-  // floor lamp near the green chair
+  // floor lamp behind the green chair
   const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.03, 1.45, 10), M.black);
-  stem.position.set(-0.5, 0.73, 2.5); scene.add(stem);
+  stem.position.set(-1.25, 0.73, 1.9); scene.add(stem);
   const base = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.18, 0.04, 16), M.black);
-  base.position.set(-0.5, 0.02, 2.5); scene.add(base);
+  base.position.set(-1.25, 0.02, 1.9); scene.add(base);
   const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.2, 0.28, 16, 1, true), M.lampShade);
-  shade.position.set(-0.5, 1.56, 2.5); scene.add(shade);
-  addCollider(-0.68, -0.32, 2.32, 2.68);
+  shade.position.set(-1.25, 1.56, 1.9); scene.add(shade);
+  addCollider(-1.43, -1.07, 1.72, 2.08);
 }
 
 /* ------------------------------------------------------------------ */
@@ -668,7 +668,7 @@ function chair(x, z, ry, seatMat) {
 
   // floor lamp light
   const fl = new THREE.PointLight(0xffb46e, 26, 10, 2);
-  fl.position.set(-0.5, 1.6, 2.5);
+  fl.position.set(-1.25, 1.6, 1.9);
   fl.castShadow = true;
   fl.shadow.mapSize.set(1024, 1024);
   fl.shadow.bias = -0.004;
@@ -728,11 +728,12 @@ function blocked(x, z) {
   return false;
 }
 
-const clock = new THREE.Clock();
+const timer = new THREE.Timer();
 let bobT = 0;
 
 function tick() {
-  const dt = Math.min(clock.getDelta(), 0.05);
+  timer.update();
+  const dt = Math.min(timer.getDelta(), 0.05);
 
   if (playing) {
     const run = keys['ShiftLeft'] || keys['ShiftRight'];

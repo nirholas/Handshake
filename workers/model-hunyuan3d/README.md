@@ -10,6 +10,7 @@ Cloud Run services**, because their Python stacks are mutually incompatible
 |---|---|---|---|---|
 | `model-hunyuan3d` | Hunyuan3D-2.0 | [`main.py`](./main.py) | [`Dockerfile`](./Dockerfile) | single baked diffuse texture |
 | `model-hunyuan3d-21` | **Hunyuan3D-2.1** | [`app21.py`](./app21.py) | [`Dockerfile.hunyuan21`](./Dockerfile.hunyuan21) | **PBR: baseColor + metallicRoughness + normal** |
+| `model-hunyuan3d-21-rtx` | **Hunyuan3D-2.1** | [`app21.py`](./app21.py) | [`Dockerfile.hunyuan21rtx`](./Dockerfile.hunyuan21rtx) | same PBR set, on **RTX PRO 6000 (Blackwell)** |
 
 **2.1 is the realism lane.** It runs the `hy3dshape` shape DiT, then the
 `hy3dpaint` PBR paint pass (multiview PBR diffusion → RealESRGAN super-res →
@@ -20,8 +21,20 @@ in the platform's own GPU fleet. 2.0 remains deployed and untouched as the
 instant fallback lane: to roll back, repoint `GCP_HUNYUAN3D_URL` at the
 `model-hunyuan3d` service URL — no rebuild.
 
-Both services speak the **same wire contract**, so either URL drops straight
+All three services speak the **same wire contract**, so any URL drops straight
 into the platform's `GCP_HUNYUAN3D_URL` env.
+
+**Why an RTX build exists.** All L4 services in us-central1 share one quota of
+3 GPUs, and the fleet is permanently at that ceiling; the RTX PRO 6000 quota in
+the same region is granted at 1000. `Dockerfile.hunyuan21rtx` is the same
+app21.py on a CUDA 12.8 / torch 2.7.1 (cu128) stack, because Blackwell is
+compute capability 12.0 and the cu124 wheels in the L4 image ship no sm_120
+kernels. Its extensions compile for both 8.9 and 12.0, so the RTX image also
+runs on an L4 if ever needed. Deploy with
+[`cloudbuild.hunyuan21rtx.yaml`](./cloudbuild.hunyuan21rtx.yaml) (BuildKit,
+inline layer cache); platform minimums for the GPU type are 20 CPU / 80 Gi. The
+RTX service runs warm (min 1, max 4) as the 2.1 primary; the L4 build stays
+deployed at min 0 as the instant fallback.
 
 ## License
 

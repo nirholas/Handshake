@@ -71,7 +71,6 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from typing import Optional
 
-import torch
 from fastapi import FastAPI, HTTPException, Header, BackgroundTasks
 from google.api_core.exceptions import NotFound
 from google.cloud import storage
@@ -200,6 +199,13 @@ def _quality_for(tier: str | None) -> dict:
 
 def _load_pipeline():
     global _pipeline
+    # torch is imported HERE, not at module scope: importing it cold reads
+    # multi-GiB CUDA libraries off the streamed image filesystem and can eat
+    # most of Cloud Run's hard 240s startup-probe ceiling. Keeping module
+    # import light means uvicorn binds the port in seconds, deterministically;
+    # this loader already runs off the request path in a worker thread.
+    import torch  # noqa: F401 (heavyweight import deferred to the load thread)
+
     # The 2.1 repo is cloned to REPO_ROOT in the image and expects its two
     # package dirs on sys.path plus cwd==REPO_ROOT (the paint config references
     # cfg/ckpt files by repo-relative path). The Dockerfile sets WORKDIR there.
@@ -503,11 +509,15 @@ async def get_task(task_id: str, authorization: str = Header(...)) -> dict:
 
 @app.get("/health")
 async def health() -> dict:
+    # torch imports lazily in the loader thread; before it lands, report the
+    # GPU as unknown rather than blocking the health endpoint on the import.
+    torch = sys.modules.get("torch")
+    gpu = bool(torch and torch.cuda.is_available())
     return {
         "ok": True,
         "model": MODEL_LABEL,
-        "gpu_available": torch.cuda.is_available(),
-        "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
+        "gpu_available": gpu if torch else None,
+        "gpu_name": torch.cuda.get_device_name(0) if gpu else None,
         "pipeline_loaded": _pipeline is not None,
         "ready": bool(_ready and _ready.is_set()),
         "load_error": _load_error,
