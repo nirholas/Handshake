@@ -1091,7 +1091,10 @@
 		   topbar, when a new agent enters your bubble. Glassy, quiet, auto-dismisses. */
 		.irl-arrival-cue {
 			position: fixed;
-			top: calc(env(safe-area-inset-top, 0px) + 64px);
+			/* Clear the top bar (Back / IRL / nearby / Live chips): at 64px this pill
+			   painted straight over the chip row and the floating name plates. Drop it
+			   below the bar so the arrival cue reads as its own calm layer. */
+			top: calc(env(safe-area-inset-top, 0px) + 96px);
 			left: 50%;
 			z-index: 46;
 			max-width: min(92vw, 360px);

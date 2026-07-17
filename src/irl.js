@@ -165,8 +165,9 @@ const subtitleEl  = $('irl-subtitle');
 const SUBTITLE = {
 	cameraOff: 'Turn on Camera AR, then tap Pin here to anchor your agent in real space.',
 	aiming:    'Tap Move here to set your agent on the floor, then Pin here to anchor it.',
-	placing:   'Aim the ring at the floor and tap to set your agent down — then Pin here.',
+	placing:   'Aim the ring at the floor and tap to set your agent down, then Pin here.',
 	pinned:    'Your agent is anchored here. Tap Pin here again to release it.',
+	orbit:     'Drag to orbit your agent. Turn on Camera AR to place it in your real room.',
 };
 function setSubtitle(text) { if (subtitleEl) subtitleEl.textContent = text; }
 const statusEl    = $('irl-status');
@@ -526,7 +527,7 @@ async function _enableARBody() {
 	arFrozenCamPos  = camera.position.clone();
 	arFrozenCamLook = camLookCurrent.clone();
 
-	setStatus('Camera on — aim at a spot, then tap Pin here');
+	setStatus('Camera on. Aim at a spot, then tap Pin here');
 }
 
 function disableAR() {
@@ -769,7 +770,7 @@ function placeAvatarAt(point) {
 	const dx = camera.position.x - point.x, dz = camera.position.z - point.z;
 	if (dx * dx + dz * dz > 1e-4) avatarYaw = Math.atan2(dx, dz);
 	carryReticle.scale.setScalar(1.4); // confirm pulse — eased back to rest in tick()
-	setStatus('Agent set down — tap Pin here to anchor it in the room');
+	setStatus('Agent set down. Tap Pin here to anchor it in the room');
 	_saveSession();
 }
 
@@ -973,7 +974,7 @@ canvas.addEventListener('touchmove', e => {
 	if (s == null) return;
 	_camScale = s;
 	avatarRig.scale.setScalar(s);
-	setStatus(`Size ${Math.round(s * 100)}% — pinch to resize`);
+	setStatus(`Size ${Math.round(s * 100)}%. Pinch to resize`);
 }, { passive: true });
 canvas.addEventListener('touchend', () => {
 	const s = pinchEnd(_camPinch);
@@ -981,7 +982,7 @@ canvas.addEventListener('touchend', () => {
 	_camPinchEndedAt = performance.now();
 	_camScale = s;
 	if (!gpsPin?.id) {
-		setStatus(`Size ${Math.round(s * 100)}% — tap Pin here to save your agent at this size`);
+		setStatus(`Size ${Math.round(s * 100)}%. Tap Pin here to save your agent at this size`);
 		return;
 	}
 	fetch('/api/irl/pins', {
@@ -990,7 +991,7 @@ canvas.addEventListener('touchend', () => {
 		body: JSON.stringify({ id: gpsPin.id, deviceToken: _deviceToken, scale: s }),
 	}).then(r => {
 		if (!r.ok) { setStatus('Size couldn’t be saved, pinch again to retry', { error: true }); return; }
-		setStatus(`Saved at ${Math.round(s * 100)}% size — nearby viewers see it this big too`);
+		setStatus(`Saved at ${Math.round(s * 100)}% size. Nearby viewers see it this big too`);
 	}).catch(() => setStatus('Size couldn’t be saved (offline?), pinch again to retry', { error: true }));
 }, { passive: true });
 
@@ -1446,10 +1447,11 @@ async function setLocked(next) {
 				anchorGpsPin();
 			} else if (locGranted) {
 				_pendingGpsLock = true;
-				setStatus('Getting your location to place the pin — this is quicker outdoors with a clear view of the sky.', { loading: true, sticky: true });
+				setStatus('Getting your location to place the pin. This is quicker outdoors with a clear view of the sky.', { loading: true, sticky: true });
 			} else {
 				// Location unavailable — lock the gyro view locally; no cross-user pin.
 				setStatus('Your agent is pinned on this device. Turn on location to place it at this real-world spot for others.', { warn: true });
+			setSubtitle(SUBTITLE.pinned);
 			}
 		} else {
 			setSubtitle(SUBTITLE.aiming);
@@ -1479,10 +1481,14 @@ async function setLocked(next) {
 			avatarRig.scale.setScalar(1);
 		}
 	}
-	// In AR the lock path owns its own status — the deferred-GPS "Waiting…",
-	// the no-compass warning, and the final "Pinned facing …" from commitPin —
-	// so don't clobber it here. Only the non-AR orbit lock and unlock fall through.
-	if (!arActive) setStatus(next ? 'Agent pinned — drag to orbit' : 'Agent unpinned');
+	// In AR the lock path owns its own status (the deferred-GPS "Waiting…", the
+	// no-compass warning, and the final "Pinned facing …" from commitPin), so don't
+	// clobber it here. Only the non-AR orbit lock and unlock fall through, and they
+	// own the subtitle signpost too, so it never contradicts this transient status.
+	if (!arActive) {
+		setSubtitle(next ? SUBTITLE.orbit : SUBTITLE.cameraOff);
+		setStatus(next ? 'Agent pinned. Drag to orbit.' : 'Agent unpinned');
+	}
 	else if (!next) setStatus('Agent unpinned');
 	_saveSession();
 }
@@ -3456,10 +3462,10 @@ async function enterQuickLookPlacement() {
 		// Quick Look is a separate system viewer — it places-and-views the agent on
 		// your real floor but can't hand a pose back to our canvas, so the durable,
 		// shareable pin still comes from the Pin path. State that, no silent gap.
-		setStatus('Opening AR — point at your floor to place your agent. To leave a shareable pin nearby people can find, tap Pin here.', { sticky: true });
+		setStatus('Opening AR. Point at your floor to place your agent. To leave a shareable pin nearby people can find, tap Pin here.', { sticky: true });
 	} catch (err) {
 		log.error('[irl] Quick Look prep failed:', err);
-		setStatus('Couldn’t prepare AR for this agent — use Pin here for compass + GPS placement instead.', { error: true, sticky: true });
+		setStatus('Couldn’t prepare AR for this agent. Use Pin here for compass + GPS placement instead.', { error: true, sticky: true });
 	} finally {
 		if (anchorBtn) { anchorBtn.classList.remove('is-active'); anchorBtn.disabled = false; }
 	}
@@ -3642,7 +3648,7 @@ let _cueBannerTimer = null;
 function showArrivalBanner() {
 	const el = document.getElementById('irl-arrival-cue');
 	if (!el) return;
-	el.textContent = 'An agent is near — look around';
+	el.textContent = 'An agent is near, look around';
 	el.classList.add('is-visible');
 	el.hidden = false;
 	clearTimeout(_cueBannerTimer);
@@ -3651,6 +3657,26 @@ function showArrivalBanner() {
 		// Keep it in the DOM (hidden) so the next arrival re-announces cleanly.
 		setTimeout(() => { if (!el.classList.contains('is-visible')) el.hidden = true; }, 320);
 	}, 4200);
+}
+
+// Dismiss the "look around" banner the moment its whole point is moot: an agent is
+// already on screen, so the visible avatar is the cue. Called from the per-frame
+// nudge pass, which is where on-screen membership is computed.
+function dismissArrivalBanner() {
+	const el = document.getElementById('irl-arrival-cue');
+	if (!el || !el.classList.contains('is-visible')) return;
+	clearTimeout(_cueBannerTimer);
+	el.classList.remove('is-visible');
+	setTimeout(() => { if (!el.classList.contains('is-visible')) el.hidden = true; }, 320);
+}
+
+// Is any rendered nearby agent currently drawing inside the view frustum? Reuses the
+// same projection test the LOD/nudge passes use, so "on screen" means one thing.
+function anyAgentOnScreen() {
+	for (const pin of nearbyPins) {
+		if (pin.group && pinOnScreen(pin)) return true;
+	}
+	return false;
 }
 
 // Fire the full arrival cue for a freshly-in-range agent: haptic (where supported),
@@ -3664,9 +3690,11 @@ function fireArrivalCue() {
 	// it's a bonus, never the cue. A short double-tap reads as "notice me".
 	try { navigator.vibrate?.([18, 40, 18]); } catch {}
 	playArrivalChime();
-	showArrivalBanner();
+	// Only nudge them to "look around" when the newcomer isn't already framed on
+	// screen. A visible avatar is its own arrival cue, so the banner would be noise.
+	if (!anyAgentOnScreen()) showArrivalBanner();
 	// Flash the arrival on paired glasses too (no-op when none connected).
-	glassesBridge.announce('Agent nearby — look around');
+	glassesBridge.announce('Agent nearby, look around');
 }
 
 onPinStable(() => fireArrivalCue());
@@ -3722,8 +3750,8 @@ function updateDirectionalNudge(dt) {
 	const halfHFov = Math.atan(Math.tan(halfVFov) * aspect);
 
 	// Already looking at the nearest agent (and it's actually drawing on-screen)? The
-	// avatar is the cue now — fade the hint.
-	if (isFacingAgent(relBearing, halfHFov) && pinOnScreen(target.pin)) { _hideNudge(); return; }
+	// avatar is the cue now: fade the hint and retire the "look around" banner with it.
+	if (isFacingAgent(relBearing, halfHFov) && pinOnScreen(target.pin)) { _hideNudge(); dismissArrivalBanner(); return; }
 
 	const { x, y, rotateDeg } = edgeNudgePlacement(relBearing, window.innerWidth, window.innerHeight);
 	_nudgeEl.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
@@ -4620,12 +4648,12 @@ function updateNearbyBadge() {
 	let text, mod;
 	if (_nearbyError) {
 		// Visible, not silent: the 15 s poll retries; show we know the data is stale.
-		text = n > 0 ? `${n} nearby · refresh failed` : 'Couldn’t load nearby — retrying…';
+		text = n > 0 ? `${n} nearby · refresh failed` : 'Couldn’t load nearby, retrying…';
 		mod = 'is-error';
 	} else if (_nearbyRateLimited) {
 		// Calm + specific + self-healing: we backed off, the next cycle resumes. Keep any
 		// pins we already have visible ("N nearby · catching up"); never an error tone.
-		text = n > 0 ? `${n} nearby · catching up…` : 'Refreshing too fast — catching up…';
+		text = n > 0 ? `${n} nearby · catching up…` : 'Refreshing too fast, catching up…';
 		mod = 'is-rate';
 	} else if (n > 0) {
 		text = `${n} nearby`;
@@ -4633,7 +4661,7 @@ function updateNearbyBadge() {
 	} else if (gpsState.ready && _nearbyLoaded) {
 		// GPS-ready, the first read has landed, and nobody's here — a designed empty state
 		// that invites the user to be the first, rather than hiding (reads as "feature off").
-		text = 'No agents nearby — be the first to pin here';
+		text = 'No agents nearby. Be the first to pin here';
 		mod = 'is-empty';
 	} else if (gpsState.ready) {
 		// Fix in hand but the first proximity read hasn't returned — still "looking", NOT
@@ -6279,10 +6307,27 @@ const _lblVec = new Vector3();
 // and interact with — a visible agent across the street shouldn't claim it.
 const FOCUS_REACH_M = 60;
 let _focusPin = null;
+
+// Keep name plates clear of the top bar and de-collide plates that stack. A plate
+// anchors at its bottom edge (CSS translateY -100%), so its top sits ~_LABEL_H above
+// the anchor; clamp the anchor to the bar height + one plate height so a plate above
+// a close/tall avatar never paints under the Back/Live/nearby chrome.
+let _topbarSafeY = 96;
+function measureTopbarSafeY() {
+	const tb = document.querySelector('.irl-topbar');
+	_topbarSafeY = (tb ? tb.getBoundingClientRect().height : 88) + 8;
+}
+measureTopbarSafeY();
+const _LABEL_H = 30;         // approx plate height, for the topbar clamp
+const _LABEL_MIN_GAP = 30;   // min vertical separation between stacked plates
+const _LABEL_X_OVERLAP = 92; // horizontal proximity (px) that counts as a collision
+const _visibleLabels = [];   // reused per-frame scratch: on-screen plates to place
+
 function updateLabels() {
 	// Pick the nearest on-screen agent within reach as the proximity focus target
 	// (B4) in the same projection pass — the "you'll tap this" affordance.
 	let focusPin = null, focusDist = Infinity;
+	_visibleLabels.length = 0;
 	for (const pin of nearbyPins) {
 		// Skip pins with no label/group, ones culled by enforceLOD, and ones past the
 		// tier's label cap (_labelAllowed === false). This bounds the live DOM label
@@ -6300,20 +6345,43 @@ function updateLabels() {
 		_lblVec.project(camera);
 		if (_lblVec.z > 1) { pin.labelEl.style.display = 'none'; pin._labelOnScreen = false; continue; }
 		const sx = (_lblVec.x * 0.5 + 0.5) * window.innerWidth;
-		const sy = (-_lblVec.y * 0.5 + 0.5) * window.innerHeight;
+		let sy = (-_lblVec.y * 0.5 + 0.5) * window.innerHeight;
 		const offscreen = sx < -80 || sx > window.innerWidth + 80 || sy < -80 || sy > window.innerHeight + 80;
-		pin.labelEl.style.display = offscreen ? 'none' : 'block';
+		if (offscreen) { pin.labelEl.style.display = 'none'; pin._labelOnScreen = false; continue; }
+		// Never let a plate ride up under the top bar.
+		const minY = _topbarSafeY + _LABEL_H;
+		if (sy < minY) sy = minY;
+		_visibleLabels.push({ pin, sx, sy });
+	}
+	// De-collide stacked plates: agents lined up front-to-back — or two people with
+	// the same name — project to nearly the same screen point and paint as one
+	// unreadable smudge. Walk them top-down and push each colliding plate below the
+	// one above it so every name stays legible. Bounded by BUDGET.label, so O(n²) is
+	// a handful of comparisons.
+	if (_visibleLabels.length > 1) {
+		_visibleLabels.sort((a, b) => a.sy - b.sy);
+		for (let i = 1; i < _visibleLabels.length; i++) {
+			const cur = _visibleLabels[i];
+			for (let j = 0; j < i; j++) {
+				const prev = _visibleLabels[j];
+				if (Math.abs(cur.sx - prev.sx) < _LABEL_X_OVERLAP && cur.sy - prev.sy < _LABEL_MIN_GAP) {
+					cur.sy = prev.sy + _LABEL_MIN_GAP;
+				}
+			}
+		}
+	}
+	for (const entry of _visibleLabels) {
+		const { pin, sx, sy } = entry;
+		pin.labelEl.style.display = 'block';
 		pin.labelEl.style.left    = `${sx}px`;
 		pin.labelEl.style.top     = `${sy}px`;
 		// Cache the projected label centre + visibility for the tap handler's 2D
 		// label net (_nearestLabelWithinSlop) — no re-projection on tap.
 		pin._labelSx = sx;
 		pin._labelSy = sy;
-		pin._labelOnScreen = !offscreen;
-		if (!offscreen) {
-			const dm = pin.distance_m ?? Math.hypot(pin.group.position.x, pin.group.position.z);
-			if (dm <= FOCUS_REACH_M && dm < focusDist) { focusDist = dm; focusPin = pin; }
-		}
+		pin._labelOnScreen = true;
+		const dm = pin.distance_m ?? Math.hypot(pin.group.position.x, pin.group.position.z);
+		if (dm <= FOCUS_REACH_M && dm < focusDist) { focusDist = dm; focusPin = pin; }
 	}
 	// Exactly one agent is focused at a time; the swap is eased by the label's
 	// transform/box-shadow transition. Cheap: only touches the class on change.
@@ -6482,6 +6550,7 @@ function onViewportChanged() {
 		camera.updateProjectionMatrix();
 		applyCameraFov(); // no-op when AR is off; re-derives + refreshes projection otherwise
 		rebaselineGyroForScreenAngle();
+		measureTopbarSafeY(); // safe-area / rotation can change the bar's height
 	});
 }
 // `screen.orientation.angle` for the landscape gyro-frame correction. Falls back

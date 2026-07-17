@@ -31,6 +31,14 @@
 			<description>Until now AR on three.ws was one model at a time: generate, view, exit. The new AR Studio at three.ws/ar/studio is a live scene through your camera where you can place as many models and avatars as you like together in your real space. Pull in your own forge creations, the community feed, or any GLB link; type a prompt and a brand-new model is generated behind the live view and drops into the room when ready. Drag to move, pinch to resize, twist to rotate, duplicate or remove any model. On Android each model gets its own world anchor in immersive AR; on iPhone the camera view with gyro look works out of the box; on desktop you arrange the scene and send it to your phone with a QR code. Your scene survives a refresh, humanoid avatars idle naturally instead of standing frozen, and a photo button captures the whole composition.</description>
 		</item>
 		<item>
+			<title>Avatar gallery previews now read clearly at a glance</title>
+			<link>https://three.ws/gallery</link>
+			<guid isPermaLink="false">2026-07-17:Avatar gallery previews now read clearly at a glance</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Gallery previews used to be shot dead-on against a near-black background, so dark models vanished and every card looked the same. Previews are now framed from a natural three-quarter angle, fill the card, and stand on a subtly tinted stage unique to each avatar. Prompt-created avatars also got more distinctive: sparse prompts like 'a knight' now commit to a specific look (age, build, hairstyle, palette, one signature detail) instead of converging on the same generic person. Every platform-generated avatar still appears in the galleries.</description>
+		</item>
+		<item>
 			<title>Avatars you generate now come out truly animation-ready</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-07-17:Avatars you generate now come out truly animation-ready</guid>
@@ -79,6 +87,14 @@
 			<description>The Forge realism engine (Hunyuan3D 2.1) is now live on a new flagship-class GPU (NVIDIA RTX PRO 6000 Blackwell, 96 GB). High-tier image-to-3D generations now come out with true physically-based materials: real metal, roughness, and color maps that catch light like photographed objects instead of flat plastic. The new hardware is also dramatically faster; the full shape-plus-texture pass finished in about a minute in our live verification, where the previous GPU class could not even load the model. Alongside it, every 3D generation service is healthy again and all of yesterday’s reliability fixes are fully rolled out across the fleet.</description>
 		</item>
 		<item>
+			<title>IRL is calmer to use: one clear next step, name tags that stay readable</title>
+			<link>https://three.ws/irl</link>
+			<guid isPermaLink="false">2026-07-17:IRL is calmer to use: one clear next step, name tags that stay readable</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The live IRL view stopped talking over itself. Before, you could see &quot;Turn on Camera AR&quot; and &quot;Agent pinned&quot; at the same time, which contradicted each other; now the guidance line and the status line always agree. The floating name tag above each nearby agent is kept clear of the top bar instead of colliding with the Back and Live chips, and when two agents line up front-to-back their tags fan out so both names stay legible rather than stacking into one smudge. The &quot;an agent is near, look around&quot; nudge no longer appears when that agent is already standing in front of you, and it clears itself the moment you turn to face them.</description>
+		</item>
+		<item>
 			<title>Paid API calls no longer fail when two agents buy the same-priced service at once</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-17:Paid API calls no longer fail when two agents buy the same-priced service at once</guid>
@@ -117,14 +133,6 @@
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Two improvements to the closed-loop x402 agent economy that dogfoods every paid endpoint on the platform. First, a fix: a background wallet-consolidation job was quietly closing the ring's payment account after every settlement, forcing the next one to recreate it and pay account rent each time. That single bug had pushed the real fee cost to roughly a hundred times where it should be. With it fixed and single-signature settlement turned on, each settlement is back to the network floor of a few thousandths of a cent, and the ring's working balance stays in the loop instead of leaking away. Second, a new capability: the ring can now cycle payments through a reusable pool of hundreds to a thousand distinct wallets instead of one, so the economy reads as many participants rather than a single account, with no extra cost per payment. The pool is off until funded and activated, and every wallet in it stays clearly labeled internal dogfooding, not organic demand.</description>
-		</item>
-		<item>
-			<title>The avatar gallery now shows every avatar's true colors</title>
-			<link>https://three.ws/gallery</link>
-			<guid isPermaLink="false">2026-07-17:The avatar gallery now shows every avatar's true colors</guid>
-			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
-			<category>improvement</category>
-			<description>The public gallery had turned into a wall of near-identical dark cards: a third of it was automatic copies of the same few avatars, and every preview was shot dead-on against a black background where dark models simply vanished. Copies made for agent-card previews no longer appear in the gallery, so what you see is originals only. Previews are now framed from a natural three-quarter angle, fill the card, and stand on a subtly tinted stage unique to each avatar. Prompt-created avatars also got more distinctive: sparse prompts like 'a knight' now commit to a specific look (age, build, hairstyle, palette, one signature detail) instead of converging on the same generic person.</description>
 		</item>
 		<item>
 			<title>The Money Pulse is beating again</title>

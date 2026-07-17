@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T09:46:43.677Z",
+	"generated_at": "2026-07-17T10:13:40.857Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -34,6 +34,17 @@
 			"link": "/ar/studio",
 			"tags": [
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "Avatar gallery previews now read clearly at a glance",
+			"summary": "Gallery previews used to be shot dead-on against a near-black background, so dark models vanished and every card looked the same. Previews are now framed from a natural three-quarter angle, fill the card, and stand on a subtly tinted stage unique to each avatar. Prompt-created avatars also got more distinctive: sparse prompts like 'a knight' now commit to a specific look (age, build, hairstyle, palette, one signature detail) instead of converging on the same generic person. Every platform-generated avatar still appears in the galleries.",
+			"link": "/gallery",
+			"tags": [
+				"improvement",
+				"fix"
 			]
 		},
 		{
@@ -105,6 +116,16 @@
 		{
 			"date": "2026-07-17",
 			"type": "update",
+			"title": "IRL is calmer to use: one clear next step, name tags that stay readable",
+			"summary": "The live IRL view stopped talking over itself. Before, you could see \"Turn on Camera AR\" and \"Agent pinned\" at the same time, which contradicted each other; now the guidance line and the status line always agree. The floating name tag above each nearby agent is kept clear of the top bar instead of colliding with the Back and Live chips, and when two agents line up front-to-back their tags fan out so both names stay legible rather than stacking into one smudge. The \"an agent is near, look around\" nudge no longer appears when that agent is already standing in front of you, and it clears itself the moment you turn to face them.",
+			"link": "/irl",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
 			"title": "Paid API calls no longer fail when two agents buy the same-priced service at once",
 			"summary": "Since July 9, a few hundred paid x402 calls a day were answered with a 502 after the buyer's USDC transfer was rejected on Solana. Two payments for the same price, signed in the same few-second window, could compile to byte-identical transactions, and only the first one could ever land. Every payment now carries its own tiny priority-fee fingerprint, so simultaneous same-priced purchases each settle cleanly, and settlement errors now name their real cause in our logs so future issues surface faster.",
 			"link": null,
@@ -153,17 +174,6 @@
 				"fix",
 				"improvement",
 				"infra"
-			]
-		},
-		{
-			"date": "2026-07-17",
-			"type": "update",
-			"title": "The avatar gallery now shows every avatar's true colors",
-			"summary": "The public gallery had turned into a wall of near-identical dark cards: a third of it was automatic copies of the same few avatars, and every preview was shot dead-on against a black background where dark models simply vanished. Copies made for agent-card previews no longer appear in the gallery, so what you see is originals only. Previews are now framed from a natural three-quarter angle, fill the card, and stand on a subtly tinted stage unique to each avatar. Prompt-created avatars also got more distinctive: sparse prompts like 'a knight' now commit to a specific look (age, build, hairstyle, palette, one signature detail) instead of converging on the same generic person.",
-			"link": "/gallery",
-			"tags": [
-				"improvement",
-				"fix"
 			]
 		},
 		{

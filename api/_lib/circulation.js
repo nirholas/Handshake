@@ -317,11 +317,11 @@ async function claimUsername(base) {
 // the coin launcher can use it as the token image. Returns the new avatar id or
 // null when no public avatar exists yet.
 //
-// Clones are inserted as 'unlisted', not 'public': they exist to give an agent
-// card a preview (agents/public.js treats unlisted thumbnails as card-visible),
-// not to be discovered. Public clones once made up a third of the gallery
-// (dozens of identical "My First Agent" cards) because every signup's draft
-// agent got a public copy of the same few source bodies.
+// Clones are public — every platform-generated body belongs in the galleries so
+// users see the full breadth of what the platform makes. The way clones stop
+// looking repetitive is upstream: the source pool must be genuinely diverse
+// (see the composer lane in api/_lib/avatar-composer/), so a random draw lands
+// on a distinct avatar instead of one of a handful of recolored base bodies.
 //
 // Exported: api/cron/agent-avatar-backfill.js reuses this to heal pre-existing
 // agents whose avatar_id is NULL, so every agent card can show a real preview.
@@ -357,7 +357,7 @@ export async function cloneAvatarFor(userId, name) {
 			${userId}, ${slug}, ${name}, ${'Operated by a three.ws agent'},
 			${src.storage_key}, ${src.size_bytes ?? 0}, ${src.content_type || 'model/gltf-binary'},
 			${src.source || 'import'}, ${JSON.stringify({ circulation: true, cloned_from: src.id })}::jsonb,
-			${src.thumbnail_key ?? null}, 'unlisted', ${src.tags ?? []}, ${src.model_category ?? null}, now(), now()
+			${src.thumbnail_key ?? null}, 'public', ${src.tags ?? []}, ${src.model_category ?? null}, now(), now()
 		)
 		returning id
 	`;

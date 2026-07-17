@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "IRL is calmer to use: one clear next step, name tags that stay readable",
+			"summary": "The live IRL view stopped talking over itself. Before, you could see \"Turn on Camera AR\" and \"Agent pinned\" at the same time, which contradicted each other; now the guidance line and the status line always agree. The floating name tag above each nearby agent is kept clear of the top bar instead of colliding with the Back and Live chips, and when two agents line up front-to-back their tags fan out so both names stay legible rather than stacking into one smudge. The \"an agent is near, look around\" nudge no longer appears when that agent is already standing in front of you, and it clears itself the moment you turn to face them.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/irl"
+		},
+		{
+			"date": "2026-07-17",
 			"title": "Selfie to 3D works again: finished avatars were being thrown away at the last step",
 			"summary": "Since the July infrastructure move, the selfie and photo reconstruction pipeline was failing with a generic \"hit a snag\" message even though the 3D engine finished every job. The security check that vets where a finished model may be downloaded from did not yet trust our own Google Cloud Storage results, so completed avatars were rejected at the final step. The check now recognizes our own storage, and any generation that was wrongly marked failed has been recovered. If your selfie avatar failed recently, it should now appear, or simply retry.",
 			"tags": [
@@ -14203,8 +14212,8 @@
 		},
 		{
 			"date": "2026-07-17",
-			"title": "The avatar gallery now shows every avatar's true colors",
-			"summary": "The public gallery had turned into a wall of near-identical dark cards: a third of it was automatic copies of the same few avatars, and every preview was shot dead-on against a black background where dark models simply vanished. Copies made for agent-card previews no longer appear in the gallery, so what you see is originals only. Previews are now framed from a natural three-quarter angle, fill the card, and stand on a subtly tinted stage unique to each avatar. Prompt-created avatars also got more distinctive: sparse prompts like 'a knight' now commit to a specific look (age, build, hairstyle, palette, one signature detail) instead of converging on the same generic person.",
+			"title": "Avatar gallery previews now read clearly at a glance",
+			"summary": "Gallery previews used to be shot dead-on against a near-black background, so dark models vanished and every card looked the same. Previews are now framed from a natural three-quarter angle, fill the card, and stand on a subtly tinted stage unique to each avatar. Prompt-created avatars also got more distinctive: sparse prompts like 'a knight' now commit to a specific look (age, build, hairstyle, palette, one signature detail) instead of converging on the same generic person. Every platform-generated avatar still appears in the galleries.",
 			"tags": [
 				"improvement",
 				"fix"

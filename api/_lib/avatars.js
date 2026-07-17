@@ -260,16 +260,11 @@ export async function searchPublicAvatars({
 }) {
 	limit = Math.min(Math.max(limit, 1), 100);
 	const params = [];
-	// Circulation clones (source_meta.circulation) are byte-for-byte copies of
-	// existing gallery avatars minted so agent cards have a preview
-	// (circulation.js cloneAvatarFor). New clones are inserted unlisted, but the
-	// pre-existing public ones would still fill the gallery with dozens of
-	// identical "My First Agent" cards; keep the discovery surface originals-only.
-	const conds = [
-		`deleted_at is null`,
-		`visibility = 'public'`,
-		`(source_meta->>'circulation') is distinct from 'true'`,
-	];
+	// Every public avatar shows in the gallery, platform-generated ones included:
+	// seeing the full breadth of what the platform can make is the point of the
+	// discovery surface. The cure for "they all look alike" is upstream — the
+	// generation lanes must produce genuinely distinct avatars — not hiding rows.
+	const conds = [`deleted_at is null`, `visibility = 'public'`];
 	if (q) {
 		params.push('%' + q + '%');
 		conds.push(`(name ilike $${params.length} or description ilike $${params.length})`);
