@@ -263,6 +263,14 @@
 			<description>Since the July infrastructure move, the selfie and photo reconstruction pipeline was failing with a generic &quot;hit a snag&quot; message even though the 3D engine finished every job. The security check that vets where a finished model may be downloaded from did not yet trust our own Google Cloud Storage results, so completed avatars were rejected at the final step. The check now recognizes our own storage, and any generation that was wrongly marked failed has been recovered. If your selfie avatar failed recently, it should now appear, or simply retry.</description>
 		</item>
 		<item>
+			<title>Share a model, and whoever opens the link builds their own</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-17:Share a model, and whoever opens the link builds their own</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Forge something you like and hit Share: you now get a remix link. When a friend opens it, the homepage loads with your prompt already in the forge bar and starts building their own version on arrival, no typing and no sign-up. Any link of the form three.ws/?prompt=your idea works the same way, so you can hand-craft or bookmark them too. It turns every creation into an invitation: make something, share it, and the next person is one glance away from making their own. (The Open in Scene action still links your exact finished model.)</description>
+		</item>
+		<item>
 			<title>Sharper, cleaner models from photos</title>
 			<link>https://three.ws/image-to-3d</link>
 			<guid isPermaLink="false">2026-07-17:Sharper, cleaner models from photos</guid>

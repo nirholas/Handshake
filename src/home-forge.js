@@ -374,6 +374,39 @@ function sceneLinkFor(glbUrl, prompt) {
 	return `/scene?${q.toString()}`;
 }
 
+// A create-oriented share link. Instead of pointing at one finished file, it
+// drops the recipient on the homepage forge with the prompt pre-loaded and
+// auto-building — so "share" grows into a loop: create → share → the next
+// person watches it build → they tweak and share their own. The `scene` action
+// still links the exact finished model; this shares the *idea*, remixable.
+export function remixLinkFor(prompt) {
+	const clean = (prompt || '').trim().slice(0, 1000);
+	if (!clean) return '/';
+	return `/?prompt=${encodeURIComponent(clean)}&remix=1`;
+}
+
+// Read a forge intent off a URL — a shared remix link, a bookmark, or a
+// hand-made one:
+//   /?prompt=a%20brass%20compass          → prefill the hero (one tap to forge)
+//   /?prompt=a%20brass%20compass&remix=1  → auto-forge on arrival (zero clicks)
+// `forge=1` / `auto=1` alias `remix=1`; `p` aliases `prompt`. Never throws.
+export function parseForgeIntent(search) {
+	let params;
+	try {
+		params = new URLSearchParams(search || '');
+	} catch {
+		return { prompt: '', auto: false };
+	}
+	const prompt = (params.get('prompt') || params.get('p') || '').trim().slice(0, 1000);
+	const truthy = (k) => {
+		if (!params.has(k)) return false;
+		const v = params.get(k);
+		return v === '' || v === '1' || v === 'true';
+	};
+	const auto = Boolean(prompt) && (truthy('remix') || truthy('forge') || truthy('auto'));
+	return { prompt, auto };
+}
+
 function downloadName(prompt) {
 	return (
 		`${(prompt || 'forge')
@@ -617,10 +650,13 @@ function autoGrow() {
 
 async function copyShareLink() {
 	if (!currentGlbUrl) return;
-	const url = new URL(sceneLinkFor(currentGlbUrl, lastPrompt), location.origin).href;
+	// Share the idea, not just the file: a remix link auto-builds this prompt
+	// for whoever opens it. (The "Open in Scene" action still links the exact
+	// finished model.)
+	const url = new URL(remixLinkFor(lastPrompt), location.origin).href;
 	try {
 		await navigator.clipboard.writeText(url);
-		showToast('Share link copied');
+		showToast('Remix link copied — whoever opens it builds their own');
 	} catch {
 		// Clipboard blocked (permissions / insecure context) — fall back to a
 		// transient selectable field the user can copy manually.
@@ -858,6 +894,20 @@ function wireHeroBar() {
 		if (heroInput) heroInput.value = chip.dataset.prompt;
 		forgeFromHero(chip.dataset.prompt);
 	});
+
+	// A shared remix link (or any /?prompt=… URL) lands the visitor mid-create:
+	// prefill the bar, and when the link opts into it (remix=1), forge on arrival
+	// so the model builds itself with zero clicks. Guarded so it fires once and
+	// not on a hidden/prerendered load.
+	const intent = parseForgeIntent(typeof location !== 'undefined' ? location.search : '');
+	if (intent.prompt) {
+		if (heroInput) heroInput.value = intent.prompt;
+		if (intent.auto && !document.hidden) {
+			forgeFromHero(intent.prompt);
+		} else if (heroInput) {
+			try { heroInput.focus({ preventScroll: true }); } catch { heroInput.focus(); }
+		}
+	}
 
 	// Keep the hero button's busy state honest as generation starts/ends by
 	// observing the chamber's state attribute (set by showState()/setBusy()).

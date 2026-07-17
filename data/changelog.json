@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "Share a model, and whoever opens the link builds their own",
+			"summary": "Forge something you like and hit Share: you now get a remix link. When a friend opens it, the homepage loads with your prompt already in the forge bar and starts building their own version on arrival, no typing and no sign-up. Any link of the form three.ws/?prompt=your idea works the same way, so you can hand-craft or bookmark them too. It turns every creation into an invitation: make something, share it, and the next person is one glance away from making their own. (The Open in Scene action still links your exact finished model.)",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-17",
 			"title": "AR Studio goes multiplayer: build a scene together in real time",
 			"summary": "The AR Studio can now be a shared space. Tap Share live to open a room with a short code, send it to a friend, and you both see the same scene update live: every model one of you adds, moves, resizes, rotates, or removes appears for everyone in the room instantly, with a running count of who's building alongside you. Forge a new model from a prompt and it drops into the shared room for everyone. Open the same room on two phones pointed at the same QR marker and the models pin to the same spot on your real table. It runs on the same realtime servers as our live worlds, with each person only able to edit their own models.",
 			"tags": [
