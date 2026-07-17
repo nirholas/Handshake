@@ -391,6 +391,9 @@
 				<a href="/api/status?format=svg" style="color: inherit">status badge</a> ·
 				<a href="/changelog" style="color: inherit">Changelog</a>
 			</p>
+			<p class="st-meta" id="st-build" hidden>
+				<!-- filled from /api/version: the exact commit + Cloud Run revision live now -->
+			</p>
 
 			<section id="st-services" aria-label="Service status list">
 				<!-- skeletons swapped out by render() -->
@@ -647,6 +650,28 @@
 			load();
 			// Live page: refresh on the probe cadence without requiring a reload.
 			setInterval(load, 5 * 60 * 1000);
+
+			// Build traceability: show the exact commit + Cloud Run revision that is
+			// serving this page right now. Static (never changes within a revision),
+			// so it loads once and links the short SHA to the commit on GitHub.
+			(async () => {
+				const el = document.getElementById('st-build');
+				try {
+					const res = await fetch('/api/version', { headers: { accept: 'application/json' } });
+					if (!res.ok) return;
+					const v = await res.json();
+					if (!v || v.commitShort === 'unknown') return;
+					const shaLink = v.commit && v.commit !== 'unknown'
+						? `<a href="https://github.com/nirholas/three.ws/commit/${esc(v.commit)}" rel="noopener" style="color: inherit; font-family: var(--font-mono, monospace)">${esc(v.commitShort)}</a>`
+						: `<span style="font-family: var(--font-mono, monospace)">${esc(v.commitShort)}</span>`;
+					const rev = v.runtime && v.runtime.revision ? ` · revision ${esc(v.runtime.revision)}` : '';
+					const built = v.builtAt ? ` · built ${new Date(v.builtAt).toLocaleString()}` : '';
+					el.innerHTML = `Live build: ${shaLink} <span style="opacity:.7">v${esc(v.version)}</span>${rev}${built}`;
+					el.hidden = false;
+				} catch {
+					/* version endpoint unreachable — leave the build line hidden */
+				}
+			})();
 		</script>
 
 		<script src="/nav.js" defer></script>

@@ -115,16 +115,26 @@ deploys from a human-authed CLI (command below).
 
 ```bash
 # Frontend changed? Build first — dist/ ships from the local build.
-# build:gcp = site build + agent-3d CDN lib (build:lib:full + publish:lib) +
-# check:dist. Plain `npm run build` is NOT enough: it skips the lib publish,
-# so /agent-3d/latest/agent-3d.js 404s in prod and the hero avatar dies
-# ("agent-3d element never registered").
+# build:gcp = site build -> agent-3d CDN lib (build:lib:full) -> publish:lib
+# -> build:info -> check:dist, IN THAT ORDER. The order is load-bearing: the
+# site `vite build` WIPES dist/, so it must run before publish:lib mirrors the
+# lib into dist/. Plain `npm run build` is NOT enough (skips the lib publish, so
+# /agent-3d/latest/agent-3d.js 404s and the hero avatar dies). Hand-running
+# `build:vercel` as the frontend build is also WRONG — it builds the SDK/lib
+# sub-artifacts, not the static HTML pages, so dist/ has no /, /create, etc.
 npm run build:gcp
 
 # Build image on Cloud Build (32-vCPU + BuildKit layer cache) + push + deploy.
 # Gated on check:dist AND db:check so an incomplete dist/ or an out-of-date
 # database can no longer ship.
 npm run deploy:gcp
+
+# Or do build + submit + CDN purge in one (from a clean worktree):
+#   npm run deploy:gcp:full
+
+# Verify the deploy actually landed — /api/version reports the live commit SHA
+# and Cloud Run revision (stamped into dist/build-info.json by build:info):
+curl -s https://three.ws/api/version | jq '{commitShort, branch, builtAt, revision: .runtime.revision}'
 ```
 
 > **Never bypass `check:dist` by calling `gcloud builds submit` directly.** It is

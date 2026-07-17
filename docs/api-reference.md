@@ -3489,6 +3489,49 @@ Returns public platform configuration. No auth required. CORS open.
 
 ---
 
+## Version API
+
+```
+GET /api/version
+```
+
+Deployment traceability: which commit is live, and on which Cloud Run revision. No auth required. CORS open. Short-cached (10s) so a new deploy shows up promptly. The commit fields are stamped into the image at build time (`dist/build-info.json`, written by `scripts/write-build-info.mjs`); the runtime fields come from the Cloud Run platform env, so no deploy-time injection is needed.
+
+**Response**
+
+```json
+{
+	"status": "ok",
+	"version": "1.5.2",
+	"commit": "83368639e0a1b2c3d4e5f6...",
+	"commitShort": "83368639e",
+	"commitSubject": "feat(forge): auto-classify creations into categories",
+	"commitTime": "2026-07-17T20:38:22Z",
+	"branch": "main",
+	"dirty": false,
+	"builtAt": "2026-07-17T21:05:00.000Z",
+	"stamped": true,
+	"runtime": {
+		"service": "three-ws-api",
+		"revision": "three-ws-api-00171-g5p",
+		"configuration": "three-ws-api",
+		"region": null,
+		"node": "v24.0.0",
+		"uptimeMs": 123456
+	}
+}
+```
+
+`stamped` is `false` when the running image carries no build stamp (e.g. a build that skipped `build:info`); the commit fields are then best-effort from env. Use this to verify a deploy landed:
+
+```bash
+curl -s https://three.ws/api/version | jq '{commitShort, revision: .runtime.revision}'
+```
+
+The same stamp is served statically at `/build-info.json`.
+
+---
+
 ## Pagination
 
 All list endpoints use offset pagination unless noted otherwise.
