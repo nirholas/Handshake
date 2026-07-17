@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "Forge: one-tap variations of any model",
+			"summary": "Every model you forge now shows a \"More like this\" row: one tap re-forges the same subject in a different material or finish (brushed brass, translucent glass, carved oak, and more), so you can explore a whole design space without retyping anything. A reshuffle button deals a fresh set of ideas. It appears for text prompts and runs on the free lane, so exploring costs nothing.",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-17",
 			"title": "Your first 3D creation gets a moment",
 			"summary": "Making your first 3D model on three.ws used to pass with a quiet three-second Saved note. Now it's a real moment: a burst of confetti and a card that marks what you just made, whether or not you're signed in. It celebrates only your first creation on a device, respects reduced-motion settings, and sits alongside the what-next suggestions so you always know where to go from there.",
 			"tags": [
