@@ -1200,3 +1200,30 @@ reasons and nothing else (no catalog, payment-rail, or description findings this
 
 Since this rejection cited ONLY the avatar, resubmit with the avatar as the single delta
 unless the WO-05 pre-submission sweep finds catalog drift.
+
+### 2026-07-17 addendum: pre-submission sweep re-run against production (WO-05 step 1)
+
+Owner asked whether the submission is actually good. Audited everything a reviewer can
+probe, live:
+
+- **402 shape:** unpaid POST to text-to-3d returns x402 v2 with `accepts[0] = eip155:196`
+  USD₮0 (the OKX rail leads), then Solana USDC, then two Base USDC variants. The two Base
+  entries are NOT duplicates: entry 4 adds `extra.assetTransferMethod: "permit2"` +
+  `supportsEip2612`, the transfer method OKX buyer wallets sign. Deliberate, keep.
+- **Health:** all five subsystems ok; payment-rail `settleable:true` (live on-chain probe,
+  block 65506315).
+- **Three-copy sync:** `api/_lib/okx-catalog.js` vs live `/api/okx/3d/catalog`: ZERO drift
+  across name/capability/input/price/endpoint on all 11 rows; every description part is
+  within the 200 display-width limit; `validateCatalog()` passes; 56 tests green
+  (okx-3d-services, okx-identity-studio, service-catalog).
+- **Docs link** `https://three.ws/docs/okx-marketplace` resolves 200.
+- This round's rejection cited ONLY the avatar, which corroborates that the catalog,
+  descriptions, and payment rail passed review as submitted.
+
+**Decision (deliberate, reversible):** resubmit with the avatar as the single delta.
+Listing strings go byte-for-byte as already live; do NOT touch copy pre-approval, since any
+string change forces a redeploy plus a fresh review roll. Post-approval cleanup noted: the
+catalog strings contain em-dash characters (house style violation, external-safe); strip
+them in a normal deploy cycle after the listing is approved. Also review the agent-level
+profile description in the resubmission session via `agent get-agents --agent-ids 2632`
+(needs the interactive login; keep it unless it drew a finding).
