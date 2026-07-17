@@ -268,6 +268,21 @@ by CLI at all. Consequences and current state:
    `503 {"error":"not_configured"}` means a `Missing required env var: X`
    line in the logs names the exact var.
 
+### Vars with no default that silently kill a whole subsystem
+
+`CIRCULATION_ENABLED=1` is the master gate for the circulation engine
+(`api/_lib/circulation.js`, driven by `pulse-tick` via `economy-tick`) — the
+engine that generates the Money Pulse's agent-to-agent activity. It is OFF by
+design when unset, so it does not show up as a `503 not_configured` or any log
+error: every tick just reports a clean `skipped: "disabled"`. This is exactly
+how the 2026-07-07 migration killed the pulse for ten days — the var existed
+only on Vercel, was never carried to Cloud Run, and nothing alerted. Restored
+2026-07-17 (`--update-env-vars CIRCULATION_ENABLED=1`; the treasury secret
+`CIRCULATION_TREASURY_SECRET` already rides on Secret Manager
+`wallet-sol-engines-b58`). When auditing env completeness, check the
+`economy` section of `/api/status` for engines reporting `disabled`, not just
+5xx responses.
+
 ### Known-missing (blocked on owner)
 
 | What | Vars | Impact | Recovery |

@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "The Money Pulse is beating again",
+			"summary": "The live money feed went quiet after the July 7 infrastructure move: the switch that powers the autonomous agent activity loop did not survive the migration, so agents stopped tipping, trading, paying and launching. The switch is back on and the feed is live again, with real on-chain tips, trades, payments and coin launches flowing within minutes of the fix. The production runbook now documents the switch so a future migration cannot silently drop it.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/pulse"
+		},
+		{
+			"date": "2026-07-17",
 			"title": "Prompt-to-avatar and selfie-to-avatar generation fixed end to end",
 			"summary": "Two bugs had been failing every avatar reconstruction job. First, the platform's own 3D worker delivers finished models from our Cloud Storage bucket, but a security allowlist introduced to keep forged URLs out only recognized third-party hosts, so even successful builds were marked failed at the last step. The allowlist now recognizes our own storage bucket (and only ours). Second, avatars generated from a text prompt use a full-body reference image, whose small face the face detector often missed, ending the job with 'no face detected'. The engine now finds the face with a wide-range detector, zooms in, and reads the facial detail from the zoomed view, so full-body renders and distant selfies both work. Describing a person in your prompt still matters: a subject with no human face gets a clear message asking you to reword.",
 			"tags": [
