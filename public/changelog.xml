@@ -231,12 +231,12 @@
 			<description>When a text-to-3D generation needs a moment and hands back a job to poll, the free /api/3d/generate API now includes how long to wait before checking again (a retryAfter value, also sent as the standard Retry-After header) plus an estimated time-to-ready and a stable creation id. Agents that honor the hint poll on a sensible schedule instead of hammering the endpoint, so they stop tripping the rate limit and the shared free GPU lane carries less needless traffic. Fully backward-compatible: existing callers keep working unchanged.</description>
 		</item>
 		<item>
-			<title>Granite-powered features stay up during an IBM outage</title>
+			<title>IBM Granite features stay up, and no longer need an IBM account</title>
 			<link>https://three.ws/changelog</link>
-			<guid isPermaLink="false">2026-07-17:Granite-powered features stay up during an IBM outage</guid>
+			<guid isPermaLink="false">2026-07-17:IBM Granite features stay up, and no longer need an IBM account</guid>
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>infra</category>
-			<description>The IBM Granite features (the Granite Oracle, Agent Twin, and Galaxy cluster naming) all run one-shot Granite completions through IBM watsonx. If watsonx dropped a request (an auth, quota, or regional hiccup), those features had no backstop and failed outright. They now fall over to the same Granite model family hosted on OpenRouter, so a watsonx-side blip is invisible to the user and the feature keeps answering.</description>
+			<description>Every Granite-powered feature (the Granite Oracle, Agent Twin, Galaxy cluster naming, Granite Vision image reads, and the IBM Granite brain in the model comparison) ran only on IBM watsonx, so a watsonx hiccup or a deployment without IBM credentials meant the feature failed or was hidden. They now fall over to the same Granite family hosted on OpenRouter (and a vision-capable model for image reads), so Granite keeps answering through an outage and stays selectable even where watsonx is not configured.</description>
 		</item>
 		<item>
 			<title>Image to 3D gets its own front door</title>
@@ -324,7 +324,7 @@
 			<guid isPermaLink="false">2026-07-17:Real marketplace purchases now land in the Money Pulse</guid>
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
-			<description>The Money Pulse's Purchases tab was wired to a source that only ever filled up when a synthetic circulation loop was running, so real skill and time-pass sales never showed. It now reads straight from the marketplace's own purchase ledger: the moment a sale confirms on-chain in $THREE, it appears as a Purchase beat in the live feed, fronted by the agent that earned it, alongside tips, launches, trades and payments. Free trials stay out, so a beat always means value actually changed hands.</description>
+			<description>The Money Pulse's Purchases tab was wired to a source that only ever filled up when a synthetic circulation loop was running, so real skill and time-pass sales never showed. It now reads straight from the marketplace's own purchase ledger: the moment a sale confirms on-chain in $THREE, it appears as a Purchase beat in the live feed, fronted by the agent that earned it, alongside tips, launches, trades and payments. Free trials stay out, so a beat always means value actually changed hands. While we were in there, every empty filter now points you to the action that creates that beat (buy a skill, launch a coin, arm an agent, tip, pay), and we fixed a caching quirk that could briefly show a short feed page instead of a full one.</description>
 		</item>
 		<item>
 			<title>Selfie to 3D works again: finished avatars were being thrown away at the last step</title>
