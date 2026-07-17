@@ -175,10 +175,14 @@ gcloud run services update-traffic three-ws-api --region us-central1 \
   --project aerial-vehicle-466722-p5 --to-revisions <good-revision>=100
 ```
 
-**Logs:**
+**Logs:** use the reader CLI; it handles `jsonPayload` and request-log
+entries that a raw `textPayload` read silently misses. Full guide incl. the
+automated triage monitor: [gcp-logs.md](gcp-logs.md).
 ```bash
-gcloud logging read 'resource.type="cloud_run_revision" resource.labels.service_name="three-ws-api" severity>=ERROR' \
-  --project aerial-vehicle-466722-p5 --freshness=1h --limit 20 --format="value(textPayload)"
+npm run logs                       # three-ws-api, last hour (vercel logs equivalent)
+npm run logs:tail                  # live tail
+npm run logs:errors                # ERROR+ across all services, last 6h
+npm run triage:gcp                 # healthz + fleet log sweep -> classified action plan
 ```
 
 **Build-context gotcha:** the upload is governed by the **allowlist** in

@@ -20,6 +20,13 @@ Silencing any of them in code would hide a real production signal, so don't.
 Severity legend: 🔴 owner decision (money / security / billing) · 🟡 set an env
 var or add quota · 🟢 self-healing, no action needed.
 
+> **This table is now machine-checked.** `npm run triage:gcp`
+> ([gcp-logs.md](gcp-logs.md)) sweeps WARNING+ logs across the whole Cloud Run
+> fleet, matches them against these signatures, and emits a classified action
+> plan; agents run the loop via the `/gcp-triage` skill. When you document a
+> new signature here, also add it to `KNOWN_SIGNATURES` in
+> [scripts/gcp-triage.mjs](../../scripts/gcp-triage.mjs).
+
 > **You no longer need a log export to see most of this.** The platform now
 > self-reports internal-dependency health: **[/status](https://three.ws/status)**
 > renders it with a plain-language fix for each degradation, and

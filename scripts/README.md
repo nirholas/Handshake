@@ -8,6 +8,32 @@ This directory contains various scripts for the 3D-Agent application.
 
 ## Operational
 
+### `gcp-logs.mjs`: read/tail Cloud Run production logs (`vercel logs` equivalent)
+
+```sh
+npm run logs                       # three-ws-api, last hour
+npm run logs:tail                  # live tail
+npm run logs -- -s model-rig --errors --since 2d
+npm run logs -- --all --grep "forge" --warnings
+```
+
+Renders app logs (`textPayload`/`jsonPayload`) and request logs chronologically,
+severity-colored, for any service in the fleet. Full guide:
+[docs/ops/gcp-logs.md](../docs/ops/gcp-logs.md).
+
+### `gcp-triage.mjs`: automated production monitor
+
+```sh
+npm run triage:gcp                 # human report
+npm run triage:gcp -- --json      # what agents consume (exit 1 = actionable findings)
+```
+
+Merges `/api/healthz` with a fleet-wide WARNING+ log sweep, fingerprints
+repeated signatures, classifies each against the runbook
+([docs/ops/production-log-triage.md](../docs/ops/production-log-triage.md)) into
+owner / env-action / investigate / self-healing, and prints the concrete action
+per finding. Agents drive the fix loop via the `/gcp-triage` skill.
+
 ### `set-r2-cors.mjs` — apply the bucket CORS policy
 
 Runs the canonical CORS policy against the R2 bucket holding all media
