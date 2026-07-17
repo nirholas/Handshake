@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<!-- Agent #2632 "three.ws 3D Studio" OKX.AI listing avatar.
+     Composition source. Rendered to okx-avatar-440.png by render-avatar.mjs
+     (Playwright at 3x, downsampled to exactly 440x440, square corners, no alpha).
+     OKX avatar spec (rejection email 2026-07-17): 440x440 px, square corners,
+     sharp at full size, style aligned with a software/service-type agent. -->
+<style>
+  @font-face {
+    font-family: 'Space Grotesk';
+    font-weight: 300 700;
+    src: url('../../../public/fonts/space-grotesk-latin.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'JetBrains Mono';
+    font-weight: 400;
+    src: url('../../../public/fonts/jetbrains-mono-latin.woff2') format('woff2');
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 440px; height: 440px; overflow: hidden; }
+  .canvas {
+    position: relative;
+    width: 440px;
+    height: 440px;
+    background: #0a0d14;
+    overflow: hidden;
+  }
+  .glow-a, .glow-b {
+    position: absolute;
+    width: 420px;
+    height: 420px;
+    border-radius: 50%;
+    filter: blur(70px);
+  }
+  .glow-a {
+    left: -120px; top: -140px;
+    background: radial-gradient(circle, rgba(139,92,246,0.34) 0%, rgba(139,92,246,0) 68%);
+  }
+  .glow-b {
+    right: -140px; bottom: -160px;
+    background: radial-gradient(circle, rgba(34,211,238,0.26) 0%, rgba(34,211,238,0) 68%);
+  }
+  .grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(148,163,184,0.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148,163,184,0.055) 1px, transparent 1px);
+    background-size: 44px 44px;
+    background-position: 22px 22px;
+    -webkit-mask-image: radial-gradient(circle at 50% 42%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.25) 62%, rgba(0,0,0,0) 92%);
+            mask-image: radial-gradient(circle at 50% 42%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.25) 62%, rgba(0,0,0,0) 92%);
+  }
+  .eyebrow {
+    position: absolute;
+    top: 24px; left: 26px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    letter-spacing: 0.06em;
+    color: #67e8f9;
+  }
+  .corner-meta {
+    position: absolute;
+    top: 26px; right: 26px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: rgba(226,232,240,0.42);
+  }
+  .cube {
+    position: absolute;
+    left: 50%; top: 178px;
+    transform: translate(-50%, -50%);
+    width: 236px; height: 236px;
+    filter: drop-shadow(0 18px 44px rgba(139,92,246,0.35));
+  }
+  .title {
+    position: absolute;
+    left: 0; right: 0;
+    top: 316px;
+    text-align: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 47px;
+    letter-spacing: 0.045em;
+    color: #f4f6fb;
+  }
+  .services {
+    position: absolute;
+    left: 0; right: 0;
+    top: 384px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.22em;
+    color: rgba(148,163,184,0.78);
+  }
+</style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="glow-a"></div>
+    <div class="glow-b"></div>
+    <div class="grid"></div>
+    <div class="eyebrow">// three.ws</div>
+    <div class="corner-meta">#2632</div>
+    <img class="cube" src="../../../public/favicon.svg" alt="">
+    <div class="title">3D STUDIO</div>
+    <div class="services">FORGE&#183;RIG&#183;RENDER</div>
+  </div>
+</body>
+</html>

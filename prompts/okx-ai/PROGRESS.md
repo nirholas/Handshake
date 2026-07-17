@@ -1162,3 +1162,41 @@ set with the identity-update flow (on-chain write needs human confirmation).
 **Still owner-blocked:** WO-04/05/07 remain gated on funding the payer wallet
 (`0x75d00a2713565171f33216e5aa2a375e076ecf69`, X Layer 196: ~$5 USD₮0 + OKB dust).
 Redis is live and the X Layer rail reports settleable:true — funding is the only gap.
+
+## 2026-07-17: Listing rejected again, avatar-only reasons; compliant 440x440 avatar produced
+
+OKX review rejected "three.ws 3D Studio" (email to the owner, 2026-07-17) on TWO avatar
+reasons and nothing else (no catalog, payment-rail, or description findings this round):
+
+1. Avatar does not align with the agent's positioning/functionality and is not polished.
+   Reviewer pointed at software/service-type reference styles (okx.ai agents 2023, 3345).
+   The rejected asset was the WO-06 3D-humanoid PFP render (dark, murky, floating gray
+   sphere, garbled texture text): correct pipeline demo, wrong genre for a service listing.
+2. Spec violations: avatar must be exactly 440x440 px, square corners (rounded corners
+   rejected), sharp at full resolution.
+
+**Fix shipped: a logo-style service-agent avatar built from the platform's own brand mark.**
+
+- Asset: `prompts/okx-ai/assets/okx-avatar-440.png` (440x440, opaque RGB PNG, 168 KB,
+  square corners, well under the 1 MB `agent upload` limit).
+- Composition: the three.ws holographic chrome cube (public/favicon.svg) centered on a
+  near-black studio ground with a faint grid and violet/cyan glows; `// three.ws` mono
+  eyebrow top-left, `#2632` corner metadata top-right, "3D STUDIO" (Space Grotesk 700)
+  wordmark, `FORGE.RIG.RENDER` service line. Directly answers rejection reason 1: the
+  avatar now states what the agent does. Legible down to 96 px.
+- Reproducible: `node prompts/okx-ai/assets/render-avatar.mjs` (Playwright at 3x scale,
+  lanczos3 downsample to exactly 440, flattened opaque; script asserts 440x440 + no alpha).
+  Source composition: `prompts/okx-ai/assets/avatar.html` (self-hosted repo fonts).
+
+**Resubmission path (needs the interactive OKX session + human confirm, per skill gates):**
+
+1. Login as claude@three.ws (human relays OTP).
+2. `onchainos agent upload --file prompts/okx-ai/assets/okx-avatar-440.png` and use the
+   returned OKX CDN URL as the profile picture in the identity-update flow
+   (`.claude/skills/okx-agent-identity/references/update.md`); update agent #2632 in place
+   (never re-create), human confirms the on-chain write.
+3. Re-activate with `--preferred-language en-US` to re-enter review; capture before/after
+   approval status here.
+
+Since this rejection cited ONLY the avatar, resubmit with the avatar as the single delta
+unless the WO-05 pre-submission sweep finds catalog drift.
