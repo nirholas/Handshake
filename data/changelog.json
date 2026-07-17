@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "The homepage no longer greets you with an empty stage",
+			"summary": "The live 3D agent on the homepage is the first thing you see, but on a cold visit it could sit as a blank near-black panel for several seconds while the model and 3D engine loaded. That gap is now filled with a gently breathing agent silhouette and a \"summoning your agent\" cue, so the stage feels alive from the very first paint instead of looking broken. It fades out the instant the real avatar is ready, respects reduced-motion settings, and if the preview ever stalls it now surfaces a retry instead of hanging on the placeholder.",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
 			"title": "Forge fills the wait with prompt-craft tips",
 			"summary": "While your model is generating, the Forge now shows a rotating \"while it forges\" tip: short, concrete prompt-craft advice tuned to the free lane (name one subject, add a material, describe the finish, and so on), each with a worked example. It sits alongside the real progress steps, so the 10-60 second wait quietly makes your next prompt sharper instead of just ticking. Motion-sensitive visitors get a single static tip.",
 			"tags": [
@@ -14439,6 +14447,25 @@
 				"improvement"
 			],
 			"link": "/"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Sharing a model now shows a preview card and a real link",
+			"summary": "When you share a forged model, the share panel now shows the exact preview card the link will unfurl as on X, Farcaster, and in chats, so you can see what people will see before you post. Every share is now a real permalink to your model with that card, instead of sometimes falling back to a generic link. Models forged right on the homepage are shareable the same way.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/forge"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Community models are now sorted into colorful categories",
+			"summary": "Every model was labeled 'other', so the browse pages were a monochrome wall with the category badges and filters doing nothing. Models are now automatically sorted into Avatar, Creature, Vehicle, Scene, Accessory, or Item from their prompt, shown as color-coded badges across the Forge showcase, gallery, and community feed. New models are categorized the moment they finish.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/forge"
 		}
 	]
 }

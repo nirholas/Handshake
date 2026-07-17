@@ -87,6 +87,14 @@
 			<description>Hovering a card in the Fresh from the Forge strip spins the actual 3D model in place. The spinning model used to render on a nearly transparent background, so it visually collided with the card's photo thumbnail and looked broken, with a stray browser tooltip on top. The preview now draws on a solid backdrop, the redundant tooltip is gone, image-to-3D cards are labeled with their engine name (Hunyuan3D) instead of an internal id, and every card can now be opened from the keyboard.</description>
 		</item>
 		<item>
+			<title>Community models are now sorted into colorful categories</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-07-17:Community models are now sorted into colorful categories</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every model was labeled 'other', so the browse pages were a monochrome wall with the category badges and filters doing nothing. Models are now automatically sorted into Avatar, Creature, Vehicle, Scene, Accessory, or Item from their prompt, shown as color-coded badges across the Forge showcase, gallery, and community feed. New models are categorized the moment they finish.</description>
+		</item>
+		<item>
 			<title>Community models now show a real picture, not an empty tile</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-07-17:Community models now show a real picture, not an empty tile</guid>
@@ -133,6 +141,14 @@
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The homepage now leads with a prompt bar: type what you want and a real textured 3D model starts building the moment you hit Enter, no navigation and no sign-up. The live generator that used to sit far down the page now sits directly under the headline, so you type at the top and watch your model take shape right below. Three one-tap example prompts and a rotating set of ideas make it easy to start.</description>
+		</item>
+		<item>
+			<title>Forge fills the wait with prompt-craft tips</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-17:Forge fills the wait with prompt-craft tips</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>While your model is generating, the Forge now shows a rotating &quot;while it forges&quot; tip: short, concrete prompt-craft advice tuned to the free lane (name one subject, add a material, describe the finish, and so on), each with a worked example. It sits alongside the real progress steps, so the 10-60 second wait quietly makes your next prompt sharper instead of just ticking. Motion-sensitive visitors get a single static tip.</description>
 		</item>
 		<item>
 			<title>Forge prompt ideas are now endless, and every one forges beautifully</title>
@@ -271,6 +287,14 @@
 			<description>Forge something you like and hit Share: you now get a remix link. When a friend opens it, the homepage loads with your prompt already in the forge bar and starts building their own version on arrival, no typing and no sign-up. Any link of the form three.ws/?prompt=your idea works the same way, so you can hand-craft or bookmark them too. It turns every creation into an invitation: make something, share it, and the next person is one glance away from making their own. (The Open in Scene action still links your exact finished model.)</description>
 		</item>
 		<item>
+			<title>Sharing a model now shows a preview card and a real link</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-07-17:Sharing a model now shows a preview card and a real link</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>When you share a forged model, the share panel now shows the exact preview card the link will unfurl as on X, Farcaster, and in chats, so you can see what people will see before you post. Every share is now a real permalink to your model with that card, instead of sometimes falling back to a generic link. Models forged right on the homepage are shareable the same way.</description>
+		</item>
+		<item>
 			<title>Sharper, cleaner models from photos</title>
 			<link>https://three.ws/image-to-3d</link>
 			<guid isPermaLink="false">2026-07-17:Sharper, cleaner models from photos</guid>
@@ -285,6 +309,14 @@
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Two improvements to the closed-loop x402 agent economy that dogfoods every paid endpoint on the platform. First, a fix: a background wallet-consolidation job was quietly closing the ring's payment account after every settlement, forcing the next one to recreate it and pay account rent each time. That single bug had pushed the real fee cost to roughly a hundred times where it should be. With it fixed and single-signature settlement turned on, each settlement is back to the network floor of a few thousandths of a cent, and the ring's working balance stays in the loop instead of leaking away. Second, a new capability: the ring can now cycle payments through a reusable pool of hundreds to a thousand distinct wallets instead of one, so the economy reads as many participants rather than a single account, with no extra cost per payment. The pool is off until funded and activated, and every wallet in it stays clearly labeled internal dogfooding, not organic demand.</description>
+		</item>
+		<item>
+			<title>The homepage no longer greets you with an empty stage</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-17:The homepage no longer greets you with an empty stage</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The live 3D agent on the homepage is the first thing you see, but on a cold visit it could sit as a blank near-black panel for several seconds while the model and 3D engine loaded. That gap is now filled with a gently breathing agent silhouette and a &quot;summoning your agent&quot; cue, so the stage feels alive from the very first paint instead of looking broken. It fades out the instant the real avatar is ready, respects reduced-motion settings, and if the preview ever stalls it now surfaces a retry instead of hanging on the placeholder.</description>
 		</item>
 		<item>
 			<title>The Money Pulse is beating again</title>

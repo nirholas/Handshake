@@ -73,6 +73,14 @@ function ensureShowcaseVoteStyles() {
 		.showcase-vote.vote-bump { animation: showcase-vote-bump .32s ease; }
 		@keyframes showcase-vote-bump { 0% { transform: scale(1); } 40% { transform: scale(1.22); } 100% { transform: scale(1); } }
 		@media (prefers-reduced-motion: reduce) { .showcase-vote.vote-bump { animation: none; } }
+		.showcase-cat-badge { font-family: var(--font-mono, ui-monospace, monospace); font-size: 10px; letter-spacing: .04em; line-height: 1; padding: 3px 7px; border-radius: 999px; flex-shrink: 0; }
+		.showcase-cat-badge.model-cat-avatar    { background: rgba(99,102,241,.18);  color: #a5b4fc; }
+		.showcase-cat-badge.model-cat-accessory { background: rgba(236,72,153,.18);  color: #f9a8d4; }
+		.showcase-cat-badge.model-cat-item      { background: rgba(245,158,11,.18);  color: #fcd34d; }
+		.showcase-cat-badge.model-cat-scene     { background: rgba(16,185,129,.18);  color: #6ee7b7; }
+		.showcase-cat-badge.model-cat-creature  { background: rgba(251,146,60,.18);  color: #fdba74; }
+		.showcase-cat-badge.model-cat-vehicle   { background: rgba(56,189,248,.18);  color: #7dd3fc; }
+		.showcase-cat-badge.model-cat-other     { background: rgba(255,255,255,.08); color: #a1a1aa; }
 	`;
 	document.head.appendChild(style);
 }

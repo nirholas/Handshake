@@ -347,6 +347,48 @@
 			margin: 0; color: var(--text-3); font-size: 13.5px; max-width: 240px;
 		}
 
+		/* Hero loading state. The stage is the site's single most important first
+		   impression, and it used to be a silent near-black void for up to 15s while
+		   the GLB and the <agent-3d> CDN loader resolve on a cold cache. A breathing
+		   agent silhouette + "summoning" copy keeps it alive and on-brand; it fades
+		   out the instant agent:ready fires (bootHeroAvatar). */
+		.hero-stage-loading {
+			position: absolute; inset: 0; z-index: 3;
+			display: flex; flex-direction: column;
+			align-items: center; justify-content: center;
+			gap: 16px; pointer-events: none;
+			transition: opacity 0.5s ease;
+		}
+		.hero-stage-loading.is-hiding { opacity: 0; }
+		.hero-stage-loading-figure {
+			position: relative;
+			width: clamp(84px, 26cqw, 138px); height: auto;
+			color: var(--text-4);
+			animation: hero-load-breathe 2.4s ease-in-out infinite;
+		}
+		.hero-stage-loading-figure::before {
+			content: ''; position: absolute; left: 50%; top: 46%;
+			width: 150%; aspect-ratio: 1; transform: translate(-50%, -50%);
+			background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 62%);
+			z-index: -1;
+		}
+		@keyframes hero-load-breathe {
+			0%, 100% { opacity: 0.34; transform: translateY(0) scale(1); }
+			50%      { opacity: 0.72; transform: translateY(-2px) scale(1.015); }
+		}
+		.hero-stage-loading-copy {
+			font-size: 12.5px; letter-spacing: 0.02em; color: var(--text-3);
+		}
+		.hero-stage-loading-copy .dot { animation: hero-load-dot 1.4s ease-in-out infinite; }
+		.hero-stage-loading-copy .dot:nth-child(2) { animation-delay: 0.18s; }
+		.hero-stage-loading-copy .dot:nth-child(3) { animation-delay: 0.36s; }
+		@keyframes hero-load-dot { 0%, 65%, 100% { opacity: 0.2; } 30% { opacity: 1; } }
+		@media (prefers-reduced-motion: reduce) {
+			.hero-stage-loading-figure { animation: none; opacity: 0.5; }
+			.hero-stage-loading-copy .dot { animation: none; opacity: 0.6; }
+			.hero-stage-loading { transition: none; }
+		}
+
 		/* ── CAPABILITY STRIP ──────────────────────────────────── */
 		.capability-strip {
 			position: relative;
@@ -5469,8 +5511,26 @@
 			new Promise((res) => setTimeout(() => res(false), timeoutMs)),
 		]);
 	}
+	// The stage's first-impression loading state: a breathing agent silhouette
+	// instead of a silent void while the GLB + <agent-3d> loader resolve. Shown at
+	// the very start of the boot, removed the instant the avatar is ready.
+	function heroLoadingMarkup() {
+		return '<div class="hero-stage-loading" role="status" aria-label="Loading the live agent preview">'
+			+ '<svg class="hero-stage-loading-figure" viewBox="0 0 64 72" fill="currentColor" aria-hidden="true">'
+			+ '<circle cx="32" cy="21" r="14"/><path d="M6 72c0-14.4 11.6-26 26-26s26 11.6 26 26z"/></svg>'
+			+ '<span class="hero-stage-loading-copy">Summoning your agent<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></span>'
+			+ '</div>';
+	}
+	function hideHeroLoading(heroInner) {
+		const el = heroInner?.querySelector('.hero-stage-loading');
+		if (!el) return;
+		el.classList.add('is-hiding');
+		setTimeout(() => el.remove(), 520);
+	}
 	async function bootHeroAvatar() {
 		const heroInner = document.getElementById('hero-stage-inner');
+		// Fill the stage immediately, before any await, so the first paint is alive.
+		if (heroInner) heroInner.innerHTML = heroLoadingMarkup();
 		try {
 			let glb;
 			try {
@@ -5482,17 +5542,30 @@
 				if (!(await agentElementDefined(15000))) {
 					throw new Error('agent-3d element never registered — loader script failed');
 				}
-				heroInner.innerHTML = '';
 				const heroEl = spawnAgent(glb);
-				// Fade the hero in on agent:ready. Attached before the element is
-				// appended so the event can never be missed — a stage-level
-				// MutationObserver raced anything else that touched the stage first
-				// (e.g. seasonal.js injecting its Fireworks chip) and left the
-				// avatar stuck at opacity 0.
-				heroEl.addEventListener('agent:ready', () => heroEl.classList.add('loaded'), { once: true });
+				let ready = false;
+				// Fade the hero in on agent:ready and retire the loading silhouette in
+				// the same beat. Attached before the element is appended so the event
+				// can never be missed (a stage-level MutationObserver raced anything
+				// else that touched the stage first, e.g. seasonal.js injecting its
+				// Fireworks chip, and left the avatar stuck at opacity 0).
+				heroEl.addEventListener('agent:ready', () => {
+					ready = true;
+					heroEl.classList.add('loaded');
+					hideHeroLoading(heroInner);
+				}, { once: true });
+				// Append alongside the loading overlay (which sits on top via z-index
+				// and fades out on ready), so the stage never blinks back to empty
+				// between clearing the placeholder and the model's first frame.
 				heroInner.appendChild(heroEl);
 				initHeroWalk(heroEl);
 				initHeroChips(heroEl);
+				// Safety net: if the element upgraded but never signals ready (an
+				// internal GLB decode / render failure), don't leave "Summoning…" up
+				// forever. Surface the retryable fallback the same as a hard failure.
+				setTimeout(() => {
+					if (!ready && heroInner.querySelector('.hero-stage-loading')) showHeroFallback(heroInner);
+				}, 22000);
 			}
 		} catch (e) {
 			console.warn('[home] avatar boot failed', e);
@@ -6575,13 +6648,21 @@
 	// stays off the critical path until the section approaches the viewport.
 	const forgeRoot = document.getElementById('home-forge');
 	if (forgeRoot) {
-		const io = new IntersectionObserver(entries => {
-			if (entries[0].isIntersecting) {
-				io.disconnect();
-				import('/src/home-forge.js');
-			}
-		}, { rootMargin: '200px' });
-		io.observe(forgeRoot);
+		// A deep link (/?prompt=… — e.g. a shared remix link) drives the hero
+		// forge bar the instant the page opens, so its controller module must
+		// boot eagerly instead of waiting for the chamber to scroll into view.
+		// Normal loads keep the module off the critical path (lazy on approach).
+		if (/[?&](?:prompt|p)=/.test(location.search)) {
+			import('/src/home-forge.js');
+		} else {
+			const io = new IntersectionObserver(entries => {
+				if (entries[0].isIntersecting) {
+					io.disconnect();
+					import('/src/home-forge.js');
+				}
+			}, { rootMargin: '200px' });
+			io.observe(forgeRoot);
+		}
 	}
 </script>
 <script type="module" src="/dragon-section.js"></script>

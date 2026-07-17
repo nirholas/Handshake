@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T12:47:38.788Z",
+	"generated_at": "2026-07-17T13:07:59.891Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -114,6 +114,17 @@
 		{
 			"date": "2026-07-17",
 			"type": "update",
+			"title": "Community models are now sorted into colorful categories",
+			"summary": "Every model was labeled 'other', so the browse pages were a monochrome wall with the category badges and filters doing nothing. Models are now automatically sorted into Avatar, Creature, Vehicle, Scene, Accessory, or Item from their prompt, shown as color-coded badges across the Forge showcase, gallery, and community feed. New models are categorized the moment they finish.",
+			"link": "/forge",
+			"tags": [
+				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
 			"title": "Community models now show a real picture, not an empty tile",
 			"summary": "Most models made on the free lane are built directly as 3D geometry with no preview image, so across the site (Fresh from the Forge, the gallery, community, search, and creator profiles) the majority of cards were showing a blank gradient instead of the model. A new background job renders every finished model to a real thumbnail from the actual 3D file and fills it in, newest first, so browse pages fill up with real work instead of empty tiles. New models heal within minutes of finishing.",
 			"link": "/forge",
@@ -173,6 +184,16 @@
 			"link": "/",
 			"tags": [
 				"feature",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "Forge fills the wait with prompt-craft tips",
+			"summary": "While your model is generating, the Forge now shows a rotating \"while it forges\" tip: short, concrete prompt-craft advice tuned to the free lane (name one subject, add a material, describe the finish, and so on), each with a worked example. It sits alongside the real progress steps, so the 10-60 second wait quietly makes your next prompt sharper instead of just ticking. Motion-sensitive visitors get a single static tip.",
+			"link": null,
+			"tags": [
 				"improvement"
 			]
 		},
@@ -355,6 +376,16 @@
 		{
 			"date": "2026-07-17",
 			"type": "update",
+			"title": "Sharing a model now shows a preview card and a real link",
+			"summary": "When you share a forged model, the share panel now shows the exact preview card the link will unfurl as on X, Farcaster, and in chats, so you can see what people will see before you post. Every share is now a real permalink to your model with that card, instead of sometimes falling back to a generic link. Models forged right on the homepage are shareable the same way.",
+			"link": "/forge",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
 			"title": "Sharper, cleaner models from photos",
 			"summary": "Four upgrades to photo-to-3D landed together. Uploaded photos now have their background cleanly removed before reconstruction, so a busy backdrop no longer bleeds into the model. You can supply up to 6 reference angles instead of 4 for fuller coverage. Every uploaded angle is now quality-checked, and a blurry or off-subject one is dropped instead of corrupting the result. And every finished model runs through an automatic geometry cleanup pass that welds and de-duplicates the mesh and trims redundant triangles, so models load faster and render cleaner with no loss of detail.",
 			"link": "/image-to-3d",
@@ -373,6 +404,16 @@
 				"fix",
 				"improvement",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "The homepage no longer greets you with an empty stage",
+			"summary": "The live 3D agent on the homepage is the first thing you see, but on a cold visit it could sit as a blank near-black panel for several seconds while the model and 3D engine loaded. That gap is now filled with a gently breathing agent silhouette and a \"summoning your agent\" cue, so the stage feels alive from the very first paint instead of looking broken. It fades out the instant the real avatar is ready, respects reduced-motion settings, and if the preview ever stalls it now surfaces a retry instead of hanging on the placeholder.",
+			"link": null,
+			"tags": [
+				"improvement"
 			]
 		},
 		{

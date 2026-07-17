@@ -22,6 +22,7 @@ import { recordDailyActivity, maybeAwardFirstCreation } from './streaks.js';
 import { recordGenerationEvent } from './forge-events.js';
 import { scoreGlbQuality } from './glb-quality.js';
 import { compressGlb } from './glb-compress.js';
+import { classifyModelCategory } from './forge-classify.js';
 import { cleanupGlb } from './glb-cleanup.js';
 
 // Stable, non-secret salt so a leaked DB row can't be trivially reversed to the
@@ -90,7 +91,10 @@ export async function createCreation({
 }) {
 	if (!forgeStoreEnabled()) return null;
 	const id = randomUUID();
-	const category = validModelCategory(modelCategory) ?? 'other';
+	// An explicit category (from the studio picker) always wins; otherwise infer
+	// it from the prompt so the model gets a real category at birth instead of
+	// defaulting to 'other' and leaving the category dimension dead.
+	const category = validModelCategory(modelCategory) ?? classifyModelCategory(prompt);
 	try {
 		await sql`
 			insert into forge_creations
