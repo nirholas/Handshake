@@ -70,6 +70,20 @@ export class SsrfBlockedError extends Error {
 	}
 }
 
+// Thrown when a pinned fetch's response exceeds opts.maxBytes — either from the
+// advertised content-length or from the actual streamed bytes. Distinct from an
+// SSRF block: the host was allowed, the payload was simply too large. Carries the
+// observed/limit sizes so callers can log specifics.
+export class MaxBytesExceededError extends Error {
+	constructor(observed, limit) {
+		super(`response exceeds max bytes: ${observed} > ${limit}`);
+		this.code = 'max_bytes_exceeded';
+		this.status = 413;
+		this.observed = observed;
+		this.limit = limit;
+	}
+}
+
 // Resolve a hostname, validate all returned addresses, and return the first
 // safe address (preferring IPv4 for socket compatibility). Throws SsrfBlockedError
 // when any address in the answer is blocked — the entire record set must be clean.
@@ -138,6 +152,35 @@ export function makePinnedLookup(pinnedIp) {
 	};
 }
 
+// Buffer a Node response stream into a single Buffer, enforcing an optional byte
+// ceiling BOTH up front (advertised content-length) and continuously (actual
+// streamed bytes). On breach it destroys the response + request sockets so no
+// memory is buffered past the cap, then rejects with MaxBytesExceededError.
+// maxBytes === null disables the cap (unbounded, the prior behavior). Extracted
+// and exported so the streaming-cap contract is unit-testable without a socket.
+export function collectCappedBody(nodeRes, req, maxBytes) {
+	return new Promise((resolve, reject) => {
+		const abort = (observed) => {
+			try { nodeRes.destroy(); } catch { /* already torn down */ }
+			try { req?.destroy(); } catch { /* already torn down */ }
+			reject(new MaxBytesExceededError(observed, maxBytes));
+		};
+		if (maxBytes != null) {
+			const advertised = Number(nodeRes.headers?.['content-length'] || 0);
+			if (advertised > maxBytes) return abort(advertised);
+		}
+		const chunks = [];
+		let received = 0;
+		nodeRes.on('data', (c) => {
+			received += c.length;
+			if (maxBytes != null && received > maxBytes) return abort(received);
+			chunks.push(c);
+		});
+		nodeRes.on('end', () => resolve(Buffer.concat(chunks)));
+		nodeRes.on('error', reject);
+	});
+}
+
 const MAX_REDIRECTS = 5;
 
 // Convenience: assert + fetch. Uses the global fetch. Same options as fetch,
@@ -180,6 +223,15 @@ export async function fetchSafePublicUrlPinned(input, init = {}, opts = {}) {
 	let url = await assertSafePublicUrl(input, opts);
 	let redirects = 0;
 
+	// Optional streaming byte ceiling. Without it, the response is buffered in
+	// full before any caller can measure it — so a hostile or misbehaving host can
+	// stream gigabytes and OOM the (memory-capped) instance BEFORE a post-hoc
+	// size check runs. When set, we reject on an over-limit content-length header
+	// up front AND abort mid-stream the instant cumulative bytes exceed the cap,
+	// so peak memory stays bounded regardless of what the host sends or lies about
+	// in its headers. Opt-in via opts.maxBytes so existing callers are unchanged.
+	const maxBytes = Number.isFinite(opts.maxBytes) ? opts.maxBytes : null;
+
 	while (true) {
 		const pinnedIp = await resolveAndValidate(url.hostname);
 
@@ -201,17 +253,15 @@ export async function fetchSafePublicUrlPinned(input, init = {}, opts = {}) {
 				agent,
 			};
 			const req = mod.request(reqOpts, (nodeRes) => {
-				const chunks = [];
-				nodeRes.on('data', (c) => chunks.push(c));
-				nodeRes.on('end', () => {
-					const body = Buffer.concat(chunks);
-					// Wrap in a fetch-compatible Response so callers use the same API.
-					resolve(new Response(body, {
-						status: nodeRes.statusCode,
-						headers: nodeRes.headers,
-					}));
-				});
-				nodeRes.on('error', reject);
+				collectCappedBody(nodeRes, req, maxBytes)
+					.then((body) =>
+						// Wrap in a fetch-compatible Response so callers use the same API.
+						resolve(new Response(body, {
+							status: nodeRes.statusCode,
+							headers: nodeRes.headers,
+						})),
+					)
+					.catch(reject);
 			});
 			req.on('error', reject);
 			// Honor an optional AbortSignal (e.g. AbortSignal.timeout) from init so a

@@ -170,10 +170,14 @@ export function assertProviderResultUrl(raw) {
 // don't churn.
 export async function fetchProviderGlbBuffer(url, { maxBytes = MAX_GLB_BYTES } = {}) {
 	assertProviderResultUrl(url); // host allowlist — throws SsrfBlockedError before any socket
+	// Pass maxBytes INTO the fetch so the ceiling is enforced while streaming — the
+	// request is torn down the instant the body exceeds it, keeping peak memory
+	// bounded. The post-fetch checks below remain as defense-in-depth (they now only
+	// ever fire if a future refactor drops the streaming cap).
 	const resp = await fetchSafePublicUrlPinned(
 		url,
 		{ signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) },
-		{ allowHttp: false },
+		{ allowHttp: false, maxBytes },
 	);
 	if (!resp.ok) throw new Error(`fetch glb: ${resp.status}`);
 	const len = Number(resp.headers.get('content-length') || 0);
