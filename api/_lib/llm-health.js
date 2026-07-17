@@ -43,7 +43,16 @@ const PROBE_TIMEOUT_MS = 5_000;
 
 // Cheapest live model per provider — a max_tokens:1 completion costs a fraction
 // of a cent and the probe only reads the HTTP status, not the body.
-const OPENROUTER_MODEL = 'openai/gpt-5.4-nano';
+// Probe the SAME model the real chain leads its OpenRouter lane with
+// (llm.js OPENROUTER_MODEL, the primary key's paid rung), not an unrelated id.
+// The previous 'openai/gpt-5.4-nano' was a wrong-family guess that need not even
+// exist on OpenRouter (a permanent 404). The paid 70B rung returns 200 on a
+// funded key at ~$3e-6/probe (≈$0.03/yr hourly — negligible), so a 200 confirms
+// the account actually has credits, and a 402 is then a TRUE, actionable "top up
+// the OpenRouter key" signal rather than a false alarm. The :free variant is not
+// used here: OpenRouter globally rate-limits free models (observed 429), which
+// would itself masquerade as an outage.
+const OPENROUTER_MODEL = 'meta-llama/llama-3.3-70b-instruct';
 const ANTHROPIC_MODEL = 'claude-haiku-4-5-20251001';
 const OPENAI_MODEL = 'gpt-5.4-nano';
 // Same model ids llm.js's real chain uses for these two rungs — see

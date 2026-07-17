@@ -1336,6 +1336,15 @@ export const env = {
 			.filter(Boolean);
 	},
 
+	// Per-user daily LLM spend cap, in whole USD, for completions that route to
+	// the platform's paid keys (Anthropic / OpenAI / Grok). Consumed by
+	// _lib/llm.js (dailyCapMicroUsd) as a float; unset or non-positive falls back
+	// to the hardcoded $1.00/user/day default. Free lanes and GCP-credit Vertex
+	// spend never count against it.
+	get LLM_USER_DAILY_CAP_USD() {
+		return opt('LLM_USER_DAILY_CAP_USD');
+	},
+
 	// Alibaba Cloud DashScope (international) — direct Qwen access. Used by
 	// /api/brain/chat when the user selects a Qwen provider. Falls back to
 	// OPENROUTER_API_KEY when unset.
