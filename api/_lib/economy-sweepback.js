@@ -299,13 +299,13 @@ const RECLAIM_EXEMPT_NAMES = new Set(['circulation-treasury']);
 /**
  * Emergency consolidation: pull IDLE SOL sitting above each engine's true
  * operating floor (`minSol`, not the topup `refillTo`) back to the master, SOL
- * only — token floats are never touched. This is the automated form of the manual
+ * only; token floats are never touched. This is the automated form of the manual
  * "drain the fleet to refund the feed" recovery: when the funding root is starved,
  * SOL trapped in over-provisioned engines (a launcher floored at 3 SOL that isn't
  * launching, say) flows to where the Money Pulse needs it, on its own.
  *
  * Non-oscillating by construction: it leaves each engine at minSol PLUS a buffer,
- * and the topup only ever funds engines strictly BELOW minSol — so a reclaimed
+ * and the topup only ever funds engines strictly BELOW minSol, so a reclaimed
  * engine is never immediately re-funded, and the two crons cannot ping-pong. The
  * feed sink (circulation-treasury) is exempt. Destination is the same hard-locked
  * ECONOMY_MASTER_ADDRESS constant as sweepBack; no parameter can redirect it.
