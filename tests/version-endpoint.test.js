@@ -10,7 +10,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { execSync } from 'node:child_process';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, writeFileSync, rmSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import handler, { _resetBuildInfoCache } from '../api/version.js';
@@ -116,5 +116,24 @@ describe('write-build-info.mjs generator', () => {
 		// builtAt round-trips as ISO 8601
 		expect(new Date(info.builtAt).toISOString()).toBe(info.builtAt);
 		expect(typeof info.dirty).toBe('boolean');
+	});
+
+	it('trusts a pre-build snapshot for the dirty flag, then consumes it', () => {
+		// The build mutates tracked files, so a live dirty read at stamp time is
+		// meaningless. build:gcp records the pre-build truth via --snapshot; the
+		// final stamp must honor that snapshot even though the tree is now dirty.
+		const gitDir = execSync('git rev-parse --absolute-git-dir', { cwd: ROOT })
+			.toString()
+			.trim();
+		const sidecar = resolve(gitDir, 'three-ws-build-dirty');
+		writeFileSync(sidecar, '0'); // pretend the tree was clean pre-build
+		try {
+			execSync('node scripts/write-build-info.mjs', { cwd: ROOT, stdio: 'ignore' });
+			const info = JSON.parse(readFileSync(resolve(ROOT, 'dist/build-info.json'), 'utf8'));
+			expect(info.dirty).toBe(false); // honored the snapshot, not the live (dirty) tree
+			expect(existsSync(sidecar)).toBe(false); // consumed so it can't leak into a later build
+		} finally {
+			if (existsSync(sidecar)) rmSync(sidecar, { force: true });
+		}
 	});
 });
