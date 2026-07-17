@@ -118,6 +118,26 @@ export async function assertSafePublicUrl(input, { allowHttp = false } = {}) {
 	return url;
 }
 
+// Build the custom `lookup` an IP-pinned Agent installs so every socket connects
+// to exactly the pre-validated address (closing the DNS-rebinding window). It
+// MUST serve both lookup contracts: Node enables autoSelectFamily (Happy
+// Eyeballs) by default and, for a dual-stack host, calls the custom lookup with
+// `{ all: true }`, expecting the array form `cb(null, [{ address, family }])`.
+// Returning the legacy positional form under `all:true` makes Node read
+// `undefined` as the address and throw `Invalid IP address: undefined` before
+// any socket opens — which silently broke every pinned fetch to a dual-stack
+// host (e.g. storage.googleapis.com) on Node 24. Exported for direct testing.
+export function makePinnedLookup(pinnedIp) {
+	const family = net.isIPv6(pinnedIp) ? 6 : 4;
+	return function lookup(_hostname, options, cb) {
+		if (options && options.all) {
+			cb(null, [{ address: pinnedIp, family }]);
+		} else {
+			cb(null, pinnedIp, family);
+		}
+	};
+}
+
 const MAX_REDIRECTS = 5;
 
 // Convenience: assert + fetch. Uses the global fetch. Same options as fetch,
@@ -165,13 +185,10 @@ export async function fetchSafePublicUrlPinned(input, init = {}, opts = {}) {
 
 		// Build a one-shot Agent whose `lookup` always returns the pre-validated IP.
 		// This closes the TOCTOU window: the TCP socket connects to exactly the address
-		// we checked, regardless of any subsequent DNS change.
+		// we checked, regardless of any subsequent DNS change. makePinnedLookup honors
+		// both the legacy and autoSelectFamily (`all:true`) lookup contracts.
 		const AgentClass = url.protocol === 'https:' ? https.Agent : http.Agent;
-		const agent = new AgentClass({
-			lookup(_hostname, _options, cb) {
-				cb(null, pinnedIp, net.isIPv6(pinnedIp) ? 6 : 4);
-			},
-		});
+		const agent = new AgentClass({ lookup: makePinnedLookup(pinnedIp) });
 
 		const res = await new Promise((resolve, reject) => {
 			const mod = url.protocol === 'https:' ? https : http;
