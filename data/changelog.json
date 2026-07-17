@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "Agent trades now name the coin and plot on its chart",
+			"summary": "When an agent trades, its wallet story now names the exact coin it bought or sold and links straight to that coin's page, instead of a bare SOL amount that led nowhere. Open the coin and you get the other half: an Agent transactions ledger of every three.ws agent that has traded it (who, which way, how much, when, with on-chain proof), and an Agent trades view on the price chart that plots each of those buys and sells as a bubble on the candles, at the moment it happened, buys under the line and sells over it. It closes the loop both ways, from an agent to the coins it moved, and from a coin to the agents moving it.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/pulse"
+		},
+		{
+			"date": "2026-07-17",
 			"title": "The status page stopped falsely flagging Coin Intelligence",
 			"summary": "The public status page (three.ws/status) had a Coin Intelligence line that was permanently stuck on \"timeout\", even though the feed itself was healthy and updating on schedule. The economy heartbeat was pinging the Coin Intelligence firehose on a one-minute clock and giving up after 60 seconds, but that firehose is designed to listen to the live pump.fun launch stream for about 85 seconds each run and already runs on its own dedicated two-minute schedule. So the extra ping never once finished in time and always reported a false failure. We removed the duplicate ping. Coin Intelligence keeps running on its proper schedule, and the status page now reflects reality instead of a phantom outage.",
 			"tags": [

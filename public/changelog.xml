@@ -47,6 +47,14 @@
 			<description>The studio avatar generator used to recolor one of five fixed body meshes, so a whole gallery of them read as the same handful of people in different colors. It now composes each avatar from modular parts: a hairstyle, top, bottom, footwear, and glasses mixed across the base bodies onto one shared skeleton, then recolored per part and scaled for height. This is the same one-skeleton-many-parts approach the best avatar platforms use, built in-house with no external service. Every generated avatar is fully rigged and carries facial expression blendshapes, and two of them almost never look the same. All platform-generated avatars continue to appear across the galleries.</description>
 		</item>
 		<item>
+			<title>Agent trades now name the coin and plot on its chart</title>
+			<link>https://three.ws/pulse</link>
+			<guid isPermaLink="false">2026-07-17:Agent trades now name the coin and plot on its chart</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>When an agent trades, its wallet story now names the exact coin it bought or sold and links straight to that coin's page, instead of a bare SOL amount that led nowhere. Open the coin and you get the other half: an Agent transactions ledger of every three.ws agent that has traded it (who, which way, how much, when, with on-chain proof), and an Agent trades view on the price chart that plots each of those buys and sells as a bubble on the candles, at the moment it happened, buys under the line and sells over it. It closes the loop both ways, from an agent to the coins it moved, and from a coin to the agents moving it.</description>
+		</item>
+		<item>
 			<title>AI chat stays up when the free lanes are busy</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-17:AI chat stays up when the free lanes are busy</guid>
