@@ -1,0 +1,1327 @@
+// AR Studio (/ar/studio) — a live multi-model AR scene through your camera.
+//
+// The gap this closes: every AR surface before it was single-model and one-way.
+// /ar generates a model THEN hands off to the native viewer (one model, exits
+// the page); /irl walks ONE owned avatar; the WebXR session anchors exactly one
+// group. The studio is the standalone surface where all three asks land:
+//
+//   · place ANY number of models/avatars into one live camera view,
+//   · pull in ANY model — your forge creations, the community feed, a pasted
+//     GLB URL, or a ?src= deep link,
+//   · forge a brand-new model from a prompt WITHOUT leaving the camera — the
+//     generation runs behind the live view and the result drops into the room.
+//
+// Rendering modes, best-first (same ladder as /irl, minus GPS/pins machinery):
+//   · WebXR immersive-ar (Android Chrome): hit-test reticle, one XRAnchor per
+//     placed model (src/ar/multi-place.js), dom-overlay HUD stays usable.
+//   · getUserMedia passthrough (iOS Safari + everywhere else with a camera):
+//     transparent WebGL over the live feed, gyro world-lock look, tap/drag/
+//     pinch/twist gestures on the floor plane.
+//   · plain 3D preview (no camera / desktop): grid floor, drag-look — the same
+//     scene, still fully arrangeable, plus a QR handoff to a phone.
+//
+// Scene state (model sources + floor transforms) persists in localStorage and
+// round-trips through ?src= links, so a desktop arrangement reopens on a phone.
+
+import {
+	AnimationMixer, Box3, CanvasTexture, CircleGeometry, Color, DirectionalLight,
+	GridHelper, Group, HemisphereLight, Mesh, MeshBasicMaterial, PerspectiveCamera,
+	PlaneGeometry, Raycaster, RingGeometry, Scene, Vector2, Vector3, WebGLRenderer,
+} from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { clone as cloneSkinnedScene } from 'three/addons/utils/SkeletonUtils.js';
+
+import { MultiPlaceSession } from './ar/multi-place.js';
+import {
+	createPinchState, pinchEnd, pinchMove, pinchStart, touchDist,
+	PINCH_SCALE_MAX, PINCH_SCALE_MIN,
+} from './ar/pinch-scale.js';
+import {
+	AVATAR_TARGET_HEIGHT_M, deserializeScene, fitTransform, MAX_PLACEMENTS,
+	normalizeGlbUrl, parseSrcParams, serializeScene, spawnPointInFront,
+	studioShareUrl, touchAngle, twistDelta,
+} from './ar/studio-scene.js';
+import { renderQRToSVG } from './erc8004/qr.js';
+import { deriveVerticalFovDeg, DEFAULT_DIAG_FOV_DEG } from './irl/camera-fov.js';
+import { createLoadQueue, sharedGLTFLoader } from './irl/load-queue.js';
+import { clampPitch, isFiniteReading, resolveLockYaw, screenPitchDeg } from './irl/sensor-fusion.js';
+import { captureComposite, shareOrDownload } from './irl/share-frame.js';
+import { createLogger } from './shared/log.js';
+
+const log = createLogger('ar-studio');
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) =>
+	String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+const SCENE_KEY = 'twx_ar_studio_scene_v1';
+// Shared with /ar (AR Forge) on purpose: a model forged on either page shows up
+// in the other's recents — one history, two doors.
+const RECENT_KEY = 'twx_ar_forge_recent';
+const POLL_MS = 3000;
+const MAX_POLL_MS = 300000;
+const EYE_HEIGHT_M = 1.55;
+const PITCH_MIN = -1.25;
+const PITCH_MAX = 1.35;
+
+// Same anonymous forge identity as /forge and /creations — scopes the "Yours"
+// tray tab and attributes in-studio generations to this browser's gallery.
+const CLIENT_ID = (() => {
+	const KEY = 'forge:cid';
+	try {
+		let id = localStorage.getItem(KEY);
+		if (!id) {
+			id = crypto?.randomUUID?.() || `c-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+			localStorage.setItem(KEY, id);
+		}
+		return id;
+	} catch {
+		return `c-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+	}
+})();
+
+// ── DOM ───────────────────────────────────────────────────────────────────────
+const videoEl = $('ars-video');
+const canvas = $('ars-canvas');
+const hud = $('ars-hud');
+const statusEl = $('ars-status');
+const countEl = $('ars-count');
+const cameraBtn = $('ars-camera-btn');
+const xrBtn = $('ars-xr-btn');
+const addBtn = $('ars-add-btn');
+const clearBtn = $('ars-clear-btn');
+const photoBtn = $('ars-photo-btn');
+const qrBtn = $('ars-qr-btn');
+const forgeForm = $('ars-forge-form');
+const forgeInput = $('ars-forge-input');
+const forgeGo = $('ars-forge-go');
+const forgeChip = $('ars-forge-chip');
+const selbar = $('ars-selbar');
+const selName = $('ars-sel-name');
+const tray = $('ars-tray');
+const trayBody = $('ars-tray-body');
+const trayClose = $('ars-tray-close');
+const emptyEl = $('ars-empty');
+const qrModal = $('ars-qr-modal');
+
+if (!canvas || !hud) {
+	throw new Error('AR Studio: page skeleton missing');
+}
+
+// ── Renderer / scene ─────────────────────────────────────────────────────────
+const renderer = new WebGLRenderer({
+	canvas, alpha: true, antialias: true, preserveDrawingBuffer: true,
+});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x000000, 0);
+
+const scene = new Scene();
+const camera = new PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.02, 200);
+camera.position.set(0, EYE_HEIGHT_M, 0);
+
+// PBR environment so forge PBR materials (metal, glass, emissive) read правильно
+// against a real room — same RoomEnvironment the viewer uses.
+{
+	const { PMREMGenerator } = renderer.constructor.name ? {} : {};
+}
+import('three').then(({ PMREMGenerator }) => {
+	try {
+		const pmrem = new PMREMGenerator(renderer);
+		scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+		pmrem.dispose();
+	} catch (err) {
+		log.warn('environment map failed', err);
+	}
+});
+
+scene.add(new HemisphereLight(0xffffff, 0x444455, 1.0));
+const sun = new DirectionalLight(0xffffff, 1.15);
+sun.position.set(2.5, 6, 3);
+scene.add(sun);
+
+// Preview-mode floor: a calm grid that hides the moment the camera feed becomes
+// the ground truth. The ray plane is the invisible tap/drag target either way.
+const grid = new GridHelper(24, 48, 0x3a3f52, 0x23273a);
+grid.position.y = 0.001;
+scene.add(grid);
+const rayPlane = new Mesh(
+	new PlaneGeometry(80, 80),
+	new MeshBasicMaterial({ visible: false, side: 2 }),
+);
+rayPlane.rotation.x = -Math.PI / 2;
+scene.add(rayPlane);
+
+// Selection ring — one reusable marker parked under the selected model.
+const selRing = new Mesh(
+	new RingGeometry(0.3, 0.34, 48).rotateX(-Math.PI / 2),
+	new MeshBasicMaterial({ color: 0x8b7cf8, transparent: true, opacity: 0.85, depthTest: false }),
+);
+selRing.renderOrder = 998;
+selRing.visible = false;
+scene.add(selRing);
+
+// Shared radial-gradient contact-shadow texture for fallback-mode placements.
+const shadowTex = (() => {
+	try {
+		const size = 128;
+		const cnv = document.createElement('canvas');
+		cnv.width = cnv.height = size;
+		const ctx = cnv.getContext('2d');
+		const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+		g.addColorStop(0, 'rgba(0,0,0,0.40)');
+		g.addColorStop(0.55, 'rgba(0,0,0,0.18)');
+		g.addColorStop(1, 'rgba(0,0,0,0)');
+		ctx.fillStyle = g;
+		ctx.fillRect(0, 0, size, size);
+		return new CanvasTexture(cnv);
+	} catch {
+		return null;
+	}
+})();
+
+const reducedMotion = (() => {
+	try {
+		return !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+	} catch {
+		return false;
+	}
+})();
+
+// ── Camera look (yaw/pitch; gyro on mobile, drag anywhere) ───────────────────
+let cameraYaw = 0;
+let cameraPitch = -0.12;
+
+function applyCameraLook() {
+	camera.rotation.set(0, 0, 0);
+	camera.rotateY(cameraYaw);
+	camera.rotateX(cameraPitch);
+}
+applyCameraLook();
+
+// ── State ─────────────────────────────────────────────────────────────────────
+/**
+ * @typedef {object} Placement
+ * @property {string} id
+ * @property {string} src
+ * @property {string} title
+ * @property {Group}  group     Outer group at the floor point (y=0).
+ * @property {Mesh|null} shadow
+ * @property {AnimationMixer|null} mixer
+ * @property {number} yaw
+ * @property {number} baseRadius  Footprint radius for the selection ring.
+ * @property {number} spawnT      Spawn scale-in progress 0→1.
+ */
+/** @type {Placement[]} */
+const placements = [];
+/** @type {Placement|null} */
+let selected = null;
+let arActive = false;
+let mediaStream = null;
+let arTransitioning = false;
+let xrSession = null;
+let arTrackW = 0;
+let arTrackH = 0;
+let statusTimer = null;
+let undoItems = null;
+
+// Template cache: one load per GLB source no matter how many copies are placed.
+/** @type {Map<string, Promise<{ gltf: any, skinned: boolean, fit: { scale: number, yOffset: number }, radius: number }>>} */
+const templates = new Map();
+const loadQueue = createLoadQueue({
+	run: (src) => sharedGLTFLoader().loadAsync(src),
+	maxActive: 3,
+});
+
+// ── Status line ───────────────────────────────────────────────────────────────
+function setStatus(msg, { warn = false, sticky = false, actionLabel = '', onAction = null } = {}) {
+	if (!statusEl) return;
+	clearTimeout(statusTimer);
+	statusEl.innerHTML = '';
+	if (!msg) {
+		statusEl.hidden = true;
+		return;
+	}
+	statusEl.hidden = false;
+	statusEl.classList.toggle('is-warn', warn);
+	const span = document.createElement('span');
+	span.textContent = msg;
+	statusEl.appendChild(span);
+	if (actionLabel && onAction) {
+		const btn = document.createElement('button');
+		btn.type = 'button';
+		btn.className = 'ars-status-action';
+		btn.textContent = actionLabel;
+		btn.addEventListener('click', () => {
+			setStatus(null);
+			onAction();
+		});
+		statusEl.appendChild(btn);
+	}
+	if (!sticky) statusTimer = setTimeout(() => { statusEl.hidden = true; }, 5000);
+}
+
+function updateCount() {
+	if (!countEl) return;
+	const n = placements.length;
+	countEl.textContent = n === 1 ? '1 model' : `${n} models`;
+	countEl.hidden = n === 0;
+	if (clearBtn) clearBtn.hidden = n === 0;
+	if (emptyEl) emptyEl.hidden = n > 0;
+	if (photoBtn) photoBtn.disabled = n === 0;
+}
+
+// ── Scene persistence ─────────────────────────────────────────────────────────
+function saveScene() {
+	try {
+		localStorage.setItem(SCENE_KEY, serializeScene(placements.map((p) => ({
+			src: p.src,
+			title: p.title,
+			x: p.group.position.x,
+			z: p.group.position.z,
+			yaw: p.yaw,
+			scale: p.group.scale.x,
+		}))));
+	} catch {}
+}
+
+// ── Selection ─────────────────────────────────────────────────────────────────
+function select(p) {
+	selected = p;
+	if (!selbar) return;
+	if (!p) {
+		selbar.hidden = true;
+		selRing.visible = false;
+		return;
+	}
+	selbar.hidden = false;
+	if (selName) selName.textContent = p.title || 'Model';
+	selRing.visible = true;
+	positionSelRing();
+}
+
+function positionSelRing() {
+	if (!selected) return;
+	const p = selected;
+	selRing.position.set(p.group.position.x, p.group.position.y + 0.006, p.group.position.z);
+	const r = Math.max(0.24, p.baseRadius * p.group.scale.x * 1.15);
+	selRing.scale.setScalar(r / 0.32);
+}
+
+// ── Model loading + placement ─────────────────────────────────────────────────
+function loadTemplate(src) {
+	let t = templates.get(src);
+	if (!t) {
+		t = loadQueue.request(src).then((gltf) => {
+			let skinned = false;
+			gltf.scene.traverse((o) => { if (o.isSkinnedMesh) skinned = true; });
+			const box = new Box3().setFromObject(gltf.scene);
+			const fit = fitTransform(
+				{ min: { x: box.min.x, y: box.min.y, z: box.min.z }, max: { x: box.max.x, y: box.max.y, z: box.max.z } },
+				{ skinned },
+			);
+			const radius = Math.max(
+				(box.max.x - box.min.x) * fit.scale,
+				(box.max.z - box.min.z) * fit.scale,
+			) / 2;
+			return { gltf, skinned, fit, radius: Number.isFinite(radius) ? radius : 0.3 };
+		});
+		templates.set(src, t);
+		t.catch(() => templates.delete(src)); // a failed load is retryable
+	}
+	return t;
+}
+
+// Instantiate a template into a floor-ready group. Cloned per placement so ten
+// copies of one crate are ten independent models; SkeletonUtils handles skinned
+// avatars (plain .clone() breaks bone bindings).
+function instantiate(tpl) {
+	const inner = cloneSkinnedScene(tpl.gltf.scene);
+	inner.scale.setScalar(tpl.fit.scale);
+	inner.position.y = tpl.fit.yOffset;
+	const group = new Group();
+	group.add(inner);
+	let mixer = null;
+	if (tpl.gltf.animations?.length) {
+		mixer = new AnimationMixer(inner);
+		mixer.clipAction(tpl.gltf.animations[0]).play();
+	}
+	return { group, mixer };
+}
+
+function makeShadow(radius) {
+	if (!shadowTex) return null;
+	const d = Math.max(0.4, radius * 2.4);
+	const mesh = new Mesh(
+		new PlaneGeometry(d, d).rotateX(-Math.PI / 2),
+		new MeshBasicMaterial({ map: shadowTex, transparent: true, opacity: 0.85, depthWrite: false }),
+	);
+	mesh.renderOrder = 1;
+	return mesh;
+}
+
+// Spread same-spot spawns into a small ring so "add, add, add" reads as a
+// lineup instead of a z-fighting pile.
+function nudgeSpawn(pt) {
+	let { x, z } = pt;
+	for (let attempt = 0; attempt < 8; attempt++) {
+		const clash = placements.some((p) =>
+			Math.hypot(p.group.position.x - x, p.group.position.z - z) < 0.45);
+		if (!clash) break;
+		const a = attempt * 2.399963; // golden angle
+		x = pt.x + Math.cos(a) * 0.55 * (1 + attempt * 0.18);
+		z = pt.z + Math.sin(a) * 0.55 * (1 + attempt * 0.18);
+	}
+	return { x, z };
+}
+
+/**
+ * Add a model to the scene. Loads (or reuses) the template, drops it on the
+ * floor in front of the camera (or at the given transform on restore), selects
+ * it, and persists. Resolves with the placement or null on failure.
+ */
+async function addModel({ src, title = '' }, { x = null, z = null, yaw = null, scale = null, announce = true, persist = true } = {}) {
+	const url = normalizeGlbUrl(src);
+	if (!url) {
+		setStatus('That link is not a loadable https GLB.', { warn: true });
+		return null;
+	}
+	if (placements.length >= MAX_PLACEMENTS) {
+		setStatus(`Scene is full (${MAX_PLACEMENTS} models). Remove one to add more.`, { warn: true });
+		return null;
+	}
+	if (announce) setStatus(`Loading ${title || 'model'}…`, { sticky: true });
+	let tpl;
+	try {
+		tpl = await loadTemplate(url);
+	} catch (err) {
+		log.warn('model load failed', url, err);
+		setStatus(`Couldn't load ${title || 'that model'} — the file may be gone.`, {
+			warn: true, actionLabel: 'Retry', onAction: () => addModel({ src: url, title }),
+		});
+		return null;
+	}
+
+	const { group, mixer } = instantiate(tpl);
+	let px = x, pz = z;
+	if (px === null || pz === null) {
+		const fwd = camera.getWorldDirection(new Vector3());
+		const spot = nudgeSpawn(spawnPointInFront(camera.position, fwd));
+		px = spot.x;
+		pz = spot.z;
+	}
+	group.position.set(px, 0, pz);
+	const yawV = yaw ?? Math.atan2(camera.position.x - px, camera.position.z - pz);
+	group.rotation.y = yawV;
+	if (scale) group.scale.setScalar(Math.min(PINCH_SCALE_MAX, Math.max(PINCH_SCALE_MIN, scale)));
+	scene.add(group);
+
+	const shadow = makeShadow(tpl.radius);
+	if (shadow) {
+		shadow.position.set(px, 0.004, pz);
+		shadow.scale.setScalar(group.scale.x);
+		shadow.visible = !xrSession; // XR session draws its own anchored shadows
+		scene.add(shadow);
+	}
+
+	const placement = {
+		id: `p-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+		src: url,
+		title: String(title || '').slice(0, 120),
+		group,
+		shadow,
+		mixer,
+		yaw: yawV,
+		baseRadius: tpl.radius,
+		spawnT: reducedMotion ? 1 : 0,
+	};
+	if (!reducedMotion) group.scale.multiplyScalar(0.001);
+	placements.push(placement);
+	armedSrc = { src: url, title: placement.title };
+	updateCount();
+	select(placement);
+	if (persist) saveScene();
+	if (announce) setStatus('Placed. Drag to move, pinch to resize, twist to rotate.');
+	return placement;
+}
+
+function removePlacement(p, { persist = true } = {}) {
+	const i = placements.indexOf(p);
+	if (i === -1) return;
+	placements.splice(i, 1);
+	xrSession?.release(p.group);
+	scene.remove(p.group);
+	if (p.shadow) {
+		scene.remove(p.shadow);
+		p.shadow.geometry?.dispose();
+		p.shadow.material?.dispose();
+	}
+	p.group.traverse((o) => {
+		o.geometry?.dispose?.();
+		// Materials/textures come from the shared template — other copies may
+		// still use them, so only the geometry clones are disposed here.
+	});
+	if (selected === p) select(placements[placements.length - 1] ?? null);
+	updateCount();
+	if (persist) saveScene();
+}
+
+// ── Restore + deep links ──────────────────────────────────────────────────────
+let armedSrc = null; // { src, title } — what an XR reticle tap places
+
+async function restoreScene() {
+	let items = [];
+	try {
+		items = deserializeScene(localStorage.getItem(SCENE_KEY));
+	} catch {}
+	const params = new URLSearchParams(location.search);
+	const linked = parseSrcParams(params);
+
+	for (const it of items) {
+		await addModel({ src: it.src, title: it.title }, {
+			x: it.x, z: it.z, yaw: it.yaw, scale: it.scale, announce: false, persist: false,
+		});
+	}
+	// Deep-linked models land in front of the camera, skipping ones already
+	// restored at an arranged spot.
+	const have = new Set(placements.map((p) => p.src));
+	for (const it of linked) {
+		if (have.has(it.src)) continue;
+		await addModel(it, { announce: false });
+	}
+	if (placements.length) {
+		select(placements[placements.length - 1]);
+		setStatus(linked.length ? 'Models loaded — tap the camera to see them in your space.' : 'Your scene is back.');
+	}
+	saveScene();
+
+	const forgePrompt = (params.get('forge') || '').trim();
+	if (forgePrompt.length >= 3 && forgeInput) {
+		forgeInput.value = forgePrompt;
+		startForge(forgePrompt);
+	}
+}
+
+// ── Camera passthrough ────────────────────────────────────────────────────────
+function applyCameraFov() {
+	const track = mediaStream?.getVideoTracks?.()[0];
+	if (track) {
+		const s = track.getSettings?.() ?? {};
+		if (Number.isFinite(s.width) && s.width > 0) arTrackW = s.width;
+		if (Number.isFinite(s.height) && s.height > 0) arTrackH = s.height;
+	}
+	if (!arActive || !(arTrackW > 0) || !(arTrackH > 0)) return;
+	camera.fov = deriveVerticalFovDeg({
+		trackWidth: arTrackW,
+		trackHeight: arTrackH,
+		viewWidth: window.innerWidth,
+		viewHeight: window.innerHeight,
+		diagFovDeg: DEFAULT_DIAG_FOV_DEG,
+	});
+	camera.updateProjectionMatrix();
+}
+
+async function startCamera() {
+	if (arTransitioning || arActive || xrSession) return;
+	if (!navigator.mediaDevices?.getUserMedia) {
+		setStatus('This browser can’t open the camera — the 3D preview still works.', { warn: true });
+		return;
+	}
+	arTransitioning = true;
+	try {
+		setStatus('Starting camera…', { sticky: true });
+		try {
+			mediaStream = await navigator.mediaDevices.getUserMedia({
+				video: { facingMode: { ideal: 'environment' } },
+				audio: false,
+			});
+		} catch (err) {
+			if (err?.name === 'NotAllowedError') {
+				setStatus('Camera permission is blocked. Allow it in your browser settings, then try again.', {
+					warn: true, sticky: true, actionLabel: 'Try again', onAction: startCamera,
+				});
+			} else {
+				setStatus(`The camera didn’t start (${err?.message ?? err}).`, {
+					warn: true, actionLabel: 'Try again', onAction: startCamera,
+				});
+			}
+			return;
+		}
+		if (videoEl) videoEl.srcObject = mediaStream;
+		arActive = true;
+		document.body.classList.add('is-ar');
+		cameraBtn?.classList.add('is-active');
+		cameraBtn?.setAttribute('aria-pressed', 'true');
+		grid.visible = false;
+		videoEl?.play?.().catch(() => {});
+		applyCameraFov();
+		await startGyro();
+		setStatus('Camera on — your models are in the room. Look around.');
+	} finally {
+		arTransitioning = false;
+	}
+}
+
+function stopCamera() {
+	if (mediaStream) {
+		mediaStream.getTracks().forEach((t) => { try { t.stop(); } catch {} });
+		mediaStream = null;
+	}
+	if (videoEl) videoEl.srcObject = null;
+	arActive = false;
+	document.body.classList.remove('is-ar');
+	cameraBtn?.classList.remove('is-active');
+	cameraBtn?.setAttribute('aria-pressed', 'false');
+	grid.visible = true;
+	camera.fov = 58;
+	camera.updateProjectionMatrix();
+	gyroBase = null;
+	arTrackW = 0;
+	arTrackH = 0;
+}
+
+cameraBtn?.addEventListener('click', () => {
+	if (arTransitioning || xrSession) return;
+	if (arActive) {
+		stopCamera();
+		setStatus('Camera off — preview mode.');
+	} else {
+		startCamera();
+	}
+});
+if (!navigator.mediaDevices?.getUserMedia && cameraBtn) {
+	cameraBtn.disabled = true;
+	cameraBtn.setAttribute('aria-disabled', 'true');
+}
+
+// ── Gyro look (relative world-lock; no GPS, no compass persistence) ──────────
+let gyroBase = null; // { alpha, beta, yaw, pitch }
+let lastDevAlpha = 0;
+let lastDevBeta = 90;
+let lastDevGamma = 0;
+let hasAbsoluteEventStream = false;
+
+function currentScreenAngle() {
+	try {
+		const a = screen.orientation?.angle;
+		if (Number.isFinite(a)) return a;
+	} catch {}
+	return Number(window.orientation) || 0;
+}
+
+function onDeviceOrientation(e) {
+	if (isFiniteReading(e.alpha, e.beta)) {
+		lastDevAlpha = e.alpha;
+		lastDevBeta = e.beta;
+		if (Number.isFinite(e.gamma)) lastDevGamma = e.gamma;
+	}
+	if (!arActive || !gyroBase) return;
+	const b = screenPitchDeg(lastDevBeta, lastDevGamma, currentScreenAngle());
+	const nextYaw = resolveLockYaw({
+		useAbsolute: false,
+		prevYaw: cameraYaw,
+		alpha: lastDevAlpha,
+		baseAlpha: gyroBase.alpha,
+		baseYaw: gyroBase.yaw,
+		compassHeading: null,
+	});
+	const nextPitch = clampPitch(
+		gyroBase.pitch - (b - gyroBase.beta) * (Math.PI / 180),
+		PITCH_MIN, PITCH_MAX,
+	);
+	if (Number.isFinite(nextYaw)) cameraYaw = nextYaw;
+	if (Number.isFinite(nextPitch)) cameraPitch = nextPitch;
+}
+
+window.addEventListener('deviceorientationabsolute', (e) => {
+	hasAbsoluteEventStream = true;
+	onDeviceOrientation(e);
+}, true);
+window.addEventListener('deviceorientation', (e) => {
+	if (hasAbsoluteEventStream) return;
+	onDeviceOrientation(e);
+}, true);
+
+async function startGyro() {
+	// iOS 13+ gates DeviceOrientationEvent behind a user-gesture permission; the
+	// camera button tap we are inside satisfies it.
+	try {
+		if (typeof DeviceOrientationEvent !== 'undefined'
+			&& typeof DeviceOrientationEvent.requestPermission === 'function') {
+			const state = await DeviceOrientationEvent.requestPermission();
+			if (state !== 'granted') {
+				setStatus('Motion access is off — drag to look around instead.', { warn: true });
+				return;
+			}
+		}
+	} catch {
+		return; // declined prompt → drag-look still works
+	}
+	gyroBase = {
+		alpha: lastDevAlpha,
+		beta: screenPitchDeg(lastDevBeta, lastDevGamma, currentScreenAngle()),
+		yaw: cameraYaw,
+		pitch: cameraPitch,
+	};
+}
+
+// ── Pointer gestures (fallback + camera modes; XR has its own) ───────────────
+const raycaster = new Raycaster();
+const ndc = new Vector2();
+let pointerDown = null; // { x, y, placement|null, moved }
+const pinch = createPinchState();
+let pinchEndedAt = -Infinity;
+let twist = null; // { startAngle, baseYaw, placement }
+
+function placementAt(clientX, clientY) {
+	ndc.set((clientX / window.innerWidth) * 2 - 1, -(clientY / window.innerHeight) * 2 + 1);
+	raycaster.setFromCamera(ndc, camera);
+	const groups = placements.map((p) => p.group);
+	if (!groups.length) return null;
+	const hits = raycaster.intersectObjects(groups, true);
+	if (!hits.length) return null;
+	let obj = hits[0].object;
+	while (obj) {
+		const found = placements.find((p) => p.group === obj);
+		if (found) return found;
+		obj = obj.parent;
+	}
+	return null;
+}
+
+function floorPointAt(clientX, clientY) {
+	ndc.set((clientX / window.innerWidth) * 2 - 1, -(clientY / window.innerHeight) * 2 + 1);
+	raycaster.setFromCamera(ndc, camera);
+	const hits = raycaster.intersectObject(rayPlane);
+	return hits.length ? hits[0].point : null;
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+	if (xrSession) return;
+	if (pinch.active || performance.now() - pinchEndedAt < 350) return;
+	pointerDown = {
+		x: e.clientX, y: e.clientY,
+		placement: placementAt(e.clientX, e.clientY),
+		lookYaw: cameraYaw, lookPitch: cameraPitch,
+		moved: false,
+	};
+});
+
+canvas.addEventListener('pointermove', (e) => {
+	if (!pointerDown || xrSession) return;
+	if (pinch.active) return;
+	const dx = e.clientX - pointerDown.x;
+	const dy = e.clientY - pointerDown.y;
+	if (Math.hypot(dx, dy) > 6) pointerDown.moved = true;
+	if (!pointerDown.moved) return;
+
+	if (pointerDown.placement) {
+		// Drag a model along the floor.
+		const pt = floorPointAt(e.clientX, e.clientY);
+		if (!pt) return;
+		const p = pointerDown.placement;
+		p.group.position.x = pt.x;
+		p.group.position.z = pt.z;
+		if (p.shadow) p.shadow.position.set(pt.x, 0.004, pt.z);
+		if (selected === p) positionSelRing();
+	} else if (!(arActive && gyroBase)) {
+		// Drag-look: only when the gyro isn't already steering the view.
+		cameraYaw = pointerDown.lookYaw + dx * 0.0042;
+		cameraPitch = clampPitch(pointerDown.lookPitch + dy * 0.0032, PITCH_MIN, PITCH_MAX);
+	}
+});
+
+function endPointer(e) {
+	if (!pointerDown || xrSession) return;
+	const wasTap = !pointerDown.moved
+		&& Math.hypot(e.clientX - pointerDown.x, e.clientY - pointerDown.y) <= 8
+		&& !pinch.active && performance.now() - pinchEndedAt >= 350;
+	if (wasTap) {
+		select(pointerDown.placement); // null = deselect
+	} else if (pointerDown.placement && pointerDown.moved) {
+		saveScene();
+		setStatus(null);
+	}
+	pointerDown = null;
+}
+canvas.addEventListener('pointerup', endPointer);
+canvas.addEventListener('pointercancel', () => { pointerDown = null; });
+
+// Two-finger pinch = scale, twist = rotate — on the selected (or last) model.
+function gestureTarget() {
+	return selected ?? placements[placements.length - 1] ?? null;
+}
+
+canvas.addEventListener('touchstart', (e) => {
+	if (xrSession || e.touches.length !== 2) return;
+	const target = gestureTarget();
+	if (!target) return;
+	pointerDown = null; // the pair owns the gesture; no drag/tap
+	pinchStart(pinch, touchDist(e.touches), target.group.scale.x);
+	twist = { startAngle: touchAngle(e.touches), baseYaw: target.yaw, placement: target };
+}, { passive: true });
+
+canvas.addEventListener('touchmove', (e) => {
+	if (xrSession || e.touches.length !== 2) return;
+	const target = twist?.placement;
+	if (!target) return;
+	const s = pinchMove(pinch, touchDist(e.touches));
+	if (s != null) {
+		target.group.scale.setScalar(s);
+		target.shadow?.scale.setScalar(s);
+		if (selected === target) positionSelRing();
+	}
+	target.yaw = twist.baseYaw + twistDelta(twist.startAngle, touchAngle(e.touches));
+	target.group.rotation.y = target.yaw;
+}, { passive: true });
+
+canvas.addEventListener('touchend', () => {
+	const s = pinchEnd(pinch);
+	if (s != null) {
+		pinchEndedAt = performance.now();
+		saveScene();
+	}
+	twist = null;
+}, { passive: true });
+
+// ── Selection toolbar ─────────────────────────────────────────────────────────
+selbar?.addEventListener('click', (e) => {
+	const btn = e.target.closest('[data-act]');
+	if (!btn || !selected) return;
+	const act = btn.dataset.act;
+	if (act === 'rotate') {
+		selected.yaw += Math.PI / 4;
+		selected.group.rotation.y = selected.yaw;
+		saveScene();
+	} else if (act === 'duplicate') {
+		addModel({ src: selected.src, title: selected.title }, {
+			yaw: selected.yaw, scale: selected.group.scale.x,
+		});
+	} else if (act === 'remove') {
+		const removed = selected;
+		removePlacement(removed);
+		setStatus('Removed.', {
+			actionLabel: 'Undo',
+			onAction: () => addModel({ src: removed.src, title: removed.title }, {
+				x: removed.group.position.x, z: removed.group.position.z,
+				yaw: removed.yaw, scale: removed.group.scale.x,
+			}),
+		});
+	}
+});
+
+clearBtn?.addEventListener('click', () => {
+	if (!placements.length) return;
+	undoItems = placements.map((p) => ({
+		src: p.src, title: p.title,
+		x: p.group.position.x, z: p.group.position.z,
+		yaw: p.yaw, scale: p.group.scale.x,
+	}));
+	for (const p of [...placements]) removePlacement(p, { persist: false });
+	saveScene();
+	setStatus('Scene cleared.', {
+		actionLabel: 'Undo',
+		onAction: async () => {
+			const items = undoItems ?? [];
+			undoItems = null;
+			for (const it of items) {
+				await addModel({ src: it.src, title: it.title }, {
+					x: it.x, z: it.z, yaw: it.yaw, scale: it.scale, announce: false,
+				});
+			}
+		},
+	});
+});
+
+// ── Forge without leaving the camera ─────────────────────────────────────────
+let forgeBusy = false;
+let forgeSeq = 0;
+
+function forgeChipState(state, label) {
+	if (!forgeChip) return;
+	forgeChip.dataset.state = state;
+	forgeChip.hidden = state === 'idle';
+	const text = forgeChip.querySelector('.ars-chip-label');
+	if (text) text.textContent = label || '';
+}
+
+async function startForge(prompt) {
+	prompt = String(prompt || '').trim();
+	if (prompt.length < 3 || forgeBusy) return;
+	forgeBusy = true;
+	const seq = ++forgeSeq;
+	if (forgeGo) forgeGo.disabled = true;
+	const t0 = Date.now();
+	forgeChipState('working', `Forging "${prompt.length > 42 ? `${prompt.slice(0, 39)}…` : prompt}"`);
+	const elapsed = setInterval(() => {
+		if (forgeChip?.dataset.state === 'working') {
+			const s = Math.round((Date.now() - t0) / 1000);
+			const el = forgeChip.querySelector('.ars-chip-elapsed');
+			if (el) el.textContent = `${s}s`;
+		}
+	}, 1000);
+
+	try {
+		const res = await fetch('/api/forge', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', 'x-forge-client': CLIENT_ID },
+			body: JSON.stringify({ prompt, backend: 'nvidia' }),
+		});
+		const data = await res.json().catch(() => ({}));
+		if (res.status === 503 || data.error === 'unconfigured') {
+			throw new Error('The generator is offline right now. Try again in a few minutes.');
+		}
+		if (res.status === 429 || data.error === 'rate_limited') {
+			const secs = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 15;
+			throw new Error(data.message || `The forge is busy — try again in about ${secs}s.`);
+		}
+		if (!res.ok) throw new Error(data.message || `The generator returned ${res.status}.`);
+
+		let done = data;
+		if (!(data.status === 'done' && data.glb_url)) {
+			if (!data.job_id) throw new Error('The forge did not accept the job. Try again.');
+			done = await pollForge(data.job_id, seq);
+		}
+		if (!done || seq !== forgeSeq) return;
+		rememberForge(prompt, done.glb_url);
+		forgeChipState('idle');
+		if (forgeInput) forgeInput.value = '';
+		await addModel({ src: done.glb_url, title: prompt }, { announce: false });
+		setStatus('Forged and placed. Pinch to resize, drag to move.');
+	} catch (err) {
+		if (seq === forgeSeq) {
+			forgeChipState('error', (err && err.message) || 'Generation failed.');
+			setTimeout(() => {
+				if (forgeChip?.dataset.state === 'error') forgeChipState('idle');
+			}, 6000);
+		}
+	} finally {
+		clearInterval(elapsed);
+		if (seq === forgeSeq) {
+			forgeBusy = false;
+			if (forgeGo) forgeGo.disabled = false;
+		}
+	}
+}
+
+async function pollForge(jobId, seq) {
+	const deadline = Date.now() + MAX_POLL_MS;
+	for (;;) {
+		if (seq !== forgeSeq) return null;
+		if (Date.now() > deadline) throw new Error('Generation timed out. Try a simpler, single-object prompt.');
+		await new Promise((r) => setTimeout(r, POLL_MS));
+		if (seq !== forgeSeq) return null;
+		const res = await fetch(`/api/forge?job=${encodeURIComponent(jobId)}`, {
+			headers: { 'x-forge-client': CLIENT_ID },
+		});
+		const data = await res.json().catch(() => ({}));
+		if (data.status === 'done' && data.glb_url) return data;
+		if (data.status === 'failed') throw new Error(data.error || 'Generation failed. Try rephrasing the prompt.');
+	}
+}
+
+function readRecent() {
+	try {
+		const v = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+		return Array.isArray(v)
+			? v.filter((e) => e && normalizeGlbUrl(e.glb) && e.prompt)
+			: [];
+	} catch {
+		return [];
+	}
+}
+
+function rememberForge(prompt, glb) {
+	try {
+		const list = readRecent().filter((e) => e.glb !== glb);
+		list.unshift({ prompt: String(prompt).slice(0, 200), glb, ts: Date.now() });
+		localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 8)));
+	} catch {}
+}
+
+forgeForm?.addEventListener('submit', (e) => {
+	e.preventDefault();
+	startForge(forgeInput?.value);
+});
+
+// ── Model tray ────────────────────────────────────────────────────────────────
+let trayTab = 'recent';
+const trayCache = new Map(); // tab → items
+
+function openTray(tab = trayTab) {
+	if (!tray) return;
+	tray.hidden = false;
+	addBtn?.setAttribute('aria-expanded', 'true');
+	setTrayTab(tab);
+	trayClose?.focus?.();
+}
+
+function closeTray() {
+	if (!tray) return;
+	tray.hidden = true;
+	addBtn?.setAttribute('aria-expanded', 'false');
+}
+
+addBtn?.addEventListener('click', () => (tray?.hidden ? openTray() : closeTray()));
+trayClose?.addEventListener('click', closeTray);
+tray?.addEventListener('click', (e) => {
+	if (e.target === tray) closeTray();
+});
+document.addEventListener('keydown', (e) => {
+	if (e.key === 'Escape') {
+		if (tray && !tray.hidden) closeTray();
+		else if (qrModal && !qrModal.hidden) qrModal.hidden = true;
+		else select(null);
+	}
+});
+
+tray?.querySelectorAll('[data-tab]').forEach((btn) => {
+	btn.addEventListener('click', () => setTrayTab(btn.dataset.tab));
+});
+
+function setTrayTab(tab) {
+	trayTab = tab;
+	tray?.querySelectorAll('[data-tab]').forEach((b) => {
+		b.classList.toggle('is-active', b.dataset.tab === tab);
+		b.setAttribute('aria-selected', String(b.dataset.tab === tab));
+	});
+	renderTray();
+}
+
+function trayItemHTML(it) {
+	const img = it.poster
+		? `<img src="${esc(it.poster)}" alt="" loading="lazy" />`
+		: '<span class="ars-item-cube" aria-hidden="true">◆</span>';
+	return `
+		<li class="ars-item">
+			<button type="button" class="ars-item-add" data-src="${esc(it.src)}" data-title="${esc(it.title)}"
+				aria-label="Add ${esc(it.title || 'model')} to your space">
+				<span class="ars-item-thumb">${img}</span>
+				<span class="ars-item-title">${esc(it.title || 'Untitled model')}</span>
+				<span class="ars-item-cta">Add</span>
+			</button>
+		</li>`;
+}
+
+async function fetchTrayItems(tab) {
+	if (trayCache.has(tab)) return trayCache.get(tab);
+	let items = [];
+	if (tab === 'recent') {
+		items = readRecent().map((e) => ({ src: e.glb, title: e.prompt, poster: '' }));
+	} else {
+		const qs = tab === 'community' ? '?scope=community&limit=24' : '?limit=24';
+		const res = await fetch(`/api/forge-gallery${qs}`, {
+			headers: tab === 'yours' ? { 'x-forge-client': CLIENT_ID } : {},
+		});
+		if (!res.ok) throw new Error(`gallery ${res.status}`);
+		const data = await res.json();
+		items = (data.creations || [])
+			.map((c) => ({
+				src: c.glb_url || c.glbUrl || '',
+				title: c.prompt || c.title || '',
+				poster: c.preview_image_url || c.previewImageUrl || '',
+			}))
+			.filter((c) => normalizeGlbUrl(c.src));
+	}
+	trayCache.set(tab, items);
+	return items;
+}
+
+async function renderTray() {
+	if (!trayBody) return;
+	const tab = trayTab;
+
+	if (tab === 'link') {
+		trayBody.innerHTML = `
+			<form class="ars-link-form" id="ars-link-form">
+				<label class="ars-link-label" for="ars-link-input">Paste a GLB link</label>
+				<div class="ars-link-row">
+					<input id="ars-link-input" type="url" inputmode="url" required
+						placeholder="https://example.com/model.glb" />
+					<button type="submit" class="ars-btn ars-btn-primary">Add</button>
+				</div>
+				<p class="ars-link-hint">Any https .glb works — a forge result, a viewer share link's src, or your own hosting.</p>
+			</form>`;
+		const form = $('ars-link-form');
+		form?.addEventListener('submit', (e) => {
+			e.preventDefault();
+			const input = $('ars-link-input');
+			const url = normalizeGlbUrl(input?.value);
+			if (!url) {
+				setStatus('That link is not a loadable https GLB.', { warn: true });
+				return;
+			}
+			closeTray();
+			addModel({ src: url, title: url.split('/').pop()?.replace(/\.glb.*$/i, '') || 'Linked model' });
+		});
+		return;
+	}
+
+	trayBody.innerHTML = '<div class="ars-tray-loading"><span class="ars-spinner" aria-hidden="true"></span> Loading models…</div>';
+	let items;
+	try {
+		items = await fetchTrayItems(tab);
+	} catch (err) {
+		log.warn('tray fetch failed', tab, err);
+		if (trayTab !== tab) return;
+		trayBody.innerHTML = `
+			<div class="ars-tray-empty">
+				<p>Couldn’t load models right now.</p>
+				<button type="button" class="ars-btn" id="ars-tray-retry">Retry</button>
+			</div>`;
+		$('ars-tray-retry')?.addEventListener('click', () => {
+			trayCache.delete(tab);
+			renderTray();
+		});
+		return;
+	}
+	if (trayTab !== tab) return;
+
+	if (!items.length) {
+		const copy = {
+			recent: 'Nothing forged on this device yet. Type a prompt below and your first model appears here.',
+			yours: 'No saved creations yet. Forge something here or in the <a href="/forge">Forge studio</a> and it lands in this tab.',
+			community: 'The community feed is quiet right now. Check back in a bit.',
+		}[tab] || 'Nothing here yet.';
+		trayBody.innerHTML = `
+			<div class="ars-tray-empty">
+				<p>${copy}</p>
+				<button type="button" class="ars-btn ars-btn-primary" id="ars-tray-forge">Forge a model</button>
+			</div>`;
+		$('ars-tray-forge')?.addEventListener('click', () => {
+			closeTray();
+			forgeInput?.focus();
+		});
+		return;
+	}
+	trayBody.innerHTML = `<ul class="ars-item-list">${items.map(trayItemHTML).join('')}</ul>`;
+	trayBody.querySelectorAll('.ars-item-add').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			closeTray();
+			addModel({ src: btn.dataset.src, title: btn.dataset.title });
+		});
+	});
+}
+
+// ── WebXR immersive multi-placement ──────────────────────────────────────────
+MultiPlaceSession.isSupported().then((ok) => {
+	if (ok && xrBtn) xrBtn.hidden = false;
+});
+
+xrBtn?.addEventListener('click', async () => {
+	if (xrSession) {
+		xrSession.end();
+		return;
+	}
+	if (arTransitioning) return;
+	arTransitioning = true;
+	try {
+		if (arActive) stopCamera(); // the immersive session owns the rear camera
+		const session = new MultiPlaceSession({
+			renderer,
+			scene,
+			camera,
+			domOverlayRoot: hud,
+			getArmedContent: () => {
+				const src = armedSrc?.src ?? placements[placements.length - 1]?.src;
+				if (!src) {
+					setStatus('Pick a model first — Add or forge one, then tap the floor.', { warn: true });
+					return null;
+				}
+				const tplPromise = templates.get(src);
+				// Templates resolve before anything is armable; a still-loading one
+				// simply skips this tap rather than placing late and surprising.
+				let tpl = null;
+				tplPromise?.then?.((t) => { tpl = t; });
+				if (!templates.has(src) || !tplReady.has(src)) return null;
+				const readyTpl = tplReady.get(src);
+				const { group, mixer } = instantiate(readyTpl);
+				const placement = {
+					id: `p-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
+					src,
+					title: armedSrc?.title || '',
+					group,
+					shadow: null,
+					mixer,
+					yaw: 0,
+					baseRadius: readyTpl.radius,
+					spawnT: 1,
+				};
+				placements.push(placement);
+				updateCount();
+				return group;
+			},
+			onPlaced: (group) => {
+				const p = placements.find((x) => x.group === group);
+				if (p) {
+					p.yaw = 0;
+					select(null); // the ring is a fallback-mode affordance
+				}
+				saveScene();
+				setStatus(`Placed ${xrSession?.placedCount ?? ''} — tap another spot to add one more.`);
+			},
+			getScaleTarget: () => placements[placements.length - 1]?.group ?? null,
+			onScale: (s, { final }) => {
+				const p = placements[placements.length - 1];
+				if (p && final) saveScene();
+			},
+			onHit: (has) => {
+				document.body.classList.toggle('xr-has-floor', has);
+			},
+			onTracking: (ok) => {
+				if (!ok) setStatus('Tracking lost — move to a brighter spot with more texture.', { warn: true, sticky: true });
+				else setStatus(null);
+			},
+			onFrame: (dt) => {
+				for (const p of placements) p.mixer?.update(dt);
+			},
+			onEnd: () => {
+				xrSession = null;
+				document.body.classList.remove('is-xr', 'xr-has-floor');
+				xrBtn.classList.remove('is-active');
+				xrBtn.setAttribute('aria-pressed', 'false');
+				// Ground anything the session placed mid-air back onto the floor
+				// plane so the fallback layout stays coherent, then resume our loop.
+				for (const p of placements) {
+					p.group.position.y = 0;
+					if (p.shadow) {
+						p.shadow.visible = true;
+						p.shadow.position.set(p.group.position.x, 0.004, p.group.position.z);
+					}
+				}
+				grid.visible = true;
+				saveScene();
+				startLoop();
+				setStatus('Back to the studio view.');
+			},
+		});
+		stopLoop();
+		await session.start();
+		xrSession = session;
+		document.body.classList.add('is-xr');
+		grid.visible = false;
+		selRing.visible = false;
+		for (const p of placements) {
+			if (p.shadow) p.shadow.visible = false;
+		}
+		xrBtn.classList.add('is-active');
+		xrBtn.setAttribute('aria-pressed', 'true');
+		setStatus('Point at the floor, then tap to place. Every tap adds another model.');
+	} catch (err) {
+		log.warn('XR session failed', err);
+		startLoop();
+		setStatus('Couldn’t start immersive AR on this device. Camera mode still works.', { warn: true });
+	} finally {
+		arTransitioning = false;
+	}
+});
+
+// Resolved templates, synchronously readable for the XR select handler (an XR
+// `select` can't await — a not-yet-loaded template skips the tap).
+const tplReady = new Map();
+const _origLoadTemplate = loadTemplate;
+function trackTemplate(src) {
+	const p = _origLoadTemplate(src);
+	p.then((t) => tplReady.set(src, t)).catch(() => {});
+	return p;
+}
+// eslint-disable-next-line no-func-assign
+loadTemplate = trackTemplate;
+
+// ── Photo + QR handoff ────────────────────────────────────────────────────────
+photoBtn?.addEventListener('click', async () => {
+	renderer.render(scene, camera); // fresh pixels under preserveDrawingBuffer
+	const blob = await captureComposite({ canvas, video: videoEl, isAR: arActive });
+	if (!blob) {
+		setStatus('Couldn’t capture the frame.', { warn: true });
+		return;
+	}
+	await shareOrDownload(blob, { filename: 'three-ws-ar-studio.png', title: 'AR Studio · three.ws' });
+});
+
+qrBtn?.addEventListener('click', () => {
+	if (!qrModal) return;
+	const url = studioShareUrl('https://three.ws', placements);
+	const box = $('ars-qr-box');
+	if (box) {
+		try {
+			box.innerHTML = renderQRToSVG(url, { scale: 6, margin: 2, dark: '#0b0b0b', light: '#ffffff' });
+		} catch {
+			box.textContent = url;
+		}
+	}
+	const link = $('ars-qr-link');
+	if (link) {
+		link.href = url;
+		link.textContent = url.length > 64 ? `${url.slice(0, 61)}…` : url;
+	}
+	qrModal.hidden = false;
+});
+$('ars-qr-close')?.addEventListener('click', () => { qrModal.hidden = true; });
+qrModal?.addEventListener('click', (e) => {
+	if (e.target === qrModal) qrModal.hidden = true;
+});
+
+// ── Render loop ───────────────────────────────────────────────────────────────
+let rafId = null;
+let prevT = 0;
+
+function tick(t) {
+	rafId = requestAnimationFrame(tick);
+	const dt = prevT ? Math.min(0.1, (t - prevT) / 1000) : 0.016;
+	prevT = t;
+
+	for (const p of placements) {
+		p.mixer?.update(dt);
+		if (p.spawnT < 1) {
+			p.spawnT = Math.min(1, p.spawnT + dt * 3.2);
+			const e = 1 - (1 - p.spawnT) ** 3; // ease-out cubic
+			const target = p.group.userData._targetScale ?? 1;
+			p.group.scale.setScalar(Math.max(0.001, target * e));
+			p.shadow?.scale.setScalar(Math.max(0.001, target * e));
+		}
+	}
+	if (selected) positionSelRing();
+	applyCameraLook();
+	renderer.render(scene, camera);
+}
+
+function startLoop() {
+	if (rafId === null) {
+		prevT = 0;
+		rafId = requestAnimationFrame(tick);
+	}
+}
+
+function stopLoop() {
+	if (rafId !== null) {
+		cancelAnimationFrame(rafId);
+		rafId = null;
+	}
+}
+
+// ── Resize / lifecycle ────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+	renderer.setSize(window.innerWidth, window.innerHeight);
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+	applyCameraFov();
+});
+
+window.addEventListener('pagehide', () => {
+	stopCamera();
+	xrSession?.end();
+});
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+updateCount();
+startLoop();
+restoreScene();
+
+// Mobile: lead with the camera (one tap, inside a user gesture via the empty
+// state CTA). Desktop: preview + QR chip.
+const isTouch = window.matchMedia?.('(pointer: coarse)').matches;
+if (!isTouch && qrBtn) qrBtn.hidden = false;
+$('ars-empty-camera')?.addEventListener('click', startCamera);
+$('ars-empty-add')?.addEventListener('click', () => openTray('community'));
+$('ars-empty-forge')?.addEventListener('click', () => forgeInput?.focus());

@@ -15,7 +15,19 @@
 import { skeletonHTML, errorStateHTML, ensureStateKitStyles } from './shared/state-kit.js';
 ensureStateKitStyles();
 
-const ENGINE_LABELS = { nvidia: 'Free', trellis: 'Fast', meshy: 'Meshy', tripo: 'Tripo', hunyuan3d: 'Hunyuan3D', triposg: 'TripoSG' };
+const ENGINE_LABELS = {
+	nvidia: 'Free',
+	huggingface: 'Hunyuan3D',
+	trellis: 'Fast',
+	trellis_selfhost: 'TRELLIS',
+	meshy: 'Meshy',
+	tripo: 'Tripo',
+	rodin: 'Rodin',
+	stability: 'Stability',
+	replicate_byok: 'Replicate',
+	hunyuan3d: 'Hunyuan3D',
+	triposg: 'TripoSG',
+};
 
 const MODEL_CAT_LABELS = {
 	avatar: 'Avatar', accessory: 'Accessory', item: 'Item',
@@ -185,7 +197,12 @@ function timeAgo(iso) {
 function buildCard(c) {
 	const card = document.createElement('div');
 	card.className = 'creation showcase-card';
-	card.title = c.prompt || 'Forged model';
+	// No title attribute: the prompt is already visible in .meta below the thumb,
+	// and the native tooltip clips over the card art on hover.
+	card.dataset.prompt = c.prompt || '';
+	card.tabIndex = 0;
+	card.setAttribute('role', 'button');
+	card.setAttribute('aria-label', `Open in viewer: ${c.prompt || 'forged model'}`);
 	// The whole card opens the viewer, but a nested Remix <button> lives in the
 	// footer — a clickable card wrapping a button is a nested-interactive WCAG
 	// failure (4.1.2). Instead the card is a plain container and the primary
