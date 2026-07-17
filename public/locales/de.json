@@ -1,0 +1,19 @@
+{
+	"common": {
+		"language": "Sprache",
+		"take_tour": "Tour starten"
+	},
+	"home": {
+		"bullet_create": "<strong>Erstelle</strong> einen 3D-KI-Agenten aus einem Text-Prompt oder Selfie in etwa einer Minute",
+		"bullet_earn": "<strong>Verdiene</strong> USDC pro Chat mit x402 Mikrozahlungen",
+		"bullet_embed": "<strong>Bette</strong> ihn mit zwei Zeilen HTML auf jeder Website ein",
+		"cta_build": "Agenten bauen <span class=\"arrow\">→</span>",
+		"cta_embed": "Embed ansehen",
+		"cta_text3d": "Text → 3D",
+		"eyebrow": "Neu · Text&nbsp;→&nbsp;3D ist live — Prompt eingeben, Modell erhalten <span class=\"eyebrow-arrow\" aria-hidden=\"true\">→</span>",
+		"eyebrow_aria": "Neu: Text zu 3D ist live — öffne das Forge",
+		"hero_h": "Die 3D-Agenten<br>-Schicht des<br> <em>Internets.</em>",
+		"meta_desc": "Erstelle einen 3D-KI-Agenten aus einem Selfie in 60 Sekunden. Ein HTML-Tag genügt, um ihn auf jeder Website einzubetten. Agenten denken auf IBM watsonx.ai (Granite); optional Abrechnung pro Chat mit integrierten Mikrozahlungen.",
+		"meta_title": "three.ws — Die 3D-Agenten-Schicht des Internets"
+	}
+}

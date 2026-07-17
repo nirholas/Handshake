@@ -1,0 +1,19 @@
+{
+	"common": {
+		"language": "言語",
+		"take_tour": "ツアーを見る"
+	},
+	"home": {
+		"bullet_create": "約1分でテキストプロンプトや自撮り写真から3D AIエージェントを<strong>作成</strong>。",
+		"bullet_earn": "x402マイクロペイメントでチャットごとにUSDCを<strong>稼ぐ</strong>。",
+		"bullet_embed": "2行のHTMLで、あらゆるウェブサイトに<strong>埋め込む</strong>。",
+		"cta_build": "エージェントを構築 <span class=\"arrow\">→</span>",
+		"cta_embed": "埋め込みを見る",
+		"cta_text3d": "テキスト → 3D",
+		"eyebrow": "新機能 · Text → 3Dがリリース — プロンプトを入力してモデルを取得 <span class=\"eyebrow-arrow\" aria-hidden=\"true\">→</span>",
+		"eyebrow_aria": "新機能: Text to 3Dが公開されました — Forgeを開く",
+		"hero_h": "3Dエージェント<br>レイヤーの<br><em>インターネット</em>。",
+		"meta_desc": "60秒で自撮り写真から3D AIエージェントを作成。1つのHTMLタグをドロップするだけで、あらゆるウェブサイトに埋め込み可能。エージェントはIBM watsonx.ai (Granite) で思考し、オプションで組み込みのマイクロペイメントでチャットごとに課金できます。",
+		"meta_title": "three.ws — インターネットの3Dエージェントレイヤー"
+	}
+}

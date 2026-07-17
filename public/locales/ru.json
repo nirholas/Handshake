@@ -1,0 +1,19 @@
+{
+	"common": {
+		"language": "Язык",
+		"take_tour": "Начать тур"
+	},
+	"home": {
+		"bullet_create": "<strong>Создайте</strong> 3D AI-агента из текстового запроса или селфи примерно за минуту",
+		"bullet_earn": "<strong>Зарабатывайте</strong> USDC за чат с помощью микроплатежей x402",
+		"bullet_embed": "<strong>Встройте</strong> его на любой сайт с помощью двух строк HTML",
+		"cta_build": "Создайте своего агента <span class=\"arrow\">→</span>",
+		"cta_embed": "Посмотреть встраивание",
+		"cta_text3d": "Текст → 3D",
+		"eyebrow": "Новое · Text&nbsp;→&nbsp;3D уже доступно — введите запрос, получите модель <span class=\"eyebrow-arrow\" aria-hidden=\"true\">→</span>",
+		"eyebrow_aria": "Новое: Text to 3D уже доступно — откройте Forge",
+		"hero_h": "Слой 3D-агентов<br> <br> <em>интернета.</em>",
+		"meta_desc": "Создайте 3D AI-агента из селфи за 60 секунд. Вставьте один HTML-тег, чтобы встроить его на любой сайт. Агенты мыслят на IBM watsonx.ai (Granite); опционально взимайте плату за чат с помощью встроенных микроплатежей.",
+		"meta_title": "three.ws — Слой 3D-агентов Интернета"
+	}
+}

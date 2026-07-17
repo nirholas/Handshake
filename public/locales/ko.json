@@ -1,0 +1,19 @@
+{
+	"common": {
+		"language": "언어",
+		"take_tour": "둘러보기"
+	},
+	"home": {
+		"bullet_create": "텍스트 프롬프트나 셀카로 약 1분 만에 <strong>3D AI 에이전트 생성</strong>",
+		"bullet_earn": "x402 마이크로페이먼트로 채팅당 USDC <strong>수익</strong>",
+		"bullet_embed": "두 줄의 HTML로 어떤 웹사이트든 <strong>임베드</strong>",
+		"cta_build": "에이전트 만들기 <span class=\"arrow\">→</span>",
+		"cta_embed": "임베드 보기",
+		"cta_text3d": "텍스트 → 3D",
+		"eyebrow": "신규 · 텍스트&nbsp;→&nbsp;3D 출시 — 프롬프트 입력, 모델 생성 <span class=\"eyebrow-arrow\" aria-hidden=\"true\">→</span>",
+		"eyebrow_aria": "신규: 텍스트 → 3D 출시 — Forge 열기",
+		"hero_h": "<em>인터넷</em>의 <br>3D 에이전트<br> 레이어",
+		"meta_desc": "셀카로 60초 만에 3D AI 에이전트를 만드세요. HTML 태그 하나로 어떤 웹사이트든 임베드하세요. 에이전트는 IBM watsonx.ai (Granite)에서 생각하며, 내장된 마이크로페이먼트로 채팅당 요금을 부과할 수 있습니다.",
+		"meta_title": "three.ws — 인터넷의 3D 에이전트 레이어"
+	}
+}

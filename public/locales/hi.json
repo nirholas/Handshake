@@ -1,0 +1,19 @@
+{
+	"common": {
+		"language": "भाषा",
+		"take_tour": "टूर करें"
+	},
+	"home": {
+		"bullet_create": "एक मिनट में टेक्स्ट प्रॉम्प्ट या सेल्फ़ी से एक 3D AI एजेंट <strong>बनाएँ</strong>",
+		"bullet_earn": "x402 माइक्रोपेमेंट के साथ प्रति चैट USDC <strong>कमाएँ</strong>",
+		"bullet_embed": "HTML की दो लाइनों के साथ इसे किसी भी वेबसाइट पर <strong>एम्बेड करें</strong>",
+		"cta_build": "अपना एजेंट बनाएँ <span class=\"arrow\">→</span>",
+		"cta_embed": "एम्बेड देखें",
+		"cta_text3d": "टेक्स्ट → 3D",
+		"eyebrow": "नया · टेक्स्ट&nbsp;→&nbsp;3D लाइव है — प्रॉम्प्ट टाइप करें, मॉडल पाएँ <span class=\"eyebrow-arrow\" aria-hidden=\"true\">→</span>",
+		"eyebrow_aria": "नया: टेक्स्ट टू 3D लाइव है — Forge खोलें",
+		"hero_h": "3D एजेंट <br> लेयर <br> <em> इंटरनेट </em> की।",
+		"meta_desc": "60 सेकंड में सेल्फ़ी से एक 3D AI एजेंट बनाएँ। इसे किसी भी वेबसाइट पर एम्बेड करने के लिए एक HTML टैग डालें। एजेंट IBM watsonx.ai (Granite) पर सोचते हैं; वैकल्पिक रूप से, बिल्ट-इन माइक्रोपेमेंट के साथ प्रति चैट शुल्क लें।",
+		"meta_title": "three.ws — इंटरनेट की 3D एजेंट लेयर"
+	}
+}

@@ -151,6 +151,14 @@
 			<description>On the shared-model viewer page, the &quot;Create a 3D model&quot; button (shown when a link is missing its model) and the &quot;Make your own&quot; button in the footer used to drop you on the homepage, leaving you to hunt for the generator. Both now go directly to the free text-to-3D Forge so you can start creating in one click.</description>
 		</item>
 		<item>
+			<title>three.ws now speaks 11 languages</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-17:three.ws now speaks 11 languages</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The site's language switcher gained nine new languages on top of English and Spanish: Simplified Chinese, Japanese, Korean, French, German, Brazilian Portuguese, Arabic, Hindi, and Russian. Pick your language from the switcher and the copy re-renders instantly, with your choice remembered for next time; if your browser is already set to one of these, three.ws now greets you in it automatically. Arabic lays out right-to-left. Brand and protocol terms like $THREE, USDC, and three.ws stay exact in every language.</description>
+		</item>
+		<item>
 			<title>Your models now look studio-quality everywhere, not just in the Forge</title>
 			<link>https://three.ws/viewer</link>
 			<guid isPermaLink="false">2026-07-17:Your models now look studio-quality everywhere, not just in the Forge</guid>

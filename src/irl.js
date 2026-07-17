@@ -6353,8 +6353,8 @@ function updateLabels() {
 		if (sy < minY) sy = minY;
 		_visibleLabels.push({ pin, sx, sy });
 	}
-	// De-collide stacked plates: agents lined up front-to-back — or two people with
-	// the same name — project to nearly the same screen point and paint as one
+	// De-collide stacked plates: agents lined up front-to-back (or two people with
+	// the same name) project to nearly the same screen point and paint as one
 	// unreadable smudge. Walk them top-down and push each colliding plate below the
 	// one above it so every name stays legible. Bounded by BUDGET.label, so O(n²) is
 	// a handful of comparisons.

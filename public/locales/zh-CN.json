@@ -1,0 +1,19 @@
+{
+	"common": {
+		"language": "语言",
+		"take_tour": "体验导览"
+	},
+	"home": {
+		"bullet_create": "<strong>创建</strong> 3D AI 智能体，一分钟内通过文本提示或自拍生成。",
+		"bullet_earn": "<strong>赚取</strong> USDC，通过 x402 微支付按次聊天收费。",
+		"bullet_embed": "<strong>嵌入</strong>：两行 HTML 代码，轻松嵌入任何网站。",
+		"cta_build": "构建你的智能体 <span class=\"arrow\">→</span>",
+		"cta_embed": "查看嵌入效果",
+		"cta_text3d": "文本 → 3D",
+		"eyebrow": "新功能 · 文本&nbsp;→&nbsp;3D 已上线 — 输入提示，生成模型 <span class=\"eyebrow-arrow\" aria-hidden=\"true\">→</span>",
+		"eyebrow_aria": "新功能：文本转 3D 已上线 — 打开 Forge",
+		"hero_h": "<em>互联网</em>的 3D 智能体<br>层<br>。",
+		"meta_desc": "60 秒内通过自拍创建 3D AI 智能体。只需一个 HTML 标签即可将其嵌入任何网站。智能体在 IBM watsonx.ai (Granite) 上运行思考；可选择通过内置微支付按次聊天收费。",
+		"meta_title": "three.ws — 互联网的 3D 智能体层"
+	}
+}

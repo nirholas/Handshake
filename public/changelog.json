@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T10:13:40.857Z",
+	"generated_at": "2026-07-17T10:23:33.686Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -195,6 +195,16 @@
 			"link": "/viewer",
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "three.ws now speaks 11 languages",
+			"summary": "The site's language switcher gained nine new languages on top of English and Spanish: Simplified Chinese, Japanese, Korean, French, German, Brazilian Portuguese, Arabic, Hindi, and Russian. Pick your language from the switcher and the copy re-renders instantly, with your choice remembered for next time; if your browser is already set to one of these, three.ws now greets you in it automatically. Arabic lays out right-to-left. Brand and protocol terms like $THREE, USDC, and three.ws stay exact in every language.",
+			"link": null,
+			"tags": [
+				"feature"
 			]
 		},
 		{

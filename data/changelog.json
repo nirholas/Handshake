@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "three.ws now speaks 11 languages",
+			"summary": "The site's language switcher gained nine new languages on top of English and Spanish: Simplified Chinese, Japanese, Korean, French, German, Brazilian Portuguese, Arabic, Hindi, and Russian. Pick your language from the switcher and the copy re-renders instantly, with your choice remembered for next time; if your browser is already set to one of these, three.ws now greets you in it automatically. Arabic lays out right-to-left. Brand and protocol terms like $THREE, USDC, and three.ws stay exact in every language.",
+			"tags": [
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-17",
 			"title": "IRL is calmer to use: one clear next step, name tags that stay readable",
 			"summary": "The live IRL view stopped talking over itself. Before, you could see \"Turn on Camera AR\" and \"Agent pinned\" at the same time, which contradicted each other; now the guidance line and the status line always agree. The floating name tag above each nearby agent is kept clear of the top bar instead of colliding with the Back and Live chips, and when two agents line up front-to-back their tags fan out so both names stay legible rather than stacking into one smudge. The \"an agent is near, look around\" nudge no longer appears when that agent is already standing in front of you, and it clears itself the moment you turn to face them.",
 			"tags": [
