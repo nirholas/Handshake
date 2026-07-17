@@ -682,6 +682,24 @@ support: resolve(__dirname, 'pages/support.html'),
 		},
 	},
 	plugins: [
+		// Resolve the shared runtime i18n entry as an EXTERNAL script. Many static
+		// pages load the locale runtime via `<script type="module" src="/i18n.js">`
+		// (injected by scripts/i18n-annotate.mjs --wire). That path is emitted at the
+		// dist root by the `i18n` rollupOptions.input entry (see entryFileNames
+		// above), so it exists at runtime. Without this, Vite's build tries to
+		// resolve `/i18n.js` as an on-disk module while processing each page's HTML
+		// and fails ("Failed to resolve /i18n.js from pages/<page>.html"), breaking
+		// the whole build for every wired page. Marking it external leaves the tag
+		// untouched in the output HTML and lets the emitted chunk serve it. Applies
+		// only to the exact absolute path so nothing else is affected.
+		{
+			name: 'threews-i18n-external-entry',
+			enforce: 'pre',
+			resolveId(source) {
+				if (source === '/i18n.js') return { id: '/i18n.js', external: true };
+				return null;
+			},
+		},
 		// Strip the VitePWA service-worker registration <script> from any
 		// page meant to be embedded in a third-party iframe. Without this,
 		// the slim /widget shell — loaded under arbitrary origins as an
