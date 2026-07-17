@@ -25,6 +25,40 @@ export const MAX_PLACEMENTS = 20;
 export const SPAWN_DISTANCE_M = 1.6;
 
 /**
+ * Read the room's light from a downsampled camera frame (RGBA bytes). Returns a
+ * light INTENSITY multiplier (dim room → <1, bright room → >1) and a white-
+ * balance TINT (a warm-lamp room casts warm, daylight casts cool) so a placed
+ * model belongs to the room instead of glowing neutral on top of it. Pure — the
+ * caller does the canvas read and applies the result to the scene lights.
+ *
+ * @param {Uint8ClampedArray|number[]} data  RGBA pixels (length divisible by 4).
+ * @returns {{ intensity: number, tint: { r: number, g: number, b: number } }}
+ *   intensity in [0.4, 1.35]; tint near {1,1,1} for neutral light, each channel
+ *   pulled a third of the way toward the room's cast. A black/empty frame
+ *   returns neutral tint and the floor intensity.
+ */
+export function roomLightFromPixels(data) {
+	const px = data && data.length ? data.length / 4 : 0;
+	if (!px) return { intensity: 0.4, tint: { r: 1, g: 1, b: 1 } };
+	let rSum = 0, gSum = 0, bSum = 0, lumaSum = 0;
+	for (let i = 0; i < data.length; i += 4) {
+		const r = data[i], g = data[i + 1], b = data[i + 2];
+		rSum += r; gSum += g; bSum += b;
+		lumaSum += 0.2126 * r + 0.7152 * g + 0.0722 * b;
+	}
+	const luma = lumaSum / px / 255; // 0 (black) → 1 (blown out)
+	const intensity = Math.min(1.35, Math.max(0.4, 0.35 + luma * 1.25));
+
+	// Normalize the mean colour to its own brightness so only the CAST remains,
+	// then pull a third of the way toward it (full tint would recolour the
+	// model's own albedo). A near-black frame has no reliable cast → stay neutral.
+	const mean = (rSum + gSum + bSum) / (px * 3);
+	if (mean <= 6) return { intensity, tint: { r: 1, g: 1, b: 1 } };
+	const pull = (sum) => 1 + ((sum / px / mean) - 1) * 0.33;
+	return { intensity, tint: { r: pull(rSum), g: pull(gSum), b: pull(bSum) } };
+}
+
+/**
  * Normalize a raw model bounding box into a floor-resting placement transform.
  *
  * @param {{min:{x:number,y:number,z:number}, max:{x:number,y:number,z:number}}} box

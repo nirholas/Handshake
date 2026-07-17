@@ -39,8 +39,9 @@ import {
 } from './ar/pinch-scale.js';
 import {
 	deserializeScene, fitTransform, MAX_PLACEMENTS, normalizeGlbUrl,
-	parseSrcParams, sceneFromHashParam, serializeScene, SPAWN_DISTANCE_M,
-	spawnPointInFront, studioSceneUrl, studioShareUrl, touchAngle, twistDelta,
+	parseSrcParams, roomLightFromPixels, sceneFromHashParam, serializeScene,
+	SPAWN_DISTANCE_M, spawnPointInFront, studioSceneUrl, studioShareUrl,
+	touchAngle, twistDelta,
 } from './ar/studio-scene.js';
 import { renderQRToSVG } from './erc8004/qr.js';
 import { deriveVerticalFovDeg, DEFAULT_DIAG_FOV_DEG } from './irl/camera-fov.js';
@@ -603,30 +604,14 @@ function sampleCameraLight() {
 	} catch {
 		return; // frame not readable yet — try again next tick
 	}
-	let rSum = 0, gSum = 0, bSum = 0, lumaSum = 0;
-	const px = data.length / 4;
-	for (let i = 0; i < data.length; i += 4) {
-		const r = data[i], g = data[i + 1], b = data[i + 2];
-		rSum += r; gSum += g; bSum += b;
-		lumaSum += 0.2126 * r + 0.7152 * g + 0.0722 * b;
-	}
-	const luma = lumaSum / px / 255; // 0 (black room) → 1 (blown out)
-	const target = Math.min(1.35, Math.max(0.4, 0.35 + luma * 1.25));
-	hemi.intensity += (target * HEMI_BASE - hemi.intensity) * 0.4;
-	sun.intensity += (target * SUN_BASE - sun.intensity) * 0.4;
-
-	// White-balance tint: normalize the mean colour to its own brightness, then
-	// pull it a third of the way toward the room's cast (never a full tint — the
-	// PBR albedo should still read as itself). Guard a black frame (mean ~0).
-	const mean = (rSum + gSum + bSum) / (px * 3);
-	if (mean > 6) {
-		const tr = 1 + ((rSum / px / mean) - 1) * 0.33;
-		const tg = 1 + ((gSum / px / mean) - 1) * 0.33;
-		const tb = 1 + ((bSum / px / mean) - 1) * 0.33;
-		roomTint.setRGB(tr, tg, tb);
-		hemi.color.lerp(roomTint, 0.4);
-		sun.color.lerp(roomTint, 0.4);
-	}
+	// Pure read (tested in studio-scene.test.js); ease the result onto the lights
+	// so it adapts over a couple of seconds instead of popping frame to frame.
+	const { intensity, tint } = roomLightFromPixels(data);
+	hemi.intensity += (intensity * HEMI_BASE - hemi.intensity) * 0.4;
+	sun.intensity += (intensity * SUN_BASE - sun.intensity) * 0.4;
+	roomTint.setRGB(tint.r, tint.g, tint.b);
+	hemi.color.lerp(roomTint, 0.4);
+	sun.color.lerp(roomTint, 0.4);
 }
 
 function startLightMatching() {

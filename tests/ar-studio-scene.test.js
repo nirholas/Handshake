@@ -15,6 +15,7 @@ import {
 	normalizeGlbUrl,
 	parseSrcParams,
 	PROP_TARGET_SIZE_M,
+	roomLightFromPixels,
 	SCALE_MAX,
 	SCALE_MIN,
 	sceneFromHashParam,
@@ -228,6 +229,54 @@ describe('studioSceneUrl', () => {
 		const url = studioSceneUrl('https://three.ws', scene, 40);
 		expect(url).toBe(studioShareUrl('https://three.ws', scene));
 		expect(url).not.toContain('#s=');
+	});
+});
+
+describe('roomLightFromPixels', () => {
+	// Build a downsampled RGBA buffer of a single flat colour.
+	const flat = (r, g, b, n = 16) => {
+		const a = new Uint8ClampedArray(n * 4);
+		for (let i = 0; i < a.length; i += 4) { a[i] = r; a[i + 1] = g; a[i + 2] = b; a[i + 3] = 255; }
+		return a;
+	};
+
+	it('reads a dim room as low intensity, a bright room as high', () => {
+		expect(roomLightFromPixels(flat(20, 20, 20)).intensity).toBeLessThan(0.6);
+		expect(roomLightFromPixels(flat(240, 240, 240)).intensity).toBeGreaterThan(1.2);
+	});
+
+	it('clamps intensity to the [0.4, 1.35] band', () => {
+		expect(roomLightFromPixels(flat(0, 0, 0)).intensity).toBe(0.4);
+		expect(roomLightFromPixels(flat(255, 255, 255)).intensity).toBeLessThanOrEqual(1.35);
+	});
+
+	it('stays neutral for grey light (no false tint)', () => {
+		const { tint } = roomLightFromPixels(flat(128, 128, 128));
+		expect(tint.r).toBeCloseTo(1, 5);
+		expect(tint.g).toBeCloseTo(1, 5);
+		expect(tint.b).toBeCloseTo(1, 5);
+	});
+
+	it('casts warm for a warm-lamp room and cool for daylight', () => {
+		const warm = roomLightFromPixels(flat(220, 160, 90)).tint;
+		expect(warm.r).toBeGreaterThan(1);
+		expect(warm.b).toBeLessThan(1);
+		const cool = roomLightFromPixels(flat(120, 150, 210)).tint;
+		expect(cool.b).toBeGreaterThan(1);
+		expect(cool.r).toBeLessThan(1);
+	});
+
+	it('never over-tints — the cast is a partial pull, not a full recolour', () => {
+		// Pure red light: a full tint would zero G and B. The 1/3 pull keeps them well above 0.
+		const { tint } = roomLightFromPixels(flat(255, 0, 0));
+		expect(tint.g).toBeGreaterThan(0.5);
+		expect(tint.b).toBeGreaterThan(0.5);
+		expect(tint.r).toBeGreaterThan(1);
+	});
+
+	it('degrades an empty or near-black frame to neutral', () => {
+		expect(roomLightFromPixels(new Uint8ClampedArray(0))).toEqual({ intensity: 0.4, tint: { r: 1, g: 1, b: 1 } });
+		expect(roomLightFromPixels(flat(1, 1, 1)).tint).toEqual({ r: 1, g: 1, b: 1 });
 	});
 });
 
