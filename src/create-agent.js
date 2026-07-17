@@ -113,7 +113,92 @@ const state = {
 	voice: 'browser',
 	publish: true,
 	submitting: false,
+	// Resolved in boot(). Signed-out visitors build the whole agent and only
+	// hit the account requirement at the final "ship it" step — the wizard is
+	// never walled up front (that killed the flow before anyone got invested).
+	authed: false,
 };
+
+// Draft persistence — lets a signed-out visitor build their whole agent, get
+// sent to sign in at the ship step, and land back on a fully-restored Review
+// with zero rework. Keyed in localStorage; cleared on a successful create.
+const DRAFT_KEY = 'threews:create-agent:draft';
+
+function saveDraft() {
+	try {
+		const d = {
+			v: 1,
+			name: state.name,
+			description: state.description,
+			tags: state.tags,
+			// A picked File can't survive a navigation; persist the reusable
+			// pointers (starter id, owned-avatar id) and let submit's default-body
+			// fallback cover a lost upload — never a dead end.
+			model: {
+				mode: state.model.mode === 'upload' ? 'skip' : state.model.mode,
+				starterId: state.model.starterId,
+				avatarId: state.model.avatarId,
+				avatarUrl: state.model.avatarUrl,
+				avatarName: state.model.avatarName,
+				uploadLost: state.model.mode === 'upload' && !!state.model.file,
+			},
+			skills: [...state.skills],
+			category: state.category,
+			greeting: state.greeting,
+			persona: state.persona,
+			voice: state.voice,
+			publish: state.publish,
+		};
+		localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+	} catch {
+		/* storage disabled — the ship-step sign-in still works, just without restore */
+	}
+}
+
+function loadDraft() {
+	try {
+		const raw = localStorage.getItem(DRAFT_KEY);
+		if (!raw) return null;
+		const d = JSON.parse(raw);
+		return d && d.v === 1 && typeof d.name === 'string' ? d : null;
+	} catch {
+		return null;
+	}
+}
+
+function clearDraft() {
+	try {
+		localStorage.removeItem(DRAFT_KEY);
+	} catch {
+		/* nothing to clear */
+	}
+}
+
+// Replay a saved draft through the same DOM-sync path a generated spec uses,
+// so restore and AI-autofill can never drift. Owned-avatar selections are
+// re-connected by id (they survive a redirect); a lost upload falls through to
+// the default body on submit.
+function restoreDraft(d) {
+	applySpec({
+		name: d.name,
+		description: d.description,
+		tags: Array.isArray(d.tags) ? d.tags : [],
+		avatar_starter: d.model?.starterId || '',
+		skills: Array.isArray(d.skills) ? d.skills : [],
+		category: d.category,
+		greeting: d.greeting,
+		persona: d.persona,
+		voice: d.voice,
+	});
+	state.publish = Boolean(d.publish);
+	if (d.model?.mode === 'library' && d.model.avatarId) {
+		state.model.mode = 'library';
+		state.model.avatarId = d.model.avatarId;
+		state.model.avatarUrl = d.model.avatarUrl || '';
+		state.model.avatarName = d.model.avatarName || '';
+	}
+	return { uploadLost: Boolean(d.model?.uploadLost) };
+}
 
 // ── DOM refs ────────────────────────────────────────────────────────────────
 
@@ -138,9 +223,9 @@ async function boot() {
 	wireMagic();
 	wireNav();
 
-	// Resolve auth. The whole flow requires an account (the agent gets a wallet),
-	// so gate the form behind a sign-in prompt rather than letting the user fill
-	// everything out only to hit a wall at the end.
+	// Resolve auth, but never wall the wizard. Signing in is only required at the
+	// final "ship it" step (the agent gets a wallet + on-chain identity there);
+	// letting a visitor build the whole thing first is what earns that sign-in.
 	let me = null;
 	try {
 		me = await getMe();
@@ -148,12 +233,32 @@ async function boot() {
 		log.warn('[create-agent] auth probe failed', err?.message);
 	}
 	$('page-loading')?.remove();
-	if (!me) {
-		showAuthGate();
-		return;
+	state.authed = Boolean(me);
+
+	// A saved draft means the visitor built an agent, got sent to sign in, and
+	// came back — restore everything and drop them on Review to ship in one click.
+	const draft = loadDraft();
+	if (draft) {
+		const { uploadLost } = restoreDraft(draft);
+		if (state.authed) {
+			clearDraft();
+			showStep(TOTAL_STEPS - 1);
+			setMsg(
+				`Welcome back — ${state.name ? `${state.name} is` : "your agent is"} ready. Ship it below.`,
+				'ok',
+			);
+		} else {
+			showStep(0);
+		}
+		if (uploadLost) {
+			setMsg('Re-attach your uploaded model on step 2, or we’ll give it the default body.', '');
+		}
+	} else {
+		prefillFromGuestDraft();
+		showStep(0);
 	}
-	prefillFromGuestDraft();
-	showStep(0);
+
+	applyAuthAffordances();
 }
 
 // The corner companion mints an ephemeral agent for signed-out visitors
@@ -181,7 +286,6 @@ function cacheEls() {
 	el.create = $('btn-create');
 	el.panels = Array.from(document.querySelectorAll('.panel'));
 	el.success = $('success');
-	el.authGate = $('auth-gate');
 	el.preview = $('model-preview');
 	el.previewEmpty = $('model-preview-empty');
 	el.magicInput = $('magic-input');
@@ -189,12 +293,26 @@ function cacheEls() {
 	el.magicMsg = $('magic-msg');
 }
 
-function showAuthGate() {
-	el.authGate.classList.add('show');
-	el.form.style.display = 'none';
-	// Carry the user back here after login.
-	const next = encodeURIComponent('/create-agent');
-	$('auth-gate-signin').href = `/login?next=${next}`;
+// Reflect auth state in the flow's affordances: honest ship-step CTA copy and a
+// one-line "no account needed to build" reassurance for signed-out visitors.
+function applyAuthAffordances() {
+	if (el.create) {
+		if (state.authed) {
+			el.create.textContent = 'Create agent';
+			el.create.setAttribute('aria-label', 'Create agent');
+		} else {
+			const who = firstWord(state.name) || 'your agent';
+			el.create.textContent = `Sign in to ship ${who} →`;
+			el.create.setAttribute('aria-label', `Sign in to ship ${who}`);
+		}
+	}
+	const note = $('build-free-note');
+	if (note) note.hidden = state.authed;
+}
+
+// First word of the name, for compact CTA copy ("Sign in to ship Vern →").
+function firstWord(s) {
+	return String(s || '').trim().split(/\s+/)[0] || '';
 }
 
 // ── Stepper ─────────────────────────────────────────────────────────────────
@@ -249,7 +367,10 @@ function showStep(n) {
 	el.next.hidden = isLast;
 	el.create.hidden = !isLast;
 
-	if (isLast) renderReview();
+	if (isLast) {
+		renderReview();
+		applyAuthAffordances();
+	}
 	if (n === 1) syncModelPreview();
 
 	// Move focus to the first field of the step for keyboard users.
@@ -1112,6 +1233,19 @@ async function submit() {
 		validateStep(0);
 		return;
 	}
+	// The one place an account is actually required: minting the agent's wallet +
+	// on-chain identity. Save the finished draft, send them to sign in, and boot()
+	// restores it on return so they ship in a single click — no rework.
+	if (!state.authed) {
+		saveDraft();
+		trackFunnelStep('activation', ANALYTICS_EVENTS.AGENT_CREATED, {
+			source: 'wizard',
+			stage: 'signin_prompt',
+		});
+		const next = encodeURIComponent('/create-agent');
+		window.location.href = `/login?next=${next}`;
+		return;
+	}
 	state.submitting = true;
 	el.create.setAttribute('aria-busy', 'true');
 	el.create.disabled = true;
@@ -1209,6 +1343,7 @@ async function submit() {
 
 		// The ephemeral companion draft is claimed — the real agent replaces it.
 		clearGuestAgent();
+		clearDraft();
 
 		// Activation funnel: a real agent identity now exists.
 		trackFunnelStep('activation', ANALYTICS_EVENTS.AGENT_CREATED, {

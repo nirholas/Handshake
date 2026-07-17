@@ -174,6 +174,30 @@
 				font-size: 14.5px;
 				margin: 0;
 			}
+			/* "No account needed to build" reassurance for signed-out visitors,
+			   so the try-first flow reads as intentional. Toggled by create-agent.js. */
+			.build-free-note {
+				display: inline-flex; align-items: center; gap: 8px;
+				margin: 14px auto 0; padding: 6px 14px;
+				font-size: 13px; color: var(--ink, #e8e8ea);
+				background: color-mix(in srgb, var(--accent, #7c5cff) 12%, transparent);
+				border: 1px solid color-mix(in srgb, var(--accent, #7c5cff) 32%, transparent);
+				border-radius: 999px;
+				animation: build-free-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+			}
+			.build-free-dot {
+				width: 7px; height: 7px; border-radius: 50%;
+				background: var(--accent, #7c5cff);
+				animation: build-free-pulse 2.4s ease-in-out infinite;
+			}
+			@keyframes build-free-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+			@keyframes build-free-pulse {
+				0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent, #7c5cff) 55%, transparent); }
+				50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent, #7c5cff) 0%, transparent); }
+			}
+			@media (prefers-reduced-motion: reduce) {
+				.build-free-note, .build-free-dot { animation: none; }
+			}
 
 			/* ── Stepper ────────────────────────────────────────────────────── */
 			.stepper {
@@ -1158,32 +1182,6 @@
 			}
 
 			/* ── Auth gate ──────────────────────────────────────────────────── */
-			.auth-gate {
-				display: none;
-				text-align: center;
-				padding: 40px 24px;
-			}
-			.auth-gate.show {
-				display: block;
-			}
-			.auth-gate svg {
-				width: 40px;
-				height: 40px;
-				color: var(--muted);
-				margin-bottom: 14px;
-			}
-			.auth-gate h2 {
-				font-family: var(--font-display);
-				font-size: 19px;
-				margin: 0 0 8px;
-			}
-			.auth-gate p {
-				color: var(--muted);
-				font-size: 13.5px;
-				max-width: 380px;
-				margin: 0 auto 20px;
-			}
-
 			/* ── Success ────────────────────────────────────────────────────── */
 			.success {
 				display: none;
@@ -1318,35 +1316,14 @@
 				</p>
 			</div>
 
+			<p class="build-free-note" id="build-free-note" hidden>
+				<span class="build-free-dot" aria-hidden="true"></span>
+				No account needed to build — sign in only when you’re ready to ship.
+			</p>
+
 			<ol class="stepper" id="stepper" aria-label="Progress"></ol>
 
 			<div class="wizard-card">
-				<!-- Auth gate (shown when not signed in) -->
-				<div class="auth-gate" id="auth-gate">
-					<svg
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.6"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-					>
-						<rect x="3" y="11" width="18" height="11" rx="2" />
-						<path d="M7 11V7a5 5 0 0 1 10 0v4" />
-					</svg>
-					<h2>Sign in to create your agent</h2>
-					<p>
-						Your agent gets its own wallet and on-chain identity, so we need an account
-						to anchor it to. It takes a few seconds.
-					</p>
-					<a
-						class="btn btn--primary btn--lg"
-						id="auth-gate-signin"
-						href="/login?next=%2Fcreate-agent"
-						>Sign in to continue</a
-					>
-				</div>
-
 				<!-- Wizard form -->
 				<form id="wizard" novalidate>
 					<div class="wizard-body" id="wizard-body">
