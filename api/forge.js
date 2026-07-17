@@ -1846,17 +1846,22 @@ async function startJob(req, res) {
 			referenceImageUrl = synthesized.imageUrl;
 			textToImageModel = synthesized.model;
 			views = [referenceImageUrl];
-			// Multi-view conditioning: rotate the synthesized reference into side +
-			// back turnaround views (Vertex Gemini edit lane) so the self-host
-			// TRELLIS worker fuses real coverage instead of hallucinating the
-			// subject's unseen sides. Only the fusing lane benefits (every other
-			// reconstruct lane conditions on the primary view alone) and draft
-			// keeps its single-view speed. Best-effort: a failed view just means
-			// fewer views, never a failed generation.
-			if (backendId === 'trellis_selfhost' && tier.id !== 'draft') {
-				const turnaround = await synthesizeTurnaroundViews(referenceImageUrl).catch(() => []);
-				if (turnaround.length) views = [referenceImageUrl, ...turnaround];
-			}
+		}
+
+		// Multi-view conditioning: rotate the primary view (the caller's uploaded
+		// photo, or the synthesized reference for a text prompt) into side + back
+		// turnaround views (Vertex Gemini edit lane) so the self-host TRELLIS
+		// worker fuses real coverage instead of hallucinating the subject's unseen
+		// sides. A single-photo upload used to skip this and shipped with a
+		// smeared, hollowed-out back for exactly that reason; text prompts always
+		// had it. Only the fusing lane benefits (every other reconstruct lane
+		// conditions on the primary view alone), draft keeps its single-view
+		// speed, and a caller who supplied multiple calibrated views keeps exactly
+		// those. Best-effort: a failed view just means fewer views, never a
+		// failed generation.
+		if (backendId === 'trellis_selfhost' && tier.id !== 'draft' && views.length === 1) {
+			const turnaround = await synthesizeTurnaroundViews(referenceImageUrl).catch(() => []);
+			if (turnaround.length) views = [...views, ...turnaround];
 		}
 
 		// Explicitly chosen free HuggingFace lane. Unlike the trellis free-first
@@ -1961,7 +1966,7 @@ async function startJob(req, res) {
 					backend: backendId,
 					prompt: prompt || null,
 					preview_image_url: referenceImageUrl,
-					reference_image_urls: isImageMode ? [imageUrls[0]] : [referenceImageUrl],
+					reference_image_urls: views,
 					text_to_image_model: isImageMode ? null : textToImageModel,
 					cold_start: cold,
 					options: opts.hasOptions ? summarizeForgeOptions(opts) : undefined,

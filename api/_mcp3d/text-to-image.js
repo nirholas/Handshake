@@ -583,8 +583,8 @@ export async function textToImage(prompt, { aspectRatio = '1:1', skipNim = false
 // redesigning the object between views (verified live 2026-07-16: front/side/
 // back of one worn leather chair kept its chassis, scuffs and lighting).
 const TURNAROUND_VIEW_INSTRUCTIONS = [
-	'Show this exact same subject in direct left side profile view (rotated 90 degrees). Keep the identical subject with identical materials, colors, wear marks and details, identical lighting, and the identical plain background. Same camera distance and framing.',
-	'Show this exact same subject from directly behind (rotated 180 degrees). Keep the identical subject with identical materials, colors, wear marks and details, identical lighting, and the identical plain background. Same camera distance and framing.',
+	'Show this exact same subject in direct left side profile view (rotated 90 degrees). Keep the identical subject with identical materials, colors, wear marks and details, and identical lighting, on a plain neutral background. Same camera distance and framing.',
+	'Show this exact same subject from directly behind (rotated 180 degrees). Keep the identical subject with identical materials, colors, wear marks and details, and identical lighting, on a plain neutral background. Same camera distance and framing.',
 ];
 
 // Synthesize additional turnaround views (side, then back) of the subject in

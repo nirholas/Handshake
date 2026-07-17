@@ -163,11 +163,11 @@ const captureObserver =
 								img.loading = 'lazy';
 								img.alt = '';
 								img.src = dataUrl;
-								img.onerror = () => applyGradientFallback(card, card.title);
+								img.onerror = () => applyGradientFallback(card, card.dataset.prompt);
 								const existing = card.querySelector('.thumb');
 								existing ? existing.replaceWith(img) : card.prepend(img);
 							} else {
-								applyGradientFallback(card, card.title);
+								applyGradientFallback(card, card.dataset.prompt);
 							}
 						});
 					});

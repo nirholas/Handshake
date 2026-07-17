@@ -14146,6 +14146,16 @@
 				"improvement"
 			],
 			"link": "/image-to-3d"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Community feed hover previews no longer blend into the photo underneath",
+			"summary": "Hovering a card in the Fresh from the Forge strip spins the actual 3D model in place. The spinning model used to render on a nearly transparent background, so it visually collided with the card's photo thumbnail and looked broken, with a stray browser tooltip on top. The preview now draws on a solid backdrop, the redundant tooltip is gone, image-to-3D cards are labeled with their engine name (Hunyuan3D) instead of an internal id, and every card can now be opened from the keyboard.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/forge"
 		}
 	]
 }

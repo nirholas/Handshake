@@ -2468,8 +2468,14 @@
 				outline: 2px solid var(--accent);
 				outline-offset: 2px;
 			}
+			.showcase-card:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+			}
 			/* Hover-to-spin: the card's real model, laid over the square thumb,
-			   faded in only after its GLB finishes loading. */
+			   faded in only after its GLB finishes loading. Ground must be OPAQUE
+			   (--surface-2 is 5% white): a translucent background lets the photo
+			   thumb bleed through the spinning render and the card reads as broken. */
 			.showcase-preview {
 				position: absolute;
 				top: 0;
@@ -2477,7 +2483,7 @@
 				right: 0;
 				aspect-ratio: 1 / 1;
 				width: 100%;
-				background: var(--surface-2);
+				background: var(--bg-1, #1a1a1a);
 				opacity: 0;
 				pointer-events: none;
 				transition: opacity 0.25s ease;

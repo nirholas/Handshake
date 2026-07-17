@@ -24,9 +24,9 @@
 // round-trips through ?src= links, so a desktop arrangement reopens on a phone.
 
 import {
-	AnimationMixer, Box3, CanvasTexture, CircleGeometry, Color, DirectionalLight,
-	GridHelper, Group, HemisphereLight, Mesh, MeshBasicMaterial, PerspectiveCamera,
-	PlaneGeometry, Raycaster, RingGeometry, Scene, Vector2, Vector3, WebGLRenderer,
+	AnimationMixer, Box3, CanvasTexture, DirectionalLight, GridHelper, Group,
+	HemisphereLight, Mesh, MeshBasicMaterial, PerspectiveCamera, PlaneGeometry,
+	PMREMGenerator, Raycaster, RingGeometry, Scene, Vector2, Vector3, WebGLRenderer,
 } from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { clone as cloneSkinnedScene } from 'three/addons/utils/SkeletonUtils.js';
@@ -37,9 +37,9 @@ import {
 	PINCH_SCALE_MAX, PINCH_SCALE_MIN,
 } from './ar/pinch-scale.js';
 import {
-	AVATAR_TARGET_HEIGHT_M, deserializeScene, fitTransform, MAX_PLACEMENTS,
-	normalizeGlbUrl, parseSrcParams, serializeScene, spawnPointInFront,
-	studioShareUrl, touchAngle, twistDelta,
+	deserializeScene, fitTransform, MAX_PLACEMENTS, normalizeGlbUrl,
+	parseSrcParams, serializeScene, spawnPointInFront, studioShareUrl,
+	touchAngle, twistDelta,
 } from './ar/studio-scene.js';
 import { renderQRToSVG } from './erc8004/qr.js';
 import { deriveVerticalFovDeg, DEFAULT_DIAG_FOV_DEG } from './irl/camera-fov.js';
@@ -120,20 +120,15 @@ const scene = new Scene();
 const camera = new PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.02, 200);
 camera.position.set(0, EYE_HEIGHT_M, 0);
 
-// PBR environment so forge PBR materials (metal, glass, emissive) read правильно
-// against a real room — same RoomEnvironment the viewer uses.
-{
-	const { PMREMGenerator } = renderer.constructor.name ? {} : {};
+// PBR environment so forge materials (metal, glass, emissive) read correctly
+// against a real room — same RoomEnvironment the main viewer uses.
+try {
+	const pmrem = new PMREMGenerator(renderer);
+	scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+	pmrem.dispose();
+} catch (err) {
+	log.warn('environment map failed', err);
 }
-import('three').then(({ PMREMGenerator }) => {
-	try {
-		const pmrem = new PMREMGenerator(renderer);
-		scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-		pmrem.dispose();
-	} catch (err) {
-		log.warn('environment map failed', err);
-	}
-});
 
 scene.add(new HemisphereLight(0xffffff, 0x444455, 1.0));
 const sun = new DirectionalLight(0xffffff, 1.15);
@@ -228,6 +223,9 @@ let undoItems = null;
 // Template cache: one load per GLB source no matter how many copies are placed.
 /** @type {Map<string, Promise<{ gltf: any, skinned: boolean, fit: { scale: number, yOffset: number }, radius: number }>>} */
 const templates = new Map();
+// Resolved templates, synchronously readable — an XR `select` handler can't
+// await, so it places only sources that have already finished loading.
+const tplReady = new Map();
 const loadQueue = createLoadQueue({
 	run: (src) => sharedGLTFLoader().loadAsync(src),
 	maxActive: 3,
@@ -305,7 +303,7 @@ function positionSelRing() {
 	const p = selected;
 	selRing.position.set(p.group.position.x, p.group.position.y + 0.006, p.group.position.z);
 	const r = Math.max(0.24, p.baseRadius * p.group.scale.x * 1.15);
-	selRing.scale.setScalar(r / 0.32);
+	selRing.scale.setScalar(r / 0.34);
 }
 
 // ── Model loading + placement ─────────────────────────────────────────────────
@@ -327,7 +325,8 @@ function loadTemplate(src) {
 			return { gltf, skinned, fit, radius: Number.isFinite(radius) ? radius : 0.3 };
 		});
 		templates.set(src, t);
-		t.catch(() => templates.delete(src)); // a failed load is retryable
+		t.then((tpl) => tplReady.set(src, tpl))
+			.catch(() => templates.delete(src)); // a failed load is retryable
 	}
 	return t;
 }
@@ -435,7 +434,8 @@ async function addModel({ src, title = '' }, { x = null, z = null, yaw = null, s
 		baseRadius: tpl.radius,
 		spawnT: reducedMotion ? 1 : 0,
 	};
-	if (!reducedMotion) group.scale.multiplyScalar(0.001);
+	group.userData._targetScale = group.scale.x;
+	if (!reducedMotion) group.scale.setScalar(0.001);
 	placements.push(placement);
 	armedSrc = { src: url, title: placement.title };
 	updateCount();
@@ -456,11 +456,10 @@ function removePlacement(p, { persist = true } = {}) {
 		p.shadow.geometry?.dispose();
 		p.shadow.material?.dispose();
 	}
-	p.group.traverse((o) => {
-		o.geometry?.dispose?.();
-		// Materials/textures come from the shared template — other copies may
-		// still use them, so only the geometry clones are disposed here.
-	});
+	// Geometry/materials belong to the shared template — other copies (and
+	// future adds of the same source) still use them, so nothing is disposed.
+	// SkeletonUtils.clone shares geometry between copies; only the shadow above
+	// is per-placement.
 	if (selected === p) select(placements[placements.length - 1] ?? null);
 	updateCount();
 	if (persist) saveScene();
@@ -1128,15 +1127,15 @@ xrBtn?.addEventListener('click', async () => {
 					setStatus('Pick a model first — Add or forge one, then tap the floor.', { warn: true });
 					return null;
 				}
-				const tplPromise = templates.get(src);
-				// Templates resolve before anything is armable; a still-loading one
-				// simply skips this tap rather than placing late and surprising.
-				let tpl = null;
-				tplPromise?.then?.((t) => { tpl = t; });
-				if (!templates.has(src) || !tplReady.has(src)) return null;
-				const readyTpl = tplReady.get(src);
-				const { group, mixer } = instantiate(readyTpl);
-				const placement = {
+				// An XR select can't await: only an already-resolved template places.
+				const tpl = tplReady.get(src);
+				if (!tpl) {
+					loadTemplate(src);
+					setStatus('Model is still loading — one moment, then tap again.', { sticky: true });
+					return null;
+				}
+				const { group, mixer } = instantiate(tpl);
+				placements.push({
 					id: `p-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
 					src,
 					title: armedSrc?.title || '',
@@ -1144,10 +1143,9 @@ xrBtn?.addEventListener('click', async () => {
 					shadow: null,
 					mixer,
 					yaw: 0,
-					baseRadius: readyTpl.radius,
+					baseRadius: tpl.radius,
 					spawnT: 1,
-				};
-				placements.push(placement);
+				});
 				updateCount();
 				return group;
 			},
@@ -1162,8 +1160,7 @@ xrBtn?.addEventListener('click', async () => {
 			},
 			getScaleTarget: () => placements[placements.length - 1]?.group ?? null,
 			onScale: (s, { final }) => {
-				const p = placements[placements.length - 1];
-				if (p && final) saveScene();
+				if (final) saveScene();
 			},
 			onHit: (has) => {
 				document.body.classList.toggle('xr-has-floor', has);
@@ -1215,18 +1212,6 @@ xrBtn?.addEventListener('click', async () => {
 		arTransitioning = false;
 	}
 });
-
-// Resolved templates, synchronously readable for the XR select handler (an XR
-// `select` can't await — a not-yet-loaded template skips the tap).
-const tplReady = new Map();
-const _origLoadTemplate = loadTemplate;
-function trackTemplate(src) {
-	const p = _origLoadTemplate(src);
-	p.then((t) => tplReady.set(src, t)).catch(() => {});
-	return p;
-}
-// eslint-disable-next-line no-func-assign
-loadTemplate = trackTemplate;
 
 // ── Photo + QR handoff ────────────────────────────────────────────────────────
 photoBtn?.addEventListener('click', async () => {

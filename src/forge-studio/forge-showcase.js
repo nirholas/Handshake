@@ -15,7 +15,19 @@
 import { skeletonHTML, errorStateHTML, ensureStateKitStyles } from '../shared/state-kit.js';
 ensureStateKitStyles();
 
-const ENGINE_LABELS = { nvidia: 'Free', trellis: 'Fast', meshy: 'Meshy', tripo: 'Tripo', hunyuan3d: 'Hunyuan3D', triposg: 'TripoSG' };
+const ENGINE_LABELS = {
+	nvidia: 'Free',
+	huggingface: 'Hunyuan3D',
+	trellis: 'Fast',
+	trellis_selfhost: 'TRELLIS',
+	meshy: 'Meshy',
+	tripo: 'Tripo',
+	rodin: 'Rodin',
+	stability: 'Stability',
+	replicate_byok: 'Replicate',
+	hunyuan3d: 'Hunyuan3D',
+	triposg: 'TripoSG',
+};
 
 const MODEL_CAT_LABELS = {
 	avatar: 'Avatar', accessory: 'Accessory', item: 'Item',
@@ -151,11 +163,11 @@ const captureObserver =
 								img.loading = 'lazy';
 								img.alt = '';
 								img.src = dataUrl;
-								img.onerror = () => applyGradientFallback(card, card.title);
+								img.onerror = () => applyGradientFallback(card, card.dataset.prompt);
 								const existing = card.querySelector('.thumb');
 								existing ? existing.replaceWith(img) : card.prepend(img);
 							} else {
-								applyGradientFallback(card, card.title);
+								applyGradientFallback(card, card.dataset.prompt);
 							}
 						});
 					});
@@ -187,7 +199,9 @@ function buildCard(c) {
 	card.className = 'creation showcase-card';
 	card.tabIndex = 0;
 	card.setAttribute('role', 'button');
-	card.title = c.prompt || 'Forged model';
+	// No title attribute: the prompt is already visible in .meta below the thumb,
+	// and the native tooltip clips over the card art on hover.
+	card.dataset.prompt = c.prompt || '';
 	card.setAttribute('aria-label', `Open in viewer: ${c.prompt || 'forged model'}`);
 
 	if (c.preview_image_url) {

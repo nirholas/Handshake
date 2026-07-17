@@ -23,6 +23,14 @@
 			<description>We rebuilt the auto-rigging engine that turns a generated 3D character into a living avatar. Rigging now finishes in seconds instead of stalling for 20 minutes, produces a full standard skeleton with fingers that our entire animation library (walk, wave, dance, emotes) can drive immediately, keeps the model's original textures perfectly intact, and adds the 52 facial expression shapes used for emotions and lip-sync. Every piece of the new pipeline is MIT-licensed open source, so it works for everyone, everywhere.</description>
 		</item>
 		<item>
+			<title>Community feed hover previews no longer blend into the photo underneath</title>
+			<link>https://three.ws/forge</link>
+			<guid isPermaLink="false">2026-07-17:Community feed hover previews no longer blend into the photo underneath</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Hovering a card in the Fresh from the Forge strip spins the actual 3D model in place. The spinning model used to render on a nearly transparent background, so it visually collided with the card's photo thumbnail and looked broken, with a stray browser tooltip on top. The preview now draws on a solid backdrop, the redundant tooltip is gone, image-to-3D cards are labeled with their engine name (Hunyuan3D) instead of an internal id, and every card can now be opened from the keyboard.</description>
+		</item>
+		<item>
 			<title>Creator profile pages work again, plus a site-wide reliability sweep</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-17:Creator profile pages work again, plus a site-wide reliability sweep</guid>
