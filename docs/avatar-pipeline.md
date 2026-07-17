@@ -90,6 +90,7 @@ pose operations.
 
 ## Related
 
+- [Selfie → Avatar reconstruction](avatar-reconstruction.md) — the separate lane that fits a *person's photo* onto a rigged template (face texture + geometry morph), rather than generating a mesh from a prompt.
 - [Animations](animations.md) — the clip library and retargeting in depth.
 - [3D asset pipeline](3d-asset-pipeline.md) — formats, optimization, validation.
 - [NVIDIA free models](nvidia-models.md) — the free generation backend.

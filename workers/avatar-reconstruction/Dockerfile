@@ -31,8 +31,10 @@ WORKDIR /app
 COPY worker_security.py /app/worker_security.py
 COPY main.py          /app/main.py
 COPY face_pipeline.py /app/face_pipeline.py
+COPY face_geometry.py /app/face_geometry.py
 COPY glb_ops.py       /app/glb_ops.py
 COPY precompute_uv.py /app/precompute_uv.py
+COPY test_face_geometry.py /app/test_face_geometry.py
 
 # ── Template GLBs ─────────────────────────────────────────────────────────────
 # Bake both gender variants into the image so cold starts are instant.
@@ -46,6 +48,12 @@ COPY templates/ /app/templates/
 # canonical MediaPipe face model and the Wolf3D_Head mesh in default.glb.
 # Requires network access during build (downloads ~200 KB OBJ from GitHub).
 RUN python /app/precompute_uv.py /app/templates/default.glb
+
+# ── Build-time guard ──────────────────────────────────────────────────────────
+# The geometry morph must preserve the rig + 52 ARKit blendshapes and never blow
+# up the mesh. Fail the image build if the morph math regresses, rather than
+# shipping a broken avatar pipeline.
+RUN python /app/test_face_geometry.py
 
 EXPOSE 8080
 
