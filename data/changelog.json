@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "Selfie to 3D works again: finished avatars were being thrown away at the last step",
+			"summary": "Since the July infrastructure move, the selfie and photo reconstruction pipeline was failing with a generic \"hit a snag\" message even though the 3D engine finished every job. The security check that vets where a finished model may be downloaded from did not yet trust our own Google Cloud Storage results, so completed avatars were rejected at the final step. The check now recognizes our own storage, and any generation that was wrongly marked failed has been recovered. If your selfie avatar failed recently, it should now appear, or simply retry.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-17",
 			"title": "AR Studio: fill your room with 3D models, and forge new ones without leaving the camera",
 			"summary": "Until now AR on three.ws was one model at a time: generate, view, exit. The new AR Studio at three.ws/ar/studio is a live scene through your camera where you can place as many models and avatars as you like together in your real space. Pull in your own forge creations, the community feed, or any GLB link; type a prompt and a brand-new model is generated behind the live view and drops into the room when ready. Drag to move, pinch to resize, twist to rotate, duplicate or remove any model. On Android each model gets its own world anchor in immersive AR; on iPhone the camera view with gyro look works out of the box; on desktop you arrange the scene and send it to your phone with a QR code. Your scene survives a refresh, humanoid avatars idle naturally instead of standing frozen, and a photo button captures the whole composition.",
 			"tags": [

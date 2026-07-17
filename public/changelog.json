@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T09:44:49.989Z",
+	"generated_at": "2026-07-17T09:46:43.677Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -129,6 +129,16 @@
 			"title": "Prompt-to-avatar and selfie-to-avatar generation fixed end to end",
 			"summary": "Two bugs had been failing every avatar reconstruction job. First, the platform's own 3D worker delivers finished models from our Cloud Storage bucket, but a security allowlist introduced to keep forged URLs out only recognized third-party hosts, so even successful builds were marked failed at the last step. The allowlist now recognizes our own storage bucket (and only ours). Second, avatars generated from a text prompt use a full-body reference image, whose small face the face detector often missed, ending the job with 'no face detected'. The engine now finds the face with a wide-range detector, zooms in, and reads the facial detail from the zoomed view, so full-body renders and distant selfies both work. Describing a person in your prompt still matters: a subject with no human face gets a clear message asking you to reword.",
 			"link": "/create/prompt",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "Selfie to 3D works again: finished avatars were being thrown away at the last step",
+			"summary": "Since the July infrastructure move, the selfie and photo reconstruction pipeline was failing with a generic \"hit a snag\" message even though the 3D engine finished every job. The security check that vets where a finished model may be downloaded from did not yet trust our own Google Cloud Storage results, so completed avatars were rejected at the final step. The check now recognizes our own storage, and any generation that was wrongly marked failed has been recovered. If your selfie avatar failed recently, it should now appear, or simply retry.",
+			"link": null,
 			"tags": [
 				"fix"
 			]
