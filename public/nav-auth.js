@@ -61,7 +61,16 @@
 			if (el.dataset.authNameOriginal === undefined) {
 				el.dataset.authNameOriginal = el.textContent;
 			}
-			el.textContent = authed && name ? name : el.dataset.authNameOriginal;
+			if (authed && name) {
+				el.textContent = name;
+				// Mark the element as personalized so the i18n runtime knows not to
+				// overwrite the display name with a translated label (the two systems
+				// otherwise race on the same text node, whoever runs last wins).
+				el.dataset.authNamed = '1';
+			} else {
+				el.textContent = el.dataset.authNameOriginal;
+				delete el.dataset.authNamed;
+			}
 		});
 	}
 

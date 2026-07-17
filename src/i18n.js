@@ -79,7 +79,17 @@ export function applyCatalog(root, t) {
 	if (!root) return;
 	root.querySelectorAll?.('[data-i18n]').forEach((el) => {
 		const v = t(el.getAttribute('data-i18n'));
-		if (v != null) el.textContent = v;
+		if (v == null) return;
+		// Some nav elements carry both data-i18n (a translatable label) and
+		// data-auth-name (their text is the signed-in visitor's display name). The
+		// name is not translatable copy and nav-auth owns it. Keep the translation
+		// as the signed-out fallback so a locale switch still localizes the label,
+		// but never clobber a live display name (data-auth-named === '1').
+		if (el.hasAttribute('data-auth-name')) {
+			el.dataset.authNameOriginal = v;
+			if (el.dataset.authNamed === '1') return;
+		}
+		el.textContent = v;
 	});
 	root.querySelectorAll?.('[data-i18n-html]').forEach((el) => {
 		const v = t(el.getAttribute('data-i18n-html'));
