@@ -3643,15 +3643,72 @@
 	.hcf-skel-line { height: 10px; border-radius: 5px; background: var(--surface-2); animation: hcf-pulse 1.8s ease-in-out infinite; margin-bottom: 6px; }
 	.hcf-skel-line:last-child { width: 60%; margin-bottom: 0; }
 	@keyframes hcf-pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+
+	/* Live-feed controls: Fresh/Trending toggle, live pulse, Show more */
+	#home-community-forge .hcf-controls { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+	#home-community-forge .hcf-tabs {
+		display: inline-flex; padding: 3px; gap: 2px;
+		background: var(--surface-1); border: 1px solid var(--hairline); border-radius: 999px;
+	}
+	#home-community-forge .hcf-tab {
+		appearance: none; border: 0; cursor: pointer;
+		padding: 6px 14px; border-radius: 999px; background: transparent;
+		font-family: var(--font-body); font-size: 13px; font-weight: 500; color: var(--text-3);
+		transition: color .15s, background .15s;
+	}
+	#home-community-forge .hcf-tab[aria-pressed="true"] { color: var(--text); background: var(--surface-3); }
+	#home-community-forge .hcf-tab:hover { color: var(--text); }
+	#home-community-forge .hcf-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+	#home-community-forge .hcf-live {
+		display: inline-flex; align-items: center; gap: 6px;
+		font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.12em;
+		text-transform: uppercase; color: var(--text-3);
+	}
+	#home-community-forge .hcf-live-dot {
+		width: 6px; height: 6px; border-radius: 50%; background: #4ade80;
+		box-shadow: 0 0 0 0 rgba(74,222,128,.5); animation: hcf-live-pulse 2.2s ease-out infinite;
+	}
+	@keyframes hcf-live-pulse {
+		0% { box-shadow: 0 0 0 0 rgba(74,222,128,.45); }
+		70% { box-shadow: 0 0 0 6px rgba(74,222,128,0); }
+		100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+	}
+	#home-community-forge .hcf-morewrap { display: flex; justify-content: center; margin-top: 22px; }
+	#home-community-forge .hcf-more {
+		appearance: none; cursor: pointer;
+		padding: 10px 22px; border-radius: 10px;
+		background: var(--surface-1); border: 1px solid var(--hairline);
+		font-family: var(--font-body); font-size: 14px; font-weight: 500; color: var(--text-2);
+		transition: color .15s, border-color .15s, transform .12s;
+	}
+	#home-community-forge .hcf-more:hover { color: var(--text); border-color: var(--hairline-strong); transform: translateY(-1px); }
+	#home-community-forge .hcf-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+	/* A freshly arrived model animates in at the top of the loop */
+	.hcf-card--new { animation: hcf-card-in .5s cubic-bezier(.2,.7,.3,1) both; }
+	@keyframes hcf-card-in { from { opacity: 0; transform: translateY(-10px) scale(.97); } to { opacity: 1; transform: none; } }
+	@media (prefers-reduced-motion: reduce) {
+		#home-community-forge .hcf-live-dot { animation: none; }
+		.hcf-card--new { animation: none; }
+	}
+	@media (max-width: 560px) {
+		#home-community-forge .hcf-head { flex-direction: column; align-items: flex-start; }
+		#home-community-forge .hcf-controls { width: 100%; justify-content: space-between; }
+	}
 </style>
 <section class="block" id="home-community-forge">
 	<div class="wrap-1280">
 		<div class="hcf-head reveal">
 			<div>
-				<p class="hcf-eyebrow" data-i18n="home.community">Community</p>
+				<p class="hcf-eyebrow"><span data-i18n="home.community">Community</span><span class="hcf-live" id="hcf-live" hidden><span class="hcf-live-dot" aria-hidden="true"></span>live</span></p>
 				<h2 class="hcf-title" data-i18n-html="home.made_with_forge_right_now">Made with Forge. <em>Right now.</em></h2>
 			</div>
-			<a href="/forge" class="hcf-cta" data-i18n="home.generate_yours">Generate yours →</a>
+			<div class="hcf-controls">
+				<div class="hcf-tabs" role="group" aria-label="Sort community models">
+					<button type="button" class="hcf-tab" data-hcf-sort="fresh" aria-pressed="true">Fresh</button>
+					<button type="button" class="hcf-tab" data-hcf-sort="top" aria-pressed="false">Trending</button>
+				</div>
+				<a href="/forge" class="hcf-cta" data-i18n="home.generate_yours">Generate yours →</a>
+			</div>
 		</div>
 		<div class="hcf-track reveal reveal-d1" id="hcf-track">
 			<!-- skeleton placeholders — replaced by JS -->
@@ -3662,6 +3719,7 @@
 			<div class="hcf-skel"><div class="hcf-skel-thumb"></div><div class="hcf-skel-body"><div class="hcf-skel-line"></div><div class="hcf-skel-line"></div></div></div>
 			<div class="hcf-skel"><div class="hcf-skel-thumb"></div><div class="hcf-skel-body"><div class="hcf-skel-line"></div><div class="hcf-skel-line"></div></div></div>
 		</div>
+		<div class="hcf-morewrap"><button type="button" class="hcf-more" id="hcf-more" hidden>Show more</button></div>
 	</div>
 </section>
 <script type="module">
@@ -3756,31 +3814,131 @@
 		return card;
 	}
 
-	fetch('/api/forge-gallery?scope=community&limit=18')
-		.then(function(r) { return r.json(); })
-		.then(function(data) {
-			var all = Array.isArray(data && data.creations) ? data.creations : [];
-			// dedupe by normalized prompt
-			var seen = new Set();
-			var items = all.filter(function(c) {
-				var key = (c.prompt || c.id || '').toLowerCase().replace(/\s+/g, ' ').trim();
-				if (seen.has(key)) return false;
-				seen.add(key);
-				return true;
-			}).slice(0, 6);
+	// ── Live, sortable, paginated loop ──────────────────────────────────
+	// The strip used to be a one-shot fetch of 6 models. It's now a real browse
+	// loop: a Fresh/Trending toggle (the gallery API's sort=fresh vs
+	// sort=top&window=week), Show more to page deeper, and a background refresh
+	// that prepends genuinely-new models on the Fresh tab so "Right now" stays
+	// honest. Everything is fail-soft: any fetch error hides the section exactly
+	// as before, so a data outage never leaves a broken strip on the homepage.
+	var INITIAL = 12, MAX = 24, POLL_MS = 25000;
+	var section = document.getElementById('home-community-forge');
+	var moreBtn = document.getElementById('hcf-more');
+	var liveChip = document.getElementById('hcf-live');
+	var tabs = section ? section.querySelectorAll('.hcf-tab') : [];
+	var sort = 'fresh';
+	var items = [];            // deduped items for the current sort
+	var knownIds = new Set();  // ids already on stage (live-prepend dedupe)
+	var expanded = false;
+	var pollTimer = null;
+	var reqSeq = 0;            // ignore a slow response after a tab switch
 
-			if (!data.enabled || items.length === 0) {
-				document.getElementById('home-community-forge').hidden = true;
+	function dedupe(all) {
+		var seen = new Set();
+		return (Array.isArray(all) ? all : []).filter(function(c) {
+			var key = (c.prompt || c.id || '').toLowerCase().replace(/\s+/g, ' ').trim();
+			if (!key || seen.has(key)) return false;
+			seen.add(key);
+			return true;
+		});
+	}
+
+	function qsFor(s) {
+		return s === 'top'
+			? 'scope=community&sort=top&window=week&limit=' + MAX
+			: 'scope=community&sort=fresh&limit=' + MAX;
+	}
+
+	function fetchFeed(s) {
+		return fetch('/api/forge-gallery?' + qsFor(s))
+			.then(function(r) { return r.json(); })
+			.then(function(data) {
+				return { enabled: data && data.enabled !== false, items: dedupe(data && data.creations) };
+			});
+	}
+
+	function render() {
+		ensureModelViewer();
+		track.innerHTML = '';
+		knownIds = new Set();
+		var count = expanded ? MAX : INITIAL;
+		items.slice(0, count).forEach(function(c) {
+			if (c.id) knownIds.add(c.id);
+			track.appendChild(buildCard(c));
+		});
+		if (moreBtn) moreBtn.hidden = expanded || items.length <= INITIAL;
+	}
+
+	function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+
+	function startPolling() {
+		stopPolling();
+		if (sort !== 'fresh') return;
+		pollTimer = setInterval(function() {
+			if (document.hidden || sort !== 'fresh') return;
+			var seq = reqSeq;
+			fetchFeed('fresh').then(function(res) {
+				if (seq !== reqSeq || !res.items.length) return;
+				// Prepend only models we haven't shown yet, newest first.
+				var fresh = res.items.filter(function(c) { return c.id && !knownIds.has(c.id); });
+				if (!fresh.length) return;
+				fresh.reverse().forEach(function(c) {
+					knownIds.add(c.id);
+					items.unshift(c);
+					var card = buildCard(c);
+					card.classList.add('hcf-card--new');
+					track.insertBefore(card, track.firstChild);
+				});
+				// Keep the grid tidy: never exceed the current visible cap.
+				var cap = expanded ? MAX : INITIAL;
+				while (track.children.length > cap) track.removeChild(track.lastChild);
+			}).catch(function() { /* transient: keep the current stage */ });
+		}, POLL_MS);
+	}
+
+	function load(s) {
+		var seq = ++reqSeq;
+		fetchFeed(s).then(function(res) {
+			if (seq !== reqSeq) return;
+			if (!res.enabled || !res.items.length) {
+				if (section) section.hidden = true;
+				stopPolling();
 				return;
 			}
-			ensureModelViewer();
-			track.innerHTML = '';
-			items.forEach(function(c) { track.appendChild(buildCard(c)); });
-		})
-		.catch(function() {
-			var sec = document.getElementById('home-community-forge');
-			if (sec) sec.hidden = true;
+			items = res.items;
+			expanded = false;
+			render();
+			if (liveChip) liveChip.hidden = (s !== 'fresh');
+			startPolling();
+		}).catch(function() {
+			if (seq !== reqSeq) return;
+			// First load failing hides the section (as before); a failed re-sort
+			// keeps whatever is already on stage rather than blanking it.
+			if (!items.length && section) section.hidden = true;
 		});
+	}
+
+	Array.prototype.forEach.call(tabs, function(tab) {
+		tab.addEventListener('click', function() {
+			var next = tab.getAttribute('data-hcf-sort');
+			if (next === sort) return;
+			sort = next;
+			Array.prototype.forEach.call(tabs, function(t) {
+				t.setAttribute('aria-pressed', String(t === tab));
+			});
+			load(sort);
+		});
+	});
+
+	if (moreBtn) moreBtn.addEventListener('click', function() { expanded = true; render(); });
+
+	// Pause the live refresh while the tab is backgrounded, resume on return.
+	document.addEventListener('visibilitychange', function() {
+		if (document.hidden) stopPolling();
+		else if (sort === 'fresh' && !pollTimer && !section.hidden) startPolling();
+	});
+
+	load('fresh');
 })();
 </script>
 
