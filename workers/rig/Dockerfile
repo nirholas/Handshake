@@ -20,6 +20,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && ln -sf /usr/bin/python3.11 /usr/bin/python \
     && python3 -m pip install --upgrade pip setuptools wheel
 
+# torch first, as its own cached layer: the cu121 wheels are multi-GB and
+# some downstream packages import torch during their own install.
+RUN pip install torch==2.1.2 torchvision==0.16.2 \
+    --index-url https://download.pytorch.org/whl/cu121
+
 COPY requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt
 

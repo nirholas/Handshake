@@ -22,10 +22,25 @@ GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 \
   https://huggingface.co/jasongzy/Make-It-Animatable "$WORK/hf-mia"
 git -C "$WORK/hf-mia" lfs pull -I output/best/new
 
-echo "==> Mixamo bone templates (HF dataset: jasongzy/Mixamo)"
-GIT_LFS_SKIP_SMUDGE=1 git clone --depth 1 \
-  https://huggingface.co/datasets/jasongzy/Mixamo "$WORK/hf-mixamo"
-git -C "$WORK/hf-mixamo" lfs pull -I 'bones*.fbx'
+echo "==> Mixamo bone templates (HF dataset: jasongzy/Mixamo, gated: auto)"
+# The dataset is gated (auto-approve). Needs an HF token; the platform one
+# lives on the three-ws-api Cloud Run service. First use of a token must
+# accept the gate, which the ask-access POST does for auto-gated repos.
+if [ -z "${HF_TOKEN:-}" ]; then
+  HF_TOKEN=$(gcloud run services describe three-ws-api --region us-central1 \
+    --format=json | python3 -c "
+import json, sys
+envs = json.load(sys.stdin)['spec']['template']['spec']['containers'][0].get('env', [])
+print(next(e['value'] for e in envs if e['name'] == 'HF_TOKEN'))")
+fi
+curl -sf -X POST -H "Authorization: Bearer $HF_TOKEN" \
+  https://huggingface.co/datasets/jasongzy/Mixamo/ask-access >/dev/null || true
+mkdir -p "$WORK/hf-mixamo"
+for f in bones.fbx bones_vroid.fbx; do
+  curl -sfL -H "Authorization: Bearer $HF_TOKEN" \
+    "https://huggingface.co/datasets/jasongzy/Mixamo/resolve/main/$f" \
+    -o "$WORK/hf-mixamo/$f"
+done
 
 echo "==> ICT-FaceKit ARKit template bake"
 git clone --depth 1 https://github.com/ICT-VGL/ICT-FaceKit "$WORK/ict"

@@ -1,12 +1,13 @@
 # Make-It-Animatable (jasongzy, MIT) runtime set, mirrored from its
 # requirements.txt at the commit pinned in the Dockerfile, minus training-only
 # extras (tensorboard, ipykernel, ipympl, fake-bpy-module).
---extra-index-url https://download.pytorch.org/whl/cu121
-torch==2.1.2
-torchvision==0.16.2
-
+#
+# torch/torchvision install in their own Dockerfile layer BEFORE this file so
+# anything that imports torch at build time already has it. torch-cluster is
+# pinned to the exact pyg wheel build: the bare "torch-cluster" spec let pip
+# pick the PyPI sdist, whose isolated build env has no torch and fails.
 -f https://data.pyg.org/whl/torch-2.1.2+cu121.html
-torch-cluster
+torch-cluster==1.6.3+pt21cu121
 
 --extra-index-url https://miropsota.github.io/torch_packages_builder
 pytorch3d==0.7.7+pt2.1.2cu121
