@@ -39,6 +39,11 @@
  *                       (an OOM-killed chromium fails every render in the batch
  *                       with "Connection closed."; genuinely broken models record a
  *                       model-attributable error and are never reset)
+ *   --restyle=N         re-queue up to N posters baked by an older renderer so
+ *                       they re-render with the current camera/backdrop. Only
+ *                       server-rendered thumb/<uuid>.png keys are cleared; user
+ *                       snapshots and forge previews are never touched. Run after
+ *                       deploying a renderer change, with --limit sized to match.
  *
  * Unlike the previous version this talks to Postgres + R2 directly, so it needs
  * no ADMIN_BEARER and no running server.
@@ -50,6 +55,7 @@ import {
 	coverage,
 	ensureBackfillSchema,
 	resetInfrastructureFailures,
+	queueRestyle,
 	MAX_ATTEMPTS,
 } from '../api/_lib/avatar-thumbs.js';
 
@@ -97,6 +103,16 @@ async function main() {
 		const { reset } = await resetInfrastructureFailures();
 		console.log(`[backfill] reset ${reset} ledger row(s) whose failure was infrastructure, not the model`);
 		await printCoverage('after reset');
+	}
+
+	// Re-queue posters baked by an older renderer (flat dark background, dead-on
+	// camera) so this run re-renders them with the current look. Only clears
+	// server-rendered thumb/<uuid>.png keys — user-uploaded snapshots and forge
+	// previews are never touched. Run AFTER deploying a renderer change; pair
+	// with --limit sized to match.
+	if (num('restyle', 0) > 0) {
+		const { queued } = await queueRestyle({ limit: num('restyle', 0) });
+		console.log(`[backfill] restyle: cleared ${queued} old server-rendered poster(s) for re-render`);
 	}
 
 	// ── Phase 1: free adoption ────────────────────────────────────────────────

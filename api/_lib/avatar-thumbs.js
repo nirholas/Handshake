@@ -322,6 +322,40 @@ export async function renderBatch({ limit = 5, concurrency = 1, onResult } = {})
 	};
 }
 
+// Restyle: re-queue avatars whose poster was baked by an older renderer (flat
+// dark background, dead-on camera) so the normal claim/render path re-renders
+// them with the current look. Only server-rendered keys (`thumb/<uuid>.png`,
+// exactly what thumbKeyFor writes) are cleared — client-uploaded customizer
+// snapshots and adopted forge previews are user/creation content, never touched.
+// While a key is cleared the card falls back to /api/avatars/:id/og, which
+// renders on demand with the current pipeline, so the surface never goes blank.
+// Most-viewed public avatars first, same priority as the claim query.
+export async function queueRestyle({ limit = 100 } = {}) {
+	const rows = await sql`
+		WITH victims AS (
+			SELECT id FROM avatars
+			 WHERE deleted_at IS NULL
+			   AND storage_key IS NOT NULL
+			   AND thumbnail_key ~ '^thumb/[0-9a-f-]{36}\\.png$'
+			 ORDER BY featured DESC, (visibility = 'public') DESC,
+			          view_count DESC NULLS LAST, created_at DESC
+			 LIMIT ${limit}
+		)
+		UPDATE avatars a
+		   SET thumbnail_key = NULL, updated_at = now()
+		  FROM victims v
+		 WHERE a.id = v.id
+		RETURNING a.id
+	`;
+	// A cleared avatar may sit in the ledger as retired from an old failure;
+	// wipe those rows so the re-render is not silently skipped.
+	if (rows.length) {
+		const ids = rows.map((r) => r.id);
+		await sql`DELETE FROM avatar_thumbnail_backfill WHERE avatar_id = any(${ids}::uuid[])`.catch(() => {});
+	}
+	return { queued: rows.length };
+}
+
 // Repair: forget every ledger row whose failure was the browser dying rather than
 // the model being bad. A row's absence means "never attempted", so the avatar
 // re-enters the candidate set with a clean slate.
