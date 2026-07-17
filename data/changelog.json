@@ -14127,6 +14127,15 @@
 				"fix"
 			],
 			"link": "/viewer"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Image to 3D gets its own front door",
+			"summary": "Turning a photo into a 3D model has worked in the Forge for a while, but it hid behind a page titled Text to 3D, and the only photo surface people could find was Selfie to Avatar. There is now a dedicated Image to 3D page (three.ws/image-to-3d) that opens the Forge with the photo tab already selected, an Image to 3D link in the main navigation and footers, and clear pointers between the selfie tools (for making an avatar of you) and Image to 3D (for making a model of any object). The Forge and its feature page are also retitled to say what they actually do: text and images.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/image-to-3d"
 		}
 	]
 }

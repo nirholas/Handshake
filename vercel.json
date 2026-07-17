@@ -1183,6 +1183,10 @@
 			"dest": "/forge.html"
 		},
 		{
+			"src": "/image-to-3d/?",
+			"dest": "/forge.html"
+		},
+		{
 			"src": "/restyle/?",
 			"dest": "/restyle.html"
 		},

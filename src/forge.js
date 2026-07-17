@@ -2941,6 +2941,17 @@ if (els.forgeShareBtn) {
 	}
 })();
 
+// Deep links: the /image-to-3d route alias and ?mode=image both land straight
+// on the photo tab, making "image to 3D" a first-class destination instead of
+// a second tab hidden behind a text-first title. The alias also gets its own
+// document title so history/tabs read as what the user searched for.
+(() => {
+	const path = location.pathname.replace(/\/+$/, '');
+	const wanted = new URLSearchParams(location.search).get('mode') || (path === '/image-to-3d' ? 'image' : '');
+	if (wanted === 'image') setMode('image');
+	if (path === '/image-to-3d') document.title = 'Image to 3D — Turn a Photo into a 3D Model · three.ws';
+})();
+
 // Hooks for the companion modules (forge-dropzone.js, forge-showcase.js) —
 // a CustomEvent contract keeps them decoupled from this file's internals.
 

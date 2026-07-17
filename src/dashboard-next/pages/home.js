@@ -719,7 +719,7 @@ function renderForgeAnnounce(host) {
 	const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
 
 	host.innerHTML = `
-		<div class="dnx-forge${reduceMotion ? ' is-still' : ''}" role="region" aria-label="New: Text to 3D">
+		<div class="dnx-forge${reduceMotion ? ' is-still' : ''}" role="region" aria-label="New: Text and image to 3D">
 			<div class="dnx-forge-visual" aria-hidden="true">
 				<span class="dnx-forge-ring"></span>
 				<span class="dnx-forge-stage">
@@ -732,8 +732,8 @@ function renderForgeAnnounce(host) {
 			<div class="dnx-forge-body">
 				<div class="dnx-forge-head">
 					<span class="dnx-forge-badge">New</span>
-					<span class="dnx-forge-title">Text&nbsp;to&nbsp;3D is live</span>
-					<span class="dnx-forge-sub">Describe any object — get a downloadable, textured GLB in seconds.</span>
+					<span class="dnx-forge-title">Text &amp; image&nbsp;to&nbsp;3D are live</span>
+					<span class="dnx-forge-sub">Describe any object, or upload a photo of one — get a downloadable, textured GLB in seconds.</span>
 				</div>
 				<form class="dnx-forge-form" novalidate>
 					<label class="dnx-forge-field">

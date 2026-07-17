@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T08:14:06.793Z",
+	"generated_at": "2026-07-17T08:26:05.077Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -454,9 +454,19 @@
 				},
 				{
 					"path": "/forge",
-					"title": "Forge — Text to 3D",
+					"title": "Forge — Text & Image to 3D",
 					"description": "Type a prompt — or drop in photos or a sketch — and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.",
 					"added": "2026-06-04",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/image-to-3d",
+					"title": "Image to 3D — Turn a Photo into a 3D Model",
+					"description": "Upload a photo (or up to 4 angles) and get a downloadable textured 3D model (GLB). The Forge's photo lane, opened directly — for objects and props; for faces, use Selfie to Avatar.",
+					"added": "2026-07-17",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -654,8 +664,8 @@
 				},
 				{
 					"path": "/features/forge",
-					"title": "Forge — Text to 3D Model",
-					"description": "Type a description, get a downloadable textured 3D model (GLB). Powered by Flux image generation and TRELLIS 3D reconstruction.",
+					"title": "Forge — Text & Image to 3D Models",
+					"description": "Type a description or upload photos, and get a downloadable textured 3D model (GLB). Multiple self-hosted engines, from fast drafts to PBR realism.",
 					"added": "2026-06-05",
 					"auth": null,
 					"indexable": true,

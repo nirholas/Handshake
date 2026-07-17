@@ -66,6 +66,13 @@ export const NAV_GROUPS = [
 						desc: 'Describe an object → textured GLB, usually in seconds',
 					},
 					{
+						title: 'Image to 3D',
+						href: '/image-to-3d',
+						badge: 'Live',
+						badgeTone: 'live',
+						desc: 'Upload a photo (up to 4 angles) → textured GLB of the object',
+					},
+					{
 						title: 'Describe it to 3D',
 						href: '/create/prompt',
 						badge: 'Live',
@@ -75,7 +82,7 @@ export const NAV_GROUPS = [
 					{
 						title: 'Selfie to avatar',
 						href: '/create/selfie',
-						desc: 'One photo → rigged 3D avatar',
+						desc: 'One photo of you → rigged 3D avatar of you',
 					},
 					{
 						title: 'Avatar Studio',

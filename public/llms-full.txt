@@ -280,11 +280,17 @@ URL: https://three.ws/create/prompt
 
 Type a description. About a minute later: a rigged 3D avatar you can animate and download.
 
-### Forge — Text to 3D
+### Forge — Text & Image to 3D
 
 URL: https://three.ws/forge
 
 Type a prompt — or drop in photos or a sketch — and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.
+
+### Image to 3D — Turn a Photo into a 3D Model
+
+URL: https://three.ws/image-to-3d
+
+Upload a photo (or up to 4 angles) and get a downloadable textured 3D model (GLB). The Forge's photo lane, opened directly — for objects and props; for faces, use Selfie to Avatar.
 
 ### Restyle Studio — material presets, AI restyle & variants
 
@@ -400,11 +406,11 @@ URL: https://three.ws/features/ar
 
 Every three.ws avatar and Forge model has a View in AR button. On mobile it anchors the model to real surfaces through your camera. WebXR on Android, Quick Look on iOS — no app, no download.
 
-### Forge — Text to 3D Model
+### Forge — Text & Image to 3D Models
 
 URL: https://three.ws/features/forge
 
-Type a description, get a downloadable textured 3D model (GLB). Powered by Flux image generation and TRELLIS 3D reconstruction.
+Type a description or upload photos, and get a downloadable textured 3D model (GLB). Multiple self-hosted engines, from fast drafts to PBR realism.
 
 ### Scan — Selfie to 3D Avatar
 

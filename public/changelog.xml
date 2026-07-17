@@ -7,6 +7,14 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Image to 3D — Turn a Photo into a 3D Model</title>
+			<link>https://three.ws/image-to-3d</link>
+			<guid isPermaLink="false">2026-07-17:Image to 3D — Turn a Photo into a 3D Model</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Upload a photo (or up to 4 angles) and get a downloadable textured 3D model (GLB). The Forge's photo lane, opened directly — for objects and props; for faces, use Selfie to Avatar.</description>
+		</item>
+		<item>
 			<title>Avatars you generate now come out truly animation-ready</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-07-17:Avatars you generate now come out truly animation-ready</guid>
@@ -21,6 +29,14 @@
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>A full automated sweep of every page and API endpoint on the site caught a bug that replaced creator profile pages (three.ws/u/yourname) with an error message. That is fixed. The sweep also repaired the login captcha for rate-limited sign-ins, fixed dead links in the dashboard and two blog posts, and added two dozen previously unlisted pages to the site index so search engines and the sitemap can find them. The audit now runs with deeper checks (blank-page detection, visible error detection, and link crawling) so regressions like these get caught before anyone hits them.</description>
+		</item>
+		<item>
+			<title>Image to 3D gets its own front door</title>
+			<link>https://three.ws/image-to-3d</link>
+			<guid isPermaLink="false">2026-07-17:Image to 3D gets its own front door</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Turning a photo into a 3D model has worked in the Forge for a while, but it hid behind a page titled Text to 3D, and the only photo surface people could find was Selfie to Avatar. There is now a dedicated Image to 3D page (three.ws/image-to-3d) that opens the Forge with the photo tab already selected, an Image to 3D link in the main navigation and footers, and clear pointers between the selfie tools (for making an avatar of you) and Image to 3D (for making a model of any object). The Forge and its feature page are also retitled to say what they actually do: text and images.</description>
 		</item>
 		<item>
 			<title>Image-to-3D leaps forward: true PBR materials on a flagship GPU</title>
@@ -45,6 +61,14 @@
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Two improvements to the closed-loop x402 agent economy that dogfoods every paid endpoint on the platform. First, a fix: a background wallet-consolidation job was quietly closing the ring's payment account after every settlement, forcing the next one to recreate it and pay account rent each time. That single bug had pushed the real fee cost to roughly a hundred times where it should be. With it fixed and single-signature settlement turned on, each settlement is back to the network floor of a few thousandths of a cent, and the ring's working balance stays in the loop instead of leaking away. Second, a new capability: the ring can now cycle payments through a reusable pool of hundreds to a thousand distinct wallets instead of one, so the economy reads as many participants rather than a single account, with no extra cost per payment. The pool is off until funded and activated, and every wallet in it stays clearly labeled internal dogfooding, not organic demand.</description>
+		</item>
+		<item>
+			<title>The viewer's Create buttons now take you straight to the Forge</title>
+			<link>https://three.ws/viewer</link>
+			<guid isPermaLink="false">2026-07-17:The viewer's Create buttons now take you straight to the Forge</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>On the shared-model viewer page, the &quot;Create a 3D model&quot; button (shown when a link is missing its model) and the &quot;Make your own&quot; button in the footer used to drop you on the homepage, leaving you to hunt for the generator. Both now go directly to the free text-to-3D Forge so you can start creating in one click.</description>
 		</item>
 		<item>
 			<title>Your models now look studio-quality everywhere, not just in the Forge</title>
@@ -13327,12 +13351,12 @@
 			<description>Plain-language introduction to three.ws for creators and non-developers — what it is, who it’s for, and where to begin.</description>
 		</item>
 		<item>
-			<title>Forge — Text to 3D Model</title>
+			<title>Forge — Text &amp; Image to 3D Models</title>
 			<link>https://three.ws/features/forge</link>
-			<guid isPermaLink="false">2026-06-05:Forge — Text to 3D Model</guid>
+			<guid isPermaLink="false">2026-06-05:Forge — Text &amp; Image to 3D Models</guid>
 			<pubDate>Fri, 05 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Type a description, get a downloadable textured 3D model (GLB). Powered by Flux image generation and TRELLIS 3D reconstruction.</description>
+			<description>Type a description or upload photos, and get a downloadable textured 3D model (GLB). Multiple self-hosted engines, from fast drafts to PBR realism.</description>
 		</item>
 		<item>
 			<title>Glossary</title>
@@ -13439,9 +13463,9 @@
 			<description>Automated token launching and trading via pump.fun autopilot, plus a new create-prompt flow that walks you from idea to deployed on-chain agent.</description>
 		</item>
 		<item>
-			<title>Forge — Text to 3D</title>
+			<title>Forge — Text &amp; Image to 3D</title>
 			<link>https://three.ws/forge</link>
-			<guid isPermaLink="false">2026-06-04:Forge — Text to 3D</guid>
+			<guid isPermaLink="false">2026-06-04:Forge — Text &amp; Image to 3D</guid>
 			<pubDate>Thu, 04 Jun 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Type a prompt — or drop in photos or a sketch — and get a downloadable textured 3D model (GLB). Pick from multiple generation engines with live health status.</description>
