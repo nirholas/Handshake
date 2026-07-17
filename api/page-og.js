@@ -14,9 +14,27 @@
 // LinkedIn, and iMessage — none of which render image/svg+xml OG cards — all
 // show the preview.
 import { ImageResponse } from '@vercel/og';
+import { readFileSync } from 'node:fs';
 
 const WIDTH = 1200;
 const HEIGHT = 630;
+
+// IBM Plex faces for the light "carbon" variant (?v=carbon). Vendored TTFs
+// (OFL-licensed) under api/_lib/fonts/ — loaded once per process, and only
+// when a carbon card is actually requested, so the default dark card pays
+// nothing. Satori can't consume woff2, hence TTF here rather than reusing
+// the woff2 set under pages/ibm/fonts/.
+let plexFonts = null;
+function loadPlexFonts() {
+  if (plexFonts) return plexFonts;
+  const font = (file) => readFileSync(new URL(`./_lib/fonts/${file}`, import.meta.url));
+  plexFonts = [
+    { name: 'IBM Plex Sans', data: font('IBMPlexSans-Regular.ttf'), weight: 400, style: 'normal' },
+    { name: 'IBM Plex Sans', data: font('IBMPlexSans-SemiBold.ttf'), weight: 600, style: 'normal' },
+    { name: 'IBM Plex Mono', data: font('IBMPlexMono-Regular.ttf'), weight: 400, style: 'normal' },
+  ];
+  return plexFonts;
+}
 
 // Per-section identity. Each catalog section gets a distinct accent so a page's
 // share card reads as part of its family at a glance. Falls back to the brand
@@ -208,10 +226,184 @@ function card({ title, desc, section, route, accent }) {
   };
 }
 
-function imageResponse(node) {
+// Light Carbon-styled card (?v=carbon) for surfaces shared into the IBM
+// ecosystem (IBM Community posts, watsonx content). IBM Plex type, IBM blue
+// (#0f62fe), Carbon gray text ramp, sharp geometry — deliberately NO IBM logo
+// or trademark: the only IBM reference is the factual "Built on IBM
+// watsonx.ai" line, the framing docs/ibm.md permits.
+function carbonCard({ title, desc, section, route }) {
+  const blue = '#0f62fe';
+  return {
+    type: 'div',
+    props: {
+      style: {
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        padding: '64px 76px 58px',
+        background: '#ffffff',
+        color: '#161616',
+        fontFamily: '"IBM Plex Sans"',
+      },
+      children: [
+        // top rule — Carbon's signature blue bar
+        {
+          type: 'div',
+          props: {
+            style: { position: 'absolute', top: 0, left: 0, right: 0, height: 10, display: 'flex', background: blue },
+          },
+        },
+        // geometric accent, top-right: quarter-circle + solid/outlined squares
+        {
+          type: 'div',
+          props: {
+            style: { position: 'absolute', top: 74, right: 76, display: 'flex', alignItems: 'flex-start' },
+            children: [
+              {
+                type: 'div',
+                props: {
+                  style: {
+                    width: 72,
+                    height: 72,
+                    background: '#d0e2ff',
+                    borderRadius: '0 0 0 72px',
+                    marginRight: 16,
+                  },
+                },
+              },
+              { type: 'div', props: { style: { width: 72, height: 72, background: blue, marginRight: 16 } } },
+              { type: 'div', props: { style: { width: 72, height: 72, border: `3px solid ${blue}` } } },
+            ],
+          },
+        },
+        // top row: wordmark + section tag
+        {
+          type: 'div',
+          props: {
+            style: { display: 'flex', alignItems: 'center' },
+            children: [
+              {
+                type: 'div',
+                props: {
+                  style: { display: 'flex', alignItems: 'baseline' },
+                  children: [
+                    {
+                      type: 'div',
+                      props: {
+                        style: { fontSize: 30, fontWeight: 600, letterSpacing: -0.5, color: '#161616' },
+                        children: 'three.ws',
+                      },
+                    },
+                    {
+                      type: 'div',
+                      props: {
+                        style: { fontSize: 30, fontWeight: 600, color: blue, marginLeft: 3 },
+                        children: '.',
+                      },
+                    },
+                  ],
+                },
+              },
+              {
+                type: 'div',
+                props: {
+                  style: {
+                    display: 'flex',
+                    fontSize: 20,
+                    fontWeight: 600,
+                    color: '#0043ce',
+                    padding: '6px 14px',
+                    marginLeft: 26,
+                    borderRadius: 4,
+                    background: '#d0e2ff',
+                  },
+                  children: section.label,
+                },
+              },
+            ],
+          },
+        },
+        // middle: title + description, Plex gray ramp
+        {
+          type: 'div',
+          props: {
+            style: { display: 'flex', flexDirection: 'column', maxWidth: 980 },
+            children: [
+              {
+                type: 'div',
+                props: {
+                  style: {
+                    fontSize: title.length > 22 ? 68 : 84,
+                    fontWeight: 600,
+                    letterSpacing: -1.5,
+                    lineHeight: 1.06,
+                    color: '#161616',
+                  },
+                  children: title,
+                },
+              },
+              desc
+                ? {
+                    type: 'div',
+                    props: {
+                      style: {
+                        fontSize: 30,
+                        fontWeight: 400,
+                        lineHeight: 1.35,
+                        marginTop: 24,
+                        color: '#525252',
+                      },
+                      children: desc,
+                    },
+                  }
+                : { type: 'div', props: { children: '' } },
+            ],
+          },
+        },
+        // bottom: route + factual watsonx line
+        {
+          type: 'div',
+          props: {
+            style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+            children: [
+              {
+                type: 'div',
+                props: {
+                  style: {
+                    display: 'flex',
+                    alignItems: 'center',
+                    fontSize: 23,
+                    fontFamily: '"IBM Plex Mono"',
+                    color: '#525252',
+                  },
+                  children: [
+                    { type: 'div', props: { style: { width: 12, height: 12, background: blue, marginRight: 14 } } },
+                    { type: 'div', props: { children: `three.ws${route}` } },
+                  ],
+                },
+              },
+              {
+                type: 'div',
+                props: {
+                  style: { fontSize: 23, fontWeight: 600, color: blue },
+                  children: 'Built on IBM watsonx.ai',
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  };
+}
+
+function imageResponse(node, fonts) {
   return new ImageResponse(node, {
     width: WIDTH,
     height: HEIGHT,
+    ...(fonts ? { fonts } : {}),
     headers: {
       'cache-control': 'public, max-age=3600, s-maxage=604800, stale-while-revalidate=86400',
     },
@@ -240,12 +432,17 @@ export default async function handler(req, res) {
   const accent = section.accent;
   const title = clamp(url.searchParams.get('t') || 'three.ws', 60);
   const desc = clamp(url.searchParams.get('d') || '', 140);
+  const variant = String(url.searchParams.get('v') || '').toLowerCase();
   let route = (url.searchParams.get('p') || '/').trim();
   if (!route.startsWith('/')) route = `/${route}`;
   route = clamp(route, 42);
 
   try {
-    await sendImage(res, imageResponse(card({ title, desc, section, route, accent })));
+    if (variant === 'carbon') {
+      await sendImage(res, imageResponse(carbonCard({ title, desc, section, route }), loadPlexFonts()));
+    } else {
+      await sendImage(res, imageResponse(card({ title, desc, section, route, accent })));
+    }
   } catch (err) {
     // Never fail open to a broken-image box — render the coin-agnostic brand
     // card so the preview still looks intentional.

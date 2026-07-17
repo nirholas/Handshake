@@ -13,7 +13,7 @@ import { randomToken, randomDigits, sha256 } from '../_lib/crypto.js';
 import { cors, json, method, readJson, wrap, error, rateLimited } from '../_lib/http.js';
 import { requireCsrf } from '../_lib/csrf.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { verifyBypassToken } from './captcha.js';
+import captcha, { verifyBypassToken } from './captcha.js';
 import { parse, loginBody, registerBody, usernameRegisterBody, username as usernameValidator, displayName, email, password, bio as bioValidator, profileLocation, httpUrl } from '../_lib/validate.js';
 import { sendPasswordResetEmail, sendVerificationEmail } from '../_lib/email.js';
 import { referralCodeCandidates, normalizeReferralCode } from '../_lib/referrals.js';
@@ -400,6 +400,10 @@ const DISPATCH = {
 	'reset-password':      handleResetPassword,
 	'verify-email':        handleVerifyEmail,
 	'resend-verification': handleResendVerification,
+	// The /api/auth/([^/]+) route matches before filesystem routing, so the
+	// standalone captcha handler must be dispatched here or it is unreachable
+	// and rate-limited users can never solve the login captcha.
+	captcha,
 };
 
 export default wrap(async (req, res) => {

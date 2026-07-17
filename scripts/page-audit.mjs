@@ -299,7 +299,63 @@ function inPageAudit() {
 		});
 	}
 
-	return { title: document.title, hasHorizontalScroll: docW > vw + 2, findings };
+	// Blank-render detection: the page "loaded" but nothing meaningful painted.
+	// A 3D canvas, iframe, or video counts as content; otherwise we require some
+	// visible text or a reasonable number of visible elements.
+	const visibleText = (document.body?.innerText || '').replace(/\s+/g, ' ').trim();
+	const hasMedia = !!document.querySelector('canvas, iframe, video');
+	let visibleEls = 0;
+	for (const el of document.querySelectorAll('body *')) {
+		const r = el.getBoundingClientRect();
+		if (r.width > 4 && r.height > 4) visibleEls++;
+		if (visibleEls > 12) break;
+	}
+	if (!hasMedia && visibleText.length < 40 && visibleEls <= 12) {
+		findings.push({
+			type: 'blank-page',
+			severity: 'error',
+			detail: `page rendered ~nothing: ${visibleText.length} chars of visible text, ${visibleEls} visible elements, no canvas/iframe/video`,
+		});
+	}
+
+	// Visible failure text: error banners and raw exception text a user would see.
+	const ERROR_TEXT =
+		/something went wrong|an error occurred|unexpected error|failed to (load|fetch|initialize)|cannot read propert|is not a function|is not defined|internal server error|\bTypeError\b|\bReferenceError\b/i;
+	const seenBanners = new Set();
+	for (const el of document.querySelectorAll('body *')) {
+		if (el.children.length > 3) continue;
+		// Docs and articles legitimately print error strings in code samples.
+		if (el.closest('pre, code, script, style, table, article')) continue;
+		const t = (el.innerText || '').trim();
+		if (!t || t.length > 400 || !ERROR_TEXT.test(t)) continue;
+		const r = el.getBoundingClientRect();
+		if (r.width === 0 || r.height === 0) continue;
+		const st = getComputedStyle(el);
+		if (st.display === 'none' || st.visibility === 'hidden') continue;
+		const key = t.slice(0, 120);
+		if (seenBanners.has(key)) continue;
+		seenBanners.add(key);
+		findings.push({ type: 'error-banner', severity: 'error', detail: `visible error text: "${key}"` });
+		if (seenBanners.size >= 5) break;
+	}
+
+	// Same-origin links, for crawl discovery of routes missing from the manifest.
+	const links = new Set();
+	for (const a of document.querySelectorAll('a[href]')) {
+		try {
+			const u = new URL(a.getAttribute('href'), location.href);
+			if (u.origin !== location.origin) continue;
+			const p = u.pathname.replace(/\/$/, '') || '/';
+			links.add(p);
+		} catch {}
+	}
+
+	return {
+		title: document.title,
+		hasHorizontalScroll: docW > vw + 2,
+		findings,
+		links: [...links].slice(0, 400),
+	};
 }
 
 // ── Per-route audit ───────────────────────────────────────────────────────────
@@ -362,20 +418,76 @@ async function auditRoute(ctx, route, viewport) {
 	}
 
 	let title = '';
+	let links = [];
 	try {
 		const r = await page.evaluate(inPageAudit);
 		title = r.title;
+		links = r.links || [];
 		for (const f of r.findings) {
 			// Tap-target noise is only meaningful on the mobile pass.
 			if (f.type === 'tap-target' && viewport !== 'mobile') continue;
-			push(f.type, f.severity, f.detail);
+			// Content-heavy prose surfaces mention error strings legitimately;
+			// keep the signal but do not fail the page on it.
+			const sev =
+				f.type === 'error-banner' && /^\/(docs|blog|news|changelog|specs)(\/|$)/.test(route)
+					? 'info'
+					: f.severity;
+			push(f.type, sev, f.detail);
 		}
 	} catch {
 		/* page torn down mid-eval */
 	}
 
+	// A screenshot for every page with an error-severity finding, so the report
+	// shows what a user would have seen.
+	let screenshot = null;
+	if (findings.some((f) => f.severity === 'error')) {
+		try {
+			const dir = resolve(ROOT, 'reports/screens');
+			mkdirSync(dir, { recursive: true });
+			const safe = route.replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '') || 'root';
+			screenshot = `reports/screens/${safe}-${viewport}.png`;
+			await page.screenshot({ path: resolve(ROOT, screenshot), fullPage: false });
+		} catch {
+			screenshot = null;
+		}
+	}
+
 	await page.close();
-	return { route, viewport, title, navStatus, findings };
+	return { route, viewport, title, navStatus, findings, links, screenshot };
+}
+
+// ── Crawl discovery ───────────────────────────────────────────────────────────
+// Links collected on audited pages that point at same-origin HTML routes we
+// were NOT going to visit. These are exactly the pages past audits missed:
+// reachable by users, absent from the manifest. Deep dynamic families
+// (/u/<id>, /coin/<mint>, ...) are sampled, never exhaustively crawled, and
+// anything sampled out is reported rather than silently dropped.
+function pickDiscovered(links, known) {
+	const candidates = [];
+	for (const p of links) {
+		if (!p.startsWith('/') || known.has(p)) continue;
+		if (!isHtmlRoute(p)) continue;
+		if (/^\/(api|assets|cdn|static|models|textures|_)/.test(p)) continue;
+		candidates.push(p);
+	}
+	candidates.sort();
+	const perFamily = new Map();
+	const audit = [];
+	const dropped = [];
+	for (const p of candidates) {
+		const fam = p.split('/').slice(0, 2).join('/');
+		const depth = p.split('/').filter(Boolean).length;
+		const cap = depth >= 2 ? 3 : Infinity;
+		const n = perFamily.get(fam) || 0;
+		if (n >= cap || audit.length >= 150) {
+			dropped.push(p);
+			continue;
+		}
+		perFamily.set(fam, n + 1);
+		audit.push(p);
+	}
+	return { audit, dropped };
 }
 
 // ── Worker pool ───────────────────────────────────────────────────────────────
@@ -425,6 +537,7 @@ function writeReport(allResults, meta) {
 		if (!byRoute.has(r.route)) byRoute.set(r.route, { route: r.route, viewports: {}, findings: [] });
 		const entry = byRoute.get(r.route);
 		entry.viewports[r.viewport] = { title: r.title, navStatus: r.navStatus };
+		if (r.screenshot) entry.screenshot = entry.screenshot || r.screenshot;
 		for (const f of r.findings) entry.findings.push({ ...f, viewport: r.viewport });
 	}
 
@@ -462,6 +575,21 @@ function writeReport(allResults, meta) {
 		`- **Totals: ${totals.error} error · ${totals.warn} warn · ${totals.info} info**`,
 	);
 	lines.push('');
+	if (meta.discovered?.length) {
+		lines.push('## Crawl-discovered routes (linked on the site, missing from data/pages.json)');
+		lines.push('');
+		lines.push('These were audited this run, but add them to the manifest so every future');
+		lines.push('audit, the sitemap, and llms.txt see them:');
+		lines.push('');
+		for (const d of meta.discovered) lines.push(`- \`${d}\``);
+		lines.push('');
+	}
+	if (meta.droppedDiscoveries?.length) {
+		lines.push(
+			`*Crawl sampled out ${meta.droppedDiscoveries.length} additional dynamic route(s) (families capped at 3): ${meta.droppedDiscoveries.slice(0, 15).map((d) => `\`${d}\``).join(', ')}${meta.droppedDiscoveries.length > 15 ? ', ...' : ''}*`,
+		);
+		lines.push('');
+	}
 	lines.push('## Pages by severity');
 	lines.push('');
 	lines.push('| Route | err | warn | info |');
@@ -485,6 +613,7 @@ function writeReport(allResults, meta) {
 			.map(([v, d]) => `${v}: HTTP ${d.navStatus ?? '?'}`)
 			.join(' · ');
 		lines.push(`*${navs}*`);
+		if (p.screenshot) lines.push(`*screenshot: ${p.screenshot}*`);
 		lines.push('');
 		for (const f of p.findings) {
 			const icon = f.severity === 'error' ? '🔴' : f.severity === 'warn' ? '🟡' : '⚪';
@@ -526,6 +655,10 @@ async function main() {
 	console.log(`  routes: ${routes.length}\n`);
 
 	const allResults = [];
+	const knownRoutes = new Set(routes);
+	const discovered = [];
+	let droppedDiscoveries = [];
+	let firstViewport = true;
 	for (const viewport of viewports) {
 		const ctxOpts = {
 			...(viewport === 'mobile' ? devices['iPhone 13'] : { viewport: { width: 1440, height: 900 } }),
@@ -535,13 +668,38 @@ async function main() {
 		};
 		const ctx = await browser.newContext(ctxOpts);
 		console.log(`── ${viewport} ──`);
-		await runPool(ctx, routes, viewport, (r) => {
+		const onResult = (r) => {
 			const e = r.findings.filter((f) => f.severity === 'error').length;
 			const w = r.findings.filter((f) => f.severity === 'warn').length;
 			const tag = e ? '🔴' : w ? '🟡' : '✓ ';
 			process.stdout.write(`  ${tag} ${r.route} (${e}e/${w}w)\n`);
 			allResults.push(r);
-		});
+		};
+		await runPool(ctx, routes, viewport, onResult);
+		// After the first pass, audit every crawl-discovered route the manifest
+		// missed. They join `routes` so later viewports cover them too.
+		if (firstViewport && !explicitRoutes.length) {
+			const linkSet = new Set(allResults.flatMap((r) => r.links || []));
+			const picked = pickDiscovered(linkSet, knownRoutes);
+			droppedDiscoveries = picked.dropped;
+			if (picked.audit.length) {
+				console.log(
+					`  ── crawl: ${picked.audit.length} linked route(s) missing from the manifest, auditing them too ──`,
+				);
+				for (const d of picked.audit) {
+					routes.push(d);
+					knownRoutes.add(d);
+					discovered.push(d);
+				}
+				await runPool(ctx, picked.audit, viewport, onResult);
+			}
+			if (picked.dropped.length) {
+				console.log(
+					`  ── crawl: ${picked.dropped.length} more discovered route(s) sampled out (dynamic families capped at 3) ──`,
+				);
+			}
+			firstViewport = false;
+		}
 		await ctx.close();
 	}
 	await browser.close();
@@ -550,6 +708,8 @@ async function main() {
 		baseUrl: BASE_URL,
 		authed,
 		viewports,
+		discovered,
+		droppedDiscoveries,
 	});
 
 	console.log('\n── Summary ──');
