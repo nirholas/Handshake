@@ -974,7 +974,13 @@ export default async function handler(req, res) {
 		// shield the DB from a thundering herd of pollers.
 		const isFirstGlobalPage = !cursor && !since && !agentId;
 		if (isFirstGlobalPage) {
-			const cacheKey = `pulse:feed:${network}:${type}`;
+			// `limit` is part of the cache key: handleFeed returns exactly `limit` rows
+			// (plus has_more / next_cursor computed from it), so two callers asking for
+			// different page sizes must NOT share a cached body. Omitting it let a
+			// limit=1 self-heal probe poison the shared feed page with a 1-row body.
+			// Clamp identically to handleFeed so the key matches the body it produced.
+			const limit = Math.min(MAX_LIMIT, Math.max(1, Number(url.searchParams.get('limit')) || 30));
+			const cacheKey = `pulse:feed:${network}:${type}:${limit}`;
 			let body = await cacheGet(cacheKey);
 			if (body === null) {
 				body = await handleFeed(req, res, { network, type, agentId, cursor, since });

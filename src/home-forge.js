@@ -32,6 +32,8 @@ import {
 	embedSize,
 } from './forge-embed-snippets.js';
 import { milestoneNote } from './forge-milestones.js';
+import { initForgeControls } from './home-forge-controls.js';
+import { generateForgePrompt } from './forge-prompt-gen.js';
 
 const POLL_INTERVAL_MS = 2500;
 // Max-tier texture bakes legitimately run past 10 minutes at full quality; the
@@ -68,6 +70,9 @@ const els = root && {
 	generate: root.querySelector('[data-hf-generate]'),
 	generateLabel: root.querySelector('[data-hf-generate-label]'),
 	chips: root.querySelector('[data-hf-chips]'),
+	surprise: root.querySelector('[data-hf-surprise]'),
+	enhance: root.querySelector('[data-hf-enhance]'),
+	laneLabel: root.querySelector('[data-hf-lane-label]'),
 	states: {
 		idle: root.querySelector('[data-hf-idle]'),
 		generating: root.querySelector('[data-hf-generating]'),
@@ -137,6 +142,13 @@ let busy = false;
 let pollAbort = false;
 let elapsedTimer = null;
 let lastPrompt = '';
+// The Options controls (tier/engine/aspect/BYOK + $THREE High gate). Initialized
+// in boot(); null on a page without the panel markup (the mini-forge then keeps
+// its original free-standard behavior). highBlocked mirrors the controls' High
+// lock so the Forge button reflects it.
+let controls = null;
+let highBlocked = false;
+let enhanceBusy = false;
 let modelViewerReady = null;
 let currentViewer = null; // the live <model-viewer> on stage
 let currentGlbUrl = ''; // what the toolbar acts on
@@ -201,9 +213,23 @@ function stopElapsed() {
 
 function setBusy(b) {
 	busy = b;
-	els.generate.disabled = b;
-	els.generateLabel.textContent = b ? 'Forging…' : 'Forge';
 	if (els.vary) els.vary.disabled = b;
+	if (els.enhance) els.enhance.disabled = b || enhanceBusy;
+	reflectGenerate();
+}
+
+// The Forge button is disabled while a job runs OR while platform High is selected
+// by a non-holder (highBlocked). The label reflects which: "Forging…", "Hold
+// $THREE for High", or "Forge". Called by setBusy() and the controls' gate change.
+function reflectGenerate() {
+	if (!els.generate) return;
+	els.generate.disabled = busy || highBlocked;
+	els.generate.classList.toggle('is-gated', highBlocked && !busy);
+	els.generateLabel.textContent = busy
+		? 'Forging…'
+		: highBlocked
+			? 'Hold $THREE for High'
+			: 'Forge';
 }
 
 function showError(message) {
@@ -333,26 +359,49 @@ function downscaleDataUrl(src, size) {
 
 // ── Pipeline ───────────────────────────────────────────────────────
 
-async function startJob(prompt) {
+// Build and POST a generation. `config` comes from the Options controls (tier,
+// engine/backend, aspect, path); with no controls it defaults to the free
+// standard lane. `headers` already carries the client id, any BYOK key, and the
+// $THREE tier pass (assembled by the controls). `payment` (a settled $THREE
+// pay-per-use proof) is attached for a non-holder's High generation.
+const DEFAULT_CFG = { tier: 'standard', path: 'image', backend: null, aspect_ratio: '1:1' };
+
+async function startJob(prompt, { config = DEFAULT_CFG, headers, payment } = {}) {
+	const body = {
+		prompt,
+		aspect_ratio: config.aspect_ratio || '1:1',
+		path: config.path || 'image',
+		tier: config.tier || 'standard',
+		// Granite art-director pass (fail-soft): same photoreal-biased prompt
+		// rewrite the full /forge page and every MCP tool already get.
+		director: true,
+	};
+	// A backend is sent ONLY when the visitor deliberately picked a lane in Options.
+	// With no backend (Auto), the server's health-aware router picks the best live
+	// lane — the mini-forge's original "never dead-end a visitor" behavior.
+	if (config.backend) body.backend = config.backend;
+	// Pay-per-use proof: a non-holder who paid $THREE for this High generation
+	// presents the settled payment so the server's gate is satisfied per use.
+	if (payment?.payment_id && payment?.ref_id) {
+		body.payment_id = payment.payment_id;
+		body.ref_id = payment.ref_id;
+	}
 	const res = await fetch('/api/forge', {
 		method: 'POST',
-		headers: { 'content-type': 'application/json', ...CLIENT_HEADERS },
-		// No backend field: an explicit backend disables the server's health-aware
-		// lane selection (see the header note), and the whole point here is letting
-		// the router route around a cold or unhealthy lane before submit.
-		body: JSON.stringify({
-			prompt,
-			aspect_ratio: '1:1',
-			path: 'image',
-			tier: 'standard',
-			// Granite art-director pass (fail-soft): same photoreal-biased prompt
-			// rewrite the full /forge page and every MCP tool already get.
-			director: true,
-		}),
+		headers: headers || { 'content-type': 'application/json', ...CLIENT_HEADERS },
+		body: JSON.stringify(body),
 	});
 	const data = await res.json().catch(() => ({}));
 	if (res.status === 503 || data.error === 'unconfigured') {
 		throw new Error('The generator is offline right now — try again in a bit.');
+	}
+	// High-tier $THREE gate reached the server despite the client guard (e.g. a
+	// keyboard submit). Recoverable: the controls' lock panel carries Get $THREE /
+	// pay-per-generation. Surface a clear, non-fatal message.
+	if (res.status === 402 && data.error === 'three_hold_required') {
+		throw new Error(
+			data.message || 'High quality is a $THREE holder feature — open Options to hold or pay per generation.',
+		);
 	}
 	if (res.status === 429 || data.error === 'rate_limited') {
 		const secs = Number(data.retry_after) > 0 ? Math.ceil(Number(data.retry_after)) : 10;
@@ -530,10 +579,29 @@ function showResult(glbUrl, prompt, { fromHistory = false, creationId = '' } = {
 	}
 }
 
-async function run(prompt) {
+async function run(prompt, { payment } = {}) {
 	if (busy) return;
 	closeEmbed();
 	lastPrompt = prompt;
+
+	// Resolve the Options config and clear the $THREE High gate BEFORE animating
+	// anything, so a blocked High submit opens the lock instead of flashing the
+	// pipeline. A settled pay-per-use proof bypasses the gate (it IS the
+	// clearance) and just assembles headers. With no controls, both paths fall
+	// through to the free standard defaults.
+	let config = DEFAULT_CFG;
+	let headers = { 'content-type': 'application/json', ...CLIENT_HEADERS };
+	if (controls) {
+		if (payment) {
+			headers = await controls.buildHeaders({ 'content-type': 'application/json' });
+		} else {
+			const gate = await controls.beforeSubmit({ 'content-type': 'application/json' });
+			if (!gate.ok) return; // High locked — the lock panel opened; nothing to animate
+			headers = gate.headers;
+		}
+		config = controls.getConfig();
+	}
+
 	pollAbort = false;
 	const seq = ++runSeq;
 	setBusy(true);
@@ -548,7 +616,7 @@ async function run(prompt) {
 	const viewerLoad = ensureModelViewer().catch((err) => err);
 
 	try {
-		const job = await startJob(prompt);
+		const job = await startJob(prompt, { config, headers, payment });
 		if (seq !== runSeq) return; // cancelled while the POST was in flight
 
 		if (job.preview_image_url) {
@@ -822,7 +890,98 @@ function wireEmbed() {
 	els.embedCopy.addEventListener('click', copyEmbedCode);
 }
 
+// Surprise me — drop a fresh, well-formed prompt into the bar and forge it. Uses
+// the same curated grammar (src/forge-prompt-gen.js) the full page's dice + the
+// "Surprise me" button run on, so the homepage rolls the exact same ideas.
+function surpriseMe() {
+	if (busy) return;
+	const prompt = generateForgePrompt();
+	els.prompt.value = prompt;
+	autoGrow();
+	run(prompt);
+}
+
+// Enhance — the art-director rewrite: POST the raw prompt to /api/forge-enhance
+// (Vertex Gemini → free LLM chain, fail-soft), which returns a richer single-
+// subject spec with per-part PBR materials. Free, no key. Non-destructive: the
+// field is only replaced when a materially different rewrite comes back.
+async function enhance() {
+	if (enhanceBusy || busy) return;
+	const raw = els.prompt.value.trim();
+	if (raw.length < 3) {
+		els.prompt.focus();
+		showToast('Describe the object in a few words first, then enhance it.');
+		return;
+	}
+	enhanceBusy = true;
+	if (els.enhance) {
+		els.enhance.disabled = true;
+		els.enhance.classList.add('is-working');
+	}
+	els.prompt.setAttribute('aria-busy', 'true');
+	try {
+		const res = await fetch('/api/forge-enhance', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json', ...CLIENT_HEADERS },
+			body: JSON.stringify({ prompt: raw }),
+		});
+		if (res.status === 429) {
+			const data = await res.json().catch(() => ({}));
+			const secs = Number(data.retry_after);
+			showToast(secs > 0 ? `Easy — try enhancing again in ${secs}s.` : 'Slow down a moment, then try again.');
+			return;
+		}
+		if (res.status === 503) {
+			showToast('The enhancer is offline right now — your prompt is unchanged.');
+			return;
+		}
+		if (!res.ok) {
+			showToast("Couldn't enhance that one. Tweak the wording and retry.");
+			return;
+		}
+		const data = await res.json().catch(() => ({}));
+		const next = typeof data.prompt === 'string' ? data.prompt.trim() : '';
+		if (!next || next.toLowerCase() === raw.toLowerCase()) {
+			showToast('That prompt is already in good shape.');
+			return;
+		}
+		els.prompt.value = next;
+		autoGrow();
+		showToast('Rewritten for sharper geometry. Edit freely, or just Forge.');
+	} catch {
+		showToast('Network hiccup — your prompt is unchanged. Try again.');
+	} finally {
+		enhanceBusy = false;
+		if (els.enhance) {
+			els.enhance.disabled = busy;
+			els.enhance.classList.remove('is-working');
+		}
+		els.prompt.removeAttribute('aria-busy');
+	}
+}
+
 function boot() {
+	// Bring up the Options controls (tier/engine/aspect/BYOK + $THREE High gate).
+	// The chamber owns generation; the controls only shape the request and gate
+	// High. onLane keeps the HUD honest ("high · NVIDIA"); onRerun re-fires the
+	// current prompt with a settled pay-per-use proof; onBlockedChange reflects the
+	// High lock onto the Forge button.
+	controls = initForgeControls({
+		root,
+		clientHeaders: CLIENT_HEADERS,
+		onLane: (label) => {
+			if (els.laneLabel) els.laneLabel.textContent = label;
+		},
+		onRerun: (payment) => {
+			const p = (els.prompt.value.trim() || lastPrompt || '').trim();
+			if (p) run(p, { payment });
+		},
+		onBlockedChange: (blocked) => {
+			highBlocked = blocked;
+			reflectGenerate();
+		},
+	});
+
 	els.form.addEventListener('submit', (e) => {
 		e.preventDefault();
 		const prompt = els.prompt.value.trim();
@@ -874,6 +1033,16 @@ function boot() {
 		els.vary.addEventListener('click', () => {
 			if (lastPrompt && !busy) run(lastPrompt);
 		});
+
+	if (els.surprise) els.surprise.addEventListener('click', surpriseMe);
+	if (els.enhance) els.enhance.addEventListener('click', enhance);
+	// ⌘/Ctrl+E enhances — same shortcut as the full page.
+	els.prompt.addEventListener('keydown', (e) => {
+		if ((e.metaKey || e.ctrlKey) && (e.key === 'e' || e.key === 'E')) {
+			e.preventDefault();
+			enhance();
+		}
+	});
 
 	wireEmbed();
 	wireHeroBar();

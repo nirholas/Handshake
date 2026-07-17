@@ -157,9 +157,10 @@ def precompute(glb_path: Path = TEMPLATE_GLB, out_path: Path = OUTPUT_JSON) -> N
     canon_norm, _, _ = _normalise(canonical)
 
     face_mask = _filter_face_vertices(positions)
+    face_indices = np.where(face_mask)[0]          # subset idx → full head vertex idx
     face_positions = positions[face_mask]
     face_uvs = uvs[face_mask]
-    face_norm, _, _ = _normalise(face_positions)
+    face_norm, _, head_face_scale = _normalise(face_positions)
 
     # KD-tree on normalised Wolf3D face vertices.
     tree = cKDTree(face_norm)
@@ -169,14 +170,16 @@ def precompute(glb_path: Path = TEMPLATE_GLB, out_path: Path = OUTPUT_JSON) -> N
 
     print(f"  Mean NN distance: {distances.mean():.4f}  Max: {distances.max():.4f}")
 
-    # Convert UV coords → pixel coords.
-    # glTF UV convention: (0,0) = top-left, (1,1) = bottom-right.
+    # Convert UV coords → pixel coords, and record the FULL-mesh vertex index each
+    # landmark maps to (nn_indices are into the filtered face subset).
     landmarks = []
+    landmark_vtx = []
     for i, nn_idx in enumerate(nn_indices):
         u, v = float(face_uvs[nn_idx, 0]), float(face_uvs[nn_idx, 1])
         px = u * tex_w
         py = v * tex_h
         landmarks.append({"u": u, "v": v, "px": px, "py": py})
+        landmark_vtx.append(int(face_indices[nn_idx]))
 
     result = {
         "texture_width": tex_w,
@@ -184,6 +187,15 @@ def precompute(glb_path: Path = TEMPLATE_GLB, out_path: Path = OUTPUT_JSON) -> N
         "landmarks": landmarks,
         "face_oval_indices": FACE_OVAL_INDICES,
         "skin_sample_indices": SKIN_SAMPLE_INDICES,
+        # ── geometry morph (Phase 2) ────────────────────────────────────────────
+        # canonical_norm: neutral MediaPipe face in unit-cube space (the reference
+        #   the person's landmarks are aligned against).
+        # landmark_vtx: full-mesh head vertex each landmark drives.
+        # head_face_scale: metres-per-normalised-unit, to carry canonical-space
+        #   identity displacements into head/metre space.
+        "canonical_norm": [[round(float(c), 6) for c in v] for v in canon_norm],
+        "landmark_vtx": landmark_vtx,
+        "head_face_scale": round(float(head_face_scale), 8),
     }
 
     out_path.write_text(json.dumps(result, indent=2))

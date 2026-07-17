@@ -26,7 +26,10 @@ const $ = (id) => document.getElementById(id);
 
 // Map of data-filter values → the feed type string the component understands.
 const FILTER_TO_TYPE = { all: 'all', tips: 'tips', launches: 'launches', trades: 'trades', payments: 'payments', purchases: 'purchases' };
-const FILTER_LABEL = { tips: 'Tips', launches: 'Launches', trades: 'Trades', payments: 'Payments', purchases: 'Marketplace' };
+// Label the active-filter chip to match the feed's own tab (which highlights
+// "Purchases") and the 'purchase' beat kind, so clicking the Marketplace stat card
+// doesn't show "Showing: Marketplace" while the Purchases tab is lit.
+const FILTER_LABEL = { tips: 'Tips', launches: 'Launches', trades: 'Trades', payments: 'Payments', purchases: 'Purchases' };
 
 function setFeedFilter(filter) {
 	const f = FILTER_TO_TYPE[filter] || 'all';

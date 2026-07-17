@@ -3784,7 +3784,17 @@
 		"hero_forge_placeholder": "describe anything: a brass compass, weathered…",
 		"hero_forge_note": "Free, no sign-up, a real textured model in about a minute. <a href=\"/forge\">Open the full Forge →</a>",
 		"feed_empty_top": "No trending models yet this week. Check back after a few votes, or browse Fresh.",
-		"feed_empty_fresh": "Nothing here yet. Be the first to forge one."
+		"feed_empty_fresh": "Nothing here yet. Be the first to forge one.",
+		"surprise": "Surprise",
+		"surprise_me_arialabel": "Surprise me with a prompt",
+		"surprise_title": "Roll a fresh prompt",
+		"quality": "Quality",
+		"engine": "Engine",
+		"frame": "Frame",
+		"provider_key": "Provider key",
+		"enhance_the_prompt_arialabel": "Enhance the prompt",
+		"enhance_title": "Enhance the prompt (art-director rewrite)",
+		"options": "Options"
 	},
 	"ibm_hello": {
 		"01forge": "<span class=\"n\">01</span>Forge",

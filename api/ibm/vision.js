@@ -152,13 +152,20 @@ async function handleSubjects(req, res) {
 
 async function handleVision(req, res) {
 	const cfg = watsonxConfig();
-	if (!cfg.configured) {
+	// Granite Vision leads on watsonx, but a vision-capable OpenRouter model is a
+	// full backstop (watsonxChatComplete falls over to it). So the endpoint is
+	// available when EITHER watsonx is configured OR an OpenRouter key is set —
+	// only both-absent is a true 503.
+	const openrouterAvailable = Boolean(
+		process.env.OPENROUTER_API_KEY?.trim() || (process.env.OPENROUTER_FALLBACK_KEYS || '').trim(),
+	);
+	if (!cfg.configured && !openrouterAvailable) {
 		return error(
 			res,
 			503,
 			'watsonx_unavailable',
 			'IBM Granite Vision runs on watsonx.ai. Set WATSONX_API_KEY and WATSONX_PROJECT_ID ' +
-				'(or WATSONX_SPACE_ID) to let Granite see your avatar.',
+				'(or WATSONX_SPACE_ID), or an OPENROUTER_API_KEY backstop, to read an image.',
 		);
 	}
 

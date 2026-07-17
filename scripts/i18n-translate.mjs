@@ -315,12 +315,12 @@ async function callVertex(prompt) {
 	return content;
 }
 
-async function callOpenAICompat(prompt) {
-	const spec = OPENAI_COMPAT[cfg.provider];
+async function callOpenAICompat(prompt, providerName = cfg.provider, modelOverride = null) {
+	const spec = OPENAI_COMPAT[providerName];
 	const key = process.env[spec.envKey];
 	if (!key) throw new Error(`${spec.envKey} not set`);
 	const body = {
-		model: modelName(),
+		model: modelOverride || modelName(),
 		temperature: cfg.temperature ?? 0.2,
 		top_p: cfg.topP ?? 0.9,
 		messages: [{ role: 'user', content: prompt }],
@@ -356,6 +356,23 @@ function backend() {
 	);
 }
 
+// Ordered backend chain: the configured provider first, then OpenRouter as the
+// universal failover so a mid-batch outage of the primary lane (a Vertex token
+// hiccup, a free-tier 429 storm) doesn't degrade a whole run to English
+// fallback. OpenRouter uses a FUNDED model (no :free) so the failover reliably
+// serves — a free-tier model would 402/429 exactly when it is needed. Set
+// OPENROUTER_I18N_MODEL to override. Skipped when the primary IS OpenRouter or
+// no OpenRouter key is configured.
+function backendChain() {
+	const chain = [{ name: cfg.provider, call: (p) => backend()(p) }];
+	const orKey = process.env.OPENROUTER_API_KEY?.trim();
+	if (orKey && cfg.provider !== 'openrouter') {
+		const orModel = process.env.OPENROUTER_I18N_MODEL?.trim() || 'meta-llama/llama-3.3-70b-instruct';
+		chain.push({ name: `openrouter(${orModel})`, call: (p) => callOpenAICompat(p, 'openrouter', orModel) });
+	}
+	return chain;
+}
+
 // Parse the model's reply into an object, tolerating the usual LLM JSON noise:
 // code fences (stripped upstream), leading/trailing prose, and a trailing comma.
 // Falls back to the largest {...} span when a raw parse fails, so one stray
@@ -380,8 +397,9 @@ function parseModelJSON(raw) {
 	}
 }
 
-async function translateChunk(langName, payload, attempt = 0) {
-	const call = backend();
+// Try one backend with the existing retry/backoff. Returns the parsed object or
+// throws the last error after exhausting retries for THIS backend.
+async function callBackendWithRetry(call, langName, payload, attempt = 0) {
 	try {
 		const raw = await call(buildPrompt(langName, payload));
 		const parsed = parseModelJSON(raw);
@@ -397,10 +415,30 @@ async function translateChunk(langName, payload, attempt = 0) {
 					? Math.max((err.retryAfter || 0) * 1000, 2000 * (attempt + 1))
 					: 400 * (attempt + 1);
 			await new Promise((r) => setTimeout(r, wait));
-			return translateChunk(langName, payload, attempt + 1);
+			return callBackendWithRetry(call, langName, payload, attempt + 1);
 		}
 		throw err;
 	}
+}
+
+// Translate one chunk, failing over across the backend chain (primary →
+// OpenRouter). Each backend gets its full retry budget before the next is tried;
+// only when every backend is exhausted does the error propagate (to the caller's
+// halve-and-retry / English-fallback logic).
+async function translateChunk(langName, payload) {
+	const chain = backendChain();
+	let lastErr;
+	for (const [i, b] of chain.entries()) {
+		try {
+			return await callBackendWithRetry(b.call, langName, payload);
+		} catch (err) {
+			lastErr = err;
+			if (i < chain.length - 1) {
+				console.warn(`  ↻ ${b.name} failed (${err.message?.slice(0, 80)}); failing over to ${chain[i + 1].name}`);
+			}
+		}
+	}
+	throw lastErr;
 }
 
 // Bounded-concurrency map.
@@ -461,7 +499,7 @@ async function translateLocale(code) {
 		}
 		let out;
 		try {
-			out = await translateChunk(langName, payload, 0);
+			out = await translateChunk(langName, payload);
 		} catch (err) {
 			if (keys.length > 1) {
 				const mid = Math.ceil(keys.length / 2);

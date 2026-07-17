@@ -23,12 +23,13 @@ export default wrap(async (req, res) => {
 	if (!rl.success) return rateLimited(res, rl);
 
 	try {
-		const [agentsRow, onchainRow, widgetsRow, chainsRow, attRow] = await Promise.all([
+		const [agentsRow, onchainRow, widgetsRow, chainsRow, attRow, forgeRow] = await Promise.all([
 			sql`SELECT COUNT(*)::int AS n FROM agent_identities WHERE deleted_at IS NULL`,
 			sql`SELECT COUNT(*)::int AS n FROM erc8004_agents_index WHERE active = true`,
 			sql`SELECT COUNT(*)::int AS n FROM widgets WHERE deleted_at IS NULL`,
 			sql`SELECT COUNT(DISTINCT chain_id)::int AS n FROM erc8004_agents_index WHERE active = true`,
 			sql`SELECT COUNT(*)::int AS n FROM solana_attestations`,
+			sql`SELECT COUNT(*)::int AS n FROM forge_creations WHERE status = 'done' AND glb_url IS NOT NULL AND (outcome IS NULL OR outcome != 'rejected')`,
 		]);
 
 		const stats = {
@@ -38,6 +39,7 @@ export default wrap(async (req, res) => {
 			widgets: widgetsRow[0]?.n ?? 0,
 			chains: chainsRow[0]?.n ?? 0,
 			attestations: attRow[0]?.n ?? 0,
+			forge_models: forgeRow[0]?.n ?? 0,
 			updated_at: new Date().toISOString(),
 		};
 

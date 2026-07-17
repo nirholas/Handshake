@@ -45,6 +45,19 @@ const FILTERS = [
 	{ id: 'purchases', label: 'Purchases' },
 ];
 
+// When a single filter is empty on the global mainnet feed, invite the action that
+// actually creates that beat instead of a dead end. Every link resolves to a live
+// surface. The self-heal probe still layers a one-click "show all activity" escape
+// on top of this, so the user gets both: how to create this kind, and where the
+// platform is busy right now.
+const FILTER_EMPTY_CTA = {
+	tips: 'No tips in this window. <a href="/agents">Tip an agent</a> to start the flow.',
+	launches: 'No launches in this window. <a href="/launch">Launch a coin</a> and be the first beat.',
+	trades: 'No trades in this window. <a href="/oracle">Arm an agent</a> to trade live.',
+	payments: 'No agent-to-agent payments in this window. <a href="/x402">Pay for a service</a> over x402.',
+	purchases: 'No skill purchases yet. <a href="/marketplace">Browse the marketplace</a>. Every paid buy lands here live.',
+};
+
 let _stylesInjected = false;
 function injectStyles() {
 	if (_stylesInjected || typeof document === 'undefined') return;
@@ -563,7 +576,9 @@ export function mountMoneyPulse({
 			|| (agentId
 				? 'This wallet has no public activity yet.'
 				: filtered
-					? `No ${typeLabel} on ${onDevnet ? 'devnet' : 'three.ws'} in this window.`
+					? (!onDevnet && FILTER_EMPTY_CTA[state.type]
+						? FILTER_EMPTY_CTA[state.type]
+						: `No ${typeLabel} on ${onDevnet ? 'devnet' : 'three.ws'} in this window.`)
 					: onDevnet
 						? 'Devnet is a test network — most live money moves on mainnet. Switch to see the real feed.'
 						: 'All quiet on three.ws right now. <a href="/agents">Tip an agent</a> and be the first beat.');

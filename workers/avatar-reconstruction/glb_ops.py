@@ -176,6 +176,73 @@ def set_material_base_color(
     return True
 
 
+# ── geometry (stride-aware) ─────────────────────────────────────────────────────
+#
+# The Wolf3D_Head buffer is INTERLEAVED: POSITION / NORMAL / TEXCOORD_0 /
+# JOINTS_0 / WEIGHTS_0 share one bufferView with a 52-byte stride, so each
+# attribute's values sit every 52 bytes, not contiguously. A stride-unaware read
+# (the previous implementation) returns jumbled bytes — POSITION[1] would land on
+# NORMAL[0], etc. Every accessor read/write below honours bufferView.byteStride.
+
+_COMPONENT_DTYPE = {
+    5120: np.int8, 5121: np.uint8, 5122: np.int16,
+    5123: np.uint16, 5125: np.uint32, 5126: np.float32,
+}
+_TYPE_NCOMP = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4, "MAT2": 4, "MAT3": 9, "MAT4": 16}
+
+
+def _read_accessor(glb: pygltflib.GLTF2, blob: bytes, acc_idx: int) -> np.ndarray:
+    """Stride-aware read of accessor acc_idx into an (count, ncomp) array."""
+    acc = glb.accessors[acc_idx]
+    bv = glb.bufferViews[acc.bufferView]
+    dtype = np.dtype(_COMPONENT_DTYPE[acc.componentType])
+    ncomp = _TYPE_NCOMP[acc.type]
+    item = dtype.itemsize * ncomp
+    stride = bv.byteStride or item
+    base = (bv.byteOffset or 0) + (acc.byteOffset or 0)
+    if stride == item:
+        # Tightly packed — a single vectorised read is correct and fast.
+        flat = np.frombuffer(blob[base : base + acc.count * item], dtype=dtype)
+        out = flat.reshape(acc.count, ncomp)
+    else:
+        # Interleaved — gather one vertex at a time honouring the stride.
+        out = np.empty((acc.count, ncomp), dtype=dtype)
+        for i in range(acc.count):
+            off = base + i * stride
+            out[i] = np.frombuffer(blob[off : off + item], dtype=dtype)
+    return out if ncomp > 1 else out.reshape(-1)
+
+
+def _write_accessor(glb: pygltflib.GLTF2, blob: bytearray, acc_idx: int, data: np.ndarray) -> None:
+    """
+    Stride-aware in-place overwrite of accessor acc_idx. `data` must have the same
+    count and component layout; only the value bytes are replaced, so an
+    interleaved buffer's other attributes (normals, joints, weights) are
+    untouched. Caller is responsible for updating accessor.min/max when relevant.
+    """
+    acc = glb.accessors[acc_idx]
+    bv = glb.bufferViews[acc.bufferView]
+    dtype = np.dtype(_COMPONENT_DTYPE[acc.componentType])
+    ncomp = _TYPE_NCOMP[acc.type]
+    item = dtype.itemsize * ncomp
+    stride = bv.byteStride or item
+    base = (bv.byteOffset or 0) + (acc.byteOffset or 0)
+    d = np.ascontiguousarray(data.reshape(acc.count, ncomp), dtype=dtype)
+    if stride == item:
+        blob[base : base + acc.count * item] = d.tobytes()
+    else:
+        for i in range(acc.count):
+            off = base + i * stride
+            blob[off : off + item] = d[i].tobytes()
+
+
+def _find_head_prim(glb: pygltflib.GLTF2):
+    mesh = next((m for m in glb.meshes if m.name == "Wolf3D_Head"), None)
+    if mesh is None:
+        raise ValueError("Wolf3D_Head mesh not found in GLB")
+    return mesh.primitives[0]
+
+
 def get_head_mesh_data(glb: pygltflib.GLTF2) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Return (positions, uvs, face_indices) for the Wolf3D_Head mesh.
@@ -183,34 +250,59 @@ def get_head_mesh_data(glb: pygltflib.GLTF2) -> tuple[np.ndarray, np.ndarray, np
     uvs:       (N, 2) float32  — TEXCOORD_0
     faces:     (F, 3) int32
     """
-    mesh = next((m for m in glb.meshes if m.name == "Wolf3D_Head"), None)
-    if mesh is None:
-        raise ValueError("Wolf3D_Head mesh not found in GLB")
-
-    prim = mesh.primitives[0]
+    prim = _find_head_prim(glb)
     blob = glb.binary_blob()
-
-    def read_accessor(acc_idx: int) -> np.ndarray:
-        acc = glb.accessors[acc_idx]
-        bv = glb.bufferViews[acc.bufferView]
-        start = bv.byteOffset + (acc.byteOffset or 0)
-        type_map = {
-            "SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4,
-            "MAT2": 4, "MAT3": 9, "MAT4": 16,
-        }
-        n_components = type_map[acc.type]
-        component_map = {
-            5120: np.int8, 5121: np.uint8, 5122: np.int16,
-            5123: np.uint16, 5125: np.uint32, 5126: np.float32,
-        }
-        dtype = component_map[acc.componentType]
-        n_items = acc.count * n_components
-        data = np.frombuffer(blob[start : start + n_items * np.dtype(dtype).itemsize], dtype=dtype)
-        return data.reshape(acc.count, n_components) if n_components > 1 else data
-
-    positions = read_accessor(prim.attributes.POSITION).astype(np.float32)
-    uvs = read_accessor(prim.attributes.TEXCOORD_0).astype(np.float32)
-    indices_raw = read_accessor(prim.indices)
-    faces = indices_raw.reshape(-1, 3).astype(np.int32)
-
+    positions = _read_accessor(glb, blob, prim.attributes.POSITION).astype(np.float32)
+    uvs = _read_accessor(glb, blob, prim.attributes.TEXCOORD_0).astype(np.float32)
+    faces = _read_accessor(glb, blob, prim.indices).reshape(-1, 3).astype(np.int32)
     return positions, uvs, faces
+
+
+def recompute_vertex_normals(positions: np.ndarray, faces: np.ndarray) -> np.ndarray:
+    """Area-weighted vertex normals for a triangle mesh — (N, 3) float32, unit length."""
+    normals = np.zeros_like(positions, dtype=np.float32)
+    v0, v1, v2 = positions[faces[:, 0]], positions[faces[:, 1]], positions[faces[:, 2]]
+    face_normals = np.cross(v1 - v0, v2 - v0)  # magnitude ∝ triangle area
+    for k in range(3):
+        np.add.at(normals, faces[:, k], face_normals)
+    lengths = np.linalg.norm(normals, axis=1, keepdims=True)
+    lengths[lengths == 0] = 1.0
+    return (normals / lengths).astype(np.float32)
+
+
+def set_head_geometry(
+    glb: pygltflib.GLTF2,
+    positions: np.ndarray,
+    faces: np.ndarray | None = None,
+    recompute_normals: bool = True,
+) -> None:
+    """
+    Overwrite the Wolf3D_Head base geometry with morphed `positions` (N, 3).
+
+    Vertex count and order are unchanged, so JOINTS_0/WEIGHTS_0 skinning and all
+    morph targets (the 52 ARKit blendshapes + visemes, stored as deltas relative
+    to the base) remain valid and attached. Updates the POSITION accessor min/max
+    and, unless disabled, recomputes and writes vertex normals. In-place on the
+    binary blob — no bufferView offsets shift because the byte size is identical.
+    """
+    prim = _find_head_prim(glb)
+    pos = np.ascontiguousarray(positions, dtype=np.float32)
+    acc = glb.accessors[prim.attributes.POSITION]
+    if pos.shape[0] != acc.count:
+        raise ValueError(
+            f"position count {pos.shape[0]} != head vertex count {acc.count}; "
+            "fixed-topology morph requires an unchanged vertex count"
+        )
+
+    blob = bytearray(glb.binary_blob())
+    _write_accessor(glb, blob, prim.attributes.POSITION, pos)
+    acc.min = pos.min(axis=0).tolist()
+    acc.max = pos.max(axis=0).tolist()
+
+    if recompute_normals and prim.attributes.NORMAL is not None:
+        if faces is None:
+            faces = _read_accessor(glb, blob, prim.indices).reshape(-1, 3).astype(np.int64)
+        normals = recompute_vertex_normals(pos, faces.astype(np.int64))
+        _write_accessor(glb, blob, prim.attributes.NORMAL, normals)
+
+    glb.set_binary_blob(bytes(blob))

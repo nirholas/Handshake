@@ -2523,6 +2523,26 @@
 		}
 		.har-nav-btn:hover { color: #fff; background: rgba(255,255,255,.08); }
 		.har-prompt { font-size: 11px; color: rgba(255,255,255,.5); font-family: var(--font-mono); max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		.har-cat {
+			position: absolute; top: 14px; left: 14px; z-index: 2;
+			font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+			color: rgba(255,255,255,.7); background: rgba(0,0,0,.5); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+			border: 1px solid rgba(255,255,255,.1); border-radius: 999px; padding: 4px 9px;
+			opacity: 0; transition: opacity .3s ease;
+		}
+		.har-cat[data-shown="1"] { opacity: 1; }
+		.har-count { font-size: 13px; color: var(--text-3); margin: 10px 0 0; min-height: 18px; opacity: 0; transition: opacity .4s ease; }
+		.har-count[data-shown="1"] { opacity: 1; }
+		.har-count b { color: var(--text-2); font-variant-numeric: tabular-nums; font-weight: 600; }
+		.har-count .har-dot-live { display: inline-block; width: 6px; height: 6px; border-radius: 999px; background: #34d399; margin-right: 6px; vertical-align: middle; box-shadow: 0 0 0 0 rgba(52,211,153,.5); animation: har-pulse 2.4s ease-out infinite; }
+		@keyframes har-pulse { 0% { box-shadow: 0 0 0 0 rgba(52,211,153,.5); } 70% { box-shadow: 0 0 0 6px rgba(52,211,153,0); } 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); } }
+		@media (prefers-reduced-motion: reduce) { .har-count .har-dot-live { animation: none; } }
+		.har-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 24px; }
+		.har-empty p { color: var(--text-3); font-size: 14px; margin: 0; max-width: 240px; line-height: 1.5; }
+		.har-empty a { display: inline-flex; align-items: center; gap: 6px; background: #fff; color: #000; font-weight: 600; font-size: 13px; padding: 9px 16px; border-radius: 999px; text-decoration: none; transition: transform .15s, box-shadow .15s; }
+		.har-empty a:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(255,255,255,.14); }
+		#home-ar .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+		.har-viewer-wrap:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
 		.har-dots { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; z-index: 2; }
 		.har-dot { width: 6px; height: 6px; border-radius: 999px; background: rgba(255,255,255,.25); border: none; padding: 0; cursor: pointer; transition: background .2s, transform .2s; }
 		.har-dot:hover { background: rgba(255,255,255,.5); }
@@ -2732,7 +2752,7 @@
 			<div class="hf-telemetry" aria-live="polite">
 				<span data-hf-tel-state data-i18n="home.standby">standby</span>
 				<span class="hf-elapsed" data-hf-elapsed></span>
-				<span data-i18n="home.standard_free_lane">standard &middot; free lane</span>
+				<span data-hf-lane-label data-i18n="home.standard_free_lane">standard &middot; free lane</span>
 			</div>
 
 			<!-- Session history — real captured frames of models you forged here,
@@ -2843,19 +2863,56 @@
 
 			<form class="hf-dock" data-hf-form autocomplete="off">
 				<div class="hf-chips" data-hf-chips role="group" aria-label="Example prompts">
+					<button type="button" class="hf-chip hf-chip--surprise" data-hf-surprise title="Roll a fresh prompt" aria-label="Surprise me with a prompt" data-i18n-attr="aria-label:home.surprise_me_arialabel;title:home.surprise_title"><span class="hf-chip-ico" aria-hidden="true">&#9860;</span><span data-i18n="home.surprise">Surprise</span></button>
 					<button type="button" class="hf-chip" data-prompt="a low-poly red fox, sitting" data-i18n="home.low_poly_fox">low-poly fox</button>
 					<button type="button" class="hf-chip" data-prompt="a sci-fi combat helmet, brushed metal" data-i18n="home.sci_fi_helmet">sci-fi helmet</button>
 					<button type="button" class="hf-chip" data-prompt="a potted monstera plant" data-i18n="home.monstera_plant">monstera plant</button>
 					<button type="button" class="hf-chip" data-prompt="a vintage film camera" data-i18n="home.film_camera">film camera</button>
 				</div>
+
+				<!-- Options disclosure — the full-Forge brains (quality tier, engine lane,
+				     aspect, BYOK, $THREE High gate), kept collapsed so the default chamber
+				     stays the minimal bar. Buttons inside are built at runtime from
+				     /api/forge?catalog + ?health by src/home-forge-controls.js. -->
+				<div class="hf-panel" id="hf-panel" data-hf-panel hidden>
+					<div class="hf-panel-row">
+						<span class="hf-panel-label" data-i18n="home.quality">Quality</span>
+						<div class="hf-seg" data-hf-tier role="group" aria-label="Quality tier"></div>
+					</div>
+					<div class="hf-panel-row">
+						<span class="hf-panel-label" data-i18n="home.engine">Engine</span>
+						<div class="hf-engine" data-hf-engine role="group" aria-label="Generation engine"></div>
+					</div>
+					<div class="hf-panel-row" data-hf-aspect-row>
+						<span class="hf-panel-label" data-i18n="home.frame">Frame</span>
+						<div class="hf-seg" data-hf-aspect role="group" aria-label="Aspect ratio"></div>
+					</div>
+					<div class="hf-byok" data-hf-byok hidden>
+						<label class="hf-byok-label" for="hf-byok-key"><span data-hf-byok-label data-i18n="home.provider_key">Provider key</span></label>
+						<input id="hf-byok-key" class="hf-byok-key" data-hf-byok-key type="password" autocomplete="off" spellcheck="false" placeholder="Your API key (kept in this browser)" />
+						<p class="hf-byok-hint" data-hf-byok-hint></p>
+					</div>
+					<div class="hf-lock" data-hf-lock hidden></div>
+					<p class="hf-perk" data-hf-perk hidden></p>
+				</div>
+
 				<div class="hf-bar">
 					<span class="hf-bar-glyph" aria-hidden="true">&#9670;</span>
 					<label class="sr-only" for="hf-prompt-input" data-i18n="home.describe_the_object_to_generate">Describe the object to generate</label>
 					<textarea id="hf-prompt-input" class="hf-prompt" data-hf-prompt rows="1" maxlength="1000" placeholder="describe an object&hellip;"></textarea>
+					<button type="button" class="hf-icon-mini" data-hf-enhance title="Enhance the prompt (art-director rewrite)" aria-label="Enhance the prompt" data-i18n-attr="aria-label:home.enhance_the_prompt_arialabel;title:home.enhance_title">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 1.9 4.6L18.5 9.5 13.9 11.4 12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M19 15l.6 1.6 1.6.6-1.6.6L19 20l-.6-1.6-1.6-.6 1.6-.6z"/></svg>
+					</button>
 					<span class="hf-kbd" aria-hidden="true">&#8984;&#9166;</span>
 					<button class="hf-forge-btn" data-hf-generate type="submit" data-i18n-html="home.forge_2"><span data-hf-generate-label>Forge</span></button>
 				</div>
-				<p class="hf-dock-note" data-i18n-html="home.free_no_sign_up_lands_in_your">Free &middot; no sign-up &middot; lands in your full Forge gallery on this device &middot; <a href="/forge">open the full Forge &rarr;</a></p>
+				<div class="hf-dock-meta">
+					<button type="button" class="hf-opts-toggle" data-hf-opts aria-expanded="false" aria-controls="hf-panel">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/><circle cx="9" cy="6" r="2" fill="var(--bg,#000)"/><circle cx="15" cy="12" r="2" fill="var(--bg,#000)"/><circle cx="9" cy="18" r="2" fill="var(--bg,#000)"/></svg>
+						<span data-i18n="home.options">Options</span>
+					</button>
+					<p class="hf-dock-note" data-i18n-html="home.free_no_sign_up_lands_in_your">Free &middot; no sign-up &middot; lands in your full Forge gallery on this device &middot; <a href="/forge">open the full Forge &rarr;</a></p>
+				</div>
 			</form>
 		</div>
 	</div>
@@ -4306,10 +4363,108 @@
 	#home-forge .hf-forge-btn:active { transform: translateY(1px); }
 	#home-forge .hf-forge-btn:focus-visible { outline: 2px solid #8b5cf6; outline-offset: 2px; }
 	#home-forge .hf-forge-btn[disabled] { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+	#home-forge .hf-dock-meta { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
 	#home-forge .hf-dock-note { font-size: 11px; font-family: var(--font-mono); letter-spacing: 0.04em; color: var(--text-3); margin: 0; text-align: center; }
 	#home-forge .hf-dock-note a { color: var(--text-2); text-decoration: none; border-bottom: 1px solid var(--hairline-strong); }
 	#home-forge .hf-dock-note a:hover { color: var(--text); }
 	#home-forge .hf-dock-note a:focus-visible { outline: 2px solid #8b5cf6; outline-offset: 2px; }
+
+	/* ── Forge controls: Surprise chip, Enhance button, Options panel ──────
+	   The full-Forge brains layered onto the chamber. Kept visually quiet so
+	   the default (collapsed) chamber still reads as the minimal bar. */
+	#home-forge .hf-chip--surprise { color: var(--text); border-color: var(--hairline-strong); background: rgba(139, 92, 246, 0.08); }
+	#home-forge .hf-chip--surprise:hover { background: rgba(139, 92, 246, 0.16); border-color: rgba(139, 92, 246, 0.5); }
+	#home-forge .hf-chip .hf-chip-ico { margin-right: 5px; opacity: 0.85; }
+
+	/* Enhance — small icon button inside the bar, left of the Forge button. */
+	#home-forge .hf-icon-mini {
+		flex: none; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center;
+		border-radius: 8px; border: 1px solid var(--hairline-strong); background: rgba(14, 14, 18, 0.5);
+		color: var(--text-3); cursor: pointer; transition: color .15s ease, border-color .15s ease, background .15s ease, transform .15s ease;
+	}
+	#home-forge .hf-icon-mini svg { width: 16px; height: 16px; }
+	#home-forge .hf-icon-mini:hover { color: #c4b5fd; border-color: rgba(139, 92, 246, 0.5); background: rgba(139, 92, 246, 0.1); transform: translateY(-1px); }
+	#home-forge .hf-icon-mini:active { transform: translateY(0); }
+	#home-forge .hf-icon-mini:focus-visible { outline: 2px solid #8b5cf6; outline-offset: 2px; }
+	#home-forge .hf-icon-mini[disabled] { opacity: 0.5; cursor: not-allowed; transform: none; }
+	#home-forge .hf-icon-mini.is-working { color: #c4b5fd; border-color: rgba(139, 92, 246, 0.5); }
+	#home-forge .hf-icon-mini.is-working svg { animation: hf-spin 0.9s linear infinite; }
+	@keyframes hf-spin { to { transform: rotate(360deg); } }
+
+	/* Options toggle. */
+	#home-forge .hf-opts-toggle {
+		display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 11px;
+		letter-spacing: 0.04em; padding: 5px 11px; border-radius: 999px; cursor: pointer;
+		border: 1px solid var(--hairline-strong); background: rgba(14, 14, 18, 0.5); color: var(--text-3);
+		transition: color .15s ease, border-color .15s ease, background .15s ease;
+	}
+	#home-forge .hf-opts-toggle svg { width: 14px; height: 14px; }
+	#home-forge .hf-opts-toggle:hover { color: var(--text); border-color: var(--hairline-strong); }
+	#home-forge .hf-opts-toggle.is-open { color: var(--text); border-color: rgba(139, 92, 246, 0.5); background: rgba(139, 92, 246, 0.1); }
+	#home-forge .hf-opts-toggle:focus-visible { outline: 2px solid #8b5cf6; outline-offset: 2px; }
+
+	/* Options panel. */
+	#home-forge .hf-panel {
+		width: 100%; max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px;
+		padding: 15px 16px; border-radius: 16px; border: 1px solid var(--hairline);
+		background: linear-gradient(180deg, rgba(16, 16, 22, 0.86), rgba(10, 10, 14, 0.86));
+		backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+		max-height: 340px; overflow-y: auto; animation: hf-panel-in .24s cubic-bezier(.22, 1, .36, 1);
+	}
+	@keyframes hf-panel-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+	#home-forge .hf-panel-row { display: flex; align-items: flex-start; gap: 12px; }
+	#home-forge .hf-panel-row[hidden] { display: none; }
+	#home-forge .hf-panel-label { flex: none; width: 62px; padding-top: 6px; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); }
+
+	/* Segmented control (tier + aspect). */
+	#home-forge .hf-seg { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
+	#home-forge .hf-seg-btn {
+		display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 12px;
+		padding: 6px 12px; border-radius: 9px; cursor: pointer; border: 1px solid var(--hairline-strong);
+		background: rgba(14, 14, 18, 0.5); color: var(--text-2); transition: color .14s ease, border-color .14s ease, background .14s ease;
+	}
+	#home-forge .hf-seg-btn:hover { color: var(--text); border-color: var(--hairline-strong); }
+	#home-forge .hf-seg-btn[aria-pressed="true"] { color: var(--text); background: rgba(255, 255, 255, 0.08); border-color: var(--hairline-strong); }
+	#home-forge .hf-seg-btn:focus-visible { outline: 2px solid #8b5cf6; outline-offset: 2px; }
+
+	/* The High-tier $THREE lock pill on its tier button. */
+	#home-forge .hfc-lock { display: inline-flex; align-items: center; gap: 3px; font-size: 9px; font-weight: 700; letter-spacing: 0.03em; padding: 2px 5px; border-radius: 5px; }
+	#home-forge .hfc-lock[data-state="locked"] { color: #f5c451; background: rgba(245, 196, 81, 0.14); }
+	#home-forge .hfc-lock[data-state="unlocked"] { color: #6ee7a8; background: rgba(110, 231, 168, 0.14); }
+	#home-forge .hfc-lock-ico { width: 10px; height: 10px; }
+
+	/* Engine picker — pills that scroll horizontally when they overflow. */
+	#home-forge .hf-engine { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
+	#home-forge .hfc-engine-btn {
+		display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 12px;
+		padding: 6px 11px; border-radius: 9px; cursor: pointer; border: 1px solid var(--hairline-strong);
+		background: rgba(14, 14, 18, 0.5); color: var(--text-2); transition: color .14s ease, border-color .14s ease, background .14s ease;
+	}
+	#home-forge .hfc-engine-btn:hover:not(:disabled) { color: var(--text); border-color: var(--hairline-strong); }
+	#home-forge .hfc-engine-btn[aria-pressed="true"] { color: var(--text); background: rgba(255, 255, 255, 0.08); border-color: var(--hairline-strong); }
+	#home-forge .hfc-engine-btn:disabled { opacity: 0.4; cursor: not-allowed; text-decoration: line-through; }
+	#home-forge .hfc-engine-btn:focus-visible { outline: 2px solid #8b5cf6; outline-offset: 2px; }
+	#home-forge .hfc-engine-btn[data-health="degraded"] { border-color: rgba(245, 196, 81, 0.4); }
+	#home-forge .hfc-engine-auto[aria-pressed="true"] { background: rgba(139, 92, 246, 0.14); border-color: rgba(139, 92, 246, 0.5); }
+	#home-forge .hfc-auto-pill { font-size: 8.5px; font-weight: 700; letter-spacing: 0.06em; color: #c4b5fd; }
+	#home-forge .hfc-free-pill { font-size: 8.5px; font-weight: 700; letter-spacing: 0.06em; color: #6ee7a8; background: rgba(110, 231, 168, 0.14); padding: 1px 4px; border-radius: 4px; }
+	#home-forge .hfc-key { width: 12px; height: 12px; opacity: 0.7; }
+
+	/* BYOK key row. */
+	#home-forge .hf-byok { display: flex; flex-direction: column; gap: 6px; padding: 11px 12px; border-radius: 11px; border: 1px solid var(--hairline); background: rgba(20, 20, 27, 0.6); }
+	#home-forge .hf-byok[hidden] { display: none; }
+	#home-forge .hf-byok-label { font-family: var(--font-mono); font-size: 11px; color: var(--text-2); }
+	#home-forge .hf-byok-key { font-family: var(--font-mono); font-size: 13px; padding: 8px 11px; border-radius: 8px; border: 1px solid var(--hairline-strong); background: rgba(0, 0, 0, 0.35); color: var(--text); }
+	#home-forge .hf-byok-key:focus-visible { outline: 2px solid #8b5cf6; outline-offset: 2px; }
+	#home-forge .hf-byok-hint { margin: 0; font-size: 11px; color: var(--text-3); line-height: 1.5; }
+	#home-forge .hf-byok-hint a { color: var(--text-2); }
+
+	/* Lock host + holder perk line. */
+	#home-forge .hf-lock[hidden] { display: none; }
+	#home-forge .hf-perk { margin: 0; font-size: 11.5px; color: var(--text-3); line-height: 1.5; text-align: center; }
+	#home-forge .hf-perk[hidden] { display: none; }
+	#home-forge .hf-perk strong { color: var(--text); }
+	#home-forge .hf-perk a { color: var(--text-2); }
 
 	/* Ghost buttons shared by states. */
 	#home-forge .hf-btn {
@@ -4488,9 +4643,10 @@
 			</p>
 		</div>
 		<div class="har-inner reveal reveal-d1">
-			<div class="har-viewer-wrap" id="har-viewer-wrap">
+			<div class="har-viewer-wrap" id="har-viewer-wrap" tabindex="0" role="group" aria-roledescription="carousel" aria-label="Community model showcase, use left and right arrow keys to browse">
 				<div class="har-skeleton" id="har-skeleton">Loading model&hellip;</div>
 				<!-- model-viewer injected by JS once the CDN script is ready -->
+				<span class="har-cat" id="har-cat"></span>
 				<div class="har-dots" id="har-dots" role="tablist" aria-label="Showcase models" style="display:none"></div>
 				<div class="har-autobar" id="har-autobar" aria-hidden="true"></div>
 				<div class="har-viewer-nav" id="har-viewer-nav" style="display:none">
@@ -4498,6 +4654,7 @@
 					<span class="har-prompt" id="har-prompt-label"></span>
 					<button class="har-nav-btn" id="har-next" aria-label="Next model" data-i18n-attr="aria-label:home.next_model_arialabel">&rarr;</button>
 				</div>
+				<span id="har-live" class="sr-only" aria-live="polite"></span>
 			</div>
 			<div class="har-right">
 				<div>
@@ -4509,6 +4666,7 @@
 						<span class="har-compat-pill" data-i18n="home.quick_look_ios">Quick Look &middot; iOS</span>
 						<span class="har-compat-pill" data-i18n="home.no_app_needed">No app needed</span>
 					</div>
+					<p class="har-count" id="har-count" aria-live="polite"></p>
 				</div>
 
 				<!-- Mobile: direct AR launch -->
@@ -4529,6 +4687,7 @@
 				</div>
 
 				<div style="display:flex;flex-direction:column;gap:10px">
+					<a class="har-cta-link har-desktop-only" id="har-open-model" href="/forge" style="color:var(--text);font-weight:600" data-i18n="home.open_this_model_in_ar">Open this model in AR &rarr;</a>
 					<a class="har-cta-link" href="/forge" data-i18n="home.generate_your_own_model">Generate your own model &rarr;</a>
 					<a class="har-cta-link" href="/gallery" data-i18n="home.browse_the_avatar_gallery">Browse the avatar gallery &rarr;</a>
 					<a class="har-cta-link" href="/features/ar" data-i18n="home.ar_feature_overview">AR feature overview &rarr;</a>
@@ -4577,6 +4736,22 @@
 	const arBtn = document.getElementById('har-ar-btn');
 	const qrCanvas = document.getElementById('har-qr-canvas');
 	const qrWrap = document.getElementById('har-qr-wrap');
+	const catChip = document.getElementById('har-cat');
+	const countEl = document.getElementById('har-count');
+	const liveEl = document.getElementById('har-live');
+	const openLink = document.getElementById('har-open-model');
+	const nfmt = (n) => { try { return new Intl.NumberFormat().format(n); } catch { return String(n); } };
+	// Map the raw category slug to a human label for the on-viewer chip.
+	const CAT_LABEL = { avatar: 'Character', creature: 'Creature', item: 'Object', accessory: 'Accessory', scene: 'Scene', vehicle: 'Vehicle', prop: 'Prop', other: 'Model' };
+
+	// The AR-studio deep link for a given model, shared by the QR and the desktop
+	// "Open this model in AR" text link.
+	function arStudioUrl(glbUrl, prompt) {
+		if (!glbUrl) return '/forge';
+		const q = new URLSearchParams({ src: glbUrl });
+		if (prompt) q.set('title', String(prompt).slice(0, 120));
+		return 'https://three.ws/ar/studio/?' + q.toString();
+	}
 
 	// Dedupe (same prompt or same mesh twice reads as a bug) and interleave by
 	// category so consecutive slides feel varied (a character, an object, a
@@ -4612,21 +4787,31 @@
 	// it places exactly this model in the room, matching the "place this model"
 	// caption. Falls back to /forge only when no glb is available yet.
 	function updateQR(glbUrl, prompt) {
-		let arUrl = 'https://three.ws/forge';
-		if (glbUrl) {
-			const q = new URLSearchParams({ src: glbUrl });
-			if (prompt) q.set('title', String(prompt).slice(0, 120));
-			arUrl = 'https://three.ws/ar/studio/?' + q.toString();
-		}
 		try {
 			const ctx = qrCanvas.getContext('2d');
-			const tmp = renderQRToCanvas(arUrl, { scale: 8, margin: 2 });
+			const tmp = renderQRToCanvas(arStudioUrl(glbUrl, prompt), { scale: 8, margin: 2 });
 			qrCanvas.width = tmp.width;
 			qrCanvas.height = tmp.height;
 			ctx.drawImage(tmp, 0, 0);
 			qrWrap.style.width = qrCanvas.width + 'px';
 			qrWrap.style.height = qrCanvas.height + 'px';
 		} catch {}
+	}
+
+	// Warm the browser cache for the next model's GLB so cycling feels instant.
+	let prefetchLink = null;
+	function prefetchNext() {
+		if (models.length < 2) return;
+		const next = models[(idx + 1) % models.length];
+		if (!next || !next.glb_url) return;
+		if (!prefetchLink) {
+			prefetchLink = document.createElement('link');
+			prefetchLink.rel = 'prefetch';
+			prefetchLink.as = 'fetch';
+			prefetchLink.crossOrigin = 'anonymous';
+			document.head.appendChild(prefetchLink);
+		}
+		prefetchLink.href = next.glb_url;
 	}
 
 	function loadModel(m) {
@@ -4639,8 +4824,19 @@
 		mv.setAttribute('alt', m.prompt || '3D model');
 		promptLabel.textContent = m.prompt || 'model';
 		arBtn.disabled = false;
+		// Category chip: signals the variety is intentional, not random.
+		if (catChip) {
+			const label = CAT_LABEL[m.model_category] || CAT_LABEL.other;
+			catChip.textContent = label;
+			catChip.dataset.shown = '1';
+		}
+		// Desktop text link opens exactly this model in AR.
+		if (openLink) openLink.href = arStudioUrl(m.glb_url, m.prompt);
+		// Announce the change for screen-reader users.
+		if (liveEl) liveEl.textContent = 'Showing ' + (m.prompt || 'model') + ', model ' + (idx + 1) + ' of ' + models.length;
 		updateQR(m.glb_url, m.prompt);
 		syncDots();
+		prefetchNext();
 	}
 
 	function syncDots() {
@@ -4700,7 +4896,36 @@
 	function softPause() { autoPaused = true; if (autobar) autobar.dataset.run = '0'; }
 	function softResume() { autoPaused = false; restartAutobar(); }
 
+	// Live social-proof count. The `total` is the full community-model count; we
+	// show the bigger of it and the fetched slice so the number never undercounts.
+	function renderCount(total) {
+		if (!countEl) return;
+		const n = Math.max(Number(total) || 0, models.length);
+		if (n < 3) return; // too few to be persuasive: stay quiet.
+		countEl.innerHTML = '<span class="har-dot-live" aria-hidden="true"></span>Join <b>' + nfmt(n) + '</b> models forged by the community.';
+		countEl.dataset.shown = '1';
+	}
+
+	// Designed failure state: never a bare "no data", always a way forward.
+	function showEmpty(message) {
+		if (mv) { mv.remove(); mv = null; }
+		nav.style.display = 'none';
+		if (dotsWrap) dotsWrap.style.display = 'none';
+		skeleton.style.display = 'none';
+		if (wrap.querySelector('.har-empty')) return;
+		const box = document.createElement('div');
+		box.className = 'har-empty';
+		const p = document.createElement('p');
+		p.textContent = message;
+		const a = document.createElement('a');
+		a.href = '/forge';
+		a.textContent = 'Forge a model →';
+		box.append(p, a);
+		wrap.appendChild(box);
+	}
+
 	async function init() {
+		let total = 0;
 		try {
 			// Curated community showcase (top-voted first, rejected excluded), not
 			// the anonymous newest-first bucket. The AR hero should lead with the
@@ -4708,6 +4933,7 @@
 			const r = await fetch('/api/forge-gallery?scope=community&sort=top&limit=24');
 			if (!r.ok) throw new Error(r.status);
 			const d = await r.json();
+			total = Number(d.total) || 0;
 			const all = (d.creations || []).filter(c => c.glb_url);
 			// Votes are sparse, so top-sort falls back to newest and can surface
 			// throwaway prompts ("test") or un-rendered results. Prefer entries that
@@ -4723,9 +4949,11 @@
 		} catch { models = []; }
 
 		if (!models.length) {
-			skeleton.textContent = 'No models available';
+			showEmpty('The community showcase is warming up. Be the first to forge one.');
 			return;
 		}
+
+		renderCount(total);
 
 		await ensureModelViewer();
 
@@ -4734,8 +4962,11 @@
 		mv.setAttribute('auto-rotate', '');
 		mv.setAttribute('ar', '');
 		mv.setAttribute('ar-modes', 'webxr scene-viewer quick-look');
-		mv.setAttribute('shadow-intensity', '1');
+		mv.setAttribute('shadow-intensity', '1.3');
+		mv.setAttribute('shadow-softness', '0.85');
+		mv.setAttribute('exposure', '1.05');
 		mv.setAttribute('environment-image', 'neutral');
+		mv.setAttribute('interaction-prompt', 'none');
 		if (models[0].preview_image_url) mv.setAttribute('poster', models[0].preview_image_url);
 		mv.style.cssText = 'width:100%;height:100%;--poster-color:transparent;background:transparent;';
 
@@ -4756,6 +4987,12 @@
 		// Manual nav takes the wheel: hard-stop autoplay.
 		document.getElementById('har-prev').addEventListener('click', () => { pauseAuto(); show(idx - 1); });
 		document.getElementById('har-next').addEventListener('click', () => { pauseAuto(); show(idx + 1); });
+
+		// Keyboard: arrow keys cycle when the viewer group has focus.
+		wrap.addEventListener('keydown', (e) => {
+			if (e.key === 'ArrowLeft') { pauseAuto(); show(idx - 1); e.preventDefault(); }
+			else if (e.key === 'ArrowRight') { pauseAuto(); show(idx + 1); e.preventDefault(); }
+		});
 
 		// Hover/focus/drag softly holds position; leaving resumes.
 		wrap.addEventListener('pointerenter', softPause);

@@ -12,6 +12,15 @@
  *
  * Backward-compatible: every field the arena already reads is still present; the
  * board rows are now a SUPERSET (win_rate, score, verified, roi_pct, drawdown, …).
+ *
+ * Also returns `real_stats`: an all-time, on-chain-ONLY aggregate over
+ * agent_sniper_positions (buy_sig present and not the 'SIMULATED' sentinel). It
+ * powers the homepage "real positions · no simulation" scoreboard, which must
+ * never count paper fills the engine writes in simulate mode. Shape:
+ *   { closed, wins, losses, win_rate, open, best_realized_pct,
+ *     best_realized_multiple, best_peak_multiple, realized_pnl_sol }
+ * This is deliberately separate from the trader-stats board rows, which include
+ * paper fills so an agent's track record stays continuous across practice runs.
  */
 
 import { cors, json, method, wrap, rateLimited } from '../_lib/http.js';
@@ -86,7 +95,7 @@ export default wrap(async (req, res) => {
 	const sort = LEADERBOARD_SORTS.has(params.get('sort')) ? params.get('sort') : 'score';
 	const verifiedOnly = params.get('verified') === '1' || params.get('verified') === 'true';
 
-	const [boardResult, recent, open] = await Promise.all([
+	const [boardResult, recent, open, realAgg] = await Promise.all([
 		getLeaderboard({ network, window, sort, verifiedOnly, limit: 100 }),
 		sql`
 			select p.id, p.agent_id, a.name as agent_name, p.mint, p.symbol, p.name,
@@ -108,7 +117,45 @@ export default wrap(async (req, res) => {
 			order by p.opened_at desc
 			limit 50
 		`,
+		// Real, on-chain-only aggregate. A position counts here ONLY if it landed a
+		// genuine broadcast signature (buy_sig present and not the 'SIMULATED'
+		// sentinel simulate-mode writes) — so the homepage "no simulation" scoreboard
+		// can never inflate itself with paper fills. All-time, network-scoped.
+		sql`
+			select
+				count(*) filter (where status = 'closed')                              as real_closed,
+				count(*) filter (where status = 'closed' and realized_pnl_lamports > 0) as real_wins,
+				count(*) filter (where status = 'open')                                as real_open,
+				max(realized_pnl_pct) filter (where status = 'closed')                 as best_realized_pct,
+				max((peak_value_lamports::numeric) / nullif(entry_quote_lamports, 0))
+					filter (where peak_value_lamports is not null and entry_quote_lamports > 0) as best_peak_multiple,
+				coalesce(sum(realized_pnl_lamports) filter (where status = 'closed'), 0) as realized_pnl_lamports
+			from agent_sniper_positions
+			where network = ${network}
+			  and buy_sig is not null and buy_sig <> 'SIMULATED'
+		`.catch(() => [{}]),
 	]);
+
+	// Real-trade scoreboard (on-chain fills only). Powers the homepage KPIs that
+	// claim "real positions · no simulation" — kept structurally separate from the
+	// trader-stats board (which includes paper fills for track-record continuity).
+	const ra = realAgg[0] || {};
+	const realClosed = Number(ra.real_closed) || 0;
+	const realWins = Number(ra.real_wins) || 0;
+	const bestPeak = ra.best_peak_multiple != null ? Number(ra.best_peak_multiple) : null;
+	const bestRealizedPct = ra.best_realized_pct != null ? Number(ra.best_realized_pct) : null;
+	const real_stats = {
+		closed: realClosed,
+		wins: realWins,
+		losses: Math.max(0, realClosed - realWins),
+		win_rate: realClosed > 0 ? Math.round((realWins / realClosed) * 100) : null,
+		open: Number(ra.real_open) || 0,
+		best_realized_pct: bestRealizedPct,
+		best_realized_multiple: bestRealizedPct != null ? Number((1 + bestRealizedPct / 100).toFixed(2)) : null,
+		best_peak_multiple: bestPeak != null ? Number(bestPeak.toFixed(2)) : null,
+		realized_pnl_sol: ra.realized_pnl_lamports != null
+			? Number((Number(BigInt(ra.realized_pnl_lamports)) / 1e9).toFixed(6)) : 0,
+	};
 
 	const trades = recent.map((t) => ({
 		id: t.id,
@@ -162,6 +209,7 @@ export default wrap(async (req, res) => {
 		source,
 		sol_usd: boardResult.sol_usd,
 		leaderboard: boardResult.leaderboard,
+		real_stats,
 		live_traders: live,
 		live_window: source === 'live' ? (KOL_WINDOW[window] || '7d') : null,
 		trades,

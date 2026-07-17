@@ -359,12 +359,12 @@
 			<description>Four upgrades to photo-to-3D landed together. Uploaded photos now have their background cleanly removed before reconstruction, so a busy backdrop no longer bleeds into the model. You can supply up to 6 reference angles instead of 4 for fuller coverage. Every uploaded angle is now quality-checked, and a blurry or off-subject one is dropped instead of corrupting the result. And every finished model runs through an automatic geometry cleanup pass that welds and de-duplicates the mesh and trims redundant triangles, so models load faster and render cleaner with no loss of detail.</description>
 		</item>
 		<item>
-			<title>The 3D world no longer stays blurry after a slow moment</title>
-			<link>https://three.ws/changelog</link>
-			<guid isPermaLink="false">2026-07-17:The 3D world no longer stays blurry after a slow moment</guid>
+			<title>The 3D world looks sharper and shows more of the plaza</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-07-17:The 3D world looks sharper and shows more of the plaza</guid>
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
-			<description>The world automatically lowers render detail if frames get choppy (loading a crowded plaza, a browser tab hiccup, a background sync). Until now it could only step down and never recovered, so a single rough moment left the 3D permanently soft on high-resolution screens while the interface on top stayed sharp. It now climbs back up to your device's full sharpness once frames are smooth again, so a brief hitch no longer costs you clarity for the rest of the session.</description>
+			<description>Two fixes to how the world renders. First, sharpness: the world lowers render detail when frames get choppy (loading a crowded plaza, a tab hiccup, a background sync), but it could only ever step down and never recovered, so a single rough moment left the 3D permanently soft on high-resolution screens while the interface on top stayed crisp. It now climbs back to your device's full sharpness once frames are smooth again, and it re-tunes automatically when you drag the window between a laptop screen and an external monitor. Second, framing: the follow camera was zoomed in tight, cropping the totem and side screens at the edges. It now uses a wider lens so you see more of the plaza and the crowd around you at once.</description>
 		</item>
 		<item>
 			<title>The agent-to-agent payment economy runs far cheaper and now cycles hundreds of distinct payers</title>
@@ -373,6 +373,14 @@
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Two improvements to the closed-loop x402 agent economy that dogfoods every paid endpoint on the platform. First, a fix: a background wallet-consolidation job was quietly closing the ring's payment account after every settlement, forcing the next one to recreate it and pay account rent each time. That single bug had pushed the real fee cost to roughly a hundred times where it should be. With it fixed and single-signature settlement turned on, each settlement is back to the network floor of a few thousandths of a cent, and the ring's working balance stays in the loop instead of leaking away. Second, a new capability: the ring can now cycle payments through a reusable pool of hundreds to a thousand distinct wallets instead of one, so the economy reads as many participants rather than a single account, with no extra cost per payment. The pool is off until funded and activated, and every wallet in it stays clearly labeled internal dogfooding, not organic demand.</description>
+		</item>
+		<item>
+			<title>The autonomous-trading scoreboard now counts only real on-chain trades</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-17:The autonomous-trading scoreboard now counts only real on-chain trades</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The homepage's live trading panel promises &quot;real positions, no simulation&quot; — so its headline numbers now come only from trades that actually landed on-chain. Winning exits, best run, best ROI, and open positions all exclude paper (simulated) fills, which the engine writes while it runs in practice mode. Nothing is inflated: the board shows the true count of profitable trades agents have closed for real, and it moves the instant a genuine winning exit lands.</description>
 		</item>
 		<item>
 			<title>The avatar shop and animation bazaar are now discoverable by paying agents</title>

@@ -7,8 +7,12 @@
  *
  *   · /api/sniper/status      → worker liveness (alive / feed-live / degraded),
  *                               strategies armed, open positions.
- *   · /api/sniper/leaderboard → win rate, best ROI, initial tape backlog
- *                               (recent closed trades + currently-open positions).
+ *   · /api/oracle/stats       → launches scored in the last 24h.
+ *   · /api/sniper/leaderboard → real_stats (on-chain-only wins, best multiple,
+ *                               best realized ROI, open count — SIMULATED fills
+ *                               excluded so the "no simulation" panel stays true),
+ *                               plus the initial tape backlog (recent closed trades
+ *                               + currently-open positions).
  *   · /api/sniper/stream      → SSE of fresh buy / sell / re-quote events; each
  *                               drives a packet through the pipeline and a row
  *                               into the tape.
@@ -223,10 +227,16 @@ function applyStatus(root, s) {
 
 function makeStatBand(root) {
 	const band = root.querySelector('#snipe-stats');
+	// The three headline numbers draw from two real sources, merged:
+	//   scored_24h    — oracle/stats: every pump.fun mint graded in 24h.
+	//   real_wins     — sniper/leaderboard real_stats: profitable trades closed
+	//                   on-chain (SIMULATED fills excluded), matching this panel's
+	//                   "real positions · no simulation" promise.
+	//   best_multiple — top multiple a real position reached from entry (peak/entry).
 	const fields = [
 		{ el: root.querySelector('#snipe-stat-scored'), key: 'scored_24h', fmt: fmtCompact },
-		{ el: root.querySelector('#snipe-stat-wins'), key: 'total_wins', fmt: fmtCompact },
-		{ el: root.querySelector('#snipe-stat-ath'), key: 'best_ath', fmt: (n) => `${Number(n).toFixed(1)}×` },
+		{ el: root.querySelector('#snipe-stat-wins'), key: 'real_wins', fmt: fmtCompact },
+		{ el: root.querySelector('#snipe-stat-ath'), key: 'best_multiple', fmt: (n) => `${Number(n).toFixed(1)}×` },
 	];
 	let values = null;
 	let shown = false;
@@ -271,8 +281,11 @@ function makeStatBand(root) {
 	window.addEventListener('resize', onScroll, { passive: true });
 
 	return {
-		set(data) {
-			values = data;
+		// Merge partial data from either source (oracle stats / real leaderboard).
+		// Whichever arrives first seeds the band; the second fills the rest. The
+		// count-up still fires exactly once, on reveal, with whatever has landed.
+		merge(partial) {
+			values = { ...(values || {}), ...partial };
 			render(); // fires now if already in view; otherwise the scroll handler will
 		},
 	};
@@ -313,7 +326,10 @@ export function initHomeSniper() {
 	async function loadStats() {
 		try {
 			const r = await fetch(STATS_URL, { headers: { accept: 'application/json' } });
-			if (r.ok) statBand.set(await r.json());
+			if (r.ok) {
+				const d = await r.json();
+				statBand.merge({ scored_24h: d.scored_24h });
+			}
 		} catch { /* non-fatal — placeholders stay */ }
 	}
 
@@ -331,14 +347,18 @@ export function initHomeSniper() {
 			const r = await fetch(BOARD_URL, { headers: { accept: 'application/json' } });
 			if (!r.ok) throw new Error(String(r.status));
 			const d = await r.json();
-			const board = Array.isArray(d.leaderboard) ? d.leaderboard : [];
 
-			const bestRoi = board.reduce((m, a) => (Number(a.roi_pct) > (m ?? -Infinity) ? Number(a.roi_pct) : m), null);
-			const totalOpen = board.reduce((s, a) => s + (Number(a.open_positions) || 0), 0)
-				|| (Array.isArray(d.positions) ? d.positions.length : 0);
+			// Real, on-chain-only scoreboard — this panel promises "no simulation",
+			// so every KPI here draws from real_stats (SIMULATED fills excluded),
+			// never the trader-stats board (which counts paper fills for continuity).
+			const rs = d.real_stats || {};
+			const bestMultiple = rs.best_peak_multiple ?? rs.best_realized_multiple ?? 0;
+			statBand.merge({ real_wins: Number(rs.wins) || 0, best_multiple: Number(bestMultiple) || 0 });
 
+			const bestRoi = rs.best_realized_pct != null ? Number(rs.best_realized_pct) : null;
+			const realOpen = Number(rs.open) || 0;
 			setKpi(root, '#snipe-kpi-roi', bestRoi != null ? (fmtPct(bestRoi) || '—') : '—', true);
-			setKpi(root, '#snipe-kpi-open', fmtCompact(totalOpen));
+			setKpi(root, '#snipe-kpi-open', fmtCompact(realOpen));
 
 			// Seed the tape from real history: most recent closed trades, then open holds.
 			const seedTrades = (d.trades || []).slice(0, MAX_ROWS).map((t) => ({

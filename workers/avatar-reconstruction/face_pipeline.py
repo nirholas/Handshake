@@ -32,6 +32,7 @@ from PIL import Image, ImageFilter
 from scipy.interpolate import RBFInterpolator
 
 import glb_ops
+import face_geometry
 import pygltflib
 from worker_security import UnsafeUrlError, fetch_remote_bytes
 
@@ -42,6 +43,21 @@ log = logging.getLogger("face_pipeline")
 HERE = Path(__file__).parent
 UV_MAP_PATH = HERE / "face_uv_map.json"
 TEMPLATES_DIR = HERE / "templates"
+
+# Phase 2: reshape the head to the person's actual face structure (not just paint
+# the texture). Default on; set GEOMETRY_MORPH=0 to fall back to texture-only.
+GEOMETRY_MORPH_ENABLED = os.environ.get("GEOMETRY_MORPH", "1") != "0"
+
+_FACE_MAP: Optional[face_geometry.FaceMap] = None
+_FACE_MAP_LOADED = False
+
+
+def _get_face_map() -> Optional[face_geometry.FaceMap]:
+    global _FACE_MAP, _FACE_MAP_LOADED
+    if not _FACE_MAP_LOADED:
+        _FACE_MAP = face_geometry.FaceMap.load()
+        _FACE_MAP_LOADED = True
+    return _FACE_MAP
 
 # ── MediaPipe setup ────────────────────────────────────────────────────────────
 
@@ -523,6 +539,30 @@ def process(
     eye_colour = _extract_eye_colour(img_arr, landmarks, img_w, img_h)
     eye_rgb_norm = (eye_colour / 255.0).tolist()
     glb_ops.set_material_base_color(glb, "Wolf3D_Eye", eye_rgb_norm + [1.0])
+
+    # 10b. Geometry morph — reshape the head to the person's actual face structure
+    # (face width, jaw, nose projection, brow), so the avatar reads as the same
+    # person rather than the user's texture on a generic head. Runs last because
+    # it overwrites POSITION/NORMAL in place; texture edits above already settled
+    # the blob. Degrades cleanly to texture-only if the map lacks geometry fields
+    # or anything goes wrong — never fails a job over the shape refinement.
+    if GEOMETRY_MORPH_ENABLED:
+        try:
+            fmap = _get_face_map()
+            if fmap is not None:
+                base_pos, _, faces = glb_ops.get_head_mesh_data(glb)
+                detected = face_geometry.landmarks_to_array(landmarks)
+                if detected.shape[0] >= fmap.canonical_norm.shape[0]:
+                    morphed = face_geometry.morph_head_to_landmarks(base_pos, fmap, detected)
+                    glb_ops.set_head_geometry(glb, morphed, faces=faces)
+                    log.info("[%s] head geometry morphed to face identity (%.1fs)",
+                             job_id, time.time() - t0)
+                else:
+                    log.warning("[%s] only %d landmarks — skipping geometry morph",
+                                job_id, detected.shape[0])
+        except Exception as exc:  # noqa: BLE001 — refinement must never fail the job
+            log.warning("[%s] geometry morph failed (%s) — keeping template shape",
+                        job_id, exc)
 
     # 11. Serialize.
     result = glb_ops.save_glb(glb)

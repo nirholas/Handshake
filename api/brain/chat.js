@@ -307,6 +307,10 @@ const PROVIDERS = {
 		maxOutput: 4096,
 		description: 'IBM’s open, enterprise-governed foundation model on watsonx.ai.',
 		watsonx: true,
+		// Same Granite family hosted on OpenRouter — the same-model backstop when
+		// watsonx drops a request, and the primary lane when watsonx creds are
+		// absent entirely (so Granite stays selectable without an IBM account).
+		openrouterModel: 'ibm-granite/granite-4.1-8b',
 	},
 
 	// ── Google Vertex AI — first-party Claude billed to GCP credits ──────────────
@@ -424,7 +428,10 @@ function openrouterKeys() {
 // records which path won so buildFallback() knows whether OpenRouter is a
 // distinct escape hatch.
 function buildPrimary(spec) {
-	if (spec.watsonx) return watsonxConfig().configured ? { kind: 'watsonx' } : null;
+	// watsonx leads when its creds are present; otherwise fall through so a
+	// Granite spec with an openrouterModel still resolves (OpenRouter-hosted
+	// Granite becomes the primary lane instead of showing unavailable).
+	if (spec.watsonx && watsonxConfig().configured) return { kind: 'watsonx' };
 	// Vertex-served Claude — routed through the shared vertex-claude transport
 	// (not an AI SDK model object), so it reports availability here and streams
 	// via streamVertex() in streamBrain(). Requires the GCP project to be set.
@@ -442,7 +449,12 @@ function buildPrimary(spec) {
 // outage (quota exhausted, out of credits, rate-limited). When the primary was
 // already OpenRouter the free-tier safety net (freeFallbackChain) is the next stop.
 function buildFallback(spec, primary) {
-	if (primary?.via !== 'native' || !spec.openrouterModel || !openrouterKeys().length) return null;
+	if (!spec.openrouterModel || !openrouterKeys().length) return null;
+	// The mirror routes around a native/watsonx/vertex outage on the SAME model
+	// via OpenRouter. Skip it only when the primary ALREADY ran on OpenRouter —
+	// the mirror would be the identical key+model and the free-tier chain is the
+	// meaningful next stop.
+	if (primary?.via === 'openrouter') return null;
 	return openrouter()(spec.openrouterModel);
 }
 

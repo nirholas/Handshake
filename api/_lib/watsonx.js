@@ -197,7 +197,7 @@ export async function watsonxChatComplete(cfg, { messages, model, maxTokens, tem
 	} catch (err) {
 		const fallback = await graniteOpenRouterFallback({ messages, maxTokens, temperature });
 		if (fallback) {
-			console.warn(`[watsonx] chat failed, served via OpenRouter Granite: ${err.message}`);
+			console.warn(`[watsonx] chat failed, served via OpenRouter (${fallback.model}): ${err.message}`);
 			return fallback;
 		}
 		throw err;
@@ -216,7 +216,16 @@ async function graniteOpenRouterFallback({ messages, maxTokens, temperature }) {
 		...(process.env.OPENROUTER_FALLBACK_KEYS || '').split(',').map((k) => k.trim()),
 	].filter(Boolean);
 	if (!keys.length) return null;
-	const model = process.env.OPENROUTER_GRANITE_MODEL?.trim() || 'ibm-granite/granite-4.1-8b';
+	// Vision reads (ibm/vision.js) send multimodal messages — an array content
+	// block with an image_url. OpenRouter has no Granite-vision model, and the
+	// text Granite model can't see the image, so route those to a vision-capable
+	// model instead. Plain text completions keep using Granite (same family).
+	const isMultimodal = (messages || []).some(
+		(m) => Array.isArray(m?.content) && m.content.some((p) => p?.type === 'image_url'),
+	);
+	const model = isMultimodal
+		? process.env.OPENROUTER_VISION_MODEL?.trim() || 'google/gemini-2.5-flash'
+		: process.env.OPENROUTER_GRANITE_MODEL?.trim() || 'ibm-granite/granite-4.1-8b';
 	for (const key of [...new Set(keys)]) {
 		try {
 			const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {

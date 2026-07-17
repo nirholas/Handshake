@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T23:15:17.858Z",
+	"generated_at": "2026-07-17T23:29:01.425Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -469,9 +469,9 @@
 		{
 			"date": "2026-07-17",
 			"type": "update",
-			"title": "The 3D world no longer stays blurry after a slow moment",
-			"summary": "The world automatically lowers render detail if frames get choppy (loading a crowded plaza, a browser tab hiccup, a background sync). Until now it could only step down and never recovered, so a single rough moment left the 3D permanently soft on high-resolution screens while the interface on top stayed sharp. It now climbs back up to your device's full sharpness once frames are smooth again, so a brief hitch no longer costs you clarity for the rest of the session.",
-			"link": null,
+			"title": "The 3D world looks sharper and shows more of the plaza",
+			"summary": "Two fixes to how the world renders. First, sharpness: the world lowers render detail when frames get choppy (loading a crowded plaza, a tab hiccup, a background sync), but it could only ever step down and never recovered, so a single rough moment left the 3D permanently soft on high-resolution screens while the interface on top stayed crisp. It now climbs back to your device's full sharpness once frames are smooth again, and it re-tunes automatically when you drag the window between a laptop screen and an external monitor. Second, framing: the follow camera was zoomed in tight, cropping the totem and side screens at the edges. It now uses a wider lens so you see more of the plaza and the crowd around you at once.",
+			"link": "/play",
 			"tags": [
 				"fix",
 				"improvement"
@@ -487,6 +487,17 @@
 				"fix",
 				"improvement",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "The autonomous-trading scoreboard now counts only real on-chain trades",
+			"summary": "The homepage's live trading panel promises \"real positions, no simulation\" — so its headline numbers now come only from trades that actually landed on-chain. Winning exits, best run, best ROI, and open positions all exclude paper (simulated) fills, which the engine writes while it runs in practice mode. Nothing is inflated: the board shows the true count of profitable trades agents have closed for real, and it moves the instant a genuine winning exit lands.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
