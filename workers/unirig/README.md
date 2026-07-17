@@ -1,5 +1,17 @@
 # unirig — auto-rigging (skeleton, skin weights, blendshapes)
 
+> **DEPRECATED (2026-07-17).** Superseded by [workers/rig/](../rig/), a
+> contract-compatible replacement built on Make-It-Animatable. Findings that
+> forced the replacement: the live `unirig` Cloud Run service was deployed
+> from code that never landed in this repo (its `/health` payload does not
+> match any commit); the checked-in image cannot build (upstream UniRig has
+> no pip packaging, and `main.py` calls a `UniRigModel.from_pretrained()` API
+> that does not exist upstream); the live service produced generically named
+> `bone_N` skeletons the platform retargeter cannot drive, zero blendshapes
+> (the Dockerfile ships an empty templates dir), and ~21-minute latencies.
+> After the `GCP_UNIRIG_URL` cutover to `model-rig`, delete the old Cloud Run
+> service to free one L4 toward the quota ceiling, then remove this directory.
+
 Takes a raw, unrigged mesh from one of the 3D generation models and makes it
 animation-ready. Wraps [UniRig](https://github.com/VAST-AI-Research/UniRig)
 (VAST-AI, MIT, SIGGRAPH 2025), which predicts:

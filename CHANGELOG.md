@@ -6,6 +6,7 @@ Public history for [three.ws](https://three.ws), newest first. New pages come fr
 
 ## 2026-07-17
 
+- **Avatars you generate now come out truly animation-ready** — We rebuilt the auto-rigging engine that turns a generated 3D character into a living avatar. Rigging now finishes in seconds instead of stalling for 20 minutes, produces a full standard skeleton with fingers that our entire animation library (walk, wave, dance, emotes) can drive immediately, keeps the model's original textures perfectly intact, and adds the 52 facial expression shapes used for emotions and lip-sync. Every piece of the new pipeline is MIT-licensed open source, so it works for everyone, everywhere. (`/forge`) `[feature, improvement, fix]`
 - **Creator profile pages work again, plus a site-wide reliability sweep** — A full automated sweep of every page and API endpoint on the site caught a bug that replaced creator profile pages (three.ws/u/yourname) with an error message. That is fixed. The sweep also repaired the login captcha for rate-limited sign-ins, fixed dead links in the dashboard and two blog posts, and added two dozen previously unlisted pages to the site index so search engines and the sitemap can find them. The audit now runs with deeper checks (blank-page detection, visible error detection, and link crawling) so regressions like these get caught before anyone hits them. (`/changelog`) `[fix, improvement]`
 
 ## 2026-07-16

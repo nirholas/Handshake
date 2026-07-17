@@ -40,6 +40,15 @@ skeleton to a GLB. A **humanoid gate** decides whether the mesh can carry a
 canonical humanoid rig; non-humanoid props are left unrigged rather than forced
 into a broken skeleton.
 
+The rigging engine is the `model-rig` worker ([workers/rig/](../workers/rig)):
+Make-It-Animatable (MIT) predicts the 52-bone Mixamo skeleton, fingers
+included, plus per-vertex weights; the worker grafts them into the original
+GLB bytes (materials and PBR textures untouched) and transfers the ARKit-52
+expression blendshapes from the MIT-licensed ICT-FaceKit template head, so
+generated avatars support emotions and lipsync out of the box. Bones come out
+`mixamorig:*`-named, which stage ③ maps onto the canonical set at 100%
+coverage.
+
 ### ③ Canonicalize bones
 
 `src/glb-canonicalize.js` maps an incoming skeleton's bone names onto three.ws's

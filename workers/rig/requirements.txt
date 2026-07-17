@@ -1,0 +1,39 @@
+# Make-It-Animatable (jasongzy, MIT) runtime set, mirrored from its
+# requirements.txt at the commit pinned in the Dockerfile, minus training-only
+# extras (tensorboard, ipykernel, ipympl, fake-bpy-module).
+--extra-index-url https://download.pytorch.org/whl/cu121
+torch==2.1.2
+torchvision==0.16.2
+
+-f https://data.pyg.org/whl/torch-2.1.2+cu121.html
+torch-cluster
+
+--extra-index-url https://miropsota.github.io/torch_packages_builder
+pytorch3d==0.7.7+pt2.1.2cu121
+
+einops
+timm
+PyMCubes
+bpy==4.3.0
+gradio>=5.25.0
+matplotlib
+numpy~=1.26.4
+plyfile
+potpourri3d
+shapely
+spaces
+tqdm
+trimesh>=4.4.0
+
+# Rig authoring + blendshape transfer (rig_glb.py / blendshapes.py)
+pygltflib==1.16.2
+scipy>=1.11.0
+
+# Server
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic>=2.0.0
+httpx>=0.27.0
+
+# GCP
+google-cloud-storage==2.18.0

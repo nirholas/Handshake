@@ -14067,6 +14067,17 @@
 				"improvement"
 			],
 			"link": "/changelog"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Avatars you generate now come out truly animation-ready",
+			"summary": "We rebuilt the auto-rigging engine that turns a generated 3D character into a living avatar. Rigging now finishes in seconds instead of stalling for 20 minutes, produces a full standard skeleton with fingers that our entire animation library (walk, wave, dance, emotes) can drive immediately, keeps the model's original textures perfectly intact, and adds the 52 facial expression shapes used for emotions and lip-sync. Every piece of the new pipeline is MIT-licensed open source, so it works for everyone, everywhere.",
+			"tags": [
+				"feature",
+				"improvement",
+				"fix"
+			],
+			"link": "/forge"
 		}
 	]
 }

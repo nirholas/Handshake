@@ -1,0 +1,116 @@
+# model-rig: auto-rigging worker (Make-It-Animatable engine)
+
+Turns a static humanoid GLB into a fully animation-ready avatar: Mixamo-named
+skeleton, per-vertex skinning weights, and the ARKit-52 expression blendshapes,
+with the original materials and PBR textures preserved byte-for-byte.
+
+This service replaces the retired `workers/unirig` deployment, whose live
+instance produced generically named 22-bone skeletons (unusable by the
+platform retargeter), no blendshapes, and 20-minute latencies. Same API
+contract, so the platform cutover is one env-var change (see Cutover below).
+
+## How it works
+
+1. **Predict**: [Make-It-Animatable](https://github.com/jasongzy/Make-It-Animatable)
+   (MIT, CVPR 2025) infers joint positions, skinning weights, and pose for the
+   52-bone Mixamo skeleton, fingers included, in under a second of GPU time
+   (`engine_mia.py`). MIA is used purely as a predictor; its Blender/FBX export
+   path is never invoked, so the visual mesh never round-trips through a
+   converter that would degrade materials.
+2. **Graft**: `rig_glb.py` writes the skeleton, `JOINTS_0`/`WEIGHTS_0`, and
+   inverse bind matrices straight into the original GLB bytes (pure
+   pygltflib/numpy; unit-tested without a GPU). Bones are named `mixamorig:*`,
+   which `src/glb-canonicalize.js` maps 1:1 onto the platform's canonical bone
+   set (proven by the `rig worker skeleton` cases in
+   `tests/glb-canonicalize.test.js`) so a freshly rigged avatar drives the
+   entire pre-baked clip library at 100% coverage.
+3. **Expressions**: `blendshapes.py` transfers the 52 ARKit expression shapes
+   from the [ICT-FaceKit](https://github.com/ICT-VGL/ICT-FaceKit) template head
+   (MIT) onto the avatar's head region (nearest-surface correspondence with
+   distance falloff), written as glTF morph targets with `targetNames`. This
+   powers emotions and lipsync (`src/voice/arkit-blendshapes.js`,
+   the embodiment stage) on generated avatars.
+
+## API
+
+Identical to the previous rig worker so `api/_providers/gcp.js` needs no code
+change:
+
+```
+POST /rig        { mesh_gcs_url, template?, blendshapes?, job_id? }
+                 -> 202 { task_id, status: "queued" }        (Bearer API_KEY)
+GET  /tasks/:id  -> { task_id, status, rigged_gcs_url?, error?, elapsed_ms? }
+GET  /health     -> { ok, model, gpu_available, gpu_name, model_loaded, queued }
+```
+
+Every task runs under a hard timeout (`TASK_TIMEOUT_S`, default 420 s): a task
+finishes or fails, it can never sit in `running` forever. Task state is
+in-memory by design; run with `min-instances = max-instances` so pollers reach
+the owning instance (a restart 404s the poll and the platform fails the job
+cleanly).
+
+## Deploy
+
+One-time asset staging (checkpoints ~a few hundred MB from Hugging Face, plus
+the baked ARKit template):
+
+```bash
+bash workers/rig/stage-assets.sh
+```
+
+Build + deploy (Cloud Build pins the `three-ws-build@` service account):
+
+```bash
+gcloud builds submit --config workers/rig/cloudbuild.yaml \
+  --substitutions=SHORT_SHA=manual$(date +%s) .
+```
+
+Service: `model-rig`, us-central1, 1x L4 (`--no-gpu-zonal-redundancy`),
+min=max instances per the L4 quota plan in `docs/ops/gcp-credits-plan.md`.
+
+## Cutover
+
+```bash
+gcloud run services update three-ws-api --region us-central1 \
+  --update-env-vars GCP_UNIRIG_URL=$(gcloud run services describe model-rig \
+      --region us-central1 --format='value(status.url)')
+```
+
+Then verify end-to-end (a static humanoid in, canonical rigged GLB out):
+
+```bash
+curl -sX POST "https://three.ws/api/forge?action=rig" \
+  -H 'content-type: application/json' \
+  -d '{"glb_url":"https://three.ws/avatars/mannequin.glb"}'
+# poll the returned job_id via /api/forge?job=... and inspect the GLB:
+# skins=1, bones named mixamorig:* (canonicalized at ingest), morph targets
+# with ARKit targetNames present.
+```
+
+After cutover, retire the old `unirig` Cloud Run service to free one L4 toward
+the quota ceiling.
+
+## Local tests (no GPU needed)
+
+```bash
+python3 workers/rig/test_rig_glb.py
+python3 workers/rig/test_blendshapes.py
+npx vitest run tests/glb-canonicalize.test.js
+```
+
+## Licensing
+
+Every component is commercially clean, worldwide: Make-It-Animatable (MIT),
+ICT-FaceKit (MIT), and this service's own code. No SMPL/FLAME research
+licenses, no Hunyuan territory carve-outs, in the rigging path.
+
+## Environment
+
+| Var | Default | Meaning |
+|---|---|---|
+| `API_KEY` | (secret) | shared bearer secret (`avatar-reconstruction-key`) |
+| `GCS_BUCKET` | (required) | output bucket for rigged GLBs |
+| `MIA_DIR` | `/app/mia` | Make-It-Animatable checkout |
+| `ARKIT_TEMPLATE` | `/app/assets/arkit_template.npz` | baked ICT template |
+| `MAX_CONCURRENT` | `1` | parallel rig jobs per instance |
+| `TASK_TIMEOUT_S` | `420` | per-task hard timeout |

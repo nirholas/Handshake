@@ -319,10 +319,12 @@ function buildWorkerRequest(request) {
 
 	if (mode === 'rerig') {
 		// Two rig backends share the /rig path but disagree on the schema. The
-		// standalone UniRig worker (GCP_UNIRIG_URL) takes `mesh_gcs_url` (any
-		// https URL — the name is historical) and reports `rigged_gcs_url`; the
-		// legacy pipeline controller takes `mesh_url`/`rig_type` and reports
-		// `glb_url`. Branch on which env the rerig URL resolved from.
+		// standalone rig worker behind GCP_UNIRIG_URL (workers/rig, the
+		// Make-It-Animatable service; the env name predates it) takes
+		// `mesh_gcs_url` (any https URL, the name is historical) and reports
+		// `rigged_gcs_url`; the legacy pipeline controller takes
+		// `mesh_url`/`rig_type` and reports `glb_url`. Branch on which env the
+		// rerig URL resolved from.
 		if (readEnv('GCP_UNIRIG_URL')) {
 			return {
 				path: '/rig',

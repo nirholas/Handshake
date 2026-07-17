@@ -726,3 +726,63 @@ describe('real-fixture: michelle.glb (Mixamo rig normalization)', () => {
 		expect(nonCanon).toHaveLength(0);
 	});
 });
+
+describe('rig worker skeleton (workers/rig, Make-It-Animatable output)', () => {
+	// The exact 52-bone skeleton the auto-rig worker emits (Mixamo names, see
+	// workers/rig/engine_mia.py). Every bone must map onto the canonical set so
+	// a freshly rigged avatar can drive the full clip library with 100%
+	// coverage; a rename miss here silently breaks retargeting in production.
+	const MIA_JOINTS = [
+		'Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head',
+		'LeftShoulder', 'LeftArm', 'LeftForeArm', 'LeftHand',
+		'LeftHandThumb1', 'LeftHandThumb2', 'LeftHandThumb3',
+		'LeftHandIndex1', 'LeftHandIndex2', 'LeftHandIndex3',
+		'LeftHandMiddle1', 'LeftHandMiddle2', 'LeftHandMiddle3',
+		'LeftHandRing1', 'LeftHandRing2', 'LeftHandRing3',
+		'LeftHandPinky1', 'LeftHandPinky2', 'LeftHandPinky3',
+		'RightShoulder', 'RightArm', 'RightForeArm', 'RightHand',
+		'RightHandThumb1', 'RightHandThumb2', 'RightHandThumb3',
+		'RightHandIndex1', 'RightHandIndex2', 'RightHandIndex3',
+		'RightHandMiddle1', 'RightHandMiddle2', 'RightHandMiddle3',
+		'RightHandRing1', 'RightHandRing2', 'RightHandRing3',
+		'RightHandPinky1', 'RightHandPinky2', 'RightHandPinky3',
+		'LeftUpLeg', 'LeftLeg', 'LeftFoot', 'LeftToeBase',
+		'RightUpLeg', 'RightLeg', 'RightFoot', 'RightToeBase',
+	].map((n) => `mixamorig:${n}`);
+
+	it('every worker bone name canonicalizes', () => {
+		for (const name of MIA_JOINTS) {
+			expect(canonicalizeBoneName(name), name).not.toBeNull();
+		}
+	});
+
+	it('the worker skeleton covers the canonical bone set completely', () => {
+		const mapped = new Set(MIA_JOINTS.map((n) => canonicalizeBoneName(n)));
+		for (const bone of CANONICAL_BONES) {
+			expect(mapped.has(bone), bone).toBe(true);
+		}
+		expect(mapped.size).toBe(CANONICAL_BONES.length);
+	});
+
+	it('a worker-shaped GLB rewrites to canonical names in place', () => {
+		const nodes = MIA_JOINTS.map((name, i) => ({
+			name,
+			translation: [0, i * 0.01, 0],
+		}));
+		// Chain children linearly; the canonicalizer only needs skins[].joints.
+		const json = {
+			asset: { version: '2.0' },
+			scenes: [{ nodes: [0] }],
+			scene: 0,
+			nodes,
+			skins: [{ joints: nodes.map((_, i) => i) }],
+		};
+		const out = canonicalizeGLBBones(buildGLB(json));
+		expect(out.renamed).toBe(MIA_JOINTS.length);
+		const after = readGLBJson(out.buffer);
+		const names = after.nodes.map((n) => n.name);
+		for (const bone of CANONICAL_BONES) {
+			expect(names).toContain(bone);
+		}
+	});
+});
