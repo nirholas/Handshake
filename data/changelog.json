@@ -3,6 +3,14 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "Forge fills the wait with prompt-craft tips",
+			"summary": "While your model is generating, the Forge now shows a rotating \"while it forges\" tip: short, concrete prompt-craft advice tuned to the free lane (name one subject, add a material, describe the finish, and so on), each with a worked example. It sits alongside the real progress steps, so the 10-60 second wait quietly makes your next prompt sharper instead of just ticking. Motion-sensitive visitors get a single static tip.",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
 			"title": "Share a model, and whoever opens the link builds their own",
 			"summary": "Forge something you like and hit Share: you now get a remix link. When a friend opens it, the homepage loads with your prompt already in the forge bar and starts building their own version on arrival, no typing and no sign-up. Any link of the form three.ws/?prompt=your idea works the same way, so you can hand-craft or bookmark them too. It turns every creation into an invitation: make something, share it, and the next person is one glance away from making their own. (The Open in Scene action still links your exact finished model.)",
 			"tags": [
