@@ -19,7 +19,8 @@
 // against replay and can never double-grant.
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
-import { buildBazaarSchema } from '../_lib/x402-spec.js';
+import { buildBazaarSchema, paymentRequirements, send402 } from '../_lib/x402-spec.js';
+import { priceFor } from '../_lib/x402-prices.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { error } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
@@ -121,19 +122,58 @@ const BAZAAR = {
 	}),
 };
 
+// Discovery probes (x402scan registration, Bazaar validators) hit the bare
+// route with placeholder or missing query params and expect a valid 402
+// challenge, not a 400/404 — the x402 discovery spec treats runtime 402 behavior
+// as the source of truth, so request validation must not reject the probe before
+// the payment middleware runs. This advertises the endpoint at a representative
+// default price (env-overridable via X402_PRICE_COSMETIC_PURCHASE) with the full
+// bazaar schema. No money can settle against it: a paid retry still needs a real
+// ?id= + ?account= (the paymentPresent branches below keep their 400/404), and
+// an X-PAYMENT envelope is only an authorization — USDC moves at settle, which
+// this path never reaches. Mirrors asset-download.js sendDiscoveryChallenge.
+function sendDiscoveryChallenge(res, errText) {
+	const resourceUrl = `${env.APP_ORIGIN}${ROUTE}`;
+	return send402(res, {
+		resourceUrl,
+		accepts: paymentRequirements(resourceUrl, {
+			amount: priceFor('cosmetic-purchase', '500000'),
+		}),
+		description: DESCRIPTION,
+		bazaar: BAZAAR,
+		error: errText,
+		serviceName: 'three.ws Avatar Shop',
+		tags: ['3d', 'avatar', 'cosmetic', 'shop', 'wearable'],
+	});
+}
+
 // Per-item paidEndpoint built on the fly: the id picks the catalog row, which
 // dictates the USDC price; everything else is shared. Mirrors asset-download.js,
 // where the slug drives a per-row price + SIWX grant.
 export default async function handler(req, res) {
+	const paymentPresent = Boolean(req.headers['x-payment'] || req.headers['payment-signature']);
+
 	const id = req.query?.id ? String(req.query.id).trim() : '';
 	if (!id) {
-		return error(res, 400, 'id_required', 'query parameter "id" is required');
+		if (paymentPresent) {
+			return error(res, 400, 'id_required', 'query parameter "id" is required');
+		}
+		return sendDiscoveryChallenge(
+			res,
+			'query parameter "id" is required — retry with ?id=<cosmeticId>&account=<accountId> from /api/cosmetics/catalog for that item’s exact price',
+		);
 	}
 
 	const account = normalizeAccountId(req.query?.account);
 	if (!account) {
-		return error(res, 400, 'account_required',
-			'query parameter "account" is required (a Solana wallet or guest id)');
+		if (paymentPresent) {
+			return error(res, 400, 'account_required',
+				'query parameter "account" is required (a Solana wallet or guest id)');
+		}
+		return sendDiscoveryChallenge(
+			res,
+			'query parameter "account" is required (a Solana wallet or guest id) — retry with ?id=<cosmeticId>&account=<accountId>',
+		);
 	}
 
 	// Coin-tied sale (R25): when bought inside a coin's /play world, the optional
@@ -144,12 +184,24 @@ export default async function handler(req, res) {
 
 	const item = getCosmetic(id);
 	if (!item) {
-		return error(res, 404, 'cosmetic_not_found', `no cosmetic with id "${id}"`);
+		if (paymentPresent) {
+			return error(res, 404, 'cosmetic_not_found', `no cosmetic with id "${id}"`);
+		}
+		return sendDiscoveryChallenge(
+			res,
+			`no cosmetic with id "${id}" — browse /api/cosmetics/catalog for available premium ids`,
+		);
 	}
 	if (!item.premium) {
 		// Base-pack items ship owned with every avatar — there's nothing to sell.
-		return error(res, 400, 'not_purchasable',
-			`cosmetic "${id}" is part of the free base pack and is already owned`);
+		if (paymentPresent) {
+			return error(res, 400, 'not_purchasable',
+				`cosmetic "${id}" is part of the free base pack and is already owned`);
+		}
+		return sendDiscoveryChallenge(
+			res,
+			`cosmetic "${id}" is part of the free base pack and is already owned — pick a premium id from /api/cosmetics/catalog`,
+		);
 	}
 
 	const priceAtomics = priceUsdcAtomicsOf(item);

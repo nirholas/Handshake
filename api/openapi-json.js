@@ -1208,7 +1208,31 @@ export default wrap(async (req, res) => {
 							},
 						],
 						responses: {
-							200: { description: 'Ownership grant JSON' },
+							200: {
+								description: 'Ownership grant JSON',
+								content: {
+									'application/json': {
+										schema: {
+											type: 'object',
+											required: ['ok', 'id', 'name', 'slot', 'rarity', 'account', 'owned'],
+											properties: {
+												ok: { type: 'boolean' },
+												id: { type: 'string' },
+												name: { type: 'string' },
+												slot: { type: 'string' },
+												rarity: { type: 'string' },
+												account: { type: 'string' },
+												owned: { type: 'boolean' },
+												newlyOwned: { type: 'boolean' },
+												payer: { type: ['string', 'null'] },
+												network: { type: ['string', 'null'] },
+												amountAtomics: { type: ['string', 'null'] },
+												asset: { type: ['string', 'null'] },
+											},
+										},
+									},
+								},
+							},
 							400: { description: 'Missing or invalid id/account' },
 							402: { description: 'Payment Required (x402)' },
 							404: { description: 'Cosmetic not found' },
@@ -1231,12 +1255,32 @@ export default wrap(async (req, res) => {
 								name: 'id',
 								in: 'query',
 								required: true,
-								schema: { type: 'string', minLength: 1, maxLength: 128 },
-								description: 'Animation slug or UUID from the animations catalog.',
+								schema: { type: 'string', format: 'uuid' },
+								description: 'Animation clip UUID from the marketplace animations feed (GET /api/marketplace/animations).',
 							},
 						],
 						responses: {
-							200: { description: 'Presigned download URL JSON' },
+							200: {
+								description: 'Presigned download URL JSON',
+								content: {
+									'application/json': {
+										schema: {
+											type: 'object',
+											required: ['ok', 'id', 'name', 'mimeType', 'downloadUrl', 'expiresAt'],
+											properties: {
+												ok: { type: 'boolean' },
+												id: { type: 'string', format: 'uuid' },
+												slug: { type: 'string' },
+												name: { type: 'string' },
+												mimeType: { type: 'string' },
+												sizeBytes: { type: 'integer', minimum: 0 },
+												expiresAt: { type: 'string', format: 'date-time' },
+												downloadUrl: { type: 'string', format: 'uri' },
+											},
+										},
+									},
+								},
+							},
 							400: { description: 'Missing or invalid id' },
 							402: { description: 'Payment Required (x402)' },
 							404: { description: 'Animation not found' },

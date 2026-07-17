@@ -165,24 +165,93 @@ export async function watsonxEmbed(cfg, { inputs, model } = {}) {
 // One-shot (non-streaming) chat completion. Used where we need a short, whole
 // answer rather than a token stream — e.g. asking Granite to name a cluster of
 // semantically-similar agents. Returns the assistant text and token usage.
+//
+// If the watsonx call fails outright (IAM auth, quota, region outage, an
+// unsupported model) AND an OpenRouter key is configured, this falls over to
+// OpenRouter-hosted Granite — the SAME model family (ibm-granite/*), just
+// different hosting — so every Granite consumer (Oracle, Twin, Galaxy, cluster
+// naming) stays up during a watsonx outage instead of hard-failing. Invisible
+// to callers: the return shape is identical and `provider` marks which lane
+// served. When OpenRouter is unset the original watsonx error propagates
+// unchanged, exactly as before.
 export async function watsonxChatComplete(cfg, { messages, model, maxTokens, temperature } = {}) {
 	// Decoding params are TOP-LEVEL on the chat endpoint (it is OpenAI-shaped) —
 	// not nested under a `parameters` wrapper (that's the older text/generation
 	// API). Nesting them here silently dropped max_tokens/temperature; keep this
 	// consistent with watsonxChatRequest() above, which already sends them flat.
-	const data = await watsonxPost(cfg, '/ml/v1/text/chat', {
-		model_id: model || cfg.chatModel,
-		messages,
-		...(maxTokens != null ? { max_tokens: maxTokens } : {}),
-		...(temperature != null ? { temperature } : {}),
-	});
-	const choice = data.choices?.[0];
-	return {
-		text: choice?.message?.content ?? '',
-		finishReason: choice?.finish_reason,
-		usage: data.usage,
-		model: data.model_id || model || cfg.chatModel,
-	};
+	try {
+		const data = await watsonxPost(cfg, '/ml/v1/text/chat', {
+			model_id: model || cfg.chatModel,
+			messages,
+			...(maxTokens != null ? { max_tokens: maxTokens } : {}),
+			...(temperature != null ? { temperature } : {}),
+		});
+		const choice = data.choices?.[0];
+		return {
+			text: choice?.message?.content ?? '',
+			finishReason: choice?.finish_reason,
+			usage: data.usage,
+			model: data.model_id || model || cfg.chatModel,
+			provider: 'watsonx',
+		};
+	} catch (err) {
+		const fallback = await graniteOpenRouterFallback({ messages, maxTokens, temperature });
+		if (fallback) {
+			console.warn(`[watsonx] chat failed, served via OpenRouter Granite: ${err.message}`);
+			return fallback;
+		}
+		throw err;
+	}
+}
+
+// Same-model backstop for watsonxChatComplete: OpenRouter-hosted Granite, tried
+// only when the watsonx call failed. Keeps the platform's Granite features alive
+// through a watsonx-side outage without swapping the model family. Returns null
+// when no OpenRouter key is configured (so the original watsonx error stands) or
+// when OpenRouter itself fails. The key list mirrors llm.js / brain-chat:
+// OPENROUTER_API_KEY first, then the comma-separated OPENROUTER_FALLBACK_KEYS.
+async function graniteOpenRouterFallback({ messages, maxTokens, temperature }) {
+	const keys = [
+		process.env.OPENROUTER_API_KEY?.trim(),
+		...(process.env.OPENROUTER_FALLBACK_KEYS || '').split(',').map((k) => k.trim()),
+	].filter(Boolean);
+	if (!keys.length) return null;
+	const model = process.env.OPENROUTER_GRANITE_MODEL?.trim() || 'ibm-granite/granite-4.1-8b';
+	for (const key of [...new Set(keys)]) {
+		try {
+			const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+				method: 'POST',
+				headers: {
+					'content-type': 'application/json',
+					authorization: `Bearer ${key}`,
+					'HTTP-Referer': 'https://three.ws',
+					'X-Title': 'three.ws',
+				},
+				body: JSON.stringify({
+					model,
+					messages,
+					...(maxTokens != null ? { max_tokens: maxTokens } : {}),
+					...(temperature != null ? { temperature } : {}),
+				}),
+				signal: AbortSignal.timeout(20_000),
+			});
+			if (!res.ok) continue;
+			const data = await res.json();
+			const choice = data.choices?.[0];
+			const text = choice?.message?.content ?? '';
+			if (!text) continue;
+			return {
+				text,
+				finishReason: choice?.finish_reason,
+				usage: data.usage,
+				model: data.model || model,
+				provider: 'openrouter-granite',
+			};
+		} catch {
+			// Try the next key; if all fail we return null and the watsonx error stands.
+		}
+	}
+	return null;
 }
 
 // Granite TimeSeries forecasting lives in ./watsonx-forecast.js (the canonical

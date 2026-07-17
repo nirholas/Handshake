@@ -102,6 +102,26 @@ describe('credential-less probes always reach the 402 challenge', () => {
 		await expectChallenge(res);
 	}, 15000);
 
+	it('bare probe on cosmetic-purchase serves the challenge (was 400/404)', async () => {
+		const res = await fetch(`${BASE}/api/x402/cosmetic-purchase`);
+		await expectChallenge(res);
+	}, 15000);
+
+	it('placeholder-param probe on cosmetic-purchase serves the challenge, not 404 (x402scan fills required strings with a placeholder)', async () => {
+		const res = await fetch(`${BASE}/api/x402/cosmetic-purchase?id=string&account=string`);
+		await expectChallenge(res);
+	}, 15000);
+
+	it('bare probe on animation-download serves the challenge (was 400)', async () => {
+		const res = await fetch(`${BASE}/api/x402/animation-download`);
+		await expectChallenge(res);
+	}, 15000);
+
+	it('non-uuid placeholder probe on animation-download serves the challenge, not 400', async () => {
+		const res = await fetch(`${BASE}/api/x402/animation-download?id=string`);
+		await expectChallenge(res);
+	}, 15000);
+
 	it('empty-object POST body on fact-check serves the challenge (was 400)', async () => {
 		const res = await fetch(`${BASE}/api/x402/fact-check`, {
 			method: 'POST',

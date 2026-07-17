@@ -11,13 +11,13 @@
 //
 // Priority (per network): the caller's explicit url (if any) → Helius → Alchemy
 // → dRPC (authenticated) → Ankr (authenticated only) → operator-supplied
-// SOLANA_RPC_FALLBACK_URLS → PublicNode → Leo RPC (keyless FREE tier) → Tatum →
-// therpc → the official mainnet-beta endpoint, always last. We never depend on the
+// SOLANA_RPC_FALLBACK_URLS → PublicNode → Leo RPC (keyless FREE tier) → Tatum → the
+// official mainnet-beta endpoint, always last. We never depend on the
 // public endpoint alone — it is the most aggressively rate-limited (the source of
 // the `getBalance 429` log noise) — and we never include a keyless Ankr URL, which
 // Ankr now answers with a hard 403. The keyless tail (PublicNode + Leo RPC + Tatum
-// + therpc + mainnet-beta) is what keeps checkout serving when a paid plan lapses:
-// all five were verified serving live getLatestBlockhash/getAccountInfo on Solana
+// + MagicBlock + mainnet-beta) is what keeps checkout serving when a paid plan lapses:
+// all were verified serving live getLatestBlockhash/getAccountInfo on Solana
 // mainnet, so even with every API key dead the chain still resolves a working node
 // instead of erroring out.
 //
@@ -248,17 +248,18 @@ export function solanaRpcEndpoints(network = 'mainnet', url = null) {
 		// chain still has depth when every paid key is exhausted (e.g. a Helius plan
 		// lapsing mid-billing-cycle). Verified serving getAccountInfo on mainnet.
 		'https://solana.leorpc.com/?api_key=FREE',
-		// Tatum + therpc — two more keyless public lanes. PublicNode, Leo RPC and
-		// Tatum were each verified serving getAccountInfo (the method whose malformed
-		// response 500'd checkout); therpc was verified on getLatestBlockhash but is
-		// flaky on getAccountInfo (intermittently returns an empty body), so it sits
-		// last before mainnet-beta and leans on the classifyRpcBody guard to fail over
-		// when it returns garbage — it adds redundancy for the methods it serves
-		// without ever handing web3.js something it can't parse. With mainnet-beta this
-		// is five keyless fallbacks: a request only errors if all five are down at
-		// once. The free public-RPC pool has thinned (most providers now 401/403/429
-		// keyless), so this set is curated to ones that actually respond — re-verify
-		// any that start cooling persistently in the failover logs.
+		// Tatum keyless lane. PublicNode, Leo RPC and Tatum were each verified serving
+		// getAccountInfo (the method whose malformed response 500'd checkout). Tatum
+		// gates getBalance and getSignaturesForAddress behind a paid tier (a -16401
+		// "available for paid plans only" / "not available for anonymous access"
+		// JSON-RPC error), which isProviderTierError classifies as a fail-over signal,
+		// so it adds redundancy for the methods it serves without ever blinding a
+		// balance/signature caller. The free public-RPC pool has thinned (most
+		// providers now 401/403/429 keyless), so this set is curated to ones that
+		// actually respond; re-verify any that start cooling persistently in the
+		// failover logs. (solana.therpc.io was pruned 2026-07-17 after going fully
+		// unreachable, DNS fetch failures on every probe of both getLatestBlockhash
+		// and getBalance.)
 		'https://api.tatum.io/v3/blockchain/node/solana-mainnet',
 		// MagicBlock + Tatum's gateway host — two more keyless lanes verified live
 		// (getLatestBlockhash + sendTransaction enabled) on 2026-07-04 when the free
@@ -267,7 +268,6 @@ export function solanaRpcEndpoints(network = 'mainnet', url = null) {
 		// classifyRpcBody guard still fails them over if either returns garbage.
 		'https://rpc.magicblock.app/mainnet',
 		'https://solana-mainnet.gateway.tatum.io',
-		'https://solana.therpc.io',
 		PUBLIC_MAINNET,
 		// Paid metered reserve (mainnet only — devnet URLs would cross clusters).
 		// Dead last BY DESIGN: these bill against a monthly quota, so they serve

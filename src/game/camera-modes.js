@@ -6,9 +6,10 @@
 // `computeCameraForMode()` is the pure per-frame pose math (no allocation
 // beyond a shared scratch, no side effects) — both `walk.js` and
 // `coincommunities.js` can call it directly for a one-shot pose. It is a
-// faithful port of the FOV table / orbit math walk.js carried inline; 'follow'
-// matches the orbit formula `/play` already used so switching to this module
-// doesn't shift the default view.
+// faithful port of the orbit math walk.js carried inline; the 'follow' orbit
+// formula matches what `/play` and `/walk` already used. (The follow FOV was
+// widened from 50° to 58° — see CAMERA_MODE_FOV — so the default view frames
+// more of the world; the orbit geometry itself is unchanged.)
 //
 // `createCameraModeController()` wraps it with mode cycling, localStorage
 // persistence, and a cross-fade transition so a mode swap doesn't pop.
@@ -24,7 +25,12 @@ export const CAMERA_MODE_LABELS = {
 	topdown: 'Top Down',
 };
 
-export const CAMERA_MODE_FOV = { follow: 50, cinematic: 35, firstperson: 75, topdown: 50 };
+// Follow sits at 58° — wide enough to frame the plaza (totem, jumbotrons, the
+// avatars around you) without the fisheye a 70°+ lens gives a close chase cam.
+// The old 50° read as telephoto: everything felt zoomed in and cropped at the
+// edges. Cinematic stays tight (35°) for its slow hero orbit; first person is a
+// natural 75°; top-down keeps 50° since it looks straight down.
+export const CAMERA_MODE_FOV = { follow: 58, cinematic: 35, firstperson: 75, topdown: 50 };
 
 const CINEMATIC_ORBIT_SPEED = 0.15; // rad/s — the auto-orbit's angular speed
 const CINEMATIC_RADIUS_MULT = 1.8; // × avatar height, scaled further by zoom

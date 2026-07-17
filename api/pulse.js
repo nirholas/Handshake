@@ -10,6 +10,9 @@
 //     (event_type='spend', category in 'trade'/'snipe'), and agent-to-agent
 //     payments (category='x402'). These are already-public, on-chain movements.
 //   · pump_agent_mints — coins launched by an agent.
+//   · skill_purchases — real marketplace purchases (skill / time-pass) confirmed
+//     on-chain and settled in $THREE. Surfaced as 'purchase' beats the instant a
+//     sale lands, straight from the authoritative purchase ledger.
 //
 // Privacy is load-bearing (see prompts/agent-wallets/07): private withdrawals,
 // spend-limit changes, key-recovery and vanity-swap custody events are OWNER-ONLY
@@ -151,6 +154,7 @@ async function handleFeed(req, res, { network, type, agentId, cursor, since }) {
 
 	const agentFilterCe = agentId ? sql`AND ce.agent_id = ${agentId}` : sql``;
 	const agentFilterPam = agentId ? sql`AND pam.agent_id = ${agentId}` : sql``;
+	const agentFilterSp = agentId ? sql`AND sp.agent_id = ${agentId}` : sql``;
 
 	// One UNION ALL of identical columns. Casts on the launch side make the null
 	// columns type-compatible with the custody side.
@@ -237,6 +241,49 @@ async function handleFeed(req, res, { network, type, agentId, cursor, since }) {
 		LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
 		WHERE pam.network = ${network}
 		  ${agentFilterPam}
+
+		UNION ALL
+
+		-- Real marketplace purchases (skill / time-pass) confirmed on-chain and
+		-- settled in $THREE on Solana mainnet. Read straight from skill_purchases,
+		-- the same authoritative ledger the marketplace stats reconcile against, so a
+		-- confirmed sale becomes a 'purchase' beat the moment it lands, not only when
+		-- the synthetic circulation loop happens to be running. Free trials are
+		-- excluded (MARKET_PAID_KINDS): a beat means value actually changed hands.
+		-- The earning SELLER agent fronts the row, mirroring the top-earners math.
+		-- These rows are always Solana mainnet, so the branch yields nothing on the
+		-- devnet feed.
+		SELECT
+			COALESCE(sp.confirmed_at, sp.created_at)  AS ts,
+			'purchase'                                AS kind,
+			'p' || sp.id::text                        AS row_id,
+			'mainnet'::text                           AS network,
+			ai.id                                     AS agent_id,
+			ai.name                                   AS agent_name,
+			ai.meta->>'solana_address'                AS agent_addr,
+			ai.meta->>'solana_vanity_prefix'          AS vanity_prefix,
+			ai.meta->>'solana_vanity_suffix'          AS vanity_suffix,
+			av.thumbnail_key                          AS thumb_key,
+			av.visibility                             AS avatar_vis,
+			'THREE'::text                             AS asset,
+			NULL::bigint                              AS amount_lamports,
+			sp.amount::numeric                        AS amount_raw,
+			NULL::numeric                             AS usd,
+			sp.tx_signature                           AS signature,
+			NULL::text                                AS mint,
+			NULL::text                                AS symbol,
+			NULL::text                                AS coin_name,
+			sp.skill                                  AS skill,
+			NULL::text                                AS counterparty
+		FROM skill_purchases sp
+		JOIN agent_identities ai ON ai.id = sp.agent_id AND ${visGate}
+		LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
+		WHERE ${network} = 'mainnet'
+		  AND sp.status = 'confirmed'
+		  AND sp.kind = ANY(${MARKET_PAID_KINDS})
+		  AND sp.currency_mint = ${THREE_MINT}
+		  AND sp.chain = 'solana'
+		  ${agentFilterSp}
 	`;
 
 	// Keyset bounds. `since` (delta poll) returns only rows strictly newer than

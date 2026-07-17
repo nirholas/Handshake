@@ -20,7 +20,7 @@ export default {
 	tags: ['3d', 'animation', 'glb', 'motion', 'avatar'],
 	description: 'three.ws Animation Bazaar — pay once in USDC to unlock a 3D avatar animation (GLB). Each animation has its own price; the response carries a short-lived presigned URL the client fetches directly. Wallets that have already paid can re-download for free by signing in with SIWX.',
 	input: {
-		id: 'pole-dancer-rumba',
+		id: '00000000-0000-0000-0000-000000000000',
 	},
 	inputSchema: {
 		type: 'object',
@@ -28,9 +28,8 @@ export default {
 		properties: {
 			id: {
 				type: 'string',
-				minLength: 1,
-				maxLength: 128,
-				description: 'Animation slug or UUID from the animations catalog.',
+				format: 'uuid',
+				description: 'Animation clip UUID from the marketplace animations feed (GET /api/marketplace/animations).',
 			},
 		},
 	},

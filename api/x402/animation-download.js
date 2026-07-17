@@ -12,7 +12,8 @@
 // response-size limit). Mirrors api/x402/asset-download.js.
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
-import { buildBazaarSchema } from '../_lib/x402-spec.js';
+import { buildBazaarSchema, paymentRequirements, send402 } from '../_lib/x402-spec.js';
+import { priceFor } from '../_lib/x402-prices.js';
 import { withService } from '../_lib/x402/bazaar-helpers.js';
 import { sql } from '../_lib/db.js';
 import { presignGet } from '../_lib/r2.js';
@@ -131,13 +132,46 @@ async function presignPayload(row) {
 	};
 }
 
+// Discovery probes (x402scan registration, Bazaar validators) hit the bare route
+// with placeholder or missing query params and expect a valid 402 challenge, not
+// a 400/404 — the x402 discovery spec treats runtime 402 behavior as the source
+// of truth, so request validation must not reject the probe before the payment
+// middleware runs. This advertises the endpoint at a representative default price
+// (env-overridable via X402_PRICE_ANIMATION_DOWNLOAD) with the full bazaar
+// schema. No money can settle against it: a paid retry still needs a real clip
+// uuid (the paymentPresent branches below keep their 400/404), and an X-PAYMENT
+// envelope is only an authorization — USDC moves at settle, which this path never
+// reaches. Mirrors asset-download.js sendDiscoveryChallenge.
+function sendDiscoveryChallenge(res, errText) {
+	const resourceUrl = `${env.APP_ORIGIN}${ROUTE}`;
+	return send402(res, {
+		resourceUrl,
+		accepts: paymentRequirements(resourceUrl, {
+			amount: priceFor('animation-download', '10000'),
+		}),
+		description: DESCRIPTION,
+		bazaar: BAZAAR,
+		error: errText,
+		serviceName: 'three.ws Animation Bazaar',
+		tags: ['3d', 'animation', 'glb', 'avatar', 'motion', 'download'],
+	});
+}
+
 // Exported for contract tests (price/statement/payout logic) without a live DB.
 export const __test__ = { priceAtomics, buildSiwxStatement, buildPayToOverride, UUID_RE };
 
 export default async function handler(req, res) {
+	const paymentPresent = Boolean(req.headers['x-payment'] || req.headers['payment-signature']);
+
 	const id = req.query?.id ? String(req.query.id).trim() : '';
 	if (!UUID_RE.test(id)) {
-		return error(res, 400, 'id_required', 'query parameter "id" must be a clip uuid');
+		if (paymentPresent) {
+			return error(res, 400, 'id_required', 'query parameter "id" must be a clip uuid');
+		}
+		return sendDiscoveryChallenge(
+			res,
+			'query parameter "id" must be a clip uuid — retry with ?id=<uuid> from the marketplace animations feed for that clip’s exact price',
+		);
 	}
 
 	let row;
@@ -147,7 +181,13 @@ export default async function handler(req, res) {
 		return error(res, 502, 'animation_lookup_failed', err.message);
 	}
 	if (!row || !row.listed || !row.artifact_key) {
-		return error(res, 404, 'animation_not_found', `no listed animation with id "${id}"`);
+		if (paymentPresent) {
+			return error(res, 404, 'animation_not_found', `no listed animation with id "${id}"`);
+		}
+		return sendDiscoveryChallenge(
+			res,
+			`no listed animation with id "${id}" — browse /api/marketplace/animations for available clip ids`,
+		);
 	}
 
 	// Free listing — no paywall, hand back the presigned URL directly.

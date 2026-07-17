@@ -118,12 +118,12 @@ describe('cosmetics ownership ledger', () => {
 });
 
 // ── purchase endpoint boundary ───────────────────────────────────────────────
-function mockReq(query) {
+function mockReq(query, headers = {}) {
 	return {
 		method: 'GET',
 		url: '/api/x402/cosmetic-purchase?' + new URLSearchParams(query).toString(),
 		query,
-		headers: {},
+		headers,
 	};
 }
 
@@ -136,14 +136,19 @@ function mockRes() {
 	return res;
 }
 
-async function call(query) {
+async function call(query, headers = {}) {
 	const { default: handler } = await import('../api/x402/cosmetic-purchase.js');
-	const req = mockReq(query);
+	const req = mockReq(query, headers);
 	const res = mockRes();
 	await handler(req, res);
 	let parsed; try { parsed = JSON.parse(res.body); } catch { parsed = res.body; }
 	return { status: res.statusCode, parsed };
 }
+
+// A real payer presents an X-PAYMENT envelope; discovery probes never do. The
+// endpoint keeps strict 400/404 validation for the former and serves a spec-valid
+// 402 discovery challenge to the latter (x402scan/Bazaar registration contract).
+const PAID = { 'x-payment': 'probe-authorization-envelope' };
 
 describe('cosmetic-purchase endpoint boundary', () => {
 	// Warm the heavy import chain (x402-paid-endpoint → @coinbase/x402 → Solana
@@ -164,16 +169,27 @@ describe('cosmetic-purchase endpoint boundary', () => {
 		process.env.X402_FEE_PAYER_SOLANA = 'THREEsynthetic1111111111111111111111111PayTo';
 	});
 
-	it('rejects missing id / account', async () => {
-		expect((await call({ account: 'guest-1' })).status).toBe(400);
-		expect((await call({ id: 'skin-midnight' })).status).toBe(400);
+	it('rejects missing id / account for a real payer (X-PAYMENT present)', async () => {
+		expect((await call({ account: 'guest-1' }, PAID)).status).toBe(400);
+		expect((await call({ id: 'skin-midnight' }, PAID)).status).toBe(400);
 	});
 
-	it('404s an unknown cosmetic and 400s a free base item', async () => {
-		expect((await call({ id: 'nope', account: 'guest-1' })).status).toBe(404);
-		const free = await call({ id: 'hat-baseball', account: 'guest-1' });
+	it('404s an unknown cosmetic and 400s a free base item for a real payer', async () => {
+		expect((await call({ id: 'nope', account: 'guest-1' }, PAID)).status).toBe(404);
+		const free = await call({ id: 'hat-baseball', account: 'guest-1' }, PAID);
 		expect(free.status).toBe(400);
 		expect(free.parsed.error).toBe('not_purchasable');
+	});
+
+	it('serves a 402 discovery challenge to a credential-less probe (missing/placeholder/unknown params)', async () => {
+		// x402scan hits the bare route or fills required strings with a placeholder;
+		// the endpoint must answer 402, never 400/404, or registration drops it.
+		for (const q of [{}, { account: 'guest-1' }, { id: 'string', account: 'string' }, { id: 'hat-baseball', account: 'guest-1' }]) {
+			const r = await call(q);
+			expect(r.status).toBe(402);
+			expect(Array.isArray(r.parsed.accepts)).toBe(true);
+			expect(r.parsed.accepts.length).toBeGreaterThan(0);
+		}
 	});
 
 	it('issues a 402 priced in USDC for a premium cosmetic', async () => {

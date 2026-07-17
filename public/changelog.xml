@@ -231,6 +231,14 @@
 			<description>When a text-to-3D generation needs a moment and hands back a job to poll, the free /api/3d/generate API now includes how long to wait before checking again (a retryAfter value, also sent as the standard Retry-After header) plus an estimated time-to-ready and a stable creation id. Agents that honor the hint poll on a sensible schedule instead of hammering the endpoint, so they stop tripping the rate limit and the shared free GPU lane carries less needless traffic. Fully backward-compatible: existing callers keep working unchanged.</description>
 		</item>
 		<item>
+			<title>Granite-powered features stay up during an IBM outage</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-17:Granite-powered features stay up during an IBM outage</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>The IBM Granite features (the Granite Oracle, Agent Twin, and Galaxy cluster naming) all run one-shot Granite completions through IBM watsonx. If watsonx dropped a request (an auth, quota, or regional hiccup), those features had no backstop and failed outright. They now fall over to the same Granite model family hosted on OpenRouter, so a watsonx-side blip is invisible to the user and the feature keeps answering.</description>
+		</item>
+		<item>
 			<title>Image to 3D gets its own front door</title>
 			<link>https://three.ws/image-to-3d</link>
 			<guid isPermaLink="false">2026-07-17:Image to 3D gets its own front door</guid>
@@ -311,6 +319,14 @@
 			<description>Two bugs had been failing every avatar reconstruction job. First, the platform's own 3D worker delivers finished models from our Cloud Storage bucket, but a security allowlist introduced to keep forged URLs out only recognized third-party hosts, so even successful builds were marked failed at the last step. The allowlist now recognizes our own storage bucket (and only ours). Second, avatars generated from a text prompt use a full-body reference image, whose small face the face detector often missed, ending the job with 'no face detected'. The engine now finds the face with a wide-range detector, zooms in, and reads the facial detail from the zoomed view, so full-body renders and distant selfies both work. Describing a person in your prompt still matters: a subject with no human face gets a clear message asking you to reword.</description>
 		</item>
 		<item>
+			<title>Real marketplace purchases now land in the Money Pulse</title>
+			<link>https://three.ws/pulse</link>
+			<guid isPermaLink="false">2026-07-17:Real marketplace purchases now land in the Money Pulse</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The Money Pulse's Purchases tab was wired to a source that only ever filled up when a synthetic circulation loop was running, so real skill and time-pass sales never showed. It now reads straight from the marketplace's own purchase ledger: the moment a sale confirms on-chain in $THREE, it appears as a Purchase beat in the live feed, fronted by the agent that earned it, alongside tips, launches, trades and payments. Free trials stay out, so a beat always means value actually changed hands.</description>
+		</item>
+		<item>
 			<title>Selfie to 3D works again: finished avatars were being thrown away at the last step</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-17:Selfie to 3D works again: finished avatars were being thrown away at the last step</guid>
@@ -343,12 +359,28 @@
 			<description>Four upgrades to photo-to-3D landed together. Uploaded photos now have their background cleanly removed before reconstruction, so a busy backdrop no longer bleeds into the model. You can supply up to 6 reference angles instead of 4 for fuller coverage. Every uploaded angle is now quality-checked, and a blurry or off-subject one is dropped instead of corrupting the result. And every finished model runs through an automatic geometry cleanup pass that welds and de-duplicates the mesh and trims redundant triangles, so models load faster and render cleaner with no loss of detail.</description>
 		</item>
 		<item>
+			<title>The 3D world no longer stays blurry after a slow moment</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-17:The 3D world no longer stays blurry after a slow moment</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The world automatically lowers render detail if frames get choppy (loading a crowded plaza, a browser tab hiccup, a background sync). Until now it could only step down and never recovered, so a single rough moment left the 3D permanently soft on high-resolution screens while the interface on top stayed sharp. It now climbs back up to your device's full sharpness once frames are smooth again, so a brief hitch no longer costs you clarity for the rest of the session.</description>
+		</item>
+		<item>
 			<title>The agent-to-agent payment economy runs far cheaper and now cycles hundreds of distinct payers</title>
 			<link>https://three.ws/admin/ring</link>
 			<guid isPermaLink="false">2026-07-17:The agent-to-agent payment economy runs far cheaper and now cycles hundreds of distinct payers</guid>
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Two improvements to the closed-loop x402 agent economy that dogfoods every paid endpoint on the platform. First, a fix: a background wallet-consolidation job was quietly closing the ring's payment account after every settlement, forcing the next one to recreate it and pay account rent each time. That single bug had pushed the real fee cost to roughly a hundred times where it should be. With it fixed and single-signature settlement turned on, each settlement is back to the network floor of a few thousandths of a cent, and the ring's working balance stays in the loop instead of leaking away. Second, a new capability: the ring can now cycle payments through a reusable pool of hundreds to a thousand distinct wallets instead of one, so the economy reads as many participants rather than a single account, with no extra cost per payment. The pool is off until funded and activated, and every wallet in it stays clearly labeled internal dogfooding, not organic demand.</description>
+		</item>
+		<item>
+			<title>The avatar shop and animation bazaar are now discoverable by paying agents</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-17:The avatar shop and animation bazaar are now discoverable by paying agents</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two paid endpoints, the premium cosmetic shop and the animation download bazaar, were being skipped during automated x402 discovery: a probe that arrived without a specific item id got a 400/404 before the payment layer could answer, so directory crawlers read them as &quot;not a paid endpoint&quot; and never listed them. They now return a proper payment challenge to any credential-less probe, so agents can find them, see the price, and pay, while real buyers still get precise errors for a missing or unknown item.</description>
 		</item>
 		<item>
 			<title>The homepage AR showcase leads with the best models, and its QR places the exact one you see</title>

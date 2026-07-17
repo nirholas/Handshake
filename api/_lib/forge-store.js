@@ -799,6 +799,26 @@ export async function listShowcase({ limit = 12, voterKey = null, sort = 'fresh'
 	}
 }
 
+// Total finished community models with a stored GLB — the same public-artifact
+// bar the showcase feed uses (rejected rows excluded). Powers the live "N models
+// forged" social-proof count. Cheap COUNT(*), CDN-cached by its callers.
+export async function countShowcase() {
+	if (!forgeStoreEnabled()) return 0;
+	try {
+		const [row] = await sql`
+			select count(*)::int as n
+			from forge_creations
+			where status = 'done' and glb_url is not null
+				and (outcome is null or outcome != 'rejected')
+		`;
+		return row?.n ?? 0;
+	} catch (err) {
+		if (isDbUnavailableError(err)) console.warn('[forge-store] countShowcase skipped (db unavailable):', err?.message);
+		else console.error('[forge-store] countShowcase failed:', err?.message);
+		return 0;
+	}
+}
+
 // Monday 00:00:00 UTC of the Forge-Off week containing `ref` (default: now).
 // The weekly ritual runs Monday→Monday UTC; the crowning cron writes one
 // forge_board_winners row per completed week keyed by this Monday. Same idiom

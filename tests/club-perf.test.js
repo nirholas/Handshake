@@ -10,6 +10,7 @@ import {
 	detectProfile,
 	PROFILES,
 	nextLowerTier,
+	nextHigherTier,
 	createFrameWatchdog,
 } from '../src/club-perf.js';
 
@@ -154,6 +155,18 @@ describe('nextLowerTier', () => {
 	});
 });
 
+describe('nextHigherTier', () => {
+	it('walks low → medium → high and ceils at high', () => {
+		expect(nextHigherTier('low')).toBe('medium');
+		expect(nextHigherTier('medium')).toBe('high');
+		expect(nextHigherTier('high')).toBe('high');
+	});
+
+	it('returns low for unknown input (safe fallback)', () => {
+		expect(nextHigherTier('ultra')).toBe('low');
+	});
+});
+
 describe('createFrameWatchdog', () => {
 	it('downgrades after sustained slow frames', () => {
 		const onDowngrade = vi.fn();
@@ -188,17 +201,61 @@ describe('createFrameWatchdog', () => {
 		expect(wd.tier).toBe('high');
 	});
 
-	it('never upgrades on its own', () => {
-		const calls = [];
+	it('never climbs above the tier it booted into', () => {
+		const up = [];
 		const wd = createFrameWatchdog({
 			initialTier: 'medium',
 			holdSec: 2.0,
+			recoverSec: 6.0,
 			emaAlpha: 1.0,
-			onDowngrade: (t) => calls.push(t),
+			onDowngrade: () => {},
+			onUpgrade: (t) => up.push(t),
 		});
-		// Run 5 seconds of fast 60fps frames — should remain medium.
-		for (let i = 0; i < 300; i++) wd.tick(1 / 60);
-		expect(calls).toEqual([]);
+		// Run 20 seconds of fast 60fps frames — maxTier defaults to the boot
+		// tier (medium), so it must never climb to high.
+		for (let i = 0; i < 1200; i++) wd.tick(1 / 60);
+		expect(up).toEqual([]);
+		expect(wd.tier).toBe('medium');
+	});
+
+	it('recovers one tier after a sustained-fast window, then caps at the boot tier', () => {
+		const down = [];
+		const up = [];
+		const wd = createFrameWatchdog({
+			initialTier: 'high',
+			holdSec: 2.0,
+			recoverSec: 6.0,
+			emaAlpha: 1.0,
+			onDowngrade: (t) => down.push(t),
+			onUpgrade: (t) => up.push(t),
+		});
+		// A slow burst drops high → medium.
+		for (let i = 0; i < 75; i++) wd.tick(0.040); // ~3s slow
+		expect(down).toEqual(['medium']);
+		expect(wd.tier).toBe('medium');
+		// Sustained fast frames (60fps) climb it back to high — and no further,
+		// since high is the boot ceiling.
+		for (let i = 0; i < 1200; i++) wd.tick(1 / 60); // ~20s fast
+		expect(up).toEqual(['high']);
+		expect(wd.tier).toBe('high');
+	});
+
+	it('does not recover on a brief fast blip inside a slow stretch (hysteresis)', () => {
+		const up = [];
+		const wd = createFrameWatchdog({
+			initialTier: 'high',
+			holdSec: 2.0,
+			recoverSec: 6.0,
+			emaAlpha: 1.0,
+			onDowngrade: () => {},
+			onUpgrade: (t) => up.push(t),
+		});
+		for (let i = 0; i < 75; i++) wd.tick(0.040);   // drop to medium
+		// 3s of fast frames — shorter than the 6s recovery window — must NOT
+		// upgrade. The fast accumulator resets the moment slow frames return.
+		for (let i = 0; i < 180; i++) wd.tick(1 / 60); // ~3s fast
+		for (let i = 0; i < 25; i++) wd.tick(0.040);   // ~1s slow (not sustained)
+		expect(up).toEqual([]);
 		expect(wd.tier).toBe('medium');
 	});
 

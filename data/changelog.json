@@ -3,6 +3,41 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "The 3D world no longer stays blurry after a slow moment",
+			"summary": "The world automatically lowers render detail if frames get choppy (loading a crowded plaza, a browser tab hiccup, a background sync). Until now it could only step down and never recovered, so a single rough moment left the 3D permanently soft on high-resolution screens while the interface on top stayed sharp. It now climbs back up to your device's full sharpness once frames are smooth again, so a brief hitch no longer costs you clarity for the rest of the session.",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Granite-powered features stay up during an IBM outage",
+			"summary": "The IBM Granite features (the Granite Oracle, Agent Twin, and Galaxy cluster naming) all run one-shot Granite completions through IBM watsonx. If watsonx dropped a request (an auth, quota, or regional hiccup), those features had no backstop and failed outright. They now fall over to the same Granite model family hosted on OpenRouter, so a watsonx-side blip is invisible to the user and the feature keeps answering.",
+			"tags": [
+				"infra",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"title": "The avatar shop and animation bazaar are now discoverable by paying agents",
+			"summary": "Two paid endpoints, the premium cosmetic shop and the animation download bazaar, were being skipped during automated x402 discovery: a probe that arrived without a specific item id got a 400/404 before the payment layer could answer, so directory crawlers read them as \"not a paid endpoint\" and never listed them. They now return a proper payment challenge to any credential-less probe, so agents can find them, see the price, and pay, while real buyers still get precise errors for a missing or unknown item.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Real marketplace purchases now land in the Money Pulse",
+			"summary": "The Money Pulse's Purchases tab was wired to a source that only ever filled up when a synthetic circulation loop was running, so real skill and time-pass sales never showed. It now reads straight from the marketplace's own purchase ledger: the moment a sale confirms on-chain in $THREE, it appears as a Purchase beat in the live feed, fronted by the agent that earned it, alongside tips, launches, trades and payments. Free trials stay out, so a beat always means value actually changed hands.",
+			"tags": [
+				"fix"
+			],
+			"link": "/pulse"
+		},
+		{
+			"date": "2026-07-17",
 			"title": "AI chat stays up when the free lanes are busy",
 			"summary": "The AI chat could return a capacity error when its free model lanes were all rate-limited at once, because signed-out chats had no funded backstop to fall to. Anonymous chat now finishes on our credits-funded Vertex Gemini anchor once the free tiers are exhausted, so a busy moment no longer turns into a dead end. We also removed a chat model route that had been failing every request, which was adding latency to every reply and could surface as an occasional error.",
 			"tags": [

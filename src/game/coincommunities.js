@@ -34,7 +34,7 @@ import {
 } from '../shared/frame-governor.js';
 import { createDayNightCycle } from './day-night.js';
 import { worldClock } from '../shared/world-clock.js';
-import { createCameraModeController, CAMERA_MODE_LABELS } from './camera-modes.js';
+import { createCameraModeController, CAMERA_MODE_LABELS, CAMERA_MODE_FOV } from './camera-modes.js';
 import { createChartScreen } from './chart-screen.js';
 import { mountOracleRibbon } from './oracle-ribbon.js';
 import { MarketReactor } from './market-reactor.js';
@@ -409,8 +409,10 @@ export class CoinCommunities {
 		this._powerSaver = getPowerSaver();
 		// Boot-time quality tier from real capability signals (deviceMemory,
 		// cores, coarse pointer — same detector /club uses), then a watchdog
-		// that steps the tier down on sustained slow frames. Applied to the
-		// renderer in _initRenderer / _applyPerfTier.
+		// that steps the tier down on sustained slow frames and climbs it
+		// back (capped at the booted tier) once frames recover, so a single
+		// load-time hitch doesn't pin the pixel ratio low — and the 3D soft —
+		// for the whole session. Applied to the renderer in _applyPerfTier.
 		this._perfTier = detectProfile();
 		this._watchdog = createFrameWatchdog({
 			initialTier: this._perfTier,
@@ -418,6 +420,11 @@ export class CoinCommunities {
 				this._perfTier = tier;
 				this._applyPerfTier();
 				log.info('[coincommunities] downgrading render tier to', tier);
+			},
+			onUpgrade: (tier) => {
+				this._perfTier = tier;
+				this._applyPerfTier();
+				log.info('[coincommunities] recovering render tier to', tier);
 			},
 		});
 		onPowerSaverChange((on) => { this._powerSaver = on; this._applyPerfTier(); });
@@ -678,6 +685,25 @@ export class CoinCommunities {
 		this.renderer = r;
 		this._applyPerfTier();
 		window.addEventListener('resize', () => this._onResize());
+		this._watchDevicePixelRatio();
+	}
+
+	// devicePixelRatio changes when the window moves to a display with a
+	// different density (retina laptop ↔ external 1x monitor) or the OS/browser
+	// zoom changes. That does NOT reliably fire a 'resize' event, so without
+	// this the canvas keeps rendering at the old ratio — sharp becomes blurry,
+	// or a needlessly high ratio tanks the framerate. A resolution media query
+	// fires once when the current ratio stops matching; we re-sync and re-arm.
+	_watchDevicePixelRatio() {
+		if (typeof window.matchMedia !== 'function') return;
+		const arm = () => {
+			const dpr = window.devicePixelRatio || 1;
+			const mq = window.matchMedia(`(resolution: ${dpr}dppx)`);
+			const onChange = () => { this._onResize(); arm(); };
+			if (mq.addEventListener) mq.addEventListener('change', onChange, { once: true });
+			else if (mq.addListener) { const h = () => { mq.removeListener(h); onChange(); }; mq.addListener(h); }
+		};
+		arm();
 	}
 
 	// Apply the current quality tier (or the power-saver floor) to the renderer.
@@ -707,7 +733,9 @@ export class CoinCommunities {
 		this.scene = scene;
 
 		// Far plane reaches the sky dome; near stays tight for close avatars.
-		this.camera = new PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 9000);
+		// Initial FOV matches the follow mode's (camera-modes.js) so the first
+		// rendered frame doesn't pop before _updateCamera applies the mode.
+		this.camera = new PerspectiveCamera(CAMERA_MODE_FOV.follow, window.innerWidth / window.innerHeight, 0.1, 9000);
 
 		// Transparent embed (`?bg=transparent`): the environment skips the sky
 		// backdrop so the host page shows through; ground, ring, and avatars render.
@@ -3613,9 +3641,17 @@ export class CoinCommunities {
 	}
 
 	_onResize() {
-		this.camera.aspect = window.innerWidth / window.innerHeight;
+		const w = window.innerWidth, h = window.innerHeight;
+		// A minimized/hidden tab or an in-flight teardown can report a 0 dimension;
+		// setting a 0 aspect NaNs the projection matrix and blanks the scene.
+		if (!w || !h || !this.camera || !this.renderer) return;
+		this.camera.aspect = w / h;
 		this.camera.updateProjectionMatrix();
-		this.renderer.setSize(window.innerWidth, window.innerHeight);
+		this.renderer.setSize(w, h);
+		// Re-apply the pixel ratio: setSize keeps the renderer's current ratio,
+		// but devicePixelRatio may have changed (display move / zoom). _applyPerfTier
+		// reads the live devicePixelRatio and re-clamps it to the active tier.
+		this._applyPerfTier();
 	}
 }
 

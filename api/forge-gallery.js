@@ -20,7 +20,7 @@
 
 import { cors, json, method, wrap, rateLimited } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
-import { hashClient, listCreations, listShowcase, forgeStoreEnabled } from './_lib/forge-store.js';
+import { hashClient, listCreations, listShowcase, countShowcase, forgeStoreEnabled } from './_lib/forge-store.js';
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS' })) return;
@@ -49,13 +49,18 @@ export default wrap(async (req, res) => {
 		const rawClient = req.headers['x-forge-client'];
 		const hasClient = Array.isArray(rawClient) ? rawClient[0] : rawClient;
 		const voterKey = hasClient ? hashClient(hasClient) : null;
-		const creations = await listShowcase({ limit, sort, window, voterKey });
+		// `total` is the full community-model count (social proof), independent of
+		// the paginated slice. Cheap enough to run alongside the feed read.
+		const [creations, total] = await Promise.all([
+			listShowcase({ limit, sort, window, voterKey }),
+			countShowcase(),
+		]);
 		// Per-voter reads can't be shared across browsers, so only the anonymous
 		// (no client id) read is CDN-cacheable. A voted-state read is private.
 		const headers = voterKey
 			? { 'cache-control': 'private, no-store' }
 			: { 'cache-control': 'public, s-maxage=60, stale-while-revalidate=300' };
-		return json(res, 200, { enabled: true, creations, sort, window }, headers);
+		return json(res, 200, { enabled: true, creations, total, sort, window }, headers);
 	}
 
 	const rawClient = req.headers['x-forge-client'];
