@@ -175,6 +175,7 @@ export default wrapCron(async (req, res) => {
 			rejected: result.rejected || [],
 			master_sol: result.masterSol ?? null,
 			spendable_sol: result.spendableSol ?? null,
+			reclaim,
 			fuel,
 			read_errors: errors,
 		});
@@ -255,6 +256,7 @@ export default wrapCron(async (req, res) => {
 		rejected: result.rejected || [],
 		spent_sol: result.spentSol,
 		master_sol: result.masterSol ?? null,
+		reclaim,
 		fuel,
 		read_errors: errors,
 		run_id: runId,
