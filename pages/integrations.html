@@ -6,19 +6,19 @@
 	<script>(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title>Integrations — three.ws</title>
-	<meta name="description" content="Drop-in 3D agents, chat widgets, and avatar embeds for any site. One script tag. Powered by three.ws." />
+	<title data-i18n="integrations.meta_title">Integrations — three.ws</title>
+	<meta name="description" content="Drop-in 3D agents, chat widgets, and avatar embeds for any site. One script tag. Powered by three.ws."  data-i18n-attr="content:integrations.meta_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
-	<meta property="og:title" content="Integrations — three.ws" />
-	<meta property="og:description" content="Drop-in 3D agents, chat widgets, and avatar embeds for any site. One script tag." />
+	<meta property="og:title" content="Integrations — three.ws"  data-i18n-attr="content:integrations.meta_og_title"/>
+	<meta property="og:description" content="Drop-in 3D agents, chat widgets, and avatar embeds for any site. One script tag."  data-i18n-attr="content:integrations.meta_og_description"/>
 	<meta property="og:url" content="https://three.ws/integrations" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Integrations&amp;d=Drop-in+3D+agents%2C+chat+widgets%2C+walk+companions%2C+and+live+token+embeds+for+any+site.+One+script+tag.+Powered+by+three.ws.&amp;p=%2Fintegrations" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Integrations — three.ws" />
-	<meta name="twitter:description" content="Drop-in 3D agents, chat widgets, and avatar embeds for any site." />
+	<meta name="twitter:title" content="Integrations — three.ws"  data-i18n-attr="content:integrations.meta_twitter_title"/>
+	<meta name="twitter:description" content="Drop-in 3D agents, chat widgets, and avatar embeds for any site."  data-i18n-attr="content:integrations.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Integrations&amp;d=Drop-in+3D+agents%2C+chat+widgets%2C+walk+companions%2C+and+live+token+embeds+for+any+site.+One+script+tag.+Powered+by+three.ws.&amp;p=%2Fintegrations" />
 	<meta name="twitter:site" content="@trythreews" />
 	<link rel="canonical" href="https://three.ws/integrations" />
@@ -761,8 +761,8 @@
 			<span class="hero-eyebrow-dot" aria-hidden="true"></span>
 			Powered by three.ws
 		</div>
-		<h1>One line of code.<br><em>Any site.</em></h1>
-		<p class="hero-sub">
+		<h1 data-i18n-html="integrations.one_line_of_code_any_site">One line of code.<br><em>Any site.</em></h1>
+		<p class="hero-sub" data-i18n="integrations.drop_3d_agents_chat_widgets_walk_companions">
 			Drop 3D agents, chat widgets, walk companions, and live token data
 			into any website — no backend, no framework, no friction.
 		</p>
@@ -773,7 +773,7 @@
 				</svg>
 				Create an agent
 			</a>
-			<a href="/docs/embedding" class="btn-ghost">Read the docs →</a>
+			<a href="/docs/embedding" class="btn-ghost" data-i18n="integrations.read_the_docs">Read the docs →</a>
 		</div>
 	</section>
 
@@ -799,13 +799,13 @@
 
 	<!-- ── Filter ─────────────────────────────────────────────── -->
 	<div class="filter-bar" role="group" aria-label="Filter integrations">
-		<button class="filter-chip active" data-filter="all">All</button>
-		<button class="filter-chip" data-filter="avatar">3D Avatar</button>
-		<button class="filter-chip" data-filter="chat">Chat Agent</button>
-		<button class="filter-chip" data-filter="companion">Walk Companion</button>
-		<button class="filter-chip" data-filter="narrator">Page Narrator</button>
-		<button class="filter-chip" data-filter="crypto">Token Widget</button>
-		<button class="filter-chip" data-filter="mcp">MCP Server</button>
+		<button class="filter-chip active" data-filter="all" data-i18n="integrations.all">All</button>
+		<button class="filter-chip" data-filter="avatar" data-i18n="integrations.3d_avatar">3D Avatar</button>
+		<button class="filter-chip" data-filter="chat" data-i18n="integrations.chat_agent">Chat Agent</button>
+		<button class="filter-chip" data-filter="companion" data-i18n="integrations.walk_companion">Walk Companion</button>
+		<button class="filter-chip" data-filter="narrator" data-i18n="integrations.page_narrator">Page Narrator</button>
+		<button class="filter-chip" data-filter="crypto" data-i18n="integrations.token_widget">Token Widget</button>
+		<button class="filter-chip" data-filter="mcp" data-i18n="integrations.mcp_server">MCP Server</button>
 	</div>
 
 	<!-- ── Integration grid ───────────────────────────────────── -->
@@ -830,22 +830,22 @@
 			</div>
 			<div class="card-body">
 				<div class="card-meta">
-					<span class="cat-badge avatar">3D Avatar</span>
-					<span class="diff-badge">Simple</span>
+					<span class="cat-badge avatar" data-i18n="integrations.3d_avatar_2">3D Avatar</span>
+					<span class="diff-badge" data-i18n="integrations.simple">Simple</span>
 				</div>
-				<h2 class="card-title">Avatar Viewer</h2>
-				<p class="card-desc">A rotatable, animated 3D avatar — transparent background, OBS-ready, fully scriptable via JS. Works as a web component on any page.</p>
+				<h2 class="card-title" data-i18n="integrations.avatar_viewer">Avatar Viewer</h2>
+				<p class="card-desc" data-i18n="integrations.a_rotatable_animated_3d_avatar_transparent_b">A rotatable, animated 3D avatar — transparent background, OBS-ready, fully scriptable via JS. Works as a web component on any page.</p>
 				<div class="card-code">
 					<button class="code-toggle" aria-expanded="false" aria-controls="code-avatar">
 						<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
 							<path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 						</svg>
-						<span class="code-toggle-label">Get embed code</span>
+						<span class="code-toggle-label" data-i18n="integrations.get_embed_code">Get embed code</span>
 					</button>
 					<div class="code-panel" id="code-avatar" role="region">
 						<div class="code-header">
-							<span class="code-lang">html</span>
-							<button class="copy-btn" aria-label="Copy code">Copy</button>
+							<span class="code-lang" data-i18n="integrations.html">html</span>
+							<button class="copy-btn" aria-label="Copy code" data-i18n="integrations.copy" data-i18n-attr="aria-label:integrations.copy_code_arialabel">Copy</button>
 						</div>
 						<pre class="code-block" data-code><span class="c">&lt;!-- Load once --&gt;</span>
 <span class="k">&lt;script</span> <span class="a">src</span>=<span class="s">"https://three.ws/embed.js"</span> <span class="a">defer</span><span class="k">&gt;&lt;/script&gt;</span>
@@ -879,29 +879,29 @@
 						<div class="preview-chat-bubble">Let me pull the latest data for you…</div>
 					</div>
 				</div>
-				<button class="try-live-btn" data-modal-widget="wdgt_demo_talking" data-modal-title="Chat Agent — Live Demo" aria-label="Try live demo">
+				<button class="try-live-btn" data-modal-widget="wdgt_demo_talking" data-modal-title="Chat Agent — Live Demo" aria-label="Try live demo" data-i18n-html="integrations.try_live" data-i18n-attr="aria-label:integrations.try_live_demo_arialabel">
 					<span class="modal-live-dot" aria-hidden="true" style="width:6px;height:6px;border-radius:50%;background:var(--green);"></span>
 					Try live
 				</button>
 			</div>
 			<div class="card-body">
 				<div class="card-meta">
-					<span class="cat-badge chat">Chat Agent</span>
-					<span class="diff-badge">Simple</span>
+					<span class="cat-badge chat" data-i18n="integrations.chat_agent_2">Chat Agent</span>
+					<span class="diff-badge" data-i18n="integrations.simple_2">Simple</span>
 				</div>
-				<h2 class="card-title">Talking Chat Agent</h2>
-				<p class="card-desc">A full chat interface with a live 3D character. Voice or text. The same tech behind PumpBot — drop it on any site in seconds.</p>
+				<h2 class="card-title" data-i18n="integrations.talking_chat_agent">Talking Chat Agent</h2>
+				<p class="card-desc" data-i18n="integrations.a_full_chat_interface_with_a_live">A full chat interface with a live 3D character. Voice or text. The same tech behind PumpBot — drop it on any site in seconds.</p>
 				<div class="card-code">
 					<button class="code-toggle" aria-expanded="false" aria-controls="code-chat">
 						<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
 							<path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 						</svg>
-						<span class="code-toggle-label">Get embed code</span>
+						<span class="code-toggle-label" data-i18n="integrations.get_embed_code_2">Get embed code</span>
 					</button>
 					<div class="code-panel" id="code-chat" role="region">
 						<div class="code-header">
-							<span class="code-lang">html</span>
-							<button class="copy-btn" aria-label="Copy code">Copy</button>
+							<span class="code-lang" data-i18n="integrations.html_2">html</span>
+							<button class="copy-btn" aria-label="Copy code" data-i18n="integrations.copy_2" data-i18n-attr="aria-label:integrations.copy_code_arialabel_2">Copy</button>
 						</div>
 						<pre class="code-block" data-code><span class="c">&lt;!-- Paste this where you want the chat agent --&gt;</span>
 <span class="k">&lt;script</span>
@@ -924,7 +924,7 @@
 				<div class="card-preview-bg" aria-hidden="true"></div>
 				<div class="preview-illustration" aria-hidden="true">
 					<div class="preview-walk-wrap">
-						<span class="preview-walk-label">yoursite.com</span>
+						<span class="preview-walk-label" data-i18n="integrations.yoursite_com">yoursite.com</span>
 						<div class="preview-walk-lines">
 							<div class="preview-walk-line" style="width:85%"></div>
 							<div class="preview-walk-line" style="width:64%"></div>
@@ -935,29 +935,29 @@
 						<div class="preview-walk-avatar">🚶</div>
 					</div>
 				</div>
-				<button class="try-live-btn" data-modal-widget="wdgt_demo_walkavt" data-modal-title="Walk Companion — Live Demo" aria-label="Try live demo">
+				<button class="try-live-btn" data-modal-widget="wdgt_demo_walkavt" data-modal-title="Walk Companion — Live Demo" aria-label="Try live demo" data-i18n-html="integrations.try_live_2" data-i18n-attr="aria-label:integrations.try_live_demo_arialabel_2">
 					<span style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;" aria-hidden="true"></span>
 					Try live
 				</button>
 			</div>
 			<div class="card-body">
 				<div class="card-meta">
-					<span class="cat-badge companion">Walk Companion</span>
-					<span class="diff-badge">Simple</span>
+					<span class="cat-badge companion" data-i18n="integrations.walk_companion_2">Walk Companion</span>
+					<span class="diff-badge" data-i18n="integrations.simple_3">Simple</span>
 				</div>
-				<h2 class="card-title">Walk Companion</h2>
-				<p class="card-desc">A floating 3D character fixed to the corner of any site. It walks, gestures, and speaks — with one script tag. No backend needed.</p>
+				<h2 class="card-title" data-i18n="integrations.walk_companion_3">Walk Companion</h2>
+				<p class="card-desc" data-i18n="integrations.a_floating_3d_character_fixed_to_the">A floating 3D character fixed to the corner of any site. It walks, gestures, and speaks — with one script tag. No backend needed.</p>
 				<div class="card-code">
 					<button class="code-toggle" aria-expanded="false" aria-controls="code-companion">
 						<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
 							<path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 						</svg>
-						<span class="code-toggle-label">Get embed code</span>
+						<span class="code-toggle-label" data-i18n="integrations.get_embed_code_3">Get embed code</span>
 					</button>
 					<div class="code-panel" id="code-companion" role="region">
 						<div class="code-header">
-							<span class="code-lang">html</span>
-							<button class="copy-btn" aria-label="Copy code">Copy</button>
+							<span class="code-lang" data-i18n="integrations.html_3">html</span>
+							<button class="copy-btn" aria-label="Copy code" data-i18n="integrations.copy_3" data-i18n-attr="aria-label:integrations.copy_code_arialabel_3">Copy</button>
 						</div>
 						<pre class="code-block" data-code><span class="c">&lt;!-- Floating corner avatar — one tag --&gt;</span>
 <span class="k">&lt;script</span>
@@ -996,22 +996,22 @@
 			</div>
 			<div class="card-body">
 				<div class="card-meta">
-					<span class="cat-badge narrator">Page Narrator</span>
-					<span class="diff-badge">Simple</span>
+					<span class="cat-badge narrator" data-i18n="integrations.page_narrator_2">Page Narrator</span>
+					<span class="diff-badge" data-i18n="integrations.simple_4">Simple</span>
 				</div>
-				<h2 class="card-title">Page Narrator</h2>
-				<p class="card-desc">A 3D agent that reads your page and guides visitors through your content — great for docs, landing pages, and blogs. Zero config.</p>
+				<h2 class="card-title" data-i18n="integrations.page_narrator_3">Page Narrator</h2>
+				<p class="card-desc" data-i18n="integrations.a_3d_agent_that_reads_your_page">A 3D agent that reads your page and guides visitors through your content — great for docs, landing pages, and blogs. Zero config.</p>
 				<div class="card-code">
 					<button class="code-toggle" aria-expanded="false" aria-controls="code-narrator">
 						<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
 							<path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 						</svg>
-						<span class="code-toggle-label">Get embed code</span>
+						<span class="code-toggle-label" data-i18n="integrations.get_embed_code_4">Get embed code</span>
 					</button>
 					<div class="code-panel" id="code-narrator" role="region">
 						<div class="code-header">
-							<span class="code-lang">html</span>
-							<button class="copy-btn" aria-label="Copy code">Copy</button>
+							<span class="code-lang" data-i18n="integrations.html_4">html</span>
+							<button class="copy-btn" aria-label="Copy code" data-i18n="integrations.copy_4" data-i18n-attr="aria-label:integrations.copy_code_arialabel_4">Copy</button>
 						</div>
 						<pre class="code-block" data-code><span class="c">&lt;!-- npm install @three-ws/page-agent --&gt;</span>
 
@@ -1057,29 +1057,29 @@
 						</div>
 					</div>
 				</div>
-				<button class="try-live-btn" data-modal-widget="wdgt_demo_pumpfun" data-modal-title="Token Widget — Live Demo" aria-label="Try live demo">
+				<button class="try-live-btn" data-modal-widget="wdgt_demo_pumpfun" data-modal-title="Token Widget — Live Demo" aria-label="Try live demo" data-i18n-html="integrations.try_live_3" data-i18n-attr="aria-label:integrations.try_live_demo_arialabel_3">
 					<span style="width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;" aria-hidden="true"></span>
 					Try live
 				</button>
 			</div>
 			<div class="card-body">
 				<div class="card-meta">
-					<span class="cat-badge crypto">Token Widget</span>
-					<span class="diff-badge">Moderate</span>
+					<span class="cat-badge crypto" data-i18n="integrations.token_widget_2">Token Widget</span>
+					<span class="diff-badge" data-i18n="integrations.moderate">Moderate</span>
 				</div>
-				<h2 class="card-title">Token Market Widget</h2>
-				<p class="card-desc">Live price, chart, and market data with a 3D mascot that reacts to moves. Built for token communities and launchpad sites.</p>
+				<h2 class="card-title" data-i18n="integrations.token_market_widget">Token Market Widget</h2>
+				<p class="card-desc" data-i18n="integrations.live_price_chart_and_market_data_with">Live price, chart, and market data with a 3D mascot that reacts to moves. Built for token communities and launchpad sites.</p>
 				<div class="card-code">
 					<button class="code-toggle" aria-expanded="false" aria-controls="code-crypto">
 						<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
 							<path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 						</svg>
-						<span class="code-toggle-label">Get embed code</span>
+						<span class="code-toggle-label" data-i18n="integrations.get_embed_code_5">Get embed code</span>
 					</button>
 					<div class="code-panel" id="code-crypto" role="region">
 						<div class="code-header">
-							<span class="code-lang">html</span>
-							<button class="copy-btn" aria-label="Copy code">Copy</button>
+							<span class="code-lang" data-i18n="integrations.html_5">html</span>
+							<button class="copy-btn" aria-label="Copy code" data-i18n="integrations.copy_5" data-i18n-attr="aria-label:integrations.copy_code_arialabel_5">Copy</button>
 						</div>
 						<pre class="code-block" data-code><span class="c">&lt;!-- Live pump.fun feed widget --&gt;</span>
 <span class="k">&lt;script</span>
@@ -1118,22 +1118,22 @@
 			</div>
 			<div class="card-body">
 				<div class="card-meta">
-					<span class="cat-badge mcp">MCP Server</span>
-					<span class="diff-badge">Advanced</span>
+					<span class="cat-badge mcp" data-i18n="integrations.mcp_server_2">MCP Server</span>
+					<span class="diff-badge" data-i18n="integrations.advanced">Advanced</span>
 				</div>
-				<h2 class="card-title">MCP Integration</h2>
-				<p class="card-desc">Let Claude, Cursor, or any MCP-compatible AI assistant control your 3D agents — render, speak, gesture, and emote from your AI tools.</p>
+				<h2 class="card-title" data-i18n="integrations.mcp_integration">MCP Integration</h2>
+				<p class="card-desc" data-i18n="integrations.let_claude_cursor_or_any_mcp_compatible">Let Claude, Cursor, or any MCP-compatible AI assistant control your 3D agents — render, speak, gesture, and emote from your AI tools.</p>
 				<div class="card-code">
 					<button class="code-toggle" aria-expanded="false" aria-controls="code-mcp">
 						<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
 							<path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 						</svg>
-						<span class="code-toggle-label">Get embed code</span>
+						<span class="code-toggle-label" data-i18n="integrations.get_embed_code_6">Get embed code</span>
 					</button>
 					<div class="code-panel" id="code-mcp" role="region">
 						<div class="code-header">
-							<span class="code-lang">json</span>
-							<button class="copy-btn" aria-label="Copy code">Copy</button>
+							<span class="code-lang" data-i18n="integrations.json">json</span>
+							<button class="copy-btn" aria-label="Copy code" data-i18n="integrations.copy_6" data-i18n-attr="aria-label:integrations.copy_code_arialabel_6">Copy</button>
 						</div>
 						<pre class="code-block" data-code><span class="c">// claude_desktop_config.json</span>
 {
@@ -1156,21 +1156,21 @@
 
 	<!-- ── Showcase CTA ───────────────────────────────────────── -->
 	<section class="showcase">
-		<p class="showcase-label">Built with three.ws</p>
-		<h2 class="showcase-title">See what's already live</h2>
-		<p class="showcase-sub">
+		<p class="showcase-label" data-i18n="integrations.built_with_three_ws">Built with three.ws</p>
+		<h2 class="showcase-title" data-i18n="integrations.see_what_s_already_live">See what's already live</h2>
+		<p class="showcase-sub" data-i18n="integrations.builders_are_already_using_these_integration">
 			Builders are already using these integrations on real sites —
 			from token chat bots to 3D docs guides.
 		</p>
 		<div class="showcase-tags">
-			<span class="showcase-tag"><strong>PumpBot</strong> — token chat agent</span>
-			<span class="showcase-tag"><strong>Docs guides</strong> — narrated walkthroughs</span>
-			<span class="showcase-tag"><strong>Corner mascots</strong> — walk companions</span>
-			<span class="showcase-tag"><strong>Agent profiles</strong> — avatar embeds</span>
+			<span class="showcase-tag" data-i18n-html="integrations.pumpbot_token_chat_agent"><strong>PumpBot</strong> — token chat agent</span>
+			<span class="showcase-tag" data-i18n-html="integrations.docs_guides_narrated_walkthroughs"><strong>Docs guides</strong> — narrated walkthroughs</span>
+			<span class="showcase-tag" data-i18n-html="integrations.corner_mascots_walk_companions"><strong>Corner mascots</strong> — walk companions</span>
+			<span class="showcase-tag" data-i18n-html="integrations.agent_profiles_avatar_embeds"><strong>Agent profiles</strong> — avatar embeds</span>
 		</div>
 		<div class="hero-cta">
-			<a href="/create" class="btn-primary">Start building</a>
-			<a href="/docs/embedding" class="btn-ghost">Full API docs →</a>
+			<a href="/create" class="btn-primary" data-i18n="integrations.start_building">Start building</a>
+			<a href="/docs/embedding" class="btn-ghost" data-i18n="integrations.full_api_docs">Full API docs →</a>
 		</div>
 	</section>
 
@@ -1183,9 +1183,9 @@
 		<div class="modal-header">
 			<div class="modal-title">
 				<span class="modal-live-dot" aria-hidden="true"></span>
-				<span id="modal-title-text">Live Demo</span>
+				<span id="modal-title-text" data-i18n="integrations.live_demo">Live Demo</span>
 			</div>
-			<button class="modal-close" id="modal-close-btn" aria-label="Close demo">
+			<button class="modal-close" id="modal-close-btn" aria-label="Close demo" data-i18n-attr="aria-label:integrations.close_demo_arialabel">
 				<svg width="14" height="14" viewBox="0 0 14 14" fill="none">
 					<path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
 				</svg>
@@ -1208,19 +1208,19 @@
 	<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
 	<div class="h-footer-cta">
 		<div class="h-footer-newsletter">
-			<h3>Stay in the loop</h3>
-			<p>Get updates on new integrations, agent tooling, and protocol changes.</p>
+			<h3 data-i18n="integrations.stay_in_the_loop">Stay in the loop</h3>
+			<p data-i18n="integrations.get_updates_on_new_integrations_agent_toolin">Get updates on new integrations, agent tooling, and protocol changes.</p>
 			<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
 				<input type="email" class="h-footer-newsletter-input" name="email" placeholder="Enter your email" aria-label="Email address" autocomplete="email" required />
-				<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
+				<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe" data-i18n-attr="aria-label:integrations.subscribe_arialabel">
 					<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4"/></svg>
 				</button>
 			</form>
 			<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
 		</div>
 		<div class="h-footer-community">
-			<h3>Join the community</h3>
-			<p>Follow along for builds, demos, and conversations with the team.</p>
+			<h3 data-i18n="integrations.join_the_community">Join the community</h3>
+			<p data-i18n="integrations.follow_along_for_builds_demos_and_conversati">Follow along for builds, demos, and conversations with the team.</p>
 			<a class="h-footer-community-btn" href="https://x.com/trythreews" target="_blank" rel="noopener noreferrer">
 				<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
 				Follow on X
@@ -1232,34 +1232,34 @@
 			<div class="h-footer-brand">
 				<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
 				<span class="wordmark-dot" aria-hidden="true"></span>
-				<span>three.ws</span>
+				<span data-i18n="integrations.three_ws">three.ws</span>
 			</div>
-			<p class="h-footer-tagline">Give your AI a body.</p>
+			<p class="h-footer-tagline" data-i18n="integrations.give_your_ai_a_body">Give your AI a body.</p>
 		</div>
 		<nav class="h-footer-links" aria-label="Footer">
 			<div class="h-footer-link-col">
-				<h4 class="h-footer-link-heading">Product</h4>
-				<a href="/features">Features</a>
-				<a href="/create">Create</a>
-				<a href="/integrations">Integrations</a>
-				<a href="/marketplace">Marketplace</a>
+				<h4 class="h-footer-link-heading" data-i18n="integrations.product">Product</h4>
+				<a href="/features" data-i18n="integrations.features">Features</a>
+				<a href="/create" data-i18n="integrations.create">Create</a>
+				<a href="/integrations" data-i18n="integrations.integrations">Integrations</a>
+				<a href="/marketplace" data-i18n="integrations.marketplace">Marketplace</a>
 			</div>
 			<div class="h-footer-link-col">
-				<h4 class="h-footer-link-heading">Developers</h4>
-				<a href="/docs">Docs</a>
-				<a href="/docs/embedding">Embedding</a>
-				<a href="/bazaar">Paid API Bazaar</a>
-				<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener noreferrer">GitHub</a>
+				<h4 class="h-footer-link-heading" data-i18n="integrations.developers">Developers</h4>
+				<a href="/docs" data-i18n="integrations.docs">Docs</a>
+				<a href="/docs/embedding" data-i18n="integrations.embedding">Embedding</a>
+				<a href="/bazaar" data-i18n="integrations.paid_api_bazaar">Paid API Bazaar</a>
+				<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener noreferrer" data-i18n="integrations.github">GitHub</a>
 			</div>
 			<div class="h-footer-link-col">
-				<h4 class="h-footer-link-heading">Legal</h4>
-				<a href="/legal/privacy">Privacy</a>
-				<a href="/legal/tos">Terms</a>
+				<h4 class="h-footer-link-heading" data-i18n="integrations.legal">Legal</h4>
+				<a href="/legal/privacy" data-i18n="integrations.privacy">Privacy</a>
+				<a href="/legal/tos" data-i18n="integrations.terms">Terms</a>
 			</div>
 		</nav>
 	</div>
 	<div class="h-footer-bottom">
-		<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+		<p class="h-footer-legal" data-i18n="integrations.2026_three_ws_all_rights_reserved">© 2026 three.ws — All rights reserved.</p>
 	</div>
 </footer>
 
@@ -1331,5 +1331,7 @@
 	document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) closeModal(); });
 </script>
 
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

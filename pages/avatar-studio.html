@@ -3,7 +3,7 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Avatar Studio · three.ws</title>
+		<title data-i18n="avatar_studio.meta_title">Avatar Studio · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="theme-color" content="#000000" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -12,12 +12,12 @@
 		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
-		<meta name="description" content="Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories — no selfie required." />
+		<meta name="description" content="Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories — no selfie required."  data-i18n-attr="content:avatar_studio.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/avatar-studio" />
-		<meta property="og:title" content="Avatar Studio · three.ws" />
-		<meta property="og:description" content="Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories." />
+		<meta property="og:title" content="Avatar Studio · three.ws"  data-i18n-attr="content:avatar_studio.meta_og_title"/>
+		<meta property="og:description" content="Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories."  data-i18n-attr="content:avatar_studio.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Avatar+Studio&amp;d=Build+a+custom+3D+avatar+from+scratch.+Choose+body+type%2C+sculpt+face+and+body%2C+add+outfits+and+accessories.+No+selfie+required.&amp;p=%2Favatar-studio" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<link rel="stylesheet" href="/style.css" />
@@ -993,8 +993,8 @@
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="Avatar Studio — three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Avatar Studio · three.ws">
-	<meta name="twitter:description" content="Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories. No selfie required.">
+	<meta name="twitter:title" content="Avatar Studio · three.ws" data-i18n-attr="content:avatar_studio.meta_twitter_title">
+	<meta name="twitter:description" content="Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories. No selfie required." data-i18n-attr="content:avatar_studio.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Avatar+Studio&amp;d=Build+a+custom+3D+avatar+from+scratch.+Choose+body+type%2C+sculpt+face+and+body%2C+add+outfits+and+accessories.+No+selfie+required.&amp;p=%2Favatar-studio">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Avatar Studio","description":"Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories. No selfie required.","url":"https://three.ws/avatar-studio","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&amp;t=Avatar+Studio&amp;d=Build+a+custom+3D+avatar+from+scratch.+Choose+body+type%2C+sculpt+face+and+body%2C+add+outfits+and+accessories.+No+selfie+required.&amp;p=%2Favatar-studio"}]}</script>
 </head>
@@ -1006,25 +1006,25 @@
 			</a>
 			<div class="as-bar-title">Avatar Studio</div>
 			<div class="as-actions">
-				<button class="as-btn as-icon-btn" id="as-undo" type="button" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>
+				<button class="as-btn as-icon-btn" id="as-undo" type="button" title="Undo (Ctrl+Z)" aria-label="Undo" disabled data-i18n-attr="aria-label:avatar_studio.undo_arialabel;title:avatar_studio.undo_ctrl_z_title">
 					<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7v6h6"/><path d="M3 13C5.5 7.5 12 5 17 8s6 9 3 13"/></svg>
 				</button>
-				<button class="as-btn as-icon-btn" id="as-redo" type="button" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled>
+				<button class="as-btn as-icon-btn" id="as-redo" type="button" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled data-i18n-attr="aria-label:avatar_studio.redo_arialabel;title:avatar_studio.redo_ctrl_shift_z_title">
 					<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 7v6h-6"/><path d="M21 13C18.5 7.5 12 5 7 8S1 17 4 21"/></svg>
 				</button>
-				<button class="as-btn" id="as-randomize" type="button" title="Randomise look">
+				<button class="as-btn" id="as-randomize" type="button" title="Randomise look" data-i18n-attr="title:avatar_studio.randomise_look_title">
 					<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px" aria-hidden="true"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
 					<span class="as-btn-label">Randomise</span>
 				</button>
-				<button class="as-btn" id="as-reset" type="button">Reset</button>
-				<button class="as-btn primary" id="as-save" type="button">Save avatar</button>
+				<button class="as-btn" id="as-reset" type="button" data-i18n="avatar_studio.reset">Reset</button>
+				<button class="as-btn primary" id="as-save" type="button" data-i18n="avatar_studio.save_avatar">Save avatar</button>
 			</div>
 		</header>
 		<main class="as-shell" id="as-shell">
 			<div class="as-stage" id="as-stage">
 				<div class="as-stage-loading" id="as-loading">
 					<div class="as-skel" aria-hidden="true"></div>
-					<span>Loading avatar…</span>
+					<span data-i18n="avatar_studio.loading_avatar">Loading avatar…</span>
 				</div>
 			</div>
 			<aside class="as-side">
@@ -1042,12 +1042,14 @@
 						<div class="upgrade-banner-title">Unlock unlimited avatars</div>
 						<div class="upgrade-banner-desc">Pro gives you unlimited custom avatars, voice cloning, and priority rendering.</div>
 					</div>
-					<span class="upgrade-banner-btn">See plans</span>
+					<span class="upgrade-banner-btn" data-i18n="avatar_studio.see_plans">See plans</span>
 				</a>
 			</aside>
 		</main>
 		<script src="/avatar-actions.js" type="module"></script>
 		<script src="/src/avatar-studio.js" type="module"></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

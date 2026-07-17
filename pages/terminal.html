@@ -11,11 +11,11 @@
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<title>Mission Control — Real-Time Trading Terminal · three.ws</title>
+		<title data-i18n="terminal.meta_title">Mission Control — Real-Time Trading Terminal · three.ws</title>
 		<meta
 			name="description"
 			content="One screen for pump.fun traders: the live launch firehose with intel scores, firewall verdicts, and smart-money flow, your streaming positions, and one-keystroke firewall + MEV-gated trading from your agent wallet."
-		/>
+		 data-i18n-attr="content:terminal.meta_description"/>
 		<style>
 			html,
 			body {
@@ -35,16 +35,16 @@
 		<link rel="canonical" href="https://three.ws/terminal" />
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Mission Control · three.ws" />
-		<meta property="og:description" content="The real-time pump.fun trading terminal — live launches, intel, firewall verdicts, smart-money, and your positions, with one-keystroke guarded trading." />
+		<meta property="og:title" content="Mission Control · three.ws"  data-i18n-attr="content:terminal.meta_og_title"/>
+		<meta property="og:description" content="The real-time pump.fun trading terminal — live launches, intel, firewall verdicts, smart-money, and your positions, with one-keystroke guarded trading."  data-i18n-attr="content:terminal.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/terminal" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Mission+Control&amp;d=The+real-time+pump.fun+trading+terminal%3A+the+live+launch+firehose+fused+with+intel+scores%2C+firewall+verdicts%2C+and+smart-money+flow%2C+your+streaming+positions+wit&amp;p=%2Fterminal" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Mission Control · three.ws" />
-		<meta name="twitter:description" content="The real-time pump.fun trading terminal — live launches, intel, firewall verdicts, smart-money, and your positions." />
+		<meta name="twitter:title" content="Mission Control · three.ws"  data-i18n-attr="content:terminal.meta_twitter_title"/>
+		<meta name="twitter:description" content="The real-time pump.fun trading terminal — live launches, intel, firewall verdicts, smart-money, and your positions."  data-i18n-attr="content:terminal.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Mission+Control&amp;d=The+real-time+pump.fun+trading+terminal%3A+the+live+launch+firehose+fused+with+intel+scores%2C+firewall+verdicts%2C+and+smart-money+flow%2C+your+streaming+positions+wit&amp;p=%2Fterminal" />
 		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 		<meta property="og:locale" content="en_US" />
@@ -62,5 +62,7 @@
 			});
 		</script>
 		<script src="/brand.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

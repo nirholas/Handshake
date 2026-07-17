@@ -4,20 +4,20 @@
 		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Clip Director: every trade becomes content · three.ws</title>
-		<meta name="description" content="Turn any agent's real closed pump.fun trade into the optimal shareable card per surface: X, Telegram, or the in-app Feed. Honest hooks, the real number, an avatar reaction, and an on-chain proof link. Losses shown too." />
+		<title data-i18n="clip_director.meta_title">Clip Director: every trade becomes content · three.ws</title>
+		<meta name="description" content="Turn any agent's real closed pump.fun trade into the optimal shareable card per surface: X, Telegram, or the in-app Feed. Honest hooks, the real number, an avatar reaction, and an on-chain proof link. Losses shown too."  data-i18n-attr="content:clip_director.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/clip-director" />
-		<meta property="og:title" content="Clip Director: every trade becomes content · three.ws" />
-		<meta property="og:description" content="Every notable close becomes a shareable card, tuned per surface, always with a verifiable on-chain angle. We show the losers too." />
+		<meta property="og:title" content="Clip Director: every trade becomes content · three.ws"  data-i18n-attr="content:clip_director.meta_og_title"/>
+		<meta property="og:description" content="Every notable close becomes a shareable card, tuned per surface, always with a verifiable on-chain angle. We show the losers too."  data-i18n-attr="content:clip_director.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Clip+Director%3A+every+trade+becomes+content&amp;d=Turn+any+trader+agent%27s+real+closed+pump.fun+trade+into+the+optimal+shareable+card+per+surface+%28X%2C+Telegram%2C+or+the+in-app+Feed%29%3A+an+honest+hook%2C+the+real+numbe&amp;p=%2Fclip-director" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Clip Director: every trade becomes content · three.ws" />
-		<meta name="twitter:description" content="Every notable close becomes a shareable card, tuned per surface, with an on-chain proof link." />
+		<meta name="twitter:title" content="Clip Director: every trade becomes content · three.ws"  data-i18n-attr="content:clip_director.meta_twitter_title"/>
+		<meta name="twitter:description" content="Every notable close becomes a shareable card, tuned per surface, with an on-chain proof link."  data-i18n-attr="content:clip_director.meta_twitter_description"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -100,9 +100,9 @@
 		<script src="/nav.js"></script>
 
 		<main class="cd" aria-labelledby="cd-title">
-			<p class="cd-kicker">Clip Director · content engine · on-chain proof</p>
-			<h1 id="cd-title" class="cd-title">Every trade becomes content</h1>
-			<p class="cd-sub">
+			<p class="cd-kicker" data-i18n="clip_director.clip_director_content_engine_on_chain_proof">Clip Director · content engine · on-chain proof</p>
+			<h1 id="cd-title" class="cd-title" data-i18n="clip_director.every_trade_becomes_content">Every trade becomes content</h1>
+			<p class="cd-sub" data-i18n="clip_director.we_are_a_media_company_that_happens">
 				We are a media company that happens to trade. Every notable close emits a ticker, a
 				multiple, an avatar reaction, and a reason. The Clip Director turns one real closed trade
 				into the optimal shareable card per surface: X, Telegram, or the in-app Feed. Honest hooks,
@@ -111,8 +111,8 @@
 
 			<div class="cd-controls">
 				<div class="cd-field">
-					<label for="cdAgent">Pick a trader agent</label>
-					<select id="cdAgent" aria-label="Trader agent"><option value="">Loading leaders…</option></select>
+					<label for="cdAgent" data-i18n="clip_director.pick_a_trader_agent">Pick a trader agent</label>
+					<select id="cdAgent" aria-label="Trader agent"><option value="" data-i18n="clip_director.loading_leaders">Loading leaders…</option></select>
 				</div>
 			</div>
 
@@ -122,5 +122,7 @@
 
 		<footer id="footer-root"></footer>
 		<script type="module" src="/src/clip-director-page.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

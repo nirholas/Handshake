@@ -4,7 +4,7 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<script>/* embed bg — ?bg=transparent composites the world onto the host page (e.g. the IBM x402 showcase) instead of a black box. Set before first paint so there is no dark flash. */(function(){try{if(new URLSearchParams(location.search).get('bg')==='transparent')document.documentElement.setAttribute('data-bg','transparent');}catch(e){}})();</script>
 		<meta charset="utf-8" />
-		<title>Play · Coin Communities — three.ws</title>
+		<title data-i18n="play.meta_title">Play · Coin Communities — three.ws</title>
 		<meta
 			name="viewport"
 			content="width=device-width, initial-scale=1, viewport-fit=cover"
@@ -12,7 +12,7 @@
 		<meta
 			name="description"
 			content="Coin Communities — a browser isometric MMO on three.ws. Join coin communities, gather, fight, trade, and explore a shared world. Sign in with your wallet and play."
-		/>
+		 data-i18n-attr="content:play.meta_description"/>
 		<meta name="theme-color" content="#060607" />
 
 		<!--
@@ -32,16 +32,16 @@
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Play · Coin Communities" />
-		<meta property="og:description" content="A browser isometric MMO on three.ws — join coin communities, gather, fight, trade, explore." />
+		<meta property="og:title" content="Play · Coin Communities"  data-i18n-attr="content:play.meta_og_title"/>
+		<meta property="og:description" content="A browser isometric MMO on three.ws — join coin communities, gather, fight, trade, explore."  data-i18n-attr="content:play.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/play" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Play&amp;d=Jump+into+a+live+coin+community+world+and+explore+it+with+your+avatar.&amp;p=%2Fplay" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Play · Coin Communities — three.ws" />
-	<meta name="twitter:description" content="Play in your coin's 3D community world. Walk, chat, and hang out with fellow holders." />
+	<meta name="twitter:title" content="Play · Coin Communities — three.ws"  data-i18n-attr="content:play.meta_twitter_title"/>
+	<meta name="twitter:description" content="Play in your coin's 3D community world. Walk, chat, and hang out with fellow holders."  data-i18n-attr="content:play.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Play&amp;d=Jump+into+a+live+coin+community+world+and+explore+it+with+your+avatar.&amp;p=%2Fplay" />
 
 		<link rel="stylesheet" href="/src/game/coincommunities.css" />
@@ -72,5 +72,7 @@
 		<script type="module" src="/src/game/coincommunities.js"></script>
 		<script type="module" src="/src/game/ambient-crowd.js"></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

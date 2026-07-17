@@ -10,22 +10,22 @@
 		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
-		<title>Coin Communities · three.ws</title>
+		<title data-i18n="communities.meta_title">Coin Communities · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<meta name="description" content="Pick a coin, drop in an avatar, and walk around its world with everyone else holding it. Each coin is its own live 3D community on three.ws." />
+		<meta name="description" content="Pick a coin, drop in an avatar, and walk around its world with everyone else holding it. Each coin is its own live 3D community on three.ws."  data-i18n-attr="content:communities.meta_description"/>
 		<meta name="theme-color" content="#0c0c0c" />
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Coin Communities · three.ws" />
-		<meta property="og:description" content="Each coin is its own live 3D world. Drop in your avatar and hang out with the community." />
+		<meta property="og:title" content="Coin Communities · three.ws"  data-i18n-attr="content:communities.meta_og_title"/>
+		<meta property="og:description" content="Each coin is its own live 3D world. Drop in your avatar and hang out with the community."  data-i18n-attr="content:communities.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/communities" />
 		<meta name="twitter:card" content="summary_large_image" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Coin+Communities&amp;d=Pick+a+coin%2C+drop+in+an+avatar%2C+and+walk+around+its+world+with+everyone+else+holding+it.+Each+coin+is+its+own+live+3D+community.&amp;p=%2Fcommunities" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Coin Communities · three.ws" />
-	<meta name="twitter:description" content="Pick a coin, drop in an avatar, and walk around its world with everyone else holding it. Each coin is its own live 3D community." />
+	<meta name="twitter:title" content="Coin Communities · three.ws"  data-i18n-attr="content:communities.meta_twitter_title"/>
+	<meta name="twitter:description" content="Pick a coin, drop in an avatar, and walk around its world with everyone else holding it. Each coin is its own live 3D community."  data-i18n-attr="content:communities.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Coin+Communities&amp;d=Pick+a+coin%2C+drop+in+an+avatar%2C+and+walk+around+its+world+with+everyone+else+holding+it.+Each+coin+is+its+own+live+3D+community.&amp;p=%2Fcommunities" />
 		<style>
 			* { margin: 0; padding: 0; box-sizing: border-box; }
@@ -266,44 +266,44 @@
 </head>
 	<body>
 		<header class="topbar">
-			<a class="brand" href="/"><span class="dot"></span>three.ws</a>
+			<a class="brand" href="/" data-i18n-html="communities.three_ws"><span class="dot"></span>three.ws</a>
 			<nav>
-				<a href="/temporary">Mainland</a>
-				<a href="/create">Create avatar</a>
+				<a href="/temporary" data-i18n="communities.mainland">Mainland</a>
+				<a href="/create" data-i18n="communities.create_avatar">Create avatar</a>
 			</nav>
 		</header>
 
 		<section class="hero">
-			<h1>Every coin, its own world.</h1>
-			<p>Drop in an avatar and walk around with everyone else who holds the same coin — live, in 3D, right in your browser.</p>
-			<div class="steps"><span><b>1.</b> Pick your avatar</span><span><b>2.</b> Choose a coin</span><span><b>3.</b> You're in.</span></div>
+			<h1 data-i18n="communities.every_coin_its_own_world">Every coin, its own world.</h1>
+			<p data-i18n="communities.drop_in_an_avatar_and_walk_around">Drop in an avatar and walk around with everyone else who holds the same coin — live, in 3D, right in your browser.</p>
+			<div class="steps"><span data-i18n-html="communities.1_pick_your_avatar"><b>1.</b> Pick your avatar</span><span data-i18n-html="communities.2_choose_a_coin"><b>2.</b> Choose a coin</span><span data-i18n-html="communities.3_you_re_in"><b>3.</b> You're in.</span></div>
 		</section>
 
 		<main class="wrap">
 			<section class="section">
-				<div class="section-head"><h2>Your identity</h2><span class="hint">Used in the world. Default works instantly.</span></div>
+				<div class="section-head"><h2 data-i18n="communities.your_identity">Your identity</h2><span class="hint" data-i18n="communities.used_in_the_world_default_works_instantly">Used in the world. Default works instantly.</span></div>
 				<div class="panel identity">
 					<div>
 						<div class="name-field">
-							<label class="field-label" for="name-input">Display name</label>
+							<label class="field-label" for="name-input" data-i18n="communities.display_name">Display name</label>
 							<input id="name-input" type="text" maxlength="24" autocomplete="off" spellcheck="false" placeholder="your name" />
 						</div>
 						<div class="url-field">
-							<label class="field-label" for="avatar-url-input">…or paste a GLB / glTF avatar URL</label>
+							<label class="field-label" for="avatar-url-input" data-i18n="communities.or_paste_a_glb_gltf_avatar_url">…or paste a GLB / glTF avatar URL</label>
 							<input id="avatar-url-input" type="url" autocomplete="off" spellcheck="false" placeholder="https://…/model.glb" />
 						</div>
 					</div>
 					<div>
-						<label class="field-label">Avatar</label>
+						<label class="field-label" data-i18n="communities.avatar">Avatar</label>
 						<div id="avatar-row" class="avatar-row"></div>
 					</div>
 				</div>
 			</section>
 
 			<section class="section">
-				<div class="section-head"><h2>Choose a community</h2><span class="hint">Live from pump.fun · sorted by market cap</span></div>
+				<div class="section-head"><h2 data-i18n="communities.choose_a_community">Choose a community</h2><span class="hint" data-i18n="communities.live_from_pump_fun_sorted_by_market">Live from pump.fun · sorted by market cap</span></div>
 
-				<button type="button" id="enter-mainland" class="mainland-card">
+				<button type="button" id="enter-mainland" class="mainland-card" data-i18n-html="communities.mainlandthe_shared_world_everyone_no_coin_re">
 					<span class="ml-icon">🌐</span>
 					<span class="ml-text"><b>Mainland</b><span>The shared world — everyone, no coin required</span></span>
 					<span class="ml-go">Enter →</span>
@@ -320,7 +320,7 @@
 
 				<div class="mint-row">
 					<input id="mint-input" type="text" autocomplete="off" spellcheck="false" placeholder="Or paste any Solana mint address to enter its world" />
-					<button type="button" id="mint-enter" class="primary-btn">Enter world</button>
+					<button type="button" id="mint-enter" class="primary-btn" data-i18n="communities.enter_world">Enter world</button>
 				</div>
 				<div id="mint-error" class="mint-error" role="alert"></div>
 			</section>
@@ -328,7 +328,7 @@
 
 			<!-- Coin profile (deep-linkable at /communities/:mint) -->
 			<main class="wrap coin-profile" id="coin-profile" hidden>
-				<button type="button" class="ghost-btn coin-profile-back" id="coin-profile-back">← All communities</button>
+				<button type="button" class="ghost-btn coin-profile-back" id="coin-profile-back" data-i18n="communities.all_communities">← All communities</button>
 
 				<div class="coin-profile-skeleton" id="coin-profile-skeleton">
 					<div class="cp-skel-head"><div class="cp-skel-avatar"></div><div class="cp-skel-lines"><div class="cp-skel-line w50"></div><div class="cp-skel-line w30"></div></div></div>
@@ -336,9 +336,9 @@
 				</div>
 
 				<div class="coin-profile-empty" id="coin-profile-empty" hidden>
-					<p id="coin-profile-empty-msg">That coin couldn't be found on pump.fun.</p>
+					<p id="coin-profile-empty-msg" data-i18n="communities.that_coin_couldn_t_be_found_on">That coin couldn't be found on pump.fun.</p>
 					<p class="coin-empty-sub" id="coin-profile-empty-mint"></p>
-					<button type="button" id="coin-profile-retry" class="ghost-btn" hidden style="margin-top:14px">Retry</button>
+					<button type="button" id="coin-profile-retry" class="ghost-btn" hidden style="margin-top:14px" data-i18n="communities.retry">Retry</button>
 				</div>
 
 				<div class="coin-profile-body" id="coin-profile-body" hidden>
@@ -347,11 +347,11 @@
 						<div class="cp-head-text">
 							<div class="cp-symbol" id="cp-symbol">$—</div>
 							<h1 class="cp-name" id="cp-name">—</h1>
-							<button type="button" class="cp-mint" id="cp-mint" title="Copy mint address"></button>
+							<button type="button" class="cp-mint" id="cp-mint" title="Copy mint address" data-i18n-attr="title:communities.copy_mint_address_title"></button>
 						</div>
 						<div class="cp-graduation" id="cp-graduation" hidden>
 							<div class="cp-grad-ring" id="cp-grad-ring"><span id="cp-grad-pct">0%</span></div>
-							<span class="cp-grad-label">to graduation</span>
+							<span class="cp-grad-label" data-i18n="communities.to_graduation">to graduation</span>
 						</div>
 					</header>
 
@@ -360,15 +360,15 @@
 					<p class="cp-desc" id="cp-desc" hidden></p>
 
 					<div class="cp-actions">
-						<button type="button" class="primary-btn" id="cp-enter">Enter 3D world →</button>
-						<a class="ghost-btn" id="cp-pumpfun" href="#" target="_blank" rel="noopener">Trade on pump.fun ↗</a>
-						<button type="button" class="ghost-btn" id="cp-share">Share</button>
+						<button type="button" class="primary-btn" id="cp-enter" data-i18n="communities.enter_3d_world">Enter 3D world →</button>
+						<a class="ghost-btn" id="cp-pumpfun" href="#" target="_blank" rel="noopener" data-i18n="communities.trade_on_pump_fun">Trade on pump.fun ↗</a>
+						<button type="button" class="ghost-btn" id="cp-share" data-i18n="communities.share">Share</button>
 					</div>
 
 					<div class="cp-socials" id="cp-socials"></div>
 
 					<section class="cp-section" id="cp-trades-wrap" hidden>
-						<div class="section-head"><h2>Recent trades</h2><span class="hint" id="cp-trades-hint"></span></div>
+						<div class="section-head"><h2 data-i18n="communities.recent_trades">Recent trades</h2><span class="hint" id="cp-trades-hint"></span></div>
 						<div class="cp-trades" id="cp-trades"></div>
 					</section>
 				</div>
@@ -376,5 +376,7 @@
 
 		<script type="module" src="/src/communities.js"></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

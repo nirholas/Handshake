@@ -4,29 +4,29 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>On-chain Deployments · three.ws</title>
+		<title data-i18n="deployments.meta_title">On-chain Deployments · three.ws</title>
 		<meta
 			name="description"
 			content="A live, cross-chain feed of every agent that lands on-chain — ERC-8004 Identity Registry registrations on EVM and Metaplex Core agent mints on Solana. Real on-chain deployments only."
-		/>
+		 data-i18n-attr="content:deployments.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/deployments" />
-		<meta property="og:title" content="On-chain Deployments · three.ws" />
+		<meta property="og:title" content="On-chain Deployments · three.ws"  data-i18n-attr="content:deployments.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="A live, cross-chain stream of every agent that lands on-chain — ERC-8004 registrations on EVM and Metaplex Core agent mints on Solana — the moment each one confirms."
-		/>
+		 data-i18n-attr="content:deployments.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=On-chain+Deployments&amp;d=A+live%2C+cross-chain+feed+of+every+agent+registered+on+the+ERC-8004+Identity+Registry+%E2%80%94+the+moment+each+registration+lands+on-chain.+Real+on-chain+registrations+&amp;p=%2Fdeployments" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="On-chain Deployments · three.ws" />
+		<meta name="twitter:title" content="On-chain Deployments · three.ws"  data-i18n-attr="content:deployments.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="A live, cross-chain stream of every agent that lands on-chain — ERC-8004 on EVM and Metaplex Core on Solana — the moment it confirms."
-		/>
+		 data-i18n-attr="content:deployments.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=On-chain+Deployments&amp;d=A+live%2C+cross-chain+feed+of+every+agent+registered+on+the+ERC-8004+Identity+Registry+%E2%80%94+the+moment+each+registration+lands+on-chain.+Real+on-chain+registrations+&amp;p=%2Fdeployments" />
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -50,55 +50,55 @@
 
 		<main class="dp-shell">
 			<section class="dp-hero">
-				<p class="dp-kicker"><span class="dp-live-dot" aria-hidden="true"></span> Live on-chain registry<span class="dp-kicker-count" id="dp-today"></span></p>
-				<h1 class="dp-title">On-chain <em>Deployments</em></h1>
-				<p class="dp-sub">
+				<p class="dp-kicker" data-i18n-html="deployments.live_on_chain_registry"><span class="dp-live-dot" aria-hidden="true"></span> Live on-chain registry<span class="dp-kicker-count" id="dp-today"></span></p>
+				<h1 class="dp-title" data-i18n-html="deployments.on_chain_deployments">On-chain <em>Deployments</em></h1>
+				<p class="dp-sub" data-i18n-html="deployments.every_agent_that_lands_on_chain_erc">
 					Every agent that lands on-chain — <strong>ERC-8004</strong> identity registrations across EVM chains and
 					<strong>Metaplex Core</strong> agent mints on Solana, the moment each one confirms. Real deployments only,
 					crawled straight from chain logs.
 				</p>
 				<div class="dp-net" role="tablist" aria-label="Network">
-					<button type="button" class="dp-net-btn active" data-network="mainnet" role="tab" aria-selected="true">Mainnet</button>
-					<button type="button" class="dp-net-btn" data-network="testnet" role="tab" aria-selected="false">Testnet</button>
+					<button type="button" class="dp-net-btn active" data-network="mainnet" role="tab" aria-selected="true" data-i18n="deployments.mainnet">Mainnet</button>
+					<button type="button" class="dp-net-btn" data-network="testnet" role="tab" aria-selected="false" data-i18n="deployments.testnet">Testnet</button>
 				</div>
 			</section>
 
 			<dl class="dp-counters" id="dp-counters">
 				<div class="dp-counter dp-counter--lead">
-					<dt>Agents registered</dt>
+					<dt data-i18n="deployments.agents_registered">Agents registered</dt>
 					<dd id="dp-c-total">—</dd>
-					<span class="dp-counter-sub">on-chain identities</span>
+					<span class="dp-counter-sub" data-i18n="deployments.on_chain_identities">on-chain identities</span>
 				</div>
 				<div class="dp-counter">
-					<dt>Chains live</dt>
+					<dt data-i18n="deployments.chains_live">Chains live</dt>
 					<dd id="dp-c-chains">—</dd>
-					<span class="dp-counter-sub">with registrations</span>
+					<span class="dp-counter-sub" data-i18n="deployments.with_registrations">with registrations</span>
 				</div>
 				<div class="dp-counter">
-					<dt>Deployed · 24h</dt>
+					<dt data-i18n="deployments.deployed_24h">Deployed · 24h</dt>
 					<dd id="dp-c-d24">—</dd>
-					<span class="dp-counter-sub">new registrations</span>
+					<span class="dp-counter-sub" data-i18n="deployments.new_registrations">new registrations</span>
 				</div>
 				<div class="dp-counter">
-					<dt>Deployed · 7d</dt>
+					<dt data-i18n="deployments.deployed_7d">Deployed · 7d</dt>
 					<dd id="dp-c-d7">—</dd>
-					<span class="dp-counter-sub">new registrations</span>
+					<span class="dp-counter-sub" data-i18n="deployments.new_registrations_2">new registrations</span>
 				</div>
 				<div class="dp-counter">
-					<dt>With 3D avatar</dt>
+					<dt data-i18n="deployments.with_3d_avatar">With 3D avatar</dt>
 					<dd id="dp-c-3d">—</dd>
-					<span class="dp-counter-sub" id="dp-c-3d-sub">rigged agents</span>
+					<span class="dp-counter-sub" id="dp-c-3d-sub" data-i18n="deployments.rigged_agents">rigged agents</span>
 				</div>
 				<div class="dp-counter">
-					<dt>x402-enabled</dt>
+					<dt data-i18n="deployments.x402_enabled">x402-enabled</dt>
 					<dd id="dp-c-x402">—</dd>
-					<span class="dp-counter-sub" id="dp-c-x402-sub">accept payments</span>
+					<span class="dp-counter-sub" id="dp-c-x402-sub" data-i18n="deployments.accept_payments">accept payments</span>
 				</div>
 			</dl>
 
 			<section class="dp-spark" aria-label="Registrations, last 7 days">
 				<div class="dp-spark-h">
-					<span class="dp-spark-title">Last 7 days</span>
+					<span class="dp-spark-title" data-i18n="deployments.last_7_days">Last 7 days</span>
 					<span class="dp-spark-total" id="dp-spark-total">—</span>
 				</div>
 				<div class="dp-spark-bars" id="dp-spark-bars" role="img" aria-label="Daily registrations, last 7 days"></div>
@@ -107,24 +107,24 @@
 			<div class="dp-grid">
 				<div class="dp-main">
 					<div class="dp-feed-head">
-						<h2 class="dp-section-h">Live feed</h2>
+						<h2 class="dp-section-h" data-i18n="deployments.live_feed">Live feed</h2>
 						<div class="dp-filters" role="tablist" aria-label="Filter deployments">
-							<button type="button" class="dp-filter active" data-kind="all" aria-pressed="true">All</button>
-							<button type="button" class="dp-filter" data-kind="3d" aria-pressed="false">3D avatar</button>
-							<button type="button" class="dp-filter" data-kind="x402" aria-pressed="false">x402</button>
+							<button type="button" class="dp-filter active" data-kind="all" aria-pressed="true" data-i18n="deployments.all">All</button>
+							<button type="button" class="dp-filter" data-kind="3d" aria-pressed="false" data-i18n="deployments.3d_avatar">3D avatar</button>
+							<button type="button" class="dp-filter" data-kind="x402" aria-pressed="false" data-i18n="deployments.x402">x402</button>
 						</div>
 					</div>
 					<div id="dp-feed" aria-live="polite"></div>
-					<button type="button" class="dp-more" id="dp-more" hidden>Load older</button>
+					<button type="button" class="dp-more" id="dp-more" hidden data-i18n="deployments.load_older">Load older</button>
 				</div>
 				<aside class="dp-rail" aria-label="Registry intelligence">
 					<section class="dp-card">
-						<div class="dp-card-h">Top chains <small>by agents</small></div>
-						<div id="dp-chains"><p class="dp-lb-empty">Loading…</p></div>
+						<div class="dp-card-h">Top chains <small data-i18n="deployments.by_agents">by agents</small></div>
+						<div id="dp-chains"><p class="dp-lb-empty" data-i18n="deployments.loading">Loading…</p></div>
 					</section>
 					<section class="dp-card dp-about">
 						<div class="dp-card-h">About this feed</div>
-						<p class="dp-about-body">
+						<p class="dp-about-body" data-i18n-html="deployments.portable_on_chain_agent_identity_across_two">
 							Portable on-chain agent identity, across two standards: <strong>ERC-8004</strong> registers agents on an
 							Identity Registry deployed at the same address on every EVM chain, while on Solana each agent is a
 							<strong>Metaplex Core</strong> asset minted into the three.ws Agents collection and enrolled in the
@@ -132,7 +132,7 @@
 							<a href="/showcase">3D agent directory</a>.
 						</p>
 					</section>
-					<p class="dp-sub dp-fineprint">
+					<p class="dp-sub dp-fineprint" data-i18n-html="deployments.network_mainnet_sources_evm_solana_metaplex">
 						Network: <strong id="dp-net-label">mainnet</strong>. Sources: <code>erc8004_agents_index</code> (EVM), <code>agent_identities</code> + <code>solana_agents_index</code> (Solana Metaplex), crawled from chain logs. Deployments without a confirmed block time are counted in totals but not placed in the timeline.
 					</p>
 				</aside>
@@ -143,5 +143,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -5,10 +5,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<title>x402 live demo — three.ws × IBM</title>
-<meta name="description" content="A live, self-contained x402 demo: pay $0.001 in USDC from your own wallet to call a real three.ws data API. Settled on-chain on Base or Solana. No backend, no account.">
-<meta property="og:title" content="x402 live demo — three.ws × IBM">
-<meta property="og:description" content="Pay $0.001 in USDC from your own wallet to call a real three.ws API. See HTTP 402 micropayments settle on-chain — on Base or Solana — in seconds.">
+<title data-i18n="ibm_x402_demo.meta_title">x402 live demo — three.ws × IBM</title>
+<meta name="description" content="A live, self-contained x402 demo: pay $0.001 in USDC from your own wallet to call a real three.ws data API. Settled on-chain on Base or Solana. No backend, no account." data-i18n-attr="content:ibm_x402_demo.meta_description">
+<meta property="og:title" content="x402 live demo — three.ws × IBM" data-i18n-attr="content:ibm_x402_demo.meta_og_title">
+<meta property="og:description" content="Pay $0.001 in USDC from your own wallet to call a real three.ws API. See HTTP 402 micropayments settle on-chain — on Base or Solana — in seconds." data-i18n-attr="content:ibm_x402_demo.meta_og_description">
 <meta property="og:type" content="website">
 <style>
 /* ─── Self-hosted IBM Plex (latin subset) — no third-party font CDN, so a
@@ -428,8 +428,8 @@ agent-3d:defined ~ .agent-skel{display:none}
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="x402 Live Demo (IBM × three.ws) · three.ws">
-	<meta name="twitter:description" content="A self-contained x402 micropayment demo: pay $0.001 USDC from your own wallet — MetaMask on Base or Phantom on Solana — to call a real three.ws data API. Watch the live HTTP 402 challenge, sign a gasless authorization, and see the on-chain settlement receipt. No backend, no account; built as the public face of the IBM × three.ws partnership.">
+	<meta name="twitter:title" content="x402 Live Demo (IBM × three.ws) · three.ws" data-i18n-attr="content:ibm_x402_demo.meta_twitter_title">
+	<meta name="twitter:description" content="A self-contained x402 micropayment demo: pay $0.001 USDC from your own wallet — MetaMask on Base or Phantom on Solana — to call a real three.ws data API. Watch the live HTTP 402 challenge, sign a gasless authorization, and see the on-chain settlement receipt. No backend, no account; built as the public face of the IBM × three.ws partnership." data-i18n-attr="content:ibm_x402_demo.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=x402+Live+Demo+%28IBM+%C3%97+three.ws%29&amp;d=A+self-contained+x402+micropayment+demo%3A+pay+%240.001+USDC+from+your+own+wallet+%E2%80%94+MetaMask+on+Base+or+Phantom+on+Solana+%E2%80%94+to+call+a+real+three.ws+data+API.+Watch+&amp;p=%2Fibm%2Fx402-demo">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"x402 Live Demo (IBM × three.ws)","description":"A self-contained x402 micropayment demo: pay $0.001 USDC from your own wallet — MetaMask on Base or Phantom on Solana — to call a real three.ws data API. Watch the live HTTP 402 challenge, sign a gasless authorization, and see the on-chain settlement receipt. No backend, no account; built as the public face of the IBM × three.ws partnership.","url":"https://three.ws/ibm/x402-demo","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 	<!-- model-viewer renders the GLB returned by the paid Forge demo (Demo 01).
@@ -448,11 +448,11 @@ agent-3d:defined ~ .agent-skel{display:none}
 </head>
 <body>
 
-<a href="#forge" class="skip-link">Skip to the demos</a>
+<a href="#forge" class="skip-link" data-i18n="ibm_x402_demo.skip_to_the_demos">Skip to the demos</a>
 
 <div class="err-banner" id="errBanner" role="alert">
-  <span id="errBannerText">Something went wrong.</span>
-  <button type="button" id="errBannerClose">Dismiss</button>
+  <span id="errBannerText" data-i18n="ibm_x402_demo.something_went_wrong">Something went wrong.</span>
+  <button type="button" id="errBannerClose" data-i18n="ibm_x402_demo.dismiss">Dismiss</button>
 </div>
 
 <!-- ══ HERO ══ -->
@@ -463,21 +463,21 @@ agent-3d:defined ~ .agent-skel{display:none}
            placeholder, NOT the registered 8-bar logo. Confirm the exact mark and the
            "IBM Business Partner" lockup + wording with IBM brand before public launch
            (see HOSTING.md, "Note on branding"). -->
-      <span class="ibm-mark">IBM</span>
-      <span>Business Partner</span>
+      <span class="ibm-mark" data-i18n="ibm_x402_demo.ibm">IBM</span>
+      <span data-i18n="ibm_x402_demo.business_partner">Business Partner</span>
       <span style="color:var(--ibm-border)" aria-hidden="true">|</span>
-      <span class="mono">three.ws</span>
+      <span class="mono" data-i18n="ibm_x402_demo.three_ws">three.ws</span>
     </div>
-    <h1>A live showcase of agentic commerce, built with <strong>IBM</strong></h1>
-    <p class="hero-sub">IBM has shaped computing for over a century — and it stays at the frontier by backing what comes next. three.ws is one of those bets: a platform for on-chain micropayments and 3D AI agents. As an IBM Business Partner, we built this page to demonstrate that partnership in the open — every demo below runs against real, production three.ws systems. Nothing is mocked, nothing is a slide.</p>
-    <p class="hero-sub" style="margin-top:14px">Five things we want to show you: pay a few cents to turn text into a 3D model, pay-per-call micropayments over <span class="mono">x402</span>, an autonomous 3D agent that buys its own data, a shared 3D world, and an agent placed in augmented reality. Try each one yourself — the two paid demos (Forge and the x402 call) settle real USDC from your own wallet.</p>
+    <h1 data-i18n-html="ibm_x402_demo.a_live_showcase_of_agentic_commerce_built">A live showcase of agentic commerce, built with <strong>IBM</strong></h1>
+    <p class="hero-sub" data-i18n="ibm_x402_demo.ibm_has_shaped_computing_for_over_a">IBM has shaped computing for over a century — and it stays at the frontier by backing what comes next. three.ws is one of those bets: a platform for on-chain micropayments and 3D AI agents. As an IBM Business Partner, we built this page to demonstrate that partnership in the open — every demo below runs against real, production three.ws systems. Nothing is mocked, nothing is a slide.</p>
+    <p class="hero-sub" style="margin-top:14px" data-i18n-html="ibm_x402_demo.five_things_we_want_to_show_you">Five things we want to show you: pay a few cents to turn text into a 3D model, pay-per-call micropayments over <span class="mono">x402</span>, an autonomous 3D agent that buys its own data, a shared 3D world, and an agent placed in augmented reality. Try each one yourself — the two paid demos (Forge and the x402 call) settle real USDC from your own wallet.</p>
     <nav class="demo-nav" aria-label="The demos on this page">
-      <a href="#webinar" class="nav-live"><span class="live-dot" aria-hidden="true"></span>Watch live</a>
-      <a href="#forge"><span class="n">01</span>Forge</a>
-      <a href="#demo"><span class="n">02</span>x402 payments</a>
-      <a href="#agent"><span class="n">03</span>3D agent</a>
-      <a href="#play"><span class="n">04</span>Play</a>
-      <a href="#irl"><span class="n">05</span>IRL</a>
+      <a href="#webinar" class="nav-live" data-i18n-html="ibm_x402_demo.watch_live"><span class="live-dot" aria-hidden="true"></span>Watch live</a>
+      <a href="#forge" data-i18n-html="ibm_x402_demo.01forge"><span class="n">01</span>Forge</a>
+      <a href="#demo" data-i18n-html="ibm_x402_demo.02x402_payments"><span class="n">02</span>x402 payments</a>
+      <a href="#agent" data-i18n-html="ibm_x402_demo.033d_agent"><span class="n">03</span>3D agent</a>
+      <a href="#play" data-i18n-html="ibm_x402_demo.04play"><span class="n">04</span>Play</a>
+      <a href="#irl" data-i18n-html="ibm_x402_demo.05irl"><span class="n">05</span>IRL</a>
     </nav>
   </div>
 </header>
@@ -533,35 +533,35 @@ agent-3d:defined ~ .agent-skel{display:none}
   <div class="inner">
     <div class="wb-head">
       <div class="section-tag">Live · IBM community webinar</div>
-      <h2 id="wb-h">Watch the <strong>live walkthrough</strong></h2>
-      <p class="section-lead">A guided tour of x402 micropayments and 3D AI agents — with every demo on this page running in real time. Can't make it live? The recording stays right here afterward.</p>
+      <h2 id="wb-h" data-i18n-html="ibm_x402_demo.watch_the_live_walkthrough">Watch the <strong>live walkthrough</strong></h2>
+      <p class="section-lead" data-i18n="ibm_x402_demo.a_guided_tour_of_x402_micropayments_and">A guided tour of x402 micropayments and 3D AI agents — with every demo on this page running in real time. Can't make it live? The recording stays right here afterward.</p>
     </div>
 
     <div class="wb-stage" id="wbStage" role="region" aria-label="Webinar player">
-      <span class="wb-badge" id="wbBadge" hidden><span class="d" aria-hidden="true"></span>Live now</span>
+      <span class="wb-badge" id="wbBadge" hidden data-i18n-html="ibm_x402_demo.live_now"><span class="d" aria-hidden="true"></span>Live now</span>
 
       <!-- PRE-EVENT · countdown -->
       <div class="wb-fill wb-pre" id="wbPre">
         <div class="wb-kicker" id="wbKicker">Starts in</div>
-        <h3 class="wb-stage-title" id="wbStageTitle">three.ws × <strong>IBM</strong> — agentic commerce, live</h3>
+        <h3 class="wb-stage-title" id="wbStageTitle" data-i18n-html="ibm_x402_demo.three_ws_ibm_agentic_commerce_live">three.ws × <strong>IBM</strong> — agentic commerce, live</h3>
         <div class="wb-countdown" id="wbCountdown" role="timer" aria-live="off" aria-label="Time until the webinar begins">
-          <div class="wb-cell"><span class="wb-num" id="wbD">00</span><span class="wb-lbl">Days</span></div>
+          <div class="wb-cell"><span class="wb-num" id="wbD">00</span><span class="wb-lbl" data-i18n="ibm_x402_demo.days">Days</span></div>
           <span class="wb-colon" aria-hidden="true">:</span>
-          <div class="wb-cell"><span class="wb-num" id="wbH">00</span><span class="wb-lbl">Hours</span></div>
+          <div class="wb-cell"><span class="wb-num" id="wbH">00</span><span class="wb-lbl" data-i18n="ibm_x402_demo.hours">Hours</span></div>
           <span class="wb-colon" aria-hidden="true">:</span>
-          <div class="wb-cell"><span class="wb-num" id="wbM">00</span><span class="wb-lbl">Minutes</span></div>
+          <div class="wb-cell"><span class="wb-num" id="wbM">00</span><span class="wb-lbl" data-i18n="ibm_x402_demo.minutes">Minutes</span></div>
           <span class="wb-colon" aria-hidden="true">:</span>
-          <div class="wb-cell"><span class="wb-num" id="wbS">00</span><span class="wb-lbl">Seconds</span></div>
+          <div class="wb-cell"><span class="wb-num" id="wbS">00</span><span class="wb-lbl" data-i18n="ibm_x402_demo.seconds">Seconds</span></div>
         </div>
-        <p class="wb-soon" id="wbSoon">Add it to your calendar so you don't miss it.</p>
+        <p class="wb-soon" id="wbSoon" data-i18n="ibm_x402_demo.add_it_to_your_calendar_so_you">Add it to your calendar so you don't miss it.</p>
       </div>
 
       <!-- LIVE · stream not yet attached, or a designed error state (graceful) -->
       <div class="wb-fill wb-holding" id="wbHolding" hidden>
         <div class="wb-spinner" id="wbSpinner" aria-hidden="true"></div>
-        <h3 class="wb-stage-title" id="wbHoldTitle">We're about to begin</h3>
-        <p class="wb-soon" id="wbHoldMsg">The stream will appear here the moment it starts.</p>
-        <button class="wb-retry" id="wbRetry" type="button" hidden>Reload the player</button>
+        <h3 class="wb-stage-title" id="wbHoldTitle" data-i18n="ibm_x402_demo.we_re_about_to_begin">We're about to begin</h3>
+        <p class="wb-soon" id="wbHoldMsg" data-i18n="ibm_x402_demo.the_stream_will_appear_here_the_moment">The stream will appear here the moment it starts.</p>
+        <button class="wb-retry" id="wbRetry" type="button" hidden data-i18n="ibm_x402_demo.reload_the_player">Reload the player</button>
       </div>
 
       <!-- LIVE / REPLAY · player mounts here -->
@@ -812,26 +812,26 @@ agent-3d:defined ~ .agent-skel{display:none}
 <section class="section" id="forge" aria-labelledby="forge-h">
   <div class="inner">
     <div class="section-tag">Demo 01 · Creation</div>
-    <h2 id="forge-h">Forge a <strong>3D model</strong> from a sentence</h2>
-    <p class="section-lead">This pays the same x402 rail as the demo below — one USDC micropayment runs a real text→3D pipeline (Microsoft TRELLIS on NVIDIA NIM) and hands back a textured GLB you can orbit and download. The price below is read live from the server's own 402 response.</p>
+    <h2 id="forge-h" data-i18n-html="ibm_x402_demo.forge_a_3d_model_from_a_sentence">Forge a <strong>3D model</strong> from a sentence</h2>
+    <p class="section-lead" data-i18n="ibm_x402_demo.this_pays_the_same_x402_rail_as">This pays the same x402 rail as the demo below — one USDC micropayment runs a real text→3D pipeline (Microsoft TRELLIS on NVIDIA NIM) and hands back a textured GLB you can orbit and download. The price below is read live from the server's own 402 response.</p>
 
     <div class="demo">
       <div class="demo-head">
         <div>
-          <h3 class="demo-title">three<span>.ws</span> Forge</h3>
+          <h3 class="demo-title" data-i18n-html="ibm_x402_demo.three_ws_forge">three<span>.ws</span> Forge</h3>
           <div class="demo-desc">Describe one object; pay; get back a textured, downloadable 3D model. Runs Microsoft TRELLIS on NVIDIA NIM (native text→mesh) — the same engine that builds the bodies our agents wear.</div>
         </div>
         <div class="price-tag">
           <div class="amt" id="fgPriceAmt" aria-hidden="true">$<strong>0.05</strong></div>
           <div class="net" aria-hidden="true">USDC · per model</div>
-          <span class="sr-only" id="fgPriceSr">Price: five cents in USDC per generation.</span>
+          <span class="sr-only" id="fgPriceSr" data-i18n="ibm_x402_demo.price_five_cents_in_usdc_per_generation">Price: five cents in USDC per generation.</span>
         </div>
       </div>
 
       <div class="demo-body">
         <!-- live 402 preview -->
         <div class="preview" id="fgPreview" role="region" aria-label="Live HTTP 402 payment challenge" aria-live="polite" aria-busy="true">
-          <div class="preview-label" id="fgPvLabel"><span class="dot" aria-hidden="true"></span><span id="fgPvLabelText">Reading the server's 402 challenge…</span></div>
+          <div class="preview-label" id="fgPvLabel"><span class="dot" aria-hidden="true"></span><span id="fgPvLabelText" data-i18n="ibm_x402_demo.reading_the_server_s_402_challenge">Reading the server's 402 challenge…</span></div>
           <div id="fgPvRows">
             <div class="preview-row"><span class="sk" style="width:38%"></span></div>
             <div class="preview-row"><span class="sk" style="width:54%"></span></div>
@@ -841,17 +841,17 @@ agent-3d:defined ~ .agent-skel{display:none}
 
         <!-- quality tier -->
         <div class="tier-row" id="fgTiers" role="radiogroup" aria-label="Generation quality tier">
-          <button class="tier" type="button" role="radio" aria-checked="true" tabindex="0" data-tier="draft">
+          <button class="tier" type="button" role="radio" aria-checked="true" tabindex="0" data-tier="draft" data-i18n-html="ibm_x402_demo.draft_0_05_fast_preview_geometry_best">
             <span class="t-name"><span class="t-tier">Draft</span><span class="t-price" data-price>$0.05</span></span>
             <span class="t-blurb">Fast preview geometry. Best to try the flow.</span>
             <span class="t-eta" data-eta>~40s</span>
           </button>
-          <button class="tier" type="button" role="radio" aria-checked="false" tabindex="-1" data-tier="standard">
+          <button class="tier" type="button" role="radio" aria-checked="false" tabindex="-1" data-tier="standard" data-i18n-html="ibm_x402_demo.standard_0_15_balanced_detail_the_default">
             <span class="t-name"><span class="t-tier">Standard</span><span class="t-price" data-price>$0.15</span></span>
             <span class="t-blurb">Balanced detail. The default for most assets.</span>
             <span class="t-eta" data-eta>~60s</span>
           </button>
-          <button class="tier" type="button" role="radio" aria-checked="false" tabindex="-1" data-tier="high">
+          <button class="tier" type="button" role="radio" aria-checked="false" tabindex="-1" data-tier="high" data-i18n-html="ibm_x402_demo.high_0_50_maximum_geometry_pbr_textures">
             <span class="t-name"><span class="t-tier">High</span><span class="t-price" data-price>$0.50</span></span>
             <span class="t-blurb">Maximum geometry + PBR textures. Slower.</span>
             <span class="t-eta" data-eta>~130s</span>
@@ -861,13 +861,13 @@ agent-3d:defined ~ .agent-skel{display:none}
         <!-- input -->
         <div class="field-row">
           <div class="field-wrap">
-            <label for="fgPrompt">Describe the object</label>
+            <label for="fgPrompt" data-i18n="ibm_x402_demo.describe_the_object">Describe the object</label>
             <input id="fgPrompt" class="field" value="a brass steampunk owl, full body" maxlength="1000" autocomplete="off" spellcheck="true" inputmode="text" aria-describedby="fgPromptHint">
             <div class="field-hint" id="fgPromptHint">One subject works best — describe it in a sentence.</div>
           </div>
-          <button id="fgBtn" class="btn" type="button"><span class="spin" aria-hidden="true"></span><span class="label">Pay $0.05 &amp; forge</span> <span class="arrow" aria-hidden="true">→</span></button>
+          <button id="fgBtn" class="btn" type="button" data-i18n-html="ibm_x402_demo.pay_0_05_forge"><span class="spin" aria-hidden="true"></span><span class="label">Pay $0.05 &amp; forge</span> <span class="arrow" aria-hidden="true">→</span></button>
         </div>
-        <div class="wallet-hint" id="fgWalletHint">On a phone? Open this page inside your <b>Phantom</b> wallet's in-app browser to pay.</div>
+        <div class="wallet-hint" id="fgWalletHint">On a phone? Open this page inside your <b data-i18n="ibm_x402_demo.phantom">Phantom</b> wallet's in-app browser to pay.</div>
 
         <!-- result. Not a live region (its success state holds a raw-JSON block);
              concise spoken updates go to #fgAnnouncer instead. -->
@@ -879,7 +879,7 @@ agent-3d:defined ~ .agent-skel{display:none}
         <!-- requirements -->
         <div class="note">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-          <p>You'll need the <b>Phantom</b> wallet on <b>Solana</b> — holding the model's price in <b>USDC</b> on Solana mainnet. This spends <b>real USDC</b> — the price shown above — from your own wallet. The payment itself is a gasless signature: the network fee is sponsored by the x402 facilitator, so it isn't added to your cost. Generation runs once the payment verifies and takes roughly a minute. No wallet? Forge one <b>free</b> below — no wallet, no key, no payment.</p>
+          <p data-i18n-html="ibm_x402_demo.you_ll_need_the_phantom_wallet_on">You'll need the <b>Phantom</b> wallet on <b>Solana</b> — holding the model's price in <b>USDC</b> on Solana mainnet. This spends <b>real USDC</b> — the price shown above — from your own wallet. The payment itself is a gasless signature: the network fee is sponsored by the x402 facilitator, so it isn't added to your cost. Generation runs once the payment verifies and takes roughly a minute. No wallet? Forge one <b>free</b> below — no wallet, no key, no payment.</p>
         </div>
       </div>
     </div>
@@ -889,18 +889,18 @@ agent-3d:defined ~ .agent-skel{display:none}
            no key, no payment. POSTs the free /api/forge lane and polls it. -->
       <div class="g3d">
         <div class="g3d-tag">Live · Free · No wallet</div>
-        <h4 id="g3d-h">Or forge one <strong>free</strong> — no wallet needed</h4>
-        <p class="g3d-sub">The same pipeline, on the house. No wallet, no API key, no payment — it runs Microsoft TRELLIS on NVIDIA NIM with automatic fallback across generation lanes, so a textured GLB always comes back to orbit and download.</p>
+        <h4 id="g3d-h" data-i18n-html="ibm_x402_demo.or_forge_one_free_no_wallet_needed">Or forge one <strong>free</strong> — no wallet needed</h4>
+        <p class="g3d-sub" data-i18n="ibm_x402_demo.the_same_pipeline_on_the_house_no">The same pipeline, on the house. No wallet, no API key, no payment — it runs Microsoft TRELLIS on NVIDIA NIM with automatic fallback across generation lanes, so a textured GLB always comes back to orbit and download.</p>
         <div class="g3d-field">
-          <label for="g3dPrompt" class="sr-only">Describe an object to generate for free</label>
+          <label for="g3dPrompt" class="sr-only" data-i18n="ibm_x402_demo.describe_an_object_to_generate_for_free">Describe an object to generate for free</label>
           <input id="g3dPrompt" class="g3d-input" value="a brass steampunk owl, full body" maxlength="600" autocomplete="off" spellcheck="true" inputmode="text" aria-describedby="g3d-h">
-          <button id="g3dBtn" class="g3d-btn" type="button"><span class="g3d-spin" aria-hidden="true"></span><span class="g3d-label">Generate free</span> <span aria-hidden="true">→</span></button>
+          <button id="g3dBtn" class="g3d-btn" type="button" data-i18n-html="ibm_x402_demo.generate_free"><span class="g3d-spin" aria-hidden="true"></span><span class="g3d-label">Generate free</span> <span aria-hidden="true">→</span></button>
         </div>
         <div class="g3d-suggest" id="g3dSuggest" aria-label="Example prompts">
-          <button type="button" data-p="a low-poly red fox, sitting">low-poly fox</button>
-          <button type="button" data-p="a glossy ceramic teapot with gold trim">ceramic teapot</button>
-          <button type="button" data-p="a futuristic delivery drone">delivery drone</button>
-          <button type="button" data-p="a worn leather hiking boot">hiking boot</button>
+          <button type="button" data-p="a low-poly red fox, sitting" data-i18n="ibm_x402_demo.low_poly_fox">low-poly fox</button>
+          <button type="button" data-p="a glossy ceramic teapot with gold trim" data-i18n="ibm_x402_demo.ceramic_teapot">ceramic teapot</button>
+          <button type="button" data-p="a futuristic delivery drone" data-i18n="ibm_x402_demo.delivery_drone">delivery drone</button>
+          <button type="button" data-p="a worn leather hiking boot" data-i18n="ibm_x402_demo.hiking_boot">hiking boot</button>
         </div>
         <div id="g3dResult" class="g3d-result is-empty">
           Describe an object and generate — your model appears here to orbit and download.
@@ -908,7 +908,7 @@ agent-3d:defined ~ .agent-skel{display:none}
         <p id="g3dStatus" class="sr-only" role="status" aria-live="polite"></p>
       </div>
 
-    <p class="forge-foot">Want image→3D, auto-rigging, AR preview and the full gallery? <a href="https://three.ws/forge" target="_blank" rel="noopener">Open the full Forge tool ↗</a></p>
+    <p class="forge-foot" data-i18n-html="ibm_x402_demo.want_image_3d_auto_rigging_ar_preview">Want image→3D, auto-rigging, AR preview and the full gallery? <a href="https://three.ws/forge" target="_blank" rel="noopener">Open the full Forge tool ↗</a></p>
   </div>
 </section>
 
@@ -916,22 +916,22 @@ agent-3d:defined ~ .agent-skel{display:none}
 <section class="section" aria-labelledby="how-h">
   <div class="inner">
     <div class="section-tag">The protocol in three moves</div>
-    <h2 id="how-h">How <strong>x402</strong> works</h2>
+    <h2 id="how-h" data-i18n-html="ibm_x402_demo.how_x402_works">How <strong>x402</strong> works</h2>
     <ol class="steps">
       <li class="step">
         <div class="step-n">01 · REQUEST</div>
-        <h3>You ask normally</h3>
-        <p>A plain <code>GET</code> to a paid endpoint — no payment attached yet.</p>
+        <h3 data-i18n="ibm_x402_demo.you_ask_normally">You ask normally</h3>
+        <p data-i18n-html="ibm_x402_demo.a_plain_to_a_paid_endpoint_no">A plain <code>GET</code> to a paid endpoint — no payment attached yet.</p>
       </li>
       <li class="step">
         <div class="step-n">02 · 402 CHALLENGE</div>
-        <h3>Server quotes a price</h3>
-        <p>It replies <code>402</code> with exactly what it wants: amount, asset, network, and the address to pay.</p>
+        <h3 data-i18n="ibm_x402_demo.server_quotes_a_price">Server quotes a price</h3>
+        <p data-i18n-html="ibm_x402_demo.it_replies_with_exactly_what_it_wants">It replies <code>402</code> with exactly what it wants: amount, asset, network, and the address to pay.</p>
       </li>
       <li class="step">
         <div class="step-n">03 · PAY &amp; RETRY</div>
-        <h3>Wallet signs, call settles</h3>
-        <p>You sign a gasless USDC authorization, resend with an <code>X-PAYMENT</code> header, and the call settles on-chain — your data comes back.</p>
+        <h3 data-i18n="ibm_x402_demo.wallet_signs_call_settles">Wallet signs, call settles</h3>
+        <p data-i18n-html="ibm_x402_demo.you_sign_a_gasless_usdc_authorization_resend">You sign a gasless USDC authorization, resend with an <code>X-PAYMENT</code> header, and the call settles on-chain — your data comes back.</p>
       </li>
     </ol>
   </div>
@@ -941,26 +941,26 @@ agent-3d:defined ~ .agent-skel{display:none}
 <section class="section" id="demo" aria-labelledby="demo-h">
   <div class="inner">
     <div class="section-tag">Demo 02 · Payments</div>
-    <h2 id="demo-h">Buy a <strong>data call</strong> for $0.001</h2>
-    <p class="section-lead">This calls a real three.ws API — a ticker-symbol availability check — for one tenth of a cent in USDC, settled on-chain. The price below is read live from the server's own 402 response.</p>
+    <h2 id="demo-h" data-i18n-html="ibm_x402_demo.buy_a_data_call_for_0_001">Buy a <strong>data call</strong> for $0.001</h2>
+    <p class="section-lead" data-i18n="ibm_x402_demo.this_calls_a_real_three_ws_api">This calls a real three.ws API — a ticker-symbol availability check — for one tenth of a cent in USDC, settled on-chain. The price below is read live from the server's own 402 response.</p>
 
     <div class="demo">
       <div class="demo-head">
         <div>
-          <h3 class="demo-title">three<span>.ws</span> Symbol Check</h3>
+          <h3 class="demo-title" data-i18n-html="ibm_x402_demo.three_ws_symbol_check">three<span>.ws</span> Symbol Check</h3>
           <div class="demo-desc">Is a ticker already taken? Returns exact and look-alike matches across symbols indexed by three.ws.</div>
         </div>
         <div class="price-tag">
           <div class="amt" id="priceAmt" aria-hidden="true">$<strong>0.001</strong></div>
           <div class="net" aria-hidden="true">USDC · per call</div>
-          <span class="sr-only" id="priceSr">Price: one tenth of a cent in USDC per call.</span>
+          <span class="sr-only" id="priceSr" data-i18n="ibm_x402_demo.price_one_tenth_of_a_cent_in">Price: one tenth of a cent in USDC per call.</span>
         </div>
       </div>
 
       <div class="demo-body">
         <!-- live 402 preview -->
         <div class="preview" role="region" aria-label="Live HTTP 402 payment challenge" aria-live="polite" aria-busy="true">
-          <div class="preview-label" id="pvLabel"><span class="dot" aria-hidden="true"></span><span id="pvLabelText">Reading the server's 402 challenge…</span></div>
+          <div class="preview-label" id="pvLabel"><span class="dot" aria-hidden="true"></span><span id="pvLabelText" data-i18n="ibm_x402_demo.reading_the_server_s_402_challenge_2">Reading the server's 402 challenge…</span></div>
           <div id="pvRows">
             <div class="preview-row"><span class="sk" style="width:38%"></span></div>
             <div class="preview-row"><span class="sk" style="width:54%"></span></div>
@@ -971,13 +971,13 @@ agent-3d:defined ~ .agent-skel{display:none}
         <!-- input -->
         <div class="field-row">
           <div class="field-wrap">
-            <label for="ticker">Ticker to check</label>
+            <label for="ticker" data-i18n="ibm_x402_demo.ticker_to_check">Ticker to check</label>
             <input id="ticker" class="field" value="GRANITE" maxlength="32" autocomplete="off" spellcheck="false" autocapitalize="characters" inputmode="text" aria-describedby="tickerHint">
             <div class="field-hint" id="tickerHint">A–Z and 0–9, up to 32 characters.</div>
           </div>
-          <button id="payBtn" class="btn" type="button"><span class="spin" aria-hidden="true"></span><span class="label">Pay $0.001 &amp; run</span> <span class="arrow" aria-hidden="true">→</span></button>
+          <button id="payBtn" class="btn" type="button" data-i18n-html="ibm_x402_demo.pay_0_001_run"><span class="spin" aria-hidden="true"></span><span class="label">Pay $0.001 &amp; run</span> <span class="arrow" aria-hidden="true">→</span></button>
         </div>
-        <div class="wallet-hint" id="walletHint">On a phone? Open this page inside your <b>MetaMask</b> or <b>Phantom</b> in-app browser to pay.</div>
+        <div class="wallet-hint" id="walletHint">On a phone? Open this page inside your <b data-i18n="ibm_x402_demo.metamask">MetaMask</b> or <b data-i18n="ibm_x402_demo.phantom_2">Phantom</b> in-app browser to pay.</div>
 
         <!-- result. The visible panel is NOT a live region (its success state
              contains a raw-JSON block that would otherwise be read aloud in full).
@@ -990,7 +990,7 @@ agent-3d:defined ~ .agent-skel{display:none}
         <!-- requirements -->
         <div class="note">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-          <p>You'll need a browser wallet — <b>MetaMask</b> (Base) or <b>Phantom</b> (Solana) — holding at least <b>$0.001 USDC</b> on mainnet. This spends <b>real USDC</b> — one tenth of a cent — from your own wallet. The payment itself is a gasless signature: the network fee is sponsored by the x402 facilitator, so it isn't added to your cost (it isn't zero, just not yours to pay). No wallet? You can still watch the live 402 challenge above and read the <a href="https://three.ws/docs/x402" target="_blank" rel="noopener">protocol docs</a>. <span class="note-aside">Paying with <b>MetaMask</b> on Base is fully self-contained — it talks only to three.ws. Paying with <b>Phantom</b> on Solana additionally loads a small library from <span class="mono">esm.sh</span>; if a strict host security policy blocks it, the Solana button reports it clearly and the Base path keeps working.</span></p>
+          <p>You'll need a browser wallet — <b data-i18n="ibm_x402_demo.metamask_2">MetaMask</b> (Base) or <b data-i18n="ibm_x402_demo.phantom_3">Phantom</b> (Solana) — holding at least <b data-i18n="ibm_x402_demo.0_001_usdc">$0.001 USDC</b> on mainnet. This spends <b data-i18n="ibm_x402_demo.real_usdc">real USDC</b> — one tenth of a cent — from your own wallet. The payment itself is a gasless signature: the network fee is sponsored by the x402 facilitator, so it isn't added to your cost (it isn't zero, just not yours to pay). No wallet? You can still watch the live 402 challenge above and read the <a href="https://three.ws/docs/x402" target="_blank" rel="noopener" data-i18n="ibm_x402_demo.protocol_docs">protocol docs</a>. <span class="note-aside" data-i18n-html="ibm_x402_demo.paying_with_metamask_on_base_is_fully">Paying with <b>MetaMask</b> on Base is fully self-contained — it talks only to three.ws. Paying with <b>Phantom</b> on Solana additionally loads a small library from <span class="mono">esm.sh</span>; if a strict host security policy blocks it, the Solana button reports it clearly and the Base path keeps working.</span></p>
         </div>
       </div>
     </div>
@@ -1001,8 +1001,8 @@ agent-3d:defined ~ .agent-skel{display:none}
 <section class="section" id="agent" aria-labelledby="agent-h">
   <div class="inner">
     <div class="section-tag">Demo 03 · Embodiment</div>
-    <h2 id="agent-h">An <strong>agent</strong> that pays for its own data</h2>
-    <p class="section-lead">Everything you just did by hand — read the price, sign, settle — an autonomous agent can do on its own. This is one of them: a 3D agent from three.ws, rendered live in your browser. It watches the call above and reacts the moment your payment settles.</p>
+    <h2 id="agent-h" data-i18n-html="ibm_x402_demo.an_agent_that_pays_for_its_own">An <strong>agent</strong> that pays for its own data</h2>
+    <p class="section-lead" data-i18n="ibm_x402_demo.everything_you_just_did_by_hand_read">Everything you just did by hand — read the price, sign, settle — an autonomous agent can do on its own. This is one of them: a 3D agent from three.ws, rendered live in your browser. It watches the call above and reacts the moment your payment settles.</p>
 
     <div class="agent-grid">
       <div class="agent-stage">
@@ -1020,9 +1020,9 @@ agent-3d:defined ~ .agent-skel{display:none}
       </div>
 
       <div class="agent-copy">
-        <h3>It reacts to the payment above — in real time</h3>
-        <p>Run the $0.001 call and watch: the agent celebrates the moment the transaction settles. The same primitives that power the demo button power it — it signs, pays, and reads results exactly the way you just did, only autonomously.</p>
-        <p>Rendered live in the browser with WebGL — no video, no pre-recording.</p>
+        <h3 data-i18n="ibm_x402_demo.it_reacts_to_the_payment_above_in">It reacts to the payment above — in real time</h3>
+        <p data-i18n="ibm_x402_demo.run_the_0_001_call_and_watch">Run the $0.001 call and watch: the agent celebrates the moment the transaction settles. The same primitives that power the demo button power it — it signs, pays, and reads results exactly the way you just did, only autonomously.</p>
+        <p data-i18n="ibm_x402_demo.rendered_live_in_the_browser_with_webgl">Rendered live in the browser with WebGL — no video, no pre-recording.</p>
       </div>
     </div>
   </div>
@@ -1032,19 +1032,19 @@ agent-3d:defined ~ .agent-skel{display:none}
 <section class="section" id="play" aria-labelledby="play-h">
   <div class="inner">
     <div class="section-tag">Demo 04 · Worlds</div>
-    <h2 id="play-h">Play — drop an agent into a <strong>live world</strong></h2>
-    <p class="section-lead">Every coin on three.ws is a 3D space agents and visitors share in real time — walk in, pick an avatar, and move around a world that reacts to live on-chain activity. Pick a name and a body below to enter; it runs full-size, right on the page.</p>
+    <h2 id="play-h" data-i18n-html="ibm_x402_demo.play_drop_an_agent_into_a_live">Play — drop an agent into a <strong>live world</strong></h2>
+    <p class="section-lead" data-i18n="ibm_x402_demo.every_coin_on_three_ws_is_a">Every coin on three.ws is a 3D space agents and visitors share in real time — walk in, pick an avatar, and move around a world that reacts to live on-chain activity. Pick a name and a body below to enter; it runs full-size, right on the page.</p>
     <div class="live-embed" data-src="https://three.ws/play?bg=transparent" data-allow="fullscreen; gamepad; autoplay; xr-spatial-tracking; microphone" data-label="Play — three.ws">
       <div class="embed-bar">
-        <span class="bar-url"><span class="dot" aria-hidden="true"></span>three.ws/play</span>
+        <span class="bar-url" data-i18n-html="ibm_x402_demo.three_ws_play"><span class="dot" aria-hidden="true"></span>three.ws/play</span>
         <span class="bar-actions">
-          <button type="button" data-fs>⤢ Full screen</button>
-          <a href="https://three.ws/play" target="_blank" rel="noopener">New tab ↗</a>
+          <button type="button" data-fs data-i18n="ibm_x402_demo.full_screen">⤢ Full screen</button>
+          <a href="https://three.ws/play" target="_blank" rel="noopener" data-i18n="ibm_x402_demo.new_tab">New tab ↗</a>
         </span>
       </div>
       <div class="embed-frame">
-        <div class="embed-load embed-state"><span class="spin" aria-hidden="true"></span><span>Loading the live world…</span></div>
-        <div class="embed-err embed-state">Play couldn't load inline here. <span class="es-hint"><a href="https://three.ws/play" target="_blank" rel="noopener">Open it in a new tab ↗</a></span></div>
+        <div class="embed-load embed-state"><span class="spin" aria-hidden="true"></span><span data-i18n="ibm_x402_demo.loading_the_live_world">Loading the live world…</span></div>
+        <div class="embed-err embed-state">Play couldn't load inline here. <span class="es-hint" data-i18n-html="ibm_x402_demo.open_it_in_a_new_tab"><a href="https://three.ws/play" target="_blank" rel="noopener">Open it in a new tab ↗</a></span></div>
       </div>
     </div>
   </div>
@@ -1054,19 +1054,19 @@ agent-3d:defined ~ .agent-skel{display:none}
 <section class="section" id="irl" aria-labelledby="irl-h">
   <div class="inner">
     <div class="section-tag">Demo 05 · Reality</div>
-    <h2 id="irl-h">IRL — put an agent in the <strong>real world</strong></h2>
-    <p class="section-lead">Anchor a 3D agent to physical space and see it through your camera, with real-world pins you place around you — you stay in control of every permission. AR is a phone experience, so it's best opened on a mobile device; the live surface is below, and the camera prompt only fires when you choose to enable it.</p>
+    <h2 id="irl-h" data-i18n-html="ibm_x402_demo.irl_put_an_agent_in_the_real">IRL — put an agent in the <strong>real world</strong></h2>
+    <p class="section-lead" data-i18n="ibm_x402_demo.anchor_a_3d_agent_to_physical_space">Anchor a 3D agent to physical space and see it through your camera, with real-world pins you place around you — you stay in control of every permission. AR is a phone experience, so it's best opened on a mobile device; the live surface is below, and the camera prompt only fires when you choose to enable it.</p>
     <div class="live-embed" data-src="https://three.ws/irl" data-allow="camera; gyroscope; accelerometer; magnetometer; xr-spatial-tracking; fullscreen" data-label="IRL — three.ws">
       <div class="embed-bar">
-        <span class="bar-url"><span class="dot" aria-hidden="true"></span>three.ws/irl</span>
+        <span class="bar-url" data-i18n-html="ibm_x402_demo.three_ws_irl"><span class="dot" aria-hidden="true"></span>three.ws/irl</span>
         <span class="bar-actions">
-          <button type="button" data-fs>⤢ Full screen</button>
-          <a href="https://three.ws/irl" target="_blank" rel="noopener">Open on your phone ↗</a>
+          <button type="button" data-fs data-i18n="ibm_x402_demo.full_screen_2">⤢ Full screen</button>
+          <a href="https://three.ws/irl" target="_blank" rel="noopener" data-i18n="ibm_x402_demo.open_on_your_phone">Open on your phone ↗</a>
         </span>
       </div>
       <div class="embed-frame">
-        <div class="embed-load embed-state"><span class="spin" aria-hidden="true"></span><span>Loading IRL…</span></div>
-        <div class="embed-err embed-state">IRL couldn't load inline here — augmented reality works best opened directly on a phone. <span class="es-hint"><a href="https://three.ws/irl" target="_blank" rel="noopener">Open it on your device ↗</a></span></div>
+        <div class="embed-load embed-state"><span class="spin" aria-hidden="true"></span><span data-i18n="ibm_x402_demo.loading_irl">Loading IRL…</span></div>
+        <div class="embed-err embed-state">IRL couldn't load inline here — augmented reality works best opened directly on a phone. <span class="es-hint" data-i18n-html="ibm_x402_demo.open_it_on_your_device"><a href="https://three.ws/irl" target="_blank" rel="noopener">Open it on your device ↗</a></span></div>
       </div>
     </div>
   </div>
@@ -1076,19 +1076,19 @@ agent-3d:defined ~ .agent-skel{display:none}
 <section class="section" aria-labelledby="embed-h">
   <div class="inner">
     <div class="section-tag">For developers</div>
-    <h2 id="embed-h">Add a paywall in <strong>eight lines</strong></h2>
-    <p class="section-lead">The button above is powered by one drop-in script. Any element with a <span class="mono">data-x402-endpoint</span> opens the wallet flow on click — no framework, no build step, no SDK.</p>
-    <div class="embed-block" id="embedCode"><span class="c-com">&lt;!-- one script tag, served from three.ws --&gt;</span>
-<span class="c-tag">&lt;script</span> <span class="c-attr">type</span>=<span class="c-str">"module"</span> <span class="c-attr">src</span>=<span class="c-str">"https://three.ws/x402.js"</span><span class="c-tag">&gt;&lt;/script&gt;</span>
+    <h2 id="embed-h" data-i18n-html="ibm_x402_demo.add_a_paywall_in_eight_lines">Add a paywall in <strong>eight lines</strong></h2>
+    <p class="section-lead" data-i18n-html="ibm_x402_demo.the_button_above_is_powered_by_one">The button above is powered by one drop-in script. Any element with a <span class="mono">data-x402-endpoint</span> opens the wallet flow on click — no framework, no build step, no SDK.</p>
+    <div class="embed-block" id="embedCode"><span class="c-com" data-i18n="ibm_x402_demo.text">&lt;!-- one script tag, served from three.ws --&gt;</span>
+<span class="c-tag" data-i18n="ibm_x402_demo.script">&lt;script</span> <span class="c-attr" data-i18n="ibm_x402_demo.type">type</span>=<span class="c-str" data-i18n="ibm_x402_demo.module">"module"</span> <span class="c-attr" data-i18n="ibm_x402_demo.src">src</span>=<span class="c-str" data-i18n="ibm_x402_demo.https_three_ws_x402_js">"https://three.ws/x402.js"</span><span class="c-tag" data-i18n="ibm_x402_demo.text_2">&gt;&lt;/script&gt;</span>
 
-<span class="c-com">&lt;!-- any element with data-x402-endpoint becomes payable --&gt;</span>
-<span class="c-tag">&lt;button</span>
-  <span class="c-attr">data-x402-endpoint</span>=<span class="c-str">"https://three.ws/api/x402/symbol-availability?ticker=GRANITE"</span>
-  <span class="c-attr">data-x402-merchant</span>=<span class="c-str">"three.ws"</span>
-  <span class="c-attr">data-x402-action</span>=<span class="c-str">"Check symbol"</span><span class="c-tag">&gt;</span>
+<span class="c-com" data-i18n="ibm_x402_demo.text_3">&lt;!-- any element with data-x402-endpoint becomes payable --&gt;</span>
+<span class="c-tag" data-i18n="ibm_x402_demo.button">&lt;button</span>
+  <span class="c-attr" data-i18n="ibm_x402_demo.data_x402_endpoint">data-x402-endpoint</span>=<span class="c-str" data-i18n="ibm_x402_demo.https_three_ws_api_x402_symbol_availability">"https://three.ws/api/x402/symbol-availability?ticker=GRANITE"</span>
+  <span class="c-attr" data-i18n="ibm_x402_demo.data_x402_merchant">data-x402-merchant</span>=<span class="c-str" data-i18n="ibm_x402_demo.three_ws_2">"three.ws"</span>
+  <span class="c-attr" data-i18n="ibm_x402_demo.data_x402_action">data-x402-action</span>=<span class="c-str" data-i18n="ibm_x402_demo.check_symbol">"Check symbol"</span><span class="c-tag">&gt;</span>
   Pay $0.001 &amp; run
-<span class="c-tag">&lt;/button&gt;</span></div>
-    <div class="copy-row"><button class="copy-btn" id="copyBtn" type="button">Copy snippet</button></div>
+<span class="c-tag" data-i18n="ibm_x402_demo.text_4">&lt;/button&gt;</span></div>
+    <div class="copy-row"><button class="copy-btn" id="copyBtn" type="button" data-i18n="ibm_x402_demo.copy_snippet">Copy snippet</button></div>
   </div>
 </section>
 </main>
@@ -1097,14 +1097,14 @@ agent-3d:defined ~ .agent-skel{display:none}
 <footer class="footer">
   <div class="inner">
     <nav class="footer-nav" aria-label="Footer">
-      <a href="https://three.ws" target="_blank" rel="noopener">Platform</a>
-      <a href="https://three.ws/docs/x402" target="_blank" rel="noopener">x402 Protocol</a>
-      <a href="https://three.ws/docs/ibm" target="_blank" rel="noopener">IBM × three.ws</a>
-      <a href="https://three.ws/bazaar" target="_blank" rel="noopener">Endpoint Bazaar</a>
-      <a href="https://three.ws/forge" target="_blank" rel="noopener">Forge</a>
-      <a href="https://three.ws/play" target="_blank" rel="noopener">Play</a>
-      <a href="https://three.ws/irl" target="_blank" rel="noopener">IRL</a>
-      <a href="https://three.ws/changelog" target="_blank" rel="noopener">Changelog</a>
+      <a href="https://three.ws" target="_blank" rel="noopener" data-i18n="ibm_x402_demo.platform">Platform</a>
+      <a href="https://three.ws/docs/x402" target="_blank" rel="noopener" data-i18n="ibm_x402_demo.x402_protocol">x402 Protocol</a>
+      <a href="https://three.ws/docs/ibm" target="_blank" rel="noopener" data-i18n="ibm_x402_demo.ibm_three_ws">IBM × three.ws</a>
+      <a href="https://three.ws/bazaar" target="_blank" rel="noopener" data-i18n="ibm_x402_demo.endpoint_bazaar">Endpoint Bazaar</a>
+      <a href="https://three.ws/forge" target="_blank" rel="noopener" data-i18n="ibm_x402_demo.forge">Forge</a>
+      <a href="https://three.ws/play" target="_blank" rel="noopener" data-i18n="ibm_x402_demo.play">Play</a>
+      <a href="https://three.ws/irl" target="_blank" rel="noopener" data-i18n="ibm_x402_demo.irl">IRL</a>
+      <a href="https://three.ws/changelog" target="_blank" rel="noopener" data-i18n="ibm_x402_demo.changelog">Changelog</a>
     </nav>
     <div class="footer-legal">
       Live x402 demo · three.ws, an IBM Business Partner. Payments settle in USDC on Base or Solana mainnet via the x402 protocol. The only coin this platform issues is $THREE (FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump).
@@ -2305,5 +2305,7 @@ agent-3d:defined ~ .agent-skel{display:none}
   }
 })();
 </script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

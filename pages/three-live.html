@@ -10,8 +10,8 @@
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>$THREE Live · Protocol Pulse — three.ws</title>
-	<meta name="description" content="The $THREE protocol as a living 3D organism. Watch real on-chain trades pulse through it in real time — every transaction emits a burst, whales send shockwaves, with a live trade feed and protocol stats." />
+	<title data-i18n="three_live.meta_title">$THREE Live · Protocol Pulse — three.ws</title>
+	<meta name="description" content="The $THREE protocol as a living 3D organism. Watch real on-chain trades pulse through it in real time — every transaction emits a burst, whales send shockwaves, with a live trade feed and protocol stats."  data-i18n-attr="content:three_live.meta_description"/>
 	<link rel="canonical" href="https://three.ws/three-live" />
 	<link rel="stylesheet" href="/style.css" />
 	<link rel="stylesheet" href="/nav.css" />
@@ -176,15 +176,15 @@
 
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="$THREE Live · Protocol Pulse · three.ws">
-	<meta property="og:description" content="The $THREE protocol as a living 3D organism. Real on-chain trades pulse through it in real time — each transaction emits a particle burst, whales send shockwaves, with a live trade feed and a HUD of price, market cap, holders, and volume.">
+	<meta property="og:title" content="$THREE Live · Protocol Pulse · three.ws" data-i18n-attr="content:three_live.meta_og_title">
+	<meta property="og:description" content="The $THREE protocol as a living 3D organism. Real on-chain trades pulse through it in real time — each transaction emits a particle burst, whales send shockwaves, with a live trade feed and a HUD of price, market cap, holders, and volume." data-i18n-attr="content:three_live.meta_og_description">
 	<meta property="og:url" content="https://three.ws/three-live">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=%24THREE+Live+%C2%B7+Protocol+Pulse&amp;d=The+%24THREE+protocol+as+a+living+3D+organism.+Real+on-chain+trades+pulse+through+it+in+real+time+%E2%80%94+each+transaction+emits+a+particle+burst%2C+whales+send+shockwave&amp;p=%2Fthree-live">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="$THREE Live · Protocol Pulse · three.ws">
-	<meta name="twitter:description" content="The $THREE protocol as a living 3D organism. Real on-chain trades pulse through it in real time — each transaction emits a particle burst, whales send shockwaves, with a live trade feed and a HUD of price, market cap, holders, and volume.">
+	<meta name="twitter:title" content="$THREE Live · Protocol Pulse · three.ws" data-i18n-attr="content:three_live.meta_twitter_title">
+	<meta name="twitter:description" content="The $THREE protocol as a living 3D organism. Real on-chain trades pulse through it in real time — each transaction emits a particle burst, whales send shockwaves, with a live trade feed and a HUD of price, market cap, holders, and volume." data-i18n-attr="content:three_live.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=%24THREE+Live+%C2%B7+Protocol+Pulse&amp;d=The+%24THREE+protocol+as+a+living+3D+organism.+Real+on-chain+trades+pulse+through+it+in+real+time+%E2%80%94+each+transaction+emits+a+particle+burst%2C+whales+send+shockwave&amp;p=%2Fthree-live">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"$THREE Live · Protocol Pulse","description":"The $THREE protocol as a living 3D organism. Real on-chain trades pulse through it in real time — each transaction emits a particle burst, whales send shockwaves, with a live trade feed and a HUD of price, market cap, holders, and volume.","url":"https://three.ws/three-live","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -202,27 +202,27 @@
 
 		<!-- Hero: price + sentiment gauge -->
 		<section class="pl-overlay pl-hero" id="pl-hero" data-state="connecting" aria-live="polite">
-			<div class="sym"><span class="dot"></span> <span id="pl-status-text">$THREE · connecting…</span></div>
+			<div class="sym"><span class="dot"></span> <span id="pl-status-text" data-i18n="three_live.three_connecting">$THREE · connecting…</span></div>
 			<div class="price" id="pl-price">$—</div>
 			<div class="chg flat" id="pl-change">—</div>
 			<div class="pl-activity" title="On-chain trade throughput in the last 60s — activity, not a buy/sell signal">
-				<span>QUIET</span>
+				<span data-i18n="three_live.quiet">QUIET</span>
 				<span class="bar"><span class="fill" id="pl-activity-fill"></span></span>
-				<span>BUSY</span>
+				<span data-i18n="three_live.busy">BUSY</span>
 				<span class="reading" id="pl-activity-reading">—</span>
 			</div>
 			<div class="pl-links" style="display:flex;gap:14px;margin-top:12px;flex-wrap:wrap;font-family:var(--pl-mono);font-size:11.5px">
-				<a href="/three-token" style="color:var(--pl-faint);text-decoration:none">▸ Price &amp; trades</a>
-				<a href="/dashboard/holders" style="color:var(--pl-faint);text-decoration:none">▸ Holder leaderboard</a>
-				<a href="https://pump.fun/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" target="_blank" rel="noopener" style="color:var(--pl-faint);text-decoration:none">▸ Buy $THREE ↗</a>
+				<a href="/three-token" style="color:var(--pl-faint);text-decoration:none" data-i18n="three_live.price_trades">▸ Price &amp; trades</a>
+				<a href="/dashboard/holders" style="color:var(--pl-faint);text-decoration:none" data-i18n="three_live.holder_leaderboard">▸ Holder leaderboard</a>
+				<a href="https://pump.fun/coin/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" target="_blank" rel="noopener" style="color:var(--pl-faint);text-decoration:none" data-i18n="three_live.buy_three">▸ Buy $THREE ↗</a>
 			</div>
 		</section>
 
 		<!-- Live trade ticker -->
 		<aside class="pl-overlay pl-ticker" id="pl-ticker">
-			<div class="head">Live trades <span class="live">live</span></div>
+			<div class="head">Live trades <span class="live" data-i18n="three_live.live">live</span></div>
 			<ol id="pl-ticker-list" role="list">
-				<li class="empty" id="pl-ticker-empty">Live trades will appear here.</li>
+				<li class="empty" id="pl-ticker-empty" data-i18n="three_live.live_trades_will_appear_here">Live trades will appear here.</li>
 			</ol>
 		</aside>
 
@@ -243,7 +243,7 @@
 			<div class="seg sells"><div class="label">Sells / 60s</div><div class="num" id="pl-sells">0</div></div>
 		</section>
 
-		<div class="pl-overlay pl-hint"><b>Drag</b> to orbit · <b>Scroll</b> to zoom · each particle is a real trade</div>
+		<div class="pl-overlay pl-hint"><b data-i18n="three_live.drag">Drag</b> to orbit · <b data-i18n="three_live.scroll">Scroll</b> to zoom · each particle is a real trade</div>
 
 		<div class="pl-intro" id="pl-intro"><div class="ring"></div><div class="label">Reading the chain</div></div>
 		<div class="pl-toast" id="pl-toast"></div>
@@ -730,5 +730,7 @@
 		raf = requestAnimationFrame(tick);
 	</script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

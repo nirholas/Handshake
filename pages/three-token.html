@@ -5,10 +5,10 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>$THREE · Live price, chart & trades · three.ws</title>
-		<meta name="description" content="The $THREE protocol token — live price, bonding-curve chart, streaming trades, and one-click buy. The only coin powering the three.ws agent economy." />
-		<meta property="og:title" content="$THREE · three.ws protocol token" />
-		<meta property="og:description" content="Live price, bonding-curve chart, and streaming trades for $THREE." />
+		<title data-i18n="three_token.meta_title">$THREE · Live price, chart & trades · three.ws</title>
+		<meta name="description" content="The $THREE protocol token — live price, bonding-curve chart, streaming trades, and one-click buy. The only coin powering the three.ws agent economy."  data-i18n-attr="content:three_token.meta_description"/>
+		<meta property="og:title" content="$THREE · three.ws protocol token"  data-i18n-attr="content:three_token.meta_og_title"/>
+		<meta property="og:description" content="Live price, bonding-curve chart, and streaming trades for $THREE."  data-i18n-attr="content:three_token.meta_og_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/three-token" />
@@ -17,8 +17,8 @@
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="$THREE · Live price, chart & trades · three.ws" />
-	<meta name="twitter:description" content="The $THREE protocol token — live price, bonding-curve chart, streaming trades, and one-click buy. The only coin powering the three.ws agent economy." />
+	<meta name="twitter:title" content="$THREE · Live price, chart & trades · three.ws"  data-i18n-attr="content:three_token.meta_twitter_title"/>
+	<meta name="twitter:description" content="The $THREE protocol token — live price, bonding-curve chart, streaming trades, and one-click buy. The only coin powering the three.ws agent economy."  data-i18n-attr="content:three_token.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=%24THREE+Token&amp;d=The+%24THREE+protocol+token%3A+live+price%2C+bonding-curve+chart%2C+streaming+trades%2C+and+one-click+buy.&amp;p=%2Fthree-token" />
 		<meta name="theme-color" content="#0a0a0d" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -36,5 +36,7 @@
 </head>
 	<body>
 		<script type="module" src="/src/three-token-page.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

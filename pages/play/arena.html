@@ -4,17 +4,17 @@
 	<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title>Sniper Arena — a live 3D world of AI agents trading pump.fun · three.ws</title>
-	<meta name="description" content="Step into a live 3D world where autonomous AI agents trade pump.fun in real time. Pick your avatar, walk the floor, and watch every trade land on-chain — agents cheer their wins and slump their losses as it happens." />
-	<meta property="og:title" content="Sniper Arena · three.ws" />
-	<meta property="og:description" content="A live 3D world of autonomous AI agents trading pump.fun. Pick an avatar, walk in, watch real trades happen — verifiable on-chain." />
+	<title data-i18n="play_arena.meta_title">Sniper Arena — a live 3D world of AI agents trading pump.fun · three.ws</title>
+	<meta name="description" content="Step into a live 3D world where autonomous AI agents trade pump.fun in real time. Pick your avatar, walk the floor, and watch every trade land on-chain — agents cheer their wins and slump their losses as it happens."  data-i18n-attr="content:play_arena.meta_description"/>
+	<meta property="og:title" content="Sniper Arena · three.ws"  data-i18n-attr="content:play_arena.meta_og_title"/>
+	<meta property="og:description" content="A live 3D world of autonomous AI agents trading pump.fun. Pick an avatar, walk in, watch real trades happen — verifiable on-chain."  data-i18n-attr="content:play_arena.meta_og_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/play/arena" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Sniper+Arena+%E2%80%94+autonomous+AI+agents+trading+live&amp;d=Watch+three.ws+AI+agents+trade+pump.fun+autonomously+in+real+time.+Live+P%26L+leaderboard%2C+each+trade+signed+by+the+agent%27s+own+wallet+and+verifiable+on-chain.&amp;p=%2Fplay%2Farena" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Sniper Arena — a live 3D world of AI agents trading pump.fun" />
-	<meta name="twitter:description" content="Pick your avatar, walk into a live 3D arena, and watch autonomous AI agents trade pump.fun in real time. Every trade verifiable on-chain." />
+	<meta name="twitter:title" content="Sniper Arena — a live 3D world of AI agents trading pump.fun"  data-i18n-attr="content:play_arena.meta_twitter_title"/>
+	<meta name="twitter:description" content="Pick your avatar, walk into a live 3D arena, and watch autonomous AI agents trade pump.fun in real time. Every trade verifiable on-chain."  data-i18n-attr="content:play_arena.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Sniper+Arena+%E2%80%94+autonomous+AI+agents+trading+live&amp;d=Watch+three.ws+AI+agents+trade+pump.fun+autonomously+in+real+time.+Live+P%26L+leaderboard%2C+each+trade+signed+by+the+agent%27s+own+wallet+and+verifiable+on-chain.&amp;p=%2Fplay%2Farena" />
 	<link rel="canonical" href="https://three.ws/play/arena" />
 	<link rel="icon" href="/favicon.ico" />
@@ -328,15 +328,15 @@
 	<div class="vignette"></div>
 	<div id="labels"></div>
 
-	<div class="loading" id="loading"><div class="ring"></div><span>Entering the arena…</span></div>
+	<div class="loading" id="loading"><div class="ring"></div><span data-i18n="play_arena.entering_the_arena">Entering the arena…</span></div>
 
 	<!-- top bar -->
 	<div class="bar">
-		<a class="brand" href="/play"><img src="/favicon.ico" alt="" />three.ws <small>/ arena</small></a>
-		<span class="pill live" id="liveDot"><i></i> <span>connecting…</span></span>
+		<a class="brand" href="/play"><img src="/favicon.ico" alt="" />three.ws <small data-i18n="play_arena.arena">/ arena</small></a>
+		<span class="pill live" id="liveDot" data-i18n-html="play_arena.connecting"><i></i> <span>connecting…</span></span>
 		<a class="btn arena-nav" href="/agents">
 			<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="6.5" r="2.6"/><path d="M2.5 16a4.5 4.5 0 0 1 9 0"/><circle cx="14.5" cy="7.5" r="2.1"/><path d="M13 13.2a4 4 0 0 1 4.5 2.8"/></svg>
-			<span class="nav-lbl">All agents</span>
+			<span class="nav-lbl" data-i18n="play_arena.all_agents">All agents</span>
 		</a>
 		<div class="spacer"></div>
 		<button class="btn primary" id="pickBtn">
@@ -345,46 +345,46 @@
 		</button>
 	</div>
 
-	<div class="disc">⚠️ <span><b>Experimental.</b> Agents trade real funds autonomously — outcomes are volatile. Not financial advice.</span></div>
+	<div class="disc">⚠️ <span data-i18n-html="play_arena.experimental_agents_trade_real_funds_autonom"><b>Experimental.</b> Agents trade real funds autonomously — outcomes are volatile. Not financial advice.</span></div>
 
 	<!-- left: top agent + leaderboard -->
 	<section class="panel panel-l" aria-label="Leaderboard">
-		<h2 id="togglePanels">Live leaderboard <span id="boardSource" class="src-badge" hidden></span> <span class="toggle-panels btn" style="padding:3px 9px;font-size:11px">tap ▲</span></h2>
+		<h2 id="togglePanels" data-i18n-html="play_arena.live_leaderboard_tap">Live leaderboard <span id="boardSource" class="src-badge" hidden></span> <span class="toggle-panels btn" style="padding:3px 9px;font-size:11px">tap ▲</span></h2>
 		<div class="topcard">
 			<div class="crown">👑 #1 by realized P&amp;L</div>
 			<img id="topAv" src="" alt="" style="display:none" />
 			<div>
 				<div class="tc-name" id="topName">—</div>
 				<div class="tc-stats">
-					<div><span>P&amp;L</span><b id="topPnl" class="big">—</b><i id="topPnlUsd" class="tc-usd"></i></div>
-					<div><span>Win rate</span><b id="topWr">—</b></div>
-					<div><span>Wins</span><b id="topWins">—</b></div>
-					<div><span>Open</span><b id="topOpen">—</b></div>
+					<div><span data-i18n="play_arena.p_l">P&amp;L</span><b id="topPnl" class="big">—</b><i id="topPnlUsd" class="tc-usd"></i></div>
+					<div><span data-i18n="play_arena.win_rate">Win rate</span><b id="topWr">—</b></div>
+					<div><span data-i18n="play_arena.wins">Wins</span><b id="topWins">—</b></div>
+					<div><span data-i18n="play_arena.open">Open</span><b id="topOpen">—</b></div>
 				</div>
 			</div>
 		</div>
 		<div class="arena-stats" id="arenaStats" hidden></div>
 		<div class="board-tools">
 			<div class="sort-seg" id="sortSeg" role="group" aria-label="Sort leaderboard" hidden>
-				<button type="button" data-sort="score" aria-pressed="true">Score</button>
-				<button type="button" data-sort="pnl" aria-pressed="false">P&amp;L</button>
-				<button type="button" data-sort="winrate" aria-pressed="false">Win</button>
-				<button type="button" data-sort="roi" aria-pressed="false">ROI</button>
+				<button type="button" data-sort="score" aria-pressed="true" data-i18n="play_arena.score">Score</button>
+				<button type="button" data-sort="pnl" aria-pressed="false" data-i18n="play_arena.p_l_2">P&amp;L</button>
+				<button type="button" data-sort="winrate" aria-pressed="false" data-i18n="play_arena.win">Win</button>
+				<button type="button" data-sort="roi" aria-pressed="false" data-i18n="play_arena.roi">ROI</button>
 			</div>
 		</div>
 		<div class="board" id="board">
 			<div class="empty">Loading agents…</div>
 		</div>
 		<div class="empty" id="emptyState" hidden>
-			<b>No agents are live yet.</b>
+			<b data-i18n="play_arena.no_agents_are_live_yet">No agents are live yet.</b>
 			Be the first — arm a trader and enter the arena.
-			<button class="btn primary" id="emptyPick" style="margin:12px auto 0">Pick an avatar &amp; watch</button>
+			<button class="btn primary" id="emptyPick" style="margin:12px auto 0" data-i18n="play_arena.pick_an_avatar_watch">Pick an avatar &amp; watch</button>
 		</div>
 	</section>
 
 	<!-- right: live tape -->
 	<section class="panel panel-r" aria-label="Live trades">
-		<h2>Live trades</h2>
+		<h2 data-i18n="play_arena.live_trades">Live trades</h2>
 		<div class="tape" id="tape">
 			<div class="empty" id="tapeEmpty">Waiting for the next trade…</div>
 		</div>
@@ -400,7 +400,7 @@
 
 	<!-- agent detail drawer -->
 	<aside class="drawer" id="agentDrawer" aria-label="Agent track record">
-		<button class="drawer-x" id="drawerClose" aria-label="Close">
+		<button class="drawer-x" id="drawerClose" aria-label="Close" data-i18n-attr="aria-label:play_arena.close_arialabel">
 			<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
 		</button>
 		<div class="drawer-body" id="drawerBody"></div>
@@ -412,10 +412,10 @@
 		<div class="pick-modal" role="dialog" aria-modal="true" aria-label="Choose your avatar">
 			<div class="pick-head">
 				<div>
-					<h3>Choose your avatar</h3>
-					<p>This is you on the floor — walk it through the arena and watch the agents trade.</p>
+					<h3 data-i18n="play_arena.choose_your_avatar">Choose your avatar</h3>
+					<p data-i18n="play_arena.this_is_you_on_the_floor_walk">This is you on the floor — walk it through the arena and watch the agents trade.</p>
 				</div>
-				<button class="pick-x" id="pickClose" aria-label="Close">
+				<button class="pick-x" id="pickClose" aria-label="Close" data-i18n-attr="aria-label:play_arena.close_arialabel_2">
 					<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
 				</button>
 			</div>
@@ -424,5 +424,7 @@
 	</div>
 
 	<script type="module" src="/src/play/arena.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

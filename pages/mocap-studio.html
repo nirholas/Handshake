@@ -3,21 +3,21 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Mocap Studio · three.ws</title>
+		<title data-i18n="mocap_studio.meta_title">Mocap Studio · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="description" content="Record your face, save the clip, replay it on any three.ws avatar." />
+		<meta name="description" content="Record your face, save the clip, replay it on any three.ws avatar."  data-i18n-attr="content:mocap_studio.meta_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/mocap-studio" />
-	<meta property="og:title" content="Mocap Studio · three.ws" />
-	<meta property="og:description" content="Record your face, save the clip, replay it on any three.ws avatar." />
+	<meta property="og:title" content="Mocap Studio · three.ws"  data-i18n-attr="content:mocap_studio.meta_og_title"/>
+	<meta property="og:description" content="Record your face, save the clip, replay it on any three.ws avatar."  data-i18n-attr="content:mocap_studio.meta_og_description"/>
 	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Mocap+Studio&amp;d=Drive+a+3D+avatar+with+your+webcam+%E2%80%94+real-time+facial+motion+capture+in+the+browser%2C+no+rig+and+no+download.&amp;p=%2Fmocap-studio" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Mocap Studio · three.ws" />
-	<meta name="twitter:description" content="Record your face, save the clip, replay it on any three.ws avatar." />
+	<meta name="twitter:title" content="Mocap Studio · three.ws"  data-i18n-attr="content:mocap_studio.meta_twitter_title"/>
+	<meta name="twitter:description" content="Record your face, save the clip, replay it on any three.ws avatar."  data-i18n-attr="content:mocap_studio.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Mocap+Studio&amp;d=Drive+a+3D+avatar+with+your+webcam+%E2%80%94+real-time+facial+motion+capture+in+the+browser%2C+no+rig+and+no+download.&amp;p=%2Fmocap-studio" />
 		<meta name="theme-color" content="#050505" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -474,14 +474,14 @@
 
 			<div class="page-header">
 				<div class="page-eyebrow">Labs · Face Capture</div>
-				<h2 class="page-title">Mocap Studio</h2>
-				<p class="page-sub">Record your face, save the clip, replay it on any avatar — yours or someone else's.</p>
+				<h2 class="page-title" data-i18n="mocap_studio.mocap_studio">Mocap Studio</h2>
+				<p class="page-sub" data-i18n="mocap_studio.record_your_face_save_the_clip_replay">Record your face, save the clip, replay it on any avatar — yours or someone else's.</p>
 			</div>
 
 			<div id="auth-warning" class="auth-banner">
 				<svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6.5" stroke="currentColor" stroke-width="1.2"/><path d="M7.5 4.5v4m0 2v.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
 				You're not signed in — clips can be recorded locally but won't be saved.
-				<a href="/login">Sign in to save and share</a>
+				<a href="/login" data-i18n="mocap_studio.sign_in_to_save_and_share">Sign in to save and share</a>
 			</div>
 
 			<div class="studio-grid">
@@ -492,48 +492,48 @@
 						<div id="stage"></div>
 						<div id="rec-pill" class="rec-pill">
 							<span class="dot"></span>
-							<span>REC <span id="rec-time">0.0s</span></span>
+							<span data-i18n-html="mocap_studio.rec_0_0s">REC <span id="rec-time">0.0s</span></span>
 						</div>
 						<video id="webcam-pip" autoplay playsinline muted aria-hidden="true"></video>
 					</div>
 
 					<div class="card" style="margin-top:16px;">
-						<p class="card-label">Record</p>
+						<p class="card-label" data-i18n="mocap_studio.record">Record</p>
 						<div class="timer" id="timer">00.0s</div>
 						<div class="btn-row">
-							<button class="btn btn-primary" id="start-cam">Start camera</button>
-							<button class="btn btn-ghost" id="calibrate" disabled>Calibrate neutral</button>
-							<button class="btn btn-danger" id="record" disabled>Record</button>
-							<button class="btn btn-ghost" id="replay" disabled>Replay last</button>
-							<button class="btn btn-ghost" id="discard" disabled>Discard</button>
+							<button class="btn btn-primary" id="start-cam" data-i18n="mocap_studio.start_camera">Start camera</button>
+							<button class="btn btn-ghost" id="calibrate" disabled data-i18n="mocap_studio.calibrate_neutral">Calibrate neutral</button>
+							<button class="btn btn-danger" id="record" disabled data-i18n="mocap_studio.record_2">Record</button>
+							<button class="btn btn-ghost" id="replay" disabled data-i18n="mocap_studio.replay_last">Replay last</button>
+							<button class="btn btn-ghost" id="discard" disabled data-i18n="mocap_studio.discard">Discard</button>
 						</div>
 					</div>
 
 					<div class="card">
-						<p class="card-label">Save clip</p>
+						<p class="card-label" data-i18n="mocap_studio.save_clip">Save clip</p>
 						<div class="field-row">
-							<label for="clip-name">Name</label>
+							<label for="clip-name" data-i18n="mocap_studio.name">Name</label>
 							<input id="clip-name" type="text" placeholder="head nod" maxlength="120" />
 						</div>
 						<div class="field-row">
-							<label for="clip-desc">Description</label>
+							<label for="clip-desc" data-i18n="mocap_studio.description">Description</label>
 							<textarea id="clip-desc" placeholder="Optional — what is this for?" maxlength="2000"></textarea>
 						</div>
 						<div class="field-row">
-							<label for="clip-tags">Tags</label>
+							<label for="clip-tags" data-i18n="mocap_studio.tags">Tags</label>
 							<input id="clip-tags" type="text" placeholder="comma, separated" />
 						</div>
 						<div class="field-row">
-							<label for="clip-visibility">Visibility</label>
+							<label for="clip-visibility" data-i18n="mocap_studio.visibility">Visibility</label>
 							<select id="clip-visibility">
-								<option value="private">Private (just you)</option>
-								<option value="unlisted">Unlisted (anyone with link)</option>
-								<option value="public">Public (in marketplace)</option>
+								<option value="private" data-i18n="mocap_studio.private_just_you">Private (just you)</option>
+								<option value="unlisted" data-i18n="mocap_studio.unlisted_anyone_with_link">Unlisted (anyone with link)</option>
+								<option value="public" data-i18n="mocap_studio.public_in_marketplace">Public (in marketplace)</option>
 							</select>
 						</div>
 						<div class="btn-row" style="margin-top:4px;">
-							<button class="btn btn-primary" id="save-clip" disabled>Save clip</button>
-							<button class="btn btn-ghost" id="download-clip" disabled>Download JSON</button>
+							<button class="btn btn-primary" id="save-clip" disabled data-i18n="mocap_studio.save_clip_2">Save clip</button>
+							<button class="btn btn-ghost" id="download-clip" disabled data-i18n="mocap_studio.download_json">Download JSON</button>
 						</div>
 					</div>
 				</div>
@@ -541,26 +541,26 @@
 				<!-- RIGHT: Avatar + clips -->
 				<div class="col-right">
 					<div class="card">
-						<p class="card-label">Source avatar</p>
+						<p class="card-label" data-i18n="mocap_studio.source_avatar">Source avatar</p>
 						<div class="field-row">
-							<label for="avatar-handle">Handle</label>
+							<label for="avatar-handle" data-i18n="mocap_studio.handle">Handle</label>
 							<input id="avatar-handle" type="text" placeholder="@yourname" autocomplete="off" />
-							<button class="btn btn-ghost" id="load-avatar" style="flex-shrink:0;">Load</button>
+							<button class="btn btn-ghost" id="load-avatar" style="flex-shrink:0;" data-i18n="mocap_studio.load">Load</button>
 						</div>
 						<div class="avatar-info" id="avatar-info">no avatar loaded</div>
 						<avatar-actions id="mc-actions" mode="wallet" style="display:none;margin-top:10px"></avatar-actions>
 					</div>
 
 					<div class="card" style="flex:1;">
-						<p class="card-label">Saved clips</p>
+						<p class="card-label" data-i18n="mocap_studio.saved_clips">Saved clips</p>
 						<div class="clip-list" id="clip-list">
 							<div class="empty-state">Loading…</div>
 						</div>
 					</div>
 
 					<div class="card">
-						<p class="card-label">Format</p>
-						<p class="format-note">
+						<p class="card-label" data-i18n="mocap_studio.format">Format</p>
+						<p class="format-note" data-i18n-html="mocap_studio.clips_are_stored_as_json_of_frame">
 							Clips are stored as <code>three.ws.face-mocap.v1</code> — JSON of <code>{ format, duration, frames: [{ t, shapes, mat }] }</code>.
 							Frame data is raw MediaPipe ARKit-52 output plus an optional 4×4 head transform.
 							Compatible with any three.ws avatar via the ARKit-52 canonical morph map.
@@ -578,5 +578,7 @@
 		<script type="module" src="/avatar-actions.js"></script>
 		<script type="module" src="/src/mocap-studio.js"></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

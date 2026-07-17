@@ -9,13 +9,13 @@
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<title>Hero Stage · three.ws</title>
+		<title data-i18n="hero_demo.meta_title">Hero Stage · three.ws</title>
 		<meta
 			name="description"
 			content="A cinematic 3D hero stage for three.ws agents — a lit avatar centered in deep space over concentric glowing rings, a drifting starfield, and soft bloom. Pointer parallax, motion-safe."
-		/>
-		<meta property="og:title" content="Hero Stage · three.ws" />
-		<meta property="og:description" content="A cinematic 3D hero stage — a lit agent over concentric glowing rings, starfield, and bloom." />
+		 data-i18n-attr="content:hero_demo.meta_description"/>
+		<meta property="og:title" content="Hero Stage · three.ws"  data-i18n-attr="content:hero_demo.meta_og_title"/>
+		<meta property="og:description" content="A cinematic 3D hero stage — a lit agent over concentric glowing rings, starfield, and bloom."  data-i18n-attr="content:hero_demo.meta_og_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/hero-demo" />
@@ -24,8 +24,8 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Hero Stage · three.ws" />
-		<meta name="twitter:description" content="A cinematic 3D hero stage for three.ws agents — lit avatar, glowing rings, starfield, bloom." />
+		<meta name="twitter:title" content="Hero Stage · three.ws"  data-i18n-attr="content:hero_demo.meta_twitter_title"/>
+		<meta name="twitter:description" content="A cinematic 3D hero stage for three.ws agents — lit avatar, glowing rings, starfield, bloom."  data-i18n-attr="content:hero_demo.meta_twitter_description"/>
 		<link rel="canonical" href="https://three.ws/hero-demo" />
 		<style>
 			:root {
@@ -341,11 +341,11 @@
 			<canvas id="stage" aria-hidden="true"></canvas>
 
 			<div class="switcher" role="group" aria-label="Choose an avatar">
-				<button class="chip" type="button" aria-pressed="true" data-glb="/avatars/realistic-female.glb">Nova</button>
-				<button class="chip" type="button" aria-pressed="false" data-glb="/avatars/realistic-male.glb">Atlas</button>
-				<button class="chip" type="button" aria-pressed="false" data-glb="/avatars/michelle.glb">Michelle</button>
-				<button class="chip" type="button" aria-pressed="false" data-glb="/avatars/xbot.glb">X-Bot</button>
-				<button class="chip" type="button" aria-pressed="false" data-glb="/avatars/fox.glb">Fox</button>
+				<button class="chip" type="button" aria-pressed="true" data-glb="/avatars/realistic-female.glb" data-i18n="hero_demo.nova">Nova</button>
+				<button class="chip" type="button" aria-pressed="false" data-glb="/avatars/realistic-male.glb" data-i18n="hero_demo.atlas">Atlas</button>
+				<button class="chip" type="button" aria-pressed="false" data-glb="/avatars/michelle.glb" data-i18n="hero_demo.michelle">Michelle</button>
+				<button class="chip" type="button" aria-pressed="false" data-glb="/avatars/xbot.glb" data-i18n="hero_demo.x_bot">X-Bot</button>
+				<button class="chip" type="button" aria-pressed="false" data-glb="/avatars/fox.glb" data-i18n="hero_demo.fox">Fox</button>
 			</div>
 
 			<div class="subject" id="subject">
@@ -355,15 +355,15 @@
 			</div>
 
 			<div class="hero-copy">
-				<p class="eyebrow">three.ws · hero stage</p>
-				<h1>Give your agent a stage worth screenshotting.</h1>
-				<p>
+				<p class="eyebrow" data-i18n="hero_demo.three_ws_hero_stage">three.ws · hero stage</p>
+				<h1 data-i18n="hero_demo.give_your_agent_a_stage_worth_screenshotting">Give your agent a stage worth screenshotting.</h1>
+				<p data-i18n="hero_demo.a_lit_avatar_centered_in_deep_space">
 					A lit avatar, centered in deep space over concentric glowing rings — bloom,
 					a drifting starfield, and pointer parallax. Drop any GLB in and it just works.
 				</p>
 				<div class="cta-row">
-					<a class="btn btn--primary" href="/create">Build your agent →</a>
-					<a class="btn btn--ghost" href="/features">See every feature</a>
+					<a class="btn btn--primary" href="/create" data-i18n="hero_demo.build_your_agent">Build your agent →</a>
+					<a class="btn btn--ghost" href="/features" data-i18n="hero_demo.see_every_feature">See every feature</a>
 				</div>
 			</div>
 
@@ -372,8 +372,8 @@
 
 		<section class="notes" aria-labelledby="notes-h2">
 			<div class="notes-head">
-				<h2 id="notes-h2">How the stage is built</h2>
-				<p>
+				<h2 id="notes-h2" data-i18n="hero_demo.how_the_stage_is_built">How the stage is built</h2>
+				<p data-i18n-html="hero_demo.the_atmosphere_renders_in_its_own_webgl">
 					The atmosphere renders in its own WebGL context so it can be lit aggressively
 					without washing out the subject. The avatar is a standard <code>&lt;agent-3d&gt;</code>
 					on top — animation, voice, and payments included, untouched.
@@ -382,18 +382,18 @@
 			<div class="note-grid">
 				<article class="note">
 					<span class="note-num">01</span>
-					<h3>Concentric glow rings</h3>
-					<p>Five additive <code>TorusGeometry</code> rings, tilted into a disc and tinted across the accent gradient. They breathe and counter-spin for depth.</p>
+					<h3 data-i18n="hero_demo.concentric_glow_rings">Concentric glow rings</h3>
+					<p data-i18n-html="hero_demo.five_additive_rings_tilted_into_a_disc">Five additive <code>TorusGeometry</code> rings, tilted into a disc and tinted across the accent gradient. They breathe and counter-spin for depth.</p>
 				</article>
 				<article class="note">
 					<span class="note-num">02</span>
-					<h3>Bloom is the look</h3>
-					<p>An <code>UnrealBloomPass</code> over the emissive rings and starfield carries ~70% of the aesthetic. High threshold so only the bright geometry glows.</p>
+					<h3 data-i18n="hero_demo.bloom_is_the_look">Bloom is the look</h3>
+					<p data-i18n-html="hero_demo.an_over_the_emissive_rings_and_starfield">An <code>UnrealBloomPass</code> over the emissive rings and starfield carries ~70% of the aesthetic. High threshold so only the bright geometry glows.</p>
 				</article>
 				<article class="note">
 					<span class="note-num">03</span>
-					<h3>Calm, motion-safe drift</h3>
-					<p>A golden-angle starfield drifts slowly while the camera eases toward the pointer for parallax. <code>prefers-reduced-motion</code> renders one still frame.</p>
+					<h3 data-i18n="hero_demo.calm_motion_safe_drift">Calm, motion-safe drift</h3>
+					<p data-i18n-html="hero_demo.a_golden_angle_starfield_drifts_slowly_while">A golden-angle starfield drifts slowly while the camera eases toward the pointer for parallax. <code>prefers-reduced-motion</code> renders one still frame.</p>
 				</article>
 			</div>
 		</section>
@@ -498,5 +498,7 @@
 			const first = chips.find((c) => c.getAttribute('aria-pressed') === 'true') || chips[0];
 			loadAvatar(first.dataset.glb);
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -4,20 +4,20 @@
 		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Custody Integrity · three.ws</title>
-		<meta name="description" content="three.ws custodial agent wallets are provably honest. Every few hours the platform commits a Merkle root over every wallet's on-chain state to Solana. Verify the latest root on-chain yourself — no account, no trust required." />
+		<title data-i18n="integrity.meta_title">Custody Integrity · three.ws</title>
+		<meta name="description" content="three.ws custodial agent wallets are provably honest. Every few hours the platform commits a Merkle root over every wallet's on-chain state to Solana. Verify the latest root on-chain yourself — no account, no trust required."  data-i18n-attr="content:integrity.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/integrity" />
-		<meta property="og:title" content="Custody Integrity · three.ws" />
-		<meta property="og:description" content="Provable, on-chain-anchored custody for every agent wallet. Verify the latest root yourself — no trust required." />
+		<meta property="og:title" content="Custody Integrity · three.ws"  data-i18n-attr="content:integrity.meta_og_title"/>
+		<meta property="og:description" content="Provable, on-chain-anchored custody for every agent wallet. Verify the latest root yourself — no trust required."  data-i18n-attr="content:integrity.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Custody+Integrity&amp;d=Provable%2C+on-chain-anchored+custody+for+every+three.ws+agent+wallet.+The+platform+commits+a+Merkle+root+over+every+wallet%27s+on-chain+state+to+Solana+%E2%80%94+verify+th&amp;p=%2Fintegrity" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Custody Integrity · three.ws" />
-		<meta name="twitter:description" content="Provable, on-chain-anchored custody for every agent wallet. Verify it yourself." />
+		<meta name="twitter:title" content="Custody Integrity · three.ws"  data-i18n-attr="content:integrity.meta_twitter_title"/>
+		<meta name="twitter:description" content="Provable, on-chain-anchored custody for every agent wallet. Verify it yourself."  data-i18n-attr="content:integrity.meta_twitter_description"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<meta name="robots" content="index, follow, max-image-preview:large" />
 		<link rel="canonical" href="https://three.ws/integrity" />
@@ -90,9 +90,9 @@
 
 		<main class="intg-shell">
 			<section class="intg-hero">
-				<p class="intg-kicker">Provable custody · live on-chain</p>
-				<h1 class="intg-title">Custody you can verify</h1>
-				<p class="intg-sub">Agent wallets on three.ws are custodial — we hold the keys and sign on your behalf. So we make custody <strong>provable</strong>, not promised. Every few hours we snapshot every wallet's on-chain state, build a Merkle tree, and commit the root to Solana. Below is the latest root and its anchoring transaction — verify it on-chain yourself. Own a wallet? <a href="/proof">Verify your own inclusion proof →</a></p>
+				<p class="intg-kicker" data-i18n="integrity.provable_custody_live_on_chain">Provable custody · live on-chain</p>
+				<h1 class="intg-title" data-i18n="integrity.custody_you_can_verify">Custody you can verify</h1>
+				<p class="intg-sub" data-i18n-html="integrity.agent_wallets_on_three_ws_are_custodial">Agent wallets on three.ws are custodial — we hold the keys and sign on your behalf. So we make custody <strong>provable</strong>, not promised. Every few hours we snapshot every wallet's on-chain state, build a Merkle tree, and commit the root to Solana. Below is the latest root and its anchoring transaction — verify it on-chain yourself. Own a wallet? <a href="/proof">Verify your own inclusion proof →</a></p>
 			</section>
 			<div id="intg-root" aria-live="polite"></div>
 		</main>
@@ -100,5 +100,7 @@
 		<script type="module" src="/src/integrity.js"></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

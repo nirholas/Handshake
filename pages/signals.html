@@ -4,23 +4,23 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Signal Marketplace · three.ws</title>
+		<title data-i18n="signals.meta_title">Signal Marketplace · three.ws</title>
 		<meta
 			name="description"
 			content="Paid alpha feeds, ranked by proven edge. Verified traders publish their live entry/exit signals as x402-metered feeds; your agent pays per signal and auto-mirrors the trade through the firewall + MEV engine. Every signal binds to a real on-chain fill and accrues a realized outcome — feeds rank by proven accuracy, not follower count."
-		/>
+		 data-i18n-attr="content:signals.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/signals" />
-		<meta property="og:title" content="Signal Marketplace · three.ws" />
-		<meta property="og:description" content="Paid alpha feeds, ranked by proven edge. Verified traders publish x402-metered signals; your agent pays per signal and auto-mirrors — every signal proven by an on-chain fill." />
+		<meta property="og:title" content="Signal Marketplace · three.ws"  data-i18n-attr="content:signals.meta_og_title"/>
+		<meta property="og:description" content="Paid alpha feeds, ranked by proven edge. Verified traders publish x402-metered signals; your agent pays per signal and auto-mirrors — every signal proven by an on-chain fill."  data-i18n-attr="content:signals.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Signal+Marketplace+%E2%80%94+paid+alpha+feeds%2C+ranked+by+proven+edge&amp;d=Verified+traders+publish+their+live+entry%2Fexit+signals+as+x402-metered+feeds.+Your+agent+pays+per+signal+or+per+epoch+in+USDC+and+auto-mirrors+the+trade+through&amp;p=%2Fsignals" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Signal Marketplace · three.ws" />
-		<meta name="twitter:description" content="Paid alpha feeds, ranked by proven edge. Pay per signal, auto-mirror, accountable on-chain." />
+		<meta name="twitter:title" content="Signal Marketplace · three.ws"  data-i18n-attr="content:signals.meta_twitter_title"/>
+		<meta name="twitter:description" content="Paid alpha feeds, ranked by proven edge. Pay per signal, auto-mirror, accountable on-chain."  data-i18n-attr="content:signals.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Signal+Marketplace+%E2%80%94+paid+alpha+feeds%2C+ranked+by+proven+edge&amp;d=Verified+traders+publish+their+live+entry%2Fexit+signals+as+x402-metered+feeds.+Your+agent+pays+per+signal+or+per+epoch+in+USDC+and+auto-mirrors+the+trade+through&amp;p=%2Fsignals" />
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -45,12 +45,12 @@
 
 		<main class="sm-shell" aria-labelledby="sm-title">
 			<section class="sm-hero">
-				<p class="sm-kicker">
+				<p class="sm-kicker" data-i18n-html="signals.connecting_reputation_gated_x402_metered_acc">
 					<span id="sm-live" class="juice-live" data-state="connecting"><span class="juice-live-dot" aria-hidden="true"></span><span class="juice-live-txt">connecting</span></span>
 					Reputation-gated · x402-metered · accountable on-chain
 				</p>
-				<h1 id="sm-title" class="sm-title">Signal Marketplace</h1>
-				<p class="sm-sub">
+				<h1 id="sm-title" class="sm-title" data-i18n="signals.signal_marketplace">Signal Marketplace</h1>
+				<p class="sm-sub" data-i18n-html="signals.verified_traders_publish_their_live_entry_ex">
 					Verified traders publish their live entry/exit signals as paid feeds. Your agent pays
 					<strong>per signal</strong> or <strong>per epoch</strong> in USDC from its own wallet, then
 					auto-mirrors the trade through the firewall + MEV engine — every spend guarded, every fill
@@ -58,24 +58,24 @@
 					outcome, so feeds rank by <strong>proven edge</strong>, never follower count.
 				</p>
 				<dl class="sm-summary" aria-label="Marketplace summary">
-					<div class="sm-summary-cell"><dt>Feeds</dt><dd id="sm-sum-feeds">—</dd></div>
-					<div class="sm-summary-cell"><dt>Verified publishers</dt><dd id="sm-sum-verified">—</dd></div>
-					<div class="sm-summary-cell"><dt>Signals closed</dt><dd id="sm-sum-closed">—</dd></div>
-					<div class="sm-summary-cell"><dt>Top edge</dt><dd id="sm-sum-edge">—</dd></div>
+					<div class="sm-summary-cell"><dt data-i18n="signals.feeds">Feeds</dt><dd id="sm-sum-feeds">—</dd></div>
+					<div class="sm-summary-cell"><dt data-i18n="signals.verified_publishers">Verified publishers</dt><dd id="sm-sum-verified">—</dd></div>
+					<div class="sm-summary-cell"><dt data-i18n="signals.signals_closed">Signals closed</dt><dd id="sm-sum-closed">—</dd></div>
+					<div class="sm-summary-cell"><dt data-i18n="signals.top_edge">Top edge</dt><dd id="sm-sum-edge">—</dd></div>
 				</dl>
 			</section>
 
 			<section class="sm-controls" aria-label="Filters">
 				<div class="sm-seg" role="tablist" aria-label="Rank by" id="sm-sort">
-					<button class="sm-seg-btn is-active" data-sort="edge" role="tab" aria-selected="true">Proven edge</button>
-					<button class="sm-seg-btn" data-sort="roi" role="tab">Avg ROI</button>
-					<button class="sm-seg-btn" data-sort="hitrate" role="tab">Hit rate</button>
-					<button class="sm-seg-btn" data-sort="subscribers" role="tab">Subscribers</button>
-					<button class="sm-seg-btn" data-sort="newest" role="tab">Newest</button>
+					<button class="sm-seg-btn is-active" data-sort="edge" role="tab" aria-selected="true" data-i18n="signals.proven_edge">Proven edge</button>
+					<button class="sm-seg-btn" data-sort="roi" role="tab" data-i18n="signals.avg_roi">Avg ROI</button>
+					<button class="sm-seg-btn" data-sort="hitrate" role="tab" data-i18n="signals.hit_rate">Hit rate</button>
+					<button class="sm-seg-btn" data-sort="subscribers" role="tab" data-i18n="signals.subscribers">Subscribers</button>
+					<button class="sm-seg-btn" data-sort="newest" role="tab" data-i18n="signals.newest">Newest</button>
 				</div>
 				<div class="sm-seg sm-net" role="tablist" aria-label="Network" id="sm-net">
-					<button class="sm-seg-btn is-active" data-net="mainnet" role="tab" aria-selected="true">Mainnet</button>
-					<button class="sm-seg-btn" data-net="devnet" role="tab">Devnet</button>
+					<button class="sm-seg-btn is-active" data-net="mainnet" role="tab" aria-selected="true" data-i18n="signals.mainnet">Mainnet</button>
+					<button class="sm-seg-btn" data-net="devnet" role="tab" data-i18n="signals.devnet">Devnet</button>
 				</div>
 			</section>
 
@@ -86,5 +86,7 @@
 		<div id="footer-container"></div>
 		<script src="/footer.js" defer></script>
 		<script type="module" src="/src/signals.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

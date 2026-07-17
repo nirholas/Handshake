@@ -4,16 +4,16 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Text → 3D · Nemotron → FLUX → TRELLIS · three.ws</title>
+		<title data-i18n="forge_spark.meta_title">Text → 3D · Nemotron → FLUX → TRELLIS · three.ws</title>
 		<meta
 			name="description"
 			content="Describe an object and watch it become a textured 3D mesh. Nemotron sharpens the prompt, FLUX paints a reference image, and TRELLIS reconstructs the model — served on NVIDIA NIM."
-		/>
-		<meta property="og:title" content="Text → 3D — Nemotron → FLUX → TRELLIS · three.ws" />
+		 data-i18n-attr="content:forge_spark.meta_description"/>
+		<meta property="og:title" content="Text → 3D — Nemotron → FLUX → TRELLIS · three.ws"  data-i18n-attr="content:forge_spark.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Describe it. Nemotron sharpens the words, FLUX paints a clean reference, TRELLIS reconstructs the mesh. Served on NVIDIA NIM, quiet and always on."
-		/>
+		 data-i18n-attr="content:forge_spark.meta_og_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/forge-spark" />
@@ -22,11 +22,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Text → 3D · Nemotron → FLUX → TRELLIS · three.ws" />
+		<meta name="twitter:title" content="Text → 3D · Nemotron → FLUX → TRELLIS · three.ws"  data-i18n-attr="content:forge_spark.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Describe it. Nemotron sharpens the words, FLUX paints a reference, TRELLIS reconstructs the mesh. Served on NVIDIA NIM."
-		/>
+		 data-i18n-attr="content:forge_spark.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Text+%E2%86%92+3D+%E2%80%94+Nemotron+%E2%86%92+FLUX+%E2%86%92+TRELLIS&amp;d=Describe+an+object+and+watch+it+become+a+textured+3D+mesh%3A+Nemotron+sharpens+the+prompt%2C+FLUX+paints+a+clean+reference%2C+and+TRELLIS+reconstructs+the+model+%E2%80%94+ser&amp;p=%2Fforge-spark" />
 		<meta name="theme-color" content="#080814" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -298,9 +298,9 @@
 
 		<main class="spark-main">
 			<header class="spark-hero">
-				<span class="spark-eyebrow"><span class="dot"></span> Text → 3D · served on NVIDIA NIM</span>
-				<h1>Describe it. Hold it.</h1>
-				<p>
+				<span class="spark-eyebrow" data-i18n-html="forge_spark.text_3d_served_on_nvidia_nim"><span class="dot"></span> Text → 3D · served on NVIDIA NIM</span>
+				<h1 data-i18n="forge_spark.describe_it_hold_it">Describe it. Hold it.</h1>
+				<p data-i18n="forge_spark.a_sentence_becomes_a_textured_3d_mesh">
 					A sentence becomes a textured 3D mesh. Nemotron sharpens your words, FLUX paints a clean
 					reference, and TRELLIS reconstructs the model — quietly, on NVIDIA NIM.
 				</p>
@@ -309,7 +309,7 @@
 			<div class="spark-workspace">
 				<!-- Composer -->
 				<form class="composer" id="composer" autocomplete="off">
-					<label for="prompt">What should we build?</label>
+					<label for="prompt" data-i18n="forge_spark.what_should_we_build">What should we build?</label>
 					<textarea
 						id="prompt"
 						placeholder="a worn brass pocket watch, half-open, resting on its side"
@@ -317,29 +317,29 @@
 						required
 					></textarea>
 					<div class="example-row" id="examples" aria-label="Example prompts">
-						<button type="button" class="chip" data-fill="a worn brass pocket watch, half-open">brass pocket watch</button>
-						<button type="button" class="chip" data-fill="a glazed ceramic teapot with a bamboo handle">ceramic teapot</button>
-						<button type="button" class="chip" data-fill="a vintage film camera, matte black body">film camera</button>
-						<button type="button" class="chip" data-fill="a potted monstera plant in a terracotta pot">potted monstera</button>
+						<button type="button" class="chip" data-fill="a worn brass pocket watch, half-open" data-i18n="forge_spark.brass_pocket_watch">brass pocket watch</button>
+						<button type="button" class="chip" data-fill="a glazed ceramic teapot with a bamboo handle" data-i18n="forge_spark.ceramic_teapot">ceramic teapot</button>
+						<button type="button" class="chip" data-fill="a vintage film camera, matte black body" data-i18n="forge_spark.film_camera">film camera</button>
+						<button type="button" class="chip" data-fill="a potted monstera plant in a terracotta pot" data-i18n="forge_spark.potted_monstera">potted monstera</button>
 					</div>
-					<button type="submit" class="generate-btn" id="generate">Generate 3D model</button>
+					<button type="submit" class="generate-btn" id="generate" data-i18n="forge_spark.generate_3d_model">Generate 3D model</button>
 					<div id="refined" class="refined" hidden></div>
 				</form>
 
 				<!-- Pipeline + viewer -->
 				<div class="stage-block">
 					<ol class="pipeline" id="pipeline">
-						<li class="stage" data-stage="nemotron" data-state="idle">
+						<li class="stage" data-stage="nemotron" data-state="idle" data-i18n-html="forge_spark.1_nemotron_refines_your_prompt_idle">
 							<span class="num">1</span>
 							<span><span class="who">Nemotron</span><br /><span class="does">refines your prompt</span></span>
 							<span class="state">idle</span>
 						</li>
-						<li class="stage" data-stage="flux" data-state="idle">
+						<li class="stage" data-stage="flux" data-state="idle" data-i18n-html="forge_spark.2_flux_paints_a_reference_image_idle">
 							<span class="num">2</span>
 							<span><span class="who">FLUX</span><br /><span class="does">paints a reference image</span></span>
 							<span class="state">idle</span>
 						</li>
-						<li class="stage" data-stage="trellis" data-state="idle">
+						<li class="stage" data-stage="trellis" data-state="idle" data-i18n-html="forge_spark.3_trellis_reconstructs_the_3d_mesh_idle">
 							<span class="num">3</span>
 							<span><span class="who">TRELLIS</span><br /><span class="does">reconstructs the 3D mesh</span></span>
 							<span class="state">idle</span>
@@ -353,27 +353,27 @@
 								<path d="m2 17 10 5 10-5" />
 								<path d="m2 12 10 5 10-5" />
 							</svg>
-							<p>Your model will appear here. Describe an object and hit generate — then orbit, light, and download the GLB.</p>
+							<p data-i18n="forge_spark.your_model_will_appear_here_describe_an">Your model will appear here. Describe an object and hit generate — then orbit, light, and download the GLB.</p>
 						</div>
 						<div class="viewer-status" id="viewer-status" hidden>
 							<span class="spinner"></span>
-							<span id="viewer-status-text">Working…</span>
+							<span id="viewer-status-text" data-i18n="forge_spark.working">Working…</span>
 						</div>
 					</div>
 
 					<div class="error-note" id="error" hidden></div>
 
 					<div class="viewer-actions" id="actions" hidden>
-						<a id="download" href="#" download>Download GLB</a>
-						<button type="button" id="again">Generate another</button>
+						<a id="download" href="#" download data-i18n="forge_spark.download_glb">Download GLB</a>
+						<button type="button" id="again" data-i18n="forge_spark.generate_another">Generate another</button>
 					</div>
 				</div>
 			</div>
 
 			<footer class="spark-footer">
 				The same TRELLIS NIM runs across lanes — local and cloud — so reconstruction stays
-				<b>always on</b>. Image → 3D lives at <a href="/forge-nim">/forge-nim</a>; the full studio at
-				<a href="/forge">/forge</a>.
+				<b data-i18n="forge_spark.always_on">always on</b>. Image → 3D lives at <a href="/forge-nim" data-i18n="forge_spark.forge_nim">/forge-nim</a>; the full studio at
+				<a href="/forge" data-i18n="forge_spark.forge">/forge</a>.
 			</footer>
 		</main>
 
@@ -585,5 +585,7 @@
 				return model;
 			}
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

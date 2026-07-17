@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<title>Talking avatar video · three.ws</title>
+		<title data-i18n="create_video.meta_title">Talking avatar video · three.ws</title>
 		<meta name="theme-color" content="#000000" />
 		<meta name="robots" content="noindex" />
 		<link rel="icon" href="/favicon.ico" />
@@ -657,13 +657,13 @@
 		</style>
 		<script src="/model-viewer-meshopt.js"></script>
 	
-	<meta name="description" content="Turn a three.ws avatar into a talking-head video: type a script, pick a voice, and export a lip-synced clip.">
+	<meta name="description" content="Turn a three.ws avatar into a talking-head video: type a script, pick a voice, and export a lip-synced clip." data-i18n-attr="content:create_video.meta_description">
 	<link rel="canonical" href="https://three.ws/create/video">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:title" content="Talking Avatar Video · three.ws">
-	<meta property="og:description" content="Turn a three.ws avatar into a talking-head video: type a script, pick a voice, and export a lip-synced clip.">
+	<meta property="og:title" content="Talking Avatar Video · three.ws" data-i18n-attr="content:create_video.meta_og_title">
+	<meta property="og:description" content="Turn a three.ws avatar into a talking-head video: type a script, pick a voice, and export a lip-synced clip." data-i18n-attr="content:create_video.meta_og_description">
 	<meta property="og:url" content="https://three.ws/create/video">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Talking+Avatar+Video&amp;d=Turn+a+three.ws+avatar+into+a+talking-head+video%3A+type+a+script%2C+pick+a+voice%2C+and+export+a+lip-synced+clip.&amp;p=%2Fcreate%2Fvideo">
 	<meta property="og:image:width" content="1200">
@@ -672,13 +672,13 @@
 	<meta property="og:image:alt" content="Talking Avatar Video — three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Talking Avatar Video · three.ws">
-	<meta name="twitter:description" content="Turn a three.ws avatar into a talking-head video: type a script, pick a voice, and export a lip-synced clip.">
+	<meta name="twitter:title" content="Talking Avatar Video · three.ws" data-i18n-attr="content:create_video.meta_twitter_title">
+	<meta name="twitter:description" content="Turn a three.ws avatar into a talking-head video: type a script, pick a voice, and export a lip-synced clip." data-i18n-attr="content:create_video.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Talking+Avatar+Video&amp;d=Turn+a+three.ws+avatar+into+a+talking-head+video%3A+type+a+script%2C+pick+a+voice%2C+and+export+a+lip-synced+clip.&amp;p=%2Fcreate%2Fvideo">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Talking Avatar Video","description":"Turn a three.ws avatar into a talking-head video: type a script, pick a voice, and export a lip-synced clip.","url":"https://three.ws/create/video","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&t=Talking+Avatar+Video&d=Turn+a+three.ws+avatar+into+a+talking-head+video%3A+type+a+script%2C+pick+a+voice%2C+and+export+a+lip-synced+clip.&p=%2Fcreate%2Fvideo"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Create","item":"https://three.ws/create"},{"@type":"ListItem","position":3,"name":"Video","item":"https://three.ws/create/video"}]}]}</script>
 </head>
 	<body>
-		<a href="#main-content" class="skip-link">Skip to main content</a>
+		<a href="#main-content" class="skip-link" data-i18n="create_video.skip_to_main_content">Skip to main content</a>
 		<header>
 			<div id="nav-container"></div>
 		</header>
@@ -686,7 +686,7 @@
 
 		<main id="main-content">
 			<div class="page-header">
-				<a href="/create" class="back-btn" aria-label="Back to Create">
+				<a href="/create" class="back-btn" aria-label="Back to Create" data-i18n-attr="aria-label:create_video.back_to_create_arialabel">
 					<svg
 						viewBox="0 0 24 24"
 						fill="none"
@@ -700,8 +700,8 @@
 					</svg>
 				</a>
 				<div>
-					<h1 class="page-title">Talking avatar video</h1>
-					<p class="page-subtitle">
+					<h1 class="page-title" data-i18n="create_video.talking_avatar_video">Talking avatar video</h1>
+					<p class="page-subtitle" data-i18n="create_video.pick_your_avatar_upload_audio_and_generate">
 						Pick your avatar, upload audio, and generate a lip-synced video.
 					</p>
 				</div>
@@ -732,7 +732,7 @@
 					</div>
 					<div class="avatar-select-bar" id="avatar-bar">
 						<span class="avatar-select-loading" id="avatar-bar-loading"
-							>Loading avatars…</span
+							 data-i18n="create_video.loading_avatars">Loading avatars…</span
 						>
 					</div>
 				</div>
@@ -741,7 +741,7 @@
 				<div class="controls-panel">
 					<!-- Audio -->
 					<div class="control-block">
-						<p class="control-label">Audio file</p>
+						<p class="control-label" data-i18n="create_video.audio_file">Audio file</p>
 						<div class="audio-drop" id="audio-drop">
 							<input
 								type="file"
@@ -784,7 +784,7 @@
 								class="audio-file-clear"
 								id="audio-clear"
 								aria-label="Remove audio"
-							>
+							 data-i18n-attr="aria-label:create_video.remove_audio_arialabel">
 								<svg
 									viewBox="0 0 24 24"
 									fill="none"
@@ -802,7 +802,7 @@
 
 					<!-- Prompt -->
 					<div class="control-block">
-						<p class="control-label">
+						<p class="control-label" data-i18n-html="create_video.scene_description_optional">
 							Scene description
 							<span
 								style="
@@ -842,8 +842,8 @@
 						<!-- Progress -->
 						<div class="progress-area" id="progress-area">
 							<div class="progress-spinner"></div>
-							<p class="progress-label" id="progress-label">Generating…</p>
-							<p class="progress-sublabel">Takes 2–4 minutes on GPU. Hang tight.</p>
+							<p class="progress-label" id="progress-label" data-i18n="create_video.generating">Generating…</p>
+							<p class="progress-sublabel" data-i18n="create_video.takes_2_4_minutes_on_gpu_hang">Takes 2–4 minutes on GPU. Hang tight.</p>
 						</div>
 						<!-- Video -->
 						<div class="video-area" id="video-area">
@@ -891,10 +891,10 @@
 						</div>
 						<!-- Error -->
 						<div class="error-area" id="error-area">
-							<p class="error-msg" id="error-msg">
+							<p class="error-msg" id="error-msg" data-i18n="create_video.generation_failed_please_try_again">
 								Generation failed. Please try again.
 							</p>
-							<button class="retry-btn" id="retry-btn">Try again</button>
+							<button class="retry-btn" id="retry-btn" data-i18n="create_video.try_again">Try again</button>
 						</div>
 					</div>
 				</div>
@@ -949,5 +949,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

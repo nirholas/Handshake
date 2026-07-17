@@ -4,7 +4,7 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Playground · three.ws</title>
+		<title data-i18n="playground.meta_title">Playground · three.ws</title>
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -571,25 +571,25 @@
 		<meta
 			name="description"
 			content="Sandbox for experimenting with agents, prompts, and 3D scenes."
-		/>
+		 data-i18n-attr="content:playground.meta_description"/>
 		<link rel="canonical" href="https://three.ws/playground" />
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Playground · three.ws" />
+		<meta property="og:title" content="Playground · three.ws"  data-i18n-attr="content:playground.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Sandbox for experimenting with agents, prompts, and 3D scenes."
-		/>
+		 data-i18n-attr="content:playground.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/playground" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Playground&amp;d=Sandbox+for+experimenting+with+agents%2C+prompts%2C+and+3D+scenes.&amp;p=%2Fplayground" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Playground · three.ws" />
+		<meta name="twitter:title" content="Playground · three.ws"  data-i18n-attr="content:playground.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Sandbox for experimenting with agents, prompts, and 3D scenes."
-		/>
+		 data-i18n-attr="content:playground.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=Playground&amp;d=Sandbox+for+experimenting+with+agents%2C+prompts%2C+and+3D+scenes.&amp;p=%2Fplayground" />
 		<script type="application/ld+json">
 			{
@@ -611,14 +611,14 @@
 	<body>
 		<header class="pg-header">
 			<div class="pg-header-left">
-				<a href="/" aria-label="three.ws home">
+				<a href="/" aria-label="three.ws home" data-i18n-attr="aria-label:playground.three_ws_home_arialabel">
 					<img src="/three.svg" alt="three.ws" class="pg-header-logo" />
 				</a>
 				<nav class="pg-header-nav" aria-label="Primary">
-					<a href="/discover">Discover</a>
-					<a href="/create">Create</a>
-					<a href="/studio">Studio</a>
-					<a href="/playground" class="active">Playground</a>
+					<a href="/discover" data-i18n="playground.discover">Discover</a>
+					<a href="/create" data-i18n="playground.create">Create</a>
+					<a href="/studio" data-i18n="playground.studio">Studio</a>
+					<a href="/playground" class="active" data-i18n="playground.playground">Playground</a>
 				</nav>
 			</div>
 		</header>
@@ -645,7 +645,7 @@
 								<line x1="12" y1="3" x2="12" y2="15" />
 							</svg>
 						</div>
-						<p>Drop a .glb file here<small>or use the upload button →</small></p>
+						<p data-i18n-html="playground.drop_a_glb_file_hereor_use_the">Drop a .glb file here<small>or use the upload button →</small></p>
 					</div>
 
 					<model-viewer
@@ -664,7 +664,7 @@
 				</div>
 
 				<div class="pg-viewer-bar">
-					<span id="file-chip" class="pg-file-chip loaded">default.glb</span>
+					<span id="file-chip" class="pg-file-chip loaded" data-i18n="playground.default_glb">default.glb</span>
 					<div id="pg-status"></div>
 				</div>
 			</div>
@@ -703,7 +703,7 @@
 							id="anim-play-pause"
 							title="Play / Pause"
 							aria-label="Play or pause animation"
-						>
+						 data-i18n-attr="aria-label:playground.play_or_pause_animation_arialabel;title:playground.play_pause_title">
 							<svg
 								id="anim-icon-pause"
 								width="14"
@@ -733,9 +733,9 @@
 				<div class="pg-section">
 					<div class="pg-section-label">Environment</div>
 					<div class="pill-row">
-						<button class="pill active" data-env="neutral">Neutral</button>
-						<button class="pill" data-env="legacy">Warm</button>
-						<button class="pill" data-env="">Dark</button>
+						<button class="pill active" data-env="neutral" data-i18n="playground.neutral">Neutral</button>
+						<button class="pill" data-env="legacy" data-i18n="playground.warm">Warm</button>
+						<button class="pill" data-env="" data-i18n="playground.dark">Dark</button>
 					</div>
 				</div>
 
@@ -743,10 +743,10 @@
 				<div class="pg-section">
 					<div class="pg-section-label">Background</div>
 					<div class="pill-row" id="bg-pills">
-						<button class="pill active" data-bg="#0f0f0f">Dark</button>
-						<button class="pill" data-bg="#1b1b1b">Midnight</button>
-						<button class="pill" data-bg="#0d1a0d">Forest</button>
-						<button class="pill" data-bg="#1a0d0d">Ember</button>
+						<button class="pill active" data-bg="#0f0f0f" data-i18n="playground.dark_2">Dark</button>
+						<button class="pill" data-bg="#1b1b1b" data-i18n="playground.midnight">Midnight</button>
+						<button class="pill" data-bg="#0d1a0d" data-i18n="playground.forest">Forest</button>
+						<button class="pill" data-bg="#1a0d0d" data-i18n="playground.ember">Ember</button>
 					</div>
 				</div>
 
@@ -754,14 +754,14 @@
 				<div class="pg-section">
 					<div class="pg-section-label">Controls</div>
 					<div class="toggle-row" style="margin-bottom: 0.85rem">
-						<span>Auto-rotate</span>
+						<span data-i18n="playground.auto_rotate">Auto-rotate</span>
 						<label class="toggle">
 							<input type="checkbox" id="toggle-rotate" checked />
 							<span class="toggle-slider"></span>
 						</label>
 					</div>
 					<div class="toggle-row">
-						<span>Shadow</span>
+						<span data-i18n="playground.shadow">Shadow</span>
 						<label class="toggle">
 							<input type="checkbox" id="toggle-shadow" checked />
 							<span class="toggle-slider"></span>
@@ -790,11 +790,11 @@
 				<div class="pg-section" id="info-section" style="display: none">
 					<div class="pg-section-label">Model info</div>
 					<dl class="info-grid">
-						<dt>File</dt>
+						<dt data-i18n="playground.file">File</dt>
 						<dd id="info-filename">—</dd>
-						<dt>Size</dt>
+						<dt data-i18n="playground.size">Size</dt>
 						<dd id="info-size">—</dd>
-						<dt>Animations</dt>
+						<dt data-i18n="playground.animations">Animations</dt>
 						<dd id="info-anims">—</dd>
 					</dl>
 				</div>
@@ -805,8 +805,8 @@
 					<textarea id="embed-code" readonly spellcheck="false"></textarea>
 					<p class="embed-note" id="embed-note"></p>
 					<div class="btn-row">
-						<button class="pg-btn accent" id="copy-embed">Copy snippet</button>
-						<button class="pg-btn" id="reset-btn">Reset</button>
+						<button class="pg-btn accent" id="copy-embed" data-i18n="playground.copy_snippet">Copy snippet</button>
+						<button class="pg-btn" id="reset-btn" data-i18n="playground.reset">Reset</button>
 					</div>
 				</div>
 			</div>
@@ -1091,5 +1091,7 @@
 		</script>
 
 		<script src="/brand.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -4,17 +4,17 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title>Oracle — fused pump.fun conviction · three.ws</title>
-	<meta name="description" content="Oracle fuses who's buying, how they're buying, what the coin is, and how it's moving into one live conviction score for every pump.fun launch — and lets your 3D AI agent act on the highest-conviction plays. The more data we watch, the sharper every score." />
-	<meta property="og:title" content="Oracle · three.ws" />
-	<meta property="og:description" content="One conviction score per pump.fun launch, fused from full-coverage wallet + coin + structure data. Watch it live. Arm your agent to act on it." />
+	<title data-i18n="oracle.meta_title">Oracle — fused pump.fun conviction · three.ws</title>
+	<meta name="description" content="Oracle fuses who's buying, how they're buying, what the coin is, and how it's moving into one live conviction score for every pump.fun launch — and lets your 3D AI agent act on the highest-conviction plays. The more data we watch, the sharper every score."  data-i18n-attr="content:oracle.meta_description"/>
+	<meta property="og:title" content="Oracle · three.ws"  data-i18n-attr="content:oracle.meta_og_title"/>
+	<meta property="og:description" content="One conviction score per pump.fun launch, fused from full-coverage wallet + coin + structure data. Watch it live. Arm your agent to act on it."  data-i18n-attr="content:oracle.meta_og_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/oracle" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Oracle+%E2%80%94+AI+Conviction+Engine&amp;d=A+fused+AI+conviction+engine+for+every+pump.fun+launch%3A+pedigree+%28who%27s+buying%29%2C+structure+%28bundle+vs+organic%29%2C+narrative+%28what+story+is+it+riding%29%2C+and+momentu&amp;p=%2Foracle" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Oracle — fused pump.fun conviction" />
-	<meta name="twitter:description" content="One live conviction score per launch, fused from the most data on pump.fun. Arm your agent to act on it." />
+	<meta name="twitter:title" content="Oracle — fused pump.fun conviction"  data-i18n-attr="content:oracle.meta_twitter_title"/>
+	<meta name="twitter:description" content="One live conviction score per launch, fused from the most data on pump.fun. Arm your agent to act on it."  data-i18n-attr="content:oracle.meta_twitter_description"/>
 	<link rel="canonical" href="https://three.ws/oracle" />
 	<link rel="icon" href="/favicon.ico" />
 	<link rel="stylesheet" href="/nav.css" />
@@ -648,78 +648,78 @@
 
 	<main class="wrap">
 		<header class="hero">
-			<span class="eyebrow"><i id="liveDot"></i> <span id="liveLabel">Live · fused conviction</span></span>
-			<h1>Stop guessing the coin.<br><span>Know the conviction.</span></h1>
-			<p>Oracle fuses four reads on every pump.fun launch — <b>who's</b> buying it (proven-wallet pedigree), <b>how</b> it's being bought (bundle vs. organic structure), <b>what</b> it is (cultural narrative), and <b>how</b> it's moving — into one transparent 0–100 conviction score. The more coins and wallets we watch, the sharper every score. Then arm your 3D agent to act on the plays that clear your bar. <a href="/oracle/docs" style="color:var(--ink);border-bottom:1px solid var(--stroke-strong);white-space:nowrap">Read the docs ↗</a></p>
+			<span class="eyebrow" data-i18n-html="oracle.live_fused_conviction"><i id="liveDot"></i> <span id="liveLabel">Live · fused conviction</span></span>
+			<h1 data-i18n-html="oracle.stop_guessing_the_coin_know_the_conviction">Stop guessing the coin.<br><span>Know the conviction.</span></h1>
+			<p data-i18n-html="oracle.oracle_fuses_four_reads_on_every_pump">Oracle fuses four reads on every pump.fun launch — <b>who's</b> buying it (proven-wallet pedigree), <b>how</b> it's being bought (bundle vs. organic structure), <b>what</b> it is (cultural narrative), and <b>how</b> it's moving — into one transparent 0–100 conviction score. The more coins and wallets we watch, the sharper every score. Then arm your 3D agent to act on the plays that clear your bar. <a href="/oracle/docs" style="color:var(--ink);border-bottom:1px solid var(--stroke-strong);white-space:nowrap">Read the docs ↗</a></p>
 			<div class="statline" id="statline">
 				<div class="stat" title="Conviction scores produced in the last 24 hours">
-					<span>Scored 24h</span><b id="stScored">—</b><span class="stat-sub" id="stScoredSub"></span>
+					<span data-i18n="oracle.scored_24h">Scored 24h</span><b id="stScored">—</b><span class="stat-sub" id="stScoredSub"></span>
 				</div>
-				<button class="stat" type="button" data-stat-action="prime" title="Coins sitting at Prime tier right now — click to filter the feed">
+				<button class="stat" type="button" data-stat-action="prime" title="Coins sitting at Prime tier right now — click to filter the feed" data-i18n-html="oracle.prime_now_filter_feed" data-i18n-attr="title:oracle.coins_sitting_at_prime_tier_title">
 					<span>Prime now <span class="stat-arrow">→</span></span><b class="up" id="stPrime">—</b><span class="stat-sub">filter feed</span>
 				</button>
-				<button class="stat" type="button" data-stat-action="strong" title="Coins at Strong tier right now — click to filter the feed">
+				<button class="stat" type="button" data-stat-action="strong" title="Coins at Strong tier right now — click to filter the feed" data-i18n-html="oracle.strong_now_filter_feed" data-i18n-attr="title:oracle.coins_at_strong_tier_right_n_title">
 					<span>Strong now <span class="stat-arrow">→</span></span><b class="up" id="stStrong">—</b><span class="stat-sub">filter feed</span>
 				</button>
-				<button class="stat" type="button" data-stat-action="edge" title="Share of resolved Lean/Strong/Prime calls that won (graduated, or ≥2× without rugging) — click for the full edge breakdown">
+				<button class="stat" type="button" data-stat-action="edge" title="Share of resolved Lean/Strong/Prime calls that won (graduated, or ≥2× without rugging) — click for the full edge breakdown" data-i18n-html="oracle.call_win_rate" data-i18n-attr="title:oracle.share_of_resolved_lean_stron_title">
 					<span>Call win rate <span class="stat-arrow">→</span></span><b id="stWin">—</b><span class="stat-sub" id="stWinSub"></span>
 				</button>
-				<button class="stat" type="button" data-stat-action="proof" title="Best ATH multiple among coins Oracle actually called (Lean tier or above) — click for the proof gallery">
+				<button class="stat" type="button" data-stat-action="proof" title="Best ATH multiple among coins Oracle actually called (Lean tier or above) — click for the proof gallery" data-i18n-html="oracle.best_ath_view_proof" data-i18n-attr="title:oracle.best_ath_multiple_among_coin_title">
 					<span>Best ATH× <span class="stat-arrow">→</span></span><b class="warm" id="stAth">—</b><span class="stat-sub">view proof</span>
 				</button>
-				<button class="stat" type="button" data-stat-action="agents" title="Distinct agents currently armed on Oracle conviction — click for the leaderboard">
+				<button class="stat" type="button" data-stat-action="agents" title="Distinct agents currently armed on Oracle conviction — click for the leaderboard" data-i18n-html="oracle.agents_armed" data-i18n-attr="title:oracle.distinct_agents_currently_ar_title">
 					<span>Agents armed <span class="stat-arrow">→</span></span><b id="stArmed">—</b><span class="stat-sub" id="stArmedSub"></span>
 				</button>
 				<div class="stat" title="Oracle watch actions currently open — awaiting settlement">
-					<span>Open trades</span><b id="stOpenTrades">—</b><span class="stat-sub">in flight</span>
+					<span data-i18n="oracle.open_trades">Open trades</span><b id="stOpenTrades">—</b><span class="stat-sub" data-i18n="oracle.in_flight">in flight</span>
 				</div>
 				<div class="stat" title="Share of ALL scored launches that won — what blindly buying every pump.fun launch would return. This is the baseline Oracle calls must beat; it is not the engine's win rate.">
-					<span>Market base rate</span><b id="stBase">—</b><span class="stat-sub" id="stBaseSub"></span>
+					<span data-i18n="oracle.market_base_rate">Market base rate</span><b id="stBase">—</b><span class="stat-sub" id="stBaseSub"></span>
 				</div>
 			</div>
 		</header>
 
 		<nav class="tabs" role="tablist">
-			<button class="tab on" data-view="feed" role="tab">Live conviction <span class="ct" id="ctFeed"></span></button>
-			<button class="tab" data-view="movers" role="tab">Movers ↑</button>
-			<button class="tab" data-view="wallets" role="tab">Top wallets <span class="ct" id="ctWallets"></span></button>
-			<button class="tab" data-view="graph" role="tab">3D graph</button>
-			<button class="tab" data-view="edge" role="tab">The edge</button>
-			<button class="tab" data-view="proof" role="tab">Proof ✓ <span class="ct" id="ctProof"></span></button>
-			<button class="tab" data-view="agents" role="tab">Agents <span class="ct" id="ctAgents"></span></button>
-			<button class="tab" data-view="activity" role="tab">Activity <span class="ct" id="ctActivity"></span></button>
-			<button class="tab" data-view="agent" role="tab">Arm your agent</button>
+			<button class="tab on" data-view="feed" role="tab" data-i18n-html="oracle.live_conviction">Live conviction <span class="ct" id="ctFeed"></span></button>
+			<button class="tab" data-view="movers" role="tab" data-i18n="oracle.movers">Movers ↑</button>
+			<button class="tab" data-view="wallets" role="tab" data-i18n-html="oracle.top_wallets">Top wallets <span class="ct" id="ctWallets"></span></button>
+			<button class="tab" data-view="graph" role="tab" data-i18n="oracle.3d_graph">3D graph</button>
+			<button class="tab" data-view="edge" role="tab" data-i18n="oracle.the_edge">The edge</button>
+			<button class="tab" data-view="proof" role="tab" data-i18n-html="oracle.proof">Proof ✓ <span class="ct" id="ctProof"></span></button>
+			<button class="tab" data-view="agents" role="tab" data-i18n-html="oracle.agents">Agents <span class="ct" id="ctAgents"></span></button>
+			<button class="tab" data-view="activity" role="tab" data-i18n-html="oracle.activity">Activity <span class="ct" id="ctActivity"></span></button>
+			<button class="tab" data-view="agent" role="tab" data-i18n="oracle.arm_your_agent">Arm your agent</button>
 		</nav>
 
 		<!-- FEED -->
 		<section class="view on" id="view-feed">
 			<div class="filters">
 				<div class="seg" id="tierSeg">
-					<button data-tier="" class="on">All</button>
-					<button data-tier="prime">Prime</button>
-					<button data-tier="strong">Strong</button>
-					<button data-tier="lean">Lean</button>
+					<button data-tier="" class="on" data-i18n="oracle.all">All</button>
+					<button data-tier="prime" data-i18n="oracle.prime">Prime</button>
+					<button data-tier="strong" data-i18n="oracle.strong">Strong</button>
+					<button data-tier="lean" data-i18n="oracle.lean">Lean</button>
 				</div>
 				<select class="sel" id="catSel" aria-label="Filter by narrative">
-					<option value="">All narratives</option>
+					<option value="" data-i18n="oracle.all_narratives">All narratives</option>
 				</select>
 				<select class="sel" id="minSel" aria-label="Minimum score">
-					<option value="0">Any score</option>
-					<option value="56">≥ 56 (Lean)</option>
-					<option value="72">≥ 72 (Strong)</option>
-					<option value="86">≥ 86 (Prime)</option>
+					<option value="0" data-i18n="oracle.any_score">Any score</option>
+					<option value="56" data-i18n="oracle.56_lean">≥ 56 (Lean)</option>
+					<option value="72" data-i18n="oracle.72_strong">≥ 72 (Strong)</option>
+					<option value="86" data-i18n="oracle.86_prime">≥ 86 (Prime)</option>
 				</select>
-				<button class="wtoggle" id="watchToggle" type="button" aria-pressed="false" title="Show only coins on your watchlist" style="margin-left:auto">☆ Watching <span class="wtoggle-ct" id="watchCt"></span></button>
+				<button class="wtoggle" id="watchToggle" type="button" aria-pressed="false" title="Show only coins on your watchlist" style="margin-left:auto" data-i18n-html="oracle.watching" data-i18n-attr="title:oracle.show_only_coins_on_your_watc_title">☆ Watching <span class="wtoggle-ct" id="watchCt"></span></button>
 				<div class="seg" id="sortSeg" aria-label="Sort order">
-					<button data-fsort="score" class="on">Top</button>
-					<button data-fsort="hot">Hot</button>
-					<button data-fsort="new">New</button>
+					<button data-fsort="score" class="on" data-i18n="oracle.top">Top</button>
+					<button data-fsort="hot" data-i18n="oracle.hot">Hot</button>
+					<button data-fsort="new" data-i18n="oracle.new">New</button>
 				</div>
 				<div style="position:relative;flex:1 1 180px;min-width:0;max-width:320px"><input class="sel" id="mintSearch" placeholder="Search symbol or paste mint…" aria-label="Search by symbol, name, or paste a mint address" autocomplete="off" style="width:100%" /></div>
 			</div>
 			<div id="breadthBar" class="breadth" style="display:none">
 				<div class="breadth-head">
-					<span class="breadth-title">Conviction breadth</span>
+					<span class="breadth-title" data-i18n="oracle.conviction_breadth">Conviction breadth</span>
 					<span class="breadth-sub" id="breadthSub"></span>
 				</div>
 				<div class="breadth-track" id="breadthTrack" role="group" aria-label="Conviction tier distribution — click a tier to filter"></div>
@@ -731,17 +731,17 @@
 
 		<!-- MOVERS -->
 		<section class="view" id="view-movers">
-			<p class="intro">Coins whose Oracle conviction score moved most in the last 24 hours — the fastest-building setups and the sharpest collapses. Rising movers are setups gaining edge before they hit Prime; falling movers are theses unwinding in real time.</p>
+			<p class="intro" data-i18n="oracle.coins_whose_oracle_conviction_score_moved_mo">Coins whose Oracle conviction score moved most in the last 24 hours — the fastest-building setups and the sharpest collapses. Rising movers are setups gaining edge before they hit Prime; falling movers are theses unwinding in real time.</p>
 			<div class="filters" style="margin-bottom:16px">
 				<div class="seg" id="movDirSeg">
-					<button data-movdir="rising" class="on">Rising ↑</button>
-					<button data-movdir="falling">Falling ↓</button>
-					<button data-movdir="all">All</button>
+					<button data-movdir="rising" class="on" data-i18n="oracle.rising">Rising ↑</button>
+					<button data-movdir="falling" data-i18n="oracle.falling">Falling ↓</button>
+					<button data-movdir="all" data-i18n="oracle.all_2">All</button>
 				</div>
 				<div class="seg" id="movHrSeg" style="margin-left:auto">
-					<button data-movhr="6">6h</button>
-					<button data-movhr="24" class="on">24h</button>
-					<button data-movhr="48">48h</button>
+					<button data-movhr="6" data-i18n="oracle.6h">6h</button>
+					<button data-movhr="24" class="on" data-i18n="oracle.24h">24h</button>
+					<button data-movhr="48" data-i18n="oracle.48h">48h</button>
 				</div>
 			</div>
 			<div id="moversGrid" class="mv-grid"></div>
@@ -749,13 +749,13 @@
 
 		<!-- WALLETS -->
 		<section class="view" id="view-wallets">
-			<p class="intro">Every wallet Oracle has judged, ranked by its real track record — how often it's an early buyer of coins that went on to graduate, against how often it sprays into duds or dumps on its followers. This is the pedigree that powers the conviction score.</p>
+			<p class="intro" data-i18n="oracle.every_wallet_oracle_has_judged_ranked_by">Every wallet Oracle has judged, ranked by its real track record — how often it's an early buyer of coins that went on to graduate, against how often it sprays into duds or dumps on its followers. This is the pedigree that powers the conviction score.</p>
 			<div class="filters">
 				<div class="seg" id="labelSeg">
-					<button data-label="" class="on">All</button>
-					<button data-label="smart_money">Smart money</button>
-					<button data-label="sniper">Snipers</button>
-					<button data-label="rugger">Ruggers</button>
+					<button data-label="" class="on" data-i18n="oracle.all_3">All</button>
+					<button data-label="smart_money" data-i18n="oracle.smart_money">Smart money</button>
+					<button data-label="sniper" data-i18n="oracle.snipers">Snipers</button>
+					<button data-label="rugger" data-i18n="oracle.ruggers">Ruggers</button>
 				</div>
 			</div>
 			<div class="lwrap" id="walletWrap"></div>
@@ -764,7 +764,7 @@
 		<!-- EDGE -->
 		<!-- GRAPH -->
 		<section class="view" id="view-graph">
-			<p class="intro" style="margin-bottom:10px">Every scored coin as a sphere in 3D space. Size = conviction score. Color = tier. Drag to orbit, scroll to zoom. Click any sphere to open its full conviction breakdown.</p>
+			<p class="intro" style="margin-bottom:10px" data-i18n="oracle.every_scored_coin_as_a_sphere_in">Every scored coin as a sphere in 3D space. Size = conviction score. Color = tier. Drag to orbit, scroll to zoom. Click any sphere to open its full conviction breakdown.</p>
 			<div style="position:relative;height:560px;border-radius:12px;overflow:hidden">
 				<canvas id="og-canvas" style="width:100%;height:100%;display:block"></canvas>
 				<div id="og-labels" style="position:absolute;inset:0;pointer-events:none"></div>
@@ -773,41 +773,41 @@
 		</section>
 
 		<section class="view" id="view-edge">
-			<p class="intro">Proof, not promises. Every conviction verdict is checked against ground truth — did the coin graduate, rug, or run? We measure the realized win rate by tier, show the 95% confidence band on every number, and plot calibration so you can see the score actually ranks coins by odds. The edge only counts if conviction beats blind buying — and we show it even when it doesn't.</p>
+			<p class="intro" data-i18n="oracle.proof_not_promises_every_conviction_verdict">Proof, not promises. Every conviction verdict is checked against ground truth — did the coin graduate, rug, or run? We measure the realized win rate by tier, show the 95% confidence band on every number, and plot calibration so you can see the score actually ranks coins by odds. The edge only counts if conviction beats blind buying — and we show it even when it doesn't.</p>
 			<div id="edgeWrap"></div>
 		</section>
 
 		<!-- AGENTS LEADERBOARD -->
 		<section class="view" id="view-agents">
-			<p class="intro">Oracle agents ranked by their real conviction track record — every call graded against ground truth. Only agents with resolved outcomes are shown. Subscribe to copy the best-performing ones.</p>
+			<p class="intro" data-i18n="oracle.oracle_agents_ranked_by_their_real_convictio">Oracle agents ranked by their real conviction track record — every call graded against ground truth. Only agents with resolved outcomes are shown. Subscribe to copy the best-performing ones.</p>
 			<div class="lwrap" id="agentLeadWrap"></div>
 		</section>
 
 		<!-- ACTIVITY FEED -->
 		<section class="view" id="view-activity">
-			<p class="intro">Every Oracle-armed agent action in real time — what the autonomous trading floor is buying, what resolved to wins, what didn't. Simulated and live actions together.</p>
+			<p class="intro" data-i18n="oracle.every_oracle_armed_agent_action_in_real">Every Oracle-armed agent action in real time — what the autonomous trading floor is buying, what resolved to wins, what didn't. Simulated and live actions together.</p>
 			<div class="af-filters">
 				<div class="seg" id="afModeSeg">
-					<button data-afmode="" class="on">All</button>
-					<button data-afmode="live">Live</button>
-					<button data-afmode="simulate">Simulate</button>
+					<button data-afmode="" class="on" data-i18n="oracle.all_4">All</button>
+					<button data-afmode="live" data-i18n="oracle.live">Live</button>
+					<button data-afmode="simulate" data-i18n="oracle.simulate">Simulate</button>
 				</div>
 				<div class="seg" id="afTierSeg">
-					<button data-aftier="" class="on">All tiers</button>
-					<button data-aftier="prime">Prime</button>
-					<button data-aftier="strong">Strong</button>
-					<button data-aftier="lean">Lean</button>
+					<button data-aftier="" class="on" data-i18n="oracle.all_tiers">All tiers</button>
+					<button data-aftier="prime" data-i18n="oracle.prime_2">Prime</button>
+					<button data-aftier="strong" data-i18n="oracle.strong_2">Strong</button>
+					<button data-aftier="lean" data-i18n="oracle.lean_2">Lean</button>
 				</div>
 				<div class="seg" id="afOutcomeSeg">
-					<button data-afoutcome="" class="on">All outcomes</button>
-					<button data-afoutcome="open">Open</button>
-					<button data-afoutcome="win">Wins</button>
-					<button data-afoutcome="loss">Losses</button>
+					<button data-afoutcome="" class="on" data-i18n="oracle.all_outcomes">All outcomes</button>
+					<button data-afoutcome="open" data-i18n="oracle.open">Open</button>
+					<button data-afoutcome="win" data-i18n="oracle.wins">Wins</button>
+					<button data-afoutcome="loss" data-i18n="oracle.losses">Losses</button>
 				</div>
 			</div>
 			<div id="afTableWrap"></div>
 			<div class="af-more" id="afMore" style="display:none">
-				<button class="btn" id="afMoreBtn">Load more</button>
+				<button class="btn" id="afMoreBtn" data-i18n="oracle.load_more">Load more</button>
 			</div>
 		</section>
 
@@ -815,13 +815,13 @@
 		<section class="view" id="view-agent">
 			<div class="apanel">
 				<div class="card" id="armCard">
-					<h3>Arm your 3D agent</h3>
-					<p class="sub">Your agent watches the live conviction stream and acts the instant a coin clears your bar — buying a small position from its own custodial Solana wallet. Set the rules on the full setup page; here's its current configuration at a glance.</p>
+					<h3 data-i18n="oracle.arm_your_3d_agent">Arm your 3D agent</h3>
+					<p class="sub" data-i18n="oracle.your_agent_watches_the_live_conviction_strea">Your agent watches the live conviction stream and acts the instant a coin clears your bar — buying a small position from its own custodial Solana wallet. Set the rules on the full setup page; here's its current configuration at a glance.</p>
 					<div id="armBody"></div>
 				</div>
 				<div class="card">
-					<h3>Recent actions</h3>
-					<p class="sub">Every move your agent makes — simulated or live — lands here, then gets graded against the outcome. This is your agent's win-rate ledger.</p>
+					<h3 data-i18n="oracle.recent_actions">Recent actions</h3>
+					<p class="sub" data-i18n="oracle.every_move_your_agent_makes_simulated_or">Every move your agent makes — simulated or live — lands here, then gets graded against the outcome. This is your agent's win-rate ledger.</p>
 					<div id="actionsBody" style="max-height:480px;overflow-y:auto"><div class="state">Sign in and arm an agent to see its actions.</div></div>
 				</div>
 			</div>
@@ -829,31 +829,31 @@
 
 		<!-- PROOF — win gallery -->
 		<section class="view" id="view-proof">
-			<p class="intro">Coins the Oracle called at conviction — and how they resolved. Every card shows the score at entry time versus the ground-truth outcome: graduated, ATH multiple, or both. Proof, not promises.</p>
+			<p class="intro" data-i18n="oracle.coins_the_oracle_called_at_conviction_and">Coins the Oracle called at conviction — and how they resolved. Every card shows the score at entry time versus the ground-truth outcome: graduated, ATH multiple, or both. Proof, not promises.</p>
 			<div class="proof-kpis" id="proofKpis" style="display:none"></div>
 			<div class="proof-filters">
 				<div class="seg" id="proofTierSeg">
-					<button data-ptier="" class="on" title="Coins Oracle actually called — Lean tier or above">Called (Lean+)</button>
-					<button data-ptier="prime">Prime</button>
-					<button data-ptier="strong">Strong</button>
-					<button data-ptier="lean">Lean</button>
-					<button data-ptier="all" title="Every scored coin, including Watch/Avoid — market context, not proof of edge">All scored</button>
+					<button data-ptier="" class="on" title="Coins Oracle actually called — Lean tier or above" data-i18n="oracle.called_lean" data-i18n-attr="title:oracle.coins_oracle_actually_called_title">Called (Lean+)</button>
+					<button data-ptier="prime" data-i18n="oracle.prime_3">Prime</button>
+					<button data-ptier="strong" data-i18n="oracle.strong_3">Strong</button>
+					<button data-ptier="lean" data-i18n="oracle.lean_3">Lean</button>
+					<button data-ptier="all" title="Every scored coin, including Watch/Avoid — market context, not proof of edge" data-i18n="oracle.all_scored" data-i18n-attr="title:oracle.every_scored_coin_including_title">All scored</button>
 				</div>
 				<div class="seg" id="proofPeriodSeg">
-					<button data-pperiod="7d">7d</button>
-					<button data-pperiod="30d" class="on">30d</button>
-					<button data-pperiod="90d">90d</button>
-					<button data-pperiod="all">All time</button>
+					<button data-pperiod="7d" data-i18n="oracle.7d">7d</button>
+					<button data-pperiod="30d" class="on" data-i18n="oracle.30d">30d</button>
+					<button data-pperiod="90d" data-i18n="oracle.90d">90d</button>
+					<button data-pperiod="all" data-i18n="oracle.all_time">All time</button>
 				</div>
 			</div>
 			<div class="proof-grid" id="proofGrid"></div>
 			<div class="proof-load-more" id="proofLoadMore" style="display:none">
-				<button class="btn" id="proofLoadMoreBtn">Load more wins</button>
+				<button class="btn" id="proofLoadMoreBtn" data-i18n="oracle.load_more_wins">Load more wins</button>
 			</div>
 		</section>
 
 		<footer class="foot">
-			<b>How conviction is built.</b> Oracle reads the platform's full-coverage pump.fun data — every coin, every wallet, every outcome — and fuses pedigree (34%), structure (30%), narrative (18%) and momentum (18%) into one score, with hard caps so a bundle, a dumping dev, or a rug-pattern creator can never read "strong" — and neither can a coin whose buyers Oracle knows nothing about: unknown pedigree tops out at Lean. A win is graduation or a ≥2× run that didn't rug — a spike on the way to zero doesn't count, and the call win rate is reported separately from the market's base rate. Nothing here is financial advice; conviction is a probability, not a promise. Trade small, especially early.
+			<b data-i18n="oracle.how_conviction_is_built">How conviction is built.</b> Oracle reads the platform's full-coverage pump.fun data — every coin, every wallet, every outcome — and fuses pedigree (34%), structure (30%), narrative (18%) and momentum (18%) into one score, with hard caps so a bundle, a dumping dev, or a rug-pattern creator can never read "strong" — and neither can a coin whose buyers Oracle knows nothing about: unknown pedigree tops out at Lean. A win is graduation or a ≥2× run that didn't rug — a spike on the way to zero doesn't count, and the call win rate is reported separately from the market's base rate. Nothing here is financial advice; conviction is a probability, not a promise. Trade small, especially early.
 		</footer>
 	</main>
 
@@ -863,12 +863,14 @@
 		<div class="dr-panel" role="dialog" aria-modal="true" aria-label="Coin conviction detail">
 			<div class="dr-head">
 				<h3 id="drTitle">—</h3>
-				<button class="dr-x" data-close aria-label="Close">✕</button>
+				<button class="dr-x" data-close aria-label="Close" data-i18n-attr="aria-label:oracle.close_arialabel">✕</button>
 			</div>
 			<div class="dr-body" id="drBody"></div>
 		</div>
 	</div>
 
 	<script type="module" src="/src/oracle.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

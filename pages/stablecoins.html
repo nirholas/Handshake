@@ -18,19 +18,19 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Stablecoins Market Cap · three.ws</title>
+		<title data-i18n="stablecoins.meta_title">Stablecoins Market Cap · three.ws</title>
 		<meta
 			name="description"
 			content="Track the top stablecoins by market cap — peg health, dominance share, backing mechanism, and the chains each one lives on. Live data from DeFiLlama."
-		/>
+		 data-i18n-attr="content:stablecoins.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/stablecoins" />
-		<meta property="og:title" content="Stablecoins Market Cap · three.ws" />
+		<meta property="og:title" content="Stablecoins Market Cap · three.ws"  data-i18n-attr="content:stablecoins.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="The top stablecoins ranked by market cap — with live peg health, dominance share, backing mechanism, and chains. Data from DeFiLlama."
-		/>
+		 data-i18n-attr="content:stablecoins.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Stablecoins+Market+Cap+%26+Peg+Health&amp;d=Every+major+stablecoin+ranked+by+circulating+market+cap%2C+with+live+peg+health%2C+backing+mechanism+%28fiat-backed%2C+crypto-backed%2C+algorithmic%29%2C+and+the+chains+it+li&amp;p=%2Fstablecoins"
@@ -39,11 +39,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Stablecoins Market Cap · three.ws" />
+		<meta name="twitter:title" content="Stablecoins Market Cap · three.ws"  data-i18n-attr="content:stablecoins.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="The top stablecoins ranked by market cap — with live peg health, dominance, mechanism, and chains."
-		/>
+		 data-i18n-attr="content:stablecoins.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Stablecoins+Market+Cap+%26+Peg+Health&amp;d=Every+major+stablecoin+ranked+by+circulating+market+cap%2C+with+live+peg+health%2C+backing+mechanism+%28fiat-backed%2C+crypto-backed%2C+algorithmic%29%2C+and+the+chains+it+li&amp;p=%2Fstablecoins"
@@ -89,11 +89,11 @@
 
 		<main class="cv-container">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a><span class="sep">/</span
-				><span class="here">Stablecoins</span>
+				<a href="/markets" data-i18n="stablecoins.markets">Markets</a><span class="sep">/</span
+				><span class="here" data-i18n="stablecoins.stablecoins">Stablecoins</span>
 			</nav>
-			<h1 class="cv-h1">Stablecoins Market Cap</h1>
-			<p class="cv-sub">
+			<h1 class="cv-h1" data-i18n="stablecoins.stablecoins_market_cap">Stablecoins Market Cap</h1>
+			<p class="cv-sub" data-i18n="stablecoins.the_stablecoin_market_at_a_glance_ranked">
 				The stablecoin market at a glance — ranked by circulating supply, with live peg
 				health, dominance share, backing mechanism, and the chains each one lives on. A
 				price drifting from $1.00 shows red; on-peg shows green.
@@ -113,12 +113,14 @@
 
 			<!-- Sortable table. Hydrated by src/stablecoins.js. -->
 			<section id="sc-table" aria-label="Stablecoins ranked by market cap"></section>
-			<p class="cv-updated" id="sc-updated">Data: DeFiLlama</p>
+			<p class="cv-updated" id="sc-updated" data-i18n="stablecoins.data_defillama">Data: DeFiLlama</p>
 		</main>
 
 		<script type="module" src="/src/stablecoins.js"></script>
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

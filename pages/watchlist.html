@@ -4,16 +4,16 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Watchlist · three.ws</title>
+		<title data-i18n="watchlist.meta_title">Watchlist · three.ws</title>
 		<meta
 			name="description"
 			content="Your watched coins on three.ws — live market caps, graduation status, and the Coin Intelligence verdict for every mint you're tracking."
-		/>
+		 data-i18n-attr="content:watchlist.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/watchlist" />
-		<meta property="og:title" content="Watchlist · three.ws" />
-		<meta property="og:description" content="Your watched coins on three.ws — live market caps, graduation status, and intelligence for every mint you track." />
+		<meta property="og:title" content="Watchlist · three.ws"  data-i18n-attr="content:watchlist.meta_og_title"/>
+		<meta property="og:description" content="Your watched coins on three.ws — live market caps, graduation status, and intelligence for every mint you track."  data-i18n-attr="content:watchlist.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Watchlist&amp;d=Your+privately-stored+watchlist+of+pump.fun+coins+%E2%80%94+live+market+caps%2C+graduation+status%2C+and+quick+links+to+full+coin+profiles.+No+account+required%3B+stored+in+y&amp;p=%2Fwatchlist" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
@@ -29,8 +29,8 @@
 		<link rel="stylesheet" href="/footer.css" />
 		<link rel="canonical" href="https://three.ws/watchlist" />
 	
-	<meta name="twitter:title" content="Watchlist · three.ws">
-	<meta name="twitter:description" content="Your privately-stored watchlist of pump.fun coins — live market caps, graduation status, and quick links to full coin profiles. No account required; stored in your browser.">
+	<meta name="twitter:title" content="Watchlist · three.ws" data-i18n-attr="content:watchlist.meta_twitter_title">
+	<meta name="twitter:description" content="Your privately-stored watchlist of pump.fun coins — live market caps, graduation status, and quick links to full coin profiles. No account required; stored in your browser." data-i18n-attr="content:watchlist.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Watchlist&amp;d=Your+privately-stored+watchlist+of+pump.fun+coins+%E2%80%94+live+market+caps%2C+graduation+status%2C+and+quick+links+to+full+coin+profiles.+No+account+required%3B+stored+in+y&amp;p=%2Fwatchlist">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Watchlist","description":"Your privately-stored watchlist of pump.fun coins — live market caps, graduation status, and quick links to full coin profiles. No account required; stored in your browser.","url":"https://three.ws/watchlist","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -47,9 +47,9 @@
 
 		<main class="wl-shell">
 			<section class="wl-hero">
-				<p class="wl-kicker"><span class="wl-live-dot" aria-hidden="true"></span>Saved on this device</p>
-				<h1 class="wl-title">Watchlist</h1>
-				<p class="wl-sub">
+				<p class="wl-kicker" data-i18n-html="watchlist.saved_on_this_device"><span class="wl-live-dot" aria-hidden="true"></span>Saved on this device</p>
+				<h1 class="wl-title" data-i18n="watchlist.watchlist">Watchlist</h1>
+				<p class="wl-sub" data-i18n="watchlist.coins_you_re_tracking_with_live_market">
 					Coins you're tracking, with live market caps and graduation status. Tap any card for the
 					full profile. Your list is stored privately in this browser.
 				</p>
@@ -62,16 +62,16 @@
 						spellcheck="false"
 						aria-label="Mint address or pump.fun URL"
 					/>
-					<button type="submit" class="wl-btn wl-btn-primary wl-add-btn">Add</button>
+					<button type="submit" class="wl-btn wl-btn-primary wl-add-btn" data-i18n="watchlist.add">Add</button>
 				</form>
 				<div id="wl-add-msg" class="wl-add-msg" aria-live="polite" hidden></div>
 				<div class="wl-hero-row">
 					<span id="wl-count" class="wl-count" aria-live="polite"></span>
 					<div class="wl-hero-ctas">
-						<a class="wl-btn" href="/launches">Browse launches</a>
-						<button id="wl-share" class="wl-btn wl-btn-ghost" type="button" hidden title="Copy a shareable link that recreates this watchlist on any device">Share list</button>
-						<button id="wl-alerts" class="wl-btn wl-btn-ghost" type="button" aria-pressed="false" title="Notify me when a watched coin reaches a higher Oracle tier">🔔 Alerts</button>
-						<button id="wl-clear" class="wl-btn wl-btn-ghost" type="button" hidden>Clear all</button>
+						<a class="wl-btn" href="/launches" data-i18n="watchlist.browse_launches">Browse launches</a>
+						<button id="wl-share" class="wl-btn wl-btn-ghost" type="button" hidden title="Copy a shareable link that recreates this watchlist on any device" data-i18n="watchlist.share_list" data-i18n-attr="title:watchlist.copy_a_shareable_link_that_r_title">Share list</button>
+						<button id="wl-alerts" class="wl-btn wl-btn-ghost" type="button" aria-pressed="false" title="Notify me when a watched coin reaches a higher Oracle tier" data-i18n="watchlist.alerts" data-i18n-attr="title:watchlist.notify_me_when_a_watched_coi_title">🔔 Alerts</button>
+						<button id="wl-clear" class="wl-btn wl-btn-ghost" type="button" hidden data-i18n="watchlist.clear_all">Clear all</button>
 					</div>
 				</div>
 			</section>
@@ -79,23 +79,23 @@
 			<!-- Portfolio summary — aggregate readout of everything watched -->
 			<section id="wl-summary" class="wl-summary" aria-label="Watchlist summary" hidden>
 				<div class="wl-sum-stat">
-					<span class="wl-sum-label">Combined market cap</span>
+					<span class="wl-sum-label" data-i18n="watchlist.combined_market_cap">Combined market cap</span>
 					<span id="wl-sum-mcap" class="wl-sum-value">—</span>
 				</div>
 				<div class="wl-sum-stat">
-					<span class="wl-sum-label">24h volume</span>
+					<span class="wl-sum-label" data-i18n="watchlist.24h_volume">24h volume</span>
 					<span id="wl-sum-vol" class="wl-sum-value">—</span>
 				</div>
 				<div class="wl-sum-stat">
-					<span class="wl-sum-label">Graduated</span>
+					<span class="wl-sum-label" data-i18n="watchlist.graduated">Graduated</span>
 					<span id="wl-sum-grad" class="wl-sum-value">—</span>
 				</div>
 				<div class="wl-sum-stat">
-					<span class="wl-sum-label">Avg conviction</span>
+					<span class="wl-sum-label" data-i18n="watchlist.avg_conviction">Avg conviction</span>
 					<span id="wl-sum-conv" class="wl-sum-value">—</span>
 				</div>
 				<div class="wl-sum-stat wl-sum-stat--wide">
-					<span class="wl-sum-label">Oracle tiers</span>
+					<span class="wl-sum-label" data-i18n="watchlist.oracle_tiers">Oracle tiers</span>
 					<div id="wl-sum-tiers" class="wl-tierbar" role="img" aria-label="Conviction tier distribution"></div>
 				</div>
 			</section>
@@ -107,31 +107,31 @@
 					<input id="wl-search" class="wl-tb-search-in" type="search" placeholder="Filter by symbol, name, or mint…" aria-label="Filter watched coins" spellcheck="false" autocomplete="off" />
 				</div>
 				<div class="wl-tb-filters" id="wl-filters" role="group" aria-label="Filter by Oracle tier">
-					<button class="wl-chip is-active" type="button" data-tier="all" aria-pressed="true">All</button>
-					<button class="wl-chip" type="button" data-tier="prime" aria-pressed="false">Prime</button>
-					<button class="wl-chip" type="button" data-tier="strong" aria-pressed="false">Strong</button>
-					<button class="wl-chip" type="button" data-tier="lean" aria-pressed="false">Lean</button>
-					<button class="wl-chip" type="button" data-tier="watch" aria-pressed="false">Watch</button>
-					<button class="wl-chip" type="button" data-tier="avoid" aria-pressed="false">Avoid</button>
+					<button class="wl-chip is-active" type="button" data-tier="all" aria-pressed="true" data-i18n="watchlist.all">All</button>
+					<button class="wl-chip" type="button" data-tier="prime" aria-pressed="false" data-i18n="watchlist.prime">Prime</button>
+					<button class="wl-chip" type="button" data-tier="strong" aria-pressed="false" data-i18n="watchlist.strong">Strong</button>
+					<button class="wl-chip" type="button" data-tier="lean" aria-pressed="false" data-i18n="watchlist.lean">Lean</button>
+					<button class="wl-chip" type="button" data-tier="watch" aria-pressed="false" data-i18n="watchlist.watch">Watch</button>
+					<button class="wl-chip" type="button" data-tier="avoid" aria-pressed="false" data-i18n="watchlist.avoid">Avoid</button>
 				</div>
 				<div class="wl-tb-end">
 					<label class="wl-tb-sort">
-						<span class="wl-tb-sort-label">Sort</span>
+						<span class="wl-tb-sort-label" data-i18n="watchlist.sort">Sort</span>
 						<select id="wl-sort" class="wl-tb-select" aria-label="Sort watched coins">
-							<option value="added">Recently added</option>
-							<option value="conviction">Oracle conviction</option>
-							<option value="mcap">Market cap</option>
-							<option value="volume">24h volume</option>
-							<option value="graduation">Graduation %</option>
-							<option value="movers">Conviction movers</option>
-							<option value="name">Name (A–Z)</option>
+							<option value="added" data-i18n="watchlist.recently_added">Recently added</option>
+							<option value="conviction" data-i18n="watchlist.oracle_conviction">Oracle conviction</option>
+							<option value="mcap" data-i18n="watchlist.market_cap">Market cap</option>
+							<option value="volume" data-i18n="watchlist.24h_volume_2">24h volume</option>
+							<option value="graduation" data-i18n="watchlist.graduation">Graduation %</option>
+							<option value="movers" data-i18n="watchlist.conviction_movers">Conviction movers</option>
+							<option value="name" data-i18n="watchlist.name_a_z">Name (A–Z)</option>
 						</select>
 					</label>
 					<div class="wl-view" role="group" aria-label="Layout density">
-						<button id="wl-view-grid" class="wl-view-btn is-active" type="button" aria-pressed="true" title="Grid view" aria-label="Grid view">
+						<button id="wl-view-grid" class="wl-view-btn is-active" type="button" aria-pressed="true" title="Grid view" aria-label="Grid view" data-i18n-attr="aria-label:watchlist.grid_view_arialabel;title:watchlist.grid_view_title">
 							<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
 						</button>
-						<button id="wl-view-list" class="wl-view-btn" type="button" aria-pressed="false" title="List view" aria-label="List view">
+						<button id="wl-view-list" class="wl-view-btn" type="button" aria-pressed="false" title="List view" aria-label="List view" data-i18n-attr="aria-label:watchlist.list_view_arialabel;title:watchlist.list_view_title">
 							<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="4" rx="1.5"/><rect x="3" y="10" width="18" height="4" rx="1.5"/><rect x="3" y="16" width="18" height="4" rx="1.5"/></svg>
 						</button>
 					</div>
@@ -146,5 +146,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

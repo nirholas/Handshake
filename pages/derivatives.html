@@ -18,19 +18,19 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Crypto Derivatives · three.ws</title>
+		<title data-i18n="derivatives.meta_title">Crypto Derivatives · three.ws</title>
 		<meta
 			name="description"
 			content="Live perpetual futures markets across the major crypto exchanges — price, 24h move, funding rate, open interest, and 24h volume. Filter by index. Real CoinGecko data."
-		/>
+		 data-i18n-attr="content:derivatives.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/derivatives" />
-		<meta property="og:title" content="Crypto Derivatives · three.ws" />
+		<meta property="og:title" content="Crypto Derivatives · three.ws"  data-i18n-attr="content:derivatives.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Live perpetual futures markets — price, 24h move, funding rate, open interest, and 24h volume across the major exchanges."
-		/>
+		 data-i18n-attr="content:derivatives.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+Derivatives+%26+Perpetual+Futures&amp;d=Live+perpetual-futures+markets+across+exchanges+%E2%80%94+price%2C+24h+change%2C+funding+rate%2C+open+interest%2C+and+volume+for+every+major+contract.+Filter+by+underlying+inde&amp;p=%2Fderivatives"
@@ -39,11 +39,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Crypto Derivatives · three.ws" />
+		<meta name="twitter:title" content="Crypto Derivatives · three.ws"  data-i18n-attr="content:derivatives.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Live perpetual futures markets — price, 24h move, funding rate, open interest, and 24h volume."
-		/>
+		 data-i18n-attr="content:derivatives.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+Derivatives+%26+Perpetual+Futures&amp;d=Live+perpetual-futures+markets+across+exchanges+%E2%80%94+price%2C+24h+change%2C+funding+rate%2C+open+interest%2C+and+volume+for+every+major+contract.+Filter+by+underlying+inde&amp;p=%2Fderivatives"
@@ -89,11 +89,11 @@
 
 		<main class="cv-container">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a><span class="sep">/</span
-				><span class="here">Derivatives</span>
+				<a href="/markets" data-i18n="derivatives.markets">Markets</a><span class="sep">/</span
+				><span class="here" data-i18n="derivatives.derivatives">Derivatives</span>
 			</nav>
-			<h1 class="cv-h1">Crypto Derivatives</h1>
-			<p class="cv-sub">
+			<h1 class="cv-h1" data-i18n="derivatives.crypto_derivatives">Crypto Derivatives</h1>
+			<p class="cv-sub" data-i18n="derivatives.live_perpetual_futures_markets_across_the_ma">
 				Live perpetual futures markets across the major exchanges — funding rate, open
 				interest, and 24h volume for every contract. Positive funding means longs pay
 				shorts; negative means shorts pay longs.
@@ -124,5 +124,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

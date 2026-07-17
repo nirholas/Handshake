@@ -5,10 +5,10 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Coin Autopilot — three.ws</title>
-	<meta name="description" content="Put your pump.fun coin on autopilot. Your agent runs buybacks and distributes creator fees to holders on rules you set — and narrates every on-chain move in real time." />
-	<meta property="og:title" content="Coin Autopilot — three.ws" />
-	<meta property="og:description" content="An autonomous coin agent that runs buybacks and distributes fees on your rules, narrated live by its avatar." />
+	<title data-i18n="autopilot.meta_title">Coin Autopilot — three.ws</title>
+	<meta name="description" content="Put your pump.fun coin on autopilot. Your agent runs buybacks and distributes creator fees to holders on rules you set — and narrates every on-chain move in real time."  data-i18n-attr="content:autopilot.meta_description"/>
+	<meta property="og:title" content="Coin Autopilot — three.ws"  data-i18n-attr="content:autopilot.meta_og_title"/>
+	<meta property="og:description" content="An autonomous coin agent that runs buybacks and distributes fees on your rules, narrated live by its avatar."  data-i18n-attr="content:autopilot.meta_og_description"/>
 	<meta name="twitter:card" content="summary_large_image" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -187,30 +187,30 @@
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="Coin Autopilot — three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Coin Autopilot · three.ws">
-	<meta name="twitter:description" content="A hands-off token cockpit: set the rules — buys, sells, and guardrails — and let your agent run the coin autonomously.">
+	<meta name="twitter:title" content="Coin Autopilot · three.ws" data-i18n-attr="content:autopilot.meta_twitter_title">
+	<meta name="twitter:description" content="A hands-off token cockpit: set the rules — buys, sells, and guardrails — and let your agent run the coin autonomously." data-i18n-attr="content:autopilot.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Coin+Autopilot&amp;d=A+hands-off+token+cockpit%3A+set+the+rules+%E2%80%94+buys%2C+sells%2C+and+guardrails+%E2%80%94+and+let+your+agent+run+the+coin+autonomously.&amp;p=%2Fautopilot">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Coin Autopilot","description":"A hands-off token cockpit: set the rules — buys, sells, and guardrails — and let your agent run the coin autonomously.","url":"https://three.ws/autopilot","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&amp;t=Coin+Autopilot&amp;d=A+hands-off+token+cockpit%3A+set+the+rules+%E2%80%94+buys%2C+sells%2C+and+guardrails+%E2%80%94+and+let+your+agent+run+the+coin+autonomously.&amp;p=%2Fautopilot"}]}</script>
 </head>
 <body>
 	<nav class="nav">
 		<div class="nav-inner">
-			<a href="/" class="brand"><span class="brand-mark"></span>three.ws</a>
+			<a href="/" class="brand" data-i18n-html="autopilot.three_ws"><span class="brand-mark"></span>three.ws</a>
 			<div class="nav-main">
-				<a href="/discover">Discover</a>
-				<a href="/pump-dashboard">Coins</a>
-				<a href="/autopilot" class="active">Autopilot</a>
-				<a href="/temporary">Walk</a>
+				<a href="/discover" data-i18n="autopilot.discover">Discover</a>
+				<a href="/pump-dashboard" data-i18n="autopilot.coins">Coins</a>
+				<a href="/autopilot" class="active" data-i18n="autopilot.autopilot">Autopilot</a>
+				<a href="/temporary" data-i18n="autopilot.walk">Walk</a>
 			</div>
-			<div class="nav-end"><a href="/dashboard">Dashboard</a></div>
+			<div class="nav-end"><a href="/dashboard" data-i18n="autopilot.dashboard">Dashboard</a></div>
 		</div>
 	</nav>
 
 	<div class="hero">
 		<div class="wrap">
 			<div class="eyebrow">Autonomous Coin Agent</div>
-			<h1>Put your coin on autopilot.</h1>
-			<p>Your agent runs the whole coin lifecycle on its own: it buys back &amp; burns from creator
+			<h1 data-i18n="autopilot.put_your_coin_on_autopilot">Put your coin on autopilot.</h1>
+			<p data-i18n="autopilot.your_agent_runs_the_whole_coin_lifecycle">Your agent runs the whole coin lifecycle on its own: it buys back &amp; burns from creator
 			fees and distributes payments to holders — on the rules you set. Every on-chain move is
 			narrated live by your agent's avatar.</p>
 			<div class="hero-steps">
@@ -254,5 +254,7 @@
 
 	<script type="module" src="/src/autopilot.js"></script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

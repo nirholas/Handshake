@@ -4,16 +4,16 @@
 		<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>AgenC × three.ws — embodied agent demo</title>
+		<title data-i18n="agenc_embodied.meta_title">AgenC × three.ws — embodied agent demo</title>
 		<meta
 			name="description"
 			content="Live demo: a three.ws 3D avatar reacts to the on-chain state of an AgenC task on Solana. Coordination protocol meets embodiment."
-		/>
+		 data-i18n-attr="content:agenc_embodied.meta_description"/>
 		<meta name="theme-color" content="#060606" />
 		<link rel="icon" href="/favicon.ico" />
 
 		<meta property="og:type" content="website" />
-		<meta property="og:title" content="AgenC × three.ws — embodied agent demo" />
+		<meta property="og:title" content="AgenC × three.ws — embodied agent demo"  data-i18n-attr="content:agenc_embodied.meta_og_title"/>
 		<meta property="og:url" content="https://three.ws/agenc/embodied" />
 
 		<style>
@@ -205,7 +205,7 @@
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:site_name" content="three.ws">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:description" content="Watch two AI agents negotiate and coordinate a task, embodied as 3D characters — the AgenC coordination protocol made visible.">
+	<meta property="og:description" content="Watch two AI agents negotiate and coordinate a task, embodied as 3D characters — the AgenC coordination protocol made visible." data-i18n-attr="content:agenc_embodied.meta_og_description">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=AgenC+%C2%B7+Embodied&amp;d=Watch+two+AI+agents+negotiate+and+coordinate+a+task%2C+embodied+as+3D+characters+%E2%80%94+the+AgenC+coordination+protocol+made+visible.&amp;p=%2Fagenc%2Fembodied">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
@@ -213,18 +213,18 @@
 	<meta property="og:image:alt" content="AgenC · Embodied — three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="AgenC · Embodied · three.ws">
-	<meta name="twitter:description" content="Watch two AI agents negotiate and coordinate a task, embodied as 3D characters — the AgenC coordination protocol made visible.">
+	<meta name="twitter:title" content="AgenC · Embodied · three.ws" data-i18n-attr="content:agenc_embodied.meta_twitter_title">
+	<meta name="twitter:description" content="Watch two AI agents negotiate and coordinate a task, embodied as 3D characters — the AgenC coordination protocol made visible." data-i18n-attr="content:agenc_embodied.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=AgenC+%C2%B7+Embodied&amp;d=Watch+two+AI+agents+negotiate+and+coordinate+a+task%2C+embodied+as+3D+characters+%E2%80%94+the+AgenC+coordination+protocol+made+visible.&amp;p=%2Fagenc%2Fembodied">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"AgenC · Embodied","description":"Watch two AI agents negotiate and coordinate a task, embodied as 3D characters — the AgenC coordination protocol made visible.","url":"https://three.ws/agenc/embodied","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&t=AgenC+%C2%B7+Embodied&d=Watch+two+AI+agents+negotiate+and+coordinate+a+task%2C+embodied+as+3D+characters+%E2%80%94+the+AgenC+coordination+protocol+made+visible.&p=%2Fagenc%2Fembodied"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Agenc","item":"https://three.ws/agenc"},{"@type":"ListItem","position":3,"name":"Embodied","item":"https://three.ws/agenc/embodied"}]}]}</script>
 </head>
 	<body>
 		<div class="wrap">
-			<h1>
+			<h1 data-i18n-html="agenc_embodied.agenc_three_ws_embodied_agent_demo_live">
 				AgenC × three.ws — embodied agent demo
 				<span class="tag">live · solana devnet</span>
 			</h1>
-			<p class="sub">
+			<p class="sub" data-i18n-html="agenc_embodied.paste_an_agenc_task_pda_the_avatar">
 				Paste an AgenC task PDA. The avatar below is bound to the task's on-chain
 				state via the <code>&lt;three-ws-agent&gt;</code> web component, which polls
 				<code>/api/agenc/get-task</code> and recolors the scene as the task moves
@@ -253,9 +253,9 @@
 
 				<div>
 					<div class="card">
-						<h2>Task</h2>
+						<h2 data-i18n="agenc_embodied.task">Task</h2>
 						<div class="field">
-							<label>Task PDA</label>
+							<label data-i18n="agenc_embodied.task_pda">Task PDA</label>
 							<input
 								type="text"
 								id="taskPda"
@@ -263,32 +263,32 @@
 							/>
 						</div>
 						<div class="field">
-							<label>Cluster</label>
+							<label data-i18n="agenc_embodied.cluster">Cluster</label>
 							<select id="cluster">
-								<option value="devnet" selected>devnet</option>
-								<option value="mainnet">mainnet</option>
+								<option value="devnet" selected data-i18n="agenc_embodied.devnet">devnet</option>
+								<option value="mainnet" data-i18n="agenc_embodied.mainnet">mainnet</option>
 							</select>
 						</div>
-						<button class="btn" id="watchBtn">Watch task</button>
+						<button class="btn" id="watchBtn" data-i18n="agenc_embodied.watch_task">Watch task</button>
 					</div>
 
 					<div class="card">
-						<h2>On-chain state</h2>
-						<div class="row"><span class="k">state</span><span class="v" id="vState">—</span></div>
-						<div class="row"><span class="k">workers</span><span class="v" id="vWorkers">—</span></div>
-						<div class="row"><span class="k">reward</span><span class="v" id="vReward">—</span></div>
-						<div class="row"><span class="k">creator</span><span class="v" id="vCreator">—</span></div>
-						<div class="row"><span class="k">deadline</span><span class="v" id="vDeadline">—</span></div>
-						<div class="row"><span class="k">explorer</span><span class="v" id="vExplorer">—</span></div>
+						<h2 data-i18n="agenc_embodied.on_chain_state">On-chain state</h2>
+						<div class="row"><span class="k" data-i18n="agenc_embodied.state">state</span><span class="v" id="vState">—</span></div>
+						<div class="row"><span class="k" data-i18n="agenc_embodied.workers">workers</span><span class="v" id="vWorkers">—</span></div>
+						<div class="row"><span class="k" data-i18n="agenc_embodied.reward">reward</span><span class="v" id="vReward">—</span></div>
+						<div class="row"><span class="k" data-i18n="agenc_embodied.creator">creator</span><span class="v" id="vCreator">—</span></div>
+						<div class="row"><span class="k" data-i18n="agenc_embodied.deadline">deadline</span><span class="v" id="vDeadline">—</span></div>
+						<div class="row"><span class="k" data-i18n="agenc_embodied.explorer">explorer</span><span class="v" id="vExplorer">—</span></div>
 					</div>
 
 					<div class="card">
-						<h2>Lifecycle</h2>
-						<div class="timeline" id="timeline"><span class="muted">no events yet</span></div>
+						<h2 data-i18n="agenc_embodied.lifecycle">Lifecycle</h2>
+						<div class="timeline" id="timeline"><span class="muted" data-i18n="agenc_embodied.no_events_yet">no events yet</span></div>
 					</div>
 
 					<div class="card">
-						<h2>Embed this</h2>
+						<h2 data-i18n="agenc_embodied.embed_this">Embed this</h2>
 						<pre class="snippet">&lt;script type="module" src="https://three.ws/agenc/embed.js"&gt;&lt;/script&gt;
 &lt;three-ws-agent
   src="/avatars/default.glb"
@@ -388,5 +388,7 @@
 			if (taskInput.value) startWatching();
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

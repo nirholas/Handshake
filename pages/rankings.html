@@ -4,8 +4,8 @@
 		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<title>Rankings · three.ws</title>
-		<meta name="description" content="The cross-surface three.ws leaderboard — creators ranked by real creations, remixes received, coin launches, followers, and distance walked. Track your streak and earn badges for showing up." />
+		<title data-i18n="rankings.meta_title">Rankings · three.ws</title>
+		<meta name="description" content="The cross-surface three.ws leaderboard — creators ranked by real creations, remixes received, coin launches, followers, and distance walked. Track your streak and earn badges for showing up."  data-i18n-attr="content:rankings.meta_description"/>
 		<link rel="canonical" href="https://three.ws/rankings" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -17,15 +17,15 @@
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/rankings" />
-		<meta property="og:title" content="Rankings · three.ws" />
-		<meta property="og:description" content="Creators ranked by real creations, remixes received, coin launches, followers, and distance walked — one board across every surface." />
+		<meta property="og:title" content="Rankings · three.ws"  data-i18n-attr="content:rankings.meta_og_title"/>
+		<meta property="og:description" content="Creators ranked by real creations, remixes received, coin launches, followers, and distance walked — one board across every surface."  data-i18n-attr="content:rankings.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Rankings&amp;d=The+cross-surface+three.ws+leaderboard+%E2%80%94+creators+ranked+by+real+creations%2C+remixes+received%2C+coin+launches%2C+followers%2C+and+distance+walked.+Track+your+streak+a&amp;p=%2Frankings" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Rankings · three.ws" />
-		<meta name="twitter:description" content="Creators ranked by real creations, remixes, launches, followers, and walk distance — one board across every surface." />
+		<meta name="twitter:title" content="Rankings · three.ws"  data-i18n-attr="content:rankings.meta_twitter_title"/>
+		<meta name="twitter:description" content="Creators ranked by real creations, remixes, launches, followers, and walk distance — one board across every surface."  data-i18n-attr="content:rankings.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=Rankings&amp;d=The+cross-surface+three.ws+leaderboard+%E2%80%94+creators+ranked+by+real+creations%2C+remixes+received%2C+coin+launches%2C+followers%2C+and+distance+walked.+Track+your+streak+a&amp;p=%2Frankings" />
 		<meta name="theme-color" content="#0a0a0a" />
 		<style>
@@ -144,9 +144,9 @@
 
 		<main class="rk-shell" aria-labelledby="rk-title">
 			<section class="rk-hero">
-				<p class="rk-kicker"><span class="rk-live-dot" aria-hidden="true"></span> Cross-surface · updates live</p>
-				<h1 id="rk-title" class="rk-title">Rankings</h1>
-				<p class="rk-sub">One board across every surface — creations forged, remixes earned, coins launched, creators followed, and distance walked. Show up daily to build a streak and earn badges.</p>
+				<p class="rk-kicker" data-i18n-html="rankings.cross_surface_updates_live"><span class="rk-live-dot" aria-hidden="true"></span> Cross-surface · updates live</p>
+				<h1 id="rk-title" class="rk-title" data-i18n="rankings.rankings">Rankings</h1>
+				<p class="rk-sub" data-i18n="rankings.one_board_across_every_surface_creations_for">One board across every surface — creations forged, remixes earned, coins launched, creators followed, and distance walked. Show up daily to build a streak and earn badges.</p>
 			</section>
 
 			<div class="rk-streak-card" id="rk-streak-card">
@@ -160,24 +160,24 @@
 
 			<section class="rk-controls" aria-label="Leaderboard metric">
 				<div class="rk-seg" role="tablist" aria-label="Rank by" id="rk-metric">
-					<button class="rk-seg-btn is-active" data-metric="creations" role="tab" aria-selected="true">Creations</button>
-					<button class="rk-seg-btn" data-metric="remixes_received" role="tab" aria-selected="false">Remixes</button>
-					<button class="rk-seg-btn" data-metric="launches" role="tab" aria-selected="false">Launches</button>
-					<button class="rk-seg-btn" data-metric="followers" role="tab" aria-selected="false">Followers</button>
-					<button class="rk-seg-btn" data-metric="walk_distance" role="tab" aria-selected="false">Walk Distance</button>
+					<button class="rk-seg-btn is-active" data-metric="creations" role="tab" aria-selected="true" data-i18n="rankings.creations">Creations</button>
+					<button class="rk-seg-btn" data-metric="remixes_received" role="tab" aria-selected="false" data-i18n="rankings.remixes">Remixes</button>
+					<button class="rk-seg-btn" data-metric="launches" role="tab" aria-selected="false" data-i18n="rankings.launches">Launches</button>
+					<button class="rk-seg-btn" data-metric="followers" role="tab" aria-selected="false" data-i18n="rankings.followers">Followers</button>
+					<button class="rk-seg-btn" data-metric="walk_distance" role="tab" aria-selected="false" data-i18n="rankings.walk_distance">Walk Distance</button>
 				</div>
 			</section>
 
 			<section class="rk-board" aria-label="Ranked creators" aria-busy="true">
 				<div class="rk-head" role="row" aria-hidden="true">
 					<span>#</span>
-					<span>Creator</span>
-					<span class="rk-col-num" id="rk-metric-label">Creations</span>
+					<span data-i18n="rankings.creator">Creator</span>
+					<span class="rk-col-num" id="rk-metric-label" data-i18n="rankings.creations_2">Creations</span>
 				</div>
 				<div id="rk-rows" aria-live="polite"></div>
 			</section>
 
-			<button type="button" id="rk-loadmore" class="rk-loadmore" hidden>Show more</button>
+			<button type="button" id="rk-loadmore" class="rk-loadmore" hidden data-i18n="rankings.show_more">Show more</button>
 
 			<div id="rk-me-wrap" class="rk-me" hidden>
 				<div class="rk-me-tag">Your rank</div>
@@ -185,9 +185,9 @@
 			</div>
 
 			<nav class="rk-footer-links" aria-label="Other leaderboards">
-				<a href="/leaderboard">Trader Leaderboard →</a>
-				<a href="/walk-leaderboard">Walk Leaderboard →</a>
-				<a href="/creations">Remix Bazaar →</a>
+				<a href="/leaderboard" data-i18n="rankings.trader_leaderboard">Trader Leaderboard →</a>
+				<a href="/walk-leaderboard" data-i18n="rankings.walk_leaderboard">Walk Leaderboard →</a>
+				<a href="/creations" data-i18n="rankings.remix_bazaar">Remix Bazaar →</a>
 			</nav>
 		</main>
 
@@ -380,5 +380,7 @@
 				}
 			})();
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

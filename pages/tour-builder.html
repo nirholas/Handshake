@@ -5,11 +5,11 @@
 	<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Tour Builder — design a 3D store guide, then paste it into Shopify | three.ws</title>
-<meta name="description" content="A live, no-code playground: point and click to build a 3D guide that walks your store and narrates it, preview it instantly, then copy the exact snippet into your Shopify theme." />
+<title data-i18n="tour_builder.meta_title">Tour Builder — design a 3D store guide, then paste it into Shopify | three.ws</title>
+<meta name="description" content="A live, no-code playground: point and click to build a 3D guide that walks your store and narrates it, preview it instantly, then copy the exact snippet into your Shopify theme."  data-i18n-attr="content:tour_builder.meta_description"/>
 <link rel="canonical" href="https://three.ws/tour-builder" />
-<meta property="og:title" content="three.ws Tour Builder — build a walking 3D store guide, no code" />
-<meta property="og:description" content="Point, click, and narrate. Design a 3D guide on a live demo store, preview it, then paste it into Shopify." />
+<meta property="og:title" content="three.ws Tour Builder — build a walking 3D store guide, no code"  data-i18n-attr="content:tour_builder.meta_og_title"/>
+<meta property="og:description" content="Point, click, and narrate. Design a 3D guide on a live demo store, preview it, then paste it into Shopify."  data-i18n-attr="content:tour_builder.meta_og_description"/>
 <meta property="og:url" content="https://three.ws/tour-builder" />
 <meta property="og:type" content="website" />
 <style>
@@ -228,8 +228,8 @@
 	<meta property="og:image:alt" content="Tour Builder — design a 3D store guide, no code — three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Tour Builder — design a 3D store guide, no code · three.ws">
-	<meta name="twitter:description" content="A live, no-code playground: point and click on a demo storefront to build a 3D guide that walks and narrates it, preview it instantly, then copy the exact snippet into your Shopify theme.">
+	<meta name="twitter:title" content="Tour Builder — design a 3D store guide, no code · three.ws" data-i18n-attr="content:tour_builder.meta_twitter_title">
+	<meta name="twitter:description" content="A live, no-code playground: point and click on a demo storefront to build a 3D guide that walks and narrates it, preview it instantly, then copy the exact snippet into your Shopify theme." data-i18n-attr="content:tour_builder.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Tour+Builder+%E2%80%94+design+a+3D+store+guide%2C+no+code&amp;d=A+live%2C+no-code+playground%3A+point+and+click+on+a+demo+storefront+to+build+a+3D+guide+that+walks+and+narrates+it%2C+preview+it+instantly%2C+then+copy+the+exact+snipp&amp;p=%2Ftour-builder">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Tour Builder — design a 3D store guide, no code","description":"A live, no-code playground: point and click on a demo storefront to build a 3D guide that walks and narrates it, preview it instantly, then copy the exact snippet into your Shopify theme.","url":"https://three.ws/tour-builder","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=learn&t=Tour+Builder+%E2%80%94+design+a+3D+store+guide%2C+no+code&d=A+live%2C+no-code+playground%3A+point+and+click+on+a+demo+storefront+to+build+a+3D+guide+that+walks+and+narrates+it%2C+preview+it+instantly%2C+then+copy+the+exact+snipp&p=%2Ftour-builder"}]}</script>
 </head>
@@ -239,116 +239,116 @@
 <aside id="drawer">
 	<div class="dr-head">
 		<div class="dr-logo">three<b>.</b>ws</div>
-		<span class="dr-badge">Tour Builder</span>
+		<span class="dr-badge" data-i18n="tour_builder.tour_builder">Tour Builder</span>
 		<div class="spacer"></div>
-		<button class="icon-btn" id="collapse" title="Hide panel (see the full store)" aria-label="Hide panel">‹</button>
+		<button class="icon-btn" id="collapse" title="Hide panel (see the full store)" aria-label="Hide panel" data-i18n-attr="aria-label:tour_builder.hide_panel_arialabel;title:tour_builder.hide_panel_see_the_full_stor_title">‹</button>
 	</div>
 
 	<div class="dr-body">
 		<div class="sec">
-			<label class="h">Start from a template</label>
-			<button class="tpl-open-btn" id="templates-open">🧩 Browse templates</button>
+			<label class="h" data-i18n="tour_builder.start_from_a_template">Start from a template</label>
+			<button class="tpl-open-btn" id="templates-open" data-i18n="tour_builder.browse_templates">🧩 Browse templates</button>
 			<p id="template-note" class="template-note" hidden></p>
 		</div>
 
 		<div class="sec">
-			<label class="h" for="tour-title">Tour name</label>
+			<label class="h" for="tour-title" data-i18n="tour_builder.tour_name">Tour name</label>
 			<input type="text" id="tour-title" placeholder="Store tour" value="Store tour" />
 		</div>
 
 		<div class="sec">
-			<label class="h">Experience</label>
+			<label class="h" data-i18n="tour_builder.experience">Experience</label>
 			<div class="mode-toggle" id="mode-toggle">
-				<button class="mode-opt" data-mode="guided"><b>🎬 Guided</b><small>Avatar walks itself</small></button>
-				<button class="mode-opt" data-mode="explore"><b>🕹 Explore</b><small>Visitor drives it</small></button>
-				<button class="mode-opt" data-mode="platformer"><b>🎮 Platformer</b><small>Gravity &amp; jumping</small></button>
+				<button class="mode-opt" data-mode="guided" data-i18n-html="tour_builder.guidedavatar_walks_itself"><b>🎬 Guided</b><small>Avatar walks itself</small></button>
+				<button class="mode-opt" data-mode="explore" data-i18n-html="tour_builder.explorevisitor_drives_it"><b>🕹 Explore</b><small>Visitor drives it</small></button>
+				<button class="mode-opt" data-mode="platformer" data-i18n-html="tour_builder.platformergravity_jumping"><b>🎮 Platformer</b><small>Gravity &amp; jumping</small></button>
 			</div>
 		</div>
 
 		<div class="sec">
-			<label class="h">Who guides the tour</label>
+			<label class="h" data-i18n="tour_builder.who_guides_the_tour">Who guides the tour</label>
 			<div class="avatars" id="avatars"></div>
 		</div>
 
 		<div class="sec">
-			<label class="h">Stops — where the guide walks &amp; what it says</label>
+			<label class="h" data-i18n="tour_builder.stops_where_the_guide_walks_what_it">Stops — where the guide walks &amp; what it says</label>
 			<div class="stops" id="stops"></div>
-			<button class="add-stop" id="add-stop">+ Add a stop</button>
+			<button class="add-stop" id="add-stop" data-i18n="tour_builder.add_a_stop">+ Add a stop</button>
 		</div>
 	</div>
 
 	<div class="dr-foot">
-		<button class="btn" id="preview" title="Watch it exactly as your visitors will">▶ Preview</button>
-		<button class="btn primary" id="export">⬇ Get the code</button>
+		<button class="btn" id="preview" title="Watch it exactly as your visitors will" data-i18n="tour_builder.preview" data-i18n-attr="title:tour_builder.watch_it_exactly_as_your_vis_title">▶ Preview</button>
+		<button class="btn primary" id="export" data-i18n="tour_builder.get_the_code">⬇ Get the code</button>
 	</div>
 </aside>
 
-<button id="reopen">✎ Edit tour</button>
+<button id="reopen" data-i18n="tour_builder.edit_tour">✎ Edit tour</button>
 
 <!-- ══════════════════ PICK MODE ══════════════════ -->
-<div id="pick-hint"><span>👆 Click the section you want the guide to walk to</span><span class="esc">Esc to cancel</span></div>
+<div id="pick-hint"><span data-i18n="tour_builder.click_the_section_you_want_the_guide">👆 Click the section you want the guide to walk to</span><span class="esc" data-i18n="tour_builder.esc_to_cancel">Esc to cancel</span></div>
 <div id="pick-outline"></div>
 
 <!-- ══════════════════ PREVIEW EXIT ══════════════════ -->
-<button id="exit-preview">✕ Exit preview</button>
+<button id="exit-preview" data-i18n="tour_builder.exit_preview">✕ Exit preview</button>
 
 <!-- ══════════════════ THE LIVE DEMO STORE ══════════════════ -->
 <main id="stage">
 	<div class="store">
 		<div class="announce">Free shipping on orders over $60 · Summer collection is live</div>
 		<header>
-			<a class="logo" href="javascript:void(0)">NORTHWIND&nbsp;GOODS</a>
-			<nav><a href="javascript:void(0)">Home</a><a href="javascript:void(0)">Catalog</a><a href="javascript:void(0)">About</a><a href="javascript:void(0)">Reviews</a><a href="javascript:void(0)">Shipping</a></nav>
-			<a class="cart" href="javascript:void(0)">Cart · 0</a>
+			<a class="logo" href="javascript:void(0)" data-i18n="tour_builder.northwind_goods">NORTHWIND&nbsp;GOODS</a>
+			<nav><a href="javascript:void(0)" data-i18n="tour_builder.home">Home</a><a href="javascript:void(0)" data-i18n="tour_builder.catalog">Catalog</a><a href="javascript:void(0)" data-i18n="tour_builder.about">About</a><a href="javascript:void(0)" data-i18n="tour_builder.reviews">Reviews</a><a href="javascript:void(0)" data-i18n="tour_builder.shipping">Shipping</a></nav>
+			<a class="cart" href="javascript:void(0)" data-i18n="tour_builder.cart_0">Cart · 0</a>
 		</header>
 
 		<section class="hero" id="hero">
 			<div>
-				<h1>Handcrafted homeware for slow mornings</h1>
-				<p>Small-batch ceramics, linen, and oak — made by workshops we know by name. Every piece is finished by hand and built to outlast trends.</p>
-				<a class="cta" id="hero-cta" href="javascript:void(0)">Shop the collection</a>
+				<h1 data-i18n="tour_builder.handcrafted_homeware_for_slow_mornings">Handcrafted homeware for slow mornings</h1>
+				<p data-i18n="tour_builder.small_batch_ceramics_linen_and_oak_made">Small-batch ceramics, linen, and oak — made by workshops we know by name. Every piece is finished by hand and built to outlast trends.</p>
+				<a class="cta" id="hero-cta" href="javascript:void(0)" data-i18n="tour_builder.shop_the_collection">Shop the collection</a>
 			</div>
 			<div class="hero-art" role="img" aria-label="Stoneware mugs on an oak shelf"></div>
 		</section>
 
 		<section class="shelf" id="featured">
-			<h2>Featured products</h2>
-			<p class="sub">This season's most-loved pieces, restocked weekly.</p>
+			<h2 data-i18n="tour_builder.featured_products">Featured products</h2>
+			<p class="sub" data-i18n="tour_builder.this_season_s_most_loved_pieces_restocked">This season's most-loved pieces, restocked weekly.</p>
 			<div class="grid">
-				<a class="product" href="javascript:void(0)"><div class="ph" style="background:linear-gradient(140deg,#dcd5c9,#b8ad99)"></div><div class="meta"><h3>Stoneware Mug — Fog</h3><div class="price">$28.00</div></div></a>
-				<a class="product" href="javascript:void(0)"><div class="ph" style="background:linear-gradient(140deg,#d7e0d7,#9fb5a1)"></div><div class="meta"><h3>Linen Table Runner</h3><div class="price">$54.00</div></div></a>
-				<a class="product" href="javascript:void(0)"><div class="ph" style="background:linear-gradient(140deg,#e6dccd,#c2a678)"></div><div class="meta"><h3>Oak Serving Board</h3><div class="price">$72.00</div></div></a>
-				<a class="product" href="javascript:void(0)"><div class="ph" style="background:linear-gradient(140deg,#ded8d2,#a89f96)"></div><div class="meta"><h3>Ceramic Pour-Over Set</h3><div class="price">$96.00</div></div></a>
-				<a class="product" href="javascript:void(0)"><div class="ph" style="background:linear-gradient(140deg,#e0dbd3,#bfb2a0)"></div><div class="meta"><h3>Wool Throw — Oat</h3><div class="price">$148.00</div></div></a>
-				<a class="product" href="javascript:void(0)"><div class="ph" style="background:linear-gradient(140deg,#d9dfd9,#8fa892)"></div><div class="meta"><h3>Botanical Candle No. 4</h3><div class="price">$36.00</div></div></a>
+				<a class="product" href="javascript:void(0)"><div class="ph" style="background:linear-gradient(140deg,#dcd5c9,#b8ad99)"></div><div class="meta"><h3 data-i18n="tour_builder.stoneware_mug_fog">Stoneware Mug — Fog</h3><div class="price">$28.00</div></div></a>
+				<a class="product" href="javascript:void(0)"><div class="ph" style="background:linear-gradient(140deg,#d7e0d7,#9fb5a1)"></div><div class="meta"><h3 data-i18n="tour_builder.linen_table_runner">Linen Table Runner</h3><div class="price">$54.00</div></div></a>
+				<a class="product" href="javascript:void(0)"><div class="ph" style="background:linear-gradient(140deg,#e6dccd,#c2a678)"></div><div class="meta"><h3 data-i18n="tour_builder.oak_serving_board">Oak Serving Board</h3><div class="price">$72.00</div></div></a>
+				<a class="product" href="javascript:void(0)"><div class="ph" style="background:linear-gradient(140deg,#ded8d2,#a89f96)"></div><div class="meta"><h3 data-i18n="tour_builder.ceramic_pour_over_set">Ceramic Pour-Over Set</h3><div class="price">$96.00</div></div></a>
+				<a class="product" href="javascript:void(0)"><div class="ph" style="background:linear-gradient(140deg,#e0dbd3,#bfb2a0)"></div><div class="meta"><h3 data-i18n="tour_builder.wool_throw_oat">Wool Throw — Oat</h3><div class="price">$148.00</div></div></a>
+				<a class="product" href="javascript:void(0)"><div class="ph" style="background:linear-gradient(140deg,#d9dfd9,#8fa892)"></div><div class="meta"><h3 data-i18n="tour_builder.botanical_candle_no_4">Botanical Candle No. 4</h3><div class="price">$36.00</div></div></a>
 			</div>
 		</section>
 
 		<section class="story" id="story">
 			<div class="copy">
-				<h2>Our story</h2>
-				<p>Northwind started in a garage kiln in 2019. Today we partner with eleven independent workshops across the Pacific Northwest, paying fair rates and releasing pieces only when they're ready. No seasons rushed, no corners cut.</p>
+				<h2 data-i18n="tour_builder.our_story">Our story</h2>
+				<p data-i18n="tour_builder.northwind_started_in_a_garage_kiln_in">Northwind started in a garage kiln in 2019. Today we partner with eleven independent workshops across the Pacific Northwest, paying fair rates and releasing pieces only when they're ready. No seasons rushed, no corners cut.</p>
 			</div>
 			<div class="art" role="img" aria-label="A potter trimming a bowl on a wheel"></div>
 		</section>
 
 		<section class="shelf" id="reviews">
-			<h2>What customers say</h2>
-			<p class="sub">4.9 average across 2,300+ reviews.</p>
+			<h2 data-i18n="tour_builder.what_customers_say">What customers say</h2>
+			<p class="sub" data-i18n="tour_builder.4_9_average_across_2_300_reviews">4.9 average across 2,300+ reviews.</p>
 			<div class="reviews">
-				<div class="review"><div class="stars">★★★★★</div><p>"The pour-over set is the best-made thing in my kitchen. You can feel the hand in it."</p><div class="who">— Maya R., Portland</div></div>
-				<div class="review"><div class="stars">★★★★★</div><p>"Ordered Monday, arrived Thursday, beautifully packed. The mug is somehow better in person."</p><div class="who">— Devon K., Austin</div></div>
-				<div class="review"><div class="stars">★★★★★</div><p>"Bought the throw as a gift and immediately ordered a second one for myself."</p><div class="who">— Priya S., Chicago</div></div>
+				<div class="review"><div class="stars">★★★★★</div><p data-i18n="tour_builder.the_pour_over_set_is_the_best">"The pour-over set is the best-made thing in my kitchen. You can feel the hand in it."</p><div class="who">— Maya R., Portland</div></div>
+				<div class="review"><div class="stars">★★★★★</div><p data-i18n="tour_builder.ordered_monday_arrived_thursday_beautifully">"Ordered Monday, arrived Thursday, beautifully packed. The mug is somehow better in person."</p><div class="who">— Devon K., Austin</div></div>
+				<div class="review"><div class="stars">★★★★★</div><p data-i18n="tour_builder.bought_the_throw_as_a_gift_and">"Bought the throw as a gift and immediately ordered a second one for myself."</p><div class="who">— Priya S., Chicago</div></div>
 			</div>
 		</section>
 
 		<section class="shelf" id="policies">
-			<h2>Shipping &amp; returns</h2>
-			<p class="sub">The boring stuff, made painless.</p>
+			<h2 data-i18n="tour_builder.shipping_returns">Shipping &amp; returns</h2>
+			<p class="sub" data-i18n="tour_builder.the_boring_stuff_made_painless">The boring stuff, made painless.</p>
 			<div class="policies">
-				<div class="policy"><h3>Fast, tracked shipping</h3><p>Orders ship within 48 hours from our Seattle studio. Free over $60.</p></div>
-				<div class="policy"><h3>60-day returns</h3><p>Not right for your home? Send it back within 60 days, no questions.</p></div>
-				<div class="policy"><h3>Lifetime repair</h3><p>If a piece chips or a seam frays, we repair or replace it. Forever.</p></div>
+				<div class="policy"><h3 data-i18n="tour_builder.fast_tracked_shipping">Fast, tracked shipping</h3><p data-i18n="tour_builder.orders_ship_within_48_hours_from_our">Orders ship within 48 hours from our Seattle studio. Free over $60.</p></div>
+				<div class="policy"><h3 data-i18n="tour_builder.60_day_returns">60-day returns</h3><p data-i18n="tour_builder.not_right_for_your_home_send_it">Not right for your home? Send it back within 60 days, no questions.</p></div>
+				<div class="policy"><h3 data-i18n="tour_builder.lifetime_repair">Lifetime repair</h3><p data-i18n="tour_builder.if_a_piece_chips_or_a_seam">If a piece chips or a seam frays, we repair or replace it. Forever.</p></div>
 			</div>
 		</section>
 
@@ -364,10 +364,10 @@
 	<div class="modal" role="dialog" aria-modal="true" aria-labelledby="templates-title">
 		<div class="modal-head">
 			<div style="flex:1">
-				<h2 id="templates-title">Start from a template</h2>
-				<p>Load a ready-made tour, then edit it exactly like your own.</p>
+				<h2 id="templates-title" data-i18n="tour_builder.start_from_a_template_2">Start from a template</h2>
+				<p data-i18n="tour_builder.load_a_ready_made_tour_then_edit">Load a ready-made tour, then edit it exactly like your own.</p>
 			</div>
-			<button class="icon-btn" id="templates-close" aria-label="Close">✕</button>
+			<button class="icon-btn" id="templates-close" aria-label="Close" data-i18n-attr="aria-label:tour_builder.close_arialabel">✕</button>
 		</div>
 		<div class="modal-body" id="templates-list"></div>
 	</div>
@@ -378,31 +378,31 @@
 	<div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
 		<div class="modal-head">
 			<div style="flex:1">
-				<h2 id="modal-title">Ship it to Shopify</h2>
-				<p id="modal-sub">Three copy-pastes and your store has a walking 3D guide. Everything below is generated from the tour you just built.</p>
+				<h2 id="modal-title" data-i18n="tour_builder.ship_it_to_shopify">Ship it to Shopify</h2>
+				<p id="modal-sub" data-i18n="tour_builder.three_copy_pastes_and_your_store_has">Three copy-pastes and your store has a walking 3D guide. Everything below is generated from the tour you just built.</p>
 			</div>
-			<button class="icon-btn" id="modal-close" aria-label="Close">✕</button>
+			<button class="icon-btn" id="modal-close" aria-label="Close" data-i18n-attr="aria-label:tour_builder.close_arialabel_2">✕</button>
 		</div>
 		<div class="modal-body">
 			<div class="step">
-				<h3><span class="n">1</span> <span id="modal-step1-title">Upload your tour script</span></h3>
-				<p id="modal-step1-desc">In Shopify admin → <b>Content → Files</b>, upload this file, then copy the URL Shopify gives it.</p>
-				<div class="dl-row"><button class="btn" id="dl-json" style="flex:none; padding:9px 16px;">⬇ Download curriculum.json</button></div>
+				<h3 data-i18n-html="tour_builder.1_upload_your_tour_script"><span class="n">1</span> <span id="modal-step1-title">Upload your tour script</span></h3>
+				<p id="modal-step1-desc" data-i18n-html="tour_builder.in_shopify_admin_content_files_upload_this">In Shopify admin → <b>Content → Files</b>, upload this file, then copy the URL Shopify gives it.</p>
+				<div class="dl-row"><button class="btn" id="dl-json" style="flex:none; padding:9px 16px;" data-i18n="tour_builder.download_curriculum_json">⬇ Download curriculum.json</button></div>
 			</div>
 			<div class="step">
-				<h3><span class="n">2</span> <span id="modal-step2-title">Add the guide to your theme</span></h3>
-				<p id="modal-step2-desc">Online Store → Themes → <b>⋯ → Edit code</b> → <b>layout/theme.liquid</b>. Paste this right before <code>&lt;/body&gt;</code>, and swap the URL for the one from step 1.</p>
-				<div class="code" id="snippet-embed"><button class="copybtn" data-copy="snippet-embed">Copy</button></div>
+				<h3 data-i18n-html="tour_builder.2_add_the_guide_to_your_theme"><span class="n">2</span> <span id="modal-step2-title">Add the guide to your theme</span></h3>
+				<p id="modal-step2-desc" data-i18n-html="tour_builder.online_store_themes_edit_code_layout_theme">Online Store → Themes → <b>⋯ → Edit code</b> → <b>layout/theme.liquid</b>. Paste this right before <code>&lt;/body&gt;</code>, and swap the URL for the one from step 1.</p>
+				<div class="code" id="snippet-embed"><button class="copybtn" data-copy="snippet-embed" data-i18n="tour_builder.copy">Copy</button></div>
 			</div>
 			<div class="step">
-				<h3><span class="n">3</span> Add a "Take the tour" button</h3>
-				<p>Drop this anywhere in your theme — a section, a Custom Liquid block, your header. Any element with <code>data-tour-start</code> becomes a start button.</p>
-				<div class="code" id="snippet-button"><button class="copybtn" data-copy="snippet-button">Copy</button></div>
+				<h3 data-i18n-html="tour_builder.3_add_a_take_the_tour_button"><span class="n">3</span> Add a "Take the tour" button</h3>
+				<p data-i18n-html="tour_builder.drop_this_anywhere_in_your_theme_a">Drop this anywhere in your theme — a section, a Custom Liquid block, your header. Any element with <code>data-tour-start</code> becomes a start button.</p>
+				<div class="code" id="snippet-button"><button class="copybtn" data-copy="snippet-button" data-i18n="tour_builder.copy_2">Copy</button></div>
 			</div>
 		</div>
 		<div class="modal-foot">
-			<a class="btn" href="/tutorials/shopify-store-guide" id="modal-guide-link" style="flex:none; padding:10px 16px; text-decoration:none;">Full written guide →</a>
-			<button class="btn primary" id="modal-done" style="flex:none; padding:10px 20px;">Done</button>
+			<a class="btn" href="/tutorials/shopify-store-guide" id="modal-guide-link" style="flex:none; padding:10px 16px; text-decoration:none;" data-i18n="tour_builder.full_written_guide">Full written guide →</a>
+			<button class="btn primary" id="modal-done" style="flex:none; padding:10px 20px;" data-i18n="tour_builder.done">Done</button>
 		</div>
 	</div>
 </div>
@@ -411,5 +411,7 @@
 
 <script src="/tour-builder/tour.global.js" defer></script>
 <script type="module" src="/tour-builder/builder.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

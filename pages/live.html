@@ -5,20 +5,20 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Agent Economy — Live · three.ws</title>
-	<meta name="description" content="Two AI agents in a virtual world paying each other for live Solana market data. Real on-chain transactions, real blockchain, real 3D." />
+	<title data-i18n="live.meta_title">Agent Economy — Live · three.ws</title>
+	<meta name="description" content="Two AI agents in a virtual world paying each other for live Solana market data. Real on-chain transactions, real blockchain, real 3D."  data-i18n-attr="content:live.meta_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/live" />
-	<meta property="og:title" content="Agent Economy — Live · three.ws" />
-	<meta property="og:description" content="Two AI agents in a virtual world paying each other for live Solana market data. Real on-chain transactions, real blockchain, real 3D." />
+	<meta property="og:title" content="Agent Economy — Live · three.ws"  data-i18n-attr="content:live.meta_og_title"/>
+	<meta property="og:description" content="Two AI agents in a virtual world paying each other for live Solana market data. Real on-chain transactions, real blockchain, real 3D."  data-i18n-attr="content:live.meta_og_description"/>
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Economy+%E2%80%94+Live&amp;d=Two+AI+agents+in+a+virtual+world+paying+each+other+for+live+Solana+market+data.+Real+on-chain+transactions%2C+real+blockchain%2C+real+3D.&amp;p=%2Flive" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Agent Economy — Live · three.ws" />
-	<meta name="twitter:description" content="Two AI agents in a virtual world paying each other for live Solana market data. Real on-chain transactions, real blockchain, real 3D." />
+	<meta name="twitter:title" content="Agent Economy — Live · three.ws"  data-i18n-attr="content:live.meta_twitter_title"/>
+	<meta name="twitter:description" content="Two AI agents in a virtual world paying each other for live Solana market data. Real on-chain transactions, real blockchain, real 3D."  data-i18n-attr="content:live.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Economy+%E2%80%94+Live&amp;d=Two+AI+agents+in+a+virtual+world+paying+each+other+for+live+Solana+market+data.+Real+on-chain+transactions%2C+real+blockchain%2C+real+3D.&amp;p=%2Flive" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -272,10 +272,10 @@
 <iframe id="iframe-trader" class="agent-iframe" title="Agent Trader" allow="autoplay"></iframe>
 
 <!-- Name tags (link to the agent directory) -->
-<a id="tag-oracle" class="agent-tag" href="/agents" title="Browse three.ws agents" style="display:none">
+<a id="tag-oracle" class="agent-tag" href="/agents" title="Browse three.ws agents" style="display:none" data-i18n-html="live.oracle_seller" data-i18n-attr="title:live.browse_three_ws_agents_title">
 	<span class="dot"></span>Oracle · Seller
 </a>
-<a id="tag-trader" class="agent-tag" href="/agents" title="Browse three.ws agents" style="display:none">
+<a id="tag-trader" class="agent-tag" href="/agents" title="Browse three.ws agents" style="display:none" data-i18n-html="live.trader_buyer" data-i18n-attr="title:live.browse_three_ws_agents_title_2">
 	<span class="dot"></span>Trader · Buyer
 </a>
 
@@ -293,8 +293,8 @@
 <!-- HUD -->
 <div id="hud">
 	<div id="notice" role="status" aria-live="polite"></div>
-	<button id="trade-btn">▶ &nbsp;Agent Trader pays Oracle for Solana market data</button>
-	<div id="log"><div class="log-entry"><span class="ev">READY</span><span>Agents online. Press the button to initiate a live on-chain trade.</span></div></div>
+	<button id="trade-btn" data-i18n="live.agent_trader_pays_oracle_for_solana_market">▶ &nbsp;Agent Trader pays Oracle for Solana market data</button>
+	<div id="log"><div class="log-entry"><span class="ev" data-i18n="live.ready">READY</span><span data-i18n="live.agents_online_press_the_button_to_initiate">Agents online. Press the button to initiate a live on-chain trade.</span></div></div>
 </div>
 
 <!-- Flash -->
@@ -669,5 +669,7 @@ setTimeout(async () => {
 	if (g) { setBubble('speech-trader', g); speakTrader(g); }
 }, 5500);
 </script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

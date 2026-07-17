@@ -33,7 +33,7 @@
 //        --apply unless --no-wire), --limit=N (cap files), --max=N (cap edits/file).
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { resolve, relative, basename } from 'node:path';
+import { relative } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { glob } from 'glob';
 import { parse } from 'node-html-parser';
@@ -89,7 +89,15 @@ function slugify(text, max = 44) {
 }
 
 function pageKey(file) {
-	return basename(file)
+	// Namespace by the page's path under pages/ or public/, not just its basename,
+	// so same-named files in different directories (features/scan.html vs
+	// scan.html) get distinct key prefixes (features_scan vs scan) instead of
+	// colliding in the shared catalog.
+	const rel = file
+		.replace(/\\/g, '/')
+		.replace(/^.*?\/(?:pages|public)\//, '')
+		.replace(/^(?:pages|public)\//, '');
+	return rel
 		.replace(/\.html?$/i, '')
 		.replace(/[^a-z0-9]+/gi, '_')
 		.replace(/^_+|_+$/g, '')

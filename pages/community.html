@@ -4,8 +4,8 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Community — three.ws</title>
-		<meta name="description" content="Join the three.ws community — follow builds, share agents, and connect with creators building the 3D agent layer of the internet." />
+		<title data-i18n="community.meta_title">Community — three.ws</title>
+		<meta name="description" content="Join the three.ws community — follow builds, share agents, and connect with creators building the 3D agent layer of the internet."  data-i18n-attr="content:community.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -16,8 +16,8 @@
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Community — three.ws" />
-		<meta property="og:description" content="Follow builds, share agents, and connect with creators building the 3D agent layer of the internet." />
+		<meta property="og:title" content="Community — three.ws"  data-i18n-attr="content:community.meta_og_title"/>
+		<meta property="og:description" content="Follow builds, share agents, and connect with creators building the 3D agent layer of the internet."  data-i18n-attr="content:community.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/community" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Community&amp;d=Live+platform+activity+plus+where+to+follow%2C+contribute%2C+and+connect+with+three.ws+creators.&amp;p=%2Fcommunity" />
 
@@ -181,8 +181,8 @@
 		</style>
 	
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Community · three.ws">
-	<meta name="twitter:description" content="Featured creators, builds, and conversations from the three.ws community.">
+	<meta name="twitter:title" content="Community · three.ws" data-i18n-attr="content:community.meta_twitter_title">
+	<meta name="twitter:description" content="Featured creators, builds, and conversations from the three.ws community." data-i18n-attr="content:community.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Community&amp;d=Live+platform+activity+plus+where+to+follow%2C+contribute%2C+and+connect+with+three.ws+creators.&amp;p=%2Fcommunity">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Community","description":"Featured creators, builds, and conversations from the three.ws community.","url":"https://three.ws/community","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -197,13 +197,13 @@
 
 		<div class="wrap">
 			<div class="eyebrow">Community</div>
-			<h1>Build with us.</h1>
-			<p class="sub">three.ws is built in the open. Follow along, share what you're building, and help shape the 3D agent layer of the internet.</p>
+			<h1 data-i18n="community.build_with_us">Build with us.</h1>
+			<p class="sub" data-i18n="community.three_ws_is_built_in_the_open">three.ws is built in the open. Follow along, share what you're building, and help shape the 3D agent layer of the internet.</p>
 
 			<div class="section">
 				<div class="activity-head">
-					<h2>Live activity</h2>
-					<a href="/feed">Open the full feed →</a>
+					<h2 data-i18n="community.live_activity">Live activity</h2>
+					<a href="/feed" data-i18n="community.open_the_full_feed">Open the full feed →</a>
 				</div>
 				<div class="activity-list" id="community-activity">
 					<div class="activity-skeleton"></div>
@@ -214,51 +214,51 @@
 
 			<div class="grid">
 				<div class="card">
-					<span class="icon">&#x1D54F;</span>
-					<h2>Follow on X</h2>
-					<p>Live builds, demos, release notes, and conversations with the team. Most day-to-day updates happen here.</p>
-					<a class="card-link" href="https://x.com/trythreews" target="_blank" rel="noopener noreferrer">@trythreews →</a>
+					<span class="icon" data-i18n="community.text">&#x1D54F;</span>
+					<h2 data-i18n="community.follow_on_x">Follow on X</h2>
+					<p data-i18n="community.live_builds_demos_release_notes_and_conversa">Live builds, demos, release notes, and conversations with the team. Most day-to-day updates happen here.</p>
+					<a class="card-link" href="https://x.com/trythreews" target="_blank" rel="noopener noreferrer" data-i18n="community.trythreews">@trythreews →</a>
 				</div>
 				<div class="card">
 					<span class="icon">&#128736;</span>
-					<h2>GitHub</h2>
-					<p>The codebase is public. File issues, read the source, or submit a PR. SDKs, examples, and the embed runtime all live here.</p>
-					<a class="card-link" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener noreferrer">nirholas/three.ws →</a>
+					<h2 data-i18n="community.github">GitHub</h2>
+					<p data-i18n="community.the_codebase_is_public_file_issues_read">The codebase is public. File issues, read the source, or submit a PR. SDKs, examples, and the embed runtime all live here.</p>
+					<a class="card-link" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener noreferrer" data-i18n="community.nirholas_three_ws">nirholas/three.ws →</a>
 				</div>
 				<div class="card">
 					<span class="icon">&#128218;</span>
-					<h2>Docs</h2>
-					<p>API reference, embed guides, SDK quickstarts, and the Solana agent-kit. Start here if you're integrating.</p>
-					<a class="card-link" href="/docs">Read the docs →</a>
+					<h2 data-i18n="community.docs">Docs</h2>
+					<p data-i18n="community.api_reference_embed_guides_sdk_quickstarts_a">API reference, embed guides, SDK quickstarts, and the Solana agent-kit. Start here if you're integrating.</p>
+					<a class="card-link" href="/docs" data-i18n="community.read_the_docs">Read the docs →</a>
 				</div>
 				<div class="card">
 					<span class="icon">&#127891;</span>
-					<h2>Tutorials</h2>
-					<p>Step-by-step guides for creating your first agent, embedding on your site, minting on Solana, and adding paid skills.</p>
-					<a class="card-link" href="/tutorials">Browse tutorials →</a>
+					<h2 data-i18n="community.tutorials">Tutorials</h2>
+					<p data-i18n="community.step_by_step_guides_for_creating_your">Step-by-step guides for creating your first agent, embedding on your site, minting on Solana, and adding paid skills.</p>
+					<a class="card-link" href="/tutorials" data-i18n="community.browse_tutorials">Browse tutorials →</a>
 				</div>
 				<div class="card">
 					<span class="icon">&#127942;</span>
-					<h2>Rankings</h2>
-					<p>The cross-surface leaderboard — creations, remixes, launches, followers, and walk distance. Build a daily streak and earn badges.</p>
-					<a class="card-link" href="/rankings">See who's ranked →</a>
+					<h2 data-i18n="community.rankings">Rankings</h2>
+					<p data-i18n="community.the_cross_surface_leaderboard_creations_remi">The cross-surface leaderboard — creations, remixes, launches, followers, and walk distance. Build a daily streak and earn badges.</p>
+					<a class="card-link" href="/rankings" data-i18n="community.see_who_s_ranked">See who's ranked →</a>
 				</div>
 			</div>
 
 			<div class="section">
-				<h2>Ways to get involved</h2>
+				<h2 data-i18n="community.ways_to_get_involved">Ways to get involved</h2>
 				<ul>
-					<li><strong>Ship an agent.</strong> Create one at <a href="/create">/create</a>, embed it on your site, and share it on X with #threews.</li>
-					<li><strong>Report bugs.</strong> Open an issue on <a href="https://github.com/nirholas/three.ws/issues" target="_blank" rel="noopener noreferrer">GitHub</a> — we triage daily.</li>
-					<li><strong>Contribute code.</strong> PRs are welcome. Check the repo for open issues labeled <code>good first issue</code>.</li>
-					<li><strong>Build an integration.</strong> The MCP server, A2A protocol, and x402 payment layer are all open for third-party tools.</li>
-					<li><strong>Share feedback.</strong> Tweet at us, open a discussion on GitHub, or email <a href="mailto:support@three.ws">support@three.ws</a>.</li>
+					<li data-i18n-html="community.ship_an_agent_create_one_at_create"><strong>Ship an agent.</strong> Create one at <a href="/create">/create</a>, embed it on your site, and share it on X with #threews.</li>
+					<li data-i18n-html="community.report_bugs_open_an_issue_on_github"><strong>Report bugs.</strong> Open an issue on <a href="https://github.com/nirholas/three.ws/issues" target="_blank" rel="noopener noreferrer">GitHub</a> — we triage daily.</li>
+					<li data-i18n-html="community.contribute_code_prs_are_welcome_check_the"><strong>Contribute code.</strong> PRs are welcome. Check the repo for open issues labeled <code>good first issue</code>.</li>
+					<li data-i18n-html="community.build_an_integration_the_mcp_server_a2a"><strong>Build an integration.</strong> The MCP server, A2A protocol, and x402 payment layer are all open for third-party tools.</li>
+					<li data-i18n-html="community.share_feedback_tweet_at_us_open_a"><strong>Share feedback.</strong> Tweet at us, open a discussion on GitHub, or email <a href="mailto:support@three.ws">support@three.ws</a>.</li>
 				</ul>
 			</div>
 
 			<div class="section">
-				<h2>Newsletter</h2>
-				<p>Weekly updates on features, protocol changes, and community highlights. No spam — unsubscribe anytime.</p>
+				<h2 data-i18n="community.newsletter">Newsletter</h2>
+				<p data-i18n="community.weekly_updates_on_features_protocol_changes">Weekly updates on features, protocol changes, and community highlights. No spam — unsubscribe anytime.</p>
 			</div>
 		</div>
 
@@ -352,5 +352,7 @@
 				el.innerHTML = items.map(rowEl).join('');
 			})();
 		</script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

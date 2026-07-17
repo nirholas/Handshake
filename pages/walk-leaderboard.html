@@ -4,8 +4,8 @@
 		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<title>Walk Leaderboard · three.ws</title>
-		<meta name="description" content="The three.ws walk leaderboard — walkers ranked by distance walked, sites visited, and time spent walking, daily, this week, and all-time. Lace up and climb." />
+		<title data-i18n="walk_leaderboard.meta_title">Walk Leaderboard · three.ws</title>
+		<meta name="description" content="The three.ws walk leaderboard — walkers ranked by distance walked, sites visited, and time spent walking, daily, this week, and all-time. Lace up and climb."  data-i18n-attr="content:walk_leaderboard.meta_description"/>
 		<link rel="canonical" href="https://three.ws/walk-leaderboard" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -17,15 +17,15 @@
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/walk-leaderboard" />
-		<meta property="og:title" content="Walk Leaderboard · three.ws" />
-		<meta property="og:description" content="Walkers ranked by distance walked, sites visited, and time spent walking — daily, weekly, all-time." />
+		<meta property="og:title" content="Walk Leaderboard · three.ws"  data-i18n-attr="content:walk_leaderboard.meta_og_title"/>
+		<meta property="og:description" content="Walkers ranked by distance walked, sites visited, and time spent walking — daily, weekly, all-time."  data-i18n-attr="content:walk_leaderboard.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Walk+Leaderboard&amp;d=Global+leaderboard+for+the+walking+avatar+%E2%80%94+distance+walked%2C+sites+visited%2C+and+time%2C+ranked+daily%2C+weekly%2C+and+all-time.&amp;p=%2Fwalk-leaderboard" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Walk Leaderboard · three.ws" />
-		<meta name="twitter:description" content="Walkers ranked by distance, sites, and time — daily, weekly, all-time." />
+		<meta name="twitter:title" content="Walk Leaderboard · three.ws"  data-i18n-attr="content:walk_leaderboard.meta_twitter_title"/>
+		<meta name="twitter:description" content="Walkers ranked by distance, sites, and time — daily, weekly, all-time."  data-i18n-attr="content:walk_leaderboard.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=Walk+Leaderboard&amp;d=Global+leaderboard+for+the+walking+avatar+%E2%80%94+distance+walked%2C+sites+visited%2C+and+time%2C+ranked+daily%2C+weekly%2C+and+all-time.&amp;p=%2Fwalk-leaderboard" />
 		<meta name="theme-color" content="#0a0a0a" />
 		<style>
@@ -121,35 +121,35 @@
 
 		<main class="wlb-shell" aria-labelledby="wlb-title">
 			<section class="wlb-hero">
-				<p class="wlb-kicker"><span class="wlb-live-dot" aria-hidden="true"></span> Gamified · updates live</p>
-				<h1 id="wlb-title" class="wlb-title">Walk Leaderboard</h1>
-				<p class="wlb-sub">Every step your avatar takes on three.ws counts. Ranked by distance walked, sites visited, and time on your feet — today, this week, and all-time.</p>
+				<p class="wlb-kicker" data-i18n-html="walk_leaderboard.gamified_updates_live"><span class="wlb-live-dot" aria-hidden="true"></span> Gamified · updates live</p>
+				<h1 id="wlb-title" class="wlb-title" data-i18n="walk_leaderboard.walk_leaderboard">Walk Leaderboard</h1>
+				<p class="wlb-sub" data-i18n="walk_leaderboard.every_step_your_avatar_takes_on_three">Every step your avatar takes on three.ws counts. Ranked by distance walked, sites visited, and time on your feet — today, this week, and all-time.</p>
 			</section>
 
 			<section class="wlb-controls" aria-label="Leaderboard filters">
 				<div class="wlb-seg" role="tablist" aria-label="Time window" id="wlb-period">
-					<button class="wlb-seg-btn" data-period="daily" role="tab" aria-selected="false">Today</button>
-					<button class="wlb-seg-btn is-active" data-period="weekly" role="tab" aria-selected="true">This Week</button>
-					<button class="wlb-seg-btn" data-period="all-time" role="tab" aria-selected="false">All Time</button>
+					<button class="wlb-seg-btn" data-period="daily" role="tab" aria-selected="false" data-i18n="walk_leaderboard.today">Today</button>
+					<button class="wlb-seg-btn is-active" data-period="weekly" role="tab" aria-selected="true" data-i18n="walk_leaderboard.this_week">This Week</button>
+					<button class="wlb-seg-btn" data-period="all-time" role="tab" aria-selected="false" data-i18n="walk_leaderboard.all_time">All Time</button>
 				</div>
 				<div class="wlb-seg" role="tablist" aria-label="Metric" id="wlb-metric">
-					<button class="wlb-seg-btn is-active" data-metric="distance" role="tab" aria-selected="true">Distance</button>
-					<button class="wlb-seg-btn" data-metric="sites" role="tab" aria-selected="false">Sites</button>
-					<button class="wlb-seg-btn" data-metric="time" role="tab" aria-selected="false">Time</button>
+					<button class="wlb-seg-btn is-active" data-metric="distance" role="tab" aria-selected="true" data-i18n="walk_leaderboard.distance">Distance</button>
+					<button class="wlb-seg-btn" data-metric="sites" role="tab" aria-selected="false" data-i18n="walk_leaderboard.sites">Sites</button>
+					<button class="wlb-seg-btn" data-metric="time" role="tab" aria-selected="false" data-i18n="walk_leaderboard.time">Time</button>
 				</div>
 			</section>
 
 			<section class="wlb-board" aria-label="Ranked walkers" aria-busy="true">
 				<div class="wlb-head" role="row" aria-hidden="true">
 					<span>#</span>
-					<span>Walker</span>
-					<span class="wlb-col-num" id="wlb-metric-label">Distance</span>
-					<span class="wlb-col-num wlb-col-delta">vs. yesterday</span>
+					<span data-i18n="walk_leaderboard.walker">Walker</span>
+					<span class="wlb-col-num" id="wlb-metric-label" data-i18n="walk_leaderboard.distance_2">Distance</span>
+					<span class="wlb-col-num wlb-col-delta" data-i18n="walk_leaderboard.vs_yesterday">vs. yesterday</span>
 				</div>
 				<div id="wlb-rows" aria-live="polite"></div>
 			</section>
 
-			<button type="button" id="wlb-loadmore" class="wlb-loadmore" hidden>Show more</button>
+			<button type="button" id="wlb-loadmore" class="wlb-loadmore" hidden data-i18n="walk_leaderboard.show_more">Show more</button>
 
 			<div id="wlb-me-wrap" class="wlb-me" hidden>
 				<div class="wlb-me-tag">Your rank</div>
@@ -337,5 +337,7 @@
 
 			load({ reset: true });
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

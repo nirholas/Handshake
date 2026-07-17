@@ -4,8 +4,8 @@
 	<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title>Recording Pipeline · three.ws</title>
-	<meta name="description" content="Live health of the three.ws data loop: the pump.fun launch recorder, signal intel, ground-truth outcomes, Oracle conviction, the wallet reputation graph, trained weights, and the agents trading on the result — every stage, in real time." />
+	<title data-i18n="pipeline.meta_title">Recording Pipeline · three.ws</title>
+	<meta name="description" content="Live health of the three.ws data loop: the pump.fun launch recorder, signal intel, ground-truth outcomes, Oracle conviction, the wallet reputation graph, trained weights, and the agents trading on the result — every stage, in real time."  data-i18n-attr="content:pipeline.meta_description"/>
 	<link rel="canonical" href="https://three.ws/pipeline" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -15,8 +15,8 @@
 	<link rel="stylesheet" href="/nav.css" />
 	<link rel="stylesheet" href="/mobile.css" />
 	<meta property="og:type" content="website" />
-	<meta property="og:title" content="Recording Pipeline · three.ws" />
-	<meta property="og:description" content="The data loop, live: launch recorder → signal intel → ground-truth outcomes → Oracle conviction → reputation graph → trained weights → trading agents." />
+	<meta property="og:title" content="Recording Pipeline · three.ws"  data-i18n-attr="content:pipeline.meta_og_title"/>
+	<meta property="og:description" content="The data loop, live: launch recorder → signal intel → ground-truth outcomes → Oracle conviction → reputation graph → trained weights → trading agents."  data-i18n-attr="content:pipeline.meta_og_description"/>
 	<meta property="og:url" content="https://three.ws/pipeline" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<style>
@@ -138,8 +138,8 @@
 	<meta property="og:image:type" content="image/png">
 	<meta property="og:image:alt" content="Recording Pipeline — the data loop, live — three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Recording Pipeline — the data loop, live · three.ws">
-	<meta name="twitter:description" content="One-glance health of the closed loop that turns every pump.fun launch into a trade signal: the launch recorder, signal intel, ground-truth outcomes, Oracle conviction, the wallet reputation graph, trained weights, and the agents trading on the result — every stage, in real time.">
+	<meta name="twitter:title" content="Recording Pipeline — the data loop, live · three.ws" data-i18n-attr="content:pipeline.meta_twitter_title">
+	<meta name="twitter:description" content="One-glance health of the closed loop that turns every pump.fun launch into a trade signal: the launch recorder, signal intel, ground-truth outcomes, Oracle conviction, the wallet reputation graph, trained weights, and the agents trading on the result — every stage, in real time." data-i18n-attr="content:pipeline.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Recording+Pipeline+%E2%80%94+the+data+loop%2C+live&amp;d=One-glance+health+of+the+closed+loop+that+turns+every+pump.fun+launch+into+a+trade+signal%3A+the+launch+recorder%2C+signal+intel%2C+ground-truth+outcomes%2C+Oracle+conv&amp;p=%2Fpipeline">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Recording Pipeline — the data loop, live","description":"One-glance health of the closed loop that turns every pump.fun launch into a trade signal: the launch recorder, signal intel, ground-truth outcomes, Oracle conviction, the wallet reputation graph, trained weights, and the agents trading on the result — every stage, in real time.","url":"https://three.ws/pipeline","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&t=Recording+Pipeline+%E2%80%94+the+data+loop%2C+live&d=One-glance+health+of+the+closed+loop+that+turns+every+pump.fun+launch+into+a+trade+signal%3A+the+launch+recorder%2C+signal+intel%2C+ground-truth+outcomes%2C+Oracle+conv&p=%2Fpipeline"}]}</script>
 </head>
@@ -149,15 +149,15 @@
 	<main class="pl-main">
 		<div class="pl-head">
 			<div>
-				<h1 class="pl-title">Recording Pipeline</h1>
-				<p class="pl-sub">The closed loop that turns every pump.fun launch into a trade signal — recorded, scored, labeled, and learned from. Each stage feeds the next.</p>
+				<h1 class="pl-title" data-i18n="pipeline.recording_pipeline">Recording Pipeline</h1>
+				<p class="pl-sub" data-i18n="pipeline.the_closed_loop_that_turns_every_pump">The closed loop that turns every pump.fun launch into a trade signal — recorded, scored, labeled, and learned from. Each stage feeds the next.</p>
 			</div>
 			<div class="pl-controls">
 				<div class="pl-net" role="group" aria-label="Network">
-					<button data-net="mainnet" aria-pressed="true">mainnet</button>
-					<button data-net="devnet" aria-pressed="false">devnet</button>
+					<button data-net="mainnet" aria-pressed="true" data-i18n="pipeline.mainnet">mainnet</button>
+					<button data-net="devnet" aria-pressed="false" data-i18n="pipeline.devnet">devnet</button>
 				</div>
-				<button class="pl-refresh" id="pl-refresh" aria-label="Refresh now" title="Refresh">
+				<button class="pl-refresh" id="pl-refresh" aria-label="Refresh now" title="Refresh" data-i18n-attr="aria-label:pipeline.refresh_now_arialabel;title:pipeline.refresh_title">
 					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
 				</button>
 			</div>
@@ -171,8 +171,8 @@
 		</div>
 
 		<div class="pl-cta" id="pl-cta" hidden>
-			<h3>The recorder hasn't started yet</h3>
-			<p>The always-on worker that watches the live pump.fun feed isn't reporting a heartbeat. Deploy it in simulate mode — <code>npm run deploy:sniper</code> — and this pipeline lights up stage by stage as data flows. Simulate spends zero SOL; it only records.</p>
+			<h3 data-i18n="pipeline.the_recorder_hasn_t_started_yet">The recorder hasn't started yet</h3>
+			<p data-i18n-html="pipeline.the_always_on_worker_that_watches_the">The always-on worker that watches the live pump.fun feed isn't reporting a heartbeat. Deploy it in simulate mode — <code>npm run deploy:sniper</code> — and this pipeline lights up stage by stage as data flows. Simulate spends zero SOL; it only records.</p>
 		</div>
 
 		<div class="pl-flow" id="pl-flow" aria-live="polite">
@@ -181,10 +181,10 @@
 		</div>
 
 		<div class="pl-legend">
-			<span><i class="pl-dot is-live" style="position:static"></i> Live — flowing now</span>
-			<span><i class="pl-dot is-active" style="position:static"></i> Active — has data</span>
-			<span><i class="pl-dot is-idle" style="position:static"></i> Idle — awaiting upstream</span>
-			<span><i class="pl-dot is-degraded" style="position:static"></i> Degraded — up but stalled</span>
+			<span data-i18n-html="pipeline.live_flowing_now"><i class="pl-dot is-live" style="position:static"></i> Live — flowing now</span>
+			<span data-i18n-html="pipeline.active_has_data"><i class="pl-dot is-active" style="position:static"></i> Active — has data</span>
+			<span data-i18n-html="pipeline.idle_awaiting_upstream"><i class="pl-dot is-idle" style="position:static"></i> Idle — awaiting upstream</span>
+			<span data-i18n-html="pipeline.degraded_up_but_stalled"><i class="pl-dot is-degraded" style="position:static"></i> Degraded — up but stalled</span>
 		</div>
 	</main>
 
@@ -345,5 +345,7 @@
 		load();
 		schedule();
 	</script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

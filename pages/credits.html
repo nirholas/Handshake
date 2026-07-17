@@ -19,16 +19,16 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<title>Credits · three.ws</title>
+		<title data-i18n="credits.meta_title">Credits · three.ws</title>
 		<meta
 			name="description"
 			content="Top up your three.ws balance with SOL or $THREE and spend credits on 3D generation, agents, and compute. Hold $THREE for a discount on every spend."
-		/>
-		<meta property="og:title" content="Credits · three.ws" />
+		 data-i18n-attr="content:credits.meta_description"/>
+		<meta property="og:title" content="Credits · three.ws"  data-i18n-attr="content:credits.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Deposit SOL or $THREE for credits. Spend on Forge, agents, and compute. Hold $THREE for up to 30% off."
-		/>
+		 data-i18n-attr="content:credits.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/credits" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=account&amp;t=Credits&amp;d=Top+up+with+SOL+or+%24THREE+and+spend+credits+on+3D+generation%2C+agents%2C+and+compute.+Hold+%24THREE+for+up+to+30%25+off+every+spend.&amp;p=%2Fcredits" />
 		<meta name="twitter:card" content="summary_large_image" />
@@ -414,21 +414,21 @@
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="Credits — three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Credits · three.ws">
-	<meta name="twitter:description" content="Top up with SOL or $THREE and spend credits on 3D generation, agents, and compute. Hold $THREE for up to 30% off every spend.">
+	<meta name="twitter:title" content="Credits · three.ws" data-i18n-attr="content:credits.meta_twitter_title">
+	<meta name="twitter:description" content="Top up with SOL or $THREE and spend credits on 3D generation, agents, and compute. Hold $THREE for up to 30% off every spend." data-i18n-attr="content:credits.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=account&amp;t=Credits&amp;d=Top+up+with+SOL+or+%24THREE+and+spend+credits+on+3D+generation%2C+agents%2C+and+compute.+Hold+%24THREE+for+up+to+30%25+off+every+spend.&amp;p=%2Fcredits">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Credits","description":"Top up with SOL or $THREE and spend credits on 3D generation, agents, and compute. Hold $THREE for up to 30% off every spend.","url":"https://three.ws/credits","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=account&amp;t=Credits&amp;d=Top+up+with+SOL+or+%24THREE+and+spend+credits+on+3D+generation%2C+agents%2C+and+compute.+Hold+%24THREE+for+up+to+30%25+off+every+spend.&amp;p=%2Fcredits"}]}</script>
 </head>
 	<body>
-		<a href="#main-content" class="h-skip-link">Skip to main content</a>
+		<a href="#main-content" class="h-skip-link" data-i18n="credits.skip_to_main_content">Skip to main content</a>
 		<header><div id="nav-container"></div></header>
 		<script src="/nav.js"></script>
 
 		<main id="main-content" class="credits-wrap">
 			<div class="credits-head">
 				<div>
-					<h1>Credits</h1>
-					<p>
+					<h1 data-i18n="credits.credits">Credits</h1>
+					<p data-i18n="credits.top_up_with_sol_or_three_and">
 						Top up with SOL or $THREE and spend credits on 3D generation, agents, and
 						compute. Hold $THREE for up to 30% off every spend.
 					</p>
@@ -437,8 +437,8 @@
 
 			<!-- Signed-out -->
 			<section id="signin-state" class="card signin" hidden>
-				<p>Sign in to view your balance and top up.</p>
-				<p><a href="/login?next=/credits">Sign in →</a></p>
+				<p data-i18n="credits.sign_in_to_view_your_balance_and">Sign in to view your balance and top up.</p>
+				<p data-i18n-html="credits.sign_in"><a href="/login?next=/credits">Sign in →</a></p>
 			</section>
 
 			<!-- Signed-in -->
@@ -446,22 +446,22 @@
 				<div class="credits-grid">
 					<!-- Balance -->
 					<section class="card" aria-label="Your balance">
-						<h2>Balance</h2>
+						<h2 data-i18n="credits.balance">Balance</h2>
 						<div class="balance-amount" id="balance">$0.00</div>
 						<div class="balance-sub">
 							<div>
-								<span class="k">Deposited</span
+								<span class="k" data-i18n="credits.deposited">Deposited</span
 								><span class="v" id="lifetime-dep">$0.00</span>
 							</div>
 							<div>
-								<span class="k">Spent</span
+								<span class="k" data-i18n="credits.spent">Spent</span
 								><span class="v" id="lifetime-spent">$0.00</span>
 							</div>
 						</div>
 						<div class="tier-pill" id="tier-pill" hidden></div>
 						<div class="row-2" style="margin-top: 1.2rem">
 							<div>
-								<h2>What credits buy</h2>
+								<h2 data-i18n="credits.what_credits_buy">What credits buy</h2>
 								<div class="buys" id="buys"></div>
 							</div>
 						</div>
@@ -469,15 +469,15 @@
 
 					<!-- Deposit -->
 					<section class="card" aria-label="Add credits">
-						<h2>Add credits</h2>
+						<h2 data-i18n="credits.add_credits">Add credits</h2>
 						<div class="seg" role="group" aria-label="Deposit asset">
-							<button type="button" data-asset="SOL" aria-pressed="true">SOL</button>
-							<button type="button" data-asset="THREE" aria-pressed="false">
+							<button type="button" data-asset="SOL" aria-pressed="true" data-i18n="credits.sol">SOL</button>
+							<button type="button" data-asset="THREE" aria-pressed="false" data-i18n="credits.three">
 								$THREE
 							</button>
 						</div>
 						<div class="field">
-							<label for="amount" id="amount-label">Amount (SOL)</label>
+							<label for="amount" id="amount-label" data-i18n="credits.amount_sol">Amount (SOL)</label>
 							<div class="amt-row">
 								<input
 									id="amount"
@@ -487,19 +487,19 @@
 									inputmode="decimal"
 									placeholder="0.0"
 								/>
-								<span class="unit" id="amount-unit">SOL</span>
+								<span class="unit" id="amount-unit" data-i18n="credits.sol_2">SOL</span>
 							</div>
 							<div class="quick" id="quick"></div>
 							<div class="est" id="estimate"></div>
 						</div>
-						<button class="btn" id="deposit-btn" type="button">
+						<button class="btn" id="deposit-btn" type="button" data-i18n="credits.connect_wallet_deposit">
 							Connect wallet &amp; deposit
 						</button>
 						<div class="status" id="status" role="status" aria-live="polite"></div>
 
 						<details class="manual">
-							<summary>Already sent it yourself? Verify by signature</summary>
-							<p class="muted" style="font-size: 0.82rem; margin: 0.6rem 0 0.3rem">
+							<summary data-i18n="credits.already_sent_it_yourself_verify_by_signature">Already sent it yourself? Verify by signature</summary>
+							<p class="muted" style="font-size: 0.82rem; margin: 0.6rem 0 0.3rem" data-i18n="credits.send_from_a_wallet_linked_to_your">
 								Send from a wallet linked to your account to this three.ws
 								deposit address, then paste the signature:
 							</p>
@@ -514,10 +514,10 @@
 								id="verify-btn"
 								type="button"
 								style="margin-top: 0.6rem"
-							>
+							 data-i18n="credits.verify_deposit">
 								Verify deposit
 							</button>
-							<p class="muted" style="font-size: 0.76rem; margin: 0.5rem 0 0">
+							<p class="muted" style="font-size: 0.76rem; margin: 0.5rem 0 0" data-i18n="credits.we_verify_on_chain_that_the_transaction">
 								We verify on-chain that the transaction was signed by your
 								linked wallet, so only you can claim your deposit — pasting
 								someone else's signature won't credit your balance. Sent from a
@@ -529,15 +529,15 @@
 
 				<!-- Ledger -->
 				<section class="card" style="margin-top: 1.1rem" aria-label="History">
-					<h2>History</h2>
+					<h2 data-i18n="credits.history">History</h2>
 					<div id="ledger-host">
 						<table class="ledger" id="ledger" hidden>
 							<thead>
 								<tr>
-									<th>When</th>
-									<th>Activity</th>
-									<th style="text-align: right">Amount</th>
-									<th style="text-align: right">Balance</th>
+									<th data-i18n="credits.when">When</th>
+									<th data-i18n="credits.activity">Activity</th>
+									<th style="text-align: right" data-i18n="credits.amount">Amount</th>
+									<th style="text-align: right" data-i18n="credits.balance_2">Balance</th>
 								</tr>
 							</thead>
 							<tbody id="ledger-body"></tbody>
@@ -562,5 +562,7 @@
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
 		<script type="module" src="/src/credits.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

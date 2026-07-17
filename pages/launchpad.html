@@ -11,11 +11,11 @@
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Launchpad Studio — three.ws</title>
+		<title data-i18n="launchpad.meta_title">Launchpad Studio — three.ws</title>
 		<meta
 			name="description"
 			content="Build a white-label 3D token launchpad in minutes. Fill in wallet, brand, and avatar — get a hosted page, an x402 agent skill, and a Pump.fun-powered mint flow you can resell."
-		/>
+		 data-i18n-attr="content:launchpad.meta_description"/>
 		<style>
 			html,
 			body {
@@ -35,15 +35,15 @@
 	<link rel="canonical" href="https://three.ws/launchpad">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="Launchpad Studio · three.ws">
-	<meta property="og:description" content="Build a hosted 3D launchpad, token page, concierge, or showroom on a three.ws subdomain.">
+	<meta property="og:title" content="Launchpad Studio · three.ws" data-i18n-attr="content:launchpad.meta_og_title">
+	<meta property="og:description" content="Build a hosted 3D launchpad, token page, concierge, or showroom on a three.ws subdomain." data-i18n-attr="content:launchpad.meta_og_description">
 	<meta property="og:url" content="https://three.ws/launchpad">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Launchpad+Studio&amp;d=Build+a+hosted+3D+launchpad%2C+token+page%2C+concierge%2C+or+showroom+on+a+three.ws+subdomain.&amp;p=%2Flaunchpad">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Launchpad Studio · three.ws">
-	<meta name="twitter:description" content="Build a hosted 3D launchpad, token page, concierge, or showroom on a three.ws subdomain.">
+	<meta name="twitter:title" content="Launchpad Studio · three.ws" data-i18n-attr="content:launchpad.meta_twitter_title">
+	<meta name="twitter:description" content="Build a hosted 3D launchpad, token page, concierge, or showroom on a three.ws subdomain." data-i18n-attr="content:launchpad.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=Launchpad+Studio&amp;d=Build+a+hosted+3D+launchpad%2C+token+page%2C+concierge%2C+or+showroom+on+a+three.ws+subdomain.&amp;p=%2Flaunchpad">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Launchpad Studio","description":"Build a hosted 3D launchpad, token page, concierge, or showroom on a three.ws subdomain.","url":"https://three.ws/launchpad","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -71,5 +71,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

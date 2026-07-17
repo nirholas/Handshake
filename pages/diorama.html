@@ -17,29 +17,29 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-		<title>Diorama — Speak a little world into being · three.ws</title>
+		<title data-i18n="diorama.meta_title">Diorama — Speak a little world into being · three.ws</title>
 		<meta
 			name="description"
 			content="Type one sentence and watch it become a tiny explorable 3D world. Claude composes the scene, each object is forged into a real 3D model, and your world assembles before your eyes — then share it as a live 3D postcard."
-		/>
+		 data-i18n-attr="content:diorama.meta_description"/>
 		<link rel="canonical" href="https://three.ws/diorama" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Diorama — Speak a little world into being" />
+		<meta property="og:title" content="Diorama — Speak a little world into being"  data-i18n-attr="content:diorama.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="One sentence → a tiny explorable 3D world. Each object forged into a real model, assembled live, shareable as a 3D postcard."
-		/>
+		 data-i18n-attr="content:diorama.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/diorama" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Diorama&amp;d=Speak+a+little+world+into+being+%E2%80%94+describe+a+scene+and+watch+it+assemble+into+an+explorable+3D+diorama+you+can+walk+through%2C+then+take+it+into+AR.&amp;p=%2Fdiorama" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Diorama — Speak a little world into being" />
+		<meta name="twitter:title" content="Diorama — Speak a little world into being"  data-i18n-attr="content:diorama.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="One sentence → a tiny explorable 3D world, forged live and shareable."
-		/>
+		 data-i18n-attr="content:diorama.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Diorama&amp;d=Speak+a+little+world+into+being+%E2%80%94+describe+a+scene+and+watch+it+assemble+into+an+explorable+3D+diorama+you+can+walk+through%2C+then+take+it+into+AR.&amp;p=%2Fdiorama" />
 
 		<!-- model-viewer powers the optional "view in your room" (AR) handoff, mirroring /forge. -->
@@ -94,9 +94,9 @@
 			<!-- ░░ Composer / hero ░░ -->
 			<section class="dio-hero" aria-labelledby="dio-title">
 				<div class="dio-hero__copy">
-					<p class="dio-eyebrow">three.ws · Diorama</p>
-					<h1 id="dio-title" class="dio-h1">Speak a little world into being.</h1>
-					<p class="dio-lede">
+					<p class="dio-eyebrow" data-i18n="diorama.three_ws_diorama">three.ws · Diorama</p>
+					<h1 id="dio-title" class="dio-h1" data-i18n="diorama.speak_a_little_world_into_being">Speak a little world into being.</h1>
+					<p class="dio-lede" data-i18n="diorama.write_one_sentence_claude_composes_the_scene">
 						Write one sentence. Claude composes the scene, each piece is forged into a
 						real 3D model, and your world assembles in front of you — then share it as a
 						live 3D postcard anyone can explore.
@@ -104,7 +104,7 @@
 
 					<form id="compose-form" class="dio-compose" autocomplete="off">
 						<label class="dio-compose__field">
-							<span class="sr-only">Describe your world</span>
+							<span class="sr-only" data-i18n="diorama.describe_your_world">Describe your world</span>
 							<input
 								id="compose-input"
 								name="prompt"
@@ -115,21 +115,21 @@
 								aria-describedby="compose-help"
 							/>
 						</label>
-						<button id="compose-submit" type="submit" class="btn primary btn--primary dio-compose__go">
+						<button id="compose-submit" type="submit" class="btn primary btn--primary dio-compose__go" data-i18n-html="diorama.build_my_world">
 							<span class="dio-compose__go-label">Build my world</span>
 						</button>
 					</form>
-					<p id="compose-help" class="dio-compose__help">
+					<p id="compose-help" class="dio-compose__help" data-i18n="diorama.one_concrete_scene_works_best_a_place">
 						One concrete scene works best — a place, a mood, a few things in it.
 					</p>
 
 					<ul id="compose-examples" class="dio-examples" aria-label="Example worlds">
-						<li><button type="button" class="dio-chip" data-prompt="a cozy autumn campsite by a lake at dusk">🏕️ autumn campsite</button></li>
-						<li><button type="button" class="dio-chip" data-prompt="a tiny Japanese zen garden with a stone lantern and a maple tree">🍁 zen garden</button></li>
-						<li><button type="button" class="dio-chip" data-prompt="a sunny tropical beach with a palm tree, a surfboard, and a beach umbrella">🏖️ tropical beach</button></li>
-						<li><button type="button" class="dio-chip" data-prompt="a snowy alpine cabin at night under the northern lights">❄️ alpine cabin</button></li>
-						<li><button type="button" class="dio-chip" data-prompt="a desert oasis at noon with a camel, palm trees, and a small pool">🐪 desert oasis</button></li>
-						<li><button type="button" class="dio-chip" data-prompt="a spooky graveyard at midnight with crooked tombstones and a dead tree">🎃 haunted graveyard</button></li>
+						<li><button type="button" class="dio-chip" data-prompt="a cozy autumn campsite by a lake at dusk" data-i18n="diorama.autumn_campsite">🏕️ autumn campsite</button></li>
+						<li><button type="button" class="dio-chip" data-prompt="a tiny Japanese zen garden with a stone lantern and a maple tree" data-i18n="diorama.zen_garden">🍁 zen garden</button></li>
+						<li><button type="button" class="dio-chip" data-prompt="a sunny tropical beach with a palm tree, a surfboard, and a beach umbrella" data-i18n="diorama.tropical_beach">🏖️ tropical beach</button></li>
+						<li><button type="button" class="dio-chip" data-prompt="a snowy alpine cabin at night under the northern lights" data-i18n="diorama.alpine_cabin">❄️ alpine cabin</button></li>
+						<li><button type="button" class="dio-chip" data-prompt="a desert oasis at noon with a camel, palm trees, and a small pool" data-i18n="diorama.desert_oasis">🐪 desert oasis</button></li>
+						<li><button type="button" class="dio-chip" data-prompt="a spooky graveyard at midnight with crooked tombstones and a dead tree" data-i18n="diorama.haunted_graveyard">🎃 haunted graveyard</button></li>
 					</ul>
 				</div>
 			</section>
@@ -144,7 +144,7 @@
 							<span class="dio-orb__ring"></span>
 							<span class="dio-orb__core"></span>
 						</div>
-						<p class="dio-stage__hint">Describe a world above to begin.</p>
+						<p class="dio-stage__hint" data-i18n="diorama.describe_a_world_above_to_begin">Describe a world above to begin.</p>
 					</div>
 					<!-- In-canvas overlay: title + mood, filled by the controller -->
 					<div id="stage-hud" class="dio-hud" hidden>
@@ -157,7 +157,7 @@
 				<aside class="dio-side">
 					<div id="world-status" class="dio-status" hidden>
 						<div class="dio-status__row">
-							<span class="dio-status__label">Forging your world…</span>
+							<span class="dio-status__label" data-i18n="diorama.forging_your_world">Forging your world…</span>
 							<span class="dio-status__count" data-count></span>
 						</div>
 						<div class="dio-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
@@ -168,22 +168,22 @@
 					<ul id="world-objects" class="dio-objects" aria-label="Objects in your world"></ul>
 
 					<div id="world-actions" class="dio-actions" hidden>
-						<button type="button" class="btn dio-act" data-act="remix">↻ Remix</button>
-						<button type="button" class="btn primary btn--primary dio-act" data-act="save">Save &amp; share</button>
-						<button type="button" class="btn dio-act" data-act="ar" hidden>View in your room</button>
-						<button type="button" class="btn dio-act" data-act="download" hidden>Download</button>
+						<button type="button" class="btn dio-act" data-act="remix" data-i18n="diorama.remix">↻ Remix</button>
+						<button type="button" class="btn primary btn--primary dio-act" data-act="save" data-i18n="diorama.save_share">Save &amp; share</button>
+						<button type="button" class="btn dio-act" data-act="ar" hidden data-i18n="diorama.view_in_your_room">View in your room</button>
+						<button type="button" class="btn dio-act" data-act="download" hidden data-i18n="diorama.download">Download</button>
 					</div>
 
 					<!-- Share panel: revealed after a successful save -->
 					<div id="share-panel" class="dio-share" hidden>
-						<p class="dio-share__title">Your world is live ✨</p>
+						<p class="dio-share__title" data-i18n="diorama.your_world_is_live">Your world is live ✨</p>
 						<div class="dio-share__link">
 							<input id="share-link" class="dio-share__input" readonly aria-label="Shareable link" />
-							<button id="share-copy" type="button" class="btn dio-share__copy">Copy</button>
+							<button id="share-copy" type="button" class="btn dio-share__copy" data-i18n="diorama.copy">Copy</button>
 						</div>
 						<div class="dio-share__row">
-							<button id="share-x" type="button" class="btn dio-share__x">Share on X</button>
-							<button id="share-embed" type="button" class="btn">Embed</button>
+							<button id="share-x" type="button" class="btn dio-share__x" data-i18n="diorama.share_on_x">Share on X</button>
+							<button id="share-embed" type="button" class="btn" data-i18n="diorama.embed">Embed</button>
 						</div>
 					</div>
 				</aside>
@@ -191,19 +191,19 @@
 
 			<!-- ░░ Designed error state (hidden until needed) ░░ -->
 			<section id="error-state" class="dio-error" hidden role="alert">
-				<h2 class="dio-error__title">That world didn’t come together.</h2>
+				<h2 class="dio-error__title" data-i18n="diorama.that_world_didn_t_come_together">That world didn’t come together.</h2>
 				<p class="dio-error__body"></p>
-				<button type="button" class="btn primary btn--primary" data-act="retry">Try again</button>
+				<button type="button" class="btn primary btn--primary" data-act="retry" data-i18n="diorama.try_again">Try again</button>
 			</section>
 
 			<!-- ░░ Public gallery ░░ -->
 			<section class="dio-gallery" aria-labelledby="gallery-title">
 				<div class="dio-gallery__head">
-					<h2 id="gallery-title" class="dio-h2">Worlds people spoke into being</h2>
-					<p class="dio-gallery__sub">Every world is real geometry, forged from a sentence. Open one to explore it.</p>
+					<h2 id="gallery-title" class="dio-h2" data-i18n="diorama.worlds_people_spoke_into_being">Worlds people spoke into being</h2>
+					<p class="dio-gallery__sub" data-i18n="diorama.every_world_is_real_geometry_forged_from">Every world is real geometry, forged from a sentence. Open one to explore it.</p>
 				</div>
 				<div id="empty-state" class="dio-gallery__empty" hidden>
-					<p>No worlds yet — yours could be the first. Describe one above.</p>
+					<p data-i18n="diorama.no_worlds_yet_yours_could_be_the">No worlds yet — yours could be the first. Describe one above.</p>
 				</div>
 				<div id="gallery-list" class="dio-gallery__grid" aria-busy="true"></div>
 			</section>
@@ -226,5 +226,7 @@
 				"isPartOf": { "@type": "WebSite", "name": "three.ws", "url": "https://three.ws" }
 			}
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

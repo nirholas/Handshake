@@ -11,16 +11,16 @@
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<title>Token in 3D · three.ws</title>
+		<title data-i18n="coin3d.meta_title">Token in 3D · three.ws</title>
 		<meta
 			name="description"
 			content="A live 3D snapshot of any pump.fun / Solana token — coin medallion, holder galaxy, and bonding-curve graduation, rendered from real on-chain data."
-		/>
-		<meta property="og:title" content="Token in 3D · three.ws" />
+		 data-i18n-attr="content:coin3d.meta_description"/>
+		<meta property="og:title" content="Token in 3D · three.ws"  data-i18n-attr="content:coin3d.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="See any pump.fun token as a live 3D scene — coin, holders, and graduation progress."
-		/>
+		 data-i18n-attr="content:coin3d.meta_og_description"/>
 		<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/coin3d" />
@@ -29,8 +29,8 @@
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Token in 3D · three.ws" />
-	<meta name="twitter:description" content="View any token in 3D — bonding curves, holder bubbles, and live trades rendered as an interactive 3D scene." />
+	<meta name="twitter:title" content="Token in 3D · three.ws"  data-i18n-attr="content:coin3d.meta_twitter_title"/>
+	<meta name="twitter:description" content="View any token in 3D — bonding curves, holder bubbles, and live trades rendered as an interactive 3D scene."  data-i18n-attr="content:coin3d.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Token+in+3D&amp;d=Any+pump.fun+token+as+a+live+3D+scene+%E2%80%94+a+spinning+coin+medallion+with+the+token%27s+logo%2C+top+holders+as+a+galaxy+sized+by+balance%2C+and+a+graduation+ring+trackin&amp;p=%2Fcoin3d" />
 		<style>
 			:root {
@@ -734,5 +734,7 @@
 		<div id="hud" hidden></div>
 		<div id="status"></div>
 		<script type="module" src="/src/coin3d/main.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

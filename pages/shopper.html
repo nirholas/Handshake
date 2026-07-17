@@ -5,8 +5,8 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Endpoint Shopper — three.ws</title>
-	<meta name="description" content="AI agent that discovers paid x402 endpoints, chains them together, and synthesizes a final answer for any task." />
+	<title data-i18n="shopper.meta_title">Endpoint Shopper — three.ws</title>
+	<meta name="description" content="AI agent that discovers paid x402 endpoints, chains them together, and synthesizes a final answer for any task."  data-i18n-attr="content:shopper.meta_description"/>
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -411,15 +411,15 @@
 	<link rel="canonical" href="https://three.ws/shopper">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="Endpoint Shopper · three.ws">
-	<meta property="og:description" content="Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer — paying per API call.">
+	<meta property="og:title" content="Endpoint Shopper · three.ws" data-i18n-attr="content:shopper.meta_og_title">
+	<meta property="og:description" content="Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer — paying per API call." data-i18n-attr="content:shopper.meta_og_description">
 	<meta property="og:url" content="https://three.ws/shopper">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Endpoint+Shopper&amp;d=Describe+a+task+and+set+a+budget.+An+AI+agent+discovers+relevant+x402+endpoints+via+the+Bazaar%2C+chains+them+together%2C+and+synthesizes+a+final+answer+%E2%80%94+paying+pe&amp;p=%2Fshopper">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Endpoint Shopper · three.ws">
-	<meta name="twitter:description" content="Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer — paying per API call.">
+	<meta name="twitter:title" content="Endpoint Shopper · three.ws" data-i18n-attr="content:shopper.meta_twitter_title">
+	<meta name="twitter:description" content="Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer — paying per API call." data-i18n-attr="content:shopper.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Endpoint+Shopper&amp;d=Describe+a+task+and+set+a+budget.+An+AI+agent+discovers+relevant+x402+endpoints+via+the+Bazaar%2C+chains+them+together%2C+and+synthesizes+a+final+answer+%E2%80%94+paying+pe&amp;p=%2Fshopper">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Endpoint Shopper","description":"Describe a task and set a budget. An AI agent discovers relevant x402 endpoints via the Bazaar, chains them together, and synthesizes a final answer — paying per API call.","url":"https://three.ws/shopper","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -433,18 +433,18 @@
 <!-- ── NAV ─────────────────────────────────────────────────── -->
 <nav class="nav">
 	<div class="nav-inner">
-		<a class="brand" href="/">
+		<a class="brand" href="/" data-i18n-html="shopper.three_ws">
 			<span class="brand-mark"></span>
 			three.ws
 		</a>
 		<div class="nav-main">
-			<a href="/">Explore</a>
-			<a href="/shopper" class="active">Endpoint Shopper</a>
-			<a href="/marketplace">Marketplace</a>
-			<a href="/fact-checker">Fact Checker</a>
+			<a href="/" data-i18n="shopper.explore">Explore</a>
+			<a href="/shopper" class="active" data-i18n="shopper.endpoint_shopper">Endpoint Shopper</a>
+			<a href="/marketplace" data-i18n="shopper.marketplace">Marketplace</a>
+			<a href="/fact-checker" data-i18n="shopper.fact_checker">Fact Checker</a>
 		</div>
 		<div class="nav-end">
-			<a href="/app-next" class="console">Dashboard</a>
+			<a href="/app-next" class="console" data-i18n="shopper.dashboard">Dashboard</a>
 		</div>
 	</div>
 </nav>
@@ -453,8 +453,8 @@
 <div class="hero">
 	<div class="wrap">
 		<div class="eyebrow">USE-36 — Agent Orchestration</div>
-		<h1 class="hero-h">Endpoint Shopper<br /><em>AI that chains paid APIs</em></h1>
-		<p class="hero-sub">Describe a task, set a budget. The agent discovers relevant x402 endpoints in the Bazaar, pays for each call, and synthesizes a final answer.</p>
+		<h1 class="hero-h" data-i18n-html="shopper.endpoint_shopper_ai_that_chains_paid_apis">Endpoint Shopper<br /><em>AI that chains paid APIs</em></h1>
+		<p class="hero-sub" data-i18n="shopper.describe_a_task_set_a_budget_the">Describe a task, set a budget. The agent discovers relevant x402 endpoints in the Bazaar, pays for each call, and synthesizes a final answer.</p>
 	</div>
 </div>
 
@@ -474,15 +474,15 @@
 				></textarea>
 
 				<div class="chip-row" id="chip-row">
-					<span class="chip" data-task="What is Ethereum's current price?">ETH price</span>
-					<span class="chip" data-task="Check reputation of agent with address 0x1234">Agent reputation</span>
-					<span class="chip" data-task="Search for available x402 endpoints for weather data">Find weather APIs</span>
-					<span class="chip" data-task="List the top paid AI model endpoints in the Bazaar">AI model endpoints</span>
-					<span class="chip" data-task="What pump.fun tokens are trending right now?">Pump.fun trends</span>
+					<span class="chip" data-task="What is Ethereum's current price?" data-i18n="shopper.eth_price">ETH price</span>
+					<span class="chip" data-task="Check reputation of agent with address 0x1234" data-i18n="shopper.agent_reputation">Agent reputation</span>
+					<span class="chip" data-task="Search for available x402 endpoints for weather data" data-i18n="shopper.find_weather_apis">Find weather APIs</span>
+					<span class="chip" data-task="List the top paid AI model endpoints in the Bazaar" data-i18n="shopper.ai_model_endpoints">AI model endpoints</span>
+					<span class="chip" data-task="What pump.fun tokens are trending right now?" data-i18n="shopper.pump_fun_trends">Pump.fun trends</span>
 				</div>
 
 				<div class="budget-row">
-					<span class="budget-label">Max budget</span>
+					<span class="budget-label" data-i18n="shopper.max_budget">Max budget</span>
 					<input
 						id="budget-slider"
 						type="range"
@@ -508,11 +508,11 @@
 			<div class="result-panel" id="result-panel">
 				<div class="empty-state" id="empty-state">
 					<svg width="40" height="40" fill="none" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" stroke="currentColor" stroke-width="1.5"/><path d="M14 20h12M20 14v12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-					<div>Enter a task and click <strong>Run Task</strong> to begin</div>
+					<div>Enter a task and click <strong data-i18n="shopper.run_task">Run Task</strong> to begin</div>
 					<ul class="empty-tips">
-						<li>Set a <strong>max budget</strong> — the agent never spends past it on downstream calls.</li>
-						<li>Running costs USDC: you'll pay once with a Base or Solana wallet when prompted.</li>
-						<li>Try an example chip above to see the discover → plan → call → synthesize flow.</li>
+						<li data-i18n-html="shopper.set_a_max_budget_the_agent_never">Set a <strong>max budget</strong> — the agent never spends past it on downstream calls.</li>
+						<li data-i18n="shopper.running_costs_usdc_you_ll_pay_once">Running costs USDC: you'll pay once with a Base or Solana wallet when prompted.</li>
+						<li data-i18n="shopper.try_an_example_chip_above_to_see">Try an example chip above to see the discover → plan → call → synthesize flow.</li>
 					</ul>
 				</div>
 			</div>
@@ -523,5 +523,7 @@
 
 <script type="module" src="/src/shopper-app.js"></script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

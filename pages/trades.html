@@ -4,26 +4,26 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Trade Terminal · three.ws</title>
+		<title data-i18n="trades.meta_title">Trade Terminal · three.ws</title>
 		<meta
 			name="description"
 			content="A live pump.fun trade terminal — every signal on a launch in one place: candlestick chart, market cap, holders, funder bubblemap, smart money, intel scores, and a real-time trade tape."
-		/>
+		 data-i18n-attr="content:trades.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/trades" />
-		<meta property="og:title" content="Trade Terminal · three.ws" />
+		<meta property="og:title" content="Trade Terminal · three.ws"  data-i18n-attr="content:trades.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Every signal on a pump.fun launch in one terminal — chart, market cap, holders, funder bubblemap, smart money, intel, and a live trade tape."
-		/>
+		 data-i18n-attr="content:trades.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Live+Trade+Feed+%E2%80%94+Notable+pump.fun+Exits&amp;d=Real-time+feed+of+every+notable+pump.fun+exit+from+three.ws+AI+agents+%E2%80%94+realized+PnL%2C+hold+time%2C+exit+multiple%2C+conviction+tier%2C+and+a+one-click+path+to+copy+th&amp;p=%2Ftrades" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Trade Terminal · three.ws" />
-		<meta name="twitter:description" content="Every signal on a pump.fun launch in one terminal — chart, holders, funder bubblemap, smart money, and a live trade tape." />
+		<meta name="twitter:title" content="Trade Terminal · three.ws"  data-i18n-attr="content:trades.meta_twitter_title"/>
+		<meta name="twitter:description" content="Every signal on a pump.fun launch in one terminal — chart, holders, funder bubblemap, smart money, and a live trade tape."  data-i18n-attr="content:trades.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Live+Trade+Feed+%E2%80%94+Notable+pump.fun+Exits&amp;d=Real-time+feed+of+every+notable+pump.fun+exit+from+three.ws+AI+agents+%E2%80%94+realized+PnL%2C+hold+time%2C+exit+multiple%2C+conviction+tier%2C+and+a+one-click+path+to+copy+th&amp;p=%2Ftrades" />
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -343,11 +343,11 @@
 			<div class="tt-bar">
 				<div class="tt-brand">
 					<span class="tt-live-dot" aria-hidden="true"></span>
-					<span class="tt-title">Trade Terminal<small>pump.fun · live</small></span>
+					<span class="tt-title" data-i18n-html="trades.trade_terminalpump_fun_live">Trade Terminal<small>pump.fun · live</small></span>
 				</div>
 				<div class="tt-pulse" aria-label="Network pulse">
-					<div class="tt-pulse-item"><span class="tt-pulse-v" id="ttPulseMints">—</span><span class="tt-pulse-l">New mints</span></div>
-					<div class="tt-pulse-item"><span class="tt-pulse-v" id="ttPulseGrad">—</span><span class="tt-pulse-l">Graduations</span></div>
+					<div class="tt-pulse-item"><span class="tt-pulse-v" id="ttPulseMints">—</span><span class="tt-pulse-l" data-i18n="trades.new_mints">New mints</span></div>
+					<div class="tt-pulse-item"><span class="tt-pulse-v" id="ttPulseGrad">—</span><span class="tt-pulse-l" data-i18n="trades.graduations">Graduations</span></div>
 					<div class="tt-pulse-item"><span class="tt-pulse-v" id="ttPulseSol">—</span><span class="tt-pulse-chg" id="ttPulseSolChg"></span></div>
 				</div>
 			</div>
@@ -357,17 +357,17 @@
 					<div class="tt-rail-top">
 						<div class="tt-search">
 							<input id="ttSearch" type="text" placeholder="Paste a mint to analyze…" aria-label="Analyze a mint" spellcheck="false" autocomplete="off" />
-							<button type="button" class="tt-search-go" id="ttSearchGo" aria-label="Analyze">→</button>
+							<button type="button" class="tt-search-go" id="ttSearchGo" aria-label="Analyze" data-i18n-attr="aria-label:trades.analyze_arialabel">→</button>
 						</div>
 						<div class="tt-tabs" id="ttTabs" role="tablist">
-							<button data-tab="launches" role="tab">Launches</button>
-							<button data-tab="exits" role="tab">Agent exits</button>
+							<button data-tab="launches" role="tab" data-i18n="trades.launches">Launches</button>
+							<button data-tab="exits" role="tab" data-i18n="trades.agent_exits">Agent exits</button>
 						</div>
 						<div class="tt-rail-net">
-							<label for="ttNetwork">Network</label>
+							<label for="ttNetwork" data-i18n="trades.network">Network</label>
 							<select id="ttNetwork" aria-label="Network">
-								<option value="mainnet">Mainnet</option>
-								<option value="devnet">Devnet</option>
+								<option value="mainnet" data-i18n="trades.mainnet">Mainnet</option>
+								<option value="devnet" data-i18n="trades.devnet">Devnet</option>
 							</select>
 						</div>
 					</div>
@@ -379,5 +379,7 @@
 		</div>
 
 		<script type="module" src="/src/trades.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

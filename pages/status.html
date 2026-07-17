@@ -3,21 +3,21 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Status — three.ws</title>
+		<title data-i18n="status.meta_title">Status — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="theme-color" content="#000000" />
 		<meta
 			name="description"
 			content="Live operational status and 90-day uptime history for the three.ws platform, API, and x402 paid-API surfaces."
-		/>
+		 data-i18n-attr="content:status.meta_description"/>
 
 		<meta property="og:type" content="website" />
 		<meta property="og:url" content="https://three.ws/status" />
-		<meta property="og:title" content="Status — three.ws" />
+		<meta property="og:title" content="Status — three.ws"  data-i18n-attr="content:status.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Live operational status and 90-day uptime history for the three.ws platform."
-		/>
+		 data-i18n-attr="content:status.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Status&amp;d=Live+operational+status+and+90-day+uptime+history+for+the+platform%2C+API%2C+and+x402+surfaces+%E2%80%94+probed+every+5+minutes.&amp;p=%2Fstatus" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
@@ -359,8 +359,8 @@
 	
 	<link rel="canonical" href="https://three.ws/status">
 	<meta property="og:site_name" content="three.ws">
-	<meta name="twitter:title" content="Status · three.ws">
-	<meta name="twitter:description" content="Live operational status and 90-day uptime history for the platform, API, and x402 surfaces — probed every 5 minutes.">
+	<meta name="twitter:title" content="Status · three.ws" data-i18n-attr="content:status.meta_twitter_title">
+	<meta name="twitter:description" content="Live operational status and 90-day uptime history for the platform, API, and x402 surfaces — probed every 5 minutes." data-i18n-attr="content:status.meta_twitter_description">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Status","description":"Live operational status and 90-day uptime history for the platform, API, and x402 surfaces — probed every 5 minutes.","url":"https://three.ws/status","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
@@ -372,12 +372,12 @@
 		<header><div id="nav-container"></div></header>
 
 		<main class="st-wrap">
-			<p class="st-crumb"><a href="/">Home</a> / Status</p>
-			<h1 class="st-title">Platform status</h1>
+			<p class="st-crumb" data-i18n-html="status.home_status"><a href="/">Home</a> / Status</p>
+			<h1 class="st-title" data-i18n="status.platform_status">Platform status</h1>
 
 			<div class="st-banner" id="st-banner" role="status" aria-live="polite">
 				<span class="st-dot" id="st-banner-dot" aria-hidden="true"></span>
-				<span id="st-banner-text">Checking platform status…</span>
+				<span id="st-banner-text" data-i18n="status.checking_platform_status">Checking platform status…</span>
 			</div>
 			<div class="st-summary st-skel" id="st-summary" aria-label="Fleet summary">
 				<div class="st-kpi"><div class="st-kpi-val" id="st-kpi-uptime">—</div><div class="st-kpi-label">90-day uptime</div></div>
@@ -385,7 +385,7 @@
 				<div class="st-kpi"><div class="st-kpi-val" id="st-kpi-latency">—</div><div class="st-kpi-label">avg response</div></div>
 			</div>
 
-			<p class="st-meta" id="st-meta">
+			<p class="st-meta" id="st-meta" data-i18n-html="status.probed_every_5_minutes_from_outside_our">
 				Probed every 5 minutes from outside our infrastructure.
 				<a href="/api/status" style="color: inherit">JSON feed</a> ·
 				<a href="/api/status?format=svg" style="color: inherit">status badge</a> ·
@@ -395,15 +395,15 @@
 			<section id="st-services" aria-label="Service status list">
 				<!-- skeletons swapped out by render() -->
 				<article class="st-card st-skel" aria-hidden="true">
-					<div class="st-card-head"><h2>loading</h2><div class="st-stats">…</div></div>
+					<div class="st-card-head"><h2 data-i18n="status.loading">loading</h2><div class="st-stats">…</div></div>
 					<div class="st-bar"></div>
 				</article>
 				<article class="st-card st-skel" aria-hidden="true">
-					<div class="st-card-head"><h2>loading</h2><div class="st-stats">…</div></div>
+					<div class="st-card-head"><h2 data-i18n="status.loading_2">loading</h2><div class="st-stats">…</div></div>
 					<div class="st-bar"></div>
 				</article>
 				<article class="st-card st-skel" aria-hidden="true">
-					<div class="st-card-head"><h2>loading</h2><div class="st-stats">…</div></div>
+					<div class="st-card-head"><h2 data-i18n="status.loading_3">loading</h2><div class="st-stats">…</div></div>
 					<div class="st-bar"></div>
 				</article>
 			</section>
@@ -411,8 +411,8 @@
 			<!-- Internal dependency health — hidden until the API returns a
 			     subsystems block (older deploys / warming-up omit it). -->
 			<section id="st-subsystems" aria-label="Internal dependency health" hidden>
-				<h2 class="st-subhead">Internal dependencies</h2>
-				<p class="st-subnote">
+				<h2 class="st-subhead" data-i18n="status.internal_dependencies">Internal dependencies</h2>
+				<p class="st-subnote" data-i18n="status.health_of_the_systems_behind_the_public">
 					Health of the systems behind the public surfaces — cache, database,
 					payment ring, RPC. A green surface can still hide a degraded
 					dependency; this is where it shows.
@@ -423,8 +423,8 @@
 			<!-- Agent-economy heartbeat — hidden until the API returns an economy
 			     block (older deploys / pre-first-tick omit it). -->
 			<section id="st-economy" aria-label="Agent economy heartbeat" hidden>
-				<h2 class="st-subhead">Agent economy heartbeat</h2>
-				<p class="st-subnote">
+				<h2 class="st-subhead" data-i18n="status.agent_economy_heartbeat">Agent economy heartbeat</h2>
+				<p class="st-subnote" data-i18n="status.the_per_minute_tick_that_drives_every">
 					The per-minute tick that drives every agent-to-agent engine — ring
 					settlements, the Money Pulse, the Labor Market, launches, payouts.
 					Each engine reports ran, skipped (with its own reason), or failed.
@@ -653,5 +653,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

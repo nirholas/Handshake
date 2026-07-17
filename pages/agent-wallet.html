@@ -3,21 +3,21 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Agent wallet — three.ws</title>
+		<title data-i18n="agent_wallet.meta_title">Agent wallet — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="theme-color" content="#000000" />
 		<meta
 			name="description"
 			content="Manage a three.ws 3D AI agent's self-custodied Solana wallet — live balance, deposits, trading, sniping, x402 payments, and withdrawals, all in one place."
-		/>
+		 data-i18n-attr="content:agent_wallet.meta_description"/>
 		<meta name="robots" content="noindex" />
 
 		<meta property="og:type" content="website" />
-		<meta property="og:title" content="Agent wallet — three.ws" />
+		<meta property="og:title" content="Agent wallet — three.ws"  data-i18n-attr="content:agent_wallet.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Your 3D AI agent's own Solana wallet: balance, deposit, trade, snipe, pay, and withdraw."
-		/>
+		 data-i18n-attr="content:agent_wallet.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Wallet&amp;d=The+wallet+surface+for+your+agents%3A+balances%2C+funding%2C+and+activity.&amp;p=%2Fagent-wallet" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
@@ -159,15 +159,15 @@
 	<meta property="og:url" content="https://three.ws/agent-wallet">
 	<meta property="og:image:alt" content="Agent Wallet — three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Agent Wallet · three.ws">
-	<meta name="twitter:description" content="The wallet surface for your agents: balances, funding, and activity.">
+	<meta name="twitter:title" content="Agent Wallet · three.ws" data-i18n-attr="content:agent_wallet.meta_twitter_title">
+	<meta name="twitter:description" content="The wallet surface for your agents: balances, funding, and activity." data-i18n-attr="content:agent_wallet.meta_twitter_description">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Agent Wallet","description":"The wallet surface for your agents: balances, funding, and activity.","url":"https://three.ws/agent-wallet","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&amp;t=Agent+Wallet&amp;d=The+wallet+surface+for+your+agents%3A+balances%2C+funding%2C+and+activity.&amp;p=%2Fagent-wallet"}]}</script>
 </head>
 	<body>
 		<div id="nav-container"></div>
 
 		<main class="awh-wrap">
-			<p class="awh-crumb"><a href="/">Home</a> / <a href="/agents">Agents</a> / Wallet</p>
+			<p class="awh-crumb" data-i18n-html="agent_wallet.home_agents_wallet"><a href="/">Home</a> / <a href="/agents">Agents</a> / Wallet</p>
 			<div id="awh-root"></div>
 		</main>
 
@@ -176,5 +176,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

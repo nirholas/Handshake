@@ -4,26 +4,26 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Back-an-Agent Vaults · three.ws</title>
+		<title data-i18n="vaults.meta_title">Back-an-Agent Vaults · three.ws</title>
 		<meta
 			name="description"
 			content="Stake behind a 3D trading agent with a verifiable on-chain reputation, share its real P&L, and watch it trade your capital live. Real custody, hard spend limits, drawdown circuit breakers — copy-trading you can actually see."
-		/>
+		 data-i18n-attr="content:vaults.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/vaults" />
-		<meta property="og:title" content="Back-an-Agent Vaults · three.ws" />
+		<meta property="og:title" content="Back-an-Agent Vaults · three.ws"  data-i18n-attr="content:vaults.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Copy-trade a 3D character with a provable track record. Stake into a verified agent, share real on-chain P&L, watch it trade — drawdown-protected, fully audited."
-		/>
+		 data-i18n-attr="content:vaults.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Back-an-Agent+Vaults&amp;d=Copy-trade+a+3D+agent+with+a+verifiable+on-chain+reputation%3A+stake+into+a+verified+trader%2C+share+its+real+P%26L+pro-rata%2C+and+watch+it+trade+your+capital+live+%E2%80%94+s&amp;p=%2Fvaults" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Back-an-Agent Vaults · three.ws" />
-		<meta name="twitter:description" content="Stake behind a verified 3D trading agent, share its real on-chain P&L, and watch it trade your capital live." />
+		<meta name="twitter:title" content="Back-an-Agent Vaults · three.ws"  data-i18n-attr="content:vaults.meta_twitter_title"/>
+		<meta name="twitter:description" content="Stake behind a verified 3D trading agent, share its real on-chain P&L, and watch it trade your capital live."  data-i18n-attr="content:vaults.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Back-an-Agent+Vaults&amp;d=Copy-trade+a+3D+agent+with+a+verifiable+on-chain+reputation%3A+stake+into+a+verified+trader%2C+share+its+real+P%26L+pro-rata%2C+and+watch+it+trade+your+capital+live+%E2%80%94+s&amp;p=%2Fvaults" />
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -49,22 +49,22 @@
 			<!-- ── Discovery view ─────────────────────────────────────────── -->
 			<section class="vx-view" id="vx-feed-view">
 				<section class="vx-hero">
-					<p class="vx-kicker">
+					<p class="vx-kicker" data-i18n-html="vaults.copy_trading_you_can_watch_real_custody">
 						<span class="vx-live-dot" aria-hidden="true"></span>
 						Copy-trading you can watch · real custody, settled on-chain
 					</p>
-					<h1 id="vx-title" class="vx-title">Back an Agent</h1>
-					<p class="vx-sub">
+					<h1 id="vx-title" class="vx-title" data-i18n="vaults.back_an_agent">Back an Agent</h1>
+					<p class="vx-sub" data-i18n-html="vaults.stake_behind_a_3d_trading_agent_with">
 						Stake behind a 3D trading agent with a <strong>verifiable on-chain track record</strong>,
 						share its real P&amp;L pro-rata, and open the theater to watch it trade your capital live.
 						Every vault is segregated custody, hard spend limits, and a drawdown circuit breaker that
 						halts trading to protect what's left. No screenshots. No trust-me. Proof.
 					</p>
 					<div class="vx-hero-actions">
-						<button class="vx-btn vx-btn--primary" id="vx-open-cta" type="button" data-auth="in" hidden>
+						<button class="vx-btn vx-btn--primary" id="vx-open-cta" type="button" data-auth="in" hidden data-i18n="vaults.open_a_vault_for_your_agent">
 							Open a vault for your agent
 						</button>
-						<a class="vx-btn" href="/leaderboard">See verified traders →</a>
+						<a class="vx-btn" href="/leaderboard" data-i18n="vaults.see_verified_traders">See verified traders →</a>
 					</div>
 				</section>
 
@@ -72,22 +72,22 @@
 
 				<div class="vx-feed-head">
 					<div class="vx-feed-head-l">
-						<h2 class="vx-h2">Backable agents</h2>
+						<h2 class="vx-h2" data-i18n="vaults.backable_agents">Backable agents</h2>
 						<span class="vx-feed-count" id="vx-feed-count" aria-live="polite"></span>
 					</div>
 					<div class="vx-feed-head-r">
 						<label class="vx-sort">
-							<span class="vx-sort-l">Sort</span>
+							<span class="vx-sort-l" data-i18n="vaults.sort">Sort</span>
 							<select class="vx-sort-sel" id="vx-sort" aria-label="Sort vaults">
-								<option value="perf">Best return</option>
-								<option value="capital">Most capital</option>
-								<option value="backers">Most backers</option>
-								<option value="rep">Top reputation</option>
+								<option value="perf" data-i18n="vaults.best_return">Best return</option>
+								<option value="capital" data-i18n="vaults.most_capital">Most capital</option>
+								<option value="backers" data-i18n="vaults.most_backers">Most backers</option>
+								<option value="rep" data-i18n="vaults.top_reputation">Top reputation</option>
 							</select>
 						</label>
 						<div class="vx-tabs" role="tablist" aria-label="Vault filter">
-							<button class="vx-tab is-active" role="tab" aria-selected="true" data-tab="all" type="button">All vaults</button>
-							<button class="vx-tab" role="tab" aria-selected="false" data-tab="mine" type="button" data-auth="in" hidden>My positions</button>
+							<button class="vx-tab is-active" role="tab" aria-selected="true" data-tab="all" type="button" data-i18n="vaults.all_vaults">All vaults</button>
+							<button class="vx-tab" role="tab" aria-selected="false" data-tab="mine" type="button" data-auth="in" hidden data-i18n="vaults.my_positions">My positions</button>
 						</div>
 					</div>
 				</div>
@@ -97,7 +97,7 @@
 
 			<!-- ── Vault detail view ──────────────────────────────────────── -->
 			<section class="vx-view" id="vx-detail-view" hidden>
-				<button class="vx-back" id="vx-back" type="button">← All vaults</button>
+				<button class="vx-back" id="vx-back" type="button" data-i18n="vaults.all_vaults_2">← All vaults</button>
 				<div id="vx-detail" aria-live="polite"></div>
 			</section>
 		</main>
@@ -106,46 +106,46 @@
 		<div class="vx-modal" id="vx-open-modal" hidden role="dialog" aria-modal="true" aria-labelledby="vx-open-title">
 			<div class="vx-modal-backdrop" data-close></div>
 			<div class="vx-modal-card" role="document">
-				<button class="vx-modal-x" type="button" data-close aria-label="Close">×</button>
-				<h2 id="vx-open-title" class="vx-modal-title">Open a vault</h2>
-				<p class="vx-modal-sub">Only a reputation-verified agent can be backed. Backers' funds live in a fresh, segregated wallet — never your agent's personal wallet.</p>
+				<button class="vx-modal-x" type="button" data-close aria-label="Close" data-i18n-attr="aria-label:vaults.close_arialabel">×</button>
+				<h2 id="vx-open-title" class="vx-modal-title" data-i18n="vaults.open_a_vault">Open a vault</h2>
+				<p class="vx-modal-sub" data-i18n="vaults.only_a_reputation_verified_agent_can_be">Only a reputation-verified agent can be backed. Backers' funds live in a fresh, segregated wallet — never your agent's personal wallet.</p>
 				<form id="vx-open-form" class="vx-form">
 					<label class="vx-field">
-						<span class="vx-label">Agent</span>
+						<span class="vx-label" data-i18n="vaults.agent">Agent</span>
 						<select id="vx-open-agent" class="vx-input" required></select>
 						<span class="vx-hint" id="vx-open-agent-hint"></span>
 					</label>
 					<div class="vx-field-row">
 						<label class="vx-field">
-							<span class="vx-label">Performance fee</span>
+							<span class="vx-label" data-i18n="vaults.performance_fee">Performance fee</span>
 							<div class="vx-input-suffix"><input id="vx-open-fee" class="vx-input" type="number" min="0" max="50" step="0.5" value="10" /><span>%</span></div>
-							<span class="vx-hint">Charged only on a backer's realized gain.</span>
+							<span class="vx-hint" data-i18n="vaults.charged_only_on_a_backer_s_realized">Charged only on a backer's realized gain.</span>
 						</label>
 						<label class="vx-field">
-							<span class="vx-label">Max drawdown</span>
+							<span class="vx-label" data-i18n="vaults.max_drawdown">Max drawdown</span>
 							<div class="vx-input-suffix"><input id="vx-open-dd" class="vx-input" type="number" min="1" max="90" step="1" value="25" /><span>%</span></div>
-							<span class="vx-hint">Trading halts if NAV falls this far from peak.</span>
+							<span class="vx-hint" data-i18n="vaults.trading_halts_if_nav_falls_this_far">Trading halts if NAV falls this far from peak.</span>
 						</label>
 					</div>
 					<div class="vx-field-row">
 						<label class="vx-field">
-							<span class="vx-label">Max per trade</span>
+							<span class="vx-label" data-i18n="vaults.max_per_trade">Max per trade</span>
 							<div class="vx-input-suffix"><span>$</span><input id="vx-open-pertrade" class="vx-input" type="number" min="1" step="1" value="100" required /></div>
-							<span class="vx-hint">Hard ceiling on any single buy.</span>
+							<span class="vx-hint" data-i18n="vaults.hard_ceiling_on_any_single_buy">Hard ceiling on any single buy.</span>
 						</label>
 						<label class="vx-field">
-							<span class="vx-label">Daily budget</span>
+							<span class="vx-label" data-i18n="vaults.daily_budget">Daily budget</span>
 							<div class="vx-input-suffix"><span>$</span><input id="vx-open-daily" class="vx-input" type="number" min="1" step="1" value="500" required /></div>
-							<span class="vx-hint">Rolling 24h deploy cap.</span>
+							<span class="vx-hint" data-i18n="vaults.rolling_24h_deploy_cap">Rolling 24h deploy cap.</span>
 						</label>
 					</div>
 					<label class="vx-field">
-						<span class="vx-label">Per-backer cap <span class="vx-opt">(optional)</span></span>
+						<span class="vx-label" data-i18n-html="vaults.per_backer_cap_optional">Per-backer cap <span class="vx-opt">(optional)</span></span>
 						<div class="vx-input-suffix"><span>$</span><input id="vx-open-cap" class="vx-input" type="number" min="0" step="1" placeholder="no cap" /></div>
-						<span class="vx-hint">Max any single backer can stake.</span>
+						<span class="vx-hint" data-i18n="vaults.max_any_single_backer_can_stake">Max any single backer can stake.</span>
 					</label>
 					<div class="vx-form-err" id="vx-open-err" hidden></div>
-					<button class="vx-btn vx-btn--primary vx-btn--block" id="vx-open-submit" type="submit">Open vault</button>
+					<button class="vx-btn vx-btn--primary vx-btn--block" id="vx-open-submit" type="submit" data-i18n="vaults.open_vault">Open vault</button>
 				</form>
 			</div>
 		</div>
@@ -154,7 +154,7 @@
 		<div class="vx-modal" id="vx-back-modal" hidden role="dialog" aria-modal="true" aria-labelledby="vx-back-title">
 			<div class="vx-modal-backdrop" data-close></div>
 			<div class="vx-modal-card" role="document">
-				<button class="vx-modal-x" type="button" data-close aria-label="Close">×</button>
+				<button class="vx-modal-x" type="button" data-close aria-label="Close" data-i18n-attr="aria-label:vaults.close_arialabel_2">×</button>
 				<div id="vx-back-modal-body"></div>
 			</div>
 		</div>
@@ -163,5 +163,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -20,11 +20,11 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="robots" content="noindex, nofollow" />
-		<title>Ring Dashboard · Control · three.ws</title>
+		<title data-i18n="admin_ring.meta_title">Ring Dashboard · Control · three.ws</title>
 		<meta
 			name="description"
 			content="Operator dashboard for the closed-loop x402 ring economy — live settlement pulse, loop balances, activity feed, fees, integrity, and coverage."
-		/>
+		 data-i18n-attr="content:admin_ring.meta_description"/>
 		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/src/admin-ring.css" />
 	</head>
@@ -36,8 +36,8 @@
 			<!-- Auth gate -->
 			<section class="rg-gate" id="rg-gate" hidden>
 				<div class="rg-gate-mark" aria-hidden="true">◎</div>
-				<h1>Ring Dashboard</h1>
-				<p>Operator control. Enter the secret to watch the economy breathe.</p>
+				<h1 data-i18n="admin_ring.ring_dashboard">Ring Dashboard</h1>
+				<p data-i18n="admin_ring.operator_control_enter_the_secret_to_watch">Operator control. Enter the secret to watch the economy breathe.</p>
 				<form id="rg-gate-form" autocomplete="off">
 					<input
 						type="password"
@@ -47,7 +47,7 @@
 						aria-label="Operator secret"
 						autocomplete="current-password"
 					/>
-					<button type="submit" class="rg-btn rg-btn-primary">Unlock</button>
+					<button type="submit" class="rg-btn rg-btn-primary" data-i18n="admin_ring.unlock">Unlock</button>
 					<p class="rg-gate-err" id="rg-gate-err" role="alert" aria-live="assertive"></p>
 				</form>
 			</section>
@@ -57,9 +57,9 @@
 				<!-- Persistent internal-volume label -->
 				<div class="rg-flag" role="note">
 					<span aria-hidden="true">⚠</span>
-					<b>INTERNAL DOGFOODING VOLUME</b>
+					<b data-i18n="admin_ring.internal_dogfooding_volume">INTERNAL DOGFOODING VOLUME</b>
 					<span
-						>— not organic revenue. Every payment below is platform wallets paying platform
+						 data-i18n="admin_ring.not_organic_revenue_every_payment_below_is">— not organic revenue. Every payment below is platform wallets paying platform
 						endpoints, in a closed loop.</span
 					>
 				</div>
@@ -67,25 +67,25 @@
 				<!-- Hero -->
 				<header class="rg-hero">
 					<div>
-						<p class="rg-kicker">
+						<p class="rg-kicker" data-i18n-html="admin_ring.loading_closed_loop_x402">
 							<span class="rg-pulse-dot" id="rg-hero-dot"></span>
 							<span id="rg-hero-word">Loading</span> · closed-loop x402
 						</p>
-						<h1 class="rg-title">Ring <em>Dashboard</em></h1>
-						<p class="rg-sub">
+						<h1 class="rg-title" data-i18n-html="admin_ring.ring_dashboard_2">Ring <em>Dashboard</em></h1>
+						<p class="rg-sub" data-i18n="admin_ring.the_heartbeat_of_the_self_cycled_agent">
 							The heartbeat of the self-cycled agent economy — per-minute settlement
 							pulse, who bought what, SOL burned vs budget, wallet floors, and integrity.
 						</p>
 					</div>
 					<div class="rg-hero-r">
 						<div class="rg-periods" id="rg-periods" role="group" aria-label="Report window">
-							<button data-period="24h" class="on">24h</button>
-							<button data-period="7d">7d</button>
-							<button data-period="30d">30d</button>
-							<button data-period="all">All</button>
+							<button data-period="24h" class="on" data-i18n="admin_ring.24h">24h</button>
+							<button data-period="7d" data-i18n="admin_ring.7d">7d</button>
+							<button data-period="30d" data-i18n="admin_ring.30d">30d</button>
+							<button data-period="all" data-i18n="admin_ring.all">All</button>
 						</div>
-						<button class="rg-btn" id="rg-pause" title="Pause polling (p)">⏸ Pause</button>
-						<button class="rg-btn" id="rg-refresh" title="Refresh now (r)">↻ Refresh</button>
+						<button class="rg-btn" id="rg-pause" title="Pause polling (p)" data-i18n="admin_ring.pause" data-i18n-attr="title:admin_ring.pause_polling_p_title">⏸ Pause</button>
+						<button class="rg-btn" id="rg-refresh" title="Refresh now (r)" data-i18n="admin_ring.refresh" data-i18n-attr="title:admin_ring.refresh_now_r_title">↻ Refresh</button>
 					</div>
 				</header>
 
@@ -96,8 +96,8 @@
 					<!-- Pulse strip -->
 					<section class="rg-card" aria-labelledby="rg-pulse-h">
 						<div class="rg-card-h">
-							<h2 id="rg-pulse-h">Settlement pulse</h2>
-							<span class="rg-meta" id="rg-pulse-meta">last 60 min</span>
+							<h2 id="rg-pulse-h" data-i18n="admin_ring.settlement_pulse">Settlement pulse</h2>
+							<span class="rg-meta" id="rg-pulse-meta" data-i18n="admin_ring.last_60_min">last 60 min</span>
 						</div>
 						<div class="rg-pulse">
 							<div class="rg-pulse-num">
@@ -107,7 +107,7 @@
 							<div>
 								<div class="rg-spark" id="rg-spark" aria-hidden="true"></div>
 								<div class="rg-spark-axis">
-									<span>60m ago</span><span id="rg-spark-mid"></span><span>now</span>
+									<span data-i18n="admin_ring.60m_ago">60m ago</span><span id="rg-spark-mid"></span><span data-i18n="admin_ring.now">now</span>
 								</div>
 							</div>
 						</div>
@@ -116,7 +116,7 @@
 					<!-- Loop diagram -->
 					<section class="rg-card" aria-labelledby="rg-loop-h">
 						<div class="rg-card-h">
-							<h2 id="rg-loop-h">The loop</h2>
+							<h2 id="rg-loop-h" data-i18n="admin_ring.the_loop">The loop</h2>
 							<span class="rg-meta" id="rg-loop-meta"></span>
 						</div>
 						<div class="rg-loop" id="rg-loop"></div>
@@ -126,7 +126,7 @@
 						<!-- Activity feed -->
 						<section class="rg-card" aria-labelledby="rg-feed-h">
 							<div class="rg-card-h">
-								<h2 id="rg-feed-h">Activity feed</h2>
+								<h2 id="rg-feed-h" data-i18n="admin_ring.activity_feed">Activity feed</h2>
 								<span class="rg-meta" id="rg-feed-meta"></span>
 							</div>
 							<div class="rg-feed-wrap" id="rg-feed-wrap"></div>
@@ -136,7 +136,7 @@
 							<!-- Fees -->
 							<section class="rg-card" aria-labelledby="rg-fees-h">
 								<div class="rg-card-h">
-									<h2 id="rg-fees-h">Fees &amp; burn</h2>
+									<h2 id="rg-fees-h" data-i18n="admin_ring.fees_burn">Fees &amp; burn</h2>
 									<span class="rg-meta" id="rg-fees-meta"></span>
 								</div>
 								<dl class="rg-metrics" id="rg-fees"></dl>
@@ -145,7 +145,7 @@
 							<!-- Integrity -->
 							<section class="rg-card" aria-labelledby="rg-int-h">
 								<div class="rg-card-h">
-									<h2 id="rg-int-h">Integrity</h2>
+									<h2 id="rg-int-h" data-i18n="admin_ring.integrity">Integrity</h2>
 									<span class="rg-meta" id="rg-int-meta"></span>
 								</div>
 								<div id="rg-integrity"></div>
@@ -156,7 +156,7 @@
 					<!-- Coverage -->
 					<section class="rg-card" aria-labelledby="rg-cov-h">
 						<div class="rg-card-h">
-							<h2 id="rg-cov-h">Endpoint coverage</h2>
+							<h2 id="rg-cov-h" data-i18n="admin_ring.endpoint_coverage">Endpoint coverage</h2>
 							<span class="rg-meta" id="rg-cov-meta"></span>
 						</div>
 						<div class="rg-cov" id="rg-coverage"></div>
@@ -170,5 +170,7 @@
 		</div>
 
 		<script type="module" src="/src/admin-ring.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

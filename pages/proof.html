@@ -4,13 +4,13 @@
 		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Verify Custody · three.ws</title>
-		<meta name="description" content="Verify your three.ws agent wallet's custody yourself — recompute your Merkle leaf, walk the path, and confirm it against the root anchored on Solana, entirely in your browser. Don't trust, verify." />
+		<title data-i18n="proof.meta_title">Verify Custody · three.ws</title>
+		<meta name="description" content="Verify your three.ws agent wallet's custody yourself — recompute your Merkle leaf, walk the path, and confirm it against the root anchored on Solana, entirely in your browser. Don't trust, verify."  data-i18n-attr="content:proof.meta_description"/>
 		<meta name="robots" content="noindex, follow" />
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Verify Custody · three.ws" />
-		<meta property="og:description" content="Recompute your Merkle leaf, walk the path, and confirm it against the on-chain root — entirely in your browser." />
+		<meta property="og:title" content="Verify Custody · three.ws"  data-i18n-attr="content:proof.meta_og_title"/>
+		<meta property="og:description" content="Recompute your Merkle leaf, walk the path, and confirm it against the on-chain root — entirely in your browser."  data-i18n-attr="content:proof.meta_og_description"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -34,9 +34,9 @@
 
 		<main class="poc-shell">
 			<section class="poc-hero">
-				<p class="poc-kicker">Don't trust · verify</p>
-				<h1 class="poc-title">Verify your custody</h1>
-				<p class="poc-sub">Your wallet's balance and authorized-state are committed to a Merkle tree whose root is anchored on Solana. This page recomputes your leaf, walks the path to that root, and reads the anchor straight off-chain — all in your browser. We never tell you it's fine; you check it. See the platform-wide picture on the <a href="/integrity">public integrity page</a>.</p>
+				<p class="poc-kicker" data-i18n="proof.don_t_trust_verify">Don't trust · verify</p>
+				<h1 class="poc-title" data-i18n="proof.verify_your_custody">Verify your custody</h1>
+				<p class="poc-sub" data-i18n-html="proof.your_wallet_s_balance_and_authorized_state">Your wallet's balance and authorized-state are committed to a Merkle tree whose root is anchored on Solana. This page recomputes your leaf, walks the path to that root, and reads the anchor straight off-chain — all in your browser. We never tell you it's fine; you check it. See the platform-wide picture on the <a href="/integrity">public integrity page</a>.</p>
 			</section>
 			<div id="poc-root" aria-live="polite"></div>
 		</main>
@@ -44,5 +44,7 @@
 		<script type="module" src="/src/proof.js"></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

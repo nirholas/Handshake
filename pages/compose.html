@@ -4,10 +4,10 @@
 		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Scene Composer · three.ws</title>
-		<meta name="description" content="Forge 3D items in real time and attach them to your avatar or place them in the scene. Move, rotate, scale, and save your creation." />
-		<meta property="og:title" content="Scene Composer · three.ws" />
-		<meta property="og:description" content="Generate 3D items, dress your avatar, and build your world." />
+		<title data-i18n="compose.meta_title">Scene Composer · three.ws</title>
+		<meta name="description" content="Forge 3D items in real time and attach them to your avatar or place them in the scene. Move, rotate, scale, and save your creation."  data-i18n-attr="content:compose.meta_description"/>
+		<meta property="og:title" content="Scene Composer · three.ws"  data-i18n-attr="content:compose.meta_og_title"/>
+		<meta property="og:description" content="Generate 3D items, dress your avatar, and build your world."  data-i18n-attr="content:compose.meta_og_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:url" content="https://three.ws/compose" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Scene+Composer&amp;d=Real-time+3D+scene+composer%3A+forge+items+from+text%2C+attach+them+to+your+avatar%27s+skeleton+bones%2C+arrange+and+scale+freely%2C+then+export+your+creation+or+save+it+&amp;p=%2Fcompose" />
@@ -224,8 +224,8 @@
 	
 	<link rel="canonical" href="https://three.ws/compose">
 	<meta property="og:site_name" content="three.ws">
-	<meta name="twitter:title" content="Scene Composer · three.ws">
-	<meta name="twitter:description" content="Real-time 3D scene composer: forge items from text, attach them to your avatar's skeleton bones, arrange and scale freely, then export your creation or save it as an outfit.">
+	<meta name="twitter:title" content="Scene Composer · three.ws" data-i18n-attr="content:compose.meta_twitter_title">
+	<meta name="twitter:description" content="Real-time 3D scene composer: forge items from text, attach them to your avatar's skeleton bones, arrange and scale freely, then export your creation or save it as an outfit." data-i18n-attr="content:compose.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Scene+Composer&amp;d=Real-time+3D+scene+composer%3A+forge+items+from+text%2C+attach+them+to+your+avatar%27s+skeleton+bones%2C+arrange+and+scale+freely%2C+then+export+your+creation+or+save+it+&amp;p=%2Fcompose">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Scene Composer","description":"Real-time 3D scene composer: forge items from text, attach them to your avatar's skeleton bones, arrange and scale freely, then export your creation or save it as an outfit.","url":"https://three.ws/compose","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -237,47 +237,47 @@
 		<div id="cr">
 			<!-- Topbar -->
 			<header id="tb">
-				<a href="/" class="tbl">three.ws</a>
-				<span class="tbp">Scene Composer</span>
+				<a href="/" class="tbl" data-i18n="compose.three_ws">three.ws</a>
+				<span class="tbp" data-i18n="compose.scene_composer">Scene Composer</span>
 				<div class="tbs"></div>
 				<div class="tbg">
-					<button class="btn" id="btn-undo" title="Undo (Ctrl+Z)" disabled>↩</button>
-					<button class="btn" id="btn-redo" title="Redo (Ctrl+Y)" disabled>↪</button>
+					<button class="btn" id="btn-undo" title="Undo (Ctrl+Z)" disabled data-i18n-attr="title:compose.undo_ctrl_z_title">↩</button>
+					<button class="btn" id="btn-redo" title="Redo (Ctrl+Y)" disabled data-i18n-attr="title:compose.redo_ctrl_y_title">↪</button>
 				</div>
 				<div class="tbs"></div>
 				<div class="tbg">
-					<button class="btn active" id="btn-translate" title="Translate (W)">Move <span class="bkey">W</span></button>
-					<button class="btn" id="btn-rotate" title="Rotate (E)">Rotate <span class="bkey">E</span></button>
-					<button class="btn" id="btn-scale" title="Scale (R)">Scale <span class="bkey">R</span></button>
+					<button class="btn active" id="btn-translate" title="Translate (W)" data-i18n-html="compose.move_w" data-i18n-attr="title:compose.translate_w_title">Move <span class="bkey">W</span></button>
+					<button class="btn" id="btn-rotate" title="Rotate (E)" data-i18n-html="compose.rotate_e" data-i18n-attr="title:compose.rotate_e_title">Rotate <span class="bkey">E</span></button>
+					<button class="btn" id="btn-scale" title="Scale (R)" data-i18n-html="compose.scale_r" data-i18n-attr="title:compose.scale_r_title">Scale <span class="bkey">R</span></button>
 				</div>
 				<div class="tbs"></div>
 				<div class="tbg">
-					<button class="btn" id="btn-space" title="Toggle space (X)"><span id="spl">World</span></button>
-					<button class="btn" id="btn-snap" title="Toggle snap (Ctrl+G)">⊞ Snap</button>
+					<button class="btn" id="btn-space" title="Toggle space (X)" data-i18n-html="compose.world" data-i18n-attr="title:compose.toggle_space_x_title"><span id="spl">World</span></button>
+					<button class="btn" id="btn-snap" title="Toggle snap (Ctrl+G)" data-i18n="compose.snap" data-i18n-attr="title:compose.toggle_snap_ctrl_g_title">⊞ Snap</button>
 				</div>
 				<div class="tbs"></div>
 				<div class="tbg campw">
-					<button class="btn" id="btn-cam" title="Camera views">📷 View ▾</button>
+					<button class="btn" id="btn-cam" title="Camera views" data-i18n="compose.view" data-i18n-attr="title:compose.camera_views_title">📷 View ▾</button>
 					<div id="cmenu" hidden>
-						<div class="cmi" data-cam="front">Front <span class="cmik">Num1</span></div>
+						<div class="cmi" data-cam="front">Front <span class="cmik" data-i18n="compose.num1">Num1</span></div>
 						<div class="cmi" data-cam="back">Back</div>
-						<div class="cmi" data-cam="left">Left <span class="cmik">Num3</span></div>
+						<div class="cmi" data-cam="left">Left <span class="cmik" data-i18n="compose.num3">Num3</span></div>
 						<div class="cmi" data-cam="right">Right</div>
-						<div class="cmi" data-cam="top">Top <span class="cmik">Num7</span></div>
+						<div class="cmi" data-cam="top">Top <span class="cmik" data-i18n="compose.num7">Num7</span></div>
 						<div class="cmi" data-cam="iso">Isometric</div>
 					</div>
 				</div>
 				<div class="tbsp"></div>
 				<span id="ss"></span>
-				<button class="btn" id="btn-screenshot" title="Screenshot (Ctrl+P)">⬡ Shot</button>
-				<button class="btn" id="btn-export">Export GLB</button>
-				<button class="btn pri" id="btn-save-outfit">Save Outfit</button>
-				<button class="btn" id="btn-help" title="Keyboard shortcuts (?)">?</button>
+				<button class="btn" id="btn-screenshot" title="Screenshot (Ctrl+P)" data-i18n="compose.shot" data-i18n-attr="title:compose.screenshot_ctrl_p_title">⬡ Shot</button>
+				<button class="btn" id="btn-export" data-i18n="compose.export_glb">Export GLB</button>
+				<button class="btn pri" id="btn-save-outfit" data-i18n="compose.save_outfit">Save Outfit</button>
+				<button class="btn" id="btn-help" title="Keyboard shortcuts (?)" data-i18n-attr="title:compose.keyboard_shortcuts_title">?</button>
 			</header>
 
 			<!-- Left panel -->
 			<aside id="po">
-				<div class="ph">Scene <button class="phb" id="btn-load-av">Load Avatar</button></div>
+				<div class="ph">Scene <button class="phb" id="btn-load-av" data-i18n="compose.load_avatar">Load Avatar</button></div>
 				<div id="ol"></div>
 				<div id="ins"><div class="ie">Select an object</div></div>
 			</aside>
@@ -296,44 +296,44 @@
 					<div class="apb">Load an avatar to attach items to its bones, or start fresh and build freely.</div>
 					<div class="apr">
 						<input class="api" type="url" id="av-url" placeholder="Paste GLB URL or avatar ID…" autocomplete="off" />
-						<button class="apbt" id="btn-load-url">Load</button>
+						<button class="apbt" id="btn-load-url" data-i18n="compose.load">Load</button>
 					</div>
-					<span class="apor">or</span>
-					<button class="aplk" id="btn-browse-av">Browse my avatars</button>
-					<button class="apsk" id="btn-skip">Start with empty scene</button>
+					<span class="apor" data-i18n="compose.or">or</span>
+					<button class="aplk" id="btn-browse-av" data-i18n="compose.browse_my_avatars">Browse my avatars</button>
+					<button class="apsk" id="btn-skip" data-i18n="compose.start_with_empty_scene">Start with empty scene</button>
 				</div>
 			</main>
 
 			<!-- Right panel -->
 			<aside id="pf">
 				<div class="fh2">
-					<h2>⚡ Forge an Item</h2>
-					<p>Describe it — we'll build it in 3D</p>
+					<h2 data-i18n="compose.forge_an_item">⚡ Forge an Item</h2>
+					<p data-i18n="compose.describe_it_we_ll_build_it_in">Describe it — we'll build it in 3D</p>
 				</div>
 				<div class="iw">
 					<div class="il">Type</div>
 					<div class="ics" id="intent-chips">
-						<button class="ic a" data-intent="">Any</button>
-						<button class="ic" data-intent="accessory">Accessory</button>
-						<button class="ic" data-intent="item">Item</button>
-						<button class="ic" data-intent="scene">Scene</button>
-						<button class="ic" data-intent="creature">Creature</button>
-						<button class="ic" data-intent="vehicle">Vehicle</button>
+						<button class="ic a" data-intent="" data-i18n="compose.any">Any</button>
+						<button class="ic" data-intent="accessory" data-i18n="compose.accessory">Accessory</button>
+						<button class="ic" data-intent="item" data-i18n="compose.item">Item</button>
+						<button class="ic" data-intent="scene" data-i18n="compose.scene">Scene</button>
+						<button class="ic" data-intent="creature" data-i18n="compose.creature">Creature</button>
+						<button class="ic" data-intent="vehicle" data-i18n="compose.vehicle">Vehicle</button>
 					</div>
 				</div>
 				<div class="pw">
 					<textarea id="fp" placeholder="A glowing katana with blue neon energy…" rows="3"></textarea>
 					<div class="sps" id="sps"></div>
-					<button id="fb"><span class="bs"></span><span class="bl">⚡ Forge</span></button>
+					<button id="fb" data-i18n-html="compose.forge"><span class="bs"></span><span class="bl">⚡ Forge</span></button>
 					<div class="fpr" id="fpr">
 						<div class="fprb"><div class="fprf" id="fprf"></div></div>
 						<div class="fprm" id="fprm">Starting…</div>
 					</div>
 					<div class="fe" id="fe"></div>
 				</div>
-				<div class="gh">Recent Creations <a href="/forge" target="_blank" rel="noopener">Open Forge →</a></div>
+				<div class="gh">Recent Creations <a href="/forge" target="_blank" rel="noopener" data-i18n="compose.open_forge">Open Forge →</a></div>
 				<div id="gl"><div class="ge">Loading…</div></div>
-				<label id="dz" title="Drop a GLB/glTF file">
+				<label id="dz" title="Drop a GLB/glTF file" data-i18n-attr="title:compose.drop_a_glb_gltf_file_title">
 					<input type="file" id="gfi" accept=".glb,.gltf" />
 					Drop GLB / glTF · or click to browse
 				</label>
@@ -343,7 +343,7 @@
 		<!-- Avatar modal -->
 		<div id="am" hidden role="dialog" aria-modal="true" aria-label="Choose an avatar">
 			<div class="amd">
-				<div class="amh"><span>Choose an Avatar</span><button class="amc" id="am-close" aria-label="Close avatar picker">×</button></div>
+				<div class="amh"><span data-i18n="compose.choose_an_avatar">Choose an Avatar</span><button class="amc" id="am-close" aria-label="Close avatar picker" data-i18n-attr="aria-label:compose.close_avatar_picker_arialabel">×</button></div>
 				<div id="amb"><div style="grid-column:1/-1;text-align:center;padding:24px;color:#52525b;font-size:12px;">Loading…</div></div>
 			</div>
 		</div>
@@ -351,29 +351,31 @@
 		<!-- Help panel -->
 		<div id="hp" hidden role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
 			<div class="hpd">
-				<div class="hph"><h3>Keyboard Shortcuts</h3><button class="hpc" id="hp-close" aria-label="Close shortcuts panel">×</button></div>
+				<div class="hph"><h3 data-i18n="compose.keyboard_shortcuts">Keyboard Shortcuts</h3><button class="hpc" id="hp-close" aria-label="Close shortcuts panel" data-i18n-attr="aria-label:compose.close_shortcuts_panel_arialabel">×</button></div>
 				<div class="hpg">
-					<div class="hpr"><span>Translate</span><span class="hpk">W</span></div>
-					<div class="hpr"><span>Rotate</span><span class="hpk">E</span></div>
-					<div class="hpr"><span>Scale</span><span class="hpk">R</span></div>
-					<div class="hpr"><span>Focus selected</span><span class="hpk">F</span></div>
-					<div class="hpr"><span>Deselect</span><span class="hpk">Esc</span></div>
-					<div class="hpr"><span>Delete</span><span class="hpk">Del</span></div>
-					<div class="hpr"><span>Duplicate</span><span class="hpk">Ctrl D</span></div>
-					<div class="hpr"><span>Undo</span><span class="hpk">Ctrl Z</span></div>
-					<div class="hpr"><span>Redo</span><span class="hpk">Ctrl Y</span></div>
-					<div class="hpr"><span>Screenshot</span><span class="hpk">Ctrl P</span></div>
-					<div class="hpr"><span>Toggle snap</span><span class="hpk">Ctrl G</span></div>
-					<div class="hpr"><span>Toggle space</span><span class="hpk">X</span></div>
-					<div class="hpr"><span>Front view</span><span class="hpk">Num 1</span></div>
-					<div class="hpr"><span>Left view</span><span class="hpk">Num 3</span></div>
-					<div class="hpr"><span>Top view</span><span class="hpk">Num 7</span></div>
-					<div class="hpr"><span>Help</span><span class="hpk">?</span></div>
+					<div class="hpr"><span data-i18n="compose.translate">Translate</span><span class="hpk" data-i18n="compose.w">W</span></div>
+					<div class="hpr"><span data-i18n="compose.rotate">Rotate</span><span class="hpk" data-i18n="compose.e">E</span></div>
+					<div class="hpr"><span data-i18n="compose.scale">Scale</span><span class="hpk" data-i18n="compose.r">R</span></div>
+					<div class="hpr"><span data-i18n="compose.focus_selected">Focus selected</span><span class="hpk" data-i18n="compose.f">F</span></div>
+					<div class="hpr"><span data-i18n="compose.deselect">Deselect</span><span class="hpk" data-i18n="compose.esc">Esc</span></div>
+					<div class="hpr"><span data-i18n="compose.delete">Delete</span><span class="hpk" data-i18n="compose.del">Del</span></div>
+					<div class="hpr"><span data-i18n="compose.duplicate">Duplicate</span><span class="hpk" data-i18n="compose.ctrl_d">Ctrl D</span></div>
+					<div class="hpr"><span data-i18n="compose.undo">Undo</span><span class="hpk" data-i18n="compose.ctrl_z">Ctrl Z</span></div>
+					<div class="hpr"><span data-i18n="compose.redo">Redo</span><span class="hpk" data-i18n="compose.ctrl_y">Ctrl Y</span></div>
+					<div class="hpr"><span data-i18n="compose.screenshot">Screenshot</span><span class="hpk" data-i18n="compose.ctrl_p">Ctrl P</span></div>
+					<div class="hpr"><span data-i18n="compose.toggle_snap">Toggle snap</span><span class="hpk" data-i18n="compose.ctrl_g">Ctrl G</span></div>
+					<div class="hpr"><span data-i18n="compose.toggle_space">Toggle space</span><span class="hpk" data-i18n="compose.x">X</span></div>
+					<div class="hpr"><span data-i18n="compose.front_view">Front view</span><span class="hpk" data-i18n="compose.num_1">Num 1</span></div>
+					<div class="hpr"><span data-i18n="compose.left_view">Left view</span><span class="hpk" data-i18n="compose.num_3">Num 3</span></div>
+					<div class="hpr"><span data-i18n="compose.top_view">Top view</span><span class="hpk" data-i18n="compose.num_7">Num 7</span></div>
+					<div class="hpr"><span data-i18n="compose.help">Help</span><span class="hpk">?</span></div>
 				</div>
 			</div>
 		</div>
 
 		<div id="tr"></div>
 		<script type="module" src="/src/scene-compose.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

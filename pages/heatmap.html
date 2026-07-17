@@ -18,19 +18,19 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Crypto Heatmap · three.ws</title>
+		<title data-i18n="heatmap.meta_title">Crypto Heatmap · three.ws</title>
 		<meta
 			name="description"
 			content="A live market heatmap of the top cryptocurrencies — each tile sized by market cap and colored by its 24h or 7d move. See where money is flowing at a glance."
-		/>
+		 data-i18n-attr="content:heatmap.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/heatmap" />
-		<meta property="og:title" content="Crypto Heatmap · three.ws" />
+		<meta property="og:title" content="Crypto Heatmap · three.ws"  data-i18n-attr="content:heatmap.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="A live market heatmap — each coin sized by market cap and colored by its price move. See where money is flowing at a glance."
-		/>
+		 data-i18n-attr="content:heatmap.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+Market+Heatmap&amp;d=A+live+market+heatmap+of+the+top+cryptocurrencies%3A+every+tile+is+a+coin%2C+sized+by+market+cap+and+colored+by+its+24h+or+7d+price+move.+See+where+money+is+flowing&amp;p=%2Fheatmap"
@@ -39,11 +39,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Crypto Heatmap · three.ws" />
+		<meta name="twitter:title" content="Crypto Heatmap · three.ws"  data-i18n-attr="content:heatmap.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="A live market heatmap — each coin sized by market cap and colored by its price move."
-		/>
+		 data-i18n-attr="content:heatmap.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+Market+Heatmap&amp;d=A+live+market+heatmap+of+the+top+cryptocurrencies%3A+every+tile+is+a+coin%2C+sized+by+market+cap+and+colored+by+its+24h+or+7d+price+move.+See+where+money+is+flowing&amp;p=%2Fheatmap"
@@ -70,23 +70,23 @@
 
 		<main class="cv-container">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a><span class="sep">/</span
-				><span class="here">Heatmap</span>
+				<a href="/markets" data-i18n="heatmap.markets">Markets</a><span class="sep">/</span
+				><span class="here" data-i18n="heatmap.heatmap">Heatmap</span>
 			</nav>
-			<h1 class="cv-h1">Market Heatmap</h1>
-			<p class="cv-sub">
+			<h1 class="cv-h1" data-i18n="heatmap.market_heatmap">Market Heatmap</h1>
+			<p class="cv-sub" data-i18n="heatmap.the_whole_market_in_one_view_every">
 				The whole market in one view — every tile is a coin, sized by market cap and colored
 				by its price move. Green is up, red is down. Click any tile for its full profile.
 			</p>
 
 			<div class="hm-toolbar">
 				<div class="hm-seg" role="group" aria-label="Color by timeframe" id="hm-timeframe">
-					<button type="button" data-key="change_24h" aria-pressed="true">24h</button>
-					<button type="button" data-key="change_7d" aria-pressed="false">7d</button>
+					<button type="button" data-key="change_24h" aria-pressed="true" data-i18n="heatmap.24h">24h</button>
+					<button type="button" data-key="change_7d" aria-pressed="false" data-i18n="heatmap.7d">7d</button>
 				</div>
 				<div class="hm-seg" role="group" aria-label="Number of coins" id="hm-count">
-					<button type="button" data-count="50" aria-pressed="true">Top 50</button>
-					<button type="button" data-count="100" aria-pressed="false">Top 100</button>
+					<button type="button" data-count="50" aria-pressed="true" data-i18n="heatmap.top_50">Top 50</button>
+					<button type="button" data-count="100" aria-pressed="false" data-i18n="heatmap.top_100">Top 100</button>
 				</div>
 				<div class="hm-legend" aria-hidden="true">
 					<span>−</span><span class="bar"></span><span>+</span>
@@ -102,5 +102,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

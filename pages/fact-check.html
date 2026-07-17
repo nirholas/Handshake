@@ -4,25 +4,25 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Fact Check · three.ws</title>
+		<title data-i18n="fact_check.meta_title">Fact Check · three.ws</title>
 		<meta
 			name="description"
 			content="Sourced fact-checking with cryptographic attestations you can audit. Live search + LLM verdicts, a published accuracy benchmark, and a free daily lane — try a real check right here."
-		/>
+		 data-i18n-attr="content:fact_check.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/fact-check" />
-		<meta property="og:title" content="Fact Check · three.ws" />
+		<meta property="og:title" content="Fact Check · three.ws"  data-i18n-attr="content:fact_check.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Submit a claim, get a sourced verdict with a SHA-256 attestation — backed by a public, checkable accuracy benchmark. 3 free checks/day per IP, then $0.10 USDC via x402."
-		/>
+		 data-i18n-attr="content:fact_check.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Fact+Check&amp;d=Sourced+fact-checking+with+cryptographic+attestations+%E2%80%94+a+published%2C+checkable+accuracy+benchmark+plus+a+live+free-check+box.+3+free+checks%2Fday+per+IP%2C+then+%240.&amp;p=%2Ffact-check" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Fact Check · three.ws" />
+		<meta name="twitter:title" content="Fact Check · three.ws"  data-i18n-attr="content:fact_check.meta_twitter_title"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -38,7 +38,7 @@
 	
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="Fact Check — three.ws">
-	<meta name="twitter:description" content="Sourced fact-checking with cryptographic attestations — a published, checkable accuracy benchmark plus a live free-check box. 3 free checks/day per IP, then $0.10 USDC via x402.">
+	<meta name="twitter:description" content="Sourced fact-checking with cryptographic attestations — a published, checkable accuracy benchmark plus a live free-check box. 3 free checks/day per IP, then $0.10 USDC via x402." data-i18n-attr="content:fact_check.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Fact+Check&amp;d=Sourced+fact-checking+with+cryptographic+attestations+%E2%80%94+a+published%2C+checkable+accuracy+benchmark+plus+a+live+free-check+box.+3+free+checks%2Fday+per+IP%2C+then+%240.&amp;p=%2Ffact-check">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Fact Check","description":"Sourced fact-checking with cryptographic attestations — a published, checkable accuracy benchmark plus a live free-check box. 3 free checks/day per IP, then $0.10 USDC via x402.","url":"https://three.ws/fact-check","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&amp;t=Fact+Check&amp;d=Sourced+fact-checking+with+cryptographic+attestations+%E2%80%94+a+published%2C+checkable+accuracy+benchmark+plus+a+live+free-check+box.+3+free+checks%2Fday+per+IP%2C+then+%240.&amp;p=%2Ffact-check"}]}</script>
 </head>
@@ -54,5 +54,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

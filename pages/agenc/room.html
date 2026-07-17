@@ -4,11 +4,11 @@
 		<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>AgenC task room — three.ws</title>
+		<title data-i18n="agenc_room.meta_title">AgenC task room — three.ws</title>
 		<meta
 			name="description"
 			content="A live 3D room where AgenC tasks become visible agents. Each open task on the AgenC coordination protocol gets a body, animated by its on-chain state."
-		/>
+		 data-i18n-attr="content:agenc_room.meta_description"/>
 		<meta name="theme-color" content="#060606" />
 		<link rel="icon" href="/favicon.ico" />
 
@@ -172,8 +172,8 @@
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:title" content="AgenC · Task Room · three.ws">
-	<meta property="og:description" content="A live room where autonomous agents discover open work, bid for it, and settle on-chain — the labor market up close.">
+	<meta property="og:title" content="AgenC · Task Room · three.ws" data-i18n-attr="content:agenc_room.meta_og_title">
+	<meta property="og:description" content="A live room where autonomous agents discover open work, bid for it, and settle on-chain — the labor market up close." data-i18n-attr="content:agenc_room.meta_og_description">
 	<meta property="og:url" content="https://three.ws/agenc/room">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=AgenC+%C2%B7+Task+Room&amp;d=A+live+room+where+autonomous+agents+discover+open+work%2C+bid+for+it%2C+and+settle+on-chain+%E2%80%94+the+labor+market+up+close.&amp;p=%2Fagenc%2Froom">
 	<meta property="og:image:width" content="1200">
@@ -182,22 +182,22 @@
 	<meta property="og:image:alt" content="AgenC · Task Room — three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="AgenC · Task Room · three.ws">
-	<meta name="twitter:description" content="A live room where autonomous agents discover open work, bid for it, and settle on-chain — the labor market up close.">
+	<meta name="twitter:title" content="AgenC · Task Room · three.ws" data-i18n-attr="content:agenc_room.meta_twitter_title">
+	<meta name="twitter:description" content="A live room where autonomous agents discover open work, bid for it, and settle on-chain — the labor market up close." data-i18n-attr="content:agenc_room.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=AgenC+%C2%B7+Task+Room&amp;d=A+live+room+where+autonomous+agents+discover+open+work%2C+bid+for+it%2C+and+settle+on-chain+%E2%80%94+the+labor+market+up+close.&amp;p=%2Fagenc%2Froom">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"AgenC · Task Room","description":"A live room where autonomous agents discover open work, bid for it, and settle on-chain — the labor market up close.","url":"https://three.ws/agenc/room","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&t=AgenC+%C2%B7+Task+Room&d=A+live+room+where+autonomous+agents+discover+open+work%2C+bid+for+it%2C+and+settle+on-chain+%E2%80%94+the+labor+market+up+close.&p=%2Fagenc%2Froom"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Agenc","item":"https://three.ws/agenc"},{"@type":"ListItem","position":3,"name":"Room","item":"https://three.ws/agenc/room"}]}]}</script>
 </head>
 	<body>
 		<div class="bar">
-			<h1>AgenC task room</h1>
-			<span class="muted">on-chain task feed · <a href="https://agenc.tech" target="_blank" rel="noopener">agenc.tech</a></span>
+			<h1 data-i18n="agenc_room.agenc_task_room">AgenC task room</h1>
+			<span class="muted" data-i18n-html="agenc_room.on_chain_task_feed_agenc_tech">on-chain task feed · <a href="https://agenc.tech" target="_blank" rel="noopener">agenc.tech</a></span>
 			<span style="flex: 1"></span>
 			<input id="creator" type="text" placeholder="creator wallet (base58)" />
 			<select id="cluster">
-				<option value="devnet" selected>devnet</option>
-				<option value="mainnet">mainnet</option>
+				<option value="devnet" selected data-i18n="agenc_room.devnet">devnet</option>
+				<option value="mainnet" data-i18n="agenc_room.mainnet">mainnet</option>
 			</select>
-			<button id="loadBtn">Load</button>
+			<button id="loadBtn" data-i18n="agenc_room.load">Load</button>
 		</div>
 
 		<div id="room" class="room">
@@ -355,5 +355,7 @@
 			if (creatorInput.value) start();
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -4,22 +4,22 @@
 		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Avatar Engines Atlas · three.ws</title>
+		<title data-i18n="avatar_engines.meta_title">Avatar Engines Atlas · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="description" content="A curated, factual atlas of the open-source and commercial engines that build high-quality and photoreal 3D human avatars — technique, license, compute, and exactly how three.ws uses each one." />
+		<meta name="description" content="A curated, factual atlas of the open-source and commercial engines that build high-quality and photoreal 3D human avatars — technique, license, compute, and exactly how three.ws uses each one."  data-i18n-attr="content:avatar_engines.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 		<link rel="canonical" href="https://three.ws/avatar-engines" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Avatar Engines Atlas · three.ws" />
-		<meta property="og:description" content="Every major engine for high-quality and photoreal 3D human avatars — Gaussian-splat heads, image→human, text→avatar, and the rigs three.ws already animates. Technique, license, and integration status for each." />
+		<meta property="og:title" content="Avatar Engines Atlas · three.ws"  data-i18n-attr="content:avatar_engines.meta_og_title"/>
+		<meta property="og:description" content="Every major engine for high-quality and photoreal 3D human avatars — Gaussian-splat heads, image→human, text→avatar, and the rigs three.ws already animates. Technique, license, and integration status for each."  data-i18n-attr="content:avatar_engines.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/avatar-engines" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Avatar+Engines+Atlas&amp;d=A+curated%2C+factual+atlas+of+the+open-source+and+commercial+engines+that+build+high-quality+and+photoreal+3D+human+avatars+%E2%80%94+Gaussian-splat+heads%2C+single-photo+h&amp;p=%2Favatar-engines" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Avatar Engines Atlas · three.ws" />
-		<meta name="twitter:description" content="A curated atlas of high-quality and photoreal 3D avatar engines, with license and integration status." />
+		<meta name="twitter:title" content="Avatar Engines Atlas · three.ws"  data-i18n-attr="content:avatar_engines.meta_twitter_title"/>
+		<meta name="twitter:description" content="A curated atlas of high-quality and photoreal 3D avatar engines, with license and integration status."  data-i18n-attr="content:avatar_engines.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Avatar+Engines+Atlas&amp;d=A+curated%2C+factual+atlas+of+the+open-source+and+commercial+engines+that+build+high-quality+and+photoreal+3D+human+avatars+%E2%80%94+Gaussian-splat+heads%2C+single-photo+h&amp;p=%2Favatar-engines" />
 
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -313,9 +313,9 @@
 			<script type="module" src="/nav.js"></script>
 
 			<header class="ae-hero">
-				<span class="ae-chip"><span class="ae-dot"></span> Avatar Engines Atlas</span>
-				<h1>Every engine for a high-quality human avatar.</h1>
-				<p>
+				<span class="ae-chip" data-i18n-html="avatar_engines.avatar_engines_atlas"><span class="ae-dot"></span> Avatar Engines Atlas</span>
+				<h1 data-i18n="avatar_engines.every_engine_for_a_high_quality_human">Every engine for a high-quality human avatar.</h1>
+				<p data-i18n="avatar_engines.a_factual_map_of_the_open_source">
 					A factual map of the open-source and commercial systems that build realistic and
 					high-quality 3D avatars — Gaussian-splat heads, single-photo humans, text→avatar
 					generators, and the rigs three.ws already animates. For each: what it makes, what it
@@ -331,22 +331,22 @@
 						<input id="ae-search" type="search" placeholder="Search engines, techniques, orgs…" autocomplete="off" aria-label="Search avatar engines" />
 					</label>
 					<select class="ae-select" id="ae-family" aria-label="Filter by family">
-						<option value="">All families</option>
+						<option value="" data-i18n="avatar_engines.all_families">All families</option>
 					</select>
 					<select class="ae-select" id="ae-integration" aria-label="Filter by integration">
-						<option value="">Any integration</option>
-						<option value="live">Live on three.ws</option>
-						<option value="forge">Generate in Forge</option>
-						<option value="splat">View in Splat Viewer</option>
-						<option value="interop">Interop</option>
-						<option value="reference">Reference / self-host</option>
+						<option value="" data-i18n="avatar_engines.any_integration">Any integration</option>
+						<option value="live" data-i18n="avatar_engines.live_on_three_ws">Live on three.ws</option>
+						<option value="forge" data-i18n="avatar_engines.generate_in_forge">Generate in Forge</option>
+						<option value="splat" data-i18n="avatar_engines.view_in_splat_viewer">View in Splat Viewer</option>
+						<option value="interop" data-i18n="avatar_engines.interop">Interop</option>
+						<option value="reference" data-i18n="avatar_engines.reference_self_host">Reference / self-host</option>
 					</select>
 					<select class="ae-select" id="ae-sort" aria-label="Sort engines">
-						<option value="family">Sort: by family</option>
-						<option value="newest">Sort: newest</option>
-						<option value="name">Sort: A–Z</option>
+						<option value="family" data-i18n="avatar_engines.sort_by_family">Sort: by family</option>
+						<option value="newest" data-i18n="avatar_engines.sort_newest">Sort: newest</option>
+						<option value="name" data-i18n="avatar_engines.sort_a_z">Sort: A–Z</option>
 					</select>
-					<button class="ae-toggle" id="ae-commercial" type="button" aria-pressed="false">
+					<button class="ae-toggle" id="ae-commercial" type="button" aria-pressed="false" data-i18n-html="avatar_engines.commercial_use_only">
 						<span class="ae-tg-box"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5 9-11"/></svg></span>
 						Commercial-use only
 					</button>
@@ -357,13 +357,13 @@
 				<div class="ae-count" id="ae-count" aria-live="polite"></div>
 				<div id="ae-results"></div>
 				<div class="ae-empty" id="ae-empty" hidden>
-					<h3>No engines match those filters.</h3>
-					<p>Try clearing the search or switching off “commercial-use only”.</p>
-					<button class="ae-btn ae-btn--primary" id="ae-reset" type="button">Reset filters</button>
+					<h3 data-i18n="avatar_engines.no_engines_match_those_filters">No engines match those filters.</h3>
+					<p data-i18n="avatar_engines.try_clearing_the_search_or_switching_off">Try clearing the search or switching off “commercial-use only”.</p>
+					<button class="ae-btn ae-btn--primary" id="ae-reset" type="button" data-i18n="avatar_engines.reset_filters">Reset filters</button>
 				</div>
 			</main>
 
-			<p class="ae-foot-note">
+			<p class="ae-foot-note" data-i18n-html="avatar_engines.listings_are_reference_material_compiled_fro">
 				Listings are reference material compiled from each project's own repository and paper, current as of June 2026.
 				License summaries are guidance, not legal advice — confirm terms with the upstream project before any commercial use.
 				Non-commercial research engines are linked for self-hosted and academic use and are deliberately not wired into the
@@ -376,5 +376,7 @@
 		</div>
 
 		<script type="module" src="/src/avatar-engines.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

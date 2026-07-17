@@ -18,19 +18,19 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Protocol Fees &amp; Revenue · three.ws</title>
+		<title data-i18n="fees.meta_title">Protocol Fees &amp; Revenue · three.ws</title>
 		<meta
 			name="description"
 			content="Live protocol fees and revenue across DeFi — the top protocols ranked by 24h fees, with category, chains, and 24h/7d/30d totals. See what users pay to use each protocol and what it keeps."
-		/>
+		 data-i18n-attr="content:fees.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/fees" />
-		<meta property="og:title" content="Protocol Fees &amp; Revenue · three.ws" />
+		<meta property="og:title" content="Protocol Fees &amp; Revenue · three.ws"  data-i18n-attr="content:fees.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Live protocol fees and revenue across DeFi — the top protocols ranked by 24h fees, with category, chains, and 24h/7d/30d totals."
-		/>
+		 data-i18n-attr="content:fees.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Protocol+Fees+%26+Revenue&amp;d=Fees+paid+by+users+and+revenue+kept+by+protocols+across+all+of+DeFi%2C+ranked+with+24h%2F7d%2F30d+totals+and+an+aggregate+history+chart.+Toggle+between+fees+and+reven&amp;p=%2Ffees"
@@ -41,11 +41,11 @@
 		<meta property="og:locale" content="en_US" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Protocol Fees &amp; Revenue · three.ws" />
+		<meta name="twitter:title" content="Protocol Fees &amp; Revenue · three.ws"  data-i18n-attr="content:fees.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Live protocol fees and revenue across DeFi — the top protocols ranked by 24h fees, with category, chains, and 24h/7d/30d totals."
-		/>
+		 data-i18n-attr="content:fees.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Protocol+Fees+%26+Revenue&amp;d=Fees+paid+by+users+and+revenue+kept+by+protocols+across+all+of+DeFi%2C+ranked+with+24h%2F7d%2F30d+totals+and+an+aggregate+history+chart.+Toggle+between+fees+and+reven&amp;p=%2Ffees"
@@ -84,12 +84,12 @@
 
 		<main class="cv-container">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a><span class="sep">/</span
-				><a href="/defi">DeFi</a><span class="sep">/</span
-				><span class="here">Fees &amp; Revenue</span>
+				<a href="/markets" data-i18n="fees.markets">Markets</a><span class="sep">/</span
+				><a href="/defi" data-i18n="fees.defi">DeFi</a><span class="sep">/</span
+				><span class="here" data-i18n="fees.fees_revenue">Fees &amp; Revenue</span>
 			</nav>
-			<h1 class="cv-h1">Protocol Fees &amp; Revenue</h1>
-			<p class="cv-sub">
+			<h1 class="cv-h1" data-i18n="fees.protocol_fees_revenue">Protocol Fees &amp; Revenue</h1>
+			<p class="cv-sub" data-i18n="fees.what_defi_protocols_earn_the_top_protocols">
 				What DeFi protocols earn — the top protocols ranked by the fees they generate, with
 				category, the chains they run on, and 24-hour, 7-day, and 30-day totals.
 			</p>
@@ -102,7 +102,7 @@
 					id="fx-tab-fees"
 					data-type="fees"
 					aria-selected="true"
-				>
+				 data-i18n="fees.fees">
 					Fees
 				</button>
 				<button
@@ -112,11 +112,11 @@
 					id="fx-tab-revenue"
 					data-type="revenue"
 					aria-selected="false"
-				>
+				 data-i18n="fees.revenue">
 					Revenue
 				</button>
 			</div>
-			<p class="fx-explainer" id="fx-explainer">
+			<p class="fx-explainer" id="fx-explainer" data-i18n-html="fees.fees_are_the_total_amount_users_pay">
 				<strong>Fees</strong> are the total amount users pay to use a protocol.
 				<strong>Revenue</strong> is the slice the protocol itself keeps after paying suppliers
 				and liquidity providers.
@@ -129,10 +129,10 @@
 			<section id="fx-chart" class="cv-section" aria-label="Aggregate fees over time"></section>
 
 			<div class="cv-toolbar">
-				<h2 class="cv-h2" style="margin: 0" id="fx-table-heading">Top Protocols by Fees</h2>
+				<h2 class="cv-h2" style="margin: 0" id="fx-table-heading" data-i18n="fees.top_protocols_by_fees">Top Protocols by Fees</h2>
 				<div class="cv-pills">
-					<a class="cv-pill" href="/dex-volumes">DEX Volumes →</a>
-					<a class="cv-pill" href="/defi">DeFi TVL →</a>
+					<a class="cv-pill" href="/dex-volumes" data-i18n="fees.dex_volumes">DEX Volumes →</a>
+					<a class="cv-pill" href="/defi" data-i18n="fees.defi_tvl">DeFi TVL →</a>
 				</div>
 			</div>
 
@@ -145,5 +145,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

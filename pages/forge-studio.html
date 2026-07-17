@@ -4,16 +4,16 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Studio · Object + Avatar from text · three.ws</title>
+		<title data-i18n="forge_studio.meta_title">Studio · Object + Avatar from text · three.ws</title>
 		<meta
 			name="description"
 			content="One place to turn text into 3D: forge a textured object (GLB) or describe a character and get a rigged avatar. Two pipelines, one canvas."
-		/>
-		<meta property="og:title" content="Studio — Object + Avatar from text · three.ws" />
+		 data-i18n-attr="content:forge_studio.meta_description"/>
+		<meta property="og:title" content="Studio — Object + Avatar from text · three.ws"  data-i18n-attr="content:forge_studio.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Forge a textured object from a prompt, or describe a character and get a rigged avatar — in one place."
-		/>
+		 data-i18n-attr="content:forge_studio.meta_og_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/forge-studio" />
@@ -22,11 +22,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Studio · Object + Avatar from text · three.ws" />
+		<meta name="twitter:title" content="Studio · Object + Avatar from text · three.ws"  data-i18n-attr="content:forge_studio.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="One place to turn text into 3D: forge a textured object (GLB) or describe a character and get a rigged avatar."
-		/>
+		 data-i18n-attr="content:forge_studio.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Studio+%E2%80%94+Object+%2B+Avatar+from+text&amp;d=One+canvas+for+both+text-to-3D+pipelines%3A+forge+a+textured+object+%28GLB%29+in+the+Object+tab%2C+or+describe+a+character+and+get+a+rigged+avatar+in+the+Avatar+tab.&amp;p=%2Fforge-studio" />
 		<meta name="theme-color" content="#080814" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -3149,8 +3149,8 @@
 
 		<main class="forge-main">
 			<header class="forge-head">
-				<h1>Studio</h1>
-				<p>Text → 3D, two ways. Forge a textured object, or describe a character and get a rigged avatar.</p>
+				<h1 data-i18n="forge_studio.studio">Studio</h1>
+				<p data-i18n="forge_studio.text_3d_two_ways_forge_a_textured">Text → 3D, two ways. Forge a textured object, or describe a character and get a rigged avatar.</p>
 				<div class="studio-tabs" role="tablist" aria-label="Studio mode">
 					<button
 						type="button"
@@ -3159,7 +3159,7 @@
 						data-studio-mode="object"
 						aria-selected="true"
 						aria-controls="studio-object"
-					>
+					 data-i18n-html="forge_studio.object">
 						<span class="dot" aria-hidden="true"></span>Object
 					</button>
 					<button
@@ -3169,7 +3169,7 @@
 						data-studio-mode="avatar"
 						aria-selected="false"
 						aria-controls="studio-avatar"
-					>
+					 data-i18n-html="forge_studio.avatar">
 						<span class="dot" aria-hidden="true"></span>Avatar
 					</button>
 					<button
@@ -3179,7 +3179,7 @@
 						data-studio-mode="lab"
 						aria-selected="false"
 						aria-controls="studio-lab"
-					>
+					 data-i18n-html="forge_studio.lab">
 						<span class="dot" aria-hidden="true"></span>Lab
 					</button>
 				</div>
@@ -3196,22 +3196,22 @@
 						aria-label="Generation mode"
 						id="mode-switch"
 					>
-						<button type="button" role="tab" data-mode="text" aria-selected="true">
+						<button type="button" role="tab" data-mode="text" aria-selected="true" data-i18n="forge_studio.describe_it">
 							Describe it
 						</button>
-						<button type="button" role="tab" data-mode="image" aria-selected="false">
+						<button type="button" role="tab" data-mode="image" aria-selected="false" data-i18n="forge_studio.from_photos">
 							From photos
 						</button>
 						<!-- Hidden until the catalog reports a live sketch engine (TripoSG
 						     self-host) — no dead tab on deployments without the worker. -->
-						<button type="button" role="tab" data-mode="sketch" aria-selected="false" hidden>
+						<button type="button" role="tab" data-mode="sketch" aria-selected="false" hidden data-i18n="forge_studio.from_a_sketch">
 							From a sketch
 						</button>
 					</div>
 				</div>
 				<!-- Text → 3D -->
 				<div id="text-pane">
-					<label for="prompt" class="is-hidden">Describe the object to generate</label>
+					<label for="prompt" class="is-hidden" data-i18n="forge_studio.describe_the_object_to_generate">Describe the object to generate</label>
 					<textarea
 						id="prompt"
 						name="prompt"
@@ -3220,7 +3220,7 @@
 						aria-describedby="prompt-coach"
 					></textarea>
 					<div class="prompt-tools" id="prompt-tools">
-						<button type="button" class="ptool" id="surprise" aria-label="Fill the box with a random vivid prompt">
+						<button type="button" class="ptool" id="surprise" aria-label="Fill the box with a random vivid prompt" data-i18n-attr="aria-label:forge_studio.fill_the_box_with_a_random_v_arialabel">
 							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 								<rect x="3" y="3" width="18" height="18" rx="3" />
 								<circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none" />
@@ -3246,7 +3246,7 @@
 					<div class="views-counter" id="views-counter" aria-live="polite">
 						<span class="views-pips" id="views-pips" aria-hidden="true"></span>
 						<span class="vc-text" id="views-counter-text"
-							><strong>0</strong> of 4 views</span
+							 data-i18n-html="forge_studio.0_of_4_views"><strong>0</strong> of 4 views</span
 						>
 					</div>
 					<div class="draw-cta-row">
@@ -3263,7 +3263,7 @@
 						hidden
 					/>
 					<label for="image-prompt" class="is-hidden"
-						>Optional guidance for reconstruction</label
+						 data-i18n="forge_studio.optional_guidance_for_reconstruction">Optional guidance for reconstruction</label
 					>
 					<textarea
 						id="image-prompt"
@@ -3272,7 +3272,7 @@
 						placeholder="Optional guidance — e.g. “matte plastic, neutral pose, no background”"
 					></textarea>
 					<span class="pd-slot" id="image-prompt-dictate-slot"></span>
-					<p class="views-hint">
+					<p class="views-hint" data-i18n-html="forge_studio.add_1_4_views_of_the_same">
 						Add 1–4 views of the <strong>same</strong> object (front · back · left ·
 						right). Drag to drop, click to browse, paste from the clipboard
 						(<kbd class="gen-kbd">⌘V</kbd> / <kbd class="gen-kbd">Ctrl+V</kbd>), drag a thumbnail to reorder.
@@ -3300,7 +3300,7 @@
 						hidden
 					/>
 					<label for="sketch-prompt" class="is-hidden"
-						>What does the sketch depict? (required)</label
+						 data-i18n="forge_studio.what_does_the_sketch_depict_required">What does the sketch depict? (required)</label
 					>
 					<textarea
 						id="sketch-prompt"
@@ -3310,7 +3310,7 @@
 						placeholder="What is it? — e.g. “a cartoon rocket with two tail fins”"
 					></textarea>
 					<span class="pd-slot" id="sketch-prompt-dictate-slot"></span>
-					<p class="views-hint">
+					<p class="views-hint" data-i18n-html="forge_studio.drop_one_drawing_dark_strokes_on_a">
 						Drop one drawing — dark strokes on a light background work best — and say
 						what it depicts<span class="req-tag" id="sketch-req-tag">Required</span>.
 						PNG/JPG/WebP, up to 8&nbsp;MB. The result is untextured geometry: use
@@ -3321,12 +3321,12 @@
 				<!-- Quality tier + generation engine + BYOK key -->
 				<div class="forge-quality" id="forge-quality">
 					<div class="fq-row">
-						<span class="fq-label" id="tier-label">Quality</span>
+						<span class="fq-label" id="tier-label" data-i18n="forge_studio.quality">Quality</span>
 						<div class="aspect" role="group" aria-labelledby="tier-label" id="tier">
-							<button type="button" data-tier="draft" aria-pressed="false">
+							<button type="button" data-tier="draft" aria-pressed="false" data-i18n="forge_studio.draft">
 								Draft
 							</button>
-							<button type="button" data-tier="standard" aria-pressed="true">
+							<button type="button" data-tier="standard" aria-pressed="true" data-i18n="forge_studio.standard">
 								Standard
 							</button>
 							<button
@@ -3335,7 +3335,7 @@
 								data-access="locked"
 								aria-pressed="false"
 								aria-label="High quality — $THREE holder feature"
-							>
+							 data-i18n-html="forge_studio.high_three" data-i18n-attr="aria-label:forge_studio.high_quality_three_holder_fe_arialabel">
 								<span class="tier-name">High</span>
 								<span class="tier-lock" data-state="locked" title="High quality is a $THREE holder feature">
 									<svg class="tier-lock-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
@@ -3344,12 +3344,12 @@
 							</button>
 						</div>
 					</div>
-					<p class="fq-holder-note" id="fq-holder-note" data-state="locked">
+					<p class="fq-holder-note" id="fq-holder-note" data-state="locked" data-i18n-html="forge_studio.high_quality_is_a_three_holder_feature">
 						<span class="fq-holder-ico" aria-hidden="true">◆</span> High quality is a
 						<a href="/three-token">$THREE holder</a> feature — hold to unlock, or pay per generation.
 					</p>
 					<div class="fq-row">
-						<span class="fq-label" id="engine-label">Engine</span>
+						<span class="fq-label" id="engine-label" data-i18n="forge_studio.engine">Engine</span>
 						<div
 							class="aspect"
 							role="group"
@@ -3357,7 +3357,7 @@
 							id="engine"
 						></div>
 					</div>
-					<p class="engine-legend" id="engine-legend">
+					<p class="engine-legend" id="engine-legend" data-i18n-html="forge_studio.free_no_api_key_your_own_key">
 						<span class="el-item"><span class="el-free">FREE</span> no API key</span>
 						<span class="el-item"
 							><svg class="el-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M10.85 12.15 19 4"/><path d="m18 5 2 2"/><path d="m15 8 2 2"/></svg>
@@ -3367,7 +3367,7 @@
 						<span class="el-item"><span class="el-dot el-dot-down"></span> unavailable</span>
 					</p>
 					<div class="byok-row is-hidden" id="byok-row">
-						<label class="fq-label" for="provider-key" id="byok-label">API key</label>
+						<label class="fq-label" for="provider-key" id="byok-label" data-i18n="forge_studio.api_key">API key</label>
 						<input
 							class="byok-input"
 							id="provider-key"
@@ -3396,7 +3396,7 @@
 						<button type="button" data-aspect="16:9" aria-pressed="false">16:9</button>
 					</div>
 				</div>
-				<button class="btn" id="generate" type="submit">
+				<button class="btn" id="generate" type="submit" data-i18n-html="forge_studio.generate">
 					<span id="generate-label">Generate</span>
 					<kbd class="gen-kbd" aria-hidden="true">⌘↵</kbd>
 				</button>
@@ -3407,7 +3407,7 @@
 				     (updatePerkLine) from the wallet-aware access matrix. -->
 				<div class="fq-perk-row" id="forge-perk-row" hidden>
 					<p class="fq-perk-line" id="forge-perk-line" aria-live="polite"></p>
-					<button type="button" class="fq-connect-btn" id="connect-wallet-btn" hidden>
+					<button type="button" class="fq-connect-btn" id="connect-wallet-btn" hidden data-i18n-html="forge_studio.connect_wallet">
 						<span class="fq-connect-ico" aria-hidden="true">◎</span>
 						<span data-wallet-label>Connect wallet</span>
 					</button>
@@ -3416,12 +3416,12 @@
 			</form>
 
 			<div class="chips" id="examples" aria-label="Example prompts">
-				<button class="chip" type="button">a low-poly red fox, sitting</button>
-				<button class="chip" type="button">a sci-fi combat helmet, brushed metal</button>
-				<button class="chip" type="button">a potted monstera plant</button>
-				<button class="chip" type="button">a vintage film camera</button>
-				<button class="chip" type="button">a glazed ceramic teapot</button>
-				<button class="chips-more" type="button" id="chips-more" aria-label="Swap in a fresh set of example prompts">↻ More ideas</button>
+				<button class="chip" type="button" data-i18n="forge_studio.a_low_poly_red_fox_sitting">a low-poly red fox, sitting</button>
+				<button class="chip" type="button" data-i18n="forge_studio.a_sci_fi_combat_helmet_brushed_metal">a sci-fi combat helmet, brushed metal</button>
+				<button class="chip" type="button" data-i18n="forge_studio.a_potted_monstera_plant">a potted monstera plant</button>
+				<button class="chip" type="button" data-i18n="forge_studio.a_vintage_film_camera">a vintage film camera</button>
+				<button class="chip" type="button" data-i18n="forge_studio.a_glazed_ceramic_teapot">a glazed ceramic teapot</button>
+				<button class="chips-more" type="button" id="chips-more" aria-label="Swap in a fresh set of example prompts" data-i18n="forge_studio.more_ideas" data-i18n-attr="aria-label:forge_studio.swap_in_a_fresh_set_of_examp_arialabel">↻ More ideas</button>
 			</div>
 				</div>
 				<!-- ── Stage column: viewer, your creations, community showcase ── -->
@@ -3454,7 +3454,7 @@
 							</g>
 						</svg>
 					</div>
-					<p class="forge-empty-label">Enter a prompt to generate</p>
+					<p class="forge-empty-label" data-i18n="forge_studio.enter_a_prompt_to_generate">Enter a prompt to generate</p>
 				</div>
 
 				<!-- Generating -->
@@ -3465,15 +3465,15 @@
 					<div class="gen-steps">
 						<div class="step" id="step-image" data-state="active">
 							<span class="dot" aria-hidden="true"></span>
-							<span>Painting reference image</span>
+							<span data-i18n="forge_studio.painting_reference_image">Painting reference image</span>
 						</div>
 						<div class="step" id="step-mesh" data-state="pending">
 							<span class="dot" aria-hidden="true"></span>
-							<span>Reconstructing textured mesh</span>
+							<span data-i18n="forge_studio.reconstructing_textured_mesh">Reconstructing textured mesh</span>
 						</div>
 						<div class="step" id="step-finish" data-state="pending">
 							<span class="dot" aria-hidden="true"></span>
-							<span>Finalizing GLB</span>
+							<span data-i18n="forge_studio.finalizing_glb">Finalizing GLB</span>
 						</div>
 						<div
 							class="gen-progress"
@@ -3488,7 +3488,7 @@
 						</div>
 						<div class="gen-meta" id="gen-meta">Elapsed 0s</div>
 						<div style="margin-top: var(--space-sm)">
-							<button class="btn btn-ghost" type="button" id="cancel">Cancel</button>
+							<button class="btn btn-ghost" type="button" id="cancel" data-i18n="forge_studio.cancel">Cancel</button>
 						</div>
 					</div>
 				</div>
@@ -3515,22 +3515,22 @@
 						></model-viewer>
 						<div class="viewer-skeleton" id="viewer-skeleton" aria-hidden="true">
 							<span class="viewer-skeleton-sheen"></span>
-							<span class="viewer-skeleton-label">Loading model…</span>
+							<span class="viewer-skeleton-label" data-i18n="forge_studio.loading_model">Loading model…</span>
 						</div>
 						<div class="viewer-load-error" id="viewer-load-error" role="alert" aria-live="polite">
 							<span class="viewer-load-error-icon" aria-hidden="true">⚠</span>
-							<p>Model failed to load — often a brief network hiccup on the file. Retry, or use the download button below to save it directly.</p>
-							<button type="button" class="btn ghost" id="viewer-retry">Retry loading</button>
+							<p data-i18n="forge_studio.model_failed_to_load_often_a_brief">Model failed to load — often a brief network hiccup on the file. Retry, or use the download button below to save it directly.</p>
+							<button type="button" class="btn ghost" id="viewer-retry" data-i18n="forge_studio.retry_loading">Retry loading</button>
 						</div>
 					</div>
 					<div class="result-bar">
 						<span class="label" id="result-label"></span>
-						<span class="saved-chip is-hidden" id="result-saved" aria-label="Auto-saved to gallery">Saved ✓</span>
+						<span class="saved-chip is-hidden" id="result-saved" aria-label="Auto-saved to gallery" data-i18n="forge_studio.saved" data-i18n-attr="aria-label:forge_studio.auto_saved_to_gallery_arialabel">Saved ✓</span>
 						<span
 							class="views-badge is-hidden"
 							id="result-views"
 							title="Reference views fused"
-						></span>
+						 data-i18n-attr="title:forge_studio.reference_views_fused_title"></span>
 						<div class="actions">
 							<button
 								class="btn btn-ghost"
@@ -3538,7 +3538,7 @@
 								id="cinema"
 								aria-pressed="false"
 								title="Cinema mode — fullscreen turntable for recording (F)"
-							>
+							 data-i18n-attr="title:forge_studio.cinema_mode_fullscreen_turnt_title">
 								<svg
 									width="15"
 									height="15"
@@ -3568,7 +3568,7 @@
 									data-outcome="accepted"
 									aria-pressed="false"
 									title="Keep — good result"
-								>
+								 data-i18n="forge_studio.keep" data-i18n-attr="title:forge_studio.keep_good_result_title">
 									👍 Keep
 								</button>
 								<button
@@ -3576,7 +3576,7 @@
 									data-outcome="rejected"
 									aria-pressed="false"
 									title="Discard — bad result"
-								>
+								 data-i18n="forge_studio.discard" data-i18n-attr="title:forge_studio.discard_bad_result_title">
 									👎 Discard
 								</button>
 							</div>
@@ -3585,7 +3585,7 @@
 								type="button"
 								id="forge-share-btn"
 								aria-label="Share this creation"
-							>
+							 data-i18n-attr="aria-label:forge_studio.share_this_creation_arialabel">
 								<svg
 									width="15"
 									height="15"
@@ -3609,7 +3609,7 @@
 								class="btn btn-ghost"
 								id="forge-segment-btn"
 								title="Split this model into selectable parts"
-								>Split into parts</a
+								 data-i18n="forge_studio.split_into_parts" data-i18n-attr="title:forge_studio.split_this_model_into_select_title">Split into parts</a
 							>
 							<button
 								class="btn btn-ghost"
@@ -3617,7 +3617,7 @@
 								id="forge-gameready-btn"
 								aria-expanded="false"
 								title="Retopologize to a poly budget and export an engine-ready GLB + FBX"
-							>
+							 data-i18n-attr="title:forge_studio.retopologize_to_a_poly_budge_title">
 								<svg
 									width="15"
 									height="15"
@@ -3640,7 +3640,7 @@
 								type="button"
 								id="forge-embed-btn"
 								title="Embed this model on any website"
-							>
+							 data-i18n-attr="title:forge_studio.embed_this_model_on_any_webs_title">
 								<svg
 									width="15"
 									height="15"
@@ -3662,7 +3662,7 @@
 								type="button"
 								id="forge-ar-btn"
 								title="View this model in AR — place it in your room"
-							>
+							 data-i18n-attr="title:forge_studio.view_this_model_in_ar_place_title">
 								<svg
 									width="15"
 									height="15"
@@ -3685,7 +3685,7 @@
 								type="button"
 								id="refine"
 								title="Re-run this exact prompt at a higher quality tier"
-							>
+							 data-i18n-attr="title:forge_studio.re_run_this_exact_prompt_at_title">
 								<svg
 									class="refine-arrow"
 									width="15"
@@ -3703,9 +3703,9 @@
 								</svg>
 								<span id="refine-label">Refine</span>
 							</button>
-							<a class="btn btn-ghost" id="open-in-composer" href="/compose" title="Open this model in Scene Composer to attach it to an avatar or place it in a scene">Compose</a>
-							<a class="btn btn-ghost" id="download" download>Download GLB</a>
-							<button class="btn" type="button" id="again">Make another</button>
+							<a class="btn btn-ghost" id="open-in-composer" href="/compose" title="Open this model in Scene Composer to attach it to an avatar or place it in a scene" data-i18n="forge_studio.compose" data-i18n-attr="title:forge_studio.open_this_model_in_scene_com_title">Compose</a>
+							<a class="btn btn-ghost" id="download" download data-i18n="forge_studio.download_glb">Download GLB</a>
+							<button class="btn" type="button" id="again" data-i18n="forge_studio.make_another">Make another</button>
 						</div>
 					</div>
 
@@ -3714,17 +3714,17 @@
 					     forge-category-picker id; hidden by default, becomes visible when
 					     the user is signed in or when a creation_id is available. -->
 					<div class="cat-picker" id="forge-category-picker" hidden>
-						<span class="cat-picker-label">Tag as:</span>
-						<span class="cat-group-label" title="Can be given a brain and become an agent">Agents</span>
-						<button class="forge-cat-btn" type="button" data-cat="avatar">Avatar</button>
-						<button class="forge-cat-btn" type="button" data-cat="creature">Creature</button>
+						<span class="cat-picker-label" data-i18n="forge_studio.tag_as">Tag as:</span>
+						<span class="cat-group-label" title="Can be given a brain and become an agent" data-i18n="forge_studio.agents" data-i18n-attr="title:forge_studio.can_be_given_a_brain_and_bec_title">Agents</span>
+						<button class="forge-cat-btn" type="button" data-cat="avatar" data-i18n="forge_studio.avatar_2">Avatar</button>
+						<button class="forge-cat-btn" type="button" data-cat="creature" data-i18n="forge_studio.creature">Creature</button>
 						<span class="cat-group-sep" aria-hidden="true"></span>
-						<span class="cat-group-label" title="3D objects — props, not personalities">Items</span>
-						<button class="forge-cat-btn" type="button" data-cat="item">Item</button>
-						<button class="forge-cat-btn" type="button" data-cat="accessory">Accessory</button>
-						<button class="forge-cat-btn" type="button" data-cat="scene">Scene</button>
-						<button class="forge-cat-btn" type="button" data-cat="vehicle">Vehicle</button>
-						<p class="cat-picker-help">Only avatars &amp; creatures can be given a brain and become agents — everything else saves as a 3D item.</p>
+						<span class="cat-group-label" title="3D objects — props, not personalities" data-i18n="forge_studio.items" data-i18n-attr="title:forge_studio.3d_objects_props_not_persona_title">Items</span>
+						<button class="forge-cat-btn" type="button" data-cat="item" data-i18n="forge_studio.item">Item</button>
+						<button class="forge-cat-btn" type="button" data-cat="accessory" data-i18n="forge_studio.accessory">Accessory</button>
+						<button class="forge-cat-btn" type="button" data-cat="scene" data-i18n="forge_studio.scene">Scene</button>
+						<button class="forge-cat-btn" type="button" data-cat="vehicle" data-i18n="forge_studio.vehicle">Vehicle</button>
+						<p class="cat-picker-help" data-i18n="forge_studio.only_avatars_creatures_can_be_given_a">Only avatars &amp; creatures can be given a brain and become agents — everything else saves as a 3D item.</p>
 					</div>
 
 					<!-- Optimize topology panel (triangle / quad / low-poly remesh) is
@@ -3733,8 +3733,8 @@
 					<!-- Stylize — one-click geometric filters on the current model -->
 					<div class="stylize" id="stylize-panel" data-busy="false" hidden>
 						<div class="stylize-head">
-							<h3>Stylize</h3>
-							<p class="stylize-sub">
+							<h3 data-i18n="forge_studio.stylize">Stylize</h3>
+							<p class="stylize-sub" data-i18n="forge_studio.one_click_geometric_filters_restyle_this_mod">
 								One-click geometric filters. Restyle this model as voxels, bricks,
 								an open lattice, or low-poly — source color is carried over where
 								the style allows.
@@ -3748,23 +3748,23 @@
 						></div>
 						<div class="stylize-controls is-hidden" id="stylize-controls">
 							<div class="stylize-slider">
-								<label id="stylize-res-label" for="stylize-res">Resolution</label>
+								<label id="stylize-res-label" for="stylize-res" data-i18n="forge_studio.resolution">Resolution</label>
 								<input type="range" id="stylize-res" min="8" max="96" value="32" />
 								<output id="stylize-res-val" for="stylize-res">32</output>
 							</div>
 							<div class="stylize-actions">
-								<button class="btn btn-ghost" type="button" id="stylize-apply">
+								<button class="btn btn-ghost" type="button" id="stylize-apply" data-i18n="forge_studio.re_apply">
 									Re-apply
 								</button>
 								<a class="btn btn-ghost" id="stylize-download" download hidden
-									>Download stylized GLB</a
+									 data-i18n="forge_studio.download_stylized_glb">Download stylized GLB</a
 								>
 								<button
 									class="btn btn-ghost"
 									type="button"
 									id="stylize-revert"
 									hidden
-								>
+								 data-i18n="forge_studio.revert_to_original">
 									Revert to original
 								</button>
 							</div>
@@ -3781,25 +3781,25 @@
 				<!-- Error -->
 				<div class="panel notice error is-hidden" id="state-error">
 					<span class="glyph" aria-hidden="true">⚠</span>
-					<h3>Generation failed</h3>
-					<p id="error-message">
+					<h3 data-i18n="forge_studio.generation_failed">Generation failed</h3>
+					<p id="error-message" data-i18n="forge_studio.something_went_wrong_try_a_simpler_single">
 						Something went wrong. Try a simpler, single-subject prompt.
 					</p>
 					<!-- One-click engine switches, populated only when a lane failed and
 					     other configured engines can still serve the same request. -->
 					<div class="actions is-hidden" id="error-lanes" role="group" aria-label="Retry on another engine"></div>
 					<div class="actions">
-						<button class="btn" type="button" id="retry">Try again</button>
-						<button class="btn btn-ghost is-hidden" type="button" id="refine-locally">Refine current model instead</button>
-						<button class="btn btn-ghost is-hidden" type="button" id="generate-anyway">Generate anyway</button>
+						<button class="btn" type="button" id="retry" data-i18n="forge_studio.try_again">Try again</button>
+						<button class="btn btn-ghost is-hidden" type="button" id="refine-locally" data-i18n="forge_studio.refine_current_model_instead">Refine current model instead</button>
+						<button class="btn btn-ghost is-hidden" type="button" id="generate-anyway" data-i18n="forge_studio.generate_anyway">Generate anyway</button>
 					</div>
 				</div>
 
 				<!-- Unconfigured -->
 				<div class="panel notice is-hidden" id="state-unconfigured">
 					<span class="glyph" aria-hidden="true">◌</span>
-					<h3>Generator not configured</h3>
-					<p>
+					<h3 data-i18n="forge_studio.generator_not_configured">Generator not configured</h3>
+					<p data-i18n-html="forge_studio.no_3d_engine_is_reachable_on_this">
 						No 3D engine is reachable on this deployment. Set any one of
 						<code>NVIDIA_API_KEY</code> or <code>HF_TOKEN</code> for the free lanes, or
 						<code>REPLICATE_API_TOKEN</code> for the flux → TRELLIS pipeline — Forge picks
@@ -3811,7 +3811,7 @@
 			<!-- Your creations — durable, reusable models tied to this browser -->
 			<section class="creations is-hidden" id="creations" aria-label="Your forged models">
 				<div class="creations-head">
-					<h2>Your creations</h2>
+					<h2 data-i18n="forge_studio.your_creations">Your creations</h2>
 					<span class="count" id="creations-count"></span>
 				</div>
 				<div class="creations-grid" id="creations-grid"></div>
@@ -3826,9 +3826,9 @@
 				aria-label="Fresh from the Forge — recent community models"
 			>
 				<div class="creations-head">
-					<h2>Fresh from the Forge</h2>
+					<h2 data-i18n="forge_studio.fresh_from_the_forge">Fresh from the Forge</h2>
 					<div class="showcase-head-right">
-						<a href="/gallery#forge-section" class="showcase-view-all">View all →</a>
+						<a href="/gallery#forge-section" class="showcase-view-all" data-i18n="forge_studio.view_all">View all →</a>
 						<span class="count" id="showcase-count"></span>
 						<button
 							type="button"
@@ -3836,7 +3836,7 @@
 							id="showcase-refresh"
 							title="Refresh the community feed"
 							aria-label="Refresh the community feed"
-						>
+						 data-i18n-attr="aria-label:forge_studio.refresh_the_community_feed_arialabel;title:forge_studio.refresh_the_community_feed_title">
 							<svg
 								width="13"
 								height="13"
@@ -3854,14 +3854,14 @@
 						</button>
 					</div>
 				</div>
-				<p class="showcase-sub">
+				<p class="showcase-sub" data-i18n-html="forge_studio.what_other_people_just_forged_open_one">
 					What other people just forged. Open one in the viewer, or
 					<strong>Remix</strong> its prompt and make it yours.
 				</p>
 				<div class="creations-grid" id="showcase-grid"></div>
 			</section>
 
-			<p class="hint-foot">
+			<p class="hint-foot" data-i18n-html="forge_studio.multi_engine_pipeline_free_uses_nvidia_hoste">
 				Multi-engine pipeline — Free uses NVIDIA-hosted generation; Fast, Meshy, Tripo, Rodin, Stability, and Replicate require an API key. Best results: one clearly described subject with a material and lighting cue. Photo mode accepts up to 4 views for multi-view reconstruction. The same pipeline is available to agents over MCP at <a href="/docs">/api/mcp-3d</a>.
 			</p>
 				</div><!-- /.forge-stage -->
@@ -3871,8 +3871,8 @@
 			<section id="studio-avatar" class="studio-pane" role="tabpanel" aria-labelledby="studio-tab-avatar" hidden>
 				<!-- Step 1: compose -->
 				<section class="step active" data-step="compose" aria-label="Describe your avatar">
-					<h1>Describe it. Get a rigged 3D avatar.</h1>
-					<p class="sub">
+					<h1 data-i18n="forge_studio.describe_it_get_a_rigged_3d_avatar">Describe it. Get a rigged 3D avatar.</h1>
+					<p class="sub" data-i18n="forge_studio.type_what_you_want_a_character_a">
 						Type what you want — a character, a creature, a style. We render a clean
 						reference, reconstruct it into 3D, and add a skeleton so it can move.
 					</p>
@@ -3885,22 +3885,22 @@
 							aria-label="Describe the avatar you want to generate"
 						></textarea>
 						<div class="composer-foot">
-							<span class="hint" id="cp-cost-hint">Single subject, full body works best.</span>
+							<span class="hint" id="cp-cost-hint" data-i18n="forge_studio.single_subject_full_body_works_best">Single subject, full body works best.</span>
 							<span class="counter" id="cp-counter">0 / 600</span>
 						</div>
 					</div>
 
 					<div class="examples" role="group" aria-label="Example prompts">
-						<button class="example" type="button">
+						<button class="example" type="button" data-i18n="forge_studio.a_friendly_robot_mascot_rounded_white_shell">
 							A friendly robot mascot, rounded white shell, glowing blue eyes
 						</button>
-						<button class="example" type="button">
+						<button class="example" type="button" data-i18n="forge_studio.a_medieval_knight_in_battered_steel_plate">
 							A medieval knight in battered steel plate, weathered cape
 						</button>
-						<button class="example" type="button">
+						<button class="example" type="button" data-i18n="forge_studio.a_fox_eared_ranger_in_green_leather">
 							A fox-eared ranger in green leather, bow on the back
 						</button>
-						<button class="example" type="button">
+						<button class="example" type="button" data-i18n="forge_studio.an_astronaut_in_a_sleek_matte_black">
 							An astronaut in a sleek matte-black suit, gold visor
 						</button>
 					</div>
@@ -3923,13 +3923,13 @@
 							Generate avatar
 						</button>
 						<span class="hint"
-							><span class="chip-auth">Sign-in required</span> · ~1 min · rigged GLB</span
+							 data-i18n-html="forge_studio.sign_in_required_1_min_rigged_glb"><span class="chip-auth">Sign-in required</span> · ~1 min · rigged GLB</span
 						>
 					</div>
 
 					<div class="error-box" id="cp-compose-error" role="alert"></div>
 
-					<p class="note">
+					<p class="note" data-i18n-html="forge_studio.avatars_come_out_best_with_a_single">
 						Avatars come out best with a single, clearly described subject. Abstract scenes
 						or multiple characters reconstruct poorly. You can refine the face, outfit, and
 						animations in the editor afterward. Making an object, prop, or scene piece
@@ -3949,15 +3949,15 @@
 					<div class="progress-track" aria-hidden="true">
 						<div class="progress-fill" id="cp-progress-fill"></div>
 					</div>
-					<p class="build-status" id="cp-build-status">Rendering a reference image…</p>
+					<p class="build-status" id="cp-build-status" data-i18n="forge_studio.rendering_a_reference_image">Rendering a reference image…</p>
 					<p class="elapsed" id="cp-elapsed">0:00</p>
 					<div class="error-box" id="cp-build-error" role="alert"></div>
 				</section>
 
 				<!-- Step 3: done -->
 				<section class="step done-wrap" data-step="done" aria-label="Your avatar is ready">
-					<h1>Your avatar is ready</h1>
-					<p class="sub" style="margin-bottom: 0">
+					<h1 data-i18n="forge_studio.your_avatar_is_ready">Your avatar is ready</h1>
+					<p class="sub" style="margin-bottom: 0" data-i18n="forge_studio.open_it_in_the_editor_to_animate">
 						Open it in the editor to animate, dress, and export.
 					</p>
 					<div class="done-viewer">
@@ -4001,7 +4001,7 @@
 								<polyline points="12 5 19 12 12 19" />
 							</svg>
 						</a>
-						<button class="btn-ghost" id="cp-make-another" type="button">Make another</button>
+						<button class="btn-ghost" id="cp-make-another" type="button" data-i18n="forge_studio.make_another_2">Make another</button>
 					</div>
 				</section>
 			</section><!-- /#studio-avatar -->
@@ -4028,14 +4028,14 @@
 							<div id="lab-splat" class="lab-splat" hidden></div>
 						</div>
 						<div class="lab-actions">
-							<button class="btn-primary" id="lab-generate" type="button">Generate model</button>
+							<button class="btn-primary" id="lab-generate" type="button" data-i18n="forge_studio.generate_model">Generate model</button>
 							<a class="btn-ghost is-disabled" id="lab-download" download>
-								<span class="lab-dl-label">Download</span>
+								<span class="lab-dl-label" data-i18n="forge_studio.download">Download</span>
 								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 									<path d="M12 3v12" /><polyline points="7 11 12 16 17 11" /><line x1="5" y1="20" x2="19" y2="20" />
 								</svg>
 							</a>
-							<button class="btn-ghost is-hidden" id="lab-talk" type="button" title="Talk to your creation with voice + an AI brain">
+							<button class="btn-ghost is-hidden" id="lab-talk" type="button" title="Talk to your creation with voice + an AI brain" data-i18n-attr="title:forge_studio.talk_to_your_creation_with_v_title">
 								<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 									<path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 9 9 0 0 1-3.9-.9L3 21l1.9-5.6A8.38 8.38 0 0 1 4 11.5 8.5 8.5 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z" />
 								</svg>
@@ -4043,7 +4043,7 @@
 							</button>
 							<span class="lab-status" id="lab-status" role="status" aria-live="polite"></span>
 						</div>
-						<p class="lab-foot">
+						<p class="lab-foot" data-i18n-html="forge_studio.every_lab_tool_runs_entirely_in_your">
 							Every Lab tool runs entirely in your browser — no API key, no upload, no cost.
 							Mesh tools export a real binary <strong>GLB</strong>; the Gaussian-splat viewer
 							renders the photoreal radiance-field format. Powered by
@@ -4113,5 +4113,7 @@
 		</script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

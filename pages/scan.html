@@ -4,7 +4,7 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>3D Scanner · Scan yourself into 3D · three.ws</title>
+		<title data-i18n="scan.meta_title">3D Scanner · Scan yourself into 3D · three.ws</title>
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -14,17 +14,17 @@
 		<meta
 			name="description"
 			content="Point your camera, hold still, and walk away with a rigged 3D model of yourself — in about a minute. Free, in your browser."
-		/>
+		 data-i18n-attr="content:scan.meta_description"/>
 		<meta name="robots" content="index, follow" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/create/selfie" />
-		<meta property="og:title" content="3D Scanner · Scan yourself into 3D" />
+		<meta property="og:title" content="3D Scanner · Scan yourself into 3D"  data-i18n-attr="content:scan.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Point your camera, hold still, walk away with a rigged 3D model of yourself. Free, in your browser."
-		/>
+		 data-i18n-attr="content:scan.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=3D+Scanner+%E2%80%94+Scan+Yourself+into+3D&amp;d=Point+your+camera+at+your+face%2C+hold+still%2C+and+walk+away+with+a+rigged+3D+avatar+%E2%80%94+reconstruction+runs+in+about+a+minute%2C+free%2C+in+your+browser.&amp;p=%2Fscan" />
 		<meta name="twitter:card" content="summary_large_image" />
 
@@ -1352,8 +1352,8 @@
 		></script>
 	
 	<link rel="canonical" href="https://three.ws/create/selfie">
-	<meta name="twitter:title" content="3D Scanner — Scan Yourself into 3D · three.ws">
-	<meta name="twitter:description" content="Point your camera at your face, hold still, and walk away with a rigged 3D avatar — reconstruction runs in about a minute, free, in your browser.">
+	<meta name="twitter:title" content="3D Scanner — Scan Yourself into 3D · three.ws" data-i18n-attr="content:scan.meta_twitter_title">
+	<meta name="twitter:description" content="Point your camera at your face, hold still, and walk away with a rigged 3D avatar — reconstruction runs in about a minute, free, in your browser." data-i18n-attr="content:scan.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=3D+Scanner+%E2%80%94+Scan+Yourself+into+3D&amp;d=Point+your+camera+at+your+face%2C+hold+still%2C+and+walk+away+with+a+rigged+3D+avatar+%E2%80%94+reconstruction+runs+in+about+a+minute%2C+free%2C+in+your+browser.&amp;p=%2Fscan">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"3D Scanner — Scan Yourself into 3D","description":"Point your camera at your face, hold still, and walk away with a rigged 3D avatar — reconstruction runs in about a minute, free, in your browser.","url":"https://three.ws/scan","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -1365,7 +1365,7 @@
 	<body>
 		<main class="stage">
 			<div class="topbar">
-				<button class="back" id="back-btn" aria-label="Back" type="button">
+				<button class="back" id="back-btn" aria-label="Back" type="button" data-i18n-attr="aria-label:scan.back_arialabel">
 					<svg
 						width="16"
 						height="16"
@@ -1381,35 +1381,35 @@
 						<polyline points="12 19 5 12 12 5" />
 					</svg>
 				</button>
-				<div class="label"><strong>three.ws</strong> · 3D Scanner</div>
-				<span class="badge">Beta</span>
+				<div class="label"><strong data-i18n="scan.three_ws">three.ws</strong> · 3D Scanner</div>
+				<span class="badge" data-i18n="scan.beta">Beta</span>
 			</div>
 
-			<p id="unsupported-msg" class="unsupported">
+			<p id="unsupported-msg" class="unsupported" data-i18n="scan.your_browser_can_t_open_the_camera">
 				Your browser can't open the camera here — use Upload instead, or open this page in
 				Safari / Chrome on a device with a camera.
 			</p>
 
 			<!-- Step 1: capture -->
 			<section class="step active" data-step="capture">
-				<h1>Scan yourself into <span class="hl">3D</span>.</h1>
-				<p class="sub">
+				<h1 data-i18n-html="scan.scan_yourself_into_3d">Scan yourself into <span class="hl">3D</span>.</h1>
+				<p class="sub" data-i18n-html="scan.point_your_camera_and_hold_still_in">
 					Point your camera and hold still. In about a minute you get a rigged 3D model of
 					yourself that drops into any app, game, or stream. Photos are downscaled in your
 					browser — nothing is stored on disk.
 					Scanning an object instead of yourself?
 					<a href="/image-to-3d">Image to 3D</a> turns any photo into a textured model.
 				</p>
-				<p class="alt-path">
+				<p class="alt-path" data-i18n-html="scan.rather_upload_a_single_photo_selfie_to">
 					Rather upload a single photo?
 					<a href="/create/selfie">Selfie to avatar</a> builds the same rigged model from
 					one picture.
 				</p>
 
 				<div class="steps-strip" aria-hidden="true">
-					<span class="chip"><b>1</b> Scan</span>
-					<span class="chip"><b>2</b> Build</span>
-					<span class="chip"><b>3</b> Download &amp; share</span>
+					<span class="chip" data-i18n-html="scan.1_scan"><b>1</b> Scan</span>
+					<span class="chip" data-i18n-html="scan.2_build"><b>2</b> Build</span>
+					<span class="chip" data-i18n-html="scan.3_download_share"><b>3</b> Download &amp; share</span>
 				</div>
 
 				<div class="hero-slot-wrap">
@@ -1437,9 +1437,9 @@
 								<circle cx="12" cy="13" r="4" />
 							</svg>
 						</span>
-						<span class="hero-title">Tap to start scanning</span>
+						<span class="hero-title" data-i18n="scan.tap_to_start_scanning">Tap to start scanning</span>
 						<span class="hero-sub"
-							>Live face tracking guides the shot. Or drop in a photo — works on phone
+							 data-i18n="scan.live_face_tracking_guides_the_shot_or">Live face tracking guides the shot. Or drop in a photo — works on phone
 							or desktop.</span
 						>
 					</div>
@@ -1497,12 +1497,12 @@
 				/>
 
 				<div class="photo-tips" id="photo-tips">
-					<p class="tips-title">For the sharpest scan</p>
+					<p class="tips-title" data-i18n="scan.for_the_sharpest_scan">For the sharpest scan</p>
 					<ul>
-						<li>Face the camera directly — no extreme angles</li>
-						<li>Good, even lighting — avoid harsh shadows or backlighting</li>
-						<li>Remove sunglasses, masks, or anything covering your face</li>
-						<li>Keep hair away from your forehead and jawline if possible</li>
+						<li data-i18n="scan.face_the_camera_directly_no_extreme_angles">Face the camera directly — no extreme angles</li>
+						<li data-i18n="scan.good_even_lighting_avoid_harsh_shadows_or">Good, even lighting — avoid harsh shadows or backlighting</li>
+						<li data-i18n="scan.remove_sunglasses_masks_or_anything_covering">Remove sunglasses, masks, or anything covering your face</li>
+						<li data-i18n="scan.keep_hair_away_from_your_forehead_and">Keep hair away from your forehead and jawline if possible</li>
 					</ul>
 				</div>
 
@@ -1512,7 +1512,7 @@
 							<div class="fid-label">
 								Add side angles
 								<span class="fid-note"
-									>(optional — adds ~30s, sharper geometry)</span
+									 data-i18n="scan.optional_adds_30s_sharper_geometry">(optional — adds ~30s, sharper geometry)</span
 								>
 							</div>
 						</div>
@@ -1540,8 +1540,8 @@
 								tabindex="0"
 								aria-label="Left side photo slot"
 							>
-								<span class="slot-label">Left</span>
-								<span class="slot-hint">Turn ~45° left</span>
+								<span class="slot-label" data-i18n="scan.left">Left</span>
+								<span class="slot-hint" data-i18n="scan.turn_45_left">Turn ~45° left</span>
 							</div>
 							<div
 								class="slot-frame"
@@ -1550,8 +1550,8 @@
 								tabindex="0"
 								aria-label="Right side photo slot"
 							>
-								<span class="slot-label">Right</span>
-								<span class="slot-hint">Turn ~45° right</span>
+								<span class="slot-label" data-i18n="scan.right">Right</span>
+								<span class="slot-hint" data-i18n="scan.turn_45_right">Turn ~45° right</span>
 							</div>
 						</div>
 						<input
@@ -1571,14 +1571,14 @@
 
 				<div class="opts">
 					<div class="opt-group">
-						<p class="opt-label">Look</p>
+						<p class="opt-label" data-i18n="scan.look">Look</p>
 						<div class="style-grid" role="group" aria-label="Avatar style">
 							<button
 								type="button"
 								class="style-card"
 								data-type="v1"
 								aria-pressed="true"
-							>
+							 data-i18n-html="scan.photoreal_likeness_first_closest_to_how_you">
 								<span class="style-swatch photoreal" aria-hidden="true"></span>
 								<span>
 									<span class="style-title">Photoreal</span>
@@ -1592,7 +1592,7 @@
 								class="style-card"
 								data-type="v2"
 								aria-pressed="false"
-							>
+							 data-i18n-html="scan.stylized_cleaner_cartoon_leaning_good_for_st">
 								<span class="style-swatch stylized" aria-hidden="true"></span>
 								<span>
 									<span class="style-title">Stylized</span>
@@ -1604,10 +1604,10 @@
 						</div>
 					</div>
 					<div class="opt-group">
-						<p class="opt-label">Body</p>
+						<p class="opt-label" data-i18n="scan.body">Body</p>
 						<div class="toggle" role="group" aria-label="Body type">
-							<button type="button" data-body="male" aria-pressed="true">Masc</button>
-							<button type="button" data-body="female" aria-pressed="false">
+							<button type="button" data-body="male" aria-pressed="true" data-i18n="scan.masc">Masc</button>
+							<button type="button" data-body="female" aria-pressed="false" data-i18n="scan.femme">
 								Femme
 							</button>
 						</div>
@@ -1615,7 +1615,7 @@
 				</div>
 
 				<div id="submit-bar" class="submit-bar">
-					<button id="submit-btn" type="button" disabled>
+					<button id="submit-btn" type="button" disabled data-i18n-html="scan.start_scanning_to_continue">
 						<span class="label">Start scanning to continue</span>
 					</button>
 				</div>
@@ -1623,8 +1623,8 @@
 
 			<!-- Step 2: Building -->
 			<section class="step" data-step="building">
-				<h1>Reconstructing you…</h1>
-				<p class="sub">
+				<h1 data-i18n="scan.reconstructing_you">Reconstructing you…</h1>
+				<p class="sub" data-i18n="scan.this_usually_takes_1_2_minutes_keep">
 					This usually takes 1–2 minutes. Keep this tab open — we'll ping you when it's
 					done.
 				</p>
@@ -1632,17 +1632,17 @@
 				<div class="build-progress" role="list" aria-label="Scan progress">
 					<div class="build-step completed" data-bstep="upload" role="listitem">
 						<span class="bstep-dot" aria-hidden="true"></span>
-						<span class="bstep-label">Scan captured</span>
+						<span class="bstep-label" data-i18n="scan.scan_captured">Scan captured</span>
 					</div>
 					<div class="build-step active" data-bstep="process" role="listitem">
 						<span class="bstep-dot" aria-hidden="true"></span>
 						<span class="bstep-label" id="build-status-text" aria-live="polite"
-							>Building 3D mesh from your scan…</span
+							 data-i18n="scan.building_3d_mesh_from_your_scan">Building 3D mesh from your scan…</span
 						>
 					</div>
 					<div class="build-step" data-bstep="finish" role="listitem">
 						<span class="bstep-dot" aria-hidden="true"></span>
-						<span class="bstep-label">Auto-rigging skeleton</span>
+						<span class="bstep-label" data-i18n="scan.auto_rigging_skeleton">Auto-rigging skeleton</span>
 					</div>
 				</div>
 
@@ -1674,13 +1674,13 @@
 				</div>
 
 				<p id="build-error-msg" class="build-error" role="alert"></p>
-				<button id="build-retry-btn" class="build-retry" type="button">← Scan again</button>
+				<button id="build-retry-btn" class="build-retry" type="button" data-i18n="scan.scan_again">← Scan again</button>
 			</section>
 
 			<!-- Step 3: Done -->
 			<section class="step" data-step="done">
-				<h1>You're in 3D.</h1>
-				<p class="sub">
+				<h1 data-i18n="scan.you_re_in_3d">You're in 3D.</h1>
+				<p class="sub" data-i18n="scan.drag_to_spin_it_download_the_model">
 					Drag to spin it. Download the model, share the scan, or open it in your
 					workspace.
 				</p>
@@ -1731,7 +1731,7 @@
 							<line x1="12" y1="15" x2="12" y2="3" />
 						</svg>
 						Download
-						<span class="ext">.GLB</span>
+						<span class="ext" data-i18n="scan.glb">.GLB</span>
 					</button>
 					<button class="export-btn" id="dl-fbx" type="button" data-format="fbx">
 						<svg
@@ -1751,7 +1751,7 @@
 							<line x1="12" y1="22.08" x2="12" y2="12" />
 						</svg>
 						Engines
-						<span class="ext">.FBX</span>
+						<span class="ext" data-i18n="scan.fbx">.FBX</span>
 					</button>
 					<button class="export-btn" id="dl-usdz" type="button" data-format="usdz">
 						<svg
@@ -1769,7 +1769,7 @@
 							<path d="m2 12 10 5 10-5" />
 						</svg>
 						iOS AR
-						<span class="ext">.USDZ</span>
+						<span class="ext" data-i18n="scan.usdz">.USDZ</span>
 					</button>
 					<button class="export-btn" id="dl-vrm" type="button" data-format="vrm">
 						<svg
@@ -1786,7 +1786,7 @@
 							<path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1" />
 						</svg>
 						VTube
-						<span class="ext">.VRM</span>
+						<span class="ext" data-i18n="scan.vrm">.VRM</span>
 					</button>
 				</div>
 
@@ -1810,21 +1810,21 @@
 						</svg>
 						Share my scan
 					</button>
-					<button id="done-save-btn" class="btn-save" type="button">
+					<button id="done-save-btn" class="btn-save" type="button" data-i18n="scan.open_in_my_workspace">
 						Open in my workspace →
 					</button>
-					<button id="done-editor-btn" class="btn-ghost" type="button">
+					<button id="done-editor-btn" class="btn-ghost" type="button" data-i18n="scan.customize_in_editor">
 						Customize in editor
 					</button>
-					<button id="done-regen-btn" class="btn-ghost" type="button">
+					<button id="done-regen-btn" class="btn-ghost" type="button" data-i18n="scan.not_quite_right_scan_again">
 						Not quite right — scan again
 					</button>
 				</div>
 				<p id="share-toast" class="share-toast" role="status" aria-live="polite"></p>
 
 				<div class="portability-note">
-					<span>This scan works in any three.ws-powered app, game, or stream.</span>
-					<a href="/docs/embed" target="_blank" rel="noopener">Learn how to embed →</a>
+					<span data-i18n="scan.this_scan_works_in_any_three_ws">This scan works in any three.ws-powered app, game, or stream.</span>
+					<a href="/docs/embed" target="_blank" rel="noopener" data-i18n="scan.learn_how_to_embed">Learn how to embed →</a>
 				</div>
 			</section>
 		</main>
@@ -1845,23 +1845,23 @@
 					<span class="count-num" id="cam-count-num">3</span>
 				</div>
 			</div>
-			<div class="cam-prompt">Scanning your <strong id="cam-slot-name">selfie</strong></div>
+			<div class="cam-prompt">Scanning your <strong id="cam-slot-name" data-i18n="scan.selfie">selfie</strong></div>
 			<div id="cam-error" hidden></div>
 			<div class="cam-bar">
 				<div id="cam-actions-live" style="display: contents">
-					<button type="button" data-cam-action="cancel">Cancel</button>
+					<button type="button" data-cam-action="cancel" data-i18n="scan.cancel">Cancel</button>
 					<button
 						type="button"
 						class="shutter"
 						data-cam-action="shoot"
 						aria-label="Capture scan"
 						id="cam-shutter"
-					></button>
+					 data-i18n-attr="aria-label:scan.capture_scan_arialabel"></button>
 					<div class="spacer"></div>
 				</div>
 				<div id="cam-actions-review" hidden style="display: contents">
-					<button type="button" data-cam-action="retake">Retake</button>
-					<button type="button" data-cam-action="use">Use this</button>
+					<button type="button" data-cam-action="retake" data-i18n="scan.retake">Retake</button>
+					<button type="button" data-cam-action="use" data-i18n="scan.use_this">Use this</button>
 				</div>
 			</div>
 		</div>
@@ -2213,5 +2213,7 @@
 		</script>
 		<script src="/brand.js" defer></script>
 		<script src="/getting-started.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

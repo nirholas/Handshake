@@ -4,26 +4,26 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<title>Agent Galaxy · three.ws × IBM Granite</title>
+		<title data-i18n="galaxy.meta_title">Agent Galaxy · three.ws × IBM Granite</title>
 		<meta
 			name="description"
 			content="An explorable 3D star-map of every AI agent on three.ws, positioned in space by meaning. Coordinates and semantic search are powered by IBM Granite embeddings on watsonx.ai."
-		/>
+		 data-i18n-attr="content:galaxy.meta_description"/>
 		<link rel="canonical" href="https://three.ws/galaxy" />
 		<meta property="og:type" content="website" />
-		<meta property="og:title" content="Agent Galaxy · three.ws × IBM Granite" />
+		<meta property="og:title" content="Agent Galaxy · three.ws × IBM Granite"  data-i18n-attr="content:galaxy.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Fly through a 3D constellation of AI agents, mapped by IBM Granite embeddings on watsonx.ai. Search by meaning and watch the matching stars light up."
-		/>
+		 data-i18n-attr="content:galaxy.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/galaxy" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Agent+Galaxy&amp;d=Every+public+agent+embedded+by+IBM+Granite+on+watsonx.ai+into+a+navigable+3D+constellation+with+natural-language+semantic+search.&amp;p=%2Fgalaxy" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Agent Galaxy · three.ws × IBM Granite" />
+		<meta name="twitter:title" content="Agent Galaxy · three.ws × IBM Granite"  data-i18n-attr="content:galaxy.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="A 3D star-map of AI agents, positioned by meaning with IBM Granite on watsonx.ai."
-		/>
+		 data-i18n-attr="content:galaxy.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=Agent+Galaxy&amp;d=Every+public+agent+embedded+by+IBM+Granite+on+watsonx.ai+into+a+navigable+3D+constellation+with+natural-language+semantic+search.&amp;p=%2Fgalaxy" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -53,16 +53,16 @@
 			<div class="gx-hud" id="gxHud">
 				<div class="gx-hud-head">
 					<div class="gx-title-wrap">
-						<h1 class="gx-title">Agent Galaxy</h1>
+						<h1 class="gx-title" data-i18n="galaxy.agent_galaxy">Agent Galaxy</h1>
 						<div class="gx-attribution">
 							<span class="gx-attr-dot" aria-hidden="true"></span>
-							Positioned by <strong>IBM Granite</strong> embeddings on watsonx.ai
+							Positioned by <strong data-i18n="galaxy.ibm_granite">IBM Granite</strong> embeddings on watsonx.ai
 						</div>
 					</div>
 					<div class="gx-stats" id="gxStats" hidden>
-						<span class="gx-stat" id="gxStatAgents">0 agents</span>
+						<span class="gx-stat" id="gxStatAgents" data-i18n="galaxy.0_agents">0 agents</span>
 						<span class="gx-stat-sep" aria-hidden="true">·</span>
-						<span class="gx-stat" id="gxStatClusters">0 constellations</span>
+						<span class="gx-stat" id="gxStatClusters" data-i18n="galaxy.0_constellations">0 constellations</span>
 					</div>
 				</div>
 
@@ -78,12 +78,12 @@
 						placeholder="Search by meaning — &ldquo;trading bots&rdquo;, &ldquo;a calm tutor&rdquo;…"
 						aria-label="Search agents by meaning, powered by IBM Granite embeddings"
 					/>
-					<button class="gx-search-clear" id="gxSearchClear" type="button" aria-label="Clear search" hidden>&times;</button>
-					<button class="gx-search-go" id="gxSearchGo" type="submit">Search</button>
+					<button class="gx-search-clear" id="gxSearchClear" type="button" aria-label="Clear search" hidden data-i18n-attr="aria-label:galaxy.clear_search_arialabel">&times;</button>
+					<button class="gx-search-go" id="gxSearchGo" type="submit" data-i18n="galaxy.search">Search</button>
 				</form>
 
 				<!-- Money-Cam entry — enabled once the galaxy has rendered -->
-				<button class="gx-moneycam-toggle" id="gxMoneyToggle" type="button" aria-pressed="false" disabled>
+				<button class="gx-moneycam-toggle" id="gxMoneyToggle" type="button" aria-pressed="false" disabled data-i18n-html="galaxy.money_cam_watch_real_value_move_m">
 					<span class="gx-mc-orb" aria-hidden="true"></span>
 					<span class="gx-mc-toggle-text">
 						<span class="gx-mc-toggle-label">Money-Cam</span>
@@ -95,8 +95,8 @@
 			<!-- Constellation legend -->
 			<aside class="gx-legend" id="gxLegend" hidden aria-label="Constellations">
 				<div class="gx-legend-head">
-					<span class="gx-legend-title">Constellations</span>
-					<button class="gx-legend-toggle" id="gxLegendToggle" type="button" aria-expanded="true" aria-label="Toggle constellation list">&minus;</button>
+					<span class="gx-legend-title" data-i18n="galaxy.constellations">Constellations</span>
+					<button class="gx-legend-toggle" id="gxLegendToggle" type="button" aria-expanded="true" aria-label="Toggle constellation list" data-i18n-attr="aria-label:galaxy.toggle_constellation_list_arialabel">&minus;</button>
 				</div>
 				<ul class="gx-legend-list" id="gxLegendList"></ul>
 			</aside>
@@ -106,7 +106,7 @@
 
 			<!-- Selected-agent card -->
 			<div class="gx-card" id="gxCard" hidden>
-				<button class="gx-card-close" id="gxCardClose" type="button" aria-label="Close">&times;</button>
+				<button class="gx-card-close" id="gxCardClose" type="button" aria-label="Close" data-i18n-attr="aria-label:galaxy.close_arialabel">&times;</button>
 				<div class="gx-card-top">
 					<div class="gx-card-thumb" id="gxCardThumb" aria-hidden="true"></div>
 					<div class="gx-card-id">
@@ -117,16 +117,16 @@
 				<p class="gx-card-desc" id="gxCardDesc"></p>
 				<div class="gx-card-meta" id="gxCardMeta"></div>
 				<div class="gx-card-actions">
-					<a class="gx-btn gx-btn-primary" id="gxCardView" href="#">View agent</a>
-					<a class="gx-btn gx-btn-ghost" id="gxCardChat" href="#">Chat</a>
+					<a class="gx-btn gx-btn-primary" id="gxCardView" href="#" data-i18n="galaxy.view_agent">View agent</a>
+					<a class="gx-btn gx-btn-ghost" id="gxCardChat" href="#" data-i18n="galaxy.chat">Chat</a>
 				</div>
 			</div>
 
 			<!-- Search results strip -->
 			<div class="gx-results" id="gxResults" hidden>
 				<div class="gx-results-head">
-					<span id="gxResultsLabel">Closest by meaning</span>
-					<button class="gx-results-close" id="gxResultsClose" type="button" aria-label="Clear results">&times;</button>
+					<span id="gxResultsLabel" data-i18n="galaxy.closest_by_meaning">Closest by meaning</span>
+					<button class="gx-results-close" id="gxResultsClose" type="button" aria-label="Clear results" data-i18n-attr="aria-label:galaxy.clear_results_arialabel">&times;</button>
 				</div>
 				<div class="gx-results-list" id="gxResultsList"></div>
 			</div>
@@ -136,20 +136,20 @@
 				<header class="gx-mc-head">
 					<div class="gx-mc-title">
 						<span class="gx-mc-live-dot" id="gxMcLiveDot" aria-hidden="true"></span>
-						<span>Money-Cam</span>
+						<span data-i18n="galaxy.money_cam">Money-Cam</span>
 					</div>
-					<button class="gx-mc-close" id="gxMcClose" type="button" aria-label="Close Money-Cam">&times;</button>
+					<button class="gx-mc-close" id="gxMcClose" type="button" aria-label="Close Money-Cam" data-i18n-attr="aria-label:galaxy.close_money_cam_arialabel">&times;</button>
 				</header>
 
 				<div class="gx-mc-modes" role="tablist" aria-label="Money-Cam mode">
-					<button class="gx-mc-mode gx-active" id="gxMcModeLive" type="button" role="tab" aria-selected="true">Live</button>
-					<button class="gx-mc-mode" id="gxMcModeReplay" type="button" role="tab" aria-selected="false">Replay</button>
+					<button class="gx-mc-mode gx-active" id="gxMcModeLive" type="button" role="tab" aria-selected="true" data-i18n="galaxy.live">Live</button>
+					<button class="gx-mc-mode" id="gxMcModeReplay" type="button" role="tab" aria-selected="false" data-i18n="galaxy.replay">Replay</button>
 				</div>
 
 				<div class="gx-mc-stats" id="gxMcStats" aria-live="polite"></div>
 
 				<div class="gx-mc-replay" id="gxMcReplay" hidden>
-					<button class="gx-mc-play" id="gxMcPlay" type="button" aria-label="Play / pause replay">▶</button>
+					<button class="gx-mc-play" id="gxMcPlay" type="button" aria-label="Play / pause replay" data-i18n-attr="aria-label:galaxy.play_pause_replay_arialabel">▶</button>
 					<input
 						class="gx-mc-scrub"
 						id="gxMcScrub"
@@ -159,16 +159,16 @@
 						value="1000"
 						aria-label="Scrub through real flow history"
 					/>
-					<button class="gx-mc-speed" id="gxMcSpeed" type="button" aria-label="Cycle playback speed">1×</button>
+					<button class="gx-mc-speed" id="gxMcSpeed" type="button" aria-label="Cycle playback speed" data-i18n-attr="aria-label:galaxy.cycle_playback_speed_arialabel">1×</button>
 					<div class="gx-mc-time" id="gxMcTime"></div>
 				</div>
 
 				<div class="gx-mc-filters" id="gxMcFilters" role="group" aria-label="Filter flows by type">
-					<button class="gx-mc-filter gx-active" data-type="all" type="button">All</button>
-					<button class="gx-mc-filter" data-type="tips" type="button">Tips</button>
-					<button class="gx-mc-filter" data-type="trades" type="button">Trades</button>
-					<button class="gx-mc-filter" data-type="payments" type="button">Pay</button>
-					<button class="gx-mc-filter" data-type="launches" type="button">Launches</button>
+					<button class="gx-mc-filter gx-active" data-type="all" type="button" data-i18n="galaxy.all">All</button>
+					<button class="gx-mc-filter" data-type="tips" type="button" data-i18n="galaxy.tips">Tips</button>
+					<button class="gx-mc-filter" data-type="trades" type="button" data-i18n="galaxy.trades">Trades</button>
+					<button class="gx-mc-filter" data-type="payments" type="button" data-i18n="galaxy.pay">Pay</button>
+					<button class="gx-mc-filter" data-type="launches" type="button" data-i18n="galaxy.launches">Launches</button>
 				</div>
 
 				<div class="gx-mc-ticker" id="gxMcTicker" aria-live="polite"></div>
@@ -176,16 +176,16 @@
 				<div class="gx-mc-note" id="gxMcNote" hidden></div>
 
 				<div class="gx-mc-legend" aria-hidden="true">
-					<span class="gx-mc-leg" data-k="tip"><i></i>Tip</span>
-					<span class="gx-mc-leg" data-k="trade"><i></i>Trade</span>
-					<span class="gx-mc-leg" data-k="payment"><i></i>Pay</span>
-					<span class="gx-mc-leg" data-k="launch"><i></i>Launch</span>
+					<span class="gx-mc-leg" data-k="tip" data-i18n-html="galaxy.tip"><i></i>Tip</span>
+					<span class="gx-mc-leg" data-k="trade" data-i18n-html="galaxy.trade"><i></i>Trade</span>
+					<span class="gx-mc-leg" data-k="payment" data-i18n-html="galaxy.pay_2"><i></i>Pay</span>
+					<span class="gx-mc-leg" data-k="launch" data-i18n-html="galaxy.launch"><i></i>Launch</span>
 				</div>
 			</section>
 
 			<!-- Flow inspector — a single real transfer, click-through to its signature -->
 			<div class="gx-flow" id="gxFlow" hidden role="dialog" aria-label="Flow details">
-				<button class="gx-flow-close" id="gxFlowClose" type="button" aria-label="Close flow details">&times;</button>
+				<button class="gx-flow-close" id="gxFlowClose" type="button" aria-label="Close flow details" data-i18n-attr="aria-label:galaxy.close_flow_details_arialabel">&times;</button>
 				<div class="gx-flow-body" id="gxFlowBody"></div>
 			</div>
 
@@ -203,7 +203,7 @@
 				<div class="gx-overlay-glyph" aria-hidden="true">✦</div>
 				<div class="gx-overlay-title" id="gxEmptyTitle">The galaxy is still forming</div>
 				<div class="gx-overlay-sub" id="gxEmptySub">No published agents to map yet. Create and publish an agent to place the first star.</div>
-				<a class="gx-btn gx-btn-primary" href="/create">Create an agent</a>
+				<a class="gx-btn gx-btn-primary" href="/create" data-i18n="galaxy.create_an_agent">Create an agent</a>
 			</div>
 
 			<!-- Error overlay -->
@@ -211,18 +211,20 @@
 				<div class="gx-overlay-glyph" aria-hidden="true">✦</div>
 				<div class="gx-overlay-title" id="gxErrorTitle">Couldn't reach the stars</div>
 				<div class="gx-overlay-sub" id="gxErrorSub"></div>
-				<button class="gx-btn gx-btn-primary" id="gxRetry" type="button">Try again</button>
+				<button class="gx-btn gx-btn-primary" id="gxRetry" type="button" data-i18n="galaxy.try_again">Try again</button>
 			</div>
 
 			<!-- Footer attribution / controls hint -->
 			<div class="gx-footnote">
-				<span class="gx-footnote-hint" id="gxHint">Drag to orbit · scroll to zoom · click a star</span>
-				<a class="gx-footnote-link" href="/docs/ibm">three.ws × IBM watsonx →</a>
+				<span class="gx-footnote-hint" id="gxHint" data-i18n="galaxy.drag_to_orbit_scroll_to_zoom_click">Drag to orbit · scroll to zoom · click a star</span>
+				<a class="gx-footnote-link" href="/docs/ibm" data-i18n="galaxy.three_ws_ibm_watsonx">three.ws × IBM watsonx →</a>
 			</div>
 		</main>
 
 		<script src="/nav.js" defer></script>
 		<script type="module" src="/src/galaxy.js"></script>
 		<script src="/brand.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

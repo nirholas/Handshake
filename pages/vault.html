@@ -17,19 +17,19 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Vault — buy &amp; unlock encrypted 3D models on BNB Chain · three.ws</title>
+		<title data-i18n="vault.meta_title">Vault — buy &amp; unlock encrypted 3D models on BNB Chain · three.ws</title>
 		<meta
 			name="description"
 			content="Buy access to an encrypted 3D model on BSC testnet — the unlock key is granted through a live cross-chain call into Greenfield's programmable storage. Browse, buy, watch the grant settle, unlock, and view the model in 3D."
-		/>
+		 data-i18n-attr="content:vault.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/vault" />
-		<meta property="og:title" content="Vault — buy & unlock encrypted 3D models on BNB Chain · three.ws" />
+		<meta property="og:title" content="Vault — buy & unlock encrypted 3D models on BNB Chain · three.ws"  data-i18n-attr="content:vault.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="An on-chain-gated 3D vault: pay a BSC smart contract, and it grants your unlock key through a real cross-chain call into Greenfield's programmable storage. No other chain we've built on lets a contract program object-level storage permissions cross-chain."
-		/>
+		 data-i18n-attr="content:vault.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Vault+%E2%80%94+Buy+%26+Unlock+Encrypted+3D+Models+on+BNB+Chain&amp;d=Browse+encrypted+3D+listings%2C+buy+access+with+a+real+BSC+testnet+transaction%2C+watch+the+cross-chain+Greenfield+permission+grant+settle%2C+then+unlock+and+view+the&amp;p=%2Fvault"
@@ -38,11 +38,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Vault — buy & unlock encrypted 3D models on BNB Chain · three.ws" />
+		<meta name="twitter:title" content="Vault — buy & unlock encrypted 3D models on BNB Chain · three.ws"  data-i18n-attr="content:vault.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="An on-chain-gated 3D vault built on BNB Chain's live Greenfield cross-chain storage hubs. Browse, buy, watch the grant settle, unlock, and view the model in 3D."
-		/>
+		 data-i18n-attr="content:vault.meta_twitter_description"/>
 		<meta name="theme-color" content="#09090b" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -84,11 +84,11 @@
 		<main id="main-content">
 			<div class="vlt-wrap">
 				<section class="vlt-hero" aria-labelledby="vlt-heading">
-					<p class="vlt-eyebrow">
+					<p class="vlt-eyebrow" data-i18n-html="vault.bnb_chain_three_ws">
 						<span class="dot" aria-hidden="true"></span><a href="/bnb">BNB Chain × three.ws</a>
 					</p>
-					<h1 id="vlt-heading">The vault</h1>
-					<p class="lede">
+					<h1 id="vlt-heading" data-i18n="vault.the_vault">The vault</h1>
+					<p class="lede" data-i18n="vault.buy_access_to_an_encrypted_3d_model">
 						Buy access to an encrypted 3D model on BSC. The unlock key is granted through a real
 						cross-chain call into Greenfield's programmable storage — a BSC smart contract creating a
 						permission grant on a separate data-availability chain, then this page watching that grant
@@ -97,19 +97,19 @@
 				</section>
 
 				<div class="vlt-session" id="vlt-session-strip" role="status" aria-live="polite">
-					<span class="vlt-net-badge">BSC Testnet</span>
-					<span class="vlt-session-item">Session <code id="vlt-session-addr">…</code></span>
-					<span class="vlt-session-item">Balance <b id="vlt-session-balance">…</b></span>
-					<button type="button" class="vlt-btn" id="vlt-fund-btn">Fund from wallet</button>
+					<span class="vlt-net-badge" data-i18n="vault.bsc_testnet">BSC Testnet</span>
+					<span class="vlt-session-item" data-i18n-html="vault.session">Session <code id="vlt-session-addr">…</code></span>
+					<span class="vlt-session-item" data-i18n-html="vault.balance">Balance <b id="vlt-session-balance">…</b></span>
+					<button type="button" class="vlt-btn" id="vlt-fund-btn" data-i18n="vault.fund_from_wallet">Fund from wallet</button>
 				</div>
 
 				<section class="vlt-section" aria-label="Vault listings">
 					<div class="vlt-section-head">
 						<div>
-							<h2 class="vlt-section-heading">Browse</h2>
-							<p class="vlt-section-sub">Live listings read straight off the GreenfieldVault contract's on-chain events.</p>
+							<h2 class="vlt-section-heading" data-i18n="vault.browse">Browse</h2>
+							<p class="vlt-section-sub" data-i18n="vault.live_listings_read_straight_off_the_greenfie">Live listings read straight off the GreenfieldVault contract's on-chain events.</p>
 						</div>
-						<button type="button" class="vlt-btn vlt-btn-ghost" id="vlt-refresh-btn">Refresh</button>
+						<button type="button" class="vlt-btn vlt-btn-ghost" id="vlt-refresh-btn" data-i18n="vault.refresh">Refresh</button>
 					</div>
 					<div id="vlt-banner-slot"></div>
 					<div class="vlt-grid" id="vlt-grid" aria-live="polite"></div>
@@ -117,23 +117,23 @@
 
 				<section class="vlt-section" aria-label="List a model for sale">
 					<details class="vlt-sell" id="vlt-sell">
-						<summary>Sell a model</summary>
+						<summary data-i18n="vault.sell_a_model">Sell a model</summary>
 						<div class="vlt-sell-body">
-							<p class="vlt-drawer-note">
+							<p class="vlt-drawer-note" data-i18n-html="vault.encrypts_and_uploads_your_glb_to_greenfield">
 								Encrypts and uploads your GLB to Greenfield, then lists it on the vault contract from
 								your connected wallet. Requires the contract to be deployed and your wallet to hold
 								Greenfield <code>ROLE_CREATE</code> on the uploaded object.
 							</p>
 							<div class="vlt-field">
-								<label for="vlt-sell-url">GLB URL</label>
+								<label for="vlt-sell-url" data-i18n="vault.glb_url">GLB URL</label>
 								<input type="url" id="vlt-sell-url" placeholder="https://…/model.glb" />
 							</div>
 							<div class="vlt-field">
-								<label for="vlt-sell-price">Price (tBNB)</label>
+								<label for="vlt-sell-price" data-i18n="vault.price_tbnb">Price (tBNB)</label>
 								<input type="number" id="vlt-sell-price" placeholder="0.01" step="0.0001" min="0" />
 							</div>
 							<div class="vlt-drawer-actions">
-								<button type="button" class="vlt-btn vlt-btn-primary" id="vlt-sell-connect">Connect wallet &amp; list</button>
+								<button type="button" class="vlt-btn vlt-btn-primary" id="vlt-sell-connect" data-i18n="vault.connect_wallet_list">Connect wallet &amp; list</button>
 							</div>
 							<div class="vlt-sell-log" id="vlt-sell-log" hidden></div>
 						</div>
@@ -141,7 +141,7 @@
 				</section>
 
 				<div class="vlt-honesty">
-					<h3>How this page stays honest</h3>
+					<h3 data-i18n="vault.how_this_page_stays_honest">How this page stays honest</h3>
 					<p>
 						Listings and purchase state are read live from the GreenfieldVault contract — never a
 						hardcoded flag. If the contract isn't deployed to this network yet, the banner above says so
@@ -160,8 +160,8 @@
 		<div class="vlt-drawer-backdrop" id="vlt-backdrop" data-open="false"></div>
 		<aside class="vlt-drawer" id="vlt-drawer" data-open="false" aria-hidden="true" aria-label="Model detail">
 			<div class="vlt-drawer-head">
-				<strong id="vlt-drawer-title">Model</strong>
-				<button type="button" class="vlt-drawer-close" id="vlt-drawer-close" aria-label="Close">
+				<strong id="vlt-drawer-title" data-i18n="vault.model">Model</strong>
+				<button type="button" class="vlt-drawer-close" id="vlt-drawer-close" aria-label="Close" data-i18n-attr="aria-label:vault.close_arialabel">
 					<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" /></svg>
 				</button>
 			</div>
@@ -171,5 +171,7 @@
 		<div id="footer-container"></div>
 		<script type="module" src="/src/vault.js"></script>
 		<script src="/footer.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

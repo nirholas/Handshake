@@ -17,19 +17,19 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>BNB Chain live block race — 0.45s vs Base, Ethereum, Solana · three.ws</title>
+		<title data-i18n="bnb_latency.meta_title">BNB Chain live block race — 0.45s vs Base, Ethereum, Solana · three.ws</title>
 		<meta
 			name="description"
 			content="A live, honest block race: BNB Chain's ~0.45s blocks measured right now against Base, Ethereum, and Solana off real public RPCs. No wallet, no payment, no hardcoded numbers — every figure is a fresh on-chain measurement."
-		/>
+		 data-i18n-attr="content:bnb_latency.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/bnb-latency" />
-		<meta property="og:title" content="BNB Chain live block race · three.ws" />
+		<meta property="og:title" content="BNB Chain live block race · three.ws"  data-i18n-attr="content:bnb_latency.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Watch BNB Chain confirm blocks in real time next to Base, Ethereum, and Solana — measured live off public RPCs, never a hardcoded '0.45s'."
-		/>
+		 data-i18n-attr="content:bnb_latency.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=BNB+Chain+Live+Block+Race+%E2%80%94+0.45s+vs+Base%2C+Ethereum%2C+Solana&amp;d=A+live%2C+honest+race%3A+BNB+Chain%2C+Base%2C+Ethereum%2C+and+Solana+block+times+measured+fresh+off+real+public+RPCs+every+few+seconds%2C+with+a+rolling+sparkline+per+lane.&amp;p=%2Fbnb-latency"
@@ -38,11 +38,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="BNB Chain live block race · three.ws" />
+		<meta name="twitter:title" content="BNB Chain live block race · three.ws"  data-i18n-attr="content:bnb_latency.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Watch BNB Chain confirm blocks in real time next to Base, Ethereum, and Solana — measured live off public RPCs, never a hardcoded '0.45s'."
-		/>
+		 data-i18n-attr="content:bnb_latency.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=BNB+Chain+Live+Block+Race+%E2%80%94+0.45s+vs+Base%2C+Ethereum%2C+Solana&amp;d=A+live%2C+honest+race%3A+BNB+Chain%2C+Base%2C+Ethereum%2C+and+Solana+block+times+measured+fresh+off+real+public+RPCs+every+few+seconds%2C+with+a+rolling+sparkline+per+lane.&amp;p=%2Fbnb-latency"
@@ -492,11 +492,11 @@
 			<div class="bnbl-wrap">
 				<!-- Hero -->
 				<section class="bnbl-hero" aria-labelledby="bnbl-heading">
-					<p class="bnbl-eyebrow">
+					<p class="bnbl-eyebrow" data-i18n-html="bnb_latency.bnb_chain_three_ws">
 						<span class="dot" aria-hidden="true"></span><a href="/bnb">BNB Chain × three.ws</a>
 					</p>
-					<h1 id="bnbl-heading">Watch BNB Chain confirm blocks in real time.</h1>
-					<p class="lede">
+					<h1 id="bnbl-heading" data-i18n="bnb_latency.watch_bnb_chain_confirm_blocks_in_real">Watch BNB Chain confirm blocks in real time.</h1>
+					<p class="lede" data-i18n="bnb_latency.four_lanes_one_honest_race_bnb_chain">
 						Four lanes, one honest race: BNB Chain, Base, Ethereum, and Solana, each measured live off a
 						public RPC every few seconds — never a hardcoded "0.45s." A lane that goes quiet shows
 						"reconnecting," not a frozen fake number, while the others keep racing.
@@ -510,25 +510,25 @@
 							<div class="bnbl-headline-num" id="bnbl-headline-num">
 								<span class="bnbl-spinner" aria-hidden="true"></span>
 							</div>
-							<p class="bnbl-headline-sub" id="bnbl-headline-sub">
+							<p class="bnbl-headline-sub" id="bnbl-headline-sub" data-i18n="bnb_latency.measuring_live_bnb_chain_block_time_from">
 								Measuring live BNB Chain block time from a public RPC…
 							</p>
 						</div>
 						<span id="bnbl-updated"></span>
 					</div>
 					<div class="bnbl-page-error" id="bnbl-page-error" role="alert" hidden>
-						<p>
+						<p data-i18n="bnb_latency.every_chain_s_public_rpc_is_unreachable">
 							Every chain's public RPC is unreachable right now — this is a real outage, not a bug.
 							Retry, or check back shortly.
 						</p>
-						<button class="bnbl-retry" id="bnbl-retry" type="button">Retry</button>
+						<button class="bnbl-retry" id="bnbl-retry" type="button" data-i18n="bnb_latency.retry">Retry</button>
 					</div>
 				</section>
 
 				<!-- Race lanes -->
 				<section class="bnbl-race-section" id="bnbl-race" aria-label="Live block-race lanes">
-					<h2 class="bnbl-section-heading">The race, lane by lane</h2>
-					<p class="bnbl-section-sub">
+					<h2 class="bnbl-section-heading" data-i18n="bnb_latency.the_race_lane_by_lane">The race, lane by lane</h2>
+					<p class="bnbl-section-sub" data-i18n="bnb_latency.each_card_samples_real_blocks_or_slots">
 						Each card samples real blocks (or slots, for Solana) off a public RPC and reports the
 						measured average interval — the sparkline is the last 24 live readings, tallest bar = fastest
 						measurement.
@@ -539,19 +539,19 @@
 				<!-- Honesty / methodology -->
 				<section class="bnbl-honesty" aria-label="How this race is measured">
 					<div class="bnbl-honesty-card">
-						<h3>How we keep this race honest</h3>
+						<h3 data-i18n="bnb_latency.how_we_keep_this_race_honest">How we keep this race honest</h3>
 						<ul>
-							<li>
+							<li data-i18n-html="bnb_latency.every_number_comes_from_which_samples_real">
 								Every number comes from <code>/api/bnb/latency</code>, which samples real blocks (BNB
 								via <code>probeBlockTime</code>, the same function backing the
 								<a href="/bnb">/bnb hub</a>'s proof strip) off public RPCs on every poll — nothing is
 								precomputed or hardcoded.
 							</li>
-							<li>
+							<li data-i18n="bnb_latency.we_never_claim_bnb_s_roadmap_targets">
 								We never claim BNB's roadmap targets — 20,000 TPS or BEP-670's 250ms finality — as
 								shipped. This page only shows what it measured itself, right now.
 							</li>
-							<li>
+							<li data-i18n="bnb_latency.a_chain_s_rpc_going_quiet_shows">
 								A chain's RPC going quiet shows "reconnecting" on that lane only; the rest of the race
 								keeps running. All four down at once shows a designed error with a retry, never a
 								blank page.
@@ -565,5 +565,7 @@
 		<div id="footer-container"></div>
 		<script type="module" src="/src/bnb-latency.js"></script>
 		<script src="/footer.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

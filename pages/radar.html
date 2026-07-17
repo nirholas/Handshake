@@ -4,31 +4,31 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Coin Radar — live pump.fun launch intelligence · three.ws</title>
+		<title data-i18n="radar.meta_title">Coin Radar — live pump.fun launch intelligence · three.ws</title>
 		<meta
 			name="description"
 			content="A live radar of every pump.fun coin in its first ~90 seconds of trading — classified and risk-scored by the Coin Intelligence Engine. See bundle vs organic, concentration, and risk flags before you act."
-		/>
+		 data-i18n-attr="content:radar.meta_description"/>
 		<meta name="robots" content="index, follow" />
 		<link rel="canonical" href="https://three.ws/radar" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Coin Radar — live pump.fun launch intelligence" />
+		<meta property="og:title" content="Coin Radar — live pump.fun launch intelligence"  data-i18n-attr="content:radar.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Every new pump.fun coin, scored in its first ~90 seconds: bundle vs organic, concentration, risk flags — live."
-		/>
+		 data-i18n-attr="content:radar.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/radar" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Coin+Radar&amp;d=Live+pump.fun+launch+intelligence%3A+every+new+coin+scored+in+its+first+%7E90+seconds+%E2%80%94+bundle+vs+organic%2C+wallet+concentration%2C+dev+behaviour%2C+and+risk+flags+from+&amp;p=%2Fradar" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Coin Radar — live pump.fun launch intelligence" />
+		<meta name="twitter:title" content="Coin Radar — live pump.fun launch intelligence"  data-i18n-attr="content:radar.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Every new pump.fun coin, scored in its first ~90 seconds: bundle vs organic, concentration, risk flags — live."
-		/>
+		 data-i18n-attr="content:radar.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Coin+Radar&amp;d=Live+pump.fun+launch+intelligence%3A+every+new+coin+scored+in+its+first+%7E90+seconds+%E2%80%94+bundle+vs+organic%2C+wallet+concentration%2C+dev+behaviour%2C+and+risk+flags+from+&amp;p=%2Fradar" />
 
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -64,17 +64,17 @@
 
 		<main class="radar-main" id="main-content">
 			<nav class="radar-breadcrumb" aria-label="Breadcrumb">
-				<a href="/">three.ws</a>
+				<a href="/" data-i18n="radar.three_ws">three.ws</a>
 				<span aria-hidden="true">/</span>
-				<a href="/launches">Launches</a>
+				<a href="/launches" data-i18n="radar.launches">Launches</a>
 				<span aria-hidden="true">/</span>
-				<span>Coin Radar</span>
+				<span data-i18n="radar.coin_radar">Coin Radar</span>
 			</nav>
 
 			<section class="radar-hero">
-				<span class="radar-pill"><span class="radar-pill-dot"></span> Coin Intelligence Engine</span>
-				<h1>Coin Radar</h1>
-				<p>
+				<span class="radar-pill" data-i18n-html="radar.coin_intelligence_engine"><span class="radar-pill-dot"></span> Coin Intelligence Engine</span>
+				<h1 data-i18n="radar.coin_radar_2">Coin Radar</h1>
+				<p data-i18n="radar.every_new_pump_fun_coin_watched_for">
 					Every new pump.fun coin, watched for its first ~90 seconds of trading and scored on the
 					spot — bundle vs organic, wallet concentration, dev behaviour, and live risk flags. Read the
 					room before you act.
@@ -92,5 +92,7 @@
 			mountRadar(document.getElementById('radar-root'));
 		</script>
 		<script src="/brand.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -5,21 +5,21 @@
 		<meta charset="UTF-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Pump Dashboard — three.ws</title>
+		<title data-i18n="pump_dashboard.meta_title">Pump Dashboard — three.ws</title>
 		<meta
 			name="description"
 			content="Real-time Pump.fun dashboard — live feed, watch list, claims, token scanner, quoting, vanity addresses."
-		/>
+		 data-i18n-attr="content:pump_dashboard.meta_description"/>
 		<meta name="theme-color" content="#070707" />
 		<link rel="canonical" href="https://three.ws/pump-dashboard" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Pump Dashboard — three.ws" />
+		<meta property="og:title" content="Pump Dashboard — three.ws"  data-i18n-attr="content:pump_dashboard.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Real-time Pump.fun dashboard — live feed, watch list, claims, token scanner, quoting, vanity addresses."
-		/>
+		 data-i18n-attr="content:pump_dashboard.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/pump-dashboard" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Pump+Dashboard&amp;d=Pump.fun+trading+desk%3A+watchlists%2C+scanner%2C+quotes%2C+portfolio%2C+and+live+charts.&amp;p=%2Fpump-dashboard" />
 
@@ -164,11 +164,11 @@
 		</style>
 
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Pump Dashboard · three.ws" />
+		<meta name="twitter:title" content="Pump Dashboard · three.ws"  data-i18n-attr="content:pump_dashboard.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Pump.fun trading desk: watchlists, scanner, quotes, portfolio, and live charts."
-		/>
+		 data-i18n-attr="content:pump_dashboard.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Pump+Dashboard&amp;d=Pump.fun+trading+desk%3A+watchlists%2C+scanner%2C+quotes%2C+portfolio%2C+and+live+charts.&amp;p=%2Fpump-dashboard" />
 		<script type="application/ld+json">
 			{
@@ -188,14 +188,14 @@
 	<script src="/model-viewer-meshopt.js"></script>
 </head>
 	<body class="home-page pump-dashboard-page">
-		<a href="#pd-main" class="h-skip-link">Skip to main content</a>
+		<a href="#pd-main" class="h-skip-link" data-i18n="pump_dashboard.skip_to_main_content">Skip to main content</a>
 
 		<header><div id="nav-container"></div></header>
 
 		<div class="pd-app" id="pd-main">
 			<aside class="pd-sidebar" id="pd-sidebar">
 				<div class="pd-sidebar-head">
-					<a class="pd-sidebar-brand" href="/" aria-label="three.ws home">
+					<a class="pd-sidebar-brand" href="/" aria-label="three.ws home" data-i18n-attr="aria-label:pump_dashboard.three_ws_home_arialabel">
 						<img
 							class="wordmark-logo"
 							src="/three.svg"
@@ -376,22 +376,22 @@
 					</a>
 				</nav>
 				<div class="pd-sidebar-foot">
-					<a class="pd-sidebar-back" href="/dashboard/tokens">&larr; Back to dashboard</a>
-					<span id="pd-uptime">Uptime: —</span>
+					<a class="pd-sidebar-back" href="/dashboard/tokens" data-i18n="pump_dashboard.back_to_dashboard">&larr; Back to dashboard</a>
+					<span id="pd-uptime" data-i18n="pump_dashboard.uptime">Uptime: —</span>
 				</div>
 			</aside>
 
 			<main class="pd-main">
 				<div class="pd-topbar">
-					<h1 class="pd-page-title" id="pd-page-title">Dashboard</h1>
+					<h1 class="pd-page-title" id="pd-page-title" data-i18n="pump_dashboard.dashboard">Dashboard</h1>
 					<div class="pd-spacer"></div>
 					<div class="pd-status-chip" title="three.ws API health">
 						<span class="pd-dot is-warm" id="pd-api-dot"></span>
-						<span id="pd-api-status">API: connecting…</span>
+						<span id="pd-api-status" data-i18n="pump_dashboard.api_connecting">API: connecting…</span>
 					</div>
 					<div class="pd-status-chip" title="Pump.fun realtime WebSocket">
 						<span class="pd-dot" id="pd-ws-dot"></span>
-						<span id="pd-ws-status">WS: idle</span>
+						<span id="pd-ws-status" data-i18n="pump_dashboard.ws_idle">WS: idle</span>
 					</div>
 					<div
 						class="pd-status-chip"
@@ -399,7 +399,7 @@
 						title="SOL spot price (via Helius/Pyth)"
 					>
 						<span class="pd-dot" id="pd-sol-dot"></span>
-						<span id="pd-sol-status">SOL: —</span>
+						<span id="pd-sol-status" data-i18n="pump_dashboard.sol">SOL: —</span>
 					</div>
 				</div>
 
@@ -439,7 +439,7 @@
 					</div>
 					<div class="pd-dash-grid">
 						<div class="pd-panel pd-mod-8">
-							<div class="pd-panel-head"><h2>Featured agent</h2></div>
+							<div class="pd-panel-head"><h2 data-i18n="pump_dashboard.featured_agent">Featured agent</h2></div>
 							<div class="pd-panel-body">
 								<div class="pd-featured" id="pd-featured-card">
 									<div class="pd-featured-avatar" id="pd-featured-avatar">
@@ -461,7 +461,7 @@
 										<div class="pd-featured-name" id="pd-featured-name">
 											Loading agent…
 										</div>
-										<p class="pd-featured-desc" id="pd-featured-desc">
+										<p class="pd-featured-desc" id="pd-featured-desc" data-i18n="pump_dashboard.fetching_the_featured_agent_for_this_account">
 											Fetching the featured agent for this account.
 										</p>
 										<div
@@ -474,10 +474,10 @@
 												class="pd-btn is-primary pd-btn-sm"
 												id="pd-featured-link"
 												href="/my-agents"
-												>View profile</a
+												 data-i18n="pump_dashboard.view_profile">View profile</a
 											>
 											<a class="pd-btn pd-btn-sm" href="/create"
-												>Create agent</a
+												 data-i18n="pump_dashboard.create_agent">Create agent</a
 											>
 										</div>
 									</div>
@@ -487,14 +487,14 @@
 
 						<div class="pd-panel pd-mod-4">
 							<div class="pd-panel-head">
-								<h2>Wallet snapshot</h2>
+								<h2 data-i18n="pump_dashboard.wallet_snapshot">Wallet snapshot</h2>
 								<div class="pd-spacer"></div>
 								<button
 									class="pd-btn pd-btn-sm"
 									id="pd-wallet-disconnect"
 									type="button"
 									hidden
-								>
+								 data-i18n="pump_dashboard.disconnect">
 									Disconnect
 								</button>
 							</div>
@@ -518,7 +518,7 @@
 											class="pd-btn is-primary pd-btn-sm"
 											id="connect-wallet-btn"
 											type="button"
-										>
+										 data-i18n="pump_dashboard.connect_wallet">
 											Connect Wallet
 										</button>
 									</div>
@@ -529,7 +529,7 @@
 
 						<div class="pd-panel pd-mod-6">
 							<div class="pd-panel-head">
-								<h2>Network health</h2>
+								<h2 data-i18n="pump_dashboard.network_health">Network health</h2>
 								<div class="pd-spacer"></div>
 								<span class="pd-badge" id="pd-network-badge">—</span>
 							</div>
@@ -565,7 +565,7 @@
 
 						<div class="pd-panel pd-mod-12">
 							<div class="pd-panel-head">
-								<h2>Market chart</h2>
+								<h2 data-i18n="pump_dashboard.market_chart">Market chart</h2>
 								<div class="pd-spacer"></div>
 								<select
 									class="pd-select"
@@ -573,7 +573,7 @@
 									aria-label="Select token for the market chart"
 									style="max-width: 280px"
 								>
-									<option value="" disabled selected>
+									<option value="" disabled selected data-i18n="pump_dashboard.loading_trending_tokens">
 										Loading trending tokens…
 									</option>
 								</select>
@@ -582,7 +582,7 @@
 									id="pd-chart-retry"
 									type="button"
 									hidden
-								>
+								 data-i18n="pump_dashboard.retry">
 									Retry
 								</button>
 							</div>
@@ -629,16 +629,16 @@
 
 						<div class="pd-panel pd-mod-6">
 							<div class="pd-panel-head">
-								<h2>High conviction <span class="pd-oracle-live-dot" aria-hidden="true"></span></h2>
+								<h2 data-i18n-html="pump_dashboard.high_conviction">High conviction <span class="pd-oracle-live-dot" aria-hidden="true"></span></h2>
 								<div class="pd-spacer"></div>
-								<a class="pd-btn pd-btn-sm" href="/oracle" style="font-size:11px">Oracle →</a>
+								<a class="pd-btn pd-btn-sm" href="/oracle" style="font-size:11px" data-i18n="pump_dashboard.oracle">Oracle →</a>
 							</div>
 							<div class="pd-oracle-stats-row" id="pd-oracle-stats-row">
-								<div class="pd-oracle-stat"><span class="pd-oracle-stat-val" id="pds-agents">—</span><span class="pd-oracle-stat-lbl">Armed</span></div>
-								<div class="pd-oracle-stat"><span class="pd-oracle-stat-val" id="pds-scored">—</span><span class="pd-oracle-stat-lbl">Scored 24h</span></div>
-								<div class="pd-oracle-stat"><span class="pd-oracle-stat-val positive" id="pds-winrate">—</span><span class="pd-oracle-stat-lbl">Win rate</span></div>
-								<div class="pd-oracle-stat"><span class="pd-oracle-stat-val" id="pds-open">—</span><span class="pd-oracle-stat-lbl">Open</span></div>
-								<div class="pd-oracle-stat"><span class="pd-oracle-stat-val" id="pds-ath">—</span><span class="pd-oracle-stat-lbl">Best ATH</span></div>
+								<div class="pd-oracle-stat"><span class="pd-oracle-stat-val" id="pds-agents">—</span><span class="pd-oracle-stat-lbl" data-i18n="pump_dashboard.armed">Armed</span></div>
+								<div class="pd-oracle-stat"><span class="pd-oracle-stat-val" id="pds-scored">—</span><span class="pd-oracle-stat-lbl" data-i18n="pump_dashboard.scored_24h">Scored 24h</span></div>
+								<div class="pd-oracle-stat"><span class="pd-oracle-stat-val positive" id="pds-winrate">—</span><span class="pd-oracle-stat-lbl" data-i18n="pump_dashboard.win_rate">Win rate</span></div>
+								<div class="pd-oracle-stat"><span class="pd-oracle-stat-val" id="pds-open">—</span><span class="pd-oracle-stat-lbl" data-i18n="pump_dashboard.open">Open</span></div>
+								<div class="pd-oracle-stat"><span class="pd-oracle-stat-val" id="pds-ath">—</span><span class="pd-oracle-stat-lbl" data-i18n="pump_dashboard.best_ath">Best ATH</span></div>
 							</div>
 							<div class="pd-panel-body no-pad">
 								<div id="pd-oracle-feed" class="pd-oracle-feed">
@@ -651,14 +651,14 @@
 
 						<div class="pd-panel pd-mod-6">
 							<div class="pd-panel-head">
-								<h2>Live feed</h2>
+								<h2 data-i18n="pump_dashboard.live_feed">Live feed</h2>
 								<span class="pd-badge" id="pd-activity-count">0</span>
 								<div class="pd-spacer"></div>
 								<button
 									class="pd-btn pd-btn-sm"
 									id="pd-clear-dash-feed"
 									type="button"
-								>
+								 data-i18n="pump_dashboard.clear">
 									Clear
 								</button>
 							</div>
@@ -698,7 +698,7 @@
 				<section class="pd-page" id="page-feed" aria-label="Live feed">
 					<div class="pd-panel">
 						<div class="pd-panel-head">
-							<h2>Realtime feed</h2>
+							<h2 data-i18n="pump_dashboard.realtime_feed">Realtime feed</h2>
 							<span class="pd-badge" id="pd-feed-count">0</span>
 							<div class="pd-spacer"></div>
 							<label
@@ -712,27 +712,27 @@
 							>
 								<input type="checkbox" class="pd-toggle" id="pd-feed-pause" /> Pause
 							</label>
-							<button class="pd-btn pd-btn-sm" id="pd-clear-live-feed" type="button">
+							<button class="pd-btn pd-btn-sm" id="pd-clear-live-feed" type="button" data-i18n="pump_dashboard.clear_2">
 								Clear
 							</button>
 						</div>
 						<div class="pd-filter-row" role="tablist">
-							<button class="pd-filter-btn is-active" data-filter="all" type="button">
+							<button class="pd-filter-btn is-active" data-filter="all" type="button" data-i18n="pump_dashboard.all">
 								All
 							</button>
-							<button class="pd-filter-btn" data-filter="launch" type="button">
+							<button class="pd-filter-btn" data-filter="launch" type="button" data-i18n="pump_dashboard.launches">
 								Launches
 							</button>
-							<button class="pd-filter-btn" data-filter="trade" type="button">
+							<button class="pd-filter-btn" data-filter="trade" type="button" data-i18n="pump_dashboard.trades">
 								Trades
 							</button>
-							<button class="pd-filter-btn" data-filter="whale" type="button">
+							<button class="pd-filter-btn" data-filter="whale" type="button" data-i18n="pump_dashboard.whales">
 								Whales
 							</button>
-							<button class="pd-filter-btn" data-filter="graduation" type="button">
+							<button class="pd-filter-btn" data-filter="graduation" type="button" data-i18n="pump_dashboard.graduations">
 								Graduations
 							</button>
-							<button class="pd-filter-btn" data-filter="claim" type="button">
+							<button class="pd-filter-btn" data-filter="claim" type="button" data-i18n="pump_dashboard.claims">
 								Claims
 							</button>
 						</div>
@@ -762,7 +762,7 @@
 									</svg>
 									<div>
 										Connecting to
-										<span class="pd-mono">wss://pumpportal.fun/api/data</span>…
+										<span class="pd-mono" data-i18n="pump_dashboard.wss_pumpportal_fun_api_data">wss://pumpportal.fun/api/data</span>…
 									</div>
 								</div>
 							</div>
@@ -773,33 +773,33 @@
 				<!-- ═══════ Watch List page ═══════ -->
 				<section class="pd-page" id="page-watches" aria-label="Watch list">
 					<div style="display: flex; gap: 0.5rem; margin-bottom: 1rem">
-						<button class="pd-btn is-primary" id="pd-add-watch-btn" type="button">
+						<button class="pd-btn is-primary" id="pd-add-watch-btn" type="button" data-i18n="pump_dashboard.add_watch">
 							+ Add watch
 						</button>
-						<button class="pd-btn" id="pd-refresh-watches" type="button">
+						<button class="pd-btn" id="pd-refresh-watches" type="button" data-i18n="pump_dashboard.refresh">
 							Refresh
 						</button>
 					</div>
 					<div class="pd-panel">
 						<div class="pd-panel-head">
-							<h2>Active watches</h2>
+							<h2 data-i18n="pump_dashboard.active_watches">Active watches</h2>
 							<span class="pd-badge" id="pd-watches-count">0</span>
 						</div>
 						<div class="pd-panel-body no-pad">
 							<table class="pd-table">
 								<thead>
 									<tr>
-										<th>Wallet</th>
-										<th>Label</th>
-										<th>Token filter</th>
-										<th>Webhook</th>
-										<th>Created</th>
+										<th data-i18n="pump_dashboard.wallet">Wallet</th>
+										<th data-i18n="pump_dashboard.label">Label</th>
+										<th data-i18n="pump_dashboard.token_filter">Token filter</th>
+										<th data-i18n="pump_dashboard.webhook">Webhook</th>
+										<th data-i18n="pump_dashboard.created">Created</th>
 										<th></th>
 									</tr>
 								</thead>
 								<tbody id="pd-watches-table">
 									<tr>
-										<td colspan="6" class="pd-empty">Loading watches…</td>
+										<td colspan="6" class="pd-empty" data-i18n="pump_dashboard.loading_watches">Loading watches…</td>
 									</tr>
 								</tbody>
 							</table>
@@ -811,7 +811,7 @@
 				<section class="pd-page" id="page-claims" aria-label="Fee claims">
 					<div class="pd-form-inline">
 						<div class="pd-form-group" style="flex: 2">
-							<label>Filter wallet</label>
+							<label data-i18n="pump_dashboard.filter_wallet">Filter wallet</label>
 							<input
 								class="pd-input"
 								type="text"
@@ -820,23 +820,23 @@
 							/>
 						</div>
 						<div class="pd-form-group" style="flex: 1">
-							<label>Type</label>
+							<label data-i18n="pump_dashboard.type">Type</label>
 							<select class="pd-select" id="pd-claims-type-filter">
-								<option value="">All types</option>
-								<option value="creator_fee">Creator fee</option>
-								<option value="cashback">Cashback</option>
+								<option value="" data-i18n="pump_dashboard.all_types">All types</option>
+								<option value="creator_fee" data-i18n="pump_dashboard.creator_fee">Creator fee</option>
+								<option value="cashback" data-i18n="pump_dashboard.cashback">Cashback</option>
 							</select>
 						</div>
-						<button class="pd-btn is-primary" id="pd-refresh-claims" type="button">
+						<button class="pd-btn is-primary" id="pd-refresh-claims" type="button" data-i18n="pump_dashboard.search">
 							Search
 						</button>
 					</div>
 					<div class="pd-panel">
 						<div class="pd-panel-head">
-							<h2>Fee claims</h2>
+							<h2 data-i18n="pump_dashboard.fee_claims">Fee claims</h2>
 							<span class="pd-badge" id="pd-claims-count">0</span>
 							<div class="pd-spacer"></div>
-							<button class="pd-btn pd-btn-sm" id="pd-export-claims" type="button">
+							<button class="pd-btn pd-btn-sm" id="pd-export-claims" type="button" data-i18n="pump_dashboard.export_csv">
 								Export CSV
 							</button>
 						</div>
@@ -844,17 +844,17 @@
 							<table class="pd-table">
 								<thead>
 									<tr>
-										<th>Time</th>
-										<th>Wallet</th>
-										<th>Type</th>
-										<th>Token</th>
-										<th>Amount</th>
-										<th>TX</th>
+										<th data-i18n="pump_dashboard.time">Time</th>
+										<th data-i18n="pump_dashboard.wallet_2">Wallet</th>
+										<th data-i18n="pump_dashboard.type_2">Type</th>
+										<th data-i18n="pump_dashboard.token">Token</th>
+										<th data-i18n="pump_dashboard.amount">Amount</th>
+										<th data-i18n="pump_dashboard.tx">TX</th>
 									</tr>
 								</thead>
 								<tbody id="pd-claims-table">
 									<tr>
-										<td colspan="6" class="pd-empty">Loading claims…</td>
+										<td colspan="6" class="pd-empty" data-i18n="pump_dashboard.loading_claims">Loading claims…</td>
 									</tr>
 								</tbody>
 							</table>
@@ -867,80 +867,80 @@
 					<div class="pd-alert-grid">
 						<div class="pd-panel pd-rule-form-panel">
 							<div class="pd-panel-head">
-								<h2 id="pd-rule-form-title">New alert rule</h2>
+								<h2 id="pd-rule-form-title" data-i18n="pump_dashboard.new_alert_rule">New alert rule</h2>
 								<div class="pd-spacer"></div>
-								<button class="pd-btn pd-btn-sm" id="pd-rule-cancel" type="button" hidden>Cancel edit</button>
+								<button class="pd-btn pd-btn-sm" id="pd-rule-cancel" type="button" hidden data-i18n="pump_dashboard.cancel_edit">Cancel edit</button>
 							</div>
 							<div class="pd-panel-body" id="pd-rule-form">
 								<div class="pd-form-group">
-									<label for="pd-rule-kind">Alert type</label>
+									<label for="pd-rule-kind" data-i18n="pump_dashboard.alert_type">Alert type</label>
 									<select class="pd-input" id="pd-rule-kind">
-										<option value="graduation">Graduation → AMM</option>
-										<option value="price_above">Market cap rises above</option>
-										<option value="price_below">Market cap falls below</option>
-										<option value="whale_buy">Whale buy</option>
-										<option value="new_mint">New launch by agent</option>
+										<option value="graduation" data-i18n="pump_dashboard.graduation_amm">Graduation → AMM</option>
+										<option value="price_above" data-i18n="pump_dashboard.market_cap_rises_above">Market cap rises above</option>
+										<option value="price_below" data-i18n="pump_dashboard.market_cap_falls_below">Market cap falls below</option>
+										<option value="whale_buy" data-i18n="pump_dashboard.whale_buy">Whale buy</option>
+										<option value="new_mint" data-i18n="pump_dashboard.new_launch_by_agent">New launch by agent</option>
 									</select>
 									<div class="pd-field-hint" id="pd-rule-kind-hint"></div>
 								</div>
 								<div class="pd-form-group" id="pd-rule-scope-group" hidden>
-									<label for="pd-rule-scope">Scope</label>
+									<label for="pd-rule-scope" data-i18n="pump_dashboard.scope">Scope</label>
 									<select class="pd-input" id="pd-rule-scope">
-										<option value="global">All graduating tokens</option>
-										<option value="mint">A specific token</option>
-										<option value="agent">A specific agent’s tokens</option>
+										<option value="global" data-i18n="pump_dashboard.all_graduating_tokens">All graduating tokens</option>
+										<option value="mint" data-i18n="pump_dashboard.a_specific_token">A specific token</option>
+										<option value="agent" data-i18n="pump_dashboard.a_specific_agent_s_tokens">A specific agent’s tokens</option>
 									</select>
 								</div>
 								<div class="pd-form-group" id="pd-rule-mint-group" hidden>
-									<label for="pd-rule-mint">Token mint</label>
+									<label for="pd-rule-mint" data-i18n="pump_dashboard.token_mint">Token mint</label>
 									<input class="pd-input" type="text" id="pd-rule-mint" placeholder="Token mint address" autocomplete="off" spellcheck="false" />
 								</div>
 								<div class="pd-form-group" id="pd-rule-agent-group" hidden>
-									<label for="pd-rule-agent">Agent</label>
+									<label for="pd-rule-agent" data-i18n="pump_dashboard.agent">Agent</label>
 									<select class="pd-input" id="pd-rule-agent">
-										<option value="">Select an agent…</option>
+										<option value="" data-i18n="pump_dashboard.select_an_agent">Select an agent…</option>
 									</select>
 									<div class="pd-field-hint" id="pd-rule-agent-hint">Fires when this agent launches a coin through three.ws.</div>
 								</div>
 								<div class="pd-form-group" id="pd-rule-threshold-group" hidden>
-									<label for="pd-rule-threshold" id="pd-rule-threshold-label">Threshold</label>
+									<label for="pd-rule-threshold" id="pd-rule-threshold-label" data-i18n="pump_dashboard.threshold">Threshold</label>
 									<input class="pd-input" type="number" id="pd-rule-threshold" min="0" step="any" />
 									<div class="pd-field-hint" id="pd-rule-threshold-hint"></div>
 								</div>
 								<div class="pd-form-group">
-									<label for="pd-rule-label">Label <span class="pd-muted">(optional)</span></label>
+									<label for="pd-rule-label" data-i18n-html="pump_dashboard.label_optional">Label <span class="pd-muted">(optional)</span></label>
 									<input class="pd-input" type="text" id="pd-rule-label" maxlength="80" placeholder="Auto-named if left blank" />
 								</div>
 								<div class="pd-rule-channels">
 									<div class="pd-rule-channels-title">Delivery channels</div>
-									<label class="pd-check"><input type="checkbox" id="pd-rule-inapp" checked /> <span>In-app notification</span></label>
+									<label class="pd-check"><input type="checkbox" id="pd-rule-inapp" checked /> <span data-i18n="pump_dashboard.in_app_notification">In-app notification</span></label>
 									<div class="pd-form-group">
-										<label for="pd-rule-webhook">Webhook URL <span class="pd-muted">(optional)</span></label>
+										<label for="pd-rule-webhook" data-i18n-html="pump_dashboard.webhook_url_optional">Webhook URL <span class="pd-muted">(optional)</span></label>
 										<input class="pd-input" type="url" id="pd-rule-webhook" placeholder="https://your-server.com/pump-alerts" autocomplete="off" spellcheck="false" />
 										<div class="pd-field-hint">HTTPS only. Each POST is HMAC-signed with a per-rule secret revealed after you save.</div>
 									</div>
 									<div class="pd-form-group">
-										<label for="pd-rule-telegram">Telegram chat ID <span class="pd-muted">(optional)</span></label>
+										<label for="pd-rule-telegram" data-i18n-html="pump_dashboard.telegram_chat_id_optional">Telegram chat ID <span class="pd-muted">(optional)</span></label>
 										<input class="pd-input" type="text" id="pd-rule-telegram" placeholder="123456789 or @yourchannel" autocomplete="off" spellcheck="false" />
 										<div class="pd-field-hint">Message the platform bot first so it can reach you. Numeric chat id or @username.</div>
 									</div>
 								</div>
 								<div class="pd-form-group">
-									<label for="pd-rule-cooldown">Cooldown <span class="pd-muted">(seconds)</span></label>
+									<label for="pd-rule-cooldown" data-i18n-html="pump_dashboard.cooldown_seconds">Cooldown <span class="pd-muted">(seconds)</span></label>
 									<input class="pd-input" type="number" id="pd-rule-cooldown" min="5" max="86400" step="5" value="300" />
 									<div class="pd-field-hint">Minimum gap between deliveries for this rule. Prevents alert storms.</div>
 								</div>
-								<button class="pd-btn is-primary" id="pd-rule-save" type="button">Create alert rule</button>
+								<button class="pd-btn is-primary" id="pd-rule-save" type="button" data-i18n="pump_dashboard.create_alert_rule">Create alert rule</button>
 								<div class="pd-rule-signin-note" id="pd-rule-signin-note" hidden>
-									Sign in to create alerts that fire across devices. <a href="/login" class="pd-link">Sign in</a>
+									Sign in to create alerts that fire across devices. <a href="/login" class="pd-link" data-i18n="pump_dashboard.sign_in">Sign in</a>
 								</div>
 							</div>
 						</div>
 						<div class="pd-panel pd-rules-list-panel">
 							<div class="pd-panel-head">
-								<h2>Your alert rules</h2>
+								<h2 data-i18n="pump_dashboard.your_alert_rules">Your alert rules</h2>
 								<div class="pd-spacer"></div>
-								<button class="pd-btn pd-btn-sm" id="pd-rules-refresh" type="button">Refresh</button>
+								<button class="pd-btn pd-btn-sm" id="pd-rules-refresh" type="button" data-i18n="pump_dashboard.refresh_2">Refresh</button>
 							</div>
 							<div class="pd-panel-body no-pad">
 								<div id="pd-rules-list" class="pd-rules-list" aria-live="polite" aria-busy="false">
@@ -951,10 +951,10 @@
 					</div>
 					<div class="pd-panel">
 						<div class="pd-panel-head">
-							<h2>Alert history</h2>
+							<h2 data-i18n="pump_dashboard.alert_history">Alert history</h2>
 							<div class="pd-feed-legend">Live this session + delivered server-side</div>
 							<div class="pd-spacer"></div>
-							<button class="pd-btn pd-btn-sm" id="pd-clear-alert-feed" type="button">Clear</button>
+							<button class="pd-btn pd-btn-sm" id="pd-clear-alert-feed" type="button" data-i18n="pump_dashboard.clear_3">Clear</button>
 						</div>
 						<div class="pd-panel-body no-pad">
 							<div class="pd-feed" id="pd-alert-feed" style="max-height: 360px">
@@ -973,7 +973,7 @@
 				<section class="pd-page" id="page-scanner" aria-label="Token scanner">
 					<div class="pd-form-inline">
 						<div class="pd-form-group" style="flex: 1">
-							<label>Token mint address</label>
+							<label data-i18n="pump_dashboard.token_mint_address">Token mint address</label>
 							<input
 								class="pd-input"
 								type="text"
@@ -981,7 +981,7 @@
 								placeholder="Enter Solana token mint…"
 							/>
 						</div>
-						<button class="pd-btn is-primary" id="pd-scan-token" type="button">
+						<button class="pd-btn is-primary" id="pd-scan-token" type="button" data-i18n="pump_dashboard.scan">
 							Scan
 						</button>
 					</div>
@@ -1006,14 +1006,14 @@
 						</div>
 
 						<div class="pd-panel">
-							<div class="pd-panel-head"><h2>Security checks</h2></div>
+							<div class="pd-panel-head"><h2 data-i18n="pump_dashboard.security_checks">Security checks</h2></div>
 							<div class="pd-panel-body no-pad">
 								<table class="pd-table">
 									<thead>
 										<tr>
-											<th>Check</th>
-											<th>Status</th>
-											<th>Detail</th>
+											<th data-i18n="pump_dashboard.check">Check</th>
+											<th data-i18n="pump_dashboard.status">Status</th>
+											<th data-i18n="pump_dashboard.detail">Detail</th>
 										</tr>
 									</thead>
 									<tbody id="pd-scan-checks"></tbody>
@@ -1027,10 +1027,10 @@
 				<section class="pd-page" id="page-quoting" aria-label="Quote engine">
 					<div class="pd-config-grid">
 						<div class="pd-panel">
-							<div class="pd-panel-head"><h2>Buy quote</h2></div>
+							<div class="pd-panel-head"><h2 data-i18n="pump_dashboard.buy_quote">Buy quote</h2></div>
 							<div class="pd-panel-body">
 								<div class="pd-form-group">
-									<label>Token mint</label>
+									<label data-i18n="pump_dashboard.token_mint_2">Token mint</label>
 									<input
 										class="pd-input"
 										type="text"
@@ -1039,7 +1039,7 @@
 									/>
 								</div>
 								<div class="pd-form-group">
-									<label>SOL amount</label>
+									<label data-i18n="pump_dashboard.sol_amount">SOL amount</label>
 									<input
 										class="pd-input"
 										type="number"
@@ -1053,7 +1053,7 @@
 									class="pd-btn is-primary"
 									id="pd-get-buy-quote"
 									type="button"
-								>
+								 data-i18n="pump_dashboard.get_buy_quote">
 									Get buy quote
 								</button>
 								<div id="pd-quote-buy-result" style="margin-top: 0.85rem"></div>
@@ -1061,10 +1061,10 @@
 						</div>
 
 						<div class="pd-panel">
-							<div class="pd-panel-head"><h2>Sell quote</h2></div>
+							<div class="pd-panel-head"><h2 data-i18n="pump_dashboard.sell_quote">Sell quote</h2></div>
 							<div class="pd-panel-body">
 								<div class="pd-form-group">
-									<label>Token mint</label>
+									<label data-i18n="pump_dashboard.token_mint_3">Token mint</label>
 									<input
 										class="pd-input"
 										type="text"
@@ -1073,7 +1073,7 @@
 									/>
 								</div>
 								<div class="pd-form-group">
-									<label>Token amount</label>
+									<label data-i18n="pump_dashboard.token_amount">Token amount</label>
 									<input
 										class="pd-input"
 										type="number"
@@ -1087,7 +1087,7 @@
 									class="pd-btn is-primary"
 									id="pd-get-sell-quote"
 									type="button"
-								>
+								 data-i18n="pump_dashboard.get_sell_quote">
 									Get sell quote
 								</button>
 								<div id="pd-quote-sell-result" style="margin-top: 0.85rem"></div>
@@ -1099,16 +1099,16 @@
 				<!-- ═══════ Vanity Generator page ═══════ -->
 				<section class="pd-page" id="page-vanity" aria-label="Vanity generator">
 					<div class="pd-panel">
-						<div class="pd-panel-head"><h2>Vanity address generator</h2></div>
+						<div class="pd-panel-head"><h2 data-i18n="pump_dashboard.vanity_address_generator">Vanity address generator</h2></div>
 						<div class="pd-panel-body">
 							<div class="pd-callout" style="margin-bottom: 1rem">
 								Grinds Ed25519 keypairs locally in Web Workers. The secret key never
 								leaves your browser. For a fuller UI with worker tuning, use
-								<a href="/vanity-wallet">/vanity-wallet</a>.
+								<a href="/vanity-wallet" data-i18n="pump_dashboard.vanity_wallet">/vanity-wallet</a>.
 							</div>
 							<div class="pd-form-row">
 								<div class="pd-form-group">
-									<label>Prefix (optional)</label>
+									<label data-i18n="pump_dashboard.prefix_optional">Prefix (optional)</label>
 									<input
 										class="pd-input"
 										type="text"
@@ -1118,7 +1118,7 @@
 									/>
 								</div>
 								<div class="pd-form-group">
-									<label>Suffix (optional)</label>
+									<label data-i18n="pump_dashboard.suffix_optional">Suffix (optional)</label>
 									<input
 										class="pd-input"
 										type="text"
@@ -1133,7 +1133,7 @@
 									class="pd-btn is-primary"
 									id="pd-vanity-start"
 									type="button"
-								>
+								 data-i18n="pump_dashboard.generate">
 									Generate
 								</button>
 								<button
@@ -1141,7 +1141,7 @@
 									id="pd-vanity-stop"
 									type="button"
 									hidden
-								>
+								 data-i18n="pump_dashboard.stop">
 									Stop
 								</button>
 							</div>
@@ -1162,7 +1162,7 @@
 				<!-- ═══════ Default Agent page ═══════ -->
 				<section class="pd-page" id="page-animations" aria-label="Default agent">
 					<div class="pd-panel">
-						<div class="pd-panel-head"><h2>Default agent</h2></div>
+						<div class="pd-panel-head"><h2 data-i18n="pump_dashboard.default_agent">Default agent</h2></div>
 						<div class="pd-panel-body">
 							<div class="pd-config-grid">
 								<div
@@ -1186,7 +1186,7 @@
 								</div>
 								<div>
 									<div class="pd-form-group">
-										<label>Speech</label>
+										<label data-i18n="pump_dashboard.speech">Speech</label>
 										<input
 											class="pd-input"
 											type="text"
@@ -1198,7 +1198,7 @@
 												class="pd-btn is-primary"
 												id="pd-speak-btn"
 												type="button"
-											>
+											 data-i18n="pump_dashboard.speak">
 												Speak
 											</button>
 											<button
@@ -1206,51 +1206,51 @@
 												id="pd-speak-stop"
 												type="button"
 												hidden
-											>
+											 data-i18n="pump_dashboard.stop_2">
 												Stop
 											</button>
 										</div>
 									</div>
 									<div class="pd-form-group">
-										<label>Quick actions</label>
+										<label data-i18n="pump_dashboard.quick_actions">Quick actions</label>
 										<div style="display: flex; gap: 0.4rem; flex-wrap: wrap">
 											<button
 												class="pd-btn"
 												data-agent-action="emote"
 												type="button"
-											>
+											 data-i18n="pump_dashboard.emote">
 												Emote
 											</button>
 											<button
 												class="pd-btn"
 												data-agent-action="wave"
 												type="button"
-											>
+											 data-i18n="pump_dashboard.wave">
 												Wave
 											</button>
 											<button
 												class="pd-btn"
 												data-agent-action="verify"
 												type="button"
-											>
+											 data-i18n="pump_dashboard.verify_model">
 												Verify model
 											</button>
 										</div>
 									</div>
 									<div class="pd-form-group">
-										<label>Animation</label>
+										<label data-i18n="pump_dashboard.animation">Animation</label>
 										<select class="pd-select" id="pd-anim-select">
-											<option>Idle</option>
-											<option>Walk</option>
-											<option>Run</option>
-											<option>Dance</option>
+											<option data-i18n="pump_dashboard.idle">Idle</option>
+											<option data-i18n="pump_dashboard.walk">Walk</option>
+											<option data-i18n="pump_dashboard.run">Run</option>
+											<option data-i18n="pump_dashboard.dance">Dance</option>
 										</select>
 										<button
 											class="pd-btn is-primary"
 											id="pd-play-anim"
 											type="button"
 											style="margin-top: 0.5rem"
-										>
+										 data-i18n="pump_dashboard.play">
 											Play
 										</button>
 									</div>
@@ -1260,23 +1260,23 @@
 					</div>
 					<div class="pd-panel">
 						<div class="pd-panel-head">
-							<h2>Your agents</h2>
+							<h2 data-i18n="pump_dashboard.your_agents">Your agents</h2>
 							<div class="pd-spacer"></div>
-							<a class="pd-btn is-primary pd-btn-sm" href="/create">+ New agent</a>
+							<a class="pd-btn is-primary pd-btn-sm" href="/create" data-i18n="pump_dashboard.new_agent">+ New agent</a>
 						</div>
 						<div class="pd-panel-body no-pad">
 							<table class="pd-table">
 								<thead>
 									<tr>
-										<th>Name</th>
-										<th>Description</th>
-										<th>Created</th>
+										<th data-i18n="pump_dashboard.name">Name</th>
+										<th data-i18n="pump_dashboard.description">Description</th>
+										<th data-i18n="pump_dashboard.created_2">Created</th>
 										<th></th>
 									</tr>
 								</thead>
 								<tbody id="pd-custom-agents-table">
 									<tr>
-										<td colspan="4" class="pd-empty">Loading…</td>
+										<td colspan="4" class="pd-empty" data-i18n="pump_dashboard.loading">Loading…</td>
 									</tr>
 								</tbody>
 							</table>
@@ -1288,28 +1288,28 @@
 				<section class="pd-page" id="page-revenue" aria-label="Revenue">
 					<div class="pd-form-inline">
 						<div class="pd-form-group" style="flex: 2">
-							<label>Agent</label>
+							<label data-i18n="pump_dashboard.agent_2">Agent</label>
 							<select class="pd-select" id="pd-rev-agent">
-								<option value="">All agents</option>
+								<option value="" data-i18n="pump_dashboard.all_agents">All agents</option>
 							</select>
 						</div>
 						<div class="pd-form-group" style="flex: 1">
-							<label>Granularity</label>
+							<label data-i18n="pump_dashboard.granularity">Granularity</label>
 							<select class="pd-select" id="pd-rev-granularity">
-								<option value="day" selected>Day</option>
-								<option value="week">Week</option>
-								<option value="month">Month</option>
+								<option value="day" selected data-i18n="pump_dashboard.day">Day</option>
+								<option value="week" data-i18n="pump_dashboard.week">Week</option>
+								<option value="month" data-i18n="pump_dashboard.month">Month</option>
 							</select>
 						</div>
 						<div class="pd-form-group" style="flex: 1">
-							<label>From</label>
+							<label data-i18n="pump_dashboard.from">From</label>
 							<input class="pd-input" type="date" id="pd-rev-from" />
 						</div>
 						<div class="pd-form-group" style="flex: 1">
-							<label>To</label>
+							<label data-i18n="pump_dashboard.to">To</label>
 							<input class="pd-input" type="date" id="pd-rev-to" />
 						</div>
-						<button class="pd-btn is-primary" id="pd-rev-refresh" type="button">
+						<button class="pd-btn is-primary" id="pd-rev-refresh" type="button" data-i18n="pump_dashboard.refresh_3">
 							Refresh
 						</button>
 					</div>
@@ -1338,7 +1338,7 @@
 					</div>
 
 					<div class="pd-panel" style="margin-bottom: 1rem">
-						<div class="pd-panel-head"><h2>Net earnings over time</h2></div>
+						<div class="pd-panel-head"><h2 data-i18n="pump_dashboard.net_earnings_over_time">Net earnings over time</h2></div>
 						<div class="pd-panel-body">
 							<div
 								id="pd-rev-status"
@@ -1359,19 +1359,19 @@
 					</div>
 
 					<div class="pd-panel">
-						<div class="pd-panel-head"><h2>By skill</h2></div>
+						<div class="pd-panel-head"><h2 data-i18n="pump_dashboard.by_skill">By skill</h2></div>
 						<div class="pd-panel-body no-pad">
 							<table class="pd-table">
 								<thead>
 									<tr>
-										<th>Skill</th>
-										<th style="text-align: right">Payments</th>
-										<th style="text-align: right">Net</th>
+										<th data-i18n="pump_dashboard.skill">Skill</th>
+										<th style="text-align: right" data-i18n="pump_dashboard.payments">Payments</th>
+										<th style="text-align: right" data-i18n="pump_dashboard.net">Net</th>
 									</tr>
 								</thead>
 								<tbody id="pd-rev-skill-table">
 									<tr>
-										<td colspan="3" class="pd-empty">
+										<td colspan="3" class="pd-empty" data-i18n="pump_dashboard.open_the_revenue_tab_to_load">
 											Open the Revenue tab to load.
 										</td>
 									</tr>
@@ -1386,20 +1386,20 @@
 					<div class="pd-callout" style="margin-bottom: 1rem">
 						This page lets you point the dashboard at an external
 						<a href="https://github.com/pumpkit/pumpkit" target="_blank" rel="noopener"
-							>PumpKit-style</a
+							 data-i18n="pump_dashboard.pumpkit_style">PumpKit-style</a
 						>
 						backend for advanced features like watches and fee claim ingestion. By
 						default, the dashboard uses the three.ws-hosted
-						<span class="pd-mono">/api/pump/*</span> endpoints, which power the Live
+						<span class="pd-mono" data-i18n="pump_dashboard.api_pump">/api/pump/*</span> endpoints, which power the Live
 						Feed, network health, quotes, and the token scanner without any setup.
 					</div>
 					<div class="pd-config-grid">
 						<div class="pd-panel">
-							<div class="pd-panel-head"><h2>Connection</h2></div>
+							<div class="pd-panel-head"><h2 data-i18n="pump_dashboard.connection">Connection</h2></div>
 							<div class="pd-panel-body">
 								<div class="pd-form-group">
 									<label
-										>API base URL
+										 data-i18n-html="pump_dashboard.api_base_url">API base URL
 										<span class="pd-probe" id="pd-probe-api"></span
 									></label>
 									<input
@@ -1411,14 +1411,14 @@
 								</div>
 								<div class="pd-form-group">
 									<label
-										>WebSocket URL
+										 data-i18n-html="pump_dashboard.websocket_url">WebSocket URL
 										<span class="pd-probe" id="pd-probe-ws"></span
 									></label>
 									<input class="pd-input" type="text" id="pd-cfg-ws-url" />
 								</div>
 								<div class="pd-form-group">
 									<label
-										>API key <span class="pd-probe" id="pd-probe-key"></span
+										 data-i18n-html="pump_dashboard.api_key">API key <span class="pd-probe" id="pd-probe-key"></span
 									></label>
 									<input
 										class="pd-input"
@@ -1427,18 +1427,18 @@
 										placeholder="Optional API key…"
 									/>
 								</div>
-								<button class="pd-btn is-primary" id="pd-save-config" type="button">
+								<button class="pd-btn is-primary" id="pd-save-config" type="button" data-i18n="pump_dashboard.save_reconnect">
 									Save &amp; reconnect
 								</button>
 							</div>
 						</div>
 
 						<div class="pd-panel">
-							<div class="pd-panel-head"><h2>Solana RPC</h2></div>
+							<div class="pd-panel-head"><h2 data-i18n="pump_dashboard.solana_rpc">Solana RPC</h2></div>
 							<div class="pd-panel-body">
 								<div class="pd-form-group">
 									<label
-										>RPC endpoint
+										 data-i18n-html="pump_dashboard.rpc_endpoint">RPC endpoint
 										<span class="pd-probe" id="pd-probe-rpc"></span
 									></label>
 									<input
@@ -1450,11 +1450,11 @@
 									/>
 								</div>
 								<div class="pd-form-group">
-									<label>Commitment level</label>
+									<label data-i18n="pump_dashboard.commitment_level">Commitment level</label>
 									<select class="pd-select" id="pd-cfg-commitment">
-										<option value="confirmed" selected>Confirmed</option>
-										<option value="finalized">Finalized</option>
-										<option value="processed">Processed</option>
+										<option value="confirmed" selected data-i18n="pump_dashboard.confirmed">Confirmed</option>
+										<option value="finalized" data-i18n="pump_dashboard.finalized">Finalized</option>
+										<option value="processed" data-i18n="pump_dashboard.processed">Processed</option>
 									</select>
 								</div>
 							</div>
@@ -1466,7 +1466,7 @@
 				<section class="pd-page" id="page-api" aria-label="API reference">
 					<div class="pd-panel" style="margin-bottom: 1rem">
 						<div class="pd-panel-head">
-							<h2>Your keys</h2>
+							<h2 data-i18n="pump_dashboard.your_keys">Your keys</h2>
 							<div class="pd-spacer"></div>
 							<span class="pd-badge" id="pd-keys-count">—</span>
 						</div>
@@ -1485,7 +1485,7 @@
 									class="pd-form-group"
 									style="flex: 2; min-width: 200px; margin: 0"
 								>
-									<label for="pd-key-name">Key name</label>
+									<label for="pd-key-name" data-i18n="pump_dashboard.key_name">Key name</label>
 									<input
 										class="pd-input"
 										type="text"
@@ -1499,7 +1499,7 @@
 									class="pd-form-group"
 									style="flex: 1; min-width: 160px; margin: 0"
 								>
-									<label for="pd-key-expiry">Expires (optional)</label>
+									<label for="pd-key-expiry" data-i18n="pump_dashboard.expires_optional">Expires (optional)</label>
 									<input
 										class="pd-input"
 										type="datetime-local"
@@ -1510,7 +1510,7 @@
 									class="pd-form-group"
 									style="flex: 2; min-width: 240px; margin: 0"
 								>
-									<label>Scopes</label>
+									<label data-i18n="pump_dashboard.scopes">Scopes</label>
 									<div
 										style="
 											display: flex;
@@ -1560,25 +1560,25 @@
 										>
 									</div>
 								</div>
-								<button class="pd-btn is-primary" id="pd-key-create" type="submit">
+								<button class="pd-btn is-primary" id="pd-key-create" type="submit" data-i18n="pump_dashboard.create_key">
 									Create key
 								</button>
 							</form>
 							<table class="pd-table">
 								<thead>
 									<tr>
-										<th>Name</th>
-										<th>Prefix</th>
-										<th>Scopes</th>
-										<th>Created</th>
-										<th>Last used</th>
-										<th>Expires</th>
+										<th data-i18n="pump_dashboard.name_2">Name</th>
+										<th data-i18n="pump_dashboard.prefix">Prefix</th>
+										<th data-i18n="pump_dashboard.scopes_2">Scopes</th>
+										<th data-i18n="pump_dashboard.created_3">Created</th>
+										<th data-i18n="pump_dashboard.last_used">Last used</th>
+										<th data-i18n="pump_dashboard.expires">Expires</th>
 										<th></th>
 									</tr>
 								</thead>
 								<tbody id="pd-keys-table">
 									<tr>
-										<td colspan="7" class="pd-empty">
+										<td colspan="7" class="pd-empty" data-i18n="pump_dashboard.open_the_api_tab_to_load_your">
 											Open the API tab to load your keys.
 										</td>
 									</tr>
@@ -1587,7 +1587,7 @@
 						</div>
 					</div>
 					<div class="pd-panel">
-						<div class="pd-panel-head"><h2>API endpoints</h2></div>
+						<div class="pd-panel-head"><h2 data-i18n="pump_dashboard.api_endpoints">API endpoints</h2></div>
 						<div class="pd-panel-body">
 							<p
 								style="
@@ -1595,7 +1595,7 @@
 									font-size: 0.88rem;
 									margin-bottom: 1rem;
 								"
-							>
+							 data-i18n-html="pump_dashboard.three_ws_ships_these_pump_endpoints_for">
 								three.ws ships these Pump endpoints for free, no auth required.
 								Resolved against:
 								<span class="pd-mono-inline" id="pd-api-endpoint-display">—</span>
@@ -1603,62 +1603,62 @@
 							<table class="pd-table">
 								<thead>
 									<tr>
-										<th>Method</th>
-										<th>Path</th>
-										<th>Description</th>
-										<th>Auth</th>
+										<th data-i18n="pump_dashboard.method">Method</th>
+										<th data-i18n="pump_dashboard.path">Path</th>
+										<th data-i18n="pump_dashboard.description_2">Description</th>
+										<th data-i18n="pump_dashboard.auth">Auth</th>
 									</tr>
 								</thead>
 								<tbody>
 									<tr>
-										<td><span class="pd-tag is-buy">GET</span></td>
-										<td class="pd-mono">/api/healthz</td>
-										<td>Health check</td>
-										<td>No</td>
+										<td data-i18n-html="pump_dashboard.get"><span class="pd-tag is-buy">GET</span></td>
+										<td class="pd-mono" data-i18n="pump_dashboard.api_healthz">/api/healthz</td>
+										<td data-i18n="pump_dashboard.health_check">Health check</td>
+										<td data-i18n="pump_dashboard.no">No</td>
 									</tr>
 									<tr>
-										<td><span class="pd-tag is-buy">GET</span></td>
-										<td class="pd-mono">/api/pump/helius-stats</td>
-										<td>SOL price, network slot, feed counts</td>
-										<td>No</td>
+										<td data-i18n-html="pump_dashboard.get_2"><span class="pd-tag is-buy">GET</span></td>
+										<td class="pd-mono" data-i18n="pump_dashboard.api_pump_helius_stats">/api/pump/helius-stats</td>
+										<td data-i18n="pump_dashboard.sol_price_network_slot_feed_counts">SOL price, network slot, feed counts</td>
+										<td data-i18n="pump_dashboard.no_2">No</td>
 									</tr>
 									<tr>
-										<td><span class="pd-tag is-buy">GET</span></td>
-										<td class="pd-mono">/api/pump/channel-feed</td>
-										<td>Recent mints, whales, claims (paginated)</td>
-										<td>No</td>
+										<td data-i18n-html="pump_dashboard.get_3"><span class="pd-tag is-buy">GET</span></td>
+										<td class="pd-mono" data-i18n="pump_dashboard.api_pump_channel_feed">/api/pump/channel-feed</td>
+										<td data-i18n="pump_dashboard.recent_mints_whales_claims_paginated">Recent mints, whales, claims (paginated)</td>
+										<td data-i18n="pump_dashboard.no_3">No</td>
 									</tr>
 									<tr>
-										<td><span class="pd-tag is-buy">GET</span></td>
-										<td class="pd-mono">/api/pump/trades-stream</td>
-										<td>SSE live trade stream (PumpPortal proxy)</td>
-										<td>No</td>
+										<td data-i18n-html="pump_dashboard.get_4"><span class="pd-tag is-buy">GET</span></td>
+										<td class="pd-mono" data-i18n="pump_dashboard.api_pump_trades_stream">/api/pump/trades-stream</td>
+										<td data-i18n="pump_dashboard.sse_live_trade_stream_pumpportal_proxy">SSE live trade stream (PumpPortal proxy)</td>
+										<td data-i18n="pump_dashboard.no_4">No</td>
 									</tr>
 									<tr>
-										<td><span class="pd-tag is-buy">GET</span></td>
-										<td class="pd-mono">/api/pump/curve?mint=…</td>
-										<td>Bonding curve, spot price, graduation progress</td>
-										<td>No</td>
+										<td data-i18n-html="pump_dashboard.get_5"><span class="pd-tag is-buy">GET</span></td>
+										<td class="pd-mono" data-i18n="pump_dashboard.api_pump_curve_mint">/api/pump/curve?mint=…</td>
+										<td data-i18n="pump_dashboard.bonding_curve_spot_price_graduation_progress">Bonding curve, spot price, graduation progress</td>
+										<td data-i18n="pump_dashboard.no_5">No</td>
 									</tr>
 									<tr>
-										<td><span class="pd-tag is-buy">GET</span></td>
-										<td class="pd-mono">
+										<td data-i18n-html="pump_dashboard.get_6"><span class="pd-tag is-buy">GET</span></td>
+										<td class="pd-mono" data-i18n="pump_dashboard.api_pump_quote_sdk_mint_side_buy">
 											/api/pump/quote-sdk?mint=…&amp;side=buy|sell&amp;amount=…
 										</td>
-										<td>Buy/sell quote with price impact</td>
-										<td>No</td>
+										<td data-i18n="pump_dashboard.buy_sell_quote_with_price_impact">Buy/sell quote with price impact</td>
+										<td data-i18n="pump_dashboard.no_6">No</td>
 									</tr>
 									<tr>
-										<td><span class="pd-tag is-buy">GET</span></td>
-										<td class="pd-mono">/api/pump/balances</td>
-										<td>SOL + token balances for the signed-in wallet</td>
-										<td>Session</td>
+										<td data-i18n-html="pump_dashboard.get_7"><span class="pd-tag is-buy">GET</span></td>
+										<td class="pd-mono" data-i18n="pump_dashboard.api_pump_balances">/api/pump/balances</td>
+										<td data-i18n="pump_dashboard.sol_token_balances_for_the_signed_in">SOL + token balances for the signed-in wallet</td>
+										<td data-i18n="pump_dashboard.session">Session</td>
 									</tr>
 									<tr>
-										<td><span class="pd-tag is-buy">GET</span></td>
-										<td class="pd-mono">/api/agents/pumpfun?op=claims</td>
-										<td>Recent fee claim feed</td>
-										<td>Session</td>
+										<td data-i18n-html="pump_dashboard.get_8"><span class="pd-tag is-buy">GET</span></td>
+										<td class="pd-mono" data-i18n="pump_dashboard.api_agents_pumpfun_op_claims">/api/agents/pumpfun?op=claims</td>
+										<td data-i18n="pump_dashboard.recent_fee_claim_feed">Recent fee claim feed</td>
+										<td data-i18n="pump_dashboard.session_2">Session</td>
 									</tr>
 								</tbody>
 							</table>
@@ -1668,7 +1668,7 @@
 									font-size: 0.82rem;
 									margin-top: 0.85rem;
 								"
-							>
+							 data-i18n-html="pump_dashboard.for_an_openapi_spec_see_openapi_json">
 								For an OpenAPI spec, see <a href="/openapi.json">/openapi.json</a>.
 							</p>
 						</div>
@@ -1686,9 +1686,9 @@
 			aria-labelledby="pd-add-watch-title"
 		>
 			<div class="pd-modal">
-				<h3 id="pd-add-watch-title">Add watch</h3>
+				<h3 id="pd-add-watch-title" data-i18n="pump_dashboard.add_watch_2">Add watch</h3>
 				<div class="pd-form-group">
-					<label>Wallet address *</label>
+					<label data-i18n="pump_dashboard.wallet_address">Wallet address *</label>
 					<input
 						class="pd-input"
 						type="text"
@@ -1697,7 +1697,7 @@
 					/>
 				</div>
 				<div class="pd-form-group">
-					<label>Label</label>
+					<label data-i18n="pump_dashboard.label_2">Label</label>
 					<input
 						class="pd-input"
 						type="text"
@@ -1706,7 +1706,7 @@
 					/>
 				</div>
 				<div class="pd-form-group">
-					<label>Token filter (comma-separated mints)</label>
+					<label data-i18n="pump_dashboard.token_filter_comma_separated_mints">Token filter (comma-separated mints)</label>
 					<input
 						class="pd-input"
 						type="text"
@@ -1715,7 +1715,7 @@
 					/>
 				</div>
 				<div class="pd-form-group">
-					<label>Webhook URL</label>
+					<label data-i18n="pump_dashboard.webhook_url">Webhook URL</label>
 					<input
 						class="pd-input"
 						type="text"
@@ -1724,8 +1724,8 @@
 					/>
 				</div>
 				<div class="pd-modal-actions">
-					<button class="pd-btn" id="pd-cancel-watch" type="button">Cancel</button>
-					<button class="pd-btn is-primary" id="pd-create-watch" type="button">
+					<button class="pd-btn" id="pd-cancel-watch" type="button" data-i18n="pump_dashboard.cancel">Cancel</button>
+					<button class="pd-btn is-primary" id="pd-create-watch" type="button" data-i18n="pump_dashboard.create_watch">
 						Create watch
 					</button>
 				</div>
@@ -1741,17 +1741,17 @@
 			aria-labelledby="pd-key-modal-title"
 		>
 			<div class="pd-modal">
-				<h3 id="pd-key-modal-title">API key created</h3>
-				<p style="font-size: 0.85rem; color: var(--warn); margin: 0 0 0.75rem">
+				<h3 id="pd-key-modal-title" data-i18n="pump_dashboard.api_key_created">API key created</h3>
+				<p style="font-size: 0.85rem; color: var(--warn); margin: 0 0 0.75rem" data-i18n="pump_dashboard.copy_this_token_now_you_won_t">
 					Copy this token now — you won't be able to see it again.
 				</p>
 				<div class="pd-form-group">
-					<label>Token</label>
+					<label data-i18n="pump_dashboard.token_2">Token</label>
 					<input class="pd-input pd-mono" type="text" id="pd-key-token" readonly />
 				</div>
 				<div class="pd-modal-actions">
-					<button class="pd-btn" id="pd-key-copy" type="button">Copy</button>
-					<button class="pd-btn is-primary" id="pd-key-done" type="button">Done</button>
+					<button class="pd-btn" id="pd-key-copy" type="button" data-i18n="pump_dashboard.copy">Copy</button>
+					<button class="pd-btn is-primary" id="pd-key-done" type="button" data-i18n="pump_dashboard.done">Done</button>
 				</div>
 			</div>
 		</div>
@@ -5294,5 +5294,7 @@
 
 		<script src="/footer.js" defer></script>
 		<script src="/brand.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

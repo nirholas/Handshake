@@ -18,19 +18,19 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Coins — live prices &amp; market caps · three.ws</title>
+		<title data-i18n="coins.meta_title">Coins — live prices &amp; market caps · three.ws</title>
 		<meta
 			name="description"
 			content="Live cryptocurrency market data — prices, trends, and a global overview for the top digital assets, with rich detail pages for every coin."
-		/>
+		 data-i18n-attr="content:coins.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/coins" />
-		<meta property="og:title" content="Coins — live prices &amp; market caps · three.ws" />
+		<meta property="og:title" content="Coins — live prices &amp; market caps · three.ws"  data-i18n-attr="content:coins.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Live cryptocurrency market data — prices, trends, and a global overview for the top digital assets."
-		/>
+		 data-i18n-attr="content:coins.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Coins+%E2%80%94+Live+Prices+%26+Market+Caps&amp;d=Live+global+cryptocurrency+market+data%3A+total+market+cap%2C+dominance%2C+Fear+%26+Greed%2C+and+the+top+coins+with+prices%2C+24h%2F7d+moves%2C+and+7d+sparklines.+Every+coin+li&amp;p=%2Fcoins"
@@ -39,11 +39,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Coins · three.ws" />
+		<meta name="twitter:title" content="Coins · three.ws"  data-i18n-attr="content:coins.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Live cryptocurrency market data — prices, trends, and a global overview for the top digital assets."
-		/>
+		 data-i18n-attr="content:coins.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Coins+%E2%80%94+Live+Prices+%26+Market+Caps&amp;d=Live+global+cryptocurrency+market+data%3A+total+market+cap%2C+dominance%2C+Fear+%26+Greed%2C+and+the+top+coins+with+prices%2C+24h%2F7d+moves%2C+and+7d+sparklines.+Every+coin+li&amp;p=%2Fcoins"
@@ -87,30 +87,30 @@
 		<script src="/nav.js"></script>
 
 		<main class="cv-container">
-			<h1 class="cv-h1">Coins</h1>
-			<p class="cv-sub">
+			<h1 class="cv-h1" data-i18n="coins.coins">Coins</h1>
+			<p class="cv-sub" data-i18n="coins.real_time_cryptocurrency_market_data_prices">
 				Real-time cryptocurrency market data — prices, trends, and global overview for
 				hundreds of digital assets.
 			</p>
 
 			<!-- Market tools hub: every sibling surface, discoverable from the index. -->
 			<nav class="cv-tools" aria-label="Market tools">
-				<a class="cv-pill" href="/markets">Markets Hub</a>
-				<a class="cv-pill" href="/markets/news">News</a>
-				<a class="cv-pill" href="/markets/digest">Digest</a>
-				<a class="cv-pill" href="/markets/archive">Archive</a>
-				<a class="cv-pill" href="/heatmap">Heatmap</a>
-				<a class="cv-pill" href="/screener">Screener</a>
-				<a class="cv-pill" href="/categories">Categories</a>
-				<a class="cv-pill" href="/exchanges">Exchanges</a>
-				<a class="cv-pill" href="/derivatives">Derivatives</a>
-				<a class="cv-pill" href="/converter">Converter</a>
-				<a class="cv-pill" href="/compare">Compare</a>
-				<a class="cv-pill" href="/fear-greed">Fear &amp; Greed</a>
-				<a class="cv-pill" href="/gas">Gas</a>
-				<a class="cv-pill" href="/defi">DeFi TVL</a>
-				<a class="cv-pill" href="/chains">Chains</a>
-				<a class="cv-pill" href="/stablecoins">Stablecoins</a>
+				<a class="cv-pill" href="/markets" data-i18n="coins.markets_hub">Markets Hub</a>
+				<a class="cv-pill" href="/markets/news" data-i18n="coins.news">News</a>
+				<a class="cv-pill" href="/markets/digest" data-i18n="coins.digest">Digest</a>
+				<a class="cv-pill" href="/markets/archive" data-i18n="coins.archive">Archive</a>
+				<a class="cv-pill" href="/heatmap" data-i18n="coins.heatmap">Heatmap</a>
+				<a class="cv-pill" href="/screener" data-i18n="coins.screener">Screener</a>
+				<a class="cv-pill" href="/categories" data-i18n="coins.categories">Categories</a>
+				<a class="cv-pill" href="/exchanges" data-i18n="coins.exchanges">Exchanges</a>
+				<a class="cv-pill" href="/derivatives" data-i18n="coins.derivatives">Derivatives</a>
+				<a class="cv-pill" href="/converter" data-i18n="coins.converter">Converter</a>
+				<a class="cv-pill" href="/compare" data-i18n="coins.compare">Compare</a>
+				<a class="cv-pill" href="/fear-greed" data-i18n="coins.fear_greed">Fear &amp; Greed</a>
+				<a class="cv-pill" href="/gas" data-i18n="coins.gas">Gas</a>
+				<a class="cv-pill" href="/defi" data-i18n="coins.defi_tvl">DeFi TVL</a>
+				<a class="cv-pill" href="/chains" data-i18n="coins.chains">Chains</a>
+				<a class="cv-pill" href="/stablecoins" data-i18n="coins.stablecoins">Stablecoins</a>
 			</nav>
 
 			<!-- Global stats bar. Hydrated by src/coins-index.js. -->
@@ -123,7 +123,7 @@
 
 			<!-- Toolbar: search type-ahead. -->
 			<div class="cv-toolbar">
-				<h2 class="cv-h2" style="margin: 0">Top Cryptocurrencies</h2>
+				<h2 class="cv-h2" style="margin: 0" data-i18n="coins.top_cryptocurrencies">Top Cryptocurrencies</h2>
 				<div class="cv-search" id="cv-search">
 					<span class="mag" aria-hidden="true">
 						<svg
@@ -161,5 +161,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

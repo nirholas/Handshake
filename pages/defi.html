@@ -18,19 +18,19 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>DeFi TVL &amp; Protocols · three.ws</title>
+		<title data-i18n="defi.meta_title">DeFi TVL &amp; Protocols · three.ws</title>
 		<meta
 			name="description"
 			content="Live DeFi total value locked — the top protocols ranked by TVL, with category, chains, and 1d/7d moves. See where liquidity sits across decentralized finance at a glance."
-		/>
+		 data-i18n-attr="content:defi.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/defi" />
-		<meta property="og:title" content="DeFi TVL &amp; Protocols · three.ws" />
+		<meta property="og:title" content="DeFi TVL &amp; Protocols · three.ws"  data-i18n-attr="content:defi.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Live DeFi total value locked — the top protocols ranked by TVL, with category, chains, and 1d/7d moves. See where liquidity sits across decentralized finance."
-		/>
+		 data-i18n-attr="content:defi.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=DeFi+TVL+%26+Top+Protocols&amp;d=Total+value+locked+across+decentralized+finance%2C+with+the+top+protocols+ranked+by+TVL%2C+their+category%2C+chains%2C+and+1-day+and+7-day+change.+Live+from+DeFiLlama%2C+&amp;p=%2Fdefi"
@@ -39,11 +39,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="DeFi TVL &amp; Protocols · three.ws" />
+		<meta name="twitter:title" content="DeFi TVL &amp; Protocols · three.ws"  data-i18n-attr="content:defi.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Live DeFi total value locked — the top protocols ranked by TVL, with category, chains, and 1d/7d moves."
-		/>
+		 data-i18n-attr="content:defi.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=DeFi+TVL+%26+Top+Protocols&amp;d=Total+value+locked+across+decentralized+finance%2C+with+the+top+protocols+ranked+by+TVL%2C+their+category%2C+chains%2C+and+1-day+and+7-day+change.+Live+from+DeFiLlama%2C+&amp;p=%2Fdefi"
@@ -89,10 +89,10 @@
 
 		<main class="cv-container">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a><span class="sep">/</span><span class="here">DeFi</span>
+				<a href="/markets" data-i18n="defi.markets">Markets</a><span class="sep">/</span><span class="here" data-i18n="defi.defi">DeFi</span>
 			</nav>
-			<h1 class="cv-h1">DeFi TVL &amp; Protocols</h1>
-			<p class="cv-sub">
+			<h1 class="cv-h1" data-i18n="defi.defi_tvl_protocols">DeFi TVL &amp; Protocols</h1>
+			<p class="cv-sub" data-i18n="defi.total_value_locked_across_decentralized_fina">
 				Total value locked across decentralized finance — the top protocols ranked by TVL,
 				with category, the chains they run on, and how each moved over the last day and
 				week.
@@ -106,17 +106,17 @@
 			></section>
 
 			<div class="cv-toolbar">
-				<h2 class="cv-h2" style="margin: 0">Top Protocols by TVL</h2>
+				<h2 class="cv-h2" style="margin: 0" data-i18n="defi.top_protocols_by_tvl">Top Protocols by TVL</h2>
 				<div class="defi-filter">
-					<label class="defi-filter-label" for="defi-category">Category</label>
+					<label class="defi-filter-label" for="defi-category" data-i18n="defi.category">Category</label>
 					<select
 						id="defi-category"
 						class="defi-select"
 						aria-label="Filter protocols by category"
 					>
-						<option value="__all">All categories</option>
+						<option value="__all" data-i18n="defi.all_categories">All categories</option>
 					</select>
-					<a class="cv-pill" href="/chains">Chains →</a>
+					<a class="cv-pill" href="/chains" data-i18n="defi.chains">Chains →</a>
 				</div>
 			</div>
 
@@ -132,5 +132,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

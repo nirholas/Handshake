@@ -5,16 +5,16 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Real-Time Fact Checker — three.ws</title>
+		<title data-i18n="fact_checker.meta_title">Real-Time Fact Checker — three.ws</title>
 		<meta
 			name="description"
 			content="Pay per verification. Results cited. Attestation signed. Powered by live web search + LLM analysis on Base and Solana USDC."
-		/>
-		<meta property="og:title" content="Real-Time Fact Checker — three.ws" />
+		 data-i18n-attr="content:fact_checker.meta_description"/>
+		<meta property="og:title" content="Real-Time Fact Checker — three.ws"  data-i18n-attr="content:fact_checker.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Submit any claim. Get sourced verdict in seconds. $0.10–$1.00 per check. USDC. Base + Solana."
-		/>
+		 data-i18n-attr="content:fact_checker.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Fact+Checker&amp;d=Pay+%240.10+per+claim.+The+agent+searches+across+authoritative+sources%2C+pays+per+retrieval+via+x402%2C+and+returns+a+verdict+with+cited+evidence+and+a+signed+attest&amp;p=%2Ffact-checker" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -884,11 +884,11 @@
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/fact-checker" />
-		<meta name="twitter:title" content="Fact Checker · three.ws" />
+		<meta name="twitter:title" content="Fact Checker · three.ws"  data-i18n-attr="content:fact_checker.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Pay $0.10 per claim. The agent searches across authoritative sources, pays per retrieval via x402, and returns a verdict with cited evidence and a signed attestation."
-		/>
+		 data-i18n-attr="content:fact_checker.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Fact+Checker&amp;d=Pay+%240.10+per+claim.+The+agent+searches+across+authoritative+sources%2C+pays+per+retrieval+via+x402%2C+and+returns+a+verdict+with+cited+evidence+and+a+signed+attest&amp;p=%2Ffact-checker" />
 		<script type="application/ld+json">
 			{
@@ -910,20 +910,20 @@
 		<!-- ── NAV ─────────────────────────────────────────────────────────────── -->
 		<header class="nav">
 			<div class="nav-inner">
-				<a class="brand" href="/">
+				<a class="brand" href="/" data-i18n-html="fact_checker.three_ws">
 					<span class="brand-mark"></span>
 					<span>three.ws</span>
 				</a>
 				<nav class="nav-main" aria-label="Primary">
-					<a href="/discover">Discover</a>
-					<a href="/marketplace">Marketplace</a>
-					<a href="/temporary">Walk</a>
-					<a href="/fact-checker" class="active">Fact Checker</a>
+					<a href="/discover" data-i18n="fact_checker.discover">Discover</a>
+					<a href="/marketplace" data-i18n="fact_checker.marketplace">Marketplace</a>
+					<a href="/temporary" data-i18n="fact_checker.walk">Walk</a>
+					<a href="/fact-checker" class="active" data-i18n="fact_checker.fact_checker">Fact Checker</a>
 				</nav>
 				<div class="nav-end">
-					<a href="/dashboard" data-auth="in" hidden>Dashboard</a>
-					<a href="/login" data-auth="out">Sign in</a>
-					<a class="console" href="/dashboard" data-auth-name>Dashboard →</a>
+					<a href="/dashboard" data-auth="in" hidden data-i18n="fact_checker.dashboard">Dashboard</a>
+					<a href="/login" data-auth="out" data-i18n="fact_checker.sign_in">Sign in</a>
+					<a class="console" href="/dashboard" data-auth-name data-i18n="fact_checker.dashboard_2">Dashboard →</a>
 				</div>
 			</div>
 		</header>
@@ -932,8 +932,8 @@
 		<section class="hero">
 			<div class="wrap-1280">
 				<div class="hero-eyebrow">x402 paid endpoint · live</div>
-				<h1>Real-Time Fact Checker</h1>
-				<p class="hero-sub">Pay per verification. Results cited. Attestation signed.</p>
+				<h1 data-i18n="fact_checker.real_time_fact_checker">Real-Time Fact Checker</h1>
+				<p class="hero-sub" data-i18n="fact_checker.pay_per_verification_results_cited_attestati">Pay per verification. Results cited. Attestation signed.</p>
 				<div class="cost-badge">
 					<span class="dot"></span>
 					$0.10–$1.00 per check · USDC · Base + Solana
@@ -946,7 +946,7 @@
 			<div class="wrap-1280">
 				<!-- Form -->
 				<div class="form-card">
-					<label class="form-label" for="claim-input">Claim to fact-check</label>
+					<label class="form-label" for="claim-input" data-i18n="fact_checker.claim_to_fact_check">Claim to fact-check</label>
 					<textarea
 						id="claim-input"
 						class="claim-textarea"
@@ -958,17 +958,17 @@
 						style="border: 0; padding: 0; margin: 0; min-width: 0"
 						aria-describedby="strictness-help"
 					>
-						<legend class="form-label" style="margin-top: 20px; float: none">
+						<legend class="form-label" style="margin-top: 20px; float: none" data-i18n="fact_checker.strictness">
 							Strictness
 						</legend>
-						<span id="strictness-help" class="sr-only">
+						<span id="strictness-help" class="sr-only" data-i18n="fact_checker.how_demanding_the_verdict_should_be_low">
 							How demanding the verdict should be: Low accepts weaker evidence, High
 							requires strong corroboration.
 						</span>
 						<div class="strictness-row" role="radiogroup" aria-label="Strictness">
 							<div class="strictness-option">
 								<input type="radio" id="s-low" name="strictness" value="low" />
-								<label for="s-low">Low</label>
+								<label for="s-low" data-i18n="fact_checker.low">Low</label>
 							</div>
 							<div class="strictness-option">
 								<input
@@ -978,17 +978,17 @@
 									value="medium"
 									checked
 								/>
-								<label for="s-medium">Medium</label>
+								<label for="s-medium" data-i18n="fact_checker.medium">Medium</label>
 							</div>
 							<div class="strictness-option">
 								<input type="radio" id="s-high" name="strictness" value="high" />
-								<label for="s-high">High</label>
+								<label for="s-high" data-i18n="fact_checker.high">High</label>
 							</div>
 						</div>
 					</fieldset>
 
 					<div class="form-actions">
-						<button id="check-btn" class="btn primary" aria-busy="false">
+						<button id="check-btn" class="btn primary" aria-busy="false" data-i18n="fact_checker.check_this_fact">
 							Check This Fact
 						</button>
 						<div
@@ -1004,7 +1004,7 @@
 							class="char-counter"
 							aria-live="polite"
 							aria-label="Characters used"
-							>0 / 1000</span
+							 data-i18n-attr="aria-label:fact_checker.characters_used_arialabel">0 / 1000</span
 						>
 					</div>
 				</div>
@@ -1016,22 +1016,22 @@
 						<button
 							class="example-chip"
 							data-claim="The Eiffel Tower is 330 meters tall."
-						>
+						 data-i18n="fact_checker.the_eiffel_tower_is_330_meters_tall">
 							The Eiffel Tower is 330 meters tall.
 						</button>
-						<button class="example-chip" data-claim="Bitcoin was invented in 2009.">
+						<button class="example-chip" data-claim="Bitcoin was invented in 2009." data-i18n="fact_checker.bitcoin_was_invented_in_2009">
 							Bitcoin was invented in 2009.
 						</button>
 						<button
 							class="example-chip"
 							data-claim="The Great Wall of China is visible from space."
-						>
+						 data-i18n="fact_checker.the_great_wall_of_china_is_visible">
 							The Great Wall of China is visible from space.
 						</button>
 						<button
 							class="example-chip"
 							data-claim="Humans use only 10% of their brain."
-						>
+						 data-i18n="fact_checker.humans_use_only_10_of_their_brain">
 							Humans use only 10% of their brain.
 						</button>
 					</div>
@@ -1078,15 +1078,15 @@
 						</div>
 						<div class="payment-networks" id="payment-networks">
 							<div class="network-badge">
-								Base <strong>USDC</strong> —
+								Base <strong data-i18n="fact_checker.usdc">USDC</strong> —
 								<strong id="payment-price-base">$0.10</strong>
 							</div>
 							<div class="network-badge">
-								Solana <strong>USDC</strong> —
+								Solana <strong data-i18n="fact_checker.usdc_2">USDC</strong> —
 								<strong id="payment-price-sol">$0.10</strong>
 							</div>
 						</div>
-						<a href="/marketplace" class="btn sm">Connect wallet to pay →</a>
+						<a href="/marketplace" class="btn sm" data-i18n="fact_checker.connect_wallet_to_pay">Connect wallet to pay →</a>
 					</div>
 				</div>
 
@@ -1096,7 +1096,7 @@
 						<div class="error-title">Something went wrong</div>
 						<div class="error-msg" id="error-msg">An unexpected error occurred.</div>
 						<div class="error-code" id="error-code"></div>
-						<button class="btn sm" id="retry-btn" style="margin-top: 16px">
+						<button class="btn sm" id="retry-btn" style="margin-top: 16px" data-i18n="fact_checker.retry">
 							Retry
 						</button>
 					</div>
@@ -1178,5 +1178,7 @@
 				document.head.appendChild(s);
 			})();
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title>Avatar Viewer — three.ws</title>
+		<title data-i18n="avatar_artifact.meta_title">Avatar Viewer — three.ws</title>
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -179,25 +179,25 @@
 		<meta
 			name="description"
 			content="Standalone Three.js viewer for avatar artifacts — embeddable and shareable without any wrapper page."
-		/>
+		 data-i18n-attr="content:avatar_artifact.meta_description"/>
 		<link rel="canonical" href="https://three.ws/avatar-artifact" />
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Avatar Artifact · three.ws" />
+		<meta property="og:title" content="Avatar Artifact · three.ws"  data-i18n-attr="content:avatar_artifact.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Standalone Three.js viewer for avatar artifacts — embeddable and shareable without any wrapper page."
-		/>
+		 data-i18n-attr="content:avatar_artifact.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/avatar-artifact" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Avatar+Artifact&amp;d=Standalone+Three.js+viewer+for+avatar+artifacts+%E2%80%94+embeddable+and+shareable+without+any+wrapper+page.&amp;p=%2Favatar-artifact" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Avatar Artifact · three.ws" />
+		<meta name="twitter:title" content="Avatar Artifact · three.ws"  data-i18n-attr="content:avatar_artifact.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Standalone Three.js viewer for avatar artifacts — embeddable and shareable without any wrapper page."
-		/>
+		 data-i18n-attr="content:avatar_artifact.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=Avatar+Artifact&amp;d=Standalone+Three.js+viewer+for+avatar+artifacts+%E2%80%94+embeddable+and+shareable+without+any+wrapper+page.&amp;p=%2Favatar-artifact" />
 		<script type="application/ld+json">
 			{
@@ -219,18 +219,18 @@
 		<!-- Persistent chrome so the standalone viewer is never a dead-end -->
 		<div class="chrome" aria-hidden="false">
 			<div class="bar top">
-				<a href="/" aria-label="Back to three.ws home">
+				<a href="/" aria-label="Back to three.ws home" data-i18n-html="avatar_artifact.three_ws" data-i18n-attr="aria-label:avatar_artifact.back_to_three_ws_home_arialabel">
 					<span aria-hidden="true">←</span>
 					<span class="brand">three<span class="dot">.</span>ws</span>
 				</a>
-				<span class="hint">Move your cursor · drag on touch · arrow keys</span>
+				<span class="hint" data-i18n="avatar_artifact.move_your_cursor_drag_on_touch_arrow">Move your cursor · drag on touch · arrow keys</span>
 			</div>
 			<div class="bar bottom">
-				<span class="hint">Avatar Artifact — a live Three.js portrait</span>
+				<span class="hint" data-i18n="avatar_artifact.avatar_artifact_a_live_three_js_portrait">Avatar Artifact — a live Three.js portrait</span>
 				<nav class="foot-links" aria-label="Explore three.ws">
-					<a href="/playground">Playground</a>
-					<a href="/labs">Labs</a>
-					<a href="/agents">Agents</a>
+					<a href="/playground" data-i18n="avatar_artifact.playground">Playground</a>
+					<a href="/labs" data-i18n="avatar_artifact.labs">Labs</a>
+					<a href="/agents" data-i18n="avatar_artifact.agents">Agents</a>
 				</nav>
 			</div>
 		</div>
@@ -238,19 +238,19 @@
 		<!-- Loading state while the Three.js runtime + scene resolve -->
 		<div class="overlay" id="loading">
 			<div class="spinner" role="status" aria-label="Loading avatar"></div>
-			<p>Summoning the avatar…</p>
+			<p data-i18n="avatar_artifact.summoning_the_avatar">Summoning the avatar…</p>
 		</div>
 
 		<!-- Designed failure state if the 3D runtime can't load -->
 		<div class="overlay" id="error" hidden>
-			<h2>Couldn’t load the 3D viewer</h2>
-			<p>
+			<h2 data-i18n="avatar_artifact.couldn_t_load_the_3d_viewer">Couldn’t load the 3D viewer</h2>
+			<p data-i18n="avatar_artifact.the_graphics_runtime_failed_to_load_this">
 				The graphics runtime failed to load — this usually means a network
 				hiccup or a browser without WebGL.
 			</p>
 			<div class="foot-links">
-				<a href="javascript:location.reload()">Retry</a>
-				<a href="/">Back to three.ws</a>
+				<a href="javascript:location.reload()" data-i18n="avatar_artifact.retry">Retry</a>
+				<a href="/" data-i18n="avatar_artifact.back_to_three_ws">Back to three.ws</a>
 			</div>
 		</div>
 
@@ -686,5 +686,7 @@
 			window.addEventListener('orientationchange', onResize);
 			}
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

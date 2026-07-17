@@ -5,10 +5,10 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>$THREE tiers · Hold-to-access perks · three.ws</title>
-		<meta name="description" content="Hold $THREE to unlock platform-wide perks — fee discounts on compute, higher free quotas, private and branded worlds. See every tier, what it unlocks, and how much $THREE you hold to reach it. $THREE is the only coin on three.ws." />
-		<meta property="og:title" content="$THREE tiers · Hold-to-access on three.ws" />
-		<meta property="og:description" content="Hold $THREE to unlock fee discounts, higher free quotas, and private worlds. The same tiers, the same upgrade path, everywhere." />
+		<title data-i18n="three.meta_title">$THREE tiers · Hold-to-access perks · three.ws</title>
+		<meta name="description" content="Hold $THREE to unlock platform-wide perks — fee discounts on compute, higher free quotas, private and branded worlds. See every tier, what it unlocks, and how much $THREE you hold to reach it. $THREE is the only coin on three.ws."  data-i18n-attr="content:three.meta_description"/>
+		<meta property="og:title" content="$THREE tiers · Hold-to-access on three.ws"  data-i18n-attr="content:three.meta_og_title"/>
+		<meta property="og:description" content="Hold $THREE to unlock fee discounts, higher free quotas, and private worlds. The same tiers, the same upgrade path, everywhere."  data-i18n-attr="content:three.meta_og_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/three" />
@@ -17,8 +17,8 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="$THREE tiers · Hold-to-access on three.ws" />
-		<meta name="twitter:description" content="Hold $THREE to unlock fee discounts, higher free quotas, and private worlds. The same tiers, the same upgrade path, everywhere." />
+		<meta name="twitter:title" content="$THREE tiers · Hold-to-access on three.ws"  data-i18n-attr="content:three.meta_twitter_title"/>
+		<meta name="twitter:description" content="Hold $THREE to unlock fee discounts, higher free quotas, and private worlds. The same tiers, the same upgrade path, everywhere."  data-i18n-attr="content:three.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=%24THREE+Tiers+%C2%B7+Hold-to-Access&amp;d=Hold+%24THREE+to+unlock+platform-wide+perks+%E2%80%94+fee+discounts+on+compute%2C+higher+free+quotas%2C+and+private+and+branded+worlds.+See+every+tier%2C+what+it+unlocks%2C+and+e&amp;p=%2Fthree" />
 		<meta name="theme-color" content="#0a0a0d" />
 		<link rel="canonical" href="https://three.ws/three" />
@@ -36,7 +36,7 @@
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"$THREE Tiers · Hold-to-Access","description":"Hold $THREE to unlock platform-wide perks — fee discounts on compute, higher free quotas, and private and branded worlds. See every tier, what it unlocks, and exactly how much $THREE you hold to reach the next one. The same tiering and the same upgrade path, everywhere.","url":"https://three.ws/three","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&amp;t=%24THREE+Tiers+%C2%B7+Hold-to-Access&amp;d=Hold+%24THREE+to+unlock+platform-wide+perks+%E2%80%94+fee+discounts+on+compute%2C+higher+free+quotas%2C+and+private+and+branded+worlds.+See+every+tier%2C+what+it+unlocks%2C+and+e&amp;p=%2Fthree"}]}</script>
 </head>
 	<body>
-		<a href="#tier-root" class="skip-link">Skip to main content</a>
+		<a href="#tier-root" class="skip-link" data-i18n="three.skip_to_main_content">Skip to main content</a>
 		<header><div id="nav-container"></div></header>
 		<script src="/nav.js"></script>
 
@@ -46,5 +46,7 @@
 
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

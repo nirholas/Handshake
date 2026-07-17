@@ -4,22 +4,22 @@
 		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Splat Viewer — Photoreal Gaussian Avatars · three.ws</title>
+		<title data-i18n="splat.meta_title">Splat Viewer — Photoreal Gaussian Avatars · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="description" content="View photoreal Gaussian-splat and radiance-field avatars in the browser. Load a .ply / .splat / .ksplat by URL or upload — the same WebGL splat engine that powers the three.ws Lab." />
+		<meta name="description" content="View photoreal Gaussian-splat and radiance-field avatars in the browser. Load a .ply / .splat / .ksplat by URL or upload — the same WebGL splat engine that powers the three.ws Lab."  data-i18n-attr="content:splat.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 		<link rel="canonical" href="https://three.ws/splat" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Splat Viewer — Photoreal Gaussian Avatars · three.ws" />
-		<meta property="og:description" content="View photoreal Gaussian-splat avatars in the browser — load a .ply / .splat / .ksplat by URL or upload. The realistic-head output of engines like GaussianAvatars and HumanGaussian, rendered live." />
+		<meta property="og:title" content="Splat Viewer — Photoreal Gaussian Avatars · three.ws"  data-i18n-attr="content:splat.meta_og_title"/>
+		<meta property="og:description" content="View photoreal Gaussian-splat avatars in the browser — load a .ply / .splat / .ksplat by URL or upload. The realistic-head output of engines like GaussianAvatars and HumanGaussian, rendered live."  data-i18n-attr="content:splat.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/splat" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Splat+Viewer+%E2%80%94+Photoreal+Gaussian+Avatars&amp;d=Render+Gaussian-splat+and+radiance-field+avatars+in+the+browser+%E2%80%94+the+photoreal+output+of+engines+like+GaussianAvatars+and+HumanGaussian.+Load+a+.ply+%2F+.splat+%2F&amp;p=%2Fsplat" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Splat Viewer — Photoreal Gaussian Avatars · three.ws" />
-		<meta name="twitter:description" content="Render photoreal Gaussian-splat avatars in the browser." />
+		<meta name="twitter:title" content="Splat Viewer — Photoreal Gaussian Avatars · three.ws"  data-i18n-attr="content:splat.meta_twitter_title"/>
+		<meta name="twitter:description" content="Render photoreal Gaussian-splat avatars in the browser."  data-i18n-attr="content:splat.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Splat+Viewer+%E2%80%94+Photoreal+Gaussian+Avatars&amp;d=Render+Gaussian-splat+and+radiance-field+avatars+in+the+browser+%E2%80%94+the+photoreal+output+of+engines+like+GaussianAvatars+and+HumanGaussian.+Load+a+.ply+%2F+.splat+%2F&amp;p=%2Fsplat" />
 
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -176,9 +176,9 @@
 
 			<div class="sp-wrap">
 				<header class="sp-head">
-					<span class="sp-chip">Gaussian Splatting · WebGL</span>
-					<h1>Photoreal splat viewer.</h1>
-					<p>
+					<span class="sp-chip" data-i18n="splat.gaussian_splatting_webgl">Gaussian Splatting · WebGL</span>
+					<h1 data-i18n="splat.photoreal_splat_viewer">Photoreal splat viewer.</h1>
+					<p data-i18n-html="splat.render_gaussian_splat_and_radiance_field_ava">
 						Render Gaussian-splat and radiance-field avatars right in the browser — the photoreal output
 						of engines like <a href="/avatar-engines?family=photoreal-head">GaussianAvatars and HumanGaussian</a>.
 						Load a <code>.ply</code>, <code>.splat</code>, or <code>.ksplat</code> by URL or drop a file in.
@@ -194,15 +194,15 @@
 							<div class="sp-glyph">
 								<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="10" r="1.4" fill="currentColor"/><circle cx="15" cy="10" r="1.4" fill="currentColor"/><circle cx="12" cy="14" r="1.4" fill="currentColor"/><circle cx="8" cy="15" r="1.1" fill="currentColor"/><circle cx="16" cy="15" r="1.1" fill="currentColor"/></svg>
 							</div>
-							<h3>Load a splat to begin</h3>
-							<p>Drop a <code>.ply</code> / <code>.splat</code> / <code>.ksplat</code> here, paste a URL, or try a sample on the right.</p>
+							<h3 data-i18n="splat.load_a_splat_to_begin">Load a splat to begin</h3>
+							<p data-i18n-html="splat.drop_a_here_paste_a_url_or">Drop a <code>.ply</code> / <code>.splat</code> / <code>.ksplat</code> here, paste a URL, or try a sample on the right.</p>
 						</div>
 
 						<!-- Loading -->
 						<div class="sp-overlay" id="sp-loading" hidden>
 							<div class="sp-spinner"></div>
-							<h3 id="sp-loading-title">Loading splat engine…</h3>
-							<p id="sp-loading-sub">Fetching and decoding the radiance field.</p>
+							<h3 id="sp-loading-title" data-i18n="splat.loading_splat_engine">Loading splat engine…</h3>
+							<p id="sp-loading-sub" data-i18n="splat.fetching_and_decoding_the_radiance_field">Fetching and decoding the radiance field.</p>
 						</div>
 
 						<!-- Error -->
@@ -210,10 +210,10 @@
 							<div class="sp-glyph" style="color:#fca5a5;background:rgba(239,68,68,0.1);border-color:#5b2a2a">
 								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4 M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
 							</div>
-							<h3 id="sp-error-title">Couldn’t load that splat</h3>
+							<h3 id="sp-error-title" data-i18n="splat.couldn_t_load_that_splat">Couldn’t load that splat</h3>
 							<p id="sp-error-sub"></p>
 							<div class="sp-err-actions">
-								<button class="sp-btn" id="sp-error-retry" type="button" style="width:auto">Try a sample</button>
+								<button class="sp-btn" id="sp-error-retry" type="button" style="width:auto" data-i18n="splat.try_a_sample">Try a sample</button>
 							</div>
 						</div>
 
@@ -221,10 +221,10 @@
 						<div class="sp-hud" id="sp-hud" hidden>
 							<div class="sp-hud-label" id="sp-hud-label"></div>
 							<div class="sp-hud-btns">
-								<button class="sp-icon-btn" id="sp-recenter" type="button" title="Recenter camera" aria-label="Recenter camera">
+								<button class="sp-icon-btn" id="sp-recenter" type="button" title="Recenter camera" aria-label="Recenter camera" data-i18n-attr="aria-label:splat.recenter_camera_arialabel;title:splat.recenter_camera_title">
 									<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3 M12 19v3 M2 12h3 M19 12h3"/></svg>
 								</button>
-								<a class="sp-icon-btn" id="sp-download" title="Download splat" aria-label="Download splat" hidden>
+								<a class="sp-icon-btn" id="sp-download" title="Download splat" aria-label="Download splat" hidden data-i18n-attr="aria-label:splat.download_splat_arialabel;title:splat.download_splat_title">
 									<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12 M7 11l5 4 5-4 M5 21h14"/></svg>
 								</a>
 							</div>
@@ -233,7 +233,7 @@
 
 					<aside class="sp-panel">
 						<div class="sp-card">
-							<h2>Load by URL</h2>
+							<h2 data-i18n="splat.load_by_url">Load by URL</h2>
 							<div class="sp-field">
 								<input class="sp-input" id="sp-url" type="url" placeholder="https://…/avatar.ply" autocomplete="off" />
 								<button class="sp-btn sp-btn--primary" id="sp-load-url" type="button">
@@ -247,21 +247,21 @@
 								Upload a file
 							</button>
 							<input id="sp-file" type="file" accept=".ply,.splat,.ksplat" hidden />
-							<p class="sp-hint">Files stay on your device — decoding runs entirely in your browser.</p>
+							<p class="sp-hint" data-i18n="splat.files_stay_on_your_device_decoding_runs">Files stay on your device — decoding runs entirely in your browser.</p>
 						</div>
 
 						<div class="sp-card">
-							<h2>Samples</h2>
+							<h2 data-i18n="splat.samples">Samples</h2>
 							<div class="sp-samples">
-								<button class="sp-sample" data-sample="bust" type="button"><span class="sp-sample-dot"></span> Synthetic head bust · 14k splats</button>
-								<button class="sp-sample" data-sample="shell" type="button"><span class="sp-sample-dot" style="background:#86efac"></span> Radiance shell · 6k splats</button>
+								<button class="sp-sample" data-sample="bust" type="button" data-i18n-html="splat.synthetic_head_bust_14k_splats"><span class="sp-sample-dot"></span> Synthetic head bust · 14k splats</button>
+								<button class="sp-sample" data-sample="shell" type="button" data-i18n-html="splat.radiance_shell_6k_splats"><span class="sp-sample-dot" style="background:#86efac"></span> Radiance shell · 6k splats</button>
 							</div>
-							<p class="sp-note" style="margin-top:12px">Samples are procedurally generated to exercise the renderer — not real captures.</p>
+							<p class="sp-note" style="margin-top:12px" data-i18n="splat.samples_are_procedurally_generated_to_exerci">Samples are procedurally generated to exercise the renderer — not real captures.</p>
 						</div>
 
 						<div class="sp-card">
-							<h2>Where splats come from</h2>
-							<p class="sp-note">
+							<h2 data-i18n="splat.where_splats_come_from">Where splats come from</h2>
+							<p class="sp-note" data-i18n-html="splat.photoreal_heads_from_gaussianavatars_or_full">
 								Photoreal heads from GaussianAvatars or full bodies from HumanGaussian export to
 								<code>.ply</code>/<code>.splat</code>. Train one yourself, then view it here.
 								Browse engines in the <a href="/avatar-engines?int=splat" style="color:var(--text-2)">Avatar Engines Atlas</a>.
@@ -276,5 +276,7 @@
 		</div>
 
 		<script type="module" src="/src/splat-viewer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

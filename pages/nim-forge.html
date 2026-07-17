@@ -4,8 +4,8 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>TRELLIS NIM · Image → 3D · three.ws</title>
-		<meta name="description" content="Drop in a photo, get a textured 3D model — reconstructed natively on a self-hosted Microsoft TRELLIS NIM. Single-hop image → GLB." />
+		<title data-i18n="nim_forge.meta_title">TRELLIS NIM · Image → 3D · three.ws</title>
+		<meta name="description" content="Drop in a photo, get a textured 3D model — reconstructed natively on a self-hosted Microsoft TRELLIS NIM. Single-hop image → GLB."  data-i18n-attr="content:nim_forge.meta_description"/>
 		<meta name="robots" content="noindex" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -105,8 +105,8 @@
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:title" content="TRELLIS NIM Forge · three.ws">
-	<meta property="og:description" content="Drop in a photo, get a textured 3D model, reconstructed on a self-hosted Microsoft TRELLIS NIM. Single-hop image to GLB.">
+	<meta property="og:title" content="TRELLIS NIM Forge · three.ws" data-i18n-attr="content:nim_forge.meta_og_title">
+	<meta property="og:description" content="Drop in a photo, get a textured 3D model, reconstructed on a self-hosted Microsoft TRELLIS NIM. Single-hop image to GLB." data-i18n-attr="content:nim_forge.meta_og_description">
 	<meta property="og:url" content="https://three.ws/nim-forge">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=TRELLIS+NIM+Forge&amp;d=Drop+in+a+photo%2C+get+a+textured+3D+model%2C+reconstructed+on+a+self-hosted+Microsoft+TRELLIS+NIM.+Single-hop+image+to+GLB.&amp;p=%2Fnim-forge">
 	<meta property="og:image:width" content="1200">
@@ -115,35 +115,35 @@
 	<meta property="og:image:alt" content="TRELLIS NIM Forge — three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="TRELLIS NIM Forge · three.ws">
-	<meta name="twitter:description" content="Drop in a photo, get a textured 3D model, reconstructed on a self-hosted Microsoft TRELLIS NIM. Single-hop image to GLB.">
+	<meta name="twitter:title" content="TRELLIS NIM Forge · three.ws" data-i18n-attr="content:nim_forge.meta_twitter_title">
+	<meta name="twitter:description" content="Drop in a photo, get a textured 3D model, reconstructed on a self-hosted Microsoft TRELLIS NIM. Single-hop image to GLB." data-i18n-attr="content:nim_forge.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=TRELLIS+NIM+Forge&amp;d=Drop+in+a+photo%2C+get+a+textured+3D+model%2C+reconstructed+on+a+self-hosted+Microsoft+TRELLIS+NIM.+Single-hop+image+to+GLB.&amp;p=%2Fnim-forge">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"TRELLIS NIM Forge","description":"Drop in a photo, get a textured 3D model, reconstructed on a self-hosted Microsoft TRELLIS NIM. Single-hop image to GLB.","url":"https://three.ws/nim-forge","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&t=TRELLIS+NIM+Forge&d=Drop+in+a+photo%2C+get+a+textured+3D+model%2C+reconstructed+on+a+self-hosted+Microsoft+TRELLIS+NIM.+Single-hop+image+to+GLB.&p=%2Fnim-forge"}]}</script>
 </head>
 	<body>
 		<main class="nf-main">
 			<header class="nf-head">
-				<span class="nf-eyebrow" id="status-badge" data-state="checking"><span class="nf-dot"></span><span id="status-text">checking engine…</span></span>
-				<h1>Image → 3D</h1>
-				<p>Drop in a photo and get a textured 3D model — reconstructed natively on a self-hosted <strong>Microsoft TRELLIS NIM</strong>. Single-hop <code>image → /v1/infer → GLB</code>, no intermediate step. This is an isolated demo surface; it shares nothing with production Forge.</p>
+				<span class="nf-eyebrow" id="status-badge" data-state="checking" data-i18n-html="nim_forge.checking_engine"><span class="nf-dot"></span><span id="status-text">checking engine…</span></span>
+				<h1 data-i18n="nim_forge.image_3d">Image → 3D</h1>
+				<p data-i18n-html="nim_forge.drop_in_a_photo_and_get_a">Drop in a photo and get a textured 3D model — reconstructed natively on a self-hosted <strong>Microsoft TRELLIS NIM</strong>. Single-hop <code>image → /v1/infer → GLB</code>, no intermediate step. This is an isolated demo surface; it shares nothing with production Forge.</p>
 			</header>
 
 			<div class="nf-workspace">
 				<div class="nf-rail">
 					<div class="nf-card">
 						<div class="nf-mode" role="group" aria-label="Input mode">
-							<button type="button" id="mode-image" aria-pressed="true">From a photo</button>
-							<button type="button" id="mode-text" aria-pressed="false">Describe it</button>
+							<button type="button" id="mode-image" aria-pressed="true" data-i18n="nim_forge.from_a_photo">From a photo</button>
+							<button type="button" id="mode-text" aria-pressed="false" data-i18n="nim_forge.describe_it">Describe it</button>
 						</div>
 
 						<div id="pane-image">
 							<div class="nf-label">Reference photo</div>
 							<label class="nf-drop" id="drop">
-								<button type="button" class="nf-clear" id="clear" aria-label="Remove image">✕</button>
+								<button type="button" class="nf-clear" id="clear" aria-label="Remove image" data-i18n-attr="aria-label:nim_forge.remove_image_arialabel">✕</button>
 								<img id="preview" alt="" hidden />
 								<div class="nf-drop-hint">
-									<strong>Drop a photo or click</strong>
-									<span>One clean object on a simple background works best.</span>
+									<strong data-i18n="nim_forge.drop_a_photo_or_click">Drop a photo or click</strong>
+									<span data-i18n="nim_forge.one_clean_object_on_a_simple_background">One clean object on a simple background works best.</span>
 								</div>
 								<input type="file" id="file" accept="image/png,image/jpeg,image/webp" />
 							</label>
@@ -158,13 +158,13 @@
 					<div class="nf-card">
 						<div class="nf-label">Quality</div>
 						<div class="nf-tiers" id="tiers" role="group" aria-label="Quality tier">
-							<button type="button" data-tier="draft" aria-pressed="false">Draft</button>
-							<button type="button" data-tier="standard" aria-pressed="true">Standard</button>
-							<button type="button" data-tier="high" aria-pressed="false">High</button>
+							<button type="button" data-tier="draft" aria-pressed="false" data-i18n="nim_forge.draft">Draft</button>
+							<button type="button" data-tier="standard" aria-pressed="true" data-i18n="nim_forge.standard">Standard</button>
+							<button type="button" data-tier="high" aria-pressed="false" data-i18n="nim_forge.high">High</button>
 						</div>
 					</div>
 
-					<button class="nf-btn" id="generate" disabled>Add a photo to start</button>
+					<button class="nf-btn" id="generate" disabled data-i18n="nim_forge.add_a_photo_to_start">Add a photo to start</button>
 					<div class="nf-foot">Self-hosted NVIDIA TRELLIS NIM · <code>/v1/infer</code></div>
 				</div>
 
@@ -172,8 +172,8 @@
 					<div class="nf-panel is-active" id="panel-empty">
 						<div>
 							<div class="nf-empty-art"></div>
-							<h2>Your model appears here</h2>
-							<p>Drop in a photo on the left and hit Generate. The mesh reconstructs in seconds and renders right here — orbit it, inspect it, download the GLB.</p>
+							<h2 data-i18n="nim_forge.your_model_appears_here">Your model appears here</h2>
+							<p data-i18n="nim_forge.drop_in_a_photo_on_the_left">Drop in a photo on the left and hit Generate. The mesh reconstructs in seconds and renders right here — orbit it, inspect it, download the GLB.</p>
 						</div>
 					</div>
 
@@ -187,7 +187,7 @@
 
 					<div class="nf-panel" id="panel-error">
 						<div>
-							<h2>That didn't land</h2>
+							<h2 data-i18n="nim_forge.that_didn_t_land">That didn't land</h2>
 							<p class="nf-err" id="error-msg"></p>
 						</div>
 					</div>
@@ -208,12 +208,14 @@
 
 					<div class="nf-resultbar" id="resultbar">
 						<span class="nf-resultmeta" id="result-meta"></span>
-						<a class="nf-download" id="download" download="trellis-model.glb">Download GLB</a>
+						<a class="nf-download" id="download" download="trellis-model.glb" data-i18n="nim_forge.download_glb">Download GLB</a>
 					</div>
 				</section>
 			</div>
 		</main>
 
 		<script type="module" src="/src/nim-forge.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

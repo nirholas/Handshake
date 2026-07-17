@@ -5,17 +5,17 @@
 	<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title>Flappin UFO — retired demo · three.ws</title>
-	<meta name="description" content="The Flappin UFO arcade demo has been retired. Explore the live three.ws experiences instead — the coin communities world, Sniper Arena, and Coin Clash." />
-	<meta property="og:title" content="Flappin UFO — retired demo · three.ws" />
-	<meta property="og:description" content="This arcade demo is no longer available. Jump into the live three.ws experiences instead." />
+	<title data-i18n="play_ufo.meta_title">Flappin UFO — retired demo · three.ws</title>
+	<meta name="description" content="The Flappin UFO arcade demo has been retired. Explore the live three.ws experiences instead — the coin communities world, Sniper Arena, and Coin Clash."  data-i18n-attr="content:play_ufo.meta_description"/>
+	<meta property="og:title" content="Flappin UFO — retired demo · three.ws"  data-i18n-attr="content:play_ufo.meta_og_title"/>
+	<meta property="og:description" content="This arcade demo is no longer available. Jump into the live three.ws experiences instead."  data-i18n-attr="content:play_ufo.meta_og_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/play/ufo" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Flappin+UFO+%E2%80%94+retired+demo&amp;d=The+Flappin+UFO+arcade+demo+ran+on+an+external+deployment+that+is+no+longer+online%2C+so+the+game+has+been+retired.+The+page+now+points+visitors+to+the+live+three&amp;p=%2Fplay%2Fufo" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Flappin UFO — retired demo · three.ws" />
-	<meta name="twitter:description" content="This arcade demo is no longer available. Explore the live three.ws experiences instead." />
+	<meta name="twitter:title" content="Flappin UFO — retired demo · three.ws"  data-i18n-attr="content:play_ufo.meta_twitter_title"/>
+	<meta name="twitter:description" content="This arcade demo is no longer available. Explore the live three.ws experiences instead."  data-i18n-attr="content:play_ufo.meta_twitter_description"/>
 	<link rel="canonical" href="https://three.ws/play/ufo" />
 	<link rel="icon" href="/favicon.ico" />
 	<style>
@@ -213,11 +213,11 @@
 <header class="bar">
 	<a href="/" class="brand">
 		<img src="/favicon.svg" alt="three.ws" />
-		<span>three.ws</span>
+		<span data-i18n="play_ufo.three_ws">three.ws</span>
 	</a>
 	<span class="brand-sep">/</span>
-	<span class="game-title">Flappin UFO</span>
-	<span class="retired-badge" title="This demo is no longer available">Retired</span>
+	<span class="game-title" data-i18n="play_ufo.flappin_ufo">Flappin UFO</span>
+	<span class="retired-badge" title="This demo is no longer available" data-i18n="play_ufo.retired" data-i18n-attr="title:play_ufo.this_demo_is_no_longer_avail_title">Retired</span>
 </header>
 
 <!-- designed retired state -->
@@ -232,8 +232,8 @@
 			</svg>
 		</div>
 
-		<h1>This demo has flown off</h1>
-		<p class="lead">
+		<h1 data-i18n="play_ufo.this_demo_has_flown_off">This demo has flown off</h1>
+		<p class="lead" data-i18n="play_ufo.flappin_ufo_was_an_external_arcade_demo">
 			Flappin UFO was an external arcade demo hosted off-platform, and its deployment
 			is no longer online. Rather than leave you staring at a broken screen, we've
 			grounded it — the live three.ws experiences are where the action is now.
@@ -255,12 +255,14 @@
 		</div>
 
 		<nav class="siblings" aria-label="Live experiences">
-			<span class="siblings-label">Still live</span>
-			<a href="/play/arena" class="chip"><span class="dot"></span>Sniper Arena</a>
-			<a href="/clash" class="chip"><span class="dot"></span>Coin Clash</a>
-			<a href="/three-live" class="chip"><span class="dot"></span>Three Live</a>
+			<span class="siblings-label" data-i18n="play_ufo.still_live">Still live</span>
+			<a href="/play/arena" class="chip" data-i18n-html="play_ufo.sniper_arena"><span class="dot"></span>Sniper Arena</a>
+			<a href="/clash" class="chip" data-i18n-html="play_ufo.coin_clash"><span class="dot"></span>Coin Clash</a>
+			<a href="/three-live" class="chip" data-i18n-html="play_ufo.three_live"><span class="dot"></span>Three Live</a>
 		</nav>
 	</section>
 </main>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

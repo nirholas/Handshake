@@ -4,13 +4,13 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Live Trading Theater · three.ws</title>
+		<title data-i18n="theater.meta_title">Live Trading Theater · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<meta name="author" content="nirholas" />
 		<meta
 			name="description"
 			content="Watch agents trade in 3D, in real time. Every trader is a 3D character with a wallet and a verifiable on-chain reputation — when a real on-chain buy fills, its avatar performs and a real receipt rises with an explorer link."
-		/>
+		 data-i18n-attr="content:theater.meta_description"/>
 		<meta name="theme-color" content="#05050a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -19,11 +19,11 @@
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Live Trading Theater · three.ws" />
+		<meta property="og:title" content="Live Trading Theater · three.ws"  data-i18n-attr="content:theater.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Trading as spectator sport. Real agents, real wallets, real on-chain fills — performed in a shared 3D stage."
-		/>
+		 data-i18n-attr="content:theater.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/theater" />
 
 		<!-- tokens.css = design variables only; buttons.css targets .btn — neither
@@ -41,27 +41,27 @@
 	<meta property="og:image:alt" content="Live Trading Theater — three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Live Trading Theater · three.ws">
-	<meta name="twitter:description" content="Watch agents trade in 3D, in real time. Every trader is a 3D character with a wallet and a verifiable on-chain reputation — when a real on-chain buy fills, its avatar performs on a shared stage and a real receipt rises with an explorer link. Click any avatar for its read-only wallet and reputation; watch, follow, or fork it.">
+	<meta name="twitter:title" content="Live Trading Theater · three.ws" data-i18n-attr="content:theater.meta_twitter_title">
+	<meta name="twitter:description" content="Watch agents trade in 3D, in real time. Every trader is a 3D character with a wallet and a verifiable on-chain reputation — when a real on-chain buy fills, its avatar performs on a shared stage and a real receipt rises with an explorer link. Click any avatar for its read-only wallet and reputation; watch, follow, or fork it." data-i18n-attr="content:theater.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Live+Trading+Theater&amp;d=Watch+agents+trade+in+3D%2C+in+real+time.+Every+trader+is+a+3D+character+with+a+wallet+and+a+verifiable+on-chain+reputation+%E2%80%94+when+a+real+on-chain+buy+fills%2C+its+&amp;p=%2Ftheater">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Live Trading Theater","description":"Watch agents trade in 3D, in real time. Every trader is a 3D character with a wallet and a verifiable on-chain reputation — when a real on-chain buy fills, its avatar performs on a shared stage and a real receipt rises with an explorer link. Click any avatar for its read-only wallet and reputation; watch, follow, or fork it.","url":"https://three.ws/theater","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&t=Live+Trading+Theater&d=Watch+agents+trade+in+3D%2C+in+real+time.+Every+trader+is+a+3D+character+with+a+wallet+and+a+verifiable+on-chain+reputation+%E2%80%94+when+a+real+on-chain+buy+fills%2C+its+&p=%2Ftheater"}]}</script>
 </head>
 	<body>
 		<div id="th-root" class="th-root">
 			<header class="th-topbar">
-				<a class="th-back" href="/" aria-label="Back to three.ws">
+				<a class="th-back" href="/" aria-label="Back to three.ws" data-i18n-html="theater.three_ws" data-i18n-attr="aria-label:theater.back_to_three_ws_arialabel">
 					<span aria-hidden="true">←</span> three.ws
 				</a>
 				<div class="th-title-wrap">
-					<h1 class="th-title">Live Trading Theater</h1>
+					<h1 class="th-title" data-i18n="theater.live_trading_theater">Live Trading Theater</h1>
 					<p class="th-room-hint" id="th-room-hint"></p>
 				</div>
-				<button class="th-sound" id="th-sound" type="button" aria-pressed="false" aria-label="Sound off" title="Toggle fill sounds">
+				<button class="th-sound" id="th-sound" type="button" aria-pressed="false" aria-label="Sound off" title="Toggle fill sounds" data-i18n-attr="aria-label:theater.sound_off_arialabel;title:theater.toggle_fill_sounds_title">
 					<span class="th-sound-icon" aria-hidden="true">🔇</span>
 				</button>
 				<div class="th-status th-dot-amber" id="th-status" role="status" aria-live="polite">
 					<span class="th-status-dot" aria-hidden="true"></span>
-					<span class="th-status-label">Connecting</span>
+					<span class="th-status-label" data-i18n="theater.connecting">Connecting</span>
 				</div>
 			</header>
 
@@ -75,35 +75,35 @@
 					<!-- loading -->
 					<div class="th-state th-loading" id="th-loading">
 						<div class="th-spinner" aria-hidden="true"></div>
-						<p>Assembling the cast…</p>
+						<p data-i18n="theater.assembling_the_cast">Assembling the cast…</p>
 					</div>
 
 					<!-- quiet market -->
 					<div class="th-state th-quiet" id="th-quiet" hidden>
 						<div class="th-quiet-head">
 							<span class="th-status-dot th-quiet-pulse" aria-hidden="true"></span>
-							<h2>Waiting on the next move</h2>
+							<h2 data-i18n="theater.waiting_on_the_next_move">Waiting on the next move</h2>
 						</div>
-						<p class="th-muted th-quiet-beat" data-beat>The stage lights up the instant the next on-chain buy fills.</p>
+						<p class="th-muted th-quiet-beat" data-beat data-i18n="theater.the_stage_lights_up_the_instant_the">The stage lights up the instant the next on-chain buy fills.</p>
 						<div class="th-highlights" data-highlights></div>
 					</div>
 
 					<!-- error -->
 					<div class="th-state th-error" id="th-error" hidden>
-						<h2>Couldn't load the stage</h2>
-						<p class="th-muted">The roster feed didn't respond in time. Your connection or our edge may be hiccuping.</p>
-						<button class="th-btn th-btn-primary" data-retry>Try again</button>
+						<h2 data-i18n="theater.couldn_t_load_the_stage">Couldn't load the stage</h2>
+						<p class="th-muted" data-i18n="theater.the_roster_feed_didn_t_respond_in">The roster feed didn't respond in time. Your connection or our edge may be hiccuping.</p>
+						<button class="th-btn th-btn-primary" data-retry data-i18n="theater.try_again">Try again</button>
 					</div>
 
 					<!-- empty roster -->
 					<div class="th-state th-empty" id="th-empty" hidden>
 						<div class="th-empty-mark" aria-hidden="true">◇</div>
-						<h2>No traders on this stage yet</h2>
-						<p class="th-muted">This room fills as agents build an on-chain track record. Explore a live agent or launch your own to take the stage.</p>
+						<h2 data-i18n="theater.no_traders_on_this_stage_yet">No traders on this stage yet</h2>
+						<p class="th-muted" data-i18n="theater.this_room_fills_as_agents_build_an">This room fills as agents build an on-chain track record. Explore a live agent or launch your own to take the stage.</p>
 						<div class="th-empty-actions">
-							<a class="th-btn th-btn-primary" href="/agents">Browse agents</a>
-							<a class="th-btn" href="/launch">Launch an agent</a>
-							<button class="th-btn th-btn-ghost" data-retry type="button">Refresh</button>
+							<a class="th-btn th-btn-primary" href="/agents" data-i18n="theater.browse_agents">Browse agents</a>
+							<a class="th-btn" href="/launch" data-i18n="theater.launch_an_agent">Launch an agent</a>
+							<button class="th-btn th-btn-ghost" data-retry type="button" data-i18n="theater.refresh">Refresh</button>
 						</div>
 					</div>
 
@@ -113,7 +113,7 @@
 
 				<aside class="th-rail" aria-label="Live activity and replay">
 					<section class="th-rail-block">
-						<h2 class="th-rail-h">
+						<h2 class="th-rail-h" data-i18n-html="theater.live_tape">
 							<span class="th-status-dot th-rail-dot" aria-hidden="true"></span> Live tape
 						</h2>
 						<ul class="th-ticker" id="th-ticker" aria-live="polite"></ul>
@@ -121,10 +121,10 @@
 
 					<section class="th-rail-block th-replay" id="th-replay">
 						<div class="th-replay-head">
-							<h2 class="th-rail-h">Replay</h2>
-							<button class="th-btn th-btn-sm" data-play-all>▶ Play session</button>
+							<h2 class="th-rail-h" data-i18n="theater.replay">Replay</h2>
+							<button class="th-btn th-btn-sm" data-play-all data-i18n="theater.play_session">▶ Play session</button>
 						</div>
-						<p class="th-muted th-replay-empty" data-empty>Every real move this session lands here. Tap a marker to replay it on stage.</p>
+						<p class="th-muted th-replay-empty" data-empty data-i18n="theater.every_real_move_this_session_lands_here">Every real move this session lands here. Tap a marker to replay it on stage.</p>
 						<div class="th-replay-rail" data-rail aria-label="Captured moves"></div>
 					</section>
 				</aside>
@@ -132,5 +132,7 @@
 		</div>
 
 		<script type="module" src="/src/theater.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

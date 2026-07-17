@@ -4,33 +4,33 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Features — three.ws</title>
+		<title data-i18n="features.meta_title">Features — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="author" content="nirholas" />
 		<meta
 			name="description"
 			content="Every three.ws feature in one place: create 3D avatars, embed agents on any site, explore coin worlds, and earn with pay-per-call skills."
-		/>
+		 data-i18n-attr="content:features.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Features — three.ws" />
+		<meta property="og:title" content="Features — three.ws"  data-i18n-attr="content:features.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Create 3D avatars, embed agents anywhere, explore coin worlds, and earn with pay-per-call skills."
-		/>
+		 data-i18n-attr="content:features.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/features" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Features&amp;d=Full+feature+overview+of+the+three.ws+platform%3A+avatars%2C+agents%2C+on-chain+identity%2C+x402+payments%2C+and+embedding.&amp;p=%2Ffeatures" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Features — three.ws" />
+		<meta name="twitter:title" content="Features — three.ws"  data-i18n-attr="content:features.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Create 3D avatars, embed agents anywhere, explore coin worlds, and earn with pay-per-call skills."
-		/>
+		 data-i18n-attr="content:features.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Features&amp;d=Full+feature+overview+of+the+three.ws+platform%3A+avatars%2C+agents%2C+on-chain+identity%2C+x402+payments%2C+and+embedding.&amp;p=%2Ffeatures" />
 
 		<link rel="canonical" href="https://three.ws/features" />
@@ -339,7 +339,7 @@
 	</style>
 </head>
 	<body class="features-page">
-		<a href="#main-content" class="skip-link">Skip to main content</a>
+		<a href="#main-content" class="skip-link" data-i18n="features.skip_to_main_content">Skip to main content</a>
 		<header><div id="nav-container"></div></header>
 		<script src="/nav.js"></script>
 
@@ -347,21 +347,21 @@
 			<!-- ── Page hero ── -->
 			<section class="feat-hero scroll-reveal">
 				<div class="feat-hero-inner">
-					<p class="feat-eyebrow">Everything three.ws does</p>
-					<h1 class="feat-hero-title">
+					<p class="feat-eyebrow" data-i18n="features.everything_three_ws_does">Everything three.ws does</p>
+					<h1 class="feat-hero-title" data-i18n-html="features.start_free_add_crypto_only_if_you">
 						Start free.<br />Add crypto only if you want it.
 					</h1>
-					<p class="feat-hero-sub">
+					<p class="feat-hero-sub" data-i18n="features.the_whole_product_making_avatars_building_ai">
 						The whole product — making avatars, building AI agents, embedding them
 						anywhere — works with nothing but an email. The on-chain features below are
 						optional extras you can switch on later.
 					</p>
 					<nav class="feat-goal-nav" aria-label="Jump to a section">
 						<a href="#core" class="feat-goal-pill feat-goal-pill--core"
-							>Core — free, no crypto</a
+							 data-i18n="features.core_free_no_crypto">Core — free, no crypto</a
 						>
 						<a href="#optional" class="feat-goal-pill feat-goal-pill--optional"
-							>Optional — on-chain &amp; payments</a
+							 data-i18n="features.optional_on_chain_payments">Optional — on-chain &amp; payments</a
 						>
 					</nav>
 				</div>
@@ -392,87 +392,87 @@
 							aria-label="3D avatar playing the selected animation"
 						></model-viewer>
 						<div class="feat-anim-stage-overlay" aria-hidden="true">
-							<span class="feat-anim-now-playing" id="animNowPlaying">Idle</span>
+							<span class="feat-anim-now-playing" id="animNowPlaying" data-i18n="features.idle">Idle</span>
 						</div>
 					</div>
 					<div class="feat-anim-controls">
-						<p class="feat-eyebrow" style="margin-bottom:6px">70+ Animations</p>
-						<h2 class="feat-anim-title">Every move, live in your browser.</h2>
-						<p class="feat-anim-sub">Pick any animation below. Your avatar switches instantly — no page reload, no install. These run on any device, in any embed.</p>
+						<p class="feat-eyebrow" style="margin-bottom:6px" data-i18n="features.70_animations">70+ Animations</p>
+						<h2 class="feat-anim-title" data-i18n="features.every_move_live_in_your_browser">Every move, live in your browser.</h2>
+						<p class="feat-anim-sub" data-i18n="features.pick_any_animation_below_your_avatar_switche">Pick any animation below. Your avatar switches instantly — no page reload, no install. These run on any device, in any embed.</p>
 
 						<div class="feat-anim-groups" id="animGroups">
 							<div class="feat-anim-group">
-								<span class="feat-anim-group-label">Idle</span>
+								<span class="feat-anim-group-label" data-i18n="features.idle_2">Idle</span>
 								<div class="feat-anim-pills">
-									<button class="feat-anim-pill feat-anim-pill--active" data-src="/animations/idle_anim.glb">Idle</button>
-									<button class="feat-anim-pill" data-src="/animations/Idle_Breath.glb">Breathing</button>
-									<button class="feat-anim-pill" data-src="/animations/Just_chilling.glb">Chilling</button>
-									<button class="feat-anim-pill" data-src="/animations/Standard_Waiting.glb">Waiting</button>
-									<button class="feat-anim-pill" data-src="/animations/Standard_Vtubing_Movement.glb">Vtubing</button>
-									<button class="feat-anim-pill" data-src="/animations/pose1.glb">Pose</button>
+									<button class="feat-anim-pill feat-anim-pill--active" data-src="/animations/idle_anim.glb" data-i18n="features.idle_3">Idle</button>
+									<button class="feat-anim-pill" data-src="/animations/Idle_Breath.glb" data-i18n="features.breathing">Breathing</button>
+									<button class="feat-anim-pill" data-src="/animations/Just_chilling.glb" data-i18n="features.chilling">Chilling</button>
+									<button class="feat-anim-pill" data-src="/animations/Standard_Waiting.glb" data-i18n="features.waiting">Waiting</button>
+									<button class="feat-anim-pill" data-src="/animations/Standard_Vtubing_Movement.glb" data-i18n="features.vtubing">Vtubing</button>
+									<button class="feat-anim-pill" data-src="/animations/pose1.glb" data-i18n="features.pose">Pose</button>
 								</div>
 							</div>
 							<div class="feat-anim-group">
-								<span class="feat-anim-group-label">Dance</span>
+								<span class="feat-anim-group-label" data-i18n="features.dance">Dance</span>
 								<div class="feat-anim-pills">
-									<button class="feat-anim-pill" data-src="/animations/dance_shuffle.glb">Shuffle</button>
-									<button class="feat-anim-pill" data-src="/animations/Dance_Head_Banging_V03.glb">Head Bang</button>
-									<button class="feat-anim-pill" data-src="/animations/Banging_Tunes_left.glb">Banging Tunes</button>
-									<button class="feat-anim-pill" data-src="/animations/Energic_conductor.glb">Conductor</button>
+									<button class="feat-anim-pill" data-src="/animations/dance_shuffle.glb" data-i18n="features.shuffle">Shuffle</button>
+									<button class="feat-anim-pill" data-src="/animations/Dance_Head_Banging_V03.glb" data-i18n="features.head_bang">Head Bang</button>
+									<button class="feat-anim-pill" data-src="/animations/Banging_Tunes_left.glb" data-i18n="features.banging_tunes">Banging Tunes</button>
+									<button class="feat-anim-pill" data-src="/animations/Energic_conductor.glb" data-i18n="features.conductor">Conductor</button>
 								</div>
 							</div>
 							<div class="feat-anim-group">
-								<span class="feat-anim-group-label">Celebration</span>
+								<span class="feat-anim-group-label" data-i18n="features.celebration">Celebration</span>
 								<div class="feat-anim-pills">
-									<button class="feat-anim-pill" data-src="/animations/Celebrating.glb">Celebrating</button>
-									<button class="feat-anim-pill" data-src="/animations/Cheering.glb">Cheering</button>
-									<button class="feat-anim-pill" data-src="/animations/Expressing_joy.glb">Joy</button>
-									<button class="feat-anim-pill" data-src="/animations/Brag_n_Claps.glb">Brag &amp; Clap</button>
-									<button class="feat-anim-pill" data-src="/animations/Call_Me.glb">Call Me</button>
+									<button class="feat-anim-pill" data-src="/animations/Celebrating.glb" data-i18n="features.celebrating">Celebrating</button>
+									<button class="feat-anim-pill" data-src="/animations/Cheering.glb" data-i18n="features.cheering">Cheering</button>
+									<button class="feat-anim-pill" data-src="/animations/Expressing_joy.glb" data-i18n="features.joy">Joy</button>
+									<button class="feat-anim-pill" data-src="/animations/Brag_n_Claps.glb" data-i18n="features.brag_clap">Brag &amp; Clap</button>
+									<button class="feat-anim-pill" data-src="/animations/Call_Me.glb" data-i18n="features.call_me">Call Me</button>
 								</div>
 							</div>
 							<div class="feat-anim-group">
-								<span class="feat-anim-group-label">Athletic</span>
+								<span class="feat-anim-group-label" data-i18n="features.athletic">Athletic</span>
 								<div class="feat-anim-pills">
-									<button class="feat-anim-pill" data-src="/animations/back_flip.glb">Back Flip</button>
-									<button class="feat-anim-pill" data-src="/animations/Suoerhero_Jump.glb">Superhero Jump</button>
-									<button class="feat-anim-pill" data-src="/animations/Arm_Flex.glb">Arm Flex</button>
-									<button class="feat-anim-pill" data-src="/animations/Flexing_Arm.glb">Flexing</button>
-									<button class="feat-anim-pill" data-src="/animations/Gymnastics_Aerial.glb">Aerial</button>
-									<button class="feat-anim-pill" data-src="/animations/Gorilla_chest_bump.glb">Chest Bump</button>
+									<button class="feat-anim-pill" data-src="/animations/back_flip.glb" data-i18n="features.back_flip">Back Flip</button>
+									<button class="feat-anim-pill" data-src="/animations/Suoerhero_Jump.glb" data-i18n="features.superhero_jump">Superhero Jump</button>
+									<button class="feat-anim-pill" data-src="/animations/Arm_Flex.glb" data-i18n="features.arm_flex">Arm Flex</button>
+									<button class="feat-anim-pill" data-src="/animations/Flexing_Arm.glb" data-i18n="features.flexing">Flexing</button>
+									<button class="feat-anim-pill" data-src="/animations/Gymnastics_Aerial.glb" data-i18n="features.aerial">Aerial</button>
+									<button class="feat-anim-pill" data-src="/animations/Gorilla_chest_bump.glb" data-i18n="features.chest_bump">Chest Bump</button>
 								</div>
 							</div>
 							<div class="feat-anim-group">
-								<span class="feat-anim-group-label">Combat</span>
+								<span class="feat-anim-group-label" data-i18n="features.combat">Combat</span>
 								<div class="feat-anim-pills">
-									<button class="feat-anim-pill" data-src="/animations/Angry.glb">Angry</button>
-									<button class="feat-anim-pill" data-src="/animations/Arm_Combo_Muay_Thai.glb">Muay Thai</button>
-									<button class="feat-anim-pill" data-src="/animations/Boxers_dance.glb">Boxer Dance</button>
-									<button class="feat-anim-pill" data-src="/animations/Standard_Push_Block_Variation.glb">Push Block</button>
-									<button class="feat-anim-pill" data-src="/animations/Cheap_Spy.glb">Spy</button>
+									<button class="feat-anim-pill" data-src="/animations/Angry.glb" data-i18n="features.angry">Angry</button>
+									<button class="feat-anim-pill" data-src="/animations/Arm_Combo_Muay_Thai.glb" data-i18n="features.muay_thai">Muay Thai</button>
+									<button class="feat-anim-pill" data-src="/animations/Boxers_dance.glb" data-i18n="features.boxer_dance">Boxer Dance</button>
+									<button class="feat-anim-pill" data-src="/animations/Standard_Push_Block_Variation.glb" data-i18n="features.push_block">Push Block</button>
+									<button class="feat-anim-pill" data-src="/animations/Cheap_Spy.glb" data-i18n="features.spy">Spy</button>
 								</div>
 							</div>
 							<div class="feat-anim-group">
-								<span class="feat-anim-group-label">Walk</span>
+								<span class="feat-anim-group-label" data-i18n="features.walk">Walk</span>
 								<div class="feat-anim-pills">
-									<button class="feat-anim-pill" data-src="/animations/Standard_Walk_Cycle_Feminine.glb">Walk (F)</button>
-									<button class="feat-anim-pill" data-src="/animations/Standard_Walk_Crouching.glb">Crouching</button>
-									<button class="feat-anim-pill" data-src="/animations/Standard_Stand_To_Crouch_To_Stand.glb">Crouch+Stand</button>
+									<button class="feat-anim-pill" data-src="/animations/Standard_Walk_Cycle_Feminine.glb" data-i18n="features.walk_f">Walk (F)</button>
+									<button class="feat-anim-pill" data-src="/animations/Standard_Walk_Crouching.glb" data-i18n="features.crouching">Crouching</button>
+									<button class="feat-anim-pill" data-src="/animations/Standard_Stand_To_Crouch_To_Stand.glb" data-i18n="features.crouch_stand">Crouch+Stand</button>
 								</div>
 							</div>
 							<div class="feat-anim-group">
-								<span class="feat-anim-group-label">Mood</span>
+								<span class="feat-anim-group-label" data-i18n="features.mood">Mood</span>
 								<div class="feat-anim-pills">
-									<button class="feat-anim-pill" data-src="/animations/Facepalm.glb">Facepalm</button>
-									<button class="feat-anim-pill" data-src="/animations/Standard_Smoking.glb">Smoking</button>
+									<button class="feat-anim-pill" data-src="/animations/Facepalm.glb" data-i18n="features.facepalm">Facepalm</button>
+									<button class="feat-anim-pill" data-src="/animations/Standard_Smoking.glb" data-i18n="features.smoking">Smoking</button>
 								</div>
 							</div>
 						</div>
 
-						<a href="/forge" class="btn-primary" style="display:inline-flex;align-items:center;gap:6px;margin-top:20px">
+						<a href="/forge" class="btn-primary" style="display:inline-flex;align-items:center;gap:6px;margin-top:20px" data-i18n-html="features.generate_your_own_avatar">
 							Generate your own avatar <span class="btn-arrow">→</span>
 						</a>
-						<a href="/pose" class="btn-ghost" style="display:inline-flex;align-items:center;gap:6px;margin-top:20px;margin-left:10px">
+						<a href="/pose" class="btn-ghost" style="display:inline-flex;align-items:center;gap:6px;margin-top:20px;margin-left:10px" data-i18n-html="features.author_your_own_in_the_animation_studio">
 							Author your own in the Animation Studio <span class="btn-arrow">→</span>
 						</a>
 					</div>
@@ -498,8 +498,8 @@
 				<div class="feat-goal-header scroll-reveal">
 					<span class="feat-goal-num">01</span>
 					<div>
-						<h2 id="goal-core-label" class="feat-goal-title">Core</h2>
-						<p class="feat-goal-desc">
+						<h2 id="goal-core-label" class="feat-goal-title" data-i18n="features.core">Core</h2>
+						<p class="feat-goal-desc" data-i18n="features.make_avatars_build_ai_agents_and_put">
 							Make avatars, build AI agents, and put them anywhere. Free to start, no
 							wallet required.
 						</p>
@@ -526,7 +526,7 @@
 							/>
 						</svg>
 					</span>
-					<p class="feat-tier-banner-text">
+					<p class="feat-tier-banner-text" data-i18n-html="features.no_crypto_needed_everything_in_this_section">
 						<strong>No crypto needed.</strong> Everything in this section works with
 						just an email — no wallet, no tokens, no blockchain. Sign up and start in
 						minutes.
@@ -541,7 +541,7 @@
 								<div class="feat-forge-prompt">
 									<span class="feat-forge-cursor"></span>
 									<span class="feat-forge-text"
-										>a crystal wizard with glowing staff</span
+										 data-i18n="features.a_crystal_wizard_with_glowing_staff">a crystal wizard with glowing staff</span
 									>
 								</div>
 								<div class="feat-forge-arrow">→</div>
@@ -564,23 +564,23 @@
 							</div>
 						</div>
 						<div class="feat-card-body">
-							<span class="feat-card-tag">Create</span>
-							<h3 class="feat-card-title">Text &amp; Image to 3D — Forge</h3>
-							<p class="feat-card-what">
+							<span class="feat-card-tag" data-i18n="features.create">Create</span>
+							<h3 class="feat-card-title" data-i18n="features.text_image_to_3d_forge">Text &amp; Image to 3D — Forge</h3>
+							<p class="feat-card-what" data-i18n="features.describe_a_character_in_plain_english_or">
 								Describe a character in plain English, or upload photos of a real
 								object. Forge generates a textured 3D model on self-hosted
 								engines, with every output stored in the gallery.
 							</p>
-							<p class="feat-card-who">
+							<p class="feat-card-who" data-i18n-html="features.for_builders_who_need_original_3d_characters">
 								<strong>For:</strong> builders who need original 3D characters fast,
 								without Blender.
 							</p>
-							<p class="feat-card-why">
+							<p class="feat-card-why" data-i18n-html="features.why_it_s_better_outputs_are_glb">
 								<strong>Why it's better:</strong> Outputs are GLB-ready — load them
 								straight into the viewer, deploy, or embed without any conversion
 								step.
 							</p>
-							<a href="/forge" class="btn-primary feat-card-cta">
+							<a href="/forge" class="btn-primary feat-card-cta" data-i18n-html="features.open_forge">
 								Open Forge <span class="btn-arrow">→</span>
 							</a>
 						</div>
@@ -607,22 +607,22 @@
 							></model-viewer>
 						</div>
 						<div class="feat-card-body">
-							<span class="feat-card-tag">Create</span>
-							<h3 class="feat-card-title">Selfie to 3D Avatar</h3>
-							<p class="feat-card-what">
+							<span class="feat-card-tag" data-i18n="features.create_2">Create</span>
+							<h3 class="feat-card-title" data-i18n="features.selfie_to_3d_avatar">Selfie to 3D Avatar</h3>
+							<p class="feat-card-what" data-i18n="features.take_one_photo_and_get_back_a">
 								Take one photo and get back a fully rigged 3D avatar in about 60
 								seconds.
 							</p>
-							<p class="feat-card-who">
+							<p class="feat-card-who" data-i18n-html="features.for_creators_who_want_a_personal_avatar">
 								<strong>For:</strong> creators who want a personal avatar without
 								hiring a 3D artist.
 							</p>
-							<p class="feat-card-why">
+							<p class="feat-card-why" data-i18n-html="features.why_it_s_better_the_rig_is">
 								<strong>Why it's better:</strong> The rig is animation-ready — you
 								can load it straight into the viewer and trigger any animation
 								immediately.
 							</p>
-							<a href="/create/selfie" class="btn-primary feat-card-cta">
+							<a href="/create/selfie" class="btn-primary feat-card-cta" data-i18n-html="features.try_selfie_avatar">
 								Try selfie → avatar <span class="btn-arrow">→</span>
 							</a>
 						</div>
@@ -637,41 +637,41 @@
 							<div class="feat-agent-build-visual" aria-hidden="true">
 								<div class="feat-agent-step feat-agent-step--done">
 									<span class="feat-agent-step-num">1</span>
-									<span>3D avatar</span>
+									<span data-i18n="features.3d_avatar">3D avatar</span>
 								</div>
 								<div class="feat-agent-connector" aria-hidden="true"></div>
 								<div class="feat-agent-step feat-agent-step--done">
 									<span class="feat-agent-step-num">2</span>
-									<span>AI brain (any LLM)</span>
+									<span data-i18n="features.ai_brain_any_llm">AI brain (any LLM)</span>
 								</div>
 								<div class="feat-agent-connector" aria-hidden="true"></div>
 								<div class="feat-agent-step feat-agent-step--done">
 									<span class="feat-agent-step-num">3</span>
-									<span>Voice + persona</span>
+									<span data-i18n="features.voice_persona">Voice + persona</span>
 								</div>
 								<div class="feat-agent-connector" aria-hidden="true"></div>
 								<div class="feat-agent-step">
 									<span class="feat-agent-step-num">4</span>
-									<span>Live on your site</span>
+									<span data-i18n="features.live_on_your_site">Live on your site</span>
 								</div>
 							</div>
 						</div>
 						<div class="feat-card-body">
-							<span class="feat-card-tag">Create</span>
-							<h3 class="feat-card-title">Build a Complete Agent</h3>
-							<p class="feat-card-what">
+							<span class="feat-card-tag" data-i18n="features.create_3">Create</span>
+							<h3 class="feat-card-title" data-i18n="features.build_a_complete_agent">Build a Complete Agent</h3>
+							<p class="feat-card-what" data-i18n="features.combine_a_3d_avatar_with_an_llm">
 								Combine a 3D avatar with an LLM brain, voice, and persona into a
 								single agent — ready to chat, answer questions, and take actions.
 							</p>
-							<p class="feat-card-who">
+							<p class="feat-card-who" data-i18n-html="features.for_developers_and_creators_who_want_a">
 								<strong>For:</strong> developers and creators who want a
 								conversational AI with a real visual presence.
 							</p>
-							<p class="feat-card-why">
+							<p class="feat-card-why" data-i18n-html="features.why_it_s_better_any_llm_works">
 								<strong>Why it's better:</strong> Any LLM works via MCP or A2A —
 								Claude, GPT, Gemini, or your own. No vendor lock-in.
 							</p>
-							<a href="/create" class="btn-primary feat-card-cta">
+							<a href="/create" class="btn-primary feat-card-cta" data-i18n-html="features.start_building">
 								Start building <span class="btn-arrow">→</span>
 							</a>
 						</div>
@@ -688,8 +688,8 @@
 											<span class="feat-code-dot"></span>
 											<span class="feat-code-dot"></span>
 											<span class="feat-code-dot"></span>
-											<span class="feat-code-label">your-site.html</span>
-											<button class="feat-copy-btn" id="embedCopyBtn" aria-label="Copy snippet" title="Copy to clipboard">Copy</button>
+											<span class="feat-code-label" data-i18n="features.your_site_html">your-site.html</span>
+											<button class="feat-copy-btn" id="embedCopyBtn" aria-label="Copy snippet" title="Copy to clipboard" data-i18n="features.copy" data-i18n-attr="aria-label:features.copy_snippet_arialabel;title:features.copy_to_clipboard_title">Copy</button>
 										</div>
 										<pre class="feat-code-body" id="embedSnippet"><code><span class="feat-c">&lt;!-- 1. load --&gt;</span>
 <span class="feat-tag">&lt;script</span> <span class="feat-attr">src</span>=<span class="feat-val">"https://three.ws/embed.js"</span><span class="feat-tag">&gt;&lt;/script&gt;</span>
@@ -708,11 +708,11 @@
 											<span class="feat-code-dot"></span>
 											<span class="feat-code-dot"></span>
 											<span class="feat-code-dot"></span>
-											<span class="feat-embed-widget-url">your-site.com</span>
+											<span class="feat-embed-widget-url" data-i18n="features.your_site_com">your-site.com</span>
 										</div>
 										<div class="feat-embed-widget-body">
 											<div class="feat-embed-widget-bubble">
-												<span class="feat-embed-widget-name">3D Agent</span>
+												<span class="feat-embed-widget-name" data-i18n="features.3d_agent">3D Agent</span>
 												<model-viewer
 													src="/animations/idle_female_jan25.glb"
 													auto-rotate
@@ -741,21 +741,21 @@
 							</div>
 						</div>
 						<div class="feat-card-body">
-							<span class="feat-card-tag">Embed</span>
-							<h3 class="feat-card-title">Widget Studio</h3>
-							<p class="feat-card-what">
+							<span class="feat-card-tag" data-i18n="features.embed">Embed</span>
+							<h3 class="feat-card-title" data-i18n="features.widget_studio">Widget Studio</h3>
+							<p class="feat-card-what" data-i18n="features.pick_an_avatar_configure_size_and_style">
 								Pick an avatar, configure size and style, then copy a single script
 								tag. Paste it into Notion, Ghost, WordPress, Framer — anywhere.
 							</p>
-							<p class="feat-card-who">
+							<p class="feat-card-who" data-i18n-html="features.for_site_owners_who_want_a_3d">
 								<strong>For:</strong> site owners who want a 3D AI assistant on
 								their page without touching backend code.
 							</p>
-							<p class="feat-card-why">
+							<p class="feat-card-why" data-i18n-html="features.why_it_s_better_no_sdk_required">
 								<strong>Why it's better:</strong> No SDK required on the consumer
 								side — one tag, any page, no build step.
 							</p>
-							<a href="/embed.html" class="btn-primary feat-card-cta">
+							<a href="/embed.html" class="btn-primary feat-card-cta" data-i18n-html="features.open_embed_editor">
 								Open Embed Editor <span class="btn-arrow">→</span>
 							</a>
 						</div>
@@ -815,28 +815,28 @@
 											stroke-linecap="round"
 										/>
 									</svg>
-									<span>AR mode</span>
+									<span data-i18n="features.ar_mode">AR mode</span>
 								</div>
 							</div>
 						</div>
 						<div class="feat-card-body">
-							<span class="feat-card-tag">Play</span>
-							<h3 class="feat-card-title">Walk + AR</h3>
-							<p class="feat-card-what">
+							<span class="feat-card-tag" data-i18n="features.play">Play</span>
+							<h3 class="feat-card-title" data-i18n="features.walk_ar">Walk + AR</h3>
+							<p class="feat-card-what" data-i18n="features.drive_your_avatar_around_a_3d_scene">
 								Drive your avatar around a 3D scene with WASD or a touch joystick.
 								Flip to back-camera mode and your avatar walks through your real
 								environment.
 							</p>
-							<p class="feat-card-who">
+							<p class="feat-card-who" data-i18n-html="features.for_anyone_who_wants_to_experience_their">
 								<strong>For:</strong> anyone who wants to experience their avatar in
 								the real world, or demo an agent at an event.
 							</p>
-							<p class="feat-card-why">
+							<p class="feat-card-why" data-i18n-html="features.why_it_s_better_no_app_install">
 								<strong>Why it's better:</strong> No app install — it runs in the
 								browser with real physics (Rapier) and real terrain, not a flat
 								plane.
 							</p>
-							<a href="/temporary" class="btn-primary feat-card-cta">
+							<a href="/temporary" class="btn-primary feat-card-cta" data-i18n-html="features.start_walking">
 								Start walking <span class="btn-arrow">→</span>
 							</a>
 						</div>
@@ -865,24 +865,24 @@
 							</div>
 						</div>
 						<div class="feat-card-body">
-							<span class="feat-card-tag">AR</span>
-							<h3 class="feat-card-title">View in AR</h3>
-							<p class="feat-card-what">
+							<span class="feat-card-tag" data-i18n="features.ar">AR</span>
+							<h3 class="feat-card-title" data-i18n="features.view_in_ar">View in AR</h3>
+							<p class="feat-card-what" data-i18n="features.every_avatar_and_forge_model_has_a">
 								Every avatar and Forge model has a View in AR button. On mobile it
 								anchors the model to real surfaces through the camera. On desktop a
 								QR code lets you scan and place in one tap. No app needed.
 							</p>
-							<p class="feat-card-who">
+							<p class="feat-card-who" data-i18n-html="features.for_anyone_who_wants_to_see_their">
 								<strong>For:</strong> anyone who wants to see their 3D agent at
 								real-world scale — on their desk, floor, or shelf.
 							</p>
-							<p class="feat-card-why">
+							<p class="feat-card-why" data-i18n-html="features.why_it_s_better_three_ar_methods">
 								<strong>Why it's better:</strong> Three AR methods in one button
 								— iOS Quick Look, Android Scene Viewer, and WebXR. The right one
 								fires automatically. The agent stays live in WebXR, so conversation
 								and animations work in AR.
 							</p>
-							<a href="/features/ar" class="btn-primary feat-card-cta">
+							<a href="/features/ar" class="btn-primary feat-card-cta" data-i18n-html="features.ar_feature_details">
 								AR feature details <span class="btn-arrow">→</span>
 							</a>
 						</div>
@@ -895,15 +895,15 @@
 								<div class="feat-dash-tiles">
 									<div class="feat-dash-tile">
 										<span class="feat-dash-tile-num">4</span
-										><span class="feat-dash-tile-label">Agents</span>
+										><span class="feat-dash-tile-label" data-i18n="features.agents">Agents</span>
 									</div>
 									<div class="feat-dash-tile">
 										<span class="feat-dash-tile-num">128</span
-										><span class="feat-dash-tile-label">Chats today</span>
+										><span class="feat-dash-tile-label" data-i18n="features.chats_today">Chats today</span>
 									</div>
 									<div class="feat-dash-tile">
 										<span class="feat-dash-tile-num">12</span
-										><span class="feat-dash-tile-label">Embeds live</span>
+										><span class="feat-dash-tile-label" data-i18n="features.embeds_live">Embeds live</span>
 									</div>
 								</div>
 								<div class="feat-dash-bars">
@@ -918,23 +918,23 @@
 							</div>
 						</div>
 						<div class="feat-card-body">
-							<span class="feat-card-tag">Dashboard</span>
-							<h3 class="feat-card-title">Your Dashboard</h3>
-							<p class="feat-card-what">
+							<span class="feat-card-tag" data-i18n="features.dashboard">Dashboard</span>
+							<h3 class="feat-card-title" data-i18n="features.your_dashboard">Your Dashboard</h3>
+							<p class="feat-card-what" data-i18n="features.one_home_for_everything_you_have_made">
 								One home for everything you have made — edit each agent's persona,
 								swap its animations, copy embed codes, and watch chat activity roll
 								in as it happens.
 							</p>
-							<p class="feat-card-who">
+							<p class="feat-card-who" data-i18n-html="features.for_anyone_running_one_or_more_agents">
 								<strong>For:</strong> anyone running one or more agents who wants a
 								single control panel instead of a pile of scattered links.
 							</p>
-							<p class="feat-card-why">
+							<p class="feat-card-why" data-i18n-html="features.why_it_s_better_every_avatar_and">
 								<strong>Why it's better:</strong> Every avatar and agent you create
 								shows up here automatically — nothing to wire up, one login for all
 								of it.
 							</p>
-							<a href="/dashboard" class="btn-primary feat-card-cta">
+							<a href="/dashboard" class="btn-primary feat-card-cta" data-i18n-html="features.open_your_dashboard">
 								Open your dashboard <span class="btn-arrow">→</span>
 							</a>
 						</div>
@@ -951,10 +951,10 @@
 				<div class="feat-goal-header scroll-reveal">
 					<span class="feat-goal-num">02</span>
 					<div>
-						<h2 id="goal-optional-label" class="feat-goal-title">
+						<h2 id="goal-optional-label" class="feat-goal-title" data-i18n="features.optional_advanced">
 							Optional &middot; Advanced
 						</h2>
-						<p class="feat-goal-desc">
+						<p class="feat-goal-desc" data-i18n="features.put_agents_on_chain_charge_for_what">
 							Put agents on-chain, charge for what they do, and launch a token.
 							Powerful, but never required.
 						</p>
@@ -980,7 +980,7 @@
 							/>
 						</svg>
 					</span>
-					<p class="feat-tier-banner-text">
+					<p class="feat-tier-banner-text" data-i18n-html="features.these_features_use_crypto_to_switch_them">
 						<strong>These features use crypto.</strong> To switch them on you'll need a
 						<span class="tws-tt" data-term="wallet" tabindex="0">wallet</span> and a
 						small amount of
@@ -1019,47 +1019,47 @@
 											stroke-linejoin="round"
 										/>
 									</svg>
-									<span class="feat-onchain-label">Verified on Solana</span>
+									<span class="feat-onchain-label" data-i18n="features.verified_on_solana">Verified on Solana</span>
 								</div>
 								<div class="feat-onchain-meta">
 									<div class="feat-onchain-row">
-										<span class="feat-onchain-key">Chain</span>
-										<span class="feat-onchain-val">Solana Mainnet</span>
+										<span class="feat-onchain-key" data-i18n="features.chain">Chain</span>
+										<span class="feat-onchain-val" data-i18n="features.solana_mainnet">Solana Mainnet</span>
 									</div>
 									<div class="feat-onchain-row">
-										<span class="feat-onchain-key">Standard</span>
-										<span class="feat-onchain-val">Metaplex Core</span>
+										<span class="feat-onchain-key" data-i18n="features.standard">Standard</span>
+										<span class="feat-onchain-val" data-i18n="features.metaplex_core">Metaplex Core</span>
 									</div>
 									<div class="feat-onchain-row">
-										<span class="feat-onchain-key">Fee</span>
+										<span class="feat-onchain-key" data-i18n="features.fee">Fee</span>
 										<span class="feat-onchain-val">~$0.01</span>
 									</div>
 									<div class="feat-onchain-row">
-										<span class="feat-onchain-key">Discoverable by</span>
-										<span class="feat-onchain-val">A2A · MCP clients</span>
+										<span class="feat-onchain-key" data-i18n="features.discoverable_by">Discoverable by</span>
+										<span class="feat-onchain-val" data-i18n="features.a2a_mcp_clients">A2A · MCP clients</span>
 									</div>
 								</div>
 							</div>
 						</div>
 						<div class="feat-card-body">
-							<span class="feat-card-tag feat-card-tag--mint">On-Chain Identity</span>
-							<span class="feat-req">Needs: a wallet · ~$0.01 network fee</span>
-							<h3 class="feat-card-title">Deploy to the Blockchain</h3>
-							<p class="feat-card-what">
+							<span class="feat-card-tag feat-card-tag--mint" data-i18n="features.on_chain_identity">On-Chain Identity</span>
+							<span class="feat-req" data-i18n="features.needs_a_wallet_0_01_network_fee">Needs: a wallet · ~$0.01 network fee</span>
+							<h3 class="feat-card-title" data-i18n="features.deploy_to_the_blockchain">Deploy to the Blockchain</h3>
+							<p class="feat-card-what" data-i18n="features.one_transaction_on_solana_gives_your_agent">
 								One transaction on Solana gives your agent a permanent, verifiable
 								identity — a Metaplex Core asset that any A2A or MCP client can
 								discover and trust.
 							</p>
-							<p class="feat-card-who">
+							<p class="feat-card-who" data-i18n-html="features.for_builders_who_want_their_agent_to">
 								<strong>For:</strong> builders who want their agent to be portable,
 								transferable, and findable by other AI systems.
 							</p>
-							<p class="feat-card-why">
+							<p class="feat-card-why" data-i18n-html="features.why_it_s_better_sub_cent_fees">
 								<strong>Why it's better:</strong> Sub-cent fees. You hold the keys.
 								The agent card is a public JSON URL — nothing is locked to this
 								site.
 							</p>
-							<a href="/deploy" class="btn-primary feat-card-cta">
+							<a href="/deploy" class="btn-primary feat-card-cta" data-i18n-html="features.deploy_your_agent">
 								Deploy your agent <span class="btn-arrow">→</span>
 							</a>
 						</div>
@@ -1071,12 +1071,12 @@
 							<div class="feat-launch-visual" aria-hidden="true">
 								<div class="feat-launch-token">
 									<span class="feat-launch-token-avatar"></span>
-									<span class="feat-launch-token-meta">
+									<span class="feat-launch-token-meta" data-i18n-html="features.your_token_ticker">
 										<span class="feat-launch-token-name">Your token</span>
 										<span class="feat-launch-token-ticker">$TICKER</span>
 									</span>
 									<span class="feat-launch-live"
-										><span class="feat-launch-live-dot"></span>Live</span
+										 data-i18n-html="features.live"><span class="feat-launch-live-dot"></span>Live</span
 									>
 								</div>
 								<svg
@@ -1096,24 +1096,24 @@
 							</div>
 						</div>
 						<div class="feat-card-body">
-							<span class="feat-card-tag feat-card-tag--mint">Token Launch</span>
-							<span class="feat-req">Needs: a wallet · SOL</span>
-							<h3 class="feat-card-title">Launch a Token</h3>
-							<p class="feat-card-what">
+							<span class="feat-card-tag feat-card-tag--mint" data-i18n="features.token_launch">Token Launch</span>
+							<span class="feat-req" data-i18n="features.needs_a_wallet_sol">Needs: a wallet · SOL</span>
+							<h3 class="feat-card-title" data-i18n="features.launch_a_token">Launch a Token</h3>
+							<p class="feat-card-what" data-i18n="features.give_your_agent_a_community_token_in">
 								Give your agent a community token in a couple of clicks — set a name
 								and image, and it goes live on a pump.fun bonding-curve market that
 								anyone can trade.
 							</p>
-							<p class="feat-card-who">
+							<p class="feat-card-who" data-i18n-html="features.for_creators_who_want_a_community_and">
 								<strong>For:</strong> creators who want a community and a live
 								market around their agent.
 							</p>
-							<p class="feat-card-why">
+							<p class="feat-card-why" data-i18n-html="features.why_it_s_better_it_s_a">
 								<strong>Why it's better:</strong> It's a real launch with live
 								trading from the first second — you supply the details, we handle
 								the on-chain mechanics.
 							</p>
-							<a href="/launchpad" class="btn-primary feat-card-cta">
+							<a href="/launchpad" class="btn-primary feat-card-cta" data-i18n-html="features.open_the_launchpad">
 								Open the launchpad <span class="btn-arrow">→</span>
 							</a>
 						</div>
@@ -1127,51 +1127,51 @@
 									<div class="feat-mkt-listing-icon">🧠</div>
 									<div class="feat-mkt-listing-info">
 										<span class="feat-mkt-listing-name"
-											>Research Assistant</span
+											 data-i18n="features.research_assistant">Research Assistant</span
 										>
-										<span class="feat-mkt-listing-price">$0.05 / call</span>
+										<span class="feat-mkt-listing-price" data-i18n="features.0_05_call">$0.05 / call</span>
 									</div>
-									<span class="feat-mkt-listing-badge">Listed</span>
+									<span class="feat-mkt-listing-badge" data-i18n="features.listed">Listed</span>
 								</div>
 								<div class="feat-mkt-listing">
 									<div class="feat-mkt-listing-icon">🗣️</div>
 									<div class="feat-mkt-listing-info">
-										<span class="feat-mkt-listing-name">Voice Narrator</span>
-										<span class="feat-mkt-listing-price">$0.02 / call</span>
+										<span class="feat-mkt-listing-name" data-i18n="features.voice_narrator">Voice Narrator</span>
+										<span class="feat-mkt-listing-price" data-i18n="features.0_02_call">$0.02 / call</span>
 									</div>
-									<span class="feat-mkt-listing-badge">Listed</span>
+									<span class="feat-mkt-listing-badge" data-i18n="features.listed_2">Listed</span>
 								</div>
 								<div class="feat-mkt-listing">
 									<div class="feat-mkt-listing-icon">📊</div>
 									<div class="feat-mkt-listing-info">
-										<span class="feat-mkt-listing-name">Market Analyst</span>
-										<span class="feat-mkt-listing-price">$0.10 / call</span>
+										<span class="feat-mkt-listing-name" data-i18n="features.market_analyst">Market Analyst</span>
+										<span class="feat-mkt-listing-price" data-i18n="features.0_10_call">$0.10 / call</span>
 									</div>
 									<span class="feat-mkt-listing-badge feat-mkt-listing-badge--new"
-										>New</span
+										 data-i18n="features.new">New</span
 									>
 								</div>
 							</div>
 						</div>
 						<div class="feat-card-body">
-							<span class="feat-card-tag">Earn</span>
-							<span class="feat-req">Earns: USDC · pay-per-call</span>
-							<h3 class="feat-card-title">Marketplace</h3>
-							<p class="feat-card-what">
+							<span class="feat-card-tag" data-i18n="features.earn">Earn</span>
+							<span class="feat-req" data-i18n="features.earns_usdc_pay_per_call">Earns: USDC · pay-per-call</span>
+							<h3 class="feat-card-title" data-i18n="features.marketplace">Marketplace</h3>
+							<p class="feat-card-what" data-i18n="features.list_your_agent_s_skills_for_others">
 								List your agent's skills for others to buy. Each call settles in
 								USDC (a $1 digital dollar) via pay-per-call — payment goes straight
 								to your wallet.
 							</p>
-							<p class="feat-card-who">
+							<p class="feat-card-who" data-i18n-html="features.for_creators_who_have_built_something_useful">
 								<strong>For:</strong> creators who have built something useful and
 								want to charge for it without building billing infrastructure.
 							</p>
-							<p class="feat-card-why">
+							<p class="feat-card-why" data-i18n-html="features.why_it_s_better_pay_per_call">
 								<strong>Why it's better:</strong> Pay-per-call means no
 								subscriptions to manage — buyers pay exactly what they use, and you
 								get paid per call.
 							</p>
-							<a href="/marketplace" class="btn-primary feat-card-cta">
+							<a href="/marketplace" class="btn-primary feat-card-cta" data-i18n-html="features.browse_the_marketplace">
 								Browse the marketplace <span class="btn-arrow">→</span>
 							</a>
 						</div>
@@ -1185,7 +1185,7 @@
 						<div class="feat-card-preview feat-card-preview--exchange">
 							<div class="feat-exchange-visual" aria-hidden="true">
 								<div class="feat-exchange-agent feat-exchange-agent--a">
-									<span class="feat-exchange-name">ORACLE</span>
+									<span class="feat-exchange-name" data-i18n="features.oracle">ORACLE</span>
 								</div>
 								<div class="feat-exchange-tx">
 									<div class="feat-exchange-tx-line"></div>
@@ -1193,30 +1193,30 @@
 									<div class="feat-exchange-tx-arrow">→</div>
 								</div>
 								<div class="feat-exchange-agent feat-exchange-agent--b">
-									<span class="feat-exchange-name">NOVA</span>
+									<span class="feat-exchange-name" data-i18n="features.nova">NOVA</span>
 								</div>
 							</div>
 						</div>
 						<div class="feat-card-body">
-							<span class="feat-card-tag">Earn</span>
-							<span class="feat-req">Uses: USDC · x402 micropayments</span>
-							<h3 class="feat-card-title">Agent Exchange</h3>
-							<p class="feat-card-what">
+							<span class="feat-card-tag" data-i18n="features.earn_2">Earn</span>
+							<span class="feat-req" data-i18n="features.uses_usdc_x402_micropayments">Uses: USDC · x402 micropayments</span>
+							<h3 class="feat-card-title" data-i18n="features.agent_exchange">Agent Exchange</h3>
+							<p class="feat-card-what" data-i18n="features.watch_two_ai_agents_oracle_and_nova">
 								Watch two AI agents — ORACLE and NOVA — negotiate, invoke each
 								other's skills, and settle payments on-chain automatically. No
 								humans in the loop.
 							</p>
-							<p class="feat-card-who">
+							<p class="feat-card-who" data-i18n-html="features.for_builders_curious_about_autonomous_agent">
 								<strong>For:</strong> builders curious about autonomous agent
 								economies, or anyone who wants to offer a service that other AI
 								systems can pay for.
 							</p>
-							<p class="feat-card-why">
+							<p class="feat-card-why" data-i18n-html="features.why_it_s_better_real_on_chain">
 								<strong>Why it's better:</strong> Real on-chain settlement via
 								pay-per-call (micropayments) — every transaction is verifiable, not
 								simulated.
 							</p>
-							<a href="/agent-exchange" class="btn-primary feat-card-cta">
+							<a href="/agent-exchange" class="btn-primary feat-card-cta" data-i18n-html="features.see_agents_pay_agents">
 								See agents pay agents <span class="btn-arrow">→</span>
 							</a>
 						</div>
@@ -1245,31 +1245,31 @@
 								aria-label="3D avatar walking through a coin world"
 							></model-viewer>
 							<div class="feat-play-hud" aria-hidden="true">
-								<span class="feat-play-hud-item feat-play-hud-live">
+								<span class="feat-play-hud-item feat-play-hud-live" data-i18n-html="features.live_2">
 									<span class="feat-play-live-dot"></span>Live
 								</span>
-								<span class="feat-play-hud-item">$THREE</span>
+								<span class="feat-play-hud-item" data-i18n="features.three">$THREE</span>
 							</div>
 						</div>
 						<div class="feat-card-body">
-							<span class="feat-card-tag feat-card-tag--mint">On-Chain World</span>
-							<span class="feat-req">Reads live market prices on-chain</span>
-							<h3 class="feat-card-title">Coin Worlds</h3>
-							<p class="feat-card-what">
+							<span class="feat-card-tag feat-card-tag--mint" data-i18n="features.on_chain_world">On-Chain World</span>
+							<span class="feat-req" data-i18n="features.reads_live_market_prices_on_chain">Reads live market prices on-chain</span>
+							<h3 class="feat-card-title" data-i18n="features.coin_worlds">Coin Worlds</h3>
+							<p class="feat-card-what" data-i18n="features.walk_your_avatar_through_3d_worlds_tied">
 								Walk your avatar through 3D worlds tied to live crypto prices. The
 								terrain shifts with the market — each world is a different token's
 								landscape.
 							</p>
-							<p class="feat-card-who">
+							<p class="feat-card-who" data-i18n-html="features.for_crypto_enthusiasts_who_want_a_more">
 								<strong>For:</strong> crypto enthusiasts who want a more visceral
 								way to follow the market.
 							</p>
-							<p class="feat-card-why">
+							<p class="feat-card-why" data-i18n-html="features.why_it_s_better_agents_in_the">
 								<strong>Why it's better:</strong> Agents in the world pay each other
 								on-chain in real time — you can watch live x402 micropayment
 								transactions happen as you walk.
 							</p>
-							<a href="/play" class="btn-primary feat-card-cta">
+							<a href="/play" class="btn-primary feat-card-cta" data-i18n-html="features.enter_the_world">
 								Enter the world <span class="btn-arrow">→</span>
 							</a>
 						</div>
@@ -1309,38 +1309,38 @@
 										</text>
 									</svg>
 									<div class="feat-ibm-badge-text">
-										<span class="feat-ibm-badge-title">watsonx.ai</span>
-										<span class="feat-ibm-badge-sub">IBM Granite</span>
+										<span class="feat-ibm-badge-title" data-i18n="features.watsonx_ai">watsonx.ai</span>
+										<span class="feat-ibm-badge-sub" data-i18n="features.ibm_granite">IBM Granite</span>
 									</div>
 								</div>
 								<div class="feat-ibm-pills">
-									<span class="feat-ibm-pill">Galaxy · 3D agent map</span>
-									<span class="feat-ibm-pill">Oracle · TimeSeries</span>
-									<span class="feat-ibm-pill">Trust Layer · governance</span>
-									<span class="feat-ibm-pill">Proof · on-chain notary</span>
+									<span class="feat-ibm-pill" data-i18n="features.galaxy_3d_agent_map">Galaxy · 3D agent map</span>
+									<span class="feat-ibm-pill" data-i18n="features.oracle_timeseries">Oracle · TimeSeries</span>
+									<span class="feat-ibm-pill" data-i18n="features.trust_layer_governance">Trust Layer · governance</span>
+									<span class="feat-ibm-pill" data-i18n="features.proof_on_chain_notary">Proof · on-chain notary</span>
 								</div>
 							</div>
 						</div>
 						<div class="feat-card-body">
-							<span class="feat-card-tag feat-card-tag--ibm">Enterprise AI</span>
-							<span class="feat-req">Enterprise · advanced demo</span>
-							<h3 class="feat-card-title">IBM Granite on watsonx.ai</h3>
-							<p class="feat-card-what">
+							<span class="feat-card-tag feat-card-tag--ibm" data-i18n="features.enterprise_ai">Enterprise AI</span>
+							<span class="feat-req" data-i18n="features.enterprise_advanced_demo">Enterprise · advanced demo</span>
+							<h3 class="feat-card-title" data-i18n="features.ibm_granite_on_watsonx_ai">IBM Granite on watsonx.ai</h3>
+							<p class="feat-card-what" data-i18n="features.a_suite_of_demos_showing_ibm_granite">
 								A suite of demos showing IBM Granite models — time-series
 								forecasting, semantic agent mapping, AI governance, and on-chain
 								proof of AI decisions — all rendered in 3D.
 							</p>
-							<p class="feat-card-who">
+							<p class="feat-card-who" data-i18n-html="features.for_enterprise_teams_evaluating_ibm_watsonx">
 								<strong>For:</strong> enterprise teams evaluating IBM watsonx, or
 								developers who want to see what Granite models can do inside a live
 								3D environment.
 							</p>
-							<p class="feat-card-why">
+							<p class="feat-card-why" data-i18n-html="features.why_it_s_better_these_are_real">
 								<strong>Why it's better:</strong> These are real Granite API calls —
 								not mocked — with every decision anchored to a Solana transaction as
 								an immutable record.
 							</p>
-							<a href="/galaxy" class="btn-primary feat-card-cta">
+							<a href="/galaxy" class="btn-primary feat-card-cta" data-i18n-html="features.explore_the_ibm_suite">
 								Explore the IBM suite <span class="btn-arrow">→</span>
 							</a>
 						</div>
@@ -1352,35 +1352,35 @@
 			<section class="feat-dev-section scroll-reveal">
 				<div class="feat-dev-inner">
 					<div class="feat-dev-text">
-						<p class="feat-dev-eyebrow">For developers</p>
-						<h2 class="feat-dev-title">One tag. Zero dependencies.</h2>
-						<p class="feat-dev-sub">
+						<p class="feat-dev-eyebrow" data-i18n="features.for_developers">For developers</p>
+						<h2 class="feat-dev-title" data-i18n="features.one_tag_zero_dependencies">One tag. Zero dependencies.</h2>
+						<p class="feat-dev-sub" data-i18n-html="features.the_web_component_lazy_loads_renders_on">
 							The <code>&lt;agent-3d&gt;</code> web component lazy-loads, renders on
 							any device, and connects to your existing AI stack via MCP or A2A. No
 							framework. No build step.
 						</p>
 						<div class="feat-dev-links">
-							<a href="/docs" class="btn-ghost">Read the docs →</a>
+							<a href="/docs" class="btn-ghost" data-i18n="features.read_the_docs">Read the docs →</a>
 							<a
 								href="https://github.com/nirholas/three.ws"
 								target="_blank"
 								rel="noopener noreferrer"
 								class="btn-ghost"
-								>GitHub →</a
+								 data-i18n="features.github">GitHub →</a
 							>
 						</div>
 					</div>
 					<div class="feat-dev-standards">
 						<div class="feat-standard-row">
-							<span class="feat-standard-pill">glTF 2.0</span>
-							<span class="feat-standard-pill">Solana</span>
-							<span class="feat-standard-pill">Metaplex Core</span>
+							<span class="feat-standard-pill" data-i18n="features.gltf_2_0">glTF 2.0</span>
+							<span class="feat-standard-pill" data-i18n="features.solana">Solana</span>
+							<span class="feat-standard-pill" data-i18n="features.metaplex_core_2">Metaplex Core</span>
 						</div>
 						<div class="feat-standard-row">
-							<span class="feat-standard-pill">A2A</span>
-							<span class="feat-standard-pill">MCP</span>
-							<span class="feat-standard-pill">x402</span>
-							<span class="feat-standard-pill">WebXR</span>
+							<span class="feat-standard-pill" data-i18n="features.a2a">A2A</span>
+							<span class="feat-standard-pill" data-i18n="features.mcp">MCP</span>
+							<span class="feat-standard-pill" data-i18n="features.x402">x402</span>
+							<span class="feat-standard-pill" data-i18n="features.webxr">WebXR</span>
 						</div>
 					</div>
 				</div>
@@ -1389,13 +1389,13 @@
 			<!-- ── Final CTA ── -->
 			<section class="feat-final-cta scroll-reveal">
 				<div class="feat-final-cta-inner">
-					<h2>Pick a goal. Start in five minutes.</h2>
-					<p>Free to start. No credit card required.</p>
+					<h2 data-i18n="features.pick_a_goal_start_in_five_minutes">Pick a goal. Start in five minutes.</h2>
+					<p data-i18n="features.free_to_start_no_credit_card_required">Free to start. No credit card required.</p>
 					<div class="feat-final-cta-row">
-						<a href="/start" class="btn-primary">
+						<a href="/start" class="btn-primary" data-i18n-html="features.get_started_free">
 							Get started — free <span class="btn-arrow">→</span>
 						</a>
-						<a href="/agents" class="btn-ghost">Browse agents</a>
+						<a href="/agents" class="btn-ghost" data-i18n="features.browse_agents">Browse agents</a>
 					</div>
 				</div>
 			</section>
@@ -1425,8 +1425,8 @@
 
 				<div class="h-footer-cta">
 					<div class="h-footer-newsletter">
-						<h3>Stay in the loop</h3>
-						<p>Get updates on new features, agent tooling, and protocol changes.</p>
+						<h3 data-i18n="features.stay_in_the_loop">Stay in the loop</h3>
+						<p data-i18n="features.get_updates_on_new_features_agent_tooling">Get updates on new features, agent tooling, and protocol changes.</p>
 						<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
 							<input
 								type="email"
@@ -1441,7 +1441,7 @@
 								type="submit"
 								class="h-footer-newsletter-btn"
 								aria-label="Subscribe"
-							>
+							 data-i18n-attr="aria-label:features.subscribe_arialabel">
 								<svg viewBox="0 0 16 16" aria-hidden="true">
 									<path
 										fill="none"
@@ -1461,8 +1461,8 @@
 						></p>
 					</div>
 					<div class="h-footer-community">
-						<h3>Join the community</h3>
-						<p>Follow along for builds, demos, and conversations with the team.</p>
+						<h3 data-i18n="features.join_the_community">Join the community</h3>
+						<p data-i18n="features.follow_along_for_builds_demos_and_conversati">Follow along for builds, demos, and conversations with the team.</p>
 						<a
 							class="h-footer-community-btn"
 							href="https://x.com/trythreews"
@@ -1484,9 +1484,9 @@
 						<div class="h-footer-brand">
 							<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
 							<span class="wordmark-dot" aria-hidden="true"></span>
-							<span>three.ws</span>
+							<span data-i18n="features.three_ws">three.ws</span>
 						</div>
-						<p class="h-footer-tagline">Give your AI a body.</p>
+						<p class="h-footer-tagline" data-i18n="features.give_your_ai_a_body">Give your AI a body.</p>
 						<div class="h-footer-socials">
 							<a
 								class="h-footer-social"
@@ -1494,7 +1494,7 @@
 								target="_blank"
 								rel="noopener noreferrer"
 								aria-label="three.ws on X"
-							>
+							 data-i18n-attr="aria-label:features.three_ws_on_x_arialabel">
 								<svg viewBox="0 0 24 24" aria-hidden="true">
 									<path
 										fill="currentColor"
@@ -1508,7 +1508,7 @@
 								target="_blank"
 								rel="noopener noreferrer"
 								aria-label="three.ws on GitHub"
-							>
+							 data-i18n-attr="aria-label:features.three_ws_on_github_arialabel">
 								<svg viewBox="0 0 16 16" aria-hidden="true">
 									<path
 										fill="currentColor"
@@ -1520,48 +1520,48 @@
 					</div>
 					<nav class="h-footer-links" aria-label="Footer">
 						<div class="h-footer-link-col">
-							<h4 class="h-footer-link-heading">Product</h4>
-							<a href="/features">Features</a>
-							<a href="/create">Create</a>
-							<a href="/marketplace">Marketplace</a>
-							<a href="/studio">Studio</a>
-							<a href="/start">Get Started</a>
+							<h4 class="h-footer-link-heading" data-i18n="features.product">Product</h4>
+							<a href="/features" data-i18n="features.features">Features</a>
+							<a href="/create" data-i18n="features.create_4">Create</a>
+							<a href="/marketplace" data-i18n="features.marketplace_2">Marketplace</a>
+							<a href="/studio" data-i18n="features.studio">Studio</a>
+							<a href="/start" data-i18n="features.get_started">Get Started</a>
 						</div>
 						<div class="h-footer-link-col">
-							<h4 class="h-footer-link-heading">Developers</h4>
-							<a href="/docs">Docs</a>
+							<h4 class="h-footer-link-heading" data-i18n="features.developers">Developers</h4>
+							<a href="/docs" data-i18n="features.docs">Docs</a>
 							<a
 								href="https://github.com/nirholas/three.ws"
 								target="_blank"
 								rel="noopener noreferrer"
-								>GitHub</a
+								 data-i18n="features.github_2">GitHub</a
 							>
-							<a href="/bazaar">Paid API Bazaar</a>
+							<a href="/bazaar" data-i18n="features.paid_api_bazaar">Paid API Bazaar</a>
 							<a
 								href="https://developers.metaplex.com/core"
 								target="_blank"
 								rel="noopener noreferrer"
-								>Metaplex Core</a
+								 data-i18n="features.metaplex_core_3">Metaplex Core</a
 							>
 						</div>
 						<div class="h-footer-link-col">
-							<h4 class="h-footer-link-heading">Company</h4>
-							<a href="/blog">Blog</a>
-							<a href="/community">Community</a>
-							<a href="/galaxy">IBM · watsonx.ai</a>
-							<a href="/dashboard">Dashboard</a>
+							<h4 class="h-footer-link-heading" data-i18n="features.company">Company</h4>
+							<a href="/blog" data-i18n="features.blog">Blog</a>
+							<a href="/community" data-i18n="features.community">Community</a>
+							<a href="/galaxy" data-i18n="features.ibm_watsonx_ai">IBM · watsonx.ai</a>
+							<a href="/dashboard" data-i18n="features.dashboard_2">Dashboard</a>
 						</div>
 						<div class="h-footer-link-col">
-							<h4 class="h-footer-link-heading">Legal</h4>
-							<a href="/legal/privacy">Privacy</a>
-							<a href="/legal/tos">Terms</a>
+							<h4 class="h-footer-link-heading" data-i18n="features.legal">Legal</h4>
+							<a href="/legal/privacy" data-i18n="features.privacy">Privacy</a>
+							<a href="/legal/tos" data-i18n="features.terms">Terms</a>
 						</div>
 					</nav>
 				</div>
 				<div class="h-footer-bottom">
-					<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+					<p class="h-footer-legal" data-i18n="features.2026_three_ws_all_rights_reserved">© 2026 three.ws — All rights reserved.</p>
 					<div class="h-footer-badges">
-						<a href="/pay" class="h-footer-badge" aria-label="Built with x402 payments">
+						<a href="/pay" class="h-footer-badge" aria-label="Built with x402 payments" data-i18n-attr="aria-label:features.built_with_x402_payments_arialabel">
 							<svg viewBox="0 0 16 16" aria-hidden="true">
 								<circle
 									cx="8"
@@ -1582,14 +1582,14 @@
 							</svg>
 							Built with x402
 						</a>
-						<span class="h-footer-badge" aria-label="All systems operational">
+						<span class="h-footer-badge" aria-label="All systems operational" data-i18n-html="features.all_systems_operational" data-i18n-attr="aria-label:features.all_systems_operational_arialabel">
 							<span class="h-footer-status-dot"></span>
 							All systems operational
 						</span>
 					</div>
 					<div class="h-footer-legal-links">
-						<a href="/legal/privacy">Privacy Policy</a>
-						<a href="/legal/tos">Terms of Use</a>
+						<a href="/legal/privacy" data-i18n="features.privacy_policy">Privacy Policy</a>
+						<a href="/legal/tos" data-i18n="features.terms_of_use">Terms of Use</a>
 					</div>
 				</div>
 			</footer>
@@ -1885,5 +1885,7 @@
 				});
 			})();
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

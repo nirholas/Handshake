@@ -4,17 +4,17 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title>Smart Money Radar — follow the wallets that actually win on pump.fun · three.ws</title>
-	<meta name="description" content="A live, first-party reputation graph of every pump.fun wallet. We cross each coin's buyers with which coins actually graduated, so you can see exactly which wallets keep picking winners — and what they're buying right now." />
-	<meta property="og:title" content="Smart Money Radar · three.ws" />
-	<meta property="og:description" content="Stop guessing. See which wallets actually win on pump.fun, and what the proven money is accumulating right now — scored from full-coverage trade data." />
+	<title data-i18n="smart_money.meta_title">Smart Money Radar — follow the wallets that actually win on pump.fun · three.ws</title>
+	<meta name="description" content="A live, first-party reputation graph of every pump.fun wallet. We cross each coin's buyers with which coins actually graduated, so you can see exactly which wallets keep picking winners — and what they're buying right now."  data-i18n-attr="content:smart_money.meta_description"/>
+	<meta property="og:title" content="Smart Money Radar · three.ws"  data-i18n-attr="content:smart_money.meta_og_title"/>
+	<meta property="og:description" content="Stop guessing. See which wallets actually win on pump.fun, and what the proven money is accumulating right now — scored from full-coverage trade data."  data-i18n-attr="content:smart_money.meta_og_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/smart-money" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Smart+Money+Radar+%E2%80%94+follow+the+wallets+that+win+on+pump.fun&amp;d=A+live+first-party+reputation+graph+of+every+pump.fun+wallet.+We+cross+each+coin%27s+buyers+with+the+coins+that+actually+graduated%2C+so+you+can+see+which+wallets+k&amp;p=%2Fsmart-money" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Smart Money Radar — follow the wallets that actually win on pump.fun" />
-	<meta name="twitter:description" content="A live reputation graph of every pump.fun wallet. See who keeps picking winners, and what they're buying right now." />
+	<meta name="twitter:title" content="Smart Money Radar — follow the wallets that actually win on pump.fun"  data-i18n-attr="content:smart_money.meta_twitter_title"/>
+	<meta name="twitter:description" content="A live reputation graph of every pump.fun wallet. See who keeps picking winners, and what they're buying right now."  data-i18n-attr="content:smart_money.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Smart+Money+Radar+%E2%80%94+follow+the+wallets+that+win+on+pump.fun&amp;d=A+live+first-party+reputation+graph+of+every+pump.fun+wallet.+We+cross+each+coin%27s+buyers+with+the+coins+that+actually+graduated%2C+so+you+can+see+which+wallets+k&amp;p=%2Fsmart-money" />
 	<link rel="canonical" href="https://three.ws/smart-money" />
 	<link rel="icon" href="/favicon.ico" />
@@ -303,45 +303,45 @@
 
 	<main class="wrap">
 		<header class="hero">
-			<span class="eyebrow"><i></i> Live · pump.fun reputation graph</span>
-			<h1>Don't read the coin.<br><span>Read the money buying it.</span></h1>
-			<p>Every pump.fun launch, every wallet, every trade — crossed against which coins actually graduated to Raydium. The result is a real track record for each wallet, and a live read on which fresh coins the <em>proven</em> money is quietly accumulating. The only edge that compounds: follow the wallets that keep being right.</p>
+			<span class="eyebrow" data-i18n-html="smart_money.live_pump_fun_reputation_graph"><i></i> Live · pump.fun reputation graph</span>
+			<h1 data-i18n-html="smart_money.don_t_read_the_coin_read_the">Don't read the coin.<br><span>Read the money buying it.</span></h1>
+			<p data-i18n-html="smart_money.every_pump_fun_launch_every_wallet_every">Every pump.fun launch, every wallet, every trade — crossed against which coins actually graduated to Raydium. The result is a real track record for each wallet, and a live read on which fresh coins the <em>proven</em> money is quietly accumulating. The only edge that compounds: follow the wallets that keep being right.</p>
 			<div class="statline" id="statline">
-				<div><span>Proven wallets</span><b id="stProven">—</b></div>
-				<div><span>Proven win rate</span><b id="stWinRate">—</b></div>
-				<div><span>Tracked capital</span><b id="stCapital">—</b></div>
-				<div><span>Coins on radar</span><b id="stCoins">—</b></div>
-				<div><span>Updated</span><b id="stUpdated">—</b></div>
+				<div><span data-i18n="smart_money.proven_wallets">Proven wallets</span><b id="stProven">—</b></div>
+				<div><span data-i18n="smart_money.proven_win_rate">Proven win rate</span><b id="stWinRate">—</b></div>
+				<div><span data-i18n="smart_money.tracked_capital">Tracked capital</span><b id="stCapital">—</b></div>
+				<div><span data-i18n="smart_money.coins_on_radar">Coins on radar</span><b id="stCoins">—</b></div>
+				<div><span data-i18n="smart_money.updated">Updated</span><b id="stUpdated">—</b></div>
 			</div>
 		</header>
 
 		<nav class="tabs">
-			<button class="tab on" data-view="feed">Smart money is buying <span class="ct" id="ctFeed"></span></button>
-			<button class="tab" data-view="wallets">Top wallets <span class="ct" id="ctWallets"></span></button>
-			<button class="tab" data-view="watchlist">Watchlist <span class="ct" id="ctWatch"></span></button>
+			<button class="tab on" data-view="feed" data-i18n-html="smart_money.smart_money_is_buying">Smart money is buying <span class="ct" id="ctFeed"></span></button>
+			<button class="tab" data-view="wallets" data-i18n-html="smart_money.top_wallets">Top wallets <span class="ct" id="ctWallets"></span></button>
+			<button class="tab" data-view="watchlist" data-i18n-html="smart_money.watchlist">Watchlist <span class="ct" id="ctWatch"></span></button>
 		</nav>
 
 		<div class="stale-bar" id="staleBar" role="status" aria-live="polite" hidden>
 			<i aria-hidden="true"></i>
-			<div>Reconnecting to the radar — <span id="staleDetail">showing the last data we received, which may be stale.</span></div>
-			<button class="stale-retry" id="staleRetry" type="button">Retry now</button>
+			<div>Reconnecting to the radar — <span id="staleDetail" data-i18n="smart_money.showing_the_last_data_we_received_which">showing the last data we received, which may be stale.</span></div>
+			<button class="stale-retry" id="staleRetry" type="button" data-i18n="smart_money.retry_now">Retry now</button>
 		</div>
 
 		<section class="view on" id="view-feed">
 			<div class="controls">
 				<div class="seg" id="feedFilter" role="tablist" aria-label="Filter coins">
-					<button data-f="fresh" class="on" role="tab" aria-selected="true">On radar <span class="sc" id="fcFresh"></span></button>
-					<button data-f="graduated" role="tab" aria-selected="false">Graduated <span class="sc" id="fcGrad"></span></button>
-					<button data-f="all" role="tab" aria-selected="false">All</button>
+					<button data-f="fresh" class="on" role="tab" aria-selected="true" data-i18n-html="smart_money.on_radar">On radar <span class="sc" id="fcFresh"></span></button>
+					<button data-f="graduated" role="tab" aria-selected="false" data-i18n-html="smart_money.graduated">Graduated <span class="sc" id="fcGrad"></span></button>
+					<button data-f="all" role="tab" aria-selected="false" data-i18n="smart_money.all">All</button>
 				</div>
 				<div class="spacer"></div>
 				<div class="select">
 					<select id="feedSort" aria-label="Sort coins">
-						<option value="score">Sort: Pedigree</option>
-						<option value="share">Sort: Smart-money share</option>
-						<option value="volume">Sort: Smart buy volume</option>
-						<option value="wallets">Sort: Proven wallets in</option>
-						<option value="new">Sort: Freshest</option>
+						<option value="score" data-i18n="smart_money.sort_pedigree">Sort: Pedigree</option>
+						<option value="share" data-i18n="smart_money.sort_smart_money_share">Sort: Smart-money share</option>
+						<option value="volume" data-i18n="smart_money.sort_smart_buy_volume">Sort: Smart buy volume</option>
+						<option value="wallets" data-i18n="smart_money.sort_proven_wallets_in">Sort: Proven wallets in</option>
+						<option value="new" data-i18n="smart_money.sort_freshest">Sort: Freshest</option>
 					</select>
 				</div>
 			</div>
@@ -350,23 +350,23 @@
 
 		<section class="view" id="view-wallets">
 			<div class="dist" id="dist" hidden>
-				<div class="dist-head"><b>Reputation mix</b><span id="distCount"></span></div>
+				<div class="dist-head"><b data-i18n="smart_money.reputation_mix">Reputation mix</b><span id="distCount"></span></div>
 				<div class="dist-bar" id="distBar"></div>
 				<div class="dist-legend" id="distLegend"></div>
 			</div>
 			<div class="controls">
 				<div class="seg" id="walletLabel" role="group" aria-label="Filter wallets by reputation">
-					<button data-l="all" class="on">All</button>
-					<button data-l="smart_money">Smart money</button>
-					<button data-l="sniper">Snipers</button>
-					<button data-l="dumper">Dumpers</button>
-					<button data-l="rugger">Ruggers</button>
+					<button data-l="all" class="on" data-i18n="smart_money.all_2">All</button>
+					<button data-l="smart_money" data-i18n="smart_money.smart_money">Smart money</button>
+					<button data-l="sniper" data-i18n="smart_money.snipers">Snipers</button>
+					<button data-l="dumper" data-i18n="smart_money.dumpers">Dumpers</button>
+					<button data-l="rugger" data-i18n="smart_money.ruggers">Ruggers</button>
 				</div>
 				<div class="spacer"></div>
 				<div class="field" id="walletSearchField">
 					<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><path d="M11 11l3 3" stroke-linecap="round"/></svg>
 					<input id="walletSearch" type="search" placeholder="Search or paste address" autocomplete="off" spellcheck="false" aria-label="Search wallets or paste an address" />
-					<button class="clr" id="walletSearchClr" type="button" aria-label="Clear search">×</button>
+					<button class="clr" id="walletSearchClr" type="button" aria-label="Clear search" data-i18n-attr="aria-label:smart_money.clear_search_arialabel">×</button>
 				</div>
 			</div>
 			<div class="lwrap">
@@ -381,18 +381,18 @@
 			<div class="grid" id="watchGrid"></div>
 		</section>
 
-		<p class="foot">Scored from first-party trade observation and on-chain graduations. A wallet's reputation is its track record, not a guarantee — coins are volatile and this is not financial advice. Reputations rebuild as new outcomes land.</p>
+		<p class="foot" data-i18n="smart_money.scored_from_first_party_trade_observation_an">Scored from first-party trade observation and on-chain graduations. A wallet's reputation is its track record, not a guarantee — coins are volatile and this is not financial advice. Reputations rebuild as new outcomes land.</p>
 	</main>
 
 	<div class="drawer" id="drawer">
 		<div class="dr-back" id="drBack"></div>
 		<div class="dr-panel" role="dialog" aria-modal="true">
 			<div class="dr-head">
-				<button class="dr-back-btn" id="drBackBtn" aria-label="Back">
+				<button class="dr-back-btn" id="drBackBtn" aria-label="Back" data-i18n-attr="aria-label:smart_money.back_arialabel">
 					<svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l-5 5 5 5"/></svg>
 				</button>
-				<h3 id="drTitle">Details</h3>
-				<button class="dr-x" id="drClose" aria-label="Close">
+				<h3 id="drTitle" data-i18n="smart_money.details">Details</h3>
+				<button class="dr-x" id="drClose" aria-label="Close" data-i18n-attr="aria-label:smart_money.close_arialabel">
 					<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
 				</button>
 			</div>
@@ -1052,5 +1052,7 @@
 			else if (!timer) { refresh(); timer = setInterval(refresh, 20000); }
 		});
 	</script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -5,18 +5,18 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-	<title>watsonx Constellation — live tokens in IBM Granite embedding space · three.ws</title>
-	<meta name="description" content="A live 3D galaxy of trending Solana tokens, positioned by IBM Granite embeddings on watsonx.ai. Click any star for a live Granite analysis. 3D + AI + crypto, all real." />
+	<title data-i18n="constellation.meta_title">watsonx Constellation — live tokens in IBM Granite embedding space · three.ws</title>
+	<meta name="description" content="A live 3D galaxy of trending Solana tokens, positioned by IBM Granite embeddings on watsonx.ai. Click any star for a live Granite analysis. 3D + AI + crypto, all real."  data-i18n-attr="content:constellation.meta_description"/>
 	<link rel="canonical" href="https://three.ws/constellation" />
 
 	<meta property="og:type" content="website" />
-	<meta property="og:title" content="watsonx Constellation — live tokens in IBM Granite embedding space" />
-	<meta property="og:description" content="Trending Solana tokens laid out in 3D semantic space by IBM Granite embeddings. Click a star for a live Granite analysis." />
+	<meta property="og:title" content="watsonx Constellation — live tokens in IBM Granite embedding space"  data-i18n-attr="content:constellation.meta_og_title"/>
+	<meta property="og:description" content="Trending Solana tokens laid out in 3D semantic space by IBM Granite embeddings. Click a star for a live Granite analysis."  data-i18n-attr="content:constellation.meta_og_description"/>
 	<meta property="og:url" content="https://three.ws/constellation" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=watsonx+Constellation&amp;d=Live+Solana+tokens+in+a+3D+galaxy%2C+positioned+in+semantic+space+by+IBM+Granite+embeddings+on+watsonx.ai.+Click+a+star+for+a+live+IBM+Granite+analysis.&amp;p=%2Fconstellation" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="watsonx Constellation · three.ws × IBM" />
-	<meta name="twitter:description" content="Live Solana tokens in 3D IBM Granite embedding space. Click a star for a Granite analysis." />
+	<meta name="twitter:title" content="watsonx Constellation · three.ws × IBM"  data-i18n-attr="content:constellation.meta_twitter_title"/>
+	<meta name="twitter:description" content="Live Solana tokens in 3D IBM Granite embedding space. Click a star for a Granite analysis."  data-i18n-attr="content:constellation.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=watsonx+Constellation&amp;d=Live+Solana+tokens+in+a+3D+galaxy%2C+positioned+in+semantic+space+by+IBM+Granite+embeddings+on+watsonx.ai.+Click+a+star+for+a+live+IBM+Granite+analysis.&amp;p=%2Fconstellation" />
 
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -115,10 +115,10 @@
 	<canvas id="c-scene"></canvas>
 
 	<div class="c-hud">
-		<a class="c-badge" href="/galaxy"><span class="dot"></span><strong>three.ws</strong> × IBM watsonx</a>
-		<h1>watsonx <span class="g">Constellation</span></h1>
-		<p>Live Solana tokens, positioned in 3D by IBM&nbsp;Granite embeddings on watsonx.ai. Nearby stars are semantically alike.</p>
-		<div class="c-status" id="c-status"><span class="s-dot"></span><span id="c-status-text">Starting…</span></div>
+		<a class="c-badge" href="/galaxy" data-i18n-html="constellation.three_ws_ibm_watsonx"><span class="dot"></span><strong>three.ws</strong> × IBM watsonx</a>
+		<h1 data-i18n-html="constellation.watsonx_constellation">watsonx <span class="g">Constellation</span></h1>
+		<p data-i18n="constellation.live_solana_tokens_positioned_in_3d_by">Live Solana tokens, positioned in 3D by IBM&nbsp;Granite embeddings on watsonx.ai. Nearby stars are semantically alike.</p>
+		<div class="c-status" id="c-status"><span class="s-dot"></span><span id="c-status-text" data-i18n="constellation.starting">Starting…</span></div>
 	</div>
 
 	<div class="c-hint" id="c-hint">drag to orbit · scroll to zoom · click a star for a live Granite analysis</div>
@@ -132,7 +132,7 @@
 					<div class="c-panel-sym" id="c-panel-sym"></div>
 					<div class="c-panel-nm" id="c-panel-nm"></div>
 				</div>
-				<button class="c-close" id="c-close" aria-label="Close">×</button>
+				<button class="c-close" id="c-close" aria-label="Close" data-i18n-attr="aria-label:constellation.close_arialabel">×</button>
 			</div>
 			<div class="c-stats">
 				<div class="c-stat"><div class="k">Price</div><div class="v" id="c-panel-price">—</div></div>
@@ -142,18 +142,20 @@
 			<div class="c-links" id="c-panel-links"></div>
 		</div>
 		<div class="c-analysis-wrap">
-			<div class="c-analysis-head"><span class="dot"></span>Analysis by <strong>IBM Granite</strong>&nbsp;on watsonx.ai</div>
+			<div class="c-analysis-head"><span class="dot"></span>Analysis by <strong data-i18n="constellation.ibm_granite">IBM Granite</strong>&nbsp;on watsonx.ai</div>
 			<div class="c-analysis" id="c-analysis"></div>
 			<div class="c-meta" id="c-analysis-meta"></div>
-			<p class="c-disclaim">Generated by an AI model from public token metadata. Informational only — not financial advice. Tokens shown are live pump.fun / Solana trending data and are not endorsements.</p>
+			<p class="c-disclaim" data-i18n="constellation.generated_by_an_ai_model_from_public">Generated by an AI model from public token metadata. Informational only — not financial advice. Tokens shown are live pump.fun / Solana trending data and are not endorsements.</p>
 		</div>
 	</aside>
 
 	<div class="c-overlay" id="c-overlay">
 		<div class="c-spinner" id="c-spinner"></div>
-		<div class="msg" id="c-overlay-msg"><strong>Loading the constellation…</strong><br/>Fetching live trending tokens.</div>
+		<div class="msg" id="c-overlay-msg"><strong data-i18n="constellation.loading_the_constellation">Loading the constellation…</strong><br/>Fetching live trending tokens.</div>
 	</div>
 
 	<script type="module" src="/src/constellation/main.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

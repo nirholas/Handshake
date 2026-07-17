@@ -3,9 +3,9 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Feed — three.ws</title>
+		<title data-i18n="feed.meta_title">Feed — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<meta name="description" content="Live avatars, agents, 3D models, worlds, and launches across three.ws." />
+		<meta name="description" content="Live avatars, agents, 3D models, worlds, and launches across three.ws."  data-i18n-attr="content:feed.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 		<meta name="robots" content="noindex" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -289,8 +289,8 @@
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:title" content="Feed · three.ws">
-	<meta property="og:description" content="Live avatars, agents, 3D models, worlds, and launches across three.ws.">
+	<meta property="og:title" content="Feed · three.ws" data-i18n-attr="content:feed.meta_og_title">
+	<meta property="og:description" content="Live avatars, agents, 3D models, worlds, and launches across three.ws." data-i18n-attr="content:feed.meta_og_description">
 	<meta property="og:url" content="https://three.ws/feed">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Feed&amp;d=Live+avatars%2C+agents%2C+3D+models%2C+worlds%2C+and+launches+across+three.ws+%E2%80%94+filter+to+everyone+or+just+the+people+you+follow.&amp;p=%2Ffeed">
 	<meta property="og:image:width" content="1200">
@@ -299,8 +299,8 @@
 	<meta property="og:image:alt" content="Feed — three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Feed · three.ws">
-	<meta name="twitter:description" content="Live avatars, agents, 3D models, worlds, and launches across three.ws.">
+	<meta name="twitter:title" content="Feed · three.ws" data-i18n-attr="content:feed.meta_twitter_title">
+	<meta name="twitter:description" content="Live avatars, agents, 3D models, worlds, and launches across three.ws." data-i18n-attr="content:feed.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Feed&amp;d=Live+avatars%2C+agents%2C+3D+models%2C+worlds%2C+and+launches+across+three.ws+%E2%80%94+filter+to+everyone+or+just+the+people+you+follow.&amp;p=%2Ffeed">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Feed","description":"Live avatars, agents, 3D models, worlds, and launches across three.ws.","url":"https://three.ws/feed","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&t=Feed&d=Live+avatars%2C+agents%2C+3D+models%2C+worlds%2C+and+launches+across+three.ws.&p=%2Ffeed"}]}</script>
 </head>
@@ -311,24 +311,24 @@
 		<main>
 			<div class="feed-root">
 				<div class="feed-head">
-					<h1>Feed</h1>
-					<p>New avatars, agents, models, worlds, and launches across three.ws.</p>
+					<h1 data-i18n="feed.feed">Feed</h1>
+					<p data-i18n="feed.new_avatars_agents_models_worlds_and_launche">New avatars, agents, models, worlds, and launches across three.ws.</p>
 					<a class="feed-tip" href="/discover">
 						<svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1m.75 10.5h-1.5V7h1.5zm0-6h-1.5V4h1.5z"/></svg>
 						Discover more people to follow
 					</a>
 				</div>
 				<div class="feed-scope" role="tablist" aria-label="Feed scope">
-					<button type="button" id="scope-all" role="tab" aria-pressed="true">All activity</button>
-					<button type="button" id="scope-following" role="tab" aria-pressed="false">Following</button>
+					<button type="button" id="scope-all" role="tab" aria-pressed="true" data-i18n="feed.all_activity">All activity</button>
+					<button type="button" id="scope-following" role="tab" aria-pressed="false" data-i18n="feed.following">Following</button>
 				</div>
-				<button type="button" class="feed-newpill" id="feed-newpill">New activity — click to view</button>
+				<button type="button" class="feed-newpill" id="feed-newpill" data-i18n="feed.new_activity_click_to_view">New activity — click to view</button>
 				<div id="feed-list">
 					<div class="feed-skeleton"></div>
 					<div class="feed-skeleton"></div>
 					<div class="feed-skeleton"></div>
 				</div>
-				<button type="button" class="feed-more" id="feed-more" hidden>Load more</button>
+				<button type="button" class="feed-more" id="feed-more" hidden data-i18n="feed.load_more">Load more</button>
 				<div id="feed-sentinel" aria-hidden="true"></div>
 			</div>
 		</main>
@@ -618,5 +618,7 @@
 			updateScopeButtons();
 			loadInitial();
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

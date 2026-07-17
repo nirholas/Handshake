@@ -18,19 +18,19 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>DeFi Hacks Database · three.ws</title>
+		<title data-i18n="hacks.meta_title">DeFi Hacks Database · three.ws</title>
 		<meta
 			name="description"
 			content="Every major DeFi exploit, bridge hack, and protocol breach — amounts stolen, attack technique, chains hit, and whether funds were returned. A searchable record of crypto's biggest security failures."
-		/>
+		 data-i18n-attr="content:hacks.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/hacks" />
-		<meta property="og:title" content="DeFi Hacks Database · three.ws" />
+		<meta property="og:title" content="DeFi Hacks Database · three.ws"  data-i18n-attr="content:hacks.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Every major DeFi exploit, bridge hack, and protocol breach — amounts stolen, attack technique, chains hit, and whether funds were returned. A searchable record of crypto's biggest security failures."
-		/>
+		 data-i18n-attr="content:hacks.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=DeFi+Hacks+Database&amp;d=A+searchable+database+of+every+major+DeFi+exploit+%E2%80%94+amount+stolen%2C+classification%2C+technique%2C+chains+affected%2C+whether+it+was+a+bridge+hack%2C+and+the+source%2C+wit&amp;p=%2Fhacks"
@@ -39,11 +39,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="DeFi Hacks Database · three.ws" />
+		<meta name="twitter:title" content="DeFi Hacks Database · three.ws"  data-i18n-attr="content:hacks.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Every major DeFi exploit, bridge hack, and protocol breach — amounts stolen, attack technique, chains hit, and whether funds were returned."
-		/>
+		 data-i18n-attr="content:hacks.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=DeFi+Hacks+Database&amp;d=A+searchable+database+of+every+major+DeFi+exploit+%E2%80%94+amount+stolen%2C+classification%2C+technique%2C+chains+affected%2C+whether+it+was+a+bridge+hack%2C+and+the+source%2C+wit&amp;p=%2Fhacks"
@@ -89,12 +89,12 @@
 
 		<main class="cv-container">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a><span class="sep">/</span
-				><a href="/defi">DeFi</a><span class="sep">/</span
-				><span class="here">Hacks</span>
+				<a href="/markets" data-i18n="hacks.markets">Markets</a><span class="sep">/</span
+				><a href="/defi" data-i18n="hacks.defi">DeFi</a><span class="sep">/</span
+				><span class="here" data-i18n="hacks.hacks">Hacks</span>
 			</nav>
-			<h1 class="cv-h1">DeFi Hacks Database</h1>
-			<p class="cv-sub">
+			<h1 class="cv-h1" data-i18n="hacks.defi_hacks_database">DeFi Hacks Database</h1>
+			<p class="cv-sub" data-i18n="hacks.every_major_on_chain_exploit_on_record">
 				Every major on-chain exploit on record — how much was taken, the technique behind
 				the breach, which chains were hit, and whether any funds came back. A sober look at
 				where and how decentralized finance has failed.
@@ -104,9 +104,9 @@
 			<section id="hacks-stats" class="cv-section" aria-label="Hack statistics"></section>
 
 			<div class="cv-toolbar">
-				<h2 class="cv-h2" style="margin: 0">Incidents</h2>
+				<h2 class="cv-h2" style="margin: 0" data-i18n="hacks.incidents">Incidents</h2>
 				<div class="hacks-filter">
-					<label class="hacks-search-label" for="hacks-search">Search</label>
+					<label class="hacks-search-label" for="hacks-search" data-i18n="hacks.search">Search</label>
 					<div class="hacks-search-wrap">
 						<svg
 							class="hacks-search-icon"
@@ -132,7 +132,7 @@
 							aria-label="Search hacks by name, technique, or classification"
 						/>
 					</div>
-					<a class="cv-pill" href="/defi">DeFi TVL →</a>
+					<a class="cv-pill" href="/defi" data-i18n="hacks.defi_tvl">DeFi TVL →</a>
 				</div>
 			</div>
 
@@ -142,7 +142,7 @@
 			<div id="hacks-more" class="hacks-more"></div>
 
 			<p class="cv-updated" id="hacks-updated"></p>
-			<p class="hacks-attribution">
+			<p class="hacks-attribution" data-i18n="hacks.data_defillama_hacks_database_figures_are_be">
 				Data: DeFiLlama hacks database. Figures are best-effort public estimates of funds
 				stolen at the time of each incident and may be revised as investigations conclude.
 			</p>
@@ -152,5 +152,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

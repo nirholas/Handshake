@@ -18,19 +18,19 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Token Screener · three.ws</title>
+		<title data-i18n="screener.meta_title">Token Screener · three.ws</title>
 		<meta
 			name="description"
 			content="Filter the top 250 cryptocurrencies live — search by name, isolate gainers or losers, set minimum market cap and volume, and sort every column. Find your next coin fast."
-		/>
+		 data-i18n-attr="content:screener.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/screener" />
-		<meta property="og:title" content="Token Screener · three.ws" />
+		<meta property="og:title" content="Token Screener · three.ws"  data-i18n-attr="content:screener.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Filter the top 250 cryptocurrencies live — search, isolate gainers or losers, set minimum market cap and volume, and sort every column."
-		/>
+		 data-i18n-attr="content:screener.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+Token+Screener&amp;d=Screen+the+top+250+cryptocurrencies+with+live+filters+%E2%80%94+search+by+name+or+symbol%2C+isolate+gainers+or+losers%2C+and+set+minimum+market+cap+and+24h+volume+threshold&amp;p=%2Fscreener"
@@ -39,11 +39,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Token Screener · three.ws" />
+		<meta name="twitter:title" content="Token Screener · three.ws"  data-i18n-attr="content:screener.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Filter the top 250 cryptocurrencies live — search, isolate gainers or losers, set minimum market cap and volume, and sort every column."
-		/>
+		 data-i18n-attr="content:screener.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+Token+Screener&amp;d=Screen+the+top+250+cryptocurrencies+with+live+filters+%E2%80%94+search+by+name+or+symbol%2C+isolate+gainers+or+losers%2C+and+set+minimum+market+cap+and+24h+volume+threshold&amp;p=%2Fscreener"
@@ -89,11 +89,11 @@
 
 		<main class="cv-container">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a><span class="sep">/</span
-				><span class="here">Screener</span>
+				<a href="/markets" data-i18n="screener.markets">Markets</a><span class="sep">/</span
+				><span class="here" data-i18n="screener.screener">Screener</span>
 			</nav>
-			<h1 class="cv-h1">Token Screener</h1>
-			<p class="cv-sub">
+			<h1 class="cv-h1" data-i18n="screener.token_screener">Token Screener</h1>
+			<p class="cv-sub" data-i18n="screener.filter_the_top_250_coins_by_market">
 				Filter the top 250 coins by market cap in real time — search by name, isolate
 				gainers or losers, set floors on market cap and volume, then sort any column. Every
 				row opens the full coin profile.
@@ -126,43 +126,43 @@
 				</div>
 
 				<div class="hm-seg" role="group" aria-label="Direction filter" id="scr-dir">
-					<button type="button" data-dir="all" aria-pressed="true">All</button>
-					<button type="button" data-dir="gainers" aria-pressed="false">Gainers</button>
-					<button type="button" data-dir="losers" aria-pressed="false">Losers</button>
+					<button type="button" data-dir="all" aria-pressed="true" data-i18n="screener.all">All</button>
+					<button type="button" data-dir="gainers" aria-pressed="false" data-i18n="screener.gainers">Gainers</button>
+					<button type="button" data-dir="losers" aria-pressed="false" data-i18n="screener.losers">Losers</button>
 				</div>
 
 				<label class="scr-field">
-					<span>Min market cap</span>
+					<span data-i18n="screener.min_market_cap">Min market cap</span>
 					<select id="scr-mcap" aria-label="Minimum market cap">
-						<option value="0">Any</option>
-						<option value="10000000">$10M+</option>
-						<option value="100000000">$100M+</option>
-						<option value="1000000000">$1B+</option>
-						<option value="10000000000">$10B+</option>
-						<option value="100000000000">$100B+</option>
+						<option value="0" data-i18n="screener.any">Any</option>
+						<option value="10000000" data-i18n="screener.10m">$10M+</option>
+						<option value="100000000" data-i18n="screener.100m">$100M+</option>
+						<option value="1000000000" data-i18n="screener.1b">$1B+</option>
+						<option value="10000000000" data-i18n="screener.10b">$10B+</option>
+						<option value="100000000000" data-i18n="screener.100b">$100B+</option>
 					</select>
 				</label>
 
 				<label class="scr-field">
-					<span>Min 24h volume</span>
+					<span data-i18n="screener.min_24h_volume">Min 24h volume</span>
 					<select id="scr-vol" aria-label="Minimum 24h volume">
-						<option value="0">Any</option>
-						<option value="1000000">$1M+</option>
-						<option value="10000000">$10M+</option>
-						<option value="100000000">$100M+</option>
-						<option value="1000000000">$1B+</option>
+						<option value="0" data-i18n="screener.any_2">Any</option>
+						<option value="1000000" data-i18n="screener.1m">$1M+</option>
+						<option value="10000000" data-i18n="screener.10m_2">$10M+</option>
+						<option value="100000000" data-i18n="screener.100m_2">$100M+</option>
+						<option value="1000000000" data-i18n="screener.1b_2">$1B+</option>
 					</select>
 				</label>
 
-				<button type="button" class="scr-reset" id="scr-reset">Reset</button>
+				<button type="button" class="scr-reset" id="scr-reset" data-i18n="screener.reset">Reset</button>
 			</div>
 
 			<div class="scr-meta">
 				<span id="scr-count" class="scr-count" aria-live="polite"></span>
 				<div class="cv-pills">
-					<a class="cv-pill" href="/coins">All Coins</a>
-					<a class="cv-pill" href="/categories">Categories</a>
-					<a class="cv-pill" href="/heatmap">Heatmap</a>
+					<a class="cv-pill" href="/coins" data-i18n="screener.all_coins">All Coins</a>
+					<a class="cv-pill" href="/categories" data-i18n="screener.categories">Categories</a>
+					<a class="cv-pill" href="/heatmap" data-i18n="screener.heatmap">Heatmap</a>
 				</div>
 			</div>
 
@@ -175,5 +175,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -3,15 +3,15 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Agent Screen · three.ws</title>
+		<title data-i18n="agent_screen.meta_title">Agent Screen · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="theme-color" content="#0a0a0b" />
-		<meta name="description" content="Watch your agent in real time — see their screen and avatar as they autonomously trade, browse, and act." />
+		<meta name="description" content="Watch your agent in real time — see their screen and avatar as they autonomously trade, browse, and act."  data-i18n-attr="content:agent_screen.meta_description"/>
 
 		<meta property="og:type" content="website" />
 		<meta property="og:url" content="https://three.ws/agent-screen" />
-		<meta property="og:title" content="Agent Screen · three.ws" />
-		<meta property="og:description" content="Watch your agent work — live screen and avatar feed." />
+		<meta property="og:title" content="Agent Screen · three.ws"  data-i18n-attr="content:agent_screen.meta_og_title"/>
+		<meta property="og:description" content="Watch your agent work — live screen and avatar feed."  data-i18n-attr="content:agent_screen.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/og-image.png" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:image" content="https://three.ws/og-image.png" />
@@ -2097,16 +2097,16 @@
 		<script src="/nav.js"></script>
 
 		<header class="asc-header" id="asc-header">
-			<a class="back" id="asc-back" href="/agents" title="Back to agents">←</a>
+			<a class="back" id="asc-back" href="/agents" title="Back to agents" data-i18n-attr="title:agent_screen.back_to_agents_title">←</a>
 			<div class="asc-agent-info">
-				<span class="asc-agent-name" id="asc-agent-name">Loading…</span>
-				<span class="asc-live-badge dark" id="asc-live-badge">
+				<span class="asc-agent-name" id="asc-agent-name" data-i18n="agent_screen.loading">Loading…</span>
+				<span class="asc-live-badge dark" id="asc-live-badge" data-i18n-html="agent_screen.connecting">
 					<span class="dot"></span>
 					<span id="asc-badge-text">Connecting</span>
 				</span>
 				<button class="asc-pnl" id="asc-pnl" type="button" hidden
 					title="Session realized + unrealized, from real fills — click for detail"
-					aria-label="Session profit and loss">
+					aria-label="Session profit and loss" data-i18n-html="agent_screen.pnl" data-i18n-attr="aria-label:agent_screen.session_profit_and_loss_arialabel;title:agent_screen.session_realized_unrealized_title">
 					<span class="asc-pnl-label">PnL</span>
 					<span class="asc-pnl-value" id="asc-pnl-value">—</span>
 					<span class="asc-pnl-detail" id="asc-pnl-detail" hidden></span>
@@ -2114,31 +2114,31 @@
 			</div>
 			<div class="asc-header-right" id="asc-controls">
 				<div class="asc-ctl-group" id="asc-panel-toggles">
-					<button class="asc-ctl" data-panel-toggle="cam" title="Avatar cam — C" aria-label="Toggle avatar cam">◉</button>
-					<button class="asc-ctl" data-panel-toggle="log" title="Activity log — L" aria-label="Toggle activity log">☰</button>
-					<button class="asc-ctl" data-panel-toggle="stats" title="Stream stats — I" aria-label="Toggle stats">📊</button>
-					<button class="asc-ctl" data-panel-toggle="treasury" title="Treasury cockpit — T" aria-label="Toggle treasury">◎</button>
-					<button class="asc-ctl" data-panel-toggle="mirror" title="Copy-trade mirror — M" aria-label="Toggle mirror">⇋</button>
-					<button class="asc-ctl" data-panel-toggle="hud" title="Portfolio HUD — B" aria-label="Toggle portfolio HUD">📈</button>
-					<button class="asc-ctl" data-panel-toggle="stage" title="Live stage show — G" aria-label="Toggle live stage show">🎙</button>
-					<button class="asc-ctl" data-panel-toggle="heatmap" title="Sentiment heatmap — H" aria-label="Toggle sentiment heatmap">🌡</button>
-					<button class="asc-ctl" data-panel-toggle="hire" title="Live hire visualizer — R" aria-label="Toggle live hire">⇄</button>
-					<button class="asc-ctl" data-panel-toggle="reputation" title="Reputation — E" aria-label="Toggle reputation">🛡</button>
-					<button class="asc-ctl" data-panel-toggle="diary" title="Memory diary — D" aria-label="Toggle memory diary">📓</button>
+					<button class="asc-ctl" data-panel-toggle="cam" title="Avatar cam — C" aria-label="Toggle avatar cam" data-i18n-attr="aria-label:agent_screen.toggle_avatar_cam_arialabel;title:agent_screen.avatar_cam_c_title">◉</button>
+					<button class="asc-ctl" data-panel-toggle="log" title="Activity log — L" aria-label="Toggle activity log" data-i18n-attr="aria-label:agent_screen.toggle_activity_log_arialabel;title:agent_screen.activity_log_l_title">☰</button>
+					<button class="asc-ctl" data-panel-toggle="stats" title="Stream stats — I" aria-label="Toggle stats" data-i18n-attr="aria-label:agent_screen.toggle_stats_arialabel;title:agent_screen.stream_stats_i_title">📊</button>
+					<button class="asc-ctl" data-panel-toggle="treasury" title="Treasury cockpit — T" aria-label="Toggle treasury" data-i18n-attr="aria-label:agent_screen.toggle_treasury_arialabel;title:agent_screen.treasury_cockpit_t_title">◎</button>
+					<button class="asc-ctl" data-panel-toggle="mirror" title="Copy-trade mirror — M" aria-label="Toggle mirror" data-i18n-attr="aria-label:agent_screen.toggle_mirror_arialabel;title:agent_screen.copy_trade_mirror_m_title">⇋</button>
+					<button class="asc-ctl" data-panel-toggle="hud" title="Portfolio HUD — B" aria-label="Toggle portfolio HUD" data-i18n-attr="aria-label:agent_screen.toggle_portfolio_hud_arialabel;title:agent_screen.portfolio_hud_b_title">📈</button>
+					<button class="asc-ctl" data-panel-toggle="stage" title="Live stage show — G" aria-label="Toggle live stage show" data-i18n-attr="aria-label:agent_screen.toggle_live_stage_show_arialabel;title:agent_screen.live_stage_show_g_title">🎙</button>
+					<button class="asc-ctl" data-panel-toggle="heatmap" title="Sentiment heatmap — H" aria-label="Toggle sentiment heatmap" data-i18n-attr="aria-label:agent_screen.toggle_sentiment_heatmap_arialabel;title:agent_screen.sentiment_heatmap_h_title">🌡</button>
+					<button class="asc-ctl" data-panel-toggle="hire" title="Live hire visualizer — R" aria-label="Toggle live hire" data-i18n-attr="aria-label:agent_screen.toggle_live_hire_arialabel;title:agent_screen.live_hire_visualizer_r_title">⇄</button>
+					<button class="asc-ctl" data-panel-toggle="reputation" title="Reputation — E" aria-label="Toggle reputation" data-i18n-attr="aria-label:agent_screen.toggle_reputation_arialabel;title:agent_screen.reputation_e_title">🛡</button>
+					<button class="asc-ctl" data-panel-toggle="diary" title="Memory diary — D" aria-label="Toggle memory diary" data-i18n-attr="aria-label:agent_screen.toggle_memory_diary_arialabel;title:agent_screen.memory_diary_d_title">📓</button>
 				</div>
 				<div class="asc-ctl-sep"></div>
-				<button class="asc-ctl" id="asc-fit-btn" title="Fit / Fill screen — V" aria-label="Toggle screen fit">▢</button>
-				<button class="asc-ctl" id="asc-shot-btn" title="Capture screenshot — S" aria-label="Screenshot">⎙</button>
-				<button class="asc-ctl" id="asc-pip-btn" title="Picture-in-picture — P" aria-label="Picture in picture">⧉</button>
-				<button class="asc-ctl" id="asc-fullscreen-btn" title="Fullscreen — F" aria-label="Fullscreen">⛶</button>
+				<button class="asc-ctl" id="asc-fit-btn" title="Fit / Fill screen — V" aria-label="Toggle screen fit" data-i18n-attr="aria-label:agent_screen.toggle_screen_fit_arialabel;title:agent_screen.fit_fill_screen_v_title">▢</button>
+				<button class="asc-ctl" id="asc-shot-btn" title="Capture screenshot — S" aria-label="Screenshot" data-i18n-attr="aria-label:agent_screen.screenshot_arialabel;title:agent_screen.capture_screenshot_s_title">⎙</button>
+				<button class="asc-ctl" id="asc-pip-btn" title="Picture-in-picture — P" aria-label="Picture in picture" data-i18n-attr="aria-label:agent_screen.picture_in_picture_arialabel;title:agent_screen.picture_in_picture_p_title">⧉</button>
+				<button class="asc-ctl" id="asc-fullscreen-btn" title="Fullscreen — F" aria-label="Fullscreen" data-i18n-attr="aria-label:agent_screen.fullscreen_arialabel;title:agent_screen.fullscreen_f_title">⛶</button>
 				<div class="asc-ctl-sep"></div>
-				<span class="asc-tod" id="asc-tod" hidden title="In-world time of day">· —</span>
-				<button class="asc-ctl asc-ctl--label" id="asc-ambient-btn" title="Ambient mode — your agent hosts a living world — A" aria-label="Toggle ambient world mode">◉ <span>Ambient</span></button>
-				<button class="asc-ctl" id="asc-audio-btn" hidden title="Narration voice — speak the host lines aloud" aria-label="Toggle narration voice">🔈</button>
+				<span class="asc-tod" id="asc-tod" hidden title="In-world time of day" data-i18n-attr="title:agent_screen.in_world_time_of_day_title">· —</span>
+				<button class="asc-ctl asc-ctl--label" id="asc-ambient-btn" title="Ambient mode — your agent hosts a living world — A" aria-label="Toggle ambient world mode" data-i18n-html="agent_screen.ambient" data-i18n-attr="aria-label:agent_screen.toggle_ambient_world_mode_arialabel;title:agent_screen.ambient_mode_your_agent_host_title">◉ <span>Ambient</span></button>
+				<button class="asc-ctl" id="asc-audio-btn" hidden title="Narration voice — speak the host lines aloud" aria-label="Toggle narration voice" data-i18n-attr="aria-label:agent_screen.toggle_narration_voice_arialabel;title:agent_screen.narration_voice_speak_the_ho_title">🔈</button>
 				<div class="asc-ctl-sep"></div>
-				<button class="asc-ctl asc-ctl--zen asc-ctl--label" id="asc-zen-btn" title="Zen mode — hide everything for a clean shot — Z">◍ <span>Zen</span></button>
-				<a class="asc-ctl" id="asc-all-live" href="/agents-live" title="All live agents">◳</a>
-				<a class="asc-ctl asc-ctl--primary asc-ctl--label" id="asc-agent-link" href="/agents">Agent →</a>
+				<button class="asc-ctl asc-ctl--zen asc-ctl--label" id="asc-zen-btn" title="Zen mode — hide everything for a clean shot — Z" data-i18n-html="agent_screen.zen" data-i18n-attr="title:agent_screen.zen_mode_hide_everything_for_title">◍ <span>Zen</span></button>
+				<a class="asc-ctl" id="asc-all-live" href="/agents-live" title="All live agents" data-i18n-attr="title:agent_screen.all_live_agents_title">◳</a>
+				<a class="asc-ctl asc-ctl--primary asc-ctl--label" id="asc-agent-link" href="/agents" data-i18n="agent_screen.agent">Agent →</a>
 			</div>
 		</header>
 
@@ -2156,5 +2156,7 @@
 		<!-- Team Task — task-bar "Team" toggle + collaboration graph (src/agent-team.js). -->
 		<script type="module" src="/src/agent-team.js"></script>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

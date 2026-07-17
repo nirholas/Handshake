@@ -10,9 +10,9 @@
 		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
-		<title>three.ws — Avatar Wallet</title>
+		<title data-i18n="avatar_wallet_chat.meta_title">three.ws — Avatar Wallet</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<meta name="description" content="An embeddable 3D AI avatar that holds a Solana wallet, chats, and can autonomously send SOL." />
+		<meta name="description" content="An embeddable 3D AI avatar that holds a Solana wallet, chats, and can autonomously send SOL."  data-i18n-attr="content:avatar_wallet_chat.meta_description"/>
 		<meta name="robots" content="noindex" />
 		<style>
 			:root {
@@ -398,15 +398,15 @@
 	<link rel="canonical" href="https://three.ws/avatar-wallet-chat">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="Avatar Wallet · three.ws">
-	<meta property="og:description" content="An embeddable 3D AI avatar that holds a Solana wallet, chats, and can autonomously send SOL.">
+	<meta property="og:title" content="Avatar Wallet · three.ws" data-i18n-attr="content:avatar_wallet_chat.meta_og_title">
+	<meta property="og:description" content="An embeddable 3D AI avatar that holds a Solana wallet, chats, and can autonomously send SOL." data-i18n-attr="content:avatar_wallet_chat.meta_og_description">
 	<meta property="og:url" content="https://three.ws/avatar-wallet-chat">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Avatar+Wallet&amp;d=An+embeddable+3D+AI+avatar+that+holds+a+Solana+wallet%2C+chats%2C+and+can+autonomously+send+SOL.&amp;p=%2Favatar-wallet-chat">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Avatar Wallet · three.ws">
-	<meta name="twitter:description" content="An embeddable 3D AI avatar that holds a Solana wallet, chats, and can autonomously send SOL.">
+	<meta name="twitter:title" content="Avatar Wallet · three.ws" data-i18n-attr="content:avatar_wallet_chat.meta_twitter_title">
+	<meta name="twitter:description" content="An embeddable 3D AI avatar that holds a Solana wallet, chats, and can autonomously send SOL." data-i18n-attr="content:avatar_wallet_chat.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Avatar+Wallet&amp;d=An+embeddable+3D+AI+avatar+that+holds+a+Solana+wallet%2C+chats%2C+and+can+autonomously+send+SOL.&amp;p=%2Favatar-wallet-chat">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Avatar Wallet","description":"An embeddable 3D AI avatar that holds a Solana wallet, chats, and can autonomously send SOL.","url":"https://three.ws/avatar-wallet-chat","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -425,10 +425,10 @@
 						<span class="amt" id="bal-amt"><span class="skel"></span></span>
 						<span class="usd" id="bal-usd"></span>
 					</span>
-					<a class="addr" id="addr-link" href="#" target="_blank" rel="noopener" title="View on Solscan">
+					<a class="addr" id="addr-link" href="#" target="_blank" rel="noopener" title="View on Solscan" data-i18n-attr="title:avatar_wallet_chat.view_on_solscan_title">
 						<span id="addr-short">—</span>
 					</a>
-					<button class="copy" id="copy-btn" title="Copy address" aria-label="Copy wallet address">
+					<button class="copy" id="copy-btn" title="Copy address" aria-label="Copy wallet address" data-i18n-attr="aria-label:avatar_wallet_chat.copy_wallet_address_arialabel;title:avatar_wallet_chat.copy_address_title">
 						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
 					</button>
 				</div>
@@ -440,8 +440,8 @@
 						<div class="fh-title" id="fund-title">Fund your avatar's wallet</div>
 						<div class="fh-sub" id="fund-sub">It can't send SOL until there's a balance to send from. Send some SOL to the address below and it'll be ready.</div>
 						<div class="fh-addr-row">
-							<span class="fh-addr" id="fund-addr" title="Avatar wallet address">—</span>
-							<button class="fh-copy" id="fund-copy" title="Copy address" aria-label="Copy wallet address to fund">
+							<span class="fh-addr" id="fund-addr" title="Avatar wallet address" data-i18n-attr="title:avatar_wallet_chat.avatar_wallet_address_title">—</span>
+							<button class="fh-copy" id="fund-copy" title="Copy address" aria-label="Copy wallet address to fund" data-i18n-attr="aria-label:avatar_wallet_chat.copy_wallet_address_to_fund_arialabel;title:avatar_wallet_chat.copy_address_title_2">
 								<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
 							</button>
 						</div>
@@ -452,14 +452,14 @@
 			<section id="chat" aria-label="Chat with the avatar">
 				<div id="log">
 					<div id="empty">
-						<h2 id="empty-title">Talk to your avatar</h2>
-						<p id="empty-sub">It holds a Solana wallet and can send SOL when you ask.</p>
+						<h2 id="empty-title" data-i18n="avatar_wallet_chat.talk_to_your_avatar">Talk to your avatar</h2>
+						<p id="empty-sub" data-i18n="avatar_wallet_chat.it_holds_a_solana_wallet_and_can">It holds a Solana wallet and can send SOL when you ask.</p>
 						<div class="chips" id="chips"></div>
 					</div>
 				</div>
 				<form id="composer" autocomplete="off">
 					<input id="input" type="text" placeholder="Ask me anything…" aria-label="Message" />
-					<button id="send" type="submit" aria-label="Send message">
+					<button id="send" type="submit" aria-label="Send message" data-i18n-attr="aria-label:avatar_wallet_chat.send_message_arialabel">
 						<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg>
 					</button>
 				</form>
@@ -865,5 +865,7 @@
 			startActivityPoller();
 			input.focus();
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

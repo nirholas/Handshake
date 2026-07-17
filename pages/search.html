@@ -4,26 +4,26 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Search · three.ws</title>
+		<title data-i18n="search.meta_title">Search · three.ws</title>
 		<meta
 			name="description"
 			content="Search everything on three.ws in one place — avatars, agents, 3D models, worlds, and coins — and remix any published model straight from the results."
-		/>
+		 data-i18n-attr="content:search.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/search" />
-		<meta property="og:title" content="Search · three.ws" />
+		<meta property="og:title" content="Search · three.ws"  data-i18n-attr="content:search.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="One search across every creation type on three.ws — avatars, agents, 3D models, worlds, and coins."
-		/>
+		 data-i18n-attr="content:search.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Search&amp;d=One+search+across+every+creation+type+on+three.ws+%E2%80%94+avatars%2C+agents%2C+3D+models%2C+worlds%2C+and+coins+%E2%80%94+with+remixable+models+remixable+straight+from+the+results.&amp;p=%2Fsearch" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Search · three.ws" />
-		<meta name="twitter:description" content="One search across every creation type on three.ws — avatars, agents, 3D models, worlds, and coins." />
+		<meta name="twitter:title" content="Search · three.ws"  data-i18n-attr="content:search.meta_twitter_title"/>
+		<meta name="twitter:description" content="One search across every creation type on three.ws — avatars, agents, 3D models, worlds, and coins."  data-i18n-attr="content:search.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Search&amp;d=One+search+across+every+creation+type+on+three.ws+%E2%80%94+avatars%2C+agents%2C+3D+models%2C+worlds%2C+and+coins+%E2%80%94+with+remixable+models+remixable+straight+from+the+results.&amp;p=%2Fsearch" />
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -51,9 +51,9 @@
 
 		<main class="sr-shell">
 			<section class="sr-hero">
-				<p class="sr-kicker"><span aria-hidden="true">⌕</span> Cross-entity search</p>
-				<h1 class="sr-title">Search <em>everything</em></h1>
-				<p class="sr-sub">
+				<p class="sr-kicker" data-i18n-html="search.cross_entity_search"><span aria-hidden="true">⌕</span> Cross-entity search</p>
+				<h1 class="sr-title" data-i18n-html="search.search_everything">Search <em>everything</em></h1>
+				<p class="sr-sub" data-i18n="search.one_query_across_every_creation_type_on">
 					One query across every creation type on three.ws — avatars, agents, 3D models, worlds, and coins.
 					Remixable models can be remixed straight from the results.
 				</p>
@@ -67,34 +67,34 @@
 			</section>
 
 			<section class="sr-feed-head">
-				<h2 class="sr-section-h" style="font-family: var(--font-display, sans-serif); font-size: var(--text-lg, 1.05rem); font-weight: 600; margin: 0;">Results</h2>
+				<h2 class="sr-section-h" style="font-family: var(--font-display, sans-serif); font-size: var(--text-lg, 1.05rem); font-weight: 600; margin: 0;" data-i18n="search.results">Results</h2>
 				<span id="sr-count" class="sr-count" aria-live="polite"></span>
 			</section>
 
 			<section id="sr-grid" class="sr-grid" aria-label="Search results"></section>
 
 			<div class="sr-quicklinks" id="sr-quicklinks">
-				<a class="sr-quicklink" href="/creations">
+				<a class="sr-quicklink" href="/creations" data-i18n-html="search.creator_gallery_browse_and_remix_the_live">
 					<span class="sr-quicklink-title">Creator Gallery →</span>
 					<span class="sr-quicklink-desc">Browse and remix the live 3D creation bazaar</span>
 				</a>
-				<a class="sr-quicklink" href="/gallery">
+				<a class="sr-quicklink" href="/gallery" data-i18n-html="search.avatar_gallery_every_public_3d_avatar">
 					<span class="sr-quicklink-title">Avatar Gallery →</span>
 					<span class="sr-quicklink-desc">Every public 3D avatar</span>
 				</a>
-				<a class="sr-quicklink" href="/agents">
+				<a class="sr-quicklink" href="/agents" data-i18n-html="search.agents_index_browse_every_registered_agent">
 					<span class="sr-quicklink-title">Agents Index →</span>
 					<span class="sr-quicklink-desc">Browse every registered agent</span>
 				</a>
-				<a class="sr-quicklink" href="/play">
+				<a class="sr-quicklink" href="/play" data-i18n-html="search.worlds_every_coin_is_a_3d_world">
 					<span class="sr-quicklink-title">Worlds →</span>
 					<span class="sr-quicklink-desc">Every coin is a 3D world — drop in</span>
 				</a>
-				<a class="sr-quicklink" href="/launches">
+				<a class="sr-quicklink" href="/launches" data-i18n-html="search.all_launches_every_agent_launched_coin">
 					<span class="sr-quicklink-title">All Launches →</span>
 					<span class="sr-quicklink-desc">Every agent-launched coin</span>
 				</a>
-				<a class="sr-quicklink" href="/trending">
+				<a class="sr-quicklink" href="/trending" data-i18n-html="search.trending_top_agents_and_top_conviction_coins">
 					<span class="sr-quicklink-title">Trending →</span>
 					<span class="sr-quicklink-desc">Top agents and top conviction coins right now</span>
 				</a>
@@ -104,5 +104,7 @@
 		<script type="module" src="/src/search-page.js"></script>
 		<script src="/brand.js" defer></script>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

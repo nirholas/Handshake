@@ -4,7 +4,7 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Pole Club · three.ws</title>
+		<title data-i18n="club.meta_title">Pole Club · three.ws</title>
 		<meta
 			name="viewport"
 			content="width=device-width, initial-scale=1, viewport-fit=cover"
@@ -13,7 +13,7 @@
 		<meta
 			name="description"
 			content="A 3D pole-dancing club where dancers only come out when you send an x402 USDC micro-tip. Pay $0.001 per routine, settled on-chain on Solana."
-		/>
+		 data-i18n-attr="content:club.meta_description"/>
 		<meta name="theme-color" content="#060606" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -24,11 +24,11 @@
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Pole Club · three.ws" />
+		<meta property="og:title" content="Pole Club · three.ws"  data-i18n-attr="content:club.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Tip a dancer in USDC via x402 — she takes the pole, performs her routine, and returns to her stance."
-		/>
+		 data-i18n-attr="content:club.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/club" />
 
 		<!-- Design tokens + canonical button styles so the shared on-chain primer
@@ -1907,8 +1907,8 @@
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Pole Club · three.ws">
-	<meta name="twitter:description" content="A 3D club where dancers only perform when you send a micro-tip. Pay $0.001 per routine, settled on-chain via x402 on Solana.">
+	<meta name="twitter:title" content="Pole Club · three.ws" data-i18n-attr="content:club.meta_twitter_title">
+	<meta name="twitter:description" content="A 3D club where dancers only perform when you send a micro-tip. Pay $0.001 per routine, settled on-chain via x402 on Solana." data-i18n-attr="content:club.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Pole+Club&amp;d=A+3D+club+where+dancers+only+perform+when+you+send+a+micro-tip.+Pay+%240.001+per+routine%2C+settled+on-chain+via+x402+on+Solana.&amp;p=%2Fclub">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Pole Club","description":"A 3D club where dancers only perform when you send a micro-tip. Pay $0.001 per routine, settled on-chain via x402 on Solana.","url":"https://three.ws/club","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -1919,7 +1919,7 @@
 </head>
 	<body>
 		<!-- Skip-to-content link for keyboard/screen-reader users -->
-		<a href="#club-stage" class="club-skip-link" id="club-skip-link">Skip to stage</a>
+		<a href="#club-stage" class="club-skip-link" id="club-skip-link" data-i18n="club.skip_to_stage">Skip to stage</a>
 
 		<!-- Entrance overlay — fades out over 1s on load -->
 		<div id="club-entrance" class="club-entrance" aria-hidden="true"></div>
@@ -1933,8 +1933,8 @@
 		<div id="club-loader" class="club-loader" role="status" aria-live="polite">
 			<div class="club-loader-inner">
 				<div class="club-loader-kicker">three.ws</div>
-				<h1 class="club-loader-title">Pole<span>Club</span></h1>
-				<p class="club-loader-tagline">Step into the alley and walk it in. Tip a dancer and she takes the pole.</p>
+				<h1 class="club-loader-title" data-i18n-html="club.poleclub">Pole<span>Club</span></h1>
+				<p class="club-loader-tagline" data-i18n="club.step_into_the_alley_and_walk_it">Step into the alley and walk it in. Tip a dancer and she takes the pole.</p>
 				<div class="club-loader-track"><div id="club-loader-bar" class="club-loader-bar"></div></div>
 				<div id="club-loader-status" class="club-loader-status">Loading the night…</div>
 			</div>
@@ -1943,31 +1943,31 @@
 		<!-- Controller UI for the walk in (toggled by src/club-entrance.js). -->
 		<nav id="club-journey" class="club-journey" aria-label="Walk-in progress">
 			<ol class="club-journey-steps">
-				<li class="club-journey-step" data-step="0"><span class="cj-dot"></span><span class="cj-label">Alley</span></li>
-				<li class="club-journey-step" data-step="1"><span class="cj-dot"></span><span class="cj-label">Gallery</span></li>
-				<li class="club-journey-step" data-step="2"><span class="cj-dot"></span><span class="cj-label">Clubhouse</span></li>
-				<li class="club-journey-step" data-step="3"><span class="cj-dot"></span><span class="cj-label">Stage</span></li>
+				<li class="club-journey-step" data-step="0" data-i18n-html="club.alley"><span class="cj-dot"></span><span class="cj-label">Alley</span></li>
+				<li class="club-journey-step" data-step="1" data-i18n-html="club.gallery"><span class="cj-dot"></span><span class="cj-label">Gallery</span></li>
+				<li class="club-journey-step" data-step="2" data-i18n-html="club.clubhouse"><span class="cj-dot"></span><span class="cj-label">Clubhouse</span></li>
+				<li class="club-journey-step" data-step="3" data-i18n-html="club.stage"><span class="cj-dot"></span><span class="cj-label">Stage</span></li>
 			</ol>
 		</nav>
 		<div id="club-agent-switch" class="club-agent-switch">
-			<span class="club-agent-label">Agent</span>
+			<span class="club-agent-label" data-i18n="club.agent">Agent</span>
 			<select id="club-agent-select" class="club-agent-select" aria-label="Choose which agent you walk as">
-				<option value="">Loading…</option>
+				<option value="" data-i18n="club.loading">Loading…</option>
 			</select>
-			<button id="club-agent-browse" type="button" class="club-agent-browse" aria-label="Browse all 3D agents">
+			<button id="club-agent-browse" type="button" class="club-agent-browse" aria-label="Browse all 3D agents" data-i18n-attr="aria-label:club.browse_all_3d_agents_arialabel">
 				<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
 				Browse
 			</button>
 		</div>
 		<div id="club-minimap" class="club-minimap" aria-hidden="true">
 			<div class="club-minimap-head">
-				<span id="club-minimap-label" class="club-minimap-label">Alley</span>
-				<span class="club-minimap-tag">You · Door</span>
+				<span id="club-minimap-label" class="club-minimap-label" data-i18n="club.alley_2">Alley</span>
+				<span class="club-minimap-tag" data-i18n="club.you_door">You · Door</span>
 			</div>
 			<canvas id="club-minimap-canvas" class="club-minimap-canvas"></canvas>
 		</div>
 		<div id="club-controls-hint" class="club-controls-hint" role="status" aria-live="polite"></div>
-		<button id="club-door-prompt" type="button" class="club-door-prompt" aria-label="Enter the club">
+		<button id="club-door-prompt" type="button" class="club-door-prompt" aria-label="Enter the club" data-i18n-html="club.enter_the_club_e" data-i18n-attr="aria-label:club.enter_the_club_arialabel">
 			Enter the club <kbd>E</kbd>
 		</button>
 		<div id="club-joystick" class="club-joystick" aria-hidden="true">
@@ -1995,44 +1995,44 @@
 
 				<!-- QUEUE: pay the cover -->
 				<div class="club-door-state is-queue">
-					<p class="club-door-eyebrow">At the door</p>
-					<h1 id="club-door-title" class="club-door-title">Pole Club</h1>
-					<p class="club-door-copy">
+					<p class="club-door-eyebrow" data-i18n="club.at_the_door">At the door</p>
+					<h1 id="club-door-title" class="club-door-title" data-i18n="club.pole_club">Pole Club</h1>
+					<p class="club-door-copy" data-i18n-html="club.there_s_a_cover_tonight_pay_0">
 						There's a cover tonight. Pay <b>$0.01 USDC</b> — the bouncer checks
 						your wallet on-chain, and if you're on the list, the rope drops and
 						you walk inside.
 					</p>
-					<button type="button" id="club-door-pay" class="club-door-pay">
+					<button type="button" id="club-door-pay" class="club-door-pay" data-i18n="club.pay_cover_0_01_to_enter">
 						Pay cover · $0.01 to enter
 					</button>
 					<p class="club-door-msg" id="club-door-msg" hidden></p>
-					<p class="club-door-fine">
+					<p class="club-door-fine" data-i18n-html="club.settled_on_chain_via_x402_on_solana">
 						Settled on-chain via <b>x402</b> on Solana. One cover gets
 						you in for the night.
 					</p>
-					<button type="button" id="club-door-back" class="club-door-back">← Back to the alley</button>
+					<button type="button" id="club-door-back" class="club-door-back" data-i18n="club.back_to_the_alley">← Back to the alley</button>
 				</div>
 
 				<!-- CHECKING: bouncer reads the list -->
 				<div class="club-door-state is-checking">
 					<div class="club-door-spinner" aria-hidden="true"></div>
-					<p class="club-door-eyebrow">At the door</p>
-					<h1 class="club-door-title">Checking the list…</h1>
-					<p class="club-door-copy">Verifying your wallet on-chain.</p>
+					<p class="club-door-eyebrow" data-i18n="club.at_the_door_2">At the door</p>
+					<h1 class="club-door-title" data-i18n="club.checking_the_list">Checking the list…</h1>
+					<p class="club-door-copy" data-i18n="club.verifying_your_wallet_on_chain">Verifying your wallet on-chain.</p>
 				</div>
 
 				<!-- ADMITTED -->
 				<div class="club-door-state is-admitted" role="status" aria-live="polite">
 					<div class="club-door-result-icon" aria-hidden="true">🎟️</div>
-					<h1 class="club-door-title">You're in</h1>
+					<h1 class="club-door-title" data-i18n="club.you_re_in">You're in</h1>
 					<p class="club-door-tier" id="club-door-tier"></p>
 				</div>
 
 				<!-- DENIED -->
 				<div class="club-door-state is-denied" role="status" aria-live="polite">
 					<div class="club-door-result-icon" aria-hidden="true">🚫</div>
-					<h1 class="club-door-title">Not tonight</h1>
-					<p class="club-door-reason" id="club-door-reason">Not on the list tonight.</p>
+					<h1 class="club-door-title" data-i18n="club.not_tonight">Not tonight</h1>
+					<p class="club-door-reason" id="club-door-reason" data-i18n="club.not_on_the_list_tonight">Not on the list tonight.</p>
 				</div>
 			</div>
 		</div>
@@ -2041,30 +2041,30 @@
 			<!-- TOP BAR -->
 			<header id="club-top">
 				<div class="brand">
-					<a href="/" title="three.ws home">three.ws</a>
+					<a href="/" title="three.ws home" data-i18n="club.three_ws" data-i18n-attr="title:club.three_ws_home_title">three.ws</a>
 					<span>/</span>
 					<span class="dot" aria-hidden="true"></span>
-					<span>Pole Club</span>
+					<span data-i18n="club.pole_club_2">Pole Club</span>
 				</div>
 				<span class="sep"></span>
-				<span class="tagline">tip in USDC · she dances</span>
+				<span class="tagline" data-i18n="club.tip_in_usdc_she_dances">tip in USDC · she dances</span>
 				<span class="spacer"></span>
-				<span class="club-pill">$0.001 / dance</span>
-				<span class="club-pill club-pill-blue">x402 · Solana</span>
+				<span class="club-pill" data-i18n="club.0_001_dance">$0.001 / dance</span>
+				<span class="club-pill club-pill-blue" data-i18n="club.x402_solana">x402 · Solana</span>
 				<button
 					id="club-audio-toggle"
 					type="button"
 					class="club-pill club-pill-toggle"
 					aria-pressed="false"
 					title="Toggle club audio (mute)"
-				>🔊 Audio on</button>
+				 data-i18n="club.audio_on" data-i18n-attr="title:club.toggle_club_audio_mute_title">🔊 Audio on</button>
 				<button
 					id="club-spatial-toggle"
 					type="button"
 					class="club-pill club-pill-toggle club-pill-8d"
 					aria-pressed="false"
 					title="8D audio — orbits the sound around your head (headphones recommended)"
-				>🎧 8D off</button>
+				 data-i18n="club.8d_off" data-i18n-attr="title:club.8d_audio_orbits_the_sound_ar_title">🎧 8D off</button>
 			</header>
 
 			<!-- STAGE -->
@@ -2078,10 +2078,10 @@
 				<span class="club-presence-dot"></span>
 				<span id="club-viewer-count">1</span> watching
 				<div class="club-reactions" id="club-reactions">
-					<button type="button" class="club-react-btn" data-react="fire" title="Fire">🔥</button>
-					<button type="button" class="club-react-btn" data-react="heart" title="Love">❤️</button>
-					<button type="button" class="club-react-btn" data-react="money" title="Money">💰</button>
-					<button type="button" class="club-react-btn" data-react="clap" title="Clap">👏</button>
+					<button type="button" class="club-react-btn" data-react="fire" title="Fire" data-i18n-attr="title:club.fire_title">🔥</button>
+					<button type="button" class="club-react-btn" data-react="heart" title="Love" data-i18n-attr="title:club.love_title">❤️</button>
+					<button type="button" class="club-react-btn" data-react="money" title="Money" data-i18n-attr="title:club.money_title">💰</button>
+					<button type="button" class="club-react-btn" data-react="clap" title="Clap" data-i18n-attr="title:club.clap_title">👏</button>
 				</div>
 			</div>
 			<div id="club-reaction-canvas" class="club-reaction-canvas" aria-hidden="true"></div>
@@ -2094,14 +2094,14 @@
 					aria-label="Expand or collapse panel"
 					aria-controls="club-right"
 					aria-expanded="false"
-				></button>
+				 data-i18n-attr="aria-label:club.expand_or_collapse_panel_arialabel"></button>
 
 				<div class="club-neon-title" aria-hidden="true">Pole Club</div>
 				<div class="club-neon-subtitle" aria-hidden="true">three.ws</div>
 
 				<section class="club-section" aria-label="How it works">
-					<h2 id="club-howto-heading">How it works</h2>
-					<p class="club-intro">
+					<h2 id="club-howto-heading" data-i18n="club.how_it_works">How it works</h2>
+					<p class="club-intro" data-i18n-html="club.three_poles_three_dancers_waiting_at_them">
 						Three poles, three dancers waiting at them. Pick a pole, pick a style, hit
 						<b>Tip</b>. Your wallet signs a <b>$0.001 USDC</b> x402 payment, the
 						server settles it on-chain, and she takes the pole and performs her
@@ -2110,29 +2110,29 @@
 				</section>
 
 				<section class="club-section" aria-label="Pole stations">
-					<h2 id="club-poles-heading">Poles</h2>
+					<h2 id="club-poles-heading" data-i18n="club.poles">Poles</h2>
 					<div id="club-poles" role="list" aria-labelledby="club-poles-heading"></div>
 					<label class="club-toggle" for="club-auto-follow">
 						<input type="checkbox" id="club-auto-follow" aria-describedby="club-auto-follow-desc" />
-						<span id="club-auto-follow-desc">Auto-follow tips (orbit cam during dance)</span>
+						<span id="club-auto-follow-desc" data-i18n="club.auto_follow_tips_orbit_cam_during_dance">Auto-follow tips (orbit cam during dance)</span>
 					</label>
 					<label class="club-toggle" for="club-power-saver">
 						<input type="checkbox" id="club-power-saver" aria-describedby="club-power-saver-desc" />
-						<span id="club-power-saver-desc">Power saver (30fps, lighter effects — cooler, quieter machine)</span>
+						<span id="club-power-saver-desc" data-i18n="club.power_saver_30fps_lighter_effects_cooler_qui">Power saver (30fps, lighter effects — cooler, quieter machine)</span>
 					</label>
-					<p class="club-hint">
+					<p class="club-hint" data-i18n-html="club.shortcuts_1_3_vip_0_overhead_esc">
 						Shortcuts: <b>1</b>-<b>3</b> VIP <b>0</b> overhead <b>Esc</b> free
 					</p>
 				</section>
 
 				<section class="club-section" aria-label="Leaderboard">
 					<details class="club-lb-details" id="club-lb-details">
-						<summary>Leaderboard</summary>
-						<h2 id="club-lb-heading">Leaderboard</h2>
+						<summary data-i18n="club.leaderboard">Leaderboard</summary>
+						<h2 id="club-lb-heading" data-i18n="club.leaderboard_2">Leaderboard</h2>
 						<div class="club-lb-tabs" role="tablist" aria-label="Leaderboard time window">
-							<button type="button" class="club-lb-tab is-active" data-window="day" role="tab" aria-selected="true" aria-controls="club-lb-rows">24h</button>
-							<button type="button" class="club-lb-tab" data-window="hour" role="tab" aria-selected="false" aria-controls="club-lb-rows">1h</button>
-							<button type="button" class="club-lb-tab" data-window="all" role="tab" aria-selected="false" aria-controls="club-lb-rows">All</button>
+							<button type="button" class="club-lb-tab is-active" data-window="day" role="tab" aria-selected="true" aria-controls="club-lb-rows" data-i18n="club.24h">24h</button>
+							<button type="button" class="club-lb-tab" data-window="hour" role="tab" aria-selected="false" aria-controls="club-lb-rows" data-i18n="club.1h">1h</button>
+							<button type="button" class="club-lb-tab" data-window="all" role="tab" aria-selected="false" aria-controls="club-lb-rows" data-i18n="club.all">All</button>
 						</div>
 						<div id="club-lb-rows" role="tabpanel" aria-labelledby="club-lb-heading">
 							<div class="club-lb-skeleton" aria-label="Loading leaderboard"></div>
@@ -2144,7 +2144,7 @@
 
 				<section class="club-section" aria-label="Live tip feed">
 					<div class="club-feed-head">
-						<h2 id="club-feed-heading">Live tips</h2>
+						<h2 id="club-feed-heading" data-i18n="club.live_tips">Live tips</h2>
 						<span id="club-feed-status" class="club-feed-status" hidden></span>
 					</div>
 					<div id="club-tip-feed" role="log" aria-live="polite" aria-labelledby="club-feed-heading">
@@ -2157,11 +2157,11 @@
 			<div class="club-status-bar" role="status" aria-label="Club status">
 				<div class="club-status-bar-left">
 					<span class="club-conn-dot" id="club-conn-dot" aria-hidden="true"></span>
-					<span id="club-conn-label">Connected</span>
+					<span id="club-conn-label" data-i18n="club.connected">Connected</span>
 				</div>
 				<div class="club-status-bar-right">
 					<span id="club-clock"></span>
-					<span id="club-viewer-bar-count">1 watching</span>
+					<span id="club-viewer-bar-count" data-i18n="club.1_watching">1 watching</span>
 				</div>
 			</div>
 		</div>
@@ -2173,10 +2173,10 @@
 			<div class="club-pick-modal" role="dialog" aria-modal="true" aria-labelledby="club-pick-title">
 				<div class="club-pick-head">
 					<div>
-						<h3 id="club-pick-title">Choose an avatar</h3>
-						<p id="club-pick-sub">Pick who dances on this pole — swaps live on stage.</p>
+						<h3 id="club-pick-title" data-i18n="club.choose_an_avatar">Choose an avatar</h3>
+						<p id="club-pick-sub" data-i18n="club.pick_who_dances_on_this_pole_swaps">Pick who dances on this pole — swaps live on stage.</p>
 					</div>
-					<button class="club-pick-x" id="club-pick-close" aria-label="Close avatar picker">
+					<button class="club-pick-x" id="club-pick-close" aria-label="Close avatar picker" data-i18n-attr="aria-label:club.close_avatar_picker_arialabel">
 						<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>
 					</button>
 				</div>
@@ -2327,5 +2327,7 @@
 		}
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

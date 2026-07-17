@@ -6,16 +6,16 @@
 		     after the site theme boot): the editor chrome only ships dark. -->
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Scene Studio · Assemble 3D worlds · three.ws</title>
+		<title data-i18n="scene.meta_title">Scene Studio · Assemble 3D worlds · three.ws</title>
 		<meta
 			name="description"
 			content="A full 3D scene editor in the browser. Import GLB models, arrange them with transform gizmos, edit materials and lights, and export complete scenes."
-		/>
-		<meta property="og:title" content="Scene Studio — Assemble 3D worlds · three.ws" />
+		 data-i18n-attr="content:scene.meta_description"/>
+		<meta property="og:title" content="Scene Studio — Assemble 3D worlds · three.ws"  data-i18n-attr="content:scene.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="A full 3D scene editor in the browser. Import models, compose scenes, edit materials and lights, export GLB."
-		/>
+		 data-i18n-attr="content:scene.meta_og_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/scene" />
@@ -24,11 +24,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Scene Studio · Assemble 3D worlds · three.ws" />
+		<meta name="twitter:title" content="Scene Studio · Assemble 3D worlds · three.ws"  data-i18n-attr="content:scene.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="A full 3D scene editor in the browser. Import models, compose scenes, edit materials and lights, export GLB."
-		/>
+		 data-i18n-attr="content:scene.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Scene+Studio&amp;d=Full+3D+scene+editor+in+the+browser+%E2%80%94+import+GLB+models%2C+arrange+them+with+transform+gizmos%2C+edit+materials+and+lights%2C+and+export+complete+scenes.&amp;p=%2Fscene" />
 		<meta name="theme-color" content="#080814" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -82,5 +82,7 @@
 
 		<script src="/nav.js" defer></script>
 		<script type="module" src="/src/scene-studio/main.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

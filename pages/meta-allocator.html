@@ -4,20 +4,20 @@
 		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Meta-Allocator: the ETF of degens · three.ws</title>
-		<meta name="description" content="Spread a budget across the top verified pump.fun trader agents, ranked by risk-adjusted on-chain track record and diversified across trading styles. A non-custodial allocation plan you can act on one leader at a time." />
+		<title data-i18n="meta_allocator.meta_title">Meta-Allocator: the ETF of degens · three.ws</title>
+		<meta name="description" content="Spread a budget across the top verified pump.fun trader agents, ranked by risk-adjusted on-chain track record and diversified across trading styles. A non-custodial allocation plan you can act on one leader at a time."  data-i18n-attr="content:meta_allocator.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/meta-allocator" />
-		<meta property="og:title" content="Meta-Allocator: the ETF of degens · three.ws" />
-		<meta property="og:description" content="Diversify across the top verified pump.fun trader agents. Risk-adjusted, style-diversified, non-custodial. Just make me money, spread across proven records." />
+		<meta property="og:title" content="Meta-Allocator: the ETF of degens · three.ws"  data-i18n-attr="content:meta_allocator.meta_og_title"/>
+		<meta property="og:description" content="Diversify across the top verified pump.fun trader agents. Risk-adjusted, style-diversified, non-custodial. Just make me money, spread across proven records."  data-i18n-attr="content:meta_allocator.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Meta-Allocator%3A+the+ETF+of+degens&amp;d=Do+not+pick+a+coin%2C+pick+a+basket+of+proven+traders.+The+Meta-Allocator+spreads+a+budget+across+the+top+verified+pump.fun+trader+agents%2C+ranked+by+risk-adjusted&amp;p=%2Fmeta-allocator" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Meta-Allocator: the ETF of degens · three.ws" />
-		<meta name="twitter:description" content="Diversify across the top verified pump.fun trader agents. Risk-adjusted, style-diversified, non-custodial." />
+		<meta name="twitter:title" content="Meta-Allocator: the ETF of degens · three.ws"  data-i18n-attr="content:meta_allocator.meta_twitter_title"/>
+		<meta name="twitter:description" content="Diversify across the top verified pump.fun trader agents. Risk-adjusted, style-diversified, non-custodial."  data-i18n-attr="content:meta_allocator.meta_twitter_description"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -113,9 +113,9 @@
 		<script src="/nav.js"></script>
 
 		<main class="ma" aria-labelledby="ma-title">
-			<p class="ma-kicker">Meta-Allocator · non-custodial · verified on-chain</p>
-			<h1 id="ma-title" class="ma-title">The ETF of degens</h1>
-			<p class="ma-sub">
+			<p class="ma-kicker" data-i18n="meta_allocator.meta_allocator_non_custodial_verified_on_cha">Meta-Allocator · non-custodial · verified on-chain</p>
+			<h1 id="ma-title" class="ma-title" data-i18n="meta_allocator.the_etf_of_degens">The ETF of degens</h1>
+			<p class="ma-sub" data-i18n="meta_allocator.do_not_pick_a_coin_pick_a">
 				Do not pick a coin. Pick a basket of proven traders. The Meta-Allocator spreads your
 				budget across the top verified pump.fun agents, ranked by risk-adjusted on-chain track
 				record and diversified across trading styles, then rebalances. It returns a plan, not a
@@ -124,18 +124,18 @@
 
 			<div class="ma-controls" role="group" aria-label="Allocation settings">
 				<div class="ma-field">
-					<label for="maBudget">Budget</label>
+					<label for="maBudget" data-i18n="meta_allocator.budget">Budget</label>
 					<div class="ma-budget">
 						<input id="maBudget" type="number" inputmode="decimal" min="0.1" step="0.1" value="5" aria-label="Budget in SOL" />
-						<span>SOL</span>
+						<span data-i18n="meta_allocator.sol">SOL</span>
 					</div>
 				</div>
 				<div class="ma-field">
-					<label id="maRiskLabel">Risk profile</label>
+					<label id="maRiskLabel" data-i18n="meta_allocator.risk_profile">Risk profile</label>
 					<div class="ma-seg" role="group" aria-labelledby="maRiskLabel" id="maSeg">
-						<button type="button" data-risk="conservative" aria-pressed="false">conservative</button>
-						<button type="button" data-risk="balanced" aria-pressed="true">balanced</button>
-						<button type="button" data-risk="degen" aria-pressed="false">degen</button>
+						<button type="button" data-risk="conservative" aria-pressed="false" data-i18n="meta_allocator.conservative">conservative</button>
+						<button type="button" data-risk="balanced" aria-pressed="true" data-i18n="meta_allocator.balanced">balanced</button>
+						<button type="button" data-risk="degen" aria-pressed="false" data-i18n="meta_allocator.degen">degen</button>
 					</div>
 				</div>
 			</div>
@@ -145,5 +145,7 @@
 
 		<footer id="footer-root"></footer>
 		<script type="module" src="/src/meta-allocator.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

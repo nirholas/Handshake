@@ -10,11 +10,11 @@
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Voice Lab · three.ws</title>
-		<meta name="description" content="Clone your voice in seconds. Record, preview, and use your cloned voice across three.ws avatars and agents." />
+		<title data-i18n="voice.meta_title">Voice Lab · three.ws</title>
+		<meta name="description" content="Clone your voice in seconds. Record, preview, and use your cloned voice across three.ws avatars and agents."  data-i18n-attr="content:voice.meta_description"/>
 		<link rel="canonical" href="https://three.ws/voice" />
-		<meta property="og:title" content="Voice Lab · three.ws" />
-		<meta property="og:description" content="Clone your voice and give your 3D avatars and AI agents a unique voice. Record 20-30 seconds and get an instant voice clone." />
+		<meta property="og:title" content="Voice Lab · three.ws"  data-i18n-attr="content:voice.meta_og_title"/>
+		<meta property="og:description" content="Clone your voice and give your 3D avatars and AI agents a unique voice. Record 20-30 seconds and get an instant voice clone."  data-i18n-attr="content:voice.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/voice" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<link rel="stylesheet" href="/style.css" />
@@ -657,8 +657,8 @@
 	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Voice+Lab&amp;d=Clone+your+voice+from+a+short+recording%2C+then+use+it+for+TTS+or+give+it+to+your+agent.+Side-by-side+comparison+of+voice+models.&amp;p=%2Fvoice">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
-	<meta name="twitter:title" content="Voice Lab · three.ws">
-	<meta name="twitter:description" content="Clone your voice from a short recording, then use it for TTS or give it to your agent. Side-by-side comparison of voice models.">
+	<meta name="twitter:title" content="Voice Lab · three.ws" data-i18n-attr="content:voice.meta_twitter_title">
+	<meta name="twitter:description" content="Clone your voice from a short recording, then use it for TTS or give it to your agent. Side-by-side comparison of voice models." data-i18n-attr="content:voice.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Voice+Lab&amp;d=Clone+your+voice+from+a+short+recording%2C+then+use+it+for+TTS+or+give+it+to+your+agent.+Side-by-side+comparison+of+voice+models.&amp;p=%2Fvoice">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Voice Lab","description":"Clone your voice from a short recording, then use it for TTS or give it to your agent. Side-by-side comparison of voice models.","url":"https://three.ws/voice","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -672,8 +672,8 @@
 
 		<main class="vl-root">
 			<div class="vl-header">
-				<h1>Voice Lab</h1>
-				<p>Clone your voice in seconds. Record 20-30 seconds of clear speech, and we'll create a digital replica you can use across your avatars and agents.</p>
+				<h1 data-i18n="voice.voice_lab">Voice Lab</h1>
+				<p data-i18n="voice.clone_your_voice_in_seconds_record_20">Clone your voice in seconds. Record 20-30 seconds of clear speech, and we'll create a digital replica you can use across your avatars and agents.</p>
 			</div>
 
 			<!-- ── Recorder ─────────────────────────────── -->
@@ -698,16 +698,16 @@
 						<div class="vl-script-text" id="scriptText"></div>
 						<div class="vl-script-nav">
 							<div class="vl-script-dots" id="scriptDots"></div>
-							<button class="vl-script-next" id="scriptNext">Next prompt</button>
+							<button class="vl-script-next" id="scriptNext" data-i18n="voice.next_prompt">Next prompt</button>
 						</div>
 					</div>
 
 					<div class="vl-controls" id="controls">
-						<button class="vl-btn vl-btn-record" id="btnRecord">
+						<button class="vl-btn vl-btn-record" id="btnRecord" data-i18n-html="voice.start_recording">
 							<span class="vl-rec-dot-icon"></span>
 							Start recording
 						</button>
-						<button class="vl-btn vl-btn-stop" id="btnStop">
+						<button class="vl-btn vl-btn-stop" id="btnStop" data-i18n="voice.stop_recording">
 							Stop recording
 						</button>
 					</div>
@@ -716,13 +716,13 @@
 						<audio id="reviewAudio" controls></audio>
 						<div class="vl-review-row">
 							<div class="vl-review-field">
-								<label for="voiceName">Voice name</label>
+								<label for="voiceName" data-i18n="voice.voice_name">Voice name</label>
 								<input type="text" id="voiceName" placeholder="e.g. My Voice" maxlength="64" />
 							</div>
 						</div>
 						<div class="vl-review-actions">
-							<button class="vl-btn vl-btn-primary" id="btnClone">Clone voice</button>
-							<button class="vl-btn vl-btn-ghost vl-btn-sm" id="btnRerecord">Re-record</button>
+							<button class="vl-btn vl-btn-primary" id="btnClone" data-i18n="voice.clone_voice">Clone voice</button>
+							<button class="vl-btn vl-btn-ghost vl-btn-sm" id="btnRerecord" data-i18n="voice.re_record">Re-record</button>
 						</div>
 						<div class="vl-cloning-overlay">
 							<div class="vl-spinner"></div>
@@ -734,9 +734,9 @@
 								<div class="vl-done-text" id="doneText">Voice cloned successfully</div>
 							</div>
 							<div class="vl-done-actions">
-								<button class="vl-btn vl-btn-primary vl-btn-sm" id="btnTryPlayground">Try in playground</button>
-									<a class="vl-btn vl-btn-ghost vl-btn-sm" id="btnAttachAgent" href="/dashboard">Add to an agent</a>
-								<button class="vl-btn vl-btn-ghost vl-btn-sm" id="btnRecordAnother">Record another</button>
+								<button class="vl-btn vl-btn-primary vl-btn-sm" id="btnTryPlayground" data-i18n="voice.try_in_playground">Try in playground</button>
+									<a class="vl-btn vl-btn-ghost vl-btn-sm" id="btnAttachAgent" href="/dashboard" data-i18n="voice.add_to_an_agent">Add to an agent</a>
+								<button class="vl-btn vl-btn-ghost vl-btn-sm" id="btnRecordAnother" data-i18n="voice.record_another">Record another</button>
 							</div>
 						</div>
 					</div>
@@ -748,7 +748,7 @@
 			<!-- ── Voice Library ─────────────────────────── -->
 			<div class="vl-section" id="librarySection">
 				<div class="vl-section-head">
-					<h2 class="vl-section-title">My Voices</h2>
+					<h2 class="vl-section-title" data-i18n="voice.my_voices">My Voices</h2>
 				</div>
 				<div id="voiceLibrary">
 					<div class="vl-empty">
@@ -761,27 +761,27 @@
 			<!-- ── TTS Playground ────────────────────────── -->
 			<div class="vl-section" id="playgroundSection">
 				<div class="vl-section-head">
-					<h2 class="vl-section-title">Text-to-Speech Playground</h2>
+					<h2 class="vl-section-title" data-i18n="voice.text_to_speech_playground">Text-to-Speech Playground</h2>
 				</div>
 				<div class="vl-card">
 					<div class="vl-card-body">
 						<div class="vl-pg-row">
 							<div class="vl-pg-field">
-								<label for="pgVoice">Voice</label>
+								<label for="pgVoice" data-i18n="voice.voice">Voice</label>
 								<select id="pgVoice">
-									<option value="" disabled selected>Clone a voice first</option>
+									<option value="" disabled selected data-i18n="voice.clone_a_voice_first">Clone a voice first</option>
 								</select>
 							</div>
 						</div>
 						<textarea class="vl-pg-textarea" id="pgText" placeholder="Type something to hear it spoken..." maxlength="500">Hello, I'm a three.ws agent. Nice to meet you.</textarea>
 						<div class="vl-pg-samples" id="pgSamples">
-							<button class="vl-pg-sample" data-text="Welcome to three.ws, the home of agentic 3D characters.">Welcome</button>
-							<button class="vl-pg-sample" data-text="Numbers test: one, two, three, four, five, six, seven, eight, nine, ten.">Numbers</button>
-							<button class="vl-pg-sample" data-text="The quick brown fox jumps over the lazy dog. She sells seashells by the seashore.">Diction</button>
-							<button class="vl-pg-sample" data-text="I believe technology should serve people. The future of interaction lies in natural, conversational interfaces that feel like talking to a friend.">Natural speech</button>
+							<button class="vl-pg-sample" data-text="Welcome to three.ws, the home of agentic 3D characters." data-i18n="voice.welcome">Welcome</button>
+							<button class="vl-pg-sample" data-text="Numbers test: one, two, three, four, five, six, seven, eight, nine, ten." data-i18n="voice.numbers">Numbers</button>
+							<button class="vl-pg-sample" data-text="The quick brown fox jumps over the lazy dog. She sells seashells by the seashore." data-i18n="voice.diction">Diction</button>
+							<button class="vl-pg-sample" data-text="I believe technology should serve people. The future of interaction lies in natural, conversational interfaces that feel like talking to a friend." data-i18n="voice.natural_speech">Natural speech</button>
 						</div>
 						<div class="vl-pg-actions">
-							<button class="vl-btn vl-btn-primary" id="pgSpeak" disabled>Speak</button>
+							<button class="vl-btn vl-btn-primary" id="pgSpeak" disabled data-i18n="voice.speak">Speak</button>
 							<span class="vl-pg-hint" id="pgHint" style="font-size:12px;color:#666666;"></span>
 						</div>
 						<div class="vl-pg-output" id="pgOutput">
@@ -797,5 +797,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

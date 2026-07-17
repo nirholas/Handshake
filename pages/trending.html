@@ -5,21 +5,21 @@
 	<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-	<title>Trending · three.ws</title>
-	<meta name="description" content="What's hot on three.ws — top AI agents by real chat activity, the most trusted agents by real wallet-trust score, and top Oracle conviction coins." />
+	<title data-i18n="trending.meta_title">Trending · three.ws</title>
+	<meta name="description" content="What's hot on three.ws — top AI agents by real chat activity, the most trusted agents by real wallet-trust score, and top Oracle conviction coins."  data-i18n-attr="content:trending.meta_description"/>
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="stylesheet" href="/fonts/fonts.css" />
 	<link rel="canonical" href="https://three.ws/trending" />
-	<meta property="og:title" content="Trending — three.ws" />
-	<meta property="og:description" content="Top 3D AI agents by real chat activity. Top conviction coins by Oracle score." />
+	<meta property="og:title" content="Trending — three.ws"  data-i18n-attr="content:trending.meta_og_title"/>
+	<meta property="og:description" content="Top 3D AI agents by real chat activity. Top conviction coins by Oracle score."  data-i18n-attr="content:trending.meta_og_description"/>
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Trending+%E2%80%94+Top+Agents+%26+Coins+on+three.ws&amp;d=What%E2%80%99s+hot+on+three.ws+right+now.+Top+3D+AI+agents+ranked+by+real+chat+activity+and+top+Oracle+conviction+coins+by+score%2C+with+24h%2F7d%2Fall-time+windows.&amp;p=%2Ftrending" />
 	<meta name="twitter:card" content="summary_large_image" />
 
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
 	<meta property="og:url" content="https://three.ws/trending">
-	<meta name="twitter:title" content="Trending — Top Agents &amp; Coins on three.ws · three.ws">
-	<meta name="twitter:description" content="What’s hot on three.ws right now. Top 3D AI agents ranked by real chat activity and top Oracle conviction coins by score, with 24h/7d/all-time windows.">
+	<meta name="twitter:title" content="Trending — Top Agents &amp; Coins on three.ws · three.ws" data-i18n-attr="content:trending.meta_twitter_title">
+	<meta name="twitter:description" content="What’s hot on three.ws right now. Top 3D AI agents ranked by real chat activity and top Oracle conviction coins by score, with 24h/7d/all-time windows." data-i18n-attr="content:trending.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Trending+%E2%80%94+Top+Agents+%26+Coins+on+three.ws&amp;d=What%E2%80%99s+hot+on+three.ws+right+now.+Top+3D+AI+agents+ranked+by+real+chat+activity+and+top+Oracle+conviction+coins+by+score%2C+with+24h%2F7d%2Fall-time+windows.&amp;p=%2Ftrending">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Trending — Top Agents & Coins on three.ws","description":"What’s hot on three.ws right now. Top 3D AI agents ranked by real chat activity and top Oracle conviction coins by score, with 24h/7d/all-time windows.","url":"https://three.ws/trending","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -33,28 +33,28 @@
 
 	<main class="tr-main" id="main">
 		<div class="tr-head">
-			<h1 class="tr-h1">Trending</h1>
-			<p class="tr-sub">What's hot on three.ws right now.</p>
+			<h1 class="tr-h1" data-i18n="trending.trending">Trending</h1>
+			<p class="tr-sub" data-i18n="trending.what_s_hot_on_three_ws_right">What's hot on three.ws right now.</p>
 		</div>
 
 		<div class="tr-controls">
 			<div class="tr-tabs" role="tablist">
-				<button class="tr-tab active" role="tab" aria-selected="true"  data-tab="agents">Agents</button>
-				<button class="tr-tab"        role="tab" aria-selected="false" data-tab="trusted">Trusted</button>
-				<button class="tr-tab"        role="tab" aria-selected="false" data-tab="coins">Coins</button>
+				<button class="tr-tab active" role="tab" aria-selected="true"  data-tab="agents" data-i18n="trending.agents">Agents</button>
+				<button class="tr-tab"        role="tab" aria-selected="false" data-tab="trusted" data-i18n="trending.trusted">Trusted</button>
+				<button class="tr-tab"        role="tab" aria-selected="false" data-tab="coins" data-i18n="trending.coins">Coins</button>
 			</div>
 			<div class="tr-windows" id="trWindows" role="group" aria-label="Time window">
-				<button class="tr-win active" data-win="24h">24h</button>
-				<button class="tr-win"        data-win="7d">7d</button>
-				<button class="tr-win"        data-win="all">All time</button>
+				<button class="tr-win active" data-win="24h" data-i18n="trending.24h">24h</button>
+				<button class="tr-win"        data-win="7d" data-i18n="trending.7d">7d</button>
+				<button class="tr-win"        data-win="all" data-i18n="trending.all_time">All time</button>
 			</div>
 		</div>
 
 		<div class="tr-content">
 			<section class="tr-section active" id="sec-agents" aria-label="Trending agents">
 				<div class="tr-legend">
-					<span>Agent</span>
-					<span class="tr-legend-r">Chats <span class="tr-legend-window" id="legendWindow">24h</span></span>
+					<span data-i18n="trending.agent">Agent</span>
+					<span class="tr-legend-r" data-i18n-html="trending.chats_24h">Chats <span class="tr-legend-window" id="legendWindow">24h</span></span>
 				</div>
 				<ol class="tr-list" id="agentList" aria-live="polite">
 					<li class="tr-skeleton"></li>
@@ -66,16 +66,16 @@
 				<div class="tr-empty" id="agentEmpty" hidden>No trending agents yet — check back soon.</div>
 				<div class="tr-error" id="agentError" role="alert" hidden>
 					<span class="tr-error-icon" aria-hidden="true">⚠️</span>
-					<span class="tr-error-title">Couldn't load trending agents</span>
-					<span class="tr-error-sub">Check your connection and try again.</span>
-					<button class="tr-retry" id="agentRetry" type="button">↻ Retry</button>
+					<span class="tr-error-title" data-i18n="trending.couldn_t_load_trending_agents">Couldn't load trending agents</span>
+					<span class="tr-error-sub" data-i18n="trending.check_your_connection_and_try_again">Check your connection and try again.</span>
+					<button class="tr-retry" id="agentRetry" type="button" data-i18n="trending.retry">↻ Retry</button>
 				</div>
 			</section>
 
 			<section class="tr-section" id="sec-trusted" aria-label="Most trusted agents">
 				<div class="tr-legend">
-					<span>Agent</span>
-					<span class="tr-legend-r">Trust score</span>
+					<span data-i18n="trending.agent_2">Agent</span>
+					<span class="tr-legend-r" data-i18n="trending.trust_score">Trust score</span>
 				</div>
 				<ol class="tr-list" id="trustedList" aria-live="polite">
 					<li class="tr-skeleton"></li>
@@ -87,16 +87,16 @@
 				<div class="tr-empty" id="trustedEmpty" hidden>No agents have earned a track record yet. Trust is built from real money and time — be the first.</div>
 				<div class="tr-error" id="trustedError" role="alert" hidden>
 					<span class="tr-error-icon" aria-hidden="true">⚠️</span>
-					<span class="tr-error-title">Couldn't load the trust leaderboard</span>
-					<span class="tr-error-sub">Check your connection and try again.</span>
-					<button class="tr-retry" id="trustedRetry" type="button">↻ Retry</button>
+					<span class="tr-error-title" data-i18n="trending.couldn_t_load_the_trust_leaderboard">Couldn't load the trust leaderboard</span>
+					<span class="tr-error-sub" data-i18n="trending.check_your_connection_and_try_again_2">Check your connection and try again.</span>
+					<button class="tr-retry" id="trustedRetry" type="button" data-i18n="trending.retry_2">↻ Retry</button>
 				</div>
 			</section>
 
 			<section class="tr-section" id="sec-coins" aria-label="Top conviction coins">
 				<div class="tr-legend">
-					<span>Coin</span>
-					<span class="tr-legend-r">Oracle score</span>
+					<span data-i18n="trending.coin">Coin</span>
+					<span class="tr-legend-r" data-i18n="trending.oracle_score">Oracle score</span>
 				</div>
 				<ol class="tr-list" id="coinList" aria-live="polite">
 					<li class="tr-skeleton"></li>
@@ -108,14 +108,14 @@
 				<div class="tr-empty" id="coinEmpty" hidden>No scored coins in the last 36 hours.</div>
 				<div class="tr-error" id="coinError" role="alert" hidden>
 					<span class="tr-error-icon" aria-hidden="true">⚠️</span>
-					<span class="tr-error-title">Couldn't load conviction coins</span>
-					<span class="tr-error-sub">Check your connection and try again.</span>
-					<button class="tr-retry" id="coinRetry" type="button">↻ Retry</button>
+					<span class="tr-error-title" data-i18n="trending.couldn_t_load_conviction_coins">Couldn't load conviction coins</span>
+					<span class="tr-error-sub" data-i18n="trending.check_your_connection_and_try_again_3">Check your connection and try again.</span>
+					<button class="tr-retry" id="coinRetry" type="button" data-i18n="trending.retry_3">↻ Retry</button>
 				</div>
 			</section>
 		</div>
 
-		<p class="tr-footnote">
+		<p class="tr-footnote" data-i18n-html="trending.agents_chats_with_real_users_via_embedded">
 			Agents: chats with real users via embedded widgets. Trusted: a real, non-gameable wallet-trust score (0–100) from settled volume, tips from distinct funded wallets, age, payment reliability, fork lineage, and on-chain identity — every input auditable, each row links to its breakdown. Coins: <a href="/oracle">Oracle</a> conviction score (pedigree + structure + narrative + momentum), refreshed every 30 min.
 		</p>
 	</main>
@@ -581,5 +581,7 @@
 	</script>
 	<script src="/nav.js" defer></script>
 	<script src="/footer.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -18,19 +18,19 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Crypto Categories · three.ws</title>
+		<title data-i18n="categories.meta_title">Crypto Categories · three.ws</title>
 		<meta
 			name="description"
 			content="Every crypto sector ranked by market cap — Layer 1s, DeFi, memes, AI, RWAs and more. See which categories are leading and lagging with live 24h moves and volume."
-		/>
+		 data-i18n-attr="content:categories.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/categories" />
-		<meta property="og:title" content="Crypto Categories · three.ws" />
+		<meta property="og:title" content="Crypto Categories · three.ws"  data-i18n-attr="content:categories.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Every crypto sector ranked by market cap — Layer 1s, DeFi, memes, AI, RWAs and more, with live 24h moves and volume."
-		/>
+		 data-i18n-attr="content:categories.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+Categories+by+Market+Cap&amp;d=Every+crypto+sector+ranked+by+market+cap+%E2%80%94+smart+contract+platforms%2C+AI+agents%2C+memecoins%2C+DeFi%2C+gaming%2C+and+more+%E2%80%94+with+24h+change%2C+volume%2C+and+the+top+coins+i&amp;p=%2Fcategories"
@@ -39,11 +39,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Crypto Categories · three.ws" />
+		<meta name="twitter:title" content="Crypto Categories · three.ws"  data-i18n-attr="content:categories.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Every crypto sector ranked by market cap, with live 24h moves and volume."
-		/>
+		 data-i18n-attr="content:categories.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+Categories+by+Market+Cap&amp;d=Every+crypto+sector+ranked+by+market+cap+%E2%80%94+smart+contract+platforms%2C+AI+agents%2C+memecoins%2C+DeFi%2C+gaming%2C+and+more+%E2%80%94+with+24h+change%2C+volume%2C+and+the+top+coins+i&amp;p=%2Fcategories"
@@ -89,11 +89,11 @@
 
 		<main class="cv-container">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a><span class="sep">/</span
-				><span class="here">Categories</span>
+				<a href="/markets" data-i18n="categories.markets">Markets</a><span class="sep">/</span
+				><span class="here" data-i18n="categories.categories">Categories</span>
 			</nav>
-			<h1 class="cv-h1">Crypto Categories</h1>
-			<p class="cv-sub">
+			<h1 class="cv-h1" data-i18n="categories.crypto_categories">Crypto Categories</h1>
+			<p class="cv-sub" data-i18n="categories.every_sector_of_the_market_ranked_by">
 				Every sector of the market, ranked by market cap — Layer 1s, DeFi, memes, AI, RWAs
 				and more. See which narratives are leading and lagging, then click through to the
 				coins that make them up.
@@ -103,10 +103,10 @@
 			<section id="cat-stats" class="cv-section" aria-label="Category statistics"></section>
 
 			<div class="cv-toolbar">
-				<h2 class="cv-h2" style="margin: 0">All Categories</h2>
+				<h2 class="cv-h2" style="margin: 0" data-i18n="categories.all_categories">All Categories</h2>
 				<div class="cv-pills">
-					<a class="cv-pill" href="/coins">All Coins</a>
-					<a class="cv-pill" href="/heatmap">Heatmap</a>
+					<a class="cv-pill" href="/coins" data-i18n="categories.all_coins">All Coins</a>
+					<a class="cv-pill" href="/heatmap" data-i18n="categories.heatmap">Heatmap</a>
 				</div>
 			</div>
 
@@ -119,5 +119,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

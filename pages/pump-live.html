@@ -10,8 +10,8 @@
 		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
-<title>3D-Agent · PumpFun Live</title>
-<meta name="description" content="Real-time stream of new PumpFun token launches on Solana, presented by a 3D Agent.">
+<title data-i18n="pump_live.meta_title">3D-Agent · PumpFun Live</title>
+<meta name="description" content="Real-time stream of new PumpFun token launches on Solana, presented by a 3D Agent." data-i18n-attr="content:pump_live.meta_description">
 <link rel="canonical" href="https://three.ws/pump-live">
 <script type="importmap">
   {
@@ -371,15 +371,15 @@
 	
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="Pump Live · three.ws">
-	<meta property="og:description" content="Real-time feed of every pump.fun launch as it happens, with a 3D agent that reacts live.">
+	<meta property="og:title" content="Pump Live · three.ws" data-i18n-attr="content:pump_live.meta_og_title">
+	<meta property="og:description" content="Real-time feed of every pump.fun launch as it happens, with a 3D agent that reacts live." data-i18n-attr="content:pump_live.meta_og_description">
 	<meta property="og:url" content="https://three.ws/pump-live">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Pump+Live&amp;d=Real-time+feed+of+every+pump.fun+launch+as+it+happens%2C+with+a+3D+agent+that+reacts+live.&amp;p=%2Fpump-live">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Pump Live · three.ws">
-	<meta name="twitter:description" content="Real-time feed of every pump.fun launch as it happens, with a 3D agent that reacts live.">
+	<meta name="twitter:title" content="Pump Live · three.ws" data-i18n-attr="content:pump_live.meta_twitter_title">
+	<meta name="twitter:description" content="Real-time feed of every pump.fun launch as it happens, with a 3D agent that reacts live." data-i18n-attr="content:pump_live.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Pump+Live&amp;d=Real-time+feed+of+every+pump.fun+launch+as+it+happens%2C+with+a+3D+agent+that+reacts+live.&amp;p=%2Fpump-live">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Pump Live","description":"Real-time feed of every pump.fun launch as it happens, with a 3D agent that reacts live.","url":"https://three.ws/pump-live","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -394,16 +394,16 @@
 
 
 <div id="header">
-  <h1>🚀 3D Agent Live Feed</h1>
+  <h1 data-i18n="pump_live.3d_agent_live_feed">🚀 3D Agent Live Feed</h1>
   <div class="status" id="status">● Connecting...</div>
   <span id="price-hint" role="status" aria-live="polite"
-        title="Live SOL→USD price is loading. Market caps show in SOL until it arrives, then switch to USD.">
+        title="Live SOL→USD price is loading. Market caps show in SOL until it arrives, then switch to USD." data-i18n-html="pump_live.caps_in_sol_loading_usd_price" data-i18n-attr="title:pump_live.live_sol_usd_price_is_loadin_title">
     <span class="ph-dot" aria-hidden="true"></span>
     <span>Caps in SOL — loading USD price…</span>
   </span>
   <nav class="header-links" aria-label="Explore the launchpad">
-    <a href="/launches">All launches →</a>
-    <a href="/pump-visualizer">Visualizer →</a>
+    <a href="/launches" data-i18n="pump_live.all_launches">All launches →</a>
+    <a href="/pump-visualizer" data-i18n="pump_live.visualizer">Visualizer →</a>
   </nav>
 </div>
 
@@ -412,32 +412,32 @@
   <div id="feed-container">
     <div id="stats-bar" role="group" aria-label="Live launch statistics">
       <div class="stat">
-        <span class="stat-label">Tokens launched</span>
+        <span class="stat-label" data-i18n="pump_live.tokens_launched">Tokens launched</span>
         <span class="stat-value" id="stat-launched" aria-live="polite">0</span>
       </div>
       <div class="stat">
-        <span class="stat-label">Initial-buy volume</span>
+        <span class="stat-label" data-i18n="pump_live.initial_buy_volume">Initial-buy volume</span>
         <span class="stat-value" id="stat-volume" aria-live="polite">$0</span>
       </div>
       <div class="stat">
-        <span class="stat-label">Last launch</span>
+        <span class="stat-label" data-i18n="pump_live.last_launch">Last launch</span>
         <span class="stat-value" id="stat-age" aria-live="polite">—</span>
       </div>
       <div class="stat" style="cursor:pointer" title="Filter to prime coins" onclick="document.querySelector('[data-ftier=prime]')?.click()">
-        <span class="stat-label">🔮 Prime scored</span>
+        <span class="stat-label" data-i18n="pump_live.prime_scored">🔮 Prime scored</span>
         <span class="stat-value" id="stat-prime" aria-live="polite" style="color:#c084fc">0</span>
       </div>
     </div>
     <div id="feed-header">
-      <h2>New Tokens on Pump.fun</h2>
+      <h2 data-i18n="pump_live.new_tokens_on_pump_fun">New Tokens on Pump.fun</h2>
     </div>
     <div id="filter-bar" role="group" aria-label="Filter by Oracle conviction">
-      <span class="fb-label">Oracle</span>
-      <button class="fb-btn active" data-ftier="all" aria-pressed="true">All</button>
-      <button class="fb-btn tier-strong" data-ftier="strong" aria-pressed="false">Strong+</button>
-      <button class="fb-btn tier-prime" data-ftier="prime" aria-pressed="false">Prime</button>
+      <span class="fb-label" data-i18n="pump_live.oracle">Oracle</span>
+      <button class="fb-btn active" data-ftier="all" aria-pressed="true" data-i18n="pump_live.all">All</button>
+      <button class="fb-btn tier-strong" data-ftier="strong" aria-pressed="false" data-i18n="pump_live.strong">Strong+</button>
+      <button class="fb-btn tier-prime" data-ftier="prime" aria-pressed="false" data-i18n="pump_live.prime">Prime</button>
       <span id="filter-count" style="flex:1;text-align:right" aria-live="polite"></span>
-      <button class="fb-btn" id="fb-pause" aria-pressed="false" title="Pause / resume the live feed">⏸ Pause</button>
+      <button class="fb-btn" id="fb-pause" aria-pressed="false" title="Pause / resume the live feed" data-i18n="pump_live.pause" data-i18n-attr="title:pump_live.pause_resume_the_live_feed_title">⏸ Pause</button>
     </div>
     <div id="feed"></div>
   </div>
@@ -1040,6 +1040,8 @@
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>
 

@@ -6,7 +6,7 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<meta name="theme-color" content="#000000" />
-		<title>Avatar in AR · three.ws</title>
+		<title data-i18n="ar.meta_title">Avatar in AR · three.ws</title>
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -447,19 +447,19 @@
 					Back
 				</a>
 				<div class="ar-topbar-center" id="view-switch-slot">
-					<span class="ar-badge">
+					<span class="ar-badge" data-i18n-html="ar.ar_ready">
 						<span class="ar-badge-dot"></span>
 						AR Ready
 					</span>
 				</div>
-				<button class="ar-share-btn" id="ar-share-btn" type="button" aria-label="Share">
+				<button class="ar-share-btn" id="ar-share-btn" type="button" aria-label="Share" data-i18n="ar.share" data-i18n-attr="aria-label:ar.share_arialabel">
 					Share
 				</button>
 			</header>
 
 			<footer class="ar-bottom">
-				<h1 class="ar-avatar-name" id="ar-avatar-name">Loading…</h1>
-				<p class="ar-subtitle">Point your device at a flat surface to place</p>
+				<h1 class="ar-avatar-name" id="ar-avatar-name" data-i18n="ar.loading">Loading…</h1>
+				<p class="ar-subtitle" data-i18n="ar.point_your_device_at_a_flat_surface">Point your device at a flat surface to place</p>
 				<p class="ar-status" id="ar-status" hidden>
 					<span class="ar-status-spinner" aria-hidden="true"></span>
 					<span id="ar-status-text"></span>
@@ -494,7 +494,7 @@
 					href="/irl"
 					aria-label="Bring this avatar to life: it walks and talks with you through your camera"
 					hidden
-				>
+				 data-i18n-attr="aria-label:ar.bring_this_avatar_to_life_it_arialabel">
 					<svg
 						width="19"
 						height="19"
@@ -514,14 +514,16 @@
 					Bring it to life
 				</a>
 				<div class="ar-footer-links">
-					<a href="/features/ar" class="ar-footer-link">AR feature overview</a>
+					<a href="/features/ar" class="ar-footer-link" data-i18n="ar.ar_feature_overview">AR feature overview</a>
 					<span class="ar-footer-sep" aria-hidden="true">·</span>
-					<a href="/docs/ar" class="ar-footer-link">How it works</a>
+					<a href="/docs/ar" class="ar-footer-link" data-i18n="ar.how_it_works">How it works</a>
 					<span class="ar-footer-sep" aria-hidden="true">·</span>
-					<a href="/forge" class="ar-footer-link">Make your own</a>
+					<a href="/forge" class="ar-footer-link" data-i18n="ar.make_your_own">Make your own</a>
 				</div>
 			</footer>
 		</div>
 		<script src="/brand.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

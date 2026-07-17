@@ -4,17 +4,17 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-	<title>Agent Exchange — 3D AI agents paying each other in real time · three.ws</title>
-	<meta name="description" content="Two AI agents with 3D bodies negotiate and pay each other for live crypto intel using x402 micropayments on Solana. Every transaction is real and confirmed on-chain." />
+	<title data-i18n="agent_exchange.meta_title">Agent Exchange — 3D AI agents paying each other in real time · three.ws</title>
+	<meta name="description" content="Two AI agents with 3D bodies negotiate and pay each other for live crypto intel using x402 micropayments on Solana. Every transaction is real and confirmed on-chain."  data-i18n-attr="content:agent_exchange.meta_description"/>
 	<link rel="canonical" href="https://three.ws/agent-exchange" />
 	<meta property="og:type"        content="website" />
-	<meta property="og:title"       content="Agent Exchange — AI agents paying each other in real time" />
-	<meta property="og:description" content="Two 3D AI agents buy and sell crypto intel for real USDC on Solana. Watch every transaction confirm on-chain." />
+	<meta property="og:title"       content="Agent Exchange — AI agents paying each other in real time"  data-i18n-attr="content:agent_exchange.meta_og_title"/>
+	<meta property="og:description" content="Two 3D AI agents buy and sell crypto intel for real USDC on Solana. Watch every transaction confirm on-chain."  data-i18n-attr="content:agent_exchange.meta_og_description"/>
 	<meta property="og:url"         content="https://three.ws/agent-exchange" />
 	<meta property="og:image"       content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Exchange&amp;d=Two+AI+agents+with+3D+bodies+negotiate+and+pay+each+other+for+live+crypto+intel+using+x402+micropayments+on+Solana.+Every+transaction+is+real+and+confirmed+on-c&amp;p=%2Fagent-exchange" />
 	<meta name="twitter:card"        content="summary_large_image" />
-	<meta name="twitter:title"       content="Agent Exchange — AI agents paying each other in real time" />
-	<meta name="twitter:description" content="Two 3D AI agents paying each other for real crypto intel. USDC on Solana. On-chain." />
+	<meta name="twitter:title"       content="Agent Exchange — AI agents paying each other in real time"  data-i18n-attr="content:agent_exchange.meta_twitter_title"/>
+	<meta name="twitter:description" content="Two 3D AI agents paying each other for real crypto intel. USDC on Solana. On-chain."  data-i18n-attr="content:agent_exchange.meta_twitter_description"/>
 	<meta name="twitter:image"       content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Exchange&amp;d=Two+AI+agents+with+3D+bodies+negotiate+and+pay+each+other+for+live+crypto+intel+using+x402+micropayments+on+Solana.+Every+transaction+is+real+and+confirmed+on-c&amp;p=%2Fagent-exchange" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -298,19 +298,19 @@
 	<!-- ── Top bar ────────────────────────────────────────── -->
 	<header class="topbar">
 		<div class="brand">
-			<a href="/">three.ws</a>
+			<a href="/" data-i18n="agent_exchange.three_ws">three.ws</a>
 			<span class="sep">/</span>
-			<span class="badge"><span class="dot"></span>Agent Exchange</span>
+			<span class="badge" data-i18n-html="agent_exchange.agent_exchange"><span class="dot"></span>Agent Exchange</span>
 		</div>
 		<div class="tb-right">
-			<span class="tx-ticker" id="txTicker">
+			<span class="tx-ticker" id="txTicker" data-i18n-html="agent_exchange.session_total_0_00_usdc_settled_on">
 				Session total: <span class="tv" id="totalUsdc">$0.00</span> USDC settled on-chain
 			</span>
-			<a class="tb-btn" href="/pay" title="x402 pay-per-call demo">
+			<a class="tb-btn" href="/pay" title="x402 pay-per-call demo" data-i18n-attr="title:agent_exchange.x402_pay_per_call_demo_title">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
 				x402 demo
 			</a>
-			<a class="tb-btn" href="/x402" title="x402 — the payment trust layer behind these settlements">
+			<a class="tb-btn" href="/x402" title="x402 — the payment trust layer behind these settlements" data-i18n-attr="title:agent_exchange.x402_the_payment_trust_layer_title">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
 				Trust Layer
 			</a>
@@ -330,8 +330,8 @@
 			</div>
 		</div>
 
-		<div class="agent-label left"  id="labelA"><span id="nameA">Intel Agent</span> <span class="role seller">SELLER</span></div>
-		<div class="agent-label right" id="labelB"><span id="nameB">Buyer Agent</span> <span class="role buyer">BUYER</span></div>
+		<div class="agent-label left"  id="labelA"><span id="nameA" data-i18n="agent_exchange.intel_agent">Intel Agent</span> <span class="role seller" data-i18n="agent_exchange.seller">SELLER</span></div>
+		<div class="agent-label right" id="labelB"><span id="nameB" data-i18n="agent_exchange.buyer_agent">Buyer Agent</span> <span class="role buyer" data-i18n="agent_exchange.buyer">BUYER</span></div>
 		<div class="bubble left"  id="bubbleA"><div class="bname">Intel Agent</div><div id="bubbleAText"></div></div>
 		<div class="bubble right" id="bubbleB"><div class="bname">Buyer Agent</div><div id="bubbleBText"></div></div>
 	</section>
@@ -340,10 +340,10 @@
 	<section id="exchange" aria-label="Exchange controls">
 		<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
 			<div class="topic-row">
-				<span class="label">Buy intel on:</span>
+				<span class="label" data-i18n="agent_exchange.buy_intel_on">Buy intel on:</span>
 				<div class="topics" id="topics" role="group" aria-label="Topic selection"></div>
 			</div>
-			<button class="pay-btn" id="payBtn" type="button">
+			<button class="pay-btn" id="payBtn" type="button" data-i18n-html="agent_exchange.buy_intel_0_01_usdc">
 				<span class="spin" aria-hidden="true"></span>
 				<span class="lbl">Buy intel — $0.01 USDC</span>
 			</button>
@@ -360,5 +360,7 @@
 </div>
 <script type="module" src="/src/agent-exchange.js"></script>
 <script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

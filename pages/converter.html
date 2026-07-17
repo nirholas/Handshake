@@ -18,19 +18,19 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Crypto Converter · three.ws</title>
+		<title data-i18n="converter.meta_title">Crypto Converter · three.ws</title>
 		<meta
 			name="description"
 			content="Convert between any cryptocurrency and major world currencies at live market rates. Crypto to crypto, crypto to fiat, fiat to crypto — instant, accurate, always up to date."
-		/>
+		 data-i18n-attr="content:converter.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/converter" />
-		<meta property="og:title" content="Crypto Converter · three.ws" />
+		<meta property="og:title" content="Crypto Converter · three.ws"  data-i18n-attr="content:converter.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Convert between any cryptocurrency and major world currencies at live market rates — crypto to crypto, crypto to fiat, and back."
-		/>
+		 data-i18n-attr="content:converter.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+Currency+Converter&amp;d=Convert+between+any+cryptocurrency+and+major+world+fiat+currencies+at+live+market+rates+%E2%80%94+crypto+to+crypto%2C+crypto+to+fiat%2C+and+back.+Type+an+amount%2C+pick+both+&amp;p=%2Fconverter"
@@ -39,11 +39,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Crypto Converter · three.ws" />
+		<meta name="twitter:title" content="Crypto Converter · three.ws"  data-i18n-attr="content:converter.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Convert between any cryptocurrency and major world currencies at live market rates."
-		/>
+		 data-i18n-attr="content:converter.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+Currency+Converter&amp;d=Convert+between+any+cryptocurrency+and+major+world+fiat+currencies+at+live+market+rates+%E2%80%94+crypto+to+crypto%2C+crypto+to+fiat%2C+and+back.+Type+an+amount%2C+pick+both+&amp;p=%2Fconverter"
@@ -89,11 +89,11 @@
 
 		<main class="cv-container">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a><span class="sep">/</span
-				><span class="here">Converter</span>
+				<a href="/markets" data-i18n="converter.markets">Markets</a><span class="sep">/</span
+				><span class="here" data-i18n="converter.converter">Converter</span>
 			</nav>
-			<h1 class="cv-h1">Crypto Converter</h1>
-			<p class="cv-sub">
+			<h1 class="cv-h1" data-i18n="converter.crypto_converter">Crypto Converter</h1>
+			<p class="cv-sub" data-i18n="converter.convert_between_any_cryptocurrency_and_major">
 				Convert between any cryptocurrency and major world currencies at live market rates.
 				Crypto to crypto, crypto to fiat, or fiat to crypto — every price comes straight
 				from the live market.
@@ -120,9 +120,9 @@
 
 			<div class="cvt-links">
 				<div class="cv-pills">
-					<a class="cv-pill" href="/coins">Browse all coins →</a>
-					<a class="cv-pill" href="/compare">Compare coins →</a>
-					<a class="cv-pill" href="/heatmap">Market heatmap →</a>
+					<a class="cv-pill" href="/coins" data-i18n="converter.browse_all_coins">Browse all coins →</a>
+					<a class="cv-pill" href="/compare" data-i18n="converter.compare_coins">Compare coins →</a>
+					<a class="cv-pill" href="/heatmap" data-i18n="converter.market_heatmap">Market heatmap →</a>
 				</div>
 			</div>
 		</main>
@@ -131,5 +131,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

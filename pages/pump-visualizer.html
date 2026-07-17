@@ -10,8 +10,8 @@
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>3D-Agent · Pump.fun Visualizer</title>
-	<meta name="description" content="A real-time 3D visualization of trending tokens on Pump.fun. Each sphere is a live coin, sized by market cap.">
+	<title data-i18n="pump_visualizer.meta_title">3D-Agent · Pump.fun Visualizer</title>
+	<meta name="description" content="A real-time 3D visualization of trending tokens on Pump.fun. Each sphere is a live coin, sized by market cap." data-i18n-attr="content:pump_visualizer.meta_description">
 	<link rel="canonical" href="https://three.ws/pump-visualizer">
 	<link rel="stylesheet" href="/style.css">
 	<link rel="stylesheet" href="/nav.css" />
@@ -796,15 +796,15 @@
 
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="Pump Visualizer · three.ws">
-	<meta property="og:description" content="3D visualizer of trending pump.fun tokens — live market data rendered as an interactive scene.">
+	<meta property="og:title" content="Pump Visualizer · three.ws" data-i18n-attr="content:pump_visualizer.meta_og_title">
+	<meta property="og:description" content="3D visualizer of trending pump.fun tokens — live market data rendered as an interactive scene." data-i18n-attr="content:pump_visualizer.meta_og_description">
 	<meta property="og:url" content="https://three.ws/pump-visualizer">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Pump+Visualizer&amp;d=3D+visualizer+of+trending+pump.fun+tokens+%E2%80%94+live+market+data+rendered+as+an+interactive+scene.&amp;p=%2Fpump-visualizer">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Pump Visualizer · three.ws">
-	<meta name="twitter:description" content="3D visualizer of trending pump.fun tokens — live market data rendered as an interactive scene.">
+	<meta name="twitter:title" content="Pump Visualizer · three.ws" data-i18n-attr="content:pump_visualizer.meta_twitter_title">
+	<meta name="twitter:description" content="3D visualizer of trending pump.fun tokens — live market data rendered as an interactive scene." data-i18n-attr="content:pump_visualizer.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Pump+Visualizer&amp;d=3D+visualizer+of+trending+pump.fun+tokens+%E2%80%94+live+market+data+rendered+as+an+interactive+scene.&amp;p=%2Fpump-visualizer">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Pump Visualizer","description":"3D visualizer of trending pump.fun tokens — live market data rendered as an interactive scene.","url":"https://three.ws/pump-visualizer","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -822,47 +822,47 @@
 
 		<div class="vz-overlay vz-status" id="vz-status" data-state="loading" data-mode="feed" role="status" aria-live="polite">
 			<span class="dot"></span>
-			<span id="vz-status-text">Connecting to pump.fun firehose…</span>
+			<span id="vz-status-text" data-i18n="pump_visualizer.connecting_to_pump_fun_firehose">Connecting to pump.fun firehose…</span>
 			<span class="sep"></span>
-			<span class="stat"><b id="vz-stat-count">0</b> tokens</span>
+			<span class="stat" data-i18n-html="pump_visualizer.0_tokens"><b id="vz-stat-count">0</b> tokens</span>
 			<span class="sep"></span>
-			<span class="stat" id="vz-stat-rate-wrap"><b id="vz-stat-rate">—</b> <span id="vz-stat-rate-unit">/min</span></span>
-			<span class="stat" id="vz-stat-mcap-wrap">total <b id="vz-stat-mcap">—</b></span>
-			<button id="vz-refresh" type="button" title="Refresh data (R)" disabled>↻ <span class="countdown" id="vz-countdown">●</span></button>
+			<span class="stat" id="vz-stat-rate-wrap" data-i18n-html="pump_visualizer.min"><b id="vz-stat-rate">—</b> <span id="vz-stat-rate-unit">/min</span></span>
+			<span class="stat" id="vz-stat-mcap-wrap" data-i18n-html="pump_visualizer.total">total <b id="vz-stat-mcap">—</b></span>
+			<button id="vz-refresh" type="button" title="Refresh data (R)" disabled data-i18n-attr="title:pump_visualizer.refresh_data_r_title">↻ <span class="countdown" id="vz-countdown">●</span></button>
 		</div>
 
 		<div class="vz-overlay vz-controls" id="vz-controls" data-mode="feed" hidden>
 			<div class="vz-mode" role="tablist" aria-label="View mode">
-				<button type="button" data-mode="feed" class="is-active"><span class="live-dot"></span>Live Feed</button>
-				<button type="button" data-mode="migrations"><span class="live-dot"></span>Migrations</button>
-				<button type="button" data-mode="trending">Trending</button>
+				<button type="button" data-mode="feed" class="is-active" data-i18n-html="pump_visualizer.live_feed"><span class="live-dot"></span>Live Feed</button>
+				<button type="button" data-mode="migrations" data-i18n-html="pump_visualizer.migrations"><span class="live-dot"></span>Migrations</button>
+				<button type="button" data-mode="trending" data-i18n="pump_visualizer.trending">Trending</button>
 			</div>
 			<label class="vz-search">
 				<input type="search" id="vz-search-input" placeholder="Search name, symbol, mint…" autocomplete="off" spellcheck="false" />
 			</label>
 			<div class="vz-sort" role="tablist" aria-label="Sort tokens">
-				<button type="button" data-sort="mcap" class="is-active">Mcap</button>
-				<button type="button" data-sort="live">Streams</button>
-				<button type="button" data-sort="replies">Replies</button>
-				<button type="button" data-sort="recent">New</button>
+				<button type="button" data-sort="mcap" class="is-active" data-i18n="pump_visualizer.mcap">Mcap</button>
+				<button type="button" data-sort="live" data-i18n="pump_visualizer.streams">Streams</button>
+				<button type="button" data-sort="replies" data-i18n="pump_visualizer.replies">Replies</button>
+				<button type="button" data-sort="recent" data-i18n="pump_visualizer.new">New</button>
 			</div>
 			<div class="vz-style" role="tablist" aria-label="Render style" title="Switch how tokens are drawn (C)">
-				<button type="button" data-style="coin" aria-label="Show tokens as coin logos">
+				<button type="button" data-style="coin" aria-label="Show tokens as coin logos" data-i18n-attr="aria-label:pump_visualizer.show_tokens_as_coin_logos_arialabel">
 					<svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3.4" fill="currentColor"/></svg>Coins
 				</button>
-				<button type="button" data-style="orb" aria-label="Show tokens as 3D orbs">
+				<button type="button" data-style="orb" aria-label="Show tokens as 3D orbs" data-i18n-attr="aria-label:pump_visualizer.show_tokens_as_3d_orbs_arialabel">
 					<svg class="ico" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><ellipse cx="12" cy="12" rx="9" ry="3.6" stroke="currentColor" stroke-width="1.4" opacity="0.7"/></svg>Orbs
 				</button>
 			</div>
 			<nav class="vz-links" aria-label="Explore the launchpad">
-				<a href="/pump-live">Feed →</a>
-				<a href="/launches">All launches →</a>
+				<a href="/pump-live" data-i18n="pump_visualizer.feed">Feed →</a>
+				<a href="/launches" data-i18n="pump_visualizer.all_launches">All launches →</a>
 			</nav>
 		</div>
 
 		<div class="vz-overlay vz-hint" id="vz-hint" aria-hidden="true">
-			<b>Drag</b> to rotate · <b>Scroll</b> to zoom · <b>Click</b> for details · <b>Double-click</b> to open · <b>/</b> to search · <b>C</b> coins/orbs
-			<button type="button" class="dismiss" id="vz-hint-dismiss" aria-label="Dismiss">×</button>
+			<b data-i18n="pump_visualizer.drag">Drag</b> to rotate · <b data-i18n="pump_visualizer.scroll">Scroll</b> to zoom · <b data-i18n="pump_visualizer.click">Click</b> for details · <b data-i18n="pump_visualizer.double_click">Double-click</b> to open · <b>/</b> to search · <b data-i18n="pump_visualizer.c">C</b> coins/orbs
+			<button type="button" class="dismiss" id="vz-hint-dismiss" aria-label="Dismiss" data-i18n-attr="aria-label:pump_visualizer.dismiss_arialabel">×</button>
 		</div>
 
 		<div class="vz-intro" id="vz-intro" aria-hidden="true">
@@ -873,8 +873,8 @@
 		<div class="vz-overlay vz-fallback" id="vz-fallback" role="status" hidden>
 			<span class="icon" aria-hidden="true">⚠</span>
 			<div class="body">
-				<div id="vz-fallback-text"><b>3D view unavailable.</b> Your device or browser doesn't support WebGL, so we're showing the live pump.fun feed as a list below. All data is real-time.</div>
-				<button type="button" id="vz-fallback-retry">Try 3D again</button>
+				<div id="vz-fallback-text"><b data-i18n="pump_visualizer.3d_view_unavailable">3D view unavailable.</b> Your device or browser doesn't support WebGL, so we're showing the live pump.fun feed as a list below. All data is real-time.</div>
+				<button type="button" id="vz-fallback-retry" data-i18n="pump_visualizer.try_3d_again">Try 3D again</button>
 			</div>
 		</div>
 
@@ -887,14 +887,14 @@
 			<div class="head">Market cap → look</div>
 			<div id="vz-ramp-tiers"></div>
 			<div class="move">
-				<span class="up">▲ <b>up</b></span>
-				<span class="down">▼ <b>down</b></span>
-				<span style="margin-left:auto;color:var(--vz-muted)">on refresh</span>
+				<span class="up" data-i18n-html="pump_visualizer.up">▲ <b>up</b></span>
+				<span class="down" data-i18n-html="pump_visualizer.down">▼ <b>down</b></span>
+				<span style="margin-left:auto;color:var(--vz-muted)" data-i18n="pump_visualizer.on_refresh">on refresh</span>
 			</div>
 		</aside>
 
 		<aside class="vz-overlay vz-detail" id="vz-detail" aria-hidden="true">
-			<button class="close" type="button" id="vz-detail-close" aria-label="Close details">×</button>
+			<button class="close" type="button" id="vz-detail-close" aria-label="Close details" data-i18n-attr="aria-label:pump_visualizer.close_details_arialabel">×</button>
 			<div class="head">
 				<img class="avatar" id="vz-detail-avatar" alt="" />
 				<div class="title">
@@ -922,9 +922,9 @@
 		</div>
 
 		<div class="vz-error" id="vz-error" hidden>
-			<h3>Could not load trending tokens</h3>
+			<h3 data-i18n="pump_visualizer.could_not_load_trending_tokens">Could not load trending tokens</h3>
 			<p id="vz-error-message"></p>
-			<button type="button" id="vz-error-retry">Retry</button>
+			<button type="button" id="vz-error-retry" data-i18n="pump_visualizer.retry">Retry</button>
 		</div>
 	</div>
 
@@ -3188,5 +3188,7 @@
 	</script>
 
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

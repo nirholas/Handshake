@@ -4,33 +4,33 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Glossary — three.ws</title>
+		<title data-i18n="glossary.meta_title">Glossary — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="author" content="nirholas" />
 		<meta
 			name="description"
 			content="Plain-English definitions for every crypto and AI-agent term on three.ws — x402, USDC, Solana, on-chain, mint, bonding curve, MCP, skills, brain, rig and more, each explained in one line."
-		/>
+		 data-i18n-attr="content:glossary.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Glossary — three.ws" />
+		<meta property="og:title" content="Glossary — three.ws"  data-i18n-attr="content:glossary.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Every crypto and agent term on three.ws, explained in one plain-English line. No jargon, no assumptions."
-		/>
+		 data-i18n-attr="content:glossary.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/glossary" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Glossary&amp;d=Plain-English+definitions+for+the+crypto+and+agent+terms+used+across+three.ws+%E2%80%94+no+jargon+required+to+get+started.&amp;p=%2Fglossary" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Glossary — three.ws" />
+		<meta name="twitter:title" content="Glossary — three.ws"  data-i18n-attr="content:glossary.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Every crypto and agent term on three.ws, explained in one plain-English line."
-		/>
+		 data-i18n-attr="content:glossary.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Glossary&amp;d=Plain-English+definitions+for+the+crypto+and+agent+terms+used+across+three.ws+%E2%80%94+no+jargon+required+to+get+started.&amp;p=%2Fglossary" />
 
 		<link rel="canonical" href="https://three.ws/glossary" />
@@ -56,9 +56,9 @@
 
 		<main class="glossary-page">
 			<div class="glos-hero">
-				<p class="glos-eyebrow">Plain English</p>
-				<h1>Glossary</h1>
-				<p class="glos-sub">
+				<p class="glos-eyebrow" data-i18n="glossary.plain_english">Plain English</p>
+				<h1 data-i18n="glossary.glossary">Glossary</h1>
+				<p class="glos-sub" data-i18n="glossary.every_crypto_and_agent_term_on_three">
 					Every crypto and agent term on three.ws, explained in one line — no
 					jargon, no assumptions. Hover any underlined term across the site for
 					the same definition.
@@ -78,12 +78,14 @@
 
 			<div id="glos-grid" class="glos-grid" aria-label="Glossary terms"></div>
 
-			<p id="glos-empty" class="glos-empty" role="status" hidden>
+			<p id="glos-empty" class="glos-empty" role="status" hidden data-i18n-html="glossary.no_terms_match_try_another_word">
 				No terms match “<span></span>”. Try another word.
 			</p>
 		</main>
 
 		<script src="/nav.js"></script>
 		<script type="module" src="/src/glossary/page.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

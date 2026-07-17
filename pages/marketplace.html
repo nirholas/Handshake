@@ -3,12 +3,12 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Agent Marketplace · three.ws</title>
+		<title data-i18n="marketplace.meta_title">Agent Marketplace · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta
 			name="description"
 			content="Discover, fork, and chat with community-published AI agents. Browse by category, search by keyword."
-		/>
+		 data-i18n-attr="content:marketplace.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 		<meta name="mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-capable" content="yes" />
@@ -3071,19 +3071,19 @@
 			}
 		</style>
 		<meta property="og:type" content="website" />
-		<meta property="og:title" content="Agent Marketplace · three.ws" />
+		<meta property="og:title" content="Agent Marketplace · three.ws"  data-i18n-attr="content:marketplace.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Discover, fork, and chat with community-published AI agents."
-		/>
+		 data-i18n-attr="content:marketplace.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/marketplace" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Marketplace&amp;d=Buy+access+to+agents%2C+skills%2C+and+avatars+from+other+creators.&amp;p=%2Fmarketplace" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Agent Marketplace · three.ws" />
+		<meta name="twitter:title" content="Agent Marketplace · three.ws"  data-i18n-attr="content:marketplace.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Discover, fork, and chat with community-published AI agents."
-		/>
+		 data-i18n-attr="content:marketplace.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Marketplace&amp;d=Buy+access+to+agents%2C+skills%2C+and+avatars+from+other+creators.&amp;p=%2Fmarketplace" />
 
 		<script
@@ -3117,55 +3117,55 @@
 	<script src="/model-viewer-meshopt.js"></script>
 </head>
 	<body class="market-page">
-		<a class="skip-link" href="#main-content">Skip to content</a>
+		<a class="skip-link" href="#main-content" data-i18n="marketplace.skip_to_content">Skip to content</a>
 		<div id="nav-container"></div>
 		<script src="/nav.js"></script>
 
 		<aside class="market-sidebar" id="market-sidebar">
 			<a href="/" class="market-logo">
 				<img src="/three.svg" alt="three.ws" />
-				<span>Community</span>
+				<span data-i18n="marketplace.community">Community</span>
 			</a>
 			<!-- Persistent Solana wallet connect. Shares the same connectedWallet
 			     state as the in-modal purchase flow, so connecting here arrives
 			     pre-connected at any Buy action. Rendered by src/marketplace.js. -->
 			<div class="mkt-wallet-slot mkt-wallet-slot--sidebar" data-wallet-connect></div>
 			<nav class="market-nav">
-				<a href="/" data-nav="home"><span class="ico">⌂</span> <span>Home</span></a>
+				<a href="/" data-nav="home" data-i18n-html="marketplace.home"><span class="ico">⌂</span> <span>Home</span></a>
 				<a href="/marketplace" data-nav="agent" class="active"
-					><span class="ico">▣</span> <span>Agent</span
+					 data-i18n-html="marketplace.agent"><span class="ico">▣</span> <span>Agent</span
 					><span class="nav-count" id="nav-count-agent" hidden></span
 				></a>
 				<a href="/marketplace?tab=avatars" data-nav="avatars"
-					><span class="ico">◉</span> <span>Avatars</span
+					 data-i18n-html="marketplace.avatars"><span class="ico">◉</span> <span>Avatars</span
 					><span class="nav-count hot" id="nav-count-avatar" hidden></span
 				></a>
 				<a href="/marketplace?tab=tools" data-nav="tools"
-					><span class="ico">⚙</span> <span>Tools</span></a
+					 data-i18n-html="marketplace.tools"><span class="ico">⚙</span> <span>Tools</span></a
 				>
 				<a href="/marketplace?tab=skills" data-nav="skills"
-					><span class="ico">≡</span> <span>Skills</span></a
+					 data-i18n-html="marketplace.skills"><span class="ico">≡</span> <span>Skills</span></a
 				>
 				<a href="/create/studio" data-nav="studio"
-					><span class="ico">◆</span> <span>Studio</span></a
+					 data-i18n-html="marketplace.studio"><span class="ico">◆</span> <span>Studio</span></a
 				>
 				<a href="/marketplace?tab=mine" data-nav="mine"
-					><span class="ico">◱</span> <span>My Agents</span></a
+					 data-i18n-html="marketplace.my_agents"><span class="ico">◱</span> <span>My Agents</span></a
 				>
 				<a href="/marketplace?tab=purchases" data-nav="purchases"
-					><span class="ico">✓</span> <span>My Purchases</span></a
+					 data-i18n-html="marketplace.my_purchases"><span class="ico">✓</span> <span>My Purchases</span></a
 				>
 				<a href="/marketplace?tab=earn" data-nav="earn"
-					><span class="ico">$</span> <span>Earn</span></a
+					 data-i18n-html="marketplace.earn"><span class="ico">$</span> <span>Earn</span></a
 				>
 				<a href="/marketplace?tab=animations" data-nav="animations"
-					><span class="ico">▶</span> <span>Animations</span></a
+					 data-i18n-html="marketplace.animations"><span class="ico">▶</span> <span>Animations</span></a
 				>
 				<a href="/marketplace?tab=memory" data-nav="memory"
-					><span class="ico">◎</span> <span>Memory</span></a
+					 data-i18n-html="marketplace.memory"><span class="ico">◎</span> <span>Memory</span></a
 				>
 			</nav>
-			<button class="market-submit-btn market-sidebar-submit" id="market-submit-btn">
+			<button class="market-submit-btn market-sidebar-submit" id="market-submit-btn" data-i18n="marketplace.submit_agent">
 				+ Submit Agent
 			</button>
 		</aside>
@@ -3177,14 +3177,14 @@
 				     is announced as the slide rotates, which is useful but isn't
 				     a stable document landmark. This gives assistive tech a single
 				     anchor for the page identity. -->
-				<h1 class="market-visually-hidden">Agent Marketplace</h1>
+				<h1 class="market-visually-hidden" data-i18n="marketplace.agent_marketplace">Agent Marketplace</h1>
 				<!-- Weekly curated theme strip (loads from /api/marketplace/theme) -->
 				<aside class="market-theme-strip" id="market-theme-strip" hidden>
 					<div class="market-theme-head">
-						<span class="market-theme-eyebrow">This week</span>
+						<span class="market-theme-eyebrow" data-i18n="marketplace.this_week">This week</span>
 						<strong class="market-theme-title" id="market-theme-title">—</strong>
 						<span class="market-theme-blurb" id="market-theme-blurb">—</span>
-						<button class="market-theme-cta" id="market-theme-cta" hidden>
+						<button class="market-theme-cta" id="market-theme-cta" hidden data-i18n="marketplace.browse">
 							Browse →
 						</button>
 					</div>
@@ -3208,23 +3208,23 @@
 						<div class="market-hero-eyebrow">
 							Featured · Community Avatars
 							<span class="market-hero-beta-pill" aria-label="Marketplace is in beta"
-								>BETA</span
+								 data-i18n="marketplace.beta" data-i18n-attr="aria-label:marketplace.marketplace_is_in_beta_arialabel">BETA</span
 							>
 						</div>
 						<h2 class="market-hero-title" id="market-hero-title">—</h2>
 						<p class="market-hero-desc" id="market-hero-desc">—</p>
 						<div class="market-hero-actions">
-							<button class="market-hero-cta" id="market-hero-view">
+							<button class="market-hero-cta" id="market-hero-view" data-i18n="marketplace.view_in_3d">
 								View in 3D →
 							</button>
-							<button class="market-hero-secondary" id="market-hero-lobby">
+							<button class="market-hero-secondary" id="market-hero-lobby" data-i18n="marketplace.open_3d_lobby">
 								Open 3D Lobby
 							</button>
-							<button class="market-hero-secondary" id="market-hero-fork" hidden>
+							<button class="market-hero-secondary" id="market-hero-fork" hidden data-i18n="marketplace.fork_agent">
 								Fork agent
 							</button>
-							<a class="market-hero-secondary" href="/marketplace-walk">Walk-Browse the gallery →</a>
-								<a class="market-hero-secondary" href="/forge">Forge your own from text →</a>
+							<a class="market-hero-secondary" href="/marketplace-walk" data-i18n="marketplace.walk_browse_the_gallery">Walk-Browse the gallery →</a>
+								<a class="market-hero-secondary" href="/forge" data-i18n="marketplace.forge_your_own_from_text">Forge your own from text →</a>
 						</div>
 						<div class="market-hero-dots" id="market-hero-dots"></div>
 					</div>
@@ -3243,7 +3243,7 @@
 						class="market-lobby-close"
 						id="market-lobby-close"
 						aria-label="Close lobby"
-					>
+					 data-i18n-attr="aria-label:marketplace.close_lobby_arialabel">
 						×
 					</button>
 					<canvas class="market-lobby-canvas" id="market-lobby-canvas"></canvas>
@@ -3254,7 +3254,7 @@
 
 				<header class="market-topbar">
 					<label class="market-visually-hidden" for="market-search"
-						>Search agents and avatars</label
+						 data-i18n="marketplace.search_agents_and_avatars">Search agents and avatars</label
 					>
 					<input
 						id="market-search"
@@ -3277,7 +3277,7 @@
 							data-filter="all"
 							role="tab"
 							aria-selected="true"
-						>
+						 data-i18n="marketplace.all">
 							All
 						</button>
 						<button
@@ -3285,7 +3285,7 @@
 							data-filter="agents"
 							role="tab"
 							aria-selected="false"
-						>
+						 data-i18n="marketplace.agents">
 							Agents
 						</button>
 						<button
@@ -3293,7 +3293,7 @@
 							data-filter="avatars"
 							role="tab"
 							aria-selected="false"
-						>
+						 data-i18n="marketplace.avatars_2">
 							Avatars
 						</button>
 						<button
@@ -3303,7 +3303,7 @@
 							aria-selected="false"
 							title="ERC-8004 agents indexed onchain across Base, Polygon, and Solana"
 							aria-label="Onchain — ERC-8004 agents indexed across all supported chains"
-						>
+						 data-i18n-html="marketplace.onchain" data-i18n-attr="aria-label:marketplace.onchain_erc_8004_agents_inde_arialabel;title:marketplace.erc_8004_agents_indexed_onch_title">
 							Onchain <span class="chip-count" id="chip-count-onchain"></span>
 						</button>
 					</div>
@@ -3313,19 +3313,19 @@
 						role="group"
 						aria-label="Filter by price"
 					>
-						<button class="market-chip active" data-price-filter="all">Any</button>
+						<button class="market-chip active" data-price-filter="all" data-i18n="marketplace.any">Any</button>
 						<button
 							class="market-chip"
 							data-price-filter="free"
 							title="Show only free listings"
-						>
+						 data-i18n="marketplace.free" data-i18n-attr="title:marketplace.show_only_free_listings_title">
 							Free
 						</button>
 						<button
 							class="market-chip"
 							data-price-filter="paid"
 							title="Show only paid listings"
-						>
+						 data-i18n="marketplace.paid" data-i18n-attr="title:marketplace.show_only_paid_listings_title">
 							Paid
 						</button>
 					</div>
@@ -3336,29 +3336,29 @@
 						aria-label="Filter 3D models by type"
 						hidden
 					>
-						<button class="market-chip active" data-model-cat="" title="All 3D models">All 3D</button>
-						<button class="market-chip" data-model-cat="avatar" title="Full character / agent body models">Avatar</button>
-						<button class="market-chip" data-model-cat="accessory" title="Wearable items for agents">Accessory</button>
-						<button class="market-chip" data-model-cat="item" title="Props and objects">Item</button>
-						<button class="market-chip" data-model-cat="scene" title="Environments and worlds">Scene</button>
-						<button class="market-chip" data-model-cat="creature" title="Animals and companions">Creature</button>
-						<button class="market-chip" data-model-cat="vehicle" title="Vehicles and mounts">Vehicle</button>
+						<button class="market-chip active" data-model-cat="" title="All 3D models" data-i18n="marketplace.all_3d" data-i18n-attr="title:marketplace.all_3d_models_title">All 3D</button>
+						<button class="market-chip" data-model-cat="avatar" title="Full character / agent body models" data-i18n="marketplace.avatar" data-i18n-attr="title:marketplace.full_character_agent_body_mo_title">Avatar</button>
+						<button class="market-chip" data-model-cat="accessory" title="Wearable items for agents" data-i18n="marketplace.accessory" data-i18n-attr="title:marketplace.wearable_items_for_agents_title">Accessory</button>
+						<button class="market-chip" data-model-cat="item" title="Props and objects" data-i18n="marketplace.item" data-i18n-attr="title:marketplace.props_and_objects_title">Item</button>
+						<button class="market-chip" data-model-cat="scene" title="Environments and worlds" data-i18n="marketplace.scene" data-i18n-attr="title:marketplace.environments_and_worlds_title">Scene</button>
+						<button class="market-chip" data-model-cat="creature" title="Animals and companions" data-i18n="marketplace.creature" data-i18n-attr="title:marketplace.animals_and_companions_title">Creature</button>
+						<button class="market-chip" data-model-cat="vehicle" title="Vehicles and mounts" data-i18n="marketplace.vehicle" data-i18n-attr="title:marketplace.vehicles_and_mounts_title">Vehicle</button>
 					</div>
 					<label class="market-visually-hidden" for="market-sort"
-						>Sort marketplace results</label
+						 data-i18n="marketplace.sort_marketplace_results">Sort marketplace results</label
 					>
 					<select
 						id="market-sort"
 						class="market-sort"
 						aria-label="Sort marketplace results"
 					>
-						<option value="recommended">Recommended</option>
-						<option value="recent">Recent</option>
-						<option value="popular">Popular</option>
-						<option value="top_rated">Top Rated</option>
+						<option value="recommended" data-i18n="marketplace.recommended">Recommended</option>
+						<option value="recent" data-i18n="marketplace.recent">Recent</option>
+						<option value="popular" data-i18n="marketplace.popular">Popular</option>
+						<option value="top_rated" data-i18n="marketplace.top_rated">Top Rated</option>
 					</select>
 					<a class="market-submit-avatar-btn" href="/create" id="market-submit-avatar-btn"
-						>+ Create Avatar</a
+						 data-i18n="marketplace.create_avatar">+ Create Avatar</a
 					>
 				</header>
 				<div
@@ -3382,32 +3382,32 @@
 				<div class="market-activity-strip" id="market-activity-strip" hidden>
 					<div class="market-activity-kpi">
 						<span class="market-activity-kpi-value loading" id="mkt-stat-agents">—</span>
-						<span class="market-activity-kpi-label">Agents live</span>
+						<span class="market-activity-kpi-label" data-i18n="marketplace.agents_live">Agents live</span>
 					</div>
 					<div class="market-activity-kpi">
 						<span class="market-activity-kpi-value loading" id="mkt-stat-scored">—</span>
-						<span class="market-activity-kpi-label">Scored today</span>
+						<span class="market-activity-kpi-label" data-i18n="marketplace.scored_today">Scored today</span>
 					</div>
 					<div class="market-activity-kpi">
 						<span class="market-activity-kpi-value positive loading" id="mkt-stat-winrate">—</span>
-						<span class="market-activity-kpi-label"><span class="market-activity-kpi-dot" aria-hidden="true"></span>Win rate</span>
+						<span class="market-activity-kpi-label" data-i18n-html="marketplace.win_rate"><span class="market-activity-kpi-dot" aria-hidden="true"></span>Win rate</span>
 					</div>
 					<div class="market-activity-kpi">
 						<span class="market-activity-kpi-value loading" id="mkt-stat-actions">—</span>
-						<span class="market-activity-kpi-label">Open trades</span>
+						<span class="market-activity-kpi-label" data-i18n="marketplace.open_trades">Open trades</span>
 					</div>
 					<div class="market-activity-kpi">
 						<span class="market-activity-kpi-value loading" id="mkt-stat-wins">—</span>
-						<span class="market-activity-kpi-label">Total wins</span>
+						<span class="market-activity-kpi-label" data-i18n="marketplace.total_wins">Total wins</span>
 					</div>
 				</div>
 
 				<!-- Top Oracle Performers — top 3 agents by oracle win rate -->
 				<section class="mkt-top-section" id="mkt-top-section" hidden aria-label="Top performing agents by oracle win rate">
 					<div class="mkt-top-head">
-						<span class="mkt-top-eyebrow">Oracle leaders</span>
-						<h2 class="mkt-top-title">Top Performers</h2>
-						<a href="/oracle" class="mkt-top-see-all">View leaderboard →</a>
+						<span class="mkt-top-eyebrow" data-i18n="marketplace.oracle_leaders">Oracle leaders</span>
+						<h2 class="mkt-top-title" data-i18n="marketplace.top_performers">Top Performers</h2>
+						<a href="/oracle" class="mkt-top-see-all" data-i18n="marketplace.view_leaderboard">View leaderboard →</a>
 					</div>
 					<div class="mkt-top-podium" id="mkt-top-podium"></div>
 				</section>
@@ -3429,13 +3429,13 @@
 
 				<div class="market-grid" id="market-grid"></div>
 				<div class="market-loadmore" id="market-loadmore-row" hidden>
-					<button id="market-loadmore" hidden>Load more</button>
+					<button id="market-loadmore" hidden data-i18n="marketplace.load_more">Load more</button>
 				</div>
 			</section>
 
 			<!-- Detail view -->
 			<section class="market-detail" id="market-detail" hidden>
-				<button class="market-back" id="market-back" aria-label="Back">←</button>
+				<button class="market-back" id="market-back" aria-label="Back" data-i18n-attr="aria-label:marketplace.back_arialabel">←</button>
 
 				<!-- Loading / not-found / error state, overlaid on the detail content.
 				     Shown when a deep-linked agent is missing, unpublished, private,
@@ -3449,7 +3449,7 @@
 				>
 					<div class="market-detail-state-inner">
 						<div class="md-state-icon" id="d-state-icon" aria-hidden="true">◍</div>
-						<h2 class="md-state-title" id="d-state-title">Loading agent…</h2>
+						<h2 class="md-state-title" id="d-state-title" data-i18n="marketplace.loading_agent">Loading agent…</h2>
 						<p class="md-state-body" id="d-state-body"></p>
 						<div class="md-state-actions" id="d-state-actions"></div>
 					</div>
@@ -3472,19 +3472,19 @@
 							<span id="d-views" class="stat-pill"></span>
 						</div>
 					</div>
-					<button class="market-bookmark" id="d-bookmark" aria-label="Bookmark">☆</button>
+					<button class="market-bookmark" id="d-bookmark" aria-label="Bookmark" data-i18n-attr="aria-label:marketplace.bookmark_arialabel">☆</button>
 				</div>
 
 				<!-- Sell / Buy panel for the agent itself (separate from per-skill prices). -->
 				<div class="avatar-modal-sale" id="agent-sale-panel" hidden></div>
 
 				<nav class="market-tabs" role="tablist">
-					<button data-tab="overview" class="active" role="tab">Overview</button>
-					<button data-tab="profile" role="tab">Agent Profile</button>
-					<button data-tab="capabilities" role="tab">Agent Capabilities</button>
-					<button data-tab="embed" role="tab">Embed</button>
-					<button data-tab="versions" role="tab">Version History</button>
-					<button data-tab="similar" role="tab">Similar Agents</button>
+					<button data-tab="overview" class="active" role="tab" data-i18n="marketplace.overview">Overview</button>
+					<button data-tab="profile" role="tab" data-i18n="marketplace.agent_profile">Agent Profile</button>
+					<button data-tab="capabilities" role="tab" data-i18n="marketplace.agent_capabilities">Agent Capabilities</button>
+					<button data-tab="embed" role="tab" data-i18n="marketplace.embed">Embed</button>
+					<button data-tab="versions" role="tab" data-i18n="marketplace.version_history">Version History</button>
+					<button data-tab="similar" role="tab" data-i18n="marketplace.similar_agents">Similar Agents</button>
 				</nav>
 
 				<div class="market-detail-body">
@@ -3500,24 +3500,24 @@
 								aria-label="3D model viewer"
 							>
 								<div class="d-model-head">
-									<h3>3D Model</h3>
+									<h3 data-i18n="marketplace.3d_model">3D Model</h3>
 									<span class="d-model-hint" id="d-model-hint"></span>
 									<div class="d-model-actions">
 										<a
 											class="d-model-btn"
 											id="d-model-world"
 											title="Walk with this agent in the three.ws world"
-											>Open in world</a
+											 data-i18n="marketplace.open_in_world" data-i18n-attr="title:marketplace.walk_with_this_agent_in_the_title">Open in world</a
 										>
 										<a class="d-model-btn" id="d-model-download" download hidden
-											>Download GLB</a
+											 data-i18n="marketplace.download_glb">Download GLB</a
 										>
 										<button
 											type="button"
 											class="d-model-btn"
 											id="d-model-fullscreen"
 											aria-label="View 3D model fullscreen"
-										>
+										 data-i18n="marketplace.fullscreen" data-i18n-attr="aria-label:marketplace.view_3d_model_fullscreen_arialabel">
 											⛶ Fullscreen
 										</button>
 									</div>
@@ -3526,7 +3526,7 @@
 							</section>
 
 							<div class="market-card">
-								<h3>What can you do with this Agent?</h3>
+								<h3 data-i18n="marketplace.what_can_you_do_with_this_agent">What can you do with this Agent?</h3>
 								<p id="d-overview">—</p>
 							</div>
 
@@ -3541,7 +3541,7 @@
 								hidden
 							>
 								<div class="d-subs-head">
-									<h3>Subscribe for exclusive perks</h3>
+									<h3 data-i18n="marketplace.subscribe_for_exclusive_perks">Subscribe for exclusive perks</h3>
 									<p class="d-subs-sub" id="d-subs-sub"></p>
 								</div>
 								<div class="tiers-grid" id="tiers-grid" role="list"></div>
@@ -3562,18 +3562,18 @@
 								<div class="d-rating-summary" id="d-rating-summary">
 									<span class="avg" id="d-rating-avg">—</span>
 									<span class="stars" id="d-rating-stars">☆☆☆☆☆</span>
-									<span class="count" id="d-rating-count">No reviews yet</span>
+									<span class="count" id="d-rating-count" data-i18n="marketplace.no_reviews_yet">No reviews yet</span>
 								</div>
 								<div class="d-rating-input" id="d-rating-input" hidden>
 									<span style="font-size: 12px; color: var(--ink-dim)"
-										>Your rating:</span
+										 data-i18n="marketplace.your_rating">Your rating:</span
 									>
 									<span
 										class="stars"
 										id="d-rating-pick"
 										role="radiogroup"
 										aria-label="Pick a rating"
-									>
+									 data-i18n-attr="aria-label:marketplace.pick_a_rating_arialabel">
 										<button
 											type="button"
 											class="star-pick"
@@ -3625,7 +3625,7 @@
 										class="submit-review"
 										id="d-review-submit"
 										disabled
-									>
+									 data-i18n="marketplace.submit_review">
 										Submit review
 									</button>
 								</div>
@@ -3640,11 +3640,11 @@
 
 							<div class="market-preview-card" id="d-preview-card">
 								<div class="market-preview-head">
-									<h2 class="market-section-title" style="margin: 0">
+									<h2 class="market-section-title" style="margin: 0" data-i18n="marketplace.try_it_now">
 										Try it now
 									</h2>
 									<span class="market-preview-hint"
-										>Send a message — no fork required</span
+										 data-i18n="marketplace.send_a_message_no_fork_required">Send a message — no fork required</span
 									>
 								</div>
 								<div
@@ -3669,7 +3669,7 @@
 										type="submit"
 										class="market-preview-send"
 										id="d-preview-send"
-									>
+									 data-i18n="marketplace.send">
 										Send
 									</button>
 								</form>
@@ -3678,73 +3678,73 @@
 						</div>
 
 						<div data-panel="profile" class="market-panel">
-							<h2>Agent Profile</h2>
+							<h2 data-i18n="marketplace.agent_profile_2">Agent Profile</h2>
 							<pre class="market-prose" id="d-profile">—</pre>
-							<h3>Capabilities</h3>
+							<h3 data-i18n="marketplace.capabilities">Capabilities</h3>
 							<ul id="d-capabilities-list"></ul>
 						</div>
 
 						<div data-panel="capabilities" class="market-panel">
-							<h2>
+							<h2 data-i18n-html="marketplace.built_in_skills_0">
 								Built-in Skills <span class="muted" id="d-skills-count">0</span>
 							</h2>
 							<div id="d-skills" class="market-skills"></div>
-							<h2>Library <span class="muted" id="d-library-count">0</span></h2>
+							<h2 data-i18n-html="marketplace.library_0">Library <span class="muted" id="d-library-count">0</span></h2>
 							<div id="d-library" class="market-library"></div>
 						</div>
 
 						<div data-panel="embed" class="market-panel">
 							<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:4px">
-								<h2 style="margin:0">Embed this Agent</h2>
-								<a id="d-embed-wizard-link" href="/embed" class="btn-secondary" style="font-size:12px;padding:5px 12px;white-space:nowrap" target="_blank" rel="noopener">
+								<h2 style="margin:0" data-i18n="marketplace.embed_this_agent">Embed this Agent</h2>
+								<a id="d-embed-wizard-link" href="/embed" class="btn-secondary" style="font-size:12px;padding:5px 12px;white-space:nowrap" target="_blank" rel="noopener" data-i18n="marketplace.configure_in_wizard">
 									Configure in wizard ↗
 								</a>
 							</div>
 							<p
 								class="market-prose"
 								style="font-size: 13px; color: var(--ink-dim); margin: 0 0 18px"
-							>
+							 data-i18n="marketplace.drop_the_agent_anywhere_as_a_web">
 								Drop the agent anywhere — as a web component, iframe, or direct
 								link. Use the wizard for a live preview, size controls, and
 								platform-specific instructions.
 							</p>
 							<div class="d-embed-section">
 								<div class="d-embed-label">
-									<span>Web component</span>
-									<button class="d-embed-copy" data-embed="wc">Copy</button>
+									<span data-i18n="marketplace.web_component">Web component</span>
+									<button class="d-embed-copy" data-embed="wc" data-i18n="marketplace.copy">Copy</button>
 								</div>
 								<pre class="d-embed-code" id="d-embed-wc"></pre>
 							</div>
 							<div class="d-embed-section">
 								<div class="d-embed-label">
-									<span>Iframe</span>
-									<button class="d-embed-copy" data-embed="iframe">Copy</button>
+									<span data-i18n="marketplace.iframe">Iframe</span>
+									<button class="d-embed-copy" data-embed="iframe" data-i18n="marketplace.copy_2">Copy</button>
 								</div>
 								<pre class="d-embed-code" id="d-embed-iframe"></pre>
 							</div>
 							<div class="d-embed-section">
 								<div class="d-embed-label">
-									<span>Direct link</span>
-									<button class="d-embed-copy" data-embed="link">Copy</button>
+									<span data-i18n="marketplace.direct_link">Direct link</span>
+									<button class="d-embed-copy" data-embed="link" data-i18n="marketplace.copy_3">Copy</button>
 								</div>
 								<pre class="d-embed-code" id="d-embed-link"></pre>
 							</div>
 						</div>
 
 						<div data-panel="versions" class="market-panel">
-							<h2>Version History</h2>
+							<h2 data-i18n="marketplace.version_history_2">Version History</h2>
 							<ul id="d-versions" class="market-versions"></ul>
 						</div>
 
 						<div data-panel="similar" class="market-panel">
-							<h2>Related Agents</h2>
+							<h2 data-i18n="marketplace.related_agents">Related Agents</h2>
 							<div id="d-similar" class="market-grid"></div>
 						</div>
 					</div>
 
 					<aside class="market-detail-side">
-						<button class="market-fork" id="d-fork">Fork &amp; Chat</button>
-						<button class="market-export-btn" id="d-export-json">↓ Export JSON</button>
+						<button class="market-fork" id="d-fork" data-i18n="marketplace.fork_chat">Fork &amp; Chat</button>
+						<button class="market-export-btn" id="d-export-json" data-i18n="marketplace.export_json">↓ Export JSON</button>
 						<div class="d-token-card" id="d-token-card" hidden>
 							<div class="d-token-eyebrow">On-chain token</div>
 							<div class="d-token-mint" id="d-token-mint"></div>
@@ -3754,14 +3754,14 @@
 									id="d-token-pump"
 									target="_blank"
 									rel="noopener"
-									>View on pump.fun</a
+									 data-i18n="marketplace.view_on_pump_fun">View on pump.fun</a
 								>
 								<a
 									class="d-token-btn d-token-btn-sec"
 									id="d-token-jup"
 									target="_blank"
 									rel="noopener"
-									>Trade on Jupiter</a
+									 data-i18n="marketplace.trade_on_jupiter">Trade on Jupiter</a
 								>
 							</div>
 						</div>
@@ -3782,10 +3782,10 @@
 			<section class="market-mine" id="market-mine" hidden>
 				<header class="market-topbar">
 					<div class="market-mine-head">
-						<h2 class="market-section-heading">My Agents</h2>
+						<h2 class="market-section-heading" data-i18n="marketplace.my_agents_2">My Agents</h2>
 						<span class="market-mine-sub" id="mine-subtitle"></span>
 					</div>
-					<button class="market-submit-btn" id="market-new-agent-btn">+ New Agent</button>
+					<button class="market-submit-btn" id="market-new-agent-btn" data-i18n="marketplace.new_agent">+ New Agent</button>
 				</header>
 				<div class="market-mine-body">
 					<div class="market-grid" id="mine-grid"></div>
@@ -3796,7 +3796,7 @@
 			<section class="market-purchases" id="market-purchases" hidden>
 				<header class="market-topbar">
 					<div class="market-mine-head">
-						<h2 class="market-section-heading">My Purchases</h2>
+						<h2 class="market-section-heading" data-i18n="marketplace.my_purchases_2">My Purchases</h2>
 						<span class="market-mine-sub" id="purchases-subtitle"></span>
 					</div>
 				</header>
@@ -3809,12 +3809,12 @@
 			<section class="market-earn" id="market-earn" hidden>
 				<header class="market-topbar">
 					<div class="market-mine-head">
-						<h2 class="market-section-heading">Earn</h2>
+						<h2 class="market-section-heading" data-i18n="marketplace.earn_2">Earn</h2>
 						<span class="market-mine-sub" id="earn-subtitle"
-							>Revenue from your published agents and skills</span
+							 data-i18n="marketplace.revenue_from_your_published_agents_and_skill">Revenue from your published agents and skills</span
 						>
 					</div>
-					<button class="market-submit-btn" id="earn-publish-skill-btn">
+					<button class="market-submit-btn" id="earn-publish-skill-btn" data-i18n="marketplace.publish_skill">
 						+ Publish Skill
 					</button>
 				</header>
@@ -3827,9 +3827,9 @@
 			<section class="market-skills-section" id="market-skills-section" hidden>
 				<header class="market-topbar">
 					<div class="market-mine-head">
-						<h2 class="market-section-heading">Skills Marketplace</h2>
+						<h2 class="market-section-heading" data-i18n="marketplace.skills_marketplace">Skills Marketplace</h2>
 						<span class="market-mine-sub" id="skills-subtitle"
-							>Browse capabilities you can unlock or fork</span
+							 data-i18n="marketplace.browse_capabilities_you_can_unlock_or_fork">Browse capabilities you can unlock or fork</span
 						>
 					</div>
 					<input
@@ -3840,20 +3840,20 @@
 						style="flex: 1; max-width: 320px"
 					/>
 					<div class="market-filter-chips" role="tablist" aria-label="Skill filter">
-						<button class="market-chip active" data-skill-filter="all" role="tab">
+						<button class="market-chip active" data-skill-filter="all" role="tab" data-i18n="marketplace.all_2">
 							All
 						</button>
-						<button class="market-chip" data-skill-filter="free" role="tab">
+						<button class="market-chip" data-skill-filter="free" role="tab" data-i18n="marketplace.free_2">
 							Free
 						</button>
-						<button class="market-chip" data-skill-filter="paid" role="tab">
+						<button class="market-chip" data-skill-filter="paid" role="tab" data-i18n="marketplace.paid_2">
 							Paid
 						</button>
 					</div>
 					<select id="skills-sort" class="market-sort" aria-label="Sort skills">
-						<option value="popular">Popular</option>
-						<option value="new">New</option>
-						<option value="az">A–Z</option>
+						<option value="popular" data-i18n="marketplace.popular_2">Popular</option>
+						<option value="new" data-i18n="marketplace.new">New</option>
+						<option value="az" data-i18n="marketplace.a_z">A–Z</option>
 					</select>
 				</header>
 				<div class="market-skills-tab">
@@ -3867,7 +3867,7 @@
 						<div class="market-empty">Loading skills…</div>
 					</div>
 					<div class="market-loadmore" id="skills-loadmore-row" hidden>
-						<button id="skills-loadmore">Load more</button>
+						<button id="skills-loadmore" data-i18n="marketplace.load_more_2">Load more</button>
 					</div>
 				</div>
 			</section>
@@ -3876,8 +3876,8 @@
 			<section class="market-tools" id="market-tools" hidden>
 				<header class="market-topbar plugins-topbar">
 					<div class="plugins-header-row">
-						<h2 class="market-tools-title">Plugins</h2>
-						<button class="plugin-add-url-btn" id="plugin-add-url">+ Add by URL</button>
+						<h2 class="market-tools-title" data-i18n="marketplace.plugins">Plugins</h2>
+						<button class="plugin-add-url-btn" id="plugin-add-url" data-i18n="marketplace.add_by_url">+ Add by URL</button>
 					</div>
 					<input
 						id="plugin-search"
@@ -3897,7 +3897,7 @@
 							<div class="market-empty">Loading…</div>
 						</div>
 						<div class="market-loadmore">
-							<button id="plugin-loadmore" hidden>Load more</button>
+							<button id="plugin-loadmore" hidden data-i18n="marketplace.load_more_3">Load more</button>
 						</div>
 					</div>
 				</div>
@@ -3912,8 +3912,8 @@
 				role="dialog"
 			>
 				<div class="plugin-modal">
-					<h3>Add Plugin by URL</h3>
-					<p class="plugin-modal-hint">
+					<h3 data-i18n="marketplace.add_plugin_by_url">Add Plugin by URL</h3>
+					<p class="plugin-modal-hint" data-i18n-html="marketplace.paste_the_url_of_a_hosted_json">
 						Paste the URL of a hosted <code>plugin/1.0</code> JSON manifest to add a
 						custom plugin.
 					</p>
@@ -3927,11 +3927,11 @@
 					<div id="plugin-url-error" class="plugin-url-error" hidden></div>
 					<div class="plugin-modal-preview" id="plugin-url-preview" hidden></div>
 					<div class="plugin-modal-actions">
-						<button id="plugin-url-cancel" class="plugin-modal-btn">Cancel</button>
+						<button id="plugin-url-cancel" class="plugin-modal-btn" data-i18n="marketplace.cancel">Cancel</button>
 						<button
 							id="plugin-url-fetch"
 							class="plugin-modal-btn plugin-modal-btn-primary"
-						>
+						 data-i18n="marketplace.fetch_validate">
 							Fetch &amp; Validate
 						</button>
 					</div>
@@ -3950,7 +3950,7 @@
 						class="market-back"
 						id="avatar-detail-back"
 						aria-label="Back to marketplace"
-					>
+					 data-i18n-attr="aria-label:marketplace.back_to_marketplace_arialabel">
 						←
 					</button>
 					<div class="market-avatar-detail-layout">
@@ -3963,18 +3963,18 @@
 										id="avatar-detail-load-bar"
 									></div>
 								</div>
-								<span class="avatar-detail-load-label">Loading 3D…</span>
+								<span class="avatar-detail-load-label" data-i18n="marketplace.loading_3d">Loading 3D…</span>
 							</div>
 							<div class="avatar-detail-empty" id="avatar-detail-empty" hidden>
 								<span class="avatar-detail-empty-glyph" aria-hidden="true">◌</span>
-								<h2 class="avatar-detail-empty-title">Avatar not found</h2>
-								<p class="avatar-detail-empty-msg">
+								<h2 class="avatar-detail-empty-title" data-i18n="marketplace.avatar_not_found">Avatar not found</h2>
+								<p class="avatar-detail-empty-msg" data-i18n="marketplace.this_avatar_may_have_been_removed_or">
 									This avatar may have been removed or the link is wrong.
 								</p>
 								<a
 									class="btn-secondary avatar-detail-empty-cta"
 									href="/marketplace?tab=avatars"
-									>Browse avatars</a
+									 data-i18n="marketplace.browse_avatars">Browse avatars</a
 								>
 							</div>
 						</div>
@@ -3989,7 +3989,7 @@
 								<button
 									class="btn-primary market-avatar-detail-cta"
 									id="avatar-detail-use"
-								>
+								 data-i18n="marketplace.start_agent_with_this_avatar">
 									Start agent with this avatar →
 								</button>
 								<a
@@ -3998,17 +3998,17 @@
 									href="#"
 									target="_blank"
 									rel="noopener"
-								>
+								 data-i18n="marketplace.open_in_3d_viewer">
 									Open in 3D viewer ↗
 								</a>
-								<a class="btn-secondary" id="avatar-detail-download" href="#">
+								<a class="btn-secondary" id="avatar-detail-download" href="#" data-i18n="marketplace.download_glb_2">
 									Download GLB
 								</a>
 								<button
 									type="button"
 									class="btn-secondary"
 									id="avatar-detail-share"
-								>
+								 data-i18n="marketplace.share">
 									Share
 								</button>
 							</div>
@@ -4020,7 +4020,7 @@
 						id="avatar-detail-similar-wrap"
 						hidden
 					>
-						<h2 class="market-section-heading">Similar avatars</h2>
+						<h2 class="market-section-heading" data-i18n="marketplace.similar_avatars">Similar avatars</h2>
 						<div class="market-grid" id="avatar-detail-similar-grid"></div>
 					</div>
 				</div>
@@ -4033,7 +4033,7 @@
 				aria-label="Plugin detail"
 			>
 				<div class="market-tool-detail-inner">
-					<button class="market-back" id="tool-detail-back" aria-label="Back to plugins">
+					<button class="market-back" id="tool-detail-back" aria-label="Back to plugins" data-i18n-attr="aria-label:marketplace.back_to_plugins_arialabel">
 						←
 					</button>
 
@@ -4055,12 +4055,12 @@
 					<!-- Not found -->
 					<div class="tool-detail-empty" id="tool-detail-empty" hidden>
 						<span class="tool-detail-empty-glyph" aria-hidden="true">◌</span>
-						<h2 class="tool-detail-empty-title">Plugin not found</h2>
-						<p class="tool-detail-empty-msg">
+						<h2 class="tool-detail-empty-title" data-i18n="marketplace.plugin_not_found">Plugin not found</h2>
+						<p class="tool-detail-empty-msg" data-i18n="marketplace.this_plugin_may_have_been_removed_or">
 							This plugin may have been removed or the link is wrong.
 						</p>
 						<a class="btn-secondary tool-detail-empty-cta" href="/marketplace?tab=tools"
-							>Browse plugins</a
+							 data-i18n="marketplace.browse_plugins">Browse plugins</a
 						>
 					</div>
 
@@ -4086,10 +4086,10 @@
 						<p class="tool-detail-desc" id="tool-detail-desc"></p>
 
 						<div class="tool-detail-actions" id="tool-detail-actions">
-							<button class="btn-primary tool-detail-cta" id="tool-detail-install">
+							<button class="btn-primary tool-detail-cta" id="tool-detail-install" data-i18n="marketplace.add_to_agent">
 								Add to Agent
 							</button>
-							<button type="button" class="btn-secondary" id="tool-detail-share">
+							<button type="button" class="btn-secondary" id="tool-detail-share" data-i18n="marketplace.share_2">
 								Share
 							</button>
 							<a
@@ -4099,7 +4099,7 @@
 								target="_blank"
 								rel="noopener"
 								hidden
-								>Homepage ↗</a
+								 data-i18n="marketplace.homepage">Homepage ↗</a
 							>
 							<a
 								class="btn-secondary"
@@ -4108,20 +4108,20 @@
 								target="_blank"
 								rel="noopener"
 								hidden
-								>View manifest ↗</a
+								 data-i18n="marketplace.view_manifest">View manifest ↗</a
 							>
 						</div>
 
 						<!-- System role / instructions -->
 						<section class="tool-detail-block" id="tool-detail-systemrole-wrap" hidden>
-							<h2 class="tool-detail-block-title">How the agent uses it</h2>
+							<h2 class="tool-detail-block-title" data-i18n="marketplace.how_the_agent_uses_it">How the agent uses it</h2>
 							<p class="tool-detail-systemrole" id="tool-detail-systemrole"></p>
 						</section>
 
 						<!-- Tools / capabilities -->
 						<section class="tool-detail-block" id="tool-detail-tools-wrap">
 							<div class="tool-detail-block-head">
-								<h2 class="tool-detail-block-title">Tools</h2>
+								<h2 class="tool-detail-block-title" data-i18n="marketplace.tools_2">Tools</h2>
 								<span
 									class="tool-detail-block-count"
 									id="tool-detail-tools-count"
@@ -4140,7 +4140,7 @@
 				aria-label="Skill detail"
 			>
 				<div class="market-tool-detail-inner">
-					<button class="market-back" id="skill-detail-back" aria-label="Back to skills">
+					<button class="market-back" id="skill-detail-back" aria-label="Back to skills" data-i18n-attr="aria-label:marketplace.back_to_skills_arialabel">
 						←
 					</button>
 					<div class="tool-detail-skeleton" id="skill-detail-skeleton">
@@ -4157,14 +4157,14 @@
 					</div>
 					<div class="tool-detail-empty" id="skill-detail-empty" hidden>
 						<span class="tool-detail-empty-glyph" aria-hidden="true">◌</span>
-						<h2 class="tool-detail-empty-title">Skill not found</h2>
-						<p class="tool-detail-empty-msg">
+						<h2 class="tool-detail-empty-title" data-i18n="marketplace.skill_not_found">Skill not found</h2>
+						<p class="tool-detail-empty-msg" data-i18n="marketplace.this_skill_may_have_been_removed_or">
 							This skill may have been removed or the link is wrong.
 						</p>
 						<a
 							class="btn-secondary tool-detail-empty-cta"
 							href="/marketplace?tab=skills"
-							>Browse skills</a
+							 data-i18n="marketplace.browse_skills">Browse skills</a
 						>
 					</div>
 					<div class="tool-detail-body" id="skill-detail-body" hidden>
@@ -4184,10 +4184,10 @@
 						<div class="tool-detail-pills" id="skill-detail-pills"></div>
 						<p class="tool-detail-desc" id="skill-detail-desc"></p>
 						<div class="tool-detail-actions" id="skill-detail-actions">
-							<button class="btn-primary tool-detail-cta" id="skill-detail-install">
+							<button class="btn-primary tool-detail-cta" id="skill-detail-install" data-i18n="marketplace.install">
 								Install
 							</button>
-							<button type="button" class="btn-secondary" id="skill-detail-share">
+							<button type="button" class="btn-secondary" id="skill-detail-share" data-i18n="marketplace.share_3">
 								Share
 							</button>
 							<button
@@ -4198,12 +4198,12 @@
 							></button>
 						</div>
 						<section class="tool-detail-block" id="skill-detail-rating-wrap" hidden>
-							<h2 class="tool-detail-block-title">Rate this skill</h2>
+							<h2 class="tool-detail-block-title" data-i18n="marketplace.rate_this_skill">Rate this skill</h2>
 							<div id="skill-detail-rating" class="market-skill-rating"></div>
 						</section>
 						<section class="tool-detail-block" id="skill-detail-tools-wrap" hidden>
 							<div class="tool-detail-block-head">
-								<h2 class="tool-detail-block-title">Tools provided</h2>
+								<h2 class="tool-detail-block-title" data-i18n="marketplace.tools_provided">Tools provided</h2>
 								<span
 									class="tool-detail-block-count"
 									id="skill-detail-tools-count"
@@ -4212,7 +4212,7 @@
 							<div class="tool-detail-tools" id="skill-detail-tools"></div>
 						</section>
 						<section class="tool-detail-block" id="skill-detail-content-wrap" hidden>
-							<h2 class="tool-detail-block-title">Instructions</h2>
+							<h2 class="tool-detail-block-title" data-i18n="marketplace.instructions">Instructions</h2>
 							<pre class="skill-detail-content" id="skill-detail-content"></pre>
 						</section>
 						<section
@@ -4221,12 +4221,12 @@
 							hidden
 						>
 							<div class="tool-detail-block-head">
-								<h2 class="tool-detail-block-title">
+								<h2 class="tool-detail-block-title" data-i18n="marketplace.call_this_skill_pay_per_call">
 									Call this skill · pay-per-call
 								</h2>
 								<span class="skill-x402-price" id="skill-detail-x402-price"></span>
 							</div>
-							<p class="skill-x402-lead">
+							<p class="skill-x402-lead" data-i18n-html="marketplace.pay_per_call_in_usdc_a_1">
 								Pay per call in
 								<span data-term="usdc">USDC (a $1 digital dollar)</span> on Base or
 								Solana and get the skill's tool schema and instructions back.
@@ -4240,19 +4240,19 @@
 									class="btn-secondary skill-x402-copy"
 									id="skill-detail-x402-copy-url"
 									aria-label="Copy endpoint URL"
-								>
+								 data-i18n="marketplace.copy_4" data-i18n-attr="aria-label:marketplace.copy_endpoint_url_arialabel">
 									Copy
 								</button>
 							</div>
 							<div class="skill-x402-snippet">
 								<div class="skill-x402-snippet-head">
-									<span>Call with x402-fetch (pay-per-call client)</span>
+									<span data-i18n="marketplace.call_with_x402_fetch_pay_per_call">Call with x402-fetch (pay-per-call client)</span>
 									<button
 										type="button"
 										class="btn-secondary skill-x402-copy"
 										id="skill-detail-x402-copy-code"
 										aria-label="Copy code snippet"
-									>
+									 data-i18n="marketplace.copy_code" data-i18n-attr="aria-label:marketplace.copy_code_snippet_arialabel">
 										Copy code
 									</button>
 								</div>
@@ -4260,7 +4260,7 @@
 							</div>
 						</section>
 						<section class="tool-detail-block" id="skill-detail-related-wrap" hidden>
-							<h2 class="tool-detail-block-title">Related skills</h2>
+							<h2 class="tool-detail-block-title" data-i18n="marketplace.related_skills">Related skills</h2>
 							<div class="market-grid" id="skill-detail-related"></div>
 						</section>
 					</div>
@@ -4278,25 +4278,25 @@
 						class="market-back"
 						id="anim-detail-back"
 						aria-label="Back to animations"
-					>
+					 data-i18n-attr="aria-label:marketplace.back_to_animations_arialabel">
 						←
 					</button>
 					<div class="tool-detail-empty" id="anim-detail-empty" hidden>
 						<span class="tool-detail-empty-glyph" aria-hidden="true">◌</span>
-						<h2 class="tool-detail-empty-title">Animation not found</h2>
-						<p class="tool-detail-empty-msg">
+						<h2 class="tool-detail-empty-title" data-i18n="marketplace.animation_not_found">Animation not found</h2>
+						<p class="tool-detail-empty-msg" data-i18n="marketplace.this_clip_may_have_been_renamed_or">
 							This clip may have been renamed or removed.
 						</p>
 						<a
 							class="btn-secondary tool-detail-empty-cta"
 							href="/marketplace?tab=animations"
-							>Browse animations</a
+							 data-i18n="marketplace.browse_animations">Browse animations</a
 						>
 					</div>
 					<div class="tool-detail-body" id="anim-detail-body" hidden>
 						<div class="anim-detail-stage" id="anim-detail-stage">
 							<div class="anim-detail-stage-load" id="anim-detail-stage-load">
-								<span class="avatar-detail-load-label">Loading preview…</span>
+								<span class="avatar-detail-load-label" data-i18n="marketplace.loading_preview">Loading preview…</span>
 							</div>
 						</div>
 						<header class="tool-detail-hero">
@@ -4311,13 +4311,13 @@
 						</header>
 						<div class="tool-detail-pills" id="anim-detail-pills"></div>
 						<div class="tool-detail-actions" id="anim-detail-actions">
-							<button class="btn-primary tool-detail-cta" id="anim-detail-replay">
+							<button class="btn-primary tool-detail-cta" id="anim-detail-replay" data-i18n="marketplace.replay">
 								Replay
 							</button>
-							<button type="button" class="btn-secondary" id="anim-detail-copy">
+							<button type="button" class="btn-secondary" id="anim-detail-copy" data-i18n="marketplace.copy_clip_name">
 								Copy clip name
 							</button>
-							<button type="button" class="btn-secondary" id="anim-detail-share">
+							<button type="button" class="btn-secondary" id="anim-detail-share" data-i18n="marketplace.share_4">
 								Share
 							</button>
 							<a
@@ -4326,11 +4326,11 @@
 								href="#"
 								target="_blank"
 								rel="noopener"
-								>View clip JSON ↗</a
+								 data-i18n="marketplace.view_clip_json">View clip JSON ↗</a
 							>
 						</div>
 						<section class="tool-detail-block" id="anim-detail-related-wrap" hidden>
-							<h2 class="tool-detail-block-title">More animations</h2>
+							<h2 class="tool-detail-block-title" data-i18n="marketplace.more_animations">More animations</h2>
 							<div
 								class="market-grid market-anim-grid"
 								id="anim-detail-related"
@@ -4351,7 +4351,7 @@
 						class="market-back"
 						id="onchain-detail-back"
 						aria-label="Back to onchain agents"
-					>
+					 data-i18n-attr="aria-label:marketplace.back_to_onchain_agents_arialabel">
 						←
 					</button>
 					<div class="tool-detail-skeleton" id="onchain-detail-skeleton">
@@ -4366,14 +4366,14 @@
 					</div>
 					<div class="tool-detail-empty" id="onchain-detail-empty" hidden>
 						<span class="tool-detail-empty-glyph" aria-hidden="true">◌</span>
-						<h2 class="tool-detail-empty-title">Agent not found</h2>
-						<p class="tool-detail-empty-msg">
+						<h2 class="tool-detail-empty-title" data-i18n="marketplace.agent_not_found">Agent not found</h2>
+						<p class="tool-detail-empty-msg" data-i18n="marketplace.this_onchain_agent_is_no_longer_indexed">
 							This onchain agent is no longer indexed, or the link is wrong.
 						</p>
 						<a
 							class="btn-secondary tool-detail-empty-cta"
 							href="/marketplace?tab=onchain"
-							>Browse onchain agents</a
+							 data-i18n="marketplace.browse_onchain_agents">Browse onchain agents</a
 						>
 					</div>
 					<div class="tool-detail-body" id="onchain-detail-body" hidden>
@@ -4396,7 +4396,7 @@
 						<p class="tool-detail-desc" id="onchain-detail-desc"></p>
 						<div class="tool-detail-actions" id="onchain-detail-actions">
 							<a class="btn-primary tool-detail-cta" id="onchain-detail-view" href="#"
-								>Open in 3D viewer ↗</a
+								 data-i18n="marketplace.open_in_3d_viewer_2">Open in 3D viewer ↗</a
 							>
 							<a
 								class="btn-secondary"
@@ -4404,7 +4404,7 @@
 								href="#"
 								target="_blank"
 								rel="noopener"
-								>View token on explorer ↗</a
+								 data-i18n="marketplace.view_token_on_explorer">View token on explorer ↗</a
 							>
 							<a
 								class="btn-secondary"
@@ -4412,15 +4412,15 @@
 								href="#"
 								target="_blank"
 								rel="noopener"
-								>View owner ↗</a
+								 data-i18n="marketplace.view_owner">View owner ↗</a
 							>
-							<button type="button" class="btn-secondary" id="onchain-detail-share">
+							<button type="button" class="btn-secondary" id="onchain-detail-share" data-i18n="marketplace.share_5">
 								Share
 							</button>
 						</div>
 						<section class="tool-detail-block" id="onchain-detail-services-wrap" hidden>
 							<div class="tool-detail-block-head">
-								<h2 class="tool-detail-block-title">Services</h2>
+								<h2 class="tool-detail-block-title" data-i18n="marketplace.services">Services</h2>
 								<span
 									class="tool-detail-block-count"
 									id="onchain-detail-services-count"
@@ -4429,7 +4429,7 @@
 							<div class="tool-detail-tools" id="onchain-detail-services"></div>
 						</section>
 						<section class="tool-detail-block">
-							<h2 class="tool-detail-block-title">Onchain identity</h2>
+							<h2 class="tool-detail-block-title" data-i18n="marketplace.onchain_identity">Onchain identity</h2>
 							<div class="onchain-detail-facts" id="onchain-detail-facts"></div>
 						</section>
 					</div>
@@ -4439,9 +4439,9 @@
 			<section class="market-animations-section" id="market-animations-section" hidden>
 				<header class="market-topbar">
 					<div class="market-mine-head">
-						<h2 class="market-section-heading">Animations</h2>
+						<h2 class="market-section-heading" data-i18n="marketplace.animations_2">Animations</h2>
 						<span class="market-mine-sub" id="animations-subtitle"
-							>Browse avatar animation clips</span
+							 data-i18n="marketplace.browse_avatar_animation_clips">Browse avatar animation clips</span
 						>
 					</div>
 					<input
@@ -4456,9 +4456,9 @@
 						role="group"
 						aria-label="Animation type filter"
 					>
-						<button class="market-chip active" data-anim-filter="all">All</button>
-						<button class="market-chip" data-anim-filter="loop">Ambient</button>
-						<button class="market-chip" data-anim-filter="action">Actions</button>
+						<button class="market-chip active" data-anim-filter="all" data-i18n="marketplace.all_3">All</button>
+						<button class="market-chip" data-anim-filter="loop" data-i18n="marketplace.ambient">Ambient</button>
+						<button class="market-chip" data-anim-filter="action" data-i18n="marketplace.actions">Actions</button>
 					</div>
 				</header>
 				<div class="market-skills-tab">
@@ -4472,13 +4472,13 @@
 			<section class="market-memory-section" id="market-memory-section" hidden>
 				<header class="market-topbar">
 					<div class="market-mine-head">
-						<h2 class="market-section-heading">Agent Memory</h2>
+						<h2 class="market-section-heading" data-i18n="marketplace.agent_memory">Agent Memory</h2>
 						<span class="market-mine-sub" id="memory-subtitle"
-							>Persistent context that makes agents smarter</span
+							 data-i18n="marketplace.persistent_context_that_makes_agents_smarter">Persistent context that makes agents smarter</span
 						>
 					</div>
 					<a href="/create-agent" class="market-submit-btn" style="text-decoration: none"
-						>+ Create Agent</a
+						 data-i18n="marketplace.create_agent">+ Create Agent</a
 					>
 				</header>
 				<div class="market-memory-body" id="market-memory-body">
@@ -4498,14 +4498,14 @@
 		>
 			<div class="market-modal">
 				<div class="market-modal-head">
-					<h2 id="market-submit-title">Submit an Agent</h2>
-					<button class="market-modal-close" id="market-submit-close" aria-label="Close">
+					<h2 id="market-submit-title" data-i18n="marketplace.submit_an_agent">Submit an Agent</h2>
+					<button class="market-modal-close" id="market-submit-close" aria-label="Close" data-i18n-attr="aria-label:marketplace.close_arialabel">
 						×
 					</button>
 				</div>
 
 				<div class="market-modal-import">
-					<button type="button" id="market-import-toggle" class="market-import-btn">
+					<button type="button" id="market-import-toggle" class="market-import-btn" data-i18n="marketplace.import_from_json">
 						Import from JSON ↓
 					</button>
 					<div id="market-import-area" hidden>
@@ -4520,7 +4520,7 @@
 							id="market-import-apply"
 							class="market-btn-sec"
 							style="margin-top: 6px"
-						>
+						 data-i18n="marketplace.apply_json">
 							Apply JSON
 						</button>
 					</div>
@@ -4528,7 +4528,7 @@
 
 				<form id="market-submit-form" class="market-submit-form" novalidate>
 					<div class="market-field">
-						<label for="sf-name">Name <span class="req">*</span></label>
+						<label for="sf-name" data-i18n-html="marketplace.name">Name <span class="req">*</span></label>
 						<input
 							id="sf-name"
 							type="text"
@@ -4538,7 +4538,7 @@
 						/>
 					</div>
 					<div class="market-field">
-						<label for="sf-description">Description <span class="req">*</span></label>
+						<label for="sf-description" data-i18n-html="marketplace.description">Description <span class="req">*</span></label>
 						<input
 							id="sf-description"
 							type="text"
@@ -4548,28 +4548,28 @@
 					</div>
 					<div class="market-field-row">
 						<div class="market-field">
-							<label for="sf-category">Category <span class="req">*</span></label>
+							<label for="sf-category" data-i18n-html="marketplace.category">Category <span class="req">*</span></label>
 							<select id="sf-category">
-								<option value="">Select…</option>
-								<option value="academic">Academic</option>
-								<option value="career">Career</option>
-								<option value="copywriting">Copywriting</option>
-								<option value="design">Design</option>
-								<option value="education">Education</option>
-								<option value="emotions">Emotions</option>
-								<option value="entertainment">Entertainment</option>
-								<option value="games">Games</option>
-								<option value="general">General</option>
-								<option value="life">Life</option>
-								<option value="marketing">Marketing</option>
-								<option value="office">Office</option>
-								<option value="programming">Programming</option>
-								<option value="translation">Translation</option>
+								<option value="" data-i18n="marketplace.select">Select…</option>
+								<option value="academic" data-i18n="marketplace.academic">Academic</option>
+								<option value="career" data-i18n="marketplace.career">Career</option>
+								<option value="copywriting" data-i18n="marketplace.copywriting">Copywriting</option>
+								<option value="design" data-i18n="marketplace.design">Design</option>
+								<option value="education" data-i18n="marketplace.education">Education</option>
+								<option value="emotions" data-i18n="marketplace.emotions">Emotions</option>
+								<option value="entertainment" data-i18n="marketplace.entertainment">Entertainment</option>
+								<option value="games" data-i18n="marketplace.games">Games</option>
+								<option value="general" data-i18n="marketplace.general">General</option>
+								<option value="life" data-i18n="marketplace.life">Life</option>
+								<option value="marketing" data-i18n="marketplace.marketing">Marketing</option>
+								<option value="office" data-i18n="marketplace.office">Office</option>
+								<option value="programming" data-i18n="marketplace.programming">Programming</option>
+								<option value="translation" data-i18n="marketplace.translation">Translation</option>
 							</select>
 						</div>
 						<div class="market-field">
 							<label for="sf-tags"
-								>Tags <span class="field-hint">(comma-separated)</span></label
+								 data-i18n-html="marketplace.tags_comma_separated">Tags <span class="field-hint">(comma-separated)</span></label
 							>
 							<input
 								id="sf-tags"
@@ -4580,7 +4580,7 @@
 						</div>
 					</div>
 					<div class="market-field">
-						<label for="sf-prompt">System Prompt <span class="req">*</span></label>
+						<label for="sf-prompt" data-i18n-html="marketplace.system_prompt">System Prompt <span class="req">*</span></label>
 						<textarea
 							id="sf-prompt"
 							rows="6"
@@ -4589,7 +4589,7 @@
 						></textarea>
 					</div>
 					<div class="market-field">
-						<label for="sf-greeting">Greeting Message</label>
+						<label for="sf-greeting" data-i18n="marketplace.greeting_message">Greeting Message</label>
 						<input
 							id="sf-greeting"
 							type="text"
@@ -4599,12 +4599,12 @@
 					</div>
 
 					<details class="market-field-group">
-						<summary class="market-field-group-title">
+						<summary class="market-field-group-title" data-i18n-html="marketplace.monetize_optional">
 							Monetize <span class="field-hint">(optional)</span>
 						</summary>
 						<div class="market-field" style="margin-top: 0.75rem">
 							<label for="sf-payout-wallet"
-								>Payout wallet address
+								 data-i18n-html="marketplace.payout_wallet_address_solana">Payout wallet address
 								<span class="field-hint">(Solana)</span></label
 							>
 							<input
@@ -4617,7 +4617,7 @@
 						</div>
 						<div class="sf-skill-prices" id="sf-skill-prices">
 							<div class="sf-skill-prices-label">
-								Skill prices <span class="field-hint">(USDC per call)</span>
+								Skill prices <span class="field-hint" data-i18n="marketplace.usdc_per_call">(USDC per call)</span>
 							</div>
 							<div id="sf-price-rows"></div>
 							<div class="agent-pricing-add-row">
@@ -4628,7 +4628,7 @@
 									placeholder="skill-name"
 									autocomplete="off"
 								/>
-								<button type="button" id="sf-add-skill" class="market-btn-sec">
+								<button type="button" id="sf-add-skill" class="market-btn-sec" data-i18n="marketplace.add_skill">
 									+ Add Skill
 								</button>
 							</div>
@@ -4638,10 +4638,10 @@
 					<div id="market-submit-error" class="market-form-error" hidden></div>
 
 					<div class="market-submit-actions">
-						<button type="button" id="sf-save-draft" class="market-btn-sec">
+						<button type="button" id="sf-save-draft" class="market-btn-sec" data-i18n="marketplace.save_draft">
 							Save Draft
 						</button>
-						<button type="button" id="sf-publish" class="market-btn-pri">
+						<button type="button" id="sf-publish" class="market-btn-pri" data-i18n="marketplace.publish">
 							Publish
 						</button>
 					</div>
@@ -4660,14 +4660,14 @@
 		>
 			<div class="market-modal">
 				<div class="market-modal-head">
-					<h2 id="skill-publish-title">Publish a Skill</h2>
-					<button class="market-modal-close" id="skill-publish-close" aria-label="Close">
+					<h2 id="skill-publish-title" data-i18n="marketplace.publish_a_skill">Publish a Skill</h2>
+					<button class="market-modal-close" id="skill-publish-close" aria-label="Close" data-i18n-attr="aria-label:marketplace.close_arialabel_2">
 						×
 					</button>
 				</div>
 				<form id="skill-publish-form" novalidate>
 					<div class="market-field">
-						<label for="sp-name">Name <span class="req">*</span></label>
+						<label for="sp-name" data-i18n-html="marketplace.name_2">Name <span class="req">*</span></label>
 						<input
 							id="sp-name"
 							type="text"
@@ -4675,10 +4675,10 @@
 							placeholder="web-search"
 							autocomplete="off"
 						/>
-						<span class="field-hint">Lowercase slug, e.g. <code>web-search</code></span>
+						<span class="field-hint" data-i18n-html="marketplace.lowercase_slug_e_g">Lowercase slug, e.g. <code>web-search</code></span>
 					</div>
 					<div class="market-field">
-						<label for="sp-description">Description <span class="req">*</span></label>
+						<label for="sp-description" data-i18n-html="marketplace.description_2">Description <span class="req">*</span></label>
 						<input
 							id="sp-description"
 							type="text"
@@ -4688,21 +4688,21 @@
 					</div>
 					<div class="market-field-row">
 						<div class="market-field">
-							<label for="sp-category">Category</label>
+							<label for="sp-category" data-i18n="marketplace.category_2">Category</label>
 							<select id="sp-category">
-								<option value="general">General</option>
-								<option value="search">Search</option>
-								<option value="data">Data</option>
-								<option value="communication">Communication</option>
-								<option value="productivity">Productivity</option>
-								<option value="development">Development</option>
-								<option value="finance">Finance</option>
-								<option value="creative">Creative</option>
+								<option value="general" data-i18n="marketplace.general_2">General</option>
+								<option value="search" data-i18n="marketplace.search">Search</option>
+								<option value="data" data-i18n="marketplace.data">Data</option>
+								<option value="communication" data-i18n="marketplace.communication">Communication</option>
+								<option value="productivity" data-i18n="marketplace.productivity">Productivity</option>
+								<option value="development" data-i18n="marketplace.development">Development</option>
+								<option value="finance" data-i18n="marketplace.finance">Finance</option>
+								<option value="creative" data-i18n="marketplace.creative">Creative</option>
 							</select>
 						</div>
 						<div class="market-field">
 							<label for="sp-price"
-								>Price per call (USD)
+								 data-i18n-html="marketplace.price_per_call_usd_0_free">Price per call (USD)
 								<span class="field-hint">0 = free</span></label
 							>
 							<input
@@ -4718,7 +4718,7 @@
 					</div>
 					<div class="market-field">
 						<label for="sp-tags"
-							>Tags <span class="field-hint">(comma-separated)</span></label
+							 data-i18n-html="marketplace.tags_comma_separated_2">Tags <span class="field-hint">(comma-separated)</span></label
 						>
 						<input
 							id="sp-tags"
@@ -4729,7 +4729,7 @@
 					</div>
 					<div class="market-field">
 						<label for="sp-schema"
-							>Tool definitions
+							 data-i18n-html="marketplace.tool_definitions_json_array_optional">Tool definitions
 							<span class="field-hint">(JSON array — optional)</span></label
 						>
 						<textarea
@@ -4740,7 +4740,7 @@
 					</div>
 					<div id="skill-publish-error" class="market-form-error" hidden></div>
 					<div class="market-submit-actions">
-						<button type="button" id="sp-publish" class="market-btn-pri">
+						<button type="button" id="sp-publish" class="market-btn-pri" data-i18n="marketplace.publish_skill_2">
 							Publish Skill
 						</button>
 					</div>
@@ -4759,24 +4759,24 @@
 		>
 			<div class="market-modal" style="max-width: 420px">
 				<div class="market-modal-head">
-					<h2 id="wallet-setup-title">Payout Wallet</h2>
-					<button class="market-modal-close" id="wallet-setup-close" aria-label="Close">
+					<h2 id="wallet-setup-title" data-i18n="marketplace.payout_wallet">Payout Wallet</h2>
+					<button class="market-modal-close" id="wallet-setup-close" aria-label="Close" data-i18n-attr="aria-label:marketplace.close_arialabel_3">
 						×
 					</button>
 				</div>
-				<p style="color: #a1a1aa; font-size: 0.875rem; margin: 0 0 1.25rem">
+				<p style="color: #a1a1aa; font-size: 0.875rem; margin: 0 0 1.25rem" data-i18n="marketplace.payments_from_buyers_go_directly_to_this">
 					Payments from buyers go directly to this wallet. You can use a Solana or Base
 					wallet address.
 				</p>
 				<div class="market-field">
-					<label for="ws-chain">Chain</label>
+					<label for="ws-chain" data-i18n="marketplace.chain">Chain</label>
 					<select id="ws-chain">
-						<option value="solana">Solana</option>
-						<option value="base">Base (EVM)</option>
+						<option value="solana" data-i18n="marketplace.solana">Solana</option>
+						<option value="base" data-i18n="marketplace.base_evm">Base (EVM)</option>
 					</select>
 				</div>
 				<div class="market-field">
-					<label for="ws-address">Wallet address <span class="req">*</span></label>
+					<label for="ws-address" data-i18n-html="marketplace.wallet_address">Wallet address <span class="req">*</span></label>
 					<input
 						id="ws-address"
 						type="text"
@@ -4787,7 +4787,7 @@
 				</div>
 				<div id="wallet-setup-error" class="market-form-error" hidden></div>
 				<div class="market-submit-actions">
-					<button type="button" id="ws-save" class="market-btn-pri">Save Wallet</button>
+					<button type="button" id="ws-save" class="market-btn-pri" data-i18n="marketplace.save_wallet">Save Wallet</button>
 				</div>
 			</div>
 		</div>
@@ -4803,15 +4803,15 @@
 		>
 			<div class="market-modal" style="max-width: 480px">
 				<div class="market-modal-head">
-					<h2 id="agent-pricing-title">Set Skill Prices</h2>
-					<button class="market-modal-close" id="agent-pricing-close" aria-label="Close">
+					<h2 id="agent-pricing-title" data-i18n="marketplace.set_skill_prices">Set Skill Prices</h2>
+					<button class="market-modal-close" id="agent-pricing-close" aria-label="Close" data-i18n-attr="aria-label:marketplace.close_arialabel_4">
 						×
 					</button>
 				</div>
 				<p
 					style="color: #a1a1aa; font-size: 0.875rem; margin: 0 0 1rem"
 					id="agent-pricing-hint"
-				>
+				 data-i18n="marketplace.set_a_usdc_a_1_digital_dollar">
 					Set a USDC (a $1 digital dollar) price for each skill. Leave blank or 0 to keep
 					it free.
 				</p>
@@ -4824,13 +4824,13 @@
 						placeholder="skill-name"
 						autocomplete="off"
 					/>
-					<button type="button" id="ap-add-skill" class="market-btn-sec">
+					<button type="button" id="ap-add-skill" class="market-btn-sec" data-i18n="marketplace.add_skill_2">
 						+ Add Skill
 					</button>
 				</div>
 				<div id="agent-pricing-error" class="market-form-error" hidden></div>
 				<div class="market-submit-actions">
-					<button type="button" id="ap-save" class="market-btn-pri">Save Prices</button>
+					<button type="button" id="ap-save" class="market-btn-pri" data-i18n="marketplace.save_prices">Save Prices</button>
 				</div>
 			</div>
 		</div>
@@ -4848,7 +4848,7 @@
 		>
 			<div class="avatar-modal" role="document">
 				<div class="avatar-modal-stage" id="avatar-modal-stage">
-					<button class="avatar-modal-close" id="avatar-modal-close" aria-label="Close">
+					<button class="avatar-modal-close" id="avatar-modal-close" aria-label="Close" data-i18n-attr="aria-label:marketplace.close_arialabel_5">
 						×
 					</button>
 				</div>
@@ -4859,7 +4859,7 @@
 					<div class="avatar-modal-meta" id="avatar-modal-meta"></div>
 					<div class="avatar-modal-sale" id="avatar-modal-sale" hidden></div>
 					<div class="avatar-modal-actions">
-						<button class="btn-primary" id="avatar-modal-use">
+						<button class="btn-primary" id="avatar-modal-use" data-i18n="marketplace.start_an_agent_with_this_avatar">
 							Start an agent with this avatar
 						</button>
 						<a
@@ -4868,12 +4868,12 @@
 							href="#"
 							target="_blank"
 							rel="noopener"
-							>Open in 3D viewer</a
+							 data-i18n="marketplace.open_in_3d_viewer_3">Open in 3D viewer</a
 						>
 						<a class="btn-secondary" id="avatar-modal-download" href="#" download
-							>Download GLB</a
+							 data-i18n="marketplace.download_glb_3">Download GLB</a
 						>
-						<button id="avatar-modal-bookmark" aria-pressed="false">Bookmark</button>
+						<button id="avatar-modal-bookmark" aria-pressed="false" data-i18n="marketplace.bookmark">Bookmark</button>
 					</div>
 				</div>
 			</div>
@@ -4889,7 +4889,7 @@
 			aria-labelledby="creator-modal-title"
 		>
 			<div class="creator-modal" role="document">
-				<button class="creator-modal-close" id="creator-modal-close" aria-label="Close">
+				<button class="creator-modal-close" id="creator-modal-close" aria-label="Close" data-i18n-attr="aria-label:marketplace.close_arialabel_6">
 					×
 				</button>
 				<header class="creator-modal-head">
@@ -4903,7 +4903,7 @@
 				</header>
 				<div class="creator-modal-body">
 					<section>
-						<h3 class="creator-modal-sectiontitle">
+						<h3 class="creator-modal-sectiontitle" data-i18n-html="marketplace.published_agents">
 							Published agents <span id="creator-agents-count" class="muted"></span>
 						</h3>
 						<div class="creator-modal-grid" id="creator-agents-grid">
@@ -4911,7 +4911,7 @@
 						</div>
 					</section>
 					<section>
-						<h3 class="creator-modal-sectiontitle">
+						<h3 class="creator-modal-sectiontitle" data-i18n-html="marketplace.public_avatars">
 							Public avatars <span id="creator-avatars-count" class="muted"></span>
 						</h3>
 						<div class="creator-modal-grid" id="creator-avatars-grid">
@@ -4928,7 +4928,7 @@
 			id="market-sidebar-toggle"
 			aria-label="Open menu"
 			hidden
-		>
+		 data-i18n-attr="aria-label:marketplace.open_menu_arialabel">
 			☰
 		</button>
 		<div class="market-sidebar-backdrop" id="market-sidebar-backdrop" hidden></div>
@@ -4944,23 +4944,23 @@
 		>
 			<div class="market-modal">
 				<div class="market-modal-head">
-					<h2 id="payment-modal-title">Unlock Skill</h2>
-					<button class="market-modal-close" id="payment-modal-close" aria-label="Close">
+					<h2 id="payment-modal-title" data-i18n="marketplace.unlock_skill">Unlock Skill</h2>
+					<button class="market-modal-close" id="payment-modal-close" aria-label="Close" data-i18n-attr="aria-label:marketplace.close_arialabel_7">
 						×
 					</button>
 				</div>
 				<div class="payment-modal-body" id="payment-modal-body">
 					<div class="payment-modal-badge" id="payment-modal-badge" hidden></div>
 
-					<p id="payment-modal-lede">You are purchasing access to the following skill:</p>
+					<p id="payment-modal-lede" data-i18n="marketplace.you_are_purchasing_access_to_the_following">You are purchasing access to the following skill:</p>
 					<div class="payment-item">
 						<strong id="payment-skill-name"></strong>
-						<span id="payment-item-from">from agent</span>
+						<span id="payment-item-from" data-i18n="marketplace.from_agent">from agent</span>
 						<em id="payment-agent-name"></em>
 					</div>
 
 					<div class="payment-price">
-						<span>Total</span>
+						<span data-i18n="marketplace.total">Total</span>
 						<strong id="payment-price-display"></strong>
 					</div>
 
@@ -4968,7 +4968,7 @@
 
 					<div class="payment-wallet-area" id="payment-wallet-area">
 						<!-- Wallet connection status and button will be rendered here by JS -->
-						<button class="btn-primary" id="payment-connect-wallet-btn">
+						<button class="btn-primary" id="payment-connect-wallet-btn" data-i18n="marketplace.connect_wallet">
 							Connect Wallet
 						</button>
 					</div>
@@ -4977,7 +4977,7 @@
 						class="btn-primary payment-confirm-btn"
 						id="payment-confirm-btn"
 						disabled
-					>
+					 data-i18n="marketplace.confirm_purchase">
 						Confirm Purchase
 					</button>
 
@@ -5003,5 +5003,7 @@
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
 		<script src="/brand.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

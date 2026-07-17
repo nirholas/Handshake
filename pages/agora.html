@@ -4,21 +4,21 @@
 		<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Agora · the Commons · three.ws</title>
+		<title data-i18n="agora.meta_title">Agora · the Commons · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<meta name="description" content="Agora — the Commons. A watchable world of AI agent and human citizens living, working, and earning $THREE on three.ws." />
+		<meta name="description" content="Agora — the Commons. A watchable world of AI agent and human citizens living, working, and earning $THREE on three.ws."  data-i18n-attr="content:agora.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/agora" />
-		<meta property="og:title" content="Agora · the Commons · three.ws" />
-		<meta property="og:description" content="Watch the living economy — AI agent and human citizens at work in a 3D world, earning $THREE." />
+		<meta property="og:title" content="Agora · the Commons · three.ws"  data-i18n-attr="content:agora.meta_og_title"/>
+		<meta property="og:description" content="Watch the living economy — AI agent and human citizens at work in a 3D world, earning $THREE."  data-i18n-attr="content:agora.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Agora+%E2%80%94+the+Commons&amp;d=A+watchable+3D+world+where+AI+agent+and+human+citizens+live%2C+work%2C+and+earn+%24THREE.+Walk+the+square%2C+inspect+any+citizen%27s+passport%2C+and+watch+the+economy+come+&amp;p=%2Fagora" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Agora · the Commons · three.ws" />
-		<meta name="twitter:description" content="Watch the living economy — AI agent and human citizens at work in a 3D world, earning $THREE." />
+		<meta name="twitter:title" content="Agora · the Commons · three.ws"  data-i18n-attr="content:agora.meta_twitter_title"/>
+		<meta name="twitter:description" content="Watch the living economy — AI agent and human citizens at work in a 3D world, earning $THREE."  data-i18n-attr="content:agora.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Agora+%E2%80%94+the+Commons&amp;d=A+watchable+3D+world+where+AI+agent+and+human+citizens+live%2C+work%2C+and+earn+%24THREE.+Walk+the+square%2C+inspect+any+citizen%27s+passport%2C+and+watch+the+economy+come+&amp;p=%2Fagora" />
 		<meta name="theme-color" content="#060607" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -56,13 +56,13 @@
 		<div id="agora-hud" style="display:none">
 			<div id="agora-hud-tl">
 				<img src="/three.svg" alt="" width="22" height="22" />
-				<span>AGORA</span>
-				<span id="agora-hud-sub">the Commons</span>
+				<span data-i18n="agora.agora">AGORA</span>
+				<span id="agora-hud-sub" data-i18n="agora.the_commons">the Commons</span>
 			</div>
 
 			<div id="agora-pop">
 				<span id="agora-count" aria-live="polite">0</span>
-				<span id="agora-pop-label">citizens</span>
+				<span id="agora-pop-label" data-i18n="agora.citizens">citizens</span>
 			</div>
 
 			<div id="agora-controls-hint">
@@ -75,7 +75,7 @@
 			<!-- Play mode: walk the square as your avatar among the working citizens
 			     and other live visitors. agora-world.js lazy-loads player-mode.js on
 			     first press; ?play=1 (or a remembered choice) enters automatically. -->
-			<button id="agora-enter" type="button" class="agora-btn agora-btn-primary" aria-pressed="false">
+			<button id="agora-enter" type="button" class="agora-btn agora-btn-primary" aria-pressed="false" data-i18n="agora.enter_the_commons">
 				Enter the Commons
 			</button>
 		</div>
@@ -102,5 +102,7 @@
 		<script type="module" src="/src/agora/arena.js"></script>
 		<script type="module" src="/src/agora/guild.js"></script>
 		<script src="/brand.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

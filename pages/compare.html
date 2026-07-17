@@ -18,19 +18,19 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Compare Coins · three.ws</title>
+		<title data-i18n="compare.meta_title">Compare Coins · three.ws</title>
 		<meta
 			name="description"
 			content="Compare cryptocurrencies side by side — overlay price performance and line up market cap, volume, supply, and all-time-high stats for up to four coins at once."
-		/>
+		 data-i18n-attr="content:compare.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/compare" />
-		<meta property="og:title" content="Compare Coins · three.ws" />
+		<meta property="og:title" content="Compare Coins · three.ws"  data-i18n-attr="content:compare.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Overlay price performance and line up market cap, volume, supply, and ATH stats for up to four coins at once."
-		/>
+		 data-i18n-attr="content:compare.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Compare+Crypto+Side+by+Side&amp;d=Compare+cryptocurrencies+head+to+head+%E2%80%94+overlay+normalized+price+performance+and+line+up+market+cap%2C+volume%2C+FDV%2C+supply%2C+and+all-time-high+stats+for+up+to+four&amp;p=%2Fcompare"
@@ -39,11 +39,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Compare Coins · three.ws" />
+		<meta name="twitter:title" content="Compare Coins · three.ws"  data-i18n-attr="content:compare.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Overlay price performance and line up market cap, volume, supply, and ATH stats for up to four coins at once."
-		/>
+		 data-i18n-attr="content:compare.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Compare+Crypto+Side+by+Side&amp;d=Compare+cryptocurrencies+head+to+head+%E2%80%94+overlay+normalized+price+performance+and+line+up+market+cap%2C+volume%2C+FDV%2C+supply%2C+and+all-time-high+stats+for+up+to+four&amp;p=%2Fcompare"
@@ -70,11 +70,11 @@
 
 		<main class="cv-container">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a><span class="sep">/</span
-				><span class="here">Compare</span>
+				<a href="/markets" data-i18n="compare.markets">Markets</a><span class="sep">/</span
+				><span class="here" data-i18n="compare.compare">Compare</span>
 			</nav>
-			<h1 class="cv-h1">Compare Coins</h1>
-			<p class="cv-sub">
+			<h1 class="cv-h1" data-i18n="compare.compare_coins">Compare Coins</h1>
+			<p class="cv-sub" data-i18n="compare.put_up_to_four_coins_head_to">
 				Put up to four coins head to head — overlay how they've performed and line up the
 				numbers that matter. Add coins with the search box; the URL updates so you can share
 				the matchup.
@@ -126,5 +126,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

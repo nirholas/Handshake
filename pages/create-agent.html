@@ -4,7 +4,7 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<title>Create an agent · three.ws</title>
+		<title data-i18n="create_agent.meta_title">Create an agent · three.ws</title>
 		<meta name="theme-color" content="#000000" />
 		<meta name="mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-capable" content="yes" />
@@ -19,26 +19,26 @@
 		<meta
 			name="description"
 			content="Create a 3D AI agent step by step — name it, give it a body, pick its skills, set its personality, and ship it on-chain."
-		/>
+		 data-i18n-attr="content:create_agent.meta_description"/>
 		<meta name="robots" content="noindex" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/create-agent" />
-		<meta property="og:title" content="Create an agent · three.ws" />
+		<meta property="og:title" content="Create an agent · three.ws"  data-i18n-attr="content:create_agent.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Create a 3D AI agent step by step — name it, give it a body, pick its skills, set its personality, and ship it on-chain."
-		/>
+		 data-i18n-attr="content:create_agent.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Create+an+Agent&amp;d=Step-by-step+wizard+to+create+a+3D+AI+agent%3A+name%2C+3D+body%2C+skills%2C+personality%2C+voice%2C+and+on-chain+identity.&amp;p=%2Fcreate-agent" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Create an agent · three.ws" />
+		<meta name="twitter:title" content="Create an agent · three.ws"  data-i18n-attr="content:create_agent.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Create a 3D AI agent step by step — name it, give it a body, pick its skills, set its personality, and ship it on-chain."
-		/>
+		 data-i18n-attr="content:create_agent.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Create+an+Agent&amp;d=Step-by-step+wizard+to+create+a+3D+AI+agent%3A+name%2C+3D+body%2C+skills%2C+personality%2C+voice%2C+and+on-chain+identity.&amp;p=%2Fcreate-agent" />
 
 		<link rel="stylesheet" href="/fonts/fonts.css" />
@@ -1301,7 +1301,7 @@
 			<img src="/three.svg" alt="" />
 			<div class="dots">...</div>
 		</div>
-		<a href="#main-content" class="skip-link">Skip to main content</a>
+		<a href="#main-content" class="skip-link" data-i18n="create_agent.skip_to_main_content">Skip to main content</a>
 		<header>
 			<div id="nav-container"></div>
 		</header>
@@ -1309,14 +1309,14 @@
 
 		<main class="stage" id="main-content">
 			<div class="wizard-head">
-				<h1 class="wizard-title">Create an agent</h1>
-				<p class="wizard-sub">
+				<h1 class="wizard-title" data-i18n="create_agent.create_an_agent">Create an agent</h1>
+				<p class="wizard-sub" data-i18n="create_agent.five_quick_steps_name_it_give_it">
 					Five quick steps — name it, give it a body, pick its skills, set its voice, ship
 					it.
 				</p>
 			</div>
 
-			<p class="build-free-note" id="build-free-note" hidden>
+			<p class="build-free-note" id="build-free-note" hidden data-i18n-html="create_agent.no_account_needed_to_build_sign_in">
 				<span class="build-free-dot" aria-hidden="true"></span>
 				No account needed to build — sign in only when you’re ready to ship.
 			</p>
@@ -1329,9 +1329,9 @@
 					<div class="wizard-body" id="wizard-body">
 						<!-- Step 1 — Basics -->
 						<section class="panel is-active" data-step="0" aria-label="Basic info">
-							<p class="panel-eyebrow">Step 1 of 5</p>
-							<h2 class="panel-title">The basics</h2>
-							<p class="panel-help">
+							<p class="panel-eyebrow" data-i18n="create_agent.step_1_of_5">Step 1 of 5</p>
+							<h2 class="panel-title" data-i18n="create_agent.the_basics">The basics</h2>
+							<p class="panel-help" data-i18n="create_agent.describe_your_agent_in_a_sentence_and">
 								Describe your agent in a sentence and we'll fill in everything —
 								name, skills, body, personality. Then review and ship.
 							</p>
@@ -1341,9 +1341,9 @@
 									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 										<path d="M5 3v4M3 5h4M6 17v4M4 19h4M13 3l2.5 6.5L22 12l-6.5 2.5L13 21l-2.5-6.5L4 12l6.5-2.5L13 3z" />
 									</svg>
-									<h3 class="magic-title">Build it for me</h3>
+									<h3 class="magic-title" data-i18n="create_agent.build_it_for_me">Build it for me</h3>
 								</div>
-								<p class="magic-sub">
+								<p class="magic-sub" data-i18n="create_agent.one_line_is_enough_no_idea_tap">
 									One line is enough. No idea? Tap an example or “Surprise me”.
 								</p>
 								<div class="magic-row">
@@ -1356,7 +1356,7 @@
 										placeholder="e.g. a witty crypto market analyst that explains charts in plain English"
 										aria-label="Describe your agent"
 									></textarea>
-									<button type="button" class="magic-go" id="magic-go">
+									<button type="button" class="magic-go" id="magic-go" data-i18n-html="create_agent.generate">
 										<span class="magic-go-icon" aria-hidden="true">
 											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
 												<path d="M5 3v4M3 5h4M13 4l2 5 5 2-5 2-2 5-2-5-5-2 5-2 2-5z" />
@@ -1367,12 +1367,12 @@
 									</button>
 								</div>
 								<div class="magic-chips" id="magic-chips">
-									<span class="lead">Try:</span>
-									<button type="button" class="magic-chip" data-example="a calm meditation and breathing coach that guides short sessions">Meditation coach</button>
-									<button type="button" class="magic-chip" data-example="a sharp Solana market analyst that reads bonding curves and flags rug risk">Market analyst</button>
-									<button type="button" class="magic-chip" data-example="a playful 3D art critic that reviews glTF models and gives honest feedback">3D art critic</button>
-									<button type="button" class="magic-chip" data-example="an upbeat onboarding host that welcomes newcomers and shows them around">Onboarding host</button>
-									<button type="button" class="magic-chip surprise" id="magic-surprise">✦ Surprise me</button>
+									<span class="lead" data-i18n="create_agent.try">Try:</span>
+									<button type="button" class="magic-chip" data-example="a calm meditation and breathing coach that guides short sessions" data-i18n="create_agent.meditation_coach">Meditation coach</button>
+									<button type="button" class="magic-chip" data-example="a sharp Solana market analyst that reads bonding curves and flags rug risk" data-i18n="create_agent.market_analyst">Market analyst</button>
+									<button type="button" class="magic-chip" data-example="a playful 3D art critic that reviews glTF models and gives honest feedback" data-i18n="create_agent.3d_art_critic">3D art critic</button>
+									<button type="button" class="magic-chip" data-example="an upbeat onboarding host that welcomes newcomers and shows them around" data-i18n="create_agent.onboarding_host">Onboarding host</button>
+									<button type="button" class="magic-chip surprise" id="magic-surprise" data-i18n="create_agent.surprise_me">✦ Surprise me</button>
 								</div>
 								<p class="magic-msg" id="magic-msg" role="status" aria-live="polite"></p>
 							</div>
@@ -1380,7 +1380,7 @@
 							<div class="magic-divider">or build it by hand</div>
 
 							<div class="field">
-								<label class="field-label" for="f-name">
+								<label class="field-label" for="f-name" data-i18n-html="create_agent.agent_name_0_60">
 									<span
 										>Agent name
 										<span class="req" aria-hidden="true">*</span></span
@@ -1396,13 +1396,13 @@
 									placeholder="e.g. Nova, Atlas, Market Oracle"
 									aria-required="true"
 								/>
-								<p class="field-error" id="name-error">
+								<p class="field-error" id="name-error" data-i18n="create_agent.please_enter_a_name_for_your_agent">
 									Please enter a name for your agent.
 								</p>
 							</div>
 
 							<div class="field">
-								<label class="field-label" for="f-description">
+								<label class="field-label" for="f-description" data-i18n-html="create_agent.description_0_280">
 									<span>Description</span>
 									<span class="count" id="desc-count">0 / 280</span>
 								</label>
@@ -1412,14 +1412,14 @@
 									maxlength="280"
 									placeholder="What does this agent do? Who is it for?"
 								></textarea>
-								<p class="field-hint">
+								<p class="field-hint" data-i18n="create_agent.one_or_two_sentences_you_can_refine">
 									One or two sentences. You can refine this later.
 								</p>
 							</div>
 
 							<div class="field">
 								<label class="field-label" for="f-tags-input"
-									><span>Tags</span></label
+									 data-i18n-html="create_agent.tags"><span>Tags</span></label
 								>
 								<div class="tagbox" id="tagbox">
 									<input
@@ -1430,7 +1430,7 @@
 										aria-describedby="tags-hint"
 									/>
 								</div>
-								<p class="field-hint" id="tags-hint">
+								<p class="field-hint" id="tags-hint" data-i18n="create_agent.press_enter_or_comma_to_add_tags">
 									Press Enter or comma to add. Tags help people discover your
 									agent. Up to 8.
 								</p>
@@ -1439,9 +1439,9 @@
 
 						<!-- Step 2 — 3D Model -->
 						<section class="panel" data-step="1" aria-label="3D model">
-							<p class="panel-eyebrow">Step 2 of 5</p>
-							<h2 class="panel-title">Give it a body</h2>
-							<p class="panel-help">
+							<p class="panel-eyebrow" data-i18n="create_agent.step_2_of_5">Step 2 of 5</p>
+							<h2 class="panel-title" data-i18n="create_agent.give_it_a_body">Give it a body</h2>
+							<p class="panel-help" data-i18n-html="create_agent.every_agent_gets_a_3d_avatar_pick">
 								Every agent gets a 3D avatar. Pick a ready-made character, upload
 								your own glTF model, or
 								<a href="/create/prompt">describe one in words and generate it</a> —
@@ -1455,7 +1455,7 @@
 									data-pane="starter"
 									role="tab"
 									aria-selected="true"
-								>
+								 data-i18n="create_agent.starter_library">
 									Starter library
 								</button>
 								<button
@@ -1464,7 +1464,7 @@
 									data-pane="library"
 									role="tab"
 									aria-selected="false"
-								>
+								 data-i18n="create_agent.my_avatars">
 									My avatars
 								</button>
 								<button
@@ -1473,7 +1473,7 @@
 									data-pane="upload"
 									role="tab"
 									aria-selected="false"
-								>
+								 data-i18n="create_agent.upload_your_own">
 									Upload your own
 								</button>
 								<button
@@ -1482,7 +1482,7 @@
 									data-pane="skip"
 									role="tab"
 									aria-selected="false"
-								>
+								 data-i18n="create_agent.add_later">
 									Add later
 								</button>
 							</div>
@@ -1537,7 +1537,7 @@
 							</div>
 
 							<div class="model-pane" data-pane="skip">
-								<p class="panel-help" style="margin: 6px 0 0">
+								<p class="panel-help" style="margin: 6px 0 0" data-i18n="create_agent.a_3d_avatar_is_how_people_recognize">
 									A 3D avatar is how people recognize and connect with your agent
 									across three.ws — we strongly recommend giving it one now from
 									the Starter library or your own upload.
@@ -1550,11 +1550,11 @@
 									</label>
 									<div class="publish-text">
 										<strong
-											>Don't pick an avatar — use the default body for
+											 data-i18n="create_agent.don_t_pick_an_avatar_use_the">Don't pick an avatar — use the default body for
 											now</strong
 										>
 										<span
-											>My agent will launch with our default 3D character. I
+											 data-i18n="create_agent.my_agent_will_launch_with_our_default">My agent will launch with our default 3D character. I
 											can pick or upload my own anytime from its editor.</span
 										>
 									</div>
@@ -1577,48 +1577,48 @@
 										<polyline points="3.27 6.96 12 12.01 20.73 6.96" />
 										<line x1="12" y1="22.08" x2="12" y2="12" />
 									</svg>
-									<span>Select a model to preview it in 3D</span>
+									<span data-i18n="create_agent.select_a_model_to_preview_it_in">Select a model to preview it in 3D</span>
 								</div>
 							</div>
 						</section>
 
 						<!-- Step 3 — Skills -->
 						<section class="panel" data-step="2" aria-label="Skills">
-							<p class="panel-eyebrow">Step 3 of 5</p>
-							<h2 class="panel-title">Pick its skills</h2>
-							<p class="panel-help">
+							<p class="panel-eyebrow" data-i18n="create_agent.step_3_of_5">Step 3 of 5</p>
+							<h2 class="panel-title" data-i18n="create_agent.pick_its_skills">Pick its skills</h2>
+							<p class="panel-help" data-i18n="create_agent.every_agent_ships_with_a_core_set">
 								Every agent ships with a core set. Toggle on extra capabilities to
 								extend what yours can do.
 							</p>
 
 							<div id="core-skills" aria-label="Core skills"></div>
 							<div id="optional-skills" aria-label="Optional skills"></div>
-							<p class="skills-meta" id="skills-meta">5 skills selected</p>
+							<p class="skills-meta" id="skills-meta" data-i18n="create_agent.5_skills_selected">5 skills selected</p>
 						</section>
 
 						<!-- Step 4 — Personality & Voice -->
 						<section class="panel" data-step="3" aria-label="Personality and voice">
-							<p class="panel-eyebrow">Step 4 of 5</p>
-							<h2 class="panel-title">Personality &amp; voice</h2>
-							<p class="panel-help">
+							<p class="panel-eyebrow" data-i18n="create_agent.step_4_of_5">Step 4 of 5</p>
+							<h2 class="panel-title" data-i18n="create_agent.personality_voice">Personality &amp; voice</h2>
+							<p class="panel-help" data-i18n="create_agent.shape_how_your_agent_talks_a_category">
 								Shape how your agent talks. A category and a profile prompt are what
 								publish it to the marketplace.
 							</p>
 
 							<div class="field">
 								<label class="field-label" for="f-category"
-									><span>Category</span></label
+									 data-i18n-html="create_agent.category"><span>Category</span></label
 								>
 								<select class="select" id="f-category">
-									<option value="">Choose a category…</option>
+									<option value="" data-i18n="create_agent.choose_a_category">Choose a category…</option>
 								</select>
-								<p class="field-hint">
+								<p class="field-hint" data-i18n="create_agent.required_to_list_on_the_marketplace_pick">
 									Required to list on the marketplace. Pick the closest fit.
 								</p>
 							</div>
 
 							<div class="field">
-								<label class="field-label" for="f-greeting">
+								<label class="field-label" for="f-greeting" data-i18n-html="create_agent.greeting_0_200">
 									<span>Greeting</span>
 									<span class="count" id="greet-count">0 / 200</span>
 								</label>
@@ -1629,13 +1629,13 @@
 									maxlength="200"
 									placeholder="Hey, I'm Nova — ask me anything about pump.fun."
 								/>
-								<p class="field-hint">
+								<p class="field-hint" data-i18n="create_agent.the_first_line_your_agent_says_when">
 									The first line your agent says when someone opens a chat.
 								</p>
 							</div>
 
 							<div class="field">
-								<label class="field-label" for="f-persona">
+								<label class="field-label" for="f-persona" data-i18n-html="create_agent.profile_instructions_0_2000">
 									<span>Profile &amp; instructions</span>
 									<span class="count" id="persona-count">0 / 2000</span>
 								</label>
@@ -1646,14 +1646,14 @@
 									style="min-height: 120px"
 									placeholder="Describe who your agent is and how it should behave. e.g. 'You are Nova, a sharp, friendly Solana market analyst. Be concise, cite on-chain data, and never give financial advice.'"
 								></textarea>
-								<p class="field-hint">
+								<p class="field-hint" data-i18n="create_agent.this_becomes_the_agent_s_system_prompt">
 									This becomes the agent's system prompt — its personality and
 									rules.
 								</p>
 							</div>
 
 							<div class="field">
-								<label class="field-label"><span>Voice</span></label>
+								<label class="field-label" data-i18n-html="create_agent.voice"><span>Voice</span></label>
 								<div class="opt-grid cols-2">
 									<button
 										type="button"
@@ -1677,9 +1677,9 @@
 												<path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
 											</svg>
 										</div>
-										<span class="opt-name">Built-in voice</span>
+										<span class="opt-name" data-i18n="create_agent.built_in_voice">Built-in voice</span>
 										<span class="opt-desc"
-											>Free browser text-to-speech. Works instantly, no
+											 data-i18n="create_agent.free_browser_text_to_speech_works_instantly">Free browser text-to-speech. Works instantly, no
 											setup.</span
 										>
 									</button>
@@ -1706,14 +1706,14 @@
 												<line x1="12" y1="19" x2="12" y2="23" />
 											</svg>
 										</div>
-										<span class="opt-name">Custom voice</span>
+										<span class="opt-name" data-i18n="create_agent.custom_voice">Custom voice</span>
 										<span class="opt-desc"
-											>Pick or clone a premium voice in the editor after
+											 data-i18n="create_agent.pick_or_clone_a_premium_voice_in">Pick or clone a premium voice in the editor after
 											creating.</span
 										>
 									</button>
 								</div>
-								<p class="field-hint">
+								<p class="field-hint" data-i18n="create_agent.starts_on_the_built_in_voice_you">
 									Starts on the built-in voice — you can upgrade to a premium or
 									cloned voice anytime.
 								</p>
@@ -1722,9 +1722,9 @@
 
 						<!-- Step 5 — Review -->
 						<section class="panel" data-step="4" aria-label="Review and create">
-							<p class="panel-eyebrow">Step 5 of 5</p>
-							<h2 class="panel-title">Review &amp; create</h2>
-							<p class="panel-help">
+							<p class="panel-eyebrow" data-i18n="create_agent.step_5_of_5">Step 5 of 5</p>
+							<h2 class="panel-title" data-i18n="create_agent.review_create">Review &amp; create</h2>
+							<p class="panel-help" data-i18n="create_agent.here_s_the_agent_you_re_about">
 								Here's the agent you're about to ship. Edit any step, then create
 								it.
 							</p>
@@ -1738,9 +1738,9 @@
 									<span class="knob"></span>
 								</label>
 								<div class="publish-text">
-									<strong>List on the agent marketplace</strong>
+									<strong data-i18n="create_agent.list_on_the_agent_marketplace">List on the agent marketplace</strong>
 									<span id="publish-note"
-										>Make your agent discoverable. Requires a category and a
+										 data-i18n="create_agent.make_your_agent_discoverable_requires_a_cate">Make your agent discoverable. Requires a category and a
 										profile prompt. You can unlist anytime.</span
 									>
 								</div>
@@ -1761,46 +1761,46 @@
 									<polyline points="20 6 9 17 4 12" />
 								</svg>
 							</div>
-							<h2 id="success-title">Your agent is live</h2>
-							<p id="success-sub">
+							<h2 id="success-title" data-i18n="create_agent.your_agent_is_live">Your agent is live</h2>
+							<p id="success-sub" data-i18n="create_agent.it_now_has_its_own_wallet_and">
 								It now has its own wallet and on-chain identity. Open it to chat,
 								customize, or share.
 							</p>
 							<div class="success-preview" id="success-preview" hidden></div>
 							<div class="success-actions">
 								<a class="btn btn--primary btn--lg" id="success-activate" href="#"
-									>⚡ Go live</a
+									 data-i18n="create_agent.go_live">⚡ Go live</a
 								>
 								<a class="btn btn--secondary btn--lg" id="success-fund" href="#"
-									>Fund agent wallet</a
+									 data-i18n="create_agent.fund_agent_wallet">Fund agent wallet</a
 								>
 								<a class="btn btn--secondary btn--lg" id="success-open" href="#"
-									>Open agent</a
+									 data-i18n="create_agent.open_agent">Open agent</a
 								>
 								<a class="btn btn--secondary btn--lg" id="success-edit" href="#"
-									>Customize further</a
+									 data-i18n="create_agent.customize_further">Customize further</a
 								>
 								<a class="btn btn--ghost btn--lg" href="/create-agent"
-									>Create another</a
+									 data-i18n="create_agent.create_another">Create another</a
 								>
 								<a class="btn btn--ghost btn--lg" href="/profile"
-									>View my profile</a
+									 data-i18n="create_agent.view_my_profile">View my profile</a
 								>
 							</div>
 							<div class="success-deploy">
-								<p class="success-deploy-label">Take it further</p>
+								<p class="success-deploy-label" data-i18n="create_agent.take_it_further">Take it further</p>
 								<div class="success-deploy-actions">
 									<a class="btn btn--ghost" id="success-voice" href="/voice"
-										>Give it a voice</a
+										 data-i18n="create_agent.give_it_a_voice">Give it a voice</a
 									>
 									<a class="btn btn--ghost" id="success-embed" href="/studio"
-										>Embed it anywhere</a
+										 data-i18n="create_agent.embed_it_anywhere">Embed it anywhere</a
 									>
 									<a class="btn btn--ghost" id="success-world" href="/play"
-										>Put it in a world</a
+										 data-i18n="create_agent.put_it_in_a_world">Put it in a world</a
 									>
 									<a class="btn btn--ghost" id="success-token" href="/launchpad"
-										>Launch its token</a
+										 data-i18n="create_agent.launch_its_token">Launch its token</a
 									>
 								</div>
 							</div>
@@ -1810,10 +1810,10 @@
 					<div class="wizard-foot" id="wizard-foot">
 						<div class="foot-msg" id="foot-msg" role="status" aria-live="polite"></div>
 						<div class="foot-actions">
-							<button type="button" class="btn btn--ghost" id="btn-back" hidden>
+							<button type="button" class="btn btn--ghost" id="btn-back" hidden data-i18n="create_agent.back">
 								Back
 							</button>
-							<button type="button" class="btn btn--primary" id="btn-next">
+							<button type="button" class="btn btn--primary" id="btn-next" data-i18n="create_agent.next">
 								Next
 							</button>
 							<button
@@ -1822,7 +1822,7 @@
 								id="btn-create"
 								hidden
 								aria-label="Create agent"
-							>
+							 data-i18n="create_agent.create_agent" data-i18n-attr="aria-label:create_agent.create_agent_arialabel">
 								Create agent
 							</button>
 						</div>
@@ -1834,5 +1834,7 @@
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
 		<script type="module" src="/src/create-agent.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

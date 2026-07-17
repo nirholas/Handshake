@@ -4,31 +4,31 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<title>Crypto API — one free, keyless API for on-chain data · three.ws</title>
+		<title data-i18n="crypto_api.meta_title">Crypto API — one free, keyless API for on-chain data · three.ws</title>
 		<meta
 			name="description"
 			content="One free API for crypto data: DEX pairs, prices, quotes, TVL, on-chain reads, name resolution. No key, no wallet. Generous free tier, pay-per-call only above quota. Live registry, OpenAPI 3.1 spec included."
-		/>
+		 data-i18n-attr="content:crypto_api.meta_description"/>
 		<meta name="robots" content="index, follow" />
 		<link rel="canonical" href="https://three.ws/crypto-api" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Crypto API — one free, keyless API for on-chain data · three.ws" />
+		<meta property="og:title" content="Crypto API — one free, keyless API for on-chain data · three.ws"  data-i18n-attr="content:crypto_api.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="DEX pairs, prices, quotes, TVL, on-chain reads, name resolution — one free API, no key, no wallet. Pay-per-call only above the free quota."
-		/>
+		 data-i18n-attr="content:crypto_api.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/crypto-api" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Crypto+API&amp;d=One+free%2C+keyless+API+for+on-chain+and+market+data%3A+DEX+pairs%2C+prices%2C+swap+quotes%2C+TVL%2C+Solana+RPC+reads%2C+and+ENS%2FSNS+name+resolution+%E2%80%94+CoinGecko%2C+DefiLlama%2C+J&amp;p=%2Fcrypto-api" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Crypto API — one free, keyless API for on-chain data · three.ws" />
+		<meta name="twitter:title" content="Crypto API — one free, keyless API for on-chain data · three.ws"  data-i18n-attr="content:crypto_api.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="DEX pairs, prices, quotes, TVL, on-chain reads, name resolution — free, keyless, one fetch."
-		/>
+		 data-i18n-attr="content:crypto_api.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Crypto+API&amp;d=One+free%2C+keyless+API+for+on-chain+and+market+data%3A+DEX+pairs%2C+prices%2C+swap+quotes%2C+TVL%2C+Solana+RPC+reads%2C+and+ENS%2FSNS+name+resolution+%E2%80%94+CoinGecko%2C+DefiLlama%2C+J&amp;p=%2Fcrypto-api" />
 
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -160,7 +160,7 @@
 		<meta name="twitter:site" content="@trythreews" />
 	</head>
 	<body>
-		<a href="#ca-endpoints" class="h-skip-link">Skip to endpoints</a>
+		<a href="#ca-endpoints" class="h-skip-link" data-i18n="crypto_api.skip_to_endpoints">Skip to endpoints</a>
 
 		<header><div id="nav-container"></div></header>
 		<script src="/nav.js"></script>
@@ -168,23 +168,23 @@
 		<main id="main-content">
 			<!-- ── HERO ────────────────────────────────────────────────── -->
 			<section class="ca-hero">
-				<div class="eyebrow"><span class="ca-dot ca-dot--live"></span><span>Crypto API · Free forever</span></div>
-				<h1>One free API for crypto data — <em>agents, not applications</em></h1>
-				<p class="ca-hero-sub">
+				<div class="eyebrow"><span class="ca-dot ca-dot--live"></span><span data-i18n="crypto_api.crypto_api_free_forever">Crypto API · Free forever</span></div>
+				<h1 data-i18n-html="crypto_api.one_free_api_for_crypto_data_agents">One free API for crypto data — <em>agents, not applications</em></h1>
+				<p class="ca-hero-sub" data-i18n="crypto_api.dex_pairs_prices_swap_quotes_tvl_on">
 					DEX pairs, prices, swap quotes, TVL, on-chain reads, name resolution — one bill for
 					CoinGecko, DefiLlama, Jupiter, DexScreener and Solana RPC. No key, no wallet. A generous
 					free tier, pay-per-call in USDC only above quota.
 				</p>
 				<div class="ca-hero-cta">
-					<a class="btn btn--primary btn--lg" href="#ca-quickstart">Copy the quickstart</a>
-					<a class="btn btn--secondary btn--lg" href="#ca-endpoints">Browse the live catalog</a>
+					<a class="btn btn--primary btn--lg" href="#ca-quickstart" data-i18n="crypto_api.copy_the_quickstart">Copy the quickstart</a>
+					<a class="btn btn--secondary btn--lg" href="#ca-endpoints" data-i18n="crypto_api.browse_the_live_catalog">Browse the live catalog</a>
 				</div>
 				<div class="ca-badges">
-					<span class="ca-badge">Free tier — no key</span>
-					<span class="ca-badge">BYOK pass-through</span>
-					<span class="ca-badge">x402 pay-per-call</span>
-					<span class="ca-badge">CoinGecko · DefiLlama · Jupiter · DexScreener · Solana RPC</span>
-					<span class="ca-live-pill" id="ca-live-count"><span class="ca-dot"></span><span id="ca-live-count-text">Loading live registry…</span></span>
+					<span class="ca-badge" data-i18n="crypto_api.free_tier_no_key">Free tier — no key</span>
+					<span class="ca-badge" data-i18n="crypto_api.byok_pass_through">BYOK pass-through</span>
+					<span class="ca-badge" data-i18n="crypto_api.x402_pay_per_call">x402 pay-per-call</span>
+					<span class="ca-badge" data-i18n="crypto_api.coingecko_defillama_jupiter_dexscreener_sola">CoinGecko · DefiLlama · Jupiter · DexScreener · Solana RPC</span>
+					<span class="ca-live-pill" id="ca-live-count" data-i18n-html="crypto_api.loading_live_registry"><span class="ca-dot"></span><span id="ca-live-count-text">Loading live registry…</span></span>
 				</div>
 			</section>
 
@@ -192,14 +192,14 @@
 				<!-- ── QUICKSTART ─────────────────────────────────────── -->
 				<section class="ca-section" id="ca-quickstart">
 					<div class="eyebrow">Quickstart</div>
-					<h2>One call, real data back</h2>
-					<p class="ca-section-lede">
+					<h2 data-i18n="crypto_api.one_call_real_data_back">One call, real data back</h2>
+					<p class="ca-section-lede" data-i18n-html="crypto_api.every_endpoint_is_a_plain_http_call">
 						Every endpoint is a plain HTTP call under <code>/api/v1/x/&lt;provider&gt;/&lt;endpoint&gt;</code>.
 						No auth header, no SDK, no signup — the free tier serves real JSON immediately. Here's
 						a live SOL price from CoinGecko.
 					</p>
 					<div class="ca-code" id="ca-quickstart-code"><!-- filled by JS --></div>
-					<p class="ca-try-note" style="margin-top:var(--space-sm); color:var(--ink-faint); font-size:var(--text-xs)">
+					<p class="ca-try-note" style="margin-top:var(--space-sm); color:var(--ink-faint); font-size:var(--text-xs)" data-i18n-html="crypto_api.base_url_discovery_index_machine_spec">
 						Base URL: <code>https://three.ws/api/v1/x</code> · discovery index:
 						<a class="ca-anchor" href="/api/v1/x" target="_blank" rel="noopener"><code>GET /api/v1/x</code></a> ·
 						machine spec: <a class="ca-anchor" href="/openapi.json" target="_blank" rel="noopener"><code>openapi.json</code></a>
@@ -209,8 +209,8 @@
 				<!-- ── LIVE ENDPOINT TABLE ────────────────────────────── -->
 				<section class="ca-section" id="ca-endpoints">
 					<div class="eyebrow">Live registry</div>
-					<h2>Every endpoint, rendered from production</h2>
-					<p class="ca-section-lede">
+					<h2 data-i18n="crypto_api.every_endpoint_rendered_from_production">Every endpoint, rendered from production</h2>
+					<p class="ca-section-lede" data-i18n-html="crypto_api.this_table_is_not_hand_written_it">
 						This table is not hand-written — it's fetched from <code>GET /api/v1/x</code> at page
 						load, so it always matches exactly what's deployed. New providers appear here the
 						moment they ship, with zero edits to this page.
@@ -225,30 +225,30 @@
 				<!-- ── CTA ────────────────────────────────────────────── -->
 				<section class="ca-section" id="ca-build">
 					<div class="eyebrow">Reference</div>
-					<h2>Read the docs, or pay for scale</h2>
-					<p class="ca-section-lede">
+					<h2 data-i18n="crypto_api.read_the_docs_or_pay_for_scale">Read the docs, or pay for scale</h2>
+					<p class="ca-section-lede" data-i18n="crypto_api.the_free_tier_is_real_production_data">
 						The free tier is real production data with zero setup. When your agent needs more —
 						its own upstream key, a three.ws plan, or scripted pay-per-call — the same URLs
 						upgrade in place.
 					</p>
 					<div class="ca-cta-grid">
 						<a class="ca-cta-card" href="/docs">
-							<span class="ca-cta-tag">Docs</span>
-							<h3>Full API reference</h3>
-							<p>Every provider, every billing lane, and the free-tier quota table in one page.</p>
-							<span class="ca-cta-go">Read the docs →</span>
+							<span class="ca-cta-tag" data-i18n="crypto_api.docs">Docs</span>
+							<h3 data-i18n="crypto_api.full_api_reference">Full API reference</h3>
+							<p data-i18n="crypto_api.every_provider_every_billing_lane_and_the">Every provider, every billing lane, and the free-tier quota table in one page.</p>
+							<span class="ca-cta-go" data-i18n="crypto_api.read_the_docs">Read the docs →</span>
 						</a>
 						<a class="ca-cta-card" href="/openapi.json" target="_blank" rel="noopener">
-							<span class="ca-cta-tag">OpenAPI 3.1</span>
-							<h3>Machine-readable spec</h3>
-							<p>Generated live from the same registry as this page — feed it to any codegen or agent tool.</p>
-							<span class="ca-cta-go">Open openapi.json →</span>
+							<span class="ca-cta-tag" data-i18n="crypto_api.openapi_3_1">OpenAPI 3.1</span>
+							<h3 data-i18n="crypto_api.machine_readable_spec">Machine-readable spec</h3>
+							<p data-i18n="crypto_api.generated_live_from_the_same_registry_as">Generated live from the same registry as this page — feed it to any codegen or agent tool.</p>
+							<span class="ca-cta-go" data-i18n="crypto_api.open_openapi_json">Open openapi.json →</span>
 						</a>
 						<a class="ca-cta-card" href="/docs/x402">
-							<span class="ca-cta-tag">x402</span>
-							<h3>Pay-per-call, programmatically</h3>
-							<p>How the HTTP 402 challenge works, and how an agent settles USDC to keep calling past the free tier.</p>
-							<span class="ca-cta-go">Read the x402 docs →</span>
+							<span class="ca-cta-tag" data-i18n="crypto_api.x402">x402</span>
+							<h3 data-i18n="crypto_api.pay_per_call_programmatically">Pay-per-call, programmatically</h3>
+							<p data-i18n="crypto_api.how_the_http_402_challenge_works_and">How the HTTP 402 challenge works, and how an agent settles USDC to keep calling past the free tier.</p>
+							<span class="ca-cta-go" data-i18n="crypto_api.read_the_x402_docs">Read the x402 docs →</span>
 						</a>
 					</div>
 				</section>
@@ -437,5 +437,7 @@
 			}
 			loadRegistry();
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

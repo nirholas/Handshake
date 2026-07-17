@@ -4,22 +4,22 @@
 		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Scene Capture — Video to 3D Point Cloud · three.ws</title>
+		<title data-i18n="capture.meta_title">Scene Capture — Video to 3D Point Cloud · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="description" content="Turn a phone video of any space into an explorable 3D point cloud in the browser. Streaming feed-forward reconstruction (LingBot-Map) → coloured .ply, rendered live with WebGL." />
+		<meta name="description" content="Turn a phone video of any space into an explorable 3D point cloud in the browser. Streaming feed-forward reconstruction (LingBot-Map) → coloured .ply, rendered live with WebGL."  data-i18n-attr="content:capture.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 		<link rel="canonical" href="https://three.ws/capture" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Scene Capture — Video to 3D Point Cloud · three.ws" />
-		<meta property="og:description" content="Film a space, get an explorable 3D point cloud. Streaming feed-forward reconstruction → coloured .ply, rendered live in the browser." />
+		<meta property="og:title" content="Scene Capture — Video to 3D Point Cloud · three.ws"  data-i18n-attr="content:capture.meta_og_title"/>
+		<meta property="og:description" content="Film a space, get an explorable 3D point cloud. Streaming feed-forward reconstruction → coloured .ply, rendered live in the browser."  data-i18n-attr="content:capture.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/capture" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Scene+Capture+%E2%80%94+Video+to+3D+Point+Cloud&amp;d=Turn+a+phone+video+of+any+space+into+an+explorable+3D+point+cloud.+Streaming+feed-forward+reconstruction+%28LingBot-Map+Geometric+Context+Transformer%29+fuses+the+f&amp;p=%2Fcapture" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Scene Capture — Video to 3D Point Cloud · three.ws" />
-		<meta name="twitter:description" content="Film a space, get an explorable 3D point cloud — rendered live in the browser." />
+		<meta name="twitter:title" content="Scene Capture — Video to 3D Point Cloud · three.ws"  data-i18n-attr="content:capture.meta_twitter_title"/>
+		<meta name="twitter:description" content="Film a space, get an explorable 3D point cloud — rendered live in the browser."  data-i18n-attr="content:capture.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Scene+Capture+%E2%80%94+Video+to+3D+Point+Cloud&amp;d=Turn+a+phone+video+of+any+space+into+an+explorable+3D+point+cloud.+Streaming+feed-forward+reconstruction+%28LingBot-Map+Geometric+Context+Transformer%29+fuses+the+f&amp;p=%2Fcapture" />
 
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -203,9 +203,9 @@
 
 			<div class="pc-wrap">
 				<div class="pc-head">
-					<span class="pc-chip"><span class="pc-chip-dot"></span> Streaming reconstruction · LingBot-Map</span>
-					<h1>Video → 3D scene.</h1>
-					<p>
+					<span class="pc-chip" data-i18n-html="capture.streaming_reconstruction_lingbot_map"><span class="pc-chip-dot"></span> Streaming reconstruction · LingBot-Map</span>
+					<h1 data-i18n="capture.video_3d_scene">Video → 3D scene.</h1>
+					<p data-i18n-html="capture.film_a_room_a_street_an_object">
 						Film a room, a street, an object — and get back an explorable 3D point cloud.
 						A feed-forward <a href="/avatar-engines">Geometric Context Transformer</a> reconstructs
 						dense world-space geometry from the frames, then streams a coloured <code>.ply</code> you
@@ -222,14 +222,14 @@
 							<div class="pc-glyph">
 								<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
 							</div>
-							<h3>Capture a scene to begin</h3>
-							<p>Paste a video URL on the right to reconstruct, drop a <code>.ply</code> here, or try the sample cloud.</p>
+							<h3 data-i18n="capture.capture_a_scene_to_begin">Capture a scene to begin</h3>
+							<p data-i18n-html="capture.paste_a_video_url_on_the_right">Paste a video URL on the right to reconstruct, drop a <code>.ply</code> here, or try the sample cloud.</p>
 						</div>
 
 						<!-- Loading -->
 						<div class="pc-overlay" id="pc-loading" hidden>
 							<div class="pc-spinner"></div>
-							<h3 id="pc-loading-title">Working…</h3>
+							<h3 id="pc-loading-title" data-i18n="capture.working">Working…</h3>
 							<p id="pc-loading-sub"></p>
 						</div>
 
@@ -238,10 +238,10 @@
 							<div class="pc-glyph" style="color:#f0f0f0">
 								<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4 M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>
 							</div>
-							<h3 id="pc-error-title">Something went wrong</h3>
+							<h3 id="pc-error-title" data-i18n="capture.something_went_wrong">Something went wrong</h3>
 							<p id="pc-error-sub"></p>
 							<div class="pc-err-actions">
-								<button class="pc-btn" id="pc-error-retry" type="button" style="width:auto">Try the sample</button>
+								<button class="pc-btn" id="pc-error-retry" type="button" style="width:auto" data-i18n="capture.try_the_sample">Try the sample</button>
 							</div>
 						</div>
 
@@ -253,19 +253,19 @@
 									<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="1.5" fill="currentColor"/><circle cx="17" cy="17" r="3.5" fill="currentColor"/></svg>
 									<input class="pc-size" id="pc-size" type="range" min="0.25" max="4" step="0.05" value="1" disabled aria-label="Point size" />
 								</div>
-								<button class="pc-icon-btn" id="pc-color" type="button" disabled title="Cycle colour mode (C)" aria-label="Cycle colour mode">
+								<button class="pc-icon-btn" id="pc-color" type="button" disabled title="Cycle colour mode (C)" aria-label="Cycle colour mode" data-i18n-attr="aria-label:capture.cycle_colour_mode_arialabel;title:capture.cycle_colour_mode_c_title">
 									<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18Z" fill="currentColor"/></svg>
 								</button>
-								<button class="pc-icon-btn" id="pc-rotate" type="button" disabled title="Auto-rotate (Space)" aria-label="Toggle auto-rotate">
+								<button class="pc-icon-btn" id="pc-rotate" type="button" disabled title="Auto-rotate (Space)" aria-label="Toggle auto-rotate" data-i18n-attr="aria-label:capture.toggle_auto_rotate_arialabel;title:capture.auto_rotate_space_title">
 									<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v4h-4"/></svg>
 								</button>
-								<button class="pc-icon-btn" id="pc-shot" type="button" disabled title="Save PNG (S)" aria-label="Save screenshot">
+								<button class="pc-icon-btn" id="pc-shot" type="button" disabled title="Save PNG (S)" aria-label="Save screenshot" data-i18n-attr="aria-label:capture.save_screenshot_arialabel;title:capture.save_png_s_title">
 									<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h3l2-2h8l2 2h3v12H3z"/><circle cx="12" cy="13" r="3.5"/></svg>
 								</button>
-								<button class="pc-icon-btn" id="pc-recenter" type="button" disabled title="Recenter camera (R)" aria-label="Recenter camera">
+								<button class="pc-icon-btn" id="pc-recenter" type="button" disabled title="Recenter camera (R)" aria-label="Recenter camera" data-i18n-attr="aria-label:capture.recenter_camera_arialabel;title:capture.recenter_camera_r_title">
 									<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3 M12 19v3 M2 12h3 M19 12h3"/></svg>
 								</button>
-								<a class="pc-icon-btn" id="pc-download" title="Download .ply" aria-label="Download point cloud" hidden>
+								<a class="pc-icon-btn" id="pc-download" title="Download .ply" aria-label="Download point cloud" hidden data-i18n-attr="aria-label:capture.download_point_cloud_arialabel;title:capture.download_ply_title">
 									<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12 M7 11l5 4 5-4 M5 21h14"/></svg>
 								</a>
 							</div>
@@ -291,18 +291,18 @@
 								<input id="pc-video-file" type="file" accept="video/mp4,video/quicktime,video/webm" hidden />
 							</div>
 							<details class="pc-adv">
-								<summary>Reconstruction settings</summary>
+								<summary data-i18n="capture.reconstruction_settings">Reconstruction settings</summary>
 								<div class="pc-adv-body">
 									<div class="pc-row">
 										<div class="pc-field">
-											<span class="pc-label">Mode</span>
+											<span class="pc-label" data-i18n="capture.mode">Mode</span>
 											<select class="pc-select" id="pc-mode">
-												<option value="streaming" selected>Streaming</option>
-												<option value="windowed">Windowed (&gt;3k frames)</option>
+												<option value="streaming" selected data-i18n="capture.streaming">Streaming</option>
+												<option value="windowed" data-i18n="capture.windowed_3k_frames">Windowed (&gt;3k frames)</option>
 											</select>
 										</div>
 										<div class="pc-field">
-											<span class="pc-label">Sample FPS</span>
+											<span class="pc-label" data-i18n="capture.sample_fps">Sample FPS</span>
 											<select class="pc-select" id="pc-fps">
 												<option value="4">4</option>
 												<option value="8" selected>8</option>
@@ -311,17 +311,17 @@
 										</div>
 									</div>
 									<div class="pc-field">
-										<span class="pc-label">Keyframe interval</span>
+										<span class="pc-label" data-i18n="capture.keyframe_interval">Keyframe interval</span>
 										<select class="pc-select" id="pc-kf">
-											<option value="2">2 · denser, slower</option>
-											<option value="4" selected>4 · balanced</option>
-											<option value="8">8 · faster, lighter</option>
+											<option value="2" data-i18n="capture.2_denser_slower">2 · denser, slower</option>
+											<option value="4" selected data-i18n="capture.4_balanced">4 · balanced</option>
+											<option value="8" data-i18n="capture.8_faster_lighter">8 · faster, lighter</option>
 										</select>
 									</div>
 									<label class="pc-check"><input type="checkbox" id="pc-sky" checked /> Mask out sky</label>
 								</div>
 							</details>
-							<p class="pc-hint">Steady, well-lit footage that orbits or walks through a space works best. Long clips run in minutes — the view updates the moment it's ready.</p>
+							<p class="pc-hint" data-i18n="capture.steady_well_lit_footage_that_orbits_or">Steady, well-lit footage that orbits or walks through a space works best. Long clips run in minutes — the view updates the moment it's ready.</p>
 						</div>
 
 						<div class="pc-card">
@@ -331,7 +331,7 @@
 							</h2>
 							<div class="pc-field">
 								<input class="pc-input" id="pc-ply-url" type="url" placeholder="https://…/scene.ply" autocomplete="off" />
-								<button class="pc-btn" id="pc-load-url" type="button">Render URL</button>
+								<button class="pc-btn" id="pc-load-url" type="button" data-i18n="capture.render_url">Render URL</button>
 							</div>
 							<div class="pc-or">or</div>
 							<button class="pc-btn" id="pc-pick" type="button">
@@ -340,13 +340,13 @@
 							</button>
 							<input id="pc-file" type="file" accept=".ply" hidden />
 							<div class="pc-or">or</div>
-							<button class="pc-sample-btn" id="pc-sample" type="button"><span class="pc-sample-dot"></span> Sample interior · 90k points</button>
-							<p class="pc-hint">Files stay on your device — decoding and rendering run entirely in your browser.</p>
+							<button class="pc-sample-btn" id="pc-sample" type="button" data-i18n-html="capture.sample_interior_90k_points"><span class="pc-sample-dot"></span> Sample interior · 90k points</button>
+							<p class="pc-hint" data-i18n="capture.files_stay_on_your_device_decoding_and">Files stay on your device — decoding and rendering run entirely in your browser.</p>
 						</div>
 
 						<div class="pc-card">
-							<h2>How it works</h2>
-							<p class="pc-note">
+							<h2 data-i18n="capture.how_it_works">How it works</h2>
+							<p class="pc-note" data-i18n-html="capture.frames_stream_through_a_feed_forward_transfo">
 								Frames stream through a feed-forward transformer that grounds coordinates, reads dense
 								geometry, and corrects drift across the whole clip — no per-scene optimisation. The result
 								is a world-space coloured point cloud. Output renders with WebGL <code>THREE.Points</code>;
@@ -362,5 +362,7 @@
 		</div>
 
 		<script type="module" src="/src/scene-capture.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

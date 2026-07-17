@@ -4,33 +4,33 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>three.ws — Tutorials</title>
+		<title data-i18n="tutorials.meta_title">three.ws — Tutorials</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="author" content="nirholas" />
 		<meta
 			name="description"
 			content="Tutorials for building 3D agents with three.ws — from a 30-second embed to on-chain identity and paid x402 endpoints."
-		/>
+		 data-i18n-attr="content:tutorials.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="three.ws — Tutorials" />
+		<meta property="og:title" content="three.ws — Tutorials"  data-i18n-attr="content:tutorials.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Tutorials for building 3D agents with three.ws — from a 30-second embed to on-chain identity and paid x402 endpoints."
-		/>
+		 data-i18n-attr="content:tutorials.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/tutorials" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Tutorials&amp;d=Step-by-step+build+guides.&amp;p=%2Ftutorials" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="three.ws — Tutorials" />
+		<meta name="twitter:title" content="three.ws — Tutorials"  data-i18n-attr="content:tutorials.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Tutorials for building 3D agents with three.ws — from a 30-second embed to on-chain identity and paid x402 endpoints."
-		/>
+		 data-i18n-attr="content:tutorials.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Tutorials&amp;d=Step-by-step+build+guides.&amp;p=%2Ftutorials" />
 
 		<link rel="canonical" href="https://three.ws/tutorials" />
@@ -483,16 +483,16 @@
 </head>
 	<body class="home-page tutorials-page tut-page">
 		<div class="cursor" id="cursor" aria-hidden="true"></div>
-		<a href="#main-content" class="h-skip-link">Skip to main content</a>
+		<a href="#main-content" class="h-skip-link" data-i18n="tutorials.skip_to_main_content">Skip to main content</a>
 
 		<header><div id="nav-container"></div></header>
 
 		<main id="main-content">
 			<div class="tut-hero">
 				<div class="tut-hero-inner">
-					<p class="tut-hero-eyebrow">Tutorials</p>
-					<h1>Build with 3D agents</h1>
-					<p>
+					<p class="tut-hero-eyebrow" data-i18n="tutorials.tutorials">Tutorials</p>
+					<h1 data-i18n="tutorials.build_with_3d_agents">Build with 3D agents</h1>
+					<p data-i18n="tutorials.twenty_three_step_by_step_guides_from">
 						Twenty-three step-by-step guides — from a one-line embed to a self-hosted
 						backend with on-chain identity and paid x402 endpoints. Pick your tier.
 					</p>
@@ -531,8 +531,8 @@
 			</div>
 			<div class="h-footer-cta">
 				<div class="h-footer-newsletter">
-					<h3>Stay in the loop</h3>
-					<p>Get updates on new features, agent tooling, and protocol changes.</p>
+					<h3 data-i18n="tutorials.stay_in_the_loop">Stay in the loop</h3>
+					<p data-i18n="tutorials.get_updates_on_new_features_agent_tooling">Get updates on new features, agent tooling, and protocol changes.</p>
 					<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
 						<input
 							type="email"
@@ -547,7 +547,7 @@
 							type="submit"
 							class="h-footer-newsletter-btn"
 							aria-label="Subscribe"
-						>
+						 data-i18n-attr="aria-label:tutorials.subscribe_arialabel">
 							<svg viewBox="0 0 16 16" aria-hidden="true">
 								<path
 									fill="none"
@@ -563,8 +563,8 @@
 					<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
 				</div>
 				<div class="h-footer-community">
-					<h3>Join the community</h3>
-					<p>Follow along for builds, demos, and conversations with the team.</p>
+					<h3 data-i18n="tutorials.join_the_community">Join the community</h3>
+					<p data-i18n="tutorials.follow_along_for_builds_demos_and_conversati">Follow along for builds, demos, and conversations with the team.</p>
 					<a
 						class="h-footer-community-btn"
 						href="https://x.com/trythreews"
@@ -586,9 +586,9 @@
 					<div class="h-footer-brand">
 						<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
 						<span class="wordmark-dot" aria-hidden="true"></span>
-						<span>three.ws</span>
+						<span data-i18n="tutorials.three_ws">three.ws</span>
 					</div>
-					<p class="h-footer-tagline">Give your AI a body.</p>
+					<p class="h-footer-tagline" data-i18n="tutorials.give_your_ai_a_body">Give your AI a body.</p>
 					<div class="h-footer-socials">
 						<a
 							class="h-footer-social"
@@ -596,7 +596,7 @@
 							target="_blank"
 							rel="noopener"
 							aria-label="three.ws on X"
-						>
+						 data-i18n-attr="aria-label:tutorials.three_ws_on_x_arialabel">
 							<svg viewBox="0 0 24 24" aria-hidden="true">
 								<path
 									fill="currentColor"
@@ -610,7 +610,7 @@
 							target="_blank"
 							rel="noopener"
 							aria-label="three.ws on GitHub"
-						>
+						 data-i18n-attr="aria-label:tutorials.three_ws_on_github_arialabel">
 							<svg viewBox="0 0 16 16" aria-hidden="true">
 								<path
 									fill="currentColor"
@@ -622,41 +622,41 @@
 				</div>
 				<nav class="h-footer-links" aria-label="Footer">
 					<div class="h-footer-link-col">
-						<h4 class="h-footer-link-heading">Product</h4>
-						<a href="/create">Create</a>
-						<a href="/studio">Studio</a>
-						<a href="/widgets">Widgets</a>
-						<a href="/discover">Discover</a>
+						<h4 class="h-footer-link-heading" data-i18n="tutorials.product">Product</h4>
+						<a href="/create" data-i18n="tutorials.create">Create</a>
+						<a href="/studio" data-i18n="tutorials.studio">Studio</a>
+						<a href="/widgets" data-i18n="tutorials.widgets">Widgets</a>
+						<a href="/discover" data-i18n="tutorials.discover">Discover</a>
 					</div>
 					<div class="h-footer-link-col">
-						<h4 class="h-footer-link-heading">Developers</h4>
-						<a href="/docs">Docs</a>
+						<h4 class="h-footer-link-heading" data-i18n="tutorials.developers">Developers</h4>
+						<a href="/docs" data-i18n="tutorials.docs">Docs</a>
 						<a
 							href="https://github.com/nirholas/three.ws"
 							target="_blank"
 							rel="noopener"
-							>GitHub</a
+							 data-i18n="tutorials.github">GitHub</a
 						>
 						<a
 							href="https://eips.ethereum.org/EIPS/eip-8004"
 							target="_blank"
 							rel="noopener"
-							>ERC-8004</a
+							 data-i18n="tutorials.erc_8004">ERC-8004</a
 						>
 					</div>
 					<div class="h-footer-link-col">
-						<h4 class="h-footer-link-heading">Resources</h4>
-						<a href="/blog">Blog</a>
-						<a href="/tutorials" aria-current="page">Tutorials</a>
-						<a href="/dashboard">Dashboard</a>
+						<h4 class="h-footer-link-heading" data-i18n="tutorials.resources">Resources</h4>
+						<a href="/blog" data-i18n="tutorials.blog">Blog</a>
+						<a href="/tutorials" aria-current="page" data-i18n="tutorials.tutorials_2">Tutorials</a>
+						<a href="/dashboard" data-i18n="tutorials.dashboard">Dashboard</a>
 					</div>
 				</nav>
 			</div>
 			<div class="h-footer-bottom">
-				<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+				<p class="h-footer-legal" data-i18n="tutorials.2026_three_ws_all_rights_reserved">© 2026 three.ws — All rights reserved.</p>
 				<div class="h-footer-legal-links">
-					<a href="/legal/privacy">Privacy Policy</a>
-					<a href="/legal/tos">Terms of Use</a>
+					<a href="/legal/privacy" data-i18n="tutorials.privacy_policy">Privacy Policy</a>
+					<a href="/legal/tos" data-i18n="tutorials.terms_of_use">Terms of Use</a>
 				</div>
 			</div>
 		</footer>
@@ -781,5 +781,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

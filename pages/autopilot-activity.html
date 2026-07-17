@@ -5,10 +5,10 @@
 	<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Autopilot Activity — three.ws</title>
-	<meta name="description" content="Every autonomous action your three.ws agent took — each with the memory that motivated it, a signed receipt, and a one-tap undo. Explainable autonomy you can trust." />
-	<meta property="og:title" content="Autopilot Activity — three.ws" />
-	<meta property="og:description" content="Explainable autonomy: every action your agent took, with the memory that motivated it and a signed receipt." />
+	<title data-i18n="autopilot_activity.meta_title">Autopilot Activity — three.ws</title>
+	<meta name="description" content="Every autonomous action your three.ws agent took — each with the memory that motivated it, a signed receipt, and a one-tap undo. Explainable autonomy you can trust."  data-i18n-attr="content:autopilot_activity.meta_description"/>
+	<meta property="og:title" content="Autopilot Activity — three.ws"  data-i18n-attr="content:autopilot_activity.meta_og_title"/>
+	<meta property="og:description" content="Explainable autonomy: every action your agent took, with the memory that motivated it and a signed receipt."  data-i18n-attr="content:autopilot_activity.meta_og_description"/>
 	<meta name="twitter:card" content="summary_large_image" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -58,32 +58,34 @@
 </head>
 <body>
 	<header class="topbar">
-		<a class="brand" href="/dashboard" aria-label="three.ws"><span class="glyph"></span> three.ws</a>
+		<a class="brand" href="/dashboard" aria-label="three.ws" data-i18n-html="autopilot_activity.three_ws" data-i18n-attr="aria-label:autopilot_activity.three_ws_arialabel"><span class="glyph"></span> three.ws</a>
 		<nav>
-			<a href="/dashboard">Dashboard</a>
-			<a href="/autopilot-activity" class="active" aria-current="page">Activity</a>
+			<a href="/dashboard" data-i18n="autopilot_activity.dashboard">Dashboard</a>
+			<a href="/autopilot-activity" class="active" aria-current="page" data-i18n="autopilot_activity.activity">Activity</a>
 		</nav>
 	</header>
 
 	<main class="wrap">
 		<section class="hero">
-			<h1>Autopilot activity</h1>
-			<p>Every action your agent took on your behalf — each grounded in the memory that motivated it,
+			<h1 data-i18n="autopilot_activity.autopilot_activity">Autopilot activity</h1>
+			<p data-i18n="autopilot_activity.every_action_your_agent_took_on_your">Every action your agent took on your behalf — each grounded in the memory that motivated it,
 			signed, and reversible where it can be. This is autonomy you can audit.</p>
 		</section>
 
 		<div class="controls">
-			<label for="agent-filter">Agent</label>
-			<select id="agent-filter" aria-label="Filter by agent"><option value="">All your agents</option></select>
+			<label for="agent-filter" data-i18n="autopilot_activity.agent">Agent</label>
+			<select id="agent-filter" aria-label="Filter by agent"><option value="" data-i18n="autopilot_activity.all_your_agents">All your agents</option></select>
 			<span id="trust-slot"></span>
 		</div>
 
 		<div id="ledger" class="ledger" aria-live="polite">
 			<div class="skel"></div><div class="skel"></div><div class="skel"></div>
 		</div>
-		<button class="loadmore apm-btn" id="loadmore" hidden>Load more</button>
+		<button class="loadmore apm-btn" id="loadmore" hidden data-i18n="autopilot_activity.load_more">Load more</button>
 	</main>
 
 	<script type="module" src="/src/autopilot-activity.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

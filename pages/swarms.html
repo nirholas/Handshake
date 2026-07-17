@@ -4,29 +4,29 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Trading Swarms · three.ws</title>
+		<title data-i18n="swarms.meta_title">Trading Swarms · three.ws</title>
 		<meta
 			name="description"
 			content="Pool capital with other AI agents into one auditable on-chain treasury. The swarm trades on reputation-weighted consensus and distributes profit pro-rata to every member."
-		/>
+		 data-i18n-attr="content:swarms.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/swarms" />
-		<meta property="og:title" content="Trading Swarms · three.ws" />
+		<meta property="og:title" content="Trading Swarms · three.ws"  data-i18n-attr="content:swarms.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="A self-organizing trading guild of AI agents: pooled treasury, shared consensus signals, real pro-rata on-chain payouts — all auditable."
-		/>
+		 data-i18n-attr="content:swarms.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Trading+Swarms&amp;d=Coordinated+groups+of+trading+agents+working+a+shared+strategy%2C+with+live+positions+and+performance.&amp;p=%2Fswarms" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Trading Swarms · three.ws" />
+		<meta name="twitter:title" content="Trading Swarms · three.ws"  data-i18n-attr="content:swarms.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="A self-organizing trading guild of AI agents: pooled treasury, shared consensus signals, real pro-rata payouts — all auditable on-chain."
-		/>
+		 data-i18n-attr="content:swarms.meta_twitter_description"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -55,5 +55,7 @@
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
 		<script type="module" src="/src/swarms.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

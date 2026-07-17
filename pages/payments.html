@@ -4,8 +4,8 @@
 		<script>/* three.ws theme boot — no-flash */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<title>Agent Payment Sessions · three.ws</title>
-		<meta name="description" content="Create budget-limited payment sessions for AI agents. No private keys needed — agents pay x402 endpoints with platform governance enforcing spend limits, URL allowlists, and expiry." />
+		<title data-i18n="payments.meta_title">Agent Payment Sessions · three.ws</title>
+		<meta name="description" content="Create budget-limited payment sessions for AI agents. No private keys needed — agents pay x402 endpoints with platform governance enforcing spend limits, URL allowlists, and expiry."  data-i18n-attr="content:payments.meta_description"/>
 <link rel="canonical" href="https://three.ws/payments" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -242,8 +242,8 @@
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:title" content="Agent Payment Sessions · three.ws">
-	<meta property="og:description" content="Create budget-limited payment sessions for AI agents. Governance-enforced spend limits, URL allowlists, and expiry — agents pay x402 APIs without holding a private key.">
+	<meta property="og:title" content="Agent Payment Sessions · three.ws" data-i18n-attr="content:payments.meta_og_title">
+	<meta property="og:description" content="Create budget-limited payment sessions for AI agents. Governance-enforced spend limits, URL allowlists, and expiry — agents pay x402 APIs without holding a private key." data-i18n-attr="content:payments.meta_og_description">
 	<meta property="og:url" content="https://three.ws/payments">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=account&amp;t=Agent+Payment+Sessions&amp;d=Create+budget-limited+payment+sessions+for+AI+agents.+Governance-enforced+spend+limits%2C+URL+allowlists%2C+and+expiry+%E2%80%94+agents+pay+x402+APIs+without+holding+a+priv&amp;p=%2Fpayments">
 	<meta property="og:image:width" content="1200">
@@ -252,15 +252,15 @@
 	<meta property="og:image:alt" content="Agent Payment Sessions — three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Agent Payment Sessions · three.ws">
-	<meta name="twitter:description" content="Create budget-limited payment sessions for AI agents. Governance-enforced spend limits, URL allowlists, and expiry — agents pay x402 APIs without holding a private key.">
+	<meta name="twitter:title" content="Agent Payment Sessions · three.ws" data-i18n-attr="content:payments.meta_twitter_title">
+	<meta name="twitter:description" content="Create budget-limited payment sessions for AI agents. Governance-enforced spend limits, URL allowlists, and expiry — agents pay x402 APIs without holding a private key." data-i18n-attr="content:payments.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=account&amp;t=Agent+Payment+Sessions&amp;d=Create+budget-limited+payment+sessions+for+AI+agents.+Governance-enforced+spend+limits%2C+URL+allowlists%2C+and+expiry+%E2%80%94+agents+pay+x402+APIs+without+holding+a+priv&amp;p=%2Fpayments">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Agent Payment Sessions","description":"Create budget-limited payment sessions for AI agents. Governance-enforced spend limits, URL allowlists, and expiry — agents pay x402 APIs without holding a private key.","url":"https://three.ws/payments","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=account&t=Agent+Payment+Sessions&d=Create+budget-limited+payment+sessions+for+AI+agents.+Governance-enforced+spend+limits%2C+URL+allowlists%2C+and+expiry+%E2%80%94+agents+pay+x402+APIs+without+holding+a+priv&p=%2Fpayments"}]}</script>
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 </head>
 	<body>
-		<a href="#main-content" class="h-skip-link">Skip to main content</a>
+		<a href="#main-content" class="h-skip-link" data-i18n="payments.skip_to_main_content">Skip to main content</a>
 		<header><div id="nav-container"></div></header>
 		<script src="/nav.js"></script>
 
@@ -273,8 +273,8 @@
 							<svg viewBox="0 0 8 8"><circle cx="4" cy="4" r="4"/></svg>
 							Governance-first · no private key required
 						</div>
-						<h1>Agent Payment Sessions</h1>
-						<p>Fund spend envelopes from your credits. Agents call paid x402 endpoints using a session token — the platform wallet signs. Budget, URL allowlists, and per-tx limits are enforced atomically.</p>
+						<h1 data-i18n="payments.agent_payment_sessions">Agent Payment Sessions</h1>
+						<p data-i18n="payments.fund_spend_envelopes_from_your_credits_agent">Fund spend envelopes from your credits. Agents call paid x402 endpoints using a session token — the platform wallet signs. Budget, URL allowlists, and per-tx limits are enforced atomically.</p>
 					</div>
 					<div class="pw-hero-actions">
 						<button class="btn-ghost" id="btnDocs" onclick="window.open('https://three.ws/docs/payments','_blank')">
@@ -284,7 +284,7 @@
 						<button class="btn-primary" id="btnNew">
 							<svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
 							New Session
-							<span class="pw-shortcut" style="font-size:10px;opacity:0.6;margin-left:2px">N</span>
+							<span class="pw-shortcut" style="font-size:10px;opacity:0.6;margin-left:2px" data-i18n="payments.n">N</span>
 						</button>
 					</div>
 				</div>
@@ -301,11 +301,11 @@
 			<!-- Toolbar -->
 			<div class="pw-toolbar">
 				<div class="pw-filters" id="pwFilters">
-					<button class="on" data-f="all">All</button>
-					<button data-f="active">Active</button>
-					<button data-f="exhausted">Exhausted</button>
-					<button data-f="expired">Expired</button>
-					<button data-f="cancelled">Cancelled</button>
+					<button class="on" data-f="all" data-i18n="payments.all">All</button>
+					<button data-f="active" data-i18n="payments.active">Active</button>
+					<button data-f="exhausted" data-i18n="payments.exhausted">Exhausted</button>
+					<button data-f="expired" data-i18n="payments.expired">Expired</button>
+					<button data-f="cancelled" data-i18n="payments.cancelled">Cancelled</button>
 				</div>
 				<span class="pw-count" id="pwCount"></span>
 			</div>
@@ -322,69 +322,69 @@
 		<div class="modal-bg" id="createModal" role="dialog" aria-modal="true" aria-labelledby="mTitle">
 			<div class="modal" id="modalInner">
 				<div class="modal-hd">
-					<h2 id="mTitle">New Payment Session</h2>
-					<p>Budget is drawn from your credits. Un-spent balance refunds automatically on cancel or expiry.</p>
+					<h2 id="mTitle" data-i18n="payments.new_payment_session">New Payment Session</h2>
+					<p data-i18n="payments.budget_is_drawn_from_your_credits_un">Budget is drawn from your credits. Un-spent balance refunds automatically on cancel or expiry.</p>
 				</div>
 
 				<div id="createForm">
 					<!-- Preset templates -->
 					<div class="tpl-row" id="tplRow">
-						<button class="tpl-btn" data-tpl="test"><span class="tpl-price">$0.10</span><span class="tpl-desc">Quick test · 15 min</span></button>
-						<button class="tpl-btn on" data-tpl="standard"><span class="tpl-price">$1.00</span><span class="tpl-desc">Standard · 1 hr</span></button>
-						<button class="tpl-btn" data-tpl="research"><span class="tpl-price">$5.00</span><span class="tpl-desc">Research · 6 hrs</span></button>
-						<button class="tpl-btn" data-tpl="sprint"><span class="tpl-price">$20.00</span><span class="tpl-desc">Sprint · 24 hrs</span></button>
+						<button class="tpl-btn" data-tpl="test" data-i18n-html="payments.0_10quick_test_15_min"><span class="tpl-price">$0.10</span><span class="tpl-desc">Quick test · 15 min</span></button>
+						<button class="tpl-btn on" data-tpl="standard" data-i18n-html="payments.1_00standard_1_hr"><span class="tpl-price">$1.00</span><span class="tpl-desc">Standard · 1 hr</span></button>
+						<button class="tpl-btn" data-tpl="research" data-i18n-html="payments.5_00research_6_hrs"><span class="tpl-price">$5.00</span><span class="tpl-desc">Research · 6 hrs</span></button>
+						<button class="tpl-btn" data-tpl="sprint" data-i18n-html="payments.20_00sprint_24_hrs"><span class="tpl-price">$20.00</span><span class="tpl-desc">Sprint · 24 hrs</span></button>
 					</div>
 
 					<div class="f-row">
-						<label>Label <span>optional</span></label>
+						<label data-i18n-html="payments.label_optional">Label <span>optional</span></label>
 						<input type="text" id="fLabel" maxlength="120" placeholder="e.g. Research agent — June sprint" autocomplete="off" />
 					</div>
 
 					<div class="f-row-2">
 						<div class="f-row">
-							<label>Budget (USD)</label>
+							<label data-i18n="payments.budget_usd">Budget (USD)</label>
 							<input type="number" id="fBudget" min="0.001" max="1000" step="0.001" value="1.00" />
 						</div>
 						<div class="f-row">
-							<label>Expiry</label>
+							<label data-i18n="payments.expiry">Expiry</label>
 							<select id="fExpiry">
-								<option value="900">15 minutes</option>
-								<option value="3600" selected>1 hour</option>
-								<option value="21600">6 hours</option>
-								<option value="86400">24 hours</option>
-								<option value="604800">7 days</option>
-								<option value="2592000">30 days</option>
+								<option value="900" data-i18n="payments.15_minutes">15 minutes</option>
+								<option value="3600" selected data-i18n="payments.1_hour">1 hour</option>
+								<option value="21600" data-i18n="payments.6_hours">6 hours</option>
+								<option value="86400" data-i18n="payments.24_hours">24 hours</option>
+								<option value="604800" data-i18n="payments.7_days">7 days</option>
+								<option value="2592000" data-i18n="payments.30_days">30 days</option>
 							</select>
 						</div>
 					</div>
 
 					<div class="f-row-2">
 						<div class="f-row">
-							<label>Network</label>
+							<label data-i18n="payments.network">Network</label>
 							<select id="fNetwork">
-								<option value="solana" selected>Solana USDC</option>
+								<option value="solana" selected data-i18n="payments.solana_usdc">Solana USDC</option>
 							</select>
 						</div>
 						<div class="f-row">
-							<label>Max per tx <span>optional</span></label>
+							<label data-i18n-html="payments.max_per_tx_optional">Max per tx <span>optional</span></label>
 							<input type="number" id="fMaxTx" min="0.000001" max="1000" step="0.0001" placeholder="No limit" />
 						</div>
 					</div>
 
 					<div class="f-row">
-						<label>Allowed hosts <span>optional — comma-separated</span></label>
+						<label data-i18n-html="payments.allowed_hosts_optional_comma_separated">Allowed hosts <span>optional — comma-separated</span></label>
 						<input type="text" id="fHosts" placeholder="api.example.com, data.provider.io" autocomplete="off" />
 						<div class="f-hint">If set, the session can only pay endpoints at these domains. Empty = any host.</div>
 					</div>
 
 					<div class="budget-preview" id="budgetPreview">
-						<span class="bp-label">Credit charge</span>
+						<span class="bp-label" data-i18n="payments.credit_charge">Credit charge</span>
 						<span class="bp-val" id="previewVal">$1.0000</span>
 					</div>
 
 					<div class="modal-footer">
-						<button class="f-cancel" id="mClose">Cancel</button>
-						<button class="f-primary" id="mCreate">Create session →</button>
+						<button class="f-cancel" id="mClose" data-i18n="payments.cancel">Cancel</button>
+						<button class="f-primary" id="mCreate" data-i18n="payments.create_session">Create session →</button>
 					</div>
 				</div>
 
@@ -393,10 +393,10 @@
 					<div class="token-reveal">
 						<div class="token-warn">
 							<svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 2L2 17h16L10 2z" stroke="#fbbf24" stroke-width="1.6"/><path d="M10 8v4M10 14.5v.5" stroke="#fbbf24" stroke-width="1.6" stroke-linecap="round"/></svg>
-							This token is shown <strong>once</strong>. Copy and store it before closing.
+							This token is shown <strong data-i18n="payments.once">once</strong>. Copy and store it before closing.
 						</div>
 						<div class="token-box" id="tokenVal"></div>
-						<div class="token-env">Set as: <span>PAYMENT_SESSION_TOKEN</span>=<em id="tokenEnvVal" style="color:#c4b5fd"></em></div>
+						<div class="token-env">Set as: <span data-i18n="payments.payment_session_token">PAYMENT_SESSION_TOKEN</span>=<em id="tokenEnvVal" style="color:#c4b5fd"></em></div>
 						<div class="token-actions">
 							<button class="token-btn copy" id="tCopy">
 								<svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M13 7V5a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2"/></svg>
@@ -409,7 +409,7 @@
 						</div>
 					</div>
 					<div class="modal-footer" style="margin-top:1.25rem">
-						<button class="f-primary" id="mDone">Done</button>
+						<button class="f-primary" id="mDone" data-i18n="payments.done">Done</button>
 					</div>
 				</div>
 			</div>
@@ -418,22 +418,22 @@
 		<!-- Edit session modal -->
 		<div class="modal-bg" id="editModal" role="dialog" aria-modal="true">
 			<div class="edit-modal">
-				<h3>Edit Session</h3>
+				<h3 data-i18n="payments.edit_session">Edit Session</h3>
 				<div class="f-row">
-					<label>Label</label>
+					<label data-i18n="payments.label">Label</label>
 					<input type="text" id="editLabel" maxlength="120" placeholder="Session label" />
 				</div>
 				<div class="f-row">
-					<label>Allowed hosts <span style="text-transform:none;letter-spacing:0;font-weight:400;font-size:11px;color:rgba(255,255,255,.3)">comma-separated</span></label>
+					<label data-i18n-html="payments.allowed_hosts_comma_separated">Allowed hosts <span style="text-transform:none;letter-spacing:0;font-weight:400;font-size:11px;color:rgba(255,255,255,.3)">comma-separated</span></label>
 					<input type="text" id="editHosts" placeholder="Any host (leave empty)" />
 				</div>
 				<div class="f-row">
-					<label>Max per tx (USD)</label>
+					<label data-i18n="payments.max_per_tx_usd">Max per tx (USD)</label>
 					<input type="number" id="editMaxTx" min="0.000001" step="0.0001" placeholder="No limit" />
 				</div>
 				<div class="modal-footer">
-					<button class="f-cancel" id="editClose">Cancel</button>
-					<button class="f-primary" id="editSave">Save changes</button>
+					<button class="f-cancel" id="editClose" data-i18n="payments.cancel_2">Cancel</button>
+					<button class="f-primary" id="editSave" data-i18n="payments.save_changes">Save changes</button>
 				</div>
 			</div>
 		</div>
@@ -974,5 +974,7 @@
 			// ── Init ───────────────────────────────────────────────────
 			load();
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -18,19 +18,19 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>DeFi Yields · three.ws</title>
+		<title data-i18n="yields.meta_title">DeFi Yields · three.ws</title>
 		<meta
 			name="description"
 			content="Explore live DeFi yield pools across every chain and protocol — filter by chain, project, stablecoins and TVL, sort by APY or size, and open any pool for its full APY and TVL history. Data from DeFiLlama."
-		/>
+		 data-i18n-attr="content:yields.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/yields" />
-		<meta property="og:title" content="DeFi Yields · three.ws" />
+		<meta property="og:title" content="DeFi Yields · three.ws"  data-i18n-attr="content:yields.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Explore live DeFi yield pools across every chain and protocol — filter by chain, project, stablecoins and TVL, sort by APY or size, and chart any pool's APY and TVL history."
-		/>
+		 data-i18n-attr="content:yields.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=DeFi+Yields+Explorer&amp;d=Explore+roughly+15%2C000+live+DeFi+yield+pools+across+every+chain+and+protocol+%E2%80%94+filter+by+chain%2C+project%2C+stablecoin+exposure%2C+and+minimum+TVL%2C+sort+by+APY+or+TV&amp;p=%2Fyields"
@@ -39,11 +39,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="DeFi Yields · three.ws" />
+		<meta name="twitter:title" content="DeFi Yields · three.ws"  data-i18n-attr="content:yields.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Explore live DeFi yield pools across every chain and protocol — filter by chain, project, stablecoins and TVL, sort by APY or size, and chart any pool's history."
-		/>
+		 data-i18n-attr="content:yields.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=DeFi+Yields+Explorer&amp;d=Explore+roughly+15%2C000+live+DeFi+yield+pools+across+every+chain+and+protocol+%E2%80%94+filter+by+chain%2C+project%2C+stablecoin+exposure%2C+and+minimum+TVL%2C+sort+by+APY+or+TV&amp;p=%2Fyields"
@@ -89,11 +89,11 @@
 
 		<main class="cv-container">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a><span class="sep">/</span
-				><span class="here">DeFi Yields</span>
+				<a href="/markets" data-i18n="yields.markets">Markets</a><span class="sep">/</span
+				><span class="here" data-i18n="yields.defi_yields">DeFi Yields</span>
 			</nav>
-			<h1 class="cv-h1">DeFi Yields</h1>
-			<p class="cv-sub">
+			<h1 class="cv-h1" data-i18n="yields.defi_yields_2">DeFi Yields</h1>
+			<p class="cv-sub" data-i18n="yields.live_yield_pools_across_every_chain_and">
 				Live yield pools across every chain and protocol. Filter by chain, project,
 				stablecoins and minimum TVL, sort by APY or size, then open any pool to chart its
 				full APY and TVL history.
@@ -103,7 +103,7 @@
 			<section class="cv-stats-grid yl-stats" aria-label="DeFi yield overview" id="yl-stats">
 				<div class="cv-stat-card">
 					<div>
-						<p class="label">Pools Tracked</p>
+						<p class="label" data-i18n="yields.pools_tracked">Pools Tracked</p>
 						<p class="value" id="yl-stat-pools"><span class="cv-skel yl-stat-skel"></span></p>
 					</div>
 					<span class="icon" aria-hidden="true">
@@ -112,7 +112,7 @@
 				</div>
 				<div class="cv-stat-card">
 					<div>
-						<p class="label">Total TVL</p>
+						<p class="label" data-i18n="yields.total_tvl">Total TVL</p>
 						<p class="value" id="yl-stat-tvl"><span class="cv-skel yl-stat-skel"></span></p>
 					</div>
 					<span class="icon" aria-hidden="true">
@@ -121,7 +121,7 @@
 				</div>
 				<div class="cv-stat-card">
 					<div>
-						<p class="label">Median APY</p>
+						<p class="label" data-i18n="yields.median_apy">Median APY</p>
 						<p class="value" id="yl-stat-apy"><span class="cv-skel yl-stat-skel"></span></p>
 					</div>
 					<span class="icon" aria-hidden="true">
@@ -157,49 +157,49 @@
 				</div>
 
 				<label class="scr-field">
-					<span>Chain</span>
+					<span data-i18n="yields.chain">Chain</span>
 					<select id="yl-chain" aria-label="Filter by chain">
-						<option value="">All chains</option>
+						<option value="" data-i18n="yields.all_chains">All chains</option>
 					</select>
 				</label>
 
 				<label class="scr-field">
-					<span>Project</span>
+					<span data-i18n="yields.project">Project</span>
 					<select id="yl-project" aria-label="Filter by project">
-						<option value="">All projects</option>
+						<option value="" data-i18n="yields.all_projects">All projects</option>
 					</select>
 				</label>
 
 				<label class="scr-field">
-					<span>Min TVL</span>
+					<span data-i18n="yields.min_tvl">Min TVL</span>
 					<select id="yl-mintvl" aria-label="Minimum total value locked">
-						<option value="0">Any</option>
-						<option value="10000">$10K+</option>
-						<option value="100000">$100K+</option>
-						<option value="1000000">$1M+</option>
-						<option value="10000000">$10M+</option>
+						<option value="0" data-i18n="yields.any">Any</option>
+						<option value="10000" data-i18n="yields.10k">$10K+</option>
+						<option value="100000" data-i18n="yields.100k">$100K+</option>
+						<option value="1000000" data-i18n="yields.1m">$1M+</option>
+						<option value="10000000" data-i18n="yields.10m">$10M+</option>
 					</select>
 				</label>
 
 				<label class="yl-toggle">
 					<input type="checkbox" id="yl-stable" />
-					<span>Stablecoins only</span>
+					<span data-i18n="yields.stablecoins_only">Stablecoins only</span>
 				</label>
 
 				<div class="hm-seg yl-seg" role="group" aria-label="Sort order" id="yl-sort">
-					<button type="button" data-sort="tvl" aria-pressed="true">TVL</button>
-					<button type="button" data-sort="apy" aria-pressed="false">APY</button>
+					<button type="button" data-sort="tvl" aria-pressed="true" data-i18n="yields.tvl">TVL</button>
+					<button type="button" data-sort="apy" aria-pressed="false" data-i18n="yields.apy">APY</button>
 				</div>
 
-				<button type="button" class="scr-reset" id="yl-reset">Reset</button>
+				<button type="button" class="scr-reset" id="yl-reset" data-i18n="yields.reset">Reset</button>
 			</div>
 
 			<div class="scr-meta">
 				<span id="yl-count" class="scr-count" aria-live="polite"></span>
 				<div class="cv-pills">
-					<a class="cv-pill" href="/screener">Screener</a>
-					<a class="cv-pill" href="/markets">Markets</a>
-					<a class="cv-pill" href="/heatmap">Heatmap</a>
+					<a class="cv-pill" href="/screener" data-i18n="yields.screener">Screener</a>
+					<a class="cv-pill" href="/markets" data-i18n="yields.markets_2">Markets</a>
+					<a class="cv-pill" href="/heatmap" data-i18n="yields.heatmap">Heatmap</a>
 				</div>
 			</div>
 
@@ -207,11 +207,11 @@
 			<section id="yl-table" aria-label="DeFi yield pools"></section>
 
 			<div class="yl-more-wrap" id="yl-more-wrap" hidden>
-				<button type="button" class="yl-more" id="yl-more">Load more pools</button>
+				<button type="button" class="yl-more" id="yl-more" data-i18n="yields.load_more_pools">Load more pools</button>
 			</div>
 
 			<p class="cv-updated" id="yl-updated"></p>
-			<p class="yl-attribution">
+			<p class="yl-attribution" data-i18n-html="yields.yield_data_from_defillama_apy_figures_are">
 				Yield data from
 				<a href="https://defillama.com/yields" rel="noopener noreferrer" target="_blank">DeFiLlama</a>. APY figures
 				are protocol-reported and vary with pool conditions — not financial advice.
@@ -222,5 +222,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

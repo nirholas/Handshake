@@ -4,7 +4,7 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Animation Studio · three.ws</title>
+		<title data-i18n="pose.meta_title">Animation Studio · three.ws</title>
 		<meta
 			name="viewport"
 			content="width=device-width, initial-scale=1, viewport-fit=cover"
@@ -13,7 +13,7 @@
 		<meta
 			name="description"
 			content="Pose and animate any three.ws avatar in your browser. Drag joints with IK, keyframe a timeline, preview live, then export an animated GLB — save to your account and sell your animations for USDC."
-		/>
+		 data-i18n-attr="content:pose.meta_description"/>
 		<meta name="theme-color" content="#0b0b0b" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -29,19 +29,19 @@
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Animation Studio · three.ws" />
+		<meta property="og:title" content="Animation Studio · three.ws"  data-i18n-attr="content:pose.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Pose and animate any three.ws avatar: IK posing, a keyframe timeline, live preview, animated-GLB export, and sell your animations for USDC."
-		/>
+		 data-i18n-attr="content:pose.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/pose" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Animation+Studio&amp;d=Pose+any+three.ws+avatar+or+the+built-in+mannequin+with+FK%2FIK%2C+keyframe+a+timeline%2C+and+preview+the+motion+live.+Export+an+animated+GLB+or+clip+JSON%2C+save+anima&amp;p=%2Fpose" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Animation Studio · three.ws" />
-	<meta name="twitter:description" content="Author animations for any three.ws avatar — IK posing, keyframe timeline, animated-GLB export. Save to your account and sell for USDC." />
+	<meta name="twitter:title" content="Animation Studio · three.ws"  data-i18n-attr="content:pose.meta_twitter_title"/>
+	<meta name="twitter:description" content="Author animations for any three.ws avatar — IK posing, keyframe timeline, animated-GLB export. Save to your account and sell for USDC."  data-i18n-attr="content:pose.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Animation+Studio&amp;d=Pose+any+three.ws+avatar+or+the+built-in+mannequin+with+FK%2FIK%2C+keyframe+a+timeline%2C+and+preview+the+motion+live.+Export+an+animated+GLB+or+clip+JSON%2C+save+anima&amp;p=%2Fpose" />
 
 		<style>
@@ -1693,9 +1693,9 @@
 			<!-- TOP BAR -->
 			<header id="pose-top">
 				<div class="brand">
-					<a href="/" title="three.ws home">three.ws</a>
+					<a href="/" title="three.ws home" data-i18n="pose.three_ws" data-i18n-attr="title:pose.three_ws_home_title">three.ws</a>
 					<span>/</span>
-					<span>Animation Studio</span>
+					<span data-i18n="pose.animation_studio">Animation Studio</span>
 				</div>
 				<span class="sep"></span>
 
@@ -1706,7 +1706,7 @@
 						data-posemode="fk"
 						aria-pressed="true"
 						title="FK — select a bone and rotate it with the gizmo or sliders (F)"
-					>
+					 data-i18n="pose.fk" data-i18n-attr="title:pose.fk_select_a_bone_and_rotate_title">
 						FK
 					</button>
 					<button
@@ -1715,7 +1715,7 @@
 						data-posemode="ik"
 						aria-pressed="false"
 						title="IK — drag a hand or foot and the limb solves (I)"
-					>
+					 data-i18n="pose.ik" data-i18n-attr="title:pose.ik_drag_a_hand_or_foot_and_title">
 						IK
 					</button>
 				</div>
@@ -1730,7 +1730,7 @@
 						title="Undo (Ctrl/Cmd+Z)"
 						aria-label="Undo"
 						disabled
-					>
+					 data-i18n-attr="aria-label:pose.undo_arialabel;title:pose.undo_ctrl_cmd_z_title">
 						↺
 					</button>
 					<button
@@ -1740,7 +1740,7 @@
 						title="Redo (Ctrl/Cmd+Shift+Z)"
 						aria-label="Redo"
 						disabled
-					>
+					 data-i18n-attr="aria-label:pose.redo_arialabel;title:pose.redo_ctrl_cmd_shift_z_title">
 						↻
 					</button>
 				</div>
@@ -1750,7 +1750,7 @@
 					id="pose-mirror"
 					class="pose-btn"
 					title="Mirror the pose left ↔ right (M)"
-				>
+				 data-i18n="pose.mirror" data-i18n-attr="title:pose.mirror_the_pose_left_right_m_title">
 					Mirror
 				</button>
 				<button
@@ -1758,7 +1758,7 @@
 					id="pose-copy"
 					class="pose-btn"
 					title="Copy the current pose (C)"
-				>
+				 data-i18n="pose.copy" data-i18n-attr="title:pose.copy_the_current_pose_c_title">
 					Copy
 				</button>
 				<button
@@ -1767,7 +1767,7 @@
 					class="pose-btn"
 					title="Paste the copied pose (V)"
 					disabled
-				>
+				 data-i18n="pose.paste" data-i18n-attr="title:pose.paste_the_copied_pose_v_title">
 					Paste
 				</button>
 
@@ -1778,7 +1778,7 @@
 					id="pose-load-avatar"
 					class="pose-btn"
 					title="Load a rigged avatar to animate"
-				>
+				 data-i18n="pose.load_avatar" data-i18n-attr="title:pose.load_a_rigged_avatar_to_anim_title">
 					Load avatar
 				</button>
 				<button
@@ -1786,7 +1786,7 @@
 					id="pose-use-mannequin"
 					class="pose-btn"
 					title="Return to the built-in mannequin"
-				>
+				 data-i18n="pose.mannequin" data-i18n-attr="title:pose.return_to_the_built_in_manne_title">
 					Mannequin
 				</button>
 
@@ -1797,7 +1797,7 @@
 					id="pose-library"
 					class="pose-btn"
 					title="Your saved animations"
-				>
+				 data-i18n="pose.my_animations" data-i18n-attr="title:pose.your_saved_animations_title">
 					My animations
 				</button>
 				<button
@@ -1805,7 +1805,7 @@
 					id="pose-save"
 					class="pose-btn pose-btn-primary"
 					title="Save this animation to your account (Ctrl/Cmd+S)"
-				>
+				 data-i18n="pose.save" data-i18n-attr="title:pose.save_this_animation_to_your_title">
 					Save
 				</button>
 				<span class="sep"></span>
@@ -1815,11 +1815,11 @@
 					id="pose-reset"
 					class="pose-btn"
 					title="Reset the pose to rest"
-				>
+				 data-i18n="pose.reset_pose" data-i18n-attr="title:pose.reset_the_pose_to_rest_title">
 					Reset pose
 				</button>
 
-				<label class="pose-btn file-label" title="Load a pose from JSON">
+				<label class="pose-btn file-label" title="Load a pose from JSON" data-i18n-attr="title:pose.load_a_pose_from_json_title">
 					Import
 					<input type="file" id="pose-import-json" accept="application/json,.json" />
 				</label>
@@ -1828,7 +1828,7 @@
 					id="pose-export-json"
 					class="pose-btn"
 					title="Save pose as JSON"
-				>
+				 data-i18n="pose.export_json" data-i18n-attr="title:pose.save_pose_as_json_title">
 					Export JSON
 				</button>
 				<button
@@ -1836,7 +1836,7 @@
 					id="pose-screenshot"
 					class="pose-btn"
 					title="Download a PNG of the current view"
-				>
+				 data-i18n="pose.png_screenshot" data-i18n-attr="title:pose.download_a_png_of_the_curren_title">
 					PNG screenshot
 				</button>
 			</header>
@@ -1844,13 +1844,13 @@
 			<!-- LEFT PANEL -->
 			<aside id="pose-left">
 				<section class="pose-section">
-					<h2>Selection</h2>
+					<h2 data-i18n="pose.selection">Selection</h2>
 					<div id="pose-selection-label">Click a body part</div>
 					<div id="pose-controls-host"></div>
 				</section>
 
 				<section class="pose-section">
-					<h2>Bones</h2>
+					<h2 data-i18n="pose.bones">Bones</h2>
 					<input
 						type="search"
 						id="pose-bone-search"
@@ -1860,7 +1860,7 @@
 						autocomplete="off"
 					/>
 					<div id="pose-joint-picker"></div>
-					<p class="pose-shortcuts">
+					<p class="pose-shortcuts" data-i18n-html="pose.f_fk_i_ik_r_reset_bone">
 						<kbd>F</kbd> FK · <kbd>I</kbd> IK · <kbd>R</kbd> reset bone ·
 						<kbd>M</kbd> mirror · <kbd>C</kbd> copy · <kbd>V</kbd> paste ·
 						<kbd>⌘Z</kbd> undo · <kbd>Esc</kbd> deselect
@@ -1868,41 +1868,41 @@
 				</section>
 
 				<section class="pose-section">
-					<h2>Model</h2>
+					<h2 data-i18n="pose.model">Model</h2>
 					<div class="pose-form-row">
-						<label for="pose-build">Body type</label>
+						<label for="pose-build" data-i18n="pose.body_type">Body type</label>
 						<select id="pose-build">
-							<option value="male" selected>Male</option>
-							<option value="female">Female</option>
+							<option value="male" selected data-i18n="pose.male">Male</option>
+							<option value="female" data-i18n="pose.female">Female</option>
 						</select>
 					</div>
 					<div class="pose-form-row">
-						<label for="pose-skin">Skin tone</label>
+						<label for="pose-skin" data-i18n="pose.skin_tone">Skin tone</label>
 						<input id="pose-skin" type="color" value="#d4d4d8" />
 					</div>
 					<div class="pose-form-row">
-						<label for="pose-constraints">Biological constraints</label>
+						<label for="pose-constraints" data-i18n="pose.biological_constraints">Biological constraints</label>
 						<input id="pose-constraints" type="checkbox" checked />
 					</div>
 				</section>
 
 				<section class="pose-section">
-					<h2>Camera &amp; environment</h2>
+					<h2 data-i18n="pose.camera_environment">Camera &amp; environment</h2>
 					<div class="pose-form-row">
-						<label for="pose-bg">Background</label>
+						<label for="pose-bg" data-i18n="pose.background">Background</label>
 						<input id="pose-bg" type="color" value="#0b0b0b" />
 					</div>
 					<div class="pose-form-row">
-						<label for="pose-fov">FOV</label>
+						<label for="pose-fov" data-i18n="pose.fov">FOV</label>
 						<input id="pose-fov" type="range" min="20" max="100" step="1" value="45" />
 					</div>
 					<div class="pose-form-row">
-						<label for="pose-grid">Show floor grid</label>
+						<label for="pose-grid" data-i18n="pose.show_floor_grid">Show floor grid</label>
 						<input id="pose-grid" type="checkbox" checked />
 					</div>
-					<h3>Key light</h3>
+					<h3 data-i18n="pose.key_light">Key light</h3>
 					<div class="pose-form-row">
-						<label for="pose-light-azimuth">Direction</label>
+						<label for="pose-light-azimuth" data-i18n="pose.direction">Direction</label>
 						<input
 							id="pose-light-azimuth"
 							type="range"
@@ -1913,7 +1913,7 @@
 						/>
 					</div>
 					<div class="pose-form-row">
-						<label for="pose-light-elevation">Height</label>
+						<label for="pose-light-elevation" data-i18n="pose.height">Height</label>
 						<input
 							id="pose-light-elevation"
 							type="range"
@@ -1924,7 +1924,7 @@
 						/>
 					</div>
 					<div class="pose-form-row">
-						<label for="pose-light-intensity">Intensity</label>
+						<label for="pose-light-intensity" data-i18n="pose.intensity">Intensity</label>
 						<input
 							id="pose-light-intensity"
 							type="range"
@@ -1946,8 +1946,8 @@
 			<!-- RIGHT PANEL -->
 			<aside id="pose-right">
 				<section class="pose-section pose-section-anim">
-					<h2>Animation</h2>
-					<p class="pose-section-sub">
+					<h2 data-i18n="pose.animation">Animation</h2>
+					<p class="pose-section-sub" data-i18n-html="pose.load_a_rigged_avatar_then_generate_a">
 						Load a rigged avatar, then <strong>generate a motion from a text
 						prompt</strong> or pick a preset — preview it live and export an
 						animated GLB.
@@ -1955,11 +1955,11 @@
 					<div id="pose-anim-library"></div>
 				</section>
 				<section class="pose-section">
-					<h2>Pose presets</h2>
+					<h2 data-i18n="pose.pose_presets">Pose presets</h2>
 					<div id="pose-presets-host"></div>
 				</section>
 				<section class="pose-section">
-					<h2>Floor props</h2>
+					<h2 data-i18n="pose.floor_props">Floor props</h2>
 					<div class="pose-prop-grid" id="pose-prop-host"></div>
 				</section>
 			</aside>
@@ -1973,7 +1973,7 @@
 						class="tl-btn"
 						title="Jump to start (Home)"
 						aria-label="Jump to start"
-					>
+					 data-i18n-attr="aria-label:pose.jump_to_start_arialabel;title:pose.jump_to_start_home_title">
 						⏮
 					</button>
 					<button
@@ -1983,7 +1983,7 @@
 						title="Play / pause (Space)"
 						aria-label="Play or pause"
 						aria-pressed="false"
-					>
+					 data-i18n-attr="aria-label:pose.play_or_pause_arialabel;title:pose.play_pause_space_title">
 						▶
 					</button>
 					<button
@@ -1992,7 +1992,7 @@
 						class="tl-btn"
 						title="Stop and rewind"
 						aria-label="Stop"
-					>
+					 data-i18n-attr="aria-label:pose.stop_arialabel;title:pose.stop_and_rewind_title">
 						⏹
 					</button>
 					<button
@@ -2001,7 +2001,7 @@
 						class="tl-btn"
 						title="Jump to end (End)"
 						aria-label="Jump to end"
-					>
+					 data-i18n-attr="aria-label:pose.jump_to_end_arialabel;title:pose.jump_to_end_end_title">
 						⏭
 					</button>
 					<button
@@ -2011,11 +2011,11 @@
 						title="Loop playback"
 						aria-label="Loop playback"
 						aria-pressed="true"
-					>
+					 data-i18n-attr="aria-label:pose.loop_playback_arialabel;title:pose.loop_playback_title">
 						↻
 					</button>
 
-					<span class="tl-time" id="tl-time"><b>0.00</b> / 4.00s</span>
+					<span class="tl-time" id="tl-time" data-i18n-html="pose.0_00_4_00s"><b>0.00</b> / 4.00s</span>
 
 					<span class="tl-sep"></span>
 
@@ -2024,14 +2024,14 @@
 						id="tl-add-key"
 						class="tl-add"
 						title="Capture the current pose as a keyframe (K)"
-					>
+					 data-i18n="pose.add_keyframe" data-i18n-attr="title:pose.capture_the_current_pose_as_title">
 						＋ Add keyframe
 					</button>
 
 					<span
 						class="tl-field"
 						title="Easing for the selected keyframe (governs the segment after it)"
-					>
+					 data-i18n-attr="title:pose.easing_for_the_selected_keyf_title">
 						<label for="tl-easing">Easing</label>
 						<select id="tl-easing" aria-label="Selected keyframe easing" disabled>
 							<option value="linear">Linear</option>
@@ -2047,7 +2047,7 @@
 						title="Delete selected keyframe (Del)"
 						aria-label="Delete selected keyframe"
 						disabled
-					>
+					 data-i18n-attr="aria-label:pose.delete_selected_keyframe_arialabel;title:pose.delete_selected_keyframe_del_title">
 						🗑
 					</button>
 
@@ -2056,7 +2056,7 @@
 					<span
 						class="tl-field tl-field-name"
 						title="Animation name (used as the clip + file name)"
-					>
+					 data-i18n-attr="title:pose.animation_name_used_as_the_c_title">
 						<label for="tl-name">Name</label>
 						<input
 							type="text"
@@ -2067,7 +2067,7 @@
 							autocomplete="off"
 						/>
 					</span>
-					<span class="tl-field" title="Total animation length in seconds">
+					<span class="tl-field" title="Total animation length in seconds" data-i18n-attr="title:pose.total_animation_length_in_se_title">
 						<label for="tl-duration">Duration</label>
 						<input
 							type="number"
@@ -2082,7 +2082,7 @@
 					<span
 						class="tl-field tl-field-fps"
 						title="Frames per second baked into the exported clip"
-					>
+					 data-i18n-attr="title:pose.frames_per_second_baked_into_title">
 						<label for="tl-fps">FPS</label>
 						<input
 							type="number"
@@ -2102,7 +2102,7 @@
 						id="tl-export-json"
 						class="pose-btn tl-export"
 						title="Download a three.ws clip JSON"
-					>
+					 data-i18n="pose.export_json_2" data-i18n-attr="title:pose.download_a_three_ws_clip_jso_title">
 						Export JSON
 					</button>
 					<button
@@ -2110,7 +2110,7 @@
 						id="tl-export-glb"
 						class="pose-btn pose-btn-primary tl-export"
 						title="Download a GLB with the animation embedded"
-					>
+					 data-i18n="pose.export_glb" data-i18n-attr="title:pose.download_a_glb_with_the_anim_title">
 						Export GLB
 					</button>
 					<button
@@ -2118,7 +2118,7 @@
 						id="tl-open-scene"
 						class="pose-btn pose-btn-primary tl-export"
 						title="Send this animation to Scene Studio to record a video"
-					>
+					 data-i18n="pose.record_in_scene" data-i18n-attr="title:pose.send_this_animation_to_scene_title">
 						Record in Scene →
 					</button>
 				</div>
@@ -2136,7 +2136,7 @@
 					<div class="tl-ruler" id="tl-ruler"></div>
 					<div class="tl-empty" id="tl-empty">
 						Pose the figure, then press <kbd>K</kbd> or
-						<b style="color: var(--text-2)">＋ Add keyframe</b> to start your animation.
+						<b style="color: var(--text-2)" data-i18n="pose.add_keyframe_2">＋ Add keyframe</b> to start your animation.
 					</div>
 					<div class="tl-lane" id="tl-lane"></div>
 					<div class="tl-playhead" id="tl-playhead" style="left: 0"></div>
@@ -2152,35 +2152,35 @@
 					<div class="h-footer-brand">
 						<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
 						<span class="wordmark-dot" aria-hidden="true"></span>
-						<span>three.ws</span>
+						<span data-i18n="pose.three_ws_2">three.ws</span>
 					</div>
-					<p class="h-footer-tagline">Give your AI a body.</p>
+					<p class="h-footer-tagline" data-i18n="pose.give_your_ai_a_body">Give your AI a body.</p>
 				</div>
 				<nav class="h-footer-links" aria-label="Footer">
 					<div class="h-footer-link-col">
-						<h4 class="h-footer-link-heading">Product</h4>
-						<a href="/create">Create</a>
-						<a href="/pose">Animation Studio</a>
-						<a href="/marketplace?tab=animations">Animations</a>
-						<a href="/marketplace">Marketplace</a>
+						<h4 class="h-footer-link-heading" data-i18n="pose.product">Product</h4>
+						<a href="/create" data-i18n="pose.create">Create</a>
+						<a href="/pose" data-i18n="pose.animation_studio_2">Animation Studio</a>
+						<a href="/marketplace?tab=animations" data-i18n="pose.animations">Animations</a>
+						<a href="/marketplace" data-i18n="pose.marketplace">Marketplace</a>
 					</div>
 					<div class="h-footer-link-col">
-						<h4 class="h-footer-link-heading">Developers</h4>
-						<a href="/docs">Docs</a>
+						<h4 class="h-footer-link-heading" data-i18n="pose.developers">Developers</h4>
+						<a href="/docs" data-i18n="pose.docs">Docs</a>
 						<a
 							href="https://github.com/nirholas/three.ws"
 							target="_blank"
 							rel="noopener"
-							>GitHub</a
+							 data-i18n="pose.github">GitHub</a
 						>
 					</div>
 				</nav>
 			</div>
 			<div class="h-footer-bottom">
-				<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+				<p class="h-footer-legal" data-i18n="pose.2026_three_ws_all_rights_reserved">© 2026 three.ws — All rights reserved.</p>
 				<div class="h-footer-legal-links">
-					<a href="/legal/privacy">Privacy</a>
-					<a href="/legal/tos">Terms</a>
+					<a href="/legal/privacy" data-i18n="pose.privacy">Privacy</a>
+					<a href="/legal/tos" data-i18n="pose.terms">Terms</a>
 				</div>
 			</div>
 		</footer>
@@ -2188,5 +2188,7 @@
 		<script defer src="/footer-newsletter.js"></script>
 		<script type="module" src="/src/pose-studio.js"></script>
 		<script src="/brand.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

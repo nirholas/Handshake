@@ -4,31 +4,31 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Guided Tour — A 3D guide walks you through three.ws · three.ws</title>
+		<title data-i18n="tour.meta_title">Guided Tour — A 3D guide walks you through three.ws · three.ws</title>
 		<meta
 			name="description"
 			content="Take the three.ws guided tour: a 3D avatar walks across the live site, points at every feature, and narrates what each one does and how to use it — voice and on-screen captions, paced by you."
-		/>
+		 data-i18n-attr="content:tour.meta_description"/>
 		<meta name="robots" content="index, follow" />
 		<link rel="canonical" href="https://three.ws/tour" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Guided Tour — A 3D guide walks you through three.ws" />
+		<meta property="og:title" content="Guided Tour — A 3D guide walks you through three.ws"  data-i18n-attr="content:tour.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="A 3D avatar walks the live site, points at every feature, and narrates how to use it. Roughly half an hour, paced by you."
-		/>
+		 data-i18n-attr="content:tour.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/tour" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Guided+Tour&amp;d=A+3D+guide+walks+across+the+live+site%2C+points+at+every+feature%2C+and+narrates+what+each+one+does+and+how+to+use+it+%E2%80%94+voice+plus+an+on-screen+chat+bubble%2C+paced+b&amp;p=%2Ftour" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Guided Tour — A 3D guide walks you through three.ws" />
+		<meta name="twitter:title" content="Guided Tour — A 3D guide walks you through three.ws"  data-i18n-attr="content:tour.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="A 3D avatar walks the live site, points at every feature, and narrates how to use it."
-		/>
+		 data-i18n-attr="content:tour.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Guided+Tour&amp;d=A+3D+guide+walks+across+the+live+site%2C+points+at+every+feature%2C+and+narrates+what+each+one+does+and+how+to+use+it+%E2%80%94+voice+plus+an+on-screen+chat+bubble%2C+paced+b&amp;p=%2Ftour" />
 
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -392,16 +392,16 @@
 
 		<main class="tour-wrap">
 			<section class="tour-hero">
-				<span class="tour-eyebrow"><span class="dot"></span> Guided Tour</span>
-				<h1 class="tour-h1">Let a 3D guide <span class="grad">walk you through</span> three.ws</h1>
-				<p class="tour-sub">
+				<span class="tour-eyebrow" data-i18n-html="tour.guided_tour"><span class="dot"></span> Guided Tour</span>
+				<h1 class="tour-h1" data-i18n-html="tour.let_a_3d_guide_walk_you_through">Let a 3D guide <span class="grad">walk you through</span> three.ws</h1>
+				<p class="tour-sub" data-i18n="tour.press_play_and_a_3d_avatar_steps">
 					Press play and a 3D avatar steps onto the page, walks over to each feature,
 					points right at it, and tells you what it does and how to use it — speaking
 					out loud with a chat bubble over its head. It covers the whole platform, on
 					the real live site, and you set the pace.
 				</p>
 				<div class="tour-tracks" id="tour-tracks">
-					<button class="tour-track tour-track--primary" data-track="quick" id="tour-start-quick">
+					<button class="tour-track tour-track--primary" data-track="quick" id="tour-start-quick" data-i18n-html="tour.quick_highlights_the_best_of_every_chapter">
 						<span class="tour-track__icon">⚡</span>
 						<span class="tour-track__body">
 							<span class="tour-track__title">Quick highlights</span>
@@ -409,7 +409,7 @@
 						</span>
 						<span class="tour-track__go">▶</span>
 					</button>
-					<button class="tour-track" data-track="full" id="tour-start-full">
+					<button class="tour-track" data-track="full" id="tour-start-full" data-i18n-html="tour.full_tour_every_feature_chapter_by_chapter">
 						<span class="tour-track__icon">🗺️</span>
 						<span class="tour-track__body">
 							<span class="tour-track__title">Full tour</span>
@@ -419,9 +419,9 @@
 					</button>
 				</div>
 				<div class="tour-cta-row" style="margin-top:18px">
-					<a class="tour-btn" href="#how">How it works</a>
+					<a class="tour-btn" href="#how" data-i18n="tour.how_it_works">How it works</a>
 				</div>
-				<p class="tour-resume" id="tour-resume">
+				<p class="tour-resume" id="tour-resume" data-i18n-html="tour.you_have_a_tour_in_progress_pick">
 					You have a tour in progress — <a href="#" id="tour-resume-link">pick it back up →</a>
 				</p>
 			</section>
@@ -433,32 +433,32 @@
 			</div>
 
 			<section class="tour-section" id="how">
-				<h2 class="tour-section__title">How it works</h2>
-				<p class="tour-section__lead">No video, no slides — the guide drives the actual site, so everything it points at is the real thing you'll use.</p>
+				<h2 class="tour-section__title" data-i18n="tour.how_it_works_2">How it works</h2>
+				<p class="tour-section__lead" data-i18n="tour.no_video_no_slides_the_guide_drives">No video, no slides — the guide drives the actual site, so everything it points at is the real thing you'll use.</p>
 				<div class="tour-how">
 					<div class="tour-how__card">
 						<div class="tour-how__icon">🚶</div>
-						<h3 class="tour-how__h">It walks and points</h3>
-						<p class="tour-how__p">The avatar moves across the page to stand beside each feature, faces it, and gestures — with a beam connecting the guide to exactly what it's talking about.</p>
+						<h3 class="tour-how__h" data-i18n="tour.it_walks_and_points">It walks and points</h3>
+						<p class="tour-how__p" data-i18n="tour.the_avatar_moves_across_the_page_to">The avatar moves across the page to stand beside each feature, faces it, and gestures — with a beam connecting the guide to exactly what it's talking about.</p>
 					</div>
 					<div class="tour-how__card">
 						<div class="tour-how__icon">🗣️</div>
-						<h3 class="tour-how__h">It speaks and captions</h3>
-						<p class="tour-how__p">Every stop is narrated out loud and shown in a chat bubble above the guide's head, so you can listen, read, or mute the voice and just read along.</p>
+						<h3 class="tour-how__h" data-i18n="tour.it_speaks_and_captions">It speaks and captions</h3>
+						<p class="tour-how__p" data-i18n="tour.every_stop_is_narrated_out_loud_and">Every stop is narrated out loud and shown in a chat bubble above the guide's head, so you can listen, read, or mute the voice and just read along.</p>
 					</div>
 					<div class="tour-how__card">
 						<div class="tour-how__icon">🎛️</div>
-						<h3 class="tour-how__h">You're in control</h3>
-						<p class="tour-how__p">Pause, skip ahead, step back, or scrub the progress bar anytime. Wander off to explore and the guide waits — press play and it takes you back to where you were.</p>
+						<h3 class="tour-how__h" data-i18n="tour.you_re_in_control">You're in control</h3>
+						<p class="tour-how__p" data-i18n="tour.pause_skip_ahead_step_back_or_scrub">Pause, skip ahead, step back, or scrub the progress bar anytime. Wander off to explore and the guide waits — press play and it takes you back to where you were.</p>
 					</div>
 				</div>
 			</section>
 
 			<section class="tour-section">
-				<h2 class="tour-section__title">Or drive it yourself</h2>
-				<p class="tour-section__lead">Rather play than watch? Take the controls: each page gets a glowing checkpoint, and you steer the guide to it — arrow keys or WASD on desktop, a joystick on your phone. Press <strong>M</strong> anytime to flip between the two movement styles.</p>
+				<h2 class="tour-section__title" data-i18n="tour.or_drive_it_yourself">Or drive it yourself</h2>
+				<p class="tour-section__lead" data-i18n-html="tour.rather_play_than_watch_take_the_controls">Rather play than watch? Take the controls: each page gets a glowing checkpoint, and you steer the guide to it — arrow keys or WASD on desktop, a joystick on your phone. Press <strong>M</strong> anytime to flip between the two movement styles.</p>
 				<div class="tour-tracks">
-					<button class="tour-track" id="tour-start-explore">
+					<button class="tour-track" id="tour-start-explore" data-i18n-html="tour.explore_walk_the_guide_anywhere_no_falling">
 						<span class="tour-track__icon">🕹</span>
 						<span class="tour-track__body">
 							<span class="tour-track__title">Explore</span>
@@ -466,7 +466,7 @@
 						</span>
 						<span class="tour-track__go">▶</span>
 					</button>
-					<button class="tour-track" id="tour-start-platformer">
+					<button class="tour-track" id="tour-start-platformer" data-i18n-html="tour.platformer_gravity_on_run_and_jump_across">
 						<span class="tour-track__icon">🎮</span>
 						<span class="tour-track__body">
 							<span class="tour-track__title">Platformer</span>
@@ -475,21 +475,21 @@
 						<span class="tour-track__go">▶</span>
 					</button>
 				</div>
-				<p class="tour-section__lead" style="margin-top:14px; font-size:13.5px">
+				<p class="tour-section__lead" style="margin-top:14px; font-size:13.5px" data-i18n-html="tour.want_this_on_your_own_site_or">
 					Want this on your own site or store? Build one in the <a href="/tour-builder">Tour Builder</a> — no code, both modes included.
 				</p>
 			</section>
 
 			<section class="tour-section">
-				<h2 class="tour-section__title">What you'll see</h2>
-				<p class="tour-section__lead">The tour runs as chapters — from building your first agent to taking it on-chain.</p>
+				<h2 class="tour-section__title" data-i18n="tour.what_you_ll_see">What you'll see</h2>
+				<p class="tour-section__lead" data-i18n="tour.the_tour_runs_as_chapters_from_building">The tour runs as chapters — from building your first agent to taking it on-chain.</p>
 				<div class="tour-chapters" id="tour-chapters"></div>
 			</section>
 
 			<section class="tour-final">
-				<h2>Ready when you are</h2>
-				<p>Bring your curiosity — the guide handles the rest.</p>
-				<button class="tour-btn tour-btn--primary" id="tour-start-2">▶ Start the guided tour</button>
+				<h2 data-i18n="tour.ready_when_you_are">Ready when you are</h2>
+				<p data-i18n="tour.bring_your_curiosity_the_guide_handles_the">Bring your curiosity — the guide handles the rest.</p>
+				<button class="tour-btn tour-btn--primary" id="tour-start-2" data-i18n="tour.start_the_guided_tour">▶ Start the guided tour</button>
 			</section>
 		</main>
 
@@ -636,5 +636,7 @@
 
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -18,19 +18,19 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Fear &amp; Greed Index · three.ws</title>
+		<title data-i18n="fear_greed.meta_title">Fear &amp; Greed Index · three.ws</title>
 		<meta
 			name="description"
 			content="The Crypto Fear & Greed Index — live market sentiment from 0 (Extreme Fear) to 100 (Extreme Greed), with a full historical chart and what each reading means."
-		/>
+		 data-i18n-attr="content:fear_greed.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/fear-greed" />
-		<meta property="og:title" content="Fear &amp; Greed Index · three.ws" />
+		<meta property="og:title" content="Fear &amp; Greed Index · three.ws"  data-i18n-attr="content:fear_greed.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Live crypto market sentiment from 0 (Extreme Fear) to 100 (Extreme Greed), with a full historical chart."
-		/>
+		 data-i18n-attr="content:fear_greed.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+Fear+%26+Greed+Index&amp;d=The+Crypto+Fear+%26+Greed+Index+%E2%80%94+live+market+sentiment+from+0+%28Extreme+Fear%29+to+100+%28Extreme+Greed%29%2C+shown+on+a+gauge+with+a+week-over-week+delta%2C+a+full+interac&amp;p=%2Ffear-greed"
@@ -39,11 +39,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Fear &amp; Greed Index · three.ws" />
+		<meta name="twitter:title" content="Fear &amp; Greed Index · three.ws"  data-i18n-attr="content:fear_greed.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Live crypto market sentiment from 0 (Extreme Fear) to 100 (Extreme Greed), with a full historical chart."
-		/>
+		 data-i18n-attr="content:fear_greed.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+Fear+%26+Greed+Index&amp;d=The+Crypto+Fear+%26+Greed+Index+%E2%80%94+live+market+sentiment+from+0+%28Extreme+Fear%29+to+100+%28Extreme+Greed%29%2C+shown+on+a+gauge+with+a+week-over-week+delta%2C+a+full+interac&amp;p=%2Ffear-greed"
@@ -70,11 +70,11 @@
 
 		<main class="cv-container">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a><span class="sep">/</span
-				><span class="here">Fear &amp; Greed</span>
+				<a href="/markets" data-i18n="fear_greed.markets">Markets</a><span class="sep">/</span
+				><span class="here" data-i18n="fear_greed.fear_greed">Fear &amp; Greed</span>
 			</nav>
-			<h1 class="cv-h1">Fear &amp; Greed Index</h1>
-			<p class="cv-sub">
+			<h1 class="cv-h1" data-i18n="fear_greed.fear_greed_index">Fear &amp; Greed Index</h1>
+			<p class="cv-sub" data-i18n="fear_greed.one_number_for_the_mood_of_the">
 				One number for the mood of the crypto market — from 0 (Extreme Fear) to 100 (Extreme
 				Greed). Built from volatility, momentum, volume, social sentiment, and Bitcoin
 				dominance.
@@ -98,5 +98,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

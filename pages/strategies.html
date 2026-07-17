@@ -4,20 +4,20 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Strategies · three.ws</title>
-		<meta name="description" content="Trading know-how as a collectible. Equip a real, rule-based strategy on your agent and it trades for real, on-chain, strictly within your spend policy. Publish yours, fork the best, ranked by verified live performance." />
+		<title data-i18n="strategies.meta_title">Strategies · three.ws</title>
+		<meta name="description" content="Trading know-how as a collectible. Equip a real, rule-based strategy on your agent and it trades for real, on-chain, strictly within your spend policy. Publish yours, fork the best, ranked by verified live performance."  data-i18n-attr="content:strategies.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/strategies" />
-		<meta property="og:title" content="Strategies · three.ws" />
-		<meta property="og:description" content="Equip a real, rule-based strategy on your agent — trades on-chain within your spend policy. Publish, fork, and rank by verified live performance." />
+		<meta property="og:title" content="Strategies · three.ws"  data-i18n-attr="content:strategies.meta_og_title"/>
+		<meta property="og:description" content="Equip a real, rule-based strategy on your agent — trades on-chain within your spend policy. Publish, fork, and rank by verified live performance."  data-i18n-attr="content:strategies.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Strategy+Objects&amp;d=A+marketplace+of+how+agents+trade%3A+ownable%2C+forkable%2C+leaderboard-ranked+trade+strategies+your+agent+can+equip+and+run+on-chain+within+your+spend+policy.&amp;p=%2Fstrategies" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Strategies · three.ws" />
-		<meta name="twitter:description" content="Ownable, forkable, leaderboard-ranked trade strategies — proven on real chain data. Equip one on your agent." />
+		<meta name="twitter:title" content="Strategies · three.ws"  data-i18n-attr="content:strategies.meta_twitter_title"/>
+		<meta name="twitter:description" content="Ownable, forkable, leaderboard-ranked trade strategies — proven on real chain data. Equip one on your agent."  data-i18n-attr="content:strategies.meta_twitter_description"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -93,26 +93,26 @@
 
 		<main class="sp-shell">
 			<section class="sp-hero">
-				<p class="sp-kicker"><span class="sp-live-dot" aria-hidden="true"></span> Ownable alpha · proven on real chain data</p>
-				<h1 class="sp-title">Equip a strategy, not a spreadsheet</h1>
-				<p class="sp-sub">A Strategy Object is a real, rule-based plan — entry conditions, sizing, take-profit, stop-loss — made into a <b>thing you own</b>. Equip it on your agent and it trades for real, on-chain, strictly inside your spend policy. Publish yours, fork the best, and watch the leaderboard rank them by <b>verified live performance</b> — numbers no one can fake.</p>
+				<p class="sp-kicker" data-i18n-html="strategies.ownable_alpha_proven_on_real_chain_data"><span class="sp-live-dot" aria-hidden="true"></span> Ownable alpha · proven on real chain data</p>
+				<h1 class="sp-title" data-i18n="strategies.equip_a_strategy_not_a_spreadsheet">Equip a strategy, not a spreadsheet</h1>
+				<p class="sp-sub" data-i18n-html="strategies.a_strategy_object_is_a_real_rule">A Strategy Object is a real, rule-based plan — entry conditions, sizing, take-profit, stop-loss — made into a <b>thing you own</b>. Equip it on your agent and it trades for real, on-chain, strictly inside your spend policy. Publish yours, fork the best, and watch the leaderboard rank them by <b>verified live performance</b> — numbers no one can fake.</p>
 				<div class="sp-safety">
-					<span><b>Spend-policy gated</b> — every trade</span>
-					<span><b>Real on-chain</b> — no backtested fiction</span>
-					<span><b>Forkable</b> — rules only, never wallet access</span>
-					<span><b>Kill switch</b> — halt all at once</span>
+					<span data-i18n-html="strategies.spend_policy_gated_every_trade"><b>Spend-policy gated</b> — every trade</span>
+					<span data-i18n-html="strategies.real_on_chain_no_backtested_fiction"><b>Real on-chain</b> — no backtested fiction</span>
+					<span data-i18n-html="strategies.forkable_rules_only_never_wallet_access"><b>Forkable</b> — rules only, never wallet access</span>
+					<span data-i18n-html="strategies.kill_switch_halt_all_at_once"><b>Kill switch</b> — halt all at once</span>
 				</div>
 			</section>
 
 			<div class="sp-bar">
 				<div class="sp-seg" role="tablist" aria-label="Strategy view" id="sp-scope">
-					<button data-scope="published" aria-pressed="true">Marketplace</button>
-					<button data-scope="leaderboard" aria-pressed="false">Leaderboard</button>
-					<button data-scope="mine" aria-pressed="false">My library</button>
+					<button data-scope="published" aria-pressed="true" data-i18n="strategies.marketplace">Marketplace</button>
+					<button data-scope="leaderboard" aria-pressed="false" data-i18n="strategies.leaderboard">Leaderboard</button>
+					<button data-scope="mine" aria-pressed="false" data-i18n="strategies.my_library">My library</button>
 				</div>
 				<input class="sp-search" id="sp-search" type="search" placeholder="Search strategies…" aria-label="Search strategies" />
 				<div class="sp-spacer"></div>
-				<button class="sp-new" id="sp-new">+ New strategy</button>
+				<button class="sp-new" id="sp-new" data-i18n="strategies.new_strategy">+ New strategy</button>
 			</div>
 
 			<div class="sp-grid" id="sp-grid">
@@ -124,5 +124,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

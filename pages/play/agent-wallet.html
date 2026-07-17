@@ -5,17 +5,17 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-	<title>Agent Wallet — your avatar pays for an endpoint on Solana · three.ws</title>
-	<meta name="description" content="Watch your 3D avatar walk up to a paid x402 endpoint and pay for it with its agent wallet — a real USDC micropayment signed by the agent and settled on Solana." />
+	<title data-i18n="play_agent_wallet.meta_title">Agent Wallet — your avatar pays for an endpoint on Solana · three.ws</title>
+	<meta name="description" content="Watch your 3D avatar walk up to a paid x402 endpoint and pay for it with its agent wallet — a real USDC micropayment signed by the agent and settled on Solana."  data-i18n-attr="content:play_agent_wallet.meta_description"/>
 	<link rel="canonical" href="https://three.ws/play/agent-wallet" />
 	<meta property="og:type"        content="website" />
-	<meta property="og:title"       content="Agent Wallet — your avatar pays for an endpoint on Solana" />
-	<meta property="og:description" content="A 3D avatar pays for live crypto intel with its agent wallet. Real x402 micropayment, real USDC, settled on Solana." />
+	<meta property="og:title"       content="Agent Wallet — your avatar pays for an endpoint on Solana"  data-i18n-attr="content:play_agent_wallet.meta_og_title"/>
+	<meta property="og:description" content="A 3D avatar pays for live crypto intel with its agent wallet. Real x402 micropayment, real USDC, settled on Solana."  data-i18n-attr="content:play_agent_wallet.meta_og_description"/>
 	<meta property="og:url"         content="https://three.ws/play/agent-wallet" />
 	<meta property="og:image"       content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Wallet+%28x402+on+Solana%29&amp;d=Watch+your+3D+avatar+walk+up+to+a+paid+endpoint+and+pay+for+it+with+its+agent+wallet+%E2%80%94+a+real+USDC+micropayment+signed+by+the+agent+and+settled+on+Solana.&amp;p=%2Fplay%2Fagent-wallet" />
 	<meta name="twitter:card"        content="summary_large_image" />
-	<meta name="twitter:title"       content="Agent Wallet — your avatar pays for an endpoint on Solana" />
-	<meta name="twitter:description" content="A 3D avatar pays for a live API with its agent wallet. Real USDC on Solana, on-chain." />
+	<meta name="twitter:title"       content="Agent Wallet — your avatar pays for an endpoint on Solana"  data-i18n-attr="content:play_agent_wallet.meta_twitter_title"/>
+	<meta name="twitter:description" content="A 3D avatar pays for a live API with its agent wallet. Real USDC on Solana, on-chain."  data-i18n-attr="content:play_agent_wallet.meta_twitter_description"/>
 	<meta name="twitter:image"       content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Wallet+%28x402+on+Solana%29&amp;d=Watch+your+3D+avatar+walk+up+to+a+paid+endpoint+and+pay+for+it+with+its+agent+wallet+%E2%80%94+a+real+USDC+micropayment+signed+by+the+agent+and+settled+on+Solana.&amp;p=%2Fplay%2Fagent-wallet" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -258,16 +258,16 @@
 <div id="app">
 	<header class="topbar">
 		<div class="brand">
-			<a href="/">three.ws</a>
+			<a href="/" data-i18n="play_agent_wallet.three_ws">three.ws</a>
 			<span class="sep">/</span>
-			<a class="crumb" href="/play">play</a>
+			<a class="crumb" href="/play" data-i18n="play_agent_wallet.play">play</a>
 			<span class="sep">/</span>
-			<span class="badge"><span class="dot"></span>Agent Wallet × x402 on Solana</span>
+			<span class="badge" data-i18n-html="play_agent_wallet.agent_wallet_x402_on_solana"><span class="dot"></span>Agent Wallet × x402 on Solana</span>
 		</div>
 		<div style="display:flex;gap:10px;align-items:center;">
-			<a class="tb-btn" href="/play/arena" title="Live agent trading arena">Arena</a>
-			<a class="tb-btn" href="/agent-exchange" title="Two agents paying each other">Agent Exchange</a>
-			<a class="tb-btn" href="/pay" title="x402 pay-per-call demo">x402 demo</a>
+			<a class="tb-btn" href="/play/arena" title="Live agent trading arena" data-i18n="play_agent_wallet.arena" data-i18n-attr="title:play_agent_wallet.live_agent_trading_arena_title">Arena</a>
+			<a class="tb-btn" href="/agent-exchange" title="Two agents paying each other" data-i18n="play_agent_wallet.agent_exchange" data-i18n-attr="title:play_agent_wallet.two_agents_paying_each_other_title">Agent Exchange</a>
+			<a class="tb-btn" href="/pay" title="x402 pay-per-call demo" data-i18n="play_agent_wallet.x402_demo" data-i18n-attr="title:play_agent_wallet.x402_pay_per_call_demo_title">x402 demo</a>
 		</div>
 	</header>
 
@@ -284,16 +284,16 @@
 					Agent Wallet · Solana
 				</h2>
 				<div class="w-row">
-					<span class="k">Account</span>
-					<span class="v"><span class="addr" id="wAddr">—</span><button class="copy-btn" id="copyAddr" type="button" aria-label="Copy wallet address">copy</button></span>
+					<span class="k" data-i18n="play_agent_wallet.account">Account</span>
+					<span class="v"><span class="addr" id="wAddr">—</span><button class="copy-btn" id="copyAddr" type="button" aria-label="Copy wallet address" data-i18n="play_agent_wallet.copy" data-i18n-attr="aria-label:play_agent_wallet.copy_wallet_address_arialabel">copy</button></span>
 				</div>
 				<div class="w-row">
-					<span class="k">Mode</span>
+					<span class="k" data-i18n="play_agent_wallet.mode">Mode</span>
 					<span class="v"><span class="mode-pill" id="wMode">—</span></span>
 				</div>
 				<div class="w-row">
-					<span class="k">Balance</span>
-					<span class="v bal" id="wBal"><span class="skel">$0.00</span><small>USD</small></span>
+					<span class="k" data-i18n="play_agent_wallet.balance">Balance</span>
+					<span class="v bal" id="wBal" data-i18n-html="play_agent_wallet.0_00usd"><span class="skel">$0.00</span><small>USD</small></span>
 				</div>
 
 				<div class="banner offline" id="bridgeOffline" role="alert">
@@ -305,7 +305,7 @@
 						<div style="margin-top:4px"><code>npm run demo:agent-wallet-bridge</code></div>
 						with <code>A2A_PAYER_SOLANA_SECRET</code> set in <code>.env</code> or the shell.
 					</div>
-					<button class="retry" id="retryBridge" type="button">Retry connection</button>
+					<button class="retry" id="retryBridge" type="button" data-i18n="play_agent_wallet.retry_connection">Retry connection</button>
 				</div>
 				<div class="banner lowbal" id="lowBalance" role="alert">
 					<div class="b-head">Wallet needs USDC on Solana</div>
@@ -316,28 +316,28 @@
 
 			<!-- Paid endpoint -->
 			<div class="card">
-				<h2>Paid endpoint · x402 on Solana</h2>
+				<h2 data-i18n="play_agent_wallet.paid_endpoint_x402_on_solana">Paid endpoint · x402 on Solana</h2>
 				<div class="ep-name">
-					<span id="epName"><span class="skel">three.ws Crypto Intel</span></span>
+					<span id="epName" data-i18n-html="play_agent_wallet.three_ws_crypto_intel"><span class="skel">three.ws Crypto Intel</span></span>
 					<span class="ep-price" id="epPrice"><span class="skel">$0.01</span></span>
 				</div>
-				<div class="ep-desc" id="epDesc"><span class="skel">Live market signal — pay per call, settled in USDC on Solana mainnet.</span></div>
+				<div class="ep-desc" id="epDesc"><span class="skel" data-i18n="play_agent_wallet.live_market_signal_pay_per_call_settled">Live market signal — pay per call, settled in USDC on Solana mainnet.</span></div>
 				<div class="ep-meta" id="epTags"></div>
 
 				<div class="topics" id="topics" role="group" aria-label="Intel topic"></div>
 
-				<button class="pay-btn" id="payBtn" type="button" disabled>
+				<button class="pay-btn" id="payBtn" type="button" disabled data-i18n-html="play_agent_wallet.send_avatar_to_pay">
 					<span class="spin" aria-hidden="true"></span>
 					<span class="lbl">Send avatar to pay</span>
 				</button>
 				<div class="pay-note">Your avatar walks to the kiosk, the agent wallet signs an SPL USDC
-				<span style="font-family:var(--mono);font-size:10px">TransferChecked</span>, and the
+				<span style="font-family:var(--mono);font-size:10px" data-i18n="play_agent_wallet.transferchecked">TransferChecked</span>, and the
 				endpoint settles it on Solana mainnet. Real money, real API response.</div>
 			</div>
 
 			<!-- Live payment stages -->
 			<div class="card">
-				<h2>Payment flow</h2>
+				<h2 data-i18n="play_agent_wallet.payment_flow">Payment flow</h2>
 				<div class="stages" id="stages" aria-live="polite"></div>
 				<div class="flow-error" id="flowError" role="alert"></div>
 			</div>
@@ -345,14 +345,14 @@
 			<div class="receipt" id="receipt" aria-live="polite"></div>
 
 			<div class="card">
-				<h2>How it works</h2>
+				<h2 data-i18n="play_agent_wallet.how_it_works">How it works</h2>
 				<div class="how">
-					<b>1.</b> The endpoint answers with a <b>402 Payment Required</b> challenge (x402 v2).<br/>
-					<b>2.</b> The <b>agent wallet</b> builds and partially signs an SPL USDC
-					<span style="font-family:var(--mono);font-size:10.5px">TransferChecked</span> — the
+					<b>1.</b> The endpoint answers with a <b data-i18n="play_agent_wallet.402_payment_required">402 Payment Required</b> challenge (x402 v2).<br/>
+					<b>2.</b> The <b data-i18n="play_agent_wallet.agent_wallet">agent wallet</b> builds and partially signs an SPL USDC
+					<span style="font-family:var(--mono);font-size:10.5px" data-i18n="play_agent_wallet.transferchecked_2">TransferChecked</span> — the
 					facilitator co-signs as fee payer, so the agent only signs the transfer.<br/>
-					<b>3.</b> The request retries with the <b>X-PAYMENT</b> header; the facilitator verifies and
-					settles the USDC on <b>Solana mainnet</b>, then the API does the paid work.
+					<b>3.</b> The request retries with the <b data-i18n="play_agent_wallet.x_payment">X-PAYMENT</b> header; the facilitator verifies and
+					settles the USDC on <b data-i18n="play_agent_wallet.solana_mainnet">Solana mainnet</b>, then the API does the paid work.
 				</div>
 			</div>
 		</aside>
@@ -360,5 +360,7 @@
 </div>
 <script type="module" src="/src/play-agent-wallet.js"></script>
 <script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

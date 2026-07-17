@@ -18,19 +18,19 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Blockchain TVL by Chain · three.ws</title>
+		<title data-i18n="chains.meta_title">Blockchain TVL by Chain · three.ws</title>
 		<meta
 			name="description"
 			content="Live total value locked by blockchain — every chain ranked by TVL with its dominance share of the cross-chain total. See which networks hold the most DeFi liquidity at a glance."
-		/>
+		 data-i18n-attr="content:chains.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/chains" />
-		<meta property="og:title" content="Blockchain TVL by Chain · three.ws" />
+		<meta property="og:title" content="Blockchain TVL by Chain · three.ws"  data-i18n-attr="content:chains.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Live total value locked by blockchain — every chain ranked by TVL with its dominance share of the cross-chain total. See which networks hold the most DeFi liquidity."
-		/>
+		 data-i18n-attr="content:chains.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Blockchain+TVL+by+Chain&amp;d=A+leaderboard+of+every+blockchain+by+total+value+locked%2C+with+each+chain%27s+dominance+share+of+on-chain+DeFi.+Live+from+DeFiLlama+%E2%80%94+see+where+liquidity+actually+&amp;p=%2Fchains"
@@ -39,11 +39,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Blockchain TVL by Chain · three.ws" />
+		<meta name="twitter:title" content="Blockchain TVL by Chain · three.ws"  data-i18n-attr="content:chains.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Live total value locked by blockchain — every chain ranked by TVL with its dominance share of the cross-chain total."
-		/>
+		 data-i18n-attr="content:chains.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Blockchain+TVL+by+Chain&amp;d=A+leaderboard+of+every+blockchain+by+total+value+locked%2C+with+each+chain%27s+dominance+share+of+on-chain+DeFi.+Live+from+DeFiLlama+%E2%80%94+see+where+liquidity+actually+&amp;p=%2Fchains"
@@ -89,11 +89,11 @@
 
 		<main class="cv-container">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a><span class="sep">/</span
-				><span class="here">Chains</span>
+				<a href="/markets" data-i18n="chains.markets">Markets</a><span class="sep">/</span
+				><span class="here" data-i18n="chains.chains">Chains</span>
 			</nav>
-			<h1 class="cv-h1">Blockchain TVL by Chain</h1>
-			<p class="cv-sub">
+			<h1 class="cv-h1" data-i18n="chains.blockchain_tvl_by_chain">Blockchain TVL by Chain</h1>
+			<p class="cv-sub" data-i18n="chains.total_value_locked_across_every_blockchain_e">
 				Total value locked across every blockchain — each network ranked by TVL with its
 				dominance share of the cross-chain total. See where DeFi liquidity concentrates.
 			</p>
@@ -106,8 +106,8 @@
 			></section>
 
 			<div class="cv-toolbar">
-				<h2 class="cv-h2" style="margin: 0">Chains by TVL</h2>
-				<a class="cv-pill" href="/defi">DeFi protocols →</a>
+				<h2 class="cv-h2" style="margin: 0" data-i18n="chains.chains_by_tvl">Chains by TVL</h2>
+				<a class="cv-pill" href="/defi" data-i18n="chains.defi_protocols">DeFi protocols →</a>
 			</div>
 
 			<!-- Chain table. Hydrated by src/chains.js. -->
@@ -122,5 +122,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

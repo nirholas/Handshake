@@ -4,29 +4,29 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Creator Gallery · three.ws</title>
+		<title data-i18n="creations.meta_title">Creator Gallery · three.ws</title>
 		<meta
 			name="description"
 			content="Browse, remix, and earn from 3D creations on three.ws — search and filter the live remix bazaar, watch a real royalty route to the original creator the moment someone builds on your work, and see who's leading the leaderboard."
-		/>
+		 data-i18n-attr="content:creations.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/creations" />
-		<meta property="og:title" content="Creator Gallery · three.ws" />
+		<meta property="og:title" content="Creator Gallery · three.ws"  data-i18n-attr="content:creations.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Browse, remix, and earn from 3D creations — live remix bazaar, real on-chain royalties, and a creator leaderboard."
-		/>
+		 data-i18n-attr="content:creations.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Creator+Gallery&amp;d=Search%2C+filter%2C+and+live-preview+the+remix+bazaar+%E2%80%94+remix+any+published+3D+creation+for+a+real+on-chain+USDC+royalty%2C+view+parent+%E2%86%92+child+lineage%2C+and+see+the+t&amp;p=%2Fcreations" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Creator Gallery · three.ws" />
+		<meta name="twitter:title" content="Creator Gallery · three.ws"  data-i18n-attr="content:creations.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Browse, remix, and earn from 3D creations — live remix bazaar, real on-chain royalties, creator leaderboard."
-		/>
+		 data-i18n-attr="content:creations.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Creator+Gallery&amp;d=Search%2C+filter%2C+and+live-preview+the+remix+bazaar+%E2%80%94+remix+any+published+3D+creation+for+a+real+on-chain+USDC+royalty%2C+view+parent+%E2%86%92+child+lineage%2C+and+see+the+t&amp;p=%2Fcreations" />
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -54,32 +54,32 @@
 
 		<main class="cr-shell">
 			<section class="cr-hero">
-				<p class="cr-kicker"><span class="cr-live-dot" aria-hidden="true"></span> Live remix bazaar</p>
-				<h1 class="cr-title">Creator <em>Gallery</em></h1>
-				<p class="cr-sub">
+				<p class="cr-kicker" data-i18n-html="creations.live_remix_bazaar"><span class="cr-live-dot" aria-hidden="true"></span> Live remix bazaar</p>
+				<h1 class="cr-title" data-i18n-html="creations.creator_gallery">Creator <em>Gallery</em></h1>
+				<p class="cr-sub" data-i18n-html="creations.every_3d_creation_published_to_the_remix">
 					Every 3D creation published to the remix bazaar — search it, filter it, watch it live in 3D, and
 					<strong>remix</strong> anything for a small USDC fee. A real royalty routes to the original
 					creator on-chain the moment your remix mints — never a ledger entry, always a signed transfer.
 				</p>
 				<div class="cr-hero-ctas">
-					<a class="cr-btn cr-btn-primary" href="/forge">Forge a 3D model</a>
-					<a class="cr-btn" href="#cr-publish">Publish a creation</a>
-					<a class="cr-btn" href="/minted">Minted NFTs</a>
+					<a class="cr-btn cr-btn-primary" href="/forge" data-i18n="creations.forge_a_3d_model">Forge a 3D model</a>
+					<a class="cr-btn" href="#cr-publish" data-i18n="creations.publish_a_creation">Publish a creation</a>
+					<a class="cr-btn" href="/minted" data-i18n="creations.minted_nfts">Minted NFTs</a>
 				</div>
 			</section>
 
 			<section class="cr-leaderboards" aria-label="Trending and leaderboards">
 				<div class="cr-lb-col">
 					<div class="cr-lb-head">
-						<h2 class="cr-section-h">Trending remixes</h2>
-						<span class="cr-lb-sub">Most-built-on assets, platform-wide</span>
+						<h2 class="cr-section-h" data-i18n="creations.trending_remixes">Trending remixes</h2>
+						<span class="cr-lb-sub" data-i18n="creations.most_built_on_assets_platform_wide">Most-built-on assets, platform-wide</span>
 					</div>
 					<ol class="cr-lb-list" id="cr-trending-list" aria-busy="true"></ol>
 				</div>
 				<div class="cr-lb-col">
 					<div class="cr-lb-head">
-						<h2 class="cr-section-h">Top creators</h2>
-						<span class="cr-lb-sub">Agents earning the most from remixes of their work</span>
+						<h2 class="cr-section-h" data-i18n="creations.top_creators">Top creators</h2>
+						<span class="cr-lb-sub" data-i18n="creations.agents_earning_the_most_from_remixes_of">Agents earning the most from remixes of their work</span>
 					</div>
 					<ol class="cr-lb-list" id="cr-creators-list" aria-busy="true"></ol>
 				</div>
@@ -92,25 +92,25 @@
 						<input type="search" id="cr-q" placeholder="Search prompts — “dragon”, “sneaker”, “low-poly car”…" autocomplete="off" maxlength="120" />
 					</label>
 					<select id="cr-category" class="cr-select" aria-label="Filter by category">
-						<option value="">All categories</option>
-						<option value="avatar">Avatar</option>
-						<option value="accessory">Accessory</option>
-						<option value="item">Item</option>
-						<option value="scene">Scene</option>
-						<option value="creature">Creature</option>
-						<option value="vehicle">Vehicle</option>
-						<option value="other">Other</option>
+						<option value="" data-i18n="creations.all_categories">All categories</option>
+						<option value="avatar" data-i18n="creations.avatar">Avatar</option>
+						<option value="accessory" data-i18n="creations.accessory">Accessory</option>
+						<option value="item" data-i18n="creations.item">Item</option>
+						<option value="scene" data-i18n="creations.scene">Scene</option>
+						<option value="creature" data-i18n="creations.creature">Creature</option>
+						<option value="vehicle" data-i18n="creations.vehicle">Vehicle</option>
+						<option value="other" data-i18n="creations.other">Other</option>
 					</select>
 				</div>
 				<div class="cr-sort-row" role="tablist" aria-label="Sort">
-					<button type="button" class="cr-sort-btn active" data-sort="recent" role="tab" aria-selected="true">New</button>
-					<button type="button" class="cr-sort-btn" data-sort="remixed" role="tab" aria-selected="false">Most remixed</button>
-					<button type="button" class="cr-sort-btn" data-sort="royalty" role="tab" aria-selected="false">Highest royalty</button>
+					<button type="button" class="cr-sort-btn active" data-sort="recent" role="tab" aria-selected="true" data-i18n="creations.new">New</button>
+					<button type="button" class="cr-sort-btn" data-sort="remixed" role="tab" aria-selected="false" data-i18n="creations.most_remixed">Most remixed</button>
+					<button type="button" class="cr-sort-btn" data-sort="royalty" role="tab" aria-selected="false" data-i18n="creations.highest_royalty">Highest royalty</button>
 				</div>
 			</section>
 
 			<section class="cr-feed-head">
-				<h2 class="cr-section-h">Browse</h2>
+				<h2 class="cr-section-h" data-i18n="creations.browse">Browse</h2>
 				<span id="cr-count" class="cr-count" aria-live="polite"></span>
 			</section>
 
@@ -120,31 +120,31 @@
 
 			<section class="cr-card cr-lineage-panel is-hidden" id="cr-lineage-panel" aria-labelledby="cr-lineage-title">
 				<div class="cr-lineage-head">
-					<h2 class="cr-section-h" id="cr-lineage-title">Remix lineage</h2>
-					<button type="button" class="cr-icon-btn" id="cr-lineage-close" aria-label="Close lineage view">✕</button>
+					<h2 class="cr-section-h" id="cr-lineage-title" data-i18n="creations.remix_lineage">Remix lineage</h2>
+					<button type="button" class="cr-icon-btn" id="cr-lineage-close" aria-label="Close lineage view" data-i18n-attr="aria-label:creations.close_lineage_view_arialabel">✕</button>
 				</div>
 				<ol class="cr-lineage-chain" id="cr-lineage-chain"></ol>
 			</section>
 
 			<section class="cr-publish" id="cr-publish">
-				<h2 class="cr-section-h">Publish a creation</h2>
-				<p class="cr-publish-sub">
+				<h2 class="cr-section-h" data-i18n="creations.publish_a_creation_2">Publish a creation</h2>
+				<p class="cr-publish-sub" data-i18n-html="creations.own_a_finished_creation_from_forge_opt">
 					Own a finished creation from <a href="/forge">Forge</a>? Opt it into the bazaar with a license,
 					an optional royalty rate (capped at 20%), and the Solana wallet that collects it. Publishing is
 					free — the fee lands on the creator only when someone remixes it.
 				</p>
 				<form class="cr-publish-form" id="cr-publish-form">
 					<label class="cr-field">
-						<span>Creation ID</span>
+						<span data-i18n="creations.creation_id">Creation ID</span>
 						<input type="text" id="cr-pub-id" placeholder="Paste the id from your Forge result" required maxlength="64" />
 					</label>
 					<label class="cr-field">
-						<span>License</span>
+						<span data-i18n="creations.license">License</span>
 						<select id="cr-pub-license">
-							<option value="remix-royalty" selected>Remix allowed · royalty on remix</option>
-							<option value="remix-cc">Remix freely · no royalty</option>
-							<option value="remix-nc">Remix, non-commercial</option>
-							<option value="all-rights">Display only · not remixable</option>
+							<option value="remix-royalty" selected data-i18n="creations.remix_allowed_royalty_on_remix">Remix allowed · royalty on remix</option>
+							<option value="remix-cc" data-i18n="creations.remix_freely_no_royalty">Remix freely · no royalty</option>
+							<option value="remix-nc" data-i18n="creations.remix_non_commercial">Remix, non-commercial</option>
+							<option value="all-rights" data-i18n="creations.display_only_not_remixable">Display only · not remixable</option>
 						</select>
 					</label>
 					<label class="cr-field" id="cr-pub-royalty-row">
@@ -152,26 +152,26 @@
 						<input type="range" id="cr-pub-royalty" min="0" max="20" step="1" value="10" />
 					</label>
 					<label class="cr-field">
-						<span>Payout wallet (Solana, optional)</span>
+						<span data-i18n="creations.payout_wallet_solana_optional">Payout wallet (Solana, optional)</span>
 						<input type="text" id="cr-pub-wallet" placeholder="Leave blank to publish without collecting royalties yet" maxlength="44" />
 					</label>
-					<button type="submit" class="cr-btn cr-btn-primary" id="cr-pub-submit">Publish to the gallery</button>
+					<button type="submit" class="cr-btn cr-btn-primary" id="cr-pub-submit" data-i18n="creations.publish_to_the_gallery">Publish to the gallery</button>
 					<div class="cr-publish-status" id="cr-pub-status" role="status" aria-live="polite"></div>
 				</form>
 			</section>
 
 			<section class="cr-about">
-				<h2 class="cr-section-h">How the remix bazaar works</h2>
+				<h2 class="cr-section-h" data-i18n="creations.how_the_remix_bazaar_works">How the remix bazaar works</h2>
 				<p class="cr-about-body">
 					Publishing a finished creation is free and opt-in — nothing is published without you choosing
-					to. A remixer pays a fixed <strong>$0.25 USDC</strong> fee over x402 to generate a new version
+					to. A remixer pays a fixed <strong data-i18n="creations.0_25_usdc">$0.25 USDC</strong> fee over x402 to generate a new version
 					anchored to your model; the platform collects the fee, generates the remix, links the durable
 					parent → child lineage, and routes your royalty slice (up to 20%, your choice) on-chain the
 					moment the remix confirms — a real second USDC transfer, not a promise. Creator identity here is
 					intentionally anonymous (a hashed client key, never a wallet or account) unless you set a
-					payout wallet; the one creator surface with a public, on-chain identity is an <strong>agent</strong>
-					that minted a 3D asset as an NFT — see its profile and reputation on <a href="/agents">/agents</a>,
-					or browse every mint at <a href="/minted">/minted</a>.
+					payout wallet; the one creator surface with a public, on-chain identity is an <strong data-i18n="creations.agent">agent</strong>
+					that minted a 3D asset as an NFT — see its profile and reputation on <a href="/agents" data-i18n="creations.agents">/agents</a>,
+					or browse every mint at <a href="/minted" data-i18n="creations.minted">/minted</a>.
 				</p>
 			</section>
 		</main>
@@ -180,5 +180,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -4,16 +4,16 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Forge · NIM Self-Host · Image → 3D · three.ws</title>
+		<title data-i18n="forge_nim.meta_title">Forge · NIM Self-Host · Image → 3D · three.ws</title>
 		<meta
 			name="description"
 			content="Drive a self-hosted TRELLIS NIM (nvcr.io/nim/microsoft/trellis) directly. Drop a photo, hit /v1/infer, and get the GLB back synchronously as base64 — rendered live, downloadable."
-		/>
-		<meta property="og:title" content="Forge — Self-Hosted NIM · Image → 3D · three.ws" />
+		 data-i18n-attr="content:forge_nim.meta_description"/>
+		<meta property="og:title" content="Forge — Self-Hosted NIM · Image → 3D · three.ws"  data-i18n-attr="content:forge_nim.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="A forge-styled demo for a self-hosted TRELLIS NIM. Real photo in, synchronous GLB out of /v1/infer. No async poll, no mocks."
-		/>
+		 data-i18n-attr="content:forge_nim.meta_og_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/forge-nim" />
@@ -22,11 +22,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Forge · NIM Self-Host · Image → 3D · three.ws" />
+		<meta name="twitter:title" content="Forge · NIM Self-Host · Image → 3D · three.ws"  data-i18n-attr="content:forge_nim.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Drive a self-hosted TRELLIS NIM directly: photo in, synchronous GLB out of /v1/infer."
-		/>
+		 data-i18n-attr="content:forge_nim.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Forge+%C2%B7+NIM+%E2%80%94+Self-Hosted+Image+to+3D&amp;d=Drive+a+self-hosted+TRELLIS+NIM+%28nvcr.io%2Fnim%2Fmicrosoft%2Ftrellis%29+directly%3A+drop+a+photo%2C+hit+%2Fv1%2Finfer%2C+and+get+the+textured+GLB+back+synchronously+as+base64+%E2%80%94+r&amp;p=%2Fforge-nim" />
 		<meta name="theme-color" content="#080814" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -540,10 +540,10 @@
 				<div class="forge-rail">
 					<form class="composer" id="composer" autocomplete="off">
 						<div class="mode-switch" role="tablist" aria-label="Generation mode">
-							<button type="button" role="tab" id="tab-image" data-mode="image" aria-selected="true">
+							<button type="button" role="tab" id="tab-image" data-mode="image" aria-selected="true" data-i18n="forge_nim.from_a_photo">
 								From a photo
 							</button>
-							<button type="button" role="tab" id="tab-text" data-mode="text" aria-selected="false">
+							<button type="button" role="tab" id="tab-text" data-mode="text" aria-selected="false" data-i18n="forge_nim.from_text">
 								From text
 							</button>
 						</div>
@@ -557,7 +557,7 @@
 								tabindex="0"
 								aria-label="Drop a reference image, click to choose, or paste"
 							>
-								<button type="button" class="dz-clear" id="dz-clear" aria-label="Remove image">✕</button>
+								<button type="button" class="dz-clear" id="dz-clear" aria-label="Remove image" data-i18n-attr="aria-label:forge_nim.remove_image_arialabel">✕</button>
 								<img class="dz-preview" id="dz-preview" alt="" hidden />
 								<div class="dz-inner">
 									<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -565,8 +565,8 @@
 										<circle cx="9" cy="9" r="2" />
 										<path d="m21 15-3.6-3.6a2 2 0 0 0-2.8 0L6 20" />
 									</svg>
-									<span class="dz-title">Drop a photo</span>
-									<span class="dz-hint">click to browse · or paste · PNG/JPG/WebP, ≤ 10 MB</span>
+									<span class="dz-title" data-i18n="forge_nim.drop_a_photo">Drop a photo</span>
+									<span class="dz-hint" data-i18n="forge_nim.click_to_browse_or_paste_png_jpg">click to browse · or paste · PNG/JPG/WebP, ≤ 10 MB</span>
 								</div>
 								<input type="file" id="file-input" accept="image/*" hidden />
 							</div>
@@ -574,7 +574,7 @@
 
 						<!-- Text pane -->
 						<div class="pane" id="pane-text">
-							<label class="field-label" for="prompt">Describe one object</label>
+							<label class="field-label" for="prompt" data-i18n="forge_nim.describe_one_object">Describe one object</label>
 							<textarea
 								id="prompt"
 								placeholder="a worn brass pocket watch, studio lighting"
@@ -584,20 +584,20 @@
 
 						<div class="composer-row">
 							<div>
-								<label class="field-label">Quality</label>
+								<label class="field-label" data-i18n="forge_nim.quality">Quality</label>
 								<div class="tier" role="group" aria-label="Sampling quality">
-									<button type="button" data-tier="draft" aria-pressed="true">Draft · 15 steps</button>
-									<button type="button" data-tier="high" aria-pressed="false">High · 40 steps</button>
+									<button type="button" data-tier="draft" aria-pressed="true" data-i18n="forge_nim.draft_15_steps">Draft · 15 steps</button>
+									<button type="button" data-tier="high" aria-pressed="false" data-i18n="forge_nim.high_40_steps">High · 40 steps</button>
 								</div>
 							</div>
 						</div>
 
-						<button class="btn" id="generate" type="submit">
+						<button class="btn" id="generate" type="submit" data-i18n-html="forge_nim.reconstruct_3d">
 							<span id="generate-label">Reconstruct 3D</span>
 						</button>
 
 						<details class="advanced">
-							<summary>NIM endpoint &amp; wire contract</summary>
+							<summary data-i18n="forge_nim.nim_endpoint_wire_contract">NIM endpoint &amp; wire contract</summary>
 							<input
 								type="url"
 								id="base-url"
@@ -605,11 +605,11 @@
 								spellcheck="false"
 								autocapitalize="off"
 							/>
-							<div class="contract" aria-hidden="true">POST <span class="k">{baseUrl}</span>/v1/infer
-{ <span class="k">mode</span>: "image", <span class="k">image</span>: "data:…",
+							<div class="contract" aria-hidden="true">POST <span class="k" data-i18n="forge_nim.baseurl">{baseUrl}</span>/v1/infer
+{ <span class="k" data-i18n="forge_nim.mode">mode</span>: "image", <span class="k" data-i18n="forge_nim.image">image</span>: "data:…",
   ss_sampling_steps, slat_sampling_steps,
-  <span class="k">output_format</span>: "glb" }
-→ 200 { <span class="k">artifacts</span>: [ { <span class="k">base64</span> } ] }</div>
+  <span class="k" data-i18n="forge_nim.output_format">output_format</span>: "glb" }
+→ 200 { <span class="k" data-i18n="forge_nim.artifacts">artifacts</span>: [ { <span class="k" data-i18n="forge_nim.base64">base64</span> } ] }</div>
 						</details>
 					</form>
 				</div>
@@ -644,8 +644,8 @@
 										<path d="m2 17 10 5 10-5" />
 										<path d="m2 12 10 5 10-5" />
 									</svg>
-									<h3>Drop a photo to begin</h3>
-									<p>One clear subject, plain background. The self-hosted NIM reconstructs a textured GLB in a single hop — then orbit, AR, or download it here.</p>
+									<h3 data-i18n="forge_nim.drop_a_photo_to_begin">Drop a photo to begin</h3>
+									<p data-i18n="forge_nim.one_clear_subject_plain_background_the_self">One clear subject, plain background. The self-hosted NIM reconstructs a textured GLB in a single hop — then orbit, AR, or download it here.</p>
 								</div>
 							</div>
 
@@ -653,10 +653,10 @@
 							<div class="stage-state" id="state-loading">
 								<div class="state-inner">
 									<div class="loader-ring"></div>
-									<h3 id="loading-title">Reconstructing…</h3>
-									<p class="loading-steps" id="loading-steps">POST /v1/infer</p>
+									<h3 id="loading-title" data-i18n="forge_nim.reconstructing">Reconstructing…</h3>
+									<p class="loading-steps" id="loading-steps" data-i18n="forge_nim.post_v1_infer">POST /v1/infer</p>
 									<div class="elapsed" id="elapsed">0.0s</div>
-									<button type="button" class="btn btn-ghost" id="cancel" style="margin-top: 0.4rem">Cancel</button>
+									<button type="button" class="btn btn-ghost" id="cancel" style="margin-top: 0.4rem" data-i18n="forge_nim.cancel">Cancel</button>
 								</div>
 							</div>
 
@@ -668,9 +668,9 @@
 										<line x1="12" y1="9" x2="12" y2="13" />
 										<line x1="12" y1="17" x2="12.01" y2="17" />
 									</svg>
-									<h3 id="error-title">Couldn't reconstruct</h3>
-									<p id="error-msg">Something went wrong.</p>
-									<button type="button" class="btn btn-ghost" id="error-retry" style="margin-top: 0.4rem">Try again</button>
+									<h3 id="error-title" data-i18n="forge_nim.couldn_t_reconstruct">Couldn't reconstruct</h3>
+									<p id="error-msg" data-i18n="forge_nim.something_went_wrong">Something went wrong.</p>
+									<button type="button" class="btn btn-ghost" id="error-retry" style="margin-top: 0.4rem" data-i18n="forge_nim.try_again">Try again</button>
 								</div>
 							</div>
 						</div>
@@ -678,11 +678,11 @@
 						<div class="result-bar is-hidden" id="result-bar">
 							<div class="meta" id="result-meta"></div>
 							<span class="spacer"></span>
-							<a class="btn btn-ghost" id="download" download="trellis-nim.glb" href="#" style="font-size: var(--text-sm); padding: 0.45rem 0.9rem">Download GLB</a>
+							<a class="btn btn-ghost" id="download" download="trellis-nim.glb" href="#" style="font-size: var(--text-sm); padding: 0.45rem 0.9rem" data-i18n="forge_nim.download_glb">Download GLB</a>
 						</div>
 					</div>
 
-					<p class="note">
+					<p class="note" data-i18n-html="forge_nim.try_a_text_prompt">
 						<span class="sample-row" id="sample-row">
 							<button type="button" data-sample="text" data-prompt="a worn brass pocket watch, studio lighting">Try a text prompt</button>
 						</span>
@@ -1001,5 +1001,7 @@
 			setMode('image');
 			checkHealth();
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

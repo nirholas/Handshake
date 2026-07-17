@@ -5,7 +5,7 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Instant Agent Genesis · three.ws</title>
+		<title data-i18n="genesis.meta_title">Instant Agent Genesis · three.ws</title>
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -15,17 +15,17 @@
 		<meta
 			name="description"
 			content="A prompt or a selfie becomes a 3D AI agent with its own custodial wallet and a verifiable on-chain identity — in under a minute. It's yours from birth."
-		/>
+		 data-i18n-attr="content:genesis.meta_description"/>
 		<meta name="robots" content="index, follow" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/genesis" />
-		<meta property="og:title" content="Instant Agent Genesis · three.ws" />
+		<meta property="og:title" content="Instant Agent Genesis · three.ws"  data-i18n-attr="content:genesis.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Selfie or prompt → 3D agent → funded wallet → tradeable on-chain identity in 60 seconds. Yours from the first frame."
-		/>
+		 data-i18n-attr="content:genesis.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=build&amp;t=Instant+Agent+Genesis&amp;d=A+prompt+or+a+selfie+becomes+a+rigged+3D+AI+agent+with+its+own+custodial+Solana+%2B+EVM+wallet+and+a+verifiable+on-chain+identity+%E2%80%94+in+under+a+minute%2C+owned+by+yo&amp;p=%2Fgenesis"
@@ -41,20 +41,20 @@
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="Instant Agent Genesis — three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Instant Agent Genesis · three.ws">
-	<meta name="twitter:description" content="A prompt or a selfie becomes a rigged 3D AI agent with its own custodial Solana + EVM wallet and a verifiable on-chain identity — in under a minute, owned by you.">
+	<meta name="twitter:title" content="Instant Agent Genesis · three.ws" data-i18n-attr="content:genesis.meta_twitter_title">
+	<meta name="twitter:description" content="A prompt or a selfie becomes a rigged 3D AI agent with its own custodial Solana + EVM wallet and a verifiable on-chain identity — in under a minute, owned by you." data-i18n-attr="content:genesis.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Instant+Agent+Genesis&amp;d=A+prompt+or+a+selfie+becomes+a+rigged+3D+AI+agent+with+its+own+custodial+Solana+%2B+EVM+wallet+and+a+verifiable+on-chain+identity+%E2%80%94+in+under+a+minute%2C+owned+by+yo&amp;p=%2Fgenesis">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Instant Agent Genesis","description":"A prompt or a selfie becomes a rigged 3D AI agent with its own custodial Solana + EVM wallet and a verifiable on-chain identity — in under a minute, owned by you.","url":"https://three.ws/genesis","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&amp;t=Instant+Agent+Genesis&amp;d=A+prompt+or+a+selfie+becomes+a+rigged+3D+AI+agent+with+its+own+custodial+Solana+%2B+EVM+wallet+and+a+verifiable+on-chain+identity+%E2%80%94+in+under+a+minute%2C+owned+by+yo&amp;p=%2Fgenesis"}]}</script>
 </head>
 	<body>
-		<a href="#genesis-main" class="skip-link">Skip to genesis</a>
+		<a href="#genesis-main" class="skip-link" data-i18n="genesis.skip_to_genesis">Skip to genesis</a>
 		<div id="nav-container"></div>
 
 		<main id="genesis-main" class="gx">
 			<header class="gx-head">
-				<span class="gx-eyebrow">60-second genesis</span>
-				<h1 class="gx-title">Instant <em>Agent Genesis</em></h1>
-				<p class="gx-sub">
+				<span class="gx-eyebrow" data-i18n="genesis.60_second_genesis">60-second genesis</span>
+				<h1 class="gx-title" data-i18n-html="genesis.instant_agent_genesis">Instant <em>Agent Genesis</em></h1>
+				<p class="gx-sub" data-i18n="genesis.a_prompt_or_a_selfie_becomes_a">
 					A prompt or a selfie becomes a living 3D agent — with its own custodial
 					wallet and a verifiable on-chain identity. Yours from the first frame.
 				</p>
@@ -63,23 +63,23 @@
 			<!-- ── STAGE: INPUT ─────────────────────────────────────────────── -->
 			<section class="gx-stage" data-stage="input">
 				<div class="gx-auth" id="gx-auth" hidden>
-					<p>Sign in to claim your agent and its wallet. Genesis writes to <b>your</b> account.</p>
-					<button class="gx-btn gx-btn-primary" id="gx-signin" type="button">Sign in</button>
+					<p data-i18n-html="genesis.sign_in_to_claim_your_agent_and">Sign in to claim your agent and its wallet. Genesis writes to <b>your</b> account.</p>
+					<button class="gx-btn gx-btn-primary" id="gx-signin" type="button" data-i18n="genesis.sign_in">Sign in</button>
 				</div>
 
 				<div class="gx-card">
 					<div class="gx-tabs" role="tablist" aria-label="Genesis source">
-						<button class="gx-tab" role="tab" id="gx-tab-text" aria-selected="true" data-mode="text" type="button">
+						<button class="gx-tab" role="tab" id="gx-tab-text" aria-selected="true" data-mode="text" type="button" data-i18n-html="genesis.describe_type_how_your_agent_looks">
 							<span class="gx-tab-icon" aria-hidden="true">✍️</span>
 							<strong>Describe</strong>
 							<span>Type how your agent looks</span>
 						</button>
-						<button class="gx-tab" role="tab" id="gx-tab-photo" aria-selected="false" data-mode="photo" type="button">
+						<button class="gx-tab" role="tab" id="gx-tab-photo" aria-selected="false" data-mode="photo" type="button" data-i18n-html="genesis.selfie_a_photo_becomes_the_body">
 							<span class="gx-tab-icon" aria-hidden="true">📸</span>
 							<strong>Selfie</strong>
 							<span>A photo becomes the body</span>
 						</button>
-						<button class="gx-tab" role="tab" id="gx-tab-remix" aria-selected="false" data-mode="remix" type="button">
+						<button class="gx-tab" role="tab" id="gx-tab-remix" aria-selected="false" data-mode="remix" type="button" data-i18n-html="genesis.remix_fork_a_public_avatar_to_own">
 							<span class="gx-tab-icon" aria-hidden="true">🧬</span>
 							<strong>Remix</strong>
 							<span>Fork a public avatar to own</span>
@@ -88,17 +88,17 @@
 
 					<!-- describe -->
 					<div class="gx-panel" data-panel="text">
-						<label class="gx-label" for="gx-prompt">Describe your agent's look</label>
+						<label class="gx-label" for="gx-prompt" data-i18n="genesis.describe_your_agent_s_look">Describe your agent's look</label>
 						<textarea
 							class="gx-input"
 							id="gx-prompt"
 							placeholder="A silver-haired explorer in a teal flight jacket, calm and curious…"
 							maxlength="1000"
 						></textarea>
-						<p class="gx-hint">Full-body characters work best. We rig it automatically so it can walk and emote.</p>
+						<p class="gx-hint" data-i18n="genesis.full_body_characters_work_best_we_rig">Full-body characters work best. We rig it automatically so it can walk and emote.</p>
 						<div class="gx-chips" id="gx-chips" aria-label="Example prompts"></div>
 						<details class="gx-adv">
-							<summary>Advanced — bring your own Meshy key for higher fidelity</summary>
+							<summary data-i18n="genesis.advanced_bring_your_own_meshy_key_for">Advanced — bring your own Meshy key for higher fidelity</summary>
 							<div class="gx-field" style="margin-top: 12px">
 								<input
 									class="gx-input"
@@ -107,7 +107,7 @@
 									autocomplete="off"
 									placeholder="msy_… (optional — kept in your browser, sent only with this job)"
 								/>
-								<p class="gx-hint">
+								<p class="gx-hint" data-i18n="genesis.without_a_key_genesis_uses_the_platform">
 									Without a key, genesis uses the platform's avatar engine. A Meshy key routes
 									geometry through your own Meshy credits at higher detail.
 								</p>
@@ -117,7 +117,7 @@
 
 					<!-- selfie -->
 					<div class="gx-panel" data-panel="photo" hidden>
-						<label class="gx-label" for="gx-photo-input">Use a photo</label>
+						<label class="gx-label" for="gx-photo-input" data-i18n="genesis.use_a_photo">Use a photo</label>
 						<label class="gx-drop" id="gx-drop" for="gx-photo-input">
 							<span class="gx-drop-icon" aria-hidden="true">📷</span>
 							<div>Tap to choose a photo, or drag one here</div>
@@ -125,25 +125,25 @@
 						</label>
 						<div class="gx-preview" id="gx-photo-preview">
 							<img id="gx-photo-img" alt="Your selected photo" />
-							<button class="gx-btn gx-btn-ghost" id="gx-photo-clear" type="button">Remove</button>
+							<button class="gx-btn gx-btn-ghost" id="gx-photo-clear" type="button" data-i18n="genesis.remove">Remove</button>
 						</div>
 						<div class="gx-row" style="margin-top: 14px">
 							<div>
-								<label class="gx-label" for="gx-bodytype">Body</label>
+								<label class="gx-label" for="gx-bodytype" data-i18n="genesis.body">Body</label>
 								<select class="gx-input" id="gx-bodytype">
-									<option value="female">Feminine</option>
-									<option value="male">Masculine</option>
+									<option value="female" data-i18n="genesis.feminine">Feminine</option>
+									<option value="male" data-i18n="genesis.masculine">Masculine</option>
 								</select>
 							</div>
 							<div>
-								<label class="gx-label" for="gx-style">Style</label>
+								<label class="gx-label" for="gx-style" data-i18n="genesis.style">Style</label>
 								<select class="gx-input" id="gx-style">
-									<option value="v2">Stylized</option>
-									<option value="v1">Photoreal</option>
+									<option value="v2" data-i18n="genesis.stylized">Stylized</option>
+									<option value="v1" data-i18n="genesis.photoreal">Photoreal</option>
 								</select>
 							</div>
 						</div>
-						<p class="gx-privacy">
+						<p class="gx-privacy" data-i18n="genesis.use_a_photo_of_yourself_or_one">
 							Use a photo of yourself or one you have the right to use. It's processed only to
 							build your avatar, stored privately in your account, and never shared.
 						</p>
@@ -151,38 +151,38 @@
 
 					<!-- remix -->
 					<div class="gx-panel" data-panel="remix" hidden>
-						<label class="gx-label">Start from a public avatar — forking mints a fresh wallet you own</label>
+						<label class="gx-label" data-i18n="genesis.start_from_a_public_avatar_forking_mints">Start from a public avatar — forking mints a fresh wallet you own</label>
 						<div class="gx-remix-grid" id="gx-remix-grid" aria-label="Public avatars to fork">
-							<p class="gx-hint" id="gx-remix-empty">Loading avatars…</p>
+							<p class="gx-hint" id="gx-remix-empty" data-i18n="genesis.loading_avatars">Loading avatars…</p>
 						</div>
 					</div>
 
 					<!-- shared: name + persona + voice -->
 					<div class="gx-field" style="margin-top: 4px">
-						<label class="gx-label" for="gx-name">Name your agent <span style="color: var(--ink-faint); font-weight: 400">(optional)</span></label>
+						<label class="gx-label" for="gx-name" data-i18n-html="genesis.name_your_agent_optional">Name your agent <span style="color: var(--ink-faint); font-weight: 400">(optional)</span></label>
 						<input class="gx-input" id="gx-name" type="text" maxlength="80" placeholder="We'll suggest one if you leave this blank" />
 					</div>
 					<div class="gx-row">
 						<div class="gx-field">
-							<label class="gx-label" for="gx-persona">Persona <span style="color: var(--ink-faint); font-weight: 400">(optional)</span></label>
+							<label class="gx-label" for="gx-persona" data-i18n-html="genesis.persona_optional">Persona <span style="color: var(--ink-faint); font-weight: 400">(optional)</span></label>
 							<input class="gx-input" id="gx-persona" type="text" maxlength="600" placeholder="Witty, sharp, talks like a degen trader…" />
 						</div>
 						<div class="gx-field">
-							<label class="gx-label" for="gx-voice">Voice</label>
+							<label class="gx-label" for="gx-voice" data-i18n="genesis.voice">Voice</label>
 							<select class="gx-input" id="gx-voice">
-								<option value="">Browser voice (default)</option>
+								<option value="" data-i18n="genesis.browser_voice_default">Browser voice (default)</option>
 							</select>
 						</div>
 					</div>
 
-					<button class="gx-btn gx-btn-primary gx-btn-lg" id="gx-begin" type="button">
+					<button class="gx-btn gx-btn-primary gx-btn-lg" id="gx-begin" type="button" data-i18n="genesis.begin_genesis">
 						Begin genesis →
 					</button>
 
 					<div class="gx-explain">
-						<div><strong>3D body</strong>A rigged avatar that walks, idles and emotes.</div>
-						<div><strong>Custodial wallet</strong>A real Solana + EVM wallet, ready to fund &amp; snipe.</div>
-						<div><strong>On-chain identity</strong>An ERC-8004 record — verifiable from birth.</div>
+						<div><strong data-i18n="genesis.3d_body">3D body</strong>A rigged avatar that walks, idles and emotes.</div>
+						<div><strong data-i18n="genesis.custodial_wallet">Custodial wallet</strong>A real Solana + EVM wallet, ready to fund &amp; snipe.</div>
+						<div><strong data-i18n="genesis.on_chain_identity">On-chain identity</strong>An ERC-8004 record — verifiable from birth.</div>
 					</div>
 				</div>
 
@@ -197,28 +197,28 @@
 							<div class="gx-step" data-step="model" data-state="active">
 								<div class="gx-step-dot" aria-hidden="true"></div>
 								<div class="gx-step-body">
-									<strong>Sculpting your 3D body</strong>
-									<small data-role="detail">Warming up the avatar engine…</small>
+									<strong data-i18n="genesis.sculpting_your_3d_body">Sculpting your 3D body</strong>
+									<small data-role="detail" data-i18n="genesis.warming_up_the_avatar_engine">Warming up the avatar engine…</small>
 									<div class="gx-bar"><i data-role="bar"></i></div>
 								</div>
 							</div>
 							<div class="gx-step" data-step="wallet" data-state="pending">
 								<div class="gx-step-dot" aria-hidden="true"></div>
 								<div class="gx-step-body">
-									<strong>Minting your custodial wallet</strong>
-									<small data-role="detail">Waiting on your agent…</small>
+									<strong data-i18n="genesis.minting_your_custodial_wallet">Minting your custodial wallet</strong>
+									<small data-role="detail" data-i18n="genesis.waiting_on_your_agent">Waiting on your agent…</small>
 								</div>
 							</div>
 							<div class="gx-step" data-step="persona" data-state="pending">
 								<div class="gx-step-dot" aria-hidden="true"></div>
 								<div class="gx-step-body">
-									<strong>Shaping persona &amp; voice</strong>
-									<small data-role="detail">Pending…</small>
+									<strong data-i18n="genesis.shaping_persona_voice">Shaping persona &amp; voice</strong>
+									<small data-role="detail" data-i18n="genesis.pending">Pending…</small>
 								</div>
 							</div>
 						</div>
-						<p class="gx-elapsed" id="gx-elapsed">Elapsed 0s</p>
-						<button class="gx-btn gx-btn-ghost" id="gx-cancel" type="button" style="margin-top: 12px">Cancel</button>
+						<p class="gx-elapsed" id="gx-elapsed" data-i18n="genesis.elapsed_0s">Elapsed 0s</p>
+						<button class="gx-btn gx-btn-ghost" id="gx-cancel" type="button" style="margin-top: 12px" data-i18n="genesis.cancel">Cancel</button>
 					</div>
 					<div>
 						<div class="gx-stage-preview" id="gx-forge-preview">
@@ -238,49 +238,49 @@
 					<div class="gx-reveal-viewer" id="gx-reveal-viewer"></div>
 					<div>
 						<div class="gx-meet">Meet your agent</div>
-						<h2 class="gx-agent-name" id="gx-reveal-name">Your Agent</h2>
-						<p class="gx-own">This agent, its wallet, and its identity are <b>yours</b> — self-custodial from birth.</p>
+						<h2 class="gx-agent-name" id="gx-reveal-name" data-i18n="genesis.your_agent">Your Agent</h2>
+						<p class="gx-own" data-i18n-html="genesis.this_agent_its_wallet_and_its_identity">This agent, its wallet, and its identity are <b>yours</b> — self-custodial from birth.</p>
 
 						<div class="gx-detail">
-							<div class="gx-detail-h"><span>Custodial wallet</span></div>
+							<div class="gx-detail-h"><span data-i18n="genesis.custodial_wallet_2">Custodial wallet</span></div>
 							<div id="gx-wallets"></div>
 						</div>
 
 						<div class="gx-detail">
 							<div class="gx-detail-h">
-								<span>On-chain identity</span>
-								<span class="gx-badge gx-badge-pending" id="gx-identity-badge">Not registered</span>
+								<span data-i18n="genesis.on_chain_identity_2">On-chain identity</span>
+								<span class="gx-badge gx-badge-pending" id="gx-identity-badge" data-i18n="genesis.not_registered">Not registered</span>
 							</div>
 							<div id="gx-identity-body">
-								<button class="gx-btn gx-btn-primary" id="gx-register" type="button" style="width: 100%">
+								<button class="gx-btn gx-btn-primary" id="gx-register" type="button" style="width: 100%" data-i18n="genesis.register_erc_8004_identity">
 									Register ERC-8004 identity
 								</button>
-								<p class="gx-identity-status" id="gx-identity-status">
+								<p class="gx-identity-status" id="gx-identity-status" data-i18n="genesis.connect_an_evm_wallet_to_mint_a">
 									Connect an EVM wallet to mint a verifiable, tradeable identity. Optional — you can do this anytime.
 								</p>
 							</div>
 						</div>
 
 						<div class="gx-cta-grid">
-							<a class="gx-cta gx-cta-primary" id="gx-cta-fund" href="#">
+							<a class="gx-cta gx-cta-primary" id="gx-cta-fund" href="#" data-i18n-html="genesis.fund_snipe_top_up_the_wallet_and">
 								<strong>Fund &amp; snipe →</strong>
 								<span>Top up the wallet and start trading</span>
 							</a>
-							<a class="gx-cta" id="gx-cta-open" href="#">
+							<a class="gx-cta" id="gx-cta-open" href="#" data-i18n-html="genesis.open_your_agent_its_profile_chat_controls">
 								<strong>Open your agent</strong>
 								<span>Its profile, chat &amp; controls</span>
 							</a>
-							<a class="gx-cta" id="gx-cta-copilot" href="/alpha-copilot">
+							<a class="gx-cta" id="gx-cta-copilot" href="/alpha-copilot" data-i18n-html="genesis.trading_co_pilot_put_your_agent_to">
 								<strong>Trading co-pilot</strong>
 								<span>Put your agent to work on alpha</span>
 							</a>
-							<a class="gx-cta" id="gx-cta-share" href="#" target="_blank" rel="noopener">
+							<a class="gx-cta" id="gx-cta-share" href="#" target="_blank" rel="noopener" data-i18n-html="genesis.share_the_reveal_a_shareable_agent_card">
 								<strong>Share the reveal</strong>
 								<span>A shareable agent card</span>
 							</a>
 						</div>
 
-						<button class="gx-btn gx-btn-ghost gx-btn-lg" id="gx-again" type="button" style="margin-top: 16px">
+						<button class="gx-btn gx-btn-ghost gx-btn-lg" id="gx-again" type="button" style="margin-top: 16px" data-i18n="genesis.spin_up_another_agent">
 							Spin up another agent
 						</button>
 					</div>
@@ -292,5 +292,7 @@
 		<script type="module" src="/src/genesis.js"></script>
 		<script src="/nav.js" defer></script>
 		<script src="/theme-switcher.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -11,20 +11,20 @@
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agent Commerce · three.ws</title>
-  <meta name="description" content="Watch two AI agents pay each other on-chain using x402 — a live Solana transaction, in 3D.">
+  <title data-i18n="agent_trade.meta_title">Agent Commerce · three.ws</title>
+  <meta name="description" content="Watch two AI agents pay each other on-chain using x402 — a live Solana transaction, in 3D." data-i18n-attr="content:agent_trade.meta_description">
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/agent-trade" />
-	<meta property="og:title" content="Agent Commerce · three.ws" />
-	<meta property="og:description" content="Watch two AI agents pay each other on-chain using x402 — a live Solana transaction, in 3D." />
+	<meta property="og:title" content="Agent Commerce · three.ws"  data-i18n-attr="content:agent_trade.meta_og_title"/>
+	<meta property="og:description" content="Watch two AI agents pay each other on-chain using x402 — a live Solana transaction, in 3D."  data-i18n-attr="content:agent_trade.meta_og_description"/>
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Commerce&amp;d=Watch+two+AI+agents+pay+each+other+on-chain+using+x402+%E2%80%94+a+live+Solana+transaction%2C+rendered+in+3D.&amp;p=%2Fagent-trade" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Agent Commerce · three.ws" />
-	<meta name="twitter:description" content="Watch two AI agents pay each other on-chain using x402 — a live Solana transaction, in 3D." />
+	<meta name="twitter:title" content="Agent Commerce · three.ws"  data-i18n-attr="content:agent_trade.meta_twitter_title"/>
+	<meta name="twitter:description" content="Watch two AI agents pay each other on-chain using x402 — a live Solana transaction, in 3D."  data-i18n-attr="content:agent_trade.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Commerce&amp;d=Watch+two+AI+agents+pay+each+other+on-chain+using+x402+%E2%80%94+a+live+Solana+transaction%2C+rendered+in+3D.&amp;p=%2Fagent-trade" />
   <link rel="stylesheet" href="/fonts/fonts.css">
   <link rel="stylesheet" href="/tokens.css">
@@ -265,13 +265,13 @@
 
   <!-- Header -->
   <div id="header">
-    <a href="/"><span>three</span>.ws</a>
+    <a href="/" data-i18n-html="agent_trade.three_ws"><span>three</span>.ws</a>
     <div class="hbadge hbadge-x402">x402</div>
     <div class="hbadge hbadge-sol">Solana</div>
     <nav class="header-links" aria-label="Related surfaces">
-      <a href="/agent-economy">Agent economy</a>
-      <a href="/three-live">$THREE live</a>
-      <a href="/x402">x402</a>
+      <a href="/agent-economy" data-i18n="agent_trade.agent_economy">Agent economy</a>
+      <a href="/three-live" data-i18n="agent_trade.three_live">$THREE live</a>
+      <a href="/x402" data-i18n="agent_trade.x402">x402</a>
     </nav>
     <div id="hright">
       <div id="liveDot"></div>
@@ -305,13 +305,13 @@
   <!-- CTA -->
   <div id="cta">
     <select id="topicSelect">
-      <option value="Solana DeFi outlook">Solana DeFi outlook</option>
-      <option value="BTC market sentiment">BTC market sentiment</option>
-      <option value="Top pump.fun tokens">Top pump.fun tokens</option>
-      <option value="Ethereum L2 landscape">Ethereum L2 landscape</option>
-      <option value="AI agent token trends">AI agent token trends</option>
+      <option value="Solana DeFi outlook" data-i18n="agent_trade.solana_defi_outlook">Solana DeFi outlook</option>
+      <option value="BTC market sentiment" data-i18n="agent_trade.btc_market_sentiment">BTC market sentiment</option>
+      <option value="Top pump.fun tokens" data-i18n="agent_trade.top_pump_fun_tokens">Top pump.fun tokens</option>
+      <option value="Ethereum L2 landscape" data-i18n="agent_trade.ethereum_l2_landscape">Ethereum L2 landscape</option>
+      <option value="AI agent token trends" data-i18n="agent_trade.ai_agent_token_trends">AI agent token trends</option>
     </select>
-    <button id="startBtn">▶ Run Trade Demo</button>
+    <button id="startBtn" data-i18n="agent_trade.run_trade_demo">▶ Run Trade Demo</button>
   </div>
 
   <!-- Toast -->
@@ -320,51 +320,53 @@
   <!-- Not-configured overlay -->
   <div id="notConfigured" class="hidden" role="dialog" aria-modal="true" aria-labelledby="cfgTitle" aria-describedby="cfgDesc">
     <div class="cfg-card" role="document">
-      <h2 id="cfgTitle">Live demo not yet configured</h2>
-      <p id="cfgDesc">This page runs a <strong>real</strong> agent-to-agent payment: two AI agents settle a tiny SOL transaction on-chain via the x402 protocol. To go live it needs two funded Solana keypairs set as environment variables on the deployment. Until then, here's exactly what the demo does — step by step — and how to enable it.</p>
+      <h2 id="cfgTitle" data-i18n="agent_trade.live_demo_not_yet_configured">Live demo not yet configured</h2>
+      <p id="cfgDesc" data-i18n-html="agent_trade.this_page_runs_a_real_agent_to">This page runs a <strong>real</strong> agent-to-agent payment: two AI agents settle a tiny SOL transaction on-chain via the x402 protocol. To go live it needs two funded Solana keypairs set as environment variables on the deployment. Until then, here's exactly what the demo does — step by step — and how to enable it.</p>
 
       <div class="cfg-walkthrough">
         <div class="cfg-wh-head">
-          <span class="cfg-wh-badge">Read-only walkthrough</span>
-          <span class="cfg-wh-note">A description of the live flow — not a running trade.</span>
+          <span class="cfg-wh-badge" data-i18n="agent_trade.read_only_walkthrough">Read-only walkthrough</span>
+          <span class="cfg-wh-note" data-i18n="agent_trade.a_description_of_the_live_flow_not">A description of the live flow — not a running trade.</span>
         </div>
         <ol class="cfg-steps">
-          <li><b>Request.</b> The buyer agent (Nexus) asks the seller agent (Oracle) for a market analysis.</li>
-          <li><b>402 challenge.</b> Oracle replies with HTTP 402 Payment Required and an x402 manifest: price in SOL, recipient, network, and memo.</li>
-          <li><b>Pay.</b> Nexus signs and broadcasts a real SOL transfer on Solana to satisfy the challenge.</li>
-          <li><b>Confirm.</b> The network confirms the transaction; the signature is shown and links to Solscan.</li>
-          <li><b>Deliver.</b> Oracle verifies payment, runs the analysis through a real model, and returns the result.</li>
+          <li data-i18n-html="agent_trade.request_the_buyer_agent_nexus_asks_the"><b>Request.</b> The buyer agent (Nexus) asks the seller agent (Oracle) for a market analysis.</li>
+          <li data-i18n-html="agent_trade.402_challenge_oracle_replies_with_http_402"><b>402 challenge.</b> Oracle replies with HTTP 402 Payment Required and an x402 manifest: price in SOL, recipient, network, and memo.</li>
+          <li data-i18n-html="agent_trade.pay_nexus_signs_and_broadcasts_a_real"><b>Pay.</b> Nexus signs and broadcasts a real SOL transfer on Solana to satisfy the challenge.</li>
+          <li data-i18n-html="agent_trade.confirm_the_network_confirms_the_transaction"><b>Confirm.</b> The network confirms the transaction; the signature is shown and links to Solscan.</li>
+          <li data-i18n-html="agent_trade.deliver_oracle_verifies_payment_runs_the_ana"><b>Deliver.</b> Oracle verifies payment, runs the analysis through a real model, and returns the result.</li>
         </ol>
       </div>
 
-      <p class="cfg-gen" style="margin-top:18px">To enable the live demo, set these on the deployment and fund each wallet with a small amount of SOL:</p>
+      <p class="cfg-gen" style="margin-top:18px" data-i18n="agent_trade.to_enable_the_live_demo_set_these">To enable the live demo, set these on the deployment and fund each wallet with a small amount of SOL:</p>
       <div class="env-block">
-        <div><span class="env-c"># Buyer agent (Nexus)</span></div>
-        <div><span class="env-k">AGENT_BUYER_SECRET</span>=&lt;base58-secret-key&gt;</div>
-        <div><span class="env-c"># Seller agent (Oracle)</span></div>
-        <div><span class="env-k">AGENT_SELLER_SECRET</span>=&lt;base58-secret-key&gt;</div>
-        <div><span class="env-c"># Trade price in SOL (default: 0.001)</span></div>
-        <div><span class="env-k">AGENT_TRADE_PRICE_SOL</span>=0.001</div>
-        <div><span class="env-c"># mainnet or devnet</span></div>
-        <div><span class="env-k">AGENT_TRADE_NETWORK</span>=mainnet</div>
+        <div><span class="env-c" data-i18n="agent_trade.buyer_agent_nexus"># Buyer agent (Nexus)</span></div>
+        <div><span class="env-k" data-i18n="agent_trade.agent_buyer_secret">AGENT_BUYER_SECRET</span>=&lt;base58-secret-key&gt;</div>
+        <div><span class="env-c" data-i18n="agent_trade.seller_agent_oracle"># Seller agent (Oracle)</span></div>
+        <div><span class="env-k" data-i18n="agent_trade.agent_seller_secret">AGENT_SELLER_SECRET</span>=&lt;base58-secret-key&gt;</div>
+        <div><span class="env-c" data-i18n="agent_trade.trade_price_in_sol_default_0_001"># Trade price in SOL (default: 0.001)</span></div>
+        <div><span class="env-k" data-i18n="agent_trade.agent_trade_price_sol">AGENT_TRADE_PRICE_SOL</span>=0.001</div>
+        <div><span class="env-c" data-i18n="agent_trade.mainnet_or_devnet"># mainnet or devnet</span></div>
+        <div><span class="env-k" data-i18n="agent_trade.agent_trade_network">AGENT_TRADE_NETWORK</span>=mainnet</div>
       </div>
-      <p class="cfg-gen">
+      <p class="cfg-gen" data-i18n-html="agent_trade.generate_a_keypair">
         Generate a keypair:<br>
         <code>node -e "const {Keypair}=require('@solana/web3.js'),bs58=require('bs58');const k=Keypair.generate();console.log('secret:',bs58.encode(k.secretKey),'addr:',k.publicKey.toString())"</code>
       </p>
 
       <div class="cfg-links">
-        <a class="cfg-link" href="/x402">x402 payments &amp; setup ↗</a>
-        <a class="cfg-link" href="/docs">Read the docs ↗</a>
-        <a class="cfg-link" href="/agent-economy">The agent economy ↗</a>
-        <a class="cfg-link" href="/three-live">$THREE live ↗</a>
+        <a class="cfg-link" href="/x402" data-i18n="agent_trade.x402_payments_setup">x402 payments &amp; setup ↗</a>
+        <a class="cfg-link" href="/docs" data-i18n="agent_trade.read_the_docs">Read the docs ↗</a>
+        <a class="cfg-link" href="/agent-economy" data-i18n="agent_trade.the_agent_economy">The agent economy ↗</a>
+        <a class="cfg-link" href="/three-live" data-i18n="agent_trade.three_live_2">$THREE live ↗</a>
       </div>
 
-      <button class="cfg-close" id="cfgClose">Dismiss (demo scene still visible)</button>
+      <button class="cfg-close" id="cfgClose" data-i18n="agent_trade.dismiss_demo_scene_still_visible">Dismiss (demo scene still visible)</button>
     </div>
   </div>
 
 
   <script type="module" src="/src/agent-trade.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

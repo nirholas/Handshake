@@ -4,7 +4,7 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>three.ws — AI-Powered 3D Model Viewer</title>
+		<title data-i18n="app.meta_title">three.ws — AI-Powered 3D Model Viewer</title>
 		<meta
 			name="viewport"
 			content="width=device-width, initial-scale=1, viewport-fit=cover"
@@ -13,7 +13,7 @@
 		<meta
 			name="description"
 			content="The first embodied 3D AI agent. Not a chatbot. A presence — with a body, a place, an identity, and memory."
-		/>
+		 data-i18n-attr="content:app.meta_description"/>
 		<meta
 			name="keywords"
 			content="three.ws, AI agent, embodied AI, glTF viewer, GLB viewer, 3D model viewer, WebGL, three.js, ERC-8004, agent identity"
@@ -22,11 +22,11 @@
 
 		<!-- Open Graph -->
 		<meta property="og:type" content="website" />
-		<meta property="og:title" content="three.ws — The First Embodied AI Agent" />
+		<meta property="og:title" content="three.ws — The First Embodied AI Agent"  data-i18n-attr="content:app.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Agents have always been imagined as present. We made that real."
-		/>
+		 data-i18n-attr="content:app.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Showcase&amp;d=AI-powered+3D+model+viewer+showcase%3A+drop+in+a+model+and+explore+it+live.&amp;p=%2Fshowcase">
@@ -35,11 +35,11 @@
 
 		<!-- Twitter / X -->
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="three.ws — Embodied AI" />
+		<meta name="twitter:title" content="three.ws — Embodied AI"  data-i18n-attr="content:app.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="The first three.ws with a body, a place, an identity, and memory."
-		/>
+		 data-i18n-attr="content:app.meta_twitter_description"/>
 		<meta name="twitter:site" content="@trythreews" />
 		<meta name="twitter:creator" content="@nichxbt" />
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Showcase&amp;d=AI-powered+3D+model+viewer+showcase%3A+drop+in+a+model+and+explore+it+live.&amp;p=%2Fshowcase">
@@ -127,23 +127,23 @@
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Showcase","description":"AI-powered 3D model viewer showcase: drop in a model and explore it live.","url":"https://three.ws/showcase","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=main&amp;t=Showcase&amp;d=AI-powered+3D+model+viewer+showcase%3A+drop+in+a+model+and+explore+it+live.&amp;p=%2Fshowcase"}]}</script>
 </head>
 	<body>
-		<a class="skip-link" href="#main-content">Skip to content</a>
+		<a class="skip-link" href="#main-content" data-i18n="app.skip_to_content">Skip to content</a>
 		<header>
-			<h1>
+			<h1 data-i18n-html="app.three_ws">
 				<a href="/" aria-label="three.ws home"
 					><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span class="wordmark-dot" aria-hidden="true"></span>three.ws</a
 				>
 			</h1>
 			<nav class="features-nav" aria-label="Primary">
-				<a href="/app" id="nav-viewer-link">Viewer</a>
-				<a href="/create">Create</a>
-				<a href="/features">Features</a>
-				<a href="/discover">Discover</a>
-				<a href="/widgets">Widgets</a>
-				<a href="/studio">Studio</a>
-				<a href="/chat">Chat</a>
-				<a href="/docs">Docs</a>
-				<a href="/dashboard">Dashboard</a>
+				<a href="/app" id="nav-viewer-link" data-i18n="app.viewer">Viewer</a>
+				<a href="/create" data-i18n="app.create">Create</a>
+				<a href="/features" data-i18n="app.features">Features</a>
+				<a href="/discover" data-i18n="app.discover">Discover</a>
+				<a href="/widgets" data-i18n="app.widgets">Widgets</a>
+				<a href="/studio" data-i18n="app.studio">Studio</a>
+				<a href="/chat" data-i18n="app.chat">Chat</a>
+				<a href="/docs" data-i18n="app.docs">Docs</a>
+				<a href="/dashboard" data-i18n="app.dashboard">Dashboard</a>
 				<button
 					type="button"
 					class="save-to-account-btn"
@@ -151,7 +151,7 @@
 					hidden
 					title="Save this model to your account"
 					aria-label="Save this model to your account"
-				>
+				 data-i18n-attr="aria-label:app.save_this_model_to_your_acco_arialabel;title:app.save_this_model_to_your_acco_title">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="14"
@@ -176,7 +176,7 @@
 					href="/studio"
 					hidden
 					title="Save the current model as an embeddable widget"
-				>
+				 data-i18n-attr="title:app.save_the_current_model_as_an_title">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="14"
@@ -202,7 +202,7 @@
 					hidden
 					aria-label="Deploy this 3D asset on Solana"
 					title="Deploy on Solana — guided on-chain deployment for 3D assets"
-				>
+				 data-i18n-attr="aria-label:app.deploy_this_3d_asset_on_sola_arialabel;title:app.deploy_on_solana_guided_on_c_title">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="14"
@@ -227,7 +227,7 @@
 					id="open-in-composer-btn"
 					hidden
 					title="Open this model in the Scene Composer to attach accessories or build a scene"
-				>
+				 data-i18n="app.open_in_composer" data-i18n-attr="title:app.open_this_model_in_the_scene_title">
 					Open in Composer
 				</a>
 				<a
@@ -238,7 +238,7 @@
 					rel="noopener noreferrer"
 					aria-label="Open this agent's public profile in a new tab"
 					title="Open this agent's public profile in a new tab"
-				>
+				 data-i18n-attr="aria-label:app.open_this_agent_s_public_pro_arialabel;title:app.open_this_agent_s_public_pro_title">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="14"
@@ -270,7 +270,7 @@
 						class="layout-switch__btn"
 						data-layout-value="classic"
 						aria-pressed="true"
-					>
+					 data-i18n="app.classic">
 						Classic
 					</button>
 					<button
@@ -278,18 +278,18 @@
 						class="layout-switch__btn"
 						data-layout-value="next"
 						aria-pressed="false"
-					>
+					 data-i18n="app.next">
 						Next
 					</button>
 				</div>
-				<a href="/dashboard" class="nav-dashboard">Dashboard</a>
+				<a href="/dashboard" class="nav-dashboard" data-i18n="app.dashboard_2">Dashboard</a>
 				<button
 					type="button"
 					class="nav-connect-wallet"
 					id="connect-wallet-btn"
 					title="Connect your Solana wallet"
 					aria-label="Connect your Solana wallet"
-				>
+				 data-i18n-attr="aria-label:app.connect_your_solana_wallet_arialabel;title:app.connect_your_solana_wallet_title">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="14"
@@ -310,18 +310,18 @@
 					<span data-wallet-label>Connect Wallet</span>
 				</button>
 				<div class="nav-user-wrap" id="nav-user-wrap" hidden>
-					<button class="nav-user" id="nav-user-btn" aria-haspopup="true" aria-expanded="false" type="button">
+					<button class="nav-user" id="nav-user-btn" aria-haspopup="true" aria-expanded="false" type="button" data-i18n-html="app.account">
 						<span id="nav-user-label">Account</span>
 					</button>
 					<div class="nav-user-menu" id="nav-user-menu" role="menu" hidden>
-						<a href="/profile" id="nav-my-profile-link" class="nav-user-menu-item">My Profile</a>
-						<a href="/settings" class="nav-user-menu-item">Settings</a>
-						<a href="/dashboard" class="nav-user-menu-item">Dashboard</a>
+						<a href="/profile" id="nav-my-profile-link" class="nav-user-menu-item" data-i18n="app.my_profile">My Profile</a>
+						<a href="/settings" class="nav-user-menu-item" data-i18n="app.settings">Settings</a>
+						<a href="/dashboard" class="nav-user-menu-item" data-i18n="app.dashboard_3">Dashboard</a>
 						<div class="nav-user-menu-sep" role="separator"></div>
-						<button class="nav-user-menu-item nav-user-menu-signout" id="nav-sign-out-btn" type="button">Sign out</button>
+						<button class="nav-user-menu-item nav-user-menu-signout" id="nav-sign-out-btn" type="button" data-i18n="app.sign_out">Sign out</button>
 					</div>
 				</div>
-				<a href="/login" class="nav-sign-in" id="nav-sign-in">Sign in</a>
+				<a href="/login" class="nav-sign-in" id="nav-sign-in" data-i18n="app.sign_in">Sign in</a>
 			</nav>
 		</header>
 
@@ -339,22 +339,22 @@
 							<rect x="3" y="11" width="18" height="11" rx="2" />
 							<path d="M7 11V7a5 5 0 0 1 10 0v4" />
 						</svg>
-						<span>Unlock the agent</span>
+						<span data-i18n="app.unlock_the_agent">Unlock the agent</span>
 					</div>
-					<h2 class="auth-gate__title">Your agent lives here</h2>
-					<p class="auth-gate__desc">
+					<h2 class="auth-gate__title" data-i18n="app.your_agent_lives_here">Your agent lives here</h2>
+					<p class="auth-gate__desc" data-i18n="app.sign_in_to_access_animations_scene_controls">
 						Sign in to access animations, scene controls, and your agent's on-chain
 						identity, memory, and skills.
 					</p>
 					<div class="auth-gate__actions">
-						<a class="auth-gate__btn auth-gate__btn--primary" href="/login">Sign in</a>
-						<a class="auth-gate__btn" href="/register">Create account</a>
+						<a class="auth-gate__btn auth-gate__btn--primary" href="/login" data-i18n="app.sign_in_2">Sign in</a>
+						<a class="auth-gate__btn" href="/register" data-i18n="app.create_account">Create account</a>
 					</div>
 					<ul class="auth-gate__perks">
-						<li>Animations &amp; presence controls</li>
-						<li>Save avatars to your account</li>
-						<li>Register on-chain agent identity</li>
-						<li>Scene, lighting &amp; material editor</li>
+						<li data-i18n="app.animations_presence_controls">Animations &amp; presence controls</li>
+						<li data-i18n="app.save_avatars_to_your_account">Save avatars to your account</li>
+						<li data-i18n="app.register_on_chain_agent_identity">Register on-chain agent identity</li>
+						<li data-i18n="app.scene_lighting_material_editor">Scene, lighting &amp; material editor</li>
 					</ul>
 				</div>
 			</aside>
@@ -373,13 +373,13 @@
 						id="agent-onboarding-close"
 						type="button"
 						aria-label="Dismiss welcome message"
-					>
+					 data-i18n-attr="aria-label:app.dismiss_welcome_message_arialabel">
 						×
 					</button>
-					<h2 class="agent-onboarding__title" id="agent-onboarding-title">
+					<h2 class="agent-onboarding__title" id="agent-onboarding-title" data-i18n="app.your_agent_is_ready">
 						Your agent is ready 🎉
 					</h2>
-					<p class="agent-onboarding__desc">
+					<p class="agent-onboarding__desc" data-i18n="app.this_is_your_agent_s_studio_try">
 						This is your agent's studio. Try an animation from the strip below, drop a
 						new GLB to swap its body, or publish it on-chain so anyone can find and
 						embed it.
@@ -389,14 +389,14 @@
 							class="agent-onboarding__btn agent-onboarding__btn--primary"
 							href="/deploy"
 							id="agent-onboarding-deploy"
-							>Deploy on-chain →</a
+							 data-i18n="app.deploy_on_chain">Deploy on-chain →</a
 						>
 						<a
 							class="agent-onboarding__btn"
 							id="agent-onboarding-share"
 							target="_blank"
 							rel="noopener noreferrer"
-							>View public profile</a
+							 data-i18n="app.view_public_profile">View public profile</a
 						>
 					</div>
 				</div>
@@ -422,16 +422,16 @@
 								d="M10 0l-5.2 4.9h3.3v5.1h3.8v-5.1h3.3l-5.2-4.9zm9.3 11.5l-3.2-2.1h-2l3.4 2.6h-3.5c-.1 0-.2.1-.2.1l-.8 2.3h-6l-.8-2.2c-.1-.1-.1-.2-.2-.2h-3.6l3.4-2.6h-2l-3.2 2.1c-.4.3-.7 1-.6 1.5l.6 3.1c.1.5.7.9 1.2.9h16.3c.6 0 1.1-.4 1.3-.9l.6-3.1c.1-.5-.2-1.2-.7-1.5z"
 							></path>
 						</svg>
-						<span>Upload your own model</span>
+						<span data-i18n="app.upload_your_own_model">Upload your own model</span>
 					</label>
 				</div>
-				<span class="drop-hint">or drag &amp; drop glTF / GLB anywhere</span>
+				<span class="drop-hint" data-i18n="app.or_drag_drop_gltf_glb_anywhere">or drag &amp; drop glTF / GLB anywhere</span>
 				<a
 					class="create-avatar-btn create-avatar-btn--forge"
 					id="forge-from-text-btn"
 					href="/forge"
 					title="Describe an object and Forge generates a 3D model"
-				>
+				 data-i18n-attr="title:app.describe_an_object_and_forge_title">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="16"
@@ -452,7 +452,7 @@
 					id="create-avatar-btn"
 					href="/create"
 					title="Create a custom 3D avatar from a selfie"
-				>
+				 data-i18n-attr="title:app.create_a_custom_3d_avatar_fr_title">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="16"
@@ -485,7 +485,7 @@
 						<path d="M13 8a2 2 0 1 1 4 0v6" />
 						<path d="M17 10a2 2 0 1 1 4 0v6a6 6 0 0 1-6 6h-2a6 6 0 0 1-6-6v-1l-2-3 1-2 3 1V8a2 2 0 1 1 4 0v3" />
 					</svg>
-					<span>drag to orbit</span>
+					<span data-i18n="app.drag_to_orbit">drag to orbit</span>
 				</div>
 
 				<!-- Top-right floating cluster: Controls gear + Share + AR -->
@@ -498,7 +498,7 @@
 						aria-expanded="false"
 						aria-controls="next-share-menu"
 						title="Share, save, deploy"
-					>
+					 data-i18n-attr="title:app.share_save_deploy_title">
 						<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 							<circle cx="18" cy="5" r="3" />
 							<circle cx="6" cy="12" r="3" />
@@ -515,7 +515,7 @@
 						aria-expanded="false"
 						aria-controls="next-drawer"
 						title="Controls"
-					>
+					 data-i18n-attr="title:app.controls_title">
 						<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 							<circle cx="12" cy="12" r="3" />
 							<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
@@ -527,7 +527,7 @@
 						id="next-fullscreen-btn"
 						type="button"
 						title="Fullscreen"
-					>
+					 data-i18n-attr="title:app.fullscreen_title">
 						<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 							<path d="M3 9V3h6" />
 							<path d="M21 9V3h-6" />
@@ -548,32 +548,32 @@
 					<div class="next-share-menu__title">Share</div>
 					<button class="next-share-menu__item" id="next-share-save" type="button" role="menuitem" hidden>
 						<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>
-						<span>Save to account</span>
+						<span data-i18n="app.save_to_account">Save to account</span>
 					</button>
 					<a class="next-share-menu__item" id="next-share-widget" role="menuitem" hidden>
 						<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>
-						<span>Make this a widget</span>
+						<span data-i18n="app.make_this_a_widget">Make this a widget</span>
 					</a>
 					<a class="next-share-menu__item" id="next-share-deploy" role="menuitem" hidden>
 						<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" /><line x1="12" y1="2" x2="12" y2="22" /><polyline points="22 8.5 12 15.5 2 8.5" /></svg>
-						<span>Deploy on-chain</span>
+						<span data-i18n="app.deploy_on_chain_2">Deploy on-chain</span>
 					</a>
 					<a class="next-share-menu__item" id="next-share-profile" role="menuitem" target="_blank" rel="noopener noreferrer" hidden>
 						<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
-						<span>Public profile</span>
+						<span data-i18n="app.public_profile">Public profile</span>
 					</a>
 					<div class="next-share-menu__sep" role="separator"></div>
 					<button class="next-share-menu__item" id="next-share-upload" type="button" role="menuitem">
 						<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
-						<span>Upload model (.glb / .gltf)</span>
+						<span data-i18n="app.upload_model_glb_gltf">Upload model (.glb / .gltf)</span>
 					</button>
 					<a class="next-share-menu__item" href="/forge" role="menuitem">
 						<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M9 3l1.6 4.6 4.6 1.6-4.6 1.6L9 15.4 7.4 10.8 2.8 9.2l4.6-1.6L9 3zm9 7l1.1 3.1 3.1 1.1-3.1 1.1L18 18.4l-1.1-3.1-3.1-1.1 3.1-1.1L18 10zM16.5 2.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2z" /></svg>
-						<span>Generate a model from text</span>
+						<span data-i18n="app.generate_a_model_from_text">Generate a model from text</span>
 					</a>
 					<a class="next-share-menu__item" href="/create" role="menuitem">
 						<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" /></svg>
-						<span>Create avatar from selfie</span>
+						<span data-i18n="app.create_avatar_from_selfie">Create avatar from selfie</span>
 					</a>
 				</div>
 
@@ -587,13 +587,13 @@
 					aria-hidden="true"
 				>
 					<header class="next-drawer__head">
-						<h2 class="next-drawer__title">Controls</h2>
+						<h2 class="next-drawer__title" data-i18n="app.controls">Controls</h2>
 						<button
 							class="next-drawer__close"
 							id="next-drawer-close"
 							type="button"
 							aria-label="Close controls"
-						>×</button>
+						 data-i18n-attr="aria-label:app.close_controls_arialabel">×</button>
 					</header>
 					<div class="next-drawer__body" id="next-drawer-body">
 						<!-- dat.GUI panel is moved here at runtime -->
@@ -610,7 +610,7 @@
 						aria-expanded="false"
 						aria-controls="next-grid"
 						title="Choose animation"
-					>
+					 data-i18n-attr="title:app.choose_animation_title">
 						<span class="next-dock__clip-name" id="next-dock-clip-name">—</span>
 						<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="next-dock__caret">
 							<polyline points="6 9 12 15 18 9" />
@@ -623,7 +623,7 @@
 						type="button"
 						aria-label="Play"
 						aria-pressed="false"
-					>
+					 data-i18n-attr="aria-label:app.play_arialabel">
 						<svg class="next-dock__icon next-dock__icon--play" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
 						<svg class="next-dock__icon next-dock__icon--pause" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z" /></svg>
 					</button>
@@ -650,7 +650,7 @@
 						type="button"
 						aria-pressed="true"
 						title="Loop"
-					>
+					 data-i18n-attr="title:app.loop_title">
 						<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 							<polyline points="17 1 21 5 17 9" />
 							<path d="M3 11V9a4 4 0 0 1 4-4h14" />
@@ -682,5 +682,7 @@
 	
 	<script src="/brand.js" defer></script>
 	<script src="/getting-started.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

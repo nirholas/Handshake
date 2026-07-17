@@ -3,21 +3,21 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Forge — Turn Text or a Photo into a 3D Model · three.ws</title>
+		<title data-i18n="features_forge.meta_title">Forge — Turn Text or a Photo into a 3D Model · three.ws</title>
 		<meta
 			name="description"
 			content="Type a description or upload photos, and get a downloadable 3D model. Forge runs multiple self-hosted engines to produce a textured GLB you can inspect in AR, embed anywhere, and attach to your AI agent."
-		/>
+		 data-i18n-attr="content:features_forge.meta_description"/>
 		<meta name="robots" content="index, follow" />
 		<link rel="canonical" href="https://three.ws/features/forge" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Forge — Turn Text or a Photo into a 3D Model · three.ws" />
+		<meta property="og:title" content="Forge — Turn Text or a Photo into a 3D Model · three.ws"  data-i18n-attr="content:features_forge.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Type a description or upload photos, and get a downloadable 3D model in one click."
-		/>
+		 data-i18n-attr="content:features_forge.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/features/forge" />
 		<meta
 			property="og:image"
@@ -26,11 +26,11 @@
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Forge — Turn Text or a Photo into a 3D Model · three.ws" />
+		<meta name="twitter:title" content="Forge — Turn Text or a Photo into a 3D Model · three.ws"  data-i18n-attr="content:features_forge.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Type a description or upload photos, and get a downloadable 3D model in one click."
-		/>
+		 data-i18n-attr="content:features_forge.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
 			content="https://three.ws/api/feature-og?feature=forge&title=Type+a+description.+Get+a+3D+model.&sub=Forge+turns+text+into+a+downloadable+GLB+in+seconds."
@@ -103,11 +103,11 @@
 
 		<main class="fl-main" id="main-content">
 			<nav class="fl-breadcrumb" aria-label="Breadcrumb">
-				<a href="/">three.ws</a>
+				<a href="/" data-i18n="features_forge.three_ws">three.ws</a>
 				<span class="fl-breadcrumb-sep" aria-hidden="true">/</span>
-				<a href="/features">Features</a>
+				<a href="/features" data-i18n="features_forge.features">Features</a>
 				<span class="fl-breadcrumb-sep" aria-hidden="true">/</span>
-				<span class="fl-breadcrumb-current">Forge</span>
+				<span class="fl-breadcrumb-current" data-i18n="features_forge.forge">Forge</span>
 			</nav>
 
 			<!-- Hero -->
@@ -115,17 +115,17 @@
 				<div class="fl-hero-inner">
 					<div class="fl-hero-copy">
 						<span class="fl-eyebrow"
-							><span class="fl-eyebrow-dot" aria-hidden="true"></span>Text & Image to 3D</span
+							 data-i18n-html="features_forge.text_image_to_3d"><span class="fl-eyebrow-dot" aria-hidden="true"></span>Text & Image to 3D</span
 						>
-						<h1 id="forge-hero-h1">Type a description.<br />Get a 3D model.</h1>
-						<p class="fl-hero-sub">
+						<h1 id="forge-hero-h1" data-i18n-html="features_forge.type_a_description_get_a_3d_model">Type a description.<br />Get a 3D model.</h1>
+						<p class="fl-hero-sub" data-i18n="features_forge.forge_runs_flux_image_generation_and_trellis">
 							Forge runs Flux image generation and TRELLIS 3D reconstruction
 							back-to-back. Describe any object and walk away with a textured GLB you
 							can orbit in AR, embed anywhere, or attach to your AI agent.
 						</p>
 						<div class="fl-hero-actions">
-							<a href="/forge" class="fl-btn-primary">Open Forge →</a>
-							<a href="/features" class="fl-btn-ghost">All features</a>
+							<a href="/forge" class="fl-btn-primary" data-i18n="features_forge.open_forge">Open Forge →</a>
+							<a href="/features" class="fl-btn-ghost" data-i18n="features_forge.all_features">All features</a>
 						</div>
 					</div>
 					<div
@@ -143,20 +143,20 @@
 							environment-image="neutral"
 							style="background: transparent; width: 100%; height: 100%"
 						></model-viewer>
-						<span class="fl-preview-label">Sample GLB · drag to orbit</span>
+						<span class="fl-preview-label" data-i18n="features_forge.sample_glb_drag_to_orbit">Sample GLB · drag to orbit</span>
 					</div>
 				</div>
 			</section>
 
 			<!-- How it works -->
 			<section class="fl-how fl-section" aria-labelledby="forge-how-h2">
-				<p class="fl-section-label">How it works</p>
-				<h2 id="forge-how-h2">Three steps from prompt to model</h2>
+				<p class="fl-section-label" data-i18n="features_forge.how_it_works">How it works</p>
+				<h2 id="forge-how-h2" data-i18n="features_forge.three_steps_from_prompt_to_model">Three steps from prompt to model</h2>
 				<div class="fl-steps" role="list">
 					<article class="fl-step" role="listitem">
 						<span class="fl-step-num">01</span>
-						<h3>Write your prompt</h3>
-						<p>
+						<h3 data-i18n="features_forge.write_your_prompt">Write your prompt</h3>
+						<p data-i18n="features_forge.describe_what_you_want_a_ceramic_coffee">
 							Describe what you want — "a ceramic coffee mug with blue glaze," "a
 							rusted iron sword," anything. Be specific about material and style for
 							best results.
@@ -164,8 +164,8 @@
 					</article>
 					<article class="fl-step" role="listitem">
 						<span class="fl-step-num">02</span>
-						<h3>Flux + TRELLIS generate it</h3>
-						<p>
+						<h3 data-i18n="features_forge.flux_trellis_generate_it">Flux + TRELLIS generate it</h3>
+						<p data-i18n="features_forge.flux_renders_a_detailed_texture_image_from">
 							Flux renders a detailed texture image from your text. TRELLIS lifts that
 							image into a full 3D mesh with UV-mapped textures, all in one pipeline
 							run.
@@ -173,8 +173,8 @@
 					</article>
 					<article class="fl-step" role="listitem">
 						<span class="fl-step-num">03</span>
-						<h3>Download, embed, or attach</h3>
-						<p>
+						<h3 data-i18n="features_forge.download_embed_or_attach">Download, embed, or attach</h3>
+						<p data-i18n="features_forge.inspect_the_result_in_the_in_browser">
 							Inspect the result in the in-browser viewer, download the GLB, share a
 							link, or pin it to your AI agent as its 3D body — all from the same
 							page.
@@ -185,36 +185,36 @@
 
 			<!-- Highlight cards -->
 			<section class="fl-highlights fl-section" aria-labelledby="forge-highlights-h2">
-				<h2 id="forge-highlights-h2">What you can do with it</h2>
+				<h2 id="forge-highlights-h2" data-i18n="features_forge.what_you_can_do_with_it">What you can do with it</h2>
 				<div class="fl-cards">
 					<div class="fl-card">
 						<span class="fl-card-icon" aria-hidden="true">⬡</span>
-						<h3>AR inspection</h3>
-						<p>
+						<h3 data-i18n="features_forge.ar_inspection">AR inspection</h3>
+						<p data-i18n="features_forge.every_generated_model_opens_in_webxr_ar">
 							Every generated model opens in WebXR AR mode with one tap — place it on
 							your real desk or floor and walk around it.
 						</p>
 					</div>
 					<div class="fl-card">
 						<span class="fl-card-icon" aria-hidden="true">⬡</span>
-						<h3>Agent avatar</h3>
-						<p>
+						<h3 data-i18n="features_forge.agent_avatar">Agent avatar</h3>
+						<p data-i18n="features_forge.attach_the_glb_to_any_ai_agent">
 							Attach the GLB to any AI agent on three.ws so the agent gets a custom 3D
 							body instead of a default avatar.
 						</p>
 					</div>
 					<div class="fl-card">
 						<span class="fl-card-icon" aria-hidden="true">⬡</span>
-						<h3>Shareable link</h3>
-						<p>
+						<h3 data-i18n="features_forge.shareable_link">Shareable link</h3>
+						<p data-i18n="features_forge.each_generated_model_gets_a_permanent_url">
 							Each generated model gets a permanent URL you can share — it loads in
 							any browser without plugins or app installs.
 						</p>
 					</div>
 					<div class="fl-card">
 						<span class="fl-card-icon" aria-hidden="true">⬡</span>
-						<h3>Data flywheel</h3>
-						<p>
+						<h3 data-i18n="features_forge.data_flywheel">Data flywheel</h3>
+						<p data-i18n="features_forge.all_forge_generations_feed_the_three_ws">
 							All forge generations feed the three.ws training flywheel — improving
 							model quality for every creator over time.
 						</p>
@@ -224,7 +224,7 @@
 
 			<!-- FAQ -->
 			<section class="fl-faq fl-section" aria-labelledby="forge-faq-h2">
-				<h2 id="forge-faq-h2">Frequently asked questions</h2>
+				<h2 id="forge-faq-h2" data-i18n="features_forge.frequently_asked_questions">Frequently asked questions</h2>
 				<div class="fl-faq-list">
 					<div class="fl-faq-item">
 						<button class="fl-faq-q" aria-expanded="false" aria-controls="forge-faq-1">
@@ -337,7 +337,7 @@
 						</button>
 						<div class="fl-faq-a" id="forge-faq-5" role="region">
 							Yes.
-							<a href="/features/scan" style="color: var(--ink)">Scan</a> reconstructs
+							<a href="/features/scan" style="color: var(--ink)" data-i18n="features_forge.scan">Scan</a> reconstructs
 							a 3D avatar from a real photo of your face. Forge generates any object
 							from a text description — they serve different use cases.
 						</div>
@@ -348,14 +348,14 @@
 			<!-- Final CTA -->
 			<section class="fl-cta-band" aria-labelledby="forge-cta-h2">
 				<div class="fl-cta-inner">
-					<h2 id="forge-cta-h2">Start generating in 30 seconds</h2>
-					<p>
+					<h2 id="forge-cta-h2" data-i18n="features_forge.start_generating_in_30_seconds">Start generating in 30 seconds</h2>
+					<p data-i18n="features_forge.no_account_required_for_your_first_model">
 						No account required for your first model. Type a description, watch it
 						appear.
 					</p>
 					<div class="fl-cta-actions">
-						<a href="/forge" class="fl-btn-primary">Open Forge →</a>
-						<a href="/features/scan" class="fl-btn-ghost">Try Scan instead</a>
+						<a href="/forge" class="fl-btn-primary" data-i18n="features_forge.open_forge_2">Open Forge →</a>
+						<a href="/features/scan" class="fl-btn-ghost" data-i18n="features_forge.try_scan_instead">Try Scan instead</a>
 					</div>
 				</div>
 			</section>
@@ -373,5 +373,7 @@
 		</script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

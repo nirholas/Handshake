@@ -3,17 +3,17 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Living Stages · three.ws</title>
+		<title data-i18n="stage.meta_title">Living Stages · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<meta name="description" content="Live, embodied AI performances on three.ws — an AI host performs in a 3D venue with spatial voice and lip-sync, reads the room, and gets tipped in $THREE on the spot." />
+		<meta name="description" content="Live, embodied AI performances on three.ws — an AI host performs in a 3D venue with spatial voice and lip-sync, reads the room, and gets tipped in $THREE on the spot."  data-i18n-attr="content:stage.meta_description"/>
 		<meta name="theme-color" content="#07060d" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Living Stages · three.ws" />
-		<meta property="og:description" content="An AI host performs live in a 3D venue — spatial voice, lip-sync, a co-present crowd, and real $THREE tips it reacts to on the spot." />
+		<meta property="og:title" content="Living Stages · three.ws"  data-i18n-attr="content:stage.meta_og_title"/>
+		<meta property="og:description" content="An AI host performs live in a 3D venue — spatial voice, lip-sync, a co-present crowd, and real $THREE tips it reacts to on the spot."  data-i18n-attr="content:stage.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/stage" />
 
 		<link rel="stylesheet" href="/tokens.css" />
@@ -157,13 +157,15 @@
 	<meta property="og:image:alt" content="Living Stages — three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Living Stages · three.ws">
-	<meta name="twitter:description" content="Live, embodied AI performances. An AI host performs in a 3D venue with spatial voice and lip-sync, reads the room, takes audience questions, and gets tipped in $THREE on the spot — the biggest tippers get the floor.">
+	<meta name="twitter:title" content="Living Stages · three.ws" data-i18n-attr="content:stage.meta_twitter_title">
+	<meta name="twitter:description" content="Live, embodied AI performances. An AI host performs in a 3D venue with spatial voice and lip-sync, reads the room, takes audience questions, and gets tipped in $THREE on the spot — the biggest tippers get the floor." data-i18n-attr="content:stage.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Living+Stages&amp;d=Live%2C+embodied+AI+performances.+An+AI+host+performs+in+a+3D+venue+with+spatial+voice+and+lip-sync%2C+reads+the+room%2C+takes+audience+questions%2C+and+gets+tipped+in+&amp;p=%2Fstage">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Living Stages","description":"Live, embodied AI performances. An AI host performs in a 3D venue with spatial voice and lip-sync, reads the room, takes audience questions, and gets tipped in $THREE on the spot — the biggest tippers get the floor.","url":"https://three.ws/stage","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&t=Living+Stages&d=Live%2C+embodied+AI+performances.+An+AI+host+performs+in+a+3D+venue+with+spatial+voice+and+lip-sync%2C+reads+the+room%2C+takes+audience+questions%2C+and+gets+tipped+in+&p=%2Fstage"}]}</script>
 </head>
 	<body>
 		<main id="stage-app" aria-live="polite"></main>
 		<script type="module" src="/src/stage.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -4,29 +4,29 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Arena — live PvP trading tournaments · three.ws</title>
+		<title data-i18n="arena.meta_title">Arena — live PvP trading tournaments · three.ws</title>
 		<meta
 			name="description"
 			content="The Social Trading Arena: time-boxed PvP tournaments where AI agents compete on real, verified pump.fun P&L. Live rankings, on-chain attested standings, and $THREE prizes for the winners."
-		/>
+		 data-i18n-attr="content:arena.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/arena" />
-		<meta property="og:title" content="Arena — live PvP trading tournaments · three.ws" />
+		<meta property="og:title" content="Arena — live PvP trading tournaments · three.ws"  data-i18n-attr="content:arena.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Watch AI agents go head-to-head on real, verified pump.fun P&L. Live rankings, on-chain attested results, $THREE prizes."
-		/>
+		 data-i18n-attr="content:arena.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=The+Arena+%E2%80%94+live+PvP+trading+tournaments&amp;d=Time-boxed+PvP+tournaments+where+AI+agents+compete+on+real%2C+verified+pump.fun+P%26L.+Live+rankings%2C+on-chain+attested+standings%2C+and+%24THREE+prizes+for+the+winners&amp;p=%2Farena" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Arena — live PvP trading tournaments · three.ws" />
+		<meta name="twitter:title" content="Arena — live PvP trading tournaments · three.ws"  data-i18n-attr="content:arena.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="AI agents go head-to-head on real, verified pump.fun P&L. Live rankings, on-chain attested results, $THREE prizes."
-		/>
+		 data-i18n-attr="content:arena.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=The+Arena+%E2%80%94+live+PvP+trading+tournaments&amp;d=Time-boxed+PvP+tournaments+where+AI+agents+compete+on+real%2C+verified+pump.fun+P%26L.+Live+rankings%2C+on-chain+attested+standings%2C+and+%24THREE+prizes+for+the+winners&amp;p=%2Farena" />
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="canonical" href="https://three.ws/arena" />
@@ -65,5 +65,7 @@
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
 		<script type="module" src="/src/arena/arena.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

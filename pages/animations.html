@@ -4,22 +4,22 @@
 		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Animation Gallery · three.ws</title>
+		<title data-i18n="animations.meta_title">Animation Gallery · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="description" content="Browse 2,000+ motion-capture and community animations for three.ws avatars. Live previews, categories, and one-click use in the Animation Studio." />
+		<meta name="description" content="Browse 2,000+ motion-capture and community animations for three.ws avatars. Live previews, categories, and one-click use in the Animation Studio."  data-i18n-attr="content:animations.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 		<link rel="canonical" href="https://three.ws/animations" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Animation Gallery · three.ws" />
-		<meta property="og:description" content="Browse 2,000+ motion-capture and community animations. Preview live and use in the Animation Studio." />
+		<meta property="og:title" content="Animation Gallery · three.ws"  data-i18n-attr="content:animations.meta_og_title"/>
+		<meta property="og:description" content="Browse 2,000+ motion-capture and community animations. Preview live and use in the Animation Studio."  data-i18n-attr="content:animations.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/animations" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Animation+Gallery&amp;d=Browse+and+preview+public+animations+authored+by+the+three.ws+community.+Apply+any+clip+to+your+avatar+in+the+Animation+Studio.&amp;p=%2Fanimations" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Animation Gallery · three.ws" />
-		<meta name="twitter:description" content="2,000+ motion-capture and community animations with live previews." />
+		<meta name="twitter:title" content="Animation Gallery · three.ws"  data-i18n-attr="content:animations.meta_twitter_title"/>
+		<meta name="twitter:description" content="2,000+ motion-capture and community animations with live previews."  data-i18n-attr="content:animations.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Animation+Gallery&amp;d=Browse+and+preview+public+animations+authored+by+the+three.ws+community.+Apply+any+clip+to+your+avatar+in+the+Animation+Studio.&amp;p=%2Fanimations" />
 
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -725,14 +725,14 @@
 				<div>
 					<div class="ag-hero-chip">
 						<span class="ag-hero-dot" aria-hidden="true"></span>
-						<span>Motion Library</span>
+						<span data-i18n="animations.motion_library">Motion Library</span>
 					</div>
 				</div>
-				<h1>Animation Gallery</h1>
-				<p>Every clip in the three.ws motion library — mocap performances, studio presets, and community-authored animations. Hover any card for a live preview, open the details for playback controls, or send it straight to the Studio.</p>
+				<h1 data-i18n="animations.animation_gallery">Animation Gallery</h1>
+				<p data-i18n="animations.every_clip_in_the_three_ws_motion">Every clip in the three.ws motion library — mocap performances, studio presets, and community-authored animations. Hover any card for a live preview, open the details for playback controls, or send it straight to the Studio.</p>
 				<div class="ag-hero-actions">
-					<a href="/pose" class="ag-btn ag-btn--primary">Open Animation Studio</a>
-					<a href="/gallery" class="ag-btn ag-btn--secondary">Avatar Gallery</a>
+					<a href="/pose" class="ag-btn ag-btn--primary" data-i18n="animations.open_animation_studio">Open Animation Studio</a>
+					<a href="/gallery" class="ag-btn ag-btn--secondary" data-i18n="animations.avatar_gallery">Avatar Gallery</a>
 					<span class="ag-hero-stats" data-role="hero-stats" aria-live="polite"></span>
 				</div>
 			</section>
@@ -753,17 +753,17 @@
 							<kbd class="ag-search-kbd" aria-hidden="true">/</kbd>
 						</div>
 						<div class="ag-seg" role="group" aria-label="Filter by playback type" data-role="type-filter">
-							<button data-filter="" aria-pressed="true">All</button>
-							<button data-filter="loop" aria-pressed="false">Loops</button>
-							<button data-filter="once" aria-pressed="false">One-shot</button>
+							<button data-filter="" aria-pressed="true" data-i18n="animations.all">All</button>
+							<button data-filter="loop" aria-pressed="false" data-i18n="animations.loops">Loops</button>
+							<button data-filter="once" aria-pressed="false" data-i18n="animations.one_shot">One-shot</button>
 						</div>
 						<select class="ag-sort" data-role="sort" aria-label="Sort animations">
-							<option value="featured">Featured</option>
-							<option value="az">A → Z</option>
-							<option value="za">Z → A</option>
-							<option value="shortest">Shortest first</option>
-							<option value="longest">Longest first</option>
-							<option value="shuffle">Shuffle</option>
+							<option value="featured" data-i18n="animations.featured">Featured</option>
+							<option value="az" data-i18n="animations.a_z">A → Z</option>
+							<option value="za" data-i18n="animations.z_a">Z → A</option>
+							<option value="shortest" data-i18n="animations.shortest_first">Shortest first</option>
+							<option value="longest" data-i18n="animations.longest_first">Longest first</option>
+							<option value="shuffle" data-i18n="animations.shuffle">Shuffle</option>
 						</select>
 						<span class="ag-count" data-role="count" aria-live="polite"></span>
 					</div>
@@ -785,24 +785,24 @@
 				<div data-role="grid" class="ag-grid" hidden></div>
 				<div data-role="empty" class="ag-state" hidden>
 					<div class="ag-state-icon">🎬</div>
-					<h2>No animations yet</h2>
-					<p>Be the first to publish an animation. Open the Studio, author a clip, and set it to public.</p>
-					<a href="/pose" class="ag-btn ag-btn--primary">Open Studio</a>
+					<h2 data-i18n="animations.no_animations_yet">No animations yet</h2>
+					<p data-i18n="animations.be_the_first_to_publish_an_animation">Be the first to publish an animation. Open the Studio, author a clip, and set it to public.</p>
+					<a href="/pose" class="ag-btn ag-btn--primary" data-i18n="animations.open_studio">Open Studio</a>
 				</div>
 				<div data-role="empty-search" class="ag-state" hidden>
 					<div class="ag-state-icon">🔍</div>
-					<h2>No matches</h2>
-					<p data-role="empty-search-msg">No animations match your search.</p>
-					<button class="ag-btn ag-btn--secondary" data-role="clear-search">Clear search &amp; filters</button>
+					<h2 data-i18n="animations.no_matches">No matches</h2>
+					<p data-role="empty-search-msg" data-i18n="animations.no_animations_match_your_search">No animations match your search.</p>
+					<button class="ag-btn ag-btn--secondary" data-role="clear-search" data-i18n="animations.clear_search_filters">Clear search &amp; filters</button>
 				</div>
 				<div data-role="error" class="ag-state" hidden>
 					<div class="ag-state-icon">⚠️</div>
-					<h2>Couldn't load animations</h2>
-					<p>Check your connection and try again.</p>
-					<button class="ag-btn ag-btn--secondary" data-role="retry">Retry</button>
+					<h2 data-i18n="animations.couldn_t_load_animations">Couldn't load animations</h2>
+					<p data-i18n="animations.check_your_connection_and_try_again">Check your connection and try again.</p>
+					<button class="ag-btn ag-btn--secondary" data-role="retry" data-i18n="animations.retry">Retry</button>
 				</div>
 				<div class="ag-load-more" data-role="load-more" hidden>
-					<button class="ag-btn ag-btn--secondary" data-role="load-more-btn">Load more</button>
+					<button class="ag-btn ag-btn--secondary" data-role="load-more-btn" data-i18n="animations.load_more">Load more</button>
 				</div>
 				<div class="ag-sentinel" data-role="sentinel" aria-hidden="true"></div>
 			</div>
@@ -815,11 +815,11 @@
 					<div class="ag-modal-stage" data-role="modal-stage"></div>
 					<div class="ag-modal-spinner" data-role="modal-spinner" aria-label="Loading preview"></div>
 					<div class="ag-modal-error" data-role="modal-error" hidden>
-						<span>⚠️ Couldn't load this clip's preview.</span>
-						<span>You can still open it in the Studio.</span>
+						<span data-i18n="animations.couldn_t_load_this_clip_s_preview">⚠️ Couldn't load this clip's preview.</span>
+						<span data-i18n="animations.you_can_still_open_it_in_the">You can still open it in the Studio.</span>
 					</div>
 					<div class="ag-modal-transport" aria-label="Playback controls">
-						<button data-role="modal-play" aria-label="Pause"></button>
+						<button data-role="modal-play" aria-label="Pause" data-i18n-attr="aria-label:animations.pause_arialabel"></button>
 						<input type="range" class="ag-modal-scrub" data-role="modal-scrub" min="0" max="1000" value="0" step="1" aria-label="Scrub timeline" />
 						<span class="ag-modal-time" data-role="modal-time"></span>
 						<div class="ag-modal-speed-wrap">
@@ -829,7 +829,7 @@
 					</div>
 				</div>
 				<div class="ag-modal-info">
-					<button class="ag-modal-close" data-role="modal-close" aria-label="Close details">
+					<button class="ag-modal-close" data-role="modal-close" aria-label="Close details" data-i18n-attr="aria-label:animations.close_details_arialabel">
 						<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
 					</button>
 					<h2 id="ag-modal-title" data-role="modal-title"></h2>
@@ -837,12 +837,12 @@
 					<div class="ag-modal-tags" data-role="modal-tags"></div>
 					<div class="ag-modal-actions">
 						<a class="ag-btn ag-btn--primary" data-role="modal-studio" href="/pose"
-							title="Open this animation in the Studio to remix or apply to your avatar">Open in Studio</a>
-						<button class="ag-btn ag-btn--secondary" data-role="modal-copy-link">Copy link</button>
-						<button class="ag-btn ag-btn--secondary" data-role="modal-copy-embed">Copy embed code</button>
+							title="Open this animation in the Studio to remix or apply to your avatar" data-i18n="animations.open_in_studio" data-i18n-attr="title:animations.open_this_animation_in_the_s_title">Open in Studio</a>
+						<button class="ag-btn ag-btn--secondary" data-role="modal-copy-link" data-i18n="animations.copy_link">Copy link</button>
+						<button class="ag-btn ag-btn--secondary" data-role="modal-copy-embed" data-i18n="animations.copy_embed_code">Copy embed code</button>
 						<div class="ag-modal-nav">
-							<button class="ag-btn ag-btn--secondary" data-role="modal-prev" aria-label="Previous animation">← Prev</button>
-							<button class="ag-btn ag-btn--secondary" data-role="modal-next" aria-label="Next animation">Next →</button>
+							<button class="ag-btn ag-btn--secondary" data-role="modal-prev" aria-label="Previous animation" data-i18n="animations.prev" data-i18n-attr="aria-label:animations.previous_animation_arialabel">← Prev</button>
+							<button class="ag-btn ag-btn--secondary" data-role="modal-next" aria-label="Next animation" data-i18n="animations.next" data-i18n-attr="aria-label:animations.next_animation_arialabel">Next →</button>
 						</div>
 						<div class="ag-modal-hint"><kbd>←</kbd> <kbd>→</kbd> browse · <kbd>Space</kbd> play/pause · <kbd>Esc</kbd> close</div>
 					</div>
@@ -854,5 +854,7 @@
 		<script src="/footer.js" defer></script>
 
 		<script type="module" src="/src/animations-gallery.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

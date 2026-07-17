@@ -4,25 +4,25 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Launch Studio — 50 ways to mint a coin · three.ws</title>
+		<title data-i18n="launch_studio.meta_title">Launch Studio — 50 ways to mint a coin · three.ws</title>
 		<meta
 			name="description"
 			content="A catalog of 50 coin-launch use cases — from reward coins for trending GitHub repos and creators to coins riding live cultural narratives. Preview what each would mint right now, then launch on pump.fun in one click."
-		/>
+		 data-i18n-attr="content:launch_studio.meta_description"/>
 		<meta name="robots" content="index, follow" />
 		<link rel="canonical" href="https://three.ws/launch-studio" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Launch Studio — 50 ways to mint a coin" />
-		<meta property="og:description" content="Reward coins for trending GitHub creators, coins riding live narratives — preview live, launch in one click." />
+		<meta property="og:title" content="Launch Studio — 50 ways to mint a coin"  data-i18n-attr="content:launch_studio.meta_og_title"/>
+		<meta property="og:description" content="Reward coins for trending GitHub creators, coins riding live narratives — preview live, launch in one click."  data-i18n-attr="content:launch_studio.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/launch-studio" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Launch+Studio+%E2%80%94+50+ways+to+mint+a+coin&amp;d=A+catalog+of+50+coin-launch+use+cases+%E2%80%94+reward+coins+for+trending+GitHub+repos+and+creators%2C+and+coins+riding+live+cultural%2C+news%2C+and+onchain+narratives.+Previ&amp;p=%2Flaunch-studio" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Launch Studio — 50 ways to mint a coin" />
-		<meta name="twitter:description" content="Reward coins for trending GitHub creators, coins riding live narratives — preview live, launch in one click." />
+		<meta name="twitter:title" content="Launch Studio — 50 ways to mint a coin"  data-i18n-attr="content:launch_studio.meta_twitter_title"/>
+		<meta name="twitter:description" content="Reward coins for trending GitHub creators, coins riding live narratives — preview live, launch in one click."  data-i18n-attr="content:launch_studio.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Launch+Studio+%E2%80%94+50+ways+to+mint+a+coin&amp;d=A+catalog+of+50+coin-launch+use+cases+%E2%80%94+reward+coins+for+trending+GitHub+repos+and+creators%2C+and+coins+riding+live+cultural%2C+news%2C+and+onchain+narratives.+Previ&amp;p=%2Flaunch-studio" />
 
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -60,17 +60,17 @@
 
 		<main class="lc-main" id="main-content">
 			<nav class="lc-breadcrumb" aria-label="Breadcrumb">
-				<a href="/">three.ws</a>
+				<a href="/" data-i18n="launch_studio.three_ws">three.ws</a>
 				<span aria-hidden="true">/</span>
-				<a href="/launches">Launches</a>
+				<a href="/launches" data-i18n="launch_studio.launches">Launches</a>
 				<span aria-hidden="true">/</span>
-				<span>Launch Studio</span>
+				<span data-i18n="launch_studio.launch_studio">Launch Studio</span>
 			</nav>
 
 			<section class="lc-hero">
-				<span class="lc-pill"><span class="lc-pill-dot"></span> 50 launch recipes · live previews</span>
-				<h1>Launch Studio</h1>
-				<p>Pick a recipe — reward coins for trending GitHub creators, coins riding live narratives — preview exactly what it would mint right now, then launch on pump.fun in one click.</p>
+				<span class="lc-pill" data-i18n-html="launch_studio.50_launch_recipes_live_previews"><span class="lc-pill-dot"></span> 50 launch recipes · live previews</span>
+				<h1 data-i18n="launch_studio.launch_studio_2">Launch Studio</h1>
+				<p data-i18n="launch_studio.pick_a_recipe_reward_coins_for_trending">Pick a recipe — reward coins for trending GitHub creators, coins riding live narratives — preview exactly what it would mint right now, then launch on pump.fun in one click.</p>
 			</section>
 
 			<div id="ls-root"></div>
@@ -88,5 +88,7 @@
 			mountLaunchStudio(document.getElementById('ls-root'));
 		</script>
 		<script src="/brand.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

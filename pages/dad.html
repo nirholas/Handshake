@@ -4,25 +4,25 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Make Dad a 3D Avatar · three.ws</title>
+		<title data-i18n="dad.meta_title">Make Dad a 3D Avatar · three.ws</title>
 		<meta
 			name="description"
 			content="Turn one photo into a recognizable, rigged, animated 3D avatar of your dad — then share it. Built on three.ws."
-		/>
+		 data-i18n-attr="content:dad.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Make Dad a 3D Avatar" />
+		<meta property="og:title" content="Make Dad a 3D Avatar"  data-i18n-attr="content:dad.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Upload one photo, get a recognizable 3D avatar of your dad that walks and waves. Happy Father's Day, from three.ws."
-		/>
+		 data-i18n-attr="content:dad.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/dad" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Make+Dad+a+3D+Avatar&amp;d=Turn+one+photo+of+your+dad+into+a+recognizable%2C+rigged%2C+animated+3D+avatar+%E2%80%94+it+idles%2C+walks%2C+and+waves+%E2%80%94+then+share+a+permalink.&amp;p=%2Fdad" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Make Dad a 3D Avatar · three.ws" />
-		<meta name="twitter:description" content="One photo → a recognizable, animated 3D avatar of your dad. Happy Father's Day." />
+		<meta name="twitter:title" content="Make Dad a 3D Avatar · three.ws"  data-i18n-attr="content:dad.meta_twitter_title"/>
+		<meta name="twitter:description" content="One photo → a recognizable, animated 3D avatar of your dad. Happy Father's Day."  data-i18n-attr="content:dad.meta_twitter_description"/>
 
 		<link rel="canonical" href="https://three.ws/dad" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -49,9 +49,9 @@
 			<section class="dad" id="dad" data-stage="intro">
 				<!-- ── Hero / intro ──────────────────────────────────────────── -->
 				<div class="dad-hero" data-region="intro">
-					<p class="dad-eyebrow">Father's Day · three.ws</p>
-					<h1 class="dad-title">Make Dad a 3D&nbsp;avatar</h1>
-					<p class="dad-sub">
+					<p class="dad-eyebrow" data-i18n="dad.father_s_day_three_ws">Father's Day · three.ws</p>
+					<h1 class="dad-title" data-i18n="dad.make_dad_a_3d_avatar">Make Dad a 3D&nbsp;avatar</h1>
+					<p class="dad-sub" data-i18n="dad.one_clear_photo_becomes_a_recognizable_rigge">
 						One clear photo becomes a recognizable, rigged 3D avatar — it idles,
 						walks, and waves. Share it with the man himself.
 					</p>
@@ -67,8 +67,8 @@
 							<path d="M12 16V4m0 0L7 9m5-5 5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
 							<path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
 						</svg>
-						<p class="dad-drop-strong">Drop a photo of your dad</p>
-						<p class="dad-drop-hint">or <span class="dad-link">browse</span> · clear, front-facing works best</p>
+						<p class="dad-drop-strong" data-i18n="dad.drop_a_photo_of_your_dad">Drop a photo of your dad</p>
+						<p class="dad-drop-hint" data-i18n-html="dad.or_browse_clear_front_facing_works_best">or <span class="dad-link">browse</span> · clear, front-facing works best</p>
 						<input
 							id="dad-file"
 							class="dad-file"
@@ -77,21 +77,21 @@
 							hidden
 						/>
 					</div>
-					<p class="dad-fineprint">
+					<p class="dad-fineprint" data-i18n="dad.jpg_png_heic_or_webp_large_photos">
 						JPG, PNG, HEIC or WebP · large photos are optimized automatically · your photo is used only to build the avatar.
 					</p>
 				</div>
 
 				<!-- ── Preprocess preview ────────────────────────────────────── -->
 				<div class="dad-stage-box" data-region="preview" hidden>
-					<h2 class="dad-h2">Looking good?</h2>
-					<p class="dad-stage-help">We centered and cut out the background to get the best likeness. Use this, or pick another photo.</p>
+					<h2 class="dad-h2" data-i18n="dad.looking_good">Looking good?</h2>
+					<p class="dad-stage-help" data-i18n="dad.we_centered_and_cut_out_the_background">We centered and cut out the background to get the best likeness. Use this, or pick another photo.</p>
 					<div class="dad-preview-frame">
 						<img id="dad-preview-img" class="dad-preview-img" alt="Cleaned-up photo of your dad, ready to turn into a 3D avatar" />
 					</div>
 					<div class="dad-actions">
-						<button class="btn btn--primary dad-btn" id="dad-generate" type="button">Make the 3D avatar</button>
-						<button class="btn btn--ghost dad-btn" id="dad-reset-1" type="button">Use a different photo</button>
+						<button class="btn btn--primary dad-btn" id="dad-generate" type="button" data-i18n="dad.make_the_3d_avatar">Make the 3D avatar</button>
+						<button class="btn btn--ghost dad-btn" id="dad-reset-1" type="button" data-i18n="dad.use_a_different_photo">Use a different photo</button>
 					</div>
 				</div>
 
@@ -100,8 +100,8 @@
 					<div class="dad-stage" aria-hidden="true">
 						<div class="dad-skeleton"></div>
 					</div>
-					<h2 class="dad-h2">Sculpting your dad…</h2>
-					<p class="dad-stage-help" id="dad-progress-text" role="status" aria-live="polite">Reconstructing geometry from the photo. This takes up to a minute.</p>
+					<h2 class="dad-h2" data-i18n="dad.sculpting_your_dad">Sculpting your dad…</h2>
+					<p class="dad-stage-help" id="dad-progress-text" role="status" aria-live="polite" data-i18n="dad.reconstructing_geometry_from_the_photo_this">Reconstructing geometry from the photo. This takes up to a minute.</p>
 					<div class="dad-progress" role="progressbar" aria-label="Building avatar" aria-valuemin="0" aria-valuemax="100">
 						<div class="dad-progress-bar" id="dad-progress-bar"></div>
 					</div>
@@ -112,31 +112,31 @@
 					<div class="dad-viewer-wrap">
 						<div id="dad-viewer" class="dad-viewer"></div>
 						<div class="dad-viewer-toolbar">
-							<button class="dad-chip is-active" id="dad-anim-idle" type="button" aria-pressed="true">Idle</button>
-							<button class="dad-chip" id="dad-anim-walk" type="button" aria-pressed="false">Walk</button>
-							<button class="dad-chip" id="dad-anim-wave" type="button" aria-pressed="false">Wave</button>
+							<button class="dad-chip is-active" id="dad-anim-idle" type="button" aria-pressed="true" data-i18n="dad.idle">Idle</button>
+							<button class="dad-chip" id="dad-anim-walk" type="button" aria-pressed="false" data-i18n="dad.walk">Walk</button>
+							<button class="dad-chip" id="dad-anim-wave" type="button" aria-pressed="false" data-i18n="dad.wave">Wave</button>
 						</div>
 					</div>
 					<div class="dad-result-side">
-						<h2 class="dad-h2">Here's your dad.</h2>
-						<p class="dad-stage-help">Drag to spin him around. Happy Father's Day.</p>
+						<h2 class="dad-h2" data-i18n="dad.here_s_your_dad">Here's your dad.</h2>
+						<p class="dad-stage-help" data-i18n="dad.drag_to_spin_him_around_happy_father">Drag to spin him around. Happy Father's Day.</p>
 						<div class="dad-actions dad-actions-col">
-							<button class="btn btn--primary dad-btn" id="dad-share" type="button">Share this avatar</button>
-							<a class="btn btn--ghost dad-btn" id="dad-download" download="dad-avatar.glb" href="#">Download GLB</a>
-							<button class="btn btn--ghost dad-btn" id="dad-reset-2" type="button">Make another</button>
+							<button class="btn btn--primary dad-btn" id="dad-share" type="button" data-i18n="dad.share_this_avatar">Share this avatar</button>
+							<a class="btn btn--ghost dad-btn" id="dad-download" download="dad-avatar.glb" href="#" data-i18n="dad.download_glb">Download GLB</a>
+							<button class="btn btn--ghost dad-btn" id="dad-reset-2" type="button" data-i18n="dad.make_another">Make another</button>
 						</div>
-						<p class="dad-share-copied" id="dad-share-copied" hidden>Link copied — paste it anywhere.</p>
+						<p class="dad-share-copied" id="dad-share-copied" hidden data-i18n="dad.link_copied_paste_it_anywhere">Link copied — paste it anywhere.</p>
 					</div>
 				</div>
 
 				<!-- ── Error ─────────────────────────────────────────────────── -->
 				<div class="dad-stage-box dad-error" data-region="error" hidden>
 					<div class="dad-error-icon" aria-hidden="true">!</div>
-					<h2 class="dad-h2" id="dad-error-title">That didn't work</h2>
-					<p class="dad-stage-help" id="dad-error-msg">Something went wrong building the avatar.</p>
+					<h2 class="dad-h2" id="dad-error-title" data-i18n="dad.that_didn_t_work">That didn't work</h2>
+					<p class="dad-stage-help" id="dad-error-msg" data-i18n="dad.something_went_wrong_building_the_avatar">Something went wrong building the avatar.</p>
 					<div class="dad-actions">
-						<button class="btn btn--primary dad-btn" id="dad-retry" type="button">Try again</button>
-						<button class="btn btn--ghost dad-btn" id="dad-reset-3" type="button">Use a different photo</button>
+						<button class="btn btn--primary dad-btn" id="dad-retry" type="button" data-i18n="dad.try_again">Try again</button>
+						<button class="btn btn--ghost dad-btn" id="dad-reset-3" type="button" data-i18n="dad.use_a_different_photo_2">Use a different photo</button>
 					</div>
 				</div>
 			</section>
@@ -148,5 +148,7 @@
 		<script type="module" src="/src/dad/index.js"></script>
 		<script src="/brand.js" defer></script>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -12,17 +12,17 @@
 	     read in api/irl/pins.js. Absent/unreachable, presence is simply hidden and
 	     discovery still works via the proximity poll (see src/irl-net.js). -->
 	<meta name="irl-server" content="wss://three-ws-multiplayer-93741856042.us-central1.run.app" />
-	<title>IRL · three.ws</title>
-	<meta name="description" content="Walk a 3D avatar in your real space. Camera AR passthrough, joystick movement, tap-to-place objects." />
+	<title data-i18n="irl.meta_title">IRL · three.ws</title>
+	<meta name="description" content="Walk a 3D avatar in your real space. Camera AR passthrough, joystick movement, tap-to-place objects."  data-i18n-attr="content:irl.meta_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/irl" />
-	<meta property="og:title" content="IRL · three.ws" />
-	<meta property="og:description" content="Walk a 3D avatar in your real space. Camera AR passthrough, joystick movement, tap-to-place objects." />
+	<meta property="og:title" content="IRL · three.ws"  data-i18n-attr="content:irl.meta_og_title"/>
+	<meta property="og:description" content="Walk a 3D avatar in your real space. Camera AR passthrough, joystick movement, tap-to-place objects."  data-i18n-attr="content:irl.meta_og_description"/>
 	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=IRL&amp;d=Place+a+3D+avatar+in+your+real+environment.+Camera+AR+passthrough%2C+joystick+movement%2C+and+tap-to-place+3D+objects+on+your+floor.&amp;p=%2Firl" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="IRL · three.ws" />
-	<meta name="twitter:description" content="Walk a 3D avatar in your real space." />
+	<meta name="twitter:title" content="IRL · three.ws"  data-i18n-attr="content:irl.meta_twitter_title"/>
+	<meta name="twitter:description" content="Walk a 3D avatar in your real space."  data-i18n-attr="content:irl.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=IRL&amp;d=Place+a+3D+avatar+in+your+real+environment.+Camera+AR+passthrough%2C+joystick+movement%2C+and+tap-to-place+3D+objects+on+your+floor.&amp;p=%2Firl" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -2253,7 +2253,7 @@
 		Back
 	</a>
 	<div class="irl-topbar-center">
-		<span class="irl-badge" role="img" aria-label="three.ws IRL — augmented reality">
+		<span class="irl-badge" role="img" aria-label="three.ws IRL — augmented reality" data-i18n-attr="aria-label:irl.three_ws_irl_augmented_reali_arialabel">
 			<svg class="irl-badge-mark" viewBox="0 0 26 28" fill="none" aria-hidden="true">
 				<path class="irl-mark-cube" d="M13 2.5 4 7v9l9 4.5 9-4.5V7Z"/>
 				<path class="irl-mark-cube" d="M13 2.5v9M4 7l9 4.5M22 7l-9 4.5"/>
@@ -2271,10 +2271,10 @@
 		<span id="irl-presence-chip" class="irl-presence-chip" hidden role="status" aria-live="polite"></span>
 	</div>
 	<div class="irl-topbar-right">
-		<button class="irl-share-btn irl-more-btn" id="irl-more-btn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="irl-more-sheet" aria-label="More" title="More">
+		<button class="irl-share-btn irl-more-btn" id="irl-more-btn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="irl-more-sheet" aria-label="More" title="More" data-i18n-attr="aria-label:irl.more_arialabel;title:irl.more_title">
 			<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
 		</button>
-		<button class="irl-share-btn" id="irl-share-btn" type="button" aria-label="Share">Share</button>
+		<button class="irl-share-btn" id="irl-share-btn" type="button" aria-label="Share" data-i18n="irl.share" data-i18n-attr="aria-label:irl.share_arialabel">Share</button>
 	</div>
 </header>
 
@@ -2283,10 +2283,10 @@
 <div id="irl-more-sheet" role="dialog" aria-modal="true" aria-labelledby="irl-more-title">
 	<div class="irl-sheet-handle" aria-hidden="true"></div>
 	<div class="irl-more-header">
-		<h3 id="irl-more-title">More</h3>
-		<button class="irl-sheet-close" id="irl-more-close" type="button" aria-label="Close">×</button>
+		<h3 id="irl-more-title" data-i18n="irl.more">More</h3>
+		<button class="irl-sheet-close" id="irl-more-close" type="button" aria-label="Close" data-i18n-attr="aria-label:irl.close_arialabel">×</button>
 	</div>
-	<button class="irl-more-row irl-cue-mute" id="irl-cue-mute" type="button" aria-pressed="false" aria-label="Arrival sound on — tap to mute">
+	<button class="irl-more-row irl-cue-mute" id="irl-cue-mute" type="button" aria-pressed="false" aria-label="Arrival sound on — tap to mute" data-i18n-html="irl.arrival_sound_on_plays_when_an_agent" data-i18n-attr="aria-label:irl.arrival_sound_on_tap_to_mute_arialabel">
 		<span class="irl-more-row-icon" aria-hidden="true">
 			<svg class="irl-cue-on" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>
 			<svg class="irl-cue-off" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4z"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg>
@@ -2298,7 +2298,7 @@
 	</button>
 	<button class="irl-more-row irl-privacy-btn" id="irl-privacy-btn" type="button">
 		<span class="irl-more-row-icon" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></span>
-		<span class="irl-more-row-text">
+		<span class="irl-more-row-text" data-i18n-html="irl.location_privacy_discovery_precision_ghost_v">
 			<span class="irl-more-row-label">Location & privacy</span>
 			<span class="irl-more-row-sub">Discovery precision, ghost visibility, your pins</span>
 		</span>
@@ -2306,13 +2306,13 @@
 	</button>
 	<a class="irl-more-row irl-privacy-btn" id="irl-worldlines-btn" href="/world-lines">
 		<span class="irl-more-row-icon" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><circle cx="12" cy="12" r="4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg></span>
-		<span class="irl-more-row-text">
+		<span class="irl-more-row-text" data-i18n-html="irl.world_lines_proof_of_presence_quests">
 			<span class="irl-more-row-label">World Lines</span>
 			<span class="irl-more-row-sub">Proof-of-presence quests</span>
 		</span>
 		<svg class="irl-more-row-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
 	</a>
-	<button class="irl-more-row irl-glasses-btn" id="irl-glasses-btn" type="button" aria-pressed="false">
+	<button class="irl-more-row irl-glasses-btn" id="irl-glasses-btn" type="button" aria-pressed="false" data-i18n-html="irl.smart_glasses_mirror_the_nearest_agent_cue">
 		<span class="irl-more-row-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/><path d="M10 15a2 2 0 0 1 4 0"/><path d="m2.5 13 1.5-5a2 2 0 0 1 2-1.5"/><path d="m21.5 13-1.5-5a2 2 0 0 0-2-1.5"/></svg></span>
 		<span class="irl-more-row-text">
 			<span class="irl-more-row-label">Smart glasses</span>
@@ -2324,7 +2324,7 @@
 <!-- Immersive toggle — collapses all chrome so the AR view is unobstructed.
      Lives outside the topbar so it survives the collapse and remains the one
      control on screen to bring everything back. -->
-<button class="irl-immersive-toggle" id="irl-immersive-toggle" type="button" aria-pressed="false" aria-label="Hide controls" title="Hide controls">
+<button class="irl-immersive-toggle" id="irl-immersive-toggle" type="button" aria-pressed="false" aria-label="Hide controls" title="Hide controls" data-i18n-attr="aria-label:irl.hide_controls_arialabel;title:irl.hide_controls_title">
 	<svg class="irl-eye-hide" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M6.61 6.61A13.5 13.5 0 0 0 2 12s3 8 10 8a9.7 9.7 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
 	<svg class="irl-eye-show" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
 </button>
@@ -2363,13 +2363,13 @@
 <div id="irl-discovery-empty" class="irl-dx-empty" hidden>
 	<div class="irl-dx-empty-card">
 		<span class="irl-dx-empty-pulse" aria-hidden="true"></span>
-		<p class="irl-dx-empty-hint" aria-hidden="true">Look around 👀  ·  or be the first to pin here</p>
-		<button type="button" class="irl-dx-place" aria-label="Place your agent here so others nearby can find it">Place an agent here</button>
+		<p class="irl-dx-empty-hint" aria-hidden="true" data-i18n="irl.look_around_or_be_the_first_to">Look around 👀  ·  or be the first to pin here</p>
+		<button type="button" class="irl-dx-place" aria-label="Place your agent here so others nearby can find it" data-i18n="irl.place_an_agent_here" data-i18n-attr="aria-label:irl.place_your_agent_here_so_oth_arialabel">Place an agent here</button>
 	</div>
 </div>
 
 <!-- Re-openable explainer affordance — always one tap from re-reading the model. -->
-<button type="button" id="irl-dx-help" class="irl-dx-help" hidden aria-label="How discovery works">?</button>
+<button type="button" id="irl-dx-help" class="irl-dx-help" hidden aria-label="How discovery works" data-i18n-attr="aria-label:irl.how_discovery_works_arialabel">?</button>
 
 <!-- First-run discovery explainer shell — filled + revealed by src/irl/discovery.js. -->
 <div id="irl-discovery-explainer" hidden role="dialog" aria-modal="true" aria-label="How discovery works"></div>
@@ -2379,17 +2379,17 @@
 
 <!-- Desktop keyboard hints -->
 <div id="irl-keys">
-	<span class="irl-key"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span>
-	<span class="irl-key"><kbd>Shift</kbd> run</span>
-	<span class="irl-key">drag to orbit</span>
-	<span class="irl-key"><kbd>H</kbd> hide UI</span>
-	<span class="irl-key"><kbd>F</kbd> fullscreen</span>
+	<span class="irl-key" data-i18n-html="irl.wasd_move"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span>
+	<span class="irl-key" data-i18n-html="irl.shift_run"><kbd>Shift</kbd> run</span>
+	<span class="irl-key" data-i18n="irl.drag_to_orbit">drag to orbit</span>
+	<span class="irl-key" data-i18n-html="irl.h_hide_ui"><kbd>H</kbd> hide UI</span>
+	<span class="irl-key" data-i18n-html="irl.f_fullscreen"><kbd>F</kbd> fullscreen</span>
 </div>
 
 <!-- Bottom panel -->
 <footer class="irl-bottom">
-	<h1 class="irl-avatar-name" id="irl-avatar-name">Loading…</h1>
-	<p class="irl-subtitle" id="irl-subtitle">Turn on Camera AR, then tap Pin here to anchor your agent in real space.</p>
+	<h1 class="irl-avatar-name" id="irl-avatar-name" data-i18n="irl.loading">Loading…</h1>
+	<p class="irl-subtitle" id="irl-subtitle" data-i18n="irl.turn_on_camera_ar_then_tap_pin">Turn on Camera AR, then tap Pin here to anchor your agent in real space.</p>
 
 	<p class="irl-status is-hidden" id="irl-status" role="status" aria-live="polite">
 		<span class="irl-status-spinner hidden" id="irl-spinner" aria-hidden="true"></span>
@@ -2398,14 +2398,14 @@
 
 	<button id="irl-camera-btn" type="button" disabled aria-busy="true" aria-pressed="false">
 		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 7 16 12l7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-		<span id="irl-camera-label">Camera AR</span>
+		<span id="irl-camera-label" data-i18n="irl.camera_ar">Camera AR</span>
 	</button>
 
 	<!-- Ordered by how often each is used: pin/place actions first (always
 	     on-screen without scrolling), setup + management actions trail off the
 	     right edge of the scroll strip (see .irl-secondary-row above). -->
 	<div class="irl-secondary-row">
-		<button class="irl-pill-btn" id="irl-lock-btn" type="button" aria-pressed="false" aria-label="Pin avatar in real space">
+		<button class="irl-pill-btn" id="irl-lock-btn" type="button" aria-pressed="false" aria-label="Pin avatar in real space" data-i18n-attr="aria-label:irl.pin_avatar_in_real_space_arialabel">
 			<svg id="irl-lock-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
 			<span class="irl-lock-label">Pin here</span>
 		</button>
@@ -2417,33 +2417,33 @@
 			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
 			Clear
 		</button>
-		<button class="irl-pill-btn" id="irl-carry-btn" type="button" aria-pressed="false" aria-label="Carry your agent and set it down where you aim on the floor">
+		<button class="irl-pill-btn" id="irl-carry-btn" type="button" aria-pressed="false" aria-label="Carry your agent and set it down where you aim on the floor" data-i18n-attr="aria-label:irl.carry_your_agent_and_set_it_arialabel">
 			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
 			Move here
 		</button>
-		<button class="irl-pill-btn" id="irl-anchor-btn" type="button" hidden aria-label="Place agent on the floor with AR">
+		<button class="irl-pill-btn" id="irl-anchor-btn" type="button" hidden aria-label="Place agent on the floor with AR" data-i18n-attr="aria-label:irl.place_agent_on_the_floor_wit_arialabel">
 			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/><circle cx="12" cy="12" r="4"/></svg>
 			Place in AR
 		</button>
-		<button class="irl-pill-btn" id="irl-mapplace-btn" type="button" aria-label="Place this agent at a spot you choose on a map">
+		<button class="irl-pill-btn" id="irl-mapplace-btn" type="button" aria-label="Place this agent at a spot you choose on a map" data-i18n-attr="aria-label:irl.place_this_agent_at_a_spot_y_arialabel">
 			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
 			Place on map
 		</button>
-		<button class="irl-pill-btn" id="irl-agents-btn" type="button" aria-label="Switch AI agent">
+		<button class="irl-pill-btn" id="irl-agents-btn" type="button" aria-label="Switch AI agent" data-i18n-attr="aria-label:irl.switch_ai_agent_arialabel">
 			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="12" cy="10" r="3"/></svg>
 			My Agents
 		</button>
-		<button class="irl-pill-btn" id="irl-avatar-btn" type="button" aria-label="Change avatar">
+		<button class="irl-pill-btn" id="irl-avatar-btn" type="button" aria-label="Change avatar" data-i18n-attr="aria-label:irl.change_avatar_arialabel">
 			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.582-7 8-7s8 3 8 7"/></svg>
 			Avatar
 		</button>
-		<button class="irl-pill-btn" id="irl-mypins-btn" type="button" aria-label="My active pins">
+		<button class="irl-pill-btn" id="irl-mypins-btn" type="button" aria-label="My active pins" data-i18n-attr="aria-label:irl.my_active_pins_arialabel">
 			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
 			My pins
 		</button>
 		<!-- D2 — opt in to appearing as a ghost to other live viewers (default off).
 		     Only shown in GPS mode, where presence is live. -->
-		<button class="irl-pill-btn" id="irl-ghost-toggle" type="button" aria-pressed="false" aria-label="Appear to others viewing nearby">
+		<button class="irl-pill-btn" id="irl-ghost-toggle" type="button" aria-pressed="false" aria-label="Appear to others viewing nearby" data-i18n-attr="aria-label:irl.appear_to_others_viewing_nea_arialabel">
 			<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
 			Appear nearby
 		</button>
@@ -2451,23 +2451,23 @@
 
 	<!-- Object picker (revealed when Add Object is active) -->
 	<div id="irl-picker" hidden>
-		<button class="irl-obj-btn" data-type="orb">
+		<button class="irl-obj-btn" data-type="orb" data-i18n-html="irl.orb">
 			<span class="irl-obj-swatch" style="background:rgba(136,187,255,0.9);box-shadow:0 0 6px rgba(136,187,255,0.6)"></span>
 			Orb
 		</button>
-		<button class="irl-obj-btn" data-type="crate">
+		<button class="irl-obj-btn" data-type="crate" data-i18n-html="irl.crate">
 			<span class="irl-obj-swatch" style="background:#b07830;border-radius:2px"></span>
 			Crate
 		</button>
-		<button class="irl-obj-btn" data-type="crystal">
+		<button class="irl-obj-btn" data-type="crystal" data-i18n-html="irl.crystal">
 			<span class="irl-obj-swatch" style="background:rgba(204,119,255,0.9);clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);border-radius:0"></span>
 			Crystal
 		</button>
-		<button class="irl-obj-btn" data-type="ring">
+		<button class="irl-obj-btn" data-type="ring" data-i18n-html="irl.ring">
 			<span class="irl-obj-swatch" style="background:transparent;border:2px solid #ffd700;box-shadow:0 0 5px rgba(255,215,0,0.5)"></span>
 			Ring
 		</button>
-		<button class="irl-obj-btn" data-type="pillar">
+		<button class="irl-obj-btn" data-type="pillar" data-i18n-html="irl.pillar">
 			<span class="irl-obj-swatch" style="background:#c8c0b8;border-radius:3px;width:7px;height:12px;margin:0 3px"></span>
 			Pillar
 		</button>
@@ -2480,8 +2480,8 @@
 <div id="irl-xr-overlay" hidden>
 	<div class="irl-xr-bar" id="irl-xr-bar">
 		<span id="irl-xr-check" class="irl-xr-check" aria-hidden="true"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-		<p id="irl-xr-hint" class="irl-xr-hint" aria-live="polite">Sweep your phone slowly to find the floor</p>
-		<button id="irl-xr-exit" type="button" class="irl-xr-exit" aria-label="Exit floor anchoring">
+		<p id="irl-xr-hint" class="irl-xr-hint" aria-live="polite" data-i18n="irl.sweep_your_phone_slowly_to_find_the">Sweep your phone slowly to find the floor</p>
+		<button id="irl-xr-exit" type="button" class="irl-xr-exit" aria-label="Exit floor anchoring" data-i18n-attr="aria-label:irl.exit_floor_anchoring_arialabel">
 			<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
 			Exit
 		</button>
@@ -2492,17 +2492,17 @@
 <!-- Caption input panel (slides up before a pin is saved) -->
 <div id="irl-caption-panel" role="dialog" aria-modal="true" aria-labelledby="irl-caption-title">
 	<div class="irl-sheet-handle" aria-hidden="true"></div>
-	<h3 id="irl-caption-title">Pin your agent here</h3>
+	<h3 id="irl-caption-title" data-i18n="irl.pin_your_agent_here">Pin your agent here</h3>
 	<!-- Placement chip (H4) — shows how this pin will be stored (exact vs approximate)
 	     and re-opens the consent sheet to change it. -->
-	<button id="irl-caption-placement" class="irl-caption-placement" type="button">
+	<button id="irl-caption-placement" class="irl-caption-placement" type="button" data-i18n-html="irl.exact_change">
 		<span class="irl-caption-place-badge">📍 Exact</span>
 		<span class="irl-caption-place-i" aria-hidden="true">Change ⓘ</span>
 	</button>
 	<textarea id="irl-caption-input" rows="3" placeholder="Add a caption… e.g. 'P2P trades here — DM me on Telegram' (optional)"></textarea>
 	<div class="irl-caption-row">
-		<button id="irl-caption-confirm" type="button">Pin it</button>
-		<button id="irl-caption-cancel" type="button" aria-label="Cancel">×</button>
+		<button id="irl-caption-confirm" type="button" data-i18n="irl.pin_it">Pin it</button>
+		<button id="irl-caption-cancel" type="button" aria-label="Cancel" data-i18n-attr="aria-label:irl.cancel_arialabel">×</button>
 	</div>
 </div>
 
@@ -2511,22 +2511,22 @@
      on later placements while keeping the remembered choice. -->
 <div id="irl-consent-sheet" role="dialog" aria-modal="true" aria-labelledby="irl-consent-title" aria-describedby="irl-consent-body">
 	<div class="irl-sheet-handle" aria-hidden="true"></div>
-	<h3 id="irl-consent-title">Heads up — this is a real-world spot</h3>
-	<p id="irl-consent-body">Your agent will be visible to anyone who physically walks within ~40&nbsp;m of here. We never show a list or map of locations, and we never reveal who placed it — but the spot itself is public. Want to place it exactly here, or approximately?</p>
+	<h3 id="irl-consent-title" data-i18n="irl.heads_up_this_is_a_real_world">Heads up — this is a real-world spot</h3>
+	<p id="irl-consent-body" data-i18n="irl.your_agent_will_be_visible_to_anyone">Your agent will be visible to anyone who physically walks within ~40&nbsp;m of here. We never show a list or map of locations, and we never reveal who placed it — but the spot itself is public. Want to place it exactly here, or approximately?</p>
 	<fieldset class="irl-consent-radius">
-		<legend>If approximate, blur within</legend>
+		<legend data-i18n="irl.if_approximate_blur_within">If approximate, blur within</legend>
 		<div class="irl-consent-seg" role="group" aria-label="Approximate blur radius">
-			<button type="button" data-fuzz="30" aria-pressed="false">~30 m<small>same block</small></button>
-			<button type="button" data-fuzz="100" class="on" aria-pressed="true">~100 m<small>this street</small></button>
-			<button type="button" data-fuzz="250" aria-pressed="false">~250 m<small>nearby</small></button>
+			<button type="button" data-fuzz="30" aria-pressed="false" data-i18n-html="irl.30_msame_block">~30 m<small>same block</small></button>
+			<button type="button" data-fuzz="100" class="on" aria-pressed="true" data-i18n-html="irl.100_mthis_street">~100 m<small>this street</small></button>
+			<button type="button" data-fuzz="250" aria-pressed="false" data-i18n-html="irl.250_mnearby">~250 m<small>nearby</small></button>
 		</div>
 	</fieldset>
 	<div class="irl-consent-actions">
-		<button id="irl-consent-exact" type="button" class="irl-consent-btn">Place exactly here</button>
-		<button id="irl-consent-approx" type="button" class="irl-consent-btn">Place approximately</button>
+		<button id="irl-consent-exact" type="button" class="irl-consent-btn" data-i18n="irl.place_exactly_here">Place exactly here</button>
+		<button id="irl-consent-approx" type="button" class="irl-consent-btn" data-i18n="irl.place_approximately">Place approximately</button>
 	</div>
 	<label class="irl-consent-dontshow"><input type="checkbox" id="irl-consent-dontshow" /> Don’t show this every time</label>
-	<button id="irl-consent-cancel" type="button" class="irl-consent-cancel">Cancel</button>
+	<button id="irl-consent-cancel" type="button" class="irl-consent-cancel" data-i18n="irl.cancel">Cancel</button>
 </div>
 
 <!-- Designed guidance sheet — recoverable motion/GPS permission states (A4) -->
@@ -2535,11 +2535,11 @@
 	<div class="irl-error-icon" aria-hidden="true">
 		<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
 	</div>
-	<h3 id="irl-error-title">Action needed</h3>
+	<h3 id="irl-error-title" data-i18n="irl.action_needed">Action needed</h3>
 	<p id="irl-error-body"></p>
 	<div class="irl-error-row">
-		<button id="irl-error-action" type="button">Try again</button>
-		<button id="irl-error-dismiss" type="button" aria-label="Dismiss">×</button>
+		<button id="irl-error-action" type="button" data-i18n="irl.try_again">Try again</button>
+		<button id="irl-error-dismiss" type="button" aria-label="Dismiss" data-i18n-attr="aria-label:irl.dismiss_arialabel">×</button>
 	</div>
 </div>
 
@@ -2547,21 +2547,21 @@
 <div id="irl-mypins-sheet" role="dialog" aria-modal="true" aria-labelledby="irl-mypins-title">
 	<div class="irl-sheet-handle" aria-hidden="true"></div>
 	<div class="irl-mypins-header">
-		<h3 id="irl-mypins-title">My pins</h3>
-		<button class="irl-sheet-close" id="irl-mypins-close" type="button" aria-label="Close">×</button>
+		<h3 id="irl-mypins-title" data-i18n="irl.my_pins">My pins</h3>
+		<button class="irl-sheet-close" id="irl-mypins-close" type="button" aria-label="Close" data-i18n-attr="aria-label:irl.close_arialabel_2">×</button>
 	</div>
 	<div id="irl-mypins-map" class="irl-mypins-map" role="group" aria-label="Map of pins you've placed"></div>
-	<div id="irl-mypins-list"><p class="irl-mypins-empty">Loading…</p></div>
+	<div id="irl-mypins-list"><p class="irl-mypins-empty" data-i18n="irl.loading_2">Loading…</p></div>
 	<div id="irl-mypins-foot" class="irl-mypins-foot" hidden></div>
 </div>
 
 <!-- Radar minimap — visible in GPS pin mode only -->
 <div id="irl-radar" aria-hidden="true">
 	<div class="irl-radar-self"></div>
-	<span class="irl-radar-n">N</span>
-	<span class="irl-radar-s">S</span>
-	<span class="irl-radar-e">E</span>
-	<span class="irl-radar-w">W</span>
+	<span class="irl-radar-n" data-i18n="irl.n">N</span>
+	<span class="irl-radar-s" data-i18n="irl.s">S</span>
+	<span class="irl-radar-e" data-i18n="irl.e">E</span>
+	<span class="irl-radar-w" data-i18n="irl.w">W</span>
 </div>
 
 <!-- Agent interaction bottom sheet (slides up when user taps a nearby pin label or 3D model) -->
@@ -2574,12 +2574,12 @@
 		<img id="irl-sheet-thumb" class="irl-sheet-thumb" alt="" hidden />
 		<div class="irl-sheet-meta">
 			<div class="irl-sheet-title-row">
-				<span class="irl-sheet-title" id="irl-sheet-name">Agent</span>
+				<span class="irl-sheet-title" id="irl-sheet-name" data-i18n="irl.agent">Agent</span>
 				<span id="irl-sheet-tier" class="irl-tier-badge" hidden></span>
 			</div>
 			<div class="irl-sheet-dist" id="irl-sheet-dist"></div>
 		</div>
-		<button class="irl-sheet-close" id="irl-sheet-close" type="button" aria-label="Close">×</button>
+		<button class="irl-sheet-close" id="irl-sheet-close" type="button" aria-label="Close" data-i18n-attr="aria-label:irl.close_arialabel_3">×</button>
 	</div>
 	<p id="irl-sheet-caption" hidden></p>
 	<!-- Rich card body — skeleton → bio + reputation + services | empty | error.
@@ -2587,45 +2587,45 @@
 	<div id="irl-card-body" class="irl-card-body"></div>
 	<div class="irl-multiplayer-note" id="irl-sheet-multiplayer" hidden>
 		<span class="irl-multiplayer-dot"></span>
-		<span id="irl-sheet-multiplayer-text">Visible to all users at this location</span>
+		<span id="irl-sheet-multiplayer-text" data-i18n="irl.visible_to_all_users_at_this_location">Visible to all users at this location</span>
 	</div>
 	<!-- Honest GPS-accuracy line (A3) — never imply a centimetre-perfect pinpoint -->
 	<p id="irl-sheet-accuracy" class="irl-sheet-accuracy" hidden></p>
 	<!-- Placement exposure badge (H4) — owner-only: exact spot vs deliberately blurred -->
 	<p id="irl-sheet-placement" class="irl-sheet-placement" hidden></p>
 	<div class="irl-sheet-actions">
-		<button id="irl-sheet-pay" class="irl-sheet-btn irl-sheet-btn-primary" type="button" hidden>Pay via x402</button>
-		<button id="irl-sheet-calibrate" class="irl-sheet-btn" type="button" hidden>Calibrate position</button>
-		<button id="irl-sheet-align-room" class="irl-sheet-btn" type="button" hidden>Align this room</button>
-		<button id="irl-sheet-refine" class="irl-sheet-btn" type="button" hidden>Refine on floor</button>
-		<button id="irl-sheet-view" class="irl-sheet-btn" type="button">View profile</button>
+		<button id="irl-sheet-pay" class="irl-sheet-btn irl-sheet-btn-primary" type="button" hidden data-i18n="irl.pay_via_x402">Pay via x402</button>
+		<button id="irl-sheet-calibrate" class="irl-sheet-btn" type="button" hidden data-i18n="irl.calibrate_position">Calibrate position</button>
+		<button id="irl-sheet-align-room" class="irl-sheet-btn" type="button" hidden data-i18n="irl.align_this_room">Align this room</button>
+		<button id="irl-sheet-refine" class="irl-sheet-btn" type="button" hidden data-i18n="irl.refine_on_floor">Refine on floor</button>
+		<button id="irl-sheet-view" class="irl-sheet-btn" type="button" data-i18n="irl.view_profile">View profile</button>
 	</div>
 	<!-- Leave a message — POSTs an interaction the owner sees in their dashboard feed -->
 	<form id="irl-sheet-msg" class="irl-sheet-msg">
 		<input id="irl-msg-input" class="irl-msg-input" type="text" maxlength="280"
 			placeholder="Leave a message for this agent…" aria-label="Message for this agent" autocomplete="off" />
-		<button id="irl-msg-send" class="irl-msg-send" type="submit">Send</button>
+		<button id="irl-msg-send" class="irl-msg-send" type="submit" data-i18n="irl.send">Send</button>
 	</form>
 	<div id="irl-sheet-status" class="irl-sheet-status" role="status" hidden></div>
 	<!-- Report — community moderation (D4). Hidden on your own pins. Opens a reason sheet. -->
-	<button id="irl-sheet-report" class="irl-sheet-report" type="button" hidden>Report this pin</button>
+	<button id="irl-sheet-report" class="irl-sheet-report" type="button" hidden data-i18n="irl.report_this_pin">Report this pin</button>
 </div>
 
 <!-- Report reason sheet (D4) — choose why, POST /api/irl/report, threshold-hide server-side -->
 <div id="irl-report-sheet" role="dialog" aria-modal="true" aria-labelledby="irl-report-title">
 	<div class="irl-sheet-handle" aria-hidden="true"></div>
 	<div class="irl-report-header">
-		<h3 id="irl-report-title">Report this pin</h3>
-		<button class="irl-sheet-close" id="irl-report-close" type="button" aria-label="Close">×</button>
+		<h3 id="irl-report-title" data-i18n="irl.report_this_pin_2">Report this pin</h3>
+		<button class="irl-sheet-close" id="irl-report-close" type="button" aria-label="Close" data-i18n-attr="aria-label:irl.close_arialabel_4">×</button>
 	</div>
-	<p class="irl-report-sub">Tell us what’s wrong. Reports are reviewed; a pin is hidden once enough people flag it.</p>
+	<p class="irl-report-sub" data-i18n="irl.tell_us_what_s_wrong_reports_are">Tell us what’s wrong. Reports are reviewed; a pin is hidden once enough people flag it.</p>
 	<div class="irl-report-reasons" role="group" aria-label="Reason">
-		<button class="irl-report-reason" type="button" data-reason="spam">Spam or advertising</button>
-		<button class="irl-report-reason" type="button" data-reason="harassment">Hate or harassment</button>
-		<button class="irl-report-reason" type="button" data-reason="impersonation">Impersonation</button>
-		<button class="irl-report-reason" type="button" data-reason="scam">Scam or off-brand coin</button>
-		<button class="irl-report-reason" type="button" data-reason="sexual">Sexual content</button>
-		<button class="irl-report-reason" type="button" data-reason="other">Something else</button>
+		<button class="irl-report-reason" type="button" data-reason="spam" data-i18n="irl.spam_or_advertising">Spam or advertising</button>
+		<button class="irl-report-reason" type="button" data-reason="harassment" data-i18n="irl.hate_or_harassment">Hate or harassment</button>
+		<button class="irl-report-reason" type="button" data-reason="impersonation" data-i18n="irl.impersonation">Impersonation</button>
+		<button class="irl-report-reason" type="button" data-reason="scam" data-i18n="irl.scam_or_off_brand_coin">Scam or off-brand coin</button>
+		<button class="irl-report-reason" type="button" data-reason="sexual" data-i18n="irl.sexual_content">Sexual content</button>
+		<button class="irl-report-reason" type="button" data-reason="other" data-i18n="irl.something_else">Something else</button>
 	</div>
 	<div id="irl-report-status" class="irl-sheet-status" role="status" hidden></div>
 </div>
@@ -2635,11 +2635,11 @@
 	<div class="irl-sheet-handle" aria-hidden="true"></div>
 	<div class="irl-agents-header">
 		<div>
-			<h3 id="irl-agents-title">My Agents</h3>
+			<h3 id="irl-agents-title" data-i18n="irl.my_agents">My Agents</h3>
 		</div>
-		<button class="irl-sheet-close" id="irl-agents-close" type="button" aria-label="Close">×</button>
+		<button class="irl-sheet-close" id="irl-agents-close" type="button" aria-label="Close" data-i18n-attr="aria-label:irl.close_arialabel_5">×</button>
 	</div>
-	<div id="irl-agents-list"><p class="irl-agents-empty">Loading…</p></div>
+	<div id="irl-agents-list"><p class="irl-agents-empty" data-i18n="irl.loading_3">Loading…</p></div>
 </div>
 
 <!-- ── Calibrate HUD (A3) — owner nudges a placed agent into its true spot ──── -->
@@ -2730,31 +2730,31 @@
 <div id="irl-calibrate-panel" role="dialog" aria-modal="false" aria-label="Calibrate agent position">
 	<div class="irl-sheet-handle" aria-hidden="true"></div>
 	<div class="irl-cal-head">
-		<h3 id="irl-cal-title">Calibrate position</h3>
+		<h3 id="irl-cal-title" data-i18n="irl.calibrate_position_2">Calibrate position</h3>
 	</div>
 	<div id="irl-cal-readout" aria-live="polite">0.00 m N · 0.00 m E · +0° · +0 cm</div>
 	<p id="irl-cal-accuracy"></p>
-	<p class="irl-cal-hint">Drag to nudge on the ground · twist with two fingers to rotate.</p>
+	<p class="irl-cal-hint" data-i18n="irl.drag_to_nudge_on_the_ground_twist">Drag to nudge on the ground · twist with two fingers to rotate.</p>
 	<div class="irl-cal-height">
-		<span class="irl-cal-height-label">Floor height</span>
-		<span class="irl-cal-height-val" id="irl-cal-height">+0 cm</span>
-		<button class="irl-cal-step" id="irl-cal-down" type="button" aria-label="Lower agent 5 cm">−</button>
-		<button class="irl-cal-step" id="irl-cal-up" type="button" aria-label="Raise agent 5 cm">+</button>
+		<span class="irl-cal-height-label" data-i18n="irl.floor_height">Floor height</span>
+		<span class="irl-cal-height-val" id="irl-cal-height" data-i18n="irl.0_cm">+0 cm</span>
+		<button class="irl-cal-step" id="irl-cal-down" type="button" aria-label="Lower agent 5 cm" data-i18n-attr="aria-label:irl.lower_agent_5_cm_arialabel">−</button>
+		<button class="irl-cal-step" id="irl-cal-up" type="button" aria-label="Raise agent 5 cm" data-i18n-attr="aria-label:irl.raise_agent_5_cm_arialabel">+</button>
 	</div>
 	<div id="irl-cal-error" hidden></div>
 	<div class="irl-cal-actions">
-		<button id="irl-cal-save" type="button">Save position</button>
-		<button id="irl-cal-cancel" type="button">Cancel</button>
+		<button id="irl-cal-save" type="button" data-i18n="irl.save_position">Save position</button>
+		<button id="irl-cal-cancel" type="button" data-i18n="irl.cancel_2">Cancel</button>
 	</div>
 </div>
 <div id="irl-cal-denied" role="alertdialog" aria-modal="false" aria-label="Calibration locked" hidden></div>
 <!-- R2 relative-frame one-tap alignment prompt — shown for a nearby room placed
      without an absolute compass that may render rotated for this viewer. -->
 <div id="irl-room-align-prompt" role="dialog" aria-modal="false" aria-label="Align this room to your view" hidden>
-	<p>This room was placed without a compass, so it may appear rotated. Face the room’s front and tap Align to match it to your view.</p>
+	<p data-i18n="irl.this_room_was_placed_without_a_compass">This room was placed without a compass, so it may appear rotated. Face the room’s front and tap Align to match it to your view.</p>
 	<div class="irl-ra-actions">
-		<button type="button" class="irl-ra-align" data-ra-action="align">Align</button>
-		<button type="button" class="irl-ra-dismiss" data-ra-action="dismiss">Dismiss</button>
+		<button type="button" class="irl-ra-align" data-ra-action="align" data-i18n="irl.align">Align</button>
+		<button type="button" class="irl-ra-dismiss" data-ra-action="dismiss" data-i18n="irl.dismiss">Dismiss</button>
 	</div>
 </div>
 
@@ -2815,5 +2815,7 @@
 		}).catch(() => {});
 	}
 </script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

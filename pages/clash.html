@@ -4,29 +4,29 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Coin Clash · three.ws</title>
+		<title data-i18n="clash.meta_title">Coin Clash · three.ws</title>
 		<meta
 			name="description"
 			content="Token-gated community warfare. Every coin community is an army — hold the coin, enlist, and rally for your faction. The side that taps hardest before the round ends wins the battle."
-		/>
+		 data-i18n-attr="content:clash.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/clash" />
-		<meta property="og:title" content="Coin Clash · three.ws" />
+		<meta property="og:title" content="Coin Clash · three.ws"  data-i18n-attr="content:clash.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Token-gated community warfare. Hold a coin, enlist in its army, and battle other communities in real time."
-		/>
+		 data-i18n-attr="content:clash.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Coin+Clash&amp;d=Token-gated+community+warfare.+Every+coin+community+is+an+army+%E2%80%94+hold+the+coin%2C+enlist%2C+and+rally+for+your+faction+in+timed+battles+against+other+communities.&amp;p=%2Fclash" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Coin Clash · three.ws" />
+		<meta name="twitter:title" content="Coin Clash · three.ws"  data-i18n-attr="content:clash.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Token-gated community warfare. Hold a coin, enlist in its army, and battle other communities live."
-		/>
+		 data-i18n-attr="content:clash.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Coin+Clash&amp;d=Token-gated+community+warfare.+Every+coin+community+is+an+army+%E2%80%94+hold+the+coin%2C+enlist%2C+and+rally+for+your+faction+in+timed+battles+against+other+communities.&amp;p=%2Fclash" />
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -54,41 +54,41 @@
 
 		<main class="cl-shell" aria-labelledby="cl-title">
 			<section class="cl-hero">
-				<p class="cl-kicker">
+				<p class="cl-kicker" data-i18n-html="clash.connecting_live_community_warfare_demo">
 					<span id="cl-live" class="juice-live" data-state="connecting"><span class="juice-live-dot" aria-hidden="true"></span><span class="juice-live-txt">connecting</span></span>
 					Live community warfare
 					<span class="cl-demo-badge" title="A playable demo — the real product is far bigger">Demo</span>
 				</p>
-				<h1 id="cl-title" class="cl-title">
+				<h1 id="cl-title" class="cl-title" data-i18n-html="clash.coin_clash">
 					<span class="cl-title-line">COIN</span>
 					<span class="cl-title-line cl-title-em">CLASH</span>
 				</h1>
-				<p class="cl-sub">
+				<p class="cl-sub" data-i18n="clash.every_coin_community_is_an_army_hold">
 					Every coin community is an army. Hold the coin, enlist, and rally for your faction —
 					the side that taps hardest before the round ends wins the battle and the bragging rights.
 				</p>
-				<p class="cl-demo-note">
+				<p class="cl-demo-note" data-i18n-html="clash.this_is_an_early_demo_we_re">
 					This is an early demo. We're building something far bigger for $THREE —
 					<a href="/what-is">see where this is headed →</a>
 				</p>
 				<dl class="cl-round" aria-label="Round status">
 					<div class="cl-round-stat">
-						<dt>Round</dt>
+						<dt data-i18n="clash.round">Round</dt>
 						<dd id="cl-round-no">—</dd>
 					</div>
 					<div class="cl-round-stat cl-round-stat-timer">
-						<dt>Ends in</dt>
+						<dt data-i18n="clash.ends_in">Ends in</dt>
 						<dd id="cl-round-timer">—</dd>
 					</div>
 					<div class="cl-round-stat">
-						<dt>Armies</dt>
+						<dt data-i18n="clash.armies">Armies</dt>
 						<dd id="cl-round-armies">—</dd>
 					</div>
 				</dl>
 				<div class="cl-tabs" role="tablist" aria-label="View">
-					<button type="button" class="cl-tab active" data-tab="arena" role="tab" aria-selected="true">⚔ Arena</button>
-					<button type="button" class="cl-tab" data-tab="standings" role="tab" aria-selected="false">🏆 War Records</button>
-					<a class="cl-tab cl-tab-link" href="/communities">Communities →</a>
+					<button type="button" class="cl-tab active" data-tab="arena" role="tab" aria-selected="true" data-i18n="clash.arena">⚔ Arena</button>
+					<button type="button" class="cl-tab" data-tab="standings" role="tab" aria-selected="false" data-i18n="clash.war_records">🏆 War Records</button>
+					<a class="cl-tab cl-tab-link" href="/communities" data-i18n="clash.communities">Communities →</a>
 				</div>
 			</section>
 
@@ -99,17 +99,17 @@
 		<!-- Rally dock — appears once you've enlisted in a faction. -->
 		<aside id="cl-rally" class="cl-rally" hidden aria-label="Rally">
 			<div class="cl-rally-inner">
-				<button type="button" class="cl-rally-close" id="cl-rally-close" aria-label="Leave the rally">✕</button>
+				<button type="button" class="cl-rally-close" id="cl-rally-close" aria-label="Leave the rally" data-i18n-attr="aria-label:clash.leave_the_rally_arialabel">✕</button>
 				<div class="cl-rally-id">
 					<img id="cl-rally-img" class="cl-rally-img" alt="" />
 					<div class="cl-rally-id-text">
-						<span class="cl-rally-for">Fighting for</span>
+						<span class="cl-rally-for" data-i18n="clash.fighting_for">Fighting for</span>
 						<strong id="cl-rally-symbol">—</strong>
 						<span id="cl-rally-hold" class="cl-rally-hold"></span>
 					</div>
 				</div>
 
-				<button type="button" id="cl-tap" class="cl-tap" aria-label="Tap to rally">
+				<button type="button" id="cl-tap" class="cl-tap" aria-label="Tap to rally" data-i18n-html="clash.rally_1" data-i18n-attr="aria-label:clash.tap_to_rally_arialabel">
 					<span class="cl-tap-ring" aria-hidden="true"></span>
 					<span class="cl-tap-label">RALLY</span>
 					<span class="cl-tap-combo" id="cl-combo" aria-hidden="true">×1</span>
@@ -117,16 +117,16 @@
 
 				<div class="cl-rally-stats">
 					<div class="cl-rs">
-						<span class="cl-rs-k">Your power</span>
+						<span class="cl-rs-k" data-i18n="clash.your_power">Your power</span>
 						<span class="cl-rs-v"><b id="cl-your-power">0</b><i id="cl-your-cap"></i></span>
 						<div class="cl-cap"><span id="cl-cap-fill" class="cl-cap-fill"></span></div>
 					</div>
 					<div class="cl-rs">
-						<span class="cl-rs-k">Army power</span>
+						<span class="cl-rs-k" data-i18n="clash.army_power">Army power</span>
 						<span class="cl-rs-v"><b id="cl-army-power">0</b></span>
 					</div>
 				</div>
-				<p class="cl-rally-hint" id="cl-rally-hint">Tap the target or hold <kbd>Space</kbd> to rally.</p>
+				<p class="cl-rally-hint" id="cl-rally-hint" data-i18n-html="clash.tap_the_target_or_hold_space_to">Tap the target or hold <kbd>Space</kbd> to rally.</p>
 			</div>
 		</aside>
 
@@ -134,5 +134,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

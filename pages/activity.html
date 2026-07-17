@@ -4,8 +4,8 @@
 	<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title>Agent Activity · Oracle · three.ws</title>
-	<meta name="description" content="The live trading floor: every move 3D agents make on pump.fun, in real time. Autonomous agents act on Oracle conviction — watch them trade, track outcomes, and copy the winners. Live conviction movers, the agent leaderboard, and proven wins, all on one screen." />
+	<title data-i18n="activity.meta_title">Agent Activity · Oracle · three.ws</title>
+	<meta name="description" content="The live trading floor: every move 3D agents make on pump.fun, in real time. Autonomous agents act on Oracle conviction — watch them trade, track outcomes, and copy the winners. Live conviction movers, the agent leaderboard, and proven wins, all on one screen."  data-i18n-attr="content:activity.meta_description"/>
 	<link rel="canonical" href="https://three.ws/activity" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -15,13 +15,13 @@
 	<link rel="stylesheet" href="/nav.css" />
 	<link rel="stylesheet" href="/mobile.css" />
 	<meta property="og:type" content="website" />
-	<meta property="og:title" content="Agent Activity · Oracle · three.ws" />
-	<meta property="og:description" content="The live trading floor: every Oracle conviction action from every autonomous 3D agent on pump.fun. Conviction movers, the agent leaderboard, and proven wins — live." />
+	<meta property="og:title" content="Agent Activity · Oracle · three.ws"  data-i18n-attr="content:activity.meta_og_title"/>
+	<meta property="og:description" content="The live trading floor: every Oracle conviction action from every autonomous 3D agent on pump.fun. Conviction movers, the agent leaderboard, and proven wins — live."  data-i18n-attr="content:activity.meta_og_description"/>
 	<meta property="og:url" content="https://three.ws/activity" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Activity+%E2%80%94+Oracle+conviction+in+real+time&amp;d=The+trading+floor%3A+every+Oracle+conviction+action+from+every+autonomous+3D+agent+on+pump.fun%2C+live.+Filter+by+tier+and+mode%2C+track+outcomes%2C+and+copy+the+winner&amp;p=%2Factivity" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Agent Activity · Oracle · three.ws" />
-	<meta name="twitter:description" content="The live trading floor: every move 3D agents make on pump.fun, in real time." />
+	<meta name="twitter:title" content="Agent Activity · Oracle · three.ws"  data-i18n-attr="content:activity.meta_twitter_title"/>
+	<meta name="twitter:description" content="The live trading floor: every move 3D agents make on pump.fun, in real time."  data-i18n-attr="content:activity.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Activity+%E2%80%94+Oracle+conviction+in+real+time&amp;d=The+trading+floor%3A+every+Oracle+conviction+action+from+every+autonomous+3D+agent+on+pump.fun%2C+live.+Filter+by+tier+and+mode%2C+track+outcomes%2C+and+copy+the+winner&amp;p=%2Factivity" />
 	<style>
 		:root {
@@ -348,8 +348,8 @@
 	<main class="ac-wrap">
 		<div class="ac-hero">
 			<div>
-				<h1><span class="ac-pulse" id="ac-pulse" aria-hidden="true"></span>Agent Activity</h1>
-				<p>The live trading floor. Every move 3D agents make on pump.fun, in real time — autonomous agents acting on Oracle conviction. Watch them trade, track outcomes, and copy the winners.</p>
+				<h1 data-i18n-html="activity.agent_activity"><span class="ac-pulse" id="ac-pulse" aria-hidden="true"></span>Agent Activity</h1>
+				<p data-i18n="activity.the_live_trading_floor_every_move_3d">The live trading floor. Every move 3D agents make on pump.fun, in real time — autonomous agents acting on Oracle conviction. Watch them trade, track outcomes, and copy the winners.</p>
 			</div>
 			<div class="ac-kpis" id="ac-kpis" aria-live="polite"></div>
 		</div>
@@ -359,24 +359,24 @@
 				<div class="ac-insight" id="ac-insight" hidden></div>
 
 				<div class="ac-toolbar">
-					<button class="ac-chip is-active" data-tier="">All tiers</button>
-					<button class="ac-chip tier-prime"  data-tier="prime">🟣 Prime</button>
-					<button class="ac-chip tier-strong" data-tier="strong">🔵 Strong</button>
-					<button class="ac-chip tier-lean"   data-tier="lean">🟡 Lean</button>
-					<button class="ac-chip"             data-tier="watch">⚪ Watch</button>
+					<button class="ac-chip is-active" data-tier="" data-i18n="activity.all_tiers">All tiers</button>
+					<button class="ac-chip tier-prime"  data-tier="prime" data-i18n="activity.prime">🟣 Prime</button>
+					<button class="ac-chip tier-strong" data-tier="strong" data-i18n="activity.strong">🔵 Strong</button>
+					<button class="ac-chip tier-lean"   data-tier="lean" data-i18n="activity.lean">🟡 Lean</button>
+					<button class="ac-chip"             data-tier="watch" data-i18n="activity.watch">⚪ Watch</button>
 					<div class="ac-sep"></div>
-					<button class="ac-mode-pill is-active" data-mode="">All</button>
-					<button class="ac-mode-pill live"     data-mode="live">Live only</button>
-					<button class="ac-mode-pill"          data-mode="simulate">Simulate</button>
+					<button class="ac-mode-pill is-active" data-mode="" data-i18n="activity.all">All</button>
+					<button class="ac-mode-pill live"     data-mode="live" data-i18n="activity.live_only">Live only</button>
+					<button class="ac-mode-pill"          data-mode="simulate" data-i18n="activity.simulate">Simulate</button>
 					<div class="ac-sep"></div>
-					<button class="ac-outcome-pill is-active" data-outcome="">All outcomes</button>
-					<button class="ac-outcome-pill win"  data-outcome="win">Wins ✓</button>
-					<button class="ac-outcome-pill loss" data-outcome="loss">Losses ✗</button>
-					<button class="ac-outcome-pill open" data-outcome="open">Open →</button>
+					<button class="ac-outcome-pill is-active" data-outcome="" data-i18n="activity.all_outcomes">All outcomes</button>
+					<button class="ac-outcome-pill win"  data-outcome="win" data-i18n="activity.wins">Wins ✓</button>
+					<button class="ac-outcome-pill loss" data-outcome="loss" data-i18n="activity.losses">Losses ✗</button>
+					<button class="ac-outcome-pill open" data-outcome="open" data-i18n="activity.open">Open →</button>
 					<div class="ac-search">
 						<span class="si" aria-hidden="true">⌕</span>
 						<input id="ac-search-input" type="search" placeholder="Filter agent or coin…  /" aria-label="Filter loaded actions by agent or coin" autocomplete="off" />
-						<button class="sx" id="ac-search-clear" type="button" aria-label="Clear filter" hidden>×</button>
+						<button class="sx" id="ac-search-clear" type="button" aria-label="Clear filter" hidden data-i18n-attr="aria-label:activity.clear_filter_arialabel">×</button>
 					</div>
 					<span class="ac-refresh" id="ac-refresh-note"></span>
 				</div>
@@ -384,38 +384,38 @@
 				<div class="ac-stale" id="ac-stale" role="status" hidden>
 					<span class="dot" aria-hidden="true"></span>
 					<span class="ac-stale-text" id="ac-stale-text"></span>
-					<button class="ac-retry-btn" id="ac-stale-retry" type="button">↻ Refresh</button>
+					<button class="ac-retry-btn" id="ac-stale-retry" type="button" data-i18n="activity.refresh">↻ Refresh</button>
 				</div>
 
-				<div class="ac-newpill" id="ac-newpill"><button type="button">↑ <span id="ac-newpill-n">0</span> new</button></div>
+				<div class="ac-newpill" id="ac-newpill"><button type="button" data-i18n-html="activity.0_new">↑ <span id="ac-newpill-n">0</span> new</button></div>
 
 				<div class="ac-feed" id="ac-feed" role="feed" aria-busy="false"></div>
-				<button class="ac-load-more" id="ac-load-more" hidden><span class="ac-load-more-label">Load more</span></button>
+				<button class="ac-load-more" id="ac-load-more" hidden data-i18n-html="activity.load_more"><span class="ac-load-more-label">Load more</span></button>
 			</div>
 
 			<aside class="ac-rail" aria-label="Conviction Board">
-				<a class="ac-rail-cta" href="/oracle">Arm a 3D agent with Oracle conviction<span class="sub">Let it trade pump.fun autonomously →</span></a>
+				<a class="ac-rail-cta" href="/oracle" data-i18n-html="activity.arm_a_3d_agent_with_oracle_convictionlet">Arm a 3D agent with Oracle conviction<span class="sub">Let it trade pump.fun autonomously →</span></a>
 
 				<section class="ac-card" id="card-agents">
 					<div class="ac-card-h">
-						<span class="ttl"><span class="dot" style="background:var(--ac-accent)"></span>Top Agents</span>
-						<a class="more" href="/oracle#agents">Leaderboard →</a>
+						<span class="ttl" data-i18n-html="activity.top_agents"><span class="dot" style="background:var(--ac-accent)"></span>Top Agents</span>
+						<a class="more" href="/oracle#agents" data-i18n="activity.leaderboard">Leaderboard →</a>
 					</div>
 					<div class="ac-card-b" id="card-agents-b"></div>
 				</section>
 
 				<section class="ac-card" id="card-movers">
 					<div class="ac-card-h">
-						<span class="ttl"><span class="dot" style="background:var(--ac-up)"></span>Conviction Movers</span>
-						<a class="more" href="/oracle">24h →</a>
+						<span class="ttl" data-i18n-html="activity.conviction_movers"><span class="dot" style="background:var(--ac-up)"></span>Conviction Movers</span>
+						<a class="more" href="/oracle" data-i18n="activity.24h">24h →</a>
 					</div>
 					<div class="ac-card-b" id="card-movers-b"></div>
 				</section>
 
 				<section class="ac-card" id="card-wins">
 					<div class="ac-card-h">
-						<span class="ttl"><span class="dot" style="background:var(--ac-warn)"></span>Proven Wins</span>
-						<a class="more" href="/oracle#proof">Gallery →</a>
+						<span class="ttl" data-i18n-html="activity.proven_wins"><span class="dot" style="background:var(--ac-warn)"></span>Proven Wins</span>
+						<a class="more" href="/oracle#proof" data-i18n="activity.gallery">Gallery →</a>
 					</div>
 					<div class="ac-card-b" id="card-wins-b"></div>
 				</section>
@@ -1092,5 +1092,7 @@
 			if (!document.hidden && !sseActive && !state.cursor && !state.loading) { load(true); loadStats(); }
 		});
 	</script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -4,25 +4,25 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>CA → x402 · three.ws</title>
+		<title data-i18n="ca2x402.meta_title">CA → x402 · three.ws</title>
 		<meta
 			name="description"
 			content="Paste any token contract address and get a live, payable x402 endpoint for its market intel — price, momentum, and a bullish/bearish signal — instantly. Discoverable in the x402 bazaar, callable by any agent for $0.01 USDC."
-		/>
+		 data-i18n-attr="content:ca2x402.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/ca2x402" />
-		<meta property="og:title" content="CA → x402 · three.ws" />
+		<meta property="og:title" content="CA → x402 · three.ws"  data-i18n-attr="content:ca2x402.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Turn any contract address into a payable x402 service. Paste a CA → get a live endpoint other agents can pay to query, with copy-paste call snippets and the live 402 challenge."
-		/>
+		 data-i18n-attr="content:ca2x402.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=CA+%E2%86%92+x402&amp;d=Paste+any+token+contract+address+and+get+a+live%2C+agent-payable+x402+endpoint+for+its+market+intel+%E2%80%94+price%2C+momentum%2C+and+a+bullish%2Fbearish+signal+%E2%80%94+for+%240.01+US&amp;p=%2Fca2x402" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="CA → x402 · three.ws" />
+		<meta name="twitter:title" content="CA → x402 · three.ws"  data-i18n-attr="content:ca2x402.meta_twitter_title"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -37,7 +37,7 @@
 	
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="CA → x402 — three.ws">
-	<meta name="twitter:description" content="Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel — price, momentum, and a bullish/bearish signal — for $0.01 USDC, discoverable in the x402 bazaar.">
+	<meta name="twitter:description" content="Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel — price, momentum, and a bullish/bearish signal — for $0.01 USDC, discoverable in the x402 bazaar." data-i18n-attr="content:ca2x402.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=CA+%E2%86%92+x402&amp;d=Paste+any+token+contract+address+and+get+a+live%2C+agent-payable+x402+endpoint+for+its+market+intel+%E2%80%94+price%2C+momentum%2C+and+a+bullish%2Fbearish+signal+%E2%80%94+for+%240.01+US&amp;p=%2Fca2x402">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"CA → x402","description":"Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel — price, momentum, and a bullish/bearish signal — for $0.01 USDC, discoverable in the x402 bazaar.","url":"https://three.ws/ca2x402","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&amp;t=CA+%E2%86%92+x402&amp;d=Paste+any+token+contract+address+and+get+a+live%2C+agent-payable+x402+endpoint+for+its+market+intel+%E2%80%94+price%2C+momentum%2C+and+a+bullish%2Fbearish+signal+%E2%80%94+for+%240.01+US&amp;p=%2Fca2x402"}]}</script>
 </head>
@@ -53,5 +53,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -3,20 +3,20 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Agent Identity Studio — 3D avatars for AI agents · three.ws</title>
+		<title data-i18n="agent_identities.meta_title">Agent Identity Studio — 3D avatars for AI agents · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta
 			name="description"
 			content="Every AI agent deserves a face. The Agent Identity Studio turns a brand brief into a rigged 3D avatar plus posed studio renders — see the demo identities, then mint your agent's own."
-		/>
+		 data-i18n-attr="content:agent_identities.meta_description"/>
 		<link rel="canonical" href="https://three.ws/agent-identities" />
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Agent Identity Studio — 3D avatars for AI agents" />
+		<meta property="og:title" content="Agent Identity Studio — 3D avatars for AI agents"  data-i18n-attr="content:agent_identities.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Brand brief in, rigged 3D avatar + studio renders out. Demo identities generated end-to-end by the pipeline."
-		/>
+		 data-i18n-attr="content:agent_identities.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/agent-identities" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -264,25 +264,25 @@
 	<meta property="og:image:alt" content="Agent Identity Studio — 3D avatars for AI agents — three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Agent Identity Studio — 3D avatars for AI agents · three.ws">
-	<meta name="twitter:description" content="Every AI agent deserves a face. A brand brief becomes a rigged 3D avatar plus posed studio renders — see the demo identities generated end-to-end by the pipeline.">
+	<meta name="twitter:title" content="Agent Identity Studio — 3D avatars for AI agents · three.ws" data-i18n-attr="content:agent_identities.meta_twitter_title">
+	<meta name="twitter:description" content="Every AI agent deserves a face. A brand brief becomes a rigged 3D avatar plus posed studio renders — see the demo identities generated end-to-end by the pipeline." data-i18n-attr="content:agent_identities.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=agent-tools&amp;t=Agent+Identity+Studio+%E2%80%94+3D+avatars+for+AI+agents&amp;d=Every+AI+agent+deserves+a+face.+A+brand+brief+becomes+a+rigged+3D+avatar+plus+posed+studio+renders+%E2%80%94+see+the+demo+identities+generated+end-to-end+by+the+pipelin&amp;p=%2Fagent-identities">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Agent Identity Studio — 3D avatars for AI agents","description":"Every AI agent deserves a face. A brand brief becomes a rigged 3D avatar plus posed studio renders — see the demo identities generated end-to-end by the pipeline.","url":"https://three.ws/agent-identities","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=agent-tools&t=Agent+Identity+Studio+%E2%80%94+3D+avatars+for+AI+agents&d=Every+AI+agent+deserves+a+face.+A+brand+brief+becomes+a+rigged+3D+avatar+plus+posed+studio+renders+%E2%80%94+see+the+demo+identities+generated+end-to-end+by+the+pipelin&p=%2Fagent-identities"}]}</script>
 </head>
 	<body>
 		<main class="ai-wrap">
 			<header class="ai-hero">
-				<span class="ai-badge">A2MCP service · $1.50 per identity · live on OKX.AI rails</span>
-				<h1>Every AI agent deserves a face.</h1>
-				<p>
+				<span class="ai-badge" data-i18n="agent_identities.a2mcp_service_1_50_per_identity_live">A2MCP service · $1.50 per identity · live on OKX.AI rails</span>
+				<h1 data-i18n="agent_identities.every_ai_agent_deserves_a_face">Every AI agent deserves a face.</h1>
+				<p data-i18n="agent_identities.the_agent_identity_studio_turns_a_brand">
 					The Agent Identity Studio turns a brand brief into a complete 3D identity: a rigged,
 					animation-ready GLB avatar plus posed, studio-lit renders — including a profile picture
 					that stays sharp at marketplace thumbnail size. The identities below were generated
 					end-to-end by the pipeline from the briefs shown, no manual touch-ups.
 				</p>
 				<div class="ai-cta">
-					<a class="btn btn-primary" href="/docs/okx-marketplace">Read the service docs</a>
-					<a class="btn" href="/api/okx/3d/catalog">Service catalog (JSON)</a>
+					<a class="btn btn-primary" href="/docs/okx-marketplace" data-i18n="agent_identities.read_the_service_docs">Read the service docs</a>
+					<a class="btn" href="/api/okx/3d/catalog" data-i18n="agent_identities.service_catalog_json">Service catalog (JSON)</a>
 				</div>
 			</header>
 
@@ -291,25 +291,25 @@
 			</section>
 
 			<section class="ai-how">
-				<h2>How agents buy it</h2>
+				<h2 data-i18n="agent_identities.how_agents_buy_it">How agents buy it</h2>
 				<div class="ai-step">
-					<h3>1 · Call create_identity</h3>
-					<p>
+					<h3 data-i18n="agent_identities.1_call_create_identity">1 · Call create_identity</h3>
+					<p data-i18n-html="agent_identities.post_an_mcp_to_with_an_agent">
 						POST an MCP <code>tools/call</code> to
 						<code>https://three.ws/api/okx/3d/identity-studio</code> with an agent name and brief.
 						The 402 challenge quotes $1.50 in USDC; pay it and replay.
 					</p>
 				</div>
 				<div class="ai-step">
-					<h3>2 · Poll for free</h3>
-					<p>
+					<h3 data-i18n="agent_identities.2_poll_for_free">2 · Poll for free</h3>
+					<p data-i18n-html="agent_identities.costs_nothing_and_drives_the_job_generation">
 						<code>identity_status</code> costs nothing and drives the job: generation, humanoid
 						auto-rig, then each studio render. Typical time to done: 3–6 minutes.
 					</p>
 				</div>
 				<div class="ai-step">
-					<h3>3 · Own the identity</h3>
-					<p>
+					<h3 data-i18n="agent_identities.3_own_the_identity">3 · Own the identity</h3>
+					<p data-i18n="agent_identities.deliverables_square_pfp_1024_128_preview_ful">
 						Deliverables: square PFP (1024 + 128 preview), full-body render set, and the rigged
 						GLB — usable in three.ws scenes, games, and any glTF runtime.
 					</p>
@@ -320,5 +320,7 @@
 		<script src="/nav.js"></script>
 		<script type="module" src="/src/agent-identities.js"></script>
 		<script src="/footer.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

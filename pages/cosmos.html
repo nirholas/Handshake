@@ -3,7 +3,7 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Cosmos · Living Worlds · three.ws</title>
+		<title data-i18n="cosmos.meta_title">Cosmos · Living Worlds · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="theme-color" content="#000000" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -13,15 +13,15 @@
 		<meta
 			name="description"
 			content="Bring your 3D avatar to life with NVIDIA Cosmos. Generate a living, photoreal world from a text prompt and watch your avatar stand inside a cinematic, animated scene."
-		/>
+		 data-i18n-attr="content:cosmos.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/cosmos" />
-		<meta property="og:title" content="Cosmos · Living Worlds · three.ws" />
+		<meta property="og:title" content="Cosmos · Living Worlds · three.ws"  data-i18n-attr="content:cosmos.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Type a world, watch it come alive behind your avatar — powered by NVIDIA Cosmos world models."
-		/>
+		 data-i18n-attr="content:cosmos.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Cosmos+%E2%80%94+Living+Worlds&amp;d=Bring+your+avatar+to+life%3A+type+a+world+and+NVIDIA+Cosmos+renders+a+living%2C+photoreal+scene+that+plays+behind+your+3D+avatar.+Generate%2C+preview%2C+and+download+a+&amp;p=%2Fcosmos" />
 		<meta name="twitter:card" content="summary_large_image" />
 
@@ -637,26 +637,26 @@
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="Cosmos — Living Worlds — three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Cosmos — Living Worlds · three.ws">
-	<meta name="twitter:description" content="Bring your avatar to life: type a world and NVIDIA Cosmos renders a living, photoreal scene that plays behind your 3D avatar. Generate, preview, and download a short cinematic clip.">
+	<meta name="twitter:title" content="Cosmos — Living Worlds · three.ws" data-i18n-attr="content:cosmos.meta_twitter_title">
+	<meta name="twitter:description" content="Bring your avatar to life: type a world and NVIDIA Cosmos renders a living, photoreal scene that plays behind your 3D avatar. Generate, preview, and download a short cinematic clip." data-i18n-attr="content:cosmos.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Cosmos+%E2%80%94+Living+Worlds&amp;d=Bring+your+avatar+to+life%3A+type+a+world+and+NVIDIA+Cosmos+renders+a+living%2C+photoreal+scene+that+plays+behind+your+3D+avatar.+Generate%2C+preview%2C+and+download+a+&amp;p=%2Fcosmos">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Cosmos — Living Worlds","description":"Bring your avatar to life: type a world and NVIDIA Cosmos renders a living, photoreal scene that plays behind your 3D avatar. Generate, preview, and download a short cinematic clip.","url":"https://three.ws/cosmos","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&amp;t=Cosmos+%E2%80%94+Living+Worlds&amp;d=Bring+your+avatar+to+life%3A+type+a+world+and+NVIDIA+Cosmos+renders+a+living%2C+photoreal+scene+that+plays+behind+your+3D+avatar.+Generate%2C+preview%2C+and+download+a+&amp;p=%2Fcosmos"}]}</script>
 </head>
 	<body>
 		<header class="cz-bar">
-			<a class="cz-back" href="/forge" aria-label="Back to the Forge">
+			<a class="cz-back" href="/forge" aria-label="Back to the Forge" data-i18n-attr="aria-label:cosmos.back_to_the_forge_arialabel">
 				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
 					<path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
 				</svg>
 				Forge
 			</a>
 			<div class="cz-brand">
-				<b>Cosmos · Living Worlds</b>
-				<span>NVIDIA world models — type a world, watch your avatar live in it</span>
+				<b data-i18n="cosmos.cosmos_living_worlds">Cosmos · Living Worlds</b>
+				<span data-i18n="cosmos.nvidia_world_models_type_a_world_watch">NVIDIA world models — type a world, watch your avatar live in it</span>
 			</div>
 			<div class="cz-badge" id="cz-status-badge" title="Cosmos lane status">
 				<span class="dot"></span>
-				<span id="cz-status-text">NVIDIA Cosmos</span>
+				<span id="cz-status-text" data-i18n="cosmos.nvidia_cosmos">NVIDIA Cosmos</span>
 			</div>
 		</header>
 
@@ -682,13 +682,13 @@
 				></model-viewer>
 
 				<div class="cz-stage-tools">
-					<button class="cz-iconbtn" id="cz-download" type="button" title="Download the world clip (MP4)">
+					<button class="cz-iconbtn" id="cz-download" type="button" title="Download the world clip (MP4)" data-i18n-attr="title:cosmos.download_the_world_clip_mp4_title">
 						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
 							<path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
 						</svg>
 						MP4
 					</button>
-					<button class="cz-iconbtn" id="cz-copy" type="button" title="Copy a shareable link to this world">
+					<button class="cz-iconbtn" id="cz-copy" type="button" title="Copy a shareable link to this world" data-i18n-attr="title:cosmos.copy_a_shareable_link_to_thi_title">
 						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
 							<path d="M10 13a5 5 0 007 0l2-2a5 5 0 00-7-7l-1 1m-1 8a5 5 0 01-7 0l-2-2a5 5 0 017-7l1 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
 						</svg>
@@ -699,12 +699,12 @@
 				<div class="cz-scrim" role="status" aria-live="polite">
 					<div class="cz-prog">
 						<div class="cz-prog-row">
-							<span id="cz-prog-label">Summoning the world…</span>
-							<span id="cz-prog-time">0s</span>
+							<span id="cz-prog-label" data-i18n="cosmos.summoning_the_world">Summoning the world…</span>
+							<span id="cz-prog-time" data-i18n="cosmos.0s">0s</span>
 						</div>
 						<div class="cz-prog-bar"><i id="cz-prog-fill"></i></div>
 						<div class="cz-phases" id="cz-phases">
-							<b>Submitting</b><span>· Rendering frames</span><span>· Finalizing</span>
+							<b data-i18n="cosmos.submitting">Submitting</b><span data-i18n="cosmos.rendering_frames">· Rendering frames</span><span data-i18n="cosmos.finalizing">· Finalizing</span>
 						</div>
 					</div>
 				</div>
@@ -713,15 +713,15 @@
 			<!-- Controls -->
 			<aside class="cz-panel">
 				<div>
-					<h1 class="cz-h">Bring your avatar to life</h1>
-					<p class="cz-sub">
+					<h1 class="cz-h" data-i18n="cosmos.bring_your_avatar_to_life">Bring your avatar to life</h1>
+					<p class="cz-sub" data-i18n="cosmos.nvidia_cosmos_renders_a_living_photoreal_wor">
 						NVIDIA Cosmos renders a living, photoreal world from your words. Describe a place — your
 						avatar steps straight into it.
 					</p>
 				</div>
 
 				<div>
-					<label class="cz-label" for="cz-prompt">Describe the world</label>
+					<label class="cz-label" for="cz-prompt" data-i18n="cosmos.describe_the_world">Describe the world</label>
 					<textarea
 						id="cz-prompt"
 						class="cz-textarea"
@@ -731,31 +731,31 @@
 					<div class="cz-chips" id="cz-chips" role="group" aria-label="Prompt ideas"></div>
 				</div>
 
-				<button class="cz-generate" id="cz-generate" type="button">
+				<button class="cz-generate" id="cz-generate" type="button" data-i18n-html="cosmos.generate_world">
 					<span class="spin" aria-hidden="true"></span>
 					<span class="label-go">Generate world</span>
 				</button>
 				<div class="cz-secondary" id="cz-secondary" style="display: none">
-					<button class="cz-btn-ghost" id="cz-cancel" type="button">Cancel</button>
-					<button class="cz-btn-ghost" id="cz-regen" type="button" style="display: none">New world</button>
+					<button class="cz-btn-ghost" id="cz-cancel" type="button" data-i18n="cosmos.cancel">Cancel</button>
+					<button class="cz-btn-ghost" id="cz-regen" type="button" style="display: none" data-i18n="cosmos.new_world">New world</button>
 				</div>
 
 				<div class="cz-note" id="cz-note" role="alert"></div>
 
 				<div>
-					<label class="cz-label">Choose your avatar</label>
+					<label class="cz-label" data-i18n="cosmos.choose_your_avatar">Choose your avatar</label>
 					<div class="cz-avatars" id="cz-avatars"></div>
 				</div>
 
 				<details class="cz-adv">
-					<summary>Advanced</summary>
+					<summary data-i18n="cosmos.advanced">Advanced</summary>
 					<div class="cz-row">
-						<label class="cz-label" for="cz-seed" style="margin: 0">Seed</label>
+						<label class="cz-label" for="cz-seed" style="margin: 0" data-i18n="cosmos.seed">Seed</label>
 						<input id="cz-seed" type="number" min="0" max="4294967295" placeholder="random" />
 					</div>
 				</details>
 
-				<p class="cz-foot">
+				<p class="cz-foot" data-i18n="cosmos.each_world_is_a_5_second_1280">
 					Each world is a ~5-second 1280×704 clip from NVIDIA Cosmos. Free, on the NVIDIA NIM tier.
 				</p>
 			</aside>
@@ -764,5 +764,7 @@
 		<div class="cz-toast" id="cz-toast" role="status" aria-live="polite"></div>
 
 		<script type="module" src="/src/cosmos.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

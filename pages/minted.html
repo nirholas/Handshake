@@ -4,29 +4,29 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Minted 3D Assets · three.ws</title>
+		<title data-i18n="minted.meta_title">Minted 3D Assets · three.ws</title>
 		<meta
 			name="description"
 			content="Every generated 3D avatar minted as a Metaplex Core NFT through three.ws — a live, public gallery with an interactive viewer, baked provenance, and enforced creator royalties on every card."
-		/>
+		 data-i18n-attr="content:minted.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/minted" />
-		<meta property="og:title" content="Minted 3D Assets · three.ws" />
+		<meta property="og:title" content="Minted 3D Assets · three.ws"  data-i18n-attr="content:minted.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Every generated 3D avatar minted as a Metaplex Core NFT through three.ws — live viewer, baked provenance, and enforced creator royalties on every card."
-		/>
+		 data-i18n-attr="content:minted.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Minted+3D+Assets&amp;d=Live+public+gallery+of+every+generated+3D+avatar+minted+as+a+Metaplex+Core+NFT+through+three.ws+%E2%80%94+interactive+viewer%2C+baked+provenance%2C+and+enforced+creator+roy&amp;p=%2Fminted" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Minted 3D Assets · three.ws" />
+		<meta name="twitter:title" content="Minted 3D Assets · three.ws"  data-i18n-attr="content:minted.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Every generated 3D avatar minted as a Metaplex Core NFT through three.ws — live viewer, baked provenance, enforced creator royalties."
-		/>
+		 data-i18n-attr="content:minted.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Minted+3D+Assets&amp;d=Live+public+gallery+of+every+generated+3D+avatar+minted+as+a+Metaplex+Core+NFT+through+three.ws+%E2%80%94+interactive+viewer%2C+baked+provenance%2C+and+enforced+creator+roy&amp;p=%2Fminted" />
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -54,50 +54,50 @@
 
 		<main class="mn-shell">
 			<section class="mn-hero">
-				<p class="mn-kicker"><span class="mn-live-dot" aria-hidden="true"></span> Live from Solana</p>
-				<h1 class="mn-title">Minted <em>3D Assets</em></h1>
-				<p class="mn-sub">
+				<p class="mn-kicker" data-i18n-html="minted.live_from_solana"><span class="mn-live-dot" aria-hidden="true"></span> Live from Solana</p>
+				<h1 class="mn-title" data-i18n-html="minted.minted_3d_assets">Minted <em>3D Assets</em></h1>
+				<p class="mn-sub" data-i18n-html="minted.every_generated_or_owned_avatar_a_creator">
 					Every generated or owned avatar a creator chose to mint as a <strong>Metaplex Core NFT</strong> —
 					real on-chain property whose media is a live, interactive 3D viewer, not a flat picture. Each
 					card carries baked, independently-verifiable <strong>provenance</strong> and an enforced,
 					capped creator <strong>royalty</strong> that pays out the moment a remix mints.
 				</p>
 				<div class="mn-net" role="tablist" aria-label="Network">
-					<button type="button" class="mn-net-btn active" data-network="mainnet" role="tab" aria-selected="true">Mainnet</button>
-					<button type="button" class="mn-net-btn" data-network="devnet" role="tab" aria-selected="false">Devnet</button>
+					<button type="button" class="mn-net-btn active" data-network="mainnet" role="tab" aria-selected="true" data-i18n="minted.mainnet">Mainnet</button>
+					<button type="button" class="mn-net-btn" data-network="devnet" role="tab" aria-selected="false" data-i18n="minted.devnet">Devnet</button>
 				</div>
 				<div class="mn-hero-ctas">
-					<a class="mn-btn mn-btn-primary" href="/forge">Forge a 3D model</a>
-					<a class="mn-btn" href="/agent-identities">Mint your own</a>
-					<a class="mn-btn" href="/gallery">Browse the avatar gallery</a>
+					<a class="mn-btn mn-btn-primary" href="/forge" data-i18n="minted.forge_a_3d_model">Forge a 3D model</a>
+					<a class="mn-btn" href="/agent-identities" data-i18n="minted.mint_your_own">Mint your own</a>
+					<a class="mn-btn" href="/gallery" data-i18n="minted.browse_the_avatar_gallery">Browse the avatar gallery</a>
 				</div>
 			</section>
 
 			<dl class="mn-counters" id="mn-counters">
 				<div class="mn-counter mn-counter--lead">
-					<dt>Minted</dt>
+					<dt data-i18n="minted.minted">Minted</dt>
 					<dd id="mn-c-total">—</dd>
-					<span class="mn-counter-sub">on this page</span>
+					<span class="mn-counter-sub" data-i18n="minted.on_this_page">on this page</span>
 				</div>
 				<div class="mn-counter">
-					<dt>Avg. royalty</dt>
+					<dt data-i18n="minted.avg_royalty">Avg. royalty</dt>
 					<dd id="mn-c-royalty">—</dd>
-					<span class="mn-counter-sub">enforced on-chain</span>
+					<span class="mn-counter-sub" data-i18n="minted.enforced_on_chain">enforced on-chain</span>
 				</div>
 				<div class="mn-counter">
-					<dt>Remixes</dt>
+					<dt data-i18n="minted.remixes">Remixes</dt>
 					<dd id="mn-c-remix">—</dd>
-					<span class="mn-counter-sub">with royalty paid</span>
+					<span class="mn-counter-sub" data-i18n="minted.with_royalty_paid">with royalty paid</span>
 				</div>
 				<div class="mn-counter">
-					<dt>Network</dt>
-					<dd id="mn-c-network">mainnet</dd>
-					<span class="mn-counter-sub">selected feed</span>
+					<dt data-i18n="minted.network">Network</dt>
+					<dd id="mn-c-network" data-i18n="minted.mainnet_2">mainnet</dd>
+					<span class="mn-counter-sub" data-i18n="minted.selected_feed">selected feed</span>
 				</div>
 			</dl>
 
 			<section class="mn-feed-head">
-				<h2 class="mn-section-h">Live gallery</h2>
+				<h2 class="mn-section-h" data-i18n="minted.live_gallery">Live gallery</h2>
 				<span id="mn-count" class="mn-count" aria-live="polite"></span>
 			</section>
 
@@ -106,7 +106,7 @@
 			<div id="mn-footer-state" class="mn-footer-state"></div>
 
 			<section class="mn-about">
-				<h2 class="mn-section-h">How minting works here</h2>
+				<h2 class="mn-section-h" data-i18n="minted.how_minting_works_here">How minting works here</h2>
 				<p class="mn-about-body">
 					Minting is always opt-in — the free text→3D lane never auto-mints. A creator picks a generated
 					or owned GLB, an optional royalty rate (capped at 10%), and mints it on devnet (default, free
@@ -115,7 +115,7 @@
 					independently-signed record on the platform's append-only provenance ledger. Naming another
 					creator's mint as a <code>parent_mint</code> (a remix) routes their royalty share out of your
 					mint fee as a real on-chain USDC transfer, the moment your mint confirms.
-					Read more in <a href="/docs/mcp#mint_3d_asset">the MCP tool docs</a> or query any mint back with
+					Read more in <a href="/docs/mcp#mint_3d_asset" data-i18n="minted.the_mcp_tool_docs">the MCP tool docs</a> or query any mint back with
 					<code>get_3d_asset_onchain</code>.
 				</p>
 			</section>
@@ -125,5 +125,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

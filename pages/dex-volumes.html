@@ -18,19 +18,19 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>DEX Volumes · three.ws</title>
+		<title data-i18n="dex_volumes.meta_title">DEX Volumes · three.ws</title>
 		<meta
 			name="description"
 			content="Live decentralized-exchange trading volume — the top DEXs ranked by 24h volume, with the chains they run on, 7d volume, 7d change, and each venue's share of total on-chain trading."
-		/>
+		 data-i18n-attr="content:dex_volumes.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/dex-volumes" />
-		<meta property="og:title" content="DEX Volumes · three.ws" />
+		<meta property="og:title" content="DEX Volumes · three.ws"  data-i18n-attr="content:dex_volumes.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Live decentralized-exchange trading volume — the top DEXs ranked by 24h volume, with chains, 7d volume, 7d change, and market share."
-		/>
+		 data-i18n-attr="content:dex_volumes.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=DEX+Volume+Leaderboard&amp;d=Every+decentralized+exchange+ranked+by+trading+volume%2C+with+24h+and+7d+totals%2C+7-day+change%2C+and+market+share%2C+plus+an+aggregate+volume+history+chart.+Live+from&amp;p=%2Fdex-volumes"
@@ -41,11 +41,11 @@
 		<meta property="og:locale" content="en_US" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="DEX Volumes · three.ws" />
+		<meta name="twitter:title" content="DEX Volumes · three.ws"  data-i18n-attr="content:dex_volumes.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Live decentralized-exchange trading volume — the top DEXs ranked by 24h volume, with chains, 7d volume, 7d change, and market share."
-		/>
+		 data-i18n-attr="content:dex_volumes.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=DEX+Volume+Leaderboard&amp;d=Every+decentralized+exchange+ranked+by+trading+volume%2C+with+24h+and+7d+totals%2C+7-day+change%2C+and+market+share%2C+plus+an+aggregate+volume+history+chart.+Live+from&amp;p=%2Fdex-volumes"
@@ -84,12 +84,12 @@
 
 		<main class="cv-container">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a><span class="sep">/</span
-				><a href="/defi">DeFi</a><span class="sep">/</span
-				><span class="here">DEX Volumes</span>
+				<a href="/markets" data-i18n="dex_volumes.markets">Markets</a><span class="sep">/</span
+				><a href="/defi" data-i18n="dex_volumes.defi">DeFi</a><span class="sep">/</span
+				><span class="here" data-i18n="dex_volumes.dex_volumes">DEX Volumes</span>
 			</nav>
-			<h1 class="cv-h1">DEX Volumes</h1>
-			<p class="cv-sub">
+			<h1 class="cv-h1" data-i18n="dex_volumes.dex_volumes_2">DEX Volumes</h1>
+			<p class="cv-sub" data-i18n="dex_volumes.where_on_chain_trading_happens_decentralized">
 				Where on-chain trading happens — decentralized exchanges ranked by 24-hour volume,
 				with the chains they run on, 7-day volume, weekly change, and each venue's share of
 				total DEX activity.
@@ -102,10 +102,10 @@
 			<section id="dx-chart" class="cv-section" aria-label="Aggregate DEX volume over time"></section>
 
 			<div class="cv-toolbar">
-				<h2 class="cv-h2" style="margin: 0">Top DEXs by Volume</h2>
+				<h2 class="cv-h2" style="margin: 0" data-i18n="dex_volumes.top_dexs_by_volume">Top DEXs by Volume</h2>
 				<div class="cv-pills">
-					<a class="cv-pill" href="/fees">Fees &amp; Revenue →</a>
-					<a class="cv-pill" href="/defi">DeFi TVL →</a>
+					<a class="cv-pill" href="/fees" data-i18n="dex_volumes.fees_revenue">Fees &amp; Revenue →</a>
+					<a class="cv-pill" href="/defi" data-i18n="dex_volumes.defi_tvl">DeFi TVL →</a>
 				</div>
 			</div>
 
@@ -118,5 +118,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

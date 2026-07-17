@@ -4,15 +4,15 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<title>Agent Genome · Breed two agents · three.ws</title>
+		<title data-i18n="genome.meta_title">Agent Genome · Breed two agents · three.ws</title>
 		<meta
 			name="description"
 			content="Breed two AI agents into a provably-inherited offspring. The child inherits a recombination of both parents' brain, voice, body, and on-chain skills — with a verifiable, tamper-evident family tree."
-		/>
+		 data-i18n-attr="content:genome.meta_description"/>
 		<link rel="canonical" href="https://three.ws/genome" />
 		<meta property="og:type" content="website" />
-		<meta property="og:title" content="Agent Genome · three.ws" />
-		<meta property="og:description" content="Breed two agents into a child that provably inherits brain, voice, body, and on-chain skills — with a verifiable family tree." />
+		<meta property="og:title" content="Agent Genome · three.ws"  data-i18n-attr="content:genome.meta_og_title"/>
+		<meta property="og:description" content="Breed two agents into a child that provably inherits brain, voice, body, and on-chain skills — with a verifiable family tree."  data-i18n-attr="content:genome.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/genome" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Agent+Genome+%E2%80%94+breed+two+agents&amp;d=Breed+two+AI+agents+into+a+provably-inherited+offspring.+The+child+inherits+a+recombination+of+both+parents%27+brain%2C+voice%2C+body%2C+and+on-chain+skill+licenses+%E2%80%94+e&amp;p=%2Fgenome" />
 		<meta name="twitter:card" content="summary_large_image" />
@@ -29,8 +29,8 @@
 	<meta property="og:locale" content="en_US">
 	<meta property="og:image:alt" content="Agent Genome — breed two agents — three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Agent Genome — breed two agents · three.ws">
-	<meta name="twitter:description" content="Breed two AI agents into a provably-inherited offspring. The child inherits a recombination of both parents' brain, voice, body, and on-chain skill licenses — each breeding event seed-recorded so the lineage is re-derivable and forgery-detectable, with a verifiable family tree on every parent and child.">
+	<meta name="twitter:title" content="Agent Genome — breed two agents · three.ws" data-i18n-attr="content:genome.meta_twitter_title">
+	<meta name="twitter:description" content="Breed two AI agents into a provably-inherited offspring. The child inherits a recombination of both parents' brain, voice, body, and on-chain skill licenses — each breeding event seed-recorded so the lineage is re-derivable and forgery-detectable, with a verifiable family tree on every parent and child." data-i18n-attr="content:genome.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Agent+Genome+%E2%80%94+breed+two+agents&amp;d=Breed+two+AI+agents+into+a+provably-inherited+offspring.+The+child+inherits+a+recombination+of+both+parents%27+brain%2C+voice%2C+body%2C+and+on-chain+skill+licenses+%E2%80%94+e&amp;p=%2Fgenome">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Agent Genome — breed two agents","description":"Breed two AI agents into a provably-inherited offspring. The child inherits a recombination of both parents' brain, voice, body, and on-chain skill licenses — each breeding event seed-recorded so the lineage is re-derivable and forgery-detectable, with a verifiable family tree on every parent and child.","url":"https://three.ws/genome","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=build&amp;t=Agent+Genome+%E2%80%94+breed+two+agents&amp;d=Breed+two+AI+agents+into+a+provably-inherited+offspring.+The+child+inherits+a+recombination+of+both+parents%27+brain%2C+voice%2C+body%2C+and+on-chain+skill+licenses+%E2%80%94+e&amp;p=%2Fgenome"}]}</script>
 </head>
@@ -39,8 +39,8 @@
 
 		<main class="gn-main">
 			<section class="gn-hero">
-				<h1>Agent Genome</h1>
-				<p>
+				<h1 data-i18n="genome.agent_genome">Agent Genome</h1>
+				<p data-i18n-html="genome.breed_two_agents_into_a_genuinely_new">
 					Breed two agents into a genuinely new one that <strong>provably inherits</strong>
 					a recombination of both parents — brain, voice, body, and on-chain skills — with a
 					tamper-evident family tree. <a class="gn-hero-link" href="/galaxy">See the lineage in the galaxy →</a>
@@ -50,26 +50,26 @@
 			<!-- The breeding bench -->
 			<section class="gn-bench" aria-label="Choose two parents">
 				<div class="gn-parent" id="gnParentA" data-slot="a">
-					<span class="gn-parent-label">Parent A</span>
+					<span class="gn-parent-label" data-i18n="genome.parent_a">Parent A</span>
 					<div class="gn-slot" id="gnSlotA">
-						<button class="gn-slot-empty" type="button" data-pick="a">+ Choose an agent</button>
+						<button class="gn-slot-empty" type="button" data-pick="a" data-i18n="genome.choose_an_agent">+ Choose an agent</button>
 					</div>
 				</div>
 
 				<div class="gn-cross" aria-hidden="true">✕</div>
 
 				<div class="gn-parent" id="gnParentB" data-slot="b">
-					<span class="gn-parent-label">Parent B</span>
+					<span class="gn-parent-label" data-i18n="genome.parent_b">Parent B</span>
 					<div class="gn-slot" id="gnSlotB">
-						<button class="gn-slot-empty" type="button" data-pick="b">+ Choose an agent</button>
+						<button class="gn-slot-empty" type="button" data-pick="b" data-i18n="genome.choose_an_agent_2">+ Choose an agent</button>
 					</div>
 				</div>
 			</section>
 
 			<div class="gn-actions">
-				<button class="gn-btn" id="gnPreview" type="button" disabled>Preview offspring</button>
-				<button class="gn-btn gn-btn-primary" id="gnBreed" type="button" disabled>Breed</button>
-				<button class="gn-btn gn-btn-ghost" id="gnReroll" type="button" hidden>Reroll seed</button>
+				<button class="gn-btn" id="gnPreview" type="button" disabled data-i18n="genome.preview_offspring">Preview offspring</button>
+				<button class="gn-btn gn-btn-primary" id="gnBreed" type="button" disabled data-i18n="genome.breed">Breed</button>
+				<button class="gn-btn gn-btn-ghost" id="gnReroll" type="button" hidden data-i18n="genome.reroll_seed">Reroll seed</button>
 			</div>
 
 			<div id="gnNotes" aria-live="polite"></div>
@@ -79,8 +79,8 @@
 
 			<!-- Stud market -->
 			<section aria-label="Stud market">
-				<h2 class="gn-section-title">Stud market</h2>
-				<p class="gn-section-sub">Rare-pedigree agents their owners have opened for breeding. Deeper lineage and emergent skills command higher $THREE stud fees.</p>
+				<h2 class="gn-section-title" data-i18n="genome.stud_market">Stud market</h2>
+				<p class="gn-section-sub" data-i18n="genome.rare_pedigree_agents_their_owners_have_opene">Rare-pedigree agents their owners have opened for breeding. Deeper lineage and emergent skills command higher $THREE stud fees.</p>
 				<div class="gn-studs" id="gnStuds"></div>
 			</section>
 		</main>
@@ -89,8 +89,8 @@
 		<div class="gn-modal" id="gnModal" hidden role="dialog" aria-modal="true" aria-labelledby="gnModalTitle">
 			<div class="gn-modal-card">
 				<div class="gn-modal-head">
-					<h2 id="gnModalTitle">Choose a parent</h2>
-					<button class="gn-modal-close" id="gnModalClose" type="button" aria-label="Close">&times;</button>
+					<h2 id="gnModalTitle" data-i18n="genome.choose_a_parent">Choose a parent</h2>
+					<button class="gn-modal-close" id="gnModalClose" type="button" aria-label="Close" data-i18n-attr="aria-label:genome.close_arialabel">&times;</button>
 				</div>
 				<div class="gn-modal-list" id="gnModalList"></div>
 			</div>
@@ -102,5 +102,7 @@
 		<script type="module" src="/src/genome.js"></script>
 		<script src="/footer.js" defer></script>
 		<script src="/brand.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

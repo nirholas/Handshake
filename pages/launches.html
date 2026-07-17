@@ -4,29 +4,29 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Agent Launches · three.ws</title>
+		<title data-i18n="launches.meta_title">Agent Launches · three.ws</title>
 		<meta
 			name="description"
 			content="Every coin launched by a three.ws agent — a live public feed with market caps, graduation status, and the agent behind each launch."
-		/>
+		 data-i18n-attr="content:launches.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/launches" />
-		<meta property="og:title" content="Agent Launches · three.ws" />
+		<meta property="og:title" content="Agent Launches · three.ws"  data-i18n-attr="content:launches.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Every coin launched by a three.ws agent — a live public feed with market caps, graduation status, and the agent behind each launch."
-		/>
+		 data-i18n-attr="content:launches.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Launches&amp;d=Live+public+feed+of+every+coin+launched+by+a+three.ws+agent+%E2%80%94+market+caps%2C+graduation+status%2C+and+the+agent+behind+each+launch.&amp;p=%2Flaunches" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Agent Launches · three.ws" />
+		<meta name="twitter:title" content="Agent Launches · three.ws"  data-i18n-attr="content:launches.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Every coin launched by a three.ws agent — a live public feed with market caps, graduation status, and the agent behind each launch."
-		/>
+		 data-i18n-attr="content:launches.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Launches&amp;d=Live+public+feed+of+every+coin+launched+by+a+three.ws+agent+%E2%80%94+market+caps%2C+graduation+status%2C+and+the+agent+behind+each+launch.&amp;p=%2Flaunches" />
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -60,44 +60,44 @@
 
 		<main class="lx-shell" aria-labelledby="lx-title">
 			<section class="lx-hero">
-				<p class="lx-kicker">
+				<p class="lx-kicker" data-i18n-html="launches.live_from_the_chain">
 					<span class="lx-live-dot" aria-hidden="true"></span>
 					Live from the chain
 				</p>
-				<h1 id="lx-title" class="lx-title" data-text="LAUNCHES">
+				<h1 id="lx-title" class="lx-title" data-text="LAUNCHES" data-i18n-html="launches.agent_launches">
 					<span class="lx-title-line">AGENT</span>
 					<span class="lx-title-line lx-title-em">LAUNCHES</span>
 				</h1>
-				<p class="lx-sub">
+				<p class="lx-sub" data-i18n="launches.every_coin_born_from_a_three_ws">
 					Every coin born from a three.ws agent, the moment it happens — live market caps,
 					graduation status, and a direct line to the mind behind each mint.
 				</p>
 				<div class="lx-hero-ctas">
-					<a class="lx-btn lx-btn-primary" href="/launch">Launch a coin</a>
-					<a class="lx-btn" href="/create-agent">Create an agent</a>
-					<a class="lx-btn" href="/forge">Forge a 3D model from text</a>
-					<a class="lx-btn" href="/agents">Browse agents</a>
+					<a class="lx-btn lx-btn-primary" href="/launch" data-i18n="launches.launch_a_coin">Launch a coin</a>
+					<a class="lx-btn" href="/create-agent" data-i18n="launches.create_an_agent">Create an agent</a>
+					<a class="lx-btn" href="/forge" data-i18n="launches.forge_a_3d_model_from_text">Forge a 3D model from text</a>
+					<a class="lx-btn" href="/agents" data-i18n="launches.browse_agents">Browse agents</a>
 				</div>
 				<dl class="lx-stats-row" aria-label="Feed statistics">
 					<div class="lx-stat">
-						<dt>Launches</dt>
+						<dt data-i18n="launches.launches">Launches</dt>
 						<dd id="lx-stat-count">—</dd>
 					</div>
 					<div class="lx-stat">
-						<dt>Latest</dt>
+						<dt data-i18n="launches.latest">Latest</dt>
 						<dd id="lx-stat-latest">—</dd>
 					</div>
 					<div class="lx-stat" title="Combined live market cap of the loaded launches">
-						<dt>Combined cap</dt>
+						<dt data-i18n="launches.combined_cap">Combined cap</dt>
 						<dd id="lx-stat-mcap">—</dd>
 					</div>
 					<div class="lx-stat" title="Loaded launches that have graduated off the bonding curve">
-						<dt>Graduated</dt>
+						<dt data-i18n="launches.graduated">Graduated</dt>
 						<dd id="lx-stat-grad">—</dd>
 					</div>
 					<div class="lx-stat">
-						<dt>Network</dt>
-						<dd id="lx-stat-network">mainnet</dd>
+						<dt data-i18n="launches.network">Network</dt>
+						<dd id="lx-stat-network" data-i18n="launches.mainnet">mainnet</dd>
 					</div>
 				</dl>
 			</section>
@@ -109,7 +109,7 @@
 			<!-- Live money layer: the platform-wide Money Pulse, compact. Self-hides
 			     when nothing is happening; links to the full /pulse feed. -->
 			<div class="lx-pulse-strip">
-				<a class="lx-pulse-label" href="/pulse">◎ Money Pulse →</a>
+				<a class="lx-pulse-label" href="/pulse" data-i18n="launches.money_pulse">◎ Money Pulse →</a>
 				<div class="lx-pulse-ticker" data-money-pulse-ticker data-network="mainnet" aria-label="Live wallet activity across three.ws"></div>
 			</div>
 			<script type="module" src="/src/pulse-ticker-embed.js"></script>
@@ -122,7 +122,7 @@
 						data-network="mainnet"
 						role="tab"
 						aria-selected="true"
-					>
+					 data-i18n="launches.mainnet_2">
 						Mainnet
 					</button>
 					<button
@@ -131,26 +131,26 @@
 						data-network="devnet"
 						role="tab"
 						aria-selected="false"
-					>
+					 data-i18n="launches.devnet">
 						Devnet
 					</button>
 				</div>
 				<div class="lx-oracle-filter" role="group" aria-label="Oracle conviction filter">
-					<button type="button" class="lx-of-btn active" data-tier="" aria-pressed="true">All</button>
-					<button type="button" class="lx-of-btn" data-tier="prime" aria-pressed="false">⭐ Prime</button>
-					<button type="button" class="lx-of-btn" data-tier="strong" aria-pressed="false">Strong</button>
-					<button type="button" class="lx-of-btn" data-tier="lean" aria-pressed="false">Lean</button>
+					<button type="button" class="lx-of-btn active" data-tier="" aria-pressed="true" data-i18n="launches.all">All</button>
+					<button type="button" class="lx-of-btn" data-tier="prime" aria-pressed="false" data-i18n="launches.prime">⭐ Prime</button>
+					<button type="button" class="lx-of-btn" data-tier="strong" aria-pressed="false" data-i18n="launches.strong">Strong</button>
+					<button type="button" class="lx-of-btn" data-tier="lean" aria-pressed="false" data-i18n="launches.lean">Lean</button>
 				</div>
 				<div id="lx-agent-filter" class="lx-agent-filter" hidden></div>
 				<span id="lx-count" class="lx-count" aria-live="polite"></span>
 			</section>
 
 			<nav class="lx-explore" aria-label="Explore the launchpad">
-				<a class="lx-explore-link" href="/watchlist">★ Watchlist →</a>
-					<a class="lx-explore-link" href="/radar">Coin radar →</a>
-					<a class="lx-explore-link" href="/pump-live">Live stream →</a>
-				<a class="lx-explore-link" href="/pump-visualizer">3D Visualizer →</a>
-				<a class="lx-explore-link" href="/launchpad">Launchpad Studio →</a>
+				<a class="lx-explore-link" href="/watchlist" data-i18n="launches.watchlist">★ Watchlist →</a>
+					<a class="lx-explore-link" href="/radar" data-i18n="launches.coin_radar">Coin radar →</a>
+					<a class="lx-explore-link" href="/pump-live" data-i18n="launches.live_stream">Live stream →</a>
+				<a class="lx-explore-link" href="/pump-visualizer" data-i18n="launches.3d_visualizer">3D Visualizer →</a>
+				<a class="lx-explore-link" href="/launchpad" data-i18n="launches.launchpad_studio">Launchpad Studio →</a>
 			</nav>
 
 			<section id="lx-feed" class="lx-grid" aria-label="Launched coins" aria-busy="true"></section>
@@ -162,5 +162,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -4,31 +4,31 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Launch a Coin — mint a token for your 3D agent · three.ws</title>
+		<title data-i18n="launch.meta_title">Launch a Coin — mint a token for your 3D agent · three.ws</title>
 		<meta
 			name="description"
 			content="Launch a coin for your 3D AI agent in one flow. Pick an agent, set the name, symbol, and image, then mint on pump.fun straight from your wallet — with an optional three.ws-branded vanity mint."
-		/>
+		 data-i18n-attr="content:launch.meta_description"/>
 		<meta name="robots" content="index, follow" />
 		<link rel="canonical" href="https://three.ws/launch" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Launch a Coin — mint a token for your 3D agent" />
+		<meta property="og:title" content="Launch a Coin — mint a token for your 3D agent"  data-i18n-attr="content:launch.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Pick an agent, set name + symbol + image, and mint a coin on pump.fun straight from your wallet."
-		/>
+		 data-i18n-attr="content:launch.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/launch" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Launch+a+Coin&amp;d=Mint+a+coin+for+your+3D+AI+agent+in+one+flow+%E2%80%94+pick+an+agent%2C+set+the+name%2C+symbol%2C+and+image%2C+then+launch+on+pump.fun+straight+from+your+wallet+with+an+optiona&amp;p=%2Flaunch" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Launch a Coin — mint a token for your 3D agent" />
+		<meta name="twitter:title" content="Launch a Coin — mint a token for your 3D agent"  data-i18n-attr="content:launch.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Pick an agent, set name + symbol + image, and mint a coin on pump.fun straight from your wallet."
-		/>
+		 data-i18n-attr="content:launch.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Launch+a+Coin&amp;d=Mint+a+coin+for+your+3D+AI+agent+in+one+flow+%E2%80%94+pick+an+agent%2C+set+the+name%2C+symbol%2C+and+image%2C+then+launch+on+pump.fun+straight+from+your+wallet+with+an+optiona&amp;p=%2Flaunch" />
 
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -128,17 +128,17 @@
 
 		<main class="lc-main" id="main-content">
 			<nav class="lc-breadcrumb" aria-label="Breadcrumb">
-				<a href="/">three.ws</a>
+				<a href="/" data-i18n="launch.three_ws">three.ws</a>
 				<span aria-hidden="true">/</span>
-				<a href="/launches">Launches</a>
+				<a href="/launches" data-i18n="launch.launches">Launches</a>
 				<span aria-hidden="true">/</span>
-				<span>Launch a Coin</span>
+				<span data-i18n="launch.launch_a_coin">Launch a Coin</span>
 			</nav>
 
 			<section class="lc-hero">
-				<span class="lc-pill"><span class="lc-pill-dot"></span> Powered by pump.fun</span>
-				<h1>Launch a Coin</h1>
-				<p>Pick your agent, set the name, symbol, and image — then mint on-chain straight from your wallet.</p>
+				<span class="lc-pill" data-i18n-html="launch.powered_by_pump_fun"><span class="lc-pill-dot"></span> Powered by pump.fun</span>
+				<h1 data-i18n="launch.launch_a_coin_2">Launch a Coin</h1>
+				<p data-i18n="launch.pick_your_agent_set_the_name_symbol">Pick your agent, set the name, symbol, and image — then mint on-chain straight from your wallet.</p>
 			</section>
 
 			<div id="launch-root"></div>
@@ -159,5 +159,7 @@
 			mountLaunchCoin(document.getElementById('launch-root'));
 		</script>
 		<script src="/brand.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

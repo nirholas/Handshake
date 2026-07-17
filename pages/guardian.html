@@ -4,8 +4,8 @@
 	<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title>Guardian console · three.ws</title>
-	<meta name="description" content="The agents you’re trusted to protect. Approve a recovery, confirm an inheritance — help a fellow human back into their funded agent wallet, without ever touching their keys." />
+	<title data-i18n="guardian.meta_title">Guardian console · three.ws</title>
+	<meta name="description" content="The agents you’re trusted to protect. Approve a recovery, confirm an inheritance — help a fellow human back into their funded agent wallet, without ever touching their keys."  data-i18n-attr="content:guardian.meta_description"/>
 	<link rel="canonical" href="https://three.ws/guardian" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -15,8 +15,8 @@
 	<link rel="stylesheet" href="/nav.css" />
 	<link rel="stylesheet" href="/mobile.css" />
 	<meta property="og:type" content="website" />
-	<meta property="og:title" content="Guardian console · three.ws" />
-	<meta property="og:description" content="The agents you’re trusted to protect. Approve a recovery or confirm an inheritance — without ever touching anyone’s keys." />
+	<meta property="og:title" content="Guardian console · three.ws"  data-i18n-attr="content:guardian.meta_og_title"/>
+	<meta property="og:description" content="The agents you’re trusted to protect. Approve a recovery or confirm an inheritance — without ever touching anyone’s keys."  data-i18n-attr="content:guardian.meta_og_description"/>
 	<meta property="og:url" content="https://three.ws/guardian" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<style>
@@ -38,8 +38,8 @@
 	<meta property="og:image:type" content="image/png">
 	<meta property="og:image:alt" content="Guardian console — recover &amp; inherit agent wallets — three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Guardian console — recover &amp; inherit agent wallets · three.ws">
-	<meta name="twitter:description" content="The agents you’re trusted to protect. Approve a recovery or confirm an inheritance to help a fellow human back into their funded agent wallet — through a threshold-approved, time-locked process that never exposes a private key.">
+	<meta name="twitter:title" content="Guardian console — recover &amp; inherit agent wallets · three.ws" data-i18n-attr="content:guardian.meta_twitter_title">
+	<meta name="twitter:description" content="The agents you’re trusted to protect. Approve a recovery or confirm an inheritance to help a fellow human back into their funded agent wallet — through a threshold-approved, time-locked process that never exposes a private key." data-i18n-attr="content:guardian.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Guardian+console+%E2%80%94+recover+%26+inherit+agent+wallets&amp;d=The+agents+you%E2%80%99re+trusted+to+protect.+Approve+a+recovery+or+confirm+an+inheritance+to+help+a+fellow+human+back+into+their+funded+agent+wallet+%E2%80%94+through+a+thresh&amp;p=%2Fguardian">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Guardian console — recover & inherit agent wallets","description":"The agents you’re trusted to protect. Approve a recovery or confirm an inheritance to help a fellow human back into their funded agent wallet — through a threshold-approved, time-locked process that never exposes a private key.","url":"https://three.ws/guardian","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&t=Guardian+console+%E2%80%94+recover+%26+inherit+agent+wallets&d=The+agents+you%E2%80%99re+trusted+to+protect.+Approve+a+recovery+or+confirm+an+inheritance+to+help+a+fellow+human+back+into+their+funded+agent+wallet+%E2%80%94+through+a+thresh&p=%2Fguardian"}]}</script>
 </head>
@@ -47,7 +47,7 @@
 	<header><div id="nav-container"></div></header>
 
 	<main class="gd-wrap">
-		<p class="gd-crumb"><a href="/">Home</a> / <a href="/dashboard">Dashboard</a> / Guardian console</p>
+		<p class="gd-crumb" data-i18n-html="guardian.home_dashboard_guardian_console"><a href="/">Home</a> / <a href="/dashboard">Dashboard</a> / Guardian console</p>
 		<div id="guardian-root"></div>
 	</main>
 
@@ -56,5 +56,7 @@
 	<script src="/brand.js" defer></script>
 	<div id="footer-container"></div>
 	<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

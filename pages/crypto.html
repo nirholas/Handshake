@@ -4,31 +4,31 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<title>Crypto Data API — Free, keyless crypto data for AI agents · three.ws</title>
+		<title data-i18n="crypto.meta_title">Crypto Data API — Free, keyless crypto data for AI agents · three.ws</title>
 		<meta
 			name="description"
 			content="One free, keyless API for the crypto data an AI agent needs mid-task: token snapshots, rug/security signals, holders, pump.fun launches, bonding-curve status, whale flow, trending, wallets and ticker checks. No key, no account, no paywall."
-		/>
+		 data-i18n-attr="content:crypto.meta_description"/>
 		<meta name="robots" content="index, follow" />
 		<link rel="canonical" href="https://three.ws/crypto" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Free crypto data for AI agents — one keyless API · three.ws" />
+		<meta property="og:title" content="Free crypto data for AI agents — one keyless API · three.ws"  data-i18n-attr="content:crypto.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Token snapshots, rug checks, holders, pump.fun launches, bonding-curve status, whale flow, trending & wallets — free and keyless. Wire it into your agent in one fetch."
-		/>
+		 data-i18n-attr="content:crypto.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/crypto" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Crypto+Data+API&amp;d=Free%2C+keyless+crypto+data+for+AI+agents+in+one+API%3A+token+snapshots%2C+security%2Frug+signals%2C+holder+concentration%2C+live+pump.fun+launches%2C+bonding-curve+status%2C+w&amp;p=%2Fcrypto" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Free crypto data for AI agents — one keyless API · three.ws" />
+		<meta name="twitter:title" content="Free crypto data for AI agents — one keyless API · three.ws"  data-i18n-attr="content:crypto.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Token snapshots, rug checks, holders, pump.fun launches, bonding & whale flow — free, keyless, one fetch."
-		/>
+		 data-i18n-attr="content:crypto.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Crypto+Data+API&amp;d=Free%2C+keyless+crypto+data+for+AI+agents+in+one+API%3A+token+snapshots%2C+security%2Frug+signals%2C+holder+concentration%2C+live+pump.fun+launches%2C+bonding-curve+status%2C+w&amp;p=%2Fcrypto" />
 
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -263,7 +263,7 @@
 	<meta name="twitter:site" content="@trythreews">
 </head>
 	<body>
-		<a href="#cx-endpoints" class="h-skip-link">Skip to endpoints</a>
+		<a href="#cx-endpoints" class="h-skip-link" data-i18n="crypto.skip_to_endpoints">Skip to endpoints</a>
 
 		<header><div id="nav-container"></div></header>
 		<script src="/nav.js"></script>
@@ -271,23 +271,23 @@
 		<main id="main-content">
 			<!-- ── HERO ────────────────────────────────────────────────── -->
 			<section class="cx-hero">
-				<div class="eyebrow"><span class="cx-dot cx-dot--live"></span><span>Crypto Data API · Free forever</span></div>
-				<h1>Free crypto data for AI&nbsp;agents — <em>one keyless API</em></h1>
-				<p class="cx-hero-sub">
+				<div class="eyebrow"><span class="cx-dot cx-dot--live"></span><span data-i18n="crypto.crypto_data_api_free_forever">Crypto Data API · Free forever</span></div>
+				<h1 data-i18n-html="crypto.free_crypto_data_for_ai_agents_one">Free crypto data for AI&nbsp;agents — <em>one keyless API</em></h1>
+				<p class="cx-hero-sub" data-i18n-html="crypto.the_market_snapshot_rug_check_holder_spread">
 					The market snapshot, rug check, holder spread, launch feed and whale flow your agent
 					needs mid-task — in a single <code>fetch</code>. No key, no account, no paywall.
 					Solana &amp; Base, real sources, honest nulls.
 				</p>
 				<div class="cx-hero-cta">
-					<a class="btn btn--primary btn--lg" href="#cx-quickstart">Copy the quickstart</a>
-					<a class="btn btn--secondary btn--lg" href="#cx-endpoints">Browse endpoints</a>
+					<a class="btn btn--primary btn--lg" href="#cx-quickstart" data-i18n="crypto.copy_the_quickstart">Copy the quickstart</a>
+					<a class="btn btn--secondary btn--lg" href="#cx-endpoints" data-i18n="crypto.browse_endpoints">Browse endpoints</a>
 				</div>
 				<div class="cx-badges">
-					<span class="cx-badge">Free</span>
-					<span class="cx-badge">Keyless — no account</span>
-					<span class="cx-badge">Solana + Base</span>
-					<span class="cx-badge">Real data · DexScreener · Solana RPC · pump.fun</span>
-					<span class="cx-live-pill" id="cx-live-count"><span class="cx-dot"></span><span id="cx-live-count-text">Checking live status…</span></span>
+					<span class="cx-badge" data-i18n="crypto.free">Free</span>
+					<span class="cx-badge" data-i18n="crypto.keyless_no_account">Keyless — no account</span>
+					<span class="cx-badge" data-i18n="crypto.solana_base">Solana + Base</span>
+					<span class="cx-badge" data-i18n="crypto.real_data_dexscreener_solana_rpc_pump_fun">Real data · DexScreener · Solana RPC · pump.fun</span>
+					<span class="cx-live-pill" id="cx-live-count" data-i18n-html="crypto.checking_live_status"><span class="cx-dot"></span><span id="cx-live-count-text">Checking live status…</span></span>
 				</div>
 			</section>
 
@@ -295,19 +295,19 @@
 				<!-- ── QUICKSTART ─────────────────────────────────────── -->
 				<section class="cx-section" id="cx-quickstart">
 					<div class="eyebrow">Quickstart</div>
-					<h2>One call, real data back</h2>
-					<p class="cx-section-lede">
+					<h2 data-i18n="crypto.one_call_real_data_back">One call, real data back</h2>
+					<p class="cx-section-lede" data-i18n-html="crypto.every_endpoint_is_a_plain_http_get">
 						Every endpoint is a plain HTTP GET. No auth header, no SDK required. Point your agent
 						at the base URL <code>https://three.ws/api/crypto</code> and read JSON. Here's a token
 						snapshot for <code>$THREE</code> — swap in any mint or pair address.
 					</p>
 					<div class="cx-tabs" role="tablist" aria-label="Quickstart language">
-						<button class="cx-tab" role="tab" aria-selected="true" data-qtab="curl" id="qt-curl">curl</button>
-						<button class="cx-tab" role="tab" aria-selected="false" data-qtab="js" id="qt-js">JavaScript</button>
-						<button class="cx-tab" role="tab" aria-selected="false" data-qtab="py" id="qt-py">Python</button>
+						<button class="cx-tab" role="tab" aria-selected="true" data-qtab="curl" id="qt-curl" data-i18n="crypto.curl">curl</button>
+						<button class="cx-tab" role="tab" aria-selected="false" data-qtab="js" id="qt-js" data-i18n="crypto.javascript">JavaScript</button>
+						<button class="cx-tab" role="tab" aria-selected="false" data-qtab="py" id="qt-py" data-i18n="crypto.python">Python</button>
 					</div>
 					<div class="cx-code" id="cx-quickstart-code"><!-- filled by JS --></div>
-					<p class="cx-try-note" style="margin-top:var(--space-sm)">
+					<p class="cx-try-note" style="margin-top:var(--space-sm)" data-i18n-html="crypto.base_url_discovery_index_machine_spec">
 						Base URL: <code>https://three.ws/api/crypto</code> · discovery index:
 						<a class="cx-anchor" href="/api/crypto" target="_blank" rel="noopener"><code>GET /api/crypto</code></a> ·
 						machine spec: <a class="cx-anchor" href="/api/crypto/openapi.json" target="_blank" rel="noopener"><code>openapi.json</code></a>
@@ -317,8 +317,8 @@
 				<!-- ── ENDPOINT TABLE ─────────────────────────────────── -->
 				<section class="cx-section" id="cx-endpoints">
 					<div class="eyebrow">Endpoints</div>
-					<h2>Nine free reads, one bundle</h2>
-					<p class="cx-section-lede">
+					<h2 data-i18n="crypto.nine_free_reads_one_bundle">Nine free reads, one bundle</h2>
+					<p class="cx-section-lede" data-i18n-html="crypto.each_answers_a_question_an_agent_actually">
 						Each answers a question an agent actually has mid-trade. Status is probed live against
 						production — endpoints still shipping show <b>Coming soon</b> and light up automatically
 						once they deploy.
@@ -326,7 +326,7 @@
 					<div class="cx-table-wrap">
 						<table class="cx-table">
 							<thead>
-								<tr><th>Endpoint</th><th>What it answers</th><th>Method &amp; path</th><th>Price</th><th>Status</th></tr>
+								<tr><th data-i18n="crypto.endpoint">Endpoint</th><th data-i18n="crypto.what_it_answers">What it answers</th><th data-i18n="crypto.method_path">Method &amp; path</th><th data-i18n="crypto.price">Price</th><th data-i18n="crypto.status">Status</th></tr>
 							</thead>
 							<tbody id="cx-table-body"><!-- filled by JS --></tbody>
 						</table>
@@ -336,8 +336,8 @@
 				<!-- ── PER-ENDPOINT DETAIL ────────────────────────────── -->
 				<section class="cx-section">
 					<div class="eyebrow">Reference</div>
-					<h2>Every endpoint, with a real example</h2>
-					<p class="cx-section-lede">
+					<h2 data-i18n="crypto.every_endpoint_with_a_real_example">Every endpoint, with a real example</h2>
+					<p class="cx-section-lede" data-i18n-html="crypto.response_shapes_below_are_the_api_s">
 						Response shapes below are the API's stable schema. Hit <b>Try it live</b> to run the real
 						call from your browser — you'll see live JSON where an endpoint is deployed, or the
 						designed “coming soon” state where it isn't yet.
@@ -348,34 +348,34 @@
 				<!-- ── CTA ────────────────────────────────────────────── -->
 				<section class="cx-section" id="cx-build">
 					<div class="eyebrow">When you're ready to build</div>
-					<h2>Free data in. Paid uniques out.</h2>
-					<p class="cx-section-lede">
+					<h2 data-i18n="crypto.free_data_in_paid_uniques_out">Free data in. Paid uniques out.</h2>
+					<p class="cx-section-lede" data-i18n-html="crypto.the_data_api_is_the_on_ramp">
 						The data API is the on-ramp. When your agent needs to <i>act</i> — mint a token, claim a
 						vanity address, generate a 3D asset — these are the paid, best-in-class endpoints it graduates to.
 					</p>
 					<div class="cx-cta-grid">
 						<a class="cx-cta-card" href="/launcher">
-							<span class="cx-cta-tag">Pump Launcher</span>
-							<h3>Launch a token</h3>
-							<p>Your agent mints and launches a pump.fun coin end-to-end — metadata, image, curve — from one call.</p>
-							<span class="cx-cta-go">Open the launcher →</span>
+							<span class="cx-cta-tag" data-i18n="crypto.pump_launcher">Pump Launcher</span>
+							<h3 data-i18n="crypto.launch_a_token">Launch a token</h3>
+							<p data-i18n="crypto.your_agent_mints_and_launches_a_pump">Your agent mints and launches a pump.fun coin end-to-end — metadata, image, curve — from one call.</p>
+							<span class="cx-cta-go" data-i18n="crypto.open_the_launcher">Open the launcher →</span>
 						</a>
 						<a class="cx-cta-card" href="/vanity-wallet">
-							<span class="cx-cta-tag">Vanity</span>
-							<h3>Claim a vanity address</h3>
-							<p>Grind a custom Solana address with your ticker or brand baked into it — verifiable, on demand.</p>
-							<span class="cx-cta-go">Get a vanity wallet →</span>
+							<span class="cx-cta-tag" data-i18n="crypto.vanity">Vanity</span>
+							<h3 data-i18n="crypto.claim_a_vanity_address">Claim a vanity address</h3>
+							<p data-i18n="crypto.grind_a_custom_solana_address_with_your">Grind a custom Solana address with your ticker or brand baked into it — verifiable, on demand.</p>
+							<span class="cx-cta-go" data-i18n="crypto.get_a_vanity_wallet">Get a vanity wallet →</span>
 						</a>
 						<a class="cx-cta-card" href="/forge">
-							<span class="cx-cta-tag">Forge</span>
-							<h3>Generate a 3D model</h3>
-							<p>Turn a token or a text prompt into a textured GLB your agent can wear, embed, or take into AR.</p>
-							<span class="cx-cta-go">Open Forge →</span>
+							<span class="cx-cta-tag" data-i18n="crypto.forge">Forge</span>
+							<h3 data-i18n="crypto.generate_a_3d_model">Generate a 3D model</h3>
+							<p data-i18n="crypto.turn_a_token_or_a_text_prompt">Turn a token or a text prompt into a textured GLB your agent can wear, embed, or take into AR.</p>
+							<span class="cx-cta-go" data-i18n="crypto.open_forge">Open Forge →</span>
 						</a>
 					</div>
 					<div class="cx-note" style="margin-top:var(--space-lg)">
 						<span>💡</span>
-						<span>
+						<span data-i18n-html="crypto.building_an_autonomous_agent_pair_this_with">
 							Building an autonomous agent? Pair this with <a class="cx-anchor" href="/pay"><b>agent payments (x402)</b></a>
 							so it can pay for the paid endpoints itself, and <a class="cx-anchor" href="/docs"><b>the SDKs &amp; API reference</b></a>
 							for the full platform surface.
@@ -726,5 +726,7 @@ token = r.json()
 				else { txt.textContent = `${total} endpoints · rolling out`; }
 			})();
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

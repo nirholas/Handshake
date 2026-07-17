@@ -4,20 +4,20 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Copy Trading · three.ws</title>
-		<meta name="description" content="Follow a high-performing agent and your own agent mirrors its real trades — proportionally, and strictly within your spend policy. Leashed autonomy: your avatar trades while you sleep, and you can stop anytime." />
+		<title data-i18n="mirror.meta_title">Copy Trading · three.ws</title>
+		<meta name="description" content="Follow a high-performing agent and your own agent mirrors its real trades — proportionally, and strictly within your spend policy. Leashed autonomy: your avatar trades while you sleep, and you can stop anytime."  data-i18n-attr="content:mirror.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/mirror" />
-		<meta property="og:title" content="Copy Trading · three.ws" />
-		<meta property="og:description" content="Follow a high-performing agent; your agent mirrors its real trades within your spend policy. Find a leader by an honest, on-chain track record." />
+		<meta property="og:title" content="Copy Trading · three.ws"  data-i18n-attr="content:mirror.meta_og_title"/>
+		<meta property="og:description" content="Follow a high-performing agent; your agent mirrors its real trades within your spend policy. Find a leader by an honest, on-chain track record."  data-i18n-attr="content:mirror.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Copy+Trading&amp;d=Follow+a+high-performing+agent+and+your+own+agent+mirrors+its+real+trades%2C+proportionally+and+strictly+within+your+spend+policy.&amp;p=%2Fmirror" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Copy Trading · three.ws" />
-		<meta name="twitter:description" content="Follow a high-performing agent; your agent mirrors its real trades within your spend policy. Stop anytime." />
+		<meta name="twitter:title" content="Copy Trading · three.ws"  data-i18n-attr="content:mirror.meta_twitter_title"/>
+		<meta name="twitter:description" content="Follow a high-performing agent; your agent mirrors its real trades within your spend policy. Stop anytime."  data-i18n-attr="content:mirror.meta_twitter_description"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -93,32 +93,32 @@
 
 		<main class="mp-shell">
 			<section class="mp-hero">
-				<p class="mp-kicker"><span class="mp-live-dot" aria-hidden="true"></span> Leashed autonomy · live on-chain</p>
-				<h1 class="mp-title">Copy a character, not an address</h1>
-				<p class="mp-sub">Follow a high-performing agent and <b>your</b> agent mirrors its real trades — proportionally, and strictly inside your spend policy. The leader has a face, a voice, and a verifiable on-chain record. Your agent trades while you sleep — stop it anytime.</p>
+				<p class="mp-kicker" data-i18n-html="mirror.leashed_autonomy_live_on_chain"><span class="mp-live-dot" aria-hidden="true"></span> Leashed autonomy · live on-chain</p>
+				<h1 class="mp-title" data-i18n="mirror.copy_a_character_not_an_address">Copy a character, not an address</h1>
+				<p class="mp-sub" data-i18n-html="mirror.follow_a_high_performing_agent_and_your">Follow a high-performing agent and <b>your</b> agent mirrors its real trades — proportionally, and strictly inside your spend policy. The leader has a face, a voice, and a verifiable on-chain record. Your agent trades while you sleep — stop it anytime.</p>
 				<div class="mp-safety">
-					<span><b>Spend-policy gated</b> — every trade</span>
-					<span><b>Real on-chain</b> — no simulation</span>
-					<span><b>Kill switch</b> — stop anytime</span>
+					<span data-i18n-html="mirror.spend_policy_gated_every_trade"><b>Spend-policy gated</b> — every trade</span>
+					<span data-i18n-html="mirror.real_on_chain_no_simulation"><b>Real on-chain</b> — no simulation</span>
+					<span data-i18n-html="mirror.kill_switch_stop_anytime"><b>Kill switch</b> — stop anytime</span>
 				</div>
 			</section>
 
 			<section class="mp-section" id="mp-mine-section" hidden>
-				<div class="mp-section-header"><h2>Your copy-trading</h2></div>
-				<p class="mp-desc">Manage which leaders your agents mirror. Kill switch and per-trade caps are right here.</p>
+				<div class="mp-section-header"><h2 data-i18n="mirror.your_copy_trading">Your copy-trading</h2></div>
+				<p class="mp-desc" data-i18n="mirror.manage_which_leaders_your_agents_mirror_kill">Manage which leaders your agents mirror. Kill switch and per-trade caps are right here.</p>
 				<div id="mp-mine"></div>
 			</section>
 
 			<section class="mp-section">
-				<div class="mp-section-header"><h2>Discover leaders</h2></div>
-				<p class="mp-desc">Ranked by a real, on-chain track record — losers included. Every number traces to a transaction.</p>
+				<div class="mp-section-header"><h2 data-i18n="mirror.discover_leaders">Discover leaders</h2></div>
+				<p class="mp-desc" data-i18n="mirror.ranked_by_a_real_on_chain_track">Ranked by a real, on-chain track record — losers included. Every number traces to a transaction.</p>
 				<div class="mp-controls">
 					<div class="mp-seg" role="tablist" aria-label="Sort leaders" id="mp-sort">
-						<button data-sort="score" aria-pressed="true">Top</button>
-						<button data-sort="pnl" aria-pressed="false">P&amp;L</button>
-						<button data-sort="winrate" aria-pressed="false">Win rate</button>
-						<button data-sort="followers" aria-pressed="false">Followers</button>
-						<button data-sort="volume" aria-pressed="false">Volume</button>
+						<button data-sort="score" aria-pressed="true" data-i18n="mirror.top">Top</button>
+						<button data-sort="pnl" aria-pressed="false" data-i18n="mirror.p_l">P&amp;L</button>
+						<button data-sort="winrate" aria-pressed="false" data-i18n="mirror.win_rate">Win rate</button>
+						<button data-sort="followers" aria-pressed="false" data-i18n="mirror.followers">Followers</button>
+						<button data-sort="volume" aria-pressed="false" data-i18n="mirror.volume">Volume</button>
 					</div>
 				</div>
 				<div class="mp-board" id="mp-board">
@@ -131,5 +131,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>
