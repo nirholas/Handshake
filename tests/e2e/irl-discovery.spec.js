@@ -68,6 +68,13 @@ function offset(lat, lng, north, east) {
 // no-op stub. Returns a setter the test drives.
 async function installRoutes(page) {
 	let served = [];
+	// Registered FIRST so it has the LOWEST priority (Playwright checks the most
+	// recently registered handler first). Every /api call the /irl boot fires that
+	// this test does NOT stub explicitly is otherwise proxied to live production
+	// by the dev server (vite.config.js DEV_API_PROXY), coupling the console-error
+	// assertion to prod health. Stub the rest to a clean 204 so the test is
+	// hermetic; the specific irl routes below still win.
+	await page.route('**/api/**', (route) => route.fulfill({ status: 204, body: '' }));
 	// Only the nearby read (query form) — never /api/irl/pins/mine.
 	await page.route(/\/api\/irl\/pins\?/, (route) =>
 		route.fulfill({ json: { pins: served } }),

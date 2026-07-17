@@ -51,6 +51,11 @@ function offset(lat, lng, north, east) {
 
 async function installRoutes(page) {
 	let served = [];
+	// Registered FIRST (lowest priority): stub every other /api call the /irl boot
+	// fires so nothing proxies to live production (vite DEV_API_PROXY), which would
+	// otherwise let a prod error leak into the console-error gate under load. The
+	// specific irl routes below are registered after, so they still win.
+	await page.route('**/api/**', (route) => route.fulfill({ status: 204, body: '' }));
 	await page.route(/\/api\/irl\/pins\?/, (route) =>
 		route.fulfill({ json: { pins: served } }),
 	);
