@@ -23,6 +23,14 @@
 			<description>A full automated sweep of every page and API endpoint on the site caught a bug that replaced creator profile pages (three.ws/u/yourname) with an error message. That is fixed. The sweep also repaired the login captcha for rate-limited sign-ins, fixed dead links in the dashboard and two blog posts, and added two dozen previously unlisted pages to the site index so search engines and the sitemap can find them. The audit now runs with deeper checks (blank-page detection, visible error detection, and link crawling) so regressions like these get caught before anyone hits them.</description>
 		</item>
 		<item>
+			<title>Your models now look studio-quality everywhere, not just in the Forge</title>
+			<link>https://three.ws/viewer</link>
+			<guid isPermaLink="false">2026-07-17:Your models now look studio-quality everywhere, not just in the Forge</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The viewer page that opens when someone follows a shared model link now renders with the same rich lighting, tone mapping, and exposure as the Forge studio where the model was created, so what you share is what they see. The copy-paste embed snippet ships those same settings, meaning models dropped onto your own site no longer look flat compared to the preview. Avatars in agent embed cards now cast a soft ground shadow instead of floating, and the homepage 3D showcase stops burning your battery when it is scrolled out of view or in a background tab.</description>
+		</item>
+		<item>
 			<title>Clip Director: every trade becomes content</title>
 			<link>https://three.ws/clip-director</link>
 			<guid isPermaLink="false">2026-07-16:Clip Director: every trade becomes content</guid>

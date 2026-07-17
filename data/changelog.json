@@ -14078,6 +14078,15 @@
 				"fix"
 			],
 			"link": "/forge"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Your models now look studio-quality everywhere, not just in the Forge",
+			"summary": "The viewer page that opens when someone follows a shared model link now renders with the same rich lighting, tone mapping, and exposure as the Forge studio where the model was created, so what you share is what they see. The copy-paste embed snippet ships those same settings, meaning models dropped onto your own site no longer look flat compared to the preview. Avatars in agent embed cards now cast a soft ground shadow instead of floating, and the homepage 3D showcase stops burning your battery when it is scrolled out of view or in a background tab.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/viewer"
 		}
 	]
 }
