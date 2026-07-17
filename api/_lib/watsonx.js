@@ -166,15 +166,26 @@ export async function watsonxEmbed(cfg, { inputs, model } = {}) {
 // answer rather than a token stream — e.g. asking Granite to name a cluster of
 // semantically-similar agents. Returns the assistant text and token usage.
 //
-// If the watsonx call fails outright (IAM auth, quota, region outage, an
-// unsupported model) AND an OpenRouter key is configured, this falls over to
-// OpenRouter-hosted Granite — the SAME model family (ibm-granite/*), just
-// different hosting — so every Granite consumer (Oracle, Twin, Galaxy, cluster
-// naming) stays up during a watsonx outage instead of hard-failing. Invisible
-// to callers: the return shape is identical and `provider` marks which lane
-// served. When OpenRouter is unset the original watsonx error propagates
-// unchanged, exactly as before.
+// Granite lane policy:
+//   • watsonx creds present → watsonx leads; on any failure (IAM auth, quota,
+//     region outage, unsupported model) it falls over to OpenRouter-hosted
+//     Granite — the SAME model family (ibm-granite/*), just different hosting.
+//   • watsonx creds ABSENT → Granite runs on OpenRouter directly as the primary
+//     (no point attempting, and failing, the watsonx call first). This is what
+//     lets the Granite features run on a deployment with no IBM account at all.
+//   • neither configured → the real watsonx "not set" error propagates, exactly
+//     as before.
+// Invisible to callers: the return shape is identical and `provider` marks which
+// lane served ('watsonx' | 'openrouter-granite').
 export async function watsonxChatComplete(cfg, { messages, model, maxTokens, temperature } = {}) {
+	// No watsonx credentials on this deployment → serve Granite from OpenRouter
+	// directly rather than attempting a doomed watsonx round-trip on every call.
+	const watsonxUsable = Boolean(cfg?.apiKey && (cfg?.projectId || cfg?.spaceId));
+	if (!watsonxUsable) {
+		const direct = await graniteOpenRouterFallback({ messages, maxTokens, temperature });
+		if (direct) return direct;
+		// No OpenRouter either — fall through so the genuine watsonx error surfaces.
+	}
 	// Decoding params are TOP-LEVEL on the chat endpoint (it is OpenAI-shaped) —
 	// not nested under a `parameters` wrapper (that's the older text/generation
 	// API). Nesting them here silently dropped max_tokens/temperature; keep this

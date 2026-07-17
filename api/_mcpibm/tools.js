@@ -34,6 +34,23 @@ function graniteConfig() {
 	return cfg;
 }
 
+// Relaxed config for the TEXT-generation tools (chat / code / analyze). Those run
+// on Granite via watsonxChatComplete(), which serves OpenRouter-hosted Granite
+// (ibm-granite/*) when watsonx creds are absent — so they only need SOME Granite
+// lane. The embed and forecast tools stay on the strict graniteConfig() above:
+// Granite embeddings and TimeSeries forecasting have no OpenRouter equivalent.
+function graniteChatConfig() {
+	const cfg = watsonxConfig();
+	if (cfg.configured) return cfg;
+	const openrouterAvailable = Boolean(
+		process.env.OPENROUTER_API_KEY?.trim() || (process.env.OPENROUTER_FALLBACK_KEYS || '').trim(),
+	);
+	if (openrouterAvailable) return cfg; // watsonxChatComplete falls over to OpenRouter Granite
+	throw new Error(
+		'IBM Granite is not configured on this server (set WATSONX_API_KEY and WATSONX_PROJECT_ID, or an OPENROUTER_API_KEY backstop).',
+	);
+}
+
 // MCP tool annotations (2025-06-18 spec) — mirrors the constants shipped in
 // packages/ibm-x402-mcp/src/tools/_shared.js so the hosted and stdio transports
 // advertise identical semantics. Granite inference reads the operator's models
@@ -250,7 +267,7 @@ const chatTool = {
 		},
 	},
 	async handler({ messages, model, max_new_tokens, temperature }) {
-		const cfg = graniteConfig();
+		const cfg = graniteChatConfig();
 		const result = await watsonxChatComplete(cfg, {
 			messages,
 			model,
@@ -339,7 +356,7 @@ const codeTool = {
 		},
 	},
 	async handler({ task, prompt, language, context }) {
-		const cfg = graniteConfig();
+		const cfg = graniteChatConfig();
 		const systemContent = buildCodeSystemPrompt(task, language);
 		const userContent = context ? `${prompt}\n\nContext: ${context}` : prompt;
 		const result = await watsonxChatComplete(cfg, {
@@ -511,7 +528,7 @@ const analyzeTool = {
 		},
 	},
 	async handler({ document, analysis_type = 'general', language }) {
-		const cfg = graniteConfig();
+		const cfg = graniteChatConfig();
 		const systemPrompt = buildAnalysisPrompt(analysis_type, language);
 		const result = await watsonxChatComplete(cfg, {
 			messages: [
