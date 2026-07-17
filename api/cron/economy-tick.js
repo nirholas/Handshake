@@ -61,7 +61,13 @@ const TARGETS = [
 	// ── Coin launches (pump.fun) ───────────────────────────────────────────
 	{ label: 'launcher', path: '/api/cron/launcher-tick', method: 'GET' },
 	{ label: 'launcher-claimer', path: '/api/cron/launcher-claimer', method: 'GET' },
-	{ label: 'coin-intel', path: '/api/cron/coin-intel-observe', method: 'GET' },
+	// coin-intel-observe is deliberately NOT fired here. It is a firehose that
+	// observes PumpPortal for OBSERVE_MS (85s) inside its own 120s maxDuration and
+	// runs on its own dedicated `*/2 * * * *` cron. Firing it from the economy tick
+	// aborted it at CALL_TIMEOUT_MS (60s) every single minute — a guaranteed
+	// timeout that never once completed, opened a doomed WebSocket per tick, and
+	// pinned the /status economy heartbeat to failed:1. The 2-min cron is the only
+	// correct owner of this engine.
 	{ label: 'pumpfun-monitor', path: '/api/cron/pumpfun-monitor', method: 'GET' },
 	{ label: 'pumpfun-graduations', path: '/api/cron/pumpfun-graduations-sync', method: 'GET' },
 	{ label: 'coin-cycle', path: '/api/cron/run-coin-cycle', method: 'GET' },

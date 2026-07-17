@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "The homepage Forge grew the full studio's brains",
+			"summary": "The mini-forge on the homepage is no longer just a prompt box on the free lane. An Options panel now unfolds under it with the same controls the full Forge runs on: choose a quality tier (Draft, Standard, or the $THREE-holder High tier, with hold-or-pay-per-generation built in), pick a specific engine or leave it on Auto (which routes to the best live lane and shows each engine's real up or down status), set the aspect ratio, and add your own provider key for keyed lanes. Two new one-tap helpers sit in the bar: Enhance rewrites your prompt into a richer, single-subject spec for sharper geometry, and Surprise rolls a fresh idea. The controls read the exact same catalog and health feed as the full page, so the two never drift, and the default view stays the clean single bar until you open Options.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Avatars made from your photo now match your actual face shape",
+			"summary": "When you create an avatar from a selfie, it used to paint your face onto a generic head, so the shape (jaw, nose, brow, how wide your face is) stayed the same for everyone. Now the head is reshaped to your real face structure, so the avatar reads as you, not just your photo on a mannequin. The avatar still arrives fully rigged with all its facial expressions and lip-sync shapes intact, ready to animate. This is the first step of a bigger push toward photoreal, self-hosted avatars that beat the best avatar makers out there.",
+			"tags": [
+				"improvement",
+				"feature"
+			]
+		},
+		{
+			"date": "2026-07-17",
 			"title": "The autonomous-trading scoreboard now counts only real on-chain trades",
 			"summary": "The homepage's live trading panel promises \"real positions, no simulation\", so its headline numbers now come only from trades that actually landed on-chain. Winning exits, best run, best ROI, and open positions all exclude paper (simulated) fills, which the engine writes while it runs in practice mode. Nothing is inflated: the board shows the true count of profitable trades agents have closed for real, and it moves the instant a genuine winning exit lands.",
 			"tags": [

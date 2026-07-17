@@ -131,6 +131,13 @@ function shapeEvent(r) {
 		mint: r.mint || null,
 		symbol: r.symbol || null,
 		coin_name: r.coin_name || null,
+		// Trade direction, derived from which leg the agent spent: a BUY spends the
+		// SOL/USDC/THREE quote leg (asset != mint), a SELL spends the token itself
+		// (asset == mint). Only meaningful for coin-moving trade/snipe rows; null
+		// otherwise. Lets a coin page colour each marker without an extra column.
+		side: (r.kind === 'trade' || r.kind === 'snipe') && r.mint
+			? (r.asset === r.mint ? 'sell' : 'buy')
+			: null,
 		skill: r.skill || null,            // marketplace 'purchase' beats carry the skill name
 		mint_explorer: r.mint ? explorerAccountUrl(r.mint, r.network) : null,
 		// the counterparty of a tip / payment, when public on-chain
@@ -139,7 +146,7 @@ function shapeEvent(r) {
 }
 
 // ── feed view ───────────────────────────────────────────────────────────────
-async function handleFeed(req, res, { network, type, agentId, cursor, since }) {
+async function handleFeed(req, res, { network, type, agentId, mint, cursor, since }) {
 	const kinds = TYPE_KINDS[type] || TYPE_KINDS.all;
 	const limit = Math.min(MAX_LIMIT, Math.max(1, Number(new URL(req.url, 'http://x').searchParams.get('limit')) || 30));
 
@@ -298,10 +305,18 @@ async function handleFeed(req, res, { network, type, agentId, cursor, since }) {
 		? sql`AND (feed.ts > ${sinceCur.ts} OR (feed.ts = ${sinceCur.ts} AND feed.row_id > ${sinceCur.rowId}))`
 		: sql``;
 
+	// Coin-scoped feed: every agent transaction in one token, newest first. The
+	// unified `feed.mint` column already resolves the traded mint on every branch
+	// (trade/snipe via meta.mint or the asset leg, launch via pump_agent_mints), so
+	// one equality narrows the whole UNION to a single coin. Powers the "agent
+	// transactions" panel + chart markers on the coin detail page.
+	const mintFilter = mint ? sql`AND feed.mint = ${mint}` : sql``;
+
 	const rows = await sql`
 		WITH feed AS (${feedCte})
 		SELECT * FROM feed
 		WHERE feed.kind = ANY(${kinds})
+		  ${mintFilter}
 		  ${olderBound}
 		  ${newerBound}
 		ORDER BY feed.ts DESC, feed.row_id DESC
@@ -323,6 +338,7 @@ async function handleFeed(req, res, { network, type, agentId, cursor, since }) {
 		network,
 		type,
 		agent_id: agentId || null,
+		mint: mint || null,
 	};
 }
 
