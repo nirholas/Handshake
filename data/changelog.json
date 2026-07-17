@@ -14118,6 +14118,15 @@
 				"infra"
 			],
 			"link": "/forge"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "The viewer's Create buttons now take you straight to the Forge",
+			"summary": "On the shared-model viewer page, the \"Create a 3D model\" button (shown when a link is missing its model) and the \"Make your own\" button in the footer used to drop you on the homepage, leaving you to hunt for the generator. Both now go directly to the free text-to-3D Forge so you can start creating in one click.",
+			"tags": [
+				"fix"
+			],
+			"link": "/viewer"
 		}
 	]
 }
