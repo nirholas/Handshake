@@ -249,6 +249,40 @@ function isMine(p) {
 	return !p.ownerId || p.ownerId === CLIENT_ID;
 }
 
+// True once a freshly-joined room's initial model burst has settled, so per-model
+// "someone added…" cues fire only for genuinely new activity, not the join sync.
+let roomSyncSettled = false;
+
+// A soft two-note chime for room arrivals — a small "someone's here" cue that
+// makes collaboration feel alive. WebAudio only, unlocked inside the create/join
+// user gesture; silent (never throws) where audio is blocked or reduced-motion.
+let _audioCtx = null;
+function unlockAudio() {
+	try {
+		if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+		if (_audioCtx.state === 'suspended') _audioCtx.resume();
+	} catch { _audioCtx = null; }
+}
+function chime() {
+	if (reducedMotion || !_audioCtx) return;
+	try {
+		const now = _audioCtx.currentTime;
+		for (const [i, freq] of [587.33, 880].entries()) { // D5 → A5
+			const osc = _audioCtx.createOscillator();
+			const gain = _audioCtx.createGain();
+			osc.type = 'sine';
+			osc.frequency.value = freq;
+			const t = now + i * 0.11;
+			gain.gain.setValueAtTime(0, t);
+			gain.gain.linearRampToValueAtTime(0.08, t + 0.02);
+			gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+			osc.connect(gain).connect(_audioCtx.destination);
+			osc.start(t);
+			osc.stop(t + 0.3);
+		}
+	} catch { /* audio is a bonus, never a failure path */ }
+}
+
 // Template cache: one load per GLB source no matter how many copies are placed.
 /** @type {Map<string, Promise<{ gltf: any, skinned: boolean, fit: { scale: number, yOffset: number }, radius: number }>>} */
 const templates = new Map();
@@ -589,6 +623,7 @@ function reconcileRemoteModels(models) {
 			removePlacement(p, { persist: false, broadcast: false });
 		}
 	}
+	let freshFromOthers = 0;
 	for (const m of models) {
 		const existing = netModelsById.get(m.id);
 		if (existing) {
@@ -599,6 +634,7 @@ function reconcileRemoteModels(models) {
 		// rejoin) so I keep control; otherwise it's someone else's, view-only.
 		const local = sharedToLocal(m);
 		const mine = !!m.mine || m.ownerId === CLIENT_ID;
+		if (!mine) freshFromOthers++;
 		addModel({ src: m.src, title: m.title }, {
 			x: local.x, z: local.z, yaw: local.yaw, scale: local.scale,
 			remote: true, netId: m.id, ownerId: mine ? CLIENT_ID : m.ownerId,
@@ -606,6 +642,12 @@ function reconcileRemoteModels(models) {
 		});
 	}
 	updateCount();
+	// After the join burst settles, a new model from someone else is live activity
+	// worth surfacing — but never during the initial sync (that would spam N toasts).
+	if (roomSyncSettled && freshFromOthers > 0) {
+		setStatus(freshFromOthers === 1 ? 'Someone added a model to the room.' : `${freshFromOthers} models were added to the room.`);
+	}
+	roomSyncSettled = true;
 }
 
 // A single model changed (per-field delta) or was removed. Refresh others' live;
@@ -651,7 +693,20 @@ function wireNet(n) {
 	});
 	n.on('models', (models) => reconcileRemoteModels(models));
 	n.on('model', (m) => applyRemoteModelChange(m));
-	n.on('presence', (p) => { roomPresence = p; updatePresencePill(); });
+	n.on('presence', (p) => {
+		const prev = roomPresence.count;
+		roomPresence = p;
+		updatePresencePill();
+		if (roomModal && !roomModal.hidden) renderRoomModal();
+		// Ambient life: announce a real arrival/departure (not the initial join, and
+		// not our own presence appearing). Makes a shared room feel inhabited.
+		if (prev > 0 && p.count > prev) {
+			setStatus(p.count === 2 ? 'Someone joined — you’re building together now.' : 'Someone else joined the room.');
+			chime();
+		} else if (prev > 1 && p.count < prev && p.count >= 1) {
+			setStatus(p.count === 1 ? 'You’re on your own in the room now.' : 'Someone left the room.');
+		}
+	});
 	n.on('reject', (msg) => {
 		const why = msg?.reason === 'room_full' ? 'the room is full'
 			: msg?.reason === 'owner_full' ? 'you have the max models in this room'
@@ -688,6 +743,7 @@ async function joinRoom(code, { seed = false } = {}) {
 		return;
 	}
 	leaveRoom({ silent: true });
+	roomSyncSettled = false; // the join's model burst must not fire "added" cues
 	roomCode = norm;
 	net = new StudioNet({
 		roomKey: roomKeyForCode(norm),
@@ -785,17 +841,30 @@ function closeRoomModal() {
 	if (roomModal) roomModal.hidden = true;
 }
 
-roomBtn?.addEventListener('click', openRoomModal);
+// Unlock the arrival chime inside a real user gesture (the same tap that opens
+// the room flow) so it can play later without an autoplay-policy warning.
+roomBtn?.addEventListener('click', () => { unlockAudio(); openRoomModal(); });
 $('ars-room-close')?.addEventListener('click', closeRoomModal);
 roomModal?.addEventListener('click', (e) => { if (e.target === roomModal) closeRoomModal(); });
 
 $('ars-room-create')?.addEventListener('click', async () => {
+	unlockAudio();
 	await createRoom();
 	renderRoomModal();
+	// One-tap invite: put the join link on the clipboard immediately (still inside
+	// this click's user activation) so hosting a room is create → paste, not
+	// create → find button → copy. Best-effort; the Copy button remains as backup.
+	if (net && net.status === 'online' && navigator.clipboard?.writeText) {
+		try {
+			await navigator.clipboard.writeText(roomShareUrl(location.origin, roomCode));
+			setStatus(`Room ${roomCode} is live — invite link copied. Paste it to a friend.`);
+		} catch { /* clipboard blocked — the Copy button below still works */ }
+	}
 });
 
 $('ars-room-join-form')?.addEventListener('submit', async (e) => {
 	e.preventDefault();
+	unlockAudio();
 	const input = $('ars-room-join-input');
 	const code = normalizeRoomCode(input?.value);
 	if (!code) {
