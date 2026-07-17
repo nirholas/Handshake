@@ -104,11 +104,11 @@ const KNOWN_SIGNATURES = [
 // `investigate`.
 const KNOWN_HTTP_SIGNATURES = [
 	{
-		id: 'ring-duplicate-signature-502',
+		id: 'ring-payer-wallet-drained-503',
 		test: (g) => g.status >= 500 && g.path.startsWith('/api/x402')
 			&& g.userAgent.includes('threews-x402-autonomous'),
 		class: 'owner',
-		action: `The x402 ring's settle_failed wave (since 2026-07-09): same-priced ring payments sharing a tick blockhash compile to byte-identical Solana txs, so only the first lands. Fixed in commit 93430b4fb (auto-nonce in payX402); awaiting deploy: npm run build:gcp && npm run deploy:gcp. If the wave persists on the revision that carries 93430b4fb, REMOVE this signature and re-investigate. ${RUNBOOK} §ring-duplicate-signature.`,
+		action: `The x402 autonomous ring payer wallet is drained: the wallet-balance monitor logs "payer USDC 0.00 < floor 5.00" and every ring/seed/autonomous tick fails with insufficient_payer_usdc, so the 6-min ring cron POST to /api/x402-pay returns 503. Not a code bug (the duplicate-signature fix, commit 93430b4fb, is already deployed). RESOLUTION IS FUNDING (owner-gated on-chain spend): top up ring payer X4o2UuVNMxnrgkzVy97kPF5gmS6CLRCVJGB48VastML with USDC (>= 5.00 floor) and keep sponsor SOL above its 0.03 floor. ${RUNBOOK} §ring-duplicate-signature.`,
 	},
 ];
 
