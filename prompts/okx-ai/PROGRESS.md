@@ -1262,3 +1262,33 @@ health -> "3D Studio Health Status". Endpoints, ids, prices, schemas unchanged.
    en-US`).
 3. Also eyeball the agent-level `--description` from `agent get-agents --agent-ids 2632`
    against the same no-tech-jargon bar while in there.
+
+### 2026-07-17 addendum 3: root-caused the avatar visual-quality rejection (product fix, not just listing)
+
+Rejection reason #1 was "visual quality isn't polished enough." That was not only a listing
+problem: the rejected image was the live output of our own $1.50 Agent Identity Studio
+pipeline (`data/agent-identities.json` -> three-ws-3d-studio), so every agent who buys that
+service was getting the same dark, murky render.
+
+Root cause (proven with a before/after render of the actual rejected GLB via local
+Chromium): the server-side render scene set NO `scene.environment`. Three.js PBR materials
+draw their reflections almost entirely from the environment map, so with none set, metal,
+leather, and fabric collapse to near-black. Compounded by ACESFilmic tone mapping at
+exposure 1.0 (crushes shadows) and a dark backdrop gradient behind the PFP.
+
+Fix (no new dependencies — three's built-in procedural `RoomEnvironment`):
+- `api/_lib/render-clip.js` (the Identity Studio render path via `/api/render/avatar-clip`)
+  and `api/_lib/avatar-render.js` (public avatar render + MCP tool): added PMREM
+  `RoomEnvironment` image-based lighting (`scene.environment`, `environmentIntensity` 1.15),
+  switched to `NeutralToneMapping` at exposure 1.15, rebalanced the directional lights as
+  accents on top of the IBL base.
+- `api/_okx3d/identity.js`: lifted the PFP backdrop gradient (slate-blue center) for subject
+  separation.
+Verified end-to-end against the REAL stack (three@0.176.0 from unpkg, RoomEnvironment +
+NeutralToneMapping, base64 GLB parse): zero page errors, character reads clearly, materials
+restored. 56 + 10 tests green. Committed on main; ships on next deploy. Comparison renders in
+the session scratchpad (not committed).
+
+**Implication for the resubmission:** once deployed, regenerate #2632's identity through the
+fixed pipeline so the demo deliverables at /agent-identities reflect the new quality; the
+listing avatar itself stays the logo mark (compliant, on-brand).

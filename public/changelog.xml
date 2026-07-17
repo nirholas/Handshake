@@ -47,6 +47,14 @@
 			<description>Gallery previews used to be shot dead-on against a near-black background, so dark models vanished and every card looked the same. Previews are now framed from a natural three-quarter angle, fill the card, and stand on a subtly tinted stage unique to each avatar. Prompt-created avatars also got more distinctive: sparse prompts like 'a knight' now commit to a specific look (age, build, hairstyle, palette, one signature detail) instead of converging on the same generic person. Every platform-generated avatar still appears in the galleries.</description>
 		</item>
 		<item>
+			<title>Avatar renders look studio-lit, not murky</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-17:Avatar renders look studio-lit, not murky</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Every generated avatar and 3D identity is now rendered with real studio lighting. The image-based lighting the renderer was missing is the reason materials like leather, fabric, and metal used to crush to near-black; adding it, plus faithful color tone mapping, makes those surfaces read the way they look in a real 3D viewer. Faces are lit, boots and belts look like leather again, and the whole character stands out from the backdrop. This lifts the profile pictures and full-body shots the Agent Identity Studio produces, and the avatar thumbnails across the site.</description>
+		</item>
+		<item>
 			<title>Avatars you generate now come out truly animation-ready</title>
 			<link>https://three.ws/forge</link>
 			<guid isPermaLink="false">2026-07-17:Avatars you generate now come out truly animation-ready</guid>

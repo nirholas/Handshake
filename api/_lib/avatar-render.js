@@ -226,6 +226,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 window.__renderDone = false;
 window.__renderError = null;
@@ -235,8 +236,11 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true,
 renderer.setSize(${width}, ${height}, false);
 renderer.setPixelRatio(1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
+// Neutral (Khronos PBR Neutral) tone mapping renders asset colors faithfully
+// without the shadow-crushing ACES rolloff — the right choice for a product
+// render where the character must read clearly.
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 1.15;
 
 const scene = new THREE.Scene();
 const bgColor = ${bg};
@@ -244,15 +248,22 @@ if (bgColor !== null) scene.background = new THREE.Color(bgColor);
 
 const camera = new THREE.PerspectiveCamera(28, ${width}/${height}, 0.01, 100);
 
-scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-const key = new THREE.DirectionalLight(0xffffff, 1.5);
-key.position.set(2, 3, 4); scene.add(key);
-const fill = new THREE.DirectionalLight(0xbfd6ff, 0.65);
-fill.position.set(-3, 1, 2); scene.add(fill);
-const rim = new THREE.DirectionalLight(0xc7a8ff, 0.55);
-rim.position.set(0, 2, -4); scene.add(rim);
-const bottom = new THREE.DirectionalLight(0xffffff, 0.15);
-bottom.position.set(0, -2, 1); scene.add(bottom);
+// Image-based lighting is what makes PBR materials read: metal and glossy
+// surfaces draw their reflections from scene.environment, so with none set they
+// collapse to near-black — the "dark, murky" render. RoomEnvironment is three's
+// built-in procedural studio environment (no external HDR asset to host).
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 1.15;
+
+// Directional lights are accents on top of the IBL base: a warm key for form,
+// a soft cool fill to open the shadow side, a violet rim for separation.
+const key = new THREE.DirectionalLight(0xffffff, 1.6);
+key.position.set(2.5, 3.5, 3.5); scene.add(key);
+const fill = new THREE.DirectionalLight(0xdfeaff, 0.5);
+fill.position.set(-3, 1.2, 2.5); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xecdcff, 0.7);
+rim.position.set(-0.5, 2.5, -4); scene.add(rim);
 
 const aliases = {
 	shoulderl: ['leftshoulder','shoulder_l','l_shoulder','mixamorig:leftshoulder'],

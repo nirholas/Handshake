@@ -3,6 +3,23 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "Free 3D API tells agents exactly when to check back",
+			"summary": "When a text-to-3D generation needs a moment and hands back a job to poll, the free /api/3d/generate API now includes how long to wait before checking again (a retryAfter value, also sent as the standard Retry-After header) plus an estimated time-to-ready and a stable creation id. Agents that honor the hint poll on a sensible schedule instead of hammering the endpoint, so they stop tripping the rate limit and the shared free GPU lane carries less needless traffic. Fully backward-compatible: existing callers keep working unchanged.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/docs/3d-api"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Avatar renders look studio-lit, not murky",
+			"summary": "Every generated avatar and 3D identity is now rendered with real studio lighting. The image-based lighting the renderer was missing is the reason materials like leather, fabric, and metal used to crush to near-black; adding it, plus faithful color tone mapping, makes those surfaces read the way they look in a real 3D viewer. Faces are lit, boots and belts look like leather again, and the whole character stands out from the backdrop. This lifts the profile pictures and full-body shots the Agent Identity Studio produces, and the avatar thumbnails across the site.",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
 			"title": "three.ws now speaks 11 languages",
 			"summary": "The site's language switcher gained nine new languages on top of English and Spanish: Simplified Chinese, Japanese, Korean, French, German, Brazilian Portuguese, Arabic, Hindi, and Russian. Pick your language from the switcher and the copy re-renders instantly, with your choice remembered for next time; if your browser is already set to one of these, three.ws now greets you in it automatically. Arabic lays out right-to-left. Brand and protocol terms like $THREE, USDC, and three.ws stay exact in every language.",
 			"tags": [
