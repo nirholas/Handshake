@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T09:14:59.862Z",
+	"generated_at": "2026-07-17T09:30:15.854Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -89,6 +89,17 @@
 			"summary": "Since July 9, a few hundred paid x402 calls a day were answered with a 502 after the buyer's USDC transfer was rejected on Solana. Two payments for the same price, signed in the same few-second window, could compile to byte-identical transactions, and only the first one could ever land. Every payment now carries its own tiny priority-fee fingerprint, so simultaneous same-priced purchases each settle cleanly, and settlement errors now name their real cause in our logs so future issues surface faster.",
 			"link": null,
 			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "Photo to 3D models no longer have broken backs",
+			"summary": "Turning a single photo into a 3D model used to leave the model's unseen sides up to the AI's imagination, which often produced smeared textures and hollowed-out backs the moment you rotated the model. The forge now generates matching side and back views of your photo first and reconstructs from all three, so the whole model holds up from every angle. Text prompts already worked this way; photo uploads now get the same treatment.",
+			"link": "/image-to-3d",
+			"tags": [
+				"improvement",
 				"fix"
 			]
 		},

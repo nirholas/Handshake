@@ -14164,6 +14164,16 @@
 			"tags": [
 				"fix"
 			]
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Photo to 3D models no longer have broken backs",
+			"summary": "Turning a single photo into a 3D model used to leave the model's unseen sides up to the AI's imagination, which often produced smeared textures and hollowed-out backs the moment you rotated the model. The forge now generates matching side and back views of your photo first and reconstructs from all three, so the whole model holds up from every angle. Text prompts already worked this way; photo uploads now get the same treatment.",
+			"tags": [
+				"improvement",
+				"fix"
+			],
+			"link": "/image-to-3d"
 		}
 	]
 }

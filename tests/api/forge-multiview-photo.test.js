@@ -60,6 +60,15 @@ vi.mock('../../api/_lib/forge-store.js', () => ({
 	findByJob: vi.fn(async () => null),
 }));
 
+// Lane health: the real snapshot probes the worker URL over the network, which
+// is unreachable here and would mark the lane down. Report everything unknown
+// (fail-open, treated as usable), matching a deployment with no telemetry.
+vi.mock('../../api/_lib/forge-lane-health.js', () => ({
+	laneHealthSnapshot: vi.fn(async () => ({ statusMap: {}, byId: {} })),
+	markLaneUnhealthy: vi.fn(async () => {}),
+	laneCooldownKey: (id) => `forge-lane:${id}`,
+}));
+
 // Vision pre-check is a no-op pass: the routing, not the input, is under test.
 vi.mock('../../api/_lib/forge-image-validate.js', () => ({
 	validateForgeImage: vi.fn(async () => ({ ok: true })),
