@@ -297,6 +297,27 @@ export async function sweepBack({ connection, mode = 'excess', includeTokens = t
 const RECLAIM_EXEMPT_NAMES = new Set(['circulation-treasury']);
 
 /**
+ * Pure reclaim sizing (no RPC) so the anti-oscillation invariant is testable.
+ * Returns how much SOL to pull from an engine holding `currentSol` whose operating
+ * floor is `minSol`, leaving it at minSol PLUS a buffer so fee jitter can't drop it
+ * below minSol (which would make the topup re-fund it and reopen the ping-pong the
+ * design closes). Returns 0 when there is nothing worth moving.
+ *
+ * Invariant: currentSol - reclaimableSol(currentSol, minSol) >= minSol, always.
+ *
+ * @param {number} currentSol
+ * @param {number} minSol
+ * @param {number} [minSweep]
+ * @returns {number}
+ */
+export function reclaimableSol(currentSol, minSol, minSweep = MIN_SWEEP_SOL) {
+	const floor = Math.max(0, minSol);
+	const keepSol = floor + Math.max(0.005, floor * 0.1);
+	const reclaimable = round(currentSol - keepSol);
+	return reclaimable >= minSweep ? reclaimable : 0;
+}
+
+/**
  * Emergency consolidation: pull IDLE SOL sitting above each engine's true
  * operating floor (`minSol`, not the topup `refillTo`) back to the master, SOL
  * only; token floats are never touched. This is the automated form of the manual
@@ -361,12 +382,10 @@ export async function reclaimIdleSol({ connection, network = 'mainnet', dryRun =
 			readErrors.push({ name, pubkey: w.pubkey, reason: `rpc_error: ${e?.message}` });
 			continue;
 		}
-		// Leave the engine its floor plus a comfortable buffer so fee jitter can't
-		// drop it below minSol (which would make the topup re-fund it and reopen the
-		// oscillation this design closes).
-		const keepSol = w.minSol + Math.max(0.005, w.minSol * 0.1);
-		const reclaimable = round(currentSol - keepSol);
-		if (reclaimable < MIN_SWEEP_SOL) {
+		// Leave the engine its floor plus a comfortable buffer (see reclaimableSol)
+		// so the topup never re-funds a reclaimed engine and the two cannot ping-pong.
+		const reclaimable = reclaimableSol(currentSol, w.minSol);
+		if (reclaimable <= 0) {
 			skipped.push({ name, reason: 'at_or_below_floor' });
 			continue;
 		}

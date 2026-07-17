@@ -115,9 +115,23 @@ shuffle the remaining SOL, and when it hits zero the Money Pulse
 ([`/pulse`](../pages/pulse.html)) goes quiet. Historically the only cure was a
 human moving SOL in.
 
-**Fuel** ([`api/_lib/economy-fuel.js`](../api/_lib/economy-fuel.js)) closes that
-gap. It runs as a pre-step of the topup cron: before the master distributes, if
-its spendable SOL can't cover the engines' real deficit, it converts a small,
+When the master can't cover the engines' real deficit, the topup cron self-heals
+in two automatic steps before it ever pages a human, in cheapest-first order:
+
+**Step 1: reclaim idle SOL (free).** `reclaimIdleSol`
+([`api/_lib/economy-sweepback.js`](../api/_lib/economy-sweepback.js)) pulls SOL
+sitting **above each engine's operating floor** (`minSol`, not the topup
+`refillTo`) back to the master, SOL only. This is the automated form of the manual
+"drain the fleet to refund the feed" recovery: SOL trapped in an over-provisioned
+engine (a launcher floored for bursts that isn't launching, say) flows to where
+the Money Pulse needs it. It is **non-oscillating by construction** (`reclaimableSol`,
+unit-tested): it leaves every engine at `minSol` plus a buffer, and the topup only
+funds engines strictly *below* `minSol`, so a reclaimed engine is never
+re-funded and the two crons can't ping-pong. The feed sink (circulation-treasury)
+is exempt, and the destination is the same hard-locked `ECONOMY_MASTER_ADDRESS`.
+
+**Step 2: refuel from revenue.** If reclaim doesn't close the gap, **fuel**
+([`api/_lib/economy-fuel.js`](../api/_lib/economy-fuel.js)) converts a small,
 bounded slice of the master's **own idle USDC revenue** into native SOL through a
 real Jupiter route, then lets the topup distribute the proceeds.
 

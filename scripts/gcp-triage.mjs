@@ -104,11 +104,11 @@ const KNOWN_SIGNATURES = [
 // `investigate`.
 const KNOWN_HTTP_SIGNATURES = [
 	{
-		id: 'ring-payer-wallet-drained-503',
+		id: 'ring-payer-refill-crash-503',
 		test: (g) => g.status >= 500 && g.path.startsWith('/api/x402')
 			&& g.userAgent.includes('threews-x402-autonomous'),
-		class: 'owner',
-		action: `The x402 autonomous ring payer wallet is drained: the wallet-balance monitor logs "payer USDC 0.00 < floor 5.00" and every ring/seed/autonomous tick fails with insufficient_payer_usdc, so the 6-min ring cron POST to /api/x402-pay returns 503. Not a code bug (the duplicate-signature fix, commit 93430b4fb, is already deployed). RESOLUTION IS FUNDING (owner-gated on-chain spend): top up ring payer X4o2UuVNMxnrgkzVy97kPF5gmS6CLRCVJGB48VastML with USDC (>= 5.00 floor) and keep sponsor SOL above its 0.03 floor. ${RUNBOOK} §ring-duplicate-signature.`,
+		class: 'investigate',
+		action: `The x402 ring payer runs to 0 USDC and its 6-min self-pay returns 503. The payer is NOT truly unfunded — it holds SOL, and economy-rebalance (ECONOMY_REBALANCE_ENABLED=1) is meant to self-swap that SOL->USDC to the 10-USDC floor every tick. Root cause fixed in commit 8a767ae87: economy-rebalance.js assigned loadSignerKeypair's wrapper to \`keypair\` and read \`keypair.publicKey\` (undefined) -> executeSwap crashed "Cannot read properties of undefined (reading 'toBase58')" on every leg, so no refill happened. VERIFY after deploy: POST /api/cron/economy-rebalance (Bearer CRON_SECRET) returns results[].status "swapped" (not "failed"), then payer USDC climbs back above floor and the 503s stop. If it still returns "failed" post-deploy, re-investigate executeSwap/buildSwapTx. ${RUNBOOK} §ring-duplicate-signature.`,
 	},
 ];
 

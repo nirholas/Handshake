@@ -7,9 +7,36 @@ import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import {
 	planSweepback,
+	reclaimableSol,
 	MIN_SWEEP_SOL,
 	DRAIN_HEADROOM_LAMPORTS,
 } from '../api/_lib/economy-sweepback.js';
+
+// reclaimableSol: the emergency consolidation's sizing. The load-bearing property
+// is anti-oscillation: it must NEVER leave an engine below minSol, or the topup
+// (which funds anything below minSol) would immediately re-fund it and the two
+// crons would ping-pong, burning fees forever.
+test('reclaimableSol never leaves an engine below its floor', () => {
+	for (const [current, min] of [
+		[3, 1], [0.6, 0.2], [1.076, 1], [0.05, 0.02], [0.3, 0.03], [10, 0.05],
+	]) {
+		const r = reclaimableSol(current, min);
+		assert.ok(current - r >= min, `left ${current - r} below floor ${min}`);
+	}
+});
+
+test('reclaimableSol pulls the idle excess above the floor+buffer', () => {
+	// launcher floored at 1 SOL sitting on 3 → reclaim ~1.9 (leaves 1.1 = min + 10%)
+	assert.ok(Math.abs(reclaimableSol(3, 1) - 1.9) < 1e-6);
+	// a2a floored at 0.02 on 0.035 → keep 0.025, reclaim 0.01 (== dust floor)
+	assert.ok(reclaimableSol(0.035, 0.02) >= MIN_SWEEP_SOL - 1e-9);
+});
+
+test('reclaimableSol returns 0 when the engine is at or below its floor', () => {
+	assert.equal(reclaimableSol(1, 1), 0);          // exactly at floor
+	assert.equal(reclaimableSol(0.5, 1), 0);        // below floor
+	assert.equal(reclaimableSol(1.05, 1), 0);       // within the buffer, not worth dust
+});
 import { ECONOMY_MASTER_ADDRESS } from '../api/_lib/economy-master.js';
 import { buildSweepbackRows, hashEntry } from '../api/_lib/economy-ledger.js';
 import { SOLANA_SIGNERS } from '../api/_lib/solana-signers.js';
