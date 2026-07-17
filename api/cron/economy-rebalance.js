@@ -109,13 +109,20 @@ export default wrapCron(async (req, res) => {
 		const spec = SOLANA_SIGNERS.find((s) => s.name === leg.name);
 		let keypair;
 		try {
-			keypair = await loadSignerKeypair(spec);
+			// loadSignerKeypair returns { configured, keypair, decodeError } — the
+			// web3.js Keypair lives on .keypair (same shape economy-sweepback uses).
+			const loaded = await loadSignerKeypair(spec);
+			keypair = loaded?.keypair || null;
+			if (!keypair) {
+				results.push({
+					name: leg.name,
+					status: 'skipped',
+					reason: loaded?.decodeError ? 'signer_decode_error' : 'signer_unconfigured',
+				});
+				continue;
+			}
 		} catch (err) {
 			results.push({ name: leg.name, status: 'failed', reason: `key: ${err.message}` });
-			continue;
-		}
-		if (!keypair) {
-			results.push({ name: leg.name, status: 'skipped', reason: 'signer_unconfigured' });
 			continue;
 		}
 		try {
