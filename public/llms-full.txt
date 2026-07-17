@@ -572,6 +572,12 @@ URL: https://three.ws/ar/studio
 
 A live multi-model AR scene through your camera: place any number of 3D models and avatars in your real space, pull in your forge creations, community models, or any GLB link, and generate new models by prompt without leaving the view.
 
+### Daily Forge
+
+URL: https://three.ws/daily
+
+A new 3D creative challenge every day. Forge today's theme into a real 3D model, free and no sign-up, build a daily streak, and place your creation in AR on your phone.
+
 ### Spatial MCP — reference renderer
 
 URL: https://three.ws/spatial-mcp

@@ -766,6 +766,15 @@
 					"showcase": true
 				},
 				{
+					"path": "/daily",
+					"title": "Daily Forge",
+					"description": "A new 3D creative challenge every day. Forge today's theme into a real 3D model, free and no sign-up, build a daily streak, and place your creation in AR on your phone.",
+					"priority": 0.8,
+					"changefreq": "daily",
+					"added": "2026-07-17",
+					"showcase": true
+				},
+				{
 					"path": "/spatial-mcp",
 					"title": "Spatial MCP — reference renderer",
 					"description": "The open standard for returning a live, interactive 3D scene as a first-class MCP tool result, with a framework-free reference renderer that displays any conformant artifact — including ones transformed from other tools.",
