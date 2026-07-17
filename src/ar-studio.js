@@ -273,6 +273,16 @@ function updateCount() {
 	if (photoBtn) photoBtn.disabled = n === 0;
 }
 
+// A placement's LOGICAL scale — the size the user chose, independent of the
+// spawn-in animation. While a model is easing in (spawnT < 1) group.scale.x is
+// a fraction of the target; reading it then would persist ~0 and clamp the
+// model to SCALE_MIN on the next load. Post-spawn, group.scale.x IS the truth
+// (pinch writes it directly), so it wins.
+function logicalScale(p) {
+	if (p.spawnT < 1) return p.group.userData._targetScale ?? 1;
+	return p.group.scale.x;
+}
+
 // ── Scene persistence ─────────────────────────────────────────────────────────
 function saveScene() {
 	try {
@@ -282,7 +292,7 @@ function saveScene() {
 			x: p.group.position.x,
 			z: p.group.position.z,
 			yaw: p.yaw,
-			scale: p.group.scale.x,
+			scale: logicalScale(p),
 		}))));
 	} catch {}
 }
@@ -885,7 +895,7 @@ selbar?.addEventListener('click', (e) => {
 		saveScene();
 	} else if (act === 'duplicate') {
 		addModel({ src: selected.src, title: selected.title }, {
-			yaw: selected.yaw, scale: selected.group.scale.x,
+			yaw: selected.yaw, scale: logicalScale(selected),
 		});
 	} else if (act === 'remove') {
 		const removed = selected;
@@ -894,7 +904,7 @@ selbar?.addEventListener('click', (e) => {
 			actionLabel: 'Undo',
 			onAction: () => addModel({ src: removed.src, title: removed.title }, {
 				x: removed.group.position.x, z: removed.group.position.z,
-				yaw: removed.yaw, scale: removed.group.scale.x,
+				yaw: removed.yaw, scale: logicalScale(removed),
 			}),
 		});
 	}
@@ -905,7 +915,7 @@ clearBtn?.addEventListener('click', () => {
 	undoItems = placements.map((p) => ({
 		src: p.src, title: p.title,
 		x: p.group.position.x, z: p.group.position.z,
-		yaw: p.yaw, scale: p.group.scale.x,
+		yaw: p.yaw, scale: logicalScale(p),
 	}));
 	for (const p of [...placements]) removePlacement(p, { persist: false });
 	saveScene();
@@ -1097,7 +1107,7 @@ document.addEventListener('keydown', (e) => {
 	} else if (key === 'd' || key === 'D') {
 		e.preventDefault();
 		addModel({ src: selected.src, title: selected.title }, {
-			yaw: selected.yaw, scale: selected.group.scale.x,
+			yaw: selected.yaw, scale: logicalScale(selected),
 		});
 	} else if (key === 'Delete' || key === 'Backspace') {
 		e.preventDefault();
@@ -1107,7 +1117,7 @@ document.addEventListener('keydown', (e) => {
 			actionLabel: 'Undo',
 			onAction: () => addModel({ src: removed.src, title: removed.title }, {
 				x: removed.group.position.x, z: removed.group.position.z,
-				yaw: removed.yaw, scale: removed.group.scale.x,
+				yaw: removed.yaw, scale: logicalScale(removed),
 			}),
 		});
 	}
@@ -1381,7 +1391,7 @@ qrBtn?.addEventListener('click', () => {
 		x: p.group.position.x,
 		z: p.group.position.z,
 		yaw: p.yaw,
-		scale: p.group.scale.x,
+		scale: logicalScale(p),
 	})));
 	const box = $('ars-qr-box');
 	if (box) {
