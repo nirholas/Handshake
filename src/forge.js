@@ -2982,10 +2982,14 @@ if (els.forgeShareBtn) {
 		const origin = location.origin;
 		const prompt = els.forgeShareBtn.dataset.sharePrompt || lastJob?.prompt || '';
 		const id = currentCreationId;
-		const shareUrl = id ? `${origin}/forge/share/${id}` : `${origin}/forge`;
 		const remixUrl = prompt
 			? `${origin}/forge?prompt=${encodeURIComponent(prompt)}`
 			: `${origin}/forge`;
+		// A share is only a real, unfurlable permalink when the creation was
+		// persisted server-side (has an id). Without one, share the remix link,
+		// which actually rebuilds the model for whoever opens it, never a bare
+		// /forge that unfurls to nothing.
+		const shareUrl = id ? `${origin}/forge/share/${id}` : remixUrl;
 		showSharePanel(
 			{
 				kind: 'forge',
@@ -2994,6 +2998,10 @@ if (els.forgeShareBtn) {
 				description: 'A 3D model generated with text / image → 3D on three.ws',
 				shareUrl,
 				remixUrl,
+				// Show the exact OG card the link unfurls as (forge-og 302s to the
+				// real preview image, or renders an SVG card). Only meaningful with a
+				// permalink; the remix-link fallback has no per-creation card.
+				previewImage: id ? `${origin}/api/forge-og?id=${id}` : undefined,
 			},
 			els.forgeShareBtn,
 		);

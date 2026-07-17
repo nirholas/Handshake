@@ -124,6 +124,7 @@ let lastPrompt = '';
 let modelViewerReady = null;
 let currentViewer = null; // the live <model-viewer> on stage
 let currentGlbUrl = ''; // what the toolbar acts on
+let currentCreationId = ''; // persisted creation id → real shareable permalink
 let toastTimer = null;
 let embedCopyTimer = null;
 let embedTrigger = null; // element to restore focus to when the embed sheet closes
@@ -416,9 +417,12 @@ function downloadName(prompt) {
 	);
 }
 
-function showResult(glbUrl, prompt, { fromHistory = false } = {}) {
+function showResult(glbUrl, prompt, { fromHistory = false, creationId = '' } = {}) {
 	stopElapsed();
 	currentGlbUrl = glbUrl;
+	// A fresh forge carries a persisted creation id (real OG permalink); a reload
+	// from the on-device history rail does not, so it shares the remix link.
+	currentCreationId = creationId || '';
 	// Reloading from the history rail can happen before any forge this session,
 	// so the viewer library may not be registered yet. The element upgrades
 	// retroactively once the script lands — fire the load and let it catch up.
@@ -549,7 +553,9 @@ async function run(prompt) {
 
 		const viewerErr = await viewerLoad;
 		if (viewerErr instanceof Error) throw viewerErr;
-		showResult(done.glb_url, prompt);
+		// The initial POST always carries the persisted creation id; the async
+		// poll result may not, so prefer the job's id and fall back to done's.
+		showResult(done.glb_url, prompt, { creationId: job.creation_id || done.creation_id || '' });
 	} catch (err) {
 		if (!pollAbort && seq === runSeq) {
 			showError(err.message || 'Something went wrong. Try a simpler prompt.');
@@ -565,6 +571,7 @@ function reset() {
 	setBusy(false);
 	closeEmbed();
 	currentGlbUrl = '';
+	currentCreationId = '';
 	currentViewer = null;
 	markActiveThumb();
 	showState('idle');
@@ -650,13 +657,21 @@ function autoGrow() {
 
 async function copyShareLink() {
 	if (!currentGlbUrl) return;
-	// Share the idea, not just the file: a remix link auto-builds this prompt
-	// for whoever opens it. (The "Open in Scene" action still links the exact
-	// finished model.)
-	const url = new URL(remixLinkFor(lastPrompt), location.origin).href;
+	// A freshly forged model has a persisted creation id, so share its real
+	// permalink: /forge/share/:id unfurls with an OG card (api/forge-share.js)
+	// and opens the actual model, not just its prompt. Only a reload from the
+	// on-device history rail lacks an id, so there we share the remix link, which
+	// rebuilds the prompt for whoever opens it. Either way the copied link is a
+	// real, working destination, never a dead file URL.
+	const sharesModel = Boolean(currentCreationId);
+	const path = sharesModel ? `/forge/share/${currentCreationId}` : remixLinkFor(lastPrompt);
+	const url = new URL(path, location.origin).href;
+	const okMsg = sharesModel
+		? 'Link copied. Opens your model with a preview card'
+		: 'Remix link copied. Whoever opens it builds their own';
 	try {
 		await navigator.clipboard.writeText(url);
-		showToast('Remix link copied — whoever opens it builds their own');
+		showToast(okMsg);
 	} catch {
 		// Clipboard blocked (permissions / insecure context) — fall back to a
 		// transient selectable field the user can copy manually.
