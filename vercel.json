@@ -4614,17 +4614,11 @@
 		},
 		{
 			"src": "/chat",
-			"status": 301,
-			"headers": {
-				"Location": "/app"
-			}
+			"dest": "/chat/index.html"
 		},
 		{
 			"src": "/chat/",
-			"status": 301,
-			"headers": {
-				"Location": "/app"
-			}
+			"dest": "/chat/index.html"
 		},
 		{
 			"src": "/chat/(.*)",

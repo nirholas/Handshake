@@ -65,7 +65,7 @@ if (base) {
 				note = err.name === 'TimeoutError' ? 'timeout' : err.message;
 			}
 			// 2xx and 3xx are both reachable. A redirect that resolves is how
-			// /chat (301 → /app) is meant to behave.
+			// /blog (301 → /changelog) is meant to behave.
 			if (!(status >= 200 && status < 400)) failures.push({ path: p, status, note });
 			done += 1;
 			if (done % 50 === 0) console.log(`[check-pages] ${done}/${paths.length}…`);

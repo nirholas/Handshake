@@ -64,7 +64,7 @@ for (const { rel, min } of distLibChecks) {
 // (docs/*, tutorials/*, .well-known/*). check-pages.mjs resolves each path
 // through the real vercel.json route table instead, so it can tell a
 // server-rendered page from an unreachable one and needs no allowlist.
-const criticalStaticPages = ['/', '/dashboard', '/pump-dashboard', '/dashboard-next', '/create', '/discover'];
+const criticalStaticPages = ['/', '/dashboard', '/pump-dashboard', '/dashboard-next', '/create', '/discover', '/chat'];
 
 function resolvesToFile(pagePath) {
 	// vercel.json rewrites "/" -> "/home.html" (server/index.mjs's phase1Routes,
