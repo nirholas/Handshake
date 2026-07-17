@@ -50,6 +50,11 @@ const opt = (name) => {
 };
 
 const cfg = loadConfig();
+// CLI overrides for the backend, so a one-off run can switch provider/model
+// without editing the committed .i18nrc.json (e.g. --provider=openrouter
+// --model=openai/gpt-4o-mini when the default GCP/Vertex path is unavailable).
+if (opt('provider')) cfg.provider = opt('provider');
+if (opt('model')) cfg.modelName = opt('model');
 const sourcePath = resolve(ROOT, cfg.entry);
 const source = readJSON(sourcePath);
 if (!source) {

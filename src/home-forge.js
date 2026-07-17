@@ -978,9 +978,17 @@ function wireHeroBar() {
 			paused = false;
 			if (!heroInput.value) heroInput.placeholder = basePlaceholder;
 		});
+		// English only: the rotator's template is English, and for a non-English
+		// locale the i18n runtime has already set a translated placeholder we must
+		// not clobber. `documentElement.lang` carries the active locale (set by
+		// src/i18n.js); default/unset is treated as English.
+		const isEnglish = () => {
+			const lang = (document.documentElement.lang || 'en').toLowerCase();
+			return lang === 'en' || lang.startsWith('en-');
+		};
 		if (!reduce) {
 			setInterval(() => {
-				if (paused || heroInput.value || document.hidden) return;
+				if (paused || heroInput.value || document.hidden || !isEnglish()) return;
 				idx = (idx + 1) % HERO_EXAMPLES.length;
 				heroInput.placeholder = `describe anything: ${HERO_EXAMPLES[idx]}…`;
 			}, 3200);

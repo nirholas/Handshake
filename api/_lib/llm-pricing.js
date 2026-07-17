@@ -9,6 +9,8 @@
 // their marginal cost to us is $0 — they are intentionally priced at zero, not
 // omitted, so the dashboard can show "calls served free" alongside paid spend.
 
+import { isPaidModel } from './chat-models.js';
+
 // USD per 1,000,000 tokens, [input, output]. Keys are matched by prefix so a
 // dated alias (claude-haiku-4-5-20251001) resolves to its family price.
 const PRICE_PER_MTOK = {
@@ -49,6 +51,9 @@ const PRICE_PER_MTOK = {
 	'gemini-2.5-flash': [0.3, 2.5],
 	'google/gemini-2.5-pro': [1.25, 10],
 	'gemini-2.5-pro': [1.25, 10],
+	// OpenRouter IBM Granite (BYOK) — the funded key draws real spend, so it is
+	// metered here despite openrouter being a free provider (see isPaidModel).
+	'ibm-granite/granite-4.1-8b': [0.05, 0.1],
 };
 
 // Providers whose marginal cost to the platform is zero (platform-funded free
@@ -71,11 +76,14 @@ function priceForModel(model) {
 // or 0 when the provider is free or the model is unpriced — never null, so the
 // caller can always record a numeric cost.
 export function costMicroUsd({ provider, model, input = 0, output = 0 } = {}) {
+	// A paid/BYOK model draws real spend even when its transport provider is an
+	// otherwise-free tier (e.g. OpenRouter Granite), so it is metered by its list
+	// price below rather than zeroed. Genuinely-free models still short-circuit.
 	// Provider names carry rung suffixes — '#n' for multi-key (openrouter#2),
 	// ':variant' for same-key model variants (openrouter:free), '#instant' for
 	// the Groq step-down. Strip them so every rung of a free provider prices
 	// to zero.
-	if (provider && FREE_PROVIDERS.has(String(provider).split(/[#:]/)[0])) return 0;
+	if (!(model && isPaidModel(model)) && provider && FREE_PROVIDERS.has(String(provider).split(/[#:]/)[0])) return 0;
 	const price = priceForModel(model);
 	if (!price) return 0;
 	const [inPerM, outPerM] = price;

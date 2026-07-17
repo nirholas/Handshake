@@ -3,6 +3,7 @@ import {
 	MODEL_CATALOG,
 	modelSupportsTools,
 	isModelModerationGated,
+	isPaidModel,
 	usableModels,
 	DEFAULT_FREE_MODEL,
 	DEFAULT_PROVIDER_ORDER,
@@ -12,6 +13,8 @@ import {
 	MAX_FALLBACK_ATTEMPTS,
 	TOTAL_BUDGET_MS,
 } from '../api/_lib/chat-models.js';
+
+const GRANITE = 'ibm-granite/granite-4.1-8b';
 
 // Models removed from the catalog because they will never succeed: OpenRouter
 // 404 "No endpoints found" / no tool-capable endpoint. They must never appear
@@ -112,6 +115,35 @@ describe('free-first ordering', () => {
 		expect(ANON_PROVIDER_LIST).toEqual(['groq', 'openrouter', 'nvidia']);
 		expect(ANON_PROVIDER_LIST).not.toContain('openai');
 		expect(ANON_PROVIDER_LIST).not.toContain('anthropic');
+	});
+});
+
+describe('paid/BYOK model gating (OpenRouter Granite)', () => {
+	it('the Granite lane is catalogued, tool-capable, and flagged paid', () => {
+		expect(MODEL_CATALOG[GRANITE], 'granite catalogued').toBeDefined();
+		expect(MODEL_CATALOG[GRANITE].provider).toBe('openrouter');
+		expect(modelSupportsTools(GRANITE)).toBe(true);
+		expect(isPaidModel(GRANITE)).toBe(true);
+	});
+
+	it('isPaidModel is false for free and unknown models', () => {
+		expect(isPaidModel(DEFAULT_FREE_MODEL)).toBe(false);
+		expect(isPaidModel('llama-3.3-70b-versatile')).toBe(false);
+		expect(isPaidModel('totally-made-up-model')).toBe(false);
+	});
+
+	it('the paid model is never in an auto-selected free path', () => {
+		// Not a per-provider default, not an OpenRouter sibling, not the free model.
+		expect(Object.values(PROVIDER_MODEL_DEFAULTS)).not.toContain(GRANITE);
+		expect(OPENROUTER_SIBLINGS).not.toContain(GRANITE);
+		expect(DEFAULT_FREE_MODEL).not.toBe(GRANITE);
+	});
+
+	it('no free-provider default is a paid model (anon can never auto-hit one)', () => {
+		for (const provider of ANON_PROVIDER_LIST) {
+			const model = PROVIDER_MODEL_DEFAULTS[provider];
+			expect(isPaidModel(model), `${provider} default ${model} must be free`).toBe(false);
+		}
 	});
 });
 

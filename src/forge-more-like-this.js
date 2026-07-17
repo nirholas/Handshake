@@ -1,11 +1,11 @@
-// Forge — "More like this" (browser client).
+// Forge: "More like this" (browser client).
 //
 // After a text→3D result lands, forge.js dispatches `forge:model-ready` with the
 // prompt that produced it (as `label`). This module reads that prompt and offers
 // a compact row of one-tap variations that keep the same subject but restyle its
 // material or finish (see ./shared/forge-variations.js). Tapping a chip fires
 // `forge:run-prompt`, which forge.js turns into an immediate generation using the
-// exact same path as the example chips — so exploring a design space is a single
+// exact same path as the example chips, so exploring a design space is a single
 // tap, with no retyping.
 //
 // Fully decoupled: no imports from forge.js, no changes to its state. It only
@@ -28,17 +28,17 @@ if (result) {
 .mlt-label{font-size:var(--text-2xs);letter-spacing:.09em;text-transform:uppercase;
 	color:var(--ink-dim);font-family:var(--font-mono);margin-right:var(--space-3xs);}
 .mlt-chip{display:inline-flex;align-items:center;gap:var(--space-2xs);
-	font-family:var(--font-body);font-size:var(--text-xs);color:var(--ink);
+	font-family:var(--font-body);font-size:var(--text-sm);color:var(--ink);
 	background:var(--surface-2);border:1px solid var(--stroke);
-	border-radius:var(--radius-pill);padding:var(--space-3xs) var(--space-sm);
-	cursor:pointer;transition:background .15s ease,border-color .15s ease,transform .15s ease;}
+	border-radius:var(--radius-pill);padding:var(--space-xs) var(--space-sm);
+	min-height:32px;cursor:pointer;transition:background .15s ease,border-color .15s ease,transform .15s ease;}
 .mlt-chip:hover{background:var(--surface-3);border-color:var(--stroke-strong);transform:translateY(-1px);}
 .mlt-chip:active{transform:translateY(0);}
 .mlt-chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 .mlt-dot{width:10px;height:10px;border-radius:var(--radius-pill);
 	background:var(--dot,#888);box-shadow:0 0 0 1px rgba(255,255,255,.14) inset;flex:none;}
 .mlt-reshuffle{display:inline-flex;align-items:center;justify-content:center;
-	width:26px;height:26px;color:var(--ink-dim);background:transparent;
+	width:32px;height:32px;color:var(--ink-dim);background:transparent;
 	border:1px solid var(--stroke);border-radius:var(--radius-pill);cursor:pointer;
 	transition:color .15s ease,border-color .15s ease,transform .3s ease;}
 .mlt-reshuffle:hover{color:var(--ink);border-color:var(--stroke-strong);}
@@ -57,6 +57,9 @@ if (result) {
 	// above the deeper tool panels (stylize/optimize).
 	const row = document.createElement('div');
 	row.className = 'mlt is-hidden';
+	// role="group" so the aria-label is actually exposed (a label on a bare div is
+	// ignored by assistive tech).
+	row.setAttribute('role', 'group');
 	row.setAttribute('aria-label', 'Generate a variation of this model');
 	row.hidden = true;
 
@@ -96,6 +99,9 @@ if (result) {
 			chip.type = 'button';
 			chip.className = 'mlt-chip';
 			chip.title = v.prompt;
+			// The visible label is just the material ("Brass"); give assistive tech
+			// the action context so tabbing onto it is self-explanatory.
+			chip.setAttribute('aria-label', `Re-forge in ${v.label}`);
 			chip.innerHTML =
 				`<span class="mlt-dot" style="--dot:${v.swatch}" aria-hidden="true"></span>` +
 				`<span class="mlt-text"></span>`;

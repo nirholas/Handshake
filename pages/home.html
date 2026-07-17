@@ -2651,20 +2651,20 @@
 		     Enter. Wired in src/home-forge.js (wireHeroBar). -->
 		<form class="hero-forge" id="hero-forge-form" autocomplete="off" role="search" aria-label="Generate a 3D model from a text description">
 			<span class="hero-forge-glyph" aria-hidden="true">◆</span>
-			<input type="text" id="hero-forge-input" class="hero-forge-input" maxlength="1000" autocomplete="off" spellcheck="false" aria-label="Describe a 3D model to generate" placeholder="describe anything: a brass compass, weathered…" />
+			<input type="text" id="hero-forge-input" class="hero-forge-input" maxlength="1000" autocomplete="off" spellcheck="false" aria-label="Describe a 3D model to generate" placeholder="describe anything: a brass compass, weathered…" data-i18n-attr="placeholder:home.hero_forge_placeholder" />
 			<button type="submit" class="hero-forge-go" id="hero-forge-go" data-cta="hero_forge" data-cta-loc="hero">
 				<span class="btn-forge-dot" aria-hidden="true"></span>
-				<span data-hero-forge-label>Forge it</span>
+				<span data-hero-forge-label data-i18n="home.forge_it">Forge it</span>
 				<span class="arrow" aria-hidden="true">→</span>
 			</button>
 		</form>
 		<div class="hero-forge-tries" aria-label="Example prompts to try">
-			<span class="hero-forge-tries-label">Try</span>
+			<span class="hero-forge-tries-label" data-i18n="home.hero_try">Try</span>
 			<button type="button" class="hero-try" data-prompt="a low-poly red fox, sitting">low-poly fox</button>
 			<button type="button" class="hero-try" data-prompt="a sci-fi combat helmet, brushed metal">sci-fi helmet</button>
 			<button type="button" class="hero-try" data-prompt="a glazed ceramic teapot">ceramic teapot</button>
 		</div>
-		<p class="hero-forge-note">Free, no sign-up, a real textured model in about a minute. <a href="/forge">Open the full Forge →</a></p>
+		<p class="hero-forge-note" data-i18n-html="home.hero_forge_note">Free, no sign-up, a real textured model in about a minute. <a href="/forge">Open the full Forge →</a></p>
 		<div class="hero-cta-row">
 			<a class="btn" href="/create" data-cta="build_agent" data-cta-loc="hero" data-i18n-html="home.cta_build">Build your agent <span class="arrow">→</span></a>
 			<a class="btn" href="#embed" data-cta="see_embed" data-cta-loc="hero" data-i18n="home.cta_embed">See the embed</a>
@@ -3673,6 +3673,11 @@
 		70% { box-shadow: 0 0 0 6px transparent; }
 		100% { box-shadow: 0 0 0 0 transparent; }
 	}
+	#home-community-forge .hcf-empty {
+		grid-column: 1 / -1; margin: 0; padding: 40px 16px; text-align: center;
+		color: var(--text-3); font-size: 14px; font-family: var(--font-body);
+		border: 1px dashed var(--hairline); border-radius: 14px;
+	}
 	#home-community-forge .hcf-morewrap { display: flex; justify-content: center; margin-top: 22px; }
 	#home-community-forge .hcf-more {
 		appearance: none; cursor: pointer;
@@ -3699,13 +3704,13 @@
 	<div class="wrap-1280">
 		<div class="hcf-head reveal">
 			<div>
-				<p class="hcf-eyebrow"><span data-i18n="home.community">Community</span><span class="hcf-live" id="hcf-live" hidden><span class="hcf-live-dot" aria-hidden="true"></span>live</span></p>
+				<p class="hcf-eyebrow"><span data-i18n="home.community">Community</span><span class="hcf-live" id="hcf-live" hidden><span class="hcf-live-dot" aria-hidden="true"></span><span data-i18n="home.live">live</span></span></p>
 				<h2 class="hcf-title" data-i18n-html="home.made_with_forge_right_now">Made with Forge. <em>Right now.</em></h2>
 			</div>
 			<div class="hcf-controls">
 				<div class="hcf-tabs" role="group" aria-label="Sort community models">
-					<button type="button" class="hcf-tab" data-hcf-sort="fresh" aria-pressed="true">Fresh</button>
-					<button type="button" class="hcf-tab" data-hcf-sort="top" aria-pressed="false">Trending</button>
+					<button type="button" class="hcf-tab" data-hcf-sort="fresh" aria-pressed="true" data-i18n="home.fresh">Fresh</button>
+					<button type="button" class="hcf-tab" data-hcf-sort="top" aria-pressed="false" data-i18n="home.trending">Trending</button>
 				</div>
 				<a href="/forge" class="hcf-cta" data-i18n="home.generate_yours">Generate yours →</a>
 			</div>
@@ -3719,7 +3724,7 @@
 			<div class="hcf-skel"><div class="hcf-skel-thumb"></div><div class="hcf-skel-body"><div class="hcf-skel-line"></div><div class="hcf-skel-line"></div></div></div>
 			<div class="hcf-skel"><div class="hcf-skel-thumb"></div><div class="hcf-skel-body"><div class="hcf-skel-line"></div><div class="hcf-skel-line"></div></div></div>
 		</div>
-		<div class="hcf-morewrap"><button type="button" class="hcf-more" id="hcf-more" hidden>Show more</button></div>
+		<div class="hcf-morewrap"><button type="button" class="hcf-more" id="hcf-more" hidden data-i18n="home.show_more">Show more</button></div>
 	</div>
 </section>
 <script type="module">
@@ -3832,6 +3837,7 @@
 	var expanded = false;
 	var pollTimer = null;
 	var reqSeq = 0;            // ignore a slow response after a tab switch
+	var hasRendered = false;   // a first successful render happened (keep the section on later empties)
 
 	function dedupe(all) {
 		var seen = new Set();
@@ -3867,6 +3873,25 @@
 			track.appendChild(buildCard(c));
 		});
 		if (moreBtn) moreBtn.hidden = expanded || items.length <= INITIAL;
+		hasRendered = true;
+	}
+
+	// Empty-state for a sort that returns nothing (e.g. Trending before the first
+	// weekly vote). Only reached AFTER a successful render, so the section and its
+	// toggle stay put — the visitor can switch back to Fresh, never a vanished
+	// strip. The message spans the whole grid via a full-row card.
+	function renderEmpty(s) {
+		track.innerHTML = '';
+		items = [];
+		knownIds = new Set();
+		if (moreBtn) moreBtn.hidden = true;
+		var msg = document.createElement('p');
+		msg.className = 'hcf-empty';
+		var t = (window.threewsI18n && window.threewsI18n.t) || function(_, d) { return d; };
+		msg.textContent = s === 'top'
+			? t('home.feed_empty_top', 'No trending models yet this week. Check back after a few votes, or browse Fresh.')
+			: t('home.feed_empty_fresh', 'Nothing here yet. Be the first to forge one.');
+		track.appendChild(msg);
 	}
 
 	function stopPolling() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
@@ -3900,8 +3925,19 @@
 		var seq = ++reqSeq;
 		fetchFeed(s).then(function(res) {
 			if (seq !== reqSeq) return;
-			if (!res.enabled || !res.items.length) {
+			// Persistence off, or nothing to show and nothing ever shown: this is a
+			// deployment/first-load with no community models, so hide the strip
+			// entirely (the pre-existing behaviour).
+			if (!res.enabled || (!res.items.length && !hasRendered)) {
 				if (section) section.hidden = true;
+				stopPolling();
+				return;
+			}
+			// A sort that came back empty AFTER we've shown models (e.g. Trending
+			// with no votes yet): keep the section and toggle, show a message.
+			if (!res.items.length) {
+				renderEmpty(s);
+				if (liveChip) liveChip.hidden = true;
 				stopPolling();
 				return;
 			}
@@ -3914,7 +3950,7 @@
 			if (seq !== reqSeq) return;
 			// First load failing hides the section (as before); a failed re-sort
 			// keeps whatever is already on stage rather than blanking it.
-			if (!items.length && section) section.hidden = true;
+			if (!hasRendered && section) section.hidden = true;
 		});
 	}
 

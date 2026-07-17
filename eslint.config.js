@@ -44,6 +44,14 @@ export default [
 			'scripts/wf-*.mjs',
 			// Bundled/minified build artifacts
 			'**/*.min.js',
+			// Bundler output formats (tsup/esbuild IIFE + global builds) and
+			// TypeDoc-generated API-doc assets: single-line minified code where
+			// minifier variable reuse trips no-redeclare/no-func-assign. These are
+			// generated, never hand-edited, and must not gate the lint on real
+			// source. (Hand-authored robinhood/**/docs demos stay linted.)
+			'**/*.iife.js',
+			'**/*.global.js',
+			'**/docs/api/assets/**',
 			'public/embed-sdk.js',
 			'public/embed.js',
 			'public/wallet-login.js',

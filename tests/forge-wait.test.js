@@ -73,7 +73,7 @@ describe('forge-wait client', () => {
 		const panel = document.getElementById('state-generating');
 		const tipEl = document.querySelector('.forge-wait-tip');
 
-		// Reveal the panel — rotation should begin.
+		// Reveal the panel: rotation should begin.
 		panel.classList.remove('is-hidden');
 		await Promise.resolve(); // let the MutationObserver microtask flush
 		const first = tipEl.textContent;
@@ -84,7 +84,7 @@ describe('forge-wait client', () => {
 		const second = tipEl.textContent;
 		expect(second).not.toBe(first);
 
-		// Hide the panel — rotation must stop (content frozen).
+		// Hide the panel: rotation must stop (content frozen).
 		panel.classList.add('is-hidden');
 		await Promise.resolve();
 		const frozen = tipEl.textContent;

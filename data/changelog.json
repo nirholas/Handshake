@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "The Money Pulse now tells you which token each trade was",
+			"summary": "Trade and snipe beats in the live Money Pulse at three.ws/pulse used to read only \"traded ◎0.012\" with no hint of what was bought or sold, while launches already named the coin. Every trade now leads with the token: its $SYMBOL when we can name it (resolved from our token cache and platform launches), or a short mint address when we can't, with the full mint on hover. Across the last 200 real trades, 198 resolve to a symbol. The same identity shows up in the compact pulse ticker embedded around the site.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/pulse"
+		},
+		{
+			"date": "2026-07-17",
 			"title": "You can now see exactly which build is live",
 			"summary": "The status page at three.ws/status now shows the exact version running in production: the commit it was built from (linked to the source), the release version, the Cloud Run revision, and when it was built. Developers can read the same details as JSON from a new /api/version endpoint. It closes a real gap: before this, confirming that a deploy actually shipped meant cross-referencing server timestamps by hand. Now it's one glance, or one request.",
 			"tags": [

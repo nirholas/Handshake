@@ -46,6 +46,7 @@ import {
 	OPENROUTER_SIBLINGS,
 	ANON_PROVIDER_LIST,
 	MODEL_CATALOG,
+	isPaidModel,
 	MAX_FALLBACK_ATTEMPTS,
 	TOTAL_BUDGET_MS,
 	PER_CALL_TIMEOUT_MS,
@@ -381,6 +382,13 @@ export default wrap(async (req, res) => {
 			return error(res, 401, 'unauthorized', 'sign in to chat with the agent');
 		}
 		if (body.provider && !ANON_PROVIDERS.has(body.provider)) {
+			return error(res, 401, 'unauthorized', 'sign in to use this model');
+		}
+		// A paid/BYOK model (e.g. the OpenRouter Granite lane) draws real spend on
+		// the platform key, so it is authenticated-only — even though its provider
+		// (openrouter) is otherwise an anon free tier. Reject an explicit request
+		// for one before it can reach the funded key.
+		if (body.model && isPaidModel(body.model)) {
 			return error(res, 401, 'unauthorized', 'sign in to use this model');
 		}
 		// Honor an explicitly-requested free-tier provider (groq/openrouter/nvidia).

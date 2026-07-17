@@ -1,11 +1,11 @@
-// Forge — "while it forges" tips (browser client).
+// Forge: "while it forges" tips (browser client).
 //
 // While a generation runs, forge.js shows the honest step/progress panel
 // (#state-generating). This module adds a quiet, rotating craft tip beneath it,
 // so the 10-60s wait teaches instead of just ticking. It is fully decoupled:
 // there is no "generation started" event, so it watches the panel's own
 // is-hidden class and starts/stops the rotation from that. It never touches the
-// progress UI and never fakes progress — it only rotates real, curated content.
+// progress UI and never fakes progress: it only rotates real, curated content.
 //
 // Motion-safe: under prefers-reduced-motion it shows a single static tip with no
 // timer and no crossfade.
@@ -38,7 +38,10 @@ if (panel && FORGE_TIPS.length) {
 
 	const card = document.createElement('div');
 	card.className = 'forge-wait';
-	card.setAttribute('aria-live', 'polite');
+	// Deliberately NOT an aria-live region: the tip rotates every few seconds and
+	// a live region would announce each one, interrupting a screen-reader user who
+	// is just waiting. It stays normal, readable content; the panel's #gen-note
+	// (role="status") already voices the real progress.
 	card.innerHTML =
 		'<span class="forge-wait-eyebrow">// while it forges</span>' +
 		'<div class="forge-wait-body"><p class="forge-wait-tip"></p>' +
@@ -58,6 +61,7 @@ if (panel && FORGE_TIPS.length) {
 	let order = tipOrder();
 	let pos = 0;
 	let timer = null;
+	let swapTimer = null;
 
 	function paint(i) {
 		const t = FORGE_TIPS[i];
@@ -78,7 +82,8 @@ if (panel && FORGE_TIPS.length) {
 			return;
 		}
 		body.classList.add('is-swapping');
-		setTimeout(() => {
+		swapTimer = setTimeout(() => {
+			swapTimer = null;
 			paint(order[pos]);
 			body.classList.remove('is-swapping');
 		}, 320);
@@ -97,6 +102,12 @@ if (panel && FORGE_TIPS.length) {
 		if (timer) {
 			clearInterval(timer);
 			timer = null;
+		}
+		// Cancel an in-flight crossfade so a stray paint never fires on a hidden card.
+		if (swapTimer) {
+			clearTimeout(swapTimer);
+			swapTimer = null;
+			body.classList.remove('is-swapping');
 		}
 	}
 

@@ -178,14 +178,28 @@ async function handleFeed(req, res, { network, type, agentId, cursor, since }) {
 			ce.amount_raw                         AS amount_raw,
 			ce.usd                                AS usd,
 			ce.signature                          AS signature,
-			NULL::text                            AS mint,
-			NULL::text                            AS symbol,
-			NULL::text                            AS coin_name,
+			tk.mint                               AS mint,
+			COALESCE(tm.symbol, ptok.symbol)      AS symbol,
+			COALESCE(tm.name, ptok.name)          AS coin_name,
 			NULLIF(ce.meta->>'skill', '')         AS skill,
 			NULLIF(ce.meta->>'from', '')          AS counterparty
 		FROM agent_custody_events ce
 		JOIN agent_identities ai ON ai.id = ce.agent_id AND ${visGate}
 		LEFT JOIN avatars av ON av.id = ai.avatar_id AND av.deleted_at IS NULL
+		-- Resolve the traded token once: it lives in meta.mint (buys + sells) and,
+		-- for sells, additionally in the asset column (which holds the mint). SOL /
+		-- USDC / THREE assets are the quote/settlement leg, not a traded token.
+		LEFT JOIN LATERAL (
+			SELECT COALESCE(
+				NULLIF(ce.meta->>'mint', ''),
+				CASE WHEN ce.asset NOT IN ('SOL', 'USDC', 'THREE') THEN ce.asset END
+			) AS mint
+		) tk ON true
+		-- Name the mint: general Helius/Jupiter cache first, then our own launches.
+		-- token_metadata.mint is a PK and pump_agent_mints is unique on (mint,
+		-- network), so neither join can fan the row out.
+		LEFT JOIN token_metadata tm ON tm.mint = tk.mint
+		LEFT JOIN pump_agent_mints ptok ON ptok.mint = tk.mint AND ptok.network = ce.network
 		WHERE ce.network = ${network}
 		  AND ce.status IN ('ok', 'confirmed')
 		  AND (

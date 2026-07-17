@@ -51,6 +51,17 @@ describe('deriveVariations', () => {
 		expect(deriveVariations('   ')).toEqual([]);
 		expect(deriveVariations(null)).toEqual([]);
 	});
+
+	it('never produces a variation longer than the forge 1000-char limit', () => {
+		const nearLimit = 'a ' + 'x'.repeat(966); // 968 chars: some facets fit, some do not
+		const v = deriveVariations(nearLimit, { count: 8 });
+		expect(v.length).toBeGreaterThan(0);
+		for (const x of v) expect(x.prompt.length).toBeLessThanOrEqual(1000);
+	});
+
+	it('returns nothing when the prompt is already at the character limit', () => {
+		expect(deriveVariations('x'.repeat(1000))).toEqual([]);
+	});
 });
 
 describe('composeVariation', () => {

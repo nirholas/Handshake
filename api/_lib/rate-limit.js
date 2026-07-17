@@ -1252,6 +1252,13 @@ export const limits = {
 	// are short-TTL cached, so this only gates cache-miss origin hits.
 	walletEmbedIp: (ip) => getLimiter('wallet:embed:ip', { limit: 120, window: '1 m' }).limit(ip),
 	agentSuggest: (ip) => getLimiter('agents:suggest', { limit: 120, window: '1 m' }).limit(ip),
+	// Signed-out "describe it, we build it" generation in the create-agent wizard.
+	// The try-first flow lets anyone generate a spec before making an account, so
+	// this hits the paid LLM chain with no user identity behind it — keyed per IP
+	// and deliberately tight (enough to explore a few ideas and tweak, not enough
+	// to turn the open endpoint into a free generation relay). The global daily
+	// spend cap in api/_lib/llm.js is the second line of defence.
+	agentSuggestAnon: (ip) => getLimiter('agents:suggest:anon', { limit: 10, window: '1 h' }).limit(ip),
 	// On-chain agent registration (register_agent MCP tool). Each call may mint a
 	// Core asset + Agent Identity PDA — real SOL spend — so this is deliberately
 	// tight, keyed per authenticated user.

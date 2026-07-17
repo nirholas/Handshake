@@ -96,6 +96,9 @@ function injectStyles() {
 .mp-name { font-weight: 600; color: var(--ink-bright, #fff); }
 .mp-amount { font-family: var(--font-mono, ui-monospace, monospace); color: var(--ink-bright, #fff); }
 .mp-usd { color: var(--ink-dim, #888); }
+.mp-token { font-family: var(--font-mono, ui-monospace, monospace); font-weight: 600; color: var(--mp-accent, #8b7cff); }
+.mp-token-mint { font-weight: 500; color: var(--ink, #e8e8e8); opacity: .82; }
+.mp-tick .mp-token { color: inherit; }
 .mp-meta { display: flex; align-items: center; gap: 8px; margin-top: 3px; font-size: var(--text-2xs, .68rem); color: var(--ink-faint, #666); }
 .mp-chip-slot { display: inline-flex; }
 .mp-time { white-space: nowrap; }
@@ -189,6 +192,27 @@ function usdLabel(ev) {
 	return ` · $${Number(ev.usd).toFixed(2)}`;
 }
 
+// Short, base58-safe mint elision for when we have a mint but no resolved symbol.
+function shortMint(mint) {
+	if (!mint || mint.length <= 10) return mint || '';
+	return `${mint.slice(0, 4)}…${mint.slice(-4)}`;
+}
+
+// The traded-token chip: "$SYMBOL" when the mint resolves to a known token,
+// otherwise the elided mint (e.g. "4h3K…9xQr"). Empty when no token is known
+// (generic SOL spends), so the sentence gracefully reads "traded ◎0.012".
+// Rendered as a span, never a nested <a> — the whole row is already an anchor.
+function tokenLabelHTML(ev) {
+	if (ev.symbol) {
+		const title = ev.coin_name ? ` title="${esc(ev.coin_name)}"` : '';
+		return `<span class="mp-token"${title}>$${esc(ev.symbol)}</span>`;
+	}
+	if (ev.mint) {
+		return `<span class="mp-token mp-token-mint" title="${esc(ev.mint)}">${esc(shortMint(ev.mint))}</span>`;
+	}
+	return '';
+}
+
 // Build the human sentence fragment (the part after the avatar). Returns HTML.
 function sentenceHTML(ev) {
 	const k = KIND_META[ev.kind] || KIND_META.trade;
@@ -202,8 +226,10 @@ function sentenceHTML(ev) {
 			return `<span class="mp-name">${name}</span> received a${amtHTML} tip${usdHTML}`;
 		case 'launch':
 			return `<span class="mp-name">${name}</span> launched ${ev.symbol ? `$${esc(ev.symbol)}` : esc(ev.coin_name || 'a coin')}`;
-		case 'snipe':
-			return `<span class="mp-name">${name}</span> sniped${amtHTML}${usdHTML}`;
+		case 'snipe': {
+			const tok = tokenLabelHTML(ev);
+			return `<span class="mp-name">${name}</span> sniped${tok ? ` ${tok}` : ''}${amtHTML}${usdHTML}`;
+		}
 		case 'payment':
 			return `<span class="mp-name">${name}</span> paid${amtHTML}${usdHTML}`;
 		case 'purchase': {
@@ -211,8 +237,10 @@ function sentenceHTML(ev) {
 			return `<span class="mp-name">${name}</span> bought ${skill}${amtHTML ? ` for${amtHTML}` : ''}`;
 		}
 		case 'trade':
-		default:
-			return `<span class="mp-name">${name}</span> traded${amtHTML}${usdHTML}`;
+		default: {
+			const tok = tokenLabelHTML(ev);
+			return `<span class="mp-name">${name}</span> traded${tok ? ` ${tok}` : ''}${amtHTML}${usdHTML}`;
+		}
 	}
 }
 
@@ -324,9 +352,14 @@ function tickEl(ev) {
 	a.className = `mp-tick ${k.cls}`;
 	a.href = ev.agent?.url || (ev.mint ? `/oracle/coin/${ev.mint}` : '/pulse');
 	const amt = fmtAmount(ev);
+	// Name the token on trade/snipe ticks too, mirroring the full feed row.
+	const tradeTok = (ev.kind === 'trade' || ev.kind === 'snipe') && (ev.symbol || ev.mint)
+		? ` <span class="mp-token">${ev.symbol ? `$${esc(ev.symbol)}` : esc(shortMint(ev.mint))}</span>`
+		: '';
 	a.innerHTML =
 		`<span class="mp-glyph" aria-hidden="true">${k.glyph}</span>` +
 		`<b>${esc(ev.agent?.name || 'Agent')}</b> ${esc(k.verb)}` +
+		tradeTok +
 		(amt ? ` <span class="mp-amount">${esc(amt)}</span>` : '') +
 		(ev.kind === 'launch' && ev.symbol ? ` <span class="mp-amount">$${esc(ev.symbol)}</span>` : '');
 	return a;

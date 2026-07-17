@@ -74,6 +74,15 @@ export const MODEL_CATALOG = {
 	// (tasks/nvidia-nim/probes/moderation.md)
 	'openai/gpt-oss-120b:free':   { provider: 'openrouter', tools: true, moderationGated: true },
 
+	// ── OpenRouter paid (BYOK, ~$0.05/$0.10 per 1M tok) — IBM Granite lane ─────
+	// Cheap, tool-capable Granite 4.1 for the "embed a Granite agent" surface.
+	// `paid: true` is load-bearing: unlike every other openrouter entry (which is
+	// a free `:free` model), this one draws real spend on the funded key, so it is
+	// gated to authenticated callers (isPaidModel → chat.js anon reject) and metered
+	// in llm-pricing.js. It is never in an auto-built fallback chain (OPENROUTER_SIBLINGS
+	// is free-only), so it is reached only when a signed-in caller names it explicitly.
+	'ibm-granite/granite-4.1-8b': { provider: 'openrouter', tools: true, paid: true },
+
 	// ── NVIDIA NIM free tier — one nvapi key, OpenAI-compatible ───────────────
 	'meta/llama-3.3-70b-instruct':               { provider: 'nvidia', tools: true },
 	'nvidia/llama-3.3-nemotron-super-49b-v1.5':  { provider: 'nvidia', tools: true },
@@ -126,6 +135,15 @@ export function modelSupportsTools(modelId) {
 /** Whether a model's upstream is moderation-gated (excluded from auto chains). */
 export function isModelModerationGated(modelId) {
 	return MODEL_CATALOG[modelId]?.moderationGated === true;
+}
+
+/**
+ * Whether a model is a paid/BYOK lane that draws real spend on the platform key.
+ * These are gated to authenticated callers (never exposed to anon free-tier
+ * traffic) and are metered in llm-pricing.js rather than priced to zero.
+ */
+export function isPaidModel(modelId) {
+	return MODEL_CATALOG[modelId]?.paid === true;
 }
 
 /**

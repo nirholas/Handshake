@@ -608,13 +608,22 @@ async function generateSpec(rawPrompt) {
 		});
 		const data = await res.json().catch(() => ({}));
 		if (!res.ok || !data.spec) {
-			const msg =
-				data.error_description ||
-				(res.status === 401
-					? 'Please sign in first, then generate.'
-					: res.status === 429
-						? 'You’re generating quickly — give it a few seconds and try again.'
-						: 'Couldn’t generate that one. Try a different description or fill the form by hand.');
+			// Anyone can generate before signing in (try-first). The one guest
+			// limit is a tight hourly rate cap, so turn that 429 into a sign-in
+			// nudge, which is the real next step, not a "wait a moment".
+			let msg;
+			if (res.status === 429) {
+				msg = state.authed
+					? data.error_description ||
+						'You’re generating quickly. Give it a few seconds and try again.'
+					: 'That’s the guest generation limit. Sign in to keep going, or fill the form in by hand.';
+			} else if (res.status === 401) {
+				msg = 'Sign in to generate, or just fill the form in by hand.';
+			} else {
+				msg =
+					data.error_description ||
+					'Couldn’t generate that one. Try a different description or fill the form by hand.';
+			}
 			setMagicMsg(msg, 'err');
 			setMagicBusy(false);
 			return;

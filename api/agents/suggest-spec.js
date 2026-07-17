@@ -1,11 +1,16 @@
 // POST /api/agents/suggest-spec  { prompt?: string }
 //
 // The "describe it, don't fill it in" engine behind the Create-Agent wizard.
-// A signed-in user types one sentence (or nothing at all — "surprise me") and
-// gets back a COMPLETE, ready-to-ship agent spec: name, description, tags,
-// optional skills, marketplace category, greeting, persona/system-prompt, a
-// fitting starter body, and a voice. The wizard pours it straight into its
+// Anyone (signed in or not) types one sentence (or nothing at all — "surprise
+// me") and gets back a COMPLETE, ready-to-ship agent spec: name, description,
+// tags, optional skills, marketplace category, greeting, persona/system-prompt,
+// a fitting starter body, and a voice. The wizard pours it straight into its
 // form so the whole flow becomes review-and-tweak instead of type-everything.
+//
+// Try-first: the wizard only requires an account at the final "ship it" step, so
+// generation is OPEN to signed-out visitors too. Anonymous callers hit the paid
+// LLM chain with no user identity, so they carry a much tighter per-IP rate
+// budget (limits.agentSuggestAnon) than signed-in users and no spend attribution.
 //
 // Real model, real provider chain (api/_lib/llm.js — free providers first, paid
 // backstop last), real spend metering. No canned responses, no fake data.
@@ -128,12 +133,17 @@ export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
 	if (!method(req, res, ['POST'])) return;
 
+	// Try-first: the create-agent wizard lets a signed-out visitor build (and now
+	// generate) a whole agent before making an account — sign-in is only required
+	// at the final "ship it" step. So authentication is resolved but NOT required
+	// here. Anonymous calls still hit the paid LLM chain, so they get a much
+	// tighter per-IP budget than signed-in users and carry no user attribution.
 	const session = await getSessionUser(req);
 	const bearer = session ? null : await authenticateBearer(extractBearer(req));
-	if (!session && !bearer) return error(res, 401, 'unauthorized', 'sign in to generate an agent');
-	const userId = session?.id ?? bearer.userId;
+	const userId = session?.id ?? bearer?.userId ?? null;
 
-	const rl = await limits.agentSuggest(clientIp(req));
+	const ip = clientIp(req);
+	const rl = userId ? await limits.agentSuggest(ip) : await limits.agentSuggestAnon(ip);
 	if (!rl.success) return rateLimited(res, rl);
 
 	if (!llmConfigured()) {

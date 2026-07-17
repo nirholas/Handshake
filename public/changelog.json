@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T21:45:12.618Z",
+	"generated_at": "2026-07-17T22:49:54.643Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -477,6 +477,16 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "The Money Pulse now tells you which token each trade was",
+			"summary": "Trade and snipe beats in the live Money Pulse at three.ws/pulse used to read only \"traded ◎0.012\" with no hint of what was bought or sold, while launches already named the coin. Every trade now leads with the token: its $SYMBOL when we can name it (resolved from our token cache and platform launches), or a short mint address when we can't, with the full mint on hover. Across the last 200 real trades, 198 resolve to a symbol. The same identity shows up in the compact pulse ticker embedded around the site.",
+			"link": "/pulse",
+			"tags": [
+				"improvement"
 			]
 		},
 		{

@@ -1,4 +1,4 @@
-// Forge — "More like this" variation grammar (pure, shared, testable).
+// Forge: "More like this" variation grammar (pure, shared, testable).
 //
 // Given the prompt that produced a result, derive a few one-tap variations that
 // keep the SAME subject but restyle its material or finish. This preserves the
@@ -57,16 +57,24 @@ function shuffled(list, rng) {
 	return a;
 }
 
+// The forge prompt box caps at 1000 characters; a variation that appends a
+// material phrase must still fit, or the generation would be rejected.
+export const MAX_PROMPT_CHARS = 1000;
+
 // Derive up to `count` distinct variations for a prompt. Facets whose material
-// the prompt already names are excluded so the suggestions always feel fresh.
+// the prompt already names are excluded so the suggestions always feel fresh,
+// and any whose composed prompt would exceed the forge limit are dropped.
 // Returns [{ key, label, swatch, prompt }]. Empty prompt yields [].
 export function deriveVariations(prompt, { count = 3, rng = Math.random } = {}) {
 	const base = cleanBase(prompt);
 	if (!base) return [];
 	const lower = base.toLowerCase();
-	const eligible = VARIATION_FACETS.filter((f) => !f.match.some((m) => lower.includes(m)));
-	const pool = eligible.length ? eligible : VARIATION_FACETS;
+	const fits = (f) => composeVariation(base, f).length <= MAX_PROMPT_CHARS;
+	const eligible = VARIATION_FACETS.filter((f) => fits(f) && !f.match.some((m) => lower.includes(m)));
+	// Fall back to any material that still fits when the prompt already names them
+	// all; if even that is empty (a near-limit prompt), there are no variations.
+	const pool = eligible.length ? eligible : VARIATION_FACETS.filter(fits);
 	return shuffled(pool, rng)
 		.slice(0, Math.max(0, count))
-		.map((f) => ({ key: f.key, label: f.label, swatch: f.swatch, prompt: composeVariation(prompt, f) }));
+		.map((f) => ({ key: f.key, label: f.label, swatch: f.swatch, prompt: composeVariation(base, f) }));
 }

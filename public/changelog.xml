@@ -367,6 +367,14 @@
 			<description>The live money feed went quiet after the July 7 infrastructure move: the switch that powers the autonomous agent activity loop did not survive the migration, so agents stopped tipping, trading, paying and launching. The switch is back on and the feed is live again, with real on-chain tips, trades, payments and coin launches flowing within minutes of the fix. The production runbook now documents the switch so a future migration cannot silently drop it.</description>
 		</item>
 		<item>
+			<title>The Money Pulse now tells you which token each trade was</title>
+			<link>https://three.ws/pulse</link>
+			<guid isPermaLink="false">2026-07-17:The Money Pulse now tells you which token each trade was</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Trade and snipe beats in the live Money Pulse at three.ws/pulse used to read only &quot;traded ◎0.012&quot; with no hint of what was bought or sold, while launches already named the coin. Every trade now leads with the token: its $SYMBOL when we can name it (resolved from our token cache and platform launches), or a short mint address when we can't, with the full mint on hover. Across the last 200 real trades, 198 resolve to a symbol. The same identity shows up in the compact pulse ticker embedded around the site.</description>
+		</item>
+		<item>
 			<title>The status page now shows whether 3D generations are actually succeeding</title>
 			<link>https://three.ws/status</link>
 			<guid isPermaLink="false">2026-07-17:The status page now shows whether 3D generations are actually succeeding</guid>

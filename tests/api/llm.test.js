@@ -435,4 +435,81 @@ describe('llmComplete — failure modes', () => {
 		installFetch({ [GROQ_HOST]: errResp(500), [OPENROUTER_HOST]: errResp(429) });
 		await expect(llm.llmComplete({ system: 's', user: 'u' })).rejects.toMatchObject({ status: 502 });
 	});
+
+	// A provider can answer HTTP 200 with a body that isn't JSON — an edge/proxy
+	// HTML error page, a truncated stream, an empty body. Parsing it used to throw
+	// OUT of llmComplete, killing the request even though a healthy provider sat
+	// next in the chain. It must fail over instead.
+	it('fails over past a provider that returns a 200 with an unparseable body', async () => {
+		process.env.GROQ_API_KEY = 'g';
+		process.env.OPENROUTER_API_KEY = 'o';
+		const badBody = {
+			ok: true,
+			status: 200,
+			// A real edge/proxy 200 that isn't the expected JSON shape.
+			json: async () => {
+				throw new SyntaxError('Unexpected token < in JSON at position 0');
+			},
+			text: async () => '<html>502 Bad Gateway</html>',
+		};
+		const calls = installFetch({
+			[GROQ_HOST]: badBody,
+			[OPENROUTER_HOST]: openaiShape('openrouter rescues'),
+		});
+		const out = await llm.llmComplete({ system: 's', user: 'u' });
+		expect(out.provider).toBe('openrouter');
+		expect(out.text).toBe('openrouter rescues');
+		expect(calls.map((c) => (c.url.includes(GROQ_HOST) ? 'groq' : 'or'))).toEqual(['groq', 'or']);
+	});
+
+	it('surfaces upstream_bad_body as the last error when every provider returns an unparseable 200', async () => {
+		process.env.GROQ_API_KEY = 'g';
+		const badBody = {
+			ok: true,
+			status: 200,
+			json: async () => {
+				throw new SyntaxError('bad json');
+			},
+			text: async () => 'not json',
+		};
+		// Every reachable lane (groq + the two keyless rungs) returns garbage.
+		installFetch({ [GROQ_HOST]: badBody, [OVH_HOST]: badBody, [POLLINATIONS_HOST]: badBody });
+		await expect(llm.llmComplete({ system: 's', user: 'u' })).rejects.toMatchObject({
+			status: 502,
+			code: 'upstream_bad_body',
+		});
+	});
+
+	// A 200 with empty content (content filter, a lane that returns nothing under
+	// load) is not a real answer — the chain fails over so a healthy provider can
+	// respond.
+	it('fails over past a provider that returns an empty completion', async () => {
+		process.env.GROQ_API_KEY = 'g';
+		process.env.OPENROUTER_API_KEY = 'o';
+		const calls = installFetch({
+			[GROQ_HOST]: openaiShape('   '), // whitespace only → trims to empty
+			[OPENROUTER_HOST]: openaiShape('a real answer'),
+		});
+		const out = await llm.llmComplete({ system: 's', user: 'u' });
+		expect(out.provider).toBe('openrouter');
+		expect(out.text).toBe('a real answer');
+		expect(calls.map((c) => (c.url.includes(GROQ_HOST) ? 'groq' : 'or'))).toEqual(['groq', 'or']);
+	});
+
+	// When EVERY provider only yields empty text, returning that empty-but-valid
+	// 200 still beats throwing — the caller got a real HTTP success, just no words.
+	it('returns the empty-but-valid result when no provider yields any text', async () => {
+		process.env.GROQ_API_KEY = 'g';
+		process.env.OPENROUTER_API_KEY = 'o';
+		installFetch({
+			[GROQ_HOST]: openaiShape(''),
+			[OPENROUTER_HOST]: openaiShape(''),
+			[OVH_HOST]: openaiShape(''),
+			[POLLINATIONS_HOST]: openaiShape(''),
+		});
+		const out = await llm.llmComplete({ system: 's', user: 'u' });
+		expect(out.text).toBe('');
+		// The first empty result is held as the last-resort return value.
+		expect(out.provider).toBe('groq');
+	});
 });

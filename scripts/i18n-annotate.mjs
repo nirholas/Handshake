@@ -99,6 +99,10 @@ function pageKey(file) {
 		.replace(/^(?:pages|public)\//, '');
 	return rel
 		.replace(/\.html?$/i, '')
+		// A ".live" source variant (e.g. ibm/hello.live.html generated into
+		// ibm/hello.html by build-ibm-shell) shares the output's key namespace, so
+		// annotating the editable source produces the same keys the built page uses.
+		.replace(/\.live$/i, '')
 		.replace(/[^a-z0-9]+/gi, '_')
 		.replace(/^_+|_+$/g, '')
 		.toLowerCase() || 'page';
@@ -339,27 +343,35 @@ async function main() {
 		if (maxPerFile > 0) edits = edits.slice(0, maxPerFile);
 		for (const k of keys.keys()) globalKeys.add(k);
 
-		if (!edits.length) {
+		// Wiring is independent of new annotations: a page that is already fully
+		// annotated but not yet wired (e.g. a generated page re-run, or one whose
+		// wire was stripped) still needs the runtime script injected. Decide it up
+		// front so an empty edit set never skips the wire step.
+		const needsWire = APPLY && WIRE && !/\/i18n\.js|\/src\/i18n\.js/.test(html);
+
+		if (!edits.length && !needsWire) {
 			console.log(`• ${rel}: nothing to annotate`);
 			continue;
 		}
 
-		totalEdits += edits.length;
-		filesChanged++;
-		console.log(`${APPLY ? '✎' : '○'} ${rel}: ${edits.length} annotation(s)`);
-		if (DIFF || !APPLY) {
-			for (const [key, val] of [...keys].slice(0, 8)) {
-				console.log(`    ${key}  ←  ${JSON.stringify(val.slice(0, 72))}`);
+		if (edits.length) {
+			totalEdits += edits.length;
+			filesChanged++;
+			console.log(`${APPLY ? '✎' : '○'} ${rel}: ${edits.length} annotation(s)`);
+			if (DIFF || !APPLY) {
+				for (const [key, val] of [...keys].slice(0, 8)) {
+					console.log(`    ${key}  ←  ${JSON.stringify(val.slice(0, 72))}`);
+				}
+				if (keys.size > 8) console.log(`    … +${keys.size - 8} more`);
 			}
-			if (keys.size > 8) console.log(`    … +${keys.size - 8} more`);
 		}
 
-		if (APPLY) {
+		if (APPLY && (edits.length || needsWire)) {
 			let out = applyEdits(html, edits);
 			if (WIRE) {
 				const wired = wireRuntime(out);
 				out = wired.html;
-				if (wired.changed) console.log(`    + wired /i18n.js runtime`);
+				if (wired.changed) console.log(`${edits.length ? '    ' : '⚙ ' + rel + ': '}+ wired /i18n.js runtime`);
 			}
 			writeFileSync(file, out);
 		}

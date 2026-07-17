@@ -1,10 +1,10 @@
-// Forge — "while it forges" craft tips (pure, shared, testable).
+// Forge: "while it forges" craft tips (pure, shared, testable).
 //
 // A text→3D generation takes 10-60s. forge.js already shows honest progress; it
 // does not fill the wait with anything to learn. These curated cards do: each is
 // a concrete prompt-craft tip tuned to the free draft lane (single subject +
 // material), so the wait quietly makes a creator's NEXT prompt better. Nothing
-// here fakes progress — it is genuine content shown alongside the real timers.
+// here fakes progress: it is genuine content shown alongside the real timers.
 //
 // Deliberately dependency-free so both the client and its tests can import it.
 

@@ -128,6 +128,14 @@ export async function checkUserLlmSpendCap(userId, { anthropicKey, grokKey } = {
 	if (!env.ANTHROPIC_API_KEY && !env.OPENAI_API_KEY && !env.GROK_API_KEY) return { exceeded: false }; // no paid keys at all
 	const cap = dailyCapMicroUsd();
 	try {
+		// The cap meters ONLY genuinely-metered third-party paid keys (Anthropic /
+		// OpenAI / Grok). Every zero-marginal-cost free lane is excluded, and so are
+		// the two Vertex rungs: they bill the platform's own GCP credits (standing
+		// owner-approved spend), and the owner directive is to never downgrade or
+		// deny a user to save credits. Counting Vertex here would let credit-billed
+		// spend push a user over the cap and lock them out of even the free chain —
+		// exactly the wrong outcome. Vertex spend stays visible on the admin
+		// dashboard (it is still priced and recorded); it just doesn't gate users.
 		const [row] = await sql`
 			SELECT COALESCE(SUM(cost_micro_usd), 0)::bigint AS spent
 			FROM usage_events
@@ -135,6 +143,7 @@ export async function checkUserLlmSpendCap(userId, { anthropicKey, grokKey } = {
 				AND kind = 'llm'
 				AND provider NOT LIKE 'groq%'
 				AND provider NOT LIKE 'openrouter%'
+				AND provider NOT LIKE 'vertex%'
 				AND provider NOT IN ('nvidia', 'cerebras', 'gemini', 'ovh', 'pollinations')
 				AND created_at > NOW() - INTERVAL '24 hours'
 		`;
@@ -466,9 +475,12 @@ export function llmConfigured(opts = {}) {
 // times out), so a hung upstream can't stall a serverless function or agent
 // tick indefinitely.
 //
-// Returns { text, provider, model, usage:{input,output}, raw }.
+// Returns { text, provider, model, usage:{input,output}, raw }. A provider that
+// answers HTTP 200 with an unparseable body or no usable text is failed over
+// like any other error; if EVERY provider only yields empty text, the first
+// such empty-but-valid result is returned rather than throwing.
 // Throws LlmUnavailableError when no provider is configured, or the last
-// upstream error (with .status = 502) when every provider failed.
+// upstream error (with .status = 502) when every provider failed outright.
 // Throws an error with .status = 429 and .code = 'daily_spend_cap_exceeded'
 // when the caller's userId has consumed their daily LLM budget on paid keys.
 //
@@ -508,6 +520,13 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 	const perProviderMs = Math.max(4_000, Number(process.env.LLM_PER_PROVIDER_TIMEOUT_MS) || 12_000);
 	const deadline = Date.now() + timeoutMs;
 	let lastErr;
+	// A 200 with no usable text (content filter, malformed shape, a lane that
+	// returns an empty completion under load) is not a real answer — the chain
+	// keeps trying so a healthy provider behind it can respond. But if EVERY
+	// provider only produces empty, returning that empty 200 still beats throwing:
+	// the caller asked for a completion and got a valid-if-empty one. Hold the
+	// first such result as the last-resort return value.
+	let lastEmpty = null;
 	for (const p of chain) {
 		const remaining = deadline - Date.now();
 		// Out of overall budget — stop rather than start an attempt we can't finish.
@@ -537,16 +556,41 @@ export async function llmComplete({ system, user, maxTokens = 1024, anthropicKey
 			lastErr = Object.assign(new Error(`${p.name} ${upstream.status}: ${body.slice(0, 200)}`), { status: 502, code: 'upstream_error' });
 			continue;
 		}
-		const data = await upstream.json();
+		// Parse the body defensively: a provider can return HTTP 200 with a
+		// non-JSON payload (an edge/proxy HTML error page, a truncated stream, an
+		// empty body). Left unguarded this threw out of llmComplete entirely,
+		// killing the request even though a healthy provider sat next in the
+		// chain. Treat a parse failure as a provider error and fail over.
+		let data;
+		try {
+			data = await upstream.json();
+		} catch (e) {
+			lastErr = Object.assign(new Error(`${p.name} returned an unparseable 200 body: ${e.message}`), { status: 502, code: 'upstream_bad_body' });
+			continue;
+		}
 		const usage = p.extractUsage(data);
+		const text = (p.extractText(data) || '').trim();
+		if (!text) {
+			// 200 but no usable content — fail over, keeping the result as the
+			// last-resort return value if nothing better comes along.
+			if (!lastEmpty) lastEmpty = { text: '', provider: p.name, model: p.model, usage, raw: data };
+			lastErr = Object.assign(new Error(`${p.name} returned an empty completion`), { status: 502, code: 'empty_completion' });
+			continue;
+		}
 		recordLlmSpend(p, usage, Date.now() - startedAt, track);
 		return {
-			text: (p.extractText(data) || '').trim(),
+			text,
 			provider: p.name,
 			model: p.model,
 			usage,
 			raw: data,
 		};
+	}
+	// Nothing produced usable text. Prefer an empty-but-valid 200 over throwing;
+	// only throw when no provider even returned a parseable success.
+	if (lastEmpty) {
+		recordLlmSpend({ name: lastEmpty.provider, model: lastEmpty.model }, lastEmpty.usage, 0, track);
+		return lastEmpty;
 	}
 	throw lastErr || new LlmUnavailableError();
 }
