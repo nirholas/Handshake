@@ -1,11 +1,22 @@
 {
-	"generated_at": "2026-07-16T22:48:23.762Z",
+	"generated_at": "2026-07-17T06:01:48.217Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "Creator profile pages work again, plus a site-wide reliability sweep",
+			"summary": "A full automated sweep of every page and API endpoint on the site caught a bug that replaced creator profile pages (three.ws/u/yourname) with an error message. That is fixed. The sweep also repaired the login captcha for rate-limited sign-ins, fixed dead links in the dashboard and two blog posts, and added two dozen previously unlisted pages to the site index so search engines and the sitemap can find them. The audit now runs with deeper checks (blank-page detection, visible error detection, and link crawling) so regressions like these get caught before anyone hits them.",
+			"link": "/changelog",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-07-16",
 			"type": "launch",

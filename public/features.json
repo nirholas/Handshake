@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-16T22:48:23.745Z",
+	"generated_at": "2026-07-17T06:01:48.204Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -300,6 +300,36 @@
 					"title": "Partner Ecosystem",
 					"description": "three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, Quicknode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.",
 					"added": "2026-06-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/pricing",
+					"title": "Pricing",
+					"description": "Plans and pricing for three.ws: free forge quota, premium passes, and pay-per-use API surfaces.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/showcase",
+					"title": "Showcase",
+					"description": "AI-powered 3D model viewer showcase: drop in a model and explore it live.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/demos",
+					"title": "Lab Demos",
+					"description": "Index of live demos across the platform: viewers, agents, payments, and experiments.",
+					"added": null,
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -781,6 +811,36 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": false
+				},
+				{
+					"path": "/avatar-studio",
+					"title": "Avatar Studio",
+					"description": "Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories. No selfie required.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/nim-forge",
+					"title": "TRELLIS NIM Forge",
+					"description": "Drop in a photo, get a textured 3D model, reconstructed on a self-hosted Microsoft TRELLIS NIM. Single-hop image to GLB.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/avatar-sdk",
+					"title": "Avatar SDK",
+					"description": "The @three-ws/avatar package: embed the platform 3D avatars in any site with a few lines of JavaScript.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
 				}
 			]
 		},
@@ -904,6 +964,16 @@
 					"title": "Walk Leaderboard",
 					"description": "Global leaderboard for the walking avatar — distance walked, sites visited, and time, ranked daily, weekly, and all-time.",
 					"added": "2026-06-21",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/galaxy",
+					"title": "Agent Galaxy",
+					"description": "Every public agent embedded by IBM Granite on watsonx.ai into a navigable 3D constellation with natural-language semantic search.",
+					"added": null,
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -2045,6 +2115,76 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": false
+				},
+				{
+					"path": "/three-token",
+					"title": "$THREE Token",
+					"description": "The $THREE protocol token: live price, bonding-curve chart, streaming trades, and one-click buy.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/x402",
+					"title": "x402 Catalog",
+					"description": "A live catalog of pay-per-call APIs settled on-chain in USDC over the x402 protocol. Search, inspect the schema, and run any endpoint.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/communities",
+					"title": "Coin Communities",
+					"description": "Pick a coin, drop in an avatar, and walk around its world with everyone else holding it. Each coin is its own live 3D community.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/play",
+					"title": "Play",
+					"description": "Jump into a live coin community world and explore it with your avatar.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/mirror",
+					"title": "Copy Trading",
+					"description": "Follow a high-performing agent and your own agent mirrors its real trades, proportionally and strictly within your spend policy.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/swarms",
+					"title": "Trading Swarms",
+					"description": "Coordinated groups of trading agents working a shared strategy, with live positions and performance.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/agent-wallet",
+					"title": "Agent Wallet",
+					"description": "The wallet surface for your agents: balances, funding, and activity.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
 				}
 			]
 		},
@@ -2926,6 +3066,96 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": false
+				},
+				{
+					"path": "/news",
+					"title": "News and Announcements",
+					"description": "Product launches, integrations, and announcements from three.ws.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/changelog",
+					"title": "Changelog",
+					"description": "What is new on three.ws: features, improvements, and releases, newest first.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/agent-3d",
+					"title": "Docs: agent-3d Web Component",
+					"description": "Documentation for embedding a 3D agent with the agent-3d web component.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/ar",
+					"title": "Docs: AR Viewing",
+					"description": "Documentation for augmented-reality viewing of three.ws models and avatars.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/bnb-payments",
+					"title": "Docs: BNB Payments",
+					"description": "Documentation for paying with BNB on three.ws.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/tutorials/agent-personality",
+					"title": "Tutorial: Agent Personality",
+					"description": "Step-by-step tutorial for giving your agent a personality.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/tutorials/animate-your-avatar",
+					"title": "Tutorial: Animate Your Avatar",
+					"description": "Step-by-step tutorial for animating your avatar with the built-in clip library.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/tutorials/build-a-scene",
+					"title": "Tutorial: Build a Scene",
+					"description": "Step-by-step tutorial for building a 3D scene.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/aws",
+					"title": "three.ws on AWS",
+					"description": "three.ws is an AWS Partner: the open-source 3D AI agent platform on AWS.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
 				}
 			]
 		},
@@ -3286,6 +3516,16 @@
 					"title": "Risk Disclosure",
 					"description": "Risk disclosure for real-funds features: experimental software, total-loss risk, autonomous agents, no liability.",
 					"added": "2026-07-03",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/legal/content-policy",
+					"title": "Content Policy",
+					"description": "What you may publish, mint, and monetise on the platform.",
+					"added": null,
 					"auth": null,
 					"indexable": true,
 					"tags": [],

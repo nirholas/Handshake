@@ -1120,7 +1120,7 @@ const DIR_ICONS = {
 	'/temporary':                '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="4" r="2"/><path d="M10 6v4l-2 4M10 10l2 4M7 8l3 2 3-2"/></svg>',
 	'/pose':                '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="4" r="2"/><path d="M10 6v5M6 8l4 2 4-2M8 11l-2 5M12 11l2 5"/></svg>',
 	'/dashboard/agents':    '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="10" height="10" rx="2"/><circle cx="8" cy="6.5" r="1"/><circle cx="12" cy="6.5" r="1"/><path d="M8 9h4M3 14l2-2h10l2 2v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3z"/></svg>',
-	'/onchain':             '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12a4 4 0 005.7 0l2-2a4 4 0 00-5.7-5.7l-1 1"/><path d="M12 8a4 4 0 00-5.7 0l-2 2a4 4 0 005.7 5.7l1-1"/></svg>',
+	'/features/deploy':     '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12a4 4 0 005.7 0l2-2a4 4 0 00-5.7-5.7l-1 1"/><path d="M12 8a4 4 0 00-5.7 0l-2 2a4 4 0 005.7 5.7l1-1"/></svg>',
 	'/reputation':          '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2l2.5 5 5.5.8-4 3.9.9 5.5L10 14.7l-4.9 2.5.9-5.5L2 7.8l5.5-.8L10 2z"/></svg>',
 	'/strategy-lab':        '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2v5l-4 8h14l-4-8V2"/><path d="M5 18h10"/><path d="M7 2h6"/></svg>',
 	'/profile':             '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="7" r="3.5"/><path d="M4 18c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>',
@@ -1183,7 +1183,7 @@ const DIRECTORY = [
 		group: 'Agents & Identity',
 		items: [
 			{ href: '/dashboard/agents', title: 'Manage Agents',     sub: 'Agent identity, wallet, personality' },
-			{ href: '/onchain',          title: 'On-chain (ERC-8004)', sub: 'Register agents on-chain' },
+			{ href: '/features/deploy',  title: 'On-chain (ERC-8004)', sub: 'Register agents on-chain' },
 			{ href: '/reputation',       title: 'Reputation',        sub: 'Reviews, attestations, and trust scores' },
 			{ href: '/strategy-lab',     title: 'Strategy Lab',      sub: 'Configure agent trading strategies' },
 			{ href: '/profile',          title: 'Profile',           sub: 'Your public creator profile' },

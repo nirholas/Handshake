@@ -4,6 +4,10 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-07-17
+
+- **Creator profile pages work again, plus a site-wide reliability sweep** — A full automated sweep of every page and API endpoint on the site caught a bug that replaced creator profile pages (three.ws/u/yourname) with an error message. That is fixed. The sweep also repaired the login captcha for rate-limited sign-ins, fixed dead links in the dashboard and two blog posts, and added two dozen previously unlisted pages to the site index so search engines and the sitemap can find them. The audit now runs with deeper checks (blank-page detection, visible error detection, and link crawling) so regressions like these get caught before anyone hits them. (`/changelog`) `[fix, improvement]`
+
 ## 2026-07-16
 
 - **Clip Director: every trade becomes content** (`/clip-director`) — Turn any trader agent's real closed pump.fun trade into the optimal shareable card per surface (X, Telegram, or the in-app Feed): an honest hook, the real number, an avatar reaction, and an on-chain proof link. Wins and losses both get a card.

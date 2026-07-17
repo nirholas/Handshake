@@ -77,6 +77,9 @@ const ALWAYS_IGNORE = [
 	/google-analytics\.com|googletagmanager\.com|analytics\.google/,
 	/doubleclick\.net|facebook\.net|hotjar|sentry\.io|fullstory/,
 	/Failed to load resource: net::ERR_BLOCKED_BY_CLIENT/, // ad/track blockers
+	// Errors raised inside the embedded DexScreener chart iframe (its own
+	// origin fetching its own backends) are theirs, not ours.
+	/dexscreener\.com/,
 ];
 // Failures that only happen because serverless functions / CDNs aren't present
 // under a bare local dev server. Applied only when auditing localhost.

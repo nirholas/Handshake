@@ -250,6 +250,27 @@
 					"priority": 0.8,
 					"changefreq": "monthly",
 					"added": "2026-06-27"
+				},
+				{
+					"path": "/pricing",
+					"title": "Pricing",
+					"description": "Plans and pricing for three.ws: free forge quota, premium passes, and pay-per-use API surfaces.",
+					"priority": 0.8,
+					"changefreq": "weekly"
+				},
+				{
+					"path": "/showcase",
+					"title": "Showcase",
+					"description": "AI-powered 3D model viewer showcase: drop in a model and explore it live.",
+					"priority": 0.6,
+					"changefreq": "weekly"
+				},
+				{
+					"path": "/demos",
+					"title": "Lab Demos",
+					"description": "Index of live demos across the platform: viewers, agents, payments, and experiments.",
+					"priority": 0.6,
+					"changefreq": "weekly"
 				}
 			]
 		},
@@ -639,6 +660,27 @@
 					"priority": 0.7,
 					"changefreq": "monthly",
 					"added": "2026-06-23"
+				},
+				{
+					"path": "/avatar-studio",
+					"title": "Avatar Studio",
+					"description": "Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories. No selfie required.",
+					"priority": 0.7,
+					"changefreq": "weekly"
+				},
+				{
+					"path": "/nim-forge",
+					"title": "TRELLIS NIM Forge",
+					"description": "Drop in a photo, get a textured 3D model, reconstructed on a self-hosted Microsoft TRELLIS NIM. Single-hop image to GLB.",
+					"priority": 0.6,
+					"changefreq": "weekly"
+				},
+				{
+					"path": "/avatar-sdk",
+					"title": "Avatar SDK",
+					"description": "The @three-ws/avatar package: embed the platform 3D avatars in any site with a few lines of JavaScript.",
+					"priority": 0.6,
+					"changefreq": "weekly"
 				}
 			]
 		},
@@ -745,6 +787,13 @@
 					"priority": 0.6,
 					"changefreq": "daily",
 					"added": "2026-06-21"
+				},
+				{
+					"path": "/galaxy",
+					"title": "Agent Galaxy",
+					"description": "Every public agent embedded by IBM Granite on watsonx.ai into a navigable 3D constellation with natural-language semantic search.",
+					"priority": 0.6,
+					"changefreq": "weekly"
 				}
 			]
 		},
@@ -1670,6 +1719,55 @@
 					"priority": 0.8,
 					"changefreq": "hourly",
 					"added": "2026-07-10"
+				},
+				{
+					"path": "/three-token",
+					"title": "$THREE Token",
+					"description": "The $THREE protocol token: live price, bonding-curve chart, streaming trades, and one-click buy.",
+					"priority": 0.8,
+					"changefreq": "daily"
+				},
+				{
+					"path": "/x402",
+					"title": "x402 Catalog",
+					"description": "A live catalog of pay-per-call APIs settled on-chain in USDC over the x402 protocol. Search, inspect the schema, and run any endpoint.",
+					"priority": 0.7,
+					"changefreq": "weekly"
+				},
+				{
+					"path": "/communities",
+					"title": "Coin Communities",
+					"description": "Pick a coin, drop in an avatar, and walk around its world with everyone else holding it. Each coin is its own live 3D community.",
+					"priority": 0.7,
+					"changefreq": "daily"
+				},
+				{
+					"path": "/play",
+					"title": "Play",
+					"description": "Jump into a live coin community world and explore it with your avatar.",
+					"priority": 0.6,
+					"changefreq": "weekly"
+				},
+				{
+					"path": "/mirror",
+					"title": "Copy Trading",
+					"description": "Follow a high-performing agent and your own agent mirrors its real trades, proportionally and strictly within your spend policy.",
+					"priority": 0.6,
+					"changefreq": "weekly"
+				},
+				{
+					"path": "/swarms",
+					"title": "Trading Swarms",
+					"description": "Coordinated groups of trading agents working a shared strategy, with live positions and performance.",
+					"priority": 0.6,
+					"changefreq": "weekly"
+				},
+				{
+					"path": "/agent-wallet",
+					"title": "Agent Wallet",
+					"description": "The wallet surface for your agents: balances, funding, and activity.",
+					"priority": 0.6,
+					"changefreq": "weekly"
 				}
 			]
 		},
@@ -2309,6 +2407,69 @@
 					"priority": 0.8,
 					"changefreq": "weekly",
 					"added": "2026-07-10"
+				},
+				{
+					"path": "/news",
+					"title": "News and Announcements",
+					"description": "Product launches, integrations, and announcements from three.ws.",
+					"priority": 0.7,
+					"changefreq": "daily"
+				},
+				{
+					"path": "/changelog",
+					"title": "Changelog",
+					"description": "What is new on three.ws: features, improvements, and releases, newest first.",
+					"priority": 0.7,
+					"changefreq": "daily"
+				},
+				{
+					"path": "/docs/agent-3d",
+					"title": "Docs: agent-3d Web Component",
+					"description": "Documentation for embedding a 3D agent with the agent-3d web component.",
+					"priority": 0.6,
+					"changefreq": "weekly"
+				},
+				{
+					"path": "/docs/ar",
+					"title": "Docs: AR Viewing",
+					"description": "Documentation for augmented-reality viewing of three.ws models and avatars.",
+					"priority": 0.6,
+					"changefreq": "weekly"
+				},
+				{
+					"path": "/docs/bnb-payments",
+					"title": "Docs: BNB Payments",
+					"description": "Documentation for paying with BNB on three.ws.",
+					"priority": 0.6,
+					"changefreq": "weekly"
+				},
+				{
+					"path": "/tutorials/agent-personality",
+					"title": "Tutorial: Agent Personality",
+					"description": "Step-by-step tutorial for giving your agent a personality.",
+					"priority": 0.6,
+					"changefreq": "weekly"
+				},
+				{
+					"path": "/tutorials/animate-your-avatar",
+					"title": "Tutorial: Animate Your Avatar",
+					"description": "Step-by-step tutorial for animating your avatar with the built-in clip library.",
+					"priority": 0.6,
+					"changefreq": "weekly"
+				},
+				{
+					"path": "/tutorials/build-a-scene",
+					"title": "Tutorial: Build a Scene",
+					"description": "Step-by-step tutorial for building a 3D scene.",
+					"priority": 0.6,
+					"changefreq": "weekly"
+				},
+				{
+					"path": "/aws",
+					"title": "three.ws on AWS",
+					"description": "three.ws is an AWS Partner: the open-source 3D AI agent platform on AWS.",
+					"priority": 0.6,
+					"changefreq": "weekly"
 				}
 			]
 		},
@@ -2630,6 +2791,13 @@
 					"priority": 0.2,
 					"changefreq": "yearly",
 					"added": "2026-07-03"
+				},
+				{
+					"path": "/legal/content-policy",
+					"title": "Content Policy",
+					"description": "What you may publish, mint, and monetise on the platform.",
+					"priority": 0.6,
+					"changefreq": "weekly"
 				}
 			]
 		},

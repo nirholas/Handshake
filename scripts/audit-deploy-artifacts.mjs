@@ -246,6 +246,29 @@ export async function findUndeclaredApiImports({ apiDir = resolve(ROOT, 'api') }
 }
 
 // ---------------------------------------------------------------------------
+// 3. Critical static runtime assets in dist/
+// ---------------------------------------------------------------------------
+// The Draco/Basis decoder binaries are gitignored (regenerated from
+// node_modules by scripts/copy-three-decoders.mjs at postinstall/prebuild),
+// so nothing in git guarantees they reach the built dist/. The 2026-07-17
+// production sweep found the whole /three/ decoder tree missing from the
+// running image: /scene hard-failed and every Draco/KTX2-compressed GLB was
+// one asset swap away from breaking. Assert their presence whenever a dist/
+// exists (i.e. in any post-build / pre-deploy run).
+
+export function findMissingDistAssets() {
+	const dist = resolve(ROOT, 'dist');
+	if (!existsSync(dist)) return { skipped: true, missing: [] };
+	const required = [
+		'three/draco/draco_decoder.wasm',
+		'three/draco/gltf/draco_decoder.wasm',
+		'three/basis/basis_transcoder.wasm',
+		'scene-studio/draco/draco_encoder.js',
+	];
+	return { skipped: false, missing: required.filter((p) => !existsSync(resolve(dist, p))) };
+}
+
+// ---------------------------------------------------------------------------
 // CLI
 // ---------------------------------------------------------------------------
 
@@ -287,12 +310,23 @@ if (isMain) {
 		}
 	}
 
+	const distAssets = findMissingDistAssets();
+	if (distAssets.skipped) {
+		console.log('[audit:deploy] note — no dist/ present, decoder-asset check skipped (run after build to enable)');
+	} else if (distAssets.missing.length) {
+		failed = true;
+		console.error(
+			`[audit:deploy] FAIL — ${distAssets.missing.length} critical decoder asset(s) missing from dist/ (the /scene draco outage): run npm install so copy-three-decoders.mjs regenerates public/three, then rebuild:`,
+		);
+		for (const m of distAssets.missing) console.error(`  dist/${m}`);
+	}
+
 	const elapsed = ((Date.now() - start) / 1000).toFixed(1);
 	if (failed) {
 		console.error(`\n[audit:deploy] failed in ${elapsed}s`);
 		process.exit(1);
 	}
 	console.log(
-		`[audit:deploy] clean in ${elapsed}s — no committed symlinks, no unsatisfied peers, no undeclared api imports`,
+		`[audit:deploy] clean in ${elapsed}s — no committed symlinks, no unsatisfied peers, no undeclared api imports, decoder assets ${distAssets.skipped ? 'skipped (no dist/)' : 'present'}`,
 	);
 }

@@ -187,6 +187,24 @@ URL: https://three.ws/partners
 
 three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, Quicknode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.
 
+### Pricing
+
+URL: https://three.ws/pricing
+
+Plans and pricing for three.ws: free forge quota, premium passes, and pay-per-use API surfaces.
+
+### Showcase
+
+URL: https://three.ws/showcase
+
+AI-powered 3D model viewer showcase: drop in a model and explore it live.
+
+### Lab Demos
+
+URL: https://three.ws/demos
+
+Index of live demos across the platform: viewers, agents, payments, and experiments.
+
 ## Build
 
 Create and customize an agent.
@@ -478,6 +496,24 @@ URL: https://three.ws/ca2x402
 
 Paste any token contract address and get a live, agent-payable x402 endpoint for its market intel — price, momentum, and a bullish/bearish signal — for $0.01 USDC, discoverable in the x402 bazaar.
 
+### Avatar Studio
+
+URL: https://three.ws/avatar-studio
+
+Build a custom 3D avatar from scratch. Choose body type, sculpt face and body, add outfits and accessories. No selfie required.
+
+### TRELLIS NIM Forge
+
+URL: https://three.ws/nim-forge
+
+Drop in a photo, get a textured 3D model, reconstructed on a self-hosted Microsoft TRELLIS NIM. Single-hop image to GLB.
+
+### Avatar SDK
+
+URL: https://three.ws/avatar-sdk
+
+The @three-ws/avatar package: embed the platform 3D avatars in any site with a few lines of JavaScript.
+
 ## Labs
 
 Experimental features actively shipping. Expect fast iteration.
@@ -553,6 +589,12 @@ The cross-surface three.ws leaderboard — creators ranked by real creations, re
 URL: https://three.ws/walk-leaderboard
 
 Global leaderboard for the walking avatar — distance walked, sites visited, and time, ranked daily, weekly, and all-time.
+
+### Agent Galaxy
+
+URL: https://three.ws/galaxy
+
+Every public agent embedded by IBM Granite on watsonx.ai into a navigable 3D constellation with natural-language semantic search.
 
 ## Crypto
 
@@ -1240,6 +1282,48 @@ URL: https://three.ws/markets/digest
 
 The day's crypto news grouped into the handful of stories that actually matter — each with a plain-language summary, a market stance, the tickers involved, and every outlet that covered it. Clustered from 38 live publisher feeds.
 
+### $THREE Token
+
+URL: https://three.ws/three-token
+
+The $THREE protocol token: live price, bonding-curve chart, streaming trades, and one-click buy.
+
+### x402 Catalog
+
+URL: https://three.ws/x402
+
+A live catalog of pay-per-call APIs settled on-chain in USDC over the x402 protocol. Search, inspect the schema, and run any endpoint.
+
+### Coin Communities
+
+URL: https://three.ws/communities
+
+Pick a coin, drop in an avatar, and walk around its world with everyone else holding it. Each coin is its own live 3D community.
+
+### Play
+
+URL: https://three.ws/play
+
+Jump into a live coin community world and explore it with your avatar.
+
+### Copy Trading
+
+URL: https://three.ws/mirror
+
+Follow a high-performing agent and your own agent mirrors its real trades, proportionally and strictly within your spend policy.
+
+### Trading Swarms
+
+URL: https://three.ws/swarms
+
+Coordinated groups of trading agents working a shared strategy, with live positions and performance.
+
+### Agent Wallet
+
+URL: https://three.ws/agent-wallet
+
+The wallet surface for your agents: balances, funding, and activity.
+
 ## Agent Tools
 
 Manage, talk to, and deploy individual agents.
@@ -1786,6 +1870,60 @@ URL: https://three.ws/docs/agent-abilities
 
 The complete map of every agent ability, researched from the shipped code: body, motion, mind, voice, identity, skills, screens, economy, the 23-ability wallet, worlds, and the developer platform — 15 chapters plus a per-ability deep dive for the entire Agent Wallet.
 
+### News and Announcements
+
+URL: https://three.ws/news
+
+Product launches, integrations, and announcements from three.ws.
+
+### Changelog
+
+URL: https://three.ws/changelog
+
+What is new on three.ws: features, improvements, and releases, newest first.
+
+### Docs: agent-3d Web Component
+
+URL: https://three.ws/docs/agent-3d
+
+Documentation for embedding a 3D agent with the agent-3d web component.
+
+### Docs: AR Viewing
+
+URL: https://three.ws/docs/ar
+
+Documentation for augmented-reality viewing of three.ws models and avatars.
+
+### Docs: BNB Payments
+
+URL: https://three.ws/docs/bnb-payments
+
+Documentation for paying with BNB on three.ws.
+
+### Tutorial: Agent Personality
+
+URL: https://three.ws/tutorials/agent-personality
+
+Step-by-step tutorial for giving your agent a personality.
+
+### Tutorial: Animate Your Avatar
+
+URL: https://three.ws/tutorials/animate-your-avatar
+
+Step-by-step tutorial for animating your avatar with the built-in clip library.
+
+### Tutorial: Build a Scene
+
+URL: https://three.ws/tutorials/build-a-scene
+
+Step-by-step tutorial for building a 3D scene.
+
+### three.ws on AWS
+
+URL: https://three.ws/aws
+
+three.ws is an AWS Partner: the open-source 3D AI agent platform on AWS.
+
 ## Blog
 
 Long-form announcements, launches, and writing from three.ws.
@@ -2001,6 +2139,12 @@ Terms of service for three.ws.
 URL: https://three.ws/legal/risk
 
 Risk disclosure for real-funds features: experimental software, total-loss risk, autonomous agents, no liability.
+
+### Content Policy
+
+URL: https://three.ws/legal/content-policy
+
+What you may publish, mint, and monetise on the platform.
 
 ## Machine-readable
 

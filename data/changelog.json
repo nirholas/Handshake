@@ -14057,6 +14057,16 @@
 				"fix"
 			],
 			"link": "/world"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Creator profile pages work again, plus a site-wide reliability sweep",
+			"summary": "A full automated sweep of every page and API endpoint on the site caught a bug that replaced creator profile pages (three.ws/u/yourname) with an error message. That is fixed. The sweep also repaired the login captcha for rate-limited sign-ins, fixed dead links in the dashboard and two blog posts, and added two dozen previously unlisted pages to the site index so search engines and the sitemap can find them. The audit now runs with deeper checks (blank-page detection, visible error detection, and link crawling) so regressions like these get caught before anyone hits them.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/changelog"
 		}
 	]
 }

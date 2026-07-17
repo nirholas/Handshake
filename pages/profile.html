@@ -2094,7 +2094,7 @@
 					</section>
 				`;
 
-				wireCreationsPagination(user.username, creationsNext);
+				wireCreationsPagination(rootEl, user.username, creationsNext);
 
 				// Tab switching — delegated so lazily-added NFT/Accessories tabs work.
 				const tabBarEl = rootEl.querySelector('#up-tab-bar');
@@ -2906,7 +2906,7 @@
 			// Wires the "Load more" button once the Creations section is in the
 			// DOM. Idempotent: safe to call every time the tab renders since the
 			// button element is (re)created fresh in renderCreationsGrid.
-			function wireCreationsPagination(username, initialNext) {
+			function wireCreationsPagination(rootEl, username, initialNext) {
 				const row = rootEl.querySelector('#up-creations-more-row');
 				const grid = rootEl.querySelector('#up-creations-grid');
 				if (!row || !grid) return;
