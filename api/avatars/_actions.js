@@ -1025,14 +1025,21 @@ const reconstructSchema = z
 		path: ['photos'],
 	});
 
-// Steer Flux toward a single, evenly-lit, full-figure humanoid on a plain
-// background — that composition reconstructs and auto-rigs far more reliably
-// than a busy scene — without overriding the user's own subject description.
-// "clear detailed face" matters: the gcp reconstruct lane is a face pipeline
-// (it warps the render's face onto a template body), so a render whose face is
-// obscured or featureless fails detection outright.
+// Steer Flux toward a single, evenly-lit, front-facing subject on a plain
+// background — without overriding the user's own subject description.
+//
+// Framing is FACE-FORWARD, not full-body, and that is deliberate: the production
+// reconstruct lane (gcp) is a face-texture-transfer pipeline — it detects the
+// face in the render, warps it onto a TEMPLATE body, and discards the render's
+// own body geometry entirely. A full-figure "head to feet" render therefore
+// shrinks the face to a small fraction of the frame, and the face detector fails
+// on it — which it did at scale: text→avatar reconstructs ran ~15% success vs
+// ~82% for face-prominent selfie photos, almost all the failures logged as
+// "no face detected in any of the provided photos". A head-and-shoulders portrait
+// makes the face large and unambiguous, which is exactly what the pipeline needs
+// (the body is templated regardless). See handleReconstruct's prompt branch.
 const AVATAR_PROMPT_SUFFIX =
-	', full body character, standing in a relaxed A-pose, facing forward with a clear detailed face, centered in frame, entire figure visible from head to feet, plain neutral studio background, soft even lighting, single subject, high detail, game-ready character render';
+	', head and shoulders portrait, face large and centered and clearly visible, looking directly at the camera, sharp focus on the face, neutral expression, plain neutral studio background, soft even lighting, single subject, high detail, photorealistic';
 
 const handleReconstruct = wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'POST,OPTIONS', credentials: true })) return;
