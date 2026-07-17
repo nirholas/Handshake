@@ -31,7 +31,7 @@ var or add quota · 🟢 self-healing, no action needed.
 > self-reports internal-dependency health: **[/status](https://three.ws/status)**
 > renders it with a plain-language fix for each degradation, and
 > **`/api/healthz`** carries a machine-readable `subsystems` block (cache, database,
-> Helius RPC, x402 ring, world, x402 config). The uptime cron
+> Helius RPC, x402 ring, **x402 settlement success**, world, x402 config). The uptime cron
 > ([api/cron/uptime-check.js](../../api/cron/uptime-check.js)) parks a snapshot
 > each tick and re-pages a degradation that persists. Source of the roll-up:
 > [api/_lib/ops/subsystem-health.js](../../api/_lib/ops/subsystem-health.js). This
@@ -120,6 +120,22 @@ HTTP 502 POST /api/x402/<any endpoint>   ua: threews-x402-autonomous/1.0   (~334
   `npm run build:gcp && npm run deploy:gcp`. If the wave persists on the
   revision carrying `93430b4fb`, remove the monitor signature and
   re-investigate; do not let the classification mask a new failure.
+- **Now watched continuously:** this wave went undetected for eight days
+  because every sensor read "ring armed / discovery up" while a third of
+  settles silently failed. The **x402 settlement success** subsystem
+  ([api/_lib/ops/x402-settle-health.js](../../api/_lib/ops/x402-settle-health.js))
+  closes that blind spot: it reads the ring's own `x402_autonomous_log`
+  outcomes over a 3h window and reports the settle SUCCESS RATE, counting only
+  payment-rail faults (5xx / 402 / RPC / broadcast / confirm) and excluding
+  caller errors (http_400/404/405/409), benign guards (cap, low USDC), and
+  downstream notes. It rolls into `/api/healthz`, `/status`, and the
+  uptime-cron escalation (pages on first sight, re-pages hourly, clears on
+  recovery). States: `ok` ≥ 90% settle rate, `degraded` 50–90%, `down` < 50%,
+  `unknown` below 20 settle attempts in-window (a quiet ring is not a fault).
+  A NEW settle-fault reason is caught automatically; a new *benign* reason that
+  shows up as a fault is the one thing to teach it — add the token to the
+  fault/exclusion rules in that module, the same learn-once loop as
+  `KNOWN_SIGNATURES` here.
 
 ---
 

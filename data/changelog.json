@@ -14254,6 +14254,16 @@
 				"improvement"
 			],
 			"link": "/gallery"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "The status page now tracks whether paid API calls actually settle, not just whether the payment rail is switched on",
+			"summary": "The July payment-settlement bug ran for eight days before anyone noticed, because every health check reported the x402 rail as 'armed' and the discovery endpoint as 'up' while a third of real settlements were quietly failing. The public status page and /api/healthz now carry a new signal, x402 settlement success, that reads the actual settle outcomes over a rolling window and reports the success rate. It counts only genuine payment-rail faults (server errors, rejected payments, RPC failures) and ignores unrelated noise, and it pages operations the moment the rate drops, so a silent settlement regression surfaces in hours instead of days.",
+			"tags": [
+				"infra",
+				"improvement"
+			],
+			"link": "/status"
 		}
 	]
 }

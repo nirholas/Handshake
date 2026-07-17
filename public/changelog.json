@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T10:52:33.703Z",
+	"generated_at": "2026-07-17T10:55:07.314Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -115,6 +115,16 @@
 		{
 			"date": "2026-07-17",
 			"type": "update",
+			"title": "Free 3D API tells agents exactly when to check back",
+			"summary": "When a text-to-3D generation needs a moment and hands back a job to poll, the free /api/3d/generate API now includes how long to wait before checking again (a retryAfter value, also sent as the standard Retry-After header) plus an estimated time-to-ready and a stable creation id. Agents that honor the hint poll on a sensible schedule instead of hammering the endpoint, so they stop tripping the rate limit and the shared free GPU lane carries less needless traffic. Fully backward-compatible: existing callers keep working unchanged.",
+			"link": "/docs/3d-api",
+			"tags": [
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
 			"title": "Image to 3D gets its own front door",
 			"summary": "Turning a photo into a 3D model has worked in the Forge for a while, but it hid behind a page titled Text to 3D, and the only photo surface people could find was Selfie to Avatar. There is now a dedicated Image to 3D page (three.ws/image-to-3d) that opens the Forge with the photo tab already selected, an Image to 3D link in the main navigation and footers, and clear pointers between the selfie tools (for making an avatar of you) and Image to 3D (for making a model of any object). The Forge and its feature page are also retitled to say what they actually do: text and images.",
 			"link": "/image-to-3d",
@@ -206,6 +216,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "The status page now tracks whether paid API calls actually settle, not just whether the payment rail is switched on",
+			"summary": "The July payment-settlement bug ran for eight days before anyone noticed, because every health check reported the x402 rail as 'armed' and the discovery endpoint as 'up' while a third of real settlements were quietly failing. The public status page and /api/healthz now carry a new signal, x402 settlement success, that reads the actual settle outcomes over a rolling window and reports the success rate. It counts only genuine payment-rail faults (server errors, rejected payments, RPC failures) and ignores unrelated noise, and it pages operations the moment the rate drops, so a silent settlement regression surfaces in hours instead of days.",
+			"link": "/status",
+			"tags": [
+				"infra",
+				"improvement"
 			]
 		},
 		{

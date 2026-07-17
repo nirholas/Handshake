@@ -34,6 +34,7 @@ import { cacheHealth, cacheGet } from '../cache.js';
 import { heliusHealth } from '../balances.js';
 import { rateLimiterHealth } from '../rate-limit.js';
 import { checkRingInvariants } from '../x402/ring-allowlist.js';
+import { gatherX402SettleHealth } from './x402-settle-health.js';
 
 const DB_PING_TIMEOUT_MS = 2_500;
 const DB_SLOW_MS = 1_000;
@@ -341,6 +342,9 @@ export async function gatherSubsystemHealth({ probeDb = true } = {}) {
 		Promise.resolve(checkRateLimiter()),
 		Promise.resolve(checkHelius()),
 		Promise.resolve(checkRing()),
+		// Settle SUCCESS RATE, not just "armed" — reads x402_autonomous_log. Needs
+		// the DB, so it shares the probeDb gate; skipped-DB callers get `unknown`.
+		probeDb ? gatherX402SettleHealth() : Promise.resolve({ name: 'x402_settle', label: 'x402 settlement success', status: 'unknown', detail: 'settle read skipped' }),
 		checkWorld(),
 		Promise.resolve(checkX402Config()),
 		probeDb ? checkSniper() : Promise.resolve({ name: 'sniper', label: 'Sniper worker (Cloud Run)', status: 'unknown', detail: 'probe skipped' }),
