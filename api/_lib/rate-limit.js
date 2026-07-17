@@ -476,6 +476,12 @@ function fallbackLimiter(name, opts) {
 
 // Preset limiters. Tune once viral traffic shape is known.
 export const limits = {
+	// One-click "Surprise me" avatar composition. Each call composes a rigged GLB
+	// (~1s CPU + a few base-body fetches), so the ceiling stops a script from
+	// hammering the composer while leaving a delighted human free to reroll fast:
+	// 40 per 5 min per IP comfortably covers rapid rerolling, well under abuse.
+	surpriseIp: (ip) =>
+		getLimiter('avatar:surprise:ip', { limit: 40, window: '5 m', local: true }).limit(ip),
 	// Auth buckets gate credential guessing / account-creation spam. They are
 	// sensitive (critical) but use degradeToMemory: on a Redis outage they fall
 	// back to the per-instance memory limiter rather than failing closed. Failing

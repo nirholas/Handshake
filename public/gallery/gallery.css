@@ -1117,3 +1117,211 @@ body.gallery-page {
 	font-weight: 600;
 	flex-shrink: 0;
 }
+
+/* ── "Surprise me" instant avatar ─────────────────────────────────────────
+ * One-click reveal modal (public/gallery/surprise.js). Dark glass panel on a
+ * per-avatar tinted stage; matches the gallery's near-black + pink/purple accent.
+ */
+.surprise-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 1000;
+	display: grid;
+	place-items: center;
+	padding: 20px;
+	opacity: 0;
+	transition: opacity 0.2s ease;
+}
+.surprise-modal.is-open { opacity: 1; }
+/* Guarantee the hidden attribute wins over the display set on state classes
+ * below, independent of whether tokens.css (its global [hidden] guard) is loaded. */
+.surprise-modal [hidden] { display: none !important; }
+.surprise-backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(3, 3, 6, 0.72);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+}
+.surprise-panel {
+	position: relative;
+	width: min(440px, 100%);
+	max-height: calc(100vh - 40px);
+	overflow: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+	padding: 22px;
+	border-radius: 20px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: linear-gradient(180deg, rgba(22, 22, 28, 0.92), rgba(12, 12, 16, 0.94));
+	box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6), 0 2px 10px rgba(0, 0, 0, 0.4);
+	transform: translateY(10px) scale(0.98);
+	transition: transform 0.24s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.surprise-modal.is-open .surprise-panel { transform: none; }
+.surprise-close {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	width: 32px;
+	height: 32px;
+	display: grid;
+	place-items: center;
+	border-radius: 999px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: rgba(255, 255, 255, 0.05);
+	color: #cfcfd6;
+	cursor: pointer;
+	transition: background 0.15s ease, color 0.15s ease;
+}
+.surprise-close:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.surprise-close:focus-visible { outline: 2px solid rgba(236, 72, 153, 0.7); outline-offset: 2px; }
+
+.surprise-stage {
+	--surprise-hue: 280;
+	position: relative;
+	aspect-ratio: 4 / 5;
+	border-radius: 16px;
+	overflow: hidden;
+	background:
+		radial-gradient(ellipse 90% 70% at 50% 34%,
+			hsl(var(--surprise-hue) 34% 16%),
+			hsl(var(--surprise-hue) 44% 6%));
+	transition: background 0.4s ease;
+}
+.surprise-viewer {
+	width: 100%;
+	height: 100%;
+	--poster-color: transparent;
+	background: transparent;
+	opacity: 0;
+	animation: surprise-fade-in 0.5s ease forwards;
+}
+@keyframes surprise-fade-in { to { opacity: 1; } }
+
+.surprise-loading {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+}
+.surprise-orb {
+	width: 46px;
+	height: 46px;
+	border-radius: 999px;
+	background: conic-gradient(from 0deg, rgba(236, 72, 153, 0), rgba(236, 72, 153, 0.9), rgba(155, 93, 255, 0.9), rgba(236, 72, 153, 0));
+	mask: radial-gradient(closest-side, transparent 62%, #000 64%);
+	-webkit-mask: radial-gradient(closest-side, transparent 62%, #000 64%);
+	animation: surprise-spin 0.9s linear infinite;
+}
+@keyframes surprise-spin { to { transform: rotate(360deg); } }
+.surprise-loading-text {
+	margin: 0;
+	font-size: 0.82rem;
+	color: rgba(255, 255, 255, 0.62);
+	letter-spacing: 0.01em;
+}
+.surprise-error {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 14px;
+	padding: 24px;
+	text-align: center;
+}
+.surprise-error p { margin: 0; color: rgba(255, 255, 255, 0.7); font-size: 0.85rem; }
+
+.surprise-meta { text-align: center; }
+.surprise-eyebrow {
+	font-family: var(--font-mono, 'JetBrains Mono', monospace);
+	font-size: 0.66rem;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: rgba(236, 72, 153, 0.85);
+}
+.surprise-name {
+	margin: 6px 0 4px;
+	font-size: 1.5rem;
+	font-weight: 600;
+	font-family: 'Space Grotesk', system-ui, sans-serif;
+	color: #fff;
+	letter-spacing: -0.01em;
+}
+.surprise-tags {
+	margin: 0;
+	font-size: 0.76rem;
+	color: rgba(255, 255, 255, 0.5);
+}
+.surprise-actions {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+}
+.surprise-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 7px;
+	padding: 12px 14px;
+	border-radius: 12px;
+	font-size: 0.88rem;
+	font-weight: 600;
+	font-family: inherit;
+	cursor: pointer;
+	border: 1px solid transparent;
+	transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+.surprise-btn:active { transform: translateY(1px); }
+.surprise-btn:disabled { opacity: 0.55; cursor: default; }
+.surprise-btn:focus-visible { outline: 2px solid rgba(236, 72, 153, 0.7); outline-offset: 2px; }
+.surprise-btn--ghost {
+	background: rgba(255, 255, 255, 0.05);
+	border-color: rgba(255, 255, 255, 0.12);
+	color: #eaeaf0;
+}
+.surprise-btn--ghost:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
+.surprise-btn--primary {
+	background: linear-gradient(135deg, #ec4899, #9b5dff);
+	color: #fff;
+	box-shadow: 0 6px 20px rgba(236, 72, 153, 0.28);
+}
+.surprise-btn--primary:hover:not(:disabled) { filter: brightness(1.06); }
+.surprise-share {
+	align-self: center;
+	background: none;
+	border: none;
+	color: rgba(255, 255, 255, 0.45);
+	font-size: 0.76rem;
+	font-family: inherit;
+	cursor: pointer;
+	padding: 2px 6px;
+	transition: color 0.15s ease;
+}
+.surprise-share:hover { color: rgba(255, 255, 255, 0.8); }
+.surprise-share:focus-visible { outline: 2px solid rgba(236, 72, 153, 0.7); outline-offset: 2px; border-radius: 6px; }
+
+/* The hero "Surprise me" CTA gets the accent gradient so it reads as primary. */
+.gallery-hero-btn--surprise {
+	background: linear-gradient(135deg, #ec4899, #9b5dff);
+	border-color: transparent;
+	color: #fff;
+	box-shadow: 0 6px 20px rgba(236, 72, 153, 0.26);
+}
+.gallery-hero-btn--surprise:hover { filter: brightness(1.06); }
+
+@media (prefers-reduced-motion: reduce) {
+	.surprise-modal, .surprise-panel, .surprise-viewer { transition: none; animation: none; }
+	.surprise-orb { animation-duration: 2s; }
+	.surprise-viewer { opacity: 1; }
+}
+@media (max-width: 480px) {
+	.surprise-panel { padding: 18px; gap: 14px; }
+	.surprise-name { font-size: 1.3rem; }
+}

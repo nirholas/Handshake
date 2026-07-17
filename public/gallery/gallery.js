@@ -13,6 +13,10 @@
  *   • Equip    → /avatars/:id/edit?equip-glb=… (accessory category only)
  */
 
+// One-click "Surprise me" instant avatar. Self-wiring on import: attaches to the
+// hero's [data-surprise-avatar] button and handles ?surprise=<seed> deep links.
+import './surprise.js';
+
 const els = {
 	search: document.querySelector('[data-role="search"]'),
 	searchClear: document.querySelector('[data-role="search-clear"]'),
