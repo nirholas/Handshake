@@ -457,10 +457,10 @@ export async function settleRingPayment({ paymentPayload, requirement, conn, fee
 		});
 	} catch (err) {
 		const m = String(err?.message || err);
+		const sig = tx.signatures?.[0] ? bs58.encode(tx.signatures[0]) : null;
 		// A resent settle (idempotent replay) hits "already processed" — the prior
 		// broadcast landed. Recover the signature from the tx and report success.
 		if (/already been processed|AlreadyProcessed|already processed/i.test(m)) {
-			const sig = tx.signatures?.[0] ? bs58.encode(tx.signatures[0]) : null;
 			if (sig) {
 				return {
 					success: true,
@@ -472,7 +472,24 @@ export async function settleRingPayment({ paymentPayload, requirement, conn, fee
 				};
 			}
 		}
-		return { success: false, reason: `broadcast_failed:${m}`.slice(0, 300) };
+		// web3.js drops the structured preflight cause (res.error.data.err), so on
+		// some RPCs a duplicate-signature rejection arrives as a bare "Transaction
+		// simulation failed" with empty logs. One status-cache probe names it: if
+		// this exact signature already landed, the failure is already-processed,
+		// not a simulation fault. Deliberately still a failure (fail closed) — the
+		// landed transfer belongs to the payment that broadcast it first; only the
+		// message-matched branch above, a true idempotent resend, recovers success.
+		let alreadyLanded = false;
+		if (sig && /simulation failed/i.test(m)) {
+			try {
+				const st = (await connection.getSignatureStatuses([sig]))?.value?.[0];
+				alreadyLanded = st != null && st.err == null;
+			} catch { /* probe is best-effort; the generic reason below stands */ }
+		}
+		const detail = alreadyLanded
+			? `already_processed:${sig}`
+			: m.replace(/\s+/g, ' ').trim();
+		return { success: false, reason: `broadcast_failed:${detail}`.slice(0, 300) };
 	}
 
 	const conf = await confirmSignature(connection, signature);

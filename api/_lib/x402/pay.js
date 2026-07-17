@@ -72,6 +72,22 @@ export function ringPriorityMicrolamports(nonce = 0) {
 	return 5 + (Number(nonce) % 997);
 }
 
+// Per-process nonce for payX402 callers that do not manage batch positions
+// themselves. Two same-amount payments to the same payTo, signed against one
+// shared tick blockhash with the same priority fee, compile to byte-identical
+// transactions with the SAME signature: the first broadcast lands, every later
+// one dies at settle preflight as already-processed (the RPC surfaces it as a
+// bare "Transaction simulation failed", seen as the settle_failed 502 wave).
+// A distinct default nonce per payment makes each fee signature unique within
+// a blockhash window. Starts at 499 so it stays clear of the small explicit
+// 0..N indices batch pipelines pass; wraps inside the same 997-slot cycle the
+// fee-floor tests already prove stays under the fee ceiling.
+let _autoNonce = 499;
+export function nextAutoNonce() {
+	_autoNonce = (_autoNonce + 1) % 997;
+	return _autoNonce;
+}
+
 // Self-pay is the OPERATIVE DEFAULT for ring-internal payments: the buyer pays
 // its own fee → 1 signature = 5,000 lamports, half the 2-signature sponsored
 // base, and the facilitator broadcasts without co-signing. An explicit
@@ -198,8 +214,9 @@ export function buildPaymentTx({ accept, buyer, blockhash, mintInfo, receiverAta
 	// identical-amount payments (same payer/payTo/mint) against the one shared
 	// blockhash produces a DISTINCT signature per call. Two byte-identical
 	// transfers compile to the same message → same signature → the second is
-	// rejected as already-processed. Single-call/inline callers leave nonce at 0
-	// and pay the unchanged baseline of 5 µlamports.
+	// rejected as already-processed. Callers that don't manage batch positions
+	// get a distinct per-process nonce from payX402 (nextAutoNonce), so cross-
+	// pipeline same-amount payments inside one blockhash window never collide.
 	const ixs = [
 		ComputeBudgetProgram.setComputeUnitLimit({ units: RING_CU_LIMIT }),
 		ComputeBudgetProgram.setComputeUnitPrice({ microLamports: ringPriorityMicrolamports(nonce) }),
@@ -252,7 +269,10 @@ export async function payX402({
 	buyer, conn, blockhash, mintInfo,
 	remainingCap = Infinity,
 	userAgent = 'threews-x402-autonomous/1.0',
-	nonce = 0,
+	// Batch pipelines pass their own position; everyone else gets a distinct
+	// per-process nonce below so same-amount payments sharing a tick blockhash
+	// never compile to the same signature (see nextAutoNonce).
+	nonce = null,
 	// Self-pay: buyer is its own fee payer → 1 signature (5000 lamports) instead
 	// of 2. Half the base fee, no sponsor co-sign. The ring's operative default;
 	// only an explicit X402_RING_SELF_PAY=false selects sponsor mode. See
@@ -267,6 +287,15 @@ export async function payX402({
 	// treated as an abort (fail-closed), never a crash.
 	onAccept = null,
 }) {
+	if (nonce == null) {
+		nonce = nextAutoNonce();
+		// Sponsor mode pays 2 signatures = 10,000 lamports base, exactly the
+		// default fee ceiling, so only priority perturbations that floor to zero
+		// extra lamports fit under the guard below: (5 + n) µlamports × 60k CU
+		// stays below 1 lamport only for n ≤ 11. Twelve distinct fee slots still
+		// keep a tick's same-amount payments from compiling to one signature.
+		if (!selfPay) nonce %= 12;
+	}
 	const reqInit = {
 		method,
 		headers: { 'content-type': 'application/json', 'user-agent': userAgent },

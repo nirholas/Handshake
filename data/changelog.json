@@ -14156,6 +14156,14 @@
 				"improvement"
 			],
 			"link": "/forge"
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Paid API calls no longer fail when two agents buy the same-priced service at once",
+			"summary": "Since July 9, a few hundred paid x402 calls a day were answered with a 502 after the buyer's USDC transfer was rejected on Solana. Two payments for the same price, signed in the same few-second window, could compile to byte-identical transactions, and only the first one could ever land. Every payment now carries its own tiny priority-fee fingerprint, so simultaneous same-priced purchases each settle cleanly, and settlement errors now name their real cause in our logs so future issues surface faster.",
+			"tags": [
+				"fix"
+			]
 		}
 	]
 }

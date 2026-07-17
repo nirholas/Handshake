@@ -70,6 +70,49 @@ describe('fee-floor regression guard — builders never exceed the ceiling', () 
 	});
 });
 
+describe('distinct-signature guard — same-amount payments must never collide', () => {
+	// Two payments with the same payer/payTo/mint/amount, one shared blockhash
+	// and the same nonce compile to byte-identical transactions → the SAME
+	// signature → every one after the first dies at settle preflight as
+	// already-processed. payX402 defaults callers onto nextAutoNonce() so this
+	// can only happen when a batch pipeline reuses an explicit position.
+	const buyer = Keypair.generate();
+	const treasury = Keypair.generate();
+	const blockhash = '11111111111111111111111111111111';
+	const accept = {
+		network: 'solana:mainnet',
+		asset: USDC,
+		payTo: treasury.publicKey.toBase58(),
+		amount: '10000', // $0.01 — the ring's most common price, the collision class
+		extra: {},
+	};
+	const build = (nonce) => buildPaymentTx({
+		accept, buyer, blockhash,
+		mintInfo: { decimals: 6 }, receiverAtaExists: true, nonce, selfPay: true,
+	});
+
+	it('equal nonces compile to byte-identical txs (the collision the guard exists for)', () => {
+		expect(build(7)).toBe(build(7));
+	});
+
+	it('distinct nonces produce distinct signatures', () => {
+		const a = VersionedTransaction.deserialize(Buffer.from(build(1), 'base64'));
+		const b = VersionedTransaction.deserialize(Buffer.from(build(2), 'base64'));
+		expect(Buffer.from(a.signatures[0]).equals(Buffer.from(b.signatures[0]))).toBe(false);
+	});
+
+	it('nextAutoNonce never repeats within a blockhash-sized window and stays in the fee-tested range', () => {
+		const seen = new Set();
+		for (let i = 0; i < 200; i++) {
+			const n = pay.nextAutoNonce();
+			expect(n).toBeGreaterThanOrEqual(0);
+			expect(n).toBeLessThan(997);
+			seen.add(n);
+		}
+		expect(seen.size).toBe(200);
+	});
+});
+
 describe('self-pay default — operative for the ring', () => {
 	it('defaults to true when X402_RING_SELF_PAY is unset', () => {
 		delete process.env.X402_RING_SELF_PAY;
