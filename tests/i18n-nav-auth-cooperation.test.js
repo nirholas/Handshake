@@ -62,6 +62,17 @@ describe('nav-auth ⇄ i18n cooperation on a shared element', () => {
 		expect(el.textContent).toBe('Ada');
 	});
 
+	it('the data-i18n-html loop also refuses to clobber a live name', () => {
+		document.body.innerHTML =
+			'<a class="console" data-auth-name data-i18n-html="nav.console">Dashboard →</a>';
+		const el = document.querySelector('.console');
+		const esHtml = (key) => (key === 'nav.console' ? '<span>Panel</span> →' : key);
+		applyAuthState(document, true, 'Marie Curie');
+		applyCatalog(document, esHtml);
+		expect(el.textContent).toBe('Marie Curie');
+		expect(el.querySelector('span')).toBeNull(); // markup never painted over the name
+	});
+
 	it('a runtime locale switch keeps the name and refreshes the fallback', () => {
 		const el = pill();
 		applyAuthState(document, true, 'Grace');

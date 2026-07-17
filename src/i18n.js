@@ -93,7 +93,14 @@ export function applyCatalog(root, t) {
 	});
 	root.querySelectorAll?.('[data-i18n-html]').forEach((el) => {
 		const v = t(el.getAttribute('data-i18n-html'));
-		if (v != null) el.innerHTML = v;
+		if (v == null) return;
+		// Same nav-auth ownership rule as the textContent loop above: never let a
+		// translated markup value overwrite a live display name.
+		if (el.hasAttribute('data-auth-name')) {
+			el.dataset.authNameOriginal = v;
+			if (el.dataset.authNamed === '1') return;
+		}
+		el.innerHTML = v;
 	});
 	root.querySelectorAll?.('[data-i18n-attr]').forEach((el) => {
 		for (const pair of el.getAttribute('data-i18n-attr').split(';')) {
