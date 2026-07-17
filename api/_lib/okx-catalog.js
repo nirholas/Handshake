@@ -67,13 +67,13 @@ export const OKX_CATALOG = Object.freeze([
 		kind: 'a2mcp',
 		describes: {
 			capability:
-				'Creates a 3D identity for an AI agent from a text brief: a rigged, animation-ready GLB ' +
-				'avatar plus posed studio renders — a square PFP sized for the OKX avatar slot and ' +
-				'full-body shots.',
+				'Creates a complete 3D identity for an AI agent from a text brief: a rigged, ' +
+				'animation-ready GLB avatar plus posed studio renders, including a square profile ' +
+				'picture and full-body shots.',
 			input:
-				'Call create_identity with agent_name and a brief (any language); optional style_hints ' +
-				'and reference_image_url. Returns a job_id — poll identity_status free until the ' +
-				'deliverables are ready.',
+				'Provide: 1. the agent name 2. a personality or brand brief in any language 3. optional ' +
+				'style hints 4. an optional reference image. Returns a job you can check for free until ' +
+				'delivery is ready.',
 		},
 		priceUsd: '1.50',
 		amountAtomics: usdToAtomics(1.5),
@@ -124,12 +124,13 @@ export const OKX_CATALOG = Object.freeze([
 		kind: 'rest',
 		describes: {
 			capability:
-				'Generates a textured, downloadable 3D model (GLB) from a text prompt on the fast draft ' +
-				'lane. Returns the finished GLB URL inline or a job to poll for free. Paid only when the ' +
-				'job is accepted.',
+				'Generates a textured, downloadable 3D model in GLB format from a text description on ' +
+				'the fast draft lane. Suited to quick props, objects, and concept assets. You pay only ' +
+				'when the job is accepted.',
 			input:
-				'POST JSON with prompt (3-1000 chars) describing one object or character; optional ' +
-				'aspect_ratio. Poll poll_url free until status is done.',
+				'Provide: 1. a text description of one object or character, 3 to 1000 characters ' +
+				'2. an optional aspect ratio. Returns the model link, or a job you can check for free ' +
+				'until it is done.',
 		},
 		priceUsd: '0.01',
 		amountAtomics: usdToAtomics(0.01),
@@ -151,12 +152,13 @@ export const OKX_CATALOG = Object.freeze([
 		kind: 'rest',
 		describes: {
 			capability:
-				'Art-directed text to 3D: an LLM art director refines the prompt, then a higher-quality ' +
-				'lane generates the textured GLB — standard tier by default, high for maximum detail ' +
-				'plus PBR textures.',
+				'Art-directed text to 3D: refines your description, then generates a higher-quality ' +
+				'textured GLB model. Standard tier by default; the high tier adds maximum detail and ' +
+				'PBR materials.',
 			input:
-				'POST JSON with prompt (3-1000 chars); optional tier standard|high and aspect_ratio. ' +
-				'Returns the GLB URL inline or job_id + poll_url; polling is free.',
+				'Provide: 1. a text description, 3 to 1000 characters 2. an optional quality tier, ' +
+				'standard or high 3. an optional aspect ratio. Returns the model link, or a job you can ' +
+				'check for free.',
 		},
 		priceUsd: '0.30',
 		amountAtomics: usdToAtomics(0.3),
@@ -179,11 +181,11 @@ export const OKX_CATALOG = Object.freeze([
 		kind: 'rest',
 		describes: {
 			capability:
-				'Reconstructs a textured 3D model (GLB) from one to four reference photos of a single ' +
-				'object. Paid per call; the job is polled for free until done.',
+				'Reconstructs a textured 3D model in GLB format from photos of a single object, turning ' +
+				'product shots or concept art into usable 3D assets.',
 			input:
-				'POST JSON with image_urls: 1-4 public https photos of the same object; optional prompt ' +
-				'hint. Returns the GLB URL or job_id + poll_url.',
+				'Provide: 1. one to four public photo links of the same object 2. an optional text ' +
+				'hint. Returns the model link, or a job you can check for free until it is done.',
 		},
 		priceUsd: '0.30',
 		amountAtomics: usdToAtomics(0.3),
@@ -233,12 +235,13 @@ export const OKX_CATALOG = Object.freeze([
 		kind: 'rest',
 		describes: {
 			capability:
-				'One call from text to an animation-ready character: generates the mesh, then auto-rigs a ' +
-				'humanoid skeleton. Non-humanoid prompts are steered to plain mesh generation instead of ' +
-				'a wasted rig pass.',
+				'One call from text to an animation-ready character: generates the 3D mesh, then rigs a ' +
+				'humanoid skeleton. Non-humanoid subjects fall back to plain mesh generation so no ' +
+				'rigging pass is wasted.',
 			input:
-				'POST JSON with prompt describing a full-body character, or image_url reference; optional ' +
-				'allow_non_humanoid. Returns the mesh GLB plus a rig job to poll free.',
+				'Provide: 1. a text description of a full-body character, or a reference image link ' +
+				'2. optionally allow non-humanoid subjects. Returns the mesh plus a rigging job you can ' +
+				'check for free.',
 		},
 		priceUsd: '0.50',
 		amountAtomics: usdToAtomics(0.5),
@@ -289,11 +292,11 @@ export const OKX_CATALOG = Object.freeze([
 		kind: 'rest',
 		describes: {
 			capability:
-				'Resolves a natural-language pose description to a deterministic pose seed and a full ' +
-				'joint-rotation map for humanoid rigs. The same prompt always returns the same pose. ' +
-				'Completes in-request.',
+				'Turns a text pose description into a deterministic pose seed and a full joint rotation ' +
+				'map for humanoid rigs. The same description always returns the same pose. Finishes ' +
+				'within the request.',
 			input:
-				'POST JSON with prompt (pose description, 1-500 chars). Returns the seed, per-joint ' +
+				'Provide: 1. a pose description, 1 to 500 characters. Returns the seed, per-joint ' +
 				'rotations, and a preview link.',
 		},
 		priceUsd: '0.02',
@@ -313,12 +316,11 @@ export const OKX_CATALOG = Object.freeze([
 		kind: 'rest',
 		describes: {
 			capability:
-				'Converts a GLB to FBX for Unity/Unreal — a rigged GLB keeps its skeleton, skin weights, ' +
-				'and blendshapes. Also exports obj, stl, ply, usdz, and 3mf. Paid per call; job polling ' +
-				'is free.',
+				'Converts a GLB model to FBX for Unity or Unreal. A rigged model keeps its skeleton, ' +
+				'skin weights, and blendshapes. Also exports OBJ, STL, PLY, USDZ, and 3MF formats.',
 			input:
-				'POST JSON with model_url (GLB https URL); optional format (default fbx). Returns ' +
-				'job_id + poll_url; poll free until done.',
+				'Provide: 1. a public link to the GLB model 2. an optional target format, FBX by ' +
+				'default. Returns a job you can check for free until the converted file is ready.',
 		},
 		priceUsd: '0.10',
 		amountAtomics: usdToAtomics(0.1),

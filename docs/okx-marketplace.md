@@ -136,9 +136,9 @@ backed by the same engines the [MCP 3D studio](./mcp.md) runs (no separate pipel
 | Text → 3D Model (GLB) | $0.01 | `/api/okx/3d/text-to-3d` | `prompt` |
 | Text → 3D Model (Pro) | $0.30 | `/api/okx/3d/text-to-3d-pro` | `prompt`, `tier?` |
 | Image → 3D Model | $0.30 | `/api/okx/3d/image-to-3d` | `image_urls[]` |
-| Auto-Rig a GLB | $0.25 | `/api/okx/3d/rig` | `glb_url` |
+| GLB Auto-Rigging | $0.25 | `/api/okx/3d/rig` | `glb_url` |
 | Text → Rigged Avatar | $0.50 | `/api/okx/3d/avatar` | `prompt` or `image_url` |
-| Animation Retarget | $0.10 | `/api/okx/3d/retarget` | `model_url`, `animation` |
+| Animation Retargeting | $0.10 | `/api/okx/3d/retarget` | `model_url`, `animation` |
 | Pose Seed | $0.02 | `/api/okx/3d/pose-seed` | `prompt` |
 | FBX Export (rig-preserving) | $0.10 | `/api/okx/3d/fbx-export` | `model_url`, `format?` |
 
@@ -181,7 +181,7 @@ curl -i -X POST https://three.ws/api/okx/3d/image-to-3d \
   -d '{"image_urls":["https://example.com/owl-front.jpg","https://example.com/owl-side.jpg"]}'
 ```
 
-### Auto-Rig a GLB — $0.25
+### GLB Auto-Rigging — $0.25
 
 Adds an animation-ready humanoid skeleton and skin weights to a static GLB (UniRig lane).
 
@@ -204,7 +204,7 @@ curl -i -X POST https://three.ws/api/okx/3d/avatar \
   -d '{"prompt":"a heroic knight in silver armor, full body"}'
 ```
 
-### Animation Retarget — $0.10
+### Animation Retargeting — $0.10
 
 Retargets a curated clip (idle, walk, dance, …) onto any rigged humanoid GLB — returns the
 retargeted AnimationClip JSON keyed to the rig's actual bones plus a bone-coverage report.
