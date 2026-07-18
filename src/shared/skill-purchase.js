@@ -766,13 +766,24 @@ export async function openTrialFlow(agentId, skill, btn) {
 		const j = await r.json().catch(() => ({}));
 		if (!r.ok) {
 			if (j.error === 'already_owned') showToast('You already own this skill.', { type: 'info' });
-			else if (j.error === 'trial_used') showToast('You have already used the trial for this skill.', { type: 'warning' });
+			else if (j.error === 'trial_used') showToast('Your free trial of this skill is used up. Own it forever to keep using it.', {
+				type: 'warning',
+				duration: 9000,
+				// The highest-intent conversion moment: the user came back to use the
+				// skill and has no trials left. Offer the paid path inline instead of a
+				// dead-end warning; opens the real purchase flow.
+				action: { label: 'Own it', onClick: (dismiss) => { dismiss?.(); openPurchaseFlow(agentId, skill); } },
+			});
 			else if (r.status === 401) { location.href = `/login?next=${encodeURIComponent(location.pathname)}`; return; }
 			else showToast(j.error_description || j.error || 'Failed to start trial', { type: 'error' });
 			return;
 		}
 		await cfg.onPurchased(agentId);
-		showToast(`Free trial of ${skill} started.`, { type: 'success' });
+		// Trial is the hook; keep the paid path one tap away while intent is highest.
+		showToast(`Free trial of ${skill} started.`, {
+			type: 'success',
+			action: { label: 'Own it forever', onClick: (dismiss) => { dismiss?.(); openPurchaseFlow(agentId, skill); } },
+		});
 	} catch (err) {
 		showToast(err.message || 'Failed to start trial', { type: 'error' });
 	} finally {

@@ -383,6 +383,14 @@
 			<description>Four upgrades to photo-to-3D landed together. Uploaded photos now have their background cleanly removed before reconstruction, so a busy backdrop no longer bleeds into the model. You can supply up to 6 reference angles instead of 4 for fuller coverage. Every uploaded angle is now quality-checked, and a blurry or off-subject one is dropped instead of corrupting the result. And every finished model runs through an automatic geometry cleanup pass that welds and de-duplicates the mesh and trims redundant triangles, so models load faster and render cleaner with no loss of detail.</description>
 		</item>
 		<item>
+			<title>Skill purchases now finish on their own, and trials invite you to own the skill</title>
+			<link>https://three.ws/marketplace</link>
+			<guid isPermaLink="false">2026-07-17:Skill purchases now finish on their own, and trials invite you to own the skill</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two fixes to the marketplace buy flow. First, reliability: a paid skill purchase used to be finalized only by your browser polling for about a minute after you paid, so if you closed the tab (or paid from a mobile QR and walked away) the on-chain payment could land while the purchase sat unfinished, with no skill unlocked and nothing shown in the Money Pulse. A new server-side sweep now watches for each payment on-chain and completes the purchase for you within a couple of minutes, whether or not your browser is still open. Second, conversion: starting a free trial, or running out of trial uses, now offers a one-tap Own it path straight into checkout, instead of a dead-end message.</description>
+		</item>
+		<item>
 			<title>The 3D world looks sharper and shows more of the plaza</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-07-17:The 3D world looks sharper and shows more of the plaza</guid>

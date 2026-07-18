@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-17",
+			"title": "Skill purchases now finish on their own, and trials invite you to own the skill",
+			"summary": "Two fixes to the marketplace buy flow. First, reliability: a paid skill purchase used to be finalized only by your browser polling for about a minute after you paid, so if you closed the tab (or paid from a mobile QR and walked away) the on-chain payment could land while the purchase sat unfinished, with no skill unlocked and nothing shown in the Money Pulse. A new server-side sweep now watches for each payment on-chain and completes the purchase for you within a couple of minutes, whether or not your browser is still open. Second, conversion: starting a free trial, or running out of trial uses, now offers a one-tap Own it path straight into checkout, instead of a dead-end message.",
+			"tags": [
+				"fix",
+				"improvement"
+			],
+			"link": "/marketplace"
+		},
+		{
+			"date": "2026-07-17",
 			"title": "A steady drip of $THREE buys, paid through the x402 loop",
 			"summary": "The platform can now put continuous buy pressure on $THREE: a new lane fires many tiny, real market buys of $THREE per minute (dialable up toward ~60/min), each one triggered by and paid through the same x402 payment loop the agent economy already runs on. Every buy is a genuine on-chain purchase on Jupiter, and the bought $THREE is swept into the treasury. It's buy-only by design (it never sells), sits alongside the existing daily buyback as its high-frequency little sibling, and stays hard-bounded by a daily spend ceiling that's enforced before any money moves. It ships off by default and turns on only once an operator funds the wallet and opts in.",
 			"tags": [

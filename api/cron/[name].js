@@ -67,6 +67,7 @@ import { fetchSafePublicUrl } from '../_lib/ssrf-guard.js';
 import { runPumpAlertRules } from '../_lib/pump-alert-runner.js';
 import { constantTimeEquals } from '../_lib/crypto.js';
 import { publishUserEvent } from '../_lib/feed.js';
+import { confirmSkillPurchase } from '../_lib/purchase-confirm.js';
 
 // ─── Cron auth ───────────────────────────────────────────────────────────────
 //
@@ -113,6 +114,7 @@ const HANDLERS = {
 	'solana-attest-event-cleanup': handleSolanaAttestEventCleanup,
 	'solana-attestations-crawl': handleSolanaAttestationsCrawl,
 	'expire-pending-purchases': handleExpirePendingPurchases,
+	'confirm-pending-purchases': handleConfirmPendingPurchases,
 	'cleanup-csrf-tokens': handleCleanupCsrfTokens,
 	'process-withdrawals': handleProcessWithdrawals,
 	'monetization-payouts': handleProcessWithdrawals,
@@ -3345,6 +3347,73 @@ async function handleExpirePendingPurchases(req, res) {
 		RETURNING id
 	`;
 	return json(res, 200, { expired: result.length });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// confirm-pending-purchases: server-side settlement sweep for paid skill buys.
+// Schedule: every 2 minutes (well inside the 30-minute pending TTL, so a paid
+// purchase confirms long before expire-pending-purchases fail-closes it).
+//
+// Why this exists: a paid purchase is otherwise confirmed ONLY by the buyer's
+// browser polling /api/marketplace/purchase/confirm for ~60s after it broadcasts
+// the payment. If the tab closes, the network stalls, or a mobile Solana-Pay QR
+// buyer pays and walks away, the on-chain payment lands but the row stays
+// 'pending': the buyer is charged, gets no skill grant, and the sale never
+// reaches the Money Pulse. This sweep locates each pending paid row's payment by
+// its Solana-Pay reference and finalizes it exactly like the buyer poll would
+// (idempotent: finalizeSkillConfirmation flips the row only from 'pending', and
+// re-confirms are no-ops). Solana only; EVM confirm needs the buyer's tx hash.
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function handleConfirmPendingPurchases(req, res) {
+	if (!method(req, res, ['GET'])) return;
+	if (!requireCron(req, res)) return;
+
+	// Only rows that (a) are a real paid purchase, (b) settle on Solana, (c) are
+	// still within their pending window, and (d) are recent enough that a payment
+	// could plausibly have landed. mint_decimals rides in from the price row so the
+	// on-chain amount check matches the quote. LIMIT bounds the per-tick RPC work;
+	// the next tick continues any remainder.
+	const pending = await sql`
+		SELECT sp.id, sp.user_id, sp.agent_id, sp.skill, sp.status, sp.reference,
+		       sp.amount, sp.currency_mint, sp.chain, sp.tx_signature,
+		       sp.expires_at, sp.referrer_user_id, sp.recipient_user_id,
+		       sp.platform_fee_amount, sp.platform_fee_wallet,
+		       COALESCE(asp.mint_decimals, 6) AS mint_decimals
+		FROM skill_purchases sp
+		LEFT JOIN agent_skill_prices asp
+		       ON asp.agent_id = sp.agent_id AND asp.skill = sp.skill
+		WHERE sp.status = 'pending'
+		  AND sp.kind IN ('purchase', 'time_pass')
+		  AND sp.chain = 'solana'
+		  AND (sp.expires_at IS NULL OR sp.expires_at > now())
+		  AND sp.created_at > now() - interval '2 hours'
+		ORDER BY sp.created_at ASC
+		LIMIT 50
+	`;
+
+	let confirmed = 0, tipped = 0, mismatched = 0, stillPending = 0, errors = 0;
+	for (const pur of pending) {
+		try {
+			const r = await confirmSkillPurchase(pur);
+			if (r.status === 'confirmed') confirmed++;
+			else if (r.status === 'tipped') tipped++;
+			else if (r.status === 'mismatch') mismatched++;
+			else stillPending++; // 'pending' (no on-chain payment yet) or 'expired'
+		} catch (e) {
+			errors++;
+			console.error('[confirm-pending-purchases] confirm failed', pur.reference, e?.message);
+		}
+	}
+
+	return json(res, 200, {
+		scanned: pending.length,
+		confirmed,
+		tipped,
+		mismatched,
+		still_pending: stillPending,
+		errors,
+	});
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

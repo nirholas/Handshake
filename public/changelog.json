@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-17T23:54:17.071Z",
+	"generated_at": "2026-07-18T00:00:08.778Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -498,6 +498,17 @@
 			"tags": [
 				"improvement",
 				"feature"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "Skill purchases now finish on their own, and trials invite you to own the skill",
+			"summary": "Two fixes to the marketplace buy flow. First, reliability: a paid skill purchase used to be finalized only by your browser polling for about a minute after you paid, so if you closed the tab (or paid from a mobile QR and walked away) the on-chain payment could land while the purchase sat unfinished, with no skill unlocked and nothing shown in the Money Pulse. A new server-side sweep now watches for each payment on-chain and completes the purchase for you within a couple of minutes, whether or not your browser is still open. Second, conversion: starting a free trial, or running out of trial uses, now offers a one-tap Own it path straight into checkout, instead of a dead-end message.",
+			"link": "/marketplace",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
