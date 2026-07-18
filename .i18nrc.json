@@ -3,7 +3,7 @@
 	"entry": "public/locales/en.json",
 	"entryLocale": "en",
 	"output": "public/locales",
-	"outputLocales": ["es", "zh-CN", "ja", "ko", "fr", "de", "pt-BR", "ar", "hi", "ru"],
+	"outputLocales": ["es", "zh-CN", "ja", "ko", "fr", "de", "pt-BR", "ar", "hi", "ru", "tr", "vi", "id", "th", "fil", "zh-TW", "it", "pl", "nl", "uk", "fa"],
 	"localeNames": {
 		"en": "English",
 		"es": "Español",
@@ -15,7 +15,18 @@
 		"pt-BR": "Português (BR)",
 		"ar": "العربية",
 		"hi": "हिन्दी",
-		"ru": "Русский"
+		"ru": "Русский",
+		"tr": "Türkçe",
+		"vi": "Tiếng Việt",
+		"id": "Bahasa Indonesia",
+		"th": "ไทย",
+		"fil": "Filipino",
+		"zh-TW": "繁體中文",
+		"it": "Italiano",
+		"pl": "Polski",
+		"nl": "Nederlands",
+		"uk": "Українська",
+		"fa": "فارسی"
 	},
 	"rtlLocales": ["ar", "he", "fa", "ur"],
 	"provider": "vertex",

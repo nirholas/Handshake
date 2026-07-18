@@ -13,6 +13,7 @@
 // lazy import() chunk and isn't pulled in until the avatar detaches.
 
 import { createWalkCompanion } from '../walk-sdk/src/companion.js';
+import { DEFAULT_EXCLUDED_PREFIXES } from '../walk-sdk/src/config.js';
 import { installTransitions } from './walk-companion-transitions.js';
 import { createWalkTrails2D, createTrailSetting, TRAIL_STYLE_LABELS } from './walk-trails.js';
 import { installClickToWalk } from './walk-companion-click-to-walk.js';
@@ -30,6 +31,10 @@ const walk = createWalkCompanion({
 	manifestUrl: '/animations/manifest.json',
 	// "Make your own" link in the avatar picker → the avatar builder.
 	docsUrl: '/avatar-studio',
+	// /concierge mounts its own corner widget (the live Concierge demo); two
+	// companions fighting over the same corner reads as broken, so the walk
+	// mascot sits that page out.
+	excludedRoutes: [...DEFAULT_EXCLUDED_PREFIXES, '/concierge'],
 });
 
 // public/nav.js drives the companion through this global (toggle from the nav

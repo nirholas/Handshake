@@ -270,20 +270,32 @@ export class Concierge {
 			this.$.mic.addEventListener('click', () => this._toggleMic());
 		}
 
-		if (this.config.theme === 'auto' && window.matchMedia) {
-			this._mq = window.matchMedia('(prefers-color-scheme: dark)');
-			this._onScheme = () => this._applyTheme(root);
-			this._mq.addEventListener?.('change', this._onScheme);
+		if (this.config.theme === 'auto') {
+			if (window.matchMedia) {
+				this._mq = window.matchMedia('(prefers-color-scheme: dark)');
+				this._onScheme = () => this._applyTheme(root);
+				this._mq.addEventListener?.('change', this._onScheme);
+			}
+			// Live-follow the host's theme toggle too (data-theme flips on <html>).
+			this._themeObs = new MutationObserver(() => this._applyTheme(root));
+			this._themeObs.observe(document.documentElement, {
+				attributes: true,
+				attributeFilter: ['data-theme'],
+			});
 		}
 	}
 
 	_applyTheme(root) {
-		const theme =
-			this.config.theme !== 'auto'
-				? this.config.theme
-				: window.matchMedia?.('(prefers-color-scheme: dark)').matches
-					? 'dark'
-					: 'light';
+		// Auto mode prefers the HOST's own theme signal when it publishes one
+		// (the common `data-theme="dark|light"` convention on <html>), because a
+		// site pinned dark must not get a light widget just because the OS is
+		// light. Falls back to prefers-color-scheme.
+		let theme = this.config.theme;
+		if (theme === 'auto') {
+			const host = document.documentElement.getAttribute('data-theme');
+			if (host === 'dark' || host === 'light') theme = host;
+			else theme = window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+		}
 		root.setAttribute('data-tc-theme', theme);
 	}
 
@@ -703,6 +715,7 @@ export class Concierge {
 		this._abort?.abort();
 		this._killTeaser();
 		this._mq?.removeEventListener?.('change', this._onScheme);
+		this._themeObs?.disconnect();
 		this._mic?.dispose();
 		this._narrator?.dispose();
 		this._stage?.dispose();
