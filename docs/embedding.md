@@ -1,5 +1,7 @@
 # Embedding Guide
 
+Embedding puts a live three.ws agent (a 3D avatar that can talk, gesture, and run skills) on any website or platform you control, from a one-line web component to a paste-a-link oEmbed. This guide covers every supported method and when to use each. To generate a ready-made snippet without reading further, publish a widget in Widget Studio at [three.ws/studio](https://three.ws/studio).
+
 > **Audience:** Developers and no-code builders who want to add a three.ws agent to a website, app, or platform.
 
 ---
@@ -86,8 +88,9 @@ free-tier proxy. Pair it with `instructions` for a system prompt:
 ```
 
 Set `brain` to a specific model id (e.g. `claude-sonnet-4-6`) instead of `free`
-to use a paid model via your three.ws dashboard key, or `brain="none"` to keep
-it a pure display embed (see [Performance tips](#performance-tips)).
+to use a paid model via your three.ws dashboard key. Omit the `brain` attribute
+entirely to keep a bare-GLB embed a pure, silent display
+(see [Performance tips](#performance-tips)).
 
 ### Sizing
 
@@ -244,7 +247,7 @@ el.addEventListener('voice:speech-start', e => {
 });
 ```
 
-Key events: `agent:ready`, `agent:load-progress`, `agent:error`, `brain:message`, `brain:thinking`, `voice:speech-start`, `voice:speech-end`, `voice:transcript`, `skill:loaded`, `skill:tool-called`, `memory:write`, `chain:resolved`.
+Key events: `agent:ready`, `agent:load-progress`, `agent:error`, `brain:message`, `brain:thinking`, `brain:stream`, `voice:speech-start`, `voice:speech-end`, `voice:transcript`, `voice:listen-start`, `skill:loaded`, `skill:tool-called`, `skill:purchased`, `memory:write`.
 
 ### Performance and lazy loading
 
@@ -299,7 +302,7 @@ The `allow` attribute controls browser feature access:
 |---------|-----|
 | Backend agent | `/agent/{agent-id}/embed` or `/agent-embed.html?id={agent-id}` |
 | On-chain agent | `/a/{chainId}/{agentId}/embed` |
-| Widget (kiosk) | `/app#widget={widget-id}&kiosk=true` |
+| Widget (kiosk) | `/widget#widget={widget-id}&kiosk=true` (legacy `/app#widget=...` still works) |
 | Model viewer only | `/#model={glb-url}` |
 
 ### postMessage protocol
@@ -315,19 +318,19 @@ const agentId = 'a_abc123'; // must match the id in the iframe src
 // Handshake — send once after iframe load
 iframe.contentWindow.postMessage(
   { type: 'agent:hello', agentId },
-  'https://three.ws/'
+  'https://three.ws'
 );
 
 // Trigger an action
 iframe.contentWindow.postMessage(
   { type: 'agent:action', agentId, action: { type: 'speak', text: 'Hello!' } },
-  'https://three.ws/'
+  'https://three.ws'
 );
 
 // Liveness probe
 iframe.contentWindow.postMessage(
   { type: 'agent:ping', agentId, id: 'probe_1' },
-  'https://three.ws/'
+  'https://three.ws'
 );
 ```
 
@@ -336,7 +339,7 @@ iframe.contentWindow.postMessage(
 ```js
 window.addEventListener('message', e => {
   // Always verify origin before trusting the message
-  if (e.origin !== 'https://three.ws/') return;
+  if (e.origin !== 'https://three.ws') return;
 
   const { type, agentId } = e.data;
 
@@ -668,7 +671,7 @@ Framer supports custom code components — wrap `<agent-3d>` in a code component
 
 Add the script tag to `theme.liquid` inside `<head>`, then use `<agent-3d>` directly in product page templates or section files.
 
-Want a guide that *walks the storefront* — spotlighting sections, narrating, free-roaming — instead of a boxed embed? That's the tour SDK, not `<agent-3d>` (it needs host-DOM access an iframe/web component doesn't have). Follow the [3D store guide for Shopify tutorial](/tutorials/shopify-store-guide).
+Want a guide that *walks the storefront* — spotlighting sections, narrating, free-roaming — instead of a boxed embed? That's the tour SDK, not `<agent-3d>` (it needs host-DOM access an iframe/web component doesn't have). Follow the [3D store guide for Shopify tutorial](/docs/tutorials/shopify-store-guide).
 
 ---
 
@@ -682,7 +685,7 @@ Want a guide that *walks the storefront* — spotlighting sections, narrating, f
 <agent-3d src="agent://base/42" kiosk auto-rotate></agent-3d>
 ```
 
-**Viewer-only (no LLM):** Add `brain="none"` to prevent the LLM client from loading. Use this for pure 3D display embeds.
+**Viewer-only (no LLM):** For bare-GLB embeds (`body` or a `.glb` `src`), simply omit the `brain` attribute; without it the LLM client never loads and the embed stays a silent display.
 
 **Auto-rotate:** Only enable `auto-rotate` for turntable-style static displays. It runs a continuous animation loop and keeps the GPU active.
 

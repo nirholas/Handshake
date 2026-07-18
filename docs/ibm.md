@@ -1,6 +1,6 @@
 # IBM watsonx & Granite
 
-three.ws agents think on **IBM Granite** foundation models, served through **IBM watsonx.ai**. This page documents the whole integration: which Granite models run where, how the watsonx client is wired, how to configure it, and the seven showcase surfaces that put it on screen — from a Granite-powered avatar brain to on-chain, Guardian-governed forecasts.
+three.ws agents can think on **IBM Granite** foundation models, served through **IBM watsonx.ai**. This page documents the whole integration for developers and operators: which Granite models run where, how the watsonx client is wired, how to configure it, and the Granite-powered API surfaces (from a Granite avatar brain to on-chain, Guardian-governed forecasts). The live IBM pages on the product are [three.ws/ibm/hello](https://three.ws/ibm/hello) (the partnership page) and [three.ws/ibm/x402-demo](https://three.ws/ibm/x402-demo) (the x402 live demo).
 
 For the broader platform model see [How it works](./how-it-works.md); for the agent brain abstraction see [Agent system](./agent-system.md); for the standalone connector see [the MCP server](#mcp-server-three-wsibm-watsonx-mcp) below.
 
@@ -10,11 +10,11 @@ For the broader platform model see [How it works](./how-it-works.md); for the ag
 
 three.ws is an **IBM Business Partner**, and the agent runtime runs on IBM watsonx.ai using your own IBM Cloud credentials.
 
-**The public showcase is not the partnership.** Everything under `/ibm/*` and `/api/ibm/*` — the galaxy, oracle, twin, trust-layer, identity, proof, and vision demos at [three.ws/ibm](https://three.ws/ibm) — is an independent set of tools three.ws built for developers to explore IBM Granite on watsonx.ai and build their own integrations. These demos are **not** official IBM partnership deliverables, **not** IBM products, and **not** endorsed by IBM. They run on IBM's publicly available Granite models, nothing more. Our formal partnership work with IBM is being built on the IBM platform and is not yet public — do not present these public demos as that work.
+**The public showcase is not the partnership.** Everything under `/api/ibm/*` and the related Granite APIs (galaxy, oracle, twin, attest, vision, the Guardian trust layer, the identity firewall) is an independent set of tools three.ws built for developers to explore IBM Granite on watsonx.ai and build their own integrations. The browser demo pages that used to live under `/ibm/*` (galaxy, oracle, twin, trust-layer, identity, proof, vision) have been retired from the product; their API endpoints remain live and are documented below. These tools are **not** official IBM partnership deliverables, **not** IBM products, and **not** endorsed by IBM. They run on IBM's publicly available Granite models, nothing more. Our formal partnership work with IBM is being built on the IBM platform and is not yet public. Do not present these public demos as that work.
 
 Three things are deliberately kept distinct, and the docs say so plainly:
 
-- **The public showcase** (everything under `/ibm/*` and `/api/ibm/*`) is a community-built playground for developers, not a partnership deliverable or an IBM product.
+- **The public showcase** (the `/api/ibm/*` surfaces plus the two live pages, `/ibm/hello` and `/ibm/x402-demo`) is a community-built playground for developers, not a partnership deliverable or an IBM product.
 - **The hosted integration** runs Granite models on watsonx.ai as part of the three.ws platform, using your own IBM Cloud credentials.
 - **The open-source connector** — the npm package [`@three-ws/ibm-watsonx-mcp`](#mcp-server-three-wsibm-watsonx-mcp) — is community-built and not an IBM product. It speaks directly to the watsonx.ai REST API with your credentials; IBM does not operate or endorse it.
 
@@ -24,15 +24,15 @@ Do not describe the connector or the public demos as an official IBM release or 
 
 - **2026-06-18 — Co-marketing ramp-up.** Following a meeting on Monday (2026-06-15) and two separate IBM meetings today — one on the development side, one on the marketing side — three.ws and IBM are ramping up co-marketing. What's coming: more co-promotion on X from IBM, a dedicated three.ws page on the IBM domain, and a live IBM Community event (below). The dedicated page is not yet live and the partnership work lives on the IBM platform — distinct from the community-built public showcase under `/ibm/*`. Do not link to the page or present it as public until IBM ships it.
 
-### Upcoming event
+### Community event (held 2026-06-23)
 
 **Building 3D AI Agents Live: From Prompt to Embeddable Agent in Minutes** — a live-build technical session in IBM's [Global AI & Data Science](https://community.ibm.com/community/user/events/event-description?CalendarEventKey=2767712c-6efd-47dc-aaeb-019ec4126e27&CommunityKey=f1c2cf2b-28bf-4b68-8570-b239473dcbbc) community, featuring a special guest from IBM.
 
-- **When:** 2026-06-23, 6:00–7:00 PM MT
+- **When:** held 2026-06-23, 6:00 to 7:00 PM MT
 - **Where:** [IBM Community — Global AI & Data Science](https://community.ibm.com/community/user/events/event-description?CalendarEventKey=2767712c-6efd-47dc-aaeb-019ec4126e27&CommunityKey=f1c2cf2b-28bf-4b68-8570-b239473dcbbc)
 - **Contact:** nich@three.ws
 
-The three.ws engineering team builds and ships a 3D, interactive, fully embeddable AI agent from a single text prompt, live: generate the agent from a prompt, embed it into any site as simply as a video, and wire it to real tools and data so it can take action — plus a look at the architecture behind frictionless deployment at scale. For developers, product builders, designers, and anyone exploring the next interface for AI beyond the chat box.
+The session: the three.ws engineering team built and shipped a 3D, interactive, fully embeddable AI agent from a single text prompt, live: generate the agent from a prompt, embed it into any site as simply as a video, and wire it to real tools and data so it can take action, plus a look at the architecture behind frictionless deployment at scale. Aimed at developers, product builders, designers, and anyone exploring the next interface for AI beyond the chat box.
 
 ### Press & coverage
 
@@ -97,7 +97,7 @@ Set these as environment variables (locally in `.env`, in production on the Clou
 
 **For on-chain attestation (Granite Proof):** `AVATAR_WALLET_SECRET` — a Solana keypair used to notarize a governed forecast on-chain.
 
-To bypass Guardian gating in `/api/chat` during local development, set `WATSONX_GUARDIAN_DISABLE=true` (the gate is best-effort and fails open when Guardian itself is unconfigured).
+To bypass Guardian gating in `/api/chat` during local development, set `GUARDIAN_DISABLE=true`. The gate is best-effort: if a Guardian call fails at runtime the local dollar spend cap is still enforced on its own.
 
 ---
 
@@ -105,17 +105,17 @@ To bypass Guardian gating in `/api/chat` during local development, set `WATSONX_
 
 watsonx Granite is a selectable **brain** for any three.ws agent, alongside the other providers. The chat proxy ([`api/chat.js`](../api/chat.js)) resolves watsonx auth headers lazily inside its failover loop and streams Granite's reply through the standard agent runtime, so a Granite-brained avatar speaks, emotes, and uses skills exactly like any other.
 
-Granite is selected when watsonx is configured and the agent/request routes to the watsonx provider; when it isn't configured, the provider reports unavailable and the runtime falls through to the next brain. Before an avatar takes an autonomous money action (e.g. sending SOL), the same request is run through Granite Guardian inline — see the Trust Layer next.
+Granite is selected when watsonx is configured and the request explicitly names the watsonx provider (it is never the silent default); when it isn't configured, the provider reports unavailable and the runtime falls through to the next brain. Before an avatar takes an autonomous money action (e.g. sending SOL), the same request is run through Granite Guardian inline — see the Trust Layer next.
 
 ---
 
 ## Trust Layer — Granite Guardian
 
-**Page:** [three.ws/ibm/trust-layer](https://three.ws/ibm/trust-layer) · **API:** `POST /api/guardian/assess` · **Lib:** [`api/_lib/granite-guardian.js`](../api/_lib/granite-guardian.js)
+**API:** `POST /api/guardian/assess` · **Lib:** [`api/_lib/granite-guardian.js`](../api/_lib/granite-guardian.js)
 
 Granite Guardian is governance middleware, not a UI flourish. It sits between an agent's reasoning and its actions and classifies a message or a proposed autonomous action across named risks (jailbreak, harm, social bias, violence, profanity, sexual content, unethical behavior, and more) using the `ibm/granite-guardian-3-8b` model on watsonx.ai. Each risk is scored from the model's calibrated `Yes`/`No` log-probabilities, and the verdicts collapse to a single **allow / review / block** decision.
 
-It doesn't just flag — it **vetoes**. The same gate runs inline in `/api/chat` before an avatar sends value, and a `block` verdict refuses the action. Every verdict is written into a **tamper-evident, hash-chained audit ledger**: each record commits the prior record's hash, so the browser can re-verify the whole chain with SHA-256.
+It doesn't just flag — it **vetoes**. The same gate runs inline in `/api/chat` before an avatar sends value, and a `block` verdict refuses the action. Every verdict is written into a **tamper-evident, hash-chained audit ledger**: each record commits the prior record's hash, so any client can re-verify the whole chain with SHA-256.
 
 ```bash
 curl -s https://three.ws/api/guardian/assess \
@@ -144,14 +144,14 @@ For autonomous sends, `governSend()` additionally enforces a per-period USD spen
 
 ## Granite Oracle — TimeSeries forecasting
 
-**Page:** [three.ws/ibm/oracle](https://three.ws/ibm/oracle) · **API:** `GET /api/ibm/oracle?token=<mint>` · **Lib:** [`api/_lib/watsonx-forecast.js`](../api/_lib/watsonx-forecast.js)
+**API:** `GET /api/ibm/oracle?token=<mint>` · **Lib:** [`api/_lib/watsonx-forecast.js`](../api/_lib/watsonx-forecast.js)
 
-The Oracle forecasts a live Solana token's price with Granite TimeSeries, renders the forecast as a 3D confidence cone, and has an embodied avatar narrate it. The pipeline is fully real:
+The Oracle forecasts a live Solana token's price with Granite TimeSeries and returns everything a client needs to render it (history, forward series, stats, narration, governance verdict). The pipeline is fully real:
 
-1. **Real candles.** Historical OHLCV comes from GeckoTerminal (keyless), so the chart always renders even without watsonx.
+1. **Real candles.** Historical OHLCV comes from GeckoTerminal (keyless), so the history is always returned even without watsonx.
 2. **Granite forecast.** The history is sent to a `granite-ttm-*` model via the watsonx Time Series Forecasting API; the model returns the forward series.
-3. **Granite narration.** `granite-3-8b-instruct` writes a two-sentence read of the forecast, which the narrator avatar speaks.
-4. **Guardian governance.** The narration is run through Granite Guardian before it's spoken; the page shows the governance verdict as a badge.
+3. **Granite narration.** `granite-3-8b-instruct` writes a two-sentence read of the forecast.
+4. **Guardian governance.** The narration is run through Granite Guardian before it's returned; the response carries the governance verdict.
 
 `GET /api/ibm/oracle?list=trending` returns trending Solana pools to seed the picker. The response carries `token`, `history`, `forecast`, `stats` (current/low/high/changePct/direction), `narration`, `governance`, and an `ibm` block reporting the forecast model and input window (or the real error reason when a step is unavailable).
 
@@ -159,7 +159,7 @@ The Oracle forecasts a live Solana token's price with Granite TimeSeries, render
 
 ## Granite Proof — auditable AI on a public ledger
 
-**Page:** [three.ws/ibm/proof](https://three.ws/ibm/proof) · **API:** `GET|POST /api/ibm/attest?token=<mint>`
+**API:** `GET|POST /api/ibm/attest?token=<mint>`
 
 Proof takes a governed forecast and **notarizes it on Solana**. It forecasts with Granite TimeSeries, narrates with Granite chat, governs with Granite Guardian, hashes the resulting claim (SHA-256), and writes a compact proof memo on-chain as a 1-lamport SPL-memo transaction. If Guardian vetoes the narration, the agent **refuses to sign** — there is no proof for a statement that didn't pass governance.
 
@@ -169,7 +169,7 @@ Proof takes a governed forecast and **notarizes it on Solana**. It forecasts wit
 
 ## Digital Twin
 
-**Page:** [three.ws/ibm/twin](https://three.ws/ibm/twin) · **API:** `GET|POST /api/ibm/twin?token=<mint>`
+**API:** `GET|POST /api/ibm/twin?token=<mint>`
 
 The Twin mirrors a live token's vitals (momentum, volatility, activity, liquidity, a "heartbeat" BPM) from on-chain OHLCV and projects its near future with Granite TimeSeries. It does two things forecasting alone can't:
 
@@ -180,9 +180,9 @@ The Twin mirrors a live token's vitals (momentum, volatility, activity, liquidit
 
 ## Agent Galaxy — semantic discovery with Granite embeddings
 
-**Page:** [three.ws/ibm/galaxy](https://three.ws/ibm/galaxy) · **API:** `GET /api/ibm/galaxy`, `POST /api/ibm/galaxy { query }`, `POST /api/watsonx/embed`
+**API:** `GET /api/ibm/galaxy`, `POST /api/ibm/galaxy { query }`, `POST /api/watsonx/embed`
 
-The Galaxy embeds every public agent with `granite-embedding-278m-multilingual`, projects the vectors into 3D with PCA, clusters them with k-means, and asks Granite chat to name each cluster. The result is a navigable 3D star-map where semantically similar agents sit near each other. A natural-language search ("a witty Solana trading assistant") embeds the query and flies the camera to the nearest agents by cosine similarity — meaning, not keywords.
+The Galaxy embeds every public agent with `granite-embedding-278m-multilingual`, projects the vectors into 3D with PCA, clusters them with k-means, and asks Granite chat to name each cluster. The result is a 3D star-map layout where semantically similar agents sit near each other. A natural-language search ("a witty Solana trading assistant") embeds the query and returns the nearest agents by cosine similarity — meaning, not keywords.
 
 The constellation is cached (keyed by a content hash of the agent set + model) so repeat visits are instant; `?refresh=1` forces a rebuild. The standalone embeddings endpoint, `POST /api/watsonx/embed`, exposes the same Granite vectors for your own semantic search or clustering:
 
@@ -198,16 +198,16 @@ It returns one vector per input (the response reports the model and its native `
 
 ## Identity Firewall — Granite embeddings + Guardian
 
-**Page:** [three.ws/ibm/identity](https://three.ws/ibm/identity) · **API:** `POST /api/agents/identity-check` · **Lib:** [`api/_lib/identity-integrity.js`](../api/_lib/identity-integrity.js)
+**API:** `POST /api/agents/identity-check` · **Lib:** [`api/_lib/identity-integrity.js`](../api/_lib/identity-integrity.js)
 
 Every three.ws agent holds a Solana wallet and earns on-chain reputation — which makes impersonating a trusted agent a real economic attack. The Identity Firewall runs before any new agent identity is created and gates it with two Granite checks:
 
 1. **Semantic impersonation detection.** The candidate name + description are embedded with `granite-embedding-278m-multilingual` and cosine-compared against every existing public agent. Similarity ≥ 93% to another owner's agent is treated as impersonation and the identity is blocked; 86–93% triggers a review warning with the nearest neighbours surfaced.
 2. **Granite Guardian content screen.** The identity text is run through `granite-guardian-3-8b` and classified against `harm`, `social_bias`, and `sexual_content`. Any flagged risk blocks the identity from representing the platform.
 
-The endpoint is auth-optional: anonymous callers (including the public `/ibm/identity` demo) get impersonation detection against all public agents; authenticated callers also get their own agents included in the comparison so the editor can warn "you already have a similar agent."
+The endpoint is auth-optional: anonymous callers get impersonation detection against all public agents; authenticated callers also get their own agents included in the comparison so the editor can warn "you already have a similar agent."
 
-When watsonx is unconfigured the response returns `{ configured: false, status: "unavailable" }` and the identity is allowed (fail-open) — the page surfaces a clear "not configured" state rather than a fake verdict.
+When watsonx is unconfigured the response returns `{ configured: false, status: "unavailable" }` and the identity is allowed (fail-open) — callers get a clear "not configured" state rather than a fake verdict.
 
 ```bash
 curl -s https://three.ws/api/agents/identity-check \
@@ -231,11 +231,11 @@ curl -s https://three.ws/api/agents/identity-check \
 
 ## Granite Vision
 
-**Page:** [three.ws/ibm/vision](https://three.ws/ibm/vision) · **API:** `GET|POST /api/ibm/vision`
+**API:** `GET|POST /api/ibm/vision`
 
 Granite Vision is the multimodal eye of the suite. Show it a rendered 3D avatar (or any image) and `ibm/granite-vision-3-2-2b` reads the look and returns a complete agent identity — appearance, vibe, persona, a suggested name, a one-line bio, tone tags, and a fitting voice descriptor — in a single multimodal call. Turn a face into an agent.
 
-- `GET /api/ibm/vision` returns a handful of real public avatars so the demo works for anonymous visitors with no upload.
+- `GET /api/ibm/vision` returns a handful of real public avatars so anonymous callers can try it with no upload.
 - `POST` accepts either an `image` data URL (a client canvas capture or uploaded file, capped at 6 MB) or an `imageUrl` the server fetches. Server-side fetches are **SSRF-allowlisted** to the platform's own asset host and a small set of content-addressed media CDNs (IPFS, Arweave, Pinata, GitHub) — never an arbitrary host — with a byte cap and timeout, so the endpoint can't be turned into an internal-network probe.
 
 ---
@@ -262,18 +262,27 @@ It reads the same `WATSONX_*` environment variables documented above. See the [M
 
 ---
 
-## Showcase routes
+## Live pages and API surfaces
+
+The two live IBM pages on the product:
 
 | Route                                                    | What it is                                                       |
 | -------------------------------------------------------- | ---------------------------------------------------------------- |
-| [`/ibm`](https://three.ws/ibm)                           | The hub — overview of the integration and links to every surface |
-| [`/ibm/galaxy`](https://three.ws/ibm/galaxy)             | Semantic 3D agent star-map (Granite embeddings)                  |
-| [`/ibm/oracle`](https://three.ws/ibm/oracle)             | Granite TimeSeries forecast, narrated by an avatar               |
-| [`/ibm/twin`](https://three.ws/ibm/twin)                 | Digital Twin — back-test + what-if simulation                    |
-| [`/ibm/trust-layer`](https://three.ws/ibm/trust-layer)   | Granite Guardian governance + audit ledger                       |
-| [`/ibm/identity`](https://three.ws/ibm/identity)         | Identity Firewall — Granite embeddings + Guardian impersonation gate |
-| [`/ibm/proof`](https://three.ws/ibm/proof)               | Governed forecast notarized on Solana                            |
-| [`/ibm/vision`](https://three.ws/ibm/vision)             | Granite Vision reads an avatar into an identity                  |
+| [`/ibm/hello`](https://three.ws/ibm/hello)               | The IBM and three.ws partnership page                            |
+| [`/ibm/x402-demo`](https://three.ws/ibm/x402-demo)       | Live x402 micropayment demo built with IBM                       |
+
+The Granite demo pages that used to live under `/ibm/*` (galaxy, oracle, twin, trust-layer, identity, proof, vision) were retired from navigation and removed. Their API endpoints remain live and callable:
+
+| Endpoint                                                 | What it does                                                     |
+| -------------------------------------------------------- | ---------------------------------------------------------------- |
+| `GET/POST /api/ibm/galaxy`                               | Semantic agent star-map layout (Granite embeddings)              |
+| `GET /api/ibm/oracle`                                    | Granite TimeSeries forecast + narration + governance             |
+| `GET/POST /api/ibm/twin`                                 | Digital Twin: back-test + what-if simulation                     |
+| `POST /api/guardian/assess`                              | Granite Guardian governance + audit ledger                       |
+| `POST /api/agents/identity-check`                        | Identity Firewall: Granite embeddings + Guardian impersonation gate |
+| `GET/POST /api/ibm/attest`                               | Governed forecast notarized on Solana                            |
+| `GET/POST /api/ibm/vision`                               | Granite Vision reads an avatar into an identity                  |
+| `POST /api/watsonx/embed`                                | Standalone Granite embedding vectors                             |
 
 ---
 

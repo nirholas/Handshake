@@ -8,7 +8,7 @@ For the full deep dive on internals, see [Architecture overview](./architecture.
 
 ## The pitch in one paragraph
 
-three.ws turns an AI agent into a persistent, ownable, multi-chain object: a 3D body that renders in any modern browser, an LLM brain you choose (Claude, GPT, or others), an on-chain identity registered on EVM chains via ERC-8004 or on Solana via Metaplex Core, and a `<agent-3d>` web component you can drop into any page on the internet. Pay-per-call API endpoints use the x402 standard. The whole stack is open source under Apache-2.0.
+three.ws turns an AI agent into a persistent, ownable, multi-chain object: a 3D body that renders in any modern browser, an LLM brain you choose (Claude, GPT, or others), an on-chain identity registered on EVM chains via ERC-8004 or on Solana via Metaplex Core, and a `<agent-3d>` web component you can drop into any page on the internet. Pay-per-call API endpoints use the x402 standard, and the client SDKs (`@three-ws/sdk`, `@three-ws/avatar`, `@three-ws/irl`, and friends) are published on npm.
 
 ---
 
@@ -52,7 +52,7 @@ The whole stack is split into four horizontal strata. Each layer can run on its 
 - **Viewer layer** — pure three.js. Knows nothing about agents, brains, or wallets. Useful on its own as a glTF inspector and as the rendering engine for Turntable / Animation Gallery widgets. See [Layers](./layers.md) for the contract.
 - **Agent layer** — turns a static GLB into a presence. LLM tool-loop, skill registry, memory, and a continuous emotion blend that drives morphs and gaze. See [Agent system](./agent-system.md).
 - **Identity layer** — durability across sessions, devices, and embed hosts. Wallet auth, on-chain registration, IPFS-pinned manifest bundles, signed action diary. Entirely optional. See [ERC-8004](./erc8004.md) and [Solana agents](./solana.md).
-- **Embed layer** — the public face. The `<agent-3d>` custom element, five widget variants, iframe embeds, the CDN bundle, the SPA, and the route table in `vercel.json` (read at runtime by the Cloud Run server). See [Embedding](./embedding.md).
+- **Embed layer** — the public face. The `<agent-3d>` custom element, ten widget variants, iframe embeds, the CDN bundle, the SPA, and the route table in `vercel.json` (read at runtime by the Cloud Run server). See [Embedding](./embedding.md).
 
 The four layers communicate through one event bus (`agent-protocol`). Every meaningful action is a `CustomEvent` on a singleton. That single design choice is why you can swap the avatar for a 2D sprite, the runtime for a different LLM, or memory for a vector store — and nothing else changes.
 
@@ -64,7 +64,7 @@ A user types "Wave at me" into an embedded agent's chat input. Here's the full d
 
 1. **Input.** Chat UI calls `runtime.send("Wave at me", { voice: false })`.
 2. **System prompt.** The runtime builds the prompt: manifest `instructions.md` + a compact memory block + the skill registry's tool descriptions.
-3. **LLM call.** A streaming request goes to Anthropic (or OpenAI, or whichever provider matches the manifest's `brain.provider`). The platform supports proxying through `/api/brain/chat` so API keys never live in the client.
+3. **LLM call.** A streaming request goes to Anthropic (or whichever provider matches the manifest's `brain.provider`). Embeds without their own key route through the platform's pooled proxy (`/api/llm/anthropic`) so API keys never live in the client.
 4. **Tool call.** The model returns a `wave` tool invocation.
 5. **Skill dispatch.** The skill registry looks up `wave`. It's a built-in: the handler emits a `gesture` event on the bus and plays the wave animation clip via the `SceneController`.
 6. **Empathy reaction.** The avatar's empathy layer hears `gesture` and `speak` events on the same bus. Sentiment is positive, so celebration weight bumps slightly. Morph targets lerp `mouthSmile` toward 0.6 over a few frames; gaze locks on the user.
@@ -81,11 +81,11 @@ Three modes, all configurable per agent:
 
 | Mode | When to use | How |
 |---|---|---|
-| **Hosted (default)** | Most users | Set `brain="claude-sonnet-4-6"`. The element posts to `https://three.ws/api/brain/chat`, which uses the platform's pooled keys. Billed against your three.ws account. |
-| **Self-hosted proxy** | You want to manage cost or use a private model | Set `key-proxy="/api/llm"` to point at your own serverless function that injects keys before forwarding to the provider. Keys never reach the client. |
-| **Direct (advanced)** | Local-only experiments | The runtime can call providers directly if you pass an API key explicitly. Don't ship this to a public page. |
+| **Hosted (default)** | Most users | Give the agent a backend `agent-id` and set no key. The element routes through the platform's pooled-key proxy (`/api/llm/anthropic?agent=<id>`), so keys never reach the client. |
+| **Self-hosted proxy** | You want to manage cost or use a private model | Set `key-proxy="https://yourapp.com/api/llm"` to point at your own serverless function that injects keys before forwarding to the provider. Keys never reach the client. |
+| **Direct (advanced)** | Local-only experiments | The runtime calls the provider directly if you pass an `api-key` attribute explicitly. Don't ship this to a public page. |
 
-The brain proxy at [`/api/brain/chat`](./api-reference.md) supports Anthropic, OpenAI, Qwen, and OpenRouter — so the brain attribute can be `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, and others.
+The platform's own chat surfaces run on the multi-model brain router at [`/api/brain/chat`](./api-reference.md), which supports Anthropic, OpenAI, and Qwen natively with OpenRouter failover; model ids include `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5`, `gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`, `qwen-plus`, and others.
 
 ---
 
@@ -97,7 +97,7 @@ Three production paths. Pick whichever fits your use case:
 - **Selfie capture** — upload a photo, get a rigged 3D version of yourself in ~60 seconds. See [avatar-creation.md](./avatar-creation.md).
 - **Upload your own** — any glTF 2.0 / GLB with a humanoid rig works. Drop the file into the editor at [three.ws/create](https://three.ws/create) or POST to `/api/avatars`.
 
-Every avatar ends up as a `cdn.three.ws/u/<owner>/…glb` URL plus a database record. When you wire one into an agent, the agent's manifest references it under `body.uri`.
+Every avatar ends up as a hosted GLB URL (served from the `cdn.three.ws` asset CDN) plus a database record. When you wire one into an agent, the agent's manifest references it under `body.uri`.
 
 ---
 
@@ -106,10 +106,10 @@ Every avatar ends up as a `cdn.three.ws/u/<owner>/…glb` URL plus a database re
 Once your agent is live, three surfaces let other pages embed it:
 
 - **The web component** — `<agent-3d agent-id="…">` after loading the CDN script. The element runs in your page, sharing the DOM. Use this when you want full control and your CSP allows third-party scripts.
-- **The iframe widget** — `https://three.ws/w/<widget-id>` rendered inside an `<iframe>`. Five widget types ship: Turntable, Animation Gallery, Talking Agent, ERC-8004 Passport, Hotspot Tour. Use this in environments where you can't load third-party scripts (Notion, Webflow, Framer, WordPress).
+- **The iframe widget** — `https://three.ws/w/<widget-id>` rendered inside an `<iframe>`. Ten widget types ship: Turntable, Animation Gallery, Talking Agent, ERC-8004 Passport, Hotspot Tour, Pump.fun Live Feed, Smart Money Feed, Live Trades Canvas, Bonding Curve, and Walking Avatar. Use this in environments where you can't load third-party scripts (Notion, Webflow, Framer, WordPress).
 - **The Open Graph + oEmbed surface** — paste `https://three.ws/agent/<id>` into Slack, X, Discord, or any platform that consumes oEmbed, and you get a rich preview with the avatar's poster, name, and description.
 
-The `postMessage` bridge in the web component and the iframe widget speaks the same protocol, so host pages can call `say()`, `ask()`, `installSkill()`, and listen for events like `agent:speak`, `agent:tool-called`, `agent:skill-done` either way.
+With the web component, the host page calls element methods directly (`say()`, `ask()`, `installSkill()`, `play()`, `lookAt()`) and listens for DOM events (`agent:ready`, `brain:message`, `skill:tool-called`, `voice:transcript`). Inside an iframe, the `postMessage` bridge (`embed-action-bridge.js`) accepts the same intents as ops (`speak`, `gesture`, `emote`, `look`) and mirrors protocol events back to hosts that send a `subscribe` request.
 
 ---
 
@@ -148,7 +148,7 @@ Quick lookup for "I want to ship X":
 | A character in Notion / Webflow / Framer | An iframe widget from [Widget Studio](./widget-studio.md) |
 | A talking AI sidekick that follows visitors | `<agent-3d mode="floating">` |
 | A character that controls a scene from page events | The JS API (`agent.say()`, `agent.ask()`) — see [js-api.md](./js-api.md) |
-| Programmatic avatar manipulation in Node | `@three-ws/avatar` |
+| Programmatic avatar viewing/creation in your own app | `@three-ws/avatar` |
 | An on-chain identity for your AI | [ERC-8004](./erc8004.md) or [Solana](./solana.md) |
 | A paid API anyone (including agents) can call | [x402 monetization](./x402.md) |
 | Multiple agents in one scene | `<agent-stage>` — see [multi-agent.md](./multi-agent.md) |

@@ -25,7 +25,7 @@ The studio is a shell plus five independently mounted sub-studios, wired over th
 real agent APIs.
 
 - **The shell** (`src/studio/studio-shell.js`) builds the layout, the auth, loading,
-  empty, and error states, and a persistent `<agent-presence mode="stage">` live
+  empty, and error states, and a persistent `<agent-presence data-mode="stage">` live
   avatar that reuses the platform renderer. It loads the caller's agent (auto-creating
   a default via `/api/agents/me` when needed) and fires `studio-shell:ready` so each
   sub-studio boots without racing.
@@ -33,8 +33,9 @@ real agent APIs.
   `studio.patch(partial)` deep-merges the edit optimistically, then flushes a
   debounced `PUT /api/agents/:id` through the shared `apiFetch` (CSRF and cookie
   handled). A failed PUT rolls the optimistic edit back and emits an `error`, so the
-  UI never drifts from the server. Each sub-studio writes only its own domain under
-  `meta.studio`.
+  UI never drifts from the server. Each sub-studio writes only its own domain: a key
+  under `meta.studio` (brain, memory, body, money, trading), or the agent's top-level
+  `skills` list for the Skills tab.
 - **The five tabs**, each a mount point the sub-studio fills:
   - **Brain**: model and provider selection plus the reasoning setup, exercised live
     against `/api/brain/chat` (the same multi-LLM backend documented in
@@ -82,11 +83,13 @@ scriptable. Read your agent, then patch a domain under `meta.studio` (see
 curl -s https://three.ws/api/agents/me \
   -H "authorization: Bearer $THREEWS_TOKEN"
 
-# Persist a brain edit: the exact shape the Brain tab writes
+# Persist a brain edit under the Brain tab's namespace. The tab itself stores a
+# node graph plus a compiled summary at meta.studio.brain:
+# { version, graph, compiled: { personaPrompt, provider, model } }
 curl -s -X PUT https://three.ws/api/agents/<agent-id> \
   -H 'content-type: application/json' \
   -H "authorization: Bearer $THREEWS_TOKEN" \
-  -d '{"meta":{"studio":{"brain":{"provider":"claude-sonnet-4-6","temperature":0.7}}}}'
+  -d '{"meta":{"studio":{"brain":{"compiled":{"provider":"claude-sonnet-4-6"}}}}}'
 ```
 
 Set per-call pricing from the Money tab's endpoint:

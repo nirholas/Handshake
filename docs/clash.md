@@ -16,7 +16,7 @@ The page (`src/clash.js`) polls `GET /api/clash/state` every 5 seconds (paused w
 
 **Factions.** Every community loaded from CoinCommunities becomes a faction, ranked strongest-first by member count and capped at `MAX_FACTIONS`. If the community source is unconfigured the API returns `503 cc_unconfigured` and the page shows a designed "temporarily unavailable" state and stops polling.
 
-**Rounds (epochs).** Battles run on a deterministic global clock: `epoch = floor(now / EPOCH_MS)` with `EPOCH_MS` defaulting to 1 hour. Every serverless instance agrees on the current round without coordination. Matchmaking rotates the member-ranked pool by an epoch-derived hash (so the top seed does not always meet the second) and folds it into adjacent pairs; an odd count gives the lowest seed a bye. The previous round is settled lazily on each `state` read (claimed once via a Redis `SET NX`, so it is idempotent and needs no cron): faction powers are re-read, the same bracket is recomputed, and each battle is decided on raw power (higher wins, equal draws, both-zero writes no record). Win, loss, draw, and lifetime power fold into a permanent `clash:record` hash.
+**Rounds (epochs).** Battles run on a deterministic global clock: `epoch = floor(now / EPOCH_MS)` with `EPOCH_MS` defaulting to 1 hour. Every serverless instance agrees on the current round without coordination. Matchmaking rotates the member-ranked pool by an epoch-derived hash (so the top seed does not always meet the second) and folds it into adjacent pairs; an odd count gives the lowest seed a bye. The previous round is settled lazily on each `state` read (claimed once via a Redis `SET NX`, so it is idempotent and needs no cron): faction powers are re-read, the bracket is recomputed from the power-ranked pool (so final pairings can differ from the member-ranked view shown live), and each battle is decided on raw power (higher wins, equal draws, both-zero writes no record). Win, loss, draw, and lifetime power fold into a permanent `clash:record` hash.
 
 **Momentum.** Each faction carries a bounded vigor bonus between 1.0 and 1.5, blended from social recency, member mass, and a positive pump.fun price move. Missing signals contribute nothing and never block a rally.
 
@@ -60,7 +60,7 @@ curl -X POST 'https://three.ws/api/clash/enlist' \
   -d '{"token":"<FACTION_MINT>","wallet":"<YOUR_WALLET>"}'
 ```
 
-The Coin Clash state and leaderboard are also exposed read-only over MCP through `@three-ws/clash-mcp` (`get-clash-state`, `get-clash-leaderboard`).
+The Coin Clash state and leaderboard are also exposed read-only over MCP through `@three-ws/clash-mcp` (`get_clash_state`, `get_clash_leaderboard`).
 
 ## States and limits
 

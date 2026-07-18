@@ -149,7 +149,7 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
 **Fix steps:**
 
 1. Check the Console. The avatar module logs a warning if expected morph targets aren't found on load.
-2. Verify your GLB has morph targets named exactly as expected (case-sensitive). The emotion system maps to: `mouthSmile`, `mouthFrown`, `mouthOpen`, `cheekPuff`, `browInnerUp`, `browOuterUp`, `noseSneer`, `eyeSquint`, `eyesClosed`. These are the standard VRM / humanoid avatar names.
+2. Verify your GLB has morph targets named exactly as expected (case-sensitive). The emotion system maps to: `mouthSmile`, `mouthFrown`, `mouthOpen`, `cheekPuff`, `browInnerUp`, `browOuterUpLeft` / `browOuterUpRight`, `noseSneerLeft` / `noseSneerRight`, `eyeSquintLeft` / `eyeSquintRight`, `eyesClosed`. These are the standard ARKit / humanoid avatar blendshape names.
 3. For head tilt and lean, the skeleton needs a `Head` or `Neck` bone. Open the model in Blender and check the armature.
 4. Confirm the avatar module is initialized: open DevTools Console and run `window.VIEWER?.agent_avatar`. If `undefined`, the avatar layer didn't boot — check for earlier errors in the console.
 
@@ -212,7 +212,7 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
 **Fix steps:**
 
 1. Verify the `<script>` tag loads before the `<agent-3d>` element in the DOM, or that it uses `defer`/`async` correctly.
-2. Check the Console for CSP violations. The CDN origin (`cdn.three.ws`) must appear in your `script-src` policy.
+2. Check the Console for CSP violations. The script origin (`https://three.ws`) must appear in your `script-src` policy (and in `connect-src` for API and model fetches).
 3. For **Next.js**: web components use browser APIs (`window`, `document`, `SpeechSynthesis`) that don't exist server-side. Mark the component file with `'use client'` and disable SSR for the wrapper:
    ```js
    import dynamic from 'next/dynamic';
@@ -228,8 +228,8 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
 **Fix steps:**
 
 1. Verify the `src` URL is correct — use the full HTTPS URL.
-2. Do not use a URL that ends in `/edit` or `/dashboard` — those pages block framing for security. Use the agent's public embed URL.
-3. Note: the `frame-ancestors` CSP for the embed is currently set via a `<meta>` HTTP-equiv tag, which browsers ignore for `frame-ancestors` (it must be an HTTP header). This means any origin can embed — if you're seeing a block, it's coming from something else, likely the host page's own CSP or an extension.
+2. Do not use a URL that ends in `/edit` or `/dashboard` — those pages block framing for security. Use the agent's public embed URL (`/agent/<id>/embed`, `/w/<widget-id>`, or `/widget#widget=<id>`).
+3. Only the dedicated embed routes send a `frame-ancestors *` CSP header (set in the route table and applied by the server); regular pages send `frame-ancestors 'self'` and will refuse to load in your iframe. If an embed route is being blocked, the block is coming from the host page's own CSP, the agent's embed policy (domain allowlist), or a browser extension.
 
 ---
 
@@ -239,20 +239,21 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
 
 **Fix steps:**
 
-1. Target the correct origin: `'https://three.ws/'` (or your self-hosted origin).
+1. Target the correct origin: `'https://three.ws'` (or your self-hosted origin). Note there is no trailing slash: `e.origin` is a bare origin, so a comparison against `'https://three.ws/'` never matches.
 2. Listen for `message` events on `window`, not on the iframe element itself:
    ```js
    window.addEventListener('message', (e) => {
-     if (e.origin !== 'https://three.ws/') return;
+     if (e.origin !== 'https://three.ws') return;
      console.log(e.data);
    });
    ```
-3. Use the correct envelope shape. There are two related protocols, and neither uses a type prefix like `3dagent:`:
+3. Use the correct envelope shape. There are three related protocols, and none uses a type prefix like `3dagent:`:
+   - The **agent iframe bridge** (`/agent/<id>/embed`) uses `{ type: 'agent:*', agentId, ... }`: send `{ type: 'agent:hello', agentId }` first, wait for `agent:ready`, then drive it with `{ type: 'agent:action', agentId, action: { type: 'speak', text: '...' } }`. Every message must carry the `agentId`. See example 9 in the [Examples gallery](/docs/examples).
    - The **element bridge** (`src/embed-host-bridge.js`) wraps every message in `{ v: 1, source: 'agent-host' | 'agent-3d', id, kind, op, payload }` — e.g. a speak request is `{ v: 1, source: 'agent-host', id: '<uuid>', kind: 'request', op: 'speak', payload: { text: '...' } }`.
    - The **host protocol** ([specs/EMBED_HOST_PROTOCOL.md](../specs/EMBED_HOST_PROTOCOL.md)) uses `{ v: 1, type: 'host.*' | 'embed.*', id, payload }` — e.g. `{ v: 1, type: 'host.chat.message', payload: { ... } }`.
 
-   Messages that don't match the expected envelope (missing `v: 1`, wrong `source`/`type`) are silently ignored.
-4. Use the `EmbedHostBridge` class (`src/embed-host-bridge.js`) rather than raw `postMessage` — it handles the handshake, queues requests until the iframe is ready, and correlates responses by `id`.
+   Messages that don't match the expected envelope (missing `agentId` or `v: 1`, wrong `source`/`type`) are silently ignored.
+4. For element embeds, use the `EmbedHostBridge` class (`src/embed-host-bridge.js`) rather than raw `postMessage` — it handles the handshake, queues requests until the iframe is ready, and correlates responses by `id`.
 
 ---
 
@@ -354,7 +355,7 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
 1. Increase the gas limit by 20% — registration involves IPFS CID storage and can exceed estimates.
 2. Check your ETH balance on Base. Bridge more if needed.
 3. Verify the manifest CID resolves on IPFS before calling the contract. A CID that doesn't resolve yet may cause the contract to reject it depending on the registry version.
-4. Confirm MetaMask is on Base mainnet (chain ID 8453), not Ethereum mainnet. The registry is not deployed on mainnet.
+4. Confirm MetaMask is on the chain you intend to register on. The platform default is Base (chain ID 8453). The registry contracts are deployed at the same addresses on all major EVM chains, but your wallet must be on the chain the registration flow targets, with gas funds on that chain.
 
 ---
 
@@ -384,13 +385,15 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
 
 ### ENS resolution not working
 
-**Symptom:** Navigating to `/agent/ens/yourname.eth` shows "not found".
+**Symptom:** Looking up an agent by ENS name returns "not found".
+
+**How it works:** the API resolves the ENS name to its address, then returns the agents registered to that wallet address. There is no ENS text record to configure: the match is on the address your name resolves to.
 
 **Fix steps:**
 
-1. Verify the `3dagent` text record is set on the ENS name. In the ENS manager, add a text record with key `3dagent` and value set to your agent's on-chain ID.
-2. ENS records can take 30+ minutes to propagate after being set.
-3. Test direct resolution: `https://three.ws/agent/ens/yourname.eth`
+1. Verify the ENS name resolves to the wallet address that owns (or is linked to) your agent. If the agent's registered wallet is a different address than the one your ENS name points to, the lookup returns nothing.
+2. ENS record changes can take 30+ minutes to propagate after being set.
+3. Test direct resolution against the API: `https://three.ws/api/agents/ens/yourname.eth` (public, rate-limited; returns the resolved address and matching agents as JSON).
 
 ---
 
@@ -646,4 +649,4 @@ In local memory mode, all conversation memory stays in the browser's `localStora
 
 **The `IdleAnimation` (blink / head-drift) doesn't seem to work.**
 
-This is a known open issue. The `IdleAnimation` class is implemented in `src/idle-animation.js` but is not yet wired into the avatar system — it's imported but the integration with `agent-avatar.js` is incomplete. Idle blink and head-drift are not active in the current release. This is tracked as a defect.
+Idle blink and head-drift are active in the current release: `src/idle-animation.js` is wired into `src/agent-avatar.js` (instantiated on avatar load and ticked every frame). If you don't see blinking, the usual cause is the model itself: the blink layer needs the `eyeBlinkLeft` / `eyeBlinkRight` morph targets, and head-drift needs a `Head` or `Neck` bone. Check the Console for the avatar module's missing-morph-target warning, and see "Agent emotions not showing" above for the full morph-target list.

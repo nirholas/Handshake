@@ -12,8 +12,8 @@ The validator measures conformance against the glTF 2.0 specification and report
 |----------|------|---------|
 | Error | 0 | Spec violation. Fix before publishing — some renderers will refuse to load the file. |
 | Warning | 1 | Non-conformant but likely to load. Behavior in different renderers may differ. |
-| Hint | 2 | Best-practice suggestion. Not a problem, but worth addressing. |
-| Info | 3 | Informational only. No action needed. |
+| Info | 2 | Informational only. No action needed. |
+| Hint | 3 | Best-practice suggestion. Not a problem, but worth addressing. |
 
 A model passes validation when `numErrors === 0`. Warnings, hints, and infos are allowed for a pass verdict.
 
@@ -37,7 +37,7 @@ Every validation produces a structured report. Here is what each field means.
 }
 ```
 
-`maxSeverity` is the code of the most severe non-empty bucket (`0` = errors present, `1` = warnings only, `3` = hints only, `-1` = completely clean).
+`maxSeverity` is the code of the most severe non-empty bucket (`0` = errors present, `1` = warnings only, `2` = infos, `3` = hints only, `-1` = completely clean).
 
 ### Individual messages
 
@@ -91,6 +91,7 @@ Validation runs automatically after every model load. The result appears in the 
 - `N errors.` — errors found; click to expand the full report
 - `N warnings.` — warnings only
 - `N hints.` — hints only
+- `N notes.`: infos only
 - `Model details` — clean; no issues
 
 Clicking the bar opens the full **ValidatorReport** panel, which shows the model metadata, a summary banner, and per-severity tables of messages.
@@ -151,7 +152,7 @@ Validation results can be attested on-chain through two complementary mechanisms
 
 ### ValidationRegistry (ERC-8004)
 
-For registered agents, a validation record can be written to the `ValidationRegistry` smart contract on Base (chain ID 8453):
+For registered agents, a validation record can be written to the `ValidationRegistry` smart contract. The registry is currently deployed on the testnets only (e.g. Base Sepolia, chain ID 84532); mainnet deployment is pending, so use a testnet chain ID:
 
 ```js
 import { recordValidation, hashReport, reportPassed } from './src/erc8004/validation-recorder.js';
@@ -164,7 +165,7 @@ const { txHash, proofHash, proofURI } = await recordValidation({
   agentId: 42,
   report: validationReport,
   signer: connectedWallet,   // must be an allow-listed validator address
-  chainId: 8453,
+  chainId: 84532,            // Base Sepolia (ValidationRegistry is testnet-only for now)
   apiToken: IPFS_API_TOKEN,  // for pinning
   pin: true,
 });
@@ -276,11 +277,11 @@ The signing message binds together the agent ID, a SHA-256 hash of the GLB bytes
 import { getLatestValidation } from './src/erc8004/validation-recorder.js';
 import { ethers } from 'ethers';
 
-const provider = new ethers.JsonRpcProvider('https://mainnet.base.org');
+const provider = new ethers.JsonRpcProvider('https://sepolia.base.org');
 const record = await getLatestValidation({
   agentId: 42,
   runner: provider,
-  chainId: 8453,
+  chainId: 84532,   // ValidationRegistry is testnet-only for now
   kind: 'glb-schema',
 });
 
@@ -339,3 +340,12 @@ Three components render validation state in the browser:
 | `ValidatorTable` | `src/components/validator-table.jsx` | Tabular view of messages for one severity level (Code / Message / Pointer columns). |
 
 The toggle's CSS class reflects the highest severity: `level-0` (errors), `level-1` (warnings), `level-2` (infos), `level-3` (hints), or no class (clean). Style these classes to match your embedding context.
+
+---
+
+## Related
+
+- [ERC-8004 identity](/docs/erc8004): the registry contracts validation records attach to
+- [Reputation](/docs/reputation): the human-feedback counterpart to validation
+- [3D asset pipeline](/docs/3d-asset-pipeline): formats, optimization, and export guidance
+- [Provenance](/docs/provenance): signed content credentials for generated models

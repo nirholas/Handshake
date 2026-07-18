@@ -69,7 +69,7 @@ The console reads this on load, resolves your viewer id (so it can tell whether 
 - **Auto-freeze during a dispute.** An open request freezes autonomous spend (owner withdrawal stays open), tracked separately so it lifts on resolution without overriding a freeze the owner set.
 - **Confirmation on every consequential action.** Approve, confirm, decline, and complete each prompt for confirmation before firing.
 - **Signed-out, empty, and error states** are all designed: sign-in prompt, "no one's named you yet", and an inline retry on failure.
-- **Not the content-safety Guardian.** This console is unrelated to `@three-ws/guardian`, the AI content-moderation model that shares the name.
+- **Not the content-safety Guardian.** This console is unrelated to `@three-ws/guardian`, the AI content-moderation package that shares the name.
 
 ## Related
 

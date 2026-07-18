@@ -34,7 +34,7 @@ Three habits that make prompts work dramatically better:
 
 Want more recipes? There's a whole cookbook: [Prompt Recipes for 3D Generation](/tutorials/prompts-for-3d).
 
-**Prefer to talk?** Click the mic button next to the prompt box and describe the object out loud — the transcript drops straight into the same field, ready to edit before you generate. It uses your browser's built-in speech recognition where available, with a free cross-browser fallback (NVIDIA Riva) for browsers that don't have one (mainly Firefox). Nothing is written to disk on either path — the browser path never leaves your device, and the fallback path transcribes in memory and discards the audio once it replies. If neither is available the mic button simply doesn't appear — type instead.
+**Prefer to talk?** The Forge Studio variant at [three.ws/forge-studio](/forge-studio) has a mic button next to each prompt box: describe the object out loud and the transcript drops straight into the field, ready to edit before you generate. It uses your browser's built-in speech recognition where available, with a free cross-browser fallback (NVIDIA Riva) for browsers that don't have one (mainly Firefox). Nothing is written to disk on either path: the browser path never leaves your device, and the fallback path transcribes in memory and discards the audio once it replies. If neither is available the mic button simply doesn't appear.
 
 ---
 
@@ -44,11 +44,13 @@ Below the prompt are three quality buttons:
 
 | Tier | What you get | When to use it |
 |------|-------------|----------------|
-| **Draft** | Fast, low-poly (~12k triangles), no textures | Trying ideas. Generate five drafts, keep the best shape. |
+| **Draft** | Fast, low-poly (~12k triangles) | Trying ideas. Generate five drafts, keep the best shape. |
 | **Standard** | Balanced detail (~30k triangles) | The default. Right for most assets. |
 | **High** | Maximum detail (~200k triangles) + PBR materials (metallic, roughness, normals) | The final version, once the prompt is dialed in. Slower. |
 
 **Start with Draft or Standard.** The pro workflow is: iterate cheap and fast, then re-run your winning prompt on High.
+
+**High is the premium tier.** Draft and Standard are free for everyone. High unlocks for $THREE holders (Bronze tier, $25 held) and shows a lock otherwise; a non-holder can pay for a single High generation, or spend prepaid credits, right from the tier picker. If you bring your own Meshy or Tripo key, High is not gated (you pay the vendor directly).
 
 You can leave the **Engine** selector alone — the Forge picks a sensible default. (If you have your own [Meshy](https://meshy.ai) or [Tripo](https://www.tripo3d.ai) API key, you can select those engines and paste your key into the field that appears — it stays in your browser and is never stored. Skip this entirely for now.)
 
@@ -102,7 +104,7 @@ This is normal — prompt, generate, adjust, repeat is the workflow, not a failu
 | Surface looks flat or plasticky | Name the material explicitly, or switch to the **High** tier for PBR textures |
 | Extra junk attached to the model | Your prompt described a scene. Cut it down to just the object |
 | Shape is mushy or vague | Be more specific: "a four-legged armchair with a tall back" beats "a chair" |
-| "Generation limit reached" | The Forge is rate-limited per visitor. Wait a minute and try again |
+| "Generation limit reached" | The free lane allows about 60 generations per hour per visitor ($THREE holders get more). Wait a bit and try again |
 | Model never finishes | Refresh the page — your job keeps running and your creations gallery keeps the result |
 
 ---

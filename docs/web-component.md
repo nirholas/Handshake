@@ -87,7 +87,7 @@ Lighting, camera orbit, and environment are managed by the built-in viewer; they
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `skills` | comma-separated URIs | — | Additional skill URIs to install on top of manifest skills. |
-| `skill-trust` | `any` \| `whitelist` \| `owned-only` | from manifest | Controls which skill URIs are allowed to install. `owned-only` allows only skills whose author matches the agent's `ownerAddress`. |
+| `skill-trust` | `any` \| `whitelist` \| `owned-only` | `owned-only` | Controls which skill URIs are allowed to install. `owned-only` allows only skills whose author matches the agent's `ownerAddress`. |
 | `memory` | `local` \| `ipfs` \| `encrypted-ipfs` \| `none` | from manifest | Memory storage mode. |
 | `memory-key` | string | agent ID or name | Namespace under which memory is persisted. Useful when embedding the same agent in multiple contexts. |
 
@@ -809,7 +809,7 @@ el.addEventListener('agent:ready', async () => {
 ### UMD (no ES modules)
 
 ```html
-<script src="https://three.ws/agent-3d/1.5.1/agent-3d.umd.cjs"></script>
+<script src="https://three.ws/agent-3d/1.5.2/agent-3d.umd.cjs"></script>
 ```
 
 ---
@@ -906,3 +906,12 @@ defineElement('my-agent');
 - iOS Safari — WebXR is not supported. AR falls back to Quick Look (USDZ).
 - Browsers without `IntersectionObserver` (very old) boot immediately rather than lazily.
 - Browsers without `SpeechRecognition` (`window.SpeechRecognition || window.webkitSpeechRecognition`) — mic/STT silently no-ops. Voice output (TTS) still works.
+
+---
+
+## Related
+
+- [SDK & Library](/docs/sdk): installing the bundle, building from source, programmatic imports
+- [JavaScript API](/docs/js-api): the viewer and validator classes under the hood
+- [Embedding guide](/docs/embedding): iframe patterns, CSP, and platform-specific embeds
+- [Widgets](/docs/widgets): the no-code alternative to hand-writing this element

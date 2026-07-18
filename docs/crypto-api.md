@@ -822,3 +822,12 @@ curl -s "https://three.ws/api/crypto/holders?address=FeMbDoX7R1Psc4GEcvJdsbNbZA3
 # Just the verdict for position sizing
 curl -s "https://three.ws/api/crypto/holders?address=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" | jq '{top10Pct, concentration}'
 ```
+
+---
+
+## Related
+
+- [Market Data API](/docs/market-data-api) - the paid x402 twin: coin prices, DeFi TVL, yields, gas, and the per-datapoint fabric
+- [x402 Paid Endpoints](/docs/x402-endpoints) - the full paid catalog and pricing
+- [API Reference](/docs/api-reference) - the complete three.ws HTTP API surface
+- [Pump Launcher](/docs/pump-launcher) - launch a token after clearing its symbol here

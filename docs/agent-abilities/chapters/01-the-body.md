@@ -1,6 +1,6 @@
 # Chapter 1 · The Body — 3D creation
 
-Every agent is embodied. Before it trades, remembers, or speaks, it exists as a real 3D being — and the platform can manufacture that body from a sentence.
+Every agent is embodied. Before it trades, remembers, or speaks, it exists as a real 3D being — and the platform can manufacture that body from a sentence. If you are new here, start by typing a prompt at three.ws/forge (free, no account) or making an avatar at three.ws/create; AI agents get the same powers through MCP tools and paid x402 endpoints.
 
 three.ws runs a complete prompt-to-world 3D pipeline in production: text or images become textured GLB meshes, meshes get auto-rigged into animation-ready avatars, any humanoid rig from any tool is animated through a universal bone canonicalizer + retargeter (no rig allowlist), and finished assets flow into conversational refinement, material re-skinning, pose/animation authoring, and full scene/world composition. Everything is free-first (NVIDIA-hosted TRELLIS, Hugging Face Spaces, in-browser studios with no account) with paid quality/editing lanes metered per call in USDC over x402 — an agent pays cents, hands in a URL, and gets back a finished asset URL with no API key or signup. Every output is a portable glTF 2.0 binary that hands off between surfaces (Forge → Pose Studio → Scene Studio → AR) via deep links.
 
@@ -8,7 +8,7 @@ three.ws runs a complete prompt-to-world 3D pipeline in production: text or imag
 
 Type a prompt at /forge (or call the forge_free MCP tool) and get a downloadable textured 3D model (GLB) plus a browser viewer link. The default lane is completely free — no account, no key, no wallet — with paid quality tiers (draft $0.05 / standard $0.15 / high $0.50 USDC) when more geometric budget is needed.
 
-**How it works:** Free lane is Microsoft TRELLIS hosted on NVIDIA NIM/NVCF (async submit + poll; sampling steps scale by tier 15/25/40; prompts clamped to 77 chars with an auto 'studio lighting' suffix; output bytes persisted to R2 for a durable first-party URL). The backend registry (api/_lib/forge-tiers.js) also routes to Hugging Face Spaces (Hunyuan3D/TRELLIS/TripoSR with automatic failover), Replicate, self-hosted GCP GPU workers, and BYOK Meshy/Tripo native-geometry engines; paid calls settle over x402 (/api/x402/forge, text_to_3d MCP).
+**How it works:** Free lane is Microsoft TRELLIS hosted on NVIDIA NIM/NVCF (async submit + poll; sampling steps scale by tier, 15 at draft up to 50 at high; prompts clamped to 77 chars with an auto 'studio lighting' suffix; output bytes persisted to R2 for a durable first-party URL). The backend registry (api/_lib/forge-tiers.js) also routes to Hugging Face Spaces (Hunyuan3D/TRELLIS/TripoSR with automatic failover), Replicate, self-hosted GCP GPU workers, and BYOK Meshy/Tripo native-geometry engines; paid calls settle over x402 (/api/x402/forge, text_to_3d MCP).
 
 **Why it matters:** Zero-cost text→3D that any human or AI agent can use instantly, with a transparent pay-per-call ladder — identical pricing across REST and MCP — when quality matters.
 
@@ -32,7 +32,7 @@ Turn 1–4 reference photos or concept-art views into a textured GLB (image_to_3
 
 Adds a humanoid skeleton with per-vertex skin weights to any static GLB, turning a rig-less mesh into an animation-ready model that can walk, wave, and emote.
 
-**How it works:** Runs the VAST-AI UniRig lane on GCP Cloud Run GPU workers (workers/unirig, avatar-pipeline controller /rig). Sold three ways at $0.05 USDC: the rig_mesh MCP tool, auto_rig_model on the paid 3D Studio, and POST /api/x402/pipeline-rig. Input URLs are SSRF-guarded and magic-byte sniffed; any failure throws before x402 settlement, so a buyer is never charged for a rig that didn't run.
+**How it works:** Runs the VAST-AI UniRig lane on GCP Cloud Run GPU workers (workers/unirig, avatar-pipeline controller /rig). Sold three ways: auto_rig_model on the 3D Studio MCP server ($0.05 USDC), POST /api/x402/pipeline-rig ($0.05 USDC), and the rig_mesh tool on the paid agent MCP server ($0.20 USDC). Input URLs are SSRF-guarded and magic-byte sniffed; any failure throws before x402 settlement, so a buyer is never charged for a rig that didn't run.
 
 **Why it matters:** Every generated or uploaded mesh becomes animatable in one paid call of a few cents — nobody else in the x402 ecosystem sells rigging as a per-call stage.
 
@@ -40,7 +40,7 @@ Adds a humanoid skeleton with per-vertex skin weights to any static GLB, turning
 
 Any humanoid avatar from any tool plays the entire animation library — legs included — with zero manual bone mapping. Mixamo, VRM/VRoid, VRM 1.0, Unreal mannequin, Daz/Genesis, MakeHuman, Blender .L/.R, Rigify, HumanIK/Maya namespaces, CH_-prefixed rigs, snake_case/kebab-case, and simple shoulderL-style rigs are all handled out of the box.
 
-**How it works:** glb-canonicalize.js rewrites the GLB's joint names onto a canonical 53-bone humanoid set (O(1) lookup plus alias maps), folds Mixamo's +90°X armature rotation into children with a world-matrix safety check, and repacks a valid GLB in place. animation-retarget.js then renames each clip track to the rig's actual bones, applies per-bone bind-pose correction (C = targetRest · sourceRest⁻¹, handling A-pose vs T-pose rests), and rescales hip translation by height ratio. Gates: ≥8 canonical bones to be playable, ≥50% track coverage per clip, and a 45° hips-tilt sanity check; a genuinely non-riggable prop falls back to the default rig via AnimationManager.supportsCanonicalClips() — never a bind-pose T-pose.
+**How it works:** glb-canonicalize.js rewrites the GLB's joint names onto a canonical 52-bone humanoid set (O(1) lookup plus alias maps), folds Mixamo's +90°X armature rotation into children with a world-matrix safety check, and repacks a valid GLB in place. animation-retarget.js then renames each clip track to the rig's actual bones, applies per-bone bind-pose correction (C = targetRest · sourceRest⁻¹, handling A-pose vs T-pose rests), and rescales hip translation by height ratio. Gates: ≥8 canonical bones to be playable, ≥50% track coverage per clip, and a 45° hips-tilt sanity check; a genuinely non-riggable prop falls back to the default rig via AnimationManager.supportsCanonicalClips() — never a bind-pose T-pose.
 
 **Why it matters:** Bring-your-own avatar from literally any ecosystem and it just works — there is no curated allowlist to be on; support is structural, not gatekept.
 
@@ -86,9 +86,9 @@ Pose any three.ws avatar (or the built-in mannequin) with FK gizmos, sliders, an
 
 ## Animation library & gallery (/animations)
 
-One shared motion library that drives every avatar: the curated studio manifest, a ~2,000-clip R2-hosted motion-capture library, and community-published clips — all browsable with poster thumbnails, derived categories, live hover previews, and shareable deep-linked filters.
+One shared motion library that drives every avatar: the curated studio manifest, a 2,800+ clip R2-hosted motion-capture library, and community-published clips — all browsable with poster thumbnails, derived categories, live hover previews, and shareable deep-linked filters.
 
-**How it works:** Clips are THREE.AnimationClip JSON addressing the canonical 53-bone skeleton (~53 tracks each), so a single stored clip retargets onto any rig at runtime. Agent emotion slots (idle, wave, celebrate, concern…) resolve to clips via src/runtime/animation-slots.js, and apply_animation ($0.01) retargets any library clip onto any rigged GLB over MCP. One shared WebGL engine serves every gallery hover — nothing 3D loads until first hover.
+**How it works:** Clips are THREE.AnimationClip JSON addressing the canonical 52-bone skeleton (~53 tracks each: one rotation track per bone plus hips position), so a single stored clip retargets onto any rig at runtime. Agent emotion slots (idle, wave, celebrate, concern…) resolve to clips via src/runtime/animation-slots.js, and apply_animation ($0.01) retargets any library clip onto any rigged GLB over MCP. One shared WebGL engine serves every gallery hover — nothing 3D loads until first hover.
 
 **Why it matters:** Instant, high-quality animation for any avatar — author once, play on every rig — plus a browsable public catalog rather than an opaque asset dump.
 
@@ -96,6 +96,13 @@ One shared motion library that drives every avatar: the curated studio manifest,
 
 Every post-generation stage of a professional 3D pipeline sold as its own few-cent x402 call: retopologize to predictable topology with textures re-baked ($0.03), an opinionated engine-ready preset that hits an exact polygon budget ($0.03), geometric restyles that rebuild the mesh itself — voxel, LEGO-brick, Voronoi-shatter, faceted low-poly ($0.02–0.03), prompt-driven retexturing (full-mesh or magic-brush masked region, $0.05), and mesh segmentation into named parts ($0.02). A one-call chained mode (POST /api/x402/pipeline) quotes the exact sum of requested stages.
 
-**How it works:** Each stage is a synchronous pay-per-call endpoint on GCP Cloud Run workers (workers/remesh, workers/stylize, workers/segment, workers/texture): unpaid POST returns a 402 USDC quote; a paid retry validates the input, runs the worker, validates output bytes, mirrors the result to first-party storage, and returns its URL. Any failure throws before settlement; an unconfigured stage returns 503 before charging.
+**How it works:** Every stage runs on GCP Cloud Run workers (workers/remesh, workers/stylize, workers/segment, workers/texture). Remesh, game-ready, and stylize are synchronous pay-per-call REST endpoints (POST /api/x402/pipeline-remesh, /api/x402/pipeline-gameready, /api/x402/pipeline-stylize): an unpaid POST returns a 402 USDC quote; a paid retry validates the input, runs the worker, validates output bytes, mirrors the result to first-party storage, and returns its URL. Retexturing and segmentation are sold as 3D Studio MCP tools (retexture_model, retexture_region, segment_model) on the same worker fleet. Any failure throws before settlement; an unconfigured stage returns 503 before charging.
 
 **Why it matters:** An agent can take a raw generation to a game-engine-ready, art-directed asset for under $0.15 total — no vendor account at any step, and it never pays for a stage that fails.
+
+## Related
+
+- [Forge](/docs/forge)
+- [3D pipeline](/docs/3d-pipeline)
+- [3D Studio MCP server](/docs/mcp-3d-studio)
+- [Restyle Studio](/docs/restyle)

@@ -1,6 +1,8 @@
 # Changelog & Versioning
 
-This document covers how three.ws is versioned, what has changed across releases, and how to upgrade safely.
+This document covers how three.ws is versioned, what has changed across releases, and how to upgrade safely. It is aimed at developers pinning the SDK or CDN bundle.
+
+> **Looking for what shipped this week?** Day-to-day product updates are published continuously on the live changelog at [three.ws/changelog](https://three.ws/changelog) (also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml)). The versioned entries below track the platform/SDK release history rather than every product change.
 
 ---
 
@@ -276,7 +278,7 @@ console.log(latest); // "1.5.2"
 
 ## Deprecated Features
 
-No public-facing features are currently deprecated. The only `@deprecated` annotations in the codebase are inside vendored dependencies (Three.js r175 internals) and have no effect on the public API.
+No public-facing features are currently deprecated. The only `@deprecated` annotations in the codebase are inside vendored dependencies (Three.js internals) and have no effect on the public API.
 
 When features are deprecated, they will be listed here with:
 
@@ -312,3 +314,12 @@ cd sdk && npm publish
 - **GitHub Releases** — Watch the repository and select "Releases only" to get an email for each new release.
 - **npm outdated** — Add `npm outdated @three-ws/sdk` to your CI pipeline to detect available upgrades automatically.
 - **`versions.json`** — The CDN publishes a machine-readable index at `https://three.ws/agent-3d/versions.json` listing all available versions, channel aliases, and SRI hashes.
+
+---
+
+## Related
+
+- [Introduction](/docs/introduction): what the platform is and how the layers fit together
+- [Quick Start](/docs/quick-start): pin the CDN bundle or install the SDK
+- [SDK Reference](/docs/sdk): the npm packages this versioning policy covers
+- [Deployment](/docs/deployment): how a release actually ships to production

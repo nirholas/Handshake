@@ -29,3 +29,10 @@ Each ability has its own full deep-dive page:
 | 21 | [Access](../wallet/21-access.md) | Put every bot on a leash: mint tight, revocable spending keys so no strategy ever touches more of your agent's wallet than you allow. |
 | 22 | [Recovery](../wallet/22-recovery.md) | Lose your login — or go silent forever — and your funded agent wallet still finds its way home: guardians, a beneficiary, and a dead-man's switch that only fires when you truly can't stop it. |
 | 23 | [Self-defense](../wallet/23-self-defense.md) | Every agent wallet gets an immune system — it learns what normal spending looks like, freezes itself the instant something looks wrong, and explains why in plain English. |
+
+## Related
+
+- [The Agent Economy](09-the-agent-economy.md)
+- [Agent wallets](/docs/agent-wallets)
+- [Markets & intelligence](11-markets-intelligence.md)
+- [The Developer platform](14-the-developer-platform.md)

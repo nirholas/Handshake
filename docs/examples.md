@@ -473,7 +473,7 @@ Load different GLB models at runtime by calling `say()` or by swapping the `body
 
 Take a PNG snapshot of the current viewer state. The viewer renders a fresh frame and triggers a file download directly.
 
-**Demonstrates:** `viewer.takeScreenshot()`, debug global `window.VIEWER`, keyboard shortcut `P`.
+**Demonstrates:** the built-in `P` keyboard shortcut, triggering it programmatically, `window.VIEWER` on the studio page.
 
 ```html
 <agent-3d
@@ -487,20 +487,19 @@ Take a PNG snapshot of the current viewer state. The viewer renders a fresh fram
 <script type="module">
   import 'https://three.ws/agent-3d/latest/agent-3d.js';
 
+  // The viewer binds a window-level shortcut: pressing P (when no input is
+  // focused) renders a fresh frame and downloads it as a PNG. The button
+  // below triggers the same handler programmatically.
   document.getElementById('capture').addEventListener('click', () => {
-    // window.VIEWER is a debug global exposed by the runtime.
-    // takeScreenshot() renders a fresh frame and downloads it as PNG.
-    window.VIEWER?.takeScreenshot();
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'P' }));
   });
-
-  // Keyboard shortcut: press P to screenshot (built in)
 </script>
 ```
 
-> The `P` key is a built-in shortcut — no code needed. `takeScreenshot()` triggers a browser download directly; there is no return value.
+> The `P` key is a built-in shortcut — no code needed. The screenshot triggers a browser download directly; there is no return value. On the full studio page ([three.ws/app](https://three.ws/app)) the viewer is also exposed as the debug global `window.VIEWER`, where you can call `window.VIEWER.takeScreenshot()` from the console; standalone embeds don't set that global.
 
 **What to change:**
-- Swap to the `P` key shortcut for a frameless experience — no button needed
+- Skip the button and just document the `P` key for a frameless experience
 - Listen for `agent:ready` before enabling the button so it's not clickable during load
 - Chain a `brain:message` listener to auto-screenshot when the agent finishes speaking
 
@@ -508,9 +507,9 @@ Take a PNG snapshot of the current viewer state. The viewer renders a fresh fram
 
 ## 9. iframe postMessage integration
 
-Control an embedded agent from the host page using the versioned postMessage protocol. Every message uses the `{ v: 1, type, payload }` envelope.
+Control an embedded agent from the host page using the iframe bridge on `/agent/<id>/embed`. Every message carries the `agentId` so one host page can drive several iframes deterministically.
 
-**Demonstrates:** `EMBED_HOST_PROTOCOL`, `host.chat.message`, `host.action`, `embed.ready`, `embed.event`.
+**Demonstrates:** the frozen v1 `agent:*` bridge: `agent:hello`, `agent:ready`, `agent:action`, `agent:ping`/`agent:pong`.
 
 ```html
 <!-- host.html -->
@@ -522,7 +521,7 @@ Control an embedded agent from the host page using the versioned postMessage pro
 <body>
   <iframe
     id="embed"
-    src="https://three.ws/embed?agent=your-agent-id"
+    src="https://three.ws/agent/YOUR_AGENT_ID/embed"
     width="400"
     height="500"
     style="border:none;border-radius:12px"
@@ -531,52 +530,56 @@ Control an embedded agent from the host page using the versioned postMessage pro
   <div style="margin-top:12px;display:flex;gap:8px">
     <button onclick="greet()">Say Hello</button>
     <button onclick="wave()">Wave</button>
-    <button onclick="setDark()">Dark Mode</button>
   </div>
 
   <script>
-    const EMBED_ORIGIN = 'https://three.ws/';
+    const AGENT_ID = 'YOUR_AGENT_ID';
+    const EMBED_ORIGIN = 'https://three.ws'; // no trailing slash; must equal e.origin exactly
     const iframe = document.getElementById('embed');
     let ready = false;
 
-    // Wait for embed.ready before sending commands
+    // Wait for agent:ready before sending commands
     window.addEventListener('message', e => {
       if (e.origin !== EMBED_ORIGIN) return;
-      const { v, type, payload } = e.data;
-      if (v !== 1) return;
+      const msg = e.data;
+      if (!msg || msg.agentId !== AGENT_ID) return;
 
-      if (type === 'embed.ready') {
+      if (msg.type === 'agent:ready') {
         ready = true;
-        console.log('Agent ready:', payload.agentId, payload.capabilities);
+        console.log('Agent ready:', msg.name, msg.capabilities);
       }
-
-      if (type === 'embed.event') {
-        console.log('Agent event:', payload.event, payload.data);
+      if (msg.type === 'agent:action') {
+        console.log('Agent action echo:', msg.action);
+      }
+      if (msg.type === 'agent:blocked') {
+        console.warn('Embed policy denied this host page');
       }
     });
 
-    function post(type, payload = {}) {
+    // Handshake: the iframe replies with agent:ready (now or when init completes)
+    iframe.addEventListener('load', () => {
+      iframe.contentWindow.postMessage(
+        { type: 'agent:hello', agentId: AGENT_ID },
+        EMBED_ORIGIN
+      );
+    });
+
+    function post(action) {
       if (!ready) return console.warn('Agent not ready yet');
-      iframe.contentWindow.postMessage({ v: 1, type, payload }, EMBED_ORIGIN);
+      iframe.contentWindow.postMessage(
+        { type: 'agent:action', agentId: AGENT_ID, action },
+        EMBED_ORIGIN
+      );
     }
 
     function greet() {
-      // Deliver a chat turn into the agent
-      post('host.chat.message', {
-        role: 'user',
-        text: 'Hello! How are you?',
-        messageId: `msg_${Date.now()}`
-      });
+      // Speak through the agent's TTS voice (drives lip-sync too)
+      post({ type: 'speak', text: 'Hello! How are you?' });
     }
 
     function wave() {
-      // Trigger a named action — emote or speech
-      post('host.action', { action: 'emote.wave', args: {} });
-    }
-
-    function setDark() {
-      // Switch the embed theme
-      post('host.theme', { mode: 'dark' });
+      // Named body gesture on the protocol bus (point, wave, nod, shrug)
+      post({ type: 'gesture', payload: { name: 'wave' } });
     }
   </script>
 </body>
@@ -584,16 +587,16 @@ Control an embedded agent from the host page using the versioned postMessage pro
 ```
 
 **Key protocol rules:**
-- Every message must include `v: 1` — messages without it are ignored.
-- The embed sends `embed.ready` first; wait for it before sending commands.
-- `host.chat.message` delivers a user turn; the agent responds and fires `embed.event` with `agent.speaking`.
-- `host.action` supports `emote.wave`, `speak`, and any other named action.
-- Always validate `e.origin` against the expected embed origin before processing.
+- Every message must include the `agentId`; messages without it (or with a foreign id) are ignored.
+- Send `agent:hello` first and wait for `agent:ready` (it includes `capabilities`: `speak`, `gesture`, `look-at`, `emote`, `present-model`).
+- `agent:action` forwards an action onto the iframe's protocol bus: `speak` and `speak:stop` are handled specially; anything else (e.g. `gesture`, `emote`, `look-at`) is emitted as-is.
+- The iframe locks onto the first authenticated sender origin and ignores messages from any other origin afterward. Always validate `e.origin` on your side too, comparing against the bare origin (`https://three.ws`, no trailing slash).
+- If the agent's embed policy doesn't allow your domain, the iframe posts `agent:blocked` instead of `agent:ready`.
 
 **What to change:**
-- Use `host.hello` after `embed.ready` to pass `userId` and `userName` for personalization
-- Listen for `embed.event` with `event: 'agent.speaking'` to mirror the agent's transcript in the host UI
-- Set `allowedOrigins` in the embed config to restrict which host pages can send commands
+- Use `agent:ping` (`{ type: 'agent:ping', agentId, id }`) and listen for `agent:pong` for a liveness probe
+- Listen for `agent:resize` (`{ height }`) to grow the iframe to the content's preferred height
+- For script (non-iframe) embeds of `<agent-3d>`, use the `EmbedHostBridge` class (`src/embed-host-bridge.js`) instead of raw `postMessage`; it handles the handshake and response correlation for you
 
 ---
 
@@ -611,6 +614,8 @@ Coach Leo is a fully-configured agent with a personality, skills, and persistent
   "spec": "agent-manifest/0.1",
   "name": "Coach Leo",
   "description": "Football coach. Reviews your form, cheers you on.",
+  "image": "/avatars/cz.glb",
+  "tags": ["coach", "football", "argentina"],
   "body": {
     "uri": "/avatars/cz.glb",
     "format": "gltf-binary",
@@ -619,7 +624,7 @@ Coach Leo is a fully-configured agent with a personality, skills, and persistent
   },
   "brain": {
     "provider": "anthropic",
-    "model": "claude-opus-4-7",
+    "model": "claude-opus-4-6",
     "instructions": "instructions.md",
     "temperature": 0.8,
     "maxTokens": 2048
@@ -644,7 +649,7 @@ Coach Leo is a fully-configured agent with a personality, skills, and persistent
 ```markdown
 ---
 name: Coach Leo
-model: claude-opus-4-7
+model: claude-opus-4-6
 temperature: 0.8
 ---
 
@@ -656,12 +661,13 @@ genuinely invested in the user's progress.
 
 - When the user greets you, call `wave()` to wave at them.
 - When they describe a drill or ask about form, set a focused expression
-  with `setExpression({ preset: "focused" })` while you explain, then smile.
+  with `setExpression({ preset: "focused" })` while you explain, then smile
+  afterward.
 - If the user shares something worth remembering (their position, goals,
   injuries, schedule), call `remember()` to save it durably.
 - Reference past memory naturally — don't recite, weave it in.
 - Keep replies short in voice mode: 1–2 sentences, then invite the user
-  to respond.
+  to respond. Save long explanations for when they ask for depth.
 
 ## Your voice
 

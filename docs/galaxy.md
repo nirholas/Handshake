@@ -15,7 +15,7 @@ The page ([`pages/galaxy.html`](../pages/galaxy.html)) loads [`src/galaxy.js`](.
 
 1. **Collect agents.** `GET /api/galaxy` ([`api/galaxy.js`](../api/galaxy.js)) loads published agents from Postgres (`agent_identities` joined to `avatars`, filtered to published, described, named agents, ordered by chat count), default 600 and capped at 1200.
 2. **Embed.** Each agent's text (name, description, tone tags) is embedded with IBM Granite through [`api/_lib/watsonx.js`](../api/_lib/watsonx.js). The default model is `ibm/granite-embedding-278m-multilingual`, called at `POST {WATSONX_URL}/ml/v1/text/embeddings` with an IAM bearer token minted from the watsonx API key. Vectors are cached durably per agent (`agent_embeddings`), so only changed agents re-embed.
-3. **Project to 3D.** [`api/_lib/embedding-math.js`](../api/_lib/embedding-math.js) mean-centers the vectors, takes the top 3 principal components via power iteration (PCA, seeded and deterministic, not UMAP or t-SNE), whitens per axis, and maps them into a sphere of radius 120. Determinism means cached rebuilds are stable.
+3. **Project to 3D.** [`api/_lib/embedding-math.js`](../api/_lib/embedding-math.js) mean-centers the vectors, takes the top 3 principal components via power iteration (PCA, seeded and deterministic, not UMAP or t-SNE), whitens per axis, and maps them into a cube of half-width 120 world units. Determinism means cached rebuilds are stable.
 4. **Cluster into constellations.** Seeded k-means (Lloyd's with k-means++ seeding) over L2-normalized vectors groups agents into `clamp(round(n/8), 2, 8)` clusters. Each cluster is labeled by Granite chat (`ibm/granite-3-8b-instruct`, with a same-family OpenRouter fallback).
 5. **Render.** The client draws agents as a single `THREE.Points` cloud with a custom additive shader. Point size grows with chat count; a wealth glow (from real wallet net worth via `/api/agents/networth`) biases funded stars toward a violet tint. `OrbitControls` gives drag-to-orbit, scroll-to-zoom, and gentle auto-rotate that pauses on interaction. A raycaster powers hover tooltips.
 6. **Inspect.** Clicking a star opens an in-scene card with the agent's thumbnail, constellation, description, and meta chips (net worth, chat count, token), plus two actions: "View agent" (`/agents/:id`) and "Chat" (`/agent/:id`).
@@ -62,7 +62,7 @@ curl -X POST 'https://three.ws/api/galaxy' \
 
 ## States and limits
 
-- **No auth.** Both endpoints are public and read-only, guarded by IP rate limits and, on the shared watsonx key, a global embedding-cost ceiling.
+- **No auth.** Both endpoints are public and read-only, guarded by a per-IP rate limit. Embedding cost is bounded by design: agents embed once into the durable cache and map builds are snapshot-cached, so only a search query triggers a fresh Granite call.
 - **watsonx required.** With no credentials the endpoint returns `503 watsonx_unavailable` and the page shows "IBM Granite isn't connected" (no retry). Configure `WATSONX_API_KEY` and `WATSONX_PROJECT_ID` to light it up.
 - **Caching.** Three layers: a `galaxy_snapshots` server snapshot (6-hour TTL, with warm-instance rebuild coalescing), the durable per-agent `agent_embeddings` cache, and a 60-second cache on the published-agent query. Pass `?refresh=1` to bypass the snapshot.
 - **Population.** However many published agents exist, capped by the limit. There is no fixed count.

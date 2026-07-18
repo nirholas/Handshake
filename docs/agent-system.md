@@ -36,7 +36,7 @@ Every event detail has the shape `{ type, payload, timestamp, agentId, sourceSki
 | `think` | `{ thought }` | Home timeline, avatar |
 | `gesture` | `{ name, duration }` | Avatar (one-shot clip) |
 | `emote` | `{ trigger, weight }` (0..1) | Avatar (injects stimulus into emotion blend) |
-| `look-at` | `{ target: 'model'\|'user'\|'camera' }` | SceneController |
+| `look-at` | `{ target: 'user'\|'camera'\|'center' }` | SceneController |
 | `perform-skill` | `{ skill, args, animationHint }` | Skills registry |
 | `skill-done` | `{ skill, result: { success, output, sentiment, data } }` | Avatar, identity |
 | `skill-error` | `{ skill, error }` | Avatar (concern + empathy), identity |
@@ -172,6 +172,18 @@ Writes a durable memory entry to the agent's memory store. Persists across sessi
 | `description` | string | Yes | One-line description |
 | `type` | `"user"` \| `"feedback"` \| `"project"` \| `"reference"` | Yes | Memory category |
 | `body` | string | Yes | The memory content |
+
+### `see_screen`
+
+Captures what is currently visible and describes it so the agent can react to what the user sees.
+
+| Arg | Type | Default | Description |
+|-----|------|---------|-------------|
+| `mode` | `"canvas"` \| `"text"` \| `"screen"` | `canvas` | `canvas` = the 3D viewport only, `text` = page text content, `screen` = full screen capture (requires user permission) |
+
+### Stage-scoped tools
+
+When the runtime is attached to an `<agent-stage>`, two extra tools are appended (see [multi-agent.md](./multi-agent.md)): `observe_agents` (list the other agents on stage with names and positions) and `say_to_agent` (send a message to a named stagemate).
 
 ---
 
@@ -439,19 +451,13 @@ window.VIEWER.agent_protocol.on('*', console.log);
 window.VIEWER.agent_protocol.history.slice(-10);
 ```
 
-**Verbose mode:**
-
-```js
-window.__3dagent_debug = true;
-```
-
 **Test avatar and emotions without an LLM:**
 
 Set `brain.provider` to `"none"` in your manifest. The avatar will still load, the emotion system will still react to `load-start`/`load-end` events, and built-in skills still execute — but no AI-generated responses are produced.
 
-**Headless runtime (brain only, no viewer):**
+**Configure the brain from the URL:**
 
-Append `#brain` to the page URL. The agent runtime and memory initialize but no 3D viewport is rendered. Useful for testing the LLM conversation loop without Three.js overhead.
+The app reads `#brain=<provider>&proxyURL=<url>` hash params, so you can point the runtime at a provider or a self-hosted proxy without editing the manifest (e.g. `/#brain=anthropic&proxyURL=https://myapp.com/api/llm`).
 
 **Debug globals exposed on `window.VIEWER`:**
 
@@ -460,8 +466,8 @@ Append `#brain` to the page URL. The agent runtime and memory initialize but no 
 | `agent_protocol` | The `AgentProtocol` singleton |
 | `agent_avatar` | The `AgentAvatar` instance |
 | `agent_skills` | The `AgentSkills` instance |
-| `agent` | The `AgentIdentity` instance |
-| `runtime` | The `Runtime` instance |
+| `agent_identity` / `agent` | The `AgentIdentity` instance |
+| `agent_runtime` | The `Runtime` instance |
 | `scene_ctrl` | The `SceneController` instance |
 
 These are debug-only globals. Do not rely on them in production code — use dependency injection via the module's constructor arguments instead.
@@ -507,6 +513,10 @@ Quick reference for where each piece of the system lives:
 
 ## See Also
 
+- [Architecture overview](/docs/architecture): how the agent layer fits the other three layers
+- [Skills system](/docs/skills): writing and installing skill bundles
+- [Memory system](/docs/memory): storage modes and the file format
+- [Multi-agent scenes](/docs/multi-agent): `<agent-stage>` and stage tools
 - [AGENT_MANIFEST.md](../specs/AGENT_MANIFEST.md) — full manifest schema and resolution flow
 - [SKILL_SPEC.md](../specs/SKILL_SPEC.md) — skill bundle format
 - [MEMORY_SPEC.md](../specs/MEMORY_SPEC.md) — file-based memory format

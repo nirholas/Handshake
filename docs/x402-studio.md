@@ -34,7 +34,7 @@ The page (`public/x402/studio.js`) is a dependency-free vanilla-JS single-page a
 <button
   data-x402-endpoint="https://your-api.example.com/paid"
   data-x402-method="GET"
-  data-x402-merchant="<merchant-id>"
+  data-x402-merchant="Your merchant name"
   data-x402-action="Summarize article"
   style="...">Pay · Summarize article</button>
 ```

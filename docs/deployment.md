@@ -343,17 +343,18 @@ The Vite config handles multi-page routing, asset hashing, and the PWA manifest.
 ```
 /agent/:id/edit      → /agent-edit.html
 /agent/:id/embed     → /agent-embed.html   (frame-ancestors: * header)
-/agent/:id           → /agent-home.html
-/dashboard           → /dashboard/index.html
-/w/:id               → widget page (server-side)
-/a/:chainId/:id      → on-chain agent page
+/agent/:id           → 301 → /agents/:id
+/agents/:id          → /agent-detail.html  (bot user-agents get the OG render)
+/dashboard           → /dashboard-next/index.html
+/w/:id               → /api/widgets/page?id=:id (server-rendered widget page)
+/a/:chainId/:id      → on-chain agent page (/api/a-page)
 ```
 
 The embed routes explicitly set `frame-ancestors *` so the embed iframe can be hosted on any domain. Other routes omit this header (defaulting to same-origin framing only).
 
 ### Background cron jobs
 
-The `crons` array in `vercel.json` declares ~80 scheduled jobs (economy tick, on-chain crawl, delegation indexing, DCA, subscriptions, coin-launch lifecycle, treasury top-ups, and more). In production these run as **~76 Google Cloud Scheduler jobs** — one per entry — each firing `GET /api/cron/<name>` with an `Authorization: Bearer $CRON_SECRET` header. A representative slice:
+The `crons` array in `vercel.json` declares ~90 scheduled jobs (economy tick, on-chain crawl, delegation indexing, DCA, subscriptions, coin-launch lifecycle, treasury top-ups, and more). In production these run as **Google Cloud Scheduler jobs** — one per entry — each firing `GET /api/cron/<name>` with an `Authorization: Bearer $CRON_SECRET` header. A representative slice:
 
 | Cron | Schedule | Purpose |
 |---|---|---|
@@ -536,7 +537,7 @@ After deploying, run through these checks to verify the instance is healthy:
 | Viewer | Load the app and drag-drop a GLB file |
 | Wallet sign-in | Connect MetaMask — SIWE challenge + verify |
 | Avatar creation | Navigate to `/create` — avatar builder iframe loads |
-| Agent page | Visit `/agent/:id` — 3D viewer with chat overlay |
+| Agent page | Visit `/agents/:id` — 3D viewer with chat overlay (`/agent/:id` 301-redirects here) |
 | Embed | Check `/agent/:id/embed` loads without auth, can be iframed |
 | Dashboard | Navigate to `/dashboard` — shows your agents |
 | API health | `GET /api/agents` returns JSON (may be empty array) |
@@ -574,3 +575,12 @@ The container does not schedule crons itself — an external scheduler must hit 
 ### Redis connection errors
 
 Upstash REST API uses HTTPS — no ports to open. If you see connection errors, verify `UPSTASH_REDIS_REST_URL` starts with `https://` and the token is correct. Rate limiting falls back to in-memory if Redis is unreachable (it will not crash the API).
+
+---
+
+## Related
+
+- [Quick Start](/docs/quick-start): get the component running before you self-host the stack
+- [Troubleshooting & FAQ](/docs/troubleshooting): symptom-first fixes, including the self-hosting section
+- [Economy heartbeat](/docs/economy-heartbeat): driving the `/api/cron/*` endpoints outside Cloud Scheduler
+- [Authentication](/docs/authentication): how sessions, SIWE, and API keys work on your instance

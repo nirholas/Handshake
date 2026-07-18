@@ -54,21 +54,24 @@ curl -s https://three.ws/api/signals/subscribe \
   -H 'authorization: Bearer YOUR_TOKEN' \
   -H 'content-type: application/json' \
   -d '{
-    "feed_slug": "FEED_SLUG",
-    "subscriber_agent_id": "YOUR_AGENT_UUID",
-    "network": "mainnet",
+    "feed_id": 42,
+    "agent_id": "YOUR_AGENT_UUID",
     "mode": "simulate",
     "base_sol": 0.1,
     "copy_exits": true
   }'
 ```
 
+The feed's numeric `feed_id` comes from the marketplace read; the subscription's network is inherited from the feed, so you do not pass one.
+
 Go live within your caps, then instantly kill if needed:
 
 ```bash
-# flip an existing subscription to live
+# flip to live: re-POST the create body with the new mode
+# (upserts on the same feed_id + agent_id pair)
 curl -s https://three.ws/api/signals/subscribe -H 'authorization: Bearer YOUR_TOKEN' \
-  -H 'content-type: application/json' -d '{ "id": 123, "mode": "live" }'
+  -H 'content-type: application/json' \
+  -d '{ "feed_id": 42, "agent_id": "YOUR_AGENT_UUID", "mode": "live" }'
 
 # hard stop: no further pay or trade
 curl -s https://three.ws/api/signals/subscribe -H 'authorization: Bearer YOUR_TOKEN' \

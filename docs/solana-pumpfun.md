@@ -1,5 +1,7 @@
 # Pump.fun integration for Solana agents
 
+Pump.fun is a Solana token launchpad, and three.ws agents can watch it live: an agent avatar reacts (speaks, gestures, emotes) as claims and token graduations happen, and the same activity feeds each agent's trust score. If you just want to see it, add the `pumpfun-feed` widget to an agent in Studio; this page documents the plumbing behind it for developers.
+
 This integrates the upstream [`pumpfun-claims-bot`](https://github.com/nirholas/pumpfun-claims-bot) MCP server into the three.ws platform so a Solana agent can:
 
 - Observe live pump.fun activity (GitHub social-fee claims, token graduations)
@@ -84,12 +86,15 @@ All registered through `registerPumpFunWatchSkills` in [src/agent-skills.js](../
 
 ### Reaction map (watch-start)
 
-| Event | Empathy Layer trigger | Speech sentiment |
-|---|---|---|
-| `first_time_claim` | `celebration` 0.9 | +0.7 |
-| `fake_claim` | `concern` 0.7 | -0.5 |
-| `tier ∈ {influencer, mega}` | `curiosity` 0.5 | +0.2 |
-| `graduation` | gesture: `wave` (1.5s) | +0.6 |
+Reactions are computed by the shared dispatcher in [src/widgets/pumpfun-reactions.js](../src/widgets/pumpfun-reactions.js): each event is first distilled into a signal envelope (tier, market-cap multiple, dev track record, GitHub legitimacy, whale status), then mapped to a prioritized variant with an emote trigger, a gesture clip, and a spoken line. Representative variants:
+
+| Variant | Trigger | Empathy Layer emote | Gesture | Speech sentiment |
+|---|---|---|---|---|
+| `graduation_standard` | any graduation | `celebration` 0.9 (up to 1.0 for moonshots) | celebrate clip | +0.7 to +0.95 |
+| `claim_first_verified` | first claim, verified GitHub | `celebration` 1.0 | `thriller` (6s) | +0.85 |
+| `claim_first_raw` | first claim, no GitHub link | `celebration` 0.85 | `celebrate` (4.5s) | +0.7 |
+| `claim_fake` | fake claim detected | `concern` 0.85 | `shake` (1.8s) | -0.6 |
+| `claim_tier_mega` / `_influencer` | repeat claim by tier | `celebration` 0.7 / `curiosity` 0.55 | short taunt/reaction | +0.5 / +0.3 |
 
 These are continuous-blend stimuli, not discrete states — they decay according to the per-second rates in [agent-system.md](agent-system.md#5-the-avatar-emotion-system-empathy-layer).
 
@@ -152,7 +157,7 @@ Studio config schema (validated in `widget-types.js`):
 ## What's intentionally not included
 
 - **Long-lived SSE** — the feed handler runs a 90s bounded loop and lets the browser auto-reconnect; the Cloud Run request handlers aren't meant to hold a connection open indefinitely. For higher throughput, deploy the bot itself as a streaming service.
-- **On-chain signal attestations** — signals are off-chain only. Promoting them to SPL Memo attestations signed by a platform key is a future step (see [docs/solana.md](solana.md) "What's intentionally not on Solana yet").
+- **On-chain signal attestations**: pump.fun signals are off-chain rows only. The platform's SPL Memo attestation layer exists (see [Solana reputation](solana-reputation.md)), but these crawled signals are not promoted into it; that remains a future step.
 - **Agent-as-signer** — the watch skills are read-only; they never sign transactions. The existing `pumpfun-create / -buy / -sell` skills cover signing flows.
 - **Anchor program for reputation** — still EVM-only on the on-chain path.
 
@@ -165,3 +170,11 @@ npx vitest run tests/pumpfun-mcp.test.js tests/pumpfun-signals.test.js
 ```
 
 The MCP client and cron crawler are unit-tested with mocked `fetch` and `sql`. End-to-end requires a live `PUMPFUN_BOT_URL` and is exercised via the Solana smoke test path.
+
+---
+
+## Related
+
+- [Solana agents](/docs/solana): the identity NFTs these signals attach to
+- [Agent Reputation on Solana](/docs/solana-reputation): how signals roll into the trust score
+- [Mint mark ("3ws")](/docs/mint-mark): branding for coins launched through three.ws

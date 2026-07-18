@@ -18,10 +18,10 @@ You need a GLB file — the standard format for 3D models on the web. Here are t
 
 ### Option A: Use the sample avatar (zero effort, recommended for beginners)
 
-There's a hosted sample avatar ready to use. Just copy the URL below and you're done for this step:
+There's a hosted sample avatar ready to use (the platform's own default body). Just copy the URL below and you're done for this step:
 
 ```
-https://cdn.three.ws/models/sample-avatar.glb
+https://three.ws/avatars/default.glb
 ```
 
 Come back and swap this for your own character later. That's what Step 9 is for.
@@ -32,14 +32,8 @@ Come back and swap this for your own character later. That's what Step 9 is for.
 
 1. Go to [mixamo.com](https://www.mixamo.com) and sign in with a free Adobe account.
 2. Click **Characters**, then pick any character you like.
-3. Click **Download** and choose **FBX for Unity** from the format dropdown.
-4. Convert the FBX to GLB using [gltf-transform](https://gltf-transform.dev):
-
-   ```bash
-   npx gltf-transform@latest fbx2glb your-character.fbx your-character.glb
-   ```
-
-   This requires Node.js. If you don't have Node.js installed, grab it from [nodejs.org](https://nodejs.org).
+3. Click **Download** and choose **FBX Binary** from the format dropdown. (Mixamo exports FBX, not GLB.)
+4. Convert the FBX to GLB with the free [Blender](https://www.blender.org): **File > Import > FBX**, then **File > Export > glTF 2.0 (.glb)**. Keep the default export settings; the rig and animations come through.
 
 ### Option C: Generate one from a selfie (~5 minutes)
 
@@ -84,7 +78,7 @@ Create a new folder somewhere on your computer. Inside it, create a file called 
   <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
 
   <agent-3d
-    body="https://cdn.three.ws/models/sample-avatar.glb"
+    body="https://three.ws/avatars/default.glb"
     width="400px"
     height="600px"
   ></agent-3d>
@@ -129,7 +123,7 @@ Update the `<agent-3d>` tag to add the `brain` and `instructions` attributes:
 
 ```html
 <agent-3d
-  body="https://cdn.three.ws/models/sample-avatar.glb"
+  body="https://three.ws/avatars/default.glb"
   brain="claude-sonnet-4-6"
   name="Aria"
   instructions="You are Aria, a friendly and enthusiastic AI guide. You love helping people explore the 3D world. Be concise, warm, and occasionally playful. When someone greets you, wave at them. Keep replies to 2–3 sentences unless asked for more."
@@ -140,7 +134,7 @@ Update the `<agent-3d>` tag to add the `brain` and `instructions` attributes:
 
 **What changed:**
 
-- `brain="claude-sonnet-4-6"` — enables the AI. The value is the Claude model ID to use. `claude-sonnet-4-6` is the recommended default: fast, capable, and cost-effective. You can also use `claude-opus-4-7` for the most capable responses, or `claude-haiku-4-5-20251001` for the fastest.
+- `brain="claude-sonnet-4-6"` — enables the AI. The value is the model ID to use. `claude-sonnet-4-6` is the recommended default: fast, capable, and cost-effective. You can also use `claude-opus-4-7` for the most capable responses, or `claude-haiku-4-5` for the fastest. There's also `brain="free"`, which routes to the platform's free hosted model so you can try everything with no key at all.
 - `name="Aria"` — the agent's name. This appears in the nameplate overlay and is available to the brain as context.
 - `instructions="..."` — the system prompt. This is where you define personality, tone, behavior rules, and anything the agent should know about its context.
 
@@ -181,9 +175,7 @@ Create `agent.json` in the same folder as `index.html`:
   "memory": {
     "mode": "local"
   },
-  "skills": [
-    { "uri": "https://cdn.three.ws/skills/wave/" }
-  ],
+  "skills": [],
   "version": "0.1.0"
 }
 ```
@@ -198,9 +190,9 @@ Then update `index.html` to load from the manifest instead of using inline attri
 ></agent-3d>
 ```
 
-The manifest approach is cleaner for anything beyond a one-liner: you can version it in git, keep the instructions in one place, and load it by URL from anywhere.
+The manifest approach is cleaner for anything beyond a one-liner: you can version it in git, keep the instructions in one place, and load it by URL from anywhere. The `skills` array is empty for now; [Build a custom skill](/docs/tutorials/custom-skill) shows how to fill it with your own tool bundle.
 
-> **Note:** If you used the sample avatar URL, replace `./your-character.glb` in the manifest with `https://cdn.three.ws/models/sample-avatar.glb`.
+> **Note:** If you used the sample avatar URL, replace `./your-character.glb` in the manifest with `https://three.ws/avatars/default.glb`.
 
 ---
 
@@ -282,8 +274,8 @@ Then add your own input below the element:
 | `agent:ready` | Agent fully booted | `{ agent, manifest }` |
 | `brain:message` | Each turn of conversation | `{ role, content }` |
 | `brain:thinking` | LLM call started | — |
-| `skill:tool-called` | Agent used a tool/skill | `{ name, args }` |
-| `voice:transcript` | STT produced a transcript | `{ text }` |
+| `skill:tool-called` | Agent used a tool/skill | `{ tool, args, result }` |
+| `voice:transcript` | STT produced a transcript | `{ text, final }` |
 
 ---
 
@@ -397,7 +389,7 @@ Once the page is live, swap in your own GLB:
 
 1. Go to [https://three.ws/app](https://three.ws/app)
 2. Drag your GLB into the viewer to confirm it loads correctly.
-3. Sign up for a free account, then click **Save to Account** to get a hosted URL.
+3. Sign in (free), then save the avatar to your account to get a hosted URL.
 4. Copy that URL.
 5. Replace the `body=` attribute in your HTML (or `body.uri` in your manifest) with the new URL.
 
@@ -486,15 +478,15 @@ And the `agent.json` manifest alongside it.
 Now that you have a working agent, here's what to explore next:
 
 **Make it smarter:**
-- [Skills documentation](../skills.md) — add tools like web search, weather, or a product catalog. Skills are JSON packages that give the agent new capabilities without changing the system prompt.
-- [Memory system](../memory.md) — the agent can remember things across conversations using local storage or IPFS.
+- [Skills documentation](/docs/skills) — add tools like web search, weather, or a product catalog. Skills are JSON packages that give the agent new capabilities without changing the system prompt.
+- [Memory system](/docs/memory) — the agent can remember things across conversations using local storage or IPFS.
 
 **Make it permanent:**
-- [ERC-8004 registration](../erc8004.md) — register your agent on-chain for a permanent, decentralized identity. Once registered, anyone can load your agent by its on-chain ID: `<agent-3d agent-id="42" chain-id="8453">`.
+- [ERC-8004 registration](/docs/erc8004) — register your agent on-chain for a permanent, decentralized identity. Once registered, anyone can load your agent by its on-chain ID: `<agent-3d agent-id="42" chain-id="8453">`.
 
 **Embed it anywhere:**
-- [Embedding guide](../embedding.md) — embed Aria as a floating bubble in the corner of any existing website, or as an iframe widget with a single line of code.
-- [Web component reference](../web-component.md) — the full attribute, method, and event reference for `<agent-3d>`.
+- [Embedding guide](/docs/embedding) — embed Aria as a floating bubble in the corner of any existing website, or as an iframe widget with a single line of code.
+- [Web component reference](/docs/web-component) — the full attribute, method, and event reference for `<agent-3d>`.
 
 ---
 

@@ -1,5 +1,7 @@
 # Authentication
 
+Authentication is how three.ws knows who you are: it protects your agents, your avatars, and your dashboard, and it is required for anything that writes data. Sign in at [three.ws/login](https://three.ws/login) with a crypto wallet or a plain email/social account; developers can also mint API keys for scripts and servers.
+
 three.ws supports three authentication methods. Which one you need depends on how you're building:
 
 | Method | Best for |
@@ -160,10 +162,9 @@ Not every user has a crypto wallet. If your audience includes non-web3 users, Pr
 2. Privy handles the OAuth UI — email magic link, Google OAuth, etc.
 3. On success, Privy issues an identity token (a JWT signed with Privy's ES256 key).
 4. Your frontend posts that token to `POST /api/auth/privy/verify`.
-5. The backend fetches Privy's JWKS, verifies the token signature and audience, extracts the linked wallet address, and finds-or-creates the user record.
-6. A session cookie is issued — from this point the user is authenticated identically to a SIWE user.
-
-> **Requirement:** The Privy account must have at least one linked wallet. If a user logs in with only an email and Privy hasn't created an embedded wallet yet, the verify call returns `400 no_wallet_linked`. Ensure wallet creation is enabled in your Privy dashboard.
+5. The backend fetches Privy's JWKS, verifies the token signature and audience, and finds-or-creates the user record (keyed on the Privy DID).
+6. Linked wallets are synced best-effort from Privy's server API into the user's wallet list; a login with no wallet still succeeds.
+7. A session cookie is issued; from this point the user is authenticated identically to a SIWE user.
 
 ### Configuration
 
@@ -180,18 +181,19 @@ Get both values from [dashboard.privy.io](https://dashboard.privy.io). The serve
 ### Verify endpoint
 
 ```js
-// After Privy client gives you an idToken. Send tosAccepted: true when your
-// UI displayed the Terms of Service agreement next to the sign-in control;
+// After the Privy client gives you an auth token. Send tosAccepted: true when
+// your UI displayed the Terms of Service agreement next to the sign-in control;
 // the server records the acceptance and the Terms version on the user record.
 const res = await fetch('/api/auth/privy/verify', {
   method: 'POST',
   credentials: 'include',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ idToken, tosAccepted: true }),
+  body: JSON.stringify({ token, tosAccepted: true }),
 });
-const { user, wallet } = await res.json();
-// user: { id, email, display_name, plan, avatar_url }
-// wallet: { address: '0x...', chain_id: null }
+const { user } = await res.json();
+// user: { id, email, display_name, plan, avatar_url, created_at }
+// Any wallets Privy has linked are synced onto the account automatically;
+// list them afterwards with GET /api/auth/wallets.
 ```
 
 ### Linking additional wallets
@@ -311,6 +313,10 @@ const res = await fetch('/api/agents', {
 | `avatars:read` | Read avatar data |
 | `avatars:write` | Create and update avatars |
 | `avatars:delete` | Delete avatars |
+| `agents:read` | Read agent data |
+| `agents:write` | Create and update agents |
+| `memory:read` | Read agent memory |
+| `memory:write` | Write agent memory |
 | `profile` | Read/write profile data; required to manage API keys themselves |
 
 Scopes are space-separated in the `scope` field. Default when unspecified: `avatars:read avatars:write`.
@@ -355,31 +361,33 @@ A user can link multiple Ethereum addresses to one account. All linked addresses
 
 ### Linking a wallet
 
-Linking requires the user to sign a challenge with the wallet they want to add. First get a link nonce, then sign and submit:
+Linking requires the user to sign a SIWE (EIP-4361) challenge with the wallet they want to add. `POST /api/auth/wallets/nonce` returns the exact message to sign; sign it and submit:
 
 ```js
-// 1. Get a link nonce
-const { nonce } = await fetch('/api/auth/wallets/nonce', {
-  credentials: 'include'
+// 1. Get the link message (must be signed in already; the nonce is bound to
+//    your session). POST with the wallet address and its chain id.
+const { nonce, message } = await fetch('/api/auth/wallets/nonce', {
+  method: 'POST',
+  credentials: 'include',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ address: walletAddress, chainId: 8453 }),
 }).then(r => r.json());
+// message is a full EIP-4361 text: "three.ws wants you to sign in… Link this
+// wallet to three.ws account <email> … Nonce: … Expiration Time: …"
 
-// 2. Sign the nonce with the new wallet
-const message = `Link wallet to three.ws\nNonce: ${nonce}`;
+// 2. Sign the message with the new wallet
 const signature = await signer.signMessage(message);
 
-// 3. Submit
+// 3. Submit the signed message
 await fetch('/api/auth/wallets', {
   method: 'POST',
   credentials: 'include',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    address: walletAddress,
-    message,
-    signature,
-    nonce,
-  }),
+  body: JSON.stringify({ message, signature }),
 });
 ```
+
+(`GET /api/auth/wallets/nonce` also works: it returns `{ nonce, domain, uri }` for clients that build the SIWE message themselves. Solana wallets use the parallel `nonce-solana` + `link-solana` actions with a Sign-In-With-Solana message.)
 
 ### Listing linked wallets
 
@@ -387,19 +395,23 @@ await fetch('/api/auth/wallets', {
 const { wallets } = await fetch('/api/auth/wallets', {
   credentials: 'include'
 }).then(r => r.json());
-// wallets: [{ address, chain_id, created_at, is_primary }, ...]
+// wallets: [{ address, chain_id, chain_type, created_at, is_primary }, ...]
 ```
 
 ### Removing a wallet
 
+Unlinking is a state-changing call, so it needs a CSRF token (one-time, from `GET /api/csrf-token`) in the `X-CSRF-Token` header:
+
 ```js
+const { token } = await fetch('/api/csrf-token', { credentials: 'include' }).then(r => r.json());
 await fetch(`/api/auth/wallets/${address}`, {
   method: 'DELETE',
   credentials: 'include',
+  headers: { 'X-CSRF-Token': token },
 });
 ```
 
-You cannot remove the primary wallet if it is the only one linked.
+You cannot remove a wallet if it is the only one linked.
 
 ---
 
@@ -445,3 +457,12 @@ VITE_WALLETCONNECT_PROJECT_ID=
 > **JWT_SECRET is critical.** It signs all session tokens and is used (via HKDF) to derive the AES-256-GCM key that encrypts agent wallet private keys. Generate it with `openssl rand -base64 64`. Never commit it. Rotate it by appending to the key set — never remove the old key while active sessions exist.
 
 Password hashing cost is configurable via `PASSWORD_ROUNDS` (default: `11` bcrypt rounds).
+
+---
+
+## Related
+
+- [API reference](/docs/api-reference): every endpoint, including the auth routes above
+- [ERC-8004 identity](/docs/erc8004): what a connected wallet unlocks on-chain
+- [Embedding guide](/docs/embedding): embeds work unauthenticated; auth is only for editing and publishing
+- [Architecture overview](/docs/architecture): where sessions and the API server fit

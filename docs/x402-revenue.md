@@ -128,13 +128,15 @@ LIMIT 10;
 ## The revenue report — `/api/x402/analytics`
 
 You don't have to query SQL. The `analytics` endpoint serves the same numbers,
-pre-aggregated. It is itself a [paid endpoint](x402-endpoints.md) ($0.005 default)
-— pass `report=revenue` and a `period`:
+pre-aggregated. It is itself a [paid endpoint](x402-endpoints.md) ($0.005 default).
+It is a `POST` endpoint: pass `report` and `period` in the JSON body:
 
 ```bash
 # After settling the 402 challenge (see the x402 buyer client doc), retry with:
-curl -s "https://three.ws/api/x402/analytics?report=revenue&period=24h" \
-  -H "X-PAYMENT: <settled-payment-header>"
+curl -s -X POST https://three.ws/api/x402/analytics \
+  -H 'content-type: application/json' \
+  -H "X-PAYMENT: <settled-payment-header>" \
+  -d '{"report":"revenue","period":"24h"}'
 ```
 
 `report` accepts: `revenue`, `x402_volume`, `clubs`, `marketplace`,
@@ -142,7 +144,8 @@ curl -s "https://three.ws/api/x402/analytics?report=revenue&period=24h" \
 `6h`, `24h`, `7d`, `30d`, `all`.
 
 The `revenue` report shape
-([`revenue-analytics.js`](../api/_lib/x402/revenue-analytics.js)):
+([`revenue-analytics.js`](../api/_lib/x402/revenue-analytics.js)); money fields
+are serialized as fixed 6-decimal strings:
 
 ```json
 {
@@ -151,26 +154,26 @@ The `revenue` report shape
 	"since": "2026-06-29T00:00:00.000Z",
 	"generated_at": "2026-06-30T00:00:00.000Z",
 	"totals": {
-		"gross_usd": 12.34,
-		"net_platform_usd": 11.9,
-		"settlement_fee_usd": 0.44,
+		"gross_usd": "12.340000",
+		"net_platform_usd": "11.900000",
+		"settlement_fee_usd": "0.440000",
 		"total_payments": 247,
 		"failed_payments": 3,
 		"unique_payers": 18,
-		"avg_payment_usd": 0.05
+		"avg_payment_usd": "0.050000"
 	},
 	"fee_splits": {
-		"gross_usd": 12.34,
-		"settlement_fee_usd": 0.44,
-		"net_platform_usd": 11.9,
+		"gross_usd": "12.340000",
+		"settlement_fee_usd": "0.440000",
+		"net_platform_usd": "11.900000",
 		"effective_fee_rate": 0.0357,
-		"fee_per_settlement_usd": 0.0018,
+		"fee_per_settlement_usd": "0.001800",
 		"fee_source": "..."
 	},
 	"by_endpoint": [
-		{ "endpoint": "/api/x402/token-intel", "count": 120, "gross_usd": 1.2, "share": 0.097 }
+		{ "endpoint": "/api/x402/token-intel", "count": 120, "gross_usd": "1.200000", "share": 0.097 }
 	],
-	"top_endpoint": { "endpoint": "/api/x402/token-intel", "gross_usd": 1.2 }
+	"top_endpoint": { "endpoint": "/api/x402/token-intel", "count": 120, "gross_usd": "1.200000" }
 }
 ```
 

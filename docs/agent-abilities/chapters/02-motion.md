@@ -1,6 +1,6 @@
 # Chapter 2 · Motion — embodiment and animation
 
-A body is nothing without movement. Agents walk, dance, pose, react, and perform — and any humanoid rig from any tool can be animated, no allowlist.
+A body is nothing without movement. Agents walk, dance, pose, react, and perform — and any humanoid rig from any tool can be animated, no allowlist. Browse the clip catalog at three.ws/animations, and pose or animate any avatar yourself at three.ws/pose.
 
 On three.ws, an agent isn't a chat window — it's a body. Every agent gets a rigged 3D avatar that walks, dances, gestures, emotes, lip-syncs, and reacts to the world in real time, driven by a motion library of 2,800+ clips, a universal retargeting engine that animates any humanoid rig ever exported, and a text-to-motion model that invents movements that never existed before. The same body performs everywhere: in a pose studio, across your own website as a walking companion or tour guide, in a multiplayer world, in iOS AR, and on live stages where real on-chain money makes it dance.
 
@@ -187,3 +187,10 @@ Inside the avatar editor, a Walk tab lets you take the exact avatar you're sculp
 **How it works:** The editor drives the same shared scene graph it sculpts (no reload), retargeting idle and walk clips with ground-speed crossfades and foot-plant-synced timeScale at a 30 fps cap; profiles embed the chrome-less walk runtime in an iframe with designed loading/error/empty states.
 
 **Why it matters:** You see your character in motion the whole time you're creating it — and so does everyone who visits your profile.
+
+## Related
+
+- [Animations gallery](/docs/animations)
+- [Animation Studio](/docs/animation-studio)
+- [Mocap Studio](/docs/mocap-studio)
+- [AR](/docs/ar)

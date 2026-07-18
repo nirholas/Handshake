@@ -6,7 +6,7 @@ Once your agent is live, you have three ways to put it in front of people. None 
 
 ## Option 1 — Share the link
 
-Every agent gets a public URL: `https://three.ws/agent/<id>`
+Every agent gets a public URL: `https://three.ws/agents/<id>`
 
 Paste it anywhere:
 
@@ -64,14 +64,14 @@ The element renders inline (no iframe boundary), supports keyboard navigation, a
 By default, your agent can be embedded anywhere. If you want to restrict it to specific domains:
 
 1. Open your agent's edit page
-2. Under **Embed settings**, add the domains that are allowed (e.g. `yoursite.com`)
+2. Under the **Embed policy** settings, add the domains that are allowed (e.g. `yoursite.com`)
 3. Save — any embed on a non-listed domain will render an error placeholder instead
 
 ---
 
 ## Sharing on social platforms
 
-Paste your agent's URL (`https://three.ws/agent/<id>`) into:
+Paste your agent's URL (`https://three.ws/agents/<id>`) into:
 
 - **X / Twitter** — renders a card with the avatar poster image, name, and description
 - **Discord** — embeds as an oEmbed rich preview

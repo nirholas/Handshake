@@ -13,21 +13,21 @@ This tutorial walks you through every path for adding a three.ws agent to your s
 
 ## Before you start
 
-You need an agent ID. Go to [three.ws/studio](https://three.ws/studio), select or create an agent, and note its ID — it looks like `a_abc123` or is a number paired with a chain ID like `42` on Base.
+For the code paths below you need an agent ID. Find yours on [three.ws/my-agents](https://three.ws/my-agents) (or browse the [agents directory](https://three.ws/agents)) — it looks like `a_abc123`, or is a number paired with a chain ID like `42` on Base.
 
 ---
 
 ## Path 1: Get your embed code (no-code, fastest)
 
-If you don't want to write code, the Studio generates the snippet for you.
+If you don't want to write code, the Widget Studio generates the snippet for you.
 
 1. Go to [three.ws/studio](https://three.ws/studio)
-2. Select an agent (or create one — the Talking Agent widget is the most popular starting point)
-3. Click **Get Embed Code** in the top-right corner
-4. Choose your widget type and placement
-5. Copy the snippet
+2. Pick an avatar — the built-in demo, one of your own uploads, or a public avatar by another creator
+3. Choose a widget type and configure placement, colors, and behavior
+4. Click **Generate embed**
+5. Copy the snippet from the "Your widget is live" modal (it shows a live preview first)
 
-The Studio offers two snippet formats. Here's what each one looks like and when to use it:
+Beyond the Studio's generated widgets, there are two hand-written snippet formats that work with any agent ID. Here's what each one looks like and when to use it:
 
 **iframe snippet** — works everywhere, more secure sandboxing, no extra script tag needed:
 ```html
@@ -493,3 +493,12 @@ Squarespace's developer preview and published output can differ. Try adding the 
 
 **Agent not responding to voice input**
 `SpeechRecognition` requires a secure origin (`https://`) and explicit browser permission. On HTTP localhost, voice input is available. On a deployed site, make sure you're serving over HTTPS. The browser will prompt for microphone permission on first use — if the user dismissed that prompt, they'll need to re-enable it in browser settings.
+
+---
+
+## Related
+
+- [Embedding guide](/docs/embedding) — iframe permissions, CSP notes, and every embed surface in one place
+- [Web component reference](/docs/web-component) — the full `<agent-3d>` attribute, method, and event reference
+- [Embed in 30 seconds](/docs/tutorials/embed-in-30-seconds) — the shortest possible version of this tutorial
+- [Build your first agent](/docs/tutorials/first-agent) — create the agent you're about to embed

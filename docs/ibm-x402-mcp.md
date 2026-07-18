@@ -4,6 +4,10 @@
 > client can call IBM Granite foundation models and pay **per call in USDC** — no
 > IBM Cloud account, no subscription, no API-key signup.
 
+In plain terms: this is a menu of IBM AI capabilities (chat, code, embeddings,
+document analysis, forecasting) that any agent or MCP client can use by paying a
+few cents per call from a crypto wallet it already controls.
+
 Every AI agent needs three things: a **body** (its 3D avatar), a **brain**
 (an LLM with memory), and a **wallet** (to pay for the jobs it runs). This is the
 wallet half of the brain — three.ws is an **IBM Business Partner**, and this suite
@@ -40,10 +44,13 @@ agent can consume the moment it has USDC.
 
 ---
 
-## The five tools
+## The five paid tools (plus one free)
 
 Each tool is independently priced. Prices are the source of truth in
-[`src/tools/`](../packages/ibm-x402-mcp/src/tools/) and mirrored here.
+[`packages/ibm-x402-mcp/src/tools/`](../packages/ibm-x402-mcp/src/tools/) and
+mirrored here. A sixth tool, `ibm_granite_getting_started`, is **free** (no
+payment, no wallet): it returns an overview of the suite, per-tool prices, and
+how the x402 payment flow works. It is the right first call for a new client.
 
 | Tool | What it does | Model | Price |
 |---|---|---|---|
@@ -60,8 +67,8 @@ Korean, Italian, Dutch, Chinese, Arabic, and Czech.
 
 ## Two transports, one tool suite
 
-The exact same five tools — identical schemas, prices, and output shapes — ship
-over two transports:
+The exact same tools (the free getting-started tool plus the five paid tools,
+identical schemas, prices, and output shapes) ship over two transports:
 
 | Transport | Endpoint | For | Payment |
 |---|---|---|---|
@@ -197,6 +204,12 @@ USDC or reach watsonx is useless, so it never silently degrades.
 ---
 
 ## Tool reference
+
+### `ibm_granite_getting_started` (free)
+
+No payment required. Returns the suite overview, per-tool pricing, setup
+requirements, and a walkthrough of the x402 payment flow. Optional `section`
+narrows the answer (for example `pricing`).
 
 ### `ibm_granite_chat` — $0.02
 

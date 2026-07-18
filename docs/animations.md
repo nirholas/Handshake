@@ -1,5 +1,7 @@
 # Animations
 
+Animations are the motion clips (idle, wave, dance, and about 2,000 more) that bring three.ws avatars to life. Browse and preview every clip at [three.ws/animations](https://three.ws/animations); this page is the developer reference for how the clip collections are organized, how the runtime loads them, and how agents pick which clip to play.
+
 > For how FBX, GLB, and clip JSON relate — the formats, the conversions, and the full generate→rig→animate→export chain — see **[docs/3d-asset-pipeline.md](3d-asset-pipeline.md)**. This page is the runtime registry and agent-slot reference.
 
 The full machine-readable registry is at [`public/animations/registry.json`](../public/animations/registry.json). Read it first before touching anything animation-related — it catalogues every animation asset in the project, which pipeline owns it, and its current status.
@@ -48,6 +50,7 @@ Slots are the fixed vocabulary the agent avatar uses to express emotion/gesture.
 | `point` | `reaction` | |
 | `shrug` | `defeated` | |
 | `fidget` | `av-waiting` | Real baked idle-fidget loop (was the never-baked `Fidget`, fixed 2026-07-08) |
+| `dance` | `rumba` | |
 
 Agents can override individual slots via `meta.edits.animations`.
 
@@ -66,3 +69,10 @@ Agents can override individual slots via `meta.edits.animations`.
 - **Dead animation hints** — skill-emitted hints `gesture`, `inspect`, `present`, `sign`, `curiosity`, `patience` have no matching clip or slot; they silently no-op on Avaturn models. (`src/agent-avatar.js`)
 
 Resolved (see `public/animations/registry.json` → `resolved_issues`): the `fidget` slot no longer points at the never-baked `Fidget` clip — it maps to the real `av-waiting` loop (2026-07-08); and the 6 formerly-orphaned source FBX (`Cover To Stand`, `Goalkeeper Scoop`, `Jumping Down` ×3, `Removing Driver`) are now entries in `scripts/animations.config.json` and built into the manifest.
+
+## Related
+
+- [3D asset pipeline](/docs/3d-asset-pipeline): the full generate, rig, animate, export chain
+- [Animation Studio](/docs/animation-studio): author and preview clips in the browser
+- [3D Viewer](/docs/viewer): how clips play back in the viewer and embeds
+- [Clip Director](/docs/clip-director): gesture slots used for trade reaction cards

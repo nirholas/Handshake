@@ -29,6 +29,8 @@ runs on.
   - `event: meta` with `{ provider, label, network, model, tier }`
   - `event: first` with `{ firstTokenMs }` (the time-to-first-token the UI shows)
   - data-only frames carrying JSON-encoded text chunks
+  - `event: fallback` with `{ route }` when the proxy reroutes mid-request
+    (advisory; clients can ignore it)
   - `event: done` with `{ elapsedMs, firstTokenMs, usage }` (the token stats)
   - `event: error` with `{ message, elapsedMs }`
 
@@ -36,12 +38,18 @@ Each provider spec declares its native first-party model (built from a first-par
 key when present) and the OpenRouter model id that mirrors it. The proxy prefers the
 native model and falls back to routing through OpenRouter, and if a native provider
 hits a quota, billing, or rate-limit error at request time it reroutes around the
-outage through the mirrored OpenRouter id. The roster spans Anthropic (Claude Fable
-5, Mythos 5, Opus 4.7, Sonnet 4.6, Haiku 4.5), OpenAI (GPT-OSS 120B, the GPT-5.x
-family, o3 family), xAI (Grok 4.x), Groq (Llama 3.3 70B), DashScope (Qwen Plus),
-ModelScope (Qwen3-Coder 480B), DeepSeek R1, and IBM Granite on watsonx.ai. In compare
-mode the page opens one streaming POST per selected provider and renders them in a
-grid, so every model streams concurrently rather than in sequence.
+outage through the mirrored OpenRouter id. If the mirror fails too, a free-tier
+safety net answers before any error is surfaced: Groq Llama 3.3, then the OpenRouter
+`:free` route across every configured key, then NVIDIA NIM. A route only errors once
+no free provider can answer, and each handoff emits an `event: fallback` frame. The
+roster spans Anthropic (Claude Fable 5, Mythos 5, Opus 4.7, Sonnet 4.6, Haiku 4.5),
+OpenAI (GPT-OSS 120B, the GPT-5.x family, o3 family), xAI (Grok 4.x), Groq (Llama
+3.3 70B), DashScope (Qwen Plus), ModelScope (Qwen3-Coder 480B), DeepSeek R1, IBM
+Granite on watsonx.ai, and a free NVIDIA NIM lineup (Nemotron 3 Super 120B,
+Llama-Nemotron Super 49B, Nemotron Nano 9B, DeepSeek V4 Pro, Kimi K2.6, Llama 4
+Maverick, MiniMax M2.7). In compare mode the page opens one streaming POST per
+selected provider and renders them in a grid, so every model streams concurrently
+rather than in sequence.
 
 Anonymous callers are gated to the genuinely free tiers only (the OpenRouter-routed
 open-weight default and the free NVIDIA NIM models); every paid first-party model

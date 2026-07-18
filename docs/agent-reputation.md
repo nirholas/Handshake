@@ -114,11 +114,11 @@ The same on-chain data is exposed through every layer a reader might come from:
 |---|---|---|
 | [Reputation Explorer](/reputation) | people | Visual lookup of score, stake, and recent vouches for any agent |
 | Reputation panel | agent profiles | The embedded vouch/score widget on `https://three.ws/a/<chainId>/<agentId>` |
-| `GET /api/agents/<id>/reputation` | apps | One-call JSON: `average`, `count`, `total_stake_wei` |
+| `GET /api/agents/<id>/reputation` | apps | The agent's unified wallet trust score: a 0-100 credibility number derived from real ledger and on-chain activity, with a per-pillar breakdown and evidence links |
 | `agent_reputation` MCP tool | AI agents | Paid ($0.01 USDC) read of identity + score + stake + recent events; resolves a wallet to its agent automatically |
 | `GET /api/x402/agent-reputation` | AI agents | Paid ($0.01) cross-chain 0–100 trust score for **any** counterparty — Solana/EVM wallet, pump.fun mint, ERC-8004 agent id, or three.ws agent_id (auto-detected). See [Trust primitives](trust-primitives.md) |
 | [Agent Passport](/agent-passport.html) | trust decisions | An A–D trust grade weighted toward credentialed and verified feedback |
-| SDK `@three-ws/sdk/erc8004` | developers | `getReputation`, `getRecentReviews`, `getTotalStake` |
+| ERC-8004 helpers (`src/erc8004/reputation.js`; ABIs re-exported by `@three-ws/sdk`) | developers | `getReputation`, `getRecentReviews`, `getTotalStake`, `submitFeedback`, `stakeReputation` |
 
 The Agent Passport is the most sophisticated: it doesn't treat all stars equally. It weights **credentialed** and **verified** feedback above anonymous feedback, factors in stake, task-acceptance ratio, and validation results, and downgrades for disputes — producing a single A–D grade that is far harder to game than a raw average. That weighting *is* the answer to the Sybil problem below.
 

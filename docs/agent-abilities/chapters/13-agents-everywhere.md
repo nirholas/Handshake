@@ -187,3 +187,26 @@ A 3D avatar walks onto any website on a transparent, fullscreen canvas floating 
 **How it works:** One createAgentUI() call loads a GLB avatar and its animation clips and returns a handle with imperative behaviors — standOn, walkTo, fallOnto, runOff, interceptNavigation — plus FX helpers like dust, impact pulses, and proximity shadows. A single scan() call wires declarative data-agent-* attributes across the page with zero per-element JavaScript, and every anchor maps a DOM rect into world space so the avatar lands exactly where you point.
 
 **Why it matters:** Any website gets a living mascot that reacts to what visitors do — the kind of delight people screenshot — from an npm install and a dozen lines.
+
+## Try it
+
+The fastest embed is the `<agent-3d>` web component: one script, one tag, and a full 3D agent renders on your page.
+
+```html
+<script type="module" src="https://unpkg.com/three.ws"></script>
+
+<agent-3d
+  src="agent://base/42"
+  brain="free"
+  style="width: 400px; height: 500px; display: block;"
+></agent-3d>
+```
+
+Full attribute reference and hosted alternatives: [Embedding guide](/docs/embedding).
+
+## Related
+
+- [Embedding guide](/docs/embedding)
+- [Web component reference](/docs/web-component)
+- [MCP servers](/docs/mcp)
+- [The Developer platform](14-the-developer-platform.md)

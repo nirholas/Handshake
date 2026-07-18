@@ -280,22 +280,22 @@ There are three ways, depending on how you're working.
 
 The `uri` points to the **directory**, not the manifest file. The runtime appends `manifest.json`, `SKILL.md`, `tools.json`, and `handlers.js` automatically. Make sure the URI ends with a trailing slash — the runtime uses it as a base for relative asset resolution.
 
-**In the web component attribute:**
+**In the web component attribute** (comma-separated skill URIs, installed on top of any manifest skills):
 
 ```html
 <agent-3d
-  src="https://yourusername.github.io/my-agent/manifest.json"
-  skills='[{"uri":"https://yourusername.github.io/weather-skill/"}]'
+  body="./my-avatar.glb"
+  brain="claude-sonnet-4-6"
+  skills="https://yourusername.github.io/weather-skill/"
 ></agent-3d>
 ```
 
-**Via the editor:**
+**At runtime via JavaScript:**
 
-1. Open your agent in the editor
-2. Go to the **Skills** tab in the manifest builder
-3. Paste the skill directory URL (ending in `/`)
-4. Click **Add Skill**
-5. Save
+```js
+const agent = document.querySelector('agent-3d');
+await agent.installSkill('https://yourusername.github.io/weather-skill/');
+```
 
 ---
 
@@ -490,7 +490,7 @@ Good skills to build next:
 - **Notion / Linear** — read and write tickets or docs
 - **Domain knowledge** — a skill that's pure `SKILL.md` with no tools, injecting specialized context (legal, medical, culinary)
 
-Sharing your skill is as simple as posting the manifest URL. Add the topic `3dagent-skill` to your GitHub repo and others can find it. The community skill registry is coming — skills will be indexable by tag, rig compatibility, and author.
+Sharing your skill is as simple as posting the manifest URL. Add the topic `3dagent-skill` to your GitHub repo so others can find it, and browse what the community has built on the [Skills Marketplace](/skills).
 
 ---
 
@@ -504,3 +504,10 @@ You built a weather skill with these four files:
 - **`handlers.js`** — exports one function per tool; runs sandboxed in a Web Worker; all I/O through `ctx.*`
 
 The skill installs via a URI in the agent manifest, runs entirely client-side, and adds new capabilities to any compatible agent without modifying the agent itself. That's the composability primitive: agents are extensible at runtime through content-addressed skill bundles.
+
+## Related
+
+- [Skills system reference](/docs/skills) — manifest format, context API, sandboxing, publishing
+- [Build a skill with database auth](/docs/tutorials/skill-with-database-auth) — the next step up: a skill backed by your own API
+- [Build your first agent](/docs/tutorials/first-agent) — the agent this skill plugs into
+- [Web component reference](/docs/web-component) — the `skills` attribute and `installSkill()` method

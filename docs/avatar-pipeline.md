@@ -28,7 +28,7 @@ prompt / image
 | Paid | `mesh_forge` (MCP) | per call | Text/image → mesh via a Granite-directed model chain. |
 | Avatar | `text_to_avatar`, `forge_avatar` (MCP) | per call | Avatar-shaped output; `forge_avatar` chains generation + rigging in one call. |
 
-Generation quality is a **tier** (`forge-tiers.js`): `draft`, `standard`
+Generation quality is a **tier** ([api/_lib/forge-tiers.js](../api/_lib/forge-tiers.js)): `draft`, `standard`
 (default), or `high` — more geometric budget at higher tiers. The tier sets the
 price identically across REST and MCP transports (see
 [MCP tools](mcp-tools.md), [x402 endpoints](x402-endpoints.md)).

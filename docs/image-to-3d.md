@@ -41,13 +41,15 @@ Image to 3D reconstructs whole objects: a prop, a product, a toy, a sculpture, a
 Send public image URLs to the same `/api/forge` endpoint. No key is required on the free lane.
 
 ```bash
-# Multi-view reconstruction from three angles, standard tier, then poll.
-JOB=$(curl -s -X POST 'https://three.ws/api/forge' \
+# Multi-view reconstruction from three angles, standard tier, then poll. A lane
+# that completes inline answers the POST with status "done", a glb_url, and a
+# null job_id; otherwise you get a job_id to poll until "done" or "failed".
+RESP=$(curl -s -X POST 'https://three.ws/api/forge' \
   -H 'content-type: application/json' \
-  -d '{"image_urls":["https://…/front.jpg","https://…/side.jpg","https://…/back.jpg"],"tier":"standard"}' \
-  | python3 -c 'import sys,json;print(json.load(sys.stdin)["job_id"])')
+  -d '{"image_urls":["https://…/front.jpg","https://…/side.jpg","https://…/back.jpg"],"tier":"standard"}')
+echo "$RESP" | python3 -c 'import sys,json;j=json.load(sys.stdin);print(j.get("glb_url") or j["job_id"])'
 
-curl "https://three.ws/api/forge?job=$JOB"
+curl "https://three.ws/api/forge?job=<JOB_ID>"
 ```
 
 Single-image reconstruction is just one URL:
@@ -68,7 +70,7 @@ const start = await fetch('https://three.ws/api/forge', {
 }).then((r) => r.json());
 
 let job = start;
-while (job.status !== 'done' && job.status !== 'error') {
+while (job.status !== 'done' && job.status !== 'failed') {
   await new Promise((r) => setTimeout(r, 4000));
   job = await fetch(`https://three.ws/api/forge?job=${start.job_id}`).then((r) => r.json());
 }

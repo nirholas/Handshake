@@ -107,5 +107,6 @@ All three run free against the hosted studio endpoint
 ## Related
 
 - [STRUCTURE.md](../STRUCTURE.md) — where every surface lives
-- [docs/skills.md](skills.md) — the in-app avatar/agent skills system
-- [docs/mcp.md](mcp.md) — the three.ws MCP server the 3D skills call
+- [In-app skills system](/docs/skills) - the avatar/agent skills system inside three.ws
+- [MCP overview](/docs/mcp) - the three.ws MCP server the 3D skills call
+- [3D Studio MCP endpoint](/docs/mcp-studio) - the free hosted endpoint the 3D skills run against

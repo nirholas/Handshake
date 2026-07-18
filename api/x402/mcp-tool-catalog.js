@@ -77,7 +77,7 @@ const OUTPUT_EXAMPLE = {
 	priced_tools: 11,
 	free_tools: 13,
 	new_tools: [
-		{ name: 'segment_model', description: 'Split a mesh into named parts', priced: true, price_usdc: 0.04, input_fields: 2 },
+		{ name: 'segment_model', description: 'Split a mesh into named parts', priced: true, price_usdc: 0.02, input_fields: 2 },
 	],
 	changed_tools: [
 		{ name: 'render_avatar', change: 'price', price_usdc: 0.005, prev_price_usdc: 0.003 },

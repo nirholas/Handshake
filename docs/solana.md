@@ -1,6 +1,8 @@
 # Solana Agents
 
-Register an agent on Solana as a Metaplex Core NFT. The flow mirrors the [ERC-8004](erc8004.md) path on EVM chains: a user's wallet signs a transaction that mints an on-chain identity token, and the platform stores the link between the agent record and the mint address.
+Give your three.ws agent a real on-chain identity on Solana. When you register, your wallet signs one transaction that mints an NFT (a Metaplex Core asset) representing the agent, and three.ws links that mint to your agent record. You do this from the agent creation and edit pages after connecting a Solana wallet (Phantom, Solflare, or Backpack).
+
+Technically, the flow mirrors the [ERC-8004](erc8004.md) path on EVM chains: a user's wallet signs a transaction that mints an on-chain identity token, and the platform stores the link between the agent record and the mint address.
 
 This document covers what is supported today, the end-to-end registration flow, and what is intentionally **not** on Solana yet.
 
@@ -17,15 +19,16 @@ This document covers what is supported today, the end-to-end registration flow, 
 | Solana payments (checkout + confirm) | Live | [api/payments/solana/\[action\].js](../api/payments/solana/%5Baction%5D.js) (handles `checkout` + `confirm`) |
 | Agent identity NFT (Metaplex Core) | Live | [api/agents/solana/\[action\].js](../api/agents/solana/%5Baction%5D.js) (handles `register-prep` + `register-confirm`) |
 | Agent record persisted in DB | Live | `agent_identities`, `meta.chain_type='solana'`, `meta.sol_mint_address` |
-| On-chain reputation registry | **Not on Solana** | EVM only |
-| On-chain validation registry | **Not on Solana** | EVM only (testnet) |
-| Discovery file lists Solana agents | **Not yet** | [public/.well-known/agent-registration.json](../public/.well-known/agent-registration.json) is EVM-only |
+| On-chain reputation (SPL Memo attestations) | Live | [api/_lib/solana-attestations.js](../api/_lib/solana-attestations.js), aggregated by `/api/agents/solana-reputation` (see [Solana reputation](solana-reputation.md)) |
+| On-chain validation (glTF/schema attestation) | Live | [api/_lib/solana-validation-attest.js](../api/_lib/solana-validation-attest.js), auto-run at register-confirm |
+| Credentialed attestations (SAS) | Live | [api/agents/sas/\[action\].js](../api/agents/sas/%5Baction%5D.js) (see [SAS attestations](sas-attestations.md)) |
+| Discovery file lists Solana agents | **Not yet** | [public/.well-known/agent-registration.json](../public/.well-known/agent-registration.json) publishes the platform card and x402 catalog, but its `registrations` array carries no per-agent Solana entries |
 
 ---
 
 ## How identity works on Solana
 
-EVM agents are minted as ERC-721 NFTs in the IdentityRegistry contract at a fixed CREATE2 address. Solana has no CREATE2 and no shared registry — instead each agent is a standalone **Metaplex Core asset** (a single-account NFT standard with name + URI metadata baked in).
+EVM agents are minted as ERC-721 NFTs in the IdentityRegistry contract at a fixed CREATE2 address. Solana has no CREATE2 and no shared registry contract. Instead each agent is a **Metaplex Core asset** (a single-account NFT standard with name + URI metadata baked in). When a three.ws Agents collection is configured for the network (`SOLANA_AGENT_COLLECTION_MAINNET` / `_DEVNET`), the asset is minted into that collection with the collection authority co-signing, so three.ws can curate on-chain metadata on the owner's behalf; with no collection configured, the mint falls back to a standalone asset. See [Deploy agents on-chain (bulk)](onchain-agents.md) for the collection model.
 
 The agent's canonical identifier on Solana is its **asset pubkey** (base58, 32-byte). The platform stores it alongside the mint transaction signature so the on-chain record can always be re-verified.
 
@@ -49,7 +52,7 @@ Agent record shape (`agent_identities.meta`):
 | `mainnet` | mainnet-beta | `SOLANA_RPC_URL` env, falls back to `https://api.mainnet-beta.solana.com` |
 | `devnet` | devnet | `SOLANA_RPC_URL_DEVNET` env, falls back to `https://api.devnet.solana.com` |
 
-Public RPCs are rate-limited. For production, set `SOLANA_RPC_URL` to a Helius, Quicknode, or Triton endpoint.
+Public RPCs are rate-limited. For production, set `SOLANA_RPC_URL` to a Helius, Quicknode, or Triton endpoint. Server-side calls do not depend on a single endpoint: [api/_lib/solana/connection.js](../api/_lib/solana/connection.js) builds a failover chain (explicit `SOLANA_RPC_URL`, then keyed providers such as Helius and Alchemy when their keys are set, then operator-supplied `SOLANA_RPC_FALLBACK_URLS`, then keyless public endpoints, with `SOLANA_RPC_LAST_RESORT_URLS` as a paid reserve tried last) and rotates past endpoints that are rate-limited or cooling down.
 
 ---
 
@@ -93,9 +96,11 @@ const prep = await fetch('/api/agents/solana-register-prep', {
     name: 'My Agent',                 // 1–60 chars
     description: 'short bio',         // ≤ 280 chars
     wallet_address: walletPubkey,     // base58, must be linked to user
-    network: 'devnet',                // or 'mainnet'
+    network: 'devnet',                // or 'mainnet' (the default)
     avatar_id: avatarUuid,            // optional — must be owned by user
     metadata_uri: 'https://...',      // optional — else server synthesizes one
+    asset_pubkey: vanityPubkey,       // optional: client-supplied asset keypair pubkey
+    vanity_prefix: '3ws',             // optional: asserts asset_pubkey starts with it
   }),
 }).then(r => r.json());
 
@@ -105,7 +110,8 @@ const prep = await fetch('/api/agents/solana-register-prep', {
 The server:
 - Verifies the wallet is linked to the session user.
 - If `avatar_id` is given, verifies the user owns the avatar.
-- Builds an unsigned Metaplex Core `createV1` transaction with the user's pubkey as a `NoopSigner`. The asset (mint) keypair is generated server-side and pre-signs the transaction.
+- Builds an unsigned Metaplex Core `create` transaction with the user's pubkey as a `NoopSigner`. The asset keypair is generated server-side and pre-signs the transaction; alternatively the client supplies its own `asset_pubkey` (with an optional `vanity_prefix`, which returns `402 payment_required` for prefixes of 5+ characters on the free plan).
+- Writes an on-chain Attributes plugin (the three.ws brand block) and an enforced Royalties plugin into the asset, and mints into the three.ws Agents collection when one is configured for the network.
 - Stores a 30-minute pending record so step 4 can resolve `name` / `description` / `avatar_id` from the prep payload.
 
 The returned `tx_base64` is a fully built transaction missing only the user's signature.
@@ -147,12 +153,13 @@ const result = await fetch('/api/agents/solana-register-confirm', {
   }),
 }).then(r => r.json());
 
-// → {
+// → 201 {
 //     ok: true,
 //     agent: { id, name, description, wallet_address, meta, home_url, ... },
 //     sol_mint_address,
 //     tx_signature,
 //     network,
+//     validation?: { passed, signature, proof_hash, deduped },
 //   }
 ```
 
@@ -161,7 +168,7 @@ The server re-fetches the parsed transaction from the cluster, asserts:
 - `asset_pubkey` appears in the transaction's account keys,
 - no agent has already been registered for this mint,
 
-then inserts the `agent_identities` row and clears the pending record.
+then inserts the `agent_identities` row and clears the pending record. If the agent has an avatar GLB, the server also records a best-effort on-chain glTF/schema validation attestation (`threews.validation.v1`, signed by the platform validator; see [api/_lib/solana-validation-attest.js](../api/_lib/solana-validation-attest.js)); a failure there never fails the registration.
 
 ---
 
@@ -171,7 +178,9 @@ Returned as `{ error, error_description }` from the prep / confirm endpoints.
 
 | Status | `error` | When |
 |---|---|---|
+| 400 | `validation_error` | Malformed body, non-base58 `asset_pubkey`, or `vanity_prefix` without `asset_pubkey` |
 | 401 | `unauthorized` | No session |
+| 402 | `payment_required` | `vanity_prefix` of 5+ characters on a free plan |
 | 403 | `forbidden` | Wallet is not linked to the session user |
 | 404 | `not_found` | `avatar_id` doesn't exist or isn't owned by user |
 | 422 | `tx_not_found` | RPC has not seen the signature yet — retry after a few seconds |
@@ -179,6 +188,7 @@ Returned as `{ error, error_description }` from the prep / confirm endpoints.
 | 422 | `asset_not_in_tx` | `asset_pubkey` is not among the transaction's account keys |
 | 409 | `conflict` | An agent is already registered for this mint |
 | 429 | `rate_limited` | Per-IP auth limiter tripped |
+| 503 | `rpc_unavailable` | Every RPC endpoint in the failover chain failed while building the tx |
 
 ---
 
@@ -186,9 +196,12 @@ Returned as `{ error, error_description }` from the prep / confirm endpoints.
 
 | Var | Purpose |
 |---|---|
-| `SOLANA_RPC_URL` | Mainnet RPC. Defaults to public mainnet-beta. **Set this in production.** |
+| `SOLANA_RPC_URL` | Primary mainnet RPC. Defaults to public mainnet-beta. **Set this in production.** |
 | `SOLANA_RPC_URL_DEVNET` | Devnet RPC. Defaults to public devnet. |
-| `APP_ORIGIN` | Used to synthesize a default `metadata_uri` if the caller didn't provide one. |
+| `SOLANA_RPC_FALLBACK_URLS` | Comma-separated extra mainnet endpoints rotated into the failover chain after the primary. |
+| `SOLANA_RPC_LAST_RESORT_URLS` | Comma-separated paid/metered endpoints tried only after every free endpoint fails. |
+| `SOLANA_AGENT_COLLECTION_MAINNET` / `_DEVNET` | Address of the three.ws Agents collection; when set, registrations mint into it. |
+| `PUBLIC_APP_ORIGIN` | Canonical origin (exposed to code as `env.APP_ORIGIN`); used to synthesize a default `metadata_uri` if the caller didn't provide one. |
 
 SIWS-related env vars live in [api/_lib/env.js](../api/_lib/env.js) and [api/_lib/siws.js](../api/_lib/siws.js).
 
@@ -206,12 +219,24 @@ There is no global Solana registry to query — discovery happens via the platfo
 
 ---
 
+## What's on Solana instead of a registry contract
+
+- **Reputation**: there is no single `ReputationRegistry` contract like ERC-8004's. Instead, permissionless SPL Memo attestations (feedback, stakes, tasks, disputes) are written on-chain against the agent's asset pubkey, crawled into `solana_attestations`, and aggregated by `/api/agents/solana-reputation`. Off-chain pump.fun behavior signals land in `pumpfun_signals` and feed the same score. See [Solana reputation](solana-reputation.md) and [solana-pumpfun.md](solana-pumpfun.md).
+- **Validation**: no registry contract either; validations are `threews.validation.v1` SPL Memo attestations (including the automatic glb-schema attestation at register-confirm), plus SAS credentialed validations signed by the platform authority ([SAS attestations](sas-attestations.md)).
+
 ## What's intentionally not on Solana yet
 
-- **Reputation**: ERC-8004's `ReputationRegistry` is EVM-only. Solana agents have no on-chain feedback aggregation today. Reviews live in the platform DB. Off-chain pump.fun behavior signals are crawled into `pumpfun_signals` and surfaced through `solana-reputation` — see [solana-pumpfun.md](solana-pumpfun.md).
-- **Validation**: Same. The `ValidationRegistry` is EVM testnet only; there is no Solana analog.
 - **Delegated wallet (EIP-712)**: There is no equivalent for Solana agents. Owner = the wallet that signed the mint.
-- **Cross-chain identifier**: EVM agents use `eip155:<chainId>:<registry>:<agentId>` (CAIP-10). Solana agents use the asset pubkey directly; a CAIP-10 form (`solana:<cluster-genesis>:<asset-pubkey>`) is not currently emitted by the platform.
-- **Discovery**: `agent-registration.json` is EVM-shaped. Adding Solana entries means defining a JSON schema for Metaplex Core assets — not done.
+- **Cross-chain identifier**: EVM agents use `eip155:<chainId>:<registry>:<agentId>` (CAIP-10). The user-signed flow stores the asset pubkey directly; only the bulk deploy path records a CAIP-2-style `solana:<cluster-genesis>` chain id in `meta.onchain.chain` (see [onchain-agents.md](onchain-agents.md)).
+- **Discovery**: `agent-registration.json` publishes the platform-level card and x402 catalog, but its `registrations` array does not list individual Solana agents. Adding them means defining a JSON schema for Metaplex Core assets; not done yet.
 
-A full ERC-8004-equivalent on Solana would mean writing three Anchor programs (Identity / Reputation / Validation) and a parallel JS client. That is a separate, larger piece of work; this document covers only what ships today.
+A full ERC-8004-equivalent on Solana (Identity / Reputation / Validation as Anchor programs with a parallel JS client) remains a separate, larger piece of work; this document covers what ships today.
+
+---
+
+## Related
+
+- [Deploy agents on-chain (bulk)](/docs/onchain-agents): the server-side, collection-minting counterpart to this flow
+- [Agent Reputation on Solana](/docs/solana-reputation): how attestations become a trust grade
+- [SAS Credentialed Attestations](/docs/sas-attestations): authority-signed credentials
+- [ERC-8004](/docs/erc8004): the EVM identity path this flow mirrors

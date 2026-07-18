@@ -98,6 +98,6 @@ Free 3D Studio (`structuredContent.spatial`): `forge_free`, `text_to_avatar`, `m
 ## Related
 
 - [`specs/SPATIAL_MCP.md`](https://github.com/nirholas/three.ws/blob/main/specs/SPATIAL_MCP.md) — the normative spec
-- [`docs/mcp-studio.md`](./mcp-studio.md) — the free 3D Studio MCP server
-- AR handoff (`ar` block) ties to the AR export path (`export_ar`, `docs/ar.md`)
-- Persona hook (`persona` block) ties to the embodiment tools (prompt 07)
+- [3D Studio MCP (free)](/docs/mcp-studio): the free 3D Studio MCP server that emits these artifacts
+- [MCP Tools Catalog](/docs/mcp-tools): which server hosts which tool, free vs. paid
+- [AR & WebXR](/docs/ar): the AR handoff the artifact's `ar` block ties into (`export_ar`)

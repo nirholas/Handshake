@@ -180,9 +180,9 @@ Your agent now has:
 
 - An **on-chain ID** — a number unique to this registry (e.g., `42`)
 - A **permanent URL**: `https://three.ws/a/8453/42`
-- A **Passport widget** visible at that URL showing your ERC-8004 identity
+- An **on-chain identity card** visible at that URL showing your ERC-8004 registration
 
-Open your agent's URL in a new tab. You should see your 3D avatar with the Passport widget showing the on-chain registration details, chain, and block explorer link.
+Open your agent's URL in a new tab. You should see your 3D avatar with the identity card showing the agent's name, on-chain ID, and chain.
 
 ---
 
@@ -194,17 +194,30 @@ Your on-chain URL works anywhere. Try these:
 Share `https://three.ws/a/8453/42` on Twitter/X, Farcaster, or Lens. Anyone who clicks it sees your verified agent — no account required.
 
 **Add to your website:**
-Drop the Passport widget in anywhere HTML is accepted:
+Drop the agent's embed iframe in anywhere HTML is accepted:
+
+```html
+<iframe
+  src="https://three.ws/a/8453/42/embed"
+  width="360"
+  height="480"
+  frameborder="0"
+  allow="microphone"
+  style="border-radius: 16px;"
+></iframe>
+```
+
+Or embed the interactive agent with the web component, addressing it by its on-chain ID:
 
 ```html
 <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
-<agent-3d widget="passport" agent-id="8453:0xRegistryAddress:42"></agent-3d>
+<agent-3d agent-id="42" chain-id="8453"></agent-3d>
 ```
 
-Replace `0xRegistryAddress` with the Identity Registry contract address shown on Basescan, and `42` with your agent ID.
+For a standalone identity card (the Passport widget: registration JSON, reputation, validation), open the [Widget Studio](https://three.ws/studio), pick the **Passport** widget type, enter your chain and agent ID, and copy the generated snippet.
 
 **Generate a QR code:**
-On your agent's page, click the QR icon in the Passport widget. A scannable code appears — save it or screenshot it for physical printouts, conference badges, or business cards.
+Your agent URL is a plain link, so any QR generator turns it into a scannable code — handy for physical printouts, conference badges, or business cards.
 
 **Include it in a README or profile:**
 A Markdown link works: `[My three.ws](https://three.ws/a/8453/42)`
@@ -213,13 +226,13 @@ A Markdown link works: `[My three.ws](https://three.ws/a/8453/42)`
 
 ## Step 10: Build your reputation
 
-Your agent's page at `https://three.ws/a/8453/42` has a **Reputation** section. Every review is a transaction on Base — public, permanent, and attached to the reviewer's wallet address.
+Every review is a transaction on Base — public, permanent, and attached to the reviewer's wallet address. The public review surface is [three.ws/reputation](https://three.ws/reputation), where anyone can view and submit on-chain reviews for any agent.
 
 **Ask others to leave a review:**
 
-1. Send them your agent URL
-2. They scroll to the Reputation section
-3. They connect their wallet and click **Leave a review**
+1. Send them your agent's chain and ID (or just your agent URL)
+2. They open [three.ws/reputation](https://three.ws/reputation) and look up your agent
+3. They connect their wallet
 4. They pick a score (1–5 stars, stored on-chain as a signed −100..+100 value) and optionally add a comment
 5. They confirm the transaction (~$0.05 gas)
 
@@ -263,8 +276,7 @@ If you own an ENS name like `yourname.eth`, you can make it resolve to your agen
 
 In your agent's manifest or on the registration page, add a `claims` entry pointing back at your ENS name. The system only shows a "verified" badge when both directions match — the ENS record points to your agent *and* your agent's card lists the ENS name. This prevents someone from putting your domain in their card to steal credibility.
 
-Once set, your agent is accessible at:
-`https://three.ws/agent/ens/yourname.eth`
+Once set, resolvers can look up `yourname.eth` and get your agent's CAIP-10 identifier, and the platform API at `https://three.ws/api/agents/ens/yourname.eth` lists the agents registered to the address your name resolves to.
 
 ---
 
@@ -321,3 +333,10 @@ Now that your agent has an on-chain identity, you can:
 - **Transfer the token** to a hardware wallet for safer long-term custody
 
 Your agent's URL will keep working as long as Base exists and IPFS gateways serve the pinned content — which is designed to be indefinite.
+
+## Related
+
+- [ERC-8004 reference](/docs/erc8004) — the full spec walkthrough: contracts, registration JSON, ENS/DNS binding
+- [Agent reputation tutorial](/docs/tutorials/agent-reputation) — reading and submitting on-chain reviews in depth
+- [Solana agent reputation](/docs/tutorials/solana-agent-reputation) — the same trust primitives on the home chain
+- [Reputation reference](/docs/reputation) — score encoding, staking, and the reputation API

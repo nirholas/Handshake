@@ -195,14 +195,14 @@ then kept in a verified, watched, auto-fundable state:
   non-role ATAs to reclaim their rent. Audit + reclaim only — never a spend.
 - **Endpoint catalog** —
   [api/_lib/x402/ring-catalog.js](../api/_lib/x402/ring-catalog.js) is the single
-  source of truth for **every** paid x402 endpoint on the platform (46 entries:
-  tips, services, intel, health checks, settlement). Each entry declares the exact
-  `method`, `query`/`body()` request contract, and default price the handler
-  actually validates — derived by reading the handler, so a ring call never spends
-  money on a request the endpoint would reject. **35 are `autobuy`** (safe to
-  purchase on the loop); the **11 `autobuy:false`** entries (real coin mints, real
-  LLM spend, dynamic third-party payouts) are covered by one-time verification, not
-  the loop, each with a justification in the source. Adding a new paid endpoint
+  source of truth for **every** paid x402 endpoint on the platform (84 entries as
+  of July 2026: tips, services, intel, health checks, settlement). Each entry
+  declares the exact `method`, `query`/`body()` request contract, and default
+  price the handler actually validates (derived by reading the handler), so a
+  ring call never spends money on a request the endpoint would reject. **45 are
+  `autobuy`** (safe to purchase on the loop); the **39 `autobuy:false`** entries
+  (real coin mints, real LLM spend, dynamic third-party payouts) are covered by
+  one-time verification, not the loop, each with a justification in the source. Adding a new paid endpoint
   without cataloging it fails `tests/x402-ring-catalog.test.js` (it greps every
   `paidEndpoint(` construction site and asserts each is cataloged).
 - **Volume engine** — the existing autonomous loop
@@ -212,8 +212,9 @@ then kept in a verified, watched, auto-fundable state:
   rotation (`rotationPlan()`), mapped into the shared driver in
   [volume-shared.js](../api/_lib/x402/pipelines/volume-shared.js). The rotation is
   weighted so **every autobuy endpoint is exercised at least once per hour** at the
-  stock 5-minute cadence (12 ticks × 4 = 48 selections/hour ≥ the 38-entry
-  rotation) — test-proven, not asserted.
+  stock 5-minute cadence (12 ticks × 6 selections = 72/hour ≥ the 48-entry
+  weighted rotation over the 45 autobuy endpoints), test-proven in
+  `tests/x402-ring-catalog.test.js`, not asserted.
 - **Coverage proof** —
   [scripts/x402-ring-coverage-sweep.js](../scripts/x402-ring-coverage-sweep.js)
   pays every catalog entry once and records the facilitator settle signature +

@@ -57,7 +57,7 @@ These skills come pre-installed in every agent. They live in `src/agent-skills.j
 | `sign-action` | Sign the current action with the connected wallet |
 | `help` | List available skills and commands |
 
-Built-in skills that are `mcpExposed: true` are also surfaced as MCP tools via `/api/mcp` — external tools can invoke them by name as `skill_<name>` (hyphens converted to underscores).
+Built-in skills that are `mcpExposed: true` are also published in the platform's skills catalog (`GET /api/chat-skills`) as callable tools named `skill_<name>` (hyphens and dots converted to underscores, e.g. `present-model` becomes `skill_present_model`). The catalog is what the platform chat runtime and external tool consumers read to discover them.
 
 ---
 
@@ -76,7 +76,7 @@ Reference skills by URI in the agent's `manifest.json`. The runtime fetches and 
 }
 ```
 
-URIs can be HTTPS, IPFS (`ipfs://`), or Arweave (`ar://`). IPFS URIs are resolved through a gateway fallback chain (ipfs.io → dweb.link → nft.storage).
+URIs can be HTTPS, IPFS (`ipfs://`), or Arweave (`ar://`). IPFS URIs are resolved through a gateway fallback chain (dweb.link → ipfs.io → flk-ipfs.xyz, see `src/ipfs.js`).
 
 ### Via the web component attribute
 
@@ -93,7 +93,10 @@ Pass a JSON array to the `skills` attribute:
 
 ```js
 const el = document.querySelector('agent-3d');
-await el.agent.skills.install({ uri: 'https://example.com/skills/weather/' });
+await el.installSkill('https://example.com/skills/weather/');
+
+// List what is installed (built-in + installed skill definitions)
+console.log(el.skills);
 ```
 
 ---
@@ -409,26 +412,29 @@ The `dependencies` object maps skill URIs to version ranges. Circular dependenci
 
 ## Skill lifecycle events
 
-The agent protocol bus fires events at each stage of skill execution. Listen to these in the host page to react to skill activity:
+The agent protocol bus fires events at each stage of skill execution. Subscribe on the bus to react to skill activity:
 
 ```js
-const el = document.querySelector('agent-3d');
+import { protocol } from './src/agent-protocol.js';
+// In the three.ws app itself the same singleton is window.VIEWER.agent_protocol.
 
 // Fires when the runtime dispatches a tool call to a skill handler
-el.addEventListener('perform-skill', e => {
-  console.log('Skill starting:', e.detail.skill, e.detail.args);
+protocol.on('perform-skill', (action) => {
+  console.log('Skill starting:', action.payload.skill, action.payload.args);
 });
 
 // Fires when the handler returns successfully
-el.addEventListener('skill-done', e => {
-  console.log('Skill done:', e.detail.skill, e.detail.result);
+protocol.on('skill-done', (action) => {
+  console.log('Skill done:', action.payload.skill, action.payload.result);
 });
 
 // Fires when the handler throws or times out
-el.addEventListener('skill-error', e => {
-  console.error('Skill error:', e.detail.skill, e.detail.error);
+protocol.on('skill-error', (action) => {
+  console.error('Skill error:', action.payload.skill, action.payload.error);
 });
 ```
+
+Host pages embedding `<agent-3d>` also get DOM `CustomEvent`s re-dispatched on the element for runtime activity: `skill:tool-start` and `skill:tool-called` (plus `brain:*`, `voice:*`, and `memory:write`). Listen with `el.addEventListener('skill:tool-called', handler)` when you only need tool-call notifications.
 
 **Event payloads:**
 
@@ -444,24 +450,29 @@ el.addEventListener('skill-error', e => {
 
 ## Calling skills programmatically
 
+In the three.ws app, the built-in skills executor is exposed as `window.VIEWER.agent_skills` (an `AgentSkills` instance from `src/agent-skills.js`):
+
 ```js
-const el = document.querySelector('agent-3d');
+const skills = window.VIEWER.agent_skills;
 
-// Execute a skill tool directly, bypassing the LLM
-const result = await el.agent.skills.perform('wave', { style: 'enthusiastic' });
-console.log(result); // { ok: true, style: 'enthusiastic' }
+// Execute a skill directly, bypassing the LLM
+const result = await skills.perform('greet', { name: 'Alex' });
+console.log(result); // { success: true, output: '...', sentiment: ... }
 
-// List all installed skills (built-in + installed)
-const skills = el.agent.skills.list();
+// List all registered skills
+skills.list();
 
 // Get a specific skill definition
-const waveDef = el.agent.skills.get('wave');
+const greetDef = skills.get('greet');
 ```
 
-For external skills installed via `SkillRegistry`, invoke via the registry:
+For external skills installed via `SkillRegistry` (`src/skills/index.js`), invoke through the registry:
 
 ```js
-const skill = el.agentRuntime.skillRegistry.findSkillForTool('get_weather');
+const registry = new SkillRegistry({ trust: 'owned-only', ownerAddress });
+await registry.install({ uri: 'https://example.com/skills/weather/' });
+
+const skill = registry.findSkillForTool('get_weather');
 const result = await skill.invoke('get_weather', { city: 'Berlin' }, ctx);
 ```
 
@@ -507,8 +518,11 @@ skill is live — LLM can now call its tools
 ## Worked example: the `wave` skill
 
 The `wave` skill is the minimal complete example — small enough to reproduce here
-in full. Create it at `examples/skills/wave/`; every file the bundle needs is
-listed below.
+in full. Create it as a `wave/` directory anywhere you serve static files; every
+file the bundle needs is listed below. For real, installable bundles that ship
+with the repo, see [examples/skills/](../examples/skills/) (`pump-fun`,
+`solana-wallet`, and friends) and [public/skills/](../public/skills/)
+(`tip-jar`, `crypto-price`, `dca`).
 
 ### `manifest.json`
 
@@ -668,7 +682,8 @@ A skill is just a directory of static files. Publish it anywhere:
 - **GitHub Releases** — attach a zip, reference the raw URL
 - **Vercel / Netlify / S3** — deploy the directory as a static site
 - **IPFS** — `ipfs add -r skills/wave/` and distribute the CID
-- **npm** — include the bundle under `public/skills/skill-name/` and reference via a CDN like jsDelivr
+- **The platform itself**: first-party bundles live under `public/skills/<name>/` in this repo (e.g. `public/skills/tip-jar/`) and are served at `https://three.ws/skills/<name>/`
+- **npm**: publish the directory as a package and reference it via a CDN like jsDelivr
 
 **Convention:** name the manifest `manifest.json` and co-locate `handlers.js` in the same directory. Agents resolve all relative paths (`./clips/`, `./prompts/`) against the manifest's URL, so the layout must be preserved.
 

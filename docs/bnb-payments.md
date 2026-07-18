@@ -1,9 +1,12 @@
 # BNB Chain payments — MPP + gasless sends
 
-three.ws speaks two agent-payment protocols. Our catalog has always run **x402**
-(the CDP wire format) on Solana and Base. It now also speaks **MPP** — BNB
-Chain's Machine Payments Protocol — so agents from the BNB ecosystem can pay our
-endpoints, and our agents can pay theirs. This page explains both halves plus the
+three.ws lets AI agents pay for API calls with stablecoins, no account or API
+key needed. This page is for developers wiring an agent to pay (or charge) over
+BNB Chain. Our catalog has always run **x402** (the CDP wire format) on Solana,
+the home chain, and Base. It now also speaks **MPP** (BNB Chain's Machine
+Payments Protocol), so agents from the BNB ecosystem can pay our endpoints, and
+our agents can pay theirs. BNB Chain is an additional surface, not a
+replacement for the Solana rails. This page explains both halves plus the
 gasless-send rail underneath, for a reader with zero prior context.
 
 Everything here is real code against real endpoints. Where a capability needs a
@@ -140,7 +143,7 @@ const { hash, mode } = await sendGasless('bscTestnet', {
 
 | Env var | Purpose | Required? |
 |---|---|---|
-| `X402_PAY_TO_BSC` | Merchant payout address for MPP receipts | to advertise MPP |
+| `X402_PAY_TO_BSC` (alias `MPP_PAY_TO_BSC`) | Merchant payout address for MPP receipts | to advertise MPP |
 | `B402_BASE_URL` / `B402_CLIENT_ID` / `B402_ACCESS_TOKEN` / `B402_PRIVATE_KEY` | b402 facilitator merchant creds (RSA "Tesla" signing) | to settle MPP on-chain |
 | `NODEREAL_MEGAFUEL_KEY` | MegaFuel policy-management only (not the send path) | optional |
 | `BNB_TESTNET_DEPLOYER_KEY` | Funded tBNB sender for live proofs | for live sends |
@@ -155,3 +158,9 @@ receipt.
 See also: the wire contract in [`specs/x402-mpp-bridge.md`](../specs/x402-mpp-bridge.md),
 and the [BNB Chain campaign context](../prompts/bnb-chain/00-CONTEXT.md) for the
 full verified-facts list.
+
+## Related
+
+- [x402 on three.ws](/docs/x402) - the payment protocol our Solana/Base catalog runs
+- [The vault](/docs/bnb-vault) - encrypted 3D models gated by an on-chain BNB Chain purchase
+- [x402 Bazaar](/docs/mcp-x402-bazaar) - discovering paid services by capability and price

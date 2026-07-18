@@ -43,6 +43,7 @@ fixed allow-list of types:
 | `payment` | A skill/service payment confirmed (`usdcAtomic`, `recipientLabel`, `txSig`, `explorerUrl`). |
 | `level-up`, `world-join`, `jackpot`, `mission-complete` | Play / world events. |
 | `member-join` | A person signed in (throttled to once per user per 6h). |
+| `agent-guard` | An autonomous buy was refused by a safety rule (`agentId`, `mint`, `reason`, `label`). |
 | `agora-registered`, `agora-task-posted`, `agora-hired`, `agora-task-claimed`, `agora-task-completed`, `agora-earned`, `agora-vouched`, `agora-flagged` | [Agora](agora.md) on-chain economy lifecycle events. |
 
 The ticker is a **curated delight layer**, not an exhaustive log: an event only
@@ -67,7 +68,8 @@ the volume dashboard.
 Each row carries: `agent_id`, `user_id`, `event_type` (e.g. `spend`),
 `category` (`trade` | `snipe` | `x402` | `withdraw` | `tip` | …), `network`,
 `asset`, `amount_lamports` / `amount_raw`, `usd`, `destination`, `signature`,
-`status`, an `idempotency_key`, and a `meta` JSON blob. Spends pass through the
+`reason`, `status`, an `idempotency_key`, an optional `capability_id`, and a
+`meta` JSON blob. Spends pass through the
 spend-cap and policy engine before they are recorded (see
 [Agent wallets](agent-wallets.md)).
 

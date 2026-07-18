@@ -66,8 +66,8 @@ Caps are enforced as a reserve → commit / rollback transaction in
 it fails — caps hold even across concurrent calls. The store is Redis-backed when
 available. If a call would exceed any window, `buyerFetch` returns
 `{ ok: false, abort: true, reason }` **without paying**. The platform-wide ceiling
-defaults live in env (`X402_MAX_PER_CALL_ATOMIC`, `_PER_HOUR_`, `_PER_DAY_`; see
-[Configuration](configuration.md)).
+defaults live in env (`X402_MAX_PER_CALL_ATOMIC`, `X402_MAX_PER_HOUR_ATOMIC`,
+`X402_MAX_PER_DAY_ATOMIC`; see [Configuration](configuration.md)).
 
 ## Axios variant
 

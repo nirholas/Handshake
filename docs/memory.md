@@ -56,9 +56,12 @@ Configure the persistence mode in the agent's `manifest.json`:
 | Mode | Description | Best for |
 |------|-------------|---------|
 | `local` | Stored in browser `localStorage`. Fast, private, device-specific. | Development, demos, single-device personal agents |
-| `ipfs` | Pinned to IPFS via a configured provider. Portable across devices. | Production agents where memory is valuable |
-| `encrypted-ipfs` | Same as `ipfs` but content is encrypted before pinning. | Agents that handle user PII |
+| `remote` | Synced to the platform backend (`/api/agent-memory`) per signed-in user. | Cross-device memory for platform-hosted agents |
+| `ipfs` | Loaded from a pinned IPFS bundle. Portable across devices. | Distributing a curated memory bundle with an agent |
+| `encrypted-ipfs` | Same as `ipfs` but content is AES-GCM encrypted before pinning. | Agents that handle user PII |
 | `none` | No persistence. Memory exists only for the current session. | Kiosks, one-shot interactions, demos |
+
+Custom backends can also be registered programmatically with `Memory.registerBackend(name, backend)` (a `backend` object with `load` / `persist` / optional `recall` hooks, see `specs/MEMORY_SPEC.md`); any unknown mode falls back to `local` with a warning.
 
 ### Local mode (default)
 
@@ -82,28 +85,23 @@ If the write fails because `localStorage` is full, the runtime automatically pru
 ```json
 {
   "memory": {
-    "mode": "ipfs",
-    "provider": "pinata"
+    "mode": "ipfs"
   }
 }
 ```
 
-Each `write()` pins the updated memory directory to IPFS via the configured provider. The resulting CID is stored locally as a pointer; the actual content lives on the IPFS network and can be retrieved from any device.
+In `ipfs` mode the agent loads its memory from a pinned bundle: `Memory.load({ mode: 'ipfs', manifestURI })` fetches `MEMORY.md` from the bundle, follows its links to the individual memory files, and hydrates the store. Runtime writes stay in-memory for the session; publishing an updated bundle is an explicit step (pin the `memory/` directory again and point `manifestURI` at the new CID).
 
-Supported providers and their required credentials:
+Pinning goes through the pluggable pinner in [src/pinning/index.js](../src/pinning/index.js) (`createPinner(config)`):
 
-| Provider | Environment variable(s) |
-|----------|------------------------|
-| Pinata | `PINATA_JWT` |
-| Filebase | `FILEBASE_KEY` + `FILEBASE_SECRET` |
-| Web3.Storage | `WEB3_STORAGE_TOKEN` |
+| Provider | `createPinner` config |
+|----------|----------------------|
+| `web3-storage` (default) | `{ provider: 'web3-storage', token }` |
+| `pinata` | `{ provider: 'pinata', token }` (JWT) |
+| `filebase` | `{ provider: 'filebase', accessKeyId, secretAccessKey, bucket }` |
+| `memory` | in-memory dev pinner (real CIDs, nothing persisted) |
 
-**How a write works:**
-1. Agent calls `memory.write(key, { ... })` or `memory.note(type, data)`
-2. The memory file is updated in-memory and the index (`MEMORY.md`) is rebuilt
-3. The updated directory is pinned to IPFS → new CID returned by the provider
-4. CID is saved to `localStorage` for fast recovery
-5. On the next session: the CID is read from localStorage, content is fetched from IPFS and deserialized
+Server-side, the platform's pinning endpoints (`/api/pinning/*`) read `PINATA_JWT` or `WEB3_STORAGE_TOKEN` from the environment.
 
 The benefit is cross-device persistence with content-addressed verification — the CID uniquely identifies the exact content, so you always know what you got back from the network.
 
@@ -112,20 +110,16 @@ The benefit is cross-device persistence with content-addressed verification — 
 ```json
 {
   "memory": {
-    "mode": "encrypted-ipfs",
-    "provider": "pinata",
-    "encryptionKey": "<derive-from-wallet>"
+    "mode": "encrypted-ipfs"
   }
 }
 ```
 
-Same as IPFS mode but the content is encrypted (ECIES / libsodium sealed box) before pinning. Only the holder of the encryption key can decrypt it, so memory content remains private even on a public IPFS network.
+Same as IPFS mode but every file is encrypted with **AES-GCM-256** ([src/memory/crypto.js](../src/memory/crypto.js), pure `crypto.subtle`) before pinning. Only the holder of the encryption key can decrypt it, so memory content remains private even on a public IPFS network.
 
-The encryption key should be derived from the user's wallet signature, not hardcoded. If the user signs a deterministic message with their wallet, the signature can serve as a stable key material.
+The key is not stored anywhere: `Memory.load({ mode: 'encrypted-ipfs', deriveKey })` requires a `deriveKey` function, and the standard implementation derives a non-extractable AES key from a deterministic wallet signature. `memory.save()` then encrypts each file and pins it via `POST /api/agents/<id>/memory/pin`, returning the per-file CIDs plus the CID of the rebuilt `MEMORY.md` index (the index itself is pinned in plaintext, since it only lists filenames and CIDs).
 
-> **Warning:** There is no key recovery. If the encryption key is lost, the memories are permanently inaccessible. Make sure users understand this before enabling encrypted-ipfs mode.
-
-> **Note:** Encrypted IPFS support is partially implemented. The storage mode is recognized and the encryption path is wired, but IPFS provider modules are under active development. Use `local` mode for production today.
+> **Warning:** There is no key recovery. If the wallet (and therefore the derived key) is lost, the memories are permanently inaccessible. Make sure users understand this before enabling encrypted-ipfs mode.
 
 ### None mode
 
@@ -198,7 +192,7 @@ Keep the index concise. Lines beyond 200 are truncated before injection into con
 
 ### The timeline
 
-The timeline is an append-only event log. Skills write ephemeral events here via `ctx.memory.note(type, data)`. In `local` mode, the last 200 timeline entries are persisted. In `ipfs` modes, one JSONL file per day lives under `memory/timeline/`.
+The timeline is an append-only event log. Skills write ephemeral events here via `ctx.memory.note(type, data)`. In memory it is capped at 1000 entries; in `local` mode, the last 200 entries are persisted. The bundle spec reserves a `memory/timeline/` directory (one JSONL file per day) for exported bundles; the runtime does not hydrate the timeline from IPFS on load.
 
 ```json
 {"ts":"2026-04-14T12:03:12Z","type":"waved","style":"enthusiastic"}
@@ -282,7 +276,7 @@ Memory can be exported as a portable blob and imported into another agent instan
 ```js
 // Export all memory as a JSON blob
 const blob = await agent.memory.export();
-// { version: "memory/0.1", index, files, timeline }
+// { version: "memory/0.1", mode, namespace, index, files, timeline }
 
 // Import into another instance (merge strategy: local wins on conflict)
 await otherAgent.memory.import(blob, { strategy: 'merge' });
@@ -345,7 +339,7 @@ Automatic decay (via the `decay` frontmatter field) down-weights a memory during
 
 **Multi-device (ipfs mode):** last-write-wins with additive merge on load. Conflicts are rare because most writes add new files rather than editing existing ones. In the case of a true conflict, the LLM can mediate.
 
-**Multiple tabs (same device):** writes use a `BroadcastChannel` mutex to avoid races. If two tabs write simultaneously, one will wait for the lock.
+**Multiple tabs (same device):** writes are synchronous `localStorage.setItem` calls, so the last tab to write wins. There is no cross-tab lock; if you run the same agent in several tabs at once, expect the most recent tab's memory state to be the one that persists.
 
 ---
 
@@ -366,7 +360,7 @@ agent/
         └── 2026-04-13.jsonl
 ```
 
-The `Memory._loadIPFS()` method fetches `MEMORY.md` first, parses its links to discover individual files, then fetches each one. If any file fails to fetch, it is skipped silently and the rest of memory loads normally.
+The `Memory._loadIPFS()` method fetches `memory/MEMORY.md` first, parses its links to discover individual files, then fetches each one (and decrypts it in `encrypted-ipfs` mode). If any file fails to fetch, it is skipped silently and the rest of memory loads normally. A wrong decryption key throws so callers can detect it.
 
 ---
 
@@ -375,6 +369,7 @@ The `Memory._loadIPFS()` method fetches `MEMORY.md` first, parses its links to d
 | Mode | Who can read the data |
 |------|-----------------------|
 | `local` | Only the device/browser where it was written. Never leaves the browser. |
+| `remote` | The signed-in owner via the platform backend (`/api/agent-memory`). |
 | `ipfs` | Anyone who knows the CID. CIDs are not guessable, but if leaked, the content is public. |
 | `encrypted-ipfs` | Only the holder of the encryption key. Content is opaque to the IPFS network. |
 | `none` | No one — data is never written. |
@@ -382,3 +377,12 @@ The `Memory._loadIPFS()` method fetches `MEMORY.md` first, parses its links to d
 **Consider what you're storing.** User names, stated preferences, and conversation summaries can constitute personally identifiable information (PII) in some jurisdictions. If your agent runs in a regulated context, use `encrypted-ipfs` or keep all PII out of memory and handle it in your own backend with proper consent flows.
 
 In `ipfs` mode without encryption, treat the memory as semi-public. Don't store anything the user wouldn't want visible to anyone with the CID.
+
+---
+
+## Related
+
+- [Create, enhance & edit agent memory](/docs/tutorials/create-and-edit-memory): the hands-on tutorial
+- [Agent system](/docs/agent-system): how memory feeds the LLM runtime
+- [Skills](/docs/skills): the `ctx.memory` API skills use
+- [Architecture overview](/docs/architecture): where memory sits in the four layers

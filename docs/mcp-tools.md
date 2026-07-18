@@ -1,9 +1,10 @@
 # MCP Tools Catalog
 
-three.ws ships several [MCP](mcp.md) servers. One is free and 3D-only; the others
-expose paid tools that settle per call in USDC over [x402](x402.md). This page is
-the catalog: which server hosts which tool, whether it's free or paid, and what it
-does.
+three.ws ships several [MCP](mcp.md) servers: tool servers that AI assistants
+(Claude, ChatGPT, any MCP client) can call directly. One is free and 3D-only; the
+others expose paid tools that settle per call in USDC over [x402](x402.md). This
+page is the catalog: which server hosts which tool, whether it's free or paid, and
+what it does.
 
 > Source: [`api/mcp-studio.js`](../api/mcp-studio.js) (free),
 > [`api/mcp-3d.js`](../api/mcp-3d.js) + [`api/_mcp3d/pricing.js`](../api/_mcp3d/pricing.js)
@@ -66,9 +67,11 @@ and direction tools are flat per call.
 | `apply_animation` | $0.01 | Retarget a library clip onto a rigged GLB. |
 | `direct_prompt` | $0.01 | Rewrite a vague idea into a tight 3D spec. |
 | `generate_material` | $0.01 | PBR material parameters from a description. |
+| `anchor_provenance` | $0.05 | Sign a content credential and anchor its hash on Solana. |
 
 Free studio helpers (no charge): `getting_started`, `generation_status`,
-`preview_3d`, `list_animations`, `inspect_model`, `optimize_model`, `save_avatar`.
+`preview_3d`, `list_animations`, `inspect_model`, `optimize_model`, `save_avatar`,
+`validate_spatial_response` (the [Spatial MCP](spatial-mcp.md) conformance gate).
 
 ## Agent & commerce tools — `3d-agent-local`
 
@@ -80,6 +83,9 @@ generation lane**; the rest are paid and quote their price in the
 | Tool | Price | What it does |
 |---|---|---|
 | `forge_free` | **Free** | Text → textured GLB on the free NVIDIA NIM (Microsoft TRELLIS) lane; returns a GLB URL + viewer link. |
+| `crypto_news` | **Free** | Live crypto headlines from 192 publisher feeds, filterable by category, source, language, or search. |
+| `crypto_news_digest` | **Free** | Clusters the last 1-72h of coverage into distinct narratives with stance, tickers, and covering outlets. |
+| `crypto_news_archive` | free quota, then $0.001/search | Search 660,000+ archived articles back to September 2017. Stats and trending modes are always free; search is free up to a daily per-IP quota, then $0.001 USDC per search via x402. |
 | `text_to_avatar` | paid | Text → 3D avatar. |
 | `mesh_forge` | paid | Text/image → 3D mesh via a Granite-directed model chain. |
 | `rig_mesh` | paid | Auto-rig a GLB into an animation-ready model. |
@@ -88,7 +94,7 @@ generation lane**; the rest are paid and quote their price in the
 | `restyle_material` | paid | Re-skin a GLB without regenerating its mesh — AI PBR restyle from an instruction ("make it chrome", "wooden", "cyberpunk neon") or seeded, reproducible colorway variant fan-out from a PBR preset; parent → child lineage. See [Restyle Studio](/restyle). |
 | `get_pose_seed` | paid | Pose generation. |
 | `ens_sns_resolve` | paid | ENS + SNS name resolution. |
-| `pump_snapshot` | free (no signer) | Live Solana token snapshot (price, volume, metadata). |
+| `pump_snapshot` | paid ($0.005) | Live Solana token snapshot: Jupiter price, DexScreener volume/pair, pump.fun metadata, on-chain top-holder distribution. |
 | `sentiment_pulse` | paid | Token sentiment pulse. |
 | `agent_reputation` | paid | ERC-8004 agent reputation read. |
 | `vanity_grinder` | paid | Solana vanity address mining. |

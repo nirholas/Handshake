@@ -63,7 +63,7 @@ The avatar is the 3D model that visually represents the agent. It is a glTF 2.0 
 
 ### Skill
 
-A skill is a modular capability bundle installed into an agent. Each skill has a manifest of its own, a set of tools exposed to the LLM, and optional scene hooks. Built-in examples include `wave` (plays a wave animation), `validate-model` (runs the glTF validator on the loaded body), and `sign-action` (performs a scoped on-chain action via a delegation). Skills are loaded lazily from relative paths, IPFS CIDs, or HTTPS URLs, and fire a `skill:loaded` event when ready. The host page can install or uninstall skills at runtime via the JS API.
+A skill is a modular capability bundle installed into an agent. Each skill has a manifest of its own, a set of tools exposed to the LLM, and optional scene hooks. Built-in examples include `greet` (waves at the user with a wave animation), `validate-model` (runs the glTF validator on the loaded body), and `sign-action` (performs a scoped on-chain action via a delegation). Skills are loaded lazily from relative paths, IPFS CIDs, or HTTPS URLs, and fire a `skill:loaded` event when ready. The host page can install or uninstall skills at runtime via the JS API.
 
 ### Widget
 

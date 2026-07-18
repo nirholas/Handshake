@@ -19,9 +19,11 @@ the sniper oracle gate.
 
 ## How a tick works
 
-The loop runs from the `x402-autonomous-loop` cron, scheduled every **5 minutes**
-(the `*/5 * * * *` entry in [`vercel.json`](../vercel.json)'s cron list, run by
-Google Cloud Scheduler). Each tick:
+The loop runs from the `x402-autonomous-loop` cron endpoint, invoked every
+**minute** by the `economy-tick` dispatcher (see the
+[economy heartbeat](economy-heartbeat.md)) rather than by its own schedule
+entry; per-entry Redis cooldowns decide what actually fires on any given tick.
+Each tick:
 
 1. Selects up to `X402_AUTONOMOUS_MAX_PER_TICK` **ready** registry entries —
    those whose Redis cooldown has elapsed — sorted by priority descending.
@@ -56,6 +58,14 @@ treasury (`CIRCULATION_TREASURY_SECRET`). Circulation funds agent-to-agent SOL /
 $THREE activity; this loop funds USDC intel purchases. They do not fund each
 other.
 
+The seeder wallet is the same keypair the ring economy calls the
+`x402-ring-payer` signer role, and it **refills its own USDC**: the
+`economy-rebalance` cron (every 30 minutes) swaps a capped slice of the wallet's
+own SOL into USDC whenever its USDC float drops below a floor (default $10,
+`ECONOMY_REBALANCE_RING_USDC_FLOOR`). The rebalancer is inert (dry-run plan
+only) unless `ECONOMY_REBALANCE_ENABLED=1`, and every swap is reserve-,
+per-swap-, per-run- and slippage-capped.
+
 ## The registry
 
 Every scheduled call is a registry entry in `autonomous-registry.js`. An entry
@@ -69,7 +79,7 @@ declares:
 | `method`, `body` | Request shape; `body` may be a function of the run context. |
 | `cooldown_s` | Minimum seconds between calls. |
 | `priority` | 1–100; higher wins when several entries are ready. |
-| `pipeline` | Tag: `oracle`, `health`, `volume`, `sniper`, `qa`, `forge`, `discovery`, `security`, `circuit-breaker`, `self`, `external`. |
+| `pipeline` | Tag grouping related entries. In production today: `health`, `oracle`, `volume`, `self`, `finance`, `discovery`, `sniper`, `agents`, `security`, `reconciliation`, `datapoint`, `qa`, `forge`, `external`, `circuit-breaker`, and a few singletons (`reliability`, `observability`, `feed`, `commerce`, `canonicalize`). |
 | `enabled` | Set `false` to pause an entry. |
 | `extractSignal` | Optional: maps the response into `signal_data` (for oracle entries, `{ mint?, signal, confidence, headline }`). |
 | `resolveTarget` | Optional: computes the request path dynamically per call (for entries that rotate over a set of resources). |
@@ -101,7 +111,7 @@ The registry groups entries into pipelines. The main ones in production:
 To pause any entry without a deploy, set its `enabled: false`; to pause the whole
 loop, set `X402_AUTONOMOUS_ENABLED=false`.
 
-## The Volume Bootstrap Loop (`self/026`)
+## The Volume Bootstrap Loop (`volume-bootstrap-loop`)
 
 One registry entry — `volume-bootstrap-loop`, pipeline `volume`, cooldown 300s —
 owns a full sweep rather than a single call. On each run it advances a
@@ -135,8 +145,8 @@ automatically (and `tests/x402-ring-catalog.test.js` fails until it is cataloged
 One registry entry — `datapoint-volume-sweep`, pipeline `datapoint`, cooldown
 300s — settles real on-chain USDC against the [datapoint fabric](market-data-api.md#the-datapoint-fabric)
 (the 1,000,000+ endpoints served by the single `api/x402/d/[...path].js` route),
-which the Volume Bootstrap Loop above never touches (its rotation is the ~60
-*named* catalog endpoints). On each run it advances its own Redis-backed cursor
+which the Volume Bootstrap Loop above never touches (its rotation is the ~45
+*named* catalog endpoints flagged `autobuy: true`). On each run it advances its own Redis-backed cursor
 over a pool of concrete datapoint URLs — resolved at runtime from the same cached
 feeds the paid route reads, so no third-party id is hardcoded — and pays the next
 `X402_DATAPOINT_SWEEP_BATCH` (default 6) of them on Solana through the shared
@@ -159,7 +169,7 @@ No-op (graceful skip, no spend) when the wallet/RPC is unconfigured. See
 > datapoint settle count as external traction — that would be wash volume. Real
 > ranking comes from external buyers, not a heavier self-paid sweep.
 
-## Reconciliation (`self/027`)
+## Reconciliation (`revenue-reconciliation`)
 
 The `revenue-reconciliation` entry (pipeline `reconciliation`, cooldown 86400s —
 **daily**) is the financial-integrity watchdog. It cross-checks every record that

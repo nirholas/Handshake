@@ -61,8 +61,11 @@ trial for a skill, so a gated skill call can verify entitlement before running.
 ## Current limitations
 
 - **Discovery surface.** Listings and prices live in the database and the buy/sell
-  endpoints are complete, but there is not yet a single paginated "browse all
-  skills for sale" HTTP endpoint with sort/filter; discovery today is per-agent.
+  endpoints are complete, but there is not yet a free, paginated "browse all
+  skills for sale" HTTP endpoint with sort/filter; discovery today is per-agent
+  (agents themselves are browsable at `GET /api/marketplace/agents`), and the
+  paid [`/api/x402/skill-marketplace`](x402-endpoints.md) endpoint returns the
+  live skill listing catalog with pricing for $0.001 USDC.
 - **Auto-grant.** A confirmed skill purchase is recorded and the license NFT is
   minted, but the purchased skill is not automatically attached to the buyer's
   agent profile — entitlement is checked via `check-skill-access.js` rather than

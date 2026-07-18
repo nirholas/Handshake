@@ -1,6 +1,6 @@
 # Reputation System
 
-The reputation system lets anyone leave a permanent, publicly verifiable score for a registered three.ws. Scores are stored on the `ReputationRegistry` smart contract — part of the ERC-8004 standard — and cannot be deleted or altered once submitted.
+The reputation system lets anyone leave a permanent, publicly verifiable score for a registered three.ws agent. Scores are stored on the `ReputationRegistry` smart contract — part of the ERC-8004 standard — and cannot be deleted or altered once submitted. You can browse any agent's scores in the [Reputation Explorer](https://three.ws/reputation) without an account or wallet.
 
 ---
 
@@ -33,24 +33,26 @@ One review per wallet address per agent is enforced by the contract. Agents cann
 2. Scroll to the **Reputation** section.
 3. Click **Vouch for this agent** (you must be signed in with a connected wallet).
 4. Select a star rating (1–5).
-5. Optionally write a comment (up to 280 characters, stored as a URI reference on-chain).
+5. Optionally write a comment (up to 280 characters, stored on-chain in the feedback record's `uri` field).
 6. Click **Sign & submit** and confirm the transaction in your wallet.
 
 Gas cost is minimal on L2 networks like Base (typically under $0.10). The panel refreshes automatically a few seconds after the transaction confirms.
 
 **Owners cannot vouch for their own agents.** If you own the agent, the vouch button is replaced with an explanatory note.
 
-A full reputation dashboard — showing aggregate stats and all recent reviews — is also available at `/public/reputation/` for any `(chainId, agentId)` pair.
+A full reputation dashboard — showing aggregate stats and all recent reviews — is also available at [three.ws/reputation](https://three.ws/reputation) for any `(chainId, agentId)` pair.
 
 ### Via the SDK
 
+These helpers live in the three.ws codebase at [src/erc8004/reputation.js](../src/erc8004/reputation.js) (import in-repo or vendor the module):
+
 ```js
-import { submitReputation } from '@three-ws/sdk/erc8004';
+import { submitReputation } from './src/erc8004/reputation.js';
 
 const txHash = await submitReputation({
   chainId: 8453,          // Base mainnet
   agentId: 42,
-  score: 5,               // Integer, 1–5 (maps to the contract's –100..+100 range)
+  score: 5,               // Any int8 in -100..+100; the star UI submits 1-5
   comment: 'Incredible avatar and fast responses.',
   signer: connectedSigner // ethers.js Signer
 });
@@ -74,7 +76,7 @@ Recent vouches are loaded by querying `FeedbackSubmitted` event logs for the las
 
 ### Full reputation dashboard
 
-The `ReputationDashboard` class ([src/reputation-ui.js](../src/reputation-ui.js)) is used on the standalone `/public/reputation/` page. It shows:
+The `ReputationDashboard` class ([src/reputation-ui.js](../src/reputation-ui.js)) is used on the standalone [/reputation](https://three.ws/reputation) page. It shows:
 
 - Review count, average rating, time since last review
 - Up to 10 recent reviews with inline transaction links
@@ -84,10 +86,10 @@ The `ReputationDashboard` class ([src/reputation-ui.js](../src/reputation-ui.js)
 ### Via the SDK
 
 ```js
-import { getReputation, getRecentReviews } from '@three-ws/sdk/erc8004';
+import { getReputation, getRecentReviews } from './src/erc8004/reputation.js';
 
 // Aggregate stats
-const { total, count, average } = await getReputation({
+const { count, average } = await getReputation({
   chainId: 8453,
   agentId: 42,
   runner: provider  // ethers.js Provider
@@ -106,16 +108,14 @@ reviews.forEach(r => {
 });
 ```
 
-`getReputation` returns `{ total, count, average }` where `average` is already computed (sum / count, or 0 if no reviews). `getRecentReviews` returns an array of objects with `from` (reviewer address), `score`, `comment`, `blockNumber`, and `txHash`.
+`getReputation` returns `{ count, average }` where `average` is already computed from the contract's `avgX100` (0 if no reviews). `getRecentReviews` returns an array of objects with `agentId`, `from` (reviewer address), `score`, `comment`, `blockNumber`, and `txHash`.
 
 ### Via the Passport widget
 
+The **ERC-8004 Passport** widget type ([src/widgets/passport.js](../src/widgets/passport.js)) renders a read-only on-chain identity card (owner, registration, reputation aggregate, and latest validation) alongside the 3D avatar. Create one in [Widget Studio](https://three.ws/studio), then embed its public URL:
+
 ```html
-<agent-3d
-  widget="passport"
-  agent-id="8453:0xRegistry:42"
-  show-reputation="true"
-></agent-3d>
+<iframe src="https://three.ws/w/{widget-id}" width="400" height="500" title="Agent passport"></iframe>
 ```
 
 ---
@@ -190,3 +190,12 @@ GET /api/explore
 Separate from reputation scores, glTF validation results can also be recorded on-chain via the `ValidationRegistry`. A passing validation attests that the agent's 3D model meets the glTF specification as of a specific block timestamp. Validation history is shown on the agent's profile page alongside reputation data.
 
 See the [Validation](./validation.md) documentation for details.
+
+---
+
+## Related
+
+- [ERC-8004 identity](/docs/erc8004): registering an agent so it can accumulate reputation
+- [Validation](/docs/validation): on-chain attestations for model quality
+- [Solana reputation](/docs/solana-reputation): the attestation-based equivalent for Solana agents
+- [Agent reputation](/docs/agent-reputation): how reputation surfaces across the platform

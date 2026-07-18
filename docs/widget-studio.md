@@ -55,7 +55,7 @@ The Studio has three columns: **Pick avatar + widget type** (left), **Live previ
 
 The left column shows your saved avatars as thumbnail cards. Click any card to select it — a highlight appears and the live preview updates immediately.
 
-> *See the screenshot below: the avatar list shows thumbnail cards; the selected avatar has a purple outline.*
+The avatar list renders as thumbnail cards; the selected avatar is outlined so you always know which model the preview is showing.
 
 If you have no avatars yet, you'll see a link to upload one from the Dashboard. Avatars are GLB files stored in your account.
 
@@ -75,7 +75,7 @@ The right column has a **Brand** panel with a form. Changes here update the live
 
 - **Name** — internal label for your widget (shown in the Dashboard). Required.
 - **Background** — canvas background color (color picker, default `#0a0a0a`)
-- **Accent** — used for buttons and interactive highlights (default `#8b5cf6`, purple)
+- **Accent**: used for buttons and interactive highlights (default `#ffffff`)
 - **Caption** — optional short text shown beneath the widget (up to 280 characters)
 - **Show controls** — toggle the orbit/rotate controls visible to visitors
 - **Auto-rotate** — whether the model spins automatically on load
@@ -117,9 +117,7 @@ If something is wrong with your form (e.g. the Name field is empty), an error me
 
 After clicking **Generate embed**, a modal slides up titled "Your widget is live."
 
-> *See the screenshot below: the modal shows a live preview iframe, a shareable URL field, and two embed snippet text areas.*
-
-The modal contains:
+The modal shows a live preview iframe, a shareable URL field, and two embed snippet text areas:
 
 **Shareable URL** — a `/w/<id>` link you can paste anywhere. Social platforms and CMSes render a rich preview card from this URL.
 

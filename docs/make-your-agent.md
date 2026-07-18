@@ -41,21 +41,23 @@ This description is your agent's system prompt — the instructions it follows. 
 
 ## Step 4 — Enable skills (optional)
 
-Skills are extra capabilities you can give your agent. Common ones:
+Skills are extra capabilities you can give your agent. The wizard offers:
 
 | Skill | What it does |
 |---|---|
-| **Voice** | Lets users talk to the agent by microphone; the agent responds out loud |
-| **Memory** | The agent remembers past conversations across sessions |
-| **Web search** | The agent can look things up in real time |
+| **Memory** | The agent remembers what you tell it across sessions (on by default) |
+| **Deep thinking** | The agent reasons step by step before answering (on by default) |
+| **Web research** | The agent can look things up in real time |
 
-You can add or remove skills at any time from the agent's edit page.
+There is also an optional crypto group (pump.fun monitoring/trading, a Solana wallet, and x402 pay-per-call) you can reveal and enable if you want an on-chain agent; skip it entirely otherwise.
+
+You can add or remove skills at any time from the agent's edit page. Voice (microphone input and spoken replies) isn't a wizard skill: you configure it later on the Voice tab of the agent editor.
 
 ---
 
 ## Step 5 — Publish and get your embed
 
-Once you hit **Publish**, your agent gets a live URL — something like `three.ws/agent/abc123`.
+Once you hit **Publish**, your agent gets a live URL — something like `three.ws/agents/abc123` (plus a friendly handle URL like `three.ws/@aria` once you reserve a handle).
 
 The wizard also gives you an **embed snippet**: a few lines of HTML you can paste into any webpage to make the agent appear there. You don't need to know HTML to do this — just copy and paste.
 

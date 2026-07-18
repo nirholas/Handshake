@@ -19,7 +19,7 @@ You need a model before you can place it in AR. The fastest way is to generate o
 
 1. Go to [three.ws/forge](https://three.ws/forge)
 2. Type a description — something concrete works best: **a ceramic coffee mug with a handle** or **a low-poly red fox sitting down**
-3. Hit **Forge** and wait 30–90 seconds for the model to generate
+3. Hit **Generate** and wait 30–90 seconds for the model to generate
 
 You can also use any existing avatar from [three.ws/gallery](https://three.ws/gallery) — the AR tab exists on every avatar and Forge model page.
 
@@ -28,10 +28,10 @@ You can also use any existing avatar from [three.ws/gallery](https://three.ws/ga
 ## Step 2 — Open the model on your phone
 
 **If you're already on your phone:**
-The Forge result screen has a **View in AR** button in the toolbar. Tap it.
+The Forge result screen has a **View in AR** button in the toolbar. Tap it and AR launches straight from the page.
 
 **If you're on desktop:**
-After the model generates, switch to the **AR** tab in the model viewer. A QR code appears. Scan it with your phone's camera. On iPhone it opens Safari; on Android it opens Chrome. The AR experience opens automatically — no extra taps required.
+Click the same **View in AR** button. A **See it in your space** panel opens with a QR code. Scan it with your phone's camera: the model opens in the phone's browser with a big **View in AR** launcher, one tap from AR.
 
 ---
 
@@ -72,20 +72,28 @@ If the above methods aren't available, three.ws starts a **WebXR immersive-ar se
 
 ## Step 5 — Add AR to your own embed
 
-If you've embedded a three.ws agent on your website, enabling AR takes one attribute:
+There are three ways to offer AR from your own page, depending on how you embed.
+
+**Lightweight model viewer (`<three-ws-viewer>`).** The [`@three-ws/avatar`](https://www.npmjs.com/package/@three-ws/avatar) SDK's viewer element takes a boolean `ar` attribute:
 
 ```html
-<script type="module"
-  src="https://three.ws/agent-3d/latest/agent-3d.js"
-></script>
+<script type="module">
+  import '@three-ws/avatar/viewer';
+</script>
 
-<agent-3d
-  id="your-agent-id"
+<three-ws-viewer
+  src="https://three.ws/cdn/your-model.glb"
   ar
-></agent-3d>
+></three-ws-viewer>
 ```
 
-The `ar` attribute is all you need. The AR button appears automatically on mobile devices that support it. On desktop, it's hidden — no desktop browser supports `immersive-ar`.
+With `ar` present, a **View in AR** button appears on the viewer. Clicking it opens the platform's device-aware launcher (`https://three.ws/api/ar?src=...`) in a new tab: Android gets Scene Viewer, iOS gets Quick Look, desktop falls back to the interactive web viewer.
+
+**Full agent embed (`<agent-3d>`).** The talking-agent web component does not take an `ar` attribute. To offer AR next to it, link to the avatar's dedicated full-screen AR page, which picks the right method per device automatically:
+
+```html
+<a href="https://three.ws/avatars/YOUR_AVATAR_ID/ar">See it in your room</a>
+```
 
 ### Iframe embed + AR
 

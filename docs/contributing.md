@@ -46,10 +46,13 @@ npm install
 
 # 3. Copy environment variables
 cp .env.example .env.local
-# Minimum required: DATABASE_URL, JWT_SECRET, ANTHROPIC_API_KEY
+# Minimum required: DATABASE_URL, JWT_SECRET, and one chat provider key
+# (GROQ_API_KEY, OPENROUTER_API_KEY, or ANTHROPIC_API_KEY)
 
-# 4. Apply the database schema (requires DATABASE_URL to be set)
-psql "$DATABASE_URL" -f api/_lib/schema.sql
+# 4. Provision the database (requires DATABASE_URL to be set)
+npm run db:bootstrap
+# Runs core schema + indexer + delegations + migrations; idempotent.
+# Do NOT apply api/_lib/schema.sql alone (it skips the migration-defined tables).
 
 # 5. Start the development server
 npm run dev
@@ -61,7 +64,7 @@ npm run dev
 | Service | Purpose | Without it |
 |---|---|---|
 | Neon (Postgres) | Real test database | API routes that need DB will fail |
-| Anthropic API key | LLM features | AI responses unavailable |
+| An LLM provider key (Groq, OpenRouter, NVIDIA, Anthropic, or OpenAI) | LLM features | AI responses unavailable |
 | Upstash Redis | Distributed rate limiting | Falls back to in-memory per-instance |
 
 Most features work without the optional services. The app degrades gracefully, so basic 3D viewer work, skill development, and UI changes don't require any backend credentials.
@@ -73,16 +76,20 @@ For full backend setup — R2 storage, environment variables, and how the app is
 ## Project Structure
 
 ```
-src/              — client-side JavaScript (agent system, viewer, UI)
-api/              — serverless-style API handlers (Node.js, served by the Cloud Run container)
-public/           — static pages and assets
-contracts/        — Solidity smart contracts (Foundry)
-character-studio/ — avatar builder (separate React SPA)
-specs/            — design specifications
-docs/             — internal documentation
-tests/            — unit and API tests
-scripts/          — build and maintenance scripts
-examples/         — working code examples (including skill templates)
+src/              - client-side JavaScript (agent system, viewer, UI)
+api/              - serverless-style API handlers (Node.js, served by the Cloud Run container)
+pages/            - HTML entry points for the multi-page app
+public/           - static pages and assets
+contracts/        - Solidity smart contracts (Foundry)
+character-studio/ - avatar builder (separate React SPA)
+packages/         - publishable packages (MCP servers and more)
+sdk/, *-sdk/      - client SDKs
+workers/          - GPU/background workers
+specs/            - design specifications
+docs/             - public documentation (served at three.ws/docs)
+tests/            - unit and API tests
+scripts/          - build and maintenance scripts
+examples/         - working code examples (including skill templates)
 ```
 
 Key source files:
@@ -124,10 +131,10 @@ The project follows the rules in [CLAUDE.md](../CLAUDE.md). These are enforced i
 
 ## Running Tests
 
-The test suite uses [Vitest](https://vitest.dev/) and covers both source modules and API endpoints.
+The test suite uses [Vitest](https://vitest.dev/) for source modules and API endpoints, plus [Playwright](https://playwright.dev/) for browser tests. `npm test` runs Vitest first and only proceeds to the Playwright stage when the unit suite is green.
 
 ```bash
-# Run all tests
+# Run all tests (vitest, then playwright)
 npm test
 
 # Run a specific test file
@@ -270,7 +277,7 @@ Skills are the best way to extend three.ws without touching core code. A skill i
 
 4. **Write a `SKILL.md`** documenting what your skill does, what permissions it requires, and how to install it.
 
-5. **Share it.** Post in the `#skills` channel on Discord, or open a PR to add it to the official skill registry.
+5. **Share it.** Post it in [GitHub Discussions](https://github.com/nirholas/three.ws/discussions), or list it on the platform's skill marketplace so agents can install it.
 
 ---
 
@@ -308,12 +315,20 @@ Check [existing issues](https://github.com/nirholas/three.ws/issues) before open
 
 - **[GitHub Discussions](https://github.com/nirholas/three.ws/discussions)** — design questions, architecture ideas, general "how does X work"
 - **[GitHub Issues](https://github.com/nirholas/three.ws/issues)** — bug reports and concrete feature requests
-- **Discord** — real-time chat (link in the README)
 
-Core team response times: typically 2–3 business days on GitHub, faster in Discord. If a PR has been open for a week with no review, a polite ping in Discord is welcome.
+Core team response times: typically 2-3 business days on GitHub. If a PR has been open for a week with no review, a polite bump on the PR is welcome.
 
 ---
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the [Apache License 2.0](../LICENSE).
+By contributing, you agree that your contributions are provided under the terms of the repository's [LICENSE](../LICENSE) (proprietary, all rights reserved). Read it before submitting substantial work.
+
+---
+
+## Related
+
+- [Configuration Reference](/docs/configuration): every environment variable and config file
+- [Deployment & Self-Hosting](/docs/deployment): running the full stack yourself
+- [Skills](/docs/skills): the skill format, lifecycle hooks, and message API
+- [Security](/docs/security): responsible disclosure and the security model

@@ -1,12 +1,15 @@
 # The vault — encrypted 3D models gated by an on-chain BNB Chain purchase
 
-`/vault` sells access to encrypted 3D models. Buying one is a real BSC
-transaction against a real smart contract, which triggers a real cross-chain
-call into Greenfield's programmable storage — a genuinely unique capability
-BNB Chain has that Ethereum L1, Base, and (mostly) Solana don't (see
-`prompts/bnb-chain/00-CONTEXT.md`'s verified facts). This page explains what
-it is, how it's built, and how to reproduce the proof yourself. Everything
-here is real code against real endpoints; nothing is mocked.
+The vault, at [three.ws/vault](https://three.ws/vault), sells access to
+encrypted 3D models: sellers list an encrypted GLB, buyers pay on-chain and
+receive the key to decrypt and view it. Buying one is a real BSC transaction
+against a real smart contract, which triggers a real cross-chain call into
+Greenfield's programmable storage: a genuinely unique capability BNB Chain
+has that Ethereum L1, Base, and (mostly) Solana don't (see
+`prompts/bnb-chain/00-CONTEXT.md`'s verified facts). This page is for
+developers: it explains what the vault is, how it's built, and how to
+reproduce the proof yourself. Everything here is real code against real
+endpoints; nothing is mocked.
 
 ---
 
@@ -81,7 +84,7 @@ Greenfield…" for that window rather than faking an instant unlock.
 ## 4. Reproducing the proof
 
 The public BSC testnet deploy is blocked on a funded deployer key (same wall
-documented across prompts 07/09/10/11/13/14/18 in `PROGRESS.md`). Every
+documented across prompts 07/09/10/11/13/14/18 in `prompts/bnb-chain/PROGRESS.md`). Every
 piece of logic above is provable today against a **local anvil fork** — the
 same technique prompt 11 used at the exported-function level, extended here
 to drive the actual running HTTP endpoints and a real headless browser:
@@ -131,3 +134,8 @@ this campaign, not a bug in this code path.
   publicly deployed contract yet (deploy itself is blocked); the "Sell a
   model" panel on `/vault` is real code against the real upload + `list()`
   path, exercised so far only on the local anvil fork above.
+
+## Related
+
+- [BNB Chain payments](/docs/bnb-payments) - MPP payments and the MegaFuel gasless-send rail the vault's `buy()` uses
+- [x402 on three.ws](/docs/x402) - the platform's pay-per-call protocol on Solana and Base

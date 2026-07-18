@@ -1,6 +1,6 @@
 # Editor Guide
 
-The three.ws editor lets you inspect and modify an agent's 3D model, adjust materials and textures, build the agent manifest, and publish the result to the platform. This guide covers the full workflow from opening a file through publishing.
+The three.ws editor lets you inspect and modify an agent's 3D model, adjust materials and textures, build the agent manifest, and publish the result to the platform. It runs entirely in the browser: open a GLB, edit, and publish or download. This guide covers the full workflow from opening a file through publishing.
 
 ---
 
@@ -11,16 +11,16 @@ The three.ws editor lets you inspect and modify an agent's 3D model, adjust mate
 If you own an agent and are authenticated:
 
 ```
-https://three.ws/agent-edit?agent=<agent-id>
+https://three.ws/agent/<agent-id>/edit
 ```
 
-This opens the full editor pre-loaded with your agent's GLB and manifest. You must be signed in — the platform checks ownership at the storage layer when you attempt to save or publish.
+This opens the agent edit page pre-loaded with your agent's GLB and configuration. You must be signed in. The platform checks ownership server-side when you attempt to save or publish.
 
-Alternative URL forms that also work:
+Two more entry points:
 
 ```
-https://three.ws/agent/<id>/edit     ← owner-only edit page
-https://three.ws/app?agent=<id>      ← app shell with agent in edit mode
+https://three.ws/agent/new           starts a new agent from scratch
+https://three.ws/app?agent=<id>      the viewer app shell in editing mode with save-back
 ```
 
 ### Open any GLB file (no account required)
@@ -37,17 +37,16 @@ Then drag and drop any `.glb` file onto the viewport. The editor loads the file 
 
 ## Editor Layout
 
-The editor is organized into five regions:
+The editor is organized into four regions:
 
 | Region | What it contains |
 |---|---|
-| **Left panel** | Scene Explorer — the full object tree |
+| **Scene Explorer panel** | The full object tree, with an inspector below it showing the selected object's properties |
 | **Center** | 3D viewport (three.js canvas with editing enabled) |
-| **Right panel** | Inspector — properties of the selected object |
-| **Bottom toolbar** | Animation controls, download, publish button |
-| **dat.GUI overlay** | Quick-access buttons: Download, Publish, Scene Panel, Revert |
+| **Animation panel** | Clip buttons rendered by the viewer for rigged models |
+| **dat.GUI "Editor" folder** | Quick-access actions: download GLB, publish as embed, scene panel, save edits, revert all edits |
 
-The dat.GUI panel (top-right corner) is the primary way to trigger editor actions. The Scene Explorer is toggled with the `T` key or the "Scene Panel" button.
+The dat.GUI panel (behind the Controls toggle, top-right corner) is the primary way to trigger editor actions. The Scene Explorer is toggled with the `T` key or the "scene panel [T]" button.
 
 ---
 
@@ -163,7 +162,7 @@ If the loaded model contains morph targets (also called blend shapes), sliders a
 
 - Range: **0.0** (rest pose) to **1.0** (full deformation)
 - Changes are applied in real-time in the viewport
-- Label names match the identifiers the emotion system expects (e.g., `happy`, `sad`, `surprised`)
+- The emotion system drives ARKit-style blendshape names (`mouthSmile`, `browInnerUp`, `eyesClosed`, and similar); if your model's targets use those names, expressions work automatically
 
 Use these sliders to verify expressions look correct before connecting them to the emotion system. Morph target influences are not currently written to the export.
 
@@ -171,15 +170,16 @@ Use these sliders to verify expressions look correct before connecting them to t
 
 ## Animation Controls
 
-The animation panel (bottom toolbar, from `animation-panel.jsx`) lists all clips embedded in the GLB.
+The animation panel (rendered by the viewer, `src/viewer.js` `.anim-panel`) lists the clip library available to the loaded rig.
 
-- **Play/Pause** per clip — click the clip button to toggle
+- **Play** per clip: click the clip button to crossfade to it
 - **Stop all** (⏹) — halts all running clips
 - **Active state** — the currently playing clip is highlighted
+- **1-9 keys**: trigger the first nine clips
 
 Animations continue running while you adjust materials. This is intentional: it lets you preview how the avatar looks in motion while tweaking a roughness value, rather than evaluating a static pose.
 
-The panel does not yet expose per-clip speed control or duration display in the current UI; those are visible in the dat.GUI overlay when a clip is selected.
+Clips embedded in the GLB itself get per-clip toggles and a playback-speed slider in the dat.GUI **Animation** folder.
 
 ---
 
@@ -331,3 +331,12 @@ The editor is at format version `agent-editor/0.1`. The following rough edges ar
 3. **Visibility via scale hack** — hidden nodes are exported with `scale=[0,0,0]` rather than being removed or flagged. This is not spec-compliant and may cause issues in downstream tools.
 4. **Duplicate material names** — if the GLB contains two materials with the same name, only the first match is patched during export.
 5. **No DOM events** — the editor does not fire DOM events on session changes. External code must call `session.onChange()` directly.
+
+The full contract lives in [specs/EDITOR_SPEC.md](https://github.com/nirholas/three.ws/blob/main/specs/EDITOR_SPEC.md).
+
+## Related
+
+- [3D Viewer](/docs/viewer): the rendering layer the editor sits on
+- [Agent Manifest](/docs/agent-manifest): the manifest format the builder produces
+- [Avatar creation](/docs/avatar-creation): generate an avatar to edit
+- [Embedding](/docs/embedding): what the published embed snippet gives you

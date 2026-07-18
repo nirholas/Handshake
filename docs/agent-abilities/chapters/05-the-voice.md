@@ -1,6 +1,6 @@
 # Chapter 5 · The Voice — conversation
 
-You talk to agents and they talk back — in chat, through copilots, as narrators, and in your notifications.
+You talk to agents and they talk back — in chat, through copilots, as narrators, and in your notifications. Try it on any avatar page, in the full chat workspace at three.ws/chat, or in your personal hub at three.ws/a/me.
 
 On three.ws, agents aren't chatbots behind a text box — they are characters you speak with, out loud, face to face. Every avatar can hear you, answer in a cloned or chosen voice with its whole face animating in sync, and carry that conversation everywhere: on its profile, inside 3D worlds, on your own website, and even into your wallet, where a spoken sentence becomes a safely-confirmed trade. Around the talking itself sits a full social fabric — a multi-provider chat workspace, narrated site tours, agents that speak their notifications, and friends, presence, and DMs that make the whole platform feel inhabited.
 
@@ -203,3 +203,10 @@ The authenticated home for everything you own: every agent with its avatar, skil
 **How it works:** src/a-me.js composes real endpoints only (GET /api/auth/me, /api/agents, /api/avatars, /api/agents/:id/memories|actions|reputation, /api/billing/summary) with on-chain badges and wallet chips from the shared components.
 
 **Why it matters:** One page answers 'what are my agents doing and earning?' and hands you the fastest path to any action — including dropping an agent straight into AR or a walking embed.
+
+## Related
+
+- [Voice Lab](/docs/voice-lab)
+- [Lip sync](/docs/lipsync)
+- [Talking Avatar Video](/docs/talking-avatar-video)
+- [Trading Copilot](/docs/trading-copilot)

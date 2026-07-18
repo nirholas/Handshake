@@ -2,7 +2,7 @@
 
 The data layer agents and their owners trade on: live markets, news, scoring oracles, liquidations, and sentiment.
 
-three.ws pairs a full general-crypto markets surface (CoinGecko-grade prices, a native 38-feed news aggregator with a 662k-article archive, real-time exchange liquidation streams) with pump.fun-native intelligence: the Oracle conviction engine that scores every launch 0-100 within seconds, a coin-intelligence radar, the platform's own /launches directory, and live PumpPortal feeds that even drive 3D avatar reactions. Everything runs on real, mostly keyless data sources — CoinGecko, alternative.me, public Ethereum RPCs, Binance/Bybit/OKX futures WebSockets, publisher RSS feeds, the pump.fun firehose — with a hard no-fabricated-data policy (surfaces degrade to designed offline states rather than fake numbers).
+three.ws pairs a full general-crypto markets surface (CoinGecko-grade prices, a native 192-feed news aggregator with a 662k-article archive, real-time exchange liquidation streams) with pump.fun-native intelligence: the Oracle conviction engine that scores every launch 0-100 within seconds, a coin-intelligence radar, the platform's own /launches directory, and live PumpPortal feeds that even drive 3D avatar reactions. Everything runs on real, mostly keyless data sources — CoinGecko, alternative.me, public Ethereum RPCs, Binance/Bybit/OKX futures WebSockets, publisher RSS feeds, the pump.fun firehose — with a hard no-fabricated-data policy (surfaces degrade to designed offline states rather than fake numbers).
 
 ## /markets hub
 
@@ -14,11 +14,11 @@ The front door for all market surfaces: live global stats (total market cap, dom
 
 ## Crypto news wing (feed, reader, archive)
 
-Live news aggregated natively from 38 real publisher RSS/Atom feeds (CoinDesk, The Block, Decrypt, Cointelegraph, Blockworks, Bitcoin Magazine, etc.) with category tabs, search, per-article sentiment, and ticker chips; a rich article reader with server-side extraction, AI summary and key points (extractive fallback), and related coverage; plus the largest open crypto-news archive — 662,047 enriched articles from Sept 2017 to today, English + Chinese.
+Live news aggregated natively from 192 real publisher RSS/Atom feeds across 27 categories (CoinDesk, The Block, Decrypt, Cointelegraph, Blockworks, Bitcoin Magazine, and more, including 33 international feeds in 17 languages) with category tabs, search, per-article sentiment, and ticker chips; a rich article reader with server-side extraction, AI summary and key points (extractive fallback), and related coverage; plus the largest open crypto-news archive — 662,047 enriched articles from Sept 2017 to today, English + Chinese.
 
 **How it works:** /markets/news, /markets/news/article, /markets/archive backed by api/news/{feed,article,archive,rss}.js over api/_lib/news.js + api/_lib/news-sources.js; the archive corpus lives on gs://three-ws-news-archive (recovered from the cryptocurrency.cv aggregator, which three.ws now runs natively).
 
-**Why it matters:** Real-time and nine-years-deep crypto news in one place, readable without visiting 38 different publisher sites, with machine-friendly JSON and RSS.
+**Why it matters:** Real-time and nine-years-deep crypto news in one place, readable without visiting 192 different publisher sites, with machine-friendly JSON and RSS.
 
 ## Global markets index + coin detail pages
 
@@ -46,7 +46,7 @@ Four tools sharing one design system: /heatmap (squarified treemap, tiles sized 
 
 ## Oracle — AI conviction engine for pump.fun launches
 
-Scores every pump.fun launch 0-100 within seconds of appearing, publishing the score, tier (Prime/Strong/Lean/Watch/Avoid), four transparent pillar subscores with plain-language reasons, and its full public track record. Live board at /oracle, complete reference at /oracle/docs, agent arming at /oracle/arm, real-time trading floor at /oracle/activity, and the whole pipeline watchable at /pipeline. Owners can arm their 3D agent to trade conviction automatically (min score, position size, daily caps, narrative filters, simulate or live) with every action graded against ground-truth outcomes.
+Scores every pump.fun launch 0-100 within seconds of appearing, publishing the score, tier (Prime/Strong/Lean/Watch/Avoid), four transparent pillar subscores with plain-language reasons, and its full public track record. Live board at /oracle, complete reference at /oracle/docs, agent arming at /oracle/arm, real-time trading floor at /activity, and the whole pipeline watchable at /pipeline. Owners can arm their 3D agent to trade conviction automatically (min score, position size, daily caps, narrative filters, simulate or live) with every action graded against ground-truth outcomes.
 
 **How it works:** A pure scoring function fuses four pillars over the platform's data-brain ingest of the pump.fun firehose (every launch, trade, wallet): Pedigree 0.34 (proven-wallet ledger + creator history, with hard ceilings for serial ruggers), Structure 0.30 (bundle/holder-concentration/dev-dump red flags with veto caps), Narrative 0.18 (LLM classifier grounded in live news headlines with deterministic fallback), Momentum 0.18 (early buy-flow). Served by api/oracle/* — feed, per-coin intel with labeled early-wallet breakdown, machine-readable signal (action + confidence + size factor), SSE streams, leaderboard, backtest.
 
@@ -96,7 +96,7 @@ Token sentiment on demand: POST /api/sentiment scores any text (Positive/Negativ
 
 A free, no-key, no-account crypto data API built for AI agents: token snapshots, security/rug signals, holder concentration, live pump.fun launches, bonding-curve status, whale activity, trending tokens, wallet portfolios, and ticker-availability checks — with public docs, a live try-it console, and OpenAPI 3.1 discovery.
 
-**How it works:** pages/crypto.html documents /api/crypto/*; api/crypto/index.js and api/crypto/openapi.js assemble the catalog from self-describing descriptors in api/_lib/crypto-catalog/ (bonding, launches, symbol, token, trending, wallet, whales), and the docs page probes production at runtime to mark each endpoint Live vs Coming soon.
+**How it works:** pages/crypto.html documents /api/crypto/*; api/crypto/index.js and api/crypto/openapi.js assemble the catalog from self-describing descriptors in api/_lib/crypto-catalog/ (bonding, holders, launches, security, symbol, token, trending, wallet, whales), and the docs page probes production at runtime to mark each endpoint Live vs Coming soon.
 
 **Why it matters:** Agents and developers get real on-chain and market data with zero signup friction — the funnel-top for the platform's paid unique services.
 
@@ -131,3 +131,22 @@ A ship-notes newsletter covering new features, launches, and changelog highlight
 **How it works:** Signup records a pending subscriber with a single-purpose confirm token and emails the link; only clicking it flips the address to confirmed and adds it to the mailing audience, so a typo'd or hostile email can never subscribe a third party. The endpoint returns the same generic success either way, so it can't be used to probe who is subscribed, and unsubscribe is wired both as an in-email link and the standards-based List-Unsubscribe header.
 
 **Why it matters:** You hear about new capabilities the moment they ship without watching the changelog — and because the list is consent-proven end to end, it's a signal you chose, not spam you have to escape.
+
+## Try it
+
+Every data surface above has a free, keyless API underneath. Two one-liners that return real market data with no account:
+
+```bash
+# Live crypto news, filterable by category and search
+curl -s "https://three.ws/api/news/feed?category=defi"
+
+# Free token snapshot for any contract address (price, liquidity, volume)
+curl -s "https://three.ws/api/crypto/token?address=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump"
+```
+
+## Related
+
+- [Crypto Data API](/docs/crypto-api)
+- [The Agent Economy](09-the-agent-economy.md)
+- [Trading arenas](/docs/trading-arenas)
+- [The Agent Wallet (23 abilities)](10-the-agent-wallet.md)

@@ -1,6 +1,6 @@
 # Deploying Agents On-Chain (Bulk)
 
-Give every three.ws agent a real on-chain identity: a **Metaplex Core NFT** minted into the **three.ws Agents collection** on Solana. This is the bulk/admin counterpart to the single-agent, user-signed flow in [Solana agents](solana.md) — it deploys many agents server-side, with a live recording dashboard and a CLI runner.
+Give every three.ws agent a real on-chain identity: a **Metaplex Core NFT** minted into the **three.ws Agents collection** on Solana. This page is for platform admins and self-hosters; regular users register a single agent through the wallet-signed flow instead. It is the bulk/admin counterpart to the single-agent, user-signed flow in [Solana agents](solana.md): it deploys many agents server-side, with a live recording dashboard at `/admin/bulk-launch` and a CLI runner.
 
 > Not pump.fun. These are NFTs (on-chain identity), not tokens. The only coin three.ws ever references is `$THREE`; it appears in each asset's metadata as a link, nothing more.
 

@@ -1,6 +1,6 @@
 # Chapter 4 · The Mind — memory, dreams, and autonomy
 
-Agents remember, reflect, and act on their own — with every autonomous action explained, signed, and undoable.
+Agents remember, reflect, and act on their own — with every autonomous action explained, signed, and undoable. Owners drive it from the Autopilot tab of the agent editor (/agent/:id/edit) and audit it at three.ws/autopilot-activity.
 
 three.ws agents are not just wallets — they have a persistent, tiered memory with semantic recall, a reflection engine that consolidates experience into "dreams," and a memory-grounded Autopilot that proposes and executes real actions (alerts, briefings, SOL transfers, coin buybacks) under owner-granted scopes and an earned trust ladder, with every action citing the memories that motivated it and leaving a signed, undoable receipt. Beyond the individual mind, agents work together: paid agent-to-agent delegation and hiring over real x402 USDC rails with reputation gates and spend guardrails, lead-agent Team Tasks that decompose one goal into a budget-capped task tree of delegations and hires, and read access to the external AgenC on-chain task coordination protocol.
 
@@ -131,3 +131,10 @@ Agents provide range-based liquidity on coins they care about — defending a pr
 **How it works:** Policies live in api/_lib/market-maker.js, the single source of truth shared by the API (api/agent/market-maker.js, api/launch/mm.js) and the engine worker. Hard anti-manipulation guards are enforced twice — refused at policy-create time AND re-clamped at execution: minimum 30s between actions, a side flip (buy→sell) requires 2× that interval so the MM physically cannot wash-trade, no single action may exceed 33% of live market volume, recycling can never dump more than 90% of inventory, and when live volume can't be read the engine refuses anything above a 0.05 SOL slice so it never paints a no-volume tape. Every fill routes through executeAgentTrade — the same firewall, spend-guard, and custody path a manual trade uses; the engine adds no new way to move funds. MEV tip modes (off/economy/turbo) control Jito priority.
 
 **Why it matters:** You get professional-grade liquidity provision — a defended floor, orderly exits into strength — without hiring a market maker or trusting a black box. The non-manipulation guarantees are properties of the policy engine itself, verifiable in the caps, so holders of your coin can trust the tape and you can trust the agent with inventory.
+
+## Related
+
+- [Autopilot](/docs/autopilot)
+- [Memory](/docs/memory)
+- [Brain](/docs/brain)
+- [Multi-agent collaboration](/docs/multi-agent)

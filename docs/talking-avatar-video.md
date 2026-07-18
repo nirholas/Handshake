@@ -35,12 +35,14 @@ The page ([`pages/create/video.html`](../pages/create/video.html)) loads [`src/c
 
 ## Examples
 
-All three endpoints require a signed-in session.
+All three endpoints require a signed-in browser session. They authenticate with the
+session cookie only (`__Host-sid`); API bearer tokens are not accepted on this
+surface, so from a script reuse the cookie from a logged-in browser session.
 
 ```bash
 # 1. Presign an audio upload slot.
 curl -X POST 'https://three.ws/api/avatar/presign-audio' \
-  -H 'authorization: Bearer <TOKEN>' -H 'content-type: application/json' \
+  -H 'cookie: __Host-sid=<SESSION>' -H 'content-type: application/json' \
   -d '{ "filename": "line.mp3", "content_type": "audio/mpeg" }'
 # -> { "upload_url": "<PUT url>", "public_url": "https://…/line.mp3", "storage_key": "u/<uid>/audio/<uuid>.mp3" }
 
@@ -49,13 +51,13 @@ curl -X PUT '<PUT url>' -H 'content-type: audio/mpeg' --data-binary @line.mp3
 
 # 3. Kick off generation with an avatar image + the uploaded audio.
 curl -X POST 'https://three.ws/api/avatar/video-generate' \
-  -H 'authorization: Bearer <TOKEN>' -H 'content-type: application/json' \
+  -H 'cookie: __Host-sid=<SESSION>' -H 'content-type: application/json' \
   -d '{ "image_url": "https://…/avatar.png", "audio_url": "https://…/line.mp3",
         "avatar_id": "<AVATAR_ID>", "prompt": "A person talking on a bright stage." }'
 # -> 202 { "job_id": "…", "status": "queued" }
 
 # 4. Poll until done, then fetch video_url.
-curl -H 'authorization: Bearer <TOKEN>' \
+curl -H 'cookie: __Host-sid=<SESSION>' \
   'https://three.ws/api/avatar/video-status?job_id=<JOB_ID>'
 # -> { "job_id": "…", "status": "done", "progress": 1, "video_url": "https://…/out.mp4", "error": null, "updated_at": "…" }
 ```

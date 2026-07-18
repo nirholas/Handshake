@@ -12,7 +12,7 @@ Everything the [Forge](/forge) does in the browser is available as a plain HTTP 
 
 ```
 POST /api/forge          { prompt, tier }     →  { job_id, status: "queued" }
-GET  /api/forge?job=ID   (poll every few s)   →  { status: "running", step: "mesh" }
+GET  /api/forge?job=ID   (poll every few s)   →  { status: "running", backend: "..." }
 GET  /api/forge?job=ID                        →  { status: "done", glb_url: "https://..." }
 GET  glb_url                                  →  your model
 ```
@@ -50,8 +50,10 @@ The request body:
 | `prompt` | string | The object description, 3–1000 chars. Same [prompt rules](/tutorials/prompts-for-3d) as the UI. |
 | `tier` | `"draft"` \| `"standard"` \| `"high"` | Polygon budget + textures. Defaults to `standard`. High adds PBR materials. |
 | `aspect_ratio` | `"1:1"` \| `"4:3"` \| `"3:4"` \| `"16:9"` \| `"9:16"` | Shape of the intermediate reference image. Optional. |
-| `image_urls` | string[] | 1–4 public HTTPS image URLs for photo→3D (Step 4). Omit for text→3D. |
+| `image_urls` | string[] | 1 to 6 public HTTPS image URLs for photo→3D (Step 4). Omit for text→3D. |
 | `backend` | string | Pin a specific engine from the catalog (Step 5). Optional — the Forge picks for you. |
+
+`draft` and `standard` are free. `high` on the platform engines is gated: it unlocks for $THREE holders (Bronze tier, $25 held), and a non-holder gets a `402` with hold-or-pay instructions (pay $THREE per generation, or sign in and spend prepaid credits via `pay_with: "credits"`). Bring-your-own-key engines skip the gate. Agents that would rather pay in USDC per call should use the x402 twin in Step 6, where `high` is a flat $0.50.
 
 ---
 
@@ -61,13 +63,13 @@ The request body:
 curl -s 'https://three.ws/api/forge?job=JOB_ID'
 ```
 
-While running you'll see progress:
+While running you'll see:
 
 ```json
-{ "job_id": "…", "status": "running", "step": "mesh" }
+{ "job_id": "…", "status": "running", "backend": "…", "tier": "draft", "path": "text" }
 ```
 
-`step` walks through `image` (painting the reference) → `mesh` (reconstruction) → `finish`. When it completes:
+Each poll echoes the job's provenance (`backend`, `tier`, `path`, and the view counts for photo jobs), so a caller that only polls still learns how the model is being made. When it completes:
 
 ```json
 { "job_id": "…", "status": "done", "glb_url": "https://three.ws/cdn/…" }
@@ -101,7 +103,7 @@ async function generateModel(prompt, tier = 'standard') {
     await sleep(4000);
     const poll = await fetch(`${BASE}/api/forge?job=${encodeURIComponent(job.job_id)}`);
     job = await poll.json();
-    console.log(`  ${job.status}${job.step ? ` (${job.step})` : ''}`);
+    console.log(`  ${job.status}${job.backend ? ` (${job.backend})` : ''}`);
   }
   return job.glb_url;
 }
@@ -121,7 +123,7 @@ Run it:
 node generate.js "a low-poly treasure chest, iron-banded wood"
 ```
 
-**Batch an asset pack** by looping prompts through `generateModel` one at a time. Keep it sequential — the endpoint is rate-limited per IP, so a `Promise.all` over twenty prompts will hit `429 rate_limited`. On a 429, wait and retry; it's a per-minute window, not a ban.
+**Batch an asset pack** by looping prompts through `generateModel` one at a time. Keep it sequential — the endpoint is rate-limited per IP (about 60 free generations an hour), so a `Promise.all` over a hundred prompts will hit `429 rate_limited`. On a 429, wait and retry; it's a rolling window, not a ban.
 
 ---
 
@@ -151,7 +153,7 @@ const submit = await fetch(`${BASE}/api/forge`, {
 });
 ```
 
-Photos are pre-checked by a vision model before any generation is spent; an unusable image comes back as a `400` explaining the problem (blurry, busy background, multiple objects). Pass `skip_validation: true` to override — the same as the UI's "Generate anyway" button. The [photo guidelines](/tutorials/image-to-3d) apply exactly as in the browser.
+Photos are pre-checked by a vision model before any generation is spent; an unusable primary image comes back as a `422` with `error: "image_not_usable"`, an `issue` code, and a plain-language `message` (blurry, busy background, multiple objects). Pass `skip_validation: true` to override — the same as the UI's "Generate anyway" button (the response's `override` field spells this out). Flagged secondary views are silently dropped rather than failing the job. The [photo guidelines](/tutorials/image-to-3d) apply exactly as in the browser.
 
 ---
 
@@ -169,7 +171,7 @@ It returns every backend (id, label, which paths it serves, whether it needs a b
 
 ## Step 6 — For autonomous agents: pay per call with x402
 
-The public endpoint is rate-limited per IP, which is fine for scripts and prototyping. Agents that need guaranteed, metered capacity can use the paid twin at `POST /api/x402/forge` — same request body, billed per generation in USDC over the [x402 protocol](https://www.x402.org) (Base or Solana):
+The public endpoint is rate-limited per IP, which is fine for scripts and prototyping. Agents that need guaranteed, metered capacity can use the paid twin at `POST /api/x402/forge` — same request body, billed per generation in USDC on Solana over the [x402 protocol](https://www.x402.org):
 
 | Tier | Price per generation |
 |------|---------------------|
@@ -187,8 +189,9 @@ If you've never made an x402 call, start with [Build a paid x402 endpoint](/tuto
 
 | Response | Meaning | Fix |
 |----------|---------|-----|
-| `429 rate_limited` | Per-IP window exhausted | Back off and retry; keep batches sequential |
-| `400` with image feedback | Photo failed the vision pre-check | Reshoot per the message, or send `skip_validation: true` |
+| `429 rate_limited` | Per-IP hourly window exhausted (about 60 free generations an hour) | Back off and retry; keep batches sequential |
+| `422 image_not_usable` | Photo failed the vision pre-check | Reshoot per the `message`, or send `skip_validation: true` |
+| `402` on `tier: "high"` | High tier is hold-or-pay on platform engines | Hold $THREE (Bronze), pay per generation, use credits, or use the x402 endpoint |
 | `status: "failed"` mid-job | Upstream generation error | Read `error`; retry once — transient provider errors happen |
 | `glb_url` 404s later | You waited a long time to download | Download promptly after `done`; re-fetch the job for a fresh URL |
 

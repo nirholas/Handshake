@@ -1,5 +1,7 @@
 # Widget API
 
+This page is for developers who want to control an embedded three.ws widget from their own page: move the camera, play animations, capture screenshots, or swap models at runtime. Widgets are created in [Widget Studio](https://three.ws/studio) and embedded via `/widget` or the one-line `embed.js` script below.
+
 The slim widget shell (`/widget`) is an embeddable 3D viewer. It supports:
 
 - **URL parameters** — declarative configuration (model, type, brand, poster, reveal mode).
@@ -189,3 +191,10 @@ If you have multiple widgets and want to coordinate them (sync camera, broadcast
 - The client validates `event.origin` against the iframe's `src` origin. Pass `{ origin: '*' }` to `attach()` to opt out (e.g. for cross-origin embed-in-embed scenarios), but you give up the guarantee that the response came from us.
 - `screenshot.capture` returns the rendered canvas, so the parent gets exactly what the visitor sees. Nothing private leaks across the boundary.
 - `model.load` accepts any URL the iframe can fetch — same-origin policy still applies to the GLB itself. If you need a private model, gate it behind a cookie/header at the GLB host.
+
+## Related
+
+- [Widget types](/docs/widgets): every widget type, config schema, and postMessage event
+- [Widget Studio guide](/docs/widget-studio): building widgets with the no-code Studio
+- [REST API Reference](/docs/api-reference): the `/api/widgets` CRUD endpoints
+- [Embedding guide](/docs/embedding): advanced embedding patterns and iframe options

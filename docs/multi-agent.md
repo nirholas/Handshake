@@ -261,7 +261,7 @@ leo.addEventListener('brain:message', async (e) => {
 });
 ```
 
-For a fully shared namespace across agents, set both to the same IPFS memory namespace in their manifests:
+For a fully shared starting point, point both agents at the same pinned IPFS memory bundle in their manifests:
 
 ```json
 {
@@ -272,7 +272,7 @@ For a fully shared namespace across agents, set both to the same IPFS memory nam
 }
 ```
 
-Both agents then read from and write to the same memory bundle. New memories written by Leo during a conversation will be visible to Mira on her next turn. Note that the `encrypted-ipfs` mode is not yet fully wired; use plain `ipfs` for shared scenes.
+Both agents then load the same memory bundle at boot. Runtime writes stay in each agent's own session, so for live sharing during a conversation use the host-page bridge above (`memory.note` into the other agent), or register a custom backend (`Memory.registerBackend`) that both agents point at. Avoid `encrypted-ipfs` for shared scenes: its key is derived from one wallet's signature, so two agents can only share it if they share the same wallet-derived key.
 
 ---
 
@@ -320,3 +320,12 @@ Open `/examples/two-agents.html` to see a complete, runnable scene with real ava
 5. **The log panel subscribes to `brain:message` and `skill:tool-called`** — shows how to observe what each agent is thinking and doing in real time without touching their internals.
 
 To extend this into a full turn-based scene, add a `brain` attribute to Mira with a model name (e.g., `brain="claude-haiku-4-5"`), then wire the `brain:message` listener to call `stage.routeMessage('leo', 'mira', said)` after each of Leo's replies. That is the minimal diff between a one-active-agent demo and a full dialogue scene.
+
+---
+
+## Related
+
+- [Agent system](/docs/agent-system): the runtime, protocol bus, and stage-scoped tools
+- [How three.ws works](/docs/how-it-works): the embed boot sequence each `<agent-3d>` follows
+- [Memory system](/docs/memory): namespaces and custom backends for shared context
+- [Layers](/docs/layers): where `<agent-stage>` sits in the embed layer

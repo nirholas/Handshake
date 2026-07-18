@@ -1,21 +1,23 @@
 # Avatar Studio
 
-Avatar Studio is a browser-based 3D avatar builder built into three.ws. It lets you design a fully customized humanoid avatar — body, hair, face, clothing, and accessories — using a point-and-click interface with no 3D modeling experience required.
+This page documents the CharacterStudio-based avatar builder: a browser-based tool for designing a customized humanoid avatar (body, hair, face, clothing, accessories) with a point-and-click interface and no 3D modeling experience required. The result is a GLB/VRM file that works with every three.ws feature: animations, the emotion system, AR viewing, and web embedding.
 
-The result is a GLB/VRM file that works with every three.ws feature: animations, the emotion system, AR viewing, and web embedding.
+It is a rebranded fork of the open-source (MIT license) [M3-org/CharacterStudio](https://github.com/M3-org/CharacterStudio) project and lives in the `character-studio/` directory of the repo.
 
-**Access:** [https://three.ws/studio](https://three.ws/studio) → Avatar tab
-
-Avatar Studio is open-source (MIT license) and built on the [M3-org/CharacterStudio](https://github.com/M3-org/CharacterStudio) project.
+**Note:** the platform's primary from-scratch builder, the page served at [three.ws/avatar-studio](https://three.ws/avatar-studio) and [three.ws/create/studio](https://three.ws/create/studio), is a separate native implementation documented in [Avatar Studio (native)](/docs/avatar-studio). The CharacterStudio fork on this page is the trait-based builder behind the "three.ws Studio" option described below.
 
 ---
 
 ## Getting Started
 
-1. Go to [https://three.ws/studio](https://three.ws/studio)
-2. Click **Avatar** in the top navigation
-3. Click **Create Avatar** — Avatar Studio opens in a new panel
-4. Start customizing using the sections in the left panel
+Where you meet it in the product:
+
+1. Open an agent's edit page (`https://three.ws/agent/<agent-id>/edit`)
+2. Click the avatar tile and choose **three.ws Studio** ("In-browser builder: hair, clothing, body") from the create menu
+3. The builder opens in a modal iframe; customize using the sections in the left panel
+4. Click **Save Avatar**; the finished GLB is handed back to the agent editor automatically
+
+It is also mounted standalone on the Avatar OS demo page at [/demo/avatar-os](https://three.ws/demo/avatar-os), and developers can run it directly with `npm run dev` inside `character-studio/`.
 
 **Account:** No account is needed to build and export an avatar. An account is required to save your avatar to an agent and use it on the platform.
 
@@ -23,55 +25,22 @@ Avatar Studio is open-source (MIT license) and built on the [M3-org/CharacterStu
 
 ## The Customization Interface
 
-The left panel is organized into sections. Every change you make is reflected immediately in the 3D preview in the center.
+The builder is trait-based. You first pick a base character class, then swap and tint the individual trait items that class defines. Every change is reflected immediately in the 3D preview.
 
-### Body
+### Character classes
 
-- **Body type** — proportions and height presets
-- **Skin tone** — continuous slider from light to dark
-- **Skin texture** — smooth, freckles, and other surface variations
+The class list comes from `character-studio/public/manifest.json`. The shipped classes are:
 
-### Head
+| Class | Description | Format |
+|---|---|---|
+| Anata (Female) | Stylized female humanoid | VRM |
+| Anata (Male) | Stylized male humanoid | VRM |
+| ON1FORCE | Demon character | VRM |
+| TUBBY CAT | Cute cat character | VRM |
 
-- **Face shape** — round, oval, square, heart
-- **Jaw line** — narrow to wide
-- **Forehead height** — adjustment slider
+### Traits
 
-### Hair
-
-- **Style gallery** — 20+ styles including short, long, curly, braided, and bald options
-- **Color picker** — solid colors and ombre combinations
-- **Accessories** — clips, ties, and similar items
-
-### Eyes
-
-- **Shape** — almond, round, hooded, and others
-- **Iris color** — full color picker
-- **Eyelashes** — style and density options
-
-### Eyebrows
-
-- **Shape** — arched, straight, thick, thin
-- **Color** — matches hair color automatically, or set independently
-
-### Nose & Mouth
-
-- **Nose shape** — selection of presets
-- **Lip shape** — thin, medium, full
-- **Lip color** — natural tones or custom color
-
-### Clothing
-
-- **Top** — t-shirts, shirts, jackets, hoodies, tanks
-- **Bottom** — pants, skirts, shorts, jeans
-- **Shoes** — sneakers, boots, heels, sandals
-- Colors and patterns available for each item
-
-### Accessories
-
-- Glasses (multiple frame styles)
-- Hats (baseball cap, beanie, beret, and others)
-- Earrings, necklaces, and watches
+Each class has its own trait manifest (hair, clothing, accessories, and other slots, as that class defines them). Trait assets are the upstream [loot-assets](https://github.com/m3-org/loot-assets) library, mirrored same-origin through `GET /api/studio-assets/<path>` (`api/studio-assets/[...path].js`) so the browser never hits a vendor CDN. Selecting a trait swaps the mesh live; traits that declare color support expose a color picker.
 
 ---
 
@@ -81,72 +50,46 @@ The center panel shows your avatar in real time using a Three.js WebGL renderer.
 
 - **Rotate** — click and drag
 - **Zoom** — scroll wheel
-- **Animation preview** — toggle between T-pose (neutral) and an idle animation loop
+- **Animation preview**: the preview avatar plays clips from the manifest's default animation set, so you see the character in motion rather than a static T-pose
 
-Switch the background environment using the environment selector:
-
-- Neutral studio (white background)
-- Outdoor sunset
-- Indoor office
-
-Every customization change updates the preview instantly — no waiting for assets to reload.
+Every trait change updates the preview live from the already-loaded asset library.
 
 ---
 
 ## Exporting Your Avatar
 
-### Download as GLB
+### Standalone (running the builder directly)
 
-1. Click **Export** → **Download GLB**
-2. The file downloads to your computer
-3. Drag and drop it into the three.ws editor, or host it on your own CDN
+The export menu offers direct downloads:
 
-### Save to Your Account
+- **GLB**: a single self-contained binary glTF file
+- **VRM 0** and **VRM 1**: VRM exports for VRM-native applications
 
-1. Click **Save to My Agents**
-2. Sign in (or create an account)
-3. The avatar is saved to your account and linked to a new agent
-4. You can open the agent in the editor immediately
+### Embedded (the "three.ws Studio" flow)
 
-The exported GLB is a single self-contained file — all textures and meshes are baked in and optimized for real-time use.
+When the builder runs inside the Avatar Creator iframe, the export menu shows a single **Save Avatar** button instead. It builds the GLB in the browser and hands the bytes back to the host page via `postMessage`; the agent editor adopts it as the agent's avatar. Nothing uploads until the host app saves it to your account.
 
-### One-Click Optimization
+### Export optimization options
 
-Before exporting, click **Optimize** to:
+The merge options panel controls how the export is assembled:
 
-- Merge all skinned meshes into a single draw call
-- Generate a texture atlas from individual textures
-- Automatically cull hidden geometry (faces underneath clothing layers)
+- **Texture atlas**: combine individual trait textures into shared atlases (separate standard and MToon atlases, each with configurable size)
+- **KTX2 compression**: GPU-compressed textures for smaller files
+- **Two-sided material**: force double-sided rendering when needed
 
-Optimized avatars render faster and use less GPU memory, which matters in scenes with multiple agents or AR contexts.
+Mesh merging and hidden-face culling run at export time (`character-studio/src/library/merge-geometry.js`, `cull-mesh.js`, `create-texture-atlas.js`), so the output is optimized for real-time use.
 
 ---
 
 ## Morph Targets and the Emotion System
 
-Every avatar created in Avatar Studio includes the full set of morph targets required by the three.ws emotion system. These are baked into the exported file automatically — you don't need to add them manually.
-
-The included morph targets are:
-
-| Morph target | Used for |
-|---|---|
-| `mouthSmile` | Celebration, positive sentiment |
-| `mouthFrown` | Concern, negative sentiment |
-| `mouthOpen` | Speech, excitement |
-| `cheekPuff` | Celebration |
-| `browInnerUp` | Concern, empathy |
-| `browOuterUp` | Curiosity |
-| `noseSneer` | Concern |
-| `eyeSquint` | Empathy |
-| `eyesClosed` | Patience (subtle) |
-
-The agent runtime blends these continuously based on emotional state — no per-avatar configuration needed.
+Exported avatars carry whatever blendshapes their source trait assets include; VRM expression data is preserved through `@pixiv/three-vrm`. The three.ws emotion system drives ARKit-style blendshape names (`mouthSmile`, `browInnerUp`, `eyesClosed`, and similar; see the [3D Viewer](/docs/viewer) morph-target reference) whenever the loaded model exposes them, with no per-avatar configuration. If a model lacks a given target, that expression channel simply does not animate.
 
 ---
 
 ## Animation Compatibility
 
-Avatar Studio avatars use a VRM-compliant skeleton with Mixamo-compatible bone names:
+Exported avatars use the VRM humanoid skeleton:
 
 ```
 Hips → Spine → Chest → Neck → Head
@@ -158,26 +101,26 @@ RightUpperLeg → RightLowerLeg → RightFoot
 
 This means:
 
-- **Mixamo animations work directly** — download any animation from Mixamo and attach it
-- **The three.ws animation library is fully compatible** — all built-in clips (idle, wave, gesture, walk) work out of the box
-- **Retargeting** is handled automatically by the animation manager
+- **Mixamo animations work**: the fork retargets Mixamo FBX clips onto the VRM rig (`loadMixamoAnimation.js`, `VRMRigMapMixamo.js`)
+- **The three.ws animation library is fully compatible**: the platform's bone-name canonicalizer (`src/glb-canonicalize.js`) maps VRM rigs to the canonical set, so all built-in clips (idle, wave, walk, and the rest) work out of the box
+- **Retargeting** is handled automatically by the animation manager (`src/animation-retarget.js`)
 
 ---
 
 ## The Asset Library
 
-Avatar Studio uses a manifest-driven asset system. Each clothing item, hair style, and accessory is a separate GLB file stored in `/character-studio/public/`. The `manifest.json` file lists what is available and how items attach to the base skeleton.
+The builder uses a manifest-driven asset system. `character-studio/public/manifest.json` lists the character classes; each class entry points at a per-class trait manifest that defines the trait slots and the individual VRM assets that fill them. The trait assets themselves are the open-source [loot-assets](https://github.com/m3-org/loot-assets) library, served through the three.ws proxy at `/api/studio-assets/` in production. For local development, `npm run get-assets` inside `character-studio/` clones the library into `public/`.
 
-At export time, the selected assets are merged into a single GLB using `@gltf-transform/core` — texture atlasing and mesh merging happen at this stage.
+At export time, the selected trait meshes are merged and their textures atlased by the fork's own pipeline (`merge-geometry.js`, `create-texture-atlas.js`, `cull-mesh.js` under `character-studio/src/library/`), producing a single GLB or VRM.
 
 ### Contributing New Assets
 
 The asset library is open-source and welcomes contributions:
 
-1. Create your 3D asset in Blender using the Avatar Studio base mesh as reference
+1. Create your 3D asset in Blender using the relevant base mesh as reference
 2. Follow the vertex group and UV conventions documented in the [CharacterStudio docs](https://m3-org.github.io/characterstudio-docs/)
-3. Export as GLB with correct bone weights
-4. Submit a pull request adding the asset and its manifest entry to `/character-studio/public/`
+3. Export in the class's format (VRM) with correct bone weights
+4. Submit a pull request to the upstream [m3-org/loot-assets](https://github.com/m3-org/loot-assets) repository, adding the asset and its manifest entry
 
 ---
 
@@ -187,18 +130,18 @@ For developers who want to understand the internals or self-host:
 
 | Component | Technology |
 |---|---|
-| Frontend framework | React 18 + Vite |
+| Frontend framework | React 19 + Vite |
 | 3D rendering | Three.js (WebGL) |
 | VRM model support | @pixiv/three-vrm |
-| State management | Zustand |
-| GLB manipulation | @gltf-transform/core |
-| Optimization | Texture atlasing, mesh merging, face culling |
+| State management | Zustand + React context |
+| GLB/VRM export | three.js GLTFExporter plus the fork's VRM exporters (`VRMExporter.js`, `VRMExporterv0.js`) |
+| Optimization | Texture atlasing, mesh merging, face culling (custom modules in `src/library/`) |
 
 The core of the system is `CharacterManager` in `character-studio/src/library/characterManager.js`. It orchestrates trait loading, mesh combining, animation playback, and VRM export. The UI layer communicates with it through React context (`SceneContext`, `ViewContext`).
 
-**Integration with the main app:** The `AvatarCreator` class in `src/avatar-creator.js` opens Avatar Studio in an iframe and listens for a `postMessage` export event. When the user clicks Export inside Avatar Studio, the GLB blob is passed back to the parent app.
+**Integration with the main app:** The `AvatarCreator` class in `src/avatar-creator.js` opens the builder in an iframe (served same-origin under `/avatar-studio`; the production build is mirrored into `dist/avatar-studio/` by the `copy-avatar-studio` Vite plugin, and the dev server serves `character-studio/build` at the same path) and listens for the `characterstudio` `postMessage` export event. When the user clicks Save Avatar inside the builder, the GLB bytes are passed back to the parent app.
 
-**Build:** `npm run dev` inside `/character-studio/` starts the dev server. `npm run build` outputs to `./build/` for GitHub Pages deployment. Run `npm run get-assets` first to clone the required loot-assets into the public directory.
+**Build:** `npm run dev` inside `character-studio/` starts the dev server. `npm run build` outputs to `./build/`, which the main repo build copies into `dist/avatar-studio/`. Run `npm run get-assets` first to clone the required loot-assets into the public directory.
 
 ---
 
@@ -234,8 +177,9 @@ offers three real paths, each ending in a GLB the world adopts immediately:
    background so peers can load it too (`play-handoff.js`).
 2. **Upload a .glb** — bring a model from Blender, Mixamo, VRoid, or any tool. Validated
    client-side (`avatar-upload.js` `validateGlb`) before it becomes your avatar.
-3. **Advanced studio** — opens the full Avatar Studio (above) at `/create/studio` in a new
-   tab for deep body/face/hair/clothing sculpting, then saves to your account.
+3. **Advanced studio**: opens the native Avatar Studio at `/create/studio` in a new
+   tab for deep body/face/hair/clothing sculpting, then saves to your account
+   (see [Avatar Studio (native)](/docs/avatar-studio)).
 
 ### The in-game wardrobe economy
 
@@ -286,4 +230,11 @@ HUD button.
 - **Asset library scope.** Customization is limited to items in the included asset library. Adding entirely new clothing shapes requires creating a 3D asset and submitting it to the library.
 - **Granular face morphing.** Individual face feature morphing (e.g., nose width, cheekbone height via sliders) is not yet available — face customization is preset-based.
 
-For cases that need more control than Avatar Studio provides, create your avatar in Blender or another 3D tool and import the GLB directly into the three.ws editor.
+For cases that need more control than the studio provides, create your avatar in Blender or another 3D tool and import the GLB directly into the three.ws editor.
+
+## Related
+
+- [Avatar Studio (native)](/docs/avatar-studio): the from-scratch builder at /avatar-studio
+- [Avatar creation](/docs/avatar-creation): the selfie photo-to-avatar path
+- [Editor Guide](/docs/editor): refine any exported GLB
+- [Animations](/docs/animations): the clip library every avatar can play

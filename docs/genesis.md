@@ -59,8 +59,8 @@ never invents a shortcut path; it orchestrates the real ones.
 1. **Open [/genesis](https://three.ws/genesis).** Pick a mode: type a prompt, drop
    a selfie, or remix one of the featured public avatars loaded from
    `/api/avatars/featured`.
-2. **Sign in if prompted.** Genesis works signed-out for generation, but claiming
-   the agent and its wallets requires a wallet sign-in (the banner wires
+2. **Sign in.** Genesis claims the agent and its wallets to your account, so
+   pressing Begin requires a wallet sign-in first (the banner wires
    `signInWithWallet`).
 3. **Kick off generation.** The step bar tracks the real reconstruction job:
    queued, generating, rigging, ready. Progress reflects the job state, not a timer.
@@ -87,7 +87,7 @@ the session cookie or bearer token):
 JOB=$(curl -s -X POST https://three.ws/api/avatars/reconstruct \
   -H 'content-type: application/json' \
   -H "authorization: Bearer $THREEWS_TOKEN" \
-  -d '{"prompt":"A silver-haired explorer in a teal flight jacket"}')
+  -d '{"name":"Silver Explorer","prompt":"A silver-haired explorer in a teal flight jacket"}')
 echo "$JOB"
 
 # 2. Poll status until the rigged model is ready
@@ -110,8 +110,10 @@ curl -s -X POST "https://three.ws/api/agents/$AGENT_ID/wallet/provision" \
 
 ## States and limits
 
-- **Signed out.** Generation runs, but wallet provisioning and identity binding
-  require sign-in. The auth banner is always reachable.
+- **Signed out.** Pressing Begin while signed out shows "Sign in first" instead of
+  starting a job: generation, wallet provisioning, and identity binding all require
+  sign-in (`/api/avatars/reconstruct` returns 401 unauthenticated). The auth banner
+  is always reachable.
 - **Generation deadline.** Reconstruction has an 8-minute deadline and the
   agent-resolve step a 60-second deadline; both surface a designed error with a
   retry action rather than hanging.

@@ -1,9 +1,9 @@
 # Strategy Objects and the Strategy Lab
 
-A Strategy Object is a trade strategy as a first-class thing you can own: a structured, validated rule set (entry conditions, sizing, take-profit, stop-loss, risk caps) that your agent can equip and run on-chain, ranked on a leaderboard by real live performance and forkable by anyone. The Strategy Lab is the workbench: write a strategy as data, validate it, backtest it against real captured pump.fun history with the exact evaluator the live worker uses, and run it live or in simulation, end to end. Both run strategies as additional constraints on top of your agent's server-side spend policy, never a way around it.
+A Strategy Object is a trade strategy as a first-class thing you can own: a structured, validated rule set (entry conditions, sizing, take-profit, stop-loss, risk caps) that your agent can equip and run on-chain, ranked on a leaderboard by real live performance and forkable by anyone. The Strategy Lab is the workbench: write a strategy as data, validate it, backtest it against real recorded pump.fun history with the same evaluator its live runs use, and run it live or in simulation, end to end. Both run strategies as additional constraints on top of your agent's server-side spend policy, never a way around it.
 
 Pages: [/strategies](https://three.ws/strategies) (the library and leaderboard), [/strategy-lab](https://three.ws/strategy-lab) (the workbench)
-API: `GET/POST /api/strategies`, `GET /api/strategies/leaderboard`, `GET/PATCH/DELETE /api/strategies/:id`, `POST /api/strategies/:id/{fork,publish}`, `GET/POST/DELETE /api/dca-strategies`, and the Lab's `POST /api/pump/strategy-{validate,backtest,run,close-all}`
+API: `GET/POST /api/strategies`, `GET /api/strategies/leaderboard`, `GET/PATCH/DELETE /api/strategies/:id`, `POST /api/strategies/:id/{fork,publish}`, `GET/POST/DELETE /api/dca-strategies`, the Lab's `POST /api/pump/strategy-{validate,backtest,run,close-all}`, and the sniper backtester `POST /api/sniper/backtest`
 
 ## Why it exists
 
@@ -26,7 +26,7 @@ Every strategy is normalized and validated by `api/_lib/strategy-schema.js` befo
 - **exits**: `take_profit_pct`, a mandatory `stop_loss_pct`, optional `trailing_stop_pct`, and `max_hold_minutes`. Validation requires a stop-loss and at least one upside exit.
 - **risk**: `max_concurrent_positions` and `cooldown_minutes`.
 
-The schema enforces hard bounds on every field, so a stored config can never carry a nonsense number into the runtime. Two pure, synchronous functions, `matchesEntry` (does this real launch pass the entry gate) and `shouldExit` (should this open position close now), are the same logic the runtime and the backtest both use, so a backtest reflects live behavior rather than a flattering fiction.
+The schema enforces hard bounds on every field, so a stored config can never carry a nonsense number into the runtime. Two pure, synchronous functions, `matchesEntry` (does this real launch pass the entry gate) and `shouldExit` (should this open position close now), are the same logic the live equipped-strategy runtime (`api/_lib/agent-strategy-runtime.js`) and the assisted scan preview (`POST /api/trading/scan`) both evaluate, so a stored rule means exactly the same thing everywhere it runs.
 
 ### The library, leaderboard, and forking
 
@@ -34,12 +34,14 @@ The schema enforces hard bounds on every field, so a stored config can never car
 
 ### The Strategy Lab
 
-`/strategy-lab` is where you build and prove a declarative pump.fun strategy against real data:
+`/strategy-lab` is where you build and prove a declarative pump.fun strategy. The Lab speaks its own tiny strategy DSL (a spec with `scan`, `filters`, `entry`, and `exit` predicate rules), and one compiled evaluator powers validation, backtest, and live runs, so they cannot drift:
 
-- **Validate** (`POST /api/pump/strategy-validate`) checks the spec with the same validator the runner uses, so a broken spec is caught before anything runs.
-- **Backtest** (`POST /api/pump/strategy-backtest`) replays the compiled strategy over the real captured universe: `pump_coin_intel` (per-launch bundle, organic, concentration, quality, category signals) joined to `pump_coin_outcomes` (graduated, pumped, flat, rugged, ATH multiple, last market cap). It uses the exact entry gate and exit priority the live worker uses. It does not synthesize launches or invent price paths; exits are evaluated at the two real price points it actually observed (the ATH multiple and the last observed multiple), entry slippage and impact are modeled from recorded early-window liquidity, and every limitation (survivorship, labeling lag, sample size) is reported in a `caveats` field.
-- **Run** (`POST /api/pump/strategy-run`) executes the strategy for a bounded duration and streams events over Server-Sent Events. In **simulate** mode it needs no wallet and spends nothing; in **live** mode it requires auth, an agent you own with a provisioned Solana wallet, and every buy passes a `policyGuard` that calls the same `checkBuyAllowed` spend-policy check the rest of the platform uses.
-- **Close all** (`POST /api/pump/strategy-close-all`) exits open strategy positions.
+- **Validate** (`POST /api/pump/strategy-validate`) checks the spec with the same validator the runner uses, so a broken spec is caught with field-level issues before anything runs. No sign-in needed.
+- **Backtest** (`POST /api/pump/strategy-backtest`, sign-in required) replays the compiled strategy over real recorded on-chain history: for each candidate mint (from the request's `mints`, the spec's `scan.mints`, or a live scan of new or trending launches) it fetches the token's real details, holders, bonding curve, and recent trades, evaluates the entry gate at the first recorded trade, then walks the subsequent real trades to trigger the exit rules. It never synthesizes launches or invents price paths; the response's `data` carries `spent`, `realizedPnlSol`, `roiPct`, `tradeCount`, `winRate`, `maxDrawdownSol`, the per-mint `trades`, and `mintsUsed`.
+- **Run** (`POST /api/pump/strategy-run`) executes the strategy for a bounded duration (5 to 600 seconds) and streams events over Server-Sent Events. In **simulate** mode it needs no wallet and spends nothing; in **live** mode it requires auth, an agent you own with a provisioned Solana wallet, and every buy passes a `policyGuard` that calls the same `checkBuyAllowed` spend-policy check the rest of the platform uses.
+- **Close all** (`POST /api/pump/strategy-close-all`, sign-in required) exits open strategy positions.
+
+A second, separate backtester serves sniper-style rule sets: `POST /api/sniper/backtest { agent_id, strategy, window_days?, network? }` (auth, agent you own, windows of 7, 30, 90, or 180 days). It replays the real captured launch universe, `pump_coin_intel` (bundle, organic, concentration, quality, category signals) joined to `pump_coin_outcomes` (graduated, pumped, flat, rugged, ATH multiple, last market cap), using the exact scorer and exit priority the live sniper worker runs. Exits are modeled at the two real price points it actually observed (the recorded peak and final multiples), a too-thin window returns an explicit `insufficient_data` verdict instead of a flattering number, and every limitation (survivorship, labeling lag, sample size) is reported in a `caveats` field. Results are cached by strategy hash and linked to the agent for projected-versus-realized comparison.
 
 ### DCA and subscription builders
 
@@ -50,7 +52,7 @@ The schema enforces hard bounds on every field, so a stored config can never car
 1. Open [/strategies](https://three.ws/strategies) and browse the published marketplace, or switch to the leaderboard to see strategies ranked by real live ROI.
 2. Click **New strategy**. The full-page builder opens. Set your entry conditions, per-trade size and slippage, a required stop-loss and at least one upside exit, and your risk caps. Save.
 3. To prove it, open [/strategy-lab](https://three.ws/strategy-lab), paste or write the spec, and **Validate**. Fix any field-tagged errors it returns.
-4. **Backtest** it against the real captured history. Read the results and the `caveats` before you trust them.
+4. **Backtest** it over real recorded launches and trades. For a sniper rule set, `POST /api/sniper/backtest` replays the captured outcome history and reports its own limitations; read the `caveats` before you trust a number.
 5. **Run** it in Simulate mode first: watch the live SSE stream of entries, exits, and logs with no funds at risk.
 6. Equip the strategy on an agent you own (or flip the Lab run to Live with that agent), and it trades within that agent's spend policy. Fork, edit, publish, or delete from your library at any time.
 
@@ -66,20 +68,23 @@ curl -s 'https://three.ws/api/strategies/leaderboard?limit=10' \
   | jq '.data.leaders[] | {rank, name, roi_pct: .performance.roi_pct}'
 ```
 
-Backtest a spec against real captured pump.fun history:
+Backtest a sniper rule set against the real captured pump.fun launch history (auth required; bearer tokens skip CSRF):
 
 ```bash
-curl -s https://three.ws/api/pump/strategy-backtest \
+curl -s https://three.ws/api/sniper/backtest \
+  -H 'authorization: Bearer YOUR_TOKEN' \
   -H 'content-type: application/json' \
   -d '{
+    "agent_id": "YOUR_AGENT_UUID",
+    "window_days": 30,
+    "network": "mainnet",
     "strategy": {
-      "network": "mainnet",
-      "entry": { "trigger": "new_launch", "max_age_minutes": 30, "min_liquidity_sol": 5 },
-      "sizing": { "amount_sol": 0.1, "max_slippage_bps": 500 },
-      "exits": { "take_profit_pct": 100, "stop_loss_pct": 40 },
-      "risk": { "max_concurrent_positions": 3 }
+      "take_profit_pct": 100,
+      "stop_loss_pct": 40,
+      "min_quality_score": 60,
+      "require_socials": true
     }
-  }' | jq '{summary, caveats}'
+  }' | jq '{sample_size, universe_size, insufficient_data, metrics, caveats}'
 ```
 
 ## Guardrails, states, and limits
@@ -88,7 +93,7 @@ curl -s https://three.ws/api/pump/strategy-backtest \
 - **Simulate versus live.** The Lab defaults to Simulate (no wallet, no funds). Live requires auth, an owned agent with a provisioned Solana wallet, and enforces the spend policy on every buy.
 - **A stop-loss is mandatory.** Validation rejects any strategy without a stop-loss and requires at least one upside exit (take-profit, trailing stop, or max hold). Every field is clamped to hard bounds.
 - **Proven, not promised.** Performance is aggregated from real closed on-chain positions. No closed trades means "Unproven", not a synthetic curve. The leaderboard ranks by verified live ROI.
-- **Backtest honesty.** The backtester replays real captured history with the live evaluator; it never invents launches, outcomes, or price paths, and reports its own limitations in `caveats`.
+- **Backtest honesty.** Both backtesters replay real recorded history with the same evaluator their live path runs; neither invents launches, outcomes, or price paths. The sniper backtester additionally reports its own limitations in `caveats` and returns an explicit `insufficient_data` verdict on a too-thin window.
 - **Forking transfers rules, not wallets.** A fork copies the config with lineage credited; the forker runs it under their own spend policy. No wallet access is ever transferred.
 - **Deleting is safe.** Deleting a strategy stops equipped agents from running it; open positions stay yours to manage.
 - **DCA moves real funds on a schedule.** Create and cancel are CSRF-gated over a session, slippage is capped server-side, and allowed output tokens plus the default chain are operator config, never hardcoded.

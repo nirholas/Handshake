@@ -2,7 +2,9 @@
 
 The complete map of every ability a three.ws agent has. Every claim on these
 pages was researched directly from the shipped implementation — frontend and
-backend — not from a roadmap. If it's here, it's live.
+backend — not from a roadmap. If it's here, it's live. Read it in the docs
+viewer at three.ws/docs/agent-abilities, or jump straight into the product at
+three.ws/create.
 
 ## The frame (read this first)
 
@@ -73,3 +75,10 @@ Prefer it in one continuous read? [Everything on one page](agent-abilities/FULL-
 | 21 | [Access](agent-abilities/wallet/21-access.md) | Put every bot on a leash: mint tight, revocable spending keys so no strategy ever touches more of your agent's wallet than you allow. |
 | 22 | [Recovery](agent-abilities/wallet/22-recovery.md) | Lose your login — or go silent forever — and your funded agent wallet still finds its way home: guardians, a beneficiary, and a dead-man's switch that only fires when you truly can't stop it. |
 | 23 | [Self-defense](agent-abilities/wallet/23-self-defense.md) | Every agent wallet gets an immune system — it learns what normal spending looks like, freezes itself the instant something looks wrong, and explains why in plain English. |
+
+## Related
+
+- [Start here](/docs/start-here)
+- [Agent system](/docs/agent-system)
+- [Agent skills](/docs/agent-skills)
+- [Agent wallets](/docs/agent-wallets)

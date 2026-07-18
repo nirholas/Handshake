@@ -9,7 +9,9 @@ touching the build pipeline.
 | Command | What it does |
 | --- | --- |
 | `npm run build` | The app build: `prebuild` lifecycle → `vite build` (`--max-old-space-size=6144`) → `scripts/strip-sw-from-embeds.mjs` → `scripts/inject-tour-boot.mjs`. Output → `dist/`. |
-| `npm run deploy:gcp` | The **production deploy**: `check:dist` + `db:check` gates → `gcloud builds submit` (Docker image via `server/cloudbuild.yaml`) → Cloud Run (`three-ws-api`, `us-central1`) → CDN cache purge. Run `npm run build` first so `dist/` is current (see [CI parity](#ci-parity)). |
+| `npm run build:gcp` | The **full pre-deploy build**, in the load-bearing order: build info snapshot → `npm run build` (the vite build wipes `dist/`, so it must run first) → UMD library build (`build:lib:full`) → `publish:lib` (mirrors the library into `dist/`) → `build:info` → `check:dist`. Run this, not bare `npm run build`, before deploying: `check:dist` fails without the published library bundle. |
+| `npm run deploy:gcp` | The **production deploy**: `check:dist` + `db:check` gates → `gcloud builds submit` (Docker image via `server/cloudbuild.yaml`) → Cloud Run (`three-ws-api`, `us-central1`) → CDN cache purge. Run `npm run build:gcp` first so `dist/` is complete (see [CI parity](#ci-parity)). |
+| `npm run deploy:gcp:full` | `build:gcp` + `deploy:gcp` in one command. |
 | `npm run build:vercel` | Legacy full-build orchestrator (`scripts/build-vercel.mjs`) from the Vercel era — runs the gate suite, bundles the API with esbuild, and builds every sub-package. **Not on the Cloud Run deploy path**; kept for full local reproduction (see [the trap](#the-esbuild-overwrite-trap)). |
 | `npm run clean` | `rm -rf dist/* dist-lib/*`. |
 | `npm run check:dist` | Asserts the published `agent-3d` library bundle + `dist-lib` mirror exist and the version matches `package.json` (`scripts/check-dist.mjs`). |
@@ -23,9 +25,13 @@ Production runs on **Google Cloud Run** (service `three-ws-api`, region
 deploy is two steps from the repo root:
 
 ```bash
-npm run build        # produce dist/ (the front-end Cloud Run serves)
+npm run build:gcp    # produce a complete dist/ (app build, then the library mirror check:dist requires)
 npm run deploy:gcp   # build the image + deploy to Cloud Run
 ```
+
+(`npm run deploy:gcp:full` runs both.) Bare `npm run build` is the app build
+only: the vite step wipes `dist/`, so without the follow-on `publish:lib`
+mirror the `check:dist` gate fails. `build:gcp` encodes the correct order.
 
 `deploy:gcp` runs `check:dist` and `db:check`, then `gcloud builds submit
 --config server/cloudbuild.yaml`. Cloud Build builds the root `Dockerfile` on a
@@ -34,9 +40,9 @@ skips `npm ci`), pushes the image, deploys it to Cloud Run in one run, and the
 `deploy:gcp:purge-cdn` step invalidates the CDN cache. The image copies the
 already-built `dist/` and runs `server/index.mjs`, which serves the static
 front-end, the `vercel.json` route table, and every `api/**` handler from source
-(no per-route bundling). The ~76 scheduled jobs run on **Google Cloud
-Scheduler** driven off the `vercel.json` cron list; there is **no GitHub Actions
-CI**. Full runbook: [docs/ops/gcp-production.md](./ops/gcp-production.md).
+(no per-route bundling). The scheduled jobs (89 crons in `vercel.json` at last
+count) run on **Google Cloud Scheduler** driven off the `vercel.json` cron
+list; there is **no GitHub Actions CI**. Full runbook: [docs/ops/gcp-production.md](./ops/gcp-production.md).
 
 `.npmrc` sets `legacy-peer-deps=true` (npm never auto-installs peers — the
 reason `audit:deploy` checks the peer tree), and `engines.node` pins Node
@@ -67,8 +73,8 @@ write the bundle back over the source: `esbuild ... --outdir=api
 Run image serves `api/**` from source, a committed bundle ships broken handlers.
 If one of those
 bundles is `git add`ed and committed, the real source is lost and the repo
-balloons by millions of generated lines. This has happened twice
-(commits `c94190b3`, `dabd5884` — both reverted).
+balloons by millions of generated lines. This has happened twice before; both
+incidents had to be reverted.
 
 A bundled file is unmistakable: its opening lines carry esbuild's interop
 helpers (`__defProp`, `__commonJS`, `__toESM`, `__esm`) or the `bundle-api`
@@ -89,7 +95,7 @@ node scripts/guard-esbuild-bundles.mjs --files api/foo.js   # explicit paths
 
 Detection logic is unit-tested (`tests/guard-esbuild-bundles.test.js`): it must
 catch real esbuild/banner output and must not false-positive on a hand-written
-route (verified clean across all 1100+ `api/**/*.js`).
+route (verified clean across all 1700+ `api/**/*.js`).
 
 ### Wiring it as a pre-commit hook
 
@@ -142,3 +148,9 @@ is idempotent and fails loudly if no embed HTML is found. Verify with:
 ```bash
 grep -l 'vite-plugin-pwa:register-sw' dist/widget.html dist/embed.html   # expect: no matches
 ```
+
+## Related
+
+- [Deployment](/docs/deployment) - the deployment overview
+- [Architecture](/docs/architecture) - how the pieces fit together
+- [Contributing](/docs/contributing) - workflow and conventions for changes

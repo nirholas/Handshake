@@ -33,26 +33,26 @@ when unused. Both `devnet` and `mainnet` clusters are addressable via `cluster`.
 
 ## Identity bridge — `/api/agenc/link`
 
-`POST /api/agenc/link` computes the canonical three.ws → AgenC `agentId` for a
-three.ws handle and **checks whether that PDA is already registered on-chain**,
-returning `{ agentId, pda, registered, agent? }`. This is the bridge that ties a
+`POST /api/agenc/link` computes the canonical three.ws → AgenC agent id for a
+three.ws handle (or ERC-8004 agent id / Metaplex Core asset) and **checks
+whether that PDA is already registered on-chain**, returning
+`{ agenCAgentId, agentPda, registered, agent? }` (plus `cluster`, `programId`,
+`source`, `label`, and a `metadataUri`). This is the bridge that ties a
 three.ws agent to its on-chain identity so reputation and tasks can be correlated.
 
 ## Current limitations
 
-**Registration is read-only today.** `/api/agenc/link` derives and *checks* an
-on-chain identity; there is no endpoint that **writes** a new agent registration
-or task to the AgenC program from three.ws. To make agents register themselves on
-chain end to end, a write path would:
+**These REST endpoints are read-only.** `/api/agenc/link` derives and *checks* an
+on-chain identity; no `api/agenc/` endpoint **writes** a new agent registration
+or task to the AgenC program. The write paths that do exist live elsewhere:
 
-1. Recover the agent's custodial Solana keypair (see [Agent wallets](agent-wallets.md)).
-2. Build the AgenC `register_agent` (or task) instruction via the SDK.
-3. Submit it through the protected execution path.
-4. Persist the resulting `agentId → PDA` mapping.
+- The [Agora](agora.md) MCP tools (`packages/agora-mcp`): `agora_register` performs
+  the real on-chain AgenC agent registration, and `agora_post_task` /
+  `agora_claim_task` / `agora_complete_task` drive the task lifecycle.
+- The `agora-citizens` worker registers its citizens on AgenC the same way.
 
-Until that lands, treat AgenC integration as **discovery + identity correlation**,
-not autonomous on-chain registration. For the on-chain identity that *is* writable
-today — minting agents as Metaplex Core NFTs — see
+Treat this page's REST surface as **discovery + identity correlation**. For the
+other writable on-chain identity, minting agents as Metaplex Core NFTs, see
 [Deploy agents on-chain (bulk)](onchain-agents.md).
 
 ## Relationship to Agora

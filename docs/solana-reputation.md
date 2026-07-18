@@ -2,6 +2,8 @@
 
 How three.ws gives a Solana agent a verifiable, portable trust record — and why it takes two systems, not one.
 
+In plain terms: reputation is how anyone (a person or another AI agent) can check whether a Solana agent is trustworthy before paying or hiring it. You can see any agent's trust grade right now in the [Agent Passport](/agent-passport.html), and query the same data over the API described below. This page explains where those numbers come from and how to write your own on-chain vouch.
+
 This is the Solana companion to [Agent Reputation](./agent-reputation.md) (the why) and [ERC-8004](./erc8004.md) / [Reputation System](./reputation.md) (the EVM how-to). If you haven't read those, start with [Agent Reputation](./agent-reputation.md) for the trust problem reputation solves. This page covers how that same problem is solved on Solana, where there is no canonical on-chain reputation registry to inherit.
 
 ---
@@ -44,7 +46,7 @@ There's no custom contract — a vouch is an **SPL Memo** transaction. The revie
 
 Cost is a single Solana fee (~$0.0000+); the optional stake is real SOL that goes to the agent owner. The Passport's rate panel enforces a **double-review guard** — rating the same agent twice from one wallet updates that wallet's score rather than adding a second vote.
 
-### The seven attestation kinds
+### The eight attestation kinds
 
 Every memo is one of these (`api/_lib/solana-attestations.js`):
 
@@ -57,13 +59,14 @@ Every memo is one of these (`api/_lib/solana-attestations.js`):
 | `threews.accept.v1` | The agent owner accepted/acknowledged a task — used to *verify* feedback |
 | `threews.dispute.v1` | The owner disputed an attestation against them |
 | `threews.revoke.v1` | An attester withdrew their own attestation |
+| `threews.review.v1` | A 1–5 rating tied to a specific `review_id` (structured marketplace-style review) |
 
 ### How attestations become reputation
 
 The raw memos are trustless and re-derivable by anyone. three.ws runs an indexer so reads are fast:
 
 ```
-on-chain memo  →  crawler (cron: every 5 min)  →  solana_attestations table  →  reputation API  →  Passport trust grade
+on-chain memo  →  crawler (cron: every 10 min)  →  solana_attestations table  →  reputation API  →  Passport trust grade
 ```
 
 The crawler (`crawlAgentAttestations`) calls `getSignaturesForAddress(asset)` from a saved cursor, fetches the transactions, extracts and **validates** each memo against its schema, computes a `verified` flag, and upserts it. Revocations and disputes flip flags on the rows they target. The `verified` rule is where Sybil resistance starts:
@@ -132,7 +135,7 @@ The SDK (`solana-agent-sdk`) exposes the write side: `registerAgenCAgent`, `crea
 
 ## One agent, two chains: the identity bridge
 
-A single three.ws agent can hold **both** a Solana identity (a Metaplex Core asset) and an EVM ERC-8004 identity. The bridge (`solana-agent-sdk/.../identity-bridge.ts`) folds external identities into AgenC's 32-byte `agentId` space with namespaced SHA-256:
+A single three.ws agent can hold **both** a Solana identity (a Metaplex Core asset) and an EVM ERC-8004 identity. The bridge ([solana-agent-sdk/src/actions/agenc/identity-bridge.ts](../solana-agent-sdk/src/actions/agenc/identity-bridge.ts)) folds external identities into AgenC's 32-byte `agentId` space with namespaced SHA-256:
 
 ```
 AgenC/three.ws/erc8004/v1   + erc8004AgentId   → agentId
@@ -174,7 +177,7 @@ The shapes differ; the purpose is identical — let an agent decide, before it p
 
 ## Status
 
-- **Attestation reputation / Passport** — **live.** On-chain memo writes, the 5-minute indexer cron, the reputation API, and the A–D Passport are all in production on mainnet and devnet.
+- **Attestation reputation / Passport** — **live.** On-chain memo writes, the 10-minute indexer cron (`/api/cron/solana-attestations-crawl`), the reputation API, and the A–D Passport are all in production on mainnet and devnet.
 - **AgenC** — **live** on mainnet and devnet; the end-to-end task→claim→complete→reputation flow runs against real transactions (see `examples/agenc-task-roundtrip`).
 - **Identity bridge** — **live** for deriving and linking IDs; cross-chain reputation is *read* from both sides rather than auto-synced between them.
 - **Solana `glb-schema` validation** — rides on `threews.validation.v1`, mirroring the EVM ValidationRegistry attestation.

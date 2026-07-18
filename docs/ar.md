@@ -22,7 +22,7 @@ three.ws selects the right AR method automatically based on the device and brows
 | **Android Scene Viewer** | Android Chrome | ARCore intent URL | ARCore (auto-prompts) |
 | **WebXR immersive-ar** | Chrome on Android, Safari 15.4+ | `navigator.xr` session | No |
 
-**Selection order:** Quick Look → Scene Viewer → WebXR. Quick Look fires first on iOS because it's the most reliable. Scene Viewer fires first on Android because it works without a runtime XR session setup. WebXR is the fallback — and the only method that keeps the agent live in-page.
+**Selection order:** the AR surfaces configure model-viewer with `ar-modes="webxr scene-viewer quick-look"`, so the first mode the device actually supports wins: WebXR where available (Android Chrome with ARCore), then Scene Viewer, then Quick Look. On iOS Safari, WebXR is off by default, so Quick Look is what fires in practice. WebXR is the only method that keeps the agent live in-page. The `/api/ar` launcher additionally 302-redirects plain Android model requests straight into the Scene Viewer intent (avatars get the launch page instead, so the living `/irl` path stays visible).
 
 ---
 
@@ -43,25 +43,18 @@ WebXR is the only method where the agent stays fully alive. Quick Look now ships
 
 ---
 
-## Enabling AR on your agent
+## Enabling AR for your model or agent
 
-Add the `ar` attribute to `<agent-3d>`:
+You do not add an attribute to enable AR; you link to (or embed) one of the AR surfaces, all of which detect the device and pick the right AR method automatically:
 
-```html
-<script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
+| Surface | URL | Best for |
+|---|---|---|
+| One-tap AR launcher | `/api/ar?src=<glbUrl>&title=<name>` | Any public GLB; see [the full section below](#one-tap-ar-for-any-glb--get-apiar--export_ar) |
+| Avatar AR page | `/avatars/<id>/ar` | Any saved three.ws avatar |
+| AR Forge | `/ar` | Generate a model from a prompt and place it immediately |
+| Living-agent AR | `/irl?avatar=<glbUrl>` | A rigged avatar that walks and talks in your room (WebXR) |
 
-<agent-3d
-  id="your-agent-id"
-  ar
-></agent-3d>
-```
-
-The AR button appears automatically when:
-- The `ar` attribute is present
-- The device/browser supports at least one AR method
-- The model has finished loading
-
-On desktop, the button is hidden — no desktop browser supports `immersive-ar`.
+The avatar AR page and the `/api/ar` launch page render the model in Google's `<model-viewer>` element with `ar ar-modes="webxr scene-viewer quick-look"`, so the same page covers Quick Look, Scene Viewer, and WebXR. The **Place in your space** button appears only when the device exposes a usable AR mode (model-viewer's `canActivateAR`); on desktop the page shows a QR code handoff instead.
 
 ### Allow XR in iframes
 
@@ -80,51 +73,47 @@ Without `xr-spatial-tracking`, the browser blocks `navigator.xr` inside the fram
 
 ## Programmatic API
 
-```js
-const el = document.querySelector('agent-3d');
+On pages that render the model with `<model-viewer>` (the avatar AR page at `/avatars/<id>/ar`, the `/api/ar` launch page, Forge results), AR is driven through model-viewer's API. This is exactly what [src/ar-page.js](../src/ar-page.js) does:
 
-// Check if AR is available on this device
-if (el.canActivateAR) {
-  // Launch AR (picks the best available method automatically)
-  await el.activateAR();
+```js
+const viewer = document.querySelector('model-viewer');
+
+// canActivateAR is true only when the device exposes a usable AR mode
+// (Quick Look, Scene Viewer, or WebXR) and the model is loaded.
+if (viewer.canActivateAR) {
+  viewer.activateAR(); // picks the best available method automatically
 }
-```
 
-`canActivateAR` is `true` when:
-- The model is fully loaded
-- At least one of Quick Look, Scene Viewer, or WebXR is available
-
-`activateAR()` is async — it awaits the session setup for WebXR; Quick Look and Scene Viewer return immediately.
-
-```js
 // Listen for AR session events
-el.addEventListener('ar-status', (e) => {
+viewer.addEventListener('ar-status', (e) => {
   // e.detail.status: 'session-started' | 'object-placed' | 'failed' | 'not-presenting'
   console.log('AR status:', e.detail.status);
 });
 ```
 
+For a custom viewer without model-viewer, use the three.ws launcher modules directly; see [Using AR without model-viewer](#using-ar-without-model-viewer) below.
+
 ---
 
 ## iOS Quick Look — deep dive
 
-Safari intercepts clicks on `<a rel="ar">` and opens the native AR viewer. The three.ws implementation in `src/ar/quick-look.js`:
+Safari intercepts clicks on `<a rel="ar">` and opens the native AR viewer. The three.ws implementation in `src/ar/quick-look.js` (simplified; the real module also keeps the anchor in the DOM to receive Quick Look banner-tap events):
 
 ```js
-function openQuickLook(modelURI) {
+export function openQuickLook(usdzURI, { onBannerTap } = {}) {
   const a = document.createElement('a');
   a.rel = 'ar';
-  a.href = modelURI;
+  a.href = usdzURI;
   a.appendChild(document.createElement('img')); // required for programmatic click
-  document.body.appendChild(a);
+  a.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;';
+  document.body.appendChild(a); // stays in the DOM while the viewer is open
   a.click();
-  document.body.removeChild(a);
 }
 ```
 
-The child `<img>` element is required — without it, Safari won't intercept a programmatic `.click()` as a Quick Look trigger. This is a documented WebKit quirk.
+The child `<img>` element is required — without it, Safari won't intercept a programmatic `.click()` as a Quick Look trigger. This is a documented WebKit quirk. The anchor must remain in the DOM while the viewer is open: Safari delivers the banner-tap `message` event on the anchor that launched the session.
 
-**USDZ on iOS:** iOS 13+ accepts GLB files directly via the `href`. For earlier devices or for Apple's richest AR features (like custom banners and item purchasing), three.ws can pre-generate a USDZ companion file stored on R2. If a `usdz_url` exists on the avatar record, it's used as `ios-src`; otherwise the GLB-to-USDZ conversion runs in-browser via the three.js `USDZExporter` before Quick Look opens.
+**USDZ on iOS:** Quick Look wants USDZ, so three.ws always hands it one. If a `usdz_url` exists on the avatar record (a pre-generated companion stored on R2), it's used as `ios-src`; otherwise the GLB-to-USDZ conversion runs in-browser (three.js `USDZExporter`, or the animated bake described below) before Quick Look opens.
 
 **Requirements:**
 - iOS 13+ with Safari (Chrome on iOS uses WebKit but lacks Quick Look integration)
@@ -221,9 +210,9 @@ For avatars on three.ws, the USDZ is handled automatically:
 1. **Pre-generated USDZ:** If the avatar record has a `usdz_url`, it's set as `ios-src` immediately — no conversion needed.
 2. **In-browser animated bake:** If not, the page downloads the GLB and bakes an *animated* USDZ via [src/usdz-animated.js](../src/usdz-animated.js) (`glbBlobToAnimatedUsdzBlob`): the avatar is driven through its idle clip, the skinned vertices are sampled at keyframes, and the samples are written into the USDA as time-sampled points that Quick Look loops natively. So a rigged avatar breathes and idles in your room instead of standing in a frozen pose. This runs inline (a dynamic import, not a Web Worker) and typically takes a few seconds depending on model complexity.
 3. **Static fallback:** Any bake failure (no rig, no usable clip) falls back to the plain `USDZExporter` path in [src/usdz-pipeline.js](../src/usdz-pipeline.js), which produces a static frame-0 pose. AR never regresses below static.
-4. **Persistent storage:** After the first conversion, the USDZ is uploaded to R2 and saved back to the avatar record so subsequent AR visits are instant.
+4. **Persistent storage (opt-in):** The AR page's in-browser conversion lives only for that visit (an object URL). Durable USDZ companions come from `generateAndSaveCompanions()` in [src/account.js](../src/account.js), which bakes the animated USDZ, uploads it via `POST /api/avatars/presign-usdz`, and saves `usdz_url` on the avatar record so later AR visits skip the conversion. Companion generation is opt-in per save (`generateCompanions: true`; the `/demos/usdz-ar` demo page enables it) because the bake costs several seconds of client CPU.
 
-The same animated bake serves the `/irl` Place-in-AR button, the `/avatars/:id/ar` page ([src/ar-page.js](../src/ar-page.js)), and the create flow ([src/account.js](../src/account.js)), which pre-bakes the animated USDZ.
+The same animated bake serves the `/irl` Place-in-AR button and the `/avatars/:id/ar` page ([src/ar-page.js](../src/ar-page.js)).
 
 **USDZ limitations to know:**
 - Quick Look plays exactly one baked clip; the full animation library and live retargeting need WebXR
@@ -310,22 +299,18 @@ Chrome on desktop (127+) has a WebXR device simulator under DevTools → More To
 
 ### AR button doesn't appear on mobile
 
-**Check 1 — `ar` attribute is set:**
-```html
-<agent-3d id="..." ar></agent-3d>
-```
-
-**Check 2 — browser supports AR:**
+**Check 1: browser supports AR**
 - iOS: Must be Safari, not Chrome or Firefox
 - Android: Must be Chrome (or Chromium) with ARCore installed
 
-**Check 3 — model is loaded:**
-The AR button is hidden until the model finishes loading. Watch for the `load` event:
+**Check 2: model is loaded**
+The **Place in your space** button is disabled until the model finishes loading. On a model-viewer page, watch for the `load` event:
 ```js
-el.addEventListener('load', () => console.log('model loaded, AR should be available'));
+document.querySelector('model-viewer')
+  .addEventListener('load', () => console.log('model loaded, AR should be available'));
 ```
 
-**Check 4 — inside an iframe:**
+**Check 3: inside an iframe**
 Add `allow="xr-spatial-tracking"` to the `<iframe>` tag.
 
 ---
@@ -381,31 +366,35 @@ iOS 15.4+ requires WebXR AR to be enabled manually: **Settings → Safari → Ad
 
 ---
 
-## Using AR without `<agent-3d>`
+## Using AR without model-viewer
 
 If you're building a custom viewer and just need the AR launchers, import the modules directly:
 
 ```js
-import { openQuickLook } from '/src/ar/quick-look.js';
-import { openSceneViewer } from '/src/ar/scene-viewer.js';
+import { canUseQuickLook, openQuickLook } from '/src/ar/quick-look.js';
+import { canUseSceneViewer, openSceneViewer } from '/src/ar/scene-viewer.js';
 import { WebXRSession } from '/src/ar/webxr.js';
 
-// iOS
-if (/iPhone|iPad/.test(navigator.userAgent)) {
-  openQuickLook('https://cdn.example.com/model.glb');
+// iOS: Quick Look takes a USDZ, not a GLB (bake one with
+// glbBlobToAnimatedUsdzBlob / glbBlobToUsdzBlob, see the USDZ pipeline above)
+if (canUseQuickLook()) {
+  openQuickLook('https://cdn.example.com/model.usdz');
 }
 
-// Android
-else if (/Android/.test(navigator.userAgent)) {
+// Android: Scene Viewer takes the GLB URL
+else if (canUseSceneViewer()) {
   openSceneViewer('https://cdn.example.com/model.glb', {
     title: 'My Agent',
     link: 'https://three.ws',
   });
 }
 
-// WebXR fallback
+// WebXR: keeps the agent alive in-page. The constructor takes a viewer
+// shim ({ renderer, scene, content, controls, activeCamera, ... }); see
+// src/xr.js for the canonical shape, plus lifecycle callbacks
+// (onEnd, onAnchored, onHit, onTracking, onScale, domOverlayRoot).
 else if (await navigator.xr?.isSessionSupported('immersive-ar')) {
-  const session = new WebXRSession(renderer, scene, camera);
+  const session = new WebXRSession(viewer, { onEnd: () => console.log('AR ended') });
   await session.start();
 }
 ```
@@ -466,6 +455,6 @@ How this link ships through ChatGPT end to end (the app connector, the custom GP
 - [Blog: See Your 3D Avatar in the Real World](https://three.ws/blog/see-your-3d-in-ar) — full walkthrough
 - [Avatar AR page](/avatars/:id/ar) — the dedicated AR experience for any avatar
 - [Walk feature](/features/walk) — WebXR immersive walk mode (different from placement AR)
-- [Web component reference](/docs/web-component) — full `<agent-3d>` attribute list including `ar`
+- [Web component reference](/docs/web-component) — full `<agent-3d>` attribute list
 - [Embedding guide](/docs/embedding) — iframe setup with XR permissions
 - [Tutorial: Place your model in AR](/docs/tutorials/view-in-ar)

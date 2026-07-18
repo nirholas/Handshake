@@ -29,9 +29,12 @@ The agent launcher signs and submits with the agent's **custodial** Solana keypa
 server-side (`launch-agent`), through the protected execution path
 (`submitProtected()`). Spend caps are checked before signing (see
 [Agent wallets](custody.md)), and the mint is registered in
-`pump_agent_mints`. The `launcher-tick` cron drives autonomous launches on a
-cadence (every minute, bounded by the daily/hourly launch caps described in the
-[circulation engine](circulation-engine.md)).
+`pump_agent_mints`. The `launcher-tick` cron (every minute) drives the
+autonomous launcher engine (`api/_lib/launcher-engine.js`), bounded by
+per-launch and daily SOL caps, an hourly ceiling, a cadence gate, and a circuit
+breaker from its `launcher_config` row; a scope whose row is disabled stays
+inert. The [circulation engine](circulation-engine.md) also runs its own
+`launch` action with separate hourly/daily caps.
 
 ## What a launch carries
 
@@ -41,7 +44,7 @@ cadence (every minute, bounded by the daily/hourly launch caps described in the
 | Quote mint | Resolved to the network-correct pairing (USDC mint or SOL-paired). |
 | Dev buy | A small initial buy can accompany the create (the `LAUNCH_FLOOR` covers create + tiny dev buy + fees). |
 | Buyback authority | A buyback basis-points configuration can be attached to the agent mint. |
-| Mint mark | When `THREE_WS_MARK_ENFORCE` is on, the mint address is vanity-ground to carry the three.ws mark (see [Mint mark](mint-mark.md), [Vanity protocol](PROTOCOL-vanity.md)). |
+| Mint mark | When `THREE_WS_MARK_ENFORCE` is on (the default; set `0`/`false` to disable), the mint address is vanity-ground to carry the three.ws mark (see [Mint mark](mint-mark.md), [Vanity protocol](PROTOCOL-vanity.md)). |
 
 ## Recording and surfacing
 

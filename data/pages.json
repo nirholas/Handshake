@@ -94,7 +94,7 @@
 				{
 					"path": "/create/video",
 					"title": "Talking Avatar Video",
-					"description": "Turn a three.ws avatar into a talking-head video: type a script, pick a voice, and export a lip-synced clip.",
+					"description": "Turn a three.ws avatar into a talking-head video: upload your audio and export a lip-synced clip.",
 					"priority": 0.6,
 					"changefreq": "weekly",
 					"added": "2026-07-01"

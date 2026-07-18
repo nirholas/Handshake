@@ -1,12 +1,13 @@
 # x402 Developer Tools
 
 A free test bench for building and debugging x402 integrations against a live
-server. Six tools — three new free diagnostics plus three pre-existing probe
-endpoints — that let you inspect what the server sees, understand why a payment
-was rejected, and confirm a receipt, all without spending anything.
+server. Six tools (three free diagnostics plus three paid probe endpoints)
+that let you inspect what the server sees, understand why a payment was
+rejected, and confirm a receipt.
 
-Every tool here is **free and keyless** except the two paid probes noted below.
-The three new diagnostic tools are rate-limited to **30 requests/minute per IP**.
+The three diagnostic tools are **free and keyless**, rate-limited to
+**30 requests/minute per IP**. The three probe endpoints are paid
+($0.001 USDC each).
 
 Base URL: `https://three.ws`
 
@@ -102,7 +103,7 @@ Two independent checks; supply either or both. The response says exactly what
 was and wasn't verifiable.
 
 **Attestation integrity** — pass a three.ws paid response carrying a
-`sha256:…` attestation (e.g. from [`/api/x402/fact-check`](./x402-endpoints.md)).
+`sha256:…` attestation (e.g. from [`/api/x402/fact-check`](/docs/x402-endpoints)).
 The digest is recomputed over the committed fields; if any was altered after
 signing, the recomputed digest won't match.
 
@@ -159,7 +160,7 @@ endpoint today before hitting its daily USDC spend cap — `remaining_calls`,
 curl -s https://three.ws/api/x402/rate-limit-probe -d '{ "endpoint": "/api/x402/forge" }'
 ```
 
-### Permit2 paid demo — `GET /api/x402/permit2-paid-demo` *(paid)*
+### Permit2 paid demo: `GET /api/x402/permit2-paid-demo` *(paid, $0.001 USDC)*
 
 A target that advertises **only** the Permit2 + EIP-2612 gas-sponsoring accept
 (no EIP-3009 fallback), so you can prove a wallet with USDC but zero native gas
@@ -181,7 +182,7 @@ implementation against a live server.
 
 ## Related
 
-- [x402 Protocol](./x402.md) — the challenge / verify / settle mechanics.
-- [x402 Paid Endpoints](./x402-endpoints.md) — the full catalog and pricing.
-- [x402 Buyer Client](./x402-buyer.md) — how to settle a challenge from code.
-- [x402 Revenue & Receipts](./x402-revenue.md) — how signed receipts are recorded.
+- [x402 Protocol](/docs/x402) - the challenge / verify / settle mechanics.
+- [x402 Paid Endpoints](/docs/x402-endpoints) - the full catalog and pricing.
+- [x402 Buyer Client](/docs/x402-buyer) - how to settle a challenge from code.
+- [x402 Revenue & Receipts](/docs/x402-revenue) - how signed receipts are recorded.

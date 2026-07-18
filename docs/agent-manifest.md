@@ -312,7 +312,7 @@ Each element must be an object with a `uri` field:
 Three URI forms:
 
 - **Relative** (`skills/wave/`) — bundled in the manifest directory.
-- **IPFS** (`ipfs://bafy.../`) — resolved via the IPFS gateway cascade (dweb.link → cloudflare-ipfs.com → ipfs.io).
+- **IPFS** (`ipfs://bafy.../`), resolved via the IPFS gateway cascade (dweb.link, then ipfs.io, then flk-ipfs.xyz).
 - **HTTPS** (`https://skills.3d-agent.io/...`) — centrally hosted.
 
 The `version` field is metadata; the runtime uses it for display and conflict detection but does not enforce semver constraints at load time.
@@ -357,7 +357,7 @@ Memory files use Claude-shaped frontmatter Markdown (same format as Claude Code'
 
 Declares which built-in scene tools are available to the LLM without installing any skill. Skills add additional tools on top of this list.
 
-Default set when `tools` is omitted: `["wave", "lookAt", "play_clip", "setExpression"]`.
+Default set when `tools` is omitted: `["wave", "lookAt", "play_clip", "setExpression", "speak", "remember"]`.
 
 Full set of built-in scene tools:
 
@@ -370,7 +370,6 @@ Full set of built-in scene tools:
 | `speak`         | Emit a speech utterance (TTS + protocol event). |
 | `remember`      | Write a memory entry. |
 | `see_screen`    | Capture what is currently visible on screen to inform the agent's response. |
-| `moveTo`        | Move the agent to a position in the scene. |
 
 On a multi-agent stage, two additional stage-scoped tools become available: `observe_agents` (list the other agents sharing the stage, with names and positions) and `say_to_agent` (send a message to another agent on the same stage).
 
@@ -451,8 +450,10 @@ ISO 8601 timestamps. Informational; not validated by the runtime.
 `ipfs://` URIs are resolved to HTTPS gateway URLs. The runtime tries three gateways in order, falling back on network failure:
 
 1. `https://dweb.link/ipfs/<CID>`
-2. `https://cloudflare-ipfs.com/ipfs/<CID>`
-3. `https://ipfs.io/ipfs/<CID>`
+2. `https://ipfs.io/ipfs/<CID>`
+3. `https://flk-ipfs.xyz/ipfs/<CID>`
+
+Cloudflare retired its public IPFS gateways (cf-ipfs.com, cloudflare-ipfs.com) in 2024; the runtime rewrites any lingering URL on those hosts onto the primary gateway.
 
 ### Arweave
 
@@ -490,7 +491,7 @@ Same rule applies on IPFS: the gateway URL of the manifest's directory is used a
   resolveURI()  →  https://dweb.link/ipfs/bafy.../manifest.json
          │
          ▼
-  fetchWithFallback()  (dweb.link → cloudflare-ipfs → ipfs.io)
+  fetchWithFallback()  (dweb.link → ipfs.io → flk-ipfs.xyz)
          │
          ▼
   normalize(json, { baseURI: "https://dweb.link/ipfs/bafy.../" })

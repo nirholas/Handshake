@@ -18,7 +18,9 @@ Contracts are deployed at the same address on every supported EVM chain, using C
 
 ### Mainnet
 
-Chains: Ethereum (1), Optimism (10), BSC (56), Gnosis (100), Polygon (137), Fantom (250), zkSync Era (324), Moonbeam (1284), Mantle (5000), Base (8453), Arbitrum One (42161), Celo (42220), Avalanche (43114), Linea (59144), Scroll (534352).
+Chains with confirmed bytecode: Ethereum (1), Optimism (10), BSC (56), Gnosis (100), Polygon (137), Mantle (5000), Base (8453), Arbitrum One (42161), Celo (42220), Avalanche (43114), Linea (59144), Scroll (534352).
+
+Fantom (250), zkSync Era (324), and Moonbeam (1284) are listed in `REGISTRY_DEPLOYMENTS` for address parity but have **no contract code yet** (an `eth_getCode` sweep on 2026-06-19 returned empty on all three; zkSync Era additionally derives CREATE2 addresses differently, so the canonical address is unreachable there without a chain-specific deploy). Writes on those chains revert until the registries are deployed. See [`contracts/DEPLOYMENTS.md`](../contracts/DEPLOYMENTS.md) for the authoritative per-chain status.
 
 | Contract | Address |
 |---|---|
@@ -276,7 +278,7 @@ await tx2.wait();
 
 ## ReputationRegistry
 
-`ReputationRegistry` stores signed feedback about registered agents. Scores are integers in the range `[-100, 100]` — negative scores indicate poor experiences, positive scores indicate good ones. Each `(reviewer, agentId)` pair can only submit once; there is no update path. Agent owners cannot review their own agents.
+`ReputationRegistry` stores signed feedback about registered agents. Scores are integers in the range `[-100, 100]` — negative scores indicate poor experiences, positive scores indicate good ones. Each `(reviewer, agentId)` pair can only submit once; there is no update path. Agent owners cannot review their own agents. Alongside plain feedback, the contract also exposes an ETH-staked variant (`stakeReputation(uint256 agentId, uint8 score, string comment)` payable, refundable via `withdrawStake(uint256 agentId)`); `submitFeedback` is the path documented here.
 
 The registry holds a reference to `IdentityRegistry` — submitting feedback for an unregistered agentId reverts with `UnknownAgent`.
 
@@ -540,17 +542,19 @@ export BASESCAN_API_KEY=your_key
 export DEPLOYER_PK=0xYourPrivateKey
 
 # Dry run first (no --broadcast)
-forge script script/Deploy.s.sol --rpc-url base_sepolia
+forge script script/Deploy.s.sol --rpc-url base_sepolia --private-key "$DEPLOYER_PK"
 
 # Deploy to Base Sepolia and verify on Basescan
 forge script script/Deploy.s.sol \
   --rpc-url base_sepolia \
+  --private-key "$DEPLOYER_PK" \
   --broadcast \
   --verify
 
 # Deploy to Base mainnet
 forge script script/Deploy.s.sol \
   --rpc-url base \
+  --private-key "$DEPLOYER_PK" \
   --broadcast \
   --verify
 ```
@@ -584,3 +588,12 @@ These are approximate costs at optimizer 200 runs. Actual cost depends on chain 
 | All `view` functions | 0 | Free off-chain reads |
 
 On Base at typical gas prices (~0.001 gwei base fee), an agent registration runs to roughly $0.10–$0.25. The same transaction costs 20–50x more on Ethereum mainnet — use Base or another L2 for cost-sensitive flows.
+
+---
+
+## Related
+
+- [ERC-8004 guide](/docs/erc8004) - the higher-level walkthrough of registering three.ws identities on-chain.
+- [Reputation system](/docs/reputation) - how feedback scores surface in the product.
+- [Validation attestations](/docs/validation) - the off-chain validation flow that writes to `ValidationRegistry`.
+- [Register on-chain tutorial](/docs/tutorials/register-onchain) - step-by-step registration from the UI and SDK.

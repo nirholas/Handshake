@@ -135,8 +135,8 @@ Ready-to-submit listing packages for each directory, plus the canonical metadata
 
 Deep dives — every tool, argument, env var, and example:
 
-- **Install-and-run:** [Scenes](https://three.ws/docs/mcp-scenes) · [x402 Wallet](https://three.ws/docs/mcp-x402) · [Intel](https://three.ws/docs/mcp-intel) · [Vanity](https://three.ws/docs/mcp-vanity) · [Naming](https://three.ws/docs/mcp-naming) · [Marketplace](https://three.ws/docs/mcp-marketplace)
-- **Hosted remote:** [3D Studio](./mcp-3d-studio.md) · [Agent wallet](./mcp-agent.md) · [x402 Bazaar](./mcp-x402-bazaar.md) · [IBM x402](./ibm-x402-mcp.md)
+- **Hosted remote:** [3D Studio (free)](./mcp-studio.md) · [3D Studio (paid)](./mcp-3d-studio.md) · [Agent wallet](./mcp-agent.md) · [x402 Bazaar](./mcp-x402-bazaar.md) · [IBM x402](./ibm-x402-mcp.md)
+- **Install-and-run:** each npm server ships its usage guide (tools, arguments, env vars, examples) in its package README on [npmjs.com/org/three-ws](https://www.npmjs.com/org/three-ws). The [MCP Tools Catalog](./mcp-tools.md) maps every tool to its server and price.
 
 ---
 
@@ -220,6 +220,8 @@ Send `POST /api/mcp` with valid JSON-RPC 2.0 messages and a bearer token. The se
 ## Available tools
 
 All tools return `{ content: [{ type, text }], structuredContent: {...} }`. On error, `isError: true` is set and `content[0].text` contains the message.
+
+The tools below are the core avatar, validation, minting, and market-data set. The server registers more beyond this page (memory `remember`/`recall`/`forget`, `register_agent`, oracle and pump.fun intel reads, trader analytics, copy-trading); call `tools/list` for the complete live catalog with schemas.
 
 ---
 
@@ -709,3 +711,12 @@ To point Claude Code at your local server, update `.mcp.json`:
 ```
 
 Restart Claude Code after editing `.mcp.json` so the new server config is picked up.
+
+---
+
+## Related
+
+- [MCP Tools Catalog](/docs/mcp-tools): every three.ws MCP tool, its server, and its price
+- [3D Studio MCP (free)](/docs/mcp-studio): the no-auth, no-payment 3D generation server
+- [Spatial MCP](/docs/spatial-mcp): returning live 3D scenes as native MCP responses
+- [x402](/docs/x402): the USDC micropayment rail behind the paid tools

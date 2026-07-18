@@ -206,7 +206,7 @@ IRL renders the scene with WebGL. If your browser lacks it, you'll see a designe
 
 This is the motion sensor. On iOS, IRL needs a one-time **Motion & Orientation** permission granted via a tap — accept it when prompted, or re-request it from the recovery chip. Without the gyroscope, the agent can't stay anchored as you rotate the phone.
 
-### "Place on floor" button never appears
+### "Place in AR" button never appears
 
 That button is the WebXR hit-test path, available only where the browser supports an `immersive-ar` session (Chrome on Android with ARCore). iOS Safari has no `immersive-ar`, so it stays on the **Pin here** gyro + GPS path — which works fine; you just don't get plane hit-testing. Desktop never shows it (no camera passthrough).
 

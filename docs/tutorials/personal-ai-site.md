@@ -67,7 +67,7 @@ When you receive the message "__greet", introduce yourself warmly: say who you a
 
 Your avatar is the visual anchor of the whole experience. You have two paths:
 
-**Selfie-to-avatar** — Use the [Avatar Creation guide](../avatar-creation.md) to generate a 3D avatar from a photo. A few tips for PAI-quality results:
+**Selfie-to-avatar** — Use the [Avatar Creation guide](/docs/avatar-creation) to generate a 3D avatar from a photo. A few tips for PAI-quality results:
 - Use a photo where you are looking straight ahead, with even lighting
 - Wear what you would want to be "remembered" in — this avatar represents you
 - Export as a Mixamo-rigged GLB so it picks up the built-in animation clips automatically
@@ -126,7 +126,7 @@ The LLM has access to these memories in every conversation turn. Update them ind
 
 ## Step 4: Build the site HTML
 
-Here is the full page. Replace the placeholder values in brackets and swap in your GLB URL and agent ID.
+Here is the full page. Replace the placeholder values in brackets and swap in your GLB URL.
 
 ```html
 <!DOCTYPE html>
@@ -258,7 +258,6 @@ Here is the full page. Replace the placeholder values in brackets and swap in yo
     <agent-3d
       id="maya"
       body="https://yourname.com/avatars/maya.glb"
-      agent-id="your-agent-id"
       brain="claude-opus-4-7"
       style="height: calc(100% - 130px); display: block"
     ></agent-3d>
@@ -325,33 +324,68 @@ You can tune the greeting by editing the `__greet` instruction in your system pr
 
 ## Step 6: Connect 3D models to projects
 
-The most memorable part of a PAI site is when the avatar loads a project model mid-conversation. To set this up, install a custom skill that exposes `load_model` as a tool.
+The most memorable part of a PAI site is when the avatar loads a project model mid-conversation. To set this up, write a custom skill that exposes `load_project` as a tool.
 
-Create `skills/load-project/skill.md`:
+A skill is a directory ("bundle") of up to four files, served from your site like any other static assets:
 
-```markdown
-# load_project
+```
+skills/load-project/
+├── manifest.json    metadata and what the skill provides
+├── SKILL.md         instructions injected into the system prompt
+├── tools.json       the tool schema the LLM can invoke
+└── handlers.js      the implementation
+```
 
-Load a 3D GLB model of a named project into the viewer.
-
-## Tool definition
+`manifest.json`:
 
 ```json
 {
-  "name": "load_project",
-  "description": "Load a 3D model of a portfolio project. Call this when the user asks to 'see' or 'show' a project.",
-  "input_schema": {
-    "type": "object",
-    "properties": {
-      "project": { "type": "string", "description": "The project name" },
-      "url": { "type": "string", "description": "The GLB URL to load" }
-    },
-    "required": ["project", "url"]
-  }
+  "spec": "skill/0.1",
+  "name": "load-project",
+  "version": "0.1.0",
+  "description": "Load a 3D GLB model of a portfolio project into the viewer.",
+  "provides": { "tools": ["load_project"] }
 }
 ```
 
-## Handler
+`tools.json`:
+
+```json
+{
+  "tools": [
+    {
+      "name": "load_project",
+      "description": "Load a 3D model of a portfolio project. Call this when the user asks to 'see' or 'show' a project.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "project": { "type": "string", "description": "The project name" },
+          "url": { "type": "string", "description": "The GLB URL to load" }
+        },
+        "required": ["project", "url"]
+      }
+    }
+  ]
+}
+```
+
+`SKILL.md` (this markdown lands in the system prompt, so the project URL list lives here instead of in your main instructions):
+
+```markdown
+---
+name: load-project
+description: Load a 3D model of a named portfolio project.
+---
+
+When a visitor asks to see or look at a project, call `load_project`
+with the matching URL.
+
+Project model URLs:
+- Acme Dashboard: https://yourname.com/models/acme-dashboard.glb
+- Health App AR: https://yourname.com/models/health-ar.glb
+```
+
+`handlers.js`:
 
 ```js
 export async function load_project({ project, url }, ctx) {
@@ -359,19 +393,19 @@ export async function load_project({ project, url }, ctx) {
   return { ok: true, output: `Loaded 3D model for ${project}` };
 }
 ```
+
+Install it by adding the `skills` attribute to the element (or a `skills` entry in your manifest):
+
+```html
+<agent-3d
+  id="maya"
+  body="https://yourname.com/avatars/maya.glb"
+  brain="claude-opus-4-7"
+  skills="https://yourname.com/skills/load-project/"
+></agent-3d>
 ```
 
-Then add skill routing to your system prompt:
-
-```
-When a visitor asks to see or look at a project, call load_project with the relevant URL.
-
-Project model URLs:
-- Acme Dashboard: https://yourname.com/models/acme-dashboard.glb
-- Health App AR: https://yourname.com/models/health-ar.glb
-```
-
-Now when a visitor says "show me the health app", the agent will call `load_project`, which calls `ctx.loadGLB()` on the scene controller, swapping the avatar's environment for the project model.
+Now when a visitor says "show me the health app", the agent calls `load_project`, which calls `ctx.loadGLB()` on the scene controller, swapping the avatar's environment for the project model. The full authoring reference (context API, sandboxing, publishing) is in the [Skills system](/docs/skills) doc, and [Build a custom skill](/docs/tutorials/custom-skill) walks through a bundle end to end.
 
 ---
 
@@ -507,8 +541,8 @@ The technical investment is one HTML file, a GLB avatar, and a system prompt. Th
 
 ## Next steps
 
-- [Avatar Creation guide](../avatar-creation.md) — detailed walkthrough of selfie-to-avatar
-- [Skills system](../skills.md) — how to install and author custom skills like `load_project`
-- [Memory system](../memory.md) — full memory API reference for pre-loading knowledge
-- [Agent Manifest](../agent-manifest.md) — package your agent for distribution and on-chain identity
-- [Embedding guide](../embedding.md) — add your agent to other pages and platforms
+- [Avatar Creation guide](/docs/avatar-creation) — detailed walkthrough of selfie-to-avatar
+- [Skills system](/docs/skills) — how to install and author custom skills like `load_project`
+- [Memory system](/docs/memory) — full memory API reference for pre-loading knowledge
+- [Agent Manifest](/docs/agent-manifest) — package your agent for distribution and on-chain identity
+- [Embedding guide](/docs/embedding) — add your agent to other pages and platforms

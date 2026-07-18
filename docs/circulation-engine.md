@@ -51,7 +51,7 @@ falls back to a weighted everyday mix.
 
 | Action | Trigger | Real? |
 |---|---|---|
-| `launch` | ~14% when pool ≥ 2, < 8 launches today, none this hour | Real pump.fun launch on chain, recorded in `pump_agent_mints` |
+| `launch` | ~14% when pool ≥ 2, < 8 launches today, none in the last 45 minutes | Real pump.fun launch on chain, recorded in `pump_agent_mints` |
 | `deploy` | ~6% when an EVM treasury is configured and < 6 deploys today | Real ERC-8004 identity registration on the configured EVM chain |
 
 ### Everyday weighted mix
@@ -148,9 +148,10 @@ in the public pump feed and the launches directory.
   amount needed for the imminent action, bounding treasury exposure per tick.
 - **Bounded heavyweight actions.** Launches and deploys are rate-limited per hour
   and per day independent of the everyday mix.
-- **Real-seller demand is opt-in and capped.** When enabled, manufactured demand
-  routed to user-owned sellers is bounded by a price band and a per-seller daily
-  cap; when off, all demand stays inside the circulation pool.
+- **Demand never leaves the pool.** The buy-side listing query
+  (`listedSkills()`) selects only sellers tagged `meta.circulation = 'true'`,
+  so manufactured demand is only ever routed to platform-owned circulation
+  sellers, never to a real user's listings or wallet.
 
 ## Ramping volume
 

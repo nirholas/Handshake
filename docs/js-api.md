@@ -1,6 +1,6 @@
 # JavaScript API Reference
 
-Complete reference for all public classes, methods, and properties exported by the three.ws web component bundle (`agent-3d.js`).
+This page documents the internal JavaScript classes behind the three.ws viewer: the `App` controller, the Three.js `Viewer`, the glTF `Validator`, and the small components that render around them. It is aimed at developers reading or extending the source (`src/`), and at anyone driving the viewer from the browser console via `window.VIEWER`. If you just want a 3D agent on your page, use the [`<agent-3d>` element](./web-component.md) instead.
 
 > For the HTTP/REST surface, see [api-reference.md](./api-reference.md). For the high-level npm SDK, see [sdk.md](./sdk.md). For the `<agent-3d>` element attributes, see [web-component.md](./web-component.md).
 
@@ -172,7 +172,7 @@ The constructor:
 
 ### State Object
 
-The `this.state` object holds all GUI-controllable values:
+The `this.state` object holds all GUI-controllable values. The core fields:
 
 ```javascript
 {
@@ -186,19 +186,26 @@ The `this.state` object holds all GUI-controllable values:
     grid: false,                         // Grid + axes visibility
     autoRotate: false,                   // Auto-rotate orbit
 
-    // Lighting
+    // Lighting: studio three-point rig (key + fill + rim) with the
+    // Khronos PBR-Neutral tone mapper
     punctualLights: true,                // App-provided lights enabled
     exposure: 0.0,                       // Exposure compensation (EV)
-    toneMapping: LinearToneMapping,      // Tone mapping mode
-    ambientIntensity: 0.3,               // Ambient light intensity
+    toneMapping: NeutralToneMapping,     // Tone mapping mode
+    ambientIntensity: 0.45,              // Ambient light intensity
     ambientColor: '#FFFFFF',             // Ambient light color
-    directIntensity: 0.8 * Math.PI,     // Directional light intensity
-    directColor: '#FFFFFF',              // Directional light color
-    bgColor: '#191919',                  // Background color
+    directIntensity: 0.8 * Math.PI,     // Key light intensity
+    directColor: '#FFFFFF',              // Key light color
+    fillRatio: 0.4,                      // Fill light, relative to directIntensity
+    rimRatio: 0.55,                      // Rim light, relative to directIntensity
+    environmentIntensity: 1.15,          // IBL strength
+    bgColor: '#000000',                  // Background color
+    transparentBg: false,                // Transparent canvas background
 
     pointSize: 1.0,                      // Point cloud vertex size
 }
 ```
+
+Additional fields (info overlay, follow mode, cinematic presets) live in the same object; see `src/viewer.js` for the full set.
 
 ### Methods
 
@@ -278,7 +285,7 @@ Synchronizes light state with the GUI:
 
 #### `addLights()`
 
-Creates and adds the ambient + directional light pair (or a single hemisphere light in asset generator mode).
+Creates and adds the studio light rig: an ambient light plus a three-point directional setup (key, fill, rim) and a shadow-casting sun (or a single hemisphere light in asset generator mode). Implemented in `src/viewer/lights.js`.
 
 #### `removeLights()`
 
@@ -605,3 +612,12 @@ window.VIEWER.app.viewer.updateBackground();
 window.VIEWER.app.viewer.state.wireframe = true;
 window.VIEWER.app.viewer.updateDisplay();
 ```
+
+---
+
+## Related
+
+- [Web Component](/docs/web-component): the `<agent-3d>` element built on these classes
+- [SDK & Library](/docs/sdk): importing `Viewer`, `Runtime`, and friends from the lib build
+- [Widget API](/docs/widget-api): driving the embeddable widget shell over JSON-RPC
+- [Architecture overview](/docs/architecture): how the folders fit together

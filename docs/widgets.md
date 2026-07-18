@@ -35,7 +35,7 @@ Every widget also inherits a set of **brand options** that apply to all types:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `background` | hex color | `#0a0a0a` | Canvas background color |
-| `accent` | hex color | `#8b5cf6` | UI accent color (buttons, highlights) |
+| `accent` | hex color | `#ffffff` | UI accent color (buttons, highlights) |
 | `caption` | string (max 280 chars) | — | Overlay text displayed on the canvas |
 | `showControls` | boolean | `true` | Show orbit/pan controls |
 | `autoRotate` | boolean | `true` | Auto-rotate the model |
@@ -105,11 +105,11 @@ All brand options apply.
 const iframe = document.querySelector('iframe');
 iframe.contentWindow.postMessage(
   { type: 'widget:command', command: 'play_clip', args: { name: 'Wave' } },
-  'https://three.ws/'
+  'https://three.ws'
 );
 ```
 
-**What it looks like:** The 3D avatar fills the canvas (auto-rotating if `autoRotate` is on). In the top-right corner, a frosted-glass panel labeled "Clips (N)" lists every animation name. The active clip is highlighted with a purple left-border accent. On mobile, the panel slides to the bottom of the screen.
+**What it looks like:** The 3D avatar fills the canvas (auto-rotating if `autoRotate` is on). In the top-right corner, a frosted-glass panel labeled "Clips (N)" lists every animation name. The active clip is highlighted with an accent-colored left border. On mobile, the panel slides to the bottom of the screen.
 
 **Best for:** Animation portfolios, character demo reels, rigging showcases, game asset storefronts.
 
@@ -419,7 +419,7 @@ Widgets communicate with the embedding page using `window.postMessage`. Always v
 
 ```js
 window.addEventListener('message', (e) => {
-  if (e.origin !== 'https://three.ws/') return;
+  if (e.origin !== 'https://three.ws') return;
 
   switch (e.data?.type) {
     case 'widget:ready':
@@ -449,13 +449,13 @@ const iframe = document.querySelector('iframe');
 // Live-update brand config (same options as the config object above)
 iframe.contentWindow.postMessage(
   { type: 'widget:config', config: { background: '#ff00aa', accent: '#ffffff' } },
-  'https://three.ws/'
+  'https://three.ws'
 );
 
 // Trigger a runtime action (animation-gallery and talking-agent)
 iframe.contentWindow.postMessage(
   { type: 'widget:command', command: 'play_clip', args: { name: 'Wave' } },
-  'https://three.ws/'
+  'https://three.ws'
 );
 ```
 
@@ -500,3 +500,12 @@ No IP addresses, no user-agent strings, no cookies, no chat message content. The
 ## Programmatic control
 
 Need to drive a widget from the parent page — change the camera, play an animation, grab a screenshot? See the [Widget API (JSON-RPC)](./widget-api.md) reference. The `ThreeWidget` SDK lives at `/widget-client.js` and works with any iframe pointing at `/widget`.
+
+---
+
+## Related
+
+- [Widget Studio guide](/docs/widget-studio): the no-code builder, step by step
+- [Widget API (JSON-RPC)](/docs/widget-api): programmatic control of an embedded widget
+- [REST API Reference](/docs/api-reference): the `/api/widgets` CRUD endpoints in full
+- [Web Component](/docs/web-component): the `<agent-3d>` element for deeper integrations

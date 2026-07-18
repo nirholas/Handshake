@@ -64,4 +64,5 @@ curl 'https://three.ws/api/avatars/<avatarId>' -H 'cookie: <session>'
 - [Scene Composer](./compose.md): forge props and attach them to the avatar's bones as a saved outfit.
 - [Mocap Studio](./mocap-studio.md): drive the avatar's face live from your webcam.
 - [Restyle Studio](./restyle.md): shares the same GLB optimize-and-validate path.
+- [CharacterStudio fork](./character-studio.md): the separate VRM trait-based studio embedded in the agent editor; a deep dive into its internals.
 - [/create](https://three.ws/create): the hub for every avatar-creation path, including selfie-to-avatar.

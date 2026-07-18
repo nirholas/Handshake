@@ -236,3 +236,10 @@ All optional — sensible production defaults:
 | `STUDIO_FORGE_TIMEOUT_MS` | `180000` | Generation poll budget |
 | `STUDIO_RIG_TIMEOUT_MS` | `180000` | Rig poll budget |
 | `STUDIO_POLL_MS` | `3000` | Poll interval |
+
+## Related
+
+- [MCP overview](/docs/mcp) - every three.ws MCP surface, paid and free
+- [AR in ChatGPT](/docs/chatgpt-ar) - how `arUrl` and the AR launcher work on ChatGPT surfaces
+- [3D API](/docs/3d-api) - the free REST lane the studio tools run on
+- [API Reference](/docs/api-reference) - the `/api/3d/studio` custom GPT Actions contract

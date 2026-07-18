@@ -1,5 +1,7 @@
 # SAS Credentialed Attestations
 
+An attestation is a signed on-chain statement about a wallet or an agent (for example "this wallet is verified" or "this task result was audited"). This page is for operators and developers who run or integrate with the three.ws attestation authority; end users see the results surfaced on agent passports and reputation scores. Reads are public via `GET /api/agents/sas/credentials`; issuing is admin-only.
+
 three.ws issues two kinds of on-chain attestations on Solana:
 
 - **Permissionless attestations** — general feedback, task lifecycle, dispute, and revoke events. Anyone can write them as SPL Memos (see [Solana reputation](solana-reputation.md)).
@@ -210,3 +212,11 @@ Closing (revoking) an attestation is done server-side via `sasClose()` in [api/_
 | `schema <kind> not registered on <network>` | Schema added to config but bootstrap not re-run. | Re-run the bootstrap for that network. |
 | Bootstrap or issue fails with insufficient funds | Authority wallet not funded on that cluster. | Send SOL to the authority address and retry. |
 | Non-base58 / bad key on load | `SAS_AUTHORITY_SECRET` holds the JSON array form, not base58. | Convert the array to base58 (see above) and use that. |
+
+---
+
+## Related
+
+- [Agent Reputation on Solana](/docs/solana-reputation): the permissionless SPL Memo attestation layer these credentials weight
+- [Solana agents](/docs/solana): the identity NFTs attestations are made about
+- [Deploy agents on-chain (bulk)](/docs/onchain-agents): the server-side fleet mint flow

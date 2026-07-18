@@ -16,7 +16,7 @@ signer/funder wallets and how to fund them).
 
 Money-routing is deliberately **config-driven** — no receiver is hardcoded, so an
 unset receiver fails closed rather than silently routing real USDC to a baked-in
-address ([env.js:732](../api/_lib/env.js#L732)).
+address ([env.js:786](../api/_lib/env.js#L786)).
 
 ### Receivers (inbound USDC)
 | Env var | Role | Value |
@@ -70,7 +70,7 @@ encodings, minimum balances, guards, funding tool — in the
 | `club-cover` | platform receiver (kept) | 100% | funds the club float; issues a door pass |
 | `cosmetic-purchase` | platform receiver → split | 50% | creator 50% (≤90%) from `COSMETIC_SPLIT_TREASURY_*` |
 | marketplace skill sale | agent owner `payout_address` | 0–10% fee | atomic split; fee → fee wallet |
-| labor skill (escrow) | worker + author | author 10% royalty | paid from escrow ([labor-settle.js:95](../api/_lib/labor-settle.js#L95)) |
+| labor skill (escrow) | worker + author | author 10% royalty | paid from escrow ([labor-settle.js:97](../api/_lib/labor-settle.js#L97)) |
 | pump trade | counterparty | 0–5% fee | fee appended to trader's tx |
 | `pump-launch` | `X402_PAY_TO_SOLANA/BASE` | 100% of $5 | pump.fun creator rewards accrue on-chain to nominated wallet |
 | `ring-settle` (internal) | `X402_PAY_TO_SOLANA` | 100% | recirculates (dogfood volume) |
@@ -102,17 +102,19 @@ unit economics.
 
 ## 4. Services catalog (what three.ws sells)
 
-- **x402 HTTP endpoints** — ~47 paid endpoints across intel/oracle, agent/reputation,
-  generation/3D, launch/naming/utility, club, avatar shop, and bazaars. Full list
-  and prices: [x402 endpoints](x402-endpoints.md).
+- **x402 HTTP endpoints**: 80+ paid endpoints (81 distinct paid routes in the
+  [ring catalog](../api/_lib/x402/ring-catalog.js), the single source of truth)
+  across intel/oracle, agent/reputation, generation/3D, launch/naming/utility,
+  club, avatar shop, and bazaars. Full list and prices:
+  [x402 endpoints](x402-endpoints.md).
 - **Paid MCP tools** —
   - Main MCP ([api/mcp.js](../api/mcp.js), pricing `api/_lib/pump-pricing.js`):
     `retexture_model` $0.10, `optimize_model` $0.05, `segment_model` $0.04,
     `retexture_region` $0.03, `inspect_model`/`validate_model` $0.01,
     `render_avatar` $0.005, `search_public_avatars`/`solana_agent_reputation` $0.001.
   - 3D Studio MCP ([api/mcp-3d.js](../api/mcp-3d.js), pricing `api/_mcp3d/pricing.js`):
-    14 priced tools — `text_to_3d`/`image_to_3d` tiered (draft/standard/high),
-    `auto_rig_model`/`capture_scene`/`retexture_model`/`retexture_region` $0.05,
+    15 priced tools: `text_to_3d`/`image_to_3d` tiered (draft/standard/high),
+    `auto_rig_model`/`capture_scene`/`retexture_model`/`retexture_region`/`anchor_provenance` $0.05,
     `stylize_model`/`remesh_model`/`segment_model` $0.02,
     `remove_background`/`pose_model`/`apply_animation`/`direct_prompt`/`generate_material` $0.01.
 - **OKX.AI ASP #2632 "three.ws 3D Studio"** — the same 3D pipeline listed on OKX.AI

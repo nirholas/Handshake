@@ -1,6 +1,6 @@
 # SDK & Library
 
-This document covers programmatic use of three.ws beyond simple embedding. There are two distributable artifacts you can import into your own project:
+This page is for developers who want to build with three.ws code in their own project, beyond pasting an embed snippet. If you just want a 3D agent on a page, start with the [web component](./web-component.md); come here when you need to import classes, register agents on-chain, or build the bundles yourself. There are two distributable artifacts you can import:
 
 | Artifact | Package | Use case |
 |---|---|---|
@@ -328,21 +328,17 @@ import {
 
 ### TypeScript support
 
-The SDK ships full TypeScript declarations at `src/index.d.ts` and `src/permissions.d.ts`:
+The SDK ships full TypeScript declarations. The package's `exports` map points each entry at its declarations (`types/index.d.ts` for the main entry, `types/permissions.d.ts` for `@three-ws/sdk/permissions`, `types/solana.d.ts` and `types/solana-attestations.d.ts` for the Solana entries), so `tsc` resolves them automatically, with no `@types` package needed:
 
 ```ts
 import type {
   AgentKitOptions,
-  RegisterOptions,
-  RegistrationResult,
-  ManifestsResult,
-  ServiceEntry,
-  SkillDefinition,
-  AgentRegistrationDocument,
-  AgentCardDocument,
-  AiPluginDocument,
-  PermissionsClient,
-  DelegationScope,
+  AgentKitRegisterOptions,
+  AgentPanelOptions,
+  WalletConnection,
+  RegisterAgentOptions,
+  PermissionsClientOptions,
+  DelegationPublic,
   ScopePreset,
 } from '@three-ws/sdk';
 
@@ -352,8 +348,8 @@ const options: AgentKitOptions = {
   description: 'Product guide',
 };
 
-const result: RegistrationResult = await agent.register();
-// { agentId: number, registrationCID: string, txHash: string }
+const result = await agent.register();
+// result: { agentId: number, registrationCID: string, txHash: string }
 ```
 
 ---
@@ -426,3 +422,12 @@ npm --prefix chat-plugin run build
 python3 -m http.server 8080
 # Open http://localhost:8080/chat-plugin/dev/?agent=<your-agent-id>
 ```
+
+---
+
+## Related
+
+- [Web Component](/docs/web-component): the `<agent-3d>` element the bundle ships
+- [JavaScript API](/docs/js-api): viewer, validator, and component internals
+- [REST API Reference](/docs/api-reference): the HTTP surface the SDK talks to
+- [x402](/docs/x402): the payment packages listed above

@@ -27,7 +27,7 @@ The core signal math, measured from the first observed trade (burst window 3s, s
 - **Dev behaviour.** `dev_sold` is set when the creator had any sell; `dev_buy_sol` comes from the launch transaction.
 - **Fresh wallets and clusters.** Fresh-wallet ratio is the share of buyers with at most one prior transaction (null below 3 known); connectivity is the largest common-funder cluster over known funders.
 
-Those roll into a **quality score (0 to 100)**: start from organic times 100, subtract for bundle, top-1 concentration, a dev sell, and fresh-wallet ratio, add a small bonus for unique buyers, then add smart-money bonuses (up to +8 for proven wallets in), and clamp.
+Those roll into a **quality score (0 to 100)**: start from organic times 100, subtract for bundle, top-1 concentration, a dev sell, and fresh-wallet ratio, add a small bonus for unique buyers, then add smart-money bonuses that stack per proven wallet in (+8 for the first, +6 for the second, +4 for the third, up to +18 total), and clamp.
 
 **Risk flags** are named, not numeric: `bundle_launch` (bundle 0.6+), `dev_dumped`, `single_whale` (top-1 0.5+), `low_diversity` (fewer than 5 buyers), `fresh_wallet_swarm` (fresh ratio 0.7+), `sell_pressure`, `sniped` (snipe 0.85+ with fewer than 8 buyers), and `coordinated_cluster` (connectivity 0.4+).
 

@@ -1,6 +1,6 @@
 # Chapter 7 · Skills — what agents know how to do
 
-Skills are the agent’s installed abilities: trading rails, launch tooling, NFTs, blinks, sentiment, scenes — all wired to real APIs.
+Skills are the agent’s installed abilities: trading rails, launch tooling, NFTs, blinks, sentiment, scenes — all wired to real APIs. Owners switch them on and off in the Agent Studio's Skills room (three.ws/agent-studio), and MCP-exposed skills are callable by other agents through /api/mcp.
 
 The in-world agent skills system (src/agent-skills.js plus 13 family modules) is what a three.ws agent can DO — and what you can watch it doing. Each skill bundles an instruction, an animation hint, a voice template, and a real handler, so execution flows through the agent protocol bus and the avatar physically performs the action (gestures, speech, mood shifts) instead of silently returning JSON. Skill families span 3D work (present/validate models, build the scene), the full Solana economy (pump.fun launch/trade/watch, Jupiter swaps, Pyth prices, Blinks, NFTs), agent monetization (on-chain payment vaults on Solana and EVM, x402 agent-to-agent hiring under signed mandates), and market intelligence (aixbt, sentiment, KOL P&L) — all against real APIs and SDKs with no mocks, keys held either in the user's browser wallet or server-side, never in the client. MCP-exposed skills double as tools on /api/mcp, so the same registry powers both the living avatar and the developer API.
 
@@ -131,3 +131,10 @@ aixbt-intel pulls the latest aixbt narrative intelligence (filterable by chain o
 **How it works:** src/agent-skills-aixbt.js calls /api/aixbt/* so the aixbt API key stays server-side; when the key isn't configured it returns an honest 'not connected yet' message rather than fabricated signals.
 
 **Why it matters:** Your in-world companion taps the same live intelligence feed professional crypto builders consume via the aixbt API — narratives and momentum, summarized out loud, never faked.
+
+## Related
+
+- [Agent skills](/docs/agent-skills)
+- [Skills marketplace](/docs/skills)
+- [Pump.fun on Solana](/docs/solana-pumpfun)
+- [Selling paid skills](/docs/pay-skills-listing)

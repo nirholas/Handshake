@@ -1,5 +1,7 @@
 # REST API Reference
 
+This is the reference for the three.ws HTTP API: every documented endpoint, its parameters, and its response shape. Anyone can call the free endpoints with plain `curl` (no account needed); authenticated endpoints take an API key from the [Dashboard](https://three.ws/dashboard) or a browser session. If you are new, skim the Overview below, then jump to the section for the surface you are building on.
+
 Base URL: `https://three.ws/api`
 
 > For the in-browser JavaScript API (the `<agent-3d>` element, `Viewer`, `Runtime`, `SceneController`, skills, memory), see [js-api.md](./js-api.md) and [web-component.md](./web-component.md). For the high-level npm SDK, see [sdk.md](./sdk.md).
@@ -22,14 +24,16 @@ Session cookies (set after SIWE or Privy login) are accepted on all endpoints th
 
 ### Response format
 
-All responses are JSON. Successful responses return the resource or a result object. Errors return:
+All responses are JSON. Successful responses return the resource or a result object. Errors return a machine-readable code plus a human-readable description:
 
 ```json
 {
-	"error": "Message describing what went wrong",
-	"code": "ERROR_CODE"
+	"error": "validation_error",
+	"error_description": "Message describing what went wrong"
 }
 ```
+
+Some endpoints add extra fields (e.g. `retry_after` on rate limits). Error responses are never cached.
 
 ### Rate limits
 
@@ -50,14 +54,7 @@ Rate-limited responses return HTTP 429 with `{ "error": "...", "code": "RATE_LIM
 GET /api/agents
 ```
 
-Returns the authenticated user's agents. Requires auth.
-
-**Query parameters**
-
-| Parameter | Type    | Description                    |
-| --------- | ------- | ------------------------------ |
-| `limit`   | integer | Max results (default: 20)      |
-| `offset`  | integer | Pagination offset (default: 0) |
+Returns all of the authenticated user's agents (oldest first, no pagination). Requires auth.
 
 **Response**
 
@@ -75,10 +72,7 @@ Returns the authenticated user's agents. Requires auth.
 			"chain_id": 8453,
 			"chain_agent_id": 42
 		}
-	],
-	"total": 5,
-	"limit": 20,
-	"offset": 0
+	]
 }
 ```
 
@@ -126,12 +120,11 @@ Requires auth.
 }
 ```
 
-**Response**
+**Response** (`201`)
 
 ```json
 {
-	"id": "new-agent-id",
-	"agent": {}
+	"agent": { "id": "new-agent-id", "name": "Aria" }
 }
 ```
 
@@ -231,16 +224,7 @@ Resolves an agent by ENS name (e.g., `myagent.eth`). No auth required.
 GET /api/widgets
 ```
 
-Requires auth. Returns the authenticated user's widgets, including joined avatar data.
-
-**Query parameters**
-
-| Parameter  | Type    | Description                    |
-| ---------- | ------- | ------------------------------ |
-| `limit`    | integer | Max results (default: 20)      |
-| `offset`   | integer | Pagination offset (default: 0) |
-| `type`     | string  | Filter by widget type          |
-| `agent_id` | string  | Filter by agent ID             |
+Requires auth (session cookie, or bearer token with `avatars:read`). Returns the authenticated user's widgets, newest-updated first (up to 500), including joined avatar data.
 
 **Response**
 
@@ -249,18 +233,17 @@ Requires auth. Returns the authenticated user's widgets, including joined avatar
 	"widgets": [
 		{
 			"id": "wdgt_abc123def456",
-			"agent_id": "abc123",
+			"avatar_id": "a1b2c3d4-...",
 			"type": "turntable",
-			"config": { "auto_rotate_speed": 0.5, "preset": "venice" },
+			"name": "Product Hero",
+			"config": { "rotationSpeed": 0.5, "background": "#0a0a0a" },
 			"is_public": true,
-			"created_at": "2025-01-15T10:00:00Z",
 			"view_count": 42,
+			"created_at": "2025-01-15T10:00:00Z",
+			"updated_at": "2025-01-15T10:00:00Z",
 			"avatar": {}
 		}
-	],
-	"total": 8,
-	"limit": 20,
-	"offset": 0
+	]
 }
 ```
 
@@ -286,32 +269,40 @@ POST /api/widgets
 
 Requires auth. Bearer token must have `avatars:write` scope.
 
-**Supported widget types:** `turntable`, `animation-gallery`, `talking-agent`, `passport`, `hotspot-tour`
+**Supported widget types:** `turntable`, `animation-gallery`, `talking-agent`, `passport`, `hotspot-tour`, plus the additional live types in the [Widget Studio](https://three.ws/studio) type grid (pump.fun feeds, bonding curve, walking avatar, and more).
 
 **Request body**
 
 ```json
 {
-	"agent_id": "abc123",
+	"name": "Product Hero",
 	"type": "turntable",
+	"avatar_id": "a1b2c3d4-...",
 	"config": {
-		"auto_rotate_speed": 0.5,
-		"preset": "venice"
+		"rotationSpeed": 0.5,
+		"background": "#0a0a0a"
 	},
-	"visibility": "public"
+	"is_public": true
 }
 ```
 
-**Response**
+`name` is required; `avatar_id` is optional (must be an avatar you own, or a public one); `config` is validated against the type's schema ([src/widget-types.js](../src/widget-types.js)); `is_public` defaults to `true`.
+
+**Response** (`201`)
 
 ```json
 {
-	"id": "wdgt_abc123def456",
-	"embed_url": "https://three.ws/widgets/view?id=wdgt_abc123def456"
+	"widget": {
+		"id": "wdgt_abc123def456",
+		"type": "turntable",
+		"name": "Product Hero",
+		"config": {},
+		"is_public": true
+	}
 }
 ```
 
-Widget IDs use the format `wdgt_` + 12 random base64url characters.
+Widget IDs use the format `wdgt_` + 12 random base64url characters. The embed URL for a widget is `https://three.ws/widget#widget=<id>&kiosk=true`.
 
 ---
 
@@ -339,25 +330,24 @@ Requires auth. Owner only. Soft-deletes via `deleted_at` timestamp.
 
 ---
 
-### Open Graph metadata
+### Open Graph share card
 
 ```
 GET /api/widgets/og?id=wdgt_abc123def456
+GET /api/widgets/:id/og
 ```
 
-Returns Open Graph metadata for a widget, used by social preview scrapers (Twitter, Slack, etc.). No auth required.
-
-**Response:** JSON with `og:title`, `og:description`, `og:image`, `og:url`.
+Returns the widget's 1200×630 share-card image (`image/svg+xml`), used as the `og:image` by social preview scrapers (Slack, Discord, X) and as the auto poster for `embed.js`. Both URL forms serve the same card. No auth required.
 
 ---
 
 ### oEmbed
 
 ```
-GET /api/widgets/oembed?url=https%3A%2F%2Fthree.ws%2Fwidgets%2Fview%3Fid%3Dwdgt_abc123
+GET /api/widgets/oembed?url=https%3A%2F%2Fthree.ws%2Fw%2Fwdgt_abc123
 ```
 
-oEmbed endpoint for rich embeds in Notion, Substack, and other oEmbed-compatible platforms. No auth required.
+oEmbed endpoint for rich embeds in Notion, Substack, and other oEmbed-compatible platforms. Accepted `url` forms: `/w/<id>` (canonical), `/widget#widget=<id>`, and the legacy `/app#widget=<id>` and `/#widget=<id>`. No auth required.
 
 **Response:** oEmbed JSON with `type`, `html`, `width`, `height`, `title`, `provider_name`.
 
@@ -2087,7 +2077,7 @@ Authentication is covered in detail in the [Authentication documentation](authen
 | `/api/auth/siwe/verify`     | POST     | Verify SIWE signature, create session |
 | `/api/auth/session`         | GET      | Get current session                   |
 | `/api/auth/session`         | DELETE   | Logout / destroy session              |
-| `/api/auth/privy/[handler]` | GET/POST | Privy OAuth handlers                  |
+| `/api/auth/privy/verify`    | POST     | Verify a Privy auth token, create session |
 | `/api/auth/wallets`         | GET      | List wallets linked to current user   |
 | `/api/auth/wallets`         | POST     | Link a new wallet                     |
 
@@ -2614,6 +2604,8 @@ Model Context Protocol endpoint — exposes three.ws as a JSON-RPC 2.0 tool serv
 | `optimize_model`        | none             | Return optimization suggestions for a model |
 
 `render_avatar` enforces the agent's embed policy (allowed origins, allowed surfaces). Model URLs must be HTTPS — SSRF protections block private IP ranges.
+
+This table is the core subset. The server registers many more tools (minting, gated embeds, memory, oracle and pump.fun intel, trader analytics, crypto data). Call `tools/list`, or see the [MCP documentation](mcp.md) and the [MCP Tools Catalog](mcp-tools.md).
 
 **Example JSON-RPC request**
 
@@ -3534,54 +3526,53 @@ The same stamp is served statically at `/build-info.json`.
 
 ## Pagination
 
-All list endpoints use offset pagination unless noted otherwise.
+Paginated list endpoints use `limit`/`offset` query parameters unless noted otherwise (each endpoint's own parameter table is authoritative; some small per-user lists, like `/api/agents` and `/api/widgets`, return everything with no pagination).
 
 ```
-GET /api/agents?limit=20&offset=40
+GET /api/v1/pump/launches?limit=24&offset=24
 ```
 
-Responses always include `total`, `limit`, and `offset`.
-
-`/api/explore` and `/api/showcase` use keyset (cursor-based) pagination for stability — pass the returned `cursor` value as the `cursor` query parameter on the next request.
+`/api/explore` and `/api/showcase` use keyset (cursor-based) pagination for stability: pass the returned `cursor` value as the `cursor` query parameter on the next request. `/api/agent-actions` and `/api/users/me/feed` are cursor-based too (`cursor` / `before` timestamps).
 
 ---
 
 ## Error codes
 
-| Code                  | HTTP Status | Description                                  |
-| --------------------- | ----------- | -------------------------------------------- |
-| `UNAUTHORIZED`        | 401         | Missing or invalid auth                      |
-| `FORBIDDEN`           | 403         | Authenticated but not allowed                |
-| `NOT_FOUND`           | 404         | Resource doesn't exist                       |
-| `RATE_LIMITED`        | 429         | Too many requests                            |
-| `INVALID_INPUT`       | 400         | Request body validation failed               |
-| `AGENT_NOT_FOUND`     | 404         | Agent ID not found                           |
-| `WIDGET_NOT_FOUND`    | 404         | Widget ID not found                          |
-| `CHAIN_NOT_SUPPORTED` | 400         | chainId not in supported list                |
-| `IPFS_FAILED`         | 503         | IPFS pinning service unavailable             |
-| `LLM_ERROR`           | 502         | LLM provider returned an error               |
-| `TTS_LIMIT_EXCEEDED`  | 429         | Character limit for TTS exceeded             |
-| `QUOTA_EXCEEDED`      | 429         | Agent's monthly token budget exhausted       |
-| `EMBED_POLICY_DENIED` | 403         | Request origin blocked by agent embed policy |
+Codes are lowercase snake_case in the `error` field. The common ones, shared across endpoints:
+
+| Code                 | HTTP Status | Description                                     |
+| -------------------- | ----------- | ----------------------------------------------- |
+| `unauthorized`       | 401         | Missing or invalid auth                         |
+| `forbidden`          | 403         | Authenticated but not allowed                   |
+| `insufficient_scope` | 403         | Bearer token lacks the required scope           |
+| `not_found`          | 404         | Resource doesn't exist                          |
+| `rate_limited`       | 429         | Too many requests (see `retry_after`)           |
+| `validation_error`   | 400         | Request body or query validation failed         |
+| `not_configured`     | 503         | A required provider/env is unset on this deploy |
+| `upstream_error`     | 502         | A third-party upstream returned an error        |
+
+Endpoint-specific codes (e.g. `quota_exceeded`, `invalid_avatar`, `no_client_id`) are documented in each endpoint's Errors table above.
 
 ---
 
 ## SDK
 
-Use the official SDK instead of raw HTTP calls:
+For building on the platform from JavaScript, the official npm package is [`@three-ws/sdk`](https://www.npmjs.com/package/@three-ws/sdk). It is not a thin wrapper over every REST route above; it ships the higher-level building blocks: `AgentKit` (chat panel + ERC-8004 registration + `.well-known` manifest generation), `AgentClient` (x402 agent-to-agent paid skill calls), `PermissionsClient` (ERC-7710 delegations), and the Solana identity/attestation helpers. Full docs: [SDK & Library](sdk.md).
+
+For the endpoints on this page, call them directly with `fetch`/`curl` and a Bearer API key:
 
 ```js
-import { AgentAPI } from '@three-ws/sdk';
-
-const api = new AgentAPI({ apiKey: 'sk_live_xxxxx' });
-
-const agents = await api.agents.list({ limit: 10 });
-const agent = await api.agents.get('abc123');
-const widget = await api.widgets.create({
-	agentId: 'abc123',
-	type: 'turntable',
-	config: { auto_rotate_speed: 0.5, preset: 'venice' },
+const res = await fetch('https://three.ws/api/agents?limit=10', {
+	headers: { Authorization: 'Bearer sk_live_xxxxx' },
 });
+const { agents } = await res.json();
 ```
 
-The SDK handles auth headers, retries on 429, and TypeScript types for all request/response shapes.
+---
+
+## Related
+
+- [SDK & Library](/docs/sdk): the npm packages and the web component bundle
+- [MCP documentation](/docs/mcp): the same platform surface as MCP tools
+- [x402](/docs/x402): how the paid `/api/x402/*` endpoints settle in USDC
+- [Authentication](/docs/authentication): SIWE, sessions, API keys, and scopes

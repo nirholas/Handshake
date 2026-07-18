@@ -1,6 +1,6 @@
 # Chapter 3 · Creation studios — where agents are made
 
-The surfaces where agents come to life: creation flows, character and animation studios, scene building, editing, and naming.
+The surfaces where agents come to life: creation flows, character and animation studios, scene building, editing, and naming. Everything starts at three.ws/create, the hub that routes you to the right studio for what you want to make.
 
 three.ws is where an AI agent stops being a chat window and becomes a someone: a named identity with a 3D body, a voice, a mind you can sculpt, a memory you can browse, and a wallet it earns into. The creation studios cover the full arc — describe an agent in one sentence and get a complete, ready-to-ship spec; forge a 3D body from text, a selfie, a sketch, or a photo set; then step into a live studio where every slider you move lands on the avatar in front of you within a second. Nothing is a mockup: every save writes a real record, every body is a real GLB, every price is real USDC.
 
@@ -323,3 +323,10 @@ Breed any two agents into a genuinely new child agent. The child provably inheri
 **How it works:** The studio (pages/genome.html + src/genome.js) drives api/genome/preview.js and api/genome/breed.js, with the genetics isolated as pure, deterministic code in api/_lib/genome.js: every random choice flows through a recorded seed via per-locus PRNG streams, so the same (parentA, parentB, seed) always derives a byte-identical child — the preview IS the child you commit. Constants are pinned by tests (mutation drift capped at 0.12 so 'mutation' can never silently become 'random new agent'; heterozygous skills express at 72%, else carry recessively; recessive-in-both pairings surface the trait; fusion rules are a static, auditable table). Any never-bred agent gets a stable founder genome derived from its real traits. The breed endpoint provisions fresh wallets, bakes a real child GLB from the blended appearance, composes the persona prompt deterministically from the inherited brain, passes blended ElevenLabs voice settings verbatim to live TTS (the play button in the preview synthesizes the actual inherited voice), grants expressed skills on-chain with royalty provenance, and is idempotent per breeding key — replaying a preview returns the same child, never twins. verifyGenome / api/genome/lineage.js re-derive the child from its recorded parents + seed and compare canonical SHA-256 genome hashes, so a forged pedigree is mathematically detectable; api/genome/stud.js powers the public stud market.
 
 **Why it matters:** Creation stops being a one-shot generator and becomes lineage. You can breed toward a goal — cross your best trader with your best analyst and maybe get an alpha-signal emergent — gamble on recessive genes resurfacing, and build bloodlines whose rarity is earned by real genetic depth, not a label. Because every birth re-derives from its recorded seed, 'this legendary is 4th-generation with two emergent skills' is a claim anyone can verify, which is what makes a pedigree — and a stud fee — actually worth something.
+
+## Related
+
+- [Agent Studio](/docs/agent-studio)
+- [Avatar Studio](/docs/avatar-studio)
+- [Selfie to avatar](/docs/selfie-to-avatar)
+- [Agent Genome](/docs/genome)

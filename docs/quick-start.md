@@ -28,7 +28,7 @@ The fastest path. No npm, no bundler, no build step.
 </head>
 <body>
   <script type="module" src="https://three.ws/agent-3d/latest/agent-3d.js"></script>
-  <agent-3d body="https://cdn.three.ws/models/sample-avatar.glb"></agent-3d>
+  <agent-3d body="https://three.ws/avatars/michelle.glb"></agent-3d>
 </body>
 </html>
 ```
@@ -137,7 +137,7 @@ The `brain` attribute turns the 3D viewer into a conversational agent:
 
 | Attribute | What it does |
 |-----------|--------------|
-| `brain` | LLM model ID. The in-browser runtime supports the Anthropic provider — registered model IDs: `claude-sonnet-4-6`, `claude-opus-4-7`, `claude-opus-4-6`, `claude-haiku-4-5-20251001`. Omit for a viewer-only display with no AI (provider `none`). |
+| `brain` | LLM model ID. Registered Claude IDs: `claude-sonnet-4-6`, `claude-opus-4-7`, `claude-opus-4-6`, `claude-haiku-4-5-20251001`, `claude-fable-5`, `claude-mythos-5`. Free models (no key, routed through the platform proxy) are also accepted, e.g. `meta-llama/llama-3.3-70b-instruct:free`. Omit for a viewer-only display with no AI (provider `none`). |
 | `instructions` | System prompt for the agent's personality and role. |
 | `mode` | Layout mode: `inline` (flows with page content), `floating` (fixed bubble in a corner), `fullscreen`, or `section`. Default: `inline`. |
 
@@ -264,8 +264,10 @@ If your page has a strict `Content-Security-Policy`, the script embed needs:
 
 ```
 script-src 'self' https://three.ws;
-connect-src 'self' https://three.ws https://cdn.three.ws;
+connect-src 'self' https://three.ws;
 ```
+
+(Also allow whatever origin hosts your GLB files in `connect-src` if it differs.)
 
 If you're embedding inside a sandboxed iframe, make sure the parent grants `allow-scripts allow-same-origin`. For sandboxed environments where the script embed won't work, use the iframe widget instead — it runs in its own browsing context and is unaffected by the parent CSP.
 

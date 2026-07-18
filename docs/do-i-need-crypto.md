@@ -6,7 +6,7 @@ Short answer: it depends on what you want to do. Here's the honest breakdown.
 
 ## Viewing and chatting with agents
 
-**No wallet or crypto needed.** Anyone can open an agent link (`three.ws/agent/<id>`) and chat with it. No account, no extension, no sign-in.
+**No wallet or crypto needed.** Anyone can open an agent link (`three.ws/agents/<id>`) and chat with it. No account, no extension, no sign-in.
 
 ---
 
@@ -18,14 +18,12 @@ Short answer: it depends on what you want to do. Here's the honest breakdown.
 
 ## Creating or editing agents
 
-**Currently requires a wallet sign-in.** The hosted platform uses wallet-based authentication (EIP-4361 SIWE for EVM wallets like MetaMask, or Phantom for Solana). If you don't have a wallet extension, you'll hit a sign-in wall.
+**No wallet needed.** The sign-in page at [three.ws/login](/login) offers two paths side by side:
 
-> A no-wallet sign-in path (email / passkey) is actively being built. Once live, you'll be able to create and publish agents with just an email address — no extension, no seed phrase.
+- **Email + password**: register with just an email address (or a username). No extension, no seed phrase. This is all you need to create, edit, and publish agents.
+- **Wallet sign-in**: EIP-4361 SIWE for EVM wallets like MetaMask, or a Solana wallet like Phantom. Choose this if you want on-chain features tied to a wallet you already own.
 
-In the meantime, the easiest path for non-crypto users:
-1. Install [MetaMask](https://metamask.io) (free browser extension)
-2. Create a new wallet — you don't need to fund it or buy anything for basic agent creation
-3. Sign in to three.ws using that wallet
+The two are equivalent for building agents. A wallet only becomes relevant when you use the optional on-chain features below.
 
 ---
 
@@ -35,13 +33,11 @@ Most basic features are free. You pay when you use premium capabilities:
 
 | What | How | Roughly how much |
 |---|---|---|
-| Hosted AI brain (LLM calls) | Billed to your three.ws account in USDC | Fractions of a cent per message |
+| Hosted AI brain (LLM calls) | A free default model is included; premium Claude models run on a paid plan or your own API key | Free to start |
 | Premium skills (skill purchases) | USDC micropayment via x402 | Set by the skill author |
 | On-chain registration (ERC-8004) | Small gas fee on Base | A few cents in ETH |
 
-**USDC** is a dollar-pegged stablecoin — 1 USDC ≈ $1 USD. It doesn't go up or down the way ETH or SOL does. When you see a price in USDC, you can treat it as dollars.
-
-> USD price display (showing "≈ $0.01" next to USDC amounts) is being added across the platform so you never have to do mental-math from crypto to dollars.
+**USDC** is a dollar-pegged stablecoin — 1 USDC ≈ $1 USD. It doesn't go up or down the way ETH or SOL does. When you see a price in USDC, you can treat it as dollars. Payment surfaces on the platform also show the approximate USD (or SOL) equivalent next to the amount, so you never have to do mental math from crypto to dollars.
 
 ---
 
@@ -70,7 +66,7 @@ When you do interact with on-chain features, the platform's native token is **$T
 |---|---|---|
 | View / chat with an agent | No | No |
 | Embed a widget on your site | No | No |
-| Create an account and build agents | Currently yes | No (wallet, not funded) |
+| Create an account and build agents | No (email sign-in works) | No |
 | Use a premium skill | Yes + small USDC balance | Yes (USDC ≈ $) |
 | Register on-chain (optional) | Yes + gas | Yes (small ETH) |
 

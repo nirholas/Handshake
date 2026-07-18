@@ -1,6 +1,6 @@
 # Security
 
-three.ws is designed for developers and organizations that need to reason carefully about what data goes where, who can call what, and how identities are established. This document covers the full security model: data handling, embed isolation, authentication, on-chain identity, and operational guidance for self-hosters.
+This page explains how three.ws keeps your data, wallet, and agents safe, and what you are responsible for when you embed or self-host the platform. If you just use the site, the short version is: 3D files render in your browser and are not uploaded unless you save them, your wallet's private keys never leave your wallet, and sessions use hardened cookies. Developers and self-hosters will find the full model below: data handling, embed isolation, authentication, on-chain identity, and operational guidance. To report a vulnerability, see [Responsible disclosure](#responsible-disclosure) at the bottom.
 
 ## Security principles
 
@@ -10,7 +10,7 @@ three.ws is designed for developers and organizations that need to reason carefu
 
 **Least privilege** — agents access only what is explicitly declared and granted. Skills declare permission requirements; users must grant them. API keys carry only the scopes you assign. OAuth access tokens are short-lived (1 hour) and audience-bound.
 
-**Transparency** — the codebase is open source. The on-chain identity, reputation, and validation registries are auditable on Base. Badge verification derives from on-chain attestations, not the badge UI itself.
+**Transparency**: the codebase is publicly readable on GitHub (source-available under the repository's proprietary LICENSE). The on-chain identity, reputation, and validation registries are auditable on Base. Badge verification derives from on-chain attestations, not the badge UI itself.
 
 **Standard web security** — HTTPS-only for all authenticated operations. CSP, CORS, and `__Host-` cookie prefix enforced throughout.
 
@@ -25,11 +25,11 @@ Models loaded into the viewer are processed entirely on your device:
 - The browser fetches and decodes the GLB file directly — no proxy, no server touch
 - WebGL rendering runs in your GPU via a sandboxed canvas context
 - Screenshots (`canvas.toDataURL()`) are generated client-side and never uploaded automatically
-- Models are only sent to three.ws servers if you explicitly use the avatar registration flow (which pins to IPFS via Storacha)
+- Models are only sent to three.ws servers if you explicitly save an avatar or use the on-chain registration flow (which pins metadata to IPFS via Pinata when you supply a JWT, or stores it in the platform's R2 bucket otherwise)
 
 ### Conversation data
 
-Chat messages travel through `/api/chat`, which proxies to the configured LLM provider (Anthropic by default). The proxy layer:
+Chat messages travel through `/api/chat`, which proxies to a configured LLM provider. Providers are tried in a failover ladder (free-tier providers such as Groq, OpenRouter, and NVIDIA NIM lead; Anthropic and OpenAI are paid backstops; Vertex and watsonx are available when configured); see the routing comment in [api/chat.js](../api/chat.js). The proxy layer:
 
 - Injects authentication and enforces rate limits
 - Does not log message content
@@ -51,6 +51,7 @@ The SIWE (Sign-In With Ethereum) flow signs a server-generated challenge — no 
 | Mode | Where data lives | Privacy |
 |------|-----------------|---------|
 | `local` (default) | Browser `localStorage` | Device-only |
+| `remote` | three.ws cloud storage, tied to your account | Opt-in cloud sync (see [Memory](./memory.md)) |
 | `ipfs` | Public IPFS network | Public — use only for non-sensitive data |
 | `encrypted-ipfs` | IPFS, encrypted before leaving the browser | Encrypted with your key; IPFS only sees ciphertext |
 | `none` | Not persisted | Cleared on page unload |
@@ -74,7 +75,7 @@ The iframe embed at `/a/:chainId/:agentId/embed` sets permissive `frame-ancestor
 }
 ```
 
-When an iframe is blocked by embed policy, it posts `{ __agent, type: 'blocked', host }` to the parent and shows a link to the canonical agent page.
+When an iframe is blocked by embed policy, it posts `{ __agent: true, type: 'blocked', host }` to the parent and shows a link to the canonical agent page.
 
 Minimum `sandbox` permissions for the `<agent-3d>` web component:
 
@@ -123,7 +124,7 @@ Pin the exact bundle version and validate with Subresource Integrity:
 ></script>
 ```
 
-SRI hashes for each release are at `/agent-3d/<version>/integrity.json`. The `latest` channel (`max-age=300`) should never be used in production — use a pinned `MAJOR.MINOR.PATCH` URL, which is served with `max-age=31536000, immutable`.
+SRI hashes for each release are at `/agent-3d/<version>/integrity.json`. The `latest` channel (served with `max-age=3600, s-maxage=300, stale-while-revalidate=86400`) should never be used in production; use a pinned `MAJOR.MINOR.PATCH` URL, which is served with `max-age=31536000, immutable`.
 
 ### postMessage security
 
@@ -131,7 +132,7 @@ Always verify the `origin` before trusting messages from the embed:
 
 ```js
 window.addEventListener('message', e => {
-  if (e.origin !== 'https://three.ws/') return;
+  if (e.origin !== 'https://three.ws') return;
   // handle message
 });
 ```
@@ -182,7 +183,7 @@ Refresh tokens are opaque (SHA-256 hashed at rest). Refresh token reuse detectio
 API keys are prefixed `sk_live_` (production) or `sk_test_`. Security properties:
 
 - Hashed with SHA-256 before storage — the plaintext is shown exactly once at creation and cannot be recovered
-- Scope-limited — each key is created with an explicit scope set (`avatars:read`, `avatars:write`, `avatars:delete`, `profile`)
+- Scope-limited: each key is created with an explicit scope set from `avatars:read`, `avatars:write`, `avatars:delete`, `profile`, `memory:read`, `memory:write`, `agents:read`, `agents:write` (default `avatars:read avatars:write`)
 - Rate-limited independently from session auth
 - Last-used timestamp tracked; revocable at any time
 
@@ -266,19 +267,24 @@ The LLM runtime enforces a hard cap of 8 tool-call iterations per message (`MAX_
 
 ### Content moderation
 
-All requests through the `/api/chat` proxy are subject to Anthropic's content policies. Requests that violate policy are rejected before the response is returned to the client.
+Requests through the `/api/chat` proxy are subject to the content policies of whichever upstream provider serves them (Anthropic, OpenAI, Groq, OpenRouter, NVIDIA, Google Vertex, or IBM watsonx, depending on routing). Requests a provider rejects for policy reasons surface as errors rather than completions.
+
+### Server-side fetch (SSRF) protection
+
+Server code that fetches user-supplied URLs (GLB validation, manifest pinning, avatar imports) goes through [api/_lib/ssrf-guard.js](../api/_lib/ssrf-guard.js) rather than raw `fetch`. `assertSafePublicUrl()` rejects non-HTTPS schemes and resolves the hostname up front, refusing private, loopback, link-local, CGNAT, and cloud-metadata addresses. `fetchSafePublicUrl()` validates DNS then fetches (acceptable where the response is only displayed); `fetchSafePublicUrlPinned()` additionally pins the TCP connection to the validated IP so a DNS rebind between check and connect cannot redirect the request into the internal network. Both re-validate every redirect hop and enforce a streaming byte cap (`MaxBytesExceededError`) so an unbounded body cannot exhaust memory.
 
 ---
 
 ## Rate limiting
 
-All limits are enforced via Upstash Redis and return `429 Too Many Requests` with a `Retry-After` header on breach.
+Limits return `429 Too Many Requests` with a `Retry-After` header on breach. Money-moving and credential buckets are enforced through shared Upstash Redis so they hold across every instance; a few very hot read buckets (including the MCP limiters) are deliberately per-instance (`local: true` in [api/_lib/rate-limit.js](../api/_lib/rate-limit.js)) to keep Redis command volume down, and the credential buckets degrade to in-memory limiting rather than failing closed if Redis is unreachable.
 
 | Endpoint class | Limit |
 |----------------|-------|
-| Login / register | 30 requests / 10 min per IP |
+| Login (credential attempts) | 50 requests / 10 min per IP |
+| Account registration | 5 / hour per IP |
 | OAuth client registration | 10 / hour per IP |
-| MCP endpoints | 1200 / min per user, 600 / min per IP |
+| MCP endpoints | 1200 / min per user, 600 / min per IP (per instance) |
 | File uploads | 60 / hour per user |
 
 The `clientIp()` helper reads `X-Forwarded-For` and walks the chain from the right, skipping the trusted proxy hops appended by three.ws's own infrastructure (Google's external Application Load Balancer in front of Cloud Run), then takes the next address as the real client. It falls back to the socket address only when there is no `X-Forwarded-For` at all (local dev, tests, direct container access). Reading a caller-settable header directly is avoided precisely so a client cannot rotate the claimed address to mint a fresh limiter bucket per request. The Google Cloud load balancer provides an additional DDoS mitigation layer before requests reach the rate-limit check.
@@ -287,11 +293,9 @@ The `clientIp()` helper reads `X-Forwarded-For` and walks the chain from the rig
 
 ## CORS policy
 
-The API's CORS configuration allows cross-origin reads from a named set of trusted origins:
+The API's default CORS allowlist lives in `isAllowedOrigin()` in [api/_lib/http.js](../api/_lib/http.js): the platform origin (`env.APP_ORIGIN`, normally `https://three.ws`), a small named set of partner and ecosystem origins (including `ibm.com` and its subdomains for the IBM partnership embeds), and `localhost` in non-production only. Endpoints that are meant to be world-readable opt in to `origins: '*'` explicitly.
 
-- `https://three.ws/`
-- `https://chat.sperax.io` and associated Sperax staging origins
-- `http://localhost:*` and `https://localhost:*` (development only)
+Separately, the S3/R2 storage bucket has its own CORS policy defined in `cors.json` (applied to the bucket, not the API); that file's origin list includes `https://three.ws`, the Sperax chat origins, and localhost. See the [`cors.json` section of the Configuration Reference](/docs/configuration).
 
 The bundle CDN path (`/agent-3d/`) sets `access-control-allow-origin: *` and `cross-origin-resource-policy: cross-origin` so the script can load from any origin. The agent embed iframe sets `frame-ancestors *` (overrideable per-agent via embed policy, see above).
 
@@ -305,7 +309,7 @@ Admin and write endpoints accept only same-site requests, enforced by checking t
 
 - Never commit `.env` to version control
 - Rotate `JWT_SECRET` immediately if it is ever exposed — all existing sessions and OAuth tokens become invalid, which is preferable to leaving a compromised secret in place
-- Scope third-party API keys minimally: Anthropic key should cover only the models and features you use; Storacha key should be scoped to your bucket
+- Scope third-party API keys minimally: LLM provider keys should cover only the models and features you use; the Pinata JWT and S3/R2 credentials should be scoped to your own bucket
 
 ### Database (Neon)
 
@@ -340,3 +344,12 @@ Found a vulnerability? Report it privately:
 We aim to acknowledge reports within 48 hours and ship patches for critical issues within 7 days. Please do not publicly disclose a vulnerability before a fix is available. We ask that you give us a reasonable window to address the issue before disclosure.
 
 For validator misconduct (biased or falsified on-chain attestations), open a public issue in the repository tagged `validator-dispute`.
+
+---
+
+## Related
+
+- [Configuration Reference](/docs/configuration): every environment variable and config file
+- [ERC-8004](/docs/erc8004): the on-chain identity registries referenced above
+- [SAS Credentialed Attestations](/docs/sas-attestations): the Solana attestation authority and its key handling
+- [Memory](/docs/memory): memory modes and their privacy trade-offs

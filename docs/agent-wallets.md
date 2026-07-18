@@ -76,7 +76,7 @@ Full request/response shapes are in the [REST API reference](api-reference.md).
 
 ## Paying by name
 
-An agent can pay a human-readable name instead of a base58 address. `/api/x402/pay-by-name` resolves a recipient across three namespaces, in order: a `@username` (which resolves to that user's default agent's Solana address), a `.sol` SNS name resolved on-chain via Bonfida (subdomains included), or a raw base58 address, which passes straight through. `GET` resolves only, so you can show the user the address before spending; `POST` resolves and settles from the agent's wallet under the same spend policy as any other outbound path.
+An agent can pay a human-readable name instead of a base58 address. `/api/x402/pay-by-name` resolves a recipient across three namespaces: a raw base58 address (passes straight through), a `.sol` SNS name resolved on-chain via Bonfida (subdomains included), or a `@username` (which resolves to that user's default agent's Solana address). `GET` resolves only, so you can show the user the address before spending; `POST` with `mode='send'` (authenticated, `agent_id` required) signs a USDC transfer as the caller's agent under the same spend policy as any other outbound path, and `mode='prep'` returns an unsigned transaction for a browser wallet to sign.
 
 ## Related
 

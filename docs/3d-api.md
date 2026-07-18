@@ -243,20 +243,20 @@ anywhere.
 
 ---
 
-### Prompt art direction (`director: true`) and brand marks
+### Prompt art direction (the `director` pass) and brand marks
 
 Text→3D runs text→image→mesh, so prompt quality decides mesh quality. Two
 layers improve it, both shared across every generation surface (the studio MCP
 tools, the paid REST twin, and this lane):
 
-**The art director.** Pass `director: true` to `POST /api/forge` and an IBM
-Granite "art director" pass rewrites your rough idea into one
-information-dense spec before generation: the single subject and its
-silhouette, its construction and part joins, per-part PBR material cues, one
-held art style, fine surface detail, and composition constraints tuned for
-clean image→mesh reconstruction (centered, isolated, no text, no collage).
-It is off by default on this endpoint and fail-soft: if the director LLM is
-unavailable, the raw prompt proceeds untouched. The prompt specs live in one
+**The art director.** On `POST /api/forge`, an IBM Granite "art director"
+pass runs **by default** on every text prompt (pass `director: false` to skip
+it) and rewrites your rough idea into one information-dense spec before
+generation: the single subject and its silhouette, its construction and part
+joins, per-part PBR material cues, one held art style, fine surface detail,
+and composition constraints tuned for clean image→mesh reconstruction
+(centered, isolated, no text, no collage). It is fail-soft: if the director
+LLM is unavailable, the raw prompt proceeds untouched. The prompt specs live in one
 module, [api/_lib/forge-director-prompts.js](../api/_lib/forge-director-prompts.js)
 (`MESH_DIRECTOR` for objects and props, `AVATAR_DIRECTOR` for rig-ready
 humanoids), so the free and paid lanes cannot drift apart.
@@ -483,3 +483,12 @@ When the report says "optimize," the paid pipelines do the work: **Forge Pro**
 (higher-quality generation), **Rigged Avatars** (auto-rigging), and the x402
 mesh-optimization routes. See
 [`/.well-known/x402.json`](https://three.ws/.well-known/x402.json).
+
+---
+
+## Related
+
+- [API Reference](/docs/api-reference) - the full three.ws HTTP API surface
+- [3D Studio MCP endpoint](/docs/mcp-studio) - the same free generation lane as MCP tools
+- [x402 Paid Endpoints](/docs/x402-endpoints) - the paid catalog Forge Pro belongs to
+- [Image to 3D](/docs/image-to-3d) - the photo-input reconstruction pipeline

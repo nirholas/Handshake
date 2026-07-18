@@ -30,7 +30,7 @@ Go to [three.ws/forge](/forge) and switch to the **From photos** tab.
 
 You'll see a grid of four upload slots. Drag your photos in, or click a slot to browse. After uploading you can **drag the thumbnails to reorder** them — put your best, clearest shot first.
 
-**No object on hand? Draw it.** Click **Or draw it instead** below the grid to open an in-browser drawing canvas — draw with your mouse, finger, or stylus, then **Use sketch** to drop the PNG straight into the next open slot. It goes through the exact same reconstruction pipeline as an uploaded photo, so simple objects with a clear outline (a mug, a low-poly rocket, a chair silhouette) work well; photorealistic detail obviously won't appear from a line drawing. Nothing is uploaded while you draw — only when you click **Use sketch**, and cancelling discards it with zero network activity.
+**No object on hand? Draw it.** The Forge also takes drawings, two ways. On this page, the **From a sketch** tab (it appears when the sketch engine is live) takes one drawing plus a short required description of what it depicts: dark strokes on a light background work best, and the result is untextured geometry you can then **Stylize** or **Retexture**. In the [Forge Studio](/forge-studio), click **Or draw it instead** below the photo grid to open an in-browser drawing canvas: draw with your mouse, finger, or stylus, then **Use sketch** to drop the PNG straight into the next open slot, where it rides the same reconstruction pipeline as an uploaded photo. Nothing is uploaded while you draw, only when you click **Use sketch**; cancelling discards it with zero network activity.
 
 ---
 

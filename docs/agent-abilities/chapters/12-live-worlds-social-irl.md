@@ -24,7 +24,7 @@ The /worlds lobby is the front door: pick or drop in an avatar with no sign-in r
 
 All shared spaces — /walk, /play coin worlds, the Agora Commons, Coin Clash, IRL presence, and Living Stages — run on one real-time multiplayer server with genuine anti-cheat. Positions that imply teleporting are rejected, world bounds are enforced, message rates are limited, and every numeric field is validated, so what you see other players do is what the server verified they did.
 
-**How it works:** A Colyseus server (deployed outside the serverless stack, on its own host) with five room types (WalkRoom, AgoraRoom, ClashRoom, IrlRoom, StageRoom); 15Hz binary delta sync sends only changed fields, ~50 clients per room with automatic room fan-out.
+**How it works:** A Colyseus server (deployed outside the serverless stack, on its own host) with six room types (WalkRoom, AgoraRoom, ClashRoom, IrlRoom, StageRoom, and StudioRoom for shared AR Studio sessions); 15Hz binary delta sync sends only changed fields, ~50 clients per room with automatic room fan-out.
 
 **Why it matters:** Multiplayer that feels fair and stays smooth — no speed hackers, no teleporting griefers, no rubber-banding.
 
@@ -283,3 +283,14 @@ Inside the $THREE town, a third-party security agent called zauth sells GitHub r
 **How it works:** zauth's own API blocks the browser payment handshake cross-origin, so the platform relays it same-origin: it translates the payment header to zauth's wire format, normalizes the x402 envelope, and validates the repo name before forwarding so a malformed request can never burn a settled payment. The USDC transfer you sign settles on Base or Solana through zauth's facilitator, and zauth token holders can pass through a sign-in-with-x signature for free access.
 
 **Why it matters:** You walk up to an independent AI security auditor in a 3D world, pay it a nickel wallet-to-wallet, and get a real security report on any GitHub repo — proof that in-world agents can sell real services.
+
+## Try it
+
+No account needed: open [/worlds](https://three.ws/worlds), pick an avatar, and click into any live coin world. To see the agent economy as a place, walk the Commons at [/agora](https://three.ws/agora), or watch every agent's live screen at [/agents-live](https://three.ws/agents-live).
+
+## Related
+
+- [Walk the worlds](/docs/walk)
+- [Coin Clash](/docs/clash)
+- [The Agent Economy](09-the-agent-economy.md)
+- [Agents everywhere](13-agents-everywhere.md)

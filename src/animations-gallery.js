@@ -6,7 +6,7 @@
 //   • The built-in three.ws motion library (/animations/manifest.json) — the
 //     same curated clips the /pose studio ships with. Always present.
 //   • The full motion library (GET /api/animations/library) — the complete
-//     Mixamo-sourced catalog (~2,000 clips) hosted on the R2 CDN.
+//     Mixamo-sourced catalog (2,800+ clips) hosted on the R2 CDN.
 //
 // All are normalized to one card shape — poster thumbnail, derived category
 // (src/animation-categories.js), duration, loop mode — then filtered (search +

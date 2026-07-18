@@ -1,5 +1,7 @@
 # Architecture Overview
 
+three.ws is the platform you see at [three.ws](https://three.ws): 3D avatars with AI brains that you can chat with, embed on any site, and register on-chain. This page is the engineering map of how that is built. If you just want to use the product, start with [How three.ws works](./how-it-works.md) instead.
+
 This document describes how three.ws is put together, how data moves through it, and where the seams are if you want to extend, self-host, or integrate it with another stack. It assumes familiarity with modern JavaScript, WebGL/three.js at a high level, and the basics of EVM blockchains and content-addressed storage.
 
 three.ws is simultaneously a glTF viewer, an LLM-driven character runtime, an on-chain identity layer, and a distributable web component. These concerns are split into four layers that communicate through a single event bus rather than direct method calls. Most of the interesting design decisions live at the seams.
@@ -42,7 +44,7 @@ This is the layer that turns a static GLB into a presence. It's structured as a 
 This layer is what keeps an agent's existence durable across sessions, devices, and embed hosts.
 
 - **`agent-identity.js`** — the **passport + diary**. Stores the agent's stable id, owner address, and a signed action history. Backed by `localStorage` for the local cache and `/api/agents/:id` for the canonical record. Listens on the protocol bus for `speak`, `remember`, `sign`, `skill-done`, `validate`, `load-end` and POSTs them to the backend fire-and-forget.
-- **`memory/`** — one of four modes: `local` (browser/disk), `ipfs` (pinned via Pinata or Filebase), `encrypted-ipfs` (still a stub), or `none` (stateless). Mode is declared on the manifest.
+- **`memory/`** — five built-in modes: `local` (browser `localStorage`), `remote` (synced to `/api/agent-memory`), `ipfs` (loaded from a pinned bundle), `encrypted-ipfs` (AES-GCM-256 with a wallet-derived key, pinned via `/api/agents/:id/memory/pin`), or `none` (stateless). Custom backends can also be registered. Mode is declared on the manifest.
 - **`erc8004/`** — the **on-chain identity** layer. Contains:
   - `IdentityRegistry` — mints an agent token whose `tokenURI` points at the manifest CID
   - `ReputationRegistry` — accepts signed feedback per agent
@@ -55,7 +57,7 @@ This layer is what keeps an agent's existence durable across sessions, devices, 
 The top layer is what lets an agent live somewhere other than the canonical app.
 
 - **`element.js`** — the `<agent-3d>` custom web component. Lazy-boots via `IntersectionObserver` (unless `eager`), enforces an origin allowlist for embeds, and exposes attributes for body, brain, agent-id, manifest URL, mode (`inline` / `floating` / `section` / `fullscreen`), and more.
-- **`widget-types.js`** — five widget variants (Turntable Showcase, Animation Gallery, Talking Agent, ERC-8004 Passport, Hotspot Tour) that share the underlying element but ship as separate ergonomic wrappers.
+- **`widget-types.js`** — ten widget variants (Turntable Showcase, Animation Gallery, Talking Agent, ERC-8004 Passport, Hotspot Tour, Pump.fun Live Feed, Smart Money Feed, Live Trades Canvas, Bonding Curve, Walking Avatar) that share the underlying element but ship as separate ergonomic wrappers.
 - **`lib.js`** — the CDN entry. Imports the element, registers it, and re-exports the public surface.
 - **`app.js`** — the main SPA. URL routing happens here using hash params (`#model=`, `#agent=`, `#kiosk=`, `#brain=`, `#preset=`) and query params (`?agent=` for authenticated edit mode, `?pending=1` for post-login round-trips). The hash form stays in embed mode; the query form moves into edit mode.
 - **`vercel.json`** — the server's route and cron table. Maps clean URLs (`/agent/<id>`, `/agent/<id>/edit`, `/agent/<id>/embed`, `/a/<chainId>/<agentId>`) to the right HTML entry and mounts the `api/*` handlers. In production the single Cloud Run container ([`server/index.mjs`](../server/index.mjs)) reads this table at runtime — it's a live config file, not a Vercel-only artifact.
@@ -151,9 +153,9 @@ The manifest is a JSON document that fully describes an embodied agent. It's int
 Key fields:
 
 - **`name`, `description`, `creator`** — display metadata.
-- **`body.uri`** — GLB / glTF / VRM URL. Resolution is deliberately polymorphic: `agent://chain/id` (resolved on-chain), `ipfs://CID/path`, `ar://TXID`, or plain `https://`. The resolver in `ipfs.js` walks gateway fallbacks (ipfs.io → dweb.link → nft.storage) so a single broken gateway never breaks an embed.
+- **`body.uri`** — GLB / glTF / VRM URL. Resolution is deliberately polymorphic: `agent://chain/id` (resolved on-chain), `ipfs://CID/path`, `ar://TXID`, or plain `https://`. The resolver in `ipfs.js` walks gateway fallbacks (dweb.link → ipfs.io → flk-ipfs.xyz) so a single broken gateway never breaks an embed.
 - **`skills[]`** — pointers to skill bundles. Each skill is loaded and validated by the registry. Trust mode determines whether unsigned/foreign skills are allowed.
-- **`memory.mode`** — `local`, `ipfs`, `encrypted-ipfs`, or `none`.
+- **`memory.mode`** — `local`, `remote`, `ipfs`, `encrypted-ipfs`, or `none`.
 - **`identity.chainId` / `identity.registryAddress`** — pin this manifest to an on-chain agent id.
 - **`personality`** — flavor: tone, domain, and any extra system-prompt fragments.
 
@@ -212,7 +214,7 @@ The flow:
 
 1. **User connects a wallet** via MetaMask, WalletConnect, or Privy embedded wallet.
 2. **Manifest is pinned** to IPFS via Pinata or Filebase. The CID is the canonical pointer to the agent.
-3. **Registration.** The user calls `IdentityRegistry.registerAgent(cid, metadata)` on the target chain (Base mainnet, Base Sepolia, or Ethereum mainnet). The registry mints a token whose `tokenURI` returns the manifest CID.
+3. **Registration.** The user calls `IdentityRegistry.registerAgent(cid, metadata)` on the target chain. Base is the default; `src/erc8004/chains.js` ships registry deployments on 15 mainnets (Ethereum, Base, Optimism, Arbitrum One, Polygon, BNB Chain, Avalanche, Linea, Scroll, Gnosis, Celo, zkSync Era, Moonbeam, Mantle, Fantom) plus the common testnets. The registry mints a token whose `tokenURI` returns the manifest CID.
 4. **Resolution.** Anyone with the chain id and agent id (or an ENS like `3dagent.eth`) can resolve the manifest: `manifest.js` reads `tokenURI(agentId)` from the registry, fetches the JSON over IPFS gateways, and normalizes it.
 5. **Reputation.** Users can call `ReputationRegistry.submitFeedback(agentId, score, comment)` to attach reviews. The element exposes a small UI for this.
 6. **Validation attestations.** When the glTF validator runs, the report can be hashed and posted to `ValidationRegistry.recordValidation(agentId, hash)` so anyone can verify the body has been spec-checked.
@@ -239,8 +241,17 @@ To run the whole stack yourself, the minimum is:
 - **A Node.js host** for the SPA and the `api/*` handlers. Production runs a single container ([`server/index.mjs`](../server/index.mjs)) on Google Cloud Run that reads the `vercel.json` route table at runtime; any Node host works the same way, or reproduce the same path → handler map in your reverse proxy.
 - **Neon DB (PostgreSQL)** for agents, widgets, sessions, and the action log.
 - **Upstash Redis** for rate limiting, nonce storage, and short-lived caches.
-- **AWS S3** (or any S3-compatible store — R2, B2) for hosted GLB and texture assets.
+- **An S3-compatible object store** for hosted GLB and texture assets. The client in [api/_lib/r2.js](../api/_lib/r2.js) speaks the S3 API, so Cloudflare R2, AWS S3, and Backblaze B2 all work (configure `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`).
 - **Anthropic API key** for the default LLM provider. The runtime can also point at a self-hosted proxy (`#proxyURL=`) for billing, logging, or a non-Anthropic backend.
 - **Optional:** ElevenLabs for higher-quality TTS, Pinata or Filebase for IPFS pinning, Privy for non-wallet onboarding, an RPC endpoint for ERC-8004 reads.
 
 A minimal Node + Neon + Anthropic deployment is enough for a single agent. The blockchain and IPFS pieces are opt-in — each layer can be replaced or removed. The protocol bus is the only thing you can't take out.
+
+---
+
+## Related
+
+- [How three.ws works](/docs/how-it-works): the zoomed-out mental model
+- [Layers](/docs/layers): the four-layer contract in detail
+- [Agent system](/docs/agent-system): runtime, skills, memory, emotion
+- [Memory system](/docs/memory): storage modes and the file format

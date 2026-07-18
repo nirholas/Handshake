@@ -34,7 +34,10 @@ should tune them to real unit economics.
 
 Endpoints advertise the networks they accept in the 402 challenge. The platform
 settles **USDC on Solana** (primary, always-on via the self-hosted facilitator)
-and, when configured, **USDC on Base** (EVM). The relevant config (see
+and, when configured, **USDC on Base** (EVM) and a **BSC leg** (contract-mediated
+`direct` scheme, advertised only when `X402_PAY_TO_BSC` is set). On the Solana
+rail, `X402_ACCEPT_THREE_SOLANA` optionally advertises **$THREE** alongside USDC
+as a second accept entry on the same challenge. The relevant config (see
 [Configuration](configuration.md)):
 
 | Key                                                  | Meaning                              |
@@ -102,7 +105,7 @@ for to feed the oracle and sniper.
 | `/api/x402/token-intel`         | $0.01      | Live market intel for any token (price, 24h change, market cap, liquidity, volume, signal). |
 | `/api/x402/crypto-intel`        | $0.01      | Agent-readable crypto market signal (bullish/bearish/neutral) + rationale.                  |
 | `/api/x402/three-intel`         | $0.01      | Intel focused on $THREE.                                                                    |
-| `/api/x402/fact-check`          | per source | Claim fact-check with cited evidence.                                                       |
+| `/api/x402/fact-check`          | $0.10      | Claim fact-check with cited sources, authority weights, and a SHA-256 attestation. A free daily quota per IP runs first; over-quota checks pay the x402 price. |
 | `/api/x402/symbol-availability` | $0.001     | Whether a ticker symbol is taken; `-batch` variant $0.005.                                  |
 | `/api/x402/bazaar-feed`         | $0.001     | x402 bazaar service listings feed.                                                          |
 
@@ -151,6 +154,11 @@ named in its description:
 | `/api/x402/market-hacks`        | $0.001  | Full DeFiLlama hack history — amount stolen, technique, chains, funds returned; searchable, with all-time/12mo loss stats. |
 | `/api/x402/market-pulse`        | $0.005  | Flagship one-call market bundle: global stats, Fear & Greed, top-10 coins, trending, ETH gas, DeFi TVL, stablecoin supply, DEX volume, protocol fees — each section degrades independently. |
 
+Beneath the named endpoints sits the **datapoint fabric**: `/api/x402/d/<family>/…`
+(one route, `api/x402/d/[...path].js`) serves 1,000,000+ individually priced
+datapoints at **$0.0005** USDC each by default, overridable per family with
+`X402_PRICE_DATAPOINT_<FAMILY>`. See [Market data API](market-data-api.md#the-datapoint-fabric).
+
 ## Agent & reputation endpoints
 
 | Endpoint                            | Default   | Returns                                    |
@@ -174,9 +182,8 @@ named in its description:
 | `/api/x402/pipeline-gameready`                              | $0.03     | **Pipeline — Game-Ready.** Retopologize to a poly budget + PBR re-bake for real-time engines. GLB in → engine-ready GLB out. See [3D pipeline](3d-pipeline.md). |
 | `/api/x402/pipeline-stylize`                                | $0.03     | **Pipeline — Stylize.** Geometric restyle (voxel/brick/voronoi/lowpoly) that rebuilds the mesh. GLB in → GLB out. See [3D pipeline](3d-pipeline.md). |
 | `/api/x402/pipeline-rembg`                                  | $0.01     | **Pipeline — Background Removal.** Image in → transparent PNG out (clean reference view for image→3D). See [3D pipeline](3d-pipeline.md). |
-| `/api/x402/mint-to-mesh`, `/api/x402/mint-to-mesh-batch`    | per call  | Token/mint → 3D mesh; `mint-to-mesh-batch` runs a set at $0.05.                              |
-| `/api/x402/model-check`, `/api/x402/model-validation-sweep` | $0.001    | Validate a GLB / sweep a batch.                                                              |
-| `/api/x402/glb-optimization-report`                         | per call  | GLB size/optimization analysis.                                                              |
+| `/api/x402/mint-to-mesh`, `/api/x402/mint-to-mesh-batch`    | $0.001    | Token/mint → 3D mesh; `mint-to-mesh-batch` runs a set at $0.05.                              |
+| `/api/x402/model-check`, `/api/x402/model-validation-sweep` | $0.001    | Validate a GLB / sweep a batch. (`model-check` is kept as a paid convenience; the same inspection is free at `/api/3d/inspect`.) |
 | `/api/x402/avatar-optimize-batch`                           | $0.001    | Batch optimization pass over the top N avatars.                                              |
 | `/api/x402/animation-download`, `/api/x402/asset-download`  | per asset | Paid asset/animation delivery.                                                               |
 
@@ -188,22 +195,23 @@ named in its description:
 | [`/api/x402/vanity`](vanity.md)                                                                                                                                           | $0.01–$0.50 (≤3) · $2.50–$10 (4–5, inventory-only) | **Vanity Grinder** — get a brand-new Solana address that starts with your ticker/prefix and/or ends with a suffix, for a branded token mint or agent/treasury wallet. Checks the pre-ground warehouse first for **instant delivery** (`source: "inventory"`); falls back to a live grind (`source: "ground"`) up to 3 chars. Keypair or importable BIP-39 mnemonic; nothing stored; optional `sealTo` ECIES. Full doc: [vanity.md](vanity.md). |
 | [`/api/x402/vanity-verifiable`](vanity.md#tier-2--provably-fair-grinder)                                                                                                  | $0.02–$0.40    | **Provably-fair grinder** — same grind with a signed commit–reveal receipt proving the key was ground fresh and never kept. Spec: [PROTOCOL-vanity.md](PROTOCOL-vanity.md). |
 | [`/api/x402/vanity-premium`](vanity.md#tier-3--premium-inventory)                                                                                                         | $1–$50 by rarity | **Premium inventory** — buy a pre-ground 4–5+ char brandable address from stock. GET lists available patterns + prices (free); `?address=…` buys via x402 and delivers the key **once** (ciphertext destroyed on delivery). Browsable at `/vanity/premium`. |
-| `/api/x402/pay-by-name`                                                                                                                                                   | per call       | Resolve and pay an SNS/ENS name (see [Agent wallets](agent-wallets.md)).                                                    |
-| `/api/x402/did`                                                                                                                                                           | per call       | Decentralized identifier resolution.                                                                                        |
+| `/api/x402/pay-by-name`                                                                                                                                                   | $0.001         | Resolve and pay a `@username` / `.sol` name / raw address (see [Agent wallets](agent-wallets.md)); the paid resolve toll is $0.001, the transfer amount itself is buyer-specified. |
+| `/api/x402/did`                                                                                                                                                           | $0.001         | Decentralized identifier resolution.                                                                                        |
+| `/api/x402/three-buy`                                                                                                                                                     | $0.001         | Micro-buy service: one settled toll payment triggers one small, real on-chain USDC to $THREE buy funded by the micro-buy wallet (driven by the `three-buy-loop` cron). |
 | `/api/x402/billboard`                                                                                                                                                     | $0.05          | Post to the on-platform billboard.                                                                                          |
 | `/api/x402/dance-tip`                                                                                                                                                     | $0.001         | Tip a club performer.                                                                                                       |
 | `/api/x402/club-cover`                                                                                                                                                    | $0.01          | Pole-club door cover charge; a paid wallet re-enters free for the pass window.                                              |
 | `/api/x402/cosmetic-purchase`                                                                                                                                             | per item       | Buy a cosmetic.                                                                                                             |
 | `/api/x402/tutor`                                                                                                                                                         | $0.01 / answer | Paid tutoring; a session accumulates a running tab across answers.                                                          |
 | `/api/x402/spend-session`                                                                                                                                                 | $0.01          | Open a metered spend session.                                                                                               |
-| `/api/x402/llm-proxy`                                                                                                                                                     | per call       | Paid LLM proxy.                                                                                                             |
+| `/api/x402/llm-proxy`                                                                                                                                                     | $0.005         | Paid LLM proxy.                                                                                                             |
 | `/api/x402/notify`                                                                                                                                                        | $0.001         | Notification gateway (Telegram + the autonomous loop's `canary` heartbeat lane).                                            |
 | `/api/x402/wallet-connect`                                                                                                                                                | $0.001         | Wallet-bridge connect probe.                                                                                                |
 | `/api/x402/permit2-paid-demo`                                                                                                                                             | $0.001         | Reference endpoint for the Permit2 / EIP-2612 gasless-approval scheme.                                                      |
 | `/api/x402/remix-asset`                                                                                                                                                   | $0.25          | Paid remix of a published, remixable 3D asset — generates a new anchored model and routes the source creator's royalty (≤20%) on-chain. |
-| `/api/x402/cross-chain`, `/api/x402/network-cost`                                                                                                                         | per call       | Cross-chain cost comparison.                                                                                                |
+| `/api/x402/cross-chain`                                                                                                                                                   | $0.005         | Cross-chain bridge status monitor. (`/api/x402/network-cost` is the free read of the cross-chain cost snapshots the autonomous loop settles hourly.) |
 | `/api/x402/rate-limit-probe`, `/api/x402/schema-check`                                                                                                                    | $0.001         | Paid diagnostic probes used by the autonomous loop.                                                                         |
-| `/api/x402/auth-health`, `/api/x402/api-key-health`, `/api/x402/feed-health`, `/api/x402/granite-health`, `/api/x402/telegram-health`, `/api/x402/solana-register-health` | $0.001         | Paid SLA/health probes for each backend dependency (auth, API keys, the live feed, IBM Granite, Telegram, Solana register). |
+| `/api/x402/auth-health`, `/api/x402/api-key-health`, `/api/x402/feed-health`, `/api/x402/telegram-health`, `/api/x402/solana-register-health` | $0.001         | Paid SLA/health probes for each backend dependency (auth, API keys, the live feed, Telegram, Solana register). |
 
 > Prices above marked "per call / per tier / per source" are computed by the
 > handler rather than a flat default; check the handler and any
@@ -224,11 +232,14 @@ directory.
 | Endpoint                           | Default  | Returns                                                                                                                                                           |
 | ---------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/api/x402/analytics`              | $0.005   | Platform reports — pick `report=revenue` for the x402 endpoint-revenue summary (see [x402 revenue & receipts](x402-revenue.md)), plus club and listing analytics. |
-| `/api/x402/mcp-tool-catalog`       | per call | Snapshot of every MCP tool — name, paid/free, price, input shape — and a diff vs the last snapshot (added / removed / re-priced tools).                           |
+| `/api/x402/mcp-tool-catalog`       | $0.001   | Snapshot of every MCP tool — name, paid/free, price, input shape — and a diff vs the last snapshot (added / removed / re-priced tools).                           |
 | **Free read surfaces**             | —        | —                                                                                                                                                                 |
 | `/api/x402/my-receipts`            | free     | A buyer's own settled receipts, gated by a wallet signature (SIWX) rather than a payment.                                                                         |
 | `/api/x402/mcp-perf`               | free     | MCP tool latency dashboard data.                                                                                                                                  |
 | `/api/x402/service-pricing-report` | free     | Tracked upstream-dependency price catalog + active price-increase/-drop alerts.                                                                                   |
+| `/api/x402/granite-health`         | free     | IBM Granite inference SLA feed, read from the verdicts the autonomous loop's paid 6-hourly probe writes.                                                          |
+| `/api/x402/glb-optimization-report`| free     | GLB Size Optimizer catalog feed: what the `glb-size-optimizer` autonomous-loop entry has measured.                                                                |
+| `/api/x402/network-cost`           | free     | Cross-chain payment-cost recommendation feed from the hourly cross-chain-cost pipeline snapshots.                                                                 |
 | `/api/x402/echo`                   | free     | httpbin for x402 — decodes your `X-PAYMENT` header (signatures redacted) and returns a local verify verdict without settling. See [x402 dev tools](x402-dev-tools.md). |
 | `/api/x402/debug`                  | free     | Diagnoses a failed 402 exchange (`{challenge, payment, response}`) into an ordered `{severity, field, problem, fix}` list. See [x402 dev tools](x402-dev-tools.md).     |
 | `/api/x402/verify-receipt`         | free     | Recomputes a paid response's SHA-256 attestation and confirms a settlement tx on-chain. See [x402 dev tools](x402-dev-tools.md).                                       |

@@ -38,9 +38,9 @@ The catalog covers six integration types:
   the `@three-ws/page-agent` package.
 - **Token Market Widget**: a live pump.fun-style token feed rendered as a widget,
   driven by a `data-widget` id and the `pumpfun-feed` type.
-- **MCP Integration**: the `@three-ws/avatar-agent-mcp` server, so Claude, Cursor, or
-  any MCP-compatible assistant can render, speak, gesture, and emote your agents. See
-  [MCP](./mcp.md).
+- **MCP Integration**: the `@three-ws/avatar-agent` server (from the
+  `packages/avatar-agent-mcp` workspace), so Claude, Cursor, or any MCP-compatible
+  assistant can render, speak, gesture, and emote your agents. See [MCP](./mcp.md).
 
 ## Walkthrough
 
@@ -50,7 +50,7 @@ The catalog covers six integration types:
    opens the real embed in a modal.
 3. **Copy the snippet.** Every card exposes its exact paste-in code.
 4. **Swap in your ids.** Replace the demo widget or avatar id with your own from
-   [Widget Studio](https://three.ws/widgets), or your API key for the MCP server.
+   [Widget Studio](https://three.ws/widgets).
 5. **Paste it into your site.** Drop the snippet anywhere in your HTML, CMS block, or
    framework component.
 
@@ -127,14 +127,19 @@ MCP Integration (`claude_desktop_config.json`):
 ```json
 {
   "mcpServers": {
-    "threews-avatar": {
+    "avatar-agent": {
       "command": "npx",
-      "args": ["-y", "@three-ws/avatar-agent-mcp"],
-      "env": { "THREEWS_API_KEY": "your-key-here" }
+      "args": ["-y", "@three-ws/avatar-agent"]
     }
   }
 }
 ```
+
+The core 3D tools (`inspect_glb`, `validate_glb`, `optimize_glb`, `thumbnail_glb`,
+`viewer_url`) and `pump_snapshot` work with no environment variables. Voice,
+generation, and signing tools take their own provider keys via `env` (for example
+`SOLANA_RPC_URL`, `OPENAI_API_KEY`, `REPLICATE_API_TOKEN`); see the package README
+for the full table.
 
 ## States and limits
 
@@ -144,8 +149,9 @@ MCP Integration (`claude_desktop_config.json`):
   backend. The chat and token widgets make their model and data calls server-side.
 - **One loader, many widgets.** `/embed.js` can be loaded once and drive multiple
   avatar, chat, and token embeds on the same page.
-- **MCP needs a key.** The MCP server authenticates with `THREEWS_API_KEY`; the other
-  embeds are public and need no key.
+- **MCP keys are per-tool.** The `@three-ws/avatar-agent` server needs no key for its
+  core 3D tools; voice, generation, and signing tools each read their own provider
+  key from the environment. The embeds are public and need no key.
 - **Deeper control lives elsewhere.** This page is the catalog. For the full web
   component API, iframe and oEmbed options, CSS, and events, use the references below
   rather than duplicating them here.

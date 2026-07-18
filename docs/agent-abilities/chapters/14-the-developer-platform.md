@@ -94,7 +94,7 @@ An official plugin marketplace manifest (.claude-plugin/marketplace.json) shippi
 
 ## @three-ws/tool-sdk — typed MCP tool authoring layer
 
-A single typed home for declaring MCP tools across the repo's 38 servers: defineTool declares identity, Zod-schema API surface, and a permission manifest (network allowlist, rate limit, wallet access) once; defineExecutor wires typed implementations through one validating invoke() entry point; toMcpTools adapts the result into the exact registration shape the servers already use.
+A single typed home for declaring MCP tools across the repo's MCP servers: defineTool declares identity, Zod-schema API surface, and a permission manifest (network allowlist, rate limit, wallet access) once; defineExecutor wires typed implementations through one validating invoke() entry point; toMcpTools adapts the result into the exact registration shape the servers already use.
 
 **How it works:** JSON Schema is derived automatically from the Zod schemas; validation, rate limiting, and success/failure normalization are enforced centrally instead of re-implemented per server. Internal workspace package (private, not on npm) at packages/tool-sdk — relevant to developers building new three.ws MCP servers in-repo.
 
@@ -156,10 +156,31 @@ Two Model Context Protocol servers plug enterprise AI clouds directly into Claud
 
 **Why it matters:** Your coding agent gains IBM Granite and Alibaba Qwen as first-class tools in one command, with your keys never leaving your machine.
 
-## The public changelog — human page, machine feeds, and X push
+## The public changelog — human page, machine feeds, and Telegram push
 
-Every user-visible change to the platform lands in a public changelog that holders can actually follow: a browsable web page with per-entry permalinks, plus machine-readable JSON and RSS feeds for bots, dashboards, and readers. Entries are written in plain holder-readable language — no commit jargon — tagged by type (feature, improvement, fix, SDK, infra, docs, security), and new page launches flow in automatically. New entries are also pushed as tweets to the @trythreews X account, the primary holder channel.
+Every user-visible change to the platform lands in a public changelog that holders can actually follow: a browsable web page with per-entry permalinks, plus machine-readable JSON and RSS feeds for bots, dashboards, and readers. Entries are written in plain holder-readable language — no commit jargon — tagged by type (feature, improvement, fix, SDK, infra, docs, security), and new page launches flow in automatically. New entries are also pushed automatically to the holders' Telegram channel, with no manual announcement step.
 
-**How it works:** A curated entry file merges with the page registry at build time to regenerate the markdown changelog, the JSON feed, and the RSS XML, with validation that fails the build on malformed entries. The X push script diffs the feed against a committed state file so posting stays idempotent across machines, supports dry-run and rate-limit-aware batching, and threads each entry to the free API tier's quota.
+**How it works:** A curated entry file merges with the page registry at build time to regenerate the markdown changelog, the JSON feed, and the RSS XML, with validation that fails the build on malformed entries. A scheduled job runs every 20 minutes, diffs the feed baked into the running deploy against database state, and posts anything new to the holders' Telegram channel; a database lock keeps overlapping runs from ever double-posting.
 
-**Why it matters:** Holders and integrators always know what shipped — on the site, in their feed reader, or on their X timeline — without anyone hand-writing announcements.
+**Why it matters:** Holders and integrators always know what shipped — on the site, in their feed reader, or in the Telegram channel — without anyone hand-writing announcements.
+
+## Try it
+
+Two zero-setup calls against the live platform:
+
+```bash
+# Discover every paid x402 endpoint, machine-readable
+curl -s "https://three.ws/.well-known/x402.json"
+
+# Free lane of the unified crypto aggregator (no key, per-IP quota)
+curl -s "https://three.ws/api/v1/x"
+```
+
+To add the flagship hosted MCP server to Claude or any MCP client, point it at `https://three.ws/api/mcp` (Streamable HTTP). The free 3D Studio server at `https://three.ws/api/mcp-studio` needs no auth or payment at all.
+
+## Related
+
+- [API reference](/docs/api-reference)
+- [MCP servers](/docs/mcp)
+- [x402 endpoints](/docs/x402-endpoints)
+- [The Agent Economy](09-the-agent-economy.md)

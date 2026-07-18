@@ -1,6 +1,6 @@
 # Configuration Reference
 
-three.ws is configured through a combination of environment variables and a handful of configuration files. This document is a complete reference for self-hosters and developers setting up a local development environment.
+three.ws is configured through a combination of environment variables and a handful of configuration files. This document is a complete reference for self-hosters and developers setting up a local development environment. If you only use the hosted site at three.ws, none of this applies to you; if you are running the code yourself, start with the [Minimum Local Development Configuration](#minimum-local-development-configuration) and come back for the rest as you enable features.
 
 **Configuration files at a glance:**
 
@@ -27,13 +27,13 @@ cp .env.example .env.local
 ### Core
 
 #### `PUBLIC_APP_ORIGIN`
-**Required.** The canonical origin of your deployment — no trailing slash.
+**Required for self-hosted deployments.** The canonical origin of your deployment, with no trailing slash. When unset, the code falls back to `https://three.ws` ([api/_lib/env.js](../api/_lib/env.js)), which is wrong for any other domain.
 
 ```
 PUBLIC_APP_ORIGIN=https://yourdomain.com
 ```
 
-Used to construct absolute URLs in API responses and OAuth metadata. Must match your production domain exactly.
+Used to construct absolute URLs in API responses and OAuth metadata (exposed to server code as `env.APP_ORIGIN`). Must match your production domain exactly.
 
 #### `DATABASE_URL`
 **Required.** PostgreSQL connection string using Neon's serverless HTTPS driver.
@@ -87,17 +87,36 @@ Higher values increase security at the cost of login latency. 11 is a reasonable
 
 ### LLM
 
+`/api/chat` routes across a provider failover ladder (see the routing comment at the top of [api/chat.js](../api/chat.js)): free-tier providers lead, paid keys are backstops. Configure at least one of these keys to enable agent conversations.
+
+#### `GROQ_API_KEY`
+**Recommended.** Free-tier Groq key; the default first provider in the chat ladder.
+
+```
+GROQ_API_KEY=gsk_xxxxx
+```
+
+#### `OPENROUTER_API_KEY`
+**Optional.** OpenRouter key, tried after Groq. Backs up every LLM surface; fund it if you rely on paid-model failover.
+
+```
+OPENROUTER_API_KEY=sk-or-xxxxx
+```
+
+#### `NVIDIA_API_KEY`
+**Optional.** NVIDIA NIM free tier, a third independent free lane.
+
 #### `ANTHROPIC_API_KEY`
-**Required for agent conversations.** If unset, the `/api/chat` endpoint falls back to client-side pattern matching (limited functionality).
+**Optional (paid backstop).** Anthropic key, tried after the free lanes. Also accepted as a user-supplied BYOK key.
 
 ```
 ANTHROPIC_API_KEY=sk-ant-api03-xxxxx
 ```
 
-Get from [console.anthropic.com](https://console.anthropic.com).
+Get from [console.anthropic.com](https://console.anthropic.com). `OPENAI_API_KEY` fills the same paid-backstop role for OpenAI, and watsonx (`WATSONX_API_KEY` plus a project scope) is served only on explicit request, never as a silent default.
 
 #### `CHAT_MODEL`
-**Optional.** Override the Claude model used for agent chat. Defaults to `claude-sonnet-4-6`.
+**Optional.** Pin a default chat model by id. It only applies when the provider that serves that model id (per the model catalog) is the one routed to; every other provider keeps its own default, so an Anthropic-style model id never leaks into a Groq request.
 
 ```
 CHAT_MODEL=claude-sonnet-4-6
@@ -345,7 +364,7 @@ The smallest `.env.local` that runs the dev server with core features:
 PUBLIC_APP_ORIGIN=http://localhost:3000
 DATABASE_URL=postgres://user:pass@ep-xxx.neon.tech/neondb?sslmode=require
 JWT_SECRET=<output of: openssl rand -base64 64>
-ANTHROPIC_API_KEY=sk-ant-...
+GROQ_API_KEY=gsk_...          # or any other chat provider key (see LLM above)
 S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
 S3_ACCESS_KEY_ID=...
 S3_SECRET_ACCESS_KEY=...
@@ -366,9 +385,9 @@ A **live configuration file** consumed at runtime by the Cloud Run server ([`ser
 ```json
 { "src": "/agent/([^/]+)/edit",  "dest": "/agent-edit.html" }
 { "src": "/agent/([^/]+)/embed", "dest": "/agent-embed.html" }
-{ "src": "/agent/([^/]+)",       "dest": "/agent-home.html" }
+{ "src": "/agent/([^/]+)",       "status": 301, "headers": { "Location": "/agents/$1" } }
 { "src": "/a/(\\d+)/(\\d+)",    "dest": "/api/a-page?chain=$1&id=$2" }
-{ "src": "/dashboard",           "dest": "/dashboard/index.html" }
+{ "src": "/dashboard/?",         "dest": "/dashboard-next/index.html" }
 { "src": "/studio",              "dest": "/studio/index.html" }
 ```
 
@@ -378,8 +397,11 @@ A **live configuration file** consumed at runtime by the Cloud Run server ([`ser
 {
   "src": "/agent/([^/]+)/embed",
   "headers": {
-    "content-security-policy": "frame-ancestors *",
-    "permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*"
+    "content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; report-uri /api/client-errors",
+    "x-content-type-options": "nosniff",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "permissions-policy": "microphone=(self), camera=(self), xr-spatial-tracking=*",
+    "cross-origin-resource-policy": "cross-origin"
   },
   "dest": "/agent-embed.html"
 }
@@ -395,7 +417,7 @@ A **live configuration file** consumed at runtime by the Cloud Run server ([`ser
 }
 ```
 
-**Cron jobs** are declared here as the source of truth for the schedule; in production they are driven by **Google Cloud Scheduler** (~80 jobs), each hitting its `/api/cron/*` handler on the Cloud Run service:
+**Cron jobs** are declared here as the source of truth for the schedule (currently 89 entries); in production they are driven by **Google Cloud Scheduler**, each job hitting its `/api/cron/*` handler on the Cloud Run service:
 
 ```json
 "crons": [
@@ -418,15 +440,15 @@ The build is controlled by the `TARGET` environment variable:
 |---|---|---|---|
 | `npm run build` | `app` (default) | `dist/` | Full multi-page SPA |
 | `npm run build:lib` | `lib` | `dist-lib/` | Self-contained web component for CDN |
-| `npm run build:all` | both | both | Builds app and lib sequentially |
+| `npm run build:all` | both | both | Builds the chat bundle first, then app and lib in parallel |
 
-**App build** (`TARGET=app`) emits multiple HTML entry points for the SPA:
+**App build** (`TARGET=app`) emits many HTML entry points for the multi-page app, sourced from `pages/`:
 
-- `index.html` — marketing/landing
-- `app.html` — agent creator
-- `agent-home.html`, `agent-edit.html`, `agent-embed.html` — agent pages
-- `dashboard/index.html` — user dashboard
-- `studio/index.html` — widget studio
+- `pages/home.html`: marketing/landing
+- `pages/app.html`: agent creator
+- `pages/agent-edit.html`, `pages/agent-embed.html`: agent pages (`/agent/:id` itself 301-redirects to `/agents/:id`)
+- `pages/dashboard-next/`: user dashboard (sub-pages auto-discovered)
+- `public/studio/index.html`: widget studio
 
 **Library build** (`TARGET=lib`) emits a self-contained ES module and UMD bundle:
 
@@ -437,7 +459,7 @@ dist-lib/agent-3d.umd.cjs  # UMD (CommonJS-compatible)
 
 Three.js and ethers are bundled (not externalized) so the web component works as a zero-install drop-in embed via `<script type="module">`.
 
-**VitePWA** generates a service worker for the app build. Assets matching `**/*.{js,css,ico,png,svg,woff2}` are precached. Google Fonts are cached with a `CacheFirst` strategy and a 1-year TTL.
+**VitePWA** generates a service worker for the app build. Only `**/*.{ico,woff2}` are precached; HTML, JS, and CSS are deliberately excluded so deploys take effect immediately. Google Fonts are cached with a `CacheFirst` strategy and a 1-year TTL, and `/api/*` is never intercepted by the service worker.
 
 The dev server includes a rewrite middleware that mirrors the `vercel.json` route patterns, so `http://localhost:3000/agent/my-agent/edit` works the same as in production.
 
@@ -454,14 +476,14 @@ aws s3api put-bucket-cors \
   --endpoint-url https://<account-id>.r2.cloudflarestorage.com
 ```
 
-The default `cors.json` restricts GET requests to a specific list of origins:
+The checked-in `cors.json` restricts GET requests to a specific list of origins: `https://three.ws`, the localhost dev origins, and a few existing partner origins:
 
 ```json
 [
   {
     "method": ["GET"],
     "origin": [
-      "https://three.ws/",
+      "https://three.ws",
       "http://localhost:*",
       "https://localhost:*"
     ],
@@ -515,3 +537,11 @@ Before going live, verify the following:
 - [ ] `AGENT_RELAYER_KEY` is set via the Cloud Run service env vars, not committed to git
 - [ ] `.mcp.json` does not contain a real API key if checked into git
 - [ ] `JWT_KID` is set so key rotation can be performed without invalidating all sessions
+
+---
+
+## Related
+
+- [Deployment & Self-Hosting](/docs/deployment): how to run the stack in production
+- [Security](/docs/security): the security model these settings feed into
+- [Contributing](/docs/contributing): local development workflow and test commands

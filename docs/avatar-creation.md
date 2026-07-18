@@ -22,24 +22,21 @@ The fastest way to get a personalized 3D avatar is to take a set of photos and l
 
 ### What you need
 
-Three photos of your face:
-- **Frontal** — face the camera straight on, neutral expression
-- **Left** — turn your head about 45° to the left
-- **Right** — turn your head about 45° to the right
+At minimum, one clear photo of your face:
+- **Frontal** (required): face the camera straight on, neutral expression
+- **Left / Right** (optional): turn your head about 45° each way; extra angles improve the likeness
 
-Good lighting and a plain background give the best results. Photos can be JPEG or PNG.
+Good lighting and a plain background give the best results. Photos can be JPEG or PNG. The reconstruction is a face pipeline, so a headshot works far better than a full-body shot.
 
 ### Steps
 
-1. Go to **https://three.ws/create**
+1. Go to **https://three.ws/create** and pick the selfie path (or open **https://three.ws/create/selfie** directly)
 2. Choose **Camera** (to take live photos in-browser) or **Upload** (to pick files from your device)
-3. Fill in all three slots — frontal, left, right
-4. Select your preferred **body type** and **avatar style** (v1 = photorealistic, v2 = stylized)
+3. Fill the frontal slot; add left/right photos if you have them
+4. Select your preferred **body type** (male / female) and **avatar style** (v1 = Photoreal, v2 = Stylized)
 5. Click **Submit**
 
-The photos are prepared and sent to the photo avatar pipeline. After a brief processing step, an avatar editor opens in a modal where you can adjust clothing, accessories, and other details before exporting.
-
-When you click export, the GLB is fetched and saved to your three.ws account automatically.
+The photos are downscaled in the browser and sent to the native avatar reconstruction backend. A build view shows progress while the rigged GLB renders (typically a minute or two); when the job finishes, the avatar is saved to your three.ws account automatically and opens for review.
 
 ### What if camera access doesn't work?
 
@@ -49,12 +46,12 @@ If your browser or device doesn't support `getUserMedia`, the Camera option is d
 
 For developers who want to understand what happens under the hood:
 
-1. [selfie-capture.js](../src/selfie-capture.js) manages the two-step UI: method choice (camera vs upload) and the three photo slots. It dispatches a `selfie:submit` CustomEvent when all three slots are filled.
-2. [selfie-pipeline.js](../src/selfie-pipeline.js) handles that event: downscales each photo to a max of 1024px, converts to base64 JPEG, then POSTs to `/api/onboarding/avaturn-session` with the photos and body/style preferences.
-3. The API responds with a `session_url`. The page redirects to `/#avatarSession=<encoded url>`.
-4. The main app reads the hash and opens `AvatarCreator` ([src/avatar-creator.js](../src/avatar-creator.js)) with the session URL, which initialises the photo avatar SDK into a modal iframe.
-5. The avatar editor iframe fires a `avatar.exported` postMessage when the user exports. The SDK catches this, fetches the GLB bytes, and calls `onExport(blob)`.
-6. [account.js](../src/account.js) → `saveRemoteGlbToAccount()` presigns an upload URL, pushes the GLB to R2 storage, and creates the avatar record.
+1. [selfie-capture.js](../src/selfie-capture.js) manages the two-step UI: method choice (camera vs upload) and the photo slots (frontal required, sides optional). On submit it dispatches a `selfie:submit` CustomEvent with `{ files, bodyType, avatarType }`.
+2. [selfie-pipeline.js](../src/selfie-pipeline.js) handles that event: it runs an on-device photo check and refinement pass ([selfie-refine.js](../src/selfie-refine.js)), downscales each photo to a max of 1024px as JPEG, then POSTs to `/api/avatars/reconstruct` with the photos and body/style preferences.
+3. The endpoint returns a `jobId`. The pipeline dispatches `selfie:building` and polls `/api/avatars/regenerate-status?jobId=...` every 3 seconds, dispatching `selfie:progress` ticks the build view renders.
+4. On `{ status: 'done', resultAvatarId }` it dispatches `selfie:done { avatarId }`. The avatar record and its GLB in R2 storage were created server-side, so nothing else needs to be uploaded. Failures dispatch `selfie:build-error` with a message and, when detectable, the photo slot that caused it.
+
+A separate photo-avatar SDK path (`AvatarCreator` in [src/avatar-creator.js](../src/avatar-creator.js) with a session from `/api/onboarding/avaturn-session`) still exists for the third-party editor integration; the selfie flow above is the default one on /create.
 
 ---
 
@@ -64,9 +61,7 @@ The three.ws avatar builder is a browser-based tool for full creative control, n
 
 ### Access
 
-Open **https://three.ws/studio**
-
-The studio opens in a modal inside the main app and runs as a separate React application embedded via iframe.
+Open **https://three.ws/avatar-studio**, or start from **https://three.ws/create** (the builder opens in a modal inside the main app). It is a separate React application embedded via iframe. Note: `/studio` is Widget Studio, the embed-snippet builder, a different tool.
 
 ### What you can customize
 
@@ -201,7 +196,7 @@ Open the editor for your avatar and click the **Regenerate** button. The regener
 
 Each mode accepts optional parameters as a JSON object. The job runs asynchronously and the panel polls for completion every 3 seconds.
 
-**Note:** Avatar regeneration is in limited availability. If your deployment shows a waitlist banner in this panel, email support@three.ws to join the early access list.
+**Note:** Re-mesh, re-texture, and re-rig need a platform ML backend. If the panel shows a "Mesh regeneration needs a backend" banner, the deployment has no regeneration provider configured: set `AVATAR_REGEN_PROVIDER` to `replicate`, `huggingface`, or `gcp` (plus the matching API token) in the server environment.
 
 ---
 
@@ -321,5 +316,14 @@ Apply Draco compression in Blender (File → Export glTF → Compression) or wit
 **The Camera option is greyed out on the selfie page**
 Your browser or device doesn't support `getUserMedia`. This is common on HTTP (non-HTTPS) connections and some desktop browsers. Use the Upload option instead.
 
-**The regeneration panel shows a waitlist message**
-The ML regeneration backend is not enabled on this deployment. Join the early access list via support@three.ws.
+**The regeneration panel says mesh regeneration needs a backend**
+No regeneration provider is configured on this deployment. Set `AVATAR_REGEN_PROVIDER` (`replicate`, `huggingface`, or `gcp`) and the matching API token in the server environment.
+
+---
+
+## Related
+
+- [Avatar pipeline](/docs/avatar-pipeline): the end-to-end generate / rig / retarget map
+- [Selfie to avatar reconstruction](/docs/avatar-reconstruction): how the photo pipeline works inside
+- [Animations](/docs/animations): the clip library your avatar drives once rigged
+- [ERC-8004 identity](/docs/erc8004): registering the finished agent on-chain

@@ -53,43 +53,38 @@ A review can also be **staked**: the reviewer locks ≥0.001 ETH behind their vo
 The fastest read is the visual one.
 
 1. Open the [Reputation Explorer](/reputation).
-2. Paste an agent identifier — a numeric `agentId`, a wallet address, or a CAIP-10 ID.
+2. Paste an identifier — an Ethereum wallet address or an ENS name (resolved automatically). For an ERC-8004 agent, deep-link with `?agent=<chainId>:<agentId>` (e.g. `/reputation?agent=8453:42`).
 3. Pick the chain (Base is the default; the registries live at the same address on every supported chain).
 4. Read the panel:
-   - **Average score** (shown as `X.X / 5`) and **total vouch count**
-   - **Total ETH staked** behind the vouches
-   - **Recent vouches** — each with the reviewer's address, score, optional comment, and a link to the transaction on the block explorer
+   - **Average score** (shown as stars out of 5) and **total review count**
+   - **Recent reviews** — each with the reviewer's address, score, optional comment, and a link to the attestation or transaction on the explorer
 
-If the agent has no reviews yet, you'll see a clean "no vouches yet" state rather than a blank — a brand-new agent reads as *unknown*, not *bad*.
-
-This is also the panel embedded on every agent profile page at `https://three.ws/a/<chainId>/<agentId>`.
+If the agent has no reviews yet, you'll see a clean empty state rather than a blank — a brand-new agent reads as *unknown*, not *bad*.
 
 ---
 
 ## Path 2 — The REST API (one `fetch`)
 
-For a webpage or a backend that just needs the aggregate, hit the REST endpoint. No key, no payment:
+For a three.ws agent (identified by its platform UUID), hit the REST endpoint. No key, no payment. It returns the agent's **unified wallet trust score** — a 0-100 credibility signal computed from real ledger and on-chain activity, with the ERC-8004 registry read as one of its inputs:
 
 ```js
-const res = await fetch('https://three.ws/api/agents/<agent-id>/reputation');
+const res = await fetch('https://three.ws/api/agents/<agent-uuid>/reputation');
 const rep = await res.json();
 // {
-//   average: 4.6,            // 0 if no reviews
-//   count: 12,               // number of vouches
-//   total_stake_wei: "3000000000000000",  // ETH staked, in wei (string for safety)
-//   chain_id: 8453
+//   agent_id: "…",
+//   name: "…",
+//   score: 62,               // 0–100 credit-style score
+//   max: 100,
+//   tier: "…", tierLabel: "…",
+//   pillars: [ … ],          // per-factor breakdown (tenure, volume, reliability, …)
+//   evidence: { … },         // links to the on-chain facts behind the score
+//   computed_at: "2026-…"
 // }
 
-console.log(`${rep.average.toFixed(1)} from ${rep.count} reviews`);
+console.log(`${rep.name}: ${rep.score}/${rep.max} (${rep.tierLabel})`);
 ```
 
-Query a different chain with `?chain_id=`:
-
-```js
-fetch('https://three.ws/api/agents/<agent-id>/reputation?chain_id=42161'); // Arbitrum
-```
-
-The endpoint reads the contract live and caches the result for ~5 minutes (look for an `X-Cache: HIT|MISS` header). `total_stake_wei` is returned as a **string** because wei values overflow JavaScript's safe-integer range — parse it with `BigInt`, not `Number`.
+The score is cached for ~3 minutes (look for an `X-Cache: HIT|MISS` header), and the same computation feeds the reputation badges on discovery surfaces. Note this endpoint takes the **three.ws agent UUID**, not a raw on-chain `agentId`; for the raw ERC-8004 star aggregate, use the SDK module (Path 4), the contract (Path 5), or the MCP tool (Path 3).
 
 ---
 
@@ -143,18 +138,18 @@ This is the path to wire into an agent that needs to gate its own spending: read
 
 ---
 
-## Path 4 — The SDK (JavaScript)
+## Path 4 — The reputation module (JavaScript)
 
-Inside a JavaScript app, the SDK wraps the contract reads with an `ethers` provider:
+Inside a JavaScript app, the in-repo module `src/erc8004/reputation.js` wraps the contract reads with an `ethers` provider (the same module the register-onchain flow and the Reputation Explorer use):
 
 ```js
-import { getReputation, getRecentReviews, getTotalStake } from '@three-ws/sdk/erc8004';
+import { getReputation, getRecentReviews, getTotalStake } from './src/erc8004/reputation.js';
 import { JsonRpcProvider } from 'ethers';
 
 const provider = new JsonRpcProvider('https://mainnet.base.org');
 
 // Aggregate — already averaged for you
-const { total, count, average } = await getReputation({
+const { count, average } = await getReputation({
   chainId: 8453,
   agentId: 42,
   runner: provider,
@@ -174,7 +169,7 @@ const reviews = await getRecentReviews({
 reviews.forEach(r => console.log(r.from, r.score, r.comment, r.txHash));
 ```
 
-`getReputation` returns `{ total, count, average }` with `average` pre-computed (`0` when there are no reviews). `getRecentReviews` returns an array of `{ from, score, comment, blockNumber, txHash }`. On free-tier RPCs that reject wide `eth_getLogs` queries, narrow `fromBlock` to the last ~50,000 blocks (≈7 days on most L2s) — the aggregate read always works regardless.
+`getReputation` returns `{ count, average }` with `average` pre-computed (`0` when there are no reviews). `getRecentReviews` returns an array of `{ agentId, from, score, comment, blockNumber, txHash }`. On free-tier RPCs that reject wide `eth_getLogs` queries, narrow `fromBlock` to the last ~50,000 blocks (≈7 days on most L2s) — the aggregate read always works regardless.
 
 ---
 
@@ -232,8 +227,10 @@ For ENS-named agents, three.ws resolves `eip155:<chainId>:<registry>/<agentId>` 
 Star reviews are one signal. For a three.ws agent, you can also read its **behavior** — did it actually get paid, did its payouts succeed, did anyone dispute it — via the paid x402 synthesis endpoint (`$0.01 USDC`):
 
 ```
-GET /api/x402/agent-reputation?agent_id=<uuid>
+GET /api/x402/agent-reputation?subject=<identifier>
 ```
+
+`subject` accepts any identifier — a three.ws agent UUID, a wallet, or a mint; the type is auto-detected.
 
 It returns confirmed payment count and distinct payers, payout/distribution success rates, failure rates, and attestation counts — reputation derived from what an agent *did*, not just what people *said*. Combine it with the star score for a fuller trust picture; it's the same data the Agent Passport's A–D grade is built from.
 
@@ -281,7 +278,7 @@ This is exactly the bouncer pattern three.ws's own Pole Club uses at its door �
 - That wallet doesn't own an ERC-8004 agent on the chosen chain. Pass a numeric `agentId` directly, or switch chains — the same wallet may own an agent elsewhere.
 
 **`fetch` to the REST endpoint 404s**
-- Use the agent's three.ws UUID for `/api/agents/<id>/reputation`. For a raw on-chain `agentId` or wallet, use the SDK (Path 4), the contract (Path 5), or the MCP tool (Path 3) instead.
+- Use the agent's three.ws UUID for `/api/agents/<id>/reputation`. For a raw on-chain `agentId` or wallet, use the reputation module (Path 4), the contract (Path 5), or the MCP tool (Path 3) instead.
 
 ---
 

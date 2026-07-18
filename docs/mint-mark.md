@@ -1,6 +1,6 @@
 # The three.ws mint mark
 
-Every coin launched through three.ws has a mint address that starts with `3ws` — the three.ws brand mark. This is automatic and verifiable directly from the address without any external lookup.
+Every coin launched through three.ws has a mint address that starts with `3ws`, the three.ws brand mark. This is automatic and verifiable directly from the address without any external lookup. It applies whenever you launch a coin from Studio or through an agent's wallet; you don't have to do anything to get it.
 
 ---
 
@@ -20,11 +20,11 @@ When you launch a coin on three.ws (via Studio or the agent wallet path), the pl
 
 ### How does it work?
 
-The server runs a fast WASM-based keypair grinder (single-threaded, sub-second for a 3-character prefix) until it finds a match, then uses that keypair as the coin mint. The expected work is ~49 000 keypairs at ~25 000/s, taking well under a second on the Cloud Run server's CPU.
+The server runs a fast WASM-based keypair grinder until it finds a match, then uses that keypair as the coin mint. The expected work is ~49 000 keypairs at ~25 000/s single-threaded, typically about a second on the Cloud Run server's CPU.
 
 ### Is it on every coin?
 
-Yes — all coins launched via **Studio** or **launch-agent** carry the mark. The only exception is the generic x402 pay-per-call launcher, which accepts arbitrary mints supplied by the caller at runtime and intentionally has no brand constraint.
+Yes: all coins launched via **Studio** or **launch-agent** carry the mark. The only exception is the generic x402 pay-per-call launcher, where the buyer chooses their own vanity prefix/suffix (or takes a random mint) and there is intentionally no brand constraint.
 
 ---
 
@@ -105,7 +105,7 @@ Watch this in the Cloud Run logs (Cloud Logging) to confirm the ~49 000-attempt 
 
 ### The generic x402 launcher exemption
 
-`api/x402/pump-launch.js` is a pay-per-call endpoint that accepts an arbitrary `mint` keypair supplied by the buyer at runtime. It does **not** enforce the brand mark and must never have `assertThreeWsMark` added to it. The mint is the buyer's choice; the brand constraint belongs only to three.ws-initiated launches.
+`api/x402/pump-launch.js` is a pay-per-call endpoint where the buyer specifies their own `vanityPrefix` / `vanitySuffix` (or gets a random or pre-ground mint from inventory). It does **not** enforce the brand mark and must never have `assertThreeWsMark` added to it. The mint pattern is the buyer's choice; the brand constraint belongs only to three.ws-initiated launches.
 
 ### Token example
 

@@ -1,5 +1,7 @@
 # NVIDIA models on three.ws — the free inference layer
 
+If you generate a 3D model on [/forge](https://three.ws/forge), chat with an agent, or hear an avatar speak, there is a good chance an NVIDIA-hosted model did the work. This page is for developers and operators who want to know exactly which model sits behind each feature.
+
 three.ws runs a large share of its AI on NVIDIA's free hosted models. **One key — `NVIDIA_API_KEY` (an `nvapi-…` token from [build.nvidia.com](https://build.nvidia.com)) — unlocks every model on this page.** There is no per-model billing, no per-seat cost, and no SLA: it is a rate-limited free tier, which is exactly why the platform treats it as a *free-first* lane and always keeps a fallback behind it.
 
 This document is the canonical map of **which NVIDIA-hosted model does what, where it's wired, and why**. Every model and endpoint below is in production source — nothing here is aspirational.
@@ -53,11 +55,11 @@ This is the headline free model. **Microsoft TRELLIS hosted on NVIDIA NVCF gives
 
 **How it works:**
 - Async by default. Submit returns `202 + NVCF-REQID`; the forge polls the NVCF status endpoint until the GLB is ready (or the job completes synchronously within a 30 s window).
-- **Quality scales by sampling steps**, clamped to TRELLIS's 10–50 window: draft `15/15`, standard `25/25`, high `40/40` (`ss_sampling_steps` / `slat_sampling_steps`).
+- **Sampling steps are pinned to the proven budget.** TRELLIS accepts 10 to 50 steps, but the hosted preview only returns inside the gateway's synchronous window at the low end, so the free lane runs `15/15` (`ss_sampling_steps` / `slat_sampling_steps`) for both draft and standard tiers. The `40/40` budget is reserved for a self-hosted TRELLIS NIM; the high tier itself defaults to the self-hosted Hunyuan3D engine, not this lane.
 - Prompts are clamped to **77 characters** (TRELLIS truncates server-side) and get a `, studio lighting` suffix unless the caller already supplied lighting/color cues — without it TRELLIS defaults to dark, gritty output.
 - Output GLBs arrive in several shapes over time (inline base64, bare string, CDN URL, numeric-keyed object, raw bytes); the extractor normalizes all of them, then **persists the bytes to R2** so three.ws owns a durable public URL.
 
-**Key constraint — text only.** NVIDIA's *hosted preview* rejects every user-image input form (verified live; see `tasks/nvidia-nim/probes/trellis.md`). So **photo→3D never routes here** — it falls to the free Hugging Face Spaces lane (Hunyuan3D / TRELLIS / TripoSR). A self-deployed TRELLIS NIM accepts real images; this is a hosted-preview limitation, not a model one.
+**Key constraint: text only.** NVIDIA's *hosted preview* rejects every user-image input form (verified live 2026-06-11). So **photo to 3D never routes here**: it falls to the free reconstruct chain in `FREE_FALLBACK_FOR_PATH` (the self-hosted TRELLIS GPU worker first, then the self-hosted Hunyuan3D worker, then the free Hugging Face Spaces lane). A self-deployed TRELLIS NIM accepts real images; this is a hosted-preview limitation, not a model one.
 
 ---
 
@@ -85,7 +87,7 @@ NVIDIA NIM hosts 100+ open-weight chat models behind the one key, all OpenAI-com
 **Model:** `meta/llama-3.3-70b-instruct`
 **Source:** [api/_lib/llm.js](../api/_lib/llm.js), [api/_lib/chat-models.js](../api/_lib/chat-models.js).
 
-The platform's general LLM helper runs a **free-first ladder: Groq → OpenRouter → NVIDIA NIM**, and only then a paid backstop (Anthropic/OpenAI). NVIDIA is the **independent third free lane** — same Llama 3.3 70B family as the Groq/OpenRouter entries, but a different provider, so an outage on two lanes still answers on the third. It's tool/function-calling capable, so it's eligible for tool-required requests.
+The platform's general LLM helper runs a **free-first ladder: Groq → Cerebras → OpenRouter → NVIDIA NIM**, followed by further keyless free rungs (OVH, Gemini, Pollinations) and only at the very end a paid backstop (Anthropic/OpenAI). NVIDIA serves the **same Llama 3.3 70B family** as the Groq/Cerebras/OpenRouter rungs but on an independent provider, so an outage on the other free lanes still answers here. It's tool/function-calling capable, so it's eligible for tool-required requests.
 
 This lane powers the platform's built-in AI surfaces — chat, embedded site widgets, the tutor, the fact-checker, persona tools, agent-to-agent talk, the transaction explainer — all of which lead with the free providers and only fall through to a paid model if every free lane fails.
 
@@ -161,7 +163,7 @@ A free content-safety pre-filter for anonymous chat. NemoGuard classifies the in
 **Model:** `magpie-tts-multilingual` · **Transport:** Riva gRPC at `grpc.nvcf.nvidia.com:443`
 **Source:** [api/_lib/tts-nvidia.js](../api/_lib/tts-nvidia.js) (mirrored in `packages/avatar-agent-mcp/src/lib/tts-nvidia.js`).
 
-The free NVIDIA TTS lane — **Magpie multilingual on Riva**, selected by an NVCF `function-id`, speaking over the standard Riva gRPC synthesis contract (protos shipped in `riva-protos/` and loaded from a generated descriptor, so there's no `.proto` build step). Drives **avatar speech** with multilingual voices. Configured by the presence of `NVIDIA_API_KEY`; returns synthesized audio bytes, with a clear error if the lane returns empty audio.
+The free NVIDIA TTS lane — **Magpie multilingual on Riva**, selected by an NVCF `function-id`, speaking over the standard Riva gRPC synthesis contract (protos shipped in `api/_lib/riva-protos/` and loaded from a generated descriptor, so there's no `.proto` build step). Drives **avatar speech** with multilingual voices. Configured by the presence of `NVIDIA_API_KEY`; returns synthesized audio bytes, with a clear error if the lane returns empty audio.
 
 ---
 
@@ -183,4 +185,11 @@ The free NVIDIA TTS lane — **Magpie multilingual on Riva**, selected by an NVC
 | `KNOWLEDGE_RERANK_ENABLED=1` | Turns on the rerank stage (§6) |
 | `FORGE_PREFER_FREE` | Free-first reconstruct ordering (default on) |
 
-Probe transcripts for every lane — request/response shapes, limits, verified behavior — live under `tasks/nvidia-nim/probes/`.
+---
+
+## Related
+
+- [How Forge works](/docs/how-forge-works) - the /forge product this layer powers
+- [REST API](/docs/api-reference) - the endpoints these models serve
+- [Configuration](/docs/configuration) - all environment variables
+- [MCP](/docs/mcp) - the `forge_free` MCP tool on the free TRELLIS lane
