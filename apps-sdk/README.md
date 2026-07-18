@@ -4,70 +4,33 @@
 
 <h1 align="center">apps-sdk</h1>
 
-<p align="center"><strong>The two host-embeddable 3D surfaces three.ws ships into other people's apps: an inline GLB viewer component for the OpenAI Apps SDK, and the living-agent-body engine behind the embodiment embed.</strong></p>
+<p align="center"><strong>The living-agent-body engine three.ws embeds into other people's apps, plus a pointer to where the ChatGPT inline 3D widget actually lives.</strong></p>
 
 ---
 
-This directory is **source consumed by build scripts and page bundles** — it is not
-an npm package and has no `package.json`. Nothing here is published; the two
-subdirectories are built or imported directly by the platform.
+This directory is **source consumed by page bundles** — it is not an npm package
+and has no `package.json`. Nothing here is published; it is imported directly by the
+platform.
 
 | Subdirectory | What it is | Where it ends up |
 | --- | --- | --- |
-| [`studio-viewer/`](#studio-viewer) | Self-contained Three.js GLB orbit-preview component | Bundled into the `ui://widget/studio-viewer.html` skybridge resource served to ChatGPT |
 | [`embodiment/`](#embodiment) | The `EmbodimentStage` living-agent-body engine + its overlay chrome | Imported by [`pages/embodiment/embed.html`](../pages/embodiment/embed.html), the hosted embed |
 
----
+## Where the ChatGPT inline 3D widget lives (not here)
 
-## studio-viewer
+The inline 3D preview ChatGPT renders next to a generated model is **not** in this
+directory. It is the `<model-viewer>` skybridge component built in
+[`api/_mcp-studio/component.js`](../api/_mcp-studio/component.js): the resource
+`ui://widget/three-studio-model.html` (and its persona sibling
+`ui://widget/three-studio-persona.html`), registered in
+[`api/_mcp-studio/dispatch.js`](../api/_mcp-studio/dispatch.js) and linked to every
+generation tool through the tool's `_meta["openai/outputTemplate"]`. That is the
+widget an OpenAI reviewer sees. For the full server, see
+[`docs/mcp-studio.md`](../docs/mcp-studio.md).
 
-Renders the GLB produced by the 3D Studio generation tools (`forge_free`,
-`text_to_avatar`, `mesh_forge`, `rig_mesh`, `forge_avatar`, …) as an interactive,
-orbitable 3D preview **inline in ChatGPT**. It uses PMREM `RoomEnvironment`
-lighting, auto-framing, a contact shadow, and `AnimationMixer`-driven idle
-playback for rigged models — the same rendering approach as the Claude.ai
-artifact viewer and the Forge chat preview.
-
-The entry point is a single file, [`studio-viewer/src.js`](studio-viewer/src.js).
-It is bundled to one self-contained IIFE (three.js + `GLTFLoader` +
-`OrbitControls` + `RoomEnvironment` + the viewer inlined) so the component needs
-no external `<script>`. The only network call it makes is fetching the GLB
-itself, permitted via the resource's `openai/widgetCSP` `connectDomains`.
-
-### Host contract (OpenAI Apps SDK)
-
-- `window.openai.toolOutput` supplies the tool's `structuredContent`.
-- The GLB URL is read from the documented `glb_url` key (camelCase `glbUrl` and a
-  few aliases are tolerated for forward-compat).
-- The `openai:set_globals` event fires when `toolOutput`, theme, or layout change;
-  the viewer re-reads on it.
-
-**Standalone fallback.** Opened directly in a browser (no `window.openai`), it
-reads `?glb=<url>&viewer=<url>&name=<text>` from the query string — used for local
-verification and the "open in a normal browser" path.
-
-### Build
-
-```bash
-npm run build:apps-sdk-viewer     # → node scripts/build-apps-sdk-viewer.mjs
-```
-
-Both outputs inline the same IIFE:
-
-| Output | Consumed by |
-| --- | --- |
-| `public/apps-sdk/studio-viewer.bundle.js` | Read at runtime by [`api/_mcp3d/studio-viewer-resource.js`](../api/_mcp3d/studio-viewer-resource.js) and inlined into the skybridge resource |
-| `public/apps-sdk/studio-viewer.html` | Standalone page that inlines the bundle and reads `?glb=<url>` |
-
-### Runnable example
-
-Build it, then open the standalone page against any public GLB:
-
-```bash
-npm run build:apps-sdk-viewer
-npx serve public -l 4173
-# → http://localhost:4173/apps-sdk/studio-viewer.html?glb=https://three.ws/models/agent.glb&name=Agent
-```
+The standalone "open in a normal browser" viewer that the tools' `viewerUrl`
+(`https://three.ws/viewer?src=<glb>`) points at is a separate page,
+[`public/viewer.html`](../public/viewer.html) — also not in this directory.
 
 ---
 
@@ -154,7 +117,8 @@ https://three.ws/embodiment/embed?persona=<persona-id>&bg=transparent
 
 ## Related
 
-- [`docs/mcp.md`](../docs/mcp.md) — the 3D Studio MCP tools whose output the viewer renders.
+- [`docs/mcp-studio.md`](../docs/mcp-studio.md) — the 3D Studio MCP server, its tools, and the inline widget (`api/_mcp-studio/component.js`).
+- [`docs/chatgpt-ar.md`](../docs/chatgpt-ar.md) — how each generation carries a place-in-your-room `arUrl`.
 - [`STRUCTURE.md`](../STRUCTURE.md) — where every product surface lives.
 
 ---

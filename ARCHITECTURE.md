@@ -142,7 +142,7 @@ Every top-level directory in the monorepo, what it is, and where to look. File c
 | `x402-modal-sdk/` | ~17 | `@three-ws/x402-modal` v0.2.0 — lighter modal variant. |
 | `pump-fun-skills/` | ~75 | `@three-ws/pumpfun-skills` — pump.fun launch/trade as composable agent tools. |
 | `chat-plugin/` | ~14 | `@three-ws/chat-plugin` v1.0.0 — LobeHub sidebar plugin rendering an embodied avatar (`manifest.json`, TS). |
-| `apps-sdk/` | ~4 | Unversioned raw helpers: `embodiment/` + `studio-viewer/` (no `package.json` — see Known Gaps). |
+| `apps-sdk/` | ~4 | Unversioned raw helpers: `embodiment/` living-agent-body engine (no `package.json` — see Known Gaps). The ChatGPT inline widget itself lives in `api/_mcp-studio/component.js`. |
 
 ### On-chain & Distribution
 
@@ -1931,7 +1931,7 @@ Full test-suite layout (runners, per-directory counts, heaviest-tested subsystem
 
 | Group | Examples | Purpose |
 |-------|----------|---------|
-| Build | `build-animations.mjs`, `build-vercel.mjs`, `build-pages.mjs`, `build-cache.mjs`, `build-apps-sdk-viewer.mjs` | Asset/clip baking, Vercel function bundling, changelog/pages generation |
+| Build | `build-animations.mjs`, `build-vercel.mjs`, `build-pages.mjs`, `build-cache.mjs`, `build-artifact-viewer.mjs` | Asset/clip baking, Vercel function bundling, changelog/pages generation |
 | Schema & migration | `apply-migrations.mjs`, `apply-schema.mjs`, `apply-siwx-migration.mjs`, `apply-delegations-schema.js` | Apply `api/_lib/migrations/` to Neon |
 | Backfill | `backfill-agent-wallets.mjs`, `backfill-erc8004.mjs`, `backfill-avatar-thumbnails.mjs`, `backfill-rig-meta.mjs` | One-shot data repair / hydration |
 | Audit | `audit-links.mjs`, `audit-console.mjs`, `audit-deploy-artifacts.mjs`, `audit-mcp-manifests.mjs`, `audit-page-index.mjs` | Automated hygiene checks |
@@ -1972,7 +1972,7 @@ Authoritative format/protocol specs that the code implements:
 | Solana Mobile (Seeker) | `solana-mobile/` | dApp Store submission: Trusted Web Activity + PWA wrapper, `publish/` config, `.well-known/` association |
 | LobeHub chat plugin | `chat-plugin/` | `@three-ws/chat-plugin` — sidebar plugin rendering an embodied avatar |
 | Standalone chat UI | `chat/` | `three.ws-chat` — fast, light, BYOK multi-provider chat (own Vite app) |
-| OpenAI Apps SDK | `apps-sdk/` | `embodiment/` helpers + `studio-viewer/` for ChatGPT-app embedding |
+| OpenAI Apps SDK | `apps-sdk/` (embed engine), `api/_mcp-studio/` (connector + widget) | `embodiment/` helpers for ChatGPT-app embedding; the inline widget is `api/_mcp-studio/component.js` |
 | Browser extension | `extensions/walk-avatar/` | Walk-companion avatar as a browser extension |
 | Blender bridge | `integrations/blender/` | `three_ws` Blender add-on |
 | ComfyUI nodes | `integrations/comfyui/` | `three_ws_nodes` custom nodes |
@@ -2451,7 +2451,7 @@ Beyond the product surfaces in [Frontend Application](#frontend-application), th
 | Widget / Widgets gallery | static, `/widgets` | `pages/widget.html`, `public/widget-demo.html`, `public/widgets-gallery/index.html` |
 | Claude.ai artifact | static | `public/artifact/index.html`, `snippet.html`, `public/artifact-example.html` |
 | Forge viewer (chat) | static | `public/chat/forge-viewer.html` |
-| Apps-SDK studio viewer | static | `public/apps-sdk/studio-viewer.html` |
+| ChatGPT inline 3D widget | skybridge resource | `api/_mcp-studio/component.js` (`ui://widget/three-studio-model.html`) |
 | LobeHub / Sperax embed | `/lobehub/iframe`, `/sperax/iframe` | `public/lobehub/iframe/index.html` |
 | Avatar artifact viewer | `/avatar-artifact` | `pages/avatar-artifact.html` |
 
@@ -2523,7 +2523,7 @@ Three non-package surfaces that embed an agent into third-party hosts (summarize
 
 - **LobeHub Chat Plugin (`chat-plugin/`)** — `@three-ws/chat-plugin` 1.0.0 (Apache-2.0). `manifest.json` (`identifier: "3dagent"`, 320×420 right panel). `src/index.ts` exports `AgentPane` (React panel mounting the embed iframe), `AgentBridge` (host PostMessage; wire envelope `{ v:1, source, id, inReplyTo?, kind, op, payload }`; ops `ping/pong/ready/speak/gesture/emote/look/setAgent/subscribe/error`). Build `tsc` + esbuild; depends on `@lobehub/chat-plugin-sdk`.
 - **Walk Avatar Chrome Extension (`extensions/walk-avatar/`)** — Manifest V3. `background.js` (session/auth), `content.js` (mounts/drag-repositions avatar iframe), `content-narrator.js` (`window.__ThreewsWalkNarrator` — Readability section detection, `IntersectionObserver` ≥60%/600ms, fetches `POST /api/tts/speak`). Build `npm run build:extension:prod` → `dist/extension/`.
-- **OpenAI / Claude Apps SDK (`apps-sdk/`)** — `embodiment/embodiment-stage.js` (`EmbodimentStage` — framework-agnostic Three.js engine; state machine `loading → idle ⇄ listening ⇄ thinking ⇄ speaking → error`; rides `AnimationManager` + canonicalize/retarget, never T-poses), `overlay.js` (DOM chrome), `studio-viewer/src.js` (renders Studio GLB inline from `window.openai.toolOutput.glb_url`). Build `scripts/build-apps-sdk-viewer.mjs`; inlined into `ui://widget/studio-viewer.html` by `api/_mcp3d/studio-viewer-resource.js`.
+- **OpenAI / Claude Apps SDK (`apps-sdk/`)** — `embodiment/embodiment-stage.js` (`EmbodimentStage` — framework-agnostic Three.js engine; state machine `loading → idle ⇄ listening ⇄ thinking ⇄ speaking → error`; rides `AnimationManager` + canonicalize/retarget, never T-poses), `overlay.js` (DOM chrome). The ChatGPT inline 3D widget is not in `apps-sdk/`: it is the `<model-viewer>` skybridge component in `api/_mcp-studio/component.js` (resource `ui://widget/three-studio-model.html`, linked to every generation tool via `_meta["openai/outputTemplate"]`), rendering the Studio GLB from `window.openai.toolOutput`.
 
 ---
 
@@ -2923,7 +2923,7 @@ Root `package.json` (v1.5.2, Node 24.x) declares **42 npm workspaces** and ~90 s
 
 ### Asset Bake (prebuild)
 
-`prebuild` runs in parallel: `build:news`, `build-skill-metadata`, `build-local-skill-packs`, `build:club-assets` (props/venue/HDRI/audio/entrance), `build:walk-environments`, then `inject-blog-seo`, `inject-hidden-guard`, `build:page-index` + page/handler/guard audits (strict), `inject-seo-meta`, `inject-theme-boot`. Other bakers: `build:animations` (Mixamo FBX → canonical JSON), `convert:fbx`, `extract:animations`, `bake:mannequin`, `build:wasm` (`wasm-pack` for `crates/vanity-grinder` → `src/solana/vanity/wasm`), `optimize:glb`, `build:artifact-viewer`, `build:apps-sdk-viewer`.
+`prebuild` runs in parallel: `build:news`, `build-skill-metadata`, `build-local-skill-packs`, `build:club-assets` (props/venue/HDRI/audio/entrance), `build:walk-environments`, then `inject-blog-seo`, `inject-hidden-guard`, `build:page-index` + page/handler/guard audits (strict), `inject-seo-meta`, `inject-theme-boot`. Other bakers: `build:animations` (Mixamo FBX → canonical JSON), `convert:fbx`, `extract:animations`, `bake:mannequin`, `build:wasm` (`wasm-pack` for `crates/vanity-grinder` → `src/solana/vanity/wasm`), `optimize:glb`, `build:artifact-viewer`.
 
 ### Build & Bundle
 
@@ -3080,7 +3080,7 @@ Two layers resolve paths: **`vercel.json`** (`routes` array, 932 entries — pro
 
 **Auth / Identity / Wallet:** `/login`, `/register`, `/forgot-password`, `/reset-password`, `/settings`, `/profile` (`/u/:handle`), `/@:handle`, `/wallet.html`, `/vanity-wallet` (+`/vanity/{verify,gallery,bounties}`), `/eth-vanity`, `/evm-wallet`, `/lookup`, `/siwx-test.html`, `/extension/{auth-callback,privacy,terms}`, `/persona/{authorize,demo}`, `.well-known/jwks.json`→`/api/auth/persona`.
 
-**Marketplace / Widgets / Embeds:** `/marketplace` (+`/marketplace/{tools,skills,animations,onchain}` and `/:id`; `/marketplace/agents/:id`→`/agents/:id`; `/marketplace/avatars/:id`→`/avatars/:id`; `/marketplace/analytics`; `/marketplace-walk`), `/collection`, `/widgets` (`public/widgets-gallery/`), `/widget`, `/widget-demo.html`, `/embed` (+`/embed-demo`, `/embed-example.html`, `/embed/v1/preview`, `/embed/walk`), `/walk` → `pages/walk-landing.html` (+`/walk/app`,`/walk-embed`,`/walk-leaderboard`,`/walk-analytics`), `/wk/:avatar`→`/temporary`, `/temporary`, `/artifact` (+`/artifact-example.html`,`/artifact/snippet.html`), `/widget-studio`→`/studio`, `/studio` → `public/studio/index.html`, `/apps-sdk/studio-viewer.html`, `/chat/forge-viewer.html`, `/lobehub/iframe` (`/sperax/iframe`), `/demos-embed/{agents,avatar-only,forge,gallery,selfie,walk}`.
+**Marketplace / Widgets / Embeds:** `/marketplace` (+`/marketplace/{tools,skills,animations,onchain}` and `/:id`; `/marketplace/agents/:id`→`/agents/:id`; `/marketplace/avatars/:id`→`/avatars/:id`; `/marketplace/analytics`; `/marketplace-walk`), `/collection`, `/widgets` (`public/widgets-gallery/`), `/widget`, `/widget-demo.html`, `/embed` (+`/embed-demo`, `/embed-example.html`, `/embed/v1/preview`, `/embed/walk`), `/walk` → `pages/walk-landing.html` (+`/walk/app`,`/walk-embed`,`/walk-leaderboard`,`/walk-analytics`), `/wk/:avatar`→`/temporary`, `/temporary`, `/artifact` (+`/artifact-example.html`,`/artifact/snippet.html`), `/widget-studio`→`/studio`, `/studio` → `public/studio/index.html`, `/chat/forge-viewer.html`, `/lobehub/iframe` (`/sperax/iframe`), `/demos-embed/{agents,avatar-only,forge,gallery,selfie,walk}`.
 
 **Dashboard (dashboard-next SPA):** `/dashboard` (+`/dashboard-next`); `/dashboard/{avatars,community-avatars,agents,library,widgets,walk,developers,three-token,holders,analytics,monetize,account,referrals,copy,irl-placements,sniper,settings,tokens,portfolio,api,brain,creator,landscape,prelaunch-radar,transactions,wallet-grinder}` → `pages/dashboard-next/:slug.html`; `/dashboard/:slug` (auto); `/dashboard/edit/:id`; `/dashboard/x402` + `/dashboard/x402-admin` → `public/dashboard/*` (classic); `/dashboard/{wallets,sessions,actions,embed-policy,memory,strategy,voice,sns,delegation,agent-pumpfun,storage,usage}` 301→dashboard-next; `/dashboard-classic/*` 301→`/dashboard/*`. Classic dashboard pages still on disk (`public/dashboard/*.html`) reachable via 301.
 

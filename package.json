@@ -169,7 +169,6 @@
 		"build:club-assets": "(npm run build:club-props & npm run build:club-venue & npm run build:club-hdri & wait)",
 		"build:walk-environments": "node scripts/build-walk-environments.mjs",
 		"build:artifact-viewer": "node scripts/build-artifact-viewer.mjs",
-		"build:apps-sdk-viewer": "node scripts/build-apps-sdk-viewer.mjs",
 		"build:lib": "TARGET=lib vite build",
 		"build:lib:full": "TARGET=lib LIB_FORMATS=es,umd vite build",
 		"build:artifact": "vite build --config vite.config.artifact.js",
