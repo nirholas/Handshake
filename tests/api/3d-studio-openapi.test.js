@@ -64,3 +64,31 @@ describe('3d-studio-openapi served schema', () => {
 		expect(match, `served schema leaked a crypto/payment token: ${match?.[0]}`).toBeNull();
 	});
 });
+
+describe('3d-studio Actions responses conform to the served schema', () => {
+	// Bind api/3d/studio.js's real wire output to the GenerationState schema so a
+	// response-shape change and a schema change cannot silently diverge.
+	const allowedKeys = new Set(Object.keys(doc.components.schemas.GenerationState.properties));
+	const validStatus = new Set(doc.components.schemas.GenerationState.properties.status.enum);
+
+	async function shapers() {
+		return import('../../api/3d/studio.js');
+	}
+
+	it('GenerationState allows exactly the keys api/3d/studio.js can emit', async () => {
+		const { shapeSubmit, shapePoll } = await shapers();
+		const outputs = [
+			shapeSubmit({ status: 'done', glb_url: 'https://cdn.example/a.glb' }, 'https://three.ws', 'a fox'),
+			shapeSubmit({ status: 'pending', job_id: 'f1.abc.sig' }, 'https://three.ws', 'a fox'),
+			shapePoll({ status: 'done', glb_url: 'https://cdn.example/a.glb' }, 'https://three.ws', 'f1.abc.sig', 'a fox'),
+			shapePoll({ status: 'failed', error: 'upstream hiccup' }, 'https://three.ws', 'f1.abc.sig', 'a fox'),
+		].filter(Boolean);
+		expect(outputs.length).toBeGreaterThan(0);
+		for (const out of outputs) {
+			expect(validStatus.has(out.status), `status "${out.status}" not in schema enum`).toBe(true);
+			for (const key of Object.keys(out)) {
+				expect(allowedKeys.has(key), `response key "${key}" is not declared in GenerationState`).toBe(true);
+			}
+		}
+	});
+});

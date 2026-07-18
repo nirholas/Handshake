@@ -12,6 +12,10 @@
 <meta property="og:type" content="website" />
 <!-- Meshopt decoder must register before <model-viewer> starts loading (Forge GLBs are meshopt-compressed). Classic script → runs during parse, before the model-viewer module. -->
 <script src="/model-viewer-meshopt.js"></script>
+<!-- This standalone browser viewer pins model-viewer 4.0.0 with SRI from Google's CDN.
+     The embeddable surfaces (ChatGPT widget api/_mcp-studio/component.js, AR launch
+     api/ar.js) intentionally pin 3.5.0 from jsdelivr instead, matching the other embed
+     bundles. Both are explicit version pins; the split is by surface, not accidental. -->
 <script
   type="module"
   src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js"

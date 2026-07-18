@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-18",
+			"title": "The free 3D Studio now publishes a machine-readable API description",
+			"summary": "The free text-to-3D generation endpoint that powers the three.ws 3D Studio in ChatGPT now ships a published OpenAPI description at /.well-known/3d-studio-openapi.yaml. Any app, custom GPT, or agent can read it to discover how to generate a model from a prompt and poll for the result, with no account, no API key, and no payment. It documents only the free generation action and is kept automatically in sync with the version used by the 3D Studio custom GPT, so the two never drift.",
+			"tags": [
+				"docs",
+				"sdk"
+			]
+		},
+		{
+			"date": "2026-07-18",
 			"title": "On-chain reads stay smooth when a data provider hits its daily cap",
 			"summary": "The platform reads Solana through a prioritized chain of RPC providers and automatically fails over the instant one is throttled. It now recognizes the specific 'daily request limit reached' signal that metered providers return when a plan's daily quota is spent, and parks that provider for the rest of the day instead of re-checking it every few minutes. On-chain data (balances, prices, live trades) keeps flowing through a healthy provider without a stumble, and the failover leaves the retry chatter behind. A dedicated reserve endpoint was also wired in as deep insurance for the rare case the whole free provider pool is down at once.",
 			"tags": [

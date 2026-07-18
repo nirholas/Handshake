@@ -327,6 +327,14 @@
 			<description>Every live Solana read the platform depends on (the $THREE price and bonding-curve, wallet balances, agent trades, and on-chain activity) now goes first through a dedicated premium RPC endpoint that absorbs the load ahead of the shared public providers, then falls back automatically down the full free-provider chain if that endpoint is ever unavailable. In practice that means fewer rate-limit stalls and fewer degraded or stale reads when Solana is busy, without adding a single point of failure: if the premium lane blinks, the free chain still answers.</description>
 		</item>
 		<item>
+			<title>The free 3D Studio now publishes a machine-readable API description</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-18:The free 3D Studio now publishes a machine-readable API description</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The free text-to-3D generation endpoint that powers the three.ws 3D Studio in ChatGPT now ships a published OpenAPI description at /.well-known/3d-studio-openapi.yaml. Any app, custom GPT, or agent can read it to discover how to generate a model from a prompt and poll for the result, with no account, no API key, and no payment. It documents only the free generation action and is kept automatically in sync with the version used by the 3D Studio custom GPT, so the two never drift.</description>
+		</item>
+		<item>
 			<title>AR Studio</title>
 			<link>https://three.ws/ar/studio</link>
 			<guid isPermaLink="false">2026-07-17:AR Studio</guid>

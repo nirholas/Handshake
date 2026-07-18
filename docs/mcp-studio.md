@@ -60,6 +60,11 @@ launcher, living avatars, link unfurls) is documented end to end in
 
 ## Tools
 
+The server exposes **nine** tools: the six generation tools documented here, plus
+three persona/embodiment tools (`create_agent_persona`, `get_agent_persona`,
+`persona_say`) documented in the **Embodiment** section below. All nine are free
+and keyless.
+
 All six generation tools are free and run operator-funded on the platform's own
 generation pipeline. Annotations: `readOnlyHint:false`, `destructiveHint:false`,
 `idempotentHint:false`, `openWorldHint:true` (work runs against external model

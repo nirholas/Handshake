@@ -146,6 +146,47 @@ describe('GET /api/ar — response caching is UA-safe', () => {
 		expect(html).toContain('Create your own');
 		expect(html).toContain('Loading your model');
 	});
+
+	it('embeds THIS GLB in the launch page <model-viewer src>', async () => {
+		const { default: handler } = await import('../api/ar.js');
+		const res = makeRes();
+		await handler(makeReq(IOS), res);
+		const html = res._body;
+		expect(html).toContain(`src="${GLB}"`);
+		expect(html).toContain('ar-modes="webxr scene-viewer quick-look"');
+	});
+
+	it('a missing/invalid src is rejected at the boundary with a designed 400 error page, not a crash', async () => {
+		const { default: handler } = await import('../api/ar.js');
+		// Missing src entirely.
+		const missing = makeRes();
+		await handler({ method: 'GET', url: '/api/ar', headers: { 'user-agent': IOS, host: 'three.ws' } }, missing);
+		expect(missing.statusCode).toBe(400);
+		expect(missing.getHeader('cache-control')).toBe('no-store');
+		expect(missing._body).toContain("Can't open this in AR");
+		expect(missing._body).not.toContain('<model-viewer');
+		// Non-https src.
+		const insecure = makeRes();
+		await handler(
+			{ method: 'GET', url: `/api/ar?src=${encodeURIComponent('http://x.io/a.glb')}`, headers: { 'user-agent': IOS, host: 'three.ws' } },
+			insecure,
+		);
+		expect(insecure.statusCode).toBe(400);
+		expect(insecure._body).toContain("Can't open this in AR");
+	});
+
+	it('kind=avatar serves the living-agent launch page with a "Bring it to life" IRL handoff (Android included)', async () => {
+		const { default: handler } = await import('../api/ar.js');
+		const res = makeRes();
+		// Android would normally 302 to Scene Viewer, but an avatar always gets the page.
+		await handler(
+			{ method: 'GET', url: `/api/ar?src=${encodeURIComponent(GLB)}&title=Scout&kind=avatar`, headers: { 'user-agent': ANDROID, host: 'three.ws' } },
+			res,
+		);
+		expect(res.statusCode).toBe(200);
+		expect(res._body).toContain('Bring it to life');
+		expect(res._body).toContain('/irl?avatar=' + encodeURIComponent(GLB));
+	});
 });
 
 describe('GET /api/render/glb — URL-addressable render (share cards)', () => {

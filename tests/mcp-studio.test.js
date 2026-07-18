@@ -22,7 +22,7 @@ function mkReq() {
 const auth = { userId: null, rateKey: '127.0.0.1', scope: '' };
 
 describe('mcp-studio catalog', () => {
-	it('exposes exactly the five allowed generation tools', () => {
+	it('exposes exactly the six allowed generation tools', () => {
 		const names = TOOL_CATALOG.map((t) => t.name).sort();
 		expect(names).toEqual([...ALLOWED].sort());
 		expect(TOOL_NAMES.sort()).toEqual([...ALLOWED].sort());

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-18T00:40:02.697Z",
+	"generated_at": "2026-07-18T01:12:36.992Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -407,6 +407,17 @@
 			"tags": [
 				"infra",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-18",
+			"type": "update",
+			"title": "The free 3D Studio now publishes a machine-readable API description",
+			"summary": "The free text-to-3D generation endpoint that powers the three.ws 3D Studio in ChatGPT now ships a published OpenAPI description at /.well-known/3d-studio-openapi.yaml. Any app, custom GPT, or agent can read it to discover how to generate a model from a prompt and poll for the result, with no account, no API key, and no payment. It documents only the free generation action and is kept automatically in sync with the version used by the 3D Studio custom GPT, so the two never drift.",
+			"link": null,
+			"tags": [
+				"docs",
+				"sdk"
 			]
 		},
 		{
