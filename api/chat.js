@@ -77,6 +77,22 @@ const DEFAULT_OPENAI_MODEL = PROVIDER_MODEL_DEFAULTS.openai;
 const DEFAULT_MAX_TOKENS = 1024;
 const HARD_MAX_TOKENS = 4096;
 
+// Vertex Gemini (GCP credits) via its OpenAI-compatible endpoint — the same rung
+// api/_lib/llm.js exposes as vertexGeminiProvider(). Serves as the credits-funded
+// last-resort anchor: it needs no third-party quota, so a signed-out /api/chat
+// request can never 503 just because groq/openrouter/nvidia are all throttled at
+// once (that was the whole point of adding 'vertex-gemini' to ANON_PROVIDER_LIST,
+// but the route was never wired into PROVIDERS/providerOrder, so the anchor was
+// dead). Model + location follow the same env knobs as the llm.js rung.
+const VERTEX_GEMINI_CHAT_MODEL = process.env.VERTEX_GEMINI_MODEL || 'google/gemini-2.5-flash';
+function vertexGeminiChatUrl() {
+	const project = process.env.GOOGLE_CLOUD_PROJECT;
+	const location = process.env.GOOGLE_CLOUD_LOCATION_GEMINI || 'global';
+	const host =
+		location === 'global' ? 'aiplatform.googleapis.com' : `${location}-aiplatform.googleapis.com`;
+	return `https://${host}/v1beta1/projects/${project}/locations/${location}/endpoints/openapi/chat/completions`;
+}
+
 const PROVIDERS = {
 	anthropic: {
 		envKey: 'ANTHROPIC_API_KEY',
@@ -92,6 +108,17 @@ const PROVIDERS = {
 	vertex: {
 		defaultModel: DEFAULT_ANTHROPIC_MODEL,
 		style: 'vertex-anthropic',
+	},
+	// Vertex-served Gemini (GCP credits), OpenAI-compatible wire format. No envKey
+	// — availability is gated by GOOGLE_CLOUD_PROJECT and the OAuth bearer token is
+	// minted per request in makeRoute (resolveHeaders), exactly like the keyless
+	// `vertex` route above. Never auto-selected as a primary route (it sits at the
+	// tail of providerOrder()); reached only via failover, where it is the
+	// credits-funded anchor that keeps anonymous chat alive when every free lane is
+	// rate-limited at once.
+	'vertex-gemini': {
+		defaultModel: VERTEX_GEMINI_CHAT_MODEL,
+		style: 'vertex-gemini',
 	},
 	openrouter: {
 		envKey: 'OPENROUTER_API_KEY',
@@ -997,21 +1024,42 @@ async function governActions(actions, userMessage) {
 
 // ── Provider selection ───────────────────────────────────────────────────────
 
+// Keyless Vertex routes carry no API key — their bearer token is minted per
+// request (makeRoute.resolveHeaders), and availability is gated by config, not an
+// env key: vertex-anthropic by vertexClaudeEnabled(), vertex-gemini by a GCP
+// project. Centralized so pickProvider and buildFallbackChain gate identically.
+const KEYLESS_VERTEX = new Set(['vertex', 'vertex-gemini']);
+function keylessVertexAvailable(name) {
+	if (name === 'vertex') return vertexClaudeEnabled();
+	if (name === 'vertex-gemini') return Boolean(process.env.GOOGLE_CLOUD_PROJECT);
+	return false;
+}
+
 // Effective provider try-order. Vertex-served Claude is injected per flags:
 //   VERTEX_CLAUDE_PRIMARY  → Vertex leads the whole ladder (before the free
 //     lanes) — the platform's default brain becomes real Claude on GCP credits.
 //   VERTEX_CLAUDE_ENABLED (not primary) → Vertex sits in the paid tier, just
 //     ahead of first-party Anthropic (GCP credits before a paid Anthropic key).
-//   Both off → DEFAULT_PROVIDER_ORDER is returned verbatim, so routing is
-//     byte-identical to today.
-function providerOrder() {
-	if (vertexClaudePrimary()) return ['vertex', ...DEFAULT_PROVIDER_ORDER];
+//   Both off → DEFAULT_PROVIDER_ORDER is returned verbatim.
+// In every case the credits-funded vertex-gemini anchor is appended at the TAIL
+// (when GOOGLE_CLOUD_PROJECT is set): never auto-selected as a primary route, but
+// always present as the last-resort rung so a failover chain — anon or authed —
+// reaches a quota-free provider before it surfaces a capacity error.
+export function providerOrder() {
+	const withGeminiAnchor = (order) =>
+		process.env.GOOGLE_CLOUD_PROJECT && !order.includes('vertex-gemini')
+			? [...order, 'vertex-gemini']
+			: order;
+	if (vertexClaudePrimary()) return withGeminiAnchor(['vertex', ...DEFAULT_PROVIDER_ORDER]);
 	if (vertexClaudeEnabled()) {
 		const i = DEFAULT_PROVIDER_ORDER.indexOf('anthropic');
-		if (i === -1) return [...DEFAULT_PROVIDER_ORDER, 'vertex'];
-		return [...DEFAULT_PROVIDER_ORDER.slice(0, i), 'vertex', ...DEFAULT_PROVIDER_ORDER.slice(i)];
+		const base =
+			i === -1
+				? [...DEFAULT_PROVIDER_ORDER, 'vertex']
+				: [...DEFAULT_PROVIDER_ORDER.slice(0, i), 'vertex', ...DEFAULT_PROVIDER_ORDER.slice(i)];
+		return withGeminiAnchor(base);
 	}
-	return DEFAULT_PROVIDER_ORDER;
+	return withGeminiAnchor(DEFAULT_PROVIDER_ORDER);
 }
 
 function pickProvider(requested, model, userKeys = {}, cooldown = new Map()) {
@@ -1037,8 +1085,8 @@ function pickProvider(requested, model, userKeys = {}, cooldown = new Map()) {
 			// Vertex has no API key — availability is gated by vertexClaudeEnabled()
 			// and its bearer token is minted per request (makeRoute.resolveHeaders).
 			// A sentinel keeps the shared `usingHostKey`/route plumbing below intact.
-			const apiKey = name === 'vertex' ? 'vertex' : userKeys[name] || process.env[cfg.envKey];
-			if (name === 'vertex' ? !vertexClaudeEnabled() : !apiKey) continue;
+			const apiKey = KEYLESS_VERTEX.has(name) ? 'vertex' : userKeys[name] || process.env[cfg.envKey];
+			if (KEYLESS_VERTEX.has(name) ? !keylessVertexAvailable(name) : !apiKey) continue;
 			if (skipCooldown && cooldown.has(name) && (name !== requested || cooldown.get(name) === 'auth'))
 				continue;
 			// watsonx needs both a key and a project/space scope to serve a model;
@@ -1051,7 +1099,7 @@ function pickProvider(requested, model, userKeys = {}, cooldown = new Map()) {
 			// or NVIDIA request would 400 every chat.
 			const chosenModel =
 				(requested === name && model) ||
-				(name === 'watsonx' || name === 'orchestrate' || name === 'vertex'
+				(name === 'watsonx' || name === 'orchestrate' || KEYLESS_VERTEX.has(name)
 					? cfg.defaultModel
 					: envPinnedModelFor(name) || cfg.defaultModel);
 			const route = makeRoute(name, cfg, apiKey, chosenModel);
@@ -1115,7 +1163,7 @@ function eligibleAsFallback(modelId) {
 	return meta.tools === true && !meta.moderationGated;
 }
 
-function buildFallbackChain(primary, userKeys = {}, cooldown = new Map()) {
+export function buildFallbackChain(primary, userKeys = {}, cooldown = new Map()) {
 	const chain = [primary];
 	const seen = new Set([`${primary.name}:${primary.model}`]);
 
@@ -1126,8 +1174,8 @@ function buildFallbackChain(primary, userKeys = {}, cooldown = new Map()) {
 		if (!eligibleAsFallback(model)) return;
 		const cfg = PROVIDERS[name];
 		// Vertex is keyless — gated by vertexClaudeEnabled(); token minted per call.
-		const apiKey = name === 'vertex' ? 'vertex' : userKeys[name] || process.env[cfg.envKey];
-		if (name === 'vertex' ? !vertexClaudeEnabled() : !apiKey) return;
+		const apiKey = KEYLESS_VERTEX.has(name) ? 'vertex' : userKeys[name] || process.env[cfg.envKey];
+		if (KEYLESS_VERTEX.has(name) ? !keylessVertexAvailable(name) : !apiKey) return;
 		if (name === 'watsonx' && !watsonxConfig().configured) return;
 		if (name === 'orchestrate' && !orchestrateConfig().configured) return;
 		seen.add(key);
@@ -1176,6 +1224,27 @@ function makeRoute(name, cfg, apiKey, model) {
 					...(includeTools ? { tools: ACTION_TOOLS } : {}),
 					stream: true,
 				}),
+		};
+	}
+	if (cfg.style === 'vertex-gemini') {
+		// Gemini on Vertex through the OpenAI-compatible endpoint: OpenAI-shaped body
+		// and reply (so style 'openai' + streamOpenAI parse it verbatim), but the
+		// model rides in the body, the endpoint is the Vertex openapi URL, and the
+		// bearer token is minted per request. `via` is the distinct telemetry label.
+		return {
+			name,
+			via: 'vertex-gemini',
+			model,
+			url: vertexGeminiChatUrl(),
+			style: 'openai',
+			resolveHeaders: () => vertexRequestHeaders(),
+			buildPayload: ({ systemPrompt, history, maxTokens, includeTools = true }) => ({
+				model,
+				max_tokens: maxTokens,
+				messages: [{ role: 'system', content: systemPrompt }, ...history],
+				...(includeTools ? { tools: OPENAI_TOOLS, tool_choice: 'auto' } : {}),
+				stream: true,
+			}),
 		};
 	}
 	if (cfg.style === 'anthropic') {
