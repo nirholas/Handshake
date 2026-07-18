@@ -194,6 +194,24 @@ export async function run(ctx = {}) {
 	const origin = ctx.origin || env.APP_ORIGIN || 'https://three.ws';
 	const endpointUrl = `${origin}/api/x402-pay`;
 
+	// The demo payment pays from the platform wallet (X402_AGENT_SOLANA_SECRET_BASE58,
+	// via loadAgentKeypair in api/x402-pay.js). When that secret is unset the POST
+	// below is guaranteed to return 503 config_missing (still handled gracefully
+	// below), but firing it every tick logs a 5xx on /api/x402-pay and flags the
+	// endpoint's health for nothing. Short-circuit before the request. The endpoint
+	// only accepts this secret as the platform wallet in every real deployment (its
+	// dev-keypair file exists on no server), so the secret's presence is the exact
+	// signal; seeding resumes on its own the moment the wallet is set.
+	if (!process.env.X402_AGENT_SOLANA_SECRET_BASE58) {
+		return {
+			success: false,
+			skipped: true,
+			amountAtomic: 0,
+			errorMsg: 'wallet_unconfigured',
+			note: 'platform_wallet_unconfigured (skipped before request)',
+		};
+	}
+
 	// Schema first — without the durable mirror there is no sink for the value,
 	// so don't spend. A schema failure exits logged, never crashes the tick.
 	try {
