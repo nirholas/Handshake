@@ -12,6 +12,15 @@ vi.mock('../../api/_lib/usage.js', () => ({
 	recordEvent: (evt) => usageState.events.push(evt),
 }));
 
+// Control the SSRF-safe image fetch used by describeImage's inline path without
+// touching the module's other (real) exports. Default impl (set in beforeEach)
+// rejects, so any imageUrl test that doesn't opt in falls back to URL pass-through.
+const imageFetch = vi.hoisted(() => ({ impl: null }));
+vi.mock('../../api/_lib/ssrf-guard.js', async (importOriginal) => {
+	const actual = await importOriginal();
+	return { ...actual, fetchSafePublicUrl: (...args) => imageFetch.impl(...args) };
+});
+
 import {
 	describeImage,
 	describeImageJson,
@@ -56,6 +65,12 @@ beforeEach(() => {
 	usageState.events = [];
 	process.env.NVIDIA_API_KEY = 'nvapi-test';
 	delete process.env.OPENAI_API_KEY;
+	// Default: our own image fetch fails, so describeImage falls back to handing
+	// the raw URL to the provider (the pre-inline behavior). Tests that exercise
+	// the inline path override this.
+	imageFetch.impl = async () => {
+		throw new Error('image host unreachable');
+	};
 });
 afterEach(() => {
 	globalThis.fetch = ORIGINAL_FETCH;
@@ -91,6 +106,33 @@ describe('vision helper — provider chain', () => {
 		// Spend tracked, free provider → cost 0.
 		expect(usageState.events).toHaveLength(1);
 		expect(usageState.events[0]).toMatchObject({ kind: 'vision', provider: 'nvidia', costMicroUsd: 0 });
+	});
+
+	it('inlines a fetchable image URL as base64 so the free lane serves it without the provider fetching the host', async () => {
+		// A 1x1 PNG we can fetch ourselves; the provider must receive a data: URI,
+		// not the original URL — this is what keeps the free NIM lane working when
+		// the provider's own server-side fetch is blocked (hotlink/UA protection).
+		imageFetch.impl = async () =>
+			new Response(Buffer.from([0x89, 0x50, 0x4e, 0x47]), {
+				status: 200,
+				headers: { 'content-type': 'image/png' },
+			});
+		const calls = stubFetch([['integrate.api.nvidia.com', () => chatOk('A red teapot')]]);
+		const r = await describeImage({ prompt: 'p', imageUrl: 'https://cdn.example/x.png' });
+		expect(r.provider).toBe('nvidia');
+		const part = calls[0].body.messages.at(-1).content.find((c) => c.type === 'image_url');
+		expect(part.image_url.url.startsWith('data:image/png;base64,')).toBe(true);
+		expect(part.image_url.url).not.toContain('cdn.example');
+	});
+
+	it('falls back to URL pass-through when we cannot fetch the image ourselves', async () => {
+		// Default beforeEach impl already rejects; assert the provider still gets the
+		// raw URL so a host the provider CAN reach is never regressed.
+		const calls = stubFetch([['integrate.api.nvidia.com', () => chatOk('ok')]]);
+		const r = await describeImage({ prompt: 'p', imageUrl: 'https://cdn.example/x.png' });
+		expect(r.provider).toBe('nvidia');
+		const part = calls[0].body.messages.at(-1).content.find((c) => c.type === 'image_url');
+		expect(part.image_url.url).toBe('https://cdn.example/x.png');
 	});
 
 	it('falls over from the first NIM lane to the second on a 5xx', async () => {

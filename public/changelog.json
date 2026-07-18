@@ -1,11 +1,33 @@
 {
-	"generated_at": "2026-07-18T00:00:08.778Z",
+	"generated_at": "2026-07-18T00:31:02.467Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-18",
+			"type": "update",
+			"title": "Image understanding is more reliable across every image host",
+			"summary": "The vision endpoint (used to describe and check 3D renders and avatars) now fetches your image itself and hands it straight to the free model, instead of asking the model's server to go fetch the link. Some image hosts block that server-side fetch, which used to push the request onto a paid fallback and, when that fallback was unavailable, fail outright. Now the free lane serves the request regardless of how the image is hosted, so describe/critique calls stop returning errors on perfectly good images.",
+			"link": "/pulse",
+			"tags": [
+				"fix",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-18",
+			"type": "update",
+			"title": "Solana price and trade reads now ride a dedicated premium connection",
+			"summary": "Every live Solana read the platform depends on (the $THREE price and bonding-curve, wallet balances, agent trades, and on-chain activity) now goes first through a dedicated premium RPC endpoint that absorbs the load ahead of the shared public providers, then falls back automatically down the full free-provider chain if that endpoint is ever unavailable. In practice that means fewer rate-limit stalls and fewer degraded or stale reads when Solana is busy, without adding a single point of failure: if the premium lane blinks, the free chain still answers.",
+			"link": "/pulse",
+			"tags": [
+				"infra",
+				"improvement"
+			]
+		},
 		{
 			"date": "2026-07-17",
 			"type": "launch",
@@ -34,6 +56,16 @@
 			"link": "/image-to-3d",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-07-17",
+			"type": "update",
+			"title": "3D imports are now hardened against a memory-exhaustion crash",
+			"summary": "When the platform pulls a 3D model from an external link (a shared GLB, a generation-provider result), it now enforces a hard size ceiling before and during the download instead of buffering the whole response first. An over-size file is rejected up front on its declared length, and any host that keeps streaming past the cap is cut off mid-transfer with both sockets destroyed, so a hostile or misbehaving source can no longer stream unbounded data and exhaust a server's memory. Normal imports are unaffected; only oversized or malicious fetches change, and they now fail cleanly with a clear error instead of taking an instance down.",
+			"link": null,
+			"tags": [
+				"security"
 			]
 		},
 		{

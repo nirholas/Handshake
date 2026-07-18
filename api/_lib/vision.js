@@ -30,6 +30,7 @@ import { env } from './env.js';
 import { recordEvent } from './usage.js';
 import { costMicroUsd } from './llm-pricing.js';
 import { validatePublicUrl, isPrivateAddress, SsrfError } from './ssrf.js';
+import { fetchSafePublicUrl } from './ssrf-guard.js';
 
 // Free NIM vision lanes, in order. nemotron-nano carries the smallest image
 // token footprint (~281 prompt tokens for a tiny image vs ~1600 for llama-90B);
@@ -140,6 +141,41 @@ function assertSafeImageUrl(rawUrl) {
 	return url;
 }
 
+// 12 MiB — matches /api/vision's inbound cap; comfortably covers a viewer
+// screenshot or photo while bounding the per-request buffer.
+const MAX_INLINE_IMAGE_BYTES = 12 * 1024 * 1024;
+
+// Fetch a caller-supplied image URL ourselves and return it as inline base64.
+// The provider model servers otherwise fetch imageUrl server-side, and hosts
+// with hotlink / User-Agent protection (Wikipedia thumbnails, some CDNs) reject
+// that fetch — which fails EVERY URL-based lane and forces a fall-through to the
+// paid backstop. Fetching here (SSRF-guarded, redirects re-validated per hop)
+// makes the free NIM lanes independent of whether the provider can reach the
+// host. Throws on non-2xx, oversize, or transport error so the caller can decide
+// whether to fall back to URL pass-through.
+async function inlineImageFromUrl(imageUrl, { timeoutMs = 8_000 } = {}) {
+	const res = await fetchSafePublicUrl(imageUrl, {
+		signal: AbortSignal.timeout(timeoutMs),
+		// A browser-like UA + image Accept gets past CDNs that reject empty/bot
+		// user-agents — the same gate that blocks the providers' own fetchers.
+		headers: {
+			'user-agent': 'Mozilla/5.0 (compatible; three.ws-vision/1.0; +https://three.ws)',
+			accept: 'image/avif,image/webp,image/png,image/*;q=0.8,*/*;q=0.5',
+		},
+	});
+	if (!res.ok) throw Object.assign(new Error(`image fetch ${res.status}`), { status: res.status });
+	const advertised = Number(res.headers.get('content-length') || 0);
+	if (advertised > MAX_INLINE_IMAGE_BYTES) {
+		throw Object.assign(new Error('image exceeds inline size cap'), { status: 413 });
+	}
+	const buf = Buffer.from(await res.arrayBuffer());
+	if (buf.length > MAX_INLINE_IMAGE_BYTES) {
+		throw Object.assign(new Error('image exceeds inline size cap'), { status: 413 });
+	}
+	const ct = (res.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+	return { imageBase64: buf.toString('base64'), mimeType: ct.startsWith('image/') ? ct : 'image/jpeg' };
+}
+
 // Normalize a caller's image spec into one OpenAI `image_url` content part.
 // Accepts { imageUrl } (pass-through) or { imageBase64, mimeType } (data URI).
 function imagePart({ imageUrl, imageBase64, mimeType = 'image/jpeg' }) {
@@ -210,6 +246,23 @@ export async function describeImage({
 	// this process. Centralized here so every consumer of describeImage is covered,
 	// not just the forge image-validate path that already pre-validates.
 	if (imageUrl) assertSafeImageUrl(imageUrl);
+
+	// Prefer inlining the image ourselves over handing the URL to each provider's
+	// server-side fetcher. If our own fetch fails (a host the provider CAN reach
+	// but we can't, or a transient error), fall back to URL pass-through so we
+	// never regress a currently-working path. Bounded by the remaining chain
+	// deadline so a slow image host can't blow the whole budget before a lane runs.
+	if (imageUrl && !imageBase64) {
+		try {
+			const budget = Math.max(1_000, Math.min(timeoutMs, deadlineAt - Date.now()));
+			const inlined = await inlineImageFromUrl(imageUrl, { timeoutMs: budget });
+			imageBase64 = inlined.imageBase64;
+			mimeType = inlined.mimeType;
+			imageUrl = null;
+		} catch {
+			// keep imageUrl set — the providers will try their own server-side fetch
+		}
+	}
 
 	const parts = [
 		{ type: 'text', text: prompt },
