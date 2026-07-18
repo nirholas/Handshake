@@ -1,5 +1,5 @@
 /**
- * @three-ws/concierge — public entry
+ * @three-ws/concierge, public entry
  * ==================================
  *
  * An AI concierge for any website: floating launcher, chat panel with a
@@ -50,7 +50,7 @@ if (typeof window !== 'undefined') {
 }
 
 /**
- * Convenience factory — mount a concierge and return the controller.
+ * Convenience factory, mount a concierge and return the controller.
  * @param {ConstructorParameters<typeof Concierge>[0]} [config]
  */
 export function mount(config) {
@@ -59,7 +59,7 @@ export function mount(config) {
 
 /**
  * Auto-init from a `<script data-concierge>` tag so a site can install the
- * widget with no JS at all — the script's `data-*` attributes become config.
+ * widget with no JS at all, the script's `data-*` attributes become config.
  * Idempotent: only the first tagged script mounts an instance.
  */
 function autoInit() {

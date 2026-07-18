@@ -1,5 +1,5 @@
 /**
- * Concierge — @three-ws/concierge
+ * Concierge: @three-ws/concierge
  * ===============================
  *
  * The embeddable AI concierge: a floating launcher that opens a chat panel
@@ -61,7 +61,7 @@ function storageSet(store, key, value) {
 	try {
 		window[store].setItem(key, value);
 	} catch {
-		/* storage unavailable (private mode / blocked) — degrade to in-memory */
+		/* storage unavailable (private mode / blocked), degrade to in-memory */
 	}
 }
 
@@ -167,7 +167,7 @@ export class Concierge {
 
 		const name = this.config.name || this.avatar.name;
 		root.innerHTML = `
-			<section class="tc-panel" role="dialog" aria-modal="false" aria-label="${escapeHtml(name)} — site assistant" hidden>
+			<section class="tc-panel" role="dialog" aria-modal="false" aria-label="${escapeHtml(name)}, site assistant" hidden>
 				<header class="tc-head">
 					<div class="tc-head-id">
 						<span class="tc-head-dot" aria-hidden="true"></span>
@@ -369,7 +369,7 @@ export class Concierge {
 				muted: this.muted,
 				onCaption: (text) => this._setCaption(text),
 				onError: () => {
-					/* voice is an enhancement — a TTS engine fault must stay silent */
+					/* voice is an enhancement, a TTS engine fault must stay silent */
 				},
 			});
 			this._narrator.setAgent(this.avatar);
@@ -651,7 +651,7 @@ export class Concierge {
 			if (err?.name !== 'AbortError') {
 				const friendly =
 					err?.status === 429
-						? 'I am getting a lot of questions right now — give me a few seconds and try again.'
+						? 'I am getting a lot of questions right now, give me a few seconds and try again.'
 						: 'Something went wrong reaching my brain. Check your connection and try again.';
 				this._renderErrorBubble(question, friendly);
 				this._emit('error', err instanceof Error ? err : new Error(String(err)));

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-18",
+			"title": "New: a 3D avatar assistant widget for any website",
+			"summary": "One script tag now puts a three.ws avatar on any site as a floating assistant. Click the launcher and a real animated 3D character pops up, standing directly on the page (transparent), or against a color or gradient you pick. It has two modes: a chatbot that answers visitors' questions using the free model chain, with the option to bring your own Groq or OpenRouter key that never leaves the browser, and a speak mode where the avatar says exactly what you type, out loud, with a speech bubble. Configure everything and copy your snippet at three.ws/assistant.",
+			"tags": [
+				"feature"
+			],
+			"link": "/assistant"
+		},
+		{
+			"date": "2026-07-18",
 			"title": "The x402-server SDK now attaches the payment receipt on every paid response",
 			"summary": "Our most-installed npm package, @three-ws/x402-server (the seller side of x402), got a correctness pass. Paid endpoints built with it now guarantee the buyer never receives the result before the payment settles, and every paid response carries the on-chain settlement receipt in the X-PAYMENT-RESPONSE header, even for handlers that write their own response (the common Express case, which previously dropped the receipt). A new streaming mode settles up-front for file downloads and event streams, a handler that errors now returns a clean retryable 500 without charging, and the Base Sepolia test lane now advertises the correct testnet USDC. Ships with four runnable examples and a step-by-step tutorial you can follow offline before touching a wallet.",
 			"tags": [

@@ -236,6 +236,14 @@
 					"added": "2026-06-21"
 				},
 				{
+					"path": "/concierge",
+					"title": "Concierge: AI Chat Widget",
+					"description": "Give any website an AI concierge with a talking 3D avatar: one-tag embed, streaming answers grounded in the live page, voice in and out, themes, and an avatar picker. Free and open source.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-07-18"
+				},
+				{
 					"path": "/feed",
 					"title": "Feed",
 					"description": "Live avatars, agents, 3D models, worlds, and launches across three.ws — filter to everyone or just the people you follow.",
@@ -2816,6 +2824,14 @@
 					"changefreq": "weekly",
 					"lastmod": "2026-05-17",
 					"added": "2026-05-17"
+				},
+				{
+					"path": "/blog/concierge-3d-chat-widget",
+					"title": "Concierge: We Gave the Site Chatbot a Face",
+					"description": "Launch post for Concierge, the embeddable support chat with a rigged, lipsyncing 3D avatar: how it grounds streaming answers in the live page and how it was built by remixing the Walk and page-agent stack.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-07-18"
 				},
 				{
 					"path": "/blog/inside-the-forge",

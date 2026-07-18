@@ -1524,6 +1524,32 @@
 			"dest": "/embed/v1.js"
 		},
 		{
+			"src": "/assistant/v1.js",
+			"headers": {
+				"content-type": "application/javascript; charset=utf-8",
+				"cache-control": "public, max-age=300, s-maxage=86400, stale-while-revalidate=604800",
+				"access-control-allow-origin": "*",
+				"cross-origin-resource-policy": "cross-origin",
+				"x-content-type-options": "nosniff"
+			},
+			"dest": "/assistant/v1.js"
+		},
+		{
+			"src": "/assistant-frame/?",
+			"headers": {
+				"content-security-policy": "frame-ancestors *; base-uri 'self'; object-src 'none'; report-uri /api/client-errors",
+				"x-content-type-options": "nosniff",
+				"referrer-policy": "strict-origin-when-cross-origin",
+				"permissions-policy": "autoplay=*",
+				"cross-origin-resource-policy": "cross-origin"
+			},
+			"dest": "/assistant-frame.html"
+		},
+		{
+			"src": "/assistant/?",
+			"dest": "/assistant.html"
+		},
+		{
 			"src": "/embed/v1/preview/?",
 			"dest": "/embed/v1/preview.html"
 		},
@@ -4678,6 +4704,14 @@
 		{
 			"src": "/tour/",
 			"dest": "/tour.html"
+		},
+		{
+			"src": "/concierge",
+			"dest": "/concierge.html"
+		},
+		{
+			"src": "/concierge/",
+			"dest": "/concierge.html"
 		},
 		{
 			"src": "/tour-builder",

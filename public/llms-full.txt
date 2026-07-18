@@ -175,6 +175,12 @@ URL: https://three.ws/walk
 
 Your 3D avatar walks anywhere on the web. Live demos across six environments, a Chrome extension, one-tag embeds, and a global distance leaderboard.
 
+### Concierge: AI Chat Widget
+
+URL: https://three.ws/concierge
+
+Give any website an AI concierge with a talking 3D avatar: one-tag embed, streaming answers grounded in the live page, voice in and out, themes, and an avatar picker. Free and open source.
+
 ### Feed
 
 URL: https://three.ws/feed
@@ -2179,6 +2185,12 @@ Long-form announcements, launches, and writing from three.ws.
 URL: https://three.ws/blog
 
 Editorial index of three.ws launches and long-form posts.
+
+### Concierge: We Gave the Site Chatbot a Face
+
+URL: https://three.ws/blog/concierge-3d-chat-widget
+
+Launch post for Concierge, the embeddable support chat with a rigged, lipsyncing 3D avatar: how it grounds streaming answers in the live page and how it was built by remixing the Walk and page-agent stack.
 
 ### Inside the Forge: How a Prompt Becomes a 3D Model
 

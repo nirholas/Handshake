@@ -330,6 +330,7 @@ const appConfig = {
 				home: resolve(__dirname, 'pages/home.html'),
 				'what-is': resolve(__dirname, 'pages/what-is.html'),
 				tour: resolve(__dirname, 'pages/tour.html'),
+				concierge: resolve(__dirname, 'pages/concierge.html'),
 				'tour-builder': resolve(__dirname, 'pages/tour-builder.html'),
 				'agent-identities': resolve(__dirname, 'pages/agent-identities.html'),
 				pitch: resolve(__dirname, 'pages/pitch.html'),
@@ -352,6 +353,8 @@ const appConfig = {
 				constellation: resolve(__dirname, 'pages/constellation.html'),
 				embed: resolve(__dirname, 'pages/embed.html'),
 				'embed-demo': resolve(__dirname, 'pages/embed-demo.html'),
+				assistant: resolve(__dirname, 'pages/assistant.html'),
+				'assistant-frame': resolve(__dirname, 'pages/assistant-frame.html'),
 				// Embodiment embed: a living, rigged agent body (lip-sync + emotion
 				// + idle) that renders inline in ChatGPT/Claude. Registered as an
 				// input so its inline module graph — /apps-sdk/embodiment/* → three
@@ -1177,6 +1180,10 @@ support: resolve(__dirname, 'pages/support.html'),
 					'/guardian/': resolve(root, 'pages/guardian.html'),
 					'/walk-embed': resolve(root, 'pages/walk-embed.html'),
 					'/walk-embed/': resolve(root, 'pages/walk-embed.html'),
+					'/assistant': resolve(root, 'pages/assistant.html'),
+					'/assistant/': resolve(root, 'pages/assistant.html'),
+					'/assistant-frame': resolve(root, 'pages/assistant-frame.html'),
+					'/assistant-frame/': resolve(root, 'pages/assistant-frame.html'),
 					'/walk': resolve(root, 'pages/walk-landing.html'),
 					'/walk/': resolve(root, 'pages/walk-landing.html'),
 					'/walk/app': resolve(root, 'pages/walk-embed.html'),

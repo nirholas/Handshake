@@ -1,17 +1,17 @@
 /**
- * Concierge catalog — @three-ws/concierge
+ * Concierge catalog: @three-ws/concierge
  * =======================================
  *
  * Every entry is a skeleton-rigged humanoid GLB with verified face morphs or a
  * talk animation, served from the three.ws origin (the repo's public/ web
  * root). The concierge frames the avatar as a bust inside the chat panel and
  * drives blink + viseme lipsync, so an unrigged mesh would read as a dead
- * statue — those are excluded by rule, same as @three-ws/page-agent.
+ * statue, those are excluded by rule, same as @three-ws/page-agent.
  *
  * Override `assetBase` (or an entry's `url`) to self-host the GLBs.
  */
 
-/** Default CDN base. Real, public three.ws assets — `public/avatars/*.glb`. */
+/** Default CDN base. Real, public three.ws assets, `public/avatars/*.glb`. */
 export const DEFAULT_ASSET_BASE = 'https://three.ws/avatars/';
 
 /**

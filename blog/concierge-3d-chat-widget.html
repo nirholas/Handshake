@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Concierge: We Gave the Site Chatbot a Face</title>
+    <meta name="description" content="Every website has the same faceless chat bubble. We shipped one with a rigged 3D avatar that blinks, lipsyncs, and speaks streaming answers grounded in your live page. One tag, free, open wire format. Here is how we built it by remixing our own stack.">
+    <meta name="keywords" content="three.ws, concierge, chat widget, chatbot, 3D avatar, lipsync, web component, support chat, intercom alternative, streaming, SSE">
+    <link rel="canonical" href="https://three.ws/blog/concierge-3d-chat-widget">
+
+    <meta property="og:title" content="Concierge: We Gave the Site Chatbot a Face">
+    <meta property="og:description" content="A support chat where a rigged 3D avatar lipsyncs streaming answers grounded in your live page. One tag on any site. Free.">
+    <meta property="og:url" content="https://three.ws/blog/concierge-3d-chat-widget">
+    <meta property="og:type" content="article">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Concierge: We Gave the Site Chatbot a Face">
+    <meta name="twitter:description" content="A support chat where a rigged 3D avatar lipsyncs streaming answers grounded in your live page. One tag on any site. Free.">
+
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/nav.css">
+    <link rel="stylesheet" href="/footer.css">
+    <style>
+        :root { color-scheme: dark; }
+        body { margin: 0; background: #060611; color: #e7e7f5; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+        .post-wrap { max-width: 720px; margin: 0 auto; padding: 96px 24px 80px; }
+        .post-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: #7a85a8; font-size: 13px; margin-bottom: 28px; }
+        .post-date { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .post-tag { padding: 2px 8px; border-radius: 999px; background: rgba(154,212,255,.08); color: #9ad4ff; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; }
+        h1 { font-size: clamp(26px, 4vw, 40px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 20px; }
+        h2 { font-size: 20px; font-weight: 600; margin: 40px 0 12px; letter-spacing: -0.01em; }
+        p { color: #c8c8e0; line-height: 1.7; margin: 0 0 18px; font-size: 16px; }
+        ul, ol { color: #c8c8e0; line-height: 1.7; margin: 0 0 18px; padding-left: 24px; font-size: 16px; }
+        li { margin-bottom: 6px; }
+        a { color: #9ad4ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: rgba(154,212,255,.07); color: #9ad4ff; padding: 2px 6px; border-radius: 4px; }
+        pre { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 16px 20px; overflow-x: auto; margin: 0 0 20px; }
+        pre code { background: none; padding: 0; font-size: 14px; }
+        strong { color: #e7e7f5; }
+        .post-back { display: inline-flex; align-items: center; gap: 6px; color: #7a85a8; font-size: 14px; margin-bottom: 40px; text-decoration: none; }
+        .post-back:hover { color: #9ad4ff; }
+        hr { border: none; border-top: 1px solid rgba(255,255,255,.08); margin: 40px 0; }
+    </style>
+</head>
+<body>
+    <div id="nav-container"></div>
+    <main class="post-wrap">
+        <a class="post-back" href="/blog">&larr; Blog</a>
+        <div class="post-meta">
+            <span class="post-date">2026-07-18</span>
+            <span class="post-tag">Launch</span>
+            <span class="post-tag">SDK</span>
+            <span class="post-tag">Avatars</span>
+        </div>
+        <h1>Concierge: We Gave the Site Chatbot a Face</h1>
+
+        <p>Every website has the same widget in the corner: a colored circle, a text box, a logo pretending to be a person. The AI behind those boxes got dramatically better in the last two years. The boxes did not.</p>
+
+        <p>So we shipped <a href="/concierge">Concierge</a>: a support chat where a rigged 3D avatar blinks, idles, turns to face the conversation, and <strong>lipsyncs the answer while it speaks it aloud</strong>. Answers stream token by token, are grounded in whatever your page actually says, and the whole thing installs with one tag:</p>
+
+        <pre><code>&lt;script type="module"
+        src="https://three.ws/concierge/concierge.global.js"
+        data-concierge
+        data-site-name="Acme"
+        data-accent="#f97316"&gt;&lt;/script&gt;</code></pre>
+
+        <p>It is free, the widget is on <a href="https://www.npmjs.com/package/@three-ws/concierge">npm as <code>@three-ws/concierge</code></a>, the wire format is open, and the <a href="/concierge">landing page</a> runs it live, where the widget's job is answering questions about itself.</p>
+
+        <h2>Built by remixing our own stack</h2>
+
+        <p>We did not start from zero, and that is the story worth telling. three.ws already had a walking corner companion (<a href="https://www.npmjs.com/package/@three-ws/walk"><code>@three-ws/walk</code></a>), a narrating page guide (<code>@three-ws/page-agent</code>), and a battle-tested free-first LLM chain behind <code>/api/chat</code>. Concierge is those three things recombined and pointed at support:</p>
+
+        <ul>
+            <li><strong>The face</strong> comes from the page-agent lineage: a transparent WebGL stage that loads a rigged GLB, frames it as a bust, plays a real idle clip when the model ships one and a procedural breathing-and-blink loop when it does not. The avatar catalog is the same diverse, rigged-only, viseme-capable roster.</li>
+            <li><strong>The mouth</strong> is text-to-viseme lipsync, not audio analysis: the sentence is tokenized into a timed phoneme sequence and the matching morph targets are lerped every frame, synced to the browser's own speech engine. No audio backend, no API key, works offline.</li>
+            <li><strong>The brain</strong> is the platform's free-first provider chain with automatic failover: if one free lane is throttled, the next takes over mid-conversation, and a billing-dead lane gets cooled down instead of re-probed on every request.</li>
+        </ul>
+
+        <h2>No crawler, no index, no onboarding call</h2>
+
+        <p>Products in this category ask you to connect a knowledge base, wait for a crawl, and keep it synced. We inverted the whole thing: the visitor is already on your page, so the widget reads it <em>at the moment of the question</em>. Title, meta description, headings, nav labels, the main content, all capped to a strict budget, plus an optional <code>knowledge</code> attribute where you paste the facts that matter (pricing, policies, contact).</p>
+
+        <p>The server folds that snapshot into a grounded system prompt with one non-negotiable rule: if the answer is not in the site information, say so and point at the closest real link. Never invent a price. Edit your pricing page and the very next answer reflects it. Nothing to re-index, ever.</p>
+
+        <h2>It speaks while it streams</h2>
+
+        <p>The detail we are proudest of: answers arrive over SSE, and the widget splits the stream into sentences as they complete, handing each one to the speech engine while the rest is still generating. The avatar starts talking about your refund policy before the model has finished writing about it. Muted, or on a browser without speech synthesis? The captions and the lipsync timeline still play, so the experience never silently stalls.</p>
+
+        <h2>The boring parts, done properly</h2>
+
+        <ul>
+            <li>A closed widget costs your page <strong>zero GPU and no GLB download</strong>; the 3D stage initializes on first open.</li>
+            <li>Every state is designed: empty state with suggestion chips, skeleton shimmer while the rig loads, typing dots, a streaming caret, and an error bubble with a retry that rewinds the failed turn.</li>
+            <li>Model output renders through a strict markdown-lite renderer: escaped first, markup second, <code>javascript:</code> links never survive.</li>
+            <li>Light and dark themes follow the visitor's system, one accent color restyles everything, and <code>prefers-reduced-motion</code> is respected throughout.</li>
+            <li>The backend is anonymous, CORS-open by design, rate-limited per IP and globally, and pre-moderated fail-open.</li>
+        </ul>
+
+        <h2>Bring your own backend</h2>
+
+        <p>The hosted endpoint is free, but nothing locks you to it. The wire format is three SSE event types (<code>chunk</code>, <code>done</code>, <code>error</code>) over one POST; point the <code>endpoint</code> attribute at any server that speaks it. The production reference implementation, failover and all, is <a href="https://github.com/nirholas/three.ws/blob/main/api/concierge.js">open in the repo</a>.</p>
+
+        <hr>
+
+        <p>Try it on the <a href="/concierge">landing page</a>, read the <a href="/docs/concierge">docs</a>, or go deep with the <a href="/docs/tutorials/build-a-site-concierge">build tutorial</a> that walks through every module. And if you ship it on your site, tell <a href="https://x.com/trythreews">@trythreews</a>, we collect screenshots of our avatars working other people's front desks.</p>
+    </main>
+    <div id="footer-container"></div>
+    <script src="/nav.js"></script>
+    <script src="/footer.js"></script>
+</body>
+</html>

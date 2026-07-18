@@ -1,10 +1,10 @@
-// POST /api/concierge — the answer engine behind @three-ws/concierge.
+// POST /api/concierge, the answer engine behind @three-ws/concierge.
 //
 // The embeddable site-concierge widget (concierge-sdk/) posts the visitor's
 // question, the running conversation, and a bounded snapshot of the HOST page
 // (title/description/headings/nav/main text + optional curated `knowledge`).
 // This handler grounds a system prompt in that snapshot and streams the answer
-// back as SSE — the same { chunk → done } event shape /api/chat uses:
+// back as SSE, the same { chunk → done } event shape /api/chat uses:
 //
 //   Body:     { message, history[], site{...}, persona?, lang? }
 //   Response: SSE  data: { type: 'chunk', text }
@@ -16,7 +16,7 @@
 //     the /api/chat allowlist forbids. No cookies/credentials cross this lane.
 //   - Anonymous-only, with its own IP + global rate buckets (limits.conciergeIp
 //     / conciergeGlobal) so widget traffic can't starve signed-in chat.
-//   - No tool calls, no persona store, no BYOK: one job — grounded answers.
+//   - No tool calls, no persona store, no BYOK: one job, grounded answers.
 //   - Providers come from the shared free-first chain (api/_lib/llm.js
 //     providerChain), streamed. Anthropic-shaped rungs are skipped: their SSE
 //     wire format differs and every OpenAI-compatible rung (incl. the
@@ -115,7 +115,7 @@ async function pumpOpenAIStream(upstream, onText) {
 			try {
 				evt = JSON.parse(payload);
 			} catch {
-				continue; // partial/malformed frame — never fatal
+				continue; // partial/malformed frame, never fatal
 			}
 			const delta = evt.choices?.[0]?.delta?.content;
 			if (typeof delta === 'string' && delta) {
@@ -131,7 +131,7 @@ function isBillingAuthStatus(status) {
 	return status === 401 || status === 402 || status === 403;
 }
 
-// Hostname only, for usage telemetry — never the full URL (query strings from
+// Hostname only, for usage telemetry, never the full URL (query strings from
 // third-party pages are not ours to store). Malformed input → null.
 function siteHostname(url) {
 	if (!url) return null;
@@ -219,7 +219,7 @@ export default wrap(async (req, res) => {
 			}).finally(() => clearTimeout(timer));
 		} catch (err) {
 			lastFailure = err;
-			continue; // transport/timeout — next rung
+			continue; // transport/timeout, next rung
 		}
 
 		if (!upstream.ok) {
@@ -233,7 +233,7 @@ export default wrap(async (req, res) => {
 			continue;
 		}
 
-		// Connected — stream the answer through.
+		// Connected, stream the answer through.
 		sseHead();
 		let reply = '';
 		try {
@@ -263,7 +263,7 @@ export default wrap(async (req, res) => {
 		return;
 	}
 
-	// Every rung failed before a byte streamed — a plain HTTP error the widget
+	// Every rung failed before a byte streamed, a plain HTTP error the widget
 	// renders as its friendly retry bubble.
 	captureException(lastFailure || new Error('concierge: no provider reachable'), {
 		route: 'concierge',

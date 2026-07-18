@@ -1,10 +1,10 @@
 /**
- * Site-context harvester — @three-ws/concierge
+ * Site-context harvester: @three-ws/concierge
  * ============================================
  *
  * The concierge grounds its answers in the page it is embedded on, with no
  * crawler, no index, and no server-side setup: at ask-time it reads the live
- * DOM — title, meta description, headings, nav labels, and the main content —
+ * DOM, title, meta description, headings, nav labels, and the main content , 
  * and ships a bounded snapshot to the answer endpoint. A host can top this up
  * with a `knowledge` string (FAQ, policies, product facts) that is always
  * included ahead of the harvested page text.

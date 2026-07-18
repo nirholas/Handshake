@@ -1,5 +1,5 @@
 /**
- * SpeechNarrator — @three-ws/concierge (shared lineage: page-agent-sdk/src/narrator.js)
+ * SpeechNarrator: @three-ws/concierge (shared lineage: page-agent-sdk/src/narrator.js)
  * =====================================
  *
  * Speaks queued text aloud with the Web Speech API and keeps the avatar's mouth
@@ -10,7 +10,7 @@
  * Graceful by design:
  *   - No speechSynthesis (or muted): we still run the lipsync timeline for the
  *     text's estimated duration so the avatar visibly "talks" and captions
- *     show — the page narration never silently stalls.
+ *     show, the page narration never silently stalls.
  *   - Voice list loads async on some platforms; we wait for `voiceschanged`.
  */
 
@@ -107,7 +107,7 @@ export class SpeechNarrator {
 			utter.rate = clamp(this.agent?.voice?.rate ?? 1, 0.1, 3);
 			utter.onend = () => this._finishActive(false);
 			utter.onerror = (e) => {
-				// Some engines fire 'interrupted'/'canceled' as errors on cancel —
+				// Some engines fire 'interrupted'/'canceled' as errors on cancel , 
 				// only surface genuine synthesis failures, then fall back visually.
 				if (e?.error && !/interrupt|cancel/i.test(e.error)) {
 					this.onError(new Error('speech-synthesis: ' + e.error));

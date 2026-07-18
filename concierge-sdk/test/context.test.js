@@ -4,7 +4,7 @@ import { JSDOM } from 'jsdom';
 import { harvestSiteContext, buildSitePayload, MAX_CONTENT_CHARS } from '../src/context.js';
 
 const PAGE = `<!doctype html><html><head>
-	<title>Acme — Rocket Skates</title>
+	<title>Acme, Rocket Skates</title>
 	<meta name="description" content="Acme sells rocket skates to discerning coyotes.">
 	<meta property="og:site_name" content="Acme">
 </head><body>
@@ -25,7 +25,7 @@ function doc() {
 
 test('harvests title, description, headings, deduped nav, site name', () => {
 	const ctx = harvestSiteContext(doc());
-	assert.equal(ctx.title, 'Acme — Rocket Skates');
+	assert.equal(ctx.title, 'Acme, Rocket Skates');
 	assert.match(ctx.description, /rocket skates/i);
 	assert.deepEqual(ctx.headings, ['Rocket Skates', 'Fast. Very fast.']);
 	assert.deepEqual(ctx.nav, ['Home', 'Pricing']);

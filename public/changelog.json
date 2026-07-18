@@ -1,11 +1,31 @@
 {
-	"generated_at": "2026-07-18T21:09:18.386Z",
+	"generated_at": "2026-07-18T22:36:12.074Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-18",
+			"type": "launch",
+			"title": "Concierge: AI Chat Widget",
+			"summary": "Give any website an AI concierge with a talking 3D avatar: one-tag embed, streaming answers grounded in the live page, voice in and out, themes, and an avatar picker. Free and open source.",
+			"link": "/concierge",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-18",
+			"type": "launch",
+			"title": "Concierge: We Gave the Site Chatbot a Face",
+			"summary": "Launch post for Concierge, the embeddable support chat with a rigged, lipsyncing 3D avatar: how it grounds streaming answers in the live page and how it was built by remixing the Walk and page-agent stack.",
+			"link": "/blog/concierge-3d-chat-widget",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-07-18",
 			"type": "launch",
@@ -405,6 +425,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-18",
+			"type": "update",
+			"title": "New: a 3D avatar assistant widget for any website",
+			"summary": "One script tag now puts a three.ws avatar on any site as a floating assistant. Click the launcher and a real animated 3D character pops up, standing directly on the page (transparent), or against a color or gradient you pick. It has two modes: a chatbot that answers visitors' questions using the free model chain, with the option to bring your own Groq or OpenRouter key that never leaves the browser, and a speak mode where the avatar says exactly what you type, out loud, with a speech bubble. Configure everything and copy your snippet at three.ws/assistant.",
+			"link": "/assistant",
+			"tags": [
+				"feature"
 			]
 		},
 		{

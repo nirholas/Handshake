@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Acme Rocket Skates, concierge demo</title>
+		<meta
+			name="description"
+			content="Acme sells rocket skates with same-day shipping. Pro skates reach 300 mph."
+		/>
+		<style>
+			body { margin: 0; font-family: system-ui, sans-serif; color: #171923; }
+			header { padding: 16px 24px; border-bottom: 1px solid #eee; display: flex; gap: 24px; align-items: center; }
+			nav a { margin-right: 16px; color: #444; text-decoration: none; }
+			main { max-width: 720px; margin: 0 auto; padding: 48px 24px; line-height: 1.65; }
+		</style>
+	</head>
+	<body>
+		<header>
+			<strong>Acme</strong>
+			<nav><a href="#">Home</a><a href="#">Pricing</a><a href="#">Shipping</a><a href="#">Contact</a></nav>
+		</header>
+		<main>
+			<h1>Rocket Skates</h1>
+			<h2>Fast. Very fast.</h2>
+			<p>Acme rocket skates reach 300 mph in under two seconds. The Standard pair is $99, the Pro pair is $199, and every order placed before 2pm ships the same day.</p>
+			<p>Returns are accepted within 30 days, no questions asked (singed eyebrows excepted).</p>
+		</main>
+
+		<!--
+			The demo widget. Serve this folder next to a build of the SDK, e.g.
+			  npm run build && npx serve .
+			from the concierge-sdk directory, then open /examples/.
+			Swap the src for https://three.ws/concierge/concierge.global.js (or the
+			unpkg URL from the README) to run against the published build instead.
+		-->
+		<script
+			type="module"
+			src="../dist/concierge.global.js"
+			data-concierge
+			data-site-name="Acme"
+			data-accent="#e11d48"
+			data-knowledge="Standard skates $99. Pro skates $199, reach 300 mph. Same-day shipping before 2pm. 30-day returns. Support: help@acme.example."
+			data-suggestions="How fast are the Pro skates?|What does shipping cost?|Can I return them?"
+		></script>
+	</body>
+</html>

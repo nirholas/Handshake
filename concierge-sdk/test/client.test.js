@@ -15,7 +15,7 @@ test('createSseBuffer reassembles frames across arbitrary chunk splits', () => {
 	const events = [];
 	const buf = createSseBuffer((e) => events.push(e));
 	const wire = 'data: {"type":"chunk","text":"Hel"}\n\ndata: {"type":"chunk","text":"lo"}\n\ndata: {"type":"done","provider":"groq"}\n\n';
-	// Feed one byte at a time — worst-case network fragmentation.
+	// Feed one byte at a time, worst-case network fragmentation.
 	for (const ch of wire) buf.push(ch);
 	assert.equal(events.length, 3);
 	assert.equal(events[0].text, 'Hel');

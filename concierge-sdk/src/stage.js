@@ -1,10 +1,10 @@
 /**
- * AvatarStage — @three-ws/concierge (shared lineage: page-agent-sdk/src/stage.js)
+ * AvatarStage: @three-ws/concierge (shared lineage: page-agent-sdk/src/stage.js)
  * ==================================
  *
  * The 3D surface: a transparent WebGL canvas that loads a rigged glTF agent,
  * frames it (bust / upper / full), and keeps it alive with skeletal idle motion
- * — a played idle clip when the GLB ships one, otherwise a procedural breathing
+ *, a played idle clip when the GLB ships one, otherwise a procedural breathing
  * + sway + blink loop so the agent never looks like a frozen statue (the whole
  * reason we require rigged avatars). It exposes the morph map + a per-frame hook
  * so the lipsync driver and speech narrator can drive the mouth in sync.
@@ -105,7 +105,7 @@ export class AvatarStage {
 		this._resizeObs.observe(container);
 
 		// Pause the render loop when the tab is backgrounded or the agent scrolls
-		// offscreen — a docked WebGL canvas should never burn GPU it can't be seen on.
+		// offscreen, a docked WebGL canvas should never burn GPU it can't be seen on.
 		this._visible = !document.hidden;
 		this._onscreen = true;
 		this._render = this._render.bind(this);

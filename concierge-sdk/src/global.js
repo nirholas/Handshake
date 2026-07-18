@@ -1,5 +1,5 @@
 /**
- * CDN entry — @three-ws/concierge
+ * CDN entry: @three-ws/concierge
  * ===============================
  *
  * The one-tag build: bundles the whole widget (three inlined), registers

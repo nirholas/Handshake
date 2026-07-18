@@ -1,5 +1,5 @@
 /**
- * Streaming answer client — @three-ws/concierge
+ * Streaming answer client: @three-ws/concierge
  * =============================================
  *
  * POSTs the visitor's question + conversation history + the harvested site
@@ -13,7 +13,7 @@
  *          data: { type: 'error', error }
  *
  * Any OpenAI-compatible endpoint can be substituted by hosts that run their
- * own backend — set `endpoint` and keep the same request/SSE contract.
+ * own backend, set `endpoint` and keep the same request/SSE contract.
  */
 
 export const DEFAULT_ENDPOINT = 'https://three.ws/api/concierge';
@@ -23,7 +23,7 @@ export const MAX_MESSAGE_CHARS = 2000;
 
 /**
  * Parse one SSE frame body (the text after `data: `) into an event object.
- * Returns null for keep-alives / malformed frames — the stream must survive
+ * Returns null for keep-alives / malformed frames, the stream must survive
  * both without surfacing an error to the visitor.
  */
 export function parseSseEvent(raw) {

@@ -1,5 +1,5 @@
 /**
- * Markdown-lite renderer — @three-ws/concierge
+ * Markdown-lite renderer: @three-ws/concierge
  * ============================================
  *
  * Answers stream back as plain text with light markdown (bold, code, links,
@@ -28,7 +28,7 @@ function inline(md) {
 	// **bold** then *italic*
 	out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
 	out = out.replace(/(^|[\s(])\*([^*\n]+)\*(?=[\s).,!?:;]|$)/g, '$1<em>$2</em>');
-	// [label](url) — href is validated; the label is already escaped
+	// [label](url), href is validated; the label is already escaped
 	out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, label, url) => {
 		const href = safeHref(url);
 		return href
@@ -97,7 +97,7 @@ export function renderMarkdown(text) {
 }
 
 /**
- * Strip markdown for the voice channel — what the narrator speaks should be
+ * Strip markdown for the voice channel, what the narrator speaks should be
  * the words, not the syntax.
  */
 export function stripMarkdown(text) {

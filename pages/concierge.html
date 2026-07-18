@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>Concierge, an AI chat widget with a 3D face, for any website · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta name="author" content="nirholas" />
+		<meta
+			name="description"
+			content="Drop an AI concierge on any website with one tag: a rigged 3D avatar that blinks and lipsyncs, streaming answers grounded in your live page, and browser-native voice in and out. Free, open embed by three.ws."
+		/>
+		<meta name="theme-color" content="#000000" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:url" content="https://three.ws/concierge" />
+		<meta property="og:title" content="Concierge, an AI chat widget with a 3D face, for any website" />
+		<meta
+			property="og:description"
+			content="One tag gives your site an AI concierge with a talking 3D avatar: streaming answers grounded in your page, voice in and out, themes, and an avatar picker."
+		/>
+		<meta property="og:image" content="https://three.ws/og-image.png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:locale" content="en_US" />
+
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Concierge, an AI chat widget with a 3D face, for any website" />
+		<meta
+			name="twitter:description"
+			content="One tag gives your site an AI concierge with a talking 3D avatar: streaming answers grounded in your page, voice in and out, themes, and an avatar picker."
+		/>
+		<meta name="twitter:image" content="https://three.ws/og-image.png" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+
+		<link rel="canonical" href="https://three.ws/concierge" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+
+		<link rel="preconnect" href="https://three.ws" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<link rel="stylesheet" href="/mobile.css" />
+		<script defer src="/footer-newsletter.js"></script>
+
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@type": "SoftwareApplication",
+				"name": "three.ws Concierge",
+				"url": "https://three.ws/concierge",
+				"applicationCategory": "DeveloperApplication",
+				"operatingSystem": "Any (web browser)",
+				"browserRequirements": "Requires a WebGL-capable browser",
+				"description": "An embeddable AI concierge for any website: a rigged 3D avatar that blinks and lipsyncs, streaming answers grounded in the live page, and browser-native voice in and out.",
+				"offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+				"isPartOf": { "@type": "WebSite", "name": "three.ws", "url": "https://three.ws" }
+			}
+		</script>
+
+		<style>
+			/* ────────────────────────────────────────────────────────────────
+			   Concierge landing, page-scoped styles. Token vars only; mirrors
+			   the marketing rhythm of /walk (eyebrow → display headline → sub
+			   → CTAs → proof sections).
+			   ──────────────────────────────────────────────────────────────── */
+			.cl-main {
+				max-width: 1080px;
+				margin: 0 auto;
+				padding: 0 var(--space-md);
+			}
+			.cl-hero {
+				padding: calc(var(--space-xl) * 2) 0 var(--space-xl);
+				text-align: center;
+			}
+			.cl-eyebrow {
+				display: inline-flex;
+				align-items: center;
+				gap: var(--space-2);
+				font-family: var(--font-mono);
+				font-size: var(--text-sm);
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				color: var(--text-tertiary);
+			}
+			.cl-hero h1 {
+				font-size: clamp(2rem, 5.5vw, 3.4rem);
+				line-height: 1.08;
+				letter-spacing: -0.02em;
+				margin: var(--space-md) auto var(--space-sm);
+				max-width: 17ch;
+			}
+			.cl-hero .cl-sub {
+				color: var(--text-secondary);
+				font-size: var(--text-lg);
+				max-width: 56ch;
+				margin: 0 auto var(--space-lg);
+				line-height: 1.6;
+			}
+			.cl-ctas {
+				display: flex;
+				gap: var(--space-sm);
+				justify-content: center;
+				flex-wrap: wrap;
+			}
+			.cl-btn {
+				display: inline-flex;
+				align-items: center;
+				gap: var(--space-2);
+				padding: 0.7rem 1.15rem;
+				border-radius: var(--radius-md);
+				font-weight: 600;
+				font-size: var(--text-base);
+				text-decoration: none;
+				transition: transform 0.15s ease, filter 0.15s ease, border-color 0.15s ease;
+			}
+			.cl-btn:hover { transform: translateY(-1px); }
+			.cl-btn-primary { background: var(--accent); color: var(--accent-contrast, #fff); }
+			.cl-btn-primary:hover { filter: brightness(1.08); }
+			.cl-btn-ghost { border: 1px solid var(--border-primary); color: var(--text-primary); }
+			.cl-btn-ghost:hover { border-color: var(--accent); }
+
+			.cl-hint {
+				margin-top: var(--space-lg);
+				font-family: var(--font-mono);
+				font-size: var(--text-sm);
+				color: var(--text-tertiary);
+			}
+			.cl-hint .cl-arrow { display: inline-block; animation: cl-nudge 1.6s ease-in-out infinite; }
+			@keyframes cl-nudge { 50% { transform: translate(4px, 4px); } }
+			@media (prefers-reduced-motion: reduce) { .cl-hint .cl-arrow { animation: none; } }
+
+			.cl-section { padding: var(--space-xl) 0; }
+			.cl-section h2 {
+				font-size: clamp(1.4rem, 3vw, 2rem);
+				letter-spacing: -0.01em;
+				margin: 0 0 var(--space-xs);
+			}
+			.cl-section .cl-lede {
+				color: var(--text-secondary);
+				max-width: 62ch;
+				margin: 0 0 var(--space-lg);
+				line-height: 1.65;
+			}
+
+			.cl-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+				gap: var(--space-md);
+			}
+			.cl-card {
+				border: 1px solid var(--border-primary);
+				border-radius: var(--radius-lg);
+				padding: var(--space-md);
+				background: var(--bg-secondary);
+				transition: border-color 0.2s ease, transform 0.2s ease;
+			}
+			.cl-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+			.cl-card h3 { margin: 0 0 var(--space-2); font-size: var(--text-base); }
+			.cl-card p { margin: 0; color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.6; }
+			.cl-card .cl-k {
+				font-family: var(--font-mono);
+				font-size: var(--text-xs);
+				color: var(--text-tertiary);
+				display: block;
+				margin-bottom: var(--space-2);
+			}
+
+			.cl-tabs { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-bottom: var(--space-sm); }
+			.cl-tab {
+				font-family: var(--font-mono);
+				font-size: var(--text-sm);
+				padding: 0.4rem 0.85rem;
+				border-radius: 999px;
+				border: 1px solid var(--border-primary);
+				background: none;
+				color: var(--text-secondary);
+				cursor: pointer;
+				transition: border-color 0.15s ease, color 0.15s ease;
+			}
+			.cl-tab:hover { border-color: var(--accent); }
+			.cl-tab[aria-selected='true'] { border-color: var(--accent); color: var(--text-primary); background: var(--bg-secondary); }
+			.cl-code {
+				position: relative;
+				border: 1px solid var(--border-primary);
+				border-radius: var(--radius-lg);
+				background: var(--bg-secondary);
+				overflow: hidden;
+			}
+			.cl-code pre {
+				margin: 0;
+				padding: var(--space-md);
+				overflow-x: auto;
+				font-family: var(--font-mono);
+				font-size: 0.82rem;
+				line-height: 1.6;
+				color: var(--text-primary);
+			}
+			.cl-copy {
+				position: absolute;
+				top: 10px;
+				right: 10px;
+				font-family: var(--font-mono);
+				font-size: var(--text-xs);
+				padding: 0.3rem 0.65rem;
+				border-radius: var(--radius-sm);
+				border: 1px solid var(--border-primary);
+				background: var(--bg-primary);
+				color: var(--text-secondary);
+				cursor: pointer;
+				transition: color 0.15s ease, border-color 0.15s ease;
+			}
+			.cl-copy:hover { color: var(--text-primary); border-color: var(--accent); }
+			.cl-panel[hidden] { display: none; }
+
+			.cl-steps { counter-reset: step; display: grid; gap: var(--space-md); }
+			.cl-step { display: flex; gap: var(--space-md); align-items: flex-start; }
+			.cl-step::before {
+				counter-increment: step;
+				content: counter(step, decimal-leading-zero);
+				font-family: var(--font-mono);
+				font-size: var(--text-sm);
+				color: var(--accent);
+				padding-top: 0.15rem;
+			}
+			.cl-step h3 { margin: 0 0 var(--space-1); font-size: var(--text-base); }
+			.cl-step p { margin: 0; color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.65; max-width: 68ch; }
+			.cl-step code { font-family: var(--font-mono); font-size: 0.82em; background: var(--bg-secondary); padding: 0.1em 0.4em; border-radius: var(--radius-sm); }
+
+			.cl-links { display: flex; gap: var(--space-md); flex-wrap: wrap; }
+			.cl-links a { color: var(--accent); text-decoration: none; font-size: var(--text-sm); }
+			.cl-links a:hover { text-decoration: underline; }
+		</style>
+	</head>
+	<body>
+		<header><div id="nav-container"></div></header>
+		<script src="/nav.js"></script>
+
+		<main class="cl-main">
+			<section class="cl-hero">
+				<span class="cl-eyebrow">// concierge</span>
+				<h1>An AI concierge with a face, for any website.</h1>
+				<p class="cl-sub">
+					One tag gives your site a support chat that visitors actually enjoy: a rigged 3D avatar that
+					blinks, talks, and lipsyncs; streaming answers grounded in your live page; and voice in and
+					out, straight from the browser. No account, no crawler setup, no per-seat pricing.
+				</p>
+				<div class="cl-ctas">
+					<a class="cl-btn cl-btn-primary" href="#install">Get the embed</a>
+					<a class="cl-btn cl-btn-ghost" href="/docs/concierge">Read the docs</a>
+					<a class="cl-btn cl-btn-ghost" href="https://github.com/nirholas/three.ws/tree/main/concierge-sdk" target="_blank" rel="noopener">Source ↗</a>
+				</div>
+				<p class="cl-hint">This page runs it live, try the bubble in the corner <span class="cl-arrow">↘</span></p>
+			</section>
+
+			<section class="cl-section" aria-labelledby="cl-why">
+				<h2 id="cl-why">Why it beats a faceless chat bubble</h2>
+				<p class="cl-lede">
+					Most site chatbots are a text box with a logo. This one is a presence: the same rigged-avatar
+					engine that powers <a href="/walk">Walk</a> and the
+					<a href="https://www.npmjs.com/package/@three-ws/page-agent" target="_blank" rel="noopener">page guide</a>, pointed at support.
+				</p>
+				<div class="cl-grid">
+					<div class="cl-card">
+						<span class="cl-k">// presence</span>
+						<h3>A real 3D avatar</h3>
+						<p>Skeleton-rigged, blinking, idling, viseme-lipsyncing while it speaks. Visitors pick their concierge from a diverse catalog, or you supply your own GLB.</p>
+					</div>
+					<div class="cl-card">
+						<span class="cl-k">// grounded</span>
+						<h3>Answers from your page</h3>
+						<p>At ask-time it reads the live page (title, headings, nav, content) plus your curated knowledge, and refuses to invent prices or policies it can't see.</p>
+					</div>
+					<div class="cl-card">
+						<span class="cl-k">// streaming</span>
+						<h3>Tokens, not spinners</h3>
+						<p>Answers stream in over SSE and the avatar starts speaking the first sentence while the rest is still arriving.</p>
+					</div>
+					<div class="cl-card">
+						<span class="cl-k">// voice</span>
+						<h3>Talk to it, hear it</h3>
+						<p>Push-to-talk speech input and browser-native speech output, no audio backend and no API key. Mute is one click and remembered.</p>
+					</div>
+					<div class="cl-card">
+						<span class="cl-k">// yours</span>
+						<h3>Your brand, both themes</h3>
+						<p>One accent color restyles the whole widget. Light and dark follow the visitor's system, or pin either. Bottom-left or bottom-right.</p>
+					</div>
+					<div class="cl-card">
+						<span class="cl-k">// free</span>
+						<h3>Free and open</h3>
+						<p>The widget is open source and the hosted answer engine runs on the three.ws free inference chain. Bring your own endpoint any time, same wire format.</p>
+					</div>
+				</div>
+			</section>
+
+			<section class="cl-section" id="install" aria-labelledby="cl-install">
+				<h2 id="cl-install">Install in under a minute</h2>
+				<p class="cl-lede">Pick your flavor. Every option ships the same widget.</p>
+				<div class="cl-tabs" role="tablist" aria-label="Install methods">
+					<button class="cl-tab" role="tab" aria-selected="true" data-panel="cdn">one tag</button>
+					<button class="cl-tab" role="tab" aria-selected="false" data-panel="element">web component</button>
+					<button class="cl-tab" role="tab" aria-selected="false" data-panel="npm">npm</button>
+					<button class="cl-tab" role="tab" aria-selected="false" data-panel="js">imperative</button>
+				</div>
+				<div class="cl-panel" data-panel="cdn">
+					<div class="cl-code">
+						<button class="cl-copy" type="button" data-copy>copy</button>
+						<pre><code>&lt;script type="module"
+        src="https://three.ws/concierge/concierge.global.js"
+        data-concierge
+        data-site-name="Acme"
+        data-accent="#f97316"
+        data-suggestions="What is Acme?|What does it cost?"&gt;&lt;/script&gt;</code></pre>
+					</div>
+				</div>
+				<div class="cl-panel" data-panel="element" hidden>
+					<div class="cl-code">
+						<button class="cl-copy" type="button" data-copy>copy</button>
+						<pre><code>import '@three-ws/concierge';
+
+&lt;three-concierge
+    site-name="Acme"
+    accent="#f97316"
+    knowledge="Pro plan is $20/month. Support: help@acme.com."
+    suggestions="What is Acme?|What does it cost?"&gt;
+&lt;/three-concierge&gt;</code></pre>
+					</div>
+				</div>
+				<div class="cl-panel" data-panel="npm" hidden>
+					<div class="cl-code">
+						<button class="cl-copy" type="button" data-copy>copy</button>
+						<pre><code>npm install @three-ws/concierge three</code></pre>
+					</div>
+				</div>
+				<div class="cl-panel" data-panel="js" hidden>
+					<div class="cl-code">
+						<button class="cl-copy" type="button" data-copy>copy</button>
+						<pre><code>import { Concierge } from '@three-ws/concierge';
+
+const concierge = new Concierge({
+	siteName: 'Acme',
+	accent: '#f97316',
+	knowledge: FAQ_TEXT,        // your curated facts, optional
+	persona: 'warm, playful, concise',
+});
+
+concierge.on('message', ({ role, content }) =&gt; track(role, content));
+concierge.ask('What does the Pro plan cost?');</code></pre>
+					</div>
+				</div>
+			</section>
+
+			<section class="cl-section" aria-labelledby="cl-how">
+				<h2 id="cl-how">How it works</h2>
+				<p class="cl-lede">No crawler, no vector database, no onboarding call. Three moving parts.</p>
+				<div class="cl-steps">
+					<div class="cl-step">
+						<div>
+							<h3>Harvest at ask-time</h3>
+							<p>When a visitor asks something, the widget snapshots the live DOM, title, meta description, headings, nav labels, and the main content, capped to a strict budget, and merges in the <code>knowledge</code> you curated. Whatever your page says today is what the concierge knows today.</p>
+						</div>
+					</div>
+					<div class="cl-step">
+						<div>
+							<h3>Ground and stream</h3>
+							<p>The snapshot, the running conversation, and the question go to <code>/api/concierge</code>, which builds a grounded system prompt and streams the answer back over SSE from the three.ws free-first inference chain, with automatic failover across providers, so the widget stays up when any one lane is throttled.</p>
+						</div>
+					</div>
+					<div class="cl-step">
+						<div>
+							<h3>Speak while streaming</h3>
+							<p>Completed sentences are handed to the browser's speech engine as they arrive, and a text-to-viseme timeline drives the avatar's mouth morphs in sync. Muted? The captions and lipsync still play, so the answer never stalls.</p>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="cl-section" aria-labelledby="cl-more">
+				<h2 id="cl-more">Go deeper</h2>
+				<div class="cl-links">
+					<a href="/docs/concierge">Docs: every attribute and event</a>
+					<a href="/docs/tutorials/build-a-site-concierge">Tutorial: how we built it</a>
+					<a href="/blog/concierge-3d-chat-widget">Blog: the launch post</a>
+					<a href="/walk">Walk, the engine it grew from</a>
+				</div>
+			</section>
+		</main>
+
+		<div id="footer-container"></div>
+		<script src="/footer.js"></script>
+		<script src="/brand.js" defer></script>
+
+		<script type="module">
+			// Install-tab switcher + copy buttons (no framework, matches site style).
+			const tabs = [...document.querySelectorAll('.cl-tab')];
+			const panels = [...document.querySelectorAll('.cl-panel')];
+			for (const tab of tabs) {
+				tab.addEventListener('click', () => {
+					for (const t of tabs) t.setAttribute('aria-selected', String(t === tab));
+					for (const p of panels) p.hidden = p.dataset.panel !== tab.dataset.panel;
+				});
+			}
+			for (const btn of document.querySelectorAll('[data-copy]')) {
+				btn.addEventListener('click', async () => {
+					const code = btn.parentElement.querySelector('code')?.textContent || '';
+					try {
+						await navigator.clipboard.writeText(code);
+						btn.textContent = 'copied';
+						setTimeout(() => (btn.textContent = 'copy'), 1400);
+					} catch {
+						btn.textContent = 'select + copy';
+						setTimeout(() => (btn.textContent = 'copy'), 1800);
+					}
+				});
+			}
+
+			// The live demo: this page eats its own dog food. The widget answers
+			// questions about Concierge itself, grounded in this page + curated facts.
+			import { Concierge } from '../concierge-sdk/src/index.js';
+			window.__threeWsConcierge = new Concierge({
+				endpoint: '/api/concierge',
+				name: 'three.ws Concierge',
+				siteName: 'three.ws Concierge',
+				greeting: 'Hi! I am the widget this page is about. Ask me anything about installing or customizing me.',
+				suggestions: [
+					'How do I install you?',
+					'How do answers stay accurate?',
+					'Can I use my own avatar?',
+					'What does it cost?',
+				],
+				knowledge: [
+					'three.ws Concierge is a free, open-source embeddable AI chat widget with a rigged 3D avatar (blinks, idles, viseme lipsync), streaming answers, and browser-native voice in/out.',
+					'Install: one CDN tag (https://three.ws/concierge/concierge.global.js with data-concierge), or npm install @three-ws/concierge (peer dependency: three), or the <three-concierge> web component, or new Concierge({...}) imperatively.',
+					'Grounding: at ask-time the widget snapshots the live page (title, meta description, headings, nav, main content, capped) plus the host-curated knowledge attribute; the backend builds a grounded system prompt and refuses to invent facts.',
+					'Backend: POST /api/concierge on three.ws, anonymous, CORS-open, rate-limited, streams SSE {type:chunk|done|error} from a free-first LLM chain with provider failover. Hosts can point the endpoint attribute at their own server using the same wire format.',
+					'Customization: accent (any CSS color), theme auto/dark/light, position bottom-right/bottom-left, name, greeting, suggestions (pipe-separated), persona tone instruction, avatars allow-list, custom-avatar URL for any rigged GLB, no-picker, no-teaser, muted, z-index, lang.',
+					'Voice: speech output uses the Web Speech API (no audio backend, no key); push-to-talk input uses SpeechRecognition where the browser supports it (the mic button hides elsewhere).',
+					'Docs: https://three.ws/docs/concierge. Tutorial: https://three.ws/docs/tutorials/build-a-site-concierge. Source: https://github.com/nirholas/three.ws/tree/main/concierge-sdk. Related: https://three.ws/walk (the Walk companion the avatar engine grew from).',
+					'Pricing: the widget and the hosted answer engine are free. No account required.',
+				].join('\n'),
+				persona: 'friendly, precise, a little playful',
+			});
+		</script>
+	</body>
+</html>

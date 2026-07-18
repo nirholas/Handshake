@@ -1,5 +1,5 @@
 /**
- * Voice input — @three-ws/concierge
+ * Voice input: @three-ws/concierge
  * =================================
  *
  * Thin wrapper over the Web Speech API's SpeechRecognition (webkit-prefixed on

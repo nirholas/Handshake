@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>Assistant Frame · three.ws</title>
+		<meta name="robots" content="noindex" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="author" content="nirholas" />
+		<meta
+			name="description"
+			content="Embeddable 3D avatar assistant — chat and text-to-speech in one iframe."
+		/>
+		<meta name="theme-color" content="#000000" />
+
+		<!--
+			Chrome-less iframe surface for the assistant widget. Loaded by
+			public/assistant/v1.js inside a floating panel on third-party sites.
+			Background is transparent by default so the avatar stands directly on
+			the host page; ?bg= paints a solid color or gradient instead
+			(validated in src/assistant-widget-core.js — never raw CSS).
+		-->
+		<meta name="assistant-frame" content="1" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+		<style>
+			:root {
+				--accent: #f97316;
+				--ink: #fafafa;
+				--ink-dim: #a1a1aa;
+				--shell: rgba(12, 12, 14, 0.86);
+				--shell-border: rgba(255, 255, 255, 0.1);
+			}
+
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+				width: 100%;
+				height: 100%;
+				overflow: hidden;
+				background: transparent;
+				color: var(--ink);
+				font-family: 'Inter', system-ui, -apple-system, sans-serif;
+				-webkit-font-smoothing: antialiased;
+				overscroll-behavior: none;
+			}
+
+			#assistant-root {
+				position: fixed;
+				inset: 0;
+				display: flex;
+				flex-direction: column;
+			}
+
+			/* ── Header ─────────────────────────────────────────────────────── */
+			#assistant-header {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				margin: 10px 10px 0;
+				padding: 8px 10px;
+				border-radius: 14px;
+				background: var(--shell);
+				border: 1px solid var(--shell-border);
+				backdrop-filter: blur(14px);
+				-webkit-backdrop-filter: blur(14px);
+				z-index: 20;
+			}
+			#assistant-title {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				font-size: 13.5px;
+				font-weight: 700;
+				letter-spacing: 0.01em;
+				min-width: 0;
+			}
+			#assistant-title .spark {
+				width: 18px;
+				height: 18px;
+				flex: 0 0 auto;
+				color: var(--accent);
+			}
+			#assistant-title .label {
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			#assistant-header .spacer { flex: 1; }
+			.icon-btn {
+				width: 30px;
+				height: 30px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				border-radius: 9px;
+				border: 1px solid transparent;
+				background: transparent;
+				color: var(--ink-dim);
+				cursor: pointer;
+				padding: 0;
+				transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+			}
+			.icon-btn:hover { background: rgba(255, 255, 255, 0.08); color: var(--ink); }
+			.icon-btn:active { transform: scale(0.94); }
+			.icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+			.icon-btn[aria-pressed='true'] { color: var(--accent); border-color: var(--shell-border); background: rgba(255, 255, 255, 0.05); }
+			.icon-btn svg { width: 16px; height: 16px; }
+			#assistant-voice-btn[aria-pressed='false'] .voice-waves { opacity: 0.2; }
+
+			/* ── Stage ──────────────────────────────────────────────────────── */
+			#assistant-stage {
+				position: relative;
+				flex: 1;
+				min-height: 0;
+			}
+			#assistant-canvas {
+				position: absolute;
+				inset: 0;
+				width: 100%;
+				height: 100%;
+				display: block;
+			}
+
+			/* Loading poster — silhouette until the first avatar frame. */
+			#assistant-poster {
+				position: absolute;
+				inset: 0;
+				z-index: 4;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				pointer-events: none;
+				transition: opacity 0.45s ease;
+			}
+			#assistant-poster.is-hidden { opacity: 0; }
+			#assistant-poster svg { width: 30%; max-width: 130px; height: auto; opacity: 0.45; }
+			#assistant-poster .poster-shimmer { fill: rgba(255, 255, 255, 0.16); }
+			@media (prefers-reduced-motion: no-preference) {
+				#assistant-poster .poster-shimmer { animation: assistant-pulse 1.6s ease-in-out infinite; }
+			}
+			@keyframes assistant-pulse {
+				0%, 100% { opacity: 0.35; }
+				50% { opacity: 0.85; }
+			}
+
+			/* ── Speech bubble (look.png style) ─────────────────────────────── */
+			#assistant-bubble {
+				position: absolute;
+				z-index: 10;
+				max-width: min(320px, calc(100% - 32px));
+				background: rgba(10, 10, 10, 0.9);
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				border-radius: 16px;
+				padding: 11px 14px;
+				font-size: 13px;
+				line-height: 1.5;
+				color: var(--ink);
+				backdrop-filter: blur(12px);
+				-webkit-backdrop-filter: blur(12px);
+				pointer-events: none;
+				opacity: 0;
+				/* Position is driven per-frame from the avatar's head projection
+				   (src/assistant-frame.js), so only opacity transitions. */
+				transform: translate(-50%, -100%);
+				transition: opacity 0.22s ease;
+				will-change: opacity;
+			}
+			#assistant-bubble.is-visible { opacity: 1; }
+			#assistant-bubble.is-error { border-color: rgba(248, 113, 113, 0.55); color: #fecaca; }
+			#assistant-bubble .bubble-text {
+				display: -webkit-box;
+				-webkit-box-orient: vertical;
+				-webkit-line-clamp: 6;
+				line-clamp: 6;
+				overflow: hidden;
+				word-break: break-word;
+				white-space: pre-wrap;
+			}
+			#assistant-bubble .bubble-tail {
+				position: absolute;
+				bottom: -7px;
+				left: 50%;
+				transform: translateX(-50%);
+				width: 0;
+				height: 0;
+				border-left: 7px solid transparent;
+				border-right: 7px solid transparent;
+				border-top: 7px solid rgba(10, 10, 10, 0.9);
+			}
+			/* Streaming caret while a chat reply is arriving. */
+			#assistant-bubble.is-streaming .bubble-text::after {
+				content: '▍';
+				color: var(--accent);
+				animation: assistant-caret 1s steps(1) infinite;
+			}
+			@keyframes assistant-caret { 50% { opacity: 0; } }
+
+			/* Thinking dots while waiting for the first token. */
+			#assistant-bubble.is-thinking .bubble-text::after {
+				content: '···';
+				letter-spacing: 2px;
+				color: var(--ink-dim);
+				animation: assistant-caret 1s steps(1) infinite;
+			}
+
+			/* ── Composer ───────────────────────────────────────────────────── */
+			#assistant-composer {
+				margin: 0 10px calc(10px + env(safe-area-inset-bottom, 0));
+				padding: 10px;
+				border-radius: 16px;
+				background: var(--shell);
+				border: 1px solid var(--shell-border);
+				backdrop-filter: blur(14px);
+				-webkit-backdrop-filter: blur(14px);
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+				z-index: 20;
+			}
+
+			#assistant-modes {
+				display: none;
+				align-self: flex-start;
+				gap: 2px;
+				padding: 2px;
+				border-radius: 10px;
+				background: rgba(255, 255, 255, 0.06);
+				border: 1px solid rgba(255, 255, 255, 0.07);
+			}
+			#assistant-root[data-mode-switch='true'] #assistant-modes { display: inline-flex; }
+			.mode-btn {
+				appearance: none;
+				border: 0;
+				background: transparent;
+				color: var(--ink-dim);
+				font: 600 11.5px/1 'Inter', system-ui, sans-serif;
+				letter-spacing: 0.02em;
+				padding: 6px 12px;
+				border-radius: 8px;
+				cursor: pointer;
+				transition: background 0.15s ease, color 0.15s ease;
+			}
+			.mode-btn:hover { color: var(--ink); }
+			.mode-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+			.mode-btn[aria-pressed='true'] { background: rgba(255, 255, 255, 0.12); color: var(--ink); }
+
+			#assistant-input-row {
+				display: flex;
+				align-items: flex-end;
+				gap: 8px;
+			}
+			#assistant-input {
+				flex: 1;
+				min-width: 0;
+				resize: none;
+				border: 0;
+				outline: 0;
+				background: transparent;
+				color: var(--ink);
+				font: 400 13.5px/1.45 'Inter', system-ui, sans-serif;
+				max-height: 96px;
+				padding: 8px 2px;
+				caret-color: var(--accent);
+			}
+			#assistant-input::placeholder { color: rgba(255, 255, 255, 0.35); }
+
+			#assistant-send {
+				flex: 0 0 auto;
+				width: 38px;
+				height: 38px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				border-radius: 12px;
+				border: 0;
+				background: var(--accent);
+				color: #fff;
+				cursor: pointer;
+				transition: filter 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+			}
+			#assistant-send:hover { filter: brightness(1.1); }
+			#assistant-send:active { transform: scale(0.94); }
+			#assistant-send:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+			#assistant-send:disabled { opacity: 0.45; cursor: default; filter: none; transform: none; }
+			#assistant-send svg { width: 16px; height: 16px; }
+
+			#assistant-hint {
+				font-size: 10.5px;
+				color: rgba(255, 255, 255, 0.38);
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				min-height: 13px;
+			}
+			#assistant-hint a {
+				color: rgba(255, 255, 255, 0.55);
+				text-decoration: none;
+				font-weight: 600;
+			}
+			#assistant-hint a:hover { color: var(--ink); }
+			#assistant-hint a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+			#assistant-hint .lane-pill {
+				margin-left: auto;
+				padding: 2px 7px;
+				border-radius: 999px;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				color: rgba(255, 255, 255, 0.5);
+				font-weight: 600;
+				letter-spacing: 0.03em;
+				text-transform: uppercase;
+				font-size: 9px;
+			}
+
+			/* ── Settings sheet ─────────────────────────────────────────────── */
+			#assistant-settings {
+				position: absolute;
+				left: 10px;
+				right: 10px;
+				bottom: 10px;
+				z-index: 30;
+				border-radius: 16px;
+				background: rgba(12, 12, 14, 0.96);
+				border: 1px solid var(--shell-border);
+				backdrop-filter: blur(16px);
+				-webkit-backdrop-filter: blur(16px);
+				padding: 14px;
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+				opacity: 0;
+				transform: translateY(8px);
+				pointer-events: none;
+				transition: opacity 0.2s ease, transform 0.2s ease;
+			}
+			#assistant-settings.is-open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+			#assistant-settings h2 {
+				margin: 0;
+				font-size: 12px;
+				font-weight: 700;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				color: var(--ink-dim);
+				display: flex;
+				align-items: center;
+			}
+			#assistant-settings h2 .icon-btn { margin-left: auto; }
+			.settings-group { display: flex; flex-direction: column; gap: 6px; }
+			.settings-group > label { font-size: 11.5px; font-weight: 600; color: var(--ink-dim); }
+			.lane-options { display: flex; flex-direction: column; gap: 4px; }
+			.lane-option {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 8px 10px;
+				border-radius: 10px;
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				background: rgba(255, 255, 255, 0.03);
+				cursor: pointer;
+				font-size: 12.5px;
+				transition: border-color 0.15s ease, background 0.15s ease;
+			}
+			.lane-option:hover { background: rgba(255, 255, 255, 0.06); }
+			.lane-option input { accent-color: var(--accent); margin: 0; }
+			.lane-option .lane-desc { color: var(--ink-dim); font-size: 11px; margin-left: auto; text-align: right; }
+			.settings-field {
+				width: 100%;
+				box-sizing: border-box;
+				border-radius: 10px;
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				background: rgba(255, 255, 255, 0.04);
+				color: var(--ink);
+				font: 400 12.5px/1.3 'Inter', system-ui, sans-serif;
+				padding: 8px 10px;
+				outline: 0;
+				transition: border-color 0.15s ease;
+			}
+			.settings-field:focus { border-color: var(--accent); }
+			.settings-note { font-size: 10.5px; color: rgba(255, 255, 255, 0.4); line-height: 1.5; margin: 0; }
+			#assistant-byok-fields { display: none; flex-direction: column; gap: 6px; }
+			#assistant-byok-fields.is-visible { display: flex; }
+
+			/* ── Attribution badge ──────────────────────────────────────────── */
+			#assistant-badge {
+				position: absolute;
+				z-index: 8;
+				right: 14px;
+				top: 62px;
+				display: inline-flex;
+				align-items: center;
+				gap: 5px;
+				padding: 4px 9px 4px 7px;
+				font-size: 10px;
+				font-weight: 600;
+				color: #d4d4d8;
+				text-decoration: none;
+				background: rgba(10, 10, 10, 0.5);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				border-radius: 999px;
+				backdrop-filter: blur(8px);
+				-webkit-backdrop-filter: blur(8px);
+				opacity: 0.6;
+				transition: opacity 0.18s ease;
+			}
+			#assistant-badge:hover { opacity: 1; }
+			#assistant-badge:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; opacity: 1; }
+			#assistant-badge .badge-dot {
+				width: 12px;
+				height: 12px;
+				border-radius: 4px;
+				background: linear-gradient(135deg, #6366f1, #8b5cf6);
+			}
+
+			#assistant-status {
+				position: absolute;
+				z-index: 9;
+				left: 50%;
+				bottom: 8px;
+				transform: translateX(-50%);
+				background: rgba(17, 17, 17, 0.75);
+				border: 1px solid rgba(255, 255, 255, 0.08);
+				border-radius: 999px;
+				padding: 5px 11px;
+				font-size: 11px;
+				color: var(--ink-dim);
+				backdrop-filter: blur(10px);
+				-webkit-backdrop-filter: blur(10px);
+				pointer-events: none;
+				transition: opacity 0.2s ease;
+				white-space: nowrap;
+				max-width: calc(100% - 32px);
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			#assistant-status.is-error { color: #f87171; border-color: rgba(248, 113, 113, 0.5); }
+			#assistant-status.is-hidden { opacity: 0; }
+
+			@media (prefers-reduced-motion: reduce) {
+				#assistant-bubble,
+				#assistant-settings,
+				.icon-btn,
+				#assistant-send { transition: none; }
+			}
+		</style>
+	</head>
+	<body>
+		<div id="assistant-root" data-mode-switch="true">
+			<header id="assistant-header">
+				<span id="assistant-title">
+					<svg class="spark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+						<path d="M12 2l1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9L12 2z" />
+						<path d="M19 15l.9 2.6L22.5 18.5l-2.6.9L19 22l-.9-2.6-2.6-.9 2.6-.9L19 15z" opacity="0.7" />
+					</svg>
+					<span class="label">Assistant</span>
+				</span>
+				<span class="spacer"></span>
+				<button type="button" class="icon-btn" id="assistant-voice-btn" aria-pressed="true" title="Voice on" aria-label="Toggle voice">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><path class="voice-waves" d="M15.5 8.5a5 5 0 0 1 0 7M18.4 5.6a9 9 0 0 1 0 12.8"/></svg>
+				</button>
+				<button type="button" class="icon-btn" id="assistant-settings-btn" title="Settings" aria-label="Open settings" aria-expanded="false">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+				</button>
+				<button type="button" class="icon-btn" id="assistant-close-btn" title="Close" aria-label="Close assistant">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+				</button>
+			</header>
+
+			<div id="assistant-stage">
+				<canvas id="assistant-canvas" role="img" aria-label="3D avatar assistant"></canvas>
+
+				<div id="assistant-poster" aria-hidden="true">
+					<svg viewBox="0 0 64 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<circle class="poster-shimmer" cx="32" cy="16" r="11" />
+						<rect class="poster-shimmer" x="18" y="31" width="28" height="42" rx="13" />
+						<rect class="poster-shimmer" x="22" y="68" width="8" height="26" rx="4" />
+						<rect class="poster-shimmer" x="34" y="68" width="8" height="26" rx="4" />
+					</svg>
+				</div>
+
+				<div id="assistant-bubble" role="status" aria-live="polite">
+					<div class="bubble-text"></div>
+					<div class="bubble-tail" aria-hidden="true"></div>
+				</div>
+
+				<a id="assistant-badge" href="https://three.ws/assistant?ref=assistant-widget" target="_blank" rel="noopener" title="Make your own — three.ws">
+					<span class="badge-dot" aria-hidden="true"></span>
+					<span>three.ws</span>
+				</a>
+
+				<div id="assistant-status" class="is-hidden"></div>
+			</div>
+
+			<div id="assistant-composer">
+				<div id="assistant-modes" role="tablist" aria-label="Assistant mode">
+					<button type="button" class="mode-btn" data-mode="chat" role="tab" aria-pressed="true">Chat</button>
+					<button type="button" class="mode-btn" data-mode="speak" role="tab" aria-pressed="false">Speak</button>
+				</div>
+				<div id="assistant-input-row">
+					<textarea id="assistant-input" rows="1" placeholder="Type a question..." aria-label="Message the assistant" maxlength="4000"></textarea>
+					<button type="button" id="assistant-send" title="Send" aria-label="Send message">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+					</button>
+				</div>
+				<div id="assistant-hint">
+					<span id="assistant-hint-text">Ask anything.</span>
+					<span class="lane-pill" id="assistant-lane-pill" title="Which model lane answers your messages">free</span>
+				</div>
+			</div>
+
+			<div id="assistant-settings" role="dialog" aria-modal="false" aria-label="Assistant settings">
+				<h2>
+					Settings
+					<button type="button" class="icon-btn" id="assistant-settings-close" title="Close settings" aria-label="Close settings">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
+					</button>
+				</h2>
+
+				<div class="settings-group">
+					<label id="assistant-lane-label">Chat brain</label>
+					<div class="lane-options" role="radiogroup" aria-labelledby="assistant-lane-label">
+						<label class="lane-option">
+							<input type="radio" name="assistant-lane" value="free" checked />
+							<span>Free lane</span>
+							<span class="lane-desc">Groq → OpenRouter → NVIDIA, no key</span>
+						</label>
+						<label class="lane-option">
+							<input type="radio" name="assistant-lane" value="groq" />
+							<span>My Groq key</span>
+							<span class="lane-desc">runs in your browser</span>
+						</label>
+						<label class="lane-option">
+							<input type="radio" name="assistant-lane" value="openrouter" />
+							<span>My OpenRouter key</span>
+							<span class="lane-desc">runs in your browser</span>
+						</label>
+					</div>
+					<div id="assistant-byok-fields">
+						<input type="password" class="settings-field" id="assistant-byok-key" placeholder="API key" autocomplete="off" spellcheck="false" aria-label="Provider API key" />
+						<input type="text" class="settings-field" id="assistant-byok-model" placeholder="Model" autocomplete="off" spellcheck="false" aria-label="Model id" />
+						<p class="settings-note">Your key is stored only in this browser (localStorage on three.ws) and sent directly to the provider — it never touches three.ws servers or the page embedding this widget.</p>
+					</div>
+				</div>
+
+				<div class="settings-group">
+					<label for="assistant-voice-select">Voice</label>
+					<select class="settings-field" id="assistant-voice-select" aria-label="Speech voice">
+						<option value="">System default</option>
+					</select>
+					<p class="settings-note">Speech uses your browser's built-in voices — nothing is uploaded.</p>
+				</div>
+			</div>
+		</div>
+
+		<script type="module" src="/src/assistant-frame.js"></script>
+	</body>
+</html>

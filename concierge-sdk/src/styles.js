@@ -1,12 +1,12 @@
 /**
- * Styles — @three-ws/concierge
+ * Styles: @three-ws/concierge
  * ============================
  *
  * One injected stylesheet, scoped under .tc- prefixes and namespaced CSS
  * variables so host pages are never polluted. Themes: dark and light, chosen
  * by `data-tc-theme` on the root (the widget resolves 'auto' from
  * prefers-color-scheme and live-updates). Accent is one variable hosts set
- * from config — every tint derives via color-mix so a single hex restyles the
+ * from config, every tint derives via color-mix so a single hex restyles the
  * whole widget.
  */
 

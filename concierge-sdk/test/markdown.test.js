@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { renderMarkdown, stripMarkdown, escapeHtml } from '../src/markdown.js';
 
-test('escapes raw HTML — no injection from model output', () => {
+test('escapes raw HTML, no injection from model output', () => {
 	const html = renderMarkdown('<img src=x onerror=alert(1)> & <b>bold</b>');
 	assert.ok(!html.includes('<img'));
 	assert.ok(html.includes('&lt;img'));

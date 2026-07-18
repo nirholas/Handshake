@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
+		<meta charset="utf-8" />
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Assistant widget — three.ws</title>
+		<meta name="description" content="Put a 3D avatar assistant on any website with one script tag. Chatbot mode (free models or your own Groq/OpenRouter key) and speak mode — the avatar says whatever you type, out loud, with a speech bubble." />
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="three.ws" />
+	<meta property="og:url" content="https://three.ws/assistant" />
+	<meta property="og:title" content="Assistant widget — three.ws" />
+	<meta property="og:description" content="Put a 3D avatar assistant on any website with one script tag. Chat mode and speak mode, transparent or gradient backgrounds, free models or bring your own key." />
+	<meta property="og:image" content="https://three.ws/og-image.png" />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:site" content="@trythreews" />
+	<meta name="twitter:title" content="Assistant widget — three.ws" />
+	<meta name="twitter:description" content="Put a 3D avatar assistant on any website with one script tag. Chat mode and speak mode, transparent or gradient backgrounds, free models or bring your own key." />
+	<meta name="twitter:image" content="https://three.ws/og-image.png" />
+		<style>
+			:root {
+				--bg: #09090b;
+				--panel: #111114;
+				--border: rgba(255, 255, 255, 0.09);
+				--ink: #fafafa;
+				--dim: #a1a1aa;
+				--accent: #f97316;
+			}
+			* { box-sizing: border-box; }
+			html, body {
+				margin: 0;
+				padding: 0;
+				background: var(--bg);
+				color: var(--ink);
+				font-family: 'Inter', system-ui, -apple-system, sans-serif;
+				-webkit-font-smoothing: antialiased;
+			}
+			main {
+				max-width: 1080px;
+				margin: 0 auto;
+				padding: 56px 20px 120px;
+			}
+			.hero h1 {
+				margin: 0 0 12px;
+				font-size: clamp(30px, 5vw, 44px);
+				letter-spacing: -0.02em;
+				line-height: 1.1;
+			}
+			.hero h1 .accent { color: var(--accent); }
+			.hero p.lede {
+				margin: 0 0 8px;
+				max-width: 640px;
+				color: var(--dim);
+				font-size: 16px;
+				line-height: 1.6;
+			}
+			.hero .hint {
+				font-size: 13px;
+				color: var(--dim);
+				background: rgba(249, 115, 22, 0.08);
+				border: 1px solid rgba(249, 115, 22, 0.25);
+				border-radius: 10px;
+				padding: 9px 12px;
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+				margin-top: 14px;
+			}
+
+			.builder {
+				display: grid;
+				grid-template-columns: 1fr;
+				gap: 24px;
+				margin-top: 44px;
+			}
+			@media (min-width: 860px) {
+				.builder { grid-template-columns: 420px 1fr; align-items: start; }
+			}
+
+			.card {
+				background: var(--panel);
+				border: 1px solid var(--border);
+				border-radius: 16px;
+				padding: 20px;
+			}
+			.card h2 {
+				margin: 0 0 16px;
+				font-size: 13px;
+				font-weight: 700;
+				letter-spacing: 0.07em;
+				text-transform: uppercase;
+				color: var(--dim);
+			}
+			.field { margin-bottom: 16px; }
+			.field > label {
+				display: block;
+				font-size: 12.5px;
+				font-weight: 600;
+				color: var(--dim);
+				margin-bottom: 6px;
+			}
+			.field input[type='text'],
+			.field select,
+			.field textarea {
+				width: 100%;
+				background: rgba(255, 255, 255, 0.04);
+				border: 1px solid var(--border);
+				border-radius: 10px;
+				color: var(--ink);
+				font: 400 13.5px/1.4 'Inter', system-ui, sans-serif;
+				padding: 9px 11px;
+				outline: 0;
+				transition: border-color 0.15s ease;
+			}
+			.field textarea { resize: vertical; min-height: 56px; }
+			.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+			.field .row { display: flex; gap: 8px; }
+			.field .row > * { flex: 1; }
+			.seg {
+				display: inline-flex;
+				gap: 2px;
+				padding: 2px;
+				border-radius: 10px;
+				background: rgba(255, 255, 255, 0.05);
+				border: 1px solid var(--border);
+			}
+			.seg button {
+				appearance: none;
+				border: 0;
+				background: transparent;
+				color: var(--dim);
+				font: 600 12px/1 'Inter', system-ui, sans-serif;
+				padding: 7px 13px;
+				border-radius: 8px;
+				cursor: pointer;
+				transition: background 0.15s ease, color 0.15s ease;
+			}
+			.seg button:hover { color: var(--ink); }
+			.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+			.seg button[aria-pressed='true'] { background: rgba(255, 255, 255, 0.12); color: var(--ink); }
+			input[type='color'] {
+				width: 42px;
+				height: 34px;
+				padding: 2px;
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				background: rgba(255, 255, 255, 0.04);
+				cursor: pointer;
+			}
+			.swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+			.swatch {
+				width: 34px;
+				height: 34px;
+				border-radius: 9px;
+				border: 2px solid transparent;
+				cursor: pointer;
+				padding: 0;
+				transition: transform 0.12s ease, border-color 0.15s ease;
+			}
+			.swatch:hover { transform: translateY(-1px); }
+			.swatch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+			.swatch[aria-pressed='true'] { border-color: #fff; }
+			.swatch.transparent {
+				background:
+					linear-gradient(45deg, #2a2a2e 25%, transparent 25%, transparent 75%, #2a2a2e 75%),
+					linear-gradient(45deg, #2a2a2e 25%, #18181b 25%, #18181b 75%, #2a2a2e 75%);
+				background-size: 10px 10px;
+				background-position: 0 0, 5px 5px;
+			}
+
+			.snippet-card { position: sticky; top: 20px; }
+			.snippet {
+				position: relative;
+				background: #0a0a0c;
+				border: 1px solid var(--border);
+				border-radius: 12px;
+				padding: 16px;
+				font: 400 12.5px/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+				color: #d4d4d8;
+				overflow-x: auto;
+				white-space: pre;
+			}
+			.snippet .tag { color: #7dd3fc; }
+			.snippet .attr { color: #fbbf24; }
+			.snippet .val { color: #86efac; }
+			.copy-btn {
+				margin-top: 12px;
+				appearance: none;
+				border: 0;
+				border-radius: 10px;
+				background: var(--accent);
+				color: #fff;
+				font: 700 13.5px/1 'Inter', system-ui, sans-serif;
+				padding: 11px 18px;
+				cursor: pointer;
+				transition: filter 0.15s ease, transform 0.1s ease;
+			}
+			.copy-btn:hover { filter: brightness(1.1); }
+			.copy-btn:active { transform: scale(0.97); }
+			.copy-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+			.snippet-note { font-size: 12px; color: var(--dim); line-height: 1.6; margin-top: 12px; }
+			.snippet-note a { color: var(--ink); }
+
+			.features {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+				gap: 16px;
+				margin-top: 56px;
+			}
+			.feature h3 { margin: 0 0 6px; font-size: 15px; }
+			.feature p { margin: 0; color: var(--dim); font-size: 13.5px; line-height: 1.6; }
+
+			.docs-link { margin-top: 40px; font-size: 14px; color: var(--dim); }
+			.docs-link a { color: var(--ink); }
+		</style>
+	</head>
+	<body>
+		<main>
+			<section class="hero">
+				<h1>A 3D avatar assistant<br /><span class="accent">on any website.</span></h1>
+				<p class="lede">
+					One script tag adds a floating launcher to your site. Click it and a real,
+					animated 3D avatar pops up — against your page, a color, or a gradient — with
+					two modes: a chatbot that answers questions (free models, or bring your own
+					Groq / OpenRouter key), and a speak mode where the avatar says exactly what you
+					type, out loud, in a speech bubble.
+				</p>
+				<span class="hint">
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9L12 2z" /></svg>
+					This page runs the real widget — try the launcher in the corner. Your builder choices update it live.
+				</span>
+			</section>
+
+			<div class="builder">
+				<div class="card" id="builder-controls">
+					<h2>Configure</h2>
+
+					<div class="field">
+						<label for="cfg-avatar">Avatar</label>
+						<select id="cfg-avatar">
+							<option value="">Default mannequin</option>
+							<option value="/avatars/selfie-girl.glb">Selfie girl</option>
+							<option value="/avatars/realistic-male.glb">Realistic male</option>
+							<option value="/avatars/realistic-female.glb">Realistic female</option>
+							<option value="/avatars/michelle.glb">Michelle</option>
+							<option value="/avatars/xbot.glb">X Bot</option>
+							<option value="custom">Custom GLB URL…</option>
+						</select>
+						<input type="text" id="cfg-avatar-url" placeholder="https://… .glb (or a three.ws avatar id)" hidden style="margin-top: 8px" />
+					</div>
+
+					<div class="field">
+						<label id="cfg-bg-label">Background</label>
+						<div class="swatches" role="group" aria-labelledby="cfg-bg-label">
+							<button type="button" class="swatch transparent" data-bg="" aria-pressed="true" title="Transparent — avatar floats on your page" aria-label="Transparent background"></button>
+							<button type="button" class="swatch" data-bg="#0a0a0c" style="background:#0a0a0c" title="Solid dark" aria-label="Solid dark background"></button>
+							<button type="button" class="swatch" data-bg="ember" style="background:linear-gradient(160deg,#1a0b05,#7c2d12)" title="Ember gradient" aria-label="Ember gradient background"></button>
+							<button type="button" class="swatch" data-bg="ocean" style="background:linear-gradient(160deg,#020617,#0c4a6e)" title="Ocean gradient" aria-label="Ocean gradient background"></button>
+							<button type="button" class="swatch" data-bg="violet" style="background:linear-gradient(160deg,#0f0518,#5b21b6)" title="Violet gradient" aria-label="Violet gradient background"></button>
+							<button type="button" class="swatch" data-bg="dusk" style="background:linear-gradient(200deg,#0b0714,#9d174d)" title="Dusk gradient" aria-label="Dusk gradient background"></button>
+							<button type="button" class="swatch" data-bg="custom-color" id="cfg-bg-custom" title="Pick a solid color" aria-label="Custom solid color" style="background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)"></button>
+						</div>
+						<input type="color" id="cfg-bg-color" value="#101820" hidden style="margin-top: 8px" aria-label="Custom background color" />
+					</div>
+
+					<div class="field">
+						<label id="cfg-mode-label">Mode</label>
+						<div class="seg" role="group" aria-labelledby="cfg-mode-label">
+							<button type="button" data-mode="both" aria-pressed="true">Chat + Speak</button>
+							<button type="button" data-mode="chat" aria-pressed="false">Chat only</button>
+							<button type="button" data-mode="speak" aria-pressed="false">Speak only</button>
+						</div>
+					</div>
+
+					<div class="field">
+						<label for="cfg-name">Assistant name</label>
+						<input type="text" id="cfg-name" placeholder="Atelier AI" maxlength="60" />
+					</div>
+
+					<div class="field">
+						<label for="cfg-greeting">Greeting</label>
+						<input type="text" id="cfg-greeting" placeholder="Ask anything about Atelier." maxlength="200" />
+					</div>
+
+					<div class="field">
+						<label for="cfg-context">What should the chatbot know about your site?</label>
+						<textarea id="cfg-context" placeholder="Atelier is a design studio that…" maxlength="500"></textarea>
+					</div>
+
+					<div class="field">
+						<label for="cfg-accent">Accent color</label>
+						<div class="row" style="align-items: center">
+							<input type="color" id="cfg-accent" value="#f97316" style="flex: 0 0 auto" />
+							<span style="font-size: 12px; color: var(--dim)">Launcher button, send button, focus rings.</span>
+						</div>
+					</div>
+
+					<div class="field">
+						<label id="cfg-pos-label">Position</label>
+						<div class="seg" role="group" aria-labelledby="cfg-pos-label">
+							<button type="button" data-pos="right" aria-pressed="true">Bottom right</button>
+							<button type="button" data-pos="left" aria-pressed="false">Bottom left</button>
+						</div>
+					</div>
+				</div>
+
+				<div class="card snippet-card">
+					<h2>Your snippet</h2>
+					<div class="snippet" id="snippet" tabindex="0" aria-label="Embed code"></div>
+					<button type="button" class="copy-btn" id="copy-btn">Copy snippet</button>
+					<p class="snippet-note">
+						Paste it before <code>&lt;/body&gt;</code> on any site. Chat answers come from the
+						free model chain (Groq → OpenRouter → NVIDIA) by default; visitors can switch to
+						their own Groq or OpenRouter key in the widget's settings — keys stay in their
+						browser. Speak mode uses the browser's built-in voices. Full docs:
+						<a href="/docs">/docs</a>.
+					</p>
+				</div>
+			</div>
+
+			<section class="features">
+				<div class="card feature">
+					<h3>Not a render. Not a video.</h3>
+					<p>A real animated 3D character with idle, wave, and talking animations — standing directly on your page when the background is transparent.</p>
+				</div>
+				<div class="card feature">
+					<h3>Chatbot with real brains</h3>
+					<p>Free lane needs no key and no account. Or visitors bring their own Groq / OpenRouter key — it never leaves their browser and never touches your site's code.</p>
+				</div>
+				<div class="card feature">
+					<h3>Speak mode</h3>
+					<p>Type anything and the avatar says it out loud with a speech bubble — browser text-to-speech, pickable voices, zero cost.</p>
+				</div>
+				<div class="card feature">
+					<h3>Any avatar</h3>
+					<p>Use a built-in body, any three.ws avatar id (make one in <a href="/forge" style="color: var(--ink)">Forge</a>), a GLB URL, or an agent's body via <code>data-agent</code>.</p>
+				</div>
+			</section>
+
+			<p class="docs-link">
+				Docs: <a href="/docs">developer docs</a> · Related: <a href="/embed">3D embeds</a> ·
+				<a href="/walk-embed">walking avatar embed</a> · <a href="/widget">creator widgets</a>
+			</p>
+		</main>
+
+		<script type="module" src="/src/assistant-page.js"></script>
+		<script src="/nav.js"></script>
+	</body>
+</html>

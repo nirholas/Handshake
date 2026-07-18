@@ -1,5 +1,5 @@
 /**
- * Lipsync driver — @three-ws/concierge (shared lineage: page-agent-sdk/src/lipsync.js)
+ * Lipsync driver: @three-ws/concierge (shared lineage: page-agent-sdk/src/lipsync.js)
  * =====================================
  *
  * Text → viseme heuristic. No audio analysis, no microphone, no network. We
@@ -11,7 +11,7 @@
  *
  * Three mouth drivers, chosen from the discovered morph targets:
  *   - 'arkit': full Oculus/ARKit viseme set (best).
- *   - 'jaw':   only jawOpen/mouthOpen — amplitude-style open/close.
+ *   - 'jaw':   only jawOpen/mouthOpen, amplitude-style open/close.
  *   - none:    no morphs → returns a no-op timeline; the stage carries the
  *              talk visually through body animation instead.
  */
@@ -140,7 +140,7 @@ export function createLipsync(text, morph, opts = {}) {
 			}
 		}
 
-		// In jaw mode there's no per-viseme shape — any active phoneme opens the
+		// In jaw mode there's no per-viseme shape, any active phoneme opens the
 		// jaw on an envelope; silence closes it.
 		for (const name of current.keys()) {
 			let target = 0;

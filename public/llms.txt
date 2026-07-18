@@ -38,6 +38,7 @@ Entry points into the product.
 - [Pitch Deck](https://three.ws/pitch): The three.ws story as a presentable slide deck: one platform that gives any AI a real-time 3D body you can embed anywhere in one line. Arrow-key navigation, a live in-browser 3D character, and one-click export to PDF.
 - [Guided Tour](https://three.ws/tour): A 3D guide walks across the live site, points at every feature, and narrates what each one does and how to use it — voice plus an on-screen chat bubble, paced by you.
 - [Walk Anywhere on the Web](https://three.ws/walk): Your 3D avatar walks anywhere on the web. Live demos across six environments, a Chrome extension, one-tag embeds, and a global distance leaderboard.
+- [Concierge: AI Chat Widget](https://three.ws/concierge): Give any website an AI concierge with a talking 3D avatar: one-tag embed, streaming answers grounded in the live page, voice in and out, themes, and an avatar picker. Free and open source.
 - [Feed](https://three.ws/feed): Live avatars, agents, 3D models, worlds, and launches across three.ws — filter to everyone or just the people you follow.
 - [Partner Ecosystem](https://three.ws/partners): three.ws partner ecosystem — AWS, IBM, Google Cloud, Alibaba Cloud, Intel, NVIDIA, Microsoft, Oracle, Quicknode. The cloud, AI, and blockchain infrastructure platforms powering 3D AI agents at enterprise scale.
 - [Pricing](https://three.ws/pricing): Plans and pricing for three.ws: free forge quota, premium passes, and pay-per-use API surfaces.
@@ -384,6 +385,7 @@ Docs, tutorials, and reference.
 Long-form announcements, launches, and writing from three.ws.
 
 - [Blog](https://three.ws/blog): Editorial index of three.ws launches and long-form posts.
+- [Concierge: We Gave the Site Chatbot a Face](https://three.ws/blog/concierge-3d-chat-widget): Launch post for Concierge, the embeddable support chat with a rigged, lipsyncing 3D avatar: how it grounds streaming answers in the live page and how it was built by remixing the Walk and page-agent stack.
 - [Inside the Forge: How a Prompt Becomes a 3D Model](https://three.ws/blog/inside-the-forge): What actually happens between typing a prompt on three.ws and downloading a textured 3D model: the reference image, the engine grid, self-healing failover, quality tiers, and what your model can do next.
 - [three.ws Joins the Quicknode Startup Program](https://three.ws/blog/three-ws-quicknode-startup-program): three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.
 - [three.ws Joins the Alibaba Cloud Partner Network](https://three.ws/blog/three-ws-alibaba-cloud-partnership): three.ws is now an Alibaba Cloud Partner, bringing Qwen foundation models and Asia-Pacific cloud infrastructure to the three.ws 3D AI agent platform.

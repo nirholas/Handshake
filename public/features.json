@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-18T21:09:18.373Z",
+	"generated_at": "2026-07-18T22:36:12.061Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -280,6 +280,16 @@
 					"title": "Walk Anywhere on the Web",
 					"description": "Your 3D avatar walks anywhere on the web. Live demos across six environments, a Chrome extension, one-tag embeds, and a global distance leaderboard.",
 					"added": "2026-06-21",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/concierge",
+					"title": "Concierge: AI Chat Widget",
+					"description": "Give any website an AI concierge with a talking 3D avatar: one-tag embed, streaming answers grounded in the live page, voice in and out, themes, and an avatar picker. Free and open source.",
+					"added": "2026-07-18",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -3579,6 +3589,16 @@
 					"title": "Blog",
 					"description": "Editorial index of three.ws launches and long-form posts.",
 					"added": "2026-05-17",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/blog/concierge-3d-chat-widget",
+					"title": "Concierge: We Gave the Site Chatbot a Face",
+					"description": "Launch post for Concierge, the embeddable support chat with a rigged, lipsyncing 3D avatar: how it grounds streaming answers in the live page and how it was built by remixing the Walk and page-agent stack.",
+					"added": "2026-07-18",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

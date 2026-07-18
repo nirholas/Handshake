@@ -1,5 +1,5 @@
 /**
- * <three-concierge> custom element — @three-ws/concierge
+ * <three-concierge> custom element: @three-ws/concierge
  * ======================================================
  *
  * Declarative wrapper around Concierge. The element itself is invisible (the

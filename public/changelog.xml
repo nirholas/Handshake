@@ -7,6 +7,22 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Concierge: AI Chat Widget</title>
+			<link>https://three.ws/concierge</link>
+			<guid isPermaLink="false">2026-07-18:Concierge: AI Chat Widget</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Give any website an AI concierge with a talking 3D avatar: one-tag embed, streaming answers grounded in the live page, voice in and out, themes, and an avatar picker. Free and open source.</description>
+		</item>
+		<item>
+			<title>Concierge: We Gave the Site Chatbot a Face</title>
+			<link>https://three.ws/blog/concierge-3d-chat-widget</link>
+			<guid isPermaLink="false">2026-07-18:Concierge: We Gave the Site Chatbot a Face</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Launch post for Concierge, the embeddable support chat with a rigged, lipsyncing 3D avatar: how it grounds streaming answers in the live page and how it was built by remixing the Walk and page-agent stack.</description>
+		</item>
+		<item>
 			<title>Docs · Agent Galaxy</title>
 			<link>https://three.ws/docs/galaxy</link>
 			<guid isPermaLink="false">2026-07-18:Docs · Agent Galaxy</guid>
@@ -325,6 +341,14 @@
 			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The vision endpoint (used to describe and check 3D renders and avatars) now fetches your image itself and hands it straight to the free model, instead of asking the model's server to go fetch the link. Some image hosts block that server-side fetch, which used to push the request onto a paid fallback and, when that fallback was unavailable, fail outright. Now the free lane serves the request regardless of how the image is hosted, so describe/critique calls stop returning errors on perfectly good images.</description>
+		</item>
+		<item>
+			<title>New: a 3D avatar assistant widget for any website</title>
+			<link>https://three.ws/assistant</link>
+			<guid isPermaLink="false">2026-07-18:New: a 3D avatar assistant widget for any website</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>One script tag now puts a three.ws avatar on any site as a floating assistant. Click the launcher and a real animated 3D character pops up, standing directly on the page (transparent), or against a color or gradient you pick. It has two modes: a chatbot that answers visitors' questions using the free model chain, with the option to bring your own Groq or OpenRouter key that never leaves the browser, and a speak mode where the avatar says exactly what you type, out loud, with a speech bubble. Configure everything and copy your snippet at three.ws/assistant.</description>
 		</item>
 		<item>
 			<title>On-chain reads stay smooth when a data provider hits its daily cap</title>
