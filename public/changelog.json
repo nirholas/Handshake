@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-18T18:54:15.599Z",
+	"generated_at": "2026-07-18T19:35:24.274Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -426,6 +426,17 @@
 			"link": "/pulse",
 			"tags": [
 				"infra",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-18",
+			"type": "update",
+			"title": "The docs got a full accuracy pass against the live platform",
+			"summary": "Every page under three.ws/docs was cross-checked line by line against the code that actually runs in production. Around 180 outdated or wrong statements were corrected: dead links and sample URLs, endpoints and prices that had changed, code examples that no longer worked, and descriptions of features that had since evolved. Twenty-two existing guides that were previously unreachable from the sidebar (including the 3D Viewer, Editor, Crypto Data API, Trading Copilot, and Premium pass docs) are now listed in the navigation, and every wallet ability deep-dive gained a copy-pasteable Try It section. If you read something in the docs today, it matches what the platform actually does.",
+			"link": "/docs",
+			"tags": [
+				"docs",
 				"improvement"
 			]
 		},
@@ -5934,7 +5945,7 @@
 			"date": "2026-07-01",
 			"type": "launch",
 			"title": "Talking Avatar Video",
-			"summary": "Turn a three.ws avatar into a talking-head video: type a script, pick a voice, and export a lip-synced clip.",
+			"summary": "Turn a three.ws avatar into a talking-head video: upload your audio and export a lip-synced clip.",
 			"link": "/create/video",
 			"tags": [
 				"launch"

@@ -2,7 +2,7 @@
 
 > Describe a snipe strategy in plain English, backtest it against real launch history, and arm your agent to trade it from its own wallet — in one tap.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Snipe** tab.*
 
 ## What it does
 
@@ -67,8 +67,20 @@ Owner-only surface end to end: the tab is hidden from non-owners, and every endp
 - The backtest card is the money shot: win rate, EV per trade, an ROI percentile band from worst to best, max drawdown, and a graduated/pumped/flat/rugged outcome bar — all computed by replaying the exact live entry and exit logic over real captured launches, stamped with a confidence badge.
 - The 'Armed ✓' moment: one tap after a green backtest and the banner confirms the agent is now sniping autonomously from its own wallet, under its spend guards, disarmable any time from the dashboard.
 
+## Try it
+
+1. Open `three.ws/agent/<your-agent-id>/wallet` while signed in as the owner and pick the **Snipe** tab.
+2. Type a strategy in plain English (or tap an example), hit compile, and review every inferred field, clamp, and assumption.
+3. Run the backtest over 7, 30, or 90 days of real launch history; only when per-trade size, daily budget, and stop-loss are set does the Arm button enable.
+
 ## API surface
 
 - `/api/sniper/compile`
 - `/api/sniper/backtest`
 - `/api/sniper/strategy`
+
+## Related
+
+- [Trade](./08-trade.md)
+- [Orders](./12-orders.md)
+- [Policy](./17-policy.md)

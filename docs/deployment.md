@@ -354,7 +354,7 @@ The embed routes explicitly set `frame-ancestors *` so the embed iframe can be h
 
 ### Background cron jobs
 
-The `crons` array in `vercel.json` declares ~90 scheduled jobs (economy tick, on-chain crawl, delegation indexing, DCA, subscriptions, coin-launch lifecycle, treasury top-ups, and more). In production these run as **Google Cloud Scheduler jobs** — one per entry — each firing `GET /api/cron/<name>` with an `Authorization: Bearer $CRON_SECRET` header. A representative slice:
+The `crons` array in `vercel.json` declares ~90 scheduled jobs (economy tick, on-chain crawl, delegation indexing, DCA, subscriptions, coin-launch lifecycle, treasury top-ups, and more). In production these run as **Google Cloud Scheduler jobs** (one per entry) each firing `GET /api/cron/<name>` with an `Authorization: Bearer $CRON_SECRET` header. A representative slice:
 
 | Cron | Schedule | Purpose |
 |---|---|---|
@@ -537,7 +537,7 @@ After deploying, run through these checks to verify the instance is healthy:
 | Viewer | Load the app and drag-drop a GLB file |
 | Wallet sign-in | Connect MetaMask — SIWE challenge + verify |
 | Avatar creation | Navigate to `/create` — avatar builder iframe loads |
-| Agent page | Visit `/agents/:id` — 3D viewer with chat overlay (`/agent/:id` 301-redirects here) |
+| Agent page | Visit `/agents/:id`: 3D viewer with chat overlay (`/agent/:id` 301-redirects here) |
 | Embed | Check `/agent/:id/embed` loads without auth, can be iframed |
 | Dashboard | Navigate to `/dashboard` — shows your agents |
 | API health | `GET /api/agents` returns JSON (may be empty array) |

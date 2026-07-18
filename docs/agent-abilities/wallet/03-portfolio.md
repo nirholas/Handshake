@@ -2,7 +2,7 @@
 
 > Your agent's entire trading life — net worth, holdings, P&L, and risk — on one live screen that never fakes a number.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Portfolio** tab.*
 
 ## What it does
 
@@ -55,7 +55,25 @@ Owner-only at two layers: the tab is hidden from non-owner viewers in the wallet
 - The allocation bar: the whole portfolio's composition in one color-coded strip — Solana violet, $THREE green, stablecoin teal, and warm hues for the memecoin sleeve — with hover tooltips per slice
 - The risk panel's plain-English verdicts: heat-colored meters plus flags like '90% of net worth is held in SOL / stable reserve — dry powder ready to deploy' instead of jargon or false alarms
 
+## Try it
+
+1. Open `three.ws/agent/<your-agent-id>/wallet` while signed in as the owner and pick the **Portfolio** tab.
+2. The first snapshot loads, then the pulsing live dot confirms the SSE stream is revaluing everything every 20 seconds.
+3. Hover the allocation bar for per-asset tooltips, and click **Trade** on any holding to jump to the Trade tab with the mint pre-copied.
+
+Owners can also read the same data directly:
+
+```bash
+curl -b <session-cookie> 'https://three.ws/api/agents/<agent-id>/portfolio?network=mainnet'
+```
+
 ## API surface
 
 - `GET /api/agents/:id/portfolio?network=mainnet|devnet`
 - `GET /api/agents/:id/portfolio/stream?network=mainnet|devnet (SSE)`
+
+## Related
+
+- [Balance](./01-balance.md)
+- [Trade](./08-trade.md)
+- [Snipe](./10-snipe.md)

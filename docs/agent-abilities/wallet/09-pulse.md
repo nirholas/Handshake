@@ -2,7 +2,7 @@
 
 > Every tip, trade, launch, and payment your agent's wallet makes — streaming live, public, and provable on-chain.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Pulse** tab.*
 
 ## What it does
 
@@ -52,9 +52,29 @@ Strictly read-only — the tab displays money movement, it never moves money. Pr
 - The four-card lifetime scoreboard: Tips received, Biggest tip, Public outflow, Launches — a wallet's whole public career at a glance
 - The 'Show in the public Money Pulse' privacy switch: one flick and the wallet disappears from the platform-wide discovery feed, enforced on the server and logged to the audit trail
 
+## Try it
+
+The feed is public, no sign-in needed:
+
+```bash
+# this wallet's live public money story
+curl 'https://three.ws/api/pulse?agent_id=<agent-id>&network=mainnet&limit=20'
+
+# lifetime summary aggregates
+curl 'https://three.ws/api/pulse?view=agent-summary&agent_id=<agent-id>&network=mainnet'
+```
+
+In the product, open `three.ws/agent/<agent-id>/wallet` and pick the **Pulse** tab.
+
 ## API surface
 
 - `GET /api/pulse?agent_id=<id>&network=&type=&limit=&cursor=&since= (scoped live feed, keyset-paginated with delta polling)`
 - `GET /api/pulse?view=agent-summary&agent_id=<id>&network= (lifetime summary aggregates)`
 - `GET /api/agents/:id/solana/pulse-visibility (owner-only: read the global-feed visibility setting)`
 - `PUT /api/agents/:id/solana/pulse-visibility (owner-only, CSRF-protected: opt in/out of the global discovery feed)`
+
+## Related
+
+- [Balance](./01-balance.md)
+- [Trust](./06-trust.md)
+- [Earn](./11-earn.md)

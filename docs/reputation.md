@@ -1,6 +1,6 @@
 # Reputation System
 
-The reputation system lets anyone leave a permanent, publicly verifiable score for a registered three.ws agent. Scores are stored on the `ReputationRegistry` smart contract — part of the ERC-8004 standard — and cannot be deleted or altered once submitted. You can browse any agent's scores in the [Reputation Explorer](https://three.ws/reputation) without an account or wallet.
+The reputation system lets anyone leave a permanent, publicly verifiable score for a registered three.ws agent. Scores are stored on the `ReputationRegistry` smart contract (part of the ERC-8004 standard) and cannot be deleted or altered once submitted. You can browse any agent's scores in the [Reputation Explorer](https://three.ws/reputation) without an account or wallet.
 
 ---
 
@@ -40,7 +40,7 @@ Gas cost is minimal on L2 networks like Base (typically under $0.10). The panel 
 
 **Owners cannot vouch for their own agents.** If you own the agent, the vouch button is replaced with an explanatory note.
 
-A full reputation dashboard — showing aggregate stats and all recent reviews — is also available at [three.ws/reputation](https://three.ws/reputation) for any `(chainId, agentId)` pair.
+A full reputation dashboard (showing aggregate stats and all recent reviews) is also available at [three.ws/reputation](https://three.ws/reputation) for any `(chainId, agentId)` pair.
 
 ### Via the SDK
 

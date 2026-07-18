@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-18",
+			"title": "The docs got a full accuracy pass against the live platform",
+			"summary": "Every page under three.ws/docs was cross-checked line by line against the code that actually runs in production. Around 180 outdated or wrong statements were corrected: dead links and sample URLs, endpoints and prices that had changed, code examples that no longer worked, and descriptions of features that had since evolved. Twenty-two existing guides that were previously unreachable from the sidebar (including the 3D Viewer, Editor, Crypto Data API, Trading Copilot, and Premium pass docs) are now listed in the navigation, and every wallet ability deep-dive gained a copy-pasteable Try It section. If you read something in the docs today, it matches what the platform actually does.",
+			"tags": [
+				"docs",
+				"improvement"
+			],
+			"link": "/docs"
+		},
+		{
+			"date": "2026-07-18",
 			"title": "The free 3D Studio now publishes a machine-readable API description",
 			"summary": "The free text-to-3D generation endpoint that powers the three.ws 3D Studio in ChatGPT now ships a published OpenAPI description at /.well-known/3d-studio-openapi.yaml. Any app, custom GPT, or agent can read it to discover how to generate a model from a prompt and poll for the result, with no account, no API key, and no payment. It documents only the free generation action and is kept automatically in sync with the version used by the 3D Studio custom GPT, so the two never drift.",
 			"tags": [

@@ -13,7 +13,7 @@ This tutorial walks you through every path for adding a three.ws agent to your s
 
 ## Before you start
 
-For the code paths below you need an agent ID. Find yours on [three.ws/my-agents](https://three.ws/my-agents) (or browse the [agents directory](https://three.ws/agents)) — it looks like `a_abc123`, or is a number paired with a chain ID like `42` on Base.
+For the code paths below you need an agent ID. Find yours on [three.ws/my-agents](https://three.ws/my-agents) (or browse the [agents directory](https://three.ws/agents)); it looks like `a_abc123`, or is a number paired with a chain ID like `42` on Base.
 
 ---
 
@@ -22,7 +22,7 @@ For the code paths below you need an agent ID. Find yours on [three.ws/my-agents
 If you don't want to write code, the Widget Studio generates the snippet for you.
 
 1. Go to [three.ws/studio](https://three.ws/studio)
-2. Pick an avatar — the built-in demo, one of your own uploads, or a public avatar by another creator
+2. Pick an avatar: the built-in demo, one of your own uploads, or a public avatar by another creator
 3. Choose a widget type and configure placement, colors, and behavior
 4. Click **Generate embed**
 5. Copy the snippet from the "Your widget is live" modal (it shows a live preview first)
@@ -498,7 +498,7 @@ Squarespace's developer preview and published output can differ. Try adding the 
 
 ## Related
 
-- [Embedding guide](/docs/embedding) — iframe permissions, CSP notes, and every embed surface in one place
-- [Web component reference](/docs/web-component) — the full `<agent-3d>` attribute, method, and event reference
-- [Embed in 30 seconds](/docs/tutorials/embed-in-30-seconds) — the shortest possible version of this tutorial
-- [Build your first agent](/docs/tutorials/first-agent) — create the agent you're about to embed
+- [Embedding guide](/docs/embedding): iframe permissions, CSP notes, and every embed surface in one place
+- [Web component reference](/docs/web-component): the full `<agent-3d>` attribute, method, and event reference
+- [Embed in 30 seconds](/docs/tutorials/embed-in-30-seconds): the shortest possible version of this tutorial
+- [Build your first agent](/docs/tutorials/first-agent): create the agent you're about to embed

@@ -2,7 +2,7 @@
 
 > Fund any agent in one scan — a tap-to-pay Solana QR with live on-chain confirmation the second the money lands.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Deposit** tab.*
 
 ## What it does
 
@@ -57,9 +57,27 @@ Public-safe by design: the tab exposes only the agent's public receive address �
 - One-tap tipping: preset chips (◎0.05 to $25), an honest stage-by-stage send flow (approve in your wallet → broadcasting → confirming), and a real Solscan receipt at the end
 - A first-time user with zero crypto hits a paid feature, clicks Add funds, buys $25 of USDC by card in a Coinbase popup — and watches the modal flip to '✓ Deposit confirmed — 25.00 USDC added' by itself the second the money lands, never having left the page
 
+## Try it
+
+1. Open `three.ws/agent/<agent-id>/wallet` (any visitor can) and pick the **Deposit** tab.
+2. Scan the QR with Phantom, Solflare, or Backpack, or tap **Open in a wallet app** on your phone; optionally type an amount first and the QR rewrites itself.
+3. Keep the tab open: the moment your SOL lands on-chain it flips to a green received confirmation.
+
+The address and balance behind the QR are a public read:
+
+```bash
+curl 'https://three.ws/api/agents/<agent-id>/solana?network=mainnet'
+```
+
 ## API surface
 
 - `GET /api/agents/:id/solana?network= — public, no-auth wallet read: agent's Solana address + live SOL balance (60s fleet-wide cache, RPC failover)`
 - `GET /api/agents/:id/solana/activity?network=&limit= — recent on-chain signatures with per-tx SOL deltas and summaries (owner-authenticated)`
 - `POST /api/agents/:id/solana/tip — records a confirmed browser-wallet tip after independent on-chain re-verification of the signature`
 - `GET /api/onramp/link`
+
+## Related
+
+- [Balance](./01-balance.md)
+- [Go Live](./02-go-live.md)
+- [Withdraw](./18-withdraw.md)

@@ -2,7 +2,7 @@
 
 > Every agent wallet gets an immune system — it learns what normal spending looks like, freezes itself the instant something looks wrong, and explains why in plain English.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Self-defense** tab.*
 
 ## What it does
 
@@ -51,6 +51,12 @@ Owner-only surface end to end: the tab is gated to the wallet owner and every AP
 - The 'What your wallet has learned' dashboard — spends learned, largest spend, known addresses, active hours — proof on screen that the wallet has a real behavioral memory, not a static rule list.
 - The sensitivity segmented control (Relaxed / Balanced / Strict) next to the promise that approving a flag teaches the guard — the wallet gets smarter, never naggier.
 
+## Try it
+
+1. Open `three.ws/agent/<your-agent-id>/wallet` while signed in as the owner and pick the **Self-defense** tab.
+2. Set a sensitivity preset (Relaxed / Balanced / Strict) and a safe address; the "What your wallet has learned" dashboard shows the live baseline.
+3. If a spend trips the guard, the wallet freezes and a flag card appears here with the risk score and plain-language reasons; resolve it with Approve & unfreeze, Keep frozen, or Sweep to safety.
+
 ## API surface
 
 - `GET /api/agents/:id/solana/guard`
@@ -58,3 +64,9 @@ Owner-only surface end to end: the tab is gated to the wallet owner and every AP
 - `PUT /api/agents/:id/solana/guard`
 - `POST /api/agents/:id/solana/guard`
 - `POST /api/agents/:id/solana/withdraw`
+
+## Related
+
+- [Policy](./17-policy.md)
+- [Withdraw](./18-withdraw.md)
+- [Recovery](./22-recovery.md)

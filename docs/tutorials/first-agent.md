@@ -134,7 +134,7 @@ Update the `<agent-3d>` tag to add the `brain` and `instructions` attributes:
 
 **What changed:**
 
-- `brain="claude-sonnet-4-6"` — enables the AI. The value is the model ID to use. `claude-sonnet-4-6` is the recommended default: fast, capable, and cost-effective. You can also use `claude-opus-4-7` for the most capable responses, or `claude-haiku-4-5` for the fastest. There's also `brain="free"`, which routes to the platform's free hosted model so you can try everything with no key at all.
+- `brain="claude-sonnet-4-6"`: enables the AI. The value is the model ID to use. `claude-sonnet-4-6` is the recommended default: fast, capable, and cost-effective. You can also use `claude-opus-4-7` for the most capable responses, or `claude-haiku-4-5` for the fastest. There's also `brain="free"`, which routes to the platform's free hosted model so you can try everything with no key at all.
 - `name="Aria"` — the agent's name. This appears in the nameplate overlay and is available to the brain as context.
 - `instructions="..."` — the system prompt. This is where you define personality, tone, behavior rules, and anything the agent should know about its context.
 
@@ -478,15 +478,15 @@ And the `agent.json` manifest alongside it.
 Now that you have a working agent, here's what to explore next:
 
 **Make it smarter:**
-- [Skills documentation](/docs/skills) — add tools like web search, weather, or a product catalog. Skills are JSON packages that give the agent new capabilities without changing the system prompt.
-- [Memory system](/docs/memory) — the agent can remember things across conversations using local storage or IPFS.
+- [Skills documentation](/docs/skills): add tools like web search, weather, or a product catalog. Skills are JSON packages that give the agent new capabilities without changing the system prompt.
+- [Memory system](/docs/memory): the agent can remember things across conversations using local storage or IPFS.
 
 **Make it permanent:**
-- [ERC-8004 registration](/docs/erc8004) — register your agent on-chain for a permanent, decentralized identity. Once registered, anyone can load your agent by its on-chain ID: `<agent-3d agent-id="42" chain-id="8453">`.
+- [ERC-8004 registration](/docs/erc8004): register your agent on-chain for a permanent, decentralized identity. Once registered, anyone can load your agent by its on-chain ID: `<agent-3d agent-id="42" chain-id="8453">`.
 
 **Embed it anywhere:**
-- [Embedding guide](/docs/embedding) — embed Aria as a floating bubble in the corner of any existing website, or as an iframe widget with a single line of code.
-- [Web component reference](/docs/web-component) — the full attribute, method, and event reference for `<agent-3d>`.
+- [Embedding guide](/docs/embedding): embed Aria as a floating bubble in the corner of any existing website, or as an iframe widget with a single line of code.
+- [Web component reference](/docs/web-component): the full attribute, method, and event reference for `<agent-3d>`.
 
 ---
 

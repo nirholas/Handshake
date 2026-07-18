@@ -105,7 +105,7 @@ To bypass Guardian gating in `/api/chat` during local development, set `GUARDIAN
 
 watsonx Granite is a selectable **brain** for any three.ws agent, alongside the other providers. The chat proxy ([`api/chat.js`](../api/chat.js)) resolves watsonx auth headers lazily inside its failover loop and streams Granite's reply through the standard agent runtime, so a Granite-brained avatar speaks, emotes, and uses skills exactly like any other.
 
-Granite is selected when watsonx is configured and the request explicitly names the watsonx provider (it is never the silent default); when it isn't configured, the provider reports unavailable and the runtime falls through to the next brain. Before an avatar takes an autonomous money action (e.g. sending SOL), the same request is run through Granite Guardian inline — see the Trust Layer next.
+Granite is selected when watsonx is configured and the request explicitly names the watsonx provider (it is never the silent default); when it isn't configured, the provider reports unavailable and the runtime falls through to the next brain. Before an avatar takes an autonomous money action (e.g. sending SOL), the same request is run through Granite Guardian inline, see the Trust Layer next.
 
 ---
 
@@ -115,7 +115,7 @@ Granite is selected when watsonx is configured and the request explicitly names 
 
 Granite Guardian is governance middleware, not a UI flourish. It sits between an agent's reasoning and its actions and classifies a message or a proposed autonomous action across named risks (jailbreak, harm, social bias, violence, profanity, sexual content, unethical behavior, and more) using the `ibm/granite-guardian-3-8b` model on watsonx.ai. Each risk is scored from the model's calibrated `Yes`/`No` log-probabilities, and the verdicts collapse to a single **allow / review / block** decision.
 
-It doesn't just flag — it **vetoes**. The same gate runs inline in `/api/chat` before an avatar sends value, and a `block` verdict refuses the action. Every verdict is written into a **tamper-evident, hash-chained audit ledger**: each record commits the prior record's hash, so any client can re-verify the whole chain with SHA-256.
+It doesn't just flag: it **vetoes**. The same gate runs inline in `/api/chat` before an avatar sends value, and a `block` verdict refuses the action. Every verdict is written into a **tamper-evident, hash-chained audit ledger**: each record commits the prior record's hash, so any client can re-verify the whole chain with SHA-256.
 
 ```bash
 curl -s https://three.ws/api/guardian/assess \
@@ -182,7 +182,7 @@ The Twin mirrors a live token's vitals (momentum, volatility, activity, liquidit
 
 **API:** `GET /api/ibm/galaxy`, `POST /api/ibm/galaxy { query }`, `POST /api/watsonx/embed`
 
-The Galaxy embeds every public agent with `granite-embedding-278m-multilingual`, projects the vectors into 3D with PCA, clusters them with k-means, and asks Granite chat to name each cluster. The result is a 3D star-map layout where semantically similar agents sit near each other. A natural-language search ("a witty Solana trading assistant") embeds the query and returns the nearest agents by cosine similarity — meaning, not keywords.
+The Galaxy embeds every public agent with `granite-embedding-278m-multilingual`, projects the vectors into 3D with PCA, clusters them with k-means, and asks Granite chat to name each cluster. The result is a 3D star-map layout where semantically similar agents sit near each other. A natural-language search ("a witty Solana trading assistant") embeds the query and returns the nearest agents by cosine similarity: matching on meaning, not keywords.
 
 The constellation is cached (keyed by a content hash of the agent set + model) so repeat visits are instant; `?refresh=1` forces a rebuild. The standalone embeddings endpoint, `POST /api/watsonx/embed`, exposes the same Granite vectors for your own semantic search or clustering:
 
@@ -207,7 +207,7 @@ Every three.ws agent holds a Solana wallet and earns on-chain reputation — whi
 
 The endpoint is auth-optional: anonymous callers get impersonation detection against all public agents; authenticated callers also get their own agents included in the comparison so the editor can warn "you already have a similar agent."
 
-When watsonx is unconfigured the response returns `{ configured: false, status: "unavailable" }` and the identity is allowed (fail-open) — callers get a clear "not configured" state rather than a fake verdict.
+When watsonx is unconfigured the response returns `{ configured: false, status: "unavailable" }` and the identity is allowed (fail-open), callers get a clear "not configured" state rather than a fake verdict.
 
 ```bash
 curl -s https://three.ws/api/agents/identity-check \

@@ -37,7 +37,7 @@ Most basic features are free. You pay when you use premium capabilities:
 | Premium skills (skill purchases) | USDC micropayment via x402 | Set by the skill author |
 | On-chain registration (ERC-8004) | Small gas fee on Base | A few cents in ETH |
 
-**USDC** is a dollar-pegged stablecoin — 1 USDC ≈ $1 USD. It doesn't go up or down the way ETH or SOL does. When you see a price in USDC, you can treat it as dollars. Payment surfaces on the platform also show the approximate USD (or SOL) equivalent next to the amount, so you never have to do mental math from crypto to dollars.
+**USDC** is a dollar-pegged stablecoin: 1 USDC ≈ $1 USD. It doesn't go up or down the way ETH or SOL does. When you see a price in USDC, you can treat it as dollars. Payment surfaces on the platform also show the approximate USD (or SOL) equivalent next to the amount, so you never have to do mental math from crypto to dollars.
 
 ---
 

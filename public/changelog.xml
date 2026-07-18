@@ -343,6 +343,14 @@
 			<description>Every live Solana read the platform depends on (the $THREE price and bonding-curve, wallet balances, agent trades, and on-chain activity) now goes first through a dedicated premium RPC endpoint that absorbs the load ahead of the shared public providers, then falls back automatically down the full free-provider chain if that endpoint is ever unavailable. In practice that means fewer rate-limit stalls and fewer degraded or stale reads when Solana is busy, without adding a single point of failure: if the premium lane blinks, the free chain still answers.</description>
 		</item>
 		<item>
+			<title>The docs got a full accuracy pass against the live platform</title>
+			<link>https://three.ws/docs</link>
+			<guid isPermaLink="false">2026-07-18:The docs got a full accuracy pass against the live platform</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>Every page under three.ws/docs was cross-checked line by line against the code that actually runs in production. Around 180 outdated or wrong statements were corrected: dead links and sample URLs, endpoints and prices that had changed, code examples that no longer worked, and descriptions of features that had since evolved. Twenty-two existing guides that were previously unreachable from the sidebar (including the 3D Viewer, Editor, Crypto Data API, Trading Copilot, and Premium pass docs) are now listed in the navigation, and every wallet ability deep-dive gained a copy-pasteable Try It section. If you read something in the docs today, it matches what the platform actually does.</description>
+		</item>
+		<item>
 			<title>The free 3D Studio now publishes a machine-readable API description</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-18:The free 3D Studio now publishes a machine-readable API description</guid>
@@ -4556,7 +4564,7 @@
 			<guid isPermaLink="false">2026-07-01:Talking Avatar Video</guid>
 			<pubDate>Wed, 01 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Turn a three.ws avatar into a talking-head video: type a script, pick a voice, and export a lip-synced clip.</description>
+			<description>Turn a three.ws avatar into a talking-head video: upload your audio and export a lip-synced clip.</description>
 		</item>
 		<item>
 			<title>Agent hire receipts and the economy market are back online</title>

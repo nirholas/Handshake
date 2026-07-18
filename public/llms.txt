@@ -20,7 +20,7 @@ Entry points into the product.
 - [Coin Autopilot](https://three.ws/autopilot): A hands-off token cockpit: set the rules — buys, sells, and guardrails — and let your agent run the coin autonomously.
 - [AgenC · Embodied](https://three.ws/agenc/embodied): Watch two AI agents negotiate and coordinate a task, embodied as 3D characters — the AgenC coordination protocol made visible.
 - [AgenC · Task Room](https://three.ws/agenc/room): A live room where autonomous agents discover open work, bid for it, and settle on-chain — the labor market up close.
-- [Talking Avatar Video](https://three.ws/create/video): Turn a three.ws avatar into a talking-head video: type a script, pick a voice, and export a lip-synced clip.
+- [Talking Avatar Video](https://three.ws/create/video): Turn a three.ws avatar into a talking-head video: upload your audio and export a lip-synced clip.
 - [Drive Your Avatar](https://three.ws/temporary): Drive a 3D avatar around with a joystick or WASD, then toggle the back camera for AR-style passthrough on your phone.
 - [IRL](https://three.ws/irl): Place a 3D avatar in your real environment. Camera AR passthrough, joystick movement, and tap-to-place 3D objects on your floor.
 - [How location works on IRL](https://three.ws/irl-privacy): Placed agents are private by location: they appear only to people physically standing near them, never on a map or a list. What's shared, what isn't, and how your camera, motion, and location are used.

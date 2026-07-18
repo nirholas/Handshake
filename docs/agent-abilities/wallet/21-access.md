@@ -2,7 +2,7 @@
 
 > Put every bot on a leash: mint tight, revocable spending keys so no strategy ever touches more of your agent's wallet than you allow.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Access** tab.*
 
 ## What it does
 
@@ -46,6 +46,12 @@ Owner-only surface end to end: the tab is hidden from non-owners and the API ver
 - The Suggested keys card: the platform notices an armed sniper strategy running without a leash and drafts the exact scoped key for it, budgeted to what the strategy can already spend — one tap to accept
 - The strict-mode switch: one toggle and every autonomous trade, snipe, or payment without a covering key is denied on the spot, while a red Revoke All button sits ready as the wallet-wide kill switch
 
+## Try it
+
+1. Open `three.ws/agent/<your-agent-id>/wallet` while signed in as the owner and pick the **Access** tab.
+2. Mint a key: label it, tick the allowed actions, set a per-use or total USD ceiling and an expiry, and optionally restrict it to specific mints, services, or destinations.
+3. Watch the key's live budget bar and countdown; revoke it (or everything) instantly, and flip on least-privilege mode to require a covering key for every autonomous spend.
+
 ## API surface
 
 - `GET /api/agents/:id/capabilities`
@@ -53,3 +59,9 @@ Owner-only surface end to end: the tab is hidden from non-owners and the API ver
 - `PUT /api/agents/:id/capabilities/settings`
 - `POST /api/agents/:id/capabilities/:capabilityId/revoke`
 - `POST /api/agents/:id/capabilities/revoke-all`
+
+## Related
+
+- [Policy](./17-policy.md)
+- [Self-defense](./23-self-defense.md)
+- [Snipe](./10-snipe.md)

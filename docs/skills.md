@@ -70,22 +70,24 @@ Reference skills by URI in the agent's `manifest.json`. The runtime fetches and 
 ```json
 {
   "skills": [
-    { "uri": "https://cdn.three.ws/skills/wave/", "version": "0.1.0" },
+    { "uri": "https://your-site.com/skills/wave/", "version": "0.1.0" },
     { "uri": "ipfs://bafy.../validate-model/", "version": "^1.0.0" }
   ]
 }
 ```
 
+The URI points at any host serving the four-file bundle. The repo ships a copyable starter at `examples/skills/wave/` (the same bundle Coach Leo's manifest references); host it on your own site or pin it to IPFS and reference that URI.
+
 URIs can be HTTPS, IPFS (`ipfs://`), or Arweave (`ar://`). IPFS URIs are resolved through a gateway fallback chain (dweb.link → ipfs.io → flk-ipfs.xyz, see `src/ipfs.js`).
 
 ### Via the web component attribute
 
-Pass a JSON array to the `skills` attribute:
+Pass one or more bundle URIs, comma separated (`src/element.js` splits on commas; versions cannot be pinned through the attribute, use the manifest for that):
 
 ```html
 <agent-3d
   agent-id="my-agent"
-  skills='[{"uri":"https://cdn.three.ws/skills/wave/","version":"0.1.0"}]'
+  skills="https://your-site.com/skills/wave/,https://your-site.com/skills/tip-jar/"
 ></agent-3d>
 ```
 
@@ -124,7 +126,7 @@ console.log(el.skills);
 
   // Skill dependencies — installed recursively before this skill
   "dependencies": {
-    "https://cdn.three.ws/skills/gesture-base/": "^1.0.0"
+    "https://your-site.com/skills/gesture-base/": "^1.0.0"
   },
 
   // What this skill adds to the agent
@@ -399,8 +401,8 @@ Skills can depend on other skills. The registry installs dependencies recursivel
   "name": "full-coaching-kit",
   "version": "1.0.0",
   "dependencies": {
-    "https://cdn.three.ws/skills/wave/": "^0.1.0",
-    "https://cdn.three.ws/skills/validate-model/": "^1.0.0"
+    "https://your-site.com/skills/wave/": "^0.1.0",
+    "https://your-site.com/skills/validate-model/": "^1.0.0"
   },
   "provides": { "tools": [] }
 }

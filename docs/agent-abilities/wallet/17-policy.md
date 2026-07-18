@@ -2,7 +2,7 @@
 
 > Write your agent's spending rules in plain English — AI translates them, deterministic code enforces them on every single spend.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Policy** tab.*
 
 ## What it does
 
@@ -53,9 +53,21 @@ Owner-only end to end: the tab is hidden from non-owner viewers and the server i
 - One sentence in, a numbered firewall out: 'stop everything if a trade drops more than 30%' becomes rule #4 with a Freeze tag that literally trips the wallet's kill-switch on-chain activity
 - The readback + assumptions card: the platform explains every rule back in plain English and openly lists what it assumed, so the owner confirms intent before anything is enforced
 
+## Try it
+
+1. Open `three.ws/agent/<your-agent-id>/wallet` while signed in as the owner and pick the **Policy** tab.
+2. Type rules in plain English (or tap a preset) and hit **Compile & preview**; read the numbered readback and the assumptions callout.
+3. Check the backtest against your real spend history, then Save; from that moment the rules run on every trade, snipe, payment, and withdrawal.
+
 ## API surface
 
 - `GET /api/agents/:id/solana/policy?network= — current compiled policy, plain-English readback, source text, numeric limits`
 - `POST /api/agents/:id/solana/policy {op:'compile', text} — LLM/heuristic compile + backtest + synthetic probes`
 - `POST /api/agents/:id/solana/policy {op:'backtest', rules} — replay a rule set against real custody history`
 - `PUT /api/agents/:id/solana/policy {rules, english} — save the validated policy (CSRF-gated, audited)`
+
+## Related
+
+- [Withdraw](./18-withdraw.md)
+- [Self-defense](./23-self-defense.md)
+- [Access](./21-access.md)

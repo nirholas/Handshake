@@ -2,7 +2,7 @@
 
 > Your agent shops the open x402 economy: find any paid API, see its live price, and settle it in USDC from the agent's own Solana wallet — receipt on-chain in seconds.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Pay** tab.*
 
 ## What it does
 
@@ -54,6 +54,12 @@ Owner-only tab, gated end to end: the caller must be signed in and must own the 
 - The bazaar search: type 'weather' or 'intel' and real paid APIs from across the open x402 economy appear with live USDC prices, each one payable in a single click from the agent's own wallet.
 - The funding-aware guard: when the agent is short, the tab shows exactly how much it holds versus the price, hands you the deposit address with one-tap copy, and routes you straight to funding instead of letting a doomed payment fire.
 
+## Try it
+
+1. Open `three.ws/agent/<your-agent-id>/wallet` while signed in as the owner and pick the **Pay** tab.
+2. Search the bazaar (try "intel") or paste any x402 endpoint URL; the preview sheet shows the live USDC price and your agent's balance before anything moves.
+3. Confirm and watch the payment timeline stream to a green receipt with the on-chain signature and the service's actual response.
+
 ## API surface
 
 - `GET /api/bazaar/search (aggregated x402 service catalog from public facilitators — PayAI + Coinbase CDP — filtered to Solana-payable)`
@@ -61,3 +67,9 @@ Owner-only tab, gated end to end: the caller must be signed in and must own the 
 - `POST /api/x402-pay streamed as Server-Sent Events (the real payment: challenge → built → settled → result)`
 - `GET /api/agents/:id/solana/holdings (live on-chain SOL + SPL token balances, USDC flagged)`
 - `GET /api/agents/:id/solana/custody?category=x402 (owner-only payment history from the custody ledger)`
+
+## Related
+
+- [Earn](./11-earn.md)
+- [Policy](./17-policy.md)
+- [Withdraw](./18-withdraw.md)

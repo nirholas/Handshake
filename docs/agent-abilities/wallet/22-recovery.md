@@ -2,7 +2,7 @@
 
 > Lose your login — or go silent forever — and your funded agent wallet still finds its way home: guardians, a beneficiary, and a dead-man's switch that only fires when you truly can't stop it.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Recovery** tab.*
 
 ## What it does
 
@@ -61,6 +61,12 @@ Owner-only tab; every write requires a fresh CSRF token and is rate-limited. Onl
 - The dead-man's switch card: a live inactivity bar that turns red as you approach the threshold, a countdown to arming, and a single glowing button — '✋ I'm here — reset the clock.'
 - The 4-step recovery timeline with a ticking 48-hour countdown and the big red 'Stop this recovery — it's not me' abort button — a screenshot that says 'your wallet can defend itself.'
 
+## Try it
+
+1. Open `three.ws/agent/<your-agent-id>/wallet` while signed in as the owner and pick the **Recovery** tab.
+2. Add guardians by @username or email, set the M-of-N threshold, and optionally name a beneficiary to unlock the dead-man's switch.
+3. Guardians act from their own console at `three.ws/guardian`; you can watch, and cancel, any live process from this tab, or tap "I'm here" to reset the inactivity clock.
+
 ## API surface
 
 - `GET /api/agents/:id/recovery`
@@ -70,3 +76,9 @@ Owner-only tab; every write requires a fresh CSRF token and is rate-limited. Onl
 - `POST /api/agents/:id/recovery/requests (+ /approve, /decline, /confirm, /complete — guardian console side)`
 - `GET /api/agents/recovery-inbox (guardian console)`
 - `GET /api/cron/dead-man-switch (daily sweep, secret-gated)`
+
+## Related
+
+- [Self-defense](./23-self-defense.md)
+- [Access](./21-access.md)
+- [Withdraw](./18-withdraw.md)

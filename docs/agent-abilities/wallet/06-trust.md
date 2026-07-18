@@ -2,7 +2,7 @@
 
 > A credit bureau plus proof-of-reserves for AI agents — one 0–100 trust score where every point traces to real money on-chain.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Trust** tab.*
 
 ## What it does
 
@@ -52,10 +52,30 @@ The score is computed exclusively server-side from real ledger and chain reads �
 - The Proof-of-Reserves header — a big live USD reserves figure, a 'Fully reserved' solvency verdict, a one-tap Verify-on-chain button, and a flow feed where every single payment links to its Solana transaction signature. 'Trustless, not trust-us.'
 - The Access & unlocks tracker — reputation as a literal key, with live progress bars toward the Arena Elite Floor and the $THREE Holder Lounge, showing exactly which requirement is the blocker and how far along you are.
 
+## Try it
+
+Both reads are public, no sign-in needed:
+
+```bash
+# 0-100 financial reputation score with all ten pillars
+curl 'https://three.ws/api/agents/<agent-id>/reputation'
+
+# live proof-of-reserves: holdings, lifetime flows, obligations
+curl 'https://three.ws/api/agents/<agent-id>/solana/reserves?network=mainnet'
+```
+
+In the product, open `three.ws/agent/<agent-id>/wallet` and pick the **Trust** tab; owner and visitor see the same numbers.
+
 ## API surface
 
 - `GET /api/agents/:id/reputation`
 - `GET|POST /api/agents/reputation-batch`
-- `GET /api/agents/:id/solana/reserves (alias /api/agents/:id/reserves)`
+- `GET /api/agents/:id/solana/reserves`
 - `GET /api/agents/:id/unlocks`
 - `POST /api/agents/:id/unlocks/claim`
+
+## Related
+
+- [Pulse](./09-pulse.md)
+- [Proof of Custody](./20-proof-of-custody.md)
+- [Earn](./11-earn.md)

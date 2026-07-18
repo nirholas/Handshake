@@ -217,7 +217,7 @@ Or embed the interactive agent with the web component, addressing it by its on-c
 For a standalone identity card (the Passport widget: registration JSON, reputation, validation), open the [Widget Studio](https://three.ws/studio), pick the **Passport** widget type, enter your chain and agent ID, and copy the generated snippet.
 
 **Generate a QR code:**
-Your agent URL is a plain link, so any QR generator turns it into a scannable code — handy for physical printouts, conference badges, or business cards.
+Your agent URL is a plain link, so any QR generator turns it into a scannable code, handy for physical printouts, conference badges, or business cards.
 
 **Include it in a README or profile:**
 A Markdown link works: `[My three.ws](https://three.ws/a/8453/42)`
@@ -226,7 +226,7 @@ A Markdown link works: `[My three.ws](https://three.ws/a/8453/42)`
 
 ## Step 10: Build your reputation
 
-Every review is a transaction on Base — public, permanent, and attached to the reviewer's wallet address. The public review surface is [three.ws/reputation](https://three.ws/reputation), where anyone can view and submit on-chain reviews for any agent.
+Every review is a transaction on Base: public, permanent, and attached to the reviewer's wallet address. The public review surface is [three.ws/reputation](https://three.ws/reputation), where anyone can view and submit on-chain reviews for any agent.
 
 **Ask others to leave a review:**
 
@@ -336,7 +336,7 @@ Your agent's URL will keep working as long as Base exists and IPFS gateways serv
 
 ## Related
 
-- [ERC-8004 reference](/docs/erc8004) — the full spec walkthrough: contracts, registration JSON, ENS/DNS binding
-- [Agent reputation tutorial](/docs/tutorials/agent-reputation) — reading and submitting on-chain reviews in depth
-- [Solana agent reputation](/docs/tutorials/solana-agent-reputation) — the same trust primitives on the home chain
-- [Reputation reference](/docs/reputation) — score encoding, staking, and the reputation API
+- [ERC-8004 reference](/docs/erc8004): the full spec walkthrough, from contracts to registration JSON to ENS/DNS binding
+- [Agent reputation tutorial](/docs/tutorials/agent-reputation): reading and submitting on-chain reviews in depth
+- [Solana agent reputation](/docs/tutorials/solana-agent-reputation): the same trust primitives on the home chain
+- [Reputation reference](/docs/reputation): score encoding, staking, and the reputation API

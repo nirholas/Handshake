@@ -92,7 +92,7 @@ Modules:
 - **`agent-identity.js`** — the passport + diary. Stable agent ID, owner address, signed action history. Backed by `localStorage` (cache) and `/api/agents/<id>` (canonical). Listens on the protocol bus and POSTs `speak` / `skill-done` / `validate` / `sign` events to `/api/agent-actions`.
 - **`memory/`** — `local`, `ipfs`, `encrypted-ipfs`, or `none`. Declared on the manifest.
 - **`erc8004/`** — on-chain registries. `IdentityRegistry` (mints agent token with `tokenURI`), `ReputationRegistry` (signed feedback), `ValidationRegistry` (validation report hashes). Per-chain addresses in `erc8004/abi.js`.
-- **`erc8004/solana-deploy.js`** — Solana counterpart. Metaplex Core asset mint; SPL Memo attestations and reputation live server-side (see [Agent Reputation on Solana](./solana-reputation.md)).
+- **`erc8004/solana-deploy.js`**: Solana counterpart. Metaplex Core asset mint; SPL Memo attestations and reputation live server-side (see [Agent Reputation on Solana](./solana-reputation.md)).
 - **`auth/` + `wallet/`** — SIWE / SIWS for backend mutations; Privy for email/social → embedded wallet onboarding; session cookies after wallet proof.
 
 Per-chain registry addresses, ABIs, and helpers ship as `@three-ws/sdk`. ENS attestations are also handled here — see [register-onchain.md](./tutorials/register-onchain.md).
@@ -107,9 +107,9 @@ Per-chain registry addresses, ABIs, and helpers ship as `@three-ws/sdk`. ENS att
 
 Modules:
 
-- **`element.js`** — `<agent-3d>` custom element. Lazy-boots via `IntersectionObserver` (unless `eager`). Enforces origin allowlist. Exposes attributes for `body`, `brain`, `agent-id`, `manifest`, `mode` (`inline` / `floating` / `section` / `fullscreen`), `voice`, and more. Public methods: `say()`, `ask()`, `installSkill()`, `expressEmotion()`, `play()`, `lookAt()`, `pause()`, `destroy()`.
-- **`stage-element.js`** — `<agent-stage>` for hosting multiple agents in one shared scene. See [multi-agent.md](./multi-agent.md).
-- **`widget-types.js`** — the ten widget variants: Turntable, Animation Gallery, Talking Agent, ERC-8004 Passport, Hotspot Tour, Pump.fun Live Feed, Smart Money Feed, Live Trades Canvas, Bonding Curve, Walking Avatar.
+- **`element.js`**: `<agent-3d>` custom element. Lazy-boots via `IntersectionObserver` (unless `eager`). Enforces origin allowlist. Exposes attributes for `body`, `brain`, `agent-id`, `manifest`, `mode` (`inline` / `floating` / `section` / `fullscreen`), `voice`, and more. Public methods: `say()`, `ask()`, `installSkill()`, `expressEmotion()`, `play()`, `lookAt()`, `pause()`, `destroy()`.
+- **`stage-element.js`**: `<agent-stage>` for hosting multiple agents in one shared scene. See [multi-agent.md](./multi-agent.md).
+- **`widget-types.js`**: the ten widget variants: Turntable, Animation Gallery, Talking Agent, ERC-8004 Passport, Hotspot Tour, Pump.fun Live Feed, Smart Money Feed, Live Trades Canvas, Bonding Curve, Walking Avatar.
 - **`lib.js`** — the CDN entry. Imports the element, registers it, re-exports the public surface (`defineElement`, `Agent3DElement`, `AgentStageElement`, helpers).
 - **`embed-action-bridge.js`** — the `postMessage` protocol. Iframe widgets and the web component speak the same dialect, so host pages can drive either with the same code.
 - **`app.js`** — the main SPA. URL routing via hash (`#model=`, `#agent=`, `#kiosk=`) and query (`?agent=`) params.

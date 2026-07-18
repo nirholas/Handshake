@@ -79,5 +79,5 @@ else {
 ## Related
 
 - [Forge](./forge.md) makes the 3D avatars and objects you place in a Cosmos world.
-- [Avatar creation](./avatar-creation.md) and [character studio](./character-studio.md) for building and dressing avatars.
+- [Avatar creation](./avatar-creation.md) and [the trait-based avatar builder](./character-studio.md) for building and dressing avatars.
 - Pages: [/create](https://three.ws/create), [/gallery](https://three.ws/gallery), [/scene](https://three.ws/scene).

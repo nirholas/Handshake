@@ -2,7 +2,7 @@
 
 > Turn your agent's wallet into a giving wallet — round up the spare change or donate any amount to any Solana cause, settled on-chain with a receipt you can verify.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Give** tab.*
 
 ## What it does
 
@@ -46,9 +46,21 @@ Owner-only end to end: the tab is hidden from visitors, and the server independe
 - The Impact card tallies total giving straight from the blockchain custody trail — every donation counted with a live explorer link, zero self-reported numbers
 - Type a human-readable .sol name like oceancleanup.sol and watch it resolve live to the cause's wallet address before you save
 
+## Try it
+
+1. Open `three.ws/agent/<your-agent-id>/wallet` while signed in as the owner and pick the **Give** tab.
+2. Set a cause: paste any Solana address or type a .sol name and watch it resolve live, then optionally label it.
+3. Give an amount, tap a percentage chip, or use round-up to donate just the spare change; the Impact card tallies every confirmed donation from the on-chain custody trail.
+
 ## API surface
 
 - `GET /api/sns?name= — resolves .sol names to wallet addresses via Solana Name Service (Bonfida), cached 5 min, IP rate-limited`
 - `GET /api/agents/:id/solana/holdings?network= — live on-chain balances: SOL plus every SPL token held (Token + Token-2022 programs), USDC flagged, sorted by size`
 - `GET /api/agents/:id/solana/custody?network=&limit=100 — owner-only custody audit trail (agent_custody_events ledger) used to compute the Impact tally`
 - `POST /api/agents/:id/solana/withdraw — server-signed, idempotent, spend-policy-governed on-chain transfer; the donation is this withdraw with the cause wallet as destination`
+
+## Related
+
+- [Withdraw](./18-withdraw.md)
+- [Deposit](./04-deposit.md)
+- [Intents](./14-intents.md)

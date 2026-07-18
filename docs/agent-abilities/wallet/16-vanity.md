@@ -2,7 +2,7 @@
 
 > Give your agent a wallet address that spells its name — ground on your own CPU at millions of attempts, then applied with a funds-safe swap that sweeps every asset over first.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Vanity** tab.*
 
 ## What it does
 
@@ -52,7 +52,19 @@ Owner-only end to end: the tab is hidden from non-owner viewers and the server r
 - The success card: the new address with your chosen pattern glowing in purple, 'Migrated 0.42 SOL + 3 tokens from the old address', and 'Found in 1,234,567 attempts · 12.3s' above a one-click explorer link
 - The difficulty estimator reacting as you type: attempt counts and time estimates update live per character and per core, flipping to an amber 'this one is hard' warning on ambitious patterns
 
+## Try it
+
+1. Open `three.ws/agent/<your-agent-id>/wallet` while signed in as the owner and pick the **Vanity** tab.
+2. Type a prefix and/or suffix (up to 6 Base58 characters each), pick how many CPU cores to spend, and start the grind; the difficulty estimate updates as you type.
+3. On a match the key is applied automatically: funds sweep to the new address first, then the success card shows the pattern, attempt count, and explorer link.
+
 ## API surface
 
 - `GET /api/agents/:id/solana/vanity — owner-only status: current address, vanity prefix/suffix, wallet source, is_vanity flag, server grind cap`
 - `POST /api/agents/:id/solana/vanity — owner-only assign: accepts a browser-ground 64-byte secret key (verified server-side) or grinds short patterns server-side, sweeps all funds old→new, swaps the stored encrypted key, returns address/iterations/duration/swept summary`
+
+## Related
+
+- [Balance](./01-balance.md)
+- [Deposit](./04-deposit.md)
+- [Withdraw](./18-withdraw.md)

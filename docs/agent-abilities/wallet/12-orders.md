@@ -2,7 +2,7 @@
 
 > Set-and-forget limit, stop, trailing, DCA, TWAP, and signal-driven orders that fire automatically from your agent's own wallet — on live on-chain data, inside your guardrails.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Orders** tab.*
 
 ## What it does
 
@@ -62,6 +62,12 @@ Owner-only end to end: the tab only renders for the agent's owner, and every ser
 - The pre-arm preview: live price, an '⚡ Would fire immediately' vs '⏳ Waiting' verdict, and the rug/honeypot firewall's allow/warn/block ruling — all before a single lamport moves
 - Open orders updating live under a pulsing 'live' badge, with per-fill receipts linking straight to the on-chain transaction
 
+## Try it
+
+1. Open `three.ws/agent/<your-agent-id>/wallet` while signed in as the owner and pick the **Orders** tab.
+2. Choose an order type, paste a mint, set the trigger and size, and hit **Preview**: you get the live metric value, a would-fire-now verdict, and the firewall ruling before arming.
+3. Arm it and watch the open-orders list stream status live; every fill links its on-chain receipt.
+
 ## API surface
 
 - `GET /api/agents/:id/orders — list orders + summary + live SOL balance + frozen/kill-switch state`
@@ -73,3 +79,9 @@ Owner-only end to end: the tab only renders for the agent's owner, and every ser
 - `GET /api/agents/:id/orders/:orderId — one order + its fills`
 - `PUT /api/agents/:id/orders/:orderId — edit price/trail/slippage/expiry or pause/resume`
 - `DELETE /api/agents/:id/orders/:orderId — instant cancel`
+
+## Related
+
+- [Trade](./08-trade.md)
+- [Snipe](./10-snipe.md)
+- [Autopilot](./13-autopilot.md)

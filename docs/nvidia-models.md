@@ -163,7 +163,7 @@ A free content-safety pre-filter for anonymous chat. NemoGuard classifies the in
 **Model:** `magpie-tts-multilingual` · **Transport:** Riva gRPC at `grpc.nvcf.nvidia.com:443`
 **Source:** [api/_lib/tts-nvidia.js](../api/_lib/tts-nvidia.js) (mirrored in `packages/avatar-agent-mcp/src/lib/tts-nvidia.js`).
 
-The free NVIDIA TTS lane — **Magpie multilingual on Riva**, selected by an NVCF `function-id`, speaking over the standard Riva gRPC synthesis contract (protos shipped in `api/_lib/riva-protos/` and loaded from a generated descriptor, so there's no `.proto` build step). Drives **avatar speech** with multilingual voices. Configured by the presence of `NVIDIA_API_KEY`; returns synthesized audio bytes, with a clear error if the lane returns empty audio.
+The free NVIDIA TTS lane: **Magpie multilingual on Riva**, selected by an NVCF `function-id`, speaking over the standard Riva gRPC synthesis contract (protos shipped in `api/_lib/riva-protos/` and loaded from a generated descriptor, so there's no `.proto` build step). Drives **avatar speech** with multilingual voices. Configured by the presence of `NVIDIA_API_KEY`; returns synthesized audio bytes, with a clear error if the lane returns empty audio.
 
 ---
 

@@ -44,7 +44,7 @@ This is the layer that turns a static GLB into a presence. It's structured as a 
 This layer is what keeps an agent's existence durable across sessions, devices, and embed hosts.
 
 - **`agent-identity.js`** — the **passport + diary**. Stores the agent's stable id, owner address, and a signed action history. Backed by `localStorage` for the local cache and `/api/agents/:id` for the canonical record. Listens on the protocol bus for `speak`, `remember`, `sign`, `skill-done`, `validate`, `load-end` and POSTs them to the backend fire-and-forget.
-- **`memory/`** — five built-in modes: `local` (browser `localStorage`), `remote` (synced to `/api/agent-memory`), `ipfs` (loaded from a pinned bundle), `encrypted-ipfs` (AES-GCM-256 with a wallet-derived key, pinned via `/api/agents/:id/memory/pin`), or `none` (stateless). Custom backends can also be registered. Mode is declared on the manifest.
+- **`memory/`**: five built-in modes: `local` (browser `localStorage`), `remote` (synced to `/api/agent-memory`), `ipfs` (loaded from a pinned bundle), `encrypted-ipfs` (AES-GCM-256 with a wallet-derived key, pinned via `/api/agents/:id/memory/pin`), or `none` (stateless). Custom backends can also be registered. Mode is declared on the manifest.
 - **`erc8004/`** — the **on-chain identity** layer. Contains:
   - `IdentityRegistry` — mints an agent token whose `tokenURI` points at the manifest CID
   - `ReputationRegistry` — accepts signed feedback per agent
@@ -57,7 +57,7 @@ This layer is what keeps an agent's existence durable across sessions, devices, 
 The top layer is what lets an agent live somewhere other than the canonical app.
 
 - **`element.js`** — the `<agent-3d>` custom web component. Lazy-boots via `IntersectionObserver` (unless `eager`), enforces an origin allowlist for embeds, and exposes attributes for body, brain, agent-id, manifest URL, mode (`inline` / `floating` / `section` / `fullscreen`), and more.
-- **`widget-types.js`** — ten widget variants (Turntable Showcase, Animation Gallery, Talking Agent, ERC-8004 Passport, Hotspot Tour, Pump.fun Live Feed, Smart Money Feed, Live Trades Canvas, Bonding Curve, Walking Avatar) that share the underlying element but ship as separate ergonomic wrappers.
+- **`widget-types.js`**: ten widget variants (Turntable Showcase, Animation Gallery, Talking Agent, ERC-8004 Passport, Hotspot Tour, Pump.fun Live Feed, Smart Money Feed, Live Trades Canvas, Bonding Curve, Walking Avatar) that share the underlying element but ship as separate ergonomic wrappers.
 - **`lib.js`** — the CDN entry. Imports the element, registers it, and re-exports the public surface.
 - **`app.js`** — the main SPA. URL routing happens here using hash params (`#model=`, `#agent=`, `#kiosk=`, `#brain=`, `#preset=`) and query params (`?agent=` for authenticated edit mode, `?pending=1` for post-login round-trips). The hash form stays in embed mode; the query form moves into edit mode.
 - **`vercel.json`** — the server's route and cron table. Maps clean URLs (`/agent/<id>`, `/agent/<id>/edit`, `/agent/<id>/embed`, `/a/<chainId>/<agentId>`) to the right HTML entry and mounts the `api/*` handlers. In production the single Cloud Run container ([`server/index.mjs`](../server/index.mjs)) reads this table at runtime — it's a live config file, not a Vercel-only artifact.
@@ -153,9 +153,9 @@ The manifest is a JSON document that fully describes an embodied agent. It's int
 Key fields:
 
 - **`name`, `description`, `creator`** — display metadata.
-- **`body.uri`** — GLB / glTF / VRM URL. Resolution is deliberately polymorphic: `agent://chain/id` (resolved on-chain), `ipfs://CID/path`, `ar://TXID`, or plain `https://`. The resolver in `ipfs.js` walks gateway fallbacks (dweb.link → ipfs.io → flk-ipfs.xyz) so a single broken gateway never breaks an embed.
+- **`body.uri`**: GLB / glTF / VRM URL. Resolution is deliberately polymorphic: `agent://chain/id` (resolved on-chain), `ipfs://CID/path`, `ar://TXID`, or plain `https://`. The resolver in `ipfs.js` walks gateway fallbacks (dweb.link → ipfs.io → flk-ipfs.xyz) so a single broken gateway never breaks an embed.
 - **`skills[]`** — pointers to skill bundles. Each skill is loaded and validated by the registry. Trust mode determines whether unsigned/foreign skills are allowed.
-- **`memory.mode`** — `local`, `remote`, `ipfs`, `encrypted-ipfs`, or `none`.
+- **`memory.mode`**: `local`, `remote`, `ipfs`, `encrypted-ipfs`, or `none`.
 - **`identity.chainId` / `identity.registryAddress`** — pin this manifest to an on-chain agent id.
 - **`personality`** — flavor: tone, domain, and any extra system-prompt fragments.
 

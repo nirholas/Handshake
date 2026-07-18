@@ -52,7 +52,7 @@ The whole stack is split into four horizontal strata. Each layer can run on its 
 - **Viewer layer** — pure three.js. Knows nothing about agents, brains, or wallets. Useful on its own as a glTF inspector and as the rendering engine for Turntable / Animation Gallery widgets. See [Layers](./layers.md) for the contract.
 - **Agent layer** — turns a static GLB into a presence. LLM tool-loop, skill registry, memory, and a continuous emotion blend that drives morphs and gaze. See [Agent system](./agent-system.md).
 - **Identity layer** — durability across sessions, devices, and embed hosts. Wallet auth, on-chain registration, IPFS-pinned manifest bundles, signed action diary. Entirely optional. See [ERC-8004](./erc8004.md) and [Solana agents](./solana.md).
-- **Embed layer** — the public face. The `<agent-3d>` custom element, ten widget variants, iframe embeds, the CDN bundle, the SPA, and the route table in `vercel.json` (read at runtime by the Cloud Run server). See [Embedding](./embedding.md).
+- **Embed layer**: the public face. The `<agent-3d>` custom element, ten widget variants, iframe embeds, the CDN bundle, the SPA, and the route table in `vercel.json` (read at runtime by the Cloud Run server). See [Embedding](./embedding.md).
 
 The four layers communicate through one event bus (`agent-protocol`). Every meaningful action is a `CustomEvent` on a singleton. That single design choice is why you can swap the avatar for a 2D sprite, the runtime for a different LLM, or memory for a vector store — and nothing else changes.
 
@@ -106,7 +106,7 @@ Every avatar ends up as a hosted GLB URL (served from the `cdn.three.ws` asset C
 Once your agent is live, three surfaces let other pages embed it:
 
 - **The web component** — `<agent-3d agent-id="…">` after loading the CDN script. The element runs in your page, sharing the DOM. Use this when you want full control and your CSP allows third-party scripts.
-- **The iframe widget** — `https://three.ws/w/<widget-id>` rendered inside an `<iframe>`. Ten widget types ship: Turntable, Animation Gallery, Talking Agent, ERC-8004 Passport, Hotspot Tour, Pump.fun Live Feed, Smart Money Feed, Live Trades Canvas, Bonding Curve, and Walking Avatar. Use this in environments where you can't load third-party scripts (Notion, Webflow, Framer, WordPress).
+- **The iframe widget**: `https://three.ws/w/<widget-id>` rendered inside an `<iframe>`. Ten widget types ship: Turntable, Animation Gallery, Talking Agent, ERC-8004 Passport, Hotspot Tour, Pump.fun Live Feed, Smart Money Feed, Live Trades Canvas, Bonding Curve, and Walking Avatar. Use this in environments where you can't load third-party scripts (Notion, Webflow, Framer, WordPress).
 - **The Open Graph + oEmbed surface** — paste `https://three.ws/agent/<id>` into Slack, X, Discord, or any platform that consumes oEmbed, and you get a rich preview with the avatar's poster, name, and description.
 
 With the web component, the host page calls element methods directly (`say()`, `ask()`, `installSkill()`, `play()`, `lookAt()`) and listens for DOM events (`agent:ready`, `brain:message`, `skill:tool-called`, `voice:transcript`). Inside an iframe, the `postMessage` bridge (`embed-action-bridge.js`) accepts the same intents as ops (`speak`, `gesture`, `emote`, `look`) and mirrors protocol events back to hosts that send a `subscribe` request.

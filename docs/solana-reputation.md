@@ -59,7 +59,7 @@ Every memo is one of these (`api/_lib/solana-attestations.js`):
 | `threews.accept.v1` | The agent owner accepted/acknowledged a task — used to *verify* feedback |
 | `threews.dispute.v1` | The owner disputed an attestation against them |
 | `threews.revoke.v1` | An attester withdrew their own attestation |
-| `threews.review.v1` | A 1–5 rating tied to a specific `review_id` (structured marketplace-style review) |
+| `threews.review.v1` | A 1-5 rating tied to a specific `review_id` (structured marketplace-style review) |
 
 ### How attestations become reputation
 
@@ -177,7 +177,7 @@ The shapes differ; the purpose is identical — let an agent decide, before it p
 
 ## Status
 
-- **Attestation reputation / Passport** — **live.** On-chain memo writes, the 10-minute indexer cron (`/api/cron/solana-attestations-crawl`), the reputation API, and the A–D Passport are all in production on mainnet and devnet.
+- **Attestation reputation / Passport**: **live.** On-chain memo writes, the 10-minute indexer cron (`/api/cron/solana-attestations-crawl`), the reputation API, and the A-D Passport are all in production on mainnet and devnet.
 - **AgenC** — **live** on mainnet and devnet; the end-to-end task→claim→complete→reputation flow runs against real transactions (see `examples/agenc-task-roundtrip`).
 - **Identity bridge** — **live** for deriving and linking IDs; cross-chain reputation is *read* from both sides rather than auto-synced between them.
 - **Solana `glb-schema` validation** — rides on `threews.validation.v1`, mirroring the EVM ValidationRegistry attestation.

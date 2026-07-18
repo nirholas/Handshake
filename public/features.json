@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-18T18:54:15.583Z",
+	"generated_at": "2026-07-18T19:35:24.261Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -108,7 +108,7 @@
 				{
 					"path": "/create/video",
 					"title": "Talking Avatar Video",
-					"description": "Turn a three.ws avatar into a talking-head video: type a script, pick a voice, and export a lip-synced clip.",
+					"description": "Turn a three.ws avatar into a talking-head video: upload your audio and export a lip-synced clip.",
 					"added": "2026-07-01",
 					"auth": null,
 					"indexable": true,

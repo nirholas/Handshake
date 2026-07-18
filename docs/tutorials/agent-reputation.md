@@ -53,19 +53,19 @@ A review can also be **staked**: the reviewer locks ≥0.001 ETH behind their vo
 The fastest read is the visual one.
 
 1. Open the [Reputation Explorer](/reputation).
-2. Paste an identifier — an Ethereum wallet address or an ENS name (resolved automatically). For an ERC-8004 agent, deep-link with `?agent=<chainId>:<agentId>` (e.g. `/reputation?agent=8453:42`).
+2. Paste an identifier: an Ethereum wallet address or an ENS name (resolved automatically). For an ERC-8004 agent, deep-link with `?agent=<chainId>:<agentId>` (e.g. `/reputation?agent=8453:42`).
 3. Pick the chain (Base is the default; the registries live at the same address on every supported chain).
 4. Read the panel:
    - **Average score** (shown as stars out of 5) and **total review count**
-   - **Recent reviews** — each with the reviewer's address, score, optional comment, and a link to the attestation or transaction on the explorer
+   - **Recent reviews**: each with the reviewer's address, score, optional comment, and a link to the attestation or transaction on the explorer
 
-If the agent has no reviews yet, you'll see a clean empty state rather than a blank — a brand-new agent reads as *unknown*, not *bad*.
+If the agent has no reviews yet, you'll see a clean empty state rather than a blank: a brand-new agent reads as *unknown*, not *bad*.
 
 ---
 
 ## Path 2 — The REST API (one `fetch`)
 
-For a three.ws agent (identified by its platform UUID), hit the REST endpoint. No key, no payment. It returns the agent's **unified wallet trust score** — a 0-100 credibility signal computed from real ledger and on-chain activity, with the ERC-8004 registry read as one of its inputs:
+For a three.ws agent (identified by its platform UUID), hit the REST endpoint. No key, no payment. It returns the agent's **unified wallet trust score**: a 0-100 credibility signal computed from real ledger and on-chain activity, with the ERC-8004 registry read as one of its inputs:
 
 ```js
 const res = await fetch('https://three.ws/api/agents/<agent-uuid>/reputation');
@@ -73,7 +73,7 @@ const rep = await res.json();
 // {
 //   agent_id: "…",
 //   name: "…",
-//   score: 62,               // 0–100 credit-style score
+//   score: 62,               // 0-100 credit-style score
 //   max: 100,
 //   tier: "…", tierLabel: "…",
 //   pillars: [ … ],          // per-factor breakdown (tenure, volume, reliability, …)
@@ -138,7 +138,7 @@ This is the path to wire into an agent that needs to gate its own spending: read
 
 ---
 
-## Path 4 — The reputation module (JavaScript)
+## Path 4: The reputation module (JavaScript)
 
 Inside a JavaScript app, the in-repo module `src/erc8004/reputation.js` wraps the contract reads with an `ethers` provider (the same module the register-onchain flow and the Reputation Explorer use):
 
@@ -169,7 +169,7 @@ const reviews = await getRecentReviews({
 reviews.forEach(r => console.log(r.from, r.score, r.comment, r.txHash));
 ```
 
-`getReputation` returns `{ count, average }` with `average` pre-computed (`0` when there are no reviews). `getRecentReviews` returns an array of `{ agentId, from, score, comment, blockNumber, txHash }`. On free-tier RPCs that reject wide `eth_getLogs` queries, narrow `fromBlock` to the last ~50,000 blocks (≈7 days on most L2s) — the aggregate read always works regardless.
+`getReputation` returns `{ count, average }` with `average` pre-computed (`0` when there are no reviews). `getRecentReviews` returns an array of `{ agentId, from, score, comment, blockNumber, txHash }`. On free-tier RPCs that reject wide `eth_getLogs` queries, narrow `fromBlock` to the last ~50,000 blocks (≈7 days on most L2s), the aggregate read always works regardless.
 
 ---
 
@@ -230,7 +230,7 @@ Star reviews are one signal. For a three.ws agent, you can also read its **behav
 GET /api/x402/agent-reputation?subject=<identifier>
 ```
 
-`subject` accepts any identifier — a three.ws agent UUID, a wallet, or a mint; the type is auto-detected.
+`subject` accepts any identifier (a three.ws agent UUID, a wallet, or a mint); the type is auto-detected.
 
 It returns confirmed payment count and distinct payers, payout/distribution success rates, failure rates, and attestation counts — reputation derived from what an agent *did*, not just what people *said*. Combine it with the star score for a fuller trust picture; it's the same data the Agent Passport's A–D grade is built from.
 

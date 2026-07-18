@@ -228,7 +228,7 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
 **Fix steps:**
 
 1. Verify the `src` URL is correct — use the full HTTPS URL.
-2. Do not use a URL that ends in `/edit` or `/dashboard` — those pages block framing for security. Use the agent's public embed URL (`/agent/<id>/embed`, `/w/<widget-id>`, or `/widget#widget=<id>`).
+2. Do not use a URL that ends in `/edit` or `/dashboard`: those pages block framing for security. Use the agent's public embed URL (`/agent/<id>/embed`, `/w/<widget-id>`, or `/widget#widget=<id>`).
 3. Only the dedicated embed routes send a `frame-ancestors *` CSP header (set in the route table and applied by the server); regular pages send `frame-ancestors 'self'` and will refuse to load in your iframe. If an embed route is being blocked, the block is coming from the host page's own CSP, the agent's embed policy (domain allowlist), or a browser extension.
 
 ---
@@ -253,7 +253,7 @@ Organized by symptom. Find your problem, check the likely causes, follow the fix
    - The **host protocol** ([specs/EMBED_HOST_PROTOCOL.md](../specs/EMBED_HOST_PROTOCOL.md)) uses `{ v: 1, type: 'host.*' | 'embed.*', id, payload }` — e.g. `{ v: 1, type: 'host.chat.message', payload: { ... } }`.
 
    Messages that don't match the expected envelope (missing `agentId` or `v: 1`, wrong `source`/`type`) are silently ignored.
-4. For element embeds, use the `EmbedHostBridge` class (`src/embed-host-bridge.js`) rather than raw `postMessage` — it handles the handshake, queues requests until the iframe is ready, and correlates responses by `id`.
+4. For element embeds, use the `EmbedHostBridge` class (`src/embed-host-bridge.js`) rather than raw `postMessage`: it handles the handshake, queues requests until the iframe is ready, and correlates responses by `id`.
 
 ---
 

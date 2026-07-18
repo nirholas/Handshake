@@ -496,7 +496,7 @@ Take a PNG snapshot of the current viewer state. The viewer renders a fresh fram
 </script>
 ```
 
-> The `P` key is a built-in shortcut — no code needed. The screenshot triggers a browser download directly; there is no return value. On the full studio page ([three.ws/app](https://three.ws/app)) the viewer is also exposed as the debug global `window.VIEWER`, where you can call `window.VIEWER.takeScreenshot()` from the console; standalone embeds don't set that global.
+> The `P` key is a built-in shortcut: no code needed. The screenshot triggers a browser download directly; there is no return value. On the full studio page ([three.ws/app](https://three.ws/app)) the viewer is also exposed as the debug global `window.VIEWER`, where you can call `window.VIEWER.takeScreenshot()` from the console; standalone embeds don't set that global.
 
 **What to change:**
 - Skip the button and just document the `P` key for a frameless experience
@@ -692,7 +692,7 @@ genuinely invested in the user's progress.
 
 **Personality prompt as a separate file.** `instructions.md` is loaded at boot via the `"instructions": "instructions.md"` field in the manifest. Keeping it separate makes it easy to iterate on the prompt without touching the manifest schema.
 
-**Skills extend tools.** The `wave` skill adds a `wave()` tool the brain can call. The manifest lists it under `skills:` with a URI; the runtime installs it and registers the tool automatically. To add more capabilities, add more entries to `skills:`.
+**Skills extend tools.** The `wave` skill ([`examples/skills/wave/`](https://github.com/nirholas/three.ws/tree/main/examples/skills/wave)) adds a `waveAndGreet` tool the brain can call; its ten-line handler chains the built-in `wave` gesture with a spoken greeting. The manifest lists it under `skills:` with a URI; the runtime installs it and registers the tool automatically. To add more capabilities, add more entries to `skills:`.
 
 **Memory persists between sessions.** `"mode": "local"` stores memories as `.md` files under `memory/`. When Leo calls `remember({ key: "position", value: "striker" })`, it writes to that directory and loads it back on the next boot. Switching to `"mode": "ipfs"` makes memories portable across devices.
 

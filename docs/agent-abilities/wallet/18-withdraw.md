@@ -2,7 +2,7 @@
 
 > Sweep any asset out of your agent's wallet in three taps — server-signed, policy-guarded, and audited down to every single key touch.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Withdraw** tab.*
 
 ## What it does
 
@@ -59,6 +59,12 @@ Owner-only end to end: every endpoint verifies the signed-in user owns the agent
 - The one-tap Freeze wallet panel — a kill switch that instantly pauses all of the agent's autonomous trading and payments while your own exit stays open
 - The Activity feed showing a payment stopped cold with 'Blocked by your rule' and the exact plain-English rule you wrote, quoted inline
 
+## Try it
+
+1. Open `three.ws/agent/<your-agent-id>/wallet` while signed in as the owner and pick the **Withdraw** tab.
+2. Choose an asset, enter an amount (or tap Max), and paste a destination address or .sol name; it resolves live with a green check.
+3. Review the confirmation screen (allowlist badge included), acknowledge the mainnet risk dialog, and confirm; the success screen links the transaction on the explorer.
+
 ## API surface
 
 - `POST /api/agents/:id/solana/withdraw`
@@ -67,3 +73,9 @@ Owner-only end to end: every endpoint verifies the signed-in user owns the agent
 - `PUT /api/agents/:id/solana/limits`
 - `GET /api/agents/:id/solana/custody`
 - `GET /api/sns?name=<name>.sol`
+
+## Related
+
+- [Policy](./17-policy.md)
+- [Give](./19-give.md)
+- [Self-defense](./23-self-defense.md)

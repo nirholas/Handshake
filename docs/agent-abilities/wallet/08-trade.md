@@ -2,7 +2,7 @@
 
 > Your agent's wallet is a full trading desk — paste any pump.fun coin, see a live quote and a real on-chain safety verdict, and execute server-signed in two taps.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Trade** tab.*
 
 ## What it does
 
@@ -58,6 +58,18 @@ Owner-only execution behind session auth plus a single-use CSRF token (quotes ar
 - The live quote card mid-typing: expected output, minimum received, and price impact that turns amber then red as size grows, with the route (bonding curve vs AMM) named on the ticket
 - The unified trade history: manual buys and sells interleaved with the sniper's automated round-trips, each snipe showing green/red realized PnL in SOL and percent with explorer links
 
+## Try it
+
+1. Open `three.ws/agent/<your-agent-id>/wallet` while signed in as the owner and pick the **Trade** tab.
+2. Paste a pump.fun mint address; the coin card, live quote, and pre-buy Safety panel appear as you size the trade.
+3. Confirm through the two-step review; the success banner links the executed transaction on the explorer.
+
+The holdings behind the tab are a public read:
+
+```bash
+curl 'https://three.ws/api/agents/<agent-id>/solana/holdings?network=mainnet'
+```
+
 ## API surface
 
 - `POST /api/agents/:id/solana/trade (preview:true = live quote; without preview = server-signed execution)`
@@ -65,3 +77,9 @@ Owner-only execution behind session auth plus a single-use CSRF token (quotes ar
 - `GET /api/agents/:id/solana/holdings (SOL balance + SPL token list, public read)`
 - `GET /api/pump/coin?mint= (coin name/symbol/image/graduation metadata, best-effort)`
 - `Jupiter Lite price API with CoinGecko fallback (client-side SOL/USD for the ≈$ readout, 60s cache)`
+
+## Related
+
+- [Portfolio](./03-portfolio.md)
+- [Orders](./12-orders.md)
+- [Copilot](./05-copilot.md)

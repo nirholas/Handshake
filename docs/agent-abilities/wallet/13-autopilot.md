@@ -2,7 +2,7 @@
 
 > Write one sentence in plain English and your agent starts paying its own bills, stacking $THREE, buying back its own coin, and sweeping the profit to you — for real, on-chain.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Autopilot** tab.*
 
 ## What it does
 
@@ -55,6 +55,12 @@ Owner-only, structurally: the tab is hidden from non-owners and every endpoint r
 - The compile moment: type one English sentence — 'Pay your own compute. Keep a 1 SOL buffer. Put 10% of tips into $THREE. Sweep anything over 3 SOL to me on Fridays.' — and watch it become five bounded rules with icons, plus red conflict callouts and amber 'here's what I assumed' notes before you're allowed to arm
 - Hit 'Run now' and each rule reports back with a status chip and a 'view tx ↗' link to a real Solana explorer page — proof on-chain, not a dashboard animation
 
+## Try it
+
+1. Open `three.ws/agent/<your-agent-id>/wallet` while signed in as the owner and pick the **Autopilot** tab.
+2. Describe a treasury policy in a sentence (or tap an example chip) and hit compile; review the bounded rules, conflicts, and assumptions.
+3. Arm it, then hit **Run now** to fire one real cycle and watch each rule report back with a status chip and an explorer link.
+
 ## API surface
 
 - `GET /api/agents/:id/autopilot?network=mainnet|devnet (policy + runway + spend caps)`
@@ -62,3 +68,9 @@ Owner-only, structurally: the tab is hidden from non-owners and every endpoint r
 - `PUT /api/agents/:id/autopilot (save / arm / disarm / pause / kill)`
 - `POST /api/agents/:id/autopilot/run (run one real cycle now, supports dry_run)`
 - `Server-side: Jupiter swap API for $THREE DCA and coin buybacks, Solana RPC for balances/sends, hourly cron /api/cron/treasury-autopilot`
+
+## Related
+
+- [Intents](./14-intents.md)
+- [Policy](./17-policy.md)
+- [Earn](./11-earn.md)

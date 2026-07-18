@@ -21,7 +21,7 @@ three.ws is built around two distinct concepts: agents (AI minds) and avatars (3
 Every page on three.ws is one of these four things. If you ever feel lost, ask: "Which of the four am I looking at?"
 
 1. **Avatar** — a 3D body. Lives at `/avatars/<id>`. Discoverable in the marketplace.
-2. **Agent** — a mind that wears an avatar. Lives at `/agents/<id>`. Yours appear in your dashboard. (Old `/agent/<id>` links redirect here.)
+2. **Agent**: a mind that wears an avatar. Lives at `/agents/<id>`. Yours appear in your dashboard. (Old `/agent/<id>` links redirect here.)
 3. **Marketplace** — where avatars (and shared agents) are listed. `/marketplace`.
 4. **Studio** — where you assemble: pick an avatar, configure an agent, wire skills. `/studio`.
 

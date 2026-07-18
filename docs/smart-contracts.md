@@ -278,7 +278,7 @@ await tx2.wait();
 
 ## ReputationRegistry
 
-`ReputationRegistry` stores signed feedback about registered agents. Scores are integers in the range `[-100, 100]` — negative scores indicate poor experiences, positive scores indicate good ones. Each `(reviewer, agentId)` pair can only submit once; there is no update path. Agent owners cannot review their own agents. Alongside plain feedback, the contract also exposes an ETH-staked variant (`stakeReputation(uint256 agentId, uint8 score, string comment)` payable, refundable via `withdrawStake(uint256 agentId)`); `submitFeedback` is the path documented here.
+`ReputationRegistry` stores signed feedback about registered agents. Scores are integers in the range `[-100, 100]`: negative scores indicate poor experiences, positive scores indicate good ones. Each `(reviewer, agentId)` pair can only submit once; there is no update path. Agent owners cannot review their own agents. Alongside plain feedback, the contract also exposes an ETH-staked variant (`stakeReputation(uint256 agentId, uint8 score, string comment)` payable, refundable via `withdrawStake(uint256 agentId)`); `submitFeedback` is the path documented here.
 
 The registry holds a reference to `IdentityRegistry` — submitting feedback for an unregistered agentId reverts with `UnknownAgent`.
 

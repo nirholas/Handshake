@@ -507,7 +507,7 @@ The skill installs via a URI in the agent manifest, runs entirely client-side, a
 
 ## Related
 
-- [Skills system reference](/docs/skills) — manifest format, context API, sandboxing, publishing
-- [Build a skill with database auth](/docs/tutorials/skill-with-database-auth) — the next step up: a skill backed by your own API
-- [Build your first agent](/docs/tutorials/first-agent) — the agent this skill plugs into
-- [Web component reference](/docs/web-component) — the `skills` attribute and `installSkill()` method
+- [Skills system reference](/docs/skills): manifest format, context API, sandboxing, publishing
+- [Build a skill with database auth](/docs/tutorials/skill-with-database-auth): the next step up, a skill backed by your own API
+- [Build your first agent](/docs/tutorials/first-agent): the agent this skill plugs into
+- [Web component reference](/docs/web-component): the `skills` attribute and `installSkill()` method

@@ -19,7 +19,7 @@ You need a model before you can place it in AR. The fastest way is to generate o
 
 1. Go to [three.ws/forge](https://three.ws/forge)
 2. Type a description — something concrete works best: **a ceramic coffee mug with a handle** or **a low-poly red fox sitting down**
-3. Hit **Generate** and wait 30–90 seconds for the model to generate
+3. Hit **Generate** and wait 30-90 seconds for the model to generate
 
 You can also use any existing avatar from [three.ws/gallery](https://three.ws/gallery) — the AR tab exists on every avatar and Forge model page.
 

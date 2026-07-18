@@ -123,7 +123,7 @@ Run it:
 node generate.js "a low-poly treasure chest, iron-banded wood"
 ```
 
-**Batch an asset pack** by looping prompts through `generateModel` one at a time. Keep it sequential — the endpoint is rate-limited per IP (about 60 free generations an hour), so a `Promise.all` over a hundred prompts will hit `429 rate_limited`. On a 429, wait and retry; it's a rolling window, not a ban.
+**Batch an asset pack** by looping prompts through `generateModel` one at a time. Keep it sequential: the endpoint is rate-limited per IP (about 60 free generations an hour), so a `Promise.all` over a hundred prompts will hit `429 rate_limited`. On a 429, wait and retry; it's a rolling window, not a ban.
 
 ---
 
@@ -153,7 +153,7 @@ const submit = await fetch(`${BASE}/api/forge`, {
 });
 ```
 
-Photos are pre-checked by a vision model before any generation is spent; an unusable primary image comes back as a `422` with `error: "image_not_usable"`, an `issue` code, and a plain-language `message` (blurry, busy background, multiple objects). Pass `skip_validation: true` to override — the same as the UI's "Generate anyway" button (the response's `override` field spells this out). Flagged secondary views are silently dropped rather than failing the job. The [photo guidelines](/tutorials/image-to-3d) apply exactly as in the browser.
+Photos are pre-checked by a vision model before any generation is spent; an unusable primary image comes back as a `422` with `error: "image_not_usable"`, an `issue` code, and a plain-language `message` (blurry, busy background, multiple objects). Pass `skip_validation: true` to override: the same as the UI's "Generate anyway" button (the response's `override` field spells this out). Flagged secondary views are silently dropped rather than failing the job. The [photo guidelines](/tutorials/image-to-3d) apply exactly as in the browser.
 
 ---
 
@@ -171,7 +171,7 @@ It returns every backend (id, label, which paths it serves, whether it needs a b
 
 ## Step 6 — For autonomous agents: pay per call with x402
 
-The public endpoint is rate-limited per IP, which is fine for scripts and prototyping. Agents that need guaranteed, metered capacity can use the paid twin at `POST /api/x402/forge` — same request body, billed per generation in USDC on Solana over the [x402 protocol](https://www.x402.org):
+The public endpoint is rate-limited per IP, which is fine for scripts and prototyping. Agents that need guaranteed, metered capacity can use the paid twin at `POST /api/x402/forge`, same request body, billed per generation in USDC on Solana over the [x402 protocol](https://www.x402.org):
 
 | Tier | Price per generation |
 |------|---------------------|

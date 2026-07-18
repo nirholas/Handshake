@@ -1,10 +1,10 @@
 # Avatar Studio
 
-This page documents the CharacterStudio-based avatar builder: a browser-based tool for designing a customized humanoid avatar (body, hair, face, clothing, accessories) with a point-and-click interface and no 3D modeling experience required. The result is a GLB/VRM file that works with every three.ws feature: animations, the emotion system, AR viewing, and web embedding.
+This page documents the Character Studio avatar builder: a browser-based tool for designing a customized humanoid avatar (body, hair, face, clothing, accessories) with a point-and-click interface and no 3D modeling experience required. The result is a GLB/VRM file that works with every three.ws feature: animations, the emotion system, AR viewing, and web embedding.
 
 It is a rebranded fork of the open-source (MIT license) [M3-org/CharacterStudio](https://github.com/M3-org/CharacterStudio) project and lives in the `character-studio/` directory of the repo.
 
-**Note:** the platform's primary from-scratch builder, the page served at [three.ws/avatar-studio](https://three.ws/avatar-studio) and [three.ws/create/studio](https://three.ws/create/studio), is a separate native implementation documented in [Avatar Studio (native)](/docs/avatar-studio). The CharacterStudio fork on this page is the trait-based builder behind the "three.ws Studio" option described below.
+**Note:** the platform's primary from-scratch builder, the page served at [three.ws/avatar-studio](https://three.ws/avatar-studio) and [three.ws/create/studio](https://three.ws/create/studio), is a separate native implementation documented in [Avatar Studio (native)](/docs/avatar-studio). The Character Studio fork on this page is the trait-based builder behind the "three.ws Studio" option described below.
 
 ---
 

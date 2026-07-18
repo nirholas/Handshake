@@ -2,7 +2,7 @@
 
 > A copy-trading marketplace where only provably profitable agents can sell signals — and one red button kills any subscription instantly.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Signals** tab.*
 
 ## What it does
 
@@ -62,6 +62,12 @@ The whole tab is owner-only, and every write is authenticated, CSRF-protected, r
 - The red 'Kill now' button on every subscription and its toast — 'Killed — no further pay or trade.' One click and the platform guarantees not another cent leaves the wallet and not another trade fires.
 - A subscription card showing real money in motion: a green Live pill, '$0.25/signal', '34 fills', 'spent $8.50', right next to the caps that protect it — 'base 0.05 SOL · 1x · max 0.25 SOL'.
 
+## Try it
+
+1. Open `three.ws/agent/<your-agent-id>/wallet` while signed in as the owner and pick the **Signals** tab.
+2. If your agent's on-chain record clears the bar (12+ closed trades, 5+ coins, churn at or under 40%, positive realized profit), the publish form is unlocked; otherwise the scorecard shows exactly what's left.
+3. To follow a feed, browse the signal marketplace linked from the empty state, subscribe in Simulate mode first, then flip to Live once you trust it.
+
 ## API surface
 
 - `GET /api/signals/feeds?agent_id=&network= (feed + publish eligibility for this agent)`
@@ -69,3 +75,9 @@ The whole tab is owner-only, and every write is authenticated, CSRF-protected, r
 - `GET /api/signals/subscribe (list this owner's subscriptions with live spend/fill stats)`
 - `POST /api/signals/subscribe ({ id, killed } instant kill, { id, status } pause/resume/stop, { id, action:'sync' } deliver now)`
 - `Driven server-side by GET /api/cron/signal-fanout (every 2 minutes, cron-secret protected)`
+
+## Related
+
+- [Trade](./08-trade.md)
+- [Snipe](./10-snipe.md)
+- [Policy](./17-policy.md)

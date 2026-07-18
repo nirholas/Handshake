@@ -2,7 +2,7 @@
 
 > Your avatar has a job: price its skills, watch it earn real USDC while you sleep, and hold the kill switch the whole time.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Earn** tab.*
 
 ## What it does
 
@@ -54,9 +54,21 @@ The whole tab is owner-only: it is hidden from visitors, and the server re-check
 - The kill-switch card flipping from "🟢 Autonomous spending armed" to "🔒 Autonomous spending frozen" in one click, next to a daily-cap meter that shifts amber then red as headroom runs out
 - The lifetime-earnings hero counting up to the real total, with Today / 7 days / All time chips and a breakdown like "From $84 in skill sales, $31 from agents hiring it and $6 in tips"
 
+## Try it
+
+1. Open `three.ws/agent/<your-agent-id>/wallet` while signed in as the owner and pick the **Earn** tab.
+2. Check a skill in the pricing editor, set a USD price, and save; buyers pay the new price in USDC immediately.
+3. Watch the receipts statement: every sale, hire, and tip lands with an explorer-linked signature, and the kill-switch card freezes autonomous spending in one click.
+
 ## API surface
 
 - `GET /api/agents/:id/economy — owner-only economy summary: windowed earnings (today/7d/lifetime) across skill sales, agent hires, and tips; autonomous spending totals; live spend policy; merged receipts; top customers; paid peers`
 - `GET /api/agents/:id/skills-pricing — the agent's active per-skill prices`
 - `PUT /api/agents/:id/skills-pricing — atomic replace of the full price set (zod-validated, CSRF-protected, through the platform MonetizationService)`
 - `PUT /api/agents/:id/solana/limits — writes the real spend policy; the Earn tab uses it as the kill switch (frozen flag); same endpoint also carries daily/per-tx caps and the withdraw allowlist`
+
+## Related
+
+- [Pay](./15-pay.md)
+- [Withdraw](./18-withdraw.md)
+- [Trust](./06-trust.md)

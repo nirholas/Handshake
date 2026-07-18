@@ -393,5 +393,25 @@
 		"pattern": "avaturn_seed",
 		"file": "docs/ops/runtime-flags.md",
 		"reason": "Literal runtime flag key `avaturn_seed` (with its `AVATURN_SEED_ENABLED` env fallback and avaturn-seed-cron.js path) in ops code samples and the flags table — technical identifiers, not user-facing brand copy."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "docs/avatar-reconstruction.md",
+		"reason": "Engineering roadmap for the reconstruction pipeline - names the commercial benchmark services and the licensed template lineage; required for licence provenance and parity tracking."
+	},
+	{
+		"pattern": "Ready Player Me",
+		"file": "docs/avatar-reconstruction.md",
+		"reason": "Same roadmap doc - names the benchmark service whose template architecture the licence analysis covers."
+	},
+	{
+		"pattern": "RPM",
+		"file": "docs/avatar-reconstruction.md",
+		"reason": "Same roadmap doc - RPM identifies the fixed-topology template lineage in the licence analysis (v3 roadmap row drops it)."
+	},
+	{
+		"pattern": "Avaturn",
+		"file": "docs/forge-pipeline.md",
+		"reason": "Rig-convention compatibility list - names the third-party skeleton naming conventions glb-canonicalize maps; technical compatibility statement, not brand promotion."
 	}
 ]

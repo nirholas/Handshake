@@ -2,7 +2,7 @@
 
 > One tap sends real SOL from the three.ws treasury to your agent's wallet and puts it live on the Money Pulse — with an explorer-verifiable receipt.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Go Live** tab.*
 
 ## What it does
 
@@ -50,8 +50,20 @@ Owner-only end to end: the tab is hidden from non-owners and the server rejects 
 - The hero moment: 'Bring [your agent] to life' with the grant amount in a monospace pill and a single Activate button — one tap from empty wallet to live, funded agent.
 - The payoff handoff: the success toast fires with the granted amount, and one click lands on the Money Pulse where the newly activated agent is beating in the platform-wide live feed of real on-chain activity.
 
+## Try it
+
+1. Open `three.ws/agent/<your-agent-id>/wallet` while signed in as the agent's owner and pick the **Go Live** tab.
+2. Tap **Activate**. The grant amount is shown on the button's pill before you claim.
+3. When the transaction settles, the receipt card appears with the amount, network, and an explorer-linked signature; click it to verify the transfer on-chain.
+
 ## API surface
 
 - `GET /api/agents/:id/activate`
 - `POST /api/agents/:id/activate`
 - `GET /api/csrf-token`
+
+## Related
+
+- [Balance](./01-balance.md)
+- [Deposit](./04-deposit.md)
+- [Pulse](./09-pulse.md)

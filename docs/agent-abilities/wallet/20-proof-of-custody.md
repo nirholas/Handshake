@@ -2,7 +2,7 @@
 
 > Don't trust — verify: your agent wallet's custody, cryptographically proven in your own browser against the Solana blockchain itself.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Proof of Custody** tab.*
 
 ## What it does
 
@@ -55,6 +55,19 @@ The tab is owner-only and the proof endpoint verifies wallet ownership on every 
 - The movement reconciliation panel: every lamport that left the wallet since the last snapshot itemized against authorized, explorer-linked events — and a red '⚠ Unexplained movement' alarm wired to fire if even one outflow can't be accounted for.
 - The 'Show it off' card: a green verified-custody badge with one-click copy-paste embed HTML that links anyone to the public integrity page, where they can re-verify the platform's on-chain root in their own browser.
 
+## Try it
+
+1. Open `three.ws/agent/<your-agent-id>/wallet` while signed in as the owner and pick the **Proof of Custody** tab; verification runs automatically.
+2. Watch the four-step checklist tick as your own browser recomputes the leaf, walks the Merkle path, and reads the anchor from public Solana RPC nodes.
+
+The platform-wide aggregate is public:
+
+```bash
+curl 'https://three.ws/api/custody/integrity'
+```
+
+Anyone can also re-verify the current root at `three.ws/integrity`, and the standalone verifier lives at `three.ws/proof`.
+
 ## API surface
 
 - `GET /api/agents/:id/solana/proof — owner-gated inclusion proof (leaf, Merkle path, anchor reference, movement reconciliation)`
@@ -63,3 +76,9 @@ The tab is owner-only and the proof endpoint verifies wallet ownership on every 
 - `GET /api/custody/integrity — public no-auth aggregate for the /integrity page`
 - `GET /api/custody/anchor?epoch=N|latest — public anchor reference for one epoch`
 - `GET/POST /api/cron/custody-attest — scheduled snapshot + on-chain anchor job (bearer-secret protected)`
+
+## Related
+
+- [Trust](./06-trust.md)
+- [Recovery](./22-recovery.md)
+- [Withdraw](./18-withdraw.md)

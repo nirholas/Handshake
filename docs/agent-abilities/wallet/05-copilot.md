@@ -2,7 +2,7 @@
 
 > Talk to your agent's wallet — by text or voice — and it answers with live on-chain data, then preps guarded trades you confirm with one tap.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Copilot** tab.*
 
 ## What it does
 
@@ -57,6 +57,12 @@ Owner-only on both client and server — the tab is hidden from visitors and the
 - Ask 'how's my portfolio?' and the agent streams back real data cards as it reads the chain: actual SOL balance, every holding, and open positions glowing green or red with live PnL
 - Say 'pause all trading' and the kill switch flips through a confirm card — full risk management as a conversation, in your agent's own cloned voice
 
+## Try it
+
+1. Open `three.ws/agent/<your-agent-id>/wallet` while signed in as the owner and pick the **Copilot** tab.
+2. Ask "How's my portfolio?" or type `/portfolio`; the reply streams in with live data cards.
+3. Say "buy 0.1 SOL of <mint>" to get a confirm card with a fresh quote and firewall verdict; nothing executes until you tap Confirm.
+
 ## API surface
 
 - `POST /api/agents/:id/copilot (SSE conversation turn with tool events, proposals, and streamed narration)`
@@ -65,3 +71,9 @@ Owner-only on both client and server — the tab is hidden from visitors and the
 - `GET /api/agents/:id/voice (agent's voice configuration for spoken replies)`
 - `POST /api/tts/eleven (ElevenLabs cloned-voice speech)`
 - `POST /api/tts/speak (free-lane server TTS fallback)`
+
+## Related
+
+- [Trade](./08-trade.md)
+- [Policy](./17-policy.md)
+- [Portfolio](./03-portfolio.md)

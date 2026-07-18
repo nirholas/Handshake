@@ -671,7 +671,7 @@ Framer supports custom code components — wrap `<agent-3d>` in a code component
 
 Add the script tag to `theme.liquid` inside `<head>`, then use `<agent-3d>` directly in product page templates or section files.
 
-Want a guide that *walks the storefront* — spotlighting sections, narrating, free-roaming — instead of a boxed embed? That's the tour SDK, not `<agent-3d>` (it needs host-DOM access an iframe/web component doesn't have). Follow the [3D store guide for Shopify tutorial](/docs/tutorials/shopify-store-guide).
+Want a guide that *walks the storefront* (spotlighting sections, narrating, free-roaming) instead of a boxed embed? That's the tour SDK, not `<agent-3d>` (it needs host-DOM access an iframe/web component doesn't have). Follow the [3D store guide for Shopify tutorial](/docs/tutorials/shopify-store-guide).
 
 ---
 

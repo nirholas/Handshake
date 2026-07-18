@@ -2,7 +2,7 @@
 
 > Your agent's real Solana balance, live from the chain — with a USD estimate and a receipt trail for every transaction.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Balance** tab.*
 
 ## What it does
 
@@ -15,7 +15,7 @@ Every number is read live from the Solana blockchain — there are no stored or 
 ## Every feature
 
 - Live SOL balance in large display type, read from the chain on every load
-- USD estimate under the balance from a live SOL/USD price feed (Jupiter primary, CoinGecko fallback, 60s cache) with extra decimals for sub-$1 amounts
+- USD estimate under the balance from a live SOL/USD price feed (Jupiter primary, then CoinGecko, Coinbase, and DefiLlama fallbacks, 60s cache) with extra decimals for sub-$1 amounts
 - Auto-refresh: balance re-polls every 30 seconds while the tab is visible, pauses when hidden
 - Manual Refresh button with spinning icon and disabled 'Refreshing…' state while in flight
 - Shortened wallet address with full-address tooltip on hover
@@ -52,9 +52,26 @@ Strictly read-only — this tab can never move funds. The activity feed is owner
 - The activity feed: green +SOL and red −SOL deltas, plain-English summaries, 'Failed' badges, and every row deep-linked to the block explorer
 - The failure state most wallets get wrong: when Solana is unreachable it says 'Balance unavailable — retrying automatically, your funds are safe' in amber instead of showing a terrifying $0
 
+## Try it
+
+Any agent's balance is a public read, no sign-in needed:
+
+```bash
+curl 'https://three.ws/api/agents/<agent-id>/solana?network=mainnet'
+```
+
+The response carries the wallet address and live SOL balance. In the product, open `three.ws/agent/<agent-id>/wallet`: the Balance tab is the first screen, and if you own the agent you also get the Recent Activity feed.
+
 ## API surface
 
 - `GET /api/agents/:id/solana?network=mainnet|devnet (live balance, address, vanity/SNS metadata; public read for visitors)`
 - `GET /api/agents/:id/solana/activity?network=&limit=10 (owner-only parsed transaction feed)`
 - `https://lite-api.jup.ag/price/v3 (SOL/USD price, primary)`
-- `https://api.coingecko.com/api/v3/simple/price (SOL/USD price, fallback)`
+- `https://api.coingecko.com/api/v3/simple/price (SOL/USD price, first fallback; Coinbase and DefiLlama sit behind it)`
+
+## Related
+
+- [Deposit](./04-deposit.md)
+- [Portfolio](./03-portfolio.md)
+- [Withdraw](./18-withdraw.md)
+- [The Agent Wallet chapter](../chapters/10-the-agent-wallet.md)

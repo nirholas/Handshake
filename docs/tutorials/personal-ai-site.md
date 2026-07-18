@@ -67,7 +67,7 @@ When you receive the message "__greet", introduce yourself warmly: say who you a
 
 Your avatar is the visual anchor of the whole experience. You have two paths:
 
-**Selfie-to-avatar** — Use the [Avatar Creation guide](/docs/avatar-creation) to generate a 3D avatar from a photo. A few tips for PAI-quality results:
+**Selfie-to-avatar**: Use the [Avatar Creation guide](/docs/avatar-creation) to generate a 3D avatar from a photo. A few tips for PAI-quality results:
 - Use a photo where you are looking straight ahead, with even lighting
 - Wear what you would want to be "remembered" in — this avatar represents you
 - Export as a Mixamo-rigged GLB so it picks up the built-in animation clips automatically
@@ -541,8 +541,8 @@ The technical investment is one HTML file, a GLB avatar, and a system prompt. Th
 
 ## Next steps
 
-- [Avatar Creation guide](/docs/avatar-creation) — detailed walkthrough of selfie-to-avatar
-- [Skills system](/docs/skills) — how to install and author custom skills like `load_project`
-- [Memory system](/docs/memory) — full memory API reference for pre-loading knowledge
-- [Agent Manifest](/docs/agent-manifest) — package your agent for distribution and on-chain identity
-- [Embedding guide](/docs/embedding) — add your agent to other pages and platforms
+- [Avatar Creation guide](/docs/avatar-creation): detailed walkthrough of selfie-to-avatar
+- [Skills system](/docs/skills): how to install and author custom skills like `load_project`
+- [Memory system](/docs/memory): full memory API reference for pre-loading knowledge
+- [Agent Manifest](/docs/agent-manifest): package your agent for distribution and on-chain identity
+- [Embedding guide](/docs/embedding): add your agent to other pages and platforms

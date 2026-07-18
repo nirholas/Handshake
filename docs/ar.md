@@ -111,7 +111,7 @@ export function openQuickLook(usdzURI, { onBannerTap } = {}) {
 }
 ```
 
-The child `<img>` element is required — without it, Safari won't intercept a programmatic `.click()` as a Quick Look trigger. This is a documented WebKit quirk. The anchor must remain in the DOM while the viewer is open: Safari delivers the banner-tap `message` event on the anchor that launched the session.
+The child `<img>` element is required: without it, Safari won't intercept a programmatic `.click()` as a Quick Look trigger. This is a documented WebKit quirk. The anchor must remain in the DOM while the viewer is open: Safari delivers the banner-tap `message` event on the anchor that launched the session.
 
 **USDZ on iOS:** Quick Look wants USDZ, so three.ws always hands it one. If a `usdz_url` exists on the avatar record (a pre-generated companion stored on R2), it's used as `ios-src`; otherwise the GLB-to-USDZ conversion runs in-browser (three.js `USDZExporter`, or the animated bake described below) before Quick Look opens.
 
@@ -455,6 +455,6 @@ How this link ships through ChatGPT end to end (the app connector, the custom GP
 - [Blog: See Your 3D Avatar in the Real World](https://three.ws/blog/see-your-3d-in-ar) — full walkthrough
 - [Avatar AR page](/avatars/:id/ar) — the dedicated AR experience for any avatar
 - [Walk feature](/features/walk) — WebXR immersive walk mode (different from placement AR)
-- [Web component reference](/docs/web-component) — full `<agent-3d>` attribute list
+- [Web component reference](/docs/web-component): full `<agent-3d>` attribute list
 - [Embedding guide](/docs/embedding) — iframe setup with XR permissions
 - [Tutorial: Place your model in AR](/docs/tutorials/view-in-ar)

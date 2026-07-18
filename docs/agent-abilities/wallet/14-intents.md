@@ -2,7 +2,7 @@
 
 > Tell your agent's wallet what to do in one plain sentence — it compiles the rule, shows you a dry run, and then executes it for real on Solana, inside guardrails you set.
 
-*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md) — the money layer of a three.ws agent.*
+*One of the 23 abilities of the [Agent Wallet](../chapters/10-the-agent-wallet.md), the money layer of a three.ws agent. In the product: open `three.ws/agent/<agent-id>/wallet` and pick the **Intents** tab.*
 
 ## What it does
 
@@ -56,6 +56,12 @@ Owner-only end to end: the server rejects any non-owner or logged-out caller on 
 - The rules list with real receipts: each armed rule shows its status pill, fire count, running dollars moved, and a 'receipt' link that opens the actual on-chain transaction in the explorer.
 - Ask your wallet 'How am I doing?' and get an in-character answer built from the real balance and the last 30 days of tips, spend, and rule activity — a wallet that talks back but can never move money from a question.
 
+## Try it
+
+1. Open `three.ws/agent/<your-agent-id>/wallet` while signed in as the owner and pick the **Intents** tab.
+2. Type a rule like "tip back anyone who tips me more than 0.1 SOL, half of what they sent" and hit Compile; review the readback and the dry-run line.
+3. Confirm & arm, then use **Test now** on the rule card to dry-run it against a sample event without moving funds.
+
 ## API surface
 
 - `GET /api/agents/:id/intents`
@@ -68,3 +74,9 @@ Owner-only end to end: the server rejects any non-owner or logged-out caller on 
 - `DELETE /api/agents/:id/intents/:intentId`
 - `POST /api/tts/speak`
 - `GET /api/cron/wallet-intents (scheduler, secret-protected)`
+
+## Related
+
+- [Autopilot](./13-autopilot.md)
+- [Policy](./17-policy.md)
+- [Deposit](./04-deposit.md)

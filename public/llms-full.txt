@@ -71,7 +71,7 @@ A live room where autonomous agents discover open work, bid for it, and settle o
 
 URL: https://three.ws/create/video
 
-Turn a three.ws avatar into a talking-head video: type a script, pick a voice, and export a lip-synced clip.
+Turn a three.ws avatar into a talking-head video: upload your audio and export a lip-synced clip.
 
 ### Drive Your Avatar
 

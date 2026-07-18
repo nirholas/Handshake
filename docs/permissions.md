@@ -19,7 +19,7 @@ An ERC-7710 delegation is a signed authorization envelope with the following str
 | `salt` | `bytes32` | Random value for replay protection |
 | `signature` | `bytes` | EIP-712 signature over the struct, produced by the delegator |
 
-The user signs the delegation via a standard EIP-712 `signTypedData` prompt in MetaMask (the scope JSON mirrors the permission shapes defined in ERC-7715). The signature is **off-chain** — the envelope is stored in the database and pinned to IPFS. When an agent needs to take a scoped action, it submits the envelope to the `DelegationManager` contract, which verifies the signature and enforces every caveat before executing the call.
+The user signs the delegation via a standard EIP-712 `signTypedData` prompt in MetaMask (the scope JSON mirrors the permission shapes defined in ERC-7715). The signature is **off-chain**: the envelope is stored in the database and pinned to IPFS. When an agent needs to take a scoped action, it submits the envelope to the `DelegationManager` contract, which verifies the signature and enforces every caveat before executing the call.
 
 **The trust model:** the user signs once. Smart contracts enforce that scope on every redemption. The agent acts autonomously within the limits the owner approved — no further user interaction required until the scope needs to change or the delegation expires.
 
@@ -58,7 +58,7 @@ When a skill or agent action requires a delegation that doesn't yet exist, the g
 
 1. **Scope builder** — the user selects token, spend limit, period, target contracts, and expiry. Common contracts (e.g., Uniswap V3 Router) are offered by name.
 2. **Plain-English review** — the modal translates the scope into a human-readable summary (e.g., "Up to 10 USDC per day, to Uniswap V3 Router, expiring 2026-07-01") before opening the MetaMask prompt. This step must never be skipped — it gives the user a trusted-context preview before the raw EIP-712 data appears in MetaMask.
-3. **EIP-712 sign** — MetaMask opens the typed-data signature prompt; the user approves; the signed delegation is stored and pinned.
+3. **EIP-712 sign**: MetaMask opens the typed-data signature prompt; the user approves; the signed delegation is stored and pinned.
 
 ### Programmatically
 
@@ -341,7 +341,7 @@ When `POST /api/permissions/redeem` is used instead of direct wallet submission,
 The grant modal and toolkit require the user to explicitly choose a chain. Mainnet support requires explicit opt-in through the agent owner's settings. Base Sepolia (84532) and Sepolia (11155111) are the default test chains.
 
 **No custodial delegator keys:**
-The delegator (owner) wallet key is never held server-side. The agent's smart account key may be held server-side only within the agent-wallet trust boundary (see [Agent wallets](/docs/agent-wallets)). Never store or redeem a delegation whose EIP-712 signature has not been verified — `signature_invalid` is the correct error for any unverified envelope.
+The delegator (owner) wallet key is never held server-side. The agent's smart account key may be held server-side only within the agent-wallet trust boundary (see [Agent wallets](/docs/agent-wallets)). Never store or redeem a delegation whose EIP-712 signature has not been verified, `signature_invalid` is the correct error for any unverified envelope.
 
 ---
 

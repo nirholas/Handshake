@@ -77,8 +77,8 @@ Request body: `name` (1-120, required), `photos` (1-6 image URLs or data URIs) *
 
 ## Related
 
-- [Avatar reconstruction pipeline](./avatar-reconstruction.md): the full engine: MediaPipe face-texture transfer, geometry morph, the Wolf3D/RPM template, and the Cloud Run worker.
+- [Avatar reconstruction pipeline](./avatar-reconstruction.md): the full engine: MediaPipe face-texture transfer, geometry morph, the fixed pre-rigged head template, and the Cloud Run worker.
 - [Avatar pipeline](./avatar-pipeline.md): the distinct Forge text-to-3D generation lane.
-- [Character Studio](./character-studio.md): customize and dress the avatar after you scan it.
+- [Trait-based avatar builder](./character-studio.md): customize and dress the avatar after you scan it.
 - [Talking Avatar Video](./talking-avatar-video.md) and [Lipsync](./lipsync.md): drive the finished avatar's mouth.
 - Pages: [/create/selfie](https://three.ws/create/selfie), [/create](https://three.ws/create), [/features/scan](https://three.ws/features/scan).
