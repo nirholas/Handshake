@@ -7,9 +7,11 @@
 -- (three_buyback_runs). BUY-ONLY -- nothing here sells $THREE; bought tokens are
 -- swept to the treasury.
 --
--- One immutable row per settled call. Confirmed/pending rows are the DB fallback
--- for the UTC-daily spend cap (the Redis counter is the fast path); skipped and
--- failed rows record why a call did not buy (never a silent no-op).
+-- One immutable row per settled call. Rows whose buy actually broadcast — status
+-- 'submitted' (throughput path, not yet confirmed), 'pending' (confirm timed out),
+-- or 'confirmed' — are the DB fallback for the UTC-daily spend cap (the Redis
+-- counter is the fast path). 'skipped'/'failed' rows record why a call did not buy
+-- (never a silent no-op). status is free text (no CHECK) so new states are additive.
 
 begin;
 

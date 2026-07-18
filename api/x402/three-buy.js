@@ -86,7 +86,7 @@ const OUTPUT_SCHEMA = {
 	properties: {
 		ok: { type: 'boolean', const: true },
 		kind: { type: 'string', const: 'three-buy' },
-		status: { type: 'string', enum: ['confirmed', 'pending'] },
+		status: { type: 'string', enum: ['submitted', 'confirmed', 'pending'] },
 		mint: { type: 'string' },
 		buySignature: { type: 'string' },
 		spentUsd: { type: ['number', 'null'] },

@@ -173,24 +173,20 @@ def morph_head_to_landmarks(
     ctrl_pos = base[uniq]
     ctrl_disp = acc / np.maximum(cnt, 1.0)
 
-    # 4. Normalised-Gaussian RBF (partition of unity): every head vertex gets a
-    #    weighted average of nearby control displacements. Bounded and local — no
-    #    thin-plate extrapolation blow-ups on the neck or scalp.
+    # 4. Thin-plate-spline INTERPOLATION of the control displacements over every
+    #    head vertex. TPS passes THROUGH the anchors, so localised identity (a
+    #    wider jaw, a longer nose) is preserved instead of being averaged away —
+    #    the failure mode of Shepard/normalised-Gaussian weighting. TPS can drift
+    #    far from the anchors, but the off-face mask zeroes it there, so the neck
+    #    and scalp stay put. Same RBF family face_pipeline uses for its UV warp.
     spacing = _median_nn_spacing(ctrl_pos)
     sigma = max(spacing * float(falloff), 1e-4)
-    d2 = _pairwise_sq(base, ctrl_pos)                  # (V,K)
-    w = np.exp(-d2 / (2.0 * sigma * sigma))
-    wsum = w.sum(1, keepdims=True)
-
-    # Locality mask: fade the morph to zero where the nearest control point is
-    # far away (back of head, neck), so only the face region actually moves.
-    nearest = np.sqrt(d2.min(1, keepdims=True))
+    nearest = np.sqrt(_pairwise_sq(base, ctrl_pos).min(1, keepdims=True))
     mask = np.exp(-(nearest ** 2) / (2.0 * (sigma * 2.0) ** 2))
 
-    safe = wsum.ravel() > 1e-12
-    field = np.zeros_like(base)
-    field[safe] = (w[safe] @ ctrl_disp) / wsum[safe]
-    field *= mask
+    from scipy.interpolate import RBFInterpolator
+    rbf = RBFInterpolator(ctrl_pos, ctrl_disp, kernel="thin_plate_spline", smoothing=1e-3)
+    field = rbf(base) * mask
 
     return (base + field).astype(np.float32)
 

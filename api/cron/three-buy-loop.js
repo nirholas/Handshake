@@ -51,6 +51,7 @@ import {
 	dailySpentAtomics,
 	loadMicrobuySigner,
 	sweepMicrobuyThree,
+	SPENT_STATUSES,
 } from '../_lib/token/microbuy.js';
 import { usdToUsdcAtomics } from '../_lib/token/buyback-math.js';
 
@@ -71,9 +72,14 @@ const perTick = () => {
 	if (!Number.isFinite(n) || n <= 0) return 10;
 	return Math.min(Math.floor(n), 60); // hard cap the per-minute burst
 };
-const concurrency = () => {
-	const n = Number(process.env.THREE_MICROBUY_CONCURRENCY);
-	return Number.isFinite(n) && n >= 1 && n <= 20 ? Math.floor(n) : 8;
+// Concurrent buy workers per tick. When unset, auto-size to the per-tick target
+// (capped at 15) so a 60-buy tick runs ~15-wide and finishes well inside the 60s
+// economy-tick budget on the broadcast-and-go path (~1-2s/buy). Explicit override
+// wins, clamped to [1, 30].
+const concurrency = (want) => {
+	const raw = Number(process.env.THREE_MICROBUY_CONCURRENCY);
+	if (Number.isFinite(raw) && raw >= 1) return Math.min(Math.floor(raw), 30);
+	return Math.min(Math.max(1, want || 10), 15);
 };
 const tollCapAtomic = () => {
 	const n = Number(process.env.X402_THREE_BUY_TOLL_CAP_ATOMIC);
@@ -160,7 +166,7 @@ export default wrapCron(async (req, res) => {
 	}
 
 	const want = perTick();
-	const conc = concurrency();
+	const conc = concurrency(want);
 	const tollCap = tollCapAtomic();
 	const tollPriceAtomic = Number(priceFor('three-buy', 1_000));
 
@@ -208,11 +214,15 @@ export default wrapCron(async (req, res) => {
 				const hay = `${result.errorMsg || ''} ${JSON.stringify(result.responseBody || '')}`;
 				if (/cap_reached|cap_unverifiable/i.test(hay)) capSignal = true;
 			}
-			// A settled toll means the endpoint delivered a broadcast buy (confirmed
-			// or pending); count it as a buy regardless of confirmation latency.
+			// A settled toll means the endpoint delivered a broadcast buy. On the
+			// throughput path it returns 'submitted' (broadcast, not yet confirmed);
+			// with THREE_MICROBUY_AWAIT_CONFIRM it may be 'confirmed'. Count any spend
+			// status as a buy; track the not-yet-confirmed ones separately.
 			const status = result?.responseBody?.status;
-			if (result.paid && status === 'confirmed') buys += 1;
-			else if (result.paid && status === 'pending') { buys += 1; pending += 1; }
+			if (result.paid && SPENT_STATUSES.includes(status)) {
+				buys += 1;
+				if (status !== 'confirmed') pending += 1;
+			}
 		}
 		idx += waveSize;
 

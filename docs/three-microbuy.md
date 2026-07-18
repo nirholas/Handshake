@@ -69,8 +69,33 @@ happen).
   never fires real buys — only its dedicated driver does (pinned by a test).
 
 Every call writes an immutable row to `three_microbuy_runs`
-([migration](../api/_lib/migrations/20260717233000_three_microbuy.sql)) — confirmed,
-pending, skipped, or failed — so there is never a silent no-op.
+([migration](../api/_lib/migrations/20260717233000_three_microbuy.sql)) — submitted,
+confirmed, pending, skipped, or failed — so there is never a silent no-op.
+
+## Throughput — hitting ~60/min
+
+The whole tick runs inside the economy-tick 60s call budget, so 60 buys/min only
+works if each buy is fast. Two things make it fast:
+
+- **Broadcast-and-go (default).** Waiting for each buy to confirm would pin it to
+  the ~2–12s block time — at 60/min that can't fit. So the engine returns as soon as
+  the buy is broadcast (`status: submitted`) and does **not** block on confirmation.
+  This is safe because the daily cap is reserved *before* broadcast (spend is bounded
+  regardless) and the treasury sweep reads real on-chain balances (accounting
+  self-corrects). Flip `THREE_MICROBUY_AWAIT_CONFIRM=true` only if you need per-call
+  confirmation and can accept a lower rate.
+- **Distinct transactions.** At 60/min many buys of the same size fire within one
+  blockhash window; identical amount + quote would let Jupiter build byte-identical
+  transactions that collide on signature (the duplicate is silently dropped). A tiny
+  per-buy amount jitter (0–255 atomics, ≤ $0.000255) makes every buy a distinct
+  market order, so none are lost to collisions. Jupiter's keyless tier absorbs the
+  per-buy quote load (measured: 20 concurrent quotes, zero throttling).
+
+Recommended 60/min config: `THREE_MICROBUY_PER_TICK=60`, leave
+`THREE_MICROBUY_CONCURRENCY` unset (auto-sizes to 15 wide), keep
+`THREE_MICROBUY_AWAIT_CONFIRM` off. At ~1–2s/buy and 15-wide, a full 60-buy tick
+lands in ~8–15s. Make sure the micro-buy wallet holds enough SOL for fees:
+60 buys/min ≈ 0.5–1.7 SOL/day at typical priority fees.
 
 ## Observability
 
@@ -118,8 +143,9 @@ The response reports `fired`, `paid`, `buys`, `pending`, `errors`, `toll_spent_u
 | `THREE_MICROBUY_SECRET_KEY_B64` | buyback wallet | Dedicated signer/funder (base64 64-byte key). |
 | `THREE_MICROBUY_USD` | `0.01` | USD per single buy (hard-capped at 5). |
 | `THREE_MICROBUY_DAILY_CAP_USD` | `50` | UTC-daily ceiling on real spend. |
-| `THREE_MICROBUY_PER_TICK` | `10` | Buys per minute (hard-capped at 60). |
-| `THREE_MICROBUY_CONCURRENCY` | `8` | Concurrent buy workers per tick (1–20). |
+| `THREE_MICROBUY_PER_TICK` | `10` | Buys per minute (hard-capped at 60). Set `60` for the target rate. |
+| `THREE_MICROBUY_CONCURRENCY` | auto (≤15) | Concurrent buy workers per tick. Unset auto-sizes to the per-tick target; override clamps to 1–30. |
+| `THREE_MICROBUY_AWAIT_CONFIRM` | `false` | Wait for each buy to confirm on-chain. Off = broadcast-and-go (required for 60/min). |
 | `THREE_MICROBUY_SLIPPAGE_BPS` | `300` | Jupiter slippage tolerance. |
 | `THREE_MICROBUY_SWEEP_EVERY_N_TICKS` | `30` | Sweep accrued `$THREE` to treasury cadence. |
 | `X402_THREE_BUY_TOLL_CAP_ATOMIC` | `1000000` | Per-tick ceiling on internal tolls (USDC atomics). |

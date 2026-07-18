@@ -113,6 +113,43 @@ function confirmTimeoutMs() {
 }
 
 /**
+ * Wait for on-chain confirmation of each buy before returning? OFF by default: the
+ * micro-buy lane is built for throughput (target ~60 buys/min). Waiting for
+ * confirmation would pin each call to the ~2–12s block time and make 60/min
+ * impossible inside the 60s tick budget. Broadcast-and-go is correct here because
+ * the daily cap is reserved BEFORE broadcast (so spend is bounded regardless) and
+ * the treasury sweep reads real on-chain balances (so accounting self-corrects).
+ * Set THREE_MICROBUY_AWAIT_CONFIRM=true to trade throughput for per-call confirmation.
+ */
+function awaitConfirm() {
+	return ['1', 'true', 'yes', 'on'].includes(
+		String(process.env.THREE_MICROBUY_AWAIT_CONFIRM || '').toLowerCase(),
+	);
+}
+
+// Micro-buy ledger statuses that count as real spend (deducted from the daily cap):
+// a submitted-but-unconfirmed buy has already committed its USDC on-chain, so it
+// must count exactly like a confirmed one — otherwise the DB cap fallback would
+// under-count and let the day overspend.
+export const SPENT_STATUSES = ['confirmed', 'pending', 'submitted'];
+
+// ── per-buy amount jitter (transaction-distinctness) ─────────────────────────
+// At ~60 buys/min, many buys of the SAME size fire within one blockhash window. If
+// two used an identical quote+amount, Jupiter can build byte-identical transactions
+// → the same signature → the second is rejected as already-processed and that buy
+// is silently lost. A tiny per-buy jitter on the input amount (0–255 atomics, up to
+// $0.000255 on a $0.01 buy) makes every buy a genuinely distinct market order:
+// distinct amount → distinct quote → distinct transaction → distinct signature. The
+// counter cycles every 256 buys (~4 min at 60/min), far longer than any blockhash
+// window, so the same jittered amount never collides in practice. Jupiter's keyless
+// tier absorbs the per-buy quote load (measured: 20 concurrent quotes, 0 throttling).
+let _jitterSeq = 0;
+function nextBuyAmountAtomics() {
+	const jitter = BigInt(_jitterSeq++ & 0xff);
+	return buyUsdcAtomics() + jitter;
+}
+
+/**
  * Load the micro-buy signer. Prefers a DEDICATED key so micro-buys and the daily
  * buyback don't fight over one wallet's USDC; falls back to the buyback wallet so
  * a single funded wallet powers both lanes out of the box. Null when neither is set.
@@ -147,7 +184,7 @@ async function dbDailySpentAtomicsStrict() {
 	const rows = await sql`
 		SELECT COALESCE(SUM(usdc_spent_atomics), 0)::bigint AS spent
 		FROM three_microbuy_runs
-		WHERE status IN ('confirmed', 'pending') AND created_at >= date_trunc('day', now())
+		WHERE status IN ('confirmed', 'pending', 'submitted') AND created_at >= date_trunc('day', now())
 	`;
 	return BigInt(rows[0]?.spent || 0);
 }
@@ -275,7 +312,8 @@ export async function planMicrobuy(signerPubkey) {
 	if (!treasuryWalletOrNull()) {
 		return { ok: false, reason: 'treasury_unavailable', walletUsdcAtomics: 0n, spendUsdcAtomics: 0n };
 	}
-	const spend = buyUsdcAtomics();
+	// Jittered per-buy amount so concurrent buys never build identical transactions.
+	const spend = nextBuyAmountAtomics();
 	const connection = getConnection({ network: 'mainnet' });
 	const walletUsdc = await splBalanceAtomics(
 		connection,
@@ -306,13 +344,20 @@ export async function planMicrobuy(signerPubkey) {
 }
 
 /**
- * Execute one micro-buy: reserve the daily budget, sign + broadcast the Jupiter
- * buy, and confirm within a bounded window. The bought $THREE accrues in the
- * micro-buy wallet (swept to the treasury on a cadence by the loop). Returns a
- * receipt; on a hard failure throws with a `.code` so the caller records the reason
- * and (on a never-broadcast failure) releases the reservation.
+ * Execute one micro-buy: reserve the daily budget, sign + broadcast the Jupiter buy.
+ * Broadcast-and-go by default (THREE_MICROBUY_AWAIT_CONFIRM off) so the lane can
+ * sustain ~60 buys/min without pinning each call to block time; confirmation is
+ * optional. The bought $THREE accrues in the micro-buy wallet (swept to the
+ * treasury on a cadence by the loop). Returns a receipt; on a hard failure throws
+ * with a `.code` so the caller records the reason and (on a never-broadcast
+ * failure) releases the reservation.
  *
- * @returns {Promise<{ status:'confirmed'|'pending', buySignature:string, spendUsdcAtomics:bigint, boughtAtomics:bigint, priceUsd:number|null }>}
+ * `boughtAtomics` is the QUOTED out amount (plan.expectedThreeAtomics), not a
+ * wallet-balance read — the wallet holds the accrued total of every prior buy, so
+ * reading its balance would over-count each row. The sweep reconciles against real
+ * on-chain balances, so the quoted figure is the honest per-buy estimate.
+ *
+ * @returns {Promise<{ status:'submitted'|'confirmed', buySignature:string, spendUsdcAtomics:bigint, boughtAtomics:bigint, priceUsd:number|null }>}
  */
 export async function executeMicrobuy(signer, plan) {
 	const { VersionedTransaction } = await import('@solana/web3.js');
@@ -320,7 +365,7 @@ export async function executeMicrobuy(signer, plan) {
 	const payer = signer.publicKey;
 
 	// Reserve budget BEFORE broadcasting so concurrent buys can't collectively
-	// overshoot the daily cap. Released by the caller only if we never broadcast.
+	// overshoot the daily cap. Released only if we never broadcast.
 	const reservation = await reserveDailySpend(plan.spendUsdcAtomics);
 	if (!reservation.ok) {
 		const code = reservation.reason || 'daily_cap_reached';
@@ -354,26 +399,38 @@ export async function executeMicrobuy(signer, plan) {
 		});
 	}
 
-	// Broadcast succeeded — the USDC is committed, so the reservation STANDS even if
-	// confirmation times out (the buy is in flight, not free).
-	try {
-		await confirmBounded(connection, buySig);
-	} catch (waitErr) {
-		if (waitErr?.code === 'tx_reverted') {
-			// A revert means the transfer did not happen — reclaim the reservation.
-			await releaseDailySpend(plan.spendUsdcAtomics);
-			throw waitErr;
-		}
+	const boughtAtomics = plan.expectedThreeAtomics ?? 0n;
+
+	// Throughput path (default): the tx is broadcast and the USDC is committed —
+	// return immediately as 'submitted' without waiting for a block. The sweep and
+	// on-chain state are the source of truth for what actually landed.
+	if (!awaitConfirm()) {
 		return {
-			status: 'pending',
+			status: 'submitted',
 			buySignature: buySig,
 			spendUsdcAtomics: plan.spendUsdcAtomics,
-			boughtAtomics: 0n,
+			boughtAtomics,
 			priceUsd: plan.priceUsd ?? null,
 		};
 	}
 
-	const boughtAtomics = await splBalanceAtomics(connection, payer, solanaPubkey(TOKEN_MINT));
+	// Opt-in confirmation path: wait within a bounded window. The reservation STANDS
+	// on a timeout (the buy is in flight, not free); only a revert reclaims it.
+	try {
+		await confirmBounded(connection, buySig);
+	} catch (waitErr) {
+		if (waitErr?.code === 'tx_reverted') {
+			await releaseDailySpend(plan.spendUsdcAtomics);
+			throw waitErr;
+		}
+		return {
+			status: 'submitted',
+			buySignature: buySig,
+			spendUsdcAtomics: plan.spendUsdcAtomics,
+			boughtAtomics,
+			priceUsd: plan.priceUsd ?? null,
+		};
+	}
 	return {
 		status: 'confirmed',
 		buySignature: buySig,
@@ -435,11 +492,11 @@ export async function microbuyStats() {
 	try {
 		const [lifetime] = await sql`
 			SELECT
-				count(*) FILTER (WHERE status IN ('confirmed', 'pending'))::int AS runs,
-				count(*) FILTER (WHERE status = 'confirmed')::int                AS confirmed,
-				count(*) FILTER (WHERE status = 'pending')::int                  AS pending,
-				COALESCE(SUM(usdc_spent_atomics) FILTER (WHERE status IN ('confirmed', 'pending')), 0)::bigint AS usdc,
-				COALESCE(SUM(three_bought_atomics), 0)::bigint                   AS three
+				count(*) FILTER (WHERE status IN ('confirmed', 'pending', 'submitted'))::int AS runs,
+				count(*) FILTER (WHERE status = 'confirmed')::int                            AS confirmed,
+				count(*) FILTER (WHERE status IN ('pending', 'submitted'))::int              AS pending,
+				COALESCE(SUM(usdc_spent_atomics) FILTER (WHERE status IN ('confirmed', 'pending', 'submitted')), 0)::bigint AS usdc,
+				COALESCE(SUM(three_bought_atomics) FILTER (WHERE status IN ('confirmed', 'pending', 'submitted')), 0)::bigint AS three
 			FROM three_microbuy_runs
 		`;
 		if (lifetime) {
@@ -452,7 +509,7 @@ export async function microbuyStats() {
 			SELECT count(*)::int AS runs,
 				COALESCE(SUM(usdc_spent_atomics), 0)::bigint AS usdc
 			FROM three_microbuy_runs
-			WHERE status IN ('confirmed', 'pending') AND created_at >= date_trunc('day', now())
+			WHERE status IN ('confirmed', 'pending', 'submitted') AND created_at >= date_trunc('day', now())
 		`;
 		if (day) today = { runs: day.runs, usdc: Number(day.usdc) };
 	} catch { /* degrade to defaults */ }
