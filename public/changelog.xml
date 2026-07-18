@@ -135,6 +135,14 @@
 			<description>Recover and inherit agent wallets through a threshold-approved, time-locked process that never exposes a private key.</description>
 		</item>
 		<item>
+			<title>Docs · How the Forge works, in plain language</title>
+			<link>https://three.ws/docs/how-forge-works</link>
+			<guid isPermaLink="false">2026-07-18:Docs · How the Forge works, in plain language</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The five steps between typing a prompt and downloading a 3D model: reference image, reconstruction, engine selection, self-healing failover, and permanent storage. Plus what the quality tiers mean and what a finished model can do next.</description>
+		</item>
+		<item>
 			<title>Docs · Image to 3D</title>
 			<link>https://three.ws/docs/image-to-3d</link>
 			<guid isPermaLink="false">2026-07-18:Docs · Image to 3D</guid>
@@ -279,6 +287,14 @@
 			<description>One autonomous agent that is superhuman at exactly one thing, trading memecoins on pump.fun, and nothing else. Its embodied 3D body, its logged decisions with stated confidence, and its chain-proven record.</description>
 		</item>
 		<item>
+			<title>Docs · The Forge pipeline (architecture deep dive)</title>
+			<link>https://three.ws/docs/forge-pipeline</link>
+			<guid isPermaLink="false">2026-07-18:Docs · The Forge pipeline (architecture deep dive)</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The engineering guide to the Forge: every entry point, the declared engine grid, free-first health-aware routing, the job lifecycle with two-layer failover, persistence and storage, GPU workers, post-processing, payments, and how to extend the pipeline.</description>
+		</item>
+		<item>
 			<title>Docs · Voice Lab</title>
 			<link>https://three.ws/docs/voice-lab</link>
 			<guid isPermaLink="false">2026-07-18:Docs · Voice Lab</guid>
@@ -333,6 +349,14 @@
 			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>The free text-to-3D generation endpoint that powers the three.ws 3D Studio in ChatGPT now ships a published OpenAPI description at /.well-known/3d-studio-openapi.yaml. Any app, custom GPT, or agent can read it to discover how to generate a model from a prompt and poll for the result, with no account, no API key, and no payment. It documents only the free generation action and is kept automatically in sync with the version used by the 3D Studio custom GPT, so the two never drift.</description>
+		</item>
+		<item>
+			<title>Two new guides explain the Forge, inside and out</title>
+			<link>https://three.ws/docs/how-forge-works</link>
+			<guid isPermaLink="false">2026-07-18:Two new guides explain the Forge, inside and out</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The 3D generation pipeline now has real documentation at both depths. A plain-language guide walks through the five steps between typing a prompt and downloading a model, including how jobs quietly move to a backup engine when one goes down. A full architecture deep dive covers the engine grid, free-first routing, failover, storage, GPU workers, and payments for anyone building on or contributing to the pipeline. Also published on the blog.</description>
 		</item>
 		<item>
 			<title>AR Studio</title>

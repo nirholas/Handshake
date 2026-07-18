@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inside the Forge: How a Prompt Becomes a 3D Model</title>
+    <meta name="description" content="What actually happens between typing a prompt on three.ws and downloading a textured 3D model: the reference image, the engine grid, self-healing failover, quality tiers, and what your model can do next.">
+    <meta name="keywords" content="text to 3D, how text to 3D works, 3D generation pipeline, TRELLIS, Hunyuan3D, GLB, Forge, three.ws, AI 3D generation, image to 3D">
+    <link rel="canonical" href="https://three.ws/blog/inside-the-forge">
+
+    <meta property="og:title" content="Inside the Forge: How a Prompt Becomes a 3D Model">
+    <meta property="og:description" content="What actually happens between typing a prompt on three.ws and downloading a textured 3D model: the reference image, the engine grid, self-healing failover, and quality tiers.">
+    <meta property="og:url" content="https://three.ws/blog/inside-the-forge">
+    <meta property="og:type" content="article">
+    <meta property="og:image" content="https://three.ws/og-image.png">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Inside the Forge: How a Prompt Becomes a 3D Model">
+    <meta name="twitter:description" content="What actually happens between typing a prompt on three.ws and downloading a textured 3D model: the reference image, the engine grid, self-healing failover, and quality tiers.">
+    <meta name="twitter:image" content="https://three.ws/og-image.png">
+
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/nav.css">
+    <link rel="stylesheet" href="/footer.css">
+    <style>
+        :root { color-scheme: dark; }
+        body { margin: 0; background: #060611; color: #e7e7f5; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+        .post-wrap { max-width: 720px; margin: 0 auto; padding: 96px 24px 80px; }
+        .post-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: #7a85a8; font-size: 13px; margin-bottom: 28px; }
+        .post-date { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .post-tag { padding: 2px 8px; border-radius: 999px; background: rgba(154,212,255,.08); color: #9ad4ff; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; }
+        h1 { font-size: clamp(26px, 4vw, 40px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 20px; }
+        h2 { font-size: 20px; font-weight: 600; margin: 40px 0 12px; letter-spacing: -0.01em; }
+        p { color: #c8c8e0; line-height: 1.7; margin: 0 0 18px; font-size: 16px; }
+        ul, ol { color: #c8c8e0; line-height: 1.7; margin: 0 0 18px; padding-left: 24px; font-size: 16px; }
+        li { margin-bottom: 6px; }
+        a { color: #9ad4ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: rgba(154,212,255,.07); color: #9ad4ff; padding: 2px 6px; border-radius: 4px; }
+        strong { color: #e7e7f5; }
+        .post-back { display: inline-flex; align-items: center; gap: 6px; color: #7a85a8; font-size: 14px; margin-bottom: 40px; text-decoration: none; }
+        .post-back:hover { color: #9ad4ff; }
+        hr { border: none; border-top: 1px solid rgba(255,255,255,.08); margin: 40px 0; }
+        .post-cta { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 10px; background: linear-gradient(120deg, #ffb454, #ff6ad5 60%, #8b5cf6); color: #060611; font-weight: 600; font-size: 15px; text-decoration: none; transition: transform .15s, box-shadow .15s; }
+        .post-cta:hover { text-decoration: none; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(255,106,213,.25); }
+    </style>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"Inside the Forge: How a Prompt Becomes a 3D Model","description":"What actually happens between typing a prompt on three.ws and downloading a textured 3D model: the reference image, the engine grid, self-healing failover, quality tiers, and what your model can do next.","image":"https://three.ws/og-image.png","datePublished":"2026-07-18T12:00:00.000Z","dateModified":"2026-07-18T12:00:00.000Z","author":{"@type":"Organization","name":"three.ws","url":"https://three.ws"},"publisher":{"@type":"Organization","name":"three.ws","url":"https://three.ws","logo":{"@type":"ImageObject","url":"https://three.ws/og-image.png"}},"mainEntityOfPage":{"@type":"WebPage","@id":"https://three.ws/blog/inside-the-forge"},"keywords":"text to 3D, how text to 3D works, 3D generation pipeline, TRELLIS, Hunyuan3D, GLB, Forge, three.ws"}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https://three.ws/blog"},{"@type":"ListItem","position":3,"name":"Inside the Forge: How a Prompt Becomes a 3D Model","item":"https://three.ws/blog/inside-the-forge"}]}</script>
+</head>
+<body>
+    <div id="nav-container"></div>
+    <main class="post-wrap">
+        <a class="post-back" href="/blog">&larr; Blog</a>
+        <div class="post-meta">
+            <span class="post-date">2026-07-18</span>
+            <span class="post-tag">Deep Dive</span>
+            <span class="post-tag">Forge</span>
+            <span class="post-tag">Text to 3D</span>
+        </div>
+        <h1>Inside the Forge: How a Prompt Becomes a 3D Model</h1>
+
+        <p>You type <em>a weathered brass diving helmet</em> at <a href="/forge">three.ws/forge</a>, and about half a minute later you are orbiting a real, textured 3D model you can download, view in AR, or drop into a scene. No account, no API key, no cost. This post explains what actually happens in between.</p>
+
+        <p><a class="post-cta" href="/forge">Try the Forge &rarr;</a></p>
+
+        <h2>Step 1: your words become a picture</h2>
+        <p>For a text prompt, an image model first paints your description as a clean reference view of the object, the way a concept artist sketches before a sculptor starts. If you uploaded photos instead, this step is skipped: your photos are the reference. Sketches skip it too and drive the geometry directly.</p>
+
+        <h2>Step 2: the picture becomes a shape</h2>
+        <p>A 3D reconstruction model looks at the reference and infers the full object: the sides it can see and the sides it has to imagine. Out comes real geometry with color and texture baked on, delivered as a <strong>GLB</strong>, the open standard that loads in Blender, Unity, Unreal, three.js, and every major 3D tool.</p>
+
+        <h2>Step 3: the best available engine does the work</h2>
+        <p>Here is the part most tools get wrong. Every other text-to-3D product wires up one model and hopes it suits your prompt. The Forge runs a <strong>grid of engines</strong>: Microsoft's TRELLIS on NVIDIA's cloud, Tencent's Hunyuan3D and TRELLIS on our own GPUs, community models on Hugging Face, and premium engines like Meshy and Tripo if you bring your own key.</p>
+        <p>Before your job starts, the Forge checks which engines are healthy <em>right now</em> and picks the best free one for your kind of prompt. Machines and vehicles route to the engine that is best at hard surfaces; people and creatures route to the one that is best at organic shapes. Free lanes always come first: a paid engine never runs while a healthy free one can serve you.</p>
+
+        <h2>Step 4: if an engine stumbles, your job quietly moves</h2>
+        <p>GPU services go down, queues fill, clouds have bad days. When that happens mid-generation, the Forge re-submits your job to the next engine in line automatically. You keep watching the same progress bar; you never find out it happened. Only if every lane fails do you see an error, and even then it arrives with one-click retry options instead of a dead end.</p>
+
+        <h2>Step 5: the model is saved somewhere permanent</h2>
+        <p>Raw engine output lands on temporary storage that expires within an hour, so the Forge immediately copies your model to a permanent CDN. That link keeps working forever. The generation is also recorded in your gallery, so closing the tab mid-job loses nothing: the platform finishes it in the background and it is waiting when you come back.</p>
+
+        <h2>What the quality tiers mean</h2>
+        <ul>
+            <li><strong>Draft</strong>: about 12,000 polygons, fast. For trying ideas.</li>
+            <li><strong>Standard</strong> (the default): about 30,000 polygons, 2K textures, reference views fused from multiple angles.</li>
+            <li><strong>High</strong>: up to 200,000 polygons, full PBR materials, HD textures, the deepest settings every engine offers. High is where holding <a href="/three">$THREE</a> matters: holders generate at High as a perk, everyone else pays per generation.</li>
+        </ul>
+        <p>The honest part: draft and standard usually cost us nothing to produce, because they run on free lanes and our own GPUs. We charge for the top tier because it is genuinely better, not to pass a vendor bill along.</p>
+
+        <h2>After the model exists</h2>
+        <p>A finished model is a starting point, not a dead end:</p>
+        <ul>
+            <li><strong>Make it move.</strong> One click adds a full skeleton (52 bones, face blendshapes) so a humanoid model can walk, wave, and talk.</li>
+            <li><strong>Change its look.</strong> Say "make it chrome" or "wooden" and the material changes without regenerating the shape.</li>
+            <li><strong>Refine it by talking.</strong> "Bigger helmet." "More rust." Each refinement is a new version in a history you can rewind or branch.</li>
+            <li><strong>Make it game-ready.</strong> Retopology to a clean polygon budget that drops straight into a real-time engine.</li>
+            <li><strong>Share and remix.</strong> Publish it, let others remix it, and earn royalties on-chain when they do.</li>
+        </ul>
+
+        <h2>Agents use the exact same machinery</h2>
+        <p>Everything above is also a tool call. AI agents generate models through our <a href="/docs/mcp-studio">free MCP server</a> or plain HTTP, and pay per call in USDC over <a href="/docs/x402">x402</a> when they want more, no account needed. The page you use and the API an agent uses are the same pipeline underneath.</p>
+
+        <h2>Go deeper</h2>
+        <ul>
+            <li>Type a prompt: <a href="/forge">three.ws/forge</a></li>
+            <li>The plain-language guide: <a href="/docs/how-forge-works">How the Forge works</a></li>
+            <li>The full engineering breakdown: <a href="/docs/forge-pipeline">the Forge pipeline deep dive</a></li>
+        </ul>
+
+        <hr>
+        <p><a href="/blog">&larr; All posts</a></p>
+    </main>
+    <div id="footer-container"></div>
+    <script src="/nav.js"></script>
+    <script src="/footer.js"></script>
+</body>
+</html>

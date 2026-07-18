@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-18T01:12:36.978Z",
+	"generated_at": "2026-07-18T18:54:15.583Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2468,6 +2468,26 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/forge-pipeline",
+					"title": "Docs · The Forge pipeline (architecture deep dive)",
+					"description": "The engineering guide to the Forge: every entry point, the declared engine grid, free-first health-aware routing, the job lifecycle with two-layer failover, persistence and storage, GPU workers, post-processing, payments, and how to extend the pipeline.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/how-forge-works",
+					"title": "Docs · How the Forge works, in plain language",
+					"description": "The five steps between typing a prompt and downloading a 3D model: reference image, reconstruction, engine selection, self-healing failover, and permanent storage. Plus what the quality tiers mean and what a finished model can do next.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/docs/image-to-3d",
 					"title": "Docs · Image to 3D",
 					"description": "Turn 1 to 4 photos of an object into a textured GLB on the free self-hosted reconstruction lane. When to use it versus Selfie to Avatar for faces, the multi-view flow, and the API.",
@@ -3555,6 +3575,26 @@
 			"description": "Long-form announcements, launches, and writing from three.ws.",
 			"pages": [
 				{
+					"path": "/blog",
+					"title": "Blog",
+					"description": "Editorial index of three.ws launches and long-form posts.",
+					"added": "2026-05-17",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/blog/inside-the-forge",
+					"title": "Inside the Forge: How a Prompt Becomes a 3D Model",
+					"description": "What actually happens between typing a prompt on three.ws and downloading a textured 3D model: the reference image, the engine grid, self-healing failover, quality tiers, and what your model can do next.",
+					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/blog/three-ws-quicknode-startup-program",
 					"title": "three.ws Joins the Quicknode Startup Program",
 					"description": "three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.",
@@ -3569,16 +3609,6 @@
 					"title": "three.ws Joins the Alibaba Cloud Partner Network",
 					"description": "three.ws is now an Alibaba Cloud Partner, bringing Qwen foundation models and Asia-Pacific cloud infrastructure to the three.ws 3D AI agent platform.",
 					"added": "2026-06-27",
-					"auth": null,
-					"indexable": true,
-					"tags": [],
-					"showcase": false
-				},
-				{
-					"path": "/blog",
-					"title": "Blog",
-					"description": "Editorial index of three.ws launches and long-form posts.",
-					"added": "2026-05-17",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

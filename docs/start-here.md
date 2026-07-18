@@ -62,6 +62,8 @@ Make something the community upvotes and it can reach beyond three.ws: the top-v
 
 Generations don't need a babysitter, either: start a forge job, close the tab, and the platform finishes it, saves it to your gallery, and notifies you when it's ready. See [Background generation](./forge-background-generation.md).
 
+Curious what happens between the prompt and the model? [How the Forge works](./how-forge-works.md) tells the story in plain language; [the Forge pipeline](./forge-pipeline.md) is the full engineering deep dive.
+
 ---
 
 ## Ready to build?

@@ -2011,6 +2011,22 @@
 					"added": "2026-07-18"
 				},
 				{
+					"path": "/docs/forge-pipeline",
+					"title": "Docs · The Forge pipeline (architecture deep dive)",
+					"description": "The engineering guide to the Forge: every entry point, the declared engine grid, free-first health-aware routing, the job lifecycle with two-layer failover, persistence and storage, GPU workers, post-processing, payments, and how to extend the pipeline.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-07-18"
+				},
+				{
+					"path": "/docs/how-forge-works",
+					"title": "Docs · How the Forge works, in plain language",
+					"description": "The five steps between typing a prompt and downloading a 3D model: reference image, reconstruction, engine selection, self-healing failover, and permanent storage. Plus what the quality tiers mean and what a finished model can do next.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-07-18"
+				},
+				{
 					"path": "/docs/image-to-3d",
 					"title": "Docs · Image to 3D",
 					"description": "Turn 1 to 4 photos of an object into a textured GLB on the free self-hosted reconstruction lane. When to use it versus Selfie to Avatar for faces, the multi-view flow, and the API.",
@@ -2793,6 +2809,23 @@
 			"description": "Long-form announcements, launches, and writing from three.ws.",
 			"pages": [
 				{
+					"path": "/blog",
+					"title": "Blog",
+					"description": "Editorial index of three.ws launches and long-form posts.",
+					"priority": 0.7,
+					"changefreq": "weekly",
+					"lastmod": "2026-05-17",
+					"added": "2026-05-17"
+				},
+				{
+					"path": "/blog/inside-the-forge",
+					"title": "Inside the Forge: How a Prompt Becomes a 3D Model",
+					"description": "What actually happens between typing a prompt on three.ws and downloading a textured 3D model: the reference image, the engine grid, self-healing failover, quality tiers, and what your model can do next.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"lastmod": "2026-07-18"
+				},
+				{
 					"path": "/blog/three-ws-quicknode-startup-program",
 					"title": "three.ws Joins the Quicknode Startup Program",
 					"description": "three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.",
@@ -2809,15 +2842,6 @@
 					"changefreq": "monthly",
 					"lastmod": "2026-06-27",
 					"added": "2026-06-27"
-				},
-				{
-					"path": "/blog",
-					"title": "Blog",
-					"description": "Editorial index of three.ws launches and long-form posts.",
-					"priority": 0.7,
-					"changefreq": "weekly",
-					"lastmod": "2026-05-17",
-					"added": "2026-05-17"
 				},
 				{
 					"path": "/blog/x402-stripe-for-agent-payments",

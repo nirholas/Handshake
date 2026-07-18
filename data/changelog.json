@@ -14709,6 +14709,15 @@
 				"improvement"
 			],
 			"link": "/"
+		},
+		{
+			"date": "2026-07-18",
+			"title": "Two new guides explain the Forge, inside and out",
+			"summary": "The 3D generation pipeline now has real documentation at both depths. A plain-language guide walks through the five steps between typing a prompt and downloading a model, including how jobs quietly move to a backup engine when one goes down. A full architecture deep dive covers the engine grid, free-first routing, failover, storage, GPU workers, and payments for anyone building on or contributing to the pipeline. Also published on the blog.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/how-forge-works"
 		}
 	]
 }

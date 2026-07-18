@@ -48,7 +48,7 @@ Health is real. The UI fetches `/api/forge?health=1` after load and disables any
 
 ### Background generation and resume
 
-Generation is a job. `POST /api/forge` returns a `job_id`; the client polls `GET /api/forge?job=<id>`. The lanes that complete inline within one request (free NVIDIA NIM, HuggingFace Spaces, BYOK-sync) retry once automatically on a failed result. Because the in-flight job id is written to `localStorage`, closing the tab or navigating away does not lose the generation: returning to Forge within a 30-minute window resumes polling the same job. Finished models for your browser are surfaced from a gallery on load, and a share link always wins over a resume.
+Generation is a job. `POST /api/forge` returns a `job_id`; the client polls `GET /api/forge?job=<id>` until the status is `done` or `failed`. The lanes that complete inline within one request (free NVIDIA NIM, HuggingFace Spaces, BYOK-sync) can instead answer the POST directly with `status:'done'`, the `glb_url`, and a null `job_id`, and they retry once automatically on a failed result. Because the in-flight job id is written to `localStorage`, closing the tab or navigating away does not lose the generation: returning to Forge within a 30-minute window resumes polling the same job. Finished models for your browser are surfaced from a gallery on load, and a share link always wins over a resume.
 
 ## Walkthrough
 
@@ -70,13 +70,16 @@ curl 'https://three.ws/api/forge?catalog=1'
 # Probe live backend health (which lanes are up right now).
 curl 'https://three.ws/api/forge?health=1'
 
-# Start a free text-to-3D generation, then poll for the GLB.
-JOB=$(curl -s -X POST 'https://three.ws/api/forge' \
+# Start a free text-to-3D generation. The free NVIDIA lane often completes
+# inline, answering with status "done", a glb_url, and a null job_id; slower
+# lanes answer with a job_id to poll instead.
+RESP=$(curl -s -X POST 'https://three.ws/api/forge' \
   -H 'content-type: application/json' \
-  -d '{"prompt":"a weathered brass diving helmet","tier":"draft"}' \
-  | python3 -c 'import sys,json;print(json.load(sys.stdin)["job_id"])')
+  -d '{"prompt":"a weathered brass diving helmet","tier":"draft"}')
+echo "$RESP" | python3 -c 'import sys,json;j=json.load(sys.stdin);print(j.get("glb_url") or j["job_id"])'
 
-curl "https://three.ws/api/forge?job=$JOB"
+# If you got a job_id, poll it until the status is "done" or "failed".
+curl "https://three.ws/api/forge?job=<JOB_ID>"
 ```
 
 Image-to-3D over the API sends public image URLs instead of a prompt:
@@ -97,7 +100,7 @@ const start = await fetch('https://three.ws/api/forge', {
 }).then((r) => r.json());
 
 let job = start;
-while (job.status !== 'done' && job.status !== 'error') {
+while (job.status !== 'done' && job.status !== 'failed') {
   await new Promise((r) => setTimeout(r, 4000));
   job = await fetch(`https://three.ws/api/forge?job=${start.job_id}`).then((r) => r.json());
 }
@@ -118,6 +121,7 @@ console.log(job.glb_url); // downloadable, textured GLB
 
 ## Related
 
+- [The Forge pipeline](./forge-pipeline.md) is the architecture deep dive: the engine grid, routing, failover, job lifecycle, workers, and payments, end to end. [How the Forge works](./how-forge-works.md) is the same story in plain language.
 - [Image to 3D](./image-to-3d.md) is the photo lane opened directly at [/image-to-3d](https://three.ws/image-to-3d).
 - [Diorama](./diorama.md) forges a whole scene of Forge objects into one explorable world.
 - The 3D generation architecture: [3D pipeline](./3d-pipeline.md), [3D asset pipeline](./3d-asset-pipeline.md), [3D API](./3d-api.md).

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-18T01:12:36.992Z",
+	"generated_at": "2026-07-18T18:54:15.599Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -162,6 +162,16 @@
 			"title": "Docs · Guardian console",
 			"summary": "Recover and inherit agent wallets through a threshold-approved, time-locked process that never exposes a private key.",
 			"link": "/docs/guardian",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-18",
+			"type": "launch",
+			"title": "Docs · How the Forge works, in plain language",
+			"summary": "The five steps between typing a prompt and downloading a 3D model: reference image, reconstruction, engine selection, self-healing failover, and permanent storage. Plus what the quality tiers mean and what a finished model can do next.",
+			"link": "/docs/how-forge-works",
 			"tags": [
 				"launch"
 			]
@@ -349,6 +359,16 @@
 		{
 			"date": "2026-07-18",
 			"type": "launch",
+			"title": "Docs · The Forge pipeline (architecture deep dive)",
+			"summary": "The engineering guide to the Forge: every entry point, the declared engine grid, free-first health-aware routing, the job lifecycle with two-layer failover, persistence and storage, GPU workers, post-processing, payments, and how to extend the pipeline.",
+			"link": "/docs/forge-pipeline",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-18",
+			"type": "launch",
 			"title": "Docs · Voice Lab",
 			"summary": "Clone your voice from a short browser recording, play it in the TTS playground, and assign it to an agent.",
 			"link": "/docs/voice-lab",
@@ -418,6 +438,16 @@
 			"tags": [
 				"docs",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-07-18",
+			"type": "update",
+			"title": "Two new guides explain the Forge, inside and out",
+			"summary": "The 3D generation pipeline now has real documentation at both depths. A plain-language guide walks through the five steps between typing a prompt and downloading a model, including how jobs quietly move to a backup engine when one goes down. A full architecture deep dive covers the engine grid, free-first routing, failover, storage, GPU workers, and payments for anyone building on or contributing to the pipeline. Also published on the blog.",
+			"link": "/docs/how-forge-works",
+			"tags": [
+				"docs"
 			]
 		},
 		{

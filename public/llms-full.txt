@@ -1510,6 +1510,18 @@ URL: https://three.ws/docs/forge
 
 How the Forge turns a text prompt, photos, or a sketch into a downloadable textured 3D model (GLB): the free-first engine grid with live health status, input modes, output formats, job resume, and background generation.
 
+### Docs · The Forge pipeline (architecture deep dive)
+
+URL: https://three.ws/docs/forge-pipeline
+
+The engineering guide to the Forge: every entry point, the declared engine grid, free-first health-aware routing, the job lifecycle with two-layer failover, persistence and storage, GPU workers, post-processing, payments, and how to extend the pipeline.
+
+### Docs · How the Forge works, in plain language
+
+URL: https://three.ws/docs/how-forge-works
+
+The five steps between typing a prompt and downloading a 3D model: reference image, reconstruction, engine selection, self-healing failover, and permanent storage. Plus what the quality tiers mean and what a finished model can do next.
+
 ### Docs · Image to 3D
 
 URL: https://three.ws/docs/image-to-3d
@@ -2162,6 +2174,18 @@ three.ws is an AWS Partner: the open-source 3D AI agent platform on AWS.
 
 Long-form announcements, launches, and writing from three.ws.
 
+### Blog
+
+URL: https://three.ws/blog
+
+Editorial index of three.ws launches and long-form posts.
+
+### Inside the Forge: How a Prompt Becomes a 3D Model
+
+URL: https://three.ws/blog/inside-the-forge
+
+What actually happens between typing a prompt on three.ws and downloading a textured 3D model: the reference image, the engine grid, self-healing failover, quality tiers, and what your model can do next.
+
 ### three.ws Joins the Quicknode Startup Program
 
 URL: https://three.ws/blog/three-ws-quicknode-startup-program
@@ -2173,12 +2197,6 @@ three.ws has been accepted into the Quicknode Startup Program and approved for f
 URL: https://three.ws/blog/three-ws-alibaba-cloud-partnership
 
 three.ws is now an Alibaba Cloud Partner, bringing Qwen foundation models and Asia-Pacific cloud infrastructure to the three.ws 3D AI agent platform.
-
-### Blog
-
-URL: https://three.ws/blog
-
-Editorial index of three.ws launches and long-form posts.
 
 ### The Stripe of x402: How three.ws Turned Agent Payments Into One Line of Code
 
