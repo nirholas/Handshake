@@ -115,6 +115,60 @@ def test_roundtrip_through_glb():
     print("ok  morph survives GLB write/reload with rig + 67 blendshapes intact")
 
 
+def test_dense_registration_recovers_target():
+    """v2: anchored TPS fit pulls the face toward a target feature, off-face frozen.
+
+    Mirrors the real flow: a high-fidelity model (MICA/FLAME) supplies the target's
+    468 landmark positions (known correspondence) plus a dense surface, handed to
+    the fit in an ARBITRARY pose (exercises Umeyama alignment). We validate with a
+    LOCAL feature (a forward nose bump) — a clean, unambiguous signal, because a
+    localised displacement carries no global-similarity component for the alignment
+    to absorb. Global-scale differences are intentionally normalised away (we
+    transfer the person's proportions, not rescale the template), so final quality
+    tuning happens against real model output, not synthetic global scalings.
+    """
+    _, base, faces, fmap = _load()
+    target = base.copy()
+    nose = base[:, 2] > np.percentile(base[:, 2], 92)
+    target[nose, 2] += 0.02                              # local forward nose bump
+
+    s, R, t = _random_similarity(7)                      # arbitrary pose
+    target_posed = (s * (R @ target.T)).T + t
+    tgt_landmarks = target_posed[fmap.landmark_vtx]      # known correspondence
+
+    result = fg.register_head_to_target(
+        base, fmap, tgt_landmarks, target_points=target_posed, strength=1.0
+    )
+
+    err_before = np.linalg.norm((base - target)[nose], axis=1).mean()
+    err_after = np.linalg.norm((result - target)[nose], axis=1).mean()
+    assert err_after < err_before * 0.6, (
+        f"registration did not pull toward target: {err_before:.4f} → {err_after:.4f}"
+    )
+    # Off-face (back of head) must stay frozen.
+    back = base[:, 2] < np.percentile(base[:, 2], 12)
+    back_move = np.linalg.norm(result[back] - base[back], axis=1).max()
+    assert back_move < 0.012, f"back of head moved: {back_move:.4f}"
+    assert np.isfinite(result).all()
+    print(f"ok  dense registration pulls face to target (nose err {err_before:.4f}→{err_after:.4f}, "
+          f"{100*(1-err_after/err_before):.0f}% ↓, back frozen {back_move:.2e})")
+
+
+def test_registration_preserves_rig_through_glb():
+    """v2 registration output writes back through glb_ops with rig + blendshapes intact."""
+    glb, base, faces, fmap = _load()
+    target = base.copy()
+    target[base[:, 2] > np.percentile(base[:, 2], 90), 2] += 0.015
+    result = fg.register_head_to_target(base, fmap, target[fmap.landmark_vtx],
+                                        target_points=target, strength=1.0)
+    glb_ops.set_head_geometry(glb, result, faces=faces)
+    out = glb_ops.save_glb(glb)
+    prim = glb_ops._find_head_prim(glb_ops.load_glb(out))
+    assert len(prim.targets) == 67 and prim.attributes.JOINTS_0 is not None
+    assert len(out) > 100_000
+    print("ok  v2 registration survives GLB write with rig + 67 blendshapes intact")
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     try:

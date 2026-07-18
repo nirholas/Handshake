@@ -195,6 +195,104 @@ def morph_head_to_landmarks(
     return (base + field).astype(np.float32)
 
 
+def register_head_to_target(
+    base_positions: np.ndarray,
+    face_map: FaceMap,
+    target_landmarks: np.ndarray,
+    *,
+    target_points: Optional[np.ndarray] = None,
+    strength: float = 1.0,
+    max_displacement_frac: float = 0.4,
+    falloff: float = 3.0,
+    icp_iterations: int = 4,
+) -> np.ndarray:
+    """
+    Dense non-rigid registration (the v2 path): reshape the template head to a
+    high-fidelity target head from MICA/FLAME, a re-based HRN, or any dense face
+    model. Model-agnostic — it needs the target's 468 landmark positions (every
+    such model exposes a landmark embedding) and, optionally, a dense surface.
+
+    Two stages, because they solve different problems:
+      A. Landmark-anchored fit — the 468 target landmarks have KNOWN correspondence
+         to the template's control vertices, so this recovers gross shape (face
+         width, length, nose/jaw projection) without the tangential "sliding" that
+         defeats pure closest-point ICP on a smooth surface.
+      B. Optional dense point-to-plane ICP — refines fine surface detail along the
+         normal direction, where closest-point matching is well-posed.
+
+    The target is first Umeyama-aligned to the template via the shared landmarks,
+    so the caller can pass the model's raw output frame. Vertex count/order are
+    preserved, so `glb_ops.set_head_geometry` writes it back with the rig and every
+    ARKit blendshape intact.
+
+    Args:
+        target_landmarks: (>=468, 3) the target's landmark positions (any frame).
+        target_points:    optional (M,3) dense target surface for stage B.
+
+    Returns:
+        (V,3) float32 morphed vertices.
+    """
+    base = np.asarray(base_positions, dtype=np.float64)
+    tgt_lm = np.asarray(target_landmarks, dtype=np.float64)[: face_map.canonical_norm.shape[0]]
+    face_scale = face_map.head_face_scale
+    clamp = max_displacement_frac * face_scale
+
+    # Control vertices and the target landmark that drives each (dedup shared).
+    lm_vtx = face_map.landmark_vtx
+    uniq, inv = np.unique(lm_vtx, return_inverse=True)
+    tgt_per_uniq = np.zeros((uniq.shape[0], 3)); cnt = np.zeros((uniq.shape[0], 1))
+    np.add.at(tgt_per_uniq, inv, tgt_lm); np.add.at(cnt, inv, 1.0)
+    tgt_ctrl = tgt_per_uniq / np.maximum(cnt, 1.0)         # target pos per control vtx
+    base_ctrl = base[uniq]
+
+    # Align the target landmarks onto the template's control vertices (absorbs the
+    # model's scale/orientation/translation) so displacements are in head space.
+    s, R, t = umeyama(tgt_ctrl, base_ctrl)
+    tgt_ctrl = _apply(s, R, t, tgt_ctrl)
+
+    # Off-face mask so only the face tracks the target (scalp/ears/neck frozen).
+    sigma = max(_median_nn_spacing(base_ctrl) * float(falloff), 1e-4)
+    nearest = np.sqrt(_pairwise_sq(base, base_ctrl).min(1, keepdims=True))
+    mask = np.exp(-(nearest ** 2) / (2.0 * (sigma * 2.0) ** 2))
+
+    def interpolate(centers, disp):
+        """
+        Thin-plate-spline INTERPOLATION of the control displacements over all
+        vertices (passes through the anchors exactly — unlike Shepard averaging,
+        which smooths them away and dilutes localised shape like a wider jaw),
+        faded off-face by the mask. Same RBF family face_pipeline uses for its
+        texture warp.
+        """
+        from scipy.interpolate import RBFInterpolator
+        rbf = RBFInterpolator(centers, disp, kernel="thin_plate_spline", smoothing=1e-3)
+        return rbf(base) * mask
+
+    # ── Stage A: anchored gross-shape fit (known correspondence, no sliding) ──
+    disp = (tgt_ctrl - base_ctrl) * float(strength)
+    m = np.linalg.norm(disp, axis=1, keepdims=True)
+    over = (m > clamp).ravel()
+    if over.any():
+        disp[over] *= (clamp / m[over])
+    current = base + interpolate(base_ctrl, disp)
+
+    # ── Stage B: dense point-to-point ICP refinement (surface detail) ──
+    if target_points is not None and len(target_points) > 0:
+        target = np.asarray(target_points, dtype=np.float64)
+        target = _apply(s, R, t, target)                  # same frame as landmarks
+        driven = np.where(mask.ravel() > 0.3)[0]
+        for _ in range(max(0, icp_iterations)):
+            d2 = _pairwise_sq(current[driven], target)
+            nn = d2.argmin(1)
+            step = (target[nn] - current[driven]) * 0.5    # damped for stability
+            sm = np.linalg.norm(step, axis=1, keepdims=True)
+            so = (sm > clamp * 0.5).ravel()
+            if so.any():
+                step[so] *= (clamp * 0.5 / sm[so])
+            current = current + interpolate(current[driven], step)
+
+    return current.astype(np.float32)
+
+
 def _pairwise_sq(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     """Squared Euclidean distances, (len(a), len(b))."""
     return ((a[:, None, :] - b[None, :, :]) ** 2).sum(-1)

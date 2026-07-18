@@ -35,8 +35,10 @@ texture-only — the shape refinement never fails a reconstruction.
 Everything above is Apache-2.0 / MIT-clean (MediaPipe, numpy, scipy) — no
 non-commercial 3DMM (FLAME/BFM/SMPL) is used. See
 [`docs/avatar-reconstruction.md`](../../docs/avatar-reconstruction.md) for the
-fidelity roadmap (FaceLift dense geometry + Imagen texture inpaint, then an
-Anny/MakeHuman CC0 body to drop the RPM-template dependency).
+fidelity roadmap (v2: dense MICA+FLAME identity via the model-agnostic
+`register_head_to_target` primitive + Imagen texture inpaint; v3: an Anny/
+MakeHuman CC0 body to drop the RPM-template dependency). FaceLift was evaluated
+and rejected — non-commercial Adobe weights, splat output, not mesh.
 
 ## Prerequisites
 

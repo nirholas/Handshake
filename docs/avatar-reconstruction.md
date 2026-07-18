@@ -77,10 +77,21 @@ each link:
 
 | Version | Upgrade | Model | Licence verdict |
 |---|---|---|---|
-| **v1 (this)** | Real face-shape morph | MediaPipe Face Mesh | Apache-2.0 — clean |
-| **v2** | Dense, detailed face geometry via non-rigid ICP onto the template | **FaceLift** (ICCV'25) or HRN re-based on **FLAME-2023-Open** | FaceLift Apache-2.0; FLAME-2023-Open CC-BY-4.0 — clean (verify FaceLift base weights) |
-| **v2** | Full-head photoreal texture (fills cheeks/ears/scalp the selfie can't see) | **Imagen** inpaint on Vertex AI | GCP — pre-approved |
+| **v1 (shipped)** | Real face-shape morph (sparse) | MediaPipe Face Mesh | Apache-2.0 — clean |
+| **v2 (recommended)** | Dense identity geometry, fused via `register_head_to_target` | **MICA + FLAME**, commercial licence from MPI | Paid MPI commercial licence — clean once signed. FLAME's fixed topology + expression basis map straight to ARKit |
+| **v2 (fallback)** | Dense identity, no licence fee | HRN re-based on **FLAME-2023-Open** (CC-BY-4.0) | Clean, but weeks of GPU R&D to retrain the identity regressor |
+| **v2 (texture)** | Full-head photoreal texture (fills cheeks/ears/scalp the selfie can't see) | **Imagen** inpaint on Vertex AI | GCP — pre-approved |
 | **v3** | Drop the RPM-template dependency for a fully-owned body | **Anny** (parametric body) + **ICT-FaceKit** (ARKit-52) + deformation transfer | Anny Apache-2.0 + CC0; ICT-FaceKit + DT MIT — clean |
+
+**Rejected: FaceLift (ICCV'25)** — initially floated as the clean v2 model, but
+verification killed it: its weights are licensed from Adobe under the
+**non-commercial Adobe Research License** (Apache code does not extend to the
+weights), and it outputs **3D Gaussian Splats, not a mesh**, so it cannot feed a
+rigged-GLB pipeline. This is the recurring trap here: the high-quality
+single-image face models are almost all encumbered by a non-commercial 3DMM/
+dataset (FLAME, BFM, SMPL) or a non-commercial weight licence. The dense
+registration itself (`register_head_to_target`) is model-agnostic and already
+validated, so whichever licensed model is chosen drops straight in.
 
 Auto-rigging for the reconstruct-the-whole-body variant would use
 **Make-It-Animatable** (Apache) or **UniRig** (MIT) → a Mixamo-standard skeleton
