@@ -129,10 +129,14 @@ export default wrapCron(async (req, res) => {
 			const r = await executeSwap({ connection, keypair, leg, solPriceUsd, network: NETWORK });
 			results.push(r);
 			if (r.status === 'swapped') {
-				await logAudit({
+				// logAudit is fire-and-forget: it schedules its own microtask, swallows
+				// its own DB errors, and returns undefined — so do NOT await or .catch it
+				// (that threw "reading 'catch'" on every successful swap), and the payload
+				// field is `meta`, not `detail`.
+				logAudit({
 					action: 'economy_rebalance_swap',
-					detail: { name: r.name, dir: r.dir, inUsd: r.inUsd, signature: r.signature },
-				}).catch(() => {});
+					meta: { name: r.name, dir: r.dir, inUsd: r.inUsd, signature: r.signature },
+				});
 			}
 		} catch (err) {
 			results.push({ name: leg.name, status: 'failed', reason: err.message?.slice(0, 160) });
