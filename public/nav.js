@@ -214,6 +214,14 @@ function boot() {
 		.then(([html, navData]) => {
 			navContainer.innerHTML = html;
 			renderMenus(navContainer, navData);
+			// Translate the freshly-injected nav immediately for the active locale
+			// (the i18n runtime's observer also catches it, this just avoids a frame
+			// of English on first paint). Safe no-op if i18n hasn't loaded yet.
+			try {
+				window.threewsI18n?.apply?.(navContainer);
+			} catch {
+				/* i18n not present on this page — nav stays English */
+			}
 			initNav(navContainer);
 			loadNotificationsInbox();
 			loadHolderBadge();
@@ -246,6 +254,16 @@ function escHtml(s) {
 		.replace(/"/g, '&quot;');
 }
 
+// i18n: scripts/i18n-nav-harvest.mjs baked every nav string into the catalog
+// under navKey(text). Emitting the same key here lets the runtime (src/i18n.js,
+// via its injected-content MutationObserver) swap each label for the active
+// locale, and re-swap on a language switch. `NK` is replaced with nav-data.js's
+// real navKey in renderMenus; the placeholder only guards against an early call.
+let NK = (t) => 'nav.' + String(t);
+function i18nAttr(text) {
+	return text && String(text).trim() ? ` data-i18n="${escHtml(NK(text))}"` : '';
+}
+
 function attrString(attrs) {
 	if (!attrs) return '';
 	return Object.keys(attrs)
@@ -255,11 +273,13 @@ function attrString(attrs) {
 
 function renderMenuItem(item) {
 	const tone = item.badgeTone === 'live' ? ' nav-pill-live' : '';
-	const badge = item.badge ? ` <span class="nav-pill-sm${tone}">${escHtml(item.badge)}</span>` : '';
+	const badge = item.badge
+		? ` <span class="nav-pill-sm${tone}"${i18nAttr(item.badge)}>${escHtml(item.badge)}</span>`
+		: '';
 	return (
 		`<a class="nav-mi" href="${escHtml(item.href)}" role="menuitem"${attrString(item.attrs)}>` +
-		`<span class="nav-mi-t">${escHtml(item.title)}${badge}</span>` +
-		`<span class="nav-mi-d">${escHtml(item.desc)}</span></a>`
+		`<span class="nav-mi-t"><span${i18nAttr(item.title)}>${escHtml(item.title)}</span>${badge}</span>` +
+		`<span class="nav-mi-d"${i18nAttr(item.desc)}>${escHtml(item.desc)}</span></a>`
 	);
 }
 
@@ -275,13 +295,15 @@ function renderGroup(group) {
 	} else if (group.layout === 'wide') {
 		popClass += ' wide';
 	}
-	const note = group.note ? `<div class="nav-pop-note">${escHtml(group.note)}</div>` : '';
+	const note = group.note
+		? `<div class="nav-pop-note"${i18nAttr(group.note)}>${escHtml(group.note)}</div>`
+		: '';
 	const body = group.columns
 		? group.columns
 				.map(
 					(col) =>
 						`<div class="nav-col" role="group" aria-label="${escHtml(col.label)}">` +
-						`<div class="nav-col-h">${escHtml(col.label)}</div>` +
+						`<div class="nav-col-h"${i18nAttr(col.label)}>${escHtml(col.label)}</div>` +
 						col.items.map(renderMenuItem).join('') +
 						`</div>`,
 				)
@@ -290,7 +312,7 @@ function renderGroup(group) {
 	return (
 		`<div class="nav-grp">` +
 		`<button type="button" class="nav-trigger" aria-haspopup="true" aria-expanded="false">` +
-		`${escHtml(group.label)}${badge}<span class="nav-caret" aria-hidden="true">▾</span></button>` +
+		`<span${i18nAttr(group.label)}>${escHtml(group.label)}</span>${badge}<span class="nav-caret" aria-hidden="true">▾</span></button>` +
 		`<div class="${popClass}" role="menu" aria-label="${escHtml(group.label)}">${note}${body}</div>` +
 		`</div>`
 	);
@@ -301,15 +323,17 @@ function renderTopLink(link) {
 		return (
 			`<a class="nav-hot" href="${escHtml(link.href)}">` +
 			`<span class="nav-hot-dot" aria-hidden="true"></span>` +
-			`<span class="nav-hot-label">${escHtml(link.label)}</span></a>`
+			`<span class="nav-hot-label"${i18nAttr(link.label)}>${escHtml(link.label)}</span></a>`
 		);
 	}
-	const badge = link.badge ? ` <span class="nav-pill-sm">${escHtml(link.badge)}</span>` : '';
-	return `<a href="${escHtml(link.href)}">${escHtml(link.label)}${badge}</a>`;
+	const badge = link.badge
+		? ` <span class="nav-pill-sm"${i18nAttr(link.badge)}>${escHtml(link.badge)}</span>`
+		: '';
+	return `<a href="${escHtml(link.href)}"><span${i18nAttr(link.label)}>${escHtml(link.label)}</span>${badge}</a>`;
 }
 
 function renderDrawerLink(item) {
-	return `<a href="${escHtml(item.href)}"${attrString(item.attrs)}>${escHtml(item.title)}</a>`;
+	return `<a href="${escHtml(item.href)}"${attrString(item.attrs)}${i18nAttr(item.title)}>${escHtml(item.title)}</a>`;
 }
 
 function renderDrawer(navData) {
@@ -321,41 +345,42 @@ function renderDrawer(navData) {
 	html +=
 		`<button type="button" class="dr-walk" id="home-nav-drawer-walk" aria-pressed="false">` +
 		`<span class="nav-walk-ico" aria-hidden="true">🚶</span>` +
-		`<span class="dr-walk-label">Walk with me</span>` +
-		`<span class="dr-walk-state" aria-hidden="true">Off</span></button>`;
+		`<span class="dr-walk-label"${i18nAttr('Walk with me')}>Walk with me</span>` +
+		`<span class="dr-walk-state" aria-hidden="true"${i18nAttr('Off')}>Off</span></button>`;
 	// Highlighted top-level links lead the drawer as featured rows — burying
 	// the one link the nav spotlights under "More" defeats the spotlight.
 	navData.NAV_LINKS.filter((l) => l.highlight).forEach((link) => {
 		html +=
 			`<a class="dr-hot" href="${escHtml(link.href)}">` +
 			`<span class="nav-hot-dot" aria-hidden="true"></span>` +
-			`<span>${escHtml(link.label)}</span>` +
+			`<span${i18nAttr(link.label)}>${escHtml(link.label)}</span>` +
 			`<span class="dr-hot-arrow" aria-hidden="true">→</span></a>`;
 	});
 	navData.NAV_GROUPS.forEach((group) => {
 		if (group.columns) {
 			group.columns.forEach((col) => {
-				html += `<div class="dr-h">${escHtml(group.label)} · ${escHtml(col.label)}</div>`;
+				html += `<div class="dr-h"><span${i18nAttr(group.label)}>${escHtml(group.label)}</span> · <span${i18nAttr(col.label)}>${escHtml(col.label)}</span></div>`;
 				html += col.items.map(renderDrawerLink).join('');
 			});
 		} else {
-			html += `<div class="dr-h">${escHtml(group.label)}</div>`;
+			html += `<div class="dr-h"${i18nAttr(group.label)}>${escHtml(group.label)}</div>`;
 			html += (group.items || []).map(renderDrawerLink).join('');
 		}
 	});
-	html += `<div class="dr-h">Legal</div>`;
+	html += `<div class="dr-h"${i18nAttr('Legal')}>Legal</div>`;
 	html += navData.DRAWER_LEGAL.map(renderDrawerLink).join('');
-	html += `<div class="dr-h">More</div>`;
+	html += `<div class="dr-h"${i18nAttr('More')}>More</div>`;
 	html += navData.NAV_LINKS.filter((l) => !l.highlight).map(renderTopLink).join('');
-	html += `<a href="/dashboard" id="home-nav-drawer-dashboard" data-auth="in" hidden>Dashboard</a>`;
-	html += `<a href="/guardian" id="home-nav-drawer-guardian" data-auth="in" hidden>Guardian console</a>`;
+	html += `<a href="/dashboard" id="home-nav-drawer-dashboard" data-auth="in" hidden${i18nAttr('Dashboard')}>Dashboard</a>`;
+	html += `<a href="/guardian" id="home-nav-drawer-guardian" data-auth="in" hidden${i18nAttr('Guardian console')}>Guardian console</a>`;
 	html += `<div class="sep"></div>`;
-	html += `<a href="/login" id="home-nav-drawer-cta" data-auth="out">Sign in</a>`;
-	html += `<a class="btn primary btn--primary" href="/dashboard">Console →</a>`;
+	html += `<a href="/login" id="home-nav-drawer-cta" data-auth="out"${i18nAttr('Sign in')}>Sign in</a>`;
+	html += `<a class="btn primary btn--primary" href="/dashboard"${i18nAttr('Console →')}>Console →</a>`;
 	return html;
 }
 
 function renderMenus(root, navData) {
+	if (typeof navData.navKey === 'function') NK = navData.navKey;
 	const main = root.querySelector('.nav-main');
 	if (main) {
 		main.innerHTML =

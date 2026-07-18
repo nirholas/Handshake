@@ -127,10 +127,29 @@
 	}
 
 	// ── DOM utilities ────────────────────────────────────────────────────────────
+	// i18n key for a shell string — must match nav-data.js navKey and the offline
+	// harvester (scripts/i18n-nav-harvest.mjs) so the runtime (src/i18n.js) swaps
+	// these labels per locale.
+	function navKey(text) {
+		var s = String(text == null ? '' : text);
+		var h = 0x811c9dc5;
+		for (var i = 0; i < s.length; i++) {
+			h ^= s.charCodeAt(i);
+			h = Math.imul(h, 0x01000193);
+		}
+		return 'nav.' + (h >>> 0).toString(36);
+	}
 	function el(tag, cls, text) {
 		var n = document.createElement(tag);
 		if (cls) n.className = cls;
 		if (text != null) n.textContent = text;
+		return n;
+	}
+	// el() variant that tags the element for translation (static labels only —
+	// never dynamic text like counts or the ✓/glyph marks).
+	function elT(tag, cls, text) {
+		var n = el(tag, cls, text);
+		if (text != null && String(text).trim()) n.setAttribute('data-i18n', navKey(text));
 		return n;
 	}
 	function ensureCss() {
@@ -187,7 +206,7 @@
 		glyph.setAttribute('aria-hidden', 'true');
 		pillRing.appendChild(glyph);
 		pill.appendChild(pillRing);
-		pill.appendChild(el('span', 'twg-pill-label', 'Getting started'));
+		pill.appendChild(elT('span', 'twg-pill-label', 'Getting started'));
 		pillCount = el('span', 'twg-pill-count');
 		pill.appendChild(pillCount);
 		pill.addEventListener('click', expand);
@@ -220,7 +239,7 @@
 
 		var head = el('div', 'twg-head');
 		var headText = el('div', 'twg-head-text');
-		headText.appendChild(el('h2', 'twg-title', 'Getting started'));
+		headText.appendChild(elT('h2', 'twg-title', 'Getting started'));
 		panelSub = el('p', 'twg-sub');
 		headText.appendChild(panelSub);
 		head.appendChild(headText);
@@ -268,10 +287,10 @@
 
 		var body = el('div', 'twg-step-body');
 		var title = el('div', 'twg-step-title');
-		title.appendChild(document.createTextNode(s.title));
-		if (!s.core) title.appendChild(el('span', 'twg-tag', 'Optional'));
+		title.appendChild(elT('span', null, s.title));
+		if (!s.core) title.appendChild(elT('span', 'twg-tag', 'Optional'));
 		body.appendChild(title);
-		body.appendChild(el('div', 'twg-step-desc', s.desc));
+		body.appendChild(elT('div', 'twg-step-desc', s.desc));
 		row.appendChild(body);
 
 		var arrow = el('span', 'twg-step-arrow');
@@ -308,7 +327,7 @@
 	}
 
 	function sectionLabel(text) {
-		var li = el('li', 'twg-section-label', text);
+		var li = elT('li', 'twg-section-label', text);
 		li.setAttribute('role', 'presentation');
 		return li;
 	}
@@ -363,7 +382,7 @@
 
 		var body = el('div', 'twg-modal-body');
 		body.appendChild(el('p', 'twg-modal-eyebrow', 'Welcome to three.ws'));
-		var title = el('h1', 'twg-modal-title', 'Give your AI a body — in about five minutes');
+		var title = elT('h1', 'twg-modal-title', 'Give your AI a body — in about five minutes');
 		title.id = 'twg-modal-title';
 		body.appendChild(title);
 		body.appendChild(el('p', 'twg-modal-lede',

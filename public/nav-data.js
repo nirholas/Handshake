@@ -614,3 +614,18 @@ export const CHAT_SITE_LINKS = [
 	{ label: 'Features', href: '/features' },
 	{ label: 'Docs', href: '/docs' },
 ];
+
+// Stable i18n key for a nav label. The SAME function runs in the offline
+// harvester (scripts/i18n-nav-harvest.mjs) so the keys nav.js emits at runtime
+// and the keys baked into the catalog always match. Pure FNV-1a hash of the
+// English string: identical text → identical key (auto-dedup), distinct text →
+// distinct key (no collisions). Prefixed `nav.` so it groups in the catalog.
+export function navKey(text) {
+	const s = String(text == null ? '' : text);
+	let h = 0x811c9dc5;
+	for (let i = 0; i < s.length; i++) {
+		h ^= s.charCodeAt(i);
+		h = Math.imul(h, 0x01000193);
+	}
+	return 'nav.' + (h >>> 0).toString(36);
+}

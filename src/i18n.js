@@ -314,12 +314,49 @@ async function injectHreflang() {
 	document.head.appendChild(frag);
 }
 
+// Re-translate DOM that is injected AFTER the initial pass — the global nav,
+// the getting-started widget, and any other runtime-built shell are fetched and
+// rendered asynchronously, so they miss the initI18n applyCatalog(document).
+// A MutationObserver translates each newly-added subtree that carries data-i18n
+// annotations, batched on an animation frame so a burst of DOM writes costs one
+// pass. setLocale still re-applies to the whole document on a language switch,
+// so this only has to cover the first render of injected content.
+function observeInjectedContent() {
+	if (!hasDOM || typeof MutationObserver === 'undefined' || !document.body) return;
+	const pending = new Set();
+	let scheduled = false;
+	const schedule = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : (fn) => setTimeout(fn, 16);
+	const flush = () => {
+		scheduled = false;
+		const roots = [...pending];
+		pending.clear();
+		for (const root of roots) applyCatalog(root, t);
+	};
+	const SEL = '[data-i18n],[data-i18n-html],[data-i18n-attr]';
+	const observer = new MutationObserver((mutations) => {
+		for (const m of mutations) {
+			for (const node of m.addedNodes) {
+				if (node.nodeType !== 1) continue;
+				if (node.matches?.(SEL) || node.querySelector?.(SEL)) pending.add(node);
+			}
+		}
+		if (pending.size && !scheduled) {
+			scheduled = true;
+			schedule(flush);
+		}
+	});
+	observer.observe(document.body, { childList: true, subtree: true });
+}
+
 // Auto-initialize on load so any page that ships this script is localized with
 // zero per-page wiring.
 if (hasDOM) {
 	registerLangSwitcher();
 	const boot = async () => {
 		await initI18n();
+		observeInjectedContent();
+		// Catch content injected during init (before the observer was attached).
+		applyCatalog(document, t);
 		mountFloatingSwitcher();
 		injectHreflang();
 	};
@@ -328,5 +365,8 @@ if (hasDOM) {
 	} else {
 		boot();
 	}
-	window.threewsI18n = { t, setLocale, getLocale, initI18n };
+	// `apply` lets a runtime-built component (nav.js, getting-started.js) request
+	// an immediate translation of the subtree it just rendered, without waiting
+	// for the observer's next frame.
+	window.threewsI18n = { t, setLocale, getLocale, initI18n, apply: (root) => applyCatalog(root || document, t) };
 }
