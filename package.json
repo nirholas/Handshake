@@ -116,6 +116,7 @@
 		"i18n:extract": "node scripts/i18n-extract.mjs",
 		"i18n:translate": "node scripts/i18n-translate.mjs",
 		"i18n:lint": "node scripts/i18n-translate.mjs --lint",
+		"changelog:gaps": "node scripts/changelog-gaps.mjs",
 		"changelog:push": "node scripts/changelog-telegram.mjs",
 		"changelog:push:x": "node scripts/changelog-x.mjs",
 		"audit:deploy": "node scripts/audit-deploy-artifacts.mjs",
