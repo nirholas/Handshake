@@ -29,7 +29,9 @@
 import { Connection } from '@solana/web3.js';
 
 function deriveWsUrl(httpUrl) {
-	return String(httpUrl).replace(/^https:/, 'wss:').replace(/^http:/, 'ws:');
+	return String(httpUrl)
+		.replace(/^https:/, 'wss:')
+		.replace(/^http:/, 'ws:');
 }
 
 // True only for a value @solana/web3.js's `new Connection` will accept — a parseable
@@ -99,10 +101,14 @@ export function normalizeRpcUrl(raw) {
 
 	// Helius host repair, spliced into the authority only (never the path/query) so
 	// the rest of the URL keeps its exact original form.
-	const fixedHost = u.hostname.replace(/^api-(mainnet|devnet)\.helius-rpc\.com$/i, '$1.helius-rpc.com');
+	const fixedHost = u.hostname.replace(
+		/^api-(mainnet|devnet)\.helius-rpc\.com$/i,
+		'$1.helius-rpc.com',
+	);
 	if (fixedHost !== u.hostname) {
-		return candidate.replace(/^([a-z][a-z0-9+.-]*:\/\/)([^/?#]+)/i, (_m, scheme, authority) =>
-			scheme + authority.replace(u.hostname, fixedHost),
+		return candidate.replace(
+			/^([a-z][a-z0-9+.-]*:\/\/)([^/?#]+)/i,
+			(_m, scheme, authority) => scheme + authority.replace(u.hostname, fixedHost),
 		);
 	}
 	return candidate;
@@ -131,7 +137,9 @@ const _endpointCooldown = new Map();
 
 function cooldownMsFor(status, bodyText) {
 	if (status === 429) {
-		return /max usage reached|-32429|quota|usage limit|credits?\s*exhausted/i.test(bodyText || '')
+		return /max usage reached|-32429|quota|usage limit|credits?\s*exhausted/i.test(
+			bodyText || '',
+		)
 			? QUOTA_COOLDOWN_MS
 			: RATE_LIMIT_COOLDOWN_MS;
 	}
@@ -219,6 +227,9 @@ export function solanaRpcEndpoints(network = 'mainnet', url = null) {
 		return dedupe([
 			normalizeRpcUrl(url),
 			normalizeRpcUrl(process.env.SOLANA_RPC_URL_DEVNET),
+			// QuickNode — a full dedicated endpoint URL (key embedded in the path), so
+			// it takes a URL var rather than an api-key. Premium/reliable, placed high.
+			normalizeRpcUrl(process.env.QUICKNODE_RPC_URL_DEVNET),
 			key && `https://devnet.helius-rpc.com/?api-key=${key}`,
 			alch && `https://solana-devnet.g.alchemy.com/v2/${alch}`,
 			drpc && `https://lb.drpc.org/ogrpc?network=solana-devnet&dkey=${drpc}`,
@@ -228,6 +239,12 @@ export function solanaRpcEndpoints(network = 'mainnet', url = null) {
 	return dedupe([
 		normalizeRpcUrl(url),
 		normalizeRpcUrl(process.env.SOLANA_RPC_URL),
+		// QuickNode — a full dedicated endpoint URL (key embedded in the path), so it
+		// takes a URL var rather than an api-key. A premium paid lane: placed right
+		// after the operator's explicit SOLANA_RPC_URL and ahead of the shared-key
+		// providers so it absorbs load first. Its WSS is derived by deriveWsUrl
+		// (https:->wss:), which matches QuickNode's own wss:// host/path exactly.
+		normalizeRpcUrl(process.env.QUICKNODE_RPC_URL),
 		key && `https://mainnet.helius-rpc.com/?api-key=${key}`,
 		alch && `https://solana-mainnet.g.alchemy.com/v2/${alch}`,
 		drpc && `https://lb.drpc.org/ogrpc?network=solana&dkey=${drpc}`,
@@ -340,22 +357,39 @@ function isProviderCapacityError(rpcError) {
 // the bad node instead of handing the caller something it cannot parse.
 export function classifyRpcBody(body) {
 	const trimmed = (body || '').trim();
-	if (trimmed === '') return { status: 502, reason: 'empty body', log: '200 but empty body', bodyText: '' };
-	if (trimmed[0] === '<') return { status: 502, reason: 'HTML body', log: '200 but HTML body', bodyText: '' };
+	if (trimmed === '')
+		return { status: 502, reason: 'empty body', log: '200 but empty body', bodyText: '' };
+	if (trimmed[0] === '<')
+		return { status: 502, reason: 'HTML body', log: '200 but HTML body', bodyText: '' };
 	let parsed;
 	try {
 		parsed = JSON.parse(trimmed);
 	} catch {
-		return { status: 502, reason: 'unparseable body', log: '200 but unparseable JSON', bodyText: '' };
+		return {
+			status: 502,
+			reason: 'unparseable body',
+			log: '200 but unparseable JSON',
+			bodyText: '',
+		};
 	}
 	// Single response or a JSON-RPC batch array — every element must be a valid envelope.
 	const items = Array.isArray(parsed) ? parsed : [parsed];
 	if (items.length === 0) {
-		return { status: 502, reason: 'empty batch', log: '200 but empty JSON-RPC batch', bodyText: '' };
+		return {
+			status: 502,
+			reason: 'empty batch',
+			log: '200 but empty JSON-RPC batch',
+			bodyText: '',
+		};
 	}
 	for (const item of items) {
 		if (!item || typeof item !== 'object') {
-			return { status: 502, reason: 'malformed envelope', log: '200 but malformed JSON-RPC envelope', bodyText: '' };
+			return {
+				status: 502,
+				reason: 'malformed envelope',
+				log: '200 but malformed JSON-RPC envelope',
+				bodyText: '',
+			};
 		}
 		const hasResult = 'result' in item;
 		const hasError = 'error' in item;
@@ -363,14 +397,24 @@ export function classifyRpcBody(body) {
 			// Neither field present — the exact shape that produces the empty-`received:`
 			// StructError. `result: null` is fine (the key is present); this catches a
 			// genuinely truncated/garbage envelope.
-			return { status: 502, reason: 'missing result/error', log: '200 but JSON-RPC envelope missing result/error', bodyText: '' };
+			return {
+				status: 502,
+				reason: 'missing result/error',
+				log: '200 but JSON-RPC envelope missing result/error',
+				bodyText: '',
+			};
 		}
 		if (hasError && isProviderCapacityError(item.error)) {
 			const code = item.error?.code ?? '';
 			const msg = String(item.error?.message || '');
 			// status 429 → cooldownMsFor scans the message for a quota signal and parks
 			// a truly-exhausted plan for hours rather than re-hitting it every call.
-			return { status: 429, reason: `provider error ${code}`.trim(), log: `200 + provider error ${code} ${msg.slice(0, 48)}`.trim(), bodyText: msg };
+			return {
+				status: 429,
+				reason: `provider error ${code}`.trim(),
+				log: `200 + provider error ${code} ${msg.slice(0, 48)}`.trim(),
+				bodyText: msg,
+			};
 		}
 	}
 	return null;
@@ -425,7 +469,13 @@ export function makeRotatingFetch(endpoints) {
 				if (shouldRotate(resp.status)) {
 					// Read the body only on the failure path (we never return it) so a
 					// quota signal can pick the long cooldown.
-					const bodyText = resp.status === 429 ? await resp.clone().text().catch(() => '') : '';
+					const bodyText =
+						resp.status === 429
+							? await resp
+									.clone()
+									.text()
+									.catch(() => '')
+							: '';
 					// Check BEFORE marking: if parallel rotatingFetch calls race onto
 					// the same endpoint simultaneously, only the first to resolve logs —
 					// all subsequent callers see alreadyCooling=true and skip the line.
@@ -460,7 +510,9 @@ export function makeRotatingFetch(endpoints) {
 					response: new Response(okBody, {
 						status: resp.status,
 						statusText: resp.statusText,
-						headers: { 'content-type': resp.headers.get('content-type') || 'application/json' },
+						headers: {
+							'content-type': resp.headers.get('content-type') || 'application/json',
+						},
 					}),
 				};
 			} catch (err) {
