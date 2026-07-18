@@ -45,6 +45,10 @@ export const MAX_FEE_BPS = 1000; // 10%
 const CANONICAL_USDC = {
 	solana: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
 	base: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+	// Circle's Base Sepolia testnet USDC — a distinct mint from Base mainnet.
+	// Advertising the mainnet address on a testnet accept makes the facilitator
+	// verify against a token the buyer never signed for.
+	'base-sepolia': '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
 };
 
 // $THREE — the three.ws platform token, the second main x402 settlement asset
@@ -263,13 +267,14 @@ function resolveAsset(asset, lane) {
 		}
 		return CANONICAL_THREE.solana;
 	}
-	if (!asset || asset === 'usdc') return CANONICAL_USDC[lane === 'base-sepolia' ? 'base' : lane];
+	if (!asset || asset === 'usdc') return CANONICAL_USDC[lane];
 	if (typeof asset === 'string') return asset;
 	if (typeof asset === 'object') {
-		const pinned = asset[lane] ?? asset[lane === 'base-sepolia' ? 'base' : lane];
-		return pinned || CANONICAL_USDC[lane === 'base-sepolia' ? 'base' : lane];
+		// A pin can target the exact lane, or `base` can stand in for `base-sepolia`.
+		const pinned = asset[lane] ?? (lane === 'base-sepolia' ? asset.base : undefined);
+		return pinned || CANONICAL_USDC[lane];
 	}
-	return CANONICAL_USDC[lane === 'base-sepolia' ? 'base' : lane];
+	return CANONICAL_USDC[lane];
 }
 
 // Assemble the full v2 envelope. Accepts either a pre-built `accepts[]` (raw
@@ -554,6 +559,14 @@ function buildPaidHandler({ buildChallenge, verifyPayment, settlePayment }, opts
 		tags,
 		iconUrl,
 		onSettled,
+		// Response ordering. Default (false) is DELIVER-THEN-SETTLE: run the work,
+		// settle, then flush the response with the X-PAYMENT-RESPONSE receipt
+		// header attached — the buyer never receives the good before the payment
+		// settles. Set `streaming: true` for handlers that must write their own
+		// body (binary download, SSE, res.pipe): settlement runs FIRST and the
+		// receipt header is emitted up-front, so a self-flushing handler is paid
+		// by construction. Mirrors api/_lib/x402-paid-endpoint.js.
+		streaming = false,
 		adapter = nodeAdapter,
 	} = opts;
 
@@ -563,9 +576,19 @@ function buildPaidHandler({ buildChallenge, verifyPayment, settlePayment }, opts
 		throw new ThreeWsError('feeBps > 0 requires feeTo (the fee recipient) — no recipient, no fee.', { code: 'invalid_input' });
 	}
 
-	// A route-scoped server when a custom facilitator is set; else the shared one.
-	const verify = facilitator ? createX402Server({ facilitator }).verifyPayment : verifyPayment;
-	const settle = facilitator ? createX402Server({ facilitator }).settlePayment : settlePayment;
+	// One route-scoped server when a custom facilitator is set (reused for both
+	// verify and settle); else the shared default client.
+	const scoped = facilitator ? createX402Server({ facilitator }) : null;
+	const verify = scoped ? scoped.verifyPayment : verifyPayment;
+	const settle = scoped ? scoped.settlePayment : settlePayment;
+
+	async function runSettle(verified) {
+		const receipt = await settle({ verified });
+		if (typeof onSettled === 'function') {
+			try { onSettled(receipt); } catch { /* a webhook/log error must not unsettle a paid call */ }
+		}
+		return receipt;
+	}
 
 	return async function paidHandler(...args) {
 		const ctx = adapter.read(...args);
@@ -586,27 +609,47 @@ function buildPaidHandler({ buildChallenge, verifyPayment, settlePayment }, opts
 			return adapter.challenge(ctx, verified.body || challengeBody, args, verified.status || 402);
 		}
 
-		// 2 — dispatch the work. A throw here returns the error and SKIPS
-		// settlement — no funds move on a failed call.
 		const payment = {
 			payer: verified.payer,
 			network: verified.network,
 			amount: verified.amount,
 			accept: verified.accept,
 		};
-		const dispatched = await adapter.dispatch(ctx, handler, payment, args);
+
+		// Streaming (settle-then-stream): settle up-front, emit the receipt header,
+		// then let the handler own the response body. Requires an adapter that can
+		// stream (node); other adapters fall back to deliver-then-settle.
+		if (streaming && typeof adapter.stream === 'function') {
+			const receipt = await runSettle(verified);
+			return adapter.stream(ctx, handler, payment, receipt, args);
+		}
+
+		// 2 — dispatch the work. The adapter buffers any response the handler
+		// writes so nothing reaches the buyer before settlement. A throw here
+		// SKIPS settlement (no funds move on a failed call) and surfaces a 500.
+		let dispatched;
+		try {
+			dispatched = await adapter.dispatch(ctx, handler, payment, args);
+		} catch (err) {
+			return adapter.fail(ctx, err, args);
+		}
 		if (dispatched && dispatched.__handled) return dispatched.value;
 
-		// 3 — settle, AFTER the work succeeded. Settlement is the last step.
-		const receipt = await settle({ verified });
-		if (typeof onSettled === 'function') {
-			try { onSettled(receipt); } catch { /* a webhook/log error must not unsettle a paid call */ }
-		}
+		// 3 — settle, AFTER the work succeeded. Settlement is the last step, and
+		// the buffered response is flushed with the receipt header in respond().
+		const receipt = await runSettle(verified);
 		return adapter.respond(ctx, dispatched, receipt, args);
 	};
 }
 
-// Node / Express / Vercel adapter: `(req, res, next?)`.
+// Node / Express / Vercel adapter: `(req, res)`.
+//
+// The buyer must never receive the good before settlement, and the 200 must
+// carry the base64 X-PAYMENT-RESPONSE receipt. A handler that writes its own
+// response (`res.json`/`res.send`/`res.end`) would flush both problems away, so
+// dispatch() BUFFERS every write; respond() then settles, injects the receipt
+// header, and flushes for real. Handlers may also just RETURN a value — the
+// wrapper serialises it. Streaming handlers opt out via `streaming: true`.
 const nodeAdapter = {
 	read(req, res) {
 		return {
@@ -627,26 +670,120 @@ const nodeAdapter = {
 		res.end?.(JSON.stringify(body));
 		return undefined;
 	},
-	// Run the user's (req, res, payment) handler. If it writes the response
-	// itself (the common Express case), it returns nothing and we treat the call
-	// as handled after settling. We still settle by capturing completion via a
-	// res.end wrapper.
+	// Run the (req, res, payment) handler with a buffered response so no bytes
+	// reach the buyer until settlement. Captures the handler's return value too,
+	// for handlers that return a value instead of writing.
 	async dispatch(ctx, handler, payment) {
-		await handler(ctx.req, ctx.res, payment);
-		// The handler owns the response object; settlement headers are attached in
-		// respond() only when the response is still open. Express handlers that
-		// already ended the response get settled silently (receipt via onSettled).
-		return { __handled: false };
+		ctx._buffer = bufferNodeResponse(ctx.res);
+		const value = await handler(ctx.req, ctx.res, payment);
+		return { __handled: false, value };
 	},
-	respond(ctx, _dispatched, receipt) {
+	respond(ctx, dispatched, receipt) {
 		const { res } = ctx;
-		// Attach the receipt header if the response is still writable.
-		if (res && !res.writableEnded && typeof res.setHeader === 'function') {
-			try { res.setHeader('X-PAYMENT-RESPONSE', base64Encode(JSON.stringify(receipt))); } catch { /* headers already sent */ }
+		const buffer = ctx._buffer;
+		const receiptHeader = base64Encode(JSON.stringify(receipt));
+
+		// Write-style handler (Express res.json/send/end): flush the buffered
+		// response with the receipt header injected ahead of the real end().
+		if (buffer && buffer.ended) {
+			buffer.flush({ 'X-PAYMENT-RESPONSE': receiptHeader });
+			return receipt;
 		}
+
+		// Return-value handler: the handler returned a value without writing.
+		// Serialise it as JSON with the receipt header. Restore the real methods
+		// first so our end() below actually flushes.
+		if (buffer) buffer.restore();
+		const value = dispatched?.value;
+		const body = value === undefined ? { ok: true } : value;
+		if (!res.statusCode || res.statusCode === 200) res.statusCode = 200;
+		try { res.setHeader?.('content-type', 'application/json; charset=utf-8'); } catch { /* headers sent */ }
+		try { res.setHeader?.('X-PAYMENT-RESPONSE', receiptHeader); } catch { /* headers sent */ }
+		res.end?.(typeof body === 'string' ? body : JSON.stringify(body));
 		return receipt;
 	},
+	// settle-then-stream: settlement already ran; attach the receipt header
+	// up-front, then hand the raw response to the (self-flushing) handler.
+	async stream(ctx, handler, payment, receipt) {
+		const { res } = ctx;
+		try { res.setHeader?.('X-PAYMENT-RESPONSE', base64Encode(JSON.stringify(receipt))); } catch { /* headers sent */ }
+		await handler(ctx.req, ctx.res, payment);
+		return receipt;
+	},
+	// The work threw AFTER a valid payment but BEFORE settlement — no funds
+	// moved. Discard any buffered partial output and return a clean 500 so the
+	// buyer can retry (their payment authorization is still spendable).
+	fail(ctx, err) {
+		const { res } = ctx;
+		const buffer = ctx._buffer;
+		if (buffer) buffer.restore();
+		if (res && !res.writableEnded) {
+			res.statusCode = err?.status && err.status >= 400 && err.status < 600 ? err.status : 500;
+			try { res.setHeader?.('content-type', 'application/json; charset=utf-8'); } catch { /* headers sent */ }
+			res.end?.(JSON.stringify({ error: err?.code || 'handler_error', message: err?.message || 'the paid work failed; payment was not settled' }));
+		}
+		return undefined;
+	},
 };
+
+// Wrap a Node ServerResponse so writes are captured instead of flushed. Returns
+// a controller: `ended` reflects whether the handler called end(); `flush(extra)`
+// restores the real methods, sets `extra` headers, and emits the buffered body;
+// `restore()` puts the real methods back without flushing.
+function bufferNodeResponse(res) {
+	const orig = { write: res.write, end: res.end, writeHead: res.writeHead };
+	const chunks = [];
+	const state = { ended: false, pendingCb: null };
+
+	res.write = function bufferedWrite(chunk, enc, cb) {
+		if (chunk) chunks.push(toBuffer(chunk, typeof enc === 'string' ? enc : undefined));
+		const done = typeof enc === 'function' ? enc : cb;
+		if (typeof done === 'function') done();
+		return true;
+	};
+	res.end = function bufferedEnd(chunk, enc, cb) {
+		if (chunk && typeof chunk !== 'function') chunks.push(toBuffer(chunk, typeof enc === 'string' ? enc : undefined));
+		state.ended = true;
+		state.pendingCb = typeof chunk === 'function' ? chunk : typeof enc === 'function' ? enc : typeof cb === 'function' ? cb : null;
+		return res;
+	};
+	// Capture an explicit status (and any header map) from writeHead without
+	// sending it; headers flush together at real end().
+	res.writeHead = function bufferedWriteHead(status, ...rest) {
+		if (typeof status === 'number') res.statusCode = status;
+		const headerMap = rest.find((r) => r && typeof r === 'object' && !Array.isArray(r));
+		if (headerMap && typeof res.setHeader === 'function') {
+			for (const [k, v] of Object.entries(headerMap)) { try { res.setHeader(k, v); } catch { /* ignore */ } }
+		}
+		return res;
+	};
+
+	function restore() {
+		res.write = orig.write;
+		res.end = orig.end;
+		res.writeHead = orig.writeHead;
+	}
+
+	return {
+		get ended() { return state.ended; },
+		restore,
+		flush(extraHeaders) {
+			restore();
+			if (extraHeaders && typeof res.setHeader === 'function') {
+				for (const [k, v] of Object.entries(extraHeaders)) { try { res.setHeader(k, v); } catch { /* headers sent */ } }
+			}
+			const body = chunks.length ? Buffer.concat(chunks) : undefined;
+			if (typeof orig.end === 'function') orig.end.call(res, body);
+			if (state.pendingCb) { try { state.pendingCb(); } catch { /* callback error is not ours to own */ } }
+		},
+	};
+}
+
+function toBuffer(chunk, enc) {
+	if (Buffer.isBuffer(chunk)) return chunk;
+	if (chunk instanceof Uint8Array) return Buffer.from(chunk);
+	return Buffer.from(String(chunk), enc || 'utf8');
+}
 
 // Fetch-style adapter: `(request) => Response`. The handler receives
 // `(request, payment)` and returns a `Response` (or a plain object → JSON).
@@ -680,6 +817,12 @@ export const fetchAdapter = {
 			return res;
 		}
 		return jsonResponse(value ?? { ok: true }, 200, headers);
+	},
+	// The work threw after a valid payment but before settlement — no funds
+	// moved. Return a clean 500 so the buyer can retry.
+	fail(_ctx, err) {
+		const status = err?.status && err.status >= 400 && err.status < 600 ? err.status : 500;
+		return jsonResponse({ error: err?.code || 'handler_error', message: err?.message || 'the paid work failed; payment was not settled' }, status);
 	},
 };
 

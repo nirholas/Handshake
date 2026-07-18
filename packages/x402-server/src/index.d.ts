@@ -162,6 +162,10 @@ export interface PaidAdapter {
 	challenge(ctx: any, body: unknown, args: any[], status?: number): any;
 	dispatch(ctx: any, handler: Function, payment: Payment, args: any[]): Promise<{ __handled: boolean; value?: unknown }>;
 	respond(ctx: any, dispatched: unknown, receipt: Receipt, args: any[]): any;
+	/** Settle-then-stream entry point for `streaming: true` (node only). */
+	stream?(ctx: any, handler: Function, payment: Payment, receipt: Receipt, args: any[]): any;
+	/** Handle a handler throw AFTER a valid payment but before settlement. */
+	fail(ctx: any, err: unknown, args: any[]): any;
 }
 
 export interface PaidOptions extends BuildChallengeOptions {
@@ -169,6 +173,14 @@ export interface PaidOptions extends BuildChallengeOptions {
 	facilitator?: string;
 	/** Fired after a successful settlement — record the call, fire a webhook. */
 	onSettled?: (receipt: Receipt) => void;
+	/**
+	 * Response ordering. Default (false) is deliver-then-settle: run the work,
+	 * settle, then flush the response with the X-PAYMENT-RESPONSE receipt header.
+	 * The buyer never receives the good before settlement. Set `true` for
+	 * self-flushing handlers (binary download, SSE, res.pipe): settlement runs
+	 * first and the receipt header is emitted up-front. Node adapter only.
+	 */
+	streaming?: boolean;
 	/** Runtime adapter. Defaults to node (req,res); use `fetchAdapter` for fetch. */
 	adapter?: PaidAdapter;
 }

@@ -1,0 +1,78 @@
+{
+	"name": "@three-ws/concierge",
+	"version": "0.1.0",
+	"description": "An AI concierge for any website: a floating chat widget with a rigged 3D avatar that blinks and lipsyncs, streaming answers grounded in your live page, browser-native voice in/out, and a one-tag embed. Powered by three.ws.",
+	"keywords": [
+		"chatbot",
+		"chat-widget",
+		"support-chat",
+		"ai-assistant",
+		"3d",
+		"avatar",
+		"three.js",
+		"webgl",
+		"lipsync",
+		"text-to-speech",
+		"speech-recognition",
+		"web-component",
+		"embeddable",
+		"concierge",
+		"intercom-alternative"
+	],
+	"author": "three.ws <support@three.ws> (https://three.ws)",
+	"license": "SEE LICENSE IN LICENSE",
+	"homepage": "https://three.ws/concierge",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "concierge-sdk"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"type": "module",
+	"main": "./dist/concierge.mjs",
+	"module": "./dist/concierge.mjs",
+	"unpkg": "./dist/concierge.global.js",
+	"jsdelivr": "./dist/concierge.global.js",
+	"types": "./types/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./types/index.d.ts",
+			"import": "./dist/concierge.mjs",
+			"default": "./dist/concierge.mjs"
+		},
+		"./catalog": {
+			"types": "./types/index.d.ts",
+			"import": "./src/catalog.js",
+			"default": "./src/catalog.js"
+		},
+		"./global": "./dist/concierge.global.js",
+		"./style.css": "./dist/concierge.css"
+	},
+	"files": [
+		"dist/concierge.mjs",
+		"dist/concierge.mjs.map",
+		"dist/concierge.global.js",
+		"dist/concierge.global.js.map",
+		"dist/concierge.css",
+		"src",
+		"types",
+		"README.md",
+		"LICENSE"
+	],
+	"scripts": {
+		"build": "node build.mjs",
+		"prepublishOnly": "node build.mjs",
+		"test": "node --test 'test/*.test.js'"
+	},
+	"peerDependencies": {
+		"three": ">=0.150.0"
+	},
+	"engines": {
+		"node": ">=18"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

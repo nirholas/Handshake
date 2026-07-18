@@ -395,6 +395,16 @@
 			ctaPrimary: { label: 'See paid calls', href: '/pay/calls' },
 		},
 		{
+			slug: 'x402-server-sdk',
+			tier: 'advanced',
+			title: 'Meter any API with the x402-server SDK',
+			blurb: 'Turn an ordinary HTTP handler into a paid one with @three-ws/x402-server. Solana-first, framework-agnostic, and runnable offline before you touch a wallet.',
+			builds: 'A paid endpoint charging USDC or $THREE, in a few lines',
+			time: '30 min',
+			previewModel: '/animations/soldier.glb',
+			ctaPrimary: { label: 'Package on npm', href: 'https://www.npmjs.com/package/@three-ws/x402-server' },
+		},
+		{
 			slug: 'nvidia-nim-self-host',
 			tier: 'advanced',
 			title: 'Run Microsoft TRELLIS on your own NVIDIA NIM',

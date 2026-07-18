@@ -965,6 +965,17 @@ export const limits = {
 	chatUser: (userId) =>
 		getLimiter('chat:user', { limit: 40, window: '1 m', critical: true }).limit(userId),
 	chatIp: (ip) => getLimiter('chat:ip', { limit: 60, window: '1 m', critical: true }).limit(ip),
+	// Embeddable concierge widget (/api/concierge) — anonymous, any-origin
+	// traffic from third-party sites, so it gets its own bucket instead of
+	// sharing chat:ip: a widget-hosting page must not starve the signed-in
+	// viewer chat (and vice versa). Same critical fail-closed policy: this lane
+	// spends free-tier LLM quota and can fall through to funded rungs.
+	conciergeIp: (ip) =>
+		getLimiter('concierge:ip', { limit: 20, window: '1 m', critical: true }).limit(ip),
+	// Global ceiling across every embedded widget combined — bounds the total
+	// free-tier draw of the whole third-party fleet, mirroring chatHostKeyGlobal.
+	conciergeGlobal: () =>
+		getLimiter('concierge:global', { limit: 600, window: '1 m', critical: true }).limit('global'),
 	// Global ceiling on inference billed to the HOST's provider keys (i.e. callers
 	// who supplied no key of their own). Stops distributed abuse — many accounts
 	// each under their per-user limit collectively draining the platform's quota.

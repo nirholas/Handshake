@@ -42,6 +42,29 @@ function xPaymentHeader(payload) {
 	return Buffer.from(JSON.stringify(payload)).toString('base64');
 }
 
+// A Node ServerResponse double that records status, headers, and the flushed
+// body — enough to assert the wrapper attaches X-PAYMENT-RESPONSE and buffers
+// the handler's writes until after settlement. Header lookups are
+// case-insensitive, like a real ServerResponse.
+function mockRes() {
+	const headers = {};
+	const chunks = [];
+	return {
+		statusCode: 200,
+		writableEnded: false,
+		setHeader(k, v) { headers[String(k).toLowerCase()] = v; },
+		getHeader(k) { return headers[String(k).toLowerCase()]; },
+		write(chunk) { if (chunk) chunks.push(Buffer.from(chunk)); return true; },
+		end(chunk) { if (chunk) chunks.push(Buffer.from(chunk)); this.writableEnded = true; return this; },
+		get body() { return Buffer.concat(chunks).toString('utf8'); },
+		get headers() { return headers; },
+	};
+}
+
+function paidReq(header) {
+	return { url: '/api/thing', headers: { host: 'three.ws', 'x-payment': header } };
+}
+
 test('buildChallenge() emits the exact v2 accepts[] envelope', () => {
 	const challenge = buildChallenge({
 		price: '50000',
@@ -86,6 +109,18 @@ test('buildChallenge() advertises only the requested lane', () => {
 	});
 	assert.equal(challenge.accepts.length, 1);
 	assert.equal(challenge.accepts[0].network, NETWORK_BASE_MAINNET);
+});
+
+test('base-sepolia advertises the testnet USDC mint, not Base mainnet USDC', () => {
+	const challenge = buildChallenge({
+		price: '1000',
+		payTo: { 'base-sepolia': SYNTH_BASE_PAYTO },
+		network: ['base-sepolia'],
+	});
+	assert.equal(challenge.accepts.length, 1);
+	// Circle's Base Sepolia USDC — distinct from Base mainnet's 0x8335… mint.
+	assert.equal(challenge.accepts[0].asset, '0x036CbD53842c5426634e7929541eC2318f3dCF7e');
+	assert.equal(challenge.accepts[0].extra.name, 'USD Coin');
 });
 
 const THREE_MINT = 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
@@ -292,6 +327,109 @@ test('paid() verifies, runs the handler, then settles on a paid call', async () 
 	assert.deepEqual(order, ['work']);
 	assert.equal(receipt.transaction, 'TX_PAID');
 	assert.equal(settledReceipt.transaction, 'TX_PAID');
+});
+
+test('paid() attaches the X-PAYMENT-RESPONSE receipt header to a write-style (Express) handler', async () => {
+	const { fetch } = stubFetch([
+		{ body: { isValid: true, payer: SYNTH_BASE_PAYTO } },
+		{ body: { success: true, transaction: 'TX_RCPT', network: NETWORK_BASE_MAINNET, payer: SYNTH_BASE_PAYTO } },
+	]);
+	const server = createX402Server({ fetch });
+	const handler = server.paid(
+		{ price: '10000', payTo: { base: SYNTH_BASE_PAYTO }, network: ['base'] },
+		// Express-style: the handler ends its own response. The good must NOT ship
+		// before settlement, and the receipt header MUST be on the flushed 200.
+		async (_req, res) => {
+			res.statusCode = 201;
+			res.setHeader('content-type', 'application/json');
+			res.end(JSON.stringify({ good: 'premium data' }));
+		},
+	);
+
+	const header = xPaymentHeader({ network: NETWORK_BASE_MAINNET, payload: { authorization: { value: '10000' } } });
+	const res = mockRes();
+	await handler(paidReq(header), res);
+
+	// The buffered response flushed with its own status + body preserved.
+	assert.equal(res.statusCode, 201);
+	assert.deepEqual(JSON.parse(res.body), { good: 'premium data' });
+	// The settlement receipt rides the same 200 the buyer receives.
+	const receiptHeader = res.getHeader('X-PAYMENT-RESPONSE');
+	assert.ok(receiptHeader, 'X-PAYMENT-RESPONSE header is set on the response');
+	const receipt = JSON.parse(Buffer.from(receiptHeader, 'base64').toString('utf8'));
+	assert.equal(receipt.transaction, 'TX_RCPT');
+	assert.equal(receipt.network, NETWORK_BASE_MAINNET);
+});
+
+test('paid() serialises a return-value handler with the receipt header', async () => {
+	const { fetch } = stubFetch([
+		{ body: { isValid: true, payer: SYNTH_BASE_PAYTO } },
+		{ body: { success: true, transaction: 'TX_RET', network: NETWORK_BASE_MAINNET, payer: SYNTH_BASE_PAYTO } },
+	]);
+	const server = createX402Server({ fetch });
+	const handler = server.paid(
+		{ price: '10000', payTo: { base: SYNTH_BASE_PAYTO }, network: ['base'] },
+		// Return-value style: no res.* calls, just return the good.
+		async (_req, _res, payment) => ({ good: 'returned data', paidBy: payment.payer }),
+	);
+
+	const header = xPaymentHeader({ network: NETWORK_BASE_MAINNET, payload: { authorization: { value: '10000' } } });
+	const res = mockRes();
+	await handler(paidReq(header), res);
+
+	assert.equal(res.statusCode, 200);
+	assert.deepEqual(JSON.parse(res.body), { good: 'returned data', paidBy: SYNTH_BASE_PAYTO });
+	assert.ok(res.getHeader('X-PAYMENT-RESPONSE'), 'return-value handlers still get the receipt header');
+});
+
+test('paid() with streaming:true settles BEFORE the handler writes, header up-front', async () => {
+	const order = [];
+	const { fetch, calls } = stubFetch([
+		{ body: { isValid: true, payer: SYNTH_BASE_PAYTO } },
+		{ body: { success: true, transaction: 'TX_STREAM', network: NETWORK_BASE_MAINNET, payer: SYNTH_BASE_PAYTO } },
+	]);
+	const server = createX402Server({ fetch });
+	const handler = server.paid(
+		{ price: '10000', payTo: { base: SYNTH_BASE_PAYTO }, network: ['base'], streaming: true },
+		async (_req, res) => {
+			// Header must already be present when a streaming handler starts writing.
+			order.push('work');
+			assert.ok(res.getHeader('X-PAYMENT-RESPONSE'), 'streaming handler sees the receipt header up-front');
+			res.write('chunk-1;');
+			res.end('chunk-2');
+		},
+	);
+
+	const header = xPaymentHeader({ network: NETWORK_BASE_MAINNET, payload: { authorization: { value: '10000' } } });
+	const res = mockRes();
+	await handler(paidReq(header), res);
+
+	// settle (calls[1]) ran before the work wrote its body.
+	assert.equal(calls[1].url.pathname, '/settle');
+	assert.deepEqual(order, ['work']);
+	assert.equal(res.body, 'chunk-1;chunk-2');
+});
+
+test('paid() skips settlement and returns 500 when the handler throws (no funds move)', async () => {
+	const { fetch, calls } = stubFetch([
+		{ body: { isValid: true, payer: SYNTH_BASE_PAYTO } },
+		// No settle response queued — asserting settle is NEVER called.
+	]);
+	const server = createX402Server({ fetch });
+	const handler = server.paid(
+		{ price: '10000', payTo: { base: SYNTH_BASE_PAYTO }, network: ['base'] },
+		async () => { throw new Error('work exploded'); },
+	);
+
+	const header = xPaymentHeader({ network: NETWORK_BASE_MAINNET, payload: { authorization: { value: '10000' } } });
+	const res = mockRes();
+	await handler(paidReq(header), res);
+
+	assert.equal(calls.length, 1, 'only /verify ran — settlement was skipped on a failed handler');
+	assert.equal(calls[0].url.pathname, '/verify');
+	assert.equal(res.statusCode, 500);
+	assert.ok(!res.getHeader('X-PAYMENT-RESPONSE'), 'no receipt on a failed, unsettled call');
+	assert.equal(JSON.parse(res.body).error, 'handler_error');
 });
 
 test('paid() supports a fetch-style adapter (Request → Response)', async () => {

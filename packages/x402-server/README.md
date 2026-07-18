@@ -195,11 +195,30 @@ function — mount it as Express/Connect middleware, a Vercel function, or a Nod
 | `maxTimeoutSeconds` | `number` | `60` | How long the buyer has to land the signed payment. |
 | `description` | `string` | — | Human label for the `resource` in the challenge (shown in wallets/the modal). |
 | `serviceName` / `tags` / `iconUrl` | `string` / `string[]` / `string` | — | Bazaar discovery metadata echoed into the challenge. |
+| `streaming` | `boolean` | `false` | Response ordering. `false` = deliver-then-settle (buffer the response, settle, flush with the receipt header). `true` = settle-then-stream, for self-flushing handlers (binary download, SSE, `res.pipe`). Node adapter only. |
 | `onSettled` | `(receipt) => void` | — | Fired after a successful settlement — record the call, fire a webhook. |
 
 **Handler** — `(req, res, payment) => unknown`. `payment` is present only on a
-paid call: `{ payer, network, accept, amount }`. Throwing from the handler
-returns its error to the buyer and **skips settlement** — no funds move.
+paid call: `{ payer, network, accept, amount }`. Write your response
+(`res.json(...)`) **or** just `return` a value — either way the wrapper holds
+the bytes until settlement lands (see [Response modes](#response-modes)).
+Throwing from the handler **skips settlement** (no funds move) and returns a
+`500` the buyer can retry with the same payment.
+
+### Response modes
+
+`paid()` guarantees the buyer never receives the good before settlement, two ways:
+
+- **Deliver-then-settle (default).** The handler's response is **buffered**, the
+  payment settles, then the `200` is flushed with the `X-PAYMENT-RESPONSE`
+  receipt header attached. Handlers may `res.json(...)`/`res.end(...)` or return
+  a value. Best for JSON APIs.
+- **Settle-then-stream (`streaming: true`).** For responses you can't buffer
+  (large files, SSE, `res.pipe`): settlement runs first, the receipt header is
+  set up-front, then the handler writes its own body — paid by construction.
+
+This mirrors `api/_lib/x402-paid-endpoint.js` on the platform. Runnable examples
+for both modes are in [`examples/`](./examples).
 
 ### `buildChallenge(options) → Body`
 
@@ -315,6 +334,12 @@ handler never charges). A `429` from your upstream can be retried with the
 *same* signed payment, because settlement only happens once the work succeeds.
 
 ## Examples
+
+Runnable versions of everything below live in [`examples/`](./examples) — start
+with [`examples/loopback-demo.mjs`](./examples/loopback-demo.mjs), which runs the
+whole buyer↔seller loop offline against a local stub facilitator
+(`node examples/loopback-demo.mjs`). A step-by-step walkthrough is in the
+[x402-server SDK tutorial](https://three.ws/tutorials/x402-server-sdk).
 
 **Express — meter an existing API**
 

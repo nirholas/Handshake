@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-18T19:35:24.274Z",
+	"generated_at": "2026-07-18T21:09:18.386Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -449,6 +449,17 @@
 			"tags": [
 				"docs",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-07-18",
+			"type": "update",
+			"title": "The x402-server SDK now attaches the payment receipt on every paid response",
+			"summary": "Our most-installed npm package, @three-ws/x402-server (the seller side of x402), got a correctness pass. Paid endpoints built with it now guarantee the buyer never receives the result before the payment settles, and every paid response carries the on-chain settlement receipt in the X-PAYMENT-RESPONSE header, even for handlers that write their own response (the common Express case, which previously dropped the receipt). A new streaming mode settles up-front for file downloads and event streams, a handler that errors now returns a clean retryable 500 without charging, and the Base Sepolia test lane now advertises the correct testnet USDC. Ships with four runnable examples and a step-by-step tutorial you can follow offline before touching a wallet.",
+			"link": "/tutorials/x402-server-sdk",
+			"tags": [
+				"sdk",
+				"fix"
 			]
 		},
 		{
