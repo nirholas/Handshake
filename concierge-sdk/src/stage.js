@@ -245,7 +245,7 @@ export class AvatarStage {
 		}
 	}
 
-	_blink(dt, t) {
+	_blink(dt) {
 		if (!this._blinkTargets.length || this._reduce) return;
 		if (this._blinkT < 0) {
 			this._nextBlink -= dt;
@@ -271,7 +271,7 @@ export class AvatarStage {
 		const nowMs = t * 1000;
 		this.mixer?.update(dt);
 		this._proceduralIdle(t);
-		this._blink(dt, t);
+		this._blink(dt);
 		for (const fn of this._frameHooks) {
 			try { fn(dt, nowMs); } catch { /* a misbehaving hook must not kill the loop */ }
 		}

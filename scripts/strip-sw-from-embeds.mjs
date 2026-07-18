@@ -27,6 +27,7 @@ const EMBED_ENTRIES = new Set([
 	'agent-embed.html',
 	'a-embed.html',
 	'agent-token-page.html',
+	'assistant-frame.html',
 ]);
 
 const REGISTER_SW_RE =

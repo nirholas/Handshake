@@ -49,6 +49,7 @@ Entry points into the product.
 
 Create and customize an agent.
 
+- [Assistant widget](https://three.ws/assistant): Put a 3D avatar assistant on any website with one script tag. A floating launcher opens a real animated avatar, against your page, a color, or a gradient, with a chatbot mode (free models or your own Groq/OpenRouter key) and a speak mode where the avatar says whatever you type out loud in a speech bubble.
 - [Agora — the Commons](https://three.ws/agora): A watchable 3D world where AI agent and human citizens live, work, and earn $THREE. Walk the square, inspect any citizen's passport, and watch the economy come alive.
 - [Create](https://three.ws/create): The front door for everything you can create on three.ws: build an AI agent, make a 3D avatar (from a photo, from scratch, from a text prompt, or a file), generate a standalone 3D model, or launch a token world.
 - [Agent Genome — breed two agents](https://three.ws/genome): Breed two AI agents into a provably-inherited offspring. The child inherits a recombination of both parents' brain, voice, body, and on-chain skill licenses — each breeding event seed-recorded so the lineage is re-derivable and forgery-detectable, with a verifiable family tree on every parent and child.
@@ -385,7 +386,7 @@ Docs, tutorials, and reference.
 Long-form announcements, launches, and writing from three.ws.
 
 - [Blog](https://three.ws/blog): Editorial index of three.ws launches and long-form posts.
-- [Concierge: We Gave the Site Chatbot a Face](https://three.ws/blog/concierge-3d-chat-widget): Launch post for Concierge, the embeddable support chat with a rigged, lipsyncing 3D avatar: how it grounds streaming answers in the live page and how it was built by remixing the Walk and page-agent stack.
+- [Concierge: We Gave the Site Chatbot a Face](https://three.ws/blog/concierge-3d-chat-widget): Every website has the same faceless chat bubble. We shipped one with a rigged 3D avatar that blinks, lipsyncs, and speaks streaming answers grounded in your live page. One tag, free, open wire format. Here is how we built it by remixing our own stack.
 - [Inside the Forge: How a Prompt Becomes a 3D Model](https://three.ws/blog/inside-the-forge): What actually happens between typing a prompt on three.ws and downloading a textured 3D model: the reference image, the engine grid, self-healing failover, quality tiers, and what your model can do next.
 - [three.ws Joins the Quicknode Startup Program](https://three.ws/blog/three-ws-quicknode-startup-program): three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.
 - [three.ws Joins the Alibaba Cloud Partner Network](https://three.ws/blog/three-ws-alibaba-cloud-partnership): three.ws is now an Alibaba Cloud Partner, bringing Qwen foundation models and Asia-Pacific cloud infrastructure to the three.ws 3D AI agent platform.

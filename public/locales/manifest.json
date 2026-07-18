@@ -60,6 +60,81 @@
 			"code": "tr",
 			"name": "Türkçe",
 			"dir": "ltr"
+		},
+		{
+			"code": "vi",
+			"name": "Tiếng Việt",
+			"dir": "ltr"
+		},
+		{
+			"code": "id",
+			"name": "Bahasa Indonesia",
+			"dir": "ltr"
+		},
+		{
+			"code": "th",
+			"name": "ไทย",
+			"dir": "ltr"
+		},
+		{
+			"code": "fil",
+			"name": "Filipino",
+			"dir": "ltr"
+		},
+		{
+			"code": "zh-TW",
+			"name": "繁體中文",
+			"dir": "ltr"
+		},
+		{
+			"code": "it",
+			"name": "Italiano",
+			"dir": "ltr"
+		},
+		{
+			"code": "pl",
+			"name": "Polski",
+			"dir": "ltr"
+		},
+		{
+			"code": "nl",
+			"name": "Nederlands",
+			"dir": "ltr"
+		},
+		{
+			"code": "uk",
+			"name": "Українська",
+			"dir": "ltr"
+		},
+		{
+			"code": "fa",
+			"name": "فارسی",
+			"dir": "rtl"
+		},
+		{
+			"code": "bn",
+			"name": "বাংলা",
+			"dir": "ltr"
+		},
+		{
+			"code": "ur",
+			"name": "اردو",
+			"dir": "rtl"
+		},
+		{
+			"code": "ta",
+			"name": "தமிழ்",
+			"dir": "ltr"
+		},
+		{
+			"code": "te",
+			"name": "తెలుగు",
+			"dir": "ltr"
+		},
+		{
+			"code": "mr",
+			"name": "मराठी",
+			"dir": "ltr"
 		}
 	]
 }

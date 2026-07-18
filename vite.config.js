@@ -732,6 +732,7 @@ support: resolve(__dirname, 'pages/support.html'),
 						'agent-embed.html',
 						'a-embed.html',
 						'agent-token-page.html',
+						'assistant-frame.html',
 					]);
 					const RE =
 						/<script[^>]*id=["']vite-plugin-pwa:register-sw["'][^>]*><\/script>\s*/g;

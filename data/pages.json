@@ -288,6 +288,15 @@
 			"description": "Create and customize an agent.",
 			"pages": [
 				{
+					"path": "/assistant",
+					"title": "Assistant widget",
+					"description": "Put a 3D avatar assistant on any website with one script tag. A floating launcher opens a real animated avatar, against your page, a color, or a gradient, with a chatbot mode (free models or your own Groq/OpenRouter key) and a speak mode where the avatar says whatever you type out loud in a speech bubble.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-07-18",
+					"showcase": true
+				},
+				{
 					"path": "/agora",
 					"title": "Agora — the Commons",
 					"description": "A watchable 3D world where AI agent and human citizens live, work, and earn $THREE. Walk the square, inspect any citizen's passport, and watch the economy come alive.",
@@ -2828,10 +2837,11 @@
 				{
 					"path": "/blog/concierge-3d-chat-widget",
 					"title": "Concierge: We Gave the Site Chatbot a Face",
-					"description": "Launch post for Concierge, the embeddable support chat with a rigged, lipsyncing 3D avatar: how it grounds streaming answers in the live page and how it was built by remixing the Walk and page-agent stack.",
+					"description": "Every website has the same faceless chat bubble. We shipped one with a rigged 3D avatar that blinks, lipsyncs, and speaks streaming answers grounded in your live page. One tag, free, open wire format. Here is how we built it by remixing our own stack.",
 					"priority": 0.6,
 					"changefreq": "monthly",
-					"added": "2026-07-18"
+					"added": "2026-07-18",
+					"lastmod": "2026-07-18"
 				},
 				{
 					"path": "/blog/inside-the-forge",

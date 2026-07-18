@@ -12,7 +12,8 @@
 //   1. Verifies the session token and reads the session's network preference
 //   2. Probes the endpoint for its 402 challenge, selecting the right network accept
 //   3. Enforces governance (budget, allowlist, per-tx cap) and reserves budget atomically
-//   4. Signs the payment using the platform Solana payer wallet (X402_AGENT_SOLANA_SECRET_BASE58)
+//   4. Signs the payment using the platform Solana payer wallet (loadSeedKeypair:
+//      X402_SEED_SOLANA_SECRET_BASE58, falling back to X402_AGENT_SOLANA_SECRET_BASE58)
 //   5. Presents X-PAYMENT header and returns the endpoint's response
 //   6. Records the execution in payment_session_executions
 //   7. On failure, rolls back the budget reservation so the session isn't charged
@@ -20,7 +21,6 @@
 // No private key is ever exposed to the caller. The only secret is the session
 // token, which is a time-bounded spending grant, not wallet access.
 
-import { readFileSync } from 'node:fs';
 import {
 	Connection, PublicKey, Keypair, TransactionMessage, VersionedTransaction,
 	ComputeBudgetProgram,
@@ -31,8 +31,8 @@ import {
 	createAssociatedTokenAccountIdempotentInstruction,
 	TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getMint,
 } from '@solana/spl-token';
-import bs58 from 'bs58';
 
+import { loadSeedKeypair } from '../_lib/x402/pay.js';
 import { cors, error, json, readJson, wrap, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { env } from '../_lib/env.js';
@@ -58,22 +58,20 @@ let _solanaKeypair = null;
 
 function loadSolanaKeypair() {
 	if (_solanaKeypair) return _solanaKeypair;
-	const b58 = process.env.X402_AGENT_SOLANA_SECRET_BASE58;
-	if (b58) {
-		_solanaKeypair = Keypair.fromSecretKey(bs58.decode(b58));
+	// Same payer wallet as the x402 ring and /api/x402-pay: loadSeedKeypair reads
+	// X402_SEED_SOLANA_SECRET_BASE58 (primary) then X402_AGENT_SOLANA_SECRET_BASE58
+	// (fallback), auto-detects the key encoding, and falls back to the dev test
+	// keypair off disk outside production. See api/_lib/solana-signers.js.
+	try {
+		_solanaKeypair = loadSeedKeypair();
 		return _solanaKeypair;
+	} catch (err) {
+		const e = new Error(err?.message || 'Platform Solana payer wallet not configured');
+		e.status = 503;
+		e.code = /undecodable/i.test(err?.message || '') ? 'wallet_misconfigured' : 'wallet_unconfigured';
+		e.cause = err;
+		throw e;
 	}
-	if (process.env.NODE_ENV !== 'production') {
-		try {
-			const arr = JSON.parse(readFileSync('/home/codespace/.config/x402-test-wallets/solana.json', 'utf8'));
-			_solanaKeypair = Keypair.fromSecretKey(Uint8Array.from(arr));
-			return _solanaKeypair;
-		} catch { /* fall through */ }
-	}
-	const e = new Error('Platform Solana payer wallet not configured (set X402_AGENT_SOLANA_SECRET_BASE58)');
-	e.status = 503;
-	e.code = 'wallet_unconfigured';
-	throw e;
 }
 
 // ── SSRF-guarded fetch ──────────────────────────────────────────────────────

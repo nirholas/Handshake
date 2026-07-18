@@ -7,6 +7,14 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Assistant widget</title>
+			<link>https://three.ws/assistant</link>
+			<guid isPermaLink="false">2026-07-18:Assistant widget</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Put a 3D avatar assistant on any website with one script tag. A floating launcher opens a real animated avatar, against your page, a color, or a gradient, with a chatbot mode (free models or your own Groq/OpenRouter key) and a speak mode where the avatar says whatever you type out loud in a speech bubble.</description>
+		</item>
+		<item>
 			<title>Concierge: AI Chat Widget</title>
 			<link>https://three.ws/concierge</link>
 			<guid isPermaLink="false">2026-07-18:Concierge: AI Chat Widget</guid>
@@ -20,7 +28,7 @@
 			<guid isPermaLink="false">2026-07-18:Concierge: We Gave the Site Chatbot a Face</guid>
 			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
-			<description>Launch post for Concierge, the embeddable support chat with a rigged, lipsyncing 3D avatar: how it grounds streaming answers in the live page and how it was built by remixing the Walk and page-agent stack.</description>
+			<description>Every website has the same faceless chat bubble. We shipped one with a rigged 3D avatar that blinks, lipsyncs, and speaks streaming answers grounded in your live page. One tag, free, open wire format. Here is how we built it by remixing our own stack.</description>
 		</item>
 		<item>
 			<title>Docs · Agent Galaxy</title>
@@ -389,6 +397,14 @@
 			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
 			<category>sdk</category>
 			<description>Our most-installed npm package, @three-ws/x402-server (the seller side of x402), got a correctness pass. Paid endpoints built with it now guarantee the buyer never receives the result before the payment settles, and every paid response carries the on-chain settlement receipt in the X-PAYMENT-RESPONSE header, even for handlers that write their own response (the common Express case, which previously dropped the receipt). A new streaming mode settles up-front for file downloads and event streams, a handler that errors now returns a clean retryable 500 without charging, and the Base Sepolia test lane now advertises the correct testnet USDC. Ships with four runnable examples and a step-by-step tutorial you can follow offline before touching a wallet.</description>
+		</item>
+		<item>
+			<title>three.ws now speaks 41 languages</title>
+			<link>https://three.ws/</link>
+			<guid isPermaLink="false">2026-07-18:three.ws now speaks 41 languages</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The site's language support nearly quadrupled, from 11 languages to 41. New additions include Turkish, Vietnamese, Indonesian, Thai, Filipino, Traditional Chinese, Italian, Polish, Dutch, Ukrainian, Persian, Bengali, Urdu, Tamil, Telugu, Marathi, Malay, Swedish, Danish, Norwegian, Finnish, Greek, Czech, Romanian, Hungarian, Hebrew, Bulgarian, Swahili, Croatian, and Slovak. Every public page translates automatically, right-to-left scripts render correctly, and the floating language switcher lists them all. Search engines see every language too via hreflang alternates.</description>
 		</item>
 		<item>
 			<title>Two new guides explain the Forge, inside and out</title>

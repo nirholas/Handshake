@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-07-18T22:36:12.074Z",
+	"generated_at": "2026-07-18T23:44:18.365Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-18",
+			"type": "launch",
+			"title": "Assistant widget",
+			"summary": "Put a 3D avatar assistant on any website with one script tag. A floating launcher opens a real animated avatar, against your page, a color, or a gradient, with a chatbot mode (free models or your own Groq/OpenRouter key) and a speak mode where the avatar says whatever you type out loud in a speech bubble.",
+			"link": "/assistant",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-07-18",
 			"type": "launch",
@@ -20,7 +30,7 @@
 			"date": "2026-07-18",
 			"type": "launch",
 			"title": "Concierge: We Gave the Site Chatbot a Face",
-			"summary": "Launch post for Concierge, the embeddable support chat with a rigged, lipsyncing 3D avatar: how it grounds streaming answers in the live page and how it was built by remixing the Walk and page-agent stack.",
+			"summary": "Every website has the same faceless chat bubble. We shipped one with a rigged 3D avatar that blinks, lipsyncs, and speaks streaming answers grounded in your live page. One tag, free, open wire format. Here is how we built it by remixing our own stack.",
 			"link": "/blog/concierge-3d-chat-widget",
 			"tags": [
 				"launch"
@@ -490,6 +500,16 @@
 			"tags": [
 				"sdk",
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-18",
+			"type": "update",
+			"title": "three.ws now speaks 41 languages",
+			"summary": "The site's language support nearly quadrupled, from 11 languages to 41. New additions include Turkish, Vietnamese, Indonesian, Thai, Filipino, Traditional Chinese, Italian, Polish, Dutch, Ukrainian, Persian, Bengali, Urdu, Tamil, Telugu, Marathi, Malay, Swedish, Danish, Norwegian, Finnish, Greek, Czech, Romanian, Hungarian, Hebrew, Bulgarian, Swahili, Croatian, and Slovak. Every public page translates automatically, right-to-left scripts render correctly, and the floating language switcher lists them all. Search engines see every language too via hreflang alternates.",
+			"link": "/",
+			"tags": [
+				"feature"
 			]
 		},
 		{

@@ -56,16 +56,22 @@ writeFileSync(resolve(outDir, 'concierge.css'), CSS.trimStart());
 
 // 4) Mirror the one-tag build into the app's web root so three.ws serves it
 //    first-party at https://three.ws/concierge/concierge.global.js (the URL the
-//    docs and the /concierge landing page hand out). Skipped gracefully when
-//    the SDK is built outside the monorepo (standalone checkout).
-import { existsSync, copyFileSync } from 'node:fs';
+//    docs and the /concierge landing page hand out). This copy is committed and
+//    shipped, so mirror ONLY the minified JS with its sourcemap reference
+//    stripped: the 3MB map is a dev aid for npm consumers (kept in dist/), not
+//    something to bloat the repo or 404 for on the served CDN path. Skipped
+//    gracefully when the SDK is built outside the monorepo (standalone checkout).
+import { existsSync, readFileSync as read } from 'node:fs';
 const webRoot = resolve(here, '../public');
 if (existsSync(webRoot)) {
 	const cdnDir = resolve(webRoot, 'concierge');
 	mkdirSync(cdnDir, { recursive: true });
-	copyFileSync(resolve(outDir, 'concierge.global.js'), resolve(cdnDir, 'concierge.global.js'));
-	copyFileSync(resolve(outDir, 'concierge.global.js.map'), resolve(cdnDir, 'concierge.global.js.map'));
-	console.log('[concierge] mirrored one-tag build → public/concierge/');
+	const bundle = read(resolve(outDir, 'concierge.global.js'), 'utf8').replace(
+		/\n?\/\/# sourceMappingURL=.*$/m,
+		'\n',
+	);
+	writeFileSync(resolve(cdnDir, 'concierge.global.js'), bundle);
+	console.log('[concierge] mirrored one-tag build → public/concierge/concierge.global.js');
 }
 
 console.log('[concierge] built dist/concierge.mjs, dist/concierge.global.js, dist/concierge.css');

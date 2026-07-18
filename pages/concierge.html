@@ -21,7 +21,7 @@
 			property="og:description"
 			content="One tag gives your site an AI concierge with a talking 3D avatar: streaming answers grounded in your page, voice in and out, themes, and an avatar picker."
 		/>
-		<meta property="og:image" content="https://three.ws/og-image.png" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Concierge%3A+AI+Chat+Widget&amp;d=Give+any+website+an+AI+concierge+with+a+talking+3D+avatar%3A+one-tag+embed%2C+streaming+answers+grounded+in+the+live+page%2C+voice+in+and+out%2C+themes%2C+and+an+avatar+p&amp;p=%2Fconcierge" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta property="og:locale" content="en_US" />
@@ -33,7 +33,7 @@
 			name="twitter:description"
 			content="One tag gives your site an AI concierge with a talking 3D avatar: streaming answers grounded in your page, voice in and out, themes, and an avatar picker."
 		/>
-		<meta name="twitter:image" content="https://three.ws/og-image.png" />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Concierge%3A+AI+Chat+Widget&amp;d=Give+any+website+an+AI+concierge+with+a+talking+3D+avatar%3A+one-tag+embed%2C+streaming+answers+grounded+in+the+live+page%2C+voice+in+and+out%2C+themes%2C+and+an+avatar+p&amp;p=%2Fconcierge" />
 		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 
 		<link rel="canonical" href="https://three.ws/concierge" />
@@ -238,7 +238,9 @@
 			.cl-links a { color: var(--accent); text-decoration: none; font-size: var(--text-sm); }
 			.cl-links a:hover { text-decoration: underline; }
 		</style>
-	</head>
+	
+	<meta property="og:image:alt" content="Concierge: AI Chat Widget — three.ws">
+</head>
 	<body>
 		<header><div id="nav-container"></div></header>
 		<script src="/nav.js"></script>
@@ -422,11 +424,22 @@ concierge.ask('What does the Pro plan cost?');</code></pre>
 				});
 			}
 
-			// The live demo: this page eats its own dog food. The widget answers
-			// questions about Concierge itself, grounded in this page + curated facts.
-			import { Concierge } from '../concierge-sdk/src/index.js';
+		</script>
+
+		<!--
+			The live demo loads the exact first-party CDN artifact the install
+			section hands out (/concierge/concierge.global.js, mirrored from the
+			SDK build), so this page proves the real embed rather than a bundled
+			copy of the source. It is loaded WITHOUT data-concierge so the auto-init
+			stays off; the module script below configures it once the global API is
+			ready (module scripts execute in DOM order).
+		-->
+		<script type="module" src="/concierge/concierge.global.js"></script>
+		<script type="module">
+			// The demo eats its own dog food: the widget answers questions about
+			// Concierge itself, grounded in this page + the curated facts below.
+			const { Concierge } = window.ThreeWsConcierge;
 			window.__threeWsConcierge = new Concierge({
-				endpoint: '/api/concierge',
 				name: 'three.ws Concierge',
 				siteName: 'three.ws Concierge',
 				greeting: 'Hi! I am the widget this page is about. Ask me anything about installing or customizing me.',

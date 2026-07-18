@@ -10,15 +10,16 @@
 // dispatch() + settlePayment(). Saves ~50–200ms vs an external fetch and
 // removes a self-egress hop.
 //
-// Env (required for prod):
-//   X402_AGENT_SOLANA_SECRET_BASE58  base58-encoded 64-byte ed25519 secret
+// Env (required for prod): the x402 payer keypair, resolved via loadSeedKeypair
+//   from X402_SEED_SOLANA_SECRET_BASE58 (primary) then X402_AGENT_SOLANA_SECRET_BASE58
+//   (fallback name) — the same wallet the x402 ring pays from (see solana-signers.js
+//   x402-ring-payer). Accepts base58 / base64 / JSON-array encodings.
 // Local dev fallback (NODE_ENV !== 'production' only): reads keypair JSON at
 //   /home/codespace/.config/x402-test-wallets/solana.json
 //
 // Also: GET /api/x402-pay?balance=1 → returns the agent wallet's USDC + SOL
 // balance so the UI can show it ticking down during the demo.
 
-import { readFileSync } from 'node:fs';
 import { solanaConnection } from './_lib/solana/connection.js';
 import {
 	Connection, PublicKey, Keypair, TransactionMessage, VersionedTransaction,
@@ -29,8 +30,6 @@ import {
 	createAssociatedTokenAccountIdempotentInstruction,
 	TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, getMint,
 } from '@solana/spl-token';
-import bs58 from 'bs58';
-
 import { cors, json, readJson, wrap, rateLimited, setRateLimitHeaders, respondError } from './_lib/http.js';
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { requireCsrf } from './_lib/csrf.js';
@@ -41,6 +40,7 @@ import {
 	resolveResourceUrl,
 	NETWORK_SOLANA_MAINNET,
 } from './_lib/x402-spec.js';
+import { loadSeedKeypair } from './_lib/x402/pay.js';
 import { dispatch } from './_mcp/dispatch.js';
 import { env } from './_lib/env.js';
 import { getRedis as _getSharedRedis } from './_lib/redis.js';
@@ -286,46 +286,23 @@ const USDC_MAINNET_MINT = env.X402_ASSET_MINT_SOLANA;
 let _agent = null;
 function loadAgentKeypair() {
 	if (_agent) return _agent;
-	const b58 = process.env.X402_AGENT_SOLANA_SECRET_BASE58;
-	if (b58) {
-		let raw;
-		try {
-			raw = bs58.decode(b58);
-		} catch (decodeErr) {
-			const e = new Error(`X402_AGENT_SOLANA_SECRET_BASE58 is not valid base58: ${decodeErr?.message}`);
-			e.status = 503;
-			e.code = 'wallet_misconfigured';
-			e.cause = decodeErr;
-			throw e;
-		}
-		if (raw.length !== 64) {
-			const e = new Error(
-				`X402_AGENT_SOLANA_SECRET_BASE58 decoded to ${raw.length} bytes; expected 64 (ed25519 keypair)`,
-			);
-			e.status = 503;
-			e.code = 'wallet_misconfigured';
-			throw e;
-		}
-		_agent = Keypair.fromSecretKey(raw);
+	// Single source of truth for the x402 payer keypair: loadSeedKeypair honors
+	// the registry's declared chain (X402_SEED_SOLANA_SECRET_BASE58 first, then
+	// the X402_AGENT_SOLANA_SECRET_BASE58 fallback name — see solana-signers.js
+	// x402-ring-payer), auto-detects base58/base64/JSON encodings, and reads the
+	// dev test keypair off disk when NODE_ENV !== 'production'. Reusing it keeps
+	// this endpoint on the same wallet as the ring payer instead of a second,
+	// separately-configured key.
+	try {
+		_agent = loadSeedKeypair();
 		return _agent;
+	} catch (err) {
+		const e = new Error(err?.message || 'x402 agent wallet not configured');
+		e.status = 503;
+		e.code = /undecodable/i.test(err?.message || '') ? 'wallet_misconfigured' : 'wallet_unconfigured';
+		e.cause = err;
+		throw e;
 	}
-	// Local dev only: load the developer's test keypair from a well-known
-	// codespace path so `npm run dev` works without setting env vars. Refusing
-	// to read it in production prevents accidental key reuse across deploys.
-	if (process.env.NODE_ENV !== 'production') {
-		try {
-			const path = '/home/codespace/.config/x402-test-wallets/solana.json';
-			const arr = JSON.parse(readFileSync(path, 'utf8'));
-			_agent = Keypair.fromSecretKey(Uint8Array.from(arr));
-			return _agent;
-		} catch (err) {
-			log.warn('dev_keypair_load_failed', { path: '/home/codespace/.config/x402-test-wallets/solana.json', message: err?.message });
-		}
-	}
-	const e = new Error('agent wallet not configured (set X402_AGENT_SOLANA_SECRET_BASE58)');
-	e.status = 503;
-	e.code = 'wallet_unconfigured';
-	throw e;
 }
 
 function buildJsonRpc(tool, args) {
