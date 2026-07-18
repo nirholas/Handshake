@@ -42,6 +42,13 @@ const EXCLUSIONS = new Map([
 			'catalog — ring volume is dogfooding, not organic third-party demand, and ' +
 			'must not masquerade as such.',
 	],
+	[
+		'/api/x402/three-buy',
+		'Internal buy-pressure machinery (discoverable:false in the endpoint ' +
+			'itself, same stance as ring-settle): the micro-buy loop pays it to ' +
+			'fire small $THREE buys. Not an organic third-party service, so it is ' +
+			'deliberately absent from the public discovery catalog.',
+	],
 	// De-listed in the 2026-07 x402 overhaul (prompt 20): these routes stay live
 	// for their in-product consumers but are internal-use only — not agent
 	// products — so they no longer appear on x402scan/agentic.market. Each route

@@ -26,7 +26,7 @@ import {
 	generate,
 	rig,
 	directPrompt,
-} from './forge-client.js';
+} from './gpt-forge-client.js';
 import { COMPONENT_URI } from './component.js';
 import { buildSpatialArtifact } from '../_lib/spatial-mcp.js';
 // Pure, dependency-free lineage core — the SAME module the paid stdio server's

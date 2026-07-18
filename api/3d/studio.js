@@ -8,11 +8,12 @@
 // pricing paths, no internal identifiers — and every prompt must pass the
 // age-13+ content-safety gate before any GPU work starts.
 //
-// It is a thin shaper, not a second pipeline: generation runs through the SAME
-// forge-client → /api/forge free lane (NVIDIA NIM TRELLIS, standard tier) and
-// draws from the SAME per-IP quota buckets as /api/3d/generate, so adding this
-// surface creates no new capacity and no new limiter. (High tier waits on the
-// async self-host Hunyuan3D worker — see the dispatch comment below.)
+// It is a thin shaper, not a second pipeline: generation runs through the
+// gpt-forge-client → /api/gpt-forge free lane (the ChatGPT-dedicated clone of
+// /api/forge — NVIDIA NIM TRELLIS, standard tier) and draws from the SAME
+// per-IP quota buckets as /api/3d/generate, so adding this surface creates no
+// new capacity and no new limiter. (High tier waits on the async self-host
+// Hunyuan3D worker — see the dispatch comment below.)
 //
 //   POST { prompt }
 //     → 200 { status:'done',  glbUrl, viewerUrl, arUrl, format }  (finished inline)
@@ -37,17 +38,17 @@
 
 import { cors, wrap, method, json, error, readJson, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
-import { startForge, originFromReq, viewerUrl, arLaunchUrl } from '../_mcp-studio/forge-client.js';
+import { startForge, originFromReq, viewerUrl, arLaunchUrl } from '../_mcp-studio/gpt-forge-client.js';
 import { checkPromptSafety } from '../_mcp-studio/safety.js';
 import { resolveLogoPrompt } from '../_lib/forge-director-prompts.js';
 
 const PROMPT_MIN = 3; // the generation lane needs a subject to condition on
-const PROMPT_MAX = 1000; // matches /api/forge's own prompt ceiling
+const PROMPT_MAX = 1000; // matches /api/gpt-forge's own prompt ceiling
 const MAX_BODY_BYTES = 8_000;
 
 // A forge job handle is either a signed f1.<b64url>.<b64url> string or a bare
 // prediction id. Bound the poll param to that shape before forwarding —
-// /api/forge does the authoritative validation, this just keeps junk off the wire.
+// /api/gpt-forge does the authoritative validation, this just keeps junk off the wire.
 const JOB_HANDLE_RE = /^[A-Za-z0-9._-]{8,1024}$/;
 
 // Shape a forge submit response into the Actions contract: model URLs and job
@@ -93,7 +94,7 @@ export function shapePoll(data, base, jobId, title) {
 		return {
 			status: 'error',
 			job: jobId,
-			// The message is already sanitized by /api/forge; generation is free, so a
+			// The message is already sanitized by /api/gpt-forge; generation is free, so a
 			// failed job costs the user nothing — they can simply try again.
 			error: data?.error || '3D generation hit a snag upstream — it costs nothing to try again.',
 		};
@@ -170,7 +171,7 @@ async function generate(req, res) {
 	}
 
 	// Per-IP guard on the free GPU lane — the SAME bucket /api/3d/generate and
-	// /api/forge draw from, so this surface adds no new unmetered capacity.
+	// /api/gpt-forge draw from, so this surface adds no new unmetered capacity.
 	const rl = await limits.mcp3dGenerateFree(ip);
 	if (!rl.success) {
 		return rateLimited(res, rl, 'Free 3D generation limit reached — try again in a little while.');
@@ -220,7 +221,7 @@ async function poll(req, res, jobId, title) {
 	const base = originFromReq(req);
 	let upstream;
 	try {
-		upstream = await fetch(`${base}/api/forge?job=${encodeURIComponent(jobId)}`, {
+		upstream = await fetch(`${base}/api/gpt-forge?job=${encodeURIComponent(jobId)}`, {
 			headers: { accept: 'application/json' },
 			signal: AbortSignal.timeout(15_000),
 		});

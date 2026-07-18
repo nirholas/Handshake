@@ -21,7 +21,7 @@ https://three.ws/api/ar?src=<glbUrl>&title=<name>&kind=avatar   (rigged avatar)
 - `title` (optional): a human label, trimmed to 80 characters. The generation pipeline puts the user's prompt here so the AR page arrives labeled.
 - `kind=avatar` (optional): marks the model as a rigged agent body and unlocks the living-agent lane (below).
 
-Every free generation endpoint returns this link as the `arUrl` field, built by one shared constructor (`buildArLaunchUrl` in [api/_lib/ar-launch.js](../api/_lib/ar-launch.js), mirrored by `arLaunchUrl` in [api/_mcp-studio/forge-client.js](../api/_mcp-studio/forge-client.js)). ChatGPT's only job is to print it. Everything hard (device detection, format conversion, the AR session itself) happens on the three.ws side after the tap, which is why one URL works identically in ChatGPT, Claude, an email, or a text message.
+Every free generation endpoint returns this link as the `arUrl` field, built by one shared constructor (`buildArLaunchUrl` in [api/_lib/ar-launch.js](../api/_lib/ar-launch.js), mirrored by `arLaunchUrl` in [api/_mcp-studio/gpt-forge-client.js](../api/_mcp-studio/gpt-forge-client.js), the ChatGPT surfaces' client over `/api/gpt-forge`, the ChatGPT-dedicated clone of the forge pipeline). ChatGPT's only job is to print it. Everything hard (device detection, format conversion, the AR session itself) happens on the three.ws side after the tap, which is why one URL works identically in ChatGPT, Claude, an email, or a text message.
 
 ---
 

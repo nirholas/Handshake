@@ -217,7 +217,8 @@ Because the lanes are zero-cost, these caps **fail open** if the rate-limiter
 backend has an outage — a Redis blip must never dead-end a free feature (the same
 posture as the paid server's own free lane). They enforce normally whenever the
 backend is healthy, and any accidental paid-lane spend is still fail-closed one
-layer down in `/api/forge`.
+layer down in `/api/gpt-forge` (the ChatGPT-dedicated clone of `/api/forge`;
+see the note under Environment).
 
 ## Safety
 
@@ -232,7 +233,13 @@ All optional — sensible production defaults:
 
 | Var | Default | Purpose |
 |---|---|---|
-| `STUDIO_API_BASE` | request origin → `PUBLIC_APP_ORIGIN` → `https://three.ws` | Origin to call `/api/forge` on |
+| `STUDIO_API_BASE` | request origin → `PUBLIC_APP_ORIGIN` → `https://three.ws` | Origin to call `/api/gpt-forge` on |
+
+Generation runs on `/api/gpt-forge` (`api/gpt-forge.js`), the ChatGPT-dedicated
+exact clone of `/api/forge`: same lanes, tiers, job tokens, and `forge_creations`
+rows, cloned so the ChatGPT pipeline can be tuned without touching the forge or
+any surface that rides it. The agent-facing REST endpoints (`/api/3d/generate`,
+`/api/v1/ai/text-to-3d`) stay on `/api/forge`.
 | `STUDIO_FORGE_TIMEOUT_MS` | `180000` | Generation poll budget |
 | `STUDIO_RIG_TIMEOUT_MS` | `180000` | Rig poll budget |
 | `STUDIO_POLL_MS` | `3000` | Poll interval |
