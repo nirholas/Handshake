@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
 	isHttpUrl,
 	normalizeRpcUrl,
+	normalizeWsUrl,
+	resolveWsEndpoint,
 	solanaRpcEndpoints,
 } from '../api/_lib/solana/connection.js';
 import { RpcFallback, rpcFallbackFromEnv } from '../api/_lib/solana/rpc-fallback.js';
@@ -148,5 +150,65 @@ describe('RpcFallback — never hands new Connection a non-http(s) URL', () => {
 		const rpc = rpcFallbackFromEnv({ network: 'mainnet' });
 		expect(rpc.currentUrl).toBe('https://mainnet.helius-rpc.com/?api-key=test');
 		expect(() => rpc.getConnection()).not.toThrow();
+	});
+});
+
+describe('normalizeWsUrl: coerces an env WS endpoint into a ws(s):// URL', () => {
+	it('passes through a clean wss URL unchanged', () => {
+		expect(normalizeWsUrl('wss://example.quiknode.pro/token')).toBe('wss://example.quiknode.pro/token');
+		expect(normalizeWsUrl('ws://localhost:8900')).toBe('ws://localhost:8900');
+	});
+	it('maps http(s) to its ws(s) form', () => {
+		expect(normalizeWsUrl('https://example.quiknode.pro/token')).toBe('wss://example.quiknode.pro/token');
+		expect(normalizeWsUrl('http://localhost:8899')).toBe('ws://localhost:8899');
+	});
+	it('prepends wss:// to a scheme-less host', () => {
+		expect(normalizeWsUrl('example.quiknode.pro/token')).toBe('wss://example.quiknode.pro/token');
+	});
+	it('strips a single pair of surrounding quotes', () => {
+		expect(normalizeWsUrl('"wss://example.quiknode.pro/token"')).toBe('wss://example.quiknode.pro/token');
+	});
+	it('returns "" for empty or unsalvageable values', () => {
+		expect(normalizeWsUrl('')).toBe('');
+		expect(normalizeWsUrl('   ')).toBe('');
+		expect(normalizeWsUrl(null)).toBe('');
+		expect(normalizeWsUrl('bareword')).toBe('');
+		expect(normalizeWsUrl('ftp://example.com')).toBe('');
+	});
+});
+
+describe('resolveWsEndpoint: SOLANA_RPC_WS_URL override, derive-from-primary default', () => {
+	let saved;
+	beforeEach(() => {
+		saved = process.env.SOLANA_RPC_WS_URL;
+		delete process.env.SOLANA_RPC_WS_URL;
+	});
+	afterEach(() => {
+		if (saved === undefined) delete process.env.SOLANA_RPC_WS_URL;
+		else process.env.SOLANA_RPC_WS_URL = saved;
+	});
+
+	it('derives the socket from the primary HTTP endpoint when unset', () => {
+		expect(resolveWsEndpoint('https://mainnet.helius-rpc.com/?api-key=k', 'mainnet')).toBe(
+			'wss://mainnet.helius-rpc.com/?api-key=k',
+		);
+	});
+	it('uses a mainnet SOLANA_RPC_WS_URL override, normalized to wss', () => {
+		process.env.SOLANA_RPC_WS_URL = 'https://ded.quiknode.pro/token';
+		expect(resolveWsEndpoint('https://mainnet.helius-rpc.com/?api-key=k', 'mainnet')).toBe(
+			'wss://ded.quiknode.pro/token',
+		);
+	});
+	it('ignores the override on devnet so a mainnet socket never crosses clusters', () => {
+		process.env.SOLANA_RPC_WS_URL = 'wss://ded.quiknode.pro/token';
+		expect(resolveWsEndpoint('https://devnet.helius-rpc.com/?api-key=k', 'devnet')).toBe(
+			'wss://devnet.helius-rpc.com/?api-key=k',
+		);
+	});
+	it('falls back to deriving when the override is unsalvageable', () => {
+		process.env.SOLANA_RPC_WS_URL = 'not a url';
+		expect(resolveWsEndpoint('https://mainnet.helius-rpc.com/?api-key=k', 'mainnet')).toBe(
+			'wss://mainnet.helius-rpc.com/?api-key=k',
+		);
 	});
 });

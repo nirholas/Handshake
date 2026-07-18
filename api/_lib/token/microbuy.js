@@ -46,9 +46,34 @@ import {
 	usdToUsdcAtomics,
 	usdcAtomicsToUsd,
 	atomicsToTokens,
+	wouldExceedCap,
 } from './buyback-math.js';
 
 const MEMO_PROGRAM_ID = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
+
+// One-time DDL guard per warm instance. The migration owns this table in a real
+// deploy; this makes the lane self-healing so the daily-cap DB fallback and the
+// ledger never silently no-op on a fresh/behind database (which, combined with a
+// Redis outage, would otherwise let the cap fail open).
+let _schemaReady = false;
+export async function ensureMicrobuySchema() {
+	if (_schemaReady) return;
+	await sql`
+		CREATE TABLE IF NOT EXISTS three_microbuy_runs (
+			id                   uuid primary key default gen_random_uuid(),
+			status               text not null,
+			reason               text,
+			usdc_spent_atomics   bigint not null default 0,
+			three_bought_atomics bigint not null default 0,
+			price_usd            numeric,
+			slippage_bps         integer,
+			buy_signature        text,
+			created_at           timestamptz not null default now()
+		)
+	`;
+	await sql`CREATE INDEX IF NOT EXISTS three_microbuy_runs_created ON three_microbuy_runs (created_at desc)`;
+	_schemaReady = true;
+}
 
 // ── policy knobs (env, with safe defaults) ──────────────────────────────────
 
@@ -113,29 +138,29 @@ const utcDay = () => new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
 const dailyKey = () => `three:microbuy:daily:${utcDay()}`;
 
 /**
- * DB fallback for today's micro-buy spend when Redis is unavailable — sums the
- * confirmed/pending rows so the cap still holds (best-effort; the Redis counter is
- * the fast path). Returns atomics.
+ * DB sum of today's micro-buy spend (confirmed + pending rows). STRICT: throws on a
+ * query fault so the caller can decide whether to fail closed. The read-path
+ * wrappers (dailySpentAtomics, hasDailyBudget) swallow the throw; the reserve path
+ * treats it as "cap unverifiable" and refuses the buy.
  */
-async function dbDailySpentAtomics() {
-	try {
-		const rows = await sql`
-			SELECT COALESCE(SUM(usdc_spent_atomics), 0)::bigint AS spent
-			FROM three_microbuy_runs
-			WHERE status IN ('confirmed', 'pending') AND created_at >= date_trunc('day', now())
-		`;
-		return BigInt(rows[0]?.spent || 0);
-	} catch {
-		return 0n;
-	}
+async function dbDailySpentAtomicsStrict() {
+	const rows = await sql`
+		SELECT COALESCE(SUM(usdc_spent_atomics), 0)::bigint AS spent
+		FROM three_microbuy_runs
+		WHERE status IN ('confirmed', 'pending') AND created_at >= date_trunc('day', now())
+	`;
+	return BigInt(rows[0]?.spent || 0);
 }
 
 /**
- * Atomically reserve `atomics` of today's budget. Returns { ok, dailySpentAtomics,
- * dailyCapAtomics }. When the reservation would cross the daily cap it is rolled
- * back and ok:false is returned, so the caller never buys past the ceiling. Redis
- * is the fast atomic path; if it is down we fall back to a (racy) DB sum so the cap
- * degrades to best-effort rather than failing open.
+ * Atomically reserve `atomics` of today's budget. Returns { ok, reason?,
+ * dailySpentAtomics, dailyCapAtomics }. When the reservation would cross the daily
+ * cap it is rolled back and ok:false is returned, so the caller never buys past the
+ * ceiling. Redis is the fast atomic path; if it is down we fall back to a (racy) DB
+ * sum. Crucially this FAILS CLOSED: if neither Redis nor the DB can tell us today's
+ * spend, the buy is refused (reason:'cap_unverifiable') rather than letting an
+ * uncapped flood through — an unbounded real-money spend is the one outcome the cap
+ * exists to prevent.
  */
 export async function reserveDailySpend(atomics) {
 	const capAtomics = usdToUsdcAtomics(dailyCapUsd());
@@ -151,16 +176,23 @@ export async function reserveDailySpend(atomics) {
 			}
 			if (total > capAtomics) {
 				try { await redis.incrby(key, -Number(need)); } catch { /* best-effort rollback */ }
-				return { ok: false, dailySpentAtomics: total - need, dailyCapAtomics: capAtomics };
+				return { ok: false, reason: 'daily_cap_reached', dailySpentAtomics: total - need, dailyCapAtomics: capAtomics };
 			}
 			return { ok: true, dailySpentAtomics: total, dailyCapAtomics: capAtomics };
 		} catch {
-			/* fall through to DB */
+			/* Redis faulted — fall through to the DB fallback below. */
 		}
 	}
-	const spent = await dbDailySpentAtomics();
-	if (spent + need > capAtomics) {
-		return { ok: false, dailySpentAtomics: spent, dailyCapAtomics: capAtomics };
+	// Fallback: sum the ledger. STRICT — a query fault here means we cannot prove the
+	// cap, so refuse (fail closed) instead of assuming zero spent.
+	let spent;
+	try {
+		spent = await dbDailySpentAtomicsStrict();
+	} catch {
+		return { ok: false, reason: 'cap_unverifiable', dailySpentAtomics: 0n, dailyCapAtomics: capAtomics };
+	}
+	if (wouldExceedCap(spent, need, capAtomics)) {
+		return { ok: false, reason: 'daily_cap_reached', dailySpentAtomics: spent, dailyCapAtomics: capAtomics };
 	}
 	return { ok: true, dailySpentAtomics: spent + need, dailyCapAtomics: capAtomics };
 }
@@ -188,7 +220,7 @@ export async function hasDailyBudget() {
 	}
 }
 
-/** Today's micro-buy spend so far (atomics) for status/read paths. */
+/** Today's micro-buy spend so far (atomics) for status/read paths. Tolerant → 0n. */
 export async function dailySpentAtomics() {
 	const redis = getRedis();
 	if (redis) {
@@ -197,7 +229,7 @@ export async function dailySpentAtomics() {
 			if (v != null) return BigInt(v);
 		} catch { /* fall through */ }
 	}
-	return dbDailySpentAtomics();
+	try { return await dbDailySpentAtomicsStrict(); } catch { return 0n; }
 }
 
 // ── helpers ─────────────────────────────────────────────────────────────────
@@ -291,11 +323,13 @@ export async function executeMicrobuy(signer, plan) {
 	// overshoot the daily cap. Released by the caller only if we never broadcast.
 	const reservation = await reserveDailySpend(plan.spendUsdcAtomics);
 	if (!reservation.ok) {
-		throw Object.assign(new Error('daily micro-buy cap reached'), {
-			code: 'daily_cap_reached',
-			dailySpentAtomics: reservation.dailySpentAtomics,
-			dailyCapAtomics: reservation.dailyCapAtomics,
-		});
+		const code = reservation.reason || 'daily_cap_reached';
+		throw Object.assign(
+			new Error(code === 'cap_unverifiable'
+				? 'micro-buy cap unverifiable (Redis and DB both unavailable) — refusing to buy'
+				: 'daily micro-buy cap reached'),
+			{ code, dailySpentAtomics: reservation.dailySpentAtomics, dailyCapAtomics: reservation.dailyCapAtomics },
+		);
 	}
 
 	let swapB64;
@@ -385,6 +419,63 @@ export async function sweepMicrobuyThree(signer) {
 		instructions: ixs,
 	});
 	return signature;
+}
+
+// ── public stats ─────────────────────────────────────────────────────────────
+
+/**
+ * Public micro-buy summary: lifetime + today's buy count, $THREE bought, USDC
+ * deployed, and how much of today's budget is spent. Resilient — degrades to a sane
+ * default whether the query rejects (table missing) or sql throws synchronously
+ * (env unconfigured), so a status surface never 500s on it.
+ */
+export async function microbuyStats() {
+	let agg = { runs: 0, confirmed: 0, pending: 0, usdc: 0, three: 0 };
+	let today = { runs: 0, usdc: 0 };
+	try {
+		const [lifetime] = await sql`
+			SELECT
+				count(*) FILTER (WHERE status IN ('confirmed', 'pending'))::int AS runs,
+				count(*) FILTER (WHERE status = 'confirmed')::int                AS confirmed,
+				count(*) FILTER (WHERE status = 'pending')::int                  AS pending,
+				COALESCE(SUM(usdc_spent_atomics) FILTER (WHERE status IN ('confirmed', 'pending')), 0)::bigint AS usdc,
+				COALESCE(SUM(three_bought_atomics), 0)::bigint                   AS three
+			FROM three_microbuy_runs
+		`;
+		if (lifetime) {
+			agg = {
+				runs: lifetime.runs, confirmed: lifetime.confirmed, pending: lifetime.pending,
+				usdc: Number(lifetime.usdc), three: Number(lifetime.three),
+			};
+		}
+		const [day] = await sql`
+			SELECT count(*)::int AS runs,
+				COALESCE(SUM(usdc_spent_atomics), 0)::bigint AS usdc
+			FROM three_microbuy_runs
+			WHERE status IN ('confirmed', 'pending') AND created_at >= date_trunc('day', now())
+		`;
+		if (day) today = { runs: day.runs, usdc: Number(day.usdc) };
+	} catch { /* degrade to defaults */ }
+
+	const capUsd = dailyCapUsd();
+	const spentTodayUsd = today.usdc / 1e6;
+	return {
+		enabled: isEnabled(),
+		buy_usd: buyUsd(),
+		lifetime: {
+			buys: agg.runs,
+			confirmed: agg.confirmed,
+			pending: agg.pending,
+			usdc_deployed: usd(agg.usdc),
+			three_bought: threeTokens(agg.three),
+		},
+		today: {
+			buys: today.runs,
+			usdc_deployed: spentTodayUsd,
+			cap_usd: capUsd,
+			cap_used_pct: capUsd > 0 ? Math.min(100, (spentTodayUsd / capUsd) * 100) : 0,
+		},
+	};
 }
 
 export { usd as usdcAtomicsToUsd, threeTokens as threeAtomicsToTokens };

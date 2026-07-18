@@ -46,6 +46,7 @@ import { loadSeedKeypair, payX402, USDC_MINT, SOLANA_RPC } from '../_lib/x402/pa
 import { ensureVolumeSchema, settleAndRecord } from '../_lib/x402/pipelines/volume-shared.js';
 import {
 	isEnabled as microbuyEnabled,
+	ensureMicrobuySchema,
 	dailyCapUsd,
 	dailySpentAtomics,
 	loadMicrobuySigner,
@@ -131,6 +132,11 @@ export default wrapCron(async (req, res) => {
 	try { await ensureVolumeSchema(sql); } catch (err) {
 		return json(res, 200, { ok: false, skipped: true, reason: `schema_failed: ${err?.message}` });
 	}
+	// Self-heal the micro-buy ledger too, so the endpoint's daily-cap DB fallback and
+	// its records always have a table (best-effort — the migration owns it in prod).
+	try { await ensureMicrobuySchema(); } catch (err) {
+		log.warn('three_buy_ledger_schema_failed', { message: err?.message });
+	}
 
 	// ── Daily market-spend cap pre-check (the endpoint enforces it atomically;
 	// this stops the loop from firing tolls once the day's buys are exhausted) ──
@@ -159,19 +165,20 @@ export default wrapCron(async (req, res) => {
 	const tollPriceAtomic = Number(priceFor('three-buy', 1_000));
 
 	let fired = 0, paid = 0, buys = 0, pending = 0, errors = 0, tollSpent = 0;
-	let capHitMidTick = false;
+	let stopReason = null;
 
 	// Fire the buys in waves of `conc`, refetching a blockhash per wave so a long
 	// tick never signs tolls against an expired blockhash.
 	let idx = 0;
-	while (idx < want && !capHitMidTick) {
-		if (tollSpent + tollPriceAtomic > tollCap) break;
+	while (idx < want && !stopReason) {
+		if (tollSpent + tollPriceAtomic > tollCap) { stopReason = 'toll_cap'; break; }
 
 		let blockhash;
 		try {
 			({ blockhash } = await conn.getLatestBlockhash('confirmed'));
 		} catch (err) {
 			log.warn('three_buy_blockhash_failed', { message: err?.message });
+			stopReason = 'blockhash_failed';
 			break;
 		}
 
@@ -188,16 +195,18 @@ export default wrapCron(async (req, res) => {
 			}),
 		);
 
+		let wavePaid = 0;
+		let capSignal = false;
 		for (const { result, paidAmount } of wave) {
 			fired += 1;
-			if (result.paid) { paid += 1; tollSpent += paidAmount; }
+			if (result.paid) { paid += 1; wavePaid += 1; tollSpent += paidAmount; }
 			if (!result.success) {
 				errors += 1;
-				// The endpoint re-emits 402 when the daily cap is reached — stop firing.
+				// The endpoint re-emits 402 with a reason when it won't buy (cap reached,
+				// unverifiable, disabled, unfunded). Surface a cap signal for a precise
+				// stop reason; the whole-wave guard below catches every systemic case.
 				const hay = `${result.errorMsg || ''} ${JSON.stringify(result.responseBody || '')}`;
-				if (/daily_cap_reached|three_buy_unavailable/i.test(hay) && /cap/i.test(hay)) {
-					capHitMidTick = true;
-				}
+				if (/cap_reached|cap_unverifiable/i.test(hay)) capSignal = true;
 			}
 			// A settled toll means the endpoint delivered a broadcast buy (confirmed
 			// or pending); count it as a buy regardless of confirmation latency.
@@ -206,6 +215,15 @@ export default wrapCron(async (req, res) => {
 			else if (result.paid && status === 'pending') { buys += 1; pending += 1; }
 		}
 		idx += waveSize;
+
+		// Whole-wave failure is a systemic signal (cap exhausted, engine disabled,
+		// unfunded wallet, or an RPC/DB outage) — stop the tick instead of hammering
+		// the endpoint `want` times for nothing. A partial wave (some paid) is the
+		// healthy path and the cap-boundary transition, so it continues.
+		if (wavePaid === 0 && waveSize > 0) {
+			stopReason = capSignal ? 'daily_cap_reached' : 'wave_all_failed';
+			break;
+		}
 	}
 
 	// ── Periodic treasury sweep of accrued $THREE (buy-only lane) ─────────────
@@ -224,7 +242,7 @@ export default wrapCron(async (req, res) => {
 		run_id: runId, fired, paid, buys, pending, errors,
 		toll_spent_usd: (tollSpent / 1e6).toFixed(4),
 		daily_spent_usd: (Number(dailySpent) / 1e6).toFixed(4),
-		cap_hit: capHitMidTick, sweep: sweepSig ? sweepSig.slice(0, 12) : null,
+		stop_reason: stopReason, sweep: sweepSig ? sweepSig.slice(0, 12) : null,
 	});
 
 	return json(res, 200, {
@@ -238,7 +256,7 @@ export default wrapCron(async (req, res) => {
 		toll_spent_usd: (tollSpent / 1e6).toFixed(4),
 		daily_spent_usd: (Number(dailySpent) / 1e6).toFixed(4),
 		daily_cap_usd: dailyCapUsd(),
-		cap_hit_mid_tick: capHitMidTick,
+		...(stopReason ? { stop_reason: stopReason } : {}),
 		...(sweepSig ? { sweep_signature: sweepSig } : {}),
 	});
 });

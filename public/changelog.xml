@@ -7,12 +7,316 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Docs · Agent Galaxy</title>
+			<link>https://three.ws/docs/galaxy</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Agent Galaxy</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every published agent embedded by IBM Granite on watsonx.ai, projected into a navigable 3D constellation with natural-language semantic search.</description>
+		</item>
+		<item>
+			<title>Docs · Agent Genome</title>
+			<link>https://three.ws/docs/genome</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Agent Genome</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Breed two agents into a provably-inherited child: recombined brain, voice, body, and on-chain skill licenses, each breeding event seed-recorded with a verifiable family tree.</description>
+		</item>
+		<item>
+			<title>Docs · Agent Studio</title>
+			<link>https://three.ws/docs/agent-studio</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Agent Studio</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Author an agent's brain, memory, body, money, and skills in one place, beside a persistent live 3D avatar that updates everywhere as you edit.</description>
+		</item>
+		<item>
+			<title>Docs · Alpha Co-pilot</title>
+			<link>https://three.ws/docs/alpha-copilot</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Alpha Co-pilot</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Your 3D agent reads a real pump.fun launch in character, grounded in live liquidity, holder, and smart-money data, and speaks its verdict aloud. Fabricated figures are rejected; the owner acts only within server-enforced spend limits.</description>
+		</item>
+		<item>
+			<title>Docs · Animation Studio</title>
+			<link>https://three.ws/docs/animation-studio</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Animation Studio</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Pose any avatar or the built-in mannequin with FK/IK, keyframe a timeline, preview live, and export an animated GLB or clip JSON. Save clips to your account and list them for sale in USDC.</description>
+		</item>
+		<item>
+			<title>Docs · AR Studio</title>
+			<link>https://three.ws/docs/ar-studio</link>
+			<guid isPermaLink="false">2026-07-18:Docs · AR Studio</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Place any number of 3D models and avatars into one live camera scene: model sources, the WebXR/passthrough/desktop rendering ladder, gestures, shared live rooms, and shareable arrangements.</description>
+		</item>
+		<item>
+			<title>Docs · Avatar Studio</title>
+			<link>https://three.ws/docs/avatar-studio</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Avatar Studio</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Build a rigged 3D avatar from scratch with no selfie: choose a base body, sculpt face and body morphs, add outfits and accessories, and export a GLB.</description>
+		</item>
+		<item>
+			<title>Docs · Coin Autopilot</title>
+			<link>https://three.ws/docs/autopilot</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Coin Autopilot</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A hands-off token cockpit: set buyback-and-burn and holder-distribution rules with USDC floors and guardrails, and let your agent run the coin autonomously.</description>
+		</item>
+		<item>
+			<title>Docs · Coin Clash</title>
+			<link>https://three.ws/docs/clash</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Coin Clash</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Token-gated community warfare: every coin community is an army. Hold the coin, enlist, and rally for your faction in timed on-chain battles.</description>
+		</item>
+		<item>
+			<title>Docs · Coin Radar</title>
+			<link>https://three.ws/docs/radar</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Coin Radar</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Live pump.fun launch intelligence: every new coin scored in its first 90 seconds for bundle vs organic, wallet concentration, dev behaviour, and risk flags.</description>
+		</item>
+		<item>
+			<title>Docs · Cosmos (living worlds)</title>
+			<link>https://three.ws/docs/cosmos</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Cosmos (living worlds)</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How NVIDIA Cosmos renders a photoreal video world behind a transparent 3D avatar: the async generation job, preview and download, and the designed fallback.</description>
+		</item>
+		<item>
+			<title>Docs · Daily Forge</title>
+			<link>https://three.ws/docs/daily-forge</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Daily Forge</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A new 3D creative challenge every day: a deterministic theme, the free no-signup forge lane, a localStorage streak with milestones, a community strip, and an AR handoff.</description>
+		</item>
+		<item>
+			<title>Docs · Diorama (text to world)</title>
+			<link>https://three.ws/docs/diorama</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Diorama (text to world)</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How one sentence becomes an explorable 3D diorama: an LLM composes a placed scene, each object is forged to a real GLB and assembled live, then saved to a public gallery permalink, exported to Scene Studio, or taken into AR.</description>
+		</item>
+		<item>
+			<title>Docs · Fact Check</title>
+			<link>https://three.ws/docs/fact-check</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Fact Check</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Sourced fact-checking with cryptographic content attestations, a published accuracy benchmark, and a free daily quota then pay-per-check via x402.</description>
+		</item>
+		<item>
+			<title>Docs · Forge (text &amp; image to 3D)</title>
+			<link>https://three.ws/docs/forge</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Forge (text &amp; image to 3D)</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How the Forge turns a text prompt, photos, or a sketch into a downloadable textured 3D model (GLB): the free-first engine grid with live health status, input modes, output formats, job resume, and background generation.</description>
+		</item>
+		<item>
+			<title>Docs · Guardian console</title>
+			<link>https://three.ws/docs/guardian</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Guardian console</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Recover and inherit agent wallets through a threshold-approved, time-locked process that never exposes a private key.</description>
+		</item>
+		<item>
+			<title>Docs · Image to 3D</title>
+			<link>https://three.ws/docs/image-to-3d</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Image to 3D</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Turn 1 to 4 photos of an object into a textured GLB on the free self-hosted reconstruction lane. When to use it versus Selfie to Avatar for faces, the multi-view flow, and the API.</description>
+		</item>
+		<item>
+			<title>Docs · Instant Agent Genesis</title>
+			<link>https://three.ws/docs/genesis</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Instant Agent Genesis</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A prompt or a selfie becomes a rigged 3D AI agent with its own custodial Solana and EVM wallets and an optional on-chain identity, in under a minute.</description>
+		</item>
+		<item>
+			<title>Docs · Integrations</title>
+			<link>https://three.ws/docs/integrations</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Integrations</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The catalog of one-script-tag embeds for any site: 3D avatar viewers, chat agents, walk companions, page narrators, live token widgets, and the MCP server.</description>
+		</item>
+		<item>
+			<title>Docs · Lipsync</title>
+			<link>https://three.ws/docs/lipsync</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Lipsync</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Two in-browser lipsync demos: TTS-driven mouth animation and live-mic viseme detection, both driving an avatar's viseme morph targets in real time.</description>
+		</item>
+		<item>
+			<title>Docs · Mission Control</title>
+			<link>https://three.ws/docs/terminal</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Mission Control</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The keyboard-first pump.fun trading terminal: the launch firehose fused with intel scores, firewall verdicts, and smart-money flow, streaming positions with live PnL, and one-keystroke guarded trading.</description>
+		</item>
+		<item>
+			<title>Docs · Mocap Studio</title>
+			<link>https://three.ws/docs/mocap-studio</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Mocap Studio</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Drive a 3D avatar's face live from your webcam in the browser: MediaPipe face landmarks mapped to ARKit blendshapes, smoothing, record and replay, and save.</description>
+		</item>
+		<item>
+			<title>Docs · Multi-LLM Brain</title>
+			<link>https://three.ws/docs/brain</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Multi-LLM Brain</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Send one prompt to Claude, GPT, Qwen, ModelScope, Groq and more at once, with side-by-side streaming and per-model latency and token stats.</description>
+		</item>
+		<item>
+			<title>Docs · Restyle Studio</title>
+			<link>https://three.ws/docs/restyle</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Restyle Studio</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Re-skin any GLB without regenerating its mesh: 14 PBR material presets, plain-language AI restyle, seeded colorway variants, live metalness and roughness, and a durable revertable version lineage.</description>
+		</item>
+		<item>
+			<title>Docs · Scene Capture (video to point cloud)</title>
+			<link>https://three.ws/docs/capture</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Scene Capture (video to point cloud)</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Turn a phone video of any space into an explorable coloured 3D point cloud with feed-forward reconstruction, tunable sampling parameters, and live WebGL rendering.</description>
+		</item>
+		<item>
+			<title>Docs · Scene Composer</title>
+			<link>https://three.ws/docs/compose</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Scene Composer</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Forge props from text, attach them to your avatar's skeleton bones, arrange and scale freely, then export a GLB or save the result as a reusable outfit.</description>
+		</item>
+		<item>
+			<title>Docs · Scene Studio</title>
+			<link>https://three.ws/docs/scene-studio</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Scene Studio</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The in-browser three.js editor: import GLBs, arrange with transform gizmos, edit materials and lights, script, and export complete glTF scenes.</description>
+		</item>
+		<item>
+			<title>Docs · Selfie to Avatar</title>
+			<link>https://three.ws/docs/selfie-to-avatar</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Selfie to Avatar</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Point your camera at your face and get a rigged 3D avatar in about a minute, free and in the browser. The capture flow, the reconstruction pipeline, and where the avatar goes next.</description>
+		</item>
+		<item>
+			<title>Docs · Signal Marketplace</title>
+			<link>https://three.ws/docs/signals</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Signal Marketplace</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Verified traders publish live entry and exit signals as x402-metered feeds ranked by proven on-chain accuracy; a subscriber agent pays per signal or epoch and auto-mirrors through the guarded path.</description>
+		</item>
+		<item>
+			<title>Docs · Smart Money Radar</title>
+			<link>https://three.ws/docs/smart-money</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Smart Money Radar</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>A live first-party reputation graph of every pump.fun wallet: cross each coin's buyers with the coins that actually graduated to surface the wallets that keep picking winners.</description>
+		</item>
+		<item>
+			<title>Docs · Splat viewer (Gaussian avatars)</title>
+			<link>https://three.ws/docs/splat</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Splat viewer (Gaussian avatars)</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Render photoreal Gaussian-splat and radiance-field avatars in the browser: supported formats (.ply, .splat, .ksplat), client-side decoding, and the engines whose output it displays.</description>
+		</item>
+		<item>
+			<title>Docs · Strategy Objects</title>
+			<link>https://three.ws/docs/strategy-objects</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Strategy Objects</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Ownable, forkable, leaderboard-ranked trade strategies your agent can equip and run on-chain within your spend policy, plus the Strategy Lab for validation and backtesting.</description>
+		</item>
+		<item>
+			<title>Docs · Talking Avatar Video</title>
+			<link>https://three.ws/docs/talking-avatar-video</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Talking Avatar Video</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Pick an avatar, provide an audio track, and render a downloadable lip-synced talking-head MP4 on a server-side worker.</description>
+		</item>
+		<item>
+			<title>Docs · The AGI</title>
+			<link>https://three.ws/docs/agi</link>
+			<guid isPermaLink="false">2026-07-18:Docs · The AGI</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>One autonomous agent that is superhuman at exactly one thing, trading memecoins on pump.fun, and nothing else. Its embodied 3D body, its logged decisions with stated confidence, and its chain-proven record.</description>
+		</item>
+		<item>
+			<title>Docs · Voice Lab</title>
+			<link>https://three.ws/docs/voice-lab</link>
+			<guid isPermaLink="false">2026-07-18:Docs · Voice Lab</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Clone your voice from a short browser recording, play it in the TTS playground, and assign it to an agent.</description>
+		</item>
+		<item>
+			<title>Docs · x402 Studio</title>
+			<link>https://three.ws/docs/x402-studio</link>
+			<guid isPermaLink="false">2026-07-18:Docs · x402 Studio</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The merchant console for running a paid x402 business: products and pricing, payout and agent wallets, real USDC send and receive with .sol resolution, a storefront and pay-button builder, giving, and security.</description>
+		</item>
+		<item>
+			<title>36 new in-depth feature guides in the docs</title>
+			<link>https://three.ws/docs/forge</link>
+			<guid isPermaLink="false">2026-07-18:36 new in-depth feature guides in the docs</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>docs</category>
+			<description>The docs now carry a dedicated, in-depth guide for every major studio and surface that was missing one: the 3D creation studios (Forge, Image to 3D, Diorama, Cosmos, Splat viewer, Scene Capture, Restyle, Scene Studio, Scene Composer, Animation Studio, Avatar Studio, Mocap Studio, Selfie to Avatar, Daily Forge, AR Studio), voice and video (Voice Lab, Lipsync, Talking Avatar Video), agent building (Instant Agent Genesis, Agent Genome, Agent Studio, Multi-LLM Brain, Agent Galaxy, Integrations), and the trading and markets surfaces (Coin Autopilot, Signal Marketplace, the AGI, Alpha Co-pilot, Guardian, Strategy Objects, Mission Control, Smart Money Radar, Coin Radar, Coin Clash, x402 Studio, Fact Check). Each guide explains why the feature exists, how it actually works, a first-time walkthrough, runnable examples, its states and limits, and links to related surfaces. Browse them from the docs sidebar.</description>
+		</item>
+		<item>
 			<title>Image understanding is more reliable across every image host</title>
 			<link>https://three.ws/pulse</link>
 			<guid isPermaLink="false">2026-07-18:Image understanding is more reliable across every image host</guid>
 			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The vision endpoint (used to describe and check 3D renders and avatars) now fetches your image itself and hands it straight to the free model, instead of asking the model's server to go fetch the link. Some image hosts block that server-side fetch, which used to push the request onto a paid fallback and, when that fallback was unavailable, fail outright. Now the free lane serves the request regardless of how the image is hosted, so describe/critique calls stop returning errors on perfectly good images.</description>
+		</item>
+		<item>
+			<title>On-chain reads stay smooth when a data provider hits its daily cap</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-18:On-chain reads stay smooth when a data provider hits its daily cap</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>infra</category>
+			<description>The platform reads Solana through a prioritized chain of RPC providers and automatically fails over the instant one is throttled. It now recognizes the specific 'daily request limit reached' signal that metered providers return when a plan's daily quota is spent, and parks that provider for the rest of the day instead of re-checking it every few minutes. On-chain data (balances, prices, live trades) keeps flowing through a healthy provider without a stumble, and the failover leaves the retry chatter behind. A dedicated reserve endpoint was also wired in as deep insurance for the rare case the whole free provider pool is down at once.</description>
 		</item>
 		<item>
 			<title>Solana price and trade reads now ride a dedicated premium connection</title>

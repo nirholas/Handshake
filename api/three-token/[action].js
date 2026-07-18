@@ -22,6 +22,7 @@ import { TOKEN_MINT as THREE_MINT } from '../_lib/token/config.js';
 import { fetchTokenMarketData } from '../_lib/market/token-market.js';
 import { threeHolderBalances, threeHolderCount } from '../_lib/coin/three-holders.js';
 import { buybackStats } from '../_lib/token/buyback.js';
+import { microbuyStats } from '../_lib/token/microbuy.js';
 
 // Truncate a base58 wallet for display: "FeMb…Jpump".
 function shortWallet(addr) {
@@ -100,12 +101,15 @@ export default wrap(async (req, res) => {
 	const action = parts[2];
 
 	if (action === 'stats') {
-		const [market, platform, buyback, holderCount] = await Promise.all([
+		const [market, platform, buyback, microbuy, holderCount] = await Promise.all([
 			fetchTokenMarketData(THREE_MINT).catch(() => null),
 			fetchPlatformMetrics(),
 			// Programmatic buyback summary (revenue → $THREE bought into treasury).
 			// Resilient: returns zeros before the first run / migration.
 			buybackStats().catch(() => null),
+			// High-frequency micro-buy summary (continuous small buys → treasury).
+			// Same resilience contract; null before the first buy / migration.
+			microbuyStats().catch(() => null),
 			// Holder count from our own snapshot — the keyless market sources
 			// (DexScreener / GeckoTerminal) don't return holders, so without this the
 			// panel shows "—" whenever Birdeye is rate-limited. Cheap meta read only.
@@ -152,6 +156,14 @@ export default wrap(async (req, res) => {
 					runs: 0,
 					recent_runs: [],
 					last_run: null,
+				},
+				// Continuous micro-buy pressure (many tiny x402-settled buys → treasury).
+				// Sibling of buyback; same resilient default before the first buy.
+				microbuy: microbuy ?? {
+					enabled: false,
+					buy_usd: 0.01,
+					lifetime: { buys: 0, confirmed: 0, pending: 0, usdc_deployed: 0, three_bought: 0 },
+					today: { buys: 0, usdc_deployed: 0, cap_usd: 50, cap_used_pct: 0 },
 				},
 			},
 			// Edge-cache the public stats at the CDN so most page loads never reach

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-18T00:31:02.453Z",
+	"generated_at": "2026-07-18T00:40:02.682Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2456,6 +2456,366 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": true
+				},
+				{
+					"path": "/docs/forge",
+					"title": "Docs · Forge (text & image to 3D)",
+					"description": "How the Forge turns a text prompt, photos, or a sketch into a downloadable textured 3D model (GLB): the free-first engine grid with live health status, input modes, output formats, job resume, and background generation.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/image-to-3d",
+					"title": "Docs · Image to 3D",
+					"description": "Turn 1 to 4 photos of an object into a textured GLB on the free self-hosted reconstruction lane. When to use it versus Selfie to Avatar for faces, the multi-view flow, and the API.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/diorama",
+					"title": "Docs · Diorama (text to world)",
+					"description": "How one sentence becomes an explorable 3D diorama: an LLM composes a placed scene, each object is forged to a real GLB and assembled live, then saved to a public gallery permalink, exported to Scene Studio, or taken into AR.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/cosmos",
+					"title": "Docs · Cosmos (living worlds)",
+					"description": "How NVIDIA Cosmos renders a photoreal video world behind a transparent 3D avatar: the async generation job, preview and download, and the designed fallback.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/splat",
+					"title": "Docs · Splat viewer (Gaussian avatars)",
+					"description": "Render photoreal Gaussian-splat and radiance-field avatars in the browser: supported formats (.ply, .splat, .ksplat), client-side decoding, and the engines whose output it displays.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/capture",
+					"title": "Docs · Scene Capture (video to point cloud)",
+					"description": "Turn a phone video of any space into an explorable coloured 3D point cloud with feed-forward reconstruction, tunable sampling parameters, and live WebGL rendering.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/restyle",
+					"title": "Docs · Restyle Studio",
+					"description": "Re-skin any GLB without regenerating its mesh: 14 PBR material presets, plain-language AI restyle, seeded colorway variants, live metalness and roughness, and a durable revertable version lineage.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/scene-studio",
+					"title": "Docs · Scene Studio",
+					"description": "The in-browser three.js editor: import GLBs, arrange with transform gizmos, edit materials and lights, script, and export complete glTF scenes.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/compose",
+					"title": "Docs · Scene Composer",
+					"description": "Forge props from text, attach them to your avatar's skeleton bones, arrange and scale freely, then export a GLB or save the result as a reusable outfit.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/animation-studio",
+					"title": "Docs · Animation Studio",
+					"description": "Pose any avatar or the built-in mannequin with FK/IK, keyframe a timeline, preview live, and export an animated GLB or clip JSON. Save clips to your account and list them for sale in USDC.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/avatar-studio",
+					"title": "Docs · Avatar Studio",
+					"description": "Build a rigged 3D avatar from scratch with no selfie: choose a base body, sculpt face and body morphs, add outfits and accessories, and export a GLB.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/mocap-studio",
+					"title": "Docs · Mocap Studio",
+					"description": "Drive a 3D avatar's face live from your webcam in the browser: MediaPipe face landmarks mapped to ARKit blendshapes, smoothing, record and replay, and save.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/selfie-to-avatar",
+					"title": "Docs · Selfie to Avatar",
+					"description": "Point your camera at your face and get a rigged 3D avatar in about a minute, free and in the browser. The capture flow, the reconstruction pipeline, and where the avatar goes next.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/voice-lab",
+					"title": "Docs · Voice Lab",
+					"description": "Clone your voice from a short browser recording, play it in the TTS playground, and assign it to an agent.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/lipsync",
+					"title": "Docs · Lipsync",
+					"description": "Two in-browser lipsync demos: TTS-driven mouth animation and live-mic viseme detection, both driving an avatar's viseme morph targets in real time.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/talking-avatar-video",
+					"title": "Docs · Talking Avatar Video",
+					"description": "Pick an avatar, provide an audio track, and render a downloadable lip-synced talking-head MP4 on a server-side worker.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/galaxy",
+					"title": "Docs · Agent Galaxy",
+					"description": "Every published agent embedded by IBM Granite on watsonx.ai, projected into a navigable 3D constellation with natural-language semantic search.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/ar-studio",
+					"title": "Docs · AR Studio",
+					"description": "Place any number of 3D models and avatars into one live camera scene: model sources, the WebXR/passthrough/desktop rendering ladder, gestures, shared live rooms, and shareable arrangements.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/genesis",
+					"title": "Docs · Instant Agent Genesis",
+					"description": "A prompt or a selfie becomes a rigged 3D AI agent with its own custodial Solana and EVM wallets and an optional on-chain identity, in under a minute.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/genome",
+					"title": "Docs · Agent Genome",
+					"description": "Breed two agents into a provably-inherited child: recombined brain, voice, body, and on-chain skill licenses, each breeding event seed-recorded with a verifiable family tree.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/agent-studio",
+					"title": "Docs · Agent Studio",
+					"description": "Author an agent's brain, memory, body, money, and skills in one place, beside a persistent live 3D avatar that updates everywhere as you edit.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/brain",
+					"title": "Docs · Multi-LLM Brain",
+					"description": "Send one prompt to Claude, GPT, Qwen, ModelScope, Groq and more at once, with side-by-side streaming and per-model latency and token stats.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/integrations",
+					"title": "Docs · Integrations",
+					"description": "The catalog of one-script-tag embeds for any site: 3D avatar viewers, chat agents, walk companions, page narrators, live token widgets, and the MCP server.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/autopilot",
+					"title": "Docs · Coin Autopilot",
+					"description": "A hands-off token cockpit: set buyback-and-burn and holder-distribution rules with USDC floors and guardrails, and let your agent run the coin autonomously.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/signals",
+					"title": "Docs · Signal Marketplace",
+					"description": "Verified traders publish live entry and exit signals as x402-metered feeds ranked by proven on-chain accuracy; a subscriber agent pays per signal or epoch and auto-mirrors through the guarded path.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/agi",
+					"title": "Docs · The AGI",
+					"description": "One autonomous agent that is superhuman at exactly one thing, trading memecoins on pump.fun, and nothing else. Its embodied 3D body, its logged decisions with stated confidence, and its chain-proven record.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/alpha-copilot",
+					"title": "Docs · Alpha Co-pilot",
+					"description": "Your 3D agent reads a real pump.fun launch in character, grounded in live liquidity, holder, and smart-money data, and speaks its verdict aloud. Fabricated figures are rejected; the owner acts only within server-enforced spend limits.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/guardian",
+					"title": "Docs · Guardian console",
+					"description": "Recover and inherit agent wallets through a threshold-approved, time-locked process that never exposes a private key.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/strategy-objects",
+					"title": "Docs · Strategy Objects",
+					"description": "Ownable, forkable, leaderboard-ranked trade strategies your agent can equip and run on-chain within your spend policy, plus the Strategy Lab for validation and backtesting.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/terminal",
+					"title": "Docs · Mission Control",
+					"description": "The keyboard-first pump.fun trading terminal: the launch firehose fused with intel scores, firewall verdicts, and smart-money flow, streaming positions with live PnL, and one-keystroke guarded trading.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/smart-money",
+					"title": "Docs · Smart Money Radar",
+					"description": "A live first-party reputation graph of every pump.fun wallet: cross each coin's buyers with the coins that actually graduated to surface the wallets that keep picking winners.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/radar",
+					"title": "Docs · Coin Radar",
+					"description": "Live pump.fun launch intelligence: every new coin scored in its first 90 seconds for bundle vs organic, wallet concentration, dev behaviour, and risk flags.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/clash",
+					"title": "Docs · Coin Clash",
+					"description": "Token-gated community warfare: every coin community is an army. Hold the coin, enlist, and rally for your faction in timed on-chain battles.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/x402-studio",
+					"title": "Docs · x402 Studio",
+					"description": "The merchant console for running a paid x402 business: products and pricing, payout and agent wallets, real USDC send and receive with .sol resolution, a storefront and pay-button builder, giving, and security.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/fact-check",
+					"title": "Docs · Fact Check",
+					"description": "Sourced fact-checking with cryptographic content attestations, a published accuracy benchmark, and a free daily quota then pay-per-check via x402.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/daily-forge",
+					"title": "Docs · Daily Forge",
+					"description": "A new 3D creative challenge every day: a deterministic theme, the free no-signup forge lane, a localStorage streak with milestones, a community strip, and an AR handoff.",
+					"added": "2026-07-18",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
 				},
 				{
 					"path": "/docs/crypto-api",

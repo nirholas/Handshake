@@ -3,6 +3,24 @@
 	"entries": [
 		{
 			"date": "2026-07-18",
+			"title": "On-chain reads stay smooth when a data provider hits its daily cap",
+			"summary": "The platform reads Solana through a prioritized chain of RPC providers and automatically fails over the instant one is throttled. It now recognizes the specific 'daily request limit reached' signal that metered providers return when a plan's daily quota is spent, and parks that provider for the rest of the day instead of re-checking it every few minutes. On-chain data (balances, prices, live trades) keeps flowing through a healthy provider without a stumble, and the failover leaves the retry chatter behind. A dedicated reserve endpoint was also wired in as deep insurance for the rare case the whole free provider pool is down at once.",
+			"tags": [
+				"infra",
+				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-18",
+			"title": "36 new in-depth feature guides in the docs",
+			"summary": "The docs now carry a dedicated, in-depth guide for every major studio and surface that was missing one: the 3D creation studios (Forge, Image to 3D, Diorama, Cosmos, Splat viewer, Scene Capture, Restyle, Scene Studio, Scene Composer, Animation Studio, Avatar Studio, Mocap Studio, Selfie to Avatar, Daily Forge, AR Studio), voice and video (Voice Lab, Lipsync, Talking Avatar Video), agent building (Instant Agent Genesis, Agent Genome, Agent Studio, Multi-LLM Brain, Agent Galaxy, Integrations), and the trading and markets surfaces (Coin Autopilot, Signal Marketplace, the AGI, Alpha Co-pilot, Guardian, Strategy Objects, Mission Control, Smart Money Radar, Coin Radar, Coin Clash, x402 Studio, Fact Check). Each guide explains why the feature exists, how it actually works, a first-time walkthrough, runnable examples, its states and limits, and links to related surfaces. Browse them from the docs sidebar.",
+			"tags": [
+				"docs"
+			],
+			"link": "/docs/forge"
+		},
+		{
+			"date": "2026-07-18",
 			"title": "Image understanding is more reliable across every image host",
 			"summary": "The vision endpoint (used to describe and check 3D renders and avatars) now fetches your image itself and hands it straight to the free model, instead of asking the model's server to go fetch the link. Some image hosts block that server-side fetch, which used to push the request onto a paid fallback and, when that fallback was unavailable, fail outright. Now the free lane serves the request regardless of how the image is hosted, so describe/critique calls stop returning errors on perfectly good images.",
 			"tags": [

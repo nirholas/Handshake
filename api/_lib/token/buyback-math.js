@@ -62,6 +62,21 @@ export function computeSpend(walletUsdcAtomics, { maxUsd, minUsd }) {
 	return { spendAtomics: spend, reason: 'ok' };
 }
 
+/**
+ * Would reserving `needAtomics` on top of `spentAtomics` cross `capAtomics`? Pure,
+ * BigInt-exact — the single sizing rule the $THREE micro-buy daily cap is checked
+ * against (Redis fast path and DB fallback both defer to it), so the "never spend
+ * past the ceiling" guarantee lives in one tested place. A zero/negative need never
+ * exceeds; a zero cap always does (except a zero need).
+ * @param {bigint|string|number} spentAtomics already reserved today
+ * @param {bigint|string|number} needAtomics this reservation
+ * @param {bigint|string|number} capAtomics the daily ceiling
+ * @returns {boolean}
+ */
+export function wouldExceedCap(spentAtomics, needAtomics, capAtomics) {
+	return BigInt(spentAtomics) + BigInt(needAtomics) > BigInt(capAtomics);
+}
+
 /** Share of revenue already deployed to buybacks, clamped to [0,100]. */
 export function deployedPct(deployedUsd, revenueUsd) {
 	if (!(revenueUsd > 0)) return 0;

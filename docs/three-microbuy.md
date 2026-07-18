@@ -48,19 +48,41 @@ happen).
   reserves the day's budget in Redis *before* broadcasting a buy, so a flood of
   concurrent calls can never collectively overshoot the cap. A DB sum over
   `three_microbuy_runs` is the fallback when Redis is down.
+- **Fail-closed.** If *neither* Redis nor the ledger DB can confirm today's spend,
+  the buy is **refused** (`cap_unverifiable`), not allowed. Unbounded real-money
+  spend is the one outcome the cap exists to prevent, so the engine never assumes
+  "zero spent" on an infrastructure outage.
 - **Fail-closed toll.** Because the endpoint refuses the toll whenever a buy can't
   happen (disabled, unfunded, cap reached), a direct payer can force buys only up
   to the same daily ceiling the loop obeys — there is no amplification past the cap.
+- **Self-healing ledger.** The loop and endpoint create `three_microbuy_runs` on
+  first use, so the DB cap fallback and the records always work even on a fresh or
+  behind database — the migration owns it in a real deploy, this is the backstop.
 - **Kill switches.** `X402_AUTONOMOUS_ENABLED=false` (global) or
   `THREE_MICROBUY_ENABLED` unset stops everything; `THREE_MICROBUY_LOOP_ENABLED=false`
   pauses only the driver while leaving the endpoint payable.
+- **No wasted hammering.** A tick stops early on a fully-failed wave (cap exhausted,
+  disabled, unfunded, or an RPC/DB outage) instead of firing every remaining call
+  for nothing — reported as `stop_reason` in the tick response.
 - **Not in the generic ring.** `three-buy` is `autobuy:false` in
   [ring-catalog.js](../api/_lib/x402/ring-catalog.js), so the generic ring rotation
-  never fires real buys — only its dedicated driver does.
+  never fires real buys — only its dedicated driver does (pinned by a test).
 
 Every call writes an immutable row to `three_microbuy_runs`
 ([migration](../api/_lib/migrations/20260717233000_three_microbuy.sql)) — confirmed,
 pending, skipped, or failed — so there is never a silent no-op.
+
+## Observability
+
+- **Tick response.** `/api/cron/three-buy-loop` returns `fired`, `paid`, `buys`,
+  `pending`, `errors`, `toll_spent_usd`, `daily_spent_usd`, `daily_cap_usd`, and
+  `stop_reason` for the tick.
+- **Public stats.** `microbuyStats()` (lifetime + today's buys, $THREE bought, USDC
+  deployed, cap-used %) is surfaced on the `$THREE` token stats API
+  ([api/three-token/[action].js](../api/three-token/%5Baction%5D.js) → `/api/three-token/stats`)
+  under `token.microbuy`, alongside the daily buyback summary.
+- **Ring volume.** The x402 tolls show up in the ring dashboards tagged
+  `pipeline='three-buy'` (per-endpoint volume ledger + `x402_autonomous_log`).
 
 ## Turning it on
 
@@ -85,7 +107,7 @@ curl -s -H "Authorization: Bearer $CRON_SECRET" https://three.ws/api/cron/three-
 ```
 
 The response reports `fired`, `paid`, `buys`, `pending`, `errors`, `toll_spent_usd`,
-`daily_spent_usd`, and `daily_cap_usd` for the tick.
+`daily_spent_usd`, `daily_cap_usd`, and `stop_reason` for the tick.
 
 ## Configuration
 

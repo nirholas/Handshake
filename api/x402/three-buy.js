@@ -35,6 +35,7 @@ import { logger } from '../_lib/usage.js';
 import { TOKEN_MINT } from '../_lib/token/config.js';
 import {
 	isEnabled,
+	ensureMicrobuySchema,
 	hasDailyBudget,
 	loadMicrobuySigner,
 	planMicrobuy,
@@ -144,6 +145,10 @@ export default paidEndpoint({
 	description: DESCRIPTION,
 	bazaar: BAZAAR,
 	async handler() {
+		// Self-heal the ledger table so record() + the daily-cap DB fallback always
+		// work, even on a fresh/behind database (best-effort — never blocks a buy).
+		try { await ensureMicrobuySchema(); } catch { /* migration owns it in prod */ }
+
 		// Gate: a scheduled/paid call is a recorded no-op — and the toll is refused —
 		// until an operator funds the wallet and opts in.
 		if (!isEnabled()) {

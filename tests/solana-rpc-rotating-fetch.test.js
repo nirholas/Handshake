@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { makeRotatingFetch } from '../api/_lib/solana/connection.js';
+import {
+	makeRotatingFetch,
+	classifyRpcBody,
+	markEndpointCooldown,
+} from '../api/_lib/solana/connection.js';
 
 // A Response carrying either a raw string body or a JSON-encoded object, the way a
 // Solana RPC node answers a JSON-RPC POST.
@@ -97,5 +101,56 @@ describe('makeRotatingFetch — never leaks an unvalidated upstream body', () =>
 		const out = await makeRotatingFetch(eps)(null, { method: 'POST', body: '{}' });
 		expect((await out.json()).error.message).toBe('Method not found');
 		expect(fetchSpy).toHaveBeenCalledTimes(1);
+	});
+});
+
+// QuickNode signals an exhausted DAILY cap with `-32003 "daily request limit reached
+// - upgrade your account"`. Over HTTP it arrives as a 429; on providers that answer
+// 200 + JSON-RPC error it must still be treated as a fail-over signal (a capacity
+// problem the next lane does not share), and it must park the endpoint for the long
+// quota window, not a 10-minute rate-limit blip that re-probes a dead-for-the-day lane.
+describe('provider daily-limit (-32003 / "request limit reached")', () => {
+	const HOUR = 3_600_000;
+
+	it('classifies a 200 + -32003 body as a fail-over (429), not a usable response', () => {
+		const bad = classifyRpcBody(
+			JSON.stringify({ jsonrpc: '2.0', id: 1, error: { code: -32003, message: 'daily request limit reached - upgrade your account' } }),
+		);
+		expect(bad).not.toBeNull();
+		expect(bad.status).toBe(429);
+	});
+
+	it('classifies the phrase alone (unknown code) as capacity too', () => {
+		const bad = classifyRpcBody(
+			JSON.stringify({ jsonrpc: '2.0', id: 1, error: { code: -32099, message: 'request limit reached' } }),
+		);
+		expect(bad).not.toBeNull();
+		expect(bad.status).toBe(429);
+	});
+
+	it('parks a daily-limit 429 for the long quota window, not the short rate-limit one', () => {
+		const quota = markEndpointCooldown('https://q.daily-limit.test/', 429, 'daily request limit reached');
+		const plain = markEndpointCooldown('https://q.plain-429.test/', 429, 'slow down');
+		expect(quota).toBeGreaterThan(HOUR); // 6h quota park
+		expect(plain).toBeLessThanOrEqual(15 * 60_000); // ~10m transient
+	});
+
+	it('fails over a 200 + -32003 endpoint to a healthy next lane', async () => {
+		const origFetch = global.fetch;
+		try {
+			const capped = { jsonrpc: '2.0', id: 1, error: { code: -32003, message: 'daily request limit reached' } };
+			const fetchSpy = vi.fn(async (url) =>
+				String(url).includes('capped') ? resp(capped) : resp(VALID),
+			);
+			global.fetch = fetchSpy;
+			const out = await makeRotatingFetch(['https://capped.test/', 'https://healthy.test/'])(null, {
+				method: 'POST',
+				body: '{}',
+			});
+			expect((await out.json()).result).toEqual({ ok: true });
+			expect(fetchSpy).toHaveBeenCalledTimes(2);
+		} finally {
+			global.fetch = origFetch;
+		}
 	});
 });

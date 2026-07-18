@@ -34,6 +34,57 @@ function deriveWsUrl(httpUrl) {
 		.replace(/^http:/, 'ws:');
 }
 
+// Coerce an env-sourced WebSocket endpoint into a ws(s):// URL that a Connection's
+// `wsEndpoint` accepts, or '' when it can't be salvaged. Mirrors normalizeRpcUrl's
+// repairs (quote-strip, http(s) → ws(s), scheme-less host → wss) but targets the
+// socket scheme instead of http. Anything unsalvageable returns '' so the caller
+// falls back to deriving the socket from the primary HTTP endpoint.
+export function normalizeWsUrl(raw) {
+	let v = (raw ?? '').trim();
+	if (!v) return '';
+	if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+		v = v.slice(1, -1).trim();
+	}
+	if (!v) return '';
+
+	let candidate = v;
+	if (/^https:\/\//i.test(candidate)) candidate = candidate.replace(/^https:/i, 'wss:');
+	else if (/^http:\/\//i.test(candidate)) candidate = candidate.replace(/^http:/i, 'ws:');
+	else if (!/^wss?:\/\//i.test(candidate)) {
+		// Scheme-less: assume wss only for a host-shaped value (has a dot, or
+		// localhost[:port]). A bare token is a typo, not a host, so drop it.
+		const host = candidate.split(/[/?#]/)[0];
+		if (!host.includes('.') && !/^localhost(:\d+)?$/i.test(host)) return '';
+		candidate = `wss://${candidate}`;
+	}
+
+	let u;
+	try {
+		u = new URL(candidate);
+	} catch {
+		return '';
+	}
+	if (u.protocol !== 'ws:' && u.protocol !== 'wss:') return '';
+	return candidate;
+}
+
+// The WebSocket endpoint a Connection subscribes on. The ONLY server-side WS consumer
+// is the bounded `onLogs` live-trades window in pump-fun-mcp.js (confirms are
+// HTTP-polling by design; see solana/confirm.js: web3.js's signatureSubscribe WS
+// bypasses the rotating-fetch failover and 429-storms a warm instance). By default the
+// socket is derived from the primary HTTP endpoint. A mainnet SOLANA_RPC_WS_URL
+// override points that one subscription at a dedicated, stable socket (e.g. a paid
+// QuickNode wss lane) instead of the primary HTTP provider, which can rate-limit the WS
+// upgrade. Unset → byte-identical to before. Never applied on devnet: the override is a
+// mainnet endpoint, and a mainnet socket on a devnet Connection would cross clusters.
+export function resolveWsEndpoint(primaryHttpUrl, network = 'mainnet') {
+	if (network !== 'devnet') {
+		const override = normalizeWsUrl(process.env.SOLANA_RPC_WS_URL);
+		if (override) return override;
+	}
+	return deriveWsUrl(primaryHttpUrl);
+}
+
 // True only for a value @solana/web3.js's `new Connection` will accept — a parseable
 // URL whose protocol is http: or https:. Connection's `assertEndpointUrl` rejects
 // everything else (ws://, a scheme-less host, junk) by throwing
@@ -137,7 +188,11 @@ const _endpointCooldown = new Map();
 
 function cooldownMsFor(status, bodyText) {
 	if (status === 429) {
-		return /max usage reached|-32429|quota|usage limit|credits?\s*exhausted/i.test(
+		// "request limit reached" / -32003 is how QuickNode signals a DAILY cap
+		// exhausted (HTTP 429 + `{code:-32003,"daily request limit reached - upgrade
+		// your account"}`); it means the endpoint is dead for the rest of the day, so
+		// park it for the long window instead of re-probing it every 10 minutes.
+		return /max usage reached|-32429|-32003|request limit|quota|usage limit|credits?\s*exhausted/i.test(
 			bodyText || '',
 		)
 			? QUOTA_COOLDOWN_MS
@@ -319,6 +374,7 @@ const PROVIDER_CAPACITY_CODES = new Set([
 	-32052, // Ankr: key not allowed / forbidden
 	-32005, // node is behind by N slots — a fresher node may answer
 	-32004, // block/slot not available yet — another node may have it
+	-32003, // QuickNode: daily/request limit reached (capped), the next lane serves
 ]);
 
 // A provider that gates a method behind its paid/registered tier answers with a
@@ -341,7 +397,7 @@ function isProviderCapacityError(rpcError) {
 	if (!rpcError || typeof rpcError !== 'object') return false;
 	if (PROVIDER_CAPACITY_CODES.has(rpcError.code)) return true;
 	if (isProviderTierError(rpcError)) return true;
-	return /too many requests|rate.?limit|quota|usage limit|credits?\s*exhausted|forbidden|api key|unauthor|max usage/i.test(
+	return /too many requests|rate.?limit|request limit|quota|usage limit|credits?\s*exhausted|forbidden|api key|unauthor|max usage/i.test(
 		String(rpcError.message || ''),
 	);
 }
@@ -565,7 +621,7 @@ export function solanaConnection({ url = null, commitment = 'confirmed', network
 	const primary = endpoints[0] || (net === 'devnet' ? PUBLIC_DEVNET : PUBLIC_MAINNET);
 	return new Connection(primary, {
 		commitment,
-		wsEndpoint: deriveWsUrl(primary),
+		wsEndpoint: resolveWsEndpoint(primary, net),
 		// Never let web3.js run its own 429 backoff loop: with >1 endpoint the
 		// rotating fetch already hides 429s, and with a single endpoint we want to
 		// fail fast to the caller rather than spend seconds retrying a dead lane.
