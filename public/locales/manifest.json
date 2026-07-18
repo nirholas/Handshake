@@ -55,6 +55,11 @@
 			"code": "ru",
 			"name": "Русский",
 			"dir": "ltr"
+		},
+		{
+			"code": "tr",
+			"name": "Türkçe",
+			"dir": "ltr"
 		}
 	]
 }

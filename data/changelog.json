@@ -14747,6 +14747,15 @@
 				"docs"
 			],
 			"link": "/docs/how-forge-works"
+		},
+		{
+			"date": "2026-07-18",
+			"title": "three.ws now speaks 41 languages",
+			"summary": "The site's language support nearly quadrupled, from 11 languages to 41. New additions include Turkish, Vietnamese, Indonesian, Thai, Filipino, Traditional Chinese, Italian, Polish, Dutch, Ukrainian, Persian, Bengali, Urdu, Tamil, Telugu, Marathi, Malay, Swedish, Danish, Norwegian, Finnish, Greek, Czech, Romanian, Hungarian, Hebrew, Bulgarian, Swahili, Croatian, and Slovak. Every public page translates automatically, right-to-left scripts render correctly, and the floating language switcher lists them all. Search engines see every language too via hreflang alternates.",
+			"tags": [
+				"feature"
+			],
+			"link": "/"
 		}
 	]
 }
