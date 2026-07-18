@@ -177,8 +177,10 @@ three.ws separately serves a **general-platform** discovery manifest at `/.well-
 third-party agents and crawlers). That manifest describes the broader three.ws platform, not this app,
 and is **not** part of the Apps SDK review flow. To keep the app's own discovery story unambiguous, the
 3D Studio app additionally ships a dedicated, served OpenAPI at
-`https://three.ws/.well-known/3d-studio-openapi.yaml`, scoped to the two free endpoints
-(`/api/3d/studio`, `/api/ar`) with `auth: none` and no payment fields, verified crypto/payment-free by
+`https://three.ws/.well-known/3d-studio-openapi.yaml`, scoped to the free generation action
+(`/api/3d/studio`, POST to generate + GET to poll) with `security: []` (no auth) and no payment fields.
+The returned `arUrl` is a public place-in-your-room link, not a paid call. The schema is verified
+crypto/payment-free and kept byte-identical to the custom-GPT Action file by
 `tests/api/3d-studio-openapi.test.js`.
 
 > Owner note: the general `ai-plugin.json` and `openapi.yaml` under `/.well-known/` describe the paid

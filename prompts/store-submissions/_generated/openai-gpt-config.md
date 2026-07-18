@@ -188,7 +188,7 @@ Leaving these off keeps the review surface minimal: the GPT does exactly one thi
    nothing destructive). ChatGPT still asks the user to allow the first call to
    the domain, but with `false` the user gets an "Always allow" option, so the
    poll loop and repeat generations run without a confirmation on every call.
-4. **Privacy policy URL:** `https://three.ws/legal/privacy.html`
+4. **Privacy policy URL:** `https://three.ws/legal/privacy`
    (required to publish a GPT with Actions to everyone; section **10a, "Free 3D
    Actions (ChatGPT / GPT Store)"** covers exactly this action's data handling).
 
