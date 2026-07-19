@@ -169,7 +169,14 @@ def _process(task_id: str, video_url: str, fps: int, seconds: float) -> dict:
     workdir = tempfile.mkdtemp(prefix="v2m-")
     try:
         raw_path = os.path.join(workdir, "raw")
-        data = fetch_remote_bytes(video_url, timeout=180, max_bytes=MAX_VIDEO_BYTES)
+        # A real UA: several large hosts (Wikimedia among them) 403 the default
+        # python-httpx agent, and users paste public video URLs directly.
+        data = fetch_remote_bytes(
+            video_url,
+            timeout=180,
+            max_bytes=MAX_VIDEO_BYTES,
+            headers={"user-agent": "three-ws-video2motion/1.0 (+https://three.ws/motion-swap)"},
+        )
         with open(raw_path, "wb") as f:
             f.write(data)
 
