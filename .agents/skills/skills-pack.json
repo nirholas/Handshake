@@ -10,7 +10,7 @@
 		"intel/trading": "Market data, trading signals, DEX/DeFi execution."
 	},
 	"counts": {
-		"3d/creative": 3,
+		"3d/creative": 4,
 		"intel/trading": 13,
 		"ops/production": 1,
 		"wallet/payments": 24
@@ -24,6 +24,15 @@
 			"origin": "three.ws",
 			"crossPlatformSafe": true,
 			"path": ".agents/skills/create-3d-avatar"
+		},
+		{
+			"name": "embed-three-ws-avatar",
+			"description": "Embed a live, animated three.ws 3D avatar in any website with the <agent-3d> web component. Use when you or the user want to embed, integrate, add, or show a 3D avatar, character, or agent on a site or app (\"embed a 3D avatar on my site\", \"add an animated character to my landing page\", \"integrate three.ws\", \"put an avatar in my hero section\"), wire avatar animations or moods from page code, let users design an avatar in the three.ws Avatar Studio from inside another app, or debug an existing agent-3d embed.",
+			"whenToUse": "A site or app (any framework, or plain HTML) should display or control a three.ws avatar. To generate the avatar model itself, use create-3d-avatar or generate-3d-model first; this skill covers putting the result on a page and driving it.",
+			"category": "3d/creative",
+			"origin": "three.ws",
+			"crossPlatformSafe": true,
+			"path": ".agents/skills/embed-three-ws-avatar"
 		},
 		{
 			"name": "generate-3d-model",
