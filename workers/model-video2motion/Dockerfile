@@ -23,6 +23,7 @@ RUN mkdir -p /models \
 
 WORKDIR /app
 COPY worker_security.py /app/worker_security.py
+COPY canonical_rest.py /app/canonical_rest.py
 COPY pose_solver.py /app/pose_solver.py
 COPY main.py /app/main.py
 
