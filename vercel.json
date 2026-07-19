@@ -3539,6 +3539,10 @@
 			"dest": "/api/avatars/from-forge"
 		},
 		{
+			"src": "/api/avatars/library",
+			"dest": "/api/avatars/library"
+		},
+		{
 			"src": "/api/avatars/draft/([^/]+)",
 			"dest": "/api/avatars/draft/[id]?id=$1"
 		},
@@ -3851,6 +3855,10 @@
 		{
 			"src": "/animations/?",
 			"dest": "/animations.html"
+		},
+		{
+			"src": "/character-library/?",
+			"dest": "/character-library.html"
 		},
 		{
 			"src": "/gallery",

@@ -13,7 +13,9 @@
       "glb_bytes": 8995084,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:15:58.831Z"
+      "glb_converted_at": "2026-07-19T15:15:58.831Z",
+      "thumb_file": "avatars/mixamo/thumbs/warrok-w-kurniawan.png",
+      "thumb_bytes": 13142
     },
     "cccc84b6-d072-4972-99da-75c5702e25f6": {
       "id": "cccc84b6-d072-4972-99da-75c5702e25f6",
@@ -27,7 +29,9 @@
       "glb_bytes": 18082900,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:16:18.410Z"
+      "glb_converted_at": "2026-07-19T15:16:18.410Z",
+      "thumb_file": "avatars/mixamo/thumbs/mutant.png",
+      "thumb_bytes": 11731
     },
     "037852b5-74da-44aa-878b-eccda13e5139": {
       "id": "037852b5-74da-44aa-878b-eccda13e5139",
@@ -41,7 +45,9 @@
       "glb_bytes": 20566060,
       "glb_skins": 7,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:16:06.534Z"
+      "glb_converted_at": "2026-07-19T15:16:06.534Z",
+      "thumb_file": "avatars/mixamo/thumbs/remy.png",
+      "thumb_bytes": 10512
     },
     "45d387cb-2276-426b-9547-95f501296b68": {
       "id": "45d387cb-2276-426b-9547-95f501296b68",
@@ -55,7 +61,9 @@
       "glb_bytes": 5095040,
       "glb_skins": 2,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:16:25.329Z"
+      "glb_converted_at": "2026-07-19T15:16:25.329Z",
+      "thumb_file": "avatars/mixamo/thumbs/vanguard-by-t-choonyung.png",
+      "thumb_bytes": 12994
     },
     "f7b85d05-5f1c-47d8-9770-9a1a054bd6f6": {
       "id": "f7b85d05-5f1c-47d8-9770-9a1a054bd6f6",
@@ -69,7 +77,9 @@
       "glb_bytes": 3725780,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:16:34.750Z"
+      "glb_converted_at": "2026-07-19T15:16:34.750Z",
+      "thumb_file": "avatars/mixamo/thumbs/ely-by-k-atienza.png",
+      "thumb_bytes": 11896
     },
     "ef7eb018-7cf3-4ae1-99ac-bab1c2c5d419": {
       "id": "ef7eb018-7cf3-4ae1-99ac-bab1c2c5d419",
@@ -83,7 +93,9 @@
       "glb_bytes": 28025452,
       "glb_skins": 8,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:16:37.266Z"
+      "glb_converted_at": "2026-07-19T15:16:37.266Z",
+      "thumb_file": "avatars/mixamo/thumbs/exo-gray.png",
+      "thumb_bytes": 11067
     },
     "d0496a75-08b9-4f4e-9f1d-f65820323cc2": {
       "id": "d0496a75-08b9-4f4e-9f1d-f65820323cc2",
@@ -97,7 +109,9 @@
       "glb_bytes": 19355132,
       "glb_skins": 4,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:16:36.391Z"
+      "glb_converted_at": "2026-07-19T15:16:36.391Z",
+      "thumb_file": "avatars/mixamo/thumbs/erika-archer.png",
+      "thumb_bytes": 11109
     },
     "e89ec3c3-47b4-4d55-87f5-83d91e537136": {
       "id": "e89ec3c3-47b4-4d55-87f5-83d91e537136",
@@ -111,7 +125,9 @@
       "glb_bytes": 10793068,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:16:36.697Z"
+      "glb_converted_at": "2026-07-19T15:16:36.697Z",
+      "thumb_file": "avatars/mixamo/thumbs/maria-j-j-ong.png",
+      "thumb_bytes": 11909
     },
     "91d02eaa-1b0a-4d34-b859-01bcd092c713": {
       "id": "91d02eaa-1b0a-4d34-b859-01bcd092c713",
@@ -125,7 +141,9 @@
       "glb_bytes": 13356320,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:16:38.949Z"
+      "glb_converted_at": "2026-07-19T15:16:38.949Z",
+      "thumb_file": "avatars/mixamo/thumbs/skeletonzombie-t-avelange.png",
+      "thumb_bytes": 11290
     },
     "6a8a18f1-cb35-4e4b-9b0b-caa20a0101d0": {
       "id": "6a8a18f1-cb35-4e4b-9b0b-caa20a0101d0",
@@ -139,7 +157,9 @@
       "glb_bytes": 10804144,
       "glb_skins": 2,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:16:38.565Z"
+      "glb_converted_at": "2026-07-19T15:16:38.565Z",
+      "thumb_file": "avatars/mixamo/thumbs/maria-w-prop-j-j-ong.png",
+      "thumb_bytes": 11776
     },
     "c9012369-6099-4f23-b1e8-e45cbdc23d74": {
       "id": "c9012369-6099-4f23-b1e8-e45cbdc23d74",
@@ -153,7 +173,9 @@
       "glb_bytes": 2692484,
       "glb_skins": 11,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:16:39.409Z"
+      "glb_converted_at": "2026-07-19T15:16:39.409Z",
+      "thumb_file": "avatars/mixamo/thumbs/the-boss.png",
+      "thumb_bytes": 11222
     },
     "58978fe0-8573-4d51-9666-f6c075f64fd0": {
       "id": "58978fe0-8573-4d51-9666-f6c075f64fd0",
@@ -167,7 +189,9 @@
       "glb_bytes": 3831700,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:16:40.349Z"
+      "glb_converted_at": "2026-07-19T15:16:40.349Z",
+      "thumb_file": "avatars/mixamo/thumbs/peasant-girl.png",
+      "thumb_bytes": 14967
     },
     "576b18a3-2e3e-4f50-b665-cbca337e0757": {
       "id": "576b18a3-2e3e-4f50-b665-cbca337e0757",
@@ -181,7 +205,9 @@
       "glb_bytes": 99998744,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:16:50.466Z"
+      "glb_converted_at": "2026-07-19T15:16:50.466Z",
+      "thumb_file": "avatars/mixamo/thumbs/romero.png",
+      "thumb_bytes": 11035
     },
     "68c2e4b0-1ad6-4e53-b67d-161b8f4ccfbf": {
       "id": "68c2e4b0-1ad6-4e53-b67d-161b8f4ccfbf",
@@ -195,7 +221,9 @@
       "glb_bytes": 41223152,
       "glb_skins": 7,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:16:45.692Z"
+      "glb_converted_at": "2026-07-19T15:16:45.692Z",
+      "thumb_file": "avatars/mixamo/thumbs/louise.png",
+      "thumb_bytes": 10443
     },
     "d13cd86b-a90f-4c8a-81c9-18fc490b40ba": {
       "id": "d13cd86b-a90f-4c8a-81c9-18fc490b40ba",
@@ -209,7 +237,9 @@
       "glb_bytes": 50204384,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:16:50.440Z"
+      "glb_converted_at": "2026-07-19T15:16:50.440Z",
+      "thumb_file": "avatars/mixamo/thumbs/james.png",
+      "thumb_bytes": 11733
     },
     "90815396-6b00-4efc-b670-4c3497dbb605": {
       "id": "90815396-6b00-4efc-b670-4c3497dbb605",
@@ -223,7 +253,9 @@
       "glb_bytes": 12717472,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:16:49.960Z"
+      "glb_converted_at": "2026-07-19T15:16:49.960Z",
+      "thumb_file": "avatars/mixamo/thumbs/vampire-a-lusth.png",
+      "thumb_bytes": 13058
     },
     "3c722a0f-8697-4ef2-93ba-d02155ecaf51": {
       "id": "3c722a0f-8697-4ef2-93ba-d02155ecaf51",
@@ -237,7 +269,9 @@
       "glb_bytes": 9291920,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:16:51.528Z"
+      "glb_converted_at": "2026-07-19T15:16:51.528Z",
+      "thumb_file": "avatars/mixamo/thumbs/prisoner-b-styperek.png",
+      "thumb_bytes": 10571
     },
     "24c3eeb4-6c47-419d-a593-f7b2948b74c7": {
       "id": "24c3eeb4-6c47-419d-a593-f7b2948b74c7",
@@ -251,7 +285,9 @@
       "glb_bytes": 25836680,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:16:55.218Z"
+      "glb_converted_at": "2026-07-19T15:16:55.218Z",
+      "thumb_file": "avatars/mixamo/thumbs/amy.png",
+      "thumb_bytes": 8475
     },
     "4ebecd82-580e-49f2-8181-b9643ecd9509": {
       "id": "4ebecd82-580e-49f2-8181-b9643ecd9509",
@@ -265,7 +301,9 @@
       "glb_bytes": 35947032,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:16:56.236Z"
+      "glb_converted_at": "2026-07-19T15:16:56.236Z",
+      "thumb_file": "avatars/mixamo/thumbs/abe.png",
+      "thumb_bytes": 10844
     },
     "999a29c0-8fb0-42d4-92c8-5b39ca94bd75": {
       "id": "999a29c0-8fb0-42d4-92c8-5b39ca94bd75",
@@ -279,7 +317,9 @@
       "glb_bytes": 29712176,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:16:56.935Z"
+      "glb_converted_at": "2026-07-19T15:16:56.935Z",
+      "thumb_file": "avatars/mixamo/thumbs/mannequin.png",
+      "thumb_bytes": 10028
     },
     "5283eb0c-ed7e-45e2-aec5-da9d0d260285": {
       "id": "5283eb0c-ed7e-45e2-aec5-da9d0d260285",
@@ -293,7 +333,9 @@
       "glb_bytes": 27078120,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:00.926Z"
+      "glb_converted_at": "2026-07-19T15:17:00.926Z",
+      "thumb_file": "avatars/mixamo/thumbs/jolleen.png",
+      "thumb_bytes": 10526
     },
     "39e74902-c602-49c0-9d0b-d35d1ba0c341": {
       "id": "39e74902-c602-49c0-9d0b-d35d1ba0c341",
@@ -307,7 +349,9 @@
       "glb_bytes": 50116100,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:03.224Z"
+      "glb_converted_at": "2026-07-19T15:17:03.224Z",
+      "thumb_file": "avatars/mixamo/thumbs/ninja.png",
+      "thumb_bytes": 11668
     },
     "37f11292-3002-46c3-ac53-f773d1a93026": {
       "id": "37f11292-3002-46c3-ac53-f773d1a93026",
@@ -321,7 +365,9 @@
       "glb_bytes": 54319524,
       "glb_skins": 6,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:04.723Z"
+      "glb_converted_at": "2026-07-19T15:17:04.723Z",
+      "thumb_file": "avatars/mixamo/thumbs/megan.png",
+      "thumb_bytes": 9867
     },
     "aba68976-90b0-4c6d-9f96-922dd1644be5": {
       "id": "aba68976-90b0-4c6d-9f96-922dd1644be5",
@@ -335,7 +381,9 @@
       "glb_bytes": 47602396,
       "glb_skins": 6,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:08.449Z"
+      "glb_converted_at": "2026-07-19T15:17:08.449Z",
+      "thumb_file": "avatars/mixamo/thumbs/kate.png",
+      "thumb_bytes": 9937
     },
     "7149bc3a-67ad-4f8e-9976-8831a7faf1e4": {
       "id": "7149bc3a-67ad-4f8e-9976-8831a7faf1e4",
@@ -349,7 +397,9 @@
       "glb_bytes": 28407800,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:08.605Z"
+      "glb_converted_at": "2026-07-19T15:17:08.605Z",
+      "thumb_file": "avatars/mixamo/thumbs/mousey.png",
+      "thumb_bytes": 9698
     },
     "c5ab0438-6309-40a5-bd0c-73ab2e23ecf1": {
       "id": "c5ab0438-6309-40a5-bd0c-73ab2e23ecf1",
@@ -363,7 +413,9 @@
       "glb_bytes": 8450432,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:06.335Z"
+      "glb_converted_at": "2026-07-19T15:17:06.335Z",
+      "thumb_file": "avatars/mixamo/thumbs/maw-j-laygo.png",
+      "thumb_bytes": 12910
     },
     "e20ce5f8-4392-47bd-8840-6b4675703b49": {
       "id": "e20ce5f8-4392-47bd-8840-6b4675703b49",
@@ -377,7 +429,9 @@
       "glb_bytes": 5609332,
       "glb_skins": 6,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:08.312Z"
+      "glb_converted_at": "2026-07-19T15:17:08.312Z",
+      "thumb_file": "avatars/mixamo/thumbs/passive-marker-man.png",
+      "thumb_bytes": 9620
     },
     "ffaec2ce-dac0-4a60-ae6c-48caf05fd368": {
       "id": "ffaec2ce-dac0-4a60-ae6c-48caf05fd368",
@@ -391,7 +445,9 @@
       "glb_bytes": 5918024,
       "glb_skins": 4,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:11.328Z"
+      "glb_converted_at": "2026-07-19T15:17:11.328Z",
+      "thumb_file": "avatars/mixamo/thumbs/aj.png",
+      "thumb_bytes": 11082
     },
     "814bf7d1-9584-4e16-b519-8575e303eb8c": {
       "id": "814bf7d1-9584-4e16-b519-8575e303eb8c",
@@ -405,7 +461,9 @@
       "glb_bytes": 5114192,
       "glb_skins": 4,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:10.580Z"
+      "glb_converted_at": "2026-07-19T15:17:10.580Z",
+      "thumb_file": "avatars/mixamo/thumbs/claire.png",
+      "thumb_bytes": 9778
     },
     "1b88326e-34c2-4e57-b582-6f8d8017343a": {
       "id": "1b88326e-34c2-4e57-b582-6f8d8017343a",
@@ -419,7 +477,9 @@
       "glb_bytes": 54418208,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:16.582Z"
+      "glb_converted_at": "2026-07-19T15:17:16.582Z",
+      "thumb_file": "avatars/mixamo/thumbs/olivia.png",
+      "thumb_bytes": 11601
     },
     "447a4990-f669-436e-a066-e2e2968bdcba": {
       "id": "447a4990-f669-436e-a066-e2e2968bdcba",
@@ -433,7 +493,9 @@
       "glb_bytes": 8302728,
       "glb_skins": 8,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:12.623Z"
+      "glb_converted_at": "2026-07-19T15:17:12.623Z",
+      "thumb_file": "avatars/mixamo/thumbs/demon-t-wiezzorek.png",
+      "thumb_bytes": 12157
     },
     "042954ae-0a57-4d07-a73c-fc685db2ca53": {
       "id": "042954ae-0a57-4d07-a73c-fc685db2ca53",
@@ -447,7 +509,9 @@
       "glb_bytes": 11013644,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:13.321Z"
+      "glb_converted_at": "2026-07-19T15:17:13.321Z",
+      "thumb_file": "avatars/mixamo/thumbs/eve-by-j-gonzales.png",
+      "thumb_bytes": 10483
     },
     "a4440477-3191-424b-8703-8126d1982f67": {
       "id": "a4440477-3191-424b-8703-8126d1982f67",
@@ -461,7 +525,9 @@
       "glb_bytes": 13284068,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:15.015Z"
+      "glb_converted_at": "2026-07-19T15:17:15.015Z",
+      "thumb_file": "avatars/mixamo/thumbs/pumpkinhulk-l-shaw.png",
+      "thumb_bytes": 12433
     },
     "90484e3f-d8be-410f-a3ec-96977f84c2d9": {
       "id": "90484e3f-d8be-410f-a3ec-96977f84c2d9",
@@ -475,7 +541,9 @@
       "glb_bytes": 24729188,
       "glb_skins": 6,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:16.767Z"
+      "glb_converted_at": "2026-07-19T15:17:16.767Z",
+      "thumb_file": "avatars/mixamo/thumbs/erika-archer-with-bow-arrow.png",
+      "thumb_bytes": 9476
     },
     "03d38a1e-ae61-4e43-bfbe-0c92d7d1224b": {
       "id": "03d38a1e-ae61-4e43-bfbe-0c92d7d1224b",
@@ -489,7 +557,9 @@
       "glb_bytes": 6905076,
       "glb_skins": 4,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:17.583Z"
+      "glb_converted_at": "2026-07-19T15:17:17.583Z",
+      "thumb_file": "avatars/mixamo/thumbs/kaya.png",
+      "thumb_bytes": 10228
     },
     "3576fd60-beef-49ec-a3d0-f93231f4fc29": {
       "id": "3576fd60-beef-49ec-a3d0-f93231f4fc29",
@@ -503,7 +573,9 @@
       "glb_bytes": 10594820,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:18.496Z"
+      "glb_converted_at": "2026-07-19T15:17:18.496Z",
+      "thumb_file": "avatars/mixamo/thumbs/warzombie-f-pedroso.png",
+      "thumb_bytes": 11707
     },
     "555df3c3-74b7-493b-a790-3b6dbba30fed": {
       "id": "555df3c3-74b7-493b-a790-3b6dbba30fed",
@@ -517,7 +589,9 @@
       "glb_bytes": 3405788,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:18.612Z"
+      "glb_converted_at": "2026-07-19T15:17:18.612Z",
+      "thumb_file": "avatars/mixamo/thumbs/medea-by-m-arrebola.png",
+      "thumb_bytes": 9483
     },
     "5fb4b535-034a-4011-af3b-2880391547a5": {
       "id": "5fb4b535-034a-4011-af3b-2880391547a5",
@@ -531,7 +605,9 @@
       "glb_bytes": 3054180,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:18.637Z"
+      "glb_converted_at": "2026-07-19T15:17:18.637Z",
+      "thumb_file": "avatars/mixamo/thumbs/peasant-man.png",
+      "thumb_bytes": 13350
     },
     "eface83a-acc0-4036-a15e-3c650df1510d": {
       "id": "eface83a-acc0-4036-a15e-3c650df1510d",
@@ -545,7 +621,9 @@
       "glb_bytes": 7732432,
       "glb_skins": 2,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:20.216Z"
+      "glb_converted_at": "2026-07-19T15:17:20.216Z",
+      "thumb_file": "avatars/mixamo/thumbs/paladin-j-nordstrom.png",
+      "thumb_bytes": 12573
     },
     "baa8eb9f-499f-4a3d-87ee-3f1e41bad413": {
       "id": "baa8eb9f-499f-4a3d-87ee-3f1e41bad413",
@@ -559,7 +637,9 @@
       "glb_bytes": 14027096,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:21.791Z"
+      "glb_converted_at": "2026-07-19T15:17:21.791Z",
+      "thumb_file": "avatars/mixamo/thumbs/crypto.png",
+      "thumb_bytes": 11795
     },
     "75fb0e3e-cf4c-4828-b72b-63b42a4a5cbb": {
       "id": "75fb0e3e-cf4c-4828-b72b-63b42a4a5cbb",
@@ -573,7 +653,9 @@
       "glb_bytes": 76972708,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:29.316Z"
+      "glb_converted_at": "2026-07-19T15:17:29.316Z",
+      "thumb_file": "avatars/mixamo/thumbs/alien-soldier.png",
+      "thumb_bytes": 12595
     },
     "f1cc548f-7afc-4ad1-bdde-da70dd40dedf": {
       "id": "f1cc548f-7afc-4ad1-bdde-da70dd40dedf",
@@ -587,7 +669,9 @@
       "glb_bytes": 48812052,
       "glb_skins": 7,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:26.634Z"
+      "glb_converted_at": "2026-07-19T15:17:26.634Z",
+      "thumb_file": "avatars/mixamo/thumbs/leonard.png",
+      "thumb_bytes": 10605
     },
     "9a3bfd6e-732c-4f8d-aeaf-225676b15505": {
       "id": "9a3bfd6e-732c-4f8d-aeaf-225676b15505",
@@ -601,7 +685,9 @@
       "glb_bytes": 47246348,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:28.305Z"
+      "glb_converted_at": "2026-07-19T15:17:28.305Z",
+      "thumb_file": "avatars/mixamo/thumbs/racer.png",
+      "thumb_bytes": 11388
     },
     "1b269c4b-c026-45f2-af55-82eb76fe7243": {
       "id": "1b269c4b-c026-45f2-af55-82eb76fe7243",
@@ -615,7 +701,9 @@
       "glb_bytes": 46175532,
       "glb_skins": 1,
       "glb_animations": 2,
-      "glb_converted_at": "2026-07-19T15:17:33.589Z"
+      "glb_converted_at": "2026-07-19T15:17:33.589Z",
+      "thumb_file": "avatars/mixamo/thumbs/doozy.png",
+      "thumb_bytes": 10709
     },
     "cf73b862-b7ca-40e9-a156-1b95393d232e": {
       "id": "cf73b862-b7ca-40e9-a156-1b95393d232e",
@@ -629,7 +717,9 @@
       "glb_bytes": 98393620,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:41.458Z"
+      "glb_converted_at": "2026-07-19T15:17:41.458Z",
+      "thumb_file": "avatars/mixamo/thumbs/swat-guy.png",
+      "thumb_bytes": 13913
     },
     "62bdaaad-efd3-470b-985b-264c596a57b3": {
       "id": "62bdaaad-efd3-470b-985b-264c596a57b3",
@@ -643,7 +733,9 @@
       "glb_bytes": 3192176,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:30.991Z"
+      "glb_converted_at": "2026-07-19T15:17:30.991Z",
+      "thumb_file": "avatars/mixamo/thumbs/lola-b-styperek.png",
+      "thumb_bytes": 11177
     },
     "9da313dd-67a7-4677-8515-7a24b8035a69": {
       "id": "9da313dd-67a7-4677-8515-7a24b8035a69",
@@ -657,7 +749,9 @@
       "glb_bytes": 4101348,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:32.944Z"
+      "glb_converted_at": "2026-07-19T15:17:32.944Z",
+      "thumb_file": "avatars/mixamo/thumbs/akai-e-espiritu.png",
+      "thumb_bytes": 11521
     },
     "014f0fda-3925-41ed-9dea-b9a14c6d24e0": {
       "id": "014f0fda-3925-41ed-9dea-b9a14c6d24e0",
@@ -671,7 +765,9 @@
       "glb_bytes": 16324344,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:36.171Z"
+      "glb_converted_at": "2026-07-19T15:17:36.171Z",
+      "thumb_file": "avatars/mixamo/thumbs/girlscout-t-masuyama.png",
+      "thumb_bytes": 11090
     },
     "e93ae322-5f54-404c-beb2-86cc1e5b1a79": {
       "id": "e93ae322-5f54-404c-beb2-86cc1e5b1a79",
@@ -685,7 +781,9 @@
       "glb_bytes": 5562176,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:35.699Z"
+      "glb_converted_at": "2026-07-19T15:17:35.699Z",
+      "thumb_file": "avatars/mixamo/thumbs/whiteclown-n-hallin.png",
+      "thumb_bytes": 10969
     },
     "41a94250-7c46-4f92-ae48-de7ddadfd8d6": {
       "id": "41a94250-7c46-4f92-ae48-de7ddadfd8d6",
@@ -699,7 +797,9 @@
       "glb_bytes": 5420052,
       "glb_skins": 24,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:38.016Z"
+      "glb_converted_at": "2026-07-19T15:17:38.016Z",
+      "thumb_file": "avatars/mixamo/thumbs/uriel-a-plotexia.png",
+      "thumb_bytes": 12576
     },
     "d2fa9231-1c9d-45e4-b3a1-41fdb246ddef": {
       "id": "d2fa9231-1c9d-45e4-b3a1-41fdb246ddef",
@@ -713,7 +813,9 @@
       "glb_bytes": 4264524,
       "glb_skins": 4,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:38.260Z"
+      "glb_converted_at": "2026-07-19T15:17:38.260Z",
+      "thumb_file": "avatars/mixamo/thumbs/sporty-granny.png",
+      "thumb_bytes": 9959
     },
     "52dcdacb-b43e-4efc-ab6d-9d2d6e09bc95": {
       "id": "52dcdacb-b43e-4efc-ab6d-9d2d6e09bc95",
@@ -727,7 +829,9 @@
       "glb_bytes": 9211772,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:40.471Z"
+      "glb_converted_at": "2026-07-19T15:17:40.471Z",
+      "thumb_file": "avatars/mixamo/thumbs/survivor-a-lusth.png",
+      "thumb_bytes": 11973
     },
     "4f5d21e1-4ccc-41f1-b35b-fb2547bd8493": {
       "id": "4f5d21e1-4ccc-41f1-b35b-fb2547bd8493",
@@ -741,7 +845,9 @@
       "glb_bytes": 2529996,
       "glb_skins": 2,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:40.546Z"
+      "glb_converted_at": "2026-07-19T15:17:40.546Z",
+      "thumb_file": "avatars/mixamo/thumbs/y-bot.png",
+      "thumb_bytes": 10270
     },
     "38b86ed5-aaf7-4a88-a791-181d18efcc19": {
       "id": "38b86ed5-aaf7-4a88-a791-181d18efcc19",
@@ -755,7 +861,9 @@
       "glb_bytes": 3926336,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:41.658Z"
+      "glb_converted_at": "2026-07-19T15:17:41.658Z",
+      "thumb_file": "avatars/mixamo/thumbs/castle-guard-01.png",
+      "thumb_bytes": 12865
     },
     "a62a2254-74c5-4ce5-8c03-c50c01d07afd": {
       "id": "a62a2254-74c5-4ce5-8c03-c50c01d07afd",
@@ -769,7 +877,9 @@
       "glb_bytes": 16336804,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:43.445Z"
+      "glb_converted_at": "2026-07-19T15:17:43.445Z",
+      "thumb_file": "avatars/mixamo/thumbs/heraklios-by-a-dizon.png",
+      "thumb_bytes": 13188
     },
     "2312e946-b71e-4b25-b61e-4f51803aa884": {
       "id": "2312e946-b71e-4b25-b61e-4f51803aa884",
@@ -783,7 +893,9 @@
       "glb_bytes": 30003952,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:47.174Z"
+      "glb_converted_at": "2026-07-19T15:17:47.174Z",
+      "thumb_file": "avatars/mixamo/thumbs/timmy.png",
+      "thumb_bytes": 10294
     },
     "8277608f-32da-42ee-b967-7c052ceb37d4": {
       "id": "8277608f-32da-42ee-b967-7c052ceb37d4",
@@ -797,7 +909,9 @@
       "glb_bytes": 76149228,
       "glb_skins": 7,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:51.761Z"
+      "glb_converted_at": "2026-07-19T15:17:51.761Z",
+      "thumb_file": "avatars/mixamo/thumbs/adam.png",
+      "thumb_bytes": 11586
     },
     "d52abd9a-08dc-4476-b1be-4f2d3dc2c434": {
       "id": "d52abd9a-08dc-4476-b1be-4f2d3dc2c434",
@@ -811,7 +925,9 @@
       "glb_bytes": 46302732,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:49.519Z"
+      "glb_converted_at": "2026-07-19T15:17:49.519Z",
+      "thumb_file": "avatars/mixamo/thumbs/jones.png",
+      "thumb_bytes": 11115
     },
     "7f3f4e32-2b70-4c69-9a3d-0bdac6188241": {
       "id": "7f3f4e32-2b70-4c69-9a3d-0bdac6188241",
@@ -825,7 +941,9 @@
       "glb_bytes": 20064548,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:51.334Z"
+      "glb_converted_at": "2026-07-19T15:17:51.334Z",
+      "thumb_file": "avatars/mixamo/thumbs/michelle.png",
+      "thumb_bytes": 9683
     },
     "61bcdb20-7b85-4f2e-a109-2a0fbd54af78": {
       "id": "61bcdb20-7b85-4f2e-a109-2a0fbd54af78",
@@ -839,7 +957,9 @@
       "glb_bytes": 41965052,
       "glb_skins": 6,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:57.917Z"
+      "glb_converted_at": "2026-07-19T15:17:57.917Z",
+      "thumb_file": "avatars/mixamo/thumbs/sophie.png",
+      "thumb_bytes": 9777
     },
     "a58c06c4-3307-40e6-a02d-bfcd658bdbff": {
       "id": "a58c06c4-3307-40e6-a02d-bfcd658bdbff",
@@ -853,7 +973,9 @@
       "glb_bytes": 48399900,
       "glb_skins": 5,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:18:03.398Z"
+      "glb_converted_at": "2026-07-19T15:18:03.398Z",
+      "thumb_file": "avatars/mixamo/thumbs/brian.png",
+      "thumb_bytes": 11166
     },
     "e90a6228-9937-4a24-83f7-886adcfb0a0a": {
       "id": "e90a6228-9937-4a24-83f7-886adcfb0a0a",
@@ -867,7 +989,9 @@
       "glb_bytes": 49700988,
       "glb_skins": 6,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:17:59.475Z"
+      "glb_converted_at": "2026-07-19T15:17:59.475Z",
+      "thumb_file": "avatars/mixamo/thumbs/bryce.png",
+      "thumb_bytes": 9904
     },
     "733463a7-15f7-4214-bb17-39d802fa7f29": {
       "id": "733463a7-15f7-4214-bb17-39d802fa7f29",
@@ -881,7 +1005,9 @@
       "glb_bytes": 101945280,
       "glb_skins": 3,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:18:11.830Z"
+      "glb_converted_at": "2026-07-19T15:18:11.830Z",
+      "thumb_file": "avatars/mixamo/thumbs/brady.png",
+      "thumb_bytes": 11348
     },
     "5867a75c-bfc5-4faa-939f-dcf08efddb58": {
       "id": "5867a75c-bfc5-4faa-939f-dcf08efddb58",
@@ -895,7 +1021,9 @@
       "glb_bytes": 121533548,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:33.025Z"
+      "glb_converted_at": "2026-07-19T15:19:33.025Z",
+      "thumb_file": "avatars/mixamo/thumbs/gas-mask.png",
+      "thumb_bytes": 13249
     },
     "862d9e08-a5f4-43d1-a798-f28f5f3ae647": {
       "id": "862d9e08-a5f4-43d1-a798-f28f5f3ae647",
@@ -909,7 +1037,9 @@
       "glb_bytes": 45133060,
       "glb_skins": 9,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:18:09.833Z"
+      "glb_converted_at": "2026-07-19T15:18:09.833Z",
+      "thumb_file": "avatars/mixamo/thumbs/joe.png",
+      "thumb_bytes": 10974
     },
     "7ee9295d-a692-4d71-a981-7dd8768cd7fd": {
       "id": "7ee9295d-a692-4d71-a981-7dd8768cd7fd",
@@ -923,7 +1053,9 @@
       "glb_bytes": 36447908,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:18:15.201Z"
+      "glb_converted_at": "2026-07-19T15:18:15.201Z",
+      "thumb_file": "avatars/mixamo/thumbs/dummy.png",
+      "thumb_bytes": 11469
     },
     "d075dd28-5474-4be1-972b-26a7bb1af2f4": {
       "id": "d075dd28-5474-4be1-972b-26a7bb1af2f4",
@@ -937,7 +1069,9 @@
       "glb_bytes": 52069452,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:18:18.900Z"
+      "glb_converted_at": "2026-07-19T15:18:18.900Z",
+      "thumb_file": "avatars/mixamo/thumbs/jackie.png",
+      "thumb_bytes": 9129
     },
     "5a0e290c-92ea-42e4-afea-cb94ba3fab6d": {
       "id": "5a0e290c-92ea-42e4-afea-cb94ba3fab6d",
@@ -951,7 +1085,9 @@
       "glb_bytes": 49265464,
       "glb_skins": 6,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:18:21.886Z"
+      "glb_converted_at": "2026-07-19T15:18:21.886Z",
+      "thumb_file": "avatars/mixamo/thumbs/elizabeth.png",
+      "thumb_bytes": 9663
     },
     "3bcbf3bf-63f7-435e-ba9e-f3f137aa639d": {
       "id": "3bcbf3bf-63f7-435e-ba9e-f3f137aa639d",
@@ -965,7 +1101,9 @@
       "glb_bytes": 49132148,
       "glb_skins": 8,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:18:26.168Z"
+      "glb_converted_at": "2026-07-19T15:18:26.168Z",
+      "thumb_file": "avatars/mixamo/thumbs/josh.png",
+      "thumb_bytes": 10514
     },
     "8833e228-8c3e-4a62-863a-9101c3ff053c": {
       "id": "8833e228-8c3e-4a62-863a-9101c3ff053c",
@@ -979,7 +1117,9 @@
       "glb_bytes": 47665292,
       "glb_skins": 7,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:01.321Z"
+      "glb_converted_at": "2026-07-19T15:19:01.321Z",
+      "thumb_file": "avatars/mixamo/thumbs/chad.png",
+      "thumb_bytes": 11153
     },
     "13c20d1a-c2b7-4725-99da-fe3bbeac2805": {
       "id": "13c20d1a-c2b7-4725-99da-fe3bbeac2805",
@@ -993,7 +1133,9 @@
       "glb_bytes": 13313276,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:18:28.833Z"
+      "glb_converted_at": "2026-07-19T15:18:28.833Z",
+      "thumb_file": "avatars/mixamo/thumbs/parasite-l-starkie.png",
+      "thumb_bytes": 11596
     },
     "2f8e576f-f69d-453e-830e-969a2f0217ea": {
       "id": "2f8e576f-f69d-453e-830e-969a2f0217ea",
@@ -1007,7 +1149,9 @@
       "glb_bytes": 13921612,
       "glb_skins": 3,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:18:32.459Z"
+      "glb_converted_at": "2026-07-19T15:18:32.459Z",
+      "thumb_file": "avatars/mixamo/thumbs/zombiegirl-w-kurniawan.png",
+      "thumb_bytes": 11109
     },
     "c0397df3-a96e-4767-826b-f5f67466bf04": {
       "id": "c0397df3-a96e-4767-826b-f5f67466bf04",
@@ -1021,7 +1165,9 @@
       "glb_bytes": 8863796,
       "glb_skins": 2,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:18:34.935Z"
+      "glb_converted_at": "2026-07-19T15:18:34.935Z",
+      "thumb_file": "avatars/mixamo/thumbs/mremireh-o-desbiens.png",
+      "thumb_bytes": 10891
     },
     "16161dd3-9be1-4d0d-b2cf-4295872988de": {
       "id": "16161dd3-9be1-4d0d-b2cf-4295872988de",
@@ -1035,7 +1181,9 @@
       "glb_bytes": 30084976,
       "glb_skins": 8,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:18:39.437Z"
+      "glb_converted_at": "2026-07-19T15:18:39.437Z",
+      "thumb_file": "avatars/mixamo/thumbs/exo-red.png",
+      "thumb_bytes": 11267
     },
     "2ab5fc24-52ac-472b-9171-98c05cca7e78": {
       "id": "2ab5fc24-52ac-472b-9171-98c05cca7e78",
@@ -1049,7 +1197,9 @@
       "glb_bytes": 3556472,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:18:41.358Z"
+      "glb_converted_at": "2026-07-19T15:18:41.358Z",
+      "thumb_file": "avatars/mixamo/thumbs/dreyar-by-m-aure.png",
+      "thumb_bytes": 12293
     },
     "b6d6b787-7378-4316-8db9-0434e51a44b4": {
       "id": "b6d6b787-7378-4316-8db9-0434e51a44b4",
@@ -1063,7 +1213,9 @@
       "glb_bytes": 10293460,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:18:43.267Z"
+      "glb_converted_at": "2026-07-19T15:18:43.267Z",
+      "thumb_file": "avatars/mixamo/thumbs/nightshade-j-friedrich.png",
+      "thumb_bytes": 12876
     },
     "6415d7c5-300f-4321-b1e2-33d68912e124": {
       "id": "6415d7c5-300f-4321-b1e2-33d68912e124",
@@ -1077,7 +1229,9 @@
       "glb_bytes": 16683900,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:18:45.889Z"
+      "glb_converted_at": "2026-07-19T15:18:45.889Z",
+      "thumb_file": "avatars/mixamo/thumbs/kachujin-g-rosales.png",
+      "thumb_bytes": 10126
     },
     "130a335c-bbdb-492f-971f-8faab0616b6e": {
       "id": "130a335c-bbdb-492f-971f-8faab0616b6e",
@@ -1091,7 +1245,9 @@
       "glb_bytes": 13352036,
       "glb_skins": 2,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:18:48.207Z"
+      "glb_converted_at": "2026-07-19T15:18:48.207Z",
+      "thumb_file": "avatars/mixamo/thumbs/goblin-d-shareyko.png",
+      "thumb_bytes": 12795
     },
     "2b100d25-62a3-4edf-a80b-4e68c4f8234e": {
       "id": "2b100d25-62a3-4edf-a80b-4e68c4f8234e",
@@ -1105,7 +1261,9 @@
       "glb_bytes": 4665404,
       "glb_skins": 2,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:18:49.742Z"
+      "glb_converted_at": "2026-07-19T15:18:49.742Z",
+      "thumb_file": "avatars/mixamo/thumbs/swat.png",
+      "thumb_bytes": 12194
     },
     "dc527621-d14a-41f6-aa74-dbdb20dbf017": {
       "id": "dc527621-d14a-41f6-aa74-dbdb20dbf017",
@@ -1119,7 +1277,9 @@
       "glb_bytes": 7024488,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:18:51.554Z"
+      "glb_converted_at": "2026-07-19T15:18:51.554Z",
+      "thumb_file": "avatars/mixamo/thumbs/ganfaul-m-aure.png",
+      "thumb_bytes": 14678
     },
     "1c7657ea-4644-4d30-aa59-299ece85eae5": {
       "id": "1c7657ea-4644-4d30-aa59-299ece85eae5",
@@ -1133,7 +1293,9 @@
       "glb_bytes": 3355792,
       "glb_skins": 4,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:18:53.523Z"
+      "glb_converted_at": "2026-07-19T15:18:53.523Z",
+      "thumb_file": "avatars/mixamo/thumbs/big-vegas.png",
+      "thumb_bytes": 10941
     },
     "7f7a8824-e060-4e60-8c87-eaaec0f4addf": {
       "id": "7f7a8824-e060-4e60-8c87-eaaec0f4addf",
@@ -1147,7 +1309,9 @@
       "glb_bytes": 82630700,
       "glb_skins": 2,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:03.074Z"
+      "glb_converted_at": "2026-07-19T15:19:03.074Z",
+      "thumb_file": "avatars/mixamo/thumbs/astra.png",
+      "thumb_bytes": 11349
     },
     "56ed684e-aeb5-4e57-ab94-7b475b553a2e": {
       "id": "56ed684e-aeb5-4e57-ab94-7b475b553a2e",
@@ -1161,7 +1325,9 @@
       "glb_bytes": 46913688,
       "glb_skins": 5,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:07.493Z"
+      "glb_converted_at": "2026-07-19T15:19:07.493Z",
+      "thumb_file": "avatars/mixamo/thumbs/jennifer.png",
+      "thumb_bytes": 10396
     },
     "bc24ef7d-a89b-4789-bdce-21e0b3e20bba": {
       "id": "bc24ef7d-a89b-4789-bdce-21e0b3e20bba",
@@ -1175,7 +1341,9 @@
       "glb_bytes": 42322600,
       "glb_skins": 7,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:09.950Z"
+      "glb_converted_at": "2026-07-19T15:19:09.950Z",
+      "thumb_file": "avatars/mixamo/thumbs/shannon.png",
+      "thumb_bytes": 10812
     },
     "9f639098-16d2-423b-b688-146b0c183dd3": {
       "id": "9f639098-16d2-423b-b688-146b0c183dd3",
@@ -1189,7 +1357,9 @@
       "glb_bytes": 42709120,
       "glb_skins": 7,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:14.008Z"
+      "glb_converted_at": "2026-07-19T15:19:14.008Z",
+      "thumb_file": "avatars/mixamo/thumbs/jody.png",
+      "thumb_bytes": 9896
     },
     "6f2a5541-27eb-4c2a-a3f5-7fd1a54f5081": {
       "id": "6f2a5541-27eb-4c2a-a3f5-7fd1a54f5081",
@@ -1203,7 +1373,9 @@
       "glb_bytes": 87408492,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:19.256Z"
+      "glb_converted_at": "2026-07-19T15:19:19.256Z",
+      "thumb_file": "avatars/mixamo/thumbs/maynard.png",
+      "thumb_bytes": 11348
     },
     "c01a541d-c585-435a-a2b9-5b0524eba790": {
       "id": "c01a541d-c585-435a-a2b9-5b0524eba790",
@@ -1217,7 +1389,9 @@
       "glb_bytes": 46792184,
       "glb_skins": 7,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:21.529Z"
+      "glb_converted_at": "2026-07-19T15:19:21.529Z",
+      "thumb_file": "avatars/mixamo/thumbs/martha.png",
+      "thumb_bytes": 9868
     },
     "23148f55-e80d-4549-9419-1e103b841771": {
       "id": "23148f55-e80d-4549-9419-1e103b841771",
@@ -1231,7 +1405,9 @@
       "glb_bytes": 74139196,
       "glb_skins": 1,
       "glb_animations": 2,
-      "glb_converted_at": "2026-07-19T15:19:29.956Z"
+      "glb_converted_at": "2026-07-19T15:19:29.956Z",
+      "thumb_file": "avatars/mixamo/thumbs/drake.png",
+      "thumb_bytes": 12880
     },
     "e5c581ba-69a5-4b47-aa06-95ee70de3d99": {
       "id": "e5c581ba-69a5-4b47-aa06-95ee70de3d99",
@@ -1245,7 +1421,9 @@
       "glb_bytes": 12042136,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:24.468Z"
+      "glb_converted_at": "2026-07-19T15:19:24.468Z",
+      "thumb_file": "avatars/mixamo/thumbs/alex.png",
+      "thumb_bytes": 11993
     },
     "c5084efc-f1f6-4721-84f9-4e2cb0c7a4a6": {
       "id": "c5084efc-f1f6-4721-84f9-4e2cb0c7a4a6",
@@ -1259,7 +1437,9 @@
       "glb_bytes": 38725044,
       "glb_skins": 6,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:30.389Z"
+      "glb_converted_at": "2026-07-19T15:19:30.389Z",
+      "thumb_file": "avatars/mixamo/thumbs/roth.png",
+      "thumb_bytes": 10483
     },
     "3d9daeb8-c2d5-45ce-b835-7cd403c72fc7": {
       "id": "3d9daeb8-c2d5-45ce-b835-7cd403c72fc7",
@@ -1273,7 +1453,9 @@
       "glb_bytes": 17567728,
       "glb_skins": 4,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:33.327Z"
+      "glb_converted_at": "2026-07-19T15:19:33.327Z",
+      "thumb_file": "avatars/mixamo/thumbs/copzombie-l-actisdato.png",
+      "thumb_bytes": 11883
     },
     "dfa221bf-4b73-47eb-bb80-fcac2df11458": {
       "id": "dfa221bf-4b73-47eb-bb80-fcac2df11458",
@@ -1287,7 +1469,9 @@
       "glb_bytes": 18177956,
       "glb_skins": 9,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:34.501Z"
+      "glb_converted_at": "2026-07-19T15:19:34.501Z",
+      "thumb_file": "avatars/mixamo/thumbs/brute.png",
+      "thumb_bytes": 10990
     },
     "de498e54-f45b-488d-947a-7aee91b9aab0": {
       "id": "de498e54-f45b-488d-947a-7aee91b9aab0",
@@ -1301,7 +1485,9 @@
       "glb_bytes": 3609132,
       "glb_skins": 4,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:35.907Z"
+      "glb_converted_at": "2026-07-19T15:19:35.907Z",
+      "thumb_file": "avatars/mixamo/thumbs/arissa.png",
+      "thumb_bytes": 12752
     },
     "129b7c59-46fe-4da4-b434-ee02b204b80e": {
       "id": "129b7c59-46fe-4da4-b434-ee02b204b80e",
@@ -1315,7 +1501,9 @@
       "glb_bytes": 6291692,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:35.317Z"
+      "glb_converted_at": "2026-07-19T15:19:35.317Z",
+      "thumb_file": "avatars/mixamo/thumbs/pirate-by-p-konstantinov.png",
+      "thumb_bytes": 11092
     },
     "2dee24f8-3b49-48af-b735-c6377509eaac": {
       "id": "2dee24f8-3b49-48af-b735-c6377509eaac",
@@ -1329,7 +1517,9 @@
       "glb_bytes": 2098800,
       "glb_skins": 2,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:35.884Z"
+      "glb_converted_at": "2026-07-19T15:19:35.884Z",
+      "thumb_file": "avatars/mixamo/thumbs/x-bot.png",
+      "thumb_bytes": 9986
     },
     "9669a5a9-964e-4060-85f0-d052a592e0e4": {
       "id": "9669a5a9-964e-4060-85f0-d052a592e0e4",
@@ -1343,7 +1533,9 @@
       "glb_bytes": 7765408,
       "glb_skins": 4,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:37.163Z"
+      "glb_converted_at": "2026-07-19T15:19:37.163Z",
+      "thumb_file": "avatars/mixamo/thumbs/paladin-w-prop-j-nordstrom.png",
+      "thumb_bytes": 12256
     },
     "e0d8d8ad-9674-4c2a-a5da-32f56ee7f95f": {
       "id": "e0d8d8ad-9674-4c2a-a5da-32f56ee7f95f",
@@ -1357,7 +1549,9 @@
       "glb_bytes": 4624192,
       "glb_skins": 7,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:37.713Z"
+      "glb_converted_at": "2026-07-19T15:19:37.713Z",
+      "thumb_file": "avatars/mixamo/thumbs/ty.png",
+      "thumb_bytes": 9505
     },
     "f57c2597-1a49-4c13-a6a5-1cf29532b9d7": {
       "id": "f57c2597-1a49-4c13-a6a5-1cf29532b9d7",
@@ -1371,7 +1565,9 @@
       "glb_bytes": 7887880,
       "glb_skins": 3,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:37.798Z"
+      "glb_converted_at": "2026-07-19T15:19:37.798Z",
+      "thumb_file": "avatars/mixamo/thumbs/knight-d-pelegrini.png",
+      "thumb_bytes": 11973
     },
     "08de56f3-ac60-4585-bd25-d68a03aa66a4": {
       "id": "08de56f3-ac60-4585-bd25-d68a03aa66a4",
@@ -1385,7 +1581,9 @@
       "glb_bytes": 94834008,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:48.694Z"
+      "glb_converted_at": "2026-07-19T15:19:48.694Z",
+      "thumb_file": "avatars/mixamo/thumbs/morak.png",
+      "thumb_bytes": 12442
     },
     "64ebcc92-8151-4815-af45-a9d6c30e3f52": {
       "id": "64ebcc92-8151-4815-af45-a9d6c30e3f52",
@@ -1399,7 +1597,9 @@
       "glb_bytes": 72932596,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:48.021Z"
+      "glb_converted_at": "2026-07-19T15:19:48.021Z",
+      "thumb_file": "avatars/mixamo/thumbs/zlorp.png",
+      "thumb_bytes": 11815
     },
     "cd89f125-a55a-495b-b924-d63d660ab882": {
       "id": "cd89f125-a55a-495b-b924-d63d660ab882",
@@ -1413,7 +1613,9 @@
       "glb_bytes": 108126960,
       "glb_skins": 2,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:51.530Z"
+      "glb_converted_at": "2026-07-19T15:19:51.530Z",
+      "thumb_file": "avatars/mixamo/thumbs/steve.png",
+      "thumb_bytes": 11311
     },
     "e2535218-5447-42fe-8305-d66d757b2bc6": {
       "id": "e2535218-5447-42fe-8305-d66d757b2bc6",
@@ -1427,7 +1629,9 @@
       "glb_bytes": 36513952,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:20:26.898Z"
+      "glb_converted_at": "2026-07-19T15:20:26.898Z",
+      "thumb_file": "avatars/mixamo/thumbs/ortiz.png",
+      "thumb_bytes": 9468
     },
     "503f4a55-0773-461d-b46c-90e5cee9c7d4": {
       "id": "503f4a55-0773-461d-b46c-90e5cee9c7d4",
@@ -1441,7 +1645,9 @@
       "glb_bytes": 39160880,
       "glb_skins": 7,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:55.176Z"
+      "glb_converted_at": "2026-07-19T15:19:55.176Z",
+      "thumb_file": "avatars/mixamo/thumbs/suzie.png",
+      "thumb_bytes": 10834
     },
     "c4f3ac90-d6db-4505-97ec-2e4dee45dc4b": {
       "id": "c4f3ac90-d6db-4505-97ec-2e4dee45dc4b",
@@ -1455,7 +1661,9 @@
       "glb_bytes": 45354244,
       "glb_skins": 6,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:19:59.508Z"
+      "glb_converted_at": "2026-07-19T15:19:59.508Z",
+      "thumb_file": "avatars/mixamo/thumbs/david.png",
+      "thumb_bytes": 11176
     },
     "7cc9ca51-d191-48ff-81c3-467c1d26c053": {
       "id": "7cc9ca51-d191-48ff-81c3-467c1d26c053",
@@ -1469,7 +1677,9 @@
       "glb_bytes": 53665648,
       "glb_skins": 8,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:20:07.544Z"
+      "glb_converted_at": "2026-07-19T15:20:07.544Z",
+      "thumb_file": "avatars/mixamo/thumbs/pete.png",
+      "thumb_bytes": 11135
     },
     "bb7d74a1-ffe3-4fb5-b6b5-48c5fecc9b4e": {
       "id": "bb7d74a1-ffe3-4fb5-b6b5-48c5fecc9b4e",
@@ -1483,7 +1693,9 @@
       "glb_bytes": 41209004,
       "glb_skins": 1,
       "glb_animations": 1,
-      "glb_converted_at": "2026-07-19T15:20:07.698Z"
+      "glb_converted_at": "2026-07-19T15:20:07.698Z",
+      "thumb_file": "avatars/mixamo/thumbs/lewis.png",
+      "thumb_bytes": 9913
     }
   },
   "catalog_size": 106,

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-19T20:34:15.672Z",
+	"generated_at": "2026-07-19T20:54:45.182Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Agent Sniper: Autonomous On-Chain Trading",
 			"summary": "How three.ws agents trade autonomously: the new-mint trigger, entry gates, the simulate-the-sell trade firewall, the hash-chained decision ledger, the exit ladder, and the case study of the first live +42% trade.",
 			"link": "/docs/agent-sniper",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-19",
+			"type": "launch",
+			"title": "Character Library",
+			"summary": "106 professionally rigged 3D characters, free to use. Every one drives the full animation library and drops into the Studio, Animation Studio, and embed viewer in one click.",
+			"link": "/character-library",
 			"tags": [
 				"launch"
 			]
@@ -74,6 +84,16 @@
 			"link": "/tutorials/arm-an-agent-sniper",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-07-19",
+			"type": "update",
+			"title": "106 rigged characters, free and ready to animate",
+			"summary": "A new Character Library brings 106 professionally rigged 3D characters to three.ws - knights, zombies, soldiers, dancers, and more. Every character ships with a full skeleton and skin weights, so it plays the entire animation library out of the box: idle, walk, run, wave, dance. Browse them at /character-library, preview any one live in your browser, send it straight to the Animation Studio, or drop it into the Widget Studio in a single click - no upload, no account needed.",
+			"link": "/character-library",
+			"tags": [
+				"feature"
 			]
 		},
 		{

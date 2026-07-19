@@ -15,6 +15,14 @@
 			<description>How three.ws agents trade autonomously: the new-mint trigger, entry gates, the simulate-the-sell trade firewall, the hash-chained decision ledger, the exit ladder, and the case study of the first live +42% trade.</description>
 		</item>
 		<item>
+			<title>Character Library</title>
+			<link>https://three.ws/character-library</link>
+			<guid isPermaLink="false">2026-07-19:Character Library</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>106 professionally rigged 3D characters, free to use. Every one drives the full animation library and drops into the Studio, Animation Studio, and embed viewer in one click.</description>
+		</item>
+		<item>
 			<title>Daily Match</title>
 			<link>https://three.ws/daily-match</link>
 			<guid isPermaLink="false">2026-07-19:Daily Match</guid>
@@ -61,6 +69,14 @@
 			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Arm a three.ws agent to trade new pump.fun launches autonomously: fund its wallet, set the entry filters and exit ladder, watch the decision ledger, and know the off switches.</description>
+		</item>
+		<item>
+			<title>106 rigged characters, free and ready to animate</title>
+			<link>https://three.ws/character-library</link>
+			<guid isPermaLink="false">2026-07-19:106 rigged characters, free and ready to animate</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A new Character Library brings 106 professionally rigged 3D characters to three.ws - knights, zombies, soldiers, dancers, and more. Every character ships with a full skeleton and skin weights, so it plays the entire animation library out of the box: idle, walk, run, wave, dance. Browse them at /character-library, preview any one live in your browser, send it straight to the Animation Studio, or drop it into the Widget Studio in a single click - no upload, no account needed.</description>
 		</item>
 		<item>
 			<title>Agent economy self-funding fixed and scaled up</title>

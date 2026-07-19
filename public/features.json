@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-19T20:34:15.658Z",
+	"generated_at": "2026-07-19T20:54:45.169Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -50,6 +50,16 @@
 					"title": "Animation Gallery",
 					"description": "Browse and preview public animations authored by the three.ws community. Apply any clip to your avatar in the Animation Studio.",
 					"added": "2026-06-17",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": true
+				},
+				{
+					"path": "/character-library",
+					"title": "Character Library",
+					"description": "106 professionally rigged 3D characters, free to use. Every one drives the full animation library and drops into the Studio, Animation Studio, and embed viewer in one click.",
+					"added": "2026-07-19",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

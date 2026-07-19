@@ -48,6 +48,15 @@
 					"showcase": true
 				},
 				{
+					"path": "/character-library",
+					"title": "Character Library",
+					"description": "106 professionally rigged 3D characters, free to use. Every one drives the full animation library and drops into the Studio, Animation Studio, and embed viewer in one click.",
+					"priority": 0.8,
+					"changefreq": "weekly",
+					"added": "2026-07-19",
+					"showcase": true
+				},
+				{
 					"path": "/diorama",
 					"title": "Diorama",
 					"description": "Speak a little world into being — describe a scene and watch it assemble into an explorable 3D diorama you can walk through, then take it into AR.",

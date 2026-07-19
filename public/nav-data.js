@@ -197,6 +197,7 @@ export const NAV_GROUPS = [
 						desc: 'Search, remix & earn — the live 3D creation bazaar, trending assets & top-creator leaderboard',
 					},
 					{ title: 'Avatar Gallery', href: '/gallery', desc: 'Every public 3D avatar' },
+					{ title: 'Character Library', href: '/character-library', desc: '106 rigged characters, ready to animate' },
 					{ title: 'Animation Gallery', href: '/animations', desc: 'Community animations for avatars' },
 					{
 						title: 'Worlds',

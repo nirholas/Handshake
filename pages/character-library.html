@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>Character Library · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+		<meta
+			name="description"
+			content="106 professionally rigged 3D characters, free to use on three.ws. Every one drives the full animation library — idle, walk, run, wave, dance. Preview, animate, or drop into the Widget Studio in one click."
+		/>
+		<meta name="theme-color" content="#000000" />
+		<link rel="canonical" href="https://three.ws/character-library" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="Character Library · three.ws" />
+		<meta property="og:description" content="106 rigged 3D characters, ready to animate. Preview, animate, or use in the Studio." />
+		<meta property="og:url" content="https://three.ws/character-library" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Character+Library&amp;d=106+professionally+rigged+3D+characters%2C+free+to+use.+Every+one+drives+the+full+animation+library+and+drops+into+the+Studio%2C+Animation+Studio%2C+and+embed+viewer+&amp;p=%2Fcharacter-library" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="Character Library · three.ws" />
+		<meta name="twitter:description" content="106 rigged 3D characters, ready to animate." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Character+Library&amp;d=106+professionally+rigged+3D+characters%2C+free+to+use.+Every+one+drives+the+full+animation+library+and+drops+into+the+Studio%2C+Animation+Studio%2C+and+embed+viewer+&amp;p=%2Fcharacter-library" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+		<meta property="og:locale" content="en_US" />
+
+		<link rel="shortcut icon" href="/favicon.ico" />
+		<script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js" integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw" crossorigin="anonymous"></script>
+		<script src="/model-viewer-meshopt.js"></script>
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+		<script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","name":"Character Library","description":"106 professionally rigged 3D characters, free to use on three.ws. Each drives the full animation library and drops into the Studio, Animation Studio, and embed viewer.","url":"https://three.ws/character-library","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+
+		<style>
+			.ch-main { max-width: 1320px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px) 80px; }
+
+			.ch-hero { padding: clamp(36px, 6vw, 72px) 0 clamp(20px, 3vw, 32px); }
+			.ch-hero-chip {
+				display: inline-flex; align-items: center; gap: 8px;
+				padding: 5px 12px; border: 1px solid var(--stroke); border-radius: 999px;
+				background: var(--surface-1); font-size: 12px; letter-spacing: .04em;
+				text-transform: uppercase; color: var(--ink-dim); font-family: var(--font-mono);
+			}
+			.ch-hero-dot { width: 7px; height: 7px; border-radius: 50%; background: #38d39f; box-shadow: 0 0 0 3px rgba(56,211,159,.18); }
+			.ch-hero h1 { font-size: clamp(30px, 5vw, 52px); line-height: 1.04; margin: 18px 0 12px; letter-spacing: -.02em; }
+			.ch-hero p { max-width: 62ch; color: var(--ink-dim); font-size: clamp(15px, 1.4vw, 17px); line-height: 1.6; margin: 0; }
+			.ch-hero-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 22px; }
+			.ch-hero-stats { color: var(--ink-dim); font-size: 13px; font-family: var(--font-mono); }
+
+			.ch-toolbar {
+				position: sticky; top: 0; z-index: 5;
+				display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+				padding: 14px 0; margin-bottom: 8px;
+				background: color-mix(in srgb, var(--surface-1) 60%, transparent);
+				backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+				border-bottom: 1px solid var(--stroke);
+			}
+			.ch-search-wrap { position: relative; flex: 1 1 260px; max-width: 420px; }
+			.ch-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--ink-dim); }
+			.ch-search {
+				width: 100%; padding: 10px 34px 10px 34px; border-radius: var(--radius-md);
+				border: 1px solid var(--stroke); background: var(--surface-1); color: var(--ink);
+				font-size: 14px; outline: none;
+			}
+			.ch-search:focus { border-color: var(--stroke-strong); }
+			.ch-search-kbd {
+				position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+				font-family: var(--font-mono); font-size: 11px; color: var(--ink-dim);
+				border: 1px solid var(--stroke); border-radius: 5px; padding: 1px 6px;
+			}
+			.ch-sort {
+				padding: 10px 12px; border-radius: var(--radius-md); border: 1px solid var(--stroke);
+				background: var(--surface-1); color: var(--ink); font-size: 14px; cursor: pointer;
+			}
+			.ch-count { margin-left: auto; color: var(--ink-dim); font-size: 13px; font-family: var(--font-mono); }
+
+			.ch-grid {
+				display: grid; gap: 16px;
+				grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+			}
+			.ch-card {
+				border: 1px solid var(--stroke); border-radius: var(--radius-lg);
+				background: var(--surface-glass); overflow: hidden;
+				transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+				display: flex; flex-direction: column;
+			}
+			.ch-card:hover { border-color: var(--stroke-strong); transform: translateY(-3px); box-shadow: var(--shadow-2); }
+			.ch-card-thumb {
+				position: relative; display: block; aspect-ratio: 1 / 1;
+				background: radial-gradient(120% 120% at 50% 20%, rgba(255,255,255,.05), rgba(0,0,0,.25));
+			}
+			.ch-card-mv { width: 100%; height: 100%; --poster-color: transparent; background: transparent; }
+			.ch-card-pill {
+				position: absolute; top: 10px; left: 10px; z-index: 2;
+				font-family: var(--font-mono); font-size: 10px; letter-spacing: .05em; text-transform: uppercase;
+				padding: 3px 8px; border-radius: 999px; color: var(--ink);
+				background: rgba(0,0,0,.5); border: 1px solid var(--stroke-strong); backdrop-filter: blur(6px);
+			}
+			.ch-card-play {
+				position: absolute; inset: 0; display: grid; place-items: center; z-index: 1;
+				font-size: 30px; color: rgba(255,255,255,.0); transition: color .18s ease; pointer-events: none;
+			}
+			.ch-card-thumb:hover .ch-card-play { color: rgba(255,255,255,.85); }
+			.ch-card-body { padding: 12px 13px 13px; display: flex; flex-direction: column; gap: 8px; }
+			.ch-card-name { font-size: 15px; margin: 0; letter-spacing: -.01em; }
+			.ch-card-meta { font-size: 12px; color: var(--ink-dim); font-family: var(--font-mono); }
+			.ch-card-actions { display: flex; gap: 6px; margin-top: 2px; }
+			.ch-btn {
+				flex: 1; text-align: center; padding: 7px 8px; border-radius: var(--radius-md);
+				font-size: 12.5px; font-weight: 600; text-decoration: none; cursor: pointer;
+				border: 1px solid var(--stroke); transition: background .15s ease, border-color .15s ease;
+				white-space: nowrap;
+			}
+			.ch-btn--primary { background: var(--accent); color: var(--accent-ink, #0b0b0f); border-color: transparent; }
+			.ch-btn--primary:hover { filter: brightness(1.08); }
+			.ch-btn--ghost { background: var(--surface-1); color: var(--ink); }
+			.ch-btn--ghost:hover { border-color: var(--stroke-strong); background: var(--surface-2); }
+
+			.ch-skeleton-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+			.ch-skeleton { aspect-ratio: 1 / 1.35; border-radius: var(--radius-lg); border: 1px solid var(--stroke);
+				background: linear-gradient(100deg, var(--surface-1) 30%, var(--surface-2) 50%, var(--surface-1) 70%);
+				background-size: 200% 100%; animation: ch-shimmer 1.3s infinite linear; }
+			@keyframes ch-shimmer { to { background-position: -200% 0; } }
+
+			.ch-state { text-align: center; padding: 72px 20px; color: var(--ink-dim); }
+			.ch-state-icon { font-size: 40px; margin-bottom: 12px; }
+			.ch-state h2 { color: var(--ink); margin: 0 0 8px; font-size: 20px; }
+			.ch-state p { max-width: 46ch; margin: 0 auto 18px; line-height: 1.55; }
+
+			.ch-hbtn {
+				display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px;
+				border-radius: var(--radius-md); font-weight: 600; font-size: 14px; text-decoration: none;
+				border: 1px solid var(--stroke); cursor: pointer;
+			}
+			.ch-hbtn--primary { background: var(--accent); color: var(--accent-ink, #0b0b0f); border-color: transparent; }
+			.ch-hbtn--secondary { background: var(--surface-1); color: var(--ink); }
+			.ch-hbtn--secondary:hover { border-color: var(--stroke-strong); }
+
+			@media (max-width: 560px) {
+				.ch-grid, .ch-skeleton-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+				.ch-card-actions { flex-wrap: wrap; }
+			}
+		</style>
+	
+	<meta property="og:image:alt" content="Characters — three.ws">
+</head>
+	<body>
+		<header>
+			<div id="nav-container"></div>
+		</header>
+		<script src="/nav.js"></script>
+
+		<main class="ch-main">
+			<section class="ch-hero">
+				<div class="ch-hero-chip">
+					<span class="ch-hero-dot" aria-hidden="true"></span>
+					<span>Character Library</span>
+				</div>
+				<h1>106 rigged characters, ready to animate</h1>
+				<p>
+					A curated library of professionally rigged humanoid characters. Every one ships with a skeleton and
+					skin weights, so it drives the full three.ws animation library out of the box — idle, walk, run, wave,
+					dance. Preview any character live, send it to the Animation Studio, or drop it straight into the Widget Studio.
+				</p>
+				<div class="ch-hero-actions">
+					<a href="/animations" class="ch-hbtn ch-hbtn--primary">Browse the animation library</a>
+					<a href="/gallery" class="ch-hbtn ch-hbtn--secondary">Avatar Gallery</a>
+					<span class="ch-hero-stats" data-role="hero-stats" aria-live="polite"></span>
+				</div>
+			</section>
+
+			<div class="ch-toolbar" role="toolbar" aria-label="Search and sort characters">
+				<div class="ch-search-wrap">
+					<svg class="ch-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+					<input type="search" class="ch-search" placeholder="Search characters…" aria-label="Search characters" autocomplete="off" data-role="search" />
+					<kbd class="ch-search-kbd" aria-hidden="true">/</kbd>
+				</div>
+				<select class="ch-sort" data-role="sort" aria-label="Sort characters">
+					<option value="az">A → Z</option>
+					<option value="za">Z → A</option>
+					<option value="largest">Largest first</option>
+					<option value="smallest">Smallest first</option>
+				</select>
+				<span class="ch-count" data-role="count" aria-live="polite"></span>
+			</div>
+
+			<div data-role="loading" class="ch-skeleton-grid" aria-label="Loading characters">
+				<div class="ch-skeleton"></div><div class="ch-skeleton"></div><div class="ch-skeleton"></div>
+				<div class="ch-skeleton"></div><div class="ch-skeleton"></div><div class="ch-skeleton"></div>
+				<div class="ch-skeleton"></div><div class="ch-skeleton"></div><div class="ch-skeleton"></div>
+				<div class="ch-skeleton"></div><div class="ch-skeleton"></div><div class="ch-skeleton"></div>
+			</div>
+
+			<div data-role="grid" class="ch-grid" hidden></div>
+
+			<div data-role="empty" class="ch-state" hidden>
+				<div class="ch-state-icon">🧍</div>
+				<h2>Character library coming online</h2>
+				<p>The rigged character library is being staged. Check back in a moment, or generate your own from a text prompt.</p>
+				<a href="/create/prompt" class="ch-hbtn ch-hbtn--primary">Generate a character</a>
+			</div>
+
+			<div data-role="empty-search" class="ch-state" hidden>
+				<div class="ch-state-icon">🔍</div>
+				<h2>No matches</h2>
+				<p>No characters match your search.</p>
+				<button class="ch-hbtn ch-hbtn--secondary" data-role="clear-search">Clear search</button>
+			</div>
+
+			<div data-role="error" class="ch-state" hidden>
+				<div class="ch-state-icon">⚠️</div>
+				<h2>Couldn't load characters</h2>
+				<p data-role="error-msg">Something went wrong loading the character library.</p>
+				<button class="ch-hbtn ch-hbtn--secondary" data-role="retry">Try again</button>
+			</div>
+		</main>
+
+		<script src="/footer.js" defer></script>
+		<script type="module" src="/src/character-library.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

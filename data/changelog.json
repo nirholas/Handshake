@@ -2,6 +2,15 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-07-19",
+			"title": "106 rigged characters, free and ready to animate",
+			"summary": "A new Character Library brings 106 professionally rigged 3D characters to three.ws - knights, zombies, soldiers, dancers, and more. Every character ships with a full skeleton and skin weights, so it plays the entire animation library out of the box: idle, walk, run, wave, dance. Browse them at /character-library, preview any one live in your browser, send it straight to the Animation Studio, or drop it into the Widget Studio in a single click - no upload, no account needed.",
+			"tags": [
+				"feature"
+			],
+			"link": "/character-library"
+		},
+		{
 			"date": "2026-07-18",
 			"title": "Build an agent, leave, come back: never lose a build in progress",
 			"summary": "The create-agent wizard now autosaves your work as you go, so a signed-out visitor who starts building and then closes the tab can return and pick up on the exact step they left, with everything filled in. A subtle Start fresh option is always one click away if you would rather begin anew, and abandoned drafts expire after a week. This closes the last gap in the try-first flow: you can now build across visits without an account, and only sign in at the final ship step.",
