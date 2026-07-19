@@ -55,8 +55,14 @@ steps:
               '--region',
               'us-central1',
               '--allow-unauthenticated',
+              # 4Gi (not 2Gi): the headless-chromium GLB renderer (api/render/glb)
+              # peaks well past 2Gi under a burst of parallel renders and OOM-killed
+              # the container mid-request (2026-07-18 502 incident). The renderer now
+              # also caps its own concurrency, but the memory headroom is the
+              # defense-in-depth floor. Pinned here so a full-config deploy can never
+              # silently drop it back to 2Gi. Runbook: docs/ops/gcp-production.md.
               '--memory',
-              '2Gi',
+              '4Gi',
               '--cpu',
               '2',
               '--timeout',
