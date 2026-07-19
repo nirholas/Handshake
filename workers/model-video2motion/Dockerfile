@@ -16,8 +16,8 @@ RUN pip install -r /app/requirements.txt
 RUN mkdir -p /models \
     && curl -fsSL -o /models/pose_landmarker_heavy.task \
         https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/latest/pose_landmarker_heavy.task \
-    && curl -fsSL -o /models/selfie_segmenter.task \
-        https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.task
+    && curl -fsSL -o /models/selfie_multiclass_256x256.tflite \
+        https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite
 
 WORKDIR /app
 COPY worker_security.py /app/worker_security.py

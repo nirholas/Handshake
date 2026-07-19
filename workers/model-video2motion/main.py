@@ -81,7 +81,7 @@ async def lifespan(app: FastAPI):
     _bucket = storage.Client().bucket(GCS_BUCKET)
     _sem = asyncio.Semaphore(MAX_CONCURRENT)
     # Fail fast if the model bundles are missing from the image.
-    for f in ("pose_landmarker_heavy.task", "selfie_segmenter.task"):
+    for f in ("pose_landmarker_heavy.task", "selfie_multiclass_256x256.tflite"):
         path = os.path.join(MODELS_DIR, f)
         if not os.path.exists(path):
             raise RuntimeError(f"model bundle missing: {path}")
@@ -259,9 +259,12 @@ def _analyze(video_path: str, fps: int):
         min_pose_detection_confidence=0.4,
         min_tracking_confidence=0.4,
     )
+    # Multiclass person-part segmenter (background/hair/skin/face/clothes/other)
+    # — the full-body person mask is 1 - background confidence, which holds up
+    # far better than the selfie model on wide framing (house tours, rooms).
     seg_opts = vision.ImageSegmenterOptions(
         base_options=mp_python.BaseOptions(
-            model_asset_path=os.path.join(MODELS_DIR, "selfie_segmenter.task")
+            model_asset_path=os.path.join(MODELS_DIR, "selfie_multiclass_256x256.tflite")
         ),
         running_mode=vision.RunningMode.VIDEO,
         output_confidence_masks=True,
@@ -311,8 +314,11 @@ def _analyze(video_path: str, fps: int):
             vis_frames.append(vis)
 
             seg_result = segmenter.segment_for_video(mp_image, ts_ms)
-            conf = seg_result.confidence_masks[0].numpy_view()
-            masks.append((np.clip(conf, 0.0, 1.0) * 255).astype(np.uint8))
+            bg = seg_result.confidence_masks[0].numpy_view()  # class 0 = background
+            person = 1.0 - np.clip(bg, 0.0, 1.0)
+            if person.shape != (height, width):
+                person = cv2.resize(person, (width, height), interpolation=cv2.INTER_LINEAR)
+            masks.append((person * 255).astype(np.uint8))
             frame_idx += 1
     cap.release()
 
