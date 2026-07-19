@@ -1,0 +1,31 @@
+# agent-sniper worker: Cloud Build config.
+#
+# Submit from the REPO ROOT (the Dockerfile copies api/, src/, packages/,
+# agent-payments-sdk/):
+#
+#   gcloud builds submit --config workers/agent-sniper/cloudbuild.yaml \
+#     --region us-central1 --project aerial-vehicle-466722-p5
+#
+# Then roll the service to the new image (config-only update):
+#
+#   gcloud run services update agent-sniper --region us-central1 \
+#     --project aerial-vehicle-466722-p5 \
+#     --image us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/workers/agent-sniper:latest
+#
+# serviceAccount is pinned: the project's default compute SA was deleted, so an
+# unpinned build fails before the first step.
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - workers/agent-sniper/Dockerfile
+      - -t
+      - us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/workers/agent-sniper:latest
+      - .
+images:
+  - us-central1-docker.pkg.dev/aerial-vehicle-466722-p5/workers/agent-sniper:latest
+serviceAccount: projects/aerial-vehicle-466722-p5/serviceAccounts/three-ws-build@aerial-vehicle-466722-p5.iam.gserviceaccount.com
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
