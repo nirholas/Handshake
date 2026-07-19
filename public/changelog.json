@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-19T00:15:05.289Z",
+	"generated_at": "2026-07-19T02:04:17.753Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -35,6 +35,17 @@
 			"tags": [
 				"sdk",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-07-19",
+			"type": "update",
+			"title": "Language links now always win, and the switcher stays out of the way",
+			"summary": "Two fixes for the new 41-language experience. Opening a link with a language in the URL (like ?lang=te for Telugu) now always shows that language, even if you had previously browsed in another one; before, your first visit's language silently overrode every shared link. The floating language switcher also joins the site's shared bottom-corner layout, so it no longer overlaps the Getting Started guide.",
+			"link": "/what-is?lang=te",
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{

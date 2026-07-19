@@ -21,7 +21,7 @@ import {
 	setDeep,
 	getDeep,
 } from '../scripts/lib/i18n-shared.mjs';
-import { resolveKey, interpolate, translate } from '../src/i18n.js';
+import { resolveKey, interpolate, translate, pickLocale } from '../src/i18n.js';
 
 describe('extractFromHtml', () => {
 	it('pulls text, html, and attribute keys with their English source values', () => {
@@ -92,6 +92,39 @@ describe('lintLocale', () => {
 		const target = { home: { title: 'Hola {{name}}', cta: 'Gana $THREE', gone: 'x' } };
 		const problems = lintLocale(source, target, { code: 'es', doNotTranslate: ['$THREE'] });
 		expect(problems.join('\n')).toMatch(/stale key.*home.gone/);
+	});
+});
+
+describe('locale detection priority', () => {
+	const manifest = {
+		default: 'en',
+		locales: [
+			{ code: 'en', name: 'English', dir: 'ltr' },
+			{ code: 'te', name: 'తెలుగు', dir: 'ltr' },
+			{ code: 'pt-BR', name: 'Português (BR)', dir: 'ltr' },
+		],
+	};
+
+	it('honors an explicit ?lang= over a stored preference (deep links win)', () => {
+		// Regression: a returning visitor's stored 'en' used to silently override
+		// every ?lang= deep link from the sitemap's hreflang alternates.
+		expect(pickLocale({ query: 'te', stored: 'en', navLangs: ['en-US'] }, manifest)).toBe('te');
+	});
+
+	it('falls back to the stored preference when the URL has no ?lang=', () => {
+		expect(pickLocale({ query: null, stored: 'te', navLangs: ['en-US'] }, manifest)).toBe('te');
+	});
+
+	it('ignores an unsupported ?lang= value', () => {
+		expect(pickLocale({ query: 'xx', stored: 'te', navLangs: [] }, manifest)).toBe('te');
+	});
+
+	it('matches navigator languages by base code (pt → pt-BR)', () => {
+		expect(pickLocale({ query: null, stored: null, navLangs: ['pt'] }, manifest)).toBe('pt-BR');
+	});
+
+	it('returns the manifest default when nothing matches', () => {
+		expect(pickLocale({ query: null, stored: null, navLangs: ['xx-YY'] }, manifest)).toBe('en');
 	});
 });
 

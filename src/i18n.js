@@ -139,14 +139,16 @@ function supported(code, manifest) {
 	return manifest.locales.find((l) => l.code === code);
 }
 
-// localStorage → ?lang= → navigator languages → manifest default.
-function detectLocale(manifest) {
-	if (!hasDOM) return manifest.default;
-	const stored = safeStorage.get(STORAGE_KEY);
+// ?lang= → localStorage → navigator languages → manifest default.
+// The URL param must outrank the stored preference: sitemap hreflang entries
+// and shared links all carry ?lang=xx, and a returning visitor (whose first
+// visit stored a locale) would otherwise see every one of those deep links
+// silently ignored. Honoring the param also stores it, so the choice sticks.
+// Pure and exported for tests; detectLocale feeds it the browser's values.
+export function pickLocale({ query, stored, navLangs }, manifest) {
+	if (query && supported(query, manifest)) return query;
 	if (stored && supported(stored, manifest)) return stored;
-	const q = new URLSearchParams(location.search).get('lang');
-	if (q && supported(q, manifest)) return q;
-	for (const nav of navigator.languages || [navigator.language || '']) {
+	for (const nav of navLangs || []) {
 		if (!nav) continue;
 		if (supported(nav, manifest)) return nav;
 		const base = nav.split('-')[0];
@@ -156,6 +158,18 @@ function detectLocale(manifest) {
 		if (byBase) return byBase.code;
 	}
 	return manifest.default;
+}
+
+function detectLocale(manifest) {
+	if (!hasDOM) return manifest.default;
+	return pickLocale(
+		{
+			query: new URLSearchParams(location.search).get('lang'),
+			stored: safeStorage.get(STORAGE_KEY),
+			navLangs: navigator.languages || [navigator.language || ''],
+		},
+		manifest,
+	);
 }
 
 async function loadCatalog(code) {
@@ -284,7 +298,14 @@ async function mountFloatingSwitcher() {
 		@media print { .twx-i18n-fab { display: none; } }`;
 	document.head.appendChild(style);
 	host.appendChild(document.createElement('lang-switcher'));
-	document.body.appendChild(host);
+	// Flow into the shared bottom-right corner stack (public/corner-stack.js) so
+	// the switcher never piles onto the "Getting started" pill or other corner
+	// cards. The stack's #id CSS overrides the fixed positioning above, which
+	// remains the standalone fallback on pages that don't ship the stack (embeds,
+	// generated shells). Priority 10 sits above the pill (30 = owns the corner).
+	host.setAttribute('data-corner-priority', '10');
+	if (window.twsCornerStack) window.twsCornerStack.mount(host);
+	else document.body.appendChild(host);
 }
 
 // Inject <link rel="alternate" hreflang> tags into <head> for the current path,

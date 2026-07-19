@@ -31,6 +31,14 @@
 			<description>The Concierge chat widget is now installable as the @three-ws/concierge npm package, and there is a companion Model Context Protocol server, @three-ws/concierge-mcp, on the official MCP registry. That server lets any AI assistant ask a website's concierge a question (it fetches the page and answers grounded in the real content), generate the copy-paste embed code for a site, and list the available 3D avatars. Six runnable examples now ship with the SDK, covering the one-tag install, the web component, the imperative API, a custom GLB avatar, a React wrapper, and pointing the widget at your own answer backend.</description>
 		</item>
 		<item>
+			<title>Language links now always win, and the switcher stays out of the way</title>
+			<link>https://three.ws/what-is?lang=te</link>
+			<guid isPermaLink="false">2026-07-19:Language links now always win, and the switcher stays out of the way</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two fixes for the new 41-language experience. Opening a link with a language in the URL (like ?lang=te for Telugu) now always shows that language, even if you had previously browsed in another one; before, your first visit's language silently overrode every shared link. The floating language switcher also joins the site's shared bottom-corner layout, so it no longer overlaps the Getting Started guide.</description>
+		</item>
+		<item>
 			<title>The assistant widget ships as an npm package and an MCP server</title>
 			<link>https://three.ws/docs/assistant-widget</link>
 			<guid isPermaLink="false">2026-07-19:The assistant widget ships as an npm package and an MCP server</guid>
