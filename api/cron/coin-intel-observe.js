@@ -21,8 +21,9 @@ import { error, json, method, wrapCron } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { constantTimeEquals } from '../_lib/crypto.js';
 import { finalizeObservation } from '../../workers/agent-sniper/intel/finalize.js';
+import { pumpPortalWsUrl, handlePumpPortalAck } from '../_lib/pumpportal.js';
+import { subscribePumpOnchainTrades } from '../_lib/pump-onchain-trades.js';
 
-const PUMPPORTAL_WS = 'wss://pumpportal.fun/api/data';
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const NETWORK = 'mainnet';
 const META_TIMEOUT_MS = 2_500;
@@ -69,6 +70,10 @@ async function fetchMeta(uri) {
 }
 
 // Run the firehose for OBSERVE_MS, returning the map of observations collected.
+// Creates come from PumpPortal (free tier); trades come from the on-chain
+// program subscription (api/_lib/pump-onchain-trades.js), with PumpPortal's
+// per-mint trade stream as an augmenting source when a funded key is set.
+// Overlap between the two is deduped by tx signature per observation.
 function collectObservations(budgetMs) {
 	return new Promise((resolve) => {
 		const observations = new Map(); // mint -> obs
@@ -76,10 +81,29 @@ function collectObservations(budgetMs) {
 		let settled = false;
 		let ws;
 
+		const recordTrade = (msg) => {
+			const obs = observations.get(msg.mint);
+			if (!obs || settled) return;
+			if (msg.signature) {
+				if (obs.sigs.has(msg.signature)) return;
+				obs.sigs.add(msg.signature);
+			}
+			obs.trades.push({
+				trader: msg.traderPublicKey || null,
+				isBuy: msg.txType === 'buy',
+				lamports: msg.solAmount != null ? solToLamports(msg.solAmount) : 0,
+				baseAmount: Number(msg.tokenAmount) || 0,
+				ts: Date.now(),
+				signature: msg.signature,
+			});
+		};
+		const stopOnchain = subscribePumpOnchainTrades({ network: NETWORK, onTrade: recordTrade });
+
 		const finish = () => {
 			if (settled) return;
 			settled = true;
 			clearTimeout(deadline);
+			try { stopOnchain(); } catch {}
 			try { ws?.close(); } catch {}
 			// Let any in-flight metadata enrich attach before we hand off.
 			Promise.allSettled(metaPending).then(() => resolve(observations));
@@ -92,7 +116,7 @@ function collectObservations(budgetMs) {
 			}
 		};
 
-		try { ws = new WebSocket(PUMPPORTAL_WS); }
+		try { ws = new WebSocket(pumpPortalWsUrl()); }
 		catch { finish(); return; }
 
 		ws.on('open', () => send({ method: 'subscribeNewToken' }));
@@ -100,7 +124,7 @@ function collectObservations(budgetMs) {
 		ws.on('message', (raw) => {
 			let msg;
 			try { msg = JSON.parse(raw.toString()); } catch { return; }
-			if (msg.message) return; // ack
+			if (handlePumpPortalAck(msg, (line) => console.warn('[coin-intel-observe]', line))) return;
 
 			if (msg.txType === 'create') {
 				const mint = msg.mint;
@@ -127,21 +151,13 @@ function collectObservations(budgetMs) {
 					trades: msg.solAmount
 						? [{ trader: msg.traderPublicKey || null, isBuy: true, lamports: solToLamports(msg.solAmount), baseAmount: Number(msg.tokenAmount) || 0, ts: now, signature: msg.signature }]
 						: [],
+					sigs: new Set(msg.signature ? [msg.signature] : []),
 				};
 				observations.set(mint, obs);
 				send({ method: 'subscribeTokenTrade', keys: [mint] });
 				metaPending.push(fetchMeta(obs.meta.uri).then((m) => { if (m) Object.assign(obs.meta, m); }).catch(() => {}));
 			} else if (msg.txType === 'buy' || msg.txType === 'sell') {
-				const obs = observations.get(msg.mint);
-				if (!obs) return;
-				obs.trades.push({
-					trader: msg.traderPublicKey || null,
-					isBuy: msg.txType === 'buy',
-					lamports: msg.solAmount != null ? solToLamports(msg.solAmount) : 0,
-					baseAmount: Number(msg.tokenAmount) || 0,
-					ts: Date.now(),
-					signature: msg.signature,
-				});
+				recordTrade(msg);
 			}
 		});
 

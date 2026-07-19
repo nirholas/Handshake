@@ -18,10 +18,10 @@ import { limits, clientIp } from '../_lib/rate-limit.js';
 import { sql } from '../_lib/db.js';
 import { knownWallet } from '../_lib/oracle/known-wallets.js';
 import WebSocket from 'ws';
+import { pumpPortalWsUrl, handlePumpPortalAck } from '../_lib/pumpportal.js';
 
 const NETWORKS = new Set(['mainnet', 'devnet']);
 const MINT_RE  = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-const PUMPPORTAL_WS   = 'wss://pumpportal.fun/api/data';
 const MAX_DURATION_MS = 45_000;
 const PING_INTERVAL_MS = 12_000;
 
@@ -140,7 +140,7 @@ export default async function handleOracleTrades(req, res) {
 	}
 
 	function openWs() {
-		ws = new WebSocket(PUMPPORTAL_WS);
+		ws = new WebSocket(pumpPortalWsUrl());
 
 		ws.on('open', () => {
 			ws.send(JSON.stringify({ method: 'subscribeTokenTrade', keys: [mint] }));
@@ -150,7 +150,7 @@ export default async function handleOracleTrades(req, res) {
 			if (!active) return;
 			let msg;
 			try { msg = JSON.parse(raw.toString()); } catch { return; }
-			if (msg.message) return; // subscription ack
+			if (handlePumpPortalAck(msg, (line) => console.warn('[oracle-trades]', line))) return;
 			if ((msg.txType === 'buy' || msg.txType === 'sell') && msg.mint === mint) {
 				send('trade', annotate(msg, roster));
 			}

@@ -78,18 +78,21 @@ export async function watchWhaleTrades({ mint, minUsd = 5000, onTrade, signal })
 			try {
 				for (const event of parser.parseLogs(logInfo.logs)) {
 					if (event.name !== 'TradeEvent') continue;
-					const { mint: evMint, isBuy, solAmount, user, timestamp } = event.data;
-					if (evMint.toString() !== mintStr) continue;
-					const sol = Number(solAmount.toString()) / LAMPORTS_PER_SOL;
+					const d = event.data;
+					// Anchor's coder emits snake_case fields with the current pump
+					// IDL; older toolchains camelCased them — read both.
+					const f = (a, b) => (d[a] !== undefined ? d[a] : d[b]);
+					if (d.mint?.toString() !== mintStr) continue;
+					const sol = Number(f('sol_amount', 'solAmount')?.toString() ?? '0') / LAMPORTS_PER_SOL;
 					const usd = sol * solPrice;
 					if (usd < minUsd) continue;
 					onTrade({
 						signature: logInfo.signature,
-						wallet: user.toString(),
-						sideBuy: isBuy,
+						wallet: d.user?.toString() ?? null,
+						sideBuy: !!f('is_buy', 'isBuy'),
 						usd,
 						sol,
-						ts: Number(timestamp.toString()) * 1000,
+						ts: Number(f('timestamp', 'timestamp')?.toString() ?? '0') * 1000 || Date.now(),
 					});
 				}
 			} catch {}

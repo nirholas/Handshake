@@ -14,8 +14,9 @@
 import WebSocket from 'ws';
 import { finalizeObservation } from './finalize.js';
 import { log } from '../log.js';
+import { pumpPortalWsUrl, handlePumpPortalAck } from '../../../api/_lib/pumpportal.js';
+import { subscribePumpOnchainTrades } from '../../../api/_lib/pump-onchain-trades.js';
 
-const PUMPPORTAL_WS = 'wss://pumpportal.fun/api/data';
 const RECONNECT_DELAY_MS = 2_000;
 const LAMPORTS_PER_SOL = 1_000_000_000;
 const META_TIMEOUT_MS = 2_500;
@@ -70,10 +71,17 @@ export function startIntelWatcher({
 	let droppedSinceLog = 0;
 	const observations = new Map(); // mint -> { meta, trades, firstSeenAtMs, createdAtSec, devBuyLamports, timer }
 
+	// The authoritative trade source: one program-wide on-chain subscription
+	// covering every observed mint. PumpPortal's per-mint trade stream (below)
+	// only augments it when a funded PUMPPORTAL_API_KEY is configured — without
+	// one PumpPortal refuses trade subscriptions, and this lane carries alone.
+	const stopOnchain = subscribePumpOnchainTrades({ network, onTrade: (msg) => { if (active) recordTrade(msg); } });
+
 	function stop() {
 		active = false;
 		clearTimeout(reconnectTimer);
 		for (const obs of observations.values()) clearTimeout(obs.timer);
+		try { stopOnchain(); } catch {}
 		if (ws) try { ws.close(); } catch {}
 	}
 	signal?.addEventListener('abort', stop);
@@ -113,6 +121,10 @@ export function startIntelWatcher({
 			trades: msg.solAmount
 				? [{ trader: msg.traderPublicKey || null, isBuy: true, lamports: solToLamports(msg.solAmount), baseAmount: Number(msg.tokenAmount) || 0, ts: now, signature: msg.signature }]
 				: [],
+			// Trades arrive from two sources (the on-chain firehose always; the
+			// PumpPortal per-mint stream when an API key is funded) — dedupe by tx
+			// signature so the overlap, and the seeded launch buy, count once.
+			sigs: new Set(msg.signature ? [msg.signature] : []),
 			timer: null,
 		};
 		observations.set(mint, obs);
@@ -129,6 +141,10 @@ export function startIntelWatcher({
 	function recordTrade(msg) {
 		const obs = observations.get(msg.mint);
 		if (!obs) return;
+		if (msg.signature) {
+			if (obs.sigs.has(msg.signature)) return;
+			obs.sigs.add(msg.signature);
+		}
 		obs.trades.push({
 			trader: msg.traderPublicKey || null,
 			isBuy: msg.txType === 'buy',
@@ -170,7 +186,7 @@ export function startIntelWatcher({
 
 	function connect() {
 		if (!active) return;
-		ws = new WebSocket(PUMPPORTAL_WS);
+		ws = new WebSocket(pumpPortalWsUrl());
 
 		ws.on('open', () => {
 			send({ method: 'subscribeNewToken' });
@@ -184,7 +200,7 @@ export function startIntelWatcher({
 			if (!active) return;
 			let msg;
 			try { msg = JSON.parse(raw.toString()); } catch { return; }
-			if (msg.message) return; // ack
+			if (handlePumpPortalAck(msg, (line) => log.warn?.(line))) return;
 			if (msg.txType === 'create') startObservation(msg);
 			else if (msg.txType === 'buy' || msg.txType === 'sell') recordTrade(msg);
 		});

@@ -5,8 +5,8 @@
 
 import WebSocket from 'ws';
 import { solPriceUsd as sharedSolPriceUsd } from './sol-price.js';
+import { pumpPortalWsUrl, handlePumpPortalAck } from './pumpportal.js';
 
-const PUMPPORTAL_WS = 'wss://pumpportal.fun/api/data';
 const RECONNECT_DELAY_MS = 2_000;
 const MAX_RECONNECTS = 5;
 const RECONNECT_MAX_DELAY_MS = 30_000;
@@ -179,7 +179,7 @@ export function connectPumpFunFeed({ onEvent, signal, kind = 'all', mints = [] }
 			reconnectTimer = setTimeout(connect, pausedFor + 1_000);
 			return;
 		}
-		ws = new WebSocket(PUMPPORTAL_WS);
+		ws = new WebSocket(pumpPortalWsUrl());
 
 		ws.on('open', () => {
 			reconnects = 0;
@@ -200,7 +200,7 @@ export function connectPumpFunFeed({ onEvent, signal, kind = 'all', mints = [] }
 			if (!active) return;
 			let msg;
 			try { msg = JSON.parse(raw.toString()); } catch { return; }
-			if (msg.message) return; // ack
+			if (handlePumpPortalAck(msg, (line) => console.warn('[pumpportal-ws]', line))) return;
 
 			if (msg.txType === 'create' && wantsMints) {
 				if (!markSeen(msg.signature)) return;

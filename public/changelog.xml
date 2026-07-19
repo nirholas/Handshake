@@ -23,6 +23,14 @@
 			<description>Step-by-step: add a floating 3D avatar assistant to any website with one script tag, configure the avatar, background, and brand, drive it from your own code, or have an AI agent generate the embed via MCP.</description>
 		</item>
 		<item>
+			<title>Agent economy self-funding fixed and scaled up</title>
+			<link>https://three.ws/pulse</link>
+			<guid isPermaLink="false">2026-07-19:Agent economy self-funding fixed and scaled up</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The agent economy's money loops are back at full speed. We found and fixed the scheduling bug that let failing paid calls hog the autonomous loop and starve the recirculation pipelines, wired a revenue share from the x402 ring treasury into the economy's funding root so it can refuel its own SOL, and raised the daily activity caps. Tips, agent-to-agent payments, trades, and marketplace purchases on the Money Pulse all flow again, and the ring's audit trail now verifies every leg of the new split sweeps.</description>
+		</item>
+		<item>
 			<title>Coin pages for new launches, redesigned in the markets-hub style</title>
 			<link>https://three.ws/radar</link>
 			<guid isPermaLink="false">2026-07-19:Coin pages for new launches, redesigned in the markets-hub style</guid>
@@ -31,12 +39,28 @@
 			<description>Every pump.fun launch on Coin Radar now links straight through to a full coin page at /oracle/coin/&lt;mint&gt;, rebuilt in the same clean editorial design as the /coin/bitcoin markets pages. The page keeps everything it had (Oracle conviction, live market intel from six sources, agent transactions, a live trade tape) and adds the complete Launch Intelligence read from the radar engine: quality score, organic vs bundle, risk flags, the full signal breakdown, smart-money buyers, and the top-trader ledger. The live candles chart stays, joined by a native line view and an agent-trades overlay, and the whole page works in light and dark themes.</description>
 		</item>
 		<item>
+			<title>Coin Radar's live trade data restored, now read straight from the chain</title>
+			<link>https://three.ws/oracle/</link>
+			<guid isPermaLink="false">2026-07-19:Coin Radar's live trade data restored, now read straight from the chain</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The pipeline that watches every pump.fun launch had quietly lost its per-coin trade feed when the upstream data provider moved it behind a paywall, which left conviction scores flat and the oracle's calls, win rate, and proof panels empty. Trade ingestion now reads directly from the Solana chain itself over our own RPC failover, so every buy and sell is observed again with no third-party dependency. Conviction scores, smart-money tracking, and the oracle's actionable tiers repopulate as new launches are scored.</description>
+		</item>
+		<item>
 			<title>Concierge ships to npm and the MCP registry, with a full examples set</title>
 			<link>https://three.ws/docs/concierge</link>
 			<guid isPermaLink="false">2026-07-19:Concierge ships to npm and the MCP registry, with a full examples set</guid>
 			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
 			<category>sdk</category>
 			<description>The Concierge chat widget is now installable as the @three-ws/concierge npm package, and there is a companion Model Context Protocol server, @three-ws/concierge-mcp, on the official MCP registry. That server lets any AI assistant ask a website's concierge a question (it fetches the page and answers grounded in the real content), generate the copy-paste embed code for a site, and list the available 3D avatars. Six runnable examples now ship with the SDK, covering the one-tag install, the web component, the imperative API, a custom GLB avatar, a React wrapper, and pointing the widget at your own answer backend.</description>
+		</item>
+		<item>
+			<title>First autonomous agent trade, fully documented</title>
+			<link>https://three.ws/blog/first-autonomous-trade</link>
+			<guid isPermaLink="false">2026-07-19:First autonomous agent trade, fully documented</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>A platform agent closed its first fully autonomous trade: it sniped a brand-new pump.fun launch from its own wallet and exited at +42.38 percent, with every decision recorded on its hash-chained ledger. We published the complete postmortem: a blog post with the on-chain receipts, a deep-dive doc on the sniper architecture (entry gates, the simulate-the-sell trade firewall, the exit ladder), and a tutorial for arming a sniper on your own agent, including the take-profit lesson this trade taught us.</description>
 		</item>
 		<item>
 			<title>Language links now always win, and the switcher stays out of the way</title>

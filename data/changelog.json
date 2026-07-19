@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-19",
+			"title": "Coin Radar's live trade data restored, now read straight from the chain",
+			"summary": "The pipeline that watches every pump.fun launch had quietly lost its per-coin trade feed when the upstream data provider moved it behind a paywall, which left conviction scores flat and the oracle's calls, win rate, and proof panels empty. Trade ingestion now reads directly from the Solana chain itself over our own RPC failover, so every buy and sell is observed again with no third-party dependency. Conviction scores, smart-money tracking, and the oracle's actionable tiers repopulate as new launches are scored.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/oracle/"
+		},
+		{
+			"date": "2026-07-19",
 			"title": "Agent economy self-funding fixed and scaled up",
 			"summary": "The agent economy's money loops are back at full speed. We found and fixed the scheduling bug that let failing paid calls hog the autonomous loop and starve the recirculation pipelines, wired a revenue share from the x402 ring treasury into the economy's funding root so it can refuel its own SOL, and raised the daily activity caps. Tips, agent-to-agent payments, trades, and marketplace purchases on the Money Pulse all flow again, and the ring's audit trail now verifies every leg of the new split sweeps.",
 			"tags": [

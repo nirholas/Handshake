@@ -45,6 +45,7 @@ import { generateVanityKey } from '../src/pump/vanity-keygen.js';
 import bs58 from 'bs58';
 import { resolveSnsName, reverseLookupAddress } from '../src/solana/sns.js';
 import { scanFirstClaims } from './_lib/pump-claims.js';
+import { eventField } from './_lib/pump-onchain-trades.js';
 import { getSolPriceUsd } from '../src/shared/usd-price.js';
 
 // ── On-chain handlers ──────────────────────────────────────────────────────
@@ -584,18 +585,18 @@ async function handleWatchWhales({ mint, minUsd = 5000, durationMs = 5000 }) {
 			try {
 				for (const event of parser.parseLogs(logInfo.logs)) {
 					if (event.name !== 'TradeEvent') continue;
-					const { mint: evMint, isBuy, solAmount, user, timestamp } = event.data;
-					if (evMint.toString() !== mintStr) continue;
-					const sol = Number(solAmount.toString()) / 1_000_000_000;
+					const d = event.data;
+					if (d.mint?.toString() !== mintStr) continue;
+					const sol = Number(eventField(d, 'solAmount')?.toString() ?? '0') / 1_000_000_000;
 					const usd = sol * solPrice;
 					if (usd < minUsdNum) continue;
 					trades.push({
 						signature: logInfo.signature,
-						wallet: user.toString(),
-						sideBuy: isBuy,
+						wallet: d.user?.toString() ?? null,
+						sideBuy: !!eventField(d, 'isBuy'),
 						usd,
 						sol,
-						ts: Number(timestamp.toString()) * 1000,
+						ts: Number(eventField(d, 'timestamp')?.toString() ?? '0') * 1000 || Date.now(),
 					});
 				}
 			} catch {}
@@ -683,9 +684,10 @@ async function readTradesFromChain({ mint, limit, network }) {
 				const d = event.data;
 				if (poolStr && d.pool?.toString() !== poolStr) continue;
 				const isBuy = event.name === 'BuyEvent';
-				const lamports = isBuy ? d.quoteAmountIn : d.quoteAmountOut;
-				const tokens = isBuy ? d.baseAmountOut : d.baseAmountIn;
+				const lamports = isBuy ? eventField(d, 'quoteAmountIn') : eventField(d, 'quoteAmountOut');
+				const tokens = isBuy ? eventField(d, 'baseAmountOut') : eventField(d, 'baseAmountIn');
 				const sol = Number(lamports?.toString() ?? '0') / 1e9;
+				const ts = eventField(d, 'timestamp');
 				return {
 					signature,
 					isBuy,
@@ -693,25 +695,22 @@ async function readTradesFromChain({ mint, limit, network }) {
 					tokenAmount: tokens?.toString() ?? '0',
 					usdValue: sol * solPrice,
 					wallet: d.user?.toString() ?? null,
-					timestamp: d.timestamp
-						? Number(d.timestamp.toString())
-						: Math.floor(blockTime / 1000),
+					timestamp: ts ? Number(ts.toString()) : Math.floor(blockTime / 1000),
 				};
 			}
 			if (!isAmm && event.name === 'TradeEvent') {
 				const d = event.data;
 				if (d.mint?.toString() !== mintStr) continue;
-				const sol = Number(d.solAmount?.toString() ?? '0') / 1e9;
+				const sol = Number(eventField(d, 'solAmount')?.toString() ?? '0') / 1e9;
+				const ts = eventField(d, 'timestamp');
 				return {
 					signature,
-					isBuy: !!d.isBuy,
+					isBuy: !!eventField(d, 'isBuy'),
 					solAmount: sol,
-					tokenAmount: d.tokenAmount?.toString() ?? '0',
+					tokenAmount: eventField(d, 'tokenAmount')?.toString() ?? '0',
 					usdValue: sol * solPrice,
 					wallet: d.user?.toString() ?? null,
-					timestamp: d.timestamp
-						? Number(d.timestamp.toString())
-						: Math.floor(blockTime / 1000),
+					timestamp: ts ? Number(ts.toString()) : Math.floor(blockTime / 1000),
 				};
 			}
 		}
