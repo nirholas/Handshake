@@ -142,7 +142,12 @@ async function main() {
 			`\nERROR: ${drift.length} migration(s) have drifted (file changed after apply):`,
 		);
 		for (const d of drift) console.error(`  - ${d.fname}`);
-		console.error('Refusing to proceed. Roll forward with a new migration instead.');
+		console.error(
+			'Refusing to proceed. An applied migration is an immutable record of what ran —\n' +
+			'do NOT edit it. If the change was comment-only (schema byte-identical), restore\n' +
+			'the file to its applied bytes:  git show <commit-that-applied-it>^:<path> > <path>\n' +
+			'If the schema genuinely needs to change, roll forward with a NEW migration.',
+		);
 		process.exit(3);
 	}
 
