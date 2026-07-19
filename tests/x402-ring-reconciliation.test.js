@@ -27,6 +27,15 @@ function mockSql({ settle = [], sweep = [], buyer = [], feeLogged = 0, feeAudit 
 		const text = strings.join('?').replace(/\s+/g, ' ').trim();
 		calls.push({ text, values });
 		if (/FROM x402_self_facilitator_log[\s\S]*action = 'settle'[\s\S]*ORDER BY ts/i.test(text)) return Promise.resolve(settle);
+		if (/FROM x402_ring_ledger[\s\S]*GROUP BY tx_sig/i.test(text)) {
+			// The per-tx totals aggregate: derive from the same sweep fixtures.
+			const totals = new Map();
+			for (const r of sweep) {
+				if (!r.tx_sig) continue;
+				totals.set(r.tx_sig, (totals.get(r.tx_sig) || 0) + Number(r.amount_atomic || 0));
+			}
+			return Promise.resolve([...totals].map(([tx_sig, total]) => ({ tx_sig, total })));
+		}
 		if (/FROM x402_ring_ledger/i.test(text)) return Promise.resolve(sweep);
 		if (/FROM x402_autonomous_log[\s\S]*success = true/i.test(text)) return Promise.resolve(buyer);
 		if (/COALESCE\(sum\(fee_lamports\)/i.test(text)) return Promise.resolve([{ total: feeLogged }]);
@@ -145,7 +154,7 @@ describe('ring-reconciliation — pure helpers', () => {
 
 	it('verifySweepMovement verifies each leg of a split sweep (payer + master revshare) via txTotal', () => {
 		const MASTER = 'MasterWallet1111111111111111111111111111111';
-		// One tx: treasury sends 1.0 USDC total — 0.8 to payer, 0.2 to master.
+		// One tx: treasury sends 1.0 USDC total (0.8 to payer, 0.2 to master).
 		const tx = {
 			meta: {
 				preTokenBalances: [

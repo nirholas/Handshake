@@ -2721,7 +2721,7 @@ const SELF_ENDPOINTS = [
 		pipeline: 'volume',
 		enabled: true,
 		// Reserved-slot maintenance: recirculation must never compete with (and
-		// lose to) paid entries for tick slots — see the loop's selection step.
+		// lose to) paid entries for tick slots; see the loop's selection step.
 		maintenance: true,
 		run: (ctx) => ringRebalance(ctx),
 	},

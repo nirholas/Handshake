@@ -53,7 +53,7 @@ const TREASURY_BUFFER_ATOMIC = BigInt(process.env.X402_RING_TREASURY_BUFFER_ATOM
 const MIN_SWEEP_ATOMIC = BigInt(process.env.X402_RING_MIN_SWEEP_ATOMIC || 100_000);
 // Revenue share routed to the economy master on every sweep, in basis points.
 // The master's fuel module (economy-fuel.js) was built on the assumption that
-// "the master accumulates USDC revenue (x402, marketplace)" — but nothing ever
+// "the master accumulates USDC revenue (x402, marketplace)", but nothing ever
 // delivered that revenue, so the funding root could never refuel SOL and every
 // engine below it starved. This cut closes the loop: treasury → master USDC →
 // fuel swap → SOL → treasury-topup → circulation/sponsor floors. Still wallet-

@@ -317,7 +317,7 @@ export default wrapCron(async (req, res) => {
 	// Maintenance entries (recirculation: treasury→payer sweep, agent float
 	// top-up, pool funding) get RESERVED slots outside MAX_PER_TICK. They move
 	// zero net spend, are cooldown-gated at 120s, and are the only thing keeping
-	// the payer float alive — when they competed on priority alone, a wave of
+	// the payer float alive. When they competed on priority alone, a wave of
 	// failing high-priority paid entries starved them for days and the whole
 	// ring drained (July 2026 flat-line).
 	const readyAll = readyChecks.filter((e) => e.ready).map((e) => e.entry);
@@ -494,7 +494,7 @@ export default wrapCron(async (req, res) => {
 			if (!accept) {
 				errorMsg = 'no_solana_accept';
 				results.push({ id: entry.id, status: 'skip', reason: errorMsg });
-				await setCooldown(redis, entry); // endpoint misconfigured — don't re-probe every tick
+				await setCooldown(redis, entry); // endpoint misconfigured; don't re-probe every tick
 				continue;
 			}
 			if (!USDC_MINT || accept.asset !== USDC_MINT) {

@@ -204,6 +204,30 @@ async function loadSweepRows(db) {
 	}
 }
 
+// Per-tx totals across ALL legs of every sweep signature, aggregated in SQL so
+// the MAX_SWEEP_ROWS page can never truncate one leg of a split sweep (payer +
+// revshare share a tx_sig) and hand verifySweepMovement a partial sum, which
+// would raise a false-positive critical mismatch. No LIMIT: the aggregate runs
+// over the same lookback window and both legs of a tx always share one ts.
+async function loadSweepTxTotals(db) {
+	const totals = new Map();
+	try {
+		const rows = await db`
+			SELECT tx_sig, SUM(amount_atomic)::bigint AS total
+			FROM x402_ring_ledger
+			WHERE kind IN ('sweep', 'revshare') AND tx_sig IS NOT NULL
+			  AND ts > now() - (${LOOKBACK_HOURS} || ' hours')::interval
+			GROUP BY tx_sig
+		`;
+		for (const r of rows) totals.set(r.tx_sig, BigInt(r.total ?? 0));
+	} catch (err) {
+		if (!err?.message?.includes('does not exist')) {
+			log.warn('ring_reconcile_sweep_totals_failed', { message: err?.message });
+		}
+	}
+	return totals;
+}
+
 // Buyer-side rows for cross-log coherence: every successful autonomous payment
 // with a signature (any endpoint — a settle matched by ANY buyer row is
 // coherent), plus the endpoint so ring-settle buyer rows can be isolated for the
@@ -286,7 +310,7 @@ export function verifySettleAmount(row, parsedTx) {
 // and that the source is the configured treasury (treasury→payer and
 // treasury→master revshare are the only legal directions). A single sweep tx
 // may carry MULTIPLE ledger legs (payer sweep + master revshare), so the
-// treasury's total on-chain delta is checked against `txTotalAtomic` — the sum
+// treasury's total on-chain delta is checked against `txTotalAtomic`: the sum
 // of every ledger row sharing this tx_sig (defaults to the row's own amount for
 // the single-leg case). The recipient check stays per-row. Pure; exported for
 // tests.
@@ -437,11 +461,8 @@ export async function run(ctx = {}) {
 	const treasuryAddress = env.X402_PAY_TO_SOLANA || process.env.X402_PAY_TO_SOLANA || null;
 	// A split sweep (payer leg + master revshare leg) shares one tx_sig; the
 	// treasury's on-chain delta must match the SUM of its legs, not each row.
-	const sweepTxTotals = new Map();
-	for (const row of sweeps) {
-		if (!row.tx_sig) continue;
-		sweepTxTotals.set(row.tx_sig, (sweepTxTotals.get(row.tx_sig) ?? 0n) + BigInt(row.amount_atomic ?? 0));
-	}
+	// SQL-aggregated so a page-truncated leg can never yield a partial sum.
+	const sweepTxTotals = await loadSweepTxTotals(db);
 	for (const row of sweeps) {
 		const ref = String(row.id);
 		if (!row.tx_sig) {
