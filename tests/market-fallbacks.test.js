@@ -14,6 +14,12 @@ import {
 	normalizePaprikaGlobal,
 	normalizeLoreGlobal,
 	normalizeGeckoRow,
+	parseKrakenTicker,
+	parseCoinbaseSpot,
+	parseBitfinexTicker,
+	normalizeKrakenChart,
+	normalizeCoinbaseChart,
+	EXCHANGE_PAIRS,
 } from '../api/_lib/market-fallbacks.js';
 
 describe('global stats normalizers', () => {
@@ -121,5 +127,74 @@ describe('markets table row normalizer', () => {
 		expect(row.change_24h).toBeCloseTo(-3.2);
 		expect(row.price).toBeNull();
 		expect(row.sparkline).toEqual([]);
+	});
+});
+
+describe('exchange spot ticker parsers', () => {
+	it('Kraken ticker → last trade price under Kraken\'s internal pair alias', () => {
+		// Querying XBTUSD comes back keyed XXBTZUSD; the parser must not depend
+		// on knowing the alias.
+		const raw = { error: [], result: { XXBTZUSD: { a: ['64000.1'], c: ['63980.5', '0.01'] } } };
+		expect(parseKrakenTicker(raw)).toBeCloseTo(63980.5);
+	});
+
+	it('Coinbase spot → data.amount', () => {
+		expect(parseCoinbaseSpot({ data: { base: 'BTC', currency: 'USD', amount: '64010.55' } })).toBeCloseTo(64010.55);
+	});
+
+	it('Bitfinex ticker array → LAST_PRICE at index 6', () => {
+		const t = [63900, 12.5, 63901, 8.1, -120, -0.0019, 63975.2, 480.7, 64890, 63500];
+		expect(parseBitfinexTicker(t)).toBeCloseTo(63975.2);
+	});
+
+	it('misses (null) on empty or malformed payloads', () => {
+		expect(parseKrakenTicker({ error: ['EQuery:Unknown asset pair'], result: {} })).toBeNull();
+		expect(parseCoinbaseSpot({})).toBeNull();
+		expect(parseBitfinexTicker(['error'])).toBeNull();
+		expect(parseBitfinexTicker(null)).toBeNull();
+	});
+
+	it('maps exactly the headline assets, all three exchanges each', () => {
+		for (const id of ['bitcoin', 'ethereum', 'solana']) {
+			expect(Object.keys(EXCHANGE_PAIRS[id]).sort()).toEqual(['bitfinex', 'coinbase', 'kraken']);
+		}
+	});
+});
+
+describe('exchange candle chart normalizers', () => {
+	const now = 1_784_467_200_000; // fixed "now" so window clipping is deterministic
+	const hour = 3_600_000;
+
+	it('Kraken OHLC → [[ts_ms, close]] clipped to the window, oldest first', () => {
+		const rows = [
+			[(now - 30 * hour) / 1000, '100', '110', '95', '105', '102', '10', 5], // outside 1d window
+			[(now - 20 * hour) / 1000, '105', '112', '101', '108', '106', '12', 6],
+			[(now - 2 * hour) / 1000, '108', '115', '107', '111', '110', '9', 4],
+		];
+		const out = normalizeKrakenChart({ result: { XXBTZUSD: rows, last: 12345 } }, 1, now);
+		expect(out).toEqual([
+			[now - 20 * hour, 108],
+			[now - 2 * hour, 111],
+		]);
+	});
+
+	it('Coinbase candles → newest-first input re-sorted oldest first', () => {
+		const raw = [
+			[(now - 1 * hour) / 1000, 107, 112, 108, 111, 20], // [t, low, high, open, close, vol]
+			[(now - 2 * hour) / 1000, 101, 109, 102, 108, 15],
+			[(now - 50 * hour) / 1000, 90, 100, 92, 99, 30], // outside 1d window
+		];
+		const out = normalizeCoinbaseChart(raw, 1, now);
+		expect(out).toEqual([
+			[now - 2 * hour, 108],
+			[now - 1 * hour, 111],
+		]);
+	});
+
+	it('misses (null) when every candle is outside the window or malformed', () => {
+		expect(normalizeKrakenChart({ result: {} }, 1, now)).toBeNull();
+		expect(normalizeKrakenChart(null, 1, now)).toBeNull();
+		expect(normalizeCoinbaseChart({ message: 'NotFound' }, 1, now)).toBeNull();
+		expect(normalizeCoinbaseChart([[(now - 100 * hour) / 1000, 1, 2, 1, 2, 3]], 1, now)).toBeNull();
 	});
 });

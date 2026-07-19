@@ -4,10 +4,17 @@
 // prices — the chart renders a line, not candles) and returns a compact
 // [[timestamp_ms, price], …] array. Granularity is upstream-chosen per window
 // (5-minutely for 1d, hourly ≤90d, daily beyond). Cached 120s + CDN.
+//
+// When CoinGecko fails (its keyless tier 429s under load), the headline assets
+// fall back to exchange candles (Kraken OHLC, then Coinbase Exchange) via
+// fetchExchangeChart, so the BTC/ETH/SOL charts stay live through a CoinGecko
+// outage. A 404 (unknown coin) never falls back: that is an answer, not an
+// outage.
 
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { geckoFetch, isPlausibleCoinId } from '../_lib/coingecko.js';
+import { fetchExchangeChart } from '../_lib/market-fallbacks.js';
 
 export const VALID_DAYS = new Set([1, 7, 30, 90, 365]);
 
@@ -15,10 +22,18 @@ export const VALID_DAYS = new Set([1, 7, 30, 90, 365]);
 // market-chart endpoint sells the same price series this page renders.
 // Callers must validate id/days first; a 404 from upstream carries err.status.
 export async function buildPriceChart(id, days) {
-	const raw = await geckoFetch(`/coins/${id}/market_chart?vs_currency=usd&days=${days}`, {
-		ttlMs: 120_000,
-		timeoutMs: 10_000,
-	});
+	let raw;
+	try {
+		raw = await geckoFetch(`/coins/${id}/market_chart?vs_currency=usd&days=${days}`, {
+			ttlMs: 120_000,
+			timeoutMs: 10_000,
+		});
+	} catch (err) {
+		if (err?.status === 404) throw err;
+		const backup = await fetchExchangeChart(id, days);
+		if (backup) return { data: backup, days };
+		throw err;
+	}
 	const data = (raw?.prices || [])
 		.filter((p) => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]))
 		.map(([t, v]) => [Math.round(t), v]);

@@ -15,6 +15,7 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { geckoFetch } from '../_lib/coingecko.js';
+import { fetchHyperliquidPerps } from '../_lib/hyperliquid.js';
 
 let _cache = null; // { value, expiresAt }
 let _exCache = null; // { value, expiresAt }
@@ -29,31 +30,44 @@ const num = (v) => {
 
 // Exported for the paid Market Data API (api/_lib/market-data/) — the x402
 // market-derivatives endpoint sells the same perp table this page renders.
+//
+// CoinGecko (cross-venue) is primary; when it is down or rate-limited the
+// table falls back to Hyperliquid's keyless info API — one venue instead of
+// dozens, but a live perp table (price/funding/OI/volume for ~200 assets)
+// beats a 502. `source` says which upstream answered.
 export async function buildDerivativeTickers() {
 	const now = Date.now();
 	if (_cache && _cache.expiresAt > now) return _cache.value;
 
-	const raw = await geckoFetch('/derivatives?include_tickers=unexpired', { ttlMs: TTL_MS });
-	const rows = Array.isArray(raw) ? raw : [];
+	let tickers = [];
+	let source = 'coingecko';
+	try {
+		const raw = await geckoFetch('/derivatives?include_tickers=unexpired', { ttlMs: TTL_MS });
+		const rows = Array.isArray(raw) ? raw : [];
+		tickers = rows
+			.filter((t) => t && t.contract_type === 'perpetual')
+			.map((t) => ({
+				market: t.market || 'Unknown',
+				symbol: t.symbol || '',
+				index_id: t.index_id || null,
+				price: num(t.price),
+				change_24h: num(t.price_percentage_change_24h),
+				funding_rate: num(t.funding_rate),
+				open_interest: num(t.open_interest),
+				volume_24h: num(t.volume_24h),
+			}))
+			.sort((a, b) => (b.volume_24h ?? 0) - (a.volume_24h ?? 0))
+			.slice(0, 100);
+	} catch {
+		// fall through to the Hyperliquid backup below
+	}
 
-	const tickers = rows
-		.filter((t) => t && t.contract_type === 'perpetual')
-		.map((t) => ({
-			market: t.market || 'Unknown',
-			symbol: t.symbol || '',
-			index_id: t.index_id || null,
-			price: num(t.price),
-			change_24h: num(t.price_percentage_change_24h),
-			funding_rate: num(t.funding_rate),
-			open_interest: num(t.open_interest),
-			volume_24h: num(t.volume_24h),
-		}))
-		.sort((a, b) => (b.volume_24h ?? 0) - (a.volume_24h ?? 0))
-		.slice(0, 100);
+	if (!tickers.length) {
+		tickers = (await fetchHyperliquidPerps()).slice(0, 100);
+		source = 'hyperliquid';
+	}
 
-	if (!tickers.length) throw new Error('empty derivatives payload');
-
-	const value = { tickers, updated_at: now };
+	const value = { tickers, source, updated_at: now };
 	_cache = { value, expiresAt: now + TTL_MS };
 	return value;
 }

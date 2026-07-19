@@ -12,6 +12,11 @@
 // in-repo news engine (api/_lib/news.js). Both components must be live or
 // the handler throws BEFORE settlement — a mood score with a dead component
 // would be fabricated, and the buyer is never charged for one.
+//
+// A third, best-effort enrichment rides along: Deribit's DVOL implied-
+// volatility index for BTC and ETH (keyless public API). Volatility is NOT
+// part of the mood blend and never gates settlement; when Deribit is down the
+// field is null and the paid contract is otherwise unchanged.
 
 import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
 import { buildBazaarSchema } from '../_lib/x402-spec.js';
@@ -106,13 +111,57 @@ async function fetchNewsMood() {
 	};
 }
 
+/**
+ * Deribit DVOL rows ([[timestamp_ms, open, high, low, close], ...], oldest
+ * first) → { value, change_24h } from the newest and oldest closes, or null
+ * when the window is empty.
+ */
+export function summarizeDvol(rows) {
+	const closes = (Array.isArray(rows) ? rows : [])
+		.map((r) => Number(r?.[4]))
+		.filter(Number.isFinite);
+	if (!closes.length) return null;
+	const value = closes[closes.length - 1];
+	return {
+		value: Number(value.toFixed(2)),
+		change_24h: closes.length > 1 ? Number((value - closes[0]).toFixed(2)) : null,
+	};
+}
+
+async function fetchDvol(currency) {
+	const end = Date.now();
+	const start = end - 24 * 3_600_000;
+	const r = await fetch(
+		`https://www.deribit.com/api/v2/public/get_volatility_index_data?currency=${currency}` +
+			`&start_timestamp=${start}&end_timestamp=${end}&resolution=3600`,
+		{ headers: { accept: 'application/json' }, signal: AbortSignal.timeout(8000) },
+	);
+	if (!r.ok) throw new Error(`dvol ${r.status}`);
+	return summarizeDvol((await r.json())?.result?.data);
+}
+
+// Best-effort: per-currency failures collapse to null and never reject, so a
+// Deribit outage cannot fail (or refund) a call whose paid components are live.
+async function fetchVolatility() {
+	const [btc, eth] = await Promise.all(
+		['BTC', 'ETH'].map((c) => fetchDvol(c).catch(() => null)),
+	);
+	if (!btc && !eth) return null;
+	return { index: 'DVOL', btc, eth };
+}
+
 async function loadMood() {
 	const now = Date.now();
 	if (_cache && _cache.expiresAt > now) return _cache.value;
 
 	// Both components are required — Promise.all rejects if either is down and
 	// the caller refunds. A one-legged "composite" would be a fabricated signal.
-	const [fng, news] = await Promise.all([fetchFearGreed(), fetchNewsMood()]);
+	// fetchVolatility never rejects (best-effort enrichment, null on outage).
+	const [fng, news, volatility] = await Promise.all([
+		fetchFearGreed(),
+		fetchNewsMood(),
+		fetchVolatility(),
+	]);
 
 	// News score is -1..1; map to 0..100 and blend with Fear & Greed.
 	const newsIndex = ((news.score + 1) / 2) * 100;
@@ -141,6 +190,7 @@ async function loadMood() {
 				negative: news.negative,
 				neutral: news.neutral,
 			},
+			volatility,
 		},
 		drivers: news.drivers,
 	};
@@ -184,6 +234,27 @@ export const OUTPUT_SCHEMA = {
 						positive: { type: 'integer' },
 						negative: { type: 'integer' },
 						neutral: { type: 'integer' },
+					},
+				},
+				// Best-effort enrichment, not in `required`: null when Deribit is down.
+				volatility: {
+					type: ['object', 'null'],
+					properties: {
+						index: { type: 'string', enum: ['DVOL'] },
+						btc: {
+							type: ['object', 'null'],
+							properties: {
+								value: { type: 'number' },
+								change_24h: { type: ['number', 'null'] },
+							},
+						},
+						eth: {
+							type: ['object', 'null'],
+							properties: {
+								value: { type: 'number' },
+								change_24h: { type: ['number', 'null'] },
+							},
+						},
 					},
 				},
 			},

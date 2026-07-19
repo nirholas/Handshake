@@ -244,7 +244,19 @@ async function fromLlamaCoins(mint) {
 	return shape({ price_usd: price, decimals: num(c?.decimals) ?? 6 }, 'llama');
 }
 
-const SOURCES = [fromBirdeye, fromDexScreener, fromGeckoTerminal, fromLlamaCoins];
+// Raydium v3 price API (keyless) — price-only like the Llama rung, and the
+// narrowest coverage of the chain (only tokens with a Raydium pool resolve),
+// so it sits last. Its value is independence: Raydium indexes its own AMM
+// on-chain, so it keeps Solana majors and migrated pump.fun tokens priced
+// through a simultaneous Birdeye/DexScreener/GeckoTerminal/Llama outage.
+async function fromRaydium(mint) {
+	const data = await fetchJson(`https://api-v3.raydium.io/mint/price?mints=${mint}`);
+	const price = num(data?.data?.[mint]);
+	if (!(price > 0)) return null;
+	return shape({ price_usd: price }, 'raydium');
+}
+
+const SOURCES = [fromBirdeye, fromDexScreener, fromGeckoTerminal, fromLlamaCoins, fromRaydium];
 
 // Store a value in the per-instance L1 cache (with the bounded-size eviction the
 // fetch path uses) and return it. Shared by the live, L2-hit, and lock-loser

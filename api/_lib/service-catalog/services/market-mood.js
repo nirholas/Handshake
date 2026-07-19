@@ -18,7 +18,7 @@ export default {
 	acceptsBuilder: 'standard',
 	serviceName: 'three.ws Market Mood',
 	tags: ['sentiment', 'fear-greed', 'news', 'market-data'],
-	description: 'three.ws Market Mood Index — pay $0.002 USDC per call for a composite market-mood reading no single index gives you. Blends the Crypto Fear & Greed index (with its 24 h delta) with live lexicon sentiment scored across the newest headlines from 192 crypto publisher feeds into one 0–100 mood score and label, and returns both components so you can see when positioning (Fear & Greed) and narrative (news tone) disagree — the divergence signal. Includes the bullish and bearish headlines currently driving the news component, with links. Both components must be live or the call refuses before settlement.',
+	description: 'three.ws Market Mood Index — pay $0.002 USDC per call for a composite market-mood reading no single index gives you. Blends the Crypto Fear & Greed index (with its 24 h delta) with live lexicon sentiment scored across the newest headlines from 192 crypto publisher feeds into one 0–100 mood score and label, and returns both components so you can see when positioning (Fear & Greed) and narrative (news tone) disagree — the divergence signal. Includes the bullish and bearish headlines currently driving the news component, with links, plus a best-effort volatility read: Deribit DVOL implied-volatility index values for BTC and ETH with their 24 h change (null if Deribit is unreachable; volatility never gates the call). Both mood components must be live or the call refuses before settlement.',
 	input: {},
 	inputSchema: {
 		type: 'object',
@@ -31,6 +31,11 @@ export default {
 		components: {
 			fear_greed: { value: 66, label: 'Greed', change_24h: 3 },
 			news: { score: 0.18, label: 'positive', articles_scored: 120, positive: 41, negative: 22, neutral: 57 },
+			volatility: {
+				index: 'DVOL',
+				btc: { value: 36.2, change_24h: -0.4 },
+				eth: { value: 58.9, change_24h: 1.1 },
+			},
 		},
 		drivers: {
 			bullish: [{ title: 'Example bullish headline', source: 'Example Source', link: 'https://example.com/a' }],

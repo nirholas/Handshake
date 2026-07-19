@@ -42,6 +42,60 @@ const asPrice = (v) => {
 	return Number.isFinite(n) && n > 0 ? n : null;
 };
 
+// ── Exchange tickers for the headline assets ─────────────────────────────────
+// US-datacenter-safe exchange APIs only: Binance, Bybit and OKX geo-block US
+// datacenter IPs (Cloud Run us-central1 gets a "restricted location" error
+// body, see the note in api/_lib/sol-price.js), which would make them
+// permanently dead rungs. Kraken, Coinbase Exchange and Bitfinex all serve
+// datacenter traffic. Only the CoinGecko ids the platform actually prices by
+// id are mapped; an unmapped id just skips the exchange rungs.
+
+export const EXCHANGE_PAIRS = {
+	bitcoin: { kraken: 'XBTUSD', coinbase: 'BTC-USD', bitfinex: 'tBTCUSD' },
+	ethereum: { kraken: 'ETHUSD', coinbase: 'ETH-USD', bitfinex: 'tETHUSD' },
+	solana: { kraken: 'SOLUSD', coinbase: 'SOL-USD', bitfinex: 'tSOLUSD' },
+};
+
+// Kraken /0/public/Ticker: the result key is Kraken's internal pair name
+// (XBTUSD comes back as XXBTZUSD), so take the first result entry rather than
+// re-deriving their aliasing. `c` is [last trade price, lot volume].
+export function parseKrakenTicker(raw) {
+	const pair = Object.values(raw?.result || {})[0];
+	return asPrice(pair?.c?.[0]);
+}
+
+/** Coinbase /v2/prices/:pair/spot → { data: { amount } }. */
+export function parseCoinbaseSpot(raw) {
+	return asPrice(raw?.data?.amount);
+}
+
+/** Bitfinex v2 ticker array: index 6 is LAST_PRICE. */
+export function parseBitfinexTicker(raw) {
+	return asPrice(Array.isArray(raw) ? raw[6] : null);
+}
+
+function exchangePriceProviders(id) {
+	const pairs = EXCHANGE_PAIRS[id];
+	if (!pairs) return [];
+	return [
+		{
+			name: 'kraken',
+			url: `https://api.kraken.com/0/public/Ticker?pair=${pairs.kraken}`,
+			parse: async (r) => parseKrakenTicker(await r.json()),
+		},
+		{
+			name: 'coinbase',
+			url: `https://api.coinbase.com/v2/prices/${pairs.coinbase}/spot`,
+			parse: async (r) => parseCoinbaseSpot(await r.json()),
+		},
+		{
+			name: 'bitfinex',
+			url: `https://api-pub.bitfinex.com/v2/ticker/${pairs.bitfinex}`,
+			parse: async (r) => parseBitfinexTicker(await r.json()),
+		},
+	];
+}
+
 // ── Spot USD price by CoinGecko id ───────────────────────────────────────────
 // For the endpoints that price a headline asset (ETH for /gas, BTC for
 // /exchanges) via CoinGecko /simple/price. Both those reads were single-source;
@@ -50,7 +104,10 @@ const asPrice = (v) => {
 // or throws when both are down; callers price best-effort and tolerate a throw.
 
 /**
- * Live USD spot price for a CoinGecko coin id, CoinGecko → DefiLlama failover.
+ * Live USD spot price for a CoinGecko coin id. CoinGecko → DefiLlama failover,
+ * extended with Kraken → Coinbase → Bitfinex exchange tickers for the headline
+ * assets in EXCHANGE_PAIRS, so BTC/ETH/SOL pricing survives even a
+ * simultaneous aggregator outage.
  * @param {string} coingeckoId  e.g. "ethereum", "bitcoin", "solana"
  * @returns {Promise<number>}   positive USD price
  * @throws when every free source is down.
@@ -71,6 +128,7 @@ export async function fetchCoinPriceUsd(coingeckoId) {
 				url: `https://coins.llama.fi/prices/current/coingecko:${id}`,
 				parse: async (r) => asPrice((await r.json())?.coins?.[`coingecko:${id}`]?.price),
 			},
+			...exchangePriceProviders(id),
 		],
 		{ timeoutMs: 6000, label: `price:${id}` },
 	);
@@ -270,4 +328,86 @@ export async function fetchMarketsTable({ page, perPage, category }) {
 	}
 	const { value, source } = await fetchFirst(providers, { timeoutMs: 10_000, label: 'markets-table' });
 	return { rows: value, source };
+}
+
+// ── Price-series (chart) failover ────────────────────────────────────────────
+// Backs up CoinGecko /market_chart for the /coin/:id line chart, which renders
+// close prices as [[timestamp_ms, price], ...]. Exchange candle endpoints
+// (Kraken OHLC, Coinbase Exchange candles) cover the EXCHANGE_PAIRS majors:
+// when CoinGecko is rate-limited, the BTC/ETH/SOL charts stay live instead of
+// blanking. Long-tail coins have no exchange mapping and keep CoinGecko as
+// their only source, exactly as before.
+
+// Kraken OHLC interval (minutes) per chart window. Kraken returns up to 720
+// candles per interval, so every window fits in one request: 5m covers 2.5d,
+// 1h covers 30d, 4h covers 120d, 1d covers ~2y.
+const KRAKEN_INTERVAL = { 1: 5, 7: 60, 30: 240, 90: 1440, 365: 1440 };
+
+// Coinbase Exchange granularity (seconds) per window. Their API allows only
+// {60,300,900,3600,21600,86400} and at most 300 candles per request, so the
+// 365d window cannot be served in one call and is left to Kraken.
+const COINBASE_GRANULARITY = { 1: 300, 7: 3600, 30: 21600, 90: 86400 };
+
+/**
+ * Kraken /0/public/OHLC → [[timestamp_ms, close], ...] clipped to the window.
+ * Rows are [t_s, open, high, low, close, vwap, volume, count], oldest first.
+ */
+export function normalizeKrakenChart(raw, days, now = Date.now()) {
+	const rows = Object.values(raw?.result || {}).find(Array.isArray);
+	if (!Array.isArray(rows)) return null;
+	const cutoff = now - days * 86_400_000;
+	const out = rows
+		.map((r) => [Number(r?.[0]) * 1000, Number(r?.[4])])
+		.filter(([t, c]) => Number.isFinite(t) && t >= cutoff && Number.isFinite(c) && c > 0);
+	return out.length ? out : null;
+}
+
+/**
+ * Coinbase Exchange /products/:pair/candles → [[timestamp_ms, close], ...].
+ * Rows are [t_s, low, high, open, close, volume], newest first.
+ */
+export function normalizeCoinbaseChart(raw, days, now = Date.now()) {
+	if (!Array.isArray(raw)) return null;
+	const cutoff = now - days * 86_400_000;
+	const out = raw
+		.map((r) => [Number(r?.[0]) * 1000, Number(r?.[4])])
+		.filter(([t, c]) => Number.isFinite(t) && t >= cutoff && Number.isFinite(c) && c > 0)
+		.sort((a, b) => a[0] - b[0]);
+	return out.length ? out : null;
+}
+
+/**
+ * Exchange-candle backup for the coin price chart. Returns [[timestamp_ms,
+ * close], ...] oldest-first, or null when the id has no exchange mapping or
+ * every exchange is down. Never throws: this only runs when CoinGecko already
+ * failed, and the caller wants that original error if the backup misses too.
+ * @param {string} id    CoinGecko coin id (must be in EXCHANGE_PAIRS)
+ * @param {number} days  chart window: 1 | 7 | 30 | 90 | 365
+ */
+export async function fetchExchangeChart(id, days) {
+	const pairs = EXCHANGE_PAIRS[id];
+	if (!pairs || !KRAKEN_INTERVAL[days]) return null;
+	const providers = [
+		{
+			name: 'kraken-ohlc',
+			url: `https://api.kraken.com/0/public/OHLC?pair=${pairs.kraken}&interval=${KRAKEN_INTERVAL[days]}`,
+			parse: async (r) => normalizeKrakenChart(await r.json(), days),
+		},
+	];
+	if (COINBASE_GRANULARITY[days]) {
+		providers.push({
+			name: 'coinbase-candles',
+			url:
+				`https://api.exchange.coinbase.com/products/${pairs.coinbase}/candles` +
+				`?granularity=${COINBASE_GRANULARITY[days]}`,
+			init: { headers: { accept: 'application/json', 'user-agent': 'three.ws/1.0' } },
+			parse: async (r) => normalizeCoinbaseChart(await r.json(), days),
+		});
+	}
+	try {
+		const { value } = await fetchFirst(providers, { timeoutMs: 8000, label: `chart:${id}` });
+		return value;
+	} catch {
+		return null;
+	}
 }
