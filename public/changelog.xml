@@ -79,6 +79,14 @@
 			<description>Two fixes for the new 41-language experience. Opening a link with a language in the URL (like ?lang=te for Telugu) now always shows that language, even if you had previously browsed in another one; before, your first visit's language silently overrode every shared link. The floating language switcher also joins the site's shared bottom-corner layout, so it no longer overlaps the Getting Started guide.</description>
 		</item>
 		<item>
+			<title>Markets data now survives outages with five new free sources</title>
+			<link>https://three.ws/coins</link>
+			<guid isPermaLink="false">2026-07-19:Markets data now survives outages with five new free sources</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The markets hub picked up a deeper safety net of free public data sources. Bitcoin, Ethereum and Solana price charts and headline prices now fall back to live exchange data (Kraken, Coinbase, Bitfinex) whenever the primary aggregator is rate-limited, so the /coins charts keep drawing instead of going blank. The /derivatives perp table gains a Hyperliquid backup with live funding, open interest and volume for about 200 contracts. Solana token panels add Raydium's own pool index as a final price source, and the paid Market Mood endpoint now includes Deribit's DVOL implied-volatility index for BTC and ETH at no extra cost.</description>
+		</item>
+		<item>
 			<title>Motion Swap now captures hands and fingers</title>
 			<link>https://three.ws/motion-swap</link>
 			<guid isPermaLink="false">2026-07-19:Motion Swap now captures hands and fingers</guid>

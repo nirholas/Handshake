@@ -106,11 +106,25 @@ through the shared [`failover-fetch`](../src/shared/failover-fetch.js) primitive
   up the ranked top-N list (7d sparklines and category scoping stay
   CoinGecko-only and degrade to an empty chart / CoinGecko-only when it's down).
 - **Headline prices** — the ETH figure on `/gas` and the BTC figure on
-  `/exchanges` fail over CoinGecko → DefiLlama (keyed by the same CoinGecko id).
+  `/exchanges` fail over CoinGecko → DefiLlama (keyed by the same CoinGecko id),
+  then to live exchange tickers (Kraken → Coinbase → Bitfinex) for the mapped
+  majors (BTC, ETH, SOL).
+- **Price chart** (`/api/coin/ohlc`) — CoinGecko `market_chart`, backed up for
+  BTC/ETH/SOL by exchange candles (Kraken OHLC → Coinbase Exchange), so the
+  headline charts stay live through a CoinGecko outage. Long-tail coins remain
+  CoinGecko-only. A 404 (unknown coin) never falls back: that is an answer.
+- **Derivatives table** (`/api/coin/derivatives`) — CoinGecko's cross-venue perp
+  feed, falling back to Hyperliquid's keyless info API
+  ([`api/_lib/hyperliquid.js`](../api/_lib/hyperliquid.js)): one venue instead of
+  dozens, but live price/funding/OI/volume for ~200 perps beats a 502. The
+  response carries a `source` marker.
 - **SOL spot** — seven sources server-side (CoinGecko, Jupiter, Kraken,
   Coinbase, DefiLlama, DIA, Bitfinex) and four browser-side, CORS-safe ones.
-- **Solana token panels** — Birdeye → DexScreener → GeckoTerminal → DefiLlama
-  (see [`api/_lib/market/token-market.js`](../api/_lib/market/token-market.js)).
+- **Solana token panels** — Birdeye → DexScreener → GeckoTerminal → DefiLlama →
+  Raydium (see
+  [`api/_lib/market/token-market.js`](../api/_lib/market/token-market.js)).
+  The Raydium rung is price-only and covers only Raydium-pooled tokens, but it
+  indexes its own AMM, so it stays up when every aggregator is rate-limited.
 - **Trending** (`/api/coin/trending`) — CoinGecko `/search/trending` → GeckoTerminal
   on-chain trending. CoinGecko ranks by search interest across all chains; the
   free fallback ranks by on-chain pool activity, scoped to Solana so every
@@ -119,8 +133,9 @@ through the shared [`failover-fetch`](../src/shared/failover-fetch.js) primitive
   fills the coins list — categories and NFTs have no on-chain analogue and come
   back empty, which the page hides. A populated list still beats a blank page.
 
-Every fallback is free and keyless (Binance is excluded — it geo-blocks US
-datacenter IPs).
+Every fallback is free and keyless (Binance, Bybit and OKX are excluded — they
+geo-block US datacenter IPs, so from Cloud Run they would be permanently dead
+rungs).
 
 ## The market tools
 

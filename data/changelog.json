@@ -14865,6 +14865,16 @@
 				"improvement"
 			],
 			"link": "/motion-swap"
+		},
+		{
+			"date": "2026-07-19",
+			"title": "Markets data now survives outages with five new free sources",
+			"summary": "The markets hub picked up a deeper safety net of free public data sources. Bitcoin, Ethereum and Solana price charts and headline prices now fall back to live exchange data (Kraken, Coinbase, Bitfinex) whenever the primary aggregator is rate-limited, so the /coins charts keep drawing instead of going blank. The /derivatives perp table gains a Hyperliquid backup with live funding, open interest and volume for about 200 contracts. Solana token panels add Raydium's own pool index as a final price source, and the paid Market Mood endpoint now includes Deribit's DVOL implied-volatility index for BTC and ETH at no extra cost.",
+			"tags": [
+				"improvement",
+				"infra"
+			],
+			"link": "/coins"
 		}
 	]
 }

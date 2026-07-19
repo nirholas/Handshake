@@ -110,4 +110,4 @@ A failed upstream never charges you: the endpoint verifies payment, runs the dat
 - [x402 developer tools](/docs/x402-dev-tools) - free test bench for debugging payment envelopes
 - [Crypto Data API](/docs/crypto-api) - the free, keyless Solana/pump.fun bundle (token snapshots, holders, whales); live index at [`/api/crypto`](https://three.ws/api/crypto)
 - Sibling paid intel endpoints: `market-heatmap`, `market-mood`, `gas-oracle`, `yield-scan`, `stablecoin-health`, `hack-check`, `news-pulse`, `defi-radar` — value-added composites over the same data, also in the discovery doc
-- Data sources: CoinGecko (with CoinPaprika/CoinLore failover), DeFiLlama, alternative.me, public Ethereum RPCs
+- Data sources: CoinGecko (with CoinPaprika/CoinLore failover), DeFiLlama, alternative.me, public Ethereum RPCs; exchange-grade backups for the majors (Kraken, Coinbase Exchange, Bitfinex candles/tickers), Hyperliquid's keyless info API behind `market-derivatives` (the response's `source` field says which upstream answered), and Deribit DVOL implied volatility inside `market-mood` (best-effort, never gates settlement)
