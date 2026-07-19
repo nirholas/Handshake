@@ -295,16 +295,24 @@ async function loadAvatar(t, url) {
 
 	const bbox = new THREE.Box3().setFromObject(root);
 	const height = Math.max(0.01, bbox.max.y - bbox.min.y);
+	// Measure the avatar's OWN head↔ankle span at rest so it can be scaled to
+	// match the subject's on-screen span (the anchor measures the same nose→ankle
+	// extent). Dividing the anchor span by the full crown→sole height instead
+	// makes the avatar render far too small. Fall back to fractions of the bbox.
 	let hipsRestY = bbox.min.y + height * HIP_HEIGHT_FRACTION;
+	let headY = bbox.min.y + height * 0.93;
+	let ankleY = bbox.min.y + height * 0.06;
+	const p = new THREE.Vector3();
 	root.traverse((n) => {
-		if (n.name === 'Hips') {
-			const p = new THREE.Vector3();
-			n.getWorldPosition(p);
-			hipsRestY = p.y;
-		}
+		if (n.name === 'Hips') { n.getWorldPosition(p); hipsRestY = p.y; }
+		else if (n.name === 'Head') { n.getWorldPosition(p); headY = p.y; }
+		else if (n.name === 'LeftFoot' || n.name === 'RightFoot') { n.getWorldPosition(p); ankleY = p.y; }
 	});
+	// Head bone sits at ear level; the anchor's top is nose/ear, so nudge up
+	// slightly toward the crown for a closer visual match.
+	const headAnkleSpan = Math.max(0.01, (headY - ankleY) * 1.08);
 
-	state.avatar = { root, group, height, hipsRestY, baseMinY: bbox.min.y, retargetMod };
+	state.avatar = { root, group, height, hipsRestY, headAnkleSpan, baseMinY: bbox.min.y, retargetMod };
 
 	if (state.clipJSON) bindClip(t);
 	setStatus('');
@@ -341,9 +349,10 @@ function placeAvatar(t, timeSec) {
 	av.group.visible = a.v === 1;
 	if (!av.group.visible) return;
 
-	// Anchor: hip centre in normalized image coords (y down) + subject height
-	// as a fraction of frame height. Backdrop is height-1 world units.
-	const scale = Math.max(0.02, a.h / av.height);
+	// Anchor: hip centre in normalized image coords (y down) + subject nose→ankle
+	// span as a fraction of frame height. Backdrop is 1 world-unit tall, so a.h is
+	// already in world units. Match the avatar's own head→ankle span to it.
+	const scale = Math.max(0.02, a.h / av.headAnkleSpan);
 	const hipWorldX = (a.x - 0.5) * aspect;
 	const hipWorldY = 0.5 - a.y;
 	av.group.scale.setScalar(scale);
