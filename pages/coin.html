@@ -41,6 +41,45 @@
 			/* /coin/:id enrichment sections — same token/card system as coin-pages.css,
 			   scoped here because only this page renders them. */
 
+			/* ── Chart source toggle (native line / TradingView) ── */
+			.cv-chart-controls {
+				display: flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: 0.5rem 0.75rem;
+			}
+			.cv-chart-modes {
+				border: 1px solid var(--cv-border);
+				border-radius: var(--cv-radius);
+				background: var(--cv-surface-2);
+				padding: 2px;
+			}
+			.cv-tv-wrap {
+				height: 440px;
+				border-radius: 8px;
+				overflow: hidden;
+				/* The widget's own loader paints on this while the iframe boots. */
+				background: var(--cv-surface-2);
+			}
+			@media (min-width: 768px) {
+				.cv-tv-wrap {
+					height: 520px;
+				}
+			}
+			.cv-tv-credit {
+				margin: 0.625rem 0 0;
+				font-size: 0.6875rem;
+			}
+			.cv-tv-credit a {
+				color: var(--cv-text-3);
+				text-decoration: none;
+			}
+			.cv-tv-credit a:hover,
+			.cv-tv-credit a:focus-visible {
+				color: var(--cv-text-2);
+				text-decoration: underline;
+			}
+
 			/* ── Price performance matrix ── */
 			.cv-perf-grid {
 				display: grid;

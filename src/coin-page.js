@@ -112,7 +112,83 @@ function renderHead(coin) {
 
 // ── Chart ───────────────────────────────────────────────────────────────────
 
-const chartState = { days: 30, series: [], loading: true, error: null };
+// Two chart sources share the panel: the native SVG line chart (default, zero
+// third-party weight) and TradingView's advanced chart widget, lazy-mounted
+// only when the user switches to it. The choice persists across coins.
+const CHART_MODE_KEY = 'tws_coin_chart_mode';
+
+function storedChartMode() {
+	try {
+		return localStorage.getItem(CHART_MODE_KEY) === 'tradingview' ? 'tradingview' : 'simple';
+	} catch {
+		return 'simple';
+	}
+}
+
+const chartState = { days: 30, series: [], loading: true, error: null, mode: storedChartMode() };
+
+// TradingView resolves an unprefixed BASE+QUOTE pair (e.g. BTCUSD) to its
+// top-liquidity listing, so no exchange mapping table is needed.
+function tvSymbol(coin) {
+	const sym = (coin.symbol || '').toUpperCase();
+	return sym && /^[A-Z0-9]{1,15}$/.test(sym) ? `${sym}USD` : null;
+}
+
+let tvThemeObserver = null;
+
+function mountTradingView(coin) {
+	const host = $('cv-tv');
+	const symbol = tvSymbol(coin);
+	if (!host || !symbol) return;
+	const theme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+	const container = document.createElement('div');
+	container.className = 'tradingview-widget-container';
+	container.style.height = '100%';
+	const widget = document.createElement('div');
+	widget.className = 'tradingview-widget-container__widget';
+	widget.style.height = '100%';
+	container.appendChild(widget);
+	const script = document.createElement('script');
+	script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+	script.type = 'text/javascript';
+	script.async = true;
+	script.text = JSON.stringify({
+		autosize: true,
+		symbol,
+		interval: 'D',
+		timezone: 'Etc/UTC',
+		theme,
+		style: '1',
+		locale: 'en',
+		allow_symbol_change: true,
+		save_image: false,
+		support_host: 'https://www.tradingview.com',
+	});
+	container.appendChild(script);
+	host.replaceChildren(container);
+
+	// The widget bakes its theme in at mount time, so a live theme switch
+	// needs a re-mount.
+	if (!tvThemeObserver) {
+		tvThemeObserver = new MutationObserver(() => {
+			if (chartState.mode === 'tradingview') mountTradingView(coin);
+		});
+		tvThemeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+	}
+}
+
+function setChartMode(coin, mode) {
+	if (mode === chartState.mode) return;
+	chartState.mode = mode;
+	try {
+		localStorage.setItem(CHART_MODE_KEY, mode);
+	} catch {
+		// Private browsing: the toggle still works for this page view.
+	}
+	renderChart(coin);
+	// Entering native mode with no data yet loads it on demand.
+	if (mode === 'simple' && !chartState.series.length && !chartState.loading) loadChart(coin);
+}
 
 const CHART_W = 800;
 const CHART_H = 300;
@@ -146,15 +222,30 @@ function chartGeometry(series) {
 
 function renderChart(coin) {
 	const el = $('cv-chart');
-	const { days, series, loading, error } = chartState;
+	const { days, series, loading, error, mode } = chartState;
+	const tvAvailable = tvSymbol(coin) != null;
+	const tv = mode === 'tradingview' && tvAvailable;
 
-	const rangeBtns = TIME_RANGES.map(
-		(r) =>
-			`<button type="button" class="cv-range-btn" data-days="${r.days}" aria-pressed="${r.days === days}">${r.label}</button>`,
-	).join('');
+	const rangeBtns = tv
+		? ''
+		: TIME_RANGES.map(
+				(r) =>
+					`<button type="button" class="cv-range-btn" data-days="${r.days}" aria-pressed="${r.days === days}">${r.label}</button>`,
+			).join('');
+
+	const modeBtns = tvAvailable
+		? `<div class="cv-ranges cv-chart-modes" role="group" aria-label="Chart source">
+				<button type="button" class="cv-range-btn" data-mode="simple" aria-pressed="${!tv}">Line</button>
+				<button type="button" class="cv-range-btn" data-mode="tradingview" aria-pressed="${tv}">TradingView</button>
+			</div>`
+		: '';
 
 	let body;
-	if (loading) {
+	if (tv) {
+		body = `
+			<div class="cv-tv-wrap" id="cv-tv" aria-label="TradingView chart for ${esc(coin.name)}"></div>
+			<p class="cv-tv-credit"><a href="https://www.tradingview.com/symbols/${esc(tvSymbol(coin))}/" target="_blank" rel="noopener nofollow noreferrer">${esc(coin.symbol || coin.name)} chart by TradingView ↗</a></p>`;
+	} else if (loading) {
 		body = '<div class="cv-chart-state"><span class="cv-spinner" aria-hidden="true"></span>Loading chart…</div>';
 	} else if (error || series.length < 2) {
 		body = '<div class="cv-chart-state">Chart data unavailable</div>';
@@ -194,7 +285,7 @@ function renderChart(coin) {
 	}
 
 	const pct =
-		!loading && !error && series.length >= 2
+		!tv && !loading && !error && series.length >= 2
 			? (() => {
 					const g = chartGeometry(series);
 					return `<span class="pct ${g.up ? 'cv-up' : 'cv-down'} cv-mono">${esc(formatPercent(g.changePct))}</span>`;
@@ -205,12 +296,15 @@ function renderChart(coin) {
 		<div class="cv-chart-panel">
 			<div class="cv-chart-bar">
 				<div class="left"><span class="title">Price Chart</span>${pct}</div>
-				<div class="cv-ranges" role="group" aria-label="Chart time range">${rangeBtns}</div>
+				<div class="cv-chart-controls">
+					${rangeBtns ? `<div class="cv-ranges" role="group" aria-label="Chart time range">${rangeBtns}</div>` : ''}
+					${modeBtns}
+				</div>
 			</div>
 			${body}
 		</div>`;
 
-	el.querySelectorAll('.cv-range-btn').forEach((btn) => {
+	el.querySelectorAll('.cv-range-btn[data-days]').forEach((btn) => {
 		btn.addEventListener('click', () => {
 			const d = Number(btn.dataset.days);
 			if (d === chartState.days) return;
@@ -218,8 +312,12 @@ function renderChart(coin) {
 			loadChart(coin);
 		});
 	});
+	el.querySelectorAll('.cv-range-btn[data-mode]').forEach((btn) => {
+		btn.addEventListener('click', () => setChartMode(coin, btn.dataset.mode));
+	});
 
-	wireChartPointer();
+	if (tv) mountTradingView(coin);
+	else wireChartPointer();
 }
 
 function wireChartPointer() {
@@ -788,7 +886,15 @@ async function main() {
 		upd.textContent = `Last updated: ${new Date(coin.last_updated).toLocaleString()}`;
 	}
 	// Chart, markets, and news stream in independently of the core profile.
-	loadChart(coin);
+	// A remembered TradingView preference mounts the widget directly and
+	// defers the native OHLC fetch until the user switches back.
+	if (chartState.mode === 'tradingview' && tvSymbol(coin)) {
+		chartState.loading = false;
+		renderChart(coin);
+	} else {
+		chartState.mode = 'simple';
+		loadChart(coin);
+	}
 	loadMarkets(coin);
 	loadNews(coin);
 }

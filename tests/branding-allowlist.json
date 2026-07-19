@@ -413,5 +413,10 @@
 		"pattern": "Avaturn",
 		"file": "docs/forge-pipeline.md",
 		"reason": "Rig-convention compatibility list - names the third-party skeleton naming conventions glb-canonicalize maps; technical compatibility statement, not brand promotion."
+	},
+	{
+		"pattern": "three.ws, R2, Ready Player Me)",
+		"file": "docs/assistant-widget.md",
+		"reason": "Documents the widget's external-GLB host allowlist, which genuinely includes models.readyplayer.me (see multiplayer/src/avatar-url.js): a factual capability listing, not user-facing promotion."
 	}
 ]

@@ -47,6 +47,14 @@
 			<description>The 3D avatar assistant widget is now installable three ways. Beyond the one-tag script, there is an npm package, @three-ws/assistant, for bundler projects (the one-tag build is generated from it, so they never drift), and a free MCP server, @three-ws/assistant-mcp, published to the official Model Context Protocol registry as io.github.nirholas/assistant-widget. Any AI agent (Claude Code, Cursor, Claude Desktop) can now ask for a widget in plain language and get back a paste-ready embed: build_assistant_widget turns a config into a script tag, a frame URL, and a ThreeAssistant.init() call, and list_assistant_options returns every avatar, background, and mode. Full developer docs at /docs/assistant-widget and a step-by-step tutorial walk through every option, the JavaScript API, and the agent workflow.</description>
 		</item>
 		<item>
+			<title>TradingView charts on every coin page</title>
+			<link>https://three.ws/coin/bitcoin</link>
+			<guid isPermaLink="false">2026-07-19:TradingView charts on every coin page</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every /coin page (like /coin/bitcoin) now has a chart-source toggle: keep the fast native line chart or switch to a full TradingView advanced chart with candlesticks, indicators, and drawing tools. Your choice is remembered across coins and visits, and the widget follows the site theme.</description>
+		</item>
+		<item>
 			<title>Assistant widget</title>
 			<link>https://three.ws/assistant</link>
 			<guid isPermaLink="false">2026-07-18:Assistant widget</guid>
