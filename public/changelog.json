@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-19T07:06:32.397Z",
+	"generated_at": "2026-07-19T07:10:14.653Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -12,6 +12,16 @@
 			"title": "Docs · Assistant widget",
 			"summary": "Add a 3D avatar assistant to any website: the one-tag script, the @three-ws/assistant npm package, and the assistant-widget MCP server for AI agents.",
 			"link": "/docs/assistant-widget",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-19",
+			"type": "launch",
+			"title": "Motion Swap — Replace Yourself in Video with Your Avatar",
+			"summary": "Upload a video of yourself and get it back with your 3D avatar performing your motion instead of you. Server-side pose tracking and person masking, browser-side compositing and export — stay off camera without staying off video.",
+			"link": "/motion-swap",
 			"tags": [
 				"launch"
 			]
@@ -91,6 +101,16 @@
 			"tags": [
 				"fix",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-19",
+			"type": "update",
+			"title": "Motion Swap: replace yourself in a video with your 3D avatar",
+			"summary": "Upload a video of yourself (a house tour, a demo, a walk-through) at /motion-swap and get it back with your avatar performing your exact motion instead of you. The platform tracks your body pose in every frame, masks you out, and pins your chosen avatar over you, matching your position and size; you stay pixelated underneath. Compositing and video export run right in your browser, and any rigged humanoid GLB works, including avatars you generated or captured from a selfie.",
+			"link": "/motion-swap",
+			"tags": [
+				"feature"
 			]
 		},
 		{

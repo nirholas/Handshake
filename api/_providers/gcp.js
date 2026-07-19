@@ -28,6 +28,9 @@
 //   video2scene  → GCP_VIDEO2SCENE_URL      (workers/model-video2scene, LingBot-Map)
 //                  Streaming video → 3D point cloud. Standard /infer + /tasks/:id
 //                  shape; the result is a .ply point cloud, not a GLB mesh.
+//   video2motion → GCP_VIDEO2MOTION_URL     (workers/model-video2motion, MediaPipe)
+//                  Video of a person → AnimationClip JSON + person-mask video +
+//                  normalized video + per-frame screen anchors (body swap).
 //
 // All workers share the same bearer secret (GCP_RECONSTRUCTION_KEY).
 // Each worker exposes the same task shape:
@@ -98,6 +101,12 @@ function serviceUrlForMode(mode) {
 			// Streaming video → 3D point-cloud worker (workers/model-video2scene,
 			// LingBot-Map). Standard /infer + /tasks/:id task shape; result is a PLY.
 			return readEnv('GCP_VIDEO2SCENE_URL');
+		case 'video2motion':
+			// Video of a person → animation clip + body-swap plates
+			// (workers/model-video2motion, MediaPipe pose + segmentation). Standard
+			// /infer + /tasks/:id task shape; result is an AnimationClip JSON plus
+			// mask/video/meta sidecar URLs.
+			return readEnv('GCP_VIDEO2MOTION_URL');
 		case 'rerig':
 			// Rigging: prefer the standalone UniRig worker (workers/unirig — direct
 			// /rig + /tasks/:id, `mesh_gcs_url` request schema) when GCP_UNIRIG_URL
@@ -352,6 +361,21 @@ function buildWorkerRequest(request) {
 		};
 	}
 
+	if (mode === 'video2motion') {
+		// Video of a person → motion clip + compositing plates. The source is a
+		// public video URL; capture params ride in `params`.
+		const body = { video_url: sourceUrl };
+		if (params?.fps !== undefined && params.fps !== null) body.fps = params.fps;
+		if (params?.max_seconds !== undefined && params.max_seconds !== null) {
+			body.max_seconds = params.max_seconds;
+		}
+		return {
+			path: '/infer',
+			resultKey: 'result_url',
+			body,
+		};
+	}
+
 	if (mode === 'text2motion') {
 		// Text→motion has no source mesh: the prompt rides in params. The worker
 		// returns a three.js AnimationClip JSON URL (result_url), not a GLB.
@@ -387,6 +411,9 @@ const MODE_ETA = {
 	text2motion: 30,
 	rerig: 45,
 	video2scene: 240,
+	// CPU pose+segmentation over every frame: scales with clip length; a 30 s
+	// clip lands around this.
+	video2motion: 120,
 };
 
 // `reconstructUrl` overrides where `reconstruct` jobs go. The forge Hunyuan3D
@@ -544,6 +571,14 @@ export function createRegenProvider({ reconstructUrl } = {}) {
 				} else if (mode === 'text2motion') {
 					// The result is a three.js AnimationClip JSON, not a mesh.
 					result.resultClipUrl = url;
+					if (typeof data.frames === 'number') result.frames = data.frames;
+					if (typeof data.fps === 'number') result.fps = data.fps;
+				} else if (mode === 'video2motion') {
+					// Clip JSON plus the body-swap compositing plates.
+					result.resultClipUrl = url;
+					if (data.meta_url) result.metaUrl = data.meta_url;
+					if (data.video_url) result.videoUrl = data.video_url;
+					if (data.mask_url) result.maskUrl = data.mask_url;
 					if (typeof data.frames === 'number') result.frames = data.frames;
 					if (typeof data.fps === 'number') result.fps = data.fps;
 				} else if (mode === 'video2scene') {

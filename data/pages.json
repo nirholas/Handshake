@@ -437,6 +437,14 @@
 					"added": "2026-06-27"
 				},
 				{
+					"path": "/motion-swap",
+					"title": "Motion Swap — Replace Yourself in Video with Your Avatar",
+					"description": "Upload a video of yourself and get it back with your 3D avatar performing your motion instead of you. Server-side pose tracking and person masking, browser-side compositing and export — stay off camera without staying off video.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-07-19"
+				},
+				{
 					"path": "/forge-nim",
 					"title": "Forge · NIM — Self-Hosted Image to 3D",
 					"description": "Drive a self-hosted TRELLIS NIM (nvcr.io/nim/microsoft/trellis) directly: drop a photo, hit /v1/infer, and get the textured GLB back synchronously as base64 — rendered live and downloadable.",

@@ -15,6 +15,14 @@
 			<description>Add a 3D avatar assistant to any website: the one-tag script, the @three-ws/assistant npm package, and the assistant-widget MCP server for AI agents.</description>
 		</item>
 		<item>
+			<title>Motion Swap — Replace Yourself in Video with Your Avatar</title>
+			<link>https://three.ws/motion-swap</link>
+			<guid isPermaLink="false">2026-07-19:Motion Swap — Replace Yourself in Video with Your Avatar</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Upload a video of yourself and get it back with your 3D avatar performing your motion instead of you. Server-side pose tracking and person masking, browser-side compositing and export — stay off camera without staying off video.</description>
+		</item>
+		<item>
 			<title>Tutorial · Add a 3D Avatar Assistant</title>
 			<link>https://three.ws/tutorials/add-a-3d-assistant</link>
 			<guid isPermaLink="false">2026-07-19:Tutorial · Add a 3D Avatar Assistant</guid>
@@ -69,6 +77,14 @@
 			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Two fixes for the new 41-language experience. Opening a link with a language in the URL (like ?lang=te for Telugu) now always shows that language, even if you had previously browsed in another one; before, your first visit's language silently overrode every shared link. The floating language switcher also joins the site's shared bottom-corner layout, so it no longer overlaps the Getting Started guide.</description>
+		</item>
+		<item>
+			<title>Motion Swap: replace yourself in a video with your 3D avatar</title>
+			<link>https://three.ws/motion-swap</link>
+			<guid isPermaLink="false">2026-07-19:Motion Swap: replace yourself in a video with your 3D avatar</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Upload a video of yourself (a house tour, a demo, a walk-through) at /motion-swap and get it back with your avatar performing your exact motion instead of you. The platform tracks your body pose in every frame, masks you out, and pins your chosen avatar over you, matching your position and size; you stay pixelated underneath. Compositing and video export run right in your browser, and any rigged humanoid GLB works, including avatars you generated or captured from a selfie.</description>
 		</item>
 		<item>
 			<title>Switch any coin chart between CoinGecko, TradingView, DexScreener, and GeckoTerminal</title>

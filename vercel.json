@@ -2227,6 +2227,14 @@
 			"dest": "/capture.html"
 		},
 		{
+			"src": "/motion-swap",
+			"dest": "/motion-swap.html"
+		},
+		{
+			"src": "/motion-swap/",
+			"dest": "/motion-swap.html"
+		},
+		{
 			"src": "/integrations",
 			"dest": "/integrations.html"
 		},

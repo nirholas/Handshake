@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<title>Motion Swap — Replace Yourself in Video with Your Avatar · three.ws</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Upload a video of yourself and get it back with your 3D avatar performing your motion instead of you. Pose tracking, person masking, and avatar retargeting — composited and exported in your browser." />
+		<meta name="theme-color" content="#000000" />
+		<link rel="canonical" href="https://three.ws/motion-swap" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="three.ws" />
+		<meta property="og:title" content="Motion Swap — Replace Yourself in Video with Your Avatar · three.ws" />
+		<meta property="og:description" content="Stay off camera without staying off video. Your avatar performs your motion, pinned frame-by-frame over you." />
+		<meta property="og:url" content="https://three.ws/motion-swap" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Motion+Swap+%E2%80%94+Your+Avatar%2C+Your+Motion&amp;d=Upload+a+video+of+yourself+and+get+it+back+with+your+3D+avatar+performing+your+motion+instead+of+you.&amp;p=%2Fmotion-swap" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:site" content="@trythreews" />
+		<meta name="twitter:title" content="Motion Swap — Replace Yourself in Video with Your Avatar · three.ws" />
+		<meta name="twitter:description" content="Stay off camera without staying off video. Your avatar performs your motion, pinned frame-by-frame over you." />
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Motion+Swap+%E2%80%94+Your+Avatar%2C+Your+Motion&amp;d=Upload+a+video+of+yourself+and+get+it+back+with+your+3D+avatar+performing+your+motion+instead+of+you.&amp;p=%2Fmotion-swap" />
+
+		<link rel="icon" href="/favicon.ico" sizes="any" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="stylesheet" href="/style.css" />
+		<link rel="stylesheet" href="/nav.css" />
+		<link rel="stylesheet" href="/footer.css" />
+		<link rel="stylesheet" href="/fonts/fonts.css" />
+
+		<style>
+			.ms-page {
+				min-height: 100vh;
+				background: var(--bg, #060606);
+				color: var(--text, #f6f6f6);
+				font-family: var(--font-body, 'Inter', system-ui, sans-serif);
+				-webkit-font-smoothing: antialiased;
+			}
+			.ms-wrap { max-width: 1180px; margin: 0 auto; padding: 40px 24px 72px; }
+			.ms-chip {
+				display: inline-flex; align-items: center; gap: 7px;
+				padding: 4px 11px; background: var(--surface-1, #141414);
+				border: 1px solid var(--hairline, #1f1f1f); border-radius: 20px;
+				font-size: 11px; color: var(--text-2, #b4b4b4); letter-spacing: 0.06em;
+				text-transform: uppercase; margin-bottom: 16px;
+			}
+			.ms-chip-dot { width: 6px; height: 6px; border-radius: 50%; background: #6ee7a2; }
+			.ms-head h1 { font-size: clamp(28px, 4.5vw, 44px); margin: 0 0 12px; letter-spacing: -0.02em; }
+			.ms-head p { max-width: 680px; color: var(--text-2, #b4b4b4); line-height: 1.6; margin: 0 0 28px; }
+			.ms-head a { color: var(--text, #f6f6f6); }
+
+			.ms-stage {
+				position: relative; border: 1px solid var(--hairline, #1f1f1f);
+				border-radius: 14px; background: var(--surface-0, #0b0b0b); overflow: hidden;
+			}
+			#ms-canvas-wrap { width: 100%; min-height: 320px; display: flex; justify-content: center; }
+			#ms-canvas { max-width: 100%; height: auto; display: block; }
+
+			.ms-overlay {
+				position: absolute; inset: 0; display: flex; flex-direction: column;
+				align-items: center; justify-content: center; text-align: center;
+				padding: 32px; gap: 10px; background: var(--surface-0, #0b0b0b);
+			}
+			.ms-overlay[hidden] { display: none; }
+			.ms-overlay h3 { margin: 0; font-size: 18px; }
+			.ms-overlay p { margin: 0; color: var(--text-2, #b4b4b4); max-width: 460px; line-height: 1.55; font-size: 14px; }
+
+			.ms-dropzone {
+				border: 1.5px dashed var(--hairline-2, #2c2c2c); border-radius: 12px;
+				padding: 42px 32px; cursor: pointer; transition: border-color 0.18s, background 0.18s;
+				display: flex; flex-direction: column; align-items: center; gap: 10px; width: min(520px, 90%);
+			}
+			.ms-dropzone:hover, .ms-dropzone:focus-visible, .ms-dropzone.is-drag {
+				border-color: var(--text-2, #b4b4b4); background: var(--surface-1, #121212); outline: none;
+			}
+			.ms-glyph {
+				width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center;
+				background: var(--surface-1, #161616); border: 1px solid var(--hairline, #1f1f1f);
+			}
+			.ms-spinner {
+				width: 26px; height: 26px; border-radius: 50%;
+				border: 2.5px solid var(--hairline-2, #2c2c2c); border-top-color: var(--text, #f6f6f6);
+				animation: ms-spin 0.9s linear infinite;
+			}
+			@keyframes ms-spin { to { transform: rotate(360deg); } }
+
+			.ms-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; margin-top: 26px; }
+			@media (max-width: 900px) { .ms-layout { grid-template-columns: 1fr; } }
+
+			.ms-card {
+				border: 1px solid var(--hairline, #1f1f1f); border-radius: 12px;
+				background: var(--surface-0, #0d0d0d); padding: 18px;
+			}
+			.ms-card h2 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-2, #b4b4b4); }
+			.ms-note { color: var(--text-2, #b4b4b4); font-size: 13.5px; line-height: 1.6; margin: 0; }
+			.ms-note + .ms-note { margin-top: 8px; }
+			.ms-note code { font-size: 12px; }
+
+			.ms-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px 14px; border-top: 1px solid var(--hairline, #1f1f1f); }
+			.ms-btn {
+				appearance: none; border: 1px solid var(--hairline-2, #2c2c2c); border-radius: 8px;
+				background: var(--surface-1, #151515); color: var(--text, #f6f6f6);
+				padding: 8px 14px; font-size: 13px; cursor: pointer;
+				transition: background 0.15s, border-color 0.15s, transform 0.08s;
+			}
+			.ms-btn:hover { background: var(--surface-2, #1d1d1d); border-color: var(--text-3, #555); }
+			.ms-btn:active { transform: translateY(1px); }
+			.ms-btn:focus-visible { outline: 2px solid var(--text-2, #b4b4b4); outline-offset: 1px; }
+			.ms-btn[disabled] { opacity: 0.55; cursor: default; }
+			.ms-btn--primary { background: var(--text, #f6f6f6); color: var(--bg, #060606); border-color: var(--text, #f6f6f6); font-weight: 600; }
+			.ms-btn--primary:hover { background: #dcdcdc; }
+
+			.ms-toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2, #b4b4b4); cursor: pointer; margin-left: auto; }
+			.ms-toggle input { accent-color: #6ee7a2; }
+
+			#ms-avatars { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+			.ms-avatar-chip {
+				appearance: none; border: 1px solid var(--hairline-2, #2c2c2c); border-radius: 18px;
+				background: var(--surface-1, #141414); color: var(--text-2, #b4b4b4);
+				padding: 6px 13px; font-size: 12.5px; cursor: pointer; transition: all 0.15s;
+			}
+			.ms-avatar-chip:hover { color: var(--text, #f6f6f6); border-color: var(--text-3, #555); }
+			.ms-avatar-chip[aria-pressed='true'] { background: var(--text, #f6f6f6); color: var(--bg, #060606); border-color: var(--text, #f6f6f6); font-weight: 600; }
+			.ms-url-row { display: flex; gap: 7px; }
+			.ms-url-row input {
+				flex: 1; min-width: 0; background: var(--surface-1, #121212); color: var(--text, #f6f6f6);
+				border: 1px solid var(--hairline-2, #2c2c2c); border-radius: 8px; padding: 8px 10px; font-size: 12.5px;
+			}
+			.ms-url-row input:focus { outline: none; border-color: var(--text-3, #555); }
+
+			#ms-status { margin-top: 12px; font-size: 13.5px; color: var(--text-2, #b4b4b4); }
+			#ms-status[data-kind='error'] { color: #ff7a7a; }
+			#ms-status[hidden] { display: none; }
+		</style>
+	</head>
+	<body>
+		<div class="ms-page">
+			<div id="nav-container"></div>
+			<script type="module" src="/nav.js"></script>
+
+			<div class="ms-wrap">
+				<div class="ms-head">
+					<span class="ms-chip"><span class="ms-chip-dot"></span> Video motion capture · body swap</span>
+					<h1>Your video. Your avatar. Not your face.</h1>
+					<p>
+						Upload a video of yourself — a house tour, a product demo, a talking walk-through — and get
+						it back with your <a href="/create">3D avatar</a> performing your exact motion instead of you.
+						Pose tracking runs server-side; you stay pixelated under the avatar. Compositing and export
+						happen right here in your browser.
+					</p>
+				</div>
+
+				<div class="ms-layout">
+					<div>
+						<div class="ms-stage">
+							<div id="ms-canvas-wrap"><canvas id="ms-canvas" width="960" height="540" aria-label="Motion swap composite preview"></canvas></div>
+
+							<div class="ms-overlay" id="ms-stage-empty">
+								<div class="ms-dropzone" id="ms-drop" role="button" tabindex="0" aria-label="Upload a video">
+									<div class="ms-glyph">
+										<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>
+									</div>
+									<h3>Drop a video of one person</h3>
+									<p>MP4, MOV, or WebM up to 256 MB. The first 90 seconds are processed. Full body in frame tracks best.</p>
+								</div>
+								<input id="ms-file" type="file" accept="video/mp4,video/quicktime,video/webm" hidden />
+							</div>
+
+							<div class="ms-overlay" id="ms-stage-processing" hidden>
+								<div class="ms-spinner" role="status" aria-label="Processing"></div>
+								<h3>Capturing your motion</h3>
+								<p>Tracking your pose frame-by-frame and masking you out. A 30-second clip takes about two minutes.</p>
+							</div>
+
+							<div id="ms-stage-ready" hidden></div>
+
+							<div class="ms-controls">
+								<button class="ms-btn" id="ms-play" type="button">Play / Pause</button>
+								<button class="ms-btn" id="ms-restart" type="button">Restart</button>
+								<button class="ms-btn ms-btn--primary" id="ms-export" type="button">Export video</button>
+								<button class="ms-btn" id="ms-new" type="button">New video</button>
+								<label class="ms-toggle" for="ms-privacy">
+									<input type="checkbox" id="ms-privacy" checked />
+									Pixelate me under the avatar
+								</label>
+							</div>
+						</div>
+						<p id="ms-status" hidden></p>
+						<video id="ms-video" playsinline hidden></video>
+						<video id="ms-mask" playsinline muted hidden></video>
+					</div>
+
+					<aside>
+						<div class="ms-card">
+							<h2>Avatar</h2>
+							<div id="ms-avatars"></div>
+							<div class="ms-url-row">
+								<input id="ms-avatar-url" type="url" placeholder="…or paste a rigged GLB URL" aria-label="Avatar GLB URL" />
+								<button class="ms-btn" id="ms-avatar-url-go" type="button">Load</button>
+							</div>
+							<p class="ms-note" style="margin-top: 10px">
+								Any rigged humanoid GLB works — one you <a href="/create">generated</a>,
+								<a href="/capture-avatar">captured from a selfie</a>, or rigged from a mesh.
+							</p>
+						</div>
+						<div class="ms-card" style="margin-top: 16px">
+							<h2>How it works</h2>
+							<p class="ms-note">
+								A server worker tracks your body pose in every frame and solves it onto the platform's
+								canonical skeleton — the same retarget engine that drives every avatar animation here.
+								It also segments you out into a mask.
+							</p>
+							<p class="ms-note">
+								Your browser then plays the original footage, pixelates you under the mask, and pins the
+								avatar over you frame-by-frame, matching your position and size. Export records the
+								composite with the original audio.
+							</p>
+							<p class="ms-note">
+								The source video is processed transiently and the pose data contains no imagery —
+								the motion clip is just skeleton rotations.
+							</p>
+						</div>
+					</aside>
+				</div>
+			</div>
+
+			<div id="footer-container"></div>
+			<script src="/footer.js" defer></script>
+		</div>
+
+		<script type="module" src="/src/motion-swap.js"></script>
+		<script type="module" src="/i18n.js"></script>
+	</body>
+</html>

@@ -328,6 +328,12 @@ URL: https://three.ws/capture
 
 Turn a phone video of any space into an explorable 3D point cloud. Streaming feed-forward reconstruction (LingBot-Map Geometric Context Transformer) fuses the frames into a coloured .ply, rendered live in the browser with WebGL. Or load a point cloud you already have.
 
+### Motion Swap — Replace Yourself in Video with Your Avatar
+
+URL: https://three.ws/motion-swap
+
+Upload a video of yourself and get it back with your 3D avatar performing your motion instead of you. Server-side pose tracking and person masking, browser-side compositing and export — stay off camera without staying off video.
+
 ### Forge · NIM — Self-Hosted Image to 3D
 
 URL: https://three.ws/forge-nim

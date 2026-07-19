@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-19T07:05:14.397Z",
+	"generated_at": "2026-07-19T07:10:14.638Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -527,6 +527,16 @@
 					"title": "Scene Capture — Video to 3D Point Cloud",
 					"description": "Turn a phone video of any space into an explorable 3D point cloud. Streaming feed-forward reconstruction (LingBot-Map Geometric Context Transformer) fuses the frames into a coloured .ply, rendered live in the browser with WebGL. Or load a point cloud you already have.",
 					"added": "2026-06-27",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/motion-swap",
+					"title": "Motion Swap — Replace Yourself in Video with Your Avatar",
+					"description": "Upload a video of yourself and get it back with your 3D avatar performing your motion instead of you. Server-side pose tracking and person masking, browser-side compositing and export — stay off camera without staying off video.",
+					"added": "2026-07-19",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
