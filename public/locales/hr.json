@@ -3707,383 +3707,383 @@
 		"groq_llama_3_1_8b_free_fastest": "Groq · Llama 3.1 8B (besplatno, najbrže)",
 		"groq_llama_3_3_70b_free_sub": "Groq · Llama 3.3 70B (besplatno, ispod sekunde)",
 		"hosts_one_per_line": "Hostovi (jedan po retku)",
-		"iframe": "",
-		"ipfs_decentralised": "",
-		"ipfs_pin_avatar_pinned_to_ipfs_pin": "",
-		"key_proxy_calls_routed_through_your_proxy": "",
-		"mcp_exposed_as_an_mcp_tool_over": "",
-		"meta_title": "",
-		"model": "",
-		"monthly_quota_completions": "",
-		"none_llm_disabled_for_this_agent": "",
-		"off_allow_all_embeds": "",
-		"on_chain_attestation_content_hash_recorded_o": "",
-		"openrouter_gpt_oss_120b_free": "",
-		"openrouter_hermes_3_405b_free": "",
-		"openrouter_llama_3_3_70b_free_default": "",
-		"origins": "",
-		"payment_mode": "",
-		"policy_mode": "",
-		"primary_storage": "",
-		"proxy_url": "",
-		"r2_cloudflare_default": "",
-		"rate_limit_req_min": "",
-		"reload": "",
-		"save": "",
-		"script_tag_on_third_party_pages": "",
-		"storage": "",
-		"surfaces": "",
-		"wallet_gated_user_pays_via_connected_wallet": "",
-		"we_pay_three_ws_covers_api_costs": "",
-		"widget_widget_pages": ""
+		"iframe": "<strong>Iframe</strong> — <code>&lt;iframe src=\"/agent/:id/embed\"&gt;</code>",
+		"ipfs_decentralised": "IPFS — decentralizirano",
+		"ipfs_pin_avatar_pinned_to_ipfs_pin": "<strong>IPFS pin</strong> — avatar zakačen na IPFS <em class=\"muted\">(pin flow coming soon)</em>",
+		"key_proxy_calls_routed_through_your_proxy": "Key-proxy — pozivi preusmjereni putem vašeg proxy URL-a",
+		"mcp_exposed_as_an_mcp_tool_over": "<strong>MCP</strong> — izloženo kao MCP alat putem <code>/api/mcp</code>",
+		"meta_title": "Politika ugradnje · three.ws",
+		"model": "Model",
+		"monthly_quota_completions": "Mjesečna kvota (dovršavanja)",
+		"none_llm_disabled_for_this_agent": "Nijedno — LLM onemogućen za ovog agenta",
+		"off_allow_all_embeds": "Isključeno — dopusti sve ugradnje",
+		"on_chain_attestation_content_hash_recorded_o": "<strong>On-chain attestation</strong> — hash sadržaja zabilježen na lancu <em class=\"muted\">(coming soon)</em>",
+		"openrouter_gpt_oss_120b_free": "OpenRouter · GPT-OSS 120B (besplatno)",
+		"openrouter_hermes_3_405b_free": "OpenRouter · Hermes 3 405B (besplatno)",
+		"openrouter_llama_3_3_70b_free_default": "OpenRouter · Llama 3.3 70B (besplatno) — zadano",
+		"origins": "Izvori",
+		"payment_mode": "Način plaćanja",
+		"policy_mode": "Način politike",
+		"primary_storage": "Primarna pohrana",
+		"proxy_url": "Proxy URL",
+		"r2_cloudflare_default": "R2 (Cloudflare) — zadano",
+		"rate_limit_req_min": "Ograničenje stope (zahtjeva / min)",
+		"reload": "Osvježi",
+		"save": "Spremi",
+		"script_tag_on_third_party_pages": "<strong>Script tag</strong> — <code>&lt;agent-3d&gt;</code> na stranicama trećih strana",
+		"storage": "Pohrana",
+		"surfaces": "Površine",
+		"wallet_gated_user_pays_via_connected_wallet": "Pristup putem novčanika — korisnik plaća putem povezanog novčanika",
+		"we_pay_three_ws_covers_api_costs": "Mi plaćamo — three.ws pokriva troškove API-ja (ograničeno kvotom)",
+		"widget_widget_pages": "<strong>Widget</strong> — <code>/w/:id</code> stranice widgeta"
 	},
 	"dashboard_index": {
-		"2026_three_ws_all_rights_reserved": "",
-		"account": "",
-		"action_log": "",
-		"admin": "",
-		"agent_pump_fun": "",
-		"agents": "",
-		"all_systems_normal": "",
-		"animations": "",
-		"api_keys": "",
-		"avatars": "",
-		"browse_on_chain_agents_acros_title": "",
-		"create": "",
-		"create_2": "",
-		"create_from_selfie": "",
-		"dashboard": "",
-		"delegation": "",
-		"discover": "",
-		"discover_2": "",
-		"discover_on_chain": "",
-		"dismiss_announcement_arialabel": "",
-		"dismiss_arialabel": "",
-		"docs": "",
-		"docs_2": "",
-		"earnings": "",
-		"embed": "",
-		"embed_policy": "",
-		"erc_8004_agents_controlled_b_title": "",
-		"erc_8004_agents_controlled_b_title_2": "",
-		"eth_vanity_create2": "",
-		"github": "",
-		"give_your_ai_a_body": "",
-		"llm_usage": "",
-		"mcp": "",
-		"memory": "",
-		"meta_title": "",
-		"monetization": "",
-		"my_agents": "",
-		"new": "",
-		"on_chain_erc_8004": "",
-		"payments": "",
-		"plan_usage": "",
-		"portfolio_nfts": "",
-		"privacy": "",
-		"reputation": "",
-		"revenue": "",
-		"sessions": "",
-		"settings": "",
-		"showcase": "",
-		"sns_domains": "",
-		"storage": "",
-		"strategy": "",
-		"strategy_lab": "",
-		"studio": "",
-		"studio_2": "",
-		"subscriptions": "",
-		"switch_to_new_version": "",
-		"system_status_arialabel": "",
-		"terms": "",
-		"text_image_to_3d_are_live_describe": "",
-		"three_ws": "",
-		"tokens_pump_fun": "",
-		"transparent_by_default": "",
-		"try_forge": "",
-		"upload": "",
-		"vanity_wallet": "",
-		"view_source_on_github_arialabel": "",
-		"viewer": "",
-		"voice": "",
-		"wallets": "",
-		"widgets": "",
-		"widgets_2": "",
-		"widgets_3": "",
-		"withdrawals": ""
+		"2026_three_ws_all_rights_reserved": "© 2026 three.ws — Sva prava pridržana.",
+		"account": "Račun",
+		"action_log": "Zapisnik aktivnosti",
+		"admin": "Admin",
+		"agent_pump_fun": "Agent · Pump.fun",
+		"agents": "Agenti",
+		"all_systems_normal": "<span class=\"h-footer-status-dot\" aria-hidden=\"true\"></span> <span>All systems normal</span>",
+		"animations": "Animacije",
+		"api_keys": "API ključevi",
+		"avatars": "Avatari",
+		"browse_on_chain_agents_acros_title": "Pregledaj agente na lancu preko svakog podržanog lanca",
+		"create": "Kreiraj",
+		"create_2": "Kreiraj",
+		"create_from_selfie": "Kreiraj iz selfija",
+		"dashboard": "Nadzorna ploča",
+		"delegation": "Delegiranje",
+		"discover": "Otkrij",
+		"discover_2": "Otkrij",
+		"discover_on_chain": "Otkrij na lancu ↗",
+		"dismiss_announcement_arialabel": "Odbaci obavijest",
+		"dismiss_arialabel": "Odbaci",
+		"docs": "Dokumentacija",
+		"docs_2": "Dokumentacija",
+		"earnings": "Zarada",
+		"embed": "Ugradi",
+		"embed_policy": "Politika ugradnje",
+		"erc_8004_agents_controlled_b_title": "ERC-8004 agenti kontrolirani vašim povezanim novčanicima",
+		"erc_8004_agents_controlled_b_title_2": "ERC-8004 agenti kontrolirani vašim povezanim novčanicima",
+		"eth_vanity_create2": "ETH vanity (CREATE2) ✦",
+		"github": "GitHub",
+		"give_your_ai_a_body": "Dajte svojoj umjetnoj inteligenciji tijelo.",
+		"llm_usage": "Korištenje LLM-a",
+		"mcp": "MCP",
+		"memory": "Memorija",
+		"meta_title": "Nadzorna ploča · three.ws",
+		"monetization": "Monetizacija",
+		"my_agents": "Moji agenti",
+		"new": "Novo",
+		"on_chain_erc_8004": "Na lancu (ERC-8004) ↗",
+		"payments": "Plaćanja",
+		"plan_usage": "Plan i korištenje",
+		"portfolio_nfts": "Portfelj i NFT-ovi",
+		"privacy": "Privatnost",
+		"reputation": "Reputacija",
+		"revenue": "Prihod",
+		"sessions": "Sesije",
+		"settings": "Postavke",
+		"showcase": "Izlog",
+		"sns_domains": "SNS domene",
+		"storage": "Pohrana",
+		"strategy": "Strategija",
+		"strategy_lab": "Laboratorij za strategije",
+		"studio": "Studio",
+		"studio_2": "Studio",
+		"subscriptions": "Pretplate",
+		"switch_to_new_version": "prebaci na novu verziju",
+		"system_status_arialabel": "Status sustava",
+		"terms": "Uvjeti",
+		"text_image_to_3d_are_live_describe": "<strong>Tekst i slika u 3D su uživo.</strong> Opišite bilo koji objekt, ili prenesite njegovu fotografiju, i Forge generira teksturirani GLB koji možete koristiti bilo gdje na three.ws.",
+		"three_ws": "three.ws",
+		"tokens_pump_fun": "Tokeni (Pump.fun)",
+		"transparent_by_default": "Transparentno po zadanim postavkama",
+		"try_forge": "Isprobajte Forge →",
+		"upload": "Prenesi",
+		"vanity_wallet": "Vanity novčanik ✦",
+		"view_source_on_github_arialabel": "Pogledajte izvorni kod na GitHubu",
+		"viewer": "Preglednik",
+		"voice": "Glas",
+		"wallets": "Novčanici",
+		"widgets": "Widgeti",
+		"widgets_2": "Widgeti",
+		"widgets_3": "Widgeti",
+		"withdrawals": "Isplate"
 	},
 	"dashboard_memory": {
-		"agent_memory": "",
-		"back_to_dashboard": "",
-		"browse_search_edit_and_manage_long_term": "",
-		"meta_title": "",
-		"skip_to_main_content": ""
+		"agent_memory": "Memorija agenta",
+		"back_to_dashboard": "← Natrag na nadzornu ploču",
+		"browse_search_edit_and_manage_long_term": "Pregledajte, pretražujte, uredite i upravljajte dugoročnim memorijama koje vaš agent koristi za kontekst.",
+		"meta_title": "Memorija agenta · three.ws",
+		"skip_to_main_content": "Preskoči na glavni sadržaj"
 	},
 	"dashboard_next_account": {
-		"meta_title": ""
+		"meta_title": "Račun · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_agents": {
-		"meta_title": ""
+		"meta_title": "Agenti · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_analytics": {
-		"meta_title": ""
+		"meta_title": "Analitika · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_api": {
-		"meta_title": ""
+		"meta_title": "API i ugradnja · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_avatars": {
-		"meta_title": ""
+		"meta_title": "Avatari · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_billing": {
-		"meta_description": "",
-		"meta_title": ""
+		"meta_description": "Upravljajte svojim three.ws pretplatama i plaćenim uslugama — status Premium propusnice, povijest plaćanja na lancu, API ključevi i pretplate za kreatore na jednom mjestu.",
+		"meta_title": "Naplata i propusnice · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_brain": {
-		"meta_description": "",
-		"meta_title": ""
+		"meta_description": "Konfigurirajte inteligenciju svog agenta, izgradite persone i testirajte na 10 AI modela.",
+		"meta_title": "Mozak · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_capabilities": {
-		"meta_description": "",
-		"meta_og_description": "",
-		"meta_og_title": "",
-		"meta_title": "",
-		"meta_twitter_description": "",
-		"meta_twitter_title": ""
+		"meta_description": "Zapovjedni centar uživo za sve 4 autonomne sposobnosti agenta: Alpha Hunt bodovanje pametnog novca, autonomni pokretač kovanica po rasporedu, Automatsko preuzimanje za kreatore za prikupljanje naknada i Market Maker s Jito izvršenjem.",
+		"meta_og_description": "Zapovjedni centar uživo za sve 4 autonomne sposobnosti agenta: Alpha Hunt bodovanje pametnog novca, autonomni pokretač kovanica po rasporedu, Automatsko preuzimanje za kreatore za prikupljanje naknada i Market Maker s Jito izvršenjem.",
+		"meta_og_title": "Sposobnosti — Alpha Hunt, Pokretač, Automatsko preuzimanje i Market Maker · three.ws",
+		"meta_title": "Sposobnosti · Nadzorna ploča · three.ws",
+		"meta_twitter_description": "Zapovjedni centar uživo za sve 4 autonomne sposobnosti agenta: Alpha Hunt bodovanje pametnog novca, autonomni pokretač kovanica po rasporedu, Automatsko preuzimanje za kreatore za prikupljanje naknada i Market Maker s Jito izvršenjem.",
+		"meta_twitter_title": "Sposobnosti — Alpha Hunt, Pokretač, Automatsko preuzimanje i Market Maker · three.ws"
 	},
 	"dashboard_next_community_avatars": {
-		"meta_title": ""
+		"meta_title": "Avatari zajednice · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_copy": {
-		"meta_title": ""
+		"meta_title": "Copy Trading · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_creator": {
-		"meta_title": ""
+		"meta_title": "Studio za kreatore · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_data_api": {
-		"meta_description": "",
-		"meta_title": ""
+		"meta_description": "Razvojna konzola za three.ws Data API — kupite Premium propusnicu s $THREE, SOL-om ili USDC, upravljajte svojim API ključem, pratite korištenje i kopirajte funkcionalne brze početke.",
+		"meta_title": "Data API · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_developers": {
-		"meta_description": "",
-		"meta_title": ""
+		"meta_description": "Avatar Render API, webhookovi, SDK-ovi i alati za integraciju za developere koji grade s three.ws avatarima.",
+		"meta_title": "Centar za developere · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_fleet": {
-		"meta_title": ""
+		"meta_title": "Zapovjedništvo flote · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_holders": {
-		"meta_title": ""
+		"meta_title": "$THREE Nositelji · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_index": {
-		"meta_title": ""
+		"meta_title": "Pregled · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_irl_placements": {
-		"meta_title": ""
+		"meta_title": "IRL Postavke · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_landscape": {
-		"meta_title": ""
+		"meta_title": "Konkurentsko okruženje · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_library": {
-		"meta_title": ""
+		"meta_title": "Knjižnica · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_monetize": {
-		"meta_title": ""
+		"meta_title": "Monetizacija · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_portfolio": {
-		"meta_title": ""
+		"meta_title": "Portfelj · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_prelaunch_radar": {
-		"meta_title": ""
+		"meta_title": "Radar prije lansiranja · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_referrals": {
-		"meta_title": ""
+		"meta_title": "Preporuke · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_settings": {
-		"meta_title": ""
+		"meta_title": "Postavke · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_sniper": {
-		"meta_title": ""
+		"meta_title": "Snajperske strategije · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_spend": {
-		"meta_title": ""
+		"meta_title": "GCP Potrošnja · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_systems": {
-		"meta_title": ""
+		"meta_title": "Sustavi · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_three_token": {
-		"meta_title": ""
+		"meta_title": "$THREE · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_tokens": {
-		"meta_title": ""
+		"meta_title": "Tokeni · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_transactions": {
-		"meta_title": ""
+		"meta_title": "Transakcije · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_walk": {
-		"meta_title": ""
+		"meta_title": "Suputnik za šetnju · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_wallet_grinder": {
-		"meta_title": ""
+		"meta_title": "Wallet Grinder · Nadzorna ploča · three.ws"
 	},
 	"dashboard_next_watch": {
-		"meta_title": ""
+		"meta_title": "Nadzor · Agent · three.ws"
 	},
 	"dashboard_next_widgets": {
-		"meta_title": ""
+		"meta_title": "Widgeti · Nadzorna ploča · three.ws"
 	},
 	"dashboard_portfolio": {
-		"1d": "",
-		"1y": "",
-		"2026_three_ws_all_rights_reserved": "",
-		"30d": "",
-		"7d": "",
-		"90d": "",
-		"all": "",
-		"all_systems_normal": "",
-		"create": "",
-		"create_2": "",
-		"dashboard": "",
-		"discover": "",
-		"discover_2": "",
-		"docs": "",
-		"docs_2": "",
-		"github": "",
-		"give_your_ai_a_body": "",
-		"loading_live_balances": "",
-		"meta_title": "",
-		"my_agents": "",
-		"portfolio": "",
-		"privacy": "",
-		"real_time_value_across_every_agent_wallet": "",
-		"studio": "",
-		"studio_2": "",
-		"system_status_arialabel": "",
-		"terms": "",
-		"three_ws": "",
-		"view_source_on_github_arialabel": "",
-		"viewer": "",
-		"widgets": "",
-		"widgets_2": ""
+		"1d": "1D",
+		"1y": "1Y",
+		"2026_three_ws_all_rights_reserved": "© 2026 three.ws — Sva prava pridržana.",
+		"30d": "30D",
+		"7d": "7D",
+		"90d": "90D",
+		"all": "Sve",
+		"all_systems_normal": "<span class=\"h-footer-status-dot\" aria-hidden=\"true\"></span> <span>Svi sustavi normalni</span>",
+		"create": "Kreiraj",
+		"create_2": "Kreiraj",
+		"dashboard": "Nadzorna ploča",
+		"discover": "Otkrij",
+		"discover_2": "Otkrij",
+		"docs": "Dokumentacija",
+		"docs_2": "Dokumentacija",
+		"github": "GitHub",
+		"give_your_ai_a_body": "Daj svojoj UI tijelo.",
+		"loading_live_balances": "Učitavanje trenutnih stanja…",
+		"meta_title": "Portfelj · Nadzorna ploča · three.ws",
+		"my_agents": "Moji agenti",
+		"portfolio": "Portfelj",
+		"privacy": "Privatnost",
+		"real_time_value_across_every_agent_wallet": "Vrijednost u stvarnom vremenu za svaki novčanik agenta pod vašim računom.",
+		"studio": "Studio",
+		"studio_2": "Studio",
+		"system_status_arialabel": "Status sustava",
+		"terms": "Uvjeti",
+		"three_ws": "three.ws",
+		"view_source_on_github_arialabel": "Pogledaj izvorni kod na GitHubu",
+		"viewer": "Preglednik",
+		"widgets": "Widgeti",
+		"widgets_2": "Widgeti"
 	},
 	"dashboard_portfolio_asset": {
-		"dashboard": "",
-		"loading": "",
-		"meta_title": "",
-		"portfolio": ""
+		"dashboard": "← Nadzorna ploča",
+		"loading": "Učitavanje…",
+		"meta_title": "Imovina · Portfelj · three.ws",
+		"portfolio": "← Portfelj"
 	},
 	"dashboard_sessions": {
-		"actions": "",
-		"created": "",
-		"device_user_agent": "",
-		"ip_address": "",
-		"last_seen": "",
-		"manage_your_active_login_sessions_across_dev": "",
-		"meta_title": "",
-		"sessions": "",
-		"sign_out_of_all_other_devices": ""
+		"actions": "Radnje",
+		"created": "Kreirano",
+		"device_user_agent": "Uređaj / Korisnički agent",
+		"ip_address": "IP adresa",
+		"last_seen": "Zadnje viđeno",
+		"manage_your_active_login_sessions_across_dev": "Upravljajte svojim aktivnim sesijama prijave na svim uređajima.",
+		"meta_title": "Sesije · three.ws",
+		"sessions": "Sesije",
+		"sign_out_of_all_other_devices": "Odjavite se sa svih ostalih uređaja"
 	},
 	"dashboard_sns": {
-		"attach_a_solana_name_service_domain_as": "",
-		"back_to_dashboard": "",
-		"meta_title": "",
-		"sns_domains": ""
+		"attach_a_solana_name_service_domain_as": "Priložite Solana Name Service <code class=\"dash-mono\">.sol</code> domenu kao čitljiv ID vašeg agenta. Domene u vlasništvu novčanika agenta ili bilo kojeg novčanika povezanog s vašim računom su prihvatljive.",
+		"back_to_dashboard": "← Natrag na nadzornu ploču",
+		"meta_title": "SNS Domene · three.ws",
+		"sns_domains": "SNS Domene"
 	},
 	"dashboard_storage": {
-		"attested_at": "",
-		"avatar": "",
-		"chain": "",
-		"cid": "",
-		"content_hash": "",
-		"dashboard": "",
-		"ipfs": "",
-		"manage_where_s_bytes_live_and_track": "",
-		"meta_title": "",
-		"not_pinned": "",
-		"on_chain_attestation": "",
-		"on_chain_attestation_is_read_only_content": "",
-		"pin_to_ipfs": "",
-		"pinned": "",
-		"pinned_at": "",
-		"present": "",
-		"r2_primary_storage": "",
-		"real_pinning_runs_through_pinata_when_is": "",
-		"reload": "",
-		"status": "",
-		"storage": "",
-		"storage_key": "",
-		"tx_hash": ""
+		"attested_at": "Potvrđeno u",
+		"avatar": "Avatar",
+		"chain": "Lanac",
+		"cid": "CID",
+		"content_hash": "Hash sadržaja",
+		"dashboard": "← Nadzorna ploča",
+		"ipfs": "IPFS",
+		"manage_where_s_bytes_live_and_track": "Upravljajte gdje se nalaze bajtovi <code id=\"avatar-id-label\">vašeg avatara</code> i pratite potvrdu sadržaja.",
+		"meta_title": "Pohrana · three.ws",
+		"not_pinned": "Nije zakačeno",
+		"on_chain_attestation": "Potvrda na lancu",
+		"on_chain_attestation_is_read_only_content": "Potvrda na lancu je samo za čitanje. Heširanje sadržaja se izvodi na poslužitelju nakon prijenosa. Emitiranje transakcija je buduća značajka.",
+		"pin_to_ipfs": "Zakači na IPFS",
+		"pinned": "Zakačeno",
+		"pinned_at": "Zakačeno u",
+		"present": "Prisutno",
+		"r2_primary_storage": "R2 (primarna pohrana)",
+		"real_pinning_runs_through_pinata_when_is": "Stvarno zakačivanje se odvija putem Pinata kada je <code>PINATA_JWT</code> konfiguriran na poslužitelju. U suprotnom, krajnja točka bilježi CID privremenog heša sadržaja, tako da ostatak toka i dalje radi u razvoju.",
+		"reload": "Osvježi",
+		"status": "Status",
+		"storage": "Pohrana",
+		"storage_key": "Ključ pohrane",
+		"tx_hash": "Tx heš"
 	},
 	"dashboard_strategy": {
-		"agent_strategy": "",
-		"back_to_dashboard": "",
-		"freeform_json_your_agent_s_skills_can": "",
-		"meta_title": ""
+		"agent_strategy": "Strategija agenta",
+		"back_to_dashboard": "← Natrag na nadzornu ploču",
+		"freeform_json_your_agent_s_skills_can": "JSON slobodnog oblika koji vještine vašeg agenta mogu čitati tijekom izvođenja. Pohranjeno na <code class=\"dash-mono\">agent_identities.meta.strategy</code>. Za tipizirana DCA pravila pogledajte <a href=\"/strategy-lab\">Laboratorij strategija</a>.",
+		"meta_title": "Strategija agenta · three.ws"
 	},
 	"dashboard_tokens": {
-		"agent_tokens": "",
-		"back_to_dashboard": "",
-		"if_your_agent_has_launched_a_pump": "",
-		"meta_title": ""
+		"agent_tokens": "Tokeni agenta",
+		"back_to_dashboard": "← Natrag na nadzornu ploču",
+		"if_your_agent_has_launched_a_pump": "Ako je vaš agent pokrenuo Pump.fun token, stanje uživo je ovdje. Pokrenite novi putem <a href=\"/dashboard/agent-pumpfun\">Agent · Pump.fun</a> ili s početne stranice agenta.",
+		"meta_title": "Tokeni agenta · three.ws"
 	},
 	"dashboard_usage": {
-		"calls": "",
-		"current_month": "",
-		"day": "",
-		"last_30_days": "",
-		"llm_usage": "",
-		"meta_title": ""
+		"calls": "Pozivi",
+		"current_month": "Trenutni mjesec",
+		"day": "Dan",
+		"last_30_days": "Zadnjih 30 dana",
+		"llm_usage": "Korištenje LLM-a",
+		"meta_title": "Korištenje LLM-a — three.ws"
 	},
 	"dashboard_voice": {
-		"agent_voice": "",
-		"back_to_dashboard": "",
-		"clone_a_voice_from_a_30_second": "",
-		"meta_title": ""
+		"agent_voice": "Glas agenta",
+		"back_to_dashboard": "← Natrag na nadzornu ploču",
+		"clone_a_voice_from_a_30_second": "Klonirajte glas iz uzorka od ≥30 sekundi (ElevenLabs) ili se vratite na TTS preglednika. Koriste ga chat, agent-3d i glasovni agent za X-Spaces.",
+		"meta_title": "Glas agenta · three.ws"
 	},
 	"dashboard_wallets": {
-		"dashboard": "",
-		"link_ethereum_wallet": "",
-		"link_solana_wallet": "",
-		"linked_wallets": "",
-		"loading_wallets": "",
-		"manage_ethereum_wallets_connected_to_your_ac": "",
-		"meta_title": ""
+		"dashboard": "← Nadzorna ploča",
+		"link_ethereum_wallet": "Poveži Ethereum novčanik",
+		"link_solana_wallet": "Poveži Solana novčanik",
+		"linked_wallets": "Povezani novčanici",
+		"loading_wallets": "Učitavanje novčanika…",
+		"manage_ethereum_wallets_connected_to_your_ac": "Upravljajte Ethereum novčanicima povezanim s vašim računom.",
+		"meta_title": "Povezani novčanici · Nadzorna ploča · three.ws"
 	},
 	"dashboard_x402": {
-		"a_402_enabled_url_returns_the_price": "",
-		"archive": "",
-		"cancel": "",
-		"checkout_skus": "",
-		"console": "",
-		"copy": "",
-		"create": "",
-		"dashboard": "",
-		"edit": "",
-		"endpoint": "",
-		"get": "",
-		"hosted_checkout_links_for_your_paid_endpoint": "",
-		"meta_title": "",
-		"new_sku": "",
-		"new_sku_2": "",
-		"open_page": "",
-		"optional": "",
-		"optional_shown_on_the_hosted_checkout_page": "",
-		"optional_where_to_send_the_buyer_after": "",
-		"performance": "",
-		"post": "",
-		"recent_calls": "",
-		"usdc": "",
-		"usdc_2": "",
-		"used_in_the_public_url_pay_c": "",
-		"view_landing": "",
-		"x402": "",
-		"your_skus": ""
+		"a_402_enabled_url_returns_the_price": "URL s omogućenim 402. Vraća cijenu + potvrdu o namiri.",
+		"archive": "Arhiviraj",
+		"cancel": "Odustani",
+		"checkout_skus": "SKU-ovi za naplatu",
+		"console": "Konzola",
+		"copy": "kopiraj",
+		"create": "Kreiraj",
+		"dashboard": "/ Nadzorna ploča",
+		"edit": "Uredi",
+		"endpoint": "Krajnja točka",
+		"get": "GET",
+		"hosted_checkout_links_for_your_paid_endpoint": "Hostani linkovi za naplatu za vaše plaćene krajnje točke. Svaki SKU dobiva URL za dijeljenje — kupci plaćaju jednim klikom.",
+		"meta_title": "x402 Naplata · Nadzorna ploča",
+		"new_sku": "+ Novi SKU",
+		"new_sku_2": "Novi SKU",
+		"open_page": "Otvori stranicu ↗",
+		"optional": "Neobavezno.",
+		"optional_shown_on_the_hosted_checkout_page": "Neobavezno. Prikazano na hostanoj stranici za naplatu.",
+		"optional_where_to_send_the_buyer_after": "Neobavezno. Kamo poslati kupca nakon uspješne uplate.",
+		"performance": "Performanse",
+		"post": "POST",
+		"recent_calls": "Nedavni pozivi",
+		"usdc": "USDC",
+		"usdc_2": "USDC",
+		"used_in_the_public_url_pay_c": "Koristi se u javnom URL-u: /pay/c/<slug>. 3–64 znaka, mala slova + crtice.",
+		"view_landing": "Pogledaj odredišnu stranicu",
+		"x402": "x402",
+		"your_skus": "Vaši SKU-ovi"
 	},
 	"dashboard_x402_admin": {
-		"a_percentage_of_each_settled_payment_goes": "",
-		"accepted_networks": "",
-		"active": "",
-		"add": "",
-		"add_agent_wallet": "",
-		"add_wallet": "",
+		"a_percentage_of_each_settled_payment_goes": "Postotak svake namirene uplate ide vašem odabranom cilju.",
+		"accepted_networks": "Prihvaćene mreže",
+		"active": "Aktivno",
+		"add": "Dodaj",
+		"add_agent_wallet": "Dodaj novčanik agenta",
+		"add_wallet": "+ Dodaj novčanik",
 		"add_wallet_2": "",
 		"advanced_only_set_this_if_you_run": "",
 		"agent_wallets": "",
