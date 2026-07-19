@@ -84,6 +84,7 @@ export default wrap(async (req, res) => {
 			and p.buy_sig is not null and p.buy_sig <> 'SIMULATED'
 			and (${interval}::text is null or p.opened_at > now() - (${interval}::text)::interval)
 		where s.network = ${network}
+		  and (s.enabled = true or s.label is not null)
 		group by s.id, a.id, a.name
 		order by realized_pnl_lamports desc, closed desc
 	`;
