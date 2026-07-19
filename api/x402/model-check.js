@@ -61,7 +61,7 @@ const ROUTE_DESCRIPTION =
 	'optimization recommendations. Pay-per-call in USDC on Solana mainnet.';
 
 const DISCOVERY_INPUT_EXAMPLE = {
-	url: 'https://three.ws/avatar/character-studio/sample.glb',
+	url: 'https://three.ws/avatars/mannequin.glb',
 };
 
 const DISCOVERY_INPUT_SCHEMA = {
@@ -79,7 +79,7 @@ const DISCOVERY_INPUT_SCHEMA = {
 };
 
 const DISCOVERY_OUTPUT_EXAMPLE = {
-	url: 'https://three.ws/avatar/character-studio/sample.glb',
+	url: 'https://three.ws/avatars/mannequin.glb',
 	fetchedBytes: 1572864,
 	model: {
 		container: 'glb',

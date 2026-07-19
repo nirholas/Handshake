@@ -795,7 +795,7 @@ async function buildDatapointItems(origin) {
 // mirror the actual 200-response keys each handler emits (post-settlement).
 const REST_OUTPUT_EXAMPLES = Object.freeze({
 	'/api/x402/model-check': {
-		url: 'https://three.ws/avatar/character-studio/sample.glb',
+		url: 'https://three.ws/avatars/mannequin.glb',
 		fetchedBytes: 1572864,
 		model: {
 			container: 'glb',

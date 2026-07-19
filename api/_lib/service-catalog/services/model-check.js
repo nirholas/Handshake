@@ -20,7 +20,7 @@ export default {
 	tags: ['3d', 'gltf', 'glb', 'inspection', 'validation'],
 	description: 'Model Check — an agent handed a 3D asset URL verifies it before using or paying for it: $0.001 USDC per call returns structural stats (vertex/triangle counts, materials, textures, animations, extensions) and prioritized optimization recommendations. Single GET with ?url=…; USDC on Solana, Base, or Arbitrum. Free tier: the same inspection is keyless at /api/3d/inspect.',
 	input: {
-		url: 'https://three.ws/avatar/character-studio/sample.glb',
+		url: 'https://three.ws/avatars/mannequin.glb',
 	},
 	inputSchema: {
 		type: 'object',

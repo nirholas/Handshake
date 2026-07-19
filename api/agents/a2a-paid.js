@@ -64,7 +64,7 @@ const SKILL = {
 		'Returns counts, extensions used, and prioritized optimization suggestions.',
 	tags: ['model', 'gltf', 'glb', 'inspect', 'a2a'],
 	examples: [
-		'Inspect https://three.ws/avatar/character-studio/sample.glb',
+		'Inspect https://three.ws/avatars/mannequin.glb',
 		'Vet this GLB before I mint it',
 	],
 	inputModes: ['application/json', 'text/plain'],
