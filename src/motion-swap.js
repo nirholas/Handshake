@@ -341,6 +341,16 @@ function anchorAt(timeSec) {
 	return meta.anchors[idx];
 }
 
+// Median subject height across the clip's visible anchors — the reference the
+// per-frame height is clamped against, so a single bad-detection frame (h can
+// collapse toward 0) can't shrink the avatar to a speck.
+function medianAnchorHeight() {
+	if (state._medH != null) return state._medH;
+	const hs = (state.meta?.anchors || []).filter((a) => a.v === 1 && a.h > 0).map((a) => a.h).sort((x, y) => x - y);
+	state._medH = hs.length ? hs[Math.floor(hs.length / 2)] : 0.6;
+	return state._medH;
+}
+
 function placeAvatar(t, timeSec) {
 	const a = anchorAt(timeSec);
 	const av = state.avatar;
@@ -352,11 +362,21 @@ function placeAvatar(t, timeSec) {
 	// Anchor: hip centre in normalized image coords (y down) + subject nose→ankle
 	// span as a fraction of frame height. Backdrop is 1 world-unit tall, so a.h is
 	// already in world units. Match the avatar's own head→ankle span to it.
-	const scale = Math.max(0.02, a.h / av.headAnkleSpan);
-	const hipWorldX = (a.x - 0.5) * aspect;
-	const hipWorldY = 0.5 - a.y;
-	av.group.scale.setScalar(scale);
-	av.group.position.set(hipWorldX, hipWorldY - av.hipsRestY * scale, 1.0);
+	// Clamp the height to the clip median (a per-frame miss can drop h to ~0.05,
+	// which would scale the avatar to nothing) and smooth scale/position over
+	// time so noisy anchors don't make the avatar jump and pulse.
+	const medH = medianAnchorHeight();
+	const h = Math.min(Math.max(a.h, medH * 0.6), medH * 1.6);
+	const targetScale = Math.max(0.05, h / av.headAnkleSpan);
+	const targetX = (a.x - 0.5) * aspect;
+	const targetY = 0.5 - a.y;
+	const s = state._place || (state._place = { scale: targetScale, x: targetX, y: targetY });
+	const k = 0.25; // EMA smoothing
+	s.scale += (targetScale - s.scale) * k;
+	s.x += (targetX - s.x) * k;
+	s.y += (targetY - s.y) * k;
+	av.group.scale.setScalar(s.scale);
+	av.group.position.set(s.x, s.y - av.hipsRestY * s.scale, 1.0);
 }
 
 async function loadComposite(artifacts) {
@@ -374,6 +394,8 @@ async function loadComposite(artifacts) {
 		fetch(artifacts.clip_url).then((r) => r.json()),
 	]);
 	state.meta = meta;
+	state._medH = null; // recompute the height clamp for this clip
+	state._place = null; // reset placement smoothing
 	state.clipJSON = clipJSON;
 
 	makeBackdrop(t, videoEl, maskEl);
