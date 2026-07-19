@@ -16,6 +16,8 @@ RUN pip install -r /app/requirements.txt
 RUN mkdir -p /models \
     && curl -fsSL -o /models/pose_landmarker_heavy.task \
         https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/latest/pose_landmarker_heavy.task \
+    && curl -fsSL -o /models/hand_landmarker.task \
+        https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task \
     && curl -fsSL -o /models/selfie_multiclass_256x256.tflite \
         https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite
 

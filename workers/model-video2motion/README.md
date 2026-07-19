@@ -19,9 +19,11 @@ For one input video, four artifacts land in GCS under `motion-swap/<task_id>/`:
 The browser compositor does the rest: original footage underneath, subject
 pixelated via the mask, avatar retargeted onto the clip and pinned per frame.
 
-## Models (both Apache-2.0, baked into the image)
+## Models (all Apache-2.0, baked into the image)
 
 - **MediaPipe PoseLandmarker (heavy)** — 33 world landmarks per frame, VIDEO
+  mode with tracking.
+- **MediaPipe HandLandmarker** — 21 landmarks per hand, up to 2 hands, VIDEO
   mode with tracking.
 - **MediaPipe ImageSegmenter (selfie)** — per-frame person confidence mask.
 
@@ -30,6 +32,16 @@ orientations for pelvis/chest/head from body lines, solves each limb with its
 bend-plane to fix twist, converts to locals against the parent chain, and emits
 hemisphere-continuous quaternion tracks. Pure NumPy, unit-tested from synthetic
 poses (`test_pose_solver.py`) without mediapipe installed.
+
+When hands are visible, the solver also emits full hand articulation: detected
+hands are assigned to the subject's left/right side by proximity to the pose
+wrists (the model's handedness label is only a mirrored-convention fallback),
+the wrist gets a palm-frame orientation (fixing twist the body-only solve
+cannot see), and all 30 canonical finger bones (`LeftHandIndex1` …
+`RightHandThumb3`) are solved as hinge rotations per frame. A frame that loses
+hand tracking holds the previous finger pose instead of snapping to rest. This
+is what makes fine-gesture and sign-language capture work: a video of a signer
+comes back as a clip whose handshapes retarget onto any rigged avatar.
 
 ## API
 

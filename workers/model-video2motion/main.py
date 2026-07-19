@@ -4,10 +4,13 @@ plus the compositing plates for an avatar body swap.
 Given an https video URL, the worker:
   1. normalizes the video with ffmpeg (≤720p, capped fps + duration, H.264,
      original audio preserved),
-  2. runs MediaPipe PoseLandmarker (VIDEO mode, heavy model, Apache-2.0) over
-     every frame → 33 world landmarks + image landmarks + visibility,
+  2. runs MediaPipe PoseLandmarker (VIDEO mode, heavy model, Apache-2.0) plus
+     HandLandmarker (2 hands, 21 landmarks each) over every frame → body world
+     landmarks + image landmarks + visibility + per-side hand world landmarks,
   3. solves the landmarks into local joint rotations on the canonical Wolf3D
-     skeleton (pose_solver.py) and emits a three.js AnimationClip JSON — the
+     skeleton (pose_solver.py) — including palm-accurate wrists and all 30
+     finger bones when hands are visible — and emits a three.js AnimationClip
+     JSON — the
      SAME document shape the animation library and text2motion lane serve, so
      the platform retargets it onto any rigged avatar with the existing engine
      (src/animation-retarget.js),
@@ -54,7 +57,7 @@ from fastapi import BackgroundTasks, FastAPI, Header, HTTPException
 from google.cloud import storage
 from pydantic import BaseModel, Field
 
-from pose_solver import image_anchors, landmarks_to_clip
+from pose_solver import image_anchors, landmarks_to_clip, match_hands_to_sides
 from worker_security import fetch_remote_bytes, require_api_key, safe_error
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -81,7 +84,7 @@ async def lifespan(app: FastAPI):
     _bucket = storage.Client().bucket(GCS_BUCKET)
     _sem = asyncio.Semaphore(MAX_CONCURRENT)
     # Fail fast if the model bundles are missing from the image.
-    for f in ("pose_landmarker_heavy.task", "selfie_multiclass_256x256.tflite"):
+    for f in ("pose_landmarker_heavy.task", "hand_landmarker.task", "selfie_multiclass_256x256.tflite"):
         path = os.path.join(MODELS_DIR, f)
         if not os.path.exists(path):
             raise RuntimeError(f"model bundle missing: {path}")
@@ -197,12 +200,12 @@ def _process(task_id: str, video_url: str, fps: int, seconds: float) -> dict:
             ]
         )
 
-        world, image, vis, masks, width, height = _analyze(norm_path, fps)
+        world, image, vis, hands, masks, width, height = _analyze(norm_path, fps)
         n_frames = world.shape[0]
         if n_frames < 2:
             raise RuntimeError("no person detected in the video")
 
-        clip = landmarks_to_clip(world, fps=fps, name=f"capture-{task_id[:8]}")
+        clip = landmarks_to_clip(world, fps=fps, name=f"capture-{task_id[:8]}", hands=hands)
         anchors = image_anchors(image, vis)
 
         mask_path = os.path.join(workdir, "mask.mp4")
@@ -245,12 +248,15 @@ def _process(task_id: str, video_url: str, fps: int, seconds: float) -> dict:
 
 
 def _analyze(video_path: str, fps: int):
-    """Run pose + segmentation over every frame of the normalized video.
+    """Run pose + hands + segmentation over every frame of the normalized video.
 
-    Returns (world (T,33,3), image (T,33,2), visibility (T,33), masks list of
-    uint8 HxW arrays, width, height). Frames where no person is detected reuse
-    the previous frame's landmarks and get visibility 0 (the anchor marks them
-    hidden; the solver stays continuous instead of snapping to rest).
+    Returns (world (T,33,3), image (T,33,2), visibility (T,33), hands
+    (T,2,21,3) with NaN where a hand went undetected, masks list of uint8 HxW
+    arrays, width, height). Frames where no person is detected reuse the
+    previous frame's landmarks and get visibility 0 (the anchor marks them
+    hidden; the solver stays continuous instead of snapping to rest). Detected
+    hands are assigned to the subject's left/right side by proximity to the
+    pose wrists (see pose_solver.match_hands_to_sides).
     """
     import cv2
     import mediapipe as mp
@@ -264,6 +270,15 @@ def _analyze(video_path: str, fps: int):
         running_mode=vision.RunningMode.VIDEO,
         num_poses=1,
         min_pose_detection_confidence=0.4,
+        min_tracking_confidence=0.4,
+    )
+    hand_opts = vision.HandLandmarkerOptions(
+        base_options=mp_python.BaseOptions(
+            model_asset_path=os.path.join(MODELS_DIR, "hand_landmarker.task")
+        ),
+        running_mode=vision.RunningMode.VIDEO,
+        num_hands=2,
+        min_hand_detection_confidence=0.4,
         min_tracking_confidence=0.4,
     )
     # Multiclass person-part segmenter (background/hair/skin/face/clothes/other)
@@ -286,13 +301,14 @@ def _analyze(video_path: str, fps: int):
     world_frames: list[np.ndarray] = []
     image_frames: list[np.ndarray] = []
     vis_frames: list[np.ndarray] = []
+    hand_frames: list[np.ndarray] = []
     masks: list[np.ndarray] = []
     prev_world: Optional[np.ndarray] = None
     prev_image: Optional[np.ndarray] = None
 
-    with vision.PoseLandmarker.create_from_options(pose_opts) as pose, vision.ImageSegmenter.create_from_options(
-        seg_opts
-    ) as segmenter:
+    with vision.PoseLandmarker.create_from_options(pose_opts) as pose, vision.HandLandmarker.create_from_options(
+        hand_opts
+    ) as hand_lm, vision.ImageSegmenter.create_from_options(seg_opts) as segmenter:
         frame_idx = 0
         while True:
             ok, frame_bgr = cap.read()
@@ -320,6 +336,24 @@ def _analyze(video_path: str, fps: int):
             image_frames.append(image)
             vis_frames.append(vis)
 
+            frame_hands = np.full((2, 21, 3), np.nan)
+            hand_result = hand_lm.detect_for_video(mp_image, ts_ms)
+            if hand_result.hand_world_landmarks:
+                wrists = [
+                    (h[0].x, h[0].y) for h in hand_result.hand_landmarks
+                ]
+                labels = [
+                    (c[0].category_name if c else None) for c in hand_result.handedness
+                ]
+                assigned = match_hands_to_sides(wrists, labels, image)
+                for si, side in enumerate(("Left", "Right")):
+                    idx = assigned[side]
+                    if idx is not None:
+                        frame_hands[si] = np.array(
+                            [[lm.x, lm.y, lm.z] for lm in hand_result.hand_world_landmarks[idx]]
+                        )
+            hand_frames.append(frame_hands)
+
             seg_result = segmenter.segment_for_video(mp_image, ts_ms)
             bg = seg_result.confidence_masks[0].numpy_view()  # class 0 = background
             person = 1.0 - np.clip(bg, 0.0, 1.0)
@@ -330,7 +364,15 @@ def _analyze(video_path: str, fps: int):
     cap.release()
 
     if not world_frames:
-        return np.zeros((0, 33, 3)), np.zeros((0, 33, 2)), np.zeros((0, 33)), masks, width, height
+        return (
+            np.zeros((0, 33, 3)),
+            np.zeros((0, 33, 2)),
+            np.zeros((0, 33)),
+            np.zeros((0, 2, 21, 3)),
+            masks,
+            width,
+            height,
+        )
 
     # Leading undetected frames produced masks but no landmarks; pad the
     # landmark arrays at the front with the first detection so lengths match.
@@ -338,11 +380,13 @@ def _analyze(video_path: str, fps: int):
     world = np.stack(world_frames)
     image = np.stack(image_frames)
     vis = np.stack(vis_frames)
+    hands = np.stack(hand_frames)
     if pad > 0:
         world = np.concatenate([np.repeat(world[:1], pad, axis=0), world])
         image = np.concatenate([np.repeat(image[:1], pad, axis=0), image])
         vis = np.concatenate([np.zeros((pad, 33)), vis])
-    return world, image, vis, masks, width, height
+        hands = np.concatenate([np.full((pad, 2, 21, 3), np.nan), hands])
+    return world, image, vis, hands, masks, width, height
 
 
 def _encode_mask_video(masks: list[np.ndarray], fps: int, out_path: str, workdir: str) -> None:

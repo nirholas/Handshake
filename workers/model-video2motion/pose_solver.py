@@ -21,6 +21,12 @@ Method: per frame,
   5. smooth landmarks with a fps-aware exponential filter and keep quaternion
      hemisphere continuity across frames.
 
+When HandLandmarker world landmarks are supplied alongside the pose (21 per
+hand, same camera convention), the solver additionally replaces the swing-only
+wrist orientation with a palm frame and solves all 30 canonical finger bones
+(pure-swing hinges in each parent's local frame), so captured clips carry full
+hand articulation — the requirement for sign language and fine gesture capture.
+
 In the rig's rest space the character stands in a T-pose facing +Z: spine +Y,
 legs -Y, left arm +X, right arm -X, feet +Z. Zero local rotation everywhere
 reproduces the rest pose, matching the SMPL-rest convention the text2motion
@@ -50,6 +56,19 @@ LEFT_KNEE, RIGHT_KNEE = 25, 26
 LEFT_ANKLE, RIGHT_ANKLE = 27, 28
 LEFT_HEEL, RIGHT_HEEL = 29, 30
 LEFT_FOOT_INDEX, RIGHT_FOOT_INDEX = 31, 32
+
+# HandLandmarker 21-landmark indices (subset used by the finger solver). Each
+# finger chain lists the landmark path root→tip; consecutive pairs are the
+# three canonical finger bones (e.g. Index MCP→PIP is LeftHandIndex1).
+HAND_WRIST = 0
+HAND_INDEX_MCP, HAND_MIDDLE_MCP, HAND_PINKY_MCP = 5, 9, 17
+_HAND_CHAINS = (
+    ("Thumb", (1, 2, 3, 4)),
+    ("Index", (5, 6, 7, 8)),
+    ("Middle", (9, 10, 11, 12)),
+    ("Ring", (13, 14, 15, 16)),
+    ("Pinky", (17, 18, 19, 20)),
+)
 
 # three.js AnimationBlendMode.NormalAnimationBlendMode
 _NORMAL_BLEND_MODE = 2500
@@ -222,6 +241,23 @@ CLIP_BONES = [
     "RightHand",
 ]
 
+# Finger bones written to the clip when hand landmarks are supplied, in a
+# stable order. Names match the canonical set in src/glb-canonicalize.js, so
+# these tracks retarget exactly like the baked library clips' finger tracks.
+FINGER_BONES = [
+    f"{side}Hand{finger}{joint}"
+    for side in ("Left", "Right")
+    for finger, _ in _HAND_CHAINS
+    for joint in (1, 2, 3)
+]
+
+_FINGER_PARENTS = {}
+for _side in ("Left", "Right"):
+    for _finger, _ in _HAND_CHAINS:
+        _FINGER_PARENTS[f"{_side}Hand{_finger}1"] = f"{_side}Hand"
+        _FINGER_PARENTS[f"{_side}Hand{_finger}2"] = f"{_side}Hand{_finger}1"
+        _FINGER_PARENTS[f"{_side}Hand{_finger}3"] = f"{_side}Hand{_finger}2"
+
 
 def smooth_landmarks(world: np.ndarray, fps: float, cutoff_hz: float = 4.0) -> np.ndarray:
     """fps-aware exponential smoothing over the time axis of (T, 33, 3)."""
@@ -245,7 +281,88 @@ def _to_rig_space(world: np.ndarray) -> np.ndarray:
     return out
 
 
-def solve_frame(p: np.ndarray, prev: Optional[dict] = None) -> dict:
+def match_hands_to_sides(
+    hand_wrists: list, labels: list, pose_image: np.ndarray, max_dist: float = 0.25
+) -> dict:
+    """Assign detected hands to the subject's Left/Right side.
+
+    `hand_wrists` are normalized image (x, y) positions of each detected hand's
+    wrist landmark; `labels` the model's handedness strings; `pose_image` one
+    frame of (33, 2+) pose image landmarks. Proximity to the pose wrists is the
+    primary signal because it cannot be confused by mirroring. The handedness
+    label is only a fallback, FLIPPED: Tasks-API handedness assumes a mirrored
+    selfie image, and the videos here are unmirrored. Returns
+    {"Left": index|None, "Right": index|None} into the detected-hand list.
+    """
+    targets = {
+        "Left": np.asarray(pose_image[LEFT_WRIST][:2], dtype=np.float64),
+        "Right": np.asarray(pose_image[RIGHT_WRIST][:2], dtype=np.float64),
+    }
+    pairs = sorted(
+        (float(np.linalg.norm(np.asarray(hand_wrists[i][:2], dtype=np.float64) - t)), i, side)
+        for i in range(len(hand_wrists))
+        for side, t in targets.items()
+    )
+    out = {"Left": None, "Right": None}
+    used: set[int] = set()
+    for dist, i, side in pairs:
+        if dist > max_dist:
+            break
+        if out[side] is None and i not in used:
+            out[side] = i
+            used.add(i)
+    for i in range(len(hand_wrists)):
+        if i in used:
+            continue
+        side = {"Left": "Right", "Right": "Left"}.get(labels[i] if i < len(labels) else None)
+        if side and out[side] is None:
+            out[side] = i
+            used.add(i)
+    return out
+
+
+def _solve_hand(pts: np.ndarray, side: str, g: dict) -> None:
+    """Solve one hand's (21, 3) rig-space landmarks into global orientations.
+
+    Overwrites g["{side}Hand"] with a palm-frame orientation (the pose-only
+    solve is swing-only; the palm plane pins the wrist twist, which finger
+    poses depend on) and adds a global for each of the 15 finger bones.
+
+    Finger joints are solved as pure swing in the parent's local frame: in the
+    canonical rest every finger segment runs along the hand axis (thumb along
+    its splayed axis), so the parent-local observed direction against that rest
+    direction gives a hinge rotation about the anatomically correct axis with
+    no twist accumulation down the chain.
+    """
+    sign = 1.0 if side == "Left" else -1.0
+    axis_rest = np.array([sign, 0.0, 0.0])
+    w = pts[HAND_WRIST]
+    hand_dir = _normalize(pts[HAND_MIDDLE_MCP] - w)
+    if np.linalg.norm(hand_dir) < 1e-6:
+        return
+    # Back-of-hand normal from the knuckle spread; +Y in the rest pose (T-pose
+    # arms out, palms down). The cross product flips chirality per side.
+    back = np.cross(pts[HAND_INDEX_MCP] - w, pts[HAND_PINKY_MCP] - w) * sign
+    g[f"{side}Hand"] = _frame_quat(hand_dir, back, axis_rest, np.array([0.0, 1.0, 0.0]))
+    # Rest thumb: splayed ~45° from the fingers toward the palm-forward (+Z)
+    # direction. The retarget engine's per-bone bind correction absorbs the
+    # residual mismatch against a specific rig's bind thumb, same as elsewhere.
+    thumb_rest = _normalize(np.array([sign, 0.0, 1.0]))
+    for finger, chain in _HAND_CHAINS:
+        rest = thumb_rest if finger == "Thumb" else axis_rest
+        parent_g = g[f"{side}Hand"]
+        for joint in range(3):
+            bone = f"{side}Hand{finger}{joint + 1}"
+            d = _normalize(pts[chain[joint + 1]] - pts[chain[joint]])
+            if np.linalg.norm(d) < 1e-6:
+                g[bone] = parent_g.copy()
+            else:
+                d_local = _normalize(_rotate_vec(_quat_conjugate(parent_g), d))
+                g[bone] = _quat_multiply(parent_g, _shortest_arc(rest, d_local))
+            parent_g = g[bone]
+
+
+def solve_frame(p: np.ndarray, prev: Optional[dict] = None, hands: Optional[dict] = None) -> dict:
     """Solve one frame of rig-space landmarks (33, 3) → {bone: [x,y,z,w]} locals."""
     hip_c = 0.5 * (p[LEFT_HIP] + p[RIGHT_HIP])
     sho_c = 0.5 * (p[LEFT_SHOULDER] + p[RIGHT_SHOULDER])
@@ -341,6 +458,23 @@ def solve_frame(p: np.ndarray, prev: Optional[dict] = None) -> dict:
             swing = _shortest_arc(_rotate_vec(g[parent], rest_dir), d)
             g[hand] = _quat_multiply(swing, g[parent])
 
+    # Fingers: replace the swing-only wrist with a palm frame and solve the
+    # finger chains where hand landmarks are available; a side with no
+    # detection this frame holds its previous finger locals (rest if never
+    # seen), so dropped hand tracking degrades gracefully instead of snapping.
+    solved_fingers: list[str] = []
+    held_fingers: list[str] = []
+    if hands is not None:
+        for side in ("Left", "Right"):
+            pts = hands.get(side)
+            side_bones = [b for b in FINGER_BONES if b.startswith(side)]
+            if pts is not None and np.isfinite(pts).all():
+                _solve_hand(np.asarray(pts, dtype=np.float64), side, g)
+                solved_fingers.extend(b for b in side_bones if b in g)
+                held_fingers.extend(b for b in side_bones if b not in g)
+            else:
+                held_fingers.extend(side_bones)
+
     parents = {
         "Hips": None,
         "Spine": "Hips",
@@ -361,14 +495,41 @@ def solve_frame(p: np.ndarray, prev: Optional[dict] = None) -> dict:
         "RightForeArm": "RightArm",
         "RightHand": "RightForeArm",
     }
+    parents.update(_FINGER_PARENTS)
     locals_ = {}
-    for bone in CLIP_BONES:
+    for bone in CLIP_BONES + solved_fingers:
         parent = parents[bone]
         if parent is None:
             locals_[bone] = _quat_normalize(g[bone])
         else:
             locals_[bone] = _quat_normalize(_quat_multiply(_quat_conjugate(g[parent]), g[bone]))
+    for bone in held_fingers:
+        if prev is not None and bone in prev.get("locals", {}):
+            locals_[bone] = prev["locals"][bone]
+        else:
+            locals_[bone] = _IDENTITY.copy()
     return {"locals": locals_, "globals": g}
+
+
+def _fill_missing_hand(seq: np.ndarray) -> np.ndarray:
+    """Forward- then back-fill NaN frames of one hand's (T, 21, 3) sequence.
+
+    A hand with zero detections stays all-NaN, which the solver renders as
+    rest-pose fingers.
+    """
+    ok = np.isfinite(seq).all(axis=(1, 2))
+    if not ok.any() or ok.all():
+        return seq
+    filled = seq.copy()
+    last: Optional[int] = None
+    for t in range(seq.shape[0]):
+        if ok[t]:
+            last = t
+        elif last is not None:
+            filled[t] = filled[last]
+    first = int(np.where(ok)[0][0])
+    filled[:first] = filled[first]
+    return filled
 
 
 def landmarks_to_clip(
@@ -377,8 +538,16 @@ def landmarks_to_clip(
     fps: float,
     name: str = "captured",
     smooth: bool = True,
+    hands: Optional[np.ndarray] = None,
 ) -> dict:
-    """(T, 33, 3) MediaPipe world landmarks → three.js AnimationClip JSON."""
+    """(T, 33, 3) MediaPipe world landmarks → three.js AnimationClip JSON.
+
+    `hands`, when given, is (T, 2, 21, 3) HandLandmarker world landmarks in the
+    same MediaPipe camera convention as `world` — index 0 the subject's left
+    hand, 1 the right, NaN-filled where a hand was not detected that frame —
+    and the clip additionally carries the 30 canonical finger-bone tracks plus
+    palm-accurate wrist orientation.
+    """
     world = np.asarray(world, dtype=np.float64)
     if world.ndim != 3 or world.shape[1] < 33 or world.shape[2] != 3:
         raise ValueError(f"landmarks must be (T, 33, 3); got {world.shape}")
@@ -388,16 +557,35 @@ def landmarks_to_clip(
     if n_frames < 1:
         raise ValueError("motion has no frames")
 
+    if hands is not None:
+        hands = np.asarray(hands, dtype=np.float64)
+        if hands.shape != (n_frames, 2, 21, 3):
+            raise ValueError(f"hands must be ({n_frames}, 2, 21, 3); got {hands.shape}")
+        hands = _to_rig_space(hands)
+        sides = []
+        for si in range(2):
+            seq = _fill_missing_hand(hands[:, si])
+            if smooth and np.isfinite(seq).all():
+                seq = smooth_landmarks(seq, fps)
+            sides.append(seq)
+
     rig = _to_rig_space(world)
     if smooth:
         rig = smooth_landmarks(rig, fps)
 
-    per_bone: dict[str, list[np.ndarray]] = {b: [] for b in CLIP_BONES}
+    track_bones = CLIP_BONES + FINGER_BONES if hands is not None else CLIP_BONES
+    per_bone: dict[str, list[np.ndarray]] = {b: [] for b in track_bones}
     prev_solution: Optional[dict] = None
     prev_quats: dict[str, np.ndarray] = {}
     for t in range(n_frames):
-        sol = solve_frame(rig[t], prev_solution)
-        for bone in CLIP_BONES:
+        frame_hands = None
+        if hands is not None:
+            frame_hands = {
+                side: sides[si][t] if np.isfinite(sides[si][t]).all() else None
+                for si, side in enumerate(("Left", "Right"))
+            }
+        sol = solve_frame(rig[t], prev_solution, frame_hands)
+        for bone in track_bones:
             q = _hemisphere(prev_quats.get(bone), sol["locals"][bone])
             prev_quats[bone] = q
             per_bone[bone].append(q)
@@ -406,7 +594,7 @@ def landmarks_to_clip(
     times = (np.arange(n_frames, dtype=np.float64) / float(fps)).tolist()
     duration = (n_frames - 1) / float(fps) if n_frames > 1 else 0.0
     tracks = []
-    for bone in CLIP_BONES:
+    for bone in track_bones:
         values = np.stack(per_bone[bone], axis=0)
         tracks.append(
             {

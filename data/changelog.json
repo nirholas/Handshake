@@ -14856,6 +14856,15 @@
 				"feature"
 			],
 			"link": "/motion-swap"
+		},
+		{
+			"date": "2026-07-19",
+			"title": "Motion Swap now captures hands and fingers",
+			"summary": "Motion capture from video just got hands. When you swap yourself for your avatar at /motion-swap, the capture now tracks both hands (21 points each) and solves every finger joint, so waves, counting, pointing, and sign-language handshapes come through on your avatar instead of a stiff flat hand. Wrist rotation is also solved from the palm itself, making hand orientation far more faithful. Works with any rigged avatar; if your hands leave the frame the capture holds the last hand pose instead of snapping flat.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/motion-swap"
 		}
 	]
 }

@@ -28,8 +28,10 @@ from pose_solver import (
     RIGHT_PINKY,
     RIGHT_SHOULDER,
     RIGHT_WRIST,
+    FINGER_BONES,
     image_anchors,
     landmarks_to_clip,
+    match_hands_to_sides,
     solve_frame,
 )
 
@@ -164,6 +166,112 @@ def test_rejects_bad_shapes():
         landmarks_to_clip(np.zeros((0, 33, 3)), fps=30)
     with pytest.raises(ValueError):
         landmarks_to_clip(np.zeros((5, 33, 3)), fps=0)
+
+
+def flat_hand_world(side: str) -> np.ndarray:
+    """A synthetic flat hand in MEDIAPIPE convention (y DOWN, z toward camera
+    is negative z), matching the T-pose: palm down, fingers along ±x, thumb
+    splayed toward the camera. Should solve to near-identity finger locals.
+    """
+    s = 1.0 if side == "Left" else -1.0
+    h = np.zeros((21, 3))
+    w = np.array([s * 0.70, -0.50, 0.0])
+    h[0] = w
+    mcps = {5: -0.025, 9: 0.0, 13: 0.022, 17: 0.045}
+    for base, z in mcps.items():
+        h[base] = w + [s * 0.09, 0.0, z]
+        for j in range(1, 4):
+            h[base + j] = h[base] + [s * 0.035 * j, 0.0, 0.0]
+    thumb_dir = np.array([s * 0.707, 0.0, -0.707])
+    h[1] = w + [s * 0.025, 0.0, -0.03]
+    for j, step in ((2, 0.035), (3, 0.065), (4, 0.09)):
+        h[j] = h[1] + step * thumb_dir
+    return h
+
+
+def test_flat_hands_near_identity():
+    hands = {"Left": _rig(flat_hand_world("Left")), "Right": _rig(flat_hand_world("Right"))}
+    sol = solve_frame(_rig(t_pose_world()), None, hands)
+    for bone in FINGER_BONES:
+        q = sol["locals"][bone]
+        assert _angle(q) < np.deg2rad(15.0), f"{bone} deviates {np.rad2deg(_angle(q)):.1f}° on a flat hand"
+    for side in ("Left", "Right"):
+        assert _angle(sol["locals"][f"{side}Hand"]) < np.deg2rad(15.0)
+
+
+def test_curled_finger_hinges_about_z():
+    h = flat_hand_world("Left")
+    # Bend the index 90° toward the palm at the PIP (palm down → curl is +y in
+    # the y-down mediapipe convention); the tip continues in the bent direction.
+    h[7] = h[6] + [0.0, 0.035, 0.0]
+    h[8] = h[7] + [0.0, 0.030, 0.0]
+    hands = {"Left": _rig(h), "Right": None}
+    sol = solve_frame(_rig(t_pose_world()), None, hands)
+    q = sol["locals"]["LeftHandIndex2"]
+    assert _angle(q) > np.deg2rad(60.0)
+    axis = np.abs(q[:3]) / max(np.linalg.norm(q[:3]), 1e-9)
+    assert axis[2] > 0.9, f"index hinge should be about z; axis={axis}"
+    assert _angle(sol["locals"]["LeftHandIndex1"]) < np.deg2rad(15.0)
+    assert _angle(sol["locals"]["LeftHandIndex3"]) < np.deg2rad(15.0)
+    # The undetected right hand holds rest, not garbage.
+    assert _angle(sol["locals"]["RightHandIndex2"]) < 1e-6
+
+
+def test_clip_with_hands_carries_finger_tracks():
+    frames = np.stack([t_pose_world()] * 6)
+    hands = np.full((6, 2, 21, 3), np.nan)
+    for t in range(6):
+        hands[t, 0] = flat_hand_world("Left")
+    clip = landmarks_to_clip(frames, fps=24, name="hands", hands=hands)
+    track_names = {t["name"] for t in clip["tracks"]}
+    for bone in FINGER_BONES:
+        assert f"{bone}.quaternion" in track_names
+    assert len(track_names) == len(CLIP_BONES) + len(FINGER_BONES) + 1
+    for track in clip["tracks"]:
+        if track["type"] != "quaternion":
+            continue
+        vals = np.asarray(track["values"]).reshape(-1, 4)
+        assert np.allclose(np.linalg.norm(vals, axis=1), 1.0, atol=1e-6)
+        # The never-detected right hand stays at rest for the whole clip.
+        if track["name"].startswith("RightHandIndex"):
+            assert np.allclose(np.abs(vals[:, 3]), 1.0, atol=1e-6)
+    b = landmarks_to_clip(frames, fps=24, name="hands", hands=hands)
+    assert clip == b
+
+
+def test_clip_without_hands_unchanged():
+    frames = np.stack([t_pose_world()] * 4)
+    clip = landmarks_to_clip(frames, fps=24, name="nohands")
+    track_names = {t["name"] for t in clip["tracks"]}
+    assert len(track_names) == len(CLIP_BONES) + 1
+    assert not any("Index" in n or "Thumb" in n for n in track_names)
+
+
+def test_clip_rejects_bad_hands_shape():
+    frames = np.stack([t_pose_world()] * 4)
+    with pytest.raises(ValueError):
+        landmarks_to_clip(frames, fps=24, hands=np.zeros((3, 2, 21, 3)))
+    with pytest.raises(ValueError):
+        landmarks_to_clip(frames, fps=24, hands=np.zeros((4, 2, 20, 3)))
+
+
+def test_match_hands_to_sides_by_proximity():
+    pose_img = np.zeros((33, 2))
+    pose_img[LEFT_WRIST] = [0.70, 0.50]
+    pose_img[RIGHT_WRIST] = [0.30, 0.50]
+    # Labels deliberately wrong: proximity must win.
+    out = match_hands_to_sides([(0.31, 0.52), (0.69, 0.48)], ["Left", "Left"], pose_img)
+    assert out == {"Left": 1, "Right": 0}
+
+
+def test_match_hands_falls_back_to_flipped_label():
+    pose_img = np.zeros((33, 2))
+    pose_img[LEFT_WRIST] = [0.70, 0.50]
+    pose_img[RIGHT_WRIST] = [0.30, 0.50]
+    # Too far from either pose wrist → the mirrored-convention label decides:
+    # a reported "Left" is the subject's right hand in unmirrored video.
+    out = match_hands_to_sides([(0.95, 0.95)], ["Left"], pose_img)
+    assert out == {"Left": None, "Right": 0}
 
 
 def test_image_anchors():
