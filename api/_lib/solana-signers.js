@@ -193,6 +193,22 @@ export const SOLANA_SIGNERS = [
 	},
 ];
 
+// Per-signer floor overrides: SIGNER_MIN_SOL_<NAME> / SIGNER_REFILL_TO_SOL_<NAME>
+// (name upper-cased, dashes to underscores, e.g. SIGNER_MIN_SOL_COIN_LAUNCHER_MASTER).
+// Applied at module load so every consumer (treasury-topup targets, balance
+// alerts, the floors dashboard) agrees on the effective floor. Exists so ops can
+// retune one engine's floor without a code deploy; the concrete case: the
+// autonomous launcher's 1 SOL floor is the fleet's largest deficit, and while
+// launches are paused it would otherwise outrank every active engine in the
+// deficit-sorted topup queue and absorb the whole fuel budget.
+for (const spec of SOLANA_SIGNERS) {
+	const key = spec.name.toUpperCase().replace(/-/g, '_');
+	const minSol = Number(process.env[`SIGNER_MIN_SOL_${key}`]);
+	if (Number.isFinite(minSol) && minSol >= 0) spec.minSol = minSol;
+	const refillTo = Number(process.env[`SIGNER_REFILL_TO_SOL_${key}`]);
+	if (Number.isFinite(refillTo) && refillTo > 0) spec.refillTo = refillTo;
+}
+
 /**
  * Decode a Solana secret key from any of the encodings used across the env:
  *   - JSON array of 64 ints (Solana CLI keypair file contents)

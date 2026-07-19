@@ -52,3 +52,13 @@ describe('autonomous registry maintenance slots', () => {
 		for (const e of maint) expect(typeof e.run).toBe('function');
 	});
 });
+
+describe('signer floor env overrides', () => {
+	it('SIGNER_MIN_SOL_<NAME> overrides a registry floor at load', async () => {
+		process.env.SIGNER_MIN_SOL_COIN_LAUNCHER_MASTER = '0.05';
+		const { SOLANA_SIGNERS } = await import('../api/_lib/solana-signers.js?floor-override');
+		const spec = SOLANA_SIGNERS.find((s) => s.name === 'coin-launcher-master');
+		expect(spec.minSol).toBe(0.05);
+		delete process.env.SIGNER_MIN_SOL_COIN_LAUNCHER_MASTER;
+	});
+});
