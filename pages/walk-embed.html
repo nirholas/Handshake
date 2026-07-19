@@ -4,7 +4,7 @@
 		<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Walk Embed · three.ws</title>
+		<title data-i18n="walk_embed.meta_title">Walk Embed · three.ws</title>
 		<meta name="robots" content="noindex" />
 		<meta
 			name="viewport"
@@ -14,19 +14,19 @@
 		<meta
 			name="description"
 			content="Embeddable walking 3D avatar — drop into any page via iframe."
-		/>
+		 data-i18n-attr="content:walk_embed.meta_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/walk-embed" />
-	<meta property="og:title" content="Walk Embed Generator · three.ws" />
-	<meta property="og:description" content="Generate embed code for the three.ws walk avatar — drop a walking 3D avatar on any website with one HTML tag." />
+	<meta property="og:title" content="Walk Embed Generator · three.ws"  data-i18n-attr="content:walk_embed.meta_og_title"/>
+	<meta property="og:description" content="Generate embed code for the three.ws walk avatar — drop a walking 3D avatar on any website with one HTML tag."  data-i18n-attr="content:walk_embed.meta_og_description"/>
 	<meta property="og:image" content="https://three.ws/og-image.png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Walk Embed Generator · three.ws" />
-	<meta name="twitter:description" content="Generate embed code for the three.ws walk avatar — drop a walking 3D avatar on any website with one HTML tag." />
+	<meta name="twitter:title" content="Walk Embed Generator · three.ws"  data-i18n-attr="content:walk_embed.meta_twitter_title"/>
+	<meta name="twitter:description" content="Generate embed code for the three.ws walk avatar — drop a walking 3D avatar on any website with one HTML tag."  data-i18n-attr="content:walk_embed.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/og-image.png" />
 		<meta name="theme-color" content="#000000" />
 
@@ -275,14 +275,14 @@
 
 			<!-- Optional end-user gesture controls (?gestures=true). -->
 			<div id="walk-gestures" aria-label="Avatar gestures">
-				<button type="button" class="walk-gesture-btn" data-gesture="wave" title="Wave" aria-label="Make the avatar wave">👋</button>
-				<button type="button" class="walk-gesture-btn" data-gesture="jump" title="Jump" aria-label="Make the avatar jump"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg></button>
+				<button type="button" class="walk-gesture-btn" data-gesture="wave" title="Wave" aria-label="Make the avatar wave" data-i18n-attr="aria-label:walk_embed.make_the_avatar_wave_arialabel;title:walk_embed.wave_title">👋</button>
+				<button type="button" class="walk-gesture-btn" data-gesture="jump" title="Jump" aria-label="Make the avatar jump" data-i18n-attr="aria-label:walk_embed.make_the_avatar_jump_arialabel;title:walk_embed.jump_title"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg></button>
 			</div>
 
 			<div id="walk-status">loading avatar…</div>
 
 			<!-- Attribution / made-with badge. Removed when ?badge=false. -->
-			<a id="walk-badge" href="https://three.ws/embed?ref=walk-embed" target="_blank" rel="noopener" title="Make your own — three.ws">
+			<a id="walk-badge" href="https://three.ws/embed?ref=walk-embed" target="_blank" rel="noopener" title="Make your own — three.ws" data-i18n-html="walk_embed.three_ws" data-i18n-attr="title:walk_embed.make_your_own_three_ws_title">
 				<span class="badge-dot" aria-hidden="true"></span>
 				<span>three.ws</span>
 			</a>
@@ -330,5 +330,7 @@
 			lifecycle points.
 		-->
 		<script type="module" src="/src/walk-embed.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

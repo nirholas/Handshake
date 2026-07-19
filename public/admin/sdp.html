@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Solana Developer Platform · three.ws admin</title>
+	<title data-i18n="admin_sdp.meta_title">Solana Developer Platform · three.ws admin</title>
 	<link rel="icon" href="/favicon.ico" />
 	<style>
 		:root { color-scheme: dark; --accent: #14f195; --accent2: #9945ff; }
@@ -93,20 +93,20 @@
 <body>
 <div class="layout">
 	<nav class="sidebar">
-		<span class="sidebar-brand">Solana Platform</span>
-		<span class="sidebar-sub">SDP · platform.solana.com</span>
-		<a class="nav-item active" data-tab="overview" onclick="switchTab('overview')">Overview</a>
-		<a class="nav-item" data-tab="wallets" onclick="switchTab('wallets')">Wallets</a>
-		<a class="nav-item" data-tab="tokens" onclick="switchTab('tokens')">Token issuance</a>
-		<a class="nav-item" data-tab="transfers" onclick="switchTab('transfers')">Payments</a>
-		<a class="nav-item" data-tab="compliance" onclick="switchTab('compliance')">Compliance</a>
+		<span class="sidebar-brand" data-i18n="admin_sdp.solana_platform">Solana Platform</span>
+		<span class="sidebar-sub" data-i18n="admin_sdp.sdp_platform_solana_com">SDP · platform.solana.com</span>
+		<a class="nav-item active" data-tab="overview" onclick="switchTab('overview')" data-i18n="admin_sdp.overview">Overview</a>
+		<a class="nav-item" data-tab="wallets" onclick="switchTab('wallets')" data-i18n="admin_sdp.wallets">Wallets</a>
+		<a class="nav-item" data-tab="tokens" onclick="switchTab('tokens')" data-i18n="admin_sdp.token_issuance">Token issuance</a>
+		<a class="nav-item" data-tab="transfers" onclick="switchTab('transfers')" data-i18n="admin_sdp.payments">Payments</a>
+		<a class="nav-item" data-tab="compliance" onclick="switchTab('compliance')" data-i18n="admin_sdp.compliance">Compliance</a>
 		<div class="nav-sep"></div>
-		<a class="nav-item" href="/admin/">← Admin home</a>
-		<a class="nav-item" href="/api/sdp/openapi.json" target="_blank" rel="noopener">API reference ↗</a>
+		<a class="nav-item" href="/admin/" data-i18n="admin_sdp.admin_home">← Admin home</a>
+		<a class="nav-item" href="/api/sdp/openapi.json" target="_blank" rel="noopener" data-i18n="admin_sdp.api_reference">API reference ↗</a>
 	</nav>
 	<main class="main">
 		<div class="page-header">
-			<span class="page-title" id="page-title">Overview</span>
+			<span class="page-title" id="page-title" data-i18n="admin_sdp.overview_2">Overview</span>
 			<span class="user-chip" id="user-chip"></span>
 		</div>
 		<div class="page-desc" id="page-desc"></div>
@@ -488,5 +488,7 @@ async function boot() {
 boot();
 </script>
 <script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

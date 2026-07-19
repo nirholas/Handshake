@@ -3,11 +3,11 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>glTF Validator · three.ws</title>
+		<title data-i18n="validation_index.meta_title">glTF Validator · three.ws</title>
 		<meta
 			name="description"
 			content="Run the official Khronos glTF 2.0 validator and glTF-Transform performance inspector in your browser. Optionally sign &amp; pin reports on-chain."
-		/>
+		 data-i18n-attr="content:validation_index.meta_description"/>
 		<link rel="icon" href="/favicon.ico" />
 		<style>
 			:root {
@@ -832,15 +832,15 @@
 	<link rel="canonical" href="https://three.ws/validation">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="glTF Validator · three.ws">
-	<meta property="og:description" content="Khronos-spec validator for glTF/GLB files. Paste a URL or upload a model.">
+	<meta property="og:title" content="glTF Validator · three.ws" data-i18n-attr="content:validation_index.meta_og_title">
+	<meta property="og:description" content="Khronos-spec validator for glTF/GLB files. Paste a URL or upload a model." data-i18n-attr="content:validation_index.meta_og_description">
 	<meta property="og:url" content="https://three.ws/validation">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=glTF+Validator&amp;d=Khronos-spec+validator+for+glTF%2FGLB+files.+Paste+a+URL+or+upload+a+model.&amp;p=%2Fvalidation">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="glTF Validator · three.ws">
-	<meta name="twitter:description" content="Khronos-spec validator for glTF/GLB files. Paste a URL or upload a model.">
+	<meta name="twitter:title" content="glTF Validator · three.ws" data-i18n-attr="content:validation_index.meta_twitter_title">
+	<meta name="twitter:description" content="Khronos-spec validator for glTF/GLB files. Paste a URL or upload a model." data-i18n-attr="content:validation_index.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=glTF+Validator&amp;d=Khronos-spec+validator+for+glTF%2FGLB+files.+Paste+a+URL+or+upload+a+model.&amp;p=%2Fvalidation">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"glTF Validator","description":"Khronos-spec validator for glTF/GLB files. Paste a URL or upload a model.","url":"https://three.ws/validation","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -856,8 +856,8 @@
 		<script src="/nav.js"></script>
 
 		<main>
-			<h1>glTF Validator</h1>
-			<p class="sub">
+			<h1 data-i18n="validation_index.gltf_validator">glTF Validator</h1>
+			<p class="sub" data-i18n-html="validation_index.run_the_official_khronos_gltf_2_0">
 				Run the official
 				<a href="https://github.com/KhronosGroup/glTF-Validator" target="_blank" rel="noreferrer"
 					>Khronos glTF 2.0 validator</a
@@ -898,13 +898,13 @@
 			</div>
 
 			<div class="tabs" role="tablist">
-				<button class="tab active" role="tab" data-tab="validate" aria-selected="true">
+				<button class="tab active" role="tab" data-tab="validate" aria-selected="true" data-i18n="validation_index.validate">
 					Validate
 				</button>
-				<button class="tab" role="tab" data-tab="inspect" aria-selected="false">
+				<button class="tab" role="tab" data-tab="inspect" aria-selected="false" data-i18n="validation_index.inspect">
 					Inspect
 				</button>
-				<button class="tab" role="tab" data-tab="records" aria-selected="false">
+				<button class="tab" role="tab" data-tab="records" aria-selected="false" data-i18n="validation_index.records">
 					Records
 				</button>
 			</div>
@@ -918,28 +918,28 @@
 						<div class="dz-sub">or click to choose · runs entirely in your browser</div>
 					</label>
 					<div class="url-box">
-						<label for="url-input">…or fetch from a URL</label>
+						<label for="url-input" data-i18n="validation_index.or_fetch_from_a_url">…or fetch from a URL</label>
 						<div class="url-row">
 							<input
 								type="url"
 								id="url-input"
 								placeholder="https://example.com/model.glb"
 							/>
-							<button class="btn" id="url-btn">Fetch</button>
+							<button class="btn" id="url-btn" data-i18n="validation_index.fetch">Fetch</button>
 						</div>
 						<div class="url-hint">CORS must be allowed by the host server.</div>
 					</div>
 				</div>
 
 				<div class="samples">
-					<span class="samples-label">Try a sample:</span>
+					<span class="samples-label" data-i18n="validation_index.try_a_sample">Try a sample:</span>
 					<span id="samples"></span>
 				</div>
 
 				<div id="status" class="status"></div>
 
 				<div class="action-bar">
-					<button class="btn ghost" id="sign-btn" disabled>
+					<button class="btn ghost" id="sign-btn" disabled data-i18n="validation_index.sign_pin_on_chain">
 						Sign &amp; pin on-chain →
 					</button>
 				</div>
@@ -958,7 +958,7 @@
 					<div class="empty-result">
 						<div class="empty-result-title">No model loaded</div>
 						<div>
-							Load a model in the <b>Validate</b> tab — both checks run in parallel and
+							Load a model in the <b data-i18n="validation_index.validate_2">Validate</b> tab — both checks run in parallel and
 							results appear here.
 						</div>
 					</div>
@@ -967,7 +967,7 @@
 
 			<!-- ── Records panel ──────────────────────────────────────────── -->
 			<section class="tab-panel" data-tab="records" role="tabpanel">
-				<p class="sub">
+				<p class="sub" data-i18n="validation_index.on_chain_proof_that_an_agent_s">
 					On-chain proof that an agent's GLB model has been audited. Each record is signed by
 					a validator's wallet and stored immutably.
 				</p>
@@ -975,8 +975,8 @@
 				<div class="records-toolbar">
 					<input type="text" id="agent-input" placeholder="Agent ID (e.g., 1)" />
 					<input type="text" id="chain-input" placeholder="Chain ID (e.g., 84532)" />
-					<button class="btn" id="load-btn">Load Records</button>
-					<button class="btn sec" id="submit-btn">Submit JSON Report</button>
+					<button class="btn" id="load-btn" data-i18n="validation_index.load_records">Load Records</button>
+					<button class="btn sec" id="submit-btn" data-i18n="validation_index.submit_json_report">Submit JSON Report</button>
 				</div>
 
 				<div id="error" class="err-box" style="display: none"></div>
@@ -987,7 +987,7 @@
 					<div class="empty-sub">
 						This agent hasn't been validated yet, or the agent ID / chain ID is incorrect.
 					</div>
-					<button class="btn" id="empty-submit-btn">Submit a Validation</button>
+					<button class="btn" id="empty-submit-btn" data-i18n="validation_index.submit_a_validation">Submit a Validation</button>
 				</div>
 			</section>
 		</main>
@@ -995,16 +995,16 @@
 		<!-- Submit Modal — IDs preserved so ValidationDashboard wiring still works -->
 		<div class="modal-overlay" id="submit-modal">
 			<div class="modal">
-				<h2>Submit Validation Report</h2>
-				<p class="sub">
+				<h2 data-i18n="validation_index.submit_validation_report">Submit Validation Report</h2>
+				<p class="sub" data-i18n="validation_index.upload_a_json_validation_report_signed_by">
 					Upload a JSON validation report — signed by your wallet and stored on-chain.
 				</p>
 
 				<div class="form-group">
-					<label>Report File (JSON)</label>
+					<label data-i18n="validation_index.report_file_json">Report File (JSON)</label>
 					<div class="file-input-wrapper">
 						<input type="file" id="report-file" accept=".json" />
-						<label for="report-file" class="file-input-label">
+						<label for="report-file" class="file-input-label" data-i18n="validation_index.click_to_select_or_drag_a_json">
 							📄 Click to select or drag a JSON report file
 						</label>
 					</div>
@@ -1018,7 +1018,7 @@
 				</div>
 
 				<div id="hash-section" style="display: none" class="form-group">
-					<label>Report Hash</label>
+					<label data-i18n="validation_index.report_hash">Report Hash</label>
 					<input
 						type="text"
 						id="report-hash"
@@ -1031,8 +1031,8 @@
 				</div>
 
 				<div class="modal-actions">
-					<button class="btn sec" onclick="closeSubmitModal()">Cancel</button>
-					<button class="btn" id="submit-report-btn" disabled>Submit on-chain</button>
+					<button class="btn sec" onclick="closeSubmitModal()" data-i18n="validation_index.cancel">Cancel</button>
+					<button class="btn" id="submit-report-btn" disabled data-i18n="validation_index.submit_on_chain">Submit on-chain</button>
 				</div>
 			</div>
 		</div>
@@ -1090,5 +1090,7 @@
 		<div id="footer-container"></div>
 		<script src="/footer.js" defer></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

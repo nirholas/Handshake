@@ -5,8 +5,8 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="robots" content="noindex, nofollow" />
-		<title>Memetic Launcher · Control · three.ws</title>
-		<meta name="description" content="Admin control panel for the autonomous coin launcher." />
+		<title data-i18n="admin_launcher.meta_title">Memetic Launcher · Control · three.ws</title>
+		<meta name="description" content="Admin control panel for the autonomous coin launcher."  data-i18n-attr="content:admin_launcher.meta_description"/>
 		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/src/admin-launcher.css" />
 	</head>
@@ -19,8 +19,8 @@
 			<section class="ml-gate" id="ml-gate" hidden>
 				<div class="ml-gate-card">
 					<div class="ml-gate-mark" aria-hidden="true">◎</div>
-					<h1 class="ml-gate-title">Memetic Launcher</h1>
-					<p class="ml-gate-sub">Admin control. Enter the operator secret to continue.</p>
+					<h1 class="ml-gate-title" data-i18n="admin_launcher.memetic_launcher">Memetic Launcher</h1>
+					<p class="ml-gate-sub" data-i18n="admin_launcher.admin_control_enter_the_operator_secret_to">Admin control. Enter the operator secret to continue.</p>
 					<form id="ml-gate-form" autocomplete="off">
 						<input
 							type="password"
@@ -30,7 +30,7 @@
 							aria-label="Operator secret"
 							autocomplete="current-password"
 						/>
-						<button type="submit" class="ml-btn ml-btn-primary ml-gate-btn">Unlock</button>
+						<button type="submit" class="ml-btn ml-btn-primary ml-gate-btn" data-i18n="admin_launcher.unlock">Unlock</button>
 						<p class="ml-gate-err" id="ml-gate-err" role="alert" aria-live="assertive"></p>
 					</form>
 				</div>
@@ -41,17 +41,17 @@
 				<!-- Hero / status -->
 				<header class="ml-hero">
 					<div class="ml-hero-l">
-						<p class="ml-kicker"><span class="ml-dot" id="ml-status-dot"></span> Autonomous coin launcher</p>
-						<h1 class="ml-title">Memetic <em>Launcher</em></h1>
-						<p class="ml-sub" id="ml-status-line">Loading state…</p>
+						<p class="ml-kicker" data-i18n-html="admin_launcher.autonomous_coin_launcher"><span class="ml-dot" id="ml-status-dot"></span> Autonomous coin launcher</p>
+						<h1 class="ml-title" data-i18n-html="admin_launcher.memetic_launcher_2">Memetic <em>Launcher</em></h1>
+						<p class="ml-sub" id="ml-status-line" data-i18n="admin_launcher.loading_state">Loading state…</p>
 					</div>
 					<div class="ml-hero-r">
 						<div class="ml-master">
-							<span class="ml-master-lbl">Master wallet</span>
+							<span class="ml-master-lbl" data-i18n="admin_launcher.master_wallet">Master wallet</span>
 							<span class="ml-master-val" id="ml-master-bal">—</span>
 						</div>
-						<button class="ml-btn ml-btn-ghost ml-force" id="ml-force-tick" title="Run one launcher tick immediately">Force tick</button>
-						<button class="ml-btn ml-armswitch" id="ml-armswitch" aria-pressed="false">
+						<button class="ml-btn ml-btn-ghost ml-force" id="ml-force-tick" title="Run one launcher tick immediately" data-i18n="admin_launcher.force_tick" data-i18n-attr="title:admin_launcher.run_one_launcher_tick_immedi_title">Force tick</button>
+						<button class="ml-btn ml-armswitch" id="ml-armswitch" aria-pressed="false" data-i18n-html="admin_launcher.disabled">
 							<span class="ml-armswitch-track"><span class="ml-armswitch-knob"></span></span>
 							<span class="ml-armswitch-lbl" id="ml-armswitch-lbl">Disabled</span>
 						</button>
@@ -61,69 +61,69 @@
 				<!-- Breaker banner -->
 				<div class="ml-breaker" id="ml-breaker" hidden role="alert">
 					<span class="ml-breaker-ico" aria-hidden="true">⚠</span>
-					<span class="ml-breaker-txt" id="ml-breaker-txt">Circuit breaker tripped.</span>
-					<button class="ml-btn ml-btn-ghost" id="ml-resume">Resume</button>
+					<span class="ml-breaker-txt" id="ml-breaker-txt" data-i18n="admin_launcher.circuit_breaker_tripped">Circuit breaker tripped.</span>
+					<button class="ml-btn ml-btn-ghost" id="ml-resume" data-i18n="admin_launcher.resume">Resume</button>
 				</div>
 
 				<!-- Stat cards -->
 				<dl class="ml-stats" id="ml-stats">
-					<div class="ml-stat ml-stat--lead"><dt>Launched today</dt><dd id="ml-s-launched">—</dd></div>
-					<div class="ml-stat"><dt>Dry runs</dt><dd id="ml-s-dry">—</dd></div>
-					<div class="ml-stat"><dt>SOL spent</dt><dd id="ml-s-spent">—</dd></div>
-					<div class="ml-stat"><dt>SOL left today</dt><dd id="ml-s-left">—</dd></div>
-					<div class="ml-stat"><dt>Queue agents</dt><dd id="ml-s-queue">—</dd></div>
-					<div class="ml-stat"><dt>Failed / skipped</dt><dd id="ml-s-fail">—</dd></div>
-					<div class="ml-stat ml-stat--revenue"><dt>Creator fees claimed</dt><dd id="ml-s-fees">—</dd></div>
-					<div class="ml-stat ml-stat--revenue"><dt>$THREE allocated</dt><dd id="ml-s-buyback">—</dd></div>
+					<div class="ml-stat ml-stat--lead"><dt data-i18n="admin_launcher.launched_today">Launched today</dt><dd id="ml-s-launched">—</dd></div>
+					<div class="ml-stat"><dt data-i18n="admin_launcher.dry_runs">Dry runs</dt><dd id="ml-s-dry">—</dd></div>
+					<div class="ml-stat"><dt data-i18n="admin_launcher.sol_spent">SOL spent</dt><dd id="ml-s-spent">—</dd></div>
+					<div class="ml-stat"><dt data-i18n="admin_launcher.sol_left_today">SOL left today</dt><dd id="ml-s-left">—</dd></div>
+					<div class="ml-stat"><dt data-i18n="admin_launcher.queue_agents">Queue agents</dt><dd id="ml-s-queue">—</dd></div>
+					<div class="ml-stat"><dt data-i18n="admin_launcher.failed_skipped">Failed / skipped</dt><dd id="ml-s-fail">—</dd></div>
+					<div class="ml-stat ml-stat--revenue"><dt data-i18n="admin_launcher.creator_fees_claimed">Creator fees claimed</dt><dd id="ml-s-fees">—</dd></div>
+					<div class="ml-stat ml-stat--revenue"><dt data-i18n="admin_launcher.three_allocated">$THREE allocated</dt><dd id="ml-s-buyback">—</dd></div>
 				</dl>
 
 				<div class="ml-grid">
 					<!-- Config -->
 					<form class="ml-config" id="ml-config" aria-label="Launcher configuration">
 						<section class="ml-card">
-							<h2 class="ml-card-h">Mode</h2>
-							<p class="ml-card-help">What the launcher coins each tick.</p>
+							<h2 class="ml-card-h" data-i18n="admin_launcher.mode">Mode</h2>
+							<p class="ml-card-help" data-i18n="admin_launcher.what_the_launcher_coins_each_tick">What the launcher coins each tick.</p>
 							<div class="ml-modes" id="ml-modes" role="radiogroup" aria-label="Launch mode"></div>
 						</section>
 
 						<section class="ml-card" id="ml-sources-card">
-							<h2 class="ml-card-h">Trend sources</h2>
-							<p class="ml-card-help">Culture mined to ride live narratives. Themes only — never clones a ticker.</p>
+							<h2 class="ml-card-h" data-i18n="admin_launcher.trend_sources">Trend sources</h2>
+							<p class="ml-card-help" data-i18n="admin_launcher.culture_mined_to_ride_live_narratives_themes">Culture mined to ride live narratives. Themes only — never clones a ticker.</p>
 							<div class="ml-chips" id="ml-sources"></div>
 						</section>
 
 						<section class="ml-card">
-							<h2 class="ml-card-h">Cadence &amp; rate</h2>
+							<h2 class="ml-card-h" data-i18n="admin_launcher.cadence_rate">Cadence &amp; rate</h2>
 							<div class="ml-fields">
 								<label class="ml-field">
-									<span class="ml-field-lbl">Target cadence <em>seconds</em></span>
+									<span class="ml-field-lbl" data-i18n-html="admin_launcher.target_cadence_seconds">Target cadence <em>seconds</em></span>
 									<input type="number" min="5" max="86400" step="1" id="ml-cadence" class="ml-input" />
 									<span class="ml-field-hint" id="ml-cadence-hint"></span>
 								</label>
 								<label class="ml-field">
-									<span class="ml-field-lbl">Max / hour <em>hard ceiling</em></span>
+									<span class="ml-field-lbl" data-i18n-html="admin_launcher.max_hour_hard_ceiling">Max / hour <em>hard ceiling</em></span>
 									<input type="number" min="0" max="100000" step="1" id="ml-maxhour" class="ml-input" />
 								</label>
 							</div>
 						</section>
 
 						<section class="ml-card">
-							<h2 class="ml-card-h">Economics</h2>
+							<h2 class="ml-card-h" data-i18n="admin_launcher.economics">Economics</h2>
 							<div class="ml-fields">
 								<label class="ml-field">
-									<span class="ml-field-lbl">Per launch <em>SOL</em></span>
+									<span class="ml-field-lbl" data-i18n-html="admin_launcher.per_launch_sol">Per launch <em>SOL</em></span>
 									<input type="number" min="0" max="50" step="0.001" id="ml-perlaunch" class="ml-input" />
 								</label>
 								<label class="ml-field">
-									<span class="ml-field-lbl">Dev buy <em>SOL</em></span>
+									<span class="ml-field-lbl" data-i18n-html="admin_launcher.dev_buy_sol">Dev buy <em>SOL</em></span>
 									<input type="number" min="0" max="50" step="0.001" id="ml-devbuy" class="ml-input" />
 								</label>
 								<label class="ml-field">
-									<span class="ml-field-lbl">Daily cap <em>SOL</em></span>
+									<span class="ml-field-lbl" data-i18n-html="admin_launcher.daily_cap_sol">Daily cap <em>SOL</em></span>
 									<input type="number" min="0" max="100000" step="0.01" id="ml-dailycap" class="ml-input" />
 								</label>
 								<label class="ml-field">
-									<span class="ml-field-lbl">$THREE buyback <em>%</em></span>
+									<span class="ml-field-lbl" data-i18n-html="admin_launcher.three_buyback">$THREE buyback <em>%</em></span>
 									<input type="number" min="0" max="100" step="0.5" id="ml-buyback" class="ml-input" />
 									<span class="ml-field-hint" id="ml-buyback-hint"></span>
 								</label>
@@ -131,21 +131,21 @@
 						</section>
 
 						<section class="ml-card">
-							<h2 class="ml-card-h">Safety</h2>
+							<h2 class="ml-card-h" data-i18n="admin_launcher.safety">Safety</h2>
 							<div class="ml-toggles">
 								<label class="ml-switch">
 									<input type="checkbox" id="ml-dryrun" />
 									<span class="ml-switch-ui" aria-hidden="true"></span>
-									<span class="ml-switch-txt">
+									<span class="ml-switch-txt" data-i18n-html="admin_launcher.dry_run_choose_a_coin_agent_record">
 										<strong>Dry run</strong>
 										<small>Choose a coin + agent, record it, move no SOL. Turn off to go live.</small>
 									</span>
 								</label>
 								<div class="ml-net">
-									<span class="ml-net-lbl">Network</span>
+									<span class="ml-net-lbl" data-i18n="admin_launcher.network">Network</span>
 									<div class="ml-seg" id="ml-network" role="radiogroup" aria-label="Network">
-										<button type="button" class="ml-seg-btn" data-net="mainnet" role="radio">Mainnet</button>
-										<button type="button" class="ml-seg-btn" data-net="devnet" role="radio">Devnet</button>
+										<button type="button" class="ml-seg-btn" data-net="mainnet" role="radio" data-i18n="admin_launcher.mainnet">Mainnet</button>
+										<button type="button" class="ml-seg-btn" data-net="devnet" role="radio" data-i18n="admin_launcher.devnet">Devnet</button>
 									</div>
 								</div>
 							</div>
@@ -157,25 +157,25 @@
 						<!-- Live narratives the launcher would ride right now -->
 						<section class="ml-narr" aria-label="Live narratives">
 							<div class="ml-console-h">
-								<h2 class="ml-card-h">Live narratives</h2>
+								<h2 class="ml-card-h" data-i18n="admin_launcher.live_narratives">Live narratives</h2>
 								<span class="ml-console-meta" id="ml-narr-meta">—</span>
 							</div>
 							<p class="ml-narr-lead" id="ml-narr-lead" hidden></p>
 							<ol class="ml-narr-list" id="ml-narr-list"></ol>
 							<div class="ml-narr-empty" id="ml-narr-empty" hidden>
-								<p>No live narrative yet. Enable trend sources (Know Your Meme, Coin intel…) to surface the currents the launcher would ride.</p>
+								<p data-i18n="admin_launcher.no_live_narrative_yet_enable_trend_sources">No live narrative yet. Enable trend sources (Know Your Meme, Coin intel…) to surface the currents the launcher would ride.</p>
 							</div>
 						</section>
 
 						<!-- Live console -->
 						<section class="ml-console" aria-label="Live launch console">
 							<div class="ml-console-h">
-								<h2 class="ml-card-h">Live console</h2>
+								<h2 class="ml-card-h" data-i18n="admin_launcher.live_console">Live console</h2>
 								<span class="ml-console-meta" id="ml-console-meta">—</span>
 							</div>
 							<ol class="ml-runs" id="ml-runs"></ol>
 							<div class="ml-runs-empty" id="ml-runs-empty" hidden>
-								<p>No launches yet. The launcher is live by default — runs appear here once the master wallet is funded and the next cadence tick fires.</p>
+								<p data-i18n="admin_launcher.no_launches_yet_the_launcher_is_live">No launches yet. The launcher is live by default — runs appear here once the master wallet is funded and the next cadence tick fires.</p>
 							</div>
 						</section>
 					</div>
@@ -185,25 +185,25 @@
 
 		<!-- Sticky save bar -->
 		<div class="ml-savebar" id="ml-savebar" hidden role="region" aria-label="Unsaved changes">
-			<span class="ml-savebar-txt" id="ml-savebar-txt">Unsaved changes</span>
+			<span class="ml-savebar-txt" id="ml-savebar-txt" data-i18n="admin_launcher.unsaved_changes">Unsaved changes</span>
 			<div class="ml-savebar-actions">
-				<button class="ml-btn ml-btn-ghost" id="ml-discard">Discard</button>
-				<button class="ml-btn ml-btn-primary" id="ml-save">Save changes</button>
+				<button class="ml-btn ml-btn-ghost" id="ml-discard" data-i18n="admin_launcher.discard">Discard</button>
+				<button class="ml-btn ml-btn-primary" id="ml-save" data-i18n="admin_launcher.save_changes">Save changes</button>
 			</div>
 		</div>
 
 		<!-- Arm confirmation modal -->
 		<div class="ml-modal" id="ml-modal" hidden role="dialog" aria-modal="true" aria-labelledby="ml-modal-title">
 			<div class="ml-modal-card">
-				<h2 class="ml-modal-title" id="ml-modal-title">Arm the live firehose?</h2>
+				<h2 class="ml-modal-title" id="ml-modal-title" data-i18n="admin_launcher.arm_the_live_firehose">Arm the live firehose?</h2>
 				<p class="ml-modal-body" id="ml-modal-body"></p>
 				<label class="ml-modal-confirm">
-					<span>Type <strong>ARM</strong> to confirm</span>
+					<span data-i18n-html="admin_launcher.type_arm_to_confirm">Type <strong>ARM</strong> to confirm</span>
 					<input type="text" id="ml-modal-input" class="ml-input" autocomplete="off" spellcheck="false" />
 				</label>
 				<div class="ml-modal-actions">
-					<button class="ml-btn ml-btn-ghost" id="ml-modal-cancel">Cancel</button>
-					<button class="ml-btn ml-btn-danger" id="ml-modal-go" disabled>Arm &amp; go live</button>
+					<button class="ml-btn ml-btn-ghost" id="ml-modal-cancel" data-i18n="admin_launcher.cancel">Cancel</button>
+					<button class="ml-btn ml-btn-danger" id="ml-modal-go" disabled data-i18n="admin_launcher.arm_go_live">Arm &amp; go live</button>
 				</div>
 			</div>
 		</div>
@@ -211,5 +211,7 @@
 		<div class="ml-toast" id="ml-toast" hidden aria-live="polite"></div>
 
 		<script type="module" src="/src/admin-launcher.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

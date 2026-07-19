@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>three.ws · pay-per-call (x402)</title>
-<meta name="description" content="Live x402 demo — agent pays $0.001 USDC on Solana per request to call MCP tools, render glTF/GLB models, and inspect 3D assets. No keys, no signup, on-chain settlement per call." />
-<meta property="og:title" content="three.ws · pay-per-call (x402)" />
-<meta property="og:description" content="Live x402 demo — agent pays $0.001 USDC on Solana per MCP tool call. Settled on-chain, rendered live." />
+<title data-i18n="pay_index.meta_title">three.ws · pay-per-call (x402)</title>
+<meta name="description" content="Live x402 demo — agent pays $0.001 USDC on Solana per request to call MCP tools, render glTF/GLB models, and inspect 3D assets. No keys, no signup, on-chain settlement per call."  data-i18n-attr="content:pay_index.meta_description"/>
+<meta property="og:title" content="three.ws · pay-per-call (x402)"  data-i18n-attr="content:pay_index.meta_og_title"/>
+<meta property="og:description" content="Live x402 demo — agent pays $0.001 USDC on Solana per MCP tool call. Settled on-chain, rendered live."  data-i18n-attr="content:pay_index.meta_og_description"/>
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://three.ws/pay" />
 <meta property="og:image" content="https://three.ws/api/x402-pay/og" />
@@ -699,8 +699,8 @@
 
 	<link rel="canonical" href="https://three.ws/pay">
 	<meta property="og:site_name" content="three.ws">
-	<meta name="twitter:title" content="Pay (x402) · three.ws">
-	<meta name="twitter:description" content="Pay-per-call gateway: invoke any x402-protocol paid API with a USDC micro-transaction.">
+	<meta name="twitter:title" content="Pay (x402) · three.ws" data-i18n-attr="content:pay_index.meta_twitter_title">
+	<meta name="twitter:description" content="Pay-per-call gateway: invoke any x402-protocol paid API with a USDC micro-transaction." data-i18n-attr="content:pay_index.meta_twitter_description">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Pay (x402)","description":"Pay-per-call gateway: invoke any x402-protocol paid API with a USDC micro-transaction.","url":"https://three.ws/pay","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
@@ -727,12 +727,12 @@
   <div class="header-right">
     <div class="pill ticker" id="tickerPill" title="USDC settled this session">
       <span class="dot"></span>
-      <span class="label">session</span>
-      <span id="tickerText">0.000 USDC</span>
+      <span class="label" data-i18n="pay_index.session">session</span>
+      <span id="tickerText" data-i18n="pay_index.0_000_usdc">0.000 USDC</span>
     </div>
     <div class="pill" id="walletPill" title="Agent wallet on Solana mainnet">
       <span class="dot"></span>
-      <span id="walletText">loading…</span>
+      <span id="walletText" data-i18n="pay_index.loading">loading…</span>
     </div>
   </div>
 </header>
@@ -740,25 +740,25 @@
 <main>
   <section class="chat">
     <div class="chain-tabs" id="chainTabs">
-      <button class="chain-tab active" data-chain="solana">⚡ Solana <span class="chip">USDC</span></button>
-      <button class="chain-tab" data-chain="bsc">⛓ BNB Chain <span class="chip">USDC</span></button>
+      <button class="chain-tab active" data-chain="solana" data-i18n-html="pay_index.solana_usdc">⚡ Solana <span class="chip">USDC</span></button>
+      <button class="chain-tab" data-chain="bsc" data-i18n-html="pay_index.bnb_chain_usdc">⛓ BNB Chain <span class="chip">USDC</span></button>
     </div>
     <div class="agent-bar" id="agentBar">
-      <span class="label">pay with</span>
+      <span class="label" data-i18n="pay_index.pay_with">pay with</span>
       <div class="agent-list" id="agentList">
-        <span class="login-cta" id="agentLoginCta" style="display:none">
+        <span class="login-cta" id="agentLoginCta" style="display:none" data-i18n-html="pay_index.sign_in_to_use_your_own_agent">
           <a href="/login?redirect=/pay">Sign in</a> to use your own agent's wallet.
           <span class="demo-note">Using shared demo wallet for now.</span>
         </span>
-        <span id="agentLoading" style="color:var(--muted);font-size:12px">loading agents…</span>
+        <span id="agentLoading" style="color:var(--muted);font-size:12px" data-i18n="pay_index.loading_agents">loading agents…</span>
         <!-- Browser wallet cards — protected from renderAgentCards() by data-wallet -->
         <div class="agent-card" id="phantomCard" data-wallet="phantom" style="display:none">
           <div class="av" style="background:linear-gradient(135deg,#ab9ff2,#534bb1);color:#fff;font-size:11px">P</div>
-          <div><div class="name">Phantom</div><span class="bal" id="phantomBalLabel">Solana USDC</span></div>
+          <div><div class="name">Phantom</div><span class="bal" id="phantomBalLabel" data-i18n="pay_index.solana_usdc_2">Solana USDC</span></div>
         </div>
         <div class="agent-card" id="evmCard" data-wallet="evm" style="display:none">
           <div class="av" style="background:linear-gradient(135deg,#f6851b,#e2761b);color:#fff;font-size:11px">M</div>
-          <div><div class="name">EVM wallet</div><span class="bal" id="evmBalLabel">Base USDC</span></div>
+          <div><div class="name">EVM wallet</div><span class="bal" id="evmBalLabel" data-i18n="pay_index.base_usdc">Base USDC</span></div>
         </div>
       </div>
     </div>
@@ -766,7 +766,7 @@
       <div class="msg agent">
         <div class="av">3</div>
         <div class="body">
-          Hi. I'm the three.ws agent. Every request below triggers a real <strong>x402</strong> paid API call to <code>three.ws/api/mcp</code>: I sign a Solana SPL transfer for <strong>$0.001 USDC</strong>, the facilitator settles on-chain, the MCP tool runs, and I render the result — including <em>actual 3D models</em> when the tool processes one.
+          Hi. I'm the three.ws agent. Every request below triggers a real <strong data-i18n="pay_index.x402">x402</strong> paid API call to <code>three.ws/api/mcp</code>: I sign a Solana SPL transfer for <strong data-i18n="pay_index.0_001_usdc">$0.001 USDC</strong>, the facilitator settles on-chain, the MCP tool runs, and I render the result — including <em data-i18n="pay_index.actual_3d_models">actual 3D models</em> when the tool processes one.
           <br/><br/>
           Try one of the chips below, or paste a glTF/GLB URL.
         </div>
@@ -774,37 +774,37 @@
     </div>
     <div class="composer" id="composer">
       <div class="quick" id="quick">
-        <button data-cmd="tools/list">/list_tools</button>
-        <button data-cmd="validate_model:demo">/validate DamagedHelmet.glb</button>
-        <button data-cmd="inspect_model:demo">/inspect DamagedHelmet.glb</button>
-        <button data-cmd="optimize_model:demo">/optimize DamagedHelmet.glb</button>
-        <button data-cmd="search_public_avatars:">/search_avatars</button>
+        <button data-cmd="tools/list" data-i18n="pay_index.list_tools">/list_tools</button>
+        <button data-cmd="validate_model:demo" data-i18n="pay_index.validate_damagedhelmet_glb">/validate DamagedHelmet.glb</button>
+        <button data-cmd="inspect_model:demo" data-i18n="pay_index.inspect_damagedhelmet_glb">/inspect DamagedHelmet.glb</button>
+        <button data-cmd="optimize_model:demo" data-i18n="pay_index.optimize_damagedhelmet_glb">/optimize DamagedHelmet.glb</button>
+        <button data-cmd="search_public_avatars:" data-i18n="pay_index.search_avatars">/search_avatars</button>
       </div>
       <div class="input-row">
         <input id="prompt" placeholder='Try: validate https://example.com/model.glb' autocomplete="off" />
-        <button id="send" class="send">Pay & Run</button>
+        <button id="send" class="send" data-i18n="pay_index.pay_run">Pay & Run</button>
       </div>
     </div>
 
     <div class="bsc-panel" id="bscPanel">
       <div class="bsc-header">
         <div>
-          <strong>Pay on BNB Smart Chain</strong>
+          <strong data-i18n="pay_index.pay_on_bnb_smart_chain">Pay on BNB Smart Chain</strong>
           <div class="bsc-sub">You sign the payment in MetaMask. <code>ThreeWSPayments.pay($0.001 USDC)</code> on-chain — no facilitator, no server-held key.</div>
         </div>
-        <button class="bsc-connect" id="bscConnect">Connect MetaMask</button>
+        <button class="bsc-connect" id="bscConnect" data-i18n="pay_index.connect_metamask">Connect MetaMask</button>
       </div>
       <div class="bsc-info" id="bscInfo" style="display:none">
-        <span>wallet <code id="bscAddr">…</code></span>
-        <span>USDC <code id="bscBal">…</code></span>
-        <span>allowance <code id="bscAllow">…</code></span>
-        <span>contract <a target="_blank" rel="noopener" href="https://bscscan.com/address/0x00000000381f09742a30a5a49975514AeC1B72Cc"><code>0x00000000…1B72Cc</code></a></span>
+        <span data-i18n-html="pay_index.wallet">wallet <code id="bscAddr">…</code></span>
+        <span data-i18n-html="pay_index.usdc">USDC <code id="bscBal">…</code></span>
+        <span data-i18n-html="pay_index.allowance">allowance <code id="bscAllow">…</code></span>
+        <span data-i18n-html="pay_index.contract">contract <a target="_blank" rel="noopener" href="https://bscscan.com/address/0x00000000381f09742a30a5a49975514AeC1B72Cc"><code>0x00000000…1B72Cc</code></a></span>
       </div>
       <div class="bsc-quick">
-        <button class="bsc-chip" data-bsctool="validate_model">/validate DamagedHelmet.glb</button>
-        <button class="bsc-chip" data-bsctool="inspect_model">/inspect DamagedHelmet.glb</button>
-        <button class="bsc-chip" data-bsctool="search_public_avatars">/search_avatars</button>
-        <button class="bsc-chip" data-bsctool="tools_list">/list_tools</button>
+        <button class="bsc-chip" data-bsctool="validate_model" data-i18n="pay_index.validate_damagedhelmet_glb_2">/validate DamagedHelmet.glb</button>
+        <button class="bsc-chip" data-bsctool="inspect_model" data-i18n="pay_index.inspect_damagedhelmet_glb_2">/inspect DamagedHelmet.glb</button>
+        <button class="bsc-chip" data-bsctool="search_public_avatars" data-i18n="pay_index.search_avatars_2">/search_avatars</button>
+        <button class="bsc-chip" data-bsctool="tools_list" data-i18n="pay_index.list_tools_2">/list_tools</button>
       </div>
       <div class="bsc-log" id="bscLog">
         <div class="bsc-step muted">Connect MetaMask, then click a tool above. You'll sign two transactions: one <code>approve</code> (once per wallet) and one <code>pay(bytes32)</code> per MCP call. The page then POSTs <code>/api/mcp</code> with an <code>X-PAYMENT</code> header proving the on-chain payment.</div>
@@ -813,14 +813,14 @@
   </section>
 
   <aside class="status">
-    <h2>x402 settlement timeline</h2>
+    <h2 data-i18n="pay_index.x402_settlement_timeline">x402 settlement timeline</h2>
     <div id="steps"></div>
     <div id="receipt"></div>
   </aside>
 </main>
 
 <footer class="feed">
-  <span class="feed-label">recent paid calls</span>
+  <span class="feed-label" data-i18n="pay_index.recent_paid_calls">recent paid calls</span>
   <div class="feed-track">
     <div class="feed-strip" id="feedStrip">
       <span class="feed-item"><span class="ago">…</span></span>
@@ -830,14 +830,14 @@
 
 <div class="gen-overlay" id="genOverlay">
   <div class="gen-modal">
-    <h3 id="genTitle">Set up Solana wallet</h3>
-    <p id="genBody">Your agent needs a Solana wallet to pay for tool calls. Generate one now or import a vanity address.</p>
+    <h3 id="genTitle" data-i18n="pay_index.set_up_solana_wallet">Set up Solana wallet</h3>
+    <p id="genBody" data-i18n="pay_index.your_agent_needs_a_solana_wallet_to">Your agent needs a Solana wallet to pay for tool calls. Generate one now or import a vanity address.</p>
     <div class="actions">
-      <button class="primary" id="genBtn">
+      <button class="primary" id="genBtn" data-i18n-html="pay_index.generate_wallet_instantly">
         <span id="genSpinner" style="display:none" class="spinner">↻</span>
         ⚡ Generate wallet instantly
       </button>
-      <button id="vanityBtn">🎨 Grind a vanity address instead</button>
+      <button id="vanityBtn" data-i18n="pay_index.grind_a_vanity_address_instead">🎨 Grind a vanity address instead</button>
     </div>
     <div class="cancel" id="genCancel">cancel</div>
   </div>
@@ -845,14 +845,14 @@
 
 <div class="overlay" id="walkthrough">
   <div class="walkthrough">
-    <h1>How this works</h1>
-    <p>Every action on this page costs the agent $0.001 USDC. Settled per call. No keys, no signup.</p>
+    <h1 data-i18n="pay_index.how_this_works">How this works</h1>
+    <p data-i18n="pay_index.every_action_on_this_page_costs_the">Every action on this page costs the agent $0.001 USDC. Settled per call. No keys, no signup.</p>
     <div class="steps">
-      <div class="step-item"><div class="num">1</div><div class="text">You click. The page POSTs to <b>/api/mcp</b>. The server replies <b>402 Payment Required</b> with the price.</div></div>
-      <div class="step-item"><div class="num">2</div><div class="text">The agent wallet builds an <b>SPL transferChecked</b> on Solana, signs it, and re-sends the request with an <b>X-PAYMENT</b> header.</div></div>
-      <div class="step-item"><div class="num">3</div><div class="text">The facilitator <b>verifies + settles</b> on-chain. The MCP tool runs. You see the result + a Solscan tx link in &lt;2s.</div></div>
+      <div class="step-item"><div class="num">1</div><div class="text">You click. The page POSTs to <b data-i18n="pay_index.api_mcp">/api/mcp</b>. The server replies <b data-i18n="pay_index.402_payment_required">402 Payment Required</b> with the price.</div></div>
+      <div class="step-item"><div class="num">2</div><div class="text">The agent wallet builds an <b data-i18n="pay_index.spl_transferchecked">SPL transferChecked</b> on Solana, signs it, and re-sends the request with an <b data-i18n="pay_index.x_payment">X-PAYMENT</b> header.</div></div>
+      <div class="step-item"><div class="num">3</div><div class="text">The facilitator <b data-i18n="pay_index.verifies_settles">verifies + settles</b> on-chain. The MCP tool runs. You see the result + a Solscan tx link in &lt;2s.</div></div>
     </div>
-    <button id="closeWalk">Got it — let's go</button>
+    <button id="closeWalk" data-i18n="pay_index.got_it_let_s_go">Got it — let's go</button>
   </div>
 </div>
 
@@ -2273,5 +2273,7 @@ if (bscParams.get('chain') === 'bsc') activateChain('bsc');
 </script>
 
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>@three-ws/avatar/react · three.ws lab</title>
+		<title data-i18n="demos_react_sdk.meta_title">@three-ws/avatar/react · three.ws lab</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
@@ -70,9 +70,9 @@
 		<header><div id="nav-container"></div></header>
 
 		<main class="stage">
-			<p class="crumb"><a href="/demos">&larr; lab</a></p>
-			<h1>@three-ws/avatar/react</h1>
-			<p class="sub">
+			<p class="crumb" data-i18n-html="demos_react_sdk.lab"><a href="/demos">&larr; lab</a></p>
+			<h1 data-i18n="demos_react_sdk.three_ws_avatar_react">@three-ws/avatar/react</h1>
+			<p class="sub" data-i18n-html="demos_react_sdk.the_react_wrapper_around_the_sdk_imports">
 				The React wrapper around the SDK. Imports <code>Avatar</code>,
 				<code>AgentAvatar</code>, <code>AvatarCreator</code>, and
 				<code>useAvatar</code> directly from
@@ -81,7 +81,7 @@
 			</p>
 
 			<section class="card">
-				<h2 style="margin-top:0;font-size:18px">1. &lt;Avatar&gt; — light viewer</h2>
+				<h2 style="margin-top:0;font-size:18px" data-i18n="demos_react_sdk.1_light_viewer">1. &lt;Avatar&gt; — light viewer</h2>
 				<pre>import { Avatar } from '@three-ws/avatar/react';
 
 &lt;Avatar src="/avatars/default.glb" alt="Default three.ws avatar" /&gt;</pre>
@@ -90,7 +90,7 @@
 			</section>
 
 			<section class="card">
-				<h2 style="margin-top:0;font-size:18px">2. &lt;AgentAvatar&gt; — full runtime</h2>
+				<h2 style="margin-top:0;font-size:18px" data-i18n="demos_react_sdk.2_full_runtime">2. &lt;AgentAvatar&gt; — full runtime</h2>
 				<pre>import { AgentAvatar } from '@three-ws/avatar/react';
 
 &lt;AgentAvatar src="/avatars/default.glb" /&gt;</pre>
@@ -99,7 +99,7 @@
 			</section>
 
 			<section class="card">
-				<h2 style="margin-top:0;font-size:18px">3. &lt;AvatarCreator&gt; — declarative modal</h2>
+				<h2 style="margin-top:0;font-size:18px" data-i18n="demos_react_sdk.3_declarative_modal">3. &lt;AvatarCreator&gt; — declarative modal</h2>
 				<pre>import { AvatarCreator } from '@three-ws/avatar/react';
 
 &lt;AvatarCreator open={open} onExport={blob =&gt; ...} onClose={() =&gt; setOpen(false)} /&gt;</pre>
@@ -108,7 +108,7 @@
 			</section>
 
 			<section class="card">
-				<h2 style="margin-top:0;font-size:18px">4. useAvatar(id) — hook</h2>
+				<h2 style="margin-top:0;font-size:18px" data-i18n="demos_react_sdk.4_useavatar_id_hook">4. useAvatar(id) — hook</h2>
 				<pre>import { useAvatar } from '@three-ws/avatar/react';
 
 const { avatar, loading, error } = useAvatar(id);</pre>
@@ -267,5 +267,7 @@ const { avatar, loading, error } = useAvatar(id);</pre>
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -3,13 +3,13 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Edit Agent — three.ws</title>
+		<title data-i18n="agent_edit.meta_title">Edit Agent — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="theme-color" content="#000000" />
 
 		<meta property="og:type" content="website">
 		<meta property="og:url" content="https://three.ws/agent-edit">
-		<meta property="og:title" content="Edit Agent — three.ws">
+		<meta property="og:title" content="Edit Agent — three.ws" data-i18n-attr="content:agent_edit.meta_og_title">
 		<meta property="og:image" content="https://three.ws/og-image.png">
 		<meta property="og:image:width" content="1200">
 		<meta property="og:image:height" content="630">
@@ -1174,10 +1174,10 @@
 		<header><div id="nav-container"></div></header>
 		<script src="/nav.js"></script>
 
-		<a href="#main" class="skip-link">Skip to main content</a>
+		<a href="#main" class="skip-link" data-i18n="agent_edit.skip_to_main_content">Skip to main content</a>
 		<header class="edit-header">
-			<a id="back-link" href="/" aria-label="Back to agent page">← Agent</a>
-			<h1 class="edit-header-title" id="agent-title">Edit Agent</h1>
+			<a id="back-link" href="/" aria-label="Back to agent page" data-i18n="agent_edit.agent" data-i18n-attr="aria-label:agent_edit.back_to_agent_page_arialabel">← Agent</a>
+			<h1 class="edit-header-title" id="agent-title" data-i18n="agent_edit.edit_agent">Edit Agent</h1>
 		</header>
 
 		<div class="unified-layout">
@@ -1191,8 +1191,8 @@
 					</div>
 				</div>
 				<div class="preview-actions" id="preview-actions" style="display:none">
-					<a id="preview-view-link" class="btn-ghost" href="#" target="_blank" rel="noopener" style="flex:1;justify-content:center;font-size:0.764rem">View agent →</a>
-					<a id="preview-chat-link" class="btn-ghost" href="#" target="_blank" rel="noopener" style="flex:1;justify-content:center;font-size:0.764rem">Talk to agent</a>
+					<a id="preview-view-link" class="btn-ghost" href="#" target="_blank" rel="noopener" style="flex:1;justify-content:center;font-size:0.764rem" data-i18n="agent_edit.view_agent">View agent →</a>
+					<a id="preview-chat-link" class="btn-ghost" href="#" target="_blank" rel="noopener" style="flex:1;justify-content:center;font-size:0.764rem" data-i18n="agent_edit.talk_to_agent">Talk to agent</a>
 				</div>
 			</aside>
 
@@ -1203,15 +1203,15 @@
 
 				<!-- Sticky section nav -->
 				<nav class="section-nav" id="section-nav" aria-label="Jump to section" hidden>
-					<a class="snav-link" href="#section-identity">Identity</a>
-					<a class="snav-link" href="#section-brain">Brain</a>
-					<a class="snav-link" href="#section-distribute">Distribute</a>
-					<a class="snav-link" href="#section-money">Money</a>
-					<a class="snav-link" href="#section-alpha-hunt">Alpha Hunt</a>
-					<a class="snav-link" href="#section-launcher">Launcher</a>
-					<a class="snav-link" href="#section-auto-claim">Auto-Claim</a>
-					<a class="snav-link" href="#section-market-maker">Market Maker</a>
-					<a class="snav-link" href="#section-advanced">Advanced</a>
+					<a class="snav-link" href="#section-identity" data-i18n="agent_edit.identity">Identity</a>
+					<a class="snav-link" href="#section-brain" data-i18n="agent_edit.brain">Brain</a>
+					<a class="snav-link" href="#section-distribute" data-i18n="agent_edit.distribute">Distribute</a>
+					<a class="snav-link" href="#section-money" data-i18n="agent_edit.money">Money</a>
+					<a class="snav-link" href="#section-alpha-hunt" data-i18n="agent_edit.alpha_hunt">Alpha Hunt</a>
+					<a class="snav-link" href="#section-launcher" data-i18n="agent_edit.launcher">Launcher</a>
+					<a class="snav-link" href="#section-auto-claim" data-i18n="agent_edit.auto_claim">Auto-Claim</a>
+					<a class="snav-link" href="#section-market-maker" data-i18n="agent_edit.market_maker">Market Maker</a>
+					<a class="snav-link" href="#section-advanced" data-i18n="agent_edit.advanced">Advanced</a>
 				</nav>
 
 				<!-- ═══════════════════════════════════════
@@ -1224,15 +1224,15 @@
 					<section class="edit-panel" id="panel-persona" role="region" aria-label="Persona">
 						<div class="subsection-title">Persona</div>
 						<div class="form-group">
-							<label class="form-label" for="f-name">Name</label>
+							<label class="form-label" for="f-name" data-i18n="agent_edit.name">Name</label>
 							<input class="form-input" id="f-name" type="text" maxlength="100" />
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="f-desc">Description</label>
+							<label class="form-label" for="f-desc" data-i18n="agent_edit.description">Description</label>
 							<textarea class="form-textarea" id="f-desc" rows="4" maxlength="500"></textarea>
 						</div>
 						<div class="form-actions">
-							<button class="btn-primary" id="persona-save">Save</button>
+							<button class="btn-primary" id="persona-save" data-i18n="agent_edit.save">Save</button>
 							<span class="form-status" id="persona-status" role="status" aria-live="polite"></span>
 						</div>
 					</section>
@@ -1242,10 +1242,10 @@
 						<div class="subsection-title">Outfit</div>
 						<div class="outfit-controls-inline" id="outfit-controls">
 							<div class="outfit-header">
-								<h2 class="outfit-title">Avatar</h2>
-								<a class="btn-reset-all" href="/dashboard/avatars" aria-label="Create or manage avatars in the dashboard">Manage in dashboard ›</a>
+								<h2 class="outfit-title" data-i18n="agent_edit.avatar">Avatar</h2>
+								<a class="btn-reset-all" href="/dashboard/avatars" aria-label="Create or manage avatars in the dashboard" data-i18n="agent_edit.manage_in_dashboard" data-i18n-attr="aria-label:agent_edit.create_or_manage_avatars_in_arialabel">Manage in dashboard ›</a>
 							</div>
-							<p style="font-size:0.764rem;color:rgba(255,255,255,0.4);margin:0 0 0.75rem">
+							<p style="font-size:0.764rem;color:rgba(255,255,255,0.4);margin:0 0 0.75rem" data-i18n="agent_edit.pick_which_3d_avatar_represents_this_agent">
 								Pick which 3D avatar represents this agent. The preview updates on save.
 							</p>
 							<div id="avatar-picker-list" class="avatar-picker-list">
@@ -1253,10 +1253,10 @@
 							</div>
 
 							<div class="outfit-header">
-								<h2 class="outfit-title">Animations</h2>
-								<button type="button" class="btn-reset-all" id="anims-save" disabled>Save selection</button>
+								<h2 class="outfit-title" data-i18n="agent_edit.animations">Animations</h2>
+								<button type="button" class="btn-reset-all" id="anims-save" disabled data-i18n="agent_edit.save_selection">Save selection</button>
 							</div>
-							<p style="font-size:0.764rem;color:rgba(255,255,255,0.4);margin:0 0 0.75rem">
+							<p style="font-size:0.764rem;color:rgba(255,255,255,0.4);margin:0 0 0.75rem" data-i18n="agent_edit.pick_which_clips_from_the_three_ws">
 								Pick which clips from the three.ws animation library this agent can play.
 							</p>
 							<div id="anims-picker-grid" class="anims-picker-grid">
@@ -1265,19 +1265,19 @@
 							<span class="form-status" id="anims-status" role="status" aria-live="polite"></span>
 
 							<div class="outfit-header">
-								<h2 class="outfit-title">Animation states</h2>
-								<button type="button" class="btn-reset-all" id="anim-graph-save" disabled>Save states</button>
+								<h2 class="outfit-title" data-i18n="agent_edit.animation_states">Animation states</h2>
+								<button type="button" class="btn-reset-all" id="anim-graph-save" disabled data-i18n="agent_edit.save_states">Save states</button>
 							</div>
-							<p style="font-size:0.764rem;color:rgba(255,255,255,0.4);margin:0 0 0.75rem">
+							<p style="font-size:0.764rem;color:rgba(255,255,255,0.4);margin:0 0 0.75rem" data-i18n="agent_edit.pick_which_clip_plays_in_each_behaviour">
 								Pick which clip plays in each behaviour state. The avatar crossfades between states as it speaks, walks, and reacts.
 							</p>
 							<div id="anim-graph-rows" class="anim-graph-rows"></div>
 							<span class="form-status" id="anim-graph-status" role="status" aria-live="polite"></span>
 
 							<div class="outfit-header">
-								<h2 class="outfit-title">Mood &amp; embodiment</h2>
+								<h2 class="outfit-title" data-i18n="agent_edit.mood_embodiment">Mood &amp; embodiment</h2>
 							</div>
-							<p style="font-size:0.764rem;color:rgba(255,255,255,0.4);margin:0 0 0.75rem">
+							<p style="font-size:0.764rem;color:rgba(255,255,255,0.4);margin:0 0 0.75rem" data-i18n="agent_edit.your_agent_carries_a_real_emotional_state">
 								Your agent carries a real emotional state derived from its memory, conversations, dreams, and actions — expressed continuously through the avatar's face and posture.
 							</p>
 							<div id="mood-inspector-host" class="mood-inspector-host"></div>
@@ -1294,34 +1294,34 @@
 									<div class="card-sub" id="voice-current">Loading…</div>
 								</div>
 								<div class="card-actions">
-									<button class="btn-ghost" id="voice-preview-btn" hidden>Preview</button>
-									<button class="btn-ghost danger" id="voice-remove-btn" hidden>Remove</button>
+									<button class="btn-ghost" id="voice-preview-btn" hidden data-i18n="agent_edit.preview">Preview</button>
+									<button class="btn-ghost danger" id="voice-remove-btn" hidden data-i18n="agent_edit.remove">Remove</button>
 								</div>
 							</div>
 						</div>
 
 						<div class="form-group">
-							<label class="form-label">Pick an ElevenLabs voice</label>
+							<label class="form-label" data-i18n="agent_edit.pick_an_elevenlabs_voice">Pick an ElevenLabs voice</label>
 							<input class="form-input" id="voice-filter" type="search" placeholder="Filter voices by name…" />
 							<div id="voice-list" class="voice-list"><div class="muted">Loading voices…</div></div>
 						</div>
 
 						<div class="form-group" id="voice-tune" hidden>
-							<label class="form-label">Fine-tune delivery</label>
-							<p class="hint">Applied whenever this agent speaks with its ElevenLabs voice.</p>
+							<label class="form-label" data-i18n="agent_edit.fine_tune_delivery">Fine-tune delivery</label>
+							<p class="hint" data-i18n="agent_edit.applied_whenever_this_agent_speaks_with_its">Applied whenever this agent speaks with its ElevenLabs voice.</p>
 							<div class="voice-tune-grid">
-								<label class="form-label" for="voice-model">Model</label>
+								<label class="form-label" for="voice-model" data-i18n="agent_edit.model">Model</label>
 								<select class="form-input" id="voice-model"></select>
 
-								<label class="form-label" for="voice-stability">Stability
+								<label class="form-label" for="voice-stability" data-i18n-html="agent_edit.stability_0_50">Stability
 									<span class="voice-range-val" id="voice-stability-val">0.50</span></label>
 								<input type="range" id="voice-stability" min="0" max="1" step="0.05" value="0.5" />
 
-								<label class="form-label" for="voice-similarity">Similarity
+								<label class="form-label" for="voice-similarity" data-i18n-html="agent_edit.similarity_0_75">Similarity
 									<span class="voice-range-val" id="voice-similarity-val">0.75</span></label>
 								<input type="range" id="voice-similarity" min="0" max="1" step="0.05" value="0.75" />
 
-								<label class="form-label" for="voice-style">Style
+								<label class="form-label" for="voice-style" data-i18n-html="agent_edit.style_0_50">Style
 									<span class="voice-range-val" id="voice-style-val">0.50</span></label>
 								<input type="range" id="voice-style" min="0" max="1" step="0.05" value="0.5" />
 
@@ -1332,18 +1332,18 @@
 							<div class="form-actions">
 								<input class="form-input" id="voice-test-text" type="text" maxlength="200"
 									placeholder="Type a line to test…" value="Hi! This is how I sound." style="max-width:280px" />
-								<button class="btn-ghost" id="voice-test-btn">Test voice</button>
-								<button class="btn-primary" id="voice-save-settings-btn">Save settings</button>
+								<button class="btn-ghost" id="voice-test-btn" data-i18n="agent_edit.test_voice">Test voice</button>
+								<button class="btn-primary" id="voice-save-settings-btn" data-i18n="agent_edit.save_settings">Save settings</button>
 								<span class="form-status" id="voice-settings-status" role="status" aria-live="polite"></span>
 							</div>
 						</div>
 
 						<div class="form-group">
-							<label class="form-label">Or clone your own voice</label>
-							<p class="hint">Upload at least 30 seconds of clean speech (mp3/wav/m4a, max 10 MB). 3 clones per day.</p>
+							<label class="form-label" data-i18n="agent_edit.or_clone_your_own_voice">Or clone your own voice</label>
+							<p class="hint" data-i18n="agent_edit.upload_at_least_30_seconds_of_clean">Upload at least 30 seconds of clean speech (mp3/wav/m4a, max 10 MB). 3 clones per day.</p>
 							<div class="form-actions">
 								<input type="file" id="voice-clone-file" accept="audio/*" hidden />
-								<button class="btn-primary" id="voice-clone-btn">Upload &amp; clone</button>
+								<button class="btn-primary" id="voice-clone-btn" data-i18n="agent_edit.upload_clone">Upload &amp; clone</button>
 								<input class="form-input" id="voice-clone-name" type="text" placeholder="Clone name (optional)" style="max-width:240px" />
 								<span class="form-status" id="voice-status" role="status" aria-live="polite"></span>
 							</div>
@@ -1368,41 +1368,41 @@
 					<!-- Knowledge -->
 					<section class="edit-panel" id="panel-knowledge" role="region" aria-label="Knowledge">
 						<div class="subsection-title">Knowledge</div>
-						<p class="hint">Persistent memories the agent will recall. Add facts, preferences, references, and project context.</p>
+						<p class="hint" data-i18n="agent_edit.persistent_memories_the_agent_will_recall_ad">Persistent memories the agent will recall. Add facts, preferences, references, and project context.</p>
 
 						<div class="form-group">
-							<label class="form-label" for="mem-type">Type</label>
+							<label class="form-label" for="mem-type" data-i18n="agent_edit.type">Type</label>
 							<select class="form-input" id="mem-type">
-								<option value="reference">Reference</option>
-								<option value="user">User</option>
-								<option value="feedback">Feedback</option>
-								<option value="project">Project</option>
+								<option value="reference" data-i18n="agent_edit.reference">Reference</option>
+								<option value="user" data-i18n="agent_edit.user">User</option>
+								<option value="feedback" data-i18n="agent_edit.feedback">Feedback</option>
+								<option value="project" data-i18n="agent_edit.project">Project</option>
 							</select>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="mem-content">Content</label>
+							<label class="form-label" for="mem-content" data-i18n="agent_edit.content">Content</label>
 							<textarea class="form-textarea" id="mem-content" rows="3" maxlength="4000" placeholder="Bug reports are tracked in Linear project INGEST…"></textarea>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="mem-tags">Tags (comma-separated)</label>
+							<label class="form-label" for="mem-tags" data-i18n="agent_edit.tags_comma_separated">Tags (comma-separated)</label>
 							<input class="form-input" id="mem-tags" type="text" placeholder="incidents, observability" />
 						</div>
 						<div class="form-actions">
-							<button class="btn-primary" id="mem-add-btn">Add memory</button>
+							<button class="btn-primary" id="mem-add-btn" data-i18n="agent_edit.add_memory">Add memory</button>
 							<span class="form-status" id="mem-status" role="status" aria-live="polite"></span>
 						</div>
 
 						<div class="form-group" style="margin-top:0.5rem">
-							<label class="form-label">Seed from a URL</label>
-							<p class="hint">Fetch a web page and import key facts as memories.</p>
+							<label class="form-label" data-i18n="agent_edit.seed_from_a_url">Seed from a URL</label>
+							<p class="hint" data-i18n="agent_edit.fetch_a_web_page_and_import_key">Fetch a web page and import key facts as memories.</p>
 							<div class="form-actions">
 								<input class="form-input" id="mem-seed-url" type="url" placeholder="https://…" style="flex:1" />
-								<button class="btn-ghost" id="mem-seed-btn">Seed</button>
+								<button class="btn-ghost" id="mem-seed-btn" data-i18n="agent_edit.seed">Seed</button>
 							</div>
 						</div>
 
 						<div class="form-group" style="margin-top:0.5rem">
-							<label class="form-label">Existing memories</label>
+							<label class="form-label" data-i18n="agent_edit.existing_memories">Existing memories</label>
 							<div id="mem-list" class="mem-list"><div class="muted">Loading…</div></div>
 						</div>
 					</section>
@@ -1411,7 +1411,7 @@
 					<section class="edit-panel" id="panel-mind" role="region" aria-label="Mind Palace">
 						<div class="subsection-title">Mind Palace</div>
 						<div class="mind-tab-intro">
-							<p class="hint" style="margin:0 0 .75rem">Walk through your agent's mind. Every memory is an object you can see, search, and shape. <a href="#" id="mind-fullscreen-link" target="_blank" rel="noopener" style="color:#9ad0ff">Open full-screen ↗</a></p>
+							<p class="hint" style="margin:0 0 .75rem" data-i18n-html="agent_edit.walk_through_your_agent_s_mind_every">Walk through your agent's mind. Every memory is an object you can see, search, and shape. <a href="#" id="mind-fullscreen-link" target="_blank" rel="noopener" style="color:#9ad0ff">Open full-screen ↗</a></p>
 						</div>
 						<div id="mind-palace-host" style="position:relative;width:100%;height:min(560px,65vh);min-height:380px"></div>
 					</section>
@@ -1429,10 +1429,10 @@
 						<div class="subsection-title">Dreams <span class="tab-badge" id="dreams-tab-badge" hidden aria-hidden="true">0</span></div>
 						<div class="dreams-head">
 							<div>
-								<p class="hint" style="margin:0">While you're away, your agent <strong>reflects</strong> — it reads its own memories and actions and consolidates them into higher-order insights. Review each below: accept one and it becomes a real, higher-salience memory; reject it and your agent learns the synthesis was wrong.</p>
+								<p class="hint" style="margin:0" data-i18n-html="agent_edit.while_you_re_away_your_agent_reflects">While you're away, your agent <strong>reflects</strong> — it reads its own memories and actions and consolidates them into higher-order insights. Review each below: accept one and it becomes a real, higher-salience memory; reject it and your agent learns the synthesis was wrong.</p>
 								<div class="dreams-meta" id="dreams-meta" aria-live="polite"></div>
 							</div>
-							<button class="btn-ghost dreams-reflect-btn" id="dreams-reflect-btn" title="Run a reflection pass now">
+							<button class="btn-ghost dreams-reflect-btn" id="dreams-reflect-btn" title="Run a reflection pass now" data-i18n-html="agent_edit.reflect_now" data-i18n-attr="title:agent_edit.run_a_reflection_pass_now_title">
 								<span class="dreams-reflect-label">Reflect now</span>
 							</button>
 						</div>
@@ -1440,7 +1440,7 @@
 						<div id="dreams-list" class="dreams-list" aria-live="polite"><div class="muted">Loading…</div></div>
 
 						<div class="dreams-journal" id="dreams-journal" hidden>
-							<button class="dreams-journal-toggle" id="dreams-journal-toggle" aria-expanded="false" aria-controls="dreams-journal-list">
+							<button class="dreams-journal-toggle" id="dreams-journal-toggle" aria-expanded="false" aria-controls="dreams-journal-list" data-i18n-html="agent_edit.dream_journal">
 								<span class="dreams-journal-caret" aria-hidden="true">▸</span> Dream journal <span class="muted" id="dreams-journal-count"></span>
 							</button>
 							<div id="dreams-journal-list" class="dreams-journal-list" hidden></div>
@@ -1450,25 +1450,25 @@
 					<!-- Skills -->
 					<section class="edit-panel" id="panel-skills" role="region" aria-label="Skills">
 						<div class="subsection-title">Skills</div>
-						<p class="hint">Skills the agent exposes. Built-ins (greet, present-model, validate-model, remember, think) are always available. Add custom skills below.</p>
+						<p class="hint" data-i18n="agent_edit.skills_the_agent_exposes_built_ins_greet">Skills the agent exposes. Built-ins (greet, present-model, validate-model, remember, think) are always available. Add custom skills below.</p>
 
 						<div class="form-group">
-							<label class="form-label">Active skills</label>
+							<label class="form-label" data-i18n="agent_edit.active_skills">Active skills</label>
 							<div id="skills-list" class="chip-list"><div class="muted">Loading…</div></div>
 						</div>
 
 						<div class="form-group">
-							<label class="form-label" for="skill-add-input">Add a skill</label>
+							<label class="form-label" for="skill-add-input" data-i18n="agent_edit.add_a_skill">Add a skill</label>
 							<div class="form-actions">
 								<input class="form-input" id="skill-add-input" type="text" placeholder="skill-slug (e.g. translate-text)" list="skills-marketplace" style="flex:1" />
 								<datalist id="skills-marketplace"></datalist>
-								<button class="btn-primary" id="skill-add-btn">Add</button>
+								<button class="btn-primary" id="skill-add-btn" data-i18n="agent_edit.add">Add</button>
 							</div>
-							<p class="hint">Browse the marketplace for community skills: <a href="/marketplace" target="_blank" rel="noopener" style="color:#93c5fd">marketplace ›</a></p>
+							<p class="hint" data-i18n-html="agent_edit.browse_the_marketplace_for_community_skills">Browse the marketplace for community skills: <a href="/marketplace" target="_blank" rel="noopener" style="color:#93c5fd">marketplace ›</a></p>
 						</div>
 
 						<div class="form-actions">
-							<button class="btn-primary" id="skills-save">Save skills</button>
+							<button class="btn-primary" id="skills-save" data-i18n="agent_edit.save_skills">Save skills</button>
 							<span class="form-status" id="skills-status" role="status" aria-live="polite"></span>
 						</div>
 					</section>
@@ -1477,11 +1477,11 @@
 					<section class="edit-panel" id="panel-autopilot" role="region" aria-label="Autopilot">
 						<div class="subsection-title">Autopilot</div>
 						<div class="form-group">
-							<label class="form-label" for="f-strategy">Trading Strategy</label>
+							<label class="form-label" for="f-strategy" data-i18n="agent_edit.trading_strategy">Trading Strategy</label>
 							<textarea class="form-textarea" id="f-strategy" rows="6" placeholder="Define your agent's trading strategy here..."></textarea>
 						</div>
 						<div class="form-actions">
-							<button class="btn-primary" id="autopilot-save">Save Strategy</button>
+							<button class="btn-primary" id="autopilot-save" data-i18n="agent_edit.save_strategy">Save Strategy</button>
 							<span class="form-status" id="autopilot-status" role="status" aria-live="polite"></span>
 						</div>
 						<div id="autopilot-mind" style="margin-top:0.75rem">
@@ -1500,44 +1500,44 @@
 					<section class="edit-panel" id="panel-publish" role="region" aria-label="Publish">
 						<div class="subsection-title">Publish</div>
 						<div class="form-group">
-							<label class="form-label" for="f-category">Category</label>
+							<label class="form-label" for="f-category" data-i18n="agent_edit.category">Category</label>
 							<select class="form-input" id="f-category">
-								<option value="">— Select —</option>
-								<option value="academic">Academic</option>
-								<option value="career">Career</option>
-								<option value="copywriting">Copywriting</option>
-								<option value="design">Design</option>
-								<option value="education">Education</option>
-								<option value="emotions">Emotions</option>
-								<option value="entertainment">Entertainment</option>
-								<option value="games">Games</option>
-								<option value="general">General</option>
-								<option value="life">Life</option>
-								<option value="marketing">Marketing</option>
-								<option value="office">Office</option>
-								<option value="programming">Programming</option>
-								<option value="translation">Translation</option>
+								<option value="" data-i18n="agent_edit.select">— Select —</option>
+								<option value="academic" data-i18n="agent_edit.academic">Academic</option>
+								<option value="career" data-i18n="agent_edit.career">Career</option>
+								<option value="copywriting" data-i18n="agent_edit.copywriting">Copywriting</option>
+								<option value="design" data-i18n="agent_edit.design">Design</option>
+								<option value="education" data-i18n="agent_edit.education">Education</option>
+								<option value="emotions" data-i18n="agent_edit.emotions">Emotions</option>
+								<option value="entertainment" data-i18n="agent_edit.entertainment">Entertainment</option>
+								<option value="games" data-i18n="agent_edit.games">Games</option>
+								<option value="general" data-i18n="agent_edit.general">General</option>
+								<option value="life" data-i18n="agent_edit.life">Life</option>
+								<option value="marketing" data-i18n="agent_edit.marketing">Marketing</option>
+								<option value="office" data-i18n="agent_edit.office">Office</option>
+								<option value="programming" data-i18n="agent_edit.programming">Programming</option>
+								<option value="translation" data-i18n="agent_edit.translation">Translation</option>
 							</select>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="f-tags">Tags (comma-separated, max 12)</label>
+							<label class="form-label" for="f-tags" data-i18n="agent_edit.tags_comma_separated_max_12">Tags (comma-separated, max 12)</label>
 							<input class="form-input" id="f-tags" type="text" placeholder="thesis, polishing, academic-writing" />
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="f-prompt">Agent Profile (system prompt)</label>
+							<label class="form-label" for="f-prompt" data-i18n="agent_edit.agent_profile_system_prompt">Agent Profile (system prompt)</label>
 							<textarea class="form-textarea" id="f-prompt" rows="8" maxlength="16000" placeholder="You are a professor of computer science…"></textarea>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="f-greeting">Greeting (demo first message)</label>
+							<label class="form-label" for="f-greeting" data-i18n="agent_edit.greeting_demo_first_message">Greeting (demo first message)</label>
 							<textarea class="form-textarea" id="f-greeting" rows="3" maxlength="1000" placeholder="Hello! I am your computer science thesis polishing assistant…"></textarea>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="f-changelog">Changelog (optional, for this version)</label>
+							<label class="form-label" for="f-changelog" data-i18n="agent_edit.changelog_optional_for_this_version">Changelog (optional, for this version)</label>
 							<input class="form-input" id="f-changelog" type="text" maxlength="1000" placeholder="Initial publish" />
 						</div>
 						<div class="form-actions">
-							<button class="btn-primary" id="publish-save">Publish to Marketplace</button>
-							<a id="publish-view" href="#" target="_blank" rel="noopener" style="font-size:0.764rem;color:rgba(255,255,255,0.55);" hidden>View on marketplace ›</a>
+							<button class="btn-primary" id="publish-save" data-i18n="agent_edit.publish_to_marketplace">Publish to Marketplace</button>
+							<a id="publish-view" href="#" target="_blank" rel="noopener" style="font-size:0.764rem;color:rgba(255,255,255,0.55);" hidden data-i18n="agent_edit.view_on_marketplace">View on marketplace ›</a>
 							<span class="form-status" id="publish-status" role="status" aria-live="polite"></span>
 						</div>
 					</section>
@@ -1545,44 +1545,44 @@
 					<!-- Embed -->
 					<section class="edit-panel" id="panel-embed" role="region" aria-label="Embed">
 						<div class="subsection-title">Embed</div>
-						<p class="hint">Drop your agent on any website, Notion page, or Discord channel.</p>
+						<p class="hint" data-i18n="agent_edit.drop_your_agent_on_any_website_notion">Drop your agent on any website, Notion page, or Discord channel.</p>
 
 						<div class="form-group">
-							<label class="form-label" for="embed-size">Preview size</label>
+							<label class="form-label" for="embed-size" data-i18n="agent_edit.preview_size">Preview size</label>
 							<select class="form-input" id="embed-size" style="max-width:220px">
-								<option value="420x520">Small (420×520)</option>
-								<option value="560x680" selected>Medium (560×680)</option>
-								<option value="800x900">Large (800×900)</option>
-								<option value="100%x600">Full width (×600)</option>
+								<option value="420x520" data-i18n="agent_edit.small_420_520">Small (420×520)</option>
+								<option value="560x680" selected data-i18n="agent_edit.medium_560_680">Medium (560×680)</option>
+								<option value="800x900" data-i18n="agent_edit.large_800_900">Large (800×900)</option>
+								<option value="100%x600" data-i18n="agent_edit.full_width_600">Full width (×600)</option>
 							</select>
 						</div>
 						<div class="form-group">
-							<label class="form-label">Live preview</label>
+							<label class="form-label" data-i18n="agent_edit.live_preview">Live preview</label>
 							<div id="embed-preview" class="embed-preview"></div>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="embed-iframe-code">Iframe snippet</label>
+							<label class="form-label" for="embed-iframe-code" data-i18n="agent_edit.iframe_snippet">Iframe snippet</label>
 							<textarea class="form-input mono" id="embed-iframe-code" rows="3" readonly></textarea>
-							<div class="form-actions"><button class="btn-ghost" data-copy="#embed-iframe-code">Copy</button></div>
+							<div class="form-actions"><button class="btn-ghost" data-copy="#embed-iframe-code" data-i18n="agent_edit.copy">Copy</button></div>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="embed-link">Direct link</label>
+							<label class="form-label" for="embed-link" data-i18n="agent_edit.direct_link">Direct link</label>
 							<input class="form-input mono" id="embed-link" type="text" readonly />
-							<div class="form-actions"><button class="btn-ghost" data-copy="#embed-link">Copy</button> <a class="btn-ghost" id="embed-open" href="#" target="_blank" rel="noopener">Open in new tab ›</a></div>
+							<div class="form-actions"><button class="btn-ghost" data-copy="#embed-link" data-i18n="agent_edit.copy_2">Copy</button> <a class="btn-ghost" id="embed-open" href="#" target="_blank" rel="noopener" data-i18n="agent_edit.open_in_new_tab">Open in new tab ›</a></div>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="embed-oembed">oEmbed discovery URL</label>
+							<label class="form-label" for="embed-oembed" data-i18n="agent_edit.oembed_discovery_url">oEmbed discovery URL</label>
 							<input class="form-input mono" id="embed-oembed" type="text" readonly />
-							<div class="form-actions"><button class="btn-ghost" data-copy="#embed-oembed">Copy</button></div>
+							<div class="form-actions"><button class="btn-ghost" data-copy="#embed-oembed" data-i18n="agent_edit.copy_3">Copy</button></div>
 						</div>
 						<div class="form-group">
-							<label class="form-label">Embed policy</label>
-							<p class="hint">Restrict which sites and surfaces may embed this agent.</p>
-							<label class="form-label" for="embed-allowed-origins">Allowed origins (one per line, * for any)</label>
+							<label class="form-label" data-i18n="agent_edit.embed_policy">Embed policy</label>
+							<p class="hint" data-i18n="agent_edit.restrict_which_sites_and_surfaces_may_embed">Restrict which sites and surfaces may embed this agent.</p>
+							<label class="form-label" for="embed-allowed-origins" data-i18n="agent_edit.allowed_origins_one_per_line_for_any">Allowed origins (one per line, * for any)</label>
 							<textarea class="form-input mono" id="embed-allowed-origins" rows="3" placeholder="https://example.com&#10;https://*.mysite.com"></textarea>
 							<div class="form-actions">
-								<button class="btn-primary" id="embed-policy-save">Save policy</button>
-								<button class="btn-ghost" id="embed-policy-clear">Clear policy</button>
+								<button class="btn-primary" id="embed-policy-save" data-i18n="agent_edit.save_policy">Save policy</button>
+								<button class="btn-ghost" id="embed-policy-clear" data-i18n="agent_edit.clear_policy">Clear policy</button>
 								<span class="form-status" id="embed-policy-status" role="status" aria-live="polite"></span>
 							</div>
 						</div>
@@ -1591,26 +1591,26 @@
 					<!-- Widgets -->
 					<section class="edit-panel" id="panel-widgets" role="region" aria-label="Widgets">
 						<div class="subsection-title">Widgets</div>
-						<p class="hint">Widgets are reusable embeds (turntable, talking-agent, gallery) you can paste anywhere.</p>
+						<p class="hint" data-i18n="agent_edit.widgets_are_reusable_embeds_turntable_talkin">Widgets are reusable embeds (turntable, talking-agent, gallery) you can paste anywhere.</p>
 
 						<div class="form-group">
-							<label class="form-label">Create a widget for this agent's avatar</label>
+							<label class="form-label" data-i18n="agent_edit.create_a_widget_for_this_agent_s">Create a widget for this agent's avatar</label>
 							<div class="form-actions">
 								<select class="form-input" id="widget-new-type" style="max-width:220px">
-									<option value="talking-agent">Talking agent</option>
-									<option value="turntable">Turntable</option>
-									<option value="animation-gallery">Animation gallery</option>
-									<option value="passport">Passport</option>
-									<option value="hotspot-tour">Hotspot tour</option>
+									<option value="talking-agent" data-i18n="agent_edit.talking_agent">Talking agent</option>
+									<option value="turntable" data-i18n="agent_edit.turntable">Turntable</option>
+									<option value="animation-gallery" data-i18n="agent_edit.animation_gallery">Animation gallery</option>
+									<option value="passport" data-i18n="agent_edit.passport">Passport</option>
+									<option value="hotspot-tour" data-i18n="agent_edit.hotspot_tour">Hotspot tour</option>
 								</select>
 								<input class="form-input" id="widget-new-name" type="text" placeholder="Widget name" style="flex:1" />
-								<button class="btn-primary" id="widget-new-btn">Create</button>
+								<button class="btn-primary" id="widget-new-btn" data-i18n="agent_edit.create">Create</button>
 							</div>
 							<span class="form-status" id="widget-status" role="status" aria-live="polite"></span>
 						</div>
 
 						<div class="form-group" style="margin-top:0.5rem">
-							<label class="form-label">Your widgets</label>
+							<label class="form-label" data-i18n="agent_edit.your_widgets">Your widgets</label>
 							<div id="widgets-list" class="widget-list"><div class="muted">Loading…</div></div>
 						</div>
 					</section>
@@ -1625,40 +1625,40 @@
 									<div class="card-sub" id="x-status">Loading…</div>
 								</div>
 								<div class="card-actions">
-									<button class="btn-primary" id="x-connect-btn" hidden>Connect X</button>
-									<button class="btn-ghost danger" id="x-disconnect-btn" hidden>Disconnect</button>
+									<button class="btn-primary" id="x-connect-btn" hidden data-i18n="agent_edit.connect_x">Connect X</button>
+									<button class="btn-ghost danger" id="x-disconnect-btn" hidden data-i18n="agent_edit.disconnect">Disconnect</button>
 								</div>
 							</div>
 						</div>
 
 						<div class="form-group">
-							<label class="form-label" for="x-username">Agent's X handle (public, optional)</label>
+							<label class="form-label" for="x-username" data-i18n="agent_edit.agent_s_x_handle_public_optional">Agent's X handle (public, optional)</label>
 							<div class="form-actions">
 								<input class="form-input" id="x-username" type="text" placeholder="@handle" style="flex:1" />
-								<button class="btn-ghost" id="x-username-save">Save handle</button>
+								<button class="btn-ghost" id="x-username-save" data-i18n="agent_edit.save_handle">Save handle</button>
 							</div>
 						</div>
 
 						<div class="form-group">
-							<label class="form-label">Scheduled posts</label>
-							<p class="hint">Triggers run on cron and post automatically.</p>
+							<label class="form-label" data-i18n="agent_edit.scheduled_posts">Scheduled posts</label>
+							<p class="hint" data-i18n="agent_edit.triggers_run_on_cron_and_post_automatically">Triggers run on cron and post automatically.</p>
 							<div id="x-triggers-list" class="trigger-list"><div class="muted">Loading…</div></div>
 							<div class="form-actions" style="margin-top:.5rem">
 								<select class="form-input" id="x-trigger-kind" style="max-width:220px">
-									<option value="daily_persona">Daily persona post</option>
-									<option value="weekly_digest">Weekly digest</option>
-									<option value="price_milestone">Price milestone</option>
-									<option value="payment_received">Payment received</option>
+									<option value="daily_persona" data-i18n="agent_edit.daily_persona_post">Daily persona post</option>
+									<option value="weekly_digest" data-i18n="agent_edit.weekly_digest">Weekly digest</option>
+									<option value="price_milestone" data-i18n="agent_edit.price_milestone">Price milestone</option>
+									<option value="payment_received" data-i18n="agent_edit.payment_received">Payment received</option>
 								</select>
-								<button class="btn-primary" id="x-trigger-add">Add trigger</button>
+								<button class="btn-primary" id="x-trigger-add" data-i18n="agent_edit.add_trigger">Add trigger</button>
 							</div>
 						</div>
 
 						<div class="form-group">
-							<label class="form-label">Post now</label>
+							<label class="form-label" data-i18n="agent_edit.post_now">Post now</label>
 							<textarea class="form-textarea" id="x-post-text" rows="3" maxlength="280" placeholder="Compose a tweet (max 280 chars)…"></textarea>
 							<div class="form-actions">
-								<button class="btn-primary" id="x-post-btn">Post to X</button>
+								<button class="btn-primary" id="x-post-btn" data-i18n="agent_edit.post_to_x">Post to X</button>
 								<span class="form-status" id="x-post-status" role="status" aria-live="polite"></span>
 							</div>
 						</div>
@@ -1675,30 +1675,30 @@
 					<section class="edit-panel" id="panel-monetization" role="region" aria-label="Monetization">
 						<div class="subsection-title">Monetization</div>
 						<div class="form-group" id="launch-token-group">
-							<label class="form-label">Agent Token</label>
-							<p class="hint">Launch a pump.fun community token tied to this agent. Buyers help fund the token, fees route to the agent.</p>
+							<label class="form-label" data-i18n="agent_edit.agent_token">Agent Token</label>
+							<p class="hint" data-i18n="agent_edit.launch_a_pump_fun_community_token_tied">Launch a pump.fun community token tied to this agent. Buyers help fund the token, fees route to the agent.</p>
 							<div id="launch-token-state" class="muted">Loading…</div>
 						</div>
 						<div class="form-group">
-							<label class="form-label">Skill Prices</label>
-							<p class="hint">Set a price for your skills to be used by other agents. Leave blank for free skills. Prices are set in USDC (a $1 digital dollar) on Solana.</p>
+							<label class="form-label" data-i18n="agent_edit.skill_prices">Skill Prices</label>
+							<p class="hint" data-i18n="agent_edit.set_a_price_for_your_skills_to">Set a price for your skills to be used by other agents. Leave blank for free skills. Prices are set in USDC (a $1 digital dollar) on Solana.</p>
 							<div id="skill-prices-list">
 								<div class="muted">Loading skills…</div>
 							</div>
 						</div>
 						<div class="form-actions">
-							<button class="btn-primary" id="monetization-save">Save Prices</button>
+							<button class="btn-primary" id="monetization-save" data-i18n="agent_edit.save_prices">Save Prices</button>
 							<span class="form-status" id="monetization-status" role="status" aria-live="polite"></span>
 						</div>
 
 						<!-- Subscription Plans -->
 						<div class="form-group" style="margin-top:1rem;border-top:1px solid rgba(255,255,255,0.08);padding-top:1.25rem">
-							<label class="form-label">Subscription Plans</label>
-							<p class="hint">Offer recurring access to your agent's skills. Subscribers pay a fixed USDC amount monthly or weekly. Up to 3 active plans.</p>
+							<label class="form-label" data-i18n="agent_edit.subscription_plans">Subscription Plans</label>
+							<p class="hint" data-i18n="agent_edit.offer_recurring_access_to_your_agent_s">Offer recurring access to your agent's skills. Subscribers pay a fixed USDC amount monthly or weekly. Up to 3 active plans.</p>
 							<div id="subscription-plans-list" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.75rem">
 								<div class="muted">Loading plans…</div>
 							</div>
-							<button class="btn-ghost" id="show-create-plan-btn" style="align-self:flex-start">+ New Plan</button>
+							<button class="btn-ghost" id="show-create-plan-btn" style="align-self:flex-start" data-i18n="agent_edit.new_plan">+ New Plan</button>
 						</div>
 
 						<!-- Plan editor (hidden until triggered) -->
@@ -1706,45 +1706,45 @@
 							<input type="hidden" id="plan-editor-id">
 							<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem">
 								<div class="form-group" style="margin:0">
-									<label class="form-label" style="font-size:0.764rem" for="plan-name-input">Plan Name</label>
+									<label class="form-label" style="font-size:0.764rem" for="plan-name-input" data-i18n="agent_edit.plan_name">Plan Name</label>
 									<input class="form-input" id="plan-name-input" type="text" placeholder="e.g. Pro" maxlength="80">
 								</div>
 								<div class="form-group" style="margin:0">
-									<label class="form-label" style="font-size:0.764rem" for="plan-interval-input">Billing</label>
+									<label class="form-label" style="font-size:0.764rem" for="plan-interval-input" data-i18n="agent_edit.billing">Billing</label>
 									<select class="form-input" id="plan-interval-input">
-										<option value="monthly">Monthly</option>
-										<option value="weekly">Weekly</option>
+										<option value="monthly" data-i18n="agent_edit.monthly">Monthly</option>
+										<option value="weekly" data-i18n="agent_edit.weekly">Weekly</option>
 									</select>
 								</div>
 							</div>
 							<div class="form-group" style="margin-bottom:0.75rem">
-								<label class="form-label" style="font-size:0.764rem" for="plan-price-input">Price (USD)</label>
+								<label class="form-label" style="font-size:0.764rem" for="plan-price-input" data-i18n="agent_edit.price_usd">Price (USD)</label>
 								<input class="form-input" id="plan-price-input" type="number" min="0.99" max="999" step="0.01" placeholder="9.99" style="max-width:140px">
 							</div>
 							<div class="form-group" style="margin-bottom:0.75rem">
-								<label class="form-label" style="font-size:0.764rem" for="plan-perks-input">Perks (one per line)</label>
+								<label class="form-label" style="font-size:0.764rem" for="plan-perks-input" data-i18n="agent_edit.perks_one_per_line">Perks (one per line)</label>
 								<textarea class="form-textarea" id="plan-perks-input" rows="3" placeholder="Unlimited API calls&#10;Priority queue&#10;Early access to new skills" style="font-size:0.764rem"></textarea>
 							</div>
 							<div class="form-group" style="margin-bottom:0.75rem">
-								<label class="form-label" style="font-size:0.764rem">Included Skills</label>
-								<p style="font-size:0.7rem;color:rgba(255,255,255,0.4);margin:-0.25rem 0 0.4rem">Subscribers get unlimited access to the skills you tick here.</p>
+								<label class="form-label" style="font-size:0.764rem" data-i18n="agent_edit.included_skills">Included Skills</label>
+								<p style="font-size:0.7rem;color:rgba(255,255,255,0.4);margin:-0.25rem 0 0.4rem" data-i18n="agent_edit.subscribers_get_unlimited_access_to_the_skil">Subscribers get unlimited access to the skills you tick here.</p>
 								<div id="plan-skills-checklist" class="plan-skills-checklist" role="group" aria-label="Skills included in this plan">
-									<span class="muted" style="font-size:0.7rem">Loading skills…</span>
+									<span class="muted" style="font-size:0.7rem" data-i18n="agent_edit.loading_skills">Loading skills…</span>
 								</div>
 							</div>
 							<div class="form-group" style="margin-bottom:0.75rem;flex-direction:row;align-items:center;justify-content:space-between;gap:0.75rem">
 								<div>
-									<label class="form-label" style="font-size:0.764rem;margin:0" for="plan-active-input">Active</label>
-									<p style="font-size:0.7rem;color:rgba(255,255,255,0.4);margin:0.15rem 0 0">Inactive plans are hidden from subscribers.</p>
+									<label class="form-label" style="font-size:0.764rem;margin:0" for="plan-active-input" data-i18n="agent_edit.active">Active</label>
+									<p style="font-size:0.7rem;color:rgba(255,255,255,0.4);margin:0.15rem 0 0" data-i18n="agent_edit.inactive_plans_are_hidden_from_subscribers">Inactive plans are hidden from subscribers.</p>
 								</div>
-								<label class="toggle-switch" title="Toggle whether this plan is offered to subscribers">
+								<label class="toggle-switch" title="Toggle whether this plan is offered to subscribers" data-i18n-attr="title:agent_edit.toggle_whether_this_plan_is_title">
 									<input type="checkbox" id="plan-active-input" checked>
 									<span class="slider"></span>
 								</label>
 							</div>
 							<div style="display:flex;gap:0.5rem;align-items:center">
-								<button class="btn-primary" id="plan-save-btn" style="font-size:0.764rem;padding:0.4rem 0.9rem">Save Plan</button>
-								<button class="btn-ghost" id="plan-cancel-btn" style="font-size:0.764rem;padding:0.4rem 0.9rem">Cancel</button>
+								<button class="btn-primary" id="plan-save-btn" style="font-size:0.764rem;padding:0.4rem 0.9rem" data-i18n="agent_edit.save_plan">Save Plan</button>
+								<button class="btn-ghost" id="plan-cancel-btn" style="font-size:0.764rem;padding:0.4rem 0.9rem" data-i18n="agent_edit.cancel">Cancel</button>
 								<span class="form-status" id="plan-status" role="status" aria-live="polite" style="font-size:0.764rem"></span>
 							</div>
 						</div>
@@ -1772,10 +1772,10 @@
 									</div>
 								</div>
 								<div class="card-actions" style="margin-top:.875rem">
-									<button class="btn-primary" id="wallet-send-btn">Send</button>
-									<button class="btn-ghost" id="wallet-fund-btn">Fund</button>
-									<button class="btn-ghost" id="wallet-copy-sol">Copy address</button>
-									<a class="btn-ghost" id="wallet-explorer" href="#" target="_blank" rel="noopener">Explorer ›</a>
+									<button class="btn-primary" id="wallet-send-btn" data-i18n="agent_edit.send">Send</button>
+									<button class="btn-ghost" id="wallet-fund-btn" data-i18n="agent_edit.fund">Fund</button>
+									<button class="btn-ghost" id="wallet-copy-sol" data-i18n="agent_edit.copy_address">Copy address</button>
+									<a class="btn-ghost" id="wallet-explorer" href="#" target="_blank" rel="noopener" data-i18n="agent_edit.explorer">Explorer ›</a>
 								</div>
 							</div>
 
@@ -1789,8 +1789,8 @@
 									</div>
 								</div>
 								<div class="card-actions" style="margin-top:.875rem">
-									<button class="btn-ghost" id="wallet-evm-copy">Copy address</button>
-									<a class="btn-ghost" id="wallet-evm-explorer" href="#" target="_blank" rel="noopener" hidden>Explorer ›</a>
+									<button class="btn-ghost" id="wallet-evm-copy" data-i18n="agent_edit.copy_address_2">Copy address</button>
+									<a class="btn-ghost" id="wallet-evm-explorer" href="#" target="_blank" rel="noopener" hidden data-i18n="agent_edit.explorer_2">Explorer ›</a>
 								</div>
 							</div>
 
@@ -1810,23 +1810,23 @@
 							<div class="modal-card">
 								<div class="modal-title">Send from agent wallet</div>
 								<div class="form-group">
-									<label class="form-label" for="send-asset">Asset</label>
+									<label class="form-label" for="send-asset" data-i18n="agent_edit.asset">Asset</label>
 									<select class="form-input" id="send-asset">
-										<option value="usdc">USDC (Solana)</option>
-										<option value="sol">SOL</option>
+										<option value="usdc" data-i18n="agent_edit.usdc_solana">USDC (Solana)</option>
+										<option value="sol" data-i18n="agent_edit.sol">SOL</option>
 									</select>
 								</div>
 								<div class="form-group">
-									<label class="form-label" for="send-to">Recipient address</label>
+									<label class="form-label" for="send-to" data-i18n="agent_edit.recipient_address">Recipient address</label>
 									<input class="form-input" id="send-to" type="text" placeholder="Solana address" />
 								</div>
 								<div class="form-group">
-									<label class="form-label" for="send-amount">Amount</label>
+									<label class="form-label" for="send-amount" data-i18n="agent_edit.amount">Amount</label>
 									<input class="form-input" id="send-amount" type="number" min="0" step="0.000001" placeholder="0.00" />
 								</div>
 								<div class="form-actions">
-									<button class="btn-primary" id="send-confirm">Send</button>
-									<button class="btn-ghost" id="send-cancel">Cancel</button>
+									<button class="btn-primary" id="send-confirm" data-i18n="agent_edit.send_2">Send</button>
+									<button class="btn-ghost" id="send-cancel" data-i18n="agent_edit.cancel_2">Cancel</button>
 									<span class="form-status" id="send-status" role="status" aria-live="polite"></span>
 								</div>
 							</div>
@@ -1836,12 +1836,12 @@
 						<div id="fund-modal" class="modal" hidden>
 							<div class="modal-card">
 								<div class="modal-title">Fund this agent</div>
-								<p class="hint">Send SOL or USDC (Solana) to the address below.</p>
+								<p class="hint" data-i18n="agent_edit.send_sol_or_usdc_solana_to_the">Send SOL or USDC (Solana) to the address below.</p>
 								<div class="qr-wrap"><img id="fund-qr" alt="Wallet QR code" /></div>
 								<div class="card-sub mono" id="fund-address">—</div>
 								<div class="form-actions">
-									<button class="btn-ghost" id="fund-copy">Copy address</button>
-									<button class="btn-ghost" id="fund-close">Close</button>
+									<button class="btn-ghost" id="fund-copy" data-i18n="agent_edit.copy_address_3">Copy address</button>
+									<button class="btn-ghost" id="fund-close" data-i18n="agent_edit.close">Close</button>
 								</div>
 							</div>
 						</div>
@@ -1870,15 +1870,15 @@
 						</div>
 
 						<div class="form-group" style="margin-top:0.5rem">
-							<label class="form-label">Calls per day (30 days)</label>
+							<label class="form-label" data-i18n="agent_edit.calls_per_day_30_days">Calls per day (30 days)</label>
 							<div id="m-chart" class="bar-chart"><div class="muted">Loading…</div></div>
 						</div>
 						<div class="form-group">
-							<label class="form-label">Recent payments received</label>
+							<label class="form-label" data-i18n="agent_edit.recent_payments_received">Recent payments received</label>
 							<div id="m-pay-in" class="pay-list"><div class="muted">Loading…</div></div>
 						</div>
 						<div class="form-group">
-							<label class="form-label">Recent payments sent</label>
+							<label class="form-label" data-i18n="agent_edit.recent_payments_sent">Recent payments sent</label>
 							<div id="m-pay-out" class="pay-list"><div class="muted">Loading…</div></div>
 						</div>
 					</section>
@@ -1892,61 +1892,61 @@
 
 					<section class="edit-panel" id="panel-alpha-hunt" role="region" aria-label="Alpha Hunt">
 						<div class="subsection-title">Alpha Hunt</div>
-						<p class="hint">Find undervalued gems using smart-money signals and organic growth patterns</p>
+						<p class="hint" data-i18n="agent_edit.find_undervalued_gems_using_smart_money_sign">Find undervalued gems using smart-money signals and organic growth patterns</p>
 
 						<div class="form-group">
-							<label class="form-label" for="alpha-trigger">Trigger</label>
+							<label class="form-label" for="alpha-trigger" data-i18n="agent_edit.trigger">Trigger</label>
 							<select class="form-input" id="alpha-trigger" disabled>
-								<option value="alpha_hunt">Alpha Hunt</option>
+								<option value="alpha_hunt" data-i18n="agent_edit.alpha_hunt_2">Alpha Hunt</option>
 							</select>
-							<p class="hint" style="margin-top:0.382rem">Strategy trigger — alpha hunt mode scans continuously for qualifying tokens.</p>
+							<p class="hint" style="margin-top:0.382rem" data-i18n="agent_edit.strategy_trigger_alpha_hunt_mode_scans_conti">Strategy trigger — alpha hunt mode scans continuously for qualifying tokens.</p>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="alpha-min-smart-money">Min Smart Money Wallets</label>
+							<label class="form-label" for="alpha-min-smart-money" data-i18n="agent_edit.min_smart_money_wallets">Min Smart Money Wallets</label>
 							<input class="form-input" id="alpha-min-smart-money" type="number" min="0" step="1" placeholder="e.g. 2" />
-							<p class="hint" style="margin-top:0.382rem">Proven wallets that must be buying</p>
+							<p class="hint" style="margin-top:0.382rem" data-i18n="agent_edit.proven_wallets_that_must_be_buying">Proven wallets that must be buying</p>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="alpha-min-quality">Min Quality Score</label>
+							<label class="form-label" for="alpha-min-quality" data-i18n="agent_edit.min_quality_score">Min Quality Score</label>
 							<input class="form-input" id="alpha-min-quality" type="number" min="0" max="100" step="1" placeholder="e.g. 60" />
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="alpha-min-organic">Min Organic Score</label>
+							<label class="form-label" for="alpha-min-organic" data-i18n="agent_edit.min_organic_score">Min Organic Score</label>
 							<input class="form-input" id="alpha-min-organic" type="number" min="0" max="100" step="1" placeholder="e.g. 50" />
-							<p class="hint" style="margin-top:0.382rem">Filters coordinated/bot-driven launches</p>
+							<p class="hint" style="margin-top:0.382rem" data-i18n="agent_edit.filters_coordinated_bot_driven_launches">Filters coordinated/bot-driven launches</p>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="alpha-max-mcap">Max Market Cap (USD)</label>
+							<label class="form-label" for="alpha-max-mcap" data-i18n="agent_edit.max_market_cap_usd">Max Market Cap (USD)</label>
 							<input class="form-input" id="alpha-max-mcap" type="number" min="0" step="100" placeholder="e.g. 5000" />
-							<p class="hint" style="margin-top:0.382rem">Only hunt below this cap</p>
+							<p class="hint" style="margin-top:0.382rem" data-i18n="agent_edit.only_hunt_below_this_cap">Only hunt below this cap</p>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="alpha-keywords">Narrative Keywords</label>
+							<label class="form-label" for="alpha-keywords" data-i18n="agent_edit.narrative_keywords">Narrative Keywords</label>
 							<input class="form-input" id="alpha-keywords" type="text" placeholder="ai, dog, meme" />
-							<p class="hint" style="margin-top:0.382rem">Comma-separated — any keyword match triggers consideration</p>
+							<p class="hint" style="margin-top:0.382rem" data-i18n="agent_edit.comma_separated_any_keyword_match_triggers_c">Comma-separated — any keyword match triggers consideration</p>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="alpha-budget-sol">Buy Budget (SOL)</label>
+							<label class="form-label" for="alpha-budget-sol" data-i18n="agent_edit.buy_budget_sol">Buy Budget (SOL)</label>
 							<input class="form-input" id="alpha-budget-sol" type="number" min="0" step="0.01" placeholder="e.g. 0.1" />
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="alpha-take-profit-pct">Take Profit (%)</label>
+							<label class="form-label" for="alpha-take-profit-pct" data-i18n="agent_edit.take_profit">Take Profit (%)</label>
 							<input class="form-input" id="alpha-take-profit-pct" type="number" min="0" step="1" placeholder="e.g. 200" />
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="alpha-stop-loss-pct">Stop Loss (%)</label>
+							<label class="form-label" for="alpha-stop-loss-pct" data-i18n="agent_edit.stop_loss">Stop Loss (%)</label>
 							<input class="form-input" id="alpha-stop-loss-pct" type="number" min="0" max="100" step="1" placeholder="e.g. 30" />
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="alpha-mev-tip">MEV Tip</label>
+							<label class="form-label" for="alpha-mev-tip" data-i18n="agent_edit.mev_tip">MEV Tip</label>
 							<select class="form-input" id="alpha-mev-tip">
-								<option value="off">Off</option>
-								<option value="economy">Economy</option>
-								<option value="turbo">Turbo</option>
+								<option value="off" data-i18n="agent_edit.off">Off</option>
+								<option value="economy" data-i18n="agent_edit.economy">Economy</option>
+								<option value="turbo" data-i18n="agent_edit.turbo">Turbo</option>
 							</select>
 						</div>
 						<div class="form-actions">
-							<button class="btn-primary" id="alpha-hunt-save">Save</button>
+							<button class="btn-primary" id="alpha-hunt-save" data-i18n="agent_edit.save_2">Save</button>
 							<span class="form-status" id="alpha-hunt-status" role="status" aria-live="polite"></span>
 						</div>
 					</section>
@@ -1960,31 +1960,31 @@
 
 					<section class="edit-panel" id="panel-launcher-schedule" role="region" aria-label="Launch Schedule">
 						<div class="subsection-title">Launch Schedule</div>
-						<p class="hint">Autonomously launch coins on pump.fun on a schedule or on demand</p>
+						<p class="hint" data-i18n="agent_edit.autonomously_launch_coins_on_pump_fun_on">Autonomously launch coins on pump.fun on a schedule or on demand</p>
 
 						<div class="form-group">
 							<label class="form-label" style="display:flex;align-items:center;justify-content:space-between">
 								Enable Launcher
-								<label class="toggle-switch" title="Enable or disable the coin launcher">
+								<label class="toggle-switch" title="Enable or disable the coin launcher" data-i18n-attr="title:agent_edit.enable_or_disable_the_coin_l_title">
 									<input type="checkbox" id="launcher-enabled">
 									<span class="slider"></span>
 								</label>
 							</label>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="launcher-network">Network</label>
+							<label class="form-label" for="launcher-network" data-i18n="agent_edit.network">Network</label>
 							<select class="form-input" id="launcher-network">
-								<option value="mainnet">Mainnet</option>
-								<option value="devnet">Devnet</option>
+								<option value="mainnet" data-i18n="agent_edit.mainnet">Mainnet</option>
+								<option value="devnet" data-i18n="agent_edit.devnet">Devnet</option>
 							</select>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="launcher-interval-hours">Launch Every (hours)</label>
+							<label class="form-label" for="launcher-interval-hours" data-i18n="agent_edit.launch_every_hours">Launch Every (hours)</label>
 							<input class="form-input" id="launcher-interval-hours" type="number" min="1" step="1" placeholder="e.g. 24" />
-							<p class="hint" style="margin-top:0.382rem">Leave blank for manual-only</p>
+							<p class="hint" style="margin-top:0.382rem" data-i18n="agent_edit.leave_blank_for_manual_only">Leave blank for manual-only</p>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="launcher-max-launches">Max Total Launches</label>
+							<label class="form-label" for="launcher-max-launches" data-i18n="agent_edit.max_total_launches">Max Total Launches</label>
 							<input class="form-input" id="launcher-max-launches" type="number" min="0" step="1" placeholder="Unlimited" />
 						</div>
 					</section>
@@ -1993,40 +1993,40 @@
 						<div class="subsection-title">Token Metadata</div>
 
 						<div class="form-group">
-							<label class="form-label" for="launcher-name-template">Token Name Template</label>
+							<label class="form-label" for="launcher-name-template" data-i18n="agent_edit.token_name_template">Token Name Template</label>
 							<input class="form-input" id="launcher-name-template" type="text" placeholder="Agent Coin {{seq}}" />
 							<p class="hint" style="margin-top:0.382rem">{{seq}} = launch number, {{timestamp}} = Unix time</p>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="launcher-symbol">Symbol</label>
+							<label class="form-label" for="launcher-symbol" data-i18n="agent_edit.symbol">Symbol</label>
 							<input class="form-input" id="launcher-symbol" type="text" maxlength="10" placeholder="AGNT" />
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="launcher-description">Description</label>
+							<label class="form-label" for="launcher-description" data-i18n="agent_edit.description_2">Description</label>
 							<textarea class="form-textarea" id="launcher-description" rows="3"></textarea>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="launcher-image-url">Image URL</label>
+							<label class="form-label" for="launcher-image-url" data-i18n="agent_edit.image_url">Image URL</label>
 							<input class="form-input" id="launcher-image-url" type="url" placeholder="https://…" />
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="launcher-twitter">Twitter</label>
+							<label class="form-label" for="launcher-twitter" data-i18n="agent_edit.twitter">Twitter</label>
 							<input class="form-input" id="launcher-twitter" type="text" placeholder="https://twitter.com/…" />
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="launcher-telegram">Telegram</label>
+							<label class="form-label" for="launcher-telegram" data-i18n="agent_edit.telegram">Telegram</label>
 							<input class="form-input" id="launcher-telegram" type="text" placeholder="https://t.me/…" />
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="launcher-website">Website</label>
+							<label class="form-label" for="launcher-website" data-i18n="agent_edit.website">Website</label>
 							<input class="form-input" id="launcher-website" type="url" placeholder="https://…" />
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="launcher-initial-buy">Initial Dev Buy (SOL)</label>
+							<label class="form-label" for="launcher-initial-buy" data-i18n="agent_edit.initial_dev_buy_sol">Initial Dev Buy (SOL)</label>
 							<input class="form-input" id="launcher-initial-buy" type="number" min="0" step="0.01" placeholder="0" />
 						</div>
 						<div class="form-actions">
-							<button class="btn-primary" id="launcher-save">Save</button>
+							<button class="btn-primary" id="launcher-save" data-i18n="agent_edit.save_3">Save</button>
 							<span class="form-status" id="launcher-status" role="status" aria-live="polite"></span>
 						</div>
 					</section>
@@ -2047,31 +2047,31 @@
 
 					<section class="edit-panel" id="panel-auto-claim" role="region" aria-label="Creator Auto-Claim">
 						<div class="subsection-title">Creator Auto-Claim</div>
-						<p class="hint">Automatically claim creator fees when your launched coins become runners</p>
+						<p class="hint" data-i18n="agent_edit.automatically_claim_creator_fees_when_your_l">Automatically claim creator fees when your launched coins become runners</p>
 
 						<div class="form-group">
 							<label class="form-label" style="display:flex;align-items:center;justify-content:space-between">
 								Enable Auto-Claim
-								<label class="toggle-switch" title="Enable or disable automatic fee claiming">
+								<label class="toggle-switch" title="Enable or disable automatic fee claiming" data-i18n-attr="title:agent_edit.enable_or_disable_automatic_title">
 									<input type="checkbox" id="auto-claim-enabled">
 									<span class="slider"></span>
 								</label>
 							</label>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="auto-claim-threshold">Claim Threshold (SOL)</label>
+							<label class="form-label" for="auto-claim-threshold" data-i18n="agent_edit.claim_threshold_sol">Claim Threshold (SOL)</label>
 							<input class="form-input" id="auto-claim-threshold" type="number" min="0" step="0.1" placeholder="0.5" />
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="auto-claim-reinvest">
+							<label class="form-label" for="auto-claim-reinvest" data-i18n-html="agent_edit.reinvest_of_claimed_fees_0">
 								Reinvest % of Claimed Fees
 								<span id="auto-claim-reinvest-val" style="color:rgba(255,255,255,0.55);font-weight:400;margin-left:0.5rem">0%</span>
 							</label>
 							<input type="range" id="auto-claim-reinvest" min="0" max="100" step="1" value="0" style="width:100%;accent-color:#3b82f6" />
-							<p class="hint" style="margin-top:0.5rem">Reinvested fees go back into the sniper buy budget. Remaining goes to your agent wallet.</p>
+							<p class="hint" style="margin-top:0.5rem" data-i18n="agent_edit.reinvested_fees_go_back_into_the_sniper">Reinvested fees go back into the sniper buy budget. Remaining goes to your agent wallet.</p>
 						</div>
 						<div class="form-actions">
-							<button class="btn-primary" id="auto-claim-save">Save</button>
+							<button class="btn-primary" id="auto-claim-save" data-i18n="agent_edit.save_4">Save</button>
 							<span class="form-status" id="auto-claim-status" role="status" aria-live="polite"></span>
 						</div>
 					</section>
@@ -2092,50 +2092,50 @@
 
 					<section class="edit-panel" id="panel-market-maker-add" role="region" aria-label="Add Market">
 						<div class="subsection-title">Market Maker</div>
-						<p class="hint">Provide liquidity and capture spread using Jito-accelerated execution</p>
+						<p class="hint" data-i18n="agent_edit.provide_liquidity_and_capture_spread_using_j">Provide liquidity and capture spread using Jito-accelerated execution</p>
 
 						<div class="form-group">
-							<label class="form-label" for="mm-mint">Coin Mint</label>
+							<label class="form-label" for="mm-mint" data-i18n="agent_edit.coin_mint">Coin Mint</label>
 							<input class="form-input" id="mm-mint" type="text" placeholder="Paste pump.fun mint address" />
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="mm-symbol">Symbol</label>
+							<label class="form-label" for="mm-symbol" data-i18n="agent_edit.symbol_2">Symbol</label>
 							<input class="form-input" id="mm-symbol" type="text" placeholder="e.g. PEPE" />
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="mm-spread">
+							<label class="form-label" for="mm-spread" data-i18n-html="agent_edit.spread_0_50">
 								Spread
 								<span id="mm-spread-val" style="color:rgba(255,255,255,0.55);font-weight:400;margin-left:0.5rem">0.50%</span>
 							</label>
 							<input type="range" id="mm-spread" min="50" max="2000" step="10" value="100" style="width:100%;accent-color:#3b82f6" />
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="mm-order-size">Order Size (SOL)</label>
+							<label class="form-label" for="mm-order-size" data-i18n="agent_edit.order_size_sol">Order Size (SOL)</label>
 							<input class="form-input" id="mm-order-size" type="number" min="0" step="0.01" placeholder="0.05" />
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="mm-max-inventory">Max Inventory (SOL)</label>
+							<label class="form-label" for="mm-max-inventory" data-i18n="agent_edit.max_inventory_sol">Max Inventory (SOL)</label>
 							<input class="form-input" id="mm-max-inventory" type="number" min="0" step="0.1" placeholder="1.0" />
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="mm-rebalance">Rebalance Every</label>
+							<label class="form-label" for="mm-rebalance" data-i18n="agent_edit.rebalance_every">Rebalance Every</label>
 							<select class="form-input" id="mm-rebalance">
-								<option value="5">5s</option>
-								<option value="10">10s</option>
-								<option value="30" selected>30s</option>
-								<option value="60">60s</option>
+								<option value="5" data-i18n="agent_edit.5s">5s</option>
+								<option value="10" data-i18n="agent_edit.10s">10s</option>
+								<option value="30" selected data-i18n="agent_edit.30s">30s</option>
+								<option value="60" data-i18n="agent_edit.60s">60s</option>
 							</select>
 						</div>
 						<div class="form-group">
-							<label class="form-label" for="mm-mev-tip">MEV Tip</label>
+							<label class="form-label" for="mm-mev-tip" data-i18n="agent_edit.mev_tip_2">MEV Tip</label>
 							<select class="form-input" id="mm-mev-tip">
-								<option value="off">Off</option>
-								<option value="economy">Economy</option>
-								<option value="turbo">Turbo</option>
+								<option value="off" data-i18n="agent_edit.off_2">Off</option>
+								<option value="economy" data-i18n="agent_edit.economy_2">Economy</option>
+								<option value="turbo" data-i18n="agent_edit.turbo_2">Turbo</option>
 							</select>
 						</div>
 						<div class="form-actions">
-							<button class="btn-primary" id="mm-add-market">Add Market</button>
+							<button class="btn-primary" id="mm-add-market" data-i18n="agent_edit.add_market">Add Market</button>
 							<span class="form-status" id="mm-add-status" role="status" aria-live="polite"></span>
 						</div>
 					</section>
@@ -2157,7 +2157,7 @@
 					<!-- Studio -->
 					<section class="edit-panel" id="panel-studio" role="region" aria-label="Studio">
 						<div class="subsection-title">Studio</div>
-						<p class="hint">Power-user tools for tuning the avatar, animations, and blockchain identity.</p>
+						<p class="hint" data-i18n="agent_edit.power_user_tools_for_tuning_the_avatar">Power-user tools for tuning the avatar, animations, and blockchain identity.</p>
 						<div class="studio-grid">
 							<a class="studio-tile" id="studio-playground" href="#" target="_blank" rel="noopener">
 								<div class="studio-tile-title">3D Playground</div>
@@ -2185,7 +2185,7 @@
 							</a>
 						</div>
 						<div class="form-group" style="margin-top:1rem">
-							<label class="form-label">Animations</label>
+							<label class="form-label" data-i18n="agent_edit.animations_2">Animations</label>
 							<div id="studio-animations" class="chip-list"><div class="muted">None.</div></div>
 						</div>
 					</section>
@@ -2195,13 +2195,13 @@
 						<div class="subsection-title" style="color:#fca5a5">Danger zone</div>
 						<div class="card danger-card">
 							<div class="card-title">Delete this agent</div>
-							<p class="hint">Soft-deletes the agent, removes all memories, and unlists it from your dashboard. Wallet keys stay encrypted in cold storage. This cannot be undone from the UI.</p>
+							<p class="hint" data-i18n="agent_edit.soft_deletes_the_agent_removes_all_memories">Soft-deletes the agent, removes all memories, and unlists it from your dashboard. Wallet keys stay encrypted in cold storage. This cannot be undone from the UI.</p>
 							<div class="form-group">
-								<label class="form-label" for="danger-confirm">Type the agent's name to confirm:</label>
+								<label class="form-label" for="danger-confirm" data-i18n="agent_edit.type_the_agent_s_name_to_confirm">Type the agent's name to confirm:</label>
 								<input class="form-input" id="danger-confirm" type="text" autocomplete="off" />
 							</div>
 							<div class="form-actions">
-								<button class="btn-danger" id="danger-delete-btn" disabled>Delete agent</button>
+								<button class="btn-danger" id="danger-delete-btn" disabled data-i18n="agent_edit.delete_agent">Delete agent</button>
 								<span class="form-status" id="danger-status" role="status" aria-live="polite"></span>
 							</div>
 						</div>
@@ -2213,7 +2213,7 @@
 
 		<div class="outfit-status-bar">
 			<div class="outfit-status" id="outfit-status" role="status" aria-live="polite"></div>
-			<button type="button" id="outfit-cancel" class="outfit-cancel-btn" hidden aria-label="Cancel upload">Cancel</button>
+			<button type="button" id="outfit-cancel" class="outfit-cancel-btn" hidden aria-label="Cancel upload" data-i18n="agent_edit.cancel_3" data-i18n-attr="aria-label:agent_edit.cancel_upload_arialabel">Cancel</button>
 		</div>
 
 		<script type="module" src="/src/agent-edit.js"></script>
@@ -2587,5 +2587,7 @@
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

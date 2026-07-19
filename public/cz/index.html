@@ -3,8 +3,8 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>CZ · Claim Your three.ws</title>
-		<meta name="description" content="Connect your wallet and claim your on-chain three.ws." />
+		<title data-i18n="cz_index.meta_title">CZ · Claim Your three.ws</title>
+		<meta name="description" content="Connect your wallet and claim your on-chain three.ws."  data-i18n-attr="content:cz_index.meta_description"/>
 		<meta name="theme-color" content="#090909" />
 		<link rel="icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="./cz.css" />
@@ -40,19 +40,19 @@
 			</div>
 
 			<section class="claim-panel">
-				<h1>Welcome, CZ.<br />Claim your on-chain agent.</h1>
+				<h1 data-i18n-html="cz_index.welcome_cz_claim_your_on_chain_agent">Welcome, CZ.<br />Claim your on-chain agent.</h1>
 
 				<div id="step-connect" class="step">
-					<button id="btn-connect" class="btn-primary">Connect wallet to claim</button>
+					<button id="btn-connect" class="btn-primary" data-i18n="cz_index.connect_wallet_to_claim">Connect wallet to claim</button>
 				</div>
 
 				<div id="step-sign" class="step hidden">
 					<p class="wallet-addr" id="wallet-addr"></p>
-					<button id="btn-sign" class="btn-primary">⬢ Sign claim transaction</button>
+					<button id="btn-sign" class="btn-primary" data-i18n="cz_index.sign_claim_transaction">⬢ Sign claim transaction</button>
 				</div>
 
 				<div id="step-success" class="step hidden">
-					<p class="success-msg">
+					<p class="success-msg" data-i18n-html="cz_index.you_now_own_here_s_your_embed">
 						You now own <strong id="agent-name-display"></strong>. Here's your embed
 						snippet.
 					</p>
@@ -65,10 +65,10 @@
 
 				<div id="step-error" class="step hidden">
 					<p class="error-msg" id="error-msg"></p>
-					<button id="btn-retry" class="btn-secondary">Try again</button>
+					<button id="btn-retry" class="btn-secondary" data-i18n="cz_index.try_again">Try again</button>
 				</div>
 
-				<span id="rehearsal-badge" class="rehearsal-badge hidden">rehearsal mode</span>
+				<span id="rehearsal-badge" class="rehearsal-badge hidden" data-i18n="cz_index.rehearsal_mode">rehearsal mode</span>
 			</section>
 		</main>
 		<script type="module" src="/cz/cz.js"></script>
@@ -76,5 +76,7 @@
 		<div id="footer-container"></div>
 		<script src="/footer.js" defer></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

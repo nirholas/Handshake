@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Forge · three.ws</title>
+  <title data-i18n="demos_embed_forge.meta_title">Forge · three.ws</title>
   <meta name="robots" content="noindex">
   <script type="module" src="https://three.ws/dist-lib/agent-3d.js"></script>
   <style>
@@ -132,10 +132,10 @@
     <div class="forge-header">
       <div>
         <div class="forge-eyebrow">three.ws · Forge</div>
-        <h1 class="forge-title">Text → <strong>3D model</strong></h1>
-        <p class="forge-sub">Type a description. Get a textured, interactive 3D model. Download the GLB or embed it anywhere.</p>
+        <h1 class="forge-title" data-i18n-html="demos_embed_forge.text_3d_model">Text → <strong>3D model</strong></h1>
+        <p class="forge-sub" data-i18n="demos_embed_forge.type_a_description_get_a_textured_interactiv">Type a description. Get a textured, interactive 3D model. Download the GLB or embed it anywhere.</p>
       </div>
-      <a href="https://three.ws/forge" target="_blank" class="forge-cta" rel="noopener">Open Forge →</a>
+      <a href="https://three.ws/forge" target="_blank" class="forge-cta" rel="noopener" data-i18n="demos_embed_forge.open_forge">Open Forge →</a>
     </div>
 
     <!-- Live 3D models generated on three.ws -->
@@ -169,9 +169,9 @@
           placeholder="e.g. e.g. a futuristic robot with glowing blue eyes…"
           value=""
         >
-        <button class="prompt-btn" onclick="openForge()">Generate →</button>
+        <button class="prompt-btn" onclick="openForge()" data-i18n="demos_embed_forge.generate">Generate →</button>
       </div>
-      <p class="prompt-note">
+      <p class="prompt-note" data-i18n-html="demos_embed_forge.generation_happens_on_three_ws_forge_real">
         Generation happens on <a href="https://three.ws/forge" target="_blank" rel="noopener">three.ws/forge</a> — real Meshy API, real GLB output.
       </p>
     </div>
@@ -189,5 +189,7 @@
       if (e.key === 'Enter') openForge();
     });
   </script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

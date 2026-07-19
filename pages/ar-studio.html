@@ -5,21 +5,21 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 	<meta name="theme-color" content="#000000" />
-	<title>AR Studio · three.ws</title>
-	<meta name="description" content="A live multi-model AR studio: place any number of 3D models and avatars in your real space through your camera, pull in your forge creations or any GLB link, and generate new models with a prompt without leaving the camera view." />
+	<title data-i18n="ar_studio.meta_title">AR Studio · three.ws</title>
+	<meta name="description" content="A live multi-model AR studio: place any number of 3D models and avatars in your real space through your camera, pull in your forge creations or any GLB link, and generate new models with a prompt without leaving the camera view."  data-i18n-attr="content:ar_studio.meta_description"/>
 	<link rel="canonical" href="https://three.ws/ar/studio" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="https://three.ws/ar/studio" />
-	<meta property="og:title" content="AR Studio · three.ws" />
-	<meta property="og:description" content="Place any number of 3D models in your real space, and forge new ones by prompt without leaving the camera." />
+	<meta property="og:title" content="AR Studio · three.ws"  data-i18n-attr="content:ar_studio.meta_og_title"/>
+	<meta property="og:description" content="Place any number of 3D models in your real space, and forge new ones by prompt without leaving the camera."  data-i18n-attr="content:ar_studio.meta_og_description"/>
 	<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=AR+Studio&amp;d=A+live+multi-model+AR+scene+through+your+camera%3A+place+any+number+of+3D+models+and+avatars+in+your+real+space%2C+pull+in+your+forge+creations%2C+community+models%2C+o&amp;p=%2Far%2Fstudio" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="AR Studio · three.ws" />
-	<meta name="twitter:description" content="Place any number of 3D models in your real space, and forge new ones by prompt without leaving the camera." />
+	<meta name="twitter:title" content="AR Studio · three.ws"  data-i18n-attr="content:ar_studio.meta_twitter_title"/>
+	<meta name="twitter:description" content="Place any number of 3D models in your real space, and forge new ones by prompt without leaving the camera."  data-i18n-attr="content:ar_studio.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=AR+Studio&amp;d=A+live+multi-model+AR+scene+through+your+camera%3A+place+any+number+of+3D+models+and+avatars+in+your+real+space%2C+pull+in+your+forge+creations%2C+community+models%2C+o&amp;p=%2Far%2Fstudio" />
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"AR Studio","url":"https://three.ws/ar/studio","applicationCategory":"DesignApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"A live multi-model AR studio: place any number of 3D models in your real space through your camera and generate new ones by prompt without leaving the view.","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 	<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -352,13 +352,13 @@
 
 	<div id="ars-hud">
 		<header class="ars-top" data-xr-ui>
-			<a class="ars-back" href="/ar" aria-label="Back to AR Forge">←</a>
-			<span class="ars-title">AR Studio</span>
-			<span class="ars-count" id="ars-count" hidden>0 models</span>
+			<a class="ars-back" href="/ar" aria-label="Back to AR Forge" data-i18n-attr="aria-label:ar_studio.back_to_ar_forge_arialabel">←</a>
+			<span class="ars-title" data-i18n="ar_studio.ar_studio">AR Studio</span>
+			<span class="ars-count" id="ars-count" hidden data-i18n="ar_studio.0_models">0 models</span>
 			<span class="ars-spacer"></span>
-			<button class="ars-icon-btn" id="ars-room-btn" type="button" aria-haspopup="dialog" aria-label="Build together in a shared room">👥 Share live</button>
-			<button class="ars-icon-btn" id="ars-photo-btn" type="button" disabled aria-label="Capture a photo of your scene">📸</button>
-			<button class="ars-icon-btn" id="ars-qr-btn" type="button" hidden aria-label="Send this scene to your phone">Phone ↗</button>
+			<button class="ars-icon-btn" id="ars-room-btn" type="button" aria-haspopup="dialog" aria-label="Build together in a shared room" data-i18n="ar_studio.share_live" data-i18n-attr="aria-label:ar_studio.build_together_in_a_shared_r_arialabel">👥 Share live</button>
+			<button class="ars-icon-btn" id="ars-photo-btn" type="button" disabled aria-label="Capture a photo of your scene" data-i18n-attr="aria-label:ar_studio.capture_a_photo_of_your_scen_arialabel">📸</button>
+			<button class="ars-icon-btn" id="ars-qr-btn" type="button" hidden aria-label="Send this scene to your phone" data-i18n="ar_studio.phone" data-i18n-attr="aria-label:ar_studio.send_this_scene_to_your_phon_arialabel">Phone ↗</button>
 		</header>
 
 		<div id="ars-forge-chip" class="ars-chip" data-state="idle" hidden role="status" aria-live="polite" data-xr-ui>
@@ -370,21 +370,21 @@
 		<div class="ars-empty" id="ars-empty">
 			<div class="ars-empty-card">
 				<div class="ars-empty-art" aria-hidden="true">🛋️✨</div>
-				<h1>Your room is the canvas</h1>
-				<p>Place as many 3D models as you like into your real space — yours, the community's, or brand new ones forged from a prompt right here.</p>
+				<h1 data-i18n="ar_studio.your_room_is_the_canvas">Your room is the canvas</h1>
+				<p data-i18n="ar_studio.place_as_many_3d_models_as_you">Place as many 3D models as you like into your real space — yours, the community's, or brand new ones forged from a prompt right here.</p>
 				<div class="ars-empty-row">
-					<button class="ars-btn ars-btn-primary" id="ars-empty-camera" type="button">Start camera</button>
-					<button class="ars-btn" id="ars-empty-add" type="button">Browse models</button>
-					<button class="ars-btn" id="ars-empty-forge" type="button">Forge one</button>
+					<button class="ars-btn ars-btn-primary" id="ars-empty-camera" type="button" data-i18n="ar_studio.start_camera">Start camera</button>
+					<button class="ars-btn" id="ars-empty-add" type="button" data-i18n="ar_studio.browse_models">Browse models</button>
+					<button class="ars-btn" id="ars-empty-forge" type="button" data-i18n="ar_studio.forge_one">Forge one</button>
 				</div>
 			</div>
 		</div>
 
 		<div class="ars-selbar" id="ars-selbar" hidden data-xr-ui>
-			<span class="ars-sel-name" id="ars-sel-name">Model</span>
-			<button class="ars-icon-btn" type="button" data-act="rotate" aria-label="Rotate 45 degrees">⟳</button>
-			<button class="ars-icon-btn" type="button" data-act="duplicate" aria-label="Duplicate this model">⧉</button>
-			<button class="ars-icon-btn" type="button" data-act="remove" aria-label="Remove this model">✕</button>
+			<span class="ars-sel-name" id="ars-sel-name" data-i18n="ar_studio.model">Model</span>
+			<button class="ars-icon-btn" type="button" data-act="rotate" aria-label="Rotate 45 degrees" data-i18n-attr="aria-label:ar_studio.rotate_45_degrees_arialabel">⟳</button>
+			<button class="ars-icon-btn" type="button" data-act="duplicate" aria-label="Duplicate this model" data-i18n-attr="aria-label:ar_studio.duplicate_this_model_arialabel">⧉</button>
+			<button class="ars-icon-btn" type="button" data-act="remove" aria-label="Remove this model" data-i18n-attr="aria-label:ar_studio.remove_this_model_arialabel">✕</button>
 		</div>
 
 		<div class="ars-status" id="ars-status" hidden role="status" aria-live="polite" data-xr-ui></div>
@@ -393,13 +393,13 @@
 			<form class="ars-forge" id="ars-forge-form" autocomplete="off">
 				<input id="ars-forge-input" name="prompt" type="text" enterkeyhint="go" maxlength="600" minlength="3"
 					placeholder="Forge into your room: a neon bonsai tree…" aria-label="Describe a 3D model to generate and place" />
-				<button id="ars-forge-go" type="submit">Forge ✦</button>
+				<button id="ars-forge-go" type="submit" data-i18n="ar_studio.forge">Forge ✦</button>
 			</form>
 			<div class="ars-dock-row">
-				<button class="ars-icon-btn ars-grow" id="ars-add-btn" type="button" aria-expanded="false" aria-controls="ars-tray">＋ Add models</button>
-				<button class="ars-icon-btn" id="ars-camera-btn" type="button" aria-pressed="false" aria-label="Toggle camera passthrough">📷 Camera</button>
-				<button class="ars-icon-btn" id="ars-xr-btn" type="button" hidden aria-pressed="false" aria-label="Enter immersive AR">✦ Immersive</button>
-				<button class="ars-icon-btn" id="ars-clear-btn" type="button" hidden aria-label="Clear all models">Clear</button>
+				<button class="ars-icon-btn ars-grow" id="ars-add-btn" type="button" aria-expanded="false" aria-controls="ars-tray" data-i18n="ar_studio.add_models">＋ Add models</button>
+				<button class="ars-icon-btn" id="ars-camera-btn" type="button" aria-pressed="false" aria-label="Toggle camera passthrough" data-i18n="ar_studio.camera" data-i18n-attr="aria-label:ar_studio.toggle_camera_passthrough_arialabel">📷 Camera</button>
+				<button class="ars-icon-btn" id="ars-xr-btn" type="button" hidden aria-pressed="false" aria-label="Enter immersive AR" data-i18n="ar_studio.immersive" data-i18n-attr="aria-label:ar_studio.enter_immersive_ar_arialabel">✦ Immersive</button>
+				<button class="ars-icon-btn" id="ars-clear-btn" type="button" hidden aria-label="Clear all models" data-i18n="ar_studio.clear" data-i18n-attr="aria-label:ar_studio.clear_all_models_arialabel">Clear</button>
 			</div>
 		</footer>
 	</div>
@@ -407,14 +407,14 @@
 	<div class="ars-tray" id="ars-tray" hidden role="dialog" aria-modal="true" aria-label="Add models to your scene" data-xr-ui>
 		<div class="ars-tray-sheet">
 			<div class="ars-tray-head">
-				<h2>Add models</h2>
-				<button class="ars-icon-btn" id="ars-tray-close" type="button" aria-label="Close">✕</button>
+				<h2 data-i18n="ar_studio.add_models_2">Add models</h2>
+				<button class="ars-icon-btn" id="ars-tray-close" type="button" aria-label="Close" data-i18n-attr="aria-label:ar_studio.close_arialabel">✕</button>
 			</div>
 			<div class="ars-tabs" role="tablist">
-				<button class="ars-tab" type="button" role="tab" data-tab="recent" aria-selected="false">Recent forges</button>
-				<button class="ars-tab" type="button" role="tab" data-tab="yours" aria-selected="false">Yours</button>
-				<button class="ars-tab" type="button" role="tab" data-tab="community" aria-selected="false">Community</button>
-				<button class="ars-tab" type="button" role="tab" data-tab="link" aria-selected="false">GLB link</button>
+				<button class="ars-tab" type="button" role="tab" data-tab="recent" aria-selected="false" data-i18n="ar_studio.recent_forges">Recent forges</button>
+				<button class="ars-tab" type="button" role="tab" data-tab="yours" aria-selected="false" data-i18n="ar_studio.yours">Yours</button>
+				<button class="ars-tab" type="button" role="tab" data-tab="community" aria-selected="false" data-i18n="ar_studio.community">Community</button>
+				<button class="ars-tab" type="button" role="tab" data-tab="link" aria-selected="false" data-i18n="ar_studio.glb_link">GLB link</button>
 			</div>
 			<div class="ars-tray-body" id="ars-tray-body"></div>
 		</div>
@@ -422,11 +422,11 @@
 
 	<div class="ars-modal" id="ars-qr-modal" hidden role="dialog" aria-modal="true" aria-label="Open on your phone" data-xr-ui>
 		<div class="ars-modal-card">
-			<h2>Continue on your phone</h2>
+			<h2 data-i18n="ar_studio.continue_on_your_phone">Continue on your phone</h2>
 			<div class="ars-qr-box" id="ars-qr-box" aria-label="QR code that opens this scene on a phone"></div>
-			<p>Scan with your phone camera — your placed models come along and open straight into camera AR.</p>
+			<p data-i18n="ar_studio.scan_with_your_phone_camera_your_placed">Scan with your phone camera — your placed models come along and open straight into camera AR.</p>
 			<a class="ars-qr-link" id="ars-qr-link" href="/ar/studio" target="_blank" rel="noopener"></a>
-			<button class="ars-btn" id="ars-qr-close" type="button">Close</button>
+			<button class="ars-btn" id="ars-qr-close" type="button" data-i18n="ar_studio.close">Close</button>
 		</div>
 	</div>
 
@@ -434,28 +434,28 @@
 		<div class="ars-modal-card ars-room-card">
 			<!-- Idle: start or join a room -->
 			<div id="ars-room-idle">
-				<h2>Build together, live</h2>
-				<p>Open a shared room and everyone with the code sees the same scene update in real time — add, move, and forge models together.</p>
-				<button class="ars-btn ars-btn-primary ars-room-start" id="ars-room-create" type="button">Start a shared room</button>
-				<div class="ars-room-or"><span>or join one</span></div>
+				<h2 data-i18n="ar_studio.build_together_live">Build together, live</h2>
+				<p data-i18n="ar_studio.open_a_shared_room_and_everyone_with">Open a shared room and everyone with the code sees the same scene update in real time — add, move, and forge models together.</p>
+				<button class="ars-btn ars-btn-primary ars-room-start" id="ars-room-create" type="button" data-i18n="ar_studio.start_a_shared_room">Start a shared room</button>
+				<div class="ars-room-or"><span data-i18n="ar_studio.or_join_one">or join one</span></div>
 				<form class="ars-room-join" id="ars-room-join-form">
 					<input id="ars-room-join-input" type="text" inputmode="latin" autocomplete="off" spellcheck="false"
 						maxlength="24" placeholder="Enter room code" aria-label="Room code to join" />
-					<button type="submit" class="ars-btn">Join</button>
+					<button type="submit" class="ars-btn" data-i18n="ar_studio.join">Join</button>
 				</form>
 			</div>
 			<!-- Live: show the code + share + leave -->
 			<div id="ars-room-live" hidden>
-				<h2>Room is live</h2>
-				<p id="ars-room-presence">You're the only one here yet.</p>
+				<h2 data-i18n="ar_studio.room_is_live">Room is live</h2>
+				<p id="ars-room-presence" data-i18n="ar_studio.you_re_the_only_one_here_yet">You're the only one here yet.</p>
 				<div class="ars-room-code" id="ars-room-code" aria-label="Room code">------</div>
 				<div class="ars-qr-box" id="ars-room-qr" aria-label="QR code to join this room"></div>
 				<div class="ars-room-actions">
-					<button class="ars-btn ars-btn-primary" id="ars-room-copy" type="button">Copy invite link</button>
-					<button class="ars-btn" id="ars-room-leave" type="button">Leave room</button>
+					<button class="ars-btn ars-btn-primary" id="ars-room-copy" type="button" data-i18n="ar_studio.copy_invite_link">Copy invite link</button>
+					<button class="ars-btn" id="ars-room-leave" type="button" data-i18n="ar_studio.leave_room">Leave room</button>
 				</div>
 			</div>
-			<button class="ars-btn ars-room-close" id="ars-room-close" type="button">Close</button>
+			<button class="ars-btn ars-room-close" id="ars-room-close" type="button" data-i18n="ar_studio.close_2">Close</button>
 		</div>
 	</div>
 
@@ -479,5 +479,7 @@
 			}
 		}
 	</script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

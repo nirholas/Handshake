@@ -11,7 +11,7 @@
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Bulk Launch · three.ws Admin</title>
+		<title data-i18n="bulk_launch.meta_title">Bulk Launch · three.ws Admin</title>
 		<style>
 			:root {
 				--green: #00ff88;
@@ -377,17 +377,17 @@
 	</head>
 	<body>
 		<header>
-			<h1>Deploy Agents On-Chain</h1>
-			<span class="badge">ADMIN</span>
+			<h1 data-i18n="bulk_launch.deploy_agents_on_chain">Deploy Agents On-Chain</h1>
+			<span class="badge" data-i18n="bulk_launch.admin">ADMIN</span>
 			<span class="badge" style="background: #0d1a2a; color: #5aa9ff; border-color: #2a4a6a"
-				>SOLANA · METAPLEX CORE</span
+				 data-i18n="bulk_launch.solana_metaplex_core">SOLANA · METAPLEX CORE</span
 			>
 		</header>
 
 		<div class="layout">
 			<aside class="sidebar">
 				<div class="funder-addr">
-					<label>Authority Wallet — send SOL here</label>
+					<label data-i18n="bulk_launch.authority_wallet_send_sol_here">Authority Wallet — send SOL here</label>
 					<div class="addr" id="funder-addr" title="Click to copy">—</div>
 					<div class="hint" id="funder-balance-hint">Loading balance…</div>
 					<div class="hint">
@@ -397,57 +397,57 @@
 				</div>
 
 				<div class="funder-addr" id="collection-block" style="display: none">
-					<label>three.ws Agents Collection</label>
+					<label data-i18n="bulk_launch.three_ws_agents_collection">three.ws Agents Collection</label>
 					<div class="addr" id="collection-addr" title="Click to copy">—</div>
 					<div class="hint" id="collection-source"></div>
 				</div>
 
 				<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
 					<div class="stat-block">
-						<label>Deployed</label>
+						<label data-i18n="bulk_launch.deployed">Deployed</label>
 						<div class="value green" id="stat-launched">0</div>
 					</div>
 					<div class="stat-block">
-						<label>Errors</label>
+						<label data-i18n="bulk_launch.errors">Errors</label>
 						<div class="value red" id="stat-errors">0</div>
 					</div>
 					<div class="stat-block">
-						<label>Remaining</label>
+						<label data-i18n="bulk_launch.remaining">Remaining</label>
 						<div class="value" id="stat-remaining">—</div>
 					</div>
 					<div class="stat-block">
-						<label>Funder SOL</label>
+						<label data-i18n="bulk_launch.funder_sol">Funder SOL</label>
 						<div class="value gold" id="stat-funder-sol">—</div>
 					</div>
 				</div>
 
 				<div class="controls">
 					<div>
-						<label>Network</label>
+						<label data-i18n="bulk_launch.network">Network</label>
 						<select id="network-select">
-							<option value="mainnet">mainnet</option>
-							<option value="devnet">devnet</option>
+							<option value="mainnet" data-i18n="bulk_launch.mainnet">mainnet</option>
+							<option value="devnet" data-i18n="bulk_launch.devnet">devnet</option>
 						</select>
 					</div>
 					<div>
-						<label>Agents per run</label>
+						<label data-i18n="bulk_launch.agents_per_run">Agents per run</label>
 						<input type="number" id="limit-input" value="100" min="1" max="500" />
 					</div>
 					<div style="display: flex; align-items: center; gap: 8px; padding: 4px 0">
 						<input type="checkbox" id="dry-run" style="width: auto" />
 						<label style="margin: 0; cursor: pointer" for="dry-run"
-							>Dry run (preview only)</label
+							 data-i18n="bulk_launch.dry_run_preview_only">Dry run (preview only)</label
 						>
 					</div>
 				</div>
 
-				<button class="btn" id="start-btn" onclick="startLaunch()">Deploy On-Chain</button>
+				<button class="btn" id="start-btn" onclick="startLaunch()" data-i18n="bulk_launch.deploy_on_chain">Deploy On-Chain</button>
 				<button
 					class="btn danger"
 					id="stop-btn"
 					style="display: none"
 					onclick="stopLaunch()"
-				>
+				 data-i18n="bulk_launch.stop">
 					Stop
 				</button>
 
@@ -458,7 +458,7 @@
 
 			<main class="feed">
 				<div class="feed-header">
-					<h2 id="feed-title">Agents</h2>
+					<h2 id="feed-title" data-i18n="bulk_launch.agents">Agents</h2>
 					<div class="progress-bar-wrap">
 						<div class="progress-bar-fill" id="progress-bar"></div>
 					</div>
@@ -466,7 +466,7 @@
 				<div id="done-banner-slot"></div>
 				<div class="cards" id="cards-grid">
 					<div class="empty-state">
-						Fund the wallet and click <strong>Deploy On-Chain</strong> to begin.<br />
+						Fund the wallet and click <strong data-i18n="bulk_launch.deploy_on_chain_2">Deploy On-Chain</strong> to begin.<br />
 						Each card appears the moment its agent is minted as a Metaplex Core asset.
 					</div>
 				</div>
@@ -763,5 +763,7 @@
 					.replace(/"/g, '&quot;');
 			}
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

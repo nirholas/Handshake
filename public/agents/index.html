@@ -4,13 +4,13 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Agents Index · three.ws</title>
-		<meta name="description" content="Browse every agent registered on three.ws across every supported chain — inspect their services and bring them into 3D." />
+		<title data-i18n="agents_index.meta_title">Agents Index · three.ws</title>
+		<meta name="description" content="Browse every agent registered on three.ws across every supported chain — inspect their services and bring them into 3D."  data-i18n-attr="content:agents_index.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/agents" />
-		<meta property="og:title" content="Agents Index · three.ws" />
-		<meta property="og:description" content="Browse every agent registered on three.ws across every supported chain — inspect their services and bring them into 3D." />
+		<meta property="og:title" content="Agents Index · three.ws"  data-i18n-attr="content:agents_index.meta_og_title"/>
+		<meta property="og:description" content="Browse every agent registered on three.ws across every supported chain — inspect their services and bring them into 3D."  data-i18n-attr="content:agents_index.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=agent-tools&amp;t=Agents+Index&amp;d=Browse+every+registered+agent+on+three.ws.&amp;p=%2Fagents" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
@@ -138,8 +138,8 @@
 		     equal specificity over this page's inline styles. -->
 		<link rel="stylesheet" href="/mobile.css" />
 
-	<meta name="twitter:title" content="Agents Index · three.ws">
-	<meta name="twitter:description" content="Browse every registered agent on three.ws.">
+	<meta name="twitter:title" content="Agents Index · three.ws" data-i18n-attr="content:agents_index.meta_twitter_title">
+	<meta name="twitter:description" content="Browse every registered agent on three.ws." data-i18n-attr="content:agents_index.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=agent-tools&amp;t=Agents+Index&amp;d=Browse+every+registered+agent+on+three.ws.&amp;p=%2Fagents">
 
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
@@ -153,18 +153,18 @@
 		<main class="wrap">
 			<section class="hero">
 				<div class="eyebrow">3D AI Agents</div>
-				<h1>Agent <span>Index</span></h1>
-				<p>Every on-chain agent — across Solana and every EVM chain, not just the ones launched on three.ws. We crawl the Metaplex Agent Registry, the AgenC protocol and ERC-8004 registries so the whole ecosystem lives in one place. Inspect their services and bring any of them into 3D.</p>
+				<h1 data-i18n-html="agents_index.agent_index">Agent <span>Index</span></h1>
+				<p data-i18n="agents_index.every_on_chain_agent_across_solana_and">Every on-chain agent — across Solana and every EVM chain, not just the ones launched on three.ws. We crawl the Metaplex Agent Registry, the AgenC protocol and ERC-8004 registries so the whole ecosystem lives in one place. Inspect their services and bring any of them into 3D.</p>
 				<div class="hero-ctas">
-					<a class="btn btn-primary" href="/create-agent">Create an agent</a>
-					<a class="btn btn-ghost" href="/marketplace">Marketplace</a>
+					<a class="btn btn-primary" href="/create-agent" data-i18n="agents_index.create_an_agent">Create an agent</a>
+					<a class="btn btn-ghost" href="/marketplace" data-i18n="agents_index.marketplace">Marketplace</a>
 				</div>
 			</section>
 
 			<div class="src-chips" role="tablist" aria-label="Filter by source">
-				<button class="chip is-active" data-src="agents" role="tab" aria-selected="true">All sources</button>
-				<button class="chip" data-src="solana" role="tab" aria-selected="false">Solana</button>
-				<button class="chip" data-src="onchain" role="tab" aria-selected="false">EVM</button>
+				<button class="chip is-active" data-src="agents" role="tab" aria-selected="true" data-i18n="agents_index.all_sources">All sources</button>
+				<button class="chip" data-src="solana" role="tab" aria-selected="false" data-i18n="agents_index.solana">Solana</button>
+				<button class="chip" data-src="onchain" role="tab" aria-selected="false" data-i18n="agents_index.evm">EVM</button>
 			</div>
 
 			<div class="controls">
@@ -175,8 +175,8 @@
 					<input id="ag-search" type="search" placeholder="Search agents…" autocomplete="off" />
 				</div>
 				<select id="ag-sort" class="ctrl" aria-label="Sort">
-					<option value="newest">Newest first</option>
-					<option value="name">Name A–Z</option>
+					<option value="newest" data-i18n="agents_index.newest_first">Newest first</option>
+					<option value="name" data-i18n="agents_index.name_a_z">Name A–Z</option>
 				</select>
 				<span id="ag-count" class="count-label"></span>
 			</div>
@@ -184,7 +184,7 @@
 			<div id="ag-grid" class="agents-grid" aria-label="Agents" aria-busy="true"></div>
 			<div id="ag-state" class="state" hidden></div>
 			<div class="load-more-wrap" id="ag-more-wrap" hidden>
-				<button id="ag-more" class="btn btn-ghost">Load more</button>
+				<button id="ag-more" class="btn btn-ghost" data-i18n="agents_index.load_more">Load more</button>
 			</div>
 		</main>
 
@@ -354,5 +354,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

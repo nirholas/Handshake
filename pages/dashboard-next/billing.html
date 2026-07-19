@@ -3,8 +3,8 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>Billing &amp; Passes · Dashboard · three.ws</title>
-	<meta name="description" content="Manage your three.ws subscriptions and paid services — Premium pass status, on-chain payment history, API keys, and creator subscriptions in one place." />
+	<title data-i18n="dashboard_next_billing.meta_title">Billing &amp; Passes · Dashboard · three.ws</title>
+	<meta name="description" content="Manage your three.ws subscriptions and paid services — Premium pass status, on-chain payment history, API keys, and creator subscriptions in one place."  data-i18n-attr="content:dashboard_next_billing.meta_description"/>
 	<link rel="icon" href="/favicon.ico" />
 	<link rel="stylesheet" href="/fonts/fonts.css" />
 	<link rel="stylesheet" href="/dashboard-next/shell.css" />
@@ -12,5 +12,7 @@
 <body>
 	<script src="/embed.js"></script>
 	<script type="module" src="/src/dashboard-next/pages/billing.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

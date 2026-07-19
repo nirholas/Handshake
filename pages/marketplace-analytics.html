@@ -5,8 +5,8 @@
 		<script>/* three.ws theme boot */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Marketplace Analytics · three.ws</title>
-		<meta name="description" content="Real-time stats on the three.ws skill marketplace: top skills, top agents, and sales volume." />
+		<title data-i18n="marketplace_analytics.meta_title">Marketplace Analytics · three.ws</title>
+		<meta name="description" content="Real-time stats on the three.ws skill marketplace: top skills, top agents, and sales volume."  data-i18n-attr="content:marketplace_analytics.meta_description"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -92,15 +92,15 @@
 	<link rel="canonical" href="https://three.ws/marketplace/analytics">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="Marketplace Analytics · three.ws">
-	<meta property="og:description" content="Real-time stats on the three.ws skill marketplace: top skills, top agents, and sales volume.">
+	<meta property="og:title" content="Marketplace Analytics · three.ws" data-i18n-attr="content:marketplace_analytics.meta_og_title">
+	<meta property="og:description" content="Real-time stats on the three.ws skill marketplace: top skills, top agents, and sales volume." data-i18n-attr="content:marketplace_analytics.meta_og_description">
 	<meta property="og:url" content="https://three.ws/marketplace/analytics">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Marketplace+Analytics&amp;d=Real-time+stats+on+the+three.ws+skill+marketplace%3A+top+skills%2C+top+agents%2C+and+sales+volume.&amp;p=%2Fmarketplace%2Fanalytics">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Marketplace Analytics · three.ws">
-	<meta name="twitter:description" content="Real-time stats on the three.ws skill marketplace: top skills, top agents, and sales volume.">
+	<meta name="twitter:title" content="Marketplace Analytics · three.ws" data-i18n-attr="content:marketplace_analytics.meta_twitter_title">
+	<meta name="twitter:description" content="Real-time stats on the three.ws skill marketplace: top skills, top agents, and sales volume." data-i18n-attr="content:marketplace_analytics.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Marketplace+Analytics&amp;d=Real-time+stats+on+the+three.ws+skill+marketplace%3A+top+skills%2C+top+agents%2C+and+sales+volume.&amp;p=%2Fmarketplace%2Fanalytics">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Marketplace Analytics","description":"Real-time stats on the three.ws skill marketplace: top skills, top agents, and sales volume.","url":"https://three.ws/marketplace/analytics","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -115,8 +115,8 @@
 
 		<main class="page-shell">
 			<div class="page-hero">
-				<h1>Marketplace Analytics</h1>
-				<p>Live stats on skill sales, top-earning agents, and platform volume.</p>
+				<h1 data-i18n="marketplace_analytics.marketplace_analytics">Marketplace Analytics</h1>
+				<p data-i18n="marketplace_analytics.live_stats_on_skill_sales_top_earning">Live stats on skill sales, top-earning agents, and platform volume.</p>
 			</div>
 
 			<div id="an-error" class="an-error" hidden></div>
@@ -130,7 +130,7 @@
 			</div>
 
 			<div class="an-section">
-				<h2>Sales Volume <span class="an-count">Last 30 days</span></h2>
+				<h2 data-i18n-html="marketplace_analytics.sales_volume_last_30_days">Sales Volume <span class="an-count">Last 30 days</span></h2>
 				<div class="chart-wrap">
 					<canvas id="volume-chart" class="chart-canvas" aria-label="Daily sales volume chart"></canvas>
 				</div>
@@ -138,7 +138,7 @@
 
 			<div class="an-two-col">
 				<div class="an-section">
-					<h2>Top Skills <span id="top-skills-count" class="an-count">10</span></h2>
+					<h2 data-i18n-html="marketplace_analytics.top_skills_10">Top Skills <span id="top-skills-count" class="an-count">10</span></h2>
 					<div class="rank-list" id="top-skills-list">
 						<div class="skeleton-rank skeleton" style="margin-bottom:0;animation-delay:0s;"></div>
 						<div class="skeleton-rank skeleton" style="margin-bottom:0;animation-delay:.1s;"></div>
@@ -148,7 +148,7 @@
 					</div>
 				</div>
 				<div class="an-section">
-					<h2>Top Agents <span id="top-agents-count" class="an-count">10</span></h2>
+					<h2 data-i18n-html="marketplace_analytics.top_agents_10">Top Agents <span id="top-agents-count" class="an-count">10</span></h2>
 					<div class="rank-list" id="top-agents-list">
 						<div class="skeleton-rank skeleton" style="margin-bottom:0;animation-delay:0s;"></div>
 						<div class="skeleton-rank skeleton" style="margin-bottom:0;animation-delay:.1s;"></div>
@@ -163,5 +163,7 @@
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
 		<script type="module" src="/src/marketplace-analytics.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

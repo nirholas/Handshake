@@ -10,16 +10,16 @@
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Parts Studio · Segment a 3D model · three.ws</title>
+		<title data-i18n="segment.meta_title">Parts Studio · Segment a 3D model · three.ws</title>
 		<meta
 			name="description"
 			content="Split any 3D model into meaningful, separable parts — head, torso, limbs; body, wheels, glass. Click a part to isolate it, toggle visibility, and export it on its own as GLB."
-		/>
-		<meta property="og:title" content="Parts Studio — Segment a 3D model · three.ws" />
+		 data-i18n-attr="content:segment.meta_description"/>
+		<meta property="og:title" content="Parts Studio — Segment a 3D model · three.ws"  data-i18n-attr="content:segment.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Turn a single mesh into addressable, named parts you can hide, recolour, replace, and export individually."
-		/>
+		 data-i18n-attr="content:segment.meta_og_description"/>
 		<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/segment" />
@@ -28,8 +28,8 @@
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Parts Studio · Segment a 3D model · three.ws" />
-	<meta name="twitter:description" content="Segment and isolate parts of any 3D model. Extract, label, and export components for use in your avatar or world." />
+	<meta name="twitter:title" content="Parts Studio · Segment a 3D model · three.ws"  data-i18n-attr="content:segment.meta_twitter_title"/>
+	<meta name="twitter:description" content="Segment and isolate parts of any 3D model. Extract, label, and export components for use in your avatar or world."  data-i18n-attr="content:segment.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/og-image.png" />
 		<link rel="stylesheet" href="/style.css" />
 		<style>
@@ -473,9 +473,9 @@
 
 		<main class="seg-main">
 			<header class="seg-head">
-				<span class="seg-eyebrow">Parts · segmentation</span>
-				<h1>Split a model into parts</h1>
-				<p>
+				<span class="seg-eyebrow" data-i18n="segment.parts_segmentation">Parts · segmentation</span>
+				<h1 data-i18n="segment.split_a_model_into_parts">Split a model into parts</h1>
+				<p data-i18n="segment.paste_a_glb_obj_stl_ply_url">
 					Paste a GLB/OBJ/STL/PLY URL. Parts Studio separates it at disconnected shells and
 					concave creases into named, recolourable parts — then click any part to isolate it,
 					toggle its visibility, or export it on its own.
@@ -484,7 +484,7 @@
 
 			<form class="composer" id="composer" autocomplete="off">
 				<div class="field field-url">
-					<label for="mesh-url">Mesh URL (https)</label>
+					<label for="mesh-url" data-i18n="segment.mesh_url_https">Mesh URL (https)</label>
 					<input
 						id="mesh-url"
 						name="mesh-url"
@@ -495,18 +495,18 @@
 					/>
 				</div>
 				<div class="field">
-					<label for="method">Method</label>
+					<label for="method" data-i18n="segment.method">Method</label>
 					<select id="method" name="method">
-						<option value="auto" selected>Auto (shells + creases)</option>
-						<option value="connected">Connected shells</option>
-						<option value="crease">Concave creases</option>
+						<option value="auto" selected data-i18n="segment.auto_shells_creases">Auto (shells + creases)</option>
+						<option value="connected" data-i18n="segment.connected_shells">Connected shells</option>
+						<option value="crease" data-i18n="segment.concave_creases">Concave creases</option>
 					</select>
 				</div>
 				<div class="field">
-					<label for="max-parts">Max parts</label>
+					<label for="max-parts" data-i18n="segment.max_parts">Max parts</label>
 					<input id="max-parts" name="max-parts" type="number" min="2" max="64" value="24" />
 				</div>
-				<button class="btn" id="segment-btn" type="submit">
+				<button class="btn" id="segment-btn" type="submit" data-i18n-html="segment.segment">
 					<span id="segment-label">Segment</span>
 				</button>
 			</form>
@@ -515,8 +515,8 @@
 				<!-- Empty -->
 				<div class="panel notice" id="state-empty">
 					<span class="glyph" aria-hidden="true">⬢</span>
-					<h3>Nothing segmented yet</h3>
-					<p>
+					<h3 data-i18n="segment.nothing_segmented_yet">Nothing segmented yet</h3>
+					<p data-i18n-html="segment.paste_a_public_mesh_url_above_and">
 						Paste a public mesh URL above and press Segment. Generated a model in
 						<a href="/forge">Forge</a>? Open it here with the “Split into parts” button on the
 						result, or paste its GLB link.
@@ -526,11 +526,11 @@
 				<!-- Loading -->
 				<div class="panel loading is-hidden" id="state-loading">
 					<div class="spinner" aria-hidden="true"></div>
-					<h3>Segmenting your model</h3>
-					<p id="loading-note">Fetching and analysing the mesh…</p>
+					<h3 data-i18n="segment.segmenting_your_model">Segmenting your model</h3>
+					<p id="loading-note" data-i18n="segment.fetching_and_analysing_the_mesh">Fetching and analysing the mesh…</p>
 					<div class="meta" id="loading-meta">Elapsed 0s</div>
 					<div style="margin-top: var(--space-md)">
-						<button class="btn btn-ghost" type="button" id="cancel">Cancel</button>
+						<button class="btn btn-ghost" type="button" id="cancel" data-i18n="segment.cancel">Cancel</button>
 					</div>
 				</div>
 
@@ -538,19 +538,19 @@
 				<div class="panel result is-hidden" id="state-result">
 					<div class="viewport-wrap">
 						<div class="viewport" id="viewport"></div>
-						<span class="tip" aria-hidden="true">Drag to orbit · click a part to select</span>
+						<span class="tip" aria-hidden="true" data-i18n="segment.drag_to_orbit_click_a_part_to">Drag to orbit · click a part to select</span>
 						<div class="viewport-bar">
-							<span class="label" id="selection-label">click a part to inspect</span>
+							<span class="label" id="selection-label" data-i18n="segment.click_a_part_to_inspect">click a part to inspect</span>
 							<div class="actions">
-								<button class="btn btn-ghost" type="button" id="reset-view">Reset view</button>
-								<button class="btn btn-ghost" type="button" id="show-all">Show all</button>
-								<a class="btn btn-ghost" id="download-glb" download>Download GLB</a>
+								<button class="btn btn-ghost" type="button" id="reset-view" data-i18n="segment.reset_view">Reset view</button>
+								<button class="btn btn-ghost" type="button" id="show-all" data-i18n="segment.show_all">Show all</button>
+								<a class="btn btn-ghost" id="download-glb" download data-i18n="segment.download_glb">Download GLB</a>
 							</div>
 						</div>
 					</div>
 					<aside class="parts" aria-label="Parts">
 						<div class="parts-head">
-							<h2>Parts <span class="count" id="parts-count">0</span></h2>
+							<h2 data-i18n-html="segment.parts_0">Parts <span class="count" id="parts-count">0</span></h2>
 						</div>
 						<div class="parts-list" id="parts-list" role="list"></div>
 					</aside>
@@ -559,18 +559,18 @@
 				<!-- Error -->
 				<div class="panel notice error is-hidden" id="state-error">
 					<span class="glyph" aria-hidden="true">⚠</span>
-					<h3>Segmentation failed</h3>
-					<p id="error-message">Something went wrong. Try a simpler mesh or fewer parts.</p>
+					<h3 data-i18n="segment.segmentation_failed">Segmentation failed</h3>
+					<p id="error-message" data-i18n="segment.something_went_wrong_try_a_simpler_mesh">Something went wrong. Try a simpler mesh or fewer parts.</p>
 					<div class="actions">
-						<button class="btn" type="button" id="retry">Try again</button>
+						<button class="btn" type="button" id="retry" data-i18n="segment.try_again">Try again</button>
 					</div>
 				</div>
 
 				<!-- Unconfigured -->
 				<div class="panel notice is-hidden" id="state-unconfigured">
 					<span class="glyph" aria-hidden="true">◌</span>
-					<h3>Segmenter not configured</h3>
-					<p>
+					<h3 data-i18n="segment.segmenter_not_configured">Segmenter not configured</h3>
+					<p data-i18n-html="segment.part_segmentation_needs_the_segment_worker_d">
 						Part segmentation needs the segment worker deployed. Once
 						<code>GCP_SEGMENT_URL</code> and <code>GCP_RECONSTRUCTION_KEY</code> are set, this
 						page runs the full pipeline with no further changes.
@@ -578,7 +578,7 @@
 				</div>
 			</section>
 
-			<p class="hint-foot">
+			<p class="hint-foot" data-i18n-html="segment.geometry_based_segmentation_disconnected_she">
 				Geometry-based segmentation — disconnected shells plus the minima rule (cut at concave
 				creases). Each part becomes a named node in the output GLB. The same tool is available to
 				agents over MCP as <code>segment_model</code> and over REST at
@@ -590,5 +590,7 @@
 		<script type="module" src="/src/segment.js"></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

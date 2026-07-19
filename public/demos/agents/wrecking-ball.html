@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Wrecking ball — three.ws</title>
+		<title data-i18n="demos_agents_wrecking_ball.meta_title">Wrecking ball — three.ws</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/demos/agents/_shared.css" />
@@ -19,15 +19,15 @@
 	<body>
 		<div class="stage">
 			<div class="hero-eyebrow">Wrecking-ball entrance</div>
-			<h1 class="hero-title">Make an <em>entrance</em>.</h1>
-			<p class="hero-sub">
+			<h1 class="hero-title" data-i18n-html="demos_agents_wrecking_ball.make_an_entrance">Make an <em>entrance</em>.</h1>
+			<p class="hero-sub" data-i18n="demos_agents_wrecking_ball.she_swings_in_from_off_canvas_on">
 				She swings in from off-canvas on a rope and knocks the ghost button
 				sideways. It wobbles, recovers, and she dangles before letting go.
 			</p>
 			<div class="cta-row">
-				<a href="#" class="btn btn-primary"><span>Don't mind her</span><span>→</span></a>
-				<a href="#" class="btn btn-ghost" id="cta-btn"><span>Hit this one</span><span>💥</span></a>
-				<button class="btn btn-ghost" id="restart" style="margin-top:8px;"><span>Swing again</span></button>
+				<a href="#" class="btn btn-primary" data-i18n-html="demos_agents_wrecking_ball.don_t_mind_her"><span>Don't mind her</span><span>→</span></a>
+				<a href="#" class="btn btn-ghost" id="cta-btn" data-i18n-html="demos_agents_wrecking_ball.hit_this_one"><span>Hit this one</span><span>💥</span></a>
+				<button class="btn btn-ghost" id="restart" style="margin-top:8px;" data-i18n-html="demos_agents_wrecking_ball.swing_again"><span>Swing again</span></button>
 			</div>
 		</div>
 		<canvas id="avatar-canvas"></canvas>
@@ -155,5 +155,7 @@
 			}, rootBone, baseRootPos);
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

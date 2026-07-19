@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Asset · Portfolio · three.ws</title>
+		<title data-i18n="dashboard_portfolio_asset.meta_title">Asset · Portfolio · three.ws</title>
 		<link rel="icon" href="/favicon.ico" />
 		<style>
 			:root {
@@ -240,19 +240,19 @@
 		<header>
 			<div class="brand"><a href="/"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a></div>
 			<div class="row">
-				<a href="/dashboard" class="muted" style="font-size:13px">← Dashboard</a>
+				<a href="/dashboard" class="muted" style="font-size:13px" data-i18n="dashboard_portfolio_asset.dashboard">← Dashboard</a>
 				<div id="header-user-slot"></div>
 			</div>
 		</header>
 		<main>
-			<a href="/dashboard/portfolio" class="back">← Portfolio</a>
+			<a href="/dashboard/portfolio" class="back" data-i18n="dashboard_portfolio_asset.portfolio">← Portfolio</a>
 
 			<div id="error" class="err-banner"></div>
 			<div id="root">
 				<div class="hero">
 					<div class="hero-head">
 						<div class="tok-logo">⏳</div>
-						<div class="tok-title"><h1>Loading…</h1></div>
+						<div class="tok-title"><h1 data-i18n="dashboard_portfolio_asset.loading">Loading…</h1></div>
 					</div>
 				</div>
 			</div>
@@ -788,5 +788,7 @@
 			})();
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

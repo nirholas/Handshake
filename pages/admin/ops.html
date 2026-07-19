@@ -4,7 +4,7 @@
 	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Ops Health · three.ws</title>
+	<title data-i18n="admin_ops.meta_title">Ops Health · three.ws</title>
 	<meta name="robots" content="noindex, nofollow" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="stylesheet" href="/style.css" />
@@ -149,19 +149,19 @@
 
 <div class="ops-wrap">
 	<div class="ops-header">
-		<h1 class="ops-title">Platform Health</h1>
+		<h1 class="ops-title" data-i18n="admin_ops.platform_health">Platform Health</h1>
 		<div class="ops-meta">
-			<span class="auto-badge" id="autoLabel">Auto-refresh: 30s</span>
+			<span class="auto-badge" id="autoLabel" data-i18n="admin_ops.auto_refresh_30s">Auto-refresh: 30s</span>
 			<span class="ops-checked" id="checkedAt">—</span>
-			<button class="ops-refresh" id="refreshBtn" onclick="load()">Refresh now</button>
+			<button class="ops-refresh" id="refreshBtn" onclick="load()" data-i18n="admin_ops.refresh_now">Refresh now</button>
 		</div>
 	</div>
 
 	<!-- Auth gate -->
 	<div class="auth-gate" id="authGate" style="display:none">
-		<h2>Ops access required</h2>
+		<h2 data-i18n="admin_ops.ops_access_required">Ops access required</h2>
 		<input type="password" id="secretInput" placeholder="OPS_SECRET / CRON_SECRET" onkeydown="if(event.key==='Enter')tryAuth()" autocomplete="current-password" />
-		<button onclick="tryAuth()">View health dashboard</button>
+		<button onclick="tryAuth()" data-i18n="admin_ops.view_health_dashboard">View health dashboard</button>
 		<div class="auth-err" id="authErr"></div>
 	</div>
 
@@ -176,7 +176,7 @@
 		<!-- Ops alerts (from ops_alerts — every sendOpsAlert persists here) -->
 		<div class="alerts-section" id="alertsSection">
 			<div class="alerts-hd">
-				<span class="alerts-hd-title">Alerts</span>
+				<span class="alerts-hd-title" data-i18n="admin_ops.alerts">Alerts</span>
 				<span class="alerts-hd-counts" id="alertCounts"></span>
 			</div>
 			<div id="alertsBody">
@@ -207,11 +207,11 @@
 			<div class="ops-section-hd">Cron heartbeats</div>
 			<table class="cron-table">
 				<thead><tr>
-					<th>Cron</th>
-					<th>Status</th>
-					<th>Last ran</th>
-					<th>Duration</th>
-					<th>Error</th>
+					<th data-i18n="admin_ops.cron">Cron</th>
+					<th data-i18n="admin_ops.status">Status</th>
+					<th data-i18n="admin_ops.last_ran">Last ran</th>
+					<th data-i18n="admin_ops.duration">Duration</th>
+					<th data-i18n="admin_ops.error">Error</th>
 				</tr></thead>
 				<tbody id="cronBody">
 					<tr><td colspan="5"><div class="skeleton" style="height:14px;width:60%"></div></td></tr>
@@ -472,5 +472,7 @@ if (_secret) {
 	showAuth();
 }
 </script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

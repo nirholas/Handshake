@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Store · x402</title>
-<meta name="description" content="A hosted x402 storefront. Pay-per-call APIs settled on-chain in USDC." />
+<title data-i18n="store_index.meta_title">Store · x402</title>
+<meta name="description" content="A hosted x402 storefront. Pay-per-call APIs settled on-chain in USDC."  data-i18n-attr="content:store_index.meta_description"/>
 <meta name="theme-color" content="#ffffff" />
 <style>
 	:root { --accent: #0a84ff; }
@@ -173,5 +173,7 @@ load();
 </script>
 
 <script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

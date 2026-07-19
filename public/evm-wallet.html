@@ -3,9 +3,9 @@
 <head>
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8">
-	<title>EVM vanity wallet generator · three.ws</title>
+	<title data-i18n="evm_wallet.meta_title">EVM vanity wallet generator · three.ws</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="description" content="Grind a custom Ethereum / EVM wallet address with the prefix or suffix of your choice. A real secp256k1 keypair — importable into MetaMask, ethers, viem. Runs entirely in your browser; the private key never leaves your device.">
+	<meta name="description" content="Grind a custom Ethereum / EVM wallet address with the prefix or suffix of your choice. A real secp256k1 keypair — importable into MetaMask, ethers, viem. Runs entirely in your browser; the private key never leaves your device." data-i18n-attr="content:evm_wallet.meta_description">
 	<link rel="icon" href="/favicon.ico">
 	<link rel="stylesheet" href="/footer.css">
 	<link rel="stylesheet" href="/nav.css">
@@ -130,15 +130,15 @@
 	<link rel="canonical" href="https://three.ws/evm-wallet">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="EVM Vanity Wallet · three.ws">
-	<meta property="og:description" content="Grind a custom Ethereum / EVM wallet address in your browser. A real keypair, importable into MetaMask. Keys never leave your device.">
+	<meta property="og:title" content="EVM Vanity Wallet · three.ws" data-i18n-attr="content:evm_wallet.meta_og_title">
+	<meta property="og:description" content="Grind a custom Ethereum / EVM wallet address in your browser. A real keypair, importable into MetaMask. Keys never leave your device." data-i18n-attr="content:evm_wallet.meta_og_description">
 	<meta property="og:url" content="https://three.ws/evm-wallet">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=EVM+Vanity+Wallet&amp;d=Grind+a+custom+Ethereum+%2F+EVM+wallet+address+with+the+prefix+or+suffix+of+your+choice.+A+real+secp256k1+keypair%2C+generated+entirely+in+your+browser+%E2%80%94+the+privat&amp;p=%2Fevm-wallet">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="EVM Vanity Wallet · three.ws">
-	<meta name="twitter:description" content="Grind a custom Ethereum / EVM wallet address in your browser. Keys never leave your device.">
+	<meta name="twitter:title" content="EVM Vanity Wallet · three.ws" data-i18n-attr="content:evm_wallet.meta_twitter_title">
+	<meta name="twitter:description" content="Grind a custom Ethereum / EVM wallet address in your browser. Keys never leave your device." data-i18n-attr="content:evm_wallet.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=EVM+Vanity+Wallet&amp;d=Grind+a+custom+Ethereum+%2F+EVM+wallet+address+with+the+prefix+or+suffix+of+your+choice.+A+real+secp256k1+keypair%2C+generated+entirely+in+your+browser+%E2%80%94+the+privat&amp;p=%2Fevm-wallet">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"EVM Vanity Wallet","description":"Grind a custom Ethereum / EVM wallet address in your browser. A real keypair, importable into MetaMask. Keys never leave your device.","url":"https://three.ws/evm-wallet","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -148,15 +148,15 @@
 	<meta name="twitter:site" content="@trythreews">
 </head>
 <body>
-	<a href="#main-content" class="skip-link">Skip to main content</a>
+	<a href="#main-content" class="skip-link" data-i18n="evm_wallet.skip_to_main_content">Skip to main content</a>
 	<header>
 		<div id="nav-container"></div>
 	</header>
 	<script src="/nav.js"></script>
 
 	<main id="main-content">
-		<h1>✦ EVM vanity wallet generator</h1>
-		<p class="lede">
+		<h1 data-i18n="evm_wallet.evm_vanity_wallet_generator">✦ EVM vanity wallet generator</h1>
+		<p class="lede" data-i18n-html="evm_wallet.grind_a_real_ethereum_evm_wallet_whose">
 			Grind a real Ethereum / EVM wallet whose address starts or ends with characters of your choice — for your agent, treasury, or anywhere a memorable
 			<code>0x</code> address matters. The result is a normal secp256k1 keypair you can import into <strong>MetaMask</strong>, ethers, viem or Rabby.
 			<strong>Runs entirely in your browser.</strong> The private key is never transmitted anywhere.
@@ -164,7 +164,7 @@
 
 		<div class="secure-note">
 			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5l-8-3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-			<span>
+			<span data-i18n-html="evm_wallet.this_is_an_eoa_grinder_it_searches">
 				This is an <strong>EOA</strong> grinder — it searches private keys directly, so you own the resulting address.
 				(<a href="/eth-vanity" style="color:#a78bfa">CREATE2</a> is the sibling tool for vanity <em>smart-contract</em> addresses, where you grind a salt instead of a key.)
 				Keys are generated with your browser's CSPRNG, each match is re-derived and verified before it's shown, and the export below is an encrypted keystore by default.
@@ -172,19 +172,19 @@
 		</div>
 
 		<div class="card">
-			<h2>Pattern</h2>
-			<p class="desc">
+			<h2 data-i18n="evm_wallet.pattern">Pattern</h2>
+			<p class="desc" data-i18n-html="evm_wallet.hex_characters_only_0_9_a_f">
 				Hex characters only (0–9, a–f). Each extra character is 16× harder.
 				<strong>Mixed case</strong> (e.g. <code>BeeF</code>) matches the EIP-55 checksum — visually distinctive, ~2× harder per letter.
 			</p>
 
 			<div class="row2">
 				<div>
-					<label for="prefix">Prefix (after 0x)</label>
+					<label for="prefix" data-i18n="evm_wallet.prefix_after_0x">Prefix (after 0x)</label>
 					<input id="prefix" type="text" maxlength="10" placeholder="e.g. beef or BeeF" autocomplete="off" spellcheck="false" />
 				</div>
 				<div>
-					<label for="suffix">Suffix</label>
+					<label for="suffix" data-i18n="evm_wallet.suffix">Suffix</label>
 					<input id="suffix" type="text" maxlength="10" placeholder="e.g. dead" autocomplete="off" spellcheck="false" />
 				</div>
 			</div>
@@ -200,13 +200,13 @@
 			</div>
 
 			<div class="row">
-				<span id="est">type a pattern to see estimated time</span>
+				<span id="est" data-i18n="evm_wallet.type_a_pattern_to_see_estimated_time">type a pattern to see estimated time</span>
 				<span id="case-tag"></span>
 			</div>
 
 			<div class="cores">
 				<div class="cores-head">
-					<label for="core-count">Compute — CPU cores to use</label>
+					<label for="core-count" data-i18n="evm_wallet.compute_cpu_cores_to_use">Compute — CPU cores to use</label>
 					<span class="cores-val"><b id="core-count-val">4</b> / <span id="core-max">8</span></span>
 				</div>
 				<div class="cores-row">
@@ -217,16 +217,16 @@
 			</div>
 
 			<div class="actions">
-				<button id="grind" class="btn primary" type="button" disabled>Generate wallet</button>
-				<button id="pause" class="btn" type="button" hidden>Pause</button>
-				<button id="stop" class="btn" type="button" hidden>Stop</button>
+				<button id="grind" class="btn primary" type="button" disabled data-i18n="evm_wallet.generate_wallet">Generate wallet</button>
+				<button id="pause" class="btn" type="button" hidden data-i18n="evm_wallet.pause">Pause</button>
+				<button id="stop" class="btn" type="button" hidden data-i18n="evm_wallet.stop">Stop</button>
 			</div>
 
 			<div id="progress" hidden class="progress">
 				<div class="live">
 					<div>
 						<div class="stat" id="rate">0/s</div>
-						<div style="font-size:.75rem;color:#555">tries/sec across <span id="cores2">?</span> cores<span id="paused-tag" class="paused-tag" hidden>paused</span></div>
+						<div style="font-size:.75rem;color:#555">tries/sec across <span id="cores2">?</span> cores<span id="paused-tag" class="paused-tag" hidden data-i18n="evm_wallet.paused">paused</span></div>
 					</div>
 					<div style="text-align:right">
 						<div class="stat"><span id="attempts">0</span></div>
@@ -629,5 +629,7 @@
 	<script src="/brand.js" defer></script>
 	<div id="footer-container"></div>
 	<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

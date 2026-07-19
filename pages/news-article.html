@@ -18,18 +18,18 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Article · Crypto News · three.ws</title>
+		<title data-i18n="news_article.meta_title">Article · Crypto News · three.ws</title>
 		<meta
 			name="description"
 			content="Rich crypto-news reader — full story extraction with summary, key points, sentiment, detected tickers, and related coverage from across the industry."
-		/>
+		 data-i18n-attr="content:news_article.meta_description"/>
 		<meta property="og:type" content="article" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Crypto News Reader · three.ws" />
+		<meta property="og:title" content="Crypto News Reader · three.ws"  data-i18n-attr="content:news_article.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Rich crypto-news reader — summary, key points, sentiment, tickers, and related coverage."
-		/>
+		 data-i18n-attr="content:news_article.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+News+Reader&amp;d=Rich+article+reader+for+crypto+news+%E2%80%94+full+story+extraction+with+AI+summary%2C+key+points%2C+sentiment%2C+detected+tickers%2C+and+related+coverage+from+across+the+indus&amp;p=%2Fmarkets%2Fnews%2Farticle"
@@ -51,8 +51,8 @@
 	<meta property="og:locale" content="en_US">
 	<meta property="og:url" content="https://three.ws/markets/news/article">
 	<meta property="og:image:alt" content="Crypto News Reader — three.ws">
-	<meta name="twitter:title" content="Crypto News Reader · three.ws">
-	<meta name="twitter:description" content="Rich article reader for crypto news — full story extraction with AI summary, key points, sentiment, detected tickers, and related coverage from across the industry.">
+	<meta name="twitter:title" content="Crypto News Reader · three.ws" data-i18n-attr="content:news_article.meta_twitter_title">
+	<meta name="twitter:description" content="Rich article reader for crypto news — full story extraction with AI summary, key points, sentiment, detected tickers, and related coverage from across the industry." data-i18n-attr="content:news_article.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+News+Reader&amp;d=Rich+article+reader+for+crypto+news+%E2%80%94+full+story+extraction+with+AI+summary%2C+key+points%2C+sentiment%2C+detected+tickers%2C+and+related+coverage+from+across+the+indus&amp;p=%2Fmarkets%2Fnews%2Farticle">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Crypto News Reader","description":"Rich article reader for crypto news — full story extraction with AI summary, key points, sentiment, detected tickers, and related coverage from across the industry.","url":"https://three.ws/markets/news/article","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&amp;t=Crypto+News+Reader&amp;d=Rich+article+reader+for+crypto+news+%E2%80%94+full+story+extraction+with+AI+summary%2C+key+points%2C+sentiment%2C+detected+tickers%2C+and+related+coverage+from+across+the+indus&amp;p=%2Fmarkets%2Fnews%2Farticle"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Markets","item":"https://three.ws/markets"},{"@type":"ListItem","position":3,"name":"News","item":"https://three.ws/markets/news"},{"@type":"ListItem","position":4,"name":"Article","item":"https://three.ws/markets/news/article"}]}]}</script>
 </head>
@@ -62,9 +62,9 @@
 
 		<main class="cv-container">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a><span class="sep">/</span
-				><a href="/markets/news">News</a><span class="sep">/</span
-				><span class="here">Article</span>
+				<a href="/markets" data-i18n="news_article.markets">Markets</a><span class="sep">/</span
+				><a href="/markets/news" data-i18n="news_article.news">News</a><span class="sep">/</span
+				><span class="here" data-i18n="news_article.article">Article</span>
 			</nav>
 
 			<!-- Reader shell. Fully hydrated by src/news-article.js. -->
@@ -75,5 +75,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Meet Your Agent · three.ws</title>
+		<title data-i18n="first_meet_index.meta_title">Meet Your Agent · three.ws</title>
 		<link rel="icon" href="/favicon.ico" />
 		<style>
 			:root {
@@ -226,8 +226,8 @@
 
 				<!-- Step 1: Name -->
 				<div class="step active" id="step-name">
-					<h1>Name your agent</h1>
-					<p class="sub">Give your avatar a name. You can change it later.</p>
+					<h1 data-i18n="first_meet_index.name_your_agent">Name your agent</h1>
+					<p class="sub" data-i18n="first_meet_index.give_your_avatar_a_name_you_can">Give your avatar a name. You can change it later.</p>
 					<div class="form-group">
 						<input
 							type="text"
@@ -240,15 +240,15 @@
 						<div class="char-count"><span id="name-count">0</span>/40</div>
 					</div>
 					<div class="buttons">
-						<button class="primary" id="name-next">Next</button>
-						<button class="skip-btn" id="name-skip">Skip</button>
+						<button class="primary" id="name-next" data-i18n="first_meet_index.next">Next</button>
+						<button class="skip-btn" id="name-skip" data-i18n="first_meet_index.skip">Skip</button>
 					</div>
 				</div>
 
 				<!-- Step 2: Bio -->
 				<div class="step" id="step-bio">
-					<h1>Tell us about your agent</h1>
-					<p class="sub">Add a short bio (optional). Max 280 characters.</p>
+					<h1 data-i18n="first_meet_index.tell_us_about_your_agent">Tell us about your agent</h1>
+					<p class="sub" data-i18n="first_meet_index.add_a_short_bio_optional_max_280">Add a short bio (optional). Max 280 characters.</p>
 					<div class="form-group">
 						<textarea
 							id="bio-input"
@@ -258,55 +258,55 @@
 						<div class="char-count"><span id="bio-count">0</span>/280</div>
 					</div>
 					<div class="buttons">
-						<button class="primary" id="bio-next">Next</button>
-						<button id="bio-back">Back</button>
+						<button class="primary" id="bio-next" data-i18n="first_meet_index.next_2">Next</button>
+						<button id="bio-back" data-i18n="first_meet_index.back">Back</button>
 					</div>
 				</div>
 
 				<!-- Step 3: Voice + Body Type -->
 				<div class="step" id="step-voice">
-					<h1>Voice & appearance</h1>
-					<p class="sub">Choose how your agent communicates and looks.</p>
+					<h1 data-i18n="first_meet_index.voice_appearance">Voice & appearance</h1>
+					<p class="sub" data-i18n="first_meet_index.choose_how_your_agent_communicates_and_looks">Choose how your agent communicates and looks.</p>
 					<div class="form-group">
-						<label for="voice-select">Voice</label>
+						<label for="voice-select" data-i18n="first_meet_index.voice">Voice</label>
 						<select id="voice-select">
-							<option value="en-US-female">US Female</option>
-							<option value="en-US-male">US Male</option>
-							<option value="en-GB-female">British Female</option>
-							<option value="en-GB-male">British Male</option>
+							<option value="en-US-female" data-i18n="first_meet_index.us_female">US Female</option>
+							<option value="en-US-male" data-i18n="first_meet_index.us_male">US Male</option>
+							<option value="en-GB-female" data-i18n="first_meet_index.british_female">British Female</option>
+							<option value="en-GB-male" data-i18n="first_meet_index.british_male">British Male</option>
 						</select>
 					</div>
 					<div class="form-group">
-						<label for="body-type-select">Body type</label>
+						<label for="body-type-select" data-i18n="first_meet_index.body_type">Body type</label>
 						<select id="body-type-select">
-							<option value="neutral">Neutral</option>
-							<option value="feminine">Feminine</option>
-							<option value="masculine">Masculine</option>
+							<option value="neutral" data-i18n="first_meet_index.neutral">Neutral</option>
+							<option value="feminine" data-i18n="first_meet_index.feminine">Feminine</option>
+							<option value="masculine" data-i18n="first_meet_index.masculine">Masculine</option>
 						</select>
 					</div>
 					<div class="buttons">
-						<button class="primary" id="voice-next">Next</button>
-						<button id="voice-back">Back</button>
+						<button class="primary" id="voice-next" data-i18n="first_meet_index.next_3">Next</button>
+						<button id="voice-back" data-i18n="first_meet_index.back_2">Back</button>
 					</div>
 				</div>
 
 				<!-- Step 4: Greet -->
 				<div class="step" id="step-greet">
-					<h1>Meet your agent</h1>
-					<p class="sub">Your agent is ready to say hello.</p>
+					<h1 data-i18n="first_meet_index.meet_your_agent">Meet your agent</h1>
+					<p class="sub" data-i18n="first_meet_index.your_agent_is_ready_to_say_hello">Your agent is ready to say hello.</p>
 					<div class="greeting-text" id="greeting-text">Listening…</div>
 					<div class="buttons">
-						<button class="primary" id="greet-next">Continue</button>
+						<button class="primary" id="greet-next" data-i18n="first_meet_index.continue">Continue</button>
 					</div>
 				</div>
 
 				<!-- Step 5: Done -->
 				<div class="step" id="step-done">
-					<h1>All set!</h1>
-					<p class="sub">Your agent is ready to go.</p>
+					<h1 data-i18n="first_meet_index.all_set">All set!</h1>
+					<p class="sub" data-i18n="first_meet_index.your_agent_is_ready_to_go">Your agent is ready to go.</p>
 					<div class="buttons">
-						<button class="primary" id="done-agent">Go to my agent</button>
-						<button id="done-dashboard">Back to dashboard</button>
+						<button class="primary" id="done-agent" data-i18n="first_meet_index.go_to_my_agent">Go to my agent</button>
+						<button id="done-dashboard" data-i18n="first_meet_index.back_to_dashboard">Back to dashboard</button>
 					</div>
 				</div>
 			</div>
@@ -315,5 +315,7 @@
 		<script src="/dist-lib/agent-3d.js" type="module"></script>
 		<script type="module" src="./first-meet.js"></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

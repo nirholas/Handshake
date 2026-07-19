@@ -3,9 +3,9 @@
 <head>
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8">
-	<title>Vanity wallet generator · three.ws</title>
+	<title data-i18n="vanity_wallet.meta_title">Vanity wallet generator · three.ws</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="description" content="Grind a custom Solana wallet address — by prefix, suffix, or both — for your agent. Runs entirely in your browser; keys never leave your device.">
+	<meta name="description" content="Grind a custom Solana wallet address — by prefix, suffix, or both — for your agent. Runs entirely in your browser; keys never leave your device." data-i18n-attr="content:vanity_wallet.meta_description">
 	<link rel="icon" href="/favicon.ico">
 	<link rel="stylesheet" href="/footer.css">
 	<link rel="stylesheet" href="/nav.css">
@@ -240,15 +240,15 @@
 	<link rel="canonical" href="https://three.ws/vanity-wallet">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="Solana Vanity Wallet · three.ws">
-	<meta property="og:description" content="Grind a Solana address with a custom prefix or suffix — entirely in your browser.">
+	<meta property="og:title" content="Solana Vanity Wallet · three.ws" data-i18n-attr="content:vanity_wallet.meta_og_title">
+	<meta property="og:description" content="Grind a Solana address with a custom prefix or suffix — entirely in your browser." data-i18n-attr="content:vanity_wallet.meta_og_description">
 	<meta property="og:url" content="https://three.ws/vanity-wallet">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Solana+Vanity+Wallet&amp;d=Grind+a+Solana+address+with+a+custom+prefix+%E2%80%94+entirely+in+your+browser%2C+across+your+CPU+cores.+Also+send+sealed+wallet+gifts%3A+fund+a+fresh+%28optionally+vanity-gr&amp;p=%2Fvanity-wallet">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Solana Vanity Wallet · three.ws">
-	<meta name="twitter:description" content="Grind a Solana address with a custom prefix or suffix — entirely in your browser.">
+	<meta name="twitter:title" content="Solana Vanity Wallet · three.ws" data-i18n-attr="content:vanity_wallet.meta_twitter_title">
+	<meta name="twitter:description" content="Grind a Solana address with a custom prefix or suffix — entirely in your browser." data-i18n-attr="content:vanity_wallet.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Solana+Vanity+Wallet&amp;d=Grind+a+Solana+address+with+a+custom+prefix+%E2%80%94+entirely+in+your+browser%2C+across+your+CPU+cores.+Also+send+sealed+wallet+gifts%3A+fund+a+fresh+%28optionally+vanity-gr&amp;p=%2Fvanity-wallet">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Solana Vanity Wallet","description":"Grind a Solana address with a custom prefix or suffix — entirely in your browser.","url":"https://three.ws/vanity-wallet","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -259,19 +259,19 @@
 	<script src="/model-viewer-meshopt.js"></script>
 </head>
 <body>
-	<a href="#main-content" class="skip-link">Skip to main content</a>
+	<a href="#main-content" class="skip-link" data-i18n="vanity_wallet.skip_to_main_content">Skip to main content</a>
 		<header>
 			<div id="nav-container"></div>
 		</header>
 		<script src="/nav.js"></script>
 
 	<main id="main-content">
-		<h1>✦ Vanity wallet generator</h1>
-		<p class="lede">
+		<h1 data-i18n="vanity_wallet.vanity_wallet_generator">✦ Vanity wallet generator</h1>
+		<p class="lede" data-i18n-html="vanity_wallet.grind_a_solana_wallet_address_that_starts">
 			Grind a Solana wallet address that <strong>starts with</strong>, <strong>ends with</strong>, or is bookended by characters of your choice — for your agent, treasury, or anywhere a memorable address matters.
 			<strong>Runs entirely in your browser.</strong> The secret key stays on your device — it only leaves if you explicitly assign the wallet to an agent.
 		</p>
-		<p class="lede" style="margin-top:-0.5rem;font-size:.85rem">
+		<p class="lede" style="margin-top:-0.5rem;font-size:.85rem" data-i18n-html="vanity_wallet.bought_a_wallet_from_the_provably_fair">
 			Bought a wallet from the <a href="/vanity/verify" style="color:#ffd54f;text-decoration:none;border-bottom:1px solid rgba(255,213,79,.4)">provably-fair grinder</a>?
 			Verify the receipt — prove we generated your key fresh and never kept a copy. See the rarest wallets ground here in the
 			<a href="/vanity/gallery" style="color:#ffd54f;text-decoration:none;border-bottom:1px solid rgba(255,213,79,.4)">proof-of-grind gallery</a>.
@@ -284,20 +284,20 @@
 		<div class="card">
 			<div class="pattern-grid">
 				<div class="pattern-field">
-					<label for="prefix">Starts with</label>
+					<label for="prefix" data-i18n="vanity_wallet.starts_with">Starts with</label>
 					<input id="prefix" type="text" maxlength="6" placeholder="e.g. AGNT" autocomplete="off" spellcheck="false" inputmode="latin" />
-					<span class="affix-hint" id="prefix-hint">Base58 · max 6</span>
+					<span class="affix-hint" id="prefix-hint" data-i18n="vanity_wallet.base58_max_6">Base58 · max 6</span>
 				</div>
 				<div class="pattern-field">
-					<label for="suffix">Ends with</label>
+					<label for="suffix" data-i18n="vanity_wallet.ends_with">Ends with</label>
 					<input id="suffix" type="text" maxlength="6" placeholder="e.g. pump" autocomplete="off" spellcheck="false" inputmode="latin" />
-					<span class="affix-hint" id="suffix-hint">Base58 · max 6</span>
+					<span class="affix-hint" id="suffix-hint" data-i18n="vanity_wallet.base58_max_6_2">Base58 · max 6</span>
 				</div>
 			</div>
 
 			<label class="ci-toggle" for="ignore-case">
 				<input type="checkbox" id="ignore-case" />
-				<span>Case-insensitive — match letters in any case. Much faster to grind, but you don't get to choose the casing of the result.</span>
+				<span data-i18n="vanity_wallet.case_insensitive_match_letters_in_any_case">Case-insensitive — match letters in any case. Much faster to grind, but you don't get to choose the casing of the result.</span>
 			</label>
 
 			<div class="combo-warn" id="combo-warn" aria-live="polite"></div>
@@ -314,22 +314,22 @@
 			</div>
 
 			<div class="row">
-				<span id="est">type a prefix or suffix to see estimated time</span>
+				<span id="est" data-i18n="vanity_wallet.type_a_prefix_or_suffix_to_see">type a prefix or suffix to see estimated time</span>
 				<span id="tier"></span>
 			</div>
 
 			<div class="chips" aria-label="Suggested patterns">
-				<button class="chip" data-prefix="AGNT" type="button">AGNT…<span class="chip-est"></span></button>
-				<button class="chip" data-prefix="BOT"  type="button">BOT…<span class="chip-est"></span></button>
-				<button class="chip" data-prefix="AI"   type="button">AI…<span class="chip-est"></span></button>
-				<button class="chip" data-suffix="pump" type="button">…pump<span class="chip-est"></span></button>
-				<button class="chip" data-prefix="GM" data-suffix="gm" type="button">GM…gm<span class="chip-est"></span></button>
+				<button class="chip" data-prefix="AGNT" type="button" data-i18n-html="vanity_wallet.agnt">AGNT…<span class="chip-est"></span></button>
+				<button class="chip" data-prefix="BOT"  type="button" data-i18n-html="vanity_wallet.bot">BOT…<span class="chip-est"></span></button>
+				<button class="chip" data-prefix="AI"   type="button" data-i18n-html="vanity_wallet.ai">AI…<span class="chip-est"></span></button>
+				<button class="chip" data-suffix="pump" type="button" data-i18n-html="vanity_wallet.pump">…pump<span class="chip-est"></span></button>
+				<button class="chip" data-prefix="GM" data-suffix="gm" type="button" data-i18n-html="vanity_wallet.gm_gm">GM…gm<span class="chip-est"></span></button>
 				<button class="chip" data-suffix="3" type="button">…3<span class="chip-est"></span></button>
 			</div>
 
 			<div class="cores">
 				<div class="cores-head">
-					<label for="core-count">Compute — CPU cores to use</label>
+					<label for="core-count" data-i18n="vanity_wallet.compute_cpu_cores_to_use">Compute — CPU cores to use</label>
 					<span class="cores-val"><b id="core-count-val">4</b> / <span id="core-max">8</span></span>
 				</div>
 				<div class="cores-row">
@@ -341,16 +341,16 @@
 			</div>
 
 			<div class="actions">
-				<button id="grind" class="btn primary" type="button" disabled>Generate wallet</button>
-				<button id="pause" class="btn" type="button" hidden>Pause</button>
-				<button id="stop" class="btn" type="button" hidden>Stop</button>
+				<button id="grind" class="btn primary" type="button" disabled data-i18n="vanity_wallet.generate_wallet">Generate wallet</button>
+				<button id="pause" class="btn" type="button" hidden data-i18n="vanity_wallet.pause">Pause</button>
+				<button id="stop" class="btn" type="button" hidden data-i18n="vanity_wallet.stop">Stop</button>
 			</div>
 
 			<div id="progress" hidden class="progress">
 				<div class="live">
 					<div>
 						<div class="stat" id="rate">0/s</div>
-						<div style="font-size:.75rem;color:#555">tries/sec across <span id="cores">?</span> cores<span id="paused-tag" class="paused-tag" hidden>paused</span></div>
+						<div style="font-size:.75rem;color:#555">tries/sec across <span id="cores">?</span> cores<span id="paused-tag" class="paused-tag" hidden data-i18n="vanity_wallet.paused">paused</span></div>
 					</div>
 					<div style="text-align:right">
 						<div class="stat"><span id="attempts">0</span></div>
@@ -365,29 +365,29 @@
 		</div>
 
 		<div class="section-divider" id="drop-create">
-			<h2>🎁 Send a sealed gift</h2>
-			<p class="lede">
+			<h2 data-i18n="vanity_wallet.send_a_sealed_gift">🎁 Send a sealed gift</h2>
+			<p class="lede" data-i18n="vanity_wallet.fund_a_fresh_wallet_optionally_vanity_ground">
 				Fund a fresh wallet — optionally vanity-ground with the pattern above — and wrap it in an end-to-end sealed link.
 				Only the recipient can ever open it; three.ws never sees the key.
 			</p>
 			<div class="card">
 				<div class="gift-row">
 					<div>
-						<label class="fl" for="dc-asset">Asset</label>
+						<label class="fl" for="dc-asset" data-i18n="vanity_wallet.asset">Asset</label>
 						<select class="t" id="dc-asset">
-							<option value="SOL">SOL</option>
-							<option value="USDC">USDC</option>
-							<option value="THREE">$THREE</option>
+							<option value="SOL" data-i18n="vanity_wallet.sol">SOL</option>
+							<option value="USDC" data-i18n="vanity_wallet.usdc">USDC</option>
+							<option value="THREE" data-i18n="vanity_wallet.three">$THREE</option>
 						</select>
 					</div>
 					<div>
-						<label class="fl" for="dc-amount">Amount</label>
+						<label class="fl" for="dc-amount" data-i18n="vanity_wallet.amount">Amount</label>
 						<input class="t" id="dc-amount" type="text" inputmode="decimal" placeholder="e.g. 0.1" autocomplete="off" />
 					</div>
 				</div>
 
-				<label class="fl">Vanity pattern (optional)</label>
-				<p class="note" style="font-size:.78rem;color:#666;margin:0 0 .4rem">Reuses the prefix/suffix above — leave blank to skip grinding and fund instantly.</p>
+				<label class="fl" data-i18n="vanity_wallet.vanity_pattern_optional">Vanity pattern (optional)</label>
+				<p class="note" style="font-size:.78rem;color:#666;margin:0 0 .4rem" data-i18n="vanity_wallet.reuses_the_prefix_suffix_above_leave_blank">Reuses the prefix/suffix above — leave blank to skip grinding and fund instantly.</p>
 				<div class="gift-row">
 					<div>
 						<input class="t mono" id="dc-prefix" type="text" maxlength="6" placeholder="Starts with" autocomplete="off" spellcheck="false" />
@@ -397,60 +397,60 @@
 					</div>
 				</div>
 
-				<label class="fl">Key export format</label>
+				<label class="fl" data-i18n="vanity_wallet.key_export_format">Key export format</label>
 				<select class="t" id="dc-format">
-					<option value="mnemonic">Seed phrase (mnemonic)</option>
-					<option value="base58">Secret key (Base58)</option>
+					<option value="mnemonic" data-i18n="vanity_wallet.seed_phrase_mnemonic">Seed phrase (mnemonic)</option>
+					<option value="base58" data-i18n="vanity_wallet.secret_key_base58">Secret key (Base58)</option>
 				</select>
 
-				<label class="fl">How should this be sealed?</label>
-				<label class="chk"><input type="radio" name="dc-seal" value="claim-time" checked /><span><strong>Bearer link</strong> — anyone with the full link can claim it once. Simplest to share.</span></label>
-				<label class="chk"><input type="radio" name="dc-seal" value="direct" /><span><strong>Sealed to a key</strong> — only the holder of a specific X25519 private key can open it, even with the link.</span></label>
-				<p class="note" id="dc-bearer-note" style="font-size:.78rem;color:#666;margin:.5rem 0 0">The claim link itself carries the key — send it privately, the same way you'd send cash.</p>
+				<label class="fl" data-i18n="vanity_wallet.how_should_this_be_sealed">How should this be sealed?</label>
+				<label class="chk"><input type="radio" name="dc-seal" value="claim-time" checked /><span data-i18n-html="vanity_wallet.bearer_link_anyone_with_the_full_link"><strong>Bearer link</strong> — anyone with the full link can claim it once. Simplest to share.</span></label>
+				<label class="chk"><input type="radio" name="dc-seal" value="direct" /><span data-i18n-html="vanity_wallet.sealed_to_a_key_only_the_holder"><strong>Sealed to a key</strong> — only the holder of a specific X25519 private key can open it, even with the link.</span></label>
+				<p class="note" id="dc-bearer-note" style="font-size:.78rem;color:#666;margin:.5rem 0 0" data-i18n="vanity_wallet.the_claim_link_itself_carries_the_key">The claim link itself carries the key — send it privately, the same way you'd send cash.</p>
 
 				<div id="dc-direct-wrap" style="display:none">
-					<label class="fl" for="dc-recipient">Recipient's X25519 public key</label>
+					<label class="fl" for="dc-recipient" data-i18n="vanity_wallet.recipient_s_x25519_public_key">Recipient's X25519 public key</label>
 					<input class="t mono" id="dc-recipient" type="text" placeholder="Paste a public key, or generate a fresh pair" autocomplete="off" />
-					<div class="actions" style="margin-top:.5rem"><button class="ghost small" id="dc-genkey" type="button">Generate a key pair for them</button></div>
+					<div class="actions" style="margin-top:.5rem"><button class="ghost small" id="dc-genkey" type="button" data-i18n="vanity_wallet.generate_a_key_pair_for_them">Generate a key pair for them</button></div>
 					<div id="dc-genkey-note" class="keynote" style="display:none"></div>
 				</div>
 
-				<label class="fl" for="dc-message">Message (optional)</label>
+				<label class="fl" for="dc-message" data-i18n="vanity_wallet.message_optional">Message (optional)</label>
 				<textarea class="t" id="dc-message" maxlength="200" placeholder="Happy birthday!"></textarea>
 
 				<div class="gift-row">
 					<div>
-						<label class="fl" for="dc-theme">Theme</label>
+						<label class="fl" for="dc-theme" data-i18n="vanity_wallet.theme">Theme</label>
 						<select class="t" id="dc-theme">
-							<option value="default">🎁 Default</option>
-							<option value="birthday">🎂 Birthday</option>
-							<option value="congrats">🎉 Congrats</option>
-							<option value="thanks">🙏 Thanks</option>
-							<option value="welcome">👋 Welcome</option>
-							<option value="tip">⚡ Tip</option>
+							<option value="default" data-i18n="vanity_wallet.default">🎁 Default</option>
+							<option value="birthday" data-i18n="vanity_wallet.birthday">🎂 Birthday</option>
+							<option value="congrats" data-i18n="vanity_wallet.congrats">🎉 Congrats</option>
+							<option value="thanks" data-i18n="vanity_wallet.thanks">🙏 Thanks</option>
+							<option value="welcome" data-i18n="vanity_wallet.welcome">👋 Welcome</option>
+							<option value="tip" data-i18n="vanity_wallet.tip">⚡ Tip</option>
 						</select>
 					</div>
 					<div>
-						<label class="fl" for="dc-sender">Your name (optional)</label>
+						<label class="fl" for="dc-sender" data-i18n="vanity_wallet.your_name_optional">Your name (optional)</label>
 						<input class="t" id="dc-sender" type="text" maxlength="40" placeholder="Shown to the recipient" autocomplete="off" />
 					</div>
 				</div>
 
 				<div class="gift-row">
 					<div>
-						<label class="fl" for="dc-expiry">Expires in (hours)</label>
+						<label class="fl" for="dc-expiry" data-i18n="vanity_wallet.expires_in_hours">Expires in (hours)</label>
 						<input class="t" id="dc-expiry" type="number" min="1" max="2160" value="168" />
 					</div>
 					<div>
-						<label class="fl" for="dc-reclaim">Reclaim address (optional)</label>
+						<label class="fl" for="dc-reclaim" data-i18n="vanity_wallet.reclaim_address_optional">Reclaim address (optional)</label>
 						<input class="t mono" id="dc-reclaim" type="text" placeholder="Defaults to your connected wallet" autocomplete="off" />
 					</div>
 				</div>
 
 				<div class="actions">
-					<button class="primary" id="dc-submit" type="button">Create sealed gift</button>
+					<button class="primary" id="dc-submit" type="button" data-i18n="vanity_wallet.create_sealed_gift">Create sealed gift</button>
 				</div>
-				<p class="note" id="dc-hint" style="font-size:.8rem;color:#666;margin-top:.6rem">Loading pricing…</p>
+				<p class="note" id="dc-hint" style="font-size:.8rem;color:#666;margin-top:.6rem" data-i18n="vanity_wallet.loading_pricing">Loading pricing…</p>
 				<div class="errbox" id="dc-err"></div>
 				<div id="dc-result" hidden></div>
 			</div>
@@ -458,8 +458,8 @@
 
 		<div class="section-divider" id="drop-mine">
 			<a id="mine"></a>
-			<h2>My sealed drops</h2>
-			<p class="lede">Gifts you've sent from this browser — reclaim any that expire unclaimed.</p>
+			<h2 data-i18n="vanity_wallet.my_sealed_drops">My sealed drops</h2>
+			<p class="lede" data-i18n="vanity_wallet.gifts_you_ve_sent_from_this_browser">Gifts you've sent from this browser — reclaim any that expire unclaimed.</p>
 			<div class="card">
 				<div id="dm-list"></div>
 			</div>
@@ -490,8 +490,8 @@
 		</div>
 		<div class="h-footer-cta">
 			<div class="h-footer-newsletter">
-				<h3>Stay in the loop</h3>
-				<p>Get updates on new features, agent tooling, and protocol changes.</p>
+				<h3 data-i18n="vanity_wallet.stay_in_the_loop">Stay in the loop</h3>
+				<p data-i18n="vanity_wallet.get_updates_on_new_features_agent_tooling">Get updates on new features, agent tooling, and protocol changes.</p>
 				<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
 					<input
 						type="email"
@@ -502,15 +502,15 @@
 						autocomplete="email"
 						required
 					/>
-					<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
+					<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe" data-i18n-attr="aria-label:vanity_wallet.subscribe_arialabel">
 						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4"/></svg>
 					</button>
 				</form>
 								<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
 			</div>
 			<div class="h-footer-resources">
-				<h3>Resources</h3>
-				<p>Read the docs, join the community, and get help.</p>
+				<h3 data-i18n="vanity_wallet.resources">Resources</h3>
+				<p data-i18n="vanity_wallet.read_the_docs_join_the_community_and">Read the docs, join the community, and get help.</p>
 				<a class="h-footer-community-btn" href="/docs" target="_blank" rel="noopener">
 					<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
 					Docs
@@ -519,8 +519,8 @@
 		</div>
 			</div>
 			<div class="h-footer-community">
-				<h3>Join the community</h3>
-				<p>Follow along for builds, demos, and conversations with the team.</p>
+				<h3 data-i18n="vanity_wallet.join_the_community">Join the community</h3>
+				<p data-i18n="vanity_wallet.follow_along_for_builds_demos_and_conversati">Follow along for builds, demos, and conversations with the team.</p>
 				<a class="h-footer-community-btn" href="https://x.com/trythreews" target="_blank" rel="noopener">
 					<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
 					Follow on X
@@ -532,42 +532,42 @@
 				<div class="h-footer-brand">
 					<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
 					<span class="wordmark-dot" aria-hidden="true"></span>
-					<span>three.ws</span>
+					<span data-i18n="vanity_wallet.three_ws">three.ws</span>
 				</div>
-				<p class="h-footer-tagline">Give your AI a body.</p>
+				<p class="h-footer-tagline" data-i18n="vanity_wallet.give_your_ai_a_body">Give your AI a body.</p>
 				<div class="h-footer-socials">
-					<a class="h-footer-social" href="https://x.com/trythreews" target="_blank" rel="noopener" aria-label="three.ws on X">
+					<a class="h-footer-social" href="https://x.com/trythreews" target="_blank" rel="noopener" aria-label="three.ws on X" data-i18n-attr="aria-label:vanity_wallet.three_ws_on_x_arialabel">
 						<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
 					</a>
-					<a class="h-footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="three.ws on GitHub">
+					<a class="h-footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="three.ws on GitHub" data-i18n-attr="aria-label:vanity_wallet.three_ws_on_github_arialabel">
 						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
 					</a>
 				</div>
 			</div>
 			<nav class="h-footer-links" aria-label="Footer">
 				<div class="h-footer-link-col">
-					<h4 class="h-footer-link-heading">Product</h4>
-					<a href="/create">Create</a>
-					<a href="/studio">Studio</a>
-					<a href="/widgets">Widgets</a>
-					<a href="/discover">Discover</a>
+					<h4 class="h-footer-link-heading" data-i18n="vanity_wallet.product">Product</h4>
+					<a href="/create" data-i18n="vanity_wallet.create">Create</a>
+					<a href="/studio" data-i18n="vanity_wallet.studio">Studio</a>
+					<a href="/widgets" data-i18n="vanity_wallet.widgets">Widgets</a>
+					<a href="/discover" data-i18n="vanity_wallet.discover">Discover</a>
 				</div>
 				<div class="h-footer-link-col">
-					<h4 class="h-footer-link-heading">Developers</h4>
-					<a href="/docs">Docs</a>
-					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
+					<h4 class="h-footer-link-heading" data-i18n="vanity_wallet.developers">Developers</h4>
+					<a href="/docs" data-i18n="vanity_wallet.docs">Docs</a>
+					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" data-i18n="vanity_wallet.github">GitHub</a>
 				</div>
 				<div class="h-footer-link-col">
-					<h4 class="h-footer-link-heading">Resources</h4>
-					<a href="/dashboard">Dashboard</a>
+					<h4 class="h-footer-link-heading" data-i18n="vanity_wallet.resources_2">Resources</h4>
+					<a href="/dashboard" data-i18n="vanity_wallet.dashboard">Dashboard</a>
 				</div>
 			</nav>
 		</div>
 		<div class="h-footer-bottom">
-			<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+			<p class="h-footer-legal" data-i18n="vanity_wallet.2026_three_ws_all_rights_reserved">© 2026 three.ws — All rights reserved.</p>
 			<div class="h-footer-legal-links">
-				<a href="/legal/privacy">Privacy Policy</a>
-				<a href="/legal/tos">Terms of Use</a>
+				<a href="/legal/privacy" data-i18n="vanity_wallet.privacy_policy">Privacy Policy</a>
+				<a href="/legal/tos" data-i18n="vanity_wallet.terms_of_use">Terms of Use</a>
 			</div>
 		</div>
 	</footer>
@@ -1063,5 +1063,7 @@
 	<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

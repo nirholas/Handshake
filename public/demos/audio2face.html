@@ -3,17 +3,17 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Audio2Face · two NVIDIA models on one face · three.ws</title>
-		<meta name="description" content="Type text, hear it in NVIDIA Magpie's voice, and watch the 3D avatar's face animate in real time — driven frame-for-frame by NVIDIA Audio2Face-3D. Real ARKit blendshapes, mapped onto any rig." />
+		<title data-i18n="demos_audio2face.meta_title">Audio2Face · two NVIDIA models on one face · three.ws</title>
+		<meta name="description" content="Type text, hear it in NVIDIA Magpie's voice, and watch the 3D avatar's face animate in real time — driven frame-for-frame by NVIDIA Audio2Face-3D. Real ARKit blendshapes, mapped onto any rig."  data-i18n-attr="content:demos_audio2face.meta_description"/>
 		<link rel="canonical" href="https://three.ws/audio2face" />
-		<meta property="og:title" content="Audio2Face · two NVIDIA models on one face · three.ws" />
-		<meta property="og:description" content="NVIDIA Magpie voice + NVIDIA Audio2Face-3D facial animation, in sync, in the browser. The avatar's lips track the real audio." />
+		<meta property="og:title" content="Audio2Face · two NVIDIA models on one face · three.ws"  data-i18n-attr="content:demos_audio2face.meta_og_title"/>
+		<meta property="og:description" content="NVIDIA Magpie voice + NVIDIA Audio2Face-3D facial animation, in sync, in the browser. The avatar's lips track the real audio."  data-i18n-attr="content:demos_audio2face.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/audio2face" />
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Audio2Face · two NVIDIA models on one face · three.ws" />
-		<meta name="twitter:description" content="NVIDIA Magpie voice + NVIDIA Audio2Face-3D facial animation, in sync, in the browser." />
+		<meta name="twitter:title" content="Audio2Face · two NVIDIA models on one face · three.ws"  data-i18n-attr="content:demos_audio2face.meta_twitter_title"/>
+		<meta name="twitter:description" content="NVIDIA Magpie voice + NVIDIA Audio2Face-3D facial animation, in sync, in the browser."  data-i18n-attr="content:demos_audio2face.meta_twitter_description"/>
 		<meta name="twitter:site" content="@trythreews" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
@@ -85,9 +85,9 @@
 		<header><div id="nav-container"></div></header>
 
 		<main class="stage">
-			<p class="crumb"><a href="/">three.ws</a> · audio2face · <a href="/lipsync">amplitude lipsync</a></p>
-			<h1>Two NVIDIA models on one face</h1>
-			<p class="sub">
+			<p class="crumb" data-i18n-html="demos_audio2face.three_ws_audio2face_amplitude_lipsync"><a href="/">three.ws</a> · audio2face · <a href="/lipsync">amplitude lipsync</a></p>
+			<h1 data-i18n="demos_audio2face.two_nvidia_models_on_one_face">Two NVIDIA models on one face</h1>
+			<p class="sub" data-i18n-html="demos_audio2face.type_a_line_it_s_spoken_in">
 				Type a line. It's spoken in <strong>NVIDIA Magpie</strong>'s voice, and that exact
 				audio is sent to <strong>NVIDIA Audio2Face-3D</strong>, which returns a per-frame
 				ARKit blendshape track. The avatar's mouth and face animate frame-for-frame with the
@@ -96,8 +96,8 @@
 				avatar still speaks and falls back to amplitude lipsync — never a frozen face.
 			</p>
 			<div class="models">
-				<span class="chip voice"><span class="dot"></span>Magpie TTS · voice</span>
-				<span class="chip"><span class="dot"></span>Audio2Face-3D · facial animation</span>
+				<span class="chip voice" data-i18n-html="demos_audio2face.magpie_tts_voice"><span class="dot"></span>Magpie TTS · voice</span>
+				<span class="chip" data-i18n-html="demos_audio2face.audio2face_3d_facial_animation"><span class="dot"></span>Audio2Face-3D · facial animation</span>
 			</div>
 
 			<div class="row">
@@ -111,38 +111,38 @@
 				</div>
 				<div class="panel">
 					<div class="field">
-						<label for="text">Text to speak</label>
+						<label for="text" data-i18n="demos_audio2face.text_to_speak">Text to speak</label>
 						<textarea id="text">Hi! I'm a three dot w s avatar. My voice is NVIDIA Magpie, and my face is animated by NVIDIA Audio2Face, frame for frame.</textarea>
 					</div>
 
 					<div class="grid2">
 						<div class="field">
-							<label for="avatar">Avatar rig</label>
+							<label for="avatar" data-i18n="demos_audio2face.avatar_rig">Avatar rig</label>
 							<select id="avatar">
-								<option value="/avatars/default.glb">Default</option>
-								<option value="/avatars/realistic-female.glb">Realistic female</option>
-								<option value="/avatars/realistic-male.glb">Realistic male</option>
-								<option value="/avatars/selfie-girl.glb">Selfie girl</option>
+								<option value="/avatars/default.glb" data-i18n="demos_audio2face.default">Default</option>
+								<option value="/avatars/realistic-female.glb" data-i18n="demos_audio2face.realistic_female">Realistic female</option>
+								<option value="/avatars/realistic-male.glb" data-i18n="demos_audio2face.realistic_male">Realistic male</option>
+								<option value="/avatars/selfie-girl.glb" data-i18n="demos_audio2face.selfie_girl">Selfie girl</option>
 							</select>
 						</div>
 						<div class="field">
-							<label for="voice">Voice</label>
+							<label for="voice" data-i18n="demos_audio2face.voice">Voice</label>
 							<select id="voice">
-								<option value="nova" selected>Nova</option>
-								<option value="alloy">Alloy</option>
-								<option value="echo">Echo</option>
-								<option value="fable">Fable</option>
-								<option value="onyx">Onyx</option>
-								<option value="shimmer">Shimmer</option>
-								<option value="sage">Sage</option>
-								<option value="coral">Coral</option>
+								<option value="nova" selected data-i18n="demos_audio2face.nova">Nova</option>
+								<option value="alloy" data-i18n="demos_audio2face.alloy">Alloy</option>
+								<option value="echo" data-i18n="demos_audio2face.echo">Echo</option>
+								<option value="fable" data-i18n="demos_audio2face.fable">Fable</option>
+								<option value="onyx" data-i18n="demos_audio2face.onyx">Onyx</option>
+								<option value="shimmer" data-i18n="demos_audio2face.shimmer">Shimmer</option>
+								<option value="sage" data-i18n="demos_audio2face.sage">Sage</option>
+								<option value="coral" data-i18n="demos_audio2face.coral">Coral</option>
 							</select>
 						</div>
 					</div>
 
 					<div class="btns">
-						<button id="speak"><span id="speak-label">Speak</span></button>
-						<button id="stop" class="secondary" disabled>Stop</button>
+						<button id="speak" data-i18n-html="demos_audio2face.speak"><span id="speak-label">Speak</span></button>
+						<button id="stop" class="secondary" disabled data-i18n="demos_audio2face.stop">Stop</button>
 					</div>
 
 					<div class="status" id="status" role="status" aria-live="polite"></div>
@@ -152,13 +152,13 @@
 					<div class="pathline" id="pathline">Pipeline path will appear here after you press Speak.</div>
 
 					<div class="field">
-						<label>Live blendshapes</label>
+						<label data-i18n="demos_audio2face.live_blendshapes">Live blendshapes</label>
 						<div class="shapes" id="shapes"></div>
 					</div>
 				</div>
 			</div>
 
-			<p class="foot">
+			<p class="foot" data-i18n-html="demos_audio2face.powered_by_nvidia_audio2face_3d_over_nvcf">
 				Powered by <code>/api/a2f</code> (NVIDIA Audio2Face-3D over NVCF gRPC) and
 				<code>/api/tts/speak</code> (NVIDIA Magpie). The blendshape→morph mapping lives in
 				<code>src/voice/a2f-player.js</code> — it reuses the ARKit/VRM/Oculus vocabulary in
@@ -514,5 +514,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

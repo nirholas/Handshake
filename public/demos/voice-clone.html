@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Voice cloning · three.ws lab</title>
+		<title data-i18n="demos_voice_clone.meta_title">Voice cloning · three.ws lab</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
@@ -81,9 +81,9 @@
 		<header><div id="nav-container"></div></header>
 
 		<main class="stage">
-			<p class="crumb"><a href="/demos">← lab</a></p>
-			<h1>three.ws · Voice cloning</h1>
-			<p class="sub">
+			<p class="crumb" data-i18n-html="demos_voice_clone.lab"><a href="/demos">← lab</a></p>
+			<h1 data-i18n="demos_voice_clone.three_ws_voice_cloning">three.ws · Voice cloning</h1>
+			<p class="sub" data-i18n-html="demos_voice_clone.record_a_short_voice_sample_in_your">
 				Record a short voice sample in your browser, ship it to the three.ws
 				instant-cloning endpoint, and synthesize fresh speech with the cloned
 				voice. For best fidelity record 20–30 seconds of clear, dry speech
@@ -93,36 +93,36 @@
 
 			<div class="row">
 				<div class="recorder-card">
-					<label>1. Record a sample</label>
+					<label data-i18n="demos_voice_clone.1_record_a_sample">1. Record a sample</label>
 					<div class="wave-wrap">
 						<div class="rec-dot" id="rec-dot"></div>
 						<div class="rec-time" id="rec-time">00:00</div>
 						<canvas id="wave"></canvas>
 					</div>
 					<div class="btn-row">
-						<button id="rec-start">Record</button>
-						<button id="rec-stop" class="danger" disabled>Stop</button>
-						<button id="rec-reset" class="secondary" disabled>Re-record</button>
+						<button id="rec-start" data-i18n="demos_voice_clone.record">Record</button>
+						<button id="rec-stop" class="danger" disabled data-i18n="demos_voice_clone.stop">Stop</button>
+						<button id="rec-reset" class="secondary" disabled data-i18n="demos_voice_clone.re_record">Re-record</button>
 					</div>
 
-					<label>2. Playback</label>
+					<label data-i18n="demos_voice_clone.2_playback">2. Playback</label>
 					<audio id="playback" controls></audio>
 
-					<label>3. Voice label</label>
+					<label data-i18n="demos_voice_clone.3_voice_label">3. Voice label</label>
 					<input type="text" id="voice-name" placeholder="e.g. Sample Voice Mar 17" maxlength="64" />
 					<input type="text" id="voice-desc" placeholder="Optional description" maxlength="500" />
 
-					<button id="submit-clone" disabled>Submit to clone</button>
+					<button id="submit-clone" disabled data-i18n="demos_voice_clone.submit_to_clone">Submit to clone</button>
 				</div>
 
 				<div class="panel">
-					<label>Cloned voice</label>
+					<label data-i18n="demos_voice_clone.cloned_voice">Cloned voice</label>
 					<div id="voice-id-out" class="hint">No voice yet — record + submit to receive a <code>voice_id</code>.</div>
 
-					<label>Log</label>
+					<label data-i18n="demos_voice_clone.log">Log</label>
 					<div class="log" id="log">ready. waiting for mic permission.</div>
 
-					<p class="hint">
+					<p class="hint" data-i18n-html="demos_voice_clone.internal_pipeline_multipart_elevenlabs_via_t">
 						Internal pipeline: <code>MediaRecorder</code> → <code>POST /api/tts/eleven-clone</code>
 						(multipart) → ElevenLabs <code>voices.add</code> via the
 						<code>elevenlabs</code> SDK. Instant Voice Cloning is a paid-tier
@@ -133,22 +133,22 @@
 			</div>
 
 			<section class="synth" id="synth-section">
-				<h2 style="font-size:20px;font-weight:600;margin:0 0 10px;">4. Synthesize with the cloned voice</h2>
+				<h2 style="font-size:20px;font-weight:600;margin:0 0 10px;" data-i18n="demos_voice_clone.4_synthesize_with_the_cloned_voice">4. Synthesize with the cloned voice</h2>
 				<div class="row">
 					<div class="panel">
-						<label>Text to speak (≤ 500 chars)</label>
+						<label data-i18n="demos_voice_clone.text_to_speak_500_chars">Text to speak (≤ 500 chars)</label>
 						<textarea id="synth-text" maxlength="500">Hi, I'm a three.ws agent. Nice to meet you.</textarea>
-						<button id="synth-speak" disabled>Speak</button>
+						<button id="synth-speak" disabled data-i18n="demos_voice_clone.speak">Speak</button>
 
-						<label>Output</label>
+						<label data-i18n="demos_voice_clone.output">Output</label>
 						<audio id="synth-audio" controls></audio>
 					</div>
 					<div class="panel">
-						<label>Sample lines</label>
-						<button class="secondary" data-sample="Welcome to three.ws — the home of agentic 3D characters.">Welcome line</button>
-						<button class="secondary" data-sample="Numbers test: one, two, three, four, five, six, seven, eight, nine, ten.">Numbers</button>
-						<button class="secondary" data-sample="The quick brown fox jumps over the lazy dog. She sells seashells by the seashore.">Diction</button>
-						<p class="hint">
+						<label data-i18n="demos_voice_clone.sample_lines">Sample lines</label>
+						<button class="secondary" data-sample="Welcome to three.ws — the home of agentic 3D characters." data-i18n="demos_voice_clone.welcome_line">Welcome line</button>
+						<button class="secondary" data-sample="Numbers test: one, two, three, four, five, six, seven, eight, nine, ten." data-i18n="demos_voice_clone.numbers">Numbers</button>
+						<button class="secondary" data-sample="The quick brown fox jumps over the lazy dog. She sells seashells by the seashore." data-i18n="demos_voice_clone.diction">Diction</button>
+						<p class="hint" data-i18n-html="demos_voice_clone.these_hit_the_existing_endpoint_with_the">
 							These hit the existing <code>/api/tts/eleven</code> endpoint with
 							the freshly minted <code>voice_id</code>. Same caching + rate
 							limit as the production TTS proxy.
@@ -442,5 +442,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

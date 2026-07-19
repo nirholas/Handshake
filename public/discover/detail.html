@@ -3,9 +3,9 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Agent · three.ws</title>
+		<title data-i18n="discover_detail.meta_title">Agent · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<meta name="description" content="Agent detail on three.ws" />
+		<meta name="description" content="Agent detail on three.ws"  data-i18n-attr="content:discover_detail.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/style.css" />
@@ -30,18 +30,18 @@
 			<!-- Error state -->
 			<div class="detail-error" data-role="error" hidden>
 				<div class="detail-error-icon">⚠</div>
-				<h2 data-role="error-title">Not found</h2>
-				<p data-role="error-msg">This item could not be loaded.</p>
+				<h2 data-role="error-title" data-i18n="discover_detail.not_found">Not found</h2>
+				<p data-role="error-msg" data-i18n="discover_detail.this_item_could_not_be_loaded">This item could not be loaded.</p>
 				<div class="detail-error-actions">
-					<button type="button" class="detail-btn detail-btn--primary" data-role="error-retry" hidden>Retry</button>
-					<a href="/discover" class="detail-btn">← Back to Discover</a>
+					<button type="button" class="detail-btn detail-btn--primary" data-role="error-retry" hidden data-i18n="discover_detail.retry">Retry</button>
+					<a href="/discover" class="detail-btn" data-i18n="discover_detail.back_to_discover">← Back to Discover</a>
 				</div>
 			</div>
 
 			<!-- Content (populated by JS) -->
 			<div class="detail-content" data-role="content" hidden>
 				<nav class="detail-breadcrumb">
-					<a href="/discover" class="detail-breadcrumb-link">← Discover</a>
+					<a href="/discover" class="detail-breadcrumb-link" data-i18n="discover_detail.discover">← Discover</a>
 				</nav>
 
 				<div class="detail-hero">
@@ -69,7 +69,7 @@
 					<!-- Services panel (onchain only) -->
 					<div class="detail-panel" data-role="services-panel" hidden>
 						<div class="detail-panel-head">
-							<span class="detail-panel-title">Services</span>
+							<span class="detail-panel-title" data-i18n="discover_detail.services">Services</span>
 							<span class="detail-panel-badge" data-role="service-count">0</span>
 						</div>
 						<ul class="detail-services" data-role="services"></ul>
@@ -78,7 +78,7 @@
 					<!-- Tags panel (avatar only) -->
 					<div class="detail-panel" data-role="tags-panel" hidden>
 						<div class="detail-panel-head">
-							<span class="detail-panel-title">Tags</span>
+							<span class="detail-panel-title" data-i18n="discover_detail.tags">Tags</span>
 						</div>
 						<div class="detail-tags" data-role="tags"></div>
 					</div>
@@ -86,7 +86,7 @@
 					<!-- On-chain details (onchain only) -->
 					<div class="detail-panel" data-role="onchain-panel" hidden>
 						<div class="detail-panel-head">
-							<span class="detail-panel-title">On-chain details</span>
+							<span class="detail-panel-title" data-i18n="discover_detail.on_chain_details">On-chain details</span>
 						</div>
 						<dl class="detail-dl" data-role="onchain-dl"></dl>
 					</div>
@@ -94,7 +94,7 @@
 					<!-- Avatar details (avatar only) -->
 					<div class="detail-panel" data-role="avatar-panel" hidden>
 						<div class="detail-panel-head">
-							<span class="detail-panel-title">Details</span>
+							<span class="detail-panel-title" data-i18n="discover_detail.details">Details</span>
 						</div>
 						<dl class="detail-dl" data-role="avatar-dl"></dl>
 					</div>
@@ -102,7 +102,7 @@
 					<!-- Embed panel -->
 					<div class="detail-panel" data-role="embed-panel" hidden>
 						<div class="detail-panel-head">
-							<span class="detail-panel-title">Embed</span>
+							<span class="detail-panel-title" data-i18n="discover_detail.embed">Embed</span>
 						</div>
 						<div class="detail-embed-tabs" data-role="embed-tabs"></div>
 						<div class="detail-embed-panes" data-role="embed-panes"></div>
@@ -115,5 +115,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -6,8 +6,8 @@
 	<script>(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>My Wallet — three.ws</title>
-	<meta name="description" content="Your master wallet for all three.ws activity — fund agents, send, receive, and pay for skills." />
+	<title data-i18n="wallet.meta_title">My Wallet — three.ws</title>
+	<meta name="description" content="Your master wallet for all three.ws activity — fund agents, send, receive, and pay for skills."  data-i18n-attr="content:wallet.meta_description"/>
 	<link rel="icon" href="/favicon.ico" />
 	<link rel="stylesheet" href="/fonts/fonts.css" />
 	<style>
@@ -193,5 +193,7 @@
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script type="module" src="/src/user-wallet.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -4,12 +4,12 @@
 		<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Import Your 3D Avatar · three.ws</title>
+		<title data-i18n="import_rpm.meta_title">Import Your 3D Avatar · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta
 			name="description"
 			content="Import your 3D avatar into three.ws. Paste the GLB URL or upload the file directly — your avatar lives on three.ws, on-chain-ready."
-		/>
+		 data-i18n-attr="content:import_rpm.meta_description"/>
 		<meta name="robots" content="noindex" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -361,15 +361,15 @@
 	<link rel="canonical" href="https://three.ws/import/rpm">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="Import an avatar URL · three.ws">
-	<meta property="og:description" content="Import any GLB or glTF avatar into three.ws and give it an agent brain.">
+	<meta property="og:title" content="Import an avatar URL · three.ws" data-i18n-attr="content:import_rpm.meta_og_title">
+	<meta property="og:description" content="Import any GLB or glTF avatar into three.ws and give it an agent brain." data-i18n-attr="content:import_rpm.meta_og_description">
 	<meta property="og:url" content="https://three.ws/import/rpm">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Import+an+avatar+URL&amp;d=Import+any+GLB+or+glTF+avatar+into+three.ws+and+give+it+an+agent+brain.&amp;p=%2Fimport%2Frpm">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Import an avatar URL · three.ws">
-	<meta name="twitter:description" content="Import any GLB or glTF avatar into three.ws and give it an agent brain.">
+	<meta name="twitter:title" content="Import an avatar URL · three.ws" data-i18n-attr="content:import_rpm.meta_twitter_title">
+	<meta name="twitter:description" content="Import any GLB or glTF avatar into three.ws and give it an agent brain." data-i18n-attr="content:import_rpm.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Import+an+avatar+URL&amp;d=Import+any+GLB+or+glTF+avatar+into+three.ws+and+give+it+an+agent+brain.&amp;p=%2Fimport%2Frpm">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Import an avatar URL","description":"Import any GLB or glTF avatar into three.ws and give it an agent brain.","url":"https://three.ws/import/rpm","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -379,19 +379,19 @@
 </head>
 	<body>
 		<main class="page">
-			<a class="back-link" href="/create">
+			<a class="back-link" href="/create" data-i18n="import_rpm.back_to_create">
 				← Back to Create
 			</a>
 
-			<h1>Import Your 3D Avatar</h1>
-			<p class="lede">
+			<h1 data-i18n="import_rpm.import_your_3d_avatar">Import Your 3D Avatar</h1>
+			<p class="lede" data-i18n="import_rpm.bring_your_existing_avatar_to_three_ws">
 				Bring your existing avatar to three.ws — it'll live here, fully
 				owned by you, on-chain-ready.
 			</p>
 
 			<div class="warn-banner">
 				<span class="warn-banner-icon">⚠</span>
-				<span>
+				<span data-i18n-html="import_rpm.paste_any_live_glb_url_we_fetch">
 					<strong>Paste any live GLB URL</strong> — we fetch it on our servers,
 					so CORS-restricted CDNs (CloudFront, Arweave, your own storage) all
 					work. If the original host is gone, or you already have the file on
@@ -401,17 +401,17 @@
 
 			<div class="import-card" id="import-card">
 				<div class="tab-bar" role="tablist">
-					<button class="tab-btn active" data-tab="url" role="tab" aria-selected="true" id="tab-url">
+					<button class="tab-btn active" data-tab="url" role="tab" aria-selected="true" id="tab-url" data-i18n="import_rpm.paste_url">
 						Paste URL
 					</button>
-					<button class="tab-btn" data-tab="file" role="tab" aria-selected="false" id="tab-file">
+					<button class="tab-btn" data-tab="file" role="tab" aria-selected="false" id="tab-file" data-i18n="import_rpm.upload_glb">
 						Upload GLB
 					</button>
 				</div>
 
 				<!-- URL tab -->
 				<div class="tab-panel active" id="panel-url">
-					<label for="rpm-url">Avatar GLB URL or CDN link</label>
+					<label for="rpm-url" data-i18n="import_rpm.avatar_glb_url_or_cdn_link">Avatar GLB URL or CDN link</label>
 					<input
 						type="url"
 						id="rpm-url"
@@ -419,12 +419,12 @@
 						autocomplete="off"
 						spellcheck="false"
 					/>
-					<p class="field-hint">
+					<p class="field-hint" data-i18n="import_rpm.accepts_any_glb_url_cloudfront_arweave_or">
 						Accepts any GLB URL — CloudFront, Arweave, or your own storage.
 						The file is fetched server-side so CORS is not an issue.
 					</p>
 
-					<label for="rpm-name" style="margin-top: 18px">Avatar name (optional)</label>
+					<label for="rpm-name" style="margin-top: 18px" data-i18n="import_rpm.avatar_name_optional">Avatar name (optional)</label>
 					<input
 						type="text"
 						id="rpm-name"
@@ -433,13 +433,13 @@
 						autocomplete="off"
 					/>
 
-					<button class="submit-btn" id="submit-url" type="button">Import from URL</button>
+					<button class="submit-btn" id="submit-url" type="button" data-i18n="import_rpm.import_from_url">Import from URL</button>
 					<div class="status-msg" id="url-status"></div>
 				</div>
 
 				<!-- File upload tab -->
 				<div class="tab-panel" id="panel-file">
-					<label>GLB file</label>
+					<label data-i18n="import_rpm.glb_file">GLB file</label>
 					<div class="drop-zone" id="drop-zone">
 						<input
 							type="file"
@@ -453,7 +453,7 @@
 						<div class="drop-zone-sub">or click to browse · .glb · max 100 MB</div>
 					</div>
 
-					<label for="file-name" style="margin-top: 18px">Avatar name (optional)</label>
+					<label for="file-name" style="margin-top: 18px" data-i18n="import_rpm.avatar_name_optional_2">Avatar name (optional)</label>
 					<input
 						type="text"
 						id="file-name"
@@ -462,14 +462,14 @@
 						autocomplete="off"
 					/>
 
-					<button class="submit-btn" id="submit-file" type="button" disabled>Upload GLB</button>
+					<button class="submit-btn" id="submit-file" type="button" disabled data-i18n="import_rpm.upload_glb_2">Upload GLB</button>
 					<div class="status-msg" id="file-status"></div>
 				</div>
 
 				<!-- Progress (shared, shown below whichever tab is active) -->
 				<div class="progress-wrap" id="progress-wrap">
 					<div class="progress-label">
-						<span id="progress-text">Importing…</span>
+						<span id="progress-text" data-i18n="import_rpm.importing">Importing…</span>
 						<span id="progress-pct">0%</span>
 					</div>
 					<div class="progress-bar-track">
@@ -482,25 +482,25 @@
 			<!-- Success state (replaces the card) -->
 			<div class="success-card" id="success-card">
 				<div class="success-icon">🎉</div>
-				<h2>Avatar imported!</h2>
-				<p id="success-name">Your avatar is ready on three.ws.</p>
-				<a class="success-btn" id="success-link" href="/gallery">View avatar</a>
+				<h2 data-i18n="import_rpm.avatar_imported">Avatar imported!</h2>
+				<p id="success-name" data-i18n="import_rpm.your_avatar_is_ready_on_three_ws">Your avatar is ready on three.ws.</p>
+				<a class="success-btn" id="success-link" href="/gallery" data-i18n="import_rpm.view_avatar">View avatar</a>
 			</div>
 
 			<div class="info-section">
-				<h3>How to find your avatar's GLB URL</h3>
+				<h3 data-i18n="import_rpm.how_to_find_your_avatar_s_glb">How to find your avatar's GLB URL</h3>
 				<ul class="info-steps">
-					<li data-step="1">
+					<li data-step="1" data-i18n-html="import_rpm.if_your_avatar_was_hosted_at_a">
 						If your avatar was hosted at a CDN (e.g.
 						<code>d1a370nemizbjq.cloudfront.net</code>), paste that URL
 						directly — the file is fetched server-side so CORS is not an issue.
 					</li>
-					<li data-step="2">
+					<li data-step="2" data-i18n-html="import_rpm.if_your_app_fetched_the_glb_on">
 						If your app fetched the GLB on load, open your browser's
 						DevTools → Network tab, filter by <code>.glb</code>, and copy
 						the request URL from there.
 					</li>
-					<li data-step="3">
+					<li data-step="3" data-i18n-html="import_rpm.if_you_already_have_the_file_on">
 						If you already have the file on disk, use the
 						<em>Upload GLB</em> tab above.
 					</li>
@@ -719,5 +719,7 @@
 			}
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

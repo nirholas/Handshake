@@ -3,8 +3,8 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Brain · Dashboard · three.ws</title>
-		<meta name="description" content="Configure your agent's intelligence, build personas, and test across 10 AI models." />
+		<title data-i18n="dashboard_next_brain.meta_title">Brain · Dashboard · three.ws</title>
+		<meta name="description" content="Configure your agent's intelligence, build personas, and test across 10 AI models."  data-i18n-attr="content:dashboard_next_brain.meta_description"/>
 		<meta name="robots" content="noindex" />
 		<link rel="icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
@@ -13,5 +13,7 @@
 	<body>
 		<script src="/embed.js"></script>
 		<script type="module" src="/src/dashboard-next/pages/brain.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

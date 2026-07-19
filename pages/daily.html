@@ -6,21 +6,21 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 	<meta name="theme-color" content="#0b0c10" />
-	<title>Daily Forge · three.ws</title>
-	<meta name="description" content="A new 3D creative challenge every day. Forge today's theme into a real 3D model, free and no sign-up, and build a daily streak. Place your creation in AR on your phone." />
+	<title data-i18n="daily.meta_title">Daily Forge · three.ws</title>
+	<meta name="description" content="A new 3D creative challenge every day. Forge today's theme into a real 3D model, free and no sign-up, and build a daily streak. Place your creation in AR on your phone."  data-i18n-attr="content:daily.meta_description"/>
 	<link rel="canonical" href="https://three.ws/daily" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="https://three.ws/daily" />
-	<meta property="og:title" content="Daily Forge · three.ws" />
-	<meta property="og:description" content="A new 3D creative challenge every day. Forge today's theme into a real 3D model, free, and keep your streak alive." />
+	<meta property="og:title" content="Daily Forge · three.ws"  data-i18n-attr="content:daily.meta_og_title"/>
+	<meta property="og:description" content="A new 3D creative challenge every day. Forge today's theme into a real 3D model, free, and keep your streak alive."  data-i18n-attr="content:daily.meta_og_description"/>
 	<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Daily+Forge&amp;d=A+new+3D+creative+challenge+every+day.+Forge+today%27s+theme+into+a+real+3D+model%2C+free+and+no+sign-up%2C+build+a+daily+streak%2C+and+place+your+creation+in+AR+on+you&amp;p=%2Fdaily" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Daily Forge · three.ws" />
-	<meta name="twitter:description" content="A new 3D creative challenge every day. Build a daily streak." />
+	<meta name="twitter:title" content="Daily Forge · three.ws"  data-i18n-attr="content:daily.meta_twitter_title"/>
+	<meta name="twitter:description" content="A new 3D creative challenge every day. Build a daily streak."  data-i18n-attr="content:daily.meta_twitter_description"/>
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Daily Forge","url":"https://three.ws/daily","applicationCategory":"GameApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"A daily 3D creative challenge: forge the day's theme into a real 3D model and build a streak.","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -169,18 +169,18 @@
 </head>
 <body>
 	<header class="bar">
-		<a class="brand" href="/"><span class="dot" aria-hidden="true"></span>three.ws</a>
-		<span class="crumb">/ Daily Forge</span>
+		<a class="brand" href="/" data-i18n-html="daily.three_ws"><span class="dot" aria-hidden="true"></span>three.ws</a>
+		<span class="crumb" data-i18n="daily.daily_forge">/ Daily Forge</span>
 		<span class="spacer"></span>
-		<span class="streak-pill zero" id="streak-pill" title="Your daily forge streak">🔥 <span id="streak-pill-n">0</span></span>
-		<a class="top" href="/forge">Studio →</a>
+		<span class="streak-pill zero" id="streak-pill" title="Your daily forge streak" data-i18n-attr="title:daily.your_daily_forge_streak_title">🔥 <span id="streak-pill-n">0</span></span>
+		<a class="top" href="/forge" data-i18n="daily.studio">Studio →</a>
 	</header>
 
 	<main>
 		<div class="theme" id="theme">
 			<div class="day" id="theme-day">Daily challenge</div>
-			<h1><span class="emoji" id="theme-emoji" aria-hidden="true">✨</span><span id="theme-title">Today's theme</span></h1>
-			<p class="hint" id="theme-hint">Loading today's challenge…</p>
+			<h1 data-i18n-html="daily.today_s_theme"><span class="emoji" id="theme-emoji" aria-hidden="true">✨</span><span id="theme-title">Today's theme</span></h1>
+			<p class="hint" id="theme-hint" data-i18n="daily.loading_today_s_challenge">Loading today's challenge…</p>
 		</div>
 
 		<div class="streak" id="streak">
@@ -195,9 +195,9 @@
 		<form class="ask" id="ask" autocomplete="off">
 			<input id="prompt" name="prompt" type="text" inputmode="text" enterkeyhint="go" maxlength="600" minlength="3"
 				placeholder="Describe your take on today's theme…" aria-label="Describe the 3D model to generate" required />
-			<button class="go" id="go" type="submit">Forge<span aria-hidden="true">✦</span></button>
+			<button class="go" id="go" type="submit" data-i18n-html="daily.forge">Forge<span aria-hidden="true">✦</span></button>
 		</form>
-		<div class="chips" id="chips" aria-label="Prompt ideas for today"><span class="label">Ideas:</span></div>
+		<div class="chips" id="chips" aria-label="Prompt ideas for today"><span class="label" data-i18n="daily.ideas">Ideas:</span></div>
 
 		<div class="stage" id="stage">
 			<model-viewer id="mv" class="veiled" camera-controls auto-rotate touch-action="pan-y"
@@ -222,20 +222,20 @@
 			<div id="failed" class="overlay hidden">
 				<div class="h">That one didn't make it</div>
 				<div class="muted" id="failmsg">Generation failed.</div>
-				<button class="btn retry" id="retry" type="button">Try again</button>
+				<button class="btn retry" id="retry" type="button" data-i18n="daily.try_again">Try again</button>
 			</div>
 
 			<div class="actions hidden" id="actions">
 				<div class="meta" id="meta"></div>
-				<button class="btn primary" id="ar-btn" type="button" aria-label="View this in augmented reality">📱 View in your room</button>
-				<a class="btn" id="studio-btn" aria-label="Open in AR Studio">▣ AR Studio</a>
-				<a class="btn" id="download" download aria-label="Download the GLB">Download</a>
-				<button class="btn" id="share" type="button" aria-label="Share this creation">Share</button>
+				<button class="btn primary" id="ar-btn" type="button" aria-label="View this in augmented reality" data-i18n="daily.view_in_your_room" data-i18n-attr="aria-label:daily.view_this_in_augmented_reali_arialabel">📱 View in your room</button>
+				<a class="btn" id="studio-btn" aria-label="Open in AR Studio" data-i18n="daily.ar_studio" data-i18n-attr="aria-label:daily.open_in_ar_studio_arialabel">▣ AR Studio</a>
+				<a class="btn" id="download" download aria-label="Download the GLB" data-i18n="daily.download" data-i18n-attr="aria-label:daily.download_the_glb_arialabel">Download</a>
+				<button class="btn" id="share" type="button" aria-label="Share this creation" data-i18n="daily.share" data-i18n-attr="aria-label:daily.share_this_creation_arialabel">Share</button>
 			</div>
 		</div>
 
 		<section class="rail-wrap hidden" id="rail-wrap">
-			<h2>Fresh from the community</h2>
+			<h2 data-i18n="daily.fresh_from_the_community">Fresh from the community</h2>
 			<div class="rail" id="rail"></div>
 		</section>
 	</main>
@@ -243,15 +243,15 @@
 	<div class="milestone hidden" id="milestone" role="dialog" aria-modal="true" aria-label="Streak milestone">
 		<div class="milestone-card">
 			<div class="big" id="ms-emoji">🔥</div>
-			<h3 id="ms-title">7-day streak!</h3>
-			<p id="ms-body">You've forged something seven days running. Keep it going.</p>
-			<button class="btn primary" id="ms-close" type="button">Keep forging</button>
+			<h3 id="ms-title" data-i18n="daily.7_day_streak">7-day streak!</h3>
+			<p id="ms-body" data-i18n="daily.you_ve_forged_something_seven_days_running">You've forged something seven days running. Keep it going.</p>
+			<button class="btn primary" id="ms-close" type="button" data-i18n="daily.keep_forging">Keep forging</button>
 		</div>
 	</div>
 
 	<footer class="foot">
 		A new challenge every day at midnight UTC · Free, no sign-up ·
-		<a href="/forge">Forge studio</a> · <a href="/ar/studio">AR Studio</a> · <a href="/gallery">Gallery</a>
+		<a href="/forge" data-i18n="daily.forge_studio">Forge studio</a> · <a href="/ar/studio" data-i18n="daily.ar_studio_2">AR Studio</a> · <a href="/gallery" data-i18n="daily.gallery">Gallery</a>
 	</footer>
 
 	<script type="module">
@@ -264,5 +264,7 @@
 			if (s) s.innerHTML = '<div class="idleart">🛰️</div><div class="h">This browser can’t render 3D</div><div class="muted">Reopen Daily Forge in an up-to-date Chrome or Safari to join today’s challenge.</div>';
 		}
 	</script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

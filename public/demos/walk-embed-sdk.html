@@ -3,8 +3,8 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Walk Embed SDK Demo · three.ws</title>
-		<meta name="description" content="Live demo: a walking 3D avatar dropped onto a blank page with one script tag." />
+		<title data-i18n="demos_walk_embed_sdk.meta_title">Walk Embed SDK Demo · three.ws</title>
+		<meta name="description" content="Live demo: a walking 3D avatar dropped onto a blank page with one script tag."  data-i18n-attr="content:demos_walk_embed_sdk.meta_description"/>
 
 		<style>
 			* { box-sizing: border-box; }
@@ -82,14 +82,14 @@
 	</head>
 	<body>
 		<main>
-			<h1>One tag. A walking avatar on any page.</h1>
-			<p class="lede">
+			<h1 data-i18n="demos_walk_embed_sdk.one_tag_a_walking_avatar_on_any">One tag. A walking avatar on any page.</h1>
+			<p class="lede" data-i18n="demos_walk_embed_sdk.this_page_is_a_blank_html_document">
 				This page is a blank HTML document. The script tag at the bottom is the only
 				three.ws code on it — yet there's a real 3D walking avatar in the corner.
 			</p>
 
-			<h2>How it works</h2>
-			<p>Drop this into the <code>&lt;body&gt;</code> of any page on the web:</p>
+			<h2 data-i18n="demos_walk_embed_sdk.how_it_works">How it works</h2>
+			<p data-i18n-html="demos_walk_embed_sdk.drop_this_into_the_of_any_page">Drop this into the <code>&lt;body&gt;</code> of any page on the web:</p>
 			<pre>&lt;script src="https://three.ws/walk-embed-sdk.js"
         data-avatar="bacff13e-b64b-4ac0-860d-44f0168ad23b"
         data-position="bottom-right"&gt;&lt;/script&gt;</pre>
@@ -99,19 +99,19 @@
 				It autoplays a slow circular walk so the page never feels static.
 			</div>
 
-			<h2>Try the runtime API</h2>
-			<p>The SDK exposes <code>window.ThreeWalkAvatar</code> for live control:</p>
+			<h2 data-i18n="demos_walk_embed_sdk.try_the_runtime_api">Try the runtime API</h2>
+			<p data-i18n-html="demos_walk_embed_sdk.the_sdk_exposes_for_live_control">The SDK exposes <code>window.ThreeWalkAvatar</code> for live control:</p>
 			<div class="controls">
-				<button id="btn-position-bl">Bottom-left</button>
-				<button id="btn-position-br">Bottom-right</button>
-				<button id="btn-position-tr">Top-right</button>
-				<button id="btn-size-small">Small</button>
-				<button id="btn-size-large">Large</button>
-				<button id="btn-reset">Reset pose</button>
+				<button id="btn-position-bl" data-i18n="demos_walk_embed_sdk.bottom_left">Bottom-left</button>
+				<button id="btn-position-br" data-i18n="demos_walk_embed_sdk.bottom_right">Bottom-right</button>
+				<button id="btn-position-tr" data-i18n="demos_walk_embed_sdk.top_right">Top-right</button>
+				<button id="btn-size-small" data-i18n="demos_walk_embed_sdk.small">Small</button>
+				<button id="btn-size-large" data-i18n="demos_walk_embed_sdk.large">Large</button>
+				<button id="btn-reset" data-i18n="demos_walk_embed_sdk.reset_pose">Reset pose</button>
 			</div>
 
-			<h2>Live events from the iframe</h2>
-			<p>
+			<h2 data-i18n="demos_walk_embed_sdk.live_events_from_the_iframe">Live events from the iframe</h2>
+			<p data-i18n-html="demos_walk_embed_sdk.the_sdk_re_emits_events_from_the">
 				The SDK re-emits <code>postMessage</code> events from the iframe as document-level
 				<code>CustomEvent</code>s. Here's a live tail:
 			</p>
@@ -167,5 +167,7 @@
 			}
 			ready();
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

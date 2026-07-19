@@ -18,19 +18,19 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Crypto News Archive — 660k+ articles since 2017 · three.ws</title>
+		<title data-i18n="news_archive.meta_title">Crypto News Archive — 660k+ articles since 2017 · three.ws</title>
 		<meta
 			name="description"
 			content="The largest open crypto-news archive: 660,000+ articles from September 2017 to today — refreshed hourly and searchable by keyword, ticker, source, sentiment, date, and language (English + Chinese)."
-		/>
+		 data-i18n-attr="content:news_archive.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/markets/archive" />
-		<meta property="og:title" content="Crypto News Archive — 660k+ articles since 2017 · three.ws" />
+		<meta property="og:title" content="Crypto News Archive — 660k+ articles since 2017 · three.ws"  data-i18n-attr="content:news_archive.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="660,000+ crypto news articles from 2017 to today, refreshed hourly — searchable by keyword, ticker, source, sentiment, date, and language."
-		/>
+		 data-i18n-attr="content:news_archive.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+News+Archive&amp;d=The+largest+open+crypto-news+archive%3A+660%2C000%2B+articles+from+September+2017+to+today%2C+refreshed+hourly+from+the+live+feed%2C+in+English+and+Chinese+%E2%80%94+searchable+b&amp;p=%2Fmarkets%2Farchive"
@@ -39,11 +39,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Crypto News Archive — 660k+ articles since 2017" />
+		<meta name="twitter:title" content="Crypto News Archive — 660k+ articles since 2017"  data-i18n-attr="content:news_archive.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="The largest open crypto-news archive — searchable by keyword, ticker, source, sentiment, date, and language."
-		/>
+		 data-i18n-attr="content:news_archive.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Crypto+News+Archive&amp;d=The+largest+open+crypto-news+archive%3A+660%2C000%2B+articles+from+September+2017+to+today%2C+refreshed+hourly+from+the+live+feed%2C+in+English+and+Chinese+%E2%80%94+searchable+b&amp;p=%2Fmarkets%2Farchive"
@@ -69,24 +69,24 @@
 
 		<main class="cv-container">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a><span class="sep">/</span
-				><span class="here">News Archive</span>
+				<a href="/markets" data-i18n="news_archive.markets">Markets</a><span class="sep">/</span
+				><span class="here" data-i18n="news_archive.news_archive">News Archive</span>
 			</nav>
-			<h1 class="cv-h1">Crypto News Archive</h1>
-			<p class="cv-sub">
+			<h1 class="cv-h1" data-i18n="news_archive.crypto_news_archive">Crypto News Archive</h1>
+			<p class="cv-sub" data-i18n-html="news_archive.the_largest_open_archive_of_crypto_news">
 				The largest open archive of crypto news — <strong>660,000+ articles</strong> from
 				September 2017 to today, refreshed hourly from the live feed, in English and Chinese —
 				every record enriched with tickers, tags, and sentiment. Search a decade of market history.
 			</p>
 
 			<nav class="cv-tools" aria-label="Market tools">
-				<a class="cv-pill" href="/markets">Markets Hub</a>
-				<a class="cv-pill" href="/markets/news">News</a>
-				<a class="cv-pill" href="/markets/digest">Digest</a>
-				<a class="cv-pill" href="/markets/archive" aria-current="page">Archive</a>
-				<a class="cv-pill" href="/coins">Coins</a>
-				<a class="cv-pill" href="/heatmap">Heatmap</a>
-				<a class="cv-pill" href="/fear-greed">Fear &amp; Greed</a>
+				<a class="cv-pill" href="/markets" data-i18n="news_archive.markets_hub">Markets Hub</a>
+				<a class="cv-pill" href="/markets/news" data-i18n="news_archive.news">News</a>
+				<a class="cv-pill" href="/markets/digest" data-i18n="news_archive.digest">Digest</a>
+				<a class="cv-pill" href="/markets/archive" aria-current="page" data-i18n="news_archive.archive">Archive</a>
+				<a class="cv-pill" href="/coins" data-i18n="news_archive.coins">Coins</a>
+				<a class="cv-pill" href="/heatmap" data-i18n="news_archive.heatmap">Heatmap</a>
+				<a class="cv-pill" href="/fear-greed" data-i18n="news_archive.fear_greed">Fear &amp; Greed</a>
 			</nav>
 
 			<!-- Corpus stats. Hydrated by src/news-archive.js. -->
@@ -95,45 +95,45 @@
 			<!-- Filters. -->
 			<form id="arc-filters" class="arc-filters" aria-label="Archive filters">
 				<div class="arc-field" style="grid-column: span 2">
-					<label for="arc-q">Search</label>
+					<label for="arc-q" data-i18n="news_archive.search">Search</label>
 					<input id="arc-q" type="search" placeholder="bitcoin etf, mt gox, halving…" autocomplete="off" />
 				</div>
 				<div class="arc-field">
-					<label for="arc-ticker">Ticker</label>
+					<label for="arc-ticker" data-i18n="news_archive.ticker">Ticker</label>
 					<input id="arc-ticker" type="text" placeholder="BTC" maxlength="10" autocomplete="off" />
 				</div>
 				<div class="arc-field">
-					<label for="arc-source">Source</label>
+					<label for="arc-source" data-i18n="news_archive.source">Source</label>
 					<input id="arc-source" type="text" placeholder="coindesk, odaily…" autocomplete="off" />
 				</div>
 				<div class="arc-field">
-					<label for="arc-from">From</label>
+					<label for="arc-from" data-i18n="news_archive.from">From</label>
 					<input id="arc-from" type="date" min="2017-09-01" />
 				</div>
 				<div class="arc-field">
-					<label for="arc-to">To</label>
+					<label for="arc-to" data-i18n="news_archive.to">To</label>
 					<input id="arc-to" type="date" min="2017-09-01" />
 				</div>
 				<div class="arc-field">
-					<label for="arc-sentiment">Sentiment</label>
+					<label for="arc-sentiment" data-i18n="news_archive.sentiment">Sentiment</label>
 					<select id="arc-sentiment">
-						<option value="">Any</option>
-						<option value="positive">Positive</option>
-						<option value="neutral">Neutral</option>
-						<option value="negative">Negative</option>
+						<option value="" data-i18n="news_archive.any">Any</option>
+						<option value="positive" data-i18n="news_archive.positive">Positive</option>
+						<option value="neutral" data-i18n="news_archive.neutral">Neutral</option>
+						<option value="negative" data-i18n="news_archive.negative">Negative</option>
 					</select>
 				</div>
 				<div class="arc-field">
-					<label for="arc-lang">Language</label>
+					<label for="arc-lang" data-i18n="news_archive.language">Language</label>
 					<select id="arc-lang">
-						<option value="">All</option>
-						<option value="en">English</option>
-						<option value="zh">中文</option>
+						<option value="" data-i18n="news_archive.all">All</option>
+						<option value="en" data-i18n="news_archive.english">English</option>
+						<option value="zh" data-i18n="news_archive.text">中文</option>
 					</select>
 				</div>
 				<div class="arc-actions">
-					<button class="arc-btn" type="submit">Search archive</button>
-					<button class="arc-btn ghost" type="reset" id="arc-reset">Reset</button>
+					<button class="arc-btn" type="submit" data-i18n="news_archive.search_archive">Search archive</button>
+					<button class="arc-btn ghost" type="reset" id="arc-reset" data-i18n="news_archive.reset">Reset</button>
 				</div>
 			</form>
 
@@ -146,7 +146,7 @@
 			<section id="arc-results" class="cv-section" aria-label="Archive results" aria-live="polite"></section>
 
 			<div style="display: flex; justify-content: center; margin: 1.5rem 0 0">
-				<button id="arc-more" class="cv-load-more" type="button" hidden>Load more</button>
+				<button id="arc-more" class="cv-load-more" type="button" hidden data-i18n="news_archive.load_more">Load more</button>
 			</div>
 		</main>
 
@@ -154,5 +154,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

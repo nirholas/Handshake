@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Half-body XR · three.ws lab</title>
+		<title data-i18n="demos_halfbody_xr.meta_title">Half-body XR · three.ws lab</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
@@ -66,9 +66,9 @@
 		<header><div id="nav-container"></div></header>
 
 		<main class="stage">
-			<p class="crumb"><a href="/demos">← lab</a></p>
-			<h1>Half-body XR</h1>
-			<p class="sub">
+			<p class="crumb" data-i18n-html="demos_halfbody_xr.lab"><a href="/demos">← lab</a></p>
+			<h1 data-i18n="demos_halfbody_xr.half_body_xr">Half-body XR</h1>
+			<p class="sub" data-i18n-html="demos_halfbody_xr.side_by_side_preview_of_full_body">
 				Side-by-side preview of full-body vs half-body. The half-body view
 				is achieved at runtime by detecting lower-body bones in the GLB
 				skeleton (<code>leg</code>, <code>thigh</code>, <code>foot</code>,
@@ -79,17 +79,17 @@
 
 			<div class="row">
 				<div class="viewer" id="viewer-full">
-					<span class="viewer-label">Full body</span>
+					<span class="viewer-label" data-i18n="demos_halfbody_xr.full_body">Full body</span>
 				</div>
 				<div class="viewer" id="viewer-half">
-					<span class="viewer-label">Half body</span>
+					<span class="viewer-label" data-i18n="demos_halfbody_xr.half_body">Half body</span>
 				</div>
 			</div>
 
 			<div class="controls">
-				<button id="enter-xr-full" class="secondary" disabled>Enter WebXR · full body</button>
-				<button id="enter-xr-half" disabled>Enter WebXR · half body</button>
-				<button id="reload" class="secondary">Reload models</button>
+				<button id="enter-xr-full" class="secondary" disabled data-i18n="demos_halfbody_xr.enter_webxr_full_body">Enter WebXR · full body</button>
+				<button id="enter-xr-half" disabled data-i18n="demos_halfbody_xr.enter_webxr_half_body">Enter WebXR · half body</button>
+				<button id="reload" class="secondary" data-i18n="demos_halfbody_xr.reload_models">Reload models</button>
 			</div>
 			<div class="log" id="log">ready.</div>
 
@@ -316,5 +316,7 @@
 			})();
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

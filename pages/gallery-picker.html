@@ -3,18 +3,18 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Avatar Gallery — three.ws</title>
+		<title data-i18n="gallery_picker.meta_title">Avatar Gallery — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="theme-color" content="#000000" />
 		<meta name="robots" content="noindex" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:url" content="https://three.ws/gallery-picker" />
-		<meta property="og:title" content="Avatar Gallery — three.ws" />
+		<meta property="og:title" content="Avatar Gallery — three.ws"  data-i18n-attr="content:gallery_picker.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Browse, preview, and grab any public 3D avatar on three.ws."
-		/>
+		 data-i18n-attr="content:gallery_picker.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/og-image.png" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
@@ -94,9 +94,9 @@
 
 		<main class="gp-wrap">
 			<div class="gp-hero">
-				<p class="gp-crumb"><a href="/">Home</a> / <a href="/gallery">Gallery</a></p>
-				<h1 class="gp-title">Avatar Gallery</h1>
-				<p class="gp-sub">
+				<p class="gp-crumb" data-i18n-html="gallery_picker.home_gallery"><a href="/">Home</a> / <a href="/gallery">Gallery</a></p>
+				<h1 class="gp-title" data-i18n="gallery_picker.avatar_gallery">Avatar Gallery</h1>
+				<p class="gp-sub" data-i18n="gallery_picker.browse_every_public_3d_avatar_on_three">
 					Browse every public 3D avatar on three.ws. Preview live in 3D, copy share links,
 					GLB URLs, or embed snippets.
 				</p>
@@ -125,5 +125,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

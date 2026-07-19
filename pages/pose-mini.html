@@ -5,8 +5,8 @@
 	<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative */[hidden]{display:none!important}</style>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>Pose it — three.ws</title>
-	<meta name="description" content="A live slice of three.ws Pose Studio: orbit the figure, grab a limb to pose it, or tap a preset to morph the whole pose. The same mannequin rig that drives every three.ws avatar — running in your browser, framable anywhere." />
+	<title data-i18n="pose_mini.meta_title">Pose it — three.ws</title>
+	<meta name="description" content="A live slice of three.ws Pose Studio: orbit the figure, grab a limb to pose it, or tap a preset to morph the whole pose. The same mannequin rig that drives every three.ws avatar — running in your browser, framable anywhere."  data-i18n-attr="content:pose_mini.meta_description"/>
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 	<meta name="robots" content="noindex" />
 	<style>
@@ -117,22 +117,22 @@
 			<div class="hp-stage-card">
 				<div data-pose-stage></div>
 				<div class="hp-stage-hud"><span class="dot"></span>Live rig</div>
-				<p class="hp-hint" data-pose-hint>Grab a limb to pose it &middot; drag the floor to orbit</p>
+				<p class="hp-hint" data-pose-hint data-i18n="pose_mini.grab_a_limb_to_pose_it_drag">Grab a limb to pose it &middot; drag the floor to orbit</p>
 				<div class="hp-toast" data-pose-toast aria-live="polite"></div>
 				<div class="hp-chips" data-pose-chips role="group" aria-label="Preset poses"></div>
 			</div>
 			<div class="hp-panel">
 				<div class="hp-panel-card">
-					<p class="hp-panel-label">Selected joint</p>
+					<p class="hp-panel-label" data-i18n="pose_mini.selected_joint">Selected joint</p>
 					<p class="hp-panel-sel" data-pose-selected>&mdash;</p>
 					<div class="hp-sliders" data-pose-sliders></div>
 				</div>
 				<div class="hp-mini-actions">
-					<button type="button" class="hp-btn" data-pose-reset>Reset</button>
-					<button type="button" class="hp-btn" data-pose-copy>Copy link</button>
-					<button type="button" class="hp-btn" data-pose-snap>Snapshot</button>
+					<button type="button" class="hp-btn" data-pose-reset data-i18n="pose_mini.reset">Reset</button>
+					<button type="button" class="hp-btn" data-pose-copy data-i18n="pose_mini.copy_link">Copy link</button>
+					<button type="button" class="hp-btn" data-pose-snap data-i18n="pose_mini.snapshot">Snapshot</button>
 				</div>
-				<a class="hp-btn hp-btn-primary" href="https://three.ws/pose" target="_blank" rel="noopener" data-pose-studio>Open in the full studio &rarr;</a>
+				<a class="hp-btn hp-btn-primary" href="https://three.ws/pose" target="_blank" rel="noopener" data-pose-studio data-i18n="pose_mini.open_in_the_full_studio">Open in the full studio &rarr;</a>
 			</div>
 		</div>
 	</section>
@@ -144,5 +144,7 @@
 		// route (e.g. embedded into the IBM showcase) without loading the homepage.
 		import('/src/home-pose.js');
 	</script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

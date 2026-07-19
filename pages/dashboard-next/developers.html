@@ -3,8 +3,8 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>Developer Hub · Dashboard · three.ws</title>
-	<meta name="description" content="Avatar Render API, webhooks, SDKs, and integration tools for developers building with three.ws avatars." />
+	<title data-i18n="dashboard_next_developers.meta_title">Developer Hub · Dashboard · three.ws</title>
+	<meta name="description" content="Avatar Render API, webhooks, SDKs, and integration tools for developers building with three.ws avatars."  data-i18n-attr="content:dashboard_next_developers.meta_description"/>
 	<link rel="icon" href="/favicon.ico" />
 	<link rel="stylesheet" href="/fonts/fonts.css" />
 	<link rel="stylesheet" href="/dashboard-next/shell.css" />
@@ -12,5 +12,7 @@
 <body>
 	<script src="/embed.js"></script>
 	<script type="module" src="/src/dashboard-next/pages/developers.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -3,15 +3,15 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Mind Palace — three.ws</title>
+		<title data-i18n="agent_mind.meta_title">Mind Palace — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="theme-color" content="#06080f" />
-		<meta name="description" content="Walk through your agent's mind — every memory as a tangible object you can see, search, pin, and forget." />
+		<meta name="description" content="Walk through your agent's mind — every memory as a tangible object you can see, search, pin, and forget."  data-i18n-attr="content:agent_mind.meta_description"/>
 
 		<meta property="og:type" content="website">
 		<meta property="og:url" content="https://three.ws/agent/mind">
-		<meta property="og:title" content="The Mind Palace — three.ws">
-		<meta property="og:description" content="Your agent's memory, rendered as a place you can explore.">
+		<meta property="og:title" content="The Mind Palace — three.ws" data-i18n-attr="content:agent_mind.meta_og_title">
+		<meta property="og:description" content="Your agent's memory, rendered as a place you can explore." data-i18n-attr="content:agent_mind.meta_og_description">
 		<meta property="og:image" content="https://three.ws/og-image.png">
 		<meta property="og:image:width" content="1200">
 		<meta property="og:image:height" content="630">
@@ -47,14 +47,16 @@
 	<body>
 		<script src="/nav.js"></script>
 		<header class="mind-page-header">
-			<a class="back" id="mind-back" href="/agents"><span aria-hidden="true">←</span> Back</a>
-			<h1 id="mind-title">Mind Palace</h1>
-			<span class="sub">Living Agents · memory you can walk through</span>
+			<a class="back" id="mind-back" href="/agents" data-i18n-html="agent_mind.back"><span aria-hidden="true">←</span> Back</a>
+			<h1 id="mind-title" data-i18n="agent_mind.mind_palace">Mind Palace</h1>
+			<span class="sub" data-i18n="agent_mind.living_agents_memory_you_can_walk_through">Living Agents · memory you can walk through</span>
 		</header>
 		<main id="mind-root">
 			<div class="mind-boot" id="mind-boot">Entering the mind…</div>
 		</main>
 		<script type="module" src="/src/agent-mind.js"></script>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

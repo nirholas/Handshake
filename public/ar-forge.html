@@ -4,15 +4,15 @@
 	<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title>AR Forge · three.ws</title>
-	<meta name="description" content="Type a prompt, get a 3D model, and place it in your room. Free text-to-3D with instant AR on your phone (WebXR, Scene Viewer, Quick Look)." />
+	<title data-i18n="ar_forge.meta_title">AR Forge · three.ws</title>
+	<meta name="description" content="Type a prompt, get a 3D model, and place it in your room. Free text-to-3D with instant AR on your phone (WebXR, Scene Viewer, Quick Look)."  data-i18n-attr="content:ar_forge.meta_description"/>
 	<link rel="canonical" href="https://three.ws/ar" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:locale" content="en_US" />
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="https://three.ws/ar" />
-	<meta property="og:title" content="AR Forge · three.ws" />
-	<meta property="og:description" content="Type a prompt, get a 3D model, and place it in your room. Free text-to-3D with instant AR." />
+	<meta property="og:title" content="AR Forge · three.ws"  data-i18n-attr="content:ar_forge.meta_og_title"/>
+	<meta property="og:description" content="Type a prompt, get a 3D model, and place it in your room. Free text-to-3D with instant AR."  data-i18n-attr="content:ar_forge.meta_og_description"/>
 	<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=AR+Forge&amp;d=Type+a+prompt%2C+get+a+real+3D+model%2C+and+place+it+in+your+room%3A+free+text-to-3D+with+one-tap+AR+on+any+phone+%28WebXR%2C+Scene+Viewer%2C+Quick+Look%29+and+a+QR+handoff+f&amp;p=%2Far" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
@@ -20,8 +20,8 @@
 	<meta property="og:image:alt" content="AR Forge, three.ws" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="AR Forge · three.ws" />
-	<meta name="twitter:description" content="Type a prompt, get a 3D model, and place it in your room. Free text-to-3D with instant AR." />
+	<meta name="twitter:title" content="AR Forge · three.ws"  data-i18n-attr="content:ar_forge.meta_twitter_title"/>
+	<meta name="twitter:description" content="Type a prompt, get a 3D model, and place it in your room. Free text-to-3D with instant AR."  data-i18n-attr="content:ar_forge.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=AR+Forge&amp;d=Type+a+prompt%2C+get+a+real+3D+model%2C+and+place+it+in+your+room%3A+free+text-to-3D+with+one-tap+AR+on+any+phone+%28WebXR%2C+Scene+Viewer%2C+Quick+Look%29+and+a+QR+handoff+f&amp;p=%2Far" />
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"AR Forge","url":"https://three.ws/ar","applicationCategory":"DesignApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Type a prompt, get a 3D model, and place it in your room. Free text-to-3D with instant AR on your phone.","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 	<!-- Meshopt decoder must register before <model-viewer> starts loading (Forge GLBs are meshopt-compressed). Classic script runs during parse, before the model-viewer module. -->
@@ -147,30 +147,30 @@
 </head>
 <body>
 	<header class="bar">
-		<a class="brand" href="/"><span class="dot" aria-hidden="true"></span>three.ws</a>
-		<span class="crumb">/ AR Forge</span>
+		<a class="brand" href="/" data-i18n-html="ar_forge.three_ws"><span class="dot" aria-hidden="true"></span>three.ws</a>
+		<span class="crumb" data-i18n="ar_forge.ar_forge">/ AR Forge</span>
 		<span class="spacer"></span>
-		<a class="top" href="/forge">Full studio →</a>
+		<a class="top" href="/forge" data-i18n="ar_forge.full_studio">Full studio →</a>
 	</header>
 
 	<main>
 		<div class="hero">
-			<h1>Imagine it. <span class="grad">Place it in your room.</span></h1>
-			<p>Describe any object and AR Forge generates a real 3D model, free, no account. On a phone, one tap puts it in your space through the camera.</p>
+			<h1 data-i18n-html="ar_forge.imagine_it_place_it_in_your_room">Imagine it. <span class="grad">Place it in your room.</span></h1>
+			<p data-i18n="ar_forge.describe_any_object_and_ar_forge_generates">Describe any object and AR Forge generates a real 3D model, free, no account. On a phone, one tap puts it in your space through the camera.</p>
 		</div>
 
 		<form class="ask" id="ask" autocomplete="off">
 			<input id="prompt" name="prompt" type="text" inputmode="text" enterkeyhint="go" maxlength="600"
 				placeholder="a bonsai tree in a glowing glass cube" aria-label="Describe the 3D model to generate" required minlength="3" />
-			<button class="go" id="go" type="submit">Forge<span aria-hidden="true">✦</span></button>
+			<button class="go" id="go" type="submit" data-i18n-html="ar_forge.forge">Forge<span aria-hidden="true">✦</span></button>
 		</form>
 
 		<div class="chips" id="chips" aria-label="Prompt ideas">
-			<span class="label">Try:</span>
-			<button type="button" class="chip">a retro arcade cabinet</button>
-			<button type="button" class="chip">a koi fish made of stained glass</button>
-			<button type="button" class="chip">a tiny robot barista</button>
-			<button type="button" class="chip">a crystal chess knight</button>
+			<span class="label" data-i18n="ar_forge.try">Try:</span>
+			<button type="button" class="chip" data-i18n="ar_forge.a_retro_arcade_cabinet">a retro arcade cabinet</button>
+			<button type="button" class="chip" data-i18n="ar_forge.a_koi_fish_made_of_stained_glass">a koi fish made of stained glass</button>
+			<button type="button" class="chip" data-i18n="ar_forge.a_tiny_robot_barista">a tiny robot barista</button>
+			<button type="button" class="chip" data-i18n="ar_forge.a_crystal_chess_knight">a crystal chess knight</button>
 		</div>
 
 		<div class="stage" id="stage">
@@ -196,17 +196,17 @@
 			<div id="failed" class="overlay hidden">
 				<div class="h">That one didn't make it</div>
 				<div class="muted" id="failmsg">Generation failed.</div>
-				<button class="btn primary" id="retry" type="button">Try again</button>
+				<button class="btn primary" id="retry" type="button" data-i18n="ar_forge.try_again">Try again</button>
 			</div>
 
 			<div class="actions hidden" id="actions">
 				<div class="meta" id="meta"></div>
-				<button class="btn primary" id="ar-btn" type="button" aria-label="View this model in augmented reality">📱 View in your space</button>
-				<a class="btn" id="download" download aria-label="Download the GLB file">Download GLB</a>
-				<button class="btn" id="share" type="button" aria-label="Share a link to this model">Share</button>
-				<a class="btn" id="open-studio" aria-label="Open this model in the AR Studio and place several models together">Add to AR Studio</a>
+				<button class="btn primary" id="ar-btn" type="button" aria-label="View this model in augmented reality" data-i18n="ar_forge.view_in_your_space" data-i18n-attr="aria-label:ar_forge.view_this_model_in_augmented_arialabel">📱 View in your space</button>
+				<a class="btn" id="download" download aria-label="Download the GLB file" data-i18n="ar_forge.download_glb" data-i18n-attr="aria-label:ar_forge.download_the_glb_file_arialabel">Download GLB</a>
+				<button class="btn" id="share" type="button" aria-label="Share a link to this model" data-i18n="ar_forge.share" data-i18n-attr="aria-label:ar_forge.share_a_link_to_this_model_arialabel">Share</button>
+				<a class="btn" id="open-studio" aria-label="Open this model in the AR Studio and place several models together" data-i18n="ar_forge.add_to_ar_studio" data-i18n-attr="aria-label:ar_forge.open_this_model_in_the_ar_st_arialabel">Add to AR Studio</a>
 				<span class="spacer"></span>
-				<a class="btn" id="open-viewer" target="_blank" rel="noopener" aria-label="Open this model in the full 3D viewer">Open in viewer</a>
+				<a class="btn" id="open-viewer" target="_blank" rel="noopener" aria-label="Open this model in the full 3D viewer" data-i18n="ar_forge.open_in_viewer" data-i18n-attr="aria-label:ar_forge.open_this_model_in_the_full_arialabel">Open in viewer</a>
 			</div>
 		</div>
 
@@ -219,15 +219,15 @@
 		</div>
 
 		<section class="recent hidden" id="recent">
-			<h2>Recent forges</h2>
+			<h2 data-i18n="ar_forge.recent_forges">Recent forges</h2>
 			<div class="rail" id="rail"></div>
 		</section>
 	</main>
 
 	<footer class="foot">
 		Free lane, fair-use rate limited · Models are meshopt-compressed glTF binaries ·
-		<a href="/daily">Daily Forge challenge</a> · <a href="/ar/studio">AR Studio (multi-model)</a> · <a href="/forge">Forge studio</a> · <a href="/viewer">GLB viewer</a> · <a href="/features/ar">How AR works</a> ·
-		<a href="/irl">Living agents in AR</a>
+		<a href="/daily" data-i18n="ar_forge.daily_forge_challenge">Daily Forge challenge</a> · <a href="/ar/studio" data-i18n="ar_forge.ar_studio_multi_model">AR Studio (multi-model)</a> · <a href="/forge" data-i18n="ar_forge.forge_studio">Forge studio</a> · <a href="/viewer" data-i18n="ar_forge.glb_viewer">GLB viewer</a> · <a href="/features/ar" data-i18n="ar_forge.how_ar_works">How AR works</a> ·
+		<a href="/irl" data-i18n="ar_forge.living_agents_in_ar">Living agents in AR</a>
 	</footer>
 
 	<script>
@@ -506,5 +506,7 @@
 		}, 12000);
 	})();
 	</script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -4,23 +4,23 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Walk — your avatar walks anywhere on the web · three.ws</title>
+		<title data-i18n="walk_landing.meta_title">Walk — your avatar walks anywhere on the web · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta name="author" content="nirholas" />
 		<meta
 			name="description"
 			content="Your 3D avatar walks anywhere on the web. Drive it with WASD or a touch joystick, drop it on any site with one tag, and let it stroll across real pages with the Chrome extension. No app install."
-		/>
+		 data-i18n-attr="content:walk_landing.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/walk" />
-		<meta property="og:title" content="Walk — your avatar walks anywhere on the web · three.ws" />
+		<meta property="og:title" content="Walk — your avatar walks anywhere on the web · three.ws"  data-i18n-attr="content:walk_landing.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Drive your 3D avatar with WASD or a joystick, embed it on any site with one tag, and let it walk across real web pages. No app install."
-		/>
+		 data-i18n-attr="content:walk_landing.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/walk-og" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
@@ -29,11 +29,11 @@
 
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Walk — your avatar walks anywhere on the web · three.ws" />
+		<meta name="twitter:title" content="Walk — your avatar walks anywhere on the web · three.ws"  data-i18n-attr="content:walk_landing.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Drive your 3D avatar with WASD or a joystick, embed it on any site with one tag, and let it walk across real web pages."
-		/>
+		 data-i18n-attr="content:walk_landing.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/walk-og" />
 		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 
@@ -654,7 +654,7 @@
 		</style>
 	</head>
 	<body class="walk-landing-page">
-		<a href="#main-content" class="skip-link">Skip to main content</a>
+		<a href="#main-content" class="skip-link" data-i18n="walk_landing.skip_to_main_content">Skip to main content</a>
 		<header><div id="nav-container"></div></header>
 		<script src="/nav.js"></script>
 
@@ -662,18 +662,18 @@
 			<!-- ── 1. HERO ── -->
 			<section class="wl-hero" aria-labelledby="wl-hero-title">
 				<div class="wl-reveal">
-					<p class="wl-eyebrow">three.ws Walk</p>
-					<h1 class="wl-hero-title" id="wl-hero-title">Your avatar walks anywhere on the web.</h1>
-					<p class="wl-hero-sub">
+					<p class="wl-eyebrow" data-i18n="walk_landing.three_ws_walk">three.ws Walk</p>
+					<h1 class="wl-hero-title" id="wl-hero-title" data-i18n="walk_landing.your_avatar_walks_anywhere_on_the_web">Your avatar walks anywhere on the web.</h1>
+					<p class="wl-hero-sub" data-i18n="walk_landing.drive_a_fully_rigged_3d_avatar_with">
 						Drive a fully-rigged 3D avatar with WASD or a touch joystick. Drop it on any
 						site with a single tag, or install the extension and let it stroll across real
 						pages — reading them aloud as it goes. No app install. It just runs in the browser.
 					</p>
 					<div class="wl-cta-row">
-						<a class="btn btn--primary btn--lg" href="/walk/app">
+						<a class="btn btn--primary btn--lg" href="/walk/app" data-i18n-html="walk_landing.try_it_now">
 							Try it now <span class="btn-arrow" aria-hidden="true">→</span>
 						</a>
-						<a class="btn btn--ghost btn--lg" href="/docs/walk/chrome-extension">
+						<a class="btn btn--ghost btn--lg" href="/docs/walk/chrome-extension" data-i18n-html="walk_landing.get_the_extension">
 							Get the extension <span class="btn-arrow" aria-hidden="true">→</span>
 						</a>
 					</div>
@@ -698,7 +698,7 @@
 						<span class="wl-frame-dot"></span>
 						<span class="wl-frame-dot"></span>
 						<span class="wl-frame-dot"></span>
-						<span class="wl-frame-label">three.ws/walk-embed</span>
+						<span class="wl-frame-label" data-i18n="walk_landing.three_ws_walk_embed">three.ws/walk-embed</span>
 					</div>
 					<div class="wl-frame-stage">
 						<iframe
@@ -706,7 +706,7 @@
 							title="Live demo — a 3D avatar walking in the void environment"
 							allow="accelerometer; gyroscope"
 						></iframe>
-						<span class="wl-frame-hint">Live · walking now</span>
+						<span class="wl-frame-hint" data-i18n="walk_landing.live_walking_now">Live · walking now</span>
 					</div>
 				</div>
 			</section>
@@ -714,8 +714,8 @@
 			<!-- ── 2. DEMO STRIP ── -->
 			<section class="wl-section" aria-labelledby="wl-demos-title">
 				<div class="wl-section-head wl-reveal">
-					<h2 class="wl-section-title" id="wl-demos-title">Choose your world.</h2>
-					<p class="wl-section-sub">Six built-in environments, no HDRIs to download. Grab the joystick or use WASD — these are live, not videos.</p>
+					<h2 class="wl-section-title" id="wl-demos-title" data-i18n="walk_landing.choose_your_world">Choose your world.</h2>
+					<p class="wl-section-sub" data-i18n="walk_landing.six_built_in_environments_no_hdris_to">Six built-in environments, no HDRIs to download. Grab the joystick or use WASD — these are live, not videos.</p>
 				</div>
 				<div class="wl-demos">
 					<article class="wl-demo wl-reveal">
@@ -730,8 +730,8 @@
 							</div>
 						</div>
 						<div class="wl-demo-caption">
-							<span class="wl-demo-name">Beach</span>
-							<span class="wl-demo-desc">Sun, sand, soft fog</span>
+							<span class="wl-demo-name" data-i18n="walk_landing.beach">Beach</span>
+							<span class="wl-demo-desc" data-i18n="walk_landing.sun_sand_soft_fog">Sun, sand, soft fog</span>
 						</div>
 					</article>
 					<article class="wl-demo wl-reveal">
@@ -746,8 +746,8 @@
 							</div>
 						</div>
 						<div class="wl-demo-caption">
-							<span class="wl-demo-name">Night</span>
-							<span class="wl-demo-desc">Moonlit, deep blue</span>
+							<span class="wl-demo-name" data-i18n="walk_landing.night">Night</span>
+							<span class="wl-demo-desc" data-i18n="walk_landing.moonlit_deep_blue">Moonlit, deep blue</span>
 						</div>
 					</article>
 					<article class="wl-demo wl-reveal">
@@ -762,8 +762,8 @@
 							</div>
 						</div>
 						<div class="wl-demo-caption">
-							<span class="wl-demo-name">Grid</span>
-							<span class="wl-demo-desc">Clean studio grid</span>
+							<span class="wl-demo-name" data-i18n="walk_landing.grid">Grid</span>
+							<span class="wl-demo-desc" data-i18n="walk_landing.clean_studio_grid">Clean studio grid</span>
 						</div>
 					</article>
 				</div>
@@ -772,8 +772,8 @@
 			<!-- ── 3. HOW IT WORKS ── -->
 			<section class="wl-section" aria-labelledby="wl-steps-title">
 				<div class="wl-section-head wl-reveal">
-					<h2 class="wl-section-title" id="wl-steps-title">How it works</h2>
-					<p class="wl-section-sub">From a blank page to a walking avatar in three steps.</p>
+					<h2 class="wl-section-title" id="wl-steps-title" data-i18n="walk_landing.how_it_works">How it works</h2>
+					<p class="wl-section-sub" data-i18n="walk_landing.from_a_blank_page_to_a_walking">From a blank page to a walking avatar in three steps.</p>
 				</div>
 				<ol class="wl-steps" style="list-style:none;padding:0;margin:0">
 					<li class="wl-step wl-reveal">
@@ -786,8 +786,8 @@
 						</div>
 						<div class="wl-step-body">
 							<span class="wl-step-num">1</span>
-							<h3 class="wl-step-title">Create your avatar</h3>
-							<p class="wl-step-desc">Generate one from a selfie or a text prompt in Forge — or use any humanoid GLB. It comes back fully rigged and animation-ready.</p>
+							<h3 class="wl-step-title" data-i18n="walk_landing.create_your_avatar">Create your avatar</h3>
+							<p class="wl-step-desc" data-i18n="walk_landing.generate_one_from_a_selfie_or_a">Generate one from a selfie or a text prompt in Forge — or use any humanoid GLB. It comes back fully rigged and animation-ready.</p>
 						</div>
 					</li>
 					<li class="wl-step wl-reveal">
@@ -800,8 +800,8 @@
 						</div>
 						<div class="wl-step-body">
 							<span class="wl-step-num">2</span>
-							<h3 class="wl-step-title">Walk on three.ws</h3>
-							<p class="wl-step-desc">Open the Walk app and drive your avatar with WASD or a touch joystick. Drag to orbit the camera, sprint to run — real locomotion, not a turntable.</p>
+							<h3 class="wl-step-title" data-i18n="walk_landing.walk_on_three_ws">Walk on three.ws</h3>
+							<p class="wl-step-desc" data-i18n="walk_landing.open_the_walk_app_and_drive_your">Open the Walk app and drive your avatar with WASD or a touch joystick. Drag to orbit the camera, sprint to run — real locomotion, not a turntable.</p>
 						</div>
 					</li>
 					<li class="wl-step wl-reveal">
@@ -814,8 +814,8 @@
 						</div>
 						<div class="wl-step-body">
 							<span class="wl-step-num">3</span>
-							<h3 class="wl-step-title">Embed it anywhere</h3>
-							<p class="wl-step-desc">Copy one iframe tag onto any site, or install the Chrome extension so your avatar follows you across the entire web.</p>
+							<h3 class="wl-step-title" data-i18n="walk_landing.embed_it_anywhere">Embed it anywhere</h3>
+							<p class="wl-step-desc" data-i18n="walk_landing.copy_one_iframe_tag_onto_any_site">Copy one iframe tag onto any site, or install the Chrome extension so your avatar follows you across the entire web.</p>
 						</div>
 					</li>
 				</ol>
@@ -828,7 +828,7 @@
 						<div class="wl-ext-icon" aria-hidden="true">
 							<img src="/three.svg" alt="" />
 						</div>
-						<h2 class="wl-ext-title" id="wl-ext-title">Walk the entire web.</h2>
+						<h2 class="wl-ext-title" id="wl-ext-title" data-i18n="walk_landing.walk_the_entire_web">Walk the entire web.</h2>
 						<ul class="wl-ext-list">
 							<li>
 								<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -848,10 +848,10 @@
 							</li>
 						</ul>
 						<div class="wl-cta-row">
-							<a class="btn btn--primary btn--lg" href="/docs/walk/chrome-extension">
+							<a class="btn btn--primary btn--lg" href="/docs/walk/chrome-extension" data-i18n-html="walk_landing.add_to_chrome">
 								Add to Chrome <span class="btn-arrow" aria-hidden="true">→</span>
 							</a>
-							<a class="btn btn--ghost" href="/extension/privacy">Privacy &amp; permissions</a>
+							<a class="btn btn--ghost" href="/extension/privacy" data-i18n="walk_landing.privacy_permissions">Privacy &amp; permissions</a>
 						</div>
 					</div>
 
@@ -860,7 +860,7 @@
 							<span class="wl-frame-dot"></span>
 							<span class="wl-frame-dot"></span>
 							<span class="wl-frame-dot"></span>
-							<span class="wl-ext-mock-url">a page on the web</span>
+							<span class="wl-ext-mock-url" data-i18n="walk_landing.a_page_on_the_web">a page on the web</span>
 						</div>
 						<div class="wl-ext-mock-stage">
 							<div class="wl-ext-mock-page" aria-hidden="true">
@@ -886,8 +886,8 @@
 			<!-- ── 5. EMBED FOR DEVELOPERS ── -->
 			<section class="wl-section" aria-labelledby="wl-dev-title">
 				<div class="wl-section-head wl-reveal">
-					<h2 class="wl-section-title" id="wl-dev-title">One tag. Any site.</h2>
-					<p class="wl-section-sub">No SDK, no build step. Paste the iframe, set the avatar and world with query params, and you have a live walking avatar.</p>
+					<h2 class="wl-section-title" id="wl-dev-title" data-i18n="walk_landing.one_tag_any_site">One tag. Any site.</h2>
+					<p class="wl-section-sub" data-i18n="walk_landing.no_sdk_no_build_step_paste_the">No SDK, no build step. Paste the iframe, set the avatar and world with query params, and you have a live walking avatar.</p>
 				</div>
 				<div class="wl-dev">
 					<div class="wl-code wl-reveal">
@@ -895,8 +895,8 @@
 							<span class="wl-frame-dot"></span>
 							<span class="wl-frame-dot"></span>
 							<span class="wl-frame-dot"></span>
-							<span class="wl-code-label">your-site.html</span>
-							<button class="wl-copy-btn" id="wl-copy" type="button" aria-label="Copy embed snippet to clipboard">Copy</button>
+							<span class="wl-code-label" data-i18n="walk_landing.your_site_html">your-site.html</span>
+							<button class="wl-copy-btn" id="wl-copy" type="button" aria-label="Copy embed snippet to clipboard" data-i18n="walk_landing.copy" data-i18n-attr="aria-label:walk_landing.copy_embed_snippet_to_clipbo_arialabel">Copy</button>
 						</div>
 <pre id="wl-snippet"><code><span class="wl-tok-com">&lt;!-- three.ws Walk — drop in anywhere --&gt;</span>
 <span class="wl-tok-tag">&lt;iframe</span>
@@ -911,7 +911,7 @@
 								<span class="wl-frame-dot"></span>
 								<span class="wl-frame-dot"></span>
 								<span class="wl-frame-dot"></span>
-								<span class="wl-frame-label">live preview</span>
+								<span class="wl-frame-label" data-i18n="walk_landing.live_preview">live preview</span>
 							</div>
 							<div class="wl-frame-stage">
 								<iframe
@@ -929,8 +929,8 @@
 			<!-- ── 6. LEADERBOARD TEASER ── -->
 			<section class="wl-section" aria-labelledby="wl-board-title">
 				<div class="wl-section-head wl-reveal">
-					<h2 class="wl-section-title" id="wl-board-title">Top walkers</h2>
-					<p class="wl-section-sub">The longest strolls on three.ws, all-time. Lace up and climb the board.</p>
+					<h2 class="wl-section-title" id="wl-board-title" data-i18n="walk_landing.top_walkers">Top walkers</h2>
+					<p class="wl-section-sub" data-i18n="walk_landing.the_longest_strolls_on_three_ws_all">The longest strolls on three.ws, all-time. Lace up and climb the board.</p>
 				</div>
 				<div class="wl-board wl-reveal" id="wl-board" aria-live="polite" aria-busy="true">
 					<div class="wl-skeleton"></div>
@@ -938,28 +938,28 @@
 					<div class="wl-skeleton"></div>
 				</div>
 				<div style="text-align:center;margin-top:var(--space-6)" class="wl-reveal">
-					<a class="btn btn--ghost" href="/walk-leaderboard">See the full leaderboard <span class="btn-arrow" aria-hidden="true">→</span></a>
+					<a class="btn btn--ghost" href="/walk-leaderboard" data-i18n-html="walk_landing.see_the_full_leaderboard">See the full leaderboard <span class="btn-arrow" aria-hidden="true">→</span></a>
 				</div>
 			</section>
 
 			<!-- ── 7. SOCIAL PROOF ── -->
 			<section class="wl-section" aria-labelledby="wl-social-title">
 				<div class="wl-section-head wl-reveal">
-					<h2 class="wl-section-title" id="wl-social-title">From the team</h2>
-					<p class="wl-section-sub">What three.ws is shipping with Walk.</p>
+					<h2 class="wl-section-title" id="wl-social-title" data-i18n="walk_landing.from_the_team">From the team</h2>
+					<p class="wl-section-sub" data-i18n="walk_landing.what_three_ws_is_shipping_with_walk">What three.ws is shipping with Walk.</p>
 				</div>
 				<div class="wl-social wl-reveal" id="wl-social" aria-live="polite"></div>
 			</section>
 
 			<!-- ── 8. FOOTER CTA ── -->
 			<section class="wl-final wl-reveal" aria-labelledby="wl-final-title">
-				<h2 id="wl-final-title">Start walking now.</h2>
-				<p>Free to try — bring any avatar and a browser.</p>
+				<h2 id="wl-final-title" data-i18n="walk_landing.start_walking_now">Start walking now.</h2>
+				<p data-i18n="walk_landing.free_to_try_bring_any_avatar_and">Free to try — bring any avatar and a browser.</p>
 				<div class="wl-cta-row">
-					<a class="btn btn--primary btn--lg" href="/walk/app">
+					<a class="btn btn--primary btn--lg" href="/walk/app" data-i18n-html="walk_landing.start_walking">
 						Start walking <span class="btn-arrow" aria-hidden="true">→</span>
 					</a>
-					<a class="btn btn--ghost btn--lg" href="/docs/walk/chrome-extension">Get the extension</a>
+					<a class="btn btn--ghost btn--lg" href="/docs/walk/chrome-extension" data-i18n="walk_landing.get_the_extension_2">Get the extension</a>
 				</div>
 			</section>
 		</main>
@@ -1178,5 +1178,7 @@
 			}
 			loadSocial();
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

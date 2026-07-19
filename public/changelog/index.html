@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Changelog · three.ws</title>
-<meta name="description" content="What's new on three.ws — features, improvements, and releases, newest first." />
+<title data-i18n="changelog_index.meta_title">Changelog · three.ws</title>
+<meta name="description" content="What's new on three.ws — features, improvements, and releases, newest first."  data-i18n-attr="content:changelog_index.meta_description"/>
 <link rel="canonical" href="https://three.ws/changelog" />
 <link rel="alternate" type="application/rss+xml" title="three.ws changelog" href="/changelog.xml" />
 <link rel="stylesheet" href="/nav.css" />
@@ -51,8 +51,8 @@
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:title" content="Changelog · three.ws">
-	<meta property="og:description" content="What is new on three.ws: features, improvements, and releases, newest first.">
+	<meta property="og:title" content="Changelog · three.ws" data-i18n-attr="content:changelog_index.meta_og_title">
+	<meta property="og:description" content="What is new on three.ws: features, improvements, and releases, newest first." data-i18n-attr="content:changelog_index.meta_og_description">
 	<meta property="og:url" content="https://three.ws/changelog">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=learn&amp;t=Changelog&amp;d=What+is+new+on+three.ws%3A+features%2C+improvements%2C+and+releases%2C+newest+first.&amp;p=%2Fchangelog">
 	<meta property="og:image:width" content="1200">
@@ -61,8 +61,8 @@
 	<meta property="og:image:alt" content="Changelog — three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Changelog · three.ws">
-	<meta name="twitter:description" content="What is new on three.ws: features, improvements, and releases, newest first.">
+	<meta name="twitter:title" content="Changelog · three.ws" data-i18n-attr="content:changelog_index.meta_twitter_title">
+	<meta name="twitter:description" content="What is new on three.ws: features, improvements, and releases, newest first." data-i18n-attr="content:changelog_index.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Changelog&amp;d=What+is+new+on+three.ws%3A+features%2C+improvements%2C+and+releases%2C+newest+first.&amp;p=%2Fchangelog">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Changelog","description":"What is new on three.ws: features, improvements, and releases, newest first.","url":"https://three.ws/changelog","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=learn&t=Changelog&d=What+is+new+on+three.ws%3A+features%2C+improvements%2C+and+releases%2C+newest+first.&p=%2Fchangelog"}]}</script>
 </head>
@@ -71,12 +71,12 @@
 	<script src="/nav.js"></script>
 	<main class="cl-wrap">
 		<div class="cl-hero">
-			<h1>Changelog</h1>
-			<p>Everything shipped on three.ws, newest first — new pages, features, improvements, fixes, and releases.</p>
-			<p>Follow along: <a href="/changelog.xml">RSS</a> · <a href="/changelog.json">JSON feed</a> · <a href="/llms.txt">llms.txt</a> · <a href="/sitemap">sitemap</a></p>
+			<h1 data-i18n="changelog_index.changelog">Changelog</h1>
+			<p data-i18n="changelog_index.everything_shipped_on_three_ws_newest_first">Everything shipped on three.ws, newest first — new pages, features, improvements, fixes, and releases.</p>
+			<p data-i18n-html="changelog_index.follow_along_rss_json_feed_llms_txt">Follow along: <a href="/changelog.xml">RSS</a> · <a href="/changelog.json">JSON feed</a> · <a href="/llms.txt">llms.txt</a> · <a href="/sitemap">sitemap</a></p>
 			<div class="cl-filters" id="cl-filters" role="group" aria-label="Filter changelog entries"></div>
 		</div>
-		<div id="cl-content"><p class="cl-empty">Loading…</p></div>
+		<div id="cl-content"><p class="cl-empty" data-i18n="changelog_index.loading">Loading…</p></div>
 	</main>
 
 	<script type="module">
@@ -165,5 +165,7 @@
 	<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

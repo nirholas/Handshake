@@ -4,8 +4,8 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-	<title>Character — three.ws</title>
-	<meta name="description" content="Character profile on three.ws" />
+	<title data-i18n="character.meta_title">Character — three.ws</title>
+	<meta name="description" content="Character profile on three.ws"  data-i18n-attr="content:character.meta_description"/>
 	<link rel="icon" href="/favicon.ico" />
 	<link rel="stylesheet" href="/nav.css" />
 	<link rel="stylesheet" href="/src/character.css" />
@@ -35,11 +35,11 @@
 			<div class="ch-stats">
 				<div class="ch-stat-bubble">
 					<span id="ch-stat-chats" class="ch-stat-num">—</span>
-					<span class="ch-stat-label">Chats</span>
+					<span class="ch-stat-label" data-i18n="character.chats">Chats</span>
 				</div>
 				<div class="ch-stat-bubble">
 					<span id="ch-stat-holders" class="ch-stat-num">—</span>
-					<span class="ch-stat-label">Holders</span>
+					<span class="ch-stat-label" data-i18n="character.holders">Holders</span>
 				</div>
 			</div>
 		</div>
@@ -47,7 +47,7 @@
 		<p id="ch-desc" class="ch-desc"></p>
 
 		<div class="ch-cta">
-			<a id="ch-chat-btn" class="ch-chat-btn" href="#">Chat</a>
+			<a id="ch-chat-btn" class="ch-chat-btn" href="#" data-i18n="character.chat">Chat</a>
 		</div>
 	</section>
 
@@ -55,14 +55,14 @@
 	<section class="ch-section">
 		<div class="ch-token-card">
 			<div id="ch-token-section">
-				<p class="ch-no-token">Loading…</p>
+				<p class="ch-no-token" data-i18n="character.loading">Loading…</p>
 			</div>
 		</div>
 	</section>
 
 	<!-- Memes gallery -->
 	<section class="ch-section">
-		<h2 class="ch-gallery-title">Memes Gallery</h2>
+		<h2 class="ch-gallery-title" data-i18n="character.memes_gallery">Memes Gallery</h2>
 		<div id="ch-memes-grid" class="ch-gallery-grid"></div>
 	</section>
 
@@ -71,5 +71,7 @@
 
 <script type="module" src="/src/character.js"></script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

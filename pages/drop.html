@@ -3,9 +3,9 @@
 <head>
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8">
-	<title>Claim your sealed gift · three.ws</title>
+	<title data-i18n="drop.meta_title">Claim your sealed gift · three.ws</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="description" content="Claim a sealed wallet gift. Opened entirely in your browser — three.ws never sees the key.">
+	<meta name="description" content="Claim a sealed wallet gift. Opened entirely in your browser — three.ws never sees the key." data-i18n-attr="content:drop.meta_description">
 	<meta name="robots" content="noindex">
 	<link rel="icon" href="/favicon.ico">
 	<link rel="stylesheet" href="/footer.css">
@@ -88,7 +88,7 @@
 	<script src="/model-viewer-meshopt.js"></script>
 </head>
 <body>
-	<a href="#main-content" class="skip-link">Skip to main content</a>
+	<a href="#main-content" class="skip-link" data-i18n="drop.skip_to_main_content">Skip to main content</a>
 	<header>
 		<div id="nav-container"></div>
 	</header>
@@ -107,19 +107,19 @@
 		<div class="h-footer-watermark" aria-hidden="true">three.ws</div>
 		<div class="h-footer-cta">
 			<div class="h-footer-newsletter">
-				<h3>Stay in the loop</h3>
-				<p>Get updates on new features, agent tooling, and protocol changes.</p>
+				<h3 data-i18n="drop.stay_in_the_loop">Stay in the loop</h3>
+				<p data-i18n="drop.get_updates_on_new_features_agent_tooling">Get updates on new features, agent tooling, and protocol changes.</p>
 				<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
 					<input type="email" class="h-footer-newsletter-input" name="email" placeholder="Enter your email" aria-label="Email address" autocomplete="email" required />
-					<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
+					<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe" data-i18n-attr="aria-label:drop.subscribe_arialabel">
 						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4"/></svg>
 					</button>
 				</form>
 				<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
 			</div>
 			<div class="h-footer-resources">
-				<h3>Resources</h3>
-				<p>Read the docs, join the community, and get help.</p>
+				<h3 data-i18n="drop.resources">Resources</h3>
+				<p data-i18n="drop.read_the_docs_join_the_community_and">Read the docs, join the community, and get help.</p>
 				<a class="h-footer-community-btn" href="/docs" target="_blank" rel="noopener">
 					<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
 					Docs
@@ -131,27 +131,27 @@
 				<div class="h-footer-brand">
 					<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
 					<span class="wordmark-dot" aria-hidden="true" style="width:8px;height:8px;border-radius:50%;background:#fff;display:inline-block"></span>
-					<span>three.ws</span>
+					<span data-i18n="drop.three_ws">three.ws</span>
 				</div>
-				<p class="h-footer-tagline">Give your AI a body.</p>
+				<p class="h-footer-tagline" data-i18n="drop.give_your_ai_a_body">Give your AI a body.</p>
 			</div>
 			<nav class="h-footer-links" aria-label="Footer">
 				<div class="h-footer-link-col">
-					<h4 class="h-footer-link-heading">Product</h4>
-					<a href="/vanity-wallet">Vanity wallet</a>
-					<a href="/create">Create</a>
+					<h4 class="h-footer-link-heading" data-i18n="drop.product">Product</h4>
+					<a href="/vanity-wallet" data-i18n="drop.vanity_wallet">Vanity wallet</a>
+					<a href="/create" data-i18n="drop.create">Create</a>
 				</div>
 				<div class="h-footer-link-col">
-					<h4 class="h-footer-link-heading">Developers</h4>
-					<a href="/docs">Docs</a>
+					<h4 class="h-footer-link-heading" data-i18n="drop.developers">Developers</h4>
+					<a href="/docs" data-i18n="drop.docs">Docs</a>
 				</div>
 			</nav>
 		</div>
 		<div class="h-footer-bottom">
-			<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+			<p class="h-footer-legal" data-i18n="drop.2026_three_ws_all_rights_reserved">© 2026 three.ws — All rights reserved.</p>
 			<div class="h-footer-legal-links">
-				<a href="/legal/privacy">Privacy Policy</a>
-				<a href="/legal/tos">Terms of Use</a>
+				<a href="/legal/privacy" data-i18n="drop.privacy_policy">Privacy Policy</a>
+				<a href="/legal/tos" data-i18n="drop.terms_of_use">Terms of Use</a>
 			</div>
 		</div>
 	</footer>
@@ -160,5 +160,7 @@
 	<script src="/brand.js" defer></script>
 	<div id="footer-container"></div>
 	<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

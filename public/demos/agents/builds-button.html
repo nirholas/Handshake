@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Builds the button — three.ws</title>
+		<title data-i18n="demos_agents_builds_button.meta_title">Builds the button — three.ws</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/demos/agents/_shared.css" />
@@ -29,14 +29,14 @@
 	<body>
 		<div class="stage">
 			<div class="hero-eyebrow">Builds the button</div>
-			<h1 class="hero-title">She <em>assembles</em> the CTA.</h1>
-			<p class="hero-sub">
+			<h1 class="hero-title" data-i18n-html="demos_agents_builds_button.she_assembles_the_cta">She <em>assembles</em> the CTA.</h1>
+			<p class="hero-sub" data-i18n="demos_agents_builds_button.walks_in_from_the_left_carrying_blocks">
 				Walks in from the left carrying blocks. Places them where the
 				button belongs. Stacks them. They snap together into the CTA.
 			</p>
 			<div class="cta-row">
-				<a href="#" class="btn btn-primary" id="cta-btn"><span>Build your agent — free</span><span>→</span></a>
-				<button class="btn btn-ghost" id="restart"><span>Rebuild</span></button>
+				<a href="#" class="btn btn-primary" id="cta-btn" data-i18n-html="demos_agents_builds_button.build_your_agent_free"><span>Build your agent — free</span><span>→</span></a>
+				<button class="btn btn-ghost" id="restart" data-i18n-html="demos_agents_builds_button.rebuild"><span>Rebuild</span></button>
 			</div>
 		</div>
 		<canvas id="avatar-canvas"></canvas>
@@ -175,5 +175,7 @@
 			}, rootBone, baseRootPos);
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

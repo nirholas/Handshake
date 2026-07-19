@@ -2,7 +2,7 @@
 	<div class="nav-inner">
 		<a class="brand" href="/">
 			<img class="brand-mark" src="/three.svg" alt="" width="24" height="24" />
-			<span>three.ws</span>
+			<span data-i18n="nav.three_ws">three.ws</span>
 		</a>
 		<!-- Menu groups + top-level links are rendered here by nav.js from
 		     nav-data.js — the single source of truth for every menu item.
@@ -15,7 +15,7 @@
 				data-search-open
 				aria-label="Search (Cmd K)"
 				title="Search"
-			>
+			 data-i18n-attr="aria-label:nav.search_cmd_k_arialabel;title:nav.search_title">
 				<svg
 					class="nav-search-ico"
 					width="14"
@@ -40,7 +40,7 @@
 				aria-pressed="false"
 				aria-label="Walk with me — toggle the avatar companion"
 				title="Walk with me"
-			>
+			 data-i18n-attr="aria-label:nav.walk_with_me_toggle_the_avat_arialabel;title:nav.walk_with_me_title">
 				<span class="nav-walk-ico" aria-hidden="true">🚶</span
 				><span class="nav-walk-label" data-i18n="nav.9nlxdc">Walk</span>
 			</button>
@@ -51,7 +51,7 @@
 				aria-pressed="false"
 				aria-label="Switch to light theme"
 				title="Toggle theme"
-			>
+			 data-i18n-attr="aria-label:nav.switch_to_light_theme_arialabel;title:nav.toggle_theme_title">
 				<svg
 					class="nav-theme-ico moon"
 					viewBox="0 0 20 20"
@@ -93,7 +93,7 @@
 				aria-expanded="false"
 				aria-haspopup="dialog"
 				title="Notifications"
-			>
+			 data-i18n-attr="aria-label:nav.notifications_arialabel;title:nav.notifications_title">
 				<svg
 					class="nav-notif-ico"
 					viewBox="0 0 20 20"
@@ -115,7 +115,7 @@
 			<a href="/login" id="home-nav-cta" data-auth="out" data-i18n="nav.w9nig3">Sign in</a>
 			<a class="console" href="/dashboard" id="home-nav-user" data-auth-name data-i18n="nav.15pjwv8">Console →</a>
 		</div>
-		<button class="nav-toggle" aria-label="Menu" aria-expanded="false" id="nav-toggle">
+		<button class="nav-toggle" aria-label="Menu" aria-expanded="false" id="nav-toggle" data-i18n-attr="aria-label:nav.menu_arialabel">
 			<svg
 				class="open"
 				viewBox="0 0 16 16"

@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Action Log — three.ws</title>
+		<title data-i18n="dashboard_actions.meta_title">Action Log — three.ws</title>
 		<style>
 			:root {
 				color-scheme: dark;
@@ -281,7 +281,7 @@
 		<div class="container">
 			<div class="header">
 				<div class="agent-info">
-					<h1 id="agent-name">Action Log</h1>
+					<h1 id="agent-name" data-i18n="dashboard_actions.action_log">Action Log</h1>
 					<div class="sub" id="agent-id"></div>
 					<div class="signer-pill" id="signer-pill" style="display: none"></div>
 				</div>
@@ -290,14 +290,14 @@
 			<div id="error-msg"></div>
 
 			<div class="actions-toolbar">
-				<button class="filter-chip active" data-filter="all">All</button>
-				<button class="filter-chip" data-filter="speak">Speak</button>
-				<button class="filter-chip" data-filter="remember">Remember</button>
-				<button class="filter-chip" data-filter="sign">Sign</button>
-				<button class="filter-chip" data-filter="skill-done">Skill Done</button>
-				<button class="filter-chip" data-filter="validate">Validate</button>
-				<button class="filter-chip" data-filter="load-end">Load End</button>
-				<button class="export-btn" id="export-btn">Download JSON</button>
+				<button class="filter-chip active" data-filter="all" data-i18n="dashboard_actions.all">All</button>
+				<button class="filter-chip" data-filter="speak" data-i18n="dashboard_actions.speak">Speak</button>
+				<button class="filter-chip" data-filter="remember" data-i18n="dashboard_actions.remember">Remember</button>
+				<button class="filter-chip" data-filter="sign" data-i18n="dashboard_actions.sign">Sign</button>
+				<button class="filter-chip" data-filter="skill-done" data-i18n="dashboard_actions.skill_done">Skill Done</button>
+				<button class="filter-chip" data-filter="validate" data-i18n="dashboard_actions.validate">Validate</button>
+				<button class="filter-chip" data-filter="load-end" data-i18n="dashboard_actions.load_end">Load End</button>
+				<button class="export-btn" id="export-btn" data-i18n="dashboard_actions.download_json">Download JSON</button>
 			</div>
 
 			<div id="timeline" class="timeline"></div>
@@ -630,5 +630,7 @@
 			}
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

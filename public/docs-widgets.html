@@ -3,20 +3,20 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Widget Docs — three.ws</title>
+		<title data-i18n="docs_widgets.meta_title">Widget Docs — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta
 			name="description"
 			content="Embed 3D widgets on any site. URL params, iframe + script embeds, postMessage API, oEmbed, privacy."
-		/>
+		 data-i18n-attr="content:docs_widgets.meta_description"/>
 		<meta name="theme-color" content="#0a0a0a" />
 
 		<meta property="og:type" content="article" />
-		<meta property="og:title" content="three.ws — Widget Docs" />
+		<meta property="og:title" content="three.ws — Widget Docs"  data-i18n-attr="content:docs_widgets.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Embed 3D widgets on any site. URL params, postMessage API, oEmbed, privacy."
-		/>
+		 data-i18n-attr="content:docs_widgets.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/docs/widgets" />
 
 		<link rel="canonical" href="https://three.ws/docs/widgets" />
@@ -131,8 +131,8 @@
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Docs · Widgets · three.ws">
-	<meta name="twitter:description" content="Build and publish reusable chat and 3D widgets.">
+	<meta name="twitter:title" content="Docs · Widgets · three.ws" data-i18n-attr="content:docs_widgets.meta_twitter_title">
+	<meta name="twitter:description" content="Build and publish reusable chat and 3D widgets." data-i18n-attr="content:docs_widgets.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=Docs+%C2%B7+Widgets&amp;d=Build+and+publish+reusable+chat+and+3D+widgets.&amp;p=%2Fdocs%2Fwidgets">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Docs · Widgets","description":"Build and publish reusable chat and 3D widgets.","url":"https://three.ws/docs/widgets","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -149,12 +149,12 @@
 		<script src="/nav.js"></script>
 
 		<main class="docs-main">
-			<h1>Widgets</h1>
-			<p>
+			<h1 data-i18n="docs_widgets.widgets">Widgets</h1>
+			<p data-i18n="docs_widgets.embeddable_3d_a_configured_shareable_view_of">
 				Embeddable 3D — a configured, shareable view of an avatar that any site can drop in
 				with one line of HTML.
 			</p>
-			<p>
+			<p data-i18n-html="docs_widgets.a_widget_is_a_saved_bundle_of">
 				A widget is a saved bundle of: an avatar (GLB stored in R2), a widget type
 				(turntable, animation gallery, talking agent, ERC-8004 passport, hotspot tour), and
 				brand config (background, accent, caption, controls, camera). Widgets are created in
@@ -162,140 +162,140 @@
 			</p>
 
 			<div class="docs-toc">
-				<strong>On this page:</strong>
+				<strong data-i18n="docs_widgets.on_this_page">On this page:</strong>
 				<ul>
-					<li><a href="#quick-start">Quick start</a></li>
-					<li><a href="#widget-types">Widget types</a></li>
-					<li><a href="#urls">URLs</a></li>
-					<li><a href="#embedding">Embedding</a></li>
-					<li><a href="#postmessage-api">postMessage API</a></li>
-					<li><a href="#og-oembed">OG / oEmbed</a></li>
-					<li><a href="#csp-cors">CSP / CORS</a></li>
-					<li><a href="#privacy">Privacy &amp; analytics</a></li>
-					<li><a href="#faq">FAQ</a></li>
+					<li data-i18n-html="docs_widgets.quick_start"><a href="#quick-start">Quick start</a></li>
+					<li data-i18n-html="docs_widgets.widget_types"><a href="#widget-types">Widget types</a></li>
+					<li data-i18n-html="docs_widgets.urls"><a href="#urls">URLs</a></li>
+					<li data-i18n-html="docs_widgets.embedding"><a href="#embedding">Embedding</a></li>
+					<li data-i18n-html="docs_widgets.postmessage_api"><a href="#postmessage-api">postMessage API</a></li>
+					<li data-i18n-html="docs_widgets.og_oembed"><a href="#og-oembed">OG / oEmbed</a></li>
+					<li data-i18n-html="docs_widgets.csp_cors"><a href="#csp-cors">CSP / CORS</a></li>
+					<li data-i18n-html="docs_widgets.privacy_analytics"><a href="#privacy">Privacy &amp; analytics</a></li>
+					<li data-i18n-html="docs_widgets.faq"><a href="#faq">FAQ</a></li>
 				</ul>
 			</div>
 
-			<h2 id="quick-start">Quick start</h2>
+			<h2 id="quick-start" data-i18n="docs_widgets.quick_start_2">Quick start</h2>
 			<ol>
-				<li>Sign in at <a href="/">three.ws</a>.</li>
-				<li>Open the <a href="/studio">Studio</a>.</li>
-				<li>
+				<li data-i18n-html="docs_widgets.sign_in_at_three_ws">Sign in at <a href="/">three.ws</a>.</li>
+				<li data-i18n-html="docs_widgets.open_the_studio">Open the <a href="/studio">Studio</a>.</li>
+				<li data-i18n-html="docs_widgets.pick_an_avatar_pick_a_widget_type">
 					Pick an avatar, pick a widget type, tweak brand colors and controls, click
 					<strong>Generate Embed</strong>.
 				</li>
-				<li>Copy the iframe snippet into any HTML page, blog post, Notion doc, or CMS.</li>
+				<li data-i18n="docs_widgets.copy_the_iframe_snippet_into_any_html">Copy the iframe snippet into any HTML page, blog post, Notion doc, or CMS.</li>
 			</ol>
 
-			<h2 id="widget-types">Widget types</h2>
+			<h2 id="widget-types" data-i18n="docs_widgets.widget_types_2">Widget types</h2>
 			<table>
 				<thead>
 					<tr>
-						<th>Type</th>
-						<th>Best for</th>
-						<th>Default size</th>
+						<th data-i18n="docs_widgets.type">Type</th>
+						<th data-i18n="docs_widgets.best_for">Best for</th>
+						<th data-i18n="docs_widgets.default_size">Default size</th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr>
 						<td><code>turntable</code></td>
-						<td>Hero banners, product showcases. Auto-rotate, no UI.</td>
+						<td data-i18n="docs_widgets.hero_banners_product_showcases_auto_rotate_n">Hero banners, product showcases. Auto-rotate, no UI.</td>
 						<td>600 × 600</td>
 					</tr>
 					<tr>
 						<td><code>animation-gallery</code></td>
-						<td>Showcasing a rigged avatar's animation library.</td>
+						<td data-i18n="docs_widgets.showcasing_a_rigged_avatar_s_animation_libra">Showcasing a rigged avatar's animation library.</td>
 						<td>720 × 720</td>
 					</tr>
 					<tr>
 						<td><code>talking-agent</code></td>
-						<td>Embodied chat — your agent on your site.</td>
+						<td data-i18n="docs_widgets.embodied_chat_your_agent_on_your_site">Embodied chat — your agent on your site.</td>
 						<td>420 × 600</td>
 					</tr>
 					<tr>
 						<td><code>passport</code></td>
-						<td>On-chain identity card backed by ERC-8004.</td>
+						<td data-i18n="docs_widgets.on_chain_identity_card_backed_by_erc">On-chain identity card backed by ERC-8004.</td>
 						<td>480 × 560</td>
 					</tr>
 					<tr>
 						<td><code>hotspot-tour</code></td>
-						<td>Annotated 3D scenes with clickable POIs.</td>
+						<td data-i18n="docs_widgets.annotated_3d_scenes_with_clickable_pois">Annotated 3D scenes with clickable POIs.</td>
 						<td>800 × 600</td>
 					</tr>
 				</tbody>
 			</table>
 
-			<h2 id="urls">URLs</h2>
-			<p>Every widget has three canonical URLs.</p>
+			<h2 id="urls" data-i18n="docs_widgets.urls_2">URLs</h2>
+			<p data-i18n="docs_widgets.every_widget_has_three_canonical_urls">Every widget has three canonical URLs.</p>
 			<table>
 				<thead>
 					<tr>
-						<th>URL</th>
-						<th>Use it for</th>
+						<th data-i18n="docs_widgets.url">URL</th>
+						<th data-i18n="docs_widgets.use_it_for">Use it for</th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr>
 						<td><code>/w/&lt;id&gt;</code></td>
-						<td>Sharing in Slack/Discord/X — server-rendered with rich OG card.</td>
+						<td data-i18n="docs_widgets.sharing_in_slack_discord_x_server_rendered">Sharing in Slack/Discord/X — server-rendered with rich OG card.</td>
 					</tr>
 					<tr>
 						<td><code>/widget#widget=&lt;id&gt;</code></td>
-						<td>Slim viewer shell — no nav/footer chrome. The canonical embed URL.</td>
+						<td data-i18n="docs_widgets.slim_viewer_shell_no_nav_footer_chrome">Slim viewer shell — no nav/footer chrome. The canonical embed URL.</td>
 					</tr>
 					<tr>
 						<td><code>/app#widget=&lt;id&gt;</code></td>
-						<td>Legacy SPA viewer — still works, but includes the full main-app chrome.</td>
+						<td data-i18n="docs_widgets.legacy_spa_viewer_still_works_but_includes">Legacy SPA viewer — still works, but includes the full main-app chrome.</td>
 					</tr>
 					<tr>
 						<td><code>/api/widgets/&lt;id&gt;/og</code></td>
-						<td>The 1200×630 preview image.</td>
+						<td data-i18n="docs_widgets.the_1200_630_preview_image">The 1200×630 preview image.</td>
 					</tr>
 				</tbody>
 			</table>
 
-			<h3>Hash parameters</h3>
+			<h3 data-i18n="docs_widgets.hash_parameters">Hash parameters</h3>
 			<table>
 				<thead>
 					<tr>
-						<th>Param</th>
-						<th>Type</th>
-						<th>Description</th>
+						<th data-i18n="docs_widgets.param">Param</th>
+						<th data-i18n="docs_widgets.type_2">Type</th>
+						<th data-i18n="docs_widgets.description">Description</th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr>
 						<td><code>widget</code></td>
-						<td>string</td>
-						<td>Loads a saved widget by id.</td>
+						<td data-i18n="docs_widgets.string">string</td>
+						<td data-i18n="docs_widgets.loads_a_saved_widget_by_id">Loads a saved widget by id.</td>
 					</tr>
 					<tr>
 						<td><code>model</code></td>
-						<td>string</td>
-						<td>
+						<td data-i18n="docs_widgets.string_2">string</td>
+						<td data-i18n-html="docs_widgets.loads_a_raw_glb_by_url_mutually">
 							Loads a raw GLB by URL (mutually exclusive with <code>widget</code>).
 						</td>
 					</tr>
 					<tr>
 						<td><code>kiosk</code></td>
-						<td>boolean</td>
-						<td>Hides the header chrome for clean iframe embeds.</td>
+						<td data-i18n="docs_widgets.boolean">boolean</td>
+						<td data-i18n="docs_widgets.hides_the_header_chrome_for_clean_iframe">Hides the header chrome for clean iframe embeds.</td>
 					</tr>
 					<tr>
 						<td><code>cameraPosition</code></td>
-						<td>x,y,z</td>
-						<td>Comma-separated camera position override.</td>
+						<td data-i18n="docs_widgets.x_y_z">x,y,z</td>
+						<td data-i18n="docs_widgets.comma_separated_camera_position_override">Comma-separated camera position override.</td>
 					</tr>
 					<tr>
 						<td><code>preset</code></td>
-						<td>string</td>
-						<td>HDR environment preset name.</td>
+						<td data-i18n="docs_widgets.string_3">string</td>
+						<td data-i18n="docs_widgets.hdr_environment_preset_name">HDR environment preset name.</td>
 					</tr>
 				</tbody>
 			</table>
 
-			<h2 id="embedding">Embedding</h2>
-			<h3>iframe (recommended)</h3>
+			<h2 id="embedding" data-i18n="docs_widgets.embedding_2">Embedding</h2>
+			<h3 data-i18n="docs_widgets.iframe_recommended">iframe (recommended)</h3>
 			<pre><code>&lt;iframe
   src="https://three.ws/widget#widget=wdgt_abc123def456&amp;kiosk=true"
   width="600"
@@ -304,55 +304,55 @@
   allow="autoplay; xr-spatial-tracking; clipboard-write"
   loading="lazy"&gt;&lt;/iframe&gt;</code></pre>
 
-			<h3>Script embed</h3>
+			<h3 data-i18n="docs_widgets.script_embed">Script embed</h3>
 			<pre><code>&lt;script async src="https://three.ws/embed.js" data-widget="wdgt_abc123def456"&gt;&lt;/script&gt;</code></pre>
 
-			<h3>oEmbed (WordPress, Ghost, Notion)</h3>
-			<p>
+			<h3 data-i18n="docs_widgets.oembed_wordpress_ghost_notion">oEmbed (WordPress, Ghost, Notion)</h3>
+			<p data-i18n-html="docs_widgets.most_cmses_auto_detect_oembed_paste_a">
 				Most CMSes auto-detect oEmbed. Paste a <code>/w/&lt;id&gt;</code> URL on its own
 				line and the editor should turn it into a live embed automatically.
 			</p>
 
-			<h2 id="postmessage-api">postMessage API</h2>
-			<p>
+			<h2 id="postmessage-api" data-i18n="docs_widgets.postmessage_api_2">postMessage API</h2>
+			<p data-i18n-html="docs_widgets.widgets_communicate_with_the_parent_page_via">
 				Widgets communicate with the parent page via <code>window.postMessage</code>.
 				<strong>Always check <code>event.origin</code> before trusting any message.</strong>
 			</p>
 
-			<h3>iframe → parent</h3>
+			<h3 data-i18n="docs_widgets.iframe_parent">iframe → parent</h3>
 			<table>
 				<thead>
 					<tr>
-						<th>Event</th>
-						<th>Payload</th>
-						<th>When</th>
+						<th data-i18n="docs_widgets.event">Event</th>
+						<th data-i18n="docs_widgets.payload">Payload</th>
+						<th data-i18n="docs_widgets.when">When</th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr>
 						<td><code>widget:ready</code></td>
 						<td><code>{ id, type }</code></td>
-						<td>Widget runtime has booted.</td>
+						<td data-i18n="docs_widgets.widget_runtime_has_booted">Widget runtime has booted.</td>
 					</tr>
 					<tr>
 						<td><code>widget:load</code></td>
 						<td><code>{ id, model_url }</code></td>
-						<td>Underlying GLB loaded successfully.</td>
+						<td data-i18n="docs_widgets.underlying_glb_loaded_successfully">Underlying GLB loaded successfully.</td>
 					</tr>
 					<tr>
 						<td><code>widget:load:error</code></td>
 						<td><code>{ id, error }</code></td>
-						<td>GLB or config failed to load.</td>
+						<td data-i18n="docs_widgets.glb_or_config_failed_to_load">GLB or config failed to load.</td>
 					</tr>
 					<tr>
 						<td><code>widget:chat:message</code></td>
 						<td><code>{ role, content }</code></td>
-						<td>Talking-agent only.</td>
+						<td data-i18n="docs_widgets.talking_agent_only">Talking-agent only.</td>
 					</tr>
 					<tr>
 						<td><code>widget:hotspot:open</code></td>
 						<td><code>{ id, label }</code></td>
-						<td>Hotspot-tour only.</td>
+						<td data-i18n="docs_widgets.hotspot_tour_only">Hotspot-tour only.</td>
 					</tr>
 				</tbody>
 			</table>
@@ -364,45 +364,45 @@
   }
 });</code></pre>
 
-			<h3>parent → iframe</h3>
+			<h3 data-i18n="docs_widgets.parent_iframe">parent → iframe</h3>
 			<table>
 				<thead>
 					<tr>
-						<th>Event</th>
-						<th>Payload</th>
-						<th>Effect</th>
+						<th data-i18n="docs_widgets.event_2">Event</th>
+						<th data-i18n="docs_widgets.payload_2">Payload</th>
+						<th data-i18n="docs_widgets.effect">Effect</th>
 					</tr>
 				</thead>
 				<tbody>
 					<tr>
 						<td><code>widget:config</code></td>
 						<td><code>{ background, accent, autoRotate, … }</code></td>
-						<td>Live-update brand config.</td>
+						<td data-i18n="docs_widgets.live_update_brand_config">Live-update brand config.</td>
 					</tr>
 					<tr>
 						<td><code>widget:command</code></td>
 						<td><code>{ command, args }</code></td>
-						<td>Trigger a runtime action.</td>
+						<td data-i18n="docs_widgets.trigger_a_runtime_action">Trigger a runtime action.</td>
 					</tr>
 				</tbody>
 			</table>
 
-			<h2 id="og-oembed">OG / oEmbed</h2>
-			<p>
+			<h2 id="og-oembed" data-i18n="docs_widgets.og_oembed_2">OG / oEmbed</h2>
+			<p data-i18n-html="docs_widgets.every_widget_url_serves_rich_preview_metadat">
 				Every widget URL serves rich-preview metadata. <code>/w/&lt;id&gt;</code> is
 				server-rendered with Open Graph + Twitter card tags and a
 				<code>&lt;link rel="alternate" type="application/json+oembed"&gt;</code> pointer.
 			</p>
 			<pre><code>GET /api/widgets/oembed?url=&lt;widget-url&gt;&amp;format=json</code></pre>
-			<p>
+			<p data-i18n-html="docs_widgets.returns_standard_oembed_v1_0_json_type">
 				Returns standard <a href="https://oembed.com">oEmbed v1.0</a> JSON, type
 				<code>rich</code>. Accepts <code>/w/&lt;id&gt;</code>,
 				<code>/widget#widget=&lt;id&gt;</code>, and legacy
 				<code>/app#widget=&lt;id&gt;</code> forms.
 			</p>
 
-			<h2 id="csp-cors">CSP / CORS</h2>
-			<p>
+			<h2 id="csp-cors" data-i18n="docs_widgets.csp_cors_2">CSP / CORS</h2>
+			<p data-i18n-html="docs_widgets.widgets_run_in_a_sandboxed_iframe_with">
 				Widgets run in a sandboxed iframe with these <code>allow</code> flags:
 				<code>autoplay</code>, <code>xr-spatial-tracking</code>,
 				<code>clipboard-write</code>. If your site uses strict CSP, allow:
@@ -410,32 +410,32 @@
 			<pre><code>frame-src https://three.ws/;
 img-src https://three.ws/ data:;</code></pre>
 
-			<h2 id="privacy">Privacy &amp; analytics</h2>
-			<p>
+			<h2 id="privacy" data-i18n="docs_widgets.privacy_analytics_2">Privacy &amp; analytics</h2>
+			<p data-i18n-html="docs_widgets.we_log_a_minimal_first_party_event">
 				We log a minimal first-party event per widget load: <code>widget_id</code>,
 				<code>type</code>, <code>country</code> (Vercel edge header),
 				<code>referer_host</code> (hostname only), <code>created_at</code>. No IPs. No
 				cookies. No user agents. No chat content. No cross-widget tracking.
 			</p>
 
-			<h2 id="faq">FAQ</h2>
-			<p>
+			<h2 id="faq" data-i18n="docs_widgets.faq_2">FAQ</h2>
+			<p data-i18n-html="docs_widgets.can_i_self_host_the_runtime_is">
 				<strong>Can I self-host?</strong> The runtime is open source. The Studio +
 				saved-widgets API depends on Neon + R2; you'd need to wire those yourself. See
 				<a href="/docs/deployment">deployment guide</a>.
 			</p>
-			<p>
+			<p data-i18n-html="docs_widgets.why_no_wordpress_plugin_the_oembed_endpoint">
 				<strong>Why no WordPress plugin?</strong> The oEmbed endpoint already does what a
 				plugin would.
 			</p>
-			<p><strong>How big is the bundle?</strong> Cold load ~400KB JS + the GLB itself.</p>
-			<p>
+			<p data-i18n-html="docs_widgets.how_big_is_the_bundle_cold_load"><strong>How big is the bundle?</strong> Cold load ~400KB JS + the GLB itself.</p>
+			<p data-i18n-html="docs_widgets.mobile_yes_every_widget_type_works_on">
 				<strong>Mobile?</strong> Yes — every widget type works on iOS Safari and Android
 				Chrome.
 			</p>
 
 			<hr />
-			<p>
+			<p data-i18n-html="docs_widgets.back_to_gallery_open_the_studio">
 				<a href="/widgets">← Back to gallery</a> · <a href="/studio">Open the Studio →</a>
 			</p>
 		</main>
@@ -467,42 +467,42 @@ img-src https://three.ws/ data:;</code></pre>
 					<div class="h-footer-brand">
 						<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
 						<span class="wordmark-dot" aria-hidden="true"></span>
-						<span>three.ws</span>
+						<span data-i18n="docs_widgets.three_ws">three.ws</span>
 					</div>
-					<p class="h-footer-tagline">Give your AI a body.</p>
+					<p class="h-footer-tagline" data-i18n="docs_widgets.give_your_ai_a_body">Give your AI a body.</p>
 				</div>
 				<nav class="h-footer-links" aria-label="Footer">
-					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
-					<a href="/create">Create</a>
-					<a href="/docs">Docs</a>
+					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" data-i18n="docs_widgets.github">GitHub</a>
+					<a href="/create" data-i18n="docs_widgets.create">Create</a>
+					<a href="/docs" data-i18n="docs_widgets.docs">Docs</a>
 				</nav>
 					</div>
-					<p class="h-footer-tagline">Give your AI a body.</p>
+					<p class="h-footer-tagline" data-i18n="docs_widgets.give_your_ai_a_body_2">Give your AI a body.</p>
 				</div>
 				<nav class="h-footer-links" aria-label="Footer">
-					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
-					<a href="/create">Create</a>
-					<a href="/studio">Studio</a>
-					<a href="/widgets">Widgets</a>
-					<a href="/discover">Discover</a>
-					<a href="/showcase">Showcase</a>
-					<a href="/docs">Docs</a>
-					<a href="/legal/privacy">Privacy</a>
-					<a href="/legal/tos">Terms</a>
+					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" data-i18n="docs_widgets.github_2">GitHub</a>
+					<a href="/create" data-i18n="docs_widgets.create_2">Create</a>
+					<a href="/studio" data-i18n="docs_widgets.studio">Studio</a>
+					<a href="/widgets" data-i18n="docs_widgets.widgets_2">Widgets</a>
+					<a href="/discover" data-i18n="docs_widgets.discover">Discover</a>
+					<a href="/showcase" data-i18n="docs_widgets.showcase">Showcase</a>
+					<a href="/docs" data-i18n="docs_widgets.docs_2">Docs</a>
+					<a href="/legal/privacy" data-i18n="docs_widgets.privacy">Privacy</a>
+					<a href="/legal/tos" data-i18n="docs_widgets.terms">Terms</a>
 				</nav>
 			</div>
 			<div class="h-footer-bottom">
-				<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+				<p class="h-footer-legal" data-i18n="docs_widgets.2026_three_ws_all_rights_reserved">© 2026 three.ws — All rights reserved.</p>
 				<div class="h-footer-badges">
-					<span class="h-footer-badge" aria-label="System status">
+					<span class="h-footer-badge" aria-label="System status" data-i18n-html="docs_widgets.all_systems_normal" data-i18n-attr="aria-label:docs_widgets.system_status_arialabel">
 						<span class="h-footer-status-dot" aria-hidden="true"></span>
 						<span>All systems normal</span>
 					</span>
 					<span class="h-footer-badge">
 						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 14.5A6.5 6.5 0 1 1 8 1.5a6.5 6.5 0 0 1 0 13zm-1-9.25a1 1 0 1 1 2 0v3.5a1 1 0 1 1-2 0v-3.5zm1 6.5a1.1 1.1 0 1 1 0-2.2 1.1 1.1 0 0 1 0 2.2z"/></svg>
-						<span>Transparent by default</span>
+						<span data-i18n="docs_widgets.transparent_by_default">Transparent by default</span>
 					</span>
-					<a class="h-footer-badge" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="View source on GitHub">
+					<a class="h-footer-badge" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="View source on GitHub" data-i18n-attr="aria-label:docs_widgets.view_source_on_github_arialabel">
 						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
 						<span>Open source</span>
 					</a>
@@ -512,5 +512,7 @@ img-src https://three.ws/ data:;</code></pre>
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

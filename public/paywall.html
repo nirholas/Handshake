@@ -5,8 +5,8 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Payment Required — three.ws</title>
-	<meta name="description" content="Pay with USDC to access this x402 endpoint." />
+	<title data-i18n="paywall.meta_title">Payment Required — three.ws</title>
+	<meta name="description" content="Pay with USDC to access this x402 endpoint."  data-i18n-attr="content:paywall.meta_description"/>
 	<link rel="icon" href="/favicon.ico" />
 	<link rel="stylesheet" href="/fonts/fonts.css" />
 	<style>
@@ -327,11 +327,11 @@
 <!-- ── MINIMAL NAV ──────────────────────────────────────────── -->
 <nav class="nav">
 	<div class="nav-inner">
-		<a class="brand" href="/">
+		<a class="brand" href="/" data-i18n-html="paywall.three_ws">
 			<span class="brand-mark"></span>
 			three.ws
 		</a>
-		<a class="nav-close" id="close-btn" href="/" title="Close">&#x2715;</a>
+		<a class="nav-close" id="close-btn" href="/" title="Close" data-i18n-attr="title:paywall.close_title">&#x2715;</a>
 	</div>
 </nav>
 
@@ -359,24 +359,24 @@
 
 			<!-- Network tabs -->
 			<div class="tab-row" id="tab-row">
-				<button class="tab-btn active" data-net="base" id="tab-base">Base</button>
-				<button class="tab-btn" data-net="solana" id="tab-solana">Solana</button>
+				<button class="tab-btn active" data-net="base" id="tab-base" data-i18n="paywall.base">Base</button>
+				<button class="tab-btn" data-net="solana" id="tab-solana" data-i18n="paywall.solana">Solana</button>
 			</div>
 
 			<!-- Base network -->
 			<div class="net-panel active" id="net-base">
 				<div class="wallet-list">
-					<button class="wallet-btn" data-wallet="coinbase">
+					<button class="wallet-btn" data-wallet="coinbase" data-i18n-html="paywall.coinbase_wallet">
 						<span class="wallet-icon">🔵</span>
 						<span class="wallet-name">Coinbase Wallet</span>
 						<span class="wallet-arrow">›</span>
 					</button>
-					<button class="wallet-btn" data-wallet="metamask">
+					<button class="wallet-btn" data-wallet="metamask" data-i18n-html="paywall.metamask">
 						<span class="wallet-icon">🦊</span>
 						<span class="wallet-name">MetaMask</span>
 						<span class="wallet-arrow">›</span>
 					</button>
-					<button class="wallet-btn" data-wallet="walletconnect">
+					<button class="wallet-btn" data-wallet="walletconnect" data-i18n-html="paywall.walletconnect">
 						<span class="wallet-icon">🔗</span>
 						<span class="wallet-name">WalletConnect</span>
 						<span class="wallet-arrow">›</span>
@@ -384,19 +384,19 @@
 				</div>
 				<div class="wallet-status" id="wallet-status-base"></div>
 				<div class="testnet-hint" id="testnet-hint-base">
-					Testing on testnet? <a href="https://faucet.circle.com/" target="_blank" rel="noopener">Get free USDC on Base Sepolia →</a>
+					Testing on testnet? <a href="https://faucet.circle.com/" target="_blank" rel="noopener" data-i18n="paywall.get_free_usdc_on_base_sepolia">Get free USDC on Base Sepolia →</a>
 				</div>
 			</div>
 
 			<!-- Solana network -->
 			<div class="net-panel" id="net-solana">
 				<div class="wallet-list">
-					<button class="wallet-btn" data-wallet="phantom">
+					<button class="wallet-btn" data-wallet="phantom" data-i18n-html="paywall.phantom">
 						<span class="wallet-icon">👻</span>
 						<span class="wallet-name">Phantom</span>
 						<span class="wallet-arrow">›</span>
 					</button>
-					<button class="wallet-btn" data-wallet="solflare">
+					<button class="wallet-btn" data-wallet="solflare" data-i18n-html="paywall.solflare">
 						<span class="wallet-icon">🌟</span>
 						<span class="wallet-name">Solflare</span>
 						<span class="wallet-arrow">›</span>
@@ -407,7 +407,7 @@
 
 			<!-- Advanced: raw payment requirements -->
 			<button class="accordion-trigger" id="adv-toggle">
-				<span>Advanced — view payment requirements</span>
+				<span data-i18n="paywall.advanced_view_payment_requirements">Advanced — view payment requirements</span>
 				<svg width="14" height="14" fill="none" viewBox="0 0 14 14"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 			</button>
 			<div class="accordion-body" id="adv-body">
@@ -418,11 +418,11 @@
 
 		<!-- Footer -->
 		<div class="card-foot">
-			<span class="foot-text">Powered by <a href="https://x402.org" target="_blank" rel="noopener">x402</a></span>
+			<span class="foot-text" data-i18n-html="paywall.powered_by_x402">Powered by <a href="https://x402.org" target="_blank" rel="noopener">x402</a></span>
 			<span class="foot-dot"></span>
-			<span class="foot-text"><a href="https://three.ws" target="_blank" rel="noopener">three.ws</a></span>
+			<span class="foot-text" data-i18n-html="paywall.three_ws_2"><a href="https://three.ws" target="_blank" rel="noopener">three.ws</a></span>
 			<span class="foot-dot"></span>
-			<span class="foot-text"><a href="https://x402.org/docs" target="_blank" rel="noopener">Learn more</a></span>
+			<span class="foot-text" data-i18n-html="paywall.learn_more"><a href="https://x402.org/docs" target="_blank" rel="noopener">Learn more</a></span>
 		</div>
 	</div>
 </div>
@@ -432,5 +432,7 @@
 <script type="module" src="/x402-pay-core.js"></script>
 <script src="/paywall.js"></script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -3,8 +3,8 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>three.ws · Reputation attestations on Base</title>
-		<meta name="description" content="Read and write reputation attestations for any agent address on Base Sepolia testnet. Real Ethereum Attestation Service contract, real wallet signing — no mocks." />
+		<title data-i18n="demos_eas_reputation.meta_title">three.ws · Reputation attestations on Base</title>
+		<meta name="description" content="Read and write reputation attestations for any agent address on Base Sepolia testnet. Real Ethereum Attestation Service contract, real wallet signing — no mocks."  data-i18n-attr="content:demos_eas_reputation.meta_description"/>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
@@ -81,9 +81,9 @@
 		<header><div id="nav-container"></div></header>
 
 		<main class="stage">
-			<p class="crumb"><a href="/demos/">&larr; lab</a></p>
-			<h1>three.ws &middot; Reputation attestations on Base</h1>
-			<p class="sub">
+			<p class="crumb" data-i18n-html="demos_eas_reputation.lab"><a href="/demos/">&larr; lab</a></p>
+			<h1 data-i18n="demos_eas_reputation.three_ws_reputation_attestations_on_base">three.ws &middot; Reputation attestations on Base</h1>
+			<p class="sub" data-i18n-html="demos_eas_reputation.a_reputation_primitive_for_autonomous_agents">
 				A reputation primitive for autonomous agents: read and write on-chain
 				attestations for any address. This demo runs entirely on
 				<b>Base Sepolia</b> (testnet, chainId <code>84532</code>) and talks
@@ -93,14 +93,14 @@
 			</p>
 
 			<section class="card">
-				<h2>1. Wallet</h2>
+				<h2 data-i18n="demos_eas_reputation.1_wallet">1. Wallet</h2>
 				<div class="row" id="wallet-row">
-					<button id="connect-btn">Connect wallet</button>
-					<span id="wallet-pill" class="pill muted">not connected</span>
-					<span id="chain-pill" class="pill muted">no chain</span>
-					<button id="switch-btn" class="secondary" style="display:none">Switch to Base Sepolia</button>
+					<button id="connect-btn" data-i18n="demos_eas_reputation.connect_wallet">Connect wallet</button>
+					<span id="wallet-pill" class="pill muted" data-i18n="demos_eas_reputation.not_connected">not connected</span>
+					<span id="chain-pill" class="pill muted" data-i18n="demos_eas_reputation.no_chain">no chain</span>
+					<button id="switch-btn" class="secondary" style="display:none" data-i18n="demos_eas_reputation.switch_to_base_sepolia">Switch to Base Sepolia</button>
 				</div>
-				<p class="notice" id="wallet-hint">
+				<p class="notice" id="wallet-hint" data-i18n-html="demos_eas_reputation.you_need_a_few_drops_of_base">
 					You need a few drops of Base Sepolia ETH to write an attestation.
 					Get it free at the
 					<a href="https://portal.cdp.coinbase.com/products/faucet" target="_blank" rel="noopener">Coinbase Base Sepolia faucet</a>
@@ -110,7 +110,7 @@
 			</section>
 
 			<section class="card">
-				<h2>2. Read attestations for an agent</h2>
+				<h2 data-i18n="demos_eas_reputation.2_read_attestations_for_an_agent">2. Read attestations for an agent</h2>
 				<div class="row">
 					<label class="full">
 						Agent address (recipient)
@@ -120,13 +120,13 @@
 						Schema UID (optional filter)
 						<input type="text" id="query-schema" placeholder="leave blank for all schemas" spellcheck="false" />
 					</label>
-					<button id="fetch-btn">Fetch attestations</button>
+					<button id="fetch-btn" data-i18n="demos_eas_reputation.fetch_attestations">Fetch attestations</button>
 				</div>
 				<div id="results-wrap" style="margin-top:16px"></div>
 			</section>
 
 			<section class="card">
-				<h2>3. Create an attestation</h2>
+				<h2 data-i18n="demos_eas_reputation.3_create_an_attestation">3. Create an attestation</h2>
 				<div class="row">
 					<label class="full">
 						Schema UID
@@ -144,10 +144,10 @@
 						Comment
 						<input type="text" id="attest-comment" value="Worked as advertised." />
 					</label>
-					<button id="attest-btn" disabled>Sign &amp; submit</button>
+					<button id="attest-btn" disabled data-i18n="demos_eas_reputation.sign_submit">Sign &amp; submit</button>
 				</div>
 				<details style="margin-top:12px">
-					<summary>Schema details &middot; <code>address agent, uint8 score, string comment</code></summary>
+					<summary data-i18n-html="demos_eas_reputation.schema_details">Schema details &middot; <code>address agent, uint8 score, string comment</code></summary>
 					<pre>schemaString  : address agent, uint8 score, string comment
 chain         : Base Sepolia (84532)
 EAS contract  : 0x4200000000000000000000000000000000000021
@@ -161,7 +161,7 @@ string above, then paste the new UID here.</pre>
 			</section>
 
 			<section class="card">
-				<h2>Log</h2>
+				<h2 data-i18n="demos_eas_reputation.log">Log</h2>
 				<div class="log" id="log">ready.</div>
 			</section>
 		</main>
@@ -506,5 +506,7 @@ string above, then paste the new UID here.</pre>
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

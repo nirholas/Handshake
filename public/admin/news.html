@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>News &middot; Admin &middot; three.ws</title>
+<title data-i18n="admin_news.meta_title">News &middot; Admin &middot; three.ws</title>
 <link rel="icon" href="/favicon.ico"/>
 <style>
 :root { color-scheme: dark; --accent: #ffffff; --accent2: #ffffff; --ok: #14f195; --warn: #ffa64d; --err: #ff5c5c; }
@@ -97,37 +97,37 @@ textarea { resize: vertical; min-height: 220px; font-family: 'SF Mono', Menlo, m
 <body>
 <div class="layout">
 \t<aside class="sidebar">
-\t\t<span class="sidebar-brand">three.ws admin</span>
-\t\t<a class="nav-item" href="/admin">Overview</a>
-\t\t<a class="nav-item active" href="/admin/news">News<span class="sidebar-badge" id="post-count" style="display:none"></span></a>
-\t\t<a class="nav-item" href="/sitemap" target="_blank" rel="noopener">Sitemap &uarr;</a>
-\t\t<a class="nav-item" href="/news" target="_blank" rel="noopener">View live &uarr;</a>
-\t\t<a class="nav-item" href="/rss/announcements.xml" target="_blank" rel="noopener">RSS feed &uarr;</a>
+\t\t<span class="sidebar-brand" data-i18n="admin_news.three_ws_admin">three.ws admin</span>
+\t\t<a class="nav-item" href="/admin" data-i18n="admin_news.overview">Overview</a>
+\t\t<a class="nav-item active" href="/admin/news" data-i18n-html="admin_news.news">News<span class="sidebar-badge" id="post-count" style="display:none"></span></a>
+\t\t<a class="nav-item" href="/sitemap" target="_blank" rel="noopener" data-i18n="admin_news.sitemap">Sitemap &uarr;</a>
+\t\t<a class="nav-item" href="/news" target="_blank" rel="noopener" data-i18n="admin_news.view_live">View live &uarr;</a>
+\t\t<a class="nav-item" href="/rss/announcements.xml" target="_blank" rel="noopener" data-i18n="admin_news.rss_feed">RSS feed &uarr;</a>
 \t</aside>
 \t<main class="main">
 \t\t<div class="page-header">
 \t\t\t<div>
-\t\t\t\t<h1 class="page-title">News &amp; Announcements</h1>
-\t\t\t\t<p style="font-size:12px;color:#666;margin-top:4px">Local-only admin &middot; edits write to <span class="kbd">data/rss/items.json</span> + regenerate <span class="kbd">public/news/</span></p>
+\t\t\t\t<h1 class="page-title" data-i18n="admin_news.news_announcements">News &amp; Announcements</h1>
+\t\t\t\t<p style="font-size:12px;color:#666;margin-top:4px" data-i18n-html="admin_news.local_only_admin_edits_write_to_data">Local-only admin &middot; edits write to <span class="kbd">data/rss/items.json</span> + regenerate <span class="kbd">public/news/</span></p>
 \t\t\t</div>
-\t\t\t<button class="btn btn-primary" id="new-btn">+ New post</button>
+\t\t\t<button class="btn btn-primary" id="new-btn" data-i18n="admin_news.new_post">+ New post</button>
 \t\t</div>
 \t\t<div class="workspace">
 \t\t\t<div class="panel">
 \t\t\t\t<div class="panel-head">
-\t\t\t\t\t<span class="panel-title">All posts</span>
+\t\t\t\t\t<span class="panel-title" data-i18n="admin_news.all_posts">All posts</span>
 \t\t\t\t\t<span style="font-size:11px;color:#666" id="list-meta"></span>
 \t\t\t\t</div>
 \t\t\t\t<div class="panel-body" id="post-list"></div>
 \t\t\t</div>
 \t\t\t<div class="panel">
 \t\t\t\t<div class="panel-head">
-\t\t\t\t\t<span class="panel-title" id="editor-title">Select a post or create a new one</span>
+\t\t\t\t\t<span class="panel-title" id="editor-title" data-i18n="admin_news.select_a_post_or_create_a_new">Select a post or create a new one</span>
 \t\t\t\t</div>
 \t\t\t\t<div class="panel-body" id="editor-pane">
 \t\t\t\t\t<div class="empty-state">
-\t\t\t\t\t\t<h2>Nothing selected</h2>
-\t\t\t\t\t\t<p>Click a post on the left to edit, or hit <span class="kbd">+ New post</span> to start one.</p>
+\t\t\t\t\t\t<h2 data-i18n="admin_news.nothing_selected">Nothing selected</h2>
+\t\t\t\t\t\t<p data-i18n-html="admin_news.click_a_post_on_the_left_to">Click a post on the left to edit, or hit <span class="kbd">+ New post</span> to start one.</p>
 \t\t\t\t\t</div>
 \t\t\t\t</div>
 \t\t\t</div>
@@ -539,5 +539,7 @@ window.addEventListener('beforeunload', (e) => {
 refresh();
 </script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -4,8 +4,8 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>x402 Console · three.ws</title>
-<meta name="description" content="The Stripe of x402. Configure payout wallets, products, pricing, CORS, security, API keys, and a drag-and-drop storefront — all in one console." />
+<title data-i18n="dashboard_x402_admin.meta_title">x402 Console · three.ws</title>
+<meta name="description" content="The Stripe of x402. Configure payout wallets, products, pricing, CORS, security, API keys, and a drag-and-drop storefront — all in one console."  data-i18n-attr="content:dashboard_x402_admin.meta_description"/>
 <meta name="theme-color" content="#0b0b0b" />
 <style>
 	:root {
@@ -259,103 +259,103 @@
 <body>
 
 <header>
-	<a class="brand" href="/x402"><div class="dot"></div><span>x402</span></a>
-	<span class="crumb">/ Console</span>
+	<a class="brand" href="/x402"><div class="dot"></div><span data-i18n="dashboard_x402_admin.x402">x402</span></a>
+	<span class="crumb" data-i18n="dashboard_x402_admin.console">/ Console</span>
 	<div class="right">
 		<span class="save-state" id="saveState"></span>
-		<a href="/dashboard/x402" class="btn ghost sm">Checkout SKUs</a>
-		<button class="btn" id="topSave">Save changes</button>
+		<a href="/dashboard/x402" class="btn ghost sm" data-i18n="dashboard_x402_admin.checkout_skus">Checkout SKUs</a>
+		<button class="btn" id="topSave" data-i18n="dashboard_x402_admin.save_changes">Save changes</button>
 	</div>
 </header>
 
 <div id="app">
 	<div class="shell" id="shell" style="display:none">
 		<nav class="side">
-			<div class="nav-item active" data-tab="overview"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>Overview</span></div>
-			<div class="nav-item" data-tab="payout"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="13" rx="2.5"/><path d="M2 10h20"/><circle cx="17.5" cy="14.5" r="1.3" fill="currentColor"/></svg><span>Payout & Wallets</span></div>
-			<div class="nav-item" data-tab="products"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l1.5-5h15L21 9M3 9h18M3 9v10a1.5 1.5 0 0 0 1.5 1.5h15A1.5 1.5 0 0 0 21 19V9M9 13h6"/></svg><span>Products</span><span class="badge" id="prodBadge">0</span></div>
-			<div class="nav-item" data-tab="storefront"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/></svg><span>Storefront</span></div>
+			<div class="nav-item active" data-tab="overview"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span data-i18n="dashboard_x402_admin.overview">Overview</span></div>
+			<div class="nav-item" data-tab="payout"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="13" rx="2.5"/><path d="M2 10h20"/><circle cx="17.5" cy="14.5" r="1.3" fill="currentColor"/></svg><span data-i18n="dashboard_x402_admin.payout_wallets">Payout & Wallets</span></div>
+			<div class="nav-item" data-tab="products"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l1.5-5h15L21 9M3 9h18M3 9v10a1.5 1.5 0 0 0 1.5 1.5h15A1.5 1.5 0 0 0 21 19V9M9 13h6"/></svg><span data-i18n="dashboard_x402_admin.products">Products</span><span class="badge" id="prodBadge">0</span></div>
+			<div class="nav-item" data-tab="storefront"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/></svg><span data-i18n="dashboard_x402_admin.storefront">Storefront</span></div>
 			<div class="nav-sep"></div>
-			<div class="nav-item" data-tab="developers"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 8l-5 4 5 4M15 8l5 4-5 4"/></svg><span>Developers</span></div>
-			<div class="nav-item" data-tab="cors"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><span>CORS & Domains</span></div>
-			<div class="nav-item" data-tab="security"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l8 3v6c0 4.5-3 7.8-8 9-5-1.2-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><span>Security</span></div>
+			<div class="nav-item" data-tab="developers"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 8l-5 4 5 4M15 8l5 4-5 4"/></svg><span data-i18n="dashboard_x402_admin.developers">Developers</span></div>
+			<div class="nav-item" data-tab="cors"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><span data-i18n="dashboard_x402_admin.cors_domains">CORS & Domains</span></div>
+			<div class="nav-item" data-tab="security"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l8 3v6c0 4.5-3 7.8-8 9-5-1.2-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><span data-i18n="dashboard_x402_admin.security">Security</span></div>
 		</nav>
 
 		<main>
 			<!-- ───── OVERVIEW ───── -->
 			<section class="tab active" data-tab="overview">
-				<h1 class="panel-title">Console</h1>
-				<p class="panel-sub">Everything you need to accept x402 stablecoin payments — payout wallets, products, pricing, a hosted storefront, API keys, and security. The Stripe of x402.</p>
+				<h1 class="panel-title" data-i18n="dashboard_x402_admin.console_2">Console</h1>
+				<p class="panel-sub" data-i18n="dashboard_x402_admin.everything_you_need_to_accept_x402_stablecoi">Everything you need to accept x402 stablecoin payments — payout wallets, products, pricing, a hosted storefront, API keys, and security. The Stripe of x402.</p>
 				<div class="stats">
 					<div class="stat"><div class="k">Products</div><div class="v" id="ov-prods">—</div></div>
 					<div class="stat"><div class="k">Paid calls</div><div class="v" id="ov-calls">—</div></div>
-					<div class="stat"><div class="k">Gross revenue</div><div class="v" id="ov-rev">—<span class="u">USDC</span></div></div>
+					<div class="stat"><div class="k">Gross revenue</div><div class="v" id="ov-rev">—<span class="u" data-i18n="dashboard_x402_admin.usdc">USDC</span></div></div>
 					<div class="stat"><div class="k">Storefront</div><div class="v" id="ov-store" style="font-size:15px">—</div></div>
 				</div>
 				<div class="card">
-					<h3>Get paid in 4 steps</h3>
-					<p class="card-sub">Complete each to start collecting real on-chain payments.</p>
+					<h3 data-i18n="dashboard_x402_admin.get_paid_in_4_steps">Get paid in 4 steps</h3>
+					<p class="card-sub" data-i18n="dashboard_x402_admin.complete_each_to_start_collecting_real_on">Complete each to start collecting real on-chain payments.</p>
 					<div class="checklist" id="checklist"></div>
 				</div>
 			</section>
 
 			<!-- ───── PAYOUT & WALLETS ───── -->
 			<section class="tab" data-tab="payout">
-				<h1 class="panel-title">Payout & agent wallets</h1>
-				<p class="panel-sub">Where settled funds land and which wallets your agents may transact from. Buyers pay USDC; the facilitator settles on-chain. <b>Double-check every address — payments are irreversible.</b></p>
+				<h1 class="panel-title" data-i18n="dashboard_x402_admin.payout_agent_wallets">Payout & agent wallets</h1>
+				<p class="panel-sub" data-i18n-html="dashboard_x402_admin.where_settled_funds_land_and_which_wallets">Where settled funds land and which wallets your agents may transact from. Buyers pay USDC; the facilitator settles on-chain. <b>Double-check every address — payments are irreversible.</b></p>
 
 				<div class="card">
 					<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:14px">
-						<div><h3>Agent wallets</h3><p class="card-sub" style="margin-bottom:0">Named wallets your agents use to <b>auto-pay</b> (payer) or <b>receive</b> (payout) x402 — each capped independently. Run a fleet that transacts with no human in the loop.</p></div>
-						<button class="btn sm" id="newWallet" style="flex:0 0 auto">+ Add wallet</button>
+						<div><h3 data-i18n="dashboard_x402_admin.agent_wallets">Agent wallets</h3><p class="card-sub" style="margin-bottom:0" data-i18n-html="dashboard_x402_admin.named_wallets_your_agents_use_to_auto">Named wallets your agents use to <b>auto-pay</b> (payer) or <b>receive</b> (payout) x402 — each capped independently. Run a fleet that transacts with no human in the loop.</p></div>
+						<button class="btn sm" id="newWallet" style="flex:0 0 auto" data-i18n="dashboard_x402_admin.add_wallet">+ Add wallet</button>
 					</div>
 					<div id="walletList" style="margin-top:16px"></div>
 				</div>
 
 				<div class="card">
-					<h3>Default settlement network</h3>
-					<p class="card-sub">Which chain new products quote in by default.</p>
+					<h3 data-i18n="dashboard_x402_admin.default_settlement_network">Default settlement network</h3>
+					<p class="card-sub" data-i18n="dashboard_x402_admin.which_chain_new_products_quote_in_by">Which chain new products quote in by default.</p>
 					<div class="seg" id="defaultNet">
-						<button data-net="base" class="on">Base</button>
-						<button data-net="solana">Solana</button>
+						<button data-net="base" class="on" data-i18n="dashboard_x402_admin.base">Base</button>
+						<button data-net="solana" data-i18n="dashboard_x402_admin.solana">Solana</button>
 					</div>
 				</div>
 
 				<div class="card">
-					<h3>Default payout addresses</h3>
-					<p class="card-sub">Fallback destination per chain when a product has no dedicated payout agent wallet. Use a wallet you control — these receive real money.</p>
+					<h3 data-i18n="dashboard_x402_admin.default_payout_addresses">Default payout addresses</h3>
+					<p class="card-sub" data-i18n="dashboard_x402_admin.fallback_destination_per_chain_when_a_produc">Fallback destination per chain when a product has no dedicated payout agent wallet. Use a wallet you control — these receive real money.</p>
 					<label class="field">
 						Base · EVM payout address
 						<input id="payout_evm" class="mono" placeholder="0x0000000000000000000000000000000000000000" spellcheck="false" autocomplete="off" />
-						<span class="hint" id="evmHint">USDC on Base settles here. Must be a 42-char 0x address.</span>
+						<span class="hint" id="evmHint" data-i18n="dashboard_x402_admin.usdc_on_base_settles_here_must_be">USDC on Base settles here. Must be a 42-char 0x address.</span>
 					</label>
 					<label class="field">
 						Solana payout address
 						<input id="payout_solana" class="mono" placeholder="So11111111111111111111111111111111111111112" spellcheck="false" autocomplete="off" />
-						<span class="hint" id="solHint">USDC on Solana settles here. Base58, 32–44 chars.</span>
+						<span class="hint" id="solHint" data-i18n="dashboard_x402_admin.usdc_on_solana_settles_here_base58_32">USDC on Solana settles here. Base58, 32–44 chars.</span>
 					</label>
 				</div>
 
 				<div class="card">
-					<h3>Giving</h3>
-					<p class="card-sub">Donate a share of every payment to a cause, and let buyers round up. Shown to buyers on your checkout and storefront.</p>
-					<div class="toggle-row"><div class="tr-text"><b>Donate a share of revenue</b><span>A percentage of each settled payment goes to your chosen cause.</span></div><label class="switch"><input type="checkbox" id="charity_enabled" /><span class="slider"></span></label></div>
+					<h3 data-i18n="dashboard_x402_admin.giving">Giving</h3>
+					<p class="card-sub" data-i18n="dashboard_x402_admin.donate_a_share_of_every_payment_to">Donate a share of every payment to a cause, and let buyers round up. Shown to buyers on your checkout and storefront.</p>
+					<div class="toggle-row"><div class="tr-text"><b data-i18n="dashboard_x402_admin.donate_a_share_of_revenue">Donate a share of revenue</b><span data-i18n="dashboard_x402_admin.a_percentage_of_each_settled_payment_goes">A percentage of each settled payment goes to your chosen cause.</span></div><label class="switch"><input type="checkbox" id="charity_enabled" /><span class="slider"></span></label></div>
 					<div id="charityFields" style="margin-top:14px;display:none">
 						<div class="row-2">
 							<label class="field">Cause name<input id="charity_name" maxlength="80" placeholder="GiveDirectly" /></label>
-							<label class="field">Share of each payment<input id="charity_pct" type="number" min="0" max="100" step="0.01" placeholder="1" /><span class="hint">Percent. e.g. 1 = 1% of every payment.</span></label>
+							<label class="field">Share of each payment<input id="charity_pct" type="number" min="0" max="100" step="0.01" placeholder="1" /><span class="hint" data-i18n="dashboard_x402_admin.percent_e_g_1_1_of_every">Percent. e.g. 1 = 1% of every payment.</span></label>
 						</div>
 						<div class="row-2">
-							<label class="field">Cause chain<select id="charity_chain"><option value="base">Base</option><option value="solana">Solana</option></select></label>
-							<label class="field">Cause wallet<input id="charity_address" class="mono" spellcheck="false" autocomplete="off" placeholder="0x… or base58" /><span class="hint" id="charityAddrHint">Validated against the selected chain.</span></label>
+							<label class="field">Cause chain<select id="charity_chain"><option value="base" data-i18n="dashboard_x402_admin.base_2">Base</option><option value="solana" data-i18n="dashboard_x402_admin.solana_2">Solana</option></select></label>
+							<label class="field">Cause wallet<input id="charity_address" class="mono" spellcheck="false" autocomplete="off" placeholder="0x… or base58" /><span class="hint" id="charityAddrHint" data-i18n="dashboard_x402_admin.validated_against_the_selected_chain">Validated against the selected chain.</span></label>
 						</div>
-						<div class="toggle-row"><div class="tr-text"><b>Round-up at checkout</b><span>Round the buyer's total up to the nearest unit and donate the difference to the cause.</span></div><label class="switch"><input type="checkbox" id="roundup_enabled" /><span class="slider"></span></label></div>
+						<div class="toggle-row"><div class="tr-text"><b data-i18n="dashboard_x402_admin.round_up_at_checkout">Round-up at checkout</b><span data-i18n="dashboard_x402_admin.round_the_buyer_s_total_up_to">Round the buyer's total up to the nearest unit and donate the difference to the cause.</span></div><label class="switch"><input type="checkbox" id="roundup_enabled" /><span class="slider"></span></label></div>
 					</div>
 				</div>
 
 				<div class="card">
-					<h3>Business identity</h3>
-					<p class="card-sub">Shown on hosted checkout pages and your storefront.</p>
+					<h3 data-i18n="dashboard_x402_admin.business_identity">Business identity</h3>
+					<p class="card-sub" data-i18n="dashboard_x402_admin.shown_on_hosted_checkout_pages_and_your">Shown on hosted checkout pages and your storefront.</p>
 					<div class="row-2">
 						<label class="field">Business name<input id="business_name" maxlength="80" placeholder="Acme Intelligence" /></label>
 						<label class="field">Support email<input id="support_email" type="email" placeholder="support@acme.com" /></label>
@@ -371,31 +371,31 @@
 			<section class="tab" data-tab="products">
 				<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:8px">
 					<div>
-						<h1 class="panel-title" style="margin-bottom:4px">Products</h1>
-						<p class="panel-sub" style="margin-bottom:0">Each product is a paid endpoint with a price. Sell them on your storefront or as standalone checkout links.</p>
+						<h1 class="panel-title" style="margin-bottom:4px" data-i18n="dashboard_x402_admin.products_2">Products</h1>
+						<p class="panel-sub" style="margin-bottom:0" data-i18n="dashboard_x402_admin.each_product_is_a_paid_endpoint_with">Each product is a paid endpoint with a price. Sell them on your storefront or as standalone checkout links.</p>
 					</div>
-					<button class="btn" id="newProd" style="flex:0 0 auto;margin-top:4px">+ New product</button>
+					<button class="btn" id="newProd" style="flex:0 0 auto;margin-top:4px" data-i18n="dashboard_x402_admin.new_product">+ New product</button>
 				</div>
 				<div id="prodList" style="margin-top:20px"></div>
 			</section>
 
 			<!-- ───── STOREFRONT ───── -->
 			<section class="tab" data-tab="storefront">
-				<h1 class="panel-title">Storefront builder</h1>
-				<p class="panel-sub">Drag blocks onto the canvas to compose a hosted store — no code. Publish to a public <span class="mono" style="font-size:12px">/store/&lt;handle&gt;</span> page that takes real x402 payments.</p>
+				<h1 class="panel-title" data-i18n="dashboard_x402_admin.storefront_builder">Storefront builder</h1>
+				<p class="panel-sub" data-i18n-html="dashboard_x402_admin.drag_blocks_onto_the_canvas_to_compose">Drag blocks onto the canvas to compose a hosted store — no code. Publish to a public <span class="mono" style="font-size:12px">/store/&lt;handle&gt;</span> page that takes real x402 payments.</p>
 
 				<div class="card">
 					<div class="toggle-row">
-						<div class="tr-text"><b>Publish storefront</b><span>Make your store live at a public URL.</span></div>
+						<div class="tr-text"><b data-i18n="dashboard_x402_admin.publish_storefront">Publish storefront</b><span data-i18n="dashboard_x402_admin.make_your_store_live_at_a_public">Make your store live at a public URL.</span></div>
 						<label class="switch"><input type="checkbox" id="store_published" /><span class="slider"></span></label>
 					</div>
 					<label class="field" style="margin-top:14px">
 						Store handle
 						<div class="add-row">
 							<input id="store_handle" class="mono" placeholder="acme" spellcheck="false" autocomplete="off" />
-							<a class="btn ghost sm" id="viewStore" target="_blank" style="white-space:nowrap" rel="noopener">View store ↗</a>
+							<a class="btn ghost sm" id="viewStore" target="_blank" style="white-space:nowrap" rel="noopener" data-i18n="dashboard_x402_admin.view_store">View store ↗</a>
 						</div>
-						<span class="hint" id="handleHint">Public URL: <span id="handlePreview" class="mono">/store/acme</span></span>
+						<span class="hint" id="handleHint" data-i18n-html="dashboard_x402_admin.public_url_store_acme">Public URL: <span id="handlePreview" class="mono">/store/acme</span></span>
 					</label>
 				</div>
 
@@ -417,9 +417,9 @@
 						</div>
 						<div style="margin-top:16px">
 							<div class="preview-bar">
-								<span style="font-size:12px;color:var(--muted);font-weight:600">LIVE PREVIEW</span>
-								<span class="url" id="previewUrl">/store/acme</span>
-								<button class="btn ghost sm" id="refreshPreview">Refresh</button>
+								<span style="font-size:12px;color:var(--muted);font-weight:600" data-i18n="dashboard_x402_admin.live_preview">LIVE PREVIEW</span>
+								<span class="url" id="previewUrl" data-i18n="dashboard_x402_admin.store_acme">/store/acme</span>
+								<button class="btn ghost sm" id="refreshPreview" data-i18n="dashboard_x402_admin.refresh">Refresh</button>
 							</div>
 							<div class="preview-frame"><iframe id="previewFrame" title="Storefront preview"></iframe></div>
 						</div>
@@ -429,38 +429,38 @@
 
 			<!-- ───── DEVELOPERS ───── -->
 			<section class="tab" data-tab="developers">
-				<h1 class="panel-title">Developers</h1>
-				<p class="panel-sub">API keys, webhooks, and the endpoints that power your checkout. Drop the snippet into any site to start charging.</p>
+				<h1 class="panel-title" data-i18n="dashboard_x402_admin.developers_2">Developers</h1>
+				<p class="panel-sub" data-i18n="dashboard_x402_admin.api_keys_webhooks_and_the_endpoints_that">API keys, webhooks, and the endpoints that power your checkout. Drop the snippet into any site to start charging.</p>
 
 				<div class="card">
-					<h3>API key</h3>
-					<p class="card-sub">Use for the key-bypass lane and server-to-server calls. Shown once at creation — store it securely.</p>
-					<div class="key-box" id="keyBox"><span class="kb-val" id="keyVal">No key yet</span><button class="btn ghost sm" id="copyKey" style="display:none">Copy</button></div>
-					<div style="margin-top:12px;display:flex;gap:10px"><button class="btn" id="rotateKey">Generate new key</button></div>
+					<h3 data-i18n="dashboard_x402_admin.api_key">API key</h3>
+					<p class="card-sub" data-i18n="dashboard_x402_admin.use_for_the_key_bypass_lane_and">Use for the key-bypass lane and server-to-server calls. Shown once at creation — store it securely.</p>
+					<div class="key-box" id="keyBox"><span class="kb-val" id="keyVal" data-i18n="dashboard_x402_admin.no_key_yet">No key yet</span><button class="btn ghost sm" id="copyKey" style="display:none" data-i18n="dashboard_x402_admin.copy">Copy</button></div>
+					<div style="margin-top:12px;display:flex;gap:10px"><button class="btn" id="rotateKey" data-i18n="dashboard_x402_admin.generate_new_key">Generate new key</button></div>
 				</div>
 
 				<div class="card">
-					<h3>Settlement webhook</h3>
-					<p class="card-sub">We POST a signed event to this URL on every successful payment.</p>
+					<h3 data-i18n="dashboard_x402_admin.settlement_webhook">Settlement webhook</h3>
+					<p class="card-sub" data-i18n="dashboard_x402_admin.we_post_a_signed_event_to_this">We POST a signed event to this URL on every successful payment.</p>
 					<label class="field">Webhook URL<input id="webhook_url" class="mono" placeholder="https://acme.com/hooks/x402" spellcheck="false" /></label>
 				</div>
 
 				<div class="card">
-					<h3>Facilitator</h3>
-					<p class="card-sub">Override the settlement facilitator. Leave blank to use the three.ws default (PayAI on Solana, Coinbase CDP on Base).</p>
-					<label class="field">Facilitator URL<input id="facilitator" class="mono" placeholder="https://facilitator.example.com" spellcheck="false" /><span class="hint">Advanced — only set this if you run your own x402 facilitator.</span></label>
+					<h3 data-i18n="dashboard_x402_admin.facilitator">Facilitator</h3>
+					<p class="card-sub" data-i18n="dashboard_x402_admin.override_the_settlement_facilitator_leave_bl">Override the settlement facilitator. Leave blank to use the three.ws default (PayAI on Solana, Coinbase CDP on Base).</p>
+					<label class="field">Facilitator URL<input id="facilitator" class="mono" placeholder="https://facilitator.example.com" spellcheck="false" /><span class="hint" data-i18n="dashboard_x402_admin.advanced_only_set_this_if_you_run">Advanced — only set this if you run your own x402 facilitator.</span></label>
 				</div>
 
 				<div class="card">
-					<h3>Drop-in snippet</h3>
-					<p class="card-sub">One script tag plus a button. The modal handles wallet connect, signing, settlement, and the receipt.</p>
-					<div class="code" id="snippet"><button class="copy" data-copy>Copy</button><span id="snippetCode"></span></div>
+					<h3 data-i18n="dashboard_x402_admin.drop_in_snippet">Drop-in snippet</h3>
+					<p class="card-sub" data-i18n="dashboard_x402_admin.one_script_tag_plus_a_button_the">One script tag plus a button. The modal handles wallet connect, signing, settlement, and the receipt.</p>
+					<div class="code" id="snippet"><button class="copy" data-copy data-i18n="dashboard_x402_admin.copy_2">Copy</button><span id="snippetCode"></span></div>
 				</div>
 
 				<div class="card">
-					<h3>Platform endpoints</h3>
-					<p class="card-sub">The x402 plumbing behind your checkout.</p>
-					<div class="code"><span>GET   /api/x402-skus?slug=&lt;slug&gt;        public product read
+					<h3 data-i18n="dashboard_x402_admin.platform_endpoints">Platform endpoints</h3>
+					<p class="card-sub" data-i18n="dashboard_x402_admin.the_x402_plumbing_behind_your_checkout">The x402 plumbing behind your checkout.</p>
+					<div class="code"><span data-i18n="dashboard_x402_admin.get_api_x402_skus_slug_public_product">GET   /api/x402-skus?slug=&lt;slug&gt;        public product read
 POST  /api/x402-checkout?action=prepare   build Solana payment tx
 POST  /api/x402-checkout?action=encode    wrap signed tx → X-PAYMENT
 GET   /api/x402-merchant?store=&lt;handle&gt;   public storefront read
@@ -470,27 +470,27 @@ POST  /api/x402-merchant?action=rotate-key mint a fresh API key</span></div>
 
 			<!-- ───── CORS & DOMAINS ───── -->
 			<section class="tab" data-tab="cors">
-				<h1 class="panel-title">CORS & domains</h1>
-				<p class="panel-sub">Restrict which sites may embed your checkout. Leave empty to allow any origin (good for public, paid endpoints).</p>
+				<h1 class="panel-title" data-i18n="dashboard_x402_admin.cors_domains_2">CORS & domains</h1>
+				<p class="panel-sub" data-i18n="dashboard_x402_admin.restrict_which_sites_may_embed_your_checkout">Restrict which sites may embed your checkout. Leave empty to allow any origin (good for public, paid endpoints).</p>
 				<div class="card">
-					<h3>Allowed origins</h3>
-					<p class="card-sub">Exact origins only — scheme + host (+ port). e.g. <span class="mono" style="font-size:12px">https://acme.com</span></p>
+					<h3 data-i18n="dashboard_x402_admin.allowed_origins">Allowed origins</h3>
+					<p class="card-sub" data-i18n-html="dashboard_x402_admin.exact_origins_only_scheme_host_port_e">Exact origins only — scheme + host (+ port). e.g. <span class="mono" style="font-size:12px">https://acme.com</span></p>
 					<div class="chips" id="corsChips"></div>
 					<div class="add-row">
 						<input id="corsInput" class="mono" placeholder="https://acme.com" spellcheck="false" />
-						<button class="btn ghost" id="corsAdd">Add</button>
+						<button class="btn ghost" id="corsAdd" data-i18n="dashboard_x402_admin.add">Add</button>
 					</div>
 				</div>
 			</section>
 
 			<!-- ───── SECURITY ───── -->
 			<section class="tab" data-tab="security">
-				<h1 class="panel-title">Security</h1>
-				<p class="panel-sub">Caps and gates that protect you and your buyers. Caps are enforced in the modal before any wallet signs.</p>
+				<h1 class="panel-title" data-i18n="dashboard_x402_admin.security_2">Security</h1>
+				<p class="panel-sub" data-i18n="dashboard_x402_admin.caps_and_gates_that_protect_you_and">Caps and gates that protect you and your buyers. Caps are enforced in the modal before any wallet signs.</p>
 
 				<div class="card">
-					<h3>Spending caps</h3>
-					<p class="card-sub">Block payments above these USDC limits. Leave blank for no cap.</p>
+					<h3 data-i18n="dashboard_x402_admin.spending_caps">Spending caps</h3>
+					<p class="card-sub" data-i18n="dashboard_x402_admin.block_payments_above_these_usdc_limits_leave">Block payments above these USDC limits. Leave blank for no cap.</p>
 					<div class="row-2">
 						<label class="field">Per-call cap (USDC)<input id="cap_call" type="number" min="0" step="0.000001" placeholder="e.g. 5" /></label>
 						<label class="field">Daily cap (USDC)<input id="cap_day" type="number" min="0" step="0.000001" placeholder="e.g. 100" /></label>
@@ -498,24 +498,24 @@ POST  /api/x402-merchant?action=rotate-key mint a fresh API key</span></div>
 				</div>
 
 				<div class="card">
-					<h3>Accepted networks</h3>
-					<p class="card-sub">Chains your checkout will settle on.</p>
-					<div class="toggle-row"><div class="tr-text"><b>Base</b><span>USDC via EIP-3009 · instant, gasless for the buyer.</span></div><label class="switch"><input type="checkbox" id="net_base" /><span class="slider"></span></label></div>
-					<div class="toggle-row"><div class="tr-text"><b>Solana</b><span>USDC via SPL transfer · sponsored fees.</span></div><label class="switch"><input type="checkbox" id="net_solana" /><span class="slider"></span></label></div>
+					<h3 data-i18n="dashboard_x402_admin.accepted_networks">Accepted networks</h3>
+					<p class="card-sub" data-i18n="dashboard_x402_admin.chains_your_checkout_will_settle_on">Chains your checkout will settle on.</p>
+					<div class="toggle-row"><div class="tr-text"><b data-i18n="dashboard_x402_admin.base_3">Base</b><span data-i18n="dashboard_x402_admin.usdc_via_eip_3009_instant_gasless_for">USDC via EIP-3009 · instant, gasless for the buyer.</span></div><label class="switch"><input type="checkbox" id="net_base" /><span class="slider"></span></label></div>
+					<div class="toggle-row"><div class="tr-text"><b data-i18n="dashboard_x402_admin.solana_3">Solana</b><span data-i18n="dashboard_x402_admin.usdc_via_spl_transfer_sponsored_fees">USDC via SPL transfer · sponsored fees.</span></div><label class="switch"><input type="checkbox" id="net_solana" /><span class="slider"></span></label></div>
 				</div>
 
 				<div class="card">
-					<h3>Re-entry</h3>
-					<div class="toggle-row"><div class="tr-text"><b>Require sign-in with wallet (SIWX)</b><span>Buyers who already paid sign in to re-access instead of paying again.</span></div><label class="switch"><input type="checkbox" id="require_siwx" /><span class="slider"></span></label></div>
+					<h3 data-i18n="dashboard_x402_admin.re_entry">Re-entry</h3>
+					<div class="toggle-row"><div class="tr-text"><b data-i18n="dashboard_x402_admin.require_sign_in_with_wallet_siwx">Require sign-in with wallet (SIWX)</b><span data-i18n="dashboard_x402_admin.buyers_who_already_paid_sign_in_to">Buyers who already paid sign in to re-access instead of paying again.</span></div><label class="switch"><input type="checkbox" id="require_siwx" /><span class="slider"></span></label></div>
 				</div>
 			</section>
 		</main>
 	</div>
 
 	<div class="gate" id="gate" style="display:none">
-		<h2>Sign in to open your x402 Console</h2>
-		<p>Configure payout wallets, products, your storefront, and security in one place.</p>
-		<a class="btn" href="/login?redirect=/dashboard/x402-admin">Sign in</a>
+		<h2 data-i18n="dashboard_x402_admin.sign_in_to_open_your_x402_console">Sign in to open your x402 Console</h2>
+		<p data-i18n="dashboard_x402_admin.configure_payout_wallets_products_your_store">Configure payout wallets, products, your storefront, and security in one place.</p>
+		<a class="btn" href="/login?redirect=/dashboard/x402-admin" data-i18n="dashboard_x402_admin.sign_in">Sign in</a>
 	</div>
 
 	<div class="gate" id="loadingGate">
@@ -527,7 +527,7 @@ POST  /api/x402-merchant?action=rotate-key mint a fresh API key</span></div>
 <!-- Product modal -->
 <div class="overlay" id="prodModal">
 	<div class="modal">
-		<div class="modal-head"><h3 id="pmTitle">New product</h3><button class="modal-close" id="pmClose">✕</button></div>
+		<div class="modal-head"><h3 id="pmTitle" data-i18n="dashboard_x402_admin.new_product_2">New product</h3><button class="modal-close" id="pmClose">✕</button></div>
 		<form class="modal-body" id="prodForm">
 			<div class="row-2">
 				<label class="field">Name<input name="action_name" required maxlength="80" placeholder="Reputation report" /></label>
@@ -536,20 +536,20 @@ POST  /api/x402-merchant?action=rotate-key mint a fresh API key</span></div>
 			<label class="field">Description<textarea name="description" maxlength="2000" placeholder="What does this charge for?"></textarea></label>
 			<label class="field">Paid endpoint (returns 402)<input name="target_endpoint" type="url" required class="mono" placeholder="https://api.acme.com/paid/report" /></label>
 			<div class="row-2">
-				<label class="field">Method<select name="target_method"><option>GET</option><option>POST</option></select></label>
-				<label class="field">Price network<select name="price_network"><option value="base">Base</option><option value="solana">Solana</option></select></label>
+				<label class="field">Method<select name="target_method"><option data-i18n="dashboard_x402_admin.get">GET</option><option data-i18n="dashboard_x402_admin.post">POST</option></select></label>
+				<label class="field">Price network<select name="price_network"><option value="base" data-i18n="dashboard_x402_admin.base_4">Base</option><option value="solana" data-i18n="dashboard_x402_admin.solana_4">Solana</option></select></label>
 			</div>
 			<div class="row-2">
-				<label class="field">Price (USDC, display)<input name="price_display" type="number" min="0" step="0.000001" placeholder="0.05" /><span class="hint">Shown on cards. Actual charge comes from the endpoint's 402.</span></label>
+				<label class="field">Price (USDC, display)<input name="price_display" type="number" min="0" step="0.000001" placeholder="0.05" /><span class="hint" data-i18n="dashboard_x402_admin.shown_on_cards_actual_charge_comes_from">Shown on cards. Actual charge comes from the endpoint's 402.</span></label>
 				<label class="field">Image URL<input name="image_url" type="url" class="mono" placeholder="https://…/product.png" /></label>
 			</div>
 			<label class="field" id="pmBodyLabel" style="display:none">Request body (JSON)<textarea name="target_body" class="mono" placeholder='{"address":"…"}'></textarea></label>
 			<div class="row-2">
 				<label class="field">Merchant label<input name="merchant_name" required maxlength="80" placeholder="Acme" /></label>
-				<label class="field">Active<select name="active"><option value="true">Active</option><option value="false">Hidden</option></select></label>
+				<label class="field">Active<select name="active"><option value="true" data-i18n="dashboard_x402_admin.active">Active</option><option value="false" data-i18n="dashboard_x402_admin.hidden">Hidden</option></select></label>
 			</div>
 			<div id="pmError" class="form-error" style="display:none"></div>
-			<div class="form-actions"><button type="button" class="btn ghost" id="pmCancel">Cancel</button><button type="submit" class="btn" id="pmSave">Create</button></div>
+			<div class="form-actions"><button type="button" class="btn ghost" id="pmCancel" data-i18n="dashboard_x402_admin.cancel">Cancel</button><button type="submit" class="btn" id="pmSave" data-i18n="dashboard_x402_admin.create">Create</button></div>
 		</form>
 	</div>
 </div>
@@ -557,21 +557,21 @@ POST  /api/x402-merchant?action=rotate-key mint a fresh API key</span></div>
 <!-- Agent wallet modal -->
 <div class="overlay" id="walletModal">
 	<div class="modal">
-		<div class="modal-head"><h3 id="wmTitle">Add agent wallet</h3><button class="modal-close" id="wmClose">✕</button></div>
+		<div class="modal-head"><h3 id="wmTitle" data-i18n="dashboard_x402_admin.add_agent_wallet">Add agent wallet</h3><button class="modal-close" id="wmClose">✕</button></div>
 		<form class="modal-body" id="walletForm">
 			<label class="field">Label<input name="label" required maxlength="60" placeholder="Treasury · Base" /></label>
 			<div class="row-2">
-				<label class="field">Chain<select name="chain"><option value="base">Base</option><option value="solana">Solana</option></select></label>
-				<label class="field">Role<select name="role"><option value="payout">Payout · receives</option><option value="payer">Payer · auto-pays</option></select></label>
+				<label class="field">Chain<select name="chain"><option value="base" data-i18n="dashboard_x402_admin.base_5">Base</option><option value="solana" data-i18n="dashboard_x402_admin.solana_5">Solana</option></select></label>
+				<label class="field">Role<select name="role"><option value="payout" data-i18n="dashboard_x402_admin.payout_receives">Payout · receives</option><option value="payer" data-i18n="dashboard_x402_admin.payer_auto_pays">Payer · auto-pays</option></select></label>
 			</div>
-			<label class="field">Address<input name="address" required class="mono" spellcheck="false" autocomplete="off" placeholder="0x… or base58" /><span class="hint" id="wmAddrHint">Validated against the selected chain.</span></label>
+			<label class="field">Address<input name="address" required class="mono" spellcheck="false" autocomplete="off" placeholder="0x… or base58" /><span class="hint" id="wmAddrHint" data-i18n="dashboard_x402_admin.validated_against_the_selected_chain_2">Validated against the selected chain.</span></label>
 			<div class="row-2">
 				<label class="field">Per-call cap (USDC)<input name="per_call" type="number" min="0" step="0.000001" placeholder="no cap" /></label>
 				<label class="field">Daily cap (USDC)<input name="daily" type="number" min="0" step="0.000001" placeholder="no cap" /></label>
 			</div>
-			<div class="toggle-row" style="border-top:1px solid var(--border);margin-top:4px"><div class="tr-text"><b>Enabled</b><span>Disabled wallets are kept but never used.</span></div><label class="switch"><input type="checkbox" name="enabled" checked /><span class="slider"></span></label></div>
+			<div class="toggle-row" style="border-top:1px solid var(--border);margin-top:4px"><div class="tr-text"><b data-i18n="dashboard_x402_admin.enabled">Enabled</b><span data-i18n="dashboard_x402_admin.disabled_wallets_are_kept_but_never_used">Disabled wallets are kept but never used.</span></div><label class="switch"><input type="checkbox" name="enabled" checked /><span class="slider"></span></label></div>
 			<div id="wmError" class="form-error" style="display:none"></div>
-			<div class="form-actions"><button type="button" class="btn ghost" id="wmCancel">Cancel</button><button type="submit" class="btn" id="wmSave">Add wallet</button></div>
+			<div class="form-actions"><button type="button" class="btn ghost" id="wmCancel" data-i18n="dashboard_x402_admin.cancel_2">Cancel</button><button type="submit" class="btn" id="wmSave" data-i18n="dashboard_x402_admin.add_wallet_2">Add wallet</button></div>
 		</form>
 	</div>
 </div>
@@ -1183,6 +1183,8 @@ function renderStoreHtml(data, isPreview){
 @media (prefers-color-scheme:dark){html,body{background:#0b0b0b;color:#f0f2f8}.p-card{background:#161616;border-color:#272727}.b-hero p,.p-desc{color:#9aa0b8}.p-buy{background:#fff;color:#111}.b-div{border-color:#222}.b-footer{border-color:#222;color:#777}.b-imgph{border-color:#333}}
 </style></head><body>${body}
 ${isPreview?'':'<script type="module" src="/x402.js"><\/script>'}
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body></html>`;
 }
 // expose for the standalone /store page via querystring? No — /store has its own copy.

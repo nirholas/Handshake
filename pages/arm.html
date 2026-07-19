@@ -4,16 +4,16 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<title>Arm your agent — automate Oracle conviction · three.ws</title>
-	<meta name="description" content="Configure your 3D agent to act on Oracle conviction automatically: set the minimum score, position size, daily and open-position caps, narrative filters and alerts, then arm it in simulate or live mode. Every action gets graded against the outcome." />
-	<meta property="og:title" content="Arm your agent · three.ws" />
-	<meta property="og:description" content="Set the rules, arm your 3D agent, and let it trade Oracle conviction from its own custodial Solana wallet — simulate first, go live when you trust it." />
+	<title data-i18n="arm.meta_title">Arm your agent — automate Oracle conviction · three.ws</title>
+	<meta name="description" content="Configure your 3D agent to act on Oracle conviction automatically: set the minimum score, position size, daily and open-position caps, narrative filters and alerts, then arm it in simulate or live mode. Every action gets graded against the outcome."  data-i18n-attr="content:arm.meta_description"/>
+	<meta property="og:title" content="Arm your agent · three.ws"  data-i18n-attr="content:arm.meta_og_title"/>
+	<meta property="og:description" content="Set the rules, arm your 3D agent, and let it trade Oracle conviction from its own custodial Solana wallet — simulate first, go live when you trust it."  data-i18n-attr="content:arm.meta_og_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/oracle/arm" />
 	<meta name="twitter:card" content="summary_large_image" />
-	<meta name="twitter:title" content="Arm your agent — automate Oracle conviction" />
-	<meta name="twitter:description" content="Rules, sizing, caps, alerts — then arm. Your 3D agent acts the instant a coin clears your bar." />
+	<meta name="twitter:title" content="Arm your agent — automate Oracle conviction"  data-i18n-attr="content:arm.meta_twitter_title"/>
+	<meta name="twitter:description" content="Rules, sizing, caps, alerts — then arm. Your 3D agent acts the instant a coin clears your bar."  data-i18n-attr="content:arm.meta_twitter_description"/>
 	<link rel="canonical" href="https://three.ws/oracle/arm" />
 	<link rel="icon" href="/favicon.ico" />
 	<link rel="stylesheet" href="/nav.css" />
@@ -242,34 +242,34 @@
 	<header><div id="nav-container"></div></header>
 
 	<main class="wrap">
-		<div class="crumb"><a href="/oracle">← Oracle</a> <span>/</span> <span style="color:var(--ink)">Arm your agent</span></div>
+		<div class="crumb"><a href="/oracle" data-i18n="arm.oracle">← Oracle</a> <span>/</span> <span style="color:var(--ink)" data-i18n="arm.arm_your_agent">Arm your agent</span></div>
 		<div class="hero">
-			<h1>Arm your agent</h1>
-			<p>Set the rules once. Your 3D agent watches the live Oracle conviction stream and acts the instant a coin clears your bar — buying a small position from its own custodial Solana wallet. Starts in <b>simulate</b> so you can watch it work risk-free, then go live when you trust it.</p>
+			<h1 data-i18n="arm.arm_your_agent_2">Arm your agent</h1>
+			<p data-i18n-html="arm.set_the_rules_once_your_3d_agent">Set the rules once. Your 3D agent watches the live Oracle conviction stream and acts the instant a coin clears your bar — buying a small position from its own custodial Solana wallet. Starts in <b>simulate</b> so you can watch it work risk-free, then go live when you trust it.</p>
 		</div>
 
 		<!-- signed-out / no-agent state -->
 		<div class="empty" id="emptyState">
-			<b>Create a 3D agent to arm it</b>
-			<p>Your agent needs its own custodial Solana wallet to act on conviction. Spin one up in the studio — it takes about a minute — then come back here to set its rules.</p>
-			<a class="btn primary" style="display:inline-flex;width:auto;padding:12px 22px" href="/create/studio">Create an agent →</a>
+			<b data-i18n="arm.create_a_3d_agent_to_arm_it">Create a 3D agent to arm it</b>
+			<p data-i18n="arm.your_agent_needs_its_own_custodial_solana">Your agent needs its own custodial Solana wallet to act on conviction. Spin one up in the studio — it takes about a minute — then come back here to set its rules.</p>
+			<a class="btn primary" style="display:inline-flex;width:auto;padding:12px 22px" href="/create/studio" data-i18n="arm.create_an_agent">Create an agent →</a>
 		</div>
 
 		<!-- control bar -->
 		<div class="card control" id="setup">
 			<div class="agentpick">
-				<label for="agentSel">Agent</label>
+				<label for="agentSel" data-i18n="arm.agent">Agent</label>
 				<select id="agentSel" aria-label="Choose which agent to arm"></select>
 			</div>
 			<div class="walletpill" id="walletPill" hidden>
-				<span class="wp-lab">Wallet</span>
+				<span class="wp-lab" data-i18n="arm.wallet">Wallet</span>
 				<span class="wp-bal" id="walletBal">—</span>
 				<span class="wp-run" id="walletRun"></span>
-				<a class="wp-fund" id="walletFund" href="#" target="_blank" rel="noopener">Fund →</a>
+				<a class="wp-fund" id="walletFund" href="#" target="_blank" rel="noopener" data-i18n="arm.fund">Fund →</a>
 			</div>
 			<div class="armbox">
 				<div class="arm-state">
-					<div class="lab"><span class="arm-dot off" id="armStatusDot"></span><span id="armStatusLab">Disarmed</span></div>
+					<div class="lab"><span class="arm-dot off" id="armStatusDot"></span><span id="armStatusLab" data-i18n="arm.disarmed">Disarmed</span></div>
 					<div class="sub" id="armStatusSub">Your agent is idle. Flip the switch to start watching the conviction stream.</div>
 				</div>
 				<div class="sw xl" id="armToggle" role="switch" aria-checked="false" tabindex="0" aria-label="Arm agent"></div>
@@ -278,67 +278,67 @@
 
 		<!-- live stats -->
 		<div class="stats" id="statsStrip">
-			<div class="stat"><span>Win rate</span><b class="stat-val" id="statWin">—</b></div>
-			<div class="stat"><span>Realized PnL</span><b class="stat-val" id="statPnl">—</b></div>
-			<div class="stat"><span>Open now</span><b class="stat-val" id="statOpen">—</b></div>
-			<div class="stat"><span>Total acts</span><b class="stat-val" id="statTotal">—</b></div>
+			<div class="stat"><span data-i18n="arm.win_rate">Win rate</span><b class="stat-val" id="statWin">—</b></div>
+			<div class="stat"><span data-i18n="arm.realized_pnl">Realized PnL</span><b class="stat-val" id="statPnl">—</b></div>
+			<div class="stat"><span data-i18n="arm.open_now">Open now</span><b class="stat-val" id="statOpen">—</b></div>
+			<div class="stat"><span data-i18n="arm.total_acts">Total acts</span><b class="stat-val" id="statTotal">—</b></div>
 		</div>
 
 		<div class="layout">
 			<!-- configuration -->
 			<div class="col-config">
 				<div class="card">
-					<h3><span class="stepno">1</span> Entry rules</h3>
-					<p class="sub">When should your agent buy? Only plays that clear every rule below get acted on.</p>
+					<h3 data-i18n-html="arm.1_entry_rules"><span class="stepno">1</span> Entry rules</h3>
+					<p class="sub" data-i18n="arm.when_should_your_agent_buy_only_plays">When should your agent buy? Only plays that clear every rule below get acted on.</p>
 					<div class="field">
-						<label>Minimum conviction</label>
+						<label data-i18n="arm.minimum_conviction">Minimum conviction</label>
 						<div class="seg" id="convSeg" role="group" aria-label="Minimum conviction">
-							<button type="button" data-min="86">Prime<small>≥ 86</small></button>
-							<button type="button" data-min="72" class="on">Strong+<small>≥ 72</small></button>
-							<button type="button" data-min="56">Lean+<small>≥ 56</small></button>
+							<button type="button" data-min="86" data-i18n-html="arm.prime_86">Prime<small>≥ 86</small></button>
+							<button type="button" data-min="72" class="on" data-i18n-html="arm.strong_72">Strong+<small>≥ 72</small></button>
+							<button type="button" data-min="56" data-i18n-html="arm.lean_56">Lean+<small>≥ 56</small></button>
 						</div>
 						<div class="edge" id="edgeReadout" aria-live="polite"></div>
 					</div>
 					<div class="toggle">
-						<div class="t-lab"><b>Require smart money in</b><span>Only act if ≥1 proven wallet has already bought</span></div>
+						<div class="t-lab"><b data-i18n="arm.require_smart_money_in">Require smart money in</b><span data-i18n="arm.only_act_if_1_proven_wallet_has">Only act if ≥1 proven wallet has already bought</span></div>
 						<div class="sw on" id="smartToggle" role="switch" aria-checked="true" tabindex="0" aria-label="Require smart money"></div>
 					</div>
 					<div class="field" style="margin-top:14px">
-						<label>Only these narratives <span style="text-transform:none;letter-spacing:0;color:var(--muted)">— none selected = any</span></label>
+						<label data-i18n-html="arm.only_these_narratives_none_selected_any">Only these narratives <span style="text-transform:none;letter-spacing:0;color:var(--muted)">— none selected = any</span></label>
 						<div class="chips" id="catChips"></div>
 					</div>
 				</div>
 
 				<div class="card">
-					<h3><span class="stepno">2</span> Position sizing &amp; risk</h3>
-					<p class="sub">How much to commit, and the hard caps your agent can never cross.</p>
+					<h3 data-i18n-html="arm.2_position_sizing_risk"><span class="stepno">2</span> Position sizing &amp; risk</h3>
+					<p class="sub" data-i18n="arm.how_much_to_commit_and_the_hard">How much to commit, and the hard caps your agent can never cross.</p>
 					<div class="row2">
-						<div class="field"><label>Size / trade</label>
-							<div class="suffixed"><input id="fSize" type="number" min="0.001" step="0.01" value="0.05"><span class="suf">SOL</span></div>
+						<div class="field"><label data-i18n="arm.size_trade">Size / trade</label>
+							<div class="suffixed"><input id="fSize" type="number" min="0.001" step="0.01" value="0.05"><span class="suf" data-i18n="arm.sol">SOL</span></div>
 						</div>
-						<div class="field"><label>Max open positions</label><input id="fOpen" type="number" min="1" step="1" value="5"></div>
+						<div class="field"><label data-i18n="arm.max_open_positions">Max open positions</label><input id="fOpen" type="number" min="1" step="1" value="5"></div>
 					</div>
-					<div class="field"><label>Max spend / day</label>
-						<div class="suffixed"><input id="fDaily" type="number" min="0.01" step="0.05" value="0.5"><span class="suf">SOL</span></div>
+					<div class="field"><label data-i18n="arm.max_spend_day">Max spend / day</label>
+						<div class="suffixed"><input id="fDaily" type="number" min="0.01" step="0.05" value="0.5"><span class="suf" data-i18n="arm.sol_2">SOL</span></div>
 					</div>
 					<div class="toggle">
-						<div class="t-lab"><b>Scale size by conviction</b><span id="scaleSub">Off — every qualifying play uses the same size</span></div>
+						<div class="t-lab"><b data-i18n="arm.scale_size_by_conviction">Scale size by conviction</b><span id="scaleSub" data-i18n="arm.off_every_qualifying_play_uses_the_same">Off — every qualifying play uses the same size</span></div>
 						<div class="sw" id="scaleToggle" role="switch" aria-checked="false" tabindex="0" aria-label="Scale size by conviction"></div>
 					</div>
 					<div class="risk" id="riskSummary">Set a per-trade size and daily cap to see your exposure.</div>
 				</div>
 
 				<div class="card">
-					<h3><span class="stepno">3</span> Alerts <span class="opt">optional</span></h3>
-					<p class="sub">Get a personal Telegram ping whenever a coin crosses your threshold — armed or not.</p>
+					<h3 data-i18n-html="arm.3_alerts_optional"><span class="stepno">3</span> Alerts <span class="opt">optional</span></h3>
+					<p class="sub" data-i18n="arm.get_a_personal_telegram_ping_whenever_a">Get a personal Telegram ping whenever a coin crosses your threshold — armed or not.</p>
 					<div class="field">
-						<label>Telegram chat ID or @channel</label>
+						<label data-i18n="arm.telegram_chat_id_or_channel">Telegram chat ID or @channel</label>
 						<div class="tg-row">
 							<input id="tgInput" type="text" placeholder="Your chat ID or @channel" autocomplete="off">
-							<button id="tgTest" class="btn sm" type="button">Send test</button>
+							<button id="tgTest" class="btn sm" type="button" data-i18n="arm.send_test">Send test</button>
 						</div>
 						<div class="tg-note" id="tgNote"></div>
-						<div class="field-hint">Chat <a href="https://t.me/three_ws_bot" target="_blank" rel="noopener">@three_ws_bot</a> and send <code>/start</code> to get your chat ID.</div>
+						<div class="field-hint">Chat <a href="https://t.me/three_ws_bot" target="_blank" rel="noopener" data-i18n="arm.three_ws_bot">@three_ws_bot</a> and send <code>/start</code> to get your chat ID.</div>
 					</div>
 				</div>
 			</div>
@@ -347,32 +347,32 @@
 			<div class="col-side">
 				<div class="card" id="qualCard">
 					<div class="qual-head">
-						<div class="qh-count"><span class="live-dot"></span><span id="qualCount">Reading the conviction stream…</span></div>
+						<div class="qh-count"><span class="live-dot"></span><span id="qualCount" data-i18n="arm.reading_the_conviction_stream">Reading the conviction stream…</span></div>
 						<div class="qh-meta" id="qualMeta"></div>
 					</div>
-					<p class="qual-sub">Live coins that clear every rule you've set — exactly what your agent would act on right now. Tighten or loosen the rules and watch this list change.</p>
+					<p class="qual-sub" data-i18n="arm.live_coins_that_clear_every_rule_you">Live coins that clear every rule you've set — exactly what your agent would act on right now. Tighten or loosen the rules and watch this list change.</p>
 					<div id="qualBody"></div>
 				</div>
 
 				<div class="card">
-					<h3><span class="stepno">4</span> Mode &amp; arm</h3>
-					<p class="sub">Simulate logs every play risk-free. Live spends real SOL from the agent wallet, capped by your limits.</p>
+					<h3 data-i18n-html="arm.4_mode_arm"><span class="stepno">4</span> Mode &amp; arm</h3>
+					<p class="sub" data-i18n="arm.simulate_logs_every_play_risk_free_live">Simulate logs every play risk-free. Live spends real SOL from the agent wallet, capped by your limits.</p>
 					<div class="field">
-						<label>Execution mode</label>
+						<label data-i18n="arm.execution_mode">Execution mode</label>
 						<div class="seg" id="modeSeg" role="group" aria-label="Execution mode">
-							<button type="button" data-mode="simulate" class="on">Simulate<small>spends nothing</small></button>
-							<button type="button" data-mode="live">Live<small>real SOL, capped</small></button>
+							<button type="button" data-mode="simulate" class="on" data-i18n-html="arm.simulatespends_nothing">Simulate<small>spends nothing</small></button>
+							<button type="button" data-mode="live" data-i18n-html="arm.livereal_sol_capped">Live<small>real SOL, capped</small></button>
 						</div>
 					</div>
-					<button class="btn primary" id="saveBtn" style="margin-top:6px">Save configuration</button>
+					<button class="btn primary" id="saveBtn" style="margin-top:6px" data-i18n="arm.save_configuration">Save configuration</button>
 					<div class="save-note" id="saveNote"></div>
 				</div>
 
 				<div class="card" id="ledgerCard">
-					<h3>Recent actions</h3>
-					<p class="sub">Every move your agent makes — simulated or live — lands here and gets graded against the outcome. This is its win-rate ledger.</p>
+					<h3 data-i18n="arm.recent_actions">Recent actions</h3>
+					<p class="sub" data-i18n="arm.every_move_your_agent_makes_simulated_or">Every move your agent makes — simulated or live — lands here and gets graded against the outcome. This is its win-rate ledger.</p>
 					<div id="ledgerBody"><div class="ledger-empty">Sign in and arm an agent to see its actions.</div></div>
-					<div class="ledger-foot">Want the full trading floor across every agent? See <a href="/activity">live agent activity →</a></div>
+					<div class="ledger-foot">Want the full trading floor across every agent? See <a href="/activity" data-i18n="arm.live_agent_activity">live agent activity →</a></div>
 				</div>
 			</div>
 		</div>
@@ -385,5 +385,7 @@
 	<script src="/nav.js"></script>
 	<script src="/footer.js"></script>
 	<script type="module" src="/src/arm.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

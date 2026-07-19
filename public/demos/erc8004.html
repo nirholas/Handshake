@@ -3,8 +3,8 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>ERC-8004 registry browser · three.ws lab</title>
-		<meta name="description" content="Browse on-chain ERC-8004 agent identities across Base, Ethereum, Polygon, and testnets. Real data, read from the Agent0 subgraph via the agent0-sdk." />
+		<title data-i18n="demos_erc8004.meta_title">ERC-8004 registry browser · three.ws lab</title>
+		<meta name="description" content="Browse on-chain ERC-8004 agent identities across Base, Ethereum, Polygon, and testnets. Real data, read from the Agent0 subgraph via the agent0-sdk."  data-i18n-attr="content:demos_erc8004.meta_description"/>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
@@ -47,9 +47,9 @@
 		<header><div id="nav-container"></div></header>
 
 		<main class="stage">
-			<p class="crumb"><a href="/demos/">← lab</a></p>
-			<h1>ERC-8004 registry browser</h1>
-			<p class="sub">
+			<p class="crumb" data-i18n-html="demos_erc8004.lab"><a href="/demos/">← lab</a></p>
+			<h1 data-i18n="demos_erc8004.erc_8004_registry_browser">ERC-8004 registry browser</h1>
+			<p class="sub" data-i18n-html="demos_erc8004.live_read_of_erc_8004_agent_identities">
 				Live read of <strong>ERC-8004</strong> agent identities across Base,
 				Ethereum, Polygon, Base Sepolia, and Sepolia. Powered by the
 				<a href="https://github.com/agent0lab/agent0-ts" target="_blank" rel="noopener" style="color:#9ad4ff">agent0-sdk</a>
@@ -60,11 +60,11 @@
 				<label>
 					Chain
 					<select id="chain">
-						<option value="8453" selected>Base (8453)</option>
-						<option value="1">Ethereum (1)</option>
-						<option value="137">Polygon (137)</option>
-						<option value="84532">Base Sepolia (84532)</option>
-						<option value="11155111">Sepolia (11155111)</option>
+						<option value="8453" selected data-i18n="demos_erc8004.base_8453">Base (8453)</option>
+						<option value="1" data-i18n="demos_erc8004.ethereum_1">Ethereum (1)</option>
+						<option value="137" data-i18n="demos_erc8004.polygon_137">Polygon (137)</option>
+						<option value="84532" data-i18n="demos_erc8004.base_sepolia_84532">Base Sepolia (84532)</option>
+						<option value="11155111" data-i18n="demos_erc8004.sepolia_11155111">Sepolia (11155111)</option>
 					</select>
 				</label>
 				<label style="flex:1">
@@ -79,7 +79,7 @@
 						<option value="50">50</option>
 					</select>
 				</label>
-				<button type="submit">Search</button>
+				<button type="submit" data-i18n="demos_erc8004.search">Search</button>
 			</form>
 
 			<div id="notice"></div>
@@ -252,5 +252,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

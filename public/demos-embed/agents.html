@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Agent Directory · three.ws</title>
+  <title data-i18n="demos_embed_agents.meta_title">Agent Directory · three.ws</title>
   <meta name="robots" content="noindex">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/fonts/fonts.css">
@@ -178,9 +178,9 @@
 <body style="background:transparent">
   <main>
     <section class="agents-hero">
-      <p class="agents-eyebrow">ERC-8004 · three.ws</p>
-      <h1>Agent Directory</h1>
-      <p>Discover registered 3D AI agents across the ecosystem</p>
+      <p class="agents-eyebrow" data-i18n="demos_embed_agents.erc_8004_three_ws">ERC-8004 · three.ws</p>
+      <h1 data-i18n="demos_embed_agents.agent_directory">Agent Directory</h1>
+      <p data-i18n="demos_embed_agents.discover_registered_3d_ai_agents_across_the">Discover registered 3D AI agents across the ecosystem</p>
     </section>
 
     <div class="agents-controls">
@@ -188,17 +188,17 @@
         <input type="text" id="search" placeholder="Search by name, ID, or description…" aria-label="Search agents">
       </div>
       <div class="agents-filter-group">
-        <span class="agents-filter-label">Chain:</span>
-        <button class="filter-chip active" data-filter="all">All</button>
-        <button class="filter-chip" data-filter="8453">Base</button>
-        <button class="filter-chip" data-filter="84532">Base Sepolia</button>
-        <button class="filter-chip" data-filter="10">Optimism</button>
-        <button class="filter-chip" data-filter="137">Polygon</button>
+        <span class="agents-filter-label" data-i18n="demos_embed_agents.chain">Chain:</span>
+        <button class="filter-chip active" data-filter="all" data-i18n="demos_embed_agents.all">All</button>
+        <button class="filter-chip" data-filter="8453" data-i18n="demos_embed_agents.base">Base</button>
+        <button class="filter-chip" data-filter="84532" data-i18n="demos_embed_agents.base_sepolia">Base Sepolia</button>
+        <button class="filter-chip" data-filter="10" data-i18n="demos_embed_agents.optimism">Optimism</button>
+        <button class="filter-chip" data-filter="137" data-i18n="demos_embed_agents.polygon">Polygon</button>
       </div>
       <select id="sort" class="agents-sort" aria-label="Sort agents">
-        <option value="newest">Newest First</option>
-        <option value="oldest">Oldest First</option>
-        <option value="name">Alphabetical</option>
+        <option value="newest" data-i18n="demos_embed_agents.newest_first">Newest First</option>
+        <option value="oldest" data-i18n="demos_embed_agents.oldest_first">Oldest First</option>
+        <option value="name" data-i18n="demos_embed_agents.alphabetical">Alphabetical</option>
       </select>
     </div>
 
@@ -206,21 +206,23 @@
       <div id="loading" class="sr-only" role="status" aria-live="polite" style="display:none">Loading agents</div>
       <div id="agents" class="agent-grid"></div>
       <div id="empty-state" class="agents-empty" style="display:none">
-        <h2>No agents found</h2>
-        <p>Be the first to register your agent on-chain — generate its 3D body from a text prompt, then give it a brain.</p>
+        <h2 data-i18n="demos_embed_agents.no_agents_found">No agents found</h2>
+        <p data-i18n="demos_embed_agents.be_the_first_to_register_your_agent">Be the first to register your agent on-chain — generate its 3D body from a text prompt, then give it a brain.</p>
         <div class="agents-empty-actions">
-          <a href="https://three.ws/create" target="_blank" class="btn-primary" rel="noopener">Create Agent</a>
-          <a href="https://three.ws/forge" target="_blank" class="btn-ghost" rel="noopener">Generate 3D from text</a>
+          <a href="https://three.ws/create" target="_blank" class="btn-primary" rel="noopener" data-i18n="demos_embed_agents.create_agent">Create Agent</a>
+          <a href="https://three.ws/forge" target="_blank" class="btn-ghost" rel="noopener" data-i18n="demos_embed_agents.generate_3d_from_text">Generate 3D from text</a>
         </div>
       </div>
       <div id="pagination" class="agents-pagination" style="display:none">
-        <button id="prev-btn" class="pag-btn">← Previous</button>
+        <button id="prev-btn" class="pag-btn" data-i18n="demos_embed_agents.previous">← Previous</button>
         <span id="page-info" class="pag-info"></span>
-        <button id="next-btn" class="pag-btn">Next →</button>
+        <button id="next-btn" class="pag-btn" data-i18n="demos_embed_agents.next">Next →</button>
       </div>
     </div>
   </main>
 
   <script type="module" src="/agents/boot.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

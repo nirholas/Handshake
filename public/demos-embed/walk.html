@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Walk Mode · three.ws</title>
+  <title data-i18n="demos_embed_walk.meta_title">Walk Mode · three.ws</title>
   <meta name="robots" content="noindex">
   <style>
     html, body {
@@ -55,8 +55,8 @@
 <body style="background:transparent">
   <div class="wrap">
     <div class="eyebrow">three.ws · Walk Mode</div>
-    <h1 class="title">Your agent,<br><strong>walking on any page.</strong></h1>
-    <p class="sub">Drop a walking 3D avatar on any website with one script tag. Powered by the three.ws Walk Embed SDK.</p>
+    <h1 class="title" data-i18n-html="demos_embed_walk.your_agent_walking_on_any_page">Your agent,<br><strong>walking on any page.</strong></h1>
+    <p class="sub" data-i18n="demos_embed_walk.drop_a_walking_3d_avatar_on_any">Drop a walking 3D avatar on any website with one script tag. Powered by the three.ws Walk Embed SDK.</p>
 
     <!-- Live walk embed from three.ws -->
     <div class="walk-frame">
@@ -84,9 +84,11 @@
     </div>
 
     <div class="cta-row">
-      <a href="https://three.ws/walk" target="_blank" class="btn-primary" rel="noopener">Open Walk Mode →</a>
-      <a href="https://three.ws/docs/embed" target="_blank" class="btn-ghost" rel="noopener">Embed docs</a>
+      <a href="https://three.ws/walk" target="_blank" class="btn-primary" rel="noopener" data-i18n="demos_embed_walk.open_walk_mode">Open Walk Mode →</a>
+      <a href="https://three.ws/docs/embed" target="_blank" class="btn-ghost" rel="noopener" data-i18n="demos_embed_walk.embed_docs">Embed docs</a>
     </div>
   </div>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

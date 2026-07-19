@@ -4,8 +4,8 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>My Agents · three.ws</title>
-		<meta name="description" content="Manage your 3D AI agents on three.ws — edit, chat, check on-chain registration, and create new ones." />
+		<title data-i18n="my_agents_index.meta_title">My Agents · three.ws</title>
+		<meta name="description" content="Manage your 3D AI agents on three.ws — edit, chat, check on-chain registration, and create new ones."  data-i18n-attr="content:my_agents_index.meta_description"/>
 		<meta name="robots" content="noindex" />
 		<meta name="theme-color" content="#0a0a0c" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -94,8 +94,8 @@
 				<!-- Static fallback replaced at runtime by nav.js; kept here so
 				     static HTML readers (tests, crawlers, no-JS) can see the nav. -->
 				<nav aria-label="Site navigation">
-					<a href="/discover">Discover</a>
-					<a href="/my-agents" aria-current="page">My Agents</a>
+					<a href="/discover" data-i18n="my_agents_index.discover">Discover</a>
+					<a href="/my-agents" aria-current="page" data-i18n="my_agents_index.my_agents">My Agents</a>
 				</nav>
 			</div>
 		</header>
@@ -104,10 +104,10 @@
 		<main class="wrap">
 			<div class="hero">
 				<div class="hero-text">
-					<h1>My Agents</h1>
-					<p>Your 3D AI agents — edit, chat, and manage them from here.</p>
+					<h1 data-i18n="my_agents_index.my_agents_2">My Agents</h1>
+					<p data-i18n="my_agents_index.your_3d_ai_agents_edit_chat_and">Your 3D AI agents — edit, chat, and manage them from here.</p>
 				</div>
-				<a class="btn btn-primary" href="/create-agent" id="create-cta" style="display:none">+ Create agent</a>
+				<a class="btn btn-primary" href="/create-agent" id="create-cta" style="display:none" data-i18n="my_agents_index.create_agent">+ Create agent</a>
 			</div>
 
 			<div id="ma-root"></div>
@@ -217,5 +217,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

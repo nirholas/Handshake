@@ -3,29 +3,29 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Avatar Gallery · three.ws</title>
+		<title data-i18n="gallery_index.meta_title">Avatar Gallery · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta
 			name="description"
 			content="Every public 3D avatar made on three.ws. Browse, preview, embed, or remix — all from one gallery."
-		/>
+		 data-i18n-attr="content:gallery_index.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 		<link rel="canonical" href="https://three.ws/gallery" />
 
 		<meta property="og:type" content="website" />
-		<meta property="og:title" content="Avatar Gallery · three.ws" />
+		<meta property="og:title" content="Avatar Gallery · three.ws"  data-i18n-attr="content:gallery_index.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Every public 3D avatar made on three.ws. Preview, embed, or remix from one place."
-		/>
+		 data-i18n-attr="content:gallery_index.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/gallery" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Avatar+Gallery&amp;d=Every+public+3D+avatar+in+the+system%2C+browsable+as+a+grid.&amp;p=%2Fgallery" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Avatar Gallery · three.ws" />
+		<meta name="twitter:title" content="Avatar Gallery · three.ws"  data-i18n-attr="content:gallery_index.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Every public 3D avatar made on three.ws."
-		/>
+		 data-i18n-attr="content:gallery_index.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Avatar+Gallery&amp;d=Every+public+3D+avatar+in+the+system%2C+browsable+as+a+grid.&amp;p=%2Fgallery" />
 
 		<link rel="shortcut icon" href="/favicon.ico" />
@@ -56,29 +56,29 @@
 					<div class="gallery-hero-chips">
 						<div class="gallery-hero-chip">
 							<span class="gallery-hero-dot"></span>
-							<span>Public avatar gallery</span>
+							<span data-i18n="gallery_index.public_avatar_gallery">Public avatar gallery</span>
 						</div>
 						<a
 							href="/dashboard/avatars"
 							class="gallery-hero-chip gallery-hero-chip--link"
 							data-role="my-avatars-chip"
 							hidden
-						>
+						 data-i18n-html="gallery_index.my_avatars">
 							<span>My avatars →</span>
 						</a>
 					</div>
-					<h1 class="gallery-title">Every avatar, ever made.</h1>
-					<p class="gallery-sub">
+					<h1 class="gallery-title" data-i18n="gallery_index.every_avatar_ever_made">Every avatar, ever made.</h1>
+					<p class="gallery-sub" data-i18n="gallery_index.the_community_made_3d_avatars_on_three">
 						The community-made 3D avatars on three.ws. Click any card to preview in
 						the viewer, then embed it anywhere or remix into a new agent.
 					</p>
 
 					<div class="gallery-hero-ctas">
-						<button type="button" class="gallery-hero-btn gallery-hero-btn--surprise" data-surprise-avatar>✨ Surprise me</button>
-						<a class="gallery-hero-btn" href="/create/prompt">Create from a prompt</a>
-						<button type="button" class="gallery-hero-btn" data-create-from-template>Create from template</button>
-						<a class="gallery-hero-btn" href="/create/selfie">Create from selfie</a>
-						<a class="gallery-hero-btn" href="/dashboard/avatars">Upload avatar</a>
+						<button type="button" class="gallery-hero-btn gallery-hero-btn--surprise" data-surprise-avatar data-i18n="gallery_index.surprise_me">✨ Surprise me</button>
+						<a class="gallery-hero-btn" href="/create/prompt" data-i18n="gallery_index.create_from_a_prompt">Create from a prompt</a>
+						<button type="button" class="gallery-hero-btn" data-create-from-template data-i18n="gallery_index.create_from_template">Create from template</button>
+						<a class="gallery-hero-btn" href="/create/selfie" data-i18n="gallery_index.create_from_selfie">Create from selfie</a>
+						<a class="gallery-hero-btn" href="/dashboard/avatars" data-i18n="gallery_index.upload_avatar">Upload avatar</a>
 					</div>
 
 				</div>
@@ -110,16 +110,16 @@
 							data-role="search-clear"
 							aria-label="Clear search"
 							hidden
-						>
+						 data-i18n-attr="aria-label:gallery_index.clear_search_arialabel">
 							×
 						</button>
 					</div>
 					<div class="gallery-sort-select">
-						<label for="gallery-sort">Sort:</label>
+						<label for="gallery-sort" data-i18n="gallery_index.sort">Sort:</label>
 						<select id="gallery-sort" data-role="sort">
-							<option value="newest">Newest</option>
-							<option value="alpha">A → Z</option>
-							<option value="rigged">Rigged first</option>
+							<option value="newest" data-i18n="gallery_index.newest">Newest</option>
+							<option value="alpha" data-i18n="gallery_index.a_z">A → Z</option>
+							<option value="rigged" data-i18n="gallery_index.rigged_first">Rigged first</option>
 						</select>
 					</div>
 				</div>
@@ -142,7 +142,7 @@
 				<div class="gallery-status" data-role="status"></div>
 				<div class="gallery-sentinel" data-role="sentinel" aria-hidden="true"></div>
 				<div class="gallery-load-more-wrap">
-					<button class="gallery-load-more" data-role="load-more" hidden>
+					<button class="gallery-load-more" data-role="load-more" hidden data-i18n="gallery_index.load_more">
 						Load more
 					</button>
 				</div>
@@ -158,10 +158,10 @@
 								<path d="m3 7 9 5 9-5"/>
 								<line x1="12" y1="12" x2="12" y2="22"/>
 							</svg>
-							<h2 class="gallery-forge-title">From the Forge</h2>
+							<h2 class="gallery-forge-title" data-i18n="gallery_index.from_the_forge">From the Forge</h2>
 							<span class="gallery-forge-count" id="forge-count"></span>
 						</div>
-						<p class="gallery-forge-sub">3D models auto-saved as the community generates them. Remix any prompt to start from something that works.</p>
+						<p class="gallery-forge-sub" data-i18n="gallery_index.3d_models_auto_saved_as_the_community">3D models auto-saved as the community generates them. Remix any prompt to start from something that works.</p>
 					</div>
 					<a href="/forge" class="gallery-forge-cta">
 						Generate your own
@@ -183,5 +183,7 @@
 		<script type="module">import '/src/shared/template-picker.js';</script>
 		<script type="module" src="/gallery/gallery.js"></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

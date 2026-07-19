@@ -9,9 +9,9 @@
 		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
-		<title>Avatar</title>
+		<title data-i18n="avatar_embed.meta_title">Avatar</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="description" content="Embedded three.ws avatar." />
+		<meta name="description" content="Embedded three.ws avatar."  data-i18n-attr="content:avatar_embed.meta_description"/>
 		<meta name="robots" content="noindex" />
 		<style>
 			html,
@@ -306,15 +306,17 @@
 		<div id="name-plate"></div>
 		<div id="state-pill" aria-live="polite">idle</div>
 		<div id="mocap-pill" role="button" tabindex="0" aria-label="Toggle webcam mocap">
-			<span class="dot"></span><span class="label">webcam mocap</span>
+			<span class="dot"></span><span class="label" data-i18n="avatar_embed.webcam_mocap">webcam mocap</span>
 		</div>
 		<div id="emote-panel" role="toolbar" aria-label="Emote hotkeys"></div>
-		<button id="anim-toggle" aria-label="Toggle animation picker" aria-expanded="false">
+		<button id="anim-toggle" aria-label="Toggle animation picker" aria-expanded="false" data-i18n-html="avatar_embed.animations" data-i18n-attr="aria-label:avatar_embed.toggle_animation_picker_arialabel">
 			<span class="anim-toggle-icon">▶</span> Animations
 		</button>
 		<div id="anim-picker" role="region" aria-label="Animation picker"></div>
 		<div id="error"></div>
 
 		<script type="module" src="/src/avatar-embed.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

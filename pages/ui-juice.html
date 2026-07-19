@@ -4,17 +4,17 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>UI Juice · the game-feel library · three.ws</title>
+		<title data-i18n="ui_juice.meta_title">UI Juice · the game-feel library · three.ws</title>
 		<meta
 			name="description"
 			content="A live demo of ui-juice — the shared, token-driven, reduced-motion-safe interaction library that powers game-feel across three.ws: count-ups, directional flashes, row enters, sparklines, ring gauges, FLIP reorders, live dots and ripples."
-		/>
+		 data-i18n-attr="content:ui_juice.meta_description"/>
 		<meta name="robots" content="noindex, follow" />
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/ui-juice" />
-		<meta property="og:title" content="UI Juice · the game-feel library · three.ws" />
-		<meta property="og:description" content="Every interaction primitive in the shared three.ws game-feel library, running on real values — and collapsing to a clean static state under reduced motion." />
+		<meta property="og:title" content="UI Juice · the game-feel library · three.ws"  data-i18n-attr="content:ui_juice.meta_og_title"/>
+		<meta property="og:description" content="Every interaction primitive in the shared three.ws game-feel library, running on real values — and collapsing to a clean static state under reduced motion."  data-i18n-attr="content:ui_juice.meta_og_description"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -30,104 +30,104 @@
 
 		<main class="ujd-shell">
 			<div class="ujd-head">
-				<h1>UI Juice</h1>
-				<p>
+				<h1 data-i18n="ui_juice.ui_juice">UI Juice</h1>
+				<p data-i18n-html="ui_juice.the_shared_game_feel_library_that_powers">
 					The shared game-feel library that powers live UI across three.ws. Every primitive below is
 					token-driven and reduced-motion-safe, and runs on <strong>real values</strong> you change here —
 					nothing is faked. Read the full reference in <a href="/docs/ui-juice.md">docs/ui-juice.md</a>.
 				</p>
-				<p>
+				<p data-i18n-html="ui_juice.to_verify_reduced_motion_open_devtools_rende">
 					To verify reduced motion: open DevTools → Rendering → <em>Emulate CSS prefers-reduced-motion: reduce</em>,
 					then drive any control. Each primitive lands on its correct static end state with no motion.
 				</p>
-				<span class="ujd-rm" id="d-rm-state" data-reduced="false">checking…</span>
+				<span class="ujd-rm" id="d-rm-state" data-reduced="false" data-i18n="ui_juice.checking">checking…</span>
 			</div>
 
 			<div class="ujd-grid">
 				<!-- 1 + 4 — countUp / updateValue → real series → sparkline -->
 				<section class="ujd-card">
-					<h2>Count up <code>updateValue</code></h2>
+					<h2 data-i18n-html="ui_juice.count_up">Count up <code>updateValue</code></h2>
 					<div class="ujd-stage">
 						<div class="ujd-bignum" id="d-count-v">—</div>
 						<div class="ujd-net" id="d-spark-net"></div>
 						<div id="d-spark-box" aria-hidden="true"></div>
 					</div>
 					<div class="ujd-controls">
-						<button class="ujd-btn ujd-btn--up" id="d-count-up" type="button">+ deposit</button>
-						<button class="ujd-btn ujd-btn--down" id="d-count-down" type="button">− withdraw</button>
-						<button class="ujd-btn" id="d-count-jump" type="button">jump</button>
-						<button class="ujd-btn" id="d-spark-fill" type="button" aria-pressed="true">fill</button>
+						<button class="ujd-btn ujd-btn--up" id="d-count-up" type="button" data-i18n="ui_juice.deposit">+ deposit</button>
+						<button class="ujd-btn ujd-btn--down" id="d-count-down" type="button" data-i18n="ui_juice.withdraw">− withdraw</button>
+						<button class="ujd-btn" id="d-count-jump" type="button" data-i18n="ui_juice.jump">jump</button>
+						<button class="ujd-btn" id="d-spark-fill" type="button" aria-pressed="true" data-i18n="ui_juice.fill">fill</button>
 					</div>
 				</section>
 
 				<!-- 2 — flashValue -->
 				<section class="ujd-card">
-					<h2>Flash <code>flashValue</code></h2>
+					<h2 data-i18n-html="ui_juice.flash">Flash <code>flashValue</code></h2>
 					<div class="ujd-stage">
 						<div class="ujd-flash-card" id="d-flash-card">value changed</div>
 					</div>
 					<div class="ujd-controls">
-						<button class="ujd-btn ujd-btn--up" id="d-flash-up" type="button">up</button>
-						<button class="ujd-btn ujd-btn--down" id="d-flash-down" type="button">down</button>
-						<button class="ujd-btn" id="d-flash-neutral" type="button">neutral</button>
+						<button class="ujd-btn ujd-btn--up" id="d-flash-up" type="button" data-i18n="ui_juice.up">up</button>
+						<button class="ujd-btn ujd-btn--down" id="d-flash-down" type="button" data-i18n="ui_juice.down">down</button>
+						<button class="ujd-btn" id="d-flash-neutral" type="button" data-i18n="ui_juice.neutral">neutral</button>
 					</div>
 				</section>
 
 				<!-- 3 — enterRow / enterStagger -->
 				<section class="ujd-card">
-					<h2>Enter <code>enterRow</code></h2>
+					<h2 data-i18n-html="ui_juice.enter">Enter <code>enterRow</code></h2>
 					<div class="ujd-stage" style="align-items: stretch; justify-content: flex-start;">
-						<ul class="ujd-feed" id="d-feed-list"><li class="ujd-empty">No events yet — emit one.</li></ul>
+						<ul class="ujd-feed" id="d-feed-list"><li class="ujd-empty" data-i18n="ui_juice.no_events_yet_emit_one">No events yet — emit one.</li></ul>
 					</div>
 					<div class="ujd-controls">
-						<button class="ujd-btn" id="d-feed-emit" type="button">emit event</button>
-						<button class="ujd-btn" id="d-feed-burst" type="button">populate 6 (stagger)</button>
+						<button class="ujd-btn" id="d-feed-emit" type="button" data-i18n="ui_juice.emit_event">emit event</button>
+						<button class="ujd-btn" id="d-feed-burst" type="button" data-i18n="ui_juice.populate_6_stagger">populate 6 (stagger)</button>
 					</div>
 				</section>
 
 				<!-- 5 — ring / playRings -->
 				<section class="ujd-card">
-					<h2>Ring gauge <code>ring</code></h2>
+					<h2 data-i18n-html="ui_juice.ring_gauge">Ring gauge <code>ring</code></h2>
 					<div class="ujd-stage">
 						<div id="d-ring-box"></div>
 					</div>
 					<div class="ujd-controls" style="flex-direction: column; align-items: stretch;">
 						<input class="ujd-range" id="d-ring-pct" type="range" min="0" max="100" value="72" aria-label="ring percentage" />
-						<button class="ujd-btn" id="d-ring-replay" type="button">replay sweep</button>
+						<button class="ujd-btn" id="d-ring-replay" type="button" data-i18n="ui_juice.replay_sweep">replay sweep</button>
 					</div>
 				</section>
 
 				<!-- 6 — flipReorder -->
 				<section class="ujd-card">
-					<h2>Reorder <code>flipReorder</code></h2>
+					<h2 data-i18n-html="ui_juice.reorder">Reorder <code>flipReorder</code></h2>
 					<div class="ujd-stage" style="align-items: stretch; justify-content: flex-start;">
 						<ul class="ujd-board" id="d-flip-list"></ul>
 					</div>
 					<div class="ujd-controls">
-						<button class="ujd-btn" id="d-flip-perturb" type="button">shuffle scores</button>
-						<button class="ujd-btn" id="d-flip-sort" type="button">re-sort</button>
+						<button class="ujd-btn" id="d-flip-perturb" type="button" data-i18n="ui_juice.shuffle_scores">shuffle scores</button>
+						<button class="ujd-btn" id="d-flip-sort" type="button" data-i18n="ui_juice.re_sort">re-sort</button>
 					</div>
 				</section>
 
 				<!-- 7 — liveDot / setLiveDot -->
 				<section class="ujd-card">
-					<h2>Live dot <code>liveDot</code></h2>
+					<h2 data-i18n-html="ui_juice.live_dot">Live dot <code>liveDot</code></h2>
 					<div class="ujd-stage">
 						<span id="d-live-slot"></span>
 					</div>
 					<div class="ujd-controls">
-						<button class="ujd-btn" id="d-live-cycle" type="button">cycle state</button>
+						<button class="ujd-btn" id="d-live-cycle" type="button" data-i18n="ui_juice.cycle_state">cycle state</button>
 					</div>
 				</section>
 
 				<!-- 8 — rippleOnce -->
 				<section class="ujd-card">
-					<h2>Ripple <code>rippleOnce</code></h2>
+					<h2 data-i18n-html="ui_juice.ripple">Ripple <code>rippleOnce</code></h2>
 					<div class="ujd-stage">
 						<div class="ujd-ripple-panel" id="d-ripple-panel">it shipped</div>
 					</div>
 					<div class="ujd-controls">
-						<button class="ujd-btn ujd-btn--up" id="d-ripple-go" type="button">ship it</button>
+						<button class="ujd-btn ujd-btn--up" id="d-ripple-go" type="button" data-i18n="ui_juice.ship_it">ship it</button>
 					</div>
 				</section>
 			</div>
@@ -136,5 +136,7 @@
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
 		<script type="module" src="/src/ui-juice-demo.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

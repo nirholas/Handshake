@@ -4,9 +4,9 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Iframe embed — Walk docs — three.ws</title>
+		<title data-i18n="docs_walk_embed_iframe.meta_title">Iframe embed — Walk docs — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<meta name="description" content="Embed a walking three.ws avatar with a plain iframe. Every /walk-embed query parameter — avatar, controls, env, autoplay, ground, orbit, bg — documented with a live preview." />
+		<meta name="description" content="Embed a walking three.ws avatar with a plain iframe. Every /walk-embed query parameter — avatar, controls, env, autoplay, ground, orbit, bg — documented with a live preview."  data-i18n-attr="content:docs_walk_embed_iframe.meta_description"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="canonical" href="https://three.ws/docs/walk/embed-iframe" />
 		<link rel="shortcut icon" href="/favicon.ico" />
@@ -17,48 +17,48 @@
 		<link rel="stylesheet" href="/docs/walk/docs.css" />
 	</head>
 	<body>
-		<a class="wd-skip" href="#wd-main">Skip to content</a>
+		<a class="wd-skip" href="#wd-main" data-i18n="docs_walk_embed_iframe.skip_to_content">Skip to content</a>
 		<header><div id="nav-container"></div></header>
 		<script src="/nav.js"></script>
 
 		<div class="wd-shell">
-			<button class="wd-side-toggle" type="button" aria-expanded="false" aria-controls="wd-side">
+			<button class="wd-side-toggle" type="button" aria-expanded="false" aria-controls="wd-side" data-i18n-html="docs_walk_embed_iframe.documentation_menu">
 				<span>Documentation menu</span><span aria-hidden="true">☰</span>
 			</button>
 			<aside class="wd-side" id="wd-side" aria-label="Walk documentation">
-				<h2>Walk docs</h2>
+				<h2 data-i18n="docs_walk_embed_iframe.walk_docs">Walk docs</h2>
 				<nav aria-label="Walk documentation pages">
-					<a href="/docs/walk">Overview</a>
-					<a href="/docs/walk/getting-started">Getting started</a>
+					<a href="/docs/walk" data-i18n="docs_walk_embed_iframe.overview">Overview</a>
+					<a href="/docs/walk/getting-started" data-i18n="docs_walk_embed_iframe.getting_started">Getting started</a>
 				</nav>
-				<h2>Use it</h2>
+				<h2 data-i18n="docs_walk_embed_iframe.use_it">Use it</h2>
 				<nav aria-label="Using Walk">
-					<a href="/docs/walk/walk-page">The walk page</a>
-					<a href="/docs/walk/companion-mode">Companion mode</a>
-					<a href="/docs/walk/chrome-extension">Chrome extension</a>
+					<a href="/docs/walk/walk-page" data-i18n="docs_walk_embed_iframe.the_walk_page">The walk page</a>
+					<a href="/docs/walk/companion-mode" data-i18n="docs_walk_embed_iframe.companion_mode">Companion mode</a>
+					<a href="/docs/walk/chrome-extension" data-i18n="docs_walk_embed_iframe.chrome_extension">Chrome extension</a>
 				</nav>
-				<h2>Build with it</h2>
+				<h2 data-i18n="docs_walk_embed_iframe.build_with_it">Build with it</h2>
 				<nav aria-label="Building with Walk">
-					<a href="/docs/walk/embed-iframe" aria-current="page">Iframe embed</a>
-					<a href="/docs/walk/embed-sdk">JavaScript SDK</a>
-					<a href="/docs/walk/postmessage-events">postMessage events</a>
-					<a href="/docs/walk/analytics">Analytics</a>
+					<a href="/docs/walk/embed-iframe" aria-current="page" data-i18n="docs_walk_embed_iframe.iframe_embed">Iframe embed</a>
+					<a href="/docs/walk/embed-sdk" data-i18n="docs_walk_embed_iframe.javascript_sdk">JavaScript SDK</a>
+					<a href="/docs/walk/postmessage-events" data-i18n="docs_walk_embed_iframe.postmessage_events">postMessage events</a>
+					<a href="/docs/walk/analytics" data-i18n="docs_walk_embed_iframe.analytics">Analytics</a>
 				</nav>
-				<h2>Reference</h2>
-				<nav aria-label="Reference"><a href="/docs/walk/changelog">Changelog</a></nav>
+				<h2 data-i18n="docs_walk_embed_iframe.reference">Reference</h2>
+				<nav aria-label="Reference"><a href="/docs/walk/changelog" data-i18n="docs_walk_embed_iframe.changelog">Changelog</a></nav>
 			</aside>
 
 			<main class="wd-main" id="wd-main">
-				<p class="wd-crumbs"><a href="/docs">Docs</a> / <a href="/docs/walk">Walk</a> / Iframe embed</p>
-				<h1>Iframe embed</h1>
-				<p class="wd-lede">
+				<p class="wd-crumbs" data-i18n-html="docs_walk_embed_iframe.docs_walk_iframe_embed"><a href="/docs">Docs</a> / <a href="/docs/walk">Walk</a> / Iframe embed</p>
+				<h1 data-i18n="docs_walk_embed_iframe.iframe_embed_2">Iframe embed</h1>
+				<p class="wd-lede" data-i18n-html="docs_walk_embed_iframe.is_a_chrome_less_transparent_page_that">
 					<code>/walk-embed</code> is a chrome-less, transparent page that renders one
 					avatar. It ships <code>frame-ancestors *</code>, so you can drop it into an
 					<code>&lt;iframe&gt;</code> on any origin and configure everything through URL
 					query parameters.
 				</p>
 
-				<h2>The minimal embed</h2>
+				<h2 data-i18n="docs_walk_embed_iframe.the_minimal_embed">The minimal embed</h2>
 				<div class="wd-code" data-lang="html" data-label="HTML">
 					<pre><code>&lt;iframe
   src="https://three.ws/walk-embed?env=studio&amp;autoplay=true&amp;ground=false"
@@ -69,53 +69,53 @@
 				</div>
 
 				<div class="wd-demo">
-					<div class="wd-demo-head"><span><span class="wd-demo-dot"></span>Live preview of the embed above</span><span>?env=studio&amp;autoplay=true&amp;ground=false</span></div>
+					<div class="wd-demo-head"><span data-i18n-html="docs_walk_embed_iframe.live_preview_of_the_embed_above"><span class="wd-demo-dot"></span>Live preview of the embed above</span><span data-i18n="docs_walk_embed_iframe.env_studio_autoplay_true_ground_false">?env=studio&amp;autoplay=true&amp;ground=false</span></div>
 					<iframe title="Live walking avatar embed" src="/walk-embed?env=studio&autoplay=true&ground=false&controls=none" height="320" loading="lazy" allow="accelerometer; gyroscope; xr-spatial-tracking"></iframe>
 				</div>
 
 				<div class="wd-note">
 					<span class="wd-icon" aria-hidden="true">✱</span>
-					<span>For a floating corner avatar that mounts itself and gives you a runtime API, use the one-tag <a href="/docs/walk/embed-sdk">JavaScript SDK</a> instead — it wraps this same iframe.</span>
+					<span data-i18n-html="docs_walk_embed_iframe.for_a_floating_corner_avatar_that_mounts">For a floating corner avatar that mounts itself and gives you a runtime API, use the one-tag <a href="/docs/walk/embed-sdk">JavaScript SDK</a> instead — it wraps this same iframe.</span>
 				</div>
 
-				<h2>Query parameters</h2>
+				<h2 data-i18n="docs_walk_embed_iframe.query_parameters">Query parameters</h2>
 				<div class="wd-table-wrap">
 					<table class="wd-table">
-						<thead><tr><th>Parameter</th><th>Values</th><th>Default</th><th>Description</th></tr></thead>
+						<thead><tr><th data-i18n="docs_walk_embed_iframe.parameter">Parameter</th><th data-i18n="docs_walk_embed_iframe.values">Values</th><th data-i18n="docs_walk_embed_iframe.default">Default</th><th data-i18n="docs_walk_embed_iframe.description">Description</th></tr></thead>
 						<tbody>
-							<tr><td><code>avatar</code></td><td>GLB / VRM URL, or avatar UUID</td><td class="wd-default">default avatar</td><td>The model to render. UUIDs are resolved through the avatar registry; URLs load directly.</td></tr>
-							<tr><td><code>controls</code></td><td><code>joystick</code> · <code>keyboard</code> · <code>none</code></td><td class="wd-default"><code>joystick</code></td><td>Input method. <code>joystick</code> shows an on-screen stick, <code>keyboard</code> enables WASD/arrows, <code>none</code> disables input.</td></tr>
-							<tr><td><code>env</code></td><td><code>studio</code> · <code>void</code> · <code>beach</code> · <code>sunset</code> · <code>night</code> · <code>grid</code></td><td class="wd-default"><code>studio</code></td><td>Scene preset — sets background, fog, ground, and lighting.</td></tr>
-							<tr><td><code>autoplay</code></td><td><code>true</code> / <code>1</code></td><td class="wd-default">off</td><td>Start the avatar walking a slow circle so the embed is never static.</td></tr>
-							<tr><td><code>ground</code></td><td><code>false</code> to hide</td><td class="wd-default">shown</td><td>The ground disc. Set <code>false</code> to float the avatar on the host background with only a soft shadow.</td></tr>
-							<tr><td><code>orbit</code></td><td><code>false</code> to disable</td><td class="wd-default">enabled</td><td>Drag-to-orbit the camera. Disable for non-interactive, autoplay-only embeds.</td></tr>
-							<tr><td><code>bg</code></td><td><code>transparent</code> or a hex colour</td><td class="wd-default"><code>transparent</code></td><td>Background fill. A hex value (e.g. <code>%23101820</code>) overrides the environment preset's clear colour.</td></tr>
-							<tr><td><code>targetOrigin</code></td><td>an origin</td><td class="wd-default"><code>*</code></td><td>Restrict outbound <code>postMessage</code> events to a single origin.</td></tr>
-							<tr><td><code>allowOrigins</code></td><td>comma-separated origins</td><td class="wd-default">allow any</td><td>Allow-list of origins permitted to send inbound commands.</td></tr>
+							<tr><td><code>avatar</code></td><td data-i18n="docs_walk_embed_iframe.glb_vrm_url_or_avatar_uuid">GLB / VRM URL, or avatar UUID</td><td class="wd-default" data-i18n="docs_walk_embed_iframe.default_avatar">default avatar</td><td data-i18n="docs_walk_embed_iframe.the_model_to_render_uuids_are_resolved">The model to render. UUIDs are resolved through the avatar registry; URLs load directly.</td></tr>
+							<tr><td><code>controls</code></td><td><code>joystick</code> · <code>keyboard</code> · <code>none</code></td><td class="wd-default"><code>joystick</code></td><td data-i18n-html="docs_walk_embed_iframe.input_method_shows_an_on_screen_stick">Input method. <code>joystick</code> shows an on-screen stick, <code>keyboard</code> enables WASD/arrows, <code>none</code> disables input.</td></tr>
+							<tr><td><code>env</code></td><td><code>studio</code> · <code>void</code> · <code>beach</code> · <code>sunset</code> · <code>night</code> · <code>grid</code></td><td class="wd-default"><code>studio</code></td><td data-i18n="docs_walk_embed_iframe.scene_preset_sets_background_fog_ground_and">Scene preset — sets background, fog, ground, and lighting.</td></tr>
+							<tr><td><code>autoplay</code></td><td><code>true</code> / <code>1</code></td><td class="wd-default" data-i18n="docs_walk_embed_iframe.off">off</td><td data-i18n="docs_walk_embed_iframe.start_the_avatar_walking_a_slow_circle">Start the avatar walking a slow circle so the embed is never static.</td></tr>
+							<tr><td><code>ground</code></td><td data-i18n-html="docs_walk_embed_iframe.to_hide"><code>false</code> to hide</td><td class="wd-default" data-i18n="docs_walk_embed_iframe.shown">shown</td><td data-i18n-html="docs_walk_embed_iframe.the_ground_disc_set_to_float_the">The ground disc. Set <code>false</code> to float the avatar on the host background with only a soft shadow.</td></tr>
+							<tr><td><code>orbit</code></td><td data-i18n-html="docs_walk_embed_iframe.to_disable"><code>false</code> to disable</td><td class="wd-default" data-i18n="docs_walk_embed_iframe.enabled">enabled</td><td data-i18n="docs_walk_embed_iframe.drag_to_orbit_the_camera_disable_for">Drag-to-orbit the camera. Disable for non-interactive, autoplay-only embeds.</td></tr>
+							<tr><td><code>bg</code></td><td data-i18n-html="docs_walk_embed_iframe.or_a_hex_colour"><code>transparent</code> or a hex colour</td><td class="wd-default"><code>transparent</code></td><td data-i18n-html="docs_walk_embed_iframe.background_fill_a_hex_value_e_g">Background fill. A hex value (e.g. <code>%23101820</code>) overrides the environment preset's clear colour.</td></tr>
+							<tr><td><code>targetOrigin</code></td><td data-i18n="docs_walk_embed_iframe.an_origin">an origin</td><td class="wd-default"><code>*</code></td><td data-i18n-html="docs_walk_embed_iframe.restrict_outbound_events_to_a_single_origin">Restrict outbound <code>postMessage</code> events to a single origin.</td></tr>
+							<tr><td><code>allowOrigins</code></td><td data-i18n="docs_walk_embed_iframe.comma_separated_origins">comma-separated origins</td><td class="wd-default" data-i18n="docs_walk_embed_iframe.allow_any">allow any</td><td data-i18n="docs_walk_embed_iframe.allow_list_of_origins_permitted_to_send">Allow-list of origins permitted to send inbound commands.</td></tr>
 						</tbody>
 					</table>
 				</div>
 				<div class="wd-note">
 					<span class="wd-icon" aria-hidden="true">✱</span>
-					<span>In a URL, <code>#</code> in a hex colour must be encoded as <code>%23</code> — e.g. <code>?bg=%23101820</code>.</span>
+					<span data-i18n-html="docs_walk_embed_iframe.in_a_url_in_a_hex_colour">In a URL, <code>#</code> in a hex colour must be encoded as <code>%23</code> — e.g. <code>?bg=%23101820</code>.</span>
 				</div>
 
-				<h2>Common recipes</h2>
-				<h3>Floating, non-interactive avatar (no ground, no orbit)</h3>
+				<h2 data-i18n="docs_walk_embed_iframe.common_recipes">Common recipes</h2>
+				<h3 data-i18n="docs_walk_embed_iframe.floating_non_interactive_avatar_no_ground_no">Floating, non-interactive avatar (no ground, no orbit)</h3>
 				<div class="wd-code" data-lang="text" data-label="URL">
 					<pre><code>/walk-embed?autoplay=true&amp;ground=false&amp;orbit=false&amp;controls=none</code></pre>
 				</div>
-				<h3>Interactive avatar with a joystick on a beach</h3>
+				<h3 data-i18n="docs_walk_embed_iframe.interactive_avatar_with_a_joystick_on_a">Interactive avatar with a joystick on a beach</h3>
 				<div class="wd-code" data-lang="text" data-label="URL">
 					<pre><code>/walk-embed?env=beach&amp;controls=joystick</code></pre>
 				</div>
-				<h3>Your own avatar with a solid backdrop</h3>
+				<h3 data-i18n="docs_walk_embed_iframe.your_own_avatar_with_a_solid_backdrop">Your own avatar with a solid backdrop</h3>
 				<div class="wd-code" data-lang="text" data-label="URL">
 					<pre><code>/walk-embed?avatar=YOUR-AVATAR-UUID&amp;bg=%230b0f1a&amp;ground=false</code></pre>
 				</div>
 
-				<h2>Driving it live</h2>
-				<p>
+				<h2 data-i18n="docs_walk_embed_iframe.driving_it_live">Driving it live</h2>
+				<p data-i18n-html="docs_walk_embed_iframe.once_mounted_you_can_change_the_avatar">
 					Once mounted you can change the avatar, environment, motion, and speech at runtime
 					by posting messages to the iframe. The full message protocol — including the
 					events the iframe emits back to you — is documented in
@@ -132,10 +132,10 @@ frame.contentWindow.postMessage({ type: 'walk:narrate', text: 'Hello!' }, '*');<
 				</div>
 
 				<div class="wd-pagefoot">
-					<a class="wd-edit" href="https://github.com/nirholas/three.ws/edit/main/public/docs/walk/embed-iframe.html" rel="noopener"><span aria-hidden="true">✎</span> Edit this page on GitHub</a>
+					<a class="wd-edit" href="https://github.com/nirholas/three.ws/edit/main/public/docs/walk/embed-iframe.html" rel="noopener" data-i18n-html="docs_walk_embed_iframe.edit_this_page_on_github"><span aria-hidden="true">✎</span> Edit this page on GitHub</a>
 					<div class="wd-nextprev">
-						<a href="/docs/walk/walk-page"><span>Previous</span>← The walk page</a>
-						<a href="/docs/walk/embed-sdk"><span>Next</span>JavaScript SDK →</a>
+						<a href="/docs/walk/walk-page" data-i18n-html="docs_walk_embed_iframe.previous_the_walk_page"><span>Previous</span>← The walk page</a>
+						<a href="/docs/walk/embed-sdk" data-i18n-html="docs_walk_embed_iframe.nextjavascript_sdk"><span>Next</span>JavaScript SDK →</a>
 					</div>
 				</div>
 			</main>
@@ -145,5 +145,7 @@ frame.contentWindow.postMessage({ type: 'walk:narrate', text: 'Hello!' }, '*');<
 		<script src="/footer.js"></script>
 		<script src="/brand.js" defer></script>
 		<script type="module" src="/docs/walk/docs.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

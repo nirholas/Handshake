@@ -4,16 +4,16 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>forever — etch a message into Bitcoin</title>
-<meta name="description" content="Inscribe a message onto the Bitcoin blockchain. It stays there. Forever." />
+<title data-i18n="forever.meta_title">forever — etch a message into Bitcoin</title>
+<meta name="description" content="Inscribe a message onto the Bitcoin blockchain. It stays there. Forever."  data-i18n-attr="content:forever.meta_description"/>
 <meta name="theme-color" content="#000000" />
-<meta property="og:title" content="forever — etch a message into Bitcoin" />
-<meta property="og:description" content="Inscribe a message onto the Bitcoin blockchain. It stays there. Forever." />
+<meta property="og:title" content="forever — etch a message into Bitcoin"  data-i18n-attr="content:forever.meta_og_title"/>
+<meta property="og:description" content="Inscribe a message onto the Bitcoin blockchain. It stays there. Forever."  data-i18n-attr="content:forever.meta_og_description"/>
 <meta property="og:type" content="website" />
 <meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Forever+%E2%80%94+etch+a+message+into+Bitcoin&amp;d=Inscribe+a+message+onto+the+Bitcoin+blockchain.+It+stays+there.+Forever.&amp;p=%2Fforever" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="forever — etch a message into Bitcoin" />
-<meta name="twitter:description" content="Your words on the most secure chain in history. One inscription. Permanent." />
+<meta name="twitter:title" content="forever — etch a message into Bitcoin"  data-i18n-attr="content:forever.meta_twitter_title"/>
+<meta name="twitter:description" content="Your words on the most secure chain in history. One inscription. Permanent."  data-i18n-attr="content:forever.meta_twitter_description"/>
 <link rel="canonical" href="https://three.ws/forever" />
 <link rel="preconnect" href="https://api.ordinalsbot.com" />
 <link rel="stylesheet" href="/nav.css" />
@@ -590,36 +590,36 @@
 <!-- ── compose view ──────────────────────────────────────────── -->
 <section id="view-compose" class="view fade-in">
 	<div class="eyebrow"><span class="dot"></span>Etch onto Bitcoin · permanent · public</div>
-	<h1>Say something. <em>Forever.</em></h1>
-	<p class="tag">Your words inscribed onto a single Bitcoin satoshi. Anyone in the world can read it. No one can ever delete it. Not in 100 years. Not in 1000.</p>
+	<h1 data-i18n-html="forever.say_something_forever">Say something. <em>Forever.</em></h1>
+	<p class="tag" data-i18n="forever.your_words_inscribed_onto_a_single_bitcoin">Your words inscribed onto a single Bitcoin satoshi. Anyone in the world can read it. No one can ever delete it. Not in 100 years. Not in 1000.</p>
 
 	<div class="composer">
 		<div class="composer-frame">
 			<textarea id="message" placeholder="Type the message you want to live on the most secure chain in history…" maxlength="1500" autocomplete="off" spellcheck="true"></textarea>
 			<div class="composer-meta">
 				<div class="left">
-					<span class="kv" id="charCount"><b>0</b> chars</span>
-					<span class="kv" id="byteCount"><b>0</b> bytes</span>
+					<span class="kv" id="charCount" data-i18n-html="forever.0_chars"><b>0</b> chars</span>
+					<span class="kv" id="byteCount" data-i18n-html="forever.0_bytes"><b>0</b> bytes</span>
 				</div>
 				<div class="right">
-					<span class="kv">max <b>1500</b> bytes</span>
+					<span class="kv" data-i18n-html="forever.max_1500_bytes">max <b>1500</b> bytes</span>
 				</div>
 			</div>
 		</div>
 
 		<div class="options">
 			<div>
-				<label for="receiveAddress">Bitcoin receive address <span style="color:var(--ink-4)">(optional)</span></label>
+				<label for="receiveAddress" data-i18n-html="forever.bitcoin_receive_address_optional">Bitcoin receive address <span style="color:var(--ink-4)">(optional)</span></label>
 				<input id="receiveAddress" placeholder="bc1p…" autocomplete="off" spellcheck="false" />
 				<div class="hint">Taproot only. Leave blank to let the platform vault hold the inscription — your message still lives on chain forever.</div>
 			</div>
 			<div>
-				<label for="feeRate">Fee rate (sats/vB)</label>
+				<label for="feeRate" data-i18n="forever.fee_rate_sats_vb">Fee rate (sats/vB)</label>
 				<select id="feeRate">
-					<option value="3">3 — economy (~12 hrs)</option>
-					<option value="8" selected>8 — standard (~1 hr)</option>
-					<option value="20">20 — fast (~10 min)</option>
-					<option value="50">50 — priority (next block)</option>
+					<option value="3" data-i18n="forever.3_economy_12_hrs">3 — economy (~12 hrs)</option>
+					<option value="8" selected data-i18n="forever.8_standard_1_hr">8 — standard (~1 hr)</option>
+					<option value="20" data-i18n="forever.20_fast_10_min">20 — fast (~10 min)</option>
+					<option value="50" data-i18n="forever.50_priority_next_block">50 — priority (next block)</option>
 				</select>
 				<div class="hint">Higher fees confirm faster. The inscription is permanent either way.</div>
 			</div>
@@ -630,7 +630,7 @@
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
 				Inscribe forever
 			</button>
-			<span class="subnote" id="feeEstimate" role="status" aria-live="polite">paid in BTC · settled in ~1 block</span>
+			<span class="subnote" id="feeEstimate" role="status" aria-live="polite" data-i18n="forever.paid_in_btc_settled_in_1_block">paid in BTC · settled in ~1 block</span>
 		</div>
 
 		<div id="errorBanner" class="error-banner" role="alert" aria-live="assertive"></div>
@@ -641,10 +641,10 @@
 <section id="view-pay" class="view pay">
 	<div class="pay-header">
 		<div>
-			<h2 class="pay-title">Send Bitcoin to inscribe</h2>
+			<h2 class="pay-title" data-i18n="forever.send_bitcoin_to_inscribe">Send Bitcoin to inscribe</h2>
 			<div class="pay-sub">Once the mempool sees your payment, we broadcast the inscription. Stay on this page.</div>
 		</div>
-		<div id="statePill" class="state-pill"><span class="dot"></span><span class="label">waiting for payment</span></div>
+		<div id="statePill" class="state-pill"><span class="dot"></span><span class="label" data-i18n="forever.waiting_for_payment">waiting for payment</span></div>
 	</div>
 
 	<div class="pay-grid">
@@ -652,30 +652,30 @@
 			<div id="qrBox" class="qr-box"></div>
 		</div>
 		<div>
-			<div class="amount-big"><span id="amountBtc">—</span> BTC<span class="sat" id="amountSats">— sats</span></div>
+			<div class="amount-big"><span id="amountBtc">—</span> BTC<span class="sat" id="amountSats" data-i18n="forever.sats">— sats</span></div>
 			<div class="amount-usd" id="amountUsd">≈ $—</div>
 
 			<div class="pay-detail-row">
-				<span class="k">Pay to</span>
-				<span class="v"><span id="payAddress">—</span><button class="copy" data-copy="payAddress">copy</button></span>
+				<span class="k" data-i18n="forever.pay_to">Pay to</span>
+				<span class="v"><span id="payAddress">—</span><button class="copy" data-copy="payAddress" data-i18n="forever.copy">copy</button></span>
 			</div>
 			<div class="pay-detail-row" id="lnRow" style="display:none">
-				<span class="k">Lightning</span>
-				<span class="v"><span id="lnInvoice">—</span><button class="copy" data-copy="lnInvoice">copy</button></span>
+				<span class="k" data-i18n="forever.lightning">Lightning</span>
+				<span class="v"><span id="lnInvoice">—</span><button class="copy" data-copy="lnInvoice" data-i18n="forever.copy_2">copy</button></span>
 			</div>
 			<div class="pay-detail-row">
-				<span class="k">Receive to</span>
+				<span class="k" data-i18n="forever.receive_to">Receive to</span>
 				<span class="v" id="receiveAddrPay">—</span>
 			</div>
 			<div class="pay-detail-row">
-				<span class="k">Order</span>
+				<span class="k" data-i18n="forever.order">Order</span>
 				<span class="v" id="orderIdPay">—</span>
 			</div>
 
 			<div class="pay-actions">
-				<a id="openWallet" class="btn primary is-pending" role="button" aria-disabled="true">Open in wallet</a>
-				<a id="mempoolLink" class="btn is-pending" target="_blank" rel="noopener" aria-disabled="true">View on mempool ↗</a>
-				<button id="cancelPay" class="btn" type="button">Cancel</button>
+				<a id="openWallet" class="btn primary is-pending" role="button" aria-disabled="true" data-i18n="forever.open_in_wallet">Open in wallet</a>
+				<a id="mempoolLink" class="btn is-pending" target="_blank" rel="noopener" aria-disabled="true" data-i18n="forever.view_on_mempool">View on mempool ↗</a>
+				<button id="cancelPay" class="btn" type="button" data-i18n="forever.cancel">Cancel</button>
 			</div>
 		</div>
 	</div>
@@ -686,21 +686,21 @@
 <!-- ── success view ──────────────────────────────────────────── -->
 <section id="view-win" class="view win">
 	<div class="win-burst"><span class="dot"></span>Inscribed on Bitcoin · block confirmed</div>
-	<h2>It's forever now.</h2>
+	<h2 data-i18n="forever.it_s_forever_now">It's forever now.</h2>
 	<div class="win-message" id="winMessage">—</div>
 	<div class="win-card">
-		<div class="row"><span class="k">Inscription</span><span class="v"><a id="winInscriptionLink" class="is-pending" target="_blank" rel="noopener" aria-disabled="true">—</a></span></div>
-		<div class="row"><span class="k">Reveal tx</span><span class="v"><a id="winTxLink" class="is-pending" target="_blank" rel="noopener" aria-disabled="true">—</a></span></div>
-		<div class="row"><span class="k">Receive</span><span class="v" id="winReceive">—</span></div>
-		<div class="row"><span class="k">Network</span><span class="v">Bitcoin mainnet</span></div>
+		<div class="row"><span class="k" data-i18n="forever.inscription">Inscription</span><span class="v"><a id="winInscriptionLink" class="is-pending" target="_blank" rel="noopener" aria-disabled="true">—</a></span></div>
+		<div class="row"><span class="k" data-i18n="forever.reveal_tx">Reveal tx</span><span class="v"><a id="winTxLink" class="is-pending" target="_blank" rel="noopener" aria-disabled="true">—</a></span></div>
+		<div class="row"><span class="k" data-i18n="forever.receive">Receive</span><span class="v" id="winReceive">—</span></div>
+		<div class="row"><span class="k" data-i18n="forever.network">Network</span><span class="v" data-i18n="forever.bitcoin_mainnet">Bitcoin mainnet</span></div>
 	</div>
 	<div class="share-row">
 		<button id="shareX" class="share-x" type="button">
 			<svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2H21l-6.55 7.486L22 22h-6.844l-4.79-6.243L4.8 22H2.04l7.014-8.018L2 2h6.918l4.342 5.74L18.244 2Zm-1.2 18h1.708L7.05 4H5.24l11.804 16Z"/></svg>
 			Share on X
 		</button>
-		<button id="copyLink" class="btn">Copy permalink</button>
-		<button id="inscribeAnother" class="btn">Inscribe another</button>
+		<button id="copyLink" class="btn" data-i18n="forever.copy_permalink">Copy permalink</button>
+		<button id="inscribeAnother" class="btn" data-i18n="forever.inscribe_another">Inscribe another</button>
 	</div>
 </section>
 
@@ -709,9 +709,9 @@
 <footer>
 	<div>three.ws · forever</div>
 	<div>
-		<a href="https://docs.ordinals.com/inscriptions.html" target="_blank" rel="noopener">What is an inscription?</a>
+		<a href="https://docs.ordinals.com/inscriptions.html" target="_blank" rel="noopener" data-i18n="forever.what_is_an_inscription">What is an inscription?</a>
 		&nbsp;·&nbsp;
-		<a href="https://mempool.space" target="_blank" rel="noopener">Explore Bitcoin</a>
+		<a href="https://mempool.space" target="_blank" rel="noopener" data-i18n="forever.explore_bitcoin">Explore Bitcoin</a>
 	</div>
 </footer>
 
@@ -719,5 +719,7 @@
 
 <script type="module" src="/forever.js"></script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

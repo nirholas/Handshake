@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Scroll inertia — three.ws</title>
+		<title data-i18n="demos_agents_scroll_inertia.meta_title">Scroll inertia — three.ws</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/demos/agents/_shared.css" />
@@ -21,24 +21,24 @@
 	<body>
 		<main class="long">
 			<div class="hero-eyebrow">Scroll inertia</div>
-			<h1 class="hero-title">Scroll <em>fast</em>.</h1>
-			<p>She gets thrown when the page accelerates, catches the edge of a heading, and recovers when you settle.</p>
+			<h1 class="hero-title" data-i18n-html="demos_agents_scroll_inertia.scroll_fast">Scroll <em>fast</em>.</h1>
+			<p data-i18n="demos_agents_scroll_inertia.she_gets_thrown_when_the_page_accelerates">She gets thrown when the page accelerates, catches the edge of a heading, and recovers when you settle.</p>
 
 			<div class="spacer"></div>
 
-			<h2>A long section</h2>
-			<p>Just keep scrolling. The faster you fling the page, the more she struggles to hold on.</p>
-			<p>When you stop, she eases back to her seat.</p>
+			<h2 data-i18n="demos_agents_scroll_inertia.a_long_section">A long section</h2>
+			<p data-i18n="demos_agents_scroll_inertia.just_keep_scrolling_the_faster_you_fling">Just keep scrolling. The faster you fling the page, the more she struggles to hold on.</p>
+			<p data-i18n="demos_agents_scroll_inertia.when_you_stop_she_eases_back_to">When you stop, she eases back to her seat.</p>
 
 			<div class="spacer"></div>
 
-			<h2>Another section</h2>
-			<p>Try a sharp flick and then a slow drift.</p>
+			<h2 data-i18n="demos_agents_scroll_inertia.another_section">Another section</h2>
+			<p data-i18n="demos_agents_scroll_inertia.try_a_sharp_flick_and_then_a">Try a sharp flick and then a slow drift.</p>
 
 			<div class="spacer"></div>
 
-			<h2>End of page</h2>
-			<p>You're done. Scroll up and feel her pull the other way.</p>
+			<h2 data-i18n="demos_agents_scroll_inertia.end_of_page">End of page</h2>
+			<p data-i18n="demos_agents_scroll_inertia.you_re_done_scroll_up_and_feel">You're done. Scroll up and feel her pull the other way.</p>
 		</main>
 		<canvas id="avatar-canvas"></canvas>
 		<div class="hint">scroll fast — fling her</div>
@@ -115,5 +115,7 @@
 			}, rootBone, baseRootPos);
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

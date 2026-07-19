@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Linked Wallets · Dashboard · three.ws</title>
+		<title data-i18n="dashboard_wallets.meta_title">Linked Wallets · Dashboard · three.ws</title>
 		<link rel="icon" href="/favicon.ico" />
 		<style>
 			:root {
@@ -203,23 +203,23 @@
 		<header>
 			<div class="brand"><a href="/"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a></div>
 			<div class="row">
-				<a href="/dashboard" class="muted" style="font-size:13px">← Dashboard</a>
+				<a href="/dashboard" class="muted" style="font-size:13px" data-i18n="dashboard_wallets.dashboard">← Dashboard</a>
 				<div id="header-user-slot"></div>
 			</div>
 		</header>
 		<main>
-			<h1>Linked Wallets</h1>
-			<p class="sub">Manage Ethereum wallets connected to your account.</p>
+			<h1 data-i18n="dashboard_wallets.linked_wallets">Linked Wallets</h1>
+			<p class="sub" data-i18n="dashboard_wallets.manage_ethereum_wallets_connected_to_your_ac">Manage Ethereum wallets connected to your account.</p>
 
 			<div id="error" class="err"></div>
 
 			<div id="wallets-container" class="loading">
-				<p style="color: #666">Loading wallets…</p>
+				<p style="color: #666" data-i18n="dashboard_wallets.loading_wallets">Loading wallets…</p>
 			</div>
 
 			<div class="row" style="margin-top: 20px; gap: 10px; flex-wrap: wrap">
-				<button id="link-evm-btn" class="btn">Link Ethereum Wallet</button>
-				<button id="link-solana-btn" class="btn sec">Link Solana Wallet</button>
+				<button id="link-evm-btn" class="btn" data-i18n="dashboard_wallets.link_ethereum_wallet">Link Ethereum Wallet</button>
+				<button id="link-solana-btn" class="btn sec" data-i18n="dashboard_wallets.link_solana_wallet">Link Solana Wallet</button>
 			</div>
 			<p class="muted" id="link-hint" style="margin-top: 10px"></p>
 		</main>
@@ -554,5 +554,7 @@
 			refreshLinkButtons();
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

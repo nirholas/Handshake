@@ -4,22 +4,22 @@
 		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Motion Swap — Replace Yourself in Video with Your Avatar · three.ws</title>
+		<title data-i18n="motion_swap.meta_title">Motion Swap — Replace Yourself in Video with Your Avatar · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="description" content="Upload a video of yourself and get it back with your 3D avatar performing your motion instead of you. Pose tracking, person masking, and avatar retargeting — composited and exported in your browser." />
+		<meta name="description" content="Upload a video of yourself and get it back with your 3D avatar performing your motion instead of you. Pose tracking, person masking, and avatar retargeting — composited and exported in your browser."  data-i18n-attr="content:motion_swap.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 		<link rel="canonical" href="https://three.ws/motion-swap" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Motion Swap — Replace Yourself in Video with Your Avatar · three.ws" />
-		<meta property="og:description" content="Stay off camera without staying off video. Your avatar performs your motion, pinned frame-by-frame over you." />
+		<meta property="og:title" content="Motion Swap — Replace Yourself in Video with Your Avatar · three.ws"  data-i18n-attr="content:motion_swap.meta_og_title"/>
+		<meta property="og:description" content="Stay off camera without staying off video. Your avatar performs your motion, pinned frame-by-frame over you."  data-i18n-attr="content:motion_swap.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/motion-swap" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Motion+Swap+%E2%80%94+Your+Avatar%2C+Your+Motion&amp;d=Upload+a+video+of+yourself+and+get+it+back+with+your+3D+avatar+performing+your+motion+instead+of+you.&amp;p=%2Fmotion-swap" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Motion Swap — Replace Yourself in Video with Your Avatar · three.ws" />
-		<meta name="twitter:description" content="Stay off camera without staying off video. Your avatar performs your motion, pinned frame-by-frame over you." />
+		<meta name="twitter:title" content="Motion Swap — Replace Yourself in Video with Your Avatar · three.ws"  data-i18n-attr="content:motion_swap.meta_twitter_title"/>
+		<meta name="twitter:description" content="Stay off camera without staying off video. Your avatar performs your motion, pinned frame-by-frame over you."  data-i18n-attr="content:motion_swap.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Motion+Swap+%E2%80%94+Your+Avatar%2C+Your+Motion&amp;d=Upload+a+video+of+yourself+and+get+it+back+with+your+3D+avatar+performing+your+motion+instead+of+you.&amp;p=%2Fmotion-swap" />
 
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -143,9 +143,9 @@
 
 			<div class="ms-wrap">
 				<div class="ms-head">
-					<span class="ms-chip"><span class="ms-chip-dot"></span> Video motion capture · body swap</span>
-					<h1>Your video. Your avatar. Not your face.</h1>
-					<p>
+					<span class="ms-chip" data-i18n-html="motion_swap.video_motion_capture_body_swap"><span class="ms-chip-dot"></span> Video motion capture · body swap</span>
+					<h1 data-i18n="motion_swap.your_video_your_avatar_not_your_face">Your video. Your avatar. Not your face.</h1>
+					<p data-i18n-html="motion_swap.upload_a_video_of_yourself_a_house">
 						Upload a video of yourself — a house tour, a product demo, a talking walk-through — and get
 						it back with your <a href="/create">3D avatar</a> performing your exact motion instead of you.
 						Pose tracking runs server-side; you stay pixelated under the avatar. Compositing and export
@@ -163,25 +163,25 @@
 									<div class="ms-glyph">
 										<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>
 									</div>
-									<h3>Drop a video of one person</h3>
-									<p>MP4, MOV, or WebM up to 256 MB. The first 90 seconds are processed. Full body in frame tracks best.</p>
+									<h3 data-i18n="motion_swap.drop_a_video_of_one_person">Drop a video of one person</h3>
+									<p data-i18n="motion_swap.mp4_mov_or_webm_up_to_256">MP4, MOV, or WebM up to 256 MB. The first 90 seconds are processed. Full body in frame tracks best.</p>
 								</div>
 								<input id="ms-file" type="file" accept="video/mp4,video/quicktime,video/webm" hidden />
 							</div>
 
 							<div class="ms-overlay" id="ms-stage-processing" hidden>
 								<div class="ms-spinner" role="status" aria-label="Processing"></div>
-								<h3>Capturing your motion</h3>
-								<p>Tracking your pose frame-by-frame and masking you out. A 30-second clip takes about two minutes.</p>
+								<h3 data-i18n="motion_swap.capturing_your_motion">Capturing your motion</h3>
+								<p data-i18n="motion_swap.tracking_your_pose_frame_by_frame_and">Tracking your pose frame-by-frame and masking you out. A 30-second clip takes about two minutes.</p>
 							</div>
 
 							<div id="ms-stage-ready" hidden></div>
 
 							<div class="ms-controls">
-								<button class="ms-btn" id="ms-play" type="button">Play / Pause</button>
-								<button class="ms-btn" id="ms-restart" type="button">Restart</button>
-								<button class="ms-btn ms-btn--primary" id="ms-export" type="button">Export video</button>
-								<button class="ms-btn" id="ms-new" type="button">New video</button>
+								<button class="ms-btn" id="ms-play" type="button" data-i18n="motion_swap.play_pause">Play / Pause</button>
+								<button class="ms-btn" id="ms-restart" type="button" data-i18n="motion_swap.restart">Restart</button>
+								<button class="ms-btn ms-btn--primary" id="ms-export" type="button" data-i18n="motion_swap.export_video">Export video</button>
+								<button class="ms-btn" id="ms-new" type="button" data-i18n="motion_swap.new_video">New video</button>
 								<label class="ms-toggle" for="ms-privacy">
 									<input type="checkbox" id="ms-privacy" checked />
 									Pixelate me under the avatar
@@ -195,30 +195,30 @@
 
 					<aside>
 						<div class="ms-card">
-							<h2>Avatar</h2>
+							<h2 data-i18n="motion_swap.avatar">Avatar</h2>
 							<div id="ms-avatars"></div>
 							<div class="ms-url-row">
 								<input id="ms-avatar-url" type="url" placeholder="…or paste a rigged GLB URL" aria-label="Avatar GLB URL" />
-								<button class="ms-btn" id="ms-avatar-url-go" type="button">Load</button>
+								<button class="ms-btn" id="ms-avatar-url-go" type="button" data-i18n="motion_swap.load">Load</button>
 							</div>
-							<p class="ms-note" style="margin-top: 10px">
+							<p class="ms-note" style="margin-top: 10px" data-i18n-html="motion_swap.any_rigged_humanoid_glb_works_one_you">
 								Any rigged humanoid GLB works — one you <a href="/create">generated</a>,
 								<a href="/capture-avatar">captured from a selfie</a>, or rigged from a mesh.
 							</p>
 						</div>
 						<div class="ms-card" style="margin-top: 16px">
-							<h2>How it works</h2>
-							<p class="ms-note">
+							<h2 data-i18n="motion_swap.how_it_works">How it works</h2>
+							<p class="ms-note" data-i18n="motion_swap.a_server_worker_tracks_your_body_pose">
 								A server worker tracks your body pose in every frame and solves it onto the platform's
 								canonical skeleton — the same retarget engine that drives every avatar animation here.
 								It also segments you out into a mask.
 							</p>
-							<p class="ms-note">
+							<p class="ms-note" data-i18n="motion_swap.your_browser_then_plays_the_original_footage">
 								Your browser then plays the original footage, pixelates you under the mask, and pins the
 								avatar over you frame-by-frame, matching your position and size. Export records the
 								composite with the original audio.
 							</p>
-							<p class="ms-note">
+							<p class="ms-note" data-i18n="motion_swap.the_source_video_is_processed_transiently_an">
 								The source video is processed transiently and the pose data contains no imagery —
 								the motion clip is just skeleton rotations.
 							</p>

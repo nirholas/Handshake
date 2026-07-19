@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>LLM Usage — three.ws</title>
+		<title data-i18n="dashboard_usage.meta_title">LLM Usage — three.ws</title>
 		<style>
 			body {
 				font-family:
@@ -95,11 +95,11 @@
 		</style>
 	</head>
 	<body>
-		<h1>LLM Usage</h1>
+		<h1 data-i18n="dashboard_usage.llm_usage">LLM Usage</h1>
 		<div class="sub" id="agent-label">Loading…</div>
 
 		<div class="section" id="quota-section" style="display: none">
-			<h2>Current month</h2>
+			<h2 data-i18n="dashboard_usage.current_month">Current month</h2>
 			<div class="quota-bar">
 				<div class="quota-fill" id="quota-fill" style="width: 0%"></div>
 			</div>
@@ -107,7 +107,7 @@
 		</div>
 
 		<div class="section" id="spark-section" style="display: none">
-			<h2>Last 30 days</h2>
+			<h2 data-i18n="dashboard_usage.last_30_days">Last 30 days</h2>
 			<div class="sparkline" id="sparkline"></div>
 		</div>
 
@@ -115,8 +115,8 @@
 			<table>
 				<thead>
 					<tr>
-						<th>Day</th>
-						<th>Calls</th>
+						<th data-i18n="dashboard_usage.day">Day</th>
+						<th data-i18n="dashboard_usage.calls">Calls</th>
 					</tr>
 				</thead>
 				<tbody id="daily-tbody"></tbody>
@@ -208,5 +208,7 @@
 			}
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

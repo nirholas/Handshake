@@ -3,14 +3,14 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>SNS Domains · three.ws</title>
+		<title data-i18n="dashboard_sns.meta_title">SNS Domains · three.ws</title>
 		<link rel="stylesheet" href="/dashboard/_dash-shell.css" />
 	</head>
 	<body>
 		<div class="dash-shell">
-			<a class="dash-back" href="/dashboard/agents">← Back to dashboard</a>
-			<h1 class="dash-title">SNS Domains</h1>
-			<p class="dash-sub">
+			<a class="dash-back" href="/dashboard/agents" data-i18n="dashboard_sns.back_to_dashboard">← Back to dashboard</a>
+			<h1 class="dash-title" data-i18n="dashboard_sns.sns_domains">SNS Domains</h1>
+			<p class="dash-sub" data-i18n-html="dashboard_sns.attach_a_solana_name_service_domain_as">
 				Attach a Solana Name Service <code class="dash-mono">.sol</code> domain as your
 				agent's readable id. Domains owned by either the agent's wallet or any wallet linked
 				to your account are eligible.
@@ -438,5 +438,7 @@
 			});
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

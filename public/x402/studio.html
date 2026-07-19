@@ -4,10 +4,10 @@
 <script>/* three.ws theme boot — no-flash */(function(){try{var t=localStorage.getItem('theme');if(t==='light')document.documentElement.dataset.theme='light';}catch(e){}})();</script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>x402 Studio · three.ws</title>
-<meta name="description" content="The Stripe of x402. Configure prices, payout and agent wallets, products, security, CORS, charity and round-up giving — and publish a drag-and-drop storefront. All settled on-chain in USDC." />
-<meta property="og:title" content="x402 Studio — the Stripe of x402" />
-<meta property="og:description" content="Run a paid x402 business: agent wallets, products, a drag-and-drop storefront, charity + round-up giving. On-chain USDC settlement." />
+<title data-i18n="x402_studio.meta_title">x402 Studio · three.ws</title>
+<meta name="description" content="The Stripe of x402. Configure prices, payout and agent wallets, products, security, CORS, charity and round-up giving — and publish a drag-and-drop storefront. All settled on-chain in USDC."  data-i18n-attr="content:x402_studio.meta_description"/>
+<meta property="og:title" content="x402 Studio — the Stripe of x402"  data-i18n-attr="content:x402_studio.meta_og_title"/>
+<meta property="og:description" content="Run a paid x402 business: agent wallets, products, a drag-and-drop storefront, charity + round-up giving. On-chain USDC settlement."  data-i18n-attr="content:x402_studio.meta_og_description"/>
 <meta property="og:type" content="website" />
 <link rel="icon" href="/favicon.ico" />
 <link rel="stylesheet" href="/tokens.css" />
@@ -225,8 +225,8 @@ tr:last-child td { border-bottom: 0; }
 	<meta property="og:image:alt" content="x402 Studio — the Stripe of x402 — three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="x402 Studio — the Stripe of x402 · three.ws">
-	<meta name="twitter:description" content="Merchant console to run a paid x402 business: products and pricing, payout and agent wallets, a real USDC send/receive with SNS .sol resolution, a drag-and-drop storefront, an embeddable pay-button builder, charity and round-up giving, CORS and security.">
+	<meta name="twitter:title" content="x402 Studio — the Stripe of x402 · three.ws" data-i18n-attr="content:x402_studio.meta_twitter_title">
+	<meta name="twitter:description" content="Merchant console to run a paid x402 business: products and pricing, payout and agent wallets, a real USDC send/receive with SNS .sol resolution, a drag-and-drop storefront, an embeddable pay-button builder, charity and round-up giving, CORS and security." data-i18n-attr="content:x402_studio.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=x402+Studio+%E2%80%94+the+Stripe+of+x402&amp;d=Merchant+console+to+run+a+paid+x402+business%3A+products+and+pricing%2C+payout+and+agent+wallets%2C+a+real+USDC+send%2Freceive+with+SNS+.sol+resolution%2C+a+drag-and-drop&amp;p=%2Fx402%2Fstudio">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"x402 Studio — the Stripe of x402","description":"Merchant console to run a paid x402 business: products and pricing, payout and agent wallets, a real USDC send/receive with SNS .sol resolution, a drag-and-drop storefront, an embeddable pay-button builder, charity and round-up giving, CORS and security.","url":"https://three.ws/x402/studio","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&t=x402+Studio+%E2%80%94+the+Stripe+of+x402&d=Merchant+console+to+run+a+paid+x402+business%3A+products+and+pricing%2C+payout+and+agent+wallets%2C+a+real+USDC+send%2Freceive+with+SNS+.sol+resolution%2C+a+drag-and-drop&p=%2Fx402%2Fstudio"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"X402","item":"https://three.ws/x402"},{"@type":"ListItem","position":3,"name":"Studio","item":"https://three.ws/x402/studio"}]}]}</script>
 </head>
@@ -239,5 +239,7 @@ tr:last-child td { border-bottom: 0; }
 </div>
 <div class="toasts" id="toasts"></div>
 <script type="module" src="/x402/studio.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

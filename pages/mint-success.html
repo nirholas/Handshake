@@ -5,7 +5,7 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-	<title>Agent deployed · three.ws</title>
+	<title data-i18n="mint_success.meta_title">Agent deployed · three.ws</title>
 	<meta name="robots" content="noindex" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="stylesheet" href="/fonts/fonts.css" />
@@ -165,14 +165,14 @@
 			<div class="agent-name" id="agentName">Loading…</div>
 
 			<div class="tx-row" id="txRow">
-				<span class="chain-badge" id="chainBadge">SOLANA</span>
+				<span class="chain-badge" id="chainBadge" data-i18n="mint_success.solana">SOLANA</span>
 				<span class="tx-hash" id="txHash">—</span>
-				<a class="tx-link" id="txLink" href="#" target="_blank" rel="noopener">View on explorer ↗</a>
+				<a class="tx-link" id="txLink" href="#" target="_blank" rel="noopener" data-i18n="mint_success.view_on_explorer">View on explorer ↗</a>
 			</div>
 
 			<div class="ctas" id="ctas">
-				<a class="btn primary" id="btnView" href="#">View your agent →</a>
-				<button class="btn ghost" id="btnShare" type="button">Share</button>
+				<a class="btn primary" id="btnView" href="#" data-i18n="mint_success.view_your_agent">View your agent →</a>
+				<button class="btn ghost" id="btnShare" type="button" data-i18n="mint_success.share">Share</button>
 			</div>
 		</div>
 	</div>
@@ -330,5 +330,7 @@
 
 		loadAgent();
 	</script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

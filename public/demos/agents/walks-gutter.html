@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Walks the gutter — three.ws</title>
+		<title data-i18n="demos_agents_walks_gutter.meta_title">Walks the gutter — three.ws</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/demos/agents/_shared.css" />
@@ -17,20 +17,20 @@
 	<body>
 		<main class="col">
 			<div class="hero-eyebrow">Walks the gutter</div>
-			<h1 class="hero-title">She walks <em>with</em> you.</h1>
-			<p>Scroll the page. She paces in the right-hand gutter at the same speed, slowing when you slow.</p>
-			<p>Stop scrolling and she stops with you. Reverse direction and she turns around.</p>
-			<h2>Heading two</h2>
-			<p>Long-form copy. She keeps pace, her gait sped up or slowed to match.</p>
-			<p>The longer the page, the longer the walk.</p>
-			<h2>Heading three</h2>
-			<p>Halfway down.</p>
-			<p>Each section keeps her busy.</p>
-			<h2>Heading four</h2>
-			<p>Almost there.</p>
-			<p>Final stretch — she'll idle at the end.</p>
-			<h2>Heading five</h2>
-			<p>End of page.</p>
+			<h1 class="hero-title" data-i18n-html="demos_agents_walks_gutter.she_walks_with_you">She walks <em>with</em> you.</h1>
+			<p data-i18n="demos_agents_walks_gutter.scroll_the_page_she_paces_in_the">Scroll the page. She paces in the right-hand gutter at the same speed, slowing when you slow.</p>
+			<p data-i18n="demos_agents_walks_gutter.stop_scrolling_and_she_stops_with_you">Stop scrolling and she stops with you. Reverse direction and she turns around.</p>
+			<h2 data-i18n="demos_agents_walks_gutter.heading_two">Heading two</h2>
+			<p data-i18n="demos_agents_walks_gutter.long_form_copy_she_keeps_pace_her">Long-form copy. She keeps pace, her gait sped up or slowed to match.</p>
+			<p data-i18n="demos_agents_walks_gutter.the_longer_the_page_the_longer_the">The longer the page, the longer the walk.</p>
+			<h2 data-i18n="demos_agents_walks_gutter.heading_three">Heading three</h2>
+			<p data-i18n="demos_agents_walks_gutter.halfway_down">Halfway down.</p>
+			<p data-i18n="demos_agents_walks_gutter.each_section_keeps_her_busy">Each section keeps her busy.</p>
+			<h2 data-i18n="demos_agents_walks_gutter.heading_four">Heading four</h2>
+			<p data-i18n="demos_agents_walks_gutter.almost_there">Almost there.</p>
+			<p data-i18n="demos_agents_walks_gutter.final_stretch_she_ll_idle_at_the">Final stretch — she'll idle at the end.</p>
+			<h2 data-i18n="demos_agents_walks_gutter.heading_five">Heading five</h2>
+			<p data-i18n="demos_agents_walks_gutter.end_of_page">End of page.</p>
 		</main>
 		<canvas id="avatar-canvas"></canvas>
 		<div class="hint">scroll slowly</div>
@@ -107,5 +107,7 @@
 			}, rootBone, baseRootPos);
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

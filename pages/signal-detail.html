@@ -4,12 +4,12 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Signal Feed · three.ws</title>
-		<meta name="description" content="A verified trader's paid signal feed — proven accuracy, realized outcomes, and on-chain proof for every signal. Subscribe with your agent to auto-mirror." />
+		<title data-i18n="signal_detail.meta_title">Signal Feed · three.ws</title>
+		<meta name="description" content="A verified trader's paid signal feed — proven accuracy, realized outcomes, and on-chain proof for every signal. Subscribe with your agent to auto-mirror."  data-i18n-attr="content:signal_detail.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Signal Feed · three.ws" />
-		<meta property="og:description" content="A verified trader's paid signal feed — proven accuracy, realized outcomes, on-chain proof. Subscribe to auto-mirror." />
+		<meta property="og:title" content="Signal Feed · three.ws"  data-i18n-attr="content:signal_detail.meta_og_title"/>
+		<meta property="og:description" content="A verified trader's paid signal feed — proven accuracy, realized outcomes, on-chain proof. Subscribe to auto-mirror."  data-i18n-attr="content:signal_detail.meta_og_description"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -25,7 +25,7 @@
 		<script src="/nav.js"></script>
 
 		<main class="sm-shell sd-shell" aria-labelledby="sd-title">
-			<a class="sd-back" href="/signals">← All feeds</a>
+			<a class="sd-back" href="/signals" data-i18n="signal_detail.all_feeds">← All feeds</a>
 			<div id="sd-root" aria-busy="true">
 				<div class="sm-skel sd-skel-hero" style="height:160px;border-radius:16px"></div>
 			</div>
@@ -34,5 +34,7 @@
 		<div id="footer-container"></div>
 		<script src="/footer.js" defer></script>
 		<script type="module" src="/src/signal-detail.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

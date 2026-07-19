@@ -4,7 +4,7 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PumpFun Grid POC</title>
+  <title data-i18n="pump_grid_poc.meta_title">PumpFun Grid POC</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@10.1.2/dist/gridstack.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/gridstack@10.1.2/dist/gridstack-all.js" integrity="sha384-6IelLg5vJ9FDli+2FiM5mdHxGkb5pvYCGXlIN9Tqlv6ufE1DNgZkrqeIz/me4Phs" crossorigin="anonymous"></script>
   <style>
@@ -27,7 +27,7 @@
 </head>
 <body>
 
-  <h1>Pump.fun Free-Flowing Dashboard (POC)</h1>
+  <h1 data-i18n="pump_grid_poc.pump_fun_free_flowing_dashboard_poc">Pump.fun Free-Flowing Dashboard (POC)</h1>
 
   <div class="grid-stack"></div>
 
@@ -47,5 +47,7 @@
   </script>
 
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Agent passport · three.ws</title>
+		<title data-i18n="agent_passport.meta_title">Agent passport · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<style>
 			* {
@@ -565,8 +565,8 @@
 		</style>
 	</head>
 	<body>
-		<h1>Solana agent passport</h1>
-		<p class="muted">
+		<h1 data-i18n="agent_passport.solana_agent_passport">Solana agent passport</h1>
+		<p class="muted" data-i18n-html="agent_passport.erc_8004_style_identity_reputation_and_valid">
 			ERC-8004-style identity, reputation, and validation.
 			<a href="/.well-known/agent-attestation-schemas" target="_blank" rel="noopener">View schemas</a>
 		</p>
@@ -579,34 +579,34 @@
 				spellcheck="false"
 			/>
 			<select id="network">
-				<option value="devnet">devnet</option>
-				<option value="mainnet">mainnet</option>
+				<option value="devnet" data-i18n="agent_passport.devnet">devnet</option>
+				<option value="mainnet" data-i18n="agent_passport.mainnet">mainnet</option>
 			</select>
-			<button id="load" class="primary">Load</button>
-			<button id="share" title="Copy shareable link">Share</button>
-			<button id="embed" title="Copy iframe embed snippet">Embed</button>
+			<button id="load" class="primary" data-i18n="agent_passport.load">Load</button>
+			<button id="share" title="Copy shareable link" data-i18n="agent_passport.share" data-i18n-attr="title:agent_passport.copy_shareable_link_title">Share</button>
+			<button id="embed" title="Copy iframe embed snippet" data-i18n="agent_passport.embed" data-i18n-attr="title:agent_passport.copy_iframe_embed_snippet_title">Embed</button>
 		</div>
 
 		<div id="identity"></div>
 
 		<div id="token-stats" hidden></div>
 
-		<h2>Reputation <span class="hint" id="rep-hint"></span></h2>
+		<h2 data-i18n-html="agent_passport.reputation">Reputation <span class="hint" id="rep-hint"></span></h2>
 		<div id="reputation"></div>
 
 		<div id="rate" class="rate-panel" hidden></div>
 
-		<h2>
+		<h2 data-i18n-html="agent_passport.recent_attestations_off">
 			Recent attestations <span class="hint" id="atts-count"></span>
 			<span id="live" class="live-dot off" title="Live updates">off</span>
 		</h2>
 		<div class="filters" id="filters" hidden>
-			<button class="chip" data-filter="all" aria-pressed="true">all</button>
-			<button class="chip" data-filter="feedback" aria-pressed="false">feedback</button>
-			<button class="chip" data-filter="validation" aria-pressed="false">validation</button>
-			<button class="chip" data-filter="task" aria-pressed="false">task</button>
-			<button class="chip" data-filter="event" aria-pressed="false">event-attested</button>
-			<button class="chip" data-filter="disputed" aria-pressed="false">disputed</button>
+			<button class="chip" data-filter="all" aria-pressed="true" data-i18n="agent_passport.all">all</button>
+			<button class="chip" data-filter="feedback" aria-pressed="false" data-i18n="agent_passport.feedback">feedback</button>
+			<button class="chip" data-filter="validation" aria-pressed="false" data-i18n="agent_passport.validation">validation</button>
+			<button class="chip" data-filter="task" aria-pressed="false" data-i18n="agent_passport.task">task</button>
+			<button class="chip" data-filter="event" aria-pressed="false" data-i18n="agent_passport.event_attested">event-attested</button>
+			<button class="chip" data-filter="disputed" aria-pressed="false" data-i18n="agent_passport.disputed">disputed</button>
 		</div>
 		<div id="atts" class="atts"></div>
 
@@ -1575,5 +1575,7 @@
 			if ($('asset').value) load();
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

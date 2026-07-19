@@ -3,14 +3,14 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Agent Strategy · three.ws</title>
+		<title data-i18n="dashboard_strategy.meta_title">Agent Strategy · three.ws</title>
 		<link rel="stylesheet" href="/dashboard/_dash-shell.css" />
 	</head>
 	<body>
 		<div class="dash-shell">
-			<a class="dash-back" href="/dashboard/agents">← Back to dashboard</a>
-			<h1 class="dash-title">Agent Strategy</h1>
-			<p class="dash-sub">
+			<a class="dash-back" href="/dashboard/agents" data-i18n="dashboard_strategy.back_to_dashboard">← Back to dashboard</a>
+			<h1 class="dash-title" data-i18n="dashboard_strategy.agent_strategy">Agent Strategy</h1>
+			<p class="dash-sub" data-i18n-html="dashboard_strategy.freeform_json_your_agent_s_skills_can">
 				Freeform JSON your agent's skills can read at runtime. Stored on
 				<code class="dash-mono">agent_identities.meta.strategy</code>. For typed DCA rules see
 				<a href="/strategy-lab">Strategy lab</a>.
@@ -133,5 +133,7 @@
 			});
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

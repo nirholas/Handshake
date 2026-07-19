@@ -10,12 +10,12 @@
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Embed your avatar · three.ws</title>
+		<title data-i18n="embed_demo.meta_title">Embed your avatar · three.ws</title>
 		<meta name="robots" content="noindex" />
 		<meta
 			name="description"
 			content="Drop a three.ws avatar on any site with a single &lt;threews-avatar&gt; tag — transparent, OBS-friendly, programmable."
-		/>
+		 data-i18n-attr="content:embed_demo.meta_description"/>
 
 		<!-- The SDK. One tag. Registers <threews-avatar> globally. -->
 		<script src="/embed.js" defer></script>
@@ -184,24 +184,24 @@
 	<body>
 		<div class="wrap">
 			<div class="eyebrow">SDK · v1.0</div>
-			<h1>One tag. Your avatar anywhere.</h1>
-			<p class="lede">
+			<h1 data-i18n="embed_demo.one_tag_your_avatar_anywhere">One tag. Your avatar anywhere.</h1>
+			<p class="lede" data-i18n-html="embed_demo.drop_on_webflow_framer_react_plain_html">
 				Drop <code>&lt;threews-avatar&gt;</code> on Webflow, Framer, React, plain HTML,
 				Squarespace, anywhere. Transparent by default, OBS-ready with a chromakey, and
 				programmable via a small JS API. Examples below run live on this page.
 			</p>
 
 			<div class="section-head">
-				<h2>Live examples</h2>
-				<span class="note">Every avatar below is a real <code>&lt;threews-avatar&gt;</code> mounted from the script tag at the top of this page.</span>
+				<h2 data-i18n="embed_demo.live_examples">Live examples</h2>
+				<span class="note" data-i18n-html="embed_demo.every_avatar_below_is_a_real_mounted">Every avatar below is a real <code>&lt;threews-avatar&gt;</code> mounted from the script tag at the top of this page.</span>
 			</div>
 
 			<div class="grid">
 				<!-- 1) Default — auto-rotate, transparent, no chrome -->
 				<div class="card">
 					<div class="card-head">
-						<h2>Default</h2>
-						<span class="tag">transparent</span>
+						<h2 data-i18n="embed_demo.default">Default</h2>
+						<span class="tag" data-i18n="embed_demo.transparent">transparent</span>
 					</div>
 					<div class="frame">
 						<threews-avatar
@@ -211,9 +211,9 @@
 						></threews-avatar>
 					</div>
 					<div class="controls">
-						<button data-target="ex-default" data-action="play" data-arg="wave">Wave</button>
-						<button data-target="ex-default" data-action="play" data-arg="celebrate">Celebrate</button>
-						<button data-target="ex-default" data-action="play" data-arg="dance">Dance</button>
+						<button data-target="ex-default" data-action="play" data-arg="wave" data-i18n="embed_demo.wave">Wave</button>
+						<button data-target="ex-default" data-action="play" data-arg="celebrate" data-i18n="embed_demo.celebrate">Celebrate</button>
+						<button data-target="ex-default" data-action="play" data-arg="dance" data-i18n="embed_demo.dance">Dance</button>
 					</div>
 					<div class="snippet">&lt;threews-avatar avatar-id="avatar_demo_disk_cz" hide-chrome&gt;&lt;/threews-avatar&gt;</div>
 					<div class="log" id="log-default"></div>
@@ -222,8 +222,8 @@
 				<!-- 2) Card with name plate -->
 				<div class="card">
 					<div class="card-head">
-						<h2>With name plate</h2>
-						<span class="tag">card mode</span>
+						<h2 data-i18n="embed_demo.with_name_plate">With name plate</h2>
+						<span class="tag" data-i18n="embed_demo.card_mode">card mode</span>
 					</div>
 					<div class="frame">
 						<threews-avatar
@@ -239,8 +239,8 @@
 				<!-- 3) OBS browser source — chromakey -->
 				<div class="card">
 					<div class="card-head">
-						<h2>OBS / chromakey</h2>
-						<span class="tag">streamer mode</span>
+						<h2 data-i18n="embed_demo.obs_chromakey">OBS / chromakey</h2>
+						<span class="tag" data-i18n="embed_demo.streamer_mode">streamer mode</span>
 					</div>
 					<div class="frame chromakey">
 						<threews-avatar
@@ -257,21 +257,21 @@
 			</div>
 
 			<div class="section-head">
-				<h2>Copy-paste snippet</h2>
-				<span class="note">Drop this on any page.</span>
+				<h2 data-i18n="embed_demo.copy_paste_snippet">Copy-paste snippet</h2>
+				<span class="note" data-i18n="embed_demo.drop_this_on_any_page">Drop this on any page.</span>
 			</div>
-			<div class="snippet-large"><span class="k">&lt;script</span> <span class="a">src</span>=<span class="s">"https://three.ws/embed.js"</span> <span class="a">defer</span><span class="k">&gt;&lt;/script&gt;</span>
+			<div class="snippet-large"><span class="k" data-i18n="embed_demo.script">&lt;script</span> <span class="a" data-i18n="embed_demo.src">src</span>=<span class="s" data-i18n="embed_demo.https_three_ws_embed_js">"https://three.ws/embed.js"</span> <span class="a" data-i18n="embed_demo.defer">defer</span><span class="k" data-i18n="embed_demo.text">&gt;&lt;/script&gt;</span>
 
-<span class="k">&lt;threews-avatar</span>
-   <span class="a">avatar-id</span>=<span class="s">"your-avatar-id"</span>
-   <span class="a">hide-chrome</span>
-   <span class="a">pose</span>=<span class="s">"wave"</span><span class="k">&gt;&lt;/threews-avatar&gt;</span>
+<span class="k" data-i18n="embed_demo.threews_avatar">&lt;threews-avatar</span>
+   <span class="a" data-i18n="embed_demo.avatar_id">avatar-id</span>=<span class="s" data-i18n="embed_demo.your_avatar_id">"your-avatar-id"</span>
+   <span class="a" data-i18n="embed_demo.hide_chrome">hide-chrome</span>
+   <span class="a" data-i18n="embed_demo.pose">pose</span>=<span class="s" data-i18n="embed_demo.wave_2">"wave"</span><span class="k" data-i18n="embed_demo.text_2">&gt;&lt;/threews-avatar&gt;</span>
 
-<span class="k">&lt;script&gt;</span>
-   <span class="a">const</span> el = document.querySelector(<span class="s">'threews-avatar'</span>);
-   <span class="a">await</span> el.ready;
-   el.play(<span class="s">'celebrate'</span>);
-<span class="k">&lt;/script&gt;</span></div>
+<span class="k" data-i18n="embed_demo.text_3">&lt;script&gt;</span>
+   <span class="a" data-i18n="embed_demo.const">const</span> el = document.querySelector(<span class="s" data-i18n="embed_demo.threews_avatar_2">'threews-avatar'</span>);
+   <span class="a" data-i18n="embed_demo.await">await</span> el.ready;
+   el.play(<span class="s" data-i18n="embed_demo.celebrate_2">'celebrate'</span>);
+<span class="k" data-i18n="embed_demo.text_4">&lt;/script&gt;</span></div>
 		</div>
 
 		<script>
@@ -312,5 +312,7 @@
 				});
 			}
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

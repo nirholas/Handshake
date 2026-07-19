@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Edit Persona · three.ws</title>
+		<title data-i18n="agent_edit_index.meta_title">Edit Persona · three.ws</title>
 		<link rel="icon" href="/favicon.ico" />
 		<style>
 			:root {
@@ -550,14 +550,14 @@
 		<header>
 			<div class="header-left">
 				<a class="brand" href="/"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a>
-				<span class="header-title" id="header-title">Edit Persona</span>
+				<span class="header-title" id="header-title" data-i18n="agent_edit_index.edit_persona">Edit Persona</span>
 			</div>
 			<div class="header-actions">
 				<a id="view-link" href="#" class="btn sec" style="text-decoration: none"
-					>View page →</a
+					 data-i18n="agent_edit_index.view_page">View page →</a
 				>
 				<span id="save-status" class="save-status" aria-live="polite"></span>
-				<button id="save-btn" class="btn" disabled>Save</button>
+				<button id="save-btn" class="btn" disabled data-i18n="agent_edit_index.save">Save</button>
 			</div>
 		</header>
 
@@ -567,14 +567,14 @@
 				<iframe id="preview-frame" title="Agent preview" style="display: none"></iframe>
 			</div>
 			<div class="editor-pane" id="editor-pane">
-				<h2>Persona</h2>
-				<p class="sub">Shape how your agent speaks, thinks, and presents itself.</p>
+				<h2 data-i18n="agent_edit_index.persona">Persona</h2>
+				<p class="sub" data-i18n="agent_edit_index.shape_how_your_agent_speaks_thinks_and">Shape how your agent speaks, thinks, and presents itself.</p>
 
 				<div class="templates" id="templates-row"></div>
 
 				<div class="form-group">
 					<div class="label-row">
-						<label for="f-name">Name</label>
+						<label for="f-name" data-i18n="agent_edit_index.name">Name</label>
 						<span class="char-count" id="cnt-name">0/40</span>
 					</div>
 					<input
@@ -588,7 +588,7 @@
 
 				<div class="form-group">
 					<div class="label-row">
-						<label for="f-bio">Bio</label>
+						<label for="f-bio" data-i18n="agent_edit_index.bio">Bio</label>
 						<span class="char-count" id="cnt-bio">0/280</span>
 					</div>
 					<textarea
@@ -601,14 +601,14 @@
 
 				<div class="form-group">
 					<div class="label-row">
-						<label for="f-system-prompt">System prompt</label>
+						<label for="f-system-prompt" data-i18n="agent_edit_index.system_prompt">System prompt</label>
 						<span>
 							<span class="char-count" id="cnt-system-prompt">0/2000</span>
 							<button
 								class="reset-btn"
 								id="reset-prompt-btn"
 								style="margin-left: 8px"
-							>
+							 data-i18n="agent_edit_index.reset_to_template">
 								Reset to template
 							</button>
 						</span>
@@ -624,11 +624,11 @@
 
 				<div class="form-group">
 					<label
-						>Catchphrases
+						 data-i18n-html="agent_edit_index.catchphrases_5">Catchphrases
 						<span style="color: #555; font-weight: 400">(≤ 5)</span></label
 					>
 					<div class="catchphrase-list" id="catchphrase-list"></div>
-					<button class="add-catchphrase" id="add-catchphrase-btn" style="display: none">
+					<button class="add-catchphrase" id="add-catchphrase-btn" style="display: none" data-i18n="agent_edit_index.add_catchphrase">
 						+ Add catchphrase
 					</button>
 				</div>
@@ -636,9 +636,9 @@
 				<hr class="section-divider" />
 
 				<div class="form-group">
-					<label>Sentiment bias</label>
+					<label data-i18n="agent_edit_index.sentiment_bias">Sentiment bias</label>
 					<div class="slider-wrap">
-						<span class="slider-label">stoic</span>
+						<span class="slider-label" data-i18n="agent_edit_index.stoic">stoic</span>
 						<input
 							type="range"
 							id="f-sentiment-bias"
@@ -647,18 +647,18 @@
 							step="0.05"
 							value="0"
 						/>
-						<span class="slider-label">effusive</span>
+						<span class="slider-label" data-i18n="agent_edit_index.effusive">effusive</span>
 						<span class="slider-value" id="bias-value">0.00</span>
 					</div>
 				</div>
 
 				<div class="form-group" id="voice-picker-group">
-					<label>Voice</label>
+					<label data-i18n="agent_edit_index.voice">Voice</label>
 					<!-- populated by initVoicePicker() in edit.js -->
 				</div>
 
 				<div class="form-group">
-					<label>Do-not-say list</label>
+					<label data-i18n="agent_edit_index.do_not_say_list">Do-not-say list</label>
 					<div class="chip-input-wrap" id="dns-wrap">
 						<input
 							class="chip-text-input"
@@ -672,9 +672,9 @@
 
 		<div id="forbidden-screen" style="display: none" class="forbidden">
 			<div>
-				<h2>Access denied</h2>
-				<p>You don't own this agent.</p>
-				<a href="/dashboard">← Back to dashboard</a>
+				<h2 data-i18n="agent_edit_index.access_denied">Access denied</h2>
+				<p data-i18n="agent_edit_index.you_don_t_own_this_agent">You don't own this agent.</p>
+				<a href="/dashboard" data-i18n="agent_edit_index.back_to_dashboard">← Back to dashboard</a>
 			</div>
 		</div>
 
@@ -695,5 +695,7 @@
 
 		<script type="module" src="./edit.js"></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

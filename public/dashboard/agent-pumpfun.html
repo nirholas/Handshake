@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Agent · Pump.fun · Dashboard · three.ws</title>
+		<title data-i18n="dashboard_agent_pumpfun.meta_title">Agent · Pump.fun · Dashboard · three.ws</title>
 		<link rel="icon" href="/favicon.ico" />
 		<style>
 			:root {
@@ -450,40 +450,40 @@
 	</head>
 	<body>
 		<header class="site-header">
-			<a class="brand" href="/" aria-label="three.ws home">
+			<a class="brand" href="/" aria-label="three.ws home" data-i18n-attr="aria-label:dashboard_agent_pumpfun.three_ws_home_arialabel">
 				<img src="/three.svg" alt="" aria-hidden="true" />
 				<span>three.ws</span>
 			</a>
 			<nav class="site-nav" aria-label="Primary">
-				<a href="/app">Viewer</a>
-				<a href="/create">Create</a>
-				<a href="/discover">Discover</a>
-				<a href="/widgets">Widgets</a>
-				<a href="/studio">Studio</a>
-				<a href="/docs">Docs</a>
-				<a href="/dashboard" class="active" aria-current="page">Dashboard</a>
+				<a href="/app" data-i18n="dashboard_agent_pumpfun.viewer">Viewer</a>
+				<a href="/create" data-i18n="dashboard_agent_pumpfun.create">Create</a>
+				<a href="/discover" data-i18n="dashboard_agent_pumpfun.discover">Discover</a>
+				<a href="/widgets" data-i18n="dashboard_agent_pumpfun.widgets">Widgets</a>
+				<a href="/studio" data-i18n="dashboard_agent_pumpfun.studio">Studio</a>
+				<a href="/docs" data-i18n="dashboard_agent_pumpfun.docs">Docs</a>
+				<a href="/dashboard" class="active" aria-current="page" data-i18n="dashboard_agent_pumpfun.dashboard">Dashboard</a>
 			</nav>
 			<div id="header-user-slot"></div>
 		</header>
 
 		<div class="crumb">
-			<a href="/dashboard">← Dashboard</a>
+			<a href="/dashboard" data-i18n="dashboard_agent_pumpfun.dashboard_2">← Dashboard</a>
 			<span class="sep">/</span>
-			<span class="brand">Agent · Pump.fun</span>
+			<span class="brand" data-i18n="dashboard_agent_pumpfun.agent_pump_fun">Agent · Pump.fun</span>
 		</div>
 
 		<nav class="subnav" aria-label="Agent wallet tools">
-			<a href="/dashboard/agent-pumpfun" class="active" aria-current="page">Pump.fun</a>
-			<a href="/dashboard/wallets">Wallets</a>
-			<a href="/vanity-wallet">Vanity ✦</a>
-			<a href="/strategy-lab">Strategy lab</a>
-			<a href="/reputation">Reputation</a>
-			<a href="/pumpfun" target="_blank" rel="noopener">Live feed ↗</a>
+			<a href="/dashboard/agent-pumpfun" class="active" aria-current="page" data-i18n="dashboard_agent_pumpfun.pump_fun">Pump.fun</a>
+			<a href="/dashboard/wallets" data-i18n="dashboard_agent_pumpfun.wallets">Wallets</a>
+			<a href="/vanity-wallet" data-i18n="dashboard_agent_pumpfun.vanity">Vanity ✦</a>
+			<a href="/strategy-lab" data-i18n="dashboard_agent_pumpfun.strategy_lab">Strategy lab</a>
+			<a href="/reputation" data-i18n="dashboard_agent_pumpfun.reputation">Reputation</a>
+			<a href="/pumpfun" target="_blank" rel="noopener" data-i18n="dashboard_agent_pumpfun.live_feed">Live feed ↗</a>
 		</nav>
 
 		<main>
-			<h1>Agent control panel<span class="tag net-badge mainnet" id="net-badge">mainnet</span></h1>
-			<p class="sub">
+			<h1 data-i18n-html="dashboard_agent_pumpfun.agent_control_panelmainnet">Agent control panel<span class="tag net-badge mainnet" id="net-badge">mainnet</span></h1>
+			<p class="sub" data-i18n="dashboard_agent_pumpfun.each_agent_has_its_own_solana_wallet">
 				Each agent has its own Solana wallet. Launch tokens, trade on the bonding curve, and
 				watch positions — the agent signs every transaction from its server-held keypair
 				(subject to its spend policy).
@@ -492,32 +492,32 @@
 			<div class="layout">
 			<div class="col-side">
 			<section class="panel" id="agent-panel">
-				<h2>Agent</h2>
+				<h2 data-i18n="dashboard_agent_pumpfun.agent">Agent</h2>
 				<div class="row">
 					<div class="field">
-						<label for="agent-select">Identity</label>
+						<label for="agent-select" data-i18n="dashboard_agent_pumpfun.identity">Identity</label>
 						<select id="agent-select"></select>
 					</div>
 					<div class="field" style="flex: 0 0 160px">
-						<label for="network-select">Network</label>
+						<label for="network-select" data-i18n="dashboard_agent_pumpfun.network">Network</label>
 						<select id="network-select">
-							<option value="mainnet">mainnet</option>
-							<option value="devnet">devnet</option>
+							<option value="mainnet" data-i18n="dashboard_agent_pumpfun.mainnet">mainnet</option>
+							<option value="devnet" data-i18n="dashboard_agent_pumpfun.devnet">devnet</option>
 						</select>
 					</div>
 					<div style="flex: 0 0 auto; padding-top: 19px">
-						<button class="btn ghost" id="refresh-btn">Refresh</button>
+						<button class="btn ghost" id="refresh-btn" data-i18n="dashboard_agent_pumpfun.refresh">Refresh</button>
 					</div>
 				</div>
 				<div style="margin-top: 14px">
 					<dl class="kv">
-						<dt>Address</dt>
+						<dt data-i18n="dashboard_agent_pumpfun.address">Address</dt>
 						<dd id="agent-address" class="muted"><span class="skeleton" style="width:180px"></span></dd>
-						<dt>Balance</dt>
+						<dt data-i18n="dashboard_agent_pumpfun.balance">Balance</dt>
 						<dd id="agent-balance" class="muted"><span class="skeleton" style="width:80px"></span></dd>
 					</dl>
 					<div class="row" style="margin-top: 10px">
-						<button class="btn ghost" id="provision-btn" hidden>
+						<button class="btn ghost" id="provision-btn" hidden data-i18n="dashboard_agent_pumpfun.provision_solana_wallet">
 							Provision Solana wallet
 						</button>
 						<a
@@ -526,7 +526,7 @@
 							href="/vanity-wallet"
 							target="_blank"
 							rel="noopener"
-							>Grind vanity address ✦</a
+							 data-i18n="dashboard_agent_pumpfun.grind_vanity_address">Grind vanity address ✦</a
 						>
 						<a
 							id="explorer-link"
@@ -535,25 +535,25 @@
 							target="_blank"
 							rel="noopener"
 							hidden
-							>Open on Solscan ↗</a
+							 data-i18n="dashboard_agent_pumpfun.open_on_solscan">Open on Solscan ↗</a
 						>
 					</div>
 				</div>
 			</section>
 
 			<section class="panel" id="sns-panel">
-				<h2>
+				<h2 data-i18n-html="dashboard_agent_pumpfun.sns_identity_solana_name_service">
 					SNS identity
 					<span class="muted" style="font-size: 13px; font-weight: normal"
 						>(Solana Name Service)</span
 					>
 				</h2>
-				<p class="muted" style="margin: 0 0 10px; font-size: 13px">
+				<p class="muted" style="margin: 0 0 10px; font-size: 13px" data-i18n-html="dashboard_agent_pumpfun.attach_a_domain_owned_by_this_agent">
 					Attach a <code>.sol</code> domain owned by this agent's wallet so it can be
 					referenced by name.
 				</p>
 				<dl class="kv">
-					<dt>Current</dt>
+					<dt data-i18n="dashboard_agent_pumpfun.current">Current</dt>
 					<dd id="sns-current" class="muted">—</dd>
 				</dl>
 				<div
@@ -562,31 +562,31 @@
 					style="margin-top: 8px; flex-wrap: wrap; gap: 6px"
 				></div>
 				<div class="row" style="margin-top: 10px">
-					<button class="btn ghost" id="sns-refresh-btn">Refresh domains</button>
-					<button class="btn ghost" id="sns-clear-btn" hidden>Clear SNS id</button>
+					<button class="btn ghost" id="sns-refresh-btn" data-i18n="dashboard_agent_pumpfun.refresh_domains">Refresh domains</button>
+					<button class="btn ghost" id="sns-clear-btn" hidden data-i18n="dashboard_agent_pumpfun.clear_sns_id">Clear SNS id</button>
 					<a
 						id="sns-register-link"
 						class="muted"
 						href="https://www.sns.id"
 						target="_blank"
 						rel="noopener"
-						>Register a name on sns.id</a
+						 data-i18n="dashboard_agent_pumpfun.register_a_name_on_sns_id">Register a name on sns.id</a
 					>
 				</div>
 				<div id="sns-registrar" style="margin-top: 14px">
 					<div class="field">
-						<label for="sns-register-label">Register a .sol domain</label>
+						<label for="sns-register-label" data-i18n="dashboard_agent_pumpfun.register_a_sol_domain">Register a .sol domain</label>
 						<div class="row" style="gap: 6px; align-items: center">
 							<input id="sns-register-label" placeholder="myagent" maxlength="63" autocomplete="off" />
-							<span class="muted" style="font-family: ui-monospace, Menlo, monospace; font-size: 13px">.sol</span>
+							<span class="muted" style="font-family: ui-monospace, Menlo, monospace; font-size: 13px" data-i18n="dashboard_agent_pumpfun.sol">.sol</span>
 						</div>
-						<p id="sns-check-status" class="muted" style="margin: 6px 0 0; font-size: 12px; min-height: 1.3em">
+						<p id="sns-check-status" class="muted" style="margin: 6px 0 0; font-size: 12px; min-height: 1.3em" data-i18n="dashboard_agent_pumpfun.bonfida_pricing_1y_1_char_750_2">
 							Bonfida pricing (1y): 1 char $750 · 2 $700 · 3 $640 · 4 $160 · 5+ $20. Paid in USDC.
 						</p>
 					</div>
 					<div class="row" style="margin-top: 10px; gap: 8px; flex-wrap: wrap">
-						<button class="btn" id="sns-register-agent-btn" disabled>Pay with agent wallet</button>
-						<button class="btn ghost" id="sns-register-user-btn" disabled>Pay with my wallet</button>
+						<button class="btn" id="sns-register-agent-btn" disabled data-i18n="dashboard_agent_pumpfun.pay_with_agent_wallet">Pay with agent wallet</button>
+						<button class="btn ghost" id="sns-register-user-btn" disabled data-i18n="dashboard_agent_pumpfun.pay_with_my_wallet">Pay with my wallet</button>
 					</div>
 				</div>
 			</section>
@@ -594,26 +594,26 @@
 
 			<div class="col-main">
 			<section class="panel">
-				<h2>Launch a pump.fun token</h2>
+				<h2 data-i18n="dashboard_agent_pumpfun.launch_a_pump_fun_token">Launch a pump.fun token</h2>
 				<div class="row">
 					<div class="field">
-						<label for="launch-name">Name</label>
+						<label for="launch-name" data-i18n="dashboard_agent_pumpfun.name">Name</label>
 						<input id="launch-name" placeholder="My Agent Coin" />
 					</div>
 					<div class="field" style="flex: 0 0 160px">
-						<label for="launch-symbol">Symbol</label>
+						<label for="launch-symbol" data-i18n="dashboard_agent_pumpfun.symbol">Symbol</label>
 						<input id="launch-symbol" placeholder="AGENT" maxlength="10" />
 					</div>
 					<div class="field" style="flex: 0 0 120px">
-						<label for="launch-vanity">Vanity prefix</label>
+						<label for="launch-vanity" data-i18n="dashboard_agent_pumpfun.vanity_prefix">Vanity prefix</label>
 						<input id="launch-vanity" placeholder="PUMP" maxlength="6" />
 					</div>
 					<div class="field" style="flex: 0 0 120px">
-						<label for="launch-vanity-suffix">Vanity suffix</label>
+						<label for="launch-vanity-suffix" data-i18n="dashboard_agent_pumpfun.vanity_suffix">Vanity suffix</label>
 						<input id="launch-vanity-suffix" placeholder="pump" maxlength="6" />
 					</div>
 					<div class="field" style="flex: 0 0 130px">
-						<label for="launch-sol">Initial buy (SOL)</label>
+						<label for="launch-sol" data-i18n="dashboard_agent_pumpfun.initial_buy_sol">Initial buy (SOL)</label>
 						<input id="launch-sol" type="number" min="0" step="0.001" placeholder="0" />
 					</div>
 					<div class="field" style="flex: 0 0 auto; padding-top: 22px">
@@ -625,16 +625,16 @@
 				<div class="row" style="margin-top: 10px">
 					<div class="field">
 						<label for="launch-uri"
-							>Metadata URI
+							 data-i18n-html="dashboard_agent_pumpfun.metadata_uri_auto_filled_to_agent_metadata">Metadata URI
 							<span class="muted">(auto-filled to agent metadata)</span></label
 						>
 						<input id="launch-uri" />
 					</div>
 					<div style="flex: 0 0 auto; padding-top: 19px">
-						<button class="btn" id="launch-btn">Launch</button>
+						<button class="btn" id="launch-btn" data-i18n="dashboard_agent_pumpfun.launch">Launch</button>
 					</div>
 				</div>
-				<p class="muted" style="margin: 10px 0 0; font-size: 12px">
+				<p class="muted" style="margin: 10px 0 0; font-size: 12px" data-i18n-html="dashboard_agent_pumpfun.base58_only_no_0_o_i_l">
 					Base58 only (no 0/O/I/l). Combined prefix+suffix length: 3 chars ≈ instant, 4 ≈
 					seconds, 5 ≈ minutes, 6+ may time out. Powered by
 					<a
@@ -647,19 +647,19 @@
 			</section>
 
 			<section class="panel" id="vanity-panel">
-				<h2>Vanity grinder ✦</h2>
-				<p class="muted" style="margin: 0 0 10px; font-size: 13px">
+				<h2 data-i18n="dashboard_agent_pumpfun.vanity_grinder">Vanity grinder ✦</h2>
+				<p class="muted" style="margin: 0 0 10px; font-size: 13px" data-i18n-html="dashboard_agent_pumpfun.grind_a_solana_keypair_entirely_in_your">
 					Grind a Solana keypair entirely in your browser — keys never leave this tab.
 					Use the result for your next pump.fun launch, or assign it as the agent's wallet.
 					Base58 only (no <code>0/O/I/l</code>). 5–6 chars can take minutes; 7+ is impractical.
 				</p>
 				<div class="row">
 					<div class="field" style="flex: 0 0 140px">
-						<label for="vg-prefix">Prefix</label>
+						<label for="vg-prefix" data-i18n="dashboard_agent_pumpfun.prefix">Prefix</label>
 						<input id="vg-prefix" placeholder="PUMP" maxlength="6" autocomplete="off" />
 					</div>
 					<div class="field" style="flex: 0 0 140px">
-						<label for="vg-suffix">Suffix</label>
+						<label for="vg-suffix" data-i18n="dashboard_agent_pumpfun.suffix">Suffix</label>
 						<input id="vg-suffix" placeholder="pump" maxlength="6" autocomplete="off" />
 					</div>
 					<div class="field" style="flex: 0 0 auto; padding-top: 22px">
@@ -668,10 +668,10 @@
 						</label>
 					</div>
 					<div style="flex: 0 0 auto; padding-top: 19px">
-						<button class="btn" id="vg-start">Start grinding</button>
+						<button class="btn" id="vg-start" data-i18n="dashboard_agent_pumpfun.start_grinding">Start grinding</button>
 					</div>
 					<div style="flex: 0 0 auto; padding-top: 19px">
-						<button class="btn ghost" id="vg-stop" hidden>Stop</button>
+						<button class="btn ghost" id="vg-stop" hidden data-i18n="dashboard_agent_pumpfun.stop">Stop</button>
 					</div>
 				</div>
 				<div id="vg-progress" class="muted" style="margin-top:10px;font-size:13px;font-family:ui-monospace,Menlo,monospace">
@@ -679,59 +679,59 @@
 				</div>
 				<div id="vg-result" hidden style="margin-top:12px">
 					<dl class="kv">
-						<dt>Address</dt>
+						<dt data-i18n="dashboard_agent_pumpfun.address_2">Address</dt>
 						<dd id="vg-address" class="mono"></dd>
-						<dt>Attempts</dt>
+						<dt data-i18n="dashboard_agent_pumpfun.attempts">Attempts</dt>
 						<dd id="vg-attempts"></dd>
-						<dt>Duration</dt>
+						<dt data-i18n="dashboard_agent_pumpfun.duration">Duration</dt>
 						<dd id="vg-duration"></dd>
 					</dl>
 					<div class="row" style="margin-top:10px;gap:8px;flex-wrap:wrap">
-						<button class="btn" id="vg-use-launch">Use for next launch</button>
-						<button class="btn ghost" id="vg-assign">Assign as agent wallet</button>
-						<button class="btn ghost" id="vg-copy">Copy secret JSON</button>
-						<button class="btn ghost" id="vg-discard">Discard</button>
+						<button class="btn" id="vg-use-launch" data-i18n="dashboard_agent_pumpfun.use_for_next_launch">Use for next launch</button>
+						<button class="btn ghost" id="vg-assign" data-i18n="dashboard_agent_pumpfun.assign_as_agent_wallet">Assign as agent wallet</button>
+						<button class="btn ghost" id="vg-copy" data-i18n="dashboard_agent_pumpfun.copy_secret_json">Copy secret JSON</button>
+						<button class="btn ghost" id="vg-discard" data-i18n="dashboard_agent_pumpfun.discard">Discard</button>
 					</div>
-					<p class="muted" style="margin:8px 0 0;font-size:12px">
+					<p class="muted" style="margin:8px 0 0;font-size:12px" data-i18n="dashboard_agent_pumpfun.the_secret_is_held_in_this_tab">
 						The secret is held in this tab only. Closing or refreshing this page erases it.
 					</p>
 				</div>
 			</section>
 
 			<section class="panel">
-				<h2>Trade on the bonding curve</h2>
+				<h2 data-i18n="dashboard_agent_pumpfun.trade_on_the_bonding_curve">Trade on the bonding curve</h2>
 				<div class="row">
 					<div class="field">
-						<label for="trade-mint">Mint</label>
+						<label for="trade-mint" data-i18n="dashboard_agent_pumpfun.mint">Mint</label>
 						<input id="trade-mint" placeholder="Mint address" />
 					</div>
 					<div class="field" style="flex: 0 0 140px">
-						<label for="trade-slippage">Slippage (bps)</label>
+						<label for="trade-slippage" data-i18n="dashboard_agent_pumpfun.slippage_bps">Slippage (bps)</label>
 						<input id="trade-slippage" type="number" min="0" max="10000" value="500" />
 					</div>
 				</div>
 				<div class="row" style="margin-top: 10px">
 					<div class="field">
-						<label for="buy-sol">Buy with SOL</label>
+						<label for="buy-sol" data-i18n="dashboard_agent_pumpfun.buy_with_sol">Buy with SOL</label>
 						<input id="buy-sol" type="number" min="0" step="0.001" placeholder="0.05" />
 					</div>
 					<div style="flex: 0 0 auto; padding-top: 19px">
-						<button class="btn buy" id="buy-btn">Buy</button>
+						<button class="btn buy" id="buy-btn" data-i18n="dashboard_agent_pumpfun.buy">Buy</button>
 					</div>
 					<div class="field">
-						<label for="sell-tokens">Sell tokens (base units)</label>
+						<label for="sell-tokens" data-i18n="dashboard_agent_pumpfun.sell_tokens_base_units">Sell tokens (base units)</label>
 						<input id="sell-tokens" placeholder="1000000000" />
 					</div>
 					<div style="flex: 0 0 auto; padding-top: 19px">
-						<button class="btn sell" id="sell-btn">Sell</button>
+						<button class="btn sell" id="sell-btn" data-i18n="dashboard_agent_pumpfun.sell">Sell</button>
 					</div>
 				</div>
 			</section>
 
 			<section class="panel">
 				<div class="row" style="justify-content: space-between">
-					<h2 style="margin: 0">Portfolio</h2>
-					<button class="btn ghost" id="portfolio-btn">Refresh portfolio</button>
+					<h2 style="margin: 0" data-i18n="dashboard_agent_pumpfun.portfolio">Portfolio</h2>
+					<button class="btn ghost" id="portfolio-btn" data-i18n="dashboard_agent_pumpfun.refresh_portfolio">Refresh portfolio</button>
 				</div>
 				<div id="portfolio-totals" class="muted" style="margin: 10px 0; font-size: 13px">
 					—
@@ -740,12 +740,12 @@
 					<table id="portfolio-table">
 						<thead>
 							<tr>
-								<th>Mint</th>
-								<th>SOL in</th>
-								<th>SOL out</th>
-								<th>Token bal</th>
-								<th>Est. value (SOL)</th>
-								<th>Unrealized PnL</th>
+								<th data-i18n="dashboard_agent_pumpfun.mint_2">Mint</th>
+								<th data-i18n="dashboard_agent_pumpfun.sol_in">SOL in</th>
+								<th data-i18n="dashboard_agent_pumpfun.sol_out">SOL out</th>
+								<th data-i18n="dashboard_agent_pumpfun.token_bal">Token bal</th>
+								<th data-i18n="dashboard_agent_pumpfun.est_value_sol">Est. value (SOL)</th>
+								<th data-i18n="dashboard_agent_pumpfun.unrealized_pnl">Unrealized PnL</th>
 								<th></th>
 							</tr>
 						</thead>
@@ -753,8 +753,8 @@
 							<tr>
 								<td colspan="7">
 									<div class="empty-cta">
-										<b>No positions yet.</b>
-										<span>Launch a token above, or paste a mint into the trade panel to start tracking.</span>
+										<b data-i18n="dashboard_agent_pumpfun.no_positions_yet">No positions yet.</b>
+										<span data-i18n="dashboard_agent_pumpfun.launch_a_token_above_or_paste_a">Launch a token above, or paste a mint into the trade panel to start tracking.</span>
 									</div>
 								</td>
 							</tr>
@@ -765,8 +765,8 @@
 
 			<section class="panel" id="indexer-panel" hidden>
 				<div style="display: flex; justify-content: space-between; align-items: center">
-					<h2 style="margin: 0">Token indexer</h2>
-					<button class="btn ghost" id="indexer-refresh">Refresh</button>
+					<h2 style="margin: 0" data-i18n="dashboard_agent_pumpfun.token_indexer">Token indexer</h2>
+					<button class="btn ghost" id="indexer-refresh" data-i18n="dashboard_agent_pumpfun.refresh_2">Refresh</button>
 				</div>
 				<div class="muted" style="font-size: 13px; margin: 6px 0 12px">
 					Live snapshot from <code>/api/cron/pump-agent-stats</code> + price history.
@@ -788,7 +788,7 @@
 			</section>
 
 			<section class="panel" id="signals-panel">
-				<h2>
+				<h2 data-i18n-html="dashboard_agent_pumpfun.live_pump_fun_signals_off_chain_claim">
 					Live pump.fun signals
 					<span class="muted" style="font-weight:400;font-size:13px">
 						— off-chain claim/graduation activity tied to your agent's wallet
@@ -796,10 +796,10 @@
 				</h2>
 				<div id="signals-grid" class="muted">No signals yet. The crawler runs every 15 minutes.</div>
 				<div class="row" style="margin-top: 12px">
-					<a class="btn ghost" id="open-live-feed" href="/pumpfun" target="_blank" rel="noopener">
+					<a class="btn ghost" id="open-live-feed" href="/pumpfun" target="_blank" rel="noopener" data-i18n="dashboard_agent_pumpfun.open_live_feed">
 						Open live feed ↗
 					</a>
-					<a class="btn ghost" id="open-passport" href="#" target="_blank" rel="noopener">
+					<a class="btn ghost" id="open-passport" href="#" target="_blank" rel="noopener" data-i18n="dashboard_agent_pumpfun.open_agent_passport">
 						Open agent passport ↗
 					</a>
 				</div>
@@ -807,7 +807,7 @@
 
 			<section class="panel">
 				<details class="debug">
-					<summary>Debug · last response</summary>
+					<summary data-i18n="dashboard_agent_pumpfun.debug_last_response">Debug · last response</summary>
 					<pre id="log">—</pre>
 				</details>
 			</section>
@@ -821,19 +821,19 @@
 			<div class="site-footer-inner">
 				<a class="site-footer-brand" href="/">
 					<img src="/three.svg" alt="" aria-hidden="true" />
-					<span>three.ws</span>
+					<span data-i18n="dashboard_agent_pumpfun.three_ws">three.ws</span>
 				</a>
 				<nav class="site-footer-links" aria-label="Footer">
-					<a href="/discover">Discover</a>
-					<a href="/dashboard">Dashboard</a>
-					<a href="/dashboard/wallets">Wallets</a>
-					<a href="/pumpfun" target="_blank" rel="noopener">Pump.fun feed ↗</a>
-					<a href="/docs">Docs</a>
-					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
-					<a href="/legal/privacy">Privacy</a>
-					<a href="/legal/tos">Terms</a>
+					<a href="/discover" data-i18n="dashboard_agent_pumpfun.discover_2">Discover</a>
+					<a href="/dashboard" data-i18n="dashboard_agent_pumpfun.dashboard_3">Dashboard</a>
+					<a href="/dashboard/wallets" data-i18n="dashboard_agent_pumpfun.wallets_2">Wallets</a>
+					<a href="/pumpfun" target="_blank" rel="noopener" data-i18n="dashboard_agent_pumpfun.pump_fun_feed">Pump.fun feed ↗</a>
+					<a href="/docs" data-i18n="dashboard_agent_pumpfun.docs_2">Docs</a>
+					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" data-i18n="dashboard_agent_pumpfun.github">GitHub</a>
+					<a href="/legal/privacy" data-i18n="dashboard_agent_pumpfun.privacy">Privacy</a>
+					<a href="/legal/tos" data-i18n="dashboard_agent_pumpfun.terms">Terms</a>
 				</nav>
-				<span class="site-footer-legal">© 2026 three.ws</span>
+				<span class="site-footer-legal" data-i18n="dashboard_agent_pumpfun.2026_three_ws">© 2026 three.ws</span>
 			</div>
 		</footer>
 
@@ -1837,5 +1837,7 @@
 			})();
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

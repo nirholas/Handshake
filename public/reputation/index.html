@@ -3,9 +3,9 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Agent Reputation — three.ws</title>
+		<title data-i18n="reputation_index.meta_title">Agent Reputation — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<meta name="description" content="View and submit on-chain reviews for any AI agent or Ethereum address." />
+		<meta name="description" content="View and submit on-chain reviews for any AI agent or Ethereum address."  data-i18n-attr="content:reputation_index.meta_description"/>
 		<meta name="theme-color" content="#090909" />
 
 		<!-- Importmap must parse before any module script or modulepreload link.
@@ -353,15 +353,15 @@
 	<link rel="canonical" href="https://three.ws/reputation">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="Reputation Explorer · three.ws">
-	<meta property="og:description" content="Inspect on-chain reputation scores and attestations for any agent.">
+	<meta property="og:title" content="Reputation Explorer · three.ws" data-i18n-attr="content:reputation_index.meta_og_title">
+	<meta property="og:description" content="Inspect on-chain reputation scores and attestations for any agent." data-i18n-attr="content:reputation_index.meta_og_description">
 	<meta property="og:url" content="https://three.ws/reputation">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=agent-tools&amp;t=Reputation+Explorer&amp;d=Inspect+on-chain+reputation+scores+and+attestations+for+any+agent.&amp;p=%2Freputation">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Reputation Explorer · three.ws">
-	<meta name="twitter:description" content="Inspect on-chain reputation scores and attestations for any agent.">
+	<meta name="twitter:title" content="Reputation Explorer · three.ws" data-i18n-attr="content:reputation_index.meta_twitter_title">
+	<meta name="twitter:description" content="Inspect on-chain reputation scores and attestations for any agent." data-i18n-attr="content:reputation_index.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=agent-tools&amp;t=Reputation+Explorer&amp;d=Inspect+on-chain+reputation+scores+and+attestations+for+any+agent.&amp;p=%2Freputation">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Reputation Explorer","description":"Inspect on-chain reputation scores and attestations for any agent.","url":"https://three.ws/reputation","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -372,10 +372,10 @@
 	<script src="/model-viewer-meshopt.js"></script>
 </head>
 	<body>
-		<a href="#rep-content" class="h-skip-link">Skip to content</a>
+		<a href="#rep-content" class="h-skip-link" data-i18n="reputation_index.skip_to_content">Skip to content</a>
 
 		<header>
-			<h1>
+			<h1 data-i18n-html="reputation_index.three_ws">
 				<a href="/" aria-label="three.ws home"
 					><img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" /><span
 						class="wordmark-dot"
@@ -393,7 +393,7 @@
 				<div id="app">
 					<div class="rep-loading">
 						<div class="spinner"></div>
-						<p>Loading…</p>
+						<p data-i18n="reputation_index.loading">Loading…</p>
 					</div>
 				</div>
 			</div>
@@ -423,11 +423,11 @@
 			</div>
 			<div class="h-footer-cta">
 				<div class="h-footer-newsletter">
-					<h3>Stay in the loop</h3>
-					<p>Get updates on new features, agent tooling, and protocol changes.</p>
+					<h3 data-i18n="reputation_index.stay_in_the_loop">Stay in the loop</h3>
+					<p data-i18n="reputation_index.get_updates_on_new_features_agent_tooling">Get updates on new features, agent tooling, and protocol changes.</p>
 					<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
 						<input type="email" class="h-footer-newsletter-input" name="email" placeholder="Enter your email" aria-label="Email address" autocomplete="email" required />
-						<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
+						<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe" data-i18n-attr="aria-label:reputation_index.subscribe_arialabel">
 							<svg viewBox="0 0 16 16" aria-hidden="true">
 								<path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4" />
 							</svg>
@@ -436,8 +436,8 @@
 					<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
 				</div>
 				<div class="h-footer-community">
-					<h3>Join the community</h3>
-					<p>Follow along for builds, demos, and conversations with the team.</p>
+					<h3 data-i18n="reputation_index.join_the_community">Join the community</h3>
+					<p data-i18n="reputation_index.follow_along_for_builds_demos_and_conversati">Follow along for builds, demos, and conversations with the team.</p>
 					<a class="h-footer-community-btn" href="https://x.com/trythreews" target="_blank" rel="noopener">
 						<svg viewBox="0 0 24 24" aria-hidden="true">
 							<path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -451,16 +451,16 @@
 					<div class="h-footer-brand">
 						<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
 						<span class="wordmark-dot" aria-hidden="true"></span>
-						<span>three.ws</span>
+						<span data-i18n="reputation_index.three_ws_2">three.ws</span>
 					</div>
-					<p class="h-footer-tagline">Give your AI a body.</p>
+					<p class="h-footer-tagline" data-i18n="reputation_index.give_your_ai_a_body">Give your AI a body.</p>
 					<div class="h-footer-socials">
-						<a class="h-footer-social" href="https://x.com/trythreews" target="_blank" rel="noopener" aria-label="three.ws on X">
+						<a class="h-footer-social" href="https://x.com/trythreews" target="_blank" rel="noopener" aria-label="three.ws on X" data-i18n-attr="aria-label:reputation_index.three_ws_on_x_arialabel">
 							<svg viewBox="0 0 24 24" aria-hidden="true">
 								<path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
 							</svg>
 						</a>
-						<a class="h-footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="three.ws on GitHub">
+						<a class="h-footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="three.ws on GitHub" data-i18n-attr="aria-label:reputation_index.three_ws_on_github_arialabel">
 							<svg viewBox="0 0 16 16" aria-hidden="true">
 								<path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
 							</svg>
@@ -469,29 +469,29 @@
 				</div>
 				<nav class="h-footer-links" aria-label="Footer">
 					<div class="h-footer-link-col">
-						<h4 class="h-footer-link-heading">Product</h4>
-						<a href="/create">Create</a>
-						<a href="/studio">Studio</a>
-						<a href="/widgets">Widgets</a>
-						<a href="/discover">Discover</a>
+						<h4 class="h-footer-link-heading" data-i18n="reputation_index.product">Product</h4>
+						<a href="/create" data-i18n="reputation_index.create">Create</a>
+						<a href="/studio" data-i18n="reputation_index.studio">Studio</a>
+						<a href="/widgets" data-i18n="reputation_index.widgets">Widgets</a>
+						<a href="/discover" data-i18n="reputation_index.discover">Discover</a>
 					</div>
 					<div class="h-footer-link-col">
-						<h4 class="h-footer-link-heading">Developers</h4>
-						<a href="/docs">Docs</a>
-						<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
+						<h4 class="h-footer-link-heading" data-i18n="reputation_index.developers">Developers</h4>
+						<a href="/docs" data-i18n="reputation_index.docs">Docs</a>
+						<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" data-i18n="reputation_index.github">GitHub</a>
 					</div>
 					<div class="h-footer-link-col">
-						<h4 class="h-footer-link-heading">Resources</h4>
-						<a href="/dashboard">Dashboard</a>
-						<a href="/reputation">Reputation</a>
+						<h4 class="h-footer-link-heading" data-i18n="reputation_index.resources">Resources</h4>
+						<a href="/dashboard" data-i18n="reputation_index.dashboard">Dashboard</a>
+						<a href="/reputation" data-i18n="reputation_index.reputation">Reputation</a>
 					</div>
 				</nav>
 			</div>
 			<div class="h-footer-bottom">
-				<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+				<p class="h-footer-legal" data-i18n="reputation_index.2026_three_ws_all_rights_reserved">© 2026 three.ws — All rights reserved.</p>
 				<div class="h-footer-legal-links">
-					<a href="/legal/privacy">Privacy Policy</a>
-					<a href="/legal/tos">Terms of Use</a>
+					<a href="/legal/privacy" data-i18n="reputation_index.privacy_policy">Privacy Policy</a>
+					<a href="/legal/tos" data-i18n="reputation_index.terms_of_use">Terms of Use</a>
 				</div>
 			</div>
 		</footer>
@@ -500,5 +500,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

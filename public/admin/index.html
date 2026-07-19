@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Admin · three.ws</title>
+	<title data-i18n="admin_index.meta_title">Admin · three.ws</title>
 	<link rel="icon" href="/favicon.ico" />
 	<style>
 		:root { color-scheme: dark; --accent: #ffffff; --accent2: #ffffff; }
@@ -110,24 +110,24 @@
 <body>
 <div class="layout" id="app">
 	<nav class="sidebar">
-		<span class="sidebar-brand">three.ws <span class="sidebar-badge">ADMIN</span></span>
-		<a class="nav-item active" data-tab="overview" onclick="switchTab('overview')">Overview</a>
-		<a class="nav-item" data-tab="users" onclick="switchTab('users')">Users</a>
-		<a class="nav-item" data-tab="revenue" onclick="switchTab('revenue')">Revenue</a>
-		<a class="nav-item" data-tab="llm" onclick="switchTab('llm')">LLM Spend</a>
-		<a class="nav-item" data-tab="usage" onclick="switchTab('usage')">Usage</a>
-		<a class="nav-item" data-tab="growth" onclick="switchTab('growth')">Growth</a>
-		<a class="nav-item" href="/admin/news">News</a>
-		<a class="nav-item" href="/admin/sdp">Solana Platform</a>
-		<a class="nav-item" href="/admin/seeder">Avatar Seeder</a>
-		<a class="nav-item" href="/admin/ring">Ring Economy</a>
-		<a class="nav-item" href="/admin/ops">Ops Health</a>
-		<a class="nav-item" href="/admin/launcher">Launcher</a>
-		<a class="nav-item" href="/dashboard/">Dashboard</a>
+		<span class="sidebar-brand" data-i18n-html="admin_index.three_ws_admin">three.ws <span class="sidebar-badge">ADMIN</span></span>
+		<a class="nav-item active" data-tab="overview" onclick="switchTab('overview')" data-i18n="admin_index.overview">Overview</a>
+		<a class="nav-item" data-tab="users" onclick="switchTab('users')" data-i18n="admin_index.users">Users</a>
+		<a class="nav-item" data-tab="revenue" onclick="switchTab('revenue')" data-i18n="admin_index.revenue">Revenue</a>
+		<a class="nav-item" data-tab="llm" onclick="switchTab('llm')" data-i18n="admin_index.llm_spend">LLM Spend</a>
+		<a class="nav-item" data-tab="usage" onclick="switchTab('usage')" data-i18n="admin_index.usage">Usage</a>
+		<a class="nav-item" data-tab="growth" onclick="switchTab('growth')" data-i18n="admin_index.growth">Growth</a>
+		<a class="nav-item" href="/admin/news" data-i18n="admin_index.news">News</a>
+		<a class="nav-item" href="/admin/sdp" data-i18n="admin_index.solana_platform">Solana Platform</a>
+		<a class="nav-item" href="/admin/seeder" data-i18n="admin_index.avatar_seeder">Avatar Seeder</a>
+		<a class="nav-item" href="/admin/ring" data-i18n="admin_index.ring_economy">Ring Economy</a>
+		<a class="nav-item" href="/admin/ops" data-i18n="admin_index.ops_health">Ops Health</a>
+		<a class="nav-item" href="/admin/launcher" data-i18n="admin_index.launcher">Launcher</a>
+		<a class="nav-item" href="/dashboard/" data-i18n="admin_index.dashboard">Dashboard</a>
 	</nav>
 	<main class="main">
 		<div class="page-header">
-			<span class="page-title" id="page-title">Overview</span>
+			<span class="page-title" id="page-title" data-i18n="admin_index.overview_2">Overview</span>
 			<span class="user-chip" id="user-chip"></span>
 		</div>
 		<div id="tab-overview"></div>
@@ -650,5 +650,7 @@ function shortAddr(a, n=6) { return a ? `${a.slice(0,n)}…${a.slice(-4)}` : '�
 boot();
 </script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

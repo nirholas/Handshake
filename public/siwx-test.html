@@ -4,7 +4,7 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>x402 SIWX — manual test page</title>
+<title data-i18n="siwx_test.meta_title">x402 SIWX — manual test page</title>
 <meta name="robots" content="noindex" />
 <style>
 	html, body { margin: 0; padding: 0; background: #0e0e0e; color: #e6e8f0; font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif; }
@@ -51,8 +51,8 @@
 </head>
 <body>
 <main>
-	<h1>x402 SIWX — manual test</h1>
-	<p class="sub">
+	<h1 data-i18n="siwx_test.x402_siwx_manual_test">x402 SIWX — manual test</h1>
+	<p class="sub" data-i18n-html="siwx_test.click_a_button_to_open_the_drop">
 		Click a button to open the drop-in modal. When the endpoint advertises the
 		<code>sign-in-with-x</code> extension, the modal offers "Sign in with wallet"
 		as the primary action — the wallet signs a CAIP-122 message, the modal
@@ -66,7 +66,7 @@
 			data-x402-endpoint="/api/x402/asset-download?slug=pole-dancer-rumba"
 			data-x402-method="GET"
 			data-x402-merchant="three.ws"
-			data-x402-action="Download pole-dancer-rumba.glb">
+			data-x402-action="Download pole-dancer-rumba.glb" data-i18n-html="siwx_test.buy_glb_pole_dancer_rumba_api_x402">
 			Buy GLB · pole-dancer-rumba
 			<small>/api/x402/asset-download?slug=pole-dancer-rumba</small>
 		</button>
@@ -74,20 +74,20 @@
 			data-x402-endpoint="/api/x402/dance-tip?dancer=1&amp;dance=rumba"
 			data-x402-method="GET"
 			data-x402-merchant="three.ws"
-			data-x402-action="Tip dancer · rumba">
+			data-x402-action="Tip dancer · rumba" data-i18n-html="siwx_test.tip_dancer_rumba_api_x402_dance_tip">
 			Tip dancer · rumba
 			<small>/api/x402/dance-tip?dancer=1&amp;dance=rumba</small>
 		</button>
 	</div>
 
 	<div class="log-head">
-		<h2>Event log</h2>
-		<button id="clear">Clear</button>
+		<h2 data-i18n="siwx_test.event_log">Event log</h2>
+		<button id="clear" data-i18n="siwx_test.clear">Clear</button>
 	</div>
 	<pre id="log">(no events yet — click a button above)</pre>
 
 	<div class="note">
-		<strong>What to look for.</strong> First click on a paid endpoint runs the
+		<strong data-i18n="siwx_test.what_to_look_for">What to look for.</strong> First click on a paid endpoint runs the
 		<code>x402:result</code> event (pay flow). After paying once with a given
 		wallet, reload the page and click again — if the endpoint opts into SIWX,
 		the modal shows "Sign in with wallet". Approving the signature fires
@@ -125,5 +125,7 @@
 	});
 </script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

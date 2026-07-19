@@ -5,13 +5,13 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Worlds · Coin Communities — three.ws</title>
+		<title data-i18n="worlds.meta_title">Worlds · Coin Communities — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta name="author" content="three.ws" />
 		<meta
 			name="description"
 			content="Every coin is its own 3D world. Drop in your avatar or 3D agent — no sign-in — and hang out with the community, live and multiplayer, on three.ws."
-		/>
+		 data-i18n-attr="content:worlds.meta_description"/>
 		<meta name="theme-color" content="#0b0b0b" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -23,22 +23,22 @@
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Worlds · Coin Communities — three.ws" />
+		<meta property="og:title" content="Worlds · Coin Communities — three.ws"  data-i18n-attr="content:worlds.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Every coin is its own 3D world. Drop in your avatar and hang out with the community, live."
-		/>
+		 data-i18n-attr="content:worlds.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/worlds" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta property="og:image" content="https://three.ws/og-image.png" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Worlds · Coin Communities — three.ws" />
+		<meta name="twitter:title" content="Worlds · Coin Communities — three.ws"  data-i18n-attr="content:worlds.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Explore 3D worlds built around coin communities on three.ws."
-		/>
+		 data-i18n-attr="content:worlds.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/og-image.png" />
 
 		<!-- model-viewer powers the live avatar preview in the onboarding panel. -->
@@ -734,17 +734,17 @@
 		<div class="wl-shell">
 			<div class="wl-top">
 				<div class="wl-brand">
-					<a href="/">three.ws</a>
-					<span>/ worlds</span>
+					<a href="/" data-i18n="worlds.three_ws">three.ws</a>
+					<span data-i18n="worlds.worlds">/ worlds</span>
 				</div>
 				<span class="wl-top-spacer"></span>
-				<a class="wl-top-link" href="/temporary">Open mainland</a>
-				<a class="wl-top-link" href="/create">Make an avatar</a>
+				<a class="wl-top-link" href="/temporary" data-i18n="worlds.open_mainland">Open mainland</a>
+				<a class="wl-top-link" href="/create" data-i18n="worlds.make_an_avatar">Make an avatar</a>
 			</div>
 
 			<header class="wl-hero">
-				<h1>Every coin is a <span class="grad">world</span>.</h1>
-				<p>
+				<h1 data-i18n-html="worlds.every_coin_is_a_world">Every coin is a <span class="grad">world</span>.</h1>
+				<p data-i18n="worlds.drop_in_your_avatar_or_3d_agent">
 					Drop in your avatar or 3D agent — no sign-in — and hang out with the community
 					inside its own live, multiplayer 3D world.
 				</p>
@@ -753,17 +753,17 @@
 			<div class="wl-layout">
 				<!-- ONBOARDING -->
 				<aside class="wl-panel">
-					<h2>Your avatar</h2>
-					<p class="wl-hint">Pick one to drop in. We’ll remember it.</p>
+					<h2 data-i18n="worlds.your_avatar">Your avatar</h2>
+					<p class="wl-hint" data-i18n="worlds.pick_one_to_drop_in_we_ll">Pick one to drop in. We’ll remember it.</p>
 
 					<div class="wl-avatar" id="wl-avatar"></div>
 
 					<div class="wl-quick" id="wl-quick"></div>
 
-					<button type="button" id="wl-browse" class="wl-btn wl-btn-block">
+					<button type="button" id="wl-browse" class="wl-btn wl-btn-block" data-i18n="worlds.browse_avatars">
 						Browse avatars
 					</button>
-					<button type="button" id="wl-browse-agents" class="wl-btn wl-btn-block">
+					<button type="button" id="wl-browse-agents" class="wl-btn wl-btn-block" data-i18n="worlds.browse_3d_agents">
 						Browse 3D agents
 					</button>
 
@@ -778,11 +778,11 @@
 							autocomplete="off"
 							aria-label="Avatar or agent ID"
 						/>
-						<button type="submit" id="wl-id-btn" class="wl-btn">Load</button>
+						<button type="submit" id="wl-id-btn" class="wl-btn" data-i18n="worlds.load">Load</button>
 					</form>
 
 					<div class="wl-field">
-						<label for="wl-name">Display name</label>
+						<label for="wl-name" data-i18n="worlds.display_name">Display name</label>
 						<input
 							type="text"
 							id="wl-name"
@@ -798,11 +798,11 @@
 							type="button"
 							id="wl-enter-mainland"
 							class="wl-btn wl-btn-primary wl-btn-block"
-						>
+						 data-i18n="worlds.enter_the_mainland">
 							Enter the mainland →
 						</button>
 						<a class="wl-create-link" id="wl-create-link" href="/create"
-							>No avatar? Make one in seconds →</a
+							 data-i18n="worlds.no_avatar_make_one_in_seconds">No avatar? Make one in seconds →</a
 						>
 					</div>
 				</aside>
@@ -810,7 +810,7 @@
 				<!-- WORLDS -->
 				<main>
 					<div class="wl-worlds-head">
-						<h2>Live worlds</h2>
+						<h2 data-i18n="worlds.live_worlds">Live worlds</h2>
 						<span class="wl-worlds-count" id="wl-worlds-count"></span>
 						<span class="wl-top-spacer"></span>
 						<input
@@ -823,9 +823,9 @@
 						/>
 					</div>
 					<div class="wl-tabs" id="wl-tabs" role="tablist" aria-label="Filter worlds by chain">
-						<button type="button" class="wl-tab is-active" data-chain="all" role="tab" aria-selected="true">All</button>
-						<button type="button" class="wl-tab" data-chain="pumpfun" role="tab" aria-selected="false">Pump.fun</button>
-						<button type="button" class="wl-tab" data-chain="robinhood-chain" role="tab" aria-selected="false">Robinhood Chain</button>
+						<button type="button" class="wl-tab is-active" data-chain="all" role="tab" aria-selected="true" data-i18n="worlds.all">All</button>
+						<button type="button" class="wl-tab" data-chain="pumpfun" role="tab" aria-selected="false" data-i18n="worlds.pump_fun">Pump.fun</button>
+						<button type="button" class="wl-tab" data-chain="robinhood-chain" role="tab" aria-selected="false" data-i18n="worlds.robinhood_chain">Robinhood Chain</button>
 					</div>
 					<div class="wl-grid" id="wl-worlds"></div>
 				</main>
@@ -836,5 +836,7 @@
 
 		<script type="module" src="/src/worlds-lobby.js"></script>
 		<script src="/brand.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 	<meta charset="utf-8">
-	<title>Agent badge</title>
+	<title data-i18n="agent_badge.meta_title">Agent badge</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<style>
 		* { box-sizing: border-box; }
@@ -109,5 +109,7 @@
 		load();
 	</script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

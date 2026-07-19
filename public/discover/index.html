@@ -3,29 +3,29 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Discover · three.ws</title>
+		<title data-i18n="discover_index.meta_title">Discover · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta
 			name="description"
 			content="Discover agents registered on Solana and 20+ EVM chains. Filter by 3D avatar, chain, and keywords."
-		/>
+		 data-i18n-attr="content:discover_index.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 		<link rel="canonical" href="https://three.ws/discover" />
 
 		<meta property="og:type" content="website" />
-		<meta property="og:title" content="Discover · three.ws" />
+		<meta property="og:title" content="Discover · three.ws"  data-i18n-attr="content:discover_index.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Browse agents registered on Solana and 20+ EVM chains. Filter by 3D avatar, chain, and keywords."
-		/>
+		 data-i18n-attr="content:discover_index.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/discover" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Discover&amp;d=On-chain+agent+directory+%28ERC-8004+%2B+Solana%29.+Browse%2C+search%2C+and+inspect+every+registered+agent.&amp;p=%2Fdiscover" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Discover · three.ws" />
+		<meta name="twitter:title" content="Discover · three.ws"  data-i18n-attr="content:discover_index.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="The on-chain agent directory. Solana and 20+ EVM chains."
-		/>
+		 data-i18n-attr="content:discover_index.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Discover&amp;d=On-chain+agent+directory+%28ERC-8004+%2B+Solana%29.+Browse%2C+search%2C+and+inspect+every+registered+agent.&amp;p=%2Fdiscover" />
 		<link rel="shortcut icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/style.css" />
@@ -67,7 +67,7 @@
 		<main class="features-main explore-main">
 			<section class="explore-hero">
 				<div class="explore-hero-chips">
-					<a href="/forge" class="explore-hero-chip explore-hero-chip--link">
+					<a href="/forge" class="explore-hero-chip explore-hero-chip--link" data-i18n-html="discover_index.new_forge_a_3d_model_from_text">
 						<span>New · Forge a 3D model from text →</span>
 					</a>
 					<a
@@ -75,13 +75,13 @@
 						class="explore-hero-chip explore-hero-chip--link"
 						data-role="my-agents-chip"
 						hidden
-					>
+					 data-i18n-html="discover_index.view_my_agents">
 						<span>View my agents →</span>
 					</a>
 				</div>
-				<p class="explore-eyebrow">ERC-8004 Agent Directory</p>
-				<h1>Every agent, every chain.</h1>
-				<p class="explore-sub">
+				<p class="explore-eyebrow" data-i18n="discover_index.erc_8004_agent_directory">ERC-8004 Agent Directory</p>
+				<h1 data-i18n="discover_index.every_agent_every_chain">Every agent, every chain.</h1>
+				<p class="explore-sub" data-i18n="discover_index.browse_agents_registered_on_solana_and_20">
 					Browse agents registered on Solana and 20+ EVM chains. Click a 3D avatar to load it in
 					the viewer. Click any card for its on-chain passport.
 				</p>
@@ -96,10 +96,10 @@
 				     into the toolbar's primary row at runtime. -->
 				<div class="explore-toolbar" data-role="list-controls"></div>
 				<div class="explore-chain-select" data-role="chain-wrap">
-					<label for="explore-chain">Chain</label>
+					<label for="explore-chain" data-i18n="discover_index.chain">Chain</label>
 					<div class="explore-chain-select-control">
 						<select id="explore-chain" data-role="chain" aria-label="Filter by chain">
-							<option value="">All chains</option>
+							<option value="" data-i18n="discover_index.all_chains">All chains</option>
 						</select>
 					</div>
 				</div>
@@ -110,7 +110,7 @@
 				<div class="explore-status" data-role="status"></div>
 				<div class="explore-sentinel" data-role="sentinel" aria-hidden="true"></div>
 				<div class="explore-load-more-wrap">
-					<button class="explore-load-more" data-role="load-more" hidden>
+					<button class="explore-load-more" data-role="load-more" hidden data-i18n="discover_index.load_more">
 						Load more
 					</button>
 				</div>
@@ -122,5 +122,7 @@
 
 		<script type="module" src="/discover/discover.js"></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

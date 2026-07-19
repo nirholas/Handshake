@@ -4,17 +4,17 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>GMGN Smart Money · three.ws</title>
-	<meta name="description" content="Live smart money signals narrated by a 3D AI agent. Powered by GMGN.ai — tracks which wallets are loading on Solana, Ethereum, Base, and BNB Chain in real time." />
-	<meta property="og:title" content="GMGN Smart Money · three.ws" />
-	<meta property="og:description" content="Live smart money signals narrated by a 3D AI agent. Powered by GMGN.ai." />
+	<title data-i18n="gmgn.meta_title">GMGN Smart Money · three.ws</title>
+	<meta name="description" content="Live smart money signals narrated by a 3D AI agent. Powered by GMGN.ai — tracks which wallets are loading on Solana, Ethereum, Base, and BNB Chain in real time."  data-i18n-attr="content:gmgn.meta_description"/>
+	<meta property="og:title" content="GMGN Smart Money · three.ws"  data-i18n-attr="content:gmgn.meta_og_title"/>
+	<meta property="og:description" content="Live smart money signals narrated by a 3D AI agent. Powered by GMGN.ai."  data-i18n-attr="content:gmgn.meta_og_description"/>
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=GMGN+Smart+Money&amp;d=Live+smart-money+signals+narrated+by+a+3D+AI+agent.+Tracks+which+wallets+are+loading+on+Solana%2C+Ethereum%2C+Base%2C+and+BNB+Chain+in+real+time.&amp;p=%2Fgmgn" />
 	<meta property="og:url" content="https://three.ws/gmgn" />
 	<meta property="og:type" content="website" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="GMGN Smart Money · three.ws" />
-	<meta name="twitter:description" content="Live smart money signals narrated by a 3D AI agent. Powered by GMGN.ai." />
+	<meta name="twitter:title" content="GMGN Smart Money · three.ws"  data-i18n-attr="content:gmgn.meta_twitter_title"/>
+	<meta name="twitter:description" content="Live smart money signals narrated by a 3D AI agent. Powered by GMGN.ai."  data-i18n-attr="content:gmgn.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=GMGN+Smart+Money&amp;d=Live+smart-money+signals+narrated+by+a+3D+AI+agent.+Tracks+which+wallets+are+loading+on+Solana%2C+Ethereum%2C+Base%2C+and+BNB+Chain+in+real+time.&amp;p=%2Fgmgn" />
 	<link rel="icon" href="/favicon.ico" />
 	<link rel="stylesheet" href="/style.css" />
@@ -183,29 +183,29 @@
 
 	<!-- Filter bar -->
 	<div class="pf-filterbar" role="toolbar" aria-label="Feed controls">
-		<h1>
+		<h1 data-i18n-html="gmgn.gmgn_smart_money">
 			<span class="dot connecting" id="status-dot" aria-label="Connecting"></span>
 			GMGN Smart Money
 		</h1>
-		<button class="status-pill" id="status-pill" type="button" title="Reconnect to the live feed now" aria-label="Connection status — click to reconnect">
+		<button class="status-pill" id="status-pill" type="button" title="Reconnect to the live feed now" aria-label="Connection status — click to reconnect" data-i18n-html="gmgn.connecting" data-i18n-attr="aria-label:gmgn.connection_status_click_to_r_arialabel;title:gmgn.reconnect_to_the_live_feed_n_title">
 			<span id="status-text">Connecting…</span>
 		</button>
 		<div class="ctl">
 			<label>Chain
 				<select id="ctl-chain">
-					<option value="sol">Solana</option>
-					<option value="eth">Ethereum</option>
-					<option value="base">Base</option>
-					<option value="bsc">BNB Chain</option>
+					<option value="sol" data-i18n="gmgn.solana">Solana</option>
+					<option value="eth" data-i18n="gmgn.ethereum">Ethereum</option>
+					<option value="base" data-i18n="gmgn.base">Base</option>
+					<option value="bsc" data-i18n="gmgn.bnb_chain">BNB Chain</option>
 				</select>
 			</label>
 			<label>Interval
 				<select id="ctl-interval">
-					<option value="1m">1m</option>
-					<option value="5m">5m</option>
-					<option value="1h" selected>1h</option>
-					<option value="6h">6h</option>
-					<option value="24h">24h</option>
+					<option value="1m" data-i18n="gmgn.1m">1m</option>
+					<option value="5m" data-i18n="gmgn.5m">5m</option>
+					<option value="1h" selected data-i18n="gmgn.1h">1h</option>
+					<option value="6h" data-i18n="gmgn.6h">6h</option>
+					<option value="24h" data-i18n="gmgn.24h">24h</option>
 				</select>
 			</label>
 			<label>Min wallets
@@ -213,31 +213,31 @@
 			</label>
 			<span class="ctl-sep" aria-hidden="true"></span>
 			<div id="ctl-avatar-wrap">
-				<button id="ctl-avatar-btn" type="button" aria-haspopup="dialog" aria-expanded="false" title="Choose avatar">
+				<button id="ctl-avatar-btn" type="button" aria-haspopup="dialog" aria-expanded="false" title="Choose avatar" data-i18n-html="gmgn.avatar" data-i18n-attr="title:gmgn.choose_avatar_title">
 					<span class="avatar-thumb" id="ctl-avatar-thumb" aria-hidden="true"></span>
 					<span class="avatar-name" id="ctl-avatar-label">Avatar</span>
 					<span class="avatar-caret" aria-hidden="true">▾</span>
 				</button>
 			</div>
-			<button id="ctl-narrate" class="toggle" type="button" data-on="1" title="Toggle narration">🔊 Narration</button>
+			<button id="ctl-narrate" class="toggle" type="button" data-on="1" title="Toggle narration" data-i18n="gmgn.narration" data-i18n-attr="title:gmgn.toggle_narration_title">🔊 Narration</button>
 			<select id="ctl-mood" title="Agent mood">
-				<option value="chill">😎 Chill</option>
-				<option value="normal" selected>🙂 Normal</option>
-				<option value="hype">🤩 Hype</option>
+				<option value="chill" data-i18n="gmgn.chill">😎 Chill</option>
+				<option value="normal" selected data-i18n="gmgn.normal">🙂 Normal</option>
+				<option value="hype" data-i18n="gmgn.hype">🤩 Hype</option>
 			</select>
-			<button id="ctl-reconnect" class="pf-icon-btn" type="button" title="Apply filters and reconnect">↻ Apply</button>
+			<button id="ctl-reconnect" class="pf-icon-btn" type="button" title="Apply filters and reconnect" data-i18n="gmgn.apply" data-i18n-attr="title:gmgn.apply_filters_and_reconnect_title">↻ Apply</button>
 		</div>
 	</div>
 
 	<!-- Stats bar -->
 	<div id="stats-bar">
-		<div class="stat-item"><span class="lbl">Smart entries seen</span><span class="val gmgn" id="stat-entries">0</span></div>
-		<div class="stat-item"><span class="lbl">Tokens tracked</span><span class="val" id="stat-tracked">—</span></div>
-		<div class="stat-item"><span class="lbl">Last poll</span><span class="val" id="stat-polled">—</span></div>
-		<div class="stat-item"><span class="lbl">Source</span><span class="val" id="stat-source"><a href="https://gmgn.ai" target="_blank" rel="noopener" style="color:var(--gmgn);text-decoration:none">GMGN.ai</a></span></div>
+		<div class="stat-item"><span class="lbl" data-i18n="gmgn.smart_entries_seen">Smart entries seen</span><span class="val gmgn" id="stat-entries">0</span></div>
+		<div class="stat-item"><span class="lbl" data-i18n="gmgn.tokens_tracked">Tokens tracked</span><span class="val" id="stat-tracked">—</span></div>
+		<div class="stat-item"><span class="lbl" data-i18n="gmgn.last_poll">Last poll</span><span class="val" id="stat-polled">—</span></div>
+		<div class="stat-item"><span class="lbl" data-i18n="gmgn.source">Source</span><span class="val" id="stat-source" data-i18n-html="gmgn.gmgn_ai"><a href="https://gmgn.ai" target="_blank" rel="noopener" style="color:var(--gmgn);text-decoration:none">GMGN.ai</a></span></div>
 		<div class="stat-item" style="margin-left:auto">
-			<span class="lbl">$THREE on GMGN</span>
-			<span class="val" id="three-gmgn-status" style="display:inline-flex;align-items:center;gap:6px">
+			<span class="lbl" data-i18n="gmgn.three_on_gmgn">$THREE on GMGN</span>
+			<span class="val" id="three-gmgn-status" style="display:inline-flex;align-items:center;gap:6px" data-i18n-html="gmgn.watch">
 				<a href="https://gmgn.ai/sol/token/FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump" target="_blank" rel="noopener" style="color:var(--gmgn);font-size:11px;text-decoration:none" id="three-gmgn-link">Watch ↗</a>
 				<span id="three-smart-count" style="font-size:11px;color:var(--muted)">—</span>
 			</span>
@@ -248,20 +248,20 @@
 	<div class="pf-modal-backdrop" id="avatar-picker" role="dialog" aria-modal="true" aria-label="Choose avatar" data-open="false">
 		<div class="pf-modal">
 			<div class="pf-modal-head">
-				<h2>Choose avatar</h2>
+				<h2 data-i18n="gmgn.choose_avatar">Choose avatar</h2>
 				<div class="spacer"></div>
-				<button class="pf-modal-close" type="button" data-picker-close aria-label="Close">×</button>
+				<button class="pf-modal-close" type="button" data-picker-close aria-label="Close" data-i18n-attr="aria-label:gmgn.close_arialabel">×</button>
 			</div>
 			<div class="pf-tabs" role="tablist">
-				<button class="pf-tab" role="tab" aria-selected="true" data-tab="defaults">Defaults<span class="badge" id="tab-badge-defaults"></span></button>
-				<button class="pf-tab" role="tab" aria-selected="false" data-tab="community">Community<span class="badge" id="tab-badge-community"></span></button>
-				<button class="pf-tab" role="tab" aria-selected="false" data-tab="mine">My agents<span class="badge" id="tab-badge-mine"></span></button>
+				<button class="pf-tab" role="tab" aria-selected="true" data-tab="defaults" data-i18n-html="gmgn.defaults">Defaults<span class="badge" id="tab-badge-defaults"></span></button>
+				<button class="pf-tab" role="tab" aria-selected="false" data-tab="community" data-i18n-html="gmgn.community">Community<span class="badge" id="tab-badge-community"></span></button>
+				<button class="pf-tab" role="tab" aria-selected="false" data-tab="mine" data-i18n-html="gmgn.my_agents">My agents<span class="badge" id="tab-badge-mine"></span></button>
 			</div>
 			<div class="pf-toolbar">
 				<input type="search" id="picker-search" placeholder="Search avatars…" aria-label="Search" />
 				<div class="custom-row">
 					<input type="url" id="picker-custom-url" placeholder="Paste .glb / .gltf / .vrm URL" aria-label="Custom avatar URL" aria-describedby="picker-custom-msg" />
-					<button type="button" id="picker-custom-go">Use</button>
+					<button type="button" id="picker-custom-go" data-i18n="gmgn.use">Use</button>
 				</div>
 				<p class="custom-msg" id="picker-custom-msg" role="alert" aria-live="polite"></p>
 			</div>
@@ -276,7 +276,7 @@
 						<div class="name" id="preview-name"></div>
 						<div class="sub" id="preview-sub"></div>
 						<div class="actions">
-							<button type="button" class="primary" id="picker-use-btn">Use this avatar</button>
+							<button type="button" class="primary" id="picker-use-btn" data-i18n="gmgn.use_this_avatar">Use this avatar</button>
 						</div>
 					</div>
 				</div>
@@ -294,12 +294,12 @@
 		</div>
 		<aside id="side">
 			<div class="side-header" id="side-header">
-				<span class="side-title" id="side-title">Smart Money Feed</span>
-				<button class="side-control-btn" id="side-minimize" title="Minimize">_</button>
+				<span class="side-title" id="side-title" data-i18n="gmgn.smart_money_feed">Smart Money Feed</span>
+				<button class="side-control-btn" id="side-minimize" title="Minimize" data-i18n-attr="title:gmgn.minimize_title">_</button>
 			</div>
 			<div id="side-content">
-				<h2 id="feed-heading">Live entries</h2>
-				<button type="button" class="feed-jump" id="feed-jump" data-visible="false" aria-live="polite">↑ <span id="feed-jump-count">0</span> new</button>
+				<h2 id="feed-heading" data-i18n="gmgn.live_entries">Live entries</h2>
+				<button type="button" class="feed-jump" id="feed-jump" data-visible="false" aria-live="polite" data-i18n-html="gmgn.0_new">↑ <span id="feed-jump-count">0</span> new</button>
 				<div id="feed"><div class="empty">Waiting for events…</div></div>
 			</div>
 		</aside>
@@ -315,19 +315,19 @@
 		</div>
 		<div class="h-footer-cta">
 			<div class="h-footer-newsletter">
-				<h3>Stay in the loop</h3>
-				<p>Get updates on new features, agent tooling, and protocol changes.</p>
+				<h3 data-i18n="gmgn.stay_in_the_loop">Stay in the loop</h3>
+				<p data-i18n="gmgn.get_updates_on_new_features_agent_tooling">Get updates on new features, agent tooling, and protocol changes.</p>
 				<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
 					<input type="email" class="h-footer-newsletter-input" name="email" placeholder="Enter your email" aria-label="Email address" autocomplete="email" required />
-					<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
+					<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe" data-i18n-attr="aria-label:gmgn.subscribe_arialabel">
 						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4"/></svg>
 					</button>
 				</form>
 				<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
 			</div>
 			<div class="h-footer-community">
-				<h3>Join the community</h3>
-				<p>Follow along for builds, demos, and conversations with the team.</p>
+				<h3 data-i18n="gmgn.join_the_community">Join the community</h3>
+				<p data-i18n="gmgn.follow_along_for_builds_demos_and_conversati">Follow along for builds, demos, and conversations with the team.</p>
 				<a class="h-footer-community-btn" href="https://x.com/trythreews" target="_blank" rel="noopener">
 					<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
 					Follow on X
@@ -336,13 +336,13 @@
 		</div>
 		<div class="h-footer-inner">
 			<nav class="h-footer-links" aria-label="Footer links">
-				<a href="/">Home</a>
-				<a href="/docs">Docs</a>
-				<a href="/pumpfun">Pump.fun Feed</a>
-				<a href="/gmgn" aria-current="page">GMGN Smart Money</a>
-				<a href="https://x.com/trythreews" target="_blank" rel="noopener">X / Twitter</a>
+				<a href="/" data-i18n="gmgn.home">Home</a>
+				<a href="/docs" data-i18n="gmgn.docs">Docs</a>
+				<a href="/pumpfun" data-i18n="gmgn.pump_fun_feed">Pump.fun Feed</a>
+				<a href="/gmgn" aria-current="page" data-i18n="gmgn.gmgn_smart_money_2">GMGN Smart Money</a>
+				<a href="https://x.com/trythreews" target="_blank" rel="noopener" data-i18n="gmgn.x_twitter">X / Twitter</a>
 			</nav>
-			<p class="h-footer-copy">&copy; 2026 three.ws. Powered by <a href="https://gmgn.ai" target="_blank" rel="noopener">GMGN.ai</a>.</p>
+			<p class="h-footer-copy" data-i18n-html="gmgn.2026_three_ws_powered_by_gmgn_ai">&copy; 2026 three.ws. Powered by <a href="https://gmgn.ai" target="_blank" rel="noopener">GMGN.ai</a>.</p>
 		</div>
 	</footer>
 
@@ -895,5 +895,7 @@
 	<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

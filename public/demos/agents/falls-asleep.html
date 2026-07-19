@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Falls asleep — three.ws</title>
+		<title data-i18n="demos_agents_falls_asleep.meta_title">Falls asleep — three.ws</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/demos/agents/_shared.css" />
@@ -19,8 +19,8 @@
 	<body>
 		<div class="stage">
 			<div class="hero-eyebrow">Falls asleep on the text</div>
-			<h1 class="hero-title"><span id="sleep-line">Give your AI</span> a <em>body.</em></h1>
-			<p class="hero-sub">
+			<h1 class="hero-title" data-i18n-html="demos_agents_falls_asleep.give_your_ai_a_body"><span id="sleep-line">Give your AI</span> a <em>body.</em></h1>
+			<p class="hero-sub" data-i18n="demos_agents_falls_asleep.she_ll_sit_on_the_headline_don">
 				She'll sit on the headline. Don't move the cursor for 6 seconds and
 				she nods off — Zzz drift up. Move closer and she startles awake.
 			</p>
@@ -127,5 +127,7 @@
 			}, rootBone, baseRootPos);
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

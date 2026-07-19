@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Sits inside "body" — three.ws</title>
+		<title data-i18n="demos_agents_sit_in_body.meta_title">Sits inside "body" — three.ws</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/demos/agents/_shared.css" />
@@ -15,8 +15,8 @@
 	<body>
 		<div class="stage">
 			<div class="hero-eyebrow">Sits inside "body"</div>
-			<h1 class="hero-title">Give your AI a <em><span class="body-word"><span class="body-letter">b</span><span class="body-letter" id="o-letter">o</span><span class="body-letter">d</span><span class="body-letter">y</span></span></em>.</h1>
-			<p class="hero-sub">
+			<h1 class="hero-title" data-i18n-html="demos_agents_sit_in_body.give_your_ai_a_body">Give your AI a <em><span class="body-word"><span class="body-letter">b</span><span class="body-letter" id="o-letter">o</span><span class="body-letter">d</span><span class="body-letter">y</span></span></em>.</h1>
+			<p class="hero-sub" data-i18n-html="demos_agents_sit_in_body.she_makes_herself_at_home_in_the">
 				She makes herself at home in the round counter of the lowercase
 				<em>o</em>, peeking out and ducking back in every few seconds.
 			</p>
@@ -87,5 +87,7 @@
 			}, rootBone, baseRootPos);
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

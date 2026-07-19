@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Sessions · three.ws</title>
+		<title data-i18n="dashboard_sessions.meta_title">Sessions · three.ws</title>
 		<link rel="icon" href="/favicon.ico" />
 		<style>
 			:root {
@@ -217,11 +217,11 @@
 			<div id="header-user-slot"></div>
 		</header>
 		<main>
-			<h1>Sessions</h1>
-			<p class="sub">Manage your active login sessions across devices.</p>
+			<h1 data-i18n="dashboard_sessions.sessions">Sessions</h1>
+			<p class="sub" data-i18n="dashboard_sessions.manage_your_active_login_sessions_across_dev">Manage your active login sessions across devices.</p>
 
 			<div class="btn-group">
-				<button class="btn danger" id="signOutBtn" style="display: none">
+				<button class="btn danger" id="signOutBtn" style="display: none" data-i18n="dashboard_sessions.sign_out_of_all_other_devices">
 					Sign out of all other devices
 				</button>
 			</div>
@@ -229,11 +229,11 @@
 			<table id="sessionsTable" style="display: none">
 				<thead>
 					<tr>
-						<th>Device / User Agent</th>
-						<th>IP Address</th>
-						<th>Created</th>
-						<th>Last Seen</th>
-						<th class="actions">Actions</th>
+						<th data-i18n="dashboard_sessions.device_user_agent">Device / User Agent</th>
+						<th data-i18n="dashboard_sessions.ip_address">IP Address</th>
+						<th data-i18n="dashboard_sessions.created">Created</th>
+						<th data-i18n="dashboard_sessions.last_seen">Last Seen</th>
+						<th class="actions" data-i18n="dashboard_sessions.actions">Actions</th>
 					</tr>
 				</thead>
 				<tbody id="sessionsList"></tbody>
@@ -466,5 +466,7 @@
 			document.head.appendChild(style);
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

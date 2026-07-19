@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title>Combined · OSS Avatar Pipeline</title>
+		<title data-i18n="demo_avatar_os_combined.meta_title">Combined · OSS Avatar Pipeline</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="robots" content="noindex" />
 		<meta name="theme-color" content="#0a0a0a" />
@@ -12,18 +12,18 @@
 	<body>
 		<header class="os-header">
 			<div class="brand">
-				three.ws<span class="tag">avatar-os · combined</span>
+				three.ws<span class="tag" data-i18n="demo_avatar_os_combined.avatar_os_combined">avatar-os · combined</span>
 			</div>
 			<nav>
-				<a href="/demo/avatar-os/">overview</a>
-				<a href="/demo/avatar-os/studio.html">studio</a>
-				<a href="/demo/avatar-os/selfie.html">selfie</a>
-				<a href="/demo/avatar-os/combined.html" class="active">combined</a>
+				<a href="/demo/avatar-os/" data-i18n="demo_avatar_os_combined.overview">overview</a>
+				<a href="/demo/avatar-os/studio.html" data-i18n="demo_avatar_os_combined.studio">studio</a>
+				<a href="/demo/avatar-os/selfie.html" data-i18n="demo_avatar_os_combined.selfie">selfie</a>
+				<a href="/demo/avatar-os/combined.html" class="active" data-i18n="demo_avatar_os_combined.combined">combined</a>
 			</nav>
 		</header>
 		<main class="os-main">
 			<div class="banner">
-				<strong>Selfie face on body GLB.</strong> Combines the MediaPipe face
+				<strong data-i18n="demo_avatar_os_combined.selfie_face_on_body_glb">Selfie face on body GLB.</strong> Combines the MediaPipe face
 				mesh with a body GLB (loaded from a URL, either a Studio-exported file
 				or the default base body). Exports one merged GLB.
 			</div>
@@ -31,13 +31,13 @@
 			<div class="os-grid">
 				<aside>
 					<div class="os-card">
-						<h2>1 · Body GLB</h2>
-						<p>Pick the body to attach the face to.</p>
+						<h2 data-i18n="demo_avatar_os_combined.1_body_glb">1 · Body GLB</h2>
+						<p data-i18n="demo_avatar_os_combined.pick_the_body_to_attach_the_face">Pick the body to attach the face to.</p>
 						<div class="btn-row">
-							<button id="btn-body-default" class="btn btn-primary">
+							<button id="btn-body-default" class="btn btn-primary" data-i18n="demo_avatar_os_combined.use_default_body">
 								Use default body
 							</button>
-							<button id="btn-body-upload" class="btn">
+							<button id="btn-body-upload" class="btn" data-i18n="demo_avatar_os_combined.upload_studio_glb">
 								Upload Studio GLB
 							</button>
 							<input
@@ -51,36 +51,36 @@
 					</div>
 
 					<div class="os-card" style="margin-top: 16px">
-						<h2>2 · Selfie</h2>
-						<p>Frontal photo only (the face mesh demo handles 3 photos).</p>
+						<h2 data-i18n="demo_avatar_os_combined.2_selfie">2 · Selfie</h2>
+						<p data-i18n="demo_avatar_os_combined.frontal_photo_only_the_face_mesh_demo">Frontal photo only (the face mesh demo handles 3 photos).</p>
 						<div class="photo-slots" style="grid-template-columns: 1fr">
 							<label class="photo-slot" data-slot="frontal">
 								<input type="file" accept="image/*" capture="user" hidden />
-								<span class="label">frontal selfie</span>
+								<span class="label" data-i18n="demo_avatar_os_combined.frontal_selfie">frontal selfie</span>
 							</label>
 						</div>
 						<div class="status" id="capture-status">no photo</div>
 					</div>
 
 					<div class="os-card" style="margin-top: 16px">
-						<h2>3 · Combine</h2>
-						<p>
+						<h2 data-i18n="demo_avatar_os_combined.3_combine">3 · Combine</h2>
+						<p data-i18n="demo_avatar_os_combined.builds_the_face_mesh_and_parents_it">
 							Builds the face mesh and parents it to the body's head bone (if
 							present) or positions it at the body's bounding box top.
 						</p>
-						<button id="btn-build" class="btn btn-primary" disabled>
+						<button id="btn-build" class="btn btn-primary" disabled data-i18n="demo_avatar_os_combined.build_combined_avatar">
 							Build combined avatar
 						</button>
 						<div class="status" id="build-status">waiting</div>
 					</div>
 
 					<div class="os-card" style="margin-top: 16px">
-						<h2>4 · Export</h2>
+						<h2 data-i18n="demo_avatar_os_combined.4_export">4 · Export</h2>
 						<div class="btn-row">
-							<button id="btn-download" class="btn" disabled>
+							<button id="btn-download" class="btn" disabled data-i18n="demo_avatar_os_combined.download_merged_glb">
 								Download merged GLB
 							</button>
-							<button id="btn-save" class="btn" disabled>
+							<button id="btn-save" class="btn" disabled data-i18n="demo_avatar_os_combined.save_to_my_avatars">
 								Save to my avatars
 							</button>
 						</div>
@@ -92,7 +92,7 @@
 					<div class="viewer" id="viewer-host" style="min-height: 600px">
 						<div class="badge" id="viewer-badge">three.js · idle</div>
 						<div class="overlay" id="viewer-overlay">
-							Load a body + selfie, then click <span class="kbd">Build combined avatar</span>
+							Load a body + selfie, then click <span class="kbd" data-i18n="demo_avatar_os_combined.build_combined_avatar_2">Build combined avatar</span>
 						</div>
 					</div>
 				</section>
@@ -100,5 +100,7 @@
 		</main>
 		<script type="module" src="/src/demo/os-combined.js"></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

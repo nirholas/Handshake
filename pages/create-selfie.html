@@ -4,7 +4,7 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Selfie to avatar · three.ws</title>
+		<title data-i18n="create_selfie.meta_title">Selfie to avatar · three.ws</title>
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -14,17 +14,17 @@
 		<meta
 			name="description"
 			content="One selfie. About a minute. A rigged 3D avatar that works everywhere."
-		/>
+		 data-i18n-attr="content:create_selfie.meta_description"/>
 		<meta name="robots" content="index, follow" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/create/selfie" />
-		<meta property="og:title" content="Selfie to avatar · three.ws" />
+		<meta property="og:title" content="Selfie to avatar · three.ws"  data-i18n-attr="content:create_selfie.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="One selfie. About a minute. A rigged 3D avatar that works everywhere."
-		/>
+		 data-i18n-attr="content:create_selfie.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Selfie+to+Avatar&amp;d=One+selfie.+About+a+minute.+A+rigged+3D+avatar+that+works+everywhere.&amp;p=%2Fcreate%2Fselfie" />
 
 		<style>
@@ -1358,11 +1358,11 @@
 
 		<link rel="canonical" href="https://three.ws/create/selfie" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Selfie to Avatar · three.ws" />
+		<meta name="twitter:title" content="Selfie to Avatar · three.ws"  data-i18n-attr="content:create_selfie.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="One selfie. About a minute. A rigged 3D avatar that works everywhere."
-		/>
+		 data-i18n-attr="content:create_selfie.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Selfie+to+Avatar&amp;d=One+selfie.+About+a+minute.+A+rigged+3D+avatar+that+works+everywhere.&amp;p=%2Fcreate%2Fselfie" />
 		<script type="application/ld+json">
 			{
@@ -1383,7 +1383,7 @@
 	<body>
 		<main class="stage">
 			<div class="topbar">
-				<button class="back" id="back-btn" aria-label="Back" type="button">
+				<button class="back" id="back-btn" aria-label="Back" type="button" data-i18n-attr="aria-label:create_selfie.back_arialabel">
 					<svg
 						width="16"
 						height="16"
@@ -1399,22 +1399,22 @@
 						<polyline points="12 19 5 12 12 5" />
 					</svg>
 				</button>
-				<div class="label"><strong>three.ws</strong> · Selfie to avatar</div>
+				<div class="label"><strong data-i18n="create_selfie.three_ws">three.ws</strong> · Selfie to avatar</div>
 			</div>
 
-			<p id="unsupported-msg" class="unsupported">
+			<p id="unsupported-msg" class="unsupported" data-i18n="create_selfie.your_browser_can_t_open_the_camera">
 				Your browser can't open the camera here — use Upload instead, or open this page in
 				Safari / Chrome on a device with a camera.
 			</p>
 
 			<!-- Step 1: capture (entry) -->
 			<section class="step active" data-step="capture">
-				<h1>One selfie. One avatar.</h1>
-				<p class="sub">
+				<h1 data-i18n="create_selfie.one_selfie_one_avatar">One selfie. One avatar.</h1>
+				<p class="sub" data-i18n="create_selfie.front_facing_good_light_plain_background_we">
 					Front-facing, good light, plain background. We downscale and upload locally —
 					your photo never sits on disk.
 				</p>
-				<p class="alt-path">
+				<p class="alt-path" data-i18n-html="create_selfie.prefer_to_use_your_camera_live_the">
 					Prefer to use your camera live? The
 					<a href="/scan">3D Scanner</a> reconstructs you in real time from a quick scan.
 					Photographing an object instead of yourself?
@@ -1430,9 +1430,9 @@
 						aria-label="Front-facing photo"
 					>
 						<span class="hero-icon" aria-hidden="true">👤</span>
-						<span class="hero-title">Add a front-facing photo</span>
+						<span class="hero-title" data-i18n="create_selfie.add_a_front_facing_photo">Add a front-facing photo</span>
 						<span class="hero-sub"
-							>Tap to open camera or upload — works on phone or desktop.</span
+							 data-i18n="create_selfie.tap_to_open_camera_or_upload_works">Tap to open camera or upload — works on phone or desktop.</span
 						>
 					</div>
 					<div class="hero-actions">
@@ -1494,12 +1494,12 @@
 				</div>
 
 				<div class="photo-tips" id="photo-tips">
-					<p class="tips-title">Tips for best results</p>
+					<p class="tips-title" data-i18n="create_selfie.tips_for_best_results">Tips for best results</p>
 					<ul>
-						<li>Face the camera directly — no extreme angles</li>
-						<li>Good, even lighting — avoid harsh shadows or backlighting</li>
-						<li>Remove sunglasses, masks, or anything covering your face</li>
-						<li>Keep hair away from your forehead and jawline if possible</li>
+						<li data-i18n="create_selfie.face_the_camera_directly_no_extreme_angles">Face the camera directly — no extreme angles</li>
+						<li data-i18n="create_selfie.good_even_lighting_avoid_harsh_shadows_or">Good, even lighting — avoid harsh shadows or backlighting</li>
+						<li data-i18n="create_selfie.remove_sunglasses_masks_or_anything_covering">Remove sunglasses, masks, or anything covering your face</li>
+						<li data-i18n="create_selfie.keep_hair_away_from_your_forehead_and">Keep hair away from your forehead and jawline if possible</li>
 					</ul>
 				</div>
 
@@ -1508,7 +1508,7 @@
 						<div>
 							<div class="fid-label">
 								Add side angles
-								<span class="fid-note">(optional — adds ~30s for more detail)</span>
+								<span class="fid-note" data-i18n="create_selfie.optional_adds_30s_for_more_detail">(optional — adds ~30s for more detail)</span>
 							</div>
 						</div>
 						<svg
@@ -1535,8 +1535,8 @@
 								tabindex="0"
 								aria-label="Left side photo slot"
 							>
-								<span class="slot-label">Left</span>
-								<span class="slot-hint">Turn ~45° left</span>
+								<span class="slot-label" data-i18n="create_selfie.left">Left</span>
+								<span class="slot-hint" data-i18n="create_selfie.turn_45_left">Turn ~45° left</span>
 							</div>
 							<div
 								class="slot-frame"
@@ -1545,8 +1545,8 @@
 								tabindex="0"
 								aria-label="Right side photo slot"
 							>
-								<span class="slot-label">Right</span>
-								<span class="slot-hint">Turn ~45° right</span>
+								<span class="slot-label" data-i18n="create_selfie.right">Right</span>
+								<span class="slot-hint" data-i18n="create_selfie.turn_45_right">Turn ~45° right</span>
 							</div>
 						</div>
 						<input
@@ -1566,14 +1566,14 @@
 
 				<div class="opts">
 					<div class="opt-group">
-						<p class="opt-label">Style</p>
+						<p class="opt-label" data-i18n="create_selfie.style">Style</p>
 						<div class="style-grid" role="group" aria-label="Avatar style">
 							<button
 								type="button"
 								class="style-card"
 								data-type="v1"
 								aria-pressed="true"
-							>
+							 data-i18n-html="create_selfie.photoreal_likeness_first_closest_to_how_you">
 								<span class="style-swatch photoreal" aria-hidden="true"></span>
 								<span>
 									<span class="style-title">Photoreal</span>
@@ -1587,7 +1587,7 @@
 								class="style-card"
 								data-type="v2"
 								aria-pressed="false"
-							>
+							 data-i18n-html="create_selfie.stylized_cleaner_cartoon_leaning_good_for_st">
 								<span class="style-swatch stylized" aria-hidden="true"></span>
 								<span>
 									<span class="style-title">Stylized</span>
@@ -1599,10 +1599,10 @@
 						</div>
 					</div>
 					<div class="opt-group">
-						<p class="opt-label">Body</p>
+						<p class="opt-label" data-i18n="create_selfie.body">Body</p>
 						<div class="toggle" role="group" aria-label="Body type">
-							<button type="button" data-body="male" aria-pressed="true">Masc</button>
-							<button type="button" data-body="female" aria-pressed="false">
+							<button type="button" data-body="male" aria-pressed="true" data-i18n="create_selfie.masc">Masc</button>
+							<button type="button" data-body="female" aria-pressed="false" data-i18n="create_selfie.femme">
 								Femme
 							</button>
 						</div>
@@ -1610,7 +1610,7 @@
 				</div>
 
 				<div id="submit-bar" class="submit-bar">
-					<button id="submit-btn" type="button" disabled>
+					<button id="submit-btn" type="button" disabled data-i18n-html="create_selfie.add_a_photo_to_start">
 						<span class="label">Add a photo to start</span>
 					</button>
 				</div>
@@ -1618,23 +1618,23 @@
 
 			<!-- Step 3: Building your avatar -->
 			<section class="step" data-step="building">
-				<h1>Building your avatar…</h1>
-				<p class="sub">This usually takes 1–2 minutes. Don't close this tab.</p>
+				<h1 data-i18n="create_selfie.building_your_avatar">Building your avatar…</h1>
+				<p class="sub" data-i18n="create_selfie.this_usually_takes_1_2_minutes_don">This usually takes 1–2 minutes. Don't close this tab.</p>
 
 				<div class="build-progress" role="list" aria-label="Build progress">
 					<div class="build-step completed" data-bstep="upload" role="listitem">
 						<span class="bstep-dot" aria-hidden="true"></span>
-						<span class="bstep-label">Photos uploaded</span>
+						<span class="bstep-label" data-i18n="create_selfie.photos_uploaded">Photos uploaded</span>
 					</div>
 					<div class="build-step active" data-bstep="process" role="listitem">
 						<span class="bstep-dot" aria-hidden="true"></span>
 						<span class="bstep-label" id="build-status-text" aria-live="polite"
-							>Processing your face…</span
+							 data-i18n="create_selfie.processing_your_face">Processing your face…</span
 						>
 					</div>
 					<div class="build-step" data-bstep="finish" role="listitem">
 						<span class="bstep-dot" aria-hidden="true"></span>
-						<span class="bstep-label">Finishing rig</span>
+						<span class="bstep-label" data-i18n="create_selfie.finishing_rig">Finishing rig</span>
 					</div>
 				</div>
 
@@ -1663,13 +1663,13 @@
 				</div>
 
 				<p id="build-error-msg" class="build-error" role="alert"></p>
-				<button id="build-retry-btn" class="build-retry" type="button">← Try again</button>
+				<button id="build-retry-btn" class="build-retry" type="button" data-i18n="create_selfie.try_again">← Try again</button>
 			</section>
 
 			<!-- Step 4: Done -->
 			<section class="step" data-step="done">
-				<h1>Your avatar is ready</h1>
-				<p class="sub">Name it and open it in your workspace.</p>
+				<h1 data-i18n="create_selfie.your_avatar_is_ready">Your avatar is ready</h1>
+				<p class="sub" data-i18n="create_selfie.name_it_and_open_it_in_your">Name it and open it in your workspace.</p>
 
 				<div class="done-viewer">
 					<model-viewer
@@ -1702,26 +1702,26 @@
 				</div>
 
 				<div class="done-actions">
-					<button id="done-save-btn" class="btn-save" type="button">
+					<button id="done-save-btn" class="btn-save" type="button" data-i18n="create_selfie.open_my_avatar">
 						Open my avatar →
 					</button>
-					<button id="done-agent-btn" class="btn-secondary" type="button">
+					<button id="done-agent-btn" class="btn-secondary" type="button" data-i18n="create_selfie.turn_this_into_an_agent">
 						Turn this into an agent
 					</button>
-					<button id="done-list-btn" class="btn-secondary" type="button">
+					<button id="done-list-btn" class="btn-secondary" type="button" data-i18n="create_selfie.list_on_marketplace">
 						List on marketplace
 					</button>
-					<button id="done-editor-btn" class="btn-ghost" type="button">
+					<button id="done-editor-btn" class="btn-ghost" type="button" data-i18n="create_selfie.customize_in_editor">
 						Customize in editor
 					</button>
-					<button id="done-regen-btn" class="btn-ghost" type="button">
+					<button id="done-regen-btn" class="btn-ghost" type="button" data-i18n="create_selfie.not_quite_right_try_again">
 						Not quite right — try again
 					</button>
 				</div>
 
 				<div class="portability-note">
-					<span>This avatar works in any three.ws-powered app.</span>
-					<a href="/docs/embed" target="_blank" rel="noopener">Learn how to embed →</a>
+					<span data-i18n="create_selfie.this_avatar_works_in_any_three_ws">This avatar works in any three.ws-powered app.</span>
+					<a href="/docs/embed" target="_blank" rel="noopener" data-i18n="create_selfie.learn_how_to_embed">Learn how to embed →</a>
 				</div>
 			</section>
 		</main>
@@ -1881,8 +1881,8 @@
 			</style>
 
 			<div class="byok-card">
-				<h1>Connect your 3D engine</h1>
-				<p class="sub">
+				<h1 data-i18n="create_selfie.connect_your_3d_engine">Connect your 3D engine</h1>
+				<p class="sub" data-i18n="create_selfie.selfie_avatar_uses_a_professional_3d_ai">
 					Selfie → avatar uses a professional 3D AI API. Add your key to continue — it takes 30 seconds.
 				</p>
 
@@ -1893,7 +1893,7 @@
 						class="byok-provider-btn selected"
 						data-byok-provider="meshy"
 						aria-pressed="true"
-					>
+					 data-i18n-html="create_selfie.meshy_image_3d_90s_free_trial_credits">
 						<span class="provider-name">Meshy</span>
 						<span class="provider-desc">Image → 3D · ~90s · free trial credits</span>
 					</button>
@@ -1902,7 +1902,7 @@
 						class="byok-provider-btn"
 						data-byok-provider="tripo"
 						aria-pressed="false"
-					>
+					 data-i18n-html="create_selfie.tripo_image_3d_60s_high_quality">
 						<span class="provider-name">Tripo</span>
 						<span class="provider-desc">Image → 3D · ~60s · high quality</span>
 					</button>
@@ -1924,10 +1924,10 @@
 						class="byok-key-toggle"
 						id="byok-key-toggle"
 						aria-label="Show key"
-					>show</button>
+					 data-i18n="create_selfie.show" data-i18n-attr="aria-label:create_selfie.show_key_arialabel">show</button>
 				</div>
 
-				<p class="byok-hint" id="byok-key-hint">
+				<p class="byok-hint" id="byok-key-hint" data-i18n-html="create_selfie.get_a_free_key_at_meshy_ai">
 					Get a free key at <a href="https://www.meshy.ai" target="_blank" rel="noopener">meshy.ai</a>
 					— it takes under a minute. The key stays in your browser and is never stored on our servers.
 				</p>
@@ -1935,11 +1935,11 @@
 				<p class="byok-error" id="byok-key-error" role="alert" aria-live="assertive"></p>
 
 				<div class="byok-actions">
-					<button type="button" class="byok-submit" id="byok-submit-btn" disabled>
+					<button type="button" class="byok-submit" id="byok-submit-btn" disabled data-i18n="create_selfie.continue">
 						Continue →
 					</button>
 					<div class="byok-divider">or</div>
-					<p class="byok-alt">
+					<p class="byok-alt" data-i18n-html="create_selfie.already_saved_a_key_manage_keys_in">
 						Already saved a key?
 						<a href="/dashboard/api">Manage keys in settings →</a>
 					</p>
@@ -1963,23 +1963,23 @@
 					<span class="count-num" id="cam-count-num">3</span>
 				</div>
 			</div>
-			<div class="cam-prompt">Take your <strong id="cam-slot-name">photo</strong></div>
+			<div class="cam-prompt">Take your <strong id="cam-slot-name" data-i18n="create_selfie.photo">photo</strong></div>
 			<div id="cam-error" hidden></div>
 			<div class="cam-bar">
 				<div id="cam-actions-live" style="display: contents">
-					<button type="button" data-cam-action="cancel">Cancel</button>
+					<button type="button" data-cam-action="cancel" data-i18n="create_selfie.cancel">Cancel</button>
 					<button
 						type="button"
 						class="shutter"
 						data-cam-action="shoot"
 						aria-label="Take photo"
 						id="cam-shutter"
-					></button>
+					 data-i18n-attr="aria-label:create_selfie.take_photo_arialabel"></button>
 					<div class="spacer"></div>
 				</div>
 				<div id="cam-actions-review" hidden style="display: contents">
-					<button type="button" data-cam-action="retake">Retake</button>
-					<button type="button" data-cam-action="use">Use this</button>
+					<button type="button" data-cam-action="retake" data-i18n="create_selfie.retake">Retake</button>
+					<button type="button" data-cam-action="use" data-i18n="create_selfie.use_this">Use this</button>
 				</div>
 			</div>
 		</div>
@@ -2474,5 +2474,7 @@
 		</script>
 		<script src="/brand.js" defer></script>
 		<script src="/getting-started.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

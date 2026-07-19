@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Sign in with three.ws</title>
+<title data-i18n="persona_authorize.meta_title">Sign in with three.ws</title>
 <link rel="icon" href="/favicon.ico" />
 <style>
 	:root {
@@ -149,9 +149,9 @@
 </head>
 <body>
 <div class="wrap" id="root">
-	<div class="brand"><strong>three.ws</strong> · Persona Hub</div>
-	<h1 id="title">Sign in with three.ws</h1>
-	<p class="lede" id="lede">Loading…</p>
+	<div class="brand"><strong data-i18n="persona_authorize.three_ws">three.ws</strong> · Persona Hub</div>
+	<h1 id="title" data-i18n="persona_authorize.sign_in_with_three_ws">Sign in with three.ws</h1>
+	<p class="lede" id="lede" data-i18n="persona_authorize.loading">Loading…</p>
 	<div id="content"></div>
 </div>
 
@@ -297,5 +297,7 @@
 	start();
 </script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

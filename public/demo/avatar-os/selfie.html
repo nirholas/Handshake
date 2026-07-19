@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title>Selfie · OSS Avatar Pipeline</title>
+		<title data-i18n="demo_avatar_os_selfie.meta_title">Selfie · OSS Avatar Pipeline</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="robots" content="noindex" />
 		<meta name="theme-color" content="#0a0a0a" />
@@ -12,18 +12,18 @@
 	<body>
 		<header class="os-header">
 			<div class="brand">
-				three.ws<span class="tag">avatar-os · selfie</span>
+				three.ws<span class="tag" data-i18n="demo_avatar_os_selfie.avatar_os_selfie">avatar-os · selfie</span>
 			</div>
 			<nav>
-				<a href="/demo/avatar-os/">overview</a>
-				<a href="/demo/avatar-os/studio.html">studio</a>
-				<a href="/demo/avatar-os/selfie.html" class="active">selfie</a>
-				<a href="/demo/avatar-os/combined.html">combined</a>
+				<a href="/demo/avatar-os/" data-i18n="demo_avatar_os_selfie.overview">overview</a>
+				<a href="/demo/avatar-os/studio.html" data-i18n="demo_avatar_os_selfie.studio">studio</a>
+				<a href="/demo/avatar-os/selfie.html" class="active" data-i18n="demo_avatar_os_selfie.selfie">selfie</a>
+				<a href="/demo/avatar-os/combined.html" data-i18n="demo_avatar_os_selfie.combined">combined</a>
 			</nav>
 		</header>
 		<main class="os-main">
 			<div class="banner">
-				<strong>Photo → 3D face mesh.</strong> Runs MediaPipe Face Landmarker
+				<strong data-i18n="demo_avatar_os_selfie.photo_3d_face_mesh">Photo → 3D face mesh.</strong> Runs MediaPipe Face Landmarker
 				entirely in-browser (no server). 478 landmarks → textured face mesh →
 				GLB. Replaces the Avaturn selfie API.
 			</div>
@@ -31,53 +31,53 @@
 			<div class="os-grid">
 				<aside>
 					<div class="os-card">
-						<h2>1 · Capture</h2>
-						<p>
+						<h2 data-i18n="demo_avatar_os_selfie.1_capture">1 · Capture</h2>
+						<p data-i18n="demo_avatar_os_selfie.front_facing_photo_gives_the_best_face">
 							Front-facing photo gives the best face mesh. Side photos are
 							optional (used by the combined demo for additional reference).
 						</p>
 						<div class="photo-slots">
 							<label class="photo-slot" data-slot="frontal">
 								<input type="file" accept="image/*" capture="user" hidden />
-								<span class="label">frontal</span>
+								<span class="label" data-i18n="demo_avatar_os_selfie.frontal">frontal</span>
 							</label>
 							<label class="photo-slot" data-slot="left">
 								<input type="file" accept="image/*" hidden />
-								<span class="label">left</span>
+								<span class="label" data-i18n="demo_avatar_os_selfie.left">left</span>
 							</label>
 							<label class="photo-slot" data-slot="right">
 								<input type="file" accept="image/*" hidden />
-								<span class="label">right</span>
+								<span class="label" data-i18n="demo_avatar_os_selfie.right">right</span>
 							</label>
 						</div>
 						<div class="btn-row">
-							<button id="btn-camera" class="btn">Use camera</button>
-							<button id="btn-clear" class="btn">Clear</button>
+							<button id="btn-camera" class="btn" data-i18n="demo_avatar_os_selfie.use_camera">Use camera</button>
+							<button id="btn-clear" class="btn" data-i18n="demo_avatar_os_selfie.clear">Clear</button>
 						</div>
 						<div class="status" id="capture-status">no photos yet</div>
 					</div>
 
 					<div class="os-card" style="margin-top: 16px">
-						<h2>2 · Build face mesh</h2>
-						<p>
+						<h2 data-i18n="demo_avatar_os_selfie.2_build_face_mesh">2 · Build face mesh</h2>
+						<p data-i18n="demo_avatar_os_selfie.runs_the_mediapipe_face_landmarker_on_the">
 							Runs the MediaPipe Face Landmarker on the frontal photo. Builds
 							a three.js BufferGeometry: 478 vertex positions from landmarks,
 							UVs from image coords, indices from the tfjs-models
 							triangulation (Apache-2.0, vendored).
 						</p>
-						<button id="btn-build" class="btn btn-primary" disabled>
+						<button id="btn-build" class="btn btn-primary" disabled data-i18n="demo_avatar_os_selfie.build_face_mesh">
 							Build face mesh
 						</button>
 						<div class="status" id="build-status">waiting for photo</div>
 					</div>
 
 					<div class="os-card" style="margin-top: 16px">
-						<h2>3 · Export</h2>
+						<h2 data-i18n="demo_avatar_os_selfie.3_export">3 · Export</h2>
 						<div class="btn-row">
-							<button id="btn-download" class="btn" disabled>
+							<button id="btn-download" class="btn" disabled data-i18n="demo_avatar_os_selfie.download_glb">
 								Download GLB
 							</button>
-							<button id="btn-save" class="btn" disabled>
+							<button id="btn-save" class="btn" disabled data-i18n="demo_avatar_os_selfie.save_to_my_avatars">
 								Save to my avatars
 							</button>
 						</div>
@@ -89,7 +89,7 @@
 					<div class="viewer" id="viewer-host">
 						<div class="badge" id="viewer-badge">three.js · idle</div>
 						<div class="overlay" id="viewer-overlay">
-							Capture a frontal selfie and click <span class="kbd">Build face mesh</span>
+							Capture a frontal selfie and click <span class="kbd" data-i18n="demo_avatar_os_selfie.build_face_mesh_2">Build face mesh</span>
 						</div>
 					</div>
 					<video
@@ -107,17 +107,19 @@
 						"
 					></video>
 					<div class="btn-row" id="camera-controls" style="display: none; margin-top: 8px">
-						<button id="btn-snap-frontal" class="btn btn-primary">
+						<button id="btn-snap-frontal" class="btn btn-primary" data-i18n="demo_avatar_os_selfie.snap_frontal">
 							Snap frontal
 						</button>
-						<button id="btn-snap-left" class="btn">Snap left</button>
-						<button id="btn-snap-right" class="btn">Snap right</button>
-						<button id="btn-stop-camera" class="btn">Stop camera</button>
+						<button id="btn-snap-left" class="btn" data-i18n="demo_avatar_os_selfie.snap_left">Snap left</button>
+						<button id="btn-snap-right" class="btn" data-i18n="demo_avatar_os_selfie.snap_right">Snap right</button>
+						<button id="btn-stop-camera" class="btn" data-i18n="demo_avatar_os_selfie.stop_camera">Stop camera</button>
 					</div>
 				</section>
 			</div>
 		</main>
 		<script type="module" src="/src/demo/os-selfie.js"></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

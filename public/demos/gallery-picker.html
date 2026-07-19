@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Avatar Gallery Picker · three.ws lab</title>
+		<title data-i18n="demos_gallery_picker.meta_title">Avatar Gallery Picker · three.ws lab</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
@@ -170,9 +170,9 @@
 		<header><div id="nav-container"></div></header>
 
 		<main class="stage">
-			<p class="crumb"><a href="/demos">← lab</a></p>
-			<h1>Avatar Gallery Picker</h1>
-			<p class="sub">
+			<p class="crumb" data-i18n-html="demos_gallery_picker.lab"><a href="/demos">← lab</a></p>
+			<h1 data-i18n="demos_gallery_picker.avatar_gallery_picker">Avatar Gallery Picker</h1>
+			<p class="sub" data-i18n-html="demos_gallery_picker.browse_every_public_avatar_on_three_ws">
 				Browse every public avatar on three.ws, preview it live, and copy the
 				exact handoff your downstream surface needs — a share link, a raw GLB
 				URL, or an <code>&lt;agent-3d&gt;</code> embed snippet. Powered by the
@@ -184,9 +184,9 @@
 			<div class="toolbar">
 				<div class="search-wrap">
 					<input type="text" id="search" placeholder="Search avatars…" autocomplete="off" aria-label="Search public avatars" />
-					<button type="button" class="search-clear" id="search-clear" hidden aria-label="Clear search">×</button>
+					<button type="button" class="search-clear" id="search-clear" hidden aria-label="Clear search" data-i18n-attr="aria-label:demos_gallery_picker.clear_search_arialabel">×</button>
 				</div>
-				<span class="status-line" id="status" aria-live="polite">Loading…</span>
+				<span class="status-line" id="status" aria-live="polite" data-i18n="demos_gallery_picker.loading">Loading…</span>
 			</div>
 
 			<div class="tag-row" id="tags" aria-label="Tag filters"></div>
@@ -194,7 +194,7 @@
 			<div class="row">
 				<div>
 					<div class="grid" id="grid"></div>
-					<div class="load-more-wrap"><button class="load-more" id="load-more" hidden>Load more</button></div>
+					<div class="load-more-wrap"><button class="load-more" id="load-more" hidden data-i18n="demos_gallery_picker.load_more">Load more</button></div>
 					<div class="sentinel" id="sentinel"></div>
 				</div>
 
@@ -204,17 +204,17 @@
 					</div>
 
 					<div>
-						<h2 id="preview-name">No avatar selected</h2>
-						<p class="preview-sub" id="preview-sub">three.ws public catalog</p>
+						<h2 id="preview-name" data-i18n="demos_gallery_picker.no_avatar_selected">No avatar selected</h2>
+						<p class="preview-sub" id="preview-sub" data-i18n="demos_gallery_picker.three_ws_public_catalog">three.ws public catalog</p>
 					</div>
 
 					<div class="mode-radio" role="radiogroup" aria-label="Handoff mode">
-						<label><input type="radio" name="mode" value="share" checked /><span>Share link</span></label>
-						<label><input type="radio" name="mode" value="glb" /><span>GLB URL</span></label>
-						<label><input type="radio" name="mode" value="embed" /><span>Embed snippet</span></label>
+						<label><input type="radio" name="mode" value="share" checked /><span data-i18n="demos_gallery_picker.share_link">Share link</span></label>
+						<label><input type="radio" name="mode" value="glb" /><span data-i18n="demos_gallery_picker.glb_url">GLB URL</span></label>
+						<label><input type="radio" name="mode" value="embed" /><span data-i18n="demos_gallery_picker.embed_snippet">Embed snippet</span></label>
 					</div>
 
-					<button class="cta" id="cta" disabled>Use this avatar</button>
+					<button class="cta" id="cta" disabled data-i18n="demos_gallery_picker.use_this_avatar">Use this avatar</button>
 
 					<div class="preview-foot" id="preview-foot">Selected payload appears here.</div>
 				</aside>
@@ -610,5 +610,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

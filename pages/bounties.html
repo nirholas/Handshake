@@ -10,54 +10,54 @@
 		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
-		<title>Bounties · three.ws</title>
+		<title data-i18n="bounties.meta_title">Bounties · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta
 			name="description"
 			content="Browse live pump.fun GO bounties — rewards, submissions, and on-chain escrow — on three.ws."
-		/>
+		 data-i18n-attr="content:bounties.meta_description"/>
 		<meta name="theme-color" content="#0a0a0f" />
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Bounties · three.ws" />
+		<meta property="og:title" content="Bounties · three.ws"  data-i18n-attr="content:bounties.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Live pump.fun GO bounties — rewards, submissions, on-chain escrow."
-		/>
+		 data-i18n-attr="content:bounties.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/bounties" />
 		<meta property="og:image" content="https://three.ws/og-image.png" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Bounties · three.ws" />
-		<meta name="twitter:description" content="Live pump.fun GO bounties — rewards, submissions, on-chain escrow." />
+		<meta name="twitter:title" content="Bounties · three.ws"  data-i18n-attr="content:bounties.meta_twitter_title"/>
+		<meta name="twitter:description" content="Live pump.fun GO bounties — rewards, submissions, on-chain escrow."  data-i18n-attr="content:bounties.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/og-image.png" />
 		<link rel="stylesheet" href="/pump-bounties.css" />
 	</head>
 	<body>
 		<header class="topbar">
-			<a href="/" class="brand">
+			<a href="/" class="brand" data-i18n-html="bounties.three_ws_bounties">
 				<span class="dot"></span>
 				three.ws
 				<span class="badge-go">Bounties</span>
 			</a>
 			<div class="topbar-right">
-				<a href="/go" class="btn btn-ghost btn-sm">$THREE board</a>
+				<a href="/go" class="btn btn-ghost btn-sm" data-i18n="bounties.three_board">$THREE board</a>
 				<a
 					href="https://pump.fun/go/bounties"
 					target="_blank"
 					rel="noopener noreferrer"
 					class="btn btn-primary btn-sm"
-					>Open on pump.fun ↗</a
+					 data-i18n="bounties.open_on_pump_fun">Open on pump.fun ↗</a
 				>
 			</div>
 		</header>
 
 		<main class="wrap">
 			<div class="page-head">
-				<h1>Bounty Board <span class="src-tag">Live · pump.fun GO</span></h1>
-				<p>
+				<h1 data-i18n-html="bounties.bounty_board_live_pump_fun_go">Bounty Board <span class="src-tag">Live · pump.fun GO</span></h1>
+				<p data-i18n="bounties.every_open_bounty_on_pump_fun_go">
 					Every open bounty on pump.fun GO — task, reward, submissions, and the on-chain
 					escrow backing it. Read-only and live; click any bounty for the full brief and
 					proof feed.
@@ -67,15 +67,15 @@
 			<div class="stats" id="stats" aria-label="Board totals">
 				<div class="stat">
 					<span class="stat-n skeleton" id="s-count">—</span
-					><span class="stat-l">Live bounties</span>
+					><span class="stat-l" data-i18n="bounties.live_bounties">Live bounties</span>
 				</div>
 				<div class="stat">
 					<span class="stat-n skeleton" id="s-usd">—</span
-					><span class="stat-l">In rewards</span>
+					><span class="stat-l" data-i18n="bounties.in_rewards">In rewards</span>
 				</div>
 				<div class="stat">
 					<span class="stat-n skeleton" id="s-subs">—</span
-					><span class="stat-l">Submissions</span>
+					><span class="stat-l" data-i18n="bounties.submissions">Submissions</span>
 				</div>
 			</div>
 
@@ -106,17 +106,17 @@
 						type="button"
 						aria-label="Clear search"
 						hidden
-					>
+					 data-i18n-attr="aria-label:bounties.clear_search_arialabel">
 						×
 					</button>
 				</label>
 				<div class="seg" id="sort-seg" role="tablist" aria-label="Sort bounties">
-					<button data-sort="reward" class="active">Top reward</button>
-					<button data-sort="newest">Newest</button>
-					<button data-sort="submissions">Most subs</button>
-					<button data-sort="likes">Most liked</button>
+					<button data-sort="reward" class="active" data-i18n="bounties.top_reward">Top reward</button>
+					<button data-sort="newest" data-i18n="bounties.newest">Newest</button>
+					<button data-sort="submissions" data-i18n="bounties.most_subs">Most subs</button>
+					<button data-sort="likes" data-i18n="bounties.most_liked">Most liked</button>
 				</div>
-				<button id="refresh-btn" class="btn btn-ghost btn-sm" aria-label="Refresh">
+				<button id="refresh-btn" class="btn btn-ghost btn-sm" aria-label="Refresh" data-i18n="bounties.refresh" data-i18n-attr="aria-label:bounties.refresh_arialabel">
 					↻ Refresh
 				</button>
 			</div>
@@ -127,5 +127,7 @@
 		</main>
 
 		<script type="module" src="/src/bounties.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -4,12 +4,12 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>x402 Bazaar — discover paid APIs and MCP tools</title>
-<meta name="description" content="Search and browse the x402 facilitator catalog. Filter by network, price, extensions. Pay any service in one click." />
+<title data-i18n="bazaar.meta_title">x402 Bazaar — discover paid APIs and MCP tools</title>
+<meta name="description" content="Search and browse the x402 facilitator catalog. Filter by network, price, extensions. Pay any service in one click."  data-i18n-attr="content:bazaar.meta_description"/>
 <meta name="theme-color" content="#0b0b0b" />
 <link rel="stylesheet" href="/nav.css" />
-<meta property="og:title" content="x402 Bazaar — discover paid APIs and MCP tools" />
-<meta property="og:description" content="Search and browse the x402 facilitator catalog. Filter by network, price, extensions. Pay any service in one click." />
+<meta property="og:title" content="x402 Bazaar — discover paid APIs and MCP tools"  data-i18n-attr="content:bazaar.meta_og_title"/>
+<meta property="og:description" content="Search and browse the x402 facilitator catalog. Filter by network, price, extensions. Pay any service in one click."  data-i18n-attr="content:bazaar.meta_og_description"/>
 <meta property="og:type" content="website" />
 <style>
 	:root {
@@ -426,8 +426,8 @@
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="x402 Bazaar · three.ws">
-	<meta name="twitter:description" content="Search and browse the x402 facilitator catalog. Filter by network, price, and extensions. Pay any service in one click.">
+	<meta name="twitter:title" content="x402 Bazaar · three.ws" data-i18n-attr="content:bazaar.meta_twitter_title">
+	<meta name="twitter:description" content="Search and browse the x402 facilitator catalog. Filter by network, price, and extensions. Pay any service in one click." data-i18n-attr="content:bazaar.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=x402+Bazaar&amp;d=Search+and+browse+the+x402+facilitator+catalog.+Filter+by+network%2C+price%2C+and+extensions.+Pay+any+service+in+one+click.&amp;p=%2Fbazaar">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"x402 Bazaar","description":"Search and browse the x402 facilitator catalog. Filter by network, price, and extensions. Pay any service in one click.","url":"https://three.ws/bazaar","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -441,69 +441,69 @@
 <script src="/nav.js"></script>
 <div class="wrap">
 	<header class="hero">
-		<h1>Discover paid APIs and MCP tools</h1>
-		<p>Live catalog merged across x402 facilitators. Search, filter, and pay any endpoint with a single click — settlement is on-chain via the x402 protocol.</p>
+		<h1 data-i18n="bazaar.discover_paid_apis_and_mcp_tools">Discover paid APIs and MCP tools</h1>
+		<p data-i18n="bazaar.live_catalog_merged_across_x402_facilitators">Live catalog merged across x402 facilitators. Search, filter, and pay any endpoint with a single click — settlement is on-chain via the x402 protocol.</p>
 	</header>
 
 	<form class="search-bar" id="search-form" autocomplete="off">
 		<input type="search" id="q" name="q" placeholder="Search: weather, sanctions, mcp tools, address…" />
-		<button type="submit">Search</button>
-		<button type="button" class="ghost" id="clear-btn">Clear</button>
+		<button type="submit" data-i18n="bazaar.search">Search</button>
+		<button type="button" class="ghost" id="clear-btn" data-i18n="bazaar.clear">Clear</button>
 	</form>
 
 	<div class="layout">
 		<aside class="filters">
-			<h3>Filters</h3>
+			<h3 data-i18n="bazaar.filters">Filters</h3>
 			<div class="group">
-				<label for="f-type">Type</label>
+				<label for="f-type" data-i18n="bazaar.type">Type</label>
 				<select id="f-type">
-					<option value="http">HTTP endpoints</option>
-					<option value="mcp">MCP tools</option>
+					<option value="http" data-i18n="bazaar.http_endpoints">HTTP endpoints</option>
+					<option value="mcp" data-i18n="bazaar.mcp_tools">MCP tools</option>
 				</select>
 			</div>
 			<div class="group">
-				<label for="f-network">Network</label>
+				<label for="f-network" data-i18n="bazaar.network">Network</label>
 				<select id="f-network">
-					<option value="">All networks</option>
-					<option value="eip155:*">EVM (any)</option>
-					<option value="eip155:8453">Base</option>
-					<option value="eip155:42161">Arbitrum</option>
-					<option value="eip155:10">Optimism</option>
-					<option value="eip155:137">Polygon</option>
-					<option value="solana:*">Solana (any)</option>
+					<option value="" data-i18n="bazaar.all_networks">All networks</option>
+					<option value="eip155:*" data-i18n="bazaar.evm_any">EVM (any)</option>
+					<option value="eip155:8453" data-i18n="bazaar.base">Base</option>
+					<option value="eip155:42161" data-i18n="bazaar.arbitrum">Arbitrum</option>
+					<option value="eip155:10" data-i18n="bazaar.optimism">Optimism</option>
+					<option value="eip155:137" data-i18n="bazaar.polygon">Polygon</option>
+					<option value="solana:*" data-i18n="bazaar.solana_any">Solana (any)</option>
 				</select>
 			</div>
 			<div class="group">
-				<label for="f-max">Max price (USDC)</label>
+				<label for="f-max" data-i18n="bazaar.max_price_usdc">Max price (USDC)</label>
 				<div class="row">
 					<input type="number" id="f-max" placeholder="0.10" step="0.001" min="0" />
 				</div>
 			</div>
 			<div class="group">
-				<label for="f-ext">Extension</label>
+				<label for="f-ext" data-i18n="bazaar.extension">Extension</label>
 				<select id="f-ext">
-					<option value="">Any</option>
-					<option value="bazaar">bazaar</option>
-					<option value="sign-in-with-x">sign-in-with-x</option>
-					<option value="payment-identifier">payment-identifier</option>
-					<option value="offer-receipt">offer-receipt</option>
+					<option value="" data-i18n="bazaar.any">Any</option>
+					<option value="bazaar" data-i18n="bazaar.bazaar">bazaar</option>
+					<option value="sign-in-with-x" data-i18n="bazaar.sign_in_with_x">sign-in-with-x</option>
+					<option value="payment-identifier" data-i18n="bazaar.payment_identifier">payment-identifier</option>
+					<option value="offer-receipt" data-i18n="bazaar.offer_receipt">offer-receipt</option>
 				</select>
 			</div>
 			<div class="group">
-				<label for="f-sort">Sort by</label>
+				<label for="f-sort" data-i18n="bazaar.sort_by">Sort by</label>
 				<select id="f-sort">
-					<option value="">Default (rank or facilitator order)</option>
-					<option value="price">Price (lowest first)</option>
+					<option value="" data-i18n="bazaar.default_rank_or_facilitator_order">Default (rank or facilitator order)</option>
+					<option value="price" data-i18n="bazaar.price_lowest_first">Price (lowest first)</option>
 				</select>
 			</div>
-			<button type="button" class="reset" id="reset-btn">Reset filters</button>
+			<button type="button" class="reset" id="reset-btn" data-i18n="bazaar.reset_filters">Reset filters</button>
 		</aside>
 
 		<main>
 			<div class="results-meta">
 				<div>
 					<strong id="count">…</strong>
-					<span> results <span id="qlabel"></span></span>
+					<span data-i18n-html="bazaar.results"> results <span id="qlabel"></span></span>
 					<div class="sources" id="sources"></div>
 				</div>
 			</div>
@@ -517,8 +517,8 @@
 
 <dialog class="modal" id="details-modal">
 	<header>
-		<h2 id="dm-title">Resource details</h2>
-		<button type="button" id="dm-close" aria-label="Close">×</button>
+		<h2 id="dm-title" data-i18n="bazaar.resource_details">Resource details</h2>
+		<button type="button" id="dm-close" aria-label="Close" data-i18n-attr="aria-label:bazaar.close_arialabel">×</button>
 	</header>
 	<section>
 		<div id="dm-body"></div>
@@ -529,5 +529,7 @@
 <script type="module" src="/x402.js"></script>
 <script type="module" src="/bazaar.js"></script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

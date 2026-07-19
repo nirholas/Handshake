@@ -5,17 +5,17 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Pricing · three.ws</title>
-	<meta name="description" content="Simple, transparent pricing for three.ws — the 3D agent layer of the internet." />
+	<title data-i18n="x_pricing.meta_title">Pricing · three.ws</title>
+	<meta name="description" content="Simple, transparent pricing for three.ws — the 3D agent layer of the internet."  data-i18n-attr="content:x_pricing.meta_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/pricing" />
-	<meta property="og:title" content="Pricing · three.ws" />
-	<meta property="og:description" content="Simple, transparent pricing for three.ws — the 3D agent layer of the internet." />
+	<meta property="og:title" content="Pricing · three.ws"  data-i18n-attr="content:x_pricing.meta_og_title"/>
+	<meta property="og:description" content="Simple, transparent pricing for three.ws — the 3D agent layer of the internet."  data-i18n-attr="content:x_pricing.meta_og_description"/>
 	<meta property="og:image" content="https://three.ws/og-image.png" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Pricing · three.ws" />
+	<meta name="twitter:title" content="Pricing · three.ws"  data-i18n-attr="content:x_pricing.meta_twitter_title"/>
 	<meta name="twitter:image" content="https://three.ws/og-image.png" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -65,56 +65,56 @@
 	<link rel="stylesheet" href="/mobile.css" />
 </head>
 <body>
-	<header><a href="/">← three.ws</a></header>
+	<header><a href="/" data-i18n="x_pricing.three_ws">← three.ws</a></header>
 	<div class="wrap">
-		<h1>Pricing</h1>
-		<p class="sub">Run autonomous AI agents that post, trade, and earn on-chain. <span id="current-plan" class="muted"></span></p>
+		<h1 data-i18n="x_pricing.pricing">Pricing</h1>
+		<p class="sub" data-i18n-html="x_pricing.run_autonomous_ai_agents_that_post_trade">Run autonomous AI agents that post, trade, and earn on-chain. <span id="current-plan" class="muted"></span></p>
 
 		<div class="grid">
 			<div class="card">
 				<div class="tier">Free</div>
-				<div class="price">$0<small> /month</small></div>
+				<div class="price">$0<small data-i18n="x_pricing.month"> /month</small></div>
 				<ul class="feat">
-					<li>5 X posts per month</li>
-					<li>1 post every 30 min</li>
-					<li>All trigger types (daily, weekly, milestones)</li>
-					<li>AI-drafted tweets with tone presets</li>
-					<li>Manual + scheduled posts</li>
-					<li>Engagement analytics</li>
+					<li data-i18n="x_pricing.5_x_posts_per_month">5 X posts per month</li>
+					<li data-i18n="x_pricing.1_post_every_30_min">1 post every 30 min</li>
+					<li data-i18n="x_pricing.all_trigger_types_daily_weekly_milestones">All trigger types (daily, weekly, milestones)</li>
+					<li data-i18n="x_pricing.ai_drafted_tweets_with_tone_presets">AI-drafted tweets with tone presets</li>
+					<li data-i18n="x_pricing.manual_scheduled_posts">Manual + scheduled posts</li>
+					<li data-i18n="x_pricing.engagement_analytics">Engagement analytics</li>
 				</ul>
-				<button class="btn sec" disabled>You're on Free</button>
+				<button class="btn sec" disabled data-i18n="x_pricing.you_re_on_free">You're on Free</button>
 			</div>
 			<div class="card pro">
 				<div class="tag">Recommended</div>
 				<div class="tier">Pro</div>
-				<div class="price"><span id="pro-price">$49</span><small> /month</small></div>
+				<div class="price"><span id="pro-price">$49</span><small data-i18n="x_pricing.month_2"> /month</small></div>
 				<div class="muted" id="three-note" style="font-size:12px"></div>
 				<ul class="feat">
-					<li>100 X posts per month</li>
-					<li>1 post every 5 min</li>
-					<li>Threads (multi-tweet posts)</li>
-					<li>Review-before-publish mode</li>
-					<li>Multi-draft picker (3 options)</li>
-					<li>Priority support</li>
+					<li data-i18n="x_pricing.100_x_posts_per_month">100 X posts per month</li>
+					<li data-i18n="x_pricing.1_post_every_5_min">1 post every 5 min</li>
+					<li data-i18n="x_pricing.threads_multi_tweet_posts">Threads (multi-tweet posts)</li>
+					<li data-i18n="x_pricing.review_before_publish_mode">Review-before-publish mode</li>
+					<li data-i18n="x_pricing.multi_draft_picker_3_options">Multi-draft picker (3 options)</li>
+					<li data-i18n="x_pricing.priority_support">Priority support</li>
 				</ul>
-				<button class="btn" id="upgrade-btn">Upgrade — pay in USDC, SOL, or $THREE</button>
+				<button class="btn" id="upgrade-btn" data-i18n="x_pricing.upgrade_pay_in_usdc_sol_or_three">Upgrade — pay in USDC, SOL, or $THREE</button>
 			</div>
 		</div>
 
 		<div class="checkout" id="checkout">
-			<h3 style="margin:0 0 8px" id="checkout-title">Pay on Solana</h3>
+			<h3 style="margin:0 0 8px" id="checkout-title" data-i18n="x_pricing.pay_on_solana">Pay on Solana</h3>
 			<div id="asset-row" style="display:flex; gap:8px; margin:2px 0 12px; flex-wrap:wrap">
-				<button class="btn sec asset-btn" data-asset="USDC" aria-pressed="true">USDC</button>
-				<button class="btn sec asset-btn" data-asset="SOL" aria-pressed="false">SOL</button>
-				<button class="btn sec asset-btn" data-asset="THREE" aria-pressed="false">$THREE <span id="three-off"></span></button>
+				<button class="btn sec asset-btn" data-asset="USDC" aria-pressed="true" data-i18n="x_pricing.usdc">USDC</button>
+				<button class="btn sec asset-btn" data-asset="SOL" aria-pressed="false" data-i18n="x_pricing.sol">SOL</button>
+				<button class="btn sec asset-btn" data-asset="THREE" aria-pressed="false" data-i18n-html="x_pricing.three">$THREE <span id="three-off"></span></button>
 			</div>
-			<p class="muted">Scan with Phantom or any Solana wallet, or open the link on the device with your wallet.</p>
+			<p class="muted" data-i18n="x_pricing.scan_with_phantom_or_any_solana_wallet">Scan with Phantom or any Solana wallet, or open the link on the device with your wallet.</p>
 			<img class="qr" id="qr" alt="Solana Pay QR" />
 			<code class="payurl" id="payurl"></code>
-			<a class="btn" id="open-link" href="#" target="_blank" rel="noopener" style="display:inline-block; text-align:center; text-decoration:none">Open in wallet</a>
+			<a class="btn" id="open-link" href="#" target="_blank" rel="noopener" style="display:inline-block; text-align:center; text-decoration:none" data-i18n="x_pricing.open_in_wallet">Open in wallet</a>
 			<div class="muted" style="margin-top:14px">After paying, paste the transaction signature:</div>
 			<input id="txsig" placeholder="Transaction signature" style="width:100%; margin-top:6px; padding:9px 11px; background:#0f0f0f; border:1px solid var(--border); border-radius:8px; color:#eee; font-size:13px; font-family:inherit" />
-			<button class="btn" id="confirm-btn" style="margin-top:10px">I've paid — confirm</button>
+			<button class="btn" id="confirm-btn" style="margin-top:10px" data-i18n="x_pricing.i_ve_paid_confirm">I've paid — confirm</button>
 			<div class="status" id="status"></div>
 		</div>
 	</div>
@@ -232,5 +232,7 @@
 		$('confirm-btn').addEventListener('click', () => { confirmTries = 0; confirmPayment(); });
 	</script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

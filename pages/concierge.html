@@ -4,23 +4,23 @@
 		<script>/* three.ws theme boot, no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Concierge, an AI chat widget with a 3D face, for any website · three.ws</title>
+		<title data-i18n="concierge.meta_title">Concierge, an AI chat widget with a 3D face, for any website · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta name="author" content="nirholas" />
 		<meta
 			name="description"
 			content="Drop an AI concierge on any website with one tag: a rigged 3D avatar that blinks and lipsyncs, streaming answers grounded in your live page, and browser-native voice in and out. Free, open embed by three.ws."
-		/>
+		 data-i18n-attr="content:concierge.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/concierge" />
-		<meta property="og:title" content="Concierge, an AI chat widget with a 3D face, for any website" />
+		<meta property="og:title" content="Concierge, an AI chat widget with a 3D face, for any website"  data-i18n-attr="content:concierge.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="One tag gives your site an AI concierge with a talking 3D avatar: streaming answers grounded in your page, voice in and out, themes, and an avatar picker."
-		/>
+		 data-i18n-attr="content:concierge.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Concierge%3A+AI+Chat+Widget&amp;d=Give+any+website+an+AI+concierge+with+a+talking+3D+avatar%3A+one-tag+embed%2C+streaming+answers+grounded+in+the+live+page%2C+voice+in+and+out%2C+themes%2C+and+an+avatar+p&amp;p=%2Fconcierge" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
@@ -28,11 +28,11 @@
 
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Concierge, an AI chat widget with a 3D face, for any website" />
+		<meta name="twitter:title" content="Concierge, an AI chat widget with a 3D face, for any website"  data-i18n-attr="content:concierge.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="One tag gives your site an AI concierge with a talking 3D avatar: streaming answers grounded in your page, voice in and out, themes, and an avatar picker."
-		/>
+		 data-i18n-attr="content:concierge.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Concierge%3A+AI+Chat+Widget&amp;d=Give+any+website+an+AI+concierge+with+a+talking+3D+avatar%3A+one-tag+embed%2C+streaming+answers+grounded+in+the+live+page%2C+voice+in+and+out%2C+themes%2C+and+an+avatar+p&amp;p=%2Fconcierge" />
 		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 
@@ -247,74 +247,74 @@
 
 		<main class="cl-main">
 			<section class="cl-hero">
-				<span class="cl-eyebrow">// concierge</span>
-				<h1>An AI concierge with a face, for any website.</h1>
-				<p class="cl-sub">
+				<span class="cl-eyebrow" data-i18n="concierge.concierge">// concierge</span>
+				<h1 data-i18n="concierge.an_ai_concierge_with_a_face_for">An AI concierge with a face, for any website.</h1>
+				<p class="cl-sub" data-i18n="concierge.one_tag_gives_your_site_a_support">
 					One tag gives your site a support chat that visitors actually enjoy: a rigged 3D avatar that
 					blinks, talks, and lipsyncs; streaming answers grounded in your live page; and voice in and
 					out, straight from the browser. No account, no crawler setup, no per-seat pricing.
 				</p>
 				<div class="cl-ctas">
-					<a class="cl-btn cl-btn-primary" href="#install">Get the embed</a>
-					<a class="cl-btn cl-btn-ghost" href="/docs/concierge">Read the docs</a>
-					<a class="cl-btn cl-btn-ghost" href="https://github.com/nirholas/three.ws/tree/main/concierge-sdk" target="_blank" rel="noopener">Source ↗</a>
+					<a class="cl-btn cl-btn-primary" href="#install" data-i18n="concierge.get_the_embed">Get the embed</a>
+					<a class="cl-btn cl-btn-ghost" href="/docs/concierge" data-i18n="concierge.read_the_docs">Read the docs</a>
+					<a class="cl-btn cl-btn-ghost" href="https://github.com/nirholas/three.ws/tree/main/concierge-sdk" target="_blank" rel="noopener" data-i18n="concierge.source">Source ↗</a>
 				</div>
-				<p class="cl-hint">This page runs it live, try the bubble in the corner <span class="cl-arrow">↘</span></p>
+				<p class="cl-hint" data-i18n-html="concierge.this_page_runs_it_live_try_the">This page runs it live, try the bubble in the corner <span class="cl-arrow">↘</span></p>
 			</section>
 
 			<section class="cl-section" aria-labelledby="cl-why">
-				<h2 id="cl-why">Why it beats a faceless chat bubble</h2>
-				<p class="cl-lede">
+				<h2 id="cl-why" data-i18n="concierge.why_it_beats_a_faceless_chat_bubble">Why it beats a faceless chat bubble</h2>
+				<p class="cl-lede" data-i18n-html="concierge.most_site_chatbots_are_a_text_box">
 					Most site chatbots are a text box with a logo. This one is a presence: the same rigged-avatar
 					engine that powers <a href="/walk">Walk</a> and the
 					<a href="https://www.npmjs.com/package/@three-ws/page-agent" target="_blank" rel="noopener">page guide</a>, pointed at support.
 				</p>
 				<div class="cl-grid">
 					<div class="cl-card">
-						<span class="cl-k">// presence</span>
-						<h3>A real 3D avatar</h3>
-						<p>Skeleton-rigged, blinking, idling, viseme-lipsyncing while it speaks. Visitors pick their concierge from a diverse catalog, or you supply your own GLB.</p>
+						<span class="cl-k" data-i18n="concierge.presence">// presence</span>
+						<h3 data-i18n="concierge.a_real_3d_avatar">A real 3D avatar</h3>
+						<p data-i18n="concierge.skeleton_rigged_blinking_idling_viseme_lipsy">Skeleton-rigged, blinking, idling, viseme-lipsyncing while it speaks. Visitors pick their concierge from a diverse catalog, or you supply your own GLB.</p>
 					</div>
 					<div class="cl-card">
-						<span class="cl-k">// grounded</span>
-						<h3>Answers from your page</h3>
-						<p>At ask-time it reads the live page (title, headings, nav, content) plus your curated knowledge, and refuses to invent prices or policies it can't see.</p>
+						<span class="cl-k" data-i18n="concierge.grounded">// grounded</span>
+						<h3 data-i18n="concierge.answers_from_your_page">Answers from your page</h3>
+						<p data-i18n="concierge.at_ask_time_it_reads_the_live">At ask-time it reads the live page (title, headings, nav, content) plus your curated knowledge, and refuses to invent prices or policies it can't see.</p>
 					</div>
 					<div class="cl-card">
-						<span class="cl-k">// streaming</span>
-						<h3>Tokens, not spinners</h3>
-						<p>Answers stream in over SSE and the avatar starts speaking the first sentence while the rest is still arriving.</p>
+						<span class="cl-k" data-i18n="concierge.streaming">// streaming</span>
+						<h3 data-i18n="concierge.tokens_not_spinners">Tokens, not spinners</h3>
+						<p data-i18n="concierge.answers_stream_in_over_sse_and_the">Answers stream in over SSE and the avatar starts speaking the first sentence while the rest is still arriving.</p>
 					</div>
 					<div class="cl-card">
-						<span class="cl-k">// voice</span>
-						<h3>Talk to it, hear it</h3>
-						<p>Push-to-talk speech input and browser-native speech output, no audio backend and no API key. Mute is one click and remembered.</p>
+						<span class="cl-k" data-i18n="concierge.voice">// voice</span>
+						<h3 data-i18n="concierge.talk_to_it_hear_it">Talk to it, hear it</h3>
+						<p data-i18n="concierge.push_to_talk_speech_input_and_browser">Push-to-talk speech input and browser-native speech output, no audio backend and no API key. Mute is one click and remembered.</p>
 					</div>
 					<div class="cl-card">
-						<span class="cl-k">// yours</span>
-						<h3>Your brand, both themes</h3>
-						<p>One accent color restyles the whole widget. Light and dark follow the visitor's system, or pin either. Bottom-left or bottom-right.</p>
+						<span class="cl-k" data-i18n="concierge.yours">// yours</span>
+						<h3 data-i18n="concierge.your_brand_both_themes">Your brand, both themes</h3>
+						<p data-i18n="concierge.one_accent_color_restyles_the_whole_widget">One accent color restyles the whole widget. Light and dark follow the visitor's system, or pin either. Bottom-left or bottom-right.</p>
 					</div>
 					<div class="cl-card">
-						<span class="cl-k">// free</span>
-						<h3>Free and open</h3>
-						<p>The widget is open source and the hosted answer engine runs on the three.ws free inference chain. Bring your own endpoint any time, same wire format.</p>
+						<span class="cl-k" data-i18n="concierge.free">// free</span>
+						<h3 data-i18n="concierge.free_and_open">Free and open</h3>
+						<p data-i18n="concierge.the_widget_is_open_source_and_the">The widget is open source and the hosted answer engine runs on the three.ws free inference chain. Bring your own endpoint any time, same wire format.</p>
 					</div>
 				</div>
 			</section>
 
 			<section class="cl-section" id="install" aria-labelledby="cl-install">
-				<h2 id="cl-install">Install in under a minute</h2>
-				<p class="cl-lede">Pick your flavor. Every option ships the same widget.</p>
+				<h2 id="cl-install" data-i18n="concierge.install_in_under_a_minute">Install in under a minute</h2>
+				<p class="cl-lede" data-i18n="concierge.pick_your_flavor_every_option_ships_the">Pick your flavor. Every option ships the same widget.</p>
 				<div class="cl-tabs" role="tablist" aria-label="Install methods">
-					<button class="cl-tab" role="tab" aria-selected="true" data-panel="cdn">one tag</button>
-					<button class="cl-tab" role="tab" aria-selected="false" data-panel="element">web component</button>
-					<button class="cl-tab" role="tab" aria-selected="false" data-panel="npm">npm</button>
-					<button class="cl-tab" role="tab" aria-selected="false" data-panel="js">imperative</button>
+					<button class="cl-tab" role="tab" aria-selected="true" data-panel="cdn" data-i18n="concierge.one_tag">one tag</button>
+					<button class="cl-tab" role="tab" aria-selected="false" data-panel="element" data-i18n="concierge.web_component">web component</button>
+					<button class="cl-tab" role="tab" aria-selected="false" data-panel="npm" data-i18n="concierge.npm">npm</button>
+					<button class="cl-tab" role="tab" aria-selected="false" data-panel="js" data-i18n="concierge.imperative">imperative</button>
 				</div>
 				<div class="cl-panel" data-panel="cdn">
 					<div class="cl-code">
-						<button class="cl-copy" type="button" data-copy>copy</button>
+						<button class="cl-copy" type="button" data-copy data-i18n="concierge.copy">copy</button>
 						<pre><code>&lt;script type="module"
         src="https://three.ws/concierge/concierge.global.js"
         data-concierge
@@ -325,7 +325,7 @@
 				</div>
 				<div class="cl-panel" data-panel="element" hidden>
 					<div class="cl-code">
-						<button class="cl-copy" type="button" data-copy>copy</button>
+						<button class="cl-copy" type="button" data-copy data-i18n="concierge.copy_2">copy</button>
 						<pre><code>import '@three-ws/concierge';
 
 &lt;three-concierge
@@ -338,13 +338,13 @@
 				</div>
 				<div class="cl-panel" data-panel="npm" hidden>
 					<div class="cl-code">
-						<button class="cl-copy" type="button" data-copy>copy</button>
+						<button class="cl-copy" type="button" data-copy data-i18n="concierge.copy_3">copy</button>
 						<pre><code>npm install @three-ws/concierge three</code></pre>
 					</div>
 				</div>
 				<div class="cl-panel" data-panel="js" hidden>
 					<div class="cl-code">
-						<button class="cl-copy" type="button" data-copy>copy</button>
+						<button class="cl-copy" type="button" data-copy data-i18n="concierge.copy_4">copy</button>
 						<pre><code>import { Concierge } from '@three-ws/concierge';
 
 const concierge = new Concierge({
@@ -361,37 +361,37 @@ concierge.ask('What does the Pro plan cost?');</code></pre>
 			</section>
 
 			<section class="cl-section" aria-labelledby="cl-how">
-				<h2 id="cl-how">How it works</h2>
-				<p class="cl-lede">No crawler, no vector database, no onboarding call. Three moving parts.</p>
+				<h2 id="cl-how" data-i18n="concierge.how_it_works">How it works</h2>
+				<p class="cl-lede" data-i18n="concierge.no_crawler_no_vector_database_no_onboarding">No crawler, no vector database, no onboarding call. Three moving parts.</p>
 				<div class="cl-steps">
 					<div class="cl-step">
 						<div>
-							<h3>Harvest at ask-time</h3>
-							<p>When a visitor asks something, the widget snapshots the live DOM, title, meta description, headings, nav labels, and the main content, capped to a strict budget, and merges in the <code>knowledge</code> you curated. Whatever your page says today is what the concierge knows today.</p>
+							<h3 data-i18n="concierge.harvest_at_ask_time">Harvest at ask-time</h3>
+							<p data-i18n-html="concierge.when_a_visitor_asks_something_the_widget">When a visitor asks something, the widget snapshots the live DOM, title, meta description, headings, nav labels, and the main content, capped to a strict budget, and merges in the <code>knowledge</code> you curated. Whatever your page says today is what the concierge knows today.</p>
 						</div>
 					</div>
 					<div class="cl-step">
 						<div>
-							<h3>Ground and stream</h3>
-							<p>The snapshot, the running conversation, and the question go to <code>/api/concierge</code>, which builds a grounded system prompt and streams the answer back over SSE from the three.ws free-first inference chain, with automatic failover across providers, so the widget stays up when any one lane is throttled.</p>
+							<h3 data-i18n="concierge.ground_and_stream">Ground and stream</h3>
+							<p data-i18n-html="concierge.the_snapshot_the_running_conversation_and_th">The snapshot, the running conversation, and the question go to <code>/api/concierge</code>, which builds a grounded system prompt and streams the answer back over SSE from the three.ws free-first inference chain, with automatic failover across providers, so the widget stays up when any one lane is throttled.</p>
 						</div>
 					</div>
 					<div class="cl-step">
 						<div>
-							<h3>Speak while streaming</h3>
-							<p>Completed sentences are handed to the browser's speech engine as they arrive, and a text-to-viseme timeline drives the avatar's mouth morphs in sync. Muted? The captions and lipsync still play, so the answer never stalls.</p>
+							<h3 data-i18n="concierge.speak_while_streaming">Speak while streaming</h3>
+							<p data-i18n="concierge.completed_sentences_are_handed_to_the_browse">Completed sentences are handed to the browser's speech engine as they arrive, and a text-to-viseme timeline drives the avatar's mouth morphs in sync. Muted? The captions and lipsync still play, so the answer never stalls.</p>
 						</div>
 					</div>
 				</div>
 			</section>
 
 			<section class="cl-section" aria-labelledby="cl-more">
-				<h2 id="cl-more">Go deeper</h2>
+				<h2 id="cl-more" data-i18n="concierge.go_deeper">Go deeper</h2>
 				<div class="cl-links">
-					<a href="/docs/concierge">Docs: every attribute and event</a>
-					<a href="/docs/tutorials/build-a-site-concierge">Tutorial: how we built it</a>
-					<a href="/blog/concierge-3d-chat-widget">Blog: the launch post</a>
-					<a href="/walk">Walk, the engine it grew from</a>
+					<a href="/docs/concierge" data-i18n="concierge.docs_every_attribute_and_event">Docs: every attribute and event</a>
+					<a href="/docs/tutorials/build-a-site-concierge" data-i18n="concierge.tutorial_how_we_built_it">Tutorial: how we built it</a>
+					<a href="/blog/concierge-3d-chat-widget" data-i18n="concierge.blog_the_launch_post">Blog: the launch post</a>
+					<a href="/walk" data-i18n="concierge.walk_the_engine_it_grew_from">Walk, the engine it grew from</a>
 				</div>
 			</section>
 		</main>
@@ -462,5 +462,7 @@ concierge.ask('What does the Pro plan cost?');</code></pre>
 				persona: 'friendly, precise, a little playful',
 			});
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

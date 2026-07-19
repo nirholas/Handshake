@@ -3,7 +3,7 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Avatar Studio · three.ws</title>
+		<title data-i18n="avatar_page.meta_title">Avatar Studio · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="theme-color" content="#000000" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -28,12 +28,12 @@
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="" id="og-url" />
-		<meta property="og:title" content="Avatar — three.ws" id="og-title" />
-		<meta property="og:description" content="A 3D avatar on three.ws" id="og-description" />
+		<meta property="og:title" content="Avatar — three.ws" id="og-title"  data-i18n-attr="content:avatar_page.meta_og_title"/>
+		<meta property="og:description" content="A 3D avatar on three.ws" id="og-description"  data-i18n-attr="content:avatar_page.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/og-image.png" id="og-image" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Avatar — three.ws" id="tw-title" />
-		<meta name="twitter:description" content="A 3D avatar on three.ws" id="tw-description" />
+		<meta name="twitter:title" content="Avatar — three.ws" id="tw-title"  data-i18n-attr="content:avatar_page.meta_twitter_title"/>
+		<meta name="twitter:description" content="A 3D avatar on three.ws" id="tw-description"  data-i18n-attr="content:avatar_page.meta_twitter_description"/>
 
 		<style>
 			:root {
@@ -1585,12 +1585,12 @@
 		<script src="/nav.js"></script>
 
 		<header class="av-actionbar">
-			<a class="av-back" href="/marketplace">← Marketplace</a>
+			<a class="av-back" href="/marketplace" data-i18n="avatar_page.marketplace">← Marketplace</a>
 			<div class="av-actionbar-center" id="view-switch-slot"></div>
 			<div class="av-share-group">
-				<button class="av-share-btn" id="share-link">Copy link</button>
+				<button class="av-share-btn" id="share-link" data-i18n="avatar_page.copy_link">Copy link</button>
 				<a class="av-share-btn" id="share-twitter" target="_blank" rel="noopener"
-					>Share on X</a
+					 data-i18n="avatar_page.share_on_x">Share on X</a
 				>
 			</div>
 		</header>
@@ -1600,7 +1600,7 @@
 		</main>
 
 		<section class="av-related" id="av-related" hidden>
-			<h2>Related avatars</h2>
+			<h2 data-i18n="avatar_page.related_avatars">Related avatars</h2>
 			<div class="av-related-grid" id="av-related-grid"></div>
 		</section>
 
@@ -1612,34 +1612,34 @@
 					<div class="h-footer-brand">
 						<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
 						<span class="wordmark-dot" aria-hidden="true"></span>
-						<span>three.ws</span>
+						<span data-i18n="avatar_page.three_ws">three.ws</span>
 					</div>
-					<p class="h-footer-tagline">Give your AI a body.</p>
+					<p class="h-footer-tagline" data-i18n="avatar_page.give_your_ai_a_body">Give your AI a body.</p>
 				</div>
 				<nav class="h-footer-links" aria-label="Footer">
 					<div class="h-footer-link-col">
-						<h4 class="h-footer-link-heading">Product</h4>
-						<a href="/create">Create</a>
-						<a href="/studio">Studio</a>
-						<a href="/marketplace">Marketplace</a>
+						<h4 class="h-footer-link-heading" data-i18n="avatar_page.product">Product</h4>
+						<a href="/create" data-i18n="avatar_page.create">Create</a>
+						<a href="/studio" data-i18n="avatar_page.studio">Studio</a>
+						<a href="/marketplace" data-i18n="avatar_page.marketplace_2">Marketplace</a>
 					</div>
 					<div class="h-footer-link-col">
-						<h4 class="h-footer-link-heading">Developers</h4>
-						<a href="/docs">Docs</a>
+						<h4 class="h-footer-link-heading" data-i18n="avatar_page.developers">Developers</h4>
+						<a href="/docs" data-i18n="avatar_page.docs">Docs</a>
 						<a
 							href="https://github.com/nirholas/three.ws"
 							target="_blank"
 							rel="noopener"
-							>GitHub</a
+							 data-i18n="avatar_page.github">GitHub</a
 						>
 					</div>
 				</nav>
 			</div>
 			<div class="h-footer-bottom">
-				<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+				<p class="h-footer-legal" data-i18n="avatar_page.2026_three_ws_all_rights_reserved">© 2026 three.ws — All rights reserved.</p>
 				<div class="h-footer-legal-links">
-					<a href="/legal/privacy">Privacy</a>
-					<a href="/legal/tos">Terms</a>
+					<a href="/legal/privacy" data-i18n="avatar_page.privacy">Privacy</a>
+					<a href="/legal/tos" data-i18n="avatar_page.terms">Terms</a>
 				</div>
 			</div>
 		</footer>
@@ -1647,5 +1647,7 @@
 		<script src="/avatar-actions.js" type="module"></script>
 		<script src="/src/avatar-page.js" type="module"></script>
 		<script src="/brand.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

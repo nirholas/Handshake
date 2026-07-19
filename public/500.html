@@ -4,7 +4,7 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>three.ws — something broke on our end</title>
+		<title data-i18n="500.meta_title">three.ws — something broke on our end</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/nav.css" />
@@ -161,29 +161,29 @@
 		<script src="/nav.js"></script>
 
 		<div class="stage">
-			<div class="eyebrow"><span class="eyebrow-dot"></span><span>Server hiccup</span></div>
+			<div class="eyebrow"><span class="eyebrow-dot"></span><span data-i18n="500.server_hiccup">Server hiccup</span></div>
 			<h1 class="bignum" id="bignum"><span id="five">5</span><em id="zero">0</em><span class="glitch" data-ch="0" id="zero-b">0</span></h1>
-			<p class="line">Something broke on our end.</p>
-			<p class="sub">This one's on us, not you — and it isn't silent: the team was <strong>alerted automatically</strong> the moment it happened. Give it a moment and try again.</p>
+			<p class="line" data-i18n="500.something_broke_on_our_end">Something broke on our end.</p>
+			<p class="sub" data-i18n-html="500.this_one_s_on_us_not_you">This one's on us, not you — and it isn't silent: the team was <strong>alerted automatically</strong> the moment it happened. Give it a moment and try again.</p>
 
 			<div class="refrow" id="refrow" role="group" aria-label="Support reference">
-				<span class="ref-label">Reference</span>
+				<span class="ref-label" data-i18n="500.reference">Reference</span>
 				<span class="ref-value" id="ref-value"></span>
-				<button type="button" class="copy-btn" id="copy-btn" aria-label="Copy support reference to clipboard">
+				<button type="button" class="copy-btn" id="copy-btn" aria-label="Copy support reference to clipboard" data-i18n-attr="aria-label:500.copy_support_reference_to_cl_arialabel">
 					<svg class="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
 					<span id="copy-label">Copy</span>
 				</button>
 			</div>
 
 			<div class="actions">
-				<a href="/" class="btn btn-primary" id="retry-btn">
+				<a href="/" class="btn btn-primary" id="retry-btn" data-i18n-html="500.try_again">
 					<span id="retry-label">Try again</span>
 					<span>&rarr;</span>
 				</a>
-				<a href="/" class="btn btn-ghost" id="home-btn">
+				<a href="/" class="btn btn-ghost" id="home-btn" data-i18n-html="500.take_me_home">
 					<span>Take me home</span>
 				</a>
-				<a href="/support" class="btn btn-ghost" id="support-btn">
+				<a href="/support" class="btn btn-ghost" id="support-btn" data-i18n-html="500.contact_support">
 					<span>Contact support</span>
 				</a>
 			</div>
@@ -318,5 +318,7 @@
 			}
 		</script>
 		<script src="/brand.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

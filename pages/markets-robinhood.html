@@ -18,19 +18,19 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Robinhood Chain — Stock Tokens, memecoins &amp; chain stats · three.ws</title>
+		<title data-i18n="markets_robinhood.meta_title">Robinhood Chain — Stock Tokens, memecoins &amp; chain stats · three.ws</title>
 		<meta
 			name="description"
 			content="Live Robinhood Chain (4663) market data: the 24/7 tokenized-equity board with Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener (NOXA / The Odyssey), recent launches, and chain TVL — real on-chain and DeFiLlama data, no API key."
-		/>
+		 data-i18n-attr="content:markets_robinhood.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/markets/robinhood" />
-		<meta property="og:title" content="Robinhood Chain — Stock Tokens, memecoins &amp; chain stats · three.ws" />
+		<meta property="og:title" content="Robinhood Chain — Stock Tokens, memecoins &amp; chain stats · three.ws"  data-i18n-attr="content:markets_robinhood.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Live Robinhood Chain market data — Stock Token board with Chainlink NAV vs DEX premium, a memecoin screener, recent launches, and chain TVL."
-		/>
+		 data-i18n-attr="content:markets_robinhood.meta_og_description"/>
 		<meta
 			property="og:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Robinhood+Chain&amp;d=The+24%2F7+tokenized-equity+board+for+Robinhood+Chain+%284663%29%3A+live+Chainlink+NAV+vs+DEX+premium+for+every+Stock+Token%2C+a+memecoin+screener+across+NOXA+and+The+Ody&amp;p=%2Fmarkets%2Frobinhood"
@@ -39,11 +39,11 @@
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Robinhood Chain · three.ws" />
+		<meta name="twitter:title" content="Robinhood Chain · three.ws"  data-i18n-attr="content:markets_robinhood.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Live Stock Token board, memecoin screener, and chain TVL for Robinhood Chain."
-		/>
+		 data-i18n-attr="content:markets_robinhood.meta_twitter_description"/>
 		<meta
 			name="twitter:image"
 			content="https://three.ws/api/page-og?s=crypto&amp;t=Robinhood+Chain&amp;d=The+24%2F7+tokenized-equity+board+for+Robinhood+Chain+%284663%29%3A+live+Chainlink+NAV+vs+DEX+premium+for+every+Stock+Token%2C+a+memecoin+screener+across+NOXA+and+The+Ody&amp;p=%2Fmarkets%2Frobinhood"
@@ -71,22 +71,22 @@
 
 		<main class="cv-container" id="rh-main">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a>
+				<a href="/markets" data-i18n="markets_robinhood.markets">Markets</a>
 				<span class="sep" aria-hidden="true">/</span>
-				<span class="here">Robinhood Chain</span>
+				<span class="here" data-i18n="markets_robinhood.robinhood_chain">Robinhood Chain</span>
 			</nav>
 
-			<h1 class="cv-h1">Robinhood Chain</h1>
-			<p class="cv-sub">
+			<h1 class="cv-h1" data-i18n="markets_robinhood.robinhood_chain_2">Robinhood Chain</h1>
+			<p class="cv-sub" data-i18n="markets_robinhood.a_permissionless_arbitrum_orbit_l2_tokenizin">
 				A permissionless Arbitrum Orbit L2 tokenizing ~95 US equities 24/7, alongside a live memecoin
 				ecosystem. Chainlink NAV vs DEX premium for every Stock Token, a memecoin screener, recent
 				launches, and chain stats — real on-chain and DeFiLlama data.
 			</p>
 
 			<div class="rh-tabs" role="tablist" aria-label="Robinhood Chain views">
-				<button type="button" class="rh-tab is-active" data-tab="stocks" role="tab" aria-selected="true" id="rh-tab-stocks">Stocks</button>
-				<button type="button" class="rh-tab" data-tab="coins" role="tab" aria-selected="false" id="rh-tab-coins">Coins</button>
-				<button type="button" class="rh-tab" data-tab="chain" role="tab" aria-selected="false" id="rh-tab-chain">Chain</button>
+				<button type="button" class="rh-tab is-active" data-tab="stocks" role="tab" aria-selected="true" id="rh-tab-stocks" data-i18n="markets_robinhood.stocks">Stocks</button>
+				<button type="button" class="rh-tab" data-tab="coins" role="tab" aria-selected="false" id="rh-tab-coins" data-i18n="markets_robinhood.coins">Coins</button>
+				<button type="button" class="rh-tab" data-tab="chain" role="tab" aria-selected="false" id="rh-tab-chain" data-i18n="markets_robinhood.chain">Chain</button>
 			</div>
 
 			<section id="rh-panel-stocks" class="rh-panel" role="tabpanel" aria-labelledby="rh-tab-stocks"></section>
@@ -100,5 +100,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

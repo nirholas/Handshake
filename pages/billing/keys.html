@@ -4,7 +4,7 @@
 	<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>API keys &amp; usage · three.ws</title>
+	<title data-i18n="billing_keys.meta_title">API keys &amp; usage · three.ws</title>
 	<meta name="robots" content="noindex" />
 	<link rel="icon" href="/favicon.ico" />
 	<style>
@@ -98,12 +98,12 @@
 </head>
 <body>
 	<header>
-		<a href="/dashboard" class="back">← Dashboard</a>
+		<a href="/dashboard" class="back" data-i18n="billing_keys.dashboard">← Dashboard</a>
 	</header>
 
 	<div class="wrap">
-		<h1>API keys &amp; usage</h1>
-		<p class="lead">Your x402 subscription keys for calling paid three.ws endpoints. Keys issued through <a href="/aws">AWS Marketplace</a> bill to your AWS account; native keys settle on-chain. The secret is shown once at issue — rotate any time to get a fresh one.</p>
+		<h1 data-i18n="billing_keys.api_keys_usage">API keys &amp; usage</h1>
+		<p class="lead" data-i18n-html="billing_keys.your_x402_subscription_keys_for_calling_paid">Your x402 subscription keys for calling paid three.ws endpoints. Keys issued through <a href="/aws">AWS Marketplace</a> bill to your AWS account; native keys settle on-chain. The secret is shown once at issue — rotate any time to get a fresh one.</p>
 
 		<!-- loading -->
 		<div id="state-loading" class="state active">
@@ -115,10 +115,10 @@
 		<div id="state-list" class="state">
 			<div id="cards"></div>
 			<div class="usage-doc">
-				<h3>Calling a paid endpoint</h3>
+				<h3 data-i18n="billing_keys.calling_a_paid_endpoint">Calling a paid endpoint</h3>
 <pre>curl https://three.ws/api/x402/agent-reputation?agent_id=&lt;uuid&gt; \
   -H "x-api-key: <span id="example-prefix">x402_live_…</span>"</pre>
-				<p style="color:var(--muted);font-size:13px;margin-top:12px">Browse paid services in the <a href="/bazaar">x402 Bazaar</a>, or read the <a href="/docs/x402.md">x402 docs</a>.</p>
+				<p style="color:var(--muted);font-size:13px;margin-top:12px" data-i18n-html="billing_keys.browse_paid_services_in_the_x402_bazaar">Browse paid services in the <a href="/bazaar">x402 Bazaar</a>, or read the <a href="/docs/x402.md">x402 docs</a>.</p>
 			</div>
 		</div>
 
@@ -126,9 +126,9 @@
 		<div id="state-empty" class="state">
 			<div class="placeholder">
 				<div class="icon">🔑</div>
-				<h2>No subscription keys yet</h2>
-				<p>Subscribe through AWS Marketplace to bill paid endpoints to your AWS account, or generate a key from the x402 console.</p>
-				<a href="/aws" class="btn primary">View AWS Marketplace</a>
+				<h2 data-i18n="billing_keys.no_subscription_keys_yet">No subscription keys yet</h2>
+				<p data-i18n="billing_keys.subscribe_through_aws_marketplace_to_bill_pa">Subscribe through AWS Marketplace to bill paid endpoints to your AWS account, or generate a key from the x402 console.</p>
+				<a href="/aws" class="btn primary" data-i18n="billing_keys.view_aws_marketplace">View AWS Marketplace</a>
 			</div>
 		</div>
 
@@ -136,9 +136,9 @@
 		<div id="state-error" class="state">
 			<div class="placeholder">
 				<div class="icon">⚠</div>
-				<h2 id="error-title">Couldn't load your keys</h2>
-				<p id="error-body">We had trouble reaching the server. Check your connection and try again.</p>
-				<button class="btn primary" id="btn-retry" type="button">Retry</button>
+				<h2 id="error-title" data-i18n="billing_keys.couldn_t_load_your_keys">Couldn't load your keys</h2>
+				<p id="error-body" data-i18n="billing_keys.we_had_trouble_reaching_the_server_check">We had trouble reaching the server. Check your connection and try again.</p>
+				<button class="btn primary" id="btn-retry" type="button" data-i18n="billing_keys.retry">Retry</button>
 			</div>
 		</div>
 	</div>
@@ -147,5 +147,7 @@
 
 	<script type="module" src="/src/billing-x402.js"></script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

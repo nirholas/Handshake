@@ -4,7 +4,7 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>three.ws — AI-Powered 3D Model Viewer</title>
+		<title data-i18n="app_next.meta_title">three.ws — AI-Powered 3D Model Viewer</title>
 		<meta
 			name="viewport"
 			content="width=device-width, initial-scale=1, viewport-fit=cover"
@@ -13,7 +13,7 @@
 		<meta
 			name="description"
 			content="The first embodied 3D AI agent. Not a chatbot. A presence — with a body, a place, an identity, and memory."
-		/>
+		 data-i18n-attr="content:app_next.meta_description"/>
 		<meta
 			name="keywords"
 			content="three.ws, AI agent, embodied AI, glTF viewer, GLB viewer, 3D model viewer, WebGL, three.js, ERC-8004, agent identity"
@@ -22,11 +22,11 @@
 
 		<!-- Open Graph -->
 		<meta property="og:type" content="website" />
-		<meta property="og:title" content="three.ws — The First Embodied AI Agent" />
+		<meta property="og:title" content="three.ws — The First Embodied AI Agent"  data-i18n-attr="content:app_next.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Agents have always been imagined as present. We made that real."
-		/>
+		 data-i18n-attr="content:app_next.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/app" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Viewer&amp;d=Drag-and-drop+glTF%2FGLB+viewer+for+inspecting+3D+models+in+the+browser.&amp;p=%2Fapp">
@@ -35,11 +35,11 @@
 
 		<!-- Twitter / X -->
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="three.ws — Embodied AI" />
+		<meta name="twitter:title" content="three.ws — Embodied AI"  data-i18n-attr="content:app_next.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="The first three.ws with a body, a place, an identity, and memory."
-		/>
+		 data-i18n-attr="content:app_next.meta_twitter_description"/>
 		<meta name="twitter:site" content="@trythreews" />
 		<meta name="twitter:creator" content="@nichxbt" />
 		<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Viewer&amp;d=Drag-and-drop+glTF%2FGLB+viewer+for+inspecting+3D+models+in+the+browser.&amp;p=%2Fapp">
@@ -68,7 +68,7 @@
 	<body class="app-next-body">
 		<!-- Minimal glass header — wordmark left, single action right -->
 		<header class="nxt-header">
-			<a class="nxt-brand" href="/" aria-label="three.ws home">
+			<a class="nxt-brand" href="/" aria-label="three.ws home" data-i18n-attr="aria-label:app_next.three_ws_home_arialabel">
 				<img class="nxt-brand-mark" src="/three.svg" alt="" aria-hidden="true" />
 				<span class="nxt-brand-text">three.ws</span>
 				<span class="nxt-brand-tag">app · next</span>
@@ -82,7 +82,7 @@
 						data-preset="face"
 						type="button"
 						title="Face shot (1)"
-					>
+					 data-i18n-html="app_next.face" data-i18n-attr="title:app_next.face_shot_1_title">
 						<span>Face</span>
 					</button>
 					<button
@@ -90,7 +90,7 @@
 						data-preset="body"
 						type="button"
 						title="Body shot (2)"
-					>
+					 data-i18n-html="app_next.body" data-i18n-attr="title:app_next.body_shot_2_title">
 						<span>Body</span>
 					</button>
 					<button
@@ -98,7 +98,7 @@
 						data-preset="wide"
 						type="button"
 						title="Wide shot (3)"
-					>
+					 data-i18n-html="app_next.wide" data-i18n-attr="title:app_next.wide_shot_3_title">
 						<span>Wide</span>
 					</button>
 					<button
@@ -106,7 +106,7 @@
 						data-preset="hero"
 						type="button"
 						title="Hero shot (4)"
-					>
+					 data-i18n-html="app_next.hero" data-i18n-attr="title:app_next.hero_shot_4_title">
 						<span>Hero</span>
 					</button>
 				</div>
@@ -117,7 +117,7 @@
 					type="button"
 					aria-label="Fullscreen (F)"
 					title="Fullscreen (F)"
-				>
+				 data-i18n-attr="aria-label:app_next.fullscreen_f_arialabel;title:app_next.fullscreen_f_title">
 					<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
 						<path d="M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
 					</svg>
@@ -129,7 +129,7 @@
 					type="button"
 					aria-label="Share / embed (S)"
 					title="Share / embed (S)"
-				>
+				 data-i18n-attr="aria-label:app_next.share_embed_s_arialabel;title:app_next.share_embed_s_title">
 					<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
 						<circle cx="4" cy="8" r="1.6" stroke="currentColor" stroke-width="1.4" fill="none" />
 						<circle cx="12" cy="3.5" r="1.6" stroke="currentColor" stroke-width="1.4" fill="none" />
@@ -146,7 +146,7 @@
 					aria-expanded="false"
 					aria-controls="nxt-more-menu"
 				>
-					<span>Explore</span>
+					<span data-i18n="app_next.explore">Explore</span>
 					<svg viewBox="0 0 12 8" width="10" height="7" aria-hidden="true">
 						<path d="M1 1l5 5 5-5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
 					</svg>
@@ -154,7 +154,7 @@
 
 				<!-- Auth surface — single pill, swaps to user chip when signed in -->
 				<div class="nxt-auth">
-					<a class="nxt-signin" id="nav-sign-in" href="/login">Sign in</a>
+					<a class="nxt-signin" id="nav-sign-in" href="/login" data-i18n="app_next.sign_in">Sign in</a>
 					<div class="nav-user-wrap" id="nav-user-wrap" hidden>
 						<button
 							class="nxt-user-btn nav-user"
@@ -162,16 +162,16 @@
 							type="button"
 							aria-haspopup="true"
 							aria-expanded="false"
-						>
+						 data-i18n-html="app_next.account">
 							<span class="nxt-user-dot" aria-hidden="true"></span>
 							<span id="nav-user-label">Account</span>
 						</button>
 						<div class="nav-user-menu nxt-user-menu" id="nav-user-menu" role="menu" hidden>
-							<a href="/profile" id="nav-my-profile-link" role="menuitem">My profile</a>
-							<a href="/dashboard" role="menuitem">Dashboard</a>
-							<a href="/settings" role="menuitem">Settings</a>
+							<a href="/profile" id="nav-my-profile-link" role="menuitem" data-i18n="app_next.my_profile">My profile</a>
+							<a href="/dashboard" role="menuitem" data-i18n="app_next.dashboard">Dashboard</a>
+							<a href="/settings" role="menuitem" data-i18n="app_next.settings">Settings</a>
 							<div class="nxt-user-sep" role="separator"></div>
-							<button id="nav-sign-out-btn" type="button" role="menuitem">Sign out</button>
+							<button id="nav-sign-out-btn" type="button" role="menuitem" data-i18n="app_next.sign_out">Sign out</button>
 						</div>
 					</div>
 				</div>
@@ -188,22 +188,22 @@
 							<rect x="3" y="11" width="18" height="11" rx="2" />
 							<path d="M7 11V7a5 5 0 0 1 10 0v4" />
 						</svg>
-						<span>Unlock the agent</span>
+						<span data-i18n="app_next.unlock_the_agent">Unlock the agent</span>
 					</div>
-					<h2 class="auth-gate__title">Your agent lives here</h2>
-					<p class="auth-gate__desc">
+					<h2 class="auth-gate__title" data-i18n="app_next.your_agent_lives_here">Your agent lives here</h2>
+					<p class="auth-gate__desc" data-i18n="app_next.sign_in_to_access_animations_scene_controls">
 						Sign in to access animations, scene controls, and your agent's on-chain
 						identity, memory, and skills.
 					</p>
 					<div class="auth-gate__actions">
-						<a class="auth-gate__btn auth-gate__btn--primary" href="/login">Sign in</a>
-						<a class="auth-gate__btn" href="/register">Create account</a>
+						<a class="auth-gate__btn auth-gate__btn--primary" href="/login" data-i18n="app_next.sign_in_2">Sign in</a>
+						<a class="auth-gate__btn" href="/register" data-i18n="app_next.create_account">Create account</a>
 					</div>
 					<ul class="auth-gate__perks">
-						<li>Animations &amp; presence controls</li>
-						<li>Save avatars to your account</li>
-						<li>Register on-chain agent identity</li>
-						<li>Scene, lighting &amp; material editor</li>
+						<li data-i18n="app_next.animations_presence_controls">Animations &amp; presence controls</li>
+						<li data-i18n="app_next.save_avatars_to_your_account">Save avatars to your account</li>
+						<li data-i18n="app_next.register_on_chain_agent_identity">Register on-chain agent identity</li>
+						<li data-i18n="app_next.scene_lighting_material_editor">Scene, lighting &amp; material editor</li>
 					</ul>
 				</div>
 			</aside>
@@ -222,13 +222,13 @@
 						id="agent-onboarding-close"
 						type="button"
 						aria-label="Dismiss welcome message"
-					>
+					 data-i18n-attr="aria-label:app_next.dismiss_welcome_message_arialabel">
 						×
 					</button>
-					<h2 class="agent-onboarding__title" id="agent-onboarding-title">
+					<h2 class="agent-onboarding__title" id="agent-onboarding-title" data-i18n="app_next.your_agent_is_ready">
 						Your agent is ready 🎉
 					</h2>
-					<p class="agent-onboarding__desc">
+					<p class="agent-onboarding__desc" data-i18n="app_next.this_is_your_agent_s_studio_try">
 						This is your agent's studio. Try an animation from the chips below, drop a
 						new GLB to swap its body, or publish it on-chain so anyone can find and
 						embed it.
@@ -238,14 +238,14 @@
 							class="agent-onboarding__btn agent-onboarding__btn--primary"
 							href="/deploy"
 							id="agent-onboarding-deploy"
-							>Deploy on-chain →</a
+							 data-i18n="app_next.deploy_on_chain">Deploy on-chain →</a
 						>
 						<a
 							class="agent-onboarding__btn"
 							id="agent-onboarding-share"
 							target="_blank"
 							rel="noopener noreferrer"
-							>View public profile</a
+							 data-i18n="app_next.view_public_profile">View public profile</a
 						>
 					</div>
 				</div>
@@ -273,14 +273,14 @@
 							<h2 class="nxt-visitor-card__name" id="nxt-visitor-name"></h2>
 							<div class="nxt-visitor-card__status">
 								<span class="nxt-visitor-card__dot"></span>
-								<span id="nxt-visitor-status">Online</span>
+								<span id="nxt-visitor-status" data-i18n="app_next.online">Online</span>
 							</div>
 						</div>
 					</div>
 					<p class="nxt-visitor-card__desc" id="nxt-visitor-desc"></p>
 					<div class="nxt-visitor-card__skills" id="nxt-visitor-skills" hidden></div>
 					<div class="nxt-visitor-card__actions">
-						<a class="nxt-visitor-card__btn nxt-visitor-card__btn--primary" href="/register">Create your own agent</a>
+						<a class="nxt-visitor-card__btn nxt-visitor-card__btn--primary" href="/register" data-i18n="app_next.create_your_own_agent">Create your own agent</a>
 						<button class="nxt-visitor-card__btn nxt-visitor-card__btn--share" id="nxt-visitor-share" type="button">
 							<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
 								<circle cx="4" cy="8" r="1.6" stroke="currentColor" stroke-width="1.4" fill="none" />
@@ -303,7 +303,7 @@
 					<span class="nxt-mobile-agent-strip__name" id="nxt-mobile-name"></span>
 					<span class="nxt-mobile-agent-strip__desc" id="nxt-mobile-desc"></span>
 				</div>
-				<button class="nxt-mobile-agent-strip__share" id="nxt-mobile-share" type="button" aria-label="Share agent">
+				<button class="nxt-mobile-agent-strip__share" id="nxt-mobile-share" type="button" aria-label="Share agent" data-i18n-attr="aria-label:app_next.share_agent_arialabel">
 					<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
 						<circle cx="4" cy="8" r="1.6" stroke="currentColor" stroke-width="1.4" fill="none" />
 						<circle cx="12" cy="3.5" r="1.6" stroke="currentColor" stroke-width="1.4" fill="none" />
@@ -352,7 +352,7 @@
 						aria-label="Push to talk (hold space)"
 						title="Push to talk (hold space)"
 						hidden
-					>
+					 data-i18n-attr="aria-label:app_next.push_to_talk_hold_space_arialabel;title:app_next.push_to_talk_hold_space_title">
 						<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
 							<rect x="6" y="2" width="4" height="8" rx="2" stroke="currentColor" stroke-width="1.4" fill="none" />
 							<path d="M3 8a5 5 0 0010 0M8 13v2M5.5 15h5" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round" />
@@ -363,7 +363,7 @@
 						id="nxt-chat-send"
 						type="submit"
 						aria-label="Send"
-					>
+					 data-i18n-attr="aria-label:app_next.send_arialabel">
 						<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
 							<path d="M2 8L14 2L9 14L7.5 9.5L2 8z" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linejoin="round" />
 						</svg>
@@ -381,7 +381,7 @@
 					aria-expanded="false"
 					aria-controls="nxt-anim-sheet"
 					title="Browse animations (A)"
-				>
+				 data-i18n-attr="title:app_next.browse_animations_a_title">
 					<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
 						<circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5" fill="none" />
 						<path d="M8 7.5l4.5 2.5L8 12.5z" fill="currentColor" />
@@ -395,7 +395,7 @@
 					id="nxt-avatar-btn"
 					type="button"
 					title="Switch avatar from the gallery"
-				>
+				 data-i18n-attr="title:app_next.switch_avatar_from_the_galle_title">
 					<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
 						<circle cx="10" cy="7" r="3.2" stroke="currentColor" stroke-width="1.5" fill="none" />
 						<path d="M4.5 16c.8-3 3-4.5 5.5-4.5s4.7 1.5 5.5 4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" />
@@ -412,7 +412,7 @@
 						aria-expanded="false"
 						aria-controls="nxt-backdrop-popover"
 						title="Change the scene backdrop"
-					>
+					 data-i18n-attr="title:app_next.change_the_scene_backdrop_title">
 						<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
 							<rect x="3" y="4" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.5" fill="none" />
 							<circle cx="7.5" cy="8" r="1.4" fill="currentColor" />
@@ -427,7 +427,7 @@
 					</div>
 				</div>
 
-				<label class="nxt-action nxt-action--ghost" for="file-input" title="Drop or pick a GLB/glTF (U)">
+				<label class="nxt-action nxt-action--ghost" for="file-input" title="Drop or pick a GLB/glTF (U)" data-i18n-attr="title:app_next.drop_or_pick_a_glb_gltf_u_title">
 					<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
 						<path d="M10 3v9m-4-4l4-4 4 4M4 15h12" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
 					</svg>
@@ -442,7 +442,7 @@
 					hidden
 					aria-label="Deploy this 3D asset on Solana"
 					title="Deploy on Solana — guided on-chain deployment for 3D assets"
-				>
+				 data-i18n-attr="aria-label:app_next.deploy_this_3d_asset_on_sola_arialabel;title:app_next.deploy_on_solana_guided_on_c_title">
 					<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
 						<polygon points="10 2 18 7 18 13 10 18 2 13 2 7 10 2" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round" />
 						<line x1="10" y1="2" x2="10" y2="18" stroke="currentColor" stroke-width="1.5" />
@@ -459,7 +459,7 @@
 					<svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true">
 						<path d="M5 11l3 3 7-7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
 					</svg>
-					<span id="nxt-primary-label">Sign in to save</span>
+					<span id="nxt-primary-label" data-i18n="app_next.sign_in_to_save">Sign in to save</span>
 				</button>
 			</div>
 
@@ -470,15 +470,15 @@
 				keep IDs and inner structure stable.
 			-->
 			<div class="nxt-hidden-hosts" aria-hidden="true" hidden>
-				<a id="deploy-onchain-btn" hidden><span data-state-label>Deploy on Solana</span></a>
+				<a id="deploy-onchain-btn" hidden data-i18n-html="app_next.deploy_on_solana"><span data-state-label>Deploy on Solana</span></a>
 				<a id="view-public-profile-btn" hidden></a>
 			</div>
 
 			<!-- Animation picker sheet — slides up when "Animations" is clicked -->
 			<div class="nxt-anim-sheet" id="nxt-anim-sheet" hidden aria-hidden="true">
 				<div class="nxt-anim-sheet__head">
-					<h2>Animations</h2>
-					<button class="nxt-anim-sheet__close" id="nxt-anim-sheet-close" type="button" aria-label="Close">×</button>
+					<h2 data-i18n="app_next.animations">Animations</h2>
+					<button class="nxt-anim-sheet__close" id="nxt-anim-sheet-close" type="button" aria-label="Close" data-i18n-attr="aria-label:app_next.close_arialabel">×</button>
 				</div>
 				<div class="nxt-anim-sheet__filter">
 					<input
@@ -497,36 +497,36 @@
 			<!-- Share / embed popover -->
 			<div class="nxt-share-popover" id="nxt-share-popover" hidden role="dialog" aria-labelledby="nxt-share-title">
 				<header class="nxt-share-popover__head">
-					<h2 id="nxt-share-title">Share this agent</h2>
-					<button class="nxt-share-close" id="nxt-share-close" type="button" aria-label="Close">×</button>
+					<h2 id="nxt-share-title" data-i18n="app_next.share_this_agent">Share this agent</h2>
+					<button class="nxt-share-close" id="nxt-share-close" type="button" aria-label="Close" data-i18n-attr="aria-label:app_next.close_arialabel_2">×</button>
 				</header>
 				<div class="nxt-share-popover__body">
 					<label class="nxt-share-row">
-						<span class="nxt-share-label">Page URL</span>
+						<span class="nxt-share-label" data-i18n="app_next.page_url">Page URL</span>
 						<div class="nxt-share-copy">
 							<input id="nxt-share-url" type="text" readonly />
-							<button id="nxt-share-url-copy" type="button">Copy</button>
+							<button id="nxt-share-url-copy" type="button" data-i18n="app_next.copy">Copy</button>
 						</div>
 					</label>
 					<label class="nxt-share-row">
-						<span class="nxt-share-label">Embed snippet</span>
+						<span class="nxt-share-label" data-i18n="app_next.embed_snippet">Embed snippet</span>
 						<div class="nxt-share-copy nxt-share-copy--block">
 							<textarea id="nxt-share-embed" rows="3" readonly></textarea>
-							<button id="nxt-share-embed-copy" type="button">Copy</button>
+							<button id="nxt-share-embed-copy" type="button" data-i18n="app_next.copy_2">Copy</button>
 						</div>
 					</label>
-					<p class="nxt-share-hint">Drop the snippet on any site. Same agent, same animations, same identity — embedded.</p>
+					<p class="nxt-share-hint" data-i18n="app_next.drop_the_snippet_on_any_site_same">Drop the snippet on any site. Same agent, same animations, same identity — embedded.</p>
 
 					<div class="nxt-share-social" id="nxt-share-social">
-						<span class="nxt-share-label">Share on</span>
+						<span class="nxt-share-label" data-i18n="app_next.share_on">Share on</span>
 						<div class="nxt-share-social__row">
-							<button class="nxt-share-social__btn" id="nxt-share-twitter" type="button" title="Share on X / Twitter">
+							<button class="nxt-share-social__btn" id="nxt-share-twitter" type="button" title="Share on X / Twitter" data-i18n-attr="title:app_next.share_on_x_twitter_title">
 								<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
 							</button>
-							<button class="nxt-share-social__btn" id="nxt-share-farcaster" type="button" title="Share on Farcaster">
+							<button class="nxt-share-social__btn" id="nxt-share-farcaster" type="button" title="Share on Farcaster" data-i18n-attr="title:app_next.share_on_farcaster_title">
 								<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M5.362 2h13.276v2.227h-1.554l.685 2.226H19.2l-.685 2.227h-.685v10.548c0 .37-.146.724-.407.985a1.394 1.394 0 01-.984.407h-.068c-.37 0-.724-.147-.985-.407a1.394 1.394 0 01-.407-.985v-5.82a2.786 2.786 0 00-2.786-2.786h-.396a2.786 2.786 0 00-2.786 2.786v5.82c0 .37-.147.724-.407.985a1.394 1.394 0 01-.985.407h-.068c-.37 0-.724-.147-.985-.407a1.394 1.394 0 01-.407-.985V8.68h-.685L5.8 6.453h1.43l.686-2.226H6.362z"/></svg>
 							</button>
-							<button class="nxt-share-social__btn" id="nxt-share-telegram" type="button" title="Share on Telegram">
+							<button class="nxt-share-social__btn" id="nxt-share-telegram" type="button" title="Share on Telegram" data-i18n-attr="title:app_next.share_on_telegram_title">
 								<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
 							</button>
 						</div>
@@ -538,7 +538,7 @@
 						id="nxt-share-deploy"
 						hidden
 						aria-label="Deploy this 3D asset on Solana"
-					>
+					 data-i18n-attr="aria-label:app_next.deploy_this_3d_asset_on_sola_arialabel_2">
 						<span class="nxt-share-deploy__icon" aria-hidden="true">
 							<svg viewBox="0 0 20 20" width="16" height="16">
 								<polygon points="10 2 18 7 18 13 10 18 2 13 2 7 10 2" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round" />
@@ -563,26 +563,26 @@
 
 		<!-- First-visit hint -->
 		<div class="nxt-first-hint" id="nxt-first-hint" hidden>
-			<span>Drag to rotate · scroll to zoom · or just <strong>ask the agent</strong> something below.</span>
-			<button id="nxt-first-hint-close" type="button" aria-label="Dismiss">×</button>
+			<span data-i18n-html="app_next.drag_to_rotate_scroll_to_zoom_or">Drag to rotate · scroll to zoom · or just <strong>ask the agent</strong> something below.</span>
+			<button id="nxt-first-hint-close" type="button" aria-label="Dismiss" data-i18n-attr="aria-label:app_next.dismiss_arialabel">×</button>
 		</div>
 
 		<!-- Keyboard help (toggled with ?) -->
 		<div class="nxt-help" id="nxt-help" hidden role="dialog" aria-labelledby="nxt-help-title">
 			<header class="nxt-help__head">
-				<h2 id="nxt-help-title">Keyboard shortcuts</h2>
-				<button class="nxt-help__close" id="nxt-help-close" type="button" aria-label="Close">×</button>
+				<h2 id="nxt-help-title" data-i18n="app_next.keyboard_shortcuts">Keyboard shortcuts</h2>
+				<button class="nxt-help__close" id="nxt-help-close" type="button" aria-label="Close" data-i18n-attr="aria-label:app_next.close_arialabel_3">×</button>
 			</header>
 			<dl class="nxt-help__grid">
-				<dt><kbd>A</kbd></dt><dd>Open animation picker</dd>
-				<dt><kbd>U</kbd></dt><dd>Upload a model</dd>
-				<dt><kbd>S</kbd></dt><dd>Share / embed</dd>
-				<dt><kbd>F</kbd></dt><dd>Fullscreen</dd>
-				<dt><kbd>/</kbd></dt><dd>Focus chat input</dd>
-				<dt><kbd>1</kbd>–<kbd>4</kbd></dt><dd>Camera presets (Face / Body / Wide / Hero)</dd>
-				<dt><kbd>Space</kbd></dt><dd>Push-to-talk (if mic available)</dd>
-				<dt><kbd>Esc</kbd></dt><dd>Close any open panel</dd>
-				<dt><kbd>?</kbd></dt><dd>Show this help</dd>
+				<dt data-i18n-html="app_next.a"><kbd>A</kbd></dt><dd data-i18n="app_next.open_animation_picker">Open animation picker</dd>
+				<dt data-i18n-html="app_next.u"><kbd>U</kbd></dt><dd data-i18n="app_next.upload_a_model">Upload a model</dd>
+				<dt data-i18n-html="app_next.s"><kbd>S</kbd></dt><dd data-i18n="app_next.share_embed">Share / embed</dd>
+				<dt data-i18n-html="app_next.f"><kbd>F</kbd></dt><dd data-i18n="app_next.fullscreen">Fullscreen</dd>
+				<dt><kbd>/</kbd></dt><dd data-i18n="app_next.focus_chat_input">Focus chat input</dd>
+				<dt><kbd>1</kbd>–<kbd>4</kbd></dt><dd data-i18n="app_next.camera_presets_face_body_wide_hero">Camera presets (Face / Body / Wide / Hero)</dd>
+				<dt data-i18n-html="app_next.space"><kbd>Space</kbd></dt><dd data-i18n="app_next.push_to_talk_if_mic_available">Push-to-talk (if mic available)</dd>
+				<dt data-i18n-html="app_next.esc"><kbd>Esc</kbd></dt><dd data-i18n="app_next.close_any_open_panel">Close any open panel</dd>
+				<dt><kbd>?</kbd></dt><dd data-i18n="app_next.show_this_help">Show this help</dd>
 			</dl>
 		</div>
 
@@ -592,15 +592,17 @@
 		<!-- Explore dropdown — lives outside <header> so backdrop-filter
 		     does not clip the menu below the header's bottom edge. -->
 		<div class="nxt-more-menu" id="nxt-more-menu" role="menu" hidden>
-			<a href="/discover" role="menuitem">Discover agents</a>
-			<a href="/create" role="menuitem">Create an avatar</a>
-			<a href="/marketplace" role="menuitem">Marketplace</a>
-			<a href="/studio" role="menuitem">Studio</a>
-			<a href="/docs" role="menuitem">Docs</a>
+			<a href="/discover" role="menuitem" data-i18n="app_next.discover_agents">Discover agents</a>
+			<a href="/create" role="menuitem" data-i18n="app_next.create_an_avatar">Create an avatar</a>
+			<a href="/marketplace" role="menuitem" data-i18n="app_next.marketplace">Marketplace</a>
+			<a href="/studio" role="menuitem" data-i18n="app_next.studio">Studio</a>
+			<a href="/docs" role="menuitem" data-i18n="app_next.docs">Docs</a>
 			<div class="nxt-more-sep" role="separator"></div>
-			<a href="/app" role="menuitem">Classic viewer</a>
+			<a href="/app" role="menuitem" data-i18n="app_next.classic_viewer">Classic viewer</a>
 		</div>
 		<script src="/brand.js" defer></script>
 		<script src="/getting-started.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

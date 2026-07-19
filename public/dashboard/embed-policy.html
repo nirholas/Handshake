@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Embed policy · three.ws</title>
+		<title data-i18n="dashboard_embed_policy.meta_title">Embed policy · three.ws</title>
 		<link rel="icon" href="/favicon.ico" />
 		<style>
 			body[data-auth-pending] {
@@ -236,12 +236,12 @@
 	</head>
 	<body data-auth-pending>
 		<header>
-			<div class="brand"><a href="/dashboard">← Dashboard</a></div>
-			<div class="muted"><span id="agent-name">Agent</span></div>
+			<div class="brand"><a href="/dashboard" data-i18n="dashboard_embed_policy.dashboard">← Dashboard</a></div>
+			<div class="muted"><span id="agent-name" data-i18n="dashboard_embed_policy.agent">Agent</span></div>
 		</header>
 		<main>
-			<h1>Embed policy</h1>
-			<p class="sub">
+			<h1 data-i18n="dashboard_embed_policy.embed_policy">Embed policy</h1>
+			<p class="sub" data-i18n-html="dashboard_embed_policy.control_how_can_be_embedded_across_the">
 				Control how <code id="embed-url"></code> can be embedded across the web.
 			</p>
 
@@ -250,16 +250,16 @@
 			<!-- Origins -->
 			<div class="card">
 				<fieldset>
-					<legend>Origins</legend>
-					<label for="mode">Policy mode</label>
+					<legend data-i18n="dashboard_embed_policy.origins">Origins</legend>
+					<label for="mode" data-i18n="dashboard_embed_policy.policy_mode">Policy mode</label>
 					<select id="mode">
-						<option value="off">Off — allow all embeds</option>
-						<option value="allowlist">Allowlist — only these hosts</option>
-						<option value="denylist">Denylist — everywhere except these hosts</option>
+						<option value="off" data-i18n="dashboard_embed_policy.off_allow_all_embeds">Off — allow all embeds</option>
+						<option value="allowlist" data-i18n="dashboard_embed_policy.allowlist_only_these_hosts">Allowlist — only these hosts</option>
+						<option value="denylist" data-i18n="dashboard_embed_policy.denylist_everywhere_except_these_hosts">Denylist — everywhere except these hosts</option>
 					</select>
 
 					<div id="hosts-wrap">
-						<label for="hosts">Hosts (one per line)</label>
+						<label for="hosts" data-i18n="dashboard_embed_policy.hosts_one_per_line">Hosts (one per line)</label>
 						<textarea
 							id="hosts"
 							placeholder="example.com&#10;*.substack.com"
@@ -275,34 +275,34 @@
 			<!-- Surfaces -->
 			<div class="card">
 				<fieldset>
-					<legend>Surfaces</legend>
+					<legend data-i18n="dashboard_embed_policy.surfaces">Surfaces</legend>
 					<div class="muted" style="margin-bottom: 12px">
 						Choose which embed surfaces are enabled for this agent.
 					</div>
 					<label class="check"
 						><input type="checkbox" id="surf-script" />
 						<span
-							><strong>Script tag</strong> — <code>&lt;agent-3d&gt;</code> on
+							 data-i18n-html="dashboard_embed_policy.script_tag_on_third_party_pages"><strong>Script tag</strong> — <code>&lt;agent-3d&gt;</code> on
 							third-party pages</span
 						></label
 					>
 					<label class="check"
 						><input type="checkbox" id="surf-iframe" />
 						<span
-							><strong>iframe</strong> —
+							 data-i18n-html="dashboard_embed_policy.iframe"><strong>iframe</strong> —
 							<code>&lt;iframe src="/agent/:id/embed"&gt;</code></span
 						></label
 					>
 					<label class="check"
 						><input type="checkbox" id="surf-widget" />
 						<span
-							><strong>Widget</strong> — <code>/w/:id</code> widget pages</span
+							 data-i18n-html="dashboard_embed_policy.widget_widget_pages"><strong>Widget</strong> — <code>/w/:id</code> widget pages</span
 						></label
 					>
 					<label class="check"
 						><input type="checkbox" id="surf-mcp" />
 						<span
-							><strong>MCP</strong> — exposed as an MCP tool over
+							 data-i18n-html="dashboard_embed_policy.mcp_exposed_as_an_mcp_tool_over"><strong>MCP</strong> — exposed as an MCP tool over
 							<code>/api/mcp</code></span
 						></label
 					>
@@ -312,23 +312,23 @@
 			<!-- Brain -->
 			<div class="card">
 				<fieldset>
-					<legend>Brain / LLM</legend>
-					<label for="brain-mode">Payment mode</label>
+					<legend data-i18n="dashboard_embed_policy.brain_llm">Brain / LLM</legend>
+					<label for="brain-mode" data-i18n="dashboard_embed_policy.payment_mode">Payment mode</label>
 					<select id="brain-mode">
-						<option value="we-pay">
+						<option value="we-pay" data-i18n="dashboard_embed_policy.we_pay_three_ws_covers_api_costs">
 							We-pay — three.ws covers API costs (quota-limited)
 						</option>
-						<option value="key-proxy">
+						<option value="key-proxy" data-i18n="dashboard_embed_policy.key_proxy_calls_routed_through_your_proxy">
 							Key-proxy — calls routed through your proxy URL
 						</option>
-						<option value="wallet-gated">
+						<option value="wallet-gated" data-i18n="dashboard_embed_policy.wallet_gated_user_pays_via_connected_wallet">
 							Wallet-gated — user pays via connected wallet
 						</option>
-						<option value="none">None — LLM disabled for this agent</option>
+						<option value="none" data-i18n="dashboard_embed_policy.none_llm_disabled_for_this_agent">None — LLM disabled for this agent</option>
 					</select>
 
 					<div id="proxy-url-wrap">
-						<label for="brain-proxy-url">Proxy URL</label>
+						<label for="brain-proxy-url" data-i18n="dashboard_embed_policy.proxy_url">Proxy URL</label>
 						<input
 							type="url"
 							id="brain-proxy-url"
@@ -338,7 +338,7 @@
 
 					<div class="col2" style="margin-top: 14px">
 						<div>
-							<label for="brain-quota">Monthly quota (completions)</label>
+							<label for="brain-quota" data-i18n="dashboard_embed_policy.monthly_quota_completions">Monthly quota (completions)</label>
 							<input
 								type="number"
 								id="brain-quota"
@@ -347,7 +347,7 @@
 							/>
 						</div>
 						<div>
-							<label for="brain-rate">Rate limit (req / min)</label>
+							<label for="brain-rate" data-i18n="dashboard_embed_policy.rate_limit_req_min">Rate limit (req / min)</label>
 							<input
 								type="number"
 								id="brain-rate"
@@ -357,32 +357,32 @@
 						</div>
 					</div>
 
-					<label for="brain-model">Model</label>
+					<label for="brain-model" data-i18n="dashboard_embed_policy.model">Model</label>
 					<select id="brain-model">
 						<optgroup label="Free — host-paid (recommended)">
-							<option value="meta-llama/llama-3.3-70b-instruct:free">
+							<option value="meta-llama/llama-3.3-70b-instruct:free" data-i18n="dashboard_embed_policy.openrouter_llama_3_3_70b_free_default">
 								OpenRouter · Llama 3.3 70B (free) — default
 							</option>
-							<option value="openai/gpt-oss-120b:free">
+							<option value="openai/gpt-oss-120b:free" data-i18n="dashboard_embed_policy.openrouter_gpt_oss_120b_free">
 								OpenRouter · GPT-OSS 120B (free)
 							</option>
-							<option value="nousresearch/hermes-3-llama-3.1-405b:free">
+							<option value="nousresearch/hermes-3-llama-3.1-405b:free" data-i18n="dashboard_embed_policy.openrouter_hermes_3_405b_free">
 								OpenRouter · Hermes 3 405B (free)
 							</option>
-							<option value="llama-3.3-70b-versatile">
+							<option value="llama-3.3-70b-versatile" data-i18n="dashboard_embed_policy.groq_llama_3_3_70b_free_sub">
 								Groq · Llama 3.3 70B (free, sub-second)
 							</option>
-							<option value="llama-3.1-8b-instant">
+							<option value="llama-3.1-8b-instant" data-i18n="dashboard_embed_policy.groq_llama_3_1_8b_free_fastest">
 								Groq · Llama 3.1 8B (free, fastest)
 							</option>
 						</optgroup>
 						<optgroup label="Paid Claude — uses host's Anthropic key">
-							<option value="claude-fable-5">Claude Fable 5</option>
-							<option value="claude-mythos-5">Claude Mythos 5</option>
-							<option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
-							<option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
-							<option value="claude-opus-4-6">Claude Opus 4.6</option>
-							<option value="claude-opus-4-7">Claude Opus 4.7</option>
+							<option value="claude-fable-5" data-i18n="dashboard_embed_policy.claude_fable_5">Claude Fable 5</option>
+							<option value="claude-mythos-5" data-i18n="dashboard_embed_policy.claude_mythos_5">Claude Mythos 5</option>
+							<option value="claude-haiku-4-5-20251001" data-i18n="dashboard_embed_policy.claude_haiku_4_5">Claude Haiku 4.5</option>
+							<option value="claude-sonnet-4-6" data-i18n="dashboard_embed_policy.claude_sonnet_4_6">Claude Sonnet 4.6</option>
+							<option value="claude-opus-4-6" data-i18n="dashboard_embed_policy.claude_opus_4_6">Claude Opus 4.6</option>
+							<option value="claude-opus-4-7" data-i18n="dashboard_embed_policy.claude_opus_4_7">Claude Opus 4.7</option>
 						</optgroup>
 					</select>
 				</fieldset>
@@ -391,24 +391,24 @@
 			<!-- Storage -->
 			<div class="card">
 				<fieldset>
-					<legend>Storage</legend>
-					<label for="storage-primary">Primary storage</label>
+					<legend data-i18n="dashboard_embed_policy.storage">Storage</legend>
+					<label for="storage-primary" data-i18n="dashboard_embed_policy.primary_storage">Primary storage</label>
 					<select id="storage-primary">
-						<option value="r2">R2 (Cloudflare) — default</option>
-						<option value="ipfs">IPFS — decentralised</option>
+						<option value="r2" data-i18n="dashboard_embed_policy.r2_cloudflare_default">R2 (Cloudflare) — default</option>
+						<option value="ipfs" data-i18n="dashboard_embed_policy.ipfs_decentralised">IPFS — decentralised</option>
 					</select>
 
 					<label class="check" style="margin-top: 14px">
 						<input type="checkbox" id="storage-ipfs" disabled />
 						<span
-							><strong>IPFS pin</strong> — avatar pinned to IPFS
+							 data-i18n-html="dashboard_embed_policy.ipfs_pin_avatar_pinned_to_ipfs_pin"><strong>IPFS pin</strong> — avatar pinned to IPFS
 							<em class="muted">(pin flow coming soon)</em></span
 						>
 					</label>
 					<label class="check">
 						<input type="checkbox" id="storage-attested" disabled />
 						<span
-							><strong>On-chain attestation</strong> — content hash recorded on-chain
+							 data-i18n-html="dashboard_embed_policy.on_chain_attestation_content_hash_recorded_o"><strong>On-chain attestation</strong> — content hash recorded on-chain
 							<em class="muted">(coming soon)</em></span
 						>
 					</label>
@@ -416,9 +416,9 @@
 			</div>
 
 			<div class="actions">
-				<button class="btn" id="save">Save</button>
-				<button class="btn sec" id="reload">Reload</button>
-				<button class="btn danger" id="clear" style="margin-left: auto">
+				<button class="btn" id="save" data-i18n="dashboard_embed_policy.save">Save</button>
+				<button class="btn sec" id="reload" data-i18n="dashboard_embed_policy.reload">Reload</button>
+				<button class="btn danger" id="clear" style="margin-left: auto" data-i18n="dashboard_embed_policy.clear_policy">
 					Clear policy
 				</button>
 			</div>
@@ -722,5 +722,7 @@
 			})();
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

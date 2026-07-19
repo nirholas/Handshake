@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Cursor follower — three.ws</title>
+		<title data-i18n="demos_agents_cursor_follower.meta_title">Cursor follower — three.ws</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/demos/agents/_shared.css" />
@@ -11,16 +11,16 @@
 	<body>
 		<div class="stage">
 			<div class="hero-eyebrow">Cursor follower</div>
-			<h1 class="hero-title">Hover <em>anywhere</em>.</h1>
-			<p class="hero-sub">
+			<h1 class="hero-title" data-i18n-html="demos_agents_cursor_follower.hover_anywhere">Hover <em>anywhere</em>.</h1>
+			<p class="hero-sub" data-i18n="demos_agents_cursor_follower.she_picks_the_closest_text_or_button">
 				She picks the closest text or button to your cursor and hops to it.
 				Sit still and she yawns; move again and she's back.
 			</p>
 			<div class="cta-row">
-				<a href="#" class="btn btn-primary"><span>Primary</span><span>→</span></a>
-				<a href="#" class="btn btn-ghost"><span>Secondary</span></a>
+				<a href="#" class="btn btn-primary" data-i18n-html="demos_agents_cursor_follower.primary"><span>Primary</span><span>→</span></a>
+				<a href="#" class="btn btn-ghost" data-i18n-html="demos_agents_cursor_follower.secondary"><span>Secondary</span></a>
 			</div>
-			<p style="margin-top:36px;color:#888c9d;font-size:13px;letter-spacing:0.04em;">
+			<p style="margin-top:36px;color:#888c9d;font-size:13px;letter-spacing:0.04em;" data-i18n-html="demos_agents_cursor_follower.hover_any_underlined_word_docs_pricing_examp">
 				Hover any underlined word →
 				<a href="#" data-target style="color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;">docs</a> ·
 				<a href="#" data-target style="color:#3dc1ff;border-bottom:1px dotted;text-decoration:none;">pricing</a> ·
@@ -141,5 +141,7 @@
 			}, rootBone, baseRootPos);
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

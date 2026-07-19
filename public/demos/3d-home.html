@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>three.ws — Give Your AI a Body</title>
+		<title data-i18n="demos_3d_home.meta_title">three.ws — Give Your AI a Body</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<style>
@@ -154,36 +154,36 @@
 				<span class="brand-dot"></span>
 				three.ws
 			</a>
-			<a href="/demos/" class="link">← lab</a>
+			<a href="/demos/" class="link" data-i18n="demos_3d_home.lab">← lab</a>
 		</div>
 
 		<div class="page">
 			<div class="eyebrow">
 				<span class="eyebrow-dot"></span>
-				<span>The 3D layer for onchain AI agents</span>
+				<span data-i18n="demos_3d_home.the_3d_layer_for_onchain_ai_agents">The 3D layer for onchain AI agents</span>
 			</div>
-			<h1 class="hero-title"><span id="sit-line">Give</span> your AI<br />a <em>body.</em></h1>
-			<p class="hero-sub">
+			<h1 class="hero-title" data-i18n-html="demos_3d_home.give_your_ai_a_body"><span id="sit-line">Give</span> your AI<br />a <em>body.</em></h1>
+			<p class="hero-sub" data-i18n="demos_3d_home.born_in_3d_raised_on_chain_yours">
 				Born in 3D. Raised on-chain. Yours forever.
 				Your AI has been a chatbox long enough — give it a body,
 				a personality, and a permanent home.
 			</p>
 			<div class="cta-row">
-				<a href="/create" class="btn btn-primary" id="cta-btn">
+				<a href="/create" class="btn btn-primary" id="cta-btn" data-i18n-html="demos_3d_home.build_your_agent_free">
 					<span>Build your agent — free</span>
 					<span>→</span>
 				</a>
-				<a href="/app" class="btn btn-ghost" target="_blank" rel="noopener">
+				<a href="/app" class="btn btn-ghost" target="_blank" rel="noopener" data-i18n-html="demos_3d_home.watch_it_live">
 					<span>Watch it live</span>
 					<span style="opacity:.4">↗</span>
 				</a>
 			</div>
 			<div class="anim-controls" id="anim-controls" role="group" aria-label="Avatar animations">
 				<div class="anim-label">Make her…</div>
-				<button class="chip" data-clip="wave"      type="button" disabled>👋 Wave</button>
-				<button class="chip" data-clip="rumba"     type="button" disabled>💃 Dance</button>
-				<button class="chip" data-clip="celebrate" type="button" disabled>🎉 Celebrate</button>
-				<button class="chip" data-clip="taunt"     type="button" disabled>😝 Taunt</button>
+				<button class="chip" data-clip="wave"      type="button" disabled data-i18n="demos_3d_home.wave">👋 Wave</button>
+				<button class="chip" data-clip="rumba"     type="button" disabled data-i18n="demos_3d_home.dance">💃 Dance</button>
+				<button class="chip" data-clip="celebrate" type="button" disabled data-i18n="demos_3d_home.celebrate">🎉 Celebrate</button>
+				<button class="chip" data-clip="taunt"     type="button" disabled data-i18n="demos_3d_home.taunt">😝 Taunt</button>
 			</div>
 		</div>
 
@@ -824,5 +824,7 @@
 			})();
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>three.ws widget</title>
+		<title data-i18n="widget.meta_title">three.ws widget</title>
 		<meta
 			name="viewport"
 			content="width=device-width, initial-scale=1, viewport-fit=cover"
@@ -259,5 +259,7 @@
 			<div class="viewer-container" id="viewer-container"></div>
 		</main>
 		<div class="spinner" aria-label="Loading"></div>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -4,11 +4,11 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>x402 — the drop-in payment layer for agents · three.ws</title>
-<meta name="description" content="A live catalog of pay-per-call APIs, settled on-chain in USDC over the x402 protocol. Search, inspect the schema, and run any endpoint with one click — no keys, no signup." />
+<title data-i18n="x402_stripe.meta_title">x402 — the drop-in payment layer for agents · three.ws</title>
+<meta name="description" content="A live catalog of pay-per-call APIs, settled on-chain in USDC over the x402 protocol. Search, inspect the schema, and run any endpoint with one click — no keys, no signup."  data-i18n-attr="content:x402_stripe.meta_description"/>
 <meta name="theme-color" content="#0b0b0b" />
-<meta property="og:title" content="x402 — the drop-in payment layer for agents" />
-<meta property="og:description" content="A live, searchable catalog of pay-per-call APIs. Inspect the schema and run any endpoint with one click. On-chain USDC settlement on Base and Solana." />
+<meta property="og:title" content="x402 — the drop-in payment layer for agents"  data-i18n-attr="content:x402_stripe.meta_og_title"/>
+<meta property="og:description" content="A live, searchable catalog of pay-per-call APIs. Inspect the schema and run any endpoint with one click. On-chain USDC settlement on Base and Solana."  data-i18n-attr="content:x402_stripe.meta_og_description"/>
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://three.ws/x402" />
 <meta name="twitter:card" content="summary_large_image" />
@@ -404,8 +404,8 @@
 	<meta property="og:image:type" content="image/png">
 	<meta property="og:image:alt" content="x402 Catalog — three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="x402 Catalog · three.ws">
-	<meta name="twitter:description" content="A live catalog of pay-per-call APIs settled on-chain in USDC over the x402 protocol. Search, inspect the schema, and run any endpoint.">
+	<meta name="twitter:title" content="x402 Catalog · three.ws" data-i18n-attr="content:x402_stripe.meta_twitter_title">
+	<meta name="twitter:description" content="A live catalog of pay-per-call APIs settled on-chain in USDC over the x402 protocol. Search, inspect the schema, and run any endpoint." data-i18n-attr="content:x402_stripe.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=x402+Catalog&amp;d=A+live+catalog+of+pay-per-call+APIs+settled+on-chain+in+USDC+over+the+x402+protocol.+Search%2C+inspect+the+schema%2C+and+run+any+endpoint.&amp;p=%2Fx402">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"x402 Catalog","description":"A live catalog of pay-per-call APIs settled on-chain in USDC over the x402 protocol. Search, inspect the schema, and run any endpoint.","url":"https://three.ws/x402","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&t=x402+Catalog&d=A+live+catalog+of+pay-per-call+APIs+settled+on-chain+in+USDC+over+the+x402+protocol.+Search%2C+inspect+the+schema%2C+and+run+any+endpoint.&p=%2Fx402"}]}</script>
 </head>
@@ -413,16 +413,16 @@
 
 <nav id="nav">
 	<div class="navrow">
-		<a class="brand" href="/x402"><div class="dot"></div><span>x402</span></a>
+		<a class="brand" href="/x402"><div class="dot"></div><span data-i18n="x402_stripe.x402">x402</span></a>
 		<div class="links">
-			<a class="hide-sm" href="#catalog">Catalog</a>
-			<a class="hide-sm" href="#install">Install</a>
-			<a class="hide-sm" href="/docs/x402" target="_blank" rel="noopener">Docs</a>
-			<button class="icon-btn" id="paletteBtn" aria-label="Search endpoints">
+			<a class="hide-sm" href="#catalog" data-i18n="x402_stripe.catalog">Catalog</a>
+			<a class="hide-sm" href="#install" data-i18n="x402_stripe.install">Install</a>
+			<a class="hide-sm" href="/docs/x402" target="_blank" rel="noopener" data-i18n="x402_stripe.docs">Docs</a>
+			<button class="icon-btn" id="paletteBtn" aria-label="Search endpoints" data-i18n-attr="aria-label:x402_stripe.search_endpoints_arialabel">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
 				<span>Search</span><kbd>⌘K</kbd>
 			</button>
-			<button class="icon-btn" id="themeBtn" aria-label="Toggle theme" style="padding:0 10px;">
+			<button class="icon-btn" id="themeBtn" aria-label="Toggle theme" style="padding:0 10px;" data-i18n-attr="aria-label:x402_stripe.toggle_theme_arialabel">
 				<svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg>
 			</button>
 		</div>
@@ -431,14 +431,14 @@
 
 <div class="wrap">
 	<section class="hero">
-		<span class="eyebrow"><span class="led"></span><span id="eyebrowText">Live on Base &amp; Solana mainnet</span></span>
-		<h1>Pay-per-call APIs,<br /><span class="grad">one click away.</span></h1>
-		<p class="lede">
+		<span class="eyebrow" data-i18n-html="x402_stripe.live_on_base_solana_mainnet"><span class="led"></span><span id="eyebrowText">Live on Base &amp; Solana mainnet</span></span>
+		<h1 data-i18n-html="x402_stripe.pay_per_call_apis_one_click_away">Pay-per-call APIs,<br /><span class="grad">one click away.</span></h1>
+		<p class="lede" data-i18n-html="x402_stripe.a_live_catalog_of_endpoints_an_agent">
 			A live catalog of endpoints an agent — or a human — can run and pay for on the spot, settled on-chain in USDC over the <a href="https://x402.org" target="_blank" rel="noopener">x402 protocol</a>. No keys, no signup, no SDK to learn. Inspect the schema, fill the inputs, click <code>Run</code>.
 		</p>
 		<div class="cta-row">
-			<a class="btn" href="#catalog">Browse the catalog</a>
-			<a class="btn ghost" href="#install">Drop it into your site</a>
+			<a class="btn" href="#catalog" data-i18n="x402_stripe.browse_the_catalog">Browse the catalog</a>
+			<a class="btn ghost" href="#install" data-i18n="x402_stripe.drop_it_into_your_site">Drop it into your site</a>
 		</div>
 		<div class="stats" id="stats" aria-label="Live 24-hour activity">
 			<div class="stat"><div class="k">Endpoints</div><div class="v skeleton" data-stat="endpoints">—</div></div>
@@ -452,12 +452,12 @@
 	<section id="catalog">
 		<div class="sec-head">
 			<div>
-				<h2><span class="num">01</span>The catalog</h2>
-				<p class="sub">Every endpoint below is live. Click one to inspect its schema and run it with a real on-chain payment.</p>
+				<h2 data-i18n-html="x402_stripe.01the_catalog"><span class="num">01</span>The catalog</h2>
+				<p class="sub" data-i18n="x402_stripe.every_endpoint_below_is_live_click_one">Every endpoint below is live. Click one to inspect its schema and run it with a real on-chain payment.</p>
 			</div>
 			<button class="icon-btn" id="paletteBtn2" style="height:42px;padding:0 16px;">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-				<span>Quick search</span><kbd>⌘K</kbd>
+				<span data-i18n="x402_stripe.quick_search">Quick search</span><kbd>⌘K</kbd>
 			</button>
 		</div>
 
@@ -468,10 +468,10 @@
 				<span class="slash">/</span>
 			</div>
 			<select class="select" id="sortSelect" aria-label="Sort endpoints">
-				<option value="popular">Most used</option>
-				<option value="price-asc">Price: low to high</option>
-				<option value="price-desc">Price: high to low</option>
-				<option value="name">Name A–Z</option>
+				<option value="popular" data-i18n="x402_stripe.most_used">Most used</option>
+				<option value="price-asc" data-i18n="x402_stripe.price_low_to_high">Price: low to high</option>
+				<option value="price-desc" data-i18n="x402_stripe.price_high_to_low">Price: high to low</option>
+				<option value="name" data-i18n="x402_stripe.name_a_z">Name A–Z</option>
 			</select>
 		</div>
 		<div class="chips" id="chips" role="tablist" aria-label="Filter by category"></div>
@@ -481,10 +481,10 @@
 
 	<section id="install" class="alt">
 		<div class="sec-head"><div>
-			<h2><span class="num">02</span>Install</h2>
-			<p class="sub">Paste one line into your <code>&lt;head&gt;</code>. Add <code>data-x402-endpoint</code> to any button. The modal handles the wallet, the 402 challenge, and settlement.</p>
+			<h2 data-i18n-html="x402_stripe.02install"><span class="num">02</span>Install</h2>
+			<p class="sub" data-i18n-html="x402_stripe.paste_one_line_into_your_add_to">Paste one line into your <code>&lt;head&gt;</code>. Add <code>data-x402-endpoint</code> to any button. The modal handles the wallet, the 402 challenge, and settlement.</p>
 		</div></div>
-		<div class="snippet" id="installSnippet"><button class="copy-btn" data-copy="installSnippetCode">Copy</button><span id="installSnippetCode"><span class="c">&lt;!-- 1. Load once --&gt;</span>
+		<div class="snippet" id="installSnippet"><button class="copy-btn" data-copy="installSnippetCode" data-i18n="x402_stripe.copy">Copy</button><span id="installSnippetCode" data-i18n-html="x402_stripe.check_agent_availability_0_001_usdc"><span class="c">&lt;!-- 1. Load once --&gt;</span>
 <span class="k">&lt;script</span> <span class="a">type</span>=<span class="s">"module"</span> <span class="a">src</span>=<span class="s">"https://three.ws/x402.js"</span><span class="k">&gt;&lt;/script&gt;</span>
 
 <span class="c">&lt;!-- 2. Any button becomes a paid call --&gt;</span>
@@ -498,22 +498,22 @@
 
 	<section id="how">
 		<div class="sec-head"><div>
-			<h2><span class="num">03</span>How it works</h2>
-			<p class="sub">x402 is HTTP 402 Payment Required, with a manifest. The drop-in handles the entire dance — you never see it.</p>
+			<h2 data-i18n-html="x402_stripe.03how_it_works"><span class="num">03</span>How it works</h2>
+			<p class="sub" data-i18n="x402_stripe.x402_is_http_402_payment_required_with">x402 is HTTP 402 Payment Required, with a manifest. The drop-in handles the entire dance — you never see it.</p>
 		</div></div>
 		<div class="steps">
-			<div class="step-card"><div class="num">1</div><h3>Buyer clicks</h3><p>The modal opens, probes your endpoint, parses the 402 challenge, and shows the exact price and network.</p></div>
-			<div class="step-card"><div class="num">2</div><h3>Wallet signs</h3><p>Phantom for Solana, MetaMask or Coinbase for Base. We build the SPL transfer or EIP-3009 authorization. One click.</p></div>
-			<div class="step-card"><div class="num">3</div><h3>Facilitator settles</h3><p>PayAI or Coinbase CDP verifies and broadcasts on-chain. Your endpoint runs and streams the result back.</p></div>
+			<div class="step-card"><div class="num">1</div><h3 data-i18n="x402_stripe.buyer_clicks">Buyer clicks</h3><p data-i18n="x402_stripe.the_modal_opens_probes_your_endpoint_parses">The modal opens, probes your endpoint, parses the 402 challenge, and shows the exact price and network.</p></div>
+			<div class="step-card"><div class="num">2</div><h3 data-i18n="x402_stripe.wallet_signs">Wallet signs</h3><p data-i18n="x402_stripe.phantom_for_solana_metamask_or_coinbase_for">Phantom for Solana, MetaMask or Coinbase for Base. We build the SPL transfer or EIP-3009 authorization. One click.</p></div>
+			<div class="step-card"><div class="num">3</div><h3 data-i18n="x402_stripe.facilitator_settles">Facilitator settles</h3><p data-i18n="x402_stripe.payai_or_coinbase_cdp_verifies_and_broadcast">PayAI or Coinbase CDP verifies and broadcasts on-chain. Your endpoint runs and streams the result back.</p></div>
 		</div>
 	</section>
 
 	<section id="programmatic" class="alt">
 		<div class="sec-head"><div>
-			<h2><span class="num">04</span>Or call it from code</h2>
-			<p class="sub">Same settlement, driven from JavaScript. The promise resolves with your endpoint's JSON and a settlement receipt.</p>
+			<h2 data-i18n-html="x402_stripe.04or_call_it_from_code"><span class="num">04</span>Or call it from code</h2>
+			<p class="sub" data-i18n="x402_stripe.same_settlement_driven_from_javascript_the_p">Same settlement, driven from JavaScript. The promise resolves with your endpoint's JSON and a settlement receipt.</p>
 		</div></div>
-		<div class="snippet" id="progSnippet"><button class="copy-btn" data-copy="progSnippetCode">Copy</button><span id="progSnippetCode"><span class="k">const</span> { result, payment } = <span class="k">await</span> window.X402.<span class="a">pay</span>({
+		<div class="snippet" id="progSnippet"><button class="copy-btn" data-copy="progSnippetCode" data-i18n="x402_stripe.copy_2">Copy</button><span id="progSnippetCode" data-i18n-html="x402_stripe.const_result_payment_await_window_x402_pay"><span class="k">const</span> { result, payment } = <span class="k">await</span> window.X402.<span class="a">pay</span>({
   <span class="a">endpoint</span>: <span class="s">'/api/x402/symbol-availability'</span>,
   <span class="a">method</span>: <span class="s">'GET'</span>,
   <span class="a">body</span>: { <span class="a">ticker</span>: <span class="s">'AGENT'</span> },
@@ -523,18 +523,18 @@
 <span class="c">// payment.transaction → on-chain tx hash</span>
 <span class="c">// payment.payer      → buyer wallet</span>
 <span class="c">// result             → your endpoint's JSON response</span></span></div>
-		<p class="sub" style="margin-top:18px;">
+		<p class="sub" style="margin-top:18px;" data-i18n-html="x402_stripe.agents_pay_autonomously_with_x402_fetch_or">
 			Agents pay autonomously with <a href="https://www.npmjs.com/package/@x402/fetch" target="_blank" rel="noopener">@x402/fetch</a> or the <a href="/docs/mcp" target="_blank" rel="noopener">MCP transport</a> — no wallet UI, no API key. Re-downloadable goods support <a href="/siwx-test.html">Sign-In-With-Wallet</a> re-entry so buyers never pay twice for the same asset.
 		</p>
 	</section>
 
 	<footer>
-		<div class="left"><div class="dot"></div><span>x402 · operated by three.ws</span></div>
+		<div class="left"><div class="dot"></div><span data-i18n="x402_stripe.x402_operated_by_three_ws">x402 · operated by three.ws</span></div>
 		<div class="right">
-			<a href="/docs/x402" target="_blank" rel="noopener">Docs</a>
-			<a href="/openapi.json" target="_blank" rel="noopener">OpenAPI</a>
-			<a href="https://x402.org" target="_blank" rel="noopener">Protocol ↗</a>
-			<a href="https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07" target="_blank" rel="noopener">Live activity ↗</a>
+			<a href="/docs/x402" target="_blank" rel="noopener" data-i18n="x402_stripe.docs_2">Docs</a>
+			<a href="/openapi.json" target="_blank" rel="noopener" data-i18n="x402_stripe.openapi">OpenAPI</a>
+			<a href="https://x402.org" target="_blank" rel="noopener" data-i18n="x402_stripe.protocol">Protocol ↗</a>
+			<a href="https://www.x402scan.com/server/17cbd874-52ac-4920-a020-b22ff2489a07" target="_blank" rel="noopener" data-i18n="x402_stripe.live_activity">Live activity ↗</a>
 		</div>
 	</footer>
 </div>
@@ -547,7 +547,7 @@
 		<input id="paletteInput" type="text" placeholder="Search endpoints by name, category, or path…" aria-label="Search endpoints" autocomplete="off" />
 	</div>
 	<div class="plist" id="paletteList" role="listbox"></div>
-	<div class="pfoot"><span><kbd>↑</kbd><kbd>↓</kbd> navigate</span><span><kbd>↵</kbd> open</span><span><kbd>esc</kbd> close</span></div>
+	<div class="pfoot"><span data-i18n-html="x402_stripe.navigate"><kbd>↑</kbd><kbd>↓</kbd> navigate</span><span data-i18n-html="x402_stripe.open"><kbd>↵</kbd> open</span><span data-i18n-html="x402_stripe.esc_close"><kbd>esc</kbd> close</span></div>
 </div>
 
 <!-- Detail drawer -->
@@ -1009,5 +1009,7 @@
 })();
 </script>
 <script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

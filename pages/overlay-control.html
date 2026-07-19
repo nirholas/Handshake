@@ -4,22 +4,22 @@
 		<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Overlay Control · three.ws</title>
+		<title data-i18n="overlay_control.meta_title">Overlay Control · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="description" content="Stream Deck for your three.ws OBS overlay — emote hotkeys, expression mixer, mic threshold." />
+		<meta name="description" content="Stream Deck for your three.ws OBS overlay — emote hotkeys, expression mixer, mic threshold."  data-i18n-attr="content:overlay_control.meta_description"/>
 		<meta name="theme-color" content="#0d0d0d" />
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/overlay-control" />
-		<meta property="og:title" content="Overlay Control · three.ws" />
-		<meta property="og:description" content="Stream Deck for your three.ws OBS overlay — emote hotkeys, expression mixer, mic threshold." />
+		<meta property="og:title" content="Overlay Control · three.ws"  data-i18n-attr="content:overlay_control.meta_og_title"/>
+		<meta property="og:description" content="Stream Deck for your three.ws OBS overlay — emote hotkeys, expression mixer, mic threshold."  data-i18n-attr="content:overlay_control.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/og-image.png" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Overlay Control · three.ws" />
-		<meta name="twitter:description" content="Stream Deck for your three.ws OBS overlay — emote hotkeys, expression mixer, mic threshold." />
+		<meta name="twitter:title" content="Overlay Control · three.ws"  data-i18n-attr="content:overlay_control.meta_twitter_title"/>
+		<meta name="twitter:description" content="Stream Deck for your three.ws OBS overlay — emote hotkeys, expression mixer, mic threshold."  data-i18n-attr="content:overlay_control.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/og-image.png" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -274,72 +274,72 @@
 		<section class="left">
 			<div class="top">
 				<div>
-					<h1>OBS overlay control</h1>
+					<h1 data-i18n="overlay_control.obs_overlay_control">OBS overlay control</h1>
 					<div class="sub">Hotkeys, expression mixer, and mic threshold for your three.ws avatar. Add the overlay URL to OBS Browser Source and keep this tab open.</div>
 				</div>
-				<div class="brand"><a href="/">← three.ws</a></div>
+				<div class="brand"><a href="/" data-i18n="overlay_control.three_ws">← three.ws</a></div>
 			</div>
 
 			<div class="card">
-				<h2>Avatar</h2>
+				<h2 data-i18n="overlay_control.avatar">Avatar</h2>
 				<label class="row">
-					<span style="min-width:90px;color:var(--ink-dim)">Handle</span>
+					<span style="min-width:90px;color:var(--ink-dim)" data-i18n="overlay_control.handle">Handle</span>
 					<input id="avatar-handle" type="text" placeholder="@yourname" autocomplete="off" />
-					<button class="action" id="apply-handle">Apply</button>
+					<button class="action" id="apply-handle" data-i18n="overlay_control.apply">Apply</button>
 				</label>
 				<div class="actions">
-					<button class="action ghost" id="open-overlay">Open overlay window</button>
-					<button class="action ghost" id="copy-overlay">Copy overlay URL</button>
-					<span class="status" id="status"><span class="dot"></span><span class="label">offline</span></span>
+					<button class="action ghost" id="open-overlay" data-i18n="overlay_control.open_overlay_window">Open overlay window</button>
+					<button class="action ghost" id="copy-overlay" data-i18n="overlay_control.copy_overlay_url">Copy overlay URL</button>
+					<span class="status" id="status" data-i18n-html="overlay_control.offline"><span class="dot"></span><span class="label">offline</span></span>
 				</div>
 				<pre class="snippet" id="overlay-url" style="margin-top:10px"></pre>
 			</div>
 
 			<div class="card">
-				<h2>Hotkeys · keys 1–9, 0</h2>
+				<h2 data-i18n="overlay_control.hotkeys_keys_1_9_0">Hotkeys · keys 1–9, 0</h2>
 				<div class="hotkey-grid" id="hotkey-grid"></div>
 			</div>
 
 			<div class="card">
-				<h2>Mic-driven talking state</h2>
+				<h2 data-i18n="overlay_control.mic_driven_talking_state">Mic-driven talking state</h2>
 				<label class="row" style="gap:14px">
-					<button class="action" id="mic-toggle">Enable mic</button>
-					<span class="status" id="mic-state"><span class="dot"></span><span class="label">off</span></span>
+					<button class="action" id="mic-toggle" data-i18n="overlay_control.enable_mic">Enable mic</button>
+					<span class="status" id="mic-state" data-i18n-html="overlay_control.off"><span class="dot"></span><span class="label">off</span></span>
 				</label>
 				<div class="slider-row">
-					<span>Noise floor</span>
+					<span data-i18n="overlay_control.noise_floor">Noise floor</span>
 					<input id="mic-floor" type="range" min="0" max="0.5" step="0.005" value="0.04" />
 					<span class="val" id="mic-floor-v">0.040</span>
 				</div>
 				<div class="slider-row">
-					<span>Mouth full</span>
+					<span data-i18n="overlay_control.mouth_full">Mouth full</span>
 					<input id="mic-ceiling" type="range" min="0.05" max="1" step="0.01" value="0.18" />
 					<span class="val" id="mic-ceiling-v">0.180</span>
 				</div>
 			</div>
 
 			<div class="card">
-				<h2>Speak</h2>
+				<h2 data-i18n="overlay_control.speak">Speak</h2>
 				<label class="row">
 					<input id="speak-text" type="text" placeholder="Type something for your avatar to say…" />
-					<button class="action" id="speak-go">Speak</button>
+					<button class="action" id="speak-go" data-i18n="overlay_control.speak_2">Speak</button>
 				</label>
 				<div class="actions">
-					<button class="action ghost" data-control="stop">Stop / reset</button>
-					<button class="action ghost" data-control="overlay-on">Overlay mode</button>
-					<button class="action ghost" data-control="overlay-off">Show chrome</button>
+					<button class="action ghost" data-control="stop" data-i18n="overlay_control.stop_reset">Stop / reset</button>
+					<button class="action ghost" data-control="overlay-on" data-i18n="overlay_control.overlay_mode">Overlay mode</button>
+					<button class="action ghost" data-control="overlay-off" data-i18n="overlay_control.show_chrome">Show chrome</button>
 				</div>
 			</div>
 
 			<div class="card">
-				<h2>Event log</h2>
+				<h2 data-i18n="overlay_control.event_log">Event log</h2>
 				<div class="event-log" id="event-log"></div>
 			</div>
 		</section>
 
 		<section class="right">
 			<div class="card" style="margin-bottom: 10px;">
-				<h2>Preview</h2>
+				<h2 data-i18n="overlay_control.preview">Preview</h2>
 				<div class="sub" style="margin-bottom:10px">This is the same overlay your stream sees — emotes here fire there too via BroadcastChannel.</div>
 				<div class="preview-wrap">
 					<iframe id="preview" allow="autoplay; camera; microphone; clipboard-write; xr-spatial-tracking" title="Avatar preview"></iframe>
@@ -347,16 +347,18 @@
 			</div>
 
 			<div class="card">
-				<h2>How to wire OBS</h2>
+				<h2 data-i18n="overlay_control.how_to_wire_obs">How to wire OBS</h2>
 				<ol style="margin:0;padding-left:18px;color:var(--ink-dim);font-size:13px;line-height:1.6;">
-					<li>Click <em>Open overlay window</em> above — copy the URL from the new tab.</li>
-					<li>In OBS, add a <strong>Browser Source</strong>. Paste the URL.</li>
-					<li>Set width 600 px, height 800 px (or to taste). Check <strong>Refresh browser when scene becomes active</strong>.</li>
-					<li>Keep this tab open while you stream — every hotkey or speak action you fire here is broadcast to the OBS overlay via BroadcastChannel.</li>
+					<li data-i18n-html="overlay_control.click_open_overlay_window_above_copy_the">Click <em>Open overlay window</em> above — copy the URL from the new tab.</li>
+					<li data-i18n-html="overlay_control.in_obs_add_a_browser_source_paste">In OBS, add a <strong>Browser Source</strong>. Paste the URL.</li>
+					<li data-i18n-html="overlay_control.set_width_600_px_height_800_px">Set width 600 px, height 800 px (or to taste). Check <strong>Refresh browser when scene becomes active</strong>.</li>
+					<li data-i18n="overlay_control.keep_this_tab_open_while_you_stream">Keep this tab open while you stream — every hotkey or speak action you fire here is broadcast to the OBS overlay via BroadcastChannel.</li>
 				</ol>
 			</div>
 		</section>
 
 		<script type="module" src="/src/overlay-control.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -5,7 +5,7 @@
 	<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-	<title>Your avatar is ready · three.ws</title>
+	<title data-i18n="create_next.meta_title">Your avatar is ready · three.ws</title>
 	<meta name="robots" content="noindex" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="stylesheet" href="/fonts/fonts.css" />
@@ -359,13 +359,13 @@
 			</div>
 			<div class="cn-avatar-label" id="cnAvatarLabel">Loading…</div>
 			<div class="cn-avatar-tag" id="cnAvatarTag">3D AI Agent</div>
-			<a class="cn-back" href="/dashboard/avatars">← Back to avatars</a>
+			<a class="cn-back" href="/dashboard/avatars" data-i18n="create_next.back_to_avatars">← Back to avatars</a>
 		</div>
 
 		<div class="cn-right">
 			<div class="cn-header" id="cnHeader">
 				<div class="cn-kicker">What's next?</div>
-				<h1 class="cn-headline" id="cnHeadline">Your avatar is ready.<br>Here's where it gets powerful.</h1>
+				<h1 class="cn-headline" id="cnHeadline" data-i18n-html="create_next.your_avatar_is_ready_here_s_where">Your avatar is ready.<br>Here's where it gets powerful.</h1>
 			</div>
 
 			<div class="cn-steps" id="cnSteps">
@@ -387,15 +387,15 @@
 				</a>
 				<div class="cn-embed" id="cnEmbed" hidden>
 					<div class="cn-embed-head">
-						<span>Or grab the snippet now</span>
-						<button class="cn-embed-copy" id="cnEmbedCopy" type="button" aria-label="Copy embed snippet">Copy</button>
+						<span data-i18n="create_next.or_grab_the_snippet_now">Or grab the snippet now</span>
+						<button class="cn-embed-copy" id="cnEmbedCopy" type="button" aria-label="Copy embed snippet" data-i18n="create_next.copy" data-i18n-attr="aria-label:create_next.copy_embed_snippet_arialabel">Copy</button>
 					</div>
 					<pre class="cn-embed-code"><code id="cnEmbedCode"></code></pre>
 				</div>
 				<a class="cn-step optional" id="cnStep3" href="/launchpad" style="animation-delay:.2s">
 					<div class="cn-step-num" id="cnStep3Num">3</div>
 					<div class="cn-step-body">
-						<div class="cn-step-title" id="cnStep3Title">Deploy on-chain <span class="cn-opt-pill">Optional</span></div>
+						<div class="cn-step-title" id="cnStep3Title">Deploy on-chain <span class="cn-opt-pill" data-i18n="create_next.optional">Optional</span></div>
 						<div class="cn-step-desc">Mint your agent as a collectible. Make it discoverable and tradeable.</div>
 					</div>
 					<div class="cn-step-arrow">→</div>
@@ -403,7 +403,7 @@
 				<a class="cn-step optional" id="cnStep4" href="/diorama" style="animation-delay:.27s">
 					<div class="cn-step-num">4</div>
 					<div class="cn-step-body">
-						<div class="cn-step-title">Put it in a world <span class="cn-opt-pill">Optional</span></div>
+						<div class="cn-step-title">Put it in a world <span class="cn-opt-pill" data-i18n="create_next.optional_2">Optional</span></div>
 						<div class="cn-step-desc">Turn one sentence into a 3D scene and drop your new avatar into it.</div>
 					</div>
 					<div class="cn-step-arrow">→</div>
@@ -419,15 +419,15 @@
 			</div>
 
 			<div class="cn-footer">
-				<button class="cn-share-btn" id="cnShareCopy" type="button" hidden aria-label="Copy public link to your agent">
+				<button class="cn-share-btn" id="cnShareCopy" type="button" hidden aria-label="Copy public link to your agent" data-i18n-attr="aria-label:create_next.copy_public_link_to_your_age_arialabel">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
 					Copy link
 				</button>
-				<a class="cn-share-btn" id="cnShareX" target="_blank" rel="noopener" hidden aria-label="Share your agent on X">
+				<a class="cn-share-btn" id="cnShareX" target="_blank" rel="noopener" hidden aria-label="Share your agent on X" data-i18n-attr="aria-label:create_next.share_your_agent_on_x_arialabel">
 					<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/></svg>
 					Share on X
 				</a>
-				<a class="cn-later" id="cnLater" href="/dashboard">I'll do this later →</a>
+				<a class="cn-later" id="cnLater" href="/dashboard" data-i18n="create_next.i_ll_do_this_later">I'll do this later →</a>
 			</div>
 		</div>
 	</div>
@@ -701,5 +701,7 @@
 		requestAnimationFrame(() => setTimeout(celebrate, 450));
 	</script>
 	<script src="/getting-started.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

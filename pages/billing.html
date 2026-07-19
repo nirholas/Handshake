@@ -4,8 +4,8 @@
 		<script>/* three.ws theme boot — no-flash */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<title>Billing &amp; invoices · three.ws</title>
-		<meta name="description" content="Your three.ws usage statement: every metered charge, the holder discount applied, and the on-chain settlement it traces to. Download or print your invoice." />
+		<title data-i18n="billing.meta_title">Billing &amp; invoices · three.ws</title>
+		<meta name="description" content="Your three.ws usage statement: every metered charge, the holder discount applied, and the on-chain settlement it traces to. Download or print your invoice."  data-i18n-attr="content:billing.meta_description"/>
 		<meta name="robots" content="noindex" />
 		<link rel="canonical" href="https://three.ws/billing" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -49,21 +49,21 @@
 		</style>
 	</head>
 	<body>
-		<a href="#main-content" class="h-skip-link">Skip to main content</a>
+		<a href="#main-content" class="h-skip-link" data-i18n="billing.skip_to_main_content">Skip to main content</a>
 		<header><div id="nav-container"></div></header>
 		<script src="/nav.js"></script>
 
 		<main id="main-content" class="bill-wrap">
 			<div class="bill-head">
 				<div>
-					<h1>Billing &amp; invoices</h1>
-					<p class="bill-sub">Every metered charge, the $THREE holder discount applied, and the on-chain settlement it traces to.</p>
+					<h1 data-i18n="billing.billing_invoices">Billing &amp; invoices</h1>
+					<p class="bill-sub" data-i18n="billing.every_metered_charge_the_three_holder_discou">Every metered charge, the $THREE holder discount applied, and the on-chain settlement it traces to.</p>
 				</div>
 				<div class="bill-controls">
-					<label for="bill-period" class="sr-only">Statement period</label>
+					<label for="bill-period" class="sr-only" data-i18n="billing.statement_period">Statement period</label>
 					<select id="bill-period" aria-label="Statement period"></select>
-					<a class="bill-btn" id="bill-csv" href="#" download>Download CSV</a>
-					<button class="bill-btn" id="bill-print" type="button">Print / PDF</button>
+					<a class="bill-btn" id="bill-csv" href="#" download data-i18n="billing.download_csv">Download CSV</a>
+					<button class="bill-btn" id="bill-print" type="button" data-i18n="billing.print_pdf">Print / PDF</button>
 				</div>
 			</div>
 
@@ -156,5 +156,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

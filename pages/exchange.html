@@ -18,29 +18,29 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Exchange · three.ws</title>
+		<title data-i18n="exchange.meta_title">Exchange · three.ws</title>
 		<meta
 			name="description"
 			content="A rich profile for any crypto exchange — trust score, 24h volume, open interest, markets, and volume history. Real CoinGecko data, no API key."
-		/>
+		 data-i18n-attr="content:exchange.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/exchanges" />
-		<meta property="og:title" content="Exchange · three.ws" />
+		<meta property="og:title" content="Exchange · three.ws"  data-i18n-attr="content:exchange.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Trust score, 24h trading volume, markets, and volume history for any crypto exchange. Real CoinGecko data."
-		/>
+		 data-i18n-attr="content:exchange.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/og-image.png" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Exchange · three.ws" />
+		<meta name="twitter:title" content="Exchange · three.ws"  data-i18n-attr="content:exchange.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Trust score, 24h trading volume, markets, and volume history for any crypto exchange."
-		/>
+		 data-i18n-attr="content:exchange.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/og-image.png" />
 		<meta name="theme-color" content="#09090b" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -63,9 +63,9 @@
 		<main class="cv-container" id="ex-main" aria-busy="true">
 			<!-- Breadcrumbs -->
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a>
+				<a href="/markets" data-i18n="exchange.markets">Markets</a>
 				<span class="sep" aria-hidden="true">/</span>
-				<a href="/exchanges">Exchanges</a>
+				<a href="/exchanges" data-i18n="exchange.exchanges">Exchanges</a>
 				<span class="sep" aria-hidden="true">/</span>
 				<span class="here" id="ex-crumb-name">…</span>
 			</nav>
@@ -89,5 +89,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

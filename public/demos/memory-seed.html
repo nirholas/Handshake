@@ -3,8 +3,8 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>three.ws · Memory seeding</title>
-		<meta name="description" content="Paste a public handle from one or more of your connected accounts. three.ws fetches your public footprint, distils a memory seed with Claude, and shows you exactly what your agent would be ingesting on first sign-in." />
+		<title data-i18n="demos_memory_seed.meta_title">three.ws · Memory seeding</title>
+		<meta name="description" content="Paste a public handle from one or more of your connected accounts. three.ws fetches your public footprint, distils a memory seed with Claude, and shows you exactly what your agent would be ingesting on first sign-in."  data-i18n-attr="content:demos_memory_seed.meta_description"/>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
@@ -104,9 +104,9 @@
 		<header><div id="nav-container"></div></header>
 
 		<main class="stage">
-			<p class="crumb"><a href="/demos/">← lab</a></p>
-			<h1>three.ws · Memory seeding</h1>
-			<p class="sub">
+			<p class="crumb" data-i18n-html="demos_memory_seed.lab"><a href="/demos/">← lab</a></p>
+			<h1 data-i18n="demos_memory_seed.three_ws_memory_seeding">three.ws · Memory seeding</h1>
+			<p class="sub" data-i18n="demos_memory_seed.paste_a_public_handle_from_one_or">
 				Paste a public handle from one or more of your connected accounts.
 				three.ws pulls the public footprint, then asks Claude to distil a
 				200–300 word memory seed — exactly the markdown your agent would
@@ -117,40 +117,40 @@
 			<div class="row">
 				<!-- GitHub connector -->
 				<section class="card" id="card-github">
-					<h2><span class="chip">GitHub</span></h2>
+					<h2 data-i18n-html="demos_memory_seed.github"><span class="chip">GitHub</span></h2>
 					<div class="input-row">
 						<input type="text" id="in-github" placeholder="e.g. torvalds" autocomplete="off" spellcheck="false" />
-						<button data-fetch="github">Fetch</button>
+						<button data-fetch="github" data-i18n="demos_memory_seed.fetch">Fetch</button>
 					</div>
 					<div class="connector-detail empty" id="detail-github">No data yet</div>
 				</section>
 
 				<!-- X connector -->
 				<section class="card" id="card-x">
-					<h2><span class="chip">X</span></h2>
+					<h2 data-i18n-html="demos_memory_seed.x"><span class="chip">X</span></h2>
 					<div class="input-row">
 						<input type="text" id="in-x" placeholder="e.g. @jack" autocomplete="off" spellcheck="false" />
-						<button data-fetch="x">Fetch</button>
+						<button data-fetch="x" data-i18n="demos_memory_seed.fetch_2">Fetch</button>
 					</div>
 					<div class="connector-detail empty" id="detail-x">No data yet</div>
 				</section>
 
 				<!-- Farcaster connector -->
 				<section class="card" id="card-farcaster">
-					<h2><span class="chip">Farcaster</span></h2>
+					<h2 data-i18n-html="demos_memory_seed.farcaster"><span class="chip">Farcaster</span></h2>
 					<div class="input-row">
 						<input type="text" id="in-farcaster" placeholder="username or fid" autocomplete="off" spellcheck="false" />
-						<button data-fetch="farcaster">Fetch</button>
+						<button data-fetch="farcaster" data-i18n="demos_memory_seed.fetch_3">Fetch</button>
 					</div>
 					<div class="connector-detail empty" id="detail-farcaster">No data yet</div>
 				</section>
 			</div>
 
 			<section class="synth-section">
-				<h2 style="margin:0">Memory seed</h2>
+				<h2 style="margin:0" data-i18n="demos_memory_seed.memory_seed">Memory seed</h2>
 				<div class="synth-actions">
-					<button id="synth-btn" class="wide" disabled>Synthesise memory seed</button>
-					<button id="copy-btn" class="secondary" disabled>Copy seed</button>
+					<button id="synth-btn" class="wide" disabled data-i18n="demos_memory_seed.synthesise_memory_seed">Synthesise memory seed</button>
+					<button id="copy-btn" class="secondary" disabled data-i18n="demos_memory_seed.copy_seed">Copy seed</button>
 					<span class="meta-line" id="synth-meta"></span>
 				</div>
 				<div class="synth-output" id="synth-output"></div>
@@ -422,5 +422,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -3,11 +3,11 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Audio-driven lipsync · three.ws</title>
-		<meta name="description" content="Real-time mic → viseme analyser → avatar morph targets. The exact pipeline that drives ElevenLabs-streamed TTS in three.ws chat, sourced from your microphone." />
+		<title data-i18n="demos_lipsync_mic.meta_title">Audio-driven lipsync · three.ws</title>
+		<meta name="description" content="Real-time mic → viseme analyser → avatar morph targets. The exact pipeline that drives ElevenLabs-streamed TTS in three.ws chat, sourced from your microphone."  data-i18n-attr="content:demos_lipsync_mic.meta_description"/>
 		<link rel="canonical" href="https://three.ws/lipsync/mic" />
-		<meta property="og:title" content="Audio-driven lipsync · three.ws" />
-		<meta property="og:description" content="Speak into your mic and watch the avatar's mouth track your voice in real time." />
+		<meta property="og:title" content="Audio-driven lipsync · three.ws"  data-i18n-attr="content:demos_lipsync_mic.meta_og_title"/>
+		<meta property="og:description" content="Speak into your mic and watch the avatar's mouth track your voice in real time."  data-i18n-attr="content:demos_lipsync_mic.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/lipsync/mic" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<link rel="stylesheet" href="/style.css" />
@@ -83,8 +83,8 @@
 	<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Lipsync+%28Mic%29&amp;d=Feed+live+mic+audio+through+the+viseme+analyser+and+watch+the+avatar%27s+mouth+track+your+voice+in+real+time.&amp;p=%2Flipsync%2Fmic">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
-	<meta name="twitter:title" content="Lipsync (Mic) · three.ws">
-	<meta name="twitter:description" content="Feed live mic audio through the viseme analyser and watch the avatar's mouth track your voice in real time.">
+	<meta name="twitter:title" content="Lipsync (Mic) · three.ws" data-i18n-attr="content:demos_lipsync_mic.meta_twitter_title">
+	<meta name="twitter:description" content="Feed live mic audio through the viseme analyser and watch the avatar's mouth track your voice in real time." data-i18n-attr="content:demos_lipsync_mic.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=Lipsync+%28Mic%29&amp;d=Feed+live+mic+audio+through+the+viseme+analyser+and+watch+the+avatar%27s+mouth+track+your+voice+in+real+time.&amp;p=%2Flipsync%2Fmic">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Lipsync (Mic)","description":"Feed live mic audio through the viseme analyser and watch the avatar's mouth track your voice in real time.","url":"https://three.ws/lipsync/mic","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -97,9 +97,9 @@
 		<header><div id="nav-container"></div></header>
 
 		<main class="stage">
-			<p class="crumb"><a href="/">three.ws</a> · <a href="/lipsync">lipsync</a> · mic</p>
-			<h1>Audio-driven lipsync</h1>
-			<p class="sub">
+			<p class="crumb" data-i18n-html="demos_lipsync_mic.three_ws_lipsync_mic"><a href="/">three.ws</a> · <a href="/lipsync">lipsync</a> · mic</p>
+			<h1 data-i18n="demos_lipsync_mic.audio_driven_lipsync">Audio-driven lipsync</h1>
+			<p class="sub" data-i18n-html="demos_lipsync_mic.real_time_test_of_the_three_ws">
 				Real-time test of the three.ws viseme analyser
 				(<code>src/lip-sync-analyser.js</code>). Hit <strong>Start</strong>,
 				allow mic access, and speak — the analyser hands per-viseme weights
@@ -111,8 +111,8 @@
 			<div class="row">
 				<div class="viewer-host" id="viewer-host"></div>
 				<div class="panel">
-					<button id="start">Start mic</button>
-					<button id="stop" class="secondary" disabled>Stop</button>
+					<button id="start" data-i18n="demos_lipsync_mic.start_mic">Start mic</button>
+					<button id="stop" class="secondary" disabled data-i18n="demos_lipsync_mic.stop">Stop</button>
 
 					<div id="mic-status" class="mic-status" role="status" aria-live="polite" hidden></div>
 
@@ -350,5 +350,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

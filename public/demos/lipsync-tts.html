@@ -3,11 +3,11 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>TTS-driven lipsync · three.ws</title>
-		<meta name="description" content="Type text, stream it through OpenAI TTS, and watch a 3D avatar's mouth animate in real time via wawa-lipsync viseme detection. No server-side audio processing." />
+		<title data-i18n="demos_lipsync_tts.meta_title">TTS-driven lipsync · three.ws</title>
+		<meta name="description" content="Type text, stream it through OpenAI TTS, and watch a 3D avatar's mouth animate in real time via wawa-lipsync viseme detection. No server-side audio processing."  data-i18n-attr="content:demos_lipsync_tts.meta_description"/>
 		<link rel="canonical" href="https://three.ws/lipsync" />
-		<meta property="og:title" content="TTS-driven lipsync · three.ws" />
-		<meta property="og:description" content="Type any text → OpenAI TTS → in-browser viseme detection → 3D avatar lipsync. Zero server-side audio processing." />
+		<meta property="og:title" content="TTS-driven lipsync · three.ws"  data-i18n-attr="content:demos_lipsync_tts.meta_og_title"/>
+		<meta property="og:description" content="Type any text → OpenAI TTS → in-browser viseme detection → 3D avatar lipsync. Zero server-side audio processing."  data-i18n-attr="content:demos_lipsync_tts.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/lipsync" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<link rel="stylesheet" href="/style.css" />
@@ -63,8 +63,8 @@
 	<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Lipsync+%28TTS%29&amp;d=Type+text%2C+stream+it+through+the+avatar%27s+voice%2C+and+the+mouth+animates+in+real+time+via+wawa-lipsync+viseme+detection.&amp;p=%2Flipsync">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
-	<meta name="twitter:title" content="Lipsync (TTS) · three.ws">
-	<meta name="twitter:description" content="Type text, stream it through OpenAI TTS, and the avatar's mouth animates in real time via wawa-lipsync viseme detection.">
+	<meta name="twitter:title" content="Lipsync (TTS) · three.ws" data-i18n-attr="content:demos_lipsync_tts.meta_twitter_title">
+	<meta name="twitter:description" content="Type text, stream it through OpenAI TTS, and the avatar's mouth animates in real time via wawa-lipsync viseme detection." data-i18n-attr="content:demos_lipsync_tts.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=Lipsync+%28TTS%29&amp;d=Type+text%2C+stream+it+through+the+avatar%27s+voice%2C+and+the+mouth+animates+in+real+time+via+wawa-lipsync+viseme+detection.&amp;p=%2Flipsync">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Lipsync (TTS)","description":"Type text, stream it through OpenAI TTS, and the avatar's mouth animates in real time via wawa-lipsync viseme detection.","url":"https://three.ws/lipsync","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -77,9 +77,9 @@
 		<header><div id="nav-container"></div></header>
 
 		<main class="stage">
-			<p class="crumb"><a href="/">three.ws</a> · lipsync · <a href="/lipsync/mic">mic mode</a></p>
-			<h1>TTS-driven lipsync</h1>
-			<p class="sub">
+			<p class="crumb" data-i18n-html="demos_lipsync_tts.three_ws_lipsync_mic_mode"><a href="/">three.ws</a> · lipsync · <a href="/lipsync/mic">mic mode</a></p>
+			<h1 data-i18n="demos_lipsync_tts.tts_driven_lipsync">TTS-driven lipsync</h1>
+			<p class="sub" data-i18n-html="demos_lipsync_tts.type_any_text_stream_it_through_openai">
 				Type any text, stream it through OpenAI TTS, and the avatar's mouth animates in
 				real time. Visemes are extracted in-browser via <code>wawa-lipsync</code>
 				analysing the audio's frequency bands — no server-side audio processing, no
@@ -92,27 +92,27 @@
 				</div>
 				<div class="panel">
 					<div>
-						<label for="text">Text to speak</label>
+						<label for="text" data-i18n="demos_lipsync_tts.text_to_speak">Text to speak</label>
 						<textarea id="text">Welcome to three dot ws. This avatar is talking through real-time viseme detection, powered entirely in the browser.</textarea>
 					</div>
 
 					<div style="display:flex;gap:8px">
 						<div style="flex:1">
-							<label for="voice">Voice</label>
+							<label for="voice" data-i18n="demos_lipsync_tts.voice">Voice</label>
 							<select id="voice" style="width:100%">
-								<option value="nova" selected>Nova</option>
-								<option value="alloy">Alloy</option>
-								<option value="echo">Echo</option>
-								<option value="fable">Fable</option>
-								<option value="onyx">Onyx</option>
-								<option value="shimmer">Shimmer</option>
-								<option value="ash">Ash</option>
-								<option value="coral">Coral</option>
-								<option value="sage">Sage</option>
+								<option value="nova" selected data-i18n="demos_lipsync_tts.nova">Nova</option>
+								<option value="alloy" data-i18n="demos_lipsync_tts.alloy">Alloy</option>
+								<option value="echo" data-i18n="demos_lipsync_tts.echo">Echo</option>
+								<option value="fable" data-i18n="demos_lipsync_tts.fable">Fable</option>
+								<option value="onyx" data-i18n="demos_lipsync_tts.onyx">Onyx</option>
+								<option value="shimmer" data-i18n="demos_lipsync_tts.shimmer">Shimmer</option>
+								<option value="ash" data-i18n="demos_lipsync_tts.ash">Ash</option>
+								<option value="coral" data-i18n="demos_lipsync_tts.coral">Coral</option>
+								<option value="sage" data-i18n="demos_lipsync_tts.sage">Sage</option>
 							</select>
 						</div>
 						<div style="flex:1">
-							<label for="speed">Speed</label>
+							<label for="speed" data-i18n="demos_lipsync_tts.speed">Speed</label>
 							<select id="speed" style="width:100%">
 								<option value="0.8">0.8×</option>
 								<option value="1.0" selected>1.0×</option>
@@ -123,14 +123,14 @@
 					</div>
 
 					<div style="display:flex;gap:8px">
-						<button id="speak" style="flex:1">Speak</button>
-						<button id="stop" class="secondary" disabled>Stop</button>
+						<button id="speak" style="flex:1" data-i18n="demos_lipsync_tts.speak">Speak</button>
+						<button id="stop" class="secondary" disabled data-i18n="demos_lipsync_tts.stop">Stop</button>
 					</div>
 
 					<div id="tts-error" class="tts-error" role="alert" aria-live="assertive" hidden></div>
 
 					<div>
-						<label>Visemes (live)</label>
+						<label data-i18n="demos_lipsync_tts.visemes_live">Visemes (live)</label>
 						<div id="visemes" style="display:flex;flex-direction:column;gap:5px;margin-top:6px"></div>
 					</div>
 
@@ -401,5 +401,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

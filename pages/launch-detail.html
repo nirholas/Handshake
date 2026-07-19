@@ -4,29 +4,29 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Coin · three.ws</title>
+		<title data-i18n="launch_detail.meta_title">Coin · three.ws</title>
 		<meta
 			name="description"
 			content="A live, on-chain profile for a coin launched on three.ws — market cap, the Coin Intelligence verdict, holder distribution, the live trade tape, and the agent behind the mint."
-		/>
+		 data-i18n-attr="content:launch_detail.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/launches" />
-		<meta property="og:title" content="Coin · three.ws" />
+		<meta property="og:title" content="Coin · three.ws"  data-i18n-attr="content:launch_detail.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="A live, on-chain profile for a coin launched on three.ws — market cap, intelligence verdict, holders, live trades, and the agent behind it."
-		/>
+		 data-i18n-attr="content:launch_detail.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/og-image.png" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Coin · three.ws" />
+		<meta name="twitter:title" content="Coin · three.ws"  data-i18n-attr="content:launch_detail.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="A live, on-chain profile for a coin launched on three.ws — market cap, intelligence verdict, holders, live trades, and the agent behind it."
-		/>
+		 data-i18n-attr="content:launch_detail.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/og-image.png" />
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -49,7 +49,7 @@
 		<div class="ld-aurora" aria-hidden="true"></div>
 
 		<main id="ld-shell" class="ld-shell" aria-busy="true">
-			<a class="ld-back" href="/launches" aria-label="Back to all launches">← All launches</a>
+			<a class="ld-back" href="/launches" aria-label="Back to all launches" data-i18n="launch_detail.all_launches" data-i18n-attr="aria-label:launch_detail.back_to_all_launches_arialabel">← All launches</a>
 
 			<!-- Hero / identity. Hydrated by src/launch-detail.js. -->
 			<section id="ld-hero" class="ld-hero" aria-label="Coin overview"></section>
@@ -83,5 +83,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -5,20 +5,20 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Agent Economy — two AI agents pay each other on-chain · three.ws</title>
-	<meta name="description" content="Watch NOVA and ORACLE — two three.ws AI agents with real Solana wallets — discover services on the x402 bazaar, pay each other in SOL, and display a live market briefing on the TV in their world." />
+	<title data-i18n="demo_economy.meta_title">Agent Economy — two AI agents pay each other on-chain · three.ws</title>
+	<meta name="description" content="Watch NOVA and ORACLE — two three.ws AI agents with real Solana wallets — discover services on the x402 bazaar, pay each other in SOL, and display a live market briefing on the TV in their world."  data-i18n-attr="content:demo_economy.meta_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/demo-economy" />
-	<meta property="og:title" content="Agent Economy Demo — two AI agents pay each other on-chain · three.ws" />
-	<meta property="og:description" content="Watch NOVA and ORACLE — two three.ws AI agents with real Solana wallets — discover services, pay each other in SOL, and display a live market briefing." />
+	<meta property="og:title" content="Agent Economy Demo — two AI agents pay each other on-chain · three.ws"  data-i18n-attr="content:demo_economy.meta_og_title"/>
+	<meta property="og:description" content="Watch NOVA and ORACLE — two three.ws AI agents with real Solana wallets — discover services, pay each other in SOL, and display a live market briefing."  data-i18n-attr="content:demo_economy.meta_og_description"/>
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Economy+%E2%80%94+NOVA+%26+ORACLE&amp;d=Two+three.ws+AI+agents+with+real+Solana+wallets+discover+services+on+the+x402+bazaar%2C+pay+each+other+in+SOL%2C+and+display+a+live+market+briefing+on+the+TV+in+the&amp;p=%2Fdemo" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Agent Economy Demo — two AI agents pay each other on-chain · three.ws" />
-	<meta name="twitter:description" content="Watch NOVA and ORACLE — two three.ws AI agents with real Solana wallets — discover services, pay each other in SOL, and display a live market briefing." />
+	<meta name="twitter:title" content="Agent Economy Demo — two AI agents pay each other on-chain · three.ws"  data-i18n-attr="content:demo_economy.meta_twitter_title"/>
+	<meta name="twitter:description" content="Watch NOVA and ORACLE — two three.ws AI agents with real Solana wallets — discover services, pay each other in SOL, and display a live market briefing."  data-i18n-attr="content:demo_economy.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Agent+Economy+%E2%80%94+NOVA+%26+ORACLE&amp;d=Two+three.ws+AI+agents+with+real+Solana+wallets+discover+services+on+the+x402+bazaar%2C+pay+each+other+in+SOL%2C+and+display+a+live+market+briefing+on+the+TV+in+the&amp;p=%2Fdemo" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -211,20 +211,20 @@
 <div id="root">
 	<header id="topbar">
 		<div class="brand">
-			<a href="/">three.ws</a>
+			<a href="/" data-i18n="demo_economy.three_ws">three.ws</a>
 			<span class="sep">/</span>
-			<span class="page">Agent Economy</span>
+			<span class="page" data-i18n="demo_economy.agent_economy">Agent Economy</span>
 		</div>
 		<div class="pills">
-			<span class="pill nova"><span class="dot"></span>NOVA · payer</span>
-			<span class="pill oracle"><span class="dot"></span>ORACLE · provider</span>
+			<span class="pill nova" data-i18n-html="demo_economy.nova_payer"><span class="dot"></span>NOVA · payer</span>
+			<span class="pill oracle" data-i18n-html="demo_economy.oracle_provider"><span class="dot"></span>ORACLE · provider</span>
 		</div>
 		<nav class="topnav">
-			<a href="/agents">Agents</a>
-			<a href="/launches">Launches</a>
+			<a href="/agents" data-i18n="demo_economy.agents">Agents</a>
+			<a href="/launches" data-i18n="demo_economy.launches">Launches</a>
 		</nav>
-		<button id="sheet-toggle" type="button" aria-label="Show payment details" aria-expanded="false">Details</button>
-		<button id="run-btn" type="button"><span id="run-label">Run demo</span></button>
+		<button id="sheet-toggle" type="button" aria-label="Show payment details" aria-expanded="false" data-i18n="demo_economy.details" data-i18n-attr="aria-label:demo_economy.show_payment_details_arialabel">Details</button>
+		<button id="run-btn" type="button" data-i18n-html="demo_economy.run_demo"><span id="run-label">Run demo</span></button>
 	</header>
 
 	<div id="canvas-wrap"><canvas id="scene"></canvas></div>
@@ -254,10 +254,10 @@
 			<div class="sb-label">Transaction</div>
 			<div id="pay-empty">Run the demo to see the on-chain transfer.</div>
 			<div id="pay-card">
-				<div class="pr"><span class="pk">Amount</span><span class="pv g" id="py-amt">—</span></div>
-				<div class="pr"><span class="pk">Network</span><span class="pv">Solana</span></div>
-				<div class="pr" id="py-sim-row" style="display:none"><span class="pk">Mode</span><span class="pv"><span class="sim-tag">Simulated</span></span></div>
-				<div class="pr"><span class="pk">Signature</span><span class="pv" id="py-sig">—</span></div>
+				<div class="pr"><span class="pk" data-i18n="demo_economy.amount">Amount</span><span class="pv g" id="py-amt">—</span></div>
+				<div class="pr"><span class="pk" data-i18n="demo_economy.network">Network</span><span class="pv" data-i18n="demo_economy.solana">Solana</span></div>
+				<div class="pr" id="py-sim-row" style="display:none"><span class="pk" data-i18n="demo_economy.mode">Mode</span><span class="pv" data-i18n-html="demo_economy.simulated"><span class="sim-tag">Simulated</span></span></div>
+				<div class="pr"><span class="pk" data-i18n="demo_economy.signature">Signature</span><span class="pv" id="py-sig">—</span></div>
 			</div>
 		</div>
 
@@ -266,14 +266,14 @@
 	</aside>
 
 	<footer id="botbar">
-		<span id="status">Ready — click Run demo</span>
+		<span id="status" data-i18n="demo_economy.ready_click_run_demo">Ready — click Run demo</span>
 		<span style="color:var(--muted)">·</span>
-		<span id="botline" style="color:var(--muted)">Real Solana infrastructure · x402 protocol</span>
+		<span id="botline" style="color:var(--muted)" data-i18n="demo_economy.real_solana_infrastructure_x402_protocol">Real Solana infrastructure · x402 protocol</span>
 		<div class="chips">
-			<span class="chip">x402</span>
-			<span class="chip">Solana</span>
-			<span class="chip">Three.js</span>
-			<span class="chip">SSE</span>
+			<span class="chip" data-i18n="demo_economy.x402">x402</span>
+			<span class="chip" data-i18n="demo_economy.solana_2">Solana</span>
+			<span class="chip" data-i18n="demo_economy.three_js">Three.js</span>
+			<span class="chip" data-i18n="demo_economy.sse">SSE</span>
 		</div>
 	</footer>
 </div>
@@ -456,5 +456,7 @@ function openSheetOnMobile() {
 	if (window.matchMedia('(max-width: 680px)').matches) setSheet(true);
 }
 </script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

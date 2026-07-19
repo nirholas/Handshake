@@ -18,29 +18,29 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>DeFi Protocol · three.ws</title>
+		<title data-i18n="protocol.meta_title">DeFi Protocol · three.ws</title>
 		<meta
 			name="description"
 			content="A rich profile for any DeFi protocol — total value locked with full history, per-chain breakdown, fees, revenue, DEX volume, audits, and funding rounds. Real DeFiLlama data, no API key."
-		/>
+		 data-i18n-attr="content:protocol.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/defi" />
-		<meta property="og:title" content="DeFi Protocol · three.ws" />
+		<meta property="og:title" content="DeFi Protocol · three.ws"  data-i18n-attr="content:protocol.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="TVL history, per-chain breakdown, fees, revenue, DEX volume, audits, and funding rounds for any DeFi protocol. Real DeFiLlama data."
-		/>
+		 data-i18n-attr="content:protocol.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/og-image.png" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="DeFi Protocol · three.ws" />
+		<meta name="twitter:title" content="DeFi Protocol · three.ws"  data-i18n-attr="content:protocol.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="TVL history, per-chain breakdown, fees, revenue, and funding rounds for any DeFi protocol."
-		/>
+		 data-i18n-attr="content:protocol.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/og-image.png" />
 		<meta name="theme-color" content="#09090b" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -63,9 +63,9 @@
 		<main class="cv-container" id="pr-main" aria-busy="true">
 			<!-- Breadcrumbs -->
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a>
+				<a href="/markets" data-i18n="protocol.markets">Markets</a>
 				<span class="sep" aria-hidden="true">/</span>
-				<a href="/defi">DeFi</a>
+				<a href="/defi" data-i18n="protocol.defi">DeFi</a>
 				<span class="sep" aria-hidden="true">/</span>
 				<span class="here" id="pr-crumb-name">…</span>
 			</nav>
@@ -98,5 +98,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

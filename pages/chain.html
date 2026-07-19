@@ -18,29 +18,29 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Chain TVL · three.ws</title>
+		<title data-i18n="chain.meta_title">Chain TVL · three.ws</title>
 		<meta
 			name="description"
 			content="A rich profile for any blockchain — total value locked, dominance share, stablecoin supply, DEX volume, fees, and the top protocols deployed on the chain. Real DeFiLlama data, no API key."
-		/>
+		 data-i18n-attr="content:chain.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/chains" />
-		<meta property="og:title" content="Chain TVL · three.ws" />
+		<meta property="og:title" content="Chain TVL · three.ws"  data-i18n-attr="content:chain.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Total value locked, dominance share, stablecoin supply, DEX volume, fees, and the top protocols for any blockchain. Real DeFiLlama data."
-		/>
+		 data-i18n-attr="content:chain.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/og-image.png" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Chain TVL · three.ws" />
+		<meta name="twitter:title" content="Chain TVL · three.ws"  data-i18n-attr="content:chain.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Total value locked, dominance share, stablecoin supply, DEX volume, and top protocols for any blockchain."
-		/>
+		 data-i18n-attr="content:chain.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/og-image.png" />
 		<meta name="theme-color" content="#09090b" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -63,9 +63,9 @@
 		<main class="cv-container" id="ch-main" aria-busy="true">
 			<!-- Breadcrumbs -->
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a>
+				<a href="/markets" data-i18n="chain.markets">Markets</a>
 				<span class="sep" aria-hidden="true">/</span>
-				<a href="/chains">Chains</a>
+				<a href="/chains" data-i18n="chain.chains">Chains</a>
 				<span class="sep" aria-hidden="true">/</span>
 				<span class="here" id="ch-crumb-name">…</span>
 			</nav>
@@ -95,5 +95,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

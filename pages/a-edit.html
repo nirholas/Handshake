@@ -3,7 +3,7 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Edit Agent — three.ws</title>
+		<title data-i18n="a_edit.meta_title">Edit Agent — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="robots" content="noindex" />
 		<meta name="theme-color" content="#000000" />
@@ -259,7 +259,7 @@
 		<script src="/nav.js"></script>
 
 		<header class="ce-page-header">
-			<a id="back-link" href="/marketplace">← Back</a>
+			<a id="back-link" href="/marketplace" data-i18n="a_edit.back">← Back</a>
 		</header>
 
 		<main>
@@ -295,5 +295,7 @@
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
 		<script src="/brand.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

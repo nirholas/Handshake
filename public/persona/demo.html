@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Persona Hub demo · three.ws</title>
+<title data-i18n="persona_demo.meta_title">Persona Hub demo · three.ws</title>
 <link rel="icon" href="/favicon.ico" />
-<meta name="description" content="Demonstration page for the three.ws Persona Hub — embed <three-ws-signin> on any site, get a token + the user's avatar URL." />
+<meta name="description" content="Demonstration page for the three.ws Persona Hub — embed <three-ws-signin> on any site, get a token + the user's avatar URL."  data-i18n-attr="content:persona_demo.meta_description"/>
 <meta name="robots" content="noindex" />
 <style>
 	:root {
@@ -173,9 +173,9 @@
 </head>
 <body>
 <main>
-	<div class="brand"><strong>three.ws</strong> · Persona Hub demo</div>
-	<h1>Sign in with three.ws</h1>
-	<p class="lede">
+	<div class="brand"><strong data-i18n="persona_demo.three_ws">three.ws</strong> · Persona Hub demo</div>
+	<h1 data-i18n="persona_demo.sign_in_with_three_ws">Sign in with three.ws</h1>
+	<p class="lede" data-i18n-html="persona_demo.this_page_imitates_a_third_party_tenant">
 		This page imitates a third-party tenant site. Clicking the button below opens a popup to the
 		three.ws consent screen and — on approval — receives a 24-hour token plus the user's avatar
 		URL via <code>postMessage</code>. The token's audience is bound to this origin so it cannot be
@@ -183,17 +183,17 @@
 	</p>
 
 	<div class="demo-card">
-		<h2>1. Trigger the flow</h2>
+		<h2 data-i18n="persona_demo.1_trigger_the_flow">1. Trigger the flow</h2>
 		<div class="row">
 			<three-ws-signin id="signin"></three-ws-signin>
-			<span class="muted" style="color: var(--muted); font-size: 13.5px;">
+			<span class="muted" style="color: var(--muted); font-size: 13.5px;" data-i18n-html="persona_demo.opens">
 				Opens <code style="background: var(--panel-elev); padding: 1px 4px; border-radius: 4px;">/persona/authorize.html</code>
 			</span>
 		</div>
 	</div>
 
 	<div class="demo-card">
-		<h2>2. Received token</h2>
+		<h2 data-i18n="persona_demo.2_received_token">2. Received token</h2>
 		<div id="token-display" class="token-display empty">No token yet — click the button above.</div>
 		<div id="avatar-preview" class="avatar-preview">
 			<img id="avatar-thumb" alt="" />
@@ -218,8 +218,8 @@
 	</div>
 
 	<div class="demo-card">
-		<h2>3. Server-side verification (snippet)</h2>
-		<p style="color: var(--muted); margin: 0 0 6px; font-size: 13.5px;">
+		<h2 data-i18n="persona_demo.3_server_side_verification_snippet">3. Server-side verification (snippet)</h2>
+		<p style="color: var(--muted); margin: 0 0 6px; font-size: 13.5px;" data-i18n="persona_demo.tenants_verify_tokens_before_trusting_them_a">
 			Tenants verify tokens before trusting them. Audience is enforced to prevent cross-tenant replay.
 		</p>
 <pre class="code-block">const audience = location.origin;
@@ -236,14 +236,14 @@ if (!res.ok) throw new Error(claims.error_description);
 	</div>
 
 	<div class="demo-card">
-		<h2>4. Event log</h2>
+		<h2 data-i18n="persona_demo.4_event_log">4. Event log</h2>
 		<div id="log" class="log">Waiting for events…</div>
 	</div>
 
 	<div class="footer-links">
-		<a href="/docs/persona-hub">Documentation</a>
-		<a href="/persona/widget.js">widget.js source</a>
-		<a href="/persona/authorize.html">Consent screen</a>
+		<a href="/docs/persona-hub" data-i18n="persona_demo.documentation">Documentation</a>
+		<a href="/persona/widget.js" data-i18n="persona_demo.widget_js_source">widget.js source</a>
+		<a href="/persona/authorize.html" data-i18n="persona_demo.consent_screen">Consent screen</a>
 	</div>
 </main>
 
@@ -323,5 +323,7 @@ if (!res.ok) throw new Error(claims.error_description);
 	});
 </script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

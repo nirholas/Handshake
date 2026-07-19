@@ -3,12 +3,12 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Widget Studio · three.ws</title>
+		<title data-i18n="studio_index.meta_title">Widget Studio · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta
 			name="description"
 			content="Turn any avatar into an embeddable 3D widget. Five types, brand controls, one-line embed."
-		/>
+		 data-i18n-attr="content:studio_index.meta_description"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<meta name="robots" content="noindex" />
 		<link rel="shortcut icon" href="/favicon.ico" />
@@ -84,15 +84,15 @@
 	<link rel="canonical" href="https://three.ws/studio">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="Widget Studio · three.ws">
-	<meta property="og:description" content="Pick an avatar, configure embed options, copy a one-line snippet for your site.">
+	<meta property="og:title" content="Widget Studio · three.ws" data-i18n-attr="content:studio_index.meta_og_title">
+	<meta property="og:description" content="Pick an avatar, configure embed options, copy a one-line snippet for your site." data-i18n-attr="content:studio_index.meta_og_description">
 	<meta property="og:url" content="https://three.ws/studio">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Widget+Studio&amp;d=Pick+an+avatar%2C+configure+embed+options%2C+copy+a+one-line+snippet+for+your+site.&amp;p=%2Fstudio">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Widget Studio · three.ws">
-	<meta name="twitter:description" content="Pick an avatar, configure embed options, copy a one-line snippet for your site.">
+	<meta name="twitter:title" content="Widget Studio · three.ws" data-i18n-attr="content:studio_index.meta_twitter_title">
+	<meta name="twitter:description" content="Pick an avatar, configure embed options, copy a one-line snippet for your site." data-i18n-attr="content:studio_index.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Widget+Studio&amp;d=Pick+an+avatar%2C+configure+embed+options%2C+copy+a+one-line+snippet+for+your+site.&amp;p=%2Fstudio">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Widget Studio","description":"Pick an avatar, configure embed options, copy a one-line snippet for your site.","url":"https://three.ws/studio","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -102,18 +102,18 @@
 </head>
 	<body class="studio-body">
 		<header class="studio-header">
-			<h1>
+			<h1 data-i18n-html="studio_index.studio">
 				<a href="/"><img src="/three.svg" alt="three.ws" class="wordmark-logo" /></a
 				><span class="studio-tag">Studio</span>
 			</h1>
 			<nav>
-				<a href="/app">Viewer</a>
-				<a href="/create">Create</a>
-				<a href="/discover">Discover</a>
-				<a href="/features">Features</a>
-				<a href="/widgets">Widgets</a>
-				<a href="/studio" aria-current="page">Studio</a>
-				<a href="/docs">Docs</a>
+				<a href="/app" data-i18n="studio_index.viewer">Viewer</a>
+				<a href="/create" data-i18n="studio_index.create">Create</a>
+				<a href="/discover" data-i18n="studio_index.discover">Discover</a>
+				<a href="/features" data-i18n="studio_index.features">Features</a>
+				<a href="/widgets" data-i18n="studio_index.widgets">Widgets</a>
+				<a href="/studio" aria-current="page" data-i18n="studio_index.studio_2">Studio</a>
+				<a href="/docs" data-i18n="studio_index.docs">Docs</a>
 				<div id="user-menu" class="user-menu" data-state="loading"></div>
 			</nav>
 		</header>
@@ -121,10 +121,10 @@
 		<main class="studio-layout" id="studio-layout" hidden>
 			<section class="studio-col-left" aria-label="Pick avatar and widget type">
 				<div class="panel">
-					<h2 data-tooltip="The 3D model your widget will display. We've pre-loaded a demo agent so you can try the studio right away — sign in to use your own.">
+					<h2 data-tooltip="The 3D model your widget will display. We've pre-loaded a demo agent so you can try the studio right away — sign in to use your own." data-i18n-html="studio_index.1_pick_avatar">
 						<span class="step-num">1</span> Pick avatar
 					</h2>
-					<p class="note">To see your avatar here, make it public or unlisted in your <a href="/dashboard/avatars">avatar dashboard</a>. Or browse the <a href="/gallery" target="_blank" rel="noopener">community gallery</a>.</p>
+					<p class="note" data-i18n-html="studio_index.to_see_your_avatar_here_make_it">To see your avatar here, make it public or unlisted in your <a href="/dashboard/avatars">avatar dashboard</a>. Or browse the <a href="/gallery" target="_blank" rel="noopener">community gallery</a>.</p>
 					<div class="avatar-list" id="avatar-list" aria-busy="true"></div>
 					<div class="browse-public">
 						<div class="browse-public-row">
@@ -135,14 +135,14 @@
 								autocomplete="off"
 								spellcheck="false"
 							/>
-							<button class="btn-ghost btn-sm" id="public-search-btn" type="button">Browse</button>
+							<button class="btn-ghost btn-sm" id="public-search-btn" type="button" data-i18n="studio_index.browse">Browse</button>
 						</div>
 						<div class="avatar-list" id="public-avatar-list" hidden></div>
 						<div class="muted public-search-status" id="public-search-status" hidden></div>
 					</div>
 				</div>
 				<div class="panel">
-					<h2 data-tooltip="Each widget type is a different layout — Turntable for hero banners, Talking Agent for chat, Passport for on-chain identity, etc. Click to switch and watch the preview update.">
+					<h2 data-tooltip="Each widget type is a different layout — Turntable for hero banners, Talking Agent for chat, Passport for on-chain identity, etc. Click to switch and watch the preview update." data-i18n-html="studio_index.2_pick_widget_type">
 						<span class="step-num">2</span> Pick widget type
 					</h2>
 					<div class="type-grid" id="type-grid"></div>
@@ -171,14 +171,14 @@
 								<svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true"><rect x="3.5" y="1" width="7" height="12" rx="1.5" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="11.5" r="0.5" fill="currentColor"/></svg>
 							</button>
 						</div>
-						<span id="preview-status" class="muted">Pick an avatar to preview</span>
+						<span id="preview-status" class="muted" data-i18n="studio_index.pick_an_avatar_to_preview">Pick an avatar to preview</span>
 						<button
 							class="btn-ghost btn-sm"
 							id="capture-camera-btn"
 							type="button"
 							data-tooltip="Drag to frame the avatar exactly how you want, then click to lock in that camera angle as the widget's default."
 							disabled
-						>
+						 data-i18n="studio_index.use_current_view">
 							Use current view
 						</button>
 					</div>
@@ -188,12 +188,12 @@
 			<section class="studio-col-right" aria-label="Brand and config">
 				<div class="panel">
 					<div class="studio-right-tabs" role="tablist">
-						<button class="studio-right-tab" id="tab-brand" role="tab" aria-selected="true" aria-controls="panel-brand">Brand</button>
-						<button class="studio-right-tab" id="tab-launch" role="tab" aria-selected="false" aria-controls="panel-launch">⚡ Launch</button>
+						<button class="studio-right-tab" id="tab-brand" role="tab" aria-selected="true" aria-controls="panel-brand" data-i18n="studio_index.brand">Brand</button>
+						<button class="studio-right-tab" id="tab-launch" role="tab" aria-selected="false" aria-controls="panel-launch" data-i18n="studio_index.launch">⚡ Launch</button>
 					</div>
 
 					<div id="panel-brand" role="tabpanel">
-					<h2 data-tooltip="Style the widget to match your site — colors, environment, captions, and behavior. Changes update the preview live.">
+					<h2 data-tooltip="Style the widget to match your site — colors, environment, captions, and behavior. Changes update the preview live." data-i18n-html="studio_index.3_brand">
 						<span class="step-num">3</span> Brand
 					</h2>
 					<form
@@ -206,7 +206,7 @@
 							class="field"
 							data-tooltip="Internal name for this widget. Shows up in your dashboard — visitors never see it."
 						>
-							<span>Name</span>
+							<span data-i18n="studio_index.name">Name</span>
 							<input
 								type="text"
 								name="name"
@@ -219,21 +219,21 @@
 							class="field"
 							data-tooltip="Backdrop color behind the avatar. Pick something close to your site's background for a seamless embed."
 						>
-							<span>Background</span>
+							<span data-i18n="studio_index.background">Background</span>
 							<input type="color" name="background" value="#0a0a0a" />
 						</label>
 						<label
 							class="field"
 							data-tooltip="Highlight color used for buttons, focus rings, and the chat bubble. Match your brand."
 						>
-							<span>Accent</span>
+							<span data-i18n="studio_index.accent">Accent</span>
 							<input type="color" name="accent" value="#ffffff" />
 						</label>
 						<label
 							class="field"
 							data-tooltip="Optional text overlay shown below the avatar — great for a tagline or call-to-action."
 						>
-							<span>Caption (optional)</span>
+							<span data-i18n="studio_index.caption_optional">Caption (optional)</span>
 							<input
 								type="text"
 								name="caption"
@@ -246,25 +246,25 @@
 							data-tooltip="Show the orbit/zoom controls so visitors can rotate the avatar themselves. Turn off for a hands-off hero shot."
 						>
 							<input type="checkbox" name="showControls" checked />
-							<span>Show controls</span>
+							<span data-i18n="studio_index.show_controls">Show controls</span>
 						</label>
 						<label
 							class="field row"
 							data-tooltip="Slowly spin the avatar on its own. Pauses when the visitor interacts."
 						>
 							<input type="checkbox" name="autoRotate" checked />
-							<span>Auto-rotate</span>
+							<span data-i18n="studio_index.auto_rotate">Auto-rotate</span>
 						</label>
 						<label
 							class="field"
 							data-tooltip="HDR lighting environment that affects how the avatar is lit and reflects. Try a few — they change the mood instantly."
 						>
-							<span>Environment</span>
+							<span data-i18n="studio_index.environment">Environment</span>
 							<select name="envPreset">
-								<option value="none">None</option>
-								<option value="neutral" selected>Neutral</option>
-								<option value="venice-sunset">Venice sunset</option>
-								<option value="footprint-court">Footprint court</option>
+								<option value="none" data-i18n="studio_index.none">None</option>
+								<option value="neutral" selected data-i18n="studio_index.neutral">Neutral</option>
+								<option value="venice-sunset" data-i18n="studio_index.venice_sunset">Venice sunset</option>
+								<option value="footprint-court" data-i18n="studio_index.footprint_court">Footprint court</option>
 							</select>
 						</label>
 						<label
@@ -272,7 +272,7 @@
 							data-tooltip="Public widgets load for anyone with the URL or embed snippet. Uncheck to keep it private to your account."
 						>
 							<input type="checkbox" name="is_public" checked />
-							<span>Public widget (anyone with the URL can load it)</span>
+							<span data-i18n="studio_index.public_widget_anyone_with_the_url_can">Public widget (anyone with the URL can load it)</span>
 						</label>
 
 						<div id="type-fields" class="type-fields"></div>
@@ -290,7 +290,7 @@
 						class="btn-ghost"
 						id="save-draft-btn"
 						data-tooltip="Save your config to your dashboard without generating embed code. You can come back and tweak it later."
-					>
+					 data-i18n="studio_index.save_draft">
 						Save draft
 					</button>
 					<button
@@ -298,7 +298,7 @@
 						class="btn-primary"
 						id="generate-btn"
 						data-tooltip="Save and produce a shareable URL plus the iframe/script snippets you can paste into your site."
-					>
+					 data-i18n="studio_index.generate_embed">
 						Generate embed
 					</button>
 				</div>
@@ -319,7 +319,7 @@
 						class="btn-danger btn-sm"
 						id="delete-widget-btn"
 						data-tooltip="Permanently delete this widget. Cannot be undone."
-					>
+					 data-i18n="studio_index.delete_widget">
 						Delete widget
 					</button>
 				</div>
@@ -329,12 +329,12 @@
 
 		<div class="modal-overlay" id="embed-modal" hidden>
 			<div class="modal" role="dialog" aria-labelledby="embed-modal-title" aria-modal="true">
-				<button type="button" class="modal-close" id="embed-modal-close" aria-label="Close">
+				<button type="button" class="modal-close" id="embed-modal-close" aria-label="Close" data-i18n-attr="aria-label:studio_index.close_arialabel">
 					×
 				</button>
-				<h2 id="embed-modal-title">Your widget is live</h2>
-				<p class="muted">Share the URL or paste the snippet anywhere.</p>
-				<p id="embed-demo-note" class="muted" hidden>
+				<h2 id="embed-modal-title" data-i18n="studio_index.your_widget_is_live">Your widget is live</h2>
+				<p class="muted" data-i18n="studio_index.share_the_url_or_paste_the_snippet">Share the URL or paste the snippet anywhere.</p>
+				<p id="embed-demo-note" class="muted" hidden data-i18n-html="studio_index.this_embeds_the_built_in_demo_agent">
 					This embeds the built-in demo agent with its preset config — your studio
 					tweaks aren't saved.
 					<a href="/dashboard#upload">Upload your own avatar</a> to embed a customized
@@ -350,10 +350,10 @@
 				</div>
 
 				<label class="field">
-					<span>Shareable URL</span>
+					<span data-i18n="studio_index.shareable_url">Shareable URL</span>
 					<div class="copy-row">
 						<input type="text" id="embed-share-url" readonly />
-						<button type="button" class="btn-ghost btn-sm" data-copy="#embed-share-url">
+						<button type="button" class="btn-ghost btn-sm" data-copy="#embed-share-url" data-i18n="studio_index.copy">
 							Copy
 						</button>
 					</div>
@@ -361,59 +361,59 @@
 
 				<div style="display:flex;gap:12px">
 					<label class="field">
-						<span>Width (px)</span>
+						<span data-i18n="studio_index.width_px">Width (px)</span>
 						<input type="number" id="embed-width" value="600" min="100" max="3000" step="10" />
 					</label>
 					<label class="field">
-						<span>Height (px)</span>
+						<span data-i18n="studio_index.height_px">Height (px)</span>
 						<input type="number" id="embed-height" value="600" min="100" max="3000" step="10" />
 					</label>
 				</div>
 
 				<div id="embed-options" hidden>
-					<p style="margin:12px 0 6px;font-size:0.82em;text-transform:uppercase;letter-spacing:0.05em;opacity:0.5">Include in embed</p>
+					<p style="margin:12px 0 6px;font-size:0.82em;text-transform:uppercase;letter-spacing:0.05em;opacity:0.5" data-i18n="studio_index.include_in_embed">Include in embed</p>
 					<label class="field row" id="embed-opt-animations" hidden>
 						<input type="checkbox" id="embed-include-animations" checked />
-						<span>Animations panel</span>
+						<span data-i18n="studio_index.animations_panel">Animations panel</span>
 					</label>
 					<label class="field row" id="embed-opt-chat" hidden>
 						<input type="checkbox" id="embed-include-chat" checked />
-						<span>Chat UI</span>
+						<span data-i18n="studio_index.chat_ui">Chat UI</span>
 					</label>
 					<label class="field row" id="embed-opt-controls" hidden>
 						<input type="checkbox" id="embed-include-controls" checked />
-						<span>3D orbit controls</span>
+						<span data-i18n="studio_index.3d_orbit_controls">3D orbit controls</span>
 					</label>
 				</div>
 
 				<label class="field">
-					<span>iframe snippet</span>
+					<span data-i18n="studio_index.iframe_snippet">iframe snippet</span>
 					<div class="copy-row">
 						<textarea id="embed-iframe-snippet" rows="3" readonly></textarea>
 						<button
 							type="button"
 							class="btn-ghost btn-sm"
 							data-copy="#embed-iframe-snippet"
-						>
+						 data-i18n="studio_index.copy_2">
 							Copy
 						</button>
 					</div>
 				</label>
 
 				<details>
-					<summary>Script-tag embed</summary>
+					<summary data-i18n="studio_index.script_tag_embed">Script-tag embed</summary>
 					<div class="copy-row">
 						<textarea id="embed-script-snippet" rows="2" readonly></textarea>
 						<button
 							type="button"
 							class="btn-ghost btn-sm"
 							data-copy="#embed-script-snippet"
-						>
+						 data-i18n="studio_index.copy_3">
 							Copy
 						</button>
 					</div>
 				</details>
-				<p class="muted">
+				<p class="muted" data-i18n-html="studio_index.want_to_try_the_viewer_full_page">
 					Want to try the viewer full-page with environments and embed code side by side?
 					Open the <a href="/playground">Playground</a>.
 				</p>
@@ -424,5 +424,7 @@
 
 		<script type="module" src="/studio/studio.js?v=4"></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

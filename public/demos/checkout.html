@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>three.ws — checkout demo</title>
+		<title data-i18n="demos_checkout.meta_title">three.ws — checkout demo</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<style>
@@ -162,7 +162,7 @@
 				<span class="brand-dot"></span>
 				three.ws
 			</a>
-			<a href="/demos/" class="link" style="margin-left:18px">← lab</a>
+			<a href="/demos/" class="link" style="margin-left:18px" data-i18n="demos_checkout.lab">← lab</a>
 			<div class="spacer"></div>
 			<div class="cart" id="cart" aria-label="Cart">
 				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -178,18 +178,18 @@
 			<div class="product">
 				<div class="product-image"><div class="orb"></div></div>
 				<div>
-					<div class="eyebrow"><span class="eyebrow-dot"></span><span>Limited drop · 2026 collection</span></div>
-					<h1>Lime Plasma Orb</h1>
-					<p class="sub">Hand-tuned reactive lighting baked into a portable companion sphere. One per agent.</p>
+					<div class="eyebrow"><span class="eyebrow-dot"></span><span data-i18n="demos_checkout.limited_drop_2026_collection">Limited drop · 2026 collection</span></div>
+					<h1 data-i18n="demos_checkout.lime_plasma_orb">Lime Plasma Orb</h1>
+					<p class="sub" data-i18n="demos_checkout.hand_tuned_reactive_lighting_baked_into_a">Hand-tuned reactive lighting baked into a portable companion sphere. One per agent.</p>
 					<div class="price">
 						<span class="now">$129</span>
 						<span class="was">$199</span>
 					</div>
-					<button class="add-btn" id="add-btn" type="button">
+					<button class="add-btn" id="add-btn" type="button" data-i18n-html="demos_checkout.add_to_cart">
 						<span>Add to cart</span>
 						<span>→</span>
 					</button>
-					<div class="hint">Click <strong>Add to cart</strong> — she'll grab it and run it to the basket.</div>
+					<div class="hint">Click <strong data-i18n="demos_checkout.add_to_cart_2">Add to cart</strong> — she'll grab it and run it to the basket.</div>
 				</div>
 			</div>
 		</div>
@@ -485,5 +485,7 @@
 			})();
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

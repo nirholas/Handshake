@@ -4,9 +4,9 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Chrome extension — Walk docs — three.ws</title>
+		<title data-i18n="docs_walk_chrome_extension.meta_title">Chrome extension — Walk docs — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<meta name="description" content="The three.ws Walk Avatar Chrome extension: walk your avatar on any site, configure appearance and per-site rules, and have pages read aloud with text-to-speech. Install, permissions, and settings." />
+		<meta name="description" content="The three.ws Walk Avatar Chrome extension: walk your avatar on any site, configure appearance and per-site rules, and have pages read aloud with text-to-speech. Install, permissions, and settings."  data-i18n-attr="content:docs_walk_chrome_extension.meta_description"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="canonical" href="https://three.ws/docs/walk/chrome-extension" />
 		<link rel="shortcut icon" href="/favicon.ico" />
@@ -17,56 +17,56 @@
 		<link rel="stylesheet" href="/docs/walk/docs.css" />
 	</head>
 	<body>
-		<a class="wd-skip" href="#wd-main">Skip to content</a>
+		<a class="wd-skip" href="#wd-main" data-i18n="docs_walk_chrome_extension.skip_to_content">Skip to content</a>
 		<header><div id="nav-container"></div></header>
 		<script src="/nav.js"></script>
 
 		<div class="wd-shell">
-			<button class="wd-side-toggle" type="button" aria-expanded="false" aria-controls="wd-side">
+			<button class="wd-side-toggle" type="button" aria-expanded="false" aria-controls="wd-side" data-i18n-html="docs_walk_chrome_extension.documentation_menu">
 				<span>Documentation menu</span><span aria-hidden="true">☰</span>
 			</button>
 			<aside class="wd-side" id="wd-side" aria-label="Walk documentation">
-				<h2>Walk docs</h2>
+				<h2 data-i18n="docs_walk_chrome_extension.walk_docs">Walk docs</h2>
 				<nav aria-label="Walk documentation pages">
-					<a href="/docs/walk">Overview</a>
-					<a href="/docs/walk/getting-started">Getting started</a>
+					<a href="/docs/walk" data-i18n="docs_walk_chrome_extension.overview">Overview</a>
+					<a href="/docs/walk/getting-started" data-i18n="docs_walk_chrome_extension.getting_started">Getting started</a>
 				</nav>
-				<h2>Use it</h2>
+				<h2 data-i18n="docs_walk_chrome_extension.use_it">Use it</h2>
 				<nav aria-label="Using Walk">
-					<a href="/docs/walk/walk-page">The walk page</a>
-					<a href="/docs/walk/companion-mode">Companion mode</a>
-					<a href="/docs/walk/chrome-extension" aria-current="page">Chrome extension</a>
+					<a href="/docs/walk/walk-page" data-i18n="docs_walk_chrome_extension.the_walk_page">The walk page</a>
+					<a href="/docs/walk/companion-mode" data-i18n="docs_walk_chrome_extension.companion_mode">Companion mode</a>
+					<a href="/docs/walk/chrome-extension" aria-current="page" data-i18n="docs_walk_chrome_extension.chrome_extension">Chrome extension</a>
 				</nav>
-				<h2>Build with it</h2>
+				<h2 data-i18n="docs_walk_chrome_extension.build_with_it">Build with it</h2>
 				<nav aria-label="Building with Walk">
-					<a href="/docs/walk/embed-iframe">Iframe embed</a>
-					<a href="/docs/walk/embed-sdk">JavaScript SDK</a>
-					<a href="/docs/walk/postmessage-events">postMessage events</a>
-					<a href="/docs/walk/analytics">Analytics</a>
+					<a href="/docs/walk/embed-iframe" data-i18n="docs_walk_chrome_extension.iframe_embed">Iframe embed</a>
+					<a href="/docs/walk/embed-sdk" data-i18n="docs_walk_chrome_extension.javascript_sdk">JavaScript SDK</a>
+					<a href="/docs/walk/postmessage-events" data-i18n="docs_walk_chrome_extension.postmessage_events">postMessage events</a>
+					<a href="/docs/walk/analytics" data-i18n="docs_walk_chrome_extension.analytics">Analytics</a>
 				</nav>
-				<h2>Reference</h2>
-				<nav aria-label="Reference"><a href="/docs/walk/changelog">Changelog</a></nav>
+				<h2 data-i18n="docs_walk_chrome_extension.reference">Reference</h2>
+				<nav aria-label="Reference"><a href="/docs/walk/changelog" data-i18n="docs_walk_chrome_extension.changelog">Changelog</a></nav>
 			</aside>
 
 			<main class="wd-main" id="wd-main">
-				<p class="wd-crumbs"><a href="/docs">Docs</a> / <a href="/docs/walk">Walk</a> / Chrome extension</p>
-				<h1>Chrome extension</h1>
-				<p class="wd-lede">
+				<p class="wd-crumbs" data-i18n-html="docs_walk_chrome_extension.docs_walk_chrome_extension"><a href="/docs">Docs</a> / <a href="/docs/walk">Walk</a> / Chrome extension</p>
+				<h1 data-i18n="docs_walk_chrome_extension.chrome_extension_2">Chrome extension</h1>
+				<p class="wd-lede" data-i18n-html="docs_walk_chrome_extension.the_three_ws_walk_avatar_extension_v1">
 					The <strong>three.ws Walk Avatar</strong> extension (v1.0.0) puts a floating 3D
 					avatar on any website you visit. It walks alongside you and can read page
 					sections aloud — a living browsing companion. It only ever runs on tabs you
 					explicitly enable.
 				</p>
 
-				<h2>What it does</h2>
+				<h2 data-i18n="docs_walk_chrome_extension.what_it_does">What it does</h2>
 				<ul>
-					<li><strong>Mounts your avatar on any site.</strong> The avatar is the same transparent <code>/walk-embed</code> iframe, injected into the current tab when you toggle it on.</li>
-					<li><strong>Reads pages aloud (optional).</strong> With narration enabled, it detects the main article, tracks what's in view, and speaks visible sections using text-to-speech.</li>
-					<li><strong>Respects your rules.</strong> Per-site enabling plus an allowlist/blocklist, and it never auto-injects — it runs only where you ask.</li>
+					<li data-i18n-html="docs_walk_chrome_extension.mounts_your_avatar_on_any_site_the"><strong>Mounts your avatar on any site.</strong> The avatar is the same transparent <code>/walk-embed</code> iframe, injected into the current tab when you toggle it on.</li>
+					<li data-i18n-html="docs_walk_chrome_extension.reads_pages_aloud_optional_with_narration_en"><strong>Reads pages aloud (optional).</strong> With narration enabled, it detects the main article, tracks what's in view, and speaks visible sections using text-to-speech.</li>
+					<li data-i18n-html="docs_walk_chrome_extension.respects_your_rules_per_site_enabling_plus"><strong>Respects your rules.</strong> Per-site enabling plus an allowlist/blocklist, and it never auto-injects — it runs only where you ask.</li>
 				</ul>
 
-				<h2>Install</h2>
-				<p>
+				<h2 data-i18n="docs_walk_chrome_extension.install">Install</h2>
+				<p data-i18n="docs_walk_chrome_extension.the_extension_is_built_from_this_repository">
 					The extension is built from this repository and loaded unpacked. (It is prepared
 					for the Chrome Web Store; a public listing is not yet available, so install it in
 					developer mode.)
@@ -75,62 +75,62 @@
 					<pre><code>npm run build:extension</code></pre>
 				</div>
 				<ol>
-					<li>Open <code>chrome://extensions</code>.</li>
-					<li>Enable <strong>Developer mode</strong> (top-right).</li>
-					<li>Click <strong>Load unpacked</strong>.</li>
-					<li>Select <code>dist/extension/</code>.</li>
+					<li data-i18n-html="docs_walk_chrome_extension.open">Open <code>chrome://extensions</code>.</li>
+					<li data-i18n-html="docs_walk_chrome_extension.enable_developer_mode_top_right">Enable <strong>Developer mode</strong> (top-right).</li>
+					<li data-i18n-html="docs_walk_chrome_extension.click_load_unpacked">Click <strong>Load unpacked</strong>.</li>
+					<li data-i18n-html="docs_walk_chrome_extension.select">Select <code>dist/extension/</code>.</li>
 				</ol>
 				<div class="wd-note">
 					<span class="wd-icon" aria-hidden="true">✱</span>
-					<span>Requires Chrome 109 or newer (Manifest V3). To package a store-ready zip, run <code>npm run build:extension:prod</code>, which emits <code>dist/extension-&lt;version&gt;.zip</code>.</span>
+					<span data-i18n-html="docs_walk_chrome_extension.requires_chrome_109_or_newer_manifest_v3">Requires Chrome 109 or newer (Manifest V3). To package a store-ready zip, run <code>npm run build:extension:prod</code>, which emits <code>dist/extension-&lt;version&gt;.zip</code>.</span>
 				</div>
 
-				<h2>Permissions</h2>
-				<p>The extension requests the minimum it needs and injects only on explicit user action.</p>
+				<h2 data-i18n="docs_walk_chrome_extension.permissions">Permissions</h2>
+				<p data-i18n="docs_walk_chrome_extension.the_extension_requests_the_minimum_it_needs">The extension requests the minimum it needs and injects only on explicit user action.</p>
 				<div class="wd-table-wrap">
 					<table class="wd-table">
-						<thead><tr><th>Permission</th><th>Why</th></tr></thead>
+						<thead><tr><th data-i18n="docs_walk_chrome_extension.permission">Permission</th><th data-i18n="docs_walk_chrome_extension.why">Why</th></tr></thead>
 						<tbody>
-							<tr><td><code>storage</code></td><td>Persist your chosen avatar, walk speed, position, site rules, and narration settings (synced across your Chrome devices).</td></tr>
-							<tr><td><code>activeTab</code></td><td>Read the current tab's hostname to label "Enable on this site" and relay your toggle to that tab.</td></tr>
-							<tr><td><code>tabs</code></td><td>Keep the avatar in sync as you navigate, evaluate your site rules, and relay live setting changes to mounted tabs.</td></tr>
-							<tr><td><code>scripting</code></td><td>Inject the avatar into your active tab — only when you turn it on, never automatically.</td></tr>
-							<tr><td><code>host_permissions</code> (<code>&lt;all_urls&gt;</code>)</td><td>Because you can enable the avatar on any site you visit. Injection still happens only on tabs you enable.</td></tr>
-							<tr><td><code>host_permissions</code> (<code>three.ws</code>)</td><td>Fetch your avatars, featured avatars, and TTS voices, and serve the walking iframe.</td></tr>
+							<tr><td><code>storage</code></td><td data-i18n="docs_walk_chrome_extension.persist_your_chosen_avatar_walk_speed_positi">Persist your chosen avatar, walk speed, position, site rules, and narration settings (synced across your Chrome devices).</td></tr>
+							<tr><td><code>activeTab</code></td><td data-i18n="docs_walk_chrome_extension.read_the_current_tab_s_hostname_to">Read the current tab's hostname to label "Enable on this site" and relay your toggle to that tab.</td></tr>
+							<tr><td><code>tabs</code></td><td data-i18n="docs_walk_chrome_extension.keep_the_avatar_in_sync_as_you">Keep the avatar in sync as you navigate, evaluate your site rules, and relay live setting changes to mounted tabs.</td></tr>
+							<tr><td><code>scripting</code></td><td data-i18n="docs_walk_chrome_extension.inject_the_avatar_into_your_active_tab">Inject the avatar into your active tab — only when you turn it on, never automatically.</td></tr>
+							<tr><td><code>host_permissions</code> (<code>&lt;all_urls&gt;</code>)</td><td data-i18n="docs_walk_chrome_extension.because_you_can_enable_the_avatar_on">Because you can enable the avatar on any site you visit. Injection still happens only on tabs you enable.</td></tr>
+							<tr><td><code>host_permissions</code> (<code>three.ws</code>)</td><td data-i18n="docs_walk_chrome_extension.fetch_your_avatars_featured_avatars_and_tts">Fetch your avatars, featured avatars, and TTS voices, and serve the walking iframe.</td></tr>
 						</tbody>
 					</table>
 				</div>
 
-				<h2>The popup</h2>
-				<p>Click the toolbar icon to open the popup:</p>
+				<h2 data-i18n="docs_walk_chrome_extension.the_popup">The popup</h2>
+				<p data-i18n="docs_walk_chrome_extension.click_the_toolbar_icon_to_open_the">Click the toolbar icon to open the popup:</p>
 				<ul>
-					<li><strong>Account</strong> — your handle and a sign-in / sign-out control.</li>
-					<li><strong>Avatar picker</strong> — three tabs: <em>My Avatars</em> (signed in), <em>Featured</em>, and <em>Recent</em> (your last picks). Selecting one sets it as your walker.</li>
-					<li><strong>Walk speed</strong> — a slider from 0.5× to 2.0×.</li>
-					<li><strong>Enable on this site</strong> — a toggle that mounts/unmounts the avatar on the current tab, with the domain shown. It's disabled on restricted pages (<code>chrome://</code>, etc.).</li>
-					<li><strong>All settings →</strong> — opens the full options page.</li>
+					<li data-i18n-html="docs_walk_chrome_extension.account_your_handle_and_a_sign_in"><strong>Account</strong> — your handle and a sign-in / sign-out control.</li>
+					<li data-i18n-html="docs_walk_chrome_extension.avatar_picker_three_tabs_my_avatars_signed"><strong>Avatar picker</strong> — three tabs: <em>My Avatars</em> (signed in), <em>Featured</em>, and <em>Recent</em> (your last picks). Selecting one sets it as your walker.</li>
+					<li data-i18n-html="docs_walk_chrome_extension.walk_speed_a_slider_from_0_5"><strong>Walk speed</strong> — a slider from 0.5× to 2.0×.</li>
+					<li data-i18n-html="docs_walk_chrome_extension.enable_on_this_site_a_toggle_that"><strong>Enable on this site</strong> — a toggle that mounts/unmounts the avatar on the current tab, with the domain shown. It's disabled on restricted pages (<code>chrome://</code>, etc.).</li>
+					<li data-i18n-html="docs_walk_chrome_extension.all_settings_opens_the_full_options_page"><strong>All settings →</strong> — opens the full options page.</li>
 				</ul>
 
-				<h2>Settings (options page)</h2>
+				<h2 data-i18n="docs_walk_chrome_extension.settings_options_page">Settings (options page)</h2>
 				<div class="wd-table-wrap">
 					<table class="wd-table">
-						<thead><tr><th>Setting</th><th>Options</th></tr></thead>
+						<thead><tr><th data-i18n="docs_walk_chrome_extension.setting">Setting</th><th data-i18n="docs_walk_chrome_extension.options">Options</th></tr></thead>
 						<tbody>
-							<tr><td>Default avatar</td><td>Choose from <em>My avatars</em> or <em>Featured</em>.</td></tr>
-							<tr><td>Default position</td><td>Bottom right / left, top right / left, or follow cursor.</td></tr>
-							<tr><td>Default size</td><td>Small, Medium, Large, or custom width × height.</td></tr>
-							<tr><td>Walk speed</td><td>0.5× – 2.0×.</td></tr>
-							<tr><td>Theme</td><td>Light, Dark, or Auto (samples the page background).</td></tr>
-							<tr><td>Read page sections aloud</td><td>Narration on/off (off by default).</td></tr>
-							<tr><td>Voice</td><td>Picked from the three.ws TTS voice list.</td></tr>
-							<tr><td>Allowlist</td><td>Domains where the avatar may appear (when set, only these).</td></tr>
-							<tr><td>Blocklist</td><td>Domains where it never appears (takes precedence).</td></tr>
+							<tr><td data-i18n="docs_walk_chrome_extension.default_avatar">Default avatar</td><td data-i18n-html="docs_walk_chrome_extension.choose_from_my_avatars_or_featured">Choose from <em>My avatars</em> or <em>Featured</em>.</td></tr>
+							<tr><td data-i18n="docs_walk_chrome_extension.default_position">Default position</td><td data-i18n="docs_walk_chrome_extension.bottom_right_left_top_right_left_or">Bottom right / left, top right / left, or follow cursor.</td></tr>
+							<tr><td data-i18n="docs_walk_chrome_extension.default_size">Default size</td><td data-i18n="docs_walk_chrome_extension.small_medium_large_or_custom_width_height">Small, Medium, Large, or custom width × height.</td></tr>
+							<tr><td data-i18n="docs_walk_chrome_extension.walk_speed">Walk speed</td><td>0.5× – 2.0×.</td></tr>
+							<tr><td data-i18n="docs_walk_chrome_extension.theme">Theme</td><td data-i18n="docs_walk_chrome_extension.light_dark_or_auto_samples_the_page">Light, Dark, or Auto (samples the page background).</td></tr>
+							<tr><td data-i18n="docs_walk_chrome_extension.read_page_sections_aloud">Read page sections aloud</td><td data-i18n="docs_walk_chrome_extension.narration_on_off_off_by_default">Narration on/off (off by default).</td></tr>
+							<tr><td data-i18n="docs_walk_chrome_extension.voice">Voice</td><td data-i18n="docs_walk_chrome_extension.picked_from_the_three_ws_tts_voice">Picked from the three.ws TTS voice list.</td></tr>
+							<tr><td data-i18n="docs_walk_chrome_extension.allowlist">Allowlist</td><td data-i18n="docs_walk_chrome_extension.domains_where_the_avatar_may_appear_when">Domains where the avatar may appear (when set, only these).</td></tr>
+							<tr><td data-i18n="docs_walk_chrome_extension.blocklist">Blocklist</td><td data-i18n="docs_walk_chrome_extension.domains_where_it_never_appears_takes_precede">Domains where it never appears (takes precedence).</td></tr>
 						</tbody>
 					</table>
 				</div>
 
-				<h2>Read-aloud narration</h2>
-				<p>
+				<h2 data-i18n="docs_walk_chrome_extension.read_aloud_narration">Read-aloud narration</h2>
+				<p data-i18n-html="docs_walk_chrome_extension.with_narration_on_the_extension_parses_the">
 					With narration on, the extension parses the page's main article (using a bundled
 					Readability extractor), pulls out headings, paragraphs, list items, and
 					blockquotes, and watches which section is in view. When a section becomes the
@@ -142,14 +142,14 @@
 				</p>
 				<div class="wd-note">
 					<span class="wd-icon" aria-hidden="true">✱</span>
-					<span>Everything stays on your device except text-to-speech requests, which are sent to three.ws to synthesize audio. Your site rules and preferences are stored in Chrome's synced storage.</span>
+					<span data-i18n="docs_walk_chrome_extension.everything_stays_on_your_device_except_text">Everything stays on your device except text-to-speech requests, which are sent to three.ws to synthesize audio. Your site rules and preferences are stored in Chrome's synced storage.</span>
 				</div>
 
 				<div class="wd-pagefoot">
-					<a class="wd-edit" href="https://github.com/nirholas/three.ws/edit/main/public/docs/walk/chrome-extension.html" rel="noopener"><span aria-hidden="true">✎</span> Edit this page on GitHub</a>
+					<a class="wd-edit" href="https://github.com/nirholas/three.ws/edit/main/public/docs/walk/chrome-extension.html" rel="noopener" data-i18n-html="docs_walk_chrome_extension.edit_this_page_on_github"><span aria-hidden="true">✎</span> Edit this page on GitHub</a>
 					<div class="wd-nextprev">
-						<a href="/docs/walk/companion-mode"><span>Previous</span>← Companion mode</a>
-						<a href="/docs/walk/changelog"><span>Next</span>Changelog →</a>
+						<a href="/docs/walk/companion-mode" data-i18n-html="docs_walk_chrome_extension.previous_companion_mode"><span>Previous</span>← Companion mode</a>
+						<a href="/docs/walk/changelog" data-i18n-html="docs_walk_chrome_extension.nextchangelog"><span>Next</span>Changelog →</a>
 					</div>
 				</div>
 			</main>
@@ -159,5 +159,7 @@
 		<script src="/footer.js"></script>
 		<script src="/brand.js" defer></script>
 		<script type="module" src="/docs/walk/docs.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

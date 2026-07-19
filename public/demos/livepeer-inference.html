@@ -3,11 +3,11 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Decentralized inference · three.ws lab</title>
+		<title data-i18n="demos_livepeer_inference.meta_title">Decentralized inference · three.ws lab</title>
 		<meta
 			name="description"
 			content="Same prompt, two providers. Compare three.ws default inference against a decentralized AI gateway side-by-side: latency, token counts, and the full reply from each."
-		/>
+		 data-i18n-attr="content:demos_livepeer_inference.meta_description"/>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
@@ -138,9 +138,9 @@
 		<header><div id="nav-container"></div></header>
 
 		<main class="stage">
-			<p class="crumb"><a href="/demos/">← lab</a></p>
-			<h1>three.ws · Decentralized inference</h1>
-			<p class="sub">
+			<p class="crumb" data-i18n-html="demos_livepeer_inference.lab"><a href="/demos/">← lab</a></p>
+			<h1 data-i18n="demos_livepeer_inference.three_ws_decentralized_inference">three.ws · Decentralized inference</h1>
+			<p class="sub" data-i18n="demos_livepeer_inference.same_prompt_two_providers_real_responses_the">
 				Same prompt, two providers, real responses. The left card hits
 				three.ws's default inference (Claude). The right card routes the
 				identical request through a decentralized AI gateway whose
@@ -151,28 +151,28 @@
 
 			<section class="composer">
 				<div>
-					<label for="prompt" style="font-size:12px;color:#8a8d98;text-transform:uppercase;letter-spacing:0.08em;">Prompt</label>
+					<label for="prompt" style="font-size:12px;color:#8a8d98;text-transform:uppercase;letter-spacing:0.08em;" data-i18n="demos_livepeer_inference.prompt">Prompt</label>
 					<textarea id="prompt">In one paragraph, explain why decentralized inference matters for AI agents.</textarea>
 				</div>
 				<div class="row">
-					<label>Max tokens</label>
+					<label data-i18n="demos_livepeer_inference.max_tokens">Max tokens</label>
 					<input type="text" id="max-tokens" value="512" inputmode="numeric" style="width: 80px;" />
-					<label>Temperature</label>
+					<label data-i18n="demos_livepeer_inference.temperature">Temperature</label>
 					<input type="text" id="temperature" value="0.7" inputmode="decimal" style="width: 70px;" />
 					<div style="flex: 1"></div>
-					<button class="secondary" id="clear-btn">Clear</button>
-					<button id="run-btn">Compare</button>
+					<button class="secondary" id="clear-btn" data-i18n="demos_livepeer_inference.clear">Clear</button>
+					<button id="run-btn" data-i18n="demos_livepeer_inference.compare">Compare</button>
 				</div>
 			</section>
 
 			<details class="drawer" id="settings">
-				<summary>Settings · decentralized gateway model</summary>
+				<summary data-i18n="demos_livepeer_inference.settings_decentralized_gateway_model">Settings · decentralized gateway model</summary>
 				<div class="drawer-body">
-					<label for="livepeer-model" style="font-size:12px;color:#8a8d98;text-transform:uppercase;letter-spacing:0.08em;">Open-weight model</label>
+					<label for="livepeer-model" style="font-size:12px;color:#8a8d98;text-transform:uppercase;letter-spacing:0.08em;" data-i18n="demos_livepeer_inference.open_weight_model">Open-weight model</label>
 					<select id="livepeer-model">
-						<option value="meta-llama/Meta-Llama-3.1-8B-Instruct" selected>Meta-Llama-3.1-8B-Instruct</option>
-						<option value="mistralai/Mistral-Nemo-Instruct-2407">Mistral-Nemo-Instruct-2407</option>
-						<option value="Qwen/Qwen2.5-7B-Instruct">Qwen2.5-7B-Instruct</option>
+						<option value="meta-llama/Meta-Llama-3.1-8B-Instruct" selected data-i18n="demos_livepeer_inference.meta_llama_3_1_8b_instruct">Meta-Llama-3.1-8B-Instruct</option>
+						<option value="mistralai/Mistral-Nemo-Instruct-2407" data-i18n="demos_livepeer_inference.mistral_nemo_instruct_2407">Mistral-Nemo-Instruct-2407</option>
+						<option value="Qwen/Qwen2.5-7B-Instruct" data-i18n="demos_livepeer_inference.qwen2_5_7b_instruct">Qwen2.5-7B-Instruct</option>
 					</select>
 					<span id="gateway-info" style="font-size:11.5px;color:#565762;font-family:ui-monospace,monospace;"></span>
 				</div>
@@ -181,13 +181,13 @@
 			<div class="grid">
 				<section class="card claude" id="card-claude">
 					<div class="card-head">
-						<h2 class="card-title">three.ws default</h2>
-						<span class="chip">Claude · Anthropic</span>
+						<h2 class="card-title" data-i18n="demos_livepeer_inference.three_ws_default">three.ws default</h2>
+						<span class="chip" data-i18n="demos_livepeer_inference.claude_anthropic">Claude · Anthropic</span>
 					</div>
 					<div class="stats">
-						<span>latency <strong id="claude-latency">—</strong></span>
-						<span>in <strong id="claude-prompt-tokens">—</strong></span>
-						<span>out <strong id="claude-completion-tokens">—</strong></span>
+						<span data-i18n-html="demos_livepeer_inference.latency">latency <strong id="claude-latency">—</strong></span>
+						<span data-i18n-html="demos_livepeer_inference.in">in <strong id="claude-prompt-tokens">—</strong></span>
+						<span data-i18n-html="demos_livepeer_inference.out">out <strong id="claude-completion-tokens">—</strong></span>
 					</div>
 					<div class="card-body empty" id="claude-body">awaiting prompt…</div>
 					<div class="card-footer" id="claude-footer">model · —</div>
@@ -195,13 +195,13 @@
 
 				<section class="card livepeer" id="card-livepeer">
 					<div class="card-head">
-						<h2 class="card-title">three.ws decentralized</h2>
-						<span class="chip">Open-weight · decentralized</span>
+						<h2 class="card-title" data-i18n="demos_livepeer_inference.three_ws_decentralized">three.ws decentralized</h2>
+						<span class="chip" data-i18n="demos_livepeer_inference.open_weight_decentralized">Open-weight · decentralized</span>
 					</div>
 					<div class="stats">
-						<span>latency <strong id="livepeer-latency">—</strong></span>
-						<span>in <strong id="livepeer-prompt-tokens">—</strong></span>
-						<span>out <strong id="livepeer-completion-tokens">—</strong></span>
+						<span data-i18n-html="demos_livepeer_inference.latency_2">latency <strong id="livepeer-latency">—</strong></span>
+						<span data-i18n-html="demos_livepeer_inference.in_2">in <strong id="livepeer-prompt-tokens">—</strong></span>
+						<span data-i18n-html="demos_livepeer_inference.out_2">out <strong id="livepeer-completion-tokens">—</strong></span>
 					</div>
 					<div class="card-body empty" id="livepeer-body">awaiting prompt…</div>
 					<div class="card-footer" id="livepeer-footer">model · — · gateway · —</div>
@@ -210,7 +210,7 @@
 
 			<div class="log" id="log">ready.</div>
 
-			<p class="footnote">
+			<p class="footnote" data-i18n-html="demos_livepeer_inference.powered_by_livepeer_ai_gateway_on_the">
 				Powered by <a href="https://livepeer.org" target="_blank" rel="noopener">Livepeer</a> AI Gateway
 				on the decentralized side. Claude reply provided by Anthropic. The
 				public decentralized gateway is rate-limited and occasionally
@@ -393,5 +393,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

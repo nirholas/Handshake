@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Settings · three.ws</title>
+		<title data-i18n="settings_index.meta_title">Settings · three.ws</title>
 		<link rel="icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/footer.css" />
@@ -306,15 +306,15 @@
 				<a href="/"><img src="/three.svg" alt="three.ws" class="wordmark-logo" /></a>
 			</h1>
 			<nav class="dash-header-nav" aria-label="Primary">
-				<a href="/app">Viewer</a>
-				<a href="/create">Create</a>
-				<a href="/discover">Discover</a>
-				<a href="/widgets">Widgets</a>
-				<a href="/studio">Studio</a>
-				<a href="/docs">Docs</a>
-				<a href="/my-agents">My Agents</a>
-				<a href="/dashboard">Dashboard</a>
-				<a href="/settings" class="active" aria-current="page">Settings</a>
+				<a href="/app" data-i18n="settings_index.viewer">Viewer</a>
+				<a href="/create" data-i18n="settings_index.create">Create</a>
+				<a href="/discover" data-i18n="settings_index.discover">Discover</a>
+				<a href="/widgets" data-i18n="settings_index.widgets">Widgets</a>
+				<a href="/studio" data-i18n="settings_index.studio">Studio</a>
+				<a href="/docs" data-i18n="settings_index.docs">Docs</a>
+				<a href="/my-agents" data-i18n="settings_index.my_agents">My Agents</a>
+				<a href="/dashboard" data-i18n="settings_index.dashboard">Dashboard</a>
+				<a href="/settings" class="active" aria-current="page" data-i18n="settings_index.settings">Settings</a>
 			</nav>
 			<div class="dash-header-user" id="header-user-slot"></div>
 		</header>
@@ -322,41 +322,41 @@
 		<div class="layout">
 			<aside id="sidebar">
 				<div class="aside-section">Account</div>
-				<a href="#profile" data-tab="profile" class="active">Profile</a>
-				<a href="#account" data-tab="account">Account</a>
-				<a href="#connected-accounts" data-tab="connected-accounts">Connected Accounts</a>
-				<a href="#privacy" data-tab="privacy">Privacy</a>
-				<a href="#sessions" data-tab="sessions">Sessions</a>
+				<a href="#profile" data-tab="profile" class="active" data-i18n="settings_index.profile">Profile</a>
+				<a href="#account" data-tab="account" data-i18n="settings_index.account">Account</a>
+				<a href="#connected-accounts" data-tab="connected-accounts" data-i18n="settings_index.connected_accounts">Connected Accounts</a>
+				<a href="#privacy" data-tab="privacy" data-i18n="settings_index.privacy">Privacy</a>
+				<a href="#sessions" data-tab="sessions" data-i18n="settings_index.sessions">Sessions</a>
 				<div class="aside-section">Workspace</div>
-				<a href="/dashboard#keys">API Keys ↗</a>
-				<a href="/dashboard#mcp">MCP ↗</a>
-				<a href="/dashboard#billing">Plan &amp; Billing ↗</a>
-				<a href="/dashboard/account">Wallets ↗</a>
+				<a href="/dashboard#keys" data-i18n="settings_index.api_keys">API Keys ↗</a>
+				<a href="/dashboard#mcp" data-i18n="settings_index.mcp">MCP ↗</a>
+				<a href="/dashboard#billing" data-i18n="settings_index.plan_billing">Plan &amp; Billing ↗</a>
+				<a href="/dashboard/account" data-i18n="settings_index.wallets">Wallets ↗</a>
 				<div class="aside-section">More</div>
-				<a href="#danger" data-tab="danger">Danger Zone</a>
+				<a href="#danger" data-tab="danger" data-i18n="settings_index.danger_zone">Danger Zone</a>
 			</aside>
 
 			<main>
 				<!-- ── Profile ───────────────────────────────────────────── -->
 				<div class="page active" id="tab-profile">
-					<h2>Profile</h2>
-					<p class="sub">Your public-facing identity on three.ws</p>
+					<h2 data-i18n="settings_index.profile_2">Profile</h2>
+					<p class="sub" data-i18n="settings_index.your_public_facing_identity_on_three_ws">Your public-facing identity on three.ws</p>
 
 					<div class="section">
 						<div class="field">
-							<label for="inp-display-name">Display name</label>
+							<label for="inp-display-name" data-i18n="settings_index.display_name">Display name</label>
 							<input id="inp-display-name" type="text" placeholder="Your name" maxlength="80" autocomplete="name" />
-							<p class="hint">Shown on your public profile and agent cards.</p>
+							<p class="hint" data-i18n="settings_index.shown_on_your_public_profile_and_agent">Shown on your public profile and agent cards.</p>
 						</div>
 						<div class="field">
-							<label for="inp-username">Username</label>
+							<label for="inp-username" data-i18n="settings_index.username">Username</label>
 							<div class="row" style="align-items:flex-start;flex-direction:column;gap:6px">
 								<input id="inp-username" type="text" placeholder="yourhandle" maxlength="30" autocomplete="off" pattern="[a-zA-Z0-9_\-]{3,30}" style="max-width:400px" />
-								<p class="hint" style="margin:0">Letters, numbers, _ and - only, 3–30 chars. Your profile URL: <span id="profile-url-preview" style="color:#cccccc">three.ws/u/yourhandle</span></p>
+								<p class="hint" style="margin:0" data-i18n-html="settings_index.letters_numbers_and_only_3_30_chars">Letters, numbers, _ and - only, 3–30 chars. Your profile URL: <span id="profile-url-preview" style="color:#cccccc">three.ws/u/yourhandle</span></p>
 							</div>
 						</div>
 						<div class="row">
-							<button class="btn" id="save-profile-btn">Save changes</button>
+							<button class="btn" id="save-profile-btn" data-i18n="settings_index.save_changes">Save changes</button>
 							<span class="inline-msg" id="profile-msg" style="display:none"></span>
 						</div>
 					</div>
@@ -364,16 +364,16 @@
 					<hr class="divider" />
 
 					<div class="section">
-						<h3>Public profile</h3>
-						<p class="muted" style="margin-bottom:14px;font-size:14px">Your agents and public avatars are visible on your profile page.</p>
-						<a id="view-profile-link" href="#" target="_blank" rel="noopener" class="btn sec" style="display:inline-block;text-decoration:none">View public profile ↗</a>
+						<h3 data-i18n="settings_index.public_profile">Public profile</h3>
+						<p class="muted" style="margin-bottom:14px;font-size:14px" data-i18n="settings_index.your_agents_and_public_avatars_are_visible">Your agents and public avatars are visible on your profile page.</p>
+						<a id="view-profile-link" href="#" target="_blank" rel="noopener" class="btn sec" style="display:inline-block;text-decoration:none" data-i18n="settings_index.view_public_profile">View public profile ↗</a>
 					</div>
 				</div>
 
 				<!-- ── Account ───────────────────────────────────────────── -->
 				<div class="page" id="tab-account">
-					<h2>Account</h2>
-					<p class="sub">Email, password, and authentication</p>
+					<h2 data-i18n="settings_index.account_2">Account</h2>
+					<p class="sub" data-i18n="settings_index.email_password_and_authentication">Email, password, and authentication</p>
 
 					<div class="section">
 						<div class="link-row">
@@ -388,57 +388,57 @@
 								<div class="label">Password</div>
 								<div class="val">Change your password</div>
 							</div>
-							<a href="/forgot-password" class="action">Reset via email ↗</a>
+							<a href="/forgot-password" class="action" data-i18n="settings_index.reset_via_email">Reset via email ↗</a>
 						</div>
 						<div class="link-row">
 							<div>
 								<div class="label">Connected wallets</div>
 								<div class="val" id="wallet-count">—</div>
 							</div>
-							<a href="/dashboard/account" class="action">Manage ↗</a>
+							<a href="/dashboard/account" class="action" data-i18n="settings_index.manage">Manage ↗</a>
 						</div>
 						<div class="link-row">
 							<div>
 								<div class="label">Plan</div>
 								<div class="val" id="account-plan">—</div>
 							</div>
-							<a href="/dashboard#billing" class="action">Manage ↗</a>
+							<a href="/dashboard#billing" class="action" data-i18n="settings_index.manage_2">Manage ↗</a>
 						</div>
 					</div>
 
 					<hr class="divider" />
 
 					<div class="section">
-						<h3>Sign-in methods</h3>
-						<p class="muted" style="font-size:14px">Sign out of all devices at once, including any OAuth clients.</p>
-						<button class="btn sec" id="sign-out-everywhere-btn">Sign out everywhere</button>
+						<h3 data-i18n="settings_index.sign_in_methods">Sign-in methods</h3>
+						<p class="muted" style="font-size:14px" data-i18n="settings_index.sign_out_of_all_devices_at_once">Sign out of all devices at once, including any OAuth clients.</p>
+						<button class="btn sec" id="sign-out-everywhere-btn" data-i18n="settings_index.sign_out_everywhere">Sign out everywhere</button>
 						<span class="inline-msg" id="soe-msg" style="display:none"></span>
 					</div>
 				</div>
 
 				<!-- ── Privacy ───────────────────────────────────────────── -->
 				<div class="page" id="tab-privacy">
-					<h2>Privacy</h2>
-					<p class="sub">Control what others can see about you</p>
+					<h2 data-i18n="settings_index.privacy_2">Privacy</h2>
+					<p class="sub" data-i18n="settings_index.control_what_others_can_see_about_you">Control what others can see about you</p>
 
 					<div class="section">
 						<div class="field">
-							<label for="sel-default-vis">Default avatar visibility</label>
+							<label for="sel-default-vis" data-i18n="settings_index.default_avatar_visibility">Default avatar visibility</label>
 							<select id="sel-default-vis" style="max-width:240px">
-								<option value="private">Private — only me</option>
-								<option value="unlisted">Unlisted — anyone with link</option>
-								<option value="public">Public — listed on my profile</option>
+								<option value="private" data-i18n="settings_index.private_only_me">Private — only me</option>
+								<option value="unlisted" data-i18n="settings_index.unlisted_anyone_with_link">Unlisted — anyone with link</option>
+								<option value="public" data-i18n="settings_index.public_listed_on_my_profile">Public — listed on my profile</option>
 							</select>
-							<p class="hint">New avatars you upload will default to this visibility. Existing avatars are not affected.</p>
+							<p class="hint" data-i18n="settings_index.new_avatars_you_upload_will_default_to">New avatars you upload will default to this visibility. Existing avatars are not affected.</p>
 						</div>
-						<button class="btn" id="save-privacy-btn">Save</button>
+						<button class="btn" id="save-privacy-btn" data-i18n="settings_index.save">Save</button>
 						<span class="inline-msg" id="privacy-msg" style="display:none"></span>
 					</div>
 
 					<hr class="divider" />
 
 					<div class="section">
-						<h3>Public profile</h3>
+						<h3 data-i18n="settings_index.public_profile_2">Public profile</h3>
 						<div class="link-row">
 							<div>
 								<div class="label">Profile visibility</div>
@@ -450,29 +450,29 @@
 
 				<!-- ── Sessions ──────────────────────────────────────────── -->
 				<div class="page" id="tab-sessions">
-					<h2>Sessions</h2>
-					<p class="sub">Devices and browsers signed in to your account</p>
+					<h2 data-i18n="settings_index.sessions_2">Sessions</h2>
+					<p class="sub" data-i18n="settings_index.devices_and_browsers_signed_in_to_your">Devices and browsers signed in to your account</p>
 
 					<div id="sessions-list">
-						<p class="muted">Loading sessions…</p>
+						<p class="muted" data-i18n="settings_index.loading_sessions">Loading sessions…</p>
 					</div>
 
 					<hr class="divider" />
 
 					<div>
-						<p class="muted" style="font-size:14px;margin-bottom:12px">This revokes all other sessions but keeps your current one active.</p>
-						<button class="btn sec" id="revoke-others-btn">Revoke all other sessions</button>
+						<p class="muted" style="font-size:14px;margin-bottom:12px" data-i18n="settings_index.this_revokes_all_other_sessions_but_keeps">This revokes all other sessions but keeps your current one active.</p>
+						<button class="btn sec" id="revoke-others-btn" data-i18n="settings_index.revoke_all_other_sessions">Revoke all other sessions</button>
 						<span class="inline-msg" id="sessions-msg" style="display:none"></span>
 					</div>
 				</div>
 
 				<!-- ── Connected Accounts ────────────────────────────────── -->
 				<div class="page" id="tab-connected-accounts">
-					<h2>Connected Accounts</h2>
-					<p class="sub">Link third-party accounts to seed your agent's memory</p>
+					<h2 data-i18n="settings_index.connected_accounts_2">Connected Accounts</h2>
+					<p class="sub" data-i18n="settings_index.link_third_party_accounts_to_seed_your">Link third-party accounts to seed your agent's memory</p>
 
 					<div class="section">
-						<h3>Social Profiles</h3>
+						<h3 data-i18n="settings_index.social_profiles">Social Profiles</h3>
 						<div class="social-card" id="github-card">
 							<div class="provider-info">
 								<div class="provider-icon">⬡</div>
@@ -482,7 +482,7 @@
 								</div>
 							</div>
 							<div class="actions" id="github-actions">
-								<span class="muted" style="font-size:13px">Loading…</span>
+								<span class="muted" style="font-size:13px" data-i18n="settings_index.loading">Loading…</span>
 							</div>
 						</div>
 						<span class="inline-msg" id="github-msg" style="display:none;margin-top:10px"></span>
@@ -502,12 +502,12 @@
 					</div>
 
 					<div class="agent-seed-area" id="seed-area" style="display:none">
-						<h3 style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:#666;margin:0 0 10px">Seed Agent Memory</h3>
-						<p class="muted" style="font-size:13px;margin:0 0 12px">Fetch your GitHub activity and distill it into agent memory facts (once per 24 hours per agent).</p>
-						<label for="inp-seed-agent-id" style="display:block;font-size:12px;color:#888;margin-bottom:6px">Agent ID</label>
+						<h3 style="font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:#666;margin:0 0 10px" data-i18n="settings_index.seed_agent_memory">Seed Agent Memory</h3>
+						<p class="muted" style="font-size:13px;margin:0 0 12px" data-i18n="settings_index.fetch_your_github_activity_and_distill_it">Fetch your GitHub activity and distill it into agent memory facts (once per 24 hours per agent).</p>
+						<label for="inp-seed-agent-id" style="display:block;font-size:12px;color:#888;margin-bottom:6px" data-i18n="settings_index.agent_id">Agent ID</label>
 						<input id="inp-seed-agent-id" type="text" placeholder="Paste agent UUID…" style="max-width:360px" />
 						<div class="row" style="margin-top:8px">
-							<button class="btn" id="seed-btn">Seed memory</button>
+							<button class="btn" id="seed-btn" data-i18n="settings_index.seed_memory">Seed memory</button>
 							<span class="inline-msg" id="seed-msg" style="display:none"></span>
 						</div>
 						<div id="seed-results" style="display:none;margin-top:12px"></div>
@@ -516,19 +516,19 @@
 
 				<!-- ── Danger ────────────────────────────────────────────── -->
 				<div class="page" id="tab-danger">
-					<h2>Danger Zone</h2>
-					<p class="sub">Irreversible actions — proceed with care</p>
+					<h2 data-i18n="settings_index.danger_zone_2">Danger Zone</h2>
+					<p class="sub" data-i18n="settings_index.irreversible_actions_proceed_with_care">Irreversible actions — proceed with care</p>
 
 					<div class="danger-zone">
-						<h3>Delete account</h3>
-						<p>Permanently deletes your account, all avatars, agents, and API keys. This cannot be undone.</p>
-						<button class="btn danger" id="show-delete-btn">Delete my account…</button>
+						<h3 data-i18n="settings_index.delete_account">Delete account</h3>
+						<p data-i18n="settings_index.permanently_deletes_your_account_all_avatars">Permanently deletes your account, all avatars, agents, and API keys. This cannot be undone.</p>
+						<button class="btn danger" id="show-delete-btn" data-i18n="settings_index.delete_my_account">Delete my account…</button>
 						<div class="confirm-delete" id="confirm-delete-wrap">
-							<p>Type <strong style="color:#eee">delete my account</strong> to confirm:</p>
+							<p data-i18n-html="settings_index.type_delete_my_account_to_confirm">Type <strong style="color:#eee">delete my account</strong> to confirm:</p>
 							<input id="delete-confirm-input" type="text" placeholder="delete my account" style="max-width:300px;margin-bottom:12px" />
 							<div class="row">
-								<button class="btn danger" id="confirm-delete-btn" disabled>Permanently delete</button>
-								<button class="btn sec" id="cancel-delete-btn">Cancel</button>
+								<button class="btn danger" id="confirm-delete-btn" disabled data-i18n="settings_index.permanently_delete">Permanently delete</button>
+								<button class="btn sec" id="cancel-delete-btn" data-i18n="settings_index.cancel">Cancel</button>
 							</div>
 						</div>
 					</div>
@@ -936,5 +936,7 @@
 			})();
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

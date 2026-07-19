@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Selfie to Avatar · three.ws</title>
+  <title data-i18n="demos_embed_selfie.meta_title">Selfie to Avatar · three.ws</title>
   <meta name="robots" content="noindex">
   <script type="module" src="https://three.ws/dist-lib/agent-3d.js"></script>
   <style>
@@ -48,8 +48,8 @@
 <body style="background:transparent">
   <div class="wrap">
     <div class="eyebrow">three.ws · Selfie → Avatar</div>
-    <h1 class="title">One photo.<br><strong>Full 3D avatar.</strong></h1>
-    <p class="sub">Upload a selfie and get a fully rigged, animated 3D avatar in seconds. No 3D skills required. Use it as your agent identity on three.ws.</p>
+    <h1 class="title" data-i18n-html="demos_embed_selfie.one_photo_full_3d_avatar">One photo.<br><strong>Full 3D avatar.</strong></h1>
+    <p class="sub" data-i18n="demos_embed_selfie.upload_a_selfie_and_get_a_fully">Upload a selfie and get a fully rigged, animated 3D avatar in seconds. No 3D skills required. Use it as your agent identity on three.ws.</p>
 
     <div class="steps">
       <div class="step">
@@ -90,9 +90,11 @@
     </div>
 
     <div class="cta-row">
-      <a href="https://three.ws/create/selfie" target="_blank" class="btn-primary" rel="noopener">Create from selfie →</a>
-      <a href="https://three.ws/gallery" target="_blank" class="btn-ghost" rel="noopener">Browse gallery</a>
+      <a href="https://three.ws/create/selfie" target="_blank" class="btn-primary" rel="noopener" data-i18n="demos_embed_selfie.create_from_selfie">Create from selfie →</a>
+      <a href="https://three.ws/gallery" target="_blank" class="btn-ghost" rel="noopener" data-i18n="demos_embed_selfie.browse_gallery">Browse gallery</a>
     </div>
   </div>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

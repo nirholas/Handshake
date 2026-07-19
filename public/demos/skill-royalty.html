@@ -3,8 +3,8 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>three.ws · Skill Earnings Split</title>
-		<meta name="description" content="Configure how earnings from your skills are automatically divided. Every payment splits instantly — no manual distributions." />
+		<title data-i18n="demos_skill_royalty.meta_title">three.ws · Skill Earnings Split</title>
+		<meta name="description" content="Configure how earnings from your skills are automatically divided. Every payment splits instantly — no manual distributions."  data-i18n-attr="content:demos_skill_royalty.meta_description"/>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
@@ -717,48 +717,48 @@
 		<main class="page">
 			<div class="page-header">
 				<div class="crumb">
-					<a href="/demos/">&larr; lab</a>
+					<a href="/demos/" data-i18n="demos_skill_royalty.lab">&larr; lab</a>
 					<span style="color:var(--border-2)">·</span>
-					<span style="color:var(--text-3);font-size:12px">Skill Earnings Split</span>
+					<span style="color:var(--text-3);font-size:12px" data-i18n="demos_skill_royalty.skill_earnings_split">Skill Earnings Split</span>
 				</div>
-				<h1>Skill Earnings Split</h1>
-				<p class="sub">Configure how earnings from your skills are automatically divided. Every payment splits instantly — no manual distributions.</p>
+				<h1 data-i18n="demos_skill_royalty.skill_earnings_split_2">Skill Earnings Split</h1>
+				<p class="sub" data-i18n="demos_skill_royalty.configure_how_earnings_from_your_skills_are">Configure how earnings from your skills are automatically divided. Every payment splits instantly — no manual distributions.</p>
 				<div class="net-badge"><span class="dot"></span>Base Sepolia testnet</div>
 			</div>
 
 			<!-- wallet bar (always visible) -->
 			<div class="card" style="margin-bottom:20px">
 				<div class="wallet-bar">
-					<button class="btn btn-primary btn-sm" id="connect-btn">Connect wallet</button>
-					<span class="pill" id="wallet-pill">not connected</span>
-					<span class="pill" id="chain-pill">no chain</span>
-					<button class="btn btn-secondary btn-sm" id="switch-btn" style="display:none">Switch to Base Sepolia</button>
-					<button class="btn btn-ghost btn-sm" id="forget-btn" style="display:none">Reset split</button>
+					<button class="btn btn-primary btn-sm" id="connect-btn" data-i18n="demos_skill_royalty.connect_wallet">Connect wallet</button>
+					<span class="pill" id="wallet-pill" data-i18n="demos_skill_royalty.not_connected">not connected</span>
+					<span class="pill" id="chain-pill" data-i18n="demos_skill_royalty.no_chain">no chain</span>
+					<button class="btn btn-secondary btn-sm" id="switch-btn" style="display:none" data-i18n="demos_skill_royalty.switch_to_base_sepolia">Switch to Base Sepolia</button>
+					<button class="btn btn-ghost btn-sm" id="forget-btn" style="display:none" data-i18n="demos_skill_royalty.reset_split">Reset split</button>
 				</div>
 				<div class="notice notice-info faucet-notice" style="margin-top:12px;margin-bottom:0">
 					Need testnet ETH? Use the
-					<a href="https://portal.cdp.coinbase.com/products/faucet" target="_blank" rel="noopener">Coinbase faucet</a>,
-					<a href="https://www.alchemy.com/faucets/base-sepolia" target="_blank" rel="noopener">Alchemy faucet</a>,
-					or the <a href="https://faucets.chain.link/base-sepolia" target="_blank" rel="noopener">Chainlink faucet</a>.
+					<a href="https://portal.cdp.coinbase.com/products/faucet" target="_blank" rel="noopener" data-i18n="demos_skill_royalty.coinbase_faucet">Coinbase faucet</a>,
+					<a href="https://www.alchemy.com/faucets/base-sepolia" target="_blank" rel="noopener" data-i18n="demos_skill_royalty.alchemy_faucet">Alchemy faucet</a>,
+					or the <a href="https://faucets.chain.link/base-sepolia" target="_blank" rel="noopener" data-i18n="demos_skill_royalty.chainlink_faucet">Chainlink faucet</a>.
 				</div>
 				<div class="notice notice-err" id="wallet-warn" style="display:none;margin-bottom:0"></div>
 			</div>
 
 			<!-- step navigator -->
 			<nav class="steps-nav" id="steps-nav">
-				<button class="step-btn active" data-step="0" id="step-btn-0">
+				<button class="step-btn active" data-step="0" id="step-btn-0" data-i18n-html="demos_skill_royalty.1_recipients">
 					<span class="num">1</span> Recipients
 				</button>
 				<span class="step-sep">›</span>
-				<button class="step-btn" data-step="1" id="step-btn-1">
+				<button class="step-btn" data-step="1" id="step-btn-1" data-i18n-html="demos_skill_royalty.2_deploy">
 					<span class="num">2</span> Deploy
 				</button>
 				<span class="step-sep">›</span>
-				<button class="step-btn" data-step="2" id="step-btn-2">
+				<button class="step-btn" data-step="2" id="step-btn-2" data-i18n-html="demos_skill_royalty.3_fund_distribute">
 					<span class="num">3</span> Fund &amp; Distribute
 				</button>
 				<span class="step-sep">›</span>
-				<button class="step-btn" data-step="3" id="step-btn-3">
+				<button class="step-btn" data-step="3" id="step-btn-3" data-i18n-html="demos_skill_royalty.done">
 					<span class="num">✓</span> Done
 				</button>
 			</nav>
@@ -784,8 +784,8 @@
 						<thead>
 							<tr>
 								<th class="r-dot-cell"></th>
-								<th>Address</th>
-								<th>Share</th>
+								<th data-i18n="demos_skill_royalty.address">Address</th>
+								<th data-i18n="demos_skill_royalty.share">Share</th>
 								<th></th>
 							</tr>
 						</thead>
@@ -793,13 +793,13 @@
 					</table>
 
 					<div class="add-recipient-row">
-						<button class="btn btn-secondary btn-sm" id="add-row" type="button">+ Add recipient</button>
-						<button class="btn btn-ghost btn-sm" id="add-my-wallet" type="button" style="display:none">+ Add my wallet</button>
+						<button class="btn btn-secondary btn-sm" id="add-row" type="button" data-i18n="demos_skill_royalty.add_recipient">+ Add recipient</button>
+						<button class="btn btn-ghost btn-sm" id="add-my-wallet" type="button" style="display:none" data-i18n="demos_skill_royalty.add_my_wallet">+ Add my wallet</button>
 					</div>
 
 					<div class="sum-bar-wrap">
 						<div class="sum-label">
-							<span>Total allocation</span>
+							<span data-i18n="demos_skill_royalty.total_allocation">Total allocation</span>
 							<span class="sum-val" id="sum-val">0.00%</span>
 						</div>
 						<div class="sum-bar-track">
@@ -808,7 +808,7 @@
 					</div>
 
 					<div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end">
-						<button class="btn btn-primary" id="go-deploy-btn" disabled>Continue to Deploy →</button>
+						<button class="btn btn-primary" id="go-deploy-btn" disabled data-i18n="demos_skill_royalty.continue_to_deploy">Continue to Deploy →</button>
 					</div>
 				</div>
 			</div>
@@ -824,13 +824,13 @@
 					<div id="split-deployed-area"></div>
 
 					<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-						<button class="btn btn-primary" id="create-btn" disabled>Create earnings split</button>
+						<button class="btn btn-primary" id="create-btn" disabled data-i18n="demos_skill_royalty.create_earnings_split">Create earnings split</button>
 						<span id="create-status" style="font-size:12px;color:var(--text-2)"></span>
 					</div>
 
 					<div style="margin-top:16px;display:flex;gap:10px;justify-content:space-between;align-items:center">
-						<button class="btn btn-ghost btn-sm" id="back-to-recipients">← Back</button>
-						<button class="btn btn-secondary btn-sm" id="go-fund-btn" style="display:none">Continue to Fund →</button>
+						<button class="btn btn-ghost btn-sm" id="back-to-recipients" data-i18n="demos_skill_royalty.back">← Back</button>
+						<button class="btn btn-secondary btn-sm" id="go-fund-btn" style="display:none" data-i18n="demos_skill_royalty.continue_to_fund">Continue to Fund →</button>
 					</div>
 				</div>
 			</div>
@@ -843,14 +843,14 @@
 
 					<div class="fund-row">
 						<div class="form-field">
-							<label>ETH amount</label>
+							<label data-i18n="demos_skill_royalty.eth_amount">ETH amount</label>
 							<input type="number" id="fund-amount" value="0.001" step="0.0001" min="0" style="width:140px" />
 						</div>
 						<div class="form-field" style="flex:1">
-							<label>Split contract</label>
+							<label data-i18n="demos_skill_royalty.split_contract">Split contract</label>
 							<input type="text" id="fund-target" readonly placeholder="deploy a split first" />
 						</div>
-						<button class="btn btn-primary" id="fund-btn">Send payment</button>
+						<button class="btn btn-primary" id="fund-btn" data-i18n="demos_skill_royalty.send_payment">Send payment</button>
 					</div>
 					<div id="fund-result"></div>
 				</div>
@@ -860,19 +860,19 @@
 
 					<div class="balance-display">
 						Current balance: <span class="eth-val" id="balance-display">—</span>
-						<button class="btn btn-ghost btn-sm" id="refresh-btn" style="margin-left:10px">Refresh</button>
+						<button class="btn btn-ghost btn-sm" id="refresh-btn" style="margin-left:10px" data-i18n="demos_skill_royalty.refresh">Refresh</button>
 					</div>
 
 					<div id="payout-table-wrap"></div>
 
 					<div class="action-row" style="margin-top:14px">
-						<button class="btn btn-primary" id="distribute-btn" disabled>Distribute to recipients</button>
-						<button class="btn btn-secondary" id="withdraw-btn" style="display:none">Claim your share</button>
+						<button class="btn btn-primary" id="distribute-btn" disabled data-i18n="demos_skill_royalty.distribute_to_recipients">Distribute to recipients</button>
+						<button class="btn btn-secondary" id="withdraw-btn" style="display:none" data-i18n="demos_skill_royalty.claim_your_share">Claim your share</button>
 					</div>
 				</div>
 
 				<div style="margin-top:12px">
-					<button class="btn btn-ghost btn-sm" id="back-to-deploy">← Back to Deploy</button>
+					<button class="btn btn-ghost btn-sm" id="back-to-deploy" data-i18n="demos_skill_royalty.back_to_deploy">← Back to Deploy</button>
 				</div>
 			</div>
 
@@ -884,7 +884,7 @@
 					<div class="card-desc" style="max-width:50ch;margin:0 auto 20px">Every payment to your split contract is automatically distributed to recipients. Share the contract address with collaborators.</div>
 					<div id="done-contract-info"></div>
 					<div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-						<button class="btn btn-secondary" id="go-fund-again">Test another payment</button>
+						<button class="btn btn-secondary" id="go-fund-again" data-i18n="demos_skill_royalty.test_another_payment">Test another payment</button>
 					</div>
 				</div>
 			</div>
@@ -892,7 +892,7 @@
 			<!-- Transaction log -->
 			<div class="log-section">
 				<div class="log-toggle" id="log-toggle">
-					<span>Transaction log</span>
+					<span data-i18n="demos_skill_royalty.transaction_log">Transaction log</span>
 					<span id="log-count" style="background:var(--border-2);padding:1px 7px;border-radius:99px;font-size:11px">0</span>
 					<span style="flex:1"></span>
 					<span class="chevron">▲</span>
@@ -903,8 +903,8 @@
 			</div>
 
 			<footer class="page-footer">
-				Powered by <a href="https://docs.splits.org/sdk/splits-v2" target="_blank" rel="noopener">0xSplits V2</a>
-				&middot; Pull-split on <a href="https://sepolia.basescan.org" target="_blank" rel="noopener">Base Sepolia</a>
+				Powered by <a href="https://docs.splits.org/sdk/splits-v2" target="_blank" rel="noopener" data-i18n="demos_skill_royalty.0xsplits_v2">0xSplits V2</a>
+				&middot; Pull-split on <a href="https://sepolia.basescan.org" target="_blank" rel="noopener" data-i18n="demos_skill_royalty.base_sepolia">Base Sepolia</a>
 			</footer>
 		</main>
 
@@ -1757,5 +1757,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

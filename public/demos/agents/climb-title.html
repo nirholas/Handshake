@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Climb the title — three.ws</title>
+		<title data-i18n="demos_agents_climb_title.meta_title">Climb the title — three.ws</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/demos/agents/_shared.css" />
@@ -16,12 +16,12 @@
 	<body>
 		<div class="stage">
 			<div class="hero-eyebrow">Climb the title</div>
-			<h1 class="hero-title">
+			<h1 class="hero-title" data-i18n-html="demos_agents_climb_title.give_your_ai">
 				<span class="word"><span class="grip">G</span><span class="grip">i</span><span class="grip">v</span><span class="grip">e</span></span>
 				<span class="word"><span class="grip">y</span><span class="grip">o</span><span class="grip">u</span><span class="grip">r</span></span>
 				<span class="word"><em><span class="grip">A</span><span class="grip">I</span></em></span>
 			</h1>
-			<p class="hero-sub">
+			<p class="hero-sub" data-i18n="demos_agents_climb_title.she_climbs_letter_to_letter_like_a">
 				She climbs letter to letter like a rope-climber. Each letter top is
 				a grip point — she perches, jumps, perches again.
 			</p>
@@ -108,5 +108,7 @@
 			}, rootBone, baseRootPos);
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

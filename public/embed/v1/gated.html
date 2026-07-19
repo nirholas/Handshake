@@ -3,8 +3,8 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<title>Token-gated 3D embed · three.ws</title>
-		<meta name="description" content="A holder-only interactive 3D embed on three.ws." />
+		<title data-i18n="embed_v1_gated.meta_title">Token-gated 3D embed · three.ws</title>
+		<meta name="description" content="A holder-only interactive 3D embed on three.ws."  data-i18n-attr="content:embed_v1_gated.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 		<meta name="robots" content="noindex" />
 		<style>
@@ -76,5 +76,7 @@
 				document.getElementById('stage').replaceWith(el);
 			})();
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

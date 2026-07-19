@@ -9,9 +9,9 @@
 		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
-		<title>three.ws</title>
+		<title data-i18n="a_embed.meta_title">three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="description" content="Embedded three.ws avatar — on-chain." />
+		<meta name="description" content="Embedded three.ws avatar — on-chain."  data-i18n-attr="content:a_embed.meta_description"/>
 		<meta name="robots" content="noindex" />
 		<style>
 			html,
@@ -162,7 +162,7 @@
 		<div id="stage"></div>
 		<div id="name-plate"></div>
 		<div id="chain-plate"></div>
-		<a id="open-link" target="_blank" rel="noopener" style="display: none">Open ↗</a>
+		<a id="open-link" target="_blank" rel="noopener" style="display: none" data-i18n="a_embed.open">Open ↗</a>
 		<div id="loading">Loading agent</div>
 		<div id="error"></div>
 		<div id="blocked"></div>
@@ -373,5 +373,7 @@
 				showError(err.message || 'Could not load agent');
 			});
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Gemini Live Avatar — three.ws</title>
+		<title data-i18n="demos_agents_gemini_live.meta_title">Gemini Live Avatar — three.ws</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/demos/agents/_shared.css" />
@@ -211,29 +211,29 @@
 	<body>
 		<!-- Intro overlay -->
 		<div id="overlay">
-			<h2>Talk to your<br><em>3D avatar.</em></h2>
-			<p>Real-time voice powered by Gemini Live. Webcam drives head pose and expressions — everything runs in your browser.</p>
+			<h2 data-i18n-html="demos_agents_gemini_live.talk_to_your_3d_avatar">Talk to your<br><em>3D avatar.</em></h2>
+			<p data-i18n="demos_agents_gemini_live.real_time_voice_powered_by_gemini_live">Real-time voice powered by Gemini Live. Webcam drives head pose and expressions — everything runs in your browser.</p>
 			<div class="voice-row">
-				<label for="voice-select">Voice</label>
+				<label for="voice-select" data-i18n="demos_agents_gemini_live.voice">Voice</label>
 				<select id="voice-select">
-					<option value="Aoede">Aoede</option>
-					<option value="Charon">Charon</option>
-					<option value="Fenrir">Fenrir</option>
-					<option value="Kore">Kore</option>
-					<option value="Leda">Leda</option>
-					<option value="Orus">Orus</option>
-					<option value="Puck">Puck</option>
-					<option value="Zephyr">Zephyr</option>
+					<option value="Aoede" data-i18n="demos_agents_gemini_live.aoede">Aoede</option>
+					<option value="Charon" data-i18n="demos_agents_gemini_live.charon">Charon</option>
+					<option value="Fenrir" data-i18n="demos_agents_gemini_live.fenrir">Fenrir</option>
+					<option value="Kore" data-i18n="demos_agents_gemini_live.kore">Kore</option>
+					<option value="Leda" data-i18n="demos_agents_gemini_live.leda">Leda</option>
+					<option value="Orus" data-i18n="demos_agents_gemini_live.orus">Orus</option>
+					<option value="Puck" data-i18n="demos_agents_gemini_live.puck">Puck</option>
+					<option value="Zephyr" data-i18n="demos_agents_gemini_live.zephyr">Zephyr</option>
 				</select>
 			</div>
-			<button id="start-btn">Start conversation</button>
+			<button id="start-btn" data-i18n="demos_agents_gemini_live.start_conversation">Start conversation</button>
 			<span id="overlay-status"></span>
 		</div>
 
 		<div class="stage">
 			<div class="hero-eyebrow">Gemini Live Avatar</div>
-			<h1 class="hero-title">Speak.<br><em>She listens.</em></h1>
-			<p class="hero-sub">
+			<h1 class="hero-title" data-i18n-html="demos_agents_gemini_live.speak_she_listens">Speak.<br><em>She listens.</em></h1>
+			<p class="hero-sub" data-i18n="demos_agents_gemini_live.low_latency_voice_via_gemini_live_streams">
 				Low-latency voice via Gemini Live streams directly into the avatar's mouth.
 				Webcam face-capture drives expressions and head pose on top.
 			</p>
@@ -244,7 +244,7 @@
 
 		<div id="status" data-state="idle">
 			<span id="status-dot"></span>
-			<span id="status-label">Ready</span>
+			<span id="status-label" data-i18n="demos_agents_gemini_live.ready">Ready</span>
 		</div>
 
 		<div id="transcript"></div>
@@ -252,12 +252,12 @@
 		<div id="controls">
 			<div id="text-row">
 				<input id="text-input" type="text" placeholder="Type a message…" autocomplete="off" />
-				<button id="send-btn">Send</button>
+				<button id="send-btn" data-i18n="demos_agents_gemini_live.send">Send</button>
 			</div>
 			<div class="btn-row">
-				<button id="mic-btn" class="ctrl-btn">🎙 Mute</button>
-				<button id="cam-btn" class="ctrl-btn">📷 Camera off</button>
-				<button id="end-btn" class="ctrl-btn">✕ End</button>
+				<button id="mic-btn" class="ctrl-btn" data-i18n="demos_agents_gemini_live.mute">🎙 Mute</button>
+				<button id="cam-btn" class="ctrl-btn" data-i18n="demos_agents_gemini_live.camera_off">📷 Camera off</button>
+				<button id="end-btn" class="ctrl-btn" data-i18n="demos_agents_gemini_live.end">✕ End</button>
 			</div>
 			<div id="mic-level"><div id="mic-level-fill"></div></div>
 		</div>
@@ -633,5 +633,7 @@
 			}, rootBone, baseRootPos);
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>CZ Agent — Offline Demo</title>
+		<title data-i18n="cz_offline_index.meta_title">CZ Agent — Offline Demo</title>
 		<style>
 			* {
 				margin: 0;
@@ -221,9 +221,9 @@
 		<div class="footer">
 			<div class="footer-item">CZ Agent</div>
 			<div class="footer-item">•</div>
-			<div class="footer-item">Agent ID: <span class="code">0x1234567</span></div>
+			<div class="footer-item">Agent ID: <span class="code" data-i18n="cz_offline_index.0x1234567">0x1234567</span></div>
 			<div class="footer-item">•</div>
-			<div class="footer-item">Chain: <span class="code">Base Sepolia</span></div>
+			<div class="footer-item">Chain: <span class="code" data-i18n="cz_offline_index.base_sepolia">Base Sepolia</span></div>
 		</div>
 
 		<script>
@@ -452,5 +452,7 @@
 			console.log('CZ Offline Demo initialized');
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

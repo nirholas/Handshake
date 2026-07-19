@@ -3,8 +3,8 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>three.ws launchpad</title>
-		<meta name="description" content="A 3D-hosted launchpad built on three.ws" />
+		<title data-i18n="p_index.meta_title">three.ws launchpad</title>
+		<meta name="description" content="A 3D-hosted launchpad built on three.ws"  data-i18n-attr="content:p_index.meta_description"/>
 		<link rel="icon" type="image/svg+xml" href="/three.svg" />
 		<style>
 			* { box-sizing: border-box; }
@@ -180,5 +180,7 @@
 		</div>
 		<script type="module" src="/p/render.js"></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

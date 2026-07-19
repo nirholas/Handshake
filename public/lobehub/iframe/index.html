@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title>three.ws — Chat Embed</title>
+		<title data-i18n="lobehub_iframe_index.meta_title">three.ws — Chat Embed</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="robots" content="noindex" />
 		<style>
@@ -60,5 +60,7 @@
 		<!-- agent-id is set dynamically by boot.js from ?agent= query param -->
 		<agent-3d id="agent" kiosk eager></agent-3d>
 		<script type="module" src="/lobehub/iframe/boot.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

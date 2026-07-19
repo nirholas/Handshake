@@ -4,11 +4,11 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>3D Viewer · three.ws</title>
-<meta name="description" content="View and download an interactive 3D model (GLB) generated with three.ws." />
+<title data-i18n="viewer.meta_title">3D Viewer · three.ws</title>
+<meta name="description" content="View and download an interactive 3D model (GLB) generated with three.ws."  data-i18n-attr="content:viewer.meta_description"/>
 <meta name="robots" content="noindex" />
-<meta property="og:title" content="3D Viewer · three.ws" />
-<meta property="og:description" content="An interactive 3D model, generated with three.ws." />
+<meta property="og:title" content="3D Viewer · three.ws"  data-i18n-attr="content:viewer.meta_og_title"/>
+<meta property="og:description" content="An interactive 3D model, generated with three.ws."  data-i18n-attr="content:viewer.meta_og_description"/>
 <meta property="og:type" content="website" />
 <!-- Meshopt decoder must register before <model-viewer> starts loading (Forge GLBs are meshopt-compressed). Classic script → runs during parse, before the model-viewer module. -->
 <script src="/model-viewer-meshopt.js"></script>
@@ -152,17 +152,17 @@
 	<meta property="og:image:alt" content="glTF / GLB Viewer — three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="glTF / GLB Viewer · three.ws">
-	<meta name="twitter:description" content="Paste any public glTF/GLB URL and preview it inline — the lightweight, unauthenticated model viewer every 3D Studio tool's shared asset link opens.">
+	<meta name="twitter:title" content="glTF / GLB Viewer · three.ws" data-i18n-attr="content:viewer.meta_twitter_title">
+	<meta name="twitter:description" content="Paste any public glTF/GLB URL and preview it inline — the lightweight, unauthenticated model viewer every 3D Studio tool's shared asset link opens." data-i18n-attr="content:viewer.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=glTF+%2F+GLB+Viewer&amp;d=Preview+any+public+glTF%2FGLB+inline%2C+then+take+it+further%3A+pose+and+animate+it%2C+restyle+the+material%2C+build+a+scene%2C+place+it+in+AR%2C+embed+it+on+your+site%2C+or+la&amp;p=%2Fviewer">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"glTF / GLB Viewer","description":"Paste any public glTF/GLB URL and preview it inline — the lightweight, unauthenticated model viewer every 3D Studio tool's shared asset link opens.","url":"https://three.ws/viewer","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=labs&t=glTF+%2F+GLB+Viewer&d=Paste+any+public+glTF%2FGLB+URL+and+preview+it+inline+%E2%80%94+the+lightweight%2C+unauthenticated+model+viewer+every+3D+Studio+tool%27s+shared+asset+link+opens.&p=%2Fviewer"}]}</script>
 </head>
 <body>
 <div class="wrap">
   <header class="bar">
-    <a class="brand" href="https://three.ws"><span class="dot" aria-hidden="true"></span>three.ws</a>
+    <a class="brand" href="https://three.ws" data-i18n-html="viewer.three_ws"><span class="dot" aria-hidden="true"></span>three.ws</a>
     <span id="title" class="title"></span>
-    <a id="badge" class="badge hidden" target="_blank" rel="noopener noreferrer" aria-label="Provenance verification"></a>
+    <a id="badge" class="badge hidden" target="_blank" rel="noopener noreferrer" aria-label="Provenance verification" data-i18n-attr="aria-label:viewer.provenance_verification_arialabel"></a>
   </header>
 
   <div class="stage">
@@ -180,8 +180,8 @@
 
     <div id="empty" class="overlay hidden">
       <div class="h">No model to show</div>
-      <div class="muted">This viewer opens a 3D model from a <code>?src=</code> link. Generate one for free at <a href="https://three.ws/forge">three.ws/forge</a>.</div>
-      <a class="btn primary" href="https://three.ws/forge">Create a 3D model</a>
+      <div class="muted">This viewer opens a 3D model from a <code>?src=</code> link. Generate one for free at <a href="https://three.ws/forge" data-i18n="viewer.three_ws_forge">three.ws/forge</a>.</div>
+      <a class="btn primary" href="https://three.ws/forge" data-i18n="viewer.create_a_3d_model">Create a 3D model</a>
     </div>
 
     <div id="error" class="overlay hidden">
@@ -191,11 +191,11 @@
   </div>
 
   <footer id="foot" class="bar hidden">
-    <button id="ar-btn" class="btn" type="button" aria-label="View this model in augmented reality">View in AR</button>
+    <button id="ar-btn" class="btn" type="button" aria-label="View this model in augmented reality" data-i18n="viewer.view_in_ar" data-i18n-attr="aria-label:viewer.view_this_model_in_augmented_arialabel">View in AR</button>
     <div class="spacer"></div>
-    <a id="download" class="btn" download aria-label="Download the GLB file">Download GLB</a>
-    <a id="make-own" class="btn primary" href="https://three.ws/forge" aria-label="Create your own 3D model with the three.ws Forge">Make your own →</a>
-    <button id="more-btn" class="btn primary hidden" type="button" aria-haspopup="dialog" aria-controls="sheet-wrap" aria-expanded="false">Do more with this model</button>
+    <a id="download" class="btn" download aria-label="Download the GLB file" data-i18n="viewer.download_glb" data-i18n-attr="aria-label:viewer.download_the_glb_file_arialabel">Download GLB</a>
+    <a id="make-own" class="btn primary" href="https://three.ws/forge" aria-label="Create your own 3D model with the three.ws Forge" data-i18n="viewer.make_your_own" data-i18n-attr="aria-label:viewer.create_your_own_3d_model_wit_arialabel">Make your own →</a>
+    <button id="more-btn" class="btn primary hidden" type="button" aria-haspopup="dialog" aria-controls="sheet-wrap" aria-expanded="false" data-i18n="viewer.do_more_with_this_model">Do more with this model</button>
   </footer>
 
   <div id="sheet-wrap" class="hidden" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
@@ -204,42 +204,42 @@
       <div class="sheet-head">
         <div id="sheet-title" class="sheet-title">Do more with this model</div>
         <div class="sheet-sub">It's yours. Take it further.</div>
-        <button class="sheet-close" type="button" aria-label="Close">✕</button>
+        <button class="sheet-close" type="button" aria-label="Close" data-i18n-attr="aria-label:viewer.close_arialabel">✕</button>
       </div>
       <div class="cards">
-        <a class="card hidden" id="act-animate">
+        <a class="card hidden" id="act-animate" data-i18n-html="viewer.pose_animate_open_it_in_pose_studio">
           <span class="k"><span class="glyph" aria-hidden="true">▶</span>Pose &amp; animate</span>
           <span class="d">Open it in Pose Studio and drive it with the animation library.</span>
         </a>
-        <a class="card" id="act-restyle">
+        <a class="card" id="act-restyle" data-i18n-html="viewer.restyle_it_keep_the_mesh_re_skin">
           <span class="k"><span class="glyph" aria-hidden="true">◈</span>Restyle it</span>
           <span class="d">Keep the mesh, re-skin the material: chrome, wood, neon, anything.</span>
         </a>
-        <a class="card" id="act-scene">
+        <a class="card" id="act-scene" data-i18n-html="viewer.build_a_scene_drop_it_into_scene">
           <span class="k"><span class="glyph" aria-hidden="true">⬢</span>Build a scene</span>
           <span class="d">Drop it into Scene Studio and compose a world around it.</span>
         </a>
-        <a class="card" id="act-compose">
+        <a class="card" id="act-compose" data-i18n-html="viewer.combine_parts_mix_it_with_other_models">
           <span class="k"><span class="glyph" aria-hidden="true">⧉</span>Combine parts</span>
           <span class="d">Mix it with other models and forge new parts onto it.</span>
         </a>
-        <button class="card" id="act-ar" type="button">
+        <button class="card" id="act-ar" type="button" data-i18n-html="viewer.see_it_in_your_room_place_it">
           <span class="k"><span class="glyph" aria-hidden="true">◎</span>See it in your room</span>
           <span class="d">Place it in AR: straight from your phone, or scan a QR from desktop.</span>
         </button>
-        <button class="card" id="act-ar-studio" type="button">
+        <button class="card" id="act-ar-studio" type="button" data-i18n-html="viewer.open_in_ar_studio_place_it_alongside">
           <span class="k"><span class="glyph" aria-hidden="true">▣</span>Open in AR Studio</span>
           <span class="d">Place it alongside other models in a live camera scene — and forge more without leaving the view.</span>
         </button>
-        <button class="card" id="act-coin" type="button">
+        <button class="card" id="act-coin" type="button" data-i18n-html="viewer.launch_it_as_a_coin_open_a">
           <span class="k"><span class="glyph" aria-hidden="true">◉</span>Launch it as a coin</span>
           <span class="d" id="coin-d">Open a pump.fun launch with this model as the token image.</span>
         </button>
-        <button class="card" id="act-embed" type="button">
+        <button class="card" id="act-embed" type="button" data-i18n-html="viewer.embed_it_anywhere_copy_an_iframe_snippet">
           <span class="k"><span class="glyph" aria-hidden="true">&lt;/&gt;</span>Embed it anywhere</span>
           <span class="d" id="embed-d">Copy an iframe snippet that shows this exact viewer on your site.</span>
         </button>
-        <a class="card" id="act-forge" href="/forge">
+        <a class="card" id="act-forge" href="/forge" data-i18n-html="viewer.forge_another_describe_anything_and_get_a">
           <span class="k"><span class="glyph" aria-hidden="true">✦</span>Forge another</span>
           <span class="d">Describe anything and get a new 3D model, free.</span>
         </a>
@@ -522,5 +522,7 @@
   }, 90000);
 })();
 </script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

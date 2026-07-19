@@ -4,7 +4,7 @@
 	<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Welcome to three.ws · AWS Marketplace</title>
+	<title data-i18n="aws_marketplace_welcome.meta_title">Welcome to three.ws · AWS Marketplace</title>
 	<meta name="robots" content="noindex" />
 	<link rel="icon" href="/favicon.ico" />
 	<style>
@@ -101,7 +101,7 @@
 </head>
 <body>
 	<header>
-		<a href="/">← three.ws</a>
+		<a href="/" data-i18n="aws_marketplace_welcome.three_ws">← three.ws</a>
 	</header>
 
 	<div class="wrap">
@@ -113,22 +113,22 @@
 		<!-- loading -->
 		<div id="state-loading" class="state active">
 			<div class="spinner"></div>
-			<p>Setting up your subscription…</p>
+			<p data-i18n="aws_marketplace_welcome.setting_up_your_subscription">Setting up your subscription…</p>
 		</div>
 
 		<!-- auth: sign up or sign in -->
 		<div id="state-auth" class="state">
-			<h1 id="auth-heading">You're almost in.</h1>
-			<p class="sub" id="auth-sub">Create a three.ws account to activate your AWS Marketplace subscription.</p>
+			<h1 id="auth-heading" data-i18n="aws_marketplace_welcome.you_re_almost_in">You're almost in.</h1>
+			<p class="sub" id="auth-sub" data-i18n="aws_marketplace_welcome.create_a_three_ws_account_to_activate">Create a three.ws account to activate your AWS Marketplace subscription.</p>
 
 			<div id="trial-banner-auth" class="trial-banner" style="display:none">
-				<strong>Free trial activated</strong>
+				<strong data-i18n="aws_marketplace_welcome.free_trial_activated">Free trial activated</strong>
 				Your AWS Marketplace free trial is confirmed. Create an account to start using three.ws — no payment required during the trial period.
 			</div>
 
 			<div class="tabs">
-				<button class="tab active" id="tab-signup" type="button">Create account</button>
-				<button class="tab" id="tab-signin" type="button">Sign in</button>
+				<button class="tab active" id="tab-signup" type="button" data-i18n="aws_marketplace_welcome.create_account">Create account</button>
+				<button class="tab" id="tab-signin" type="button" data-i18n="aws_marketplace_welcome.sign_in">Sign in</button>
 			</div>
 
 			<div id="err-auth" class="err"></div>
@@ -136,53 +136,53 @@
 			<!-- sign-up form -->
 			<form id="form-signup" autocomplete="on">
 				<div class="form-group">
-					<label for="su-email">Email</label>
+					<label for="su-email" data-i18n="aws_marketplace_welcome.email">Email</label>
 					<input id="su-email" type="email" name="email" placeholder="you@example.com" required autocomplete="email" />
 				</div>
 				<div class="form-group">
-					<label for="su-password">Password</label>
+					<label for="su-password" data-i18n="aws_marketplace_welcome.password">Password</label>
 					<input id="su-password" type="password" name="password" placeholder="Min. 8 characters" required autocomplete="new-password" />
 				</div>
 				<label class="tos-row" for="su-tos">
 					<input id="su-tos" type="checkbox" required />
-					<span>I have read and agree to the <a href="/legal/tos" target="_blank" rel="noopener">Terms of Service</a>, <a href="/legal/privacy" target="_blank" rel="noopener">Privacy Policy</a>, and <a href="/legal/aws-marketplace-eula" target="_blank" rel="noopener">AWS Marketplace EULA</a>.</span>
+					<span data-i18n-html="aws_marketplace_welcome.i_have_read_and_agree_to_the">I have read and agree to the <a href="/legal/tos" target="_blank" rel="noopener">Terms of Service</a>, <a href="/legal/privacy" target="_blank" rel="noopener">Privacy Policy</a>, and <a href="/legal/aws-marketplace-eula" target="_blank" rel="noopener">AWS Marketplace EULA</a>.</span>
 				</label>
-				<button class="btn" id="btn-signup" type="submit">Create account &amp; activate</button>
+				<button class="btn" id="btn-signup" type="submit" data-i18n="aws_marketplace_welcome.create_account_activate">Create account &amp; activate</button>
 			</form>
 
 			<!-- sign-in form -->
 			<form id="form-signin" autocomplete="on" style="display:none">
 				<div class="form-group">
-					<label for="si-email">Email</label>
+					<label for="si-email" data-i18n="aws_marketplace_welcome.email_2">Email</label>
 					<input id="si-email" type="email" name="email" placeholder="you@example.com" required autocomplete="email" />
 				</div>
 				<div class="form-group">
-					<label for="si-password">Password</label>
+					<label for="si-password" data-i18n="aws_marketplace_welcome.password_2">Password</label>
 					<input id="si-password" type="password" name="password" placeholder="Your password" required autocomplete="current-password" />
 				</div>
-				<button class="btn" id="btn-signin" type="submit">Sign in &amp; activate</button>
-				<p class="tos-note">By signing in you agree to the <a href="/legal/tos" target="_blank" rel="noopener">Terms of Service</a> and <a href="/legal/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
+				<button class="btn" id="btn-signin" type="submit" data-i18n="aws_marketplace_welcome.sign_in_activate">Sign in &amp; activate</button>
+				<p class="tos-note" data-i18n-html="aws_marketplace_welcome.by_signing_in_you_agree_to_the">By signing in you agree to the <a href="/legal/tos" target="_blank" rel="noopener">Terms of Service</a> and <a href="/legal/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
 			</form>
 		</div>
 
 		<!-- already signed in: link -->
 		<div id="state-link" class="state">
-			<h1>Link your AWS subscription.</h1>
-			<p class="sub">You're signed in as <strong id="link-email"></strong>. Confirm to link your AWS Marketplace subscription to this account.</p>
+			<h1 data-i18n="aws_marketplace_welcome.link_your_aws_subscription">Link your AWS subscription.</h1>
+			<p class="sub" data-i18n-html="aws_marketplace_welcome.you_re_signed_in_as_confirm_to">You're signed in as <strong id="link-email"></strong>. Confirm to link your AWS Marketplace subscription to this account.</p>
 
 			<div id="trial-banner-link" class="trial-banner" style="display:none">
-				<strong>Free trial activated</strong>
+				<strong data-i18n="aws_marketplace_welcome.free_trial_activated_2">Free trial activated</strong>
 				Your AWS Marketplace free trial is confirmed. Linking will activate it on your account — no additional payment during the trial.
 			</div>
 
 			<ul class="feature-list">
-				<li>Usage billed directly to your AWS account</li>
-				<li>Eligible for AWS credits and EDP commitments</li>
-				<li>Consolidated billing under AWS Marketplace Software</li>
+				<li data-i18n="aws_marketplace_welcome.usage_billed_directly_to_your_aws_account">Usage billed directly to your AWS account</li>
+				<li data-i18n="aws_marketplace_welcome.eligible_for_aws_credits_and_edp_commitments">Eligible for AWS credits and EDP commitments</li>
+				<li data-i18n="aws_marketplace_welcome.consolidated_billing_under_aws_marketplace_s">Consolidated billing under AWS Marketplace Software</li>
 			</ul>
 
 			<div id="err-link" class="err"></div>
-			<button class="btn" id="btn-link" type="button">Confirm &amp; activate</button>
+			<button class="btn" id="btn-link" type="button" data-i18n="aws_marketplace_welcome.confirm_activate">Confirm &amp; activate</button>
 		</div>
 
 		<!-- success -->
@@ -190,44 +190,46 @@
 			<div class="check">
 				<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
 			</div>
-			<h1>Subscription activated.</h1>
-			<p class="sub" id="linked-sub">Your AWS Marketplace subscription is linked to your three.ws account. Use the API key below to call any x402 endpoint — no on-chain payment required.</p>
+			<h1 data-i18n="aws_marketplace_welcome.subscription_activated">Subscription activated.</h1>
+			<p class="sub" id="linked-sub" data-i18n="aws_marketplace_welcome.your_aws_marketplace_subscription_is_linked">Your AWS Marketplace subscription is linked to your three.ws account. Use the API key below to call any x402 endpoint — no on-chain payment required.</p>
 
 			<div id="already-issued-note" class="already-issued" style="display:none">
-				Your API key was issued during a previous activation. For security we don't store the plaintext — manage and rotate it from <a href="/billing/keys" style="color:inherit;text-decoration:underline">API keys</a>.
+				Your API key was issued during a previous activation. For security we don't store the plaintext — manage and rotate it from <a href="/billing/keys" style="color:inherit;text-decoration:underline" data-i18n="aws_marketplace_welcome.api_keys">API keys</a>.
 			</div>
 
 			<div id="key-panel" class="key-panel" style="display:none">
 				<div class="key-panel-label">
-					<span>Your API key</span>
-					<button type="button" class="copy" id="btn-copy-key">Copy</button>
+					<span data-i18n="aws_marketplace_welcome.your_api_key">Your API key</span>
+					<button type="button" class="copy" id="btn-copy-key" data-i18n="aws_marketplace_welcome.copy">Copy</button>
 				</div>
 				<div class="key-value" id="key-value"></div>
-				<div class="key-note">Store this somewhere safe — it's shown once and grants every paid call on your AWS subscription. You can rotate it any time from <a href="/billing/keys" style="color:inherit;text-decoration:underline">API keys</a>.</div>
+				<div class="key-note">Store this somewhere safe — it's shown once and grants every paid call on your AWS subscription. You can rotate it any time from <a href="/billing/keys" style="color:inherit;text-decoration:underline" data-i18n="aws_marketplace_welcome.api_keys_2">API keys</a>.</div>
 			</div>
 
 			<div class="usage">
-				<h3>Use it</h3>
+				<h3 data-i18n="aws_marketplace_welcome.use_it">Use it</h3>
 <pre>curl https://three.ws/api/x402/agent-reputation?agent_id=&lt;uuid&gt; \
   -H "x-api-key: x402_live_…"</pre>
 			</div>
 
 			<div class="linked-actions">
-				<a href="/billing/keys" class="btn btn-sec">Manage keys</a>
-				<a href="/dashboard" class="btn">Dashboard</a>
+				<a href="/billing/keys" class="btn btn-sec" data-i18n="aws_marketplace_welcome.manage_keys">Manage keys</a>
+				<a href="/dashboard" class="btn" data-i18n="aws_marketplace_welcome.dashboard">Dashboard</a>
 			</div>
 		</div>
 
 		<!-- error -->
 		<div id="state-error" class="state">
 			<div class="icon">⚠</div>
-			<h1 id="err-heading">Something went wrong.</h1>
-			<p class="sub" id="err-body">We couldn't complete your AWS Marketplace subscription setup.</p>
-			<a href="https://github.com/nirholas/three.ws/issues" class="btn btn-sec" target="_blank" rel="noopener">Contact support</a>
+			<h1 id="err-heading" data-i18n="aws_marketplace_welcome.something_went_wrong">Something went wrong.</h1>
+			<p class="sub" id="err-body" data-i18n="aws_marketplace_welcome.we_couldn_t_complete_your_aws_marketplace">We couldn't complete your AWS Marketplace subscription setup.</p>
+			<a href="https://github.com/nirholas/three.ws/issues" class="btn btn-sec" target="_blank" rel="noopener" data-i18n="aws_marketplace_welcome.contact_support">Contact support</a>
 		</div>
 	</div>
 
 	<script type="module" src="/src/aws-marketplace-welcome.js"></script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

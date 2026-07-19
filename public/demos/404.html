@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>three.ws — 404</title>
+		<title data-i18n="demos_404.meta_title">three.ws — 404</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<style>
@@ -110,20 +110,20 @@
 				<span class="brand-dot"></span>
 				three.ws
 			</a>
-			<a href="/demos/" class="link">← lab</a>
+			<a href="/demos/" class="link" data-i18n="demos_404.lab">← lab</a>
 		</div>
 
 		<div class="stage">
-			<div class="eyebrow"><span class="eyebrow-dot"></span><span>Lost in 3D</span></div>
+			<div class="eyebrow"><span class="eyebrow-dot"></span><span data-i18n="demos_404.lost_in_3d">Lost in 3D</span></div>
 			<h1 class="bignum" id="bignum"><span id="four-a">4</span><em id="zero">0</em><span id="four-b">4</span></h1>
-			<p class="line" id="lost-line">Your agent took a wrong turn.</p>
-			<p class="sub">This page does not exist on three.ws — but she landed here, looked around, and seems pretty confused. Send her home.</p>
+			<p class="line" id="lost-line" data-i18n="demos_404.your_agent_took_a_wrong_turn">Your agent took a wrong turn.</p>
+			<p class="sub" data-i18n="demos_404.this_page_does_not_exist_on_three">This page does not exist on three.ws — but she landed here, looked around, and seems pretty confused. Send her home.</p>
 			<div class="actions">
-				<a href="/" class="btn btn-primary" id="home-btn">
+				<a href="/" class="btn btn-primary" id="home-btn" data-i18n-html="demos_404.take_her_home">
 					<span>Take her home</span>
 					<span>→</span>
 				</a>
-				<a href="/demos/" class="btn btn-ghost" id="lab-btn">
+				<a href="/demos/" class="btn btn-ghost" id="lab-btn" data-i18n-html="demos_404.back_to_lab">
 					<span>Back to lab</span>
 				</a>
 			</div>
@@ -173,5 +173,7 @@
 			agent.interceptNavigation(labBtn,  { direction: 'left',  delay: 1100 });
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

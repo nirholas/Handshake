@@ -4,8 +4,8 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>x402 Providers — operator profiles for the bazaar</title>
-<meta name="description" content="Quantified provider profiles for the x402 paid API catalog. Service counts, price bands, dominant categories, and the underlying listings." />
+<title data-i18n="providers.meta_title">x402 Providers — operator profiles for the bazaar</title>
+<meta name="description" content="Quantified provider profiles for the x402 paid API catalog. Service counts, price bands, dominant categories, and the underlying listings."  data-i18n-attr="content:providers.meta_description"/>
 <meta name="theme-color" content="#0b0b0b" />
 <link rel="stylesheet" href="/nav.css" />
 <style>
@@ -323,15 +323,15 @@
 	<link rel="canonical" href="https://three.ws/providers">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="x402 Providers · three.ws">
-	<meta property="og:description" content="Quantified operator profiles for the x402 paid API catalog. Service counts, price bands, dominant categories, and the underlying listings.">
+	<meta property="og:title" content="x402 Providers · three.ws" data-i18n-attr="content:providers.meta_og_title">
+	<meta property="og:description" content="Quantified operator profiles for the x402 paid API catalog. Service counts, price bands, dominant categories, and the underlying listings." data-i18n-attr="content:providers.meta_og_description">
 	<meta property="og:url" content="https://three.ws/providers">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=x402+Providers&amp;d=Quantified+operator+profiles+for+the+x402+paid+API+catalog.+Service+counts%2C+price+bands%2C+dominant+categories%2C+and+the+underlying+listings.&amp;p=%2Fproviders">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="x402 Providers · three.ws">
-	<meta name="twitter:description" content="Quantified operator profiles for the x402 paid API catalog. Service counts, price bands, dominant categories, and the underlying listings.">
+	<meta name="twitter:title" content="x402 Providers · three.ws" data-i18n-attr="content:providers.meta_twitter_title">
+	<meta name="twitter:description" content="Quantified operator profiles for the x402 paid API catalog. Service counts, price bands, dominant categories, and the underlying listings." data-i18n-attr="content:providers.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=x402+Providers&amp;d=Quantified+operator+profiles+for+the+x402+paid+API+catalog.+Service+counts%2C+price+bands%2C+dominant+categories%2C+and+the+underlying+listings.&amp;p=%2Fproviders">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"x402 Providers","description":"Quantified operator profiles for the x402 paid API catalog. Service counts, price bands, dominant categories, and the underlying listings.","url":"https://three.ws/providers","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -349,5 +349,7 @@
 
 <script type="module" src="/providers.js"></script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

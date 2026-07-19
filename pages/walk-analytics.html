@@ -4,8 +4,8 @@
 		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<title>Walk Analytics · three.ws</title>
-		<meta name="description" content="Analytics for your embedded walking avatars — sessions, time spent, distance walked, conversion events, and top embed locations. Your private creator dashboard." />
+		<title data-i18n="walk_analytics.meta_title">Walk Analytics · three.ws</title>
+		<meta name="description" content="Analytics for your embedded walking avatars — sessions, time spent, distance walked, conversion events, and top embed locations. Your private creator dashboard."  data-i18n-attr="content:walk_analytics.meta_description"/>
 		<link rel="canonical" href="https://three.ws/walk-analytics" />
 		<meta name="robots" content="noindex" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -17,8 +17,8 @@
 		<link rel="stylesheet" href="/footer.css" />
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Walk Analytics · three.ws" />
-		<meta property="og:description" content="Sessions, time, distance, conversions and top embed locations for your walking avatars." />
+		<meta property="og:title" content="Walk Analytics · three.ws"  data-i18n-attr="content:walk_analytics.meta_og_title"/>
+		<meta property="og:description" content="Sessions, time, distance, conversions and top embed locations for your walking avatars."  data-i18n-attr="content:walk_analytics.meta_og_description"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<style>
 			.wa-shell { max-width: 1080px; margin: 0 auto; padding: var(--space-lg) var(--space-md) var(--space-2xl); }
@@ -86,8 +86,8 @@
 
 		<main class="wa-shell" aria-labelledby="wa-title">
 			<section class="wa-hero">
-				<h1 id="wa-title" class="wa-title">Walk Analytics</h1>
-				<p class="wa-sub">How your embedded walking avatars are performing — sessions, time spent, distance walked, conversion events, and where they're running. Private to you, the creator.</p>
+				<h1 id="wa-title" class="wa-title" data-i18n="walk_analytics.walk_analytics">Walk Analytics</h1>
+				<p class="wa-sub" data-i18n="walk_analytics.how_your_embedded_walking_avatars_are_perfor">How your embedded walking avatars are performing — sessions, time spent, distance walked, conversion events, and where they're running. Private to you, the creator.</p>
 			</section>
 
 			<!-- Auth / ownership states swap in here -->
@@ -97,41 +97,41 @@
 			<div id="wa-dash" hidden>
 				<section class="wa-controls" aria-label="Filters">
 					<div class="wa-field">
-						<label for="wa-avatar">Avatar</label>
+						<label for="wa-avatar" data-i18n="walk_analytics.avatar">Avatar</label>
 						<select id="wa-avatar" class="wa-select" aria-label="Choose an avatar"></select>
 					</div>
 					<div class="wa-field">
-						<label for="wa-from">From</label>
+						<label for="wa-from" data-i18n="walk_analytics.from">From</label>
 						<input type="date" id="wa-from" class="wa-input" aria-label="From date" />
 					</div>
 					<div class="wa-field">
-						<label for="wa-to">To</label>
+						<label for="wa-to" data-i18n="walk_analytics.to">To</label>
 						<input type="date" id="wa-to" class="wa-input" aria-label="To date" />
 					</div>
-					<button type="button" id="wa-apply" class="wa-cta ghost">Apply</button>
+					<button type="button" id="wa-apply" class="wa-cta ghost" data-i18n="walk_analytics.apply">Apply</button>
 				</section>
 
 				<section class="wa-cards" id="wa-cards" aria-label="Summary">
-					<div class="wa-card"><p class="wa-card-label">Sessions</p><div class="wa-card-value" id="wa-c-sessions">—</div></div>
-					<div class="wa-card"><p class="wa-card-label">Avg duration</p><div class="wa-card-value" id="wa-c-duration">—</div></div>
-					<div class="wa-card"><p class="wa-card-label">Distance walked</p><div class="wa-card-value" id="wa-c-distance">—</div></div>
-					<div class="wa-card"><p class="wa-card-label">Unique sites</p><div class="wa-card-value" id="wa-c-origins">—</div></div>
+					<div class="wa-card"><p class="wa-card-label" data-i18n="walk_analytics.sessions">Sessions</p><div class="wa-card-value" id="wa-c-sessions">—</div></div>
+					<div class="wa-card"><p class="wa-card-label" data-i18n="walk_analytics.avg_duration">Avg duration</p><div class="wa-card-value" id="wa-c-duration">—</div></div>
+					<div class="wa-card"><p class="wa-card-label" data-i18n="walk_analytics.distance_walked">Distance walked</p><div class="wa-card-value" id="wa-c-distance">—</div></div>
+					<div class="wa-card"><p class="wa-card-label" data-i18n="walk_analytics.unique_sites">Unique sites</p><div class="wa-card-value" id="wa-c-origins">—</div></div>
 				</section>
 
 				<section class="wa-panel" aria-label="Sessions over time">
-					<h2 class="wa-panel-title">Over time</h2>
+					<h2 class="wa-panel-title" data-i18n="walk_analytics.over_time">Over time</h2>
 					<div class="wa-chart-wrap" id="wa-chart-wrap"></div>
 					<div class="wa-chart-legend" id="wa-legend"></div>
 				</section>
 
 				<section class="wa-panel" aria-label="Top embed locations">
-					<h2 class="wa-panel-title">Top embed locations</h2>
+					<h2 class="wa-panel-title" data-i18n="walk_analytics.top_embed_locations">Top embed locations</h2>
 					<div id="wa-origins"></div>
 				</section>
 
 				<section class="wa-panel" aria-label="Conversion events">
-					<h2 class="wa-panel-title">Events</h2>
-					<p class="wa-sub" style="margin:0 0 12px;font-size:var(--text-sm)">Fire events from your embed with <code style="font-family:var(--font-mono)">window.ThreeWalkAvatar.track('subscribe', { value: 9 })</code>. Conversion rate is events ÷ sessions.</p>
+					<h2 class="wa-panel-title" data-i18n="walk_analytics.events">Events</h2>
+					<p class="wa-sub" style="margin:0 0 12px;font-size:var(--text-sm)" data-i18n-html="walk_analytics.fire_events_from_your_embed_with_conversion">Fire events from your embed with <code style="font-family:var(--font-mono)">window.ThreeWalkAvatar.track('subscribe', { value: 9 })</code>. Conversion rate is events ÷ sessions.</p>
 					<div id="wa-events"></div>
 				</section>
 			</div>
@@ -326,5 +326,7 @@
 
 			boot();
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

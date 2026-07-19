@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Avatar Gallery · three.ws</title>
+  <title data-i18n="demos_embed_gallery.meta_title">Avatar Gallery · three.ws</title>
   <meta name="robots" content="noindex">
   <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js" integrity="sha384-sr9b4Ux0WhAUGclJ0ym0FSY2zSOMmNSn0bP/SA0e6bNCrpn/5W3QL8mm+LdlQMKw" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="/style.css">
@@ -167,11 +167,11 @@
         <div class="gallery-hero-chips">
           <div class="gallery-hero-chip">
             <span class="gallery-hero-dot"></span>
-            <span>three.ws · Avatar Gallery</span>
+            <span data-i18n="demos_embed_gallery.three_ws_avatar_gallery">three.ws · Avatar Gallery</span>
           </div>
         </div>
-        <h1 class="gallery-title">Every avatar, ever made.</h1>
-        <p class="gallery-sub">Community-made 3D avatars on three.ws. Click any card to preview, then embed or remix.</p>
+        <h1 class="gallery-title" data-i18n="demos_embed_gallery.every_avatar_ever_made">Every avatar, ever made.</h1>
+        <p class="gallery-sub" data-i18n="demos_embed_gallery.community_made_3d_avatars_on_three_ws">Community-made 3D avatars on three.ws. Click any card to preview, then embed or remix.</p>
         <div class="gallery-stats">
           <div class="gallery-stat">
             <div class="gallery-stat-value" data-role="stat-count">—</div>
@@ -179,9 +179,9 @@
           </div>
         </div>
         <div class="gallery-hero-ctas">
-          <a class="gallery-hero-btn gallery-hero-btn--primary" href="https://three.ws/create/prompt" target="_blank" rel="noopener">Create from a prompt</a>
-          <a class="gallery-hero-btn" href="https://three.ws/create/selfie" target="_blank" rel="noopener">Create from selfie</a>
-          <a class="gallery-hero-btn" href="https://three.ws/forge" target="_blank" rel="noopener">Open Forge</a>
+          <a class="gallery-hero-btn gallery-hero-btn--primary" href="https://three.ws/create/prompt" target="_blank" rel="noopener" data-i18n="demos_embed_gallery.create_from_a_prompt">Create from a prompt</a>
+          <a class="gallery-hero-btn" href="https://three.ws/create/selfie" target="_blank" rel="noopener" data-i18n="demos_embed_gallery.create_from_selfie">Create from selfie</a>
+          <a class="gallery-hero-btn" href="https://three.ws/forge" target="_blank" rel="noopener" data-i18n="demos_embed_gallery.open_forge">Open Forge</a>
         </div>
       </div>
     </section>
@@ -194,13 +194,13 @@
             <path d="m14 14 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
           </svg>
           <input type="search" placeholder="Search by name or description…" data-role="search" aria-label="Search avatars" autocomplete="off" spellcheck="false">
-          <button type="button" class="gallery-search-clear" data-role="search-clear" aria-label="Clear search" hidden>×</button>
+          <button type="button" class="gallery-search-clear" data-role="search-clear" aria-label="Clear search" hidden data-i18n-attr="aria-label:demos_embed_gallery.clear_search_arialabel">×</button>
         </div>
         <div class="gallery-sort-select">
-          <label for="gallery-sort-embed">Sort:</label>
+          <label for="gallery-sort-embed" data-i18n="demos_embed_gallery.sort">Sort:</label>
           <select id="gallery-sort-embed" data-role="sort">
-            <option value="newest">Newest</option>
-            <option value="alpha">A → Z</option>
+            <option value="newest" data-i18n="demos_embed_gallery.newest">Newest</option>
+            <option value="alpha" data-i18n="demos_embed_gallery.a_z">A → Z</option>
           </select>
         </div>
       </div>
@@ -215,7 +215,7 @@
       <div class="gallery-status" data-role="status"></div>
       <div class="gallery-sentinel" data-role="sentinel" aria-hidden="true"></div>
       <div class="gallery-load-more-wrap">
-        <button class="gallery-load-more" data-role="load-more" hidden>Load more</button>
+        <button class="gallery-load-more" data-role="load-more" hidden data-i18n="demos_embed_gallery.load_more">Load more</button>
       </div>
     </section>
 
@@ -226,12 +226,12 @@
             <svg class="gallery-forge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M12 2 3 7v10l9 5 9-5V7l-9-5Z"/><path d="m3 7 9 5 9-5"/><line x1="12" y1="12" x2="12" y2="22"/>
             </svg>
-            <h2 class="gallery-forge-title">From the Forge</h2>
+            <h2 class="gallery-forge-title" data-i18n="demos_embed_gallery.from_the_forge">From the Forge</h2>
             <span class="gallery-forge-count" id="forge-count"></span>
           </div>
-          <p class="gallery-forge-sub">3D models auto-saved as the community generates them.</p>
+          <p class="gallery-forge-sub" data-i18n="demos_embed_gallery.3d_models_auto_saved_as_the_community">3D models auto-saved as the community generates them.</p>
         </div>
-        <a href="https://three.ws/forge" target="_blank" class="gallery-forge-cta" rel="noopener">Generate your own →</a>
+        <a href="https://three.ws/forge" target="_blank" class="gallery-forge-cta" rel="noopener" data-i18n="demos_embed_gallery.generate_your_own">Generate your own →</a>
       </div>
       <div class="gallery-forge-grid" id="forge-grid"></div>
     </section>
@@ -240,5 +240,7 @@
   <script type="module">import '/src/shared/onchain-badge.js';</script>
   <script type="module">import '/src/shared/template-picker.js';</script>
   <script type="module" src="/gallery/gallery.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

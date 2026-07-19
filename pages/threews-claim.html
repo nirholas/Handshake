@@ -3,9 +3,9 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Claim your threews.sol subdomain</title>
+		<title data-i18n="threews_claim.meta_title">Claim your threews.sol subdomain</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="description" content="Claim your own subdomain on threews.sol and get a Brave-resolvable personal showcase page." />
+		<meta name="description" content="Claim your own subdomain on threews.sol and get a Brave-resolvable personal showcase page."  data-i18n-attr="content:threews_claim.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -159,15 +159,15 @@
 	<link rel="canonical" href="https://three.ws/threews/claim">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="Claim threews.sol Subdomain · three.ws">
-	<meta property="og:description" content="Claim your own &lt;name&gt;.threews.sol subdomain and get a Brave-resolvable personal showcase page.">
+	<meta property="og:title" content="Claim threews.sol Subdomain · three.ws" data-i18n-attr="content:threews_claim.meta_og_title">
+	<meta property="og:description" content="Claim your own &lt;name&gt;.threews.sol subdomain and get a Brave-resolvable personal showcase page." data-i18n-attr="content:threews_claim.meta_og_description">
 	<meta property="og:url" content="https://three.ws/threews/claim">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Claim+threews.sol+Subdomain&amp;d=Claim+your+own+%3Cname%3E.threews.sol+subdomain+and+get+a+Brave-resolvable+personal+showcase+page.&amp;p=%2Fthreews%2Fclaim">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Claim threews.sol Subdomain · three.ws">
-	<meta name="twitter:description" content="Claim your own &lt;name&gt;.threews.sol subdomain and get a Brave-resolvable personal showcase page.">
+	<meta name="twitter:title" content="Claim threews.sol Subdomain · three.ws" data-i18n-attr="content:threews_claim.meta_twitter_title">
+	<meta name="twitter:description" content="Claim your own &lt;name&gt;.threews.sol subdomain and get a Brave-resolvable personal showcase page." data-i18n-attr="content:threews_claim.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Claim+threews.sol+Subdomain&amp;d=Claim+your+own+%3Cname%3E.threews.sol+subdomain+and+get+a+Brave-resolvable+personal+showcase+page.&amp;p=%2Fthreews%2Fclaim">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Claim threews.sol Subdomain","description":"Claim your own \u003cname>.threews.sol subdomain and get a Brave-resolvable personal showcase page.","url":"https://three.ws/threews/claim","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -182,22 +182,22 @@
 
 		<main class="tw-wrap">
 			<div class="tw-eyebrow">threews.sol</div>
-			<h1>Claim your subdomain</h1>
-			<p class="tw-sub">
+			<h1 data-i18n="threews_claim.claim_your_subdomain">Claim your subdomain</h1>
+			<p class="tw-sub" data-i18n-html="threews_claim.get_as_a_solana_name_service_subdomain">
 				Get <code style="background:rgba(255,255,255,.06);padding:.1em .4em;border-radius:4px;">yourname.threews.sol</code>
 				as a Solana Name Service subdomain. Brave Browser resolves it directly to
 				your three.ws showcase. Your agents, avatars, and skills, all under one name.
 			</p>
 
 			<section class="tw-card">
-				<label for="tw-label">Subdomain label</label>
+				<label for="tw-label" data-i18n="threews_claim.subdomain_label">Subdomain label</label>
 				<div class="tw-input-row">
 					<input id="tw-label" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="yourhandle" maxlength="63" />
 					<div class="tw-suffix">.threews.sol</div>
 				</div>
 				<div class="tw-status muted" id="tw-status">Type a label to check availability.</div>
-				<button class="tw-btn" id="tw-mint" disabled>Mint subdomain</button>
-				<p class="tw-help" style="margin-top:1rem">
+				<button class="tw-btn" id="tw-mint" disabled data-i18n="threews_claim.mint_subdomain">Mint subdomain</button>
+				<p class="tw-help" style="margin-top:1rem" data-i18n="threews_claim.minting_is_paid_by_three_ws_the">
 					Minting is paid by three.ws. The on-chain subdomain is transferred to
 					your agent's Solana wallet (or a wallet you've linked). Your label must
 					match your account username.
@@ -207,12 +207,12 @@
 			<div class="tw-result" id="tw-result"></div>
 
 			<section class="tw-card">
-				<h3 style="margin:0 0 .5rem;font-weight:500">What this gives you</h3>
+				<h3 style="margin:0 0 .5rem;font-weight:500" data-i18n="threews_claim.what_this_gives_you">What this gives you</h3>
 				<ul class="tw-bullets tw-help">
-					<li><code>yourname.threews.sol</code> resolves to your showcase in Brave</li>
-					<li>A pay-by-name handle — anyone can <code>POST /api/x402/pay-by-name</code> with <code>yourname.threews.sol</code> to send you USDC</li>
-					<li>Ownership transfers to your wallet; we just set the URL record</li>
-					<li>Verified profile badge at <code style="color:#69e16f">/u/yourname</code></li>
+					<li data-i18n-html="threews_claim.resolves_to_your_showcase_in_brave"><code>yourname.threews.sol</code> resolves to your showcase in Brave</li>
+					<li data-i18n-html="threews_claim.a_pay_by_name_handle_anyone_can">A pay-by-name handle — anyone can <code>POST /api/x402/pay-by-name</code> with <code>yourname.threews.sol</code> to send you USDC</li>
+					<li data-i18n="threews_claim.ownership_transfers_to_your_wallet_we_just">Ownership transfers to your wallet; we just set the URL record</li>
+					<li data-i18n-html="threews_claim.verified_profile_badge_at">Verified profile badge at <code style="color:#69e16f">/u/yourname</code></li>
 				</ul>
 			</section>
 		</main>
@@ -329,5 +329,7 @@
 			});
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -10,20 +10,20 @@
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Embed editor — three.ws</title>
-		<meta name="description" content="Embed a live 3D avatar on any website — static, idle, walking, or chat. Configure, preview, and copy the snippet." />
+		<title data-i18n="embed.meta_title">Embed editor — three.ws</title>
+		<meta name="description" content="Embed a live 3D avatar on any website — static, idle, walking, or chat. Configure, preview, and copy the snippet."  data-i18n-attr="content:embed.meta_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/embed" />
-	<meta property="og:title" content="Embed editor — three.ws" />
-	<meta property="og:description" content="Embed a live 3D avatar on any website — static, idle, walking, or chat. Configure, preview, and copy the snippet." />
+	<meta property="og:title" content="Embed editor — three.ws"  data-i18n-attr="content:embed.meta_og_title"/>
+	<meta property="og:description" content="Embed a live 3D avatar on any website — static, idle, walking, or chat. Configure, preview, and copy the snippet."  data-i18n-attr="content:embed.meta_og_description"/>
 	<meta property="og:image" content="https://three.ws/og-image.png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Embed editor — three.ws" />
-	<meta name="twitter:description" content="Embed a live 3D avatar on any website — static, idle, walking, or chat. Configure, preview, and copy the snippet." />
+	<meta name="twitter:title" content="Embed editor — three.ws"  data-i18n-attr="content:embed.meta_twitter_title"/>
+	<meta name="twitter:description" content="Embed a live 3D avatar on any website — static, idle, walking, or chat. Configure, preview, and copy the snippet."  data-i18n-attr="content:embed.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/og-image.png" />
 		<style>
 			html,
@@ -60,5 +60,7 @@
 				badge: q.get('badge'),
 			});
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

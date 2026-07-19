@@ -3,16 +3,16 @@
 <head>
 	<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8">
-	<title>Verify a vanity receipt · three.ws</title>
+	<title data-i18n="vanity_verify_index.meta_title">Verify a vanity receipt · three.ws</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="description" content="Independently verify a three.ws provably-fair vanity wallet receipt — entirely in your browser. Prove the key was generated fresh under a committed seed and the operator could never have kept a copy.">
+	<meta name="description" content="Independently verify a three.ws provably-fair vanity wallet receipt — entirely in your browser. Prove the key was generated fresh under a committed seed and the operator could never have kept a copy." data-i18n-attr="content:vanity_verify_index.meta_description">
 	<link rel="icon" href="/favicon.ico">
 	<link rel="stylesheet" href="/footer.css">
 	<link rel="stylesheet" href="/nav.css">
 	<link rel="stylesheet" href="/fonts/fonts.css" />
 	<script defer src="/footer-newsletter.js"></script>
-	<meta property="og:title" content="Verify a provably-fair vanity wallet · three.ws">
-	<meta property="og:description" content="Prove your three.ws vanity key was generated fresh and never kept — verification runs entirely in your browser.">
+	<meta property="og:title" content="Verify a provably-fair vanity wallet · three.ws" data-i18n-attr="content:vanity_verify_index.meta_og_title">
+	<meta property="og:description" content="Prove your three.ws vanity key was generated fresh and never kept — verification runs entirely in your browser." data-i18n-attr="content:vanity_verify_index.meta_og_description">
 	<meta name="twitter:card" content="summary_large_image">
 	<style>
 		* { box-sizing: border-box; }
@@ -106,8 +106,8 @@
 	<meta property="og:image:type" content="image/png">
 	<meta property="og:image:alt" content="Verify a Vanity Receipt — three.ws">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Verify a Vanity Receipt · three.ws">
-	<meta name="twitter:description" content="Independently verify a three.ws provably-fair vanity wallet receipt — entirely in your browser. Prove the key was generated fresh under a committed seed and the operator never kept a copy.">
+	<meta name="twitter:title" content="Verify a Vanity Receipt · three.ws" data-i18n-attr="content:vanity_verify_index.meta_twitter_title">
+	<meta name="twitter:description" content="Independently verify a three.ws provably-fair vanity wallet receipt — entirely in your browser. Prove the key was generated fresh under a committed seed and the operator never kept a copy." data-i18n-attr="content:vanity_verify_index.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Verify+a+Vanity+Receipt&amp;d=Independently+verify+a+three.ws+provably-fair+vanity+wallet+receipt+%E2%80%94+entirely+in+your+browser.+Prove+the+key+was+generated+fresh+under+a+committed+seed+and+the&amp;p=%2Fvanity%2Fverify">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Verify a Vanity Receipt","description":"Independently verify a three.ws provably-fair vanity wallet receipt — entirely in your browser. Prove the key was generated fresh under a committed seed and the operator never kept a copy.","url":"https://three.ws/vanity/verify","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=crypto&t=Verify+a+Vanity+Receipt&d=Independently+verify+a+three.ws+provably-fair+vanity+wallet+receipt+%E2%80%94+entirely+in+your+browser.+Prove+the+key+was+generated+fresh+under+a+committed+seed+and+the&p=%2Fvanity%2Fverify"},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Vanity","item":"https://three.ws/vanity"},{"@type":"ListItem","position":3,"name":"Verify","item":"https://three.ws/vanity/verify"}]}]}</script>
 	<!-- Resolve the bare specifiers that verifiable-grind.js / sealed-envelope.js import, without a bundler
@@ -127,13 +127,13 @@
 	</script>
 </head>
 <body>
-	<a href="#main-content" class="skip-link">Skip to main content</a>
+	<a href="#main-content" class="skip-link" data-i18n="vanity_verify_index.skip_to_main_content">Skip to main content</a>
 	<header><div id="nav-container"></div></header>
 	<script src="/nav.js"></script>
 
 	<main id="main-content">
-		<h1>Verify a vanity receipt</h1>
-		<p class="lede">
+		<h1 data-i18n="vanity_verify_index.verify_a_vanity_receipt">Verify a vanity receipt</h1>
+		<p class="lede" data-i18n-html="vanity_verify_index.paste_the_receipt_from_a_three_ws">
 			Paste the receipt from a <a class="link" href="/vanity-wallet">three.ws provably-fair vanity wallet</a> and prove,
 			from first principles, that the key was generated <strong>fresh</strong> under a seed the server committed to
 			<em>before</em> grinding — and that the operator could never have kept a copy.
@@ -146,24 +146,24 @@
 		</div>
 
 		<div class="card">
-			<label for="receipt">Receipt JSON</label>
+			<label for="receipt" data-i18n="vanity_verify_index.receipt_json">Receipt JSON</label>
 			<textarea id="receipt" placeholder='Paste the full receipt object you received from /api/x402/vanity-verifiable…' spellcheck="false" autocomplete="off"></textarea>
 
 			<details class="optional-row">
-				<summary>Optional: prove you hold the key (open the sealed envelope locally)</summary>
+				<summary data-i18n="vanity_verify_index.optional_prove_you_hold_the_key_open">Optional: prove you hold the key (open the sealed envelope locally)</summary>
 				<div style="margin-top:.8rem">
-					<label for="x25519">Your X25519 private key <span style="text-transform:none;color:#555">(Base58 or hex — used only in your browser)</span></label>
+					<label for="x25519" data-i18n-html="vanity_verify_index.your_x25519_private_key_base58_or_hex">Your X25519 private key <span style="text-transform:none;color:#555">(Base58 or hex — used only in your browser)</span></label>
 					<input id="x25519" type="text" placeholder="The secret key matching the sealTo you sent" spellcheck="false" autocomplete="off" />
-					<p class="muted-note"><strong>Private.</strong> This key is used only to decrypt the sealed secret right here in your browser, then verify that the key you recover is exactly the one the receipt describes. It is never sent anywhere.</p>
+					<p class="muted-note" data-i18n-html="vanity_verify_index.private_this_key_is_used_only_to"><strong>Private.</strong> This key is used only to decrypt the sealed secret right here in your browser, then verify that the key you recover is exactly the one the receipt describes. It is never sent anywhere.</p>
 				</div>
 			</details>
 
 			<div class="error-box" id="error"></div>
 
 			<div class="btn-row">
-				<button class="primary" id="verify-btn">Verify receipt</button>
-				<button class="ghost" id="clear-btn">Clear</button>
-				<a class="link" href="/vanity-wallet" style="margin-left:auto;font-size:.85rem">Need a receipt? Grind a wallet →</a>
+				<button class="primary" id="verify-btn" data-i18n="vanity_verify_index.verify_receipt">Verify receipt</button>
+				<button class="ghost" id="clear-btn" data-i18n="vanity_verify_index.clear">Clear</button>
+				<a class="link" href="/vanity-wallet" style="margin-left:auto;font-size:.85rem" data-i18n="vanity_verify_index.need_a_receipt_grind_a_wallet">Need a receipt? Grind a wallet →</a>
 			</div>
 			<div class="pin-line" id="pin-line">Pinning against the live service key from <code>/.well-known/three-vanity.json</code>…</div>
 		</div>
@@ -172,23 +172,23 @@
 			<div class="checks" id="checks"></div>
 			<div id="meta" style="margin-top:1rem"></div>
 			<div class="share-row" id="share-row">
-				<span class="badge">✓ Verified trustless · three.ws</span>
-				<button class="ghost" id="copy-badge">Copy verified badge</button>
-				<a class="link" id="publish-link" href="/vanity/gallery#tab=publish" style="align-self:center;font-size:.85rem">Publish to the rarity gallery →</a>
+				<span class="badge" data-i18n="vanity_verify_index.verified_trustless_three_ws">✓ Verified trustless · three.ws</span>
+				<button class="ghost" id="copy-badge" data-i18n="vanity_verify_index.copy_verified_badge">Copy verified badge</button>
+				<a class="link" id="publish-link" href="/vanity/gallery#tab=publish" style="align-self:center;font-size:.85rem" data-i18n="vanity_verify_index.publish_to_the_rarity_gallery">Publish to the rarity gallery →</a>
 			</div>
 		</div>
 
 		<div class="explainer">
-			<h2>What does this prove?</h2>
+			<h2 data-i18n="vanity_verify_index.what_does_this_prove">What does this prove?</h2>
 			<ol>
-				<li><strong>The commitment opens.</strong> <code>SHA-256(serverSeed)</code> equals the value the server published before grinding — so it couldn't grind thousands of candidates and hand you the one whose key it kept.</li>
-				<li><strong>Neither side controlled the result.</strong> Your <code>clientSeed</code> was mixed into the seed, so the server couldn't have predicted the address at commit time.</li>
-				<li><strong>The address really derives from that seed</strong> at the claimed index — re-derived here with the same HMAC-SHA256 → Ed25519 derivation.</li>
-				<li><strong>It matches your pattern</strong> and the difficulty claim is the honest <code>58ⁿ</code> model.</li>
-				<li><strong>three.ws signed it.</strong> The Ed25519 signature verifies against the service key pinned from the well-known document — not an impostor.</li>
-				<li><strong>(If you open the seal)</strong> the key you decrypt is byte-for-byte the key the receipt describes — you, and only you, hold it.</li>
+				<li data-i18n-html="vanity_verify_index.the_commitment_opens_equals_the_value_the"><strong>The commitment opens.</strong> <code>SHA-256(serverSeed)</code> equals the value the server published before grinding — so it couldn't grind thousands of candidates and hand you the one whose key it kept.</li>
+				<li data-i18n-html="vanity_verify_index.neither_side_controlled_the_result_your_was"><strong>Neither side controlled the result.</strong> Your <code>clientSeed</code> was mixed into the seed, so the server couldn't have predicted the address at commit time.</li>
+				<li data-i18n-html="vanity_verify_index.the_address_really_derives_from_that_seed"><strong>The address really derives from that seed</strong> at the claimed index — re-derived here with the same HMAC-SHA256 → Ed25519 derivation.</li>
+				<li data-i18n-html="vanity_verify_index.it_matches_your_pattern_and_the_difficulty"><strong>It matches your pattern</strong> and the difficulty claim is the honest <code>58ⁿ</code> model.</li>
+				<li data-i18n-html="vanity_verify_index.three_ws_signed_it_the_ed25519_signature"><strong>three.ws signed it.</strong> The Ed25519 signature verifies against the service key pinned from the well-known document — not an impostor.</li>
+				<li data-i18n-html="vanity_verify_index.if_you_open_the_seal_the_key"><strong>(If you open the seal)</strong> the key you decrypt is byte-for-byte the key the receipt describes — you, and only you, hold it.</li>
 			</ol>
-			<p class="muted-note" style="margin-top:.9rem">Protocol <code>three-vanity/v1</code> · verify offline with the open-source CLI <code>scripts/verify-vanity-receipt.mjs</code> or the <code>@three-ws/solana-agent</code> SDK's <code>verifyVanityReceipt()</code>. <a class="link" href="/.well-known/three-vanity.json">View the service key →</a></p>
+			<p class="muted-note" style="margin-top:.9rem" data-i18n-html="vanity_verify_index.protocol_verify_offline_with_the_open_source">Protocol <code>three-vanity/v1</code> · verify offline with the open-source CLI <code>scripts/verify-vanity-receipt.mjs</code> or the <code>@three-ws/solana-agent</code> SDK's <code>verifyVanityReceipt()</code>. <a class="link" href="/.well-known/three-vanity.json">View the service key →</a></p>
 		</div>
 	</main>
 
@@ -347,5 +347,7 @@
 			} catch { /* malformed hash — ignore */ }
 		})();
 	</script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

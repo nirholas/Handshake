@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>three.ws · Persona extraction</title>
+		<title data-i18n="demos_persona_extract.meta_title">three.ws · Persona extraction</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
@@ -159,9 +159,9 @@
 		<header><div id="nav-container"></div></header>
 
 		<main class="stage">
-			<p class="crumb"><a href="/demos">← lab</a></p>
-			<h1>three.ws · Persona extraction</h1>
-			<p class="sub">
+			<p class="crumb" data-i18n-html="demos_persona_extract.lab"><a href="/demos">← lab</a></p>
+			<h1 data-i18n="demos_persona_extract.three_ws_persona_extraction">three.ws · Persona extraction</h1>
+			<p class="sub" data-i18n-html="demos_persona_extract.answer_six_onboarding_questions_three_ws_syn">
 				Answer six onboarding questions. three.ws synthesizes a structured
 				<code>persona.json</code> — tone, vocabulary, interests, communication
 				style — then lets you chat with an agent that wears that voice. Nothing
@@ -171,16 +171,16 @@
 			<div class="grid">
 				<div class="col-main">
 					<section class="panel" id="step-1">
-						<h2><span class="step-marker">1</span>Interview</h2>
+						<h2 data-i18n-html="demos_persona_extract.1interview"><span class="step-marker">1</span>Interview</h2>
 						<div id="questions"></div>
 						<div class="row">
-							<button id="synthesize-btn" disabled>Synthesize persona</button>
-							<button id="example-btn" class="ghost">Fill with example answers</button>
+							<button id="synthesize-btn" disabled data-i18n="demos_persona_extract.synthesize_persona">Synthesize persona</button>
+							<button id="example-btn" class="ghost" data-i18n="demos_persona_extract.fill_with_example_answers">Fill with example answers</button>
 						</div>
 					</section>
 
 					<section class="panel disabled-step" id="step-2">
-						<h2><span class="step-marker">2</span>Persona card</h2>
+						<h2 data-i18n-html="demos_persona_extract.2persona_card"><span class="step-marker">2</span>Persona card</h2>
 						<div class="persona-card" id="persona-card">
 							<div class="persona-field">
 								<div class="k">Tone</div>
@@ -207,8 +207,8 @@
 								<div class="greet" id="p-greet"></div>
 							</div>
 							<div class="row">
-								<button id="toggle-raw" class="ghost">Show raw JSON</button>
-								<button id="copy-raw" class="secondary">Copy JSON</button>
+								<button id="toggle-raw" class="ghost" data-i18n="demos_persona_extract.show_raw_json">Show raw JSON</button>
+								<button id="copy-raw" class="secondary" data-i18n="demos_persona_extract.copy_json">Copy JSON</button>
 							</div>
 							<pre class="raw" id="raw-json"></pre>
 						</div>
@@ -218,7 +218,7 @@
 					</section>
 
 					<section class="panel disabled-step" id="step-3">
-						<h2><span class="step-marker">3</span>Preview chat</h2>
+						<h2 data-i18n-html="demos_persona_extract.3preview_chat"><span class="step-marker">3</span>Preview chat</h2>
 						<div class="chat-stream" id="chat-stream">
 							<div class="bubble meta">
 								Try a few messages — ask a question, request a recommendation, push back on something. The agent replies in your persona's voice.
@@ -232,20 +232,20 @@
 								autocomplete="off"
 								disabled
 							/>
-							<button type="submit" id="chat-send" disabled>Send</button>
+							<button type="submit" id="chat-send" disabled data-i18n="demos_persona_extract.send">Send</button>
 						</form>
 					</section>
 				</div>
 
 				<div class="col-side">
 					<section class="panel">
-						<h2>Log</h2>
+						<h2 data-i18n="demos_persona_extract.log">Log</h2>
 						<div class="log" id="log">ready.</div>
 					</section>
 
 					<section class="panel">
-						<h2>How it works</h2>
-						<p style="color:#cfd2dc; font-size: 13.5px; margin:0">
+						<h2 data-i18n="demos_persona_extract.how_it_works">How it works</h2>
+						<p style="color:#cfd2dc; font-size: 13.5px; margin:0" data-i18n-html="demos_persona_extract.post_api_persona_extract_takes_your_q">
 							<strong>POST /api/persona/extract</strong> takes your Q&amp;A and
 							returns a structured persona JSON.<br /><br />
 							<strong>POST /api/persona/preview</strong> takes that persona plus
@@ -490,5 +490,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>High-five — three.ws</title>
+		<title data-i18n="demos_agents_high_five.meta_title">High-five — three.ws</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/demos/agents/_shared.css" />
@@ -11,13 +11,13 @@
 	<body>
 		<div class="stage">
 			<div class="hero-eyebrow">High-five reach</div>
-			<h1 class="hero-title">Bring your <em>hand</em> close.</h1>
-			<p class="hero-sub">
+			<h1 class="hero-title" data-i18n-html="demos_agents_high_five.bring_your_hand_close">Bring your <em>hand</em> close.</h1>
+			<p class="hero-sub" data-i18n="demos_agents_high_five.she_tracks_the_cursor_s_distance_and">
 				She tracks the cursor's distance and leans toward it as you near
 				her. Click within reach to high-five — the button claps back.
 			</p>
 			<div class="cta-row">
-				<a href="#" class="btn btn-primary" id="cta-btn"><span>Slap me</span><span>✋</span></a>
+				<a href="#" class="btn btn-primary" id="cta-btn" data-i18n-html="demos_agents_high_five.slap_me"><span>Slap me</span><span>✋</span></a>
 			</div>
 		</div>
 		<canvas id="avatar-canvas"></canvas>
@@ -105,5 +105,7 @@
 			}, rootBone, baseRootPos);
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

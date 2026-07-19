@@ -3,14 +3,14 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Agent Voice · three.ws</title>
+		<title data-i18n="dashboard_voice.meta_title">Agent Voice · three.ws</title>
 		<link rel="stylesheet" href="/dashboard/_dash-shell.css" />
 	</head>
 	<body>
 		<div class="dash-shell">
-			<a class="dash-back" href="/dashboard/agents">← Back to dashboard</a>
-			<h1 class="dash-title">Agent Voice</h1>
-			<p class="dash-sub">
+			<a class="dash-back" href="/dashboard/agents" data-i18n="dashboard_voice.back_to_dashboard">← Back to dashboard</a>
+			<h1 class="dash-title" data-i18n="dashboard_voice.agent_voice">Agent Voice</h1>
+			<p class="dash-sub" data-i18n="dashboard_voice.clone_a_voice_from_a_30_second">
 				Clone a voice from a ≥30-second sample (ElevenLabs) or fall back to browser TTS. Used by chat,
 				agent-3d, and the X-Spaces voice agent.
 			</p>
@@ -218,5 +218,7 @@
 			});
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

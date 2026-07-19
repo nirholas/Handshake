@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Dashboard · three.ws</title>
+		<title data-i18n="dashboard_index.meta_title">Dashboard · three.ws</title>
 		<link rel="icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/footer.css" />
@@ -1304,17 +1304,17 @@
 	</head>
 	<body>
 		<div id="forge-announce" class="dash-announce" role="region" aria-label="Announcement">
-			<span class="dash-announce-badge">New</span>
-			<span>
+			<span class="dash-announce-badge" data-i18n="dashboard_index.new">New</span>
+			<span data-i18n-html="dashboard_index.text_image_to_3d_are_live_describe">
 				<strong>Text &amp; image to 3D are live.</strong> Describe any object, or upload a
 				photo of one, and Forge generates a textured GLB you can use anywhere on three.ws.
 			</span>
-			<a href="/forge" class="dash-announce-cta">Try Forge &rarr;</a>
+			<a href="/forge" class="dash-announce-cta" data-i18n="dashboard_index.try_forge">Try Forge &rarr;</a>
 			<button
 				class="dash-announce-dismiss"
 				onclick="document.getElementById('forge-announce').remove();localStorage.setItem('forge-announce-dismissed','1')"
 				aria-label="Dismiss announcement"
-			>
+			 data-i18n-attr="aria-label:dashboard_index.dismiss_announcement_arialabel">
 				&times;
 			</button>
 		</div>
@@ -1337,13 +1337,13 @@
 ">
   <span>
     &#10022; Beta: New dashboard available &mdash;
-    <button id="switch-to-next" style="background:none;border:none;color:#b39bff;font-weight:600;text-decoration:underline;cursor:pointer;padding:0;font-family:inherit;font-size:inherit">
+    <button id="switch-to-next" style="background:none;border:none;color:#b39bff;font-weight:600;text-decoration:underline;cursor:pointer;padding:0;font-family:inherit;font-size:inherit" data-i18n="dashboard_index.switch_to_new_version">
       switch to new version
     </button>
   </span>
   <button onclick="document.getElementById('dn-next-banner').remove();localStorage.setItem('dn-next-dismissed','1')"
     style="background:none;border:none;color:#888;font-size:18px;cursor:pointer;line-height:1;padding:0 2px"
-    aria-label="Dismiss">&times;</button>
+    aria-label="Dismiss" data-i18n-attr="aria-label:dashboard_index.dismiss_arialabel">&times;</button>
 </div>
 <script>
   if (localStorage.getItem('dn-next-dismissed') === '1') {
@@ -1360,61 +1360,61 @@
 				<a href="/"><img src="/three.svg" alt="three.ws" class="wordmark-logo" /></a>
 			</h1>
 			<nav class="dash-header-nav" aria-label="Primary">
-				<a href="/app">Viewer</a>
-				<a href="/create">Create</a>
-				<a href="/discover">Discover</a>
-				<a href="/widgets">Widgets</a>
-				<a href="/studio">Studio</a>
-				<a href="/docs">Docs</a>
-				<a href="/my-agents" title="ERC-8004 agents controlled by your linked wallets">My Agents</a>
-				<a href="/dashboard" class="active" aria-current="page">Dashboard</a>
+				<a href="/app" data-i18n="dashboard_index.viewer">Viewer</a>
+				<a href="/create" data-i18n="dashboard_index.create">Create</a>
+				<a href="/discover" data-i18n="dashboard_index.discover">Discover</a>
+				<a href="/widgets" data-i18n="dashboard_index.widgets">Widgets</a>
+				<a href="/studio" data-i18n="dashboard_index.studio">Studio</a>
+				<a href="/docs" data-i18n="dashboard_index.docs">Docs</a>
+				<a href="/my-agents" title="ERC-8004 agents controlled by your linked wallets" data-i18n="dashboard_index.my_agents" data-i18n-attr="title:dashboard_index.erc_8004_agents_controlled_b_title">My Agents</a>
+				<a href="/dashboard" class="active" aria-current="page" data-i18n="dashboard_index.dashboard">Dashboard</a>
 			</nav>
 			<div class="dash-header-user" id="header-user-slot"></div>
 		</header>
 		<div class="layout">
 			<aside>
-				<a href="/dashboard/portfolio">Portfolio &amp; NFTs</a>
-				<a href="/dashboard/avatars" class="active" data-tab="avatars">Avatars</a>
-				<a href="/dashboard/agents" data-tab="agents">Agents</a>
-				<a href="/dashboard-classic/create" data-tab="create">Create from selfie</a>
-				<a href="/dashboard-classic/upload" data-tab="upload">Upload</a>
-				<a href="/dashboard-classic/animations" data-tab="animations">Animations</a>
-				<a href="/dashboard/widgets" data-tab="widgets">Widgets</a>
-				<a href="/dashboard-classic/embed" data-tab="embed">Embed</a>
-				<a href="/dashboard-classic/keys" data-tab="keys">API keys</a>
-				<a href="/dashboard-classic/mcp" data-tab="mcp">MCP</a>
-				<a href="/dashboard-classic/monetization" data-tab="monetization">Monetization</a>
-				<a href="/dashboard-classic/payments" data-tab="payments">Payments</a>
-				<a href="/dashboard-classic/subscriptions" data-tab="subscriptions">Subscriptions</a>
-				<a href="/dashboard-classic/billing" data-tab="billing">Plan &amp; usage</a>
-				<a href="/dashboard-classic/revenue" data-tab="revenue">Revenue</a>
-				<a href="/dashboard-classic/withdrawals" data-tab="withdrawals">Withdrawals</a>
-				<a href="/dashboard-classic/earnings" data-tab="earnings">Earnings</a>
-				<a href="/dashboard/account" data-tab="account">Account</a>
-				<a href="/dashboard/wallets">Wallets</a>
-				<a href="/vanity-wallet">Vanity wallet ✦</a>
-				<a href="/eth-vanity">ETH vanity (CREATE2) ✦</a>
-				<a href="/dashboard/memory">Memory</a>
-				<a href="/dashboard/strategy">Strategy</a>
-				<a href="/dashboard/voice">Voice</a>
-				<a href="/dashboard/sns">SNS domains</a>
-				<a href="/dashboard/delegation">Delegation</a>
-				<a href="/dashboard/tokens">Tokens (Pump.fun)</a>
-				<a href="/dashboard/actions">Action log</a>
-				<a href="/dashboard-classic/usage">LLM usage</a>
-				<a href="/dashboard/embed-policy">Embed policy</a>
-				<a href="/dashboard/sessions">Sessions</a>
-				<a href="/dashboard-classic/storage">Storage</a>
-				<a href="/dashboard/agent-pumpfun">Agent · Pump.fun</a>
-				<a href="/strategy-lab">Strategy lab</a>
-				<a href="/reputation">Reputation</a>
-				<a href="/settings">Settings</a>
-				<a href="/admin" id="admin-link" style="display:none">Admin</a>
+				<a href="/dashboard/portfolio" data-i18n="dashboard_index.portfolio_nfts">Portfolio &amp; NFTs</a>
+				<a href="/dashboard/avatars" class="active" data-tab="avatars" data-i18n="dashboard_index.avatars">Avatars</a>
+				<a href="/dashboard/agents" data-tab="agents" data-i18n="dashboard_index.agents">Agents</a>
+				<a href="/dashboard-classic/create" data-tab="create" data-i18n="dashboard_index.create_from_selfie">Create from selfie</a>
+				<a href="/dashboard-classic/upload" data-tab="upload" data-i18n="dashboard_index.upload">Upload</a>
+				<a href="/dashboard-classic/animations" data-tab="animations" data-i18n="dashboard_index.animations">Animations</a>
+				<a href="/dashboard/widgets" data-tab="widgets" data-i18n="dashboard_index.widgets_2">Widgets</a>
+				<a href="/dashboard-classic/embed" data-tab="embed" data-i18n="dashboard_index.embed">Embed</a>
+				<a href="/dashboard-classic/keys" data-tab="keys" data-i18n="dashboard_index.api_keys">API keys</a>
+				<a href="/dashboard-classic/mcp" data-tab="mcp" data-i18n="dashboard_index.mcp">MCP</a>
+				<a href="/dashboard-classic/monetization" data-tab="monetization" data-i18n="dashboard_index.monetization">Monetization</a>
+				<a href="/dashboard-classic/payments" data-tab="payments" data-i18n="dashboard_index.payments">Payments</a>
+				<a href="/dashboard-classic/subscriptions" data-tab="subscriptions" data-i18n="dashboard_index.subscriptions">Subscriptions</a>
+				<a href="/dashboard-classic/billing" data-tab="billing" data-i18n="dashboard_index.plan_usage">Plan &amp; usage</a>
+				<a href="/dashboard-classic/revenue" data-tab="revenue" data-i18n="dashboard_index.revenue">Revenue</a>
+				<a href="/dashboard-classic/withdrawals" data-tab="withdrawals" data-i18n="dashboard_index.withdrawals">Withdrawals</a>
+				<a href="/dashboard-classic/earnings" data-tab="earnings" data-i18n="dashboard_index.earnings">Earnings</a>
+				<a href="/dashboard/account" data-tab="account" data-i18n="dashboard_index.account">Account</a>
+				<a href="/dashboard/wallets" data-i18n="dashboard_index.wallets">Wallets</a>
+				<a href="/vanity-wallet" data-i18n="dashboard_index.vanity_wallet">Vanity wallet ✦</a>
+				<a href="/eth-vanity" data-i18n="dashboard_index.eth_vanity_create2">ETH vanity (CREATE2) ✦</a>
+				<a href="/dashboard/memory" data-i18n="dashboard_index.memory">Memory</a>
+				<a href="/dashboard/strategy" data-i18n="dashboard_index.strategy">Strategy</a>
+				<a href="/dashboard/voice" data-i18n="dashboard_index.voice">Voice</a>
+				<a href="/dashboard/sns" data-i18n="dashboard_index.sns_domains">SNS domains</a>
+				<a href="/dashboard/delegation" data-i18n="dashboard_index.delegation">Delegation</a>
+				<a href="/dashboard/tokens" data-i18n="dashboard_index.tokens_pump_fun">Tokens (Pump.fun)</a>
+				<a href="/dashboard/actions" data-i18n="dashboard_index.action_log">Action log</a>
+				<a href="/dashboard-classic/usage" data-i18n="dashboard_index.llm_usage">LLM usage</a>
+				<a href="/dashboard/embed-policy" data-i18n="dashboard_index.embed_policy">Embed policy</a>
+				<a href="/dashboard/sessions" data-i18n="dashboard_index.sessions">Sessions</a>
+				<a href="/dashboard-classic/storage" data-i18n="dashboard_index.storage">Storage</a>
+				<a href="/dashboard/agent-pumpfun" data-i18n="dashboard_index.agent_pump_fun">Agent · Pump.fun</a>
+				<a href="/strategy-lab" data-i18n="dashboard_index.strategy_lab">Strategy lab</a>
+				<a href="/reputation" data-i18n="dashboard_index.reputation">Reputation</a>
+				<a href="/settings" data-i18n="dashboard_index.settings">Settings</a>
+				<a href="/admin" id="admin-link" style="display:none" data-i18n="dashboard_index.admin">Admin</a>
 				<a href="/my-agents" title="ERC-8004 agents controlled by your linked wallets"
-					>On-chain (ERC-8004) ↗</a
+					 data-i18n="dashboard_index.on_chain_erc_8004" data-i18n-attr="title:dashboard_index.erc_8004_agents_controlled_b_title_2">On-chain (ERC-8004) ↗</a
 				>
 				<a href="/discover" title="Browse on-chain agents across every supported chain"
-					>Discover on-chain ↗</a
+					 data-i18n="dashboard_index.discover_on_chain" data-i18n-attr="title:dashboard_index.browse_on_chain_agents_acros_title">Discover on-chain ↗</a
 				>
 			</aside>
 			<main id="main"></main>
@@ -1446,28 +1446,28 @@
 					<div class="h-footer-brand">
 						<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
 						<span class="wordmark-dot" aria-hidden="true"></span>
-						<span>three.ws</span>
+						<span data-i18n="dashboard_index.three_ws">three.ws</span>
 					</div>
-					<p class="h-footer-tagline">Give your AI a body.</p>
+					<p class="h-footer-tagline" data-i18n="dashboard_index.give_your_ai_a_body">Give your AI a body.</p>
 				</div>
 				<nav class="h-footer-links" aria-label="Footer">
 					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener"
-						>GitHub</a
+						 data-i18n="dashboard_index.github">GitHub</a
 					>
-					<a href="/create">Create</a>
-					<a href="/studio">Studio</a>
-					<a href="/widgets">Widgets</a>
-					<a href="/discover">Discover</a>
-					<a href="/showcase">Showcase</a>
-					<a href="/docs">Docs</a>
-					<a href="/legal/privacy">Privacy</a>
-					<a href="/legal/tos">Terms</a>
+					<a href="/create" data-i18n="dashboard_index.create_2">Create</a>
+					<a href="/studio" data-i18n="dashboard_index.studio_2">Studio</a>
+					<a href="/widgets" data-i18n="dashboard_index.widgets_3">Widgets</a>
+					<a href="/discover" data-i18n="dashboard_index.discover_2">Discover</a>
+					<a href="/showcase" data-i18n="dashboard_index.showcase">Showcase</a>
+					<a href="/docs" data-i18n="dashboard_index.docs_2">Docs</a>
+					<a href="/legal/privacy" data-i18n="dashboard_index.privacy">Privacy</a>
+					<a href="/legal/tos" data-i18n="dashboard_index.terms">Terms</a>
 				</nav>
 			</div>
 			<div class="h-footer-bottom">
-				<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+				<p class="h-footer-legal" data-i18n="dashboard_index.2026_three_ws_all_rights_reserved">© 2026 three.ws — All rights reserved.</p>
 				<div class="h-footer-badges">
-					<span class="h-footer-badge" aria-label="System status">
+					<span class="h-footer-badge" aria-label="System status" data-i18n-html="dashboard_index.all_systems_normal" data-i18n-attr="aria-label:dashboard_index.system_status_arialabel">
 						<span class="h-footer-status-dot" aria-hidden="true"></span>
 						<span>All systems normal</span>
 					</span>
@@ -1478,7 +1478,7 @@
 								d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 14.5A6.5 6.5 0 1 1 8 1.5a6.5 6.5 0 0 1 0 13zm-1-9.25a1 1 0 1 1 2 0v3.5a1 1 0 1 1-2 0v-3.5zm1 6.5a1.1 1.1 0 1 1 0-2.2 1.1 1.1 0 0 1 0 2.2z"
 							/>
 						</svg>
-						<span>Transparent by default</span>
+						<span data-i18n="dashboard_index.transparent_by_default">Transparent by default</span>
 					</span>
 					<a
 						class="h-footer-badge"
@@ -1486,7 +1486,7 @@
 						target="_blank"
 						rel="noopener"
 						aria-label="View source on GitHub"
-					>
+					 data-i18n-attr="aria-label:dashboard_index.view_source_on_github_arialabel">
 						<svg viewBox="0 0 16 16" aria-hidden="true">
 							<path
 								fill="currentColor"
@@ -1541,5 +1541,7 @@
 			})();
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

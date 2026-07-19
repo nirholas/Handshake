@@ -18,29 +18,29 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Crypto Category · three.ws</title>
+		<title data-i18n="category.meta_title">Crypto Category · three.ws</title>
 		<meta
 			name="description"
 			content="A crypto sector at a glance — live market cap, 24h move, trading volume, and the ranked coins that make it up, with related categories to explore."
-		/>
+		 data-i18n-attr="content:category.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/categories" />
-		<meta property="og:title" content="Crypto Category · three.ws" />
+		<meta property="og:title" content="Crypto Category · three.ws"  data-i18n-attr="content:category.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="A crypto sector at a glance — live market cap, 24h move, volume, and the ranked coins that make it up."
-		/>
+		 data-i18n-attr="content:category.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/og-image.png" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Crypto Category · three.ws" />
+		<meta name="twitter:title" content="Crypto Category · three.ws"  data-i18n-attr="content:category.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="A crypto sector at a glance — live market cap, 24h move, volume, and the ranked coins that make it up."
-		/>
+		 data-i18n-attr="content:category.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/og-image.png" />
 		<meta name="theme-color" content="#09090b" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -63,9 +63,9 @@
 
 		<main class="cv-container" id="cat-main" aria-busy="true">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a>
+				<a href="/markets" data-i18n="category.markets">Markets</a>
 				<span class="sep" aria-hidden="true">›</span>
-				<a href="/categories">Categories</a>
+				<a href="/categories" data-i18n="category.categories">Categories</a>
 				<span class="sep" aria-hidden="true">›</span>
 				<span class="here" id="cat-crumb">…</span>
 			</nav>
@@ -90,5 +90,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -4,25 +4,25 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Agent · three.ws</title>
+		<title data-i18n="agent_detail.meta_title">Agent · three.ws</title>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/agents" />
-		<meta property="og:title" content="Agent · three.ws" />
+		<meta property="og:title" content="Agent · three.ws"  data-i18n-attr="content:agent_detail.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Meet your 3D AI agent — voice, memory, payments, and an on-chain identity. Built on three.ws."
-		/>
+		 data-i18n-attr="content:agent_detail.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/og-image.png" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Agent · three.ws" />
+		<meta name="twitter:title" content="Agent · three.ws"  data-i18n-attr="content:agent_detail.meta_twitter_title"/>
 		<meta
 			name="twitter:description"
 			content="Meet your 3D AI agent — voice, memory, payments, and an on-chain identity. Built on three.ws."
-		/>
+		 data-i18n-attr="content:agent_detail.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/og-image.png" />
 		<link rel="canonical" href="https://three.ws/agents" id="canonical-link" />
 		<meta name="theme-color" content="#0a0a0a" />
@@ -73,9 +73,9 @@
 
 		<main class="ad-main adv2 loading">
 			<div class="adv2-wrap adv2-top">
-				<a class="ad-back" href="/agents">← Back to Registry</a>
+				<a class="ad-back" href="/agents" data-i18n="agent_detail.back_to_registry">← Back to Registry</a>
 				<div class="adv2-top-right">
-					<a class="adv2-classic-link" id="adv2-classic-link" href="/agents" title="View this profile in the previous layout">Classic layout</a>
+					<a class="adv2-classic-link" id="adv2-classic-link" href="/agents" title="View this profile in the previous layout" data-i18n="agent_detail.classic_layout" data-i18n-attr="title:agent_detail.view_this_profile_in_the_pre_title">Classic layout</a>
 					<div id="view-switch-slot"></div>
 				</div>
 			</div>
@@ -83,7 +83,7 @@
 			<!-- ── Hero: identity + primary actions ─────────────────────────── -->
 			<section class="ad-hero adv2-hero adv2-wrap">
 				<div class="ad-hero-glow" id="ad-hero-glow" aria-hidden="true"></div>
-				<button class="ad-hero-share-float" id="ad-hero-share-float" aria-label="Share this agent" title="Share">
+				<button class="ad-hero-share-float" id="ad-hero-share-float" aria-label="Share this agent" title="Share" data-i18n-attr="aria-label:agent_detail.share_this_agent_arialabel;title:agent_detail.share_title">
 					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
 				</button>
 				<div class="ad-hero-avatar-wrap" id="ad-avatar-wrap" role="button" aria-label="View full 3D model" tabindex="0">
@@ -101,7 +101,7 @@
 							class="skeleton"
 							style="width: 200px; height: 36px; display: none"
 						></div>
-						<span class="ad-status" id="ad-status">Active</span>
+						<span class="ad-status" id="ad-status" data-i18n="agent_detail.active">Active</span>
 					</div>
 					<div class="ad-hero-meta">
 						<span id="ad-id-short" class="ad-mono"></span>
@@ -109,11 +109,11 @@
 							class="ad-copy"
 							data-copy-target="ad-id-short"
 							aria-label="Copy"
-						>
+						 data-i18n-attr="aria-label:agent_detail.copy_arialabel">
 							⧉
 						</button>
 						<span class="ad-dot">·</span>
-						<span id="ad-asset-kind">Core Asset</span>
+						<span id="ad-asset-kind" data-i18n="agent_detail.core_asset">Core Asset</span>
 					</div>
 					<div class="ad-market-meta" id="ad-market-meta" hidden>
 						<button
@@ -121,7 +121,7 @@
 							id="d-author"
 							class="ad-author-btn"
 							aria-label="View creator profile"
-						>
+						 data-i18n-attr="aria-label:agent_detail.view_creator_profile_arialabel">
 							—
 						</button>
 						<span class="ad-dot">·</span>
@@ -150,7 +150,7 @@
 							class="ad-btn ad-btn-primary"
 							href="/walk/app"
 							aria-label="Walk with this agent — drive its avatar around in real time"
-						>
+						 data-i18n-attr="aria-label:agent_detail.walk_with_this_agent_drive_i_arialabel">
 							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right: 6px">
 								<circle cx="13" cy="4" r="2" />
 								<path d="M7 21l3-6 2-3" />
@@ -164,7 +164,7 @@
 							class="ad-btn"
 							href="/play"
 							aria-label="See this agent's 3D avatar in the three.ws world"
-						>
+						 data-i18n-attr="aria-label:agent_detail.see_this_agent_s_3d_avatar_i_arialabel">
 							<svg
 								width="14"
 								height="14"
@@ -186,7 +186,7 @@
 							See in 3D
 						</a>
 						<span class="ad-market-actions" id="ad-market-actions" hidden>
-							<button type="button" id="ad-fork" class="ad-btn ad-btn-primary">
+							<button type="button" id="ad-fork" class="ad-btn ad-btn-primary" data-i18n="agent_detail.fork_chat">
 								⑂ Fork &amp; Chat
 							</button>
 							<button
@@ -194,15 +194,15 @@
 								id="ad-bookmark"
 								class="ad-btn"
 								aria-pressed="false"
-							>
+							 data-i18n="agent_detail.save">
 								☆ Save
 							</button>
-							<button type="button" id="ad-export-json" class="ad-btn">
+							<button type="button" id="ad-export-json" class="ad-btn" data-i18n="agent_detail.export_json">
 								↓ Export JSON
 							</button>
 						</span>
 						<details class="adv2-more">
-							<summary class="ad-btn" aria-label="More ways to view this agent">
+							<summary class="ad-btn" aria-label="More ways to view this agent" data-i18n-attr="aria-label:agent_detail.more_ways_to_view_this_agent_arialabel">
 								More
 								<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-left:6px"><polyline points="6 9 12 15 18 9"/></svg>
 							</summary>
@@ -213,7 +213,7 @@
 									href="/agents-live"
 									role="menuitem"
 									aria-label="Watch this agent's live screen and avatar cam"
-								>
+								 data-i18n-attr="aria-label:agent_detail.watch_this_agent_s_live_scre_arialabel">
 									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 										<rect x="2" y="3" width="20" height="14" rx="2" />
 										<path d="M8 21h8M12 17v4" />
@@ -226,7 +226,7 @@
 									href="/irl"
 									role="menuitem"
 									aria-label="View this agent in IRL — place it in your real space"
-								>
+								 data-i18n-attr="aria-label:agent_detail.view_this_agent_in_irl_place_arialabel">
 									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 										<circle cx="12" cy="8" r="4" />
 										<path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
@@ -239,7 +239,7 @@
 									href="/xr"
 									role="menuitem"
 									aria-label="View this agent in XR — immersive AR/VR"
-								>
+								 data-i18n-attr="aria-label:agent_detail.view_this_agent_in_xr_immers_arialabel">
 									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 										<path d="M3 7l9-4 9 4v10l-9 4-9-4V7z" />
 										<path d="M12 3v18M3 7l9 4 9-4" />
@@ -253,7 +253,7 @@
 									role="menuitem"
 									aria-label="Share this agent"
 									style="display: none"
-								>
+								 data-i18n-attr="aria-label:agent_detail.share_this_agent_arialabel_2">
 									<svg
 										width="14"
 										height="14"
@@ -286,22 +286,22 @@
 			<!-- ── Platform pulse strip ──────────────────────────────────────── -->
 			<div class="adv2-wrap">
 				<div class="ad-platform-bar" id="ad-platform-bar" hidden aria-label="three.ws network activity across all agents">
-					<span class="ad-platform-kicker">Across three.ws</span>
+					<span class="ad-platform-kicker" data-i18n="agent_detail.across_three_ws">Across three.ws</span>
 					<div class="ad-platform-stat">
 						<span class="ad-platform-stat-val" id="adp-agents">—</span>
-						<span class="ad-platform-stat-lbl"><span class="ad-platform-dot" aria-hidden="true"></span>Agents live</span>
+						<span class="ad-platform-stat-lbl" data-i18n-html="agent_detail.agents_live"><span class="ad-platform-dot" aria-hidden="true"></span>Agents live</span>
 					</div>
 					<div class="ad-platform-stat">
 						<span class="ad-platform-stat-val positive" id="adp-winrate">—</span>
-						<span class="ad-platform-stat-lbl">Platform win rate</span>
+						<span class="ad-platform-stat-lbl" data-i18n="agent_detail.platform_win_rate">Platform win rate</span>
 					</div>
 					<div class="ad-platform-stat">
 						<span class="ad-platform-stat-val" id="adp-wins">—</span>
-						<span class="ad-platform-stat-lbl">Oracle wins</span>
+						<span class="ad-platform-stat-lbl" data-i18n="agent_detail.oracle_wins">Oracle wins</span>
 					</div>
 					<div class="ad-platform-stat">
 						<span class="ad-platform-stat-val" id="adp-scored">—</span>
-						<span class="ad-platform-stat-lbl">Scored today</span>
+						<span class="ad-platform-stat-lbl" data-i18n="agent_detail.scored_today">Scored today</span>
 					</div>
 				</div>
 			</div>
@@ -309,13 +309,13 @@
 			<!-- ── Sticky section navigation ─────────────────────────────────── -->
 			<nav class="adv2-tabs" id="adv2-tabs" aria-label="Profile sections">
 				<div class="adv2-wrap adv2-tabs-row">
-					<a href="#sec-overview" data-tab="sec-overview" class="adv2-tab is-active">Overview</a>
-					<a href="#sec-capabilities" data-tab="sec-capabilities" class="adv2-tab">Capabilities</a>
-					<a href="#sec-economy" data-tab="sec-economy" class="adv2-tab">Economy</a>
-					<a href="#sec-activity" data-tab="sec-activity" class="adv2-tab">Activity</a>
-					<a href="#sec-trust" data-tab="sec-trust" class="adv2-tab">Trust &amp; Identity</a>
-					<a href="#sec-reviews" data-tab="sec-reviews" class="adv2-tab">Reviews</a>
-					<a href="#sec-developers" data-tab="sec-developers" class="adv2-tab">Developers</a>
+					<a href="#sec-overview" data-tab="sec-overview" class="adv2-tab is-active" data-i18n="agent_detail.overview">Overview</a>
+					<a href="#sec-capabilities" data-tab="sec-capabilities" class="adv2-tab" data-i18n="agent_detail.capabilities">Capabilities</a>
+					<a href="#sec-economy" data-tab="sec-economy" class="adv2-tab" data-i18n="agent_detail.economy">Economy</a>
+					<a href="#sec-activity" data-tab="sec-activity" class="adv2-tab" data-i18n="agent_detail.activity">Activity</a>
+					<a href="#sec-trust" data-tab="sec-trust" class="adv2-tab" data-i18n="agent_detail.trust_identity">Trust &amp; Identity</a>
+					<a href="#sec-reviews" data-tab="sec-reviews" class="adv2-tab" data-i18n="agent_detail.reviews">Reviews</a>
+					<a href="#sec-developers" data-tab="sec-developers" class="adv2-tab" data-i18n="agent_detail.developers">Developers</a>
 				</div>
 			</nav>
 
@@ -324,16 +324,16 @@
 				<!-- ══ Overview — meet the agent, try it, walk it ═══════════════ -->
 				<section class="adv2-group" id="sec-overview">
 					<header class="adv2-group-head">
-						<h2>Overview</h2>
-						<p>Try the agent live and see what it has earned on the platform.</p>
+						<h2 data-i18n="agent_detail.overview_2">Overview</h2>
+						<p data-i18n="agent_detail.try_the_agent_live_and_see_what">Try the agent live and see what it has earned on the platform.</p>
 					</header>
 					<div class="adv2-grid">
 
 					<section class="ad-card ad-preview-card" id="ad-preview-card" data-span="2" hidden>
 						<div class="ad-card-head">
 							<span class="ad-bullet ad-bullet-green"></span>
-							<h2>TRY IT NOW</h2>
-							<span class="ad-preview-hint">Send a message — no fork required</span>
+							<h2 data-i18n="agent_detail.try_it_now">TRY IT NOW</h2>
+							<span class="ad-preview-hint" data-i18n="agent_detail.send_a_message_no_fork_required">Send a message — no fork required</span>
 						</div>
 						<div class="ad-preview-thread" id="d-preview-thread" aria-live="polite"></div>
 						<form class="ad-preview-form" id="d-preview-form" autocomplete="off">
@@ -345,7 +345,7 @@
 								maxlength="2000"
 								required
 							/>
-							<button type="submit" class="ad-btn ad-btn-primary" id="d-preview-send">
+							<button type="submit" class="ad-btn ad-btn-primary" id="d-preview-send" data-i18n="agent_detail.send">
 								Send
 							</button>
 						</form>
@@ -356,14 +356,14 @@
 					<section class="ad-card ad-walk-card" id="ad-walk-card" data-span="2" hidden>
 						<div class="ad-card-head">
 							<span class="ad-bullet ad-bullet-violet"></span>
-							<h2>WALK WITH THIS AGENT</h2>
-							<span class="ad-preview-hint">Drive its avatar in real time</span>
+							<h2 data-i18n="agent_detail.walk_with_this_agent">WALK WITH THIS AGENT</h2>
+							<span class="ad-preview-hint" data-i18n="agent_detail.drive_its_avatar_in_real_time">Drive its avatar in real time</span>
 						</div>
 						<div class="ad-walk-body">
 							<div class="ad-walk-stage" id="ad-walk-stage">
 								<div class="ad-walk-skeleton" id="ad-walk-skeleton" aria-hidden="true">
 									<span class="ad-walk-skeleton-pulse"></span>
-									<span class="ad-walk-skeleton-label">Loading avatar…</span>
+									<span class="ad-walk-skeleton-label" data-i18n="agent_detail.loading_avatar">Loading avatar…</span>
 								</div>
 								<iframe
 									id="ad-walk-frame"
@@ -374,12 +374,12 @@
 									style="opacity: 0"
 								></iframe>
 								<div class="ad-walk-error" id="ad-walk-error" hidden>
-									<span class="ad-walk-error-msg">Couldn’t load the walking preview.</span>
-									<button type="button" class="ad-btn" id="ad-walk-retry">Retry</button>
+									<span class="ad-walk-error-msg" data-i18n="agent_detail.couldn_t_load_the_walking_preview">Couldn’t load the walking preview.</span>
+									<button type="button" class="ad-btn" id="ad-walk-retry" data-i18n="agent_detail.retry">Retry</button>
 								</div>
 							</div>
 							<div class="ad-walk-info">
-								<p class="ad-walk-lead">This agent has a live, embodied avatar. Drag to look around the studio, then take the controls and walk it in real time.</p>
+								<p class="ad-walk-lead" data-i18n="agent_detail.this_agent_has_a_live_embodied_avatar">This agent has a live, embodied avatar. Drag to look around the studio, then take the controls and walk it in real time.</p>
 								<ul class="ad-walk-tips">
 									<li>
 										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></svg>
@@ -399,7 +399,7 @@
 									id="ad-walk-expand"
 									href="/walk/app"
 									aria-label="Open the full walk experience with this agent"
-								>
+								 data-i18n-attr="aria-label:agent_detail.open_the_full_walk_experienc_arialabel">
 									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="margin-right: 6px">
 										<path d="M15 3h6v6" />
 										<path d="M10 14L21 3" />
@@ -418,8 +418,8 @@
 					<section class="ad-card" id="ad-achievements-card">
 						<div class="ad-card-head">
 							<span class="ad-bullet ad-bullet-amber"></span>
-							<h2>ACHIEVEMENTS</h2>
-							<span class="ad-preview-hint">Earned on three.ws</span>
+							<h2 data-i18n="agent_detail.achievements">ACHIEVEMENTS</h2>
+							<span class="ad-preview-hint" data-i18n="agent_detail.earned_on_three_ws">Earned on three.ws</span>
 						</div>
 						<div id="ad-achievements-body"></div>
 					</section>
@@ -427,7 +427,7 @@
 					<section class="ad-card ad-sale-card" id="ad-sale-card" hidden>
 						<div class="ad-card-head">
 							<span class="ad-bullet ad-bullet-green"></span>
-							<h2>OWNERSHIP</h2>
+							<h2 data-i18n="agent_detail.ownership">OWNERSHIP</h2>
 						</div>
 						<div id="ad-sale-panel"></div>
 					</section>
@@ -438,15 +438,15 @@
 				<!-- ══ Capabilities — what this agent can do, and for how much ══ -->
 				<section class="adv2-group" id="sec-capabilities">
 					<header class="adv2-group-head">
-						<h2>Capabilities</h2>
-						<p>Skills, pricing, and the service endpoints this agent exposes.</p>
+						<h2 data-i18n="agent_detail.capabilities_2">Capabilities</h2>
+						<p data-i18n="agent_detail.skills_pricing_and_the_service_endpoints_thi">Skills, pricing, and the service endpoints this agent exposes.</p>
 					</header>
 					<div class="adv2-grid">
 
 					<section class="ad-card ad-pricing-card" id="ad-pricing-card" hidden>
 						<div class="ad-card-head">
 							<span class="ad-bullet ad-bullet-amber"></span>
-							<h2>SKILLS &amp; PRICING</h2>
+							<h2 data-i18n="agent_detail.skills_pricing">SKILLS &amp; PRICING</h2>
 						</div>
 						<div class="ad-pricing-summary" id="ad-pricing-summary" hidden></div>
 						<div id="ad-pricing-body"></div>
@@ -456,7 +456,7 @@
 					<section class="ad-card ad-tiers-card" id="ad-tiers-card" hidden>
 						<div class="ad-card-head">
 							<span class="ad-bullet ad-bullet-violet"></span>
-							<h2>SUBSCRIPTION TIERS</h2>
+							<h2 data-i18n="agent_detail.subscription_tiers">SUBSCRIPTION TIERS</h2>
 						</div>
 						<p class="ad-tiers-sub" id="ad-tiers-sub" hidden></p>
 						<div class="ad-tiers-body" id="ad-tiers-body"></div>
@@ -465,8 +465,8 @@
 					<section class="ad-card" id="ad-services-card">
 						<div class="ad-card-head">
 							<span class="ad-bullet"></span>
-							<h2>SERVICES</h2>
-							<span class="ad-pill ad-pill-muted" id="ad-svc-count">0 configured</span>
+							<h2 data-i18n="agent_detail.services">SERVICES</h2>
+							<span class="ad-pill ad-pill-muted" id="ad-svc-count" data-i18n="agent_detail.0_configured">0 configured</span>
 						</div>
 						<div class="ad-services" id="ad-services"></div>
 					</section>
@@ -477,15 +477,15 @@
 				<!-- ══ Economy — wallet, token, income, and trading ═════════════ -->
 				<section class="adv2-group" id="sec-economy">
 					<header class="adv2-group-head">
-						<h2>Economy</h2>
-						<p>The agent’s wallet, token, income streams, and trading record.</p>
+						<h2 data-i18n="agent_detail.economy_2">Economy</h2>
+						<p data-i18n="agent_detail.the_agent_s_wallet_token_income_streams">The agent’s wallet, token, income streams, and trading record.</p>
 					</header>
 					<div class="adv2-grid">
 
 					<section class="ad-card" id="ad-holdings-card">
 						<div class="ad-card-head">
 							<span class="ad-bullet"></span>
-							<h2>AGENT HOLDINGS</h2>
+							<h2 data-i18n="agent_detail.agent_holdings">AGENT HOLDINGS</h2>
 						</div>
 						<div class="ad-row" id="ad-holdings-chip"></div>
 						<div class="ad-balance"><span id="ad-holdings-sol">0</span> SOL</div>
@@ -495,7 +495,7 @@
 					<section class="ad-card" id="ad-token-card">
 						<div class="ad-card-head">
 							<span class="ad-bullet ad-bullet-amber"></span>
-							<h2>AGENT TOKEN</h2>
+							<h2 data-i18n="agent_detail.agent_token">AGENT TOKEN</h2>
 						</div>
 						<div id="ad-token-body" class="ad-muted">
 							No agent token linked for this agent yet.
@@ -505,9 +505,9 @@
 					<section class="ad-card" id="ad-trading-card-section" data-span="2" hidden>
 						<div class="ad-card-head">
 							<span class="ad-bullet"></span>
-							<h2>TRADING CARD</h2>
+							<h2 data-i18n="agent_detail.trading_card">TRADING CARD</h2>
 							<span class="ad-card-link" id="ad-trading-card-share" role="button" tabindex="0"
-								style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888);cursor:pointer">Share card →</span>
+								style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888);cursor:pointer" data-i18n="agent_detail.share_card">Share card →</span>
 						</div>
 						<div id="ad-trading-card-mount"></div>
 					</section>
@@ -515,8 +515,8 @@
 					<section class="ad-card" id="ad-stream-card" hidden>
 						<div class="ad-card-head">
 							<span class="ad-bullet"></span>
-							<h2 id="ad-stream-title">MONEY STREAM</h2>
-							<span id="ad-stream-sub" style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888)">pay by the second</span>
+							<h2 id="ad-stream-title" data-i18n="agent_detail.money_stream">MONEY STREAM</h2>
+							<span id="ad-stream-sub" style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888)" data-i18n="agent_detail.pay_by_the_second">pay by the second</span>
 						</div>
 						<div id="ad-stream-mount"></div>
 					</section>
@@ -524,8 +524,8 @@
 					<section class="ad-card" id="ad-pulse-card" hidden>
 						<div class="ad-card-head">
 							<span class="ad-bullet"></span>
-							<h2>WALLET STORY</h2>
-							<a class="ad-card-link" href="/pulse" style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888);text-decoration:none">All activity →</a>
+							<h2 data-i18n="agent_detail.wallet_story">WALLET STORY</h2>
+							<a class="ad-card-link" href="/pulse" style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888);text-decoration:none" data-i18n="agent_detail.all_activity">All activity →</a>
 						</div>
 						<div id="ad-pulse-feed"></div>
 					</section>
@@ -533,7 +533,7 @@
 					<section class="ad-card" id="ad-patronage-card" hidden>
 						<div class="ad-card-head">
 							<span class="ad-bullet"></span>
-							<h2>PATRONAGE</h2>
+							<h2 data-i18n="agent_detail.patronage">PATRONAGE</h2>
 						</div>
 						<div id="ad-patronage-panel"></div>
 					</section>
@@ -541,8 +541,8 @@
 					<section class="ad-card" id="ad-mirror-card" hidden>
 						<div class="ad-card-head">
 							<span class="ad-bullet"></span>
-							<h2>COPY TRADING</h2>
-							<a class="ad-card-link" href="/mirror" style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888);text-decoration:none">Discover leaders →</a>
+							<h2 data-i18n="agent_detail.copy_trading">COPY TRADING</h2>
+							<a class="ad-card-link" href="/mirror" style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888);text-decoration:none" data-i18n="agent_detail.discover_leaders">Discover leaders →</a>
 						</div>
 						<div id="ad-mirror-panel"></div>
 					</section>
@@ -550,8 +550,8 @@
 					<section class="ad-card" id="ad-strategy-objects-card" hidden>
 						<div class="ad-card-head">
 							<span class="ad-bullet"></span>
-							<h2>STRATEGIES</h2>
-							<a class="ad-card-link" href="/strategies" style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888);text-decoration:none">Strategy library →</a>
+							<h2 data-i18n="agent_detail.strategies">STRATEGIES</h2>
+							<a class="ad-card-link" href="/strategies" style="margin-left:auto;font-size:.7rem;color:var(--ink-dim,#888);text-decoration:none" data-i18n="agent_detail.strategy_library">Strategy library →</a>
 						</div>
 						<div id="ad-strategy-panel"></div>
 					</section>
@@ -559,40 +559,40 @@
 					<section class="ad-card" id="ad-rewards-card" hidden>
 						<div class="ad-card-head">
 							<span class="ad-bullet ad-bullet-green"></span>
-							<h2>CREATOR REWARDS</h2>
+							<h2 data-i18n="agent_detail.creator_rewards">CREATOR REWARDS</h2>
 						</div>
 						<div class="ad-row ad-row-split">
-							<span class="ad-muted">Lifetime rewards</span>
-							<span><b id="ad-rewards">0</b> SOL</span>
+							<span class="ad-muted" data-i18n="agent_detail.lifetime_rewards">Lifetime rewards</span>
+							<span data-i18n-html="agent_detail.0_sol"><b id="ad-rewards">0</b> SOL</span>
 						</div>
 					</section>
 
 					<section class="ad-card" id="ad-trading-card" style="display:none">
 						<div class="ad-card-head">
 							<span class="ad-bullet ad-bullet-amber"></span>
-							<h2>TRADING RECORD</h2>
-							<span class="ad-pill ad-pill-sim" id="ad-trade-mode-pill" hidden>SIM</span>
+							<h2 data-i18n="agent_detail.trading_record">TRADING RECORD</h2>
+							<span class="ad-pill ad-pill-sim" id="ad-trade-mode-pill" hidden data-i18n="agent_detail.sim">SIM</span>
 						</div>
 						<div class="ad-row ad-row-split">
-							<span class="ad-muted">Win rate</span>
+							<span class="ad-muted" data-i18n="agent_detail.win_rate">Win rate</span>
 							<span class="ad-trade-winrate-wrap"><span id="ad-trade-winring" class="ad-trade-ring" aria-hidden="true"></span><b id="ad-trade-winrate">—</b></span>
 						</div>
 						<div id="ad-trade-spark" class="ad-trade-spark" hidden></div>
 						<div class="ad-row ad-row-split">
-							<span class="ad-muted">Wins / Losses</span>
+							<span class="ad-muted" data-i18n="agent_detail.wins_losses">Wins / Losses</span>
 							<span id="ad-trade-wl">—</span>
 						</div>
 						<div class="ad-row ad-row-split">
-							<span class="ad-muted">Realized PnL</span>
+							<span class="ad-muted" data-i18n="agent_detail.realized_pnl">Realized PnL</span>
 							<span id="ad-trade-pnl">—</span>
 						</div>
 						<div class="ad-row ad-row-split">
-							<span class="ad-muted">ROI</span>
+							<span class="ad-muted" data-i18n="agent_detail.roi">ROI</span>
 							<span id="ad-trade-roi">—</span>
 						</div>
 						<div class="ad-sub" style="margin-top:12px">RECENT TRADES</div>
 						<div id="ad-trade-history" class="ad-trade-history"></div>
-						<a class="ad-cta" id="ad-trade-copy-link" href="#" hidden>Copy this trader →</a>
+						<a class="ad-cta" id="ad-trade-copy-link" href="#" hidden data-i18n="agent_detail.copy_this_trader">Copy this trader →</a>
 					</section>
 
 					<!-- 3D Creations — every GLB this agent minted as a tokenized NFT
@@ -602,7 +602,7 @@
 					<section class="ad-card" id="ad-creations-card" hidden>
 						<div class="ad-card-head">
 							<span class="ad-bullet"></span>
-							<h2>3D CREATIONS</h2>
+							<h2 data-i18n="agent_detail.3d_creations">3D CREATIONS</h2>
 						</div>
 						<div id="ad-creations-body" class="ad-muted"></div>
 					</section>
@@ -613,8 +613,8 @@
 				<!-- ══ Activity — what the agent has been doing (owner-rich) ════ -->
 				<section class="adv2-group" id="sec-activity">
 					<header class="adv2-group-head">
-						<h2>Activity</h2>
-						<p>Watch the agent live — its screen, avatar cam, and action log.</p>
+						<h2 data-i18n="agent_detail.activity_2">Activity</h2>
+						<p data-i18n="agent_detail.watch_the_agent_live_its_screen_avatar">Watch the agent live — its screen, avatar cam, and action log.</p>
 					</header>
 					<div class="adv2-grid">
 
@@ -624,7 +624,7 @@
 					<section class="ad-card" id="ad-actions-card" style="display: none">
 						<div class="ad-card-head">
 							<span class="ad-bullet ad-bullet-green"></span>
-							<h2>RECENT ACTIONS</h2>
+							<h2 data-i18n="agent_detail.recent_actions">RECENT ACTIONS</h2>
 							<span class="ad-pill ad-pill-muted" id="ad-actions-count">0</span>
 						</div>
 						<div id="ad-actions-list"></div>
@@ -633,7 +633,7 @@
 					<section class="ad-card" id="ad-memory-card" style="display: none">
 						<div class="ad-card-head">
 							<span class="ad-bullet"></span>
-							<h2>MEMORY</h2>
+							<h2 data-i18n="agent_detail.memory">MEMORY</h2>
 							<span class="ad-pill ad-pill-muted" id="ad-memory-count">0</span>
 						</div>
 						<div id="ad-memory-list"></div>
@@ -642,7 +642,7 @@
 					<section class="ad-card" id="ad-strategy-card" style="display: none">
 						<div class="ad-card-head">
 							<span class="ad-bullet ad-bullet-dim"></span>
-							<h2>STRATEGY</h2>
+							<h2 data-i18n="agent_detail.strategy">STRATEGY</h2>
 						</div>
 						<pre class="ad-raw" id="ad-strategy"></pre>
 					</section>
@@ -653,15 +653,15 @@
 				<!-- ══ Trust & Identity — registrations, reputation, on-chain ═══ -->
 				<section class="adv2-group" id="sec-trust">
 					<header class="adv2-group-head">
-						<h2>Trust &amp; Identity</h2>
-						<p>How this agent is registered, secured, and scored on-chain.</p>
+						<h2 data-i18n="agent_detail.trust_identity_2">Trust &amp; Identity</h2>
+						<p data-i18n="agent_detail.how_this_agent_is_registered_secured_and">How this agent is registered, secured, and scored on-chain.</p>
 					</header>
 					<div class="adv2-grid">
 
 					<section class="ad-card" id="ad-trust-card">
 						<div class="ad-card-head">
 							<span class="ad-bullet"></span>
-							<h2>TRUST &amp; SECURITY</h2>
+							<h2 data-i18n="agent_detail.trust_security">TRUST &amp; SECURITY</h2>
 						</div>
 						<div class="ad-sub">TRUST MECHANISMS</div>
 						<div class="ad-trust-pills" id="ad-trust-mechs"></div>
@@ -672,22 +672,22 @@
 					<section class="ad-card" id="ad-registrations-card">
 						<div class="ad-card-head">
 							<span class="ad-bullet ad-bullet-dim"></span>
-							<h2>REGISTRATIONS</h2>
+							<h2 data-i18n="agent_detail.registrations">REGISTRATIONS</h2>
 						</div>
 						<div class="ad-row ad-row-split">
-							<span class="ad-muted">Agent ID</span>
+							<span class="ad-muted" data-i18n="agent_detail.agent_id">Agent ID</span>
 							<span class="ad-mono" id="ad-agent-id"></span>
 						</div>
 						<div class="ad-row ad-row-split">
-							<span class="ad-muted">Registry</span>
+							<span class="ad-muted" data-i18n="agent_detail.registry">Registry</span>
 							<span class="ad-trust-pills" id="ad-registries"></span>
 						</div>
 						<div class="ad-row ad-row-split" id="ad-sns-row" style="display: none">
-							<span class="ad-muted">SNS</span>
+							<span class="ad-muted" data-i18n="agent_detail.sns">SNS</span>
 							<span class="ad-mono" id="ad-sns"></span>
 						</div>
 						<div class="ad-row ad-row-split" id="ad-voice-row" style="display: none">
-							<span class="ad-muted">Voice</span>
+							<span class="ad-muted" data-i18n="agent_detail.voice">Voice</span>
 							<span id="ad-voice"></span>
 						</div>
 					</section>
@@ -695,18 +695,18 @@
 					<section class="ad-card" id="ad-reputation-card" style="display: none">
 						<div class="ad-card-head">
 							<span class="ad-bullet ad-bullet-amber"></span>
-							<h2>REPUTATION</h2>
+							<h2 data-i18n="agent_detail.reputation">REPUTATION</h2>
 						</div>
 						<div class="ad-row ad-row-split">
-							<span class="ad-muted">Average score</span>
+							<span class="ad-muted" data-i18n="agent_detail.average_score">Average score</span>
 							<span class="ad-trade-winrate-wrap"><span id="ad-rep-ring" class="ad-trade-ring" aria-hidden="true"></span><b id="ad-rep-avg">—</b> / 5</span>
 						</div>
 						<div class="ad-row ad-row-split">
-							<span class="ad-muted">Feedback count</span>
+							<span class="ad-muted" data-i18n="agent_detail.feedback_count">Feedback count</span>
 							<span id="ad-rep-count">0</span>
 						</div>
 						<div class="ad-row ad-row-split" id="ad-rep-stake-row" style="display: none">
-							<span class="ad-muted">Total stake</span>
+							<span class="ad-muted" data-i18n="agent_detail.total_stake">Total stake</span>
 							<span id="ad-rep-stake"></span>
 						</div>
 					</section>
@@ -714,22 +714,22 @@
 					<section class="ad-card" id="ad-ledger-card" style="display: none">
 						<div class="ad-card-head">
 							<span class="ad-bullet"></span>
-							<h2>REASONING LEDGER</h2>
-							<span class="ad-pill ad-pill-muted" id="ad-ledger-verify">verifying…</span>
+							<h2 data-i18n="agent_detail.reasoning_ledger">REASONING LEDGER</h2>
+							<span class="ad-pill ad-pill-muted" id="ad-ledger-verify" data-i18n="agent_detail.verifying">verifying…</span>
 						</div>
 						<div class="ad-row ad-row-split">
-							<span class="ad-muted">Track-record score</span>
+							<span class="ad-muted" data-i18n="agent_detail.track_record_score">Track-record score</span>
 							<span><b id="ad-ledger-score">—</b> / 100</span>
 						</div>
 						<div class="ad-row ad-row-split">
-							<span class="ad-muted">Hit rate</span>
+							<span class="ad-muted" data-i18n="agent_detail.hit_rate">Hit rate</span>
 							<span id="ad-ledger-hitrate">—</span>
 						</div>
 						<div class="ad-row ad-row-split">
-							<span class="ad-muted">Reconciled calls</span>
+							<span class="ad-muted" data-i18n="agent_detail.reconciled_calls">Reconciled calls</span>
 							<span id="ad-ledger-sample">0</span>
 						</div>
-						<a class="ad-cta-row" id="ad-ledger-link" href="#" style="display:inline-flex;margin-top:10px;">Open the Reasoning Ledger →</a>
+						<a class="ad-cta-row" id="ad-ledger-link" href="#" style="display:inline-flex;margin-top:10px;" data-i18n="agent_detail.open_the_reasoning_ledger">Open the Reasoning Ledger →</a>
 					</section>
 
 					<!-- Agent Genome — verifiable lineage (parents + children). Hidden
@@ -737,7 +737,7 @@
 					<section class="ad-card" id="ad-lineage-card" hidden>
 						<div class="ad-card-head">
 							<span class="ad-bullet ad-bullet-violet"></span>
-							<h2>LINEAGE</h2>
+							<h2 data-i18n="agent_detail.lineage">LINEAGE</h2>
 						</div>
 						<div id="ad-lineage-body" class="ad-muted"></div>
 					</section>
@@ -745,7 +745,7 @@
 					<section class="ad-card" id="ad-embed-policy-card" style="display: none">
 						<div class="ad-card-head">
 							<span class="ad-bullet ad-bullet-muted"></span>
-							<h2>EMBED POLICY</h2>
+							<h2 data-i18n="agent_detail.embed_policy">EMBED POLICY</h2>
 						</div>
 						<div id="ad-embed-policy"></div>
 					</section>
@@ -753,32 +753,32 @@
 					<section class="ad-card" id="ad-blockchain-card">
 						<div class="ad-card-head">
 							<span class="ad-bullet"></span>
-							<h2>BLOCKCHAIN DETAILS</h2>
+							<h2 data-i18n="agent_detail.blockchain_details">BLOCKCHAIN DETAILS</h2>
 						</div>
 						<div id="ad-onchain"></div>
 						<div id="ad-deploy-slot" class="ad-deploy-slot"></div>
 						<div class="ad-row ad-row-split">
-							<span class="ad-muted">Active</span><span id="ad-active">true</span>
+							<span class="ad-muted" data-i18n="agent_detail.active_2">Active</span><span id="ad-active" data-i18n="agent_detail.true">true</span>
 						</div>
 						<div class="ad-row ad-row-split">
-							<span class="ad-muted">Services</span><span id="ad-svc-count2">0</span>
+							<span class="ad-muted" data-i18n="agent_detail.services_2">Services</span><span id="ad-svc-count2">0</span>
 						</div>
 						<div class="ad-row ad-row-split">
-							<span class="ad-muted">Supported Trust</span
+							<span class="ad-muted" data-i18n="agent_detail.supported_trust">Supported Trust</span
 							><span class="ad-trust-pills" id="ad-supported-trust"></span>
 						</div>
 						<div class="ad-row ad-row-split">
-							<span class="ad-muted">Pay-per-call Support</span
-							><span id="ad-x402">No</span>
+							<span class="ad-muted" data-i18n="agent_detail.pay_per_call_support">Pay-per-call Support</span
+							><span id="ad-x402" data-i18n="agent_detail.no">No</span>
 						</div>
 						<div class="ad-sub">PROTOCOLS</div>
 						<div class="ad-protocols" id="ad-protocols"></div>
 						<div class="ad-cta-row">
 							<a class="ad-cta" id="ad-explorer" target="_blank" rel="noopener"
-								>View on Explorer ↗</a
+								 data-i18n="agent_detail.view_on_explorer">View on Explorer ↗</a
 							>
 							<a class="ad-cta" id="ad-trade" target="_blank" rel="noopener"
-								>Trade on Magic Eden ↗</a
+								 data-i18n="agent_detail.trade_on_magic_eden">Trade on Magic Eden ↗</a
 							>
 						</div>
 					</section>
@@ -789,15 +789,15 @@
 				<!-- ══ Reviews — social proof + where to go next ════════════════ -->
 				<section class="adv2-group" id="sec-reviews">
 					<header class="adv2-group-head">
-						<h2>Reviews</h2>
-						<p>What people think of this agent — and similar agents to explore.</p>
+						<h2 data-i18n="agent_detail.reviews_2">Reviews</h2>
+						<p data-i18n="agent_detail.what_people_think_of_this_agent_and">What people think of this agent — and similar agents to explore.</p>
 					</header>
 					<div class="adv2-grid">
 
 					<section class="ad-card" id="ad-reviews-card" data-span="2" aria-labelledby="ad-reviews-heading">
 						<div class="ad-card-head">
 							<span class="ad-bullet ad-bullet-amber"></span>
-							<h2 id="ad-reviews-heading">REVIEWS</h2>
+							<h2 id="ad-reviews-heading" data-i18n="agent_detail.reviews_3">REVIEWS</h2>
 							<span
 								class="ad-pill ad-pill-muted"
 								id="ad-reviews-count"
@@ -828,7 +828,7 @@
 					<section class="ad-card ad-similar-card" id="ad-similar-card" data-span="2" hidden>
 						<div class="ad-card-head">
 							<span class="ad-bullet"></span>
-							<h2>SIMILAR AGENTS</h2>
+							<h2 data-i18n="agent_detail.similar_agents">SIMILAR AGENTS</h2>
 						</div>
 						<div class="ad-similar-grid" id="ad-similar-grid"></div>
 					</section>
@@ -839,23 +839,23 @@
 				<!-- ══ Developers — embed, versions, raw metadata ═══════════════ -->
 				<section class="adv2-group" id="sec-developers">
 					<header class="adv2-group-head">
-						<h2>Developers</h2>
-						<p>Embed this agent anywhere, inspect its versions and raw record.</p>
+						<h2 data-i18n="agent_detail.developers_2">Developers</h2>
+						<p data-i18n="agent_detail.embed_this_agent_anywhere_inspect_its_versio">Embed this agent anywhere, inspect its versions and raw record.</p>
 					</header>
 					<div class="adv2-grid">
 
 					<section class="ad-card ad-embed-card" id="ad-embed-card" data-span="2" hidden>
 						<div class="ad-card-head">
 							<span class="ad-bullet ad-bullet-muted"></span>
-							<h2>EMBED THIS AGENT</h2>
+							<h2 data-i18n="agent_detail.embed_this_agent">EMBED THIS AGENT</h2>
 						</div>
-						<p class="ad-embed-lede">
+						<p class="ad-embed-lede" data-i18n="agent_detail.drop_the_agent_anywhere_as_a_web">
 							Drop the agent anywhere — as a web component, iframe, or direct link.
 						</p>
 						<div class="ad-embed-section">
 							<div class="ad-embed-label">
-								<span>Web component</span
-								><button class="ad-embed-copy" type="button" data-embed="wc">
+								<span data-i18n="agent_detail.web_component">Web component</span
+								><button class="ad-embed-copy" type="button" data-embed="wc" data-i18n="agent_detail.copy">
 									Copy
 								</button>
 							</div>
@@ -863,8 +863,8 @@
 						</div>
 						<div class="ad-embed-section">
 							<div class="ad-embed-label">
-								<span>Iframe</span
-								><button class="ad-embed-copy" type="button" data-embed="iframe">
+								<span data-i18n="agent_detail.iframe">Iframe</span
+								><button class="ad-embed-copy" type="button" data-embed="iframe" data-i18n="agent_detail.copy_2">
 									Copy
 								</button>
 							</div>
@@ -872,8 +872,8 @@
 						</div>
 						<div class="ad-embed-section">
 							<div class="ad-embed-label">
-								<span>Direct link</span
-								><button class="ad-embed-copy" type="button" data-embed="link">
+								<span data-i18n="agent_detail.direct_link">Direct link</span
+								><button class="ad-embed-copy" type="button" data-embed="link" data-i18n="agent_detail.copy_3">
 									Copy
 								</button>
 							</div>
@@ -884,13 +884,13 @@
 					<section class="ad-card ad-versions-card" id="ad-versions-card" hidden>
 						<div class="ad-card-head">
 							<span class="ad-bullet ad-bullet-dim"></span>
-							<h2>VERSION HISTORY</h2>
+							<h2 data-i18n="agent_detail.version_history">VERSION HISTORY</h2>
 						</div>
 						<ul class="ad-versions" id="ad-versions-list"></ul>
 					</section>
 
 					<details class="ad-card ad-collapse" id="ad-raw-card">
-						<summary>
+						<summary data-i18n-html="agent_detail.raw_metadata">
 							<span class="ad-bullet ad-bullet-muted"></span>
 							<span class="ad-card-title">RAW METADATA</span>
 						</summary>
@@ -903,9 +903,9 @@
 			</div>
 
 			<footer class="ad-foot">
-				<span>© 2026 three.ws</span>
+				<span data-i18n="agent_detail.2026_three_ws">© 2026 three.ws</span>
 				<span
-					><a href="/legal/tos">Terms</a> · <a href="/legal/privacy">Privacy</a> ·
+					 data-i18n-html="agent_detail.terms_privacy_content_policy"><a href="/legal/tos">Terms</a> · <a href="/legal/privacy">Privacy</a> ·
 					<a href="/content-policy">Content Policy</a></span
 				>
 			</footer>
@@ -920,7 +920,7 @@
 			aria-labelledby="creator-modal-title"
 		>
 			<div class="creator-modal" role="document">
-				<button class="creator-modal-close" id="creator-modal-close" aria-label="Close">
+				<button class="creator-modal-close" id="creator-modal-close" aria-label="Close" data-i18n-attr="aria-label:agent_detail.close_arialabel">
 					×
 				</button>
 				<header class="creator-modal-head">
@@ -934,7 +934,7 @@
 				</header>
 				<div class="creator-modal-body">
 					<section>
-						<h3 class="creator-modal-sectiontitle">
+						<h3 class="creator-modal-sectiontitle" data-i18n-html="agent_detail.published_agents">
 							Published agents <span id="creator-agents-count" class="muted"></span>
 						</h3>
 						<div class="creator-modal-grid" id="creator-agents-grid">
@@ -942,7 +942,7 @@
 						</div>
 					</section>
 					<section>
-						<h3 class="creator-modal-sectiontitle">
+						<h3 class="creator-modal-sectiontitle" data-i18n-html="agent_detail.public_avatars">
 							Public avatars <span id="creator-avatars-count" class="muted"></span>
 						</h3>
 						<div class="creator-modal-grid" id="creator-avatars-grid">
@@ -956,7 +956,7 @@
 		<!-- Fullscreen 3D viewer modal -->
 		<div class="ad-3d-modal hidden" id="ad-3d-modal" role="dialog" aria-modal="true" aria-label="Full-screen 3D viewer">
 			<div class="ad-3d-modal-inner">
-				<button class="ad-3d-modal-close" id="ad-3d-modal-close" aria-label="Close">✕</button>
+				<button class="ad-3d-modal-close" id="ad-3d-modal-close" aria-label="Close" data-i18n-attr="aria-label:agent_detail.close_arialabel_2">✕</button>
 				<div id="ad-avatar-modal-3d" role="img" aria-label="Agent 3D avatar — fullscreen"></div>
 				<a
 					id="ad-3d-modal-world"
@@ -964,7 +964,7 @@
 					href="#"
 					hidden
 					aria-label="See this agent in the three.ws world"
-				>
+				 data-i18n-attr="aria-label:agent_detail.see_this_agent_in_the_three_arialabel">
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
 					View in AR
 				</a>
@@ -976,5 +976,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>three.ws · paid call · x402</title>
-<meta name="description" content="An x402 paid call to three.ws/api/mcp — settled on Solana, $0.001 USDC." />
+<title data-i18n="pay_calls_index.meta_title">three.ws · paid call · x402</title>
+<meta name="description" content="An x402 paid call to three.ws/api/mcp — settled on Solana, $0.001 USDC."  data-i18n-attr="content:pay_calls_index.meta_description"/>
 <meta property="og:type" content="article" />
-<meta property="og:title" content="three.ws · paid call (x402)" />
+<meta property="og:title" content="three.ws · paid call (x402)"  data-i18n-attr="content:pay_calls_index.meta_og_title"/>
 <meta property="og:image" content="" id="ogImage" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
@@ -333,5 +333,7 @@ if (!tx) {
 <script src="/footer.js" defer></script>
 
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

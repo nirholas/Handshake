@@ -3,11 +3,11 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>three.ws — Claude.ai artifact</title>
+		<title data-i18n="artifact_index.meta_title">three.ws — Claude.ai artifact</title>
 		<meta
 			name="description"
 			content="Embed an interactive three.ws agent inside a Claude.ai artifact. Self-contained HTML, zero external dependencies."
-		/>
+		 data-i18n-attr="content:artifact_index.meta_description"/>
 		<link rel="stylesheet" href="/style.css" />
 		<style>
 			body {
@@ -417,15 +417,15 @@
 	<link rel="canonical" href="https://three.ws/artifact">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="Artifact Viewer · three.ws">
-	<meta property="og:description" content="Renders Claude artifact bundles as standalone embeddable apps.">
+	<meta property="og:title" content="Artifact Viewer · three.ws" data-i18n-attr="content:artifact_index.meta_og_title">
+	<meta property="og:description" content="Renders Claude artifact bundles as standalone embeddable apps." data-i18n-attr="content:artifact_index.meta_og_description">
 	<meta property="og:url" content="https://three.ws/artifact">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Artifact+Viewer&amp;d=Renders+Claude+artifact+bundles+as+standalone+embeddable+apps.&amp;p=%2Fartifact">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Artifact Viewer · three.ws">
-	<meta name="twitter:description" content="Renders Claude artifact bundles as standalone embeddable apps.">
+	<meta name="twitter:title" content="Artifact Viewer · three.ws" data-i18n-attr="content:artifact_index.meta_twitter_title">
+	<meta name="twitter:description" content="Renders Claude artifact bundles as standalone embeddable apps." data-i18n-attr="content:artifact_index.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Artifact+Viewer&amp;d=Renders+Claude+artifact+bundles+as+standalone+embeddable+apps.&amp;p=%2Fartifact">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Artifact Viewer","description":"Renders Claude artifact bundles as standalone embeddable apps.","url":"https://three.ws/artifact","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -442,9 +442,9 @@
 
 		<main class="artifact-page">
 			<header class="hero">
-				<span class="eyebrow">Claude.ai artifact</span>
-				<h1 class="headline">Embed your agent in Claude.ai</h1>
-				<p class="lede">
+				<span class="eyebrow" data-i18n="artifact_index.claude_ai_artifact">Claude.ai artifact</span>
+				<h1 class="headline" data-i18n="artifact_index.embed_your_agent_in_claude_ai">Embed your agent in Claude.ai</h1>
+				<p class="lede" data-i18n="artifact_index.paste_a_single_url_into_a_claude">
 					Paste a single URL into a Claude conversation. The response is one self-contained
 					HTML document — three.js, GLTFLoader, and your agent's GLB are all inlined. No
 					script blocked by Claude's sandbox CSP, no fetch that ever leaves the page.
@@ -453,10 +453,10 @@
 
 			<section class="builder">
 				<div class="panel" aria-labelledby="config-h">
-					<h2 id="config-h">Configure</h2>
+					<h2 id="config-h" data-i18n="artifact_index.configure">Configure</h2>
 
 					<div class="field">
-						<label for="agentIdInput">Agent ID</label>
+						<label for="agentIdInput" data-i18n="artifact_index.agent_id">Agent ID</label>
 						<input
 							type="text"
 							id="agentIdInput"
@@ -468,14 +468,14 @@
 
 					<div class="field-row">
 						<div class="field">
-							<label for="themeInput">Theme</label>
+							<label for="themeInput" data-i18n="artifact_index.theme">Theme</label>
 							<select id="themeInput">
-								<option value="dark">dark</option>
-								<option value="light">light</option>
+								<option value="dark" data-i18n="artifact_index.dark">dark</option>
+								<option value="light" data-i18n="artifact_index.light">light</option>
 							</select>
 						</div>
 						<div class="field">
-							<label for="idleInput">Idle clip</label>
+							<label for="idleInput" data-i18n="artifact_index.idle_clip">Idle clip</label>
 							<input
 								type="text"
 								id="idleInput"
@@ -487,7 +487,7 @@
 					</div>
 
 					<div class="field">
-						<label for="bgInput">Background hex (optional)</label>
+						<label for="bgInput" data-i18n="artifact_index.background_hex_optional">Background hex (optional)</label>
 						<input
 							type="text"
 							id="bgInput"
@@ -499,33 +499,33 @@
 					</div>
 
 					<div class="btn-row">
-						<button class="btn" id="btnGenerate" type="button">Generate</button>
-						<button class="btn ghost" id="btnReload" type="button" disabled>Reload</button>
+						<button class="btn" id="btnGenerate" type="button" data-i18n="artifact_index.generate">Generate</button>
+						<button class="btn ghost" id="btnReload" type="button" disabled data-i18n="artifact_index.reload">Reload</button>
 					</div>
 
 					<div class="stats" id="stats" hidden>
 						<div class="stat">
-							<span class="label">Artifact</span>
+							<span class="label" data-i18n="artifact_index.artifact">Artifact</span>
 							<span class="value" id="statSize">—</span>
 						</div>
 						<div class="stat">
-							<span class="label">First paint</span>
+							<span class="label" data-i18n="artifact_index.first_paint">First paint</span>
 							<span class="value" id="statTtfp">—</span>
 						</div>
 						<div class="stat">
-							<span class="label">Sandbox</span>
+							<span class="label" data-i18n="artifact_index.sandbox">Sandbox</span>
 							<span class="value" id="statSandbox">—</span>
 						</div>
 					</div>
 
 					<details class="snippet">
-						<summary>Claude artifact sandbox CSP</summary>
+						<summary data-i18n="artifact_index.claude_artifact_sandbox_csp">Claude artifact sandbox CSP</summary>
 						<div class="csp-line" id="cspText">Loading actual CSP from Claude.ai mirror…</div>
 					</details>
 				</div>
 
 				<div class="panel preview" aria-labelledby="preview-h">
-					<h2 id="preview-h">Live preview</h2>
+					<h2 id="preview-h" data-i18n="artifact_index.live_preview">Live preview</h2>
 
 					<div class="preview-frame">
 						<iframe
@@ -535,20 +535,20 @@
 							referrerpolicy="no-referrer"
 						></iframe>
 						<div class="preview-overlay" id="previewOverlay">
-							<div>Enter an agent ID and press <strong>Generate</strong></div>
+							<div>Enter an agent ID and press <strong data-i18n="artifact_index.generate_2">Generate</strong></div>
 						</div>
 					</div>
 
 					<div class="btn-row">
-						<button class="btn" id="btnCopyUrl" type="button" disabled>Copy URL</button>
-						<button class="btn ghost" id="btnCopyHtml" type="button" disabled>
+						<button class="btn" id="btnCopyUrl" type="button" disabled data-i18n="artifact_index.copy_url">Copy URL</button>
+						<button class="btn ghost" id="btnCopyHtml" type="button" disabled data-i18n="artifact_index.copy_raw_html">
 							Copy raw HTML
 						</button>
-						<button class="btn ghost" id="btnOpen" type="button" disabled>Open in tab</button>
+						<button class="btn ghost" id="btnOpen" type="button" disabled data-i18n="artifact_index.open_in_tab">Open in tab</button>
 					</div>
 
 					<details class="snippet">
-						<summary>Paste-into-Claude snippet</summary>
+						<summary data-i18n="artifact_index.paste_into_claude_snippet">Paste-into-Claude snippet</summary>
 						<pre id="claudeSnippet">Generate to see the snippet…</pre>
 					</details>
 				</div>
@@ -556,23 +556,23 @@
 
 			<section class="facts">
 				<div class="fact">
-					<h3>Self-contained</h3>
-					<p>
+					<h3 data-i18n="artifact_index.self_contained">Self-contained</h3>
+					<p data-i18n="artifact_index.three_js_gltfloader_and_the_glb_are">
 						three.js, GLTFLoader, and the GLB are all inlined. The page renders with zero
 						network calls — fully compatible with Claude's sandbox CSP that forbids fetch
 						and external scripts.
 					</p>
 				</div>
 				<div class="fact">
-					<h3>Sandbox-locked CSP</h3>
-					<p>
+					<h3 data-i18n="artifact_index.sandbox_locked_csp">Sandbox-locked CSP</h3>
+					<p data-i18n="artifact_index.the_response_sets_a_csp_mirroring_claude">
 						The response sets a CSP mirroring Claude's own. Behavior in the live preview
 						matches behavior inside Claude.ai — no surprises between staging and prod.
 					</p>
 				</div>
 				<div class="fact">
-					<h3>Size budget</h3>
-					<p>
+					<h3 data-i18n="artifact_index.size_budget">Size budget</h3>
+					<p data-i18n="artifact_index.glbs_over_6_mb_are_rejected_claude">
 						GLBs over 6 MB are rejected — Claude's artifact panel can hang on huge inlined
 						payloads. The viewer adds a flat 565 KB on top of the model.
 					</p>
@@ -762,5 +762,7 @@
 
 		<div id="footer-container"></div>
 		<script src="/footer.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

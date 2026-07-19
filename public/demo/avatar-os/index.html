@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title>OSS Avatar Pipeline · three.ws</title>
+		<title data-i18n="demo_avatar_os_index.meta_title">OSS Avatar Pipeline · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="robots" content="noindex" />
 		<meta name="theme-color" content="#0a0a0a" />
@@ -11,23 +11,23 @@
 	</head>
 	<body>
 		<header class="os-header">
-			<div class="brand">three.ws<span class="tag">avatar-os demo</span></div>
+			<div class="brand">three.ws<span class="tag" data-i18n="demo_avatar_os_index.avatar_os_demo">avatar-os demo</span></div>
 			<nav>
-				<a href="/demo/avatar-os/" class="active">overview</a>
-				<a href="/demo/avatar-os/studio.html">studio</a>
-				<a href="/demo/avatar-os/selfie.html">selfie</a>
-				<a href="/demo/avatar-os/combined.html">combined</a>
+				<a href="/demo/avatar-os/" class="active" data-i18n="demo_avatar_os_index.overview">overview</a>
+				<a href="/demo/avatar-os/studio.html" data-i18n="demo_avatar_os_index.studio">studio</a>
+				<a href="/demo/avatar-os/selfie.html" data-i18n="demo_avatar_os_index.selfie">selfie</a>
+				<a href="/demo/avatar-os/combined.html" data-i18n="demo_avatar_os_index.combined">combined</a>
 			</nav>
 		</header>
 		<main class="os-main">
 			<div class="banner">
-				<strong>Isolated demo workspace.</strong> Nothing here touches the production
+				<strong data-i18n="demo_avatar_os_index.isolated_demo_workspace">Isolated demo workspace.</strong> Nothing here touches the production
 				Avaturn pipeline. Goal: prove out a fully open-source replacement before promoting
 				it.
 			</div>
 
-			<h1 style="margin: 0 0 8px; font-size: 28px">Open-source avatar pipeline</h1>
-			<p style="color: var(--text-2); max-width: 720px; line-height: 1.6">
+			<h1 style="margin: 0 0 8px; font-size: 28px" data-i18n="demo_avatar_os_index.open_source_avatar_pipeline">Open-source avatar pipeline</h1>
+			<p style="color: var(--text-2); max-width: 720px; line-height: 1.6" data-i18n="demo_avatar_os_index.three_parallel_paths_replace_what_we_current">
 				Three parallel paths replace what we currently get from Avaturn. Each demo is
 				end-to-end functional — capture, generate, preview, export GLB. No mocks, no fake
 				data.
@@ -35,8 +35,8 @@
 
 			<div class="tile-grid">
 				<a class="tile" href="/demo/avatar-os/studio.html">
-					<h3>Studio · customization editor</h3>
-					<p>
+					<h3 data-i18n="demo_avatar_os_index.studio_customization_editor">Studio · customization editor</h3>
+					<p data-i18n="demo_avatar_os_index.embeds_the_open_source_characterstudio_m3_or">
 						Embeds the open-source CharacterStudio (M3-org / Apache-2.0) editor. Pick a
 						base avatar, customize traits, export GLB. Replaces the Avaturn iframe
 						editor.
@@ -46,16 +46,16 @@
 					</div>
 				</a>
 				<a class="tile" href="/demo/avatar-os/selfie.html">
-					<h3>Selfie · photo → 3D face mesh</h3>
-					<p>
+					<h3 data-i18n="demo_avatar_os_index.selfie_photo_3d_face_mesh">Selfie · photo → 3D face mesh</h3>
+					<p data-i18n="demo_avatar_os_index.mediapipe_face_landmarker_apache_2_0_runs">
 						MediaPipe Face Landmarker (Apache-2.0) runs entirely in-browser to build a
 						textured 3D mesh from one selfie. Replaces the Avaturn photo-to-avatar API.
 					</p>
 					<div class="meta">stack: @mediapipe/tasks-vision · three.js · WebGL</div>
 				</a>
 				<a class="tile" href="/demo/avatar-os/combined.html">
-					<h3>Combined · selfie face + Studio body</h3>
-					<p>
+					<h3 data-i18n="demo_avatar_os_index.combined_selfie_face_studio_body">Combined · selfie face + Studio body</h3>
+					<p data-i18n="demo_avatar_os_index.stitches_the_selfie_face_mesh_onto_a">
 						Stitches the selfie face mesh onto a Studio body GLB and exports a single
 						merged GLB. Closest analogue to the Avaturn end product.
 					</p>
@@ -64,14 +64,14 @@
 			</div>
 
 			<section style="margin-top: 48px">
-				<h2 style="font-size: 18px; margin: 0 0 12px">What's wired</h2>
+				<h2 style="font-size: 18px; margin: 0 0 12px" data-i18n="demo_avatar_os_index.what_s_wired">What's wired</h2>
 				<ul style="color: var(--text-2); line-height: 1.8; font-size: 14px">
-					<li>
+					<li data-i18n-html="demo_avatar_os_index.mediapipe_tasks_vision_pulled_via_npm_wasm">
 						MediaPipe Tasks Vision pulled via npm
 						(<code>@mediapipe/tasks-vision</code>). WASM + model files fetch from
 						Google's CDN at runtime.
 					</li>
-					<li>
+					<li data-i18n-html="demo_avatar_os_index.triangulation_indices_from_tfjs_models_apach">
 						Triangulation indices from
 						<a
 							href="https://github.com/tensorflow/tfjs-models/blob/master/face-landmarks-detection/demos/shared/triangulation.js"
@@ -79,14 +79,14 @@
 						>
 						(Apache-2.0) — vendored at <code>src/demo/triangulation.js</code>.
 					</li>
-					<li>
+					<li data-i18n-html="demo_avatar_os_index.the_avatar_studio_is_the_existing_workspace">
 						The Avatar Studio is the existing
 						<code>character-studio/</code> workspace (M3-org, AGPL — under review),
 						served same-origin at <code>/avatar-studio</code> in dev and production.
 						Build it once with <code>npm --prefix character-studio run build</code>, or
 						point <code>VITE_CHARACTER_STUDIO_URL</code> at a standalone studio server.
 					</li>
-					<li>
+					<li data-i18n-html="demo_avatar_os_index.glb_export_uses_three_js_s_from">
 						GLB export uses three.js's
 						<code>GLTFExporter</code> from <code>three/addons</code>.
 					</li>
@@ -94,22 +94,22 @@
 			</section>
 
 			<section style="margin-top: 32px">
-				<h2 style="font-size: 18px; margin: 0 0 12px">Status</h2>
+				<h2 style="font-size: 18px; margin: 0 0 12px" data-i18n="demo_avatar_os_index.status">Status</h2>
 				<div id="status-grid" class="tile-grid">
 					<div class="tile">
-						<h3>MediaPipe wasm</h3>
+						<h3 data-i18n="demo_avatar_os_index.mediapipe_wasm">MediaPipe wasm</h3>
 						<div class="status" id="mp-status">checking…</div>
 					</div>
 					<div class="tile">
-						<h3>Triangulation</h3>
+						<h3 data-i18n="demo_avatar_os_index.triangulation">Triangulation</h3>
 						<div class="status" id="tri-status">checking…</div>
 					</div>
 					<div class="tile">
-						<h3>Base body GLB</h3>
+						<h3 data-i18n="demo_avatar_os_index.base_body_glb">Base body GLB</h3>
 						<div class="status" id="glb-status">checking…</div>
 					</div>
 					<div class="tile">
-						<h3>Avatar Studio</h3>
+						<h3 data-i18n="demo_avatar_os_index.avatar_studio">Avatar Studio</h3>
 						<div class="status" id="cs-status">checking…</div>
 					</div>
 				</div>
@@ -117,5 +117,7 @@
 		</main>
 		<script type="module" src="/src/demo/os-hub.js"></script>
 		<script src="/brand.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

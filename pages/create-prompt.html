@@ -5,7 +5,7 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Describe it to 3D · three.ws</title>
+		<title data-i18n="create_prompt.meta_title">Describe it to 3D · three.ws</title>
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -15,17 +15,17 @@
 		<meta
 			name="description"
 			content="Type a description. About a minute later: a rigged 3D avatar you can animate and download."
-		/>
+		 data-i18n-attr="content:create_prompt.meta_description"/>
 		<meta name="robots" content="index, follow" />
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/create/prompt" />
-		<meta property="og:title" content="Describe it to 3D · three.ws" />
+		<meta property="og:title" content="Describe it to 3D · three.ws"  data-i18n-attr="content:create_prompt.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Type a description. About a minute later: a rigged 3D avatar you can animate and download."
-		/>
+		 data-i18n-attr="content:create_prompt.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Describe+it+to+3D&amp;d=Type+a+description.+About+a+minute+later%3A+a+rigged+3D+avatar+you+can+animate+and+download.&amp;p=%2Fcreate%2Fprompt" />
 
 		<style>
@@ -572,8 +572,8 @@
 	
 	<link rel="canonical" href="https://three.ws/create/prompt">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Describe it to 3D · three.ws">
-	<meta name="twitter:description" content="Type a description. About a minute later: a rigged 3D avatar you can animate and download.">
+	<meta name="twitter:title" content="Describe it to 3D · three.ws" data-i18n-attr="content:create_prompt.meta_twitter_title">
+	<meta name="twitter:description" content="Type a description. About a minute later: a rigged 3D avatar you can animate and download." data-i18n-attr="content:create_prompt.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Describe+it+to+3D&amp;d=Type+a+description.+About+a+minute+later%3A+a+rigged+3D+avatar+you+can+animate+and+download.&amp;p=%2Fcreate%2Fprompt">
 
 	<meta property="og:locale" content="en_US">
@@ -582,11 +582,11 @@
 	<script src="/model-viewer-meshopt.js"></script>
 </head>
 	<body>
-		<a href="#prompt" class="skip-link">Skip to the prompt box</a>
+		<a href="#prompt" class="skip-link" data-i18n="create_prompt.skip_to_the_prompt_box">Skip to the prompt box</a>
 		<div id="nav-container"></div>
 		<main class="stage">
 			<div class="topbar">
-				<button class="back" id="back-btn" aria-label="Back to create" type="button">
+				<button class="back" id="back-btn" aria-label="Back to create" type="button" data-i18n-attr="aria-label:create_prompt.back_to_create_arialabel">
 					<svg
 						width="16"
 						height="16"
@@ -607,8 +607,8 @@
 
 			<!-- Step 1: compose -->
 			<section class="step active" data-step="compose" aria-label="Describe your avatar">
-				<h1>Describe it. Get a rigged 3D avatar.</h1>
-				<p class="sub">
+				<h1 data-i18n="create_prompt.describe_it_get_a_rigged_3d_avatar">Describe it. Get a rigged 3D avatar.</h1>
+				<p class="sub" data-i18n="create_prompt.type_what_you_want_a_character_a">
 					Type what you want — a character, a creature, a style. We render a clean
 					reference, reconstruct it into 3D, and add a skeleton so it can move.
 				</p>
@@ -622,7 +622,7 @@
 					></textarea>
 					<div class="composer-foot">
 						<span class="hint" id="cost-hint"
-							>Single subject, full body works best.</span
+							 data-i18n="create_prompt.single_subject_full_body_works_best">Single subject, full body works best.</span
 						>
 						<span class="counter" id="counter">0 / 600</span>
 						<span class="pd-slot" id="prompt-dictate-slot"></span>
@@ -630,16 +630,16 @@
 				</div>
 
 				<div class="examples" role="group" aria-label="Example prompts">
-					<button class="example" type="button">
+					<button class="example" type="button" data-i18n="create_prompt.a_friendly_robot_mascot_rounded_white_shell">
 						A friendly robot mascot, rounded white shell, glowing blue eyes
 					</button>
-					<button class="example" type="button">
+					<button class="example" type="button" data-i18n="create_prompt.a_medieval_knight_in_battered_steel_plate">
 						A medieval knight in battered steel plate, weathered cape
 					</button>
-					<button class="example" type="button">
+					<button class="example" type="button" data-i18n="create_prompt.a_fox_eared_ranger_in_green_leather">
 						A fox-eared ranger in green leather, bow on the back
 					</button>
-					<button class="example" type="button">
+					<button class="example" type="button" data-i18n="create_prompt.an_astronaut_in_a_sleek_matte_black">
 						An astronaut in a sleek matte-black suit, gold visor
 					</button>
 				</div>
@@ -662,13 +662,13 @@
 						Generate avatar
 					</button>
 					<span class="hint"
-						><span class="chip-auth">Sign-in required</span> · ~1 min · rigged GLB</span
+						 data-i18n-html="create_prompt.sign_in_required_1_min_rigged_glb"><span class="chip-auth">Sign-in required</span> · ~1 min · rigged GLB</span
 					>
 				</div>
 
 				<div class="error-box" id="compose-error" role="alert"></div>
 
-				<p class="note">
+				<p class="note" data-i18n-html="create_prompt.avatars_come_out_best_with_a_single">
 					Avatars come out best with a single, clearly described subject. Abstract scenes
 					or multiple characters reconstruct poorly. You can refine the face, outfit, and
 					animations in the editor afterward. Making an object, prop, or scene piece
@@ -695,16 +695,16 @@
 				>
 					<div class="progress-fill" id="progress-fill"></div>
 				</div>
-				<p class="build-status" id="build-status" aria-live="polite">Rendering a reference image…</p>
+				<p class="build-status" id="build-status" aria-live="polite" data-i18n="create_prompt.rendering_a_reference_image">Rendering a reference image…</p>
 				<p class="elapsed" id="elapsed" aria-hidden="true">0:00</p>
-				<button type="button" id="cancel-build" class="cancel-build">Cancel</button>
+				<button type="button" id="cancel-build" class="cancel-build" data-i18n="create_prompt.cancel">Cancel</button>
 				<div class="error-box" id="build-error" role="alert"></div>
 			</section>
 
 			<!-- Step 3: done -->
 			<section class="step done-wrap" data-step="done" aria-label="Your avatar is ready">
-				<h1>Your avatar is ready</h1>
-				<p class="sub" style="margin-bottom: 0">
+				<h1 data-i18n="create_prompt.your_avatar_is_ready">Your avatar is ready</h1>
+				<p class="sub" style="margin-bottom: 0" data-i18n="create_prompt.open_it_in_the_editor_to_animate">
 					Open it in the editor to animate, dress, and export.
 				</p>
 				<div class="done-viewer">
@@ -743,7 +743,7 @@
 							<polyline points="12 5 19 12 12 19" />
 						</svg>
 					</a>
-					<button class="btn-ghost" id="make-another" type="button">Make another</button>
+					<button class="btn-ghost" id="make-another" type="button" data-i18n="create_prompt.make_another">Make another</button>
 				</div>
 			</section>
 		</main>
@@ -753,5 +753,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

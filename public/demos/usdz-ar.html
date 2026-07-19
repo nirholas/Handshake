@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>USDZ &amp; AR Quick Look · three.ws lab</title>
+		<title data-i18n="demos_usdz_ar.meta_title">USDZ &amp; AR Quick Look · three.ws lab</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
@@ -55,9 +55,9 @@
 		<header><div id="nav-container"></div></header>
 
 		<main class="stage">
-			<p class="crumb"><a href="/demos">← lab</a></p>
-			<h1>USDZ &amp; AR Quick Look</h1>
-			<p class="sub">
+			<p class="crumb" data-i18n-html="demos_usdz_ar.lab"><a href="/demos">← lab</a></p>
+			<h1 data-i18n="demos_usdz_ar.usdz_ar_quick_look">USDZ &amp; AR Quick Look</h1>
+			<p class="sub" data-i18n-html="demos_usdz_ar.loads_a_glb_generates_a_usdz_companion">
 				Loads a GLB, generates a USDZ companion entirely in-browser via the
 				three.js <code>USDZExporter</code>, uploads it to R2 through the
 				<code>/api/avatars/presign-usdz</code> action, then renders
@@ -86,18 +86,18 @@
 				</div>
 
 				<div class="panel">
-					<label>1. Pick a GLB (or use the sample)</label>
+					<label data-i18n="demos_usdz_ar.1_pick_a_glb_or_use_the">1. Pick a GLB (or use the sample)</label>
 					<input type="file" id="glb-input" accept=".glb,model/gltf-binary" />
 					<input type="text" id="glb-url" placeholder="…or paste a GLB URL" />
 
-					<label style="margin-top:6px">2. Convert to USDZ</label>
-					<button id="convert-btn">Generate USDZ in-browser</button>
+					<label style="margin-top:6px" data-i18n="demos_usdz_ar.2_convert_to_usdz">2. Convert to USDZ</label>
+					<button id="convert-btn" data-i18n="demos_usdz_ar.generate_usdz_in_browser">Generate USDZ in-browser</button>
 
-					<label style="margin-top:6px">3. Optional — upload to your account</label>
+					<label style="margin-top:6px" data-i18n="demos_usdz_ar.3_optional_upload_to_your_account">3. Optional — upload to your account</label>
 					<input type="text" id="avatar-id" placeholder="Existing avatar UUID (must be yours)" />
-					<button id="upload-btn" class="secondary" disabled>Upload + PATCH avatar</button>
+					<button id="upload-btn" class="secondary" disabled data-i18n="demos_usdz_ar.upload_patch_avatar">Upload + PATCH avatar</button>
 
-					<label style="margin-top:6px">Log</label>
+					<label style="margin-top:6px" data-i18n="demos_usdz_ar.log">Log</label>
 					<div class="log" id="log">ready.</div>
 				</div>
 			</div>
@@ -209,5 +209,7 @@
 			});
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

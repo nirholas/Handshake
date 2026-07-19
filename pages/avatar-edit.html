@@ -3,7 +3,7 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>Customize Avatar · three.ws</title>
+		<title data-i18n="avatar_edit.meta_title">Customize Avatar · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="robots" content="noindex" />
 		<meta name="theme-color" content="#000000" />
@@ -767,12 +767,12 @@
 	</head>
 	<body>
 		<header class="ae-bar">
-			<a class="ae-back" id="ae-back" href="/">← Back</a>
+			<a class="ae-back" id="ae-back" href="/" data-i18n="avatar_edit.back">← Back</a>
 			<div class="ae-bar-title" id="ae-title">Customize</div>
 			<div class="ae-actions">
-				<button class="ae-btn" id="ae-reset" type="button" disabled>Discard</button>
-				<button class="ae-btn" id="ae-play" type="button" disabled title="Drop into /play as this avatar">▶ Play as this</button>
-				<button class="ae-btn primary" id="ae-save" type="button" disabled>Save</button>
+				<button class="ae-btn" id="ae-reset" type="button" disabled data-i18n="avatar_edit.discard">Discard</button>
+				<button class="ae-btn" id="ae-play" type="button" disabled title="Drop into /play as this avatar" data-i18n="avatar_edit.play_as_this" data-i18n-attr="title:avatar_edit.drop_into_play_as_this_avata_title">▶ Play as this</button>
+				<button class="ae-btn primary" id="ae-save" type="button" disabled data-i18n="avatar_edit.save">Save</button>
 			</div>
 		</header>
 		<main class="ae-shell" id="ae-shell">
@@ -790,5 +790,7 @@
 		<script src="/avatar-actions.js" type="module"></script>
 		<script src="/src/avatar-edit.js" type="module"></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

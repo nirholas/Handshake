@@ -3,14 +3,14 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Agent Delegation · three.ws</title>
+		<title data-i18n="dashboard_delegation.meta_title">Agent Delegation · three.ws</title>
 		<link rel="stylesheet" href="/dashboard/_dash-shell.css" />
 	</head>
 	<body>
 		<div class="dash-shell">
-			<a class="dash-back" href="/dashboard/agents">← Back to dashboard</a>
-			<h1 class="dash-title">Agent Delegation</h1>
-			<p class="dash-sub">
+			<a class="dash-back" href="/dashboard/agents" data-i18n="dashboard_delegation.back_to_dashboard">← Back to dashboard</a>
+			<h1 class="dash-title" data-i18n="dashboard_delegation.agent_delegation">Agent Delegation</h1>
+			<p class="dash-sub" data-i18n-html="dashboard_delegation.send_a_message_from_one_of_your">
 				Send a message from one of your agents to any other agent. Calls
 				<code class="dash-mono">/api/agent-delegate</code>. Nested calls are rejected — depth is
 				capped at 1 to prevent recursion.
@@ -138,5 +138,7 @@
 			});
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

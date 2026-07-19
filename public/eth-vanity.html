@@ -3,9 +3,9 @@
 <head>
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8">
-	<title>Ethereum CREATE2 vanity grinder · three.ws</title>
+	<title data-i18n="eth_vanity.meta_title">Ethereum CREATE2 vanity grinder · three.ws</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="description" content="Grind a vanity Ethereum smart-contract address by searching CREATE2 salts. Runs entirely in your browser — no keys involved, just a salt you feed to your factory.">
+	<meta name="description" content="Grind a vanity Ethereum smart-contract address by searching CREATE2 salts. Runs entirely in your browser — no keys involved, just a salt you feed to your factory." data-i18n-attr="content:eth_vanity.meta_description">
 	<link rel="icon" href="/favicon.ico">
 	<link rel="stylesheet" href="/footer.css">
 	<link rel="stylesheet" href="/nav.css">
@@ -145,15 +145,15 @@
 	<link rel="canonical" href="https://three.ws/eth-vanity">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="CREATE2 Vanity Address Grinder · three.ws">
-	<meta property="og:description" content="Grind a vanity smart-contract address by searching CREATE2 salts — chain-agnostic and deployer-agnostic. Works with any CREATE2 factory (Arachnid, CreateX, Safe, Coinbase). Runs entirely in your browser, no private keys involved.">
+	<meta property="og:title" content="CREATE2 Vanity Address Grinder · three.ws" data-i18n-attr="content:eth_vanity.meta_og_title">
+	<meta property="og:description" content="Grind a vanity smart-contract address by searching CREATE2 salts — chain-agnostic and deployer-agnostic. Works with any CREATE2 factory (Arachnid, CreateX, Safe, Coinbase). Runs entirely in your browser, no private keys involved." data-i18n-attr="content:eth_vanity.meta_og_description">
 	<meta property="og:url" content="https://three.ws/eth-vanity">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=ETH+Vanity+%28CREATE2%29&amp;d=Grind+a+vanity+smart-contract+address+using+the+ThreeWSFactory+CREATE2+deployer+on+BSC.&amp;p=%2Feth-vanity">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="CREATE2 Vanity Address Grinder · three.ws">
-	<meta name="twitter:description" content="Grind a vanity smart-contract address by searching CREATE2 salts — chain-agnostic and deployer-agnostic. Works with any CREATE2 factory. Runs entirely in your browser, no private keys involved.">
+	<meta name="twitter:title" content="CREATE2 Vanity Address Grinder · three.ws" data-i18n-attr="content:eth_vanity.meta_twitter_title">
+	<meta name="twitter:description" content="Grind a vanity smart-contract address by searching CREATE2 salts — chain-agnostic and deployer-agnostic. Works with any CREATE2 factory. Runs entirely in your browser, no private keys involved." data-i18n-attr="content:eth_vanity.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=ETH+Vanity+%28CREATE2%29&amp;d=Grind+a+vanity+smart-contract+address+using+the+ThreeWSFactory+CREATE2+deployer+on+BSC.&amp;p=%2Feth-vanity">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"CREATE2 Vanity Address Grinder","description":"Grind a vanity smart-contract address by searching CREATE2 salts — chain-agnostic and deployer-agnostic. Works with any CREATE2 factory (Arachnid, CreateX, Safe, Coinbase). Runs entirely in your browser, no private keys involved.","url":"https://three.ws/eth-vanity","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -163,15 +163,15 @@
 	<meta name="twitter:site" content="@trythreews">
 </head>
 <body>
-	<a href="#main-content" class="skip-link">Skip to main content</a>
+	<a href="#main-content" class="skip-link" data-i18n="eth_vanity.skip_to_main_content">Skip to main content</a>
 	<header>
 		<div id="nav-container"></div>
 	</header>
 	<script src="/nav.js"></script>
 
 	<main id="main-content">
-		<h1>✦ Ethereum CREATE2 vanity grinder</h1>
-		<p class="lede">
+		<h1 data-i18n="eth_vanity.ethereum_create2_vanity_grinder">✦ Ethereum CREATE2 vanity grinder</h1>
+		<p class="lede" data-i18n-html="eth_vanity.grind_a_vanity_smart_contract_address_by">
 			Grind a vanity smart-contract address by searching <strong>CREATE2 salts</strong> — no private keys involved.
 			The result is a deterministic address you can deploy to from your factory of choice (Safe, ERC-4337 SimpleAccount, CreateX, Coinbase Smart Wallet…).
 			Runs entirely in your browser.
@@ -179,50 +179,50 @@
 
 		<div class="sibling-note">
 			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V5l-8-3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-			<span>
+			<span data-i18n-html="eth_vanity.this_grinds_a_vanity_smart_contract_address">
 				This grinds a vanity <strong>smart-contract</strong> address — you search a salt, and the address is a deterministic function of your factory + init code. No private key is involved.
 				Want a vanity <strong>wallet</strong> you hold the key to? Use the <a href="/evm-wallet">EVM vanity wallet generator</a> — it grinds a real secp256k1 keypair in your browser.
 			</span>
 		</div>
 
 		<div class="card">
-			<h2>1. Factory + init code</h2>
-			<p class="desc">CREATE2 fixes the deployer address and the init code; only the salt is yours to choose.</p>
+			<h2 data-i18n="eth_vanity.1_factory_init_code">1. Factory + init code</h2>
+			<p class="desc" data-i18n="eth_vanity.create2_fixes_the_deployer_address_and_the">CREATE2 fixes the deployer address and the init code; only the salt is yours to choose.</p>
 
 			<div class="formula">address = keccak256(0xff ‖ deployer ‖ salt ‖ keccak256(initCode))[12:]</div>
 
-			<label for="deployer">Deployer / factory address (20 bytes)</label>
+			<label for="deployer" data-i18n="eth_vanity.deployer_factory_address_20_bytes">Deployer / factory address (20 bytes)</label>
 			<input id="deployer" type="text" placeholder="0x…" autocomplete="off" spellcheck="false" />
 			<div class="preset-row" aria-label="Common deployers">
-				<button class="preset" type="button" data-deployer="0x4e59b44847b379578588920cA78FbF26c0B4956C" data-name="Arachnid CREATE2 (deterministic-deployment-proxy)">Arachnid proxy</button>
-				<button class="preset" type="button" data-deployer="0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed" data-name="CreateX">CreateX</button>
-				<button class="preset" type="button" data-deployer="0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67" data-name="Safe SafeProxyFactory v1.4.1">Safe v1.4.1</button>
-				<button class="preset" type="button" data-deployer="0x0BA5ED0c6AA8c49038F819E587E2633c4A9F428a" data-name="Coinbase Smart Wallet factory">Coinbase Smart Wallet</button>
+				<button class="preset" type="button" data-deployer="0x4e59b44847b379578588920cA78FbF26c0B4956C" data-name="Arachnid CREATE2 (deterministic-deployment-proxy)" data-i18n="eth_vanity.arachnid_proxy">Arachnid proxy</button>
+				<button class="preset" type="button" data-deployer="0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed" data-name="CreateX" data-i18n="eth_vanity.createx">CreateX</button>
+				<button class="preset" type="button" data-deployer="0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67" data-name="Safe SafeProxyFactory v1.4.1" data-i18n="eth_vanity.safe_v1_4_1">Safe v1.4.1</button>
+				<button class="preset" type="button" data-deployer="0x0BA5ED0c6AA8c49038F819E587E2633c4A9F428a" data-name="Coinbase Smart Wallet factory" data-i18n="eth_vanity.coinbase_smart_wallet">Coinbase Smart Wallet</button>
 			</div>
 
-			<label for="initcode-hash">keccak256(initCode) — 32 bytes</label>
+			<label for="initcode-hash" data-i18n="eth_vanity.keccak256_initcode_32_bytes">keccak256(initCode) — 32 bytes</label>
 			<input id="initcode-hash" type="text" placeholder="0x… (64 hex chars)" autocomplete="off" spellcheck="false" />
-			<p class="desc" style="margin-top:.4rem">
+			<p class="desc" style="margin-top:.4rem" data-i18n-html="eth_vanity.if_you_have_the_raw_deploy_bytecode">
 				If you have the raw <code>initCode</code> (deploy bytecode + constructor args), paste it below and we'll hash it for you.
 			</p>
-			<label for="initcode-raw" style="margin-top:.5rem">Raw init code (optional — auto-hashes)</label>
+			<label for="initcode-raw" style="margin-top:.5rem" data-i18n="eth_vanity.raw_init_code_optional_auto_hashes">Raw init code (optional — auto-hashes)</label>
 			<textarea id="initcode-raw" rows="3" placeholder="0x… (paste bytecode + ABI-encoded args)"></textarea>
 		</div>
 
 		<div class="card">
-			<h2>2. Pattern</h2>
-			<p class="desc">
+			<h2 data-i18n="eth_vanity.2_pattern">2. Pattern</h2>
+			<p class="desc" data-i18n-html="eth_vanity.hex_characters_only_0_9_a_f">
 				Hex characters only (0–9, a–f). Each extra character is 16× harder.
 				<strong>Mixed case</strong> (e.g. <code>Beef</code>) matches the EIP-55 checksum — visually distinctive, ~2× harder per letter.
 			</p>
 
 			<div class="row2">
 				<div>
-					<label for="prefix">Prefix (after 0x)</label>
+					<label for="prefix" data-i18n="eth_vanity.prefix_after_0x">Prefix (after 0x)</label>
 					<input id="prefix" type="text" maxlength="10" placeholder="e.g. beef or Beef" autocomplete="off" spellcheck="false" />
 				</div>
 				<div>
-					<label for="suffix">Suffix</label>
+					<label for="suffix" data-i18n="eth_vanity.suffix">Suffix</label>
 					<input id="suffix" type="text" maxlength="10" placeholder="e.g. dead" autocomplete="off" spellcheck="false" />
 				</div>
 			</div>
@@ -241,13 +241,13 @@
 			</div>
 
 			<div class="row">
-				<span id="est">type a pattern to see estimated time</span>
+				<span id="est" data-i18n="eth_vanity.type_a_pattern_to_see_estimated_time">type a pattern to see estimated time</span>
 				<span><span id="case-tag"></span> <span id="tier"></span></span>
 			</div>
 
 			<div class="cores">
 				<div class="cores-head">
-					<label for="core-count">Compute — CPU cores to use</label>
+					<label for="core-count" data-i18n="eth_vanity.compute_cpu_cores_to_use">Compute — CPU cores to use</label>
 					<span class="cores-val"><b id="core-count-val">4</b> / <span id="core-max">8</span></span>
 				</div>
 				<div class="cores-row">
@@ -259,16 +259,16 @@
 			</div>
 
 			<div class="actions">
-				<button id="grind" class="btn primary" type="button" disabled>Grind salt</button>
-				<button id="pause" class="btn" type="button" hidden>Pause</button>
-				<button id="cancel" class="btn" type="button" hidden>Stop</button>
+				<button id="grind" class="btn primary" type="button" disabled data-i18n="eth_vanity.grind_salt">Grind salt</button>
+				<button id="pause" class="btn" type="button" hidden data-i18n="eth_vanity.pause">Pause</button>
+				<button id="cancel" class="btn" type="button" hidden data-i18n="eth_vanity.stop">Stop</button>
 			</div>
 
 			<div id="progress" hidden class="progress">
 				<div class="live">
 					<div>
 						<div class="stat" id="rate">0/s</div>
-						<div style="font-size:.75rem;color:#555">tries/sec across <span id="cores2">?</span> cores<span id="paused-tag" class="paused-tag" hidden>paused</span></div>
+						<div style="font-size:.75rem;color:#555">tries/sec across <span id="cores2">?</span> cores<span id="paused-tag" class="paused-tag" hidden data-i18n="eth_vanity.paused">paused</span></div>
 					</div>
 					<div style="text-align:right">
 						<div class="stat"><span id="attempts">0</span></div>
@@ -835,5 +835,7 @@
 	<div id="footer-container"></div>
 	<script src="/footer.js" defer></script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

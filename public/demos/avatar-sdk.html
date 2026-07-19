@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>@three-ws/avatar SDK · three.ws lab</title>
+		<title data-i18n="demos_avatar_sdk.meta_title">@three-ws/avatar SDK · three.ws lab</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
@@ -49,9 +49,9 @@
 		<header><div id="nav-container"></div></header>
 
 		<main class="stage">
-			<p class="crumb"><a href="/demos">← lab</a></p>
-			<h1>@three-ws/avatar SDK</h1>
-			<p class="sub">
+			<p class="crumb" data-i18n-html="demos_avatar_sdk.lab"><a href="/demos">← lab</a></p>
+			<h1 data-i18n="demos_avatar_sdk.three_ws_avatar_sdk">@three-ws/avatar SDK</h1>
+			<p class="sub" data-i18n-html="demos_avatar_sdk.the_npm_sdk_bundle_loaded_from_what">
 				The npm SDK bundle loaded from <code>/avatar-sdk/dist/index.mjs</code>
 				(what consumers would get from <code>npm install @three-ws/avatar</code>
 				once it's published). On mount it registers <code>&lt;agent-3d&gt;</code>
@@ -60,7 +60,7 @@
 			</p>
 
 			<section class="card">
-				<h2 style="margin-top:0;font-size:18px">1. Drop-in web component</h2>
+				<h2 style="margin-top:0;font-size:18px" data-i18n="demos_avatar_sdk.1_drop_in_web_component">1. Drop-in web component</h2>
 				<pre>&lt;script type="module" src="/avatar-sdk/dist/index.mjs"&gt;&lt;/script&gt;
 &lt;agent-3d src="/avatars/default.glb"&gt;&lt;/agent-3d&gt;</pre>
 				<div class="viewer-host" id="sdk-viewer-host">
@@ -70,10 +70,10 @@
 			</section>
 
 			<section class="card">
-				<h2 style="margin-top:0;font-size:18px">2. Hand off by avatar ID</h2>
+				<h2 style="margin-top:0;font-size:18px" data-i18n="demos_avatar_sdk.2_hand_off_by_avatar_id">2. Hand off by avatar ID</h2>
 				<pre>&lt;script type="module" src="/avatar-sdk/dist/index.mjs"&gt;&lt;/script&gt;
 &lt;agent-3d avatar-id="AVATAR_UUID"&gt;&lt;/agent-3d&gt;</pre>
-				<p class="sub" style="margin:10px 0 0">
+				<p class="sub" style="margin:10px 0 0" data-i18n-html="demos_avatar_sdk.the_sdk_resolves_against_on_the_same">
 					The SDK resolves <code>avatar-id</code> against
 					<code>GET /api/avatars/:id</code> on the same origin the SDK was
 					loaded from (override with <code>api-base="https://other.host"</code>).
@@ -86,14 +86,14 @@
 			</section>
 
 			<section class="card">
-				<h2 style="margin-top:0;font-size:18px">3. Programmatic Creator</h2>
+				<h2 style="margin-top:0;font-size:18px" data-i18n="demos_avatar_sdk.3_programmatic_creator">3. Programmatic Creator</h2>
 				<pre>import { AvatarCreator } from '/avatar-sdk/src/creator.js';
 
 const creator = new AvatarCreator({
   onExport: (glbBlob) =&gt; { /* save it */ },
 });
 creator.open();</pre>
-				<button id="open-creator-btn">Open three.ws Avatar Creator</button>
+				<button id="open-creator-btn" data-i18n="demos_avatar_sdk.open_three_ws_avatar_creator">Open three.ws Avatar Creator</button>
 				<div class="log" id="creator-log">click to open the modal.</div>
 			</section>
 		</main>
@@ -179,5 +179,7 @@ creator.open();</pre>
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

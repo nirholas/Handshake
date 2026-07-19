@@ -4,11 +4,11 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>x402 Arbitrage — same capability, different price</title>
-<meta name="description" content="Cross-provider price disparities surfaced live from the merged x402 facilitator catalog. Find the cheapest endpoint for any capability." />
+<title data-i18n="arbitrage.meta_title">x402 Arbitrage — same capability, different price</title>
+<meta name="description" content="Cross-provider price disparities surfaced live from the merged x402 facilitator catalog. Find the cheapest endpoint for any capability."  data-i18n-attr="content:arbitrage.meta_description"/>
 <meta name="theme-color" content="#0b0b0b" />
-<meta property="og:title" content="x402 Arbitrage — same capability, different price" />
-<meta property="og:description" content="Live cross-provider price disparities from the merged x402 catalog." />
+<meta property="og:title" content="x402 Arbitrage — same capability, different price"  data-i18n-attr="content:arbitrage.meta_og_title"/>
+<meta property="og:description" content="Live cross-provider price disparities from the merged x402 catalog."  data-i18n-attr="content:arbitrage.meta_og_description"/>
 <meta property="og:type" content="website" />
 <link rel="stylesheet" href="/nav.css" />
 <style>
@@ -331,8 +331,8 @@
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="x402 Arbitrage · three.ws">
-	<meta name="twitter:description" content="Cross-provider price disparities surfaced live from the merged x402 facilitator catalog. Find the cheapest endpoint for any capability.">
+	<meta name="twitter:title" content="x402 Arbitrage · three.ws" data-i18n-attr="content:arbitrage.meta_twitter_title">
+	<meta name="twitter:description" content="Cross-provider price disparities surfaced live from the merged x402 facilitator catalog. Find the cheapest endpoint for any capability." data-i18n-attr="content:arbitrage.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=x402+Arbitrage&amp;d=Cross-provider+price+disparities+surfaced+live+from+the+merged+x402+facilitator+catalog.+Find+the+cheapest+endpoint+for+any+capability.&amp;p=%2Farbitrage">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"x402 Arbitrage","description":"Cross-provider price disparities surfaced live from the merged x402 facilitator catalog. Find the cheapest endpoint for any capability.","url":"https://three.ws/arbitrage","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -348,8 +348,8 @@
 	<header class="hero">
 		<div class="left">
 			<div class="eyebrow"><span class="pulse"></span>Cross-provider arbitrage</div>
-			<h1>Spot the same capability priced differently.</h1>
-			<p>Live opportunities surfaced from the merged x402 facilitator catalog. Same tool, same intent — different price.</p>
+			<h1 data-i18n="arbitrage.spot_the_same_capability_priced_differently">Spot the same capability priced differently.</h1>
+			<p data-i18n="arbitrage.live_opportunities_surfaced_from_the_merged">Live opportunities surfaced from the merged x402 facilitator catalog. Same tool, same intent — different price.</p>
 		</div>
 		<div class="updated">
 			Updated: <strong id="updated">…</strong>
@@ -357,9 +357,9 @@
 	</header>
 
 	<div class="toolbar">
-		<button type="button" class="chip active" data-filter="all">All</button>
-		<button type="button" class="chip" data-filter="http">HTTP</button>
-		<button type="button" class="chip" data-filter="mcp">MCP</button>
+		<button type="button" class="chip active" data-filter="all" data-i18n="arbitrage.all">All</button>
+		<button type="button" class="chip" data-filter="http" data-i18n="arbitrage.http">HTTP</button>
+		<button type="button" class="chip" data-filter="mcp" data-i18n="arbitrage.mcp">MCP</button>
 		<input type="search" id="q" placeholder="Filter by capability or provider…" />
 		<div class="count"><strong id="count">…</strong> opportunities</div>
 	</div>
@@ -370,5 +370,7 @@
 
 <script type="module" src="/arbitrage.js"></script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

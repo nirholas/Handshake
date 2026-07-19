@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Fall from above — three.ws</title>
+		<title data-i18n="demos_agents_fall_from_top.meta_title">Fall from above — three.ws</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/demos/agents/_shared.css" />
@@ -11,14 +11,14 @@
 	<body>
 		<div class="stage">
 			<div class="hero-eyebrow">Fall from off-canvas</div>
-			<h1 class="hero-title">She drops in <em>uninvited</em>.</h1>
-			<p class="hero-sub">
+			<h1 class="hero-title" data-i18n-html="demos_agents_fall_from_top.she_drops_in_uninvited">She drops in <em>uninvited</em>.</h1>
+			<p class="hero-sub" data-i18n="demos_agents_fall_from_top.page_loads_gravity_engages_she_falls_past">
 				Page loads, gravity engages, she falls past the nav and crashes
 				onto the CTA — splash, squish, then composes herself.
 			</p>
 			<div class="cta-row">
-				<a href="#" class="btn btn-primary" id="cta-btn"><span>Catch me</span><span>↓</span></a>
-				<button class="btn btn-ghost" id="redrop"><span>Drop again</span></button>
+				<a href="#" class="btn btn-primary" id="cta-btn" data-i18n-html="demos_agents_fall_from_top.catch_me"><span>Catch me</span><span>↓</span></a>
+				<button class="btn btn-ghost" id="redrop" data-i18n-html="demos_agents_fall_from_top.drop_again"><span>Drop again</span></button>
 			</div>
 		</div>
 		<canvas id="avatar-canvas"></canvas>
@@ -106,5 +106,7 @@
 			}, rootBone, baseRootPos);
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

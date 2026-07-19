@@ -4,9 +4,9 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Analytics — Walk docs — three.ws</title>
+		<title data-i18n="docs_walk_analytics.meta_title">Analytics — Walk docs — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<meta name="description" content="Walk embed analytics: sessions, average duration, distance walked, unique embed origins, a daily time series, top hosts, and creator-defined conversion events fired with ThreeWalkAvatar.track." />
+		<meta name="description" content="Walk embed analytics: sessions, average duration, distance walked, unique embed origins, a daily time series, top hosts, and creator-defined conversion events fired with ThreeWalkAvatar.track."  data-i18n-attr="content:docs_walk_analytics.meta_description"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="canonical" href="https://three.ws/docs/walk/analytics" />
 		<link rel="shortcut icon" href="/favicon.ico" />
@@ -17,65 +17,65 @@
 		<link rel="stylesheet" href="/docs/walk/docs.css" />
 	</head>
 	<body>
-		<a class="wd-skip" href="#wd-main">Skip to content</a>
+		<a class="wd-skip" href="#wd-main" data-i18n="docs_walk_analytics.skip_to_content">Skip to content</a>
 		<header><div id="nav-container"></div></header>
 		<script src="/nav.js"></script>
 
 		<div class="wd-shell">
-			<button class="wd-side-toggle" type="button" aria-expanded="false" aria-controls="wd-side">
+			<button class="wd-side-toggle" type="button" aria-expanded="false" aria-controls="wd-side" data-i18n-html="docs_walk_analytics.documentation_menu">
 				<span>Documentation menu</span><span aria-hidden="true">☰</span>
 			</button>
 			<aside class="wd-side" id="wd-side" aria-label="Walk documentation">
-				<h2>Walk docs</h2>
+				<h2 data-i18n="docs_walk_analytics.walk_docs">Walk docs</h2>
 				<nav aria-label="Walk documentation pages">
-					<a href="/docs/walk">Overview</a>
-					<a href="/docs/walk/getting-started">Getting started</a>
+					<a href="/docs/walk" data-i18n="docs_walk_analytics.overview">Overview</a>
+					<a href="/docs/walk/getting-started" data-i18n="docs_walk_analytics.getting_started">Getting started</a>
 				</nav>
-				<h2>Use it</h2>
+				<h2 data-i18n="docs_walk_analytics.use_it">Use it</h2>
 				<nav aria-label="Using Walk">
-					<a href="/docs/walk/walk-page">The walk page</a>
-					<a href="/docs/walk/companion-mode">Companion mode</a>
-					<a href="/docs/walk/chrome-extension">Chrome extension</a>
+					<a href="/docs/walk/walk-page" data-i18n="docs_walk_analytics.the_walk_page">The walk page</a>
+					<a href="/docs/walk/companion-mode" data-i18n="docs_walk_analytics.companion_mode">Companion mode</a>
+					<a href="/docs/walk/chrome-extension" data-i18n="docs_walk_analytics.chrome_extension">Chrome extension</a>
 				</nav>
-				<h2>Build with it</h2>
+				<h2 data-i18n="docs_walk_analytics.build_with_it">Build with it</h2>
 				<nav aria-label="Building with Walk">
-					<a href="/docs/walk/embed-iframe">Iframe embed</a>
-					<a href="/docs/walk/embed-sdk">JavaScript SDK</a>
-					<a href="/docs/walk/postmessage-events">postMessage events</a>
-					<a href="/docs/walk/analytics" aria-current="page">Analytics</a>
+					<a href="/docs/walk/embed-iframe" data-i18n="docs_walk_analytics.iframe_embed">Iframe embed</a>
+					<a href="/docs/walk/embed-sdk" data-i18n="docs_walk_analytics.javascript_sdk">JavaScript SDK</a>
+					<a href="/docs/walk/postmessage-events" data-i18n="docs_walk_analytics.postmessage_events">postMessage events</a>
+					<a href="/docs/walk/analytics" aria-current="page" data-i18n="docs_walk_analytics.analytics">Analytics</a>
 				</nav>
-				<h2>Reference</h2>
-				<nav aria-label="Reference"><a href="/docs/walk/changelog">Changelog</a></nav>
+				<h2 data-i18n="docs_walk_analytics.reference">Reference</h2>
+				<nav aria-label="Reference"><a href="/docs/walk/changelog" data-i18n="docs_walk_analytics.changelog">Changelog</a></nav>
 			</aside>
 
 			<main class="wd-main" id="wd-main">
-				<p class="wd-crumbs"><a href="/docs">Docs</a> / <a href="/docs/walk">Walk</a> / Analytics</p>
-				<h1>Analytics</h1>
-				<p class="wd-lede">
+				<p class="wd-crumbs" data-i18n-html="docs_walk_analytics.docs_walk_analytics"><a href="/docs">Docs</a> / <a href="/docs/walk">Walk</a> / Analytics</p>
+				<h1 data-i18n="docs_walk_analytics.analytics_2">Analytics</h1>
+				<p class="wd-lede" data-i18n-html="docs_walk_analytics.every_avatar_you_own_has_a_private">
 					Every avatar you own has a private analytics dashboard at
 					<a href="/walk-analytics">three.ws/walk-analytics</a> — sessions, distance,
 					time, where it walked, and the conversion events you fire yourself. All figures
 					come from real walk activity; nothing is sampled or estimated.
 				</p>
 
-				<h2>What's measured</h2>
+				<h2 data-i18n="docs_walk_analytics.what_s_measured">What's measured</h2>
 				<div class="wd-table-wrap">
 					<table class="wd-table">
-						<thead><tr><th>Metric</th><th>Meaning</th></tr></thead>
+						<thead><tr><th data-i18n="docs_walk_analytics.metric">Metric</th><th data-i18n="docs_walk_analytics.meaning">Meaning</th></tr></thead>
 						<tbody>
-							<tr><td>Total sessions</td><td>Sessions counted across the selected window.</td></tr>
-							<tr><td>Avg. duration</td><td>Total walk time ÷ total sessions.</td></tr>
-							<tr><td>Total distance</td><td>Metres walked, summed from per-frame movement.</td></tr>
-							<tr><td>Unique origins</td><td>Distinct host sites the avatar walked on.</td></tr>
-							<tr><td>Time series</td><td>Per-day sessions, distance, and duration — gaps filled with zeroes for a continuous chart.</td></tr>
-							<tr><td>Top origins</td><td>The top 10 embed hosts by session count.</td></tr>
-							<tr><td>Events</td><td>Your conversion events with a count and conversion rate (events ÷ sessions).</td></tr>
+							<tr><td data-i18n="docs_walk_analytics.total_sessions">Total sessions</td><td data-i18n="docs_walk_analytics.sessions_counted_across_the_selected_window">Sessions counted across the selected window.</td></tr>
+							<tr><td data-i18n="docs_walk_analytics.avg_duration">Avg. duration</td><td data-i18n="docs_walk_analytics.total_walk_time_total_sessions">Total walk time ÷ total sessions.</td></tr>
+							<tr><td data-i18n="docs_walk_analytics.total_distance">Total distance</td><td data-i18n="docs_walk_analytics.metres_walked_summed_from_per_frame_movement">Metres walked, summed from per-frame movement.</td></tr>
+							<tr><td data-i18n="docs_walk_analytics.unique_origins">Unique origins</td><td data-i18n="docs_walk_analytics.distinct_host_sites_the_avatar_walked_on">Distinct host sites the avatar walked on.</td></tr>
+							<tr><td data-i18n="docs_walk_analytics.time_series">Time series</td><td data-i18n="docs_walk_analytics.per_day_sessions_distance_and_duration_gaps">Per-day sessions, distance, and duration — gaps filled with zeroes for a continuous chart.</td></tr>
+							<tr><td data-i18n="docs_walk_analytics.top_origins">Top origins</td><td data-i18n="docs_walk_analytics.the_top_10_embed_hosts_by_session">The top 10 embed hosts by session count.</td></tr>
+							<tr><td data-i18n="docs_walk_analytics.events">Events</td><td data-i18n="docs_walk_analytics.your_conversion_events_with_a_count_and">Your conversion events with a count and conversion rate (events ÷ sessions).</td></tr>
 						</tbody>
 					</table>
 				</div>
 
-				<h2>How collection works</h2>
-				<p>
+				<h2 data-i18n="docs_walk_analytics.how_collection_works">How collection works</h2>
+				<p data-i18n-html="docs_walk_analytics.the_walk_runtime_accumulates_two_running_tot">
 					The walk runtime accumulates two running totals — horizontal distance and
 					session wall-clock — and flushes a compact batch to <code>POST /api/walk/metrics</code>
 					roughly every 60 seconds, plus once on page hide via
@@ -84,11 +84,11 @@
 				</p>
 				<div class="wd-note">
 					<span class="wd-icon" aria-hidden="true">✱</span>
-					<span>The embed host (which site the avatar walked on) is derived server-side from the request's <code>Origin</code>/<code>Referer</code> header — never trusted from the request body. Your "unique origins" reflect where the avatar actually ran.</span>
+					<span data-i18n-html="docs_walk_analytics.the_embed_host_which_site_the_avatar">The embed host (which site the avatar walked on) is derived server-side from the request's <code>Origin</code>/<code>Referer</code> header — never trusted from the request body. Your "unique origins" reflect where the avatar actually ran.</span>
 				</div>
 
-				<h2>Conversion events</h2>
-				<p>
+				<h2 data-i18n="docs_walk_analytics.conversion_events">Conversion events</h2>
+				<p data-i18n="docs_walk_analytics.beyond_automatic_metrics_fire_your_own_event">
 					Beyond automatic metrics, fire your own events to measure what matters — a
 					subscribe, a purchase, a play. From a page running the walk runtime:
 				</p>
@@ -97,35 +97,35 @@
 window.ThreeWalkAvatar.track('subscribe', { value: 9 });
 window.ThreeWalkAvatar.track('play');</code></pre>
 				</div>
-				<p>
+				<p data-i18n="docs_walk_analytics.each_event_posts_immediately_events_are_spar">
 					Each event posts immediately (events are sparse, unlike the batched metrics) and
 					is attributed to the same avatar and walker as the surrounding session. The
 					dashboard shows each event's count and its conversion rate against sessions.
 				</p>
 
-				<h2>Achievements</h2>
-				<p>The runtime unlocks a fixed set of achievements, persisted once each:</p>
+				<h2 data-i18n="docs_walk_analytics.achievements">Achievements</h2>
+				<p data-i18n="docs_walk_analytics.the_runtime_unlocks_a_fixed_set_of">The runtime unlocks a fixed set of achievements, persisted once each:</p>
 				<div class="wd-table-wrap">
 					<table class="wd-table">
-						<thead><tr><th>Code</th><th>Unlock</th></tr></thead>
+						<thead><tr><th data-i18n="docs_walk_analytics.code">Code</th><th data-i18n="docs_walk_analytics.unlock">Unlock</th></tr></thead>
 						<tbody>
-							<tr><td><code>distance_1km</code></td><td>1 km walked.</td></tr>
-							<tr><td><code>distance_5km</code></td><td>5 km walked.</td></tr>
-							<tr><td><code>sites_10</code></td><td>Walked on 10 different sites.</td></tr>
-							<tr><td><code>all_environments</code></td><td>Walked in all six environments.</td></tr>
+							<tr><td><code>distance_1km</code></td><td data-i18n="docs_walk_analytics.1_km_walked">1 km walked.</td></tr>
+							<tr><td><code>distance_5km</code></td><td data-i18n="docs_walk_analytics.5_km_walked">5 km walked.</td></tr>
+							<tr><td><code>sites_10</code></td><td data-i18n="docs_walk_analytics.walked_on_10_different_sites">Walked on 10 different sites.</td></tr>
+							<tr><td><code>all_environments</code></td><td data-i18n="docs_walk_analytics.walked_in_all_six_environments">Walked in all six environments.</td></tr>
 						</tbody>
 					</table>
 				</div>
 
-				<h2>Access &amp; privacy</h2>
+				<h2 data-i18n="docs_walk_analytics.access_privacy">Access &amp; privacy</h2>
 				<ul>
-					<li><strong>Owner-only.</strong> The dashboard API requires a signed-in session (or a bearer token with the <code>avatars:read</code> scope) and verifies you own the avatar — others get a 403.</li>
-					<li><strong>Anonymous walkers count too.</strong> Signed-in walkers are attributed to their account; everyone else is keyed to a rotating anonymous id, so the leaderboard and your totals still include them.</li>
-					<li><strong>No third-party tracking.</strong> Metrics flow only to the three.ws ingest; there is no external analytics provider in the pipeline.</li>
+					<li data-i18n-html="docs_walk_analytics.owner_only_the_dashboard_api_requires_a"><strong>Owner-only.</strong> The dashboard API requires a signed-in session (or a bearer token with the <code>avatars:read</code> scope) and verifies you own the avatar — others get a 403.</li>
+					<li data-i18n-html="docs_walk_analytics.anonymous_walkers_count_too_signed_in_walker"><strong>Anonymous walkers count too.</strong> Signed-in walkers are attributed to their account; everyone else is keyed to a rotating anonymous id, so the leaderboard and your totals still include them.</li>
+					<li data-i18n-html="docs_walk_analytics.no_third_party_tracking_metrics_flow_only"><strong>No third-party tracking.</strong> Metrics flow only to the three.ws ingest; there is no external analytics provider in the pipeline.</li>
 				</ul>
 
-				<h2>The data shape</h2>
-				<p>The ingest accepts this batch (all fields optional unless noted):</p>
+				<h2 data-i18n="docs_walk_analytics.the_data_shape">The data shape</h2>
+				<p data-i18n="docs_walk_analytics.the_ingest_accepts_this_batch_all_fields">The ingest accepts this batch (all fields optional unless noted):</p>
 				<div class="wd-code" data-lang="json" data-label="POST /api/walk/metrics">
 					<pre><code>{
   "distanceMeters": 142.5,
@@ -141,10 +141,10 @@ window.ThreeWalkAvatar.track('play');</code></pre>
 				</div>
 
 				<div class="wd-pagefoot">
-					<a class="wd-edit" href="https://github.com/nirholas/three.ws/edit/main/public/docs/walk/analytics.html" rel="noopener"><span aria-hidden="true">✎</span> Edit this page on GitHub</a>
+					<a class="wd-edit" href="https://github.com/nirholas/three.ws/edit/main/public/docs/walk/analytics.html" rel="noopener" data-i18n-html="docs_walk_analytics.edit_this_page_on_github"><span aria-hidden="true">✎</span> Edit this page on GitHub</a>
 					<div class="wd-nextprev">
-						<a href="/docs/walk/postmessage-events"><span>Previous</span>← postMessage events</a>
-						<a href="/docs/walk/chrome-extension"><span>Next</span>Chrome extension →</a>
+						<a href="/docs/walk/postmessage-events" data-i18n-html="docs_walk_analytics.previous_postmessage_events"><span>Previous</span>← postMessage events</a>
+						<a href="/docs/walk/chrome-extension" data-i18n-html="docs_walk_analytics.nextchrome_extension"><span>Next</span>Chrome extension →</a>
 					</div>
 				</div>
 			</main>
@@ -154,5 +154,7 @@ window.ThreeWalkAvatar.track('play');</code></pre>
 		<script src="/footer.js"></script>
 		<script src="/brand.js" defer></script>
 		<script type="module" src="/docs/walk/docs.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

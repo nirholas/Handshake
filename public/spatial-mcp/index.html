@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Spatial MCP — reference renderer</title>
-<meta name="description" content="Reference renderer for the open Spatial MCP artifact shape — 3D as a native conversational MCP response type." />
+<title data-i18n="spatial_mcp_index.meta_title">Spatial MCP — reference renderer</title>
+<meta name="description" content="Reference renderer for the open Spatial MCP artifact shape — 3D as a native conversational MCP response type."  data-i18n-attr="content:spatial_mcp_index.meta_description"/>
 <script src="/model-viewer-meshopt.js"></script>
 <script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3.5.0/dist/model-viewer.min.js"></script>
 <style>
@@ -32,8 +32,8 @@
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
 	<meta property="og:locale" content="en_US">
-	<meta property="og:title" content="Spatial MCP — reference renderer · three.ws">
-	<meta property="og:description" content="The open standard for returning a live, interactive 3D scene as a first-class MCP tool result, with a framework-free reference renderer that displays any conformant artifact — including ones transformed from other tools.">
+	<meta property="og:title" content="Spatial MCP — reference renderer · three.ws" data-i18n-attr="content:spatial_mcp_index.meta_og_title">
+	<meta property="og:description" content="The open standard for returning a live, interactive 3D scene as a first-class MCP tool result, with a framework-free reference renderer that displays any conformant artifact — including ones transformed from other tools." data-i18n-attr="content:spatial_mcp_index.meta_og_description">
 	<meta property="og:url" content="https://three.ws/spatial-mcp">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=labs&amp;t=Spatial+MCP+%E2%80%94+reference+renderer&amp;d=The+open+standard+for+returning+a+live%2C+interactive+3D+scene+as+a+first-class+MCP+tool+result%2C+with+a+framework-free+reference+renderer+that+displays+any+confor&amp;p=%2Fspatial-mcp">
 	<meta property="og:image:width" content="1200">
@@ -42,15 +42,15 @@
 	<meta property="og:image:alt" content="Spatial MCP — reference renderer — three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="Spatial MCP — reference renderer · three.ws">
-	<meta name="twitter:description" content="The open standard for returning a live, interactive 3D scene as a first-class MCP tool result, with a framework-free reference renderer that displays any conformant artifact — including ones transformed from other tools.">
+	<meta name="twitter:title" content="Spatial MCP — reference renderer · three.ws" data-i18n-attr="content:spatial_mcp_index.meta_twitter_title">
+	<meta name="twitter:description" content="The open standard for returning a live, interactive 3D scene as a first-class MCP tool result, with a framework-free reference renderer that displays any conformant artifact — including ones transformed from other tools." data-i18n-attr="content:spatial_mcp_index.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=labs&amp;t=Spatial+MCP+%E2%80%94+reference+renderer&amp;d=The+open+standard+for+returning+a+live%2C+interactive+3D+scene+as+a+first-class+MCP+tool+result%2C+with+a+framework-free+reference+renderer+that+displays+any+confor&amp;p=%2Fspatial-mcp">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"Spatial MCP — reference renderer","description":"The open standard for returning a live, interactive 3D scene as a first-class MCP tool result, with a framework-free reference renderer that displays any conformant artifact — including ones transformed from other tools.","url":"https://three.ws/spatial-mcp","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=labs&t=Spatial+MCP+%E2%80%94+reference+renderer&d=The+open+standard+for+returning+a+live%2C+interactive+3D+scene+as+a+first-class+MCP+tool+result%2C+with+a+framework-free+reference+renderer+that+displays+any+confor&p=%2Fspatial-mcp"}]}</script>
 </head>
 <body>
 <div class="page">
-  <h1>Spatial MCP — reference renderer</h1>
-  <p class="lede">
+  <h1 data-i18n="spatial_mcp_index.spatial_mcp_reference_renderer">Spatial MCP — reference renderer</h1>
+  <p class="lede" data-i18n-html="spatial_mcp_index.spatial_mcp_makes_a_live_interactive_3d">
     <strong>Spatial MCP</strong> makes a live, interactive 3D scene a first-class MCP tool result, not a URL in text.
     This page is the reference renderer for the open artifact shape. It renders the conformant payload below —
     including one <em>transformed from a different (foreign) tool's output</em> — proving the shape is portable.
@@ -59,21 +59,21 @@
 
   <div class="grid">
     <div class="card">
-      <h2>three.ws forge_free → artifact</h2>
+      <h2 data-i18n="spatial_mcp_index.three_ws_forge_free_artifact">three.ws forge_free → artifact</h2>
       <div id="stage-native" class="stage"></div>
     </div>
     <div class="card">
-      <h2>Foreign tool result → conformant artifact</h2>
+      <h2 data-i18n="spatial_mcp_index.foreign_tool_result_conformant_artifact">Foreign tool result → conformant artifact</h2>
       <div id="stage-foreign" class="stage"></div>
     </div>
   </div>
 
   <div class="card" style="margin-top:20px;">
-    <h2>The foreign result, transformed (what the renderer consumes)</h2>
+    <h2 data-i18n="spatial_mcp_index.the_foreign_result_transformed_what_the_rend">The foreign result, transformed (what the renderer consumes)</h2>
     <pre id="artifact-json"></pre>
   </div>
 
-  <p class="note">
+  <p class="note" data-i18n-html="spatial_mcp_index.a_third_party_mcp_server_that_returns">
     A third-party MCP server that returns <code>{ url, previewImage }</code> becomes conformant with a tiny adapter —
     see <a href="/docs/spatial-mcp">docs/spatial-mcp</a>. Any renderer that speaks this shape (this one included) then
     displays it. No payment, wallet, or coin surface anywhere in the shape or the renderer.
@@ -116,5 +116,7 @@
   renderSpatialArtifact(document.getElementById('stage-foreign'), transformed);
   document.getElementById('artifact-json').textContent = JSON.stringify(transformed, null, 2);
 </script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

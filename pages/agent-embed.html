@@ -9,9 +9,9 @@
 		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
-		<title>Agent</title>
+		<title data-i18n="agent_embed.meta_title">Agent</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="description" content="Embedded three.ws avatar." />
+		<meta name="description" content="Embedded three.ws avatar."  data-i18n-attr="content:agent_embed.meta_description"/>
 		<meta name="robots" content="noindex" />
 		<style>
 			html,
@@ -596,5 +596,7 @@
 				el.style.display = 'flex';
 			});
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

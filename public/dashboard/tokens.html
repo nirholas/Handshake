@@ -3,14 +3,14 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Agent Tokens · three.ws</title>
+		<title data-i18n="dashboard_tokens.meta_title">Agent Tokens · three.ws</title>
 		<link rel="stylesheet" href="/dashboard/_dash-shell.css" />
 	</head>
 	<body>
 		<div class="dash-shell">
-			<a class="dash-back" href="/dashboard/agents">← Back to dashboard</a>
-			<h1 class="dash-title">Agent Tokens</h1>
-			<p class="dash-sub">
+			<a class="dash-back" href="/dashboard/agents" data-i18n="dashboard_tokens.back_to_dashboard">← Back to dashboard</a>
+			<h1 class="dash-title" data-i18n="dashboard_tokens.agent_tokens">Agent Tokens</h1>
+			<p class="dash-sub" data-i18n-html="dashboard_tokens.if_your_agent_has_launched_a_pump">
 				If your agent has launched a Pump.fun token, the live state lives here. Launch a new one via
 				<a href="/dashboard/agent-pumpfun">Agent · Pump.fun</a> or from the agent's home page.
 			</p>
@@ -158,5 +158,7 @@
 			});
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

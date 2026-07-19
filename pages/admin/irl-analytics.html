@@ -4,7 +4,7 @@
 	<script>/* three.ws theme boot */(function(){document.documentElement.classList.add('js');try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>IRL Analytics · three.ws</title>
+	<title data-i18n="admin_irl_analytics.meta_title">IRL Analytics · three.ws</title>
 	<meta name="robots" content="noindex, nofollow" />
 	<link rel="icon" href="/favicon.ico" sizes="any" />
 	<link rel="stylesheet" href="/style.css" />
@@ -66,25 +66,25 @@
 
 <div class="wrap">
 	<div class="hd">
-		<h1 class="title">IRL Analytics</h1>
+		<h1 class="title" data-i18n="admin_irl_analytics.irl_analytics">IRL Analytics</h1>
 		<div class="meta">
 			<span class="checked" id="checkedAt">—</span>
-			<button class="refresh" id="refreshBtn" onclick="load()">Refresh now</button>
+			<button class="refresh" id="refreshBtn" onclick="load()" data-i18n="admin_irl_analytics.refresh_now">Refresh now</button>
 		</div>
 	</div>
 
 	<div class="auth-gate" id="authGate" style="display:none">
-		<h2>Ops access required</h2>
+		<h2 data-i18n="admin_irl_analytics.ops_access_required">Ops access required</h2>
 		<input type="password" id="secretInput" placeholder="OPS_SECRET / CRON_SECRET" onkeydown="if(event.key==='Enter')tryAuth()" autocomplete="current-password" />
-		<button onclick="tryAuth()">View analytics</button>
+		<button onclick="tryAuth()" data-i18n="admin_irl_analytics.view_analytics">View analytics</button>
 		<div class="auth-err" id="authErr"></div>
 	</div>
 
 	<div id="dashboard" style="display:none">
 		<div class="tabs">
-			<button class="tab active" data-w="24h" onclick="setWindow('24h')">24h</button>
-			<button class="tab" data-w="7d" onclick="setWindow('7d')">7d</button>
-			<button class="tab" data-w="30d" onclick="setWindow('30d')">30d</button>
+			<button class="tab active" data-w="24h" onclick="setWindow('24h')" data-i18n="admin_irl_analytics.24h">24h</button>
+			<button class="tab" data-w="7d" onclick="setWindow('7d')" data-i18n="admin_irl_analytics.7d">7d</button>
+			<button class="tab" data-w="30d" onclick="setWindow('30d')" data-i18n="admin_irl_analytics.30d">30d</button>
 		</div>
 
 		<div class="cards" id="cards"><div class="skeleton" style="height:70px"></div></div>
@@ -93,8 +93,8 @@
 			<div class="section-hd">Pins placed &amp; nearby reads — last 30 days</div>
 			<div class="panel">
 				<div class="legend">
-					<span class="legend-item"><span class="legend-dot" style="background:#7c5cff"></span> Pins placed</span>
-					<span class="legend-item"><span class="legend-dot" style="background:#60a5fa"></span> Nearby reads</span>
+					<span class="legend-item" data-i18n-html="admin_irl_analytics.pins_placed"><span class="legend-dot" style="background:#7c5cff"></span> Pins placed</span>
+					<span class="legend-item" data-i18n-html="admin_irl_analytics.nearby_reads"><span class="legend-dot" style="background:#60a5fa"></span> Nearby reads</span>
 				</div>
 				<div id="sparkline"><div class="skeleton" style="height:120px"></div></div>
 			</div>
@@ -231,5 +231,7 @@ async function tryAuth() {
 
 if (_secret) { load(); } else { showAuth(); }
 </script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -5,7 +5,7 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<meta name="robots" content="noindex" />
-	<title>Connecting the Walk Avatar extension · three.ws</title>
+	<title data-i18n="extension_auth_callback.meta_title">Connecting the Walk Avatar extension · three.ws</title>
 	<style>
 		:root {
 			--bg: #0a0a0a; --surface: #141414; --border: rgba(255,255,255,0.08);
@@ -51,33 +51,33 @@
 </head>
 <body>
 	<div class="card">
-		<div class="logo">three<span>.ws</span> · Walk Avatar</div>
+		<div class="logo">three<span data-i18n="extension_auth_callback.ws">.ws</span> · Walk Avatar</div>
 
 		<div id="loading">
 			<div class="spinner" role="status" aria-label="Connecting"></div>
-			<h1>Connecting your account…</h1>
-			<p>Linking the Walk Avatar extension to your three.ws avatars.</p>
+			<h1 data-i18n="extension_auth_callback.connecting_your_account">Connecting your account…</h1>
+			<p data-i18n="extension_auth_callback.linking_the_walk_avatar_extension_to_your">Linking the Walk Avatar extension to your three.ws avatars.</p>
 		</div>
 
 		<div id="success" class="hidden">
 			<div class="icon ok" aria-hidden="true">✓</div>
-			<h1>You're connected</h1>
-			<p>The extension now has access to your avatars. You can close this tab — it'll close itself in a moment.</p>
+			<h1 data-i18n="extension_auth_callback.you_re_connected">You're connected</h1>
+			<p data-i18n="extension_auth_callback.the_extension_now_has_access_to_your">The extension now has access to your avatars. You can close this tab — it'll close itself in a moment.</p>
 		</div>
 
 		<div id="need-login" class="hidden">
 			<div class="icon" aria-hidden="true">🔑</div>
-			<h1>Sign in to continue</h1>
-			<p>Sign in to three.ws, then we'll connect the Walk Avatar extension automatically.</p>
-			<a class="btn" href="/login?next=/extension/auth-callback">Sign in</a>
+			<h1 data-i18n="extension_auth_callback.sign_in_to_continue">Sign in to continue</h1>
+			<p data-i18n="extension_auth_callback.sign_in_to_three_ws_then_we">Sign in to three.ws, then we'll connect the Walk Avatar extension automatically.</p>
+			<a class="btn" href="/login?next=/extension/auth-callback" data-i18n="extension_auth_callback.sign_in">Sign in</a>
 		</div>
 
 		<div id="error" class="hidden">
 			<div class="icon err" aria-hidden="true">⚠</div>
-			<h1>Couldn't connect</h1>
-			<p id="error-msg">Something went wrong while linking the extension.</p>
-			<button class="btn" id="retry-btn">Try again</button>
-			<a class="btn ghost" href="/login?next=/extension/auth-callback">Sign in again</a>
+			<h1 data-i18n="extension_auth_callback.couldn_t_connect">Couldn't connect</h1>
+			<p id="error-msg" data-i18n="extension_auth_callback.something_went_wrong_while_linking_the_exten">Something went wrong while linking the extension.</p>
+			<button class="btn" id="retry-btn" data-i18n="extension_auth_callback.try_again">Try again</button>
+			<a class="btn ghost" href="/login?next=/extension/auth-callback" data-i18n="extension_auth_callback.sign_in_again">Sign in again</a>
 		</div>
 	</div>
 
@@ -132,5 +132,7 @@
 			connect();
 		})();
 	</script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

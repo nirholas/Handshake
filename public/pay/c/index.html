@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Checkout · x402</title>
-<meta name="description" content="Hosted x402 payment checkout. Pay with USDC on Base or Solana." />
+<title data-i18n="pay_c_index.meta_title">Checkout · x402</title>
+<meta name="description" content="Hosted x402 payment checkout. Pay with USDC on Base or Solana."  data-i18n-attr="content:pay_c_index.meta_description"/>
 <meta name="theme-color" content="#0b0b0b" />
 <style>
 	:root {
@@ -175,13 +175,13 @@
 		<div class="description" id="description" style="display:none"></div>
 		<div id="meta"></div>
 		<div class="giving" id="giving" style="display:none"></div>
-		<button class="pay-btn" id="payBtn" disabled>Loading…</button>
+		<button class="pay-btn" id="payBtn" disabled data-i18n="pay_c_index.loading">Loading…</button>
 		<div id="result"></div>
 	</div>
 </div>
 
 <footer>
-	Secured by x402 · on-chain settlement · <a href="/x402" target="_blank" rel="noopener">about</a>
+	Secured by x402 · on-chain settlement · <a href="/x402" target="_blank" rel="noopener" data-i18n="pay_c_index.about">about</a>
 </footer>
 
 <script type="module" src="/x402.js"></script>
@@ -394,5 +394,7 @@
 </script>
 
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

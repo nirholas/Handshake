@@ -3,19 +3,19 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Demo · Lottery + Reflection · three.ws</title>
-	<meta name="description" content="DEMO — the three.ws lottery + SOL reflection mechanic, under test. Not yet a production launch." />
+	<title data-i18n="demo_coin_index.meta_title">Demo · Lottery + Reflection · three.ws</title>
+	<meta name="description" content="DEMO — the three.ws lottery + SOL reflection mechanic, under test. Not yet a production launch."  data-i18n-attr="content:demo_coin_index.meta_description"/>
 	<meta name="robots" content="noindex,nofollow" />
 	<meta property="og:site_name" content="three.ws" />
-	<meta property="og:title" content="Demo · Lottery + Reflection · three.ws" />
-	<meta property="og:description" content="Under test on three.ws — hourly lottery + passive SOL reflection. Production launch TBD." />
+	<meta property="og:title" content="Demo · Lottery + Reflection · three.ws"  data-i18n-attr="content:demo_coin_index.meta_og_title"/>
+	<meta property="og:description" content="Under test on three.ws — hourly lottery + passive SOL reflection. Production launch TBD."  data-i18n-attr="content:demo_coin_index.meta_og_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="https://three.ws/demo/coin" />
 	<meta property="og:image" content="https://three.ws/3d.png" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Demo · Lottery + Reflection · three.ws" />
-	<meta name="twitter:description" content="Under test on three.ws — hourly lottery + passive SOL reflection. Production launch TBD." />
+	<meta name="twitter:title" content="Demo · Lottery + Reflection · three.ws"  data-i18n-attr="content:demo_coin_index.meta_twitter_title"/>
+	<meta name="twitter:description" content="Under test on three.ws — hourly lottery + passive SOL reflection. Production launch TBD."  data-i18n-attr="content:demo_coin_index.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/3d.png" />
 	<link rel="icon" href="/favicon.ico" />
 	<link rel="stylesheet" href="/style.css" />
@@ -153,31 +153,31 @@
 	<header id="top-nav"></header>
 	<main>
 		<div class="brand-strip">
-			<a href="/">three.ws</a>
+			<a href="/" data-i18n="demo_coin_index.three_ws">three.ws</a>
 			<span class="dot-sep"></span>
-			<span>Lottery + SOL reflection</span>
+			<span data-i18n="demo_coin_index.lottery_sol_reflection">Lottery + SOL reflection</span>
 			<span class="dot-sep"></span>
-			<span class="demo-tag">DEMO</span>
+			<span class="demo-tag" data-i18n="demo_coin_index.demo">DEMO</span>
 		</div>
 		<div class="demo-banner" role="note">
-			<strong>This is a three.ws demo surface.</strong> The mechanic is implemented end-to-end —
+			<strong data-i18n="demo_coin_index.this_is_a_three_ws_demo_surface">This is a three.ws demo surface.</strong> The mechanic is implemented end-to-end —
 			pump.fun creator-vault claim, verifiable randomness, batched SOL payouts — but is not yet
 			serving a production launch. Nothing here is a public offering. If a coin appears below, it
 			is operating in test mode (dry-run cron, no on-chain payouts until explicitly activated).
 		</div>
 		<div id="header" class="title-row">
-			<h1 id="coin-name">Loading…</h1>
+			<h1 id="coin-name" data-i18n="demo_coin_index.loading">Loading…</h1>
 			<span id="coin-symbol" class="symbol" hidden></span>
-			<span id="coin-live" class="live-pill" hidden><span class="pulse"></span><span id="coin-live-text">LIVE</span></span>
+			<span id="coin-live" class="live-pill" hidden data-i18n-html="demo_coin_index.live"><span class="pulse"></span><span id="coin-live-text">LIVE</span></span>
 		</div>
-		<p class="tagline">
+		<p class="tagline" data-i18n-html="demo_coin_index.every_holder_is_a_ticket_hourly_draws">
 			<strong>Every holder is a ticket.</strong> Hourly draws send the lottery pot in SOL to one random
 			eligible wallet. Between draws, every holder accrues a passive SOL reflection paid directly into
 			their wallet — funded entirely by trading fees on the underlying token, three.ws verifiable randomness end-to-end.
 		</p>
 		<div id="address-row" class="address-row" hidden>
 			<span id="coin-mint">—</span>
-			<button class="copy" id="copy-mint" title="Copy mint">copy</button>
+			<button class="copy" id="copy-mint" title="Copy mint" data-i18n="demo_coin_index.copy" data-i18n-attr="title:demo_coin_index.copy_mint_title">copy</button>
 		</div>
 
 		<div class="hero">
@@ -185,70 +185,70 @@
 				<div class="pots-row">
 					<div class="pot lottery">
 						<div class="label">Lottery pot</div>
-						<div class="value"><span id="pot-lottery">0.000000000</span><span class="sol">SOL</span></div>
+						<div class="value"><span id="pot-lottery">0.000000000</span><span class="sol" data-i18n="demo_coin_index.sol">SOL</span></div>
 					</div>
 					<div class="pot reflection">
 						<div class="label">Reflection pot</div>
-						<div class="value"><span id="pot-reflection">0.000000000</span><span class="sol">SOL</span></div>
+						<div class="value"><span id="pot-reflection">0.000000000</span><span class="sol" data-i18n="demo_coin_index.sol_2">SOL</span></div>
 					</div>
 				</div>
 				<div class="next-draw">
-					<span class="label">Next draw</span>
+					<span class="label" data-i18n="demo_coin_index.next_draw">Next draw</span>
 					<span class="countdown" id="next-draw">—</span>
 				</div>
 			</div>
 
 			<div class="kpi-card">
 				<div class="kpi">
-					<span class="label">Total claimed</span>
-					<span class="value" id="kpi-claimed">— SOL</span>
+					<span class="label" data-i18n="demo_coin_index.total_claimed">Total claimed</span>
+					<span class="value" id="kpi-claimed" data-i18n="demo_coin_index.sol_3">— SOL</span>
 				</div>
 				<div class="kpi">
-					<span class="label">Eligible holders</span>
+					<span class="label" data-i18n="demo_coin_index.eligible_holders">Eligible holders</span>
 					<span class="value" id="kpi-holders">—</span>
 				</div>
 				<div class="kpi">
-					<span class="label">Total reflection paid</span>
-					<span class="value" id="kpi-reflection-paid">— SOL</span>
+					<span class="label" data-i18n="demo_coin_index.total_reflection_paid">Total reflection paid</span>
+					<span class="value" id="kpi-reflection-paid" data-i18n="demo_coin_index.sol_4">— SOL</span>
 				</div>
 				<div class="kpi">
-					<span class="label">Total lottery paid</span>
-					<span class="value" id="kpi-lottery-paid">— SOL</span>
+					<span class="label" data-i18n="demo_coin_index.total_lottery_paid">Total lottery paid</span>
+					<span class="value" id="kpi-lottery-paid" data-i18n="demo_coin_index.sol_5">— SOL</span>
 				</div>
 				<div class="kpi">
-					<span class="label">Allocation</span>
+					<span class="label" data-i18n="demo_coin_index.allocation">Allocation</span>
 					<span class="value" id="kpi-allocation">—</span>
 				</div>
 			</div>
 		</div>
 
 		<section class="panel">
-			<h2>Your wallet</h2>
+			<h2 data-i18n="demo_coin_index.your_wallet">Your wallet</h2>
 			<div class="wallet-controls">
-				<button id="wallet-connect" class="ghost" title="Connect a Solana wallet">Connect wallet</button>
+				<button id="wallet-connect" class="ghost" title="Connect a Solana wallet" data-i18n="demo_coin_index.connect_wallet" data-i18n-attr="title:demo_coin_index.connect_a_solana_wallet_title">Connect wallet</button>
 				<input id="wallet-input" type="text" placeholder="…or paste your Solana wallet address" autocomplete="off" spellcheck="false" />
-				<button id="wallet-check">Show my stats</button>
-				<button id="wallet-clear" class="ghost">Clear</button>
+				<button id="wallet-check" data-i18n="demo_coin_index.show_my_stats">Show my stats</button>
+				<button id="wallet-clear" class="ghost" data-i18n="demo_coin_index.clear">Clear</button>
 			</div>
 			<div id="wallet-stats" class="wallet-stats" hidden>
-				<div class="stat"><div class="label">Balance</div><div class="value" id="wallet-balance">—<span class="unit">tokens</span></div></div>
-				<div class="stat"><div class="label">Reflection paid</div><div class="value" id="wallet-reflection-paid">—<span class="unit">SOL</span></div></div>
-				<div class="stat"><div class="label">Pending reflection</div><div class="value" id="wallet-accrued">—<span class="unit">SOL</span></div></div>
-				<div class="stat"><div class="label">Lottery winnings</div><div class="value" id="wallet-lottery">—<span class="unit">SOL</span></div></div>
+				<div class="stat"><div class="label">Balance</div><div class="value" id="wallet-balance">—<span class="unit" data-i18n="demo_coin_index.tokens">tokens</span></div></div>
+				<div class="stat"><div class="label">Reflection paid</div><div class="value" id="wallet-reflection-paid">—<span class="unit" data-i18n="demo_coin_index.sol_6">SOL</span></div></div>
+				<div class="stat"><div class="label">Pending reflection</div><div class="value" id="wallet-accrued">—<span class="unit" data-i18n="demo_coin_index.sol_7">SOL</span></div></div>
+				<div class="stat"><div class="label">Lottery winnings</div><div class="value" id="wallet-lottery">—<span class="unit" data-i18n="demo_coin_index.sol_8">SOL</span></div></div>
 			</div>
 			<div id="wallet-payouts" hidden style="margin-top: 14px;"></div>
 		</section>
 
 		<section class="panel">
 			<div class="tabs" role="tablist">
-				<button data-tab="winners" aria-selected="true" role="tab">Recent winners</button>
-				<button data-tab="holders" role="tab">Top holders</button>
-				<button data-tab="claims" role="tab">Fee claims</button>
-				<button data-tab="reflections" role="tab">Reflection batches</button>
+				<button data-tab="winners" aria-selected="true" role="tab" data-i18n="demo_coin_index.recent_winners">Recent winners</button>
+				<button data-tab="holders" role="tab" data-i18n="demo_coin_index.top_holders">Top holders</button>
+				<button data-tab="claims" role="tab" data-i18n="demo_coin_index.fee_claims">Fee claims</button>
+				<button data-tab="reflections" role="tab" data-i18n="demo_coin_index.reflection_batches">Reflection batches</button>
 			</div>
 			<div id="tab-content"><div class="empty">Loading…</div></div>
 			<div class="transparency">
-				<strong>three.ws verifiable randomness.</strong> Every draw commits in advance to a public
+				<strong data-i18n="demo_coin_index.three_ws_verifiable_randomness">three.ws verifiable randomness.</strong> Every draw commits in advance to a public
 				future BLS-signed randomness round — neither three.ws nor anyone else knows the value at
 				commit time. Winners are computed deterministically from
 				<code>sha256(randomness ∥ weights_hash)</code> against the frozen holder snapshot. Every
@@ -264,5 +264,7 @@
 	<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

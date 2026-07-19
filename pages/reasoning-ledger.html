@@ -4,25 +4,25 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Reasoning Ledger · three.ws</title>
+		<title data-i18n="reasoning_ledger.meta_title">Reasoning Ledger · three.ws</title>
 		<meta
 			name="description"
 			content="Every consequential decision an agent makes — what it decided, why, what it predicted, and what actually happened — recorded in a tamper-evident, independently verifiable ledger. Track record you can interrogate, not trust."
-		/>
+		 data-i18n-attr="content:reasoning_ledger.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<meta property="og:url" content="https://three.ws/ledger" />
-		<meta property="og:title" content="Reasoning Ledger · three.ws" />
+		<meta property="og:title" content="Reasoning Ledger · three.ws"  data-i18n-attr="content:reasoning_ledger.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="An auditable, on-chain-anchored record of an agent's decisions, predictions, and real outcomes. Being wrong is visible — honesty is the trust signal."
-		/>
+		 data-i18n-attr="content:reasoning_ledger.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/og-image.png" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="Reasoning Ledger · three.ws" />
+		<meta name="twitter:title" content="Reasoning Ledger · three.ws"  data-i18n-attr="content:reasoning_ledger.meta_twitter_title"/>
 		<meta name="theme-color" content="#0a0a0a" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -48,5 +48,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

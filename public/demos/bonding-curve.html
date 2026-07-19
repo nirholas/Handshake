@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Bonding curve simulator · three.ws lab</title>
+		<title data-i18n="demos_bonding_curve.meta_title">Bonding curve simulator · three.ws lab</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
@@ -88,9 +88,9 @@
 		<header><div id="nav-container"></div></header>
 
 		<main class="stage">
-			<p class="crumb"><a href="/demos">← lab</a></p>
-			<h1>three.ws · Agent token bonding curve</h1>
-			<p class="sub">
+			<p class="crumb" data-i18n-html="demos_bonding_curve.lab"><a href="/demos">← lab</a></p>
+			<h1 data-i18n="demos_bonding_curve.three_ws_agent_token_bonding_curve">three.ws · Agent token bonding curve</h1>
+			<p class="sub" data-i18n="demos_bonding_curve.interactive_bancor_v1_simulator_the_same_for">
 				Interactive Bancor V1 simulator (the same formula pump.fun uses). Everything runs
 				in the browser — no wallet, no on-chain writes, no RPC. Move the sliders, simulate
 				buys and sells against a virtual reserve, and watch the spot price respond. Useful
@@ -101,8 +101,8 @@
 			<div class="row">
 				<div class="chart-card">
 					<div style="display:flex; justify-content:space-between; align-items:center;">
-						<h2>Spot price vs supply</h2>
-						<span id="grad-badge" class="badge warn" style="display:none">GRADUATED ✓</span>
+						<h2 data-i18n="demos_bonding_curve.spot_price_vs_supply">Spot price vs supply</h2>
+						<span id="grad-badge" class="badge warn" style="display:none" data-i18n="demos_bonding_curve.graduated">GRADUATED ✓</span>
 					</div>
 					<canvas id="chart" class="chart" width="1200" height="800"></canvas>
 					<div class="stats">
@@ -116,10 +116,10 @@
 				</div>
 
 				<div class="panel">
-					<h2>Curve parameters</h2>
+					<h2 data-i18n="demos_bonding_curve.curve_parameters">Curve parameters</h2>
 
 					<div class="field">
-						<label>Initial reserve (ETH)</label>
+						<label data-i18n="demos_bonding_curve.initial_reserve_eth">Initial reserve (ETH)</label>
 						<div class="field-row">
 							<input type="range" id="r-init-reserve" min="0.1" max="20" step="0.1" value="1" />
 							<input type="number" id="n-init-reserve" min="0.001" step="0.1" value="1" />
@@ -127,7 +127,7 @@
 					</div>
 
 					<div class="field">
-						<label>Initial supply (tokens)</label>
+						<label data-i18n="demos_bonding_curve.initial_supply_tokens">Initial supply (tokens)</label>
 						<div class="field-row">
 							<input type="range" id="r-init-supply" min="100000" max="100000000" step="100000" value="1000000" />
 							<input type="number" id="n-init-supply" min="1" step="100000" value="1000000" />
@@ -135,7 +135,7 @@
 					</div>
 
 					<div class="field">
-						<label>Reserve ratio (Bancor ppm)</label>
+						<label data-i18n="demos_bonding_curve.reserve_ratio_bancor_ppm">Reserve ratio (Bancor ppm)</label>
 						<div class="radios">
 							<input type="radio" name="rr" id="rr10" value="100000" />
 							<label class="opt" for="rr10">10%</label>
@@ -149,7 +149,7 @@
 					</div>
 
 					<div class="field">
-						<label>Max supply cap (graduation)</label>
+						<label data-i18n="demos_bonding_curve.max_supply_cap_graduation">Max supply cap (graduation)</label>
 						<div class="field-row">
 							<input type="range" id="r-max-supply" min="10000000" max="10000000000" step="10000000" value="1000000000" />
 							<input type="number" id="n-max-supply" min="1" step="1000000" value="1000000000" />
@@ -157,52 +157,52 @@
 					</div>
 
 					<div class="field">
-						<label>Graduation reserve (ETH)</label>
+						<label data-i18n="demos_bonding_curve.graduation_reserve_eth">Graduation reserve (ETH)</label>
 						<div class="field-row">
 							<input type="range" id="r-grad-reserve" min="1" max="500" step="1" value="85" />
 							<input type="number" id="n-grad-reserve" min="0.001" step="1" value="85" />
 						</div>
 					</div>
 
-					<button id="reset-btn" class="secondary">Reset curve state</button>
+					<button id="reset-btn" class="secondary" data-i18n="demos_bonding_curve.reset_curve_state">Reset curve state</button>
 				</div>
 			</div>
 
 			<div class="row3">
 				<div class="panel">
-					<h2>Simulate buy</h2>
+					<h2 data-i18n="demos_bonding_curve.simulate_buy">Simulate buy</h2>
 					<div class="field">
-						<label>Deposit (ETH)</label>
+						<label data-i18n="demos_bonding_curve.deposit_eth">Deposit (ETH)</label>
 						<div class="trade-row">
 							<input type="number" id="buy-amount" min="0" step="0.01" value="1" />
-							<button id="buy-preview" class="secondary">Preview</button>
+							<button id="buy-preview" class="secondary" data-i18n="demos_bonding_curve.preview">Preview</button>
 						</div>
 					</div>
 					<div class="trade-result" id="buy-result">Tap Preview to see the trade output.</div>
-					<button id="buy-exec">Execute buy</button>
+					<button id="buy-exec" data-i18n="demos_bonding_curve.execute_buy">Execute buy</button>
 				</div>
 
 				<div class="panel">
-					<h2>Simulate sell</h2>
+					<h2 data-i18n="demos_bonding_curve.simulate_sell">Simulate sell</h2>
 					<div class="field">
-						<label>Sell amount (tokens)</label>
+						<label data-i18n="demos_bonding_curve.sell_amount_tokens">Sell amount (tokens)</label>
 						<div class="trade-row">
 							<input type="number" id="sell-amount" min="0" step="1" value="10000" />
-							<button id="sell-preview" class="secondary">Preview</button>
+							<button id="sell-preview" class="secondary" data-i18n="demos_bonding_curve.preview_2">Preview</button>
 						</div>
 					</div>
 					<div class="trade-result" id="sell-result">Tap Preview to see the trade output.</div>
-					<button id="sell-exec" class="danger">Execute sell</button>
+					<button id="sell-exec" class="danger" data-i18n="demos_bonding_curve.execute_sell">Execute sell</button>
 				</div>
 
 				<div class="panel">
-					<h2>Trade log</h2>
+					<h2 data-i18n="demos_bonding_curve.trade_log">Trade log</h2>
 					<div class="log" id="log">ready.</div>
 				</div>
 			</div>
 
-			<h2 style="margin-top:32px">Reserve-ratio comparison <span class="badge live">static</span></h2>
-			<p class="sub">
+			<h2 style="margin-top:32px" data-i18n-html="demos_bonding_curve.reserve_ratio_comparison_static">Reserve-ratio comparison <span class="badge live">static</span></h2>
+			<p class="sub" data-i18n="demos_bonding_curve.same_starting_state_same_cumulative_eth_depo">
 				Same starting state, same cumulative ETH deposited — three different reserve ratios.
 				Lower ratio = steeper curve = faster price discovery + more aggressive
 				front-runner advantage. Pump.fun ships ~25% by default.
@@ -697,5 +697,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

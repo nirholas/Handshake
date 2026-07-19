@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Agent Memory · three.ws</title>
+		<title data-i18n="dashboard_memory.meta_title">Agent Memory · three.ws</title>
 		<link rel="icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
@@ -245,18 +245,18 @@
 		</style>
 	</head>
 	<body>
-		<a href="#main-content" class="skip-link">Skip to main content</a>
+		<a href="#main-content" class="skip-link" data-i18n="dashboard_memory.skip_to_main_content">Skip to main content</a>
 		<header>
 			<div id="nav-container"></div>
 		</header>
 		<script src="/nav.js"></script>
 
 		<main id="main-content" class="dash-shell">
-			<a class="dash-back" href="/dashboard/agents">← Back to dashboard</a>
+			<a class="dash-back" href="/dashboard/agents" data-i18n="dashboard_memory.back_to_dashboard">← Back to dashboard</a>
 			<div style="display:flex;align-items:baseline;gap:14px;margin-bottom:4px">
-				<h1 class="dash-title" style="margin:0">Agent Memory</h1>
+				<h1 class="dash-title" style="margin:0" data-i18n="dashboard_memory.agent_memory">Agent Memory</h1>
 			</div>
-			<p class="dash-sub">
+			<p class="dash-sub" data-i18n="dashboard_memory.browse_search_edit_and_manage_long_term">
 				Browse, search, edit, and manage long-term memories your agent uses for context.
 			</p>
 
@@ -837,5 +837,7 @@
 		<div id="footer-container"></div>
 		<script src="/footer.js" defer></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

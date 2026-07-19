@@ -4,7 +4,7 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>PumpFun migrations · three.ws</title>
+	<title data-i18n="pumpfun.meta_title">PumpFun migrations · three.ws</title>
 	<link rel="icon" href="/favicon.ico" />
 	<link rel="stylesheet" href="/style.css" />
 	<link rel="stylesheet" href="/home.css" />
@@ -393,19 +393,19 @@
 		.config-save-btn:hover { filter: brightness(1.1); }
 	</style>
 
-	<meta name="description" content="Mint and trade pump.fun agent tokens on Solana. Live feed of every launch.">
+	<meta name="description" content="Mint and trade pump.fun agent tokens on Solana. Live feed of every launch." data-i18n-attr="content:pumpfun.meta_description">
 	<link rel="canonical" href="https://three.ws/pumpfun">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="Pump.fun Stream · three.ws">
-	<meta property="og:description" content="Mint and trade pump.fun agent tokens on Solana. Live feed of every launch.">
+	<meta property="og:title" content="Pump.fun Stream · three.ws" data-i18n-attr="content:pumpfun.meta_og_title">
+	<meta property="og:description" content="Mint and trade pump.fun agent tokens on Solana. Live feed of every launch." data-i18n-attr="content:pumpfun.meta_og_description">
 	<meta property="og:url" content="https://three.ws/pumpfun">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Pump.fun+Stream&amp;d=Mint+and+trade+pump.fun+agent+tokens+on+Solana.+Live+feed+of+every+launch.&amp;p=%2Fpumpfun">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Pump.fun Stream · three.ws">
-	<meta name="twitter:description" content="Mint and trade pump.fun agent tokens on Solana. Live feed of every launch.">
+	<meta name="twitter:title" content="Pump.fun Stream · three.ws" data-i18n-attr="content:pumpfun.meta_twitter_title">
+	<meta name="twitter:description" content="Mint and trade pump.fun agent tokens on Solana. Live feed of every launch." data-i18n-attr="content:pumpfun.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Pump.fun+Stream&amp;d=Mint+and+trade+pump.fun+agent+tokens+on+Solana.+Live+feed+of+every+launch.&amp;p=%2Fpumpfun">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Pump.fun Stream","description":"Mint and trade pump.fun agent tokens on Solana. Live feed of every launch.","url":"https://three.ws/pumpfun","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -421,22 +421,22 @@
 	</header>
 	<script src="/nav.js"></script>
 	<div class="pf-filterbar">
-		<h1>✦ PumpFun migrations</h1>
-		<button type="button" class="status-pill" id="status-pill" data-state="connecting" title="Click to reconnect when offline"><span class="dot connecting" id="status-dot"></span><span id="status-label">connecting…</span></button>
+		<h1 data-i18n="pumpfun.pumpfun_migrations">✦ PumpFun migrations</h1>
+		<button type="button" class="status-pill" id="status-pill" data-state="connecting" title="Click to reconnect when offline" data-i18n-html="pumpfun.connecting" data-i18n-attr="title:pumpfun.click_to_reconnect_when_offl_title"><span class="dot connecting" id="status-dot"></span><span id="status-label">connecting…</span></button>
 		<div class="ctl">
 			<input id="ctl-asset" type="text" placeholder="Solana asset pubkey (optional)" size="22" />
 			<input id="ctl-mint" type="text" placeholder="Filter mint…" size="18" />
 			<select id="ctl-kind" title="Event type">
-				<option value="all">All events</option>
-				<option value="mint">New tokens</option>
-				<option value="graduation">Graduations</option>
-				<option value="claims">Claims only</option>
+				<option value="all" data-i18n="pumpfun.all_events">All events</option>
+				<option value="mint" data-i18n="pumpfun.new_tokens">New tokens</option>
+				<option value="graduation" data-i18n="pumpfun.graduations">Graduations</option>
+				<option value="claims" data-i18n="pumpfun.claims_only">Claims only</option>
 			</select>
 			<select id="ctl-tier" title="Minimum tier">
-				<option value="">Any tier</option>
-				<option value="notable">Notable+</option>
-				<option value="influencer">Influencer+</option>
-				<option value="mega">Mega only</option>
+				<option value="" data-i18n="pumpfun.any_tier">Any tier</option>
+				<option value="notable" data-i18n="pumpfun.notable">Notable+</option>
+				<option value="influencer" data-i18n="pumpfun.influencer">Influencer+</option>
+				<option value="mega" data-i18n="pumpfun.mega_only">Mega only</option>
 			</select>
 			<span class="ctl-sep" aria-hidden="true"></span>
 			<input id="ctl-mc-min" type="number" placeholder="Min MC $" class="ctl-num" min="0" step="1000" title="Min market cap in USD (graduations &amp; claims)" />
@@ -444,22 +444,22 @@
 			<input id="ctl-min-buy" type="number" placeholder="Min buy SOL" class="ctl-num" min="0" step="1" title="Min initial buy in SOL — new tokens only" />
 			<input id="ctl-whale" type="number" placeholder="Whale ≥ SOL" class="ctl-num" min="0" step="5" title="Whale filter — only show trades/claims ≥ N SOL" />
 			<div id="ctl-avatar-wrap">
-				<button id="ctl-avatar-btn" type="button" aria-haspopup="dialog" aria-expanded="false" title="Choose avatar">
+				<button id="ctl-avatar-btn" type="button" aria-haspopup="dialog" aria-expanded="false" title="Choose avatar" data-i18n-html="pumpfun.avatar" data-i18n-attr="title:pumpfun.choose_avatar_title">
 					<span class="avatar-thumb" id="ctl-avatar-thumb" aria-hidden="true"></span>
 					<span class="avatar-name" id="ctl-avatar-label">Avatar</span>
 					<span class="avatar-caret" aria-hidden="true">▾</span>
 				</button>
 			</div>
-			<button id="ctl-narrate" class="toggle" type="button" data-on="1" title="Toggle agent narration">🔊 Narration</button>
-			<button id="ctl-announce-mints" class="toggle" type="button" data-on="0" title="Toggle new coin announcements">🚀 New coins</button>
+			<button id="ctl-narrate" class="toggle" type="button" data-on="1" title="Toggle agent narration" data-i18n="pumpfun.narration" data-i18n-attr="title:pumpfun.toggle_agent_narration_title">🔊 Narration</button>
+			<button id="ctl-announce-mints" class="toggle" type="button" data-on="0" title="Toggle new coin announcements" data-i18n="pumpfun.new_coins" data-i18n-attr="title:pumpfun.toggle_new_coin_announcement_title">🚀 New coins</button>
 			<select id="ctl-mood" title="Avatar mood — biases reaction intensity">
-				<option value="chill">😎 Chill</option>
-				<option value="normal" selected>🙂 Normal</option>
-				<option value="hype">🤩 Hype</option>
+				<option value="chill" data-i18n="pumpfun.chill">😎 Chill</option>
+				<option value="normal" selected data-i18n="pumpfun.normal">🙂 Normal</option>
+				<option value="hype" data-i18n="pumpfun.hype">🤩 Hype</option>
 			</select>
-			<button id="ctl-config" class="pf-icon-btn" type="button" title="Configure agent reactions">⚙️ Config</button>
-			<button id="ctl-share" class="pf-icon-btn" type="button" title="Copy a shareable link with current filters">🔗 <span id="ctl-share-label">Share</span></button>
-			<button id="side-toggle" class="pf-icon-btn" type="button" aria-pressed="false" aria-controls="side" title="Toggle live feed">📡 Feed</button>
+			<button id="ctl-config" class="pf-icon-btn" type="button" title="Configure agent reactions" data-i18n="pumpfun.config" data-i18n-attr="title:pumpfun.configure_agent_reactions_title">⚙️ Config</button>
+			<button id="ctl-share" class="pf-icon-btn" type="button" title="Copy a shareable link with current filters" data-i18n-html="pumpfun.share" data-i18n-attr="title:pumpfun.copy_a_shareable_link_with_c_title">🔗 <span id="ctl-share-label">Share</span></button>
+			<button id="side-toggle" class="pf-icon-btn" type="button" aria-pressed="false" aria-controls="side" title="Toggle live feed" data-i18n="pumpfun.feed" data-i18n-attr="title:pumpfun.toggle_live_feed_title">📡 Feed</button>
 		</div>
 	</div>
 	<main class="pf-main">
@@ -472,44 +472,44 @@
 			<div id="stage-error" role="alert" aria-live="assertive">
 				<div class="se-title">Avatar failed to load</div>
 				<div class="se-msg" id="stage-error-msg">The 3D model couldn't be loaded. Check your connection or try a different avatar.</div>
-				<button type="button" class="se-retry" id="stage-error-retry">Retry</button>
+				<button type="button" class="se-retry" id="stage-error-retry" data-i18n="pumpfun.retry">Retry</button>
 			</div>
 			<div id="anim-chips" role="group" aria-label="Trigger animation" aria-busy="true">
-				<button type="button" id="anim-loop-toggle" aria-pressed="true" title="Pause or resume the looping animation" hidden>
+				<button type="button" id="anim-loop-toggle" aria-pressed="true" title="Pause or resume the looping animation" hidden data-i18n-html="pumpfun.pause" data-i18n-attr="title:pumpfun.pause_or_resume_the_looping_title">
 					<span class="lt-glyph" aria-hidden="true">⏸</span><span class="lt-label">Pause</span>
 				</button>
 			</div>
 		</div>
 		<aside id="side">
 			<div class="side-header" id="side-header">
-				<span class="side-title">Live Feed</span>
+				<span class="side-title" data-i18n="pumpfun.live_feed">Live Feed</span>
 				<div class="side-controls">
-					<button id="side-minimize" class="side-control-btn" title="Minimize">_</button>
-					<button id="side-close" class="side-control-btn" title="Close">×</button>
+					<button id="side-minimize" class="side-control-btn" title="Minimize" data-i18n-attr="title:pumpfun.minimize_title">_</button>
+					<button id="side-close" class="side-control-btn" title="Close" data-i18n-attr="title:pumpfun.close_title">×</button>
 				</div>
 			</div>
 			<div id="side-content">
-				<h2>Agent</h2>
+				<h2 data-i18n="pumpfun.agent">Agent</h2>
 				<div id="agent-card"><div class="empty">Default narrator avatar. Paste a Solana asset pubkey above to bind a specific agent.</div></div>
 				<div id="signals-section" hidden>
-					<h2>Reputation signals</h2>
+					<h2 data-i18n="pumpfun.reputation_signals">Reputation signals</h2>
 					<div class="signal-grid" id="signals"></div>
 				</div>
 				<div id="first-claims-section">
 					<h2>
-						<span>First-time fee claims</span>
+						<span data-i18n="pumpfun.first_time_fee_claims">First-time fee claims</span>
 						<select id="fc-window" title="Lookback window" style="margin-left:8px;background:#101010;color:#e6e6f0;border:1px solid #212121;border-radius:6px;padding:2px 6px;font-size:12px">
-							<option value="60">1h</option>
-							<option value="360">6h</option>
-							<option value="1440" selected>24h</option>
+							<option value="60" data-i18n="pumpfun.1h">1h</option>
+							<option value="360" data-i18n="pumpfun.6h">6h</option>
+							<option value="1440" selected data-i18n="pumpfun.24h">24h</option>
 						</select>
-						<button type="button" id="fc-refresh" class="pf-icon-btn" title="Refresh first-time claims" style="margin-left:6px">↻</button>
+						<button type="button" id="fc-refresh" class="pf-icon-btn" title="Refresh first-time claims" style="margin-left:6px" data-i18n-attr="title:pumpfun.refresh_first_time_claims_title">↻</button>
 					</h2>
 					<div id="first-claims"><div class="empty">Loading first-time claims…</div></div>
 				</div>
 				<div id="feed-wrap">
-					<h2><span id="feed-title">Live feed</span><a id="helius-pill" class="helius-pill" href="https://pumpportal.fun" target="_blank" rel="noopener" title="Real-time pump.fun data via the PumpPortal WebSocket — count is events received this session"><span class="helius-dot" aria-hidden="true"></span><span id="helius-count" class="helius-count">0</span>Powered by PumpPortal</a></h2>
-					<button type="button" class="feed-jump" id="feed-jump" data-visible="false" aria-live="polite">↑ <span id="feed-jump-count">0</span> new</button>
+					<h2 data-i18n-html="pumpfun.live_feed0powered_by_pumpportal"><span id="feed-title">Live feed</span><a id="helius-pill" class="helius-pill" href="https://pumpportal.fun" target="_blank" rel="noopener" title="Real-time pump.fun data via the PumpPortal WebSocket — count is events received this session"><span class="helius-dot" aria-hidden="true"></span><span id="helius-count" class="helius-count">0</span>Powered by PumpPortal</a></h2>
+					<button type="button" class="feed-jump" id="feed-jump" data-visible="false" aria-live="polite" data-i18n-html="pumpfun.0_new">↑ <span id="feed-jump-count">0</span> new</button>
 					<div id="feed"><div class="empty">Waiting for events…</div></div>
 				</div>
 			</div>
@@ -525,19 +525,19 @@
 		</div>
 		<div class="h-footer-cta">
 			<div class="h-footer-newsletter">
-				<h3>Stay in the loop</h3>
-				<p>Get updates on new features, agent tooling, and protocol changes.</p>
+				<h3 data-i18n="pumpfun.stay_in_the_loop">Stay in the loop</h3>
+				<p data-i18n="pumpfun.get_updates_on_new_features_agent_tooling">Get updates on new features, agent tooling, and protocol changes.</p>
 				<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
 					<input type="email" class="h-footer-newsletter-input" name="email" placeholder="Enter your email" aria-label="Email address" autocomplete="email" required />
-					<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
+					<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe" data-i18n-attr="aria-label:pumpfun.subscribe_arialabel">
 						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4"/></svg>
 					</button>
 				</form>
 				<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
 			</div>
 			<div class="h-footer-community">
-				<h3>Join the community</h3>
-				<p>Follow along for builds, demos, and conversations with the team.</p>
+				<h3 data-i18n="pumpfun.join_the_community">Join the community</h3>
+				<p data-i18n="pumpfun.follow_along_for_builds_demos_and_conversati">Follow along for builds, demos, and conversations with the team.</p>
 				<a class="h-footer-community-btn" href="https://x.com/trythreews" target="_blank" rel="noopener">
 					<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
 					Follow on X
@@ -549,64 +549,64 @@
 				<div class="h-footer-brand">
 					<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
 					<span class="wordmark-dot" aria-hidden="true"></span>
-					<span>three.ws</span>
+					<span data-i18n="pumpfun.three_ws">three.ws</span>
 				</div>
-				<p class="h-footer-tagline">Give your AI a body.</p>
+				<p class="h-footer-tagline" data-i18n="pumpfun.give_your_ai_a_body">Give your AI a body.</p>
 				<div class="h-footer-socials">
-					<a class="h-footer-social" href="https://x.com/trythreews" target="_blank" rel="noopener" aria-label="three.ws on X">
+					<a class="h-footer-social" href="https://x.com/trythreews" target="_blank" rel="noopener" aria-label="three.ws on X" data-i18n-attr="aria-label:pumpfun.three_ws_on_x_arialabel">
 						<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
 					</a>
-					<a class="h-footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="three.ws on GitHub">
+					<a class="h-footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="three.ws on GitHub" data-i18n-attr="aria-label:pumpfun.three_ws_on_github_arialabel">
 						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
 					</a>
 				</div>
 			</div>
 			<nav class="h-footer-links" aria-label="Footer">
 				<div class="h-footer-link-col">
-					<h4 class="h-footer-link-heading">Product</h4>
-					<a href="/create">Create</a>
-					<a href="/studio">Studio</a>
-					<a href="/widgets">Widgets</a>
-					<a href="/discover">Discover</a>
+					<h4 class="h-footer-link-heading" data-i18n="pumpfun.product">Product</h4>
+					<a href="/create" data-i18n="pumpfun.create">Create</a>
+					<a href="/studio" data-i18n="pumpfun.studio">Studio</a>
+					<a href="/widgets" data-i18n="pumpfun.widgets">Widgets</a>
+					<a href="/discover" data-i18n="pumpfun.discover">Discover</a>
 				</div>
 				<div class="h-footer-link-col">
-					<h4 class="h-footer-link-heading">Developers</h4>
-					<a href="/docs">Docs</a>
-					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
+					<h4 class="h-footer-link-heading" data-i18n="pumpfun.developers">Developers</h4>
+					<a href="/docs" data-i18n="pumpfun.docs">Docs</a>
+					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" data-i18n="pumpfun.github">GitHub</a>
 				</div>
 				<div class="h-footer-link-col">
-					<h4 class="h-footer-link-heading">Resources</h4>
-					<a href="/dashboard">Dashboard</a>
+					<h4 class="h-footer-link-heading" data-i18n="pumpfun.resources">Resources</h4>
+					<a href="/dashboard" data-i18n="pumpfun.dashboard">Dashboard</a>
 				</div>
 			</nav>
 		</div>
 		<div class="h-footer-bottom">
-			<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+			<p class="h-footer-legal" data-i18n="pumpfun.2026_three_ws_all_rights_reserved">© 2026 three.ws — All rights reserved.</p>
 			<div class="h-footer-legal-links">
-				<a href="/legal/privacy">Privacy Policy</a>
-				<a href="/legal/tos">Terms of Use</a>
+				<a href="/legal/privacy" data-i18n="pumpfun.privacy_policy">Privacy Policy</a>
+				<a href="/legal/tos" data-i18n="pumpfun.terms_of_use">Terms of Use</a>
 			</div>
 		</div>
 	</footer>
 	<div class="pf-modal-backdrop" id="avatar-picker" data-open="false" role="dialog" aria-modal="true" aria-labelledby="avatar-picker-title">
 		<div class="pf-modal" role="document">
 			<div class="pf-modal-head">
-				<h2 id="avatar-picker-title">Choose an avatar</h2>
+				<h2 id="avatar-picker-title" data-i18n="pumpfun.choose_an_avatar">Choose an avatar</h2>
 				<span class="spacer"></span>
-				<button class="pf-modal-close" type="button" aria-label="Close" data-picker-close>×</button>
+				<button class="pf-modal-close" type="button" aria-label="Close" data-picker-close data-i18n-attr="aria-label:pumpfun.close_arialabel">×</button>
 			</div>
 			<div class="pf-tabs" role="tablist">
-				<button class="pf-tab" role="tab" type="button" data-tab="defaults" aria-selected="true">Defaults<span class="badge" id="tab-count-defaults"></span></button>
-				<button class="pf-tab" role="tab" type="button" data-tab="recent" aria-selected="false">Recent<span class="badge" id="tab-count-recent"></span></button>
-				<button class="pf-tab" role="tab" type="button" data-tab="favorites" aria-selected="false">Favorites<span class="badge" id="tab-count-favorites"></span></button>
-				<button class="pf-tab" role="tab" type="button" data-tab="community" aria-selected="false">Community<span class="badge" id="tab-count-community"></span></button>
-				<button class="pf-tab" role="tab" type="button" data-tab="mine" aria-selected="false">My Agents<span class="badge" id="tab-count-mine"></span></button>
+				<button class="pf-tab" role="tab" type="button" data-tab="defaults" aria-selected="true" data-i18n-html="pumpfun.defaults">Defaults<span class="badge" id="tab-count-defaults"></span></button>
+				<button class="pf-tab" role="tab" type="button" data-tab="recent" aria-selected="false" data-i18n-html="pumpfun.recent">Recent<span class="badge" id="tab-count-recent"></span></button>
+				<button class="pf-tab" role="tab" type="button" data-tab="favorites" aria-selected="false" data-i18n-html="pumpfun.favorites">Favorites<span class="badge" id="tab-count-favorites"></span></button>
+				<button class="pf-tab" role="tab" type="button" data-tab="community" aria-selected="false" data-i18n-html="pumpfun.community">Community<span class="badge" id="tab-count-community"></span></button>
+				<button class="pf-tab" role="tab" type="button" data-tab="mine" aria-selected="false" data-i18n-html="pumpfun.my_agents">My Agents<span class="badge" id="tab-count-mine"></span></button>
 			</div>
 			<div class="pf-toolbar">
 				<input type="search" id="picker-search" placeholder="Search by name…" autocomplete="off" aria-label="Search avatars" />
 				<div class="custom-row">
 					<input type="url" id="picker-custom-url" placeholder="https://…/avatar.glb" aria-label="Custom avatar URL" />
-					<button type="button" id="picker-custom-go">Use URL</button>
+					<button type="button" id="picker-custom-go" data-i18n="pumpfun.use_url">Use URL</button>
 				</div>
 			</div>
 			<div class="pf-tags" id="picker-tags" role="group" aria-label="Filter by tag"></div>
@@ -630,13 +630,13 @@
 	<div class="pf-modal-backdrop" id="config-modal" data-open="false" role="dialog" aria-modal="true" aria-labelledby="config-modal-title">
 		<div class="pf-modal" role="document">
 			<div class="pf-modal-head">
-				<h2 id="config-modal-title">Configure Agent Reactions</h2>
+				<h2 id="config-modal-title" data-i18n="pumpfun.configure_agent_reactions">Configure Agent Reactions</h2>
 				<span class="spacer"></span>
-				<button class="pf-modal-close" type="button" aria-label="Close" data-config-close>×</button>
+				<button class="pf-modal-close" type="button" aria-label="Close" data-config-close data-i18n-attr="aria-label:pumpfun.close_arialabel_2">×</button>
 			</div>
 			<div class="pf-tabs" role="tablist">
-				<button class="pf-tab" id="config-tab-emotions" role="tab" type="button" data-tab="emotions" aria-selected="true">Emotion Mapping</button>
-				<button class="pf-tab" id="config-tab-actions" role="tab" type="button" data-tab="actions">Action Triggers</button>
+				<button class="pf-tab" id="config-tab-emotions" role="tab" type="button" data-tab="emotions" aria-selected="true" data-i18n="pumpfun.emotion_mapping">Emotion Mapping</button>
+				<button class="pf-tab" id="config-tab-actions" role="tab" type="button" data-tab="actions" data-i18n="pumpfun.action_triggers">Action Triggers</button>
 			</div>
 			<div class="pf-content" style="grid-template-columns: 1fr;">
 				<div class="pf-body" id="config-body" role="tabpanel">
@@ -644,7 +644,7 @@
 				</div>
 			</div>
 			<div class="config-save-bar">
-				<button class="config-save-btn" id="config-save-btn">Save Configuration</button>
+				<button class="config-save-btn" id="config-save-btn" data-i18n="pumpfun.save_configuration">Save Configuration</button>
 			</div>
 		</div>
 	</div>
@@ -2028,5 +2028,7 @@
 	<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

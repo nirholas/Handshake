@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Skateboard — three.ws</title>
+		<title data-i18n="demos_agents_skateboard.meta_title">Skateboard — three.ws</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/demos/agents/_shared.css" />
@@ -22,14 +22,14 @@
 	<body>
 		<div class="stage">
 			<div class="hero-eyebrow">Skateboards the descender</div>
-			<h1 class="hero-title">Give your AI a <em><span class="descender" id="ramp">body</span></em>.</h1>
-			<p class="hero-sub">
+			<h1 class="hero-title" data-i18n-html="demos_agents_skateboard.give_your_ai_a_body">Give your AI a <em><span class="descender" id="ramp">body</span></em>.</h1>
+			<p class="hero-sub" data-i18n-html="demos_agents_skateboard.she_rides_the_descender_of_y_like">
 				She rides the descender of "<em>y</em>" like a quarter-pipe and
 				launches into the CTA.
 			</p>
 			<div class="cta-row">
-				<a href="#" class="btn btn-primary" id="cta-btn"><span>Catch the landing</span><span>→</span></a>
-				<button class="btn btn-ghost" id="restart"><span>Drop in again</span></button>
+				<a href="#" class="btn btn-primary" id="cta-btn" data-i18n-html="demos_agents_skateboard.catch_the_landing"><span>Catch the landing</span><span>→</span></a>
+				<button class="btn btn-ghost" id="restart" data-i18n-html="demos_agents_skateboard.drop_in_again"><span>Drop in again</span></button>
 			</div>
 		</div>
 		<canvas id="avatar-canvas"></canvas>
@@ -156,5 +156,7 @@
 			}, rootBone, baseRootPos);
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

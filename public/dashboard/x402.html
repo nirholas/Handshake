@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>x402 Checkout · Dashboard</title>
+<title data-i18n="dashboard_x402.meta_title">x402 Checkout · Dashboard</title>
 <link rel="icon" href="/favicon.ico" />
 <style>
 	:root {
@@ -252,19 +252,19 @@
 <header>
 	<a class="brand" href="/x402">
 		<div class="dot"></div>
-		<span>x402</span>
+		<span data-i18n="dashboard_x402.x402">x402</span>
 	</a>
-	<span class="crumb">/ Dashboard</span>
+	<span class="crumb" data-i18n="dashboard_x402.dashboard">/ Dashboard</span>
 	<div class="right">
-		<a href="/dashboard/x402-admin" class="btn ghost">Console</a>
-		<a href="/x402" class="btn ghost">View landing</a>
-		<button class="btn" id="newBtn">+ New SKU</button>
+		<a href="/dashboard/x402-admin" class="btn ghost" data-i18n="dashboard_x402.console">Console</a>
+		<a href="/x402" class="btn ghost" data-i18n="dashboard_x402.view_landing">View landing</a>
+		<button class="btn" id="newBtn" data-i18n="dashboard_x402.new_sku">+ New SKU</button>
 	</div>
 </header>
 
 <div class="wrap">
-	<h1>Checkout SKUs</h1>
-	<p class="sub">Hosted checkout links for your paid endpoints. Each SKU gets a shareable URL — buyers pay with one click.</p>
+	<h1 data-i18n="dashboard_x402.checkout_skus">Checkout SKUs</h1>
+	<p class="sub" data-i18n="dashboard_x402.hosted_checkout_links_for_your_paid_endpoint">Hosted checkout links for your paid endpoints. Each SKU gets a shareable URL — buyers pay with one click.</p>
 
 	<div class="stats" id="stats" style="display:none">
 		<div class="stat-card">
@@ -277,12 +277,12 @@
 		</div>
 		<div class="stat-card">
 			<div class="k">Gross revenue</div>
-			<div class="v" id="s-revenue">—<span class="unit"> USDC</span></div>
+			<div class="v" id="s-revenue">—<span class="unit" data-i18n="dashboard_x402.usdc"> USDC</span></div>
 		</div>
 	</div>
 
 	<div class="skus-head">
-		<h2>Your SKUs</h2>
+		<h2 data-i18n="dashboard_x402.your_skus">Your SKUs</h2>
 	</div>
 
 	<div id="content"></div>
@@ -292,14 +292,14 @@
 <div class="modal-overlay" id="modal">
 	<div class="modal">
 		<div class="modal-head">
-			<h3 id="modalTitle">New SKU</h3>
+			<h3 id="modalTitle" data-i18n="dashboard_x402.new_sku_2">New SKU</h3>
 			<button class="modal-close" id="modalClose">✕</button>
 		</div>
 		<form class="modal-body" id="skuForm">
 			<label>
 				URL slug
 				<input name="slug" required pattern="^[a-z0-9][a-z0-9\-]{1,62}[a-z0-9]$" placeholder="pro-summary" />
-				<span class="hint">Used in the public URL: /pay/c/&lt;slug&gt;. 3–64 chars, lowercase + hyphens.</span>
+				<span class="hint" data-i18n="dashboard_x402.used_in_the_public_url_pay_c">Used in the public URL: /pay/c/&lt;slug&gt;. 3–64 chars, lowercase + hyphens.</span>
 			</label>
 			<div class="row-2">
 				<label>
@@ -314,19 +314,19 @@
 			<label>
 				Description
 				<textarea name="description" maxlength="2000" placeholder="What does this charge for?"></textarea>
-				<span class="hint">Optional. Shown on the hosted checkout page.</span>
+				<span class="hint" data-i18n="dashboard_x402.optional_shown_on_the_hosted_checkout_page">Optional. Shown on the hosted checkout page.</span>
 			</label>
 			<label>
 				Target endpoint
 				<input name="target_endpoint" type="url" required placeholder="https://api.acme.com/summarize" />
-				<span class="hint">A 402-enabled URL. Returns the price + a settlement receipt.</span>
+				<span class="hint" data-i18n="dashboard_x402.a_402_enabled_url_returns_the_price">A 402-enabled URL. Returns the price + a settlement receipt.</span>
 			</label>
 			<div class="row-2">
 				<label>
 					Method
 					<select name="target_method">
-						<option value="GET">GET</option>
-						<option value="POST">POST</option>
+						<option value="GET" data-i18n="dashboard_x402.get">GET</option>
+						<option value="POST" data-i18n="dashboard_x402.post">POST</option>
 					</select>
 				</label>
 				<label>
@@ -341,17 +341,17 @@
 			<label>
 				Logo URL
 				<input name="logo_url" type="url" placeholder="https://acme.com/logo.png" />
-				<span class="hint">Optional.</span>
+				<span class="hint" data-i18n="dashboard_x402.optional">Optional.</span>
 			</label>
 			<label>
 				Success redirect
 				<input name="success_url" type="url" placeholder="https://acme.com/thanks" />
-				<span class="hint">Optional. Where to send the buyer after a successful payment.</span>
+				<span class="hint" data-i18n="dashboard_x402.optional_where_to_send_the_buyer_after">Optional. Where to send the buyer after a successful payment.</span>
 			</label>
 			<div id="formError" class="form-error" style="display:none"></div>
 			<div class="form-actions">
-				<button type="button" class="btn ghost" id="cancelBtn">Cancel</button>
-				<button type="submit" class="btn" id="saveBtn">Create</button>
+				<button type="button" class="btn ghost" id="cancelBtn" data-i18n="dashboard_x402.cancel">Cancel</button>
+				<button type="submit" class="btn" id="saveBtn" data-i18n="dashboard_x402.create">Create</button>
 			</div>
 		</form>
 	</div>
@@ -364,31 +364,31 @@
 		<div class="action-name" id="d-action">—</div>
 		<div class="url" id="d-url">
 			<span id="d-url-text">—</span>
-			<button class="url-copy" id="d-url-copy">copy</button>
+			<button class="url-copy" id="d-url-copy" data-i18n="dashboard_x402.copy">copy</button>
 		</div>
 	</div>
 	<div class="drawer-body">
 		<section>
-			<h4>Performance</h4>
+			<h4 data-i18n="dashboard_x402.performance">Performance</h4>
 			<div class="stats" style="display:grid;margin-bottom:0">
 				<div class="stat-card"><div class="k">Calls</div><div class="v" id="d-s-calls">—</div></div>
-				<div class="stat-card"><div class="k">Revenue</div><div class="v" id="d-s-revenue">—<span class="unit"> USDC</span></div></div>
+				<div class="stat-card"><div class="k">Revenue</div><div class="v" id="d-s-revenue">—<span class="unit" data-i18n="dashboard_x402.usdc_2"> USDC</span></div></div>
 				<div class="stat-card"><div class="k">Unique payers</div><div class="v" id="d-s-payers">—</div></div>
 			</div>
 		</section>
 		<section>
-			<h4>Recent calls</h4>
+			<h4 data-i18n="dashboard_x402.recent_calls">Recent calls</h4>
 			<div class="call-list" id="d-calls"><div style="color:var(--muted);font-family:inherit;font-size:13px">No calls yet.</div></div>
 		</section>
 		<section>
-			<h4>Endpoint</h4>
+			<h4 data-i18n="dashboard_x402.endpoint">Endpoint</h4>
 			<div class="url" id="d-endpoint">—</div>
 		</section>
 	</div>
 	<div class="drawer-actions">
-		<button class="btn ghost" id="d-edit">Edit</button>
-		<button class="btn ghost" id="d-open">Open page ↗</button>
-		<button class="btn danger" id="d-archive" style="margin-left:auto">Archive</button>
+		<button class="btn ghost" id="d-edit" data-i18n="dashboard_x402.edit">Edit</button>
+		<button class="btn ghost" id="d-open" data-i18n="dashboard_x402.open_page">Open page ↗</button>
+		<button class="btn danger" id="d-archive" style="margin-left:auto" data-i18n="dashboard_x402.archive">Archive</button>
 	</div>
 </aside>
 
@@ -629,5 +629,7 @@
 </script>
 
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -10,28 +10,28 @@
 		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<link rel="manifest" href="/manifest.webmanifest" />
-		<title>GO · Bounties · three.ws</title>
+		<title data-i18n="go.meta_title">GO · Bounties · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta
 			name="description"
 			content="Post bounties, submit proof, earn rewards. The three.ws bounty board powered by $THREE."
-		/>
+		 data-i18n-attr="content:go.meta_description"/>
 		<meta name="theme-color" content="#0a0a0f" />
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="GO · Bounties · three.ws" />
+		<meta property="og:title" content="GO · Bounties · three.ws"  data-i18n-attr="content:go.meta_og_title"/>
 		<meta
 			property="og:description"
 			content="Post bounties, submit proof, earn rewards on-chain."
-		/>
+		 data-i18n-attr="content:go.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/go" />
 		<meta property="og:image" content="https://three.ws/og-image.png" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="twitter:site" content="@trythreews" />
-		<meta name="twitter:title" content="GO · Bounties · three.ws" />
-		<meta name="twitter:description" content="Post bounties, submit proof, earn rewards on-chain." />
+		<meta name="twitter:title" content="GO · Bounties · three.ws"  data-i18n-attr="content:go.meta_twitter_title"/>
+		<meta name="twitter:description" content="Post bounties, submit proof, earn rewards on-chain."  data-i18n-attr="content:go.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/og-image.png" />
 		<style>
 			* {
@@ -932,15 +932,15 @@
 	<body>
 		<!-- Top bar -->
 		<header class="topbar">
-			<a href="/" class="brand">
+			<a href="/" class="brand" data-i18n-html="go.three_ws_go">
 				<span class="dot"></span>
 				three.ws
 				<span class="go-badge">GO</span>
 			</a>
 			<div class="topbar-right">
-				<a href="/bounties" class="btn btn-ghost btn-sm">Live pump.fun bounties</a>
-				<a href="/dashboard" class="btn btn-ghost btn-sm">Dashboard</a>
-				<button id="create-btn" class="btn btn-primary btn-sm">+ Post Bounty</button>
+				<a href="/bounties" class="btn btn-ghost btn-sm" data-i18n="go.live_pump_fun_bounties">Live pump.fun bounties</a>
+				<a href="/dashboard" class="btn btn-ghost btn-sm" data-i18n="go.dashboard">Dashboard</a>
+				<button id="create-btn" class="btn btn-primary btn-sm" data-i18n="go.post_bounty">+ Post Bounty</button>
 				<button id="user-btn" class="btn btn-ghost btn-sm"></button>
 			</div>
 		</header>
@@ -950,9 +950,9 @@
 			<!-- Feed column -->
 			<div class="feed-col">
 				<nav class="tabs" role="tablist">
-					<button class="tab-btn active" data-tab="feed">Trending</button>
-					<button class="tab-btn" data-tab="open">Open</button>
-					<button class="tab-btn" data-tab="submissions">Submissions</button>
+					<button class="tab-btn active" data-tab="feed" data-i18n="go.trending">Trending</button>
+					<button class="tab-btn" data-tab="open" data-i18n="go.open">Open</button>
+					<button class="tab-btn" data-tab="submissions" data-i18n="go.submissions">Submissions</button>
 				</nav>
 				<div id="feed"></div>
 			</div>
@@ -978,13 +978,13 @@
 		<div class="modal-overlay" id="create-modal" role="dialog" aria-modal="true">
 			<div class="modal">
 				<div class="modal-header">
-					<span class="modal-title">Post a Bounty</span>
-					<button class="modal-close" data-close="create-modal" aria-label="Close dialog">✕</button>
+					<span class="modal-title" data-i18n="go.post_a_bounty">Post a Bounty</span>
+					<button class="modal-close" data-close="create-modal" aria-label="Close dialog" data-i18n-attr="aria-label:go.close_dialog_arialabel">✕</button>
 				</div>
 				<div class="modal-body">
 					<div id="create-error" class="form-error" style="display: none"></div>
 					<div class="field">
-						<label>Title *</label>
+						<label data-i18n="go.title">Title *</label>
 						<input
 							id="c-title"
 							type="text"
@@ -993,7 +993,7 @@
 						/>
 					</div>
 					<div class="field">
-						<label>Description</label>
+						<label data-i18n="go.description">Description</label>
 						<textarea
 							id="c-desc"
 							rows="3"
@@ -1002,23 +1002,23 @@
 					</div>
 					<div class="field-row">
 						<div class="field">
-							<label>Reward (SOL)</label>
+							<label data-i18n="go.reward_sol">Reward (SOL)</label>
 							<input id="c-sol" type="number" min="0" step="0.01" placeholder="0.5" />
 						</div>
 						<div class="field">
-							<label>Expires in (days)</label>
+							<label data-i18n="go.expires_in_days">Expires in (days)</label>
 							<select id="c-days">
-								<option value="3">3 days</option>
-								<option value="7" selected>7 days</option>
-								<option value="14">14 days</option>
-								<option value="30">30 days</option>
+								<option value="3" data-i18n="go.3_days">3 days</option>
+								<option value="7" selected data-i18n="go.7_days">7 days</option>
+								<option value="14" data-i18n="go.14_days">14 days</option>
+								<option value="30" data-i18n="go.30_days">30 days</option>
 							</select>
 						</div>
 					</div>
 				</div>
 				<div class="modal-footer">
-					<button class="btn btn-ghost" data-close="create-modal">Cancel</button>
-					<button id="create-submit" class="btn btn-primary">Post Bounty</button>
+					<button class="btn btn-ghost" data-close="create-modal" data-i18n="go.cancel">Cancel</button>
+					<button id="create-submit" class="btn btn-primary" data-i18n="go.post_bounty_2">Post Bounty</button>
 				</div>
 			</div>
 		</div>
@@ -1027,8 +1027,8 @@
 		<div class="modal-overlay" id="submit-modal" role="dialog" aria-modal="true">
 			<div class="modal">
 				<div class="modal-header">
-					<span class="modal-title">Submit Proof</span>
-					<button class="modal-close" data-close="submit-modal" aria-label="Close dialog">✕</button>
+					<span class="modal-title" data-i18n="go.submit_proof">Submit Proof</span>
+					<button class="modal-close" data-close="submit-modal" aria-label="Close dialog" data-i18n-attr="aria-label:go.close_dialog_arialabel_2">✕</button>
 				</div>
 				<div class="modal-body">
 					<div id="submit-error" class="form-error" style="display: none"></div>
@@ -1037,7 +1037,7 @@
 						style="font-size: 13px; color: var(--muted); margin-bottom: 4px"
 					></div>
 					<div class="field">
-						<label>Description</label>
+						<label data-i18n="go.description_2">Description</label>
 						<textarea
 							id="s-content"
 							rows="3"
@@ -1045,7 +1045,7 @@
 						></textarea>
 					</div>
 					<div class="field">
-						<label>Media / Link URL</label>
+						<label data-i18n="go.media_link_url">Media / Link URL</label>
 						<input
 							id="s-url"
 							type="url"
@@ -1054,8 +1054,8 @@
 					</div>
 				</div>
 				<div class="modal-footer">
-					<button class="btn btn-ghost" data-close="submit-modal">Cancel</button>
-					<button id="submit-proof-btn" class="btn btn-primary">Submit</button>
+					<button class="btn btn-ghost" data-close="submit-modal" data-i18n="go.cancel_2">Cancel</button>
+					<button id="submit-proof-btn" class="btn btn-primary" data-i18n="go.submit">Submit</button>
 				</div>
 			</div>
 		</div>
@@ -1064,21 +1064,21 @@
 		<div class="modal-overlay" id="resolve-modal" role="dialog" aria-modal="true">
 			<div class="modal">
 				<div class="modal-header">
-					<span class="modal-title">Pick a Winner</span>
-					<button class="modal-close" data-close="resolve-modal" aria-label="Close dialog">✕</button>
+					<span class="modal-title" data-i18n="go.pick_a_winner">Pick a Winner</span>
+					<button class="modal-close" data-close="resolve-modal" aria-label="Close dialog" data-i18n-attr="aria-label:go.close_dialog_arialabel_3">✕</button>
 				</div>
 				<div class="modal-body">
 					<div id="resolve-error" class="form-error" style="display: none"></div>
 					<div class="resolve-actions">
-						<span class="hint">Pick the submission to reward.</span>
-						<button id="ai-judge-btn" class="ai-judge-btn" type="button">
+						<span class="hint" data-i18n="go.pick_the_submission_to_reward">Pick the submission to reward.</span>
+						<button id="ai-judge-btn" class="ai-judge-btn" type="button" data-i18n="go.rank_with_ai">
 							✨ Rank with AI
 						</button>
 					</div>
 					<div id="ai-summary" class="ai-summary" style="display: none"></div>
 					<div id="resolve-subs" class="sub-pick-list"></div>
 					<div class="field" style="margin-top: 12px">
-						<label>Solana TX Hash (optional)</label>
+						<label data-i18n="go.solana_tx_hash_optional">Solana TX Hash (optional)</label>
 						<input
 							id="r-tx"
 							type="text"
@@ -1087,8 +1087,8 @@
 					</div>
 				</div>
 				<div class="modal-footer">
-					<button class="btn btn-ghost" data-close="resolve-modal">Cancel</button>
-					<button id="resolve-submit" class="btn btn-primary">Confirm Winner</button>
+					<button class="btn btn-ghost" data-close="resolve-modal" data-i18n="go.cancel_3">Cancel</button>
+					<button id="resolve-submit" class="btn btn-primary" data-i18n="go.confirm_winner">Confirm Winner</button>
 				</div>
 			</div>
 		</div>
@@ -1097,5 +1097,7 @@
 		<div class="toast" id="toast"></div>
 
 		<script type="module" src="/src/go.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

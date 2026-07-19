@@ -18,8 +18,8 @@
 		</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title id="rh-doc-title">Robinhood Chain Stock Token · three.ws</title>
-		<meta id="rh-doc-desc" name="description" content="Live Chainlink NAV, DEX premium/discount, holders, and contract links for a Robinhood Chain Stock Token." />
+		<title id="rh-doc-title" data-i18n="robinhood_stock.meta_title">Robinhood Chain Stock Token · three.ws</title>
+		<meta id="rh-doc-desc" name="description" content="Live Chainlink NAV, DEX premium/discount, holders, and contract links for a Robinhood Chain Stock Token."  data-i18n-attr="content:robinhood_stock.meta_description"/>
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
@@ -38,11 +38,11 @@
 
 		<main class="cv-container" id="rh-main" aria-busy="true">
 			<nav class="cv-crumbs" aria-label="Breadcrumb">
-				<a href="/markets">Markets</a>
+				<a href="/markets" data-i18n="robinhood_stock.markets">Markets</a>
 				<span class="sep" aria-hidden="true">/</span>
-				<a href="/markets/robinhood">Robinhood Chain</a>
+				<a href="/markets/robinhood" data-i18n="robinhood_stock.robinhood_chain">Robinhood Chain</a>
 				<span class="sep" aria-hidden="true">/</span>
-				<span class="here" id="rh-crumb-symbol">Stock</span>
+				<span class="here" id="rh-crumb-symbol" data-i18n="robinhood_stock.stock">Stock</span>
 			</nav>
 
 			<section id="rh-head"></section>
@@ -62,5 +62,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

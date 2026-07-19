@@ -20,8 +20,8 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta name="robots" content="noindex, nofollow" />
-		<title>Avatar Seeder · Control · three.ws</title>
-		<meta name="description" content="Admin control room for the three.ws avatar seeder." />
+		<title data-i18n="admin_seeder.meta_title">Avatar Seeder · Control · three.ws</title>
+		<meta name="description" content="Admin control room for the three.ws avatar seeder."  data-i18n-attr="content:admin_seeder.meta_description"/>
 		<link rel="stylesheet" href="/nav.css" />
 		<link rel="stylesheet" href="/src/admin-seeder.css" />
 		<!-- model-viewer (Google, allow-listed in CSP) powers the live 3D gallery -->
@@ -38,8 +38,8 @@
 			<!-- Auth gate -->
 			<section class="sd-gate" id="sd-gate" hidden>
 				<div class="sd-gate-mark" aria-hidden="true">◎</div>
-				<h1>Avatar Seeder</h1>
-				<p>Operator control. Enter the secret to open the control room.</p>
+				<h1 data-i18n="admin_seeder.avatar_seeder">Avatar Seeder</h1>
+				<p data-i18n="admin_seeder.operator_control_enter_the_secret_to_open">Operator control. Enter the secret to open the control room.</p>
 				<form id="sd-gate-form" autocomplete="off">
 					<input
 						type="password"
@@ -49,7 +49,7 @@
 						aria-label="Operator secret"
 						autocomplete="current-password"
 					/>
-					<button type="submit" class="sd-btn sd-btn-primary">Unlock</button>
+					<button type="submit" class="sd-btn sd-btn-primary" data-i18n="admin_seeder.unlock">Unlock</button>
 					<p class="sd-gate-err" id="sd-gate-err" role="alert" aria-live="assertive"></p>
 				</form>
 			</section>
@@ -59,12 +59,12 @@
 				<!-- Hero -->
 				<header class="sd-hero">
 					<div>
-						<p class="sd-kicker">
+						<p class="sd-kicker" data-i18n-html="admin_seeder.loading_headless_forge_lane">
 							<span class="sd-dot" id="sd-dot"></span>
 							<span id="sd-state-word">Loading</span> · headless forge lane
 						</p>
-						<h1 class="sd-title">Avatar <em>Seeder</em></h1>
-						<p class="sd-sub" id="sd-sub">
+						<h1 class="sd-title" data-i18n-html="admin_seeder.avatar_seeder_2">Avatar <em>Seeder</em></h1>
+						<p class="sd-sub" id="sd-sub" data-i18n="admin_seeder.every_tick_forges_one_fully_rigged_avatar">
 							Every tick forges one fully-rigged avatar and publishes it,
 							ready to walk, to the public gallery.
 						</p>
@@ -74,7 +74,7 @@
 							class="sd-btn sd-btn-ghost"
 							id="sd-run"
 							title="Force one export right now"
-						>
+						 data-i18n="admin_seeder.run_one_now" data-i18n-attr="title:admin_seeder.force_one_export_right_now_title">
 							◎ Run one now
 						</button>
 						<button
@@ -83,7 +83,7 @@
 							role="switch"
 							aria-checked="false"
 							aria-label="Arm the seeder"
-						>
+						 data-i18n-html="admin_seeder.disabled" data-i18n-attr="aria-label:admin_seeder.arm_the_seeder_arialabel">
 							<span class="sd-arm-lbl" id="sd-arm-lbl">Disabled</span>
 							<span class="sd-arm-track"><span class="sd-arm-knob"></span></span>
 						</button>
@@ -93,33 +93,33 @@
 				<!-- Circuit breaker -->
 				<div class="sd-breaker" id="sd-breaker" hidden role="alert">
 					<span aria-hidden="true">⚠</span>
-					<span id="sd-breaker-txt">Circuit breaker tripped.</span>
+					<span id="sd-breaker-txt" data-i18n="admin_seeder.circuit_breaker_tripped">Circuit breaker tripped.</span>
 				</div>
 
 				<!-- Stats -->
 				<dl class="sd-stats" id="sd-stats">
 					<div class="sd-stat sd-stat--lead">
-						<dt>Seeded · 24h</dt>
+						<dt data-i18n="admin_seeder.seeded_24h">Seeded · 24h</dt>
 						<dd id="sd-s-24h">—</dd>
-						<small id="sd-s-24h-sub">last day</small>
+						<small id="sd-s-24h-sub" data-i18n="admin_seeder.last_day">last day</small>
 					</div>
 					<div class="sd-stat">
-						<dt>Total rigged avatars</dt>
+						<dt data-i18n="admin_seeder.total_rigged_avatars">Total rigged avatars</dt>
 						<dd id="sd-s-total">—</dd>
-						<small id="sd-s-total-sub">all time</small>
+						<small id="sd-s-total-sub" data-i18n="admin_seeder.all_time">all time</small>
 					</div>
 					<div class="sd-stat">
-						<dt>Rig rate</dt>
+						<dt data-i18n="admin_seeder.rig_rate">Rig rate</dt>
 						<dd id="sd-s-rig">—</dd>
-						<small>skeleton-confirmed</small>
+						<small data-i18n="admin_seeder.skeleton_confirmed">skeleton-confirmed</small>
 					</div>
 					<div class="sd-stat">
-						<dt>Next export</dt>
+						<dt data-i18n="admin_seeder.next_export">Next export</dt>
 						<dd id="sd-s-next">—</dd>
-						<small id="sd-s-next-sub">cadence 60s</small>
+						<small id="sd-s-next-sub" data-i18n="admin_seeder.cadence_60s">cadence 60s</small>
 					</div>
 					<div class="sd-stat">
-						<dt>Last seeded</dt>
+						<dt data-i18n="admin_seeder.last_seeded">Last seeded</dt>
 						<dd id="sd-s-last" style="font-size: 1.15rem">—</dd>
 						<small id="sd-s-last-sub"></small>
 					</div>
@@ -129,8 +129,8 @@
 				<section class="sd-section">
 					<div class="sd-section-h">
 						<div>
-							<h2>Freshly forged</h2>
-							<p>
+							<h2 data-i18n="admin_seeder.freshly_forged">Freshly forged</h2>
+							<p data-i18n="admin_seeder.real_seeded_avatars_drag_to_orbit_every">
 								Real seeded avatars — drag to orbit. Every one is rigged and
 								animation-ready.
 							</p>
@@ -144,8 +144,8 @@
 				<section class="sd-section">
 					<div class="sd-section-h">
 						<div>
-							<h2>Runtime flags</h2>
-							<p>DB-backed switches — flip instantly, no redeploy.</p>
+							<h2 data-i18n="admin_seeder.runtime_flags">Runtime flags</h2>
+							<p data-i18n="admin_seeder.db_backed_switches_flip_instantly_no_redeplo">DB-backed switches — flip instantly, no redeploy.</p>
 						</div>
 						<a
 							class="sd-section-meta"
@@ -153,7 +153,7 @@
 							target="_blank"
 							rel="noopener"
 							style="text-decoration: none"
-							>docs ↗</a
+							 data-i18n="admin_seeder.docs">docs ↗</a
 						>
 					</div>
 					<div class="sd-flags" id="sd-flags"></div>
@@ -170,14 +170,14 @@
 			aria-labelledby="sd-modal-title"
 		>
 			<div class="sd-modal-card">
-				<h3 id="sd-modal-title">Arm the seeder?</h3>
-				<p id="sd-modal-body">
+				<h3 id="sd-modal-title" data-i18n="admin_seeder.arm_the_seeder">Arm the seeder?</h3>
+				<p id="sd-modal-body" data-i18n="admin_seeder.the_seeder_will_forge_and_publish_a">
 					The seeder will forge and publish a fully-rigged avatar to the public
 					gallery every minute, using the headless avatar forge. You can disarm any time.
 				</p>
 				<div class="sd-modal-actions">
-					<button class="sd-btn sd-btn-ghost" id="sd-modal-cancel">Cancel</button>
-					<button class="sd-btn sd-btn-primary" id="sd-modal-go">Arm &amp; start</button>
+					<button class="sd-btn sd-btn-ghost" id="sd-modal-cancel" data-i18n="admin_seeder.cancel">Cancel</button>
+					<button class="sd-btn sd-btn-primary" id="sd-modal-go" data-i18n="admin_seeder.arm_start">Arm &amp; start</button>
 				</div>
 			</div>
 		</div>
@@ -185,5 +185,7 @@
 		<div class="sd-toast" id="sd-toast" role="status" aria-live="polite"></div>
 
 		<script type="module" src="/src/admin-seeder.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

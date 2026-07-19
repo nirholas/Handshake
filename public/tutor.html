@@ -4,8 +4,8 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Pay-As-You-Learn Tutor — three.ws</title>
-	<meta name="description" content="Ask anything and pay a cent per answer. A pay-as-you-learn AI tutor settled in USDC over x402 on Base or Solana." />
+	<title data-i18n="tutor.meta_title">Pay-As-You-Learn Tutor — three.ws</title>
+	<meta name="description" content="Ask anything and pay a cent per answer. A pay-as-you-learn AI tutor settled in USDC over x402 on Base or Solana."  data-i18n-attr="content:tutor.meta_description"/>
 	<link rel="icon" href="/favicon.ico" />
 	<link rel="stylesheet" href="/nav.css" />
 	<style>
@@ -187,15 +187,15 @@
 	<link rel="canonical" href="https://three.ws/tutor">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="Pay-As-You-Learn Tutor · three.ws">
-	<meta property="og:description" content="Ask anything and pay a cent per answer. A pay-as-you-learn AI tutor that bills $0.01 per explanation in USDC over x402, with a live itemized session invoice and signed attestation.">
+	<meta property="og:title" content="Pay-As-You-Learn Tutor · three.ws" data-i18n-attr="content:tutor.meta_og_title">
+	<meta property="og:description" content="Ask anything and pay a cent per answer. A pay-as-you-learn AI tutor that bills $0.01 per explanation in USDC over x402, with a live itemized session invoice and signed attestation." data-i18n-attr="content:tutor.meta_og_description">
 	<meta property="og:url" content="https://three.ws/tutor">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Pay-As-You-Learn+Tutor&amp;d=Ask+anything+and+pay+a+cent+per+answer.+A+pay-as-you-learn+AI+tutor+that+bills+%240.01+per+explanation+in+USDC+over+x402%2C+with+a+live+itemized+session+invoice+and&amp;p=%2Ftutor">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Pay-As-You-Learn Tutor · three.ws">
-	<meta name="twitter:description" content="Ask anything and pay a cent per answer. A pay-as-you-learn AI tutor that bills $0.01 per explanation in USDC over x402, with a live itemized session invoice and signed attestation.">
+	<meta name="twitter:title" content="Pay-As-You-Learn Tutor · three.ws" data-i18n-attr="content:tutor.meta_twitter_title">
+	<meta name="twitter:description" content="Ask anything and pay a cent per answer. A pay-as-you-learn AI tutor that bills $0.01 per explanation in USDC over x402, with a live itemized session invoice and signed attestation." data-i18n-attr="content:tutor.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Pay-As-You-Learn+Tutor&amp;d=Ask+anything+and+pay+a+cent+per+answer.+A+pay-as-you-learn+AI+tutor+that+bills+%240.01+per+explanation+in+USDC+over+x402%2C+with+a+live+itemized+session+invoice+and&amp;p=%2Ftutor">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Pay-As-You-Learn Tutor","description":"Ask anything and pay a cent per answer. A pay-as-you-learn AI tutor that bills $0.01 per explanation in USDC over x402, with a live itemized session invoice and signed attestation.","url":"https://three.ws/tutor","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -208,26 +208,26 @@
 	<div id="nav-container"></div>
 	<script src="/nav.js"></script>
 	<header class="top">
-		<span class="top-title">Tutor</span>
+		<span class="top-title" data-i18n="tutor.tutor">Tutor</span>
 		<div class="spacer"></div>
 		<div class="tab" title="Running session total">
-			<span class="label">Session</span>
+			<span class="label" data-i18n="tutor.session">Session</span>
 			<span class="amount" id="tab-amount">$0.00</span>
-			<span class="count" id="tab-count">0 answers</span>
+			<span class="count" id="tab-count" data-i18n="tutor.0_answers">0 answers</span>
 		</div>
-		<button class="btn ghost" id="end-btn" disabled>End &amp; invoice</button>
+		<button class="btn ghost" id="end-btn" disabled data-i18n="tutor.end_invoice">End &amp; invoice</button>
 	</header>
 
 	<main>
 		<div class="thread" id="thread">
 			<div class="empty" id="empty">
-				<h1>Pay-as-you-learn.</h1>
-				<p>Ask anything — code, concepts, math, history. Each answer costs <strong>one cent</strong>, settled in USDC over x402 on Base or Solana. No subscription, no signup. You only pay for what you learn.</p>
+				<h1 data-i18n="tutor.pay_as_you_learn">Pay-as-you-learn.</h1>
+				<p data-i18n-html="tutor.ask_anything_code_concepts_math_history_each">Ask anything — code, concepts, math, history. Each answer costs <strong>one cent</strong>, settled in USDC over x402 on Base or Solana. No subscription, no signup. You only pay for what you learn.</p>
 				<div class="suggestions" id="suggestions">
-					<button class="suggestion">Explain how a JWT is verified, step by step.</button>
-					<button class="suggestion">Why does my recursive function overflow the stack?</button>
-					<button class="suggestion">What is the difference between TCP and UDP?</button>
-					<button class="suggestion">Walk me through how a transformer attention head works.</button>
+					<button class="suggestion" data-i18n="tutor.explain_how_a_jwt_is_verified_step">Explain how a JWT is verified, step by step.</button>
+					<button class="suggestion" data-i18n="tutor.why_does_my_recursive_function_overflow_the">Why does my recursive function overflow the stack?</button>
+					<button class="suggestion" data-i18n="tutor.what_is_the_difference_between_tcp_and">What is the difference between TCP and UDP?</button>
+					<button class="suggestion" data-i18n="tutor.walk_me_through_how_a_transformer_attention">Walk me through how a transformer attention head works.</button>
 				</div>
 			</div>
 		</div>
@@ -236,26 +236,26 @@
 			<div class="composer-inner">
 				<textarea id="q" rows="1" maxlength="2000" placeholder="Ask your question…" aria-label="Your question" aria-describedby="q-count"></textarea>
 				<div class="controls">
-					<span class="q-count" id="q-count" aria-live="polite" aria-label="Characters used">0 / 2000</span>
+					<span class="q-count" id="q-count" aria-live="polite" aria-label="Characters used" data-i18n-attr="aria-label:tutor.characters_used_arialabel">0 / 2000</span>
 					<select id="level" aria-label="Expertise level" title="Target expertise level">
-						<option value="beginner">Beginner</option>
-						<option value="intermediate" selected>Intermediate</option>
-						<option value="expert">Expert</option>
+						<option value="beginner" data-i18n="tutor.beginner">Beginner</option>
+						<option value="intermediate" selected data-i18n="tutor.intermediate">Intermediate</option>
+						<option value="expert" data-i18n="tutor.expert">Expert</option>
 					</select>
-					<button class="btn primary send" id="send" type="submit" aria-label="Send (pay $0.01)" title="Send · $0.01">
+					<button class="btn primary send" id="send" type="submit" aria-label="Send (pay $0.01)" title="Send · $0.01" data-i18n-attr="aria-label:tutor.send_pay_0_01_arialabel;title:tutor.send_0_01_title">
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
 					</button>
 				</div>
 			</div>
-			<p class="price-note">$0.01 per answer · paid in USDC via x402 · <span id="conn-note">connect a wallet when you send your first question</span></p>
+			<p class="price-note" data-i18n-html="tutor.0_01_per_answer_paid_in_usdc">$0.01 per answer · paid in USDC via x402 · <span id="conn-note">connect a wallet when you send your first question</span></p>
 		</form>
 	</main>
 
 	<div class="scrim" id="scrim">
 		<div class="invoice" role="dialog" aria-modal="true" aria-label="Session invoice">
-			<header><h3>Session invoice</h3><div class="spacer" style="flex:1"></div><button class="btn ghost" id="invoice-close">Close</button></header>
+			<header><h3 data-i18n="tutor.session_invoice">Session invoice</h3><div class="spacer" style="flex:1"></div><button class="btn ghost" id="invoice-close" data-i18n="tutor.close">Close</button></header>
 			<div class="body" id="invoice-lines"></div>
-			<div class="total"><span>Total</span><span class="amt" id="invoice-total">$0.00</span></div>
+			<div class="total"><span data-i18n="tutor.total">Total</span><span class="amt" id="invoice-total">$0.00</span></div>
 			<div class="attest" id="invoice-attest"></div>
 		</div>
 	</div>
@@ -263,5 +263,7 @@
 	<script type="module" src="/x402.js"></script>
 	<script type="module" src="/tutor.js"></script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

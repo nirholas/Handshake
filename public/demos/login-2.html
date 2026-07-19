@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>three.ws — login demo</title>
+		<title data-i18n="demos_login_2.meta_title">three.ws — login demo</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<style>
@@ -154,17 +154,17 @@
 				<span class="brand-dot"></span>
 				three.ws
 			</a>
-			<a href="/demos/" class="link">← lab</a>
+			<a href="/demos/" class="link" data-i18n="demos_login_2.lab">← lab</a>
 		</div>
 
 		<div class="page">
 			<form class="card" id="login-form" novalidate>
-				<div class="eyebrow"><span class="eyebrow-dot"></span><span>Declarative agent interactions</span></div>
-				<h1>Sign in</h1>
-				<p class="sub">Your agent will read along — and look away when it shouldn't.</p>
+				<div class="eyebrow"><span class="eyebrow-dot"></span><span data-i18n="demos_login_2.declarative_agent_interactions">Declarative agent interactions</span></div>
+				<h1 data-i18n="demos_login_2.sign_in">Sign in</h1>
+				<p class="sub" data-i18n="demos_login_2.your_agent_will_read_along_and_look">Your agent will read along — and look away when it shouldn't.</p>
 
 				<div class="field">
-					<label for="email">Email</label>
+					<label for="email" data-i18n="demos_login_2.email">Email</label>
 					<input
 						class="input"
 						id="email"
@@ -178,7 +178,7 @@
 				</div>
 
 				<div class="field">
-					<label for="password">Password</label>
+					<label for="password" data-i18n="demos_login_2.password">Password</label>
 					<input
 						class="input"
 						id="password"
@@ -196,9 +196,9 @@
 					id="submit-btn"
 					type="submit"
 					data-agent-action="validate-form"
-				>Sign in</button>
+				 data-i18n="demos_login_2.sign_in_2">Sign in</button>
 
-				<p class="foot">No account? <a href="/create">Build an agent →</a></p>
+				<p class="foot" data-i18n-html="demos_login_2.no_account_build_an_agent">No account? <a href="/create">Build an agent →</a></p>
 			</form>
 		</div>
 
@@ -535,5 +535,7 @@
 			})();
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

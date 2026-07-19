@@ -3,9 +3,9 @@
 	<head>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>three.ws</title>
+		<title data-i18n="handle.meta_title">three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="description" content="Live 3D avatar on three.ws — embed me anywhere." />
+		<meta name="description" content="Live 3D avatar on three.ws — embed me anywhere."  data-i18n-attr="content:handle.meta_description"/>
 		<meta name="theme-color" content="#0d0d0d" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -18,12 +18,12 @@
 
 		<meta property="og:type" content="profile" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="three.ws" id="og-title" />
-		<meta property="og:description" content="Live 3D avatar on three.ws." id="og-description" />
+		<meta property="og:title" content="three.ws" id="og-title"  data-i18n-attr="content:handle.meta_og_title"/>
+		<meta property="og:description" content="Live 3D avatar on three.ws." id="og-description"  data-i18n-attr="content:handle.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/og-image.png" id="og-image" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="three.ws" id="tw-title" />
-		<meta name="twitter:description" content="Live 3D avatar on three.ws." id="tw-description" />
+		<meta name="twitter:title" content="three.ws" id="tw-title"  data-i18n-attr="content:handle.meta_twitter_title"/>
+		<meta name="twitter:description" content="Live 3D avatar on three.ws." id="tw-description"  data-i18n-attr="content:handle.meta_twitter_description"/>
 		<meta name="twitter:image" content="https://three.ws/og-image.png" id="tw-image" />
 
 		<style>
@@ -245,16 +245,18 @@
 	</head>
 	<body>
 		<header class="topbar">
-			<a class="brand" href="/">three.ws</a>
+			<a class="brand" href="/" data-i18n="handle.three_ws">three.ws</a>
 			<nav class="links">
-				<a href="/explore">explore</a>
-				<a href="/create">create</a>
-				<a href="/dashboard">dashboard</a>
+				<a href="/explore" data-i18n="handle.explore">explore</a>
+				<a href="/create" data-i18n="handle.create">create</a>
+				<a href="/dashboard" data-i18n="handle.dashboard">dashboard</a>
 			</nav>
 		</header>
 		<main id="main"></main>
 
 		<script type="module" src="/src/handle.js"></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

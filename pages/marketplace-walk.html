@@ -17,7 +17,7 @@
 			})();
 		</script>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Walk-Browse the Marketplace · three.ws</title>
+		<title data-i18n="marketplace_walk.meta_title">Walk-Browse the Marketplace · three.ws</title>
 		<meta
 			name="viewport"
 			content="width=device-width, initial-scale=1, viewport-fit=cover"
@@ -26,7 +26,7 @@
 		<meta
 			name="description"
 			content="Walk your avatar through a 3D gallery of the three.ws marketplace — real agents, avatars, and skills as plinths in an endless hall. Step up to any listing and open it. Joystick or WASD."
-		/>
+		 data-i18n-attr="content:marketplace_walk.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 
 		<!--
@@ -51,13 +51,13 @@
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Walk-Browse the Marketplace · three.ws" />
-		<meta property="og:description" content="Stroll a 3D hall of real marketplace listings — agents, avatars, and skills as plinths you walk up to and open." />
+		<meta property="og:title" content="Walk-Browse the Marketplace · three.ws"  data-i18n-attr="content:marketplace_walk.meta_og_title"/>
+		<meta property="og:description" content="Stroll a 3D hall of real marketplace listings — agents, avatars, and skills as plinths you walk up to and open."  data-i18n-attr="content:marketplace_walk.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/marketplace-walk" />
 		<meta property="og:image" id="og-image" content="https://three.ws/api/walk-og" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Walk-Browse the Marketplace · three.ws" />
-		<meta name="twitter:description" content="Stroll a 3D hall of real marketplace listings — agents, avatars, and skills as plinths you walk up to and open." />
+		<meta name="twitter:title" content="Walk-Browse the Marketplace · three.ws"  data-i18n-attr="content:marketplace_walk.meta_twitter_title"/>
+		<meta name="twitter:description" content="Stroll a 3D hall of real marketplace listings — agents, avatars, and skills as plinths you walk up to and open."  data-i18n-attr="content:marketplace_walk.meta_twitter_description"/>
 		<meta name="twitter:image" id="twitter-image" content="https://three.ws/api/walk-og" />
 		<script>
 			// Patch OG image to include avatar + handle from URL params so
@@ -1333,7 +1333,7 @@
 		<div id="walk-loading" class="walk-loading">
 			<div class="walk-loading-inner">
 				<div class="walk-loading-spinner"></div>
-				<p class="walk-loading-text" id="walk-loading-text">Loading avatar...</p>
+				<p class="walk-loading-text" id="walk-loading-text" data-i18n="marketplace_walk.loading_avatar">Loading avatar...</p>
 			</div>
 		</div>
 
@@ -1348,61 +1348,61 @@
 							placeholder="your name" maxlength="24" autocomplete="off" spellcheck="false"
 							aria-label="Your display name" />
 					</div>
-					<p><kbd>WASD</kbd> or joystick to walk the hall · step up to a listing, press <kbd>E</kbd> to open. <a href="/marketplace">Grid view →</a></p>
+					<p data-i18n-html="marketplace_walk.wasd_or_joystick_to_walk_the_hall"><kbd>WASD</kbd> or joystick to walk the hall · step up to a listing, press <kbd>E</kbd> to open. <a href="/marketplace">Grid view →</a></p>
 				</div>
 				<div class="walk-actions">
-					<button type="button" class="walk-btn" id="walk-avatar-btn" title="Change avatar">
+					<button type="button" class="walk-btn" id="walk-avatar-btn" title="Change avatar" data-i18n-attr="title:marketplace_walk.change_avatar_title">
 						<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="5.5" r="3"/><path d="M3 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg>
 						<span data-label>Avatar</span>
 					</button>
-					<button type="button" id="walk-online" data-status="idle" title="Players online">
+					<button type="button" id="walk-online" data-status="idle" title="Players online" data-i18n-html="marketplace_walk.solo_1" data-i18n-attr="title:marketplace_walk.players_online_title">
 						<span class="dot"></span>
 						<span data-label>solo</span>
 						<span class="count" id="walk-online-count">1</span>
 					</button>
-					<button type="button" class="walk-btn" id="walk-camera-mode-btn" title="Camera mode (C)">
+					<button type="button" class="walk-btn" id="walk-camera-mode-btn" title="Camera mode (C)" data-i18n-attr="title:marketplace_walk.camera_mode_c_title">
 						<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="5"/><path d="M8 3v2M8 11v2M3 8h2M11 8h2"/></svg>
 						<span data-label>Camera</span>
 					</button>
-					<button type="button" class="walk-btn" id="walk-env-btn" title="Environment (V)">
+					<button type="button" class="walk-btn" id="walk-env-btn" title="Environment (V)" data-i18n-attr="title:marketplace_walk.environment_v_title">
 						<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 14l4-6 3 4 2-3 5 5"/><circle cx="11" cy="4" r="2"/></svg>
 						<span data-label>Scene</span>
 					</button>
 					<button type="button" class="walk-btn" id="walk-ar-toggle"
-						aria-pressed="false" title="Put your avatar on your real floor">
+						aria-pressed="false" title="Put your avatar on your real floor" data-i18n-html="marketplace_walk.ar" data-i18n-attr="title:marketplace_walk.put_your_avatar_on_your_real_title">
 						<span class="dot"></span>
 						<span data-label>AR</span>
 					</button>
-					<button type="button" class="walk-btn" id="walk-screenshot-btn" title="Screenshot (P)">
+					<button type="button" class="walk-btn" id="walk-screenshot-btn" title="Screenshot (P)" data-i18n-attr="title:marketplace_walk.screenshot_p_title">
 						<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="12" height="9" rx="2"/><circle cx="8" cy="9" r="2.5"/><path d="M5.5 4L6.5 2h3l1 2"/></svg>
 						<span data-label>Photo</span>
 					</button>
 					<button type="button" class="walk-btn" id="walk-record-btn"
-						data-recording="false" title="Record a 6-second clip to share">
+						data-recording="false" title="Record a 6-second clip to share" data-i18n-html="marketplace_walk.record" data-i18n-attr="title:marketplace_walk.record_a_6_second_clip_to_sh_title">
 						<span class="dot"></span>
 						<span data-label>Record</span>
 					</button>
-					<button type="button" class="walk-btn" id="walk-minimap-btn" title="Minimap (M)">
+					<button type="button" class="walk-btn" id="walk-minimap-btn" title="Minimap (M)" data-i18n-attr="title:marketplace_walk.minimap_m_title">
 						<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="1" width="14" height="14" rx="2"/><circle cx="8" cy="8" r="2"/><path d="M8 1v3M8 12v3M1 8h3M12 8h3"/></svg>
 						<span data-label>Map</span>
 					</button>
-					<button type="button" class="walk-btn" id="walk-zen-btn" title="Hide all controls — just the scene and joystick (Z)">
+					<button type="button" class="walk-btn" id="walk-zen-btn" title="Hide all controls — just the scene and joystick (Z)" data-i18n-attr="title:marketplace_walk.hide_all_controls_just_the_s_title">
 						<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8S3.8 3.5 8 3.5 14.5 8 14.5 8 12.2 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/><path d="M2 14L14 2"/></svg>
 						<span data-label>Hide UI</span>
 					</button>
-					<button type="button" class="walk-btn walk-friends-btn" id="walk-friends-btn" title="Friends (F)" aria-label="Friends" aria-haspopup="dialog">
+					<button type="button" class="walk-btn walk-friends-btn" id="walk-friends-btn" title="Friends (F)" aria-label="Friends" aria-haspopup="dialog" data-i18n-attr="aria-label:marketplace_walk.friends_arialabel;title:marketplace_walk.friends_f_title">
 						<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="5" r="2.5"/><path d="M1 13c0-2.5 2-4.5 4.5-4.5S10 10.5 10 13"/><circle cx="12" cy="5.5" r="2"/><path d="M10.5 13c0-1.7.9-3.2 2.4-3.9"/></svg>
 						<span data-label>Friends</span>
 						<span class="walk-friends-badge" id="walk-friends-badge" hidden aria-label="unread messages"></span>
 					</button>
-					<button type="button" class="walk-btn" id="walk-help-toggle" title="Show controls (H)">
+					<button type="button" class="walk-btn" id="walk-help-toggle" title="Show controls (H)" data-i18n-attr="title:marketplace_walk.show_controls_h_title">
 						<span>?</span>
 					</button>
 				</div>
 			</div>
 
 			<!-- Restore-chrome pill (only shown in zen mode) -->
-			<button type="button" id="walk-zen-exit" title="Show controls (Z)" aria-label="Show controls">
+			<button type="button" id="walk-zen-exit" title="Show controls (Z)" aria-label="Show controls" data-i18n-attr="aria-label:marketplace_walk.show_controls_arialabel;title:marketplace_walk.show_controls_z_title">
 				<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 8S3.8 3.5 8 3.5 14.5 8 14.5 8 12.2 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/></svg>
 				<span>Show UI</span>
 			</button>
@@ -1410,8 +1410,8 @@
 			<!-- Avatar picker panel -->
 			<div id="walk-avatar-picker" class="walk-avatar-picker" hidden>
 				<div class="walk-avatar-picker-header">
-					<span>Choose Avatar</span>
-					<button type="button" id="walk-avatar-picker-close" aria-label="Close">&times;</button>
+					<span data-i18n="marketplace_walk.choose_avatar">Choose Avatar</span>
+					<button type="button" id="walk-avatar-picker-close" aria-label="Close" data-i18n-attr="aria-label:marketplace_walk.close_arialabel">&times;</button>
 				</div>
 				<div id="walk-avatar-picker-list" class="walk-avatar-picker-list">
 					<div class="walk-avatar-picker-loading">Loading your avatars...</div>
@@ -1425,7 +1425,7 @@
 					<input type="text" id="walk-chat-input" class="walk-chat-input"
 						placeholder="Press Enter to chat..." maxlength="200" autocomplete="off" spellcheck="false"
 						aria-label="Chat message" />
-					<button type="submit" class="walk-chat-send" aria-label="Send">
+					<button type="submit" class="walk-chat-send" aria-label="Send" data-i18n-attr="aria-label:marketplace_walk.send_arialabel">
 						<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2L7 9"/><path d="M14 2l-5 12-2-5-5-2z"/></svg>
 					</button>
 				</form>
@@ -1437,7 +1437,7 @@
 				<div class="walk-voice-status" data-voice-status aria-live="polite">Hold to talk</div>
 				<canvas class="walk-voice-wave" data-voice-wave width="120" height="28" aria-hidden="true"></canvas>
 				<button type="button" class="walk-voice-mic" data-voice-mic
-					aria-pressed="false" aria-label="Hold to talk to your avatar (T)" title="Hold to talk (T)">
+					aria-pressed="false" aria-label="Hold to talk to your avatar (T)" title="Hold to talk (T)" data-i18n-attr="aria-label:marketplace_walk.hold_to_talk_to_your_avatar_arialabel;title:marketplace_walk.hold_to_talk_t_title">
 					<span class="walk-voice-ring" aria-hidden="true"></span>
 					<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 						<rect x="9" y="2" width="6" height="11" rx="3"/>
@@ -1445,15 +1445,15 @@
 						<path d="M12 18v3"/>
 					</svg>
 				</button>
-				<span class="walk-voice-key" aria-hidden="true">Hold <kbd>T</kbd></span>
+				<span class="walk-voice-key" aria-hidden="true" data-i18n-html="marketplace_walk.hold_t">Hold <kbd>T</kbd></span>
 			</div>
 
 			<!-- Friends panel (Task 15) -->
 			<div id="walk-friends-overlay" class="wf-friends-overlay" hidden aria-label="Friends">
 				<div class="wf-friends-card" role="dialog" aria-modal="true" aria-labelledby="walk-friends-title">
 					<div class="wf-friends-head">
-						<h2 class="wf-friends-title" id="walk-friends-title">Friends</h2>
-						<button type="button" class="wf-friends-close" id="walk-friends-close" aria-label="Close friends panel">&times;</button>
+						<h2 class="wf-friends-title" id="walk-friends-title" data-i18n="marketplace_walk.friends">Friends</h2>
+						<button type="button" class="wf-friends-close" id="walk-friends-close" aria-label="Close friends panel" data-i18n-attr="aria-label:marketplace_walk.close_friends_panel_arialabel">&times;</button>
 					</div>
 					<div class="wf-friends-body" id="walk-friends-body"></div>
 				</div>
@@ -1462,8 +1462,8 @@
 			<!-- Player list panel -->
 			<div id="walk-players-panel" class="walk-players-panel" hidden>
 				<div class="walk-players-header">
-					<span>Players</span>
-					<button type="button" id="walk-players-close" aria-label="Close">&times;</button>
+					<span data-i18n="marketplace_walk.players">Players</span>
+					<button type="button" id="walk-players-close" aria-label="Close" data-i18n-attr="aria-label:marketplace_walk.close_arialabel_2">&times;</button>
 				</div>
 				<ul id="walk-players-list" class="walk-players-list"></ul>
 			</div>
@@ -1471,7 +1471,7 @@
 			<!-- Emote tray -->
 			<div id="walk-emote-tray" class="walk-emote-tray" hidden></div>
 
-			<button type="button" id="walk-ar-cta" aria-hidden="true">
+			<button type="button" id="walk-ar-cta" aria-hidden="true" data-i18n-html="marketplace_walk.see_your_avatar_on_your_floor_tap">
 				<span class="pulse"></span>
 				<span>See your avatar on your floor — tap for AR</span>
 				<span class="dismiss" aria-label="Dismiss">×</span>
@@ -1479,35 +1479,35 @@
 
 			<div id="walk-record-status" role="status" aria-live="polite">
 				<span class="rec-dot"></span>
-				<span data-label>REC 6s</span>
+				<span data-label data-i18n="marketplace_walk.rec_6s">REC 6s</span>
 			</div>
 
 			<div id="walk-joystick" aria-label="Movement joystick"></div>
 			<div id="walk-look-joystick" aria-label="Look joystick"></div>
 
 			<div id="walk-touch-actions" aria-label="Action buttons">
-				<button type="button" class="walk-touch-btn" id="walk-touch-camera" aria-label="Switch camera">
+				<button type="button" class="walk-touch-btn" id="walk-touch-camera" aria-label="Switch camera" data-i18n-attr="aria-label:marketplace_walk.switch_camera_arialabel">
 					<svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3"/><path d="M5 3.5h6l1 1.5h1.5a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H1.5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1H3z"/></svg>
 				</button>
-				<button type="button" class="walk-touch-btn" id="walk-touch-gesture" aria-label="Gestures">
+				<button type="button" class="walk-touch-btn" id="walk-touch-gesture" aria-label="Gestures" data-i18n-attr="aria-label:marketplace_walk.gestures_arialabel">
 					<svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8V3.2a1.2 1.2 0 0 1 2.4 0V7m0-.5a1.2 1.2 0 0 1 2.4 0V8m0-.8a1.2 1.2 0 0 1 2.4 0v3.2c0 2-1.6 3.6-3.6 3.6H8.4c-1.2 0-2-.5-2.7-1.4L3.3 11a1.2 1.2 0 0 1 1.8-1.5L6 10.4"/></svg>
 				</button>
-				<button type="button" class="walk-touch-btn is-jump" id="walk-touch-jump" aria-label="Jump">
+				<button type="button" class="walk-touch-btn is-jump" id="walk-touch-jump" aria-label="Jump" data-i18n-attr="aria-label:marketplace_walk.jump_arialabel">
 					<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l5 6h-3v6h-4v-6H7z"/></svg>
 				</button>
 			</div>
 
 			<div id="walk-help" aria-hidden="true">
-				<span class="walk-key"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span>
-				<span class="walk-key"><kbd>shift</kbd> run</span>
-				<span class="walk-key"><kbd>space</kbd> jump</span>
-				<span class="walk-key"><kbd>C</kbd> camera</span>
-				<span class="walk-key"><kbd>G</kbd> gestures</span>
-				<span class="walk-key"><kbd>V</kbd> scene</span>
-				<span class="walk-key"><kbd>M</kbd> map</span>
-				<span class="walk-key"><kbd>I</kbd> inspect avatar</span>
-				<span class="walk-key"><kbd>Z</kbd> hide UI</span>
-				<span class="walk-key"><kbd>H</kbd> help</span>
+				<span class="walk-key" data-i18n-html="marketplace_walk.wasd_move"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span>
+				<span class="walk-key" data-i18n-html="marketplace_walk.shift_run"><kbd>shift</kbd> run</span>
+				<span class="walk-key" data-i18n-html="marketplace_walk.space_jump"><kbd>space</kbd> jump</span>
+				<span class="walk-key" data-i18n-html="marketplace_walk.c_camera"><kbd>C</kbd> camera</span>
+				<span class="walk-key" data-i18n-html="marketplace_walk.g_gestures"><kbd>G</kbd> gestures</span>
+				<span class="walk-key" data-i18n-html="marketplace_walk.v_scene"><kbd>V</kbd> scene</span>
+				<span class="walk-key" data-i18n-html="marketplace_walk.m_map"><kbd>M</kbd> map</span>
+				<span class="walk-key" data-i18n-html="marketplace_walk.i_inspect_avatar"><kbd>I</kbd> inspect avatar</span>
+				<span class="walk-key" data-i18n-html="marketplace_walk.z_hide_ui"><kbd>Z</kbd> hide UI</span>
+				<span class="walk-key" data-i18n-html="marketplace_walk.h_help"><kbd>H</kbd> help</span>
 			</div>
 
 			<div id="walk-status">loading avatar…</div>
@@ -1518,5 +1518,7 @@
 		     the treadmill that scrolls them past the avatar. -->
 		<script type="module" src="/src/walk.js"></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

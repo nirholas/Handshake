@@ -4,12 +4,12 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-	<title>Characters — three.ws</title>
-	<meta name="description" content="Discover AI characters on three.ws. Chat, trade, and create." />
+	<title data-i18n="characters.meta_title">Characters — three.ws</title>
+	<meta name="description" content="Discover AI characters on three.ws. Chat, trade, and create."  data-i18n-attr="content:characters.meta_description"/>
 	<link rel="icon" href="/favicon.ico" />
 	<link rel="canonical" href="https://three.ws/characters" />
-	<meta property="og:title" content="Characters — three.ws" />
-	<meta property="og:description" content="Discover AI characters. Chat, trade, create." />
+	<meta property="og:title" content="Characters — three.ws"  data-i18n-attr="content:characters.meta_og_title"/>
+	<meta property="og:description" content="Discover AI characters. Chat, trade, create."  data-i18n-attr="content:characters.meta_og_description"/>
 	<meta property="og:url" content="https://three.ws/characters" />
 	<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Characters&amp;d=Discover+AI+characters+on+three.ws.+Chat%2C+trade%2C+and+create.&amp;p=%2Fcharacters" />
 	<link rel="stylesheet" href="/nav.css" />
@@ -18,8 +18,8 @@
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Characters · three.ws">
-	<meta name="twitter:description" content="Discover AI characters on three.ws. Chat, trade, and create.">
+	<meta name="twitter:title" content="Characters · three.ws" data-i18n-attr="content:characters.meta_twitter_title">
+	<meta name="twitter:description" content="Discover AI characters on three.ws. Chat, trade, and create." data-i18n-attr="content:characters.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Characters&amp;d=Discover+AI+characters+on+three.ws.+Chat%2C+trade%2C+and+create.&amp;p=%2Fcharacters">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Characters","description":"Discover AI characters on three.ws. Chat, trade, and create.","url":"https://three.ws/characters","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -34,12 +34,12 @@
 <script src="/nav.js"></script>
 
 <div class="chs-header">
-	<h1 class="chs-title">Characters</h1>
+	<h1 class="chs-title" data-i18n="characters.characters">Characters</h1>
 	<div class="chs-controls">
 		<input id="chs-search" class="chs-search" type="search" placeholder="Search characters…" autocomplete="off" />
 		<div class="chs-sort">
-			<button class="chs-sort-btn active" data-sort="new">New</button>
-			<button class="chs-sort-btn" data-sort="chats">Top</button>
+			<button class="chs-sort-btn active" data-sort="new" data-i18n="characters.new">New</button>
+			<button class="chs-sort-btn" data-sort="chats" data-i18n="characters.top">Top</button>
 		</div>
 	</div>
 </div>
@@ -49,12 +49,14 @@
 </div>
 
 <div id="chs-load-more" class="chs-load-more" style="display:none">
-	<button id="chs-load-btn" class="chs-load-btn">Load more</button>
+	<button id="chs-load-btn" class="chs-load-btn" data-i18n="characters.load_more">Load more</button>
 </div>
 
 <div class="chs-bottom-pad"></div>
 
 <script type="module" src="/src/characters.js"></script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

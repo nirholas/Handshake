@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Selfie Fit · three.ws lab</title>
+		<title data-i18n="demos_selfie_fit.meta_title">Selfie Fit · three.ws lab</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/style.css" />
 		<link rel="stylesheet" href="/nav.css" />
@@ -138,9 +138,9 @@
 		<header><div id="nav-container"></div></header>
 
 		<main class="stage">
-			<p class="crumb"><a href="/demos">&larr; lab</a></p>
-			<h1>Selfie Fit</h1>
-			<p class="sub">
+			<p class="crumb" data-i18n-html="demos_selfie_fit.lab"><a href="/demos">&larr; lab</a></p>
+			<h1 data-i18n="demos_selfie_fit.selfie_fit">Selfie Fit</h1>
+			<p class="sub" data-i18n-html="demos_selfie_fit.three_photo_capture_with_live_face_landmark">
 				Three-photo capture with live face-landmark quality gates. Each slot
 				runs a 468-point wireframe overlay and head-pose estimator on the
 				webcam feed (or a single uploaded image) and only unlocks when the
@@ -153,7 +153,7 @@
 
 			<div class="grid">
 				<section class="panel">
-					<h2>1. Capture three photos</h2>
+					<h2 data-i18n="demos_selfie_fit.1_capture_three_photos">1. Capture three photos</h2>
 					<div class="slots">
 						<div class="slot" data-slot="frontal">
 							<div class="placeholder">
@@ -163,8 +163,8 @@
 							</div>
 							<div class="badge"></div>
 							<div class="footer" hidden>
-								<button class="slot-btn" data-slot-action="camera">Camera</button>
-								<button class="slot-btn" data-slot-action="upload">Upload</button>
+								<button class="slot-btn" data-slot-action="camera" data-i18n="demos_selfie_fit.camera">Camera</button>
+								<button class="slot-btn" data-slot-action="upload" data-i18n="demos_selfie_fit.upload">Upload</button>
 							</div>
 							<input class="upload-input" type="file" accept="image/jpeg,image/png" />
 						</div>
@@ -176,8 +176,8 @@
 							</div>
 							<div class="badge"></div>
 							<div class="footer" hidden>
-								<button class="slot-btn" data-slot-action="camera">Camera</button>
-								<button class="slot-btn" data-slot-action="upload">Upload</button>
+								<button class="slot-btn" data-slot-action="camera" data-i18n="demos_selfie_fit.camera_2">Camera</button>
+								<button class="slot-btn" data-slot-action="upload" data-i18n="demos_selfie_fit.upload_2">Upload</button>
 							</div>
 							<input class="upload-input" type="file" accept="image/jpeg,image/png" />
 						</div>
@@ -189,13 +189,13 @@
 							</div>
 							<div class="badge"></div>
 							<div class="footer" hidden>
-								<button class="slot-btn" data-slot-action="camera">Camera</button>
-								<button class="slot-btn" data-slot-action="upload">Upload</button>
+								<button class="slot-btn" data-slot-action="camera" data-i18n="demos_selfie_fit.camera_3">Camera</button>
+								<button class="slot-btn" data-slot-action="upload" data-i18n="demos_selfie_fit.upload_3">Upload</button>
 							</div>
 							<input class="upload-input" type="file" accept="image/jpeg,image/png" />
 						</div>
 					</div>
-					<p style="color:#6a6d7c;font-size:12px;margin:0">
+					<p style="color:#6a6d7c;font-size:12px;margin:0" data-i18n-html="demos_selfie_fit.click_a_slot_to_start_choose_camera">
 						Click a slot to start. Choose <strong>Camera</strong> for a live
 						feed with real-time face-landmark gates, or <strong>Upload</strong>
 						to validate an existing JPEG/PNG.
@@ -203,7 +203,7 @@
 				</section>
 
 				<section class="panel opts">
-					<h2>2. Options</h2>
+					<h2 data-i18n="demos_selfie_fit.2_options">2. Options</h2>
 					<div class="opt-row">
 						<div class="label">Body type</div>
 						<div class="radios" id="body-radios">
@@ -219,12 +219,12 @@
 							<label class="radio"><input type="radio" name="style" value="v2" /> v2</label>
 						</div>
 					</div>
-					<button class="submit" id="submit-btn" disabled>Upload 0/3</button>
+					<button class="submit" id="submit-btn" disabled data-i18n="demos_selfie_fit.upload_0_3">Upload 0/3</button>
 					<div class="result-card" id="result-card">
-						<h2 style="margin:0 0 6px;color:#3dc1ff">three.ws Selfie session ready</h2>
+						<h2 style="margin:0 0 6px;color:#3dc1ff" data-i18n="demos_selfie_fit.three_ws_selfie_session_ready">three.ws Selfie session ready</h2>
 						<div style="color:#8a8d98;font-size:13px">Open the editor to refine and export your avatar.</div>
 						<div class="url" id="result-url"></div>
-						<button class="submit" id="open-session-btn">Open three.ws Selfie editor</button>
+						<button class="submit" id="open-session-btn" data-i18n="demos_selfie_fit.open_three_ws_selfie_editor">Open three.ws Selfie editor</button>
 					</div>
 					<div class="opt-row">
 						<div class="label">Log</div>
@@ -236,7 +236,7 @@
 
 		<div class="iframe-modal" id="iframe-modal">
 			<div class="frame-shell">
-				<button class="close" id="modal-close">Close</button>
+				<button class="close" id="modal-close" data-i18n="demos_selfie_fit.close">Close</button>
 				<iframe id="session-iframe" allow="camera; microphone; clipboard-write" referrerpolicy="no-referrer"></iframe>
 			</div>
 		</div>
@@ -1087,5 +1087,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

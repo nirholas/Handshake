@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Brain · three.ws</title>
-<meta name="description" content="Multi-model AI playground. Chat with Claude, GPT, Llama, Qwen, DeepSeek — switch models mid-conversation, compare side-by-side, track speed and token metrics."/>
+<title data-i18n="demos_brain.meta_title">Brain · three.ws</title>
+<meta name="description" content="Multi-model AI playground. Chat with Claude, GPT, Llama, Qwen, DeepSeek — switch models mid-conversation, compare side-by-side, track speed and token metrics." data-i18n-attr="content:demos_brain.meta_description"/>
 <link rel="canonical" href="https://three.ws/brain"/>
-<meta property="og:title" content="Brain · three.ws"/>
-<meta property="og:description" content="Multi-model AI playground. Chat, compare, and benchmark 10 models side-by-side with real streaming and token metrics."/>
+<meta property="og:title" content="Brain · three.ws" data-i18n-attr="content:demos_brain.meta_og_title"/>
+<meta property="og:description" content="Multi-model AI playground. Chat, compare, and benchmark 10 models side-by-side with real streaming and token metrics." data-i18n-attr="content:demos_brain.meta_og_description"/>
 <meta property="og:url" content="https://three.ws/brain"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <link rel="icon" href="/favicon.ico"/>
@@ -163,32 +163,32 @@ a{color:inherit;text-decoration:none}button{font-family:inherit;cursor:pointer;b
 <header><div id="nav-container"></div></header>
 <div class="brain">
 <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
-<aside class="sidebar" id="sidebar"><div class="sidebar-head"><button class="new-chat-btn" id="new-chat-btn">+ New chat</button></div><div class="sessions" id="sessions"></div></aside>
+<aside class="sidebar" id="sidebar"><div class="sidebar-head"><button class="new-chat-btn" id="new-chat-btn" data-i18n="demos_brain.new_chat">+ New chat</button></div><div class="sessions" id="sessions"></div></aside>
 <div class="main">
 <div class="topbar">
-<button class="sidebar-btn" id="sidebar-btn" aria-label="Toggle sidebar">&#9776;</button>
-<div class="model-picker" id="model-picker"><button class="model-trigger" id="model-trigger"><span class="model-dot" id="trigger-dot"></span><span id="trigger-label">Claude Sonnet 4.6</span><span class="model-caret">&#9662;</span></button><div class="model-dropdown" id="model-dropdown"></div></div>
-<div class="mode-tabs"><button class="mode-tab active" data-mode="chat" id="tab-chat">Chat</button><button class="mode-tab" data-mode="compare" id="tab-compare">Compare</button></div>
+<button class="sidebar-btn" id="sidebar-btn" aria-label="Toggle sidebar" data-i18n-attr="aria-label:demos_brain.toggle_sidebar_arialabel">&#9776;</button>
+<div class="model-picker" id="model-picker"><button class="model-trigger" id="model-trigger" data-i18n-html="demos_brain.claude_sonnet_4_6"><span class="model-dot" id="trigger-dot"></span><span id="trigger-label">Claude Sonnet 4.6</span><span class="model-caret">&#9662;</span></button><div class="model-dropdown" id="model-dropdown"></div></div>
+<div class="mode-tabs"><button class="mode-tab active" data-mode="chat" id="tab-chat" data-i18n="demos_brain.chat">Chat</button><button class="mode-tab" data-mode="compare" id="tab-compare" data-i18n="demos_brain.compare">Compare</button></div>
 <div class="topbar-spacer"></div>
-<div class="topbar-actions"><button class="topbar-btn" id="export-btn" title="Export conversation">Export</button><button class="topbar-btn" id="clear-btn" title="Clear conversation">Clear</button></div>
+<div class="topbar-actions"><button class="topbar-btn" id="export-btn" title="Export conversation" data-i18n="demos_brain.export" data-i18n-attr="title:demos_brain.export_conversation_title">Export</button><button class="topbar-btn" id="clear-btn" title="Clear conversation" data-i18n="demos_brain.clear" data-i18n-attr="title:demos_brain.clear_conversation_title">Clear</button></div>
 </div>
 <div class="content">
 <div class="chat-view" id="chat-view">
-<div id="agent-banner" class="agent-banner"><span>Chatting as</span><span class="agent-banner-name" id="agent-banner-name"></span><button class="agent-banner-dismiss" id="agent-banner-dismiss">Dismiss</button></div>
+<div id="agent-banner" class="agent-banner"><span data-i18n="demos_brain.chatting_as">Chatting as</span><span class="agent-banner-name" id="agent-banner-name"></span><button class="agent-banner-dismiss" id="agent-banner-dismiss" data-i18n="demos_brain.dismiss">Dismiss</button></div>
 <div class="messages" id="messages">
 <div class="empty-state" id="empty-state"><div class="empty-orb"></div><div class="empty-title">Brain</div><div class="empty-sub">Chat with any model. Switch mid-conversation, compare side-by-side, track speed and token metrics.</div><div class="prompt-grid" id="prompt-grid"></div></div>
 </div>
 <div class="input-area"><div class="input-inner">
-<div class="sys-row"><button class="sys-toggle" id="sys-toggle">&#9658; System prompt</button><div class="sys-panel" id="sys-panel" hidden><textarea class="sys-ta" id="system-ta" placeholder="You are a helpful assistant..." rows="3"></textarea></div></div>
-<div class="input-box"><textarea class="input-ta" id="input-ta" placeholder="Message... (Ctrl+Enter to send)" rows="1"></textarea><div class="input-footer"><span class="input-hint">ctrl+&#8629; send &middot; shift+&#8629; newline</span><button class="btn-stop" id="stop-btn">&#9724; Stop</button><button class="btn-send" id="send-btn" disabled>Send <span class="sc">&#8984;&#8629;</span></button></div></div>
-<div class="input-sub"><a href="/dashboard/library#tab=brain">Configure agent brains</a> &middot; Responses may be inaccurate</div>
+<div class="sys-row"><button class="sys-toggle" id="sys-toggle" data-i18n="demos_brain.system_prompt">&#9658; System prompt</button><div class="sys-panel" id="sys-panel" hidden><textarea class="sys-ta" id="system-ta" placeholder="You are a helpful assistant..." rows="3"></textarea></div></div>
+<div class="input-box"><textarea class="input-ta" id="input-ta" placeholder="Message... (Ctrl+Enter to send)" rows="1"></textarea><div class="input-footer"><span class="input-hint" data-i18n="demos_brain.ctrl_send_shift_newline">ctrl+&#8629; send &middot; shift+&#8629; newline</span><button class="btn-stop" id="stop-btn" data-i18n="demos_brain.stop">&#9724; Stop</button><button class="btn-send" id="send-btn" disabled data-i18n-html="demos_brain.send">Send <span class="sc">&#8984;&#8629;</span></button></div></div>
+<div class="input-sub"><a href="/dashboard/library#tab=brain" data-i18n="demos_brain.configure_agent_brains">Configure agent brains</a> &middot; Responses may be inaccurate</div>
 </div></div>
 </div>
 <div class="compare-view" id="compare-view" style="display:none">
 <div class="cmp-top">
 <div class="cmp-providers" id="cmp-providers"></div>
-<div class="cmp-inputs"><textarea class="cmp-textarea" id="cmp-prompt" rows="3" placeholder="Ask anything... (Ctrl+Enter to run)">Explain HTTP 402 in two sentences. No filler.</textarea><div class="cmp-sidebar-col"><label class="cmp-label">System (optional)</label><textarea class="cmp-sys-ta" id="cmp-system" rows="2" placeholder="You are a terse assistant..."></textarea></div></div>
-<div class="cmp-controls"><label for="cmp-tokens">Max tokens</label><input type="number" id="cmp-tokens" value="512" min="32" max="4096"/><span class="cmp-spacer"></span><button class="cmp-btn-clear" id="cmp-clear-btn">Clear</button><button class="cmp-btn-run" id="cmp-run-btn">Run all</button></div>
+<div class="cmp-inputs"><textarea class="cmp-textarea" id="cmp-prompt" rows="3" placeholder="Ask anything... (Ctrl+Enter to run)">Explain HTTP 402 in two sentences. No filler.</textarea><div class="cmp-sidebar-col"><label class="cmp-label" data-i18n="demos_brain.system_optional">System (optional)</label><textarea class="cmp-sys-ta" id="cmp-system" rows="2" placeholder="You are a terse assistant..."></textarea></div></div>
+<div class="cmp-controls"><label for="cmp-tokens" data-i18n="demos_brain.max_tokens">Max tokens</label><input type="number" id="cmp-tokens" value="512" min="32" max="4096"/><span class="cmp-spacer"></span><button class="cmp-btn-clear" id="cmp-clear-btn" data-i18n="demos_brain.clear_2">Clear</button><button class="cmp-btn-run" id="cmp-run-btn" data-i18n="demos_brain.run_all">Run all</button></div>
 </div>
 <div class="cmp-grid" id="cmp-grid"><div class="cmp-empty">Select models and run a prompt to compare responses side-by-side.</div></div>
 </div>
@@ -297,5 +297,7 @@ checkAvailability();loadAgentContext();
 if(window.innerWidth<=860)sidebar.classList.add('collapsed');
 </script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Pickup &amp; drop — three.ws</title>
+		<title data-i18n="demos_agents_pickup_drop.meta_title">Pickup &amp; drop — three.ws</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/demos/agents/_shared.css" />
@@ -15,8 +15,8 @@
 	<body>
 		<div class="stage">
 			<div class="hero-eyebrow">Pickup &amp; drop</div>
-			<h1 class="hero-title">Pick her <em>up</em>.</h1>
-			<p class="hero-sub">
+			<h1 class="hero-title" data-i18n-html="demos_agents_pickup_drop.pick_her_up">Pick her <em>up</em>.</h1>
+			<p class="hero-sub" data-i18n="demos_agents_pickup_drop.click_and_drag_her_anywhere_on_the">
 				Click and drag her anywhere on the page. Release her and gravity
 				takes over — she falls, splashes on landing, then stands up.
 			</p>
@@ -129,5 +129,7 @@
 			}, rootBone, baseRootPos);
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Trampoline — three.ws</title>
+		<title data-i18n="demos_agents_trampoline.meta_title">Trampoline — three.ws</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/demos/agents/_shared.css" />
@@ -11,14 +11,14 @@
 	<body>
 		<div class="stage">
 			<div class="hero-eyebrow">Trampoline mode</div>
-			<h1 class="hero-title">The CTA <em>bounces</em>.</h1>
-			<p class="hero-sub">
+			<h1 class="hero-title" data-i18n-html="demos_agents_trampoline.the_cta_bounces">The CTA <em>bounces</em>.</h1>
+			<p class="hero-sub" data-i18n="demos_agents_trampoline.she_lands_on_the_button_and_it">
 				She lands on the button and it springs her back up — four bounces,
 				each peak higher than the last. Confetti on the top bounce.
 			</p>
 			<div class="cta-row">
-				<a href="#" class="btn btn-primary" id="cta-btn"><span>Bounce me</span><span>⤴</span></a>
-				<button class="btn btn-ghost" id="restart"><span>Restart</span></button>
+				<a href="#" class="btn btn-primary" id="cta-btn" data-i18n-html="demos_agents_trampoline.bounce_me"><span>Bounce me</span><span>⤴</span></a>
+				<button class="btn btn-ghost" id="restart" data-i18n-html="demos_agents_trampoline.restart"><span>Restart</span></button>
 			</div>
 		</div>
 		<canvas id="avatar-canvas"></canvas>
@@ -118,5 +118,7 @@
 			}, rootBone, baseRootPos);
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

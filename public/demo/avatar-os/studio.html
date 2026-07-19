@@ -2,7 +2,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title>Studio · OSS Avatar Pipeline</title>
+		<title data-i18n="demo_avatar_os_studio.meta_title">Studio · OSS Avatar Pipeline</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="robots" content="noindex" />
 		<meta name="theme-color" content="#0a0a0a" />
@@ -11,59 +11,59 @@
 	</head>
 	<body>
 		<header class="os-header">
-			<div class="brand">three.ws<span class="tag">avatar-os · studio</span></div>
+			<div class="brand">three.ws<span class="tag" data-i18n="demo_avatar_os_studio.avatar_os_studio">avatar-os · studio</span></div>
 			<nav>
-				<a href="/demo/avatar-os/">overview</a>
-				<a href="/demo/avatar-os/studio.html" class="active">studio</a>
-				<a href="/demo/avatar-os/selfie.html">selfie</a>
-				<a href="/demo/avatar-os/combined.html">combined</a>
+				<a href="/demo/avatar-os/" data-i18n="demo_avatar_os_studio.overview">overview</a>
+				<a href="/demo/avatar-os/studio.html" class="active" data-i18n="demo_avatar_os_studio.studio">studio</a>
+				<a href="/demo/avatar-os/selfie.html" data-i18n="demo_avatar_os_studio.selfie">selfie</a>
+				<a href="/demo/avatar-os/combined.html" data-i18n="demo_avatar_os_studio.combined">combined</a>
 			</nav>
 		</header>
 		<main class="os-main">
 			<div class="banner">
-				<strong>CharacterStudio editor.</strong> Open-source customization editor (M3-org).
+				<strong data-i18n="demo_avatar_os_studio.characterstudio_editor">CharacterStudio editor.</strong> Open-source customization editor (M3-org).
 				Built on @pixiv/three-vrm. Replaces the Avaturn iframe editor.
 			</div>
 
 			<div class="os-grid">
 				<aside>
 					<div class="os-card">
-						<h2>1 · Open editor</h2>
-						<p>
+						<h2 data-i18n="demo_avatar_os_studio.1_open_editor">1 · Open editor</h2>
+						<p data-i18n-html="demo_avatar_os_studio.loads_the_three_ws_avatar_studio_in">
 							Loads the three.ws Avatar Studio in an iframe — served same-origin at
 							<span class="kbd">/avatar-studio</span> (override with
 							<span class="kbd">VITE_CHARACTER_STUDIO_URL</span>) — or use the public
 							CharacterStudio build.
 						</p>
 						<div class="btn-row">
-							<button id="btn-open-studio" class="btn btn-primary">
+							<button id="btn-open-studio" class="btn btn-primary" data-i18n="demo_avatar_os_studio.open_avatar_studio">
 								Open Avatar Studio
 							</button>
-							<button id="btn-open-public" class="btn">Open public build</button>
+							<button id="btn-open-public" class="btn" data-i18n="demo_avatar_os_studio.open_public_build">Open public build</button>
 						</div>
 						<div class="status" id="studio-status">idle</div>
 					</div>
 
 					<div class="os-card" style="margin-top: 16px">
-						<h2>2 · Export</h2>
-						<p>
+						<h2 data-i18n="demo_avatar_os_studio.2_export">2 · Export</h2>
+						<p data-i18n-html="demo_avatar_os_studio.in_characterstudio_click_export_vrm_or_glb">
 							In CharacterStudio, click <span class="kbd">Export</span> ·
 							<span class="kbd">VRM</span> or <span class="kbd">GLB</span>. This page
 							listens for the export message and renders the result below.
 						</p>
 						<div class="btn-row">
-							<button id="btn-download" class="btn" disabled>Download GLB</button>
-							<button id="btn-save" class="btn" disabled>Save to my avatars</button>
+							<button id="btn-download" class="btn" disabled data-i18n="demo_avatar_os_studio.download_glb">Download GLB</button>
+							<button id="btn-save" class="btn" disabled data-i18n="demo_avatar_os_studio.save_to_my_avatars">Save to my avatars</button>
 						</div>
 						<div class="status" id="export-status">no export yet</div>
 					</div>
 
 					<div class="os-card" style="margin-top: 16px">
-						<h2>Postmessage contract</h2>
-						<p style="font-family: ui-monospace, monospace; font-size: 11px">
+						<h2 data-i18n="demo_avatar_os_studio.postmessage_contract">Postmessage contract</h2>
+						<p style="font-family: ui-monospace, monospace; font-size: 11px" data-i18n="demo_avatar_os_studio.source_characterstudio_type_export_glb_array">
 							{ source: "characterstudio", type: "export", glb: ArrayBuffer }
 						</p>
-						<p style="font-size: 12px; color: var(--text-3); margin: 0">
+						<p style="font-size: 12px; color: var(--text-3); margin: 0" data-i18n="demo_avatar_os_studio.any_window_postmessage_from_the_iframe_origi">
 							Any window.postMessage from the iframe origin with this shape is
 							captured.
 						</p>
@@ -73,7 +73,7 @@
 				<section>
 					<div id="iframe-host" class="viewer" style="min-height: 600px; padding: 0">
 						<div class="overlay" id="iframe-empty">
-							Click <span class="kbd">Open Avatar Studio</span> to start
+							Click <span class="kbd" data-i18n="demo_avatar_os_studio.open_avatar_studio_2">Open Avatar Studio</span> to start
 						</div>
 					</div>
 
@@ -89,5 +89,7 @@
 		</main>
 		<script type="module" src="/src/demo/os-studio.js"></script>
 		<script src="/brand.js" defer></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

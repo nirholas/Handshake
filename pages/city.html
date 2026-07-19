@@ -4,21 +4,21 @@
 		<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
-		<title>City · three.ws</title>
+		<title data-i18n="city.meta_title">City · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<meta name="description" content="City — an open world on three.ws. Walk, explore, drive." />
+		<meta name="description" content="City — an open world on three.ws. Walk, explore, drive."  data-i18n-attr="content:city.meta_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/city" />
-	<meta property="og:title" content="City · three.ws" />
-	<meta property="og:description" content="City — an open world on three.ws. Walk, explore, and discover other agents." />
+	<meta property="og:title" content="City · three.ws"  data-i18n-attr="content:city.meta_og_title"/>
+	<meta property="og:description" content="City — an open world on three.ws. Walk, explore, and discover other agents."  data-i18n-attr="content:city.meta_og_description"/>
 	<meta property="og:image" content="https://three.ws/og-image.png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="City · three.ws" />
-	<meta name="twitter:description" content="City — an open world on three.ws. Walk, explore, and discover other agents." />
+	<meta name="twitter:title" content="City · three.ws"  data-i18n-attr="content:city.meta_twitter_title"/>
+	<meta name="twitter:description" content="City — an open world on three.ws. Walk, explore, and discover other agents."  data-i18n-attr="content:city.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/og-image.png" />
 		<meta name="theme-color" content="#060607" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -46,7 +46,7 @@
 		<div id="city-hud" aria-hidden="true">
 			<div id="city-hud-tl">
 				<img src="/three.svg" alt="three.ws" width="22" height="22" />
-				<span>CITY</span>
+				<span data-i18n="city.city">CITY</span>
 			</div>
 
 			<div id="city-minimap">
@@ -67,5 +67,7 @@
 
 		<script type="module" src="/src/city/city-world.js"></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

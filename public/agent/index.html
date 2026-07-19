@@ -2,12 +2,12 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<title>Agent Home — three.ws</title>
+		<title data-i18n="agent_index.meta_title">Agent Home — three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta
 			name="description"
 			content="An embodied 3D AI agent — body, place, identity, memory."
-		/>
+		 data-i18n-attr="content:agent_index.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 
 		<link rel="shortcut icon" href="/favicon.ico" />
@@ -15,12 +15,12 @@
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<!-- unfurl (populated at runtime from identity) -->
 		<meta property="og:type" content="website" />
-		<meta property="og:title" content="Agent" id="og-title" />
-		<meta property="og:description" content="An embodied three.ws." id="og-description" />
+		<meta property="og:title" content="Agent" id="og-title"  data-i18n-attr="content:agent_index.meta_og_title"/>
+		<meta property="og:description" content="An embodied three.ws." id="og-description"  data-i18n-attr="content:agent_index.meta_og_description"/>
 		<meta property="og:image" content="" id="og-image" />
 		<meta property="og:url" content="" id="og-url" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Agent" id="tw-title" />
+		<meta name="twitter:title" content="Agent" id="tw-title"  data-i18n-attr="content:agent_index.meta_twitter_title"/>
 		<meta name="twitter:description" content="" id="tw-description" />
 		<meta name="twitter:image" content="" id="tw-image" />
 		<link
@@ -795,12 +795,12 @@
 	</head>
 	<body>
 		<div class="agent-page-header">
-			<a href="/">← three.ws</a>
+			<a href="/" data-i18n="agent_index.three_ws">← three.ws</a>
 		</div>
 
 		<div class="agent-page-hero">
-			<h1 class="agent-page-title" id="page-agent-name">Agent</h1>
-			<p class="agent-page-subtitle" id="page-agent-desc">Embodied. Present. Persistent.</p>
+			<h1 class="agent-page-title" id="page-agent-name" data-i18n="agent_index.agent">Agent</h1>
+			<p class="agent-page-subtitle" id="page-agent-desc" data-i18n="agent_index.embodied_present_persistent">Embodied. Present. Persistent.</p>
 		</div>
 
 		<!-- Agent home card rendered by AgentHome -->
@@ -826,20 +826,20 @@
 		<div class="agent-embed-hint" id="agent-embed-section" style="display: none">
 			<div class="agent-embed-label">Share &amp; embed</div>
 			<div class="agent-embed-tabs" role="tablist">
-				<button class="agent-embed-tab active" data-tab="iframe">iframe</button>
-				<button class="agent-embed-tab" data-tab="link">link</button>
-				<button class="agent-embed-tab" data-tab="webcomponent">&lt;agent-3d&gt;</button>
+				<button class="agent-embed-tab active" data-tab="iframe" data-i18n="agent_index.iframe">iframe</button>
+				<button class="agent-embed-tab" data-tab="link" data-i18n="agent_index.link">link</button>
+				<button class="agent-embed-tab" data-tab="webcomponent" data-i18n="agent_index.text">&lt;agent-3d&gt;</button>
 			</div>
 			<div class="agent-embed-code-wrap">
 				<div class="agent-embed-code" id="agent-embed-code"></div>
-				<button class="agent-embed-copy" id="agent-embed-copy">copy</button>
+				<button class="agent-embed-copy" id="agent-embed-copy" data-i18n="agent_index.copy">copy</button>
 			</div>
 			<a
 				class="agent-embed-preview-link"
 				id="agent-embed-preview"
 				target="_blank"
 				rel="noopener"
-				>preview embed →</a
+				 data-i18n="agent_index.preview_embed">preview embed →</a
 			>
 			<a
 				class="agent-embed-preview-link"
@@ -847,7 +847,7 @@
 				href=""
 				target="_blank"
 				rel="noopener"
-				>embed settings →</a
+				 data-i18n="agent_index.embed_settings">embed settings →</a
 			>
 		</div>
 
@@ -1044,5 +1044,7 @@
 			});
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

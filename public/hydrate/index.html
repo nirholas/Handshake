@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Import My Agents</title>
+		<title data-i18n="hydrate_index.meta_title">Import My Agents</title>
 		<style>
 			:root {
 				--primary: #0066cc;
@@ -271,19 +271,19 @@
 			}
 		</style>
 	
-	<meta name="description" content="Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills.">
+	<meta name="description" content="Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills." data-i18n-attr="content:hydrate_index.meta_description">
 	<link rel="canonical" href="https://three.ws/hydrate">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="Hydrate · three.ws">
-	<meta property="og:description" content="Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills.">
+	<meta property="og:title" content="Hydrate · three.ws" data-i18n-attr="content:hydrate_index.meta_og_title">
+	<meta property="og:description" content="Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills." data-i18n-attr="content:hydrate_index.meta_og_description">
 	<meta property="og:url" content="https://three.ws/hydrate">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=build&amp;t=Hydrate&amp;d=Take+an+existing+on-chain+agent+%28ERC-8004+%2F+Solana%29+and+attach+a+3D+body%2C+voice%2C+and+skills.&amp;p=%2Fhydrate">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Hydrate · three.ws">
-	<meta name="twitter:description" content="Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills.">
+	<meta name="twitter:title" content="Hydrate · three.ws" data-i18n-attr="content:hydrate_index.meta_twitter_title">
+	<meta name="twitter:description" content="Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills." data-i18n-attr="content:hydrate_index.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=build&amp;t=Hydrate&amp;d=Take+an+existing+on-chain+agent+%28ERC-8004+%2F+Solana%29+and+attach+a+3D+body%2C+voice%2C+and+skills.&amp;p=%2Fhydrate">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Hydrate","description":"Take an existing on-chain agent (ERC-8004 / Solana) and attach a 3D body, voice, and skills.","url":"https://three.ws/hydrate","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -300,20 +300,20 @@
 
 		<div class="container">
 			<div class="breadcrumb">
-				<a href="/marketplace?tab=mine">Home</a> / <a href="/dashboard/">Dashboard</a> / Import Agents
+				<a href="/marketplace?tab=mine" data-i18n="hydrate_index.home">Home</a> / <a href="/dashboard/" data-i18n="hydrate_index.dashboard">Dashboard</a> / Import Agents
 			</div>
 
-			<h1>Import My Agents</h1>
-			<p class="subtitle">Discover and import agents you've already registered on-chain</p>
+			<h1 data-i18n="hydrate_index.import_my_agents">Import My Agents</h1>
+			<p class="subtitle" data-i18n="hydrate_index.discover_and_import_agents_you_ve_already">Discover and import agents you've already registered on-chain</p>
 
 			<div id="alert" class="alert"></div>
 
 			<div id="authPrompt" class="auth-prompt" style="display: none">
-				<p>
+				<p data-i18n-html="hydrate_index.to_import_your_on_chain_agents_you">
 					To import your on-chain agents, you need to
 					<strong>connect a wallet</strong> first.
 				</p>
-				<a href="/dashboard/account#wallets" class="button primary">Connect Wallet</a>
+				<a href="/dashboard/account#wallets" class="button primary" data-i18n="hydrate_index.connect_wallet">Connect Wallet</a>
 			</div>
 
 			<div id="loadingState" class="loading" style="display: none">
@@ -323,8 +323,8 @@
 			<div id="agentsList" class="agents-list"></div>
 
 			<div id="emptyState" class="empty-state" style="display: none">
-				<p>No on-chain agents found for your wallets.</p>
-				<p style="font-size: 12px; color: #999">
+				<p data-i18n="hydrate_index.no_on_chain_agents_found_for_your">No on-chain agents found for your wallets.</p>
+				<p style="font-size: 12px; color: #999" data-i18n-html="hydrate_index.register_a_new_agent_at_deploy">
 					Register a new agent at
 					<a href="/deploy" style="color: var(--primary)">Deploy</a>
 				</p>
@@ -511,5 +511,7 @@
 		<div id="footer-container"></div>
 		<script src="/footer.js" defer></script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

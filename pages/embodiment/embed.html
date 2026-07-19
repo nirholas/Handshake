@@ -4,7 +4,7 @@
 		<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<title>Agent — three.ws</title>
+		<title data-i18n="embodiment_embed.meta_title">Agent — three.ws</title>
 		<!-- sandboxed: no index, allow framing by any host (ChatGPT, Claude, etc.) -->
 		<meta name="robots" content="noindex" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -136,5 +136,7 @@
 				}
 			})();
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

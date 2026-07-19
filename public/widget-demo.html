@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex">
-  <title>3D Agent Widget Demo</title>
+  <title data-i18n="widget_demo.meta_title">3D Agent Widget Demo</title>
   <style>
     body {
       font-family: sans-serif;
@@ -63,23 +63,23 @@
 </head>
 <body>
 
-  <h1>3D Agent Widget Demo</h1>
+  <h1 data-i18n="widget_demo.3d_agent_widget_demo">3D Agent Widget Demo</h1>
 
   <div class="demo-grid">
     <div class="widget-card">
-      <h2>Default</h2>
+      <h2 data-i18n="widget_demo.default">Default</h2>
       <div class="widget-container">
         <div class="threews-widget" data-agent-id="041cb44a-3c58-4d56-b083-d5234563456a"></div>
       </div>
     </div>
     <div class="widget-card">
-      <h2>Dark background</h2>
+      <h2 data-i18n="widget_demo.dark_background">Dark background</h2>
       <div class="widget-container">
         <div class="threews-widget" data-agent-id="041cb44a-3c58-4d56-b083-d5234563456a" data-background="dark"></div>
       </div>
     </div>
     <div class="widget-card">
-      <h2>Nameplate hidden</h2>
+      <h2 data-i18n="widget_demo.nameplate_hidden">Nameplate hidden</h2>
       <div class="widget-container">
         <div class="threews-widget" data-agent-id="041cb44a-3c58-4d56-b083-d5234563456a" data-nameplate="false"></div>
       </div>
@@ -87,8 +87,8 @@
   </div>
 
   <div class="instructions">
-    <h2>How to use it</h2>
-    <p>Copy and paste this code into your website. Customize it with <code>data-*</code> attributes.</p>
+    <h2 data-i18n="widget_demo.how_to_use_it">How to use it</h2>
+    <p data-i18n-html="widget_demo.copy_and_paste_this_code_into_your">Copy and paste this code into your website. Customize it with <code>data-*</code> attributes.</p>
     <textarea readonly>
 <div class="threews-widget" 
      data-agent-id="YOUR_AGENT_ID" 
@@ -98,18 +98,18 @@
 </div>
 <script src="https://3d-agent.vercel.app/dist/widget.js" defer></script>
     </textarea>
-    <p>Available options:</p>
+    <p data-i18n="widget_demo.available_options">Available options:</p>
     <ul>
-      <li><code>data-agent-id</code>: (Required) The ID of the agent to display.</li>
-      <li><code>data-background</code>: Set the background. Can be <code>transparent</code> (default), <code>dark</code>, or <code>light</code>.</li>
-      <li><code>data-nameplate</code>: Set to <code>false</code> to hide the agent's name.</li>
+      <li data-i18n-html="widget_demo.required_the_id_of_the_agent_to"><code>data-agent-id</code>: (Required) The ID of the agent to display.</li>
+      <li data-i18n-html="widget_demo.set_the_background_can_be_default_or"><code>data-background</code>: Set the background. Can be <code>transparent</code> (default), <code>dark</code>, or <code>light</code>.</li>
+      <li data-i18n-html="widget_demo.set_to_to_hide_the_agent_s"><code>data-nameplate</code>: Set to <code>false</code> to hide the agent's name.</li>
     </ul>
   </div>
 
   <div class="instructions">
-    <h2>Dynamic Loading</h2>
-    <p>The widget script automatically detects new widgets added to the page. Click the button to add another agent.</p>
-    <button id="addWidgetBtn">Add Another Widget</button>
+    <h2 data-i18n="widget_demo.dynamic_loading">Dynamic Loading</h2>
+    <p data-i18n="widget_demo.the_widget_script_automatically_detects_new">The widget script automatically detects new widgets added to the page. Click the button to add another agent.</p>
+    <button id="addWidgetBtn" data-i18n="widget_demo.add_another_widget">Add Another Widget</button>
     <div id="dynamic-container" style="margin-top: 1rem;"></div>
   </div>
 
@@ -132,5 +132,7 @@
 
   <script src="/dist/widget.js" defer></script>
 
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

@@ -3,8 +3,8 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-		<title>three.ws — embedded 3D model</title>
-		<meta name="description" content="An interactive 3D model forged on three.ws." />
+		<title data-i18n="forge_embed.meta_title">three.ws — embedded 3D model</title>
+		<meta name="description" content="An interactive 3D model forged on three.ws."  data-i18n-attr="content:forge_embed.meta_description"/>
 		<!-- Embeddable surface: keep it out of the index, allow framing anywhere. -->
 		<meta name="robots" content="noindex" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
@@ -215,14 +215,14 @@
 			View in AR
 		</button>
 
-		<a class="brand" id="brand" href="https://three.ws/forge" target="_blank" rel="noopener" aria-label="Forge your own 3D model on three.ws">
+		<a class="brand" id="brand" href="https://three.ws/forge" target="_blank" rel="noopener" aria-label="Forge your own 3D model on three.ws" data-i18n-html="forge_embed.forged_on_three_ws" data-i18n-attr="aria-label:forge_embed.forge_your_own_3d_model_on_t_arialabel">
 			<span class="dot" aria-hidden="true"></span>
 			Forged on three.ws
 		</a>
 
 		<div class="msg">
-			<h1>No model to show</h1>
-			<p>
+			<h1 data-i18n="forge_embed.no_model_to_show">No model to show</h1>
+			<p data-i18n-html="forge_embed.this_embed_is_missing_its_model_url">
 				This embed is missing its model URL. Generate one at
 				<a href="https://three.ws/forge" target="_blank" rel="noopener">three.ws/forge</a>
 				and copy the embed code from the result.
@@ -310,5 +310,7 @@
 				}
 			})();
 		</script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

@@ -5,7 +5,7 @@
 		<script src="/referral-capture.js"></script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Create account · three.ws</title>
+		<title data-i18n="register.meta_title">Create account · three.ws</title>
 		<link rel="icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/wallet-connect.css" />
 		<link rel="stylesheet" href="/auth.css" />
@@ -468,19 +468,19 @@
 			#privy-wallet-status { margin: 6px 0 0; font-size: 12px; color: #888; }
 		</style>
 	
-	<meta name="description" content="Create a new three.ws account.">
+	<meta name="description" content="Create a new three.ws account." data-i18n-attr="content:register.meta_description">
 	<link rel="canonical" href="https://three.ws/register">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="Create account · three.ws">
-	<meta property="og:description" content="Create a new three.ws account.">
+	<meta property="og:title" content="Create account · three.ws" data-i18n-attr="content:register.meta_og_title">
+	<meta property="og:description" content="Create a new three.ws account." data-i18n-attr="content:register.meta_og_description">
 	<meta property="og:url" content="https://three.ws/register">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=account&amp;t=Create+account&amp;d=Create+a+new+three.ws+account.&amp;p=%2Fregister">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Create account · three.ws">
-	<meta name="twitter:description" content="Create a new three.ws account.">
+	<meta name="twitter:title" content="Create account · three.ws" data-i18n-attr="content:register.meta_twitter_title">
+	<meta name="twitter:description" content="Create a new three.ws account." data-i18n-attr="content:register.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=account&amp;t=Create+account&amp;d=Create+a+new+three.ws+account.&amp;p=%2Fregister">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Create account","description":"Create a new three.ws account.","url":"https://three.ws/register","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -494,8 +494,8 @@
 		<div class="shell">
 			<form class="card" id="f" autocomplete="on">
 			<a href="/" class="brand"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a>
-			<h1>Create account</h1>
-			<p class="sub">Get started free. <span class="badge">✓ No wallet needed</span></p>
+			<h1 data-i18n="register.create_account">Create account</h1>
+			<p class="sub" data-i18n-html="register.get_started_free_no_wallet_needed">Get started free. <span class="badge">✓ No wallet needed</span></p>
 
 			<!-- Privy social / email-OTP login -->
 			<div id="privy-section">
@@ -507,18 +507,18 @@
 					<div id="privy-step-email">
 						<div class="privy-row">
 							<input id="privy-email-input" type="email" inputmode="email" placeholder="Email address" autocomplete="email" autocapitalize="none" />
-							<button type="button" id="privy-send-btn" class="privy-row-btn">Send code</button>
+							<button type="button" id="privy-send-btn" class="privy-row-btn" data-i18n="register.send_code">Send code</button>
 						</div>
 						<div id="privy-captcha-slot" aria-live="polite"></div>
 					</div>
 					<div id="privy-step-code" hidden>
 						<div class="privy-row">
 							<input id="privy-code-input" type="text" inputmode="numeric" placeholder="6-digit code" maxlength="6" autocomplete="one-time-code" />
-							<button type="button" id="privy-verify-btn" class="privy-row-btn">Verify</button>
+							<button type="button" id="privy-verify-btn" class="privy-row-btn" data-i18n="register.verify">Verify</button>
 						</div>
 					</div>
 					<div id="privy-wallet-wrap">
-						<p class="privy-wallet-divider">or connect wallet</p>
+						<p class="privy-wallet-divider" data-i18n="register.or_connect_wallet">or connect wallet</p>
 						<div class="privy-chain-btns">
 							<button type="button" id="privy-evm-btn" class="privy-chain-btn">
 								<svg width="14" height="14" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 2L4 16.5 16 22l12-5.5L16 2z" fill="currentColor" opacity=".55"/><path d="M16 2v12.5L4 16.5 16 2z" fill="currentColor" opacity=".9"/><path d="M16 22v8l12-11L16 22z" fill="currentColor" opacity=".55"/><path d="M16 22L4 19l12 11V22z" fill="currentColor" opacity=".9"/><path d="M16 14.5v5.5L4 16.5l12-2z" fill="currentColor" opacity=".35"/><path d="M28 16.5l-12 3.5v-5.5l12 2z" fill="currentColor" opacity=".9"/></svg>
@@ -532,12 +532,12 @@
 						<p id="privy-wallet-status" hidden></p>
 					</div>
 					<p id="privy-inline-err" hidden></p>
-					<button type="button" id="privy-back-btn" class="privy-back-link">← Back</button>
+					<button type="button" id="privy-back-btn" class="privy-back-link" data-i18n="register.back">← Back</button>
 				</div>
 			</div>
 			<div class="divider" id="privy-or-divider">or</div>
 
-			<label for="username">Username</label>
+			<label for="username" data-i18n="register.username">Username</label>
 			<input
 				id="username"
 				name="username"
@@ -553,8 +553,8 @@
 				placeholder="e.g. cool_agent"
 				aria-describedby="username-hint err"
 			/>
-			<p class="hint" id="username-hint">3–30 characters, letters, numbers, _ or -</p>
-			<label for="password">Password</label>
+			<p class="hint" id="username-hint" data-i18n="register.3_30_characters_letters_numbers_or">3–30 characters, letters, numbers, _ or -</p>
+			<label for="password" data-i18n="register.password">Password</label>
 			<div class="password-wrap">
 				<input
 					id="password"
@@ -566,35 +566,35 @@
 					maxlength="200"
 					aria-describedby="strength-label caps-warn err"
 				/>
-				<button type="button" class="password-toggle" id="password-toggle" aria-label="Show password" aria-pressed="false">
+				<button type="button" class="password-toggle" id="password-toggle" aria-label="Show password" aria-pressed="false" data-i18n-attr="aria-label:register.show_password_arialabel">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 						<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
 						<circle cx="12" cy="12" r="3" />
 					</svg>
 				</button>
 			</div>
-			<p class="caps-warn" id="caps-warn">Caps Lock is on</p>
+			<p class="caps-warn" id="caps-warn" data-i18n="register.caps_lock_is_on">Caps Lock is on</p>
 			<div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
-			<p class="strength-label" id="strength-label">Minimum 10 characters</p>
+			<p class="strength-label" id="strength-label" data-i18n="register.minimum_10_characters">Minimum 10 characters</p>
 			<label class="tos-row" for="tos-accept">
 				<input id="tos-accept" name="tos-accept" type="checkbox" required aria-describedby="err" />
-				<span>I have read and agree to the <a href="/legal/tos" target="_blank" rel="noopener">Terms of Service</a> and <a href="/legal/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span>
+				<span data-i18n-html="register.i_have_read_and_agree_to_the">I have read and agree to the <a href="/legal/tos" target="_blank" rel="noopener">Terms of Service</a> and <a href="/legal/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span>
 			</label>
-			<button id="submit" type="submit">Create account</button>
+			<button id="submit" type="submit" data-i18n="register.create_account_2">Create account</button>
 
 			<div class="err" id="err" role="alert" aria-live="polite"></div>
 
 			<div class="onchain-toggle-row">
-				<span class="onchain-toggle-label">Using on-chain features?</span>
-				<button type="button" class="onchain-toggle-btn" id="onchain-toggle" aria-expanded="false" aria-controls="onchain-section">
+				<span class="onchain-toggle-label" data-i18n="register.using_on_chain_features">Using on-chain features?</span>
+				<button type="button" class="onchain-toggle-btn" id="onchain-toggle" aria-expanded="false" aria-controls="onchain-section" data-i18n="register.connect_wallet">
 					Connect wallet
 				</button>
 			</div>
 
 			<div class="onchain-section" id="onchain-section" aria-hidden="true">
 				<div class="chain-tabs" role="tablist" aria-label="Wallet chain">
-					<button type="button" class="chain-tab active" data-chain="solana" role="tab" aria-selected="true" aria-controls="solana-panel">Solana</button>
-					<button type="button" class="chain-tab" data-chain="evm" role="tab" aria-selected="false" aria-controls="evm-panel">EVM</button>
+					<button type="button" class="chain-tab active" data-chain="solana" role="tab" aria-selected="true" aria-controls="solana-panel" data-i18n="register.solana">Solana</button>
+					<button type="button" class="chain-tab" data-chain="evm" role="tab" aria-selected="false" aria-controls="evm-panel" data-i18n="register.evm">EVM</button>
 				</div>
 				<div id="solana-panel" class="chain-panel active" role="tabpanel">
 					<div id="solana-wallet-mount"></div>
@@ -602,14 +602,14 @@
 				<div id="evm-panel" class="chain-panel" role="tabpanel">
 					<div id="wallet-mount"></div>
 				</div>
-				<p class="hint" style="margin-top:10px;text-align:center;font-size:11px;color:#555;cursor:help" title="Your wallet will prompt twice — once to connect, once to sign.">Wallet prompts to connect, then to sign.</p>
+				<p class="hint" style="margin-top:10px;text-align:center;font-size:11px;color:#555;cursor:help" title="Your wallet will prompt twice — once to connect, once to sign." data-i18n="register.wallet_prompts_to_connect_then_to_sign" data-i18n-attr="title:register.your_wallet_will_prompt_twic_title">Wallet prompts to connect, then to sign.</p>
 			</div>
 
-			<p class="foot">Already have an account? <a href="/login">Sign in</a></p>
-			<p class="legal">By creating an account (including with Privy or a connected wallet) you agree to the <a href="/legal/tos" target="_blank" rel="noopener">Terms of Service</a> and <a href="/legal/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
+			<p class="foot" data-i18n-html="register.already_have_an_account_sign_in">Already have an account? <a href="/login">Sign in</a></p>
+			<p class="legal" data-i18n-html="register.by_creating_an_account_including_with_privy">By creating an account (including with Privy or a connected wallet) you agree to the <a href="/legal/tos" target="_blank" rel="noopener">Terms of Service</a> and <a href="/legal/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
 		</form>
 			<div class="panel">
-				<a href="/" class="panel-brand" aria-label="three.ws home"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a>
+				<a href="/" class="panel-brand" aria-label="three.ws home" data-i18n-attr="aria-label:register.three_ws_home_arialabel"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a>
 				<div class="agent-avatar loading" id="register-avatar-wrap" aria-hidden="true">
 					<model-viewer
 						id="register-avatar"
@@ -900,5 +900,7 @@
 			});
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

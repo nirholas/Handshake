@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>three.ws · Face mocap</title>
+		<title data-i18n="demos_agents_face_mocap.meta_title">three.ws · Face mocap</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/demos/agents/_shared.css" />
@@ -315,22 +315,22 @@
 	<body>
 		<!-- Permission overlay -->
 		<div id="overlay">
-			<span class="eyebrow">three.ws · face mocap</span>
-			<h2>Your face. <em>Her face.</em></h2>
-			<p>52 ARKit blendshapes streamed from your webcam to a Three.js avatar in real time. Everything runs in your browser — no frames leave the page.</p>
-			<button id="enable-btn">Enable camera</button>
+			<span class="eyebrow" data-i18n="demos_agents_face_mocap.three_ws_face_mocap">three.ws · face mocap</span>
+			<h2 data-i18n-html="demos_agents_face_mocap.your_face_her_face">Your face. <em>Her face.</em></h2>
+			<p data-i18n="demos_agents_face_mocap.52_arkit_blendshapes_streamed_from_your_webc">52 ARKit blendshapes streamed from your webcam to a Three.js avatar in real time. Everything runs in your browser — no frames leave the page.</p>
+			<button id="enable-btn" data-i18n="demos_agents_face_mocap.enable_camera">Enable camera</button>
 			<span id="overlay-status"></span>
 			<div class="privacy">100% on-device · zero network upload</div>
 		</div>
 
 		<!-- Brand badge -->
-		<div class="fm-brand"><span class="dot"></span>three<em>.ws</em>&nbsp;·&nbsp;face mocap</div>
+		<div class="fm-brand"><span class="dot"></span>three<em data-i18n="demos_agents_face_mocap.ws">.ws</em>&nbsp;·&nbsp;face mocap</div>
 
 		<!-- Hero copy -->
 		<div class="stage">
 			<div class="hero-eyebrow">Open source · v1</div>
-			<h1 class="hero-title">Mocap, in&nbsp;the&nbsp;<em>browser</em>.</h1>
-			<p class="hero-sub">
+			<h1 class="hero-title" data-i18n-html="demos_agents_face_mocap.mocap_in_the_browser">Mocap, in&nbsp;the&nbsp;<em>browser</em>.</h1>
+			<p class="hero-sub" data-i18n="demos_agents_face_mocap.mediapipe_face_landmarker_reads_478_landmark">
 				MediaPipe Face Landmarker reads 478 landmarks and 52 ARKit blendshapes
 				every frame, one-euro filtered, calibrated to your neutral pose, and
 				written straight onto a rigged humanoid avatar. Record a take, replay it
@@ -360,11 +360,11 @@
 				<select id="cam-device" title="Video input device"></select>
 			</div>
 			<div class="cam-toggles" id="cam-toggles">
-				<button data-mode="dots"     class="on">Landmarks</button>
-				<button data-mode="wire"     class="on">Mesh</button>
-				<button data-mode="contours" class="on">Contours</button>
-				<button data-mode="iris"     class="on">Iris</button>
-				<button data-mode="axis"     class="on">Pose</button>
+				<button data-mode="dots"     class="on" data-i18n="demos_agents_face_mocap.landmarks">Landmarks</button>
+				<button data-mode="wire"     class="on" data-i18n="demos_agents_face_mocap.mesh">Mesh</button>
+				<button data-mode="contours" class="on" data-i18n="demos_agents_face_mocap.contours">Contours</button>
+				<button data-mode="iris"     class="on" data-i18n="demos_agents_face_mocap.iris">Iris</button>
+				<button data-mode="axis"     class="on" data-i18n="demos_agents_face_mocap.pose">Pose</button>
 			</div>
 		</div>
 
@@ -374,10 +374,10 @@
 				<div class="diag-title">Live signal</div>
 				<div id="status-pill" style="font:600 10px/1 'Space Grotesk',sans-serif;letter-spacing:0.12em;color:#555870;text-transform:uppercase;">No face</div>
 			</div>
-			<div class="diag-row"><span>Morph coverage</span><span id="diag-morphs">0 / 52</span></div>
-			<div class="diag-row"><span>Head yaw</span><span id="diag-yaw">0°</span></div>
-			<div class="diag-row"><span>Head pitch</span><span id="diag-pitch">0°</span></div>
-			<div class="diag-row"><span>Head roll</span><span id="diag-roll">0°</span></div>
+			<div class="diag-row"><span data-i18n="demos_agents_face_mocap.morph_coverage">Morph coverage</span><span id="diag-morphs">0 / 52</span></div>
+			<div class="diag-row"><span data-i18n="demos_agents_face_mocap.head_yaw">Head yaw</span><span id="diag-yaw">0°</span></div>
+			<div class="diag-row"><span data-i18n="demos_agents_face_mocap.head_pitch">Head pitch</span><span id="diag-pitch">0°</span></div>
+			<div class="diag-row"><span data-i18n="demos_agents_face_mocap.head_roll">Head roll</span><span id="diag-roll">0°</span></div>
 
 			<div class="diag-section">
 				<div class="diag-title" style="margin-bottom:8px;">Top blendshapes</div>
@@ -387,20 +387,20 @@
 
 		<!-- Bottom control bar -->
 		<div id="controls">
-			<button id="calibrate"   title="Capture your current face as the neutral baseline">Calibrate</button>
+			<button id="calibrate"   title="Capture your current face as the neutral baseline" data-i18n="demos_agents_face_mocap.calibrate" data-i18n-attr="title:demos_agents_face_mocap.capture_your_current_face_as_title">Calibrate</button>
 			<div class="divider"></div>
-			<button id="record"      title="Record a mocap take">● Record</button>
-			<button id="replay"      disabled>Replay</button>
-			<button id="download"    disabled>Download</button>
+			<button id="record"      title="Record a mocap take" data-i18n="demos_agents_face_mocap.record" data-i18n-attr="title:demos_agents_face_mocap.record_a_mocap_take_title">● Record</button>
+			<button id="replay"      disabled data-i18n="demos_agents_face_mocap.replay">Replay</button>
+			<button id="download"    disabled data-i18n="demos_agents_face_mocap.download">Download</button>
 			<div class="divider"></div>
 			<select  id="character"  title="Switch avatar">
-				<option value="/avatars/cz.glb">CZ</option>
-				<option value="/avatars/default.glb">Default</option>
+				<option value="/avatars/cz.glb" data-i18n="demos_agents_face_mocap.cz">CZ</option>
+				<option value="/avatars/default.glb" data-i18n="demos_agents_face_mocap.default">Default</option>
 			</select>
 		</div>
 
 		<div class="fm-foot">
-			Built on <a href="https://github.com/three-ws/three.ws" target="_blank" rel="noopener">three.ws</a> · MediaPipe Face Landmarker
+			Built on <a href="https://github.com/three-ws/three.ws" target="_blank" rel="noopener" data-i18n="demos_agents_face_mocap.three_ws">three.ws</a> · MediaPipe Face Landmarker
 		</div>
 
 		<script type="module">
@@ -715,5 +715,7 @@
 			})();
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

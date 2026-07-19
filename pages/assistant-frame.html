@@ -5,14 +5,14 @@
 		<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 		<meta charset="utf-8" />
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Assistant Frame · three.ws</title>
+		<title data-i18n="assistant_frame.meta_title">Assistant Frame · three.ws</title>
 		<meta name="robots" content="noindex" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<meta name="author" content="nirholas" />
 		<meta
 			name="description"
 			content="Embeddable 3D avatar assistant — chat and text-to-speech in one iframe."
-		/>
+		 data-i18n-attr="content:assistant_frame.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 
 		<!--
@@ -456,16 +456,16 @@
 						<path d="M12 2l1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9L12 2z" />
 						<path d="M19 15l.9 2.6L22.5 18.5l-2.6.9L19 22l-.9-2.6-2.6-.9 2.6-.9L19 15z" opacity="0.7" />
 					</svg>
-					<span class="label">Assistant</span>
+					<span class="label" data-i18n="assistant_frame.assistant">Assistant</span>
 				</span>
 				<span class="spacer"></span>
-				<button type="button" class="icon-btn" id="assistant-voice-btn" aria-pressed="true" title="Voice on" aria-label="Toggle voice">
+				<button type="button" class="icon-btn" id="assistant-voice-btn" aria-pressed="true" title="Voice on" aria-label="Toggle voice" data-i18n-attr="aria-label:assistant_frame.toggle_voice_arialabel;title:assistant_frame.voice_on_title">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none"/><path class="voice-waves" d="M15.5 8.5a5 5 0 0 1 0 7M18.4 5.6a9 9 0 0 1 0 12.8"/></svg>
 				</button>
-				<button type="button" class="icon-btn" id="assistant-settings-btn" title="Settings" aria-label="Open settings" aria-expanded="false">
+				<button type="button" class="icon-btn" id="assistant-settings-btn" title="Settings" aria-label="Open settings" aria-expanded="false" data-i18n-attr="aria-label:assistant_frame.open_settings_arialabel;title:assistant_frame.settings_title">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
 				</button>
-				<button type="button" class="icon-btn" id="assistant-close-btn" title="Close" aria-label="Close assistant">
+				<button type="button" class="icon-btn" id="assistant-close-btn" title="Close" aria-label="Close assistant" data-i18n-attr="aria-label:assistant_frame.close_assistant_arialabel;title:assistant_frame.close_title">
 					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
 				</button>
 			</header>
@@ -487,7 +487,7 @@
 					<div class="bubble-tail" aria-hidden="true"></div>
 				</div>
 
-				<a id="assistant-badge" href="https://three.ws/assistant?ref=assistant-widget" target="_blank" rel="noopener" title="Make your own — three.ws">
+				<a id="assistant-badge" href="https://three.ws/assistant?ref=assistant-widget" target="_blank" rel="noopener" title="Make your own — three.ws" data-i18n-html="assistant_frame.three_ws" data-i18n-attr="title:assistant_frame.make_your_own_three_ws_title">
 					<span class="badge-dot" aria-hidden="true"></span>
 					<span>three.ws</span>
 				</a>
@@ -497,65 +497,67 @@
 
 			<div id="assistant-composer">
 				<div id="assistant-modes" role="tablist" aria-label="Assistant mode">
-					<button type="button" class="mode-btn" data-mode="chat" role="tab" aria-pressed="true">Chat</button>
-					<button type="button" class="mode-btn" data-mode="speak" role="tab" aria-pressed="false">Speak</button>
+					<button type="button" class="mode-btn" data-mode="chat" role="tab" aria-pressed="true" data-i18n="assistant_frame.chat">Chat</button>
+					<button type="button" class="mode-btn" data-mode="speak" role="tab" aria-pressed="false" data-i18n="assistant_frame.speak">Speak</button>
 				</div>
 				<div id="assistant-input-row">
 					<textarea id="assistant-input" rows="1" placeholder="Type a question..." aria-label="Message the assistant" maxlength="4000"></textarea>
-					<button type="button" id="assistant-send" title="Send" aria-label="Send message">
+					<button type="button" id="assistant-send" title="Send" aria-label="Send message" data-i18n-attr="aria-label:assistant_frame.send_message_arialabel;title:assistant_frame.send_title">
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
 					</button>
 				</div>
 				<div id="assistant-hint">
-					<span id="assistant-hint-text">Ask anything.</span>
-					<span class="lane-pill" id="assistant-lane-pill" title="Which model lane answers your messages">free</span>
+					<span id="assistant-hint-text" data-i18n="assistant_frame.ask_anything">Ask anything.</span>
+					<span class="lane-pill" id="assistant-lane-pill" title="Which model lane answers your messages" data-i18n="assistant_frame.free" data-i18n-attr="title:assistant_frame.which_model_lane_answers_you_title">free</span>
 				</div>
 			</div>
 
 			<div id="assistant-settings" role="dialog" aria-modal="false" aria-label="Assistant settings">
 				<h2>
 					Settings
-					<button type="button" class="icon-btn" id="assistant-settings-close" title="Close settings" aria-label="Close settings">
+					<button type="button" class="icon-btn" id="assistant-settings-close" title="Close settings" aria-label="Close settings" data-i18n-attr="aria-label:assistant_frame.close_settings_arialabel;title:assistant_frame.close_settings_title">
 						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>
 					</button>
 				</h2>
 
 				<div class="settings-group">
-					<label id="assistant-lane-label">Chat brain</label>
+					<label id="assistant-lane-label" data-i18n="assistant_frame.chat_brain">Chat brain</label>
 					<div class="lane-options" role="radiogroup" aria-labelledby="assistant-lane-label">
 						<label class="lane-option">
 							<input type="radio" name="assistant-lane" value="free" checked />
-							<span>Free lane</span>
-							<span class="lane-desc">Groq → OpenRouter → NVIDIA, no key</span>
+							<span data-i18n="assistant_frame.free_lane">Free lane</span>
+							<span class="lane-desc" data-i18n="assistant_frame.groq_openrouter_nvidia_no_key">Groq → OpenRouter → NVIDIA, no key</span>
 						</label>
 						<label class="lane-option">
 							<input type="radio" name="assistant-lane" value="groq" />
-							<span>My Groq key</span>
-							<span class="lane-desc">runs in your browser</span>
+							<span data-i18n="assistant_frame.my_groq_key">My Groq key</span>
+							<span class="lane-desc" data-i18n="assistant_frame.runs_in_your_browser">runs in your browser</span>
 						</label>
 						<label class="lane-option">
 							<input type="radio" name="assistant-lane" value="openrouter" />
-							<span>My OpenRouter key</span>
-							<span class="lane-desc">runs in your browser</span>
+							<span data-i18n="assistant_frame.my_openrouter_key">My OpenRouter key</span>
+							<span class="lane-desc" data-i18n="assistant_frame.runs_in_your_browser_2">runs in your browser</span>
 						</label>
 					</div>
 					<div id="assistant-byok-fields">
 						<input type="password" class="settings-field" id="assistant-byok-key" placeholder="API key" autocomplete="off" spellcheck="false" aria-label="Provider API key" />
 						<input type="text" class="settings-field" id="assistant-byok-model" placeholder="Model" autocomplete="off" spellcheck="false" aria-label="Model id" />
-						<p class="settings-note">Your key is stored only in this browser (localStorage on three.ws) and sent directly to the provider — it never touches three.ws servers or the page embedding this widget.</p>
+						<p class="settings-note" data-i18n="assistant_frame.your_key_is_stored_only_in_this">Your key is stored only in this browser (localStorage on three.ws) and sent directly to the provider — it never touches three.ws servers or the page embedding this widget.</p>
 					</div>
 				</div>
 
 				<div class="settings-group">
-					<label for="assistant-voice-select">Voice</label>
+					<label for="assistant-voice-select" data-i18n="assistant_frame.voice">Voice</label>
 					<select class="settings-field" id="assistant-voice-select" aria-label="Speech voice">
-						<option value="">System default</option>
+						<option value="" data-i18n="assistant_frame.system_default">System default</option>
 					</select>
-					<p class="settings-note">Speech uses your browser's built-in voices — nothing is uploaded.</p>
+					<p class="settings-note" data-i18n="assistant_frame.speech_uses_your_browser_s_built_in">Speech uses your browser's built-in voices — nothing is uploaded.</p>
 				</div>
 			</div>
 		</div>
 
 		<script type="module" src="/src/assistant-frame.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

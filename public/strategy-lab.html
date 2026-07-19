@@ -3,7 +3,7 @@
 <head>
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8">
-	<title>Strategy lab · three.ws</title>
+	<title data-i18n="strategy_lab.meta_title">Strategy lab · three.ws</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="theme-color" content="#0b0b0b">
 	<link rel="stylesheet" href="/nav.css">
@@ -211,19 +211,19 @@
 		.toast.show { opacity: 1; transform: none; }
 	</style>
 
-	<meta name="description" content="Build, validate, backtest and run declarative pump.fun trading strategies on real on-chain data.">
+	<meta name="description" content="Build, validate, backtest and run declarative pump.fun trading strategies on real on-chain data." data-i18n-attr="content:strategy_lab.meta_description">
 	<link rel="canonical" href="https://three.ws/strategy-lab">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="Strategy Lab · three.ws">
-	<meta property="og:description" content="Build, validate, backtest and run declarative pump.fun strategies on real on-chain data.">
+	<meta property="og:title" content="Strategy Lab · three.ws" data-i18n-attr="content:strategy_lab.meta_og_title">
+	<meta property="og:description" content="Build, validate, backtest and run declarative pump.fun strategies on real on-chain data." data-i18n-attr="content:strategy_lab.meta_og_description">
 	<meta property="og:url" content="https://three.ws/strategy-lab">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Strategy+Lab&amp;d=Build+DCA+and+subscription+strategies+that+trade+on-chain+on+your+behalf.&amp;p=%2Fstrategy-lab">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Strategy Lab · three.ws">
-	<meta name="twitter:description" content="Build, validate, backtest and run declarative pump.fun strategies on real on-chain data.">
+	<meta name="twitter:title" content="Strategy Lab · three.ws" data-i18n-attr="content:strategy_lab.meta_twitter_title">
+	<meta name="twitter:description" content="Build, validate, backtest and run declarative pump.fun strategies on real on-chain data." data-i18n-attr="content:strategy_lab.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=crypto&amp;t=Strategy+Lab&amp;d=Build+DCA+and+subscription+strategies+that+trade+on-chain+on+your+behalf.&amp;p=%2Fstrategy-lab">
 	<meta name="twitter:site" content="@trythreews">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Strategy Lab","description":"Build, validate, backtest and run declarative pump.fun strategies on real on-chain data.","url":"https://three.ws/strategy-lab","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
@@ -239,8 +239,8 @@
 		<div class="hero">
 			<div class="left">
 				<div class="eyebrow"><span class="pulse"></span> Strategy lab · live MCP data</div>
-				<h1>Declarative pump.fun strategies, executed end-to-end</h1>
-				<p class="lead">
+				<h1 data-i18n="strategy_lab.declarative_pump_fun_strategies_executed_end">Declarative pump.fun strategies, executed end-to-end</h1>
+				<p class="lead" data-i18n="strategy_lab.write_a_strategy_as_data_backtests_replay">
 					Write a strategy as data. Backtests replay it against real holder, curve, and
 					creator data from the read-only MCP. Live runs sign and submit on-chain through
 					your agent's hot wallet — the same evaluator powers both, so a backtest is a
@@ -264,13 +264,13 @@
 		<div class="panel" id="walletPanel">
 			<div class="row" style="justify-content:space-between">
 				<div class="row">
-					<label class="kv"><span class="lbl">Agent</span>
-						<select id="agentSel"><option value="">— sign in —</option></select>
+					<label class="kv"><span class="lbl" data-i18n="strategy_lab.agent">Agent</span>
+						<select id="agentSel"><option value="" data-i18n="strategy_lab.sign_in">— sign in —</option></select>
 					</label>
-					<label class="kv"><span class="lbl">Network</span>
-						<select id="netSel"><option value="mainnet">mainnet</option><option value="devnet">devnet</option></select>
+					<label class="kv"><span class="lbl" data-i18n="strategy_lab.network">Network</span>
+						<select id="netSel"><option value="mainnet" data-i18n="strategy_lab.mainnet">mainnet</option><option value="devnet" data-i18n="strategy_lab.devnet">devnet</option></select>
 					</label>
-					<button id="provisionBtn" disabled>Provision wallet</button>
+					<button id="provisionBtn" disabled data-i18n="strategy_lab.provision_wallet">Provision wallet</button>
 				</div>
 				<div class="row">
 					<div id="walletInfo" class="kv muted">No wallet loaded.</div>
@@ -282,17 +282,17 @@
 		<div class="layout">
 			<!-- ── Spec editor ──────────────────────────────────── -->
 			<section class="panel">
-				<h2>Strategy spec</h2>
+				<h2 data-i18n="strategy_lab.strategy_spec">Strategy spec</h2>
 				<div class="presets" id="presets">
-					<button class="preset-card" data-preset="momentum">
+					<button class="preset-card" data-preset="momentum" data-i18n-html="strategy_lab.momentum_buy_strong_new_launches_take_profit">
 						<span class="pname"><span class="risk med"></span> Momentum</span>
 						<span class="pdesc">Buy strong new launches, take profit at +75%, hard stop at -30%.</span>
 					</button>
-					<button class="preset-card" data-preset="snipe">
+					<button class="preset-card" data-preset="snipe" data-i18n-html="strategy_lab.new_token_snipe_small_bets_on_fresh">
 						<span class="pname"><span class="risk high"></span> New-token snipe</span>
 						<span class="pdesc">Small bets on fresh mints; double or 10-minute timeout exit.</span>
 					</button>
-					<button class="preset-card" data-preset="mean-revert">
+					<button class="preset-card" data-preset="mean-revert" data-i18n-html="strategy_lab.mean_revert_trending_coins_scale_out_at">
 						<span class="pname"><span class="risk low"></span> Mean revert</span>
 						<span class="pdesc">Trending coins, scale out at +20% / +40%, cut at -15%.</span>
 					</button>
@@ -301,24 +301,24 @@
 				<textarea id="spec" spellcheck="false" aria-label="Strategy spec JSON"></textarea>
 
 				<div class="actions">
-					<button id="format" class="mini" title="Pretty-print the JSON">Format</button>
-					<button id="validate">Validate</button>
-					<button id="backtest" class="primary">Backtest</button>
+					<button id="format" class="mini" title="Pretty-print the JSON" data-i18n="strategy_lab.format" data-i18n-attr="title:strategy_lab.pretty_print_the_json_title">Format</button>
+					<button id="validate" data-i18n="strategy_lab.validate">Validate</button>
+					<button id="backtest" class="primary" data-i18n="strategy_lab.backtest">Backtest</button>
 					<span style="flex:1"></span>
-					<label class="kv"><span class="lbl">Duration</span>
+					<label class="kv"><span class="lbl" data-i18n="strategy_lab.duration">Duration</span>
 						<select id="durSel">
-							<option value="30">30s</option>
-							<option value="60" selected>60s</option>
-							<option value="120">2m</option>
-							<option value="300">5m</option>
+							<option value="30" data-i18n="strategy_lab.30s">30s</option>
+							<option value="60" selected data-i18n="strategy_lab.60s">60s</option>
+							<option value="120" data-i18n="strategy_lab.2m">2m</option>
+							<option value="300" data-i18n="strategy_lab.5m">5m</option>
 						</select>
 					</label>
 					<div class="mode-switch" id="modeSwitch">
-						<button class="mode active" data-mode="simulate">Simulate</button>
-						<button class="mode" data-mode="live">Live</button>
+						<button class="mode active" data-mode="simulate" data-i18n="strategy_lab.simulate">Simulate</button>
+						<button class="mode" data-mode="live" data-i18n="strategy_lab.live">Live</button>
 					</div>
-					<button id="run" class="primary">Run</button>
-					<button id="stop" disabled>Stop</button>
+					<button id="run" class="primary" data-i18n="strategy_lab.run">Run</button>
+					<button id="stop" disabled data-i18n="strategy_lab.stop">Stop</button>
 				</div>
 
 				<div id="status" class="status info">Edit the spec, then validate or backtest.</div>
@@ -326,7 +326,7 @@
 				<div id="summaryBox" class="summary-box"></div>
 
 				<details class="palette-wrap" id="paletteWrap" open>
-					<summary>Field palette — click to insert a rule · hover for domain</summary>
+					<summary data-i18n="strategy_lab.field_palette_click_to_insert_a_rule">Field palette — click to insert a rule · hover for domain</summary>
 					<div class="palette" id="palette"></div>
 				</details>
 
@@ -340,11 +340,11 @@
 			<!-- ── Results ──────────────────────────────────────── -->
 			<section class="panel">
 				<div class="row" style="justify-content:space-between; align-items:center">
-					<h2 style="margin:0">Results</h2>
+					<h2 style="margin:0" data-i18n="strategy_lab.results">Results</h2>
 					<div class="row">
 						<span id="liveDot" class="live-dot"></span>
-						<button id="exportBtn" class="mini" style="display:none">Export JSON</button>
-						<button id="copyBtn" class="mini" style="display:none">Copy summary</button>
+						<button id="exportBtn" class="mini" style="display:none" data-i18n="strategy_lab.export_json">Export JSON</button>
+						<button id="copyBtn" class="mini" style="display:none" data-i18n="strategy_lab.copy_summary">Copy summary</button>
 					</div>
 				</div>
 				<div id="metrics" class="metrics" style="display:none"></div>
@@ -357,18 +357,18 @@
 					</div>
 				</div>
 
-				<h2 style="margin-top:1.1rem">Activity</h2>
+				<h2 style="margin-top:1.1rem" data-i18n="strategy_lab.activity">Activity</h2>
 				<div class="log-toolbar" id="logToolbar">
-					<button class="fpill on" data-f="all">all<span class="n">0</span></button>
-					<button class="fpill" data-f="enter">enter<span class="n">0</span></button>
-					<button class="fpill" data-f="exit">exit<span class="n">0</span></button>
-					<button class="fpill" data-f="skip">skip<span class="n">0</span></button>
-					<button class="fpill" data-f="tick">tick<span class="n">0</span></button>
-					<button class="fpill" data-f="error">error<span class="n">0</span></button>
+					<button class="fpill on" data-f="all" data-i18n-html="strategy_lab.all0">all<span class="n">0</span></button>
+					<button class="fpill" data-f="enter" data-i18n-html="strategy_lab.enter0">enter<span class="n">0</span></button>
+					<button class="fpill" data-f="exit" data-i18n-html="strategy_lab.exit0">exit<span class="n">0</span></button>
+					<button class="fpill" data-f="skip" data-i18n-html="strategy_lab.skip0">skip<span class="n">0</span></button>
+					<button class="fpill" data-f="tick" data-i18n-html="strategy_lab.tick0">tick<span class="n">0</span></button>
+					<button class="fpill" data-f="error" data-i18n-html="strategy_lab.error0">error<span class="n">0</span></button>
 					<span class="spacer"></span>
-					<button id="autoscroll" class="fpill on" title="Auto-scroll to newest">⤓ auto</button>
-					<button id="copyLog" class="mini">Copy</button>
-					<button id="clearLog" class="mini">Clear</button>
+					<button id="autoscroll" class="fpill on" title="Auto-scroll to newest" data-i18n="strategy_lab.auto" data-i18n-attr="title:strategy_lab.auto_scroll_to_newest_title">⤓ auto</button>
+					<button id="copyLog" class="mini" data-i18n="strategy_lab.copy">Copy</button>
+					<button id="clearLog" class="mini" data-i18n="strategy_lab.clear">Clear</button>
 				</div>
 				<div id="log" class="log"><div class="ln muted">— no events yet —</div></div>
 			</section>
@@ -377,10 +377,10 @@
 		<!-- ── Portfolio ────────────────────────────────────────── -->
 		<section class="panel" style="margin-top:1rem">
 			<div class="row" style="justify-content:space-between">
-				<h2 style="margin:0">Portfolio</h2>
+				<h2 style="margin:0" data-i18n="strategy_lab.portfolio">Portfolio</h2>
 				<div class="row">
-					<button id="refreshPortfolio">Refresh</button>
-					<button id="closeAll" class="danger">Stop &amp; sell all</button>
+					<button id="refreshPortfolio" data-i18n="strategy_lab.refresh">Refresh</button>
+					<button id="closeAll" class="danger" data-i18n="strategy_lab.stop_sell_all">Stop &amp; sell all</button>
 				</div>
 			</div>
 			<div id="portfolio">
@@ -396,11 +396,11 @@
 	<!-- ── Confirm modal ────────────────────────────────────────── -->
 	<div id="confirmModal" class="modal-backdrop" hidden>
 		<div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmBody">
-			<h3 id="confirmTitle">Confirm</h3>
+			<h3 id="confirmTitle" data-i18n="strategy_lab.confirm">Confirm</h3>
 			<p id="confirmBody"></p>
 			<div class="modal-actions">
-				<button id="confirmCancel" type="button">Cancel</button>
-				<button id="confirmAccept" type="button" class="danger">Confirm</button>
+				<button id="confirmCancel" type="button" data-i18n="strategy_lab.cancel">Cancel</button>
+				<button id="confirmAccept" type="button" class="danger" data-i18n="strategy_lab.confirm_2">Confirm</button>
 			</div>
 		</div>
 	</div>
@@ -1117,5 +1117,7 @@
 	<div id="footer-container"></div>
 	<script src="/footer.js" defer></script>
 	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

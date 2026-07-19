@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Holds the CTA — three.ws</title>
+		<title data-i18n="demos_agents_holds_cta.meta_title">Holds the CTA — three.ws</title>
 		<meta name="robots" content="noindex" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/demos/agents/_shared.css" />
@@ -14,13 +14,13 @@
 	<body>
 		<div class="stage">
 			<div class="hero-eyebrow">Holds the CTA up</div>
-			<h1 class="hero-title">She's <em>working</em> for you.</h1>
-			<p class="hero-sub">
+			<h1 class="hero-title" data-i18n-html="demos_agents_holds_cta.she_s_working_for_you">She's <em>working</em> for you.</h1>
+			<p class="hero-sub" data-i18n="demos_agents_holds_cta.a_second_agent_crouches_under_the_button">
 				A second agent crouches under the button, holding it up. Hover the
 				CTA and she struggles; click and she drops it.
 			</p>
 			<div class="cta-row">
-				<a href="#" class="btn btn-primary" id="cta-btn"><span>Build your agent — free</span><span>→</span></a>
+				<a href="#" class="btn btn-primary" id="cta-btn" data-i18n-html="demos_agents_holds_cta.build_your_agent_free"><span>Build your agent — free</span><span>→</span></a>
 			</div>
 		</div>
 		<canvas id="avatar-canvas"></canvas>
@@ -109,5 +109,7 @@
 			}, rootBone, baseRootPos);
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

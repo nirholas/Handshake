@@ -4,20 +4,20 @@
 	<style>/* three.ws hidden-guard — make the `hidden` attribute authoritative; see scripts/lib/hidden-guard.mjs */[hidden]{display:none!important}</style>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Walk Avatar Embed Generator · three.ws</title>
-	<meta name="description" content="Generate an embed snippet for your three.ws walking avatar — iframe or one-line JS tag." />
+	<title data-i18n="embed_walk.meta_title">Walk Avatar Embed Generator · three.ws</title>
+	<meta name="description" content="Generate an embed snippet for your three.ws walking avatar — iframe or one-line JS tag."  data-i18n-attr="content:embed_walk.meta_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:site_name" content="three.ws" />
 	<meta property="og:url" content="https://three.ws/embed-walk" />
-	<meta property="og:title" content="Walk Avatar Embed Generator · three.ws" />
-	<meta property="og:description" content="Generate an embed snippet for the three.ws walking avatar. One HTML tag, any website." />
+	<meta property="og:title" content="Walk Avatar Embed Generator · three.ws"  data-i18n-attr="content:embed_walk.meta_og_title"/>
+	<meta property="og:description" content="Generate an embed snippet for the three.ws walking avatar. One HTML tag, any website."  data-i18n-attr="content:embed_walk.meta_og_description"/>
 	<meta property="og:image" content="https://three.ws/og-image.png" />
 	<meta property="og:image:width" content="1200" />
 	<meta property="og:image:height" content="630" />
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:site" content="@trythreews" />
-	<meta name="twitter:title" content="Walk Avatar Embed Generator · three.ws" />
-	<meta name="twitter:description" content="Generate an embed snippet for the three.ws walking avatar. One HTML tag, any website." />
+	<meta name="twitter:title" content="Walk Avatar Embed Generator · three.ws"  data-i18n-attr="content:embed_walk.meta_twitter_title"/>
+	<meta name="twitter:description" content="Generate an embed snippet for the three.ws walking avatar. One HTML tag, any website."  data-i18n-attr="content:embed_walk.meta_twitter_description"/>
 	<meta name="twitter:image" content="https://three.ws/og-image.png" />
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -288,8 +288,8 @@
 		three.ws
 	</a>
 	<span class="ew-topbar-sep">/</span>
-	<span class="ew-topbar-title">Walk Embed Generator</span>
-	<a href="/temporary" class="ew-topbar-back">← Back to Walk</a>
+	<span class="ew-topbar-title" data-i18n="embed_walk.walk_embed_generator">Walk Embed Generator</span>
+	<a href="/temporary" class="ew-topbar-back" data-i18n="embed_walk.back_to_walk">← Back to Walk</a>
 </nav>
 
 <div class="ew-layout">
@@ -299,7 +299,7 @@
 		<div>
 			<div class="ew-section-title">Avatar</div>
 			<div class="ew-field">
-				<label class="ew-label" for="cfg-avatar">Avatar ID</label>
+				<label class="ew-label" for="cfg-avatar" data-i18n="embed_walk.avatar_id">Avatar ID</label>
 				<div class="ew-avatar-input-row">
 					<input id="cfg-avatar" class="ew-input" type="text" placeholder="paste avatar UUID…" spellcheck="false" />
 					<img id="avatar-thumb" class="ew-avatar-preview" src="" alt="avatar preview" />
@@ -326,25 +326,25 @@
 			</div>
 			<div class="ew-color-row" id="bg-color-row" style="margin-top:10px;display:none">
 				<input type="color" id="cfg-bg-color" value="#1b1b1b" />
-				<span class="ew-label" id="bg-color-label">#1b1b1b</span>
+				<span class="ew-label" id="bg-color-label" data-i18n="embed_walk.1b1b1b">#1b1b1b</span>
 			</div>
 		</div>
 
 		<div>
 			<div class="ew-section-title">Size</div>
 			<div class="ew-size-presets" id="size-presets">
-				<button class="ew-size-preset" data-w="200" data-h="280">S</button>
-				<button class="ew-size-preset active" data-w="320" data-h="480">M</button>
-				<button class="ew-size-preset" data-w="480" data-h="720">L</button>
-				<button class="ew-size-preset" data-w="" data-h="">Custom</button>
+				<button class="ew-size-preset" data-w="200" data-h="280" data-i18n="embed_walk.s">S</button>
+				<button class="ew-size-preset active" data-w="320" data-h="480" data-i18n="embed_walk.m">M</button>
+				<button class="ew-size-preset" data-w="480" data-h="720" data-i18n="embed_walk.l">L</button>
+				<button class="ew-size-preset" data-w="" data-h="" data-i18n="embed_walk.custom">Custom</button>
 			</div>
 			<div class="ew-wh">
 				<div class="ew-field">
-					<label class="ew-label" for="cfg-w">Width (px)</label>
+					<label class="ew-label" for="cfg-w" data-i18n="embed_walk.width_px">Width (px)</label>
 					<input id="cfg-w" class="ew-input" type="number" value="320" min="100" max="2000" />
 				</div>
 				<div class="ew-field">
-					<label class="ew-label" for="cfg-h">Height (px)</label>
+					<label class="ew-label" for="cfg-h" data-i18n="embed_walk.height_px">Height (px)</label>
 					<input id="cfg-h" class="ew-input" type="number" value="480" min="100" max="2000" />
 				</div>
 			</div>
@@ -362,15 +362,15 @@
 			<div class="ew-section-title">Options</div>
 			<div class="ew-field" style="gap:12px">
 				<div class="ew-toggle-row">
-					<span class="ew-label">Autoplay idle animation</span>
+					<span class="ew-label" data-i18n="embed_walk.autoplay_idle_animation">Autoplay idle animation</span>
 					<div class="ew-toggle on" id="cfg-autoplay" role="switch" aria-checked="true" tabindex="0"></div>
 				</div>
 				<div class="ew-toggle-row">
-					<span class="ew-label">Shadow ground disc</span>
+					<span class="ew-label" data-i18n="embed_walk.shadow_ground_disc">Shadow ground disc</span>
 					<div class="ew-toggle" id="cfg-ground" role="switch" aria-checked="false" tabindex="0"></div>
 				</div>
 				<div class="ew-toggle-row">
-					<span class="ew-label">Orbit drag (desktop)</span>
+					<span class="ew-label" data-i18n="embed_walk.orbit_drag_desktop">Orbit drag (desktop)</span>
 					<div class="ew-toggle" id="cfg-orbit" role="switch" aria-checked="false" tabindex="0"></div>
 				</div>
 			</div>
@@ -389,25 +389,25 @@
 	<!-- ── Right: preview + snippet ──────────────────────────────── -->
 	<main class="ew-preview-panel">
 		<div class="ew-preview-wrap" id="preview-wrap">
-			<span class="ew-preview-label">Live preview</span>
-			<a class="ew-preview-new-tab" id="preview-new-tab" href="#" target="_blank" rel="noopener">↗ New tab</a>
+			<span class="ew-preview-label" data-i18n="embed_walk.live_preview">Live preview</span>
+			<a class="ew-preview-new-tab" id="preview-new-tab" href="#" target="_blank" rel="noopener" data-i18n="embed_walk.new_tab">↗ New tab</a>
 			<iframe id="preview-iframe" class="ew-preview-iframe" title="Avatar preview" allow="autoplay" loading="lazy"></iframe>
 		</div>
 
 		<div class="ew-snippet-section">
 			<div class="ew-tabs" id="snippet-tabs">
-				<button class="ew-tab active" data-tab="html">HTML</button>
-				<button class="ew-tab" data-tab="react">React</button>
-				<button class="ew-tab" data-tab="vue">Vue</button>
-				<button class="ew-tab" data-tab="svelte">Svelte</button>
+				<button class="ew-tab active" data-tab="html" data-i18n="embed_walk.html">HTML</button>
+				<button class="ew-tab" data-tab="react" data-i18n="embed_walk.react">React</button>
+				<button class="ew-tab" data-tab="vue" data-i18n="embed_walk.vue">Vue</button>
+				<button class="ew-tab" data-tab="svelte" data-i18n="embed_walk.svelte">Svelte</button>
 			</div>
 
 			<div class="ew-code-block">
 				<pre id="snippet-code"></pre>
-				<button class="ew-copy-btn" id="copy-btn">Copy</button>
+				<button class="ew-copy-btn" id="copy-btn" data-i18n="embed_walk.copy">Copy</button>
 			</div>
 
-			<p id="framework-note" class="ew-note" style="display:none">
+			<p id="framework-note" class="ew-note" style="display:none" data-i18n-html="embed_walk.install_then_and_render_props_map_1">
 				Install: <code>npm i @three-ws/react</code> then
 				<code>import { Agent3D } from '@three-ws/react';</code> and render
 				<code>&lt;Agent3D agentId="…" controls="joystick" /&gt;</code> — props map 1:1 to the options above.
@@ -680,5 +680,7 @@ window.addEventListener('resize', scheduleUpdate);
 // ── Initial render ─────────────────────────────────────────────────────────
 update();
 </script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

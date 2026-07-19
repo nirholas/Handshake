@@ -5,7 +5,7 @@
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
 		<meta name="robots" content="noindex" />
 		<meta name="referrer" content="strict-origin-when-cross-origin" />
-		<title>Portfolio · Dashboard · three.ws</title>
+		<title data-i18n="dashboard_portfolio.meta_title">Portfolio · Dashboard · three.ws</title>
 		<link rel="icon" href="/favicon.ico" />
 		<link rel="stylesheet" href="/fonts/fonts.css" />
 		<link rel="stylesheet" href="/footer.css" />
@@ -501,14 +501,14 @@
 				<img src="/three.svg" alt="three.ws" class="wordmark-logo" />
 			</a>
 			<nav class="site-nav" aria-label="Primary">
-				<a href="/app">Viewer</a>
-				<a href="/create">Create</a>
-				<a href="/discover">Discover</a>
-				<a href="/widgets">Widgets</a>
-				<a href="/studio">Studio</a>
-				<a href="/docs">Docs</a>
-				<a href="/my-agents">My Agents</a>
-				<a href="/dashboard" class="active" aria-current="page">Dashboard</a>
+				<a href="/app" data-i18n="dashboard_portfolio.viewer">Viewer</a>
+				<a href="/create" data-i18n="dashboard_portfolio.create">Create</a>
+				<a href="/discover" data-i18n="dashboard_portfolio.discover">Discover</a>
+				<a href="/widgets" data-i18n="dashboard_portfolio.widgets">Widgets</a>
+				<a href="/studio" data-i18n="dashboard_portfolio.studio">Studio</a>
+				<a href="/docs" data-i18n="dashboard_portfolio.docs">Docs</a>
+				<a href="/my-agents" data-i18n="dashboard_portfolio.my_agents">My Agents</a>
+				<a href="/dashboard" class="active" aria-current="page" data-i18n="dashboard_portfolio.dashboard">Dashboard</a>
 			</nav>
 			<div class="site-header-right" id="header-user-slot"></div>
 		</header>
@@ -601,8 +601,8 @@
 
 			<!-- Main content -->
 			<main class="dash-main" id="main">
-				<h1 class="page-title">Portfolio</h1>
-				<p class="page-sub">Real-time value across every agent wallet under your account.</p>
+				<h1 class="page-title" data-i18n="dashboard_portfolio.portfolio">Portfolio</h1>
+				<p class="page-sub" data-i18n="dashboard_portfolio.real_time_value_across_every_agent_wallet">Real-time value across every agent wallet under your account.</p>
 
 				<div id="error" class="err-banner" role="alert"></div>
 
@@ -614,7 +614,7 @@
 							<div class="tot-value" id="tot-value">—</div>
 							<div class="tot-change">
 								<span class="chip flat" id="tot-change-chip">—</span>
-								<span class="tot-meta" id="tot-meta">Loading live balances…</span>
+								<span class="tot-meta" id="tot-meta" data-i18n="dashboard_portfolio.loading_live_balances">Loading live balances…</span>
 							</div>
 						</div>
 						<div class="tot-actions">
@@ -636,12 +636,12 @@
 						</div>
 					</div>
 					<div class="range-tabs" id="range-tabs" role="group" aria-label="Time range">
-						<button class="range-tab" data-days="1">1D</button>
-						<button class="range-tab" data-days="7">7D</button>
-						<button class="range-tab" data-days="30" aria-pressed="true">30D</button>
-						<button class="range-tab" data-days="90">90D</button>
-						<button class="range-tab" data-days="365">1Y</button>
-						<button class="range-tab" data-days="0">All</button>
+						<button class="range-tab" data-days="1" data-i18n="dashboard_portfolio.1d">1D</button>
+						<button class="range-tab" data-days="7" data-i18n="dashboard_portfolio.7d">7D</button>
+						<button class="range-tab" data-days="30" aria-pressed="true" data-i18n="dashboard_portfolio.30d">30D</button>
+						<button class="range-tab" data-days="90" data-i18n="dashboard_portfolio.90d">90D</button>
+						<button class="range-tab" data-days="365" data-i18n="dashboard_portfolio.1y">1Y</button>
+						<button class="range-tab" data-days="0" data-i18n="dashboard_portfolio.all">All</button>
 					</div>
 				</div>
 
@@ -731,25 +731,25 @@
 				<div class="h-footer-brand-col">
 					<div class="h-footer-brand">
 						<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
-						<span>three.ws</span>
+						<span data-i18n="dashboard_portfolio.three_ws">three.ws</span>
 					</div>
-					<p class="h-footer-tagline">Give your AI a body.</p>
+					<p class="h-footer-tagline" data-i18n="dashboard_portfolio.give_your_ai_a_body">Give your AI a body.</p>
 				</div>
 				<nav class="h-footer-links" aria-label="Footer">
-					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener noreferrer">GitHub</a>
-					<a href="/create">Create</a>
-					<a href="/studio">Studio</a>
-					<a href="/widgets">Widgets</a>
-					<a href="/discover">Discover</a>
-					<a href="/docs">Docs</a>
-					<a href="/legal/privacy">Privacy</a>
-					<a href="/legal/tos">Terms</a>
+					<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener noreferrer" data-i18n="dashboard_portfolio.github">GitHub</a>
+					<a href="/create" data-i18n="dashboard_portfolio.create_2">Create</a>
+					<a href="/studio" data-i18n="dashboard_portfolio.studio_2">Studio</a>
+					<a href="/widgets" data-i18n="dashboard_portfolio.widgets_2">Widgets</a>
+					<a href="/discover" data-i18n="dashboard_portfolio.discover_2">Discover</a>
+					<a href="/docs" data-i18n="dashboard_portfolio.docs_2">Docs</a>
+					<a href="/legal/privacy" data-i18n="dashboard_portfolio.privacy">Privacy</a>
+					<a href="/legal/tos" data-i18n="dashboard_portfolio.terms">Terms</a>
 				</nav>
 			</div>
 			<div class="h-footer-bottom">
-				<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+				<p class="h-footer-legal" data-i18n="dashboard_portfolio.2026_three_ws_all_rights_reserved">© 2026 three.ws — All rights reserved.</p>
 				<div class="h-footer-badges">
-					<span class="h-footer-badge" aria-label="System status">
+					<span class="h-footer-badge" aria-label="System status" data-i18n-html="dashboard_portfolio.all_systems_normal" data-i18n-attr="aria-label:dashboard_portfolio.system_status_arialabel">
 						<span class="h-footer-status-dot" aria-hidden="true"></span>
 						<span>All systems normal</span>
 					</span>
@@ -757,7 +757,7 @@
 						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 14.5A6.5 6.5 0 1 1 8 1.5a6.5 6.5 0 0 1 0 13zm-1-9.25a1 1 0 1 1 2 0v3.5a1 1 0 1 1-2 0v-3.5zm1 6.5a1.1 1.1 0 1 1 0-2.2 1.1 1.1 0 0 1 0 2.2z"/></svg>
 						Transparent by default
 					</span>
-					<a class="h-footer-badge" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener noreferrer" aria-label="View source on GitHub">
+					<a class="h-footer-badge" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener noreferrer" aria-label="View source on GitHub" data-i18n-attr="aria-label:dashboard_portfolio.view_source_on_github_arialabel">
 						<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
 						Open source
 					</a>
@@ -1394,5 +1394,7 @@
 			})();
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

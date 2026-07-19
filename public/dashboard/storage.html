@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Storage · three.ws</title>
+		<title data-i18n="dashboard_storage.meta_title">Storage · three.ws</title>
 		<link rel="icon" href="/favicon.ico" />
 		<style>
 			:root {
@@ -224,12 +224,12 @@
 	</head>
 	<body data-auth-pending>
 		<header>
-			<div class="brand"><a href="/dashboard">← Dashboard</a></div>
-			<div class="muted"><span id="avatar-name">Avatar</span></div>
+			<div class="brand"><a href="/dashboard" data-i18n="dashboard_storage.dashboard">← Dashboard</a></div>
+			<div class="muted"><span id="avatar-name" data-i18n="dashboard_storage.avatar">Avatar</span></div>
 		</header>
 		<main>
-			<h1>Storage</h1>
-			<p class="sub">
+			<h1 data-i18n="dashboard_storage.storage">Storage</h1>
+			<p class="sub" data-i18n-html="dashboard_storage.manage_where_s_bytes_live_and_track">
 				Manage where <code id="avatar-id-label">your avatar</code>'s bytes live and track content
 				attestation.
 			</p>
@@ -242,13 +242,13 @@
 			<!-- R2 -->
 			<div class="card">
 				<fieldset>
-					<legend>R2 (primary storage)</legend>
+					<legend data-i18n="dashboard_storage.r2_primary_storage">R2 (primary storage)</legend>
 					<div class="kv">
-						<span class="kv-label">Status</span>
-						<span class="badge green" id="r2-present-badge">Present</span>
+						<span class="kv-label" data-i18n="dashboard_storage.status">Status</span>
+						<span class="badge green" id="r2-present-badge" data-i18n="dashboard_storage.present">Present</span>
 					</div>
 					<div class="kv">
-						<span class="kv-label">Storage key</span>
+						<span class="kv-label" data-i18n="dashboard_storage.storage_key">Storage key</span>
 						<code id="r2-key" class="kv-value">—</code>
 					</div>
 				</fieldset>
@@ -257,23 +257,23 @@
 			<!-- IPFS -->
 			<div class="card">
 				<fieldset>
-					<legend>IPFS</legend>
+					<legend data-i18n="dashboard_storage.ipfs">IPFS</legend>
 					<div class="kv">
-						<span class="kv-label">Pinned</span>
-						<span class="badge grey" id="ipfs-pinned-badge">Not pinned</span>
+						<span class="kv-label" data-i18n="dashboard_storage.pinned">Pinned</span>
+						<span class="badge grey" id="ipfs-pinned-badge" data-i18n="dashboard_storage.not_pinned">Not pinned</span>
 					</div>
 					<div class="kv" id="ipfs-cid-row">
-						<span class="kv-label">CID</span>
+						<span class="kv-label" data-i18n="dashboard_storage.cid">CID</span>
 						<code id="ipfs-cid" class="kv-value">—</code>
 					</div>
 					<div class="kv" id="ipfs-pinned-at-row">
-						<span class="kv-label">Pinned at</span>
+						<span class="kv-label" data-i18n="dashboard_storage.pinned_at">Pinned at</span>
 						<span id="ipfs-pinned-at" class="kv-value muted">—</span>
 					</div>
 					<div class="actions">
-						<button class="btn" id="pin-btn">Pin to IPFS</button>
+						<button class="btn" id="pin-btn" data-i18n="dashboard_storage.pin_to_ipfs">Pin to IPFS</button>
 					</div>
-					<p class="muted" style="margin-top: 10px">
+					<p class="muted" style="margin-top: 10px" data-i18n-html="dashboard_storage.real_pinning_runs_through_pinata_when_is">
 						Real pinning runs through Pinata when <code>PINATA_JWT</code> is configured
 						on the server. Otherwise the endpoint records a content-hash stub CID so the
 						rest of the flow still works in dev.
@@ -284,24 +284,24 @@
 			<!-- Attestation -->
 			<div class="card">
 				<fieldset>
-					<legend>On-chain attestation</legend>
+					<legend data-i18n="dashboard_storage.on_chain_attestation">On-chain attestation</legend>
 					<div class="kv">
-						<span class="kv-label">Content hash</span>
+						<span class="kv-label" data-i18n="dashboard_storage.content_hash">Content hash</span>
 						<code id="attest-hash" class="kv-value">—</code>
 					</div>
 					<div class="kv">
-						<span class="kv-label">Chain</span>
+						<span class="kv-label" data-i18n="dashboard_storage.chain">Chain</span>
 						<span id="attest-chain" class="kv-value muted">—</span>
 					</div>
 					<div class="kv">
-						<span class="kv-label">Tx hash</span>
+						<span class="kv-label" data-i18n="dashboard_storage.tx_hash">Tx hash</span>
 						<code id="attest-tx" class="kv-value">—</code>
 					</div>
 					<div class="kv">
-						<span class="kv-label">Attested at</span>
+						<span class="kv-label" data-i18n="dashboard_storage.attested_at">Attested at</span>
 						<span id="attest-at" class="kv-value muted">—</span>
 					</div>
-					<p class="muted" style="margin-top: 10px">
+					<p class="muted" style="margin-top: 10px" data-i18n="dashboard_storage.on_chain_attestation_is_read_only_content">
 						On-chain attestation is read-only. Content hashing runs server-side
 						post-upload. Transaction broadcasting is a future feature.
 					</p>
@@ -309,7 +309,7 @@
 			</div>
 
 			<div class="actions">
-				<button class="btn sec" id="reload">Reload</button>
+				<button class="btn sec" id="reload" data-i18n="dashboard_storage.reload">Reload</button>
 				</div>
 				<!-- /storage-cards -->
 			</div>
@@ -500,5 +500,7 @@
 			})();
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

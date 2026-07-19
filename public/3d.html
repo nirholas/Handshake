@@ -4,11 +4,11 @@
 	<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>three.ws 3D API — free text→3D + inspection for AI agents</title>
-	<meta name="description" content="A free, keyless 3D API for AI agents: turn a text prompt into a real GLB, validate and optimize any glTF/GLB, and graduate to paid Forge Pro quality tiers and Rigged Avatars. One URL to discover it all — no account, no API key." />
+	<title data-i18n="3d.meta_title">three.ws 3D API — free text→3D + inspection for AI agents</title>
+	<meta name="description" content="A free, keyless 3D API for AI agents: turn a text prompt into a real GLB, validate and optimize any glTF/GLB, and graduate to paid Forge Pro quality tiers and Rigged Avatars. One URL to discover it all — no account, no API key."  data-i18n-attr="content:3d.meta_description"/>
 	<meta name="theme-color" content="#0b0b0b" />
-	<meta property="og:title" content="three.ws 3D API — free text→3D + inspection for AI agents" />
-	<meta property="og:description" content="Free, keyless 3D for agents: text→3D draft generation + glTF/GLB inspection, with a clean OpenAPI 3.1 doc and a paid ladder to production quality." />
+	<meta property="og:title" content="three.ws 3D API — free text→3D + inspection for AI agents"  data-i18n-attr="content:3d.meta_og_title"/>
+	<meta property="og:description" content="Free, keyless 3D for agents: text→3D draft generation + glTF/GLB inspection, with a clean OpenAPI 3.1 doc and a paid ladder to production quality."  data-i18n-attr="content:3d.meta_og_description"/>
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="https://three.ws/3d" />
 	<link rel="canonical" href="https://three.ws/3d" />
@@ -124,8 +124,8 @@
 	<meta property="og:image:alt" content="3D API — three.ws">
 	<meta name="twitter:card" content="summary_large_image">
 	<meta name="twitter:site" content="@trythreews">
-	<meta name="twitter:title" content="3D API · three.ws">
-	<meta name="twitter:description" content="Free, keyless 3D API for AI agents: turn a text prompt into a real GLB model and validate/optimize any glTF/GLB, all from one URL with a live OpenAPI 3.1 spec. Free draft generation and inspection graduate to paid Forge Pro quality tiers and animation-ready Rigged Avatars. No key, no account.">
+	<meta name="twitter:title" content="3D API · three.ws" data-i18n-attr="content:3d.meta_twitter_title">
+	<meta name="twitter:description" content="Free, keyless 3D API for AI agents: turn a text prompt into a real GLB model and validate/optimize any glTF/GLB, all from one URL with a live OpenAPI 3.1 spec. Free draft generation and inspection graduate to paid Forge Pro quality tiers and animation-ready Rigged Avatars. No key, no account." data-i18n-attr="content:3d.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=learn&amp;t=3D+API&amp;d=Free%2C+keyless+3D+API+for+AI+agents%3A+turn+a+text+prompt+into+a+real+GLB+model+and+validate%2Foptimize+any+glTF%2FGLB%2C+all+from+one+URL+with+a+live+OpenAPI+3.1+spec.+&amp;p=%2F3d">
 	<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","name":"3D API","description":"Free, keyless 3D API for AI agents: turn a text prompt into a real GLB model and validate/optimize any glTF/GLB, all from one URL with a live OpenAPI 3.1 spec. Free draft generation and inspection graduate to paid Forge Pro quality tiers and animation-ready Rigged Avatars. No key, no account.","url":"https://three.ws/3d","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"},"primaryImageOfPage":"https://three.ws/api/page-og?s=learn&t=3D+API&d=Free%2C+keyless+3D+API+for+AI+agents%3A+turn+a+text+prompt+into+a+real+GLB+model+and+validate%2Foptimize+any+glTF%2FGLB%2C+all+from+one+URL+with+a+live+OpenAPI+3.1+spec.+&p=%2F3d"}]}</script>
 </head>
@@ -136,17 +136,17 @@
 		<!-- Hero -->
 		<header class="hero">
 			<div class="badges">
-				<span class="pill">Free</span>
-				<span class="pill">Keyless</span>
-				<span class="pill">OpenAPI 3.1</span>
-				<span class="pill live" id="liveBadge" title="Live status of the API"><span class="dot"></span><span id="liveText">checking…</span></span>
+				<span class="pill" data-i18n="3d.free">Free</span>
+				<span class="pill" data-i18n="3d.keyless">Keyless</span>
+				<span class="pill" data-i18n="3d.openapi_3_1">OpenAPI 3.1</span>
+				<span class="pill live" id="liveBadge" title="Live status of the API" data-i18n-html="3d.checking" data-i18n-attr="title:3d.live_status_of_the_api_title"><span class="dot"></span><span id="liveText">checking…</span></span>
 			</div>
-			<h1>three.ws 3D API</h1>
-			<p class="lede">Give your AI agent a 3D toolchain. Turn a text prompt into a real textured GLB, validate and optimize any glTF/GLB — <strong>free, keyless, no account</strong>. When a draft isn't enough, the same API graduates to production Forge Pro tiers and animation-ready Rigged Avatars.</p>
+			<h1 data-i18n="3d.three_ws_3d_api">three.ws 3D API</h1>
+			<p class="lede" data-i18n-html="3d.give_your_ai_agent_a_3d_toolchain">Give your AI agent a 3D toolchain. Turn a text prompt into a real textured GLB, validate and optimize any glTF/GLB — <strong>free, keyless, no account</strong>. When a draft isn't enough, the same API graduates to production Forge Pro tiers and animation-ready Rigged Avatars.</p>
 			<div class="cta">
-				<a class="btn primary" href="#quickstart">Quickstart</a>
-				<a class="btn" href="/api/3d/openapi.json">OpenAPI spec →</a>
-				<a class="btn" href="/api/3d">JSON index →</a>
+				<a class="btn primary" href="#quickstart" data-i18n="3d.quickstart">Quickstart</a>
+				<a class="btn" href="/api/3d/openapi.json" data-i18n="3d.openapi_spec">OpenAPI spec →</a>
+				<a class="btn" href="/api/3d" data-i18n="3d.json_index">JSON index →</a>
 			</div>
 		</header>
 
@@ -159,21 +159,21 @@
 
 		<!-- Who it's for -->
 		<section class="block">
-			<h2>Who this is for</h2>
-			<p class="sub">An autonomous agent building a game, a scene, an NFT, or a marketplace asset needs 3D — and needs to trust what it gets. This API answers both mid-task: <strong>make me a model from this description</strong>, and <strong>is this model any good, and how do I make it smaller?</strong> No other agent-payments platform gives away 3D generation and inspection.</p>
+			<h2 data-i18n="3d.who_this_is_for">Who this is for</h2>
+			<p class="sub" data-i18n-html="3d.an_autonomous_agent_building_a_game_a">An autonomous agent building a game, a scene, an NFT, or a marketplace asset needs 3D — and needs to trust what it gets. This API answers both mid-task: <strong>make me a model from this description</strong>, and <strong>is this model any good, and how do I make it smaller?</strong> No other agent-payments platform gives away 3D generation and inspection.</p>
 		</section>
 
 		<!-- Endpoints -->
 		<section class="block" id="endpoints">
-			<h2>Endpoints</h2>
-			<p class="sub">Assembled live from the API catalog. Every row is free and keyless.</p>
+			<h2 data-i18n="3d.endpoints">Endpoints</h2>
+			<p class="sub" data-i18n="3d.assembled_live_from_the_api_catalog_every">Assembled live from the API catalog. Every row is free and keyless.</p>
 			<div class="table-wrap">
 				<table class="ep">
 					<thead>
-						<tr><th>Method</th><th>Path</th><th>What it does</th><th>Tier</th></tr>
+						<tr><th data-i18n="3d.method">Method</th><th data-i18n="3d.path">Path</th><th data-i18n="3d.what_it_does">What it does</th><th data-i18n="3d.tier">Tier</th></tr>
 					</thead>
 					<tbody id="epRows">
-						<tr><td colspan="4" style="color:var(--ink-dim)">Loading catalog…</td></tr>
+						<tr><td colspan="4" style="color:var(--ink-dim)" data-i18n="3d.loading_catalog">Loading catalog…</td></tr>
 					</tbody>
 				</table>
 			</div>
@@ -181,21 +181,21 @@
 
 		<!-- Quickstart -->
 		<section class="block" id="quickstart">
-			<h2>Quickstart</h2>
-			<p class="sub">Copy, run, done. No key, no header, no account. These call the live production API.</p>
+			<h2 data-i18n="3d.quickstart_2">Quickstart</h2>
+			<p class="sub" data-i18n="3d.copy_run_done_no_key_no_header">Copy, run, done. No key, no header, no account. These call the live production API.</p>
 
-			<h3 style="font-family:var(--font-display);font-size:var(--text-md);margin:var(--space-md) 0 var(--space-2xs)">1 · Discover the whole API</h3>
+			<h3 style="font-family:var(--font-display);font-size:var(--text-md);margin:var(--space-md) 0 var(--space-2xs)" data-i18n="3d.1_discover_the_whole_api">1 · Discover the whole API</h3>
 			<pre class="code"><code>curl https://three.ws/api/3d</code></pre>
 
-			<h3 style="font-family:var(--font-display);font-size:var(--text-md);margin:var(--space-md) 0 var(--space-2xs)">2 · Inspect a model (validate + optimization report)</h3>
+			<h3 style="font-family:var(--font-display);font-size:var(--text-md);margin:var(--space-md) 0 var(--space-2xs)" data-i18n="3d.2_inspect_a_model_validate_optimization_repo">2 · Inspect a model (validate + optimization report)</h3>
 			<pre class="code"><code>curl "https://three.ws/api/3d/inspect?url=https://three.ws/avatars/cesium-man.glb"</code></pre>
 			<div class="runbar">
-				<button class="btn" id="runInspect" type="button">Run it live ▶</button>
+				<button class="btn" id="runInspect" type="button" data-i18n="3d.run_it_live">Run it live ▶</button>
 				<span class="status" id="inspectStatus"></span>
 			</div>
 			<div class="out"><pre class="code"><code id="inspectOut">// Response appears here — a real call to /api/3d/inspect.</code></pre></div>
 
-			<h3 style="font-family:var(--font-display);font-size:var(--text-md);margin:var(--space-md) 0 var(--space-2xs)">3 · Generate a model from text (free draft)</h3>
+			<h3 style="font-family:var(--font-display);font-size:var(--text-md);margin:var(--space-md) 0 var(--space-2xs)" data-i18n="3d.3_generate_a_model_from_text_free">3 · Generate a model from text (free draft)</h3>
 			<pre class="code"><code>curl -X POST https://three.ws/api/3d/generate \
   -H 'content-type: application/json' \
   -d '{ "prompt": "a small ceramic robot figurine" }'
@@ -204,15 +204,15 @@
 curl "https://three.ws/api/3d/generate?job=&lt;id&gt;"
 # → { "status": "done", "glbUrl": "https://…/model.glb", "viewerUrl": "https://three.ws/…" }</code></pre>
 
-			<h3 style="font-family:var(--font-display);font-size:var(--text-md);margin:var(--space-md) 0 var(--space-2xs)">Point any OpenAPI toolchain at it</h3>
+			<h3 style="font-family:var(--font-display);font-size:var(--text-md);margin:var(--space-md) 0 var(--space-2xs)" data-i18n="3d.point_any_openapi_toolchain_at_it">Point any OpenAPI toolchain at it</h3>
 			<pre class="code"><code># LangChain, openapi-generator, Swagger UI, etc.
 curl https://three.ws/api/3d/openapi.json</code></pre>
 		</section>
 
 		<!-- Viewer -->
 		<section class="block">
-			<h2>See the output</h2>
-			<p class="sub">Everything the API touches is a real, standards-compliant GLB — the same format your engine, viewer, or marketplace already speaks. Drag to orbit.</p>
+			<h2 data-i18n="3d.see_the_output">See the output</h2>
+			<p class="sub" data-i18n="3d.everything_the_api_touches_is_a_real">Everything the API touches is a real, standards-compliant GLB — the same format your engine, viewer, or marketplace already speaks. Drag to orbit.</p>
 			<div class="viewer-card">
 				<model-viewer
 					src="/avatars/cesium-man.glb"
@@ -228,75 +228,75 @@ curl https://three.ws/api/3d/openapi.json</code></pre>
 					touch-action="pan-y"
 				></model-viewer>
 				<div>
-					<h3>Real GLB, not a screenshot</h3>
-					<p>This is a live glTF binary rendered in your browser. The free <code>/api/3d/inspect</code> endpoint reports exactly what's inside one of these — vertices, triangles, materials, textures, animations, extensions — and a prioritized plan to make it smaller and faster.</p>
-					<a class="btn" href="/api/3d/inspect?url=https://three.ws/avatars/cesium-man.glb">Inspect this model →</a>
+					<h3 data-i18n="3d.real_glb_not_a_screenshot">Real GLB, not a screenshot</h3>
+					<p data-i18n-html="3d.this_is_a_live_gltf_binary_rendered">This is a live glTF binary rendered in your browser. The free <code>/api/3d/inspect</code> endpoint reports exactly what's inside one of these — vertices, triangles, materials, textures, animations, extensions — and a prioritized plan to make it smaller and faster.</p>
+					<a class="btn" href="/api/3d/inspect?url=https://three.ws/avatars/cesium-man.glb" data-i18n="3d.inspect_this_model">Inspect this model →</a>
 				</div>
 			</div>
 		</section>
 
 		<!-- Free → paid ladder -->
 		<section class="block">
-			<h2>Free → paid ladder</h2>
-			<p class="sub">Start free. Upgrade only when a draft isn't enough. Paid tiers settle per-call in USDC over <a href="/pay">x402</a> — still no account, still no key.</p>
+			<h2 data-i18n="3d.free_paid_ladder">Free → paid ladder</h2>
+			<p class="sub" data-i18n-html="3d.start_free_upgrade_only_when_a_draft">Start free. Upgrade only when a draft isn't enough. Paid tiers settle per-call in USDC over <a href="/pay">x402</a> — still no account, still no key.</p>
 			<div class="ladder">
 				<div class="rung free">
-					<span class="cap">Tier 0 · Free</span>
-					<h3>Draft + Inspect</h3>
+					<span class="cap" data-i18n="3d.tier_0_free">Tier 0 · Free</span>
+					<h3 data-i18n="3d.draft_inspect">Draft + Inspect</h3>
 					<div class="price">$0 · keyless</div>
 					<ul>
-						<li>Text→3D draft (NIM TRELLIS): single subject, GLB, no rigging</li>
-						<li>glTF/GLB validation + optimization report</li>
-						<li>Generous per-IP rate limit</li>
+						<li data-i18n="3d.text_3d_draft_nim_trellis_single_subject">Text→3D draft (NIM TRELLIS): single subject, GLB, no rigging</li>
+						<li data-i18n="3d.gltf_glb_validation_optimization_report">glTF/GLB validation + optimization report</li>
+						<li data-i18n="3d.generous_per_ip_rate_limit">Generous per-IP rate limit</li>
 					</ul>
-					<div class="go"><a class="btn" href="/api/3d">Use it →</a></div>
+					<div class="go"><a class="btn" href="/api/3d" data-i18n="3d.use_it">Use it →</a></div>
 				</div>
 				<div class="rung">
-					<span class="cap">Tier 1 · Paid</span>
-					<h3>Forge Pro</h3>
+					<span class="cap" data-i18n="3d.tier_1_paid">Tier 1 · Paid</span>
+					<h3 data-i18n="3d.forge_pro">Forge Pro</h3>
 					<div class="price">from $0.05 USDC</div>
 					<ul>
-						<li>Higher polygon budgets + PBR textures</li>
-						<li>draft / standard / high quality tiers</li>
-						<li>Text→3D and image→3D pipelines</li>
+						<li data-i18n="3d.higher_polygon_budgets_pbr_textures">Higher polygon budgets + PBR textures</li>
+						<li data-i18n="3d.draft_standard_high_quality_tiers">draft / standard / high quality tiers</li>
+						<li data-i18n="3d.text_3d_and_image_3d_pipelines">Text→3D and image→3D pipelines</li>
 					</ul>
-					<div class="go"><a class="btn" href="/forge">Open Forge →</a></div>
+					<div class="go"><a class="btn" href="/forge" data-i18n="3d.open_forge">Open Forge →</a></div>
 				</div>
 				<div class="rung">
-					<span class="cap">Tier 2 · Paid</span>
-					<h3>Rigged Avatars</h3>
+					<span class="cap" data-i18n="3d.tier_2_paid">Tier 2 · Paid</span>
+					<h3 data-i18n="3d.rigged_avatars">Rigged Avatars</h3>
 					<div class="price">from $0.05 USDC</div>
 					<ul>
-						<li>Auto skeleton + skin weights</li>
-						<li>Pre-baked idle / walk clip library</li>
-						<li>Animation-ready humanoid GLB</li>
+						<li data-i18n="3d.auto_skeleton_skin_weights">Auto skeleton + skin weights</li>
+						<li data-i18n="3d.pre_baked_idle_walk_clip_library">Pre-baked idle / walk clip library</li>
+						<li data-i18n="3d.animation_ready_humanoid_glb">Animation-ready humanoid GLB</li>
 					</ul>
-					<div class="go"><a class="btn" href="/create/prompt">Rig one →</a></div>
+					<div class="go"><a class="btn" href="/create/prompt" data-i18n="3d.rig_one">Rig one →</a></div>
 				</div>
 			</div>
 		</section>
 
 		<!-- FAQ -->
 		<section class="block">
-			<h2>Notes</h2>
+			<h2 data-i18n="3d.notes">Notes</h2>
 			<div class="faq">
 				<details>
-					<summary>Is it really free and keyless?</summary>
-					<p>Yes. No account, no API key, no wallet. Free endpoints have a generous per-IP rate limit that only blunts abuse. The free draft generation tier runs on a shared GPU lane — it's honest about being a prototyping tier (draft geometry, GLB only, no rigging).</p>
+					<summary data-i18n="3d.is_it_really_free_and_keyless">Is it really free and keyless?</summary>
+					<p data-i18n="3d.yes_no_account_no_api_key_no">Yes. No account, no API key, no wallet. Free endpoints have a generous per-IP rate limit that only blunts abuse. The free draft generation tier runs on a shared GPU lane — it's honest about being a prototyping tier (draft geometry, GLB only, no rigging).</p>
 				</details>
 				<details>
-					<summary>What formats are supported?</summary>
-					<p>Output is binary glTF (GLB) — the web-standard 3D container every engine and viewer reads. Inspection accepts <code>.glb</code> and <code>.gltf</code> from any public URL, up to the documented size cap.</p>
+					<summary data-i18n="3d.what_formats_are_supported">What formats are supported?</summary>
+					<p data-i18n-html="3d.output_is_binary_gltf_glb_the_web">Output is binary glTF (GLB) — the web-standard 3D container every engine and viewer reads. Inspection accepts <code>.glb</code> and <code>.gltf</code> from any public URL, up to the documented size cap.</p>
 				</details>
 				<details>
-					<summary>How do agents pay for the pro tiers?</summary>
-					<p>Programmatically, over <a href="/pay">x402</a> (HTTP 402 + USDC on Base or Solana). No key exchange — an agent just retries the request with a payment header. See the paid <a href="/bazaar">x402 Bazaar</a> for the full catalog.</p>
+					<summary data-i18n="3d.how_do_agents_pay_for_the_pro">How do agents pay for the pro tiers?</summary>
+					<p data-i18n-html="3d.programmatically_over_x402_http_402_usdc_on">Programmatically, over <a href="/pay">x402</a> (HTTP 402 + USDC on Base or Solana). No key exchange — an agent just retries the request with a payment header. See the paid <a href="/bazaar">x402 Bazaar</a> for the full catalog.</p>
 				</details>
 			</div>
 		</section>
 
 		<footer class="foot">
-			Built for agents. Machine-readable spec: <a href="/api/3d/openapi.json">/api/3d/openapi.json</a> · Discovery: <a href="/api/3d">/api/3d</a> · Paid catalog: <a href="/bazaar">x402 Bazaar</a>
+			Built for agents. Machine-readable spec: <a href="/api/3d/openapi.json" data-i18n="3d.api_3d_openapi_json">/api/3d/openapi.json</a> · Discovery: <a href="/api/3d" data-i18n="3d.api_3d">/api/3d</a> · Paid catalog: <a href="/bazaar" data-i18n="3d.x402_bazaar">x402 Bazaar</a>
 		</footer>
 	</main>
 
@@ -373,5 +373,7 @@ curl https://three.ws/api/3d/openapi.json</code></pre>
 			}
 		});
 	</script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

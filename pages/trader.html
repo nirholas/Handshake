@@ -4,12 +4,12 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Trader · three.ws</title>
-		<meta name="description" content="A pump.fun trader's provable track record on three.ws — realized P&L, win rate, drawdown, and every trade traceable to its on-chain transaction." />
+		<title data-i18n="trader.meta_title">Trader · three.ws</title>
+		<meta name="description" content="A pump.fun trader's provable track record on three.ws — realized P&L, win rate, drawdown, and every trade traceable to its on-chain transaction."  data-i18n-attr="content:trader.meta_description"/>
 		<meta property="og:type" content="profile" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:title" content="Trader track record · three.ws" />
-		<meta property="og:description" content="A provable pump.fun track record — every number traceable to its transaction." />
+		<meta property="og:title" content="Trader track record · three.ws"  data-i18n-attr="content:trader.meta_og_title"/>
+		<meta property="og:description" content="A provable pump.fun track record — every number traceable to its transaction."  data-i18n-attr="content:trader.meta_og_description"/>
 		<meta property="og:image" content="https://three.ws/og-image.png" />
 		<meta name="twitter:card" content="summary_large_image" />
 		<meta name="theme-color" content="#0a0a0a" />
@@ -30,7 +30,7 @@
 		<script src="/nav.js"></script>
 
 		<main class="tp-shell" id="tp-root" aria-busy="true">
-			<a class="tp-back" href="/leaderboard">← Leaderboard</a>
+			<a class="tp-back" href="/leaderboard" data-i18n="trader.leaderboard">← Leaderboard</a>
 			<div id="tp-content"></div>
 		</main>
 
@@ -38,5 +38,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
-	</body>
+		<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
 </html>

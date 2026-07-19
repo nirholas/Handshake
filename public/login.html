@@ -5,7 +5,7 @@
 		<script src="/referral-capture.js"></script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<title>Sign in · three.ws</title>
+		<title data-i18n="login.meta_title">Sign in · three.ws</title>
 		<meta name="theme-color" content="#000000" />
 		<meta name="mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-capable" content="yes" />
@@ -540,19 +540,19 @@
 			}
 		</style>
 	
-	<meta name="description" content="Sign in with email, GitHub, or a connected wallet.">
+	<meta name="description" content="Sign in with email, GitHub, or a connected wallet." data-i18n-attr="content:login.meta_description">
 	<link rel="canonical" href="https://three.ws/login">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
-	<meta property="og:title" content="Sign in · three.ws">
-	<meta property="og:description" content="Sign in with email, GitHub, or a connected wallet.">
+	<meta property="og:title" content="Sign in · three.ws" data-i18n-attr="content:login.meta_og_title">
+	<meta property="og:description" content="Sign in with email, GitHub, or a connected wallet." data-i18n-attr="content:login.meta_og_description">
 	<meta property="og:url" content="https://three.ws/login">
 	<meta property="og:image" content="https://three.ws/api/page-og?s=account&amp;t=Sign+in&amp;d=Sign+in+with+email%2C+GitHub%2C+or+a+connected+wallet.&amp;p=%2Flogin">
 	<meta property="og:image:width" content="1200">
 	<meta property="og:image:height" content="630">
 	<meta name="twitter:card" content="summary_large_image">
-	<meta name="twitter:title" content="Sign in · three.ws">
-	<meta name="twitter:description" content="Sign in with email, GitHub, or a connected wallet.">
+	<meta name="twitter:title" content="Sign in · three.ws" data-i18n-attr="content:login.meta_twitter_title">
+	<meta name="twitter:description" content="Sign in with email, GitHub, or a connected wallet." data-i18n-attr="content:login.meta_twitter_description">
 	<meta name="twitter:image" content="https://three.ws/api/page-og?s=account&amp;t=Sign+in&amp;d=Sign+in+with+email%2C+GitHub%2C+or+a+connected+wallet.&amp;p=%2Flogin">
 	<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebPage","name":"Sign in","description":"Sign in with email, GitHub, or a connected wallet.","url":"https://three.ws/login","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
 
@@ -565,17 +565,17 @@
 	<script async defer src="https://cdn.jsdelivr.net/npm/altcha@latest/dist/altcha.min.js" type="module"></script>
 </head>
 	<body>
-		<a href="#main-content" class="skip-link">Skip to main content</a>
+		<a href="#main-content" class="skip-link" data-i18n="login.skip_to_main_content">Skip to main content</a>
 		<div id="nav-container"></div>
 		<script src="/nav.js"></script>
 		<main class="auth-stage" id="main-content">
 		<div class="shell">
 			<form class="card" id="f" autocomplete="on">
 				<a href="/" class="brand"><img src="/three.svg" alt="three.ws" /></a>
-				<h1>Welcome back</h1>
-				<p class="sub">Sign in to manage your avatars.</p>
+				<h1 data-i18n="login.welcome_back">Welcome back</h1>
+				<p class="sub" data-i18n="login.sign_in_to_manage_your_avatars">Sign in to manage your avatars.</p>
 
-				<p class="no-wallet-hint" id="no-wallet-hint">
+				<p class="no-wallet-hint" id="no-wallet-hint" data-i18n="login.no_wallet_needed_sign_in_with_your">
 					No wallet needed — sign in with your email below.
 				</p>
 
@@ -584,20 +584,20 @@
 					<div id="privy-step-email">
 						<div class="privy-row">
 							<input id="privy-email-input" type="email" inputmode="email" placeholder="Email address" autocomplete="email" autocapitalize="none" autofocus />
-							<button type="button" id="privy-send-btn" class="privy-row-btn">Send code</button>
+							<button type="button" id="privy-send-btn" class="privy-row-btn" data-i18n="login.send_code">Send code</button>
 						</div>
 						<div id="privy-captcha-slot" aria-live="polite"></div>
 					</div>
 					<div id="privy-step-code" hidden>
-						<p class="privy-code-hint">Code sent — check your inbox</p>
+						<p class="privy-code-hint" data-i18n="login.code_sent_check_your_inbox">Code sent — check your inbox</p>
 						<div class="privy-row">
 							<input id="privy-code-input" type="text" inputmode="numeric" placeholder="6-digit code" maxlength="6" autocomplete="one-time-code" />
-							<button type="button" id="privy-verify-btn" class="privy-row-btn">Verify</button>
+							<button type="button" id="privy-verify-btn" class="privy-row-btn" data-i18n="login.verify">Verify</button>
 						</div>
-						<button type="button" id="privy-back-btn" class="privy-back-link">← Back</button>
+						<button type="button" id="privy-back-btn" class="privy-back-link" data-i18n="login.back">← Back</button>
 					</div>
 					<div id="privy-wallet-wrap">
-						<p class="privy-wallet-divider">or connect wallet</p>
+						<p class="privy-wallet-divider" data-i18n="login.or_connect_wallet">or connect wallet</p>
 						<div class="privy-chain-btns">
 							<button type="button" id="privy-evm-btn" class="privy-chain-btn">
 								<svg width="14" height="14" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 2L4 16.5 16 22l12-5.5L16 2z" fill="currentColor" opacity=".55"/><path d="M16 2v12.5L4 16.5 16 2z" fill="currentColor" opacity=".9"/><path d="M16 22v8l12-11L16 22z" fill="currentColor" opacity=".55"/><path d="M16 22L4 19l12 11V22z" fill="currentColor" opacity=".9"/><path d="M16 14.5v5.5L4 16.5l12-2z" fill="currentColor" opacity=".35"/><path d="M28 16.5l-12 3.5v-5.5l12 2z" fill="currentColor" opacity=".9"/></svg>
@@ -617,16 +617,16 @@
 				     identity provider is configured (GET /api/config → samlEnabled). -->
 				<button type="button" id="sso-btn" class="privy-chain-btn sso-btn" hidden>
 					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-					<span id="sso-btn-label">Single sign-on (SSO)</span>
+					<span id="sso-btn-label" data-i18n="login.single_sign_on_sso">Single sign-on (SSO)</span>
 				</button>
 
 				<div class="or-divider" id="privy-or-divider">or</div>
 
-				<label for="email">Email or username</label>
+				<label for="email" data-i18n="login.email_or_username">Email or username</label>
 				<input id="email" name="username" type="text" inputmode="email" autocapitalize="none" autocomplete="username email" required aria-describedby="email-err" />
 				<p class="field-err" id="email-err" role="alert"></p>
 
-				<label for="password">Password</label>
+				<label for="password" data-i18n="login.password">Password</label>
 				<div class="password-wrap">
 					<input
 						id="password"
@@ -637,43 +637,43 @@
 						minlength="10"
 						aria-describedby="password-err caps-warn"
 					/>
-					<button type="button" class="password-toggle" id="password-toggle" aria-label="Show password" aria-pressed="false">
+					<button type="button" class="password-toggle" id="password-toggle" aria-label="Show password" aria-pressed="false" data-i18n-attr="aria-label:login.show_password_arialabel">
 						<svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 							<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
 							<circle cx="12" cy="12" r="3" />
 						</svg>
 					</button>
 				</div>
-				<p class="caps-warn" id="caps-warn">Caps Lock is on</p>
+				<p class="caps-warn" id="caps-warn" data-i18n="login.caps_lock_is_on">Caps Lock is on</p>
 				<p class="field-err" id="password-err" role="alert"></p>
 
 				<div class="remember-row">
 					<label><input type="checkbox" id="remember" /> Remember me</label>
-					<a href="/forgot-password" class="forgot">Forgot password?</a>
+					<a href="/forgot-password" class="forgot" data-i18n="login.forgot_password">Forgot password?</a>
 				</div>
 				<!-- CAPTCHA slot — only revealed when the server rate-limits this IP.
 				     The <altcha-widget> is injected lazily by showCaptcha(); keeping its
 				     internal required checkbox out of the DOM during normal sign-in stops
 				     the browser from aborting form submission on a non-focusable control. -->
 				<div id="captcha-wrap" aria-live="polite">
-					<p class="captcha-hint">Prove you're human to continue signing in.</p>
+					<p class="captcha-hint" data-i18n="login.prove_you_re_human_to_continue_signing">Prove you're human to continue signing in.</p>
 				</div>
 
-				<button id="submit" type="submit">Sign in</button>
+				<button id="submit" type="submit" data-i18n="login.sign_in">Sign in</button>
 
 				<div class="err" id="err" role="alert" aria-live="polite"></div>
 
 				<div class="onchain-toggle-row">
-					<span class="onchain-toggle-label">Using on-chain features?</span>
-					<button type="button" class="onchain-toggle-btn" id="onchain-toggle" aria-expanded="false" aria-controls="onchain-section">
+					<span class="onchain-toggle-label" data-i18n="login.using_on_chain_features">Using on-chain features?</span>
+					<button type="button" class="onchain-toggle-btn" id="onchain-toggle" aria-expanded="false" aria-controls="onchain-section" data-i18n="login.connect_wallet">
 						Connect wallet
 					</button>
 				</div>
 
 				<div class="onchain-section" id="onchain-section" aria-hidden="true">
 					<div class="chain-tabs" role="tablist" aria-label="Wallet chain">
-						<button type="button" class="chain-tab active" data-chain="solana" role="tab" aria-selected="true" aria-controls="solana-panel">Solana</button>
-						<button type="button" class="chain-tab" data-chain="evm" role="tab" aria-selected="false" aria-controls="evm-panel">EVM</button>
+						<button type="button" class="chain-tab active" data-chain="solana" role="tab" aria-selected="true" aria-controls="solana-panel" data-i18n="login.solana">Solana</button>
+						<button type="button" class="chain-tab" data-chain="evm" role="tab" aria-selected="false" aria-controls="evm-panel" data-i18n="login.evm">EVM</button>
 					</div>
 					<div id="solana-panel" class="chain-panel active" role="tabpanel">
 						<div id="solana-wallet-mount"></div>
@@ -681,14 +681,14 @@
 					<div id="evm-panel" class="chain-panel" role="tabpanel">
 						<div id="wallet-mount"></div>
 					</div>
-					<p class="wallet-step-hint" title="Your wallet will prompt twice — once to connect, once to sign.">Wallet prompts to connect, then to sign.</p>
+					<p class="wallet-step-hint" title="Your wallet will prompt twice — once to connect, once to sign." data-i18n="login.wallet_prompts_to_connect_then_to_sign" data-i18n-attr="title:login.your_wallet_will_prompt_twic_title">Wallet prompts to connect, then to sign.</p>
 				</div>
 
-				<p class="foot">No account? <a href="/register">Create one</a></p>
-			<p class="signin-legal">By signing in (with a password, Privy, SSO, or a connected wallet) you agree to the <a href="/legal/tos" target="_blank" rel="noopener">Terms of Service</a> and <a href="/legal/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
+				<p class="foot" data-i18n-html="login.no_account_create_one">No account? <a href="/register">Create one</a></p>
+			<p class="signin-legal" data-i18n-html="login.by_signing_in_with_a_password_privy">By signing in (with a password, Privy, SSO, or a connected wallet) you agree to the <a href="/legal/tos" target="_blank" rel="noopener">Terms of Service</a> and <a href="/legal/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</p>
 			</form>
 			<div class="panel">
-				<a href="/" class="panel-brand" aria-label="three.ws home">three.ws</a>
+				<a href="/" class="panel-brand" aria-label="three.ws home" data-i18n="login.three_ws" data-i18n-attr="aria-label:login.three_ws_home_arialabel">three.ws</a>
 				<div class="agent-avatar loading" id="login-avatar-wrap" aria-hidden="true"></div>
 			</div>
 		</div>
@@ -718,8 +718,8 @@
 			</div>
 			<div class="h-footer-cta">
 				<div class="h-footer-newsletter">
-					<h3>Stay in the loop</h3>
-					<p>Get updates on new features, agent tooling, and protocol changes.</p>
+					<h3 data-i18n="login.stay_in_the_loop">Stay in the loop</h3>
+					<p data-i18n="login.get_updates_on_new_features_agent_tooling">Get updates on new features, agent tooling, and protocol changes.</p>
 					<form class="h-footer-newsletter-form" data-newsletter-form novalidate>
 						<input
 							type="email"
@@ -730,15 +730,15 @@
 							autocomplete="email"
 							required
 						/>
-						<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe">
+						<button type="submit" class="h-footer-newsletter-btn" aria-label="Subscribe" data-i18n-attr="aria-label:login.subscribe_arialabel">
 							<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M2 8h11m0 0L9 4m4 4l-4 4"/></svg>
 						</button>
 					</form>
 					<p class="h-footer-newsletter-msg" data-newsletter-msg aria-live="polite"></p>
 				</div>
 				<div class="h-footer-community">
-					<h3>Join the community</h3>
-					<p>Follow along for builds, demos, and conversations with the team.</p>
+					<h3 data-i18n="login.join_the_community">Join the community</h3>
+					<p data-i18n="login.follow_along_for_builds_demos_and_conversati">Follow along for builds, demos, and conversations with the team.</p>
 					<a class="h-footer-community-btn" href="https://x.com/trythreews" target="_blank" rel="noopener">
 						<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
 						Follow on X
@@ -750,42 +750,42 @@
 					<div class="h-footer-brand">
 						<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
 						<span class="wordmark-dot" aria-hidden="true"></span>
-						<span>three.ws</span>
+						<span data-i18n="login.three_ws_2">three.ws</span>
 					</div>
-					<p class="h-footer-tagline">Give your AI a body.</p>
+					<p class="h-footer-tagline" data-i18n="login.give_your_ai_a_body">Give your AI a body.</p>
 					<div class="h-footer-socials">
-						<a class="h-footer-social" href="https://x.com/trythreews" target="_blank" rel="noopener" aria-label="three.ws on X">
+						<a class="h-footer-social" href="https://x.com/trythreews" target="_blank" rel="noopener" aria-label="three.ws on X" data-i18n-attr="aria-label:login.three_ws_on_x_arialabel">
 							<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
 						</a>
-						<a class="h-footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="three.ws on GitHub">
+						<a class="h-footer-social" href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" aria-label="three.ws on GitHub" data-i18n-attr="aria-label:login.three_ws_on_github_arialabel">
 							<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
 						</a>
 					</div>
 				</div>
 				<nav class="h-footer-links" aria-label="Footer">
 					<div class="h-footer-link-col">
-						<h4 class="h-footer-link-heading">Product</h4>
-						<a href="/create">Create</a>
-						<a href="/studio">Studio</a>
-						<a href="/widgets">Widgets</a>
-						<a href="/discover">Discover</a>
+						<h4 class="h-footer-link-heading" data-i18n="login.product">Product</h4>
+						<a href="/create" data-i18n="login.create">Create</a>
+						<a href="/studio" data-i18n="login.studio">Studio</a>
+						<a href="/widgets" data-i18n="login.widgets">Widgets</a>
+						<a href="/discover" data-i18n="login.discover">Discover</a>
 					</div>
 					<div class="h-footer-link-col">
-						<h4 class="h-footer-link-heading">Developers</h4>
-						<a href="/docs">Docs</a>
-						<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener">GitHub</a>
+						<h4 class="h-footer-link-heading" data-i18n="login.developers">Developers</h4>
+						<a href="/docs" data-i18n="login.docs">Docs</a>
+						<a href="https://github.com/nirholas/three.ws" target="_blank" rel="noopener" data-i18n="login.github">GitHub</a>
 					</div>
 					<div class="h-footer-link-col">
-						<h4 class="h-footer-link-heading">Resources</h4>
-						<a href="/dashboard">Dashboard</a>
+						<h4 class="h-footer-link-heading" data-i18n="login.resources">Resources</h4>
+						<a href="/dashboard" data-i18n="login.dashboard">Dashboard</a>
 					</div>
 				</nav>
 			</div>
 			<div class="h-footer-bottom">
-				<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+				<p class="h-footer-legal" data-i18n="login.2026_three_ws_all_rights_reserved">© 2026 three.ws — All rights reserved.</p>
 				<div class="h-footer-legal-links">
-					<a href="/legal/privacy">Privacy Policy</a>
-					<a href="/legal/tos">Terms of Use</a>
+					<a href="/legal/privacy" data-i18n="login.privacy_policy">Privacy Policy</a>
+					<a href="/legal/tos" data-i18n="login.terms_of_use">Terms of Use</a>
 				</div>
 			</div>
 		</footer>
@@ -1355,5 +1355,7 @@
 			}
 		</script>
 		<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>

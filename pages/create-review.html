@@ -4,7 +4,7 @@
 		<script>/* three.ws theme boot — no-flash; runtime in /theme-switcher.js */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Preview your avatar · three.ws</title>
+		<title data-i18n="create_review.meta_title">Preview your avatar · three.ws</title>
 		<link rel="icon" href="/favicon.ico" sizes="any" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
@@ -14,7 +14,7 @@
 		<meta
 			name="description"
 			content="Preview the 3D avatar you just generated, then save it to your three.ws account."
-		/>
+		 data-i18n-attr="content:create_review.meta_description"/>
 		<meta name="robots" content="noindex" />
 
 		<style>
@@ -1686,7 +1686,7 @@
 
 		<main class="stage" id="main">
 			<div class="topbar">
-				<a href="/create" class="back-link" id="back-link" aria-label="Back to create">
+				<a href="/create" class="back-link" id="back-link" aria-label="Back to create" data-i18n-attr="aria-label:create_review.back_to_create_arialabel">
 					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 						<line x1="19" y1="12" x2="5" y2="12" />
 						<polyline points="12 19 5 12 12 5" />
@@ -1695,8 +1695,8 @@
 				</a>
 			</div>
 
-			<h1 id="heading">Meet your avatar</h1>
-			<p class="sub" id="subhead">
+			<h1 id="heading" data-i18n="create_review.meet_your_avatar">Meet your avatar</h1>
+			<p class="sub" id="subhead" data-i18n="create_review.try_every_capability_before_you_save_talk">
 				Try every capability before you save. Talk to it, drop it on any site,
 				take it offline — see what your new agent can do, then claim it.
 			</p>
@@ -1705,7 +1705,7 @@
 				<div class="viewer">
 					<div class="viewer-loading" id="viewer-loading">
 						<div class="spinner-sm" aria-hidden="true"></div>
-						<span>Loading 3D preview…</span>
+						<span data-i18n="create_review.loading_3d_preview">Loading 3D preview…</span>
 					</div>
 					<!--
 						Three.js viewer (TalkScene) mounted by create-review.js. We use
@@ -1719,16 +1719,16 @@
 
 				<div class="panel">
 					<div class="panel-head">
-						<h2 id="avatar-name">Your avatar</h2>
+						<h2 id="avatar-name" data-i18n="create_review.your_avatar">Your avatar</h2>
 						<div class="tags">
 							<span class="meta-tag" id="tag-source">—</span>
-							<span class="meta-tag is-size" id="tag-size">— KB</span>
+							<span class="meta-tag is-size" id="tag-size" data-i18n="create_review.kb">— KB</span>
 						</div>
 					</div>
 
 					<div class="name-field">
 						<div class="name-field-head">
-							<label class="label" for="f-name">Name &amp; handle</label>
+							<label class="label" for="f-name" data-i18n="create_review.name_handle">Name &amp; handle</label>
 							<button
 								class="handle-copy"
 								id="handle-copy-btn"
@@ -1736,7 +1736,7 @@
 								aria-label="Copy your future handle URL"
 								title="Copy handle URL"
 								disabled
-							>Copy</button>
+							 data-i18n="create_review.copy" data-i18n-attr="aria-label:create_review.copy_your_future_handle_url_arialabel;title:create_review.copy_handle_url_title">Copy</button>
 						</div>
 						<input
 							id="f-name"
@@ -1745,32 +1745,32 @@
 							autocomplete="off"
 						/>
 						<div class="handle-preview" id="handle-preview" aria-live="polite">
-							<span class="handle-host">three.ws/@</span><span class="handle-slug" id="handle-slug">your-avatar</span>
+							<span class="handle-host" data-i18n="create_review.three_ws">three.ws/@</span><span class="handle-slug" id="handle-slug" data-i18n="create_review.your_avatar_2">your-avatar</span>
 						</div>
 					</div>
 
 					<div class="type-selector" id="type-selector">
-						<p class="type-selector-label">Is this an agent or an item?</p>
+						<p class="type-selector-label" data-i18n="create_review.is_this_an_agent_or_an_item">Is this an agent or an item?</p>
 						<div class="type-selector-btns" role="group" aria-label="Creation type">
-							<button class="type-btn active" id="type-btn-avatar" data-type="avatar" type="button" aria-pressed="true">
+							<button class="type-btn active" id="type-btn-avatar" data-type="avatar" type="button" aria-pressed="true" data-i18n-html="create_review.agent_thinks_talks_remembers_can_go_on">
 								<span class="type-btn-title">Agent</span>
 								<span class="type-btn-desc">Thinks, talks, remembers — can go on-chain</span>
 							</button>
-							<button class="type-btn" id="type-btn-object" data-type="object" type="button" aria-pressed="false">
+							<button class="type-btn" id="type-btn-object" data-type="object" type="button" aria-pressed="false" data-i18n-html="create_review.item_a_3d_object_or_prop_for">
 								<span class="type-btn-title">Item</span>
 								<span class="type-btn-desc">A 3D object or prop — for scenes &amp; trading</span>
 							</button>
 						</div>
 					</div>
 
-					<button class="cta" id="save-btn" type="button" disabled>
+					<button class="cta" id="save-btn" type="button" disabled data-i18n="create_review.save_to_my_account">
 						Save to my account
 					</button>
-					<button class="secondary" id="start-over-btn" type="button">
+					<button class="secondary" id="start-over-btn" type="button" data-i18n="create_review.start_over">
 						Start over
 					</button>
 
-					<p class="guest-note" id="guest-note" hidden>
+					<p class="guest-note" id="guest-note" hidden data-i18n-html="create_review.not_signed_in_this_preview_lives_in">
 						<strong>Not signed in.</strong> This preview lives in your browser
 						only — sign in to claim the handle and ship your agent.
 					</p>
@@ -1778,10 +1778,10 @@
 			</div>
 
 			<div class="capabilities" id="capabilities" hidden>
-				<p class="capabilities-heading">Your agent unlocks</p>
+				<p class="capabilities-heading" data-i18n="create_review.your_agent_unlocks">Your agent unlocks</p>
 				<ul class="feature-grid">
 					<li>
-						<button class="feature-tile" type="button" data-feature="body" aria-label="Try animations on your avatar">
+						<button class="feature-tile" type="button" data-feature="body" aria-label="Try animations on your avatar" data-i18n-html="create_review.3d_body_animations_expressions_posable_rig_t" data-i18n-attr="aria-label:create_review.try_animations_on_your_avata_arialabel">
 							<span class="feature-icon" aria-hidden="true">🧍</span>
 							<span class="feature-name">3D Body</span>
 							<span class="feature-desc">Animations, expressions, posable rig</span>
@@ -1789,7 +1789,7 @@
 						</button>
 					</li>
 					<li>
-						<button class="feature-tile" type="button" data-feature="voice" aria-label="Try talking to your avatar">
+						<button class="feature-tile" type="button" data-feature="voice" aria-label="Try talking to your avatar" data-i18n-html="create_review.voice_persona_mic_in_livekit_voice_out" data-i18n-attr="aria-label:create_review.try_talking_to_your_avatar_arialabel">
 							<span class="feature-icon" aria-hidden="true">🗣️</span>
 							<span class="feature-name">Voice &amp; Persona</span>
 							<span class="feature-desc">Mic in, LiveKit voice out, pinned memory</span>
@@ -1797,7 +1797,7 @@
 						</button>
 					</li>
 					<li>
-						<button class="feature-tile" type="button" data-feature="voice-library" aria-label="Browse voice library">
+						<button class="feature-tile" type="button" data-feature="voice-library" aria-label="Browse voice library" data-i18n-html="create_review.voice_library_clone_or_pick_from_100" data-i18n-attr="aria-label:create_review.browse_voice_library_arialabel">
 							<span class="feature-icon" aria-hidden="true">🎙️</span>
 							<span class="feature-name">Voice Library</span>
 							<span class="feature-desc">Clone or pick from 100+ voices</span>
@@ -1805,7 +1805,7 @@
 						</button>
 					</li>
 					<li>
-						<button class="feature-tile" type="button" data-feature="video" aria-label="See video generation">
+						<button class="feature-tile" type="button" data-feature="video" aria-label="See video generation" data-i18n-html="create_review.video_talking_head_clips_from_your_avatar" data-i18n-attr="aria-label:create_review.see_video_generation_arialabel">
 							<span class="feature-icon" aria-hidden="true">🎬</span>
 							<span class="feature-name">Video</span>
 							<span class="feature-desc">Talking-head clips from your avatar</span>
@@ -1813,7 +1813,7 @@
 						</button>
 					</li>
 					<li>
-						<button class="feature-tile" type="button" data-feature="mocap" aria-label="See face mocap and streaming">
+						<button class="feature-tile" type="button" data-feature="mocap" aria-label="See face mocap and streaming" data-i18n-html="create_review.mocap_streaming_face_capture_obs_pose_studio" data-i18n-attr="aria-label:create_review.see_face_mocap_and_streaming_arialabel">
 							<span class="feature-icon" aria-hidden="true">🎥</span>
 							<span class="feature-name">Mocap &amp; Streaming</span>
 							<span class="feature-desc">Face capture, OBS, pose studio</span>
@@ -1821,7 +1821,7 @@
 						</button>
 					</li>
 					<li>
-						<button class="feature-tile" type="button" data-feature="identity" aria-label="See on-chain identity details">
+						<button class="feature-tile" type="button" data-feature="identity" aria-label="See on-chain identity details" data-i18n-html="create_review.on_chain_identity_solana_wallet_transferable" data-i18n-attr="aria-label:create_review.see_on_chain_identity_detail_arialabel">
 							<span class="feature-icon" aria-hidden="true">🪪</span>
 							<span class="feature-name">On-Chain Identity</span>
 							<span class="feature-desc">Solana wallet, transferable asset</span>
@@ -1829,7 +1829,7 @@
 						</button>
 					</li>
 					<li>
-						<button class="feature-tile" type="button" data-feature="token-launch" aria-label="See token launch">
+						<button class="feature-tile" type="button" data-feature="token-launch" aria-label="See token launch" data-i18n-html="create_review.token_launch_one_click_pump_fun_token" data-i18n-attr="aria-label:create_review.see_token_launch_arialabel">
 							<span class="feature-icon" aria-hidden="true">🪙</span>
 							<span class="feature-name">Token Launch</span>
 							<span class="feature-desc">One-click pump.fun token</span>
@@ -1837,7 +1837,7 @@
 						</button>
 					</li>
 					<li>
-						<button class="feature-tile" type="button" data-feature="paid" aria-label="See paid-skills pricing example">
+						<button class="feature-tile" type="button" data-feature="paid" aria-label="See paid-skills pricing example" data-i18n-html="create_review.paid_skills_earn_usdc_per_call_via" data-i18n-attr="aria-label:create_review.see_paid_skills_pricing_exam_arialabel">
 							<span class="feature-icon" aria-hidden="true">💸</span>
 							<span class="feature-name">Paid Skills</span>
 							<span class="feature-desc">Earn USDC per call via x402</span>
@@ -1845,7 +1845,7 @@
 						</button>
 					</li>
 					<li>
-						<button class="feature-tile" type="button" data-feature="analytics" aria-label="See analytics dashboard">
+						<button class="feature-tile" type="button" data-feature="analytics" aria-label="See analytics dashboard" data-i18n-html="create_review.analytics_revenue_views_transcripts_tracked" data-i18n-attr="aria-label:create_review.see_analytics_dashboard_arialabel">
 							<span class="feature-icon" aria-hidden="true">📊</span>
 							<span class="feature-name">Analytics</span>
 							<span class="feature-desc">Revenue, views, transcripts tracked</span>
@@ -1853,7 +1853,7 @@
 						</button>
 					</li>
 					<li>
-						<button class="feature-tile" type="button" data-feature="embed" aria-label="See embed snippet">
+						<button class="feature-tile" type="button" data-feature="embed" aria-label="See embed snippet" data-i18n-html="create_review.embed_anywhere_one_snippet_any_site_or" data-i18n-attr="aria-label:create_review.see_embed_snippet_arialabel">
 							<span class="feature-icon" aria-hidden="true">🧩</span>
 							<span class="feature-name">Embed Anywhere</span>
 							<span class="feature-desc">One snippet, any site or app</span>
@@ -1861,7 +1861,7 @@
 						</button>
 					</li>
 					<li>
-						<button class="feature-tile" type="button" data-feature="widgets" aria-label="See widget types">
+						<button class="feature-tile" type="button" data-feature="widgets" aria-label="See widget types" data-i18n-html="create_review.widgets_8_types_turntable_to_live_feed" data-i18n-attr="aria-label:create_review.see_widget_types_arialabel">
 							<span class="feature-icon" aria-hidden="true">🧱</span>
 							<span class="feature-name">Widgets</span>
 							<span class="feature-desc">8 types: turntable to live feed</span>
@@ -1869,7 +1869,7 @@
 						</button>
 					</li>
 					<li>
-						<button class="feature-tile" type="button" data-feature="developer" aria-label="See developer API">
+						<button class="feature-tile" type="button" data-feature="developer" aria-label="See developer API" data-i18n-html="create_review.developer_api_mcp_tools_api_keys_scopes" data-i18n-attr="aria-label:create_review.see_developer_api_arialabel">
 							<span class="feature-icon" aria-hidden="true">🛠️</span>
 							<span class="feature-name">Developer API</span>
 							<span class="feature-desc">MCP tools, API keys, scopes</span>
@@ -1877,7 +1877,7 @@
 						</button>
 					</li>
 					<li>
-						<button class="feature-tile" type="button" data-feature="knowledge" aria-label="See knowledge and memory">
+						<button class="feature-tile" type="button" data-feature="knowledge" aria-label="See knowledge and memory" data-i18n-html="create_review.knowledge_memory_persistent_context_and_stra" data-i18n-attr="aria-label:create_review.see_knowledge_and_memory_arialabel">
 							<span class="feature-icon" aria-hidden="true">🧠</span>
 							<span class="feature-name">Knowledge &amp; Memory</span>
 							<span class="feature-desc">Persistent context and strategy</span>
@@ -1885,7 +1885,7 @@
 						</button>
 					</li>
 					<li>
-						<button class="feature-tile" type="button" data-feature="reputation" aria-label="See reputation system">
+						<button class="feature-tile" type="button" data-feature="reputation" aria-label="See reputation system" data-i18n-html="create_review.reputation_reviews_history_and_validation_se" data-i18n-attr="aria-label:create_review.see_reputation_system_arialabel">
 							<span class="feature-icon" aria-hidden="true">⭐</span>
 							<span class="feature-name">Reputation</span>
 							<span class="feature-desc">Reviews, history, and validation</span>
@@ -1893,7 +1893,7 @@
 						</button>
 					</li>
 					<li>
-						<button class="feature-tile" type="button" data-feature="download" aria-label="Download this avatar">
+						<button class="feature-tile" type="button" data-feature="download" aria-label="Download this avatar" data-i18n-html="create_review.download_glb_vrm_usdz_use_it_anywhere" data-i18n-attr="aria-label:create_review.download_this_avatar_arialabel">
 							<span class="feature-icon" aria-hidden="true">📦</span>
 							<span class="feature-name">Download</span>
 							<span class="feature-desc">GLB · VRM · USDZ — use it anywhere</span>
@@ -1910,10 +1910,10 @@
 			<div class="item-nudge" id="item-nudge" hidden>
 				<span class="item-nudge-icon" aria-hidden="true">🧩</span>
 				<div class="item-nudge-text">
-					<strong>This is an item — it won't get a brain.</strong>
-					<span>Items are 3D objects: place them in scenes, attach them to an agent, or trade them. Thinking, voice and memory are for agents.</span>
+					<strong data-i18n="create_review.this_is_an_item_it_won_t">This is an item — it won't get a brain.</strong>
+					<span data-i18n="create_review.items_are_3d_objects_place_them_in">Items are 3D objects: place them in scenes, attach them to an agent, or trade them. Thinking, voice and memory are for agents.</span>
 				</div>
-				<button class="item-nudge-promote" id="item-nudge-promote" type="button">
+				<button class="item-nudge-promote" id="item-nudge-promote" type="button" data-i18n="create_review.made_a_character_make_it_an_agent">
 					Made a character? Make it an agent →
 				</button>
 			</div>
@@ -1929,30 +1929,30 @@
 					<div class="h-footer-brand">
 						<img class="wordmark-logo" src="/three.svg" alt="" aria-hidden="true" />
 						<span class="wordmark-dot" aria-hidden="true"></span>
-						<span>three.ws</span>
+						<span data-i18n="create_review.three_ws_2">three.ws</span>
 					</div>
-					<p class="h-footer-tagline">Give your AI a body.</p>
+					<p class="h-footer-tagline" data-i18n="create_review.give_your_ai_a_body">Give your AI a body.</p>
 				</div>
 				<nav class="h-footer-links" aria-label="Footer">
 					<div class="h-footer-link-col">
-						<h4 class="h-footer-link-heading">Product</h4>
-						<a href="/create">Create</a>
-						<a href="/studio">Studio</a>
-						<a href="/widgets">Widgets</a>
-						<a href="/discover">Discover</a>
+						<h4 class="h-footer-link-heading" data-i18n="create_review.product">Product</h4>
+						<a href="/create" data-i18n="create_review.create">Create</a>
+						<a href="/studio" data-i18n="create_review.studio">Studio</a>
+						<a href="/widgets" data-i18n="create_review.widgets">Widgets</a>
+						<a href="/discover" data-i18n="create_review.discover">Discover</a>
 					</div>
 					<div class="h-footer-link-col">
-						<h4 class="h-footer-link-heading">Resources</h4>
-						<a href="/blog">Blog</a>
-						<a href="/dashboard">Dashboard</a>
+						<h4 class="h-footer-link-heading" data-i18n="create_review.resources">Resources</h4>
+						<a href="/blog" data-i18n="create_review.blog">Blog</a>
+						<a href="/dashboard" data-i18n="create_review.dashboard">Dashboard</a>
 					</div>
 				</nav>
 			</div>
 			<div class="h-footer-bottom">
-				<p class="h-footer-legal">© 2026 three.ws — All rights reserved.</p>
+				<p class="h-footer-legal" data-i18n="create_review.2026_three_ws_all_rights_reserved">© 2026 three.ws — All rights reserved.</p>
 				<div class="h-footer-legal-links">
-					<a href="/legal/privacy">Privacy Policy</a>
-					<a href="/legal/tos">Terms of Use</a>
+					<a href="/legal/privacy" data-i18n="create_review.privacy_policy">Privacy Policy</a>
+					<a href="/legal/tos" data-i18n="create_review.terms_of_use">Terms of Use</a>
 				</div>
 			</div>
 		</footer>
@@ -1970,5 +1970,7 @@
 		<script src="/brand.js" defer></script>
 		<div id="footer-container"></div>
 		<script src="/footer.js"></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
 </body>
 </html>
