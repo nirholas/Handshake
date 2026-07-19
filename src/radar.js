@@ -848,9 +848,19 @@ function renderCard(coin) {
 	scan.href = solscanToken(coin.mint, coin.network);
 	scan.target = '_blank'; scan.rel = 'noopener noreferrer';
 	scan.addEventListener('click', (e) => e.stopPropagation());
-	const detail = el('button', 'rc-detail', 'Full intel →');
-	detail.type = 'button';
-	detail.addEventListener('click', (e) => { e.stopPropagation(); open(); });
+	// Mainnet coins link straight to their full intelligence page (the card body
+	// still opens the quick-view drawer); devnet coins have no page, so the
+	// button keeps opening the drawer.
+	let detail;
+	if (coin.network === 'devnet') {
+		detail = el('button', 'rc-detail', 'Full intel →');
+		detail.type = 'button';
+		detail.addEventListener('click', (e) => { e.stopPropagation(); open(); });
+	} else {
+		detail = el('a', 'rc-detail', 'Full intel →');
+		detail.href = `/oracle/coin/${coin.mint}`;
+		detail.addEventListener('click', (e) => e.stopPropagation());
+	}
 
 	const watched = isWatched(coin.mint);
 	const watchBtn = el('button', `rc-watch${watched ? ' rc-watched' : ''}`, watched ? '★' : '☆');
@@ -1200,6 +1210,13 @@ function drawerHeader(title, sub, coin) {
 	const txt = el('div');
 	txt.append(el('h2', 'rd-title', title));
 	if (sub) txt.append(el('div', 'rd-sub', sub));
+	// The drawer is the quick view; surface the full-page link right at the top
+	// so the deep coin page is one click away, not buried below the ledger.
+	if (coin && coin.network !== 'devnet') {
+		const page = el('a', 'rd-page-link', 'Open full page →');
+		page.href = `/oracle/coin/${coin.mint}`;
+		txt.append(page);
+	}
 	titleWrap.append(txt);
 
 	const close = el('button', 'rd-close');

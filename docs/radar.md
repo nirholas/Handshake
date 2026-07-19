@@ -39,7 +39,8 @@ The UI colors quality as Healthy at 70 and up, Mixed from 40 to 69, and High ris
 2. Use the toolbar to filter by narrative category, drag the minimum-quality slider, toggle smart-money-only or news, and hide flagged coins (a client-side drop of danger-flagged launches). Sort by newest, quality, smart money, buyers, or volume. All filters serialize to the URL for shareable views.
 3. Press `/` to focus search and type a name, ticker, or mint. Press `g` or `l` to switch grid and list, `r` to refresh.
 4. Click any coin for the drawer: the full signal grid, the top-50 wallet ledger, the smart-money notable roster, the outcome (if labeled), and an asynchronously injected Oracle conviction section.
-5. On a coin worth tracking, use Watch to add it to your [Watchlist](https://three.ws/watchlist), then open it in [Mission Control](./terminal.md) to trade.
+5. Every mainnet coin links to its full page at `/oracle/coin/<mint>`: the card's "Full intel →" button goes there directly, and the drawer carries an "Open full page →" link in its header. The full page renders in the markets-hub design (the same system as `/coin/:id`) with the live price chart, the complete Launch Intelligence read (this engine's signal grid, risk flags, and trader ledger), Oracle conviction, live market intel, agent transactions, and a live trade tape.
+6. On a coin worth tracking, use Watch to add it to your [Watchlist](https://three.ws/watchlist), then open it in [Mission Control](./terminal.md) to trade.
 
 ## Examples
 

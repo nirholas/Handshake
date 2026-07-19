@@ -256,8 +256,8 @@
 
 		const srcNote = Array.isArray(m.sources) && m.sources.length ? `<div class="mkt-src">Live · ${m.sources.map(esc).join(' · ')}</div>` : '';
 
-		return `<div class="dr-sec">Market <span style="color:var(--faint);font-weight:400;font-size:10px">live${p.native_sol ? ` · ${p.native_sol < 0.0001 ? p.native_sol.toExponential(2) : p.native_sol.toFixed(6)} ◎` : ''}</span></div>
-			<div class="mkt-stats">${tiles}</div>
+		const nativeNote = p.native_sol ? `<div class="mkt-src">${p.native_sol < 0.0001 ? p.native_sol.toExponential(2) : p.native_sol.toFixed(6)} ◎ native</div>` : '';
+		return `<div class="mkt-stats">${tiles}</div>${nativeNote}
 			${changeRow}${curveHtml}${activityHtml}
 			${supplyChips ? `<div class="coin-meta" style="margin-top:10px">${supplyChips}</div>` : ''}
 			${secHtml}${listingHtml}${pairsHtml}
@@ -274,7 +274,7 @@
 		const n = scores.length;
 		const xs = scores.map((_, i) => PAD + (i / (n - 1)) * (W - PAD * 2));
 		const ys = scores.map((s) => PAD + (1 - (s - min) / range) * (H - PAD * 2));
-		const trendColor = trend === 'rising' ? '#e4e8f2' : trend === 'falling' ? '#6c7280' : '#8a92a8';
+		const trendColor = trend === 'rising' ? 'var(--cv-green)' : trend === 'falling' ? 'var(--cv-red)' : 'var(--cv-text-3)';
 		const trendArrow = trend === 'rising' ? '↑' : trend === 'falling' ? '↓' : '→';
 		const delta = scores[n - 1] - scores[0];
 		const deltaStr = delta > 0 ? `+${delta}` : `${delta}`;
@@ -314,14 +314,36 @@
 				return;
 			}
 			wrap.innerHTML = status === 404
-				? `<div class="dr-sec">Market</div><div class="state" style="padding:20px 0">No live market yet — this mint hasn't started trading. Price, liquidity and holders appear the moment it does.</div>`
-				: `<div class="dr-sec">Market</div><div class="state" style="padding:20px 0">Live market data is momentarily unavailable. <button type="button" class="dr-act" id="ocMktRetry">Retry</button></div>`;
+				? `<div class="state" style="padding:20px 0">No live market yet — this mint hasn't started trading. Price, liquidity and holders appear the moment it does.</div>`
+				: `<div class="state" style="padding:20px 0">Live market data is momentarily unavailable. <button type="button" class="dr-act" id="ocMktRetry">Retry</button></div>`;
 			const retry = $('#ocMktRetry');
 			if (retry) retry.addEventListener('click', () => { wrap.classList.add('mkt-loading'); wrap.setAttribute('aria-busy', 'true'); loadMarket(mint); });
 			return;
 		}
 		wrap.innerHTML = renderMarket(data);
+		fillPriceRow(data);
 		fillDescription(data.identity?.description);
+	}
+
+	// Fill the header's price row (SSR renders it hidden) the moment a live price
+	// exists — the same header treatment /coin/:id gives listed coins.
+	function fillPriceRow(m) {
+		const rowEl = $('#ocPriceRow');
+		const priceEl = $('#ocPrice');
+		const chipsEl = $('#ocPriceChips');
+		const p = m.price || {};
+		if (!rowEl || !priceEl || p.usd == null) return;
+		priceEl.textContent = fmtPrice(p.usd);
+		const ch = p.change || {};
+		if (chipsEl) {
+			chipsEl.innerHTML = [['24h', ch.h24], ['7d', ch.d7]]
+				.filter(([, v]) => v != null && Number.isFinite(Number(v)))
+				.map(([l, v]) => {
+					const c = changeStr(v);
+					return `<span class="cv-chip ${c.cls === 'up' ? 'up' : c.cls === 'down' ? 'down' : ''}"><span class="win">${l}</span>${c.txt}</span>`;
+				}).join('');
+		}
+		rowEl.hidden = false;
 	}
 
 	// Fill the hero's description slot from the market identity — the SSR only
@@ -354,11 +376,166 @@
 			pf.reply_count != null ? `<span class="chip">replies <b>${fmtInt(pf.reply_count)}</b></span>` : '',
 			pf.creator ? `<span class="chip">creator <b>${esc(shortAddr(pf.creator))}</b></span>` : '',
 		].filter(Boolean).join('');
-		return `<div class="dr-sec">Market <span style="color:var(--faint);font-weight:400;font-size:10px">pump.fun · pre-DEX</span></div>
-			${tiles ? `<div class="mkt-stats">${tiles}</div>` : ''}
+		return `${tiles ? `<div class="mkt-stats">${tiles}</div>` : ''}
 			${curve}
 			${chips ? `<div class="coin-meta" style="margin-top:10px">${chips}</div>` : ''}
 			<div class="mkt-src">Live · pumpfun — full metrics populate once it lists on a DEX</div>`;
+	}
+
+	// ── launch intelligence (Coin Radar engine) ────────────────────────────────
+	// The same first-~90s on-chain read the /radar drawer shows, on the full page:
+	// quality score, organic vs bundle, risk flags, the complete signal breakdown,
+	// smart-money buyers, news provenance, tags, and the top-trader ledger. Source
+	// is /api/pump/coin-intel — every number traces to an observed on-chain trade;
+	// a signal the engine did not measure renders as "not measured", never as 0.
+	const RADAR_FLAGS = {
+		bundle_launch:      { label: 'Bundle launch',      tone: 'danger', tip: 'Many wallets bought in the same block — likely coordinated.' },
+		dev_dumped:         { label: 'Dev dumped',         tone: 'danger', tip: 'The creator sold their position.' },
+		single_whale:       { label: 'Single whale',       tone: 'danger', tip: 'One wallet holds an outsized share of supply.' },
+		low_diversity:      { label: 'Low diversity',      tone: 'danger', tip: 'Few unique buyers — thin, concentrated participation.' },
+		fresh_wallet_swarm: { label: 'Fresh-wallet swarm', tone: 'danger', tip: 'A cluster of brand-new wallets bought together.' },
+		sell_pressure:      { label: 'Sell pressure',      tone: 'warn',   tip: 'Sells are outpacing buys early.' },
+		sniped:             { label: 'Sniped',             tone: 'warn',   tip: 'Snipers grabbed supply in the first moments.' },
+	};
+
+	const fmtSolPlain = (v) => {
+		if (v == null || Number.isNaN(Number(v))) return null;
+		const n = Number(v), abs = Math.abs(n);
+		if (abs === 0) return '0';
+		if (abs < 0.001) return n.toFixed(5);
+		if (abs < 1) return n.toFixed(3);
+		if (abs < 1000) return n.toFixed(2);
+		return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+	};
+	const ratioPct = (v) => (v == null ? 'not measured' : `${Math.round(Number(v) * 100)}%`);
+
+	function qualityMeta(score) {
+		if (score == null) return { cls: 'q-none', label: 'Unscored' };
+		if (score >= 70) return { cls: 'q-good', label: 'Healthy' };
+		if (score >= 40) return { cls: 'q-mixed', label: 'Mixed' };
+		return { cls: 'q-risk', label: 'High risk' };
+	}
+
+	function intelTile(label, value, tip, cls = '') {
+		const measured = value !== 'not measured';
+		return `<div class="cv-mini-stat"${tip ? ` title="${esc(tip)}"` : ''}>
+			<p class="label">${esc(label)}</p>
+			<p class="value cv-mono ${cls}" style="${measured ? '' : 'color:var(--cv-text-3);font-size:0.8125rem'}">${value}</p>
+		</div>`;
+	}
+
+	async function loadRadarIntel(mint) {
+		const sec = $('#ocIntelSec');
+		const wrap = $('#ocIntel');
+		if (!sec || !wrap) return;
+		const { ok, data } = await api(`/api/pump/coin-intel?mint=${encodeURIComponent(mint)}&wallets=1&network=${NETWORK}`, { timeout: 12000 });
+		// Coins the radar never observed (pre-engine launches, non-pump mints) simply
+		// don't get this section — absence of data is not an error state here.
+		if (!ok || !data || !data.mint) return;
+		wrap.innerHTML = renderIntel(data);
+		sec.hidden = false;
+	}
+
+	function renderIntel(c) {
+		const q = qualityMeta(c.quality_score);
+		const organic = c.organic_score != null ? Math.round(c.organic_score * 100) : null;
+		const bundle = c.bundle_score != null ? Math.round(c.bundle_score * 100) : null;
+
+		const head = `<div class="oc-intel-head">
+			<div class="oc-iq ${q.cls}"><b>${c.quality_score ?? '—'}</b><div class="oc-iq-lbl">${esc(q.label)}</div></div>
+			<div class="oc-ob">
+				<div class="oc-ob-row"><span>Organic <b class="og">${organic != null ? `${organic}%` : 'n/m'}</b></span><span>Bundle <b class="bd">${bundle != null ? `${bundle}%` : 'n/m'}</b></span></div>
+				<div class="oc-ob-track">
+					<span class="oc-ob-organic" style="width:${Math.max(0, Math.min(100, organic || 0))}%"></span>
+					<span class="oc-ob-bundle" style="width:${Math.max(0, Math.min(100, bundle || 0))}%"></span>
+				</div>
+			</div>
+			<div class="coin-meta oc-intel-meta">
+				${c.observation_seconds != null ? `<span class="chip">observed <b>${fmtInt(c.observation_seconds)}s</b></span>` : ''}
+				${c.first_seen_at ? `<span class="chip">first seen <b>${esc(ago(c.first_seen_at))} ago</b></span>` : ''}
+				${c.category ? `<span class="chip cat">${esc(c.category)}</span>` : ''}
+				${c.classify_source ? `<span class="chip">classified by <b>${esc(c.classify_source)}</b>${c.classify_confidence != null ? ` · ${Math.round(c.classify_confidence * 100)}%` : ''}</span>` : ''}
+				${c.outcome?.outcome ? `<span class="chip ${c.outcome.rugged ? 'flag' : c.outcome.graduated ? 'sm' : ''}">${c.outcome.rugged ? 'rugged ✕' : c.outcome.graduated ? 'graduated ✓' : esc(c.outcome.outcome)}</span>` : ''}
+				${c.outcome?.ath_multiple != null ? `<span class="chip">ATH <b>${Number(c.outcome.ath_multiple).toFixed(1)}×</b></span>` : ''}
+				${Array.isArray(c.tags) ? c.tags.slice(0, 6).map((t) => `<span class="chip">${esc(t)}</span>`).join('') : ''}
+			</div>
+		</div>`;
+
+		const news = c.is_news_meme && c.news_headline
+			? `<div class="oc-news"><span class="oc-news-glyph" aria-hidden="true">⚡</span><div>
+					<p class="oc-news-headline">${esc(c.news_headline)}</p>
+					${c.news_url && /^https?:\/\//i.test(c.news_url) ? `<a href="${esc(c.news_url)}" target="_blank" rel="noopener noreferrer">Read source →</a>` : ''}
+				</div></div>`
+			: '';
+
+		const flags = Array.isArray(c.risk_flags) ? c.risk_flags : [];
+		const flagsHtml = `<div class="dr-sec">Risk flags</div>
+			<div class="oc-flags">${flags.length
+				? flags.map((f) => {
+					const meta = RADAR_FLAGS[f] || { label: f.replace(/_/g, ' '), tone: 'warn', tip: '' };
+					return `<div class="oc-flag oc-flag--${meta.tone}"><span class="oc-flag-name">${esc(meta.label)}</span>${meta.tip ? `<span class="oc-flag-tip">${esc(meta.tip)}</span>` : ''}</div>`;
+				}).join('')
+				: '<div class="oc-flag oc-flag--clean"><span class="oc-flag-name">No risk flags</span><span class="oc-flag-tip">Nothing raised during the observation window.</span></div>'}</div>`;
+
+		const notable = Array.isArray(c.smart_money_notable) ? c.smart_money_notable : [];
+		const smHtml = (c.smart_money_count > 0 || notable.length)
+			? `<div class="dr-sec">Smart money</div>
+				<div class="coin-meta" style="margin-bottom:0.625rem">
+					<span class="chip sm">${fmtInt(c.smart_money_count)} wallet${c.smart_money_count === 1 ? '' : 's'}</span>
+					${c.smart_money_score != null ? `<span class="chip">pedigree <b>${Math.round(c.smart_money_score)}/100</b></span>` : ''}
+				</div>
+				${notable.slice(0, 5).map((w) => `<div class="nwallet">
+					<div class="nw-left">
+						<span class="nw-addr"><a class="solscan" href="${solscan(w.wallet)}" target="_blank" rel="noopener">${esc(w.label || shortAddr(w.wallet))}</a></span>
+						<span class="nw-sub">${w.win_rate != null ? `${Math.round(w.win_rate * 100)}% win${w.wins != null && w.duds != null ? ` · ${w.wins}W/${w.duds}L` : ''}` : '—'}</span>
+					</div>
+					${w.smart_money_score != null ? `<span class="nw-buy">${Math.round(w.smart_money_score)}</span>` : ''}
+				</div>`).join('')}`
+			: '';
+
+		const sig = [
+			['Organic score', ratioPct(c.organic_score), null],
+			['Bundle score', ratioPct(c.bundle_score), null],
+			['Coordination', ratioPct(c.coordination_score), 'Blended bundle + funding-graph coordination signal'],
+			['Snipe ratio', ratioPct(c.snipe_ratio), 'Share of early supply taken by snipers'],
+			['Top-10 concentration', ratioPct(c.concentration_top10), 'Share of supply held by the top 10 wallets'],
+			['Top-5 concentration', ratioPct(c.concentration_top5), 'Share of supply held by the top 5 wallets'],
+			['Fresh-wallet ratio', ratioPct(c.fresh_wallet_ratio), 'Share of buyers using brand-new wallets'],
+			['Bubblemap connectivity', ratioPct(c.bubblemap_connectivity), 'How interlinked the buyer wallets are by funding'],
+			['Funding clusters', c.cluster_count != null ? fmtInt(c.cluster_count) : '—', 'Distinct funding clusters among buyers'],
+			['Mkt cap (first seen)', c.market_cap_sol != null ? `${fmtSolPlain(c.market_cap_sol)} ◎` : 'not measured', 'Market cap in SOL when the engine began observing'],
+			['Unique buyers', fmtInt(c.unique_buyers), null],
+			['Unique sellers', fmtInt(c.unique_sellers), null],
+			['Buys / sells', `${fmtInt(c.buy_count)} / ${fmtInt(c.sell_count)}`, null],
+			['Buy/sell ratio', c.buy_sell_ratio != null ? `${Number(c.buy_sell_ratio).toFixed(2)}×` : '—', 'Buy volume divided by sell volume'],
+			['Buy volume', c.buy_volume_sol != null ? `${fmtSolPlain(c.buy_volume_sol)} ◎` : '—', null],
+			['Sell volume', c.sell_volume_sol != null ? `${fmtSolPlain(c.sell_volume_sol)} ◎` : '—', null],
+			['Net flow', c.net_volume_sol != null ? `${c.net_volume_sol > 0 ? '+' : ''}${fmtSolPlain(c.net_volume_sol)} ◎` : '—', 'Buy volume minus sell volume', c.net_volume_sol > 0 ? 'green' : c.net_volume_sol < 0 ? 'red' : ''],
+			['Dev buy', c.dev_buy_sol != null ? `${fmtSolPlain(c.dev_buy_sol)} ◎` : '—', null],
+			['Dev sold', c.dev_sold ? 'Yes' : 'No', null, c.dev_sold ? 'red' : ''],
+			['Largest buy', c.largest_buy_sol != null ? `${fmtSolPlain(c.largest_buy_sol)} ◎` : '—', null],
+		];
+		const sigHtml = `<div class="dr-sec">Signal breakdown</div>
+			<div class="oc-sig-grid">${sig.map(([l, v, tip, cls]) => intelTile(l, v, tip, cls || '')).join('')}</div>`;
+
+		const wallets = Array.isArray(c.wallets) ? c.wallets : [];
+		const ledgerHtml = wallets.length
+			? `<div class="dr-sec">Top trader ledger</div>
+				<div class="oc-ledger"><div class="cv-table-wrap"><table class="cv-table">
+					<thead><tr><th scope="col">Wallet</th><th scope="col">Buy ◎</th><th scope="col">Sell ◎</th><th scope="col">Net ◎</th></tr></thead>
+					<tbody>${wallets.map((w) => `<tr>
+						<td><a class="solscan" href="${solscan(w.wallet)}" target="_blank" rel="noopener" title="${esc(w.wallet)}">${esc(shortAddr(w.wallet))}</a>${w.is_creator ? '<span class="oc-wtag">creator</span>' : ''}</td>
+						<td class="cv-mono" style="text-align:right">${w.buy_sol != null ? fmtSolPlain(w.buy_sol) : '—'}</td>
+						<td class="cv-mono" style="text-align:right">${w.sell_sol != null ? fmtSolPlain(w.sell_sol) : '—'}</td>
+						<td class="cv-mono ${w.net_sol > 0 ? 'mkt-up' : w.net_sol < 0 ? 'mkt-down' : ''}" style="text-align:right">${w.net_sol != null ? `${w.net_sol > 0 ? '+' : ''}${fmtSolPlain(w.net_sol)}` : '—'}</td>
+					</tr>`).join('')}</tbody>
+				</table></div></div>`
+			: '';
+
+		const narrative = c.narrative ? `<p class="oc-intel-note" style="margin:0 0 1rem;font-size:0.9375rem;color:var(--cv-text-2)">${esc(c.narrative)}</p>` : '';
+
+		return `${head}${narrative}${news}${flagsHtml}${smHtml}${sigHtml}${ledgerHtml}
+			<p class="oc-intel-note">Every number traces to an observed on-chain trade in the coin's first moments — nothing is synthesized. <a class="dr-act" href="/radar">Open Coin Radar →</a></p>`;
 	}
 
 	// ── price chart ────────────────────────────────────────────────────────────
@@ -521,16 +698,17 @@
 		let view = stored || (hasTrades ? 'trades' : preCurve ? 'line' : 'candles');
 		if (view === 'trades' && !hasTrades) view = preCurve ? 'line' : 'candles';
 		const tradesBtn = hasTrades ? `<button type="button" class="oc-seg-btn${view === 'trades' ? ' on' : ''}" data-view="trades">Agent trades</button>` : '';
-		container.innerHTML = `<div class="dr-sec" style="margin-top:0">Price <span style="color:var(--faint);font-weight:400;font-size:10px">live</span></div>
-			<div class="oc-chart-controls">
-				<div class="oc-seg">
+		container.innerHTML = `<div class="oc-chart-controls">
+				<span class="oc-chart-title">Price chart <span class="oc-h2-note">live</span></span>
+				<div class="oc-seg" role="group" aria-label="Chart view">
 					<button type="button" class="oc-seg-btn${view === 'candles' ? ' on' : ''}" data-view="candles">Candles</button>
 					<button type="button" class="oc-seg-btn${view === 'line' ? ' on' : ''}" data-view="line">Line</button>
 					${tradesBtn}
 				</div>
 				<a class="dr-act" href="https://dexscreener.com/solana/${encodeURIComponent(mint)}" target="_blank" rel="noopener">DexScreener ↗</a>
 			</div>
-			<div class="oc-chart-canvas" id="ocChartCanvas"></div>`;
+			<div class="oc-chart-canvas" id="ocChartCanvas"></div>
+			<p class="oc-chart-credit"><a href="https://dexscreener.com/solana/${encodeURIComponent(mint)}" target="_blank" rel="noopener nofollow noreferrer">Candles chart by DexScreener · TradingView ↗</a></p>`;
 		const canvas = container.querySelector('#ocChartCanvas');
 		let watchdog = 0;
 		function renderCandles() {
@@ -585,7 +763,7 @@
 				${tx}
 			</div>`;
 		}).join('');
-		wrap.innerHTML = `<div class="dr-sec">Agent transactions <span style="color:var(--faint);font-weight:400;font-size:10px">${trades.length} on three.ws · ${buys} buys / ${trades.length - buys} sells</span></div>
+		wrap.innerHTML = `<h2 class="cv-h2">Agent transactions <span class="oc-h2-note">${trades.length} on three.ws · ${buys} buys / ${trades.length - buys} sells</span></h2>
 			<div class="oc-atx-list">${rows}</div>
 			${trades.length > 12 ? `<a class="dr-act oc-atx-more" href="/pulse?mint=${encodeURIComponent(mint)}">Every agent transaction in this coin →</a>` : ''}`;
 	}
@@ -650,7 +828,7 @@
 		if (!ok || !data?.items?.length) return;
 		const related = data.items.filter((it) => it.mint !== mint).slice(0, 3);
 		if (!related.length) return;
-		wrap.innerHTML = `<div class="dr-sec">Related · ${esc(category)}</div>
+		wrap.innerHTML = `<h2 class="cv-h2">Related <span class="oc-h2-note">${esc(category)} · Oracle score ≥ 60</span></h2>
 			<div style="display:flex;flex-direction:column;gap:6px">
 				${related.map((r) => {
 					const imgEl = r.image_uri
@@ -763,32 +941,42 @@
 		set('ped', p.pedigree); set('str', p.structure); set('nar', p.narrative); set('mom', p.momentum);
 	}
 
-	// The conviction-independent scaffold: identity is already in the SSR hero, so
-	// market + live trades render immediately for ANY mint. The conviction column
-	// fills in (or shows an "observing" state) once /api/oracle/coin resolves.
+	// The conviction-independent scaffold: identity is already in the SSR header,
+	// so chart + market + launch intel + live trades render immediately for ANY
+	// mint. The conviction section fills in (or shows an "observing" state) once
+	// /api/oracle/coin resolves. Sections follow the markets-hub (/coin/:id)
+	// stacked layout: full-width cv-sections with editorial headings.
 	async function buildScaffold(mint) {
 		const deep = $('#ocDeep');
 		if (!deep) return;
 		deep.innerHTML = `
 			<div id="ocTake"></div>
-			<div id="ocChart" class="oc-chart"></div>
-			<div id="ocAgentTx" class="oc-agent-tx"></div>
-			<div id="ocHistory"></div>
-			<div class="oc-cols">
-				<div id="ocConviction">
-					<div class="dr-sec">Conviction</div>
+			<section class="cv-section" aria-label="Price chart">
+				<div id="ocChart" class="oc-chart"></div>
+			</section>
+			<section class="cv-section" aria-label="Market">
+				<h2 class="cv-h2">Market <span class="oc-h2-note">live</span></h2>
+				<div id="ocMarket" class="mkt-loading" aria-busy="true">
+					<div class="mkt-skel"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+				</div>
+			</section>
+			<section class="cv-section" id="ocIntelSec" aria-label="Launch intelligence" hidden>
+				<h2 class="cv-h2">Launch intelligence <span class="oc-h2-note">Coin Radar · first ~90s of trading</span></h2>
+				<div id="ocIntel"></div>
+			</section>
+			<section class="cv-section" aria-label="Conviction">
+				<h2 class="cv-h2">Conviction <span class="oc-h2-note">who's buying · how · what · move</span></h2>
+				<div id="ocHistory"></div>
+				<div id="ocConviction" class="oc-two">
 					<div class="oc-spinner" aria-label="Reading conviction"></div>
 				</div>
-				<div>
-					<div id="ocMarket" class="mkt-loading" aria-busy="true">
-						<div class="dr-sec">Market <span style="color:var(--faint);font-weight:400;font-size:10px">live</span></div>
-						<div class="mkt-skel"><span></span><span></span><span></span><span></span><span></span><span></span></div>
-					</div>
-					<div class="dr-sec">Live trades</div>
-					<div id="ocTape" class="trade-tape"></div>
-					<div id="ocRelated"></div>
-				</div>
-			</div>`;
+			</section>
+			<section class="cv-section oc-agent-tx" id="ocAgentTx" aria-label="Agent transactions"></section>
+			<section class="cv-section" aria-label="Live trades">
+				<h2 class="cv-h2">Live trades <span class="oc-h2-note">PumpPortal stream</span></h2>
+				<div id="ocTape" class="trade-tape"></div>
+			</section>
+			<div id="ocRelated" class="cv-section"></div>`;
 		// Load this coin's agent transactions before the chart mounts so the annotated
 		// "Agent trades" view can lead by default and the list renders together. The
 		// fetch is fast and never throws; on failure both simply stay empty.
@@ -797,6 +985,7 @@
 		const chartEl = $('#ocChart');
 		if (chartEl) mountChart(chartEl, mint);
 		loadMarket(mint);
+		loadRadarIntel(mint);
 		loadHistory(mint);
 		loadProofTrades(mint); // renders into #ocProof once the conviction column exists
 		if (window.__ocTape) { try { window.__ocTape.destroy(); } catch {} }
@@ -816,16 +1005,20 @@
 		const out = data.outcome;
 		const comp = data.components || {};
 		col.innerHTML = `
-			<div class="dr-sec">Why this score</div>${reasons}
-			${narr ? `<div class="dr-sec">Narrative</div><div style="font-size:13.5px;color:var(--ink)">${esc(narr.narrative || '')}</div>
-				<div class="coin-meta" style="margin-top:8px"><span class="chip cat">${esc(narr.category)}</span><span class="chip">virality <b>${narr.virality ?? '—'}</b></span><span class="chip">${esc(narr.source || '')}</span></div>` : ''}
-			<div id="ocPulse"></div>
-			${structurePanel(comp.structure)}
-			${out ? `<div class="dr-sec">Outcome</div><div class="coin-meta">
-				<span class="chip ${out.graduated ? 'sm' : out.rugged ? 'flag' : ''}">${out.graduated ? 'graduated ✓' : out.rugged ? 'rugged ✕' : 'live'}</span>
-				${out.ath_multiple ? `<span class="chip">ATH <b>${Number(out.ath_multiple).toFixed(1)}×</b></span>` : ''}</div>` : ''}
-			<div class="dr-sec">Who's in <span style="color:var(--faint)">(${(data.whos_in || []).length})</span></div>${whos}
-			<div id="ocProof"></div>`;
+			<div class="oc-col">
+				<div class="dr-sec">Why this score</div>${reasons}
+				${narr ? `<div class="dr-sec">Narrative</div><div style="font-size:13.5px;color:var(--ink)">${esc(narr.narrative || '')}</div>
+					<div class="coin-meta" style="margin-top:8px"><span class="chip cat">${esc(narr.category)}</span><span class="chip">virality <b>${narr.virality ?? '—'}</b></span><span class="chip">${esc(narr.source || '')}</span></div>` : ''}
+				<div id="ocPulse"></div>
+			</div>
+			<div class="oc-col">
+				${structurePanel(comp.structure)}
+				${out ? `<div class="dr-sec">Outcome</div><div class="coin-meta">
+					<span class="chip ${out.graduated ? 'sm' : out.rugged ? 'flag' : ''}">${out.graduated ? 'graduated ✓' : out.rugged ? 'rugged ✕' : 'live'}</span>
+					${out.ath_multiple ? `<span class="chip">ATH <b>${Number(out.ath_multiple).toFixed(1)}×</b></span>` : ''}</div>` : ''}
+				<div class="dr-sec">Who's in <span style="color:var(--faint)">(${(data.whos_in || []).length})</span></div>${whos}
+				<div id="ocProof"></div>
+			</div>`;
 		const take = $('#ocTake');
 		if (take) take.innerHTML = drawerTake(data);
 		loadHistory(mint);
@@ -837,8 +1030,7 @@
 	function renderObserving(mint, retry) {
 		const col = $('#ocConviction');
 		if (!col) return;
-		col.innerHTML = `<div class="dr-sec">Conviction</div>
-			<div class="state" style="padding:28px 20px">
+		col.innerHTML = `<div class="state" style="padding:28px 20px;grid-column:1/-1">
 				<b>Oracle is reading this launch</b>
 				A conviction score fuses who's buying, how, what it is, and how it's moving — it appears here within moments of a coin surfacing on pump.fun. The live market and trade tape are already streaming.
 				<div style="margin-top:14px"><button type="button" class="dr-act" id="ocRetry">${retry >= 4 ? 'Check again' : 'Checking…'}</button></div>

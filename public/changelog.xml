@@ -23,6 +23,14 @@
 			<description>Step-by-step: add a floating 3D avatar assistant to any website with one script tag, configure the avatar, background, and brand, drive it from your own code, or have an AI agent generate the embed via MCP.</description>
 		</item>
 		<item>
+			<title>Coin pages for new launches, redesigned in the markets-hub style</title>
+			<link>https://three.ws/radar</link>
+			<guid isPermaLink="false">2026-07-19:Coin pages for new launches, redesigned in the markets-hub style</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Every pump.fun launch on Coin Radar now links straight through to a full coin page at /oracle/coin/&lt;mint&gt;, rebuilt in the same clean editorial design as the /coin/bitcoin markets pages. The page keeps everything it had (Oracle conviction, live market intel from six sources, agent transactions, a live trade tape) and adds the complete Launch Intelligence read from the radar engine: quality score, organic vs bundle, risk flags, the full signal breakdown, smart-money buyers, and the top-trader ledger. The live candles chart stays, joined by a native line view and an agent-trades overlay, and the whole page works in light and dark themes.</description>
+		</item>
+		<item>
 			<title>Concierge ships to npm and the MCP registry, with a full examples set</title>
 			<link>https://three.ws/docs/concierge</link>
 			<guid isPermaLink="false">2026-07-19:Concierge ships to npm and the MCP registry, with a full examples set</guid>
@@ -52,7 +60,7 @@
 			<guid isPermaLink="false">2026-07-19:TradingView charts on every coin page</guid>
 			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
-			<description>Every /coin page (like /coin/bitcoin) now has a chart-source toggle: keep the fast native line chart or switch to a full TradingView advanced chart with candlesticks, indicators, and drawing tools. Your choice is remembered across coins and visits, and the widget follows the site theme.</description>
+			<description>Every /coin page (like /coin/bitcoin) now has a chart-source toggle. Keep the fast native line chart, or switch to a full advanced candlestick chart with indicators and drawing tools. Listed coins open on TradingView; Solana DEX tokens that TradingView doesn't carry open on DexScreener instead, so the advanced view works on every coin. Your choice is remembered across coins and visits, and the chart follows the site theme.</description>
 		</item>
 		<item>
 			<title>Assistant widget</title>

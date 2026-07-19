@@ -52,7 +52,7 @@ describe('rewrite-dest query params reach handlers on req.url', () => {
 		const res = await fetch(`${BASE}/oracle/coin/${MINT}`, { redirect: 'manual' });
 		expect(res.status).toBe(200);
 		const html = await res.text();
-		expect(html).toContain('oc-hero');       // SSR conviction hero
+		expect(html).toContain('ocHeroDynamic'); // SSR conviction header
 		expect(html).toContain('/oracle-coin.js'); // hydration script
 		expect(html).toContain(MINT);            // boot payload carries the mint
 	}, 30000);

@@ -177,13 +177,15 @@ function pillarBar(kind, label, val) {
 		<div class="track"><div class="fill" style="width:${v || 0}%"></div></div></div>`;
 }
 
-// Server-rendered hero — the conviction verdict, above the fold, from the DB for
+// Server-rendered header in the markets-hub (cv) design: icon, name, ticker,
+// conviction card, meta chips, contract row, and action pills, from the DB for
 // scored coins, or the coin's real pump.fun identity for a launch Oracle hasn't
 // observed yet (the client patches in the score once it lazy-scores). Either way
-// the hero shows the real coin, never a bare placeholder.
+// the header shows the real coin, never a bare placeholder. The price row is a
+// hydration target the client fills from /api/oracle/market.
 function heroHtml({ mint, row, pump, origin }) {
 	const symRaw = row?.symbol || pump?.symbol || null;
-	const sym  = symRaw ? esc(symRaw) : shortMint(mint);
+	const sym  = symRaw ? `$${esc(symRaw)}` : shortMint(mint);
 	const name = esc(row?.name || pump?.name || '');
 	const score = row ? Number(row.score ?? 0) : null;
 	const tier  = row?.tier || 'watch';
@@ -191,8 +193,8 @@ function heroHtml({ mint, row, pump, origin }) {
 	const sw    = Number(row?.smart_wallet_count || 0);
 	const imgUri = row?.image_uri || pump?.image || '';
 	const img   = imgUri
-		? `<img class="oc-img" src="${esc(imgUri)}" alt="${sym}" width="84" height="84" loading="eager">`
-		: `<div class="oc-img">${esc((symRaw || mint)[0] || '?').toUpperCase()}</div>`;
+		? `<img class="coin-icon" src="${esc(imgUri)}" alt="" width="64" height="64" loading="eager" data-no-dark-filter>`
+		: `<div class="coin-icon oc-icon-letter" aria-hidden="true">${esc(((symRaw || mint)[0] || '?').toUpperCase())}</div>`;
 
 	// Dial: the score for scored coins; a "reading" state for fresh launches that
 	// the client fills in (id ocDial) once /api/oracle/coin returns a verdict.
@@ -215,7 +217,7 @@ function heroHtml({ mint, row, pump, origin }) {
 			? '<span class="chip sm">graduated ✓</span>'
 			: (curvePct != null ? `<span class="chip">curve <b>${Math.round(curvePct)}%</b></span>` : ''))
 		: '';
-	const metaChips = `<div class="coin-meta" style="margin-top:14px">
+	const metaChips = `<div class="coin-meta oc-head-chips">
 		${cat ? `<span class="chip cat">${esc(cat)}</span>` : ''}
 		${sw > 0 ? `<span class="chip sm">${sw} proven wallet${sw === 1 ? '' : 's'}</span>` : ''}
 		${row?.scored_at ? `<span class="chip">scored <b>${esc(agoServer(row.scored_at))}</b></span>` : ''}
@@ -224,16 +226,16 @@ function heroHtml({ mint, row, pump, origin }) {
 		${pump?.is_live ? '<span class="chip sm">live now</span>' : ''}
 	</div>`;
 
-	const actions = `<div class="dr-actions">
-		<a class="dr-act" href="${esc(pumpUrl(mint))}" target="_blank" rel="noopener">pump.fun ↗</a>
-		<a class="dr-act" href="https://solscan.io/token/${esc(mint)}" target="_blank" rel="noopener">solscan ↗</a>
-		<a class="dr-act" href="/coin3d?mint=${encodeURIComponent(mint)}" title="Open the full 3D coin profile">View in 3D ↗</a>
-		<a class="dr-act" href="/launches/${esc(mint)}">Launch details ↗</a>
-		<a class="dr-act" href="/trades">Trade feed ↗</a>
-		<button class="dr-act dr-watch" id="ocWatch" type="button" aria-pressed="false">☆ Watch</button>
-		<button class="dr-act" id="ocCopyMint" type="button" title="Copy mint address">Copy mint</button>
-		<button class="dr-act" id="ocCopyLink" type="button" title="Copy shareable link">Copy link</button>
-		<a class="dr-act dr-share" href="${esc(shareTweet(mint, row, pump, origin))}" target="_blank" rel="noopener">Share ↗</a>
+	const actions = `<div class="cv-pills oc-actions">
+		<a class="cv-pill" href="${esc(pumpUrl(mint))}" target="_blank" rel="noopener">pump.fun ↗</a>
+		<a class="cv-pill" href="https://solscan.io/token/${esc(mint)}" target="_blank" rel="noopener">Solscan ↗</a>
+		<a class="cv-pill" href="/coin3d?mint=${encodeURIComponent(mint)}" title="Open the full 3D coin profile">View in 3D</a>
+		<a class="cv-pill" href="/launches/${esc(mint)}">Launch details</a>
+		<a class="cv-pill" href="/trades">Trade feed</a>
+		<a class="cv-pill" href="/oracle">Oracle feed</a>
+		<button class="cv-pill" id="ocWatch" type="button" aria-pressed="false">☆ Watch</button>
+		<button class="cv-pill" id="ocCopyLink" type="button" title="Copy shareable link">Copy link</button>
+		<a class="cv-pill" href="${esc(shareTweet(mint, row, pump, origin))}" target="_blank" rel="noopener">Share ↗</a>
 	</div>`;
 
 	// The coin's own words. Server-known only for pump-identified launches; for
@@ -241,17 +243,31 @@ function heroHtml({ mint, row, pump, origin }) {
 	const desc = (pump?.description || '').trim().slice(0, 400);
 	const descHtml = `<p class="oc-desc" id="ocDesc"${desc ? '' : ' hidden'}>${esc(desc)}</p>`;
 
-	return `<div class="oc-hero" id="ocHeroDynamic">
-		${img}
-		<div class="oc-id">
-			<div class="oc-sym">${sym}${name ? `<span class="oc-name">${name}</span>` : ''}</div>
-			<div class="oc-mint">${esc(shortMint(mint))}</div>
-			${descHtml}
-			<div class="oc-topgrid">${dial}${pillars}</div>
-			${metaChips}
-			${actions}
+	return `<section aria-label="Coin overview">
+		<div class="cv-coin-head oc-head" id="ocHeroDynamic">
+			${img}
+			<div class="oc-head-main">
+				<div class="title-row">
+					<h1>${name || sym}</h1>
+					${symRaw && name ? `<span class="ticker">${sym}</span>` : ''}
+				</div>
+				<div class="cv-price-row oc-price-row" id="ocPriceRow" hidden>
+					<span class="cv-price cv-mono" id="ocPrice"></span>
+					<div class="oc-price-chips" id="ocPriceChips"></div>
+				</div>
+				${descHtml}
+				${metaChips}
+				<div class="oc-contract-row">
+					<span class="cv-contract"><span class="oc-mint-addr" title="${esc(mint)}">${esc(mint)}</span><button type="button" id="ocCopyMint" title="Copy mint address">Copy</button></span>
+				</div>
+				${actions}
+			</div>
+			<div class="oc-conv-card" aria-label="Oracle conviction">
+				${dial}
+				${pillars}
+			</div>
 		</div>
-	</div>`;
+	</section>`;
 }
 
 function pumpUrl(mint) { return `https://pump.fun/coin/${mint}`; }
@@ -279,8 +295,10 @@ function jsonForScript(obj) {
 export function renderHtml({ mint, row, pump, meta, pageUrl, ogImage, origin }) {
 	const t = esc(meta.title);
 	const d = esc(meta.desc);
+	const symRaw = row?.symbol || pump?.symbol || null;
+	const crumb = symRaw ? `$${esc(symRaw)}` : esc(shortMint(mint));
 	return `<!doctype html>
-<html lang="en">
+<html lang="en" class="cv-page">
 <head>
 	<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 	<meta charset="utf-8">
@@ -320,15 +338,22 @@ export function renderHtml({ mint, row, pump, meta, pageUrl, ogImage, origin }) 
 	<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 	<link rel="stylesheet" href="/fonts/fonts.css">
 	<link rel="stylesheet" href="/nav.css">
+	<link rel="stylesheet" href="/src/coin-pages.css">
 	<link rel="stylesheet" href="/oracle-coin.css">
 	<link rel="stylesheet" href="/footer.css">
 </head>
 <body>
-	<div id="nav-container"></div>
+	<header><div id="nav-container"></div></header>
 	<script defer src="/nav.js"></script>
 
-	<main class="wrap">
-		<a class="oc-back" href="/oracle">← Oracle feed</a>
+	<main class="cv-container">
+		<nav class="cv-crumbs" aria-label="Breadcrumb">
+			<a href="/">Home</a>
+			<span class="sep" aria-hidden="true">›</span>
+			<a href="/radar">Coin Radar</a>
+			<span class="sep" aria-hidden="true">›</span>
+			<span class="here">${crumb}</span>
+		</nav>
 		${heroHtml({ mint, row, pump, origin })}
 		<div class="oc-body" id="ocDeep">
 			<div class="oc-spinner" aria-label="Loading conviction"></div>

@@ -368,6 +368,7 @@
 	font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--ink);
 	background: var(--surface-2); border: 1px solid var(--stroke);
 	border-radius: var(--radius-md); padding: var(--space-2xs) var(--space-sm); cursor: pointer;
+	text-decoration: none; display: inline-block;
 	transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
 }
 .rc-detail:hover { background: var(--surface-3); border-color: var(--stroke-strong); }
@@ -455,6 +456,13 @@
 .rd-img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; background: var(--surface-2); border: 1px solid var(--stroke); flex-shrink: 0; }
 .rd-title { font-size: var(--text-lg); font-weight: var(--weight-bold); color: var(--ink-bright); margin: 0; line-height: 1.2; }
 .rd-sub { font-size: var(--text-sm); color: var(--ink-dim); margin-top: 2px; }
+.rd-page-link {
+	display: inline-block; margin-top: 6px; font-size: var(--text-sm); font-weight: var(--weight-semibold);
+	color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--stroke-strong);
+	transition: color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+}
+.rd-page-link:hover { color: var(--ink-bright); border-bottom-color: var(--ink-dim); }
+.rd-page-link:focus-visible { outline: var(--focus-ring-width) solid var(--focus-ring-color); outline-offset: 2px; border-radius: var(--radius-sm); }
 .rd-close {
 	background: var(--surface-2); border: 1px solid var(--stroke); border-radius: var(--radius-md);
 	color: var(--ink-dim); width: 34px; height: 34px; display: grid; place-items: center;
