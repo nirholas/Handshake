@@ -258,13 +258,14 @@ function layout(t, meta) {
 async function loadAvatar(t, url) {
 	const { THREE, GLTFLoader, scene } = t;
 	setStatus('Loading avatar…');
-	const [buf, canonMod, retargetMod] = await Promise.all([
+	const [buf, canonMod, retargetMod, { getMeshoptDecoder }] = await Promise.all([
 		fetch(url).then((r) => {
 			if (!r.ok) throw new Error(`Avatar fetch failed (${r.status}).`);
 			return r.arrayBuffer();
 		}),
 		import('./glb-canonicalize.js'),
 		import('./animation-retarget.js'),
+		import('./viewer/internal.js'),
 	]);
 	let glb = buf;
 	try {
@@ -275,7 +276,9 @@ async function loadAvatar(t, url) {
 		// Not canonicalizable (already canonical or unusual container) — retarget
 		// still resolves bone names through the same mapping at clip-bind time.
 	}
-	const gltf = await new GLTFLoader().parseAsync(glb, '');
+	const loader = new GLTFLoader();
+	loader.setMeshoptDecoder(await getMeshoptDecoder());
+	const gltf = await loader.parseAsync(glb, '');
 	const root = gltf.scene;
 
 	if (state.avatar?.group) scene.remove(state.avatar.group);
