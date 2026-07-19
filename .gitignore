@@ -382,3 +382,6 @@ prompts/robinhood-chain/11-toolkit-cli.md
 # archives at repo root are never committed
 /*.zip
 tests/openai-comarketing-language.test.js
+
+# scratch OTP relay file used by scripts/get-mixamo-token.mjs
+.mixamo-otp

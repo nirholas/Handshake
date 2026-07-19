@@ -11,7 +11,7 @@
  */
 
 import { chromium } from 'playwright';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import * as readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
@@ -40,26 +40,96 @@ function saveToken(token) {
 	console.log('✅ MIXAMO_TOKEN saved to .env.local');
 }
 
+// Adobe's "Verify your identity" step is two screens: a confirmation screen
+// ("we'll send you a code to n***@g***.com" + Continue button) that must be
+// clicked before the email actually goes out, then the real code-entry screen.
+// Detect which one we're on and only prompt for a code once inputs exist.
+async function handleVerification(page, label) {
+	let bodyText = await page.innerText('body').catch(() => '');
+	if (!/Verify|verification|code/i.test(bodyText)) return bodyText;
+
+	const hasCodeInput = await page
+		.$('input[name="code"], input[aria-label*="code" i], input[placeholder*="code" i], input[type="text"], input[type="number"], input[inputmode="numeric"]')
+		.then(Boolean)
+		.catch(() => false);
+
+	if (!hasCodeInput) {
+		const continueBtn = await page.$('button:has-text("Continue")');
+		if (continueBtn) {
+			console.log(`   ${label}: confirmation screen — clicking Continue to trigger the email...`);
+			await continueBtn.click();
+			await page.waitForTimeout(3000);
+			bodyText = await page.innerText('body').catch(() => '');
+		}
+	}
+
+	if (/Verify|verification|code/i.test(bodyText)) {
+		console.log(`\n📧 Adobe sent a verification code to your email (${label}).`);
+		const code = await prompt('   Enter the code: ');
+		await fillOtp(page, code);
+		await page.waitForTimeout(3000);
+		bodyText = await page.innerText('body').catch(() => '');
+	}
+	return bodyText;
+}
+
 async function fillOtp(page, code) {
 	const single = await page.$('input[name="code"], input[aria-label*="code" i], input[placeholder*="code" i]');
 	if (single) {
 		await single.fill(code);
 	} else {
-		const inputs = await page.$$('input[type="text"], input[type="number"], input[inputmode="numeric"]');
-		for (let i = 0; i < inputs.length && i < code.length; i++) {
-			await inputs[i].fill(code[i]);
+		// Split-box OTP (one <input> per digit, type varies: text/tel/number/none).
+		// fill()-ing each box programmatically skips the input events these UIs use
+		// to auto-advance focus, so only the first box ever lands a digit. Instead
+		// click the first box and type the whole code as real keystrokes — the
+		// page's own JS advances focus per keystroke, same as a human typing it.
+		let boxes = await page.$$('input:visible');
+		if (boxes.length === 0) boxes = await page.$$('input');
+		if (boxes.length >= code.length) {
+			await boxes[0].click();
+			await page.keyboard.type(code, { delay: 80 });
+		} else if (boxes.length === 1) {
+			await boxes[0].fill(code);
 		}
 	}
+	await page.waitForTimeout(300);
 	await page.click('button[type="submit"], button:has-text("Continue")').catch(() =>
 		page.keyboard.press('Enter')
 	);
 }
 
+const OTP_FILE = join(process.cwd(), '.mixamo-otp');
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 async function prompt(question) {
-	const rl = readline.createInterface({ input, output });
-	const answer = await rl.question(question);
-	rl.close();
-	return answer.trim();
+	// A restarted process means a restarted login = a brand-new email that
+	// invalidates whatever code was read from the previous one. So this must
+	// NOT start a fresh process per code — it polls a file for the code while
+	// the SAME browser session (which just sent the one and only email for
+	// this run) stays open. Whoever has the code writes it to .mixamo-otp.
+	if (process.env.ADOBE_OTP) {
+		console.log(`${question}${process.env.ADOBE_OTP} (from ADOBE_OTP)`);
+		return process.env.ADOBE_OTP.trim();
+	}
+	if (process.stdin.isTTY) {
+		const rl = readline.createInterface({ input, output });
+		const answer = await rl.question(question);
+		rl.close();
+		return answer.trim();
+	}
+	console.log(`${question}(waiting up to 4 min — write the code to ${OTP_FILE})`);
+	try { rmSync(OTP_FILE, { force: true }); } catch {}
+	for (let i = 0; i < 120; i++) {
+		await sleep(2000);
+		if (existsSync(OTP_FILE)) {
+			const code = readFileSync(OTP_FILE, 'utf8').trim();
+			if (code) {
+				writeFileSync(OTP_FILE, '');
+				return code;
+			}
+		}
+	}
+	throw new Error('timed out waiting for OTP code');
 }
 
 (async () => {
@@ -149,14 +219,8 @@ async function prompt(question) {
 	console.log(`   Page heading: ${bodyText.slice(0, 120).replace(/\n/g, ' ')}`);
 
 	// Handle verification screen before password (some accounts see this first)
-	if (bodyText.includes('Verify') || bodyText.includes('verification') || bodyText.includes('code')) {
-		console.log('\n📧 Adobe sent a verification code to your email.');
-		const code = await prompt('   Enter the code: ');
-		await fillOtp(loginPage, code);
-		await loginPage.waitForTimeout(3000);
-		await loginPage.screenshot({ path: 'scripts/debug-step4.png' });
-		bodyText = await loginPage.innerText('body').catch(() => '');
-	}
+	bodyText = await handleVerification(loginPage, 'before password');
+	await loginPage.screenshot({ path: 'scripts/debug-step4.png' });
 
 	// Password step
 	if (await loginPage.$('input[type="password"]').then(Boolean).catch(() => false)) {
@@ -170,12 +234,7 @@ async function prompt(question) {
 	}
 
 	// Verification after password
-	if (bodyText.includes('Verify') || bodyText.includes('verification') || bodyText.includes('code')) {
-		console.log('\n📧 Adobe sent a verification code to your email.');
-		const code = await prompt('   Enter the code: ');
-		await fillOtp(loginPage, code);
-		await loginPage.waitForTimeout(3000);
-	}
+	bodyText = await handleVerification(loginPage, 'after password');
 
 
 	// Wait for redirect back to mixamo

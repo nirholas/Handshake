@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Agent Made Its First Autonomous Trade. Here Is Every Decision It Took.</title>
+    <meta name="description" content="A three.ws agent sniped a brand-new pump.fun launch and closed it at +42.38%, fully autonomously. The full postmortem: every gate it passed, the on-chain receipts, what was luck, what was design, and the LLM-piloted strategist we are building next.">
+    <meta name="keywords" content="autonomous trading agent, AI agent trading, pump.fun sniper, Solana trading bot, agent wallet, on-chain AI agent, decision ledger, trade firewall, three.ws">
+    <link rel="canonical" href="https://three.ws/blog/first-autonomous-trade">
+
+    <meta property="og:title" content="Our Agent Made Its First Autonomous Trade. Here Is Every Decision It Took.">
+    <meta property="og:description" content="A three.ws agent sniped a new pump.fun launch and closed at +42.38%, autonomously. The full postmortem with on-chain receipts: what was luck, what was design, and what we build next.">
+    <meta property="og:url" content="https://three.ws/blog/first-autonomous-trade">
+    <meta property="og:type" content="article">
+    <meta property="og:image" content="https://three.ws/og-image.png">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Our Agent Made Its First Autonomous Trade. Here Is Every Decision It Took.">
+    <meta name="twitter:description" content="A three.ws agent sniped a new pump.fun launch and closed at +42.38%, autonomously. The full postmortem with on-chain receipts.">
+    <meta name="twitter:image" content="https://three.ws/og-image.png">
+
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/nav.css">
+    <link rel="stylesheet" href="/footer.css">
+    <style>
+        :root { color-scheme: dark; }
+        body { margin: 0; background: #060611; color: #e7e7f5; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+        .post-wrap { max-width: 720px; margin: 0 auto; padding: 96px 24px 80px; }
+        .post-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; color: #7a85a8; font-size: 13px; margin-bottom: 28px; }
+        .post-date { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .post-tag { padding: 2px 8px; border-radius: 999px; background: rgba(154,212,255,.08); color: #9ad4ff; font-size: 11px; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; }
+        h1 { font-size: clamp(26px, 4vw, 40px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin: 0 0 20px; }
+        h2 { font-size: 20px; font-weight: 600; margin: 40px 0 12px; letter-spacing: -0.01em; }
+        p { color: #c8c8e0; line-height: 1.7; margin: 0 0 18px; font-size: 16px; }
+        ul, ol { color: #c8c8e0; line-height: 1.7; margin: 0 0 18px; padding-left: 24px; font-size: 16px; }
+        li { margin-bottom: 6px; }
+        a { color: #9ad4ff; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; background: rgba(154,212,255,.07); color: #9ad4ff; padding: 2px 6px; border-radius: 4px; word-break: break-all; }
+        strong { color: #e7e7f5; }
+        blockquote { margin: 0 0 18px; padding: 14px 18px; border-left: 3px solid #9ad4ff; background: rgba(154,212,255,.05); border-radius: 0 8px 8px 0; color: #c8c8e0; font-size: 15px; line-height: 1.7; }
+        .trade-table { width: 100%; border-collapse: collapse; margin: 0 0 18px; font-size: 14px; }
+        .trade-table th, .trade-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,.07); color: #c8c8e0; vertical-align: top; }
+        .trade-table th { color: #7a85a8; font-weight: 500; white-space: nowrap; }
+        .table-scroll { overflow-x: auto; }
+        .post-back { display: inline-flex; align-items: center; gap: 6px; color: #7a85a8; font-size: 14px; margin-bottom: 40px; text-decoration: none; }
+        .post-back:hover { color: #9ad4ff; }
+        hr { border: none; border-top: 1px solid rgba(255,255,255,.08); margin: 40px 0; }
+        .post-cta { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 10px; background: linear-gradient(120deg, #ffb454, #ff6ad5 60%, #8b5cf6); color: #060611; font-weight: 600; font-size: 15px; text-decoration: none; transition: transform .15s, box-shadow .15s; }
+        .post-cta:hover { text-decoration: none; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(255,106,213,.25); }
+    </style>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"Our Agent Made Its First Autonomous Trade. Here Is Every Decision It Took.","description":"A three.ws agent sniped a brand-new pump.fun launch and closed it at +42.38%, fully autonomously. The full postmortem: every gate it passed, the on-chain receipts, what was luck, what was design, and the LLM-piloted strategist we are building next.","image":"https://three.ws/og-image.png","datePublished":"2026-07-19T12:00:00.000Z","dateModified":"2026-07-19T12:00:00.000Z","author":{"@type":"Organization","name":"three.ws","url":"https://three.ws"},"publisher":{"@type":"Organization","name":"three.ws","url":"https://three.ws","logo":{"@type":"ImageObject","url":"https://three.ws/og-image.png"}},"mainEntityOfPage":{"@type":"WebPage","@id":"https://three.ws/blog/first-autonomous-trade"},"keywords":"autonomous trading agent, AI agent trading, pump.fun sniper, Solana trading bot, agent wallet, on-chain AI agent, decision ledger, trade firewall, three.ws"}</script>
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://three.ws/"},{"@type":"ListItem","position":2,"name":"Blog","item":"https://three.ws/blog"},{"@type":"ListItem","position":3,"name":"Our Agent Made Its First Autonomous Trade. Here Is Every Decision It Took.","item":"https://three.ws/blog/first-autonomous-trade"}]}</script>
+</head>
+<body>
+    <div id="nav-container"></div>
+    <main class="post-wrap">
+        <a class="post-back" href="/blog">&larr; Blog</a>
+        <div class="post-meta">
+            <span class="post-date">2026-07-19</span>
+            <span class="post-tag">Postmortem</span>
+            <span class="post-tag">Agents</span>
+            <span class="post-tag">Trading</span>
+        </div>
+        <h1>Our Agent Made Its First Autonomous Trade. Here Is Every Decision It Took.</h1>
+
+        <p>At 02:26 UTC on July 19th, an AI agent on three.ws spent 0.05 SOL of its own money on a token that was seconds old. Thirty minutes later it sold, up <strong>42.38%</strong>. No human saw the token, approved the buy, or timed the exit. And because every decision an agent takes here is recorded on a hash-chained ledger next to real on-chain signatures, we can replay the whole thing, gate by gate. This post does exactly that, including the parts that were luck rather than skill.</p>
+
+        <h2>The setup: rules armed nine days earlier</h2>
+        <p>Every three.ws agent has its own custodial Solana wallet. The <a href="/docs/agent-sniper">Agent Sniper</a> lets an owner arm that wallet with a trading policy: which new pump.fun launches qualify, how much to spend, and exactly when to exit. The policy behind this trade was armed on July 10th: 0.05 SOL per trade, 0.2 SOL daily ceiling, one position at a time, only coins in a $5k to $25k market-cap band with real socials, a 30% stop-loss, a 25% trailing stop, and a hard 30-minute maximum hold.</p>
+        <p>Then, for nine days: nothing. The strategy evaluated launch after launch from the live pump.fun firehose and skipped nearly all of them, each skip logged with a reason. That silence is the system working. Most brand-new tokens fail the socials gate, sit outside the band, or fail the safety checks below.</p>
+
+        <h2>The five gates the token passed</h2>
+        <ol>
+            <li><strong>The trigger.</strong> A long-lived worker holds the new-mint feed open and scores coins the second they exist. A launch called $BITS appeared, SOL-quoted, inside the band.</li>
+            <li><strong>The owner's filters.</strong> Socials present, creator had not dumped, market cap in range.</li>
+            <li><strong>The fleet safety band.</strong> Platform-wide market-cap clamps that individual strategies can tighten but never loosen. Unknown market cap fails closed: the sniper never buys what it cannot price.</li>
+            <li><strong>The Mayhem gate.</strong> Pump.fun "Mayhem mode" launches are excluded unconditionally, read straight from the on-chain bonding curve.</li>
+            <li><strong>The trade firewall.</strong> The important one. Before spending anything, the executor ran a <em>real simulated buy-and-sell on-chain</em>. If a token cannot be sold back, it is a honeypot and the buy aborts. The round trip came back clean: verdict <code>allow</code>, score 100.</li>
+        </ol>
+        <p>Only after all five did the agent's key leave its encrypted box to sign. The buy landed in 1.7 seconds with 0.05% price impact, and the agent wrote this to its decision ledger, verbatim:</p>
+        <blockquote>"Sniped $BITS on a new_mint trigger with 0.05% price impact; firewall verdict allow (score 100). Committed 0.0500 SOL expecting a profitable exit." <em>(confidence: 0.698)</em></blockquote>
+
+        <h2>The trade, with receipts</h2>
+        <div class="table-scroll">
+        <table class="trade-table">
+            <tr><th>Entry</th><td>2026-07-19 02:26:00 UTC, 0.05 SOL</td></tr>
+            <tr><th>Peak</th><td>+46.5%</td></tr>
+            <tr><th>Exit</th><td>02:56:04 UTC, full position, reason: <code>timeout</code></td></tr>
+            <tr><th>Realized</th><td><strong>+0.0212 SOL, +42.38%</strong></td></tr>
+            <tr><th>Buy tx</th><td><code>3Y6NqS8CV3K1j5sBZYsuQjpipZeY2wckCz3h99vGA6ZbwJgMpeUjkVm43zffeV52Kc2jWRUn4d4rzcTxoCEGrzRY</code></td></tr>
+            <tr><th>Sell tx</th><td><code>mLmGA7FeHFUEDdQagavVZCH2aExmMssjsVxWiRCSxRZwvbxDS1Xfnvan63ab5FkrKnQ7koEu4yxwgVJYXajeyhH</code></td></tr>
+        </table>
+        </div>
+        <p>Both signatures resolve on any Solana explorer. The position row, the reasoning entry, and the custody events (key recovery, spend, exit) are all in the platform's ledgers, and the wallet's balance is committed into a Merkle attestation every epoch.</p>
+
+        <h2>The honest part: the exit was luck-shaped</h2>
+        <p>Exits run on a strict ladder: stop-loss first, then trailing stop, then take-profit, then timeout. This strategy had <strong>no take-profit configured</strong>. So when the position hit +46.5%, nothing existed to lock that in. The price drifted a few points, the 30-minute clock expired, and the position closed on <code>timeout</code>, still up 42%.</p>
+        <p>It sold because the clock ran out, and it happened to still be winning. A configured take-profit turns that from luck into policy, and that is now the first lesson in <a href="/tutorials/arm-an-agent-sniper">the tutorial</a>. We are publishing the miss along with the win because a 42% first trade teaches nothing if you pretend every part of it was designed.</p>
+        <p>Also worth saying plainly: this is one trade at deliberately tiny size. It is an existence proof that the full pipeline works end to end on mainnet, not a track record. Anyone showing you a single green trade as evidence of an edge is selling something.</p>
+
+        <h2>What we actually learned</h2>
+        <ul>
+            <li><strong>The firewall is the product.</strong> Simulating the sell before the buy is what separates sniping from donating to rug creators. It vetoed quietly for nine days; the one coin it allowed was genuinely sellable.</li>
+            <li><strong>Selectivity feels like silence.</strong> A well-filtered strategy mostly does nothing. The skip log, with a reason per rejected coin, is what makes that trustworthy instead of worrying.</li>
+            <li><strong>Every exit needs a profit rule.</strong> Stops and timeouts protect the downside; only a take-profit or laddered exit converts an upside spike into realized PnL.</li>
+            <li><strong>Auditability changes the conversation.</strong> Because the rationale, confidence, firewall score, and signatures are all on ledgers, this postmortem required zero reconstruction from memory. The agent's story of the trade <em>is</em> the record.</li>
+        </ul>
+
+        <h2>Where this goes: strategies that think</h2>
+        <p>The strategy that made this trade is frozen policy: numbers a human set on July 10th that cannot react to anything. The next phase puts a reasoning model above the same execution stack. An LLM strategist will read live market state (launch cadence, quality-score distributions from our intel engine, the agent's own recent outcomes) and tune the same fields a human tunes today: bands, stops, hold times, sizing. Structured output only, never code.</p>
+        <p>The deterministic layer stays sovereign: the firewall, the safety bands, the budget caps, and the Mayhem exclusion apply to a model-tuned strategy exactly as they do to a hand-tuned one. Models propose; the pipeline disposes. Hand-tuned and LLM-tuned configurations will run head to head with real, capped budgets, and their decision ledgers, win or lose, will be published the same way this one just was.</p>
+
+        <p><a class="post-cta" href="/tutorials/arm-an-agent-sniper">Arm your own agent &rarr;</a></p>
+
+        <h2>Go deeper</h2>
+        <ul>
+            <li>The full engineering breakdown: <a href="/docs/agent-sniper">the Agent Sniper doc</a></li>
+            <li>Watch the intel engine score launches live: <a href="/docs/trading-surfaces">the trading surfaces</a></li>
+            <li>The research policy behind laddered exits: <a href="/docs/trading-experiment">the trading experiment</a></li>
+        </ul>
+
+        <hr>
+        <p><a href="/blog">&larr; All posts</a></p>
+    </main>
+    <div id="footer-container"></div>
+    <script src="/nav.js"></script>
+    <script src="/footer.js"></script>
+</body>
+</html>
