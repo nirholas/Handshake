@@ -4954,6 +4954,14 @@
 			"dest": "/rankings.html"
 		},
 		{
+			"src": "/daily-match",
+			"dest": "/daily-match.html"
+		},
+		{
+			"src": "/daily-match/",
+			"dest": "/daily-match.html"
+		},
+		{
 			"src": "/fact-check",
 			"dest": "/fact-check.html"
 		},

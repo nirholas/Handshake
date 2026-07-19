@@ -784,3 +784,18 @@
 	padding-left: var(--adv2-pad);
 	padding-right: var(--adv2-pad);
 }
+
+/* Playground strip spans both hero columns and left-aligns in the v2 shell. */
+.adv2-hero .ad-playground {
+	grid-column: 1 / -1;
+	max-width: none;
+	margin-top: 0;
+}
+.adv2-hero .ad-playground .apg {
+	justify-content: flex-start;
+}
+@media (max-width: 720px) {
+	.adv2-hero .ad-playground .apg {
+		justify-content: center;
+	}
+}

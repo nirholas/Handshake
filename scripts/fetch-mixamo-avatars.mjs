@@ -120,6 +120,16 @@ function saveCatalog() {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────
+// Export API rejects gms_hash whose `params` is the raw [[name, value], …]
+// array — it wants the values flattened to a comma-joined string (e.g. "0").
+// Sending the raw array still gets a 202 queued response but the job then
+// fails async with "Error while generating the animation".
+function flattenGmsHash(g) {
+	if (!g) return null;
+	const params = Array.isArray(g.params) ? g.params.map((p) => p[1]).join(',') : (g.params ?? '0');
+	return { ...g, params };
+}
+
 const slugify = (s) =>
 	s
 		.toLowerCase()
@@ -191,6 +201,16 @@ async function listAllCharacters() {
 	return unique;
 }
 
+// Mixamo has no dedicated "download this character's mesh" endpoint —
+// `/characters/export` 404s (not a real route). The actual mechanism the
+// mixamo.com frontend uses is exporting a reference Motion (any base pose,
+// here "Standing Idle") *targeted at the character* via the same
+// `/animations/export` endpoint the animation fetchers use, with
+// `skin: 'true'`. That bundles the character's own skinned/textured mesh
+// into the exported FBX — confirmed by content-length (12.6 MB vs 900 KB
+// for a skinless animation-only clip of the same character.
+const REFERENCE_MOTION_ID = 'c9c972d1-b96c-11e4-a802-0aaa78deedf9'; // "Standing Idle"
+
 // ── Step 2: export + poll + download a single character (needs MIXAMO_TOKEN) ──
 async function downloadOne(product) {
 	const slug = slugify(product.description || product.name || product.id);
@@ -206,8 +226,8 @@ async function downloadOne(product) {
 		return { skipped: true, slug, reason: 'permanent-fail' };
 	}
 
-	// Fetch product details to get gms_hash
-	const productDetails = await api(`/products/${product.id}`);
+	// Fetch the reference motion's gms_hash, targeted at this character.
+	const productDetails = await api(`/products/${REFERENCE_MOTION_ID}?character_id=${product.id}`);
 	const gmsHash = productDetails?.details?.gms_hash;
 	if (!gmsHash) {
 		catalog.avatars[product.id] = {
@@ -221,14 +241,15 @@ async function downloadOne(product) {
 		throw new Error('no gms_hash');
 	}
 
-	const exportRes = await rlFetch(`${API}/characters/export`, {
+	const exportRes = await rlFetch(`${API}/animations/export`, {
 		method: 'POST',
 		headers: authHeaders,
 		body: JSON.stringify({
-			product_id: product.id,
-			product_name: product.description || product.name,
-			type: 'Character',
-			gms_hash: [gmsHash],
+			character_id: product.id,
+			product_id: REFERENCE_MOTION_ID,
+			product_name: 'Standing Idle',
+			type: 'Motion',
+			gms_hash: [flattenGmsHash(gmsHash)],
 			preferences: { format: FORMAT, skin: 'true', fps: '30', reducekf: '0' },
 		}),
 	});
@@ -248,12 +269,14 @@ async function downloadOne(product) {
 		throw new Error(`export ${status}`);
 	}
 
+	// The character monitor endpoint is the per-character job status —
+	// same one the export's own job_type: 'character_export' reports through.
 	let downloadUrl = null;
 	for (let i = 0; i < POLL_MAX_ATTEMPTS; i++) {
 		await sleep(POLL_INTERVAL_MS);
-		const status = await api(`/characters/export/${product.id}`);
-		if (status.status === 'completed' && status.result?.url) {
-			downloadUrl = status.result.url;
+		const status = await api(`/characters/${product.id}/monitor`);
+		if (status.status === 'completed' && status.job_result) {
+			downloadUrl = status.job_result;
 			break;
 		}
 		if (status.status === 'failed') throw new Error('export failed');

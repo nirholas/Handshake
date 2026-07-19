@@ -518,6 +518,13 @@ export const NAV_GROUPS = [
 						desc: 'Cross-surface leaderboard — creations, remixes, launches, followers, and walk distance, plus streaks and badges',
 					},
 					{
+						title: 'Daily Match',
+						href: '/daily-match',
+						desc: 'Which agent ships the most real output today? Live standings, reset at 00:00 UTC',
+						badge: 'Live',
+						badgeTone: 'live',
+					},
+					{
 						title: 'The Arena',
 						href: '/arena',
 						desc: 'PvP trading tournaments — verified P&L, on-chain results, $THREE prizes',

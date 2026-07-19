@@ -25,6 +25,7 @@ import { hasSkillAccess } from '../skill-access.js';
 import { getAvailableBalance } from '../monetization.js';
 import { resolveMarketplaceFee } from '../marketplace-platform-fee.js';
 import { resolveListingSplit, describeSplit } from '../splits.js';
+import { resolveSkillPrice } from '../skill-pricing-rules.js';
 import { invalidateSkillPriceCache } from '../skill-price-cache.js';
 import {
 	confirmSkillPurchase,
@@ -193,6 +194,17 @@ export class MonetizationService {
 		if (!price) throw svcError(404, 'not_found', 'this skill is not for sale');
 
 		const isPwyw = price.pricing_type === 'pwyw';
+
+		// Dynamic pricing rules (first-N-free proof phases, post-traction step-ups,
+		// time windows) override the base amount for fixed-price skills. This is
+		// the same engine the creator dashboard writes rules into — quoting from
+		// the base table alone would advertise promos that never apply.
+		if (!isPwyw) {
+			const effective = await resolveSkillPrice(agentId, skillName).catch(() => null);
+			if (effective && effective.amount != null) {
+				price.amount = effective.amount;
+			}
+		}
 
 		let payoutAddress = await resolvePayoutAddress(agentId, price.chain);
 

@@ -108,6 +108,22 @@ const STYLE = `
 .skill-pay-price strong { font-size: 20px; color: #34d399; }
 .skill-pay-price .usd-eq { font-size: 13px; color: rgba(255,255,255,.45); margin-left: 6px; }
 .skill-pay-wallet-area { margin-bottom: 12px; }
+/* Proof-phase promo: struck list price + live spots-left counter. */
+.skill-pay-list {
+	font-size: 14px; color: rgba(255,255,255,.35); text-decoration: line-through;
+	font-weight: 400; margin-right: 8px;
+}
+.skill-pay-promo {
+	display: flex; align-items: center; gap: 8px;
+	margin: -10px 0 16px; padding: 8px 12px;
+	background: rgba(52,211,153,.08); border: 1px solid rgba(52,211,153,.3);
+	border-radius: 10px; font-size: 12px; color: rgba(255,255,255,.75);
+}
+.skill-pay-promo[hidden] { display: none; }
+.skill-pay-promo-spots {
+	margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 700;
+	color: #34d399; white-space: nowrap;
+}
 .skill-pay-btn {
 	width: 100%; padding: 12px; border-radius: 10px; border: none;
 	font-size: 14px; font-weight: 600; cursor: pointer;
@@ -130,6 +146,52 @@ const STYLE = `
 }
 .skill-pay-status.err { color: #f87171; }
 .skill-pay-status.ok  { color: #34d399; }
+/* Checkout step tracker — the flow is always visible, not narrated one line
+   at a time: Connect → Approve → Confirm → Record. */
+.skill-pay-steps {
+	list-style: none; display: flex; align-items: center;
+	margin: 0 0 16px; padding: 0;
+}
+.skill-pay-step { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.skill-pay-step + .skill-pay-step { flex: 1; }
+.skill-pay-step + .skill-pay-step::before {
+	content: ''; flex: 1 0 10px; height: 1px; margin: 0 6px;
+	background: rgba(255,255,255,.14); transition: background .25s;
+}
+.skill-pay-step.is-done + .skill-pay-step::before { background: rgba(52,211,153,.5); }
+.skill-pay-step-dot {
+	width: 18px; height: 18px; border-radius: 50%; flex: 0 0 auto;
+	display: inline-flex; align-items: center; justify-content: center;
+	font-size: 10px; line-height: 1; color: rgba(255,255,255,.45);
+	border: 1px solid rgba(255,255,255,.22); background: rgba(255,255,255,.04);
+	transition: border-color .25s, background .25s, color .25s, box-shadow .25s;
+}
+.skill-pay-step-label {
+	font-size: 10.5px; color: rgba(255,255,255,.4); letter-spacing: .05em;
+	text-transform: uppercase; white-space: nowrap; transition: color .25s;
+}
+.skill-pay-step.is-active .skill-pay-step-dot {
+	border-color: #a78bfa; color: #a78bfa;
+	box-shadow: 0 0 0 3px rgba(167,139,250,.16);
+	animation: skill-pay-step-pulse 1.6s ease-in-out infinite;
+}
+.skill-pay-step.is-active .skill-pay-step-label { color: rgba(255,255,255,.85); }
+.skill-pay-step.is-done .skill-pay-step-dot {
+	border-color: rgba(52,211,153,.7); background: rgba(52,211,153,.16); color: #34d399;
+}
+.skill-pay-step.is-done .skill-pay-step-label { color: rgba(52,211,153,.75); }
+.skill-pay-step.is-err .skill-pay-step-dot {
+	border-color: rgba(248,113,113,.8); background: rgba(248,113,113,.14); color: #f87171;
+	animation: none;
+}
+.skill-pay-step.is-err .skill-pay-step-label { color: #f87171; }
+@keyframes skill-pay-step-pulse {
+	0%, 100% { box-shadow: 0 0 0 3px rgba(167,139,250,.16); }
+	50% { box-shadow: 0 0 0 5px rgba(167,139,250,.08); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.skill-pay-step.is-active .skill-pay-step-dot { animation: none; }
+}
 .skill-pay-open-link {
 	display: block; text-align: center; margin-top: 14px;
 	font-size: 12px; color: rgba(255,255,255,.4); text-decoration: none;
@@ -197,10 +259,17 @@ export class SkillPaymentModal {
 				</div>
 				<p class="skill-pay-skill"></p>
 				<p class="skill-pay-desc">This skill requires a one-time payment to unlock.</p>
+				<ol class="skill-pay-steps">
+					<li class="skill-pay-step" data-step="connect"><span class="skill-pay-step-dot">1</span><span class="skill-pay-step-label">Connect</span></li>
+					<li class="skill-pay-step" data-step="approve"><span class="skill-pay-step-dot">2</span><span class="skill-pay-step-label">Approve</span></li>
+					<li class="skill-pay-step" data-step="confirm"><span class="skill-pay-step-dot">3</span><span class="skill-pay-step-label">Confirm</span></li>
+					<li class="skill-pay-step" data-step="record"><span class="skill-pay-step-dot">4</span><span class="skill-pay-step-label">Record</span></li>
+				</ol>
 				<div class="skill-pay-price">
 					<span>Total</span>
-					<strong><span class="skill-pay-amount"></span><span class="usd-eq" hidden></span></strong>
+					<strong><span class="skill-pay-list" hidden></span><span class="skill-pay-amount"></span><span class="usd-eq" hidden></span></strong>
 				</div>
+				<div class="skill-pay-promo" hidden></div>
 				<div class="skill-pay-wallet-area">
 					<button class="skill-pay-btn" id="skill-pay-connect">Connect Phantom</button>
 				</div>
@@ -305,9 +374,46 @@ export class SkillPaymentModal {
 			this._el.querySelector('.skill-pay-open-link').href =
 				`/marketplace/agents/${this._agentId}?buy=${encodeURIComponent(skill)}`;
 
+			// Proof-phase promo: ask the server what the quote will actually charge.
+			// When a first-N rule is live, show the real price (list struck through)
+			// and the live spots-left count; when the passed-in price is already
+			// current, this renders nothing and costs one cached GET.
+			const listEl = this._el.querySelector('.skill-pay-list');
+			const promoEl = this._el.querySelector('.skill-pay-promo');
+			listEl.hidden = true;
+			promoEl.hidden = true;
+			fetch(`/api/marketplace/skill-promo?agent_id=${encodeURIComponent(this._agentId)}&skill=${encodeURIComponent(skill)}`)
+				.then((r) => (r.ok ? r.json() : null))
+				.then((j) => {
+					const state = j?.data;
+					if (!state || this._el.hasAttribute('hidden')) return;
+					const effective = Number(state.effective_amount);
+					if (Number.isFinite(effective) && String(state.effective_amount) !== String(price.amount || '')) {
+						amountEl.textContent = `${(effective / 10 ** USDC_DECIMALS).toFixed(2)} ${currency}`;
+					}
+					const promo = state.promo;
+					if (!promo) return;
+					const listUsdc = (Number(promo.list_amount) / 10 ** USDC_DECIMALS).toFixed(2);
+					listEl.textContent = `${listUsdc} ${currency}`;
+					listEl.hidden = false;
+					promoEl.textContent = '';
+					const label = document.createElement('span');
+					label.textContent =
+						Number(promo.promo_amount) === 0
+							? `Proof phase: first ${promo.threshold} buyers get it free`
+							: `Proof phase: first ${promo.threshold} buyers at this price`;
+					const spots = document.createElement('span');
+					spots.className = 'skill-pay-promo-spots';
+					spots.textContent = `${promo.spots_left} left`;
+					promoEl.append(label, spots);
+					promoEl.hidden = false;
+				})
+				.catch(() => {});
+
 			this._setStatus('');
 			this._el.querySelector('.skill-pay-confirm').disabled = true;
 			this._updateWalletArea();
+			this._setStep(this._wallet?.isConnected || window.solana?.isConnected ? 'approve' : 'connect');
 
 			// Remember what had focus so we can hand it back on close, then open
 			// with a fade/scale entrance and move focus to the primary action.
@@ -358,6 +464,37 @@ export class SkillPaymentModal {
 		const el = this._el.querySelector('.skill-pay-status');
 		el.textContent = msg;
 		el.className = 'skill-pay-status' + (kind ? ' ' + kind : '');
+	}
+
+	/**
+	 * Advance the step tracker. Steps before `active` render done, `active`
+	 * pulses, later ones stay idle. Pass 'done' to complete the whole row.
+	 * The escalation mirrors the wire flow exactly: Connect (wallet) →
+	 * Approve (signature) → Confirm (on-chain) → Record (server verdict).
+	 */
+	_setStep(active) {
+		const order = ['connect', 'approve', 'confirm', 'record'];
+		const activeIdx = active === 'done' ? order.length : order.indexOf(active);
+		this._el.querySelectorAll('.skill-pay-step').forEach((li) => {
+			const idx = order.indexOf(li.dataset.step);
+			const done = idx < activeIdx;
+			li.classList.toggle('is-done', done);
+			li.classList.toggle('is-active', idx === activeIdx);
+			li.classList.remove('is-err');
+			const dot = li.querySelector('.skill-pay-step-dot');
+			if (dot) dot.textContent = done ? '✓' : String(idx + 1);
+		});
+	}
+
+	/** Mark the currently active step as failed (keeps earlier ✓s). */
+	_stepError() {
+		const li = this._el.querySelector('.skill-pay-step.is-active');
+		if (li) {
+			li.classList.remove('is-active');
+			li.classList.add('is-err');
+			const dot = li.querySelector('.skill-pay-step-dot');
+			if (dot) dot.textContent = '!';
+		}
 	}
 
 	_setStatusHTML(html, kind = '') {
@@ -415,6 +552,7 @@ export class SkillPaymentModal {
 	async _connectWallet() {
 		const btn = this._el.querySelector('#skill-pay-connect');
 		if (btn) { btn.textContent = 'Connecting…'; btn.disabled = true; }
+		this._setStep('connect');
 		try {
 			// Try injected Phantom wallet first, then wallet adapter
 			if (window.solana?.isPhantom || window.solana?.connect) {
@@ -431,8 +569,10 @@ export class SkillPaymentModal {
 			}
 			this._setStatus('');
 			this._updateWalletArea();
+			this._setStep('approve');
 		} catch (e) {
 			log.warn('[three.ws] payment-modal connect error:', e);
+			this._stepError();
 			if (/reject|denied|cancel|user.*declin/i.test(e.message || '')) {
 				this._setStatus('Connection cancelled — try again when you\'re ready.', 'err');
 			} else {
@@ -456,6 +596,7 @@ export class SkillPaymentModal {
 		const skill = this._el.querySelector('.skill-pay-skill').textContent;
 
 		// Step 1: Create pending purchase record
+		this._setStep('approve');
 		this._setStatus('Creating purchase…');
 		let purchase;
 		try {
@@ -469,6 +610,7 @@ export class SkillPaymentModal {
 			if (!r.ok) throw new Error(j.error_description || j.error || `HTTP ${r.status}`);
 			purchase = j.data;
 			if (purchase.already_owned) {
+				this._setStep('done');
 				this._setStatus('✓ Already purchased — access granted.', 'ok');
 				await delay(1000);
 				this.hide();
@@ -477,6 +619,7 @@ export class SkillPaymentModal {
 				return;
 			}
 		} catch (e) {
+			this._stepError();
 			this._setStatus(e.message || 'Failed to start purchase', 'err');
 			confirm.disabled = false;
 			return;
@@ -534,11 +677,13 @@ export class SkillPaymentModal {
 			const txid = await wallet.sendTransaction(tx, this._connection);
 			broadcast = true;
 
+			this._setStep('confirm');
 			this._setStatus('Waiting for confirmation…');
 			// Bind confirmation to the blockhash's expiry so a dropped tx fails fast
 			// instead of polling the signature for the full default timeout.
 			await this._connection.confirmTransaction({ signature: txid, blockhash, lastValidBlockHeight }, 'confirmed');
 
+			this._setStep('record');
 			this._setStatus('Verifying with server…');
 			const ok = await this._pollConfirm(purchase.reference);
 			if (!ok) {
@@ -553,6 +698,7 @@ export class SkillPaymentModal {
 				explorerUrl: `https://solscan.io/tx/${txid}`,
 				signature: txid,
 			});
+			this._setStep('done');
 			this._setStatusHTML(receiptHtml, 'ok');
 			await delay(1800);
 			this.hide();
@@ -560,6 +706,7 @@ export class SkillPaymentModal {
 			this._resolve = null;
 		} catch (e) {
 			log.warn('[three.ws] payment-modal purchase error:', e);
+			this._stepError();
 			const msg = e.message || '';
 			const payerAddr = (this._wallet?.publicKey || window.solana?.publicKey)?.toBase58?.() || null;
 			// After broadcast the transfer is irreversible — present a terminal state

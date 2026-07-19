@@ -101,6 +101,16 @@ export function mountIdleAvatar(container, glbUrl, opts = {}) {
 
 	let disposed = false;
 
+	// Resolves once the GLB + clip pipeline settled, with whether this rig can
+	// accept canonical library clips (humanoid) — false for props/own-clip
+	// models and on load failure. Lets callers (the playground chips) know
+	// whether gesture playback is possible without reaching into the manager
+	// mid-load.
+	let _readyResolve;
+	const ready = new Promise((resolve) => {
+		_readyResolve = resolve;
+	});
+
 	viewer
 		.load(glbUrl, '', new Map())
 		.then(async () => {
@@ -115,10 +125,14 @@ export function mountIdleAvatar(container, glbUrl, opts = {}) {
 			// here: the model attached during viewer.load() above.
 			if (typeof mgr.supportsCanonicalClips === 'function' && !mgr.supportsCanonicalClips()) {
 				if (viewer.clips?.length) playAllClips(viewer);
+				_readyResolve(false);
 				return;
 			}
 			const defs = await loadAnimationDefs();
-			if (disposed || !Array.isArray(defs) || defs.length === 0) return;
+			if (disposed || !Array.isArray(defs) || defs.length === 0) {
+				_readyResolve(false);
+				return;
+			}
 			viewer.animationManager.setAnimationDefs(defs);
 			// Retarget the idle clip first so the arms drop out of the bind pose
 			// immediately; load the rest of the library in the background for any
@@ -131,22 +145,54 @@ export function mountIdleAvatar(container, glbUrl, opts = {}) {
 				log.warn('[idle-avatar] idle clip retarget failed', err?.message);
 			}
 			viewer.animationManager.loadAll().catch(() => {});
+			_readyResolve(true);
 		})
 		.catch((err) => {
 			if (disposed) return;
 			log.warn('[idle-avatar] GLB load failed', err?.message);
+			_readyResolve(false);
 			onError?.(err);
 		});
 
 	return {
 		viewer,
+		/** Resolves true when the rig can play canonical library clips. */
+		ready,
 		setAutoRotate(v) {
 			viewer.state.autoRotate = !!v;
 			viewer.updateDisplay?.();
 		},
+		/**
+		 * Play the first available gesture from a candidate list, then settle
+		 * back into the idle loop. Candidates let one semantic action ("dance")
+		 * degrade across the clip library per rig — a clip the fallen-pose guard
+		 * rejected on this skeleton is skipped, not frozen on.
+		 *
+		 * @param {string|string[]} names  Clip name(s), most-preferred first.
+		 * @param {{ settleTo?: string }} [opts]
+		 * @returns {Promise<string|null>}  The clip that played, or null.
+		 */
+		async playGesture(names, { settleTo = 'idle' } = {}) {
+			const supports = await ready;
+			if (disposed || !supports) return null;
+			const mgr = viewer.animationManager;
+			const list = Array.isArray(names) ? names : [names];
+			for (const name of list) {
+				if (!mgr.canPlay(name)) continue;
+				const ok = await mgr.ensureLoaded(name).catch(() => false);
+				if (disposed) return null;
+				if (!ok || !mgr.canPlay(name)) continue;
+				await mgr.playOnce(name, { settleTo });
+				return name;
+			}
+			return null;
+		},
 		dispose() {
 			if (disposed) return;
 			disposed = true;
+			// Unblock anything awaiting `ready` (playground chips) so it settles
+			// to "no gestures" instead of hanging on a torn-down mount.
+			_readyResolve(false);
 			try {
 				viewer.dispose?.();
 			} catch (err) {

@@ -28,13 +28,15 @@ const X_INTENT = 'https://x.com/intent/tweet';
 export function showSharePanel(entity, triggerEl = null) {
 	ensureShareStyles();
 
-	const { title = '', description = '', shareUrl, remixUrl, previewImage } = entity;
+	const { title = '', description = '', shareUrl, remixUrl, previewImage, shareText } = entity;
 
-	const xText = encodeURIComponent(`${title} on three.ws\n`);
+	// Callers can supply a full per-entity share template (built from the
+	// entity's real facts); the generic "<title> on three.ws" stays the default.
+	const xText = encodeURIComponent(shareText ? `${shareText}\n` : `${title} on three.ws\n`);
 	const xUrl = encodeURIComponent(shareUrl || location.href);
 	const xHref = `${X_INTENT}?text=${xText}&url=${xUrl}`;
 
-	const fcText = encodeURIComponent(`${title} on three.ws — `);
+	const fcText = encodeURIComponent(shareText ? `${shareText} — ` : `${title} on three.ws — `);
 	const fcEmbed = encodeURIComponent(shareUrl || location.href);
 	const fcHref = `${FARCASTER_COMPOSE}?text=${fcText}&embeds[]=${fcEmbed}`;
 

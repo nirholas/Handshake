@@ -117,9 +117,9 @@ async function prompt(question) {
 		rl.close();
 		return answer.trim();
 	}
-	console.log(`${question}(waiting up to 4 min — write the code to ${OTP_FILE})`);
+	console.log(`${question}(waiting up to 20 min — write the code to ${OTP_FILE})`);
 	try { rmSync(OTP_FILE, { force: true }); } catch {}
-	for (let i = 0; i < 120; i++) {
+	for (let i = 0; i < 600; i++) {
 		await sleep(2000);
 		if (existsSync(OTP_FILE)) {
 			const code = readFileSync(OTP_FILE, 'utf8').trim();

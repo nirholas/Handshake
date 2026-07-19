@@ -108,6 +108,7 @@ function cardHTML(item) {
 				<div class="cr-card-actions">
 					<a class="cr-card-btn" href="${esc(item.viewerUrl)}" target="_blank" rel="noopener noreferrer">View</a>
 					<button class="cr-card-btn" type="button" data-lineage="${esc(item.id)}">Lineage</button>
+					${item.prompt ? `<button class="cr-card-btn" type="button" data-copy-prompt="${esc(item.id)}" title="Copy the prompt that generated this model">Copy prompt</button>` : ''}
 					<button class="cr-card-btn cr-card-btn--remix" type="button" data-remix-open="${esc(item.id)}">Remix — $0.25</button>
 					<span class="cr-time">${esc(timeAgo(item.createdAt))}</span>
 				</div>
@@ -310,6 +311,27 @@ function wireRemixActions() {
 	$('cr-feed')?.addEventListener('click', async (e) => {
 		const lineageId = e.target.closest('[data-lineage]')?.dataset.lineage;
 		if (lineageId) return openLineage(lineageId);
+
+		const copyBtn = e.target.closest('[data-copy-prompt]');
+		if (copyBtn) {
+			const item = state.items.find((it) => it.id === copyBtn.dataset.copyPrompt);
+			if (!item?.prompt) return;
+			try {
+				await navigator.clipboard.writeText(item.prompt);
+				const prev = copyBtn.textContent;
+				copyBtn.textContent = 'Copied!';
+				copyBtn.disabled = true;
+				setTimeout(() => {
+					copyBtn.textContent = prev;
+					copyBtn.disabled = false;
+				}, 1200);
+			} catch {
+				// Clipboard blocked (permissions/insecure context) — hand the visitor
+				// the composer instead so the action still lands somewhere real.
+				window.open(`/create/prompt?prompt=${encodeURIComponent(item.prompt)}`, '_blank', 'noopener');
+			}
+			return;
+		}
 
 		const openId = e.target.closest('[data-remix-open]')?.dataset.remixOpen;
 		if (openId) {

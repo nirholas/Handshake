@@ -69,3 +69,62 @@ export async function resolveSkillPrice(agentId, skillName) {
 
 	return base;
 }
+
+/**
+ * Public promo descriptor for a skill — powers proof-phase UI (spots-left
+ * counters, strikethrough list prices) without duplicating rule evaluation.
+ *
+ * Returns null when the skill has no base price. `promo` is non-null only
+ * while a `first_n_purchases` rule is the winning rule right now, and carries
+ * the real confirmed-sale count so a rendered "N spots left" can never drift
+ * from what the purchase quote will charge.
+ */
+export async function describeSkillPromo(agentId, skillName) {
+	const [base] = await sql`
+		SELECT amount, currency_mint, chain
+		FROM agent_skill_prices
+		WHERE agent_id = ${agentId} AND skill = ${skillName} AND is_active = true
+	`;
+	if (!base) return null;
+
+	const effective = await resolveSkillPrice(agentId, skillName);
+
+	const rules = await sql`
+		SELECT rule_type, threshold, price_amount
+		FROM skill_pricing_rules
+		WHERE agent_id = ${agentId}
+		  AND skill_name = ${skillName}
+		  AND is_active = true
+		  AND rule_type = 'first_n_purchases'
+		ORDER BY priority ASC, created_at ASC
+		LIMIT 1
+	`;
+
+	let promo = null;
+	const rule = rules[0];
+	if (rule && effective && String(effective.amount) === String(rule.price_amount)) {
+		const [{ count }] = await sql`
+			SELECT COUNT(*)::int AS count
+			FROM skill_purchases
+			WHERE agent_id = ${agentId} AND skill = ${skillName} AND status = 'confirmed'
+		`;
+		if (count < rule.threshold) {
+			promo = {
+				rule_type: 'first_n_purchases',
+				threshold: rule.threshold,
+				claimed: count,
+				spots_left: rule.threshold - count,
+				promo_amount: String(rule.price_amount),
+				list_amount: String(base.amount),
+			};
+		}
+	}
+
+	return {
+		base_amount: String(base.amount),
+		effective_amount: String(effective?.amount ?? base.amount),
+		currency_mint: base.currency_mint,
+		chain: base.chain,
+		promo,
+	};
+}

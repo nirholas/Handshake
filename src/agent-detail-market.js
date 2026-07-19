@@ -616,6 +616,7 @@ function renderPricing(a) {
 		.join('');
 
 	bindReviewsDelegation(a);
+	hydrateSkillPromos(a, body);
 
 	const lib = $('ad-pricing-library');
 	if (libraryArr.length) {
@@ -628,6 +629,52 @@ function renderPricing(a) {
 	} else {
 		lib.hidden = true;
 	}
+}
+
+/**
+ * Overlay live proof-phase promo state onto the rendered price badges.
+ * Only fixed-price purchasable skills can carry a first-N rule; each gets one
+ * briefly-CDN-cached GET, and rows without an active promo are left untouched.
+ * The quote endpoint applies the same rules, so what's shown here is what the
+ * checkout charges.
+ */
+async function hydrateSkillPromos(a, body) {
+	const names = Object.entries(a.skill_prices || {})
+		.filter(([, p]) => p && Number(p.amount) > 0 && p.pricing_type !== 'pwyw' && p.gate_type !== 'nft')
+		.map(([n]) => n)
+		.slice(0, 8);
+	const cssEsc = (s) =>
+		typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(s) : String(s).replace(/["\\]/g, '\\$&');
+	await Promise.all(
+		names.map(async (name) => {
+			try {
+				const r = await fetch(
+					`/api/marketplace/skill-promo?agent_id=${encodeURIComponent(a.id)}&skill=${encodeURIComponent(name)}`,
+				);
+				if (!r.ok) return;
+				const { data } = await r.json();
+				const promo = data?.promo;
+				if (!promo) return;
+				const btn = body.querySelector(`.purchase-btn[data-skill-name="${cssEsc(name)}"]`);
+				const priceBadge = btn?.previousElementSibling;
+				if (!priceBadge?.classList?.contains('ad-price-badge')) return;
+				const promoAtomic = Number(promo.promo_amount);
+				const listUsd = (Number(promo.list_amount) / 1e6).toFixed(2);
+				priceBadge.textContent = '';
+				const struck = document.createElement('s');
+				struck.className = 'ad-price-list';
+				struck.textContent = `${listUsd}`;
+				priceBadge.append(struck, ` ${promoAtomic === 0 ? 'Free' : `${(promoAtomic / 1e6).toFixed(2)} USDC`}`);
+				const pill = document.createElement('span');
+				pill.className = 'ad-price-badge promo';
+				pill.title = 'Proof-phase price for the first buyers while this skill earns its track record';
+				pill.textContent = `First ${promo.threshold} · ${promo.spots_left} left`;
+				priceBadge.after(pill);
+			} catch {
+				/* promo overlay is best-effort; the base price is already rendered */
+			}
+		}),
+	);
 }
 
 let purchaseDelegationBound = false;

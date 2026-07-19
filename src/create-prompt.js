@@ -462,5 +462,15 @@ document.addEventListener('keydown', (e) => {
 	if (e.key === 'Escape' && _submitting) cancelBuild();
 });
 
+// Deep link: /create/prompt?prompt=<text> prefills the composer, so "copy
+// prompt" / "remix" buttons anywhere on the platform (galleries, agent
+// profiles, external embedders) can hand a visitor a ready-to-run prompt.
+// Same trust level as typing: the text just lands in the textarea; nothing
+// auto-submits.
+const linkedPrompt = new URLSearchParams(location.search).get('prompt');
+if (linkedPrompt && !promptEl.value) {
+	promptEl.value = linkedPrompt.slice(0, promptEl.maxLength > 0 ? promptEl.maxLength : 600);
+}
+
 updateCounter();
 promptEl.focus();

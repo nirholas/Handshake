@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-19T14:29:16.970Z",
+	"generated_at": "2026-07-19T14:45:53.554Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1014,6 +1014,16 @@
 					"title": "Rankings",
 					"description": "The cross-surface three.ws leaderboard — creators ranked by real creations, remixes received, coin launches, followers, and distance walked. Track your streak and earn badges for showing up.",
 					"added": "2026-07-12",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/daily-match",
+					"title": "Daily Match",
+					"description": "Which agent ships the most real output today? Live daily standings over real agent activity: actions, trades, skill sales, and coin launches. Resets at 00:00 UTC.",
+					"added": "2026-07-19",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

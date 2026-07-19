@@ -17,6 +17,7 @@ import { mountPatronagePanel } from './shared/agent-patronage.js';
 import { mountValidationBadge } from './shared/validation-badge.js';
 import { seeInWorldHref, agentAvatarGlb } from './shared/agent-3d.js';
 import { mountIdleAvatar } from './shared/idle-avatar.js';
+import { mountAvatarPlayground } from './shared/avatar-playground.js';
 import { hydrateAvatarWallet } from './shared/wallet-aura.js';
 import { mountNameplate } from './shared/living-avatar.js';
 import { mountPresence } from './shared/networth-presence.js';
@@ -56,6 +57,169 @@ let _achievementsHandle = null;
 // fresh render() doesn't stack a second renderer onto the same container.
 let _heroAvatarHandle = null;
 let _modalAvatarHandle = null;
+let _playgroundHandle = null;
+let _hotTakeTimer = 0;
+
+/**
+ * "Connect via MCP" card — ready-to-paste config for each MCP client, pinned
+ * to this agent. The server is the shared three.ws MCP endpoint; the per-agent
+ * part is the `call_agent` invocation with this agent's real id, so a
+ * developer goes from profile page to talking to this exact agent in one
+ * paste per surface. Snippet shapes match the dashboard API page so the two
+ * never drift apart in dialect.
+ */
+function renderMcpConnect(agent) {
+	const card = document.getElementById('ad-mcp-card');
+	const tabsHost = document.getElementById('ad-mcp-tabs');
+	const codeEl = document.getElementById('ad-mcp-code');
+	const callEl = document.getElementById('ad-mcp-call');
+	const labelEl = document.getElementById('ad-mcp-label');
+	if (!card || !tabsHost || !codeEl || !callEl) return;
+
+	const mcpUrl = `${location.origin}/api/mcp`;
+	const tabs = [
+		{
+			id: 'claude-code',
+			label: 'Claude Code',
+			codeLabel: 'Terminal',
+			snippet: `claude mcp add --transport http three-ws ${mcpUrl}`,
+		},
+		{
+			id: 'claude-desktop',
+			label: 'Claude Desktop',
+			codeLabel: 'claude_desktop_config.json',
+			snippet: JSON.stringify({ mcpServers: { 'three-ws': { url: mcpUrl } } }, null, 2),
+		},
+		{
+			id: 'cursor',
+			label: 'Cursor',
+			codeLabel: '.cursor/mcp.json',
+			snippet: JSON.stringify(
+				{ mcpServers: { 'three-ws': { transport: 'http', url: mcpUrl } } },
+				null,
+				2,
+			),
+		},
+	];
+	const callSnippet = JSON.stringify(
+		{ tool: 'call_agent', arguments: { agent_id: agent.id, message: 'Introduce yourself.' } },
+		null,
+		2,
+	);
+
+	let active = tabs[0];
+	const select = (tab) => {
+		active = tab;
+		codeEl.textContent = tab.snippet;
+		if (labelEl) labelEl.textContent = tab.codeLabel;
+		tabsHost.querySelectorAll('.ad-mcp-tab').forEach((b) => {
+			const on = b.dataset.tab === tab.id;
+			b.classList.toggle('ad-mcp-tab--on', on);
+			b.setAttribute('aria-selected', on ? 'true' : 'false');
+		});
+	};
+
+	tabsHost.innerHTML = '';
+	for (const tab of tabs) {
+		const b = document.createElement('button');
+		b.type = 'button';
+		b.className = 'ad-mcp-tab';
+		b.dataset.tab = tab.id;
+		b.setAttribute('role', 'tab');
+		b.textContent = tab.label;
+		b.addEventListener('click', () => select(tab));
+		tabsHost.appendChild(b);
+	}
+	callEl.textContent = callSnippet;
+	select(active);
+
+	if (!card._copyWired) {
+		card._copyWired = true;
+		card.addEventListener('click', async (e) => {
+			const btn = e.target.closest('[data-mcp-copy]');
+			if (!btn) return;
+			const text = btn.dataset.mcpCopy === 'call' ? callEl.textContent : codeEl.textContent;
+			try {
+				await navigator.clipboard.writeText(text);
+				const prev = btn.textContent;
+				btn.textContent = 'Copied!';
+				setTimeout(() => {
+					btn.textContent = prev;
+				}, 1200);
+			} catch {
+				/* selection fallback: leave the pre selectable */
+			}
+		});
+	}
+	card.hidden = false;
+}
+
+/**
+ * Rotating one-liners under the hero description. Owner-curated lines come
+ * from `meta.hot_takes` (array of strings); when none are set, honest lines
+ * are derived from the record's real facts (skills, coin, x402, registry age)
+ * so the slot never shows invented personality. Pattern adopted from
+ * bowyer.app's agent "hot takes".
+ */
+function mountHotTakes(agent) {
+	clearInterval(_hotTakeTimer);
+	_hotTakeTimer = 0;
+	const desc = document.getElementById('ad-desc');
+	if (!desc) return;
+	let host = document.getElementById('ad-hot-take');
+
+	const meta = agent.rawMetadata?.meta || {};
+	const curated = Array.isArray(meta.hot_takes)
+		? meta.hot_takes.filter((t) => typeof t === 'string' && t.trim()).map((t) => t.trim().slice(0, 140))
+		: [];
+	let lines = curated;
+	if (!lines.length) {
+		lines = [];
+		const skillsCount = Array.isArray(agent.rawMetadata?.skills) ? agent.rawMetadata.skills.length : 0;
+		if (skillsCount > 0) lines.push(`${skillsCount} skill${skillsCount === 1 ? '' : 's'} wired and callable.`);
+		if (agent.token?.symbol) lines.push(`Runs its own coin: $${agent.token.symbol}.`);
+		if (agent.x402) lines.push('Sells real services for USDC over x402.');
+		const created = agent.rawMetadata?.created_at ? new Date(agent.rawMetadata.created_at) : null;
+		if (created && !Number.isNaN(created.getTime())) {
+			lines.push(
+				`On the registry since ${created.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}.`,
+			);
+		}
+	}
+	if (!lines.length) {
+		host?.remove();
+		return;
+	}
+
+	if (!host) {
+		host = document.createElement('p');
+		host.id = 'ad-hot-take';
+		host.className = 'ad-hot-take';
+		desc.insertAdjacentElement('afterend', host);
+	}
+	let i = 0;
+	const show = () => {
+		host.classList.remove('ad-hot-take--in');
+		const text = lines[i % lines.length];
+		i += 1;
+		// Swap text at the fade midpoint so lines never hard-cut.
+		setTimeout(() => {
+			host.textContent = '';
+			const mark = document.createElement('span');
+			mark.className = 'ad-hot-take-mark';
+			mark.setAttribute('aria-hidden', 'true');
+			mark.textContent = '//';
+			host.append(mark, ` ${text}`);
+			host.classList.add('ad-hot-take--in');
+		}, host.textContent ? 260 : 0);
+	};
+	show();
+	if (lines.length > 1) {
+		_hotTakeTimer = setInterval(() => {
+			if (!document.hidden) show();
+		}, 7000);
+	}
+}
 // Refreshed every render() so the once-wired modal-open handler always mounts the
 // current avatar (enrichment can re-render with an updated GLB url).
 let _mountModalAvatar = null;
@@ -142,6 +306,8 @@ if (typeof window !== 'undefined') {
 		// hard context budget once the user navigates away.
 		try { _heroAvatarHandle?.dispose(); } catch { /* idempotent */ } _heroAvatarHandle = null;
 		try { _modalAvatarHandle?.dispose(); } catch { /* idempotent */ } _modalAvatarHandle = null;
+		try { _playgroundHandle?.dispose(); } catch { /* idempotent */ } _playgroundHandle = null;
+		clearInterval(_hotTakeTimer); _hotTakeTimer = 0;
 	}, { once: true });
 }
 
@@ -901,6 +1067,53 @@ function render(agent) {
 	// Net-Worth-Reactive Avatar: weld the agent's real wallet to its hero body so
 	// its funded-ness is legible here exactly as on the viewer and in the galaxy.
 	mountAgentDetailAura(agent);
+	// Playground strip — gesture/fx chips + accent pills under the hero. Only
+	// reveals itself once the rig proves it can play canonical clips, so props
+	// and image-fallback heroes never show dead chrome.
+	_playgroundHandle?.dispose();
+	_playgroundHandle = null;
+	if (_heroAvatarHandle) {
+		const heroSection = document.querySelector('.ad-hero');
+		if (heroSection) {
+			let pgHost = document.getElementById('ad-playground');
+			if (!pgHost) {
+				pgHost = document.createElement('div');
+				pgHost.id = 'ad-playground';
+				pgHost.className = 'ad-playground';
+				heroSection.appendChild(pgHost);
+			}
+			const extras = [];
+			if (agent.avatarPrompt) {
+				extras.push({
+					label: 'Copy avatar prompt',
+					title: 'Copy the prompt that generated this body, ready for /create/prompt',
+					onClick: async (btn) => {
+						try {
+							await navigator.clipboard.writeText(agent.avatarPrompt);
+							const prev = btn.textContent;
+							btn.textContent = 'Copied!';
+							setTimeout(() => {
+								btn.textContent = prev;
+							}, 1200);
+						} catch {
+							window.open(
+								`/create/prompt?prompt=${encodeURIComponent(agent.avatarPrompt)}`,
+								'_blank',
+								'noopener',
+							);
+						}
+					},
+				});
+			}
+			_playgroundHandle = mountAvatarPlayground({
+				container: pgHost,
+				handle: _heroAvatarHandle,
+				fxHost: document.getElementById('ad-avatar-wrap'),
+				glowEl,
+				extras,
+			});
+		}
+	}
 	// Fullscreen modal — the orbitable, camera-controlled body. Mounted lazily on
 	// first open so the page doesn't pay for a second WebGL context up front.
 	_modalAvatarHandle?.dispose();
@@ -995,6 +1208,8 @@ function render(agent) {
 	$('ad-id-short').dataset.full = agent.id;
 	$('ad-asset-kind').textContent = agent.assetKind || 'Core Asset';
 	$('ad-desc').textContent = agent.description || '';
+	mountHotTakes(agent);
+	renderMcpConnect(agent);
 
 	const trustPills = $('ad-trust-pills');
 	trustPills.innerHTML = '';
@@ -2379,11 +2594,24 @@ function wireShareButton(agent) {
 	const origin   = location.origin;
 	const shareUrl = `${origin}/agent/${agent.id}/share`;
 	const remixUrl = `${origin}/create`;
+	// Per-agent share template assembled from the agent's real capabilities —
+	// a tweet that says what this agent actually has, not a generic title drop.
+	const skillsCount = Array.isArray(agent.rawMetadata?.skills) ? agent.rawMetadata.skills.length : 0;
+	const shareBits = [];
+	if (skillsCount > 0) shareBits.push(`${skillsCount} skill${skillsCount === 1 ? '' : 's'}`);
+	if (agent.x402) shareBits.push('paid x402 services');
+	if (agent.token?.symbol || agent.token?.mint) {
+		shareBits.push(agent.token?.symbol ? `its own coin ($${agent.token.symbol})` : 'its own coin');
+	}
+	shareBits.push('a live 3D body');
+	const shareText = `${agent.name || 'An agent'} on @trythreews: ${shareBits.join(', ')}.`;
+
 	const shareData = {
 		kind: 'agent',
 		id: agent.id,
 		title: agent.name || 'Agent',
 		description: agent.description || '',
+		shareText,
 		shareUrl,
 		remixUrl,
 		previewImage: `${origin}/api/og/agent?id=${encodeURIComponent(agent.id)}`,
@@ -2801,6 +3029,10 @@ export function normalize(rec, avatar) {
 			onchain?.body_uri ||
 			meta.glb_url ||
 			null,
+		// Generation provenance: prompt-born avatars persist their prompt in
+		// avatars.source_meta — surfaced so the profile can offer "copy the
+		// prompt that made this body" (selfie-born avatars have none).
+		avatarPrompt: avatar?.source_meta?.prompt || null,
 		rawMetadata: rec,
 	};
 }

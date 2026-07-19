@@ -202,6 +202,45 @@
 				background: rgba(255, 255, 255, 0.04);
 			}
 
+			/* Card wrapper lets the prompt action float above the whole-card anchor. */
+			.up-card-wrap {
+				position: relative;
+				display: flex;
+				flex-direction: column;
+			}
+			.up-card-wrap .up-card {
+				flex: 1;
+			}
+			.up-copy-prompt {
+				position: absolute;
+				top: 8px;
+				right: 8px;
+				z-index: 2;
+				appearance: none;
+				border: 1px solid rgba(255, 255, 255, 0.16);
+				background: rgba(10, 10, 16, 0.72);
+				color: rgba(255, 255, 255, 0.75);
+				border-radius: 999px;
+				padding: 4px 10px;
+				font-size: 11px;
+				cursor: pointer;
+				opacity: 0;
+				transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+			}
+			.up-card-wrap:hover .up-copy-prompt,
+			.up-copy-prompt:focus-visible {
+				opacity: 1;
+			}
+			.up-copy-prompt:hover {
+				color: #fff;
+				border-color: rgba(255, 255, 255, 0.35);
+			}
+			@media (hover: none) {
+				.up-copy-prompt {
+					opacity: 1;
+				}
+			}
+
 			.up-card-thumb-link {
 				display: block;
 				text-decoration: none;
@@ -2113,6 +2152,26 @@
 					if (btn) activateTab(btn.dataset.tab);
 				});
 
+				// Copy a creation's generating prompt straight off its card.
+				rootEl.addEventListener('click', async (e) => {
+					const copyBtn = e.target.closest('[data-copy-prompt]');
+					if (!copyBtn) return;
+					e.preventDefault();
+					const prompt = copyBtn.dataset.copyPrompt;
+					if (!prompt) return;
+					try {
+						await navigator.clipboard.writeText(prompt);
+						const prev = copyBtn.textContent;
+						copyBtn.textContent = 'Copied!';
+						setTimeout(() => {
+							copyBtn.textContent = prev;
+						}, 1200);
+					} catch {
+						// Clipboard blocked — open the composer prefilled instead.
+						window.open(`/create/prompt?prompt=${encodeURIComponent(prompt)}`, '_blank', 'noopener');
+					}
+				});
+
 				// Fork an avatar (clones the GLB + its agent + a fresh wallet into the
 				// viewer's namespace). Signed-out viewers are routed to login first.
 				rootEl.addEventListener('click', async (e) => {
@@ -2880,18 +2939,28 @@
 				const date = c.createdAt
 					? new Date(c.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 					: '';
+				// The card stays one big anchor; the prompt action floats above it
+				// (sibling + z-index, same pattern as the forge showcase) so the
+				// markup never nests interactive elements.
+				const promptBtn = c.prompt
+					? `<button type="button" class="up-copy-prompt" data-copy-prompt="${attr(c.prompt)}" ` +
+						`title="Copy the prompt that made this" aria-label="Copy generation prompt">⧉ prompt</button>`
+					: '';
 				return `
-					<a class="up-card" href="${attr(c.viewerUrl)}" style="text-decoration:none">
-						<div class="up-card-thumb">${thumb}</div>
-						<div class="up-card-body">
-							<span class="up-card-chain">${esc(badge)}${c.category ? ` · ${esc(c.category)}` : ''}</span>
-							<span class="up-card-name">${esc((c.title || 'Untitled').slice(0, 80))}</span>
-							<div class="up-card-footer">
-								<span class="up-card-id">${esc(date)}</span>
-								${c.isRemix ? `<span class="up-tag">remix</span>` : ''}
+					<div class="up-card-wrap">
+						<a class="up-card" href="${attr(c.viewerUrl)}" style="text-decoration:none">
+							<div class="up-card-thumb">${thumb}</div>
+							<div class="up-card-body">
+								<span class="up-card-chain">${esc(badge)}${c.category ? ` · ${esc(c.category)}` : ''}</span>
+								<span class="up-card-name">${esc((c.title || 'Untitled').slice(0, 80))}</span>
+								<div class="up-card-footer">
+									<span class="up-card-id">${esc(date)}</span>
+									${c.isRemix ? `<span class="up-tag">remix</span>` : ''}
+								</div>
 							</div>
-						</div>
-					</a>
+						</a>
+						${promptBtn}
+					</div>
 				`;
 			}
 

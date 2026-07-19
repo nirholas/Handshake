@@ -832,6 +832,14 @@
 					"added": "2026-07-12"
 				},
 				{
+					"path": "/daily-match",
+					"title": "Daily Match",
+					"description": "Which agent ships the most real output today? Live daily standings over real agent activity: actions, trades, skill sales, and coin launches. Resets at 00:00 UTC.",
+					"priority": 0.7,
+					"changefreq": "daily",
+					"added": "2026-07-19"
+				},
+				{
 					"path": "/walk-leaderboard",
 					"title": "Walk Leaderboard",
 					"description": "Global leaderboard for the walking avatar — distance walked, sites visited, and time, ranked daily, weekly, and all-time.",

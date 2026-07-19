@@ -2738,3 +2738,77 @@ div.ad-hero-avatar canvas {
 .ad-lineage-verdict[data-ok='0'] { color: #f4a3ad; }
 .ad-lineage-breed { margin-top: 8px; align-self: flex-start; text-decoration: none; }
 @media (prefers-reduced-motion: reduce) { .ad-lineage-node { transition: none; } }
+
+/* ── Avatar playground strip (gesture chips + fx + accent pills) ─────────── */
+.ad-playground {
+	margin-top: 14px;
+	max-width: 720px;
+	width: 100%;
+}
+.ad-playground .apg {
+	justify-content: center;
+}
+
+/* ── Hot takes: rotating one-liners under the hero description ───────────── */
+.ad-hot-take {
+	margin: 6px 0 0;
+	font-size: 13px;
+	color: var(--ad-muted);
+	opacity: 0;
+	transition: opacity 0.5s ease;
+	min-height: 18px;
+}
+.ad-hot-take--in {
+	opacity: 1;
+}
+.ad-hot-take-mark {
+	font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+	color: var(--ad-violet);
+	letter-spacing: 0.05em;
+}
+
+/* ── Connect-via-MCP card ────────────────────────────────────────────────── */
+.ad-mcp-tabs {
+	display: flex;
+	gap: 6px;
+	margin: 0 0 10px;
+	flex-wrap: wrap;
+}
+.ad-mcp-tab {
+	appearance: none;
+	border: 1px solid var(--ad-line);
+	background: transparent;
+	color: var(--ad-muted);
+	border-radius: 999px;
+	padding: 5px 12px;
+	font-size: 12px;
+	cursor: pointer;
+	transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.ad-mcp-tab:hover {
+	color: var(--ad-text);
+	border-color: rgba(255, 255, 255, 0.22);
+}
+.ad-mcp-tab:focus-visible {
+	outline: 2px solid var(--ad-violet);
+	outline-offset: 2px;
+}
+.ad-mcp-tab--on {
+	color: var(--ad-text);
+	border-color: var(--ad-violet);
+	background: rgba(167, 139, 250, 0.1);
+}
+
+/* Proof-phase promo overlays on skill pricing rows */
+.ad-price-list {
+	color: var(--ad-muted);
+	opacity: 0.7;
+	margin-right: 4px;
+	font-weight: 400;
+}
+.ad-price-badge.promo {
+	background: rgba(52, 211, 153, 0.1);
+	border: 1px solid rgba(52, 211, 153, 0.35);
+	color: var(--ad-green);
+	font-variant-numeric: tabular-nums;
+}
