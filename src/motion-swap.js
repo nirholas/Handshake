@@ -101,6 +101,9 @@ async function pollJob(jobId, etaSeconds) {
 		await new Promise((r) => setTimeout(r, POLL_MS));
 		const res = await fetch(`/api/motion-swap?job=${encodeURIComponent(jobId)}`);
 		const data = await res.json().catch(() => ({}));
+		if (res.status >= 400) {
+			throw new Error(data?.message || `Capture status unavailable (${res.status}).`);
+		}
 		if (data.status === 'done' && data.clip_url) return data;
 		if (data.status === 'failed') {
 			throw new Error(data.error || 'Capture failed. Make sure one person is clearly visible.');
@@ -122,6 +125,7 @@ async function handleFile(file) {
 		const job = await submitJob(videoUrl);
 		state.job = job.job_id;
 		const done = await pollJob(job.job_id, job.eta_seconds);
+		history.replaceState(null, '', `?job=${encodeURIComponent(job.job_id)}`);
 		state.artifacts = done;
 		setStatus('Loading composite…');
 		await loadComposite(done);
@@ -130,6 +134,25 @@ async function handleFile(file) {
 	} catch (err) {
 		showStage('empty');
 		setStatus(err?.message || 'Something went wrong. Try another video.', 'error');
+	}
+}
+
+// A finished capture is shareable/resumable: /motion-swap?job=<id> re-opens
+// the composite without re-uploading (artifacts live at stable URLs).
+async function resumeFromQuery() {
+	const jobId = new URLSearchParams(location.search).get('job');
+	if (!jobId) return;
+	try {
+		showStage('processing');
+		const done = await pollJob(jobId, null);
+		state.artifacts = done;
+		setStatus('Loading composite…');
+		await loadComposite(done);
+		showStage('ready');
+		setStatus('');
+	} catch (err) {
+		showStage('empty');
+		setStatus(err?.message || 'That capture could not be reopened.', 'error');
 	}
 }
 
@@ -288,7 +311,12 @@ function bindClip(t) {
 	const { retargetMod } = state.avatar;
 	const clip = retargetMod.parseClipJSON(state.clipJSON, 'motion-swap');
 	const result = retargetMod.retargetClipToObject(clip, state.avatar.root, { minCoverage: 0.3 });
-	const bound = result?.clip || result; // retarget result carries the clip
+	const bound = result?.clip;
+	if (!bound) {
+		throw new Error(
+			'That model has no compatible humanoid skeleton. Load a rigged avatar GLB (generate one at /create).',
+		);
+	}
 	t.mixer = new t.THREE.AnimationMixer(state.avatar.root);
 	t.action = t.mixer.clipAction(bound);
 	t.action.play();
@@ -524,3 +552,4 @@ function wireUI() {
 
 wireUI();
 showStage('empty');
+resumeFromQuery();
