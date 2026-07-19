@@ -1,5 +1,5 @@
 /**
- * Avatar playground — a "things to try" chip strip for any living avatar mount.
+ * Avatar playground: a "things to try" chip strip for any living avatar mount.
  *
  * Gesture chips fire real canonical clips on the rig (wave, dance, celebrate),
  * fx chips layer CSS spectacle on the DOM around the WebGL stage (accent pulse,
@@ -20,7 +20,7 @@
 
 const STYLE_ID = 'tws-avatar-playground-styles';
 
-/** Semantic actions, most-preferred clip first — degrade across the library per rig. */
+/** Semantic actions, most-preferred clip first: degrade across the library per rig. */
 const GESTURES = [
 	{ id: 'wave', label: 'Wave', clips: ['wave'] },
 	{ id: 'dance', label: 'Dance', clips: ['dance', 'av-dance-shuffle', 'av-rap-dance'] },
@@ -105,7 +105,7 @@ export function mountAvatarPlayground({ container, handle, fxHost = null, glowEl
 	label.textContent = 'Try:';
 	strip.appendChild(label);
 
-	// A single in-flight gesture at a time — chips glow while their clip plays
+	// A single in-flight gesture at a time: chips glow while their clip plays
 	// and re-arm when it settles, so mashing buttons can't queue a backlog.
 	let busy = false;
 	const gestureButtons = [];
@@ -116,7 +116,7 @@ export function mountAvatarPlayground({ container, handle, fxHost = null, glowEl
 		try {
 			const played = await handle.playGesture(clips);
 			if (!disposed && !played) {
-				// No candidate could play on this rig — retire the chip honestly
+				// No candidate could play on this rig: retire the chip honestly
 				// instead of leaving a button that silently does nothing.
 				btn.disabled = true;
 				btn.title = 'Not available on this rig';
@@ -203,7 +203,7 @@ export function mountAvatarPlayground({ container, handle, fxHost = null, glowEl
 		strip.appendChild(pills);
 	}
 
-	// Host-supplied chips — rig-independent, live immediately.
+	// Host-supplied chips: rig-independent, live immediately.
 	for (const extra of extras) {
 		const btn = chipBtn(extra.label, 'apg-chip--extra');
 		btn.disabled = false;
@@ -212,7 +212,7 @@ export function mountAvatarPlayground({ container, handle, fxHost = null, glowEl
 		strip.appendChild(btn);
 	}
 
-	// Credit where the interaction pattern came from — Bowyer built this
+	// Credit where the interaction pattern came from: Bowyer built this
 	// playground on top of three.ws avatars first, and credited us in kind.
 	const credit = document.createElement('a');
 	credit.className = 'apg-credit';
@@ -225,7 +225,7 @@ export function mountAvatarPlayground({ container, handle, fxHost = null, glowEl
 
 	container.appendChild(strip);
 
-	// Reveal only for rigs that can actually gesture — a prop or own-clip model
+	// Reveal only for rigs that can actually gesture: a prop or own-clip model
 	// keeps the clean hero with no dead chrome. Host extras (rig-independent)
 	// still earn the strip; the gesture chips just never appear.
 	handle.ready.then((supports) => {

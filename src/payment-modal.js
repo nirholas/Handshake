@@ -146,7 +146,7 @@ const STYLE = `
 }
 .skill-pay-status.err { color: #f87171; }
 .skill-pay-status.ok  { color: #34d399; }
-/* Checkout step tracker — the flow is always visible, not narrated one line
+/* Checkout step tracker: the flow is always visible, not narrated one line
    at a time: Connect → Approve → Confirm → Record. */
 .skill-pay-steps {
 	list-style: none; display: flex; align-items: center;

@@ -326,7 +326,7 @@ function wireRemixActions() {
 					copyBtn.disabled = false;
 				}, 1200);
 			} catch {
-				// Clipboard blocked (permissions/insecure context) — hand the visitor
+				// Clipboard blocked (permissions/insecure context): hand the visitor
 				// the composer instead so the action still lands somewhere real.
 				window.open(`/create/prompt?prompt=${encodeURIComponent(item.prompt)}`, '_blank', 'noopener');
 			}

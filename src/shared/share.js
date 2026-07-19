@@ -36,7 +36,7 @@ export function showSharePanel(entity, triggerEl = null) {
 	const xUrl = encodeURIComponent(shareUrl || location.href);
 	const xHref = `${X_INTENT}?text=${xText}&url=${xUrl}`;
 
-	const fcText = encodeURIComponent(shareText ? `${shareText} — ` : `${title} on three.ws — `);
+	const fcText = encodeURIComponent(shareText ? `${shareText}: ` : `${title} on three.ws; `);
 	const fcEmbed = encodeURIComponent(shareUrl || location.href);
 	const fcHref = `${FARCASTER_COMPOSE}?text=${fcText}&embeds[]=${fcEmbed}`;
 

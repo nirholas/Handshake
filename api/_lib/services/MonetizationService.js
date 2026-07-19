@@ -197,7 +197,7 @@ export class MonetizationService {
 
 		// Dynamic pricing rules (first-N-free proof phases, post-traction step-ups,
 		// time windows) override the base amount for fixed-price skills. This is
-		// the same engine the creator dashboard writes rules into — quoting from
+		// the same engine the creator dashboard writes rules into: quoting from
 		// the base table alone would advertise promos that never apply.
 		if (!isPwyw) {
 			const effective = await resolveSkillPrice(agentId, skillName).catch(() => null);

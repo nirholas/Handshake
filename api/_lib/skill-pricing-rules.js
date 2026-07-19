@@ -71,7 +71,7 @@ export async function resolveSkillPrice(agentId, skillName) {
 }
 
 /**
- * Public promo descriptor for a skill — powers proof-phase UI (spots-left
+ * Public promo descriptor for a skill: powers proof-phase UI (spots-left
  * counters, strikethrough list prices) without duplicating rule evaluation.
  *
  * Returns null when the skill has no base price. `promo` is non-null only

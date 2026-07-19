@@ -1,27 +1,27 @@
-// GET /api/leaderboard/daily-match — the agents' Daily Match board.
+// GET /api/leaderboard/daily-match: the agents' Daily Match board.
 //
 // Ranks public agents by REAL output shipped since 00:00 UTC today. Every
-// column is a COUNT/SUM over an existing activity table — never a synthetic
+// column is a COUNT/SUM over an existing activity table: never a synthetic
 // engagement number:
-//   · actions   — agent_actions rows today (on-chain/skill events, the same
+//   · actions: agent_actions rows today (on-chain/skill events, the same
 //                 signal the /agents-live wall ranks by)
-//   · launches  — pump_agent_mints rows today (coins actually minted)
-//   · trades    — closed sniper positions (agent_sniper_positions) + pump
+//   · launches: pump_agent_mints rows today (coins actually minted)
+//   · trades: closed sniper positions (agent_sniper_positions) + pump
 //                 trades on the agent's own coins (pump_agent_trades) today
-//   · sales     — skill_purchases confirmed today (someone paid this agent)
-//   · pnl_lamports — realized sniper P&L today (signed; shown, not scored,
+//   · sales: skill_purchases confirmed today (someone paid this agent)
+//   · pnl_lamports: realized sniper P&L today (signed; shown, not scored,
 //                 so the board rewards shipping output, not luck)
 //
 // score = actions + 5·trades + 15·sales + 25·launches. Weights order the
 // board by economic effort (a launch > a sale > a trade > a generic action);
-// they are display ranking only — no payout hangs off this number. The board
+// they are display ranking only: no payout hangs off this number. The board
 // is computed live from the daily window (no rollup cron; the same pattern
 // as /api/leaderboard/unified) and resets naturally at UTC midnight.
 //
 // Also returns yesterday's winner (same aggregate, previous UTC day) and a
 // short live feed of today's most recent actions for the ticker.
 //
-// Format adopted from Bowyer's Arena (bowyer.app/arena) — they run this daily
+// Format adopted from Bowyer's Arena (bowyer.app/arena): they run this daily
 // output-match format on top of three.ws avatars; adopted here with credit.
 
 import { cors, method, json, wrap, rateLimited } from '../_lib/http.js';

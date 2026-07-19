@@ -61,7 +61,7 @@ let _playgroundHandle = null;
 let _hotTakeTimer = 0;
 
 /**
- * "Connect via MCP" card — ready-to-paste config for each MCP client, pinned
+ * "Connect via MCP" card: ready-to-paste config for each MCP client, pinned
  * to this agent. The server is the shared three.ws MCP endpoint; the per-agent
  * part is the `call_agent` invocation with this agent's real id, so a
  * developer goes from profile page to talking to this exact agent in one
@@ -1067,7 +1067,7 @@ function render(agent) {
 	// Net-Worth-Reactive Avatar: weld the agent's real wallet to its hero body so
 	// its funded-ness is legible here exactly as on the viewer and in the galaxy.
 	mountAgentDetailAura(agent);
-	// Playground strip — gesture/fx chips + accent pills under the hero. Only
+	// Playground strip: gesture/fx chips + accent pills under the hero. Only
 	// reveals itself once the rig proves it can play canonical clips, so props
 	// and image-fallback heroes never show dead chrome.
 	_playgroundHandle?.dispose();
@@ -2594,7 +2594,7 @@ function wireShareButton(agent) {
 	const origin   = location.origin;
 	const shareUrl = `${origin}/agent/${agent.id}/share`;
 	const remixUrl = `${origin}/create`;
-	// Per-agent share template assembled from the agent's real capabilities —
+	// Per-agent share template assembled from the agent's real capabilities:
 	// a tweet that says what this agent actually has, not a generic title drop.
 	const skillsCount = Array.isArray(agent.rawMetadata?.skills) ? agent.rawMetadata.skills.length : 0;
 	const shareBits = [];
@@ -3030,7 +3030,7 @@ export function normalize(rec, avatar) {
 			meta.glb_url ||
 			null,
 		// Generation provenance: prompt-born avatars persist their prompt in
-		// avatars.source_meta — surfaced so the profile can offer "copy the
+		// avatars.source_meta: surfaced so the profile can offer "copy the
 		// prompt that made this body" (selfie-born avatars have none).
 		avatarPrompt: avatar?.source_meta?.prompt || null,
 		rawMetadata: rec,

@@ -2167,7 +2167,7 @@
 							copyBtn.textContent = prev;
 						}, 1200);
 					} catch {
-						// Clipboard blocked — open the composer prefilled instead.
+						// Clipboard blocked: open the composer prefilled instead.
 						window.open(`/create/prompt?prompt=${encodeURIComponent(prompt)}`, '_blank', 'noopener');
 					}
 				});

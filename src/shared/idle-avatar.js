@@ -102,7 +102,7 @@ export function mountIdleAvatar(container, glbUrl, opts = {}) {
 	let disposed = false;
 
 	// Resolves once the GLB + clip pipeline settled, with whether this rig can
-	// accept canonical library clips (humanoid) — false for props/own-clip
+	// accept canonical library clips (humanoid): false for props/own-clip
 	// models and on load failure. Lets callers (the playground chips) know
 	// whether gesture playback is possible without reaching into the manager
 	// mid-load.
@@ -165,7 +165,7 @@ export function mountIdleAvatar(container, glbUrl, opts = {}) {
 		/**
 		 * Play the first available gesture from a candidate list, then settle
 		 * back into the idle loop. Candidates let one semantic action ("dance")
-		 * degrade across the clip library per rig — a clip the fallen-pose guard
+		 * degrade across the clip library per rig: a clip the fallen-pose guard
 		 * rejected on this skeleton is skipped, not frozen on.
 		 *
 		 * @param {string|string[]} names  Clip name(s), most-preferred first.
