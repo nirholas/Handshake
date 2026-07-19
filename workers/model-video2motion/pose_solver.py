@@ -258,6 +258,142 @@ for _side in ("Left", "Right"):
         _FINGER_PARENTS[f"{_side}Hand{_finger}2"] = f"{_side}Hand{_finger}1"
         _FINGER_PARENTS[f"{_side}Hand{_finger}3"] = f"{_side}Hand{_finger}2"
 
+# Full canonical parent map (body + fingers), used by the canonical-convention
+# authoring below.
+_BODY_PARENTS = {
+    "Hips": None, "Spine": "Hips", "Spine1": "Spine", "Spine2": "Spine1",
+    "Neck": "Spine2", "Head": "Neck",
+    "LeftUpLeg": "Hips", "LeftLeg": "LeftUpLeg", "LeftFoot": "LeftLeg",
+    "RightUpLeg": "Hips", "RightLeg": "RightUpLeg", "RightFoot": "RightLeg",
+    "LeftArm": "Spine2", "LeftForeArm": "LeftArm", "LeftHand": "LeftForeArm",
+    "RightArm": "Spine2", "RightForeArm": "RightArm", "RightHand": "RightForeArm",
+}
+_ALL_PARENTS = {**_BODY_PARENTS, **_FINGER_PARENTS}
+
+
+# ---------------------------------------------------------------------------
+# Canonical-convention authoring
+# ---------------------------------------------------------------------------
+# The solver computes each bone's WORLD orientation from the landmarks in its own
+# y-up rig frame, where identity local = a T-pose. But the browser retarget
+# (src/animation-retarget.js) interprets a clip's keyframes as rotations relative
+# to the CANONICAL rig bind pose (Mixamo/Wolf3D — legs baked 180° about Z, arms
+# in a specific frame; see canonical_rest.REST_LOCAL). Emitting our own T-pose
+# convention makes the retarget's world-delta correction reframe every bone into
+# garbage (legs fold over the head). So we author each keyframe in the canonical
+# convention with the standard world-delta retarget:
+#
+#     q_canon = WSp⁻¹ · (G · Grest⁻¹) · WSp · Rs
+#
+# where G is the measured world orientation, Grest the solver's world orientation
+# for the SAME bone at the reference rest pose, WSp = REST_WORLD[parent] (parent
+# world bind), and Rs = REST_LOCAL[bone] (bone local bind). At rest (G == Grest)
+# this returns exactly Rs, so a rest bone emits the canonical bind local and the
+# retarget round-trips instead of mangling it.
+from canonical_rest import REST_LOCAL, REST_WORLD  # noqa: E402
+
+_REST_GLOBALS_CACHE: Optional[dict] = None
+
+
+def _reference_rest_pose() -> tuple:
+    """Synthetic reference rest: a T-pose facing the camera with flat hands, in
+    MediaPipe world convention (y DOWN). Identical geometry to the solver's rest
+    assumptions, so solving it yields each bone's rest world orientation."""
+    p = np.zeros((33, 3))
+    p[LEFT_HIP] = [0.10, 0.0, 0.0]; p[RIGHT_HIP] = [-0.10, 0.0, 0.0]
+    p[LEFT_SHOULDER] = [0.18, -0.50, 0.0]; p[RIGHT_SHOULDER] = [-0.18, -0.50, 0.0]
+    p[NOSE] = [0.0, -0.72, -0.10]
+    p[LEFT_EAR] = [0.07, -0.70, 0.0]; p[RIGHT_EAR] = [-0.07, -0.70, 0.0]
+    p[LEFT_ELBOW] = [0.45, -0.50, 0.0]; p[LEFT_WRIST] = [0.70, -0.50, 0.0]
+    p[LEFT_INDEX] = [0.80, -0.50, 0.0]; p[LEFT_PINKY] = [0.79, -0.50, 0.02]
+    p[RIGHT_ELBOW] = [-0.45, -0.50, 0.0]; p[RIGHT_WRIST] = [-0.70, -0.50, 0.0]
+    p[RIGHT_INDEX] = [-0.80, -0.50, 0.0]; p[RIGHT_PINKY] = [-0.79, -0.50, 0.02]
+    p[LEFT_KNEE] = [0.10, 0.45, 0.0]; p[LEFT_ANKLE] = [0.10, 0.90, 0.0]
+    p[LEFT_HEEL] = [0.10, 0.95, 0.03]; p[LEFT_FOOT_INDEX] = [0.10, 0.95, -0.12]
+    p[RIGHT_KNEE] = [-0.10, 0.45, 0.0]; p[RIGHT_ANKLE] = [-0.10, 0.90, 0.0]
+    p[RIGHT_HEEL] = [-0.10, 0.95, 0.03]; p[RIGHT_FOOT_INDEX] = [-0.10, 0.95, -0.12]
+
+    def flat_hand(side: str) -> np.ndarray:
+        s = 1.0 if side == "Left" else -1.0
+        h = np.zeros((21, 3))
+        w = np.array([s * 0.70, -0.50, 0.0]); h[0] = w
+        for base, z in {5: -0.025, 9: 0.0, 13: 0.022, 17: 0.045}.items():
+            h[base] = w + [s * 0.09, 0.0, z]
+            for j in range(1, 4):
+                h[base + j] = h[base] + [s * 0.035 * j, 0.0, 0.0]
+        thumb = np.array([s * 0.707, 0.0, -0.707])
+        h[1] = w + [s * 0.025, 0.0, -0.03]
+        for j, step in ((2, 0.035), (3, 0.065), (4, 0.09)):
+            h[j] = h[1] + step * thumb
+        return h
+
+    hands = np.stack([flat_hand("Left"), flat_hand("Right")])
+    return p, hands
+
+
+def _rest_globals() -> dict:
+    global _REST_GLOBALS_CACHE
+    if _REST_GLOBALS_CACHE is None:
+        pose, hands = _reference_rest_pose()
+        rig = _to_rig_space(pose[None, ...])[0]
+        rig_hands = _to_rig_space(hands)
+        frame_hands = {side: rig_hands[i] for i, side in enumerate(("Left", "Right"))}
+        _REST_GLOBALS_CACHE = solve_frame(rig, None, frame_hands)["globals"]
+    return _REST_GLOBALS_CACHE
+
+
+def _to_canonical_local(bone: str, g: np.ndarray, rest_globals: dict) -> np.ndarray:
+    """World orientation `g` of `bone` → canonical-convention local keyframe."""
+    rs = REST_LOCAL.get(bone)
+    if rs is None:
+        return _IDENTITY.copy()
+    rs = np.asarray(rs, dtype=np.float64)
+    grest = rest_globals.get(bone)
+    if grest is None:
+        return rs
+    # D = g · grest⁻¹  (physical world delta from rest)
+    delta = _quat_multiply(g, _quat_conjugate(grest))
+    parent = _ALL_PARENTS.get(bone)
+    wsp = np.asarray(REST_WORLD[parent], dtype=np.float64) if parent else _IDENTITY
+    wsp_inv = _quat_conjugate(wsp)
+    q = _quat_multiply(_quat_multiply(_quat_multiply(wsp_inv, delta), wsp), rs)
+    return _quat_normalize(q)
+
+
+def _smooth_quaternion_track(values: np.ndarray, fps: float) -> np.ndarray:
+    """One-Euro low-pass on a (T,4) quaternion track: heavy smoothing when the
+    joint is near-still (kills tracking jitter), light when it moves fast (keeps
+    real motion crisp). Operates by slerping toward each raw sample with an
+    adaptive factor derived from the local angular velocity."""
+    n = values.shape[0]
+    if n < 3:
+        return values
+    # One-Euro params tuned for markerless pose: heavy smoothing at rest,
+    # loosening only for genuine fast motion. A single-frame spike beyond
+    # SPIKE_DEG (occlusion teleport, not real motion) is rejected — the filter
+    # holds and catches up over the next frames instead of snapping.
+    min_cutoff, beta = 0.8, 0.025
+    SPIKE_DEG = 45.0
+    out = values.copy()
+    prev = values[0].copy()
+    prev_speed = 0.0
+    for t in range(1, n):
+        raw = values[t]
+        if float(np.dot(prev, raw)) < 0.0:
+            raw = -raw
+        dot = float(np.clip(abs(np.dot(prev, raw)), -1.0, 1.0))
+        step_deg = np.degrees(2.0 * np.arccos(dot))
+        speed = np.radians(step_deg) * fps  # rad/s
+        prev_speed = 0.7 * prev_speed + 0.3 * speed
+        cutoff = min_cutoff + beta * np.degrees(prev_speed)
+        tau = 1.0 / (2.0 * np.pi * cutoff)
+        alpha = 1.0 / (1.0 + tau * fps)
+        if step_deg > SPIKE_DEG:
+            alpha = min(alpha, 0.25)  # suspected teleport: ease in, don't snap
+        prev = _quat_slerp(prev, raw, float(np.clip(alpha, 0.04, 1.0)))
+        out[t] = prev
+    return out
+
 
 def smooth_landmarks(world: np.ndarray, fps: float, cutoff_hz: float = 4.0) -> np.ndarray:
     """fps-aware exponential smoothing over the time axis of (T, 33, 3)."""
@@ -574,6 +710,7 @@ def landmarks_to_clip(
         rig = smooth_landmarks(rig, fps)
 
     track_bones = CLIP_BONES + FINGER_BONES if hands is not None else CLIP_BONES
+    rest_globals = _rest_globals()
     per_bone: dict[str, list[np.ndarray]] = {b: [] for b in track_bones}
     prev_solution: Optional[dict] = None
     prev_quats: dict[str, np.ndarray] = {}
@@ -586,7 +723,16 @@ def landmarks_to_clip(
             }
         sol = solve_frame(rig[t], prev_solution, frame_hands)
         for bone in track_bones:
-            q = _hemisphere(prev_quats.get(bone), sol["locals"][bone])
+            # Author in the canonical rig convention (see _to_canonical_local),
+            # not the solver's own T-pose frame, so the browser retarget
+            # round-trips instead of folding the skeleton. A held bone (no global
+            # this frame, e.g. an undetected finger) rests at its bind local.
+            gb = sol["globals"].get(bone)
+            if gb is None:
+                q = np.asarray(REST_LOCAL.get(bone, _IDENTITY), dtype=np.float64)
+            else:
+                q = _to_canonical_local(bone, gb, rest_globals)
+            q = _hemisphere(prev_quats.get(bone), q)
             prev_quats[bone] = q
             per_bone[bone].append(q)
         prev_solution = sol
@@ -596,6 +742,8 @@ def landmarks_to_clip(
     tracks = []
     for bone in track_bones:
         values = np.stack(per_bone[bone], axis=0)
+        if smooth:
+            values = _smooth_quaternion_track(values, float(fps))
         tracks.append(
             {
                 "type": "quaternion",

@@ -232,11 +232,35 @@ def test_clip_with_hands_carries_finger_tracks():
             continue
         vals = np.asarray(track["values"]).reshape(-1, 4)
         assert np.allclose(np.linalg.norm(vals, axis=1), 1.0, atol=1e-6)
-        # The never-detected right hand stays at rest for the whole clip.
+        # The never-detected right hand holds its canonical bind local (not
+        # identity — the clip is authored in the canonical rig convention) for
+        # the whole clip: every frame equals frame 0.
         if track["name"].startswith("RightHandIndex"):
-            assert np.allclose(np.abs(vals[:, 3]), 1.0, atol=1e-6)
+            assert np.allclose(vals - vals[0], 0.0, atol=1e-6)
     b = landmarks_to_clip(frames, fps=24, name="hands", hands=hands)
     assert clip == b
+
+
+def test_rest_pose_emits_canonical_bind_local():
+    """A person at the reference rest pose must author each keyframe as the
+    canonical rig's BIND local (e.g. LeftUpLeg ~180° about Z), not identity —
+    otherwise the browser retarget folds the skeleton (the shipped-broken bug).
+    """
+    from canonical_rest import REST_LOCAL
+
+    frames = np.stack([t_pose_world()] * 4)
+    clip = landmarks_to_clip(frames, fps=24, name="rest")
+    tracks = {t["name"].split(".")[0]: t for t in clip["tracks"] if t["type"] == "quaternion"}
+    for bone in ("LeftUpLeg", "RightUpLeg", "LeftArm", "Hips", "Spine"):
+        got = np.asarray(tracks[bone]["values"]).reshape(-1, 4)[0]
+        want = np.asarray(REST_LOCAL[bone])
+        # quaternion equality up to sign
+        assert abs(abs(float(np.dot(got, want))) - 1.0) < 2e-2, (
+            f"{bone} rest should be its canonical bind local {want}, got {got}"
+        )
+    # LeftUpLeg's canonical bind is a ~180° flip — the exact thing identity got wrong.
+    up = np.asarray(tracks["LeftUpLeg"]["values"]).reshape(-1, 4)[0]
+    assert abs(up[3]) < 0.1, "LeftUpLeg bind must be a large rotation, not identity"
 
 
 def test_clip_without_hands_unchanged():
