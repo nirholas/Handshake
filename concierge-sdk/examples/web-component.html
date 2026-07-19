@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Nimbus, Weather for makers</title>
+		<meta name="description" content="Nimbus is a hyper-local weather API for hardware and hobby projects." />
+		<meta property="og:site_name" content="Nimbus" />
+		<style>
+			body { margin: 0; font-family: system-ui, sans-serif; color: #0f172a; background: #f8fafc; }
+			header { padding: 16px 24px; background: #fff; border-bottom: 1px solid #e2e8f0; display: flex; gap: 24px; align-items: center; }
+			nav a { margin-right: 16px; color: #475569; text-decoration: none; }
+			main { max-width: 720px; margin: 0 auto; padding: 56px 24px; line-height: 1.7; }
+			h1 { font-size: 2rem; }
+			code { background: #e2e8f0; padding: 2px 6px; border-radius: 4px; }
+		</style>
+	</head>
+	<body>
+		<header>
+			<strong>Nimbus</strong>
+			<nav><a href="#">Docs</a><a href="#">Pricing</a><a href="#">Status</a></nav>
+		</header>
+		<main>
+			<h1>Weather for makers</h1>
+			<p>Nimbus gives you hyper-local forecasts over a single <code>GET /v1/now?lat=&lng=</code> call. Free tier is 1,000 requests/day; the Maker plan is $9/month for 100k. No credit card for the free tier.</p>
+			<p>SDKs for Python, JavaScript, and MicroPython. Rate limits reset at midnight UTC.</p>
+		</main>
+
+		<!--
+			Declarative install: import the SDK (registers the element), then drop
+			<three-concierge> anywhere. It reads the page for grounding; `knowledge`
+			adds curated facts on top. Every attribute is optional.
+		-->
+		<script type="module" src="../dist/concierge.mjs"></script>
+		<three-concierge
+			site-name="Nimbus"
+			accent="#0ea5e9"
+			avatar="vera"
+			position="bottom-right"
+			theme="auto"
+			greeting="Hi! Ask me anything about the Nimbus weather API."
+			suggestions="What's the free tier?|How do I authenticate?|Which SDKs exist?"
+			knowledge="Free tier: 1000 req/day, no card. Maker plan: $9/mo for 100k req. Auth: send your API key in the X-Nimbus-Key header. SDKs: Python, JavaScript, MicroPython. Rate limits reset midnight UTC. Support: hello@nimbus.example."
+			persona="friendly and precise, like a helpful DevRel engineer"
+		></three-concierge>
+	</body>
+</html>

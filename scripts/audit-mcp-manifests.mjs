@@ -32,6 +32,7 @@ const PACKAGE_MANIFESTS = [
 	'packages/threews-avatar-mcp/server.json',
 	'packages/three-token-mcp/server.json',
 	'packages/agent-sniper/server.json',
+	'packages/concierge-mcp/server.json',
 ];
 
 // Remote manifests are every server*.json at the repo root.

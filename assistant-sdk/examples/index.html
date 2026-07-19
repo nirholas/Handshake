@@ -1,0 +1,116 @@
+<!doctype html>
+<!--
+  Example host page for @three-ws/assistant.
+
+  Build first, then serve this folder:
+    npm run build   (from assistant-sdk/)
+    npx serve .
+
+  This uses the locally built one-tag bundle (../dist/assistant.global.js). In
+  production you would use the CDN URL instead:
+    <script src="https://three.ws/assistant/v1.js" async ...></script>
+-->
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Acme Studio</title>
+		<style>
+			body {
+				margin: 0;
+				font-family: system-ui, sans-serif;
+				color: #111;
+				background: #f7f7f8;
+			}
+			header {
+				max-width: 720px;
+				margin: 0 auto;
+				padding: 80px 24px;
+			}
+			h1 {
+				font-size: 40px;
+				letter-spacing: -0.02em;
+				margin: 0 0 12px;
+			}
+			p {
+				font-size: 18px;
+				line-height: 1.6;
+				color: #444;
+				max-width: 560px;
+			}
+			.row {
+				display: flex;
+				gap: 10px;
+				margin-top: 24px;
+				flex-wrap: wrap;
+			}
+			button {
+				font: 600 14px/1 system-ui, sans-serif;
+				padding: 11px 16px;
+				border-radius: 10px;
+				border: 1px solid #ddd;
+				background: #fff;
+				cursor: pointer;
+			}
+			button:hover {
+				border-color: #f97316;
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<h1>Acme Studio</h1>
+			<p>
+				A design studio for 3D artists. The floating launcher in the corner is a
+				three.ws assistant, standing directly on this page. Ask it anything, or
+				try the buttons below to drive it from the host page.
+			</p>
+			<div class="row">
+				<button id="open">Open</button>
+				<button id="speak">Make it speak</button>
+				<button id="chat">Chat mode</button>
+				<button id="speakmode">Speak mode</button>
+			</div>
+		</header>
+
+		<!--
+			The one-tag embed. data-context is what the chatbot knows about this
+			site; data-bg="transparent" floats the avatar over the page.
+		-->
+		<script
+			src="../dist/assistant.global.js"
+			async
+			data-avatar="/avatars/selfie-girl.glb"
+			data-name="Atelier AI"
+			data-greeting="Hi! Ask me anything about Acme Studio."
+			data-context="Acme Studio is a design studio for 3D artists. Plans start at $20/month. Support is at help@acme.example."
+			data-bg="transparent"
+			data-accent="#f97316"
+			data-manual
+		></script>
+
+		<script type="module">
+			// data-manual above means the tag does not auto-mount; we init ourselves
+			// so the demo can also drive it. In real use, drop data-manual and the
+			// widget mounts automatically from the data-* attributes.
+			import ThreeAssistant from '../dist/assistant.mjs';
+			ThreeAssistant.init({
+				avatar: '/avatars/selfie-girl.glb',
+				name: 'Atelier AI',
+				greeting: 'Hi! Ask me anything about Acme Studio.',
+				context: 'Acme Studio is a design studio for 3D artists. Plans start at $20/month.',
+				bg: 'transparent',
+				accent: '#f97316',
+			});
+
+			document.getElementById('open').onclick = () => ThreeAssistant.open();
+			document.getElementById('speak').onclick = () => ThreeAssistant.say('Welcome to Acme Studio!');
+			document.getElementById('chat').onclick = () => ThreeAssistant.setMode('chat');
+			document.getElementById('speakmode').onclick = () => ThreeAssistant.setMode('speak');
+
+			window.addEventListener('three-assistant', (e) => {
+				console.log('[assistant event]', e.detail.type, e.detail.payload);
+			});
+		</script>
+	</body>
+</html>

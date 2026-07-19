@@ -21,6 +21,16 @@
 			ctaPrimary: { label: 'Open the editor', href: '/create' },
 		},
 		{
+			slug: 'add-a-3d-assistant',
+			tier: 'easy',
+			title: 'Add a 3D avatar assistant to your site',
+			blurb: 'One script tag adds a floating 3D avatar with a chatbot and a speak mode to any website. Configure the avatar, background, and brand, drive it from your own code, or have an AI agent generate the embed.',
+			builds: 'A branded 3D assistant widget embedded on your own page',
+			time: '8 min',
+			previewModel: '/avatars/selfie-girl.glb',
+			ctaPrimary: { label: 'Open the builder', href: '/assistant' },
+		},
+		{
 			slug: 'text-to-3d',
 			tier: 'easy',
 			title: 'Turn a text prompt into a 3D model',

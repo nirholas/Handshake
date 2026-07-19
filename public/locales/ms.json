@@ -279,7 +279,7 @@
 	},
 	"agent_wallet": {
 		"home_agents_wallet": "<a href=\"/\">Laman Utama</a> / <a href=\"/agents\">Ejen</a> / Dompet",
-		"meta_description": "Urus dompet three.ws ejen AI 3D yang disimpan sendiri — baki langsung, deposit, perdagangan, sniping, x402 pembayaran, dan pengeluaran, semuanya di satu tempat.",
+		"meta_description": "Urus dompet three.ws 3D AI agent yang disimpan sendiri Solana — baki langsung, deposit, perdagangan, sniping, pembayaran x402, dan pengeluaran, semuanya dalam satu tempat.",
 		"meta_og_description": "Dompet Solana ejen AI 3D anda sendiri: baki, deposit, perdagangan, sniping, bayar, dan keluarkan.",
 		"meta_og_title": "Dompet Ejen — three.ws",
 		"meta_title": "Dompet Ejen — three.ws",
@@ -7449,7 +7449,7 @@
 		"pay_per_use_ibm_granite_chat_code": "Bayar mengikut penggunaan IBM Granite — sembang, kod, penyisipan, analisis, dan ramalan siri masa — diselesaikan dalam USDC di Solana. Tersenarai di Pusat Rakan Kongsi IBM Cloud.",
 		"privacy_three_ws_data_privacy_requests_gdpr": "<a href=\"mailto:privacy@three.ws\">privacy@three.ws</a><br><span style=\"font-size:12px;color:var(--muted)\">Permintaan data &amp; privasi (GDPR / CCPA)</span>",
 		"private_or_account_specific_help_billing_or": "Bantuan peribadi atau khusus akaun, pengebilan, atau apa sahaja yang anda lebih suka tidak dikongsi secara umum.",
-		"redact_secrets_never_paste_an_api_key": "<b>Sembunyikan rahsia.</b> Jangan sekali-kali tampal kunci API, kunci peribadi, atau benih dompet. Alamat awam yang dipendekkan adalah baik. Untuk isu pembayaran, tandatangan transaksi awam membantu.",
+		"redact_secrets_never_paste_an_api_key": "<b>Sembunyikan rahsia.</b> Jangan sekali-kali tampal kunci API, kunci peribadi, atau benih dompet. Alamat Solana awam yang dipendekkan adalah memadai. Untuk isu pembayaran, tandatangan transaksi awam membantu.",
 		"report_a_reproducible_bug_a_crash_or": "Laporkan pepijat yang boleh dihasilkan semula, keruntuhan, atau output alat yang tidak dijangka — atau minta ciri. Awam dan dipantau hingga penyelesaian.",
 		"report_a_vulnerability_privately_please_don": "Laporkan kerentanan secara peribadi. Sila jangan buka isu awam untuk apa-apa yang boleh dieksploitasi — kami mengutamakan laporan ini.",
 		"report_privately": "Laporkan secara peribadi",

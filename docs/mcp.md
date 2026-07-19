@@ -43,7 +43,7 @@ The MCP server configuration is at `.mcp.json` in the project root, which Claude
 
 ## The full three.ws MCP ecosystem
 
-This page documents the hosted avatar/3D server at `/api/mcp`, but it's one of **42 three.ws MCP servers** — all listed in the [official MCP registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas), so any MCP-compatible client can discover them by name.
+This page documents the hosted avatar/3D server at `/api/mcp`, but it's one of **44 three.ws MCP servers** — all listed in the [official MCP registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas), so any MCP-compatible client can discover them by name.
 
 There are two kinds. **Hosted remote servers** run over Streamable HTTP with nothing to install — add them by URL. **Install-and-run servers** are published on npm under the `@three-ws` scope and run locally over stdio — add them in one line with `npx`.
 
@@ -59,12 +59,14 @@ There are two kinds. **Hosted remote servers** run over Streamable HTTP with not
 | pump.fun | `/api/pump-fun-mcp` | Free, read-only pump.fun + Solana token tools |
 | IBM x402 | `/api/ibm-mcp` | Pay-per-use IBM Granite AI |
 
-**Thirty-five install-and-run servers** on npm under the `@three-ws` scope — each runs over stdio with one command:
+**Thirty-seven install-and-run servers** on npm under the `@three-ws` scope — each runs over stdio with one command:
 
 ```bash
 # 3D & avatars
 npx -y @three-ws/scene-mcp        # speak a 3D diorama into being from one sentence
+npx -y @three-ws/assistant-mcp    # generate a 3D avatar assistant widget embed for any site
 npx -y @three-ws/avatar-mcp       # drop a live 3D avatar into any chat
+npx -y @three-ws/concierge-mcp    # ask any site's AI concierge; generate the 3D chat-widget embed
 npx -y @three-ws/avatar-agent     # turn any GLB into a riggable 3D AI agent
 npx -y @three-ws/mcp-server       # full 3D + agent toolkit, paid per call in USDC
 

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Ledger, imperative API demo</title>
+		<meta name="description" content="Ledger is a personal-finance app that categorizes transactions automatically." />
+		<meta property="og:site_name" content="Ledger" />
+		<style>
+			body { margin: 0; font-family: system-ui, sans-serif; color: #111827; }
+			main { max-width: 720px; margin: 0 auto; padding: 56px 24px; line-height: 1.7; }
+			h1 { font-size: 2rem; }
+			.controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0; }
+			button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; cursor: pointer; }
+			button:hover { border-color: #6366f1; }
+			#log { margin-top: 24px; font-family: ui-monospace, monospace; font-size: 12px; color: #6b7280; white-space: pre-wrap; }
+		</style>
+	</head>
+	<body>
+		<main>
+			<h1>Ledger</h1>
+			<p>Ledger auto-categorizes your transactions and shows where your money goes. Free for one account; Plus is $6/month for unlimited accounts and CSV export.</p>
+
+			<div class="controls">
+				<button id="open">Open concierge</button>
+				<button id="ask">Ask "What does Plus cost?"</button>
+				<button id="nova">Switch to Nova</button>
+				<button id="mute">Toggle mute</button>
+				<button id="reset">Reset conversation</button>
+			</div>
+			<div id="log">events will stream here…</div>
+		</main>
+
+		<script type="module">
+			import { Concierge } from '../dist/concierge.mjs';
+
+			const log = document.getElementById('log');
+			const line = (msg) => (log.textContent = `${new Date().toLocaleTimeString()}  ${msg}\n` + log.textContent);
+
+			// Construct with full config; nothing renders until first open.
+			const concierge = new Concierge({
+				siteName: 'Ledger',
+				accent: '#6366f1',
+				knowledge: 'Free plan: 1 account. Plus: $6/mo, unlimited accounts + CSV export. Data is encrypted at rest. Cancel anytime.',
+				suggestions: ['What does Plus cost?', 'Is my data private?', 'How do I export?'],
+				persona: 'reassuring and concise',
+			});
+
+			// Observe the lifecycle. Great for analytics or driving your own UI.
+			concierge.on('ready', () => line('ready'));
+			concierge.on('open', () => line('opened'));
+			concierge.on('close', () => line('closed'));
+			concierge.on('agentchange', ({ avatar }) => line('avatar → ' + avatar));
+			concierge.on('message', ({ role, content }) => line(`${role}: ${content.slice(0, 60)}`));
+			concierge.on('error', (err) => line('error: ' + (err?.message || err)));
+
+			document.getElementById('open').onclick = () => concierge.setOpen(true);
+			document.getElementById('ask').onclick = () => concierge.ask('What does Plus cost?');
+			document.getElementById('nova').onclick = () => concierge.setAvatar('nova');
+			document.getElementById('mute').onclick = () => concierge.setMuted(!concierge.muted);
+			document.getElementById('reset').onclick = () => concierge.reset();
+		</script>
+	</body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Custom avatar, bring your own GLB</title>
+		<meta name="description" content="Use any rigged GLB avatar with the three.ws concierge." />
+		<style>
+			body { margin: 0; font-family: system-ui, sans-serif; color: #111827; }
+			main { max-width: 640px; margin: 0 auto; padding: 56px 24px; line-height: 1.7; }
+			code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; }
+		</style>
+	</head>
+	<body>
+		<main>
+			<h1>Bring your own avatar</h1>
+			<p>Instead of the built-in catalog, point <code>customAvatar</code> at any rigged, viseme-capable GLB you host. It should be a humanoid with a skeleton and (ideally) ARKit/Oculus visemes or a jaw morph, so it blinks and lipsyncs. Unrigged meshes are not supported, they would render as a frozen statue.</p>
+			<p>This example uses one of the three.ws catalog GLBs by absolute URL to stand in for your own file; replace the URL with yours.</p>
+		</main>
+
+		<script type="module">
+			import { Concierge } from '../dist/concierge.mjs';
+
+			new Concierge({
+				siteName: 'Your Site',
+				name: 'Aria',
+				accent: '#a855f7',
+				// Any rigged GLB URL works here. Self-host yours and pass its URL:
+				customAvatar: 'https://three.ws/avatars/realistic-female.glb',
+				greeting: "Hi, I'm Aria, your custom-avatar concierge.",
+				knowledge: 'This demo shows a bring-your-own-GLB avatar driving the concierge.',
+			});
+		</script>
+	</body>
+</html>

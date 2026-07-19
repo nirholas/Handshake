@@ -8,6 +8,8 @@ Live demo: [three.ws/concierge](https://three.ws/concierge) (the widget on that 
 
 - Docs: [three.ws/docs/concierge](https://three.ws/docs/concierge)
 - Tutorial (how it is built): [three.ws/docs/tutorials/build-a-site-concierge](https://three.ws/docs/tutorials/build-a-site-concierge)
+- Examples: [examples/](./examples), one-tag, web component, imperative, custom avatar, React, self-hosted backend
+- Use it from an AI agent: [`@three-ws/concierge-mcp`](https://www.npmjs.com/package/@three-ws/concierge-mcp) (Model Context Protocol server)
 - Sibling packages: [`@three-ws/walk`](https://www.npmjs.com/package/@three-ws/walk) (walking page companion), [`@three-ws/page-agent`](https://www.npmjs.com/package/@three-ws/page-agent) (narrating page guide), [`@three-ws/tour`](https://www.npmjs.com/package/@three-ws/tour) (guided site tours)
 
 ## Install

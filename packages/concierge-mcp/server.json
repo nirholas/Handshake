@@ -1,0 +1,56 @@
+{
+	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+	"name": "io.github.nirholas/concierge-mcp",
+	"title": "three.ws Concierge",
+	"description": "Ask any website's AI concierge a grounded question, and generate the embed to add one to a site.",
+	"websiteUrl": "https://three.ws/concierge",
+	"icons": [
+		{
+			"src": "https://three.ws/three-ws-mcp-icon.svg",
+			"mimeType": "image/svg+xml",
+			"sizes": [
+				"any"
+			]
+		}
+	],
+	"repository": {
+		"url": "https://github.com/nirholas/three.ws",
+		"source": "github",
+		"subfolder": "packages/concierge-mcp"
+	},
+	"version": "0.1.0",
+	"packages": [
+		{
+			"registryType": "npm",
+			"identifier": "@three-ws/concierge-mcp",
+			"version": "0.1.0",
+			"runtimeHint": "npx",
+			"transport": {
+				"type": "stdio"
+			},
+			"environmentVariables": [
+				{
+					"name": "THREE_WS_BASE",
+					"description": "Base URL of the three.ws API that serves POST /api/concierge, and the origin the generated embed snippets point at. Override only when self-hosting or targeting a preview deployment.",
+					"format": "string",
+					"isRequired": false,
+					"default": "https://three.ws"
+				},
+				{
+					"name": "THREE_WS_TIMEOUT_MS",
+					"description": "Per-request timeout in milliseconds for the concierge answer call. The answer streams over a free-first LLM chain that can fail over across providers, so the default leaves room for one slow rung.",
+					"format": "number",
+					"isRequired": false,
+					"default": "45000"
+				},
+				{
+					"name": "CONCIERGE_PAGE_TIMEOUT_MS",
+					"description": "Timeout in milliseconds for fetching a page that concierge_ask grounds its answer in. Separate from the answer timeout so a slow site cannot consume the whole call.",
+					"format": "number",
+					"isRequired": false,
+					"default": "12000"
+				}
+			]
+		}
+	]
+}

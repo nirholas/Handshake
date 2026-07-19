@@ -1,0 +1,58 @@
+{
+	"name": "@three-ws/assistant-mcp",
+	"version": "0.1.0",
+	"mcpName": "io.github.nirholas/assistant-widget",
+	"description": "Generate a paste-ready three.ws assistant widget from any AI agent. build_assistant_widget turns a config into an embeddable <script> tag, a frame URL, and a ThreeAssistant.init() snippet for a floating 3D avatar chatbot on any website; list_assistant_options enumerates every avatar, background, mode and data-* attribute you can set. Pure, offline, deterministic, no key, no signer, no payment.",
+	"type": "module",
+	"author": "nirholas <support@three.ws>",
+	"license": "SEE LICENSE IN LICENSE",
+	"homepage": "https://three.ws/assistant",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/assistant-mcp"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"keywords": [
+		"mcp",
+		"model-context-protocol",
+		"three.ws",
+		"3d",
+		"avatar",
+		"assistant",
+		"widget",
+		"chatbot",
+		"embed",
+		"tts"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"src",
+		"server.json",
+		"README.md",
+		"LICENSE"
+	],
+	"bin": {
+		"assistant-mcp": "src/index.js"
+	},
+	"main": "./src/index.js",
+	"exports": {
+		".": "./src/index.js"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"start": "node src/index.js",
+		"test": "node --test \"test/**/*.test.mjs\"",
+		"inspect": "npx -y @modelcontextprotocol/inspector node src/index.js"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"zod": "^3.23.8"
+	}
+}

@@ -1,0 +1,60 @@
+{
+	"name": "@three-ws/concierge-mcp",
+	"version": "0.1.0",
+	"mcpName": "io.github.nirholas/concierge-mcp",
+	"description": "Ask any website's AI concierge a grounded question, and generate the copy-paste embed code to add a three.ws Concierge (an AI chat widget with a 3D avatar) to a site. concierge_ask fetches a page and answers from its real content; concierge_embed builds the one-tag install; concierge_avatars lists the avatars. No key, no signer, no payment.",
+	"type": "module",
+	"author": "nirholas <support@three.ws>",
+	"license": "SEE LICENSE IN LICENSE",
+	"homepage": "https://three.ws/concierge",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "packages/concierge-mcp"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"keywords": [
+		"mcp",
+		"model-context-protocol",
+		"three.ws",
+		"concierge",
+		"chatbot",
+		"chat-widget",
+		"support-chat",
+		"3d",
+		"avatar",
+		"embed",
+		"ai-agent"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"src",
+		"server.json",
+		"README.md",
+		"LICENSE"
+	],
+	"bin": {
+		"concierge-mcp": "src/index.js"
+	},
+	"main": "./src/index.js",
+	"exports": {
+		".": "./src/index.js"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"start": "node src/index.js",
+		"test": "node --test \"test/**/*.test.mjs\"",
+		"inspect": "npx -y @modelcontextprotocol/inspector node src/index.js"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"@three-ws/tool-sdk": "file:../tool-sdk",
+		"zod": "^3.23.8"
+	}
+}

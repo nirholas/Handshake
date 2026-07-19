@@ -2517,6 +2517,12 @@
 					"description": "Embed an agent via iframe, oEmbed, or the <agent-3d> web component.",
 					"added": "2026-04-27"
 				},
+					{
+						"path": "/docs/assistant-widget",
+						"title": "Docs · Assistant widget",
+						"description": "Add a 3D avatar assistant to any website: the one-tag script, the @three-ws/assistant npm package, and the assistant-widget MCP server for AI agents.",
+						"added": "2026-07-19"
+					},
 				{
 					"path": "/docs/web-component",
 					"title": "Docs · <agent-3d>",
@@ -2623,6 +2629,14 @@
 					"changefreq": "monthly",
 					"added": "2026-06-12"
 				},
+					{
+						"path": "/tutorials/add-a-3d-assistant",
+						"title": "Tutorial · Add a 3D Avatar Assistant",
+						"description": "Step-by-step: add a floating 3D avatar assistant to any website with one script tag, configure the avatar, background, and brand, drive it from your own code, or have an AI agent generate the embed via MCP.",
+						"priority": 0.8,
+						"changefreq": "monthly",
+						"added": "2026-07-19"
+					},
 				{
 					"path": "/tutorials/image-to-3d",
 					"title": "Tutorial · Photos to 3D Model",

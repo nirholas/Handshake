@@ -69,8 +69,35 @@ The hosted endpoint is free, but the wire format is open. Any server that accept
 - Model output renders through a strict markdown-lite renderer: all text is escaped before markup applies, and links are restricted to http(s)/mailto.
 - Only the embedding page's hostname (never the full URL) is recorded in usage telemetry.
 
+## Agent access (MCP)
+
+The concierge is also reachable from any AI assistant through the Model Context Protocol server [`@three-ws/concierge-mcp`](https://www.npmjs.com/package/@three-ws/concierge-mcp), published on the [official MCP registry](https://registry.modelcontextprotocol.io/?q=io.github.nirholas) as `io.github.nirholas/concierge-mcp`. Add it in one line:
+
+```bash
+claude mcp add concierge -- npx -y @three-ws/concierge-mcp
+```
+
+Three tools:
+
+- **`concierge_ask`**, ask a website's concierge a question. Give it a `url` and it fetches that page and answers grounded in the real content; or pass `knowledge`/`content` to answer from text you provide. This is "ask any website a question," on the free lane.
+- **`concierge_embed`**, generate the copy-paste embed code (`<script>` tag, `<three-concierge>` element, or npm snippet) for adding a concierge to a site, fully configured.
+- **`concierge_avatars`**, list the avatars a concierge can wear.
+
+`concierge_ask` runs on the same free `POST /api/concierge` lane the widget uses; `concierge_embed` and `concierge_avatars` are offline generators. Full reference: the [package README](https://github.com/nirholas/three.ws/tree/main/packages/concierge-mcp).
+
+## Examples
+
+Runnable examples ship with the SDK ([concierge-sdk/examples/](https://github.com/nirholas/three.ws/tree/main/concierge-sdk/examples)):
+
+- **index.html**, the one-tag CDN install, grounded in the page + curated knowledge
+- **web-component.html**, the declarative `<three-concierge>` element
+- **imperative.html**, the `new Concierge({...})` API with events, programmatic `ask()`, and live avatar swaps
+- **custom-avatar.html**, using your own rigged GLB
+- **react.jsx**, a `<Concierge>` React wrapper component
+- **self-hosted-endpoint.md**, point the widget at your own backend, with a complete runnable Node server
+
 ## Related surfaces
 
 - [/walk](/walk): the walking page companion the avatar engine grew from
 - [Share and embed](./share-and-embed.md): every other way to put a three.ws creation on your site
-- [MCP](./mcp.md): drive avatars and generation from agent tooling
+- [MCP](./mcp.md): the full catalog of three.ws MCP servers, including this one

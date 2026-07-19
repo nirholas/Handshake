@@ -565,8 +565,93 @@ function writeManifest() {
 	);
 }
 
+// --- repair mode: re-translate only lint-failing keys ----------------------
+
+// The masker replaces glossary terms ("Solana", "x402", …) and {{placeholders}}
+// with sentinels the model is meant to reproduce verbatim. A small model
+// occasionally omits a sentinel mid-sentence, so the term never gets restored
+// on unmask and the key fails lint. That drop is probabilistic, not
+// deterministic: re-translating the same key usually preserves the sentinel.
+// Repair re-runs only the failing keys, one at a time, retrying until the key
+// passes its own integrity check, and bakes English on the rare key that never
+// converges (lint-clean, graceful runtime fallback). Idempotent: a clean locale
+// reports "nothing to repair".
+async function repairLocale(code, maxAttempts = 4) {
+	const existing = readJSON(localePath(code), {}) || {};
+	if (!existing || !Object.keys(existing).length) {
+		console.log(`◦ ${code}: not generated yet (skipped)`);
+		return { code, repaired: 0, baked: 0 };
+	}
+	// Only keys whose current value drops a glossary term or a placeholder.
+	const problems = lintLocale(source, existing, { code, doNotTranslate: cfg.doNotTranslate });
+	const failingKeys = [
+		...new Set(
+			problems
+				.map((p) => /(?:glossary term dropped|placeholder drift) in ([^:]+):/.exec(p)?.[1])
+				.filter(Boolean),
+		),
+	];
+	if (!failingKeys.length) {
+		console.log(`• ${code}: nothing to repair`);
+		return { code, repaired: 0, baked: 0 };
+	}
+	const langName = cfg.localeNames?.[code] || code;
+	console.log(`→ ${code}: repairing ${failingKeys.length} key(s) via ${cfg.provider}`);
+
+	const passes = (key, value) => {
+		const sv = String(getDeep(source, key) ?? '');
+		if (typeof value !== 'string' || value.trim() === '') return false;
+		for (const term of cfg.doNotTranslate) {
+			if (sv.includes(term) && !value.includes(term)) return false;
+		}
+		const srcVars = (sv.match(/\{\{[^}]+\}\}/g) || []).sort().join('|');
+		const tgtVars = (value.match(/\{\{[^}]+\}\}/g) || []).sort().join('|');
+		return srcVars === tgtVars;
+	};
+
+	let repaired = 0;
+	let baked = 0;
+	for (const key of failingKeys) {
+		let fixed = null;
+		for (let attempt = 0; attempt < maxAttempts && fixed === null; attempt++) {
+			const { masked, tokens } = masker.mask(String(getDeep(source, key) ?? ''));
+			let out;
+			try {
+				out = await translateChunk(langName, { [key]: masked });
+			} catch {
+				continue;
+			}
+			const candidate =
+				typeof out[key] === 'string' ? masker.unmask(out[key], tokens) : null;
+			if (candidate && passes(key, candidate)) fixed = candidate;
+		}
+		if (fixed === null) {
+			// Never converged: bake the English source so the key is lint-clean and
+			// the runtime shows English (the same graceful fallback an empty value
+			// triggers). Rare — brand terms preserved on the very next attempt.
+			fixed = getDeep(source, key);
+			baked++;
+			console.warn(`  ! ${code} ${key}: baked English after ${maxAttempts} attempts`);
+		} else {
+			repaired++;
+		}
+		setDeep(existing, key, fixed);
+		writeFileSync(localePath(code), JSON.stringify(existing, null, '\t') + '\n');
+	}
+	console.log(`  ${code}: repaired ${repaired}, baked ${baked}`);
+	return { code, repaired, baked };
+}
+
 async function main() {
 	if (flag('lint')) return runLint();
+	if (flag('repair')) {
+		writeManifest();
+		const results = await pool(targets, 1, (c) => repairLocale(c));
+		const r = results.reduce((s, x) => s + (x?.repaired || 0), 0);
+		const b = results.reduce((s, x) => s + (x?.baked || 0), 0);
+		console.log(`\ni18n-repair: ${r} key(s) repaired, ${b} baked across ${targets.length} locale(s).`);
+		return;
+	}
 
 	writeManifest();
 	const results = await pool(targets, 1, translateLocale); // locales sequential; chunks parallel within

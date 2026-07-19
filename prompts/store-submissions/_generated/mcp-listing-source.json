@@ -23,9 +23,9 @@
     "icon": "Card/avatar image on all directories."
   },
   "counts": {
-    "total": 42,
+    "total": 44,
     "remote": 7,
-    "stdio": 35
+    "stdio": 37
   },
   "servers": [
     {
@@ -267,7 +267,7 @@
       "transport": "stdio",
       "connect": "npx -y @three-ws/avatar-agent",
       "npmPackage": "@three-ws/avatar-agent",
-      "version": "1.2.1",
+      "version": "1.2.2",
       "description": "3D AI Agent Avatar — render any GLB, give it a Solana wallet, a voice, and pump.fun powers.",
       "tagline": "Turn any GLB into a riggable 3D AI agent with a Solana wallet, a voice, and pump.fun powers.",
       "category": "avatars",
@@ -354,7 +354,7 @@
       "transport": "stdio",
       "connect": "npx -y @three-ws/agent-sniper mcp",
       "npmPackage": "@three-ws/agent-sniper",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "description": "Self-custodial pump.fun sniper: arm strategies, snipe, manage positions. Simulate by default.",
       "tagline": "Self-custodial pump.fun sniper: arm strategies, snipe, and manage positions. Simulates by default.",
       "category": "trading",
@@ -383,7 +383,7 @@
       "transport": "stdio",
       "connect": "npx -y @three-ws/agentcore-payments-mcp",
       "npmPackage": "@three-ws/agentcore-payments-mcp",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "description": "Governed x402 payment sessions: pay any endpoint with budget, allowlist & per-tx caps, no key.",
       "tagline": "Governed x402 payment sessions: pay any endpoint with a budget, allowlist, and per-tx caps — no key handling.",
       "category": "payments",
@@ -497,6 +497,36 @@
       "icon": "https://three.ws/three-ws-mcp-icon.svg"
     },
     {
+      "name": "io.github.nirholas/assistant-widget",
+      "title": "three.ws Assistant Widget",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/assistant-mcp",
+      "npmPackage": "@three-ws/assistant-mcp",
+      "version": "0.1.0",
+      "description": "Turn a config into a paste-ready three.ws assistant widget: an embeddable script tag, a frame URL, and a ThreeAssistant.init() snippet for a floating 3D avatar chatbot on any website.",
+      "tagline": "Generate a paste-ready 3D avatar assistant widget for any website, a floating chatbot plus speak mode.",
+      "category": "3d",
+      "tags": [
+        "3d",
+        "avatar",
+        "assistant",
+        "chatbot",
+        "widget",
+        "embed"
+      ],
+      "examplePrompts": [
+        "Build a 3D assistant widget named Aria with an ocean background for my site.",
+        "What avatars and backgrounds can the assistant widget use?",
+        "Give me the embed snippet for a left-positioned chat-only assistant."
+      ],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws/assistant",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fassistant-widget",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
       "name": "io.github.nirholas/audio-mcp",
       "title": "three.ws Audio",
       "type": "stdio",
@@ -594,7 +624,7 @@
       "transport": "stdio",
       "connect": "npx -y @three-ws/brain-mcp",
       "npmPackage": "@three-ws/brain-mcp",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "description": "List LLM providers and run chat completions through the three.ws multi-provider router.",
       "tagline": "List LLM providers and run chat completions through the three.ws multi-provider router.",
       "category": "ai-models",
@@ -643,6 +673,25 @@
       "websiteUrl": "https://three.ws",
       "repository": "https://github.com/nirholas/three.ws",
       "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fclash-mcp",
+      "icon": "https://three.ws/three-ws-mcp-icon.svg"
+    },
+    {
+      "name": "io.github.nirholas/concierge-mcp",
+      "title": "three.ws Concierge",
+      "type": "stdio",
+      "transport": "stdio",
+      "connect": "npx -y @three-ws/concierge-mcp",
+      "npmPackage": "@three-ws/concierge-mcp",
+      "version": "0.1.0",
+      "description": "Ask any website's AI concierge a grounded question, and generate the embed to add one to a site.",
+      "tagline": "Ask any website's AI concierge a grounded question, and generate the embed to add one to a site.",
+      "category": "agents",
+      "tags": [],
+      "examplePrompts": [],
+      "requiredEnv": [],
+      "websiteUrl": "https://three.ws/concierge",
+      "repository": "https://github.com/nirholas/three.ws",
+      "registryUrl": "https://registry.modelcontextprotocol.io/?q=io.github.nirholas%2Fconcierge-mcp",
       "icon": "https://three.ws/three-ws-mcp-icon.svg"
     },
     {
@@ -714,7 +763,7 @@
       "transport": "stdio",
       "connect": "npx -y @three-ws/ibm-x402-mcp",
       "npmPackage": "@three-ws/ibm-x402-mcp",
-      "version": "1.1.1",
+      "version": "1.1.2",
       "description": "x402 pay-per-use IBM Granite AI: chat, code, embeddings, analysis, forecasting. Pay USDC per call.",
       "tagline": "x402 pay-per-use IBM Granite AI over stdio: chat, code, embeddings, analysis, forecasting — pay USDC per call.",
       "category": "ai-models",
@@ -891,7 +940,7 @@
       "transport": "stdio",
       "connect": "npx -y @three-ws/notifications-mcp",
       "npmPackage": "@three-ws/notifications-mcp",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "description": "Read the inbox, mark items read, manage delivery preferences, and register Web Push devices.",
       "tagline": "An agent's inbox — read notifications, mark them read, manage delivery preferences, and register Web Push devices.",
       "category": "account",
@@ -984,7 +1033,7 @@
       "transport": "stdio",
       "connect": "npx -y @three-ws/pumpfun-mcp",
       "npmPackage": "@three-ws/pumpfun-mcp",
-      "version": "0.2.2",
+      "version": "0.2.3",
       "description": "Free, read-only pump.fun + Solana MCP: token discovery, on-chain analysis, SNS, 3D snapshots.",
       "tagline": "Free, read-only pump.fun + Solana MCP: token discovery, on-chain analysis, SNS, 3D snapshots.",
       "category": "market-data",
@@ -1013,8 +1062,8 @@
       "transport": "stdio",
       "connect": "npx -y @three-ws/scene-mcp",
       "npmPackage": "@three-ws/scene-mcp",
-      "version": "0.1.1",
-      "description": "Compose a placed 3D diorama from one sentence, then browse the saved scene gallery.",
+      "version": "0.2.0",
+      "description": "Compose a placed 3D diorama from one sentence, build and export a complete forged world in one call, then browse the saved scene gallery.",
       "tagline": "Speak a placed 3D diorama into being from one sentence, then browse the saved scene gallery.",
       "category": "3d",
       "tags": [

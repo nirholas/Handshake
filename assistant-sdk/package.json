@@ -1,0 +1,63 @@
+{
+	"name": "@three-ws/assistant",
+	"version": "1.0.0",
+	"description": "A 3D avatar assistant for any website in one script tag. A floating launcher opens a real animated avatar with a chatbot mode (free models or the visitor's own Groq/OpenRouter key) and a speak mode that says whatever you type, out loud, in a speech bubble.",
+	"type": "module",
+	"author": "nirholas <support@three.ws>",
+	"license": "SEE LICENSE IN LICENSE",
+	"homepage": "https://three.ws/assistant",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nirholas/three.ws.git",
+		"directory": "assistant-sdk"
+	},
+	"bugs": {
+		"url": "https://github.com/nirholas/three.ws/issues"
+	},
+	"keywords": [
+		"three.ws",
+		"3d",
+		"avatar",
+		"assistant",
+		"chatbot",
+		"widget",
+		"embed",
+		"text-to-speech",
+		"tts",
+		"ai-agent"
+	],
+	"main": "./dist/assistant.mjs",
+	"module": "./dist/assistant.mjs",
+	"unpkg": "./dist/assistant.global.js",
+	"jsdelivr": "./dist/assistant.global.js",
+	"types": "./types/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./types/index.d.ts",
+			"import": "./dist/assistant.mjs",
+			"default": "./dist/assistant.mjs"
+		},
+		"./global": "./dist/assistant.global.js"
+	},
+	"files": [
+		"dist/assistant.mjs",
+		"dist/assistant.mjs.map",
+		"dist/assistant.global.js",
+		"dist/assistant.global.js.map",
+		"src",
+		"types",
+		"README.md",
+		"LICENSE"
+	],
+	"scripts": {
+		"build": "node build.mjs",
+		"prepublishOnly": "node build.mjs",
+		"test": "node --test \"test/*.test.js\""
+	},
+	"engines": {
+		"node": ">=18"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}
