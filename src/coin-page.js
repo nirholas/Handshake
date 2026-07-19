@@ -112,14 +112,17 @@ function renderHead(coin) {
 
 // ── Chart ───────────────────────────────────────────────────────────────────
 
-// Two chart sources share the panel: the native SVG line chart (default, zero
-// third-party weight) and TradingView's advanced chart widget, lazy-mounted
-// only when the user switches to it. The choice persists across coins.
+// The chart panel offers two sources: the native SVG line chart (default, zero
+// third-party weight) and a full candlestick "advanced" chart, lazy-mounted
+// only when the user switches to it. The advanced provider is chosen per coin —
+// TradingView for exchange-listed coins, DexScreener for Solana DEX tokens
+// TradingView doesn't carry — so "advanced" never lands on an unchartable
+// symbol. The simple/advanced choice persists across coins and visits.
 const CHART_MODE_KEY = 'tws_coin_chart_mode';
 
 function storedChartMode() {
 	try {
-		return localStorage.getItem(CHART_MODE_KEY) === 'tradingview' ? 'tradingview' : 'simple';
+		return localStorage.getItem(CHART_MODE_KEY) === 'advanced' ? 'advanced' : 'simple';
 	} catch {
 		return 'simple';
 	}
@@ -134,13 +137,39 @@ function tvSymbol(coin) {
 	return sym && /^[A-Z0-9]{1,15}$/.test(sym) ? `${sym}USD` : null;
 }
 
-let tvThemeObserver = null;
-
-function mountTradingView(coin) {
-	const host = $('cv-tv');
+// Pick the advanced-chart provider best suited to this coin. A Solana DEX token
+// (has a mint, isn't a top-ranked major) charts on DexScreener's terminal keyed
+// by the mint — it resolves the most-liquid pair itself and covers coins that
+// never reach a TradingView-listed exchange. Everything with a real ticker
+// charts on TradingView. Returns null when neither fits (no chartable identity).
+function advancedProvider(coin) {
+	const raw = coin.platforms?.solana;
+	const mint = raw && MINT_RE.test(raw) ? raw : null;
 	const symbol = tvSymbol(coin);
-	if (!host || !symbol) return;
-	const theme = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+	const major = coin.rank != null && coin.rank <= 300;
+	if (mint && !major) return { kind: 'dexscreener', mint, label: 'DexScreener' };
+	if (symbol) return { kind: 'tradingview', symbol, label: 'TradingView' };
+	if (mint) return { kind: 'dexscreener', mint, label: 'DexScreener' };
+	return null;
+}
+
+function chartTheme() {
+	return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+}
+
+let themeObserver = null;
+
+// Both embeds bake the theme in at mount time, so a live theme switch has to
+// re-mount. Registered once; only fires while the advanced chart is showing.
+function ensureThemeRemount(coin) {
+	if (themeObserver) return;
+	themeObserver = new MutationObserver(() => {
+		if (chartState.mode === 'advanced') renderChart(coin);
+	});
+	themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+}
+
+function mountTradingView(host, symbol) {
 	const container = document.createElement('div');
 	container.className = 'tradingview-widget-container';
 	container.style.height = '100%';
@@ -157,7 +186,7 @@ function mountTradingView(coin) {
 		symbol,
 		interval: 'D',
 		timezone: 'Etc/UTC',
-		theme,
+		theme: chartTheme(),
 		style: '1',
 		locale: 'en',
 		allow_symbol_change: true,
@@ -166,15 +195,35 @@ function mountTradingView(coin) {
 	});
 	container.appendChild(script);
 	host.replaceChildren(container);
+}
 
-	// The widget bakes its theme in at mount time, so a live theme switch
-	// needs a re-mount.
-	if (!tvThemeObserver) {
-		tvThemeObserver = new MutationObserver(() => {
-			if (chartState.mode === 'tradingview') mountTradingView(coin);
-		});
-		tvThemeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-	}
+function mountDexScreener(host, mint) {
+	const t = chartTheme();
+	const p = new URLSearchParams({
+		embed: '1',
+		loadChartSettings: '0',
+		theme: t,
+		chartTheme: t,
+		chartType: 'usd',
+		interval: '15',
+		info: '0',
+	});
+	const iframe = document.createElement('iframe');
+	iframe.src = `https://dexscreener.com/solana/${encodeURIComponent(mint)}?${p}`;
+	iframe.title = 'DexScreener chart';
+	iframe.loading = 'lazy';
+	iframe.allow = 'clipboard-write';
+	iframe.style.cssText = 'width:100%;height:100%;border:0;display:block';
+	host.replaceChildren(iframe);
+}
+
+function mountAdvanced(coin) {
+	const host = $('cv-adv');
+	const prov = advancedProvider(coin);
+	if (!host || !prov) return;
+	if (prov.kind === 'tradingview') mountTradingView(host, prov.symbol);
+	else mountDexScreener(host, prov.mint);
+	ensureThemeRemount(coin);
 }
 
 function setChartMode(coin, mode) {
@@ -223,28 +272,32 @@ function chartGeometry(series) {
 function renderChart(coin) {
 	const el = $('cv-chart');
 	const { days, series, loading, error, mode } = chartState;
-	const tvAvailable = tvSymbol(coin) != null;
-	const tv = mode === 'tradingview' && tvAvailable;
+	const prov = advancedProvider(coin);
+	const adv = mode === 'advanced' && prov != null;
 
-	const rangeBtns = tv
+	const rangeBtns = adv
 		? ''
 		: TIME_RANGES.map(
 				(r) =>
 					`<button type="button" class="cv-range-btn" data-days="${r.days}" aria-pressed="${r.days === days}">${r.label}</button>`,
 			).join('');
 
-	const modeBtns = tvAvailable
+	const modeBtns = prov
 		? `<div class="cv-ranges cv-chart-modes" role="group" aria-label="Chart source">
-				<button type="button" class="cv-range-btn" data-mode="simple" aria-pressed="${!tv}">Line</button>
-				<button type="button" class="cv-range-btn" data-mode="tradingview" aria-pressed="${tv}">TradingView</button>
+				<button type="button" class="cv-range-btn" data-mode="simple" aria-pressed="${!adv}">Line</button>
+				<button type="button" class="cv-range-btn" data-mode="advanced" aria-pressed="${adv}">${esc(prov.label)}</button>
 			</div>`
 		: '';
 
 	let body;
-	if (tv) {
+	if (adv) {
+		const credit =
+			prov.kind === 'tradingview'
+				? `<a href="https://www.tradingview.com/symbols/${esc(prov.symbol)}/" target="_blank" rel="noopener nofollow noreferrer">${esc(coin.symbol || coin.name)} chart by TradingView ↗</a>`
+				: `<a href="https://dexscreener.com/solana/${esc(prov.mint)}" target="_blank" rel="noopener nofollow noreferrer">Open in DexScreener ↗</a>`;
 		body = `
-			<div class="cv-tv-wrap" id="cv-tv" aria-label="TradingView chart for ${esc(coin.name)}"></div>
-			<p class="cv-tv-credit"><a href="https://www.tradingview.com/symbols/${esc(tvSymbol(coin))}/" target="_blank" rel="noopener nofollow noreferrer">${esc(coin.symbol || coin.name)} chart by TradingView ↗</a></p>`;
+			<div class="cv-adv-wrap" id="cv-adv" aria-label="${esc(prov.label)} chart for ${esc(coin.name)}"></div>
+			<p class="cv-tv-credit">${credit}</p>`;
 	} else if (loading) {
 		body = '<div class="cv-chart-state"><span class="cv-spinner" aria-hidden="true"></span>Loading chart…</div>';
 	} else if (error || series.length < 2) {
@@ -285,7 +338,7 @@ function renderChart(coin) {
 	}
 
 	const pct =
-		!tv && !loading && !error && series.length >= 2
+		!adv && !loading && !error && series.length >= 2
 			? (() => {
 					const g = chartGeometry(series);
 					return `<span class="pct ${g.up ? 'cv-up' : 'cv-down'} cv-mono">${esc(formatPercent(g.changePct))}</span>`;
@@ -316,7 +369,7 @@ function renderChart(coin) {
 		btn.addEventListener('click', () => setChartMode(coin, btn.dataset.mode));
 	});
 
-	if (tv) mountTradingView(coin);
+	if (adv) mountAdvanced(coin);
 	else wireChartPointer();
 }
 
@@ -886,9 +939,9 @@ async function main() {
 		upd.textContent = `Last updated: ${new Date(coin.last_updated).toLocaleString()}`;
 	}
 	// Chart, markets, and news stream in independently of the core profile.
-	// A remembered TradingView preference mounts the widget directly and
-	// defers the native OHLC fetch until the user switches back.
-	if (chartState.mode === 'tradingview' && tvSymbol(coin)) {
+	// A remembered "advanced" preference mounts the candlestick embed directly
+	// and defers the native OHLC fetch until the user switches back.
+	if (chartState.mode === 'advanced' && advancedProvider(coin)) {
 		chartState.loading = false;
 		renderChart(coin);
 	} else {
