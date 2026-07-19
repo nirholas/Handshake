@@ -116,6 +116,9 @@ function renderBoard(experiments) {
 	const rows = experiments
 		.map((x) => {
 			const record = x.closed > 0 ? `${x.wins}W · ${x.losses}L` : 'no fills';
+			const paper = x.paper_closed > 0 || x.paper_open > 0
+				? `<div class="xp-paper" title="Simulate-mode record: real quotes, no broadcast">paper: ${x.paper_wins}W · ${x.paper_closed - x.paper_wins}L${x.paper_open ? ` · ${x.paper_open} open` : ''} · ${esc(sol(x.paper_pnl_sol))}</div>`
+				: '';
 			return `
 			<tr class="${x.enabled ? '' : 'xp-off'}">
 				<td>
@@ -123,7 +126,7 @@ function renderBoard(experiments) {
 					<div class="xp-agent"><a href="/a/${esc(x.agent_id)}">${esc(x.agent_name || 'agent')}</a> ${modeBadge(x)}</div>
 				</td>
 				<td class="xp-cond">${esc(x.conditions)}<div class="xp-cond-sub">${esc(String(x.per_trade_sol ?? '·'))} SOL/trade · SL ${esc(pct(-Math.abs(x.stop_loss_pct ?? 0), false))}${x.trailing_stop_pct != null ? ` · trail ${esc(pct(x.trailing_stop_pct, false))}` : ''}${x.max_hold_seconds != null ? ` · max ${esc(holdFmt(x.max_hold_seconds))}` : ''}</div></td>
-				<td>${esc(record)}${x.open > 0 ? ` <span class="xp-open">+${x.open} open</span>` : ''}</td>
+				<td>${esc(record)}${x.open > 0 ? ` <span class="xp-open">+${x.open} open</span>` : ''}${paper}</td>
 				<td>${x.win_rate != null ? esc(String(x.win_rate)) + '%' : '·'}</td>
 				<td class="${pnlClass(x.realized_pnl_sol)}">${esc(sol(x.realized_pnl_sol))}</td>
 				<td class="${pnlClass(x.roi_pct)}">${esc(pct(x.roi_pct))}</td>
@@ -191,6 +194,7 @@ function injectStyles() {
 	.xp-pos{color:#4ade80}
 	.xp-neg{color:#f87171}
 	.xp-open{font-size:11px;color:#93c5fd}
+	.xp-paper{font-size:11px;color:var(--cv-text-3,#888);margin-top:3px}
 	.xp-paused{font-size:10.5px;color:var(--cv-text-3,#888);font-weight:400}
 	.xp-off td{opacity:.55}
 	`;

@@ -66,22 +66,26 @@ export default wrap(async (req, res) => {
 			s.min_oracle_score, s.min_quality_score, s.max_bundle_score, s.require_smart_money,
 			s.stop_loss_pct, s.trailing_stop_pct, s.take_profit_pct, s.max_hold_seconds,
 			a.id as agent_id, a.name as agent_name,
-			count(p.id) filter (where p.status = 'closed')                                   as closed,
-			count(p.id) filter (where p.status = 'closed' and p.realized_pnl_lamports > 0)   as wins,
-			count(p.id) filter (where p.status = 'open')                                     as open,
-			coalesce(sum(p.realized_pnl_lamports) filter (where p.status = 'closed'), 0)     as realized_pnl_lamports,
-			coalesce(sum(p.entry_quote_lamports) filter (where p.status = 'closed'), 0)      as deployed_lamports,
-			avg(p.realized_pnl_pct) filter (where p.status = 'closed')                       as avg_pnl_pct,
-			max(p.realized_pnl_pct) filter (where p.status = 'closed')                       as best_pnl_pct,
-			min(p.realized_pnl_pct) filter (where p.status = 'closed')                       as worst_pnl_pct,
-			avg(extract(epoch from (p.closed_at - p.opened_at))) filter (where p.status = 'closed') as avg_hold_s,
-			max(p.closed_at)                                                                 as last_closed_at
+			count(p.id) filter (where p.status = 'closed' and p.buy_sig <> 'SIMULATED')                                 as closed,
+			count(p.id) filter (where p.status = 'closed' and p.buy_sig <> 'SIMULATED' and p.realized_pnl_lamports > 0) as wins,
+			count(p.id) filter (where p.status = 'open' and p.buy_sig <> 'SIMULATED')                                   as open,
+			coalesce(sum(p.realized_pnl_lamports) filter (where p.status = 'closed' and p.buy_sig <> 'SIMULATED'), 0)   as realized_pnl_lamports,
+			coalesce(sum(p.entry_quote_lamports) filter (where p.status = 'closed' and p.buy_sig <> 'SIMULATED'), 0)    as deployed_lamports,
+			avg(p.realized_pnl_pct) filter (where p.status = 'closed' and p.buy_sig <> 'SIMULATED')                     as avg_pnl_pct,
+			max(p.realized_pnl_pct) filter (where p.status = 'closed' and p.buy_sig <> 'SIMULATED')                     as best_pnl_pct,
+			min(p.realized_pnl_pct) filter (where p.status = 'closed' and p.buy_sig <> 'SIMULATED')                     as worst_pnl_pct,
+			avg(extract(epoch from (p.closed_at - p.opened_at))) filter (where p.status = 'closed' and p.buy_sig <> 'SIMULATED') as avg_hold_s,
+			max(p.closed_at) filter (where p.buy_sig <> 'SIMULATED')                                                    as last_closed_at,
+			count(p.id) filter (where p.status = 'closed' and p.buy_sig = 'SIMULATED')                                  as paper_closed,
+			count(p.id) filter (where p.status = 'closed' and p.buy_sig = 'SIMULATED' and p.realized_pnl_lamports > 0)  as paper_wins,
+			count(p.id) filter (where p.status = 'open' and p.buy_sig = 'SIMULATED')                                    as paper_open,
+			coalesce(sum(p.realized_pnl_lamports) filter (where p.status = 'closed' and p.buy_sig = 'SIMULATED'), 0)    as paper_pnl_lamports
 		from agent_sniper_strategies s
 		join agent_identities a on a.id = s.agent_id and a.deleted_at is null
 		left join agent_sniper_positions p
 			on p.strategy_id = s.id
 			and p.network = s.network
-			and p.buy_sig is not null and p.buy_sig <> 'SIMULATED'
+			and p.buy_sig is not null
 			and (${interval}::text is null or p.opened_at > now() - (${interval}::text)::interval)
 		where s.network = ${network}
 		  and (s.enabled = true or s.label is not null)
@@ -124,6 +128,13 @@ export default wrap(async (req, res) => {
 			worst_pnl_pct: r.worst_pnl_pct != null ? Number(Number(r.worst_pnl_pct).toFixed(2)) : null,
 			avg_hold_seconds: r.avg_hold_s != null ? Math.round(Number(r.avg_hold_s)) : null,
 			last_closed_at: r.last_closed_at || null,
+			// Simulate-mode (paper) record, kept strictly separate from the real one:
+			// the worker's SNIPER_MODE=simulate books quotes without broadcasting, so
+			// these rows prove behavior but never claim on-chain results.
+			paper_closed: Number(r.paper_closed) || 0,
+			paper_wins: Number(r.paper_wins) || 0,
+			paper_open: Number(r.paper_open) || 0,
+			paper_pnl_sol: lamportsToSol(r.paper_pnl_lamports),
 		};
 	});
 
