@@ -22,7 +22,9 @@ import { limits, clientIp } from './_lib/rate-limit.js';
 import { assertPublicHttpsUrl, SsrfError } from './_lib/ssrf.js';
 import { createRegenProvider } from './_providers/gcp.js';
 
-const JOB_ID_RE = /^[A-Za-z0-9_-]{20,64}$/;
+// Provider job ids are base64url JSON envelopes (packJobId in _providers/gcp.js)
+// and run several hundred chars — a 64-char cap 400s every poll.
+const JOB_ID_RE = /^[A-Za-z0-9_-]{20,600}$/;
 const VALID_METHODS = new Set(['auto', 'connected', 'crease']);
 const PART_REF_RE = /^[A-Za-z0-9_-]{1,64}$/;
 

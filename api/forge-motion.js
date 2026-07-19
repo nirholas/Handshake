@@ -25,7 +25,9 @@ import { cors, json, method, readJson, wrap, rateLimited } from './_lib/http.js'
 import { limits, clientIp } from './_lib/rate-limit.js';
 import { createRegenProvider } from './_providers/gcp.js';
 
-const JOB_ID_RE = /^[A-Za-z0-9_-]{20,64}$/;
+// Provider job ids are base64url JSON envelopes (packJobId in _providers/gcp.js)
+// and run several hundred chars — a 64-char cap 400s every poll.
+const JOB_ID_RE = /^[A-Za-z0-9_-]{20,600}$/;
 const MAX_DURATION = 10;
 const MIN_DURATION = 1;
 
