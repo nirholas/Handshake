@@ -2804,6 +2804,24 @@ beyond).
 
 ---
 
+### On-chain pool resolution
+
+```
+GET /api/coin/pool?address=<token-address>&network=<gecko-network>
+```
+
+Resolves a token's most-liquid on-chain pool, so the coin page can mount the
+GeckoTerminal chart embed (which is keyed by pool address, not token). `network`
+is a GeckoTerminal network id (`solana`, `eth`, `base`, `bsc`, `polygon_pos`,
+`arbitrum`, `optimism`, `avax`); `address` is the token mint (Solana) or
+contract (EVM), validated per-network at the boundary. Returns
+`{ "network", "address", "pool" }`. A token with no indexed pool returns `404`
+(`no_pool`); upstream throttles surface as `429`, outages as `502` — the client
+falls back to an "open on GeckoTerminal" link rather than a fabricated chart.
+Cached 60s in-process + 5min at the CDN.
+
+---
+
 ### Markets table / coin search
 
 ```

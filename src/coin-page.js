@@ -112,23 +112,32 @@ function renderHead(coin) {
 
 // ── Chart ───────────────────────────────────────────────────────────────────
 
-// The chart panel offers two sources: the native SVG line chart (default, zero
-// third-party weight) and a full candlestick "advanced" chart, lazy-mounted
-// only when the user switches to it. The advanced provider is chosen per coin —
-// TradingView for exchange-listed coins, DexScreener for Solana DEX tokens
-// TradingView doesn't carry — so "advanced" never lands on an unchartable
-// symbol. The simple/advanced choice persists across coins and visits.
-const CHART_MODE_KEY = 'tws_coin_chart_mode';
+// The chart panel is a multi-source switcher. CoinGecko powers the default,
+// zero-dependency native line chart (with the time-range selector); the other
+// sources lazy-mount a full third-party terminal in an iframe only when picked:
+//   • TradingView   — advanced candlestick widget, for coins with a ticker.
+//   • DexScreener   — on-chain terminal keyed by the token address (all chains).
+//   • GeckoTerminal — on-chain terminal keyed by the token's most-liquid pool.
+// Each source is offered only when it can actually render for the coin, so the
+// switcher never lands on a dead chart. The picked source persists across coins.
+const CHART_SOURCE_KEY = 'tws_coin_chart_source';
 
-function storedChartMode() {
-	try {
-		return localStorage.getItem(CHART_MODE_KEY) === 'advanced' ? 'advanced' : 'simple';
-	} catch {
-		return 'simple';
-	}
-}
+// CoinGecko asset-platform id → the chain slug DexScreener and the network id
+// GeckoTerminal use for the same chain. Solana leads (home chain); the rest are
+// the majors both terminals index. A platform without a mapping is not offered
+// an on-chain chart.
+const CHAIN_MAP = {
+	solana: { ds: 'solana', gt: 'solana', evm: false },
+	ethereum: { ds: 'ethereum', gt: 'eth', evm: true },
+	base: { ds: 'base', gt: 'base', evm: true },
+	'binance-smart-chain': { ds: 'bsc', gt: 'bsc', evm: true },
+	'polygon-pos': { ds: 'polygon', gt: 'polygon_pos', evm: true },
+	'arbitrum-one': { ds: 'arbitrum', gt: 'arbitrum', evm: true },
+	'optimistic-ethereum': { ds: 'optimism', gt: 'optimism', evm: true },
+	avalanche: { ds: 'avalanche', gt: 'avax', evm: true },
+};
 
-const chartState = { days: 30, series: [], loading: true, error: null, mode: storedChartMode() };
+const EVM_RE = /^0x[0-9a-fA-F]{40}$/;
 
 // TradingView resolves an unprefixed BASE+QUOTE pair (e.g. BTCUSD) to its
 // top-liquidity listing, so no exchange mapping table is needed.
@@ -137,20 +146,59 @@ function tvSymbol(coin) {
 	return sym && /^[A-Z0-9]{1,15}$/.test(sym) ? `${sym}USD` : null;
 }
 
-// Pick the advanced-chart provider best suited to this coin. A Solana DEX token
-// (has a mint, isn't a top-ranked major) charts on DexScreener's terminal keyed
-// by the mint — it resolves the most-liquid pair itself and covers coins that
-// never reach a TradingView-listed exchange. Everything with a real ticker
-// charts on TradingView. Returns null when neither fits (no chartable identity).
-function advancedProvider(coin) {
-	const raw = coin.platforms?.solana;
-	const mint = raw && MINT_RE.test(raw) ? raw : null;
-	const symbol = tvSymbol(coin);
-	const major = coin.rank != null && coin.rank <= 300;
-	if (mint && !major) return { kind: 'dexscreener', mint, label: 'DexScreener' };
-	if (symbol) return { kind: 'tradingview', symbol, label: 'TradingView' };
-	if (mint) return { kind: 'dexscreener', mint, label: 'DexScreener' };
+// The coin's on-chain identity for the DEX terminals: a contract address plus
+// the per-provider chain slugs. Solana is preferred when present (home chain);
+// otherwise the first platform whose address is well-formed for a mapped chain.
+function onchainRef(coin) {
+	const entries = Object.entries(coin.platforms || {});
+	const ordered = entries.sort(([a], [b]) => (a === 'solana' ? -1 : b === 'solana' ? 1 : 0));
+	for (const [platform, address] of ordered) {
+		const m = CHAIN_MAP[platform];
+		if (!m || typeof address !== 'string') continue;
+		const addr = address.trim();
+		const valid = m.evm ? EVM_RE.test(addr) : MINT_RE.test(addr);
+		if (valid) return { platform, address: addr, ds: m.ds, gt: m.gt };
+	}
 	return null;
+}
+
+// The switchable chart sources, in tab order. `available` gates whether a tab
+// shows for a given coin; `kind` selects the render path in renderChart.
+const CHART_SOURCES = [
+	{ id: 'coingecko', label: 'CoinGecko', kind: 'native', available: () => true },
+	{ id: 'tradingview', label: 'TradingView', kind: 'tradingview', available: (c) => tvSymbol(c) != null },
+	{ id: 'dexscreener', label: 'DexScreener', kind: 'dexscreener', available: (c) => onchainRef(c) != null },
+	{ id: 'geckoterminal', label: 'GeckoTerminal', kind: 'geckoterminal', available: (c) => onchainRef(c) != null },
+];
+
+function availableSources(coin) {
+	return CHART_SOURCES.filter((s) => s.available(coin));
+}
+
+function storedChartSource() {
+	try {
+		return localStorage.getItem(CHART_SOURCE_KEY) || 'coingecko';
+	} catch {
+		return 'coingecko';
+	}
+}
+
+const chartState = {
+	days: 30,
+	series: [],
+	loading: true,
+	error: null,
+	source: storedChartSource(),
+	// GeckoTerminal pool resolution is async, resolved once per coin.
+	gtPool: null,
+	gtState: 'idle', // idle | loading | ready | error
+};
+
+// The source actually rendered for this coin: the stored preference when it's
+// available here, else the CoinGecko native chart (always available).
+function resolvedSource(coin) {
+	const avail = availableSources(coin);
+	return avail.find((s) => s.id === chartState.source) || avail[0];
 }
 
 function chartTheme() {
@@ -159,14 +207,24 @@ function chartTheme() {
 
 let themeObserver = null;
 
-// Both embeds bake the theme in at mount time, so a live theme switch has to
-// re-mount. Registered once; only fires while the advanced chart is showing.
+// The iframe terminals bake the theme in at mount time, so a live theme switch
+// re-renders whichever embed is showing. Registered once.
 function ensureThemeRemount(coin) {
 	if (themeObserver) return;
 	themeObserver = new MutationObserver(() => {
-		if (chartState.mode === 'advanced') renderChart(coin);
+		if (resolvedSource(coin).kind !== 'native') renderChart(coin);
 	});
 	themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+}
+
+function iframeEl(src, title) {
+	const iframe = document.createElement('iframe');
+	iframe.src = src;
+	iframe.title = title;
+	iframe.loading = 'lazy';
+	iframe.allow = 'clipboard-write';
+	iframe.style.cssText = 'width:100%;height:100%;border:0;display:block';
+	return iframe;
 }
 
 function mountTradingView(host, symbol) {
@@ -197,7 +255,7 @@ function mountTradingView(host, symbol) {
 	host.replaceChildren(container);
 }
 
-function mountDexScreener(host, mint) {
+function mountDexScreener(host, ref) {
 	const t = chartTheme();
 	const p = new URLSearchParams({
 		embed: '1',
@@ -208,35 +266,56 @@ function mountDexScreener(host, mint) {
 		interval: '15',
 		info: '0',
 	});
-	const iframe = document.createElement('iframe');
-	iframe.src = `https://dexscreener.com/solana/${encodeURIComponent(mint)}?${p}`;
-	iframe.title = 'DexScreener chart';
-	iframe.loading = 'lazy';
-	iframe.allow = 'clipboard-write';
-	iframe.style.cssText = 'width:100%;height:100%;border:0;display:block';
-	host.replaceChildren(iframe);
+	host.replaceChildren(
+		iframeEl(`https://dexscreener.com/${ref.ds}/${encodeURIComponent(ref.address)}?${p}`, 'DexScreener chart'),
+	);
 }
 
-function mountAdvanced(coin) {
-	const host = $('cv-adv');
-	const prov = advancedProvider(coin);
-	if (!host || !prov) return;
-	if (prov.kind === 'tradingview') mountTradingView(host, prov.symbol);
-	else mountDexScreener(host, prov.mint);
-	ensureThemeRemount(coin);
+function mountGeckoTerminal(host, ref, pool) {
+	const p = new URLSearchParams({
+		embed: '1',
+		info: '0',
+		swaps: '0',
+		grayscale: '0',
+		light_chart: chartTheme() === 'light' ? '1' : '0',
+	});
+	host.replaceChildren(
+		iframeEl(`https://www.geckoterminal.com/${ref.gt}/pools/${encodeURIComponent(pool)}?${p}`, 'GeckoTerminal chart'),
+	);
 }
 
-function setChartMode(coin, mode) {
-	if (mode === chartState.mode) return;
-	chartState.mode = mode;
+// GeckoTerminal embeds are keyed by pool, not token, so resolve the most-liquid
+// pool once via our cached proxy, then mount. State drives the loading/error UI.
+async function loadGtPool(coin, ref) {
+	if (chartState.gtState === 'loading') return;
+	chartState.gtState = 'loading';
+	renderChart(coin);
 	try {
-		localStorage.setItem(CHART_MODE_KEY, mode);
+		const { pool } = await getJson(
+			`/api/coin/pool?address=${encodeURIComponent(ref.address)}&network=${encodeURIComponent(ref.gt)}`,
+		);
+		if (!pool) throw new Error('no pool');
+		chartState.gtPool = pool;
+		chartState.gtState = 'ready';
 	} catch {
-		// Private browsing: the toggle still works for this page view.
+		chartState.gtPool = null;
+		chartState.gtState = 'error';
 	}
 	renderChart(coin);
-	// Entering native mode with no data yet loads it on demand.
-	if (mode === 'simple' && !chartState.series.length && !chartState.loading) loadChart(coin);
+}
+
+function setChartSource(coin, id) {
+	if (id === chartState.source) return;
+	chartState.source = id;
+	try {
+		localStorage.setItem(CHART_SOURCE_KEY, id);
+	} catch {
+		// Private browsing: the switch still works for this page view.
+	}
+	renderChart(coin);
+	const src = resolvedSource(coin);
+	// Entering the native chart with no data yet loads it on demand.
+	if (src.kind === 'native' && !chartState.series.length && !chartState.loading) loadChart(coin);
 }
 
 const CHART_W = 800;
@@ -271,74 +350,32 @@ function chartGeometry(series) {
 
 function renderChart(coin) {
 	const el = $('cv-chart');
-	const { days, series, loading, error, mode } = chartState;
-	const prov = advancedProvider(coin);
-	const adv = mode === 'advanced' && prov != null;
+	const { days, series, loading, error } = chartState;
+	const sources = availableSources(coin);
+	const active = resolvedSource(coin);
+	const native = active.kind === 'native';
 
-	const rangeBtns = adv
-		? ''
-		: TIME_RANGES.map(
+	const rangeBtns = native
+		? TIME_RANGES.map(
 				(r) =>
 					`<button type="button" class="cv-range-btn" data-days="${r.days}" aria-pressed="${r.days === days}">${r.label}</button>`,
-			).join('');
-
-	const modeBtns = prov
-		? `<div class="cv-ranges cv-chart-modes" role="group" aria-label="Chart source">
-				<button type="button" class="cv-range-btn" data-mode="simple" aria-pressed="${!adv}">Line</button>
-				<button type="button" class="cv-range-btn" data-mode="advanced" aria-pressed="${adv}">${esc(prov.label)}</button>
-			</div>`
+			).join('')
 		: '';
 
-	let body;
-	if (adv) {
-		const credit =
-			prov.kind === 'tradingview'
-				? `<a href="https://www.tradingview.com/symbols/${esc(prov.symbol)}/" target="_blank" rel="noopener nofollow noreferrer">${esc(coin.symbol || coin.name)} chart by TradingView ↗</a>`
-				: `<a href="https://dexscreener.com/solana/${esc(prov.mint)}" target="_blank" rel="noopener nofollow noreferrer">Open in DexScreener ↗</a>`;
-		body = `
-			<div class="cv-adv-wrap" id="cv-adv" aria-label="${esc(prov.label)} chart for ${esc(coin.name)}"></div>
-			<p class="cv-tv-credit">${credit}</p>`;
-	} else if (loading) {
-		body = '<div class="cv-chart-state"><span class="cv-spinner" aria-hidden="true"></span>Loading chart…</div>';
-	} else if (error || series.length < 2) {
-		body = '<div class="cv-chart-state">Chart data unavailable</div>';
-	} else {
-		const g = chartGeometry(series);
-		const color = g.up ? 'var(--cv-chart-green)' : 'var(--cv-chart-red)';
-		const steps = 4;
-		const h = CHART_H - PAD.top - PAD.bottom;
-		const yLabels = Array.from({ length: steps + 1 }, (_, i) => {
-			const price = g.min + (g.range * i) / steps;
-			const y = PAD.top + h - (i / steps) * h;
-			return `<g><line x1="${PAD.left}" y1="${y}" x2="${CHART_W - PAD.right}" y2="${y}" stroke="var(--cv-border)" stroke-width="0.5" stroke-dasharray="4 4" opacity="0.5"/><text x="${CHART_W - PAD.right + 8}" y="${y + 4}" font-size="10" fill="var(--cv-text-3)">${esc(formatPrice(price))}</text></g>`;
-		}).join('');
-		body = `
-			<div class="cv-chart-area">
-				<svg viewBox="0 0 ${CHART_W} ${CHART_H}" role="img"
-					aria-label="Price chart for ${esc(coin.name)} over ${days} day${days > 1 ? 's' : ''}. Change: ${esc(formatPercent(g.changePct))}">
-					<defs>
-						<linearGradient id="cv-grad" x1="0" x2="0" y1="0" y2="1">
-							<stop offset="0%" stop-color="${color}" stop-opacity="0.2"/>
-							<stop offset="100%" stop-color="${color}" stop-opacity="0.02"/>
-						</linearGradient>
-					</defs>
-					${yLabels}
-					<path d="${g.area}" fill="url(#cv-grad)"/>
-					<path d="${g.line}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-					<g id="cv-crosshair" hidden>
-						<line id="cv-cross-line" x1="0" y1="${PAD.top}" x2="0" y2="${CHART_H - PAD.bottom}" stroke="var(--cv-text-3)" stroke-width="0.5" stroke-dasharray="3 3"/>
-						<circle id="cv-cross-dot" r="4" fill="${color}" stroke="var(--cv-surface)" stroke-width="2"/>
-					</g>
-				</svg>
-				<div class="cv-chart-tip" id="cv-tip" hidden>
-					<p class="p cv-mono" id="cv-tip-price"></p>
-					<p class="d" id="cv-tip-date"></p>
-				</div>
-			</div>`;
-	}
+	const sourceBtns =
+		sources.length > 1
+			? `<div class="cv-ranges cv-chart-modes" role="group" aria-label="Chart source">${sources
+					.map(
+						(s) =>
+							`<button type="button" class="cv-range-btn" data-source="${s.id}" aria-pressed="${s.id === active.id}">${esc(s.label)}</button>`,
+					)
+					.join('')}</div>`
+			: '';
+
+	const body = native ? nativeChartBody(coin) : embedChartBody(coin, active);
 
 	const pct =
-		!adv && !loading && !error && series.length >= 2
+		native && !loading && !error && series.length >= 2
 			? (() => {
 					const g = chartGeometry(series);
 					return `<span class="pct ${g.up ? 'cv-up' : 'cv-down'} cv-mono">${esc(formatPercent(g.changePct))}</span>`;
@@ -351,7 +388,7 @@ function renderChart(coin) {
 				<div class="left"><span class="title">Price Chart</span>${pct}</div>
 				<div class="cv-chart-controls">
 					${rangeBtns ? `<div class="cv-ranges" role="group" aria-label="Chart time range">${rangeBtns}</div>` : ''}
-					${modeBtns}
+					${sourceBtns}
 				</div>
 			</div>
 			${body}
@@ -365,12 +402,106 @@ function renderChart(coin) {
 			loadChart(coin);
 		});
 	});
-	el.querySelectorAll('.cv-range-btn[data-mode]').forEach((btn) => {
-		btn.addEventListener('click', () => setChartMode(coin, btn.dataset.mode));
+	el.querySelectorAll('.cv-range-btn[data-source]').forEach((btn) => {
+		btn.addEventListener('click', () => setChartSource(coin, btn.dataset.source));
 	});
 
-	if (adv) mountAdvanced(coin);
-	else wireChartPointer();
+	if (native) wireChartPointer();
+	else mountActiveEmbed(coin, active);
+}
+
+// The native (CoinGecko) line chart body: loading, error, or the SVG series.
+function nativeChartBody(coin) {
+	const { days, series, loading, error } = chartState;
+	if (loading) {
+		return '<div class="cv-chart-state"><span class="cv-spinner" aria-hidden="true"></span>Loading chart…</div>';
+	}
+	if (error || series.length < 2) {
+		return '<div class="cv-chart-state">Chart data unavailable</div>';
+	}
+	const g = chartGeometry(series);
+	const color = g.up ? 'var(--cv-chart-green)' : 'var(--cv-chart-red)';
+	const steps = 4;
+	const h = CHART_H - PAD.top - PAD.bottom;
+	const yLabels = Array.from({ length: steps + 1 }, (_, i) => {
+		const price = g.min + (g.range * i) / steps;
+		const y = PAD.top + h - (i / steps) * h;
+		return `<g><line x1="${PAD.left}" y1="${y}" x2="${CHART_W - PAD.right}" y2="${y}" stroke="var(--cv-border)" stroke-width="0.5" stroke-dasharray="4 4" opacity="0.5"/><text x="${CHART_W - PAD.right + 8}" y="${y + 4}" font-size="10" fill="var(--cv-text-3)">${esc(formatPrice(price))}</text></g>`;
+	}).join('');
+	return `
+		<div class="cv-chart-area">
+			<svg viewBox="0 0 ${CHART_W} ${CHART_H}" role="img"
+				aria-label="Price chart for ${esc(coin.name)} over ${days} day${days > 1 ? 's' : ''}. Change: ${esc(formatPercent(g.changePct))}">
+				<defs>
+					<linearGradient id="cv-grad" x1="0" x2="0" y1="0" y2="1">
+						<stop offset="0%" stop-color="${color}" stop-opacity="0.2"/>
+						<stop offset="100%" stop-color="${color}" stop-opacity="0.02"/>
+					</linearGradient>
+				</defs>
+				${yLabels}
+				<path d="${g.area}" fill="url(#cv-grad)"/>
+				<path d="${g.line}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+				<g id="cv-crosshair" hidden>
+					<line id="cv-cross-line" x1="0" y1="${PAD.top}" x2="0" y2="${CHART_H - PAD.bottom}" stroke="var(--cv-text-3)" stroke-width="0.5" stroke-dasharray="3 3"/>
+					<circle id="cv-cross-dot" r="4" fill="${color}" stroke="var(--cv-surface)" stroke-width="2"/>
+				</g>
+			</svg>
+			<div class="cv-chart-tip" id="cv-tip" hidden>
+				<p class="p cv-mono" id="cv-tip-price"></p>
+				<p class="d" id="cv-tip-date"></p>
+			</div>
+		</div>`;
+}
+
+// The iframe-terminal body for a non-native source: the mount target + an
+// attribution/open link, or GeckoTerminal's loading/error states while its pool
+// resolves. `cv-adv` is present only when an iframe should mount.
+function embedChartBody(coin, source) {
+	if (source.kind === 'tradingview') {
+		const sym = tvSymbol(coin);
+		const credit = `<a href="https://www.tradingview.com/symbols/${esc(sym)}/" target="_blank" rel="noopener nofollow noreferrer">${esc(coin.symbol || coin.name)} chart by TradingView ↗</a>`;
+		return `<div class="cv-adv-wrap" id="cv-adv" aria-label="TradingView chart for ${esc(coin.name)}"></div><p class="cv-tv-credit">${credit}</p>`;
+	}
+	const ref = onchainRef(coin);
+	if (!ref) return '<div class="cv-chart-state">Chart data unavailable</div>';
+	if (source.kind === 'dexscreener') {
+		const credit = `<a href="https://dexscreener.com/${esc(ref.ds)}/${esc(ref.address)}" target="_blank" rel="noopener nofollow noreferrer">Open in DexScreener ↗</a>`;
+		return `<div class="cv-adv-wrap" id="cv-adv" aria-label="DexScreener chart for ${esc(coin.name)}"></div><p class="cv-tv-credit">${credit}</p>`;
+	}
+	// geckoterminal
+	const openLink = `<a href="https://www.geckoterminal.com/${esc(ref.gt)}/tokens/${esc(ref.address)}" target="_blank" rel="noopener nofollow noreferrer">Open in GeckoTerminal ↗</a>`;
+	if (chartState.gtState === 'error') {
+		return `<div class="cv-chart-state">On-chain chart unavailable · ${openLink}</div>`;
+	}
+	if (chartState.gtState !== 'ready' || !chartState.gtPool) {
+		return '<div class="cv-chart-state"><span class="cv-spinner" aria-hidden="true"></span>Loading GeckoTerminal…</div>';
+	}
+	return `<div class="cv-adv-wrap" id="cv-adv" aria-label="GeckoTerminal chart for ${esc(coin.name)}"></div><p class="cv-tv-credit">${openLink}</p>`;
+}
+
+// Mount the iframe for the active non-native source into #cv-adv. GeckoTerminal
+// first resolves its pool (kicking off the async fetch on the idle→loading
+// transition); the other terminals mount synchronously.
+function mountActiveEmbed(coin, source) {
+	ensureThemeRemount(coin);
+	if (source.kind === 'tradingview') {
+		mountTradingView($('cv-adv'), tvSymbol(coin));
+		return;
+	}
+	const ref = onchainRef(coin);
+	if (!ref) return;
+	if (source.kind === 'dexscreener') {
+		mountDexScreener($('cv-adv'), ref);
+		return;
+	}
+	// geckoterminal
+	if (chartState.gtState === 'idle') {
+		loadGtPool(coin, ref);
+		return;
+	}
+	if (chartState.gtState === 'ready' && chartState.gtPool) {
+		mountGeckoTerminal($('cv-adv'), ref, chartState.gtPool);
+	}
 }
 
 function wireChartPointer() {
@@ -939,14 +1070,13 @@ async function main() {
 		upd.textContent = `Last updated: ${new Date(coin.last_updated).toLocaleString()}`;
 	}
 	// Chart, markets, and news stream in independently of the core profile.
-	// A remembered "advanced" preference mounts the candlestick embed directly
-	// and defers the native OHLC fetch until the user switches back.
-	if (chartState.mode === 'advanced' && advancedProvider(coin)) {
+	// A remembered non-CoinGecko source mounts its terminal directly and defers
+	// the native OHLC fetch until the user switches back to the CoinGecko chart.
+	if (resolvedSource(coin).kind === 'native') {
+		loadChart(coin);
+	} else {
 		chartState.loading = false;
 		renderChart(coin);
-	} else {
-		chartState.mode = 'simple';
-		loadChart(coin);
 	}
 	loadMarkets(coin);
 	loadNews(coin);

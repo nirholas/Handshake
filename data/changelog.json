@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-19",
+			"title": "Switch any coin chart between CoinGecko, TradingView, DexScreener, and GeckoTerminal",
+			"summary": "The chart on every /coin page now has a source switcher. Start on the fast native CoinGecko line chart, then flip to TradingView's advanced candlesticks, or to the DexScreener or GeckoTerminal on-chain terminal for the token's live DEX pair. Each option only appears when it can actually chart that coin, your pick is remembered across coins and visits, and every view follows the site theme.",
+			"tags": [
+				"feature",
+				"improvement"
+			],
+			"link": "/coin/bitcoin"
+		},
+		{
+			"date": "2026-07-19",
 			"title": "Coin Radar's live trade data restored, now read straight from the chain",
 			"summary": "The pipeline that watches every pump.fun launch had quietly lost its per-coin trade feed when the upstream data provider moved it behind a paywall, which left conviction scores flat and the oracle's calls, win rate, and proof panels empty. Trade ingestion now reads directly from the Solana chain itself over our own RPC failover, so every buy and sell is observed again with no third-party dependency. Conviction scores, smart-money tracking, and the oracle's actionable tiers repopulate as new launches are scored.",
 			"tags": [

@@ -38,8 +38,21 @@ editorial serif headings, hairline borders, mono numerals, light/dark themes.
 
 - **Header** — icon, name, symbol, market-cap-rank badge, live price, and
   24h / 7d / 30d change chips, plus the coin's categories.
-- **Interactive chart** — SVG line chart across 24H / 7D / 30D / 90D / 1Y with
-  a crosshair tooltip showing exact price and time.
+- **Interactive chart with a source switcher** — the default is a lightweight
+  native SVG line chart across 24H / 7D / 30D / 90D / 1Y (data by CoinGecko)
+  with a crosshair tooltip showing exact price and time. A pill switcher next
+  to the time ranges swaps in a full third-party terminal, and each option only
+  appears when it can actually chart the coin:
+  - **CoinGecko** — the native line chart (always available).
+  - **TradingView** — the advanced candlestick widget (indicators, drawing
+    tools), for any coin with a ticker symbol.
+  - **DexScreener** — the on-chain terminal keyed by the token's contract
+    address, for coins with a Solana mint or a supported EVM contract.
+  - **GeckoTerminal** — the on-chain terminal keyed by the token's most-liquid
+    pool, resolved server-side via `GET /api/coin/pool` (below).
+
+  The picked source is remembered across coins and visits (localStorage
+  `tws_coin_chart_source`), and the embeds follow the site's light/dark theme.
 - **Price performance matrix** — colored 1h / 24h / 7d / 14d / 30d / 60d /
   200d / 1y change cells, so the whole return curve is legible at a glance.
 - **Market stats** — market cap, 24h volume, circulating/total supply,

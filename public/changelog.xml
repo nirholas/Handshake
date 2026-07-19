@@ -71,6 +71,14 @@
 			<description>Two fixes for the new 41-language experience. Opening a link with a language in the URL (like ?lang=te for Telugu) now always shows that language, even if you had previously browsed in another one; before, your first visit's language silently overrode every shared link. The floating language switcher also joins the site's shared bottom-corner layout, so it no longer overlaps the Getting Started guide.</description>
 		</item>
 		<item>
+			<title>Switch any coin chart between CoinGecko, TradingView, DexScreener, and GeckoTerminal</title>
+			<link>https://three.ws/coin/bitcoin</link>
+			<guid isPermaLink="false">2026-07-19:Switch any coin chart between CoinGecko, TradingView, DexScreener, and GeckoTerminal</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The chart on every /coin page now has a source switcher. Start on the fast native CoinGecko line chart, then flip to TradingView's advanced candlesticks, or to the DexScreener or GeckoTerminal on-chain terminal for the token's live DEX pair. Each option only appears when it can actually chart that coin, your pick is remembered across coins and visits, and every view follows the site theme.</description>
+		</item>
+		<item>
 			<title>The assistant widget ships as an npm package and an MCP server</title>
 			<link>https://three.ws/docs/assistant-widget</link>
 			<guid isPermaLink="false">2026-07-19:The assistant widget ships as an npm package and an MCP server</guid>
