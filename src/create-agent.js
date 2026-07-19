@@ -18,6 +18,7 @@ import { peekGuestAgent, clearGuestAgent } from './agents/guest-agent.js';
 import { log } from './shared/log.js';
 import { isValidGlbMagic } from './shared/glb-magic.js';
 import { track, trackFunnelStep, trackError, ANALYTICS_EVENTS } from './analytics.js';
+import { draftHasContent, isDraftFresh } from './create-agent-draft.js';
 
 const TOTAL_STEPS = 5;
 const STEP_LABELS = ['Basics', 'Model', 'Skills', 'Personality', 'Review'];
@@ -128,6 +129,8 @@ function saveDraft() {
 	try {
 		const d = {
 			v: 1,
+			savedAt: Date.now(),
+			step: state.step,
 			name: state.name,
 			description: state.description,
 			tags: state.tags,
@@ -160,10 +163,49 @@ function loadDraft() {
 		const raw = localStorage.getItem(DRAFT_KEY);
 		if (!raw) return null;
 		const d = JSON.parse(raw);
-		return d && d.v === 1 && typeof d.name === 'string' ? d : null;
+		if (!d || d.v !== 1 || typeof d.name !== 'string') return null;
+		// Expire stale drafts so a long-abandoned build never silently resumes.
+		if (!isDraftFresh(d)) {
+			clearDraft();
+			return null;
+		}
+		return d;
 	} catch {
 		return null;
 	}
+}
+
+// Debounced autosave so a guest who builds and then closes the tab (without
+// reaching the ship step) can pick up exactly where they left off. Only writes
+// once there's real content; never overwrites a draft with an empty form.
+let draftSaveTimer;
+// Set once the agent is created — stops autosave from resurrecting a draft for
+// an agent that already exists (the success screen still holds the state).
+let submitted = false;
+function scheduleDraftSave() {
+	if (submitted) return;
+	clearTimeout(draftSaveTimer);
+	draftSaveTimer = setTimeout(() => {
+		if (draftHasContent(state)) saveDraft();
+	}, 600);
+}
+
+// Actionable "you're resumed, want a clean slate?" note for a returning guest.
+function showResumeNote() {
+	el.footMsg.className = 'foot-msg';
+	el.footMsg.innerHTML =
+		'Resumed your saved draft. <button type="button" class="msg-link" id="msg-start-fresh">Start fresh</button>';
+	$('msg-start-fresh')?.addEventListener('click', startFresh);
+}
+
+// Abandon the restored draft and start a clean build. Stop autosave first — the
+// `beforeunload` flush would otherwise re-save the draft during the reload and
+// resurrect exactly what we just cleared.
+function startFresh() {
+	submitted = true;
+	clearTimeout(draftSaveTimer);
+	clearDraft();
+	window.location.reload();
 }
 
 function clearDraft() {
@@ -235,12 +277,14 @@ async function boot() {
 	$('page-loading')?.remove();
 	state.authed = Boolean(me);
 
-	// A saved draft means the visitor built an agent, got sent to sign in, and
-	// came back — restore everything and drop them on Review to ship in one click.
+	// A saved draft means the visitor built something before and came back —
+	// either via the ship-step sign-in bounce, or just by leaving and returning
+	// (autosave). Restore it and put them back where they were.
 	const draft = loadDraft();
 	if (draft) {
 		const { uploadLost } = restoreDraft(draft);
 		if (state.authed) {
+			// Signed in (typically the ship-step bounce): drop straight on Review.
 			clearDraft();
 			showStep(TOTAL_STEPS - 1);
 			setMsg(
@@ -248,7 +292,13 @@ async function boot() {
 				'ok',
 			);
 		} else {
-			showStep(0);
+			// Guest returning to an in-progress build: resume the exact step, and
+			// offer a clean start so restore is never a surprise.
+			const savedStep = Number.isInteger(draft.step)
+				? Math.min(Math.max(draft.step, 0), TOTAL_STEPS - 1)
+				: 0;
+			showStep(uploadLost ? 1 : savedStep);
+			if (!uploadLost) showResumeNote();
 		}
 		if (uploadLost) {
 			setMsg('Re-attach your uploaded model on step 2, or we’ll give it the default body.', '');
@@ -257,6 +307,15 @@ async function boot() {
 		prefillFromGuestDraft();
 		showStep(0);
 	}
+
+	// Autosave the in-progress build: one delegated listener covers every text,
+	// select, and checkbox field; button-driven changes (model, voice, step nav)
+	// are caught by showStep and the unload flush below.
+	el.form.addEventListener('input', scheduleDraftSave);
+	el.form.addEventListener('change', scheduleDraftSave);
+	window.addEventListener('beforeunload', () => {
+		if (!submitted && draftHasContent(state)) saveDraft();
+	});
 
 	applyAuthAffordances();
 }
@@ -380,6 +439,9 @@ function showStep(n) {
 	);
 	requestAnimationFrame(() => focusable?.focus?.({ preventScroll: true }));
 	el.body.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+	// Persist progress on every step change so a returning guest resumes here.
+	scheduleDraftSave();
 }
 
 function wireNav() {
@@ -1421,6 +1483,10 @@ function resetSubmitButton() {
 }
 
 function succeed(agent) {
+	// The agent exists now — stop autosave from writing the draft back after it
+	// was cleared (the success screen still holds the form state).
+	submitted = true;
+	clearTimeout(draftSaveTimer);
 	// Swap the form body for the success state.
 	el.panels.forEach((p) => p.classList.remove('is-active'));
 	el.foot.style.display = 'none';

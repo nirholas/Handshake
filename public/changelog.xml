@@ -143,6 +143,14 @@
 			<description>The markets hub picked up a deeper safety net of free public data sources. Bitcoin, Ethereum and Solana price charts and headline prices now fall back to live exchange data (Kraken, Coinbase, Bitfinex) whenever the primary aggregator is rate-limited, so the /coins charts keep drawing instead of going blank. The /derivatives perp table gains a Hyperliquid backup with live funding, open interest and volume for about 200 contracts. Solana token panels add Raydium's own pool index as a final price source, and the paid Market Mood endpoint now includes Deribit's DVOL implied-volatility index for BTC and ETH at no extra cost.</description>
 		</item>
 		<item>
+			<title>More paid agent services now settle on the x402 marketplace</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-19:More paid agent services now settle on the x402 marketplace</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Fixed a payment bug where an endpoint's own listing text, echoed back inside the payment envelope, was rejected by the Coinbase settlement layer, so many of our pay-per-call agent services silently failed to settle on Base and never appeared in the agent marketplace. Payments now carry a clean envelope and settle reliably, bringing dozens more three.ws services (model inspection, gas and market data, avatar pipelines, identity and reputation checks) into agent discovery. Also repaired the model-check sample link that pointed at a missing asset.</description>
+		</item>
+		<item>
 			<title>Motion Swap now captures hands and fingers</title>
 			<link>https://three.ws/motion-swap</link>
 			<guid isPermaLink="false">2026-07-19:Motion Swap now captures hands and fingers</guid>
@@ -541,6 +549,14 @@
 			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
 			<category>docs</category>
 			<description>The docs now carry a dedicated, in-depth guide for every major studio and surface that was missing one: the 3D creation studios (Forge, Image to 3D, Diorama, Cosmos, Splat viewer, Scene Capture, Restyle, Scene Studio, Scene Composer, Animation Studio, Avatar Studio, Mocap Studio, Selfie to Avatar, Daily Forge, AR Studio), voice and video (Voice Lab, Lipsync, Talking Avatar Video), agent building (Instant Agent Genesis, Agent Genome, Agent Studio, Multi-LLM Brain, Agent Galaxy, Integrations), and the trading and markets surfaces (Coin Autopilot, Signal Marketplace, the AGI, Alpha Co-pilot, Guardian, Strategy Objects, Mission Control, Smart Money Radar, Coin Radar, Coin Clash, x402 Studio, Fact Check). Each guide explains why the feature exists, how it actually works, a first-time walkthrough, runnable examples, its states and limits, and links to related surfaces. Browse them from the docs sidebar.</description>
+		</item>
+		<item>
+			<title>Build an agent, leave, come back: never lose a build in progress</title>
+			<link>https://three.ws/create-agent</link>
+			<guid isPermaLink="false">2026-07-18:Build an agent, leave, come back: never lose a build in progress</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The create-agent wizard now autosaves your work as you go, so a signed-out visitor who starts building and then closes the tab can return and pick up on the exact step they left, with everything filled in. A subtle Start fresh option is always one click away if you would rather begin anew, and abandoned drafts expire after a week. This closes the last gap in the try-first flow: you can now build across visits without an account, and only sign in at the final ship step.</description>
 		</item>
 		<item>
 			<title>Image understanding is more reliable across every image host</title>

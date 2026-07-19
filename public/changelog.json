@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-19T15:09:18.622Z",
+	"generated_at": "2026-07-19T20:34:15.672Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -183,6 +183,17 @@
 			"link": "/coins",
 			"tags": [
 				"improvement",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-19",
+			"type": "update",
+			"title": "More paid agent services now settle on the x402 marketplace",
+			"summary": "Fixed a payment bug where an endpoint's own listing text, echoed back inside the payment envelope, was rejected by the Coinbase settlement layer, so many of our pay-per-call agent services silently failed to settle on Base and never appeared in the agent marketplace. Payments now carry a clean envelope and settle reliably, bringing dozens more three.ws services (model inspection, gas and market data, avatar pipelines, identity and reputation checks) into agent discovery. Also repaired the model-check sample link that pointed at a missing asset.",
+			"link": null,
+			"tags": [
+				"fix",
 				"infra"
 			]
 		},
@@ -691,6 +702,16 @@
 			"link": "/docs/forge",
 			"tags": [
 				"docs"
+			]
+		},
+		{
+			"date": "2026-07-18",
+			"type": "update",
+			"title": "Build an agent, leave, come back: never lose a build in progress",
+			"summary": "The create-agent wizard now autosaves your work as you go, so a signed-out visitor who starts building and then closes the tab can return and pick up on the exact step they left, with everything filled in. A subtle Start fresh option is always one click away if you would rather begin anew, and abandoned drafts expire after a week. This closes the last gap in the try-first flow: you can now build across visits without an account, and only sign in at the final ship step.",
+			"link": "/create-agent",
+			"tags": [
+				"improvement"
 			]
 		},
 		{

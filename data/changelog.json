@@ -2,6 +2,24 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-07-18",
+			"title": "Build an agent, leave, come back: never lose a build in progress",
+			"summary": "The create-agent wizard now autosaves your work as you go, so a signed-out visitor who starts building and then closes the tab can return and pick up on the exact step they left, with everything filled in. A subtle Start fresh option is always one click away if you would rather begin anew, and abandoned drafts expire after a week. This closes the last gap in the try-first flow: you can now build across visits without an account, and only sign in at the final ship step.",
+			"tags": [
+				"improvement"
+			],
+			"link": "/create-agent"
+		},
+		{
+			"date": "2026-07-19",
+			"title": "More paid agent services now settle on the x402 marketplace",
+			"summary": "Fixed a payment bug where an endpoint's own listing text, echoed back inside the payment envelope, was rejected by the Coinbase settlement layer, so many of our pay-per-call agent services silently failed to settle on Base and never appeared in the agent marketplace. Payments now carry a clean envelope and settle reliably, bringing dozens more three.ws services (model inspection, gas and market data, avatar pipelines, identity and reputation checks) into agent discovery. Also repaired the model-check sample link that pointed at a missing asset.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
 			"date": "2026-07-19",
 			"title": "Steadier free 3D generation and model snapshots",
 			"summary": "Two reliability fixes for the free lanes: the model snapshot renderer no longer fails under a burst of simultaneous requests (renders now queue instead of overloading the server, with more memory behind them), and free text-to-3D requests no longer time out early when the primary GPU provider is degraded; the fallback lane now gets the time it needs to finish your model.",
