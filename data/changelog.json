@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-19",
+			"title": "Steadier free 3D generation and model snapshots",
+			"summary": "Two reliability fixes for the free lanes: the model snapshot renderer no longer fails under a burst of simultaneous requests (renders now queue instead of overloading the server, with more memory behind them), and free text-to-3D requests no longer time out early when the primary GPU provider is degraded; the fallback lane now gets the time it needs to finish your model.",
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-19",
 			"title": "Daily Match: a live daily agent arena",
 			"summary": "New at three.ws/daily-match: live standings ranking agents by real output shipped today (actions, trades, paid skill sales, coin launches), with a countdown to the 00:00 UTC reset, yesterday's champion, and a live output feed. Reputation-first: winning builds standing, not payouts. Format adopted, with credit, from Bowyer's Arena, which is built on three.ws avatars.",
 			"tags": [

@@ -102,6 +102,31 @@ export function isBrowserInfrastructureError(err) {
 	return INFRA_ERROR_RE.test(String(err?.message || err || ''));
 }
 
+// Bound simultaneous renders per container. Each render runs a software-GL
+// WebGL scene in its own chromium page while holding the GLB's decoded
+// buffers; a parallel burst stacked enough of those to push the container past
+// its memory limit, and Cloud Run OOM-killed it mid-request (observed
+// 2026-07-18: every in-flight render surfaced as a 502). Renders beyond the
+// cap wait FIFO for a slot; the endpoint's per-IP rate limit bounds how deep
+// the queue can grow.
+const MAX_CONCURRENT_RENDERS = Math.max(1, Number(env.RENDER_GLB_CONCURRENCY) || 2);
+let _activeRenders = 0;
+const _renderWaiters = [];
+
+function acquireRenderSlot() {
+	if (_activeRenders < MAX_CONCURRENT_RENDERS) {
+		_activeRenders += 1;
+		return Promise.resolve();
+	}
+	return new Promise((resolve) => _renderWaiters.push(resolve));
+}
+
+function releaseRenderSlot() {
+	const next = _renderWaiters.shift();
+	if (next) next();
+	else _activeRenders -= 1;
+}
+
 // Inline viewer HTML — bundled into the function so the renderer needs no
 // extra static assets. three.js + GLTFLoader load from unpkg pinned to the
 // installed version. window.__renderDone signals readiness to puppeteer.
@@ -263,6 +288,27 @@ export async function renderGlbToPng({ glbUrl, width = 1200, height = 630, backg
 			code: err?.code || 'glb_fetch_failed',
 		});
 	}
+	await acquireRenderSlot();
+	try {
+		try {
+			return await renderOnce({ glbBase64, width, height, background, backdrop });
+		} catch (err) {
+			// The shared browser can die mid-render (an OOM-reaped chromium takes
+			// every in-flight page with it). That says nothing about this GLB: the
+			// disconnect handler already evicted the corpse, so one retry lands on
+			// a freshly launched browser instead of surfacing an infra blip as a
+			// render failure.
+			if (!isBrowserInfrastructureError(err)) throw err;
+			return await renderOnce({ glbBase64, width, height, background, backdrop });
+		}
+	} finally {
+		releaseRenderSlot();
+	}
+}
+
+// One page lifecycle on the shared browser: boot page, load the inline viewer,
+// wait for the first clean frame, screenshot.
+async function renderOnce({ glbBase64, width, height, background, backdrop }) {
 	const browser = await getBrowser();
 	const page = await browser.newPage();
 	try {

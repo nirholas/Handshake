@@ -269,7 +269,19 @@ async function generate(req, res) {
 	let job;
 	try {
 		// Pin the free draft lane exactly: NVIDIA NIM TRELLIS, image path, draft tier.
-		job = await startForge(base, { prompt, backend: 'nvidia', path: 'image', tier: 'draft' });
+		// Wide submit window (240s vs the 90s default): when NIM is degraded the
+		// draft falls to the blocking HF Spaces lane, whose queue + inference can
+		// legitimately run past 90s. Consumers of this endpoint poll anyway, so a
+		// slower inline completion strictly beats aborting the self-call at 90s,
+		// 503ing the caller, and finishing the GPU work for nobody (the 2026-07-18
+		// lane_timeout window: every one of those 503s was exactly 90s old).
+		job = await startForge(base, {
+			prompt,
+			backend: 'nvidia',
+			path: 'image',
+			tier: 'draft',
+			submitTimeoutMs: 240_000,
+		});
 	} catch (err) {
 		return failFromLane(res, err);
 	}
@@ -356,7 +368,8 @@ export default wrap(async (req, res) => {
 	return poll(req, res, jobId, title);
 });
 
-// The free NIM draft often finishes inside the submit window; startForge waits up
-// to 90s for that inline completion. Give the function headroom beyond the default
-// so a fast draft returns done in one call instead of forcing a poll.
-export const config = { maxDuration: 120 };
+// The free NIM draft often finishes inside the submit window; startForge waits
+// up to 240s for that inline completion (wide enough for the blocking HF
+// fallback lane's queue). Give the function headroom beyond that window so a
+// slow draft returns done in one call instead of a gateway timeout.
+export const config = { maxDuration: 300 };

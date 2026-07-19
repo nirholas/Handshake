@@ -159,6 +159,14 @@
 			<description>Upload a video of yourself (a house tour, a demo, a walk-through) at /motion-swap and get it back with your avatar performing your exact motion instead of you. The platform tracks your body pose in every frame, masks you out, and pins your chosen avatar over you, matching your position and size; you stay pixelated underneath. Compositing and video export run right in your browser, and any rigged humanoid GLB works, including avatars you generated or captured from a selfie.</description>
 		</item>
 		<item>
+			<title>Steadier free 3D generation and model snapshots</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-19:Steadier free 3D generation and model snapshots</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Two reliability fixes for the free lanes: the model snapshot renderer no longer fails under a burst of simultaneous requests (renders now queue instead of overloading the server, with more memory behind them), and free text-to-3D requests no longer time out early when the primary GPU provider is degraded; the fallback lane now gets the time it needs to finish your model.</description>
+		</item>
+		<item>
 			<title>Switch any coin chart between CoinGecko, TradingView, DexScreener, and GeckoTerminal</title>
 			<link>https://three.ws/coin/bitcoin</link>
 			<guid isPermaLink="false">2026-07-19:Switch any coin chart between CoinGecko, TradingView, DexScreener, and GeckoTerminal</guid>

@@ -1504,6 +1504,14 @@ export const env = {
 		return opt('CHROMIUM_PACK_URL');
 	},
 
+	// Cap on simultaneous chromium GLB renders per container (render-glb.js).
+	// Each render holds a software-GL WebGL page plus the GLB's decoded buffers;
+	// unbounded parallelism OOM-killed the 2Gi container under a 5-render burst
+	// (2026-07-18). Raise only alongside the service's memory limit.
+	get RENDER_GLB_CONCURRENCY() {
+		return opt('RENDER_GLB_CONCURRENCY');
+	},
+
 	// CZ Agent campaign — on-chain registry contract for the transfer flow.
 	// Set CZ_REGISTRY_CONTRACT to the deployed identity registry address.
 	// CZ_AGENT_ID and CZ_AGENT_NAME can override the defaults.

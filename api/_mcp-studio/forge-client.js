@@ -89,7 +89,14 @@ function internalHeaders() {
 // OR when the high lane can't hand back a job in time (the free Hunyuan3D lane
 // blocks the whole request instead of returning a poll handle, which no ChatGPT
 // surface can wait out).
-export async function startForge(base, { prompt, imageUrls, aspect, backend, path, tier, internal }) {
+// `submitTimeoutMs` sets how long the caller is willing to hold the submit open
+// before giving up (default 90s). The blocking free lanes (HF Spaces) can take
+// well past 90s under a queue while still finishing fine server-side; a caller
+// whose consumers poll anyway (the public /api/3d/generate) passes a wider
+// window so a slow-but-working lane returns done instead of burning the GPU
+// work into a client-side timeout. Interactive surfaces keep the 90s default.
+export async function startForge(base, { prompt, imageUrls, aspect, backend, path, tier, internal, submitTimeoutMs }) {
+	const submitWindowMs = Number(submitTimeoutMs) > 0 ? Number(submitTimeoutMs) : 90_000;
 	const attempt = async (tierId, withInternal) => {
 		const payload = {
 			...(prompt ? { prompt } : {}),
@@ -105,7 +112,7 @@ export async function startForge(base, { prompt, imageUrls, aspect, backend, pat
 				method: 'POST',
 				headers: { 'content-type': 'application/json', ...(withInternal ? internalHeaders() : {}) },
 				body: JSON.stringify(payload),
-				signal: AbortSignal.timeout(90_000),
+				signal: AbortSignal.timeout(submitWindowMs),
 			});
 		} catch (err) {
 			if (err?.name === 'TimeoutError' || err?.name === 'AbortError')

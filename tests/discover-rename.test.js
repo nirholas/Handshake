@@ -105,7 +105,8 @@ describe('discover/my-agents rename — static page contents', () => {
 		const path = p('public/discover/index.html');
 		expect(existsSync(path)).toBe(true);
 		const html = readFileSync(path, 'utf8');
-		expect(html).toContain('<title>Discover · three.ws</title>');
+		// The title tag may carry attributes (the i18n pass adds data-i18n).
+		expect(html).toMatch(/<title[^>]*>Discover · three\.ws<\/title>/);
 		expect(html).toContain('ERC-8004 Agent Directory');
 	});
 
@@ -113,7 +114,8 @@ describe('discover/my-agents rename — static page contents', () => {
 		const path = p('public/my-agents/index.html');
 		expect(existsSync(path)).toBe(true);
 		const html = readFileSync(path, 'utf8');
-		expect(html).toContain('<title>My Agents · three.ws</title>');
+		// The title tag may carry attributes (the i18n pass adds data-i18n).
+		expect(html).toMatch(/<title[^>]*>My Agents · three\.ws<\/title>/);
 		// Page heading uses "My Agents" (renamed from "On-chain Agents").
 		expect(html).toMatch(/My Agents|On-chain Agents/);
 	});
