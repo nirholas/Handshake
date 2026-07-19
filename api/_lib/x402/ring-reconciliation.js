@@ -189,9 +189,9 @@ async function loadSettleRows(db) {
 async function loadSweepRows(db) {
 	try {
 		return await db`
-			SELECT id, ts, from_wallet, to_wallet, mint, amount_atomic, tx_sig
+			SELECT id, ts, kind, from_wallet, to_wallet, mint, amount_atomic, tx_sig
 			FROM x402_ring_ledger
-			WHERE kind = 'sweep'
+			WHERE kind IN ('sweep', 'revshare')
 			  AND ts > now() - (${LOOKBACK_HOURS} || ' hours')::interval
 			ORDER BY ts DESC
 			LIMIT ${MAX_SWEEP_ROWS}
@@ -283,9 +283,14 @@ export function verifySettleAmount(row, parsedTx) {
 }
 
 // Prove one confirmed sweep moved amount_atomic of mint from_wallet → to_wallet,
-// and that the source is the configured treasury (treasury→payer is the ONLY
-// legal sweep direction). Pure; exported for tests.
-export function verifySweepMovement(row, parsedTx, treasuryAddress) {
+// and that the source is the configured treasury (treasury→payer and
+// treasury→master revshare are the only legal directions). A single sweep tx
+// may carry MULTIPLE ledger legs (payer sweep + master revshare), so the
+// treasury's total on-chain delta is checked against `txTotalAtomic` — the sum
+// of every ledger row sharing this tx_sig (defaults to the row's own amount for
+// the single-leg case). The recipient check stays per-row. Pure; exported for
+// tests.
+export function verifySweepMovement(row, parsedTx, treasuryAddress, txTotalAtomic = null) {
 	const mint = row.mint || ASSET;
 	if (treasuryAddress && row.from_wallet !== treasuryAddress) {
 		return { ok: false, reason: `sweep_source_not_treasury:${row.from_wallet}` };
@@ -293,9 +298,10 @@ export function verifySweepMovement(row, parsedTx, treasuryAddress) {
 	const deltas = tokenDeltasByOwner(parsedTx, mint);
 	if (deltas === null) return { ok: false, reason: 'tx_unparseable', soft: true };
 	const amount = BigInt(row.amount_atomic ?? 0);
+	const txTotal = BigInt(txTotalAtomic ?? row.amount_atomic ?? 0);
 	const sent = deltas.get(row.from_wallet) ?? 0n;
 	const received = deltas.get(row.to_wallet) ?? 0n;
-	if (sent !== -amount) return { ok: false, reason: `treasury_delta_${sent}_expected_${-amount}` };
+	if (sent !== -txTotal) return { ok: false, reason: `treasury_delta_${sent}_expected_${-txTotal}` };
 	if (received !== amount) return { ok: false, reason: `payer_delta_${received}_expected_${amount}` };
 	return { ok: true };
 }
@@ -429,6 +435,13 @@ export async function run(ctx = {}) {
 	//    each sweep moves the entire float, so full verification of every sweep
 	//    outranks sampling one more settle.
 	const treasuryAddress = env.X402_PAY_TO_SOLANA || process.env.X402_PAY_TO_SOLANA || null;
+	// A split sweep (payer leg + master revshare leg) shares one tx_sig; the
+	// treasury's on-chain delta must match the SUM of its legs, not each row.
+	const sweepTxTotals = new Map();
+	for (const row of sweeps) {
+		if (!row.tx_sig) continue;
+		sweepTxTotals.set(row.tx_sig, (sweepTxTotals.get(row.tx_sig) ?? 0n) + BigInt(row.amount_atomic ?? 0));
+	}
 	for (const row of sweeps) {
 		const ref = String(row.id);
 		if (!row.tx_sig) {
@@ -471,7 +484,7 @@ export async function run(ctx = {}) {
 			});
 			continue;
 		}
-		const check = verifySweepMovement(row, tx, treasuryAddress);
+		const check = verifySweepMovement(row, tx, treasuryAddress, sweepTxTotals.get(row.tx_sig));
 		if (!check.ok && !check.soft) {
 			summary.sweep_mismatches += 1;
 			critical.push({ kind: 'x402_ring_sweep_mismatch', ref, sig: row.tx_sig, reason: check.reason });

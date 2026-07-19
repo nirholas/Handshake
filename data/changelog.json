@@ -3,6 +3,27 @@
 	"entries": [
 		{
 			"date": "2026-07-19",
+			"title": "Agent economy self-funding fixed and scaled up",
+			"summary": "The agent economy's money loops are back at full speed. We found and fixed the scheduling bug that let failing paid calls hog the autonomous loop and starve the recirculation pipelines, wired a revenue share from the x402 ring treasury into the economy's funding root so it can refuel its own SOL, and raised the daily activity caps. Tips, agent-to-agent payments, trades, and marketplace purchases on the Money Pulse all flow again, and the ring's audit trail now verifies every leg of the new split sweeps.",
+			"tags": [
+				"fix",
+				"improvement",
+				"infra"
+			],
+			"link": "/pulse"
+		},
+		{
+			"date": "2026-07-19",
+			"title": "First autonomous agent trade, fully documented",
+			"summary": "A platform agent closed its first fully autonomous trade: it sniped a brand-new pump.fun launch from its own wallet and exited at +42.38 percent, with every decision recorded on its hash-chained ledger. We published the complete postmortem: a blog post with the on-chain receipts, a deep-dive doc on the sniper architecture (entry gates, the simulate-the-sell trade firewall, the exit ladder), and a tutorial for arming a sniper on your own agent, including the take-profit lesson this trade taught us.",
+			"tags": [
+				"feature",
+				"docs"
+			],
+			"link": "/blog/first-autonomous-trade"
+		},
+		{
+			"date": "2026-07-19",
 			"title": "TradingView charts on every coin page",
 			"summary": "Every /coin page (like /coin/bitcoin) now has a chart-source toggle. Keep the fast native line chart, or switch to a full advanced candlestick chart with indicators and drawing tools. Listed coins open on TradingView; Solana DEX tokens that TradingView doesn't carry open on DexScreener instead, so the advanced view works on every coin. Your choice is remembered across coins and visits, and the chart follows the site theme.",
 			"tags": [

@@ -143,6 +143,38 @@ describe('ring-reconciliation — pure helpers', () => {
 		expect(r.ok).toBe(false);
 	});
 
+	it('verifySweepMovement verifies each leg of a split sweep (payer + master revshare) via txTotal', () => {
+		const MASTER = 'MasterWallet1111111111111111111111111111111';
+		// One tx: treasury sends 1.0 USDC total — 0.8 to payer, 0.2 to master.
+		const tx = {
+			meta: {
+				preTokenBalances: [
+					{ owner: TREASURY, mint: MINT, uiTokenAmount: { amount: '1000000' } },
+					{ owner: PAYER, mint: MINT, uiTokenAmount: { amount: '0' } },
+					{ owner: MASTER, mint: MINT, uiTokenAmount: { amount: '0' } },
+				],
+				postTokenBalances: [
+					{ owner: TREASURY, mint: MINT, uiTokenAmount: { amount: '0' } },
+					{ owner: PAYER, mint: MINT, uiTokenAmount: { amount: '800000' } },
+					{ owner: MASTER, mint: MINT, uiTokenAmount: { amount: '200000' } },
+				],
+			},
+		};
+		const payerLeg = verifySweepMovement(
+			{ from_wallet: TREASURY, to_wallet: PAYER, mint: MINT, amount_atomic: 800_000 }, tx, TREASURY, 1_000_000,
+		);
+		const masterLeg = verifySweepMovement(
+			{ from_wallet: TREASURY, to_wallet: MASTER, mint: MINT, amount_atomic: 200_000 }, tx, TREASURY, 1_000_000,
+		);
+		expect(payerLeg.ok).toBe(true);
+		expect(masterLeg.ok).toBe(true);
+		// A leg claiming more than its on-chain credit still fails.
+		const inflated = verifySweepMovement(
+			{ from_wallet: TREASURY, to_wallet: MASTER, mint: MINT, amount_atomic: 300_000 }, tx, TREASURY, 1_000_000,
+		);
+		expect(inflated.ok).toBe(false);
+	});
+
 	it('feeDivergence: null when no audit figure, 0 when both zero, ratio otherwise', () => {
 		expect(feeDivergence(100, null)).toBeNull();
 		expect(feeDivergence(0, 0)).toBe(0);

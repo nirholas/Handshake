@@ -2720,6 +2720,9 @@ const SELF_ENDPOINTS = [
 		priority: 20,
 		pipeline: 'volume',
 		enabled: true,
+		// Reserved-slot maintenance: recirculation must never compete with (and
+		// lose to) paid entries for tick slots — see the loop's selection step.
+		maintenance: true,
 		run: (ctx) => ringRebalance(ctx),
 	},
 
@@ -2770,6 +2773,7 @@ const SELF_ENDPOINTS = [
 		priority: 22,
 		pipeline: 'agents',
 		enabled: true,
+		maintenance: true,
 		run: (ctx) => ringFloatTopUp(ctx),
 	},
 
@@ -2791,6 +2795,7 @@ const SELF_ENDPOINTS = [
 		priority: 22,
 		pipeline: 'agents',
 		enabled: true,
+		maintenance: true,
 		run: (ctx) => ringPoolFund(ctx),
 	},
 

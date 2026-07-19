@@ -418,6 +418,33 @@ principal recirculates (the rebalancer sweeps treasury→payer, now on a **120s*
 cooldown to keep up with the faster float), a higher daily cap raises *gross volume*
 without raising real cost — cost is only the SOL fees above.
 
+### The master revenue share: how the ring fuels the rest of the economy
+
+Every treasury sweep routes a bounded cut (`X402_RING_MASTER_REVSHARE_BPS`,
+default 20%) to the **economy master wallet** instead of the payer. That cut is
+the funding root's only USDC inflow: `economy-fuel.js` converts it to SOL (a
+self-swap, per-run and per-day capped) and `treasury-topup` distributes that SOL
+to every engine below its floor — the circulation treasury that drives the
+Money Pulse (tips, trades, agent-to-agent payments), the ring sponsor whose SOL
+floor gates settlement, and the rest of `SOLANA_SIGNERS`. Without this leg the
+master starves, the sponsor slips under its floor, settles 502, and the pulse
+flat-lines (July 2026 incident). Both legs of a split sweep land in
+`x402_ring_ledger` (`kind='sweep'` payer leg, `kind='revshare'` master leg,
+same `tx_sig`) and the reconciler verifies the treasury's on-chain delta
+against the *sum* of the legs, each recipient against its own row.
+
+Two scheduling guarantees keep the recirculation alive regardless of what else
+the autonomous loop is doing:
+
+1. **Reserved maintenance slots** — registry entries tagged `maintenance: true`
+   (ring-rebalance, ring-float-topup, ring-pool-fund) are selected *outside*
+   `X402_AUTONOMOUS_MAX_PER_TICK`, so a wave of failing high-priority paid
+   entries can never starve them out of the rotation.
+2. **Cooldown on failure** — a paid entry that errors now backs off for its full
+   cooldown exactly like a success. Before this, a failing entry retried every
+   tick forever, pinning all tick slots and generating thousands of junk
+   settle-502 rows per day.
+
 ### Coherence: no silent skips
 
 The old failure — ring-settle silently dropped because its price exceeded the

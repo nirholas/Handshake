@@ -314,11 +314,19 @@ export default wrapCron(async (req, res) => {
 			return { entry, ready: !cooling };
 		}),
 	);
-	const ready = readyChecks
-		.filter((e) => e.ready)
-		.map((e) => e.entry)
-		.sort((a, b) => (b.priority || 0) - (a.priority || 0))
-		.slice(0, MAX_PER_TICK);
+	// Maintenance entries (recirculation: treasury→payer sweep, agent float
+	// top-up, pool funding) get RESERVED slots outside MAX_PER_TICK. They move
+	// zero net spend, are cooldown-gated at 120s, and are the only thing keeping
+	// the payer float alive — when they competed on priority alone, a wave of
+	// failing high-priority paid entries starved them for days and the whole
+	// ring drained (July 2026 flat-line).
+	const readyAll = readyChecks.filter((e) => e.ready).map((e) => e.entry);
+	const byPriority = (a, b) => (b.priority || 0) - (a.priority || 0);
+	const maintenance = readyAll.filter((e) => e.maintenance).sort(byPriority);
+	const ready = [
+		...maintenance,
+		...readyAll.filter((e) => !e.maintenance).sort(byPriority).slice(0, MAX_PER_TICK),
+	];
 
 	if (ready.length === 0) {
 		return json(res, 200, { ok: true, skipped: true, reason: 'all_cooling_down', run_id: runId });
@@ -486,16 +494,19 @@ export default wrapCron(async (req, res) => {
 			if (!accept) {
 				errorMsg = 'no_solana_accept';
 				results.push({ id: entry.id, status: 'skip', reason: errorMsg });
+				await setCooldown(redis, entry); // endpoint misconfigured — don't re-probe every tick
 				continue;
 			}
 			if (!USDC_MINT || accept.asset !== USDC_MINT) {
 				errorMsg = `unexpected_asset:${accept.asset}`;
 				results.push({ id: entry.id, status: 'skip', reason: errorMsg });
+				await setCooldown(redis, entry);
 				continue;
 			}
 			if (!accept.extra?.feePayer) {
 				errorMsg = 'missing_fee_payer';
 				results.push({ id: entry.id, status: 'skip', reason: errorMsg });
+				await setCooldown(redis, entry);
 				continue;
 			}
 
@@ -503,6 +514,7 @@ export default wrapCron(async (req, res) => {
 			if (amountAtomic > remainingCap) {
 				log.info('autonomous_cap_would_exceed', { id: entry.id, amount: amountAtomic, remaining: remainingCap });
 				results.push({ id: entry.id, status: 'skip', reason: 'cap_would_exceed' });
+				await setCooldown(redis, entry); // cap headroom won't appear mid-cooldown; stop re-probing
 				continue;
 			}
 			// Can't pay what we don't hold. Skip BEFORE building/signing/POSTing a
@@ -569,12 +581,18 @@ export default wrapCron(async (req, res) => {
 				await runStoreValue(entry, { sql, redis, responseBody, signalData, runId, targetUrl, targetContext, endpointUrl, origin, durationMs: Date.now() - t0, success, amountAtomic, txSig });
 			} else {
 				errorMsg = `http_${paidRes.status}`;
+				// Failure MUST cool down too. Without this a failing paid entry
+				// retried every tick forever: 12k+ settle-502 rows/day, all 8 tick
+				// slots pinned by the same broken entries, and the maintenance
+				// pipelines starved out of the rotation entirely.
+				await setCooldown(redis, entry);
 			}
 
 			results.push({ id: entry.id, status: success ? 'paid' : 'error', amount_usdc: amountAtomic / 1e6, tx: txSig });
 		} catch (err) {
 			errorMsg = err?.message || 'unknown_error';
 			results.push({ id: entry.id, status: 'error', reason: errorMsg });
+			await setCooldown(redis, entry);
 		}
 
 		await recordLog(runId, entry, {

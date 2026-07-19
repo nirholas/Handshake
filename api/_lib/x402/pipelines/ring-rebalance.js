@@ -34,6 +34,7 @@ import { env } from '../../env.js';
 import { logger } from '../../usage.js';
 import { solanaConnection } from '../../solana/connection.js';
 import { loadSeedKeypair, USDC_MINT } from '../pay.js';
+import { ECONOMY_MASTER_ADDRESS } from '../../economy-master.js';
 
 const log = logger('x402-ring-rebalance');
 
@@ -50,6 +51,32 @@ const TREASURY_BUFFER_ATOMIC = BigInt(process.env.X402_RING_TREASURY_BUFFER_ATOM
 // float in small increments so the rebalancer sweeps sooner and the payer never
 // starves between the (now 120s) rebalance ticks.
 const MIN_SWEEP_ATOMIC = BigInt(process.env.X402_RING_MIN_SWEEP_ATOMIC || 100_000);
+// Revenue share routed to the economy master on every sweep, in basis points.
+// The master's fuel module (economy-fuel.js) was built on the assumption that
+// "the master accumulates USDC revenue (x402, marketplace)" — but nothing ever
+// delivered that revenue, so the funding root could never refuel SOL and every
+// engine below it starved. This cut closes the loop: treasury → master USDC →
+// fuel swap → SOL → treasury-topup → circulation/sponsor floors. Still wallet-
+// to-wallet inside the controlled set (master is a SOLANA_SIGNERS role, so the
+// leak scanner classifies it internal). 0 disables the leg entirely.
+const MASTER_REVSHARE_BPS = (() => {
+	const v = Number(process.env.X402_RING_MASTER_REVSHARE_BPS);
+	return Number.isFinite(v) && v >= 0 && v <= 10_000 ? Math.floor(v) : 2_000;
+})();
+// Don't bother with a dust-sized master leg (default $0.10).
+const MIN_REVSHARE_ATOMIC = 100_000n;
+
+/**
+ * Pure split of a sweep amount into { payerCut, masterCut } per the revshare
+ * bps, with the dust floor applied to the master leg.
+ * @param {bigint} sweep total atomic USDC being swept
+ * @param {number} [bps] override for tests; defaults to the env-derived cut
+ */
+export function splitSweep(sweep, bps = MASTER_REVSHARE_BPS) {
+	let masterCut = (sweep * BigInt(bps)) / 10_000n;
+	if (masterCut < MIN_REVSHARE_ATOMIC) masterCut = 0n;
+	return { payerCut: sweep - masterCut, masterCut };
+}
 
 async function confirmSignature(conn, signature, timeoutMs = 30_000) {
 	const deadline = Date.now() + timeoutMs;
@@ -128,13 +155,19 @@ export async function run(ctx = {}) {
 		}
 	}
 
+	// Split the sweep: a bounded revenue share funds the economy master (the SOL
+	// fuel source for every engine floor), the rest recycles to the payer float.
+	const split = splitSweep(sweep);
+	let masterCut = split.masterCut;
+	const payerCut = split.payerCut;
+
 	const payerAta = getAssociatedTokenAddressSync(mint, payerPub, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
 	const payerAtaInfo = await conn.getAccountInfo(payerAta).catch(() => null);
 	const mintInfo = await getMint(conn, mint);
 	const { blockhash } = await conn.getLatestBlockhash('confirmed');
 
 	const ixs = [
-		ComputeBudgetProgram.setComputeUnitLimit({ units: 60_000 }),
+		ComputeBudgetProgram.setComputeUnitLimit({ units: 90_000 }),
 		ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 5 }),
 	];
 	if (!payerAtaInfo) {
@@ -142,9 +175,24 @@ export async function run(ctx = {}) {
 			feePayerKp.publicKey, payerAta, payerPub, mint, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
 		));
 	}
-	ixs.push(createTransferCheckedInstruction(
-		treasuryAta, mint, payerAta, treasury.publicKey, sweep, mintInfo.decimals, [], TOKEN_PROGRAM_ID,
-	));
+	if (payerCut > 0n) {
+		ixs.push(createTransferCheckedInstruction(
+			treasuryAta, mint, payerAta, treasury.publicKey, payerCut, mintInfo.decimals, [], TOKEN_PROGRAM_ID,
+		));
+	}
+	let masterPub = null;
+	if (masterCut > 0n && ECONOMY_MASTER_ADDRESS) {
+		masterPub = new PublicKey(ECONOMY_MASTER_ADDRESS);
+		const masterAta = getAssociatedTokenAddressSync(mint, masterPub, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+		ixs.push(createAssociatedTokenAccountIdempotentInstruction(
+			feePayerKp.publicKey, masterAta, masterPub, mint, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID,
+		));
+		ixs.push(createTransferCheckedInstruction(
+			treasuryAta, mint, masterAta, treasury.publicKey, masterCut, mintInfo.decimals, [], TOKEN_PROGRAM_ID,
+		));
+	} else {
+		masterCut = 0n;
+	}
 
 	const msg = new TransactionMessage({
 		payerKey: feePayerKp.publicKey,
@@ -170,17 +218,28 @@ export async function run(ctx = {}) {
 	}
 
 	try {
-		await sql`
-			INSERT INTO x402_ring_ledger (kind, from_wallet, to_wallet, mint, amount_atomic, tx_sig, run_id)
-			VALUES ('sweep', ${treasury.publicKey.toBase58()}, ${payerPub.toBase58()},
-			        ${USDC_MINT}, ${Number(sweep)}, ${signature}, ${runId})
-		`;
+		if (payerCut > 0n) {
+			await sql`
+				INSERT INTO x402_ring_ledger (kind, from_wallet, to_wallet, mint, amount_atomic, tx_sig, run_id)
+				VALUES ('sweep', ${treasury.publicKey.toBase58()}, ${payerPub.toBase58()},
+				        ${USDC_MINT}, ${Number(payerCut)}, ${signature}, ${runId})
+			`;
+		}
+		if (masterCut > 0n && masterPub) {
+			await sql`
+				INSERT INTO x402_ring_ledger (kind, from_wallet, to_wallet, mint, amount_atomic, tx_sig, run_id)
+				VALUES ('revshare', ${treasury.publicKey.toBase58()}, ${masterPub.toBase58()},
+				        ${USDC_MINT}, ${Number(masterCut)}, ${signature}, ${runId})
+			`;
+		}
 	} catch (err) {
 		log.warn('sweep_ledger_write_failed', { message: err?.message });
 	}
 
 	log.info('ring_rebalance_swept', {
 		amount_atomic: Number(sweep),
+		payer_cut_atomic: Number(payerCut),
+		master_cut_atomic: Number(masterCut),
 		to: payerPub.toBase58(),
 		tx: signature,
 	});
@@ -189,7 +248,8 @@ export async function run(ctx = {}) {
 		success: true,
 		amountAtomic: 0, // recirculation, not spend — cap-neutral
 		txSig: signature,
-		note: `swept ${Number(sweep) / 1e6} USDC treasury→payer`,
+		note: `swept ${Number(payerCut) / 1e6} USDC treasury→payer`
+			+ (masterCut > 0n ? ` + ${Number(masterCut) / 1e6} USDC treasury→master` : ''),
 	};
 }
 
