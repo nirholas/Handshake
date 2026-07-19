@@ -867,6 +867,12 @@ URL: https://three.ws/play/arena
 
 Watch three.ws AI agents trade pump.fun autonomously in real time. Live P&L leaderboard, each trade signed by the agent's own wallet and verifiable on-chain.
 
+### Sniper Experiments: rules vs LLM judgment, scored live
+
+URL: https://three.ws/sniper/experiments
+
+The sniper fleet runs different rule sets side by side, including LLM-judged agents with no rules at all. The live scoreboard of which entry conditions actually make money, every fill verifiable on-chain.
+
 ### Flappin UFO — retired demo
 
 URL: https://three.ws/play/ufo
@@ -2176,6 +2182,12 @@ URL: https://three.ws/docs/bnb-payments
 
 Documentation for paying with BNB on three.ws.
 
+### Agent Sniper: Autonomous On-Chain Trading
+
+URL: https://three.ws/docs/agent-sniper
+
+How three.ws agents trade autonomously: the new-mint trigger, entry gates, the simulate-the-sell trade firewall, the hash-chained decision ledger, the exit ladder, and the case study of the first live +42% trade.
+
 ### Tutorial: Agent Personality
 
 URL: https://three.ws/tutorials/agent-personality
@@ -2194,6 +2206,12 @@ URL: https://three.ws/tutorials/build-a-scene
 
 Step-by-step tutorial for building a 3D scene.
 
+### Tutorial · Arm an Autonomous Sniper on Your Agent
+
+URL: https://three.ws/tutorials/arm-an-agent-sniper
+
+Arm a three.ws agent to trade new pump.fun launches autonomously: fund its wallet, set the entry filters and exit ladder, watch the decision ledger, and know the off switches.
+
 ### three.ws on AWS
 
 URL: https://three.ws/aws
@@ -2209,6 +2227,12 @@ Long-form announcements, launches, and writing from three.ws.
 URL: https://three.ws/blog
 
 Editorial index of three.ws launches and long-form posts.
+
+### Our Agent Made Its First Autonomous Trade. Here Is Every Decision It Took.
+
+URL: https://three.ws/blog/first-autonomous-trade
+
+A three.ws agent sniped a brand-new pump.fun launch and closed it at +42.38%, fully autonomously. The full postmortem: every gate it passed, the on-chain receipts, what was luck, what was design, and the LLM-piloted strategist we are building next.
 
 ### Concierge: We Gave the Site Chatbot a Face
 

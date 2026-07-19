@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-07-19T14:03:19.061Z",
+	"generated_at": "2026-07-19T14:29:16.984Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-19",
+			"type": "launch",
+			"title": "Agent Sniper: Autonomous On-Chain Trading",
+			"summary": "How three.ws agents trade autonomously: the new-mint trigger, entry gates, the simulate-the-sell trade firewall, the hash-chained decision ledger, the exit ladder, and the case study of the first live +42% trade.",
+			"link": "/docs/agent-sniper",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-07-19",
 			"type": "launch",
@@ -29,9 +39,29 @@
 		{
 			"date": "2026-07-19",
 			"type": "launch",
+			"title": "Sniper Experiments: rules vs LLM judgment, scored live",
+			"summary": "The sniper fleet runs different rule sets side by side, including LLM-judged agents with no rules at all. The live scoreboard of which entry conditions actually make money, every fill verifiable on-chain.",
+			"link": "/sniper/experiments",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-19",
+			"type": "launch",
 			"title": "Tutorial · Add a 3D Avatar Assistant",
 			"summary": "Step-by-step: add a floating 3D avatar assistant to any website with one script tag, configure the avatar, background, and brand, drive it from your own code, or have an AI agent generate the embed via MCP.",
 			"link": "/tutorials/add-a-3d-assistant",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-19",
+			"type": "launch",
+			"title": "Tutorial · Arm an Autonomous Sniper on Your Agent",
+			"summary": "Arm a three.ws agent to trade new pump.fun launches autonomously: fund its wallet, set the entry filters and exit ladder, watch the decision ledger, and know the off switches.",
+			"link": "/tutorials/arm-an-agent-sniper",
 			"tags": [
 				"launch"
 			]

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-19T14:03:19.047Z",
+	"generated_at": "2026-07-19T14:29:16.970Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -1421,6 +1421,16 @@
 					"title": "Sniper Arena — autonomous AI agents trading live",
 					"description": "Watch three.ws AI agents trade pump.fun autonomously in real time. Live P&L leaderboard, each trade signed by the agent's own wallet and verifiable on-chain.",
 					"added": "2026-06-15",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/sniper/experiments",
+					"title": "Sniper Experiments: rules vs LLM judgment, scored live",
+					"description": "The sniper fleet runs different rule sets side by side, including LLM-judged agents with no rules at all. The live scoreboard of which entry conditions actually make money, every fill verifiable on-chain.",
+					"added": "2026-07-19",
 					"auth": null,
 					"indexable": true,
 					"tags": [],
@@ -3578,6 +3588,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/docs/agent-sniper",
+					"title": "Agent Sniper: Autonomous On-Chain Trading",
+					"description": "How three.ws agents trade autonomously: the new-mint trigger, entry gates, the simulate-the-sell trade firewall, the hash-chained decision ledger, the exit ladder, and the case study of the first live +42% trade.",
+					"added": "2026-07-19",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/tutorials/agent-personality",
 					"title": "Tutorial: Agent Personality",
 					"description": "Step-by-step tutorial for giving your agent a personality.",
@@ -3608,6 +3628,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/tutorials/arm-an-agent-sniper",
+					"title": "Tutorial · Arm an Autonomous Sniper on Your Agent",
+					"description": "Arm a three.ws agent to trade new pump.fun launches autonomously: fund its wallet, set the entry filters and exit ladder, watch the decision ledger, and know the off switches.",
+					"added": "2026-07-19",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/aws",
 					"title": "three.ws on AWS",
 					"description": "three.ws is an AWS Partner: the open-source 3D AI agent platform on AWS.",
@@ -3629,6 +3659,16 @@
 					"title": "Blog",
 					"description": "Editorial index of three.ws launches and long-form posts.",
 					"added": "2026-05-17",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/blog/first-autonomous-trade",
+					"title": "Our Agent Made Its First Autonomous Trade. Here Is Every Decision It Took.",
+					"description": "A three.ws agent sniped a brand-new pump.fun launch and closed it at +42.38%, fully autonomously. The full postmortem: every gate it passed, the on-chain receipts, what was luck, what was design, and the LLM-piloted strategist we are building next.",
+					"added": null,
 					"auth": null,
 					"indexable": true,
 					"tags": [],

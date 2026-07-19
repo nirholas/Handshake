@@ -7,6 +7,14 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Agent Sniper: Autonomous On-Chain Trading</title>
+			<link>https://three.ws/docs/agent-sniper</link>
+			<guid isPermaLink="false">2026-07-19:Agent Sniper: Autonomous On-Chain Trading</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>How three.ws agents trade autonomously: the new-mint trigger, entry gates, the simulate-the-sell trade firewall, the hash-chained decision ledger, the exit ladder, and the case study of the first live +42% trade.</description>
+		</item>
+		<item>
 			<title>Docs · Assistant widget</title>
 			<link>https://three.ws/docs/assistant-widget</link>
 			<guid isPermaLink="false">2026-07-19:Docs · Assistant widget</guid>
@@ -23,12 +31,28 @@
 			<description>Upload a video of yourself and get it back with your 3D avatar performing your motion instead of you. Server-side pose tracking and person masking, browser-side compositing and export — stay off camera without staying off video.</description>
 		</item>
 		<item>
+			<title>Sniper Experiments: rules vs LLM judgment, scored live</title>
+			<link>https://three.ws/sniper/experiments</link>
+			<guid isPermaLink="false">2026-07-19:Sniper Experiments: rules vs LLM judgment, scored live</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>The sniper fleet runs different rule sets side by side, including LLM-judged agents with no rules at all. The live scoreboard of which entry conditions actually make money, every fill verifiable on-chain.</description>
+		</item>
+		<item>
 			<title>Tutorial · Add a 3D Avatar Assistant</title>
 			<link>https://three.ws/tutorials/add-a-3d-assistant</link>
 			<guid isPermaLink="false">2026-07-19:Tutorial · Add a 3D Avatar Assistant</guid>
 			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
 			<category>launch</category>
 			<description>Step-by-step: add a floating 3D avatar assistant to any website with one script tag, configure the avatar, background, and brand, drive it from your own code, or have an AI agent generate the embed via MCP.</description>
+		</item>
+		<item>
+			<title>Tutorial · Arm an Autonomous Sniper on Your Agent</title>
+			<link>https://three.ws/tutorials/arm-an-agent-sniper</link>
+			<guid isPermaLink="false">2026-07-19:Tutorial · Arm an Autonomous Sniper on Your Agent</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Arm a three.ws agent to trade new pump.fun launches autonomously: fund its wallet, set the entry filters and exit ladder, watch the decision ledger, and know the off switches.</description>
 		</item>
 		<item>
 			<title>Agent economy self-funding fixed and scaled up</title>

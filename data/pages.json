@@ -2533,12 +2533,12 @@
 					"description": "Embed an agent via iframe, oEmbed, or the <agent-3d> web component.",
 					"added": "2026-04-27"
 				},
-					{
-						"path": "/docs/assistant-widget",
-						"title": "Docs · Assistant widget",
-						"description": "Add a 3D avatar assistant to any website: the one-tag script, the @three-ws/assistant npm package, and the assistant-widget MCP server for AI agents.",
-						"added": "2026-07-19"
-					},
+				{
+					"path": "/docs/assistant-widget",
+					"title": "Docs · Assistant widget",
+					"description": "Add a 3D avatar assistant to any website: the one-tag script, the @three-ws/assistant npm package, and the assistant-widget MCP server for AI agents.",
+					"added": "2026-07-19"
+				},
 				{
 					"path": "/docs/web-component",
 					"title": "Docs · <agent-3d>",
@@ -2645,14 +2645,14 @@
 					"changefreq": "monthly",
 					"added": "2026-06-12"
 				},
-					{
-						"path": "/tutorials/add-a-3d-assistant",
-						"title": "Tutorial · Add a 3D Avatar Assistant",
-						"description": "Step-by-step: add a floating 3D avatar assistant to any website with one script tag, configure the avatar, background, and brand, drive it from your own code, or have an AI agent generate the embed via MCP.",
-						"priority": 0.8,
-						"changefreq": "monthly",
-						"added": "2026-07-19"
-					},
+				{
+					"path": "/tutorials/add-a-3d-assistant",
+					"title": "Tutorial · Add a 3D Avatar Assistant",
+					"description": "Step-by-step: add a floating 3D avatar assistant to any website with one script tag, configure the avatar, background, and brand, drive it from your own code, or have an AI agent generate the embed via MCP.",
+					"priority": 0.8,
+					"changefreq": "monthly",
+					"added": "2026-07-19"
+				},
 				{
 					"path": "/tutorials/image-to-3d",
 					"title": "Tutorial · Photos to 3D Model",
@@ -2821,6 +2821,14 @@
 					"changefreq": "weekly"
 				},
 				{
+					"path": "/docs/agent-sniper",
+					"title": "Agent Sniper: Autonomous On-Chain Trading",
+					"description": "How three.ws agents trade autonomously: the new-mint trigger, entry gates, the simulate-the-sell trade firewall, the hash-chained decision ledger, the exit ladder, and the case study of the first live +42% trade.",
+					"priority": 0.7,
+					"changefreq": "monthly",
+					"added": "2026-07-19"
+				},
+				{
 					"path": "/tutorials/agent-personality",
 					"title": "Tutorial: Agent Personality",
 					"description": "Step-by-step tutorial for giving your agent a personality.",
@@ -2840,6 +2848,14 @@
 					"description": "Step-by-step tutorial for building a 3D scene.",
 					"priority": 0.6,
 					"changefreq": "weekly"
+				},
+				{
+					"path": "/tutorials/arm-an-agent-sniper",
+					"title": "Tutorial · Arm an Autonomous Sniper on Your Agent",
+					"description": "Arm a three.ws agent to trade new pump.fun launches autonomously: fund its wallet, set the entry filters and exit ladder, watch the decision ledger, and know the off switches.",
+					"priority": 0.75,
+					"changefreq": "monthly",
+					"added": "2026-07-19"
 				},
 				{
 					"path": "/aws",
@@ -2863,6 +2879,14 @@
 					"changefreq": "weekly",
 					"lastmod": "2026-05-17",
 					"added": "2026-05-17"
+				},
+				{
+					"path": "/blog/first-autonomous-trade",
+					"title": "Our Agent Made Its First Autonomous Trade. Here Is Every Decision It Took.",
+					"description": "A three.ws agent sniped a brand-new pump.fun launch and closed it at +42.38%, fully autonomously. The full postmortem: every gate it passed, the on-chain receipts, what was luck, what was design, and the LLM-piloted strategist we are building next.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"lastmod": "2026-07-19"
 				},
 				{
 					"path": "/blog/concierge-3d-chat-widget",

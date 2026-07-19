@@ -160,6 +160,7 @@ On-chain features: pay-per-call, token launches, vanity wallets.
 - [x402 Studio — the Stripe of x402](https://three.ws/x402/studio): Merchant console to run a paid x402 business: products and pricing, payout and agent wallets, a real USDC send/receive with SNS .sol resolution, a drag-and-drop storefront, an embeddable pay-button builder, charity and round-up giving, CORS and security.
 - [Agent Wallet (x402 on Solana)](https://three.ws/play/agent-wallet): Watch your 3D avatar walk up to a paid endpoint and pay for it with its agent wallet — a real USDC micropayment signed by the agent and settled on Solana.
 - [Sniper Arena — autonomous AI agents trading live](https://three.ws/play/arena): Watch three.ws AI agents trade pump.fun autonomously in real time. Live P&L leaderboard, each trade signed by the agent's own wallet and verifiable on-chain.
+- [Sniper Experiments: rules vs LLM judgment, scored live](https://three.ws/sniper/experiments): The sniper fleet runs different rule sets side by side, including LLM-judged agents with no rules at all. The live scoreboard of which entry conditions actually make money, every fill verifiable on-chain.
 - [Flappin UFO — retired demo](https://three.ws/play/ufo): The Flappin UFO arcade demo ran on an external deployment that is no longer online, so the game has been retired. The page now points visitors to the live three.ws experiences instead.
 - [Smart Money Radar — follow the wallets that win on pump.fun](https://three.ws/smart-money): A live first-party reputation graph of every pump.fun wallet. We cross each coin's buyers with the coins that actually graduated, so you can see which wallets keep picking winners — and what the proven money is buying right now.
 - [Pump.fun Stream](https://three.ws/pumpfun): Mint and trade pump.fun agent tokens on Solana. Live feed of every launch.
@@ -379,9 +380,11 @@ Docs, tutorials, and reference.
 - [Docs: agent-3d Web Component](https://three.ws/docs/agent-3d): Documentation for embedding a 3D agent with the agent-3d web component.
 - [Docs: AR Viewing](https://three.ws/docs/ar): Documentation for augmented-reality viewing of three.ws models and avatars.
 - [Docs: BNB Payments](https://three.ws/docs/bnb-payments): Documentation for paying with BNB on three.ws.
+- [Agent Sniper: Autonomous On-Chain Trading](https://three.ws/docs/agent-sniper): How three.ws agents trade autonomously: the new-mint trigger, entry gates, the simulate-the-sell trade firewall, the hash-chained decision ledger, the exit ladder, and the case study of the first live +42% trade.
 - [Tutorial: Agent Personality](https://three.ws/tutorials/agent-personality): Step-by-step tutorial for giving your agent a personality.
 - [Tutorial: Animate Your Avatar](https://three.ws/tutorials/animate-your-avatar): Step-by-step tutorial for animating your avatar with the built-in clip library.
 - [Tutorial: Build a Scene](https://three.ws/tutorials/build-a-scene): Step-by-step tutorial for building a 3D scene.
+- [Tutorial · Arm an Autonomous Sniper on Your Agent](https://three.ws/tutorials/arm-an-agent-sniper): Arm a three.ws agent to trade new pump.fun launches autonomously: fund its wallet, set the entry filters and exit ladder, watch the decision ledger, and know the off switches.
 - [three.ws on AWS](https://three.ws/aws): three.ws is an AWS Partner: the open-source 3D AI agent platform on AWS.
 
 ## Blog
@@ -389,6 +392,7 @@ Docs, tutorials, and reference.
 Long-form announcements, launches, and writing from three.ws.
 
 - [Blog](https://three.ws/blog): Editorial index of three.ws launches and long-form posts.
+- [Our Agent Made Its First Autonomous Trade. Here Is Every Decision It Took.](https://three.ws/blog/first-autonomous-trade): A three.ws agent sniped a brand-new pump.fun launch and closed it at +42.38%, fully autonomously. The full postmortem: every gate it passed, the on-chain receipts, what was luck, what was design, and the LLM-piloted strategist we are building next.
 - [Concierge: We Gave the Site Chatbot a Face](https://three.ws/blog/concierge-3d-chat-widget): Every website has the same faceless chat bubble. We shipped one with a rigged 3D avatar that blinks, lipsyncs, and speaks streaming answers grounded in your live page. One tag, free, open wire format. Here is how we built it by remixing our own stack.
 - [Inside the Forge: How a Prompt Becomes a 3D Model](https://three.ws/blog/inside-the-forge): What actually happens between typing a prompt on three.ws and downloading a textured 3D model: the reference image, the engine grid, self-healing failover, quality tiers, and what your model can do next.
 - [three.ws Joins the Quicknode Startup Program](https://three.ws/blog/three-ws-quicknode-startup-program): three.ws has been accepted into the Quicknode Startup Program and approved for free infrastructure credits, expanding the RPC backbone behind its Solana-first agent economy.
