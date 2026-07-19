@@ -931,6 +931,30 @@ function buildIdempotencyKey({ paymentPayload, requirement }) {
 // mint-to-mesh, mint-to-mesh-batch, mcp/auth) get echo enforcement symmetric
 // with build402Body's auto-declaration. Pass `builderCode: null`
 // explicitly to opt out (e.g. test harnesses).
+// CDP's /verify and /settle validate the forwarded paymentPayload against a
+// strict envelope schema. Clients speaking the PAYMENT-SIGNATURE dialect
+// (@x402/fetch v2, OKX) echo unsigned listing copy into the payload —
+// `resource` and `extensions` blocks copied verbatim from our own 402 body —
+// and CDP rejects the whole payment when that echo trips its validator
+// ("'paymentPayload' is invalid: must match one of [x402V2PaymentPayload,
+// x402V1PaymentPayload]"). That let per-endpoint listing copy break payment
+// settlement (14 endpoints deterministically failed while 31 passed, split
+// purely by echoed content). None of the echoed fields are signed — the
+// EIP-712 / SPL signature covers `payload` only — and none are needed to
+// verify or settle, so for CDP we forward the minimal envelope it always
+// accepts. Non-CDP facilitators (PayAI, the self-facilitator) keep the
+// original payload untouched.
+function minimalPaymentPayloadForCdp(paymentPayload) {
+	if (!paymentPayload || typeof paymentPayload !== 'object') return paymentPayload;
+	const out = {};
+	if (paymentPayload.x402Version !== undefined) out.x402Version = paymentPayload.x402Version;
+	if (paymentPayload.scheme !== undefined) out.scheme = paymentPayload.scheme;
+	if (paymentPayload.network !== undefined) out.network = paymentPayload.network;
+	if (paymentPayload.accepted !== undefined) out.accepted = paymentPayload.accepted;
+	out.payload = paymentPayload.payload;
+	return out;
+}
+
 export async function verifyPayment({ paymentHeader, requirements, builderCode }) {
 	const all = Array.isArray(requirements) ? requirements : [requirements];
 	// Auth-hint placeholder entries (amount="0" / extra.authRequired) are never
@@ -1022,7 +1046,7 @@ export async function verifyPayment({ paymentHeader, requirements, builderCode }
 	}
 	const result = await callFacilitator(requirement.network, '/verify', {
 		x402Version: X402_VERSION,
-		paymentPayload,
+		paymentPayload: config.cdp ? minimalPaymentPayloadForCdp(paymentPayload) : paymentPayload,
 		paymentRequirements: requirement,
 	});
 	if (!result.isValid) {
@@ -1124,7 +1148,7 @@ export async function settlePayment(args) {
 		'/settle',
 		{
 			x402Version: X402_VERSION,
-			paymentPayload,
+			paymentPayload: config.cdp ? minimalPaymentPayloadForCdp(paymentPayload) : paymentPayload,
 			paymentRequirements: requirement,
 		},
 		{ idempotencyKey },

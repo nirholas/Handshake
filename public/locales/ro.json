@@ -7674,7 +7674,7 @@
 	},
 	"forge_embed": {
 		"forge_your_own_3d_model_on_t_arialabel": "Forge propriul tău model 3D pe three.ws",
-		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> făurit pe three.ws",
+		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> Forged pe three.ws",
 		"meta_description": "Un model 3D interactiv făurit pe three.ws.",
 		"meta_title": "three.ws — model 3D încorporat",
 		"no_model_to_show": "Niciun model de afișat",
@@ -18584,7 +18584,7 @@
 		"download_glb": "Descarcă GLB",
 		"download_the_glb_file_arialabel": "Descarcă fișierul GLB",
 		"embed_it_anywhere_copy_an_iframe_snippet": "<span class=\"k\"><span class=\"glyph\" aria-hidden=\"true\">&lt;/&gt;</span>Integrează-l oriunde</span> <span class=\"d\" id=\"embed-d\">Copiază un snippet iframe care afișează acest vizualizator exact pe site-ul tău.</span>",
-		"forge_another_describe_anything_and_get_a": "<span class=\"k\"><span class=\"glyph\" aria-hidden=\"true\">✦</span>Creează altul</span> <span class=\"d\">Descrie orice și obține un nou model 3D, gratuit.</span>",
+		"forge_another_describe_anything_and_get_a": "<span class=\"k\"><span class=\"glyph\" aria-hidden=\"true\">✦</span>Forge Modelează altul</span> <span class=\"d\">Descrie orice și obține un nou model 3D, gratuit.</span>",
 		"launch_it_as_a_coin_open_a": "<span class=\"k\"><span class=\"glyph\" aria-hidden=\"true\">◉</span>Lansează-l ca monedă</span> <span class=\"d\" id=\"coin-d\">Deschide o lansare pump.fun cu acest model ca imagine a token-ului.</span>",
 		"make_your_own": "Creează-ți propriul →",
 		"meta_description": "Vizualizează și descarcă un model 3D interactiv (GLB) generat cu three.ws.",

@@ -7674,7 +7674,7 @@
 	},
 	"forge_embed": {
 		"forge_your_own_3d_model_on_t_arialabel": "Forge ang sarili mong 3D model sa three.ws",
-		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> hinulma sa three.ws",
+		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> Forged sa three.ws",
 		"meta_description": "Isang interactive na 3D model na hinulma sa three.ws.",
 		"meta_title": "three.ws — naka-embed na 3D model",
 		"no_model_to_show": "Walang model na ipapakita",

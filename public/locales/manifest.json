@@ -205,6 +205,101 @@
 			"code": "sk",
 			"name": "Slovenčina",
 			"dir": "ltr"
+		},
+		{
+			"code": "gu",
+			"name": "ગુજરાતી",
+			"dir": "ltr"
+		},
+		{
+			"code": "kn",
+			"name": "ಕನ್ನಡ",
+			"dir": "ltr"
+		},
+		{
+			"code": "ml",
+			"name": "മലയാളം",
+			"dir": "ltr"
+		},
+		{
+			"code": "pa",
+			"name": "ਪੰਜਾਬੀ",
+			"dir": "ltr"
+		},
+		{
+			"code": "or",
+			"name": "ଓଡ଼ିଆ",
+			"dir": "ltr"
+		},
+		{
+			"code": "as",
+			"name": "অসমীয়া",
+			"dir": "ltr"
+		},
+		{
+			"code": "ne",
+			"name": "नेपाली",
+			"dir": "ltr"
+		},
+		{
+			"code": "si",
+			"name": "සිංහල",
+			"dir": "ltr"
+		},
+		{
+			"code": "kk",
+			"name": "Қазақша",
+			"dir": "ltr"
+		},
+		{
+			"code": "uz",
+			"name": "Oʻzbekcha",
+			"dir": "ltr"
+		},
+		{
+			"code": "az",
+			"name": "Azərbaycan dili",
+			"dir": "ltr"
+		},
+		{
+			"code": "ka",
+			"name": "ქართული",
+			"dir": "ltr"
+		},
+		{
+			"code": "hy",
+			"name": "Հայերեն",
+			"dir": "ltr"
+		},
+		{
+			"code": "mn",
+			"name": "Монгол",
+			"dir": "ltr"
+		},
+		{
+			"code": "ky",
+			"name": "Кыргызча",
+			"dir": "ltr"
+		},
+		{
+			"code": "tg",
+			"name": "Тоҷикӣ",
+			"dir": "ltr"
+		},
+		{
+			"code": "km",
+			"name": "ខ្មែរ",
+			"dir": "ltr"
+		},
+		{
+			"code": "lo",
+			"name": "ລາວ",
+			"dir": "ltr"
+		},
+		{
+			"code": "my",
+			"name": "မြန်မာ",
+			"dir": "ltr"
 		}
 	]
 }

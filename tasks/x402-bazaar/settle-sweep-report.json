@@ -1,26 +1,26 @@
 {
-	"ranAt": "2026-07-19T14:46:16.807Z",
-	"buyer": "0x4022de2D36C334E73C7a108805Cea11C0564f402",
-	"spentUsd": 0,
-	"settled": 0,
+	"ranAt": "2026-07-19T14:49:44.748Z",
+	"buyer": "0x2c37E0A953D21Dd738e1BFba386102EE07a07Ccd",
+	"spentUsd": 0.044,
+	"settled": 31,
 	"planned": 63,
 	"results": [
 		{
 			"slug": "model-check",
 			"url": "https://three.ws/api/x402/model-check",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 404,
-			"outcome": "unpaid-402",
+			"status": 400,
+			"elapsedMs": 353,
+			"outcome": "unpaid-400",
 			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/model-check\",\"description\":\"three.ws — agent-fir"
+			"bodyPreview": "{\"error\":\"missing_url\",\"error_description\":\"query param \\\"url\\\" is required\"}"
 		},
 		{
 			"slug": "mint-to-mesh",
 			"url": "https://three.ws/api/x402/mint-to-mesh",
 			"priceUsd": 0.001,
 			"status": 402,
-			"elapsedMs": 487,
+			"elapsedMs": 298,
 			"outcome": "unpaid-402",
 			"tx": null,
 			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: 'paymentPayload' is invalid: must match one of [x402V2PaymentPayload, x402V1PaymentPayload]. x402V1PaymentPayload re"
@@ -29,38 +29,38 @@
 			"slug": "skill-marketplace",
 			"url": "https://three.ws/api/x402/skill-marketplace",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 1644,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/skill-marketplace\",\"description\":\"Skill Marketpl"
+			"status": 200,
+			"elapsedMs": 1231,
+			"outcome": "settled-200",
+			"tx": "0xe9f960170818e10bcb6069f5828d0cc3f2f406a7898853e9cd90e52ce9a5594a",
+			"bodyPreview": "{\"skill_filter\":null,\"count\":50,\"cheapest\":null,\"listings\":[{\"agent_id\":\"b80ee384-ad06-4004-ac6e-117c9844e3e0\",\"agent_name\":\"Ring Endpoint Shopper\",\"skill\":\"qui"
 		},
 		{
 			"slug": "symbol-availability",
 			"url": "https://three.ws/api/x402/symbol-availability",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 670,
-			"outcome": "unpaid-402",
+			"status": 400,
+			"elapsedMs": 383,
+			"outcome": "unpaid-400",
 			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/symbol-availability\",\"description\":\"Symbol Avail"
+			"bodyPreview": "{\"error\":\"missing_ticker\",\"error_description\":\"query param \\\"ticker\\\" is required\"}"
 		},
 		{
 			"slug": "permit2-paid-demo",
 			"url": "https://three.ws/api/x402/permit2-paid-demo",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 496,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/permit2-paid-demo\",\"description\":\"Permit2 + EIP-"
+			"status": 200,
+			"elapsedMs": 1251,
+			"outcome": "settled-200",
+			"tx": "0x7eeb03fd398b6c67c806e2cd314425f437533da1f7c3f971679f733cad278e4d",
+			"bodyPreview": "{\"ok\":true,\"demo\":\"permit2-eip2612-gas-sponsoring\",\"method\":\"permit2\",\"supportsEip2612\":true,\"payer\":\"0x2c37E0A953D21Dd738e1BFba386102EE07a07Ccd\",\"network\":\"eip"
 		},
 		{
 			"slug": "gas-oracle",
 			"url": "https://three.ws/api/x402/gas-oracle",
 			"priceUsd": 0.001,
 			"status": 402,
-			"elapsedMs": 504,
+			"elapsedMs": 379,
 			"outcome": "unpaid-402",
 			"tx": null,
 			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: 'paymentPayload' is invalid: must match one of [x402V2PaymentPayload, x402V1PaymentPayload]. x402V1PaymentPayload re"
@@ -69,448 +69,448 @@
 			"slug": "market-coins",
 			"url": "https://three.ws/api/x402/market-coins?page=1&per_page=100",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 783,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/market-coins\",\"description\":\"Ranked cryptocurren"
+			"status": 200,
+			"elapsedMs": 1224,
+			"outcome": "settled-200",
+			"tx": "0x1293bab274ec615ae775fbae0137a499bd7506d42a512507ba0d70dff457623a",
+			"bodyPreview": "{\"coins\":[{\"id\":\"bitcoin\",\"symbol\":\"BTC\",\"name\":\"Bitcoin\",\"image\":\"https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png?1696501400\",\"rank\":1,\"pric"
 		},
 		{
 			"slug": "market-coin",
 			"url": "https://three.ws/api/x402/market-coin?id=bitcoin",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 600,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/market-coin\",\"description\":\"Rich single-coin pro"
+			"status": 200,
+			"elapsedMs": 1187,
+			"outcome": "settled-200",
+			"tx": "0xbb7b71a5f871eaac52c41013b0d6937d9985aa9ebc3123a10a14bfd06d933fe2",
+			"bodyPreview": "{\"coin\":{\"id\":\"bitcoin\",\"symbol\":\"BTC\",\"name\":\"Bitcoin\",\"image\":\"https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png?1696501400\",\"rank\":1,\"catego"
 		},
 		{
 			"slug": "market-chart",
 			"url": "https://three.ws/api/x402/market-chart?id=bitcoin&days=30",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 573,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/market-chart\",\"description\":\"Historical price se"
+			"status": 200,
+			"elapsedMs": 1126,
+			"outcome": "settled-200",
+			"tx": "0x4bed68b3f80c69df68ead4fe6899ed8cb5a89f264ade0fcbf60ea34c8c54e919",
+			"bodyPreview": "{\"data\":[[1781881240330,63148.3861884272],[1781884827113,63159.432954581534],[1781888414410,62934.94732450514],[1781892043431,63148.481990645334],[1781895656736"
 		},
 		{
 			"slug": "market-categories",
 			"url": "https://three.ws/api/x402/market-categories",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 630,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/market-categories\",\"description\":\"Crypto sector "
+			"status": 200,
+			"elapsedMs": 1083,
+			"outcome": "settled-200",
+			"tx": "0x51c3990f2a1bc18cc3b4ca4fd49a6ea9c7fff5c8dbd20bc91d182b597725a507",
+			"bodyPreview": "{\"categories\":[{\"id\":\"smart-contract-platform\",\"name\":\"Smart Contract Platform\",\"market_cap\":1844837068923.9573,\"market_cap_change_24h\":0.8961113320475035,\"volu"
 		},
 		{
 			"slug": "market-exchanges",
 			"url": "https://three.ws/api/x402/market-exchanges",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 544,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/market-exchanges\",\"description\":\"Spot exchange r"
+			"status": 200,
+			"elapsedMs": 1200,
+			"outcome": "settled-200",
+			"tx": "0x54e94135a2ce30d30e8392d2f3593f8f201631ed0cfffc1331ad20e8a2a7f65b",
+			"bodyPreview": "{\"exchanges\":[{\"id\":\"gdax\",\"name\":\"Coinbase Exchange\",\"image\":\"https://coin-images.coingecko.com/markets/images/23/small/Coinbase_Coin_Primary.png?1706864258\",\""
 		},
 		{
 			"slug": "market-derivatives",
 			"url": "https://three.ws/api/x402/market-derivatives",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 424,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/market-derivatives\",\"description\":\"Derivatives m"
+			"status": 200,
+			"elapsedMs": 1945,
+			"outcome": "settled-200",
+			"tx": "0x2d0778d236327529249220d704eaa2d739e90a643faad04bdf7b5657c5467e9f",
+			"bodyPreview": "{\"tickers\":[{\"market\":\"WEEX (Futures)\",\"symbol\":\"BTC-USDT\",\"index_id\":\"BTC\",\"price\":64422.64,\"change_24h\":0.5330909295022718,\"funding_rate\":0.00000406,\"open_int"
 		},
 		{
 			"slug": "market-global",
 			"url": "https://three.ws/api/x402/market-global",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 380,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/market-global\",\"description\":\"Global crypto mark"
+			"status": 200,
+			"elapsedMs": 1241,
+			"outcome": "settled-200",
+			"tx": "0x5215384e5e5adb0aa0524da4975f8bc77abf7285b5623fca900ed8f20200face",
+			"bodyPreview": "{\"market\":{\"market_cap_usd\":2290709951829.374,\"volume_24h_usd\":40002066333.558075,\"market_cap_change_pct_24h\":0.6100750766238416,\"active_coins\":17657,\"dominance"
 		},
 		{
 			"slug": "market-gas",
 			"url": "https://three.ws/api/x402/market-gas",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 548,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/market-gas\",\"description\":\"Live Ethereum gas ora"
+			"status": 200,
+			"elapsedMs": 1279,
+			"outcome": "settled-200",
+			"tx": "0xcdc687a6fe289bf3f8e4519bcfb3bb985f2cf80908b3ffb5df4c2fcf4d3be8da",
+			"bodyPreview": "{\"tiers\":[{\"key\":\"slow\",\"base_fee_gwei\":0.044103313,\"priority_fee_gwei\":0.0004107835,\"gas_price_gwei\":0.0445140965,\"gas_price_wei\":44514096.5,\"actions\":[{\"key\":"
 		},
 		{
 			"slug": "market-trending",
 			"url": "https://three.ws/api/x402/market-trending",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 825,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/market-trending\",\"description\":\"Trending crypto "
+			"status": 200,
+			"elapsedMs": 1660,
+			"outcome": "settled-200",
+			"tx": "0x86617faa8d0465c8c33be3d3a5749d4f73ab2d3019b5d808b34c0a69a38eb4df",
+			"bodyPreview": "{\"coins\":[{\"id\":\"lorenzo-protocol\",\"name\":\"Lorenzo Protocol\",\"symbol\":\"BANK\",\"image\":\"https://coin-images.coingecko.com/coins/images/55250/small/lorenzo.jpg?174"
 		},
 		{
 			"slug": "market-defi",
 			"url": "https://three.ws/api/x402/market-defi",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 602,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/market-defi\",\"description\":\"DeFi protocol rankin"
+			"status": 200,
+			"elapsedMs": 1789,
+			"outcome": "settled-200",
+			"tx": "0x372b434c9b258bf7c6d4fb6978df0ffa226246ee098e0050d57dab835287556e",
+			"bodyPreview": "{\"total_tvl\":240584388806.46918,\"protocol_count\":5617,\"protocols\":[{\"slug\":\"lido\",\"name\":\"Lido\",\"logo\":\"https://icons.llamao.fi/icons/protocols/lido\",\"symbol\":\""
 		},
 		{
 			"slug": "market-chains",
 			"url": "https://three.ws/api/x402/market-chains",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 585,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/market-chains\",\"description\":\"Cross-chain TVL le"
+			"status": 200,
+			"elapsedMs": 1059,
+			"outcome": "settled-200",
+			"tx": "0x43ec24bf35f6f1e7b98f7ff7ff6117aa680c3d766b0486f67a1bb7f6c696e586",
+			"bodyPreview": "{\"total_tvl\":75761766528.65736,\"chain_count\":360,\"chains\":[{\"name\":\"Ethereum\",\"tvl\":41058161061.959206,\"token_symbol\":\"ETH\",\"share_pct\":54.19377470089574},{\"nam"
 		},
 		{
 			"slug": "market-yields",
 			"url": "https://three.ws/api/x402/market-yields?chain=solana&stablecoin=true&sort=apy",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 597,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/market-yields\",\"description\":\"DeFi yield-pool ex"
+			"status": 200,
+			"elapsedMs": 1885,
+			"outcome": "settled-200",
+			"tx": "0xe131f3bdc9a4b458f5fede97666c1c595fe16c9c53c2c413b62c1bf26904ff53",
+			"bodyPreview": "{\"pools\":[{\"pool\":\"ea7875db-2680-5012-8559-3dd1a0303e5a\",\"chain\":\"Solana\",\"project\":\"orca-dex\",\"symbol\":\"CASHCAT-USDC\",\"tvl_usd\":20190,\"apy\":597.19374,\"apy_base"
 		},
 		{
 			"slug": "market-stablecoins",
 			"url": "https://three.ws/api/x402/market-stablecoins",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 725,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/market-stablecoins\",\"description\":\"Stablecoin ma"
+			"status": 200,
+			"elapsedMs": 1199,
+			"outcome": "settled-200",
+			"tx": "0x74a4fd5516207d416734f5e4f3f654a13ad4f6eaf2b337aada932215d1a7a156",
+			"bodyPreview": "{\"total_mcap\":309710219931.752,\"count\":410,\"stablecoins\":[{\"id\":\"1\",\"name\":\"Tether\",\"symbol\":\"USDT\",\"price\":0.9991767447865646,\"peg_type\":\"peggedUSD\",\"peg_mecha"
 		},
 		{
 			"slug": "market-fees",
 			"url": "https://three.ws/api/x402/market-fees?type=fees",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 381,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/market-fees\",\"description\":\"Protocol fee and rev"
+			"status": 200,
+			"elapsedMs": 1461,
+			"outcome": "settled-200",
+			"tx": "0x2898c75f337486cb27fa3963513acb14bb769a99a702bddfc1d9fb62f6a4b723",
+			"bodyPreview": "{\"type\":\"fees\",\"total24h\":49420236,\"total7d\":386878267,\"total30d\":1604001218,\"change_1d\":-8.57,\"chart\":[{\"t\":1522022400000,\"value\":141},{\"t\":1523318400000,\"valu"
 		},
 		{
 			"slug": "market-dex-volumes",
 			"url": "https://three.ws/api/x402/market-dex-volumes",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 1323,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/market-dex-volumes\",\"description\":\"DEX trading-v"
+			"status": 200,
+			"elapsedMs": 1270,
+			"outcome": "settled-200",
+			"tx": "0x9084e315f614aa171bd426c46a0d46650a7eedda0945c12fdda1c3dbb470d3dc",
+			"bodyPreview": "{\"total24h\":4649966028,\"total7d\":46799805205,\"change_7dover7d\":1.13,\"chart\":[{\"t\":1461024000000,\"value\":607},{\"t\":1462665600000,\"value\":675},{\"t\":1464480000000,"
 		},
 		{
 			"slug": "market-hacks",
 			"url": "https://three.ws/api/x402/market-hacks?search=bridge",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 593,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/market-hacks\",\"description\":\"DeFi exploit databa"
+			"status": 200,
+			"elapsedMs": 1083,
+			"outcome": "settled-200",
+			"tx": "0x191a31e028b292e89ab913cec03cd456e6e693792c5dd8588a4cf5b6d619819d",
+			"bodyPreview": "{\"stats\":{\"total_stolen_all_time\":16712952055,\"total_stolen_12mo\":1406378456,\"incidents_12mo\":190,\"bridge_hack_share_pct\":19.49673545569206},\"hacks\":[{\"date\":17"
 		},
 		{
 			"slug": "api-key-health",
 			"url": "https://three.ws/api/x402/api-key-health",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 417,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/api-key-health\",\"description\":\"API Key Validity "
+			"status": 200,
+			"elapsedMs": 1013,
+			"outcome": "settled-200",
+			"tx": "0x79eea23d6b5e69efd5805d6f713c84df045385191375b9a201a7404c5c974381",
+			"bodyPreview": "{\"valid\":false,\"scopes\":[],\"expires_at\":null,\"key_type\":null,\"source\":null,\"key_prefix\":null,\"rate_limit_per_minute\":null,\"checked_at\":\"2026-07-19T14:48:47.704Z"
 		},
 		{
 			"slug": "auth-health",
 			"url": "https://three.ws/api/x402/auth-health",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 380,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/auth-health\",\"description\":\"Auth Session Lifecyc"
+			"status": 200,
+			"elapsedMs": 1129,
+			"outcome": "settled-200",
+			"tx": "0x369ea082902d108935882e53234099f49047d20f0349d3958217e9797e56ce54",
+			"bodyPreview": "{\"all_pass\":true,\"failed_step\":null,\"latency_ms\":3,\"steps\":{\"create\":{\"pass\":true,\"latency_ms\":2},\"validate\":{\"pass\":true,\"latency_ms\":1},\"refresh\":{\"pass\":true"
 		},
 		{
 			"slug": "avatar-optimize-batch",
 			"url": "https://three.ws/api/x402/avatar-optimize-batch",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 499,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/avatar-optimize-batch\",\"description\":\"three.ws A"
+			"status": 200,
+			"elapsedMs": 17731,
+			"outcome": "settled-200",
+			"tx": "0xca583bdd39d4b65dc6670ab9bec232a0a04c5874969549ca4fd52609c1de4358",
+			"bodyPreview": "{\"analyzed\":50,\"critical_count\":0,\"warn_count\":2,\"info_count\":54,\"total_size_bytes\":262916188,\"avatars\":[{\"id\":\"81a076b6-55ff-49a2-b007-1d88e7dce2aa\",\"name\":\"an"
 		},
 		{
 			"slug": "bazaar-feed",
 			"url": "https://three.ws/api/x402/bazaar-feed",
 			"priceUsd": 0.001,
-			"status": 429,
-			"elapsedMs": 196,
-			"outcome": "unpaid-429",
-			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":52,\"reason\":\"cacheBlock\"}"
+			"status": 200,
+			"elapsedMs": 1327,
+			"outcome": "settled-200",
+			"tx": "0xc0f4d6970d77a775346d38797c3610eb6af74268410b599be3e4a7cc1aff4760",
+			"bodyPreview": "{\"filter\":\"new\",\"limit\":10,\"count\":10,\"listings\":[{\"id\":\"https://api.tradeperpetua.xyz/signal\",\"resource\":\"https://api.tradeperpetua.xyz/signal\",\"tool_name\":nul"
 		},
 		{
 			"slug": "did",
 			"url": "https://three.ws/api/x402/did",
 			"priceUsd": 0.001,
-			"status": 429,
-			"elapsedMs": 193,
-			"outcome": "unpaid-429",
-			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":52,\"reason\":\"cacheBlock\"}"
+			"status": 200,
+			"elapsedMs": 1078,
+			"outcome": "settled-200",
+			"tx": "0xee06ac40a9fcc8ed0a14a06a1192e5ad4a4642f014c5bc17140def7db5782fe0",
+			"bodyPreview": "{\"verified\":false,\"latency_ms\":26,\"did\":\"did:three:canary\",\"mode\":\"verify\",\"resolved_did\":null,\"http_status\":404,\"within_latency\":true,\"malformed\":true,\"configu"
 		},
 		{
 			"slug": "mcp-tool-catalog",
 			"url": "https://three.ws/api/x402/mcp-tool-catalog",
 			"priceUsd": 0.001,
-			"status": 402,
-			"elapsedMs": 411,
-			"outcome": "unpaid-402",
-			"tx": null,
-			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: self_send_not_allowed\",\"resource\":{\"url\":\"https://three.ws/api/x402/mcp-tool-catalog\",\"description\":\"three.ws MCP To"
+			"status": 200,
+			"elapsedMs": 3503,
+			"outcome": "settled-200",
+			"tx": "0x4466a1cc3d462e1018bc3000293b044236dd0a93ed7a8b48a786266c33c28061",
+			"bodyPreview": "{\"ok\":true,\"mode\":\"discover\",\"total_tools\":41,\"priced_tools\":8,\"free_tools\":33,\"new_tools\":[],\"changed_tools\":[],\"removed_tools\":[],\"ts\":\"2026-07-19T14:49:10.14"
 		},
 		{
 			"slug": "model-validation-sweep",
 			"url": "https://three.ws/api/x402/model-validation-sweep",
 			"priceUsd": 0.001,
-			"status": 429,
-			"elapsedMs": 161,
-			"outcome": "unpaid-429",
-			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":52,\"reason\":\"cacheBlock\"}"
+			"status": 200,
+			"elapsedMs": 2352,
+			"outcome": "settled-200",
+			"tx": "0x9e4c184e28cadbdb00531e2c337b12e690c6d89418a78c223ac1e3e32e13f1e9",
+			"bodyPreview": "{\"ok\":true,\"avatar_id\":\"a7558491-4d16-458c-86fa-4cd5501eb3ea\",\"avatar_name\":\"hi\",\"score\":90,\"has_errors\":false,\"missing_bones\":false,\"counts\":{\"scenes\":1,\"nodes"
 		},
 		{
 			"slug": "notify",
 			"url": "https://three.ws/api/x402/notify",
 			"priceUsd": 0.001,
-			"status": 429,
-			"elapsedMs": 211,
-			"outcome": "unpaid-429",
-			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":51,\"reason\":\"cacheBlock\"}"
+			"status": 200,
+			"elapsedMs": 1088,
+			"outcome": "settled-200",
+			"tx": "0xd298e5aa63acf85ecbaeef406d6302169d013283b46bd60596987e859863e978",
+			"bodyPreview": "{\"delivered\":true,\"channel\":\"canary\",\"latency_ms\":49,\"notification_id\":\"6f6fd819-f4ce-4fe9-a164-6da7f7e164ae\",\"message\":\"x402 loop heartbeat\",\"priority\":\"low\",\""
 		},
 		{
 			"slug": "rate-limit-probe",
 			"url": "https://three.ws/api/x402/rate-limit-probe",
 			"priceUsd": 0.001,
-			"status": 429,
-			"elapsedMs": 220,
-			"outcome": "unpaid-429",
+			"status": 400,
+			"elapsedMs": 410,
+			"outcome": "unpaid-400",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":51,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"error\":\"missing_endpoint\",\"error_description\":\"\\\"endpoint\\\" is required\"}"
 		},
 		{
 			"slug": "schema-check",
 			"url": "https://three.ws/api/x402/schema-check",
 			"priceUsd": 0.001,
-			"status": 429,
-			"elapsedMs": 170,
-			"outcome": "unpaid-429",
-			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":51,\"reason\":\"cacheBlock\"}"
+			"status": 200,
+			"elapsedMs": 1025,
+			"outcome": "settled-200",
+			"tx": "0x650045ed47d801964f3cfbcba7d065f4fdfe992f346b4151095f12433a0aeaf5",
+			"bodyPreview": "{\"ok\":false,\"error\":\"unsupported api \\\"undefined\\\"; supported: changelog_json\"}"
 		},
 		{
 			"slug": "solana-register-health",
 			"url": "https://three.ws/api/x402/solana-register-health",
 			"priceUsd": 0.001,
-			"status": 429,
-			"elapsedMs": 223,
-			"outcome": "unpaid-429",
-			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":51,\"reason\":\"cacheBlock\"}"
+			"status": 200,
+			"elapsedMs": 1353,
+			"outcome": "settled-200",
+			"tx": "0x6207e20173ef93f695295c3fb492788d0accae60d6ea2c9c50c411331d9e5867",
+			"bodyPreview": "{\"tool\":\"solana_register\",\"healthy\":false,\"reason\":\"no_canary_registered\",\"network\":null,\"canary_agent_id\":null,\"asset\":null,\"identity_pda\":null,\"registration_u"
 		},
 		{
 			"slug": "telegram-health",
 			"url": "https://three.ws/api/x402/telegram-health",
 			"priceUsd": 0.001,
-			"status": 429,
-			"elapsedMs": 163,
-			"outcome": "unpaid-429",
+			"status": 400,
+			"elapsedMs": 365,
+			"outcome": "unpaid-400",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":51,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"error\":\"invalid_bot\",\"error_description\":\"bot must be one of: changelog\"}"
 		},
 		{
 			"slug": "wallet-connect",
 			"url": "https://three.ws/api/x402/wallet-connect",
 			"priceUsd": 0.001,
-			"status": 429,
-			"elapsedMs": 263,
-			"outcome": "unpaid-429",
-			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":50,\"reason\":\"cacheBlock\"}"
+			"status": 200,
+			"elapsedMs": 1134,
+			"outcome": "settled-200",
+			"tx": "0x1decee3ee2bfccc78f6c5887f2ad6bb19c8cf8b43501f8f58ea7a48a69944436",
+			"bodyPreview": "{\"mode\":\"health\",\"session_created\":true,\"latency_ms\":91,\"slow\":false,\"nonce_valid\":true,\"domain\":\"three.ws\",\"reason\":null,\"checked_at\":\"2026-07-19T14:49:20.141Z"
 		},
 		{
 			"slug": "hack-check",
 			"url": "https://three.ws/api/x402/hack-check?limit=5",
 			"priceUsd": 0.002,
-			"status": 429,
-			"elapsedMs": 157,
-			"outcome": "unpaid-429",
+			"status": 402,
+			"elapsedMs": 391,
+			"outcome": "unpaid-402",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":50,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: 'paymentPayload' is invalid: must match one of [x402V2PaymentPayload, x402V1PaymentPayload]. x402V1PaymentPayload re"
 		},
 		{
 			"slug": "market-heatmap",
 			"url": "https://three.ws/api/x402/market-heatmap?limit=50",
 			"priceUsd": 0.002,
-			"status": 429,
-			"elapsedMs": 167,
-			"outcome": "unpaid-429",
+			"status": 402,
+			"elapsedMs": 363,
+			"outcome": "unpaid-402",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":50,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: 'paymentPayload' is invalid: must match one of [x402V2PaymentPayload, x402V1PaymentPayload]. x402V1PaymentPayload re"
 		},
 		{
 			"slug": "market-mood",
 			"url": "https://three.ws/api/x402/market-mood",
 			"priceUsd": 0.002,
-			"status": 429,
-			"elapsedMs": 310,
-			"outcome": "unpaid-429",
+			"status": 402,
+			"elapsedMs": 367,
+			"outcome": "unpaid-402",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":50,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: 'paymentPayload' is invalid: must match one of [x402V2PaymentPayload, x402V1PaymentPayload]. x402V1PaymentPayload re"
 		},
 		{
 			"slug": "news-pulse",
 			"url": "https://three.ws/api/x402/news-pulse?ticker=THREE&hours=24",
 			"priceUsd": 0.002,
-			"status": 429,
-			"elapsedMs": 235,
-			"outcome": "unpaid-429",
+			"status": 402,
+			"elapsedMs": 358,
+			"outcome": "unpaid-402",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":50,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: 'paymentPayload' is invalid: must match one of [x402V2PaymentPayload, x402V1PaymentPayload]. x402V1PaymentPayload re"
 		},
 		{
 			"slug": "robinhood-portfolio",
 			"url": "https://three.ws/api/x402/robinhood-portfolio",
 			"priceUsd": 0.002,
-			"status": 429,
-			"elapsedMs": 151,
-			"outcome": "unpaid-429",
+			"status": 400,
+			"elapsedMs": 343,
+			"outcome": "unpaid-400",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":49,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"error\":\"validation_error\",\"error_description\":\"query param \\\"address\\\" must be a valid EVM address\"}"
 		},
 		{
 			"slug": "onchain-identity-verify",
 			"url": "https://three.ws/api/x402/onchain-identity-verify",
 			"priceUsd": 0.005,
-			"status": 429,
-			"elapsedMs": 260,
-			"outcome": "unpaid-429",
+			"status": 400,
+			"elapsedMs": 388,
+			"outcome": "unpaid-400",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":49,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"error\":\"missing_params\",\"error_description\":\"query params identity and address are required\"}"
 		},
 		{
 			"slug": "defi-radar",
 			"url": "https://three.ws/api/x402/defi-radar?limit=10",
 			"priceUsd": 0.005,
-			"status": 429,
-			"elapsedMs": 200,
-			"outcome": "unpaid-429",
+			"status": 402,
+			"elapsedMs": 440,
+			"outcome": "unpaid-402",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":49,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: 'paymentPayload' is invalid: must match one of [x402V2PaymentPayload, x402V1PaymentPayload]. x402V1PaymentPayload re"
 		},
 		{
 			"slug": "yield-scan",
 			"url": "https://three.ws/api/x402/yield-scan?limit=10&minTvlUsd=1000000&stable=true",
 			"priceUsd": 0.005,
-			"status": 429,
-			"elapsedMs": 189,
-			"outcome": "unpaid-429",
+			"status": 402,
+			"elapsedMs": 356,
+			"outcome": "unpaid-402",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":49,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: 'paymentPayload' is invalid: must match one of [x402V2PaymentPayload, x402V1PaymentPayload]. x402V1PaymentPayload re"
 		},
 		{
 			"slug": "stablecoin-health",
 			"url": "https://three.ws/api/x402/stablecoin-health?limit=10",
 			"priceUsd": 0.005,
-			"status": 429,
-			"elapsedMs": 211,
-			"outcome": "unpaid-429",
+			"status": 402,
+			"elapsedMs": 351,
+			"outcome": "unpaid-402",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":49,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: 'paymentPayload' is invalid: must match one of [x402V2PaymentPayload, x402V1PaymentPayload]. x402V1PaymentPayload re"
 		},
 		{
 			"slug": "market-pulse",
 			"url": "https://three.ws/api/x402/market-pulse",
 			"priceUsd": 0.005,
-			"status": 429,
-			"elapsedMs": 289,
-			"outcome": "unpaid-429",
+			"status": 402,
+			"elapsedMs": 370,
+			"outcome": "unpaid-402",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":48,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: 'paymentPayload' is invalid: must match one of [x402V2PaymentPayload, x402V1PaymentPayload]. x402V1PaymentPayload re"
 		},
 		{
 			"slug": "analytics",
 			"url": "https://three.ws/api/x402/analytics",
 			"priceUsd": 0.005,
-			"status": 429,
-			"elapsedMs": 209,
-			"outcome": "unpaid-429",
+			"status": 402,
+			"elapsedMs": 353,
+			"outcome": "unpaid-402",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":48,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: 'paymentPayload' is invalid: must match one of [x402V2PaymentPayload, x402V1PaymentPayload]. x402V1PaymentPayload re"
 		},
 		{
 			"slug": "cross-chain",
 			"url": "https://three.ws/api/x402/cross-chain",
 			"priceUsd": 0.005,
-			"status": 429,
-			"elapsedMs": 164,
-			"outcome": "unpaid-429",
-			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":48,\"reason\":\"cacheBlock\"}"
+			"status": 200,
+			"elapsedMs": 1342,
+			"outcome": "settled-200",
+			"tx": "0xc93a06bab3fb708da6e08fb9102e2b469cf1044fd2bb0768c284464b40d114dd",
+			"bodyPreview": "{\"mode\":\"bridge_status\",\"bridges\":[{\"chain\":\"wormhole\",\"status\":\"operational\",\"latency_ms\":213,\"provider\":\"wormholescan\"},{\"chain\":\"lifi\",\"status\":\"operational\""
 		},
 		{
 			"slug": "llm-proxy",
 			"url": "https://three.ws/api/x402/llm-proxy",
 			"priceUsd": 0.005,
-			"status": 429,
-			"elapsedMs": 249,
-			"outcome": "unpaid-429",
+			"status": 400,
+			"elapsedMs": 400,
+			"outcome": "unpaid-400",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":48,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"error\":\"invalid_json\",\"error_description\":\"Request body must be valid JSON\"}"
 		},
 		{
 			"slug": "agent-reputation",
 			"url": "https://three.ws/api/x402/agent-reputation",
 			"priceUsd": 0.01,
-			"status": 429,
-			"elapsedMs": 160,
-			"outcome": "unpaid-429",
+			"status": 400,
+			"elapsedMs": 388,
+			"outcome": "unpaid-400",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":47,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"error\":\"missing_subject\",\"error_description\":\"query param \\\"subject\\\" is required\"}"
 		},
 		{
 			"slug": "agent-bouncer",
 			"url": "https://three.ws/api/x402/agent-bouncer",
 			"priceUsd": 0.01,
-			"status": 429,
-			"elapsedMs": 181,
-			"outcome": "unpaid-429",
+			"status": 400,
+			"elapsedMs": 366,
+			"outcome": "unpaid-400",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":47,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"error\":\"missing_agent_id\",\"error_description\":\"query param \\\"agent_id\\\" is required\"}"
 		},
 		{
 			"slug": "vanity",
 			"url": "https://three.ws/api/x402/vanity",
 			"priceUsd": 0.01,
 			"status": 402,
-			"elapsedMs": 466,
+			"elapsedMs": 225,
 			"outcome": "unpaid-402",
 			"tx": null,
 			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: 'paymentPayload' is invalid: must match one of [x402V2PaymentPayload, x402V1PaymentPayload]. x402V1PaymentPayload re"
@@ -520,7 +520,7 @@
 			"url": "https://three.ws/api/x402/skill-call",
 			"priceUsd": 0.01,
 			"status": 400,
-			"elapsedMs": 139,
+			"elapsedMs": 121,
 			"outcome": "unpaid-400",
 			"tx": null,
 			"bodyPreview": "{\"error\":\"skill_required\",\"error_description\":\"query parameter \\\"skill\\\" is required\"}"
@@ -529,18 +529,18 @@
 			"slug": "token-intel",
 			"url": "https://three.ws/api/x402/token-intel?mint=FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump",
 			"priceUsd": 0.01,
-			"status": 429,
-			"elapsedMs": 218,
-			"outcome": "unpaid-429",
-			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":46,\"reason\":\"cacheBlock\"}"
+			"status": 200,
+			"elapsedMs": 1361,
+			"outcome": "settled-200",
+			"tx": "0xf9c386d6282a53d1765fb979d43fc87d5ddbddb1dea55a2ed416aa0d89abd1a6",
+			"bodyPreview": "{\"mint\":\"FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump\",\"symbol\":\"three\",\"name\":\"three.ws\",\"chain\":\"solana\",\"price_usd\":0.00197,\"change_24h\":-6.05,\"market_cap_us"
 		},
 		{
 			"slug": "animation-download",
 			"url": "https://three.ws/api/x402/animation-download",
 			"priceUsd": 0.01,
 			"status": 400,
-			"elapsedMs": 199,
+			"elapsedMs": 118,
 			"outcome": "unpaid-400",
 			"tx": null,
 			"bodyPreview": "{\"error\":\"id_required\",\"error_description\":\"query parameter \\\"id\\\" must be a clip uuid\"}"
@@ -549,18 +549,18 @@
 			"slug": "pipeline-rembg",
 			"url": "https://three.ws/api/x402/pipeline-rembg",
 			"priceUsd": 0.01,
-			"status": 429,
-			"elapsedMs": 220,
-			"outcome": "unpaid-429",
+			"status": 400,
+			"elapsedMs": 376,
+			"outcome": "unpaid-400",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":46,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"error\":\"missing_url\",\"error_description\":\"image_url is required\"}"
 		},
 		{
 			"slug": "vanity-verifiable",
 			"url": "https://three.ws/api/x402/vanity-verifiable",
 			"priceUsd": 0.02,
 			"status": 402,
-			"elapsedMs": 420,
+			"elapsedMs": 329,
 			"outcome": "unpaid-402",
 			"tx": null,
 			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: 'paymentPayload' is invalid: must match one of [x402V2PaymentPayload, x402V1PaymentPayload]. x402V1PaymentPayload re"
@@ -569,71 +569,71 @@
 			"slug": "pipeline-remesh",
 			"url": "https://three.ws/api/x402/pipeline-remesh",
 			"priceUsd": 0.03,
-			"status": 429,
-			"elapsedMs": 265,
-			"outcome": "unpaid-429",
+			"status": 400,
+			"elapsedMs": 377,
+			"outcome": "unpaid-400",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":45,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"error\":\"missing_url\",\"error_description\":\"glb_url is required\"}"
 		},
 		{
 			"slug": "pipeline-gameready",
 			"url": "https://three.ws/api/x402/pipeline-gameready",
 			"priceUsd": 0.03,
-			"status": 429,
-			"elapsedMs": 204,
-			"outcome": "unpaid-429",
+			"status": 400,
+			"elapsedMs": 379,
+			"outcome": "unpaid-400",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":45,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"error\":\"missing_url\",\"error_description\":\"glb_url is required\"}"
 		},
 		{
 			"slug": "pipeline-stylize",
 			"url": "https://three.ws/api/x402/pipeline-stylize",
 			"priceUsd": 0.03,
-			"status": 429,
-			"elapsedMs": 312,
-			"outcome": "unpaid-429",
+			"status": 400,
+			"elapsedMs": 10976,
+			"outcome": "unpaid-400",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":45,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"error\":\"missing_url\",\"error_description\":\"glb_url is required\"}"
 		},
 		{
 			"slug": "mint-to-mesh-batch",
 			"url": "https://three.ws/api/x402/mint-to-mesh-batch",
 			"priceUsd": 0.05,
-			"status": 429,
-			"elapsedMs": 192,
-			"outcome": "unpaid-429",
+			"status": 400,
+			"elapsedMs": 563,
+			"outcome": "unpaid-400",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":45,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"error\":\"missing_mints\",\"error_description\":\"body.mints must be a non-empty array\"}"
 		},
 		{
 			"slug": "pipeline-rig",
 			"url": "https://three.ws/api/x402/pipeline-rig",
 			"priceUsd": 0.05,
-			"status": 429,
-			"elapsedMs": 199,
-			"outcome": "unpaid-429",
+			"status": 400,
+			"elapsedMs": 895,
+			"outcome": "unpaid-400",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":44,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"error\":\"missing_url\",\"error_description\":\"glb_url is required\"}"
 		},
 		{
 			"slug": "billboard",
 			"url": "https://three.ws/api/x402/billboard",
 			"priceUsd": 0.05,
-			"status": 429,
-			"elapsedMs": 318,
-			"outcome": "unpaid-429",
+			"status": 400,
+			"elapsedMs": 464,
+			"outcome": "unpaid-400",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":44,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"error\":\"invalid_coin\",\"error_description\":\"a valid coin-world mint is required in ?coin=\"}"
 		},
 		{
 			"slug": "fact-check",
 			"url": "https://three.ws/api/x402/fact-check",
 			"priceUsd": 0.1,
-			"status": 429,
-			"elapsedMs": 160,
-			"outcome": "unpaid-429",
+			"status": 402,
+			"elapsedMs": 823,
+			"outcome": "unpaid-402",
 			"tx": null,
-			"bodyPreview": "{\"error\":\"rate_limited\",\"error_description\":\"too many payment attempts — retry shortly\",\"retry_after\":44,\"reason\":\"cacheBlock\"}"
+			"bodyPreview": "{\"x402Version\":2,\"error\":\"payment rejected: 'paymentPayload' is invalid: must match one of [x402V2PaymentPayload, x402V1PaymentPayload]. x402V1PaymentPayload re"
 		}
 	],
 	"skipped": [

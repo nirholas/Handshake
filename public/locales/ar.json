@@ -7674,7 +7674,7 @@
 	},
 	"forge_embed": {
 		"forge_your_own_3d_model_on_t_arialabel": "Forge نموذجك ثلاثي الأبعاد الخاص بك على three.ws",
-		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> تم صياغته على three.ws",
+		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> Forged على three.ws",
 		"meta_description": "نموذج ثلاثي الأبعاد تفاعلي تم صياغته على three.ws.",
 		"meta_title": "three.ws — نموذج ثلاثي الأبعاد مضمّن",
 		"no_model_to_show": "لا يوجد نموذج للعرض",

@@ -9803,7 +9803,7 @@
 		"erc_8004": "ERC-8004",
 		"erc_8004_agent_registration_on_evm_solana": "ERC-8004 agentregistrering på EVM. Solana attesteringer på seks hendelsestyper: tilbakemelding, validering, oppgavetilbud, oppgaveaksept, tilbakekalling, tvist. ERC-7710 avgrensede delegeringer — gi/tilbakekalle tidsbegrensede, mengdebegrensede tillatelser. Fullstendig omdømme-gjennomsøk hvert 5. minutt via cron.",
 		"erc_8004_erc_7710_solana_sas": "ERC-8004 · ERC-7710 · Solana SAS",
-		"erc_8004_on_chain_identity_chat_panel": "<code>@three-ws/sdk</code> — ERC-8004 on-chain identitet, chatpanel, ERC-7710 avgrensede delegeringer, IPFS-pinning, integrasjon med nettleserlommebok. <code>@three-ws/agent-payments</code> v3.1.0 — agentbetalingsprogram med støtte for v2 bonding curve, x402 fasilitator, EVM agentbetalinger (Base + Arbitrum), event-parere.",
+		"erc_8004_on_chain_identity_chat_panel": "<code>@three-ws/sdk</code> — ERC-8004 on-chain identitet, chatpanel, ERC-7710-delegeringer med omfang, IPFS-pinning, nettleserlommebok-integrasjon. <code>@three-ws/agent-payments</code> v3.1.0 — agentbetalingsprogram med støtte for v2 bonding curve, x402 fasilitator, EVM-agentbetalinger (Base + Arbitrum), event-parere. <code>three.ws</code> — npm-pakke for <code>&lt;agent-3d&gt;</code> webkomponenten.",
 		"every_metric_below_is_pulled_directly_from": "Alle målinger nedenfor er hentet direkte fra X-analyse for <a href=\"https://x.com/trythreews\">@trythreews</a> i perioden 29. april – 9. mai 2026, og fra en komplett skraping av alle innlegg publisert i samme periode.",
 		"every_post_is_linked_every_metric_is": "Hvert innlegg er lenket. Hver måling er den faktiske skrapede verdien fra X.",
 		"exchanges_market_data": "Børser + Markedsdata",

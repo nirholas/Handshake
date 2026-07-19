@@ -7674,7 +7674,7 @@
 	},
 	"forge_embed": {
 		"forge_your_own_3d_model_on_t_arialabel": "Forge σφυρηλάτησε το δικό σου 3D μοντέλο στο three.ws",
-		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> σφυρηλατημένο στο three.ws",
+		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> Forged σε three.ws",
 		"meta_description": "Ένα διαδραστικό 3D μοντέλο σφυρηλατημένο στο three.ws.",
 		"meta_title": "three.ws — ενσωματωμένο 3D μοντέλο",
 		"no_model_to_show": "Δεν υπάρχει μοντέλο για προβολή",

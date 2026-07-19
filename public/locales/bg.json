@@ -18584,7 +18584,7 @@
 		"download_glb": "Изтеглете GLB",
 		"download_the_glb_file_arialabel": "Изтеглете файла GLB",
 		"embed_it_anywhere_copy_an_iframe_snippet": "<span class=\"k\"><span class=\"glyph\" aria-hidden=\"true\">&lt;/&gt;</span>Вградете го навсякъде</span> <span class=\"d\" id=\"embed-d\">Копирайте iframe фрагмент, който показва точно този преглед на вашия сайт.</span>",
-		"forge_another_describe_anything_and_get_a": "<span class=\"k\"><span class=\"glyph\" aria-hidden=\"true\">✦</span>Изковайте още един</span> <span class=\"d\">Опишете каквото и да е и получете нов 3D модел, безплатно.</span>",
+		"forge_another_describe_anything_and_get_a": "<span class=\"k\"><span class=\"glyph\" aria-hidden=\"true\">✦</span>Forge Още един</span> <span class=\"d\">Опиши каквото и да е и генерирай нов 3D модел, безплатно.</span>",
 		"launch_it_as_a_coin_open_a": "<span class=\"k\"><span class=\"glyph\" aria-hidden=\"true\">◉</span>Пусни го като монета</span> <span class=\"d\" id=\"coin-d\">Отворете pump.fun стартиране с този модел като изображение на токена.</span>",
 		"make_your_own": "Създайте свой собствен →",
 		"meta_description": "Прегледайте и изтеглете интерактивен 3D модел (GLB), генериран с three.ws.",

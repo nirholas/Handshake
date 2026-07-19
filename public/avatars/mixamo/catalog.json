@@ -8,7 +8,12 @@
       "bytes": 12642304,
       "downloaded_at": "2026-07-19T14:31:14.617Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/warrok-w-kurniawan.glb",
+      "glb_bytes": 8995084,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:15:58.831Z"
     },
     "cccc84b6-d072-4972-99da-75c5702e25f6": {
       "id": "cccc84b6-d072-4972-99da-75c5702e25f6",
@@ -17,7 +22,12 @@
       "bytes": 20162032,
       "downloaded_at": "2026-07-19T14:31:19.384Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/mutant.glb",
+      "glb_bytes": 18082900,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:16:18.410Z"
     },
     "037852b5-74da-44aa-878b-eccda13e5139": {
       "id": "037852b5-74da-44aa-878b-eccda13e5139",
@@ -26,7 +36,12 @@
       "bytes": 28849216,
       "downloaded_at": "2026-07-19T14:31:24.712Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/remy.glb",
+      "glb_bytes": 20566060,
+      "glb_skins": 7,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:16:06.534Z"
     },
     "45d387cb-2276-426b-9547-95f501296b68": {
       "id": "45d387cb-2276-426b-9547-95f501296b68",
@@ -35,7 +50,12 @@
       "bytes": 11916240,
       "downloaded_at": "2026-07-19T14:31:29.214Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/vanguard-by-t-choonyung.glb",
+      "glb_bytes": 5095040,
+      "glb_skins": 2,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:16:25.329Z"
     },
     "f7b85d05-5f1c-47d8-9770-9a1a054bd6f6": {
       "id": "f7b85d05-5f1c-47d8-9770-9a1a054bd6f6",
@@ -44,7 +64,12 @@
       "bytes": 5438976,
       "downloaded_at": "2026-07-19T14:31:33.545Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/ely-by-k-atienza.glb",
+      "glb_bytes": 3725780,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:16:34.750Z"
     },
     "ef7eb018-7cf3-4ae1-99ac-bab1c2c5d419": {
       "id": "ef7eb018-7cf3-4ae1-99ac-bab1c2c5d419",
@@ -53,7 +78,12 @@
       "bytes": 32725872,
       "downloaded_at": "2026-07-19T14:31:38.782Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/exo-gray.glb",
+      "glb_bytes": 28025452,
+      "glb_skins": 8,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:16:37.266Z"
     },
     "d0496a75-08b9-4f4e-9f1d-f65820323cc2": {
       "id": "d0496a75-08b9-4f4e-9f1d-f65820323cc2",
@@ -62,7 +92,12 @@
       "bytes": 20096064,
       "downloaded_at": "2026-07-19T14:31:43.760Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/erika-archer.glb",
+      "glb_bytes": 19355132,
+      "glb_skins": 4,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:16:36.391Z"
     },
     "e89ec3c3-47b4-4d55-87f5-83d91e537136": {
       "id": "e89ec3c3-47b4-4d55-87f5-83d91e537136",
@@ -71,7 +106,12 @@
       "bytes": 16052304,
       "downloaded_at": "2026-07-19T14:31:48.479Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/maria-j-j-ong.glb",
+      "glb_bytes": 10793068,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:16:36.697Z"
     },
     "91d02eaa-1b0a-4d34-b859-01bcd092c713": {
       "id": "91d02eaa-1b0a-4d34-b859-01bcd092c713",
@@ -80,7 +120,12 @@
       "bytes": 18060336,
       "downloaded_at": "2026-07-19T14:31:53.091Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/skeletonzombie-t-avelange.glb",
+      "glb_bytes": 13356320,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:16:38.949Z"
     },
     "6a8a18f1-cb35-4e4b-9b0b-caa20a0101d0": {
       "id": "6a8a18f1-cb35-4e4b-9b0b-caa20a0101d0",
@@ -89,7 +134,12 @@
       "bytes": 16128688,
       "downloaded_at": "2026-07-19T14:31:57.960Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/maria-w-prop-j-j-ong.glb",
+      "glb_bytes": 10804144,
+      "glb_skins": 2,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:16:38.565Z"
     },
     "c9012369-6099-4f23-b1e8-e45cbdc23d74": {
       "id": "c9012369-6099-4f23-b1e8-e45cbdc23d74",
@@ -98,7 +148,12 @@
       "bytes": 6759664,
       "downloaded_at": "2026-07-19T14:32:02.379Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/the-boss.glb",
+      "glb_bytes": 2692484,
+      "glb_skins": 11,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:16:39.409Z"
     },
     "58978fe0-8573-4d51-9666-f6c075f64fd0": {
       "id": "58978fe0-8573-4d51-9666-f6c075f64fd0",
@@ -107,7 +162,12 @@
       "bytes": 5471952,
       "downloaded_at": "2026-07-19T14:32:06.586Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/peasant-girl.glb",
+      "glb_bytes": 3831700,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:16:40.349Z"
     },
     "576b18a3-2e3e-4f50-b665-cbca337e0757": {
       "id": "576b18a3-2e3e-4f50-b665-cbca337e0757",
@@ -116,7 +176,12 @@
       "bytes": 111099488,
       "downloaded_at": "2026-07-19T14:32:20.342Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/romero.glb",
+      "glb_bytes": 99998744,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:16:50.466Z"
     },
     "68c2e4b0-1ad6-4e53-b67d-161b8f4ccfbf": {
       "id": "68c2e4b0-1ad6-4e53-b67d-161b8f4ccfbf",
@@ -125,7 +190,12 @@
       "bytes": 50491184,
       "downloaded_at": "2026-07-19T14:32:30.318Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/louise.glb",
+      "glb_bytes": 41223152,
+      "glb_skins": 7,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:16:45.692Z"
     },
     "d13cd86b-a90f-4c8a-81c9-18fc490b40ba": {
       "id": "d13cd86b-a90f-4c8a-81c9-18fc490b40ba",
@@ -134,7 +204,12 @@
       "bytes": 55183696,
       "downloaded_at": "2026-07-19T14:32:39.257Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/james.glb",
+      "glb_bytes": 50204384,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:16:50.440Z"
     },
     "90815396-6b00-4efc-b670-4c3497dbb605": {
       "id": "90815396-6b00-4efc-b670-4c3497dbb605",
@@ -143,7 +218,12 @@
       "bytes": 16794352,
       "downloaded_at": "2026-07-19T14:32:43.940Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/vampire-a-lusth.glb",
+      "glb_bytes": 12717472,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:16:49.960Z"
     },
     "3c722a0f-8697-4ef2-93ba-d02155ecaf51": {
       "id": "3c722a0f-8697-4ef2-93ba-d02155ecaf51",
@@ -152,7 +232,12 @@
       "bytes": 11846576,
       "downloaded_at": "2026-07-19T14:32:51.519Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/prisoner-b-styperek.glb",
+      "glb_bytes": 9291920,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:16:51.528Z"
     },
     "24c3eeb4-6c47-419d-a593-f7b2948b74c7": {
       "id": "24c3eeb4-6c47-419d-a593-f7b2948b74c7",
@@ -161,7 +246,12 @@
       "bytes": 29491904,
       "downloaded_at": "2026-07-19T14:32:56.640Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/amy.glb",
+      "glb_bytes": 25836680,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:16:55.218Z"
     },
     "4ebecd82-580e-49f2-8181-b9643ecd9509": {
       "id": "4ebecd82-580e-49f2-8181-b9643ecd9509",
@@ -170,7 +260,12 @@
       "bytes": 42351712,
       "downloaded_at": "2026-07-19T14:33:06.081Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/abe.glb",
+      "glb_bytes": 35947032,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:16:56.236Z"
     },
     "999a29c0-8fb0-42d4-92c8-5b39ca94bd75": {
       "id": "999a29c0-8fb0-42d4-92c8-5b39ca94bd75",
@@ -179,7 +274,12 @@
       "bytes": 35611232,
       "downloaded_at": "2026-07-19T14:33:11.776Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/mannequin.glb",
+      "glb_bytes": 29712176,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:16:56.935Z"
     },
     "5283eb0c-ed7e-45e2-aec5-da9d0d260285": {
       "id": "5283eb0c-ed7e-45e2-aec5-da9d0d260285",
@@ -188,7 +288,12 @@
       "bytes": 28564080,
       "downloaded_at": "2026-07-19T14:33:20.426Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/jolleen.glb",
+      "glb_bytes": 27078120,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:00.926Z"
     },
     "39e74902-c602-49c0-9d0b-d35d1ba0c341": {
       "id": "39e74902-c602-49c0-9d0b-d35d1ba0c341",
@@ -197,7 +302,12 @@
       "bytes": 53868672,
       "downloaded_at": "2026-07-19T14:33:29.973Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/ninja.glb",
+      "glb_bytes": 50116100,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:03.224Z"
     },
     "37f11292-3002-46c3-ac53-f773d1a93026": {
       "id": "37f11292-3002-46c3-ac53-f773d1a93026",
@@ -206,7 +316,12 @@
       "bytes": 59830864,
       "downloaded_at": "2026-07-19T14:33:39.364Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/megan.glb",
+      "glb_bytes": 54319524,
+      "glb_skins": 6,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:04.723Z"
     },
     "aba68976-90b0-4c6d-9f96-922dd1644be5": {
       "id": "aba68976-90b0-4c6d-9f96-922dd1644be5",
@@ -215,7 +330,12 @@
       "bytes": 53606176,
       "downloaded_at": "2026-07-19T14:33:49.342Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/kate.glb",
+      "glb_bytes": 47602396,
+      "glb_skins": 6,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:08.449Z"
     },
     "7149bc3a-67ad-4f8e-9976-8831a7faf1e4": {
       "id": "7149bc3a-67ad-4f8e-9976-8831a7faf1e4",
@@ -224,7 +344,12 @@
       "bytes": 30281776,
       "downloaded_at": "2026-07-19T14:33:54.749Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/mousey.glb",
+      "glb_bytes": 28407800,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:08.605Z"
     },
     "c5ab0438-6309-40a5-bd0c-73ab2e23ecf1": {
       "id": "c5ab0438-6309-40a5-bd0c-73ab2e23ecf1",
@@ -233,7 +358,12 @@
       "bytes": 13626672,
       "downloaded_at": "2026-07-19T14:33:59.237Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/maw-j-laygo.glb",
+      "glb_bytes": 8450432,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:06.335Z"
     },
     "e20ce5f8-4392-47bd-8840-6b4675703b49": {
       "id": "e20ce5f8-4392-47bd-8840-6b4675703b49",
@@ -242,7 +372,12 @@
       "bytes": 6189504,
       "downloaded_at": "2026-07-19T14:34:03.836Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/passive-marker-man.glb",
+      "glb_bytes": 5609332,
+      "glb_skins": 6,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:08.312Z"
     },
     "ffaec2ce-dac0-4a60-ae6c-48caf05fd368": {
       "id": "ffaec2ce-dac0-4a60-ae6c-48caf05fd368",
@@ -251,7 +386,12 @@
       "bytes": 7529184,
       "downloaded_at": "2026-07-19T14:34:08.193Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/aj.glb",
+      "glb_bytes": 5918024,
+      "glb_skins": 4,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:11.328Z"
     },
     "814bf7d1-9584-4e16-b519-8575e303eb8c": {
       "id": "814bf7d1-9584-4e16-b519-8575e303eb8c",
@@ -260,7 +400,12 @@
       "bytes": 8316160,
       "downloaded_at": "2026-07-19T14:34:12.495Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/claire.glb",
+      "glb_bytes": 5114192,
+      "glb_skins": 4,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:10.580Z"
     },
     "1b88326e-34c2-4e57-b582-6f8d8017343a": {
       "id": "1b88326e-34c2-4e57-b582-6f8d8017343a",
@@ -269,7 +414,12 @@
       "bytes": 63092000,
       "downloaded_at": "2026-07-19T14:34:23.079Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/olivia.glb",
+      "glb_bytes": 54418208,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:16.582Z"
     },
     "447a4990-f669-436e-a066-e2e2968bdcba": {
       "id": "447a4990-f669-436e-a066-e2e2968bdcba",
@@ -278,7 +428,12 @@
       "bytes": 11908064,
       "downloaded_at": "2026-07-19T14:34:27.590Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/demon-t-wiezzorek.glb",
+      "glb_bytes": 8302728,
+      "glb_skins": 8,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:12.623Z"
     },
     "042954ae-0a57-4d07-a73c-fc685db2ca53": {
       "id": "042954ae-0a57-4d07-a73c-fc685db2ca53",
@@ -287,7 +442,12 @@
       "bytes": 15852112,
       "downloaded_at": "2026-07-19T14:34:32.247Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/eve-by-j-gonzales.glb",
+      "glb_bytes": 11013644,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:13.321Z"
     },
     "a4440477-3191-424b-8703-8126d1982f67": {
       "id": "a4440477-3191-424b-8703-8126d1982f67",
@@ -296,7 +456,12 @@
       "bytes": 13930192,
       "downloaded_at": "2026-07-19T14:34:36.701Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/pumpkinhulk-l-shaw.glb",
+      "glb_bytes": 13284068,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:15.015Z"
     },
     "90484e3f-d8be-410f-a3ec-96977f84c2d9": {
       "id": "90484e3f-d8be-410f-a3ec-96977f84c2d9",
@@ -305,7 +470,12 @@
       "bytes": 25610752,
       "downloaded_at": "2026-07-19T14:34:42.167Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/erika-archer-with-bow-arrow.glb",
+      "glb_bytes": 24729188,
+      "glb_skins": 6,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:16.767Z"
     },
     "03d38a1e-ae61-4e43-bfbe-0c92d7d1224b": {
       "id": "03d38a1e-ae61-4e43-bfbe-0c92d7d1224b",
@@ -314,7 +484,12 @@
       "bytes": 9357744,
       "downloaded_at": "2026-07-19T14:34:46.716Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/kaya.glb",
+      "glb_bytes": 6905076,
+      "glb_skins": 4,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:17.583Z"
     },
     "3576fd60-beef-49ec-a3d0-f93231f4fc29": {
       "id": "3576fd60-beef-49ec-a3d0-f93231f4fc29",
@@ -323,7 +498,12 @@
       "bytes": 14304608,
       "downloaded_at": "2026-07-19T14:34:51.252Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/warzombie-f-pedroso.glb",
+      "glb_bytes": 10594820,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:18.496Z"
     },
     "555df3c3-74b7-493b-a790-3b6dbba30fed": {
       "id": "555df3c3-74b7-493b-a790-3b6dbba30fed",
@@ -332,7 +512,12 @@
       "bytes": 5242592,
       "downloaded_at": "2026-07-19T14:34:55.528Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/medea-by-m-arrebola.glb",
+      "glb_bytes": 3405788,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:18.612Z"
     },
     "5fb4b535-034a-4011-af3b-2880391547a5": {
       "id": "5fb4b535-034a-4011-af3b-2880391547a5",
@@ -341,7 +526,12 @@
       "bytes": 4014496,
       "downloaded_at": "2026-07-19T14:34:59.721Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/peasant-man.glb",
+      "glb_bytes": 3054180,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:18.637Z"
     },
     "eface83a-acc0-4036-a15e-3c650df1510d": {
       "id": "eface83a-acc0-4036-a15e-3c650df1510d",
@@ -350,7 +540,12 @@
       "bytes": 9556368,
       "downloaded_at": "2026-07-19T14:35:04.427Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/paladin-j-nordstrom.glb",
+      "glb_bytes": 7732432,
+      "glb_skins": 2,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:20.216Z"
     },
     "baa8eb9f-499f-4a3d-87ee-3f1e41bad413": {
       "id": "baa8eb9f-499f-4a3d-87ee-3f1e41bad413",
@@ -359,7 +554,12 @@
       "bytes": 17122656,
       "downloaded_at": "2026-07-19T14:35:09.147Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/crypto.glb",
+      "glb_bytes": 14027096,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:21.791Z"
     },
     "75fb0e3e-cf4c-4828-b72b-63b42a4a5cbb": {
       "id": "75fb0e3e-cf4c-4828-b72b-63b42a4a5cbb",
@@ -368,7 +568,12 @@
       "bytes": 98784352,
       "downloaded_at": "2026-07-19T14:35:21.163Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/alien-soldier.glb",
+      "glb_bytes": 76972708,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:29.316Z"
     },
     "f1cc548f-7afc-4ad1-bdde-da70dd40dedf": {
       "id": "f1cc548f-7afc-4ad1-bdde-da70dd40dedf",
@@ -377,7 +582,12 @@
       "bytes": 54436336,
       "downloaded_at": "2026-07-19T14:35:33.305Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/leonard.glb",
+      "glb_bytes": 48812052,
+      "glb_skins": 7,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:26.634Z"
     },
     "9a3bfd6e-732c-4f8d-aeaf-225676b15505": {
       "id": "9a3bfd6e-732c-4f8d-aeaf-225676b15505",
@@ -386,7 +596,12 @@
       "bytes": 52898096,
       "downloaded_at": "2026-07-19T14:35:42.281Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/racer.glb",
+      "glb_bytes": 47246348,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:28.305Z"
     },
     "1b269c4b-c026-45f2-af55-82eb76fe7243": {
       "id": "1b269c4b-c026-45f2-af55-82eb76fe7243",
@@ -395,7 +610,12 @@
       "bytes": 54328496,
       "downloaded_at": "2026-07-19T14:35:51.263Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/doozy.glb",
+      "glb_bytes": 46175532,
+      "glb_skins": 1,
+      "glb_animations": 2,
+      "glb_converted_at": "2026-07-19T15:17:33.589Z"
     },
     "cf73b862-b7ca-40e9-a156-1b95393d232e": {
       "id": "cf73b862-b7ca-40e9-a156-1b95393d232e",
@@ -404,7 +624,12 @@
       "bytes": 115526016,
       "downloaded_at": "2026-07-19T14:36:03.607Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/swat-guy.glb",
+      "glb_bytes": 98393620,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:41.458Z"
     },
     "62bdaaad-efd3-470b-985b-264c596a57b3": {
       "id": "62bdaaad-efd3-470b-985b-264c596a57b3",
@@ -413,7 +638,12 @@
       "bytes": 4539760,
       "downloaded_at": "2026-07-19T14:36:07.963Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/lola-b-styperek.glb",
+      "glb_bytes": 3192176,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:30.991Z"
     },
     "9da313dd-67a7-4677-8515-7a24b8035a69": {
       "id": "9da313dd-67a7-4677-8515-7a24b8035a69",
@@ -422,7 +652,12 @@
       "bytes": 4710480,
       "downloaded_at": "2026-07-19T14:36:12.147Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/akai-e-espiritu.glb",
+      "glb_bytes": 4101348,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:32.944Z"
     },
     "014f0fda-3925-41ed-9dea-b9a14c6d24e0": {
       "id": "014f0fda-3925-41ed-9dea-b9a14c6d24e0",
@@ -431,7 +666,12 @@
       "bytes": 19711504,
       "downloaded_at": "2026-07-19T14:36:17.313Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/girlscout-t-masuyama.glb",
+      "glb_bytes": 16324344,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:36.171Z"
     },
     "e93ae322-5f54-404c-beb2-86cc1e5b1a79": {
       "id": "e93ae322-5f54-404c-beb2-86cc1e5b1a79",
@@ -440,7 +680,12 @@
       "bytes": 7154400,
       "downloaded_at": "2026-07-19T14:36:24.857Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/whiteclown-n-hallin.glb",
+      "glb_bytes": 5562176,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:35.699Z"
     },
     "41a94250-7c46-4f92-ae48-de7ddadfd8d6": {
       "id": "41a94250-7c46-4f92-ae48-de7ddadfd8d6",
@@ -449,7 +694,12 @@
       "bytes": 14156960,
       "downloaded_at": "2026-07-19T14:36:29.344Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/uriel-a-plotexia.glb",
+      "glb_bytes": 5420052,
+      "glb_skins": 24,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:38.016Z"
     },
     "d2fa9231-1c9d-45e4-b3a1-41fdb246ddef": {
       "id": "d2fa9231-1c9d-45e4-b3a1-41fdb246ddef",
@@ -458,7 +708,12 @@
       "bytes": 5583328,
       "downloaded_at": "2026-07-19T14:36:33.759Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/sporty-granny.glb",
+      "glb_bytes": 4264524,
+      "glb_skins": 4,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:38.260Z"
     },
     "52dcdacb-b43e-4efc-ab6d-9d2d6e09bc95": {
       "id": "52dcdacb-b43e-4efc-ab6d-9d2d6e09bc95",
@@ -467,7 +722,12 @@
       "bytes": 19731552,
       "downloaded_at": "2026-07-19T14:36:41.704Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/survivor-a-lusth.glb",
+      "glb_bytes": 9211772,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:40.471Z"
     },
     "4f5d21e1-4ccc-41f1-b35b-fb2547bd8493": {
       "id": "4f5d21e1-4ccc-41f1-b35b-fb2547bd8493",
@@ -476,7 +736,12 @@
       "bytes": 2494176,
       "downloaded_at": "2026-07-19T14:36:45.831Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/y-bot.glb",
+      "glb_bytes": 2529996,
+      "glb_skins": 2,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:40.546Z"
     },
     "38b86ed5-aaf7-4a88-a791-181d18efcc19": {
       "id": "38b86ed5-aaf7-4a88-a791-181d18efcc19",
@@ -485,7 +750,12 @@
       "bytes": 5692768,
       "downloaded_at": "2026-07-19T14:36:49.993Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/castle-guard-01.glb",
+      "glb_bytes": 3926336,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:41.658Z"
     },
     "a62a2254-74c5-4ce5-8c03-c50c01d07afd": {
       "id": "a62a2254-74c5-4ce5-8c03-c50c01d07afd",
@@ -494,7 +764,12 @@
       "bytes": 22269760,
       "downloaded_at": "2026-07-19T14:36:54.914Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/heraklios-by-a-dizon.glb",
+      "glb_bytes": 16336804,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:43.445Z"
     },
     "2312e946-b71e-4b25-b61e-4f51803aa884": {
       "id": "2312e946-b71e-4b25-b61e-4f51803aa884",
@@ -503,7 +778,12 @@
       "bytes": 34756160,
       "downloaded_at": "2026-07-19T14:37:00.741Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/timmy.glb",
+      "glb_bytes": 30003952,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:47.174Z"
     },
     "8277608f-32da-42ee-b967-7c052ceb37d4": {
       "id": "8277608f-32da-42ee-b967-7c052ceb37d4",
@@ -512,7 +792,12 @@
       "bytes": 87781920,
       "downloaded_at": "2026-07-19T14:37:12.924Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/adam.glb",
+      "glb_bytes": 76149228,
+      "glb_skins": 7,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:51.761Z"
     },
     "d52abd9a-08dc-4476-b1be-4f2d3dc2c434": {
       "id": "d52abd9a-08dc-4476-b1be-4f2d3dc2c434",
@@ -521,7 +806,12 @@
       "bytes": 57114512,
       "downloaded_at": "2026-07-19T14:37:19.395Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/jones.glb",
+      "glb_bytes": 46302732,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:49.519Z"
     },
     "7f3f4e32-2b70-4c69-9a3d-0bdac6188241": {
       "id": "7f3f4e32-2b70-4c69-9a3d-0bdac6188241",
@@ -530,7 +820,12 @@
       "bytes": 21486144,
       "downloaded_at": "2026-07-19T14:37:24.492Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/michelle.glb",
+      "glb_bytes": 20064548,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:51.334Z"
     },
     "61bcdb20-7b85-4f2e-a109-2a0fbd54af78": {
       "id": "61bcdb20-7b85-4f2e-a109-2a0fbd54af78",
@@ -539,7 +834,12 @@
       "bytes": 50549648,
       "downloaded_at": "2026-07-19T14:37:34.482Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/sophie.glb",
+      "glb_bytes": 41965052,
+      "glb_skins": 6,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:57.917Z"
     },
     "a58c06c4-3307-40e6-a02d-bfcd658bdbff": {
       "id": "a58c06c4-3307-40e6-a02d-bfcd658bdbff",
@@ -548,7 +848,12 @@
       "bytes": 55381552,
       "downloaded_at": "2026-07-19T14:37:44.088Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/brian.glb",
+      "glb_bytes": 48399900,
+      "glb_skins": 5,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:18:03.398Z"
     },
     "e90a6228-9937-4a24-83f7-886adcfb0a0a": {
       "id": "e90a6228-9937-4a24-83f7-886adcfb0a0a",
@@ -557,7 +862,12 @@
       "bytes": 54492928,
       "downloaded_at": "2026-07-19T14:37:50.940Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/bryce.glb",
+      "glb_bytes": 49700988,
+      "glb_skins": 6,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:17:59.475Z"
     },
     "733463a7-15f7-4214-bb17-39d802fa7f29": {
       "id": "733463a7-15f7-4214-bb17-39d802fa7f29",
@@ -566,7 +876,12 @@
       "bytes": 116116144,
       "downloaded_at": "2026-07-19T14:38:04.407Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/brady.glb",
+      "glb_bytes": 101945280,
+      "glb_skins": 3,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:18:11.830Z"
     },
     "5867a75c-bfc5-4faa-939f-dcf08efddb58": {
       "id": "5867a75c-bfc5-4faa-939f-dcf08efddb58",
@@ -575,7 +890,12 @@
       "bytes": 142949632,
       "downloaded_at": "2026-07-19T14:38:19.992Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/gas-mask.glb",
+      "glb_bytes": 121533548,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:33.025Z"
     },
     "862d9e08-a5f4-43d1-a798-f28f5f3ae647": {
       "id": "862d9e08-a5f4-43d1-a798-f28f5f3ae647",
@@ -584,7 +904,12 @@
       "bytes": 55143360,
       "downloaded_at": "2026-07-19T14:38:29.775Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/joe.glb",
+      "glb_bytes": 45133060,
+      "glb_skins": 9,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:18:09.833Z"
     },
     "7ee9295d-a692-4d71-a981-7dd8768cd7fd": {
       "id": "7ee9295d-a692-4d71-a981-7dd8768cd7fd",
@@ -593,7 +918,12 @@
       "bytes": 42059280,
       "downloaded_at": "2026-07-19T14:38:35.770Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/dummy.glb",
+      "glb_bytes": 36447908,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:18:15.201Z"
     },
     "d075dd28-5474-4be1-972b-26a7bb1af2f4": {
       "id": "d075dd28-5474-4be1-972b-26a7bb1af2f4",
@@ -602,7 +932,12 @@
       "bytes": 69584784,
       "downloaded_at": "2026-07-19T14:38:45.551Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/jackie.glb",
+      "glb_bytes": 52069452,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:18:18.900Z"
     },
     "5a0e290c-92ea-42e4-afea-cb94ba3fab6d": {
       "id": "5a0e290c-92ea-42e4-afea-cb94ba3fab6d",
@@ -611,7 +946,12 @@
       "bytes": 56708608,
       "downloaded_at": "2026-07-19T14:38:55.200Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/elizabeth.glb",
+      "glb_bytes": 49265464,
+      "glb_skins": 6,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:18:21.886Z"
     },
     "3bcbf3bf-63f7-435e-ba9e-f3f137aa639d": {
       "id": "3bcbf3bf-63f7-435e-ba9e-f3f137aa639d",
@@ -620,7 +960,12 @@
       "bytes": 53915040,
       "downloaded_at": "2026-07-19T14:39:01.792Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/josh.glb",
+      "glb_bytes": 49132148,
+      "glb_skins": 8,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:18:26.168Z"
     },
     "8833e228-8c3e-4a62-863a-9101c3ff053c": {
       "id": "8833e228-8c3e-4a62-863a-9101c3ff053c",
@@ -629,7 +974,12 @@
       "bytes": 54475632,
       "downloaded_at": "2026-07-19T14:39:11.525Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/chad.glb",
+      "glb_bytes": 47665292,
+      "glb_skins": 7,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:01.321Z"
     },
     "13c20d1a-c2b7-4725-99da-fe3bbeac2805": {
       "id": "13c20d1a-c2b7-4725-99da-fe3bbeac2805",
@@ -638,7 +988,12 @@
       "bytes": 16281248,
       "downloaded_at": "2026-07-19T14:39:19.118Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/parasite-l-starkie.glb",
+      "glb_bytes": 13313276,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:18:28.833Z"
     },
     "2f8e576f-f69d-453e-830e-969a2f0217ea": {
       "id": "2f8e576f-f69d-453e-830e-969a2f0217ea",
@@ -647,7 +1002,12 @@
       "bytes": 16387664,
       "downloaded_at": "2026-07-19T14:39:23.623Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/zombiegirl-w-kurniawan.glb",
+      "glb_bytes": 13921612,
+      "glb_skins": 3,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:18:32.459Z"
     },
     "c0397df3-a96e-4767-826b-f5f67466bf04": {
       "id": "c0397df3-a96e-4767-826b-f5f67466bf04",
@@ -656,7 +1016,12 @@
       "bytes": 14740128,
       "downloaded_at": "2026-07-19T14:39:28.724Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/mremireh-o-desbiens.glb",
+      "glb_bytes": 8863796,
+      "glb_skins": 2,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:18:34.935Z"
     },
     "16161dd3-9be1-4d0d-b2cf-4295872988de": {
       "id": "16161dd3-9be1-4d0d-b2cf-4295872988de",
@@ -665,7 +1030,12 @@
       "bytes": 34788656,
       "downloaded_at": "2026-07-19T14:39:37.889Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/exo-red.glb",
+      "glb_bytes": 30084976,
+      "glb_skins": 8,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:18:39.437Z"
     },
     "2ab5fc24-52ac-472b-9171-98c05cca7e78": {
       "id": "2ab5fc24-52ac-472b-9171-98c05cca7e78",
@@ -674,7 +1044,12 @@
       "bytes": 8191104,
       "downloaded_at": "2026-07-19T14:39:45.260Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/dreyar-by-m-aure.glb",
+      "glb_bytes": 3556472,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:18:41.358Z"
     },
     "b6d6b787-7378-4316-8db9-0434e51a44b4": {
       "id": "b6d6b787-7378-4316-8db9-0434e51a44b4",
@@ -683,7 +1058,12 @@
       "bytes": 16661536,
       "downloaded_at": "2026-07-19T14:39:50.033Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/nightshade-j-friedrich.glb",
+      "glb_bytes": 10293460,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:18:43.267Z"
     },
     "6415d7c5-300f-4321-b1e2-33d68912e124": {
       "id": "6415d7c5-300f-4321-b1e2-33d68912e124",
@@ -692,7 +1072,12 @@
       "bytes": 19237248,
       "downloaded_at": "2026-07-19T14:39:54.619Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/kachujin-g-rosales.glb",
+      "glb_bytes": 16683900,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:18:45.889Z"
     },
     "130a335c-bbdb-492f-971f-8faab0616b6e": {
       "id": "130a335c-bbdb-492f-971f-8faab0616b6e",
@@ -701,7 +1086,12 @@
       "bytes": 19647888,
       "downloaded_at": "2026-07-19T14:40:02.771Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/goblin-d-shareyko.glb",
+      "glb_bytes": 13352036,
+      "glb_skins": 2,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:18:48.207Z"
     },
     "2b100d25-62a3-4edf-a80b-4e68c4f8234e": {
       "id": "2b100d25-62a3-4edf-a80b-4e68c4f8234e",
@@ -710,7 +1100,12 @@
       "bytes": 6191648,
       "downloaded_at": "2026-07-19T14:40:07.073Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/swat.glb",
+      "glb_bytes": 4665404,
+      "glb_skins": 2,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:18:49.742Z"
     },
     "dc527621-d14a-41f6-aa74-dbdb20dbf017": {
       "id": "dc527621-d14a-41f6-aa74-dbdb20dbf017",
@@ -719,7 +1114,12 @@
       "bytes": 7972608,
       "downloaded_at": "2026-07-19T14:40:11.373Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/ganfaul-m-aure.glb",
+      "glb_bytes": 7024488,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:18:51.554Z"
     },
     "1c7657ea-4644-4d30-aa59-299ece85eae5": {
       "id": "1c7657ea-4644-4d30-aa59-299ece85eae5",
@@ -728,7 +1128,12 @@
       "bytes": 4400464,
       "downloaded_at": "2026-07-19T14:40:15.855Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/big-vegas.glb",
+      "glb_bytes": 3355792,
+      "glb_skins": 4,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:18:53.523Z"
     },
     "7f7a8824-e060-4e60-8c87-eaaec0f4addf": {
       "id": "7f7a8824-e060-4e60-8c87-eaaec0f4addf",
@@ -737,7 +1142,12 @@
       "bytes": 101834048,
       "downloaded_at": "2026-07-19T14:40:27.473Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/astra.glb",
+      "glb_bytes": 82630700,
+      "glb_skins": 2,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:03.074Z"
     },
     "56ed684e-aeb5-4e57-ab94-7b475b553a2e": {
       "id": "56ed684e-aeb5-4e57-ab94-7b475b553a2e",
@@ -746,7 +1156,12 @@
       "bytes": 54272224,
       "downloaded_at": "2026-07-19T14:40:37.750Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/jennifer.glb",
+      "glb_bytes": 46913688,
+      "glb_skins": 5,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:07.493Z"
     },
     "bc24ef7d-a89b-4789-bdce-21e0b3e20bba": {
       "id": "bc24ef7d-a89b-4789-bdce-21e0b3e20bba",
@@ -755,7 +1170,12 @@
       "bytes": 52567760,
       "downloaded_at": "2026-07-19T14:40:46.871Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/shannon.glb",
+      "glb_bytes": 42322600,
+      "glb_skins": 7,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:09.950Z"
     },
     "9f639098-16d2-423b-b688-146b0c183dd3": {
       "id": "9f639098-16d2-423b-b688-146b0c183dd3",
@@ -764,7 +1184,12 @@
       "bytes": 53473632,
       "downloaded_at": "2026-07-19T14:40:52.910Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/jody.glb",
+      "glb_bytes": 42709120,
+      "glb_skins": 7,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:14.008Z"
     },
     "6f2a5541-27eb-4c2a-a3f5-7fd1a54f5081": {
       "id": "6f2a5541-27eb-4c2a-a3f5-7fd1a54f5081",
@@ -773,7 +1198,12 @@
       "bytes": 100966352,
       "downloaded_at": "2026-07-19T14:41:05.067Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/maynard.glb",
+      "glb_bytes": 87408492,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:19.256Z"
     },
     "c01a541d-c585-435a-a2b9-5b0524eba790": {
       "id": "c01a541d-c585-435a-a2b9-5b0524eba790",
@@ -782,7 +1212,12 @@
       "bytes": 57191184,
       "downloaded_at": "2026-07-19T14:41:14.753Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/martha.glb",
+      "glb_bytes": 46792184,
+      "glb_skins": 7,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:21.529Z"
     },
     "23148f55-e80d-4549-9419-1e103b841771": {
       "id": "23148f55-e80d-4549-9419-1e103b841771",
@@ -791,7 +1226,12 @@
       "bytes": 83504656,
       "downloaded_at": "2026-07-19T14:41:26.656Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/drake.glb",
+      "glb_bytes": 74139196,
+      "glb_skins": 1,
+      "glb_animations": 2,
+      "glb_converted_at": "2026-07-19T15:19:29.956Z"
     },
     "e5c581ba-69a5-4b47-aa06-95ee70de3d99": {
       "id": "e5c581ba-69a5-4b47-aa06-95ee70de3d99",
@@ -800,7 +1240,12 @@
       "bytes": 14326944,
       "downloaded_at": "2026-07-19T14:41:31.234Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/alex.glb",
+      "glb_bytes": 12042136,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:24.468Z"
     },
     "c5084efc-f1f6-4721-84f9-4e2cb0c7a4a6": {
       "id": "c5084efc-f1f6-4721-84f9-4e2cb0c7a4a6",
@@ -809,7 +1254,12 @@
       "bytes": 43726656,
       "downloaded_at": "2026-07-19T14:41:41.068Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/roth.glb",
+      "glb_bytes": 38725044,
+      "glb_skins": 6,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:30.389Z"
     },
     "3d9daeb8-c2d5-45ce-b835-7cd403c72fc7": {
       "id": "3d9daeb8-c2d5-45ce-b835-7cd403c72fc7",
@@ -818,7 +1268,12 @@
       "bytes": 22563040,
       "downloaded_at": "2026-07-19T14:41:46.890Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/copzombie-l-actisdato.glb",
+      "glb_bytes": 17567728,
+      "glb_skins": 4,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:33.327Z"
     },
     "dfa221bf-4b73-47eb-bb80-fcac2df11458": {
       "id": "dfa221bf-4b73-47eb-bb80-fcac2df11458",
@@ -827,7 +1282,12 @@
       "bytes": 24871248,
       "downloaded_at": "2026-07-19T14:41:51.903Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/brute.glb",
+      "glb_bytes": 18177956,
+      "glb_skins": 9,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:34.501Z"
     },
     "de498e54-f45b-488d-947a-7aee91b9aab0": {
       "id": "de498e54-f45b-488d-947a-7aee91b9aab0",
@@ -836,7 +1296,12 @@
       "bytes": 7439200,
       "downloaded_at": "2026-07-19T14:41:56.228Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/arissa.glb",
+      "glb_bytes": 3609132,
+      "glb_skins": 4,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:35.907Z"
     },
     "129b7c59-46fe-4da4-b434-ee02b204b80e": {
       "id": "129b7c59-46fe-4da4-b434-ee02b204b80e",
@@ -845,7 +1310,12 @@
       "bytes": 7611744,
       "downloaded_at": "2026-07-19T14:42:00.537Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/pirate-by-p-konstantinov.glb",
+      "glb_bytes": 6291692,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:35.317Z"
     },
     "2dee24f8-3b49-48af-b735-c6377509eaac": {
       "id": "2dee24f8-3b49-48af-b735-c6377509eaac",
@@ -854,7 +1324,12 @@
       "bytes": 2261824,
       "downloaded_at": "2026-07-19T14:42:04.680Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/x-bot.glb",
+      "glb_bytes": 2098800,
+      "glb_skins": 2,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:35.884Z"
     },
     "9669a5a9-964e-4060-85f0-d052a592e0e4": {
       "id": "9669a5a9-964e-4060-85f0-d052a592e0e4",
@@ -863,7 +1338,12 @@
       "bytes": 9711264,
       "downloaded_at": "2026-07-19T14:42:08.950Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/paladin-w-prop-j-nordstrom.glb",
+      "glb_bytes": 7765408,
+      "glb_skins": 4,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:37.163Z"
     },
     "e0d8d8ad-9674-4c2a-a5da-32f56ee7f95f": {
       "id": "e0d8d8ad-9674-4c2a-a5da-32f56ee7f95f",
@@ -872,7 +1352,12 @@
       "bytes": 5785536,
       "downloaded_at": "2026-07-19T14:42:13.407Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/ty.glb",
+      "glb_bytes": 4624192,
+      "glb_skins": 7,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:37.713Z"
     },
     "f57c2597-1a49-4c13-a6a5-1cf29532b9d7": {
       "id": "f57c2597-1a49-4c13-a6a5-1cf29532b9d7",
@@ -881,7 +1366,12 @@
       "bytes": 11372624,
       "downloaded_at": "2026-07-19T14:42:17.944Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/knight-d-pelegrini.glb",
+      "glb_bytes": 7887880,
+      "glb_skins": 3,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:37.798Z"
     },
     "08de56f3-ac60-4585-bd25-d68a03aa66a4": {
       "id": "08de56f3-ac60-4585-bd25-d68a03aa66a4",
@@ -890,7 +1380,12 @@
       "bytes": 120543584,
       "downloaded_at": "2026-07-19T14:42:30.802Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/morak.glb",
+      "glb_bytes": 94834008,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:48.694Z"
     },
     "64ebcc92-8151-4815-af45-a9d6c30e3f52": {
       "id": "64ebcc92-8151-4815-af45-a9d6c30e3f52",
@@ -899,7 +1394,12 @@
       "bytes": 122001888,
       "downloaded_at": "2026-07-19T14:42:44.249Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/zlorp.glb",
+      "glb_bytes": 72932596,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:48.021Z"
     },
     "cd89f125-a55a-495b-b924-d63d660ab882": {
       "id": "cd89f125-a55a-495b-b924-d63d660ab882",
@@ -908,7 +1408,12 @@
       "bytes": 117654656,
       "downloaded_at": "2026-07-19T14:42:57.790Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/steve.glb",
+      "glb_bytes": 108126960,
+      "glb_skins": 2,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:51.530Z"
     },
     "e2535218-5447-42fe-8305-d66d757b2bc6": {
       "id": "e2535218-5447-42fe-8305-d66d757b2bc6",
@@ -917,7 +1422,12 @@
       "bytes": 43736784,
       "downloaded_at": "2026-07-19T14:43:06.912Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/ortiz.glb",
+      "glb_bytes": 36513952,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:20:26.898Z"
     },
     "503f4a55-0773-461d-b46c-90e5cee9c7d4": {
       "id": "503f4a55-0773-461d-b46c-90e5cee9c7d4",
@@ -926,7 +1436,12 @@
       "bytes": 47269968,
       "downloaded_at": "2026-07-19T14:43:15.841Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/suzie.glb",
+      "glb_bytes": 39160880,
+      "glb_skins": 7,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:55.176Z"
     },
     "c4f3ac90-d6db-4505-97ec-2e4dee45dc4b": {
       "id": "c4f3ac90-d6db-4505-97ec-2e4dee45dc4b",
@@ -935,7 +1450,12 @@
       "bytes": 50716416,
       "downloaded_at": "2026-07-19T14:43:25.590Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/david.glb",
+      "glb_bytes": 45354244,
+      "glb_skins": 6,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:19:59.508Z"
     },
     "7cc9ca51-d191-48ff-81c3-467c1d26c053": {
       "id": "7cc9ca51-d191-48ff-81c3-467c1d26c053",
@@ -944,7 +1464,12 @@
       "bytes": 65760336,
       "downloaded_at": "2026-07-19T14:43:37.602Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/pete.glb",
+      "glb_bytes": 53665648,
+      "glb_skins": 8,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:20:07.544Z"
     },
     "bb7d74a1-ffe3-4fb5-b6b5-48c5fecc9b4e": {
       "id": "bb7d74a1-ffe3-4fb5-b6b5-48c5fecc9b4e",
@@ -953,8 +1478,14 @@
       "bytes": 45837680,
       "downloaded_at": "2026-07-19T14:43:46.632Z",
       "status": "completed",
-      "storage": "r2"
+      "storage": "r2",
+      "glb_file": "avatars/mixamo/glb/lewis.glb",
+      "glb_bytes": 41209004,
+      "glb_skins": 1,
+      "glb_animations": 1,
+      "glb_converted_at": "2026-07-19T15:20:07.698Z"
     }
   },
-  "catalog_size": 106
+  "catalog_size": 106,
+  "glb_generated_at": "2026-07-19T15:20:26.918Z"
 }

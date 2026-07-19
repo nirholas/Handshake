@@ -7674,7 +7674,7 @@
 	},
 	"forge_embed": {
 		"forge_your_own_3d_model_on_t_arialabel": "Forge 您自己的 3D 模型，在 three.ws 上",
-		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> 於 three.ws 上鍛造",
+		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> Forge 於 three.ws",
 		"meta_description": "一個於 three.ws 上鍛造的互動式 3D 模型。",
 		"meta_title": "three.ws — 嵌入式 3D 模型",
 		"no_model_to_show": "無模型可顯示",

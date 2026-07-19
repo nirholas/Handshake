@@ -7674,7 +7674,7 @@
 	},
 	"forge_embed": {
 		"forge_your_own_3d_model_on_t_arialabel": "Forge svoj 3D model na three.ws",
-		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> skuto na three.ws",
+		"forged_on_three_ws": "<span class=\"dot\" aria-hidden=\"true\"></span> Forged na three.ws",
 		"meta_description": "Interaktivni 3D model, skut na three.ws.",
 		"meta_title": "three.ws — vdelan 3D model",
 		"no_model_to_show": "Ni modela za prikaz",
@@ -12318,7 +12318,7 @@
 		"news": "Novice",
 		"news_announcements": "Novice in objave",
 		"originally_shared_on_x": "<em>Prvotno objavljeno na <a href=\"https://x.com/trythreews/status/2052418108837781511\" rel=\"noopener\">X</a>.</em>",
-		"the": "",
+		"the": "The",
 		"the_three_ws_podcast_is_now_live": "Podcast <br>three.ws je zdaj na voljo na <br><a href=\"https://x.com/amazonmusic\" rel=\"noopener\">@amazonmusic</a>",
 		"three_ws_home_news_rss_x_github": "&copy; three.ws &middot; <a href=\"/\">Domov</a> &middot; <a href=\"/news\">Novice</a> &middot; <a href=\"/rss/announcements.xml\">RSS</a> &middot; <a href=\"https://x.com/trythreews\" rel=\"noopener\">X</a> &middot; <a href=\"https://github.com/nirholas/three.ws\" rel=\"noopener\">GitHub</a>",
 		"trythreews": "@trythreews",
