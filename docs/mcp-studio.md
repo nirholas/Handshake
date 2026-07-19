@@ -91,9 +91,15 @@ needs to display the model — no internal identifiers:
   "viewerUrl": "https://three.ws/viewer?src=…",
   "arUrl": "https://three.ws/api/ar?src=…&title=…",
   "format": "glb",
-  "prompt": "a friendly round robot mascot, glossy white plastic"
+  "prompt": "a friendly round robot mascot, glossy white plastic",
+  "referenceImageUrl": "https://three.ws/cdn/creations/…/model-ref.png"
 }
 ```
+
+`referenceImageUrl` is the concept image the generator paints first and then
+sculpts into 3D (the forge's image-generation step). The inline widget uses it
+as the model-viewer poster so the painted view shows while the GLB streams in,
+and the result narration links it for non-widget clients.
 
 `arUrl` is the one-tap place-in-your-room link (see [AR in ChatGPT](./chatgpt-ar.md)).
 Rigged avatars additionally carry `irlUrl`, the living-agent handoff into

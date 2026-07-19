@@ -59,7 +59,7 @@ function firstPartyGlbUrl(glbUrl, base) {
 
 // Minimal, identifier-free success envelope. structuredContent is the contract
 // the widget + model read; content is the human/agent-readable narration.
-function ok({ glbUrl, base, kind, prompt, rigged }) {
+function ok({ glbUrl, base, kind, prompt, rigged, referenceImageUrl }) {
 	glbUrl = firstPartyGlbUrl(glbUrl, base);
 	// An avatar (rigged or humanoid) is an agent's body, not a prop: it also gets
 	// the IRL living handoff: walk it, talk to it, camera AR in the real room.
@@ -67,6 +67,13 @@ function ok({ glbUrl, base, kind, prompt, rigged }) {
 	const vUrl = viewerUrl(base, glbUrl);
 	const aUrl = arLaunchUrl(base, glbUrl, prompt, { live });
 	const iUrl = live ? irlUrl(base, glbUrl) : '';
+	// The painted concept view the generator sculpted from — the forge's
+	// image-generation first step. https-only; the widget uses it as the
+	// model-viewer poster so something visual shows while the GLB streams in.
+	const refImg =
+		typeof referenceImageUrl === 'string' && /^https:\/\//.test(referenceImageUrl)
+			? firstPartyGlbUrl(referenceImageUrl, base)
+			: '';
 	const structured = {
 		kind,
 		glbUrl,
@@ -76,6 +83,7 @@ function ok({ glbUrl, base, kind, prompt, rigged }) {
 		...(prompt ? { prompt } : {}),
 		...(rigged ? { rigged: true } : {}),
 		...(iUrl ? { irlUrl: iUrl } : {}),
+		...(refImg ? { referenceImageUrl: refImg } : {}),
 		// Spatial MCP artifact — the open, coin-clean shape for a 3D-native tool
 		// result (specs/SPATIAL_MCP.md). Additive to the fields the widget already
 		// reads, so any Spatial-MCP renderer can display this model, not just ours.
@@ -89,6 +97,7 @@ function ok({ glbUrl, base, kind, prompt, rigged }) {
 		}),
 	};
 	const label = rigged ? 'rigged 3D model' : '3D model';
+	const refLine = refImg ? `\nConcept image it was sculpted from: ${refImg}` : '';
 	return {
 		content: [
 			{
@@ -96,9 +105,11 @@ function ok({ glbUrl, base, kind, prompt, rigged }) {
 				text: iUrl
 					? `Generated a ${label} (GLB). View it: ${structured.viewerUrl}\n` +
 						`Bring it to life in your real room (it moves and talks through the camera, open on a phone): ${iUrl}\n` +
-						`Place a static copy in AR: ${aUrl}\nDownload: ${glbUrl}`
+						`Place a static copy in AR: ${aUrl}\nDownload: ${glbUrl}` +
+						refLine
 					: `Generated a ${label} (GLB). View it: ${structured.viewerUrl}\n` +
-						`Place it in your room (AR, open on a phone): ${aUrl}\nDownload: ${glbUrl}`,
+						`Place it in your room (AR, open on a phone): ${aUrl}\nDownload: ${glbUrl}` +
+						refLine,
 			},
 		],
 		structuredContent: structured,
@@ -223,7 +234,7 @@ async function handleForgeFree(args, _auth, req) {
 		return toolError(failureMessage(err));
 	}
 	if (job._timedOut || !job.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
-	return ok({ glbUrl: job.glb_url, base, kind: 'model', prompt });
+	return ok({ glbUrl: job.glb_url, base, kind: 'model', prompt, referenceImageUrl: job.preview_image_url });
 }
 
 async function handleTextToAvatar(args, _auth, req) {
@@ -251,7 +262,7 @@ async function handleTextToAvatar(args, _auth, req) {
 		return toolError(failureMessage(err));
 	}
 	if (job._timedOut || !job.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
-	return ok({ glbUrl: job.glb_url, base, kind: 'avatar', prompt: prompt || undefined });
+	return ok({ glbUrl: job.glb_url, base, kind: 'avatar', prompt: prompt || undefined, referenceImageUrl: job.preview_image_url });
 }
 
 async function handleMeshForge(args, _auth, req) {
@@ -302,7 +313,7 @@ async function handleMeshForge(args, _auth, req) {
 		return toolError(failureMessage(err));
 	}
 	if (job._timedOut || !job.glb_url) return toolError('Generation is taking longer than expected. Please try again.');
-	return ok({ glbUrl: job.glb_url, base, kind: 'mesh', prompt: prompt || undefined });
+	return ok({ glbUrl: job.glb_url, base, kind: 'mesh', prompt: prompt || undefined, referenceImageUrl: job.preview_image_url });
 }
 
 async function handleRigMesh(args, _auth, req) {
@@ -385,7 +396,7 @@ async function handleForgeAvatar(args, _auth, req) {
 		};
 	}
 	if (rigged._timedOut || !rigged.glb_url) return toolError('Rigging is taking longer than expected. Please try again.');
-	return ok({ glbUrl: rigged.glb_url, base, kind: 'avatar', prompt: prompt || undefined, rigged: true });
+	return ok({ glbUrl: rigged.glb_url, base, kind: 'avatar', prompt: prompt || undefined, rigged: true, referenceImageUrl: gen.preview_image_url });
 }
 
 // Conversational refinement — carry a prior model forward with a natural-language

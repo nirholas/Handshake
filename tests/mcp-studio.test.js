@@ -200,6 +200,31 @@ describe('mcp-studio dispatch', () => {
 		expect(serialized).not.toContain('creation_id');
 	});
 
+	it('forge_free surfaces the painted concept image (the forge paint-then-sculpt step) in result + widget contract', async () => {
+		globalThis.fetch = vi.fn(async () => ({
+			ok: true,
+			status: 200,
+			json: async () => ({
+				status: 'done',
+				glb_url: 'https://three.ws/cdn/creations/model.glb',
+				preview_image_url: 'https://three.ws/cdn/creations/model-ref.png',
+			}),
+		}));
+		const r = await dispatch(
+			{ jsonrpc: '2.0', id: 61, method: 'tools/call', params: { name: 'forge_free', arguments: { prompt: 'a friendly round robot mascot' } } },
+			auth,
+			mkReq(),
+		);
+		const sc = r.result.structuredContent;
+		expect(sc.referenceImageUrl).toBe('https://three.ws/cdn/creations/model-ref.png');
+		// The narration offers the concept image so non-widget clients see it too.
+		expect(r.result.content[0].text).toContain('https://three.ws/cdn/creations/model-ref.png');
+		// The widget uses it as the model-viewer poster while the GLB streams in.
+		const { COMPONENT_HTML } = await import('../api/_mcp-studio/component.js');
+		expect(COMPONENT_HTML).toContain('referenceImageUrl');
+		expect(COMPONENT_HTML).toContain('poster');
+	});
+
 	it('avatar results carry the IRL living-agent handoff; props stay static (AR bridges agents into the real world)', async () => {
 		globalThis.fetch = vi.fn(async () => ({
 			ok: true,

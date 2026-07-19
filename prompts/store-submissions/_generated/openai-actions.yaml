@@ -16,7 +16,11 @@ info:
     Contract: POST /api/3d/studio either finishes inline (status "done" with
     glbUrl + viewerUrl + arUrl) or returns status "pending" with a "job"
     handle. Poll GET /api/3d/studio?job=... every few seconds until status is
-    "done" or "error". Generation typically takes 20-60 seconds. arUrl is the
+    "done" or "error". Generation typically takes 20-60 seconds at the default
+    tier; tier "high" produces far more detail and can take several minutes,
+    so keep polling patiently. Responses may carry previewImageUrl - the
+    concept image the generator paints first and then sculpts into 3D; show
+    it to the user while the model is still generating. arUrl is the
     augmented-reality launch link: opened on a phone it places the model in
     the user's real room (Quick Look on iPhone, Scene Viewer on Android);
     always offer it alongside the viewer link.
@@ -39,10 +43,13 @@ paths:
       summary: Generate a 3D model (GLB) from a text prompt
       description: >-
         Start a free text-to-3D generation. Describe ONE subject concretely
-        (shape, colors, style). Returns status "done" with glbUrl (download),
+        (shape, colors, style). Optionally pick a tier: "draft" (fastest),
+        "standard" (default), or "high" (maximum detail, slower - expect
+        minutes, not seconds). Returns status "done" with glbUrl (download),
         viewerUrl (preview), and arUrl (see it in your room in AR), or
-        "pending" with a "job" handle for checkModelJob. Unsafe prompts return
-        error "prompt_rejected".
+        "pending" with a "job" handle for checkModelJob plus, once available,
+        previewImageUrl - the painted concept image to show the user while
+        the 3D model finishes. Unsafe prompts return error "prompt_rejected".
       requestBody:
         required: true
         content:
@@ -59,6 +66,13 @@ paths:
                   description: >-
                     A concrete description of one subject to model, e.g.
                     "a small ceramic robot figurine with round eyes".
+                tier:
+                  type: string
+                  enum: [draft, standard, high]
+                  description: >-
+                    Quality tier. draft = fastest, low detail; standard
+                    (default) = balanced; high = maximum geometric and
+                    texture detail, takes several minutes - keep polling.
             examples:
               fox:
                 summary: Low-poly animal
@@ -120,9 +134,10 @@ paths:
       description: >-
         Poll a generation started by generate3DModel. Use the "poll" path from
         the pending response verbatim (it carries the job handle and title).
-        Keep polling every few seconds while "pending"; stop on "done"
-        (present glbUrl + viewerUrl + arUrl) or "error" (offer to retry -
-        generation is free).
+        Keep polling every few seconds while "pending"; when a pending state
+        carries previewImageUrl, show that concept image to the user while
+        they wait. Stop on "done" (present glbUrl + viewerUrl + arUrl) or
+        "error" (offer to retry - generation is free).
       parameters:
         - name: job
           in: query
@@ -209,6 +224,22 @@ components:
           type: string
           const: glb
           description: Output format - always GLB (binary glTF).
+        previewImageUrl:
+          type: string
+          format: uri
+          description: >-
+            The concept image the generator paints first and then sculpts
+            into 3D. Present on pending and done states once painted - show
+            it to the user while the model is still generating.
+        tier:
+          type: string
+          enum: [draft, standard, high]
+          description: The quality tier this generation is running at.
+        etaSeconds:
+          type: integer
+          description: >-
+            Rough estimate of remaining generation time in seconds (pending
+            states only).
         job:
           type: string
           description: Job handle to pass to checkModelJob (present when pending).

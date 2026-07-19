@@ -2731,6 +2731,14 @@ async function pollJob(req, res, jobId) {
 				backend: meta.backend ?? null,
 				tier: meta.tier ?? null,
 				path: meta.path ?? null,
+				// ChatGPT-pipeline divergence from api/forge.js: polls surface the
+				// painted reference view (and the model that painted it) so the
+				// ChatGPT surfaces can show the concept image while the mesh is
+				// still generating — the submit response already carries these,
+				// but ChatGPT's Actions poll loop only ever sees poll responses.
+				prompt: meta.prompt ?? null,
+				preview_image_url: meta.preview_image_url ?? null,
+				text_to_image_model: meta.text_to_image_model ?? null,
 			}
 		: {};
 

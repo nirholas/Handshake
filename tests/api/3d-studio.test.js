@@ -118,7 +118,7 @@ function expectCleanWire(body) {
 }
 
 describe('shape helpers — Actions wire contract', () => {
-	it('shapeSubmit maps inline-done to { done, glbUrl, viewerUrl, arUrl } with nothing else attached', async () => {
+	it('shapeSubmit maps inline-done to { done, glbUrl, viewerUrl, arUrl, tier } with nothing else attached', async () => {
 		const { shapeSubmit } = await import('../../api/3d/studio.js');
 		const out = shapeSubmit(SUBMIT_DONE, 'https://three.ws', 'a small ceramic robot figurine');
 		expect(out).toEqual({
@@ -131,8 +131,25 @@ describe('shape helpers — Actions wire contract', () => {
 				'&title=' +
 				encodeURIComponent('a small ceramic robot figurine'),
 			format: 'glb',
+			tier: 'draft',
 		});
 		expectCleanWire(out);
+	});
+
+	it('shapeSubmit surfaces the painted concept image on done and pending states', async () => {
+		const { shapeSubmit } = await import('../../api/3d/studio.js');
+		const preview = 'https://cdn.three.ws/forge/anon/ref-view.png';
+		const done = shapeSubmit({ ...SUBMIT_DONE, preview_image_url: preview }, 'https://three.ws', 'a robot');
+		expect(done.previewImageUrl).toBe(preview);
+		const pending = shapeSubmit(
+			{ ...SUBMIT_QUEUED, preview_image_url: preview, tier: 'high', eta_seconds: 240 },
+			'https://three.ws',
+			'a robot',
+		);
+		expect(pending).toMatchObject({ status: 'pending', previewImageUrl: preview, tier: 'high', etaSeconds: 240 });
+		// Non-https preview never leaks onto the wire.
+		const dirty = shapeSubmit({ ...SUBMIT_QUEUED, preview_image_url: 'http://evil/ref.png' }, 'https://three.ws', 'x');
+		expect(dirty.previewImageUrl).toBeUndefined();
 	});
 
 	it('shapeSubmit maps queued to { pending, job, poll } carrying the prompt as the AR title', async () => {
@@ -254,8 +271,39 @@ describe('POST /api/3d/studio — response contract', () => {
 				encodeURIComponent('a small ceramic robot figurine'),
 		);
 		expectCleanWire(body);
+		// No pinned backend: the free-first health-aware router picks the lane,
+		// exactly like the /forge page.
 		const [, opts] = globalThis.fetch.mock.calls[0];
-		expect(JSON.parse(opts.body)).toMatchObject({ prompt: 'a small ceramic robot figurine', backend: 'nvidia', path: 'image', tier: 'standard' });
+		const sent = JSON.parse(opts.body);
+		expect(sent).toMatchObject({ prompt: 'a small ceramic robot figurine', path: 'image', tier: 'standard' });
+		expect(sent.backend).toBeUndefined();
+	});
+
+	it('accepts tier "high" and runs it operator-funded through the internal seed header', async () => {
+		globalThis.fetch = vi.fn(async () => jsonResponse(SUBMIT_QUEUED));
+		process.env.CRON_SECRET = 'test-seed-secret';
+		const { res, body } = await dispatch(
+			makeReq({ body: { prompt: 'a small ceramic robot figurine', tier: 'high' } }),
+			makeRes(),
+		);
+		delete process.env.CRON_SECRET;
+		expect(res.statusCode).toBe(200);
+		expect(body.status).toBe('pending');
+		const [, opts] = globalThis.fetch.mock.calls[0];
+		expect(JSON.parse(opts.body)).toMatchObject({ tier: 'high' });
+		expect(opts.headers['x-forge-seed']).toBe('test-seed-secret');
+		expectCleanWire(body);
+	});
+
+	it('rejects an invalid tier with a designed 400', async () => {
+		globalThis.fetch = vi.fn(async () => jsonResponse(SUBMIT_DONE));
+		const { res, body } = await dispatch(
+			makeReq({ body: { prompt: 'a small ceramic robot figurine', tier: 'ultra' } }),
+			makeRes(),
+		);
+		expect(res.statusCode).toBe(400);
+		expect(body.error).toBe('invalid_tier');
+		expect(globalThis.fetch).not.toHaveBeenCalled();
 	});
 
 	it('submits a known brand-mark prompt as image→3D against the deployment-hosted reference view', async () => {

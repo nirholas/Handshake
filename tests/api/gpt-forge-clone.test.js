@@ -66,6 +66,15 @@ describe('surface wiring — ChatGPT on the clone, agents on the original', () =
 	});
 });
 
+describe('gpt-forge divergences — ChatGPT-side improvements stay in place', () => {
+	it('poll metadata surfaces the painted concept view (preview_image_url) to the ChatGPT surfaces', () => {
+		const src = read('api/gpt-forge.js');
+		const metaBlock = src.slice(src.indexOf('const metaFields'), src.indexOf('const metaFields') + 900);
+		expect(metaBlock).toContain('preview_image_url');
+		expect(metaBlock).toContain('text_to_image_model');
+	});
+});
+
 describe('/api/gpt-forge — the cloned orchestrator serves', () => {
 	function makeReq(url) {
 		return { method: 'GET', url, headers: {} };

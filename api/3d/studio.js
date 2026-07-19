@@ -9,21 +9,25 @@
 // age-13+ content-safety gate before any GPU work starts.
 //
 // It is a thin shaper, not a second pipeline: generation runs through the
-// gpt-forge-client → /api/gpt-forge free lane (the ChatGPT-dedicated clone of
-// /api/forge — NVIDIA NIM TRELLIS, standard tier) and draws from the SAME
-// per-IP quota buckets as /api/3d/generate, so adding this surface creates no
-// new capacity and no new limiter. (High tier waits on the async self-host
-// Hunyuan3D worker — see the dispatch comment below.)
+// gpt-forge-client → /api/gpt-forge free-first router (the ChatGPT-dedicated
+// clone of /api/forge) with no pinned backend, and draws from the SAME per-IP
+// quota buckets as /api/3d/generate, so adding this surface creates no new
+// capacity and no new limiter. High tier rides the async self-host lanes
+// operator-funded (internal seed) through the pending/poll contract.
 //
-//   POST { prompt }
-//     → 200 { status:'done',  glbUrl, viewerUrl, arUrl, format }  (finished inline)
-//     → 200 { status:'pending', job, poll, format }               (queued — poll below)
+//   POST { prompt, tier? }   (tier: draft | standard (default) | high)
+//     → 200 { status:'done',  glbUrl, viewerUrl, arUrl, format, previewImageUrl?, tier? }
+//     → 200 { status:'pending', job, poll, format, previewImageUrl?, tier?, etaSeconds? }
 //     → 400 { error:'prompt_rejected', message }                  (safety gate refusal)
 //
 //   GET ?job=<id>&title=<prompt>   (title optional — labels the AR/viewer pages)
-//     → 200 { status:'pending', job, poll }                       (still generating)
-//     → 200 { status:'done',  glbUrl, viewerUrl, arUrl, format }  (GLB ready)
+//     → 200 { status:'pending', job, poll, previewImageUrl?, tier? }
+//     → 200 { status:'done',  glbUrl, viewerUrl, arUrl, format, previewImageUrl?, tier? }
 //     → 200 { status:'error', error }                             (upstream failed — retry is free)
+//
+// previewImageUrl is the forge's painted concept view — the image-generation
+// first step of the text path — surfaced on pending states so the GPT can show
+// the user what is being sculpted while the mesh is still generating.
 //
 // arUrl is the flagship link: the device-aware AR launch (api/ar.js) that puts
 // the model in the user's real room — Scene Viewer on Android, Quick Look on
@@ -51,11 +55,27 @@ const MAX_BODY_BYTES = 8_000;
 // /api/gpt-forge does the authoritative validation, this just keeps junk off the wire.
 const JOB_HANDLE_RE = /^[A-Za-z0-9._-]{8,1024}$/;
 
+// The painted reference view of the model — the forge's first, image-generation
+// step. Surfaced on every state (pending included) so the GPT can show the
+// concept image the moment it exists, while the mesh is still generating —
+// the same paint-then-reconstruct experience the /forge page gives.
+function previewOf(payload) {
+	const u = payload?.preview_image_url;
+	return typeof u === 'string' && /^https:\/\//.test(u) ? u : null;
+}
+
+function tierOf(payload) {
+	const t = payload?.tier;
+	return t === 'draft' || t === 'standard' || t === 'high' ? t : null;
+}
+
 // Shape a forge submit response into the Actions contract: model URLs and job
 // state only. Pure + exported so tests pin the boundary against real captured
 // forge shapes without any network.
 export function shapeSubmit(job, base, prompt) {
 	const glbUrl = typeof job?.glb_url === 'string' ? job.glb_url : '';
+	const preview = previewOf(job);
+	const tier = tierOf(job);
 	if (job?.status === 'done' && glbUrl) {
 		return {
 			status: 'done',
@@ -63,23 +83,31 @@ export function shapeSubmit(job, base, prompt) {
 			viewerUrl: viewerUrl(base, glbUrl),
 			arUrl: arLaunchUrl(base, glbUrl, prompt),
 			format: 'glb',
+			...(preview ? { previewImageUrl: preview } : {}),
+			...(tier ? { tier } : {}),
 		};
 	}
 	const handle = job?.job_id ?? null;
 	// The poll URL carries the prompt as `title` so the eventual done response
 	// can label the AR/viewer pages without the GPT having to resend anything.
 	const t = typeof prompt === 'string' && prompt.trim() ? `&title=${encodeURIComponent(prompt.trim().slice(0, 80))}` : '';
+	const eta = Number(job?.eta_seconds);
 	return {
 		status: 'pending',
 		job: handle,
 		poll: handle ? `/api/3d/studio?job=${encodeURIComponent(handle)}${t}` : null,
 		format: 'glb',
+		...(preview ? { previewImageUrl: preview } : {}),
+		...(tier ? { tier } : {}),
+		...(Number.isFinite(eta) && eta > 0 ? { etaSeconds: Math.round(eta) } : {}),
 	};
 }
 
 // Shape a forge poll response into { status:'pending'|'done'|'error', ... }.
 export function shapePoll(data, base, jobId, title) {
 	const glbUrl = typeof data?.glb_url === 'string' ? data.glb_url : '';
+	const preview = previewOf(data);
+	const tier = tierOf(data);
 	if (data?.status === 'done' && glbUrl) {
 		return {
 			status: 'done',
@@ -88,6 +116,8 @@ export function shapePoll(data, base, jobId, title) {
 			viewerUrl: viewerUrl(base, glbUrl),
 			arUrl: arLaunchUrl(base, glbUrl, title),
 			format: 'glb',
+			...(preview ? { previewImageUrl: preview } : {}),
+			...(tier ? { tier } : {}),
 		};
 	}
 	if (data?.status === 'failed') {
@@ -102,7 +132,13 @@ export function shapePoll(data, base, jobId, title) {
 	// queued / running / anything transient → still pending; keep the title on the
 	// poll URL so it survives to the done response.
 	const t = typeof title === 'string' && title.trim() ? `&title=${encodeURIComponent(title.trim().slice(0, 80))}` : '';
-	return { status: 'pending', job: jobId, poll: `/api/3d/studio?job=${encodeURIComponent(jobId)}${t}` };
+	return {
+		status: 'pending',
+		job: jobId,
+		poll: `/api/3d/studio?job=${encodeURIComponent(jobId)}${t}`,
+		...(preview ? { previewImageUrl: preview } : {}),
+		...(tier ? { tier } : {}),
+	};
 }
 
 // Map a startForge lane failure to an honest boundary response. A well-formed
@@ -163,6 +199,18 @@ async function generate(req, res) {
 		});
 	}
 
+	// Optional quality tier. High runs operator-funded (internal seed) on the
+	// async self-host lanes and simply takes longer through the pending/poll
+	// contract — no payment surface exists on this endpoint.
+	const rawTier = body?.tier === undefined ? 'standard' : body.tier;
+	const tier = rawTier === 'draft' || rawTier === 'standard' || rawTier === 'high' ? rawTier : null;
+	if (!tier) {
+		return json(res, 400, {
+			error: 'invalid_tier',
+			message: '"tier" must be "draft", "standard", or "high" (default "standard").',
+		});
+	}
+
 	// Age-13+ content gate BEFORE any quota spend or GPU work. The category
 	// message is the user-facing refusal the GPT relays verbatim.
 	const safety = checkPromptSafety(prompt);
@@ -186,20 +234,19 @@ async function generate(req, res) {
 	const subject = knownMark ? knownMark.prompt : prompt;
 	let job;
 	try {
-		// Pinned to the fast free lane: ChatGPT Actions abandon the HTTP call at
-		// ~45s, and the only high-tier free engine currently deployed (Hunyuan3D
-		// via HF Spaces) BLOCKS the submit for 50-280s with no poll handle, so a
-		// high request here can never answer in time. To raise quality later:
-		// deploy the async self-host Hunyuan3D worker (workers/model-hunyuan3d,
-		// forge lane already wired behind GCP_HUNYUAN3D_URL), then request tier
-		// 'high' with internal: true — startForge degrades to standard on
-		// 402/timeout. A known mark with a reference view goes image→3D unpinned
-		// (image jobs return a poll handle, which the Actions contract handles).
+		// No pinned backend: the health-aware free-first router picks the best
+		// healthy lane for the prompt exactly as the /forge page does (the fast
+		// NIM lane is its own named default for standard text, so the happy path
+		// is unchanged). Slow/async lanes return a poll handle, which the
+		// pending/poll contract absorbs — ChatGPT Actions' ~45s deadline only
+		// bounds the submit, never the generation. High rides the async
+		// self-host lanes with the internal seed; startForge degrades a high
+		// submit to standard on 402/timeout rather than dead-ending.
 		job = await startForge(
 			base,
 			knownMark?.imagePath
-				? { prompt: subject, imageUrls: [`${base}${knownMark.imagePath}`], tier: 'standard' }
-				: { prompt: subject, backend: 'nvidia', path: 'image', tier: 'standard' },
+				? { prompt: subject, imageUrls: [`${base}${knownMark.imagePath}`], tier }
+				: { prompt: subject, path: 'image', tier, ...(tier === 'high' ? { internal: true } : {}) },
 		);
 	} catch (err) {
 		return failFromLane(res, err);
