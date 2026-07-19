@@ -12,11 +12,14 @@
 // alpha, first_claim, radar, swarm — is covered, not just the standalone fleet.
 //
 //   SNIPER_MAYHEM_FILTER=0  — disable the gate entirely (default: on)
-//   SNIPER_MAYHEM_STRICT=1  — skip the buy when the curve can't be read
-//                             (default: allow-on-unknown, logged), so a flaky
-//                             RPC read can't silently halt all trading.
+//   SNIPER_MAYHEM_STRICT=0: allow-on-unknown (default: strict, skip the buy
+//                             when the curve can't be read even after retries;
+//                             the owner rule is NEVER buy Mayhem, not "buy when
+//                             unsure"). Reads rotate the platform RPC chain and
+//                             retry, so unknowns are rare, not the common case.
 
 import { createMayhemFilter } from '../../packages/agent-sniper/src/mayhem-filter.js';
+import { getConnection } from '../../api/_lib/pump.js';
 import { log } from './log.js';
 
 /**
@@ -37,7 +40,14 @@ export function mayhemVerdict(isMayhem, { strict = false } = {}) {
 let _filter = null;
 function getFilter(cfg) {
 	if (_filter) return _filter;
-	_filter = createMayhemFilter({ rpcUrl: cfg?.rpcUrl || undefined, strictOnUnknown: !!cfg?.mayhemStrict });
+	// Use the platform's rotating multi-endpoint connection (same chain as the
+	// trade path), NOT a raw Connection pinned to one provider: a single throttled
+	// endpoint used to fail every read into "unknown", which on a strict gate
+	// skipped every buy fleet-wide. Retries are safe; the flag is immutable.
+	_filter = createMayhemFilter({
+		connection: getConnection({ network: cfg?.network || 'mainnet' }),
+		strictOnUnknown: !!cfg?.mayhemStrict,
+	});
 	return _filter;
 }
 

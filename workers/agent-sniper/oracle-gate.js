@@ -18,8 +18,16 @@
 import { sql } from '../../api/_lib/db.js';
 import { log } from './log.js';
 
-const _cache = new Map(); // key → { score, ts }
+const _cache = new Map(); // key → { score, firstSeenAt, ts }
 const CACHE_TTL_MS = 30_000;
+
+// A conviction score only GATES once the coin is old enough for the Oracle to
+// have real data. Brand-new mints score 15-25 on thin defaults, which silently
+// disqualified every min_oracle_score strategy from ever sniping a launch: the
+// gate saw a "low score" where there was really "no signal yet". Younger than
+// this, a below-threshold score is treated exactly like an unscored coin (fail
+// open, logged); at or past it, the threshold bites for real.
+const ORACLE_MATURITY_S = Math.max(0, Number(process.env.SNIPER_ORACLE_MATURITY_S || 900));
 
 // Rugpull verdict cache (separate from the conviction cache).
 const _rugCache = new Map(); // key → { rejected, score, level, ts }
@@ -203,7 +211,8 @@ export async function coinSentimentAdjustment(mint, network) {
  * Returns:
  *   { pass: true }                         — scored and above threshold (or no threshold)
  *   { pass: false, reason: string }         — scored and below threshold
- *   { pass: true, skipped: true }           — no Oracle score yet; gate deferred
+ *   { pass: true, skipped: true }: no Oracle score yet, or a provisional
+ *     below-threshold score on a coin younger than SNIPER_ORACLE_MATURITY_S; gate deferred
  *   All results include macro_adjustment when a threshold was evaluated.
  *
  * @param {string} mint
@@ -224,17 +233,20 @@ export async function oracleGate(mint, network, strat) {
 	const cacheKey = `${network}:${mint}`;
 	const cached = _cache.get(cacheKey);
 	let score;
+	let firstSeenAt;
 	if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
 		score = cached.score;
+		firstSeenAt = cached.firstSeenAt;
 	} else {
 		try {
 			const [row] = await sql`
-				select score from oracle_conviction
+				select score, coin_first_seen_at from oracle_conviction
 				where mint = ${mint} and network = ${network}
 				limit 1
 			`;
 			score = row?.score != null ? n(row.score) : null;
-			_cache.set(cacheKey, { score, ts: Date.now() });
+			firstSeenAt = row?.coin_first_seen_at ? new Date(row.coin_first_seen_at).getTime() : null;
+			_cache.set(cacheKey, { score, firstSeenAt, ts: Date.now() });
 			// Prune the cache when it grows large.
 			if (_cache.size > 2000) {
 				const cutoff = Date.now() - CACHE_TTL_MS;
@@ -260,6 +272,14 @@ export async function oracleGate(mint, network, strat) {
 	const effectiveMin = minScore + macroAdj + coinAdj;
 
 	if (score < effectiveMin) {
+		// Provisional score on a coin the Oracle has barely seen → same treatment as
+		// unscored: fail open. A minutes-old launch cannot have earned a meaningful
+		// conviction score, and gating on the thin-data default (~15-25) meant a
+		// min_oracle_score strategy could never snipe a launch at all.
+		const coinAgeMs = firstSeenAt != null ? Date.now() - firstSeenAt : null;
+		if (coinAgeMs != null && coinAgeMs < ORACLE_MATURITY_S * 1000) {
+			return { pass: true, skipped: true, reason: `oracle_immature:${Math.round(coinAgeMs / 1000)}s<${ORACLE_MATURITY_S}s` };
+		}
 		const parts = [];
 		if (macroAdj !== 0) parts.push(`macro:${macroAdj}`);
 		if (coinAdj !== 0) parts.push(`coin:${coinAdj}`);

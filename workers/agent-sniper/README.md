@@ -62,7 +62,7 @@ Enforced in `executeBuy`, short-circuiting before any transaction:
 5. **Mandatory stop-loss** — DB `CHECK (stop_loss_pct > 0)` + runtime filter.
 6. **Price-impact circuit breaker** — `max_price_impact_pct` checked against a fresh `quoteForBuy`.
 7. **Idempotency** — `INSERT … ON CONFLICT (agent_id, mint, network) DO NOTHING` claims the slot before the tx; one shot per mint per agent.
-8. **Mayhem exclusion (owner rule)** — the first gate: never buy pump.fun "Mayhem"-mode tokens, only regular launches. Reads `isMayhemMode` off the on-chain bonding curve (cached per mint) via `mayhem-gate.js`. Applies to **every** trigger path, since it lives in the `executeBuy` chokepoint. `SNIPER_MAYHEM_FILTER=0` disables; `SNIPER_MAYHEM_STRICT=1` also skips when the curve can't be read.
+8. **Mayhem exclusion (owner rule)** — the first gate: never buy pump.fun "Mayhem"-mode tokens, only regular launches. Reads `isMayhemMode` off the on-chain bonding curve (cached per mint) via `mayhem-gate.js`, through the platform's **rotating multi-endpoint RPC chain** with bounded retries; a single throttled provider can no longer starve the gate into permanent "unknown". Applies to **every** trigger path, since it lives in the `executeBuy` chokepoint. `SNIPER_MAYHEM_FILTER=0` disables; strict-on-unknown is the default (`SNIPER_MAYHEM_STRICT=0` restores allow-on-unknown).
 9. **Market-cap band (owner rule)** — buy only inside a market-cap window. Enforced at the `executeBuy` chokepoint (`marketCapBandReason`), so `new_mint`, `intel`, `alpha`, `first_claim`, `radar` and `swarm` all obey it. **Fails closed**: a coin whose market cap can't be confirmed inside the band is skipped, not bought. A per-strategy `min/max_market_cap_usd` only *tightens* the fleet-wide floor/ceil (`SNIPER_MIN_MC_FLOOR_USD` / `SNIPER_MAX_MC_CEIL_USD`) — it can never loosen it. On a blind `new_mint` snipe the create-event cap is ~$4k, so a $10k floor correctly rejects brand-new launches; use the `intel_confirmed` trigger to buy a coin *after* it pumps into the band.
 10. **Realized-loss circuit breaker (portfolio layer)** — once an agent's **net realized loss over the trailing 24 h** crosses its cap, it stops opening new positions for the rest of the window. Catches a fleet that bleeds one losing entry at a time — each trade passes the per-trade caps yet the wallet still grinds down. A profitable or break-even day never trips it; a DB hiccup never blocks (the lamports caps stay the backstop). The fleet-wide `SNIPER_MAX_DAILY_LOSS_SOL` protects every agent at once and is tightened by an optional per-strategy `daily_loss_limit_lamports`. **The same breaker gates the auto-funder** — a wallet past its loss cap stops being refilled, so the master can't keep pouring SOL after a wallet that only loses.
 11. **Agent scoping** — `SNIPER_AGENT_IDS` restricts the worker to a specific set of agents, so a bounded run against the shared DB can't act on every other armed strategy.
@@ -80,6 +80,44 @@ Enforced in `executeBuy`, short-circuiting before any transaction:
 > (`api/_lib/launcher-funding.js`). This is a hard backstop that a loose per-call
 > cap can't bypass — recommended whenever armed strategies auto-fund from the master.
 
+> **Exit reconciliation (chain over DB).** A sell whose confirmation times out may
+> still land. On a RETRY of a previously-failed sell, `executeSell` first reads the
+> wallet's real token balance (`reconcile.js`): balance zero means a prior broadcast
+> landed, so the worker finds the transaction that emptied the bag and closes the
+> position with its actual proceeds (`error = 'reconciled_onchain'`) instead of
+> retrying a sell that can only revert (pump error 6023, `NotEnoughTokensToSell`);
+> a short balance clamps the sell to what the wallet really holds.
+
+## Decision modes and the experiment fleet
+
+Every strategy row carries a `decision_mode`:
+
+- **`rules`** (default): the scorer/oracle gate chain documented above.
+- **`llm`**: no rule shields at all (no market-cap band, no socials requirement,
+  no oracle threshold, no creator gates). Each new launch is judged by a model
+  (`llm-judge.js`): the strategy's `llm_model` (an OpenRouter slug, e.g.
+  `x-ai/grok-4.3`, `anthropic/claude-haiku-4.5`, `openrouter/auto`) returns
+  `{buy, confidence, thesis}`; the buy fires only at `confidence >=
+  llm_min_confidence` (default 0.6). The thesis is journaled with the position and
+  written to the reasoning ledger. Verdicts are shared per (mint, model), a small
+  concurrency cap (`SNIPER_LLM_MAX_CONCURRENT`) drops launches instead of queueing
+  unboundedly, and the platform's free-first `llmComplete` chain backstops an
+  OpenRouter outage. The non-negotiable safety rails (Mayhem exclusion, trade
+  firewall round-trip, budgets, concurrency, headroom, spend policy) still apply
+  to both modes at the `executeBuy` chokepoint.
+
+Strategies also carry a human `label` + `experiment_group` so deliberately
+different rule sets can trade side by side and be compared honestly:
+`scripts/seed-sniper-experiments.mjs` shapes the fleet (dry-run by default,
+`--apply` writes), `/api/sniper/experiments` aggregates each arm's REAL on-chain
+record, and **/sniper/experiments** is the public scoreboard.
+
+Oracle-gated arms get one more fairness rule: a below-threshold conviction score
+on a coin younger than `SNIPER_ORACLE_MATURITY_S` (default 900 s) is treated as
+*unscored* (fail open, logged as `oracle_immature`): brand-new mints score 15-25
+on thin data, which used to disqualify every `min_oracle_score` strategy from
+ever sniping a launch.
+
 ## Environment
 
 | Var | Required | Default | Notes |
@@ -93,7 +131,11 @@ Enforced in `executeBuy`, short-circuiting before any transaction:
 | `SNIPER_POLL_MS` | | `5000` | Position re-quote cadence. |
 | `SNIPER_MAX_GLOBAL_BUYS_PER_MIN` | | `10` | Platform-wide buy throttle backstop. |
 | `SNIPER_MAYHEM_FILTER` | | `1` | Enforce the no-Mayhem rule (skip pump.fun Mayhem-mode tokens). `0` disables. |
-| `SNIPER_MAYHEM_STRICT` | | `0` | `1` = skip a buy when the bonding curve can't be read (default allows-on-unknown, logged). |
+| `SNIPER_MAYHEM_STRICT` | | `1` | Skip a buy when the bonding curve can't be read even after retries (never buy Mayhem, not "buy when unsure"). `0` restores allow-on-unknown. |
+| `SNIPER_ORACLE_MATURITY_S` | | `900` | A below-threshold Oracle score on a coin younger than this counts as unscored (fail open); provisional thin-data scores must not disqualify launch snipes. |
+| `SNIPER_LLM_MAX_CONCURRENT` | | `3` | LLM-judge concurrency cap; launches beyond it are skipped with a log line, never queued unboundedly. |
+| `SNIPER_LLM_TIMEOUT_MS` | | `9000` | Per-verdict LLM time budget. |
+| `OPENROUTER_API_KEY` | llm arms | unset | One key serves every experiment model; the free-first `llmComplete` chain backstops an outage. |
 | `SNIPER_AGENT_IDS` | | — | Comma/space-separated agent UUID allowlist. Unset = all agents for the network. |
 | `SNIPER_MIN_MC_FLOOR_USD` | | — | Fleet-wide market-cap floor (USD). Buys below it are skipped across every agent; a per-strategy `min_market_cap_usd` only tightens it. Unset = no floor. |
 | `SNIPER_MAX_MC_CEIL_USD` | | — | Fleet-wide market-cap ceiling (USD). Buys above it are skipped; a per-strategy `max_market_cap_usd` only tightens it. Unset = no ceiling. |

@@ -106,6 +106,13 @@ const STRATEGY_SCHEMA = z.object({
 	// Notifications: personal Telegram chat ID for this strategy's buy/sell alerts.
 	// Must be a numeric chat ID (positive = user/group, negative = supergroup/channel).
 	telegram_chat_id: z.string().regex(/^-?[0-9]+$/).nullable().optional(),
+	// Experiment identity + decision mode. 'llm' replaces the rule shields with a
+	// model verdict per launch (safety rails still enforced at executeBuy).
+	decision_mode: z.enum(['rules', 'llm']).optional(),
+	llm_model: z.string().max(120).nullable().optional(),
+	llm_min_confidence: z.union([z.string(), z.number()]).nullable().optional(),
+	label: z.string().max(80).nullable().optional(),
+	experiment_group: z.string().max(80).nullable().optional(),
 });
 
 const atomicStr = (v, fallback = '0') => {
@@ -240,6 +247,11 @@ async function listStrategies(req, res, userId) {
 			alpha_max_mcap_usd: s.alpha_max_mcap_usd != null ? Number(s.alpha_max_mcap_usd) : null,
 			alpha_narrative_keywords: s.alpha_narrative_keywords || null,
 			alpha_min_quality_score: s.alpha_min_quality_score != null ? Number(s.alpha_min_quality_score) : null,
+			decision_mode: s.decision_mode || 'rules',
+			llm_model: s.llm_model || null,
+			llm_min_confidence: s.llm_min_confidence != null ? Number(s.llm_min_confidence) : null,
+			label: s.label || null,
+			experiment_group: s.experiment_group || null,
 			summary: {
 				open_positions: sum ? Number(sum.open_positions) : 0,
 				closed_positions: sum ? Number(sum.closed_positions) : 0,
@@ -299,6 +311,8 @@ async function upsertStrategy(req, res, userId) {
 		telegram_chat_id: null,
 		alpha_min_smart_money: null, alpha_min_organic_score: null, alpha_max_mcap_usd: null,
 		alpha_narrative_keywords: null, alpha_min_quality_score: null,
+		decision_mode: 'rules', llm_model: null, llm_min_confidence: null,
+		label: null, experiment_group: null,
 	};
 
 	const next = {
@@ -350,6 +364,13 @@ async function upsertStrategy(req, res, userId) {
 		// null = classic single-shot exit. moonbag_min_pct = the floor always kept.
 		initials_out_multiple: 'initials_out_multiple' in p ? (p.initials_out_multiple == null || p.initials_out_multiple === '' ? null : Math.max(1.01, Number(p.initials_out_multiple))) : (cur.initials_out_multiple != null ? Number(cur.initials_out_multiple) : null),
 		moonbag_min_pct: 'moonbag_min_pct' in p ? Math.max(0, Math.min(95, Number(p.moonbag_min_pct))) : (cur.moonbag_min_pct != null ? Number(cur.moonbag_min_pct) : 15),
+		// Experiment identity + decision mode. 'llm' replaces the rule shields with
+		// a per-launch model verdict; safety rails still hold at executeBuy.
+		decision_mode: p.decision_mode ?? cur.decision_mode ?? 'rules',
+		llm_model: 'llm_model' in p ? (p.llm_model || null) : (cur.llm_model || null),
+		llm_min_confidence: 'llm_min_confidence' in p ? (p.llm_min_confidence == null || p.llm_min_confidence === '' ? null : Math.min(1, Math.max(0, Number(p.llm_min_confidence)))) : (cur.llm_min_confidence != null ? Number(cur.llm_min_confidence) : null),
+		label: 'label' in p ? (p.label || null) : (cur.label || null),
+		experiment_group: 'experiment_group' in p ? (p.experiment_group || null) : (cur.experiment_group || null),
 	};
 
 	// Mandatory stop-loss — never let the DB constraint be the first line of defense.
@@ -383,7 +404,8 @@ async function upsertStrategy(req, res, userId) {
 			 avoid_dev_dump, allowed_categories, telegram_chat_id,
 			 alpha_min_smart_money, alpha_min_organic_score, alpha_max_mcap_usd,
 			 alpha_narrative_keywords, alpha_min_quality_score, auto_fund_enabled,
-			 initials_out_multiple, moonbag_min_pct, updated_at)
+			 initials_out_multiple, moonbag_min_pct,
+			 decision_mode, llm_model, llm_min_confidence, label, experiment_group, updated_at)
 		values
 			(${p.agent_id}, ${userId}, ${p.network}, ${next.enabled}, ${next.kill_switch},
 			 ${next.trigger}, ${next.buy_delay_ms}, ${next.min_claim_lamports}, ${next.max_claim_lamports}, ${next.first_claim_max_age_seconds},
@@ -398,7 +420,8 @@ async function upsertStrategy(req, res, userId) {
 			 ${next.avoid_dev_dump}, ${next.allowed_categories}, ${next.telegram_chat_id},
 			 ${next.alpha_min_smart_money}, ${next.alpha_min_organic_score}, ${next.alpha_max_mcap_usd},
 			 ${next.alpha_narrative_keywords}, ${next.alpha_min_quality_score}, ${next.auto_fund_enabled},
-			 ${next.initials_out_multiple}, ${next.moonbag_min_pct}, now())
+			 ${next.initials_out_multiple}, ${next.moonbag_min_pct},
+			 ${next.decision_mode}, ${next.llm_model}, ${next.llm_min_confidence}, ${next.label}, ${next.experiment_group}, now())
 		on conflict (agent_id, network) do update set
 			enabled                  = excluded.enabled,
 			kill_switch              = excluded.kill_switch,
@@ -442,6 +465,11 @@ async function upsertStrategy(req, res, userId) {
 			auto_fund_enabled        = excluded.auto_fund_enabled,
 			initials_out_multiple    = excluded.initials_out_multiple,
 			moonbag_min_pct          = excluded.moonbag_min_pct,
+			decision_mode            = excluded.decision_mode,
+			llm_model                = excluded.llm_model,
+			llm_min_confidence       = excluded.llm_min_confidence,
+			label                    = excluded.label,
+			experiment_group         = excluded.experiment_group,
 			updated_at               = now()
 		returning *
 	`;
@@ -493,6 +521,11 @@ async function upsertStrategy(req, res, userId) {
 			auto_fund_enabled: row.auto_fund_enabled ?? false,
 			initials_out_multiple: row.initials_out_multiple != null ? Number(row.initials_out_multiple) : null,
 			moonbag_min_pct: row.moonbag_min_pct != null ? Number(row.moonbag_min_pct) : 15,
+			decision_mode: row.decision_mode || 'rules',
+			llm_model: row.llm_model || null,
+			llm_min_confidence: row.llm_min_confidence != null ? Number(row.llm_min_confidence) : null,
+			label: row.label || null,
+			experiment_group: row.experiment_group || null,
 		},
 	});
 }

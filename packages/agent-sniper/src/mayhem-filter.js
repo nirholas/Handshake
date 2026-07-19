@@ -14,15 +14,38 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 
 /**
+ * Re-run `fn` while it resolves null, with exponential backoff. A brand-new
+ * mint's curve account exists from creation, so a null read is an RPC hiccup
+ * (throttled endpoint, not-yet-synced node); a short backoff usually resolves
+ * it to a real answer instead of forfeiting the buy on a strict gate. Exported
+ * for unit tests; the answer being retried is immutable, so retrying is safe.
+ */
+export async function retryWhileNull(fn, { retries = 2, delayMs = 350 } = {}) {
+	let v = await fn();
+	for (let attempt = 0; v === null && attempt < retries; attempt++) {
+		await new Promise((r) => setTimeout(r, delayMs * 2 ** attempt));
+		v = await fn();
+	}
+	return v;
+}
+
+/**
  * @param {object} o
  * @param {string} [o.rpcUrl]                RPC endpoint (falls back to public mainnet)
+ * @param {object} [o.connection]            pre-built web3 Connection (e.g. the platform's
+ *   rotating multi-endpoint connection). Takes precedence over rpcUrl, so a single
+ *   throttled provider can't starve the gate into permanent "unknown".
  * @param {boolean} [o.strictOnUnknown=false] if the curve can't be read, skip the buy
  *   (honor the rule strictly) instead of allowing it. Default allows-on-unknown so a
  *   flaky RPC read doesn't silently halt all trading — unknowns are logged.
+ * @param {number} [o.retries=2]             extra read attempts before resolving "unknown".
+ *   The flag is immutable per mint, so retrying is always safe; on a strict gate each
+ *   retry converts a would-be skipped buy into a definitive pass/fail.
+ * @param {number} [o.retryDelayMs=350]      base backoff between attempts (doubles per retry)
  * @returns {{ oracleGate: Function, isMayhem: Function, stats: Function }}
  */
-export function createMayhemFilter({ rpcUrl, strictOnUnknown = false } = {}) {
-	const conn = new Connection(rpcUrl || 'https://api.mainnet-beta.solana.com', 'confirmed');
+export function createMayhemFilter({ rpcUrl, connection = null, strictOnUnknown = false, retries = 2, retryDelayMs = 350 } = {}) {
+	const conn = connection || new Connection(rpcUrl || 'https://api.mainnet-beta.solana.com', 'confirmed');
 	const cache = new Map();      // mint → boolean (true = mayhem)
 	const inflight = new Map();   // mint → Promise<boolean|null>
 	let sdkPromise = null;
@@ -62,7 +85,7 @@ export function createMayhemFilter({ rpcUrl, strictOnUnknown = false } = {}) {
 		if (!mint) return null;
 		if (cache.has(mint)) return cache.get(mint);
 		if (inflight.has(mint)) return inflight.get(mint);
-		const p = readMayhem(mint).then((v) => {
+		const p = retryWhileNull(() => readMayhem(mint), { retries, delayMs: retryDelayMs }).then((v) => {
 			inflight.delete(mint);
 			if (v !== null) cache.set(mint, v);   // only cache definitive answers
 			return v;

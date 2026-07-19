@@ -1160,6 +1160,14 @@
 					"added": "2026-06-15"
 				},
 				{
+					"path": "/sniper/experiments",
+					"title": "Sniper Experiments: rules vs LLM judgment, scored live",
+					"description": "The sniper fleet runs different rule sets side by side, including LLM-judged agents with no rules at all. The live scoreboard of which entry conditions actually make money, every fill verifiable on-chain.",
+					"priority": 0.7,
+					"changefreq": "daily",
+					"added": "2026-07-19"
+				},
+				{
 					"path": "/play/ufo",
 					"title": "Flappin UFO — retired demo",
 					"description": "The Flappin UFO arcade demo ran on an external deployment that is no longer online, so the game has been retired. The page now points visitors to the live three.ws experiences instead.",

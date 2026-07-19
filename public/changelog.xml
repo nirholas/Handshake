@@ -119,6 +119,14 @@
 			<description>The 3D avatar assistant widget is now installable three ways. Beyond the one-tag script, there is an npm package, @three-ws/assistant, for bundler projects (the one-tag build is generated from it, so they never drift), and a free MCP server, @three-ws/assistant-mcp, published to the official Model Context Protocol registry as io.github.nirholas/assistant-widget. Any AI agent (Claude Code, Cursor, Claude Desktop) can now ask for a widget in plain language and get back a paste-ready embed: build_assistant_widget turns a config into a script tag, a frame URL, and a ThreeAssistant.init() call, and list_assistant_options returns every avatar, background, and mode. Full developer docs at /docs/assistant-widget and a step-by-step tutorial walk through every option, the JavaScript API, and the agent workflow.</description>
 		</item>
 		<item>
+			<title>The sniper fleet becomes a live experiment: rules vs AI judgment</title>
+			<link>https://three.ws/sniper/experiments</link>
+			<guid isPermaLink="false">2026-07-19:The sniper fleet becomes a live experiment: rules vs AI judgment</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The autonomous pump.fun sniper now runs ten labeled strategies side by side to learn which entry conditions actually make money. Some agents trade strict rule shields (market-cap bands, socials, Oracle conviction), and three new agents have no rules at all: an AI model (Grok, Claude, or an auto-router) reads every launch and decides with a written thesis, while the same hard safety rails (no Mayhem tokens, honeypot firewall, budgets and stop-losses) protect every trade. A new scoreboard at /sniper/experiments compares each arm by real on-chain results. Under the hood the sniper also got three reliability fixes that unblocked buying: safety reads now rotate across many RPC providers with retries, provisional Oracle scores on brand-new coins no longer disqualify launch snipes, and a stuck position whose sell had already landed on-chain is now reconciled from the chain instead of retrying forever.</description>
+		</item>
+		<item>
 			<title>TradingView charts on every coin page</title>
 			<link>https://three.ws/coin/bitcoin</link>
 			<guid isPermaLink="false">2026-07-19:TradingView charts on every coin page</guid>

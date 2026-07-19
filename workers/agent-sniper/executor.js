@@ -22,6 +22,7 @@ import {
 	SOL_FEE_HEADROOM_LAMPORTS,
 } from '../../api/_lib/agent-trade-guards.js';
 import { buildAmmSellInstructions } from './amm-exit.js';
+import { getWalletBaseBalance, reconcileVanishedBag } from './reconcile.js';
 import { assessTradeSafety, recordFirewallDecision, criticalFirewallReason } from '../../api/_lib/trade-firewall.js';
 import { recordDecision } from '../../api/_lib/reasoning-ledger.js';
 import { screenPush } from './screen-push.js';
@@ -72,6 +73,7 @@ async function recordSnipeDecision({ strat, network, mint, posId, sig, mode, pri
 				buy_sig: sig && sig !== 'SIMULATED' ? sig : null,
 				mode,
 				symbol: mint.symbol || null,
+				llm: mint.llm ? { model: mint.llm.model, confidence: mint.llm.confidence, thesis: mint.llm.thesis } : null,
 			},
 			prediction: { direction: 'up', basis: 'snipe entry expects a profitable exit', metric: 'realized_pnl' },
 			rationale,
@@ -469,7 +471,7 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 			await journalEntry({
 				cfg, strat, mint, posId, sig,
 				score: mint.score ?? null,
-				rationale: `Entered on ${mint.entry_trigger || 'new_mint'}${mint.market_cap_usd != null ? ` at ~$${Math.round(mint.market_cap_usd).toLocaleString()} mcap` : ''}${firewallSnapshot ? ` (firewall ${firewallSnapshot.verdict}, score ${firewallSnapshot.score})` : ''}; ${lamportsToSol(perTrade).toFixed(4)} SOL, impact ${Number(quote.priceImpactPct).toFixed(2)}%.`,
+				rationale: `Entered on ${mint.entry_trigger || 'new_mint'}${mint.market_cap_usd != null ? ` at ~$${Math.round(mint.market_cap_usd).toLocaleString()} mcap` : ''}${firewallSnapshot ? ` (firewall ${firewallSnapshot.verdict}, score ${firewallSnapshot.score})` : ''}; ${lamportsToSol(perTrade).toFixed(4)} SOL, impact ${Number(quote.priceImpactPct).toFixed(2)}%.${mint.llm ? ` LLM ${mint.llm.model} judged buy at ${Math.round(mint.llm.confidence * 100)}%: ${mint.llm.thesis}` : ''}`,
 			});
 			screenPush(`Bought $${(mint.symbol || mint.mint.slice(0, 6)).toUpperCase()} at ${lamportsToSol(perTrade).toFixed(4)} SOL — position open`, 'trade');
 			notifyBuy({ agentName: strat.agent_name || strat.agent_id, symbol: mint.symbol, mint: mint.mint, solSpent: lamportsToSol(perTrade), mode: cfg.mode, sig, chatId: strat.telegram_chat_id || null });
@@ -510,6 +512,31 @@ export async function executeSell({ cfg, position, reason, fraction = 1, recover
 			const { keypair } = loaded;
 
 			const ctx = await getTradeCtx(cfg.network);
+
+			// Retry of a previously-failed sell → make the CHAIN the source of truth
+			// before re-broadcasting. A sell whose confirmation timed out may have
+			// landed anyway; retrying it then simulates a sell of tokens the wallet no
+			// longer holds and fails forever (pump 6023 NotEnoughTokensToSell), burning
+			// RPC every sweep. Balance 0 → find the landed tx and book its real
+			// proceeds; balance short of the DB amount → sell what's actually there.
+			if (position.error) {
+				const realBalance = await getWalletBaseBalance(ctx, keypair.publicKey, position.mint);
+				if (realBalance != null) {
+					if (realBalance === 0n) {
+						const reconciled = await reconcileVanishedBag({ ctx, position, reason });
+						if (reconciled) return { status: 'closed', reason: 'reconciled_onchain' };
+						// Emptying tx not found yet (history lag); hold for the next sweep
+						// rather than re-broadcasting a sell that cannot succeed.
+						await sql`UPDATE agent_sniper_positions SET status = 'open', error = 'reconcile_pending', last_quoted_at = now() WHERE id = ${position.id}`;
+						return { status: 'retry', reason: 'reconcile_pending' };
+					}
+					if (realBalance < sellBaseBig) {
+						log.warn('sell clamped to real wallet balance', { ...tag, db_base: sellBaseBig.toString(), real_base: realBalance.toString() });
+						sellBaseBig = realBalance;
+					}
+				}
+			}
+
 			const mintPk = new ctx.web3.PublicKey(position.mint);
 			const baseAmount = bn(ctx, sellBaseBig);
 			const slippagePct = (position.slippage_bps ?? 500) / 100;

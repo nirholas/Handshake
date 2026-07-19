@@ -1231,6 +1231,10 @@
 			"dest": "/play/arena.html"
 		},
 		{
+			"src": "/sniper/experiments/?",
+			"dest": "/sniper-experiments.html"
+		},
+		{
 			"src": "/arena/?",
 			"dest": "/arena.html"
 		},
@@ -3051,6 +3055,10 @@
 		{
 			"src": "/api/sniper/leaderboard",
 			"dest": "/api/sniper/leaderboard.js"
+		},
+		{
+			"src": "/api/sniper/experiments",
+			"dest": "/api/sniper/experiments.js"
 		},
 		{
 			"src": "/api/sniper/status",

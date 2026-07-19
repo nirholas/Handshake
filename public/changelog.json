@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-19T13:33:34.481Z",
+	"generated_at": "2026-07-19T14:03:19.061Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -155,6 +155,18 @@
 				"sdk",
 				"feature",
 				"docs"
+			]
+		},
+		{
+			"date": "2026-07-19",
+			"type": "update",
+			"title": "The sniper fleet becomes a live experiment: rules vs AI judgment",
+			"summary": "The autonomous pump.fun sniper now runs ten labeled strategies side by side to learn which entry conditions actually make money. Some agents trade strict rule shields (market-cap bands, socials, Oracle conviction), and three new agents have no rules at all: an AI model (Grok, Claude, or an auto-router) reads every launch and decides with a written thesis, while the same hard safety rails (no Mayhem tokens, honeypot firewall, budgets and stop-losses) protect every trade. A new scoreboard at /sniper/experiments compares each arm by real on-chain results. Under the hood the sniper also got three reliability fixes that unblocked buying: safety reads now rotate across many RPC providers with retries, provisional Oracle scores on brand-new coins no longer disqualify launch snipes, and a stuck position whose sell had already landed on-chain is now reconciled from the chain instead of retrying forever.",
+			"link": "/sniper/experiments",
+			"tags": [
+				"feature",
+				"improvement",
+				"fix"
 			]
 		},
 		{

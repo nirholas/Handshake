@@ -17,6 +17,7 @@ import { refreshStrategies, cachedStrategies, logStrategyLoad } from './strategy
 import { scoreMint, scoreIntel } from './scorer.js';
 import { executeBuy } from './executor.js';
 import { oracleGate } from './oracle-gate.js';
+import { judgeLaunch } from './llm-judge.js';
 import { runPositionSweep } from './positions.js';
 import { runSwarmConsensus, runSwarmSettlement } from './swarm.js';
 import { startFirstClaimWatch } from './first-claim-watch.js';
@@ -137,6 +138,29 @@ async function main() {
 			// The new-mint feed only drives new_mint strategies; first_claim
 			// strategies are driven by the on-chain claim poll loop below.
 			if ((strat.trigger || 'new_mint') !== 'new_mint') continue;
+
+			// LLM-judged experiment arm: no rule shields, no oracle gate: a model
+			// reads the launch and decides. The executeBuy chokepoint still enforces
+			// every safety rail (Mayhem, firewall round-trip, budgets, headroom).
+			if ((strat.decision_mode || 'rules') === 'llm') {
+				queue.push(async () => {
+					const verdict = await judgeLaunch(data, strat);
+					if (!verdict) return;
+					const minConf = Number(strat.llm_min_confidence ?? 0.6);
+					if (!verdict.buy || verdict.confidence < minConf) {
+						log.info('llm judge pass', { agent: strat.agent_id, mint: data.mint, model: verdict.model, buy: verdict.buy, confidence: verdict.confidence });
+						return;
+					}
+					log.info('llm judge buy', { agent: strat.agent_id, mint: data.mint, model: verdict.model, confidence: verdict.confidence, thesis: verdict.thesis });
+					screenPush(`$${sym} LLM verdict: BUY at ${Math.round(verdict.confidence * 100)}%: ${verdict.thesis}`, 'trade');
+					await executeBuy({
+						cfg, strat, throttle,
+						mint: { ...data, entry_trigger: 'llm_judge', trigger_ref: verdict.model, score: verdict.confidence, llm: verdict },
+					});
+				});
+				continue;
+			}
+
 			const { pass, score, reasons } = scoreMint(data, strat);
 			if (!pass) continue;
 			log.info('candidate', { agent: strat.agent_id, mint: data.mint, symbol: data.symbol, score, reasons });
