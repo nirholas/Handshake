@@ -6,10 +6,14 @@ substitutions:
   _SERVICE: model-video2motion
   _REPO: model-video2motion
   _GCS_BUCKET: three-ws-avatar-reconstructions
-  # Scale-to-zero: motion capture is a batch submit-and-poll job, not an
-  # interactive edit loop — a cold start disappears inside the processing time.
-  _MIN_INSTANCES: "0"
-  _MAX_INSTANCES: "5"
+  # One always-on instance, instance-based billing. Processing happens in a
+  # FastAPI BackgroundTask AFTER the 202 returns, so request-based billing
+  # throttles it to near-zero CPU (a 30s clip took 3.5 h wall in prod vs 3 min
+  # unthrottled — measured 2026-07-19). min 1 keeps the instance from being
+  # reaped mid-job between polls; max 1 keeps the in-memory task store
+  # authoritative (polls always land on the instance running the job).
+  _MIN_INSTANCES: "1"
+  _MAX_INSTANCES: "1"
 
 steps:
   - id: build
@@ -49,6 +53,7 @@ steps:
       - --min-instances=${_MIN_INSTANCES}
       - --max-instances=${_MAX_INSTANCES}
       - --timeout=900
+      - --no-cpu-throttling
       - --allow-unauthenticated
       - --set-env-vars=GCS_BUCKET=${_GCS_BUCKET},MAX_CONCURRENT=2,MAX_SECONDS=90
       - --set-secrets=API_KEY=avatar-reconstruction-key:latest
