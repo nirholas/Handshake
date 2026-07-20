@@ -53,6 +53,21 @@ import { getSolPriceUsd } from '../src/shared/usd-price.js';
 const TOTAL_PUMP_TOKEN_SUPPLY = 1_000_000_000; // 1B pump.fun standard
 const GRADUATION_REAL_SOL_LAMPORTS = 85_000_000_000n; // ~85 SOL — heuristic
 
+// Read a bonding curve's quote-side reserve as a string, or null if absent.
+//
+// Pump renamed these when USDC became a possible quote asset:
+// `real_sol_reserves` → `real_quote_reserves`, `virtual_sol_reserves` →
+// `virtual_quote_reserves` (same u64s at the same offsets, new names). Current
+// SDKs expose only the `*Quote*` names. Reading just the legacy name yields
+// `undefined`, which silently coerces to 0 and reports a healthy curve as empty
+// rather than failing — so read the current name first and keep the legacy one
+// as a fallback for an older decoder.
+function curveQuoteReserve(curve, kind /* 'real' | 'virtual' */) {
+	const quoteKey = kind === 'real' ? 'realQuoteReserves' : 'virtualQuoteReserves';
+	const legacyKey = kind === 'real' ? 'realSolReserves' : 'virtualSolReserves';
+	return curve?.[quoteKey]?.toString?.() ?? curve?.[legacyKey]?.toString?.() ?? null;
+}
+
 async function handleGetBondingCurve({ mint, network = 'mainnet' }) {
 	const pk = solanaPubkey(mint);
 	if (!pk) throw rpcError(-32602, 'invalid mint');
@@ -70,9 +85,9 @@ async function handleGetBondingCurve({ mint, network = 'mainnet' }) {
 	}
 	if (!curve) throw rpcError(-32004, 'no bonding curve found for this mint');
 
-	const realSol = BigInt(curve.realSolReserves?.toString?.() ?? '0');
+	const realSol = BigInt(curveQuoteReserve(curve, 'real') ?? '0');
 	const realToken = BigInt(curve.realTokenReserves?.toString?.() ?? '0');
-	const virtSol = BigInt(curve.virtualSolReserves?.toString?.() ?? '0');
+	const virtSol = BigInt(curveQuoteReserve(curve, 'virtual') ?? '0');
 	const virtToken = BigInt(curve.virtualTokenReserves?.toString?.() ?? '0');
 	const complete = !!curve.complete;
 	// Graduation % heuristic: complete=100, else realSol/graduationTarget * 100.
@@ -443,15 +458,28 @@ async function handleQuoteSwap({
 	const { buyQuoteInput, sellBaseInput } = await import('@pump-fun/pump-swap-sdk');
 	const BNMod = await import('bn.js');
 	const BN = BNMod.default || BNMod;
-	const { poolKey, pool, baseReserve, quoteReserve, baseMintAccount, globalConfig, feeConfig } =
-		state;
+	const {
+		poolKey,
+		pool,
+		baseReserve,
+		quoteReserve,
+		virtualQuoteReserves,
+		effectiveQuoteReserve,
+		baseMintAccount,
+		globalConfig,
+		feeConfig,
+	} = state;
 	const amountBn = new BN(String(amountIn));
 	// pump-swap-sdk takes slippage as a PERCENT (1 = 1%): `1 ± slippage / 100`.
 	const slip = (slippageBps ?? 100) / 100;
+	// `virtualQuoteReserves` is a separate arg the SDK adds to `quoteReserve`
+	// itself — pass the RAW reserve here. Our own impact math below uses the
+	// pre-summed `effectiveQuoteReserve`.
 	const shared = {
 		slippage: slip,
 		baseReserve,
 		quoteReserve,
+		virtualQuoteReserves,
 		globalConfig,
 		baseMintAccount,
 		baseMint: pool.baseMint,
@@ -464,14 +492,14 @@ async function handleQuoteSwap({
 		const r = buyQuoteInput({ quote: amountBn, ...shared });
 		amountOut = r.base;
 		const num = amountBn.mul(baseReserve);
-		const denom = amountOut.mul(quoteReserve);
+		const denom = amountOut.mul(effectiveQuoteReserve);
 		priceImpactBps = denom.isZero()
 			? 0
 			: Math.max(0, num.muln(10_000).div(denom).subn(10_000).toNumber());
 	} else {
 		const r = sellBaseInput({ base: amountBn, ...shared });
 		amountOut = r.uiQuote;
-		const spot = quoteReserve.mul(amountBn);
+		const spot = effectiveQuoteReserve.mul(amountBn);
 		const exec = amountOut.mul(baseReserve);
 		priceImpactBps = spot.isZero()
 			? 0
@@ -527,9 +555,9 @@ async function handleSocialXPostImpact({ postUrl, mint, windowMin = 30, network 
 	}
 	if (!curve) throw rpcError(-32004, 'no bonding curve found for this mint');
 
-	const virtSol = Number(curve.virtualSolReserves?.toString?.() ?? '0');
+	const virtSol = Number(curveQuoteReserve(curve, 'virtual') ?? '0');
 	const virtToken = Number(curve.virtualTokenReserves?.toString?.() ?? '0');
-	const realSolLamports = Number(curve.realSolReserves?.toString?.() ?? '0');
+	const realSolLamports = Number(curveQuoteReserve(curve, 'real') ?? '0');
 	const priceRaw = virtToken > 0 ? virtSol / virtToken : null;
 	const volSol = realSolLamports / 1e9;
 
@@ -587,7 +615,8 @@ async function handleWatchWhales({ mint, minUsd = 5000, durationMs = 5000 }) {
 					if (event.name !== 'TradeEvent') continue;
 					const d = event.data;
 					if (d.mint?.toString() !== mintStr) continue;
-					const sol = Number(eventField(d, 'solAmount')?.toString() ?? '0') / 1_000_000_000;
+					const sol =
+						Number(eventField(d, 'solAmount')?.toString() ?? '0') / 1_000_000_000;
 					const usd = sol * solPrice;
 					if (usd < minUsdNum) continue;
 					trades.push({
@@ -596,7 +625,9 @@ async function handleWatchWhales({ mint, minUsd = 5000, durationMs = 5000 }) {
 						sideBuy: !!eventField(d, 'isBuy'),
 						usd,
 						sol,
-						ts: Number(eventField(d, 'timestamp')?.toString() ?? '0') * 1000 || Date.now(),
+						ts:
+							Number(eventField(d, 'timestamp')?.toString() ?? '0') * 1000 ||
+							Date.now(),
 					});
 				}
 			} catch {}
@@ -684,8 +715,12 @@ async function readTradesFromChain({ mint, limit, network }) {
 				const d = event.data;
 				if (poolStr && d.pool?.toString() !== poolStr) continue;
 				const isBuy = event.name === 'BuyEvent';
-				const lamports = isBuy ? eventField(d, 'quoteAmountIn') : eventField(d, 'quoteAmountOut');
-				const tokens = isBuy ? eventField(d, 'baseAmountOut') : eventField(d, 'baseAmountIn');
+				const lamports = isBuy
+					? eventField(d, 'quoteAmountIn')
+					: eventField(d, 'quoteAmountOut');
+				const tokens = isBuy
+					? eventField(d, 'baseAmountOut')
+					: eventField(d, 'baseAmountIn');
 				const sol = Number(lamports?.toString() ?? '0') / 1e9;
 				const ts = eventField(d, 'timestamp');
 				return {

@@ -1,11 +1,32 @@
 {
-	"generated_at": "2026-07-19T22:30:00.732Z",
+	"generated_at": "2026-07-20T18:38:37.717Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-20",
+			"type": "update",
+			"title": "Bonding curve progress reads correctly again in the MCP tools",
+			"summary": "The agent tools that report a coin's bonding curve were showing every coin as 0% to graduation with zero reserves and a zero price. Pump renamed these on-chain fields when USDC became a possible trading pair, and the tools were still reading the old names, which quietly resolved to zero instead of failing. They now read the current fields, so graduation progress, reserves, and price reflect the real curve. Verified against live coins reading 2% through 70% to graduation.",
+			"link": null,
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-20",
+			"type": "update",
+			"title": "Graduated-coin prices now match PumpSwap exactly",
+			"summary": "PumpSwap changed how pool prices are calculated: a pool can now hold quote-side liquidity that is not sitting in its vault, and prices have to count it. Every place we price a graduated coin has been updated to match, so quotes, price impact, market caps, and agent trade fills line up with what actually executes on-chain. Coins that have not graduated are unaffected, and the change is exact rather than approximate: where a pool carries none of this liquidity, prices are identical to before.",
+			"link": null,
+			"tags": [
+				"fix",
+				"infra"
+			]
+		},
 		{
 			"date": "2026-07-19",
 			"type": "launch",

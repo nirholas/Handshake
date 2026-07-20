@@ -71,18 +71,29 @@ export async function quoteSwap({ inputMint, outputMint, amountIn, slippageBps =
 	let state;
 	try {
 		// SystemProgram as dummy user — user ATAs will be null, which is fine for quoting.
-		state = await sdk.swapSolanaState(poolKey, new PublicKey('11111111111111111111111111111111'));
+		state = await sdk.swapSolanaState(
+			poolKey,
+			new PublicKey('11111111111111111111111111111111'),
+		);
 	} catch (err) {
 		throw new Error(`Pool unavailable for ${baseMintPk.toBase58()}: ${err.message}`);
 	}
 
-	const { globalConfig, feeConfig, pool, poolBaseAmount, poolQuoteAmount, baseMintAccount } = state;
+	const { globalConfig, feeConfig, pool, poolBaseAmount, poolQuoteAmount, baseMintAccount } =
+		state;
 	// pump-swap-sdk takes slippage as a PERCENT (1 = 1%): `1 ± slippage / 100`.
 	const slippage = slippageBps / 100;
+	// PumpSwap prices against effective quote reserves (raw vault + the pool's
+	// virtual_quote_reserves, non-zero on launchpad coins since 2026-07-20). The
+	// SDK adds `virtualQuoteReserves` to `quoteReserve` internally, so pass the
+	// raw reserve here; the spot-price baseline below uses the summed value.
+	const virtualQuoteReserves = new BN((pool.virtualQuoteReserves ?? 0).toString());
+	const effectiveQuoteReserve = poolQuoteAmount.add(virtualQuoteReserves);
 	const shared = {
 		slippage,
 		baseReserve: poolBaseAmount,
 		quoteReserve: poolQuoteAmount,
+		virtualQuoteReserves,
 		globalConfig,
 		baseMintAccount,
 		baseMint: pool.baseMint,
@@ -97,9 +108,9 @@ export async function quoteSwap({ inputMint, outputMint, amountIn, slippageBps =
 		const result = buyQuoteInput({ quote: amountBn, ...shared });
 		amountOut = result.base;
 		// impact = (execPrice / spotPrice − 1) × 10000
-		// execPrice = amountIn / amountOut;  spotPrice = quoteReserve / baseReserve
+		// execPrice = amountIn / amountOut;  spotPrice = effectiveQuoteReserve / baseReserve
 		const num = amountBn.mul(poolBaseAmount);
-		const denom = amountOut.mul(poolQuoteAmount);
+		const denom = amountOut.mul(effectiveQuoteReserve);
 		priceImpactBps = denom.isZero()
 			? 0
 			: Math.max(0, num.muln(10_000).div(denom).subn(10_000).toNumber());
@@ -107,8 +118,8 @@ export async function quoteSwap({ inputMint, outputMint, amountIn, slippageBps =
 		const result = sellBaseInput({ base: amountBn, ...shared });
 		amountOut = result.uiQuote;
 		// impact = (1 − execPrice / spotPrice) × 10000
-		// spotPrice = quoteReserve / baseReserve;  execPrice = amountOut / amountIn
-		const spot = poolQuoteAmount.mul(amountBn);
+		// spotPrice = effectiveQuoteReserve / baseReserve;  execPrice = amountOut / amountIn
+		const spot = effectiveQuoteReserve.mul(amountBn);
 		const exec = amountOut.mul(poolBaseAmount);
 		priceImpactBps = spot.isZero()
 			? 0

@@ -768,6 +768,7 @@ async function handleSellPrep(req, res) {
 			const { uiQuote } = ammMod.sellBaseInput({
 				base: tokens, slippage: slippagePct,
 				baseReserve: swapState.poolBaseAmount, quoteReserve: swapState.poolQuoteAmount,
+				virtualQuoteReserves: swapState.pool.virtualQuoteReserves,
 				baseMintAccount: swapState.baseMintAccount, baseMint: swapState.baseMint,
 				coinCreator: swapState.pool.coinCreator, creator: swapState.pool.creator,
 				feeConfig: swapState.feeConfig, globalConfig: swapState.globalConfig,
@@ -2752,6 +2753,8 @@ async function handleQuote(req, res) {
 			poolKey,
 			baseReserve,
 			quoteReserve,
+			virtualQuoteReserves,
+			effectiveQuoteReserve,
 			baseMintAccount,
 			globalConfig,
 			feeConfig,
@@ -2780,6 +2783,7 @@ async function handleQuote(req, res) {
 					slippage: slippagePct,
 					baseReserve,
 					quoteReserve,
+					virtualQuoteReserves,
 					globalConfig,
 					baseMintAccount,
 					baseMint: pool.baseMint,
@@ -2806,6 +2810,7 @@ async function handleQuote(req, res) {
 				slippage: slippagePct,
 				baseReserve,
 				quoteReserve,
+				virtualQuoteReserves,
 				globalConfig,
 				baseMintAccount,
 				baseMint: pool.baseMint,
@@ -2837,6 +2842,12 @@ async function handleQuote(req, res) {
 				quote: resolvedQuoteMintStr,
 				base_reserve: baseReserve.toString(),
 				quote_reserve: quoteReserve.toString(),
+				// Price against `effective_quote_reserve`, not `quote_reserve`:
+				// PumpSwap adds the pool's virtual quote reserves to the vault
+				// balance when quoting (non-zero on launchpad coins since
+				// 2026-07-20). The raw vault balance alone under-prices buys.
+				virtual_quote_reserves: virtualQuoteReserves.toString(),
+				effective_quote_reserve: effectiveQuoteReserve.toString(),
 				lp_supply: pool.lpSupply?.toString?.() ?? null,
 			},
 			platform_fee_bps: await effectivePumpFeeBps(),

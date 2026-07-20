@@ -138,9 +138,12 @@ export async function quoteTrade({ conn, side, mintPk, mintStr, network, solAmou
 		// Graduated → AMM pool.
 		const amm = await loadAmm(network, mintPk);
 		const sdk = await import('@pump-fun/pump-swap-sdk');
+		// `virtualQuoteReserves` is added to `quoteReserve` by the SDK itself —
+		// pass the raw reserve here; our own impact math uses the summed value.
 		const r = sdk.buyQuoteInput({
 			quote: new amm.BN(lamportsIn.toString()), slippage: slippagePercentFromBps(slippageBps),
-			baseReserve: amm.baseReserve, quoteReserve: amm.quoteReserve, globalConfig: amm.globalConfig,
+			baseReserve: amm.baseReserve, quoteReserve: amm.quoteReserve,
+			virtualQuoteReserves: amm.virtualQuoteReserves, globalConfig: amm.globalConfig,
 			baseMintAccount: amm.baseMintAccount, baseMint: amm.pool.baseMint,
 			coinCreator: amm.pool.coinCreator, creator: amm.pool.creator, feeConfig: amm.feeConfig,
 		});
@@ -153,7 +156,7 @@ export async function quoteTrade({ conn, side, mintPk, mintStr, network, solAmou
 			outAsset: 'TOKEN', outAtomics: tokensOut.toString(), outUi: Number(tokensOut) / 10 ** decimals,
 			minOutAtomics: applySlippageFloor(tokensOut, slippageBps).toString(),
 			minOutUi: Number(applySlippageFloor(tokensOut, slippageBps)) / 10 ** decimals,
-			decimals, priceImpactPct: derivePriceImpact(amm.quoteReserve, amm.baseReserve, lamportsIn, tokensOut),
+			decimals, priceImpactPct: derivePriceImpact(amm.effectiveQuoteReserve, amm.baseReserve, lamportsIn, tokensOut),
 		};
 	}
 
@@ -180,7 +183,8 @@ export async function quoteTrade({ conn, side, mintPk, mintStr, network, solAmou
 	const sdk = await import('@pump-fun/pump-swap-sdk');
 	const r = sdk.sellBaseInput({
 		base: new amm.BN(baseUnits.toString()), slippage: slippagePercentFromBps(slippageBps),
-		baseReserve: amm.baseReserve, quoteReserve: amm.quoteReserve, globalConfig: amm.globalConfig,
+		baseReserve: amm.baseReserve, quoteReserve: amm.quoteReserve,
+		virtualQuoteReserves: amm.virtualQuoteReserves, globalConfig: amm.globalConfig,
 		baseMintAccount: amm.baseMintAccount, baseMint: amm.pool.baseMint,
 		coinCreator: amm.pool.coinCreator, creator: amm.pool.creator, feeConfig: amm.feeConfig,
 	});
@@ -191,7 +195,7 @@ export async function quoteTrade({ conn, side, mintPk, mintStr, network, solAmou
 		inAsset: 'TOKEN', inAtomics: baseUnits.toString(), inUi: Number(baseUnits) / 10 ** decimals,
 		outAsset: 'SOL', outAtomics: lamportsOut.toString(), outUi: lamportsToSol(lamportsOut),
 		minOutAtomics: minLamportsOut.toString(), minOutUi: lamportsToSol(minLamportsOut),
-		decimals, priceImpactPct: derivePriceImpact(amm.baseReserve, amm.quoteReserve, baseUnits, lamportsOut),
+		decimals, priceImpactPct: derivePriceImpact(amm.baseReserve, amm.effectiveQuoteReserve, baseUnits, lamportsOut),
 	};
 }
 

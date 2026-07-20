@@ -30,7 +30,10 @@ import { PUMP_PROGRAM_ID } from './solana/programs.js';
 {
 	const _err = console.error.bind(console);
 	console.error = (...args) => {
-		if (typeof args[0] === 'string' && /Server responded with \d+ .*Retrying after/.test(args[0])) {
+		if (
+			typeof args[0] === 'string' &&
+			/Server responded with \d+ .*Retrying after/.test(args[0])
+		) {
 			console.warn(...args);
 		} else {
 			_err(...args);
@@ -249,6 +252,9 @@ export function txInvokesPumpProgram(tx) {
 // return everything `buyQuoteInput` / `sellBaseInput` need to price a swap.
 // Quote currency is WSOL on the canonical pool.
 //
+// Returns BOTH `quoteReserve` (raw vault balance) and `effectiveQuoteReserve`
+// (raw + virtual). See the note at the reserve decode below for which to use.
+//
 // Throws { status: 404, code: 'pool_not_found' } if no pool exists yet.
 export async function getAmmPoolState({ network = 'mainnet', mint, quoteMint = null } = {}) {
 	if (!mint) throw Object.assign(new Error('mint required'), { status: 400 });
@@ -261,7 +267,8 @@ export async function getAmmPoolState({ network = 'mainnet', mint, quoteMint = n
 		]);
 	const connection = getConnection({ network });
 	const mintPk = mint instanceof PublicKey ? mint : new PublicKey(mint);
-	const quoteMintPk = quoteMint instanceof PublicKey ? quoteMint : (quoteMint ? new PublicKey(quoteMint) : null);
+	const quoteMintPk =
+		quoteMint instanceof PublicKey ? quoteMint : quoteMint ? new PublicKey(quoteMint) : null;
 	const poolKey = quoteMintPk
 		? canonicalPumpPoolPda(mintPk, quoteMintPk)
 		: canonicalPumpPoolPda(mintPk);
@@ -294,6 +301,22 @@ export async function getAmmPoolState({ network = 'mainnet', mint, quoteMint = n
 	const baseReserve = new BN(baseAcc.amount.toString());
 	const quoteReserve = new BN(quoteAcc.amount.toString());
 
+	// PumpSwap prices against EFFECTIVE quote reserves, not the raw vault balance:
+	//   effective = quote_vault_balance + pool.virtual_quote_reserves
+	// The field shipped 2026-07-15 at 0 on every pool and went non-zero for
+	// launchpad coins on 2026-07-20. Non-launchpad pools keep it at 0, where
+	// effective == raw and quotes are unchanged.
+	//
+	// Two consumers, two different values — do not mix them up:
+	//   · SDK quote fns (buyQuoteInput/sellBaseInput) take `virtualQuoteReserves`
+	//     as its OWN argument and add it internally. Pass the raw `quoteReserve`
+	//     alongside it; passing an already-summed reserve double-counts.
+	//   · Our own spot-price / price-impact math takes `effectiveQuoteReserve`.
+	// A pool decoded by an SDK older than 1.19.0 has no field; default to 0 so
+	// this stays correct rather than NaN.
+	const virtualQuoteReserves = new BN((pool.virtualQuoteReserves ?? 0).toString());
+	const effectiveQuoteReserve = quoteReserve.add(virtualQuoteReserves);
+
 	const offline = new PumpAmmSdk();
 	const [globalConfigInfo, feeConfigInfo] = await Promise.all([
 		connection.getAccountInfo((await import('@pump-fun/pump-swap-sdk')).GLOBAL_CONFIG_PDA),
@@ -310,6 +333,8 @@ export async function getAmmPoolState({ network = 'mainnet', mint, quoteMint = n
 		pool,
 		baseReserve,
 		quoteReserve,
+		virtualQuoteReserves,
+		effectiveQuoteReserve,
 		baseMintAccount,
 		globalConfig,
 		feeConfig,

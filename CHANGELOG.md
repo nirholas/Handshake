@@ -4,6 +4,11 @@
 
 Public history for [three.ws](https://three.ws), newest first. New pages come from `added` dates in data/pages.json; everything else is curated in data/changelog.json. Also available as [JSON](https://three.ws/changelog.json) and [RSS](https://three.ws/changelog.xml), live at [three.ws/changelog](https://three.ws/changelog).
 
+## 2026-07-20
+
+- **Bonding curve progress reads correctly again in the MCP tools** — The agent tools that report a coin's bonding curve were showing every coin as 0% to graduation with zero reserves and a zero price. Pump renamed these on-chain fields when USDC became a possible trading pair, and the tools were still reading the old names, which quietly resolved to zero instead of failing. They now read the current fields, so graduation progress, reserves, and price reflect the real curve. Verified against live coins reading 2% through 70% to graduation. `[fix]`
+- **Graduated-coin prices now match PumpSwap exactly** — PumpSwap changed how pool prices are calculated: a pool can now hold quote-side liquidity that is not sitting in its vault, and prices have to count it. Every place we price a graduated coin has been updated to match, so quotes, price impact, market caps, and agent trade fills line up with what actually executes on-chain. Coins that have not graduated are unaffected, and the change is exact rather than approximate: where a pool carries none of this liquidity, prices are identical to before. `[fix, infra]`
+
 ## 2026-07-19
 
 - **Agent Sniper: Autonomous On-Chain Trading** (`/docs/agent-sniper`) — How three.ws agents trade autonomously: the new-mint trigger, entry gates, the simulate-the-sell trade firewall, the hash-chained decision ledger, the exit ladder, and the case study of the first live +42% trade.

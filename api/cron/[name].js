@@ -1167,6 +1167,10 @@ async function pumpStatsSnapshotMint({ network, mint }) {
 				pool: amm.poolKey.toString(),
 				base_reserve: amm.baseReserve.toString(),
 				quote_reserve: amm.quoteReserve.toString(),
+				// Quotes price against vault + virtual; expose both so a consumer
+				// of this snapshot can reproduce the same numbers.
+				virtual_quote_reserves: amm.virtualQuoteReserves.toString(),
+				effective_quote_reserve: amm.effectiveQuoteReserve.toString(),
 				lp_supply: amm.pool.lpSupply?.toString?.() ?? null,
 			};
 		} catch (e) {

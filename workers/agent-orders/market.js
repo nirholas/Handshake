@@ -49,12 +49,15 @@ export async function quoteMarket({ network, mint }) {
 	}
 }
 
-// Price off the live AMM pool reserves (post-graduation). price = quote/base.
+// Price off the live AMM pool reserves (post-graduation). price = quote/base,
+// where quote is the EFFECTIVE reserve (vault balance + the pool's virtual quote
+// reserves). Using the raw vault balance alone under-states both price and the
+// mcap derived from it on launchpad coins.
 async function quoteMarketAmm({ network, mint }) {
 	try {
 		const state = await getAmmPoolState({ network, mint });
 		const base = Number(state.baseReserve.toString()) / 10 ** TOKEN_DECIMALS;
-		const quote = Number(state.quoteReserve.toString()) / 1e9;
+		const quote = Number(state.effectiveQuoteReserve.toString()) / 1e9;
 		if (!(base > 0) || !(quote > 0)) return null;
 		const price_sol = quote / base;
 		return { price_sol, mcap_sol: price_sol * TOTAL_SUPPLY_TOKENS, graduated: true };

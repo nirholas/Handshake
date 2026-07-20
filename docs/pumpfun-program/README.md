@@ -17,6 +17,7 @@ re-vendor from upstream to update. Nothing here is imported by application code.
 | Path | What it covers |
 | --- | --- |
 | `UPSTREAM-buy-sell-v2-announcement.md` | **The v2 trade-instruction announcement** — `buy_v2` / `sell_v2` / `buy_exact_quote_in_v2`, the move to a unified interface, and USDC-as-quote support. (Upstream's root README.) |
+| `UPSTREAM-pumpswap-virtual-quote-reserves.md` | **PumpSwap virtual quote reserves** (2026-07-20) — quotes price on `quote_vault_balance + virtual_quote_reserves`. The double-count and silent-default traps, and every three.ws surface that had to change. |
 | `idl/pump.json` | Bonding-curve program IDL (canonical account/arg shapes). |
 | `idl/pump_amm.json` | PumpSwap AMM (graduated pools) IDL. |
 | `idl/pump_fees.json` | Fee program IDL (`fee_config`, `sharing_config`, creator-fee sharing). |

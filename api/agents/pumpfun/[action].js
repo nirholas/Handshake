@@ -13,7 +13,17 @@
  */
 
 import { getSessionUser, authenticateBearer, extractBearer } from '../../_lib/auth.js';
-import { cors, json, method, readJson, wrap, error, rateLimited, serverError, respondError } from '../../_lib/http.js';
+import {
+	cors,
+	json,
+	method,
+	readJson,
+	wrap,
+	error,
+	rateLimited,
+	serverError,
+	respondError,
+} from '../../_lib/http.js';
 import { limits, clientIp } from '../../_lib/rate-limit.js';
 import { loadAgentForSigning, solanaConnection } from '../../_lib/agent-pumpfun.js';
 import { submitProtected } from '../../_lib/execution-engine.js';
@@ -143,7 +153,12 @@ async function handleBuy(req, res, id) {
 
 		if (quote.isUsdc) {
 			if (body.usdcAmount == null)
-				return error(res, 400, 'validation_error', 'usdcAmount required for USDC-paired coin');
+				return error(
+					res,
+					400,
+					'validation_error',
+					'usdcAmount required for USDC-paired coin',
+				);
 			const quoteMintPk = new PublicKey(quote.quoteMint);
 			// quote_token_program must match the quote mint's owner (USDC is SPL
 			// Token today; read it from chain so a future quote can't break us).
@@ -195,7 +210,12 @@ async function handleBuy(req, res, id) {
 				quoteMint: quoteMintPk,
 			});
 			if (!tokenAmount.gt(new BN(0)))
-				return error(res, 400, 'amount_too_small', 'usdcAmount too small to buy any tokens');
+				return error(
+					res,
+					400,
+					'amount_too_small',
+					'usdcAmount too small to buy any tokens',
+				);
 			instructions = await sdk.buyV2Instructions({
 				global,
 				bondingCurveAccountInfo: state.bondingCurveAccountInfo,
@@ -212,7 +232,12 @@ async function handleBuy(req, res, id) {
 		} else {
 			// SOL-paired buy (unchanged behaviour).
 			if (body.solAmount == null)
-				return error(res, 400, 'validation_error', 'solAmount required for SOL-paired coin');
+				return error(
+					res,
+					400,
+					'validation_error',
+					'solAmount required for SOL-paired coin',
+				);
 			quoteAtomics = new BN(Math.floor(body.solAmount * 1e9));
 			const expected = getBuyTokenAmountFromSolAmount({
 				global,
@@ -266,7 +291,12 @@ async function handleBuy(req, res, id) {
 	try {
 		// Protected send: priority fee + CU estimate, rebroadcast with blockhash
 		// refresh until it lands, hard throw on an on-chain revert.
-		({ signature } = await submitProtected({ network: body.network, connection: conn, payer: keypair, instructions }));
+		({ signature } = await submitProtected({
+			network: body.network,
+			connection: conn,
+			payer: keypair,
+			instructions,
+		}));
 	} catch (err) {
 		console.error('[pumpfun/buy] send failed', err);
 		if (reservation) await releaseSpend(reservation.reservationId);
@@ -720,7 +750,12 @@ async function handlePay(req, res, id) {
 	try {
 		// Protected send: priority fee + CU estimate, rebroadcast with blockhash
 		// refresh until it lands, hard throw on an on-chain revert.
-		({ signature } = await submitProtected({ network: body.network, connection: conn, payer: keypair, instructions }));
+		({ signature } = await submitProtected({
+			network: body.network,
+			connection: conn,
+			payer: keypair,
+			instructions,
+		}));
 	} catch (err) {
 		console.error(`[pumpfun/pay] ${body.action} send failed`, err);
 		return serverError(res, 502, 'rpc_error', err);
@@ -827,7 +862,6 @@ async function handlePortfolio(req, res, id) {
 		]);
 	const online = new OnlinePumpSdk(conn);
 	const onlineAmm = new ammMod.OnlinePumpAmmSdk(conn);
-	const ammSdk = new ammMod.PumpAmmSdk();
 	let global;
 	try {
 		global = await online.fetchGlobal();
@@ -912,27 +946,26 @@ async function handlePortfolio(req, res, id) {
 							poolKey,
 							keypair.publicKey,
 						);
-						const result = ammSdk.sellAutocompleteQuoteFromBase
-							? ammSdk.sellAutocompleteQuoteFromBase(
-									swapState,
-									new BN(out.token_balance),
-									0,
-								)
-							: null;
-						if (result && result.uiQuote != null) {
-							out.estimated_sol_value = lamportsToSol(result.uiQuote);
-						} else {
-							const pool = swapState.pool;
-							const baseReserve = pool.baseReserve || pool.virtualBaseReserves;
-							const quoteReserve = pool.quoteReserve || pool.virtualQuoteReserves;
-							if (baseReserve && quoteReserve) {
-								const bal = new BN(out.token_balance);
-								const out_q = bal.mul(quoteReserve).div(baseReserve.add(bal));
-								out.estimated_sol_value = lamportsToSol(out_q);
-							} else {
-								out.estimated_sol_value = null;
-							}
-						}
+						// Fee-aware quote off the live pool. Reserves come from the
+						// swap state (the vault balances); `virtualQuoteReserves`
+						// is added to the quote side by the SDK itself, so it is
+						// passed separately rather than pre-summed.
+						const result = ammMod.sellBaseInput({
+							base: new BN(out.token_balance),
+							slippage: 0,
+							baseReserve: swapState.poolBaseAmount,
+							quoteReserve: swapState.poolQuoteAmount,
+							virtualQuoteReserves: swapState.pool.virtualQuoteReserves,
+							baseMintAccount: swapState.baseMintAccount,
+							baseMint: swapState.baseMint,
+							coinCreator: swapState.pool.coinCreator,
+							creator: swapState.pool.creator,
+							feeConfig: swapState.feeConfig,
+							globalConfig: swapState.globalConfig,
+						});
+						const expectedQuote = result?.uiQuote ?? result?.minQuote ?? null;
+						out.estimated_sol_value =
+							expectedQuote != null ? lamportsToSol(expectedQuote) : null;
 						out.venue = 'amm';
 						out.pool = poolKey.toBase58();
 					} catch (e) {
@@ -1113,7 +1146,12 @@ async function handleSell(req, res, id) {
 	try {
 		// Protected send: priority fee + CU estimate, rebroadcast with blockhash
 		// refresh until it lands, hard throw on an on-chain revert.
-		({ signature } = await submitProtected({ network: body.network, connection: conn, payer: keypair, instructions }));
+		({ signature } = await submitProtected({
+			network: body.network,
+			connection: conn,
+			payer: keypair,
+			instructions,
+		}));
 	} catch (err) {
 		console.error('[pumpfun/sell] send failed', err);
 		return serverError(res, 502, 'rpc_error', err);
@@ -1236,7 +1274,7 @@ async function handleSwap(req, res, id) {
 	}
 
 	// AMM path.
-	const { PumpAmmSdk, OnlinePumpAmmSdk, canonicalPumpPoolPda } =
+	const { PumpAmmSdk, OnlinePumpAmmSdk, canonicalPumpPoolPda, sellBaseInput } =
 		await import('@pump-fun/pump-swap-sdk');
 	const BN = (await import('bn.js')).default;
 	const amm = new PumpAmmSdk();
@@ -1328,15 +1366,28 @@ async function handleSwap(req, res, id) {
 			const baseAmount = new BN(body.tokenAmount);
 			instructions = await amm.sellBaseInput(swapState, baseAmount, slippage);
 			quotedAmount = { base_amount: baseAmount.toString() };
-			// Best-effort expected quote-out via constant-product on pool reserves.
+			// Expected quote-out from the SDK's own pricing. Reserves come from the
+			// swap state (the vault balances); the pool's `virtualQuoteReserves` is
+			// added to the quote side by the SDK, so it is passed separately rather
+			// than pre-summed into `quoteReserve`.
 			try {
-				const pool = swapState.pool || {};
-				const baseReserve = pool.baseReserve || pool.virtualBaseReserves;
-				const quoteReserve = pool.quoteReserve || pool.virtualQuoteReserves;
-				if (baseReserve && quoteReserve) {
-					const out = baseAmount.mul(quoteReserve).div(baseReserve.add(baseAmount));
+				const r = sellBaseInput({
+					base: baseAmount,
+					slippage: 0,
+					baseReserve: swapState.poolBaseAmount,
+					quoteReserve: swapState.poolQuoteAmount,
+					virtualQuoteReserves: swapState.pool.virtualQuoteReserves,
+					baseMintAccount: swapState.baseMintAccount,
+					baseMint: swapState.baseMint,
+					coinCreator: swapState.pool.coinCreator,
+					creator: swapState.pool.creator,
+					feeConfig: swapState.feeConfig,
+					globalConfig: swapState.globalConfig,
+				});
+				const expected = r?.uiQuote ?? r?.minQuote ?? null;
+				if (expected != null) {
 					quotedAmount[quote.isUsdc ? 'expectedUsdcAtomics' : 'expectedSolLamports'] =
-						out.toString();
+						expected.toString();
 				}
 			} catch (e) {
 				console.error('[pumpfun/swap] sell quote failed', e);
@@ -1368,7 +1419,12 @@ async function handleSwap(req, res, id) {
 	try {
 		// Protected send: priority fee + CU estimate, rebroadcast with blockhash
 		// refresh until it lands, hard throw on an on-chain revert.
-		({ signature } = await submitProtected({ network: body.network, connection: conn, payer: keypair, instructions }));
+		({ signature } = await submitProtected({
+			network: body.network,
+			connection: conn,
+			payer: keypair,
+			instructions,
+		}));
 	} catch (err) {
 		console.error('[pumpfun/swap] send failed', err);
 		if (reservation) await releaseSpend(reservation.reservationId);

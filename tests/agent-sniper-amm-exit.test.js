@@ -48,7 +48,14 @@ const WSOL = 'So11111111111111111111111111111111111111112';
 const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const MINT = 'THREEsynthetic1111111111111111111111111111111';
 
-function poolState({ quoteMint = WSOL, baseReserve = 1_000_000_000, quoteReserve = 1_000_000_000 } = {}) {
+// Mirrors the real getAmmPoolState return, including the effective quote reserve
+// (vault balance + the pool's virtual quote reserves) that pricing runs against.
+function poolState({
+	quoteMint = WSOL,
+	baseReserve = 1_000_000_000,
+	quoteReserve = 1_000_000_000,
+	virtualQuoteReserves = 0,
+} = {}) {
 	return {
 		poolKey: { toString: () => MOCK_POOL },
 		pool: {
@@ -56,9 +63,12 @@ function poolState({ quoteMint = WSOL, baseReserve = 1_000_000_000, quoteReserve
 			baseMint: { toString: () => MINT },
 			coinCreator: { toString: () => '11111111111111111111111111111111' },
 			creator: { toString: () => '11111111111111111111111111111111' },
+			virtualQuoteReserves: new BN(virtualQuoteReserves),
 		},
 		baseReserve: new BN(baseReserve),
 		quoteReserve: new BN(quoteReserve),
+		virtualQuoteReserves: new BN(virtualQuoteReserves),
+		effectiveQuoteReserve: new BN(quoteReserve).add(new BN(virtualQuoteReserves)),
 		baseMintAccount: { decimals: 6 },
 		globalConfig: { mock: true },
 		feeConfig: null,
@@ -135,6 +145,43 @@ describe('quoteAmmSell — re-quote a graduated position off the AMM', () => {
 		expect(call.baseReserve.toString()).toBe('1000000000');
 		expect(call.quoteReserve.toString()).toBe('1000000000');
 		expect(call.globalConfig).toEqual({ mock: true });
+	});
+
+	// PumpSwap prices against vault + virtual quote reserves. The SDK performs
+	// that addition itself, so we must hand it the RAW vault balance alongside
+	// the virtual figure — passing a pre-summed reserve double-counts the
+	// virtual liquidity and over-values every exit.
+	it('passes virtual quote reserves to the SDK without pre-summing them', async () => {
+		mockGetAmmPoolState.mockResolvedValueOnce(
+			poolState({ quoteReserve: 1_000_000_000, virtualQuoteReserves: 250_000_000 }),
+		);
+		mockSellBaseInput.mockReturnValueOnce({ uiQuote: new BN(50), minQuote: new BN(45) });
+
+		await quoteAmmSell({ network: 'mainnet', mint: MINT, baseAmount: new BN(10_000), slippagePct: 5 });
+
+		const call = mockSellBaseInput.mock.calls[0][0];
+		expect(call.quoteReserve.toString()).toBe('1000000000');
+		expect(call.virtualQuoteReserves.toString()).toBe('250000000');
+	});
+
+	// Impact is measured against the spot price implied by EFFECTIVE reserves.
+	// Virtual liquidity deepens the pool, so the same sale moves it less.
+	it('measures price impact against effective (vault + virtual) reserves', async () => {
+		// base=1e6, vault quote=1e6, virtual=1e6 → effective quote = 2e6.
+		// spot value of 100_000 base = 100_000 * (2e6/1e6) = 200_000.
+		// Netting 190_000 is a 5% impact, not the 10% the raw vault implies.
+		mockGetAmmPoolState.mockResolvedValueOnce(
+			poolState({ baseReserve: 1_000_000, quoteReserve: 1_000_000, virtualQuoteReserves: 1_000_000 }),
+		);
+		mockSellBaseInput.mockReturnValueOnce({ uiQuote: new BN(190_000), minQuote: new BN(180_000) });
+
+		const r = await quoteAmmSell({
+			network: 'mainnet',
+			mint: MINT,
+			baseAmount: new BN(100_000),
+			slippagePct: 5,
+		});
+		expect(r.priceImpactPct).toBeCloseTo(5, 5);
 	});
 
 	it('computes a non-trivial price impact for a sale that moves the pool', async () => {

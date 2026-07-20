@@ -73,7 +73,16 @@ export async function quoteAmmSell({ network, mint, baseAmount, slippagePct }) {
 // pool that resolved to a non-SOL quote breaks the lamports-denominated PnL math
 // — refuse rather than mis-price.
 function priceSellFromPool(amm, sdk, baseAmount, slippagePct) {
-	const { pool, baseReserve, quoteReserve, baseMintAccount, globalConfig, feeConfig } = amm;
+	const {
+		pool,
+		baseReserve,
+		quoteReserve,
+		virtualQuoteReserves,
+		effectiveQuoteReserve,
+		baseMintAccount,
+		globalConfig,
+		feeConfig,
+	} = amm;
 
 	const resolvedQuoteMint = pool.quoteMint?.toString?.() ?? WSOL_MINT;
 	if (resolvedQuoteMint !== WSOL_MINT) {
@@ -82,11 +91,15 @@ function priceSellFromPool(amm, sdk, baseAmount, slippagePct) {
 		throw e;
 	}
 
+	// `virtualQuoteReserves` is added to `quoteReserve` inside the SDK — pass the
+	// raw reserve, never the pre-summed effective one, or the sale is priced
+	// against double the virtual liquidity and the exit under-fills.
 	const r = sdk.sellBaseInput({
 		base: baseAmount,
 		slippage: slippagePct,
 		baseReserve,
 		quoteReserve,
+		virtualQuoteReserves,
 		globalConfig,
 		baseMintAccount,
 		baseMint: pool.baseMint,
@@ -101,7 +114,12 @@ function priceSellFromPool(amm, sdk, baseAmount, slippagePct) {
 	// constant-product sale actually nets. quote/base spot * base = ideal; the
 	// shortfall is impact. Guards a thin post-graduation pool the same way the
 	// entry breaker guards a thin curve.
-	const priceImpactPct = derivePriceImpact(baseReserve, quoteReserve, baseAmount, expectedQuoteOut);
+	const priceImpactPct = derivePriceImpact(
+		baseReserve,
+		effectiveQuoteReserve,
+		baseAmount,
+		expectedQuoteOut,
+	);
 
 	return { expectedQuoteOut, minQuoteOut, priceImpactPct };
 }
@@ -158,7 +176,16 @@ export async function quoteAmmBuy({ network, mint, quoteAmount, slippagePct }) {
 // `maxQuote` (the most SOL you'll pay), so the base-unit floor is derived from the
 // slippage percentage for the ledger/guards while the on-chain bound stays maxQuote.
 function priceBuyFromPool(amm, sdk, quoteAmount, slippagePct) {
-	const { pool, baseReserve, quoteReserve, baseMintAccount, globalConfig, feeConfig } = amm;
+	const {
+		pool,
+		baseReserve,
+		quoteReserve,
+		virtualQuoteReserves,
+		effectiveQuoteReserve,
+		baseMintAccount,
+		globalConfig,
+		feeConfig,
+	} = amm;
 
 	const resolvedQuoteMint = pool.quoteMint?.toString?.() ?? WSOL_MINT;
 	if (resolvedQuoteMint !== WSOL_MINT) {
@@ -167,11 +194,13 @@ function priceBuyFromPool(amm, sdk, quoteAmount, slippagePct) {
 		throw e;
 	}
 
+	// See priceSellFromPool: raw `quoteReserve` here, virtual passed separately.
 	const r = sdk.buyQuoteInput({
 		quote: quoteAmount,
 		slippage: slippagePct,
 		baseReserve,
 		quoteReserve,
+		virtualQuoteReserves,
 		globalConfig,
 		baseMintAccount,
 		baseMint: pool.baseMint,
@@ -186,7 +215,12 @@ function priceBuyFromPool(amm, sdk, quoteAmount, slippagePct) {
 	const minBaseOut = (expectedBaseOut * BigInt(10000 - slippageBps)) / 10000n;
 
 	// SOL in, tokens out → input reserve is quote, output reserve is base.
-	const priceImpactPct = derivePriceImpact(quoteReserve, baseReserve, quoteAmount, expectedBaseOut);
+	const priceImpactPct = derivePriceImpact(
+		effectiveQuoteReserve,
+		baseReserve,
+		quoteAmount,
+		expectedBaseOut,
+	);
 
 	return { expectedBaseOut, minBaseOut, maxQuoteIn, priceImpactPct };
 }
