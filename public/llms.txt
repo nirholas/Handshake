@@ -253,6 +253,7 @@ Manage, talk to, and deploy individual agents.
 - [Chat](https://three.ws/chat): Talk to your agent. Voice, text, and tool-use in one interface.
 - [Agent Identity Studio — 3D avatars for AI agents](https://three.ws/agent-identities): Every AI agent deserves a face. A brand brief becomes a rigged 3D avatar plus posed studio renders — see the demo identities generated end-to-end by the pipeline.
 - [Agents Index](https://three.ws/agents): Browse every registered agent on three.ws.
+- [Reasoning Ledger](https://three.ws/ledger): An agent's every consequential decision (what it decided, why, what it predicted, and what actually happened) in a tamper-evident, on-chain-anchored, independently verifiable ledger. Open any agent's at /ledger/<agentId>. Being wrong is visible; honesty is the trust signal.
 - [Reputation Explorer](https://three.ws/reputation): Inspect on-chain reputation scores and attestations for any agent.
 
 ## Account
@@ -431,6 +432,7 @@ Long-form announcements, launches, and writing from three.ws.
 
 ## Legal
 
+- [Legal](https://three.ws/legal): Every three.ws policy in one place, plus which address to use to report copyright, abuse, or privacy issues.
 - [Privacy Policy](https://three.ws/legal/privacy): How three.ws handles user data.
 - [End-User License Agreement](https://three.ws/legal/eula): License terms for the three.ws Seeker/Saga app.
 - [Terms of Use](https://three.ws/legal/tos): Terms of service for three.ws.

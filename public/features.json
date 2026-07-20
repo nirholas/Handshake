@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-20T20:03:53.589Z",
+	"generated_at": "2026-07-20T20:59:16.156Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2314,6 +2314,16 @@
 					"showcase": false
 				},
 				{
+					"path": "/ledger",
+					"title": "Reasoning Ledger",
+					"description": "An agent's every consequential decision (what it decided, why, what it predicted, and what actually happened) in a tamper-evident, on-chain-anchored, independently verifiable ledger. Open any agent's at /ledger/<agentId>. Being wrong is visible; honesty is the trust signal.",
+					"added": "2026-07-20",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
 					"path": "/my-agents",
 					"title": "My Agents",
 					"description": "Your private collection of agents and avatars. Requires sign-in.",
@@ -4031,6 +4041,16 @@
 			"title": "Legal",
 			"description": null,
 			"pages": [
+				{
+					"path": "/legal",
+					"title": "Legal",
+					"description": "Every three.ws policy in one place, plus which address to use to report copyright, abuse, or privacy issues.",
+					"added": "2026-07-20",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
 				{
 					"path": "/legal/privacy",
 					"title": "Privacy Policy",

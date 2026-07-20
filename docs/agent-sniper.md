@@ -40,8 +40,9 @@ The full record, straight from the database and the chain:
 | Peak | +46.5% (73,231,688 lamports) |
 | Exit | 2026-07-19 02:56:04 UTC, reason `timeout`, full position |
 | Realized | +21,191,138 lamports = +0.0212 SOL = **+42.38%** |
-| Buy signature | `3Y6NqS8CV3K1j5sBZYsuQjpipZeY2wckCz3h99vGA6ZbwJgMpeUjkVm43zffeV52Kc2jWRUn4d4rzcTxoCEGrzRY` |
-| Sell signature | `mLmGA7FeHFUEDdQagavVZCH2aExmMssjsVxWiRCSxRZwvbxDS1Xfnvan63ab5FkrKnQ7koEu4yxwgVJYXajeyhH` |
+| Buy signature | [`3Y6NqS8…CEGrzRY`](https://solscan.io/tx/3Y6NqS8CV3K1j5sBZYsuQjpipZeY2wckCz3h99vGA6ZbwJgMpeUjkVm43zffeV52Kc2jWRUn4d4rzcTxoCEGrzRY) |
+| Sell signature | [`mLmGA7F…jeyhH`](https://solscan.io/tx/mLmGA7FeHFUEDdQagavVZCH2aExmMssjsVxWiRCSxRZwvbxDS1Xfnvan63ab5FkrKnQ7koEu4yxwgVJYXajeyhH) |
+| Live decision ledger | [three.ws/ledger/4c0e4d18-0544-4c95-a0db-a16896b029be](https://three.ws/ledger/4c0e4d18-0544-4c95-a0db-a16896b029be) |
 
 The decision-ledger rationale the agent recorded at entry, verbatim:
 
@@ -60,9 +61,10 @@ Honesty is the point of publishing this, so here is the unvarnished read:
 
 ### Audit it yourself
 
-Every layer of the trade above is independently checkable:
+Every layer of the trade above is independently checkable. You do not need our word for any of it:
 
-- The two transaction signatures resolve on any Solana explorer.
+- **The agent's public reasoning ledger** is live at [three.ws/ledger/4c0e4d18-0544-4c95-a0db-a16896b029be](https://three.ws/ledger/4c0e4d18-0544-4c95-a0db-a16896b029be). It renders this exact decision with its rationale, prediction, confidence, and (once reconciled) the real outcome, hash-chained to the agent's prior history and independently verifiable via `GET /api/ledger/verify/4c0e4d18-0544-4c95-a0db-a16896b029be`. The API behind it: `GET /api/ledger/4c0e4d18-0544-4c95-a0db-a16896b029be?kind=snipe`.
+- **The two transactions** resolve on any Solana explorer: [buy](https://solscan.io/tx/3Y6NqS8CV3K1j5sBZYsuQjpipZeY2wckCz3h99vGA6ZbwJgMpeUjkVm43zffeV52Kc2jWRUn4d4rzcTxoCEGrzRY) and [sell](https://solscan.io/tx/mLmGA7FeHFUEDdQagavVZCH2aExmMssjsVxWiRCSxRZwvbxDS1Xfnvan63ab5FkrKnQ7koEu4yxwgVJYXajeyhH).
 - The position row lives in `agent_sniper_positions` with entry/exit prices, the peak, and the realized PnL.
 - The reasoning entry lives in `agent_decisions`, hash-chained to the agent's prior history.
 - The spend and key-recovery events live in `agent_custody_events`, and the wallet appears in the epoch custody attestations (`custody_attestation_leaves`).

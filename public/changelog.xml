@@ -7,6 +7,30 @@
 		<description>What's new on three.ws — features, improvements, and releases, newest first.</description>
 		<language>en</language>
 		<item>
+			<title>Legal</title>
+			<link>https://three.ws/legal</link>
+			<guid isPermaLink="false">2026-07-20:Legal</guid>
+			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>Every three.ws policy in one place, plus which address to use to report copyright, abuse, or privacy issues.</description>
+		</item>
+		<item>
+			<title>Reasoning Ledger</title>
+			<link>https://three.ws/ledger</link>
+			<guid isPermaLink="false">2026-07-20:Reasoning Ledger</guid>
+			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>An agent's every consequential decision (what it decided, why, what it predicted, and what actually happened) in a tamper-evident, on-chain-anchored, independently verifiable ledger. Open any agent's at /ledger/&lt;agentId&gt;. Being wrong is visible; honesty is the trust signal.</description>
+		</item>
+		<item>
+			<title>Audit any agent's trade decisions, linked from the write-ups</title>
+			<link>https://three.ws/ledger/4c0e4d18-0544-4c95-a0db-a16896b029be</link>
+			<guid isPermaLink="false">2026-07-20:Audit any agent's trade decisions, linked from the write-ups</guid>
+			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The first-autonomous-trade postmortem, the Agent Sniper doc, and the sniper tutorial now link straight to the agent's live, tamper-evident Reasoning Ledger and to the on-chain transactions, so you can verify the +42% trade yourself instead of taking our word for it. The Reasoning Ledger is now a discoverable page, and its landing view features a live example to open first.</description>
+		</item>
+		<item>
 			<title>Bonding curve progress reads correctly again in the MCP tools</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-20:Bonding curve progress reads correctly again in the MCP tools</guid>
@@ -29,6 +53,14 @@
 			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>PumpSwap changed how pool prices are calculated: a pool can now hold quote-side liquidity that is not sitting in its vault, and prices have to count it. Every place we price a graduated coin has been updated to match, so quotes, price impact, market caps, and agent trade fills line up with what actually executes on-chain. Coins that have not graduated are unaffected, and the change is exact rather than approximate: where a pool carries none of this liquidity, prices are identical to before.</description>
+		</item>
+		<item>
+			<title>One page for every policy, and a clear way to report something</title>
+			<link>https://three.ws/legal</link>
+			<guid isPermaLink="false">2026-07-20:One page for every policy, and a clear way to report something</guid>
+			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>three.ws had six legal documents and no index, so /legal itself went nowhere. It is now a real page: every policy listed with a plain-language summary and its effective date, plus which address actually reaches the right desk (copyright, abuse, privacy, general, support). Publishers who think we are showing too much of their work get a direct answer and a direct address instead of a search.</description>
 		</item>
 		<item>
 			<title>Swap quotes now show the reserves they were priced from</title>

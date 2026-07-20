@@ -336,8 +336,9 @@ function renderEmptyPrompt() {
 		${hero(null).replace(/<div class="rl-agent-head">[\s\S]*$/, '')}
 		<section class="rl-card"><div class="rl-state">
 			<h3>Pick an agent to audit</h3>
-			<p>The Reasoning Ledger is per-agent. Open any trader from the leaderboard to interrogate its decisions and verify its track record.</p>
-			<a class="rl-btn" href="/leaderboard">Open the leaderboard →</a>
+			<p>The Reasoning Ledger is per-agent. Open any trader from the leaderboard to interrogate its decisions and verify its track record, or start with a live example: the platform agent's first autonomous snipe, a real +42% trade with its full reasoning recorded.</p>
+			<a class="rl-btn" href="/ledger/4c0e4d18-0544-4c95-a0db-a16896b029be">See a live ledger →</a>
+			<a class="rl-btn rl-btn-ghost" href="/leaderboard">Open the leaderboard →</a>
 		</div></section>`;
 }
 

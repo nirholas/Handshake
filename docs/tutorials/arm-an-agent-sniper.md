@@ -20,7 +20,7 @@ This is real trading with real SOL on Solana mainnet. The platform's own agent c
 
 ---
 
-## Step 1 — Understand what fires and what blocks
+## Step 1: Understand what fires and what blocks
 
 A strategy is a row of policy, and the worker enforces it as a chain of gates. A launch must pass all of them before a single lamport moves:
 
@@ -32,7 +32,7 @@ A strategy is a row of policy, and the worker enforces it as a chain of gates. A
 
 Only then does the executor sign. Expect long silences: a well-filtered strategy skips almost everything, and each skip is logged with its reason.
 
-## Step 2 — Arm the strategy
+## Step 2: Arm the strategy
 
 One authenticated call arms it:
 
@@ -64,7 +64,7 @@ curl -X POST https://three.ws/api/sniper/strategy \
 
 That is 0.05 SOL per trade, at most 0.2 SOL per day, one position at a time. `GET /api/sniper/strategy` returns your strategies with a live position summary and the agent wallet's SOL balance.
 
-## Step 3 — Know your exit ladder
+## Step 3: Know your exit ladder
 
 Exits are decided by a pure function in strict priority order, so behavior is exactly predictable:
 
@@ -75,19 +75,19 @@ Exits are decided by a pure function in strict priority order, so behavior is ex
 
 There is also a laddered mode (`initials_out_multiple`, `moonbag_min_pct`): recover your initial cost when the position hits a multiple, then let the remaining moon bag ride the trailing stop.
 
-## Step 4 — The lesson from the first live trade: set `take_profit_pct`
+## Step 4: The lesson from the first live trade: set `take_profit_pct`
 
 The platform's first autonomous position rode to +46.5%, then exited at +42.38% only because its 30-minute timeout expired. Why: the strategy had `take_profit_pct` unset. With no profit rule, a winner is only ever closed by the trailing stop (which gives back 25% from the peak by definition) or by the clock (which exits at whatever the price happens to be).
 
 That trade won anyway. Configuration should not rely on that. Set an explicit `take_profit_pct` (or use the laddered exit) so that locking in a win is policy, not luck.
 
-## Step 5 — Watch it work
+## Step 5: Watch it work
 
 - **Positions and PnL**: `GET /api/sniper/strategy` (summary) and the journal at `GET /api/sniper/journal` for the plain-language story of each entry and exit.
-- **Reasoning**: every buy writes a decision-ledger entry with the firewall verdict, price impact, a rationale sentence, and a confidence score, hash-chained to the previous entry.
+- **Reasoning**: every buy writes a decision-ledger entry with the firewall verdict, price impact, a rationale sentence, and a confidence score, hash-chained to the previous entry. It is public and auditable at `three.ws/ledger/<your-agent-id>`, with tamper-evidence you can check yourself via `GET /api/ledger/verify/<your-agent-id>`. See a live one: [the platform agent's ledger](https://three.ws/ledger/4c0e4d18-0544-4c95-a0db-a16896b029be), including the +42% trade this tutorial's Step 4 is built on.
 - **The market through the engine's eyes**: [Radar and Coin Intelligence](/docs/trading-surfaces) show what the sniper's intel layer is scoring right now, including coins it skipped.
 
-## Step 6 — The off switches
+## Step 6: The off switches
 
 Two independent controls, both instant, both reversible, via the same POST:
 

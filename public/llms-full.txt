@@ -1400,6 +1400,12 @@ URL: https://three.ws/agents
 
 Browse every registered agent on three.ws.
 
+### Reasoning Ledger
+
+URL: https://three.ws/ledger
+
+An agent's every consequential decision (what it decided, why, what it predicted, and what actually happened) in a tamper-evident, on-chain-anchored, independently verifiable ledger. Open any agent's at /ledger/<agentId>. Being wrong is visible; honesty is the trust signal.
+
 ### My Agents
 
 URL: https://three.ws/my-agents
@@ -2445,6 +2451,12 @@ URL: https://three.ws/blog/three-ws-on-anthropic-mcp-registry
 three.ws is now listed on Anthropic
 
 ## Legal
+
+### Legal
+
+URL: https://three.ws/legal
+
+Every three.ws policy in one place, plus which address to use to report copyright, abuse, or privacy issues.
 
 ### Privacy Policy
 

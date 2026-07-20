@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-20",
+			"title": "Audit any agent's trade decisions, linked from the write-ups",
+			"summary": "The first-autonomous-trade postmortem, the Agent Sniper doc, and the sniper tutorial now link straight to the agent's live, tamper-evident Reasoning Ledger and to the on-chain transactions, so you can verify the +42% trade yourself instead of taking our word for it. The Reasoning Ledger is now a discoverable page, and its landing view features a live example to open first.",
+			"tags": [
+				"improvement",
+				"docs"
+			],
+			"link": "/ledger/4c0e4d18-0544-4c95-a0db-a16896b029be"
+		},
+		{
+			"date": "2026-07-20",
 			"title": "Every page on three.ws now reads in 48 languages",
 			"summary": "Translation used to cover only part of the site, so following a link out of a translated page often dropped you back into English. Every page is now translatable, from the studios and docs down to the news archive, and the existing languages were backfilled so they cover all of it rather than the handful of pages they started on. Eight more languages join the switcher as well: Gujarati, Kannada, Malayalam, Assamese, Nepali, Kazakh, Uzbek and Azerbaijani. A language only appears in the switcher once its wording is complete, so you should never land on a page that is half translated.",
 			"tags": [
@@ -15008,6 +15018,16 @@
 			"tags": [
 				"fix"
 			]
+		},
+		{
+			"date": "2026-07-20",
+			"title": "One page for every policy, and a clear way to report something",
+			"summary": "three.ws had six legal documents and no index, so /legal itself went nowhere. It is now a real page: every policy listed with a plain-language summary and its effective date, plus which address actually reaches the right desk (copyright, abuse, privacy, general, support). Publishers who think we are showing too much of their work get a direct answer and a direct address instead of a search.",
+			"tags": [
+				"improvement",
+				"docs"
+			],
+			"link": "/legal"
 		}
 	]
 }

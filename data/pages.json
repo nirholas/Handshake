@@ -1878,6 +1878,14 @@
 					"added": "2026-04-17"
 				},
 				{
+					"path": "/ledger",
+					"title": "Reasoning Ledger",
+					"description": "An agent's every consequential decision (what it decided, why, what it predicted, and what actually happened) in a tamper-evident, on-chain-anchored, independently verifiable ledger. Open any agent's at /ledger/<agentId>. Being wrong is visible; honesty is the trust signal.",
+					"priority": 0.6,
+					"changefreq": "weekly",
+					"added": "2026-07-20"
+				},
+				{
 					"path": "/my-agents",
 					"title": "My Agents",
 					"description": "Your private collection of agents and avatars. Requires sign-in.",
@@ -3203,6 +3211,14 @@
 			"title": "Legal",
 			"description": "",
 			"pages": [
+				{
+					"path": "/legal",
+					"title": "Legal",
+					"description": "Every three.ws policy in one place, plus which address to use to report copyright, abuse, or privacy issues.",
+					"priority": 0.4,
+					"changefreq": "monthly",
+					"added": "2026-07-20"
+				},
 				{
 					"path": "/legal/privacy",
 					"title": "Privacy Policy",

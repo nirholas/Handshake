@@ -207,6 +207,8 @@
 .rl-state p { margin: 0 auto 16px; max-width: 46ch; line-height: 1.55; }
 .rl-state .rl-btn { display: inline-block; padding: 9px 18px; border-radius: 10px; border: 1px solid var(--rl-line); color: var(--rl-text); text-decoration: none; font: 600 13px var(--rl-mono); }
 .rl-state .rl-btn:hover { border-color: var(--rl-cyan); color: var(--rl-cyan); }
+.rl-state .rl-btn.rl-btn-ghost { opacity: .72; margin-left: 8px; }
+.rl-state .rl-btn.rl-btn-ghost:hover { opacity: 1; }
 .rl-skel { border-radius: 12px; background: linear-gradient(90deg, var(--rl-line) 25%, var(--rl-line-2) 37%, var(--rl-line) 63%); background-size: 400% 100%; animation: rl-shimmer 1.4s ease infinite; }
 @keyframes rl-shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
 .rl-skel-line { height: 14px; margin: 8px 0; }

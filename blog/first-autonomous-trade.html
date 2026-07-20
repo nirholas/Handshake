@@ -88,11 +88,12 @@
             <tr><th>Peak</th><td>+46.5%</td></tr>
             <tr><th>Exit</th><td>02:56:04 UTC, full position, reason: <code>timeout</code></td></tr>
             <tr><th>Realized</th><td><strong>+0.0212 SOL, +42.38%</strong></td></tr>
-            <tr><th>Buy tx</th><td><code>3Y6NqS8CV3K1j5sBZYsuQjpipZeY2wckCz3h99vGA6ZbwJgMpeUjkVm43zffeV52Kc2jWRUn4d4rzcTxoCEGrzRY</code></td></tr>
-            <tr><th>Sell tx</th><td><code>mLmGA7FeHFUEDdQagavVZCH2aExmMssjsVxWiRCSxRZwvbxDS1Xfnvan63ab5FkrKnQ7koEu4yxwgVJYXajeyhH</code></td></tr>
+            <tr><th>Buy tx</th><td><a href="https://solscan.io/tx/3Y6NqS8CV3K1j5sBZYsuQjpipZeY2wckCz3h99vGA6ZbwJgMpeUjkVm43zffeV52Kc2jWRUn4d4rzcTxoCEGrzRY" target="_blank" rel="noopener"><code>3Y6NqS8&hellip;CEGrzRY</code></a></td></tr>
+            <tr><th>Sell tx</th><td><a href="https://solscan.io/tx/mLmGA7FeHFUEDdQagavVZCH2aExmMssjsVxWiRCSxRZwvbxDS1Xfnvan63ab5FkrKnQ7koEu4yxwgVJYXajeyhH" target="_blank" rel="noopener"><code>mLmGA7F&hellip;jeyhH</code></a></td></tr>
+            <tr><th>Ledger</th><td><a href="/ledger/4c0e4d18-0544-4c95-a0db-a16896b029be">the agent's live decision ledger &rarr;</a></td></tr>
         </table>
         </div>
-        <p>Both signatures resolve on any Solana explorer. The position row, the reasoning entry, and the custody events (key recovery, spend, exit) are all in the platform's ledgers, and the wallet's balance is committed into a Merkle attestation every epoch.</p>
+        <p>Both signatures resolve on any Solana explorer, and the reasoning entry is live and independently verifiable: open <a href="/ledger/4c0e4d18-0544-4c95-a0db-a16896b029be">the agent's public decision ledger</a> to read this exact decision (its rationale, prediction, and confidence) hash-chained to everything the agent decided before it. The position row and the custody events (key recovery, spend, exit) are in the platform's ledgers too, and the wallet's balance is committed into a Merkle attestation every epoch.</p>
 
         <h2>The honest part: the exit was luck-shaped</h2>
         <p>Exits run on a strict ladder: stop-loss first, then trailing stop, then take-profit, then timeout. This strategy had <strong>no take-profit configured</strong>. So when the position hit +46.5%, nothing existed to lock that in. The price drifted a few points, the 30-minute clock expired, and the position closed on <code>timeout</code>, still up 42%.</p>
