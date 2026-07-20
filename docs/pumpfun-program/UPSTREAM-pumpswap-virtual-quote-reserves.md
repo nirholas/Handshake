@@ -151,17 +151,37 @@ Surfaces updated to price on effective reserves:
   reserves, so a pool holding real quote-side depth virtually is not failed as
   `pool_reserves_empty`.
 - `workers/agent-sniper/amm-exit.js` — position exits and their price-impact
-  circuit breaker. Because the virtual figure is signed, a quote here refuses a
-  pool whose effective depth is non-positive (`amm_quote_depth_empty`) instead of
-  pricing it. The refusal is load-bearing: the impact math reports a non-positive
-  reserve as 0% impact, i.e. as the safest possible trade, so without it the
-  breaker would wave through exactly the pool it exists to stop.
+  circuit breaker.
 - `workers/agent-mm/market.js`, `workers/agent-orders/market.js` — the market
-  maker's price and the order book's derived market cap.
+  maker's price and the order book's derived market cap. These return no price at
+  all for a non-positive effective reserve, rather than a misleading one.
 
-Regression coverage is in [`tests/agent-sniper-amm-exit.test.js`](../../tests/agent-sniper-amm-exit.test.js):
-one test asserts the virtual figure reaches the SDK un-summed, another asserts
-price impact is measured against effective reserves.
+### Refusing an exhausted pool
+
+Because the virtual figure is signed, effective depth can be zero or negative:
+a pool that cannot absorb a trade. Every path that quotes must refuse such a pool
+outright rather than price it, because all of our impact math clamps the result
+to a floor of zero and would therefore report an exhausted pool as **0% impact,
+the safest-looking trade available**. That number then sails past the very guards
+meant to stop it (the sniper's circuit breaker, the agent `max_price_impact_pct`
+limit).
+
+| Surface | Refusal |
+|---|---|
+| `workers/agent-sniper/amm-exit.js` | throws `amm_quote_depth_empty` |
+| `api/agents/solana-trade.js` (`loadAmm`) | HTTP 409 `pool_depth_empty` |
+| `api/pump-fun-mcp.js` (`quoteSwap`) | JSON-RPC `-32004` |
+| `src/pump/pump-swap-quote.js` | throws `no tradable quote depth` |
+
+A `0` returned by any impact helper means "unknown", never "safe".
+
+Regression coverage lives in
+[`tests/agent-sniper-amm-exit.test.js`](../../tests/agent-sniper-amm-exit.test.js)
+and [`tests/pump-swap-quote.test.js`](../../tests/pump-swap-quote.test.js): the
+virtual figure must reach the SDK un-summed and signed, impact must be measured
+against effective reserves, a negative that exhausts depth must be refused before
+any quote is attempted, and a negative that merely reduces depth must still price
+normally against the reduced reserve.
 
 ## Versions
 

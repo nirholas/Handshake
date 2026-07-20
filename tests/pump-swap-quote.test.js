@@ -142,6 +142,52 @@ describe('quoteSwap', () => {
 		expect(result.priceImpactBps).toBe(200);
 	});
 
+	// `Pool.virtual_quote_reserves` is a signed i128. A negative large enough to
+	// wipe out effective depth means the pool cannot absorb a trade, and the
+	// impact math clamps with Math.max(0, …) — so an unrefused quote would come
+	// back as 0 bps, the most attractive number the endpoint can return.
+	it('refuses a pool whose effective quote depth is wiped out by a negative virtual', async () => {
+		mockSwapSolanaState.mockResolvedValueOnce(
+			fakeState({
+				poolQuoteAmount: new BN(1_000_000),
+				pool: {
+					...fakeState().pool,
+					virtualQuoteReserves: new BN(-1_000_000),
+				},
+			}),
+		);
+
+		await expect(
+			quoteSwap({ inputMint: TOKEN, outputMint: WSOL, amountIn: 10_000 }),
+		).rejects.toThrow(/no tradable quote depth/);
+		expect(mockSellBaseInput).not.toHaveBeenCalled();
+	});
+
+	// A negative virtual that only reduces depth is still tradable: it must price
+	// against the reduced effective reserve, while the SDK still receives the raw
+	// vault balance and the signed virtual as separate arguments.
+	it('prices against reduced depth when a negative virtual does not exhaust the pool', async () => {
+		mockSwapSolanaState.mockResolvedValueOnce(
+			fakeState({
+				poolBaseAmount: new BN(1_000_000),
+				poolQuoteAmount: new BN(2_000_000),
+				pool: {
+					...fakeState().pool,
+					virtualQuoteReserves: new BN(-1_000_000),
+				},
+			}),
+		);
+		mockSellBaseInput.mockReturnValueOnce({ uiQuote: new BN(9_800) });
+
+		const result = await quoteSwap({ inputMint: TOKEN, outputMint: WSOL, amountIn: 10_000 });
+
+		// effective quote = 2e6 - 1e6 = 1e6, so the impact matches the baseline case.
+		expect(result.priceImpactBps).toBe(200);
+		const call = mockSellBaseInput.mock.calls[0][0];
+		expect(call.quoteReserve.toString()).toBe('2000000');
+		expect(call.virtualQuoteReserves.toString()).toBe('-1000000');
+	});
+
 	it('uses default slippageBps of 100 when not provided', async () => {
 		mockSwapSolanaState.mockResolvedValueOnce(fakeState());
 		mockBuyQuoteInput.mockReturnValueOnce({ base: new BN(5_000) });

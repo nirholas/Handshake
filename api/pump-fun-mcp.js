@@ -470,6 +470,14 @@ async function handleQuoteSwap({
 		feeConfig,
 	} = state;
 	const amountBn = new BN(String(amountIn));
+	// `Pool.virtual_quote_reserves` is a SIGNED i128, so effective depth
+	// (vault + virtual) can be zero or negative: a pool that cannot absorb a
+	// trade. Refuse rather than quote it, because the impact math below clamps
+	// with Math.max(0, …) and would report such a pool as 0 bps, the most
+	// attractive quote we can return.
+	if (BigInt(effectiveQuoteReserve.toString()) <= 0n) {
+		throw rpcError(-32004, 'pool has no tradable quote depth');
+	}
 	// pump-swap-sdk takes slippage as a PERCENT (1 = 1%): `1 ± slippage / 100`.
 	const slip = (slippageBps ?? 100) / 100;
 	// `virtualQuoteReserves` is a separate arg the SDK adds to `quoteReserve`

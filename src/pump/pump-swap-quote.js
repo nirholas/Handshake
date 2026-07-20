@@ -84,11 +84,19 @@ export async function quoteSwap({ inputMint, outputMint, amountIn, slippageBps =
 	// pump-swap-sdk takes slippage as a PERCENT (1 = 1%): `1 ± slippage / 100`.
 	const slippage = slippageBps / 100;
 	// PumpSwap prices against effective quote reserves (raw vault + the pool's
-	// virtual_quote_reserves, non-zero on launchpad coins since 2026-07-20). The
-	// SDK adds `virtualQuoteReserves` to `quoteReserve` internally, so pass the
-	// raw reserve here; the spot-price baseline below uses the summed value.
+	// virtual_quote_reserves, non-zero on boost pools since 2026-07-20). The SDK
+	// adds `virtualQuoteReserves` to `quoteReserve` internally, so pass the raw
+	// reserve here; the spot-price baseline below uses the summed value.
+	//
+	// The virtual figure is a SIGNED i128, so effective depth can be zero or
+	// negative: a pool that cannot absorb a trade. Refuse rather than quote it,
+	// because the impact math below clamps with Math.max(0, …) and would report
+	// such a pool as 0 bps, the most attractive quote we can return.
 	const virtualQuoteReserves = new BN((pool.virtualQuoteReserves ?? 0).toString());
 	const effectiveQuoteReserve = poolQuoteAmount.add(virtualQuoteReserves);
+	if (effectiveQuoteReserve.lten(0)) {
+		throw new Error(`Pool ${poolKey.toBase58()} has no tradable quote depth`);
+	}
 	const shared = {
 		slippage,
 		baseReserve: poolBaseAmount,

@@ -206,6 +206,15 @@ async function loadAmm(network, mintPk) {
 	if (resolvedQuote !== WSOL_MINT) {
 		throw typed(409, 'unsupported_quote', 'this coin trades against a non-SOL asset — trade it from its coin page instead');
 	}
+	// `Pool.virtual_quote_reserves` is a SIGNED i128, so effective depth
+	// (vault + virtual) can land at or below zero: a pool that cannot absorb a
+	// trade. Refuse here rather than quote it, because `derivePriceImpact`
+	// reports a non-positive reserve as 0% impact, i.e. as the safest possible
+	// trade, which would sail straight past the max-price-impact guard.
+	const effective = BigInt(amm.effectiveQuoteReserve?.toString?.() ?? 0);
+	if (effective <= 0n) {
+		throw typed(409, 'pool_depth_empty', 'this pool has no tradable SOL depth right now, try again later');
+	}
 	return amm;
 }
 
