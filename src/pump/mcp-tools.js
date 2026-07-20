@@ -431,7 +431,7 @@ export const TOOLS = [
 	{
 		name: 'pumpfun_quote_swap',
 		description:
-			'Read-only price quote for a pump.fun AMM swap. No signing or tx sending. One of inputMint/outputMint must be wSOL (So11111111111111111111111111111111111111112). Returns amountOut, priceImpactBps, route, expiresAtMs.',
+			'Read-only price quote for a pump.fun AMM (PumpSwap) swap. No signing or tx sending. One of inputMint/outputMint must be wSOL (So11111111111111111111111111111111111111112). Only GRADUATED coins have an AMM pool; for a coin still on its bonding curve use get_bonding_curve instead. Pricing runs on the pool effective quote reserves (quote vault balance + pool.virtual_quote_reserves); the base side is the raw base vault balance. Returns amountOut, priceImpactBps, route, expiresAtMs, plus the reserves the quote was computed from so the number can be reproduced.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -450,6 +450,24 @@ export const TOOLS = [
 				priceImpactBps: { type: 'number', description: 'Price impact in basis points' },
 				route: { type: 'string', description: 'AMM pool address the quote routes through (base58)' },
 				expiresAtMs: { type: 'number', description: 'Epoch ms after which the quote is stale' },
+				base_reserve: {
+					type: 'string',
+					description: 'Raw base vault balance. Unchanged by the virtual-reserve rollout.',
+				},
+				quote_reserve: {
+					type: 'string',
+					description: 'Raw quote vault balance, before virtual reserves are added.',
+				},
+				virtual_quote_reserves: {
+					type: 'string',
+					description:
+						'Pool.virtual_quote_reserves. Quote-side liquidity the pool carries outside its vault. 0 on non-launchpad pools.',
+				},
+				effective_quote_reserve: {
+					type: 'string',
+					description:
+						'quote_reserve + virtual_quote_reserves. This is what the quote is priced against.',
+				},
 			},
 			required: ['amountOut', 'priceImpactBps', 'route', 'expiresAtMs'],
 			additionalProperties: true,

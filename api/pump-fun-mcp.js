@@ -510,6 +510,14 @@ async function handleQuoteSwap({
 		priceImpactBps,
 		route: poolKey.toBase58(),
 		expiresAtMs: Date.now() + 10_000,
+		// Reserve provenance, so a caller can reproduce the number above rather
+		// than trusting it. Mirrors the /api/pump quote response. The quote side
+		// is priced on `effective_quote_reserve` (vault + virtual); the base side
+		// is the raw vault balance and is unaffected by that change.
+		base_reserve: baseReserve.toString(),
+		quote_reserve: quoteReserve.toString(),
+		virtual_quote_reserves: virtualQuoteReserves.toString(),
+		effective_quote_reserve: effectiveQuoteReserve.toString(),
 	};
 }
 

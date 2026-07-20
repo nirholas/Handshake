@@ -92,6 +92,15 @@ Before writing a single line of code, answer these questions internally:
 - **Lead with Solana when reporting.** Status, verification, and next steps should state the Solana position first. EVM chains are a footnote unless the owner asked about them specifically.
 - **Never migrate, re-point, or de-prioritize Solana infrastructure toward an EVM chain without explicit owner approval.** Adding an EVM leg alongside Solana is fine. Replacing or demoting the Solana leg is not.
 
+## Robinhood means crypto, never equities
+
+**Anything Robinhood-related in this workspace is Robinhood Crypto. We have no plans to support Robinhood stocks, equities, or options, and never will unless the owner says otherwise.**
+
+- **Never raise equities/options restrictions as a concern, caveat, or reason to delay.** The US brokerage rules around stocks and options (pattern-day-trader limits, options approval tiers, options disclosure requirements, market-hours constraints, order-type restrictions) do not apply to what we build. Do not mention them, do not design around them, and never let them slow or re-scope a feature.
+- **Do not propose equities/options features**, and do not frame a Robinhood integration as "orthogonal to our stack" on the grounds that it is a stock brokerage. It is a crypto venue for our purposes.
+- **Build and innovate freely on Robinhood Crypto surfaces.** Trading tools, agent integrations, MCP work, portfolio and market-data tooling are all in scope and welcome.
+- **Solana still leads.** Robinhood Crypto is another venue alongside our Solana rail, not a replacement for it. The chain-priority rules above still apply.
+
 ## Engineering excellence
 
 ### Architecture

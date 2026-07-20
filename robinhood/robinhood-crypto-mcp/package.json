@@ -1,0 +1,77 @@
+{
+  "name": "robinhood-crypto-mcp",
+  "mcpName": "io.github.nirholas/robinhood-crypto-mcp",
+  "version": "0.1.0",
+  "description": "Model Context Protocol servers for the official Robinhood Crypto Trading API: a read-only server (quotes, holdings, orders, account) and an explicitly opt-in trading server with hard spend caps and a confirm gate. Ed25519 request signing verified against Robinhood's own key material.",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "robinhood",
+    "robinhood-crypto",
+    "crypto-trading-api",
+    "trading",
+    "ed25519",
+    "ai-agents",
+    "claude",
+    "cursor"
+  ],
+  "license": "SEE LICENSE IN LICENSE",
+  "author": "nirholas (https://x.com/nichxbt)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nirholas/robinhood-crypto-mcp.git"
+  },
+  "homepage": "https://github.com/nirholas/robinhood-crypto-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/nirholas/robinhood-crypto-mcp/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "robinhood-crypto-mcp": "./dist/data-server.js",
+    "robinhood-crypto-mcp-trading": "./dist/trading-server.js",
+    "robinhood-crypto-keygen": "./dist/keygen.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./data-server": "./dist/data-server.js",
+    "./trading-server": "./dist/trading-server.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "server.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "dev:data": "tsx src/data-server.ts",
+    "dev:trading": "tsx src/trading-server.ts",
+    "keygen": "tsx src/keygen.ts",
+    "start": "node dist/data-server.js",
+    "test": "vitest run",
+    "test:live": "vitest run -c vitest.live.config.ts --testTimeout 120000",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsup": "^8.5.0",
+    "tsx": "^4.23.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}
