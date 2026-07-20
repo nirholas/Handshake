@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-20T20:03:53.603Z",
+	"generated_at": "2026-07-20T20:54:46.623Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -14,6 +14,16 @@
 			"link": null,
 			"tags": [
 				"fix"
+			]
+		},
+		{
+			"date": "2026-07-20",
+			"type": "update",
+			"title": "Every page on three.ws now reads in 48 languages",
+			"summary": "Translation used to cover only part of the site, so following a link out of a translated page often dropped you back into English. Every page is now translatable, from the studios and docs down to the news archive, and the existing languages were backfilled so they cover all of it rather than the handful of pages they started on. Eight more languages join the switcher as well: Gujarati, Kannada, Malayalam, Assamese, Nepali, Kazakh, Uzbek and Azerbaijani. A language only appears in the switcher once its wording is complete, so you should never land on a page that is half translated.",
+			"link": "/docs/i18n",
+			"tags": [
+				"improvement"
 			]
 		},
 		{

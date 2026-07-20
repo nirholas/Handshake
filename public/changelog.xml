@@ -15,6 +15,14 @@
 			<description>The agent tools that report a coin's bonding curve were showing every coin as 0% to graduation with zero reserves and a zero price. Pump renamed these on-chain fields when USDC became a possible trading pair, and the tools were still reading the old names, which quietly resolved to zero instead of failing. They now read the current fields, so graduation progress, reserves, and price reflect the real curve. Verified against live coins reading 2% through 70% to graduation.</description>
 		</item>
 		<item>
+			<title>Every page on three.ws now reads in 48 languages</title>
+			<link>https://three.ws/docs/i18n</link>
+			<guid isPermaLink="false">2026-07-20:Every page on three.ws now reads in 48 languages</guid>
+			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>Translation used to cover only part of the site, so following a link out of a translated page often dropped you back into English. Every page is now translatable, from the studios and docs down to the news archive, and the existing languages were backfilled so they cover all of it rather than the handful of pages they started on. Eight more languages join the switcher as well: Gujarati, Kannada, Malayalam, Assamese, Nepali, Kazakh, Uzbek and Azerbaijani. A language only appears in the switcher once its wording is complete, so you should never land on a page that is half translated.</description>
+		</item>
+		<item>
 			<title>Graduated-coin prices now match PumpSwap exactly</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-20:Graduated-coin prices now match PumpSwap exactly</guid>
