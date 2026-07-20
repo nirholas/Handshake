@@ -7,7 +7,7 @@ export type Db = Database.Database
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS subscribers (
   id INTEGER PRIMARY KEY,
-  platform TEXT NOT NULL CHECK (platform IN ('telegram', 'discord', 'console')),
+  platform TEXT NOT NULL CHECK (platform IN ('telegram', 'discord', 'console', 'x')),
   chat_id TEXT NOT NULL,
   title TEXT,
   digest INTEGER NOT NULL DEFAULT 0,

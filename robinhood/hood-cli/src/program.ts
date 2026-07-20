@@ -20,6 +20,7 @@ import { transferCommand } from './commands/transfer.js'
 import { faucetCommand } from './commands/faucet.js'
 import { deployTokenCommand } from './commands/deploy-token.js'
 import { configCommand } from './commands/config.js'
+import { initCommand } from './commands/init.js'
 
 function readVersion(): string {
   const here = dirname(fileURLToPath(import.meta.url))
@@ -60,6 +61,7 @@ export function createProgram(): Command {
   program.addCommand(faucetCommand())
   program.addCommand(deployTokenCommand())
   program.addCommand(configCommand())
+  program.addCommand(initCommand())
 
   return program
 }

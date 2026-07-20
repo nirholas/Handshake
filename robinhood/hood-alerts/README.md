@@ -2,10 +2,10 @@
 
 [![license](https://img.shields.io/badge/license-MIT-93a1af?labelColor=101418)](./LICENSE)
 
-The alert layer for **Robinhood Chain** (chain ID 4663): Telegram and Discord bots backed by one
-shared detection engine that watches launches, graduations, whale trades, Stock Token price moves,
-on-chain premium/discount arbitrage, holder milestones, and liquidity-pull rug warnings. Free tier
-plus x402 USDG premium.
+The alert layer for **Robinhood Chain** (chain ID 4663): Telegram and Discord bots, plus optional
+X (Twitter) auto-posting, backed by one shared detection engine that watches launches, graduations,
+whale trades, Stock Token price moves, on-chain premium/discount arbitrage, holder milestones, and
+liquidity-pull rug warnings. Free tier plus x402 USDG premium.
 
 ## What it detects
 
@@ -21,8 +21,8 @@ plus x402 USDG premium.
 
 Every event is deduped per fingerprint before it reaches a subscriber, routed through a
 premium/quiet-hours/digest gate, and rendered as a platform-native card (Telegram HTML, Discord
-embed, or a structured console log line) with links back to the chain explorer and
-`three.ws/markets/robinhood`.
+embed, a compact X post, or a structured console log line) with links back to the chain explorer
+and `three.ws/markets/robinhood`.
 
 ## Quickstart (self-host)
 
@@ -53,6 +53,43 @@ npm start       # node dist/src/index.js
 
 Leaving either token unset disables that transport; the engine and the console transport keep
 running regardless.
+
+### X (Twitter)
+
+X is a broadcast-only transport: there is no inbound bot, so you cannot DM the account and get a
+reply the way you can with Telegram or Discord. What it auto-posts is fixed at startup by
+`HOOD_ALERTS_X_TOPICS` (default `launches,graduations,whales`) instead of `watch`/`unwatch`
+commands, parsed through the same topic resolver the bots use. Pick exactly **one** of two modes
+via `HOOD_ALERTS_X_MODE`; see `.env.example` for the full variable list.
+
+**`official`**: the real X API v2, `POST /2/tweets`, signed with your own developer app's OAuth1
+user-context credentials. This is the normal, ToS-compliant path, and it costs money: X gates
+posting behind a paid API tier. Check current pricing at
+[developer.x.com/en/portal/products/buy](https://developer.x.com/en/portal/products/buy) before
+relying on it; it has changed before and can change again.
+
+Setup: create an app at the [developer portal](https://developer.x.com/en/portal), generate a
+consumer key/secret (`HOOD_ALERTS_X_API_KEY` / `HOOD_ALERTS_X_API_SECRET`), then generate an
+access token/secret with **read and write** permissions (`HOOD_ALERTS_X_ACCESS_TOKEN` /
+`HOOD_ALERTS_X_ACCESS_SECRET`). All four are required; hood-alerts signs every request itself with
+Node's built-in `crypto` (HMAC-SHA1 per RFC 5849), no extra dependency.
+
+**`xactions`**: posts through a self-hosted [XActions](https://github.com/nirholas/XActions)
+instance instead of the official API: browser-automation driving your own X session cookie. Free,
+no developer account, no paid tier. This is **not** the official API and carries real ToS risk;
+run it on an account you are prepared to lose if X acts on that. Point `HOOD_ALERTS_XACTIONS_URL`
+at your running instance and `HOOD_ALERTS_XACTIONS_TOKEN` at its bearer token. Posting is
+async/job-queued: hood-alerts treats a 2xx from `POST {url}/api/posting/tweet` as "accepted", not
+"delivered", and logs that delivery is not confirmed synchronously (the real xactions API responds
+`{ operationId, status: "queued" }`, not a tweet id).
+
+Both modes fail loudly: a configured mode missing any required credential logs a warning and
+disables the X transport (Telegram, Discord, and the console transport keep running) instead of
+crashing the process. Every X post is compacted to fit X's 280-character limit: title, the single
+most important line, and the first link; only the text portion truncates, never the URL. Digests
+(too many alerts to post individually) post the single most significant event plus a `(+N more)`
+count, and log the full summarized batch, so nothing is silently dropped from the record even
+though it is dropped from the post itself.
 
 ## Bot commands
 
@@ -111,7 +148,7 @@ The same process that runs the bots serves a small Hono app on `PORT` (default 8
 | --- | --- | --- |
 | `/` | GET | service metadata and endpoint list |
 | `/healthz` | GET | uptime, last detector event time, per-event-type counts, whether premium purchases are enabled |
-| `/premium/status?platform=telegram\|discord\|console&chat=<id>` | GET | `{ tier: 'free' \| 'premium', expiresAt }` for that chat |
+| `/premium/status?platform=telegram\|discord\|console\|x&chat=<id>` | GET | `{ tier: 'free' \| 'premium', expiresAt }` for that chat |
 | `/premium/activate?platform=...&chat=...` | POST | the x402 purchase flow: 402 challenge, then 200 + entitlement once payment settles |
 
 ## Example: reading the alert engine's pure logic directly
@@ -248,7 +285,8 @@ src/engine/detectors/        pure per-signal detectors (price move, premium ladd
                               which wires them to hoodchain/hoodkit streams
 src/db/                      better-sqlite3 repositories: subscribers, entitlements, deliveries
 src/premium/paywall.ts       the hood402 x402 purchase flow
-src/transports/              Telegram (grammY), Discord (discord.js), and console transports
+src/transports/              Telegram (grammY), Discord (discord.js), X (OAuth1 API v2 or self-
+                              hosted xactions), and console transports
 src/commands/commands.ts     the shared, platform-neutral command router
 src/format/cards.ts          alert -> platform-neutral card -> per-platform rendering
 tests/                       vitest unit suite + tests/fixtures (real captured chain events) +

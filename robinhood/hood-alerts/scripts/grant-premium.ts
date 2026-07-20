@@ -8,6 +8,7 @@
  *   npm run grant-premium -- grant telegram 123456789 --days 30
  *   npm run grant-premium -- status discord 987654321
  *   npm run grant-premium -- revoke telegram 123456789
+ *   npm run grant-premium -- grant x public --days 30   # the X broadcast subscriber
  *
  * The database path follows HOOD_ALERTS_DB (default ./data/hood-alerts.db).
  */
@@ -22,7 +23,7 @@ function fail(message: string): never {
   process.exit(1)
 }
 
-const PLATFORMS: Platform[] = ['telegram', 'discord', 'console']
+const PLATFORMS: Platform[] = ['telegram', 'discord', 'console', 'x']
 
 function flag(name: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`)
@@ -32,7 +33,7 @@ function flag(name: string): string | undefined {
 function main(): void {
   const [action, platform, chat] = process.argv.slice(2)
   if (!action || !['grant', 'revoke', 'status'].includes(action)) {
-    fail('Usage: grant-premium <grant|revoke|status> <telegram|discord|console> <chatId> [--days 30]')
+    fail('Usage: grant-premium <grant|revoke|status> <telegram|discord|console|x> <chatId> [--days 30]')
   }
   if (!platform || !PLATFORMS.includes(platform as Platform)) fail(`platform must be one of ${PLATFORMS.join(', ')}`)
   if (!chat) fail('chatId is required')

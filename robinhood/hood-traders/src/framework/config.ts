@@ -1,5 +1,6 @@
 import type { HoodNetwork } from 'hoodchain'
 import type { Mode, RiskLimits } from './types.js'
+import type { LlmClientConfig, LlmProvider } from './llm.js'
 
 /** Fleet-wide configuration resolved from the environment. */
 export interface FleetConfig {
@@ -67,4 +68,39 @@ export function loadFleetConfig(env: NodeJS.ProcessEnv = process.env): FleetConf
       cooldownSeconds: num('AGENT_COOLDOWN_SECONDS', 60),
     },
   }
+}
+
+const LLM_PROVIDERS: readonly LlmProvider[] = ['anthropic', 'openai', 'groq', 'openrouter']
+
+/**
+ * Resolve LLM config for {@link LlmStrategist} from the environment. Returns
+ * `null` when `HOOD_LLM_PROVIDER` or `HOOD_LLM_API_KEY` is unset — the
+ * strategy is optional and simply isn't added to the fleet in that case (see
+ * main.ts). Throws only when `HOOD_LLM_PROVIDER` is set to an unrecognized
+ * value, since that is very likely a typo the operator would want to know
+ * about immediately rather than silently running without the strategy.
+ */
+export function loadLlmConfig(env: NodeJS.ProcessEnv = process.env): LlmClientConfig | null {
+  const provider = env.HOOD_LLM_PROVIDER
+  const apiKey = env.HOOD_LLM_API_KEY
+  if (!provider && !apiKey) return null
+  if (!provider || !apiKey) {
+    throw new Error(
+      'hood-traders config.ts: HOOD_LLM_PROVIDER and HOOD_LLM_API_KEY must both be set to enable llm-strategist (or both left unset to disable it).',
+    )
+  }
+  if (!LLM_PROVIDERS.includes(provider as LlmProvider)) {
+    throw new Error(`hood-traders config.ts: HOOD_LLM_PROVIDER="${provider}" is not one of ${LLM_PROVIDERS.join(', ')}`)
+  }
+  return {
+    provider: provider as LlmProvider,
+    apiKey,
+    model: env.HOOD_LLM_MODEL || undefined,
+    timeoutMs: num('HOOD_LLM_TIMEOUT_MS', 9000),
+  }
+}
+
+/** Minimum LLM confidence required to convert a `buy` verdict into a trade. */
+export function loadLlmMinConfidence(env: NodeJS.ProcessEnv = process.env): number {
+  return num('HOOD_LLM_MIN_CONFIDENCE', 0.6)
 }

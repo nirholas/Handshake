@@ -9,6 +9,14 @@ const ENV_KEYS = [
   'HOOD_ALERTS_TELEGRAM_TOKEN',
   'HOOD_ALERTS_DISCORD_TOKEN',
   'HOOD_ALERTS_DISCORD_APP_ID',
+  'HOOD_ALERTS_X_MODE',
+  'HOOD_ALERTS_X_API_KEY',
+  'HOOD_ALERTS_X_API_SECRET',
+  'HOOD_ALERTS_X_ACCESS_TOKEN',
+  'HOOD_ALERTS_X_ACCESS_SECRET',
+  'HOOD_ALERTS_XACTIONS_URL',
+  'HOOD_ALERTS_XACTIONS_TOKEN',
+  'HOOD_ALERTS_X_TOPICS',
   'HOOD_ALERTS_PREMIUM_RAIL',
   'HOOD402_PAY_TO',
   'HOOD402_FACILITATOR_URL',
@@ -50,6 +58,10 @@ describe('loadConfig', () => {
     expect(config.publicUrl).toBe('http://localhost:8080')
     expect(config.telegramToken).toBeNull()
     expect(config.discordToken).toBeNull()
+    expect(config.xMode).toBeUndefined()
+    expect(config.xApiKey).toBeNull()
+    expect(config.xactionsUrl).toBeNull()
+    expect(config.xTopics).toEqual(['launches', 'graduations', 'whales'])
     expect(config.premiumRail).toBe('hood402')
     expect(config.payTo).toBeNull()
     expect(config.premiumPriceUsdg).toBe('5')
@@ -105,6 +117,23 @@ describe('loadConfig', () => {
   it('treats an empty string env var as unset (falls back to default)', () => {
     process.env.HOOD_ALERTS_DB = ''
     expect(loadConfig().dbPath).toBe('./data/hood-alerts.db')
+  })
+
+  it('accepts a well-formed HOOD_ALERTS_X_MODE', () => {
+    process.env.HOOD_ALERTS_X_MODE = 'official'
+    expect(loadConfig().xMode).toBe('official')
+    process.env.HOOD_ALERTS_X_MODE = 'xactions'
+    expect(loadConfig().xMode).toBe('xactions')
+  })
+
+  it('rejects an unrecognized HOOD_ALERTS_X_MODE', () => {
+    process.env.HOOD_ALERTS_X_MODE = 'bluesky'
+    expect(() => loadConfig()).toThrow(/HOOD_ALERTS_X_MODE must be "official" or "xactions"/)
+  })
+
+  it('splits and trims HOOD_ALERTS_X_TOPICS, dropping empty entries', () => {
+    process.env.HOOD_ALERTS_X_TOPICS = ' launches, whales ,,premiums '
+    expect(loadConfig().xTopics).toEqual(['launches', 'whales', 'premiums'])
   })
 
   it('reads through custom detector tuning', () => {

@@ -1,6 +1,6 @@
 {
   "name": "hood-traders",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A framework and runnable fleet of autonomous agents that trade Robinhood Chain (4663) memecoins and watch Stock Token premium/discount — real quotes, real risk caps, real signed swaps, live P&L dashboard.",
   "keywords": [
     "robinhood-chain",

@@ -1,6 +1,6 @@
 {
   "name": "hood-alerts",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "The alert layer for Robinhood Chain (chain ID 4663): Telegram + Discord bots and a shared detection engine for memecoin launches, graduations, whale trades, price moves, Stock Token premium/discount arbitrage, holder milestones, and liquidity-pull rug warnings. Free tier + x402 USDG premium.",
   "keywords": [
     "robinhood",

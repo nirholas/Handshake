@@ -34,6 +34,7 @@ describe('global flags — eligibility + confirmation gates', () => {
         'config',
         'deploy-token',
         'faucet',
+        'init',
         'launches',
         'portfolio',
         'price',

@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { cardToDiscordEmbed, cardToText, cardToTelegramHtml, digestCards, short, toCard, usd } from '../src/format/cards.js'
+import {
+  cardToDiscordEmbed,
+  cardToText,
+  cardToTelegramHtml,
+  cardToXDigestPost,
+  cardToXPost,
+  digestCards,
+  short,
+  toCard,
+  usd,
+  X_POST_LIMIT,
+} from '../src/format/cards.js'
 import type { AlertEvent } from '../src/engine/events.js'
 
 const TOKEN = '0x1234567890123456789012345678901234567890' as `0x${string}`
@@ -116,6 +127,71 @@ describe('cardToText / cardToTelegramHtml / cardToDiscordEmbed', () => {
     expect(notice.color).toBe(0x30a46c)
     const info = cardToDiscordEmbed(toCard({ type: 'holders', token: TOKEN, symbol: null, milestone: 1, count: 1, at: 0 }))
     expect(info.color).toBe(0x5b5bd6)
+  })
+})
+
+describe('cardToXPost', () => {
+  it('fits a normal card comfortably under the limit and includes the link', () => {
+    const e: AlertEvent = { type: 'graduation', token: TOKEN, symbol: 'FOO', name: null, pool: TOKEN, blockNumber: 1n, transactionHash: '0x1', at: 0 }
+    const post = cardToXPost(toCard(e))
+    expect(post.length).toBeLessThanOrEqual(X_POST_LIMIT)
+    expect(post).toContain('Graduated: FOO')
+    expect(post.endsWith(toCard(e).links[0]?.url ?? '')).toBe(true)
+  })
+
+  it('truncates long text with an ellipsis but never truncates the URL', () => {
+    const e: AlertEvent = {
+      type: 'launch',
+      launchpad: 'noxa',
+      token: TOKEN,
+      symbol: 'FOO',
+      name: 'A'.repeat(400),
+      creator: TOKEN,
+      pool: TOKEN,
+      blockNumber: 5n,
+      transactionHash: '0xabc',
+      at: 0,
+    }
+    const card = toCard(e)
+    const post = cardToXPost(card)
+    const url = card.links[0]?.url as string
+    expect(post.length).toBeLessThanOrEqual(X_POST_LIMIT)
+    expect(post).toContain('…')
+    expect(post.endsWith(url)).toBe(true)
+    expect(post).toContain(url) // the full, un-truncated URL is present verbatim
+  })
+
+  it('renders a card with no links (title + line only) under the limit', () => {
+    const card = { emojiless: true as const, title: 'Short title', lines: ['one line'], links: [], severity: 'info' as const }
+    const post = cardToXPost(card)
+    expect(post).toBe('Short title: one line')
+    expect(post.length).toBeLessThanOrEqual(X_POST_LIMIT)
+  })
+})
+
+describe('cardToXDigestPost', () => {
+  function launchEvent(i: number): AlertEvent {
+    return { type: 'launch', launchpad: 'noxa', token: TOKEN, symbol: `T${i}`, name: null, creator: TOKEN, pool: TOKEN, blockNumber: BigInt(i), transactionHash: '0x1', at: 0 }
+  }
+  function liquidityPullEvent(): AlertEvent {
+    return { type: 'liquidity_pull', token: TOKEN, symbol: 'RUG', pool: TOKEN, quoteAsset: 'USDG', droppedPct: 80, beforeUsd: 100_000, afterUsd: 20_000, at: 0 }
+  }
+
+  it('picks the highest-severity event and appends a "+N more" count', () => {
+    const events = [launchEvent(1), launchEvent(2), liquidityPullEvent(), launchEvent(3)]
+    const post = cardToXDigestPost(events)
+    expect(post).toContain('Liquidity pull: RUG')
+    expect(post).toContain('(+3 more)')
+    expect(post.length).toBeLessThanOrEqual(X_POST_LIMIT)
+  })
+
+  it('omits the "+N more" suffix for a single event', () => {
+    const post = cardToXDigestPost([launchEvent(1)])
+    expect(post).not.toContain('more)')
+  })
+
+  it('returns an empty string for an empty batch rather than throwing', () => {
+    expect(cardToXDigestPost([])).toBe('')
   })
 })
 

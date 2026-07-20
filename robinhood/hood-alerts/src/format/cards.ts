@@ -167,6 +167,45 @@ export function cardToDiscordEmbed(card: AlertCard): {
   }
 }
 
+/** X (Twitter)'s post character limit. Assumes no paid long-post tier. */
+export const X_POST_LIMIT = 280
+
+/**
+ * Compose title + one line + one link into an X post, truncating only the
+ * text portion (never the URL) to fit `X_POST_LIMIT`.
+ */
+function composeXPost(title: string, line: string | undefined, link: AlertCard['links'][number] | undefined, suffix = ''): string {
+  const linkPart = link ? ` ${link.url}` : ''
+  const budget = X_POST_LIMIT - linkPart.length - suffix.length
+  const body = line ? `${title}: ${line}` : title
+  const text = body.length <= budget ? body : `${body.slice(0, Math.max(0, budget - 1))}…`
+  return `${text}${suffix}${linkPart}`
+}
+
+/** X (Twitter) post rendering: title, the single most important line, and the first link. */
+export function cardToXPost(card: AlertCard): string {
+  return composeXPost(card.title, card.lines[0], card.links[0])
+}
+
+/**
+ * X digest rendering: X has no room for a multi-item card list, so this posts
+ * the single most significant event (by severity: warning, then notice, then
+ * info) plus a "+N more" count. Nothing is silently dropped from the batch,
+ * only from the post itself; callers should log the full summarized list.
+ */
+export function cardToXDigestPost(events: AlertEvent[]): string {
+  const severityRank: Record<AlertCard['severity'], number> = { warning: 0, notice: 1, info: 2 }
+  let best: AlertCard | null = null
+  for (const e of events) {
+    const card = toCard(e)
+    if (!best || severityRank[card.severity] < severityRank[best.severity]) best = card
+  }
+  if (!best) return ''
+  const more = events.length - 1
+  const suffix = more > 0 ? ` (+${more} more)` : ''
+  return composeXPost(best.title, best.lines[0], best.links[0], suffix)
+}
+
 /** A compact digest rendering: one block per event, capped. */
 export function digestCards(events: AlertEvent[]): { title: string; cards: AlertCard[]; omitted: number } {
   const cards = events.slice(0, 10).map(toCard)

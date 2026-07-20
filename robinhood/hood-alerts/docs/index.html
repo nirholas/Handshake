@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>hood-alerts · Robinhood Chain alert bots</title>
-  <meta name="description" content="Real-time Telegram and Discord alerts for Robinhood Chain (4663): memecoin launches, graduations, whale trades, Stock Token price moves, on-chain premium/discount arbitrage, holder milestones, and liquidity-pull rug warnings." />
+  <meta name="description" content="Real-time Telegram, Discord, and X (Twitter) alerts for Robinhood Chain (4663): memecoin launches, graduations, whale trades, Stock Token price moves, on-chain premium/discount arbitrage, holder milestones, and liquidity-pull rug warnings." />
   <link rel="preconnect" href="https://rpc.mainnet.chain.robinhood.com" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -25,7 +25,7 @@
     <div class="wrap">
       <span class="chip"><span class="live"></span> Live · Robinhood Chain · ID 4663</span>
       <h1>Alerts for the chain that<br /><span class="grad">never sleeps.</span></h1>
-      <p class="sub">Telegram and Discord bots that watch Robinhood Chain in real time: launches, graduations, whale trades, Stock Token moves, on-chain premium/discount arbitrage, holder milestones, and liquidity-pull rug warnings.</p>
+      <p class="sub">Telegram and Discord bots, plus auto-posting to X (Twitter), that watch Robinhood Chain in real time: launches, graduations, whale trades, Stock Token moves, on-chain premium/discount arbitrage, holder milestones, and liquidity-pull rug warnings.</p>
       <div class="cta">
         <a class="btn primary" href="commands.html">See the commands</a>
         <a class="btn ghost" href="#live">Watch it live ↓</a>
@@ -102,6 +102,7 @@
         <div class="feat"><span class="tag">group</span><h3>Group-chat ready</h3><p>Add the bot to a Telegram group or Discord server; config commands are admin-only, alerts land for everyone.</p></div>
         <div class="feat"><span class="tag">premium</span><h3>Arb and rug detectors</h3><p>The Stock Token premium/discount signal and the liquidity-pull rug warning are the premium tier. Free tier covers launches, whales, and moves.</p></div>
         <div class="feat"><span class="tag">host</span><h3>One container</h3><p>Engine plus both bots plus a health endpoint in a single process. Deploy to Cloud Run with min-instances 1 and go.</p></div>
+        <div class="feat"><span class="tag">broadcast</span><h3>X (Twitter), your choice of mode</h3><p>Official X API v2 (OAuth1, your own developer app) or a free self-hosted <a href="https://github.com/nirholas/XActions" target="_blank" rel="noopener">xactions</a> instance — pick whichever fits, config-driven topics, no code changes.</p></div>
       </div>
     </div>
   </section>

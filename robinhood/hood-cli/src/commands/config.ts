@@ -68,7 +68,7 @@ export function configCommand(): Command {
   return cmd
 }
 
-async function setWallet(json: boolean, assumeYes: boolean): Promise<void> {
+export async function setWallet(json: boolean, assumeYes: boolean): Promise<void> {
   const config = loadConfig()
   const keystorePath = config.walletKeystore ?? defaultKeystorePath()
 

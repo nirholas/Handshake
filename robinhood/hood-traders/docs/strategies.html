@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Strategies — hood-traders</title>
-  <meta name="description" content="Honest edge hypotheses and failure modes for launch-sniper, momentum, and premium-watch." />
+  <meta name="description" content="Honest edge hypotheses and failure modes for launch-sniper, momentum, premium-watch, and the bring-your-own-key llm-strategist." />
   <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%236d5ef8%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%232fd0e0%27%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Ccircle%20cx%3D%2716%27%20cy%3D%2716%27%20r%3D%2713%27%20fill%3D%27url(%23g)%27%2F%3E%3C%2Fsvg%3E" />
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -23,9 +23,10 @@
   <div class="wrap">
     <h1>Strategies</h1>
     <p class="lede">
-      Three simple, honestly documented strategies. No ML theater — every entry/exit rule is
-      readable in one file, and every strategy's <code>meta.edge</code> / <code>meta.failureModes</code>
-      is a live object on the class, not a comment that can drift from the code.
+      Four honestly documented strategies. No ML theater — every entry/exit rule is readable in one
+      file, and every strategy's <code>meta.edge</code> / <code>meta.failureModes</code> is a live
+      object on the class, not a comment that can drift from the code. Three are pure rule-based
+      code; the fourth, <code>llm-strategist</code>, is opt-in and bring-your-own-key.
     </p>
 
     <h2>launch-sniper</h2>
@@ -112,6 +113,46 @@
       <li>Stock Token pools are thin; the probe price doesn't reflect real trade-size slippage, and the trade itself moves the spread being arbitraged.</li>
       <li>No shorting primitive exists — only discounts are ever tradeable; premiums are alert-only by construction, not by choice.</li>
       <li>Chainlink staleness (weekend gap, feed outage) can masquerade as a discount when the oracle, not the pool, is stale.</li>
+    </ul>
+
+    <h2>llm-strategist <span class="badge">optional, bring your own key</span></h2>
+    <p><code>src/strategies/llm-strategist.ts</code> · quote token: WETH · disabled unless configured</p>
+    <p><strong>Edge hypothesis:</strong> <code>launch-sniper</code>'s filters are fixed cutoffs applied
+      independently — a launch either clears every threshold or it doesn't. An LLM can weigh the same
+      real on-chain signals (round-trip retention, deployer concentration) holistically instead, and
+      may make better marginal calls on launches that are close to the line. It sees nothing
+      <code>launch-sniper</code> can't — same inputs, a different judgment function.</p>
+
+    <div class="callout warn">
+      <strong>Bring your own key.</strong> Set <code>HOOD_LLM_PROVIDER</code> (<code>anthropic</code> |
+      <code>openai</code> | <code>groq</code> | <code>openrouter</code>) and <code>HOOD_LLM_API_KEY</code>
+      to enable it — unset, the fleet simply runs the other three strategies. Every verdict still
+      passes through the exact same risk engine as every other strategy; an LLM proposes an intent,
+      it never executes one directly.
+    </div>
+
+    <h3>Signal</h3>
+    <p>For each new launch, the strategy computes the same buy→sell round-trip retention and
+      deployer-supply-concentration numbers <code>launch-sniper</code> uses, sends them (numbers
+      only — no free-text on-chain fields, to limit prompt-injection surface) to the configured LLM
+      with a strict JSON-only verdict contract, and parses the response with a tolerant extractor
+      that throws on anything malformed.</p>
+    <h3>Entry</h3>
+    <p>Trades only when the verdict is <code>{"buy": true}</code> <strong>and</strong>
+      <code>confidence >= HOOD_LLM_MIN_CONFIDENCE</code> (default 0.6). Everything else — a
+      <code>buy:false</code> verdict, low confidence, a malformed response, or a provider timeout —
+      is logged to the decision journal as an alert, never a trade.</p>
+    <h3>Exits</h3>
+    <ul>
+      <li>Take-profit / stop-loss / time-exit — identical bands to <code>launch-sniper</code></li>
+    </ul>
+    <h3>Failure modes</h3>
+    <ul>
+      <li>LLM confidence is not calibrated probability — a confidently wrong verdict trades exactly like a confidently right one.</li>
+      <li>On-chain data reaching the prompt is attacker-controlled; only numeric signals are included today specifically to limit prompt-injection surface.</li>
+      <li>LLM round-trip latency means this strategy reacts to a launch after <code>launch-sniper</code> already has (or hasn't).</li>
+      <li>Every judged launch costs a real LLM API call regardless of verdict — a launch storm inflates spend with nothing to show for it.</li>
+      <li>One configured provider, no fallback chain — a provider outage means zero coverage until it recovers.</li>
     </ul>
 
     <footer class="footer">

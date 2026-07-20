@@ -1,6 +1,6 @@
 import type { Db } from './index.js'
 
-export type Platform = 'telegram' | 'discord' | 'console'
+export type Platform = 'telegram' | 'discord' | 'console' | 'x'
 
 export interface Subscriber {
   id: number

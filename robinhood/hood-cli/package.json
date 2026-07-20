@@ -1,6 +1,6 @@
 {
   "name": "hood-cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "The command-line toolkit for Robinhood Chain (chain 4663): instant reads with zero config, guarded writes with a wallet. Prices, portfolios, launches, swaps, transfers — the gh/vercel of Robinhood Chain.",
   "keywords": [
     "robinhood",

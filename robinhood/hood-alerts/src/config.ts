@@ -15,6 +15,27 @@ export interface Config {
   /** Discord bot token + application id, or null to disable the transport. */
   discordToken: string | null
   discordAppId: string | null
+  /**
+   * X (Twitter) delivery mode, or undefined to disable the transport.
+   * `official` posts through the real X API v2 (OAuth1, paid tier). `xactions`
+   * posts through a self-hosted https://github.com/nirholas/XActions instance
+   * (free, cookie-session automation, ToS risk). Set at most one.
+   */
+  xMode: 'official' | 'xactions' | undefined
+  /** official mode: X API v2 OAuth1 user-context credentials (developer.x.com). */
+  xApiKey: string | null
+  xApiSecret: string | null
+  xAccessToken: string | null
+  xAccessSecret: string | null
+  /** xactions mode: base URL and bearer token of a self-hosted xactions instance. */
+  xactionsUrl: string | null
+  xactionsToken: string | null
+  /**
+   * Topics the X broadcast auto-posts, resolved the same way a `watch`
+   * command would parse them. X has no inbound bot, so this is fixed at
+   * startup instead of user-driven.
+   */
+  xTopics: string[]
   /** Premium rail. Only `hood402` is implemented end-to-end. */
   premiumRail: 'hood402'
   /** Receiving address for premium payments (null = purchases disabled). */
@@ -80,6 +101,10 @@ export function loadConfig(): Config {
   if (settlerRaw && !/^0x[0-9a-fA-F]{64}$/.test(settlerRaw)) {
     throw new Error('HOOD402_SETTLER_KEY must be a 0x-prefixed 32-byte hex private key')
   }
+  const xModeRaw = str('HOOD_ALERTS_X_MODE')
+  if (xModeRaw !== null && xModeRaw !== 'official' && xModeRaw !== 'xactions') {
+    throw new Error(`HOOD_ALERTS_X_MODE must be "official" or "xactions", got "${xModeRaw}"`)
+  }
   const port = Math.floor(num('PORT', 8080))
   return {
     rpcUrl: str('HOOD_ALERTS_RPC_URL') ?? undefined,
@@ -89,6 +114,17 @@ export function loadConfig(): Config {
     telegramToken: str('HOOD_ALERTS_TELEGRAM_TOKEN'),
     discordToken: str('HOOD_ALERTS_DISCORD_TOKEN'),
     discordAppId: str('HOOD_ALERTS_DISCORD_APP_ID'),
+    xMode: xModeRaw ?? undefined,
+    xApiKey: str('HOOD_ALERTS_X_API_KEY'),
+    xApiSecret: str('HOOD_ALERTS_X_API_SECRET'),
+    xAccessToken: str('HOOD_ALERTS_X_ACCESS_TOKEN'),
+    xAccessSecret: str('HOOD_ALERTS_X_ACCESS_SECRET'),
+    xactionsUrl: str('HOOD_ALERTS_XACTIONS_URL'),
+    xactionsToken: str('HOOD_ALERTS_XACTIONS_TOKEN'),
+    xTopics: (str('HOOD_ALERTS_X_TOPICS') ?? 'launches,graduations,whales')
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean),
     premiumRail: 'hood402',
     payTo: (payToRaw as Address | null) ?? null,
     facilitatorUrl: str('HOOD402_FACILITATOR_URL'),

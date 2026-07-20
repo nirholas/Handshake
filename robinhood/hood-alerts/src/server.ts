@@ -41,13 +41,18 @@ export function buildApp(deps: ServerDeps): Hono {
   const validTarget = (c: { req: { query(k: string): string | undefined } }): { platform: Platform; chat: string } | null => {
     const platform = c.req.query('platform')
     const chat = c.req.query('chat')
-    if ((platform !== 'telegram' && platform !== 'discord' && platform !== 'console') || !chat || chat.length > 64) return null
+    if (
+      (platform !== 'telegram' && platform !== 'discord' && platform !== 'console' && platform !== 'x') ||
+      !chat ||
+      chat.length > 64
+    )
+      return null
     return { platform, chat }
   }
 
   app.get('/premium/status', (c) => {
     const target = validTarget(c)
-    if (!target) return c.json({ error: 'pass ?platform=telegram|discord&chat=<chat id>' }, 400)
+    if (!target) return c.json({ error: 'pass ?platform=telegram|discord|x&chat=<chat id>' }, 400)
     const entitlement = deps.engine.entitlements.get(target.platform, target.chat)
     const remaining = deps.engine.entitlements.remainingS(target.platform, target.chat)
     return c.json({
@@ -60,7 +65,7 @@ export function buildApp(deps: ServerDeps): Hono {
 
   app.post('/premium/activate', async (c) => {
     const target = validTarget(c)
-    if (!target) return c.json({ error: 'pass ?platform=telegram|discord&chat=<chat id>' }, 400)
+    if (!target) return c.json({ error: 'pass ?platform=telegram|discord|x&chat=<chat id>' }, 400)
     const result = await deps.paywall.activate(target.platform, target.chat, c.req.header(PAYMENT_HEADER), c.req.url)
     if (result.status === 200) {
       c.header('X-PAYMENT-RESPONSE', result.settlementHeader)

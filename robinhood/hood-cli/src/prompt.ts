@@ -33,6 +33,29 @@ export async function confirm(question: string): Promise<boolean> {
 }
 
 /**
+ * Ask a free-text question, echoing the input (not a secret). Falls back to
+ * the env var when provided. Returns `fallback` (default `''`) on an empty
+ * answer.
+ */
+export async function promptLine(question: string, envVar?: string, fallback = ''): Promise<string> {
+  const fromEnv = envVar ? process.env[envVar] : undefined
+  if (fromEnv) return fromEnv
+  if (!canPrompt()) {
+    throw guardError('An interactive answer is required.', envVar ? `Set ${envVar} or run in an interactive terminal.` : 'Run in an interactive terminal.')
+  }
+  const rl = createInterface({ input: process.stdin, output: process.stderr })
+  try {
+    const answer = await new Promise<string>((resolve) => {
+      rl.question(`${yellow('?')} ${bold(question)} `, resolve)
+    })
+    const trimmed = answer.trim()
+    return trimmed.length > 0 ? trimmed : fallback
+  } finally {
+    rl.close()
+  }
+}
+
+/**
  * Read a password without echoing it. Falls back to the env var when provided
  * so automation never has to type into a TTY.
  */

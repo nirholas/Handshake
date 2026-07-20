@@ -351,6 +351,29 @@ AES-256-GCM keystore (scrypt KDF, Node's built-in `crypto` — the same primitiv
 Web3 Secret Storage spec) to `~/.config/hood/keystore.json`. The private key never touches the
 config file or plaintext disk.
 
+### `hood init`
+
+The one-command onboarding wizard for the whole trading stack: this CLI's wallet, the
+[`hood-traders`](https://github.com/nirholas/hood-traders) `llm-strategist` (bring your own key —
+Claude, OpenAI, Groq, or OpenRouter), and the [`hood-alerts`](https://github.com/nirholas/hood-alerts)
+Telegram bot / Discord bot / X (Twitter) auto-posting. Every step is optional — skip anything you
+don't need with `n` or Enter.
+
+```bash
+hood init
+```
+
+It writes `hood-traders.env` and `hood-alerts.env` into the current directory (`--out <dir>` to
+choose another). Copy each into the matching package as `.env` and run it:
+
+```bash
+cp hood-traders.env hood-traders/.env && cd hood-traders && npx hood-traders
+cp hood-alerts.env  hood-alerts/.env  && cd hood-alerts  && npx hood-alerts
+```
+
+Needs an interactive terminal (secrets are typed, not passed as flags) — in CI or a non-interactive
+shell, copy `hood-traders/.env.example` and `hood-alerts/.env.example` by hand instead.
+
 ## Wallet & signing
 
 Every write command (`swap --execute`, `transfer`, `deploy-token --execute`, `config set

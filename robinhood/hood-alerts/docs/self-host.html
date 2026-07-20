@@ -42,6 +42,9 @@ npm run probe -- --token 0xTOKEN --seconds 300</code></pre>
       <tbody>
         <tr><td><code>HOOD_ALERTS_TELEGRAM_TOKEN</code></td><td>Message <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a>, run <code>/newbot</code>, copy the token.</td></tr>
         <tr><td><code>HOOD_ALERTS_DISCORD_TOKEN</code><br /><code>HOOD_ALERTS_DISCORD_APP_ID</code></td><td>Create an app at the <a href="https://discord.com/developers/applications" target="_blank" rel="noopener">Discord Developer Portal</a>; copy the Bot token and Application ID. Invite it with <code>applications.commands</code> + <code>bot</code> scopes.</td></tr>
+        <tr><td><code>HOOD_ALERTS_X_MODE=official</code><br /><code>HOOD_ALERTS_X_API_KEY</code> / <code>_API_SECRET</code> / <code>_ACCESS_TOKEN</code> / <code>_ACCESS_SECRET</code></td><td>X API v2 (OAuth1, user-context). Create an app at <a href="https://developer.x.com" target="_blank" rel="noopener">developer.x.com</a> with read+write access, copy the four credentials. Needs a posting-capable API tier — check current pricing there.</td></tr>
+        <tr><td><code>HOOD_ALERTS_X_MODE=xactions</code><br /><code>HOOD_ALERTS_XACTIONS_URL</code> / <code>_XACTIONS_TOKEN</code></td><td>Free, self-hosted alternative: point at your own running <a href="https://github.com/nirholas/XActions" target="_blank" rel="noopener">xactions</a> instance. Browser-session automation, not the official API — ToS risk, delivery isn't confirmed synchronously.</td></tr>
+        <tr><td><code>HOOD_ALERTS_X_TOPICS</code></td><td>Comma-separated topics to auto-post (default <code>launches,graduations,whales</code>). No inbound X bot, so this is fixed at startup, not set via a chat command.</td></tr>
       </tbody>
     </table>
     <p>Each transport is optional: set only the tokens you want. The others stay disabled and log a warning.</p>

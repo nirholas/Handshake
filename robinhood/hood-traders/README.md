@@ -26,8 +26,11 @@ drop-in change confined to `src/framework/market.ts`.
 - **Framework** (`src/framework/`): agent = strategy + wallet + risk budget + journal. Every tick
   runs observe → decide → simulate (a real Uniswap v3 `eth_call`) → risk-check (fail-closed) →
   execute → journal.
-- **Three strategies** (`src/strategies/`): `launch-sniper`, `momentum`, `premium-watch` — each
-  with an honestly documented edge hypothesis and failure modes (see [Strategies](#strategies)).
+- **Four strategies** (`src/strategies/`): `launch-sniper`, `momentum`, `premium-watch`, and
+  `llm-strategist` — each with an honestly documented edge hypothesis and failure modes (see
+  [Strategies](#strategies)). `llm-strategist` is optional and bring-your-own-key: point it at
+  Claude, OpenAI, Groq, or OpenRouter and it judges launches the other strategies discover, using
+  the same real on-chain signals, subject to the exact same risk engine as everything else.
 - **Live dashboard** (`dashboard/`): fleet overview, per-agent equity curve, open positions, the
   full decision journal (why each trade fired — or didn't), and a kill button.
 - **Risk layer** (`src/framework/risk.ts`): per-agent position cap, daily spend cap, fleet-wide
@@ -92,7 +95,7 @@ these tokenized debt securities (issuer: Robinhood Assets (Jersey) Ltd). Without
 ## Architecture
 
 See [`docs/architecture.html`](docs/architecture.html) for the full observe → decide → simulate →
-risk-check → execute → journal diagram, and how the three strategies plug into it. Short version:
+risk-check → execute → journal diagram, and how the four strategies plug into it. Short version:
 
 ```
 Market (hoodchain SDK, live RPC)
@@ -122,9 +125,30 @@ Full docs with live examples: [`docs/strategies.html`](docs/strategies.html). Su
 | `launch-sniper` | Opening-minutes volatility on new launches is real; discipline (round-trip + deployer-concentration filters, mechanical exits) harvests a slice of it. | Most new launches go to zero — the stop loss fires often; this is negative-carry unless winners cover losers. |
 | `momentum` | Tokens that survive to graduation and then break out on price reflect real demand, not launch-day noise. | Breakouts on thin pools are trivially fakeable by one wallet; price-only signal has no depth check. |
 | `premium-watch` | Stock Token pools are thin and drift from the Chainlink oracle; buying the discount captures reversion. **Alerts-only by default** — trading requires explicit eligibility + opt-in. | A premium/discount can be *correct* (DEX reacting to news the ≤24h Chainlink heartbeat hasn't caught yet); fading it loses on purpose. No shorting primitive exists. |
+| `llm-strategist` | An LLM (bring your own key) weighs the same round-trip-retention and deployer-concentration signals `launch-sniper` checks mechanically, holistically instead of against fixed cutoffs, and only trades above a confidence threshold. **Disabled unless configured** — see below. | LLM confidence is not calibrated probability; a confidently wrong verdict trades identically to a confidently right one. On-chain data reaching the prompt is attacker-controlled, so the brief is numbers-only by design. One provider, no fallback. |
 
 Every strategy exposes its `meta.edge` / `meta.failureModes` at runtime (`strategy.meta`) — the
 dashboard and docs pull the live values, not a stale copy.
+
+### `llm-strategist` setup
+
+Disabled by default — the fleet runs the other three strategies with zero LLM config. To enable it,
+set exactly one provider in `.env`:
+
+```sh
+# any ONE of:
+HOOD_LLM_PROVIDER=anthropic   HOOD_LLM_API_KEY=sk-ant-...
+HOOD_LLM_PROVIDER=openai      HOOD_LLM_API_KEY=sk-...
+HOOD_LLM_PROVIDER=groq        HOOD_LLM_API_KEY=gsk_...
+HOOD_LLM_PROVIDER=openrouter  HOOD_LLM_API_KEY=sk-or-...
+```
+
+`HOOD_LLM_MODEL` is optional — each provider has a sane default (see
+[`src/framework/llm.ts`](src/framework/llm.ts)); set it if a default ever goes stale or you want a
+stronger/cheaper model. `HOOD_LLM_MIN_CONFIDENCE` (default `0.6`) is the minimum LLM-stated
+confidence required to actually place a trade — everything below that is logged to the decision
+journal as an alert, not a trade. Every LLM API call costs money regardless of verdict; a launch
+storm inflates spend with nothing to show for it if you set the confidence bar too low.
 
 ## Configuration
 
@@ -143,6 +167,11 @@ All of `.env.example` is optional for paper mode. Key knobs:
 | `AGENT_COOLDOWN_SECONDS` | `60` | Minimum gap between an agent's trades |
 | `KILL_FILE` | `./KILL` | Drop a file here to halt the fleet immediately |
 | `DASHBOARD_PORT` | `4670` | Dashboard + API port |
+| `HOOD_LLM_PROVIDER` | *(unset)* | `anthropic`\|`openai`\|`groq`\|`openrouter` — enables `llm-strategist` when set with `HOOD_LLM_API_KEY` |
+| `HOOD_LLM_API_KEY` | *(unset)* | Your own key for the chosen provider |
+| `HOOD_LLM_MODEL` | *(per-provider default)* | Override the model id |
+| `HOOD_LLM_MIN_CONFIDENCE` | `0.6` | Minimum LLM confidence to trade, else it's alert-only |
+| `HOOD_LLM_TIMEOUT_MS` | `9000` | Per-call timeout before the judge is treated as failed |
 
 ## Kill switch
 
