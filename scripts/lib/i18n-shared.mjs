@@ -68,6 +68,22 @@ export function missingKeys(source, target) {
 	});
 }
 
+// How many keys in a catalog are present but not actually translated.
+//
+// A translate run that dies partway (expired credentials, an exhausted provider)
+// still writes the full key skeleton with empty-string values for everything it
+// never reached, so the catalog looks finished by key count while rendering as a
+// half-translated page. Callers use this to tell "complete" from "merely present"
+// before shipping a locale. Same empty-string rule as missingKeys, so a catalog
+// with count 0 is exactly one that a resumed run would find nothing to do for.
+export function untranslatedCount(catalog) {
+	let n = 0;
+	for (const value of Object.values(flatten(catalog || {}))) {
+		if (typeof value !== 'string' || value.trim() === '') n++;
+	}
+	return n;
+}
+
 // Keys present in target but no longer in source — stale translations to prune.
 export function staleKeys(source, target) {
 	const src = flatten(source);

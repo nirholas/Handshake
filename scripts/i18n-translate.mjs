@@ -37,6 +37,7 @@ import {
 	setDeep,
 	getDeep,
 	missingKeys,
+	untranslatedCount,
 	mergeOrdered,
 	buildMasker,
 	lintLocale,
@@ -549,10 +550,30 @@ function persist(code, existing, translatedFlat) {
 }
 
 // Refresh the runtime manifest the locale switcher reads. Only locales with a
-// committed catalog are listed, so the switcher never offers a language that
+// COMPLETE catalog are listed, so the switcher never offers a language that
 // would silently fall back to English.
+//
+// File existence is not enough. A run that dies partway (expired credentials, an
+// exhausted provider) still writes the full key skeleton with empty-string values
+// for everything it never reached, so the catalog looks finished by key count and
+// then renders as a half-translated page, because the runtime falls back to English
+// per key. Listing such a locale is exactly the failure this manifest exists to
+// prevent, so an incomplete catalog is skipped and reported rather than shipped.
 function writeManifest() {
-	const ready = (code) => code === cfg.entryLocale || existsSync(localePath(code));
+	const skipped = [];
+	const ready = (code) => {
+		if (code === cfg.entryLocale) return true;
+		if (!existsSync(localePath(code))) return false;
+		let empty = 0;
+		try {
+			empty = untranslatedCount(readJSON(localePath(code)));
+		} catch {
+			skipped.push(`${code} (unreadable)`);
+			return false;
+		}
+		if (empty) skipped.push(`${code} (${empty} untranslated key${empty === 1 ? '' : 's'})`);
+		return empty === 0;
+	};
 	const localesList = [cfg.entryLocale, ...cfg.outputLocales].filter(ready).map((code) => ({
 		code,
 		name: cfg.localeNames?.[code] || code,
@@ -563,6 +584,11 @@ function writeManifest() {
 		resolve(ROOT, cfg.output, 'manifest.json'),
 		JSON.stringify(manifest, null, '\t') + '\n',
 	);
+	if (skipped.length) {
+		console.log(
+			`• manifest: ${localesList.length} locale(s) listed, ${skipped.length} held back until complete: ${skipped.join(', ')}`,
+		);
+	}
 }
 
 // --- repair mode: re-translate only lint-failing keys ----------------------

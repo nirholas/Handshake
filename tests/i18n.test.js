@@ -17,6 +17,7 @@ import {
 	lintLocale,
 	mergeOrdered,
 	missingKeys,
+	untranslatedCount,
 	flatten,
 	setDeep,
 	getDeep,
@@ -155,6 +156,20 @@ describe('merge + diff', () => {
 	it('reports only missing/empty target keys', () => {
 		const target = { a: 'uno', b: { c: '' } };
 		expect(missingKeys(source, target).sort()).toEqual(['b.c', 'b.d']);
+	});
+
+	// A run killed partway leaves the full key skeleton with empty values, so a
+	// key-count check calls it finished while the page renders half-translated.
+	// The manifest gate uses this to tell "complete" from "merely present".
+	it('counts skeleton-only keys as untranslated so partial catalogs are detectable', () => {
+		expect(untranslatedCount({ a: 'uno', b: { c: 'dos' } })).toBe(0);
+		expect(untranslatedCount({ a: 'uno', b: { c: '', d: '   ' } })).toBe(2);
+		expect(untranslatedCount({})).toBe(0);
+	});
+
+	it('agrees with missingKeys, so a complete catalog leaves a resumed run nothing to do', () => {
+		const partial = { a: 'uno', b: { c: '', d: '' } };
+		expect(untranslatedCount(partial)).toBe(missingKeys(source, partial).length);
 	});
 
 	it('keeps prior translations, applies fresh ones, and prunes stale keys', () => {
