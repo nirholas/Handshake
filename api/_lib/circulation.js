@@ -64,6 +64,48 @@ const TIP_MAX = Math.floor(0.006 * SOL);
 const PAY_MIN = Math.floor(0.0012 * SOL);
 const PAY_MAX = Math.floor(0.01 * SOL);
 
+// ── Adaptive rate governor ────────────────────────────────────────────────────
+// The engine used to plan a fixed actionsPerTick regardless of what the treasury
+// could afford. When the treasury ran dry every action still did its RPC reads
+// and then threw Skip("treasury balance ... too low"), so the loop burned work to
+// produce nothing and the Money Pulse went silent until a human topped it up
+// (observed 2026-07-20: circulation dead for 11h while the x402 ring kept running).
+//
+// Instead the tick now reads the treasury once and scales itself: it funds as
+// many SOL-spending actions as it can actually afford, and fills the rest of the
+// budget with actions that cost nothing on-chain, so the economy degrades to a
+// quieter-but-alive state and automatically speeds back up as the ring's revenue
+// share refills the treasury. Self-balancing instead of burst-then-dead.
+const COSTLY_ACTIONS = new Set(['tip', 'payment', 'trade', 'launch', 'deploy', 'buy_skill', 'buy_asset']);
+/** Leave this much SOL so the treasury can always pay its own transfer fees. */
+const TREASURY_RESERVE_SOL = Number(process.env.CIRCULATION_TREASURY_RESERVE_SOL) || 0.005;
+/** Typical just-in-time top-up one paid action draws (observed ~0.012 SOL). */
+const EST_ACTION_SOL = Number(process.env.CIRCULATION_EST_ACTION_SOL) || 0.012;
+
+/**
+ * How many SOL-spending actions this tick can afford. Pure so the throttle curve
+ * is unit-testable without a chain or a treasury.
+ * @param {{treasurySol:number, actionsPerTick:number, reserveSol?:number, costPerActionSol?:number}} p
+ * @returns {{paidBudget:number, throttled:boolean, spendableSol:number, reason:string|null}}
+ */
+export function planBudget({
+	treasurySol,
+	actionsPerTick,
+	reserveSol = TREASURY_RESERVE_SOL,
+	costPerActionSol = EST_ACTION_SOL,
+}) {
+	const cap = Math.max(0, Number(actionsPerTick) || 0);
+	const spendable = Math.max(0, (Number(treasurySol) || 0) - reserveSol);
+	const affordable = costPerActionSol > 0 ? Math.floor(spendable / costPerActionSol) : cap;
+	const paidBudget = Math.max(0, Math.min(cap, affordable));
+	return {
+		paidBudget,
+		throttled: paidBudget < cap,
+		spendableSol: Math.round(spendable * 1e6) / 1e6,
+		reason: paidBudget === 0 ? 'treasury_below_reserve' : (paidBudget < cap ? 'treasury_low' : null),
+	};
+}
+
 const THREE_MINT = () => env.THREE_TOKEN_MINT || 'FeMbDoX7R1Psc4GEcvJdsbNbZA3bfztcyDCatJVJpump';
 
 // Marketplace economics. Listings are priced in whole $THREE; buyers acquire $THREE
@@ -1322,18 +1364,21 @@ async function buildAgentCard(agent, origin) {
 
 // Choose the action mix for this tick. Launch/deploy are heavyweight and run
 // solo. Everything else can batch up to actionsPerTick.
-async function planActions(cfg, poolSize) {
+async function planActions(cfg, poolSize, budget = null) {
 	const plan = [];
+	// No affordable paid slots → don't even price the heavyweight solo actions;
+	// they are the most expensive things the engine does.
+	const paidAllowed = budget ? budget.paidBudget > 0 : true;
 	const launchesToday = await recentCount('launch', '1 day');
 	const deploysToday = await recentCount('deploy', '1 day');
 	const launchesHour = await recentCount('launch', '45 minutes');
 
 	// Heavyweight, low-frequency, solo actions get first refusal.
 	const r = Math.random();
-	if (poolSize >= 2 && launchesHour === 0 && launchesToday < 8 && r < 0.14) {
+	if (paidAllowed && poolSize >= 2 && launchesHour === 0 && launchesToday < 8 && r < 0.14) {
 		return ['launch'];
 	}
-	if (cfg.evmTreasurySecret && poolSize >= 1 && deploysToday < 6 && r >= 0.14 && r < 0.2) {
+	if (paidAllowed && cfg.evmTreasurySecret && poolSize >= 1 && deploysToday < 6 && r >= 0.14 && r < 0.2) {
 		return ['deploy'];
 	}
 
@@ -1370,12 +1415,22 @@ async function planActions(cfg, poolSize) {
 		['review', 8],
 		['payment', 6],
 	];
-	const total = weighted.reduce((s, [, w]) => s + w, 0);
+	// Fill against the affordable budget: once the paid slots are used up, only
+	// actions that cost nothing on-chain remain eligible, so a lean treasury
+	// yields a quieter-but-live tick instead of a wall of guaranteed skips.
+	let paidLeft = budget ? budget.paidBudget : cfg.actionsPerTick;
 	while (plan.length < cfg.actionsPerTick) {
+		const eligible = paidLeft > 0 ? weighted : weighted.filter(([kind]) => !COSTLY_ACTIONS.has(kind));
+		if (!eligible.length) break;
+		const total = eligible.reduce((s, [, w]) => s + w, 0);
 		let roll = Math.random() * total;
-		for (const [kind, w] of weighted) {
+		for (const [kind, w] of eligible) {
 			roll -= w;
-			if (roll <= 0) { plan.push(kind); break; }
+			if (roll <= 0) {
+				plan.push(kind);
+				if (COSTLY_ACTIONS.has(kind)) paidLeft -= 1;
+				break;
+			}
 		}
 	}
 	return plan;
@@ -1439,8 +1494,29 @@ export async function runCirculationTick() {
 	let solUsd = null;
 	try { solUsd = await solUsdPrice(); } catch { /* usd is decoration */ }
 
+	// One treasury read per tick drives the governor. A failed read must not stall
+	// the economy, so it degrades to "assume fundable" and the per-action
+	// ensureFunded checks stay the backstop.
+	let treasurySol = null;
+	try {
+		treasurySol = (await conn.getBalance(treasuryKp.publicKey)) / SOL;
+	} catch (e) {
+		console.warn('[circulation] treasury balance read failed', e?.message);
+	}
+	const budget = treasurySol === null
+		? null
+		: planBudget({ treasurySol, actionsPerTick: cfg.actionsPerTick });
+	if (budget?.throttled) {
+		console.warn('[circulation] throttled', {
+			reason: budget.reason,
+			treasury_sol: Number(treasurySol.toFixed(6)),
+			paid_budget: budget.paidBudget,
+			actions_per_tick: cfg.actionsPerTick,
+		});
+	}
+
 	const ctx = { conn, treasuryKp, pool, network: cfg.network, origin: cfg.origin, solUsd, cfg };
-	const plan = await planActions(cfg, pool.length);
+	const plan = await planActions(cfg, pool.length, budget);
 
 	const results = [];
 	for (const kind of plan) {
@@ -1460,5 +1536,18 @@ export async function runCirculationTick() {
 		}
 	}
 
-	return { ok: true, pool: pool.length, grew, network: cfg.network, actions: results };
+	return {
+		ok: true,
+		pool: pool.length,
+		grew,
+		network: cfg.network,
+		...(budget
+			? {
+				treasury_sol: Number(treasurySol.toFixed(6)),
+				paid_budget: budget.paidBudget,
+				...(budget.throttled ? { throttled: budget.reason } : {}),
+			}
+			: {}),
+		actions: results,
+	};
 }
