@@ -20,7 +20,7 @@ export default {
 	tags: ['3d', 'rigging', 'skeleton', 'glb', 'pipeline'],
 	description: '3D Asset Pipeline — Rig: pay $0.05 USDC to make a static GLB animation-ready. A humanoid skeleton is inferred and bound to the mesh with skin weights so the model can walk, wave, and emote. POST a public glb_url; get back a durable first-party rigged GLB URL. No other x402 resource rigs a mesh.',
 	input: {
-		glb_url: 'https://three.ws/forge/character.glb',
+		glb_url: 'https://three.ws/avatars/mannequin.glb',
 		rig_type: 'biped',
 	},
 	inputSchema: {

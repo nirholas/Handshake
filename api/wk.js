@@ -910,7 +910,7 @@ const REST_OUTPUT_EXAMPLES = Object.freeze({
 	},
 	'/api/x402/pipeline-rig': {
 		stage: 'rig',
-		input_url: 'https://three.ws/forge/character.glb',
+		input_url: 'https://three.ws/avatars/mannequin.glb',
 		output_url: 'https://cdn.three.ws/x402-pipeline/rig/abc123.glb',
 		bytes: 1940112,
 		persisted: true,
@@ -918,7 +918,7 @@ const REST_OUTPUT_EXAMPLES = Object.freeze({
 	},
 	'/api/x402/pipeline-remesh': {
 		stage: 'remesh',
-		input_url: 'https://three.ws/forge/sample.glb',
+		input_url: 'https://three.ws/avatars/mannequin.glb',
 		output_url: 'https://cdn.three.ws/x402-pipeline/remesh/abc123.glb',
 		bytes: 812044,
 		persisted: true,
@@ -930,7 +930,7 @@ const REST_OUTPUT_EXAMPLES = Object.freeze({
 	},
 	'/api/x402/pipeline-gameready': {
 		stage: 'gameready',
-		input_url: 'https://three.ws/forge/prop.glb',
+		input_url: 'https://three.ws/avatars/mannequin.glb',
 		output_url: 'https://cdn.three.ws/x402-pipeline/gameready/abc123.glb',
 		bytes: 640220,
 		persisted: true,
@@ -942,7 +942,7 @@ const REST_OUTPUT_EXAMPLES = Object.freeze({
 	},
 	'/api/x402/pipeline-stylize': {
 		stage: 'stylize',
-		input_url: 'https://three.ws/forge/statue.glb',
+		input_url: 'https://three.ws/avatars/mannequin.glb',
 		output_url: 'https://cdn.three.ws/x402-pipeline/stylize/abc123.glb',
 		bytes: 512880,
 		persisted: true,
@@ -952,7 +952,7 @@ const REST_OUTPUT_EXAMPLES = Object.freeze({
 	},
 	'/api/x402/pipeline-rembg': {
 		stage: 'rembg',
-		input_url: 'https://three.ws/uploads/photo.jpg',
+		input_url: 'https://three.ws/avatars/thumbs/default.png',
 		output_url: 'https://cdn.three.ws/x402-pipeline/rembg/abc123.png',
 		bytes: 284112,
 		persisted: true,

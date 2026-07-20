@@ -87,12 +87,12 @@ export const OUTPUT_SCHEMA = {
 export const BAZAAR = {
 	discoverable: true,
 	info: {
-		input: { type: 'http', method: 'POST', bodyType: 'json', body: { glb_url: 'https://three.ws/forge/statue.glb', style: 'voxel', resolution: 48 } },
+		input: { type: 'http', method: 'POST', bodyType: 'json', body: { glb_url: 'https://three.ws/avatars/mannequin.glb', style: 'voxel', resolution: 48 } },
 		output: {
 			type: 'json',
 			example: {
 				stage: 'stylize',
-				input_url: 'https://three.ws/forge/statue.glb',
+				input_url: 'https://three.ws/avatars/mannequin.glb',
 				output_url: 'https://cdn.three.ws/x402-pipeline/stylize/abc123.glb',
 				bytes: 512_880,
 				persisted: true,

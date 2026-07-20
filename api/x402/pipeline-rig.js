@@ -75,12 +75,12 @@ export const OUTPUT_SCHEMA = {
 export const BAZAAR = {
 	discoverable: true,
 	info: {
-		input: { type: 'http', method: 'POST', bodyType: 'json', body: { glb_url: 'https://three.ws/forge/character.glb', rig_type: 'biped' } },
+		input: { type: 'http', method: 'POST', bodyType: 'json', body: { glb_url: 'https://three.ws/avatars/mannequin.glb', rig_type: 'biped' } },
 		output: {
 			type: 'json',
 			example: {
 				stage: 'rig',
-				input_url: 'https://three.ws/forge/character.glb',
+				input_url: 'https://three.ws/avatars/mannequin.glb',
 				output_url: 'https://cdn.three.ws/x402-pipeline/rig/abc123.glb',
 				bytes: 1_940_112,
 				persisted: true,

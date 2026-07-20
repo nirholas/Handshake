@@ -100,12 +100,12 @@ export const OUTPUT_SCHEMA = {
 export const BAZAAR = {
 	discoverable: true,
 	info: {
-		input: { type: 'http', method: 'POST', bodyType: 'json', body: { glb_url: 'https://three.ws/forge/prop.glb', topology: 'quad', poly_budget: 12000 } },
+		input: { type: 'http', method: 'POST', bodyType: 'json', body: { glb_url: 'https://three.ws/avatars/mannequin.glb', topology: 'quad', poly_budget: 12000 } },
 		output: {
 			type: 'json',
 			example: {
 				stage: 'gameready',
-				input_url: 'https://three.ws/forge/prop.glb',
+				input_url: 'https://three.ws/avatars/mannequin.glb',
 				output_url: 'https://cdn.three.ws/x402-pipeline/gameready/abc123.glb',
 				bytes: 640_220,
 				persisted: true,

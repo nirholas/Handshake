@@ -100,12 +100,12 @@ export const OUTPUT_SCHEMA = {
 export const BAZAAR = {
 	discoverable: true,
 	info: {
-		input: { type: 'http', method: 'POST', bodyType: 'json', body: { glb_url: 'https://three.ws/forge/sample.glb', remesh_mode: 'quad', target_faces: 20000 } },
+		input: { type: 'http', method: 'POST', bodyType: 'json', body: { glb_url: 'https://three.ws/avatars/mannequin.glb', remesh_mode: 'quad', target_faces: 20000 } },
 		output: {
 			type: 'json',
 			example: {
 				stage: 'remesh',
-				input_url: 'https://three.ws/forge/sample.glb',
+				input_url: 'https://three.ws/avatars/mannequin.glb',
 				output_url: 'https://cdn.three.ws/x402-pipeline/remesh/abc123.glb',
 				bytes: 812_044,
 				persisted: true,

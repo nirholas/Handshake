@@ -20,7 +20,7 @@ export default {
 	tags: ['3d', 'remesh', 'retopology', 'glb', 'pipeline'],
 	description: '3D Asset Pipeline — Remesh: pay $0.03 USDC to retopologize a GLB. Triangle, quad, or low-poly remeshing plus repair and decimation to a target face count, with the texture re-baked onto the new topology. POST a public glb_url and options; get back a durable first-party GLB URL.',
 	input: {
-		glb_url: 'https://three.ws/forge/sample.glb',
+		glb_url: 'https://three.ws/avatars/mannequin.glb',
 		remesh_mode: 'quad',
 		target_faces: 20000,
 	},

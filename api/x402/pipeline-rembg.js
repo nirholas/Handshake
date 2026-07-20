@@ -74,12 +74,12 @@ export const OUTPUT_SCHEMA = {
 export const BAZAAR = {
 	discoverable: true,
 	info: {
-		input: { type: 'http', method: 'POST', bodyType: 'json', body: { image_url: 'https://three.ws/uploads/photo.jpg', model: 'rmbg2' } },
+		input: { type: 'http', method: 'POST', bodyType: 'json', body: { image_url: 'https://three.ws/avatars/thumbs/default.png', model: 'rmbg2' } },
 		output: {
 			type: 'json',
 			example: {
 				stage: 'rembg',
-				input_url: 'https://three.ws/uploads/photo.jpg',
+				input_url: 'https://three.ws/avatars/thumbs/default.png',
 				output_url: 'https://cdn.three.ws/x402-pipeline/rembg/abc123.png',
 				bytes: 284_112,
 				persisted: true,

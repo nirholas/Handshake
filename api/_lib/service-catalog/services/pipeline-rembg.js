@@ -20,7 +20,7 @@ export default {
 	tags: ['image', 'rembg', 'cutout', 'segmentation', 'pipeline'],
 	description: '3D Asset Pipeline — Background Removal: pay $0.01 USDC to strip the background from an image, returning a transparent PNG — the clean reference view image→3D reconstruction needs so it never bakes a room into the mesh. POST a public image_url; get back a durable first-party PNG URL.',
 	input: {
-		image_url: 'https://three.ws/uploads/photo.jpg',
+		image_url: 'https://three.ws/avatars/thumbs/default.png',
 		model: 'rmbg2',
 	},
 	inputSchema: {

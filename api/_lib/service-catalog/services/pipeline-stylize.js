@@ -20,7 +20,7 @@ export default {
 	tags: ['3d', 'stylize', 'voxel', 'glb', 'pipeline'],
 	description: '3D Asset Pipeline — Stylize: pay $0.03 USDC to geometrically restyle a GLB. Voxel, brick, Voronoi-shatter, or faceted low-poly filters that rebuild the mesh itself (not a shader), so the look survives export to any engine. POST a public glb_url + style; get back a durable first-party GLB URL.',
 	input: {
-		glb_url: 'https://three.ws/forge/statue.glb',
+		glb_url: 'https://three.ws/avatars/mannequin.glb',
 		style: 'voxel',
 		resolution: 48,
 	},

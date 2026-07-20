@@ -20,7 +20,7 @@ export default {
 	tags: ['3d', 'gameready', 'retopology', 'glb', 'pipeline'],
 	description: '3D Asset Pipeline — Game-Ready: pay $0.03 USDC to make a GLB engine-ready. The mesh is retopologized to a fixed polygon budget (quad QuadriFlow or silhouette-preserving low-poly) with PBR re-baked onto the new topology. POST a public glb_url + poly_budget; get back a durable first-party GLB URL.',
 	input: {
-		glb_url: 'https://three.ws/forge/prop.glb',
+		glb_url: 'https://three.ws/avatars/mannequin.glb',
 		topology: 'quad',
 		poly_budget: 12000,
 	},
