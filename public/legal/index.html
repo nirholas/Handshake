@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title data-i18n="legal_index.meta_title">Legal · three.ws</title>
+	<link rel="icon" href="/favicon.ico" />
+	<style>
+		:root { color-scheme: dark; }
+		* { box-sizing: border-box; }
+		body {
+			font: 16px/1.7 -apple-system, system-ui, 'Segoe UI', sans-serif;
+			background: #000000;
+			color: #ccc;
+			margin: 0;
+			padding: 48px 24px 80px;
+		}
+		.wrap { max-width: 720px; margin: 0 auto; }
+		.brand { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: #ffffff; margin: 0 0 32px; display: block; text-decoration: none; }
+		.header-logo { width: 14px; height: 14px; vertical-align: -2px; margin-right: 6px; }
+		h1 { font-size: 32px; color: #eee; margin: 0 0 6px; letter-spacing: -.02em; }
+		.meta { color: #555; font-size: 14px; margin: 0 0 40px; }
+		h2 { font-size: 18px; color: #eee; margin: 40px 0 10px; }
+		p, li { color: #aaa; font-size: 15px; }
+		ul { padding-left: 20px; }
+		li { margin-bottom: 6px; }
+		a { color: #cccccc; }
+		hr { border: none; border-top: 1px solid #1e1e1e; margin: 48px 0; }
+		.foot { color: #555; font-size: 13px; }
+
+		/* Policy index. Each row is one whole click target, so the title, the
+		   summary and the date are all part of the same link — no small tap area
+		   on a phone, and one tab stop per policy for keyboard users. */
+		.docs { list-style: none; padding: 0; margin: 0; }
+		.docs li { margin: 0 0 10px; }
+		.doc {
+			display: block;
+			padding: 16px 18px;
+			border: 1px solid #1e1e1e;
+			border-radius: 10px;
+			text-decoration: none;
+			background: #070707;
+			transition: border-color .15s ease, background .15s ease, transform .15s ease;
+		}
+		.doc:hover, .doc:focus-visible { border-color: #3a3a3a; background: #0d0d0d; transform: translateY(-1px); }
+		.doc:focus-visible { outline: 2px solid #6ea8ff; outline-offset: 2px; }
+		.doc:active { transform: translateY(0); background: #101010; }
+		.doc-title { display: block; color: #eee; font-size: 16px; font-weight: 600; margin: 0 0 3px; }
+		.doc-desc { display: block; color: #999; font-size: 14px; line-height: 1.55; }
+		.doc-date { display: block; color: #555; font-size: 12px; margin-top: 6px; }
+
+		/* Contact table: which address actually reaches the right desk. */
+		.contacts { list-style: none; padding: 0; margin: 0; }
+		.contacts li { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-bottom: 10px; font-size: 15px; }
+		.contacts .who { color: #eee; min-width: 190px; }
+		.contacts .what { color: #888; font-size: 14px; flex: 1 1 240px; }
+
+		@media (prefers-reduced-motion: reduce) {
+			.doc { transition: none; }
+			.doc:hover, .doc:focus-visible, .doc:active { transform: none; }
+		}
+		@media (max-width: 520px) {
+			body { padding: 32px 18px 64px; }
+			h1 { font-size: 26px; }
+			.contacts .who { min-width: 0; }
+		}
+	</style>
+
+	<meta name="description" content="Every three.ws policy in one place: terms of service, privacy, content policy, risk disclosure, and the EULAs — plus where to report copyright, abuse, or privacy issues." data-i18n-attr="content:legal_index.meta_description">
+	<link rel="canonical" href="https://three.ws/legal">
+	<meta property="og:type" content="website">
+	<meta property="og:site_name" content="three.ws">
+	<meta property="og:title" content="Legal · three.ws" data-i18n-attr="content:legal_index.meta_og_title">
+	<meta property="og:description" content="Every three.ws policy in one place, plus where to report copyright, abuse, or privacy issues." data-i18n-attr="content:legal_index.meta_og_description">
+	<meta property="og:url" content="https://three.ws/legal">
+	<meta property="og:image" content="https://three.ws/api/page-og?s=legal&amp;t=Legal&amp;d=Every+three.ws+policy+in+one+place.&amp;p=%2Flegal">
+	<meta property="og:image:width" content="1200">
+	<meta property="og:image:height" content="630">
+	<meta name="twitter:card" content="summary_large_image">
+	<meta name="twitter:title" content="Legal · three.ws" data-i18n-attr="content:legal_index.meta_twitter_title">
+	<meta name="twitter:description" content="Every three.ws policy in one place, plus where to report copyright, abuse, or privacy issues." data-i18n-attr="content:legal_index.meta_twitter_description">
+	<meta name="twitter:image" content="https://three.ws/api/page-og?s=legal&amp;t=Legal&amp;d=Every+three.ws+policy+in+one+place.&amp;p=%2Flegal">
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","name":"Legal","description":"Every three.ws policy in one place.","url":"https://three.ws/legal","isPartOf":{"@type":"WebSite","name":"three.ws","url":"https://three.ws"}}</script>
+
+	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+	<meta property="og:locale" content="en_US">
+	<meta property="og:image:alt" content="Legal — three.ws">
+	<meta name="twitter:site" content="@trythreews">
+</head>
+<body>
+<div class="wrap">
+	<a class="brand" href="/"><img src="/three.svg" alt="" class="header-logo" aria-hidden="true" />three.ws</a>
+	<h1 data-i18n="legal_index.legal">Legal</h1>
+	<p class="meta" data-i18n="legal_index.every_policy_that_governs_your_use_of">Every policy that governs your use of three.ws, and where to reach us.</p>
+
+	<p data-i18n-html="legal_index.if_you_are_looking_for_one_specific">If you are looking for one specific thing: copyright takedowns are handled at <a href="mailto:dmca@three.ws">dmca@three.ws</a>, abuse reports at <a href="mailto:abuse@three.ws">abuse@three.ws</a>, and everything else at <a href="mailto:legal@three.ws">legal@three.ws</a>.</p>
+
+	<h2 data-i18n="legal_index.policies">Policies</h2>
+	<ul class="docs">
+		<li data-i18n-html="legal_index.terms_of_service_the_agreement_between_you">
+			<a class="doc" href="/legal/tos">
+				<span class="doc-title">Terms of Service</span>
+				<span class="doc-desc">The agreement between you and three.ws: your account, acceptable use, payments and on-chain activity, liability, and the DMCA takedown process.</span>
+				<span class="doc-date">Effective July 16, 2026</span>
+			</a>
+		</li>
+		<li data-i18n-html="legal_index.privacy_policy_what_data_we_collect_why">
+			<a class="doc" href="/legal/privacy">
+				<span class="doc-title">Privacy Policy</span>
+				<span class="doc-desc">What data we collect, why we hold it, who we share it with, and the controls you have over it.</span>
+				<span class="doc-date">Effective July 16, 2026</span>
+			</a>
+		</li>
+		<li data-i18n-html="legal_index.content_policy_what_you_may_publish_mint">
+			<a class="doc" href="/legal/content-policy">
+				<span class="doc-title">Content Policy</span>
+				<span class="doc-desc">What you may publish, mint, and monetise: prohibited content, agent behaviour, marketplace listings, and how we enforce.</span>
+				<span class="doc-date">Effective June 21, 2026</span>
+			</a>
+		</li>
+		<li data-i18n-html="legal_index.risk_disclosure_read_before_using_any_real">
+			<a class="doc" href="/legal/risk">
+				<span class="doc-title">Risk Disclosure</span>
+				<span class="doc-desc">Read before using any real-funds feature. Experimental software, autonomous agents acting on your behalf, and total-loss risk.</span>
+				<span class="doc-date">Effective July 3, 2026</span>
+			</a>
+		</li>
+		<li data-i18n-html="legal_index.end_user_license_agreement_license_terms_for">
+			<a class="doc" href="/legal/eula">
+				<span class="doc-title">End-User License Agreement</span>
+				<span class="doc-desc">License terms for the three.ws Seeker/Saga mobile app.</span>
+				<span class="doc-date">Effective July 14, 2026</span>
+			</a>
+		</li>
+		<li data-i18n-html="legal_index.aws_marketplace_eula_license_terms_for_three">
+			<a class="doc" href="/legal/aws-marketplace-eula.html">
+				<span class="doc-title">AWS Marketplace EULA</span>
+				<span class="doc-desc">License terms for three.ws software obtained through AWS Marketplace.</span>
+				<span class="doc-date">Effective May 30, 2026</span>
+			</a>
+		</li>
+	</ul>
+
+	<h2 data-i18n="legal_index.reporting_something">Reporting something</h2>
+	<p data-i18n="legal_index.you_do_not_need_a_lawyer_to">You do not need a lawyer to reach us, and you do not need to file a formal notice before we will look at a problem. Tell us the URL and what is wrong with it.</p>
+	<ul class="contacts">
+		<li data-i18n-html="legal_index.dmca_three_ws_copyright_your_work_is"><span class="who"><a href="mailto:dmca@three.ws">dmca@three.ws</a></span> <span class="what">Copyright. Your work is being reproduced without permission, or you want your publication removed from a feed we aggregate.</span></li>
+		<li data-i18n-html="legal_index.abuse_three_ws_content_that_breaks_the"><span class="who"><a href="mailto:abuse@three.ws">abuse@three.ws</a></span> <span class="what">Content that breaks the Content Policy: impersonation, harassment, fraud, or illegal material.</span></li>
+		<li data-i18n-html="legal_index.privacy_three_ws_data_requests_access_correc"><span class="who"><a href="mailto:privacy@three.ws">privacy@three.ws</a></span> <span class="what">Data requests: access, correction, deletion, or a question about how your data is handled.</span></li>
+		<li data-i18n-html="legal_index.legal_three_ws_anything_else_including_quest"><span class="who"><a href="mailto:legal@three.ws">legal@three.ws</a></span> <span class="what">Anything else, including questions about these policies.</span></li>
+		<li data-i18n-html="legal_index.support_three_ws_product_problems_that_are"><span class="who"><a href="mailto:support@three.ws">support@three.ws</a></span> <span class="what">Product problems that are not a legal matter.</span></li>
+	</ul>
+
+	<h2 data-i18n="legal_index.publishers">Publishers</h2>
+	<p data-i18n-html="legal_index.three_ws_aggregates_crypto_news_headlines_an">three.ws aggregates crypto news headlines and adds its own analysis. We quote a short lead excerpt and link to you for the rest; we do not host your article body. If you believe we are showing more than that, or you want your publication dropped from the aggregator entirely, email <a href="mailto:dmca@three.ws">dmca@three.ws</a> and we will act on it. The full policy, including the limits we enforce in code, is documented at <a href="/docs/news-rights">Publisher rights in the news reader</a>.</p>
+
+	<hr>
+	<p class="foot" data-i18n-html="legal_index.three_ws_terms_of_service_privacy_policy">three.ws &nbsp;·&nbsp; <a href="/legal/tos">Terms of Service</a> &nbsp;·&nbsp; <a href="/legal/privacy">Privacy Policy</a> &nbsp;·&nbsp; <a href="/">Home</a></p>
+</div>
+	<script src="/brand.js" defer></script>
+	<!-- Runtime i18n: detects locale, swaps annotated copy, mounts <lang-switcher>. -->
+	<script type="module" src="/i18n.js"></script>
+</body>
+</html>

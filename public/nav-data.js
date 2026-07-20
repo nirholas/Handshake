@@ -611,6 +611,9 @@ export const NAV_LINKS = [
 export const DRAWER_LEGAL = [
 	{ title: 'Privacy Policy', href: '/legal/privacy' },
 	{ title: 'Terms of Use', href: '/legal/tos' },
+	// The hub: the other four policies (content, risk, the two EULAs) have no
+	// nav home of their own, and it carries the report-something addresses.
+	{ title: 'All policies', href: '/legal' },
 ];
 
 // The chat SPA header shows a compact subset of main-site destinations.

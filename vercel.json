@@ -4670,6 +4670,10 @@
 			"dest": "/agent-studio.html"
 		},
 		{
+			"src": "/legal/?",
+			"dest": "/legal/index.html"
+		},
+		{
 			"src": "/legal/privacy/?",
 			"dest": "/legal/privacy.html"
 		},

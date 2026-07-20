@@ -59,9 +59,9 @@ The script rewrites each affected `gs://three-ws-news-archive/articles/<month>.j
 
 ## If you are a publisher
 
-If three.ws is showing more of your work than you want it to, you do not need to file anything formal first — email the address on [/legal](https://three.ws/legal) with the URLs and we will remove them. We will also honour a request to drop your publication from the aggregator entirely.
+If three.ws is showing more of your work than you want it to, you do not need to file anything formal first. Email **[dmca@three.ws](mailto:dmca@three.ws)** with the URLs and we will remove them, and we will honour a request to drop your publication from the aggregator entirely.
 
-If you would rather file a DMCA notice, that is fine too, and it reaches us either way.
+If you would rather file a formal DMCA notice, the process and the information required by 17 U.S.C. § 512(c)(3) are in the [Terms of Service](https://three.ws/legal/tos); it reaches the same place. Every policy is listed at [three.ws/legal](https://three.ws/legal).
 
 ## For contributors
 
