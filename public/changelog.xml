@@ -47,6 +47,14 @@
 			<description>A PumpSwap pool that has run out of tradable depth could, in rare cases, be priced as a 0% price-impact trade instead of being refused, because the impact math never reports a negative number and a drained pool's reserves can go negative internally. That reading is deceptively attractive and would have slipped past both the sniper's safety breaker and the agent trade guard's max price-impact limit. Every path that can quote a swap, the agent trade API, the pump.fun MCP tool, and the in-browser quote helper, now refuses a pool with no real depth before it ever returns a price.</description>
 		</item>
 		<item>
+			<title>Every commit to three.ws now posts live to Telegram</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-20:Every commit to three.ws now posts live to Telegram</guid>
+			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Alongside the curated changelog digest, the holders' Telegram channel now gets a message the moment each commit lands on main: short SHA, author, and a link to the diff. It's a raw, unfiltered build log instead of a periodic summary, for anyone who wants to watch the platform get built in real time.</description>
+		</item>
+		<item>
 			<title>Every page on three.ws now reads in 48 languages</title>
 			<link>https://three.ws/docs/i18n</link>
 			<guid isPermaLink="false">2026-07-20:Every page on three.ws now reads in 48 languages</guid>

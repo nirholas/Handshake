@@ -15148,6 +15148,15 @@
 				"feature"
 			],
 			"link": "/pose"
+		},
+		{
+			"date": "2026-07-20",
+			"title": "Every commit to three.ws now posts live to Telegram",
+			"summary": "Alongside the curated changelog digest, the holders' Telegram channel now gets a message the moment each commit lands on main: short SHA, author, and a link to the diff. It's a raw, unfiltered build log instead of a periodic summary, for anyone who wants to watch the platform get built in real time.",
+			"tags": [
+				"feature",
+				"infra"
+			]
 		}
 	]
 }

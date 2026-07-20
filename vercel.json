@@ -5500,6 +5500,10 @@
 			"schedule": "*/20 * * * *"
 		},
 		{
+			"path": "/api/cron/commit-feed-push",
+			"schedule": "*/5 * * * *"
+		},
+		{
 			"path": "/api/cron/forge-off-crown",
 			"schedule": "7 0 * * 1"
 		}
