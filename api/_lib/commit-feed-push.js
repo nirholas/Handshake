@@ -85,14 +85,35 @@ function newCommitsSince(commits, lastSha) {
 const escapeHtml = (s) =>
 	String(s).replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c]);
 
+// Most commit subjects in this repo follow a loose "scope: description"
+// convention ("agent-sniper: stop LLM judge calls…", "docs: cover ASL
+// fingerspelling…"). Split on the first colon when it looks like that
+// convention so the scope reads as a small headline and the rest as the
+// body, matching the changelog message's headline/body/footer shape.
+// Subjects without that convention fall back to a generic headline with the
+// full subject as the body.
+function splitSubject(subjectLine) {
+	const idx = subjectLine.indexOf(': ');
+	if (idx > 0 && idx < 60) {
+		return { headline: subjectLine.slice(0, idx), body: subjectLine.slice(idx + 2) };
+	}
+	return { headline: 'New commit', body: subjectLine };
+}
+
 export function formatTelegramMessage(commit) {
 	const shortSha = commit.sha.slice(0, 7);
-	const subject = (commit.commit?.message || '').split('\n')[0];
+	const subjectLine = (commit.commit?.message || '').split('\n')[0];
+	const { headline, body } = splitSubject(subjectLine);
 	const author = commit.author?.login || commit.commit?.author?.name || 'unknown';
+	const date = (commit.commit?.author?.date || '').slice(0, 10);
 	const url = commit.html_url || `https://github.com/${REPO}/commit/${commit.sha}`;
+	const linkText = `github.com/${REPO}/commit/${shortSha}`;
 	return [
-		`<code>${escapeHtml(shortSha)}</code> ${escapeHtml(subject)}`,
-		`${escapeHtml(author)} · <a href="${url}">view</a>`,
+		`<b>${escapeHtml(headline)}</b>`,
+		'',
+		escapeHtml(body),
+		'',
+		`<a href="${url}">${escapeHtml(linkText)}</a> · ${escapeHtml(date)} · ${escapeHtml(author)}`,
 	].join('\n');
 }
 
