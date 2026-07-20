@@ -2,6 +2,31 @@
 // Imported by both the Vercel handler (api/pump-fun-mcp.js) and the
 // Cloudflare Workers mirror (workers/pump-fun-mcp/worker.js).
 // No imports — pure data and pure helpers only.
+//
+// ── Two pricing regimes, never blur them ────────────────────────────────────
+// The tool descriptions here are the contract a model reads, so the two
+// pump.fun pricing regimes have to stay distinct:
+//
+//   Pre-graduation  · pump program BondingCurve account. Spot price is
+//     virtual_quote_reserves / virtual_token_reserves (both u64). Those
+//     quote-side fields were renamed from virtual_sol_reserves /
+//     real_sol_reserves once a non-SOL quote asset became possible: same u64s,
+//     same offsets, new names. The curve also gained a quote_mint, which is the
+//     SOL default on every coin created to date. Surfaced by get_bonding_curve
+//     and social_x_post_impact.
+//
+//   Post-graduation · PumpSwap (pump_amm) Pool account. Quotes price against the
+//     EFFECTIVE quote reserve: pool_quote_token_account.amount +
+//     pool.virtual_quote_reserves, a field appended to Pool that carries a
+//     non-zero value on boost pools from 2026-07-20. It is an i128, so it is
+//     signed and effective depth can fall below the raw vault balance. The base
+//     side is unchanged: still the raw pool_base_token_account.amount. Surfaced
+//     by pumpfun_quote_swap.
+//
+// The two virtual_quote_reserves are DIFFERENT fields, on DIFFERENT accounts,
+// with DIFFERENT widths, that happen to share a name. A coin has one or the
+// other, never both.
+// See docs/pumpfun-program/UPSTREAM-pumpswap-virtual-quote-reserves.md
 
 // ── MCP ToolAnnotations (spec: readOnlyHint/destructiveHint/idempotentHint/
 // openWorldHint). Every tool on this surface is read-only — nothing signs or
@@ -142,7 +167,13 @@ export const TOOLS = [
 	{
 		name: 'get_bonding_curve',
 		description:
-			'Bonding curve analysis: real reserves, virtual reserves, and graduation progress (on-chain).',
+			'Bonding curve analysis: real reserves, virtual reserves, and graduation progress (on-chain). ' +
+			'Pre-graduation only: these reserves come from the pump program bonding-curve account, not from a ' +
+			'PumpSwap pool. Pump renamed the quote-side fields on-chain (real_sol_reserves -> real_quote_reserves, ' +
+			'virtual_sol_reserves -> virtual_quote_reserves) once a non-SOL quote asset became possible; the ' +
+			'response keys below keep their original names and are still denominated in SOL, because the curve ' +
+			'quote_mint is the SOL default on every coin created to date. Once complete=true the curve is retired ' +
+			'and pricing moves to the PumpSwap pool, so use pumpfun_quote_swap from that point on.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -158,9 +189,9 @@ export const TOOLS = [
 				network: { type: 'string' },
 				complete: { type: 'boolean', description: 'true once the curve has graduated' },
 				graduationPercent: { type: 'number', description: '0–100 graduation progress' },
-				solReserves: { type: 'string', description: 'Real SOL reserves in SOL (4-decimal string)' },
+				solReserves: { type: 'string', description: 'Real quote reserves in SOL (4-decimal string). On-chain field: real_quote_reserves.' },
 				tokenReserves: { type: 'string', description: 'Real token reserves (raw base units)' },
-				virtualSolReserves: { type: 'string', description: 'Virtual SOL reserves (lamports)' },
+				virtualSolReserves: { type: 'string', description: 'Virtual quote reserves (lamports). On-chain field: virtual_quote_reserves (u64). Spot price = virtual_quote_reserves / virtual_token_reserves. Distinct from the identically-named PumpSwap Pool.virtual_quote_reserves (an i128), which applies only after graduation.' },
 				virtualTokenReserves: { type: 'string', description: 'Virtual token reserves (raw base units)' },
 			},
 			required: [

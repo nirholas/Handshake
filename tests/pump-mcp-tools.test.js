@@ -98,6 +98,58 @@ describe('src/pump/mcp-tools — shared tool registry', () => {
 		expect(env.id).toBeNull();
 	});
 
+	// PumpSwap prices on effective quote reserves (vault + Pool.virtual_quote_reserves).
+	// The MCP surface is the contract a model reads, so it has to (a) hand back the
+	// reserves a quote was priced from, and (b) keep the two identically-named
+	// virtual_quote_reserves fields apart. Getting (b) wrong is how a model ends up
+	// applying AMM pool math to a bonding curve.
+	describe('PumpSwap effective-reserve contract', () => {
+		const tool = (name) => TOOLS.filter(Boolean).find((t) => t.name === name);
+
+		it('pumpfun_quote_swap declares reserve provenance so a quote can be reproduced', () => {
+			const props = tool('pumpfun_quote_swap')?.outputSchema?.properties ?? {};
+			for (const field of [
+				'base_reserve',
+				'quote_reserve',
+				'virtual_quote_reserves',
+				'effective_quote_reserve',
+			]) {
+				expect(props[field]?.type, `${field} must be declared`).toBe('string');
+			}
+			// Reserves are u64/i128 on chain and exceed Number.MAX_SAFE_INTEGER, so
+			// they must stay strings. A number here would silently lose precision.
+			expect(props.amountOut.type).toBe('string');
+		});
+
+		it('pumpfun_quote_swap describes the effective quote reserve, not the raw vault', () => {
+			const t = tool('pumpfun_quote_swap');
+			expect(t.description).toMatch(/effective/i);
+			expect(t.description).toMatch(/virtual_quote_reserves/);
+			// The base side did NOT change; saying otherwise sends callers hunting
+			// for a virtual base reserve that does not exist.
+			expect(t.description).toMatch(/base/i);
+			expect(t.outputSchema.properties.base_reserve.description).toMatch(
+				/unaffected|unchanged/i,
+			);
+		});
+
+		it('keeps the bonding-curve and pool virtual_quote_reserves distinguishable', () => {
+			const curve = tool('get_bonding_curve');
+			// The curve tool must scope itself to pre-graduation and point onward,
+			// or a model will call it for a graduated coin and read zeros.
+			expect(curve.description).toMatch(/pre-graduation/i);
+			expect(curve.description).toMatch(/pumpfun_quote_swap/);
+			// And it must name the on-chain rename, since the response key
+			// (virtualSolReserves) no longer matches the on-chain field.
+			expect(curve.outputSchema.properties.virtualSolReserves.description).toMatch(
+				/virtual_quote_reserves/,
+			);
+			expect(curve.outputSchema.properties.solReserves.description).toMatch(
+				/real_quote_reserves/,
+			);
+		});
+	});
+
 	it('Vercel and Worker runtimes share the same TOOLS source (structural parity)', async () => {
 		// Both api/pump-fun-mcp.js and workers/pump-fun-mcp/worker.js import TOOLS
 		// from this module, so the tool list is identical by construction.

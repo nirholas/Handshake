@@ -5,6 +5,31 @@
 // unreachable at startup, so a freshly-installed client still advertises a
 // correct tool surface offline. Keep in sync with src/pump/mcp-tools.js in the
 // three.ws repo — that file is the source of truth.
+//
+// ── Pricing surfaces (what the descriptions below must keep straight) ────────
+// This bridge performs no pricing of its own: every number is computed by the
+// backend from live on-chain state. What lives here is the contract the model
+// reads, so the two pump.fun pricing regimes must never be blurred together:
+//
+//   Pre-graduation  · pump program BondingCurve account. Spot price is
+//     virtual_quote_reserves / virtual_token_reserves (both u64). Those
+//     quote-side fields were renamed from virtual_sol_reserves /
+//     real_sol_reserves when a non-SOL quote asset became possible; same u64s,
+//     same offsets, new names, and the curve gained a quote_mint (the SOL
+//     default on every coin created to date). Surfaced by get_bonding_curve and
+//     social_x_post_impact.
+//
+//   Post-graduation · PumpSwap (pump_amm) Pool account. Quotes price against the
+//     EFFECTIVE quote reserve, pool_quote_token_account.amount +
+//     pool.virtual_quote_reserves, a field appended to Pool that carries a
+//     non-zero value on boost pools from 2026-07-20. It is an i128, so it is
+//     signed and effective depth can fall below the raw vault balance. The base
+//     side is unchanged: still the raw pool_base_token_account.amount. Surfaced
+//     by pumpfun_quote_swap.
+//
+// The two virtual_quote_reserves are DIFFERENT fields, on DIFFERENT accounts,
+// with DIFFERENT widths, that happen to share a name. A coin has one or the
+// other, never both.
 
 // ── MCP ToolAnnotations (readOnlyHint/destructiveHint/idempotentHint/
 // openWorldHint). Every tool on this surface is read-only — nothing signs or
@@ -62,7 +87,9 @@ export const TOOL_NAME_ALIASES = Object.freeze({
 });
 
 const CANONICAL_TO_LEGACY = Object.freeze(
-	Object.fromEntries(Object.entries(TOOL_NAME_ALIASES).map(([legacy, canonical]) => [canonical, legacy])),
+	Object.fromEntries(
+		Object.entries(TOOL_NAME_ALIASES).map(([legacy, canonical]) => [canonical, legacy]),
+	),
 );
 
 // Resolve a tool name to its canonical (snake_case) form. Unknown names pass
@@ -145,7 +172,13 @@ export const FALLBACK_TOOLS = [
 	{
 		name: 'get_bonding_curve',
 		description:
-			'Bonding curve analysis: real reserves, virtual reserves, and graduation progress (on-chain).',
+			'Bonding curve analysis: real reserves, virtual reserves, and graduation progress (on-chain). ' +
+			'Pre-graduation only: the reserves come from the pump program bonding-curve account, not from a ' +
+			'PumpSwap pool. Pump renamed the quote-side fields (real_sol_reserves → real_quote_reserves, ' +
+			'virtual_sol_reserves → virtual_quote_reserves) when a non-SOL quote asset became possible; the ' +
+			'response keys below keep their original names and are still denominated in SOL, because the curve ' +
+			'quote_mint is the SOL default on every coin created to date. Once complete=true the curve is ' +
+			'retired and pricing moves to the PumpSwap pool, so use pumpfun_quote_swap from that point on.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -163,10 +196,20 @@ export const FALLBACK_TOOLS = [
 				graduationPercent: { type: 'number', description: '0–100 graduation progress' },
 				solReserves: {
 					type: 'string',
-					description: 'Real SOL reserves in SOL (4-decimal string)',
+					description:
+						'Real quote reserves in SOL (4-decimal string). On-chain field: real_quote_reserves.',
 				},
-				tokenReserves: { type: 'string', description: 'Real token reserves (raw base units)' },
-				virtualSolReserves: { type: 'string', description: 'Virtual SOL reserves (lamports)' },
+				tokenReserves: {
+					type: 'string',
+					description: 'Real token reserves (raw base units)',
+				},
+				virtualSolReserves: {
+					type: 'string',
+					description:
+						'Virtual quote reserves in lamports. On-chain field: virtual_quote_reserves. ' +
+						'Spot price = virtual_quote_reserves / virtual_token_reserves. Distinct from the ' +
+						'identically-named PumpSwap Pool.virtual_quote_reserves, which applies only after graduation.',
+				},
 				virtualTokenReserves: {
 					type: 'string',
 					description: 'Virtual token reserves (raw base units)',
@@ -400,7 +443,13 @@ export const FALLBACK_TOOLS = [
 	{
 		name: 'pumpfun_quote_swap',
 		description:
-			'Read-only price quote for a pump.fun AMM swap. No signing or tx sending. One of inputMint/outputMint must be wSOL (So11111111111111111111111111111111111111112). Returns amountOut, priceImpactBps, route, expiresAtMs.',
+			'Read-only price quote for a pump.fun (PumpSwap) AMM swap on a GRADUATED coin. No signing or tx ' +
+			'sending. One of inputMint/outputMint must be wSOL (So11111111111111111111111111111111111111112). ' +
+			'Returns amountOut, priceImpactBps, route, expiresAtMs. Pricing follows PumpSwap exactly: the ' +
+			'quote side is the EFFECTIVE reserve, pool_quote_token_account.amount + pool.virtual_quote_reserves ' +
+			'(non-zero on launchpad coins since 2026-07-20), while the base side is the raw ' +
+			'pool_base_token_account.amount, unchanged. Coins still on the bonding curve have no pool, so use ' +
+			'get_bonding_curve instead. The quote is a snapshot: honour expiresAtMs and re-quote after it.',
 		inputSchema: {
 			type: 'object',
 			properties: {
@@ -418,11 +467,62 @@ export const FALLBACK_TOOLS = [
 			},
 			required: ['inputMint', 'outputMint', 'amountIn'],
 		},
+		outputSchema: {
+			type: 'object',
+			properties: {
+				amountOut: {
+					type: 'string',
+					description:
+						'Expected output in raw base units (lamports when the output is wSOL), fee-inclusive.',
+				},
+				priceImpactBps: {
+					type: 'number',
+					description:
+						'Execution price vs. the pool spot price, in basis points. Spot is measured against the ' +
+						'effective quote reserve (vault + virtual), so virtual liquidity correctly reads as depth ' +
+						'rather than as impact.',
+				},
+				route: {
+					type: 'string',
+					description: 'PumpSwap pool address the quote was priced on.',
+				},
+				expiresAtMs: {
+					type: 'number',
+					description:
+						'Unix ms after which this quote is stale and must be re-requested.',
+				},
+				// Reserve provenance, so the quote above can be reproduced rather
+				// than taken on trust.
+				base_reserve: {
+					type: 'string',
+					description:
+						'Raw base vault balance (pool_base_token_account.amount). Unaffected by virtual reserves.',
+				},
+				quote_reserve: {
+					type: 'string',
+					description:
+						'Raw quote vault balance (pool_quote_token_account.amount), before virtual reserves.',
+				},
+				virtual_quote_reserves: {
+					type: 'string',
+					description:
+						'Pool.virtual_quote_reserves, an i128. Quote-side liquidity held outside the vault. 0 on non-boost pools. SIGNED: may be negative, so do not parse it unsigned.',
+				},
+				effective_quote_reserve: {
+					type: 'string',
+					description:
+						'quote_reserve + virtual_quote_reserves. The reserve the quote is actually priced against.',
+				},
+			},
+			required: ['amountOut', 'priceImpactBps', 'route', 'expiresAtMs'],
+			// Stays open so the backend can add fields without a release here.
+			additionalProperties: true,
+		},
 	},
 	{
 		name: 'social_x_post_impact',
 		description:
-			'Correlate an X (Twitter) post to a memecoin price impact. Fetches post metadata via oEmbed (no API key) and computes price delta from the pump.fun bonding curve in a ±windowMin window around the post.',
+			'Correlate an X (Twitter) post to a memecoin price impact. Fetches post metadata via oEmbed (no API key) and computes price delta from the pump.fun bonding curve in a ±windowMin window around the post. Bonding-curve pricing (virtual_quote_reserves / virtual_token_reserves), so it applies to coins that have not graduated; a graduated coin has no curve and the call fails rather than returning a zero price.',
 		inputSchema: {
 			type: 'object',
 			properties: {

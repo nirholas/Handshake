@@ -303,9 +303,15 @@ export async function getAmmPoolState({ network = 'mainnet', mint, quoteMint = n
 
 	// PumpSwap prices against EFFECTIVE quote reserves, not the raw vault balance:
 	//   effective = quote_vault_balance + pool.virtual_quote_reserves
-	// The field shipped 2026-07-15 at 0 on every pool and went non-zero for
-	// launchpad coins on 2026-07-20. Non-launchpad pools keep it at 0, where
-	// effective == raw and quotes are unchanged.
+	// The field shipped 2026-07-15 at 0 on every pool and went non-zero on
+	// 2026-07-20. Per the IDL it stays 0 on non-boost pools, where effective ==
+	// raw and quotes are unchanged. The base side is untouched by all of this.
+	//
+	// It is an i128, so it is SIGNED: effective can be LOWER than the raw vault
+	// balance. Anchor decodes it to a signed BN and BN.add handles that, so the
+	// arithmetic below is correct as written. Do not "fix" it by clamping to 0
+	// or by re-reading the bytes unsigned; an unsigned read flips a negative
+	// into a huge positive that reads as near-infinite depth.
 	//
 	// Two consumers, two different values — do not mix them up:
 	//   · SDK quote fns (buyQuoteInput/sellBaseInput) take `virtualQuoteReserves`

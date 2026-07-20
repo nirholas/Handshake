@@ -172,9 +172,11 @@ async function checkVenue(network, mintPk, cacheKey) {
 			const amm = await getAmmPoolState({ network, mint: mintPk });
 			const baseRes = bigOf(amm.baseReserve);
 			// Liquidity is judged on EFFECTIVE quote reserves (vault + virtual):
-			// a launchpad pool can hold real quote-side depth in its virtual
+			// a boost pool can hold real quote-side depth in its virtual
 			// reserves, and gating on the raw vault alone would fail a tradable
-			// pool as `pool_reserves_empty`.
+			// pool as `pool_reserves_empty`. The virtual leg is an i128 and can
+			// be negative, so the `<= 0n` check below is also what correctly
+			// rejects a pool whose effective depth has gone non-positive.
 			const quoteRes = bigOf(amm.effectiveQuoteReserve);
 			if (baseRes <= 0n || quoteRes <= 0n) {
 				return result('venue', 'fail', 'pool_reserves_empty', {

@@ -2,6 +2,16 @@
 	"$comment": "Curated changelog entries for three.ws, the editorial layer of the public changelog. New PAGE launches are tracked automatically via the `added` field in data/pages.json; this file is for everything else holders care about: improvements, fixes, SDK releases, trading/payments capabilities, security work. scripts/build-page-index.mjs merges both sources into CHANGELOG.md, public/changelog.json, and public/changelog.xml. Newest first. Allowed tags: feature, improvement, fix, sdk, infra, docs, security. `link` is optional and must be a live three.ws path.",
 	"entries": [
 		{
+			"date": "2026-07-20",
+			"title": "Swap quotes now show the reserves they were priced from",
+			"summary": "The pump.fun MCP swap-quote tool used to hand back a price and nothing else, so there was no way to check it. It now also returns the pool reserves the quote was computed from, including the virtual quote reserves PumpSwap added last week, so an agent or a person can reproduce the number instead of trusting it. The tool descriptions were also rewritten to keep the bonding curve and the PumpSwap pool apart: both now have a field called virtual_quote_reserves, they mean different things, and conflating them was an easy way to read a coin's price as zero.",
+			"tags": [
+				"improvement",
+				"sdk"
+			],
+			"link": "/docs/mcp"
+		},
+		{
 			"date": "2026-07-19",
 			"title": "106 rigged characters, free and ready to animate",
 			"summary": "A new Character Library brings 106 professionally rigged 3D characters to three.ws - knights, zombies, soldiers, dancers, and more. Every character ships with a full skeleton and skin weights, so it plays the entire animation library out of the box: idle, walk, run, wave, dance. Browse them at /character-library, preview any one live in your browser, send it straight to the Animation Studio, or drop it into the Widget Studio in a single click - no upload, no account needed.",

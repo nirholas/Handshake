@@ -23,6 +23,14 @@
 			<description>PumpSwap changed how pool prices are calculated: a pool can now hold quote-side liquidity that is not sitting in its vault, and prices have to count it. Every place we price a graduated coin has been updated to match, so quotes, price impact, market caps, and agent trade fills line up with what actually executes on-chain. Coins that have not graduated are unaffected, and the change is exact rather than approximate: where a pool carries none of this liquidity, prices are identical to before.</description>
 		</item>
 		<item>
+			<title>Swap quotes now show the reserves they were priced from</title>
+			<link>https://three.ws/docs/mcp</link>
+			<guid isPermaLink="false">2026-07-20:Swap quotes now show the reserves they were priced from</guid>
+			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The pump.fun MCP swap-quote tool used to hand back a price and nothing else, so there was no way to check it. It now also returns the pool reserves the quote was computed from, including the virtual quote reserves PumpSwap added last week, so an agent or a person can reproduce the number instead of trusting it. The tool descriptions were also rewritten to keep the bonding curve and the PumpSwap pool apart: both now have a field called virtual_quote_reserves, they mean different things, and conflating them was an easy way to read a coin's price as zero.</description>
+		</item>
+		<item>
 			<title>Agent Sniper: Autonomous On-Chain Trading</title>
 			<link>https://three.ws/docs/agent-sniper</link>
 			<guid isPermaLink="false">2026-07-19:Agent Sniper: Autonomous On-Chain Trading</guid>

@@ -8,8 +8,25 @@ The PumpSwap (`pump_amm`) `Pool` account carries a field appended to the end of
 the struct:
 
 ```text
-virtual_quote_reserves: u64
+virtual_quote_reserves: i128
 ```
+
+Note the type. It is **signed** and **16 bytes**, not a `u64`. Two things follow,
+and both fail silently rather than loudly:
+
+- A hand-rolled decoder that reads 8 bytes gets a truncated value.
+- A decoder that reads it as *unsigned* turns a negative into an enormous
+  positive, which reads as near-infinite pool depth. That is the dangerous
+  direction: a position sizer would happily push size into a pool that cannot
+  absorb it. Never clamp it to zero, never parse it unsigned, and do not guard
+  with `if (virtual > 0)`.
+
+Because the value can be negative, **effective quote reserves can be lower than
+the raw vault balance**. Treat a non-positive effective reserve as an untradable
+pool, not as a normal quote.
+
+The identically-named `BondingCurve.virtual_quote_reserves` is a `u64`. The two
+fields differ in type as well as in meaning; see the collision note below.
 
 Quotes are computed against the pool's **effective** quote reserves, not the raw
 balance sitting in the quote vault:
@@ -22,6 +39,9 @@ Buys and sells are both priced on `effective_quote_reserves`. Pricing off the ra
 vault balance alone under-states the quote side of the pool, which under-prices
 the token.
 
+The **base** side is explicitly unchanged: base reserves remain the raw
+`pool_base_token_account.amount`. Only the quote side gains a virtual component.
+
 `BuyEvent` and `SellEvent` also carry `virtual_quote_reserves`, appended. Because
 it is appended, existing Borsh decoders keep decoding the earlier fields
 correctly. Indexers that rebuild reserves from the event stream need it to
@@ -32,10 +52,51 @@ reconstruct effective reserves.
 | Phase | Date | Behaviour |
 |---|---|---|
 | 1 | 2026-07-15 | Field ships, `0` on every pool. `effective == raw`, so quotes are byte-identical to before. Integrate here. |
-| 2 | 2026-07-20, 10:00 EST | Launchpad-coin pools begin carrying a non-zero value. Anything still pricing off the raw vault balance starts mispricing. |
+| 2 | 2026-07-20, 10:00 EST | Pools begin carrying a non-zero value. Anything still pricing off the raw vault balance starts mispricing. |
 
-Non-launchpad pools keep `virtual_quote_reserves` at `0` indefinitely, where the
-change is a no-op.
+The IDL scopes which pools those are: the field's doc comment reads *"For
+non-boost pools, value is 0, so the behavior is identical to legacy pools."* So
+boost pools are the non-zero population, and every other pool keeps
+`virtual_quote_reserves` at `0`, where the change is a no-op.
+
+Note that upstream's own prose still reads "`0` on all pools today", because the
+public docs were written for phase 1 and have not been revised for phase 2. Do
+not read that as the change being deferred.
+
+## The name collision
+
+Two different accounts now expose a field called `virtual_quote_reserves`, and
+they are not the same thing:
+
+| | `BondingCurve.virtual_quote_reserves` | `Pool.virtual_quote_reserves` |
+|---|---|---|
+| Program | `pump` | `pump_amm` (PumpSwap) |
+| Stage | Pre-graduation | Post-graduation |
+| Type | `u64` | `i128` (signed) |
+| Meaning | The curve's virtual quote leg, part of the constant-product curve since launch | Quote-side liquidity the pool holds outside its vault, appended 2026-07-15 |
+
+A coin has one or the other, never both. The bonding-curve field is *not* new:
+it is the old `virtual_sol_reserves` renamed (see below). The pool field is
+genuinely new. Conflating them is the easiest way to get this wrong.
+
+## The other rename, already live
+
+Separately from the change above, the `pump` bonding-curve struct renamed its
+quote-side fields when a non-SOL quote asset became possible:
+
+| Was | Now |
+|---|---|
+| `virtual_sol_reserves` | `virtual_quote_reserves` |
+| `real_sol_reserves` | `real_quote_reserves` |
+
+`Global` also gained `initial_virtual_quote_reserves`, and the curve gained a
+`quote_mint` (`Pubkey::default()` on every coin created to date, and on any
+SOL-paired coin).
+
+This one is already in effect and fails **silently**: reading the retired name
+off a freshly decoded curve yields `undefined`, which coerces to `0` rather than
+throwing. The symptom is every coin reporting 0% to graduation with zero reserves
+and a zero price. three.ws hit exactly this before commit `798725c21`.
 
 ## The integration trap
 
