@@ -90,6 +90,7 @@ function priceSellFromPool(amm, sdk, baseAmount, slippagePct) {
 		e.code = 'amm_quote_not_sol';
 		throw e;
 	}
+	assertTradableQuoteDepth(effectiveQuoteReserve);
 
 	// `virtualQuoteReserves` is added to `quoteReserve` inside the SDK — pass the
 	// raw reserve, never the pre-summed effective one, or the sale is priced
@@ -193,6 +194,7 @@ function priceBuyFromPool(amm, sdk, quoteAmount, slippagePct) {
 		e.code = 'amm_quote_not_sol';
 		throw e;
 	}
+	assertTradableQuoteDepth(effectiveQuoteReserve);
 
 	// See priceSellFromPool: raw `quoteReserve` here, virtual passed separately.
 	const r = sdk.buyQuoteInput({
@@ -252,9 +254,28 @@ export async function buildAmmBuyInstructions({ network, mint, user, quoteAmount
 	return { instructions, poolKey: amm.poolKey.toString(), ...priced };
 }
 
+// Refuse a pool whose EFFECTIVE quote depth is non-positive.
+//
+// `Pool.virtual_quote_reserves` is a SIGNED i128, so effective depth
+// (vault + virtual) can legitimately land at or below zero. Such a pool cannot
+// absorb a trade. This has to be an explicit refusal because the downstream
+// price-impact math reports a non-positive reserve as 0% impact — i.e. as the
+// safest possible trade — which would wave the circuit breaker through on
+// exactly the pool it exists to stop.
+function assertTradableQuoteDepth(effectiveQuoteReserve) {
+	const eff = BigInt(effectiveQuoteReserve?.toString?.() ?? effectiveQuoteReserve ?? 0);
+	if (eff <= 0n) {
+		const e = new Error(`amm pool has no effective quote depth (${eff.toString()})`);
+		e.code = 'amm_quote_depth_empty';
+		throw e;
+	}
+}
+
 // Constant-product price impact for selling `baseIn` into a pool, as a percent
 // of the no-impact (spot) value. Clamped to [0, 100]; returns 0 if reserves are
-// missing so a quote can't be falsely rejected by the breaker.
+// missing so a quote can't be falsely rejected by the breaker. Callers must have
+// already rejected a non-positive effective quote reserve via
+// `assertTradableQuoteDepth` — a 0 here means "unknown", never "safe".
 function derivePriceImpact(baseReserve, quoteReserve, baseIn, quoteOut) {
 	const b = Number(baseReserve?.toString?.() ?? baseReserve ?? 0);
 	const q = Number(quoteReserve?.toString?.() ?? quoteReserve ?? 0);
