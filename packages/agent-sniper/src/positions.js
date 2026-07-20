@@ -22,10 +22,24 @@ async function tickPosition(cfg, pos, ports) {
 	const baseAmount = BigInt(pos.base_amount);
 	const slippagePct = (pos.slippage_bps ?? 500) / 100;
 
+	// Re-quote the bag. This number decides whether the position exits, so an
+	// unusable quote must NOT be read as a valuation. The bundled adapter throws
+	// on a missing or non-positive quote, but a custom SolanaClient may not, so
+	// the sweep re-checks independently: a zero here would compute as -100% P&L
+	// and stop-loss a perfectly healthy position on the very next tick. A real
+	// collapse still exits, because a real collapse still returns a real number.
 	let value;
 	try {
 		const quote = await solana.quoteForSell({ mint: mintPk, baseAmount, slippagePct });
-		value = Number(quote.expectedQuoteOut.toString());
+		const out = quote?.expectedQuoteOut == null ? null : Number(quote.expectedQuoteOut.toString());
+		if (out == null || !Number.isFinite(out) || out <= 0) {
+			log.warn('position re-quote returned no usable value, holding', {
+				mint: pos.mint,
+				expected_quote_out: String(quote?.expectedQuoteOut),
+			});
+			return; // hold, do not value the bag at zero
+		}
+		value = out;
 	} catch (err) {
 		log.warn('position re-quote failed', { mint: pos.mint, err: err?.message });
 		return; // transient — try again next sweep

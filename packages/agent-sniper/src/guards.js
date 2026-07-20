@@ -37,7 +37,15 @@ export function checkSolHeadroom(balanceLamports, perTradeLamports, headroom = S
 export function checkPriceImpact(impactPct, maxImpactPct) {
 	const max = Number(maxImpactPct);
 	if (!Number.isFinite(max) || max <= 0) return null; // unset ⇒ no gate
-	if (Number(impactPct) > max) return { reason: 'price_impact_too_high' };
+	// Fails CLOSED on an unusable impact figure. `undefined > 10` and `NaN > 10`
+	// are both false, so an unpriced quote used to walk straight through this
+	// gate: the exact silent-zero failure a mispriced or half-decoded pool
+	// produces. `Number(null)` and `Number('')` are 0, so the absent cases must
+	// be rejected BEFORE coercion, or "no data" arrives as a perfect 0% impact.
+	if (impactPct == null || impactPct === '') return { reason: 'price_impact_unknown' };
+	const impact = Number(impactPct);
+	if (!Number.isFinite(impact)) return { reason: 'price_impact_unknown' };
+	if (impact > max) return { reason: 'price_impact_too_high' };
 	return null;
 }
 
@@ -90,7 +98,13 @@ export function makeQueue(concurrency, maxDepth, { onError, onDrop } = {}) {
 
 /** Self-rated entry conviction 0..1 for the optional decision ledger. */
 export function snipeConfidence({ priceImpactPct, maxImpactPct, firewallVerdict }) {
-	const impactPenalty = Math.min(1, Math.max(0, priceImpactPct) / (maxImpactPct > 0 ? maxImpactPct : 10)) * 0.4;
+	// An unusable impact figure takes the FULL penalty rather than writing a NaN
+	// confidence into the decision ledger: "we could not price this" is low
+	// conviction, not missing data.
+	const impact = priceImpactPct == null || priceImpactPct === '' ? NaN : Number(priceImpactPct);
+	const impactPenalty = Number.isFinite(impact)
+		? Math.min(1, Math.max(0, impact) / (maxImpactPct > 0 ? maxImpactPct : 10)) * 0.4
+		: 0.4;
 	const fwBonus = firewallVerdict === 'allow' ? 0.1 : firewallVerdict === 'warn' ? -0.15 : 0;
 	const c = 0.6 + fwBonus - impactPenalty;
 	return Math.min(0.95, Math.max(0.05, c));
