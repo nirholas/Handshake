@@ -66,9 +66,9 @@
     "discord.js": "^14.27.0",
     "grammy": "^1.44.0",
     "hono": "^4.12.0",
-    "hood402": "file:../hood402",
-    "hoodchain": "file:../robinhood-chain-sdk",
-    "hoodkit": "file:../hoodkit",
+    "hood402": "^0.1.0",
+    "hoodchain": "^0.1.1",
+    "hoodkit": "^0.1.0",
     "pino": "^10.3.0",
     "viem": "2.55.1"
   },
