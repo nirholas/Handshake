@@ -16,6 +16,7 @@ import { AnimationMixer, LoopOnce, LoopRepeat } from 'three';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 
 import { curate } from './animation-presets.js';
+import { buildFingerspellingClip, normalizeWord } from './fingerspelling.js';
 import {
 	retargetClipToRig,
 	scaleClipSpeed,
@@ -281,6 +282,32 @@ export class AnimationLibrary {
 		});
 		const gen = el('div', { class: 'al-gen' }, [genInput, genBtn]);
 
+		// Fingerspell: spell any word in ASL on the avatar's right hand. Built
+		// locally and deterministically (src/fingerspelling.js) — no network,
+		// instant, and the result exports like any other clip.
+		const spellInput = el('input', {
+			type: 'text',
+			class: 'al-gen-input',
+			placeholder: 'Fingerspell in ASL — try your name',
+			'aria-label': 'Fingerspell a word in American Sign Language',
+			autocomplete: 'off',
+			maxlength: '40',
+		});
+		const spellBtn = el(
+			'button',
+			{ class: 'al-gen-btn', type: 'button', title: 'Spell the word letter by letter in American Sign Language' },
+			['🤟 Spell'],
+		);
+		const submitSpell = () => this.spellWord(spellInput.value);
+		spellBtn.addEventListener('click', submitSpell);
+		spellInput.addEventListener('keydown', (e) => {
+			if (e.key === 'Enter') {
+				e.preventDefault();
+				submitSpell();
+			}
+		});
+		const spell = el('div', { class: 'al-gen al-spell' }, [spellInput, spellBtn]);
+
 		const search = el('input', {
 			type: 'search',
 			class: 'al-search',
@@ -303,11 +330,12 @@ export class AnimationLibrary {
 
 		// Shell refs first; _renderTransport() merges its own sub-refs (label,
 		// speed, export button) into this._refs, so it must run after this assign.
-		this._refs = { gen, genInput, genBtn, search, chips, grid, empty };
+		this._refs = { gen, genInput, genBtn, spell, spellInput, spellBtn, search, chips, grid, empty };
 		const transport = this._renderTransport();
 		this._refs.transport = transport;
 
 		this.host.appendChild(gen);
+		this.host.appendChild(spell);
 		this.host.appendChild(search);
 		// Now-playing transport sits directly under the search so it's visible the
 		// moment a clip plays (hidden until then) — not buried below the card grid.
@@ -319,9 +347,10 @@ export class AnimationLibrary {
 
 	_setState(state) {
 		this._state = state;
-		const { gen, search, chips, grid, empty, transport } = this._refs;
+		const { gen, spell, search, chips, grid, empty, transport } = this._refs;
 		const ready = state === 'ready';
 		if (gen) gen.style.display = ready ? '' : 'none';
+		if (spell) spell.style.display = ready ? '' : 'none';
 		search.style.display = ready ? '' : 'none';
 		chips.style.display = ready ? '' : 'none';
 		grid.style.display = ready ? '' : 'none';
@@ -660,6 +689,43 @@ export class AnimationLibrary {
 		}
 		if (token !== this._genToken) return null;
 		throw new Error('Generation timed out. Try a shorter prompt.');
+	}
+
+	// ── Fingerspell ─────────────────────────────────────────────────────────
+	/**
+	 * Spell a word in American Sign Language on the rig's right hand. The clip
+	 * is built locally and deterministically (src/fingerspelling.js) and plays
+	 * through the same retarget/transport path as a preset, so speed, scrub,
+	 * and animated-GLB export all work on a spelled word. Returns true on play.
+	 */
+	spellWord(word) {
+		const letters = normalizeWord(word);
+		if (!letters) {
+			this.setStatus('Type a word to fingerspell — letters A–Z.', 'error');
+			return false;
+		}
+		const rig = this.getRig();
+		if (!rig || rig.kind === 'mannequin') {
+			this.setStatus('Load a rigged avatar to fingerspell.', 'error');
+			return false;
+		}
+		let clip;
+		try {
+			const json = buildFingerspellingClip(letters);
+			clip = parseClipJSON(json, json.name);
+			this._clipCache.set(json.name, clip);
+		} catch (err) {
+			this.setStatus(`Couldn’t build the spelling: ${err.message}`, 'error');
+			return false;
+		}
+		const def = {
+			name: clip.name,
+			label: `Fingerspell “${letters}”`,
+			icon: '🤟',
+			loop: false,
+			spelled: true,
+		};
+		return this._playClip(clip, def);
 	}
 
 	_stopGenTimer() {

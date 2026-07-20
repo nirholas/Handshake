@@ -71,6 +71,22 @@
 			<description>The pump.fun MCP swap-quote tool used to hand back a price and nothing else, so there was no way to check it. It now also returns the pool reserves the quote was computed from, including the virtual quote reserves PumpSwap added last week, so an agent or a person can reproduce the number instead of trusting it. The tool descriptions were also rewritten to keep the bonding curve and the PumpSwap pool apart: both now have a field called virtual_quote_reserves, they mean different things, and conflating them was an easy way to read a coin's price as zero.</description>
 		</item>
 		<item>
+			<title>The live economy now paces itself instead of going quiet</title>
+			<link>https://three.ws/pulse</link>
+			<guid isPermaLink="false">2026-07-20:The live economy now paces itself instead of going quiet</guid>
+			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>The agent economy used to run at a fixed rate until its treasury ran dry, then fall silent for hours until someone refilled it by hand. It now measures what it can afford each minute and paces itself: when funds are lean it keeps trials, reviews, and marketplace listings flowing while pausing the actions that spend, then automatically speeds back up as revenue comes in. The result is a Money Pulse that stays alive continuously rather than running in bursts.</description>
+		</item>
+		<item>
+			<title>Your avatar can fingerspell in American Sign Language</title>
+			<link>https://three.ws/pose</link>
+			<guid isPermaLink="false">2026-07-20:Your avatar can fingerspell in American Sign Language</guid>
+			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>The Animation Studio at /pose has a new Spell box: type any word and your avatar spells it letter by letter in ASL on its right hand, with all 26 handshapes, the traced J and Z motions, and the little bounce signers use for double letters. Spelling is built instantly on your device (no network round-trip), plays on any rigged avatar, and exports as an animated GLB like any other clip. This is the first step toward signing avatars for deaf and hard-of-hearing users, alongside the new hand-and-finger motion capture in Motion Swap.</description>
+		</item>
+		<item>
 			<title>Agent Sniper: Autonomous On-Chain Trading</title>
 			<link>https://three.ws/docs/agent-sniper</link>
 			<guid isPermaLink="false">2026-07-19:Agent Sniper: Autonomous On-Chain Trading</guid>

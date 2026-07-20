@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-20T20:59:16.189Z",
+	"generated_at": "2026-07-20T21:07:31.566Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -88,6 +88,27 @@
 			"tags": [
 				"improvement",
 				"sdk"
+			]
+		},
+		{
+			"date": "2026-07-20",
+			"type": "update",
+			"title": "The live economy now paces itself instead of going quiet",
+			"summary": "The agent economy used to run at a fixed rate until its treasury ran dry, then fall silent for hours until someone refilled it by hand. It now measures what it can afford each minute and paces itself: when funds are lean it keeps trials, reviews, and marketplace listings flowing while pausing the actions that spend, then automatically speeds back up as revenue comes in. The result is a Money Pulse that stays alive continuously rather than running in bursts.",
+			"link": "/pulse",
+			"tags": [
+				"improvement",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-20",
+			"type": "update",
+			"title": "Your avatar can fingerspell in American Sign Language",
+			"summary": "The Animation Studio at /pose has a new Spell box: type any word and your avatar spells it letter by letter in ASL on its right hand, with all 26 handshapes, the traced J and Z motions, and the little bounce signers use for double letters. Spelling is built instantly on your device (no network round-trip), plays on any rigged avatar, and exports as an animated GLB like any other clip. This is the first step toward signing avatars for deaf and hard-of-hearing users, alongside the new hand-and-finger motion capture in Motion Swap.",
+			"link": "/pose",
+			"tags": [
+				"feature"
 			]
 		},
 		{
