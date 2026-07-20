@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-20T22:19:37.888Z",
+	"generated_at": "2026-07-20T23:03:38.244Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -99,6 +99,17 @@
 			"tags": [
 				"fix",
 				"infra"
+			]
+		},
+		{
+			"date": "2026-07-20",
+			"type": "update",
+			"title": "hood-traders gains an LLM-piloted strategy, hood-alerts now posts to X",
+			"summary": "The open-source Robinhood Chain trading fleet, hood-traders, shipped a fourth strategy: bring your own key (Claude, OpenAI, Groq, or OpenRouter) and an LLM weighs the same on-chain launch signals the mechanical sniper already checks, holistically instead of against fixed cutoffs, gated behind the exact same risk engine as every other trade. The real-time alert bot, hood-alerts, now posts to X in addition to Telegram and Discord, with a choice of the official X API or a free self-hosted xactions instance. A new `hood init` command in hood-cli walks through setting up the wallet, the LLM key, and Telegram/Discord/X in one pass, so getting the whole stack running is one command instead of hand-editing env files.",
+			"link": "/markets/robinhood",
+			"tags": [
+				"feature",
+				"sdk"
 			]
 		},
 		{

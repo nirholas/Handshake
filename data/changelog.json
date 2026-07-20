@@ -3,6 +3,16 @@
 	"entries": [
 		{
 			"date": "2026-07-20",
+			"title": "hood-traders gains an LLM-piloted strategy, hood-alerts now posts to X",
+			"summary": "The open-source Robinhood Chain trading fleet, hood-traders, shipped a fourth strategy: bring your own key (Claude, OpenAI, Groq, or OpenRouter) and an LLM weighs the same on-chain launch signals the mechanical sniper already checks, holistically instead of against fixed cutoffs, gated behind the exact same risk engine as every other trade. The real-time alert bot, hood-alerts, now posts to X in addition to Telegram and Discord, with a choice of the official X API or a free self-hosted xactions instance. A new `hood init` command in hood-cli walks through setting up the wallet, the LLM key, and Telegram/Discord/X in one pass, so getting the whole stack running is one command instead of hand-editing env files.",
+			"tags": [
+				"feature",
+				"sdk"
+			],
+			"link": "/markets/robinhood"
+		},
+		{
+			"date": "2026-07-20",
 			"title": "Every three.ws MCP server now resolves to its current version",
 			"summary": "The MCP servers three.ws publishes are listed in the public Model Context Protocol registry, which is how most AI assistants discover them. Those listings had fallen behind what was actually released, so an assistant adding one could pin a months-old build and miss tools that already shipped. All 44 listings now match their released versions, and one server that had never appeared at all is listed for the first time. Adding a three.ws server to Claude, or any MCP-capable assistant, gets you the current tools.",
 			"tags": [
