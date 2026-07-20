@@ -138,10 +138,58 @@ export default wrap(async (req, res) => {
 		};
 	});
 
+	// Judgment ledger: every LLM verdict (buys AND skips) scored against what the
+	// coin actually did. This measures a model's CALLS, independent of trade size
+	// or simulate mode; `scored` counts verdicts whose coin has an outcome label
+	// (pump_coin_outcomes lags launches by an hour by design). A "hit" for a buy
+	// call, and a "missed winner" for a skip, is a coin that pumped 3x or
+	// graduated after the verdict.
+	const judgment = await sql`
+		select
+			v.model,
+			count(*)                                                                        as verdicts,
+			count(*) filter (where v.buy)                                                   as buy_calls,
+			avg(v.confidence)                                                               as avg_confidence,
+			avg(v.latency_ms)                                                               as avg_latency_ms,
+			count(o.mint)                                                                   as scored,
+			count(*) filter (where v.buy and o.mint is not null)                            as buys_scored,
+			count(*) filter (where v.buy and o.outcome in ('pumped','graduated'))           as buy_hits,
+			count(*) filter (where not v.buy and o.mint is not null)                        as skips_scored,
+			count(*) filter (where not v.buy and o.outcome in ('pumped','graduated'))       as missed_winners,
+			max(v.created_at)                                                               as last_verdict_at
+		from sniper_llm_verdicts v
+		left join pump_coin_outcomes o on o.mint = v.mint
+		where v.network = ${network}
+		  and (${interval}::text is null or v.created_at > now() - (${interval}::text)::interval)
+		group by v.model
+		order by verdicts desc
+	`.catch(() => []);
+
+	const judgmentOut = judgment.map((j) => {
+		const buysScored = Number(j.buys_scored) || 0;
+		const skipsScored = Number(j.skips_scored) || 0;
+		return {
+			model: j.model,
+			verdicts: Number(j.verdicts) || 0,
+			buy_calls: Number(j.buy_calls) || 0,
+			avg_confidence: j.avg_confidence != null ? Number(Number(j.avg_confidence).toFixed(3)) : null,
+			avg_latency_ms: j.avg_latency_ms != null ? Math.round(Number(j.avg_latency_ms)) : null,
+			scored: Number(j.scored) || 0,
+			buys_scored: buysScored,
+			buy_hits: Number(j.buy_hits) || 0,
+			buy_precision_pct: buysScored > 0 ? Math.round((Number(j.buy_hits) / buysScored) * 100) : null,
+			skips_scored: skipsScored,
+			missed_winners: Number(j.missed_winners) || 0,
+			missed_winner_pct: skipsScored > 0 ? Math.round((Number(j.missed_winners) / skipsScored) * 100) : null,
+			last_verdict_at: j.last_verdict_at || null,
+		};
+	});
+
 	return json(res, 200, {
 		network,
 		window,
 		experiments,
+		judgment: judgmentOut,
 		t: Date.now(),
 	}, { 'cache-control': 'public, max-age=15, s-maxage=30' });
 });

@@ -150,11 +150,51 @@ function renderBoard(experiments) {
 		</div>`;
 }
 
+function renderJudgment(judgment) {
+	const el = $('xp-judgment');
+	if (!el) return;
+	if (!judgment || !judgment.length) {
+		el.innerHTML = '';
+		return;
+	}
+	const rows = judgment
+		.map((j) => `
+		<tr>
+			<td class="xp-label">${esc(j.model.split('/').pop())}<div class="xp-cond-sub">${esc(j.model)}</div></td>
+			<td>${j.verdicts}</td>
+			<td>${j.verdicts > 0 ? Math.round((j.buy_calls / j.verdicts) * 100) + '%' : '·'} <span class="xp-cond-sub" style="display:inline">(${j.buy_calls})</span></td>
+			<td>${j.avg_confidence != null ? Math.round(j.avg_confidence * 100) + '%' : '·'}</td>
+			<td class="${j.buy_precision_pct != null ? (j.buy_precision_pct >= 50 ? 'xp-pos' : 'xp-neg') : ''}">${j.buy_precision_pct != null ? j.buy_precision_pct + '%' : 'awaiting outcomes'} <span class="xp-cond-sub" style="display:inline">${j.buys_scored ? `(${j.buy_hits}/${j.buys_scored})` : ''}</span></td>
+			<td>${j.missed_winner_pct != null ? j.missed_winner_pct + '%' : '·'} <span class="xp-cond-sub" style="display:inline">${j.skips_scored ? `(${j.missed_winners}/${j.skips_scored})` : ''}</span></td>
+			<td>${j.avg_latency_ms != null ? (j.avg_latency_ms / 1000).toFixed(1) + 's' : '·'}</td>
+		</tr>`)
+		.join('');
+	el.innerHTML = `
+		<h2 class="cv-h2">Judgment ledger</h2>
+		<p style="margin:4px 0 12px;color:var(--cv-text-3);font-size:13px">
+			Every verdict the LLM judges render is recorded, buys and skips alike, then scored
+			against what the coin actually did an hour later. This measures each model's calls
+			independent of position size: a "hit" is a coin that pumped 3x or graduated.
+		</p>
+		<div class="cv-card" style="overflow-x:auto">
+			<table class="cv-table xp-table" style="min-width:720px">
+				<thead>
+					<tr>
+						<th>Model</th><th>Verdicts</th><th>Buy rate</th><th>Avg conf</th>
+						<th>Buy precision</th><th>Missed winners</th><th>Latency</th>
+					</tr>
+				</thead>
+				<tbody>${rows}</tbody>
+			</table>
+		</div>`;
+}
+
 async function refresh() {
 	try {
 		const data = await getJson(`/api/sniper/experiments?network=mainnet&window=${encodeURIComponent(windowKey)}`);
 		renderSummary(data.experiments);
 		renderBoard(data.experiments);
+		renderJudgment(data.judgment);
 		$('xp-updated').textContent = `Updated ${new Date(data.t).toLocaleTimeString()} · real on-chain fills only`;
 	} catch (err) {
 		$('xp-board').innerHTML = `

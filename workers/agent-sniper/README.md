@@ -118,6 +118,13 @@ on a coin younger than `SNIPER_ORACLE_MATURITY_S` (default 900 s) is treated as
 on thin data, which used to disqualify every `min_oracle_score` strategy from
 ever sniping a launch.
 
+**Judgment ledger.** Every LLM verdict, buys AND skips, is persisted to
+`sniper_llm_verdicts` (one row per mint+model; fire-and-forget) and scored
+against `pump_coin_outcomes` an hour later: buy precision (advised buys that
+pumped 3x or graduated) and missed winners (advised skips that did). This
+measures each model's calls independent of position size or simulate mode; the
+scoreboard renders it as the "Judgment ledger" section on /sniper/experiments.
+
 ## Environment
 
 | Var | Required | Default | Notes |

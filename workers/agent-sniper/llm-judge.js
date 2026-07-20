@@ -18,6 +18,7 @@
 //     the verdict is tagged with the model that actually answered.
 
 import { log } from './log.js';
+import { sql } from '../../api/_lib/db.js';
 import { llmComplete } from '../../api/_lib/llm.js';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -119,7 +120,7 @@ async function judge(mint, model) {
 	try {
 		const text = await askOpenRouter({ model, user });
 		const verdict = parseVerdict(text);
-		if (verdict) return { ...verdict, model, latencyMs: Date.now() - t0 };
+		if (verdict) return { ...verdict, model, answeredBy: model, latencyMs: Date.now() - t0 };
 		throw new Error('unparseable verdict');
 	} catch (err) {
 		// Free-first platform chain as the backstop, the experiment arm keeps
@@ -128,8 +129,22 @@ async function judge(mint, model) {
 		const res = await llmComplete({ system: SYSTEM_PROMPT, user, maxTokens: 200, timeoutMs: TIMEOUT_MS });
 		const verdict = parseVerdict(res?.text ?? res);
 		if (!verdict) return null;
-		return { ...verdict, model: `fallback:${res?.provider || 'free-chain'}`, latencyMs: Date.now() - t0 };
+		return { ...verdict, model: `fallback:${res?.provider || 'free-chain'}`, answeredBy: res?.model || res?.provider || 'free-chain', latencyMs: Date.now() - t0 };
 	}
+}
+
+// Persist a verdict into the judgment ledger, buys AND skips, so each model's
+// calls can later be scored against pump_coin_outcomes (the counterfactuals a
+// trade record can't capture). Fire-and-forget: a ledger hiccup never delays
+// or blocks the buy path. Keyed by the REQUESTED model (the experiment arm's
+// identity); answered_by records who actually replied when the chain fell back.
+function recordVerdict({ mint, network, requestedModel, verdict }) {
+	sql`
+		insert into sniper_llm_verdicts (mint, network, model, buy, confidence, thesis, latency_ms, answered_by)
+		values (${mint}, ${network}, ${requestedModel}, ${verdict.buy}, ${verdict.confidence},
+		        ${verdict.thesis || null}, ${verdict.latencyMs ?? null}, ${verdict.answeredBy || null})
+		on conflict (mint, network, model) do nothing
+	`.catch((err) => log.warn('llm verdict record failed', { mint, model: requestedModel, err: err?.message }));
 }
 
 /**
@@ -150,6 +165,10 @@ export async function judgeLaunch(mint, strat) {
 	}
 	_active++;
 	const promise = judge(mint, model)
+		.then((verdict) => {
+			if (verdict) recordVerdict({ mint: mint.mint, network: strat.network || 'mainnet', requestedModel: model, verdict });
+			return verdict;
+		})
 		.catch((err) => {
 			log.warn('llm judge failed', { mint: mint.mint, model, err: err?.message });
 			return null;
