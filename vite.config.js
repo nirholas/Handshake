@@ -68,6 +68,12 @@ const CODESPACE_HMR =
 			}
 		: undefined;
 
+// Set by the threews-i18n-external-entry plugin's configResolved hook, read by
+// its resolveId hook: a closure var rather than `this`, since Vite-only hooks
+// (configResolved) aren't guaranteed the same PluginContext as Rollup hooks
+// (resolveId).
+let i18nExternalEntryIsBuild = true;
+
 const appConfig = {
 	server: {
 		// Bind to 0.0.0.0 so the Codespace port-forwarder can reach the server.
@@ -690,22 +696,33 @@ support: resolve(__dirname, 'pages/support.html'),
 		},
 	},
 	plugins: [
-		// Resolve the shared runtime i18n entry as an EXTERNAL script. Many static
-		// pages load the locale runtime via `<script type="module" src="/i18n.js">`
-		// (injected by scripts/i18n-annotate.mjs --wire). That path is emitted at the
-		// dist root by the `i18n` rollupOptions.input entry (see entryFileNames
-		// above), so it exists at runtime. Without this, Vite's build tries to
+		// Resolve the shared runtime i18n entry as an EXTERNAL script — but only
+		// during BUILD. Many static pages load the locale runtime via
+		// `<script type="module" src="/i18n.js">` (injected by
+		// scripts/i18n-annotate.mjs --wire). That path is emitted at the dist root
+		// by the `i18n` rollupOptions.input entry (see entryFileNames above), so it
+		// exists at runtime. Without marking it external, Vite's build tries to
 		// resolve `/i18n.js` as an on-disk module while processing each page's HTML
 		// and fails ("Failed to resolve /i18n.js from pages/<page>.html"), breaking
 		// the whole build for every wired page. Marking it external leaves the tag
-		// untouched in the output HTML and lets the emitted chunk serve it. Applies
-		// only to the exact absolute path so nothing else is affected.
+		// untouched in the output HTML and lets the emitted chunk serve it.
+		//
+		// In DEV/serve mode there is no dist chunk yet, so treating it as external
+		// left every wired page with a real 404 on `/i18n.js` (a console error
+		// against the Definition-of-Done "no console errors" bar). Dev instead
+		// resolves the tag straight to the source file, so the runtime loads and
+		// behaves identically to the built page. Applies only to the exact
+		// absolute path so nothing else is affected.
 		{
 			name: 'threews-i18n-external-entry',
 			enforce: 'pre',
+			configResolved(config) {
+				i18nExternalEntryIsBuild = config.command === 'build';
+			},
 			resolveId(source) {
-				if (source === '/i18n.js') return { id: '/i18n.js', external: true };
-				return null;
+				if (source !== '/i18n.js') return null;
+				if (i18nExternalEntryIsBuild) return { id: '/i18n.js', external: true };
+				return resolve(__dirname, 'src/i18n.js');
 			},
 		},
 		// Strip the VitePWA service-worker registration <script> from any
