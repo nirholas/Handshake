@@ -28,6 +28,12 @@ Set a pose, drop a keyframe on the playhead, move the playhead, re-pose, drop an
 
 A curated gallery of ready-made motion clips sits beside the timeline. Picking one retargets it onto the loaded rig and plays it live in the same viewport, then offers an animated-GLB export. The library also drives a text-to-animation path (`POST /api/forge-motion`), so you can describe a motion and get a clip retargeted onto your figure. While a preset previews, it owns the figure and the keyframe timeline yields, so the two never fight over bone transforms.
 
+### ASL fingerspelling
+
+Under the motion generator sits a Spell box: type a word and the avatar spells it letter by letter in American Sign Language on its right hand. All 26 handshapes are built in, including the traced motions for J and Z and the small bounce signers use to mark double letters; between letters the hand transitions smoothly and the figure holds a natural signing posture (right hand raised palm-out, off hand relaxed). Spelling is generated locally in the browser from a parametric hand model (`src/fingerspelling.js`), so it is instant, deterministic, and works offline; nothing is sent to a server. The spelled clip plays through the same retarget path as a preset, which means scrub, speed, stop, and the animated-GLB export all work on it, and it plays on any rigged avatar whose skeleton includes finger bones. A rig without finger bones cannot form handshapes, so the studio refuses it with an explanation instead of playing a wrong result.
+
+Fingerspelling is the deterministic, spelling-based subset of sign language, it spells English words rather than translating into grammatical ASL. It is the first step of the platform's signing-avatars work; lexical signs come from the motion-capture lane, which can turn video of a real signer into a library clip.
+
 ### Export, save, and sell
 
 - **Clip JSON** serializes the keyframe document to a documented `{ name, duration, tracks }` shape.
@@ -75,6 +81,7 @@ curl -X POST 'https://three.ws/api/animations/clips' \
 - **Saving and selling need an account.** Export and download are open to everyone; saving to the library and listing for sale require sign-in.
 - **The sellable artifact is the baked GLB.** A marketplace listing sells the baked animated GLB, so the buyer gets a self-contained, playable file.
 - **Mannequin-only controls.** Build, skin color, and joint constraints apply to the primitive mannequin; on a loaded GLB avatar those controls are disabled.
+- **Fingerspelling spells A to Z.** The Spell box keeps letters and spaces and drops everything else (digits and punctuation have distinct signs that are not letter handshapes). It needs a loaded rigged avatar with finger bones; the mannequin and finger-less rigs are refused with an explanation.
 
 ## Related
 
