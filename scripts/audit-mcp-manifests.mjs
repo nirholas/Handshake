@@ -21,19 +21,20 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
-// stdio package manifests live next to their package.json.
+// stdio package manifests live next to their package.json. Discovered from
+// disk, never hand-listed: a hardcoded list silently drifts as packages are
+// added, and an unlisted manifest is an unvalidated one that only fails on
+// publish day. mcp-server/mcp-bridge sit outside packages/ so they are named.
+const FIXED_PACKAGE_DIRS = ['mcp-server', 'mcp-bridge'];
 const PACKAGE_MANIFESTS = [
-	'mcp-server/server.json',
-	'mcp-bridge/server.json',
-	'packages/pumpfun-mcp/server.json',
-	'packages/ibm-watsonx-mcp/server.json',
-	'packages/ibm-x402-mcp/server.json',
-	'packages/avatar-agent-mcp/server.json',
-	'packages/threews-avatar-mcp/server.json',
-	'packages/three-token-mcp/server.json',
-	'packages/agent-sniper/server.json',
-	'packages/concierge-mcp/server.json',
-];
+	...FIXED_PACKAGE_DIRS,
+	...readdirSync(resolve(root, 'packages'), { withFileTypes: true })
+		.filter((e) => e.isDirectory())
+		.map((e) => join('packages', e.name))
+		.filter((d) => existsSync(resolve(root, d, 'server.json'))),
+]
+	.map((d) => join(d, 'server.json'))
+	.sort();
 
 // Remote manifests are every server*.json at the repo root.
 const remoteManifests = readdirSync(root).filter((f) => /^server(-[\w-]+)?\.json$/.test(f));
@@ -114,6 +115,24 @@ for (const path of remoteManifests) {
 	}
 	for (const r of remotes) {
 		if (!r.url?.startsWith('https://')) fail(path, `remote url must be https (${r.url})`);
+	}
+}
+
+// Every manifest on disk must be reachable by the publisher. A manifest that
+// validates here but is absent from publish-mcp-servers.mjs can never be
+// published or version-bumped on the registry: it silently pins to whatever
+// version was pushed by hand, while npm moves on.
+{
+	const publisher = 'scripts/publish-mcp-servers.mjs';
+	const src = readFileSync(resolve(root, publisher), 'utf8');
+	const listed = new Set(
+		[...src.matchAll(/manifest:\s*'([^']+)'/g)].map((m) => m[1]),
+	);
+	for (const path of PACKAGE_MANIFESTS) {
+		if (!existsSync(resolve(root, path))) continue;
+		if (!listed.has(path)) {
+			fail(path, `not listed in ${publisher}, so it can never be published or updated`);
+		}
 	}
 }
 

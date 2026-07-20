@@ -94,6 +94,17 @@ const SERVERS = [
 	{ key: 'loom-mcp', dir: 'packages/loom-mcp', manifest: 'packages/loom-mcp/server.json' },
 	{ key: 'agent-sniper', dir: 'packages/agent-sniper', manifest: 'packages/agent-sniper/server.json' },
 	{ key: 'concierge-mcp', dir: 'packages/concierge-mcp', manifest: 'packages/concierge-mcp/server.json' },
+	{
+		key: 'agentcore-payments-mcp',
+		dir: 'packages/agentcore-payments-mcp',
+		manifest: 'packages/agentcore-payments-mcp/server.json',
+	},
+	{ key: 'agora-mcp', dir: 'packages/agora-mcp', manifest: 'packages/agora-mcp/server.json' },
+	{
+		key: 'alibaba-cloud-mcp',
+		dir: 'packages/alibaba-cloud-mcp',
+		manifest: 'packages/alibaba-cloud-mcp/server.json',
+	},
 	{ key: 'remote-main', manifest: 'server.json' },
 	{ key: 'remote-pumpfun', manifest: 'server-pumpfun.json' },
 	{ key: 'remote-3d', manifest: 'server-3d.json' },
