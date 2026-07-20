@@ -151,7 +151,11 @@ Surfaces updated to price on effective reserves:
   reserves, so a pool holding real quote-side depth virtually is not failed as
   `pool_reserves_empty`.
 - `workers/agent-sniper/amm-exit.js` — position exits and their price-impact
-  circuit breaker.
+  circuit breaker. Because the virtual figure is signed, a quote here refuses a
+  pool whose effective depth is non-positive (`amm_quote_depth_empty`) instead of
+  pricing it. The refusal is load-bearing: the impact math reports a non-positive
+  reserve as 0% impact, i.e. as the safest possible trade, so without it the
+  breaker would wave through exactly the pool it exists to stop.
 - `workers/agent-mm/market.js`, `workers/agent-orders/market.js` — the market
   maker's price and the order book's derived market cap.
 

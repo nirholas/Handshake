@@ -164,6 +164,43 @@ describe('quoteAmmSell — re-quote a graduated position off the AMM', () => {
 		expect(call.virtualQuoteReserves.toString()).toBe('250000000');
 	});
 
+	// `Pool.virtual_quote_reserves` is a signed i128, so a large negative can put
+	// effective depth at or below zero. Such a pool cannot absorb a sale, and the
+	// impact math would score it 0% (the safest possible trade) — so the quote has
+	// to refuse outright rather than hand the breaker a reassuring number.
+	it('refuses a pool whose effective quote depth is wiped out by a negative virtual', async () => {
+		mockGetAmmPoolState.mockResolvedValueOnce(
+			poolState({ quoteReserve: 1_000_000, virtualQuoteReserves: -1_000_000 }),
+		);
+		await expect(
+			quoteAmmSell({ network: 'mainnet', mint: MINT, baseAmount: new BN(10_000), slippagePct: 5 }),
+		).rejects.toMatchObject({ code: 'amm_quote_depth_empty' });
+		expect(mockSellBaseInput).not.toHaveBeenCalled();
+	});
+
+	// A negative virtual that only reduces depth is still a tradable pool: it must
+	// price normally, against the reduced effective reserve.
+	it('prices normally when a negative virtual only reduces depth', async () => {
+		mockGetAmmPoolState.mockResolvedValueOnce(
+			poolState({ baseReserve: 1_000_000, quoteReserve: 2_000_000, virtualQuoteReserves: -1_000_000 }),
+		);
+		mockSellBaseInput.mockReturnValueOnce({ uiQuote: new BN(90_000), minQuote: new BN(85_000) });
+
+		const r = await quoteAmmSell({
+			network: 'mainnet',
+			mint: MINT,
+			baseAmount: new BN(100_000),
+			slippagePct: 5,
+		});
+		// effective quote = 2e6 - 1e6 = 1e6; spot value of 100k base = 100k.
+		// netting 90k is a 10% impact.
+		expect(r.priceImpactPct).toBeCloseTo(10, 5);
+		// The SDK still receives the RAW vault balance plus the signed virtual.
+		const call = mockSellBaseInput.mock.calls[0][0];
+		expect(call.quoteReserve.toString()).toBe('2000000');
+		expect(call.virtualQuoteReserves.toString()).toBe('-1000000');
+	});
+
 	// Impact is measured against the spot price implied by EFFECTIVE reserves.
 	// Virtual liquidity deepens the pool, so the same sale moves it less.
 	it('measures price impact against effective (vault + virtual) reserves', async () => {
