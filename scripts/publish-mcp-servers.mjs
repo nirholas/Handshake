@@ -18,6 +18,7 @@
 //   node scripts/publish-mcp-servers.mjs --dry-run   # validate + report only
 //   node scripts/publish-mcp-servers.mjs             # publish what's missing
 //   node scripts/publish-mcp-servers.mjs --only pumpfun-mcp,three-token-mcp
+//   node scripts/publish-mcp-servers.mjs --npm-only  # skip the registry step entirely
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
@@ -117,6 +118,7 @@ const SERVERS = [
 
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
+const npmOnly = args.includes('--npm-only');
 const onlyArg = args.find((a) => a.startsWith('--only'));
 const only = onlyArg
 	? (onlyArg.includes('=') ? onlyArg.split('=')[1] : args[args.indexOf(onlyArg) + 1] || '')
@@ -152,16 +154,33 @@ async function registryVersionExists(name, version) {
 	return true;
 }
 
-function patFromOriginRemote() {
+// The repo owner's GitHub PAT, from wherever git keeps it.
+//
+// Two locations, because both are normal setups: the token can be embedded in the
+// origin remote URL, or (the tidier arrangement, and what `credential.helper=store`
+// produces) it can live in ~/.git-credentials with the remote left clean. Reading
+// only the remote meant a repo using the credential store looked unauthenticated
+// and silently fell through to GITHUB_TOKEN, which is the wrong account.
+function patFromGitConfig() {
 	try {
 		const url = execFileSync('git', ['-C', root, 'remote', 'get-url', 'origin'], {
 			encoding: 'utf8',
 		}).trim();
 		const m = /https:\/\/[^:]+:([^@]+)@github\.com\//.exec(url);
-		return m ? m[1] : null;
+		if (m) return m[1];
 	} catch {
-		return null;
+		// no origin remote configured; fall through to the credential store
 	}
+	try {
+		const store = readFileSync(resolve(homedir(), '.git-credentials'), 'utf8');
+		for (const line of store.split('\n')) {
+			const m = /^https:\/\/[^:]+:([^@]+)@github\.com/.exec(line.trim());
+			if (m) return m[1];
+		}
+	} catch {
+		// no credential store, or unreadable
+	}
+	return null;
 }
 
 async function getRegistryToken() {
@@ -242,40 +261,53 @@ for (const server of SERVERS) {
 		}
 	}
 
-	// 1. npm
+	// 1. npm. Isolated per-package: a batch run publishes 40+ independent
+	// packages, and one failure (name squatted, auth blip, network hiccup)
+	// must not strand every package still queued behind it.
+	let npmOk = true;
 	if (server.dir) {
 		const pkg = readJson(`${server.dir}/package.json`);
-		const onNpm = await npmVersionExists(pkg.name, version);
-		if (onNpm) {
-			console.log(`   npm: ${pkg.name}@${version} already published`);
-		} else if (dryRun) {
-			console.log(`   npm: would publish ${pkg.name}@${version}`);
-		} else {
-			console.log(`   npm: publishing ${pkg.name}@${version}…`);
-			npmPublish(server.dir);
+		try {
+			const onNpm = await npmVersionExists(pkg.name, version);
+			if (onNpm) {
+				console.log(`   npm: ${pkg.name}@${version} already published`);
+			} else if (dryRun) {
+				console.log(`   npm: would publish ${pkg.name}@${version}`);
+			} else {
+				console.log(`   npm: publishing ${pkg.name}@${version}…`);
+				npmPublish(server.dir);
+			}
+		} catch (err) {
+			npmOk = false;
+			fail(`${server.key}: npm publish failed — ${err.message}`);
 		}
 	}
+	if (!npmOk || npmOnly) continue;
 
 	// 2. MCP registry
-	const onRegistry = await registryVersionExists(name, version);
-	if (onRegistry) {
-		console.log(`   registry: ${name}@${version} already published`);
-	} else if (dryRun) {
-		console.log(`   registry: would publish ${name}@${version}`);
-	} else {
-		if (server.dir) {
-			const pkg = readJson(`${server.dir}/package.json`);
-			if (!(await npmVersionExists(pkg.name, version))) {
-				fail(
-					`${server.key}: skipping registry publish — ${pkg.name}@${version} is not on npm yet`,
-				);
-				continue;
+	try {
+		const onRegistry = await registryVersionExists(name, version);
+		if (onRegistry) {
+			console.log(`   registry: ${name}@${version} already published`);
+		} else if (dryRun) {
+			console.log(`   registry: would publish ${name}@${version}`);
+		} else {
+			if (server.dir) {
+				const pkg = readJson(`${server.dir}/package.json`);
+				if (!(await npmVersionExists(pkg.name, version))) {
+					fail(
+						`${server.key}: skipping registry publish — ${pkg.name}@${version} is not on npm yet`,
+					);
+					continue;
+				}
 			}
+			registryToken ??= await getRegistryToken();
+			console.log(`   registry: publishing ${name}@${version}…`);
+			const out = await publishToRegistry(manifest, registryToken);
+			console.log(`   registry: published (status ${out?.server?.status ?? 'ok'})`);
 		}
-		registryToken ??= await getRegistryToken();
-		console.log(`   registry: publishing ${name}@${version}…`);
-		const out = await publishToRegistry(manifest, registryToken);
-		console.log(`   registry: published (status ${out?.server?.status ?? 'ok'})`);
+	} catch (err) {
+		fail(`${server.key}: registry step failed — ${err.message}`);
 	}
 }
 
