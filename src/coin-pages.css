@@ -2748,6 +2748,17 @@ a.cv-liq-item:focus-visible {
 .art-prose p {
 	margin: 0 0 1.125rem;
 }
+/* Sits under a truncated excerpt: makes the cut-off read as deliberate
+   attribution, not a failed extraction. Pairs with the .art-cta below it. */
+.art-continue {
+	max-width: 70ch;
+	margin: -0.25rem 0 0;
+	padding-left: 0.875rem;
+	border-left: 2px solid var(--cv-accent);
+	color: var(--cv-text-dim);
+	font-size: 0.9375rem;
+	line-height: 1.6;
+}
 .art-preview-note {
 	display: flex;
 	gap: 0.75rem;

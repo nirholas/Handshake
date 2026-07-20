@@ -56,6 +56,7 @@ import { paidEndpoint } from '../_lib/x402-paid-endpoint.js';
 import { declareHttpDiscovery, withService } from '../_lib/x402/bazaar-helpers.js';
 import { installAccessControl } from '../_lib/x402/access-control.js';
 import { getStats, getMonths, loadMonth } from '../_lib/news-archive-store.js';
+import { isSuppressed, excerptText } from '../_lib/news-rights.js';
 
 const MAX_MONTHS_PER_SCAN = 12;
 const MONTH_FETCH_CONCURRENCY = 3;
@@ -156,7 +157,7 @@ async function archiveSearch(parsed) {
 			for (let b = 0; b < batch.length; b++) {
 				if (!loaded[b]) continue; // month failed to load; reported via scanned list
 				scannedMonths.push(batch[b]);
-				found = found.concat(loaded[b].filter(matches));
+				found = found.concat(loaded[b].filter((a) => matches(a) && !isSuppressed(a)));
 			}
 			if (found.length >= need) break;
 		}
@@ -170,7 +171,12 @@ async function archiveSearch(parsed) {
 		found.sort((a, b) => new Date(b.pub_date || 0) - new Date(a.pub_date || 0));
 		const monthsRemaining = window.length - scannedMonths.length;
 		const body = {
-			articles: found.slice(offset, offset + limit),
+			// Bound the quoted text on the way out. The corpus holds 660k records
+			// captured before the rights layer existed, many with a full-body
+			// `description` from a content:encoded feed; this caps them at read
+			// time so the API cannot serve a publisher's article regardless of
+			// what any individual stored row contains.
+			articles: found.slice(offset, offset + limit).map((a) => ({ ...a, description: excerptText(a.description) })),
 			total_scanned_matches: found.length,
 			limit,
 			offset,

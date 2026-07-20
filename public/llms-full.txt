@@ -37,6 +37,12 @@ URL: https://three.ws/animations
 
 Browse and preview public animations authored by the three.ws community. Apply any clip to your avatar in the Animation Studio.
 
+### Character Library
+
+URL: https://three.ws/character-library
+
+106 professionally rigged 3D characters, free to use. Every one drives the full animation library and drops into the Studio, Animation Studio, and embed viewer in one click.
+
 ### Diorama
 
 URL: https://three.ws/diorama
@@ -1533,6 +1539,12 @@ Free, keyless 3D API for AI agents: turn a text prompt into a real GLB model and
 URL: https://three.ws/crypto-api
 
 One free, keyless API for on-chain and market data: DEX pairs, prices, swap quotes, TVL, Solana RPC reads, and ENS/SNS name resolution — CoinGecko, DefiLlama, Jupiter, DexScreener and Solana RPC bundled behind one bill. Live provider table rendered from the real registry, generated OpenAPI 3.1 spec, free tier then BYOK, plan, or x402 pay-per-call.
+
+### Docs · Publisher rights in the news reader
+
+URL: https://three.ws/docs/news-rights
+
+What three.ws shows from a publisher's article and what it never shows: the enforced lead-excerpt limit, how a withdrawn story is removed (410, deindex, purge), and how publishers can ask us to take something down.
 
 ### Docs · Forge (text & image to 3D)
 

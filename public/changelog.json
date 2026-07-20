@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-19T20:54:45.182Z",
+	"generated_at": "2026-07-19T22:30:00.732Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -42,6 +42,16 @@
 			"title": "Docs · Assistant widget",
 			"summary": "Add a 3D avatar assistant to any website: the one-tag script, the @three-ws/assistant npm package, and the assistant-widget MCP server for AI agents.",
 			"link": "/docs/assistant-widget",
+			"tags": [
+				"launch"
+			]
+		},
+		{
+			"date": "2026-07-19",
+			"type": "launch",
+			"title": "Docs · Publisher rights in the news reader",
+			"summary": "What three.ws shows from a publisher's article and what it never shows: the enforced lead-excerpt limit, how a withdrawn story is removed (410, deindex, purge), and how publishers can ask us to take something down.",
+			"link": "/docs/news-rights",
 			"tags": [
 				"launch"
 			]
@@ -280,6 +290,18 @@
 			"tags": [
 				"feature",
 				"improvement"
+			]
+		},
+		{
+			"date": "2026-07-19",
+			"type": "update",
+			"title": "The news reader now quotes publishers instead of reprinting them",
+			"summary": "Story pages used to show the full text of the articles they linked to. That was wrong, and a publisher was right to object. Every story page now shows a short lead excerpt, our own summary and key points, live tickers and market context, and sends you to the publisher for the rest. The limit is enforced on the server across every surface that touches article text: the reader, the RSS mirror, the archive search, and the agent knowledge corpus. Twenty-four pages named in a takedown notice have been removed and deindexed, and the publisher who filed it has been dropped from the aggregator. New: a documented takedown path for publishers at /docs/news-rights.",
+			"link": "/docs/news-rights",
+			"tags": [
+				"fix",
+				"improvement",
+				"docs"
 			]
 		},
 		{

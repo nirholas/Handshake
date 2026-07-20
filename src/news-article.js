@@ -200,7 +200,10 @@ function summaryCardHtml(a, seed) {
 
 function render(a, seed) {
 	const image = a.image || seed.image;
-	const paragraphs = (a.paragraphs || []).slice(0, 60);
+	// The API serves a bounded lead excerpt, never the publisher's full body
+	// (api/_lib/news-rights.js). The value here is what we may quote; the story
+	// itself belongs to, and stays on, the publisher's site.
+	const paragraphs = a.paragraphs || [];
 	const isPreview = a.extraction === 'preview';
 	root.innerHTML = `
 		${image ? `<div class="art-hero"><img loading="lazy" decoding="async" src="${esc(image)}" alt="" data-fallback="${esc((a.source || '?').slice(0, 2).toUpperCase())}" /></div>` : ''}
@@ -219,11 +222,16 @@ function render(a, seed) {
 								<span><strong>${esc(a.source)}</strong> doesn’t allow embedded reading, so the full text stays on their site.
 								The summary above is built from the story metadata.</span>
 							</div>`
-						: `<div class="art-prose">${paragraphs.map((p) => `<p>${esc(p)}</p>`).join('')}</div>`
+						: `<div class="art-prose">${paragraphs.map((p) => `<p>${esc(p)}</p>`).join('')}</div>
+							${
+								a.excerpt_truncated
+									? `<p class="art-continue">Excerpt from <strong>${esc(a.source)}</strong>. Continue reading the full story at the source.</p>`
+									: ''
+							}`
 				}
 				<p style="margin:1.75rem 0 0">
 					<a class="art-cta" href="${esc(a.url)}" target="_blank" rel="noopener noreferrer">
-						Read at ${esc(a.source)}
+						${a.excerpt_truncated ? 'Continue reading at' : 'Read at'} ${esc(a.source)}
 						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
 					</a>
 				</p>

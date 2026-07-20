@@ -18,6 +18,7 @@ import path from 'node:path';
 import { wrap } from '../_lib/http.js';
 import { env } from '../_lib/env.js';
 import { resolveStory, validStoryKey } from '../_lib/news-story.js';
+import { suppression, excerptParagraphs, excerptText } from '../_lib/news-rights.js';
 import { storyPath, tickerHref, TICKER_COIN_IDS } from '../../src/shared/news-links.js';
 
 const ORIGIN = env.APP_ORIGIN || 'https://three.ws';
@@ -90,7 +91,7 @@ function jsonLd(a, canonicalAbs, ogImage) {
 				publisher: { '@type': 'Organization', name: 'three.ws', url: ORIGIN },
 				mainEntityOfPage: { '@type': 'WebPage', '@id': canonicalAbs },
 				isBasedOn: a.link || undefined,
-				description: a.description || undefined,
+				description: excerptText(a.description) || undefined,
 				about: (a.tickers || []).map((t) => ({ '@type': 'Thing', name: t })),
 			},
 			{
@@ -118,6 +119,10 @@ function marketContextHtml(mc) {
 }
 
 function crawlerBodyHtml(a) {
+	// Feeds that ship content:encoded put the WHOLE article in `description`.
+	// Quote only the lead — this block is what crawlers index, so an unbounded
+	// description here is republication of the publisher's body under our URL.
+	const lead = excerptParagraphs([a.description || a.title]).paragraphs[0] || a.title;
 	const sentiment = a.sentiment?.label || 'neutral';
 	const badgeCls = sentiment.includes('positive') ? 'bullish' : sentiment.includes('negative') ? 'bearish' : '';
 	const date = fmtDate(a.pub_date);
@@ -139,7 +144,7 @@ function crawlerBodyHtml(a) {
 		${chips ? `<div class="nw-chips" style="margin:0 0 1.25rem">${chips}</div>` : ''}
 		<div class="art-summary-card">
 			<h2>Story</h2>
-			<p>${esc(a.description || a.title)}</p>
+			<p>${esc(lead)}</p>
 			${marketContextHtml(a.market_context)}
 		</div>
 		<p style="margin:1.75rem 0 0">
@@ -189,7 +194,10 @@ export function renderStoryHtml(shell, a) {
 		source: a.source,
 		image: a.image || null,
 		author: a.author || null,
-		description: a.description || null,
+		// Bounded: the seed is embedded verbatim in the served HTML, so an
+		// unbounded description would ship the publisher's body in the page
+		// source even though the rendered lead above is capped.
+		description: excerptText(a.description) || null,
 		pub_date: a.pub_date || null,
 		tickers: a.tickers || [],
 		sentiment: a.sentiment || null,
@@ -202,6 +210,30 @@ export function renderStoryHtml(shell, a) {
 			`<script type="application/json" id="art-seed">${JSON.stringify(seed).replace(/</g, '\\u003c')}</script>\n` +
 			`\t\t\t<article id="art-root" aria-live="polite">${crawlerBodyHtml(a)}</article>`,
 	);
+	return html;
+}
+
+// A story withdrawn at the rightsholder's demand. Served with 410 Gone and
+// noindex so the URL leaves the search index permanently, and with an honest
+// explanation rather than a generic 404 — the link is not broken, the content
+// was removed.
+function removedHtml(shell, sup) {
+	const who = sup.publisher ? esc(sup.publisher) : 'the publisher';
+	const body = `
+		<h1 class="art-title">This story has been removed</h1>
+		<div class="cv-empty">
+			<p><strong>${who} asked us to take this page down, and we did.</strong></p>
+			<p>three.ws aggregates crypto headlines and adds its own analysis. It should never have hosted
+			this article's full text, and it no longer does. The original remains available from ${who}.</p>
+			<p><a class="arc-btn" href="/markets/news">Latest crypto news</a>
+			<a class="arc-btn ghost" href="/markets/archive">Search the archive</a></p>
+		</div>`;
+	let html = shell
+		.replace(/<title>[\s\S]*?<\/title>/, () => `<title>Story removed · Crypto News · three.ws</title>`)
+		.replace(/<article id="art-root"[^>]*>[\s\S]*?<\/article>/, () => `<article id="art-root">${body}</article>`);
+	// noindex is load-bearing here: this page must not be re-indexed under any
+	// circumstance, including if a crawler ignores the 410.
+	html = setMetaContent(html, 'robots', 'noindex, nofollow');
 	return html;
 }
 
@@ -244,6 +276,18 @@ export default wrap(async (req, res) => {
 		return;
 	}
 
+	// Rights check by id first, before any lookup: a taken-down story must 410
+	// even once its record is gone from the archive, and must never be served
+	// from the page cache.
+	const byId = suppression({ id });
+	if (byId) {
+		res.statusCode = 410;
+		res.setHeader('cache-control', 'public, max-age=3600, s-maxage=86400');
+		res.setHeader('x-robots-tag', 'noindex, nofollow');
+		res.end(removedHtml(shell, byId));
+		return;
+	}
+
 	const key = `${month}/${id}`;
 	const hit = _pages.get(key);
 	if (hit && hit.expiresAt > Date.now()) {
@@ -254,6 +298,18 @@ export default wrap(async (req, res) => {
 	}
 
 	const resolved = await resolveStory(month, id);
+
+	// Publisher-level rights check on the resolved record — catches every story
+	// from a withdrawn publisher, not just the ids named in a notice.
+	const bySource = resolved ? suppression(resolved.article) : null;
+	if (bySource) {
+		res.statusCode = 410;
+		res.setHeader('cache-control', 'public, max-age=3600, s-maxage=86400');
+		res.setHeader('x-robots-tag', 'noindex, nofollow');
+		res.end(removedHtml(shell, bySource));
+		return;
+	}
+
 	// A resolvable story always has a canonical path; a dated-but-unlinkable
 	// record (no id/date after compaction) can't reach here because the route
 	// carries both. Missing → an honest 404, cached briefly.

@@ -14961,6 +14961,17 @@
 				"improvement"
 			],
 			"link": "/docs/chatgpt-ar"
+		},
+		{
+			"date": "2026-07-19",
+			"title": "The news reader now quotes publishers instead of reprinting them",
+			"summary": "Story pages used to show the full text of the articles they linked to. That was wrong, and a publisher was right to object. Every story page now shows a short lead excerpt, our own summary and key points, live tickers and market context, and sends you to the publisher for the rest. The limit is enforced on the server across every surface that touches article text: the reader, the RSS mirror, the archive search, and the agent knowledge corpus. Twenty-four pages named in a takedown notice have been removed and deindexed, and the publisher who filed it has been dropped from the aggregator. New: a documented takedown path for publishers at /docs/news-rights.",
+			"tags": [
+				"fix",
+				"improvement",
+				"docs"
+			],
+			"link": "/docs/news-rights"
 		}
 	]
 }

@@ -39,6 +39,14 @@
 			<description>Add a 3D avatar assistant to any website: the one-tag script, the @three-ws/assistant npm package, and the assistant-widget MCP server for AI agents.</description>
 		</item>
 		<item>
+			<title>Docs · Publisher rights in the news reader</title>
+			<link>https://three.ws/docs/news-rights</link>
+			<guid isPermaLink="false">2026-07-19:Docs · Publisher rights in the news reader</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>launch</category>
+			<description>What three.ws shows from a publisher's article and what it never shows: the enforced lead-excerpt limit, how a withdrawn story is removed (410, deindex, purge), and how publishers can ask us to take something down.</description>
+		</item>
+		<item>
 			<title>Motion Swap — Replace Yourself in Video with Your Avatar</title>
 			<link>https://three.ws/motion-swap</link>
 			<guid isPermaLink="false">2026-07-19:Motion Swap — Replace Yourself in Video with Your Avatar</guid>
@@ -213,6 +221,14 @@
 			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Making a 3D model in ChatGPT now feels like the Forge. The generator paints a concept image before sculpting the mesh, and ChatGPT now shows that painted view the moment it exists, while the 3D model is still generating: in the inline widget it appears instantly as the model loads behind it. You can also ask for quality now: draft for speed, standard by default, or high for maximum detail on our own GPUs (it takes a few minutes and is worth it). Under the hood, ChatGPT requests ride the same smart engine routing as the Forge page instead of a single pinned engine, so an unhealthy lane never blocks your model.</description>
+		</item>
+		<item>
+			<title>The news reader now quotes publishers instead of reprinting them</title>
+			<link>https://three.ws/docs/news-rights</link>
+			<guid isPermaLink="false">2026-07-19:The news reader now quotes publishers instead of reprinting them</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Story pages used to show the full text of the articles they linked to. That was wrong, and a publisher was right to object. Every story page now shows a short lead excerpt, our own summary and key points, live tickers and market context, and sends you to the publisher for the rest. The limit is enforced on the server across every surface that touches article text: the reader, the RSS mirror, the archive search, and the agent knowledge corpus. Twenty-four pages named in a takedown notice have been removed and deindexed, and the publisher who filed it has been dropped from the aggregator. New: a documented takedown path for publishers at /docs/news-rights.</description>
 		</item>
 		<item>
 			<title>The sniper fleet becomes a live experiment: rules vs AI judgment</title>

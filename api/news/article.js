@@ -4,7 +4,9 @@
 // ladder (publisher page → Jina Reader → publisher feed → preview, in
 // api/_lib/article-extract.js), so a Cloudflare-blocked publisher still yields
 // the full story instead of a one-line teaser. Layers analysis on top:
-//   • paragraphs      extracted plain-text body
+//   • paragraphs      BOUNDED lead excerpt of the publisher's body (see
+//                     api/_lib/news-rights.js — we quote the lead and link out;
+//                     the full body is never served from three.ws)
 //   • summary         LLM summary via the platform chain; falls back to lead
 //   • key_points      3–5 takeaways (LLM, or highest-signal sentences)
 //   • entities        orgs / people / projects the story is about (LLM)
@@ -29,6 +31,7 @@ import { llmComplete, llmConfigured } from '../_lib/llm.js';
 import { extractArticle } from '../_lib/article-extract.js';
 import { enrichTickers } from '../_lib/news-coins.js';
 import { recordExtraction, getExtraction } from '../_lib/news-knowledge-store.js';
+import { suppression, excerptParagraphs, excerptText } from '../_lib/news-rights.js';
 
 const CACHE_TTL_MS = 30 * 60_000;
 
@@ -65,9 +68,17 @@ async function llmAnalyze(content, title, source) {
 	}
 }
 
+// The fallback when no LLM provider answers. Unlike the LLM path, this one is
+// EXTRACTIVE — its summary and key points are the publisher's own sentences,
+// not new prose. So it is held to the same quotation budget as the excerpt:
+// a bounded lead, and a few short representative sentences. Without these
+// bounds the "analysis" would quietly become a second copy of the article.
+const HEURISTIC_KEY_POINTS = 3;
+const HEURISTIC_POINT_CHARS = 200;
+
 function heuristicAnalyze(paragraphs, title) {
 	const lead = paragraphs.slice(0, 3).join(' ');
-	const summary = lead.slice(0, 500) + (lead.length > 500 ? '…' : '');
+	const summary = excerptText(lead);
 	// Highest-signal sentences: numbers, detected tickers, and early position.
 	const sentences = paragraphs
 		.join(' ')
@@ -85,13 +96,35 @@ function heuristicAnalyze(paragraphs, title) {
 		.sort((a, b) => b.score - a.score);
 	const key_points = [];
 	for (const { s } of scored) {
-		if (key_points.length >= 4) break;
+		if (key_points.length >= HEURISTIC_KEY_POINTS) break;
 		if (key_points.some((k) => k.slice(0, 60) === s.slice(0, 60))) continue;
-		key_points.push(s);
+		key_points.push(s.length > HEURISTIC_POINT_CHARS ? `${s.slice(0, HEURISTIC_POINT_CHARS).trimEnd()}…` : s);
 	}
 	const lex = lexiconSentiment(`${title} ${lead}`);
 	const sentiment = lex.label.includes('positive') ? 'bullish' : lex.label.includes('negative') ? 'bearish' : 'neutral';
 	return { summary, key_points, entities: [], topics: [], sentiment, provider: 'heuristic' };
+}
+
+// ── Rights boundary ──────────────────────────────────────────────────────────
+
+/**
+ * The public shape of an extraction. The extraction ladder and the knowledge
+ * base hold the full body because the analysis layer and the agents' RAG corpus
+ * need it; the HTTP response does NOT get it. `paragraphs` is capped to a lead
+ * excerpt here, at the one place every response passes through, so no caller —
+ * reader, cached record, or third party hitting the endpoint directly — can
+ * obtain the publisher's article body from us.
+ */
+function publicView(value) {
+	const { paragraphs, truncated } = excerptParagraphs(value.paragraphs);
+	return {
+		...value,
+		paragraphs,
+		excerpt_truncated: truncated,
+		// Where the rest of the story lives. The reader renders this as the
+		// primary call to action whenever the body was truncated.
+		full_text_url: value.url,
+	};
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -113,10 +146,17 @@ export default wrap(async (req, res) => {
 		return error(res, 400, 'bad_url', 'url is not a valid absolute URL');
 	}
 
+	// Withdrawn publisher (or a taken-down story reached by its link) — refuse
+	// before fetching anything. 410: the resource is permanently gone from here.
+	const sup = suppression({ url: target });
+	if (sup) {
+		return error(res, 410, 'removed', `Coverage from ${sup.publisher || 'this publisher'} is no longer available on three.ws.`);
+	}
+
 	const cacheHeaders = { 'cache-control': 'public, max-age=600, s-maxage=1800, stale-while-revalidate=3600' };
 
 	const hit = _cache.get(target);
-	if (hit && hit.expiresAt > Date.now()) return json(res, 200, hit.value, cacheHeaders);
+	if (hit && hit.expiresAt > Date.now()) return json(res, 200, publicView(hit.value), cacheHeaders);
 
 	const id = articleId(target);
 
@@ -126,7 +166,7 @@ export default wrap(async (req, res) => {
 	const stored = await getExtraction(id).catch(() => null);
 	if (stored && (stored.extraction === 'page' || stored.extraction === 'reader') && stored.content_chars > 400) {
 		_cache.set(target, { value: stored, expiresAt: Date.now() + CACHE_TTL_MS });
-		return json(res, 200, stored, cacheHeaders);
+		return json(res, 200, publicView(stored), cacheHeaders);
 	}
 
 	// The publisher's own feed copy — trusted metadata, and (for feeds that
@@ -217,5 +257,5 @@ export default wrap(async (req, res) => {
 	// forget: a persistence hiccup must never fail the reader response.
 	recordExtraction(value).catch(() => {});
 
-	return json(res, 200, value, cacheHeaders);
+	return json(res, 200, publicView(value), cacheHeaders);
 });

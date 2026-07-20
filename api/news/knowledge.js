@@ -18,6 +18,19 @@
 import { cors, json, method, wrap, error, rateLimited } from '../_lib/http.js';
 import { limits, clientIp } from '../_lib/rate-limit.js';
 import { getExtraction, queryKnowledge, knowledgeStats } from '../_lib/news-knowledge-store.js';
+import { suppression, isSuppressed, excerptParagraphs } from '../_lib/news-rights.js';
+
+// The corpus stores each story's full body so the agents' grounding layer can
+// reason over it server-side. This endpoint is public and CORS-open, so the
+// same rights boundary the reader uses applies on the way out: withdrawn
+// stories are dropped entirely, and `paragraphs` is capped to a lead excerpt.
+// Callers wanting the whole article follow `url` to the publisher.
+function publicRecord(record) {
+	if (!record) return record;
+	if (!Array.isArray(record.paragraphs)) return record;
+	const { paragraphs, truncated } = excerptParagraphs(record.paragraphs);
+	return { ...record, paragraphs, excerpt_truncated: truncated, full_text_url: record.url };
+}
 
 export default wrap(async (req, res) => {
 	if (cors(req, res, { methods: 'GET,OPTIONS', origins: '*' })) return;
@@ -37,9 +50,12 @@ export default wrap(async (req, res) => {
 
 	if (id) {
 		if (!/^[a-f0-9]{16}$/.test(id)) return error(res, 400, 'bad_id', 'id must be a 16-hex article id');
+		const sup = suppression({ id });
+		if (sup) return error(res, 410, 'removed', 'this story was withdrawn at the rightsholder’s request');
 		const record = await getExtraction(id);
 		if (!record) return error(res, 404, 'not_found', 'no knowledge recorded for this story yet');
-		return json(res, 200, record, headers);
+		if (isSuppressed(record)) return error(res, 410, 'removed', 'this story was withdrawn at the rightsholder’s request');
+		return json(res, 200, publicRecord(record), headers);
 	}
 
 	if (ticker && !/^[A-Za-z0-9]{1,12}$/.test(ticker)) {
@@ -51,5 +67,6 @@ export default wrap(async (req, res) => {
 		queryKnowledge({ ticker: ticker || null, q: q || null, limit, full }),
 		knowledgeStats(),
 	]);
-	return json(res, 200, { articles, stats, query: { ticker: ticker || null, q: q || null, full } }, headers);
+	const visible = articles.filter((a) => !isSuppressed(a)).map(publicRecord);
+	return json(res, 200, { articles: visible, stats, query: { ticker: ticker || null, q: q || null, full } }, headers);
 });

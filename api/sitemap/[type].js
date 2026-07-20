@@ -15,6 +15,7 @@ import { env } from '../_lib/env.js';
 import { reportServerError, redactUrl } from '../_lib/http.js';
 import { getMonths, loadMonth } from '../_lib/news-archive-store.js';
 import { storyPath } from '../../src/shared/news-links.js';
+import { isSuppressed } from '../_lib/news-rights.js';
 
 const ORIGIN = env.APP_ORIGIN;
 const MAX_URLS = 45_000;
@@ -236,6 +237,7 @@ async function newsSitemap() {
 	for (const month of recent) {
 		const records = await loadMonth(month).catch(() => []);
 		for (const a of records) {
+			if (isSuppressed(a)) continue; // withdrawn at the rightsholder's demand — never submit it for crawling
 			const loc = storyPath(a);
 			if (!loc) continue; // undated/id-less corpus rows have no story page
 			out.push({

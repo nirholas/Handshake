@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-19T20:54:45.169Z",
+	"generated_at": "2026-07-19T22:30:00.719Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -2516,6 +2516,16 @@
 					"indexable": true,
 					"tags": [],
 					"showcase": true
+				},
+				{
+					"path": "/docs/news-rights",
+					"title": "Docs · Publisher rights in the news reader",
+					"description": "What three.ws shows from a publisher's article and what it never shows: the enforced lead-excerpt limit, how a withdrawn story is removed (410, deindex, purge), and how publishers can ask us to take something down.",
+					"added": "2026-07-19",
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
 				},
 				{
 					"path": "/docs/forge",

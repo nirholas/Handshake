@@ -22,6 +22,7 @@ import { constantTimeEquals } from '../_lib/crypto.js';
 import { getGcpAccessToken } from '../_lib/gcp-auth.js';
 import { getNews } from '../_lib/news.js';
 import { geckoFetch } from '../_lib/coingecko.js';
+import { excerptText } from '../_lib/news-rights.js';
 
 const BUCKET = 'three-ws-news-archive';
 const API = `https://storage.googleapis.com/storage/v1/b/${BUCKET}/o`;
@@ -95,7 +96,10 @@ function toArchiveRecord(a, marketContext, nowIso) {
 		title: a.title,
 		link: a.link,
 		canonical_link: a.link,
-		description: a.description,
+		// Bounded at capture: feeds shipping content:encoded put the entire
+		// article in `description`, and the archive is a durable, publicly
+		// searchable store. We keep a quotable lead and the link, never the body.
+		description: excerptText(a.description),
 		source: a.source,
 		source_key: a.source_key,
 		category: a.category,

@@ -80,7 +80,10 @@ export const NEWS_SOURCES = {
 	livecoins: { name: 'Livecoins', url: 'https://livecoins.com.br/feed/', category: 'general', language: 'pt', region: 'latam' },
 	mihanblockchain: { name: 'Mihan Blockchain (میهن بلاکچین)', url: 'https://mihanblockchain.com/feed/', category: 'general', language: 'fa', region: 'mena' },
 	newsbtc: { name: 'NewsBTC', url: 'https://www.newsbtc.com/feed/', category: 'general', tier: 'tier3', credibility: 0.7 },
-	nulltx: { name: 'NullTX', url: 'https://nulltx.com/feed/', category: 'general' },
+	// nulltx (NullTX) — withdrawn 2026-07-19 at the rightsholder's demand
+	// (The Merkle, LLC). Do not re-add without written permission; the key is
+	// held in RESTRICTED_SOURCE_KEYS (api/_lib/news-rights.js) so any record
+	// already in the archive stays suppressed on read.
 	panewslab: { name: 'PANews (PA财经)', url: 'https://www.panewslab.com/rss.xml?lang=zh&type=NEWS', category: 'general', language: 'zh', region: 'asia' },
 	portaldobitcoin: { name: 'Portal do Bitcoin', url: 'https://portaldobitcoin.uol.com.br/feed/', category: 'general', language: 'pt', region: 'latam' },
 	ramzarz: { name: 'Ramz Arz (رمزارز)', url: 'https://ramzarz.news/feed/', category: 'general', language: 'fa', region: 'mena' },

@@ -2053,6 +2053,14 @@
 					"showcase": true
 				},
 				{
+					"path": "/docs/news-rights",
+					"title": "Docs · Publisher rights in the news reader",
+					"description": "What three.ws shows from a publisher's article and what it never shows: the enforced lead-excerpt limit, how a withdrawn story is removed (410, deindex, purge), and how publishers can ask us to take something down.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-07-19"
+				},
+				{
 					"path": "/docs/forge",
 					"title": "Docs · Forge (text & image to 3D)",
 					"description": "How the Forge turns a text prompt, photos, or a sketch into a downloadable textured 3D model (GLB): the free-first engine grid with live health status, input modes, output formats, job resume, and background generation.",

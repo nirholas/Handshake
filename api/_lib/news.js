@@ -25,6 +25,7 @@
 import { createHash } from 'node:crypto';
 import { XMLParser } from 'fast-xml-parser';
 import { NEWS_SOURCES, sourcesForCategory, sourcesForLanguage, sourcePriority, isFeaturedSource } from './news-sources.js';
+import { isSuppressed, excerptText } from './news-rights.js';
 
 const FEED_TIMEOUT_MS = 7000;
 const FRESH_MS = 300_000; // refetch a source after 5 min
@@ -565,9 +566,13 @@ export async function getNews({ category, source, lang = 'en', q, limit = 30, of
 	// while the stragglers land in cache for the next caller.
 	const deadline = keys.length <= NARROW_QUERY_SOURCES ? FEED_TIMEOUT_MS + 500 : REFRESH_DEADLINE_MS;
 	const all = await ensureSources(keys, deadline);
-	let articles = dedupe(all).sort(
-		(a, b) => new Date(b.pub_date || 0) - new Date(a.pub_date || 0),
-	);
+	// Rights filter, applied at the fan-out's single choke point: everything
+	// downstream of getNews (the /markets/news feed, the RSS mirror, related
+	// coverage, the coin rails, and the hourly archive-append cron) inherits it,
+	// so a withdrawn publisher can neither be displayed nor newly archived.
+	let articles = dedupe(all)
+		.filter((a) => !isSuppressed(a))
+		.sort((a, b) => new Date(b.pub_date || 0) - new Date(a.pub_date || 0));
 	if (q) {
 		const needle = q.toLowerCase();
 		articles = articles.filter((a) =>
@@ -578,7 +583,12 @@ export async function getNews({ category, source, lang = 'en', q, limit = 30, of
 	const sources_ok = keys.filter((k) => sourceCache.get(k)?.ok).length;
 	// content_text is a server-side field for the article reader; list payloads
 	// stay light.
-	const page = articles.slice(offset, offset + limit).map(({ content_text, ...a }) => a);
+	// `description` is bounded here for the same reason content_text is dropped:
+	// a content:encoded feed puts the publisher's whole article in it, and this
+	// payload is what the feed UI, the RSS mirror and the coin rails render.
+	const page = articles
+		.slice(offset, offset + limit)
+		.map(({ content_text, ...a }) => ({ ...a, description: excerptText(a.description) }));
 	return {
 		articles: page,
 		total,
@@ -603,5 +613,9 @@ export async function findArticle({ link, id }) {
 	const all = await ensureSources(keys);
 	const wantId = id || (link ? articleId(link) : null);
 	if (!wantId && !link) return null;
-	return all.find((a) => a.id === wantId || (link && a.link === link)) || null;
+	const hit = all.find((a) => a.id === wantId || (link && a.link === link)) || null;
+	// A withdrawn story is "not found" to every caller, including the reader's
+	// feed-body fallback — otherwise a blocked page fetch would route straight
+	// around the rights filter and serve the publisher's feed copy instead.
+	return hit && isSuppressed(hit) ? null : hit;
 }
