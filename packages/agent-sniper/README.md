@@ -380,6 +380,13 @@ overrides passed to `createSniper`/`loadConfig` always win. See `.env.example`.
   a real endpoint so trades aren't silently dropped to rate limits.
 - **Optional firewall hook.** The `assessSafety` hook runs after the quote and
   before broadcast; a `block` verdict cancels the trade.
+- **Mayhem exclusion.** `createMayhemFilter({ connection?, rpcUrl?, strictOnUnknown?, retries?, retryDelayMs? })`
+  reads the bonding curve's `isMayhemMode` (cached per mint) and skips pump.fun
+  Mayhem-mode launches. As of 0.1.4 a pre-built web3 `Connection` (for example a
+  rotating multi-endpoint one) can be injected instead of a single `rpcUrl`, and
+  a null read retries with backoff (default 2 retries) before resolving
+  "unknown", so a throttled provider can't starve a strict gate. The pure
+  `retryWhileNull(fn, { retries, delayMs })` helper is exported too.
 - **Global kill switch.** `SNIPER_GLOBAL_KILL=true` (or `config.globalKill`)
   halts every buy across every agent immediately.
 
