@@ -235,7 +235,7 @@ function makeTipGuard({ strat, network, alreadyCommittedLamports, dailySpentLamp
  */
 export async function executeBuy({ cfg, strat, mint, throttle }) {
 	return withAgentLock(strat.agent_id, async () => {
-		const perTrade = BigInt(strat.per_trade_lamports);
+		let perTrade = BigInt(strat.per_trade_lamports);
 		const tag = { agent: strat.agent_id, mint: mint.mint, symbol: mint.symbol };
 
 		// 0. Mayhem exclusion (owner rule) — NEVER buy pump.fun Mayhem tokens, only
@@ -319,7 +319,17 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 			return skip(tag, 'wallet_precheck_failed');
 		}
 		const headroom = checkSolHeadroom(preBalance, perTrade, SOL_FEE_HEADROOM_LAMPORTS);
-		if (headroom) return skip(tag, headroom.reason);
+		if (headroom) {
+			// Learning > profit (owner directive): a wallet too poor for the
+			// strategy's configured size still trades, shrunk to whatever is left
+			// after the fee/rent headroom — it only sits out once even a
+			// cfg.minTradeLamports-sized buy wouldn't fit. Safe to shrink here: every
+			// check already passed above (budget, spend policy) is a ceiling a
+			// smaller trade only clears more easily, never less.
+			const dustCapable = preBalance - SOL_FEE_HEADROOM_LAMPORTS;
+			if (dustCapable < cfg.minTradeLamports) return skip(tag, headroom.reason);
+			perTrade = dustCapable;
+		}
 
 		// 5. idempotency lock — claim the (agent,mint,network) slot BEFORE the tx.
 		//    The wallet is known now, so it's written on the claim (no later UPDATE).

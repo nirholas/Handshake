@@ -121,6 +121,12 @@ export function loadConfig() {
 		feedWatchdogMs: Math.max(30_000, num('SNIPER_FEED_WATCHDOG_MS', 180_000)),
 		// Confirmation timeout for a broadcast trade.
 		confirmTimeoutMs: Math.max(15_000, num('SNIPER_CONFIRM_TIMEOUT_MS', 60_000)),
+		// Owner directive: the fleet is a learning experiment, not a profit desk — a
+		// wallet too poor for its strategy's configured per_trade_lamports should
+		// shrink the trade to whatever it actually has left rather than sit idle.
+		// This is the floor below that shrink: once even a dust-sized buy wouldn't
+		// clear it, THEN skip with insufficient_sol. Default 0.00001 SOL.
+		minTradeLamports: BigInt(Math.max(1, Math.round(num('SNIPER_MIN_TRADE_LAMPORTS', 10_000)))),
 		// ── liveness + alerting ──────────────────────────────────────────────────
 		// How often the worker upserts its bot_heartbeat row. /api/sniper/status
 		// (and /status) read this to answer "is the sniper alive?" without SSH.
