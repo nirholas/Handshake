@@ -11,8 +11,13 @@
 //
 // Registry auth (io.github.nirholas namespace), first match wins:
 //   - MCP_REGISTRY_TOKEN env (a registry JWT)
-//   - GITHUB_TOKEN env, exchanged via POST /v0/auth/github-at
-//   - the GitHub PAT embedded in the `origin` remote URL, same exchange
+//   - the owner's GitHub PAT from git: the `origin` remote URL, else
+//     ~/.git-credentials, exchanged via POST /v0/auth/github-at
+//   - GITHUB_TOKEN env, same exchange
+//
+// The git PAT outranks GITHUB_TOKEN on purpose: in a Codespace the latter can
+// belong to a different account, whose io.github.<owner> namespace is not the one
+// these manifests publish under, so it authenticates fine and then 403s on publish.
 //
 // Usage:
 //   node scripts/publish-mcp-servers.mjs --dry-run   # validate + report only
@@ -23,7 +28,8 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { homedir } from 'node:os';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const REGISTRY = 'https://registry.modelcontextprotocol.io';
@@ -188,7 +194,7 @@ async function getRegistryToken() {
 	// The origin-remote PAT outranks GITHUB_TOKEN: it belongs to the repo owner,
 	// whose io.github.<owner> namespace is the one these manifests publish under.
 	// A Codespace GITHUB_TOKEN can belong to a different account entirely.
-	const ghToken = patFromOriginRemote() || process.env.GITHUB_TOKEN;
+	const ghToken = patFromGitConfig() || process.env.GITHUB_TOKEN;
 	if (!ghToken) {
 		throw new Error(
 			'no registry auth: set MCP_REGISTRY_TOKEN or GITHUB_TOKEN, or keep the PAT on the origin remote',
@@ -226,6 +232,18 @@ function npmPublish(dir) {
 		cwd: resolve(root, dir),
 		stdio: 'inherit',
 	});
+}
+
+// This file publishes to npm and the MCP registry from its top level, so merely
+// importing it runs a live publish. Nothing imports it today (package.json calls
+// it with node, and audit-mcp-manifests reads it as text), and nothing should:
+// importing it to reach a helper would ship packages as a side effect. Fail loudly
+// instead, so an accidental import rejects rather than publishes.
+if (!process.argv[1] || import.meta.url !== pathToFileURL(process.argv[1]).href) {
+	throw new Error(
+		'publish-mcp-servers.mjs is a CLI, not a module: importing it would run a live publish. ' +
+			'Run `node scripts/publish-mcp-servers.mjs --dry-run` instead.',
+	);
 }
 
 let registryToken = null;
