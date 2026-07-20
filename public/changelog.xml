@@ -39,12 +39,28 @@
 			<description>The agent tools that report a coin's bonding curve were showing every coin as 0% to graduation with zero reserves and a zero price. Pump renamed these on-chain fields when USDC became a possible trading pair, and the tools were still reading the old names, which quietly resolved to zero instead of failing. They now read the current fields, so graduation progress, reserves, and price reflect the real curve. Verified against live coins reading 2% through 70% to graduation.</description>
 		</item>
 		<item>
+			<title>Closed a gap that could price a drained PumpSwap pool as the safest trade</title>
+			<link>https://three.ws/docs/mcp</link>
+			<guid isPermaLink="false">2026-07-20:Closed a gap that could price a drained PumpSwap pool as the safest trade</guid>
+			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A PumpSwap pool that has run out of tradable depth could, in rare cases, be priced as a 0% price-impact trade instead of being refused, because the impact math never reports a negative number and a drained pool's reserves can go negative internally. That reading is deceptively attractive and would have slipped past both the sniper's safety breaker and the agent trade guard's max price-impact limit. Every path that can quote a swap, the agent trade API, the pump.fun MCP tool, and the in-browser quote helper, now refuses a pool with no real depth before it ever returns a price.</description>
+		</item>
+		<item>
 			<title>Every page on three.ws now reads in 48 languages</title>
 			<link>https://three.ws/docs/i18n</link>
 			<guid isPermaLink="false">2026-07-20:Every page on three.ws now reads in 48 languages</guid>
 			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>Translation used to cover only part of the site, so following a link out of a translated page often dropped you back into English. Every page is now translatable, from the studios and docs down to the news archive, and the existing languages were backfilled so they cover all of it rather than the handful of pages they started on. Eight more languages join the switcher as well: Gujarati, Kannada, Malayalam, Assamese, Nepali, Kazakh, Uzbek and Azerbaijani. A language only appears in the switcher once its wording is complete, so you should never land on a page that is half translated.</description>
+		</item>
+		<item>
+			<title>Every three.ws MCP server now resolves to its current version</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-20:Every three.ws MCP server now resolves to its current version</guid>
+			<pubDate>Mon, 20 Jul 2026 12:00:00 GMT</pubDate>
+			<category>sdk</category>
+			<description>The MCP servers three.ws publishes are listed in the public Model Context Protocol registry, which is how most AI assistants discover them. Those listings had fallen behind what was actually released, so an assistant adding one could pin a months-old build and miss tools that already shipped. All 44 listings now match their released versions, and one server that had never appeared at all is listed for the first time. Adding a three.ws server to Claude, or any MCP-capable assistant, gets you the current tools.</description>
 		</item>
 		<item>
 			<title>Graduated-coin prices now match PumpSwap exactly</title>
@@ -223,6 +239,14 @@
 			<description>A platform agent closed its first fully autonomous trade: it sniped a brand-new pump.fun launch from its own wallet and exited at +42.38 percent, with every decision recorded on its hash-chained ledger. We published the complete postmortem: a blog post with the on-chain receipts, a deep-dive doc on the sniper architecture (entry gates, the simulate-the-sell trade firewall, the exit ladder), and a tutorial for arming a sniper on your own agent, including the take-profit lesson this trade taught us.</description>
 		</item>
 		<item>
+			<title>Fixed job polling on six generation tools with long provider job ids</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-19:Fixed job polling on six generation tools with long provider job ids</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>Motion Swap, and five Forge tools that run on our GCP provider lane (motion, stylize, background removal, remesh, and segment), could submit a job successfully and then have every poll for its status rejected with a 400 error, because the job-id format check was sized for a short id and the GCP provider's ids run several hundred characters. The check is now wide enough for the real format, so submitted jobs report their progress and completion correctly again.</description>
+		</item>
+		<item>
 			<title>Language links now always win, and the switcher stays out of the way</title>
 			<link>https://three.ws/what-is?lang=te</link>
 			<guid isPermaLink="false">2026-07-19:Language links now always win, and the switcher stays out of the way</guid>
@@ -253,6 +277,14 @@
 			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>Fixed a payment bug where an endpoint's own listing text, echoed back inside the payment envelope, was rejected by the Coinbase settlement layer, so many of our pay-per-call agent services silently failed to settle on Base and never appeared in the agent marketplace. Payments now carry a clean envelope and settle reliably, bringing dozens more three.ws services (model inspection, gas and market data, avatar pipelines, identity and reputation checks) into agent discovery. Also repaired the model-check sample link that pointed at a missing asset.</description>
+		</item>
+		<item>
+			<title>Motion Swap fixed a launch-day bug that folded avatars into a heap</title>
+			<link>https://three.ws/motion-swap</link>
+			<guid isPermaLink="false">2026-07-19:Motion Swap fixed a launch-day bug that folded avatars into a heap</guid>
+			<pubDate>Sun, 19 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The first captures on /motion-swap could render your avatar folded into a V-sit with its legs over its head, because the motion solver was authoring each frame in a different pose convention than the browser expects. Capture now speaks the same convention the retargeting engine reads, so standing and walking frames render upright with legs down where they used to fold. Alongside it, the underlying capture worker moved off throttled request-based billing (a 30-second clip had been taking hours to process) onto an always-on instance for full-speed processing, and switched to a better-tuned body segmenter so full-body shots like a house tour hold up as well as close-up selfie framing.</description>
 		</item>
 		<item>
 			<title>Motion Swap now captures hands and fingers</title>
@@ -669,6 +701,14 @@
 			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
 			<category>improvement</category>
 			<description>The create-agent wizard now autosaves your work as you go, so a signed-out visitor who starts building and then closes the tab can return and pick up on the exact step they left, with everything filled in. A subtle Start fresh option is always one click away if you would rather begin anew, and abandoned drafts expire after a week. This closes the last gap in the try-first flow: you can now build across visits without an account, and only sign in at the final ship step.</description>
+		</item>
+		<item>
+			<title>Concierge widget now follows your site's own theme, not just the OS setting</title>
+			<link>https://three.ws/docs/concierge</link>
+			<guid isPermaLink="false">2026-07-18:Concierge widget now follows your site's own theme, not just the OS setting</guid>
+			<pubDate>Sat, 18 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The embeddable Concierge chat widget's auto theme mode used to check only the visitor's OS-level light/dark preference, so a site pinned to dark mode could still hand visitors a light widget if their system happened to be set to light. Auto mode now checks the host page's own theme signal first (the standard data-theme attribute) and live-follows it if the site's own theme toggle changes, falling back to the OS preference only when the host doesn't publish one.</description>
 		</item>
 		<item>
 			<title>Image understanding is more reliable across every image host</title>
@@ -1093,6 +1133,14 @@
 			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The Money Pulse's Purchases tab was wired to a source that only ever filled up when a synthetic circulation loop was running, so real skill and time-pass sales never showed. It now reads straight from the marketplace's own purchase ledger: the moment a sale confirms on-chain in $THREE, it appears as a Purchase beat in the live feed, fronted by the agent that earned it, alongside tips, launches, trades and payments. Free trials stay out, so a beat always means value actually changed hands. While we were in there, every empty filter now points you to the action that creates that beat (buy a skill, launch a coin, arm an agent, tip, pay), and we fixed a caching quirk that could briefly show a short feed page instead of a full one.</description>
+		</item>
+		<item>
+			<title>Selfie and photo-to-3D results that finished were being thrown away, fixed</title>
+			<link>https://three.ws/create/selfie</link>
+			<guid isPermaLink="false">2026-07-17:Selfie and photo-to-3D results that finished were being thrown away, fixed</guid>
+			<pubDate>Fri, 17 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A Node.js platform upgrade silently broke the safety check that fetches a finished model from our own Google Cloud Storage bucket for selfie and photo reconstructions: the security layer that pins a fetch to a verified IP couldn't parse the newer runtime's DNS answer for a dual-stack host like storage.googleapis.com, so every one of those fetches failed before it ever opened a connection. The 3D engine was finishing these jobs correctly the whole time; the results just never made it back to you. The lookup is fixed and covered by a regression test, so completed selfie and photo-to-3D avatars deliver normally again.</description>
 		</item>
 		<item>
 			<title>Selfie to 3D works again: finished avatars were being thrown away at the last step</title>
@@ -2135,6 +2183,14 @@
 			<description>The machine-readable discovery document at /.well-known/x402.json now advertises roughly 3,400 individual paid data endpoints, up from about 180, every one a concrete, priced URL that agent directories (x402scan, the Coinbase Bazaar, 402index) can index directly. Each of the top coins, every chain, and the top protocols, stablecoins, yield pools, and exchanges now lists its own datapoints (price, TVL, APY, peg deviation, supply, volume, and more) as standalone $0.0005 endpoints. The underlying datapoint fabric already served the full ~480,000-endpoint space; this makes a broad, high-value slice of it findable without guessing. The listing is memoized so the larger document still renders in milliseconds, and every entry passed the strict indexer-validation check with zero warnings.</description>
 		</item>
 		<item>
+			<title>Trending tokens no longer go blank when CoinGecko is rate-limited</title>
+			<link>https://three.ws/markets/trending</link>
+			<guid isPermaLink="false">2026-07-12:Trending tokens no longer go blank when CoinGecko is rate-limited</guid>
+			<pubDate>Sun, 12 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>The trending tokens list at /markets/trending, and the paid Market Data API's trending endpoint, used to have a single source: if CoinGecko's trending feed was down or rate-limited, the list came back empty. It now falls back automatically to GeckoTerminal's on-chain Solana trending pools, a different but real signal, so the page still shows real, live tokens during an outage instead of a blank state. The badge on the page marks which source is currently powering the list.</description>
+		</item>
+		<item>
 			<title>Widget knowledge ingestion now requires HTTPS in production</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-12:Widget knowledge ingestion now requires HTTPS in production</guid>
@@ -2495,6 +2551,14 @@
 			<description>The launches feed asked the Oracle about every coin twice, once in a single batch and again one coin at a time, firing dozens of redundant requests on every page load. It now uses only the batch. Mocap Studio also stopped requesting account details for the stand-in demo avatar, which could never have any.</description>
 		</item>
 		<item>
+			<title>Fixed a routing bug that dropped data from Marketplace, Skills, and Economy</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-10:Fixed a routing bug that dropped data from Marketplace, Skills, and Economy</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A server routing fix shipped the day before had an unintended side effect: several pages that route by an internal action path instead of a query parameter, including /marketplace, /skills, and /economy, lost their categories, theme, and list data in production, because the fix rewrote the request path itself rather than just merging in the destination's query. The router now keeps the original path and merges the query correctly for both routing styles, so all three pages load their data normally again.</description>
+		</item>
+		<item>
 			<title>Fixed two API endpoints that returned an error for every request</title>
 			<link>https://three.ws/changelog</link>
 			<guid isPermaLink="false">2026-07-10:Fixed two API endpoints that returned an error for every request</guid>
@@ -2549,6 +2613,14 @@
 			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
 			<category>fix</category>
 			<description>The counter that animates up to a percentage could briefly paint a wildly wrong value, the $THREE holder gate showed &quot;-42797% there&quot; instead of &quot;40% there&quot;, whenever the browser's animation clock disagreed with its performance clock. Counters now measure elapsed time against a single clock and are clamped to their real start and end values, so every frame shows a sane number.</description>
+		</item>
+		<item>
+			<title>Scene Studio's move, rotate, and scale gizmo works again</title>
+			<link>https://three.ws/compose</link>
+			<guid isPermaLink="false">2026-07-10:Scene Studio's move, rotate, and scale gizmo works again</guid>
+			<pubDate>Fri, 10 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>An update to the three.js library changed how its transform gizmo is built, and Scene Studio (/compose) never adopted the new shape, so clicking an object to translate, rotate, or scale it showed no gizmo at all, one of the editor's core interactions was silently dead. It's wired back in correctly and object selection and glTF export are unaffected.</description>
 		</item>
 		<item>
 			<title>Subscription checkout works again on the pricing page</title>
@@ -2999,6 +3071,14 @@
 			<description>/create used to be just the avatar picker. It's now a four-way intent hub, Build an AI agent, Make a 3D avatar, Generate a 3D model, or Launch a token world, so you pick your destination in one click instead of hunting through a flat menu of tools. The avatar picker didn't go anywhere: it's still exactly where it was, now reachable as the 'Make a 3D avatar' path with its photo/scratch/prompt/upload options intact.</description>
 		</item>
 		<item>
+			<title>/play gets a Jobs Board: quest-giver NPCs with real missions</title>
+			<link>https://three.ws/play</link>
+			<guid isPermaLink="false">2026-07-08:/play gets a Jobs Board: quest-giver NPCs with real missions</guid>
+			<pubDate>Wed, 08 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>Walk up to a quest-giver NPC in /play (marked with a visible quest indicator) and you can open the new Jobs Board to view and accept missions, tracked and validated by the server in real time. It's the same jobs system that already powers the world's driving delivery missions, now with NPCs to hand them out and markers to find them, reachable from either the HUD or a quest-giver directly.</description>
+		</item>
+		<item>
 			<title>/play grew real physics, a drivable district, and day/night</title>
 			<link>https://three.ws/play</link>
 			<guid isPermaLink="false">2026-07-08:/play grew real physics, a drivable district, and day/night</guid>
@@ -3093,6 +3173,14 @@
 			<pubDate>Wed, 08 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>The BNB Greenfield 3D vault now has its buyer-facing API: browse what's listed, check whether a purchase and its cross-chain storage-permission grant have settled, and, once both are confirmed on-chain, unlock a one-time-use, per-buyer encryption key for the model. A buyer proves control of their wallet with a signed message, which doubles as the key the vault re-wraps the content key to, so a captured response is useless to anyone but that buyer. Proven end-to-end against a real locally-deployed copy of the vault contract (real transactions, real event logs, real pending-then-granted state transitions), full public rollout is pending the same funded BSC testnet deployer key blocking the rest of this track.</description>
+		</item>
+		<item>
+			<title>Bounded a slow-network hang that could freeze a fresh API request for a minute</title>
+			<link>https://three.ws/changelog</link>
+			<guid isPermaLink="false">2026-07-08:Bounded a slow-network hang that could freeze a fresh API request for a minute</guid>
+			<pubDate>Wed, 08 Jul 2026 12:00:00 GMT</pubDate>
+			<category>fix</category>
+			<description>A handful of rate-limited API routes, including text-to-speech, text-to-3D, and sentiment analysis, could hang with no response for 55 seconds or more the first time a caller hit them, because a stalled network call to our rate-limiter never failed, it just never returned, so the request sat frozen instead of falling through to the existing fail-safe behavior. Every rate-limiter check now gives up after a few seconds if the network stalls, so a slow connection now degrades gracefully and quickly instead of hanging.</description>
 		</item>
 		<item>
 			<title>Cleaned up the x402 storefront listing</title>

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-20",
+			"title": "Every three.ws MCP server now resolves to its current version",
+			"summary": "The MCP servers three.ws publishes are listed in the public Model Context Protocol registry, which is how most AI assistants discover them. Those listings had fallen behind what was actually released, so an assistant adding one could pin a months-old build and miss tools that already shipped. All 44 listings now match their released versions, and one server that had never appeared at all is listed for the first time. Adding a three.ws server to Claude, or any MCP-capable assistant, gets you the current tools.",
+			"tags": [
+				"sdk",
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-20",
 			"title": "The live economy now paces itself instead of going quiet",
 			"summary": "The agent economy used to run at a fixed rate until its treasury ran dry, then fall silent for hours until someone refilled it by hand. It now measures what it can afford each minute and paces itself: when funds are lean it keeps trials, reviews, and marketplace listings flowing while pausing the actions that spend, then automatically speeds back up as revenue comes in. The result is a Money Pulse that stays alive continuously rather than running in bursts.",
 			"tags": [
@@ -37,6 +46,16 @@
 			"tags": [
 				"improvement",
 				"sdk"
+			],
+			"link": "/docs/mcp"
+		},
+		{
+			"date": "2026-07-20",
+			"title": "Closed a gap that could price a drained PumpSwap pool as the safest trade",
+			"summary": "A PumpSwap pool that has run out of tradable depth could, in rare cases, be priced as a 0% price-impact trade instead of being refused, because the impact math never reports a negative number and a drained pool's reserves can go negative internally. That reading is deceptively attractive and would have slipped past both the sniper's safety breaker and the agent trade guard's max price-impact limit. Every path that can quote a swap, the agent trade API, the pump.fun MCP tool, and the in-browser quote helper, now refuses a pool with no real depth before it ever returns a price.",
+			"tags": [
+				"fix",
+				"security"
 			],
 			"link": "/docs/mcp"
 		},
@@ -187,6 +206,16 @@
 		},
 		{
 			"date": "2026-07-18",
+			"title": "Concierge widget now follows your site's own theme, not just the OS setting",
+			"summary": "The embeddable Concierge chat widget's auto theme mode used to check only the visitor's OS-level light/dark preference, so a site pinned to dark mode could still hand visitors a light widget if their system happened to be set to light. Auto mode now checks the host page's own theme signal first (the standard data-theme attribute) and live-follows it if the site's own theme toggle changes, falling back to the OS preference only when the host doesn't publish one.",
+			"tags": [
+				"fix",
+				"sdk"
+			],
+			"link": "/docs/concierge"
+		},
+		{
+			"date": "2026-07-18",
 			"title": "The x402-server SDK now attaches the payment receipt on every paid response",
 			"summary": "Our most-installed npm package, @three-ws/x402-server (the seller side of x402), got a correctness pass. Paid endpoints built with it now guarantee the buyer never receives the result before the payment settles, and every paid response carries the on-chain settlement receipt in the X-PAYMENT-RESPONSE header, even for handlers that write their own response (the common Express case, which previously dropped the receipt). A new streaming mode settles up-front for file downloads and event streams, a handler that errors now returns a clean retryable 500 without charging, and the Base Sepolia test lane now advertises the correct testnet USDC. Ships with four runnable examples and a step-by-step tutorial you can follow offline before touching a wallet.",
 			"tags": [
@@ -269,6 +298,16 @@
 			"tags": [
 				"security"
 			]
+		},
+		{
+			"date": "2026-07-17",
+			"title": "Selfie and photo-to-3D results that finished were being thrown away, fixed",
+			"summary": "A Node.js platform upgrade silently broke the safety check that fetches a finished model from our own Google Cloud Storage bucket for selfie and photo reconstructions: the security layer that pins a fetch to a verified IP couldn't parse the newer runtime's DNS answer for a dual-stack host like storage.googleapis.com, so every one of those fetches failed before it ever opened a connection. The 3D engine was finishing these jobs correctly the whole time; the results just never made it back to you. The lookup is fixed and covered by a regression test, so completed selfie and photo-to-3D avatars deliver normally again.",
+			"tags": [
+				"fix",
+				"security"
+			],
+			"link": "/create/selfie"
 		},
 		{
 			"date": "2026-07-17",
@@ -1018,6 +1057,16 @@
 		},
 		{
 			"date": "2026-07-12",
+			"title": "Trending tokens no longer go blank when CoinGecko is rate-limited",
+			"summary": "The trending tokens list at /markets/trending, and the paid Market Data API's trending endpoint, used to have a single source: if CoinGecko's trending feed was down or rate-limited, the list came back empty. It now falls back automatically to GeckoTerminal's on-chain Solana trending pools, a different but real signal, so the page still shows real, live tokens during an outage instead of a blank state. The badge on the page marks which source is currently powering the list.",
+			"tags": [
+				"fix",
+				"infra"
+			],
+			"link": "/markets/trending"
+		},
+		{
+			"date": "2026-07-12",
 			"title": "A guided tour for your first five minutes on three.ws",
 			"summary": "New accounts now get a real, 3D-guided walkthrough, starting on /start, that chains together everything the platform can do: make an avatar, put it in a world, see it tied to live $THREE market data on /markets, an optional stop to launch your own coin (clearly skippable), and a landing on your own new profile showing what you just made. It's auto-offered once to a genuinely new, signed-in account with zero creations, then stays reachable anytime via \"Replay guided tour\" in the Getting started checklist (bottom-right on most pages). Every stop is the platform's real, already-shipped flow, nothing built just for the tour.",
 			"tags": [
@@ -1345,6 +1394,23 @@
 		},
 		{
 			"date": "2026-07-10",
+			"title": "Scene Studio's move, rotate, and scale gizmo works again",
+			"summary": "An update to the three.js library changed how its transform gizmo is built, and Scene Studio (/compose) never adopted the new shape, so clicking an object to translate, rotate, or scale it showed no gizmo at all, one of the editor's core interactions was silently dead. It's wired back in correctly and object selection and glTF export are unaffected.",
+			"tags": [
+				"fix"
+			],
+			"link": "/compose"
+		},
+		{
+			"date": "2026-07-10",
+			"title": "Fixed a routing bug that dropped data from Marketplace, Skills, and Economy",
+			"summary": "A server routing fix shipped the day before had an unintended side effect: several pages that route by an internal action path instead of a query parameter, including /marketplace, /skills, and /economy, lost their categories, theme, and list data in production, because the fix rewrote the request path itself rather than just merging in the destination's query. The router now keeps the original path and merges the query correctly for both routing styles, so all three pages load their data normally again.",
+			"tags": [
+				"fix"
+			]
+		},
+		{
+			"date": "2026-07-10",
 			"title": "Crypto news now aggregates 192 publisher feeds, in 18 languages",
 			"summary": "The news feed grew from 38 sources to 192, every major newsroom plus research desks, security teams, on-chain analysts, exchanges, regulators, and independent journalists, across 27 categories. 33 of them publish in a language other than English, so /markets/news now has a language picker covering 18 languages; the default feed stays English-only. Every feed was fetched and parsed before being added, so the list holds no dead links: of roughly 450 candidate feeds, about half turned out to be defunct domains, URLs that now serve a web page instead of a feed, or sites that block servers outright. Binance listing announcements are in there too, which no RSS feed carries.",
 			"tags": [
@@ -1628,6 +1694,24 @@
 				"feature"
 			],
 			"link": "/play"
+		},
+		{
+			"date": "2026-07-08",
+			"title": "/play gets a Jobs Board: quest-giver NPCs with real missions",
+			"summary": "Walk up to a quest-giver NPC in /play (marked with a visible quest indicator) and you can open the new Jobs Board to view and accept missions, tracked and validated by the server in real time. It's the same jobs system that already powers the world's driving delivery missions, now with NPCs to hand them out and markers to find them, reachable from either the HUD or a quest-giver directly.",
+			"tags": [
+				"feature"
+			],
+			"link": "/play"
+		},
+		{
+			"date": "2026-07-08",
+			"title": "Bounded a slow-network hang that could freeze a fresh API request for a minute",
+			"summary": "A handful of rate-limited API routes, including text-to-speech, text-to-3D, and sentiment analysis, could hang with no response for 55 seconds or more the first time a caller hit them, because a stalled network call to our rate-limiter never failed, it just never returned, so the request sat frozen instead of falling through to the existing fail-safe behavior. Every rate-limiter check now gives up after a few seconds if the network stalls, so a slow connection now degrades gracefully and quickly instead of hanging.",
+			"tags": [
+				"fix",
+				"infra"
+			]
 		},
 		{
 			"date": "2026-07-08",
@@ -14969,6 +15053,23 @@
 				"improvement"
 			],
 			"link": "/motion-swap"
+		},
+		{
+			"date": "2026-07-19",
+			"title": "Motion Swap fixed a launch-day bug that folded avatars into a heap",
+			"summary": "The first captures on /motion-swap could render your avatar folded into a V-sit with its legs over its head, because the motion solver was authoring each frame in a different pose convention than the browser expects. Capture now speaks the same convention the retargeting engine reads, so standing and walking frames render upright with legs down where they used to fold. Alongside it, the underlying capture worker moved off throttled request-based billing (a 30-second clip had been taking hours to process) onto an always-on instance for full-speed processing, and switched to a better-tuned body segmenter so full-body shots like a house tour hold up as well as close-up selfie framing.",
+			"tags": [
+				"fix"
+			],
+			"link": "/motion-swap"
+		},
+		{
+			"date": "2026-07-19",
+			"title": "Fixed job polling on six generation tools with long provider job ids",
+			"summary": "Motion Swap, and five Forge tools that run on our GCP provider lane (motion, stylize, background removal, remesh, and segment), could submit a job successfully and then have every poll for its status rejected with a 400 error, because the job-id format check was sized for a short id and the GCP provider's ids run several hundred characters. The check is now wide enough for the real format, so submitted jobs report their progress and completion correctly again.",
+			"tags": [
+				"fix"
+			]
 		},
 		{
 			"date": "2026-07-19",
