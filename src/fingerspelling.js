@@ -125,6 +125,7 @@ function chainLocals(side, upperDir, lowerDir, handDir, handNormal) {
 		[`${side}ForeArm`]: qNorm(lowerLocal),
 		[`${side}Hand`]: qNorm(handLocal),
 		[`__g${side}Hand`]: gHand,
+		[`__g${side}Lower`]: gLower,
 	};
 }
 
@@ -173,12 +174,12 @@ const THUMB_PRESETS = {
 export const LETTER_SHAPES = {
 	A: { curl: { Index: 1, Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'side' },
 	B: { curl: {}, thumb: 'across' },
-	C: { curl: { Index: 0.45, Middle: 0.45, Ring: 0.45, Pinky: 0.45 }, thumb: 'oppose', wrist: { yaw: -45 } },
+	C: { curl: { Index: 0.45, Middle: 0.45, Ring: 0.45, Pinky: 0.45 }, thumb: 'oppose' },
 	D: { curl: { Middle: 0.7, Ring: 0.7, Pinky: 0.7 }, thumb: 'oppose' },
 	E: { curl: { Index: 0.85, Middle: 0.85, Ring: 0.85, Pinky: 0.85 }, thumb: 'across' },
 	F: { curl: { Index: 0.55 }, splay: { Middle: 6, Ring: 0, Pinky: -8 }, thumb: 'oppose' },
-	G: { curl: { Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'side', wrist: { pitch: -80, roll: -90 } },
-	H: { curl: { Ring: 1, Pinky: 1 }, thumb: 'side', wrist: { pitch: -80, roll: -90 } },
+	G: { curl: { Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'side', wrist: { local: [0, 1, 0], deg: 85 } },
+	H: { curl: { Ring: 1, Pinky: 1 }, thumb: 'side', wrist: { local: [0, 1, 0], deg: 85 } },
 	I: { curl: { Index: 1, Middle: 1, Ring: 1 }, thumb: 'across' },
 	J: { curl: { Index: 1, Middle: 1, Ring: 1 }, thumb: 'across', motion: 'J' },
 	K: { curl: { Middle: [40, 15, 10], Ring: 1, Pinky: 1 }, thumb: 'between' },
@@ -186,8 +187,8 @@ export const LETTER_SHAPES = {
 	M: { curl: { Index: 0.75, Middle: 0.75, Ring: 0.75, Pinky: 0.95 }, thumb: 'across' },
 	N: { curl: { Index: 0.75, Middle: 0.75, Ring: 0.95, Pinky: 0.95 }, thumb: 'across' },
 	O: { curl: { Index: 0.55, Middle: 0.55, Ring: 0.55, Pinky: 0.55 }, thumb: 'oppose' },
-	P: { curl: { Middle: [40, 15, 10], Ring: 1, Pinky: 1 }, thumb: 'between', wrist: { pitch: -110 } },
-	Q: { curl: { Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'side', wrist: { pitch: -110 } },
+	P: { curl: { Middle: [40, 15, 10], Ring: 1, Pinky: 1 }, thumb: 'between', wrist: { dir: [0.15, -0.85, 0.5], normal: [0, 1, 0.2] } },
+	Q: { curl: { Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'side', wrist: { dir: [0.15, -0.85, 0.5], normal: [0, 1, 0.2] } },
 	R: { curl: { Ring: 1, Pinky: 1 }, splay: { Index: -6, Middle: 8 }, thumb: 'across' },
 	S: { curl: { Index: 1, Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'across' },
 	T: { curl: { Index: 0.9, Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'between' },
@@ -199,18 +200,20 @@ export const LETTER_SHAPES = {
 	Z: { curl: { Middle: 1, Ring: 1, Pinky: 1 }, thumb: 'side', motion: 'Z' },
 };
 
-// Wrist paths for the traced letters, keyed 0..1 across the letter window.
+// Wrist paths for the traced letters, keyed 0..1 across the letter window —
+// absolute {dir, normal} orientations like every other wrist spec. J dips and
+// supinates so the pinky draws the hook; Z jabs the index through the zigzag.
 const MOTIONS = {
 	J: [
-		{ at: 0.0, wrist: { pitch: 0, yaw: 0, roll: 0 } },
-		{ at: 0.45, wrist: { pitch: -35, yaw: 0, roll: -30 } },
-		{ at: 1.0, wrist: { pitch: -20, yaw: 15, roll: -80 } },
+		{ at: 0.0, wrist: { dir: [0, 1, 0], normal: [0, 0, -1] } },
+		{ at: 0.45, wrist: { dir: [0.15, 0.5, 0.85], normal: [0, -0.8, 0.2] } },
+		{ at: 1.0, wrist: { dir: [0.55, 0.6, 0.55], normal: [-0.8, 0, 0.2] } },
 	],
 	Z: [
-		{ at: 0.0, wrist: { pitch: 0, yaw: 18, roll: 0 } },
-		{ at: 0.3, wrist: { pitch: 0, yaw: -18, roll: 0 } },
-		{ at: 0.7, wrist: { pitch: -25, yaw: 18, roll: 0 } },
-		{ at: 1.0, wrist: { pitch: -25, yaw: -18, roll: 0 } },
+		{ at: 0.0, wrist: { dir: [0.35, 1, 0.1], normal: [0, 0, -1] } },
+		{ at: 0.3, wrist: { dir: [-0.35, 1, 0.1], normal: [0, 0, -1] } },
+		{ at: 0.7, wrist: { dir: [0.45, 0.65, 0.45], normal: [0, 0, -1] } },
+		{ at: 1.0, wrist: { dir: [-0.3, 0.6, 0.45], normal: [0, 0, -1] } },
 	],
 };
 
@@ -250,14 +253,20 @@ export function handshapeLocals(letter, side = 'Right') {
 	return locals;
 }
 
-function wristOffsetQuat(off, s = -1) {
-	// pitch: tip the fingers forward/back; yaw: turn the palm; roll: rotate
-	// about the finger axis. Expressed in the raised-hand frame (fingers +Y,
-	// palm +Z), applied as a local pre-rotation on the hand bone.
-	const pitch = qAxisAngle([-s, 0, 0], off.pitch ?? 0);
-	const yaw = qAxisAngle([0, -s, 0], off.yaw ?? 0);
-	const roll = qAxisAngle([0, 0, 1], (off.roll ?? 0) * -s);
-	return qMul(yaw, qMul(pitch, roll));
+// Hand local for an ABSOLUTE authored orientation: fingers toward `dir`, back
+// of hand toward `normal`, in the same authoring frame as the signing pose
+// (avatar faces +Z, up +Y, the right side of the body toward -X). Relative
+// deltas on the base wrist do not survive the retargeter's per-rig bind
+// correction, but absolute orientations built like the base pose do — the base
+// pose itself is the proof.
+function wristLocal(spec, gLower, restHand) {
+	// Escape hatch for orientations that degenerate under absolute authoring
+	// (a target direction near the bone's rest axis collapses to a pure twist,
+	// which the bind correction scrambles): a plain local pre-rotation on the
+	// base wrist, tuned against the live renderer (G / H use it).
+	if (spec.local) return qNorm(qMul(restHand, qAxisAngle(spec.local, spec.deg)));
+	const gHand = frameQuat(vNorm(spec.dir), vNorm(spec.normal), [-1, 0, 0], [0, 1, 0]);
+	return qNorm(qMul(qConj(gLower), gHand));
 }
 
 // ── clip assembly ──────────────────────────────────────────────────────────
@@ -308,6 +317,7 @@ export function buildFingerspellingClip(word, opts = {}) {
 
 	const pose = signingPose();
 	const restHand = pose.RightHand;
+	const gLower = pose.__gRightLower;
 	const neutralFingers = {};
 	for (const finger of [...FINGERS, 'Thumb']) {
 		for (let j = 1; j <= 3; j++) neutralFingers[`RightHand${finger}${j}`] = qAxisAngle([0, 0, 1], finger === 'Thumb' ? 4 : 12);
@@ -316,9 +326,9 @@ export function buildFingerspellingClip(word, opts = {}) {
 	// Build the keyframe timeline: {time, locals} snapshots. Every snapshot
 	// carries the full right-hand bone set so tracks stay aligned.
 	const keys = [];
-	const pushKey = (time, fingers, wristOff) => {
+	const pushKey = (time, fingers, wristSpec) => {
 		const locals = { ...fingers };
-		locals.RightHand = wristOff ? qNorm(qMul(restHand, wristOffsetQuat(wristOff))) : restHand;
+		locals.RightHand = wristSpec ? wristLocal(wristSpec, gLower, restHand) : restHand;
 		keys.push({ time, locals });
 	};
 
@@ -338,17 +348,14 @@ export function buildFingerspellingClip(word, opts = {}) {
 		const isDouble = prevLetter === ch;
 		if (isDouble) {
 			// Small outward bounce between repeated letters.
-			const bounce = { ...fingers };
-			pushKey(t + timing.transitionSeconds * 0.6, bounce, { yaw: -14 });
+			pushKey(t + timing.transitionSeconds * 0.6, { ...fingers }, { dir: [-0.3, 1, 0.1], normal: [0, 0, -1] });
 			t += timing.transitionSeconds * 0.6;
 		}
 		const wristBase = shape.wrist ?? null;
 		if (shape.motion && MOTIONS[shape.motion]) {
 			const start = t + timing.transitionSeconds;
 			for (const step of MOTIONS[shape.motion]) {
-				const w = { ...(wristBase ?? {}) };
-				for (const k of ['pitch', 'yaw', 'roll']) w[k] = (w[k] ?? 0) + (step.wrist[k] ?? 0);
-				pushKey(start + step.at * timing.motionSeconds, fingers, w);
+				pushKey(start + step.at * timing.motionSeconds, fingers, step.wrist);
 			}
 			t = start + timing.motionSeconds;
 		} else {
