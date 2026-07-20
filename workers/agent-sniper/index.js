@@ -142,22 +142,34 @@ async function main() {
 			// LLM-judged experiment arm: no rule shields, no oracle gate: a model
 			// reads the launch and decides. The executeBuy chokepoint still enforces
 			// every safety rail (Mayhem, firewall round-trip, budgets, headroom).
+			//
+			// judgeLaunch() self-bounds its own concurrency (see llm-judge.js) and is
+			// called directly, NOT through the shared `queue` — that queue is sized
+			// for bounded RPC (buy execution), and an LLM call that's retrying a
+			// failing provider chain can occupy a slot for many seconds. Routing the
+			// judge call through `queue` let a provider outage back the queue up past
+			// its depth cap and starve real buy attempts fleet-wide (rules arms
+			// included) with "buy queue full — dropping snipe". Only the confirmed
+			// buy touches `queue`.
 			if ((strat.decision_mode || 'rules') === 'llm') {
-				queue.push(async () => {
-					const verdict = await judgeLaunch(data, strat);
-					if (!verdict) return;
-					const minConf = Number(strat.llm_min_confidence ?? 0.6);
-					if (!verdict.buy || verdict.confidence < minConf) {
-						log.info('llm judge pass', { agent: strat.agent_id, mint: data.mint, model: verdict.model, buy: verdict.buy, confidence: verdict.confidence });
-						return;
-					}
-					log.info('llm judge buy', { agent: strat.agent_id, mint: data.mint, model: verdict.model, confidence: verdict.confidence, thesis: verdict.thesis });
-					screenPush(`$${sym} LLM verdict: BUY at ${Math.round(verdict.confidence * 100)}%: ${verdict.thesis}`, 'trade');
-					await executeBuy({
-						cfg, strat, throttle,
-						mint: { ...data, entry_trigger: 'llm_judge', trigger_ref: verdict.model, score: verdict.confidence, llm: verdict },
-					});
-				});
+				judgeLaunch(data, strat)
+					.then((verdict) => {
+						if (!verdict) return;
+						const minConf = Number(strat.llm_min_confidence ?? 0.6);
+						if (!verdict.buy || verdict.confidence < minConf) {
+							log.info('llm judge pass', { agent: strat.agent_id, mint: data.mint, model: verdict.model, buy: verdict.buy, confidence: verdict.confidence });
+							return;
+						}
+						log.info('llm judge buy', { agent: strat.agent_id, mint: data.mint, model: verdict.model, confidence: verdict.confidence, thesis: verdict.thesis });
+						screenPush(`$${sym} LLM verdict: BUY at ${Math.round(verdict.confidence * 100)}%: ${verdict.thesis}`, 'trade');
+						queue.push(async () => {
+							await executeBuy({
+								cfg, strat, throttle,
+								mint: { ...data, entry_trigger: 'llm_judge', trigger_ref: verdict.model, score: verdict.confidence, llm: verdict },
+							});
+						});
+					})
+					.catch((err) => log.error('llm judge branch failed', { agent: strat.agent_id, mint: data.mint, err: err?.message }));
 				continue;
 			}
 
