@@ -1,6 +1,6 @@
 {
 	"name": "@three-ws/x402-fetch",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "Drop-in fetch wrapper that automatically pays x402 payment challenges with USDC on Base",
 	"type": "module",
 	"main": "dist/index.cjs",
