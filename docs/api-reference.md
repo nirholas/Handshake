@@ -3219,18 +3219,29 @@ GET /api/news/article?url=<article url>&title=&source=
 
 Server-side extraction with SSRF + DNS-rebinding protection. Returns
 `{ id, url, title, source, image, author, published_at, description,
-extraction, paragraphs[], content_chars, tickers[], coins[], summary,
-key_points[], entities[], topics[], sentiment
+extraction, paragraphs[], excerpt_truncated, full_text_url, content_chars,
+tickers[], coins[], summary, key_points[], entities[], topics[], sentiment
 ("bullish"|"bearish"|"neutral"), analysis_provider, market_context, related[],
 fetched_at }`.
 
-`extraction` tells you where the text came from, in ladder order
-(`api/_lib/article-extract.js`): `"page"` (the publisher's own HTML),
+`paragraphs[]` is a bounded lead excerpt, not the article body: capped to 2
+paragraphs / 400 characters by `excerptParagraphs()` in
+[api/_lib/news-rights.js](../api/_lib/news-rights.js), the single choke point
+every response passes through (see [docs/news-rights.md](./news-rights.md)).
+`excerpt_truncated` is `true` whenever the source ran longer than the quoted
+excerpt; `full_text_url` is where to send the reader for the rest. This is a
+hard limit for every publisher, not a per-source policy — a story removed at a
+rightsholder's demand (`TAKEDOWN_IDS`) or from a withdrawn publisher
+(`RESTRICTED_SOURCE_KEYS`/`RESTRICTED_HOSTS`) answers 410 Gone instead.
+
+`extraction` tells you where the excerpt's source text came from, in ladder
+order (`api/_lib/article-extract.js`): `"page"` (the publisher's own HTML),
 `"reader"` (recovered through a keyless reader service when the publisher
 Cloudflare-blocks direct fetches — this is what makes bot-blocked outlets like
-The Defiant and CoinDesk return a full story instead of a one-line teaser),
-`"feed"` (the publisher's own `content:encoded` feed body), or `"preview"`
-(metadata only; `blocked_reason` set).
+The Defiant and CoinDesk resolve to more than a one-line teaser), `"feed"`
+(the publisher's own `content:encoded` feed body), or `"preview"` (metadata
+only; `blocked_reason` set). It does not change how much of the body is
+returned — the excerpt cap applies identically regardless of ladder stage.
 
 `coins[]` is a live market snapshot for every detected ticker that maps to a
 known coin — `{ symbol, id, name, image, price, change_24h, change_7d,
@@ -3254,15 +3265,20 @@ GET /api/news/knowledge                          # latest recorded stories + cor
 ```
 
 The grounding surface the three.ws 3D agents read crypto from. Every story the
-reader fully extracts and analyzes is recorded here (`news_knowledge` table,
-`api/_lib/news-knowledge-store.js`): full body, AI summary + key points,
-sentiment, detected tickers with their market snapshot, and named entities —
-permanent and queryable, distinct from the append-only GCS archive and from
-per-agent memory. Lightweight rows by default (id, title, source, sentiment,
-tickers, entities, summary); add `&full=1` for the extracted paragraphs and
-coin snapshot. `stats` reports `{ total, full_text, latest, enabled }`. Free,
-key-less, CORS `*`; CDN cache 60–120 s. Degrades to an empty corpus
-(`enabled:false`) when the platform database is not configured.
+reader extracts and analyzes is recorded here (`news_knowledge` table,
+`api/_lib/news-knowledge-store.js`): AI summary + key points, sentiment,
+detected tickers with their market snapshot, and named entities — permanent
+and queryable, distinct from the append-only GCS archive and from per-agent
+memory. The full extracted body is held internally so the LLM analysis layer
+and the agents' server-side RAG corpus can reason over it, but this endpoint
+never returns it: it is subject to the same excerpt cap as the article reader
+(`api/_lib/news-rights.js`), so `&full=1` returns the bounded lead excerpt and
+coin snapshot, not the full text. Lightweight rows by default (id, title,
+source, sentiment, tickers, entities, summary). `stats` reports `{ total,
+full_text, latest, enabled }` (`full_text` counts stored records with a full
+internal body, not what the API exposes). Free, key-less, CORS `*`; CDN cache
+60–120 s. Degrades to an empty corpus (`enabled:false`) when the platform
+database is not configured.
 
 ---
 

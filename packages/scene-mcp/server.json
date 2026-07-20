@@ -2,7 +2,7 @@
 	"$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
 	"name": "io.github.nirholas/scene-mcp",
 	"title": "three.ws Scenes",
-	"description": "Compose a placed 3D diorama from one sentence, build and export a complete forged world in one call, then browse the saved scene gallery.",
+	"description": "Compose a placed 3D diorama from one sentence, export a forged world, browse saved scenes.",
 	"websiteUrl": "https://three.ws",
 	"icons": [
 		{
