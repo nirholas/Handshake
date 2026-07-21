@@ -4,25 +4,25 @@
 		<meta charset="utf-8" />
 		<script>/* three.ws theme boot — no-flash */(function(){try{var m=localStorage.getItem('twx_theme');var l=m==='auto'?(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches):m==='light';document.documentElement.setAttribute('data-theme',l?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<title>Object Library · three.ws</title>
+		<title data-i18n="objects.meta_title">Object Library · three.ws</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 		<meta
 			name="description"
 			content="Hundreds of free CC0 3D objects and props — furniture, lighting, electronics, containers, decor. Preview any one live, or download the GLB to use anywhere. No attribution required."
-		/>
+		 data-i18n-attr="content:objects.meta_description"/>
 		<meta name="theme-color" content="#000000" />
 		<link rel="canonical" href="https://three.ws/objects" />
 
 		<meta property="og:type" content="website" />
-		<meta property="og:title" content="Object Library · three.ws" />
-		<meta property="og:description" content="Free CC0 3D props, ready to drop into any scene. Preview, animate, or use in the Studio." />
+		<meta property="og:title" content="Object Library · three.ws"  data-i18n-attr="content:objects.meta_og_title"/>
+		<meta property="og:description" content="Free CC0 3D props, ready to drop into any scene. Preview live or download the GLB — no attribution required."  data-i18n-attr="content:objects.meta_og_description"/>
 		<meta property="og:url" content="https://three.ws/objects" />
 		<meta property="og:site_name" content="three.ws" />
-		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Character+Library&amp;d=106+professionally+rigged+3D+characters%2C+free+to+use.+Every+one+drives+the+full+animation+library+and+drops+into+the+Studio%2C+Animation+Studio%2C+and+embed+viewer+&amp;p=%2Fcharacter-library" />
+		<meta property="og:image" content="https://three.ws/api/page-og?s=main&amp;t=Object+Library&amp;d=Hundreds+of+free+CC0+3D+props%2C+ready+to+use.&amp;p=%2Fobjects" />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content="Object Library · three.ws" />
-		<meta name="twitter:description" content="Free CC0 3D props, ready to drop into any scene." />
-		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Character+Library&amp;d=106+professionally+rigged+3D+characters%2C+free+to+use.+Every+one+drives+the+full+animation+library+and+drops+into+the+Studio%2C+Animation+Studio%2C+and+embed+viewer+&amp;p=%2Fcharacter-library" />
+		<meta name="twitter:title" content="Object Library · three.ws"  data-i18n-attr="content:objects.meta_twitter_title"/>
+		<meta name="twitter:description" content="Free CC0 3D props, ready to drop into any scene."  data-i18n-attr="content:objects.meta_twitter_description"/>
+		<meta name="twitter:image" content="https://three.ws/api/page-og?s=main&amp;t=Object+Library&amp;d=Hundreds+of+free+CC0+3D+props%2C+ready+to+use.&amp;p=%2Fobjects" />
 		<meta name="twitter:site" content="@trythreews" />
 		<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
 		<meta property="og:locale" content="en_US" />
@@ -156,7 +156,7 @@
 			}
 		</style>
 	
-	<meta property="og:image:alt" content="Characters — three.ws">
+	<meta property="og:image:alt" content="Object Library — three.ws">
 </head>
 	<body>
 		<header>
@@ -168,17 +168,17 @@
 			<section class="ch-hero">
 				<div class="ch-hero-chip">
 					<span class="ch-hero-dot" aria-hidden="true"></span>
-					<span>Object Library</span>
+					<span data-i18n="objects.object_library">Object Library</span>
 				</div>
-				<h1>Free 3D props, ready to drop into any scene</h1>
-				<p>
+				<h1 data-i18n="objects.free_3d_props_ready_to_drop_into">Free 3D props, ready to drop into any scene</h1>
+				<p data-i18n="objects.a_curated_library_of_cc0_3d_objects">
 					A curated library of CC0 3D objects and props — furniture, lighting, electronics, containers, decor.
 					Every one is public domain: free to use commercially, no attribution required. Preview any object live
 					in your browser, or download the GLB and use it anywhere.
 				</p>
 				<div class="ch-hero-actions">
-					<a href="/character-library" class="ch-hbtn ch-hbtn--primary">Character Library</a>
-					<a href="/gallery" class="ch-hbtn ch-hbtn--secondary">Avatar Gallery</a>
+					<a href="/character-library" class="ch-hbtn ch-hbtn--primary" data-i18n="objects.character_library">Character Library</a>
+					<a href="/gallery" class="ch-hbtn ch-hbtn--secondary" data-i18n="objects.avatar_gallery">Avatar Gallery</a>
 					<span class="ch-hero-stats" data-role="hero-stats" aria-live="polite"></span>
 				</div>
 			</section>
@@ -190,10 +190,10 @@
 					<kbd class="ch-search-kbd" aria-hidden="true">/</kbd>
 				</div>
 				<select class="ch-sort" data-role="sort" aria-label="Sort objects">
-					<option value="az">A → Z</option>
-					<option value="za">Z → A</option>
-					<option value="largest">Largest first</option>
-					<option value="smallest">Smallest first</option>
+					<option value="az" data-i18n="objects.a_z">A → Z</option>
+					<option value="za" data-i18n="objects.z_a">Z → A</option>
+					<option value="largest" data-i18n="objects.largest_first">Largest first</option>
+					<option value="smallest" data-i18n="objects.smallest_first">Smallest first</option>
 				</select>
 				<span class="ch-count" data-role="count" aria-live="polite"></span>
 			</div>
@@ -211,23 +211,23 @@
 
 			<div data-role="empty" class="ch-state" hidden>
 				<div class="ch-state-icon">📦</div>
-				<h2>Object library coming online</h2>
-				<p>The CC0 object library is being staged. Check back in a moment, or generate your own from a text prompt.</p>
-				<a href="/forge" class="ch-hbtn ch-hbtn--primary">Generate a 3D model</a>
+				<h2 data-i18n="objects.object_library_coming_online">Object library coming online</h2>
+				<p data-i18n="objects.the_cc0_object_library_is_being_staged">The CC0 object library is being staged. Check back in a moment, or generate your own from a text prompt.</p>
+				<a href="/forge" class="ch-hbtn ch-hbtn--primary" data-i18n="objects.generate_a_3d_model">Generate a 3D model</a>
 			</div>
 
 			<div data-role="empty-search" class="ch-state" hidden>
 				<div class="ch-state-icon">🔍</div>
-				<h2>No matches</h2>
-				<p>No objects match your search.</p>
-				<button class="ch-hbtn ch-hbtn--secondary" data-role="clear-search">Clear search</button>
+				<h2 data-i18n="objects.no_matches">No matches</h2>
+				<p data-i18n="objects.no_objects_match_your_search">No objects match your search.</p>
+				<button class="ch-hbtn ch-hbtn--secondary" data-role="clear-search" data-i18n="objects.clear_search">Clear search</button>
 			</div>
 
 			<div data-role="error" class="ch-state" hidden>
 				<div class="ch-state-icon">⚠️</div>
-				<h2>Couldn't load objects</h2>
-				<p data-role="error-msg">Something went wrong loading the object library.</p>
-				<button class="ch-hbtn ch-hbtn--secondary" data-role="retry">Try again</button>
+				<h2 data-i18n="objects.couldn_t_load_objects">Couldn't load objects</h2>
+				<p data-role="error-msg" data-i18n="objects.something_went_wrong_loading_the_object_libr">Something went wrong loading the object library.</p>
+				<button class="ch-hbtn ch-hbtn--secondary" data-role="retry" data-i18n="objects.try_again">Try again</button>
 			</div>
 		</main>
 

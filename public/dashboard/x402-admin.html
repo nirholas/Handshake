@@ -1195,8 +1195,8 @@ function renderOverview(){
 	const gross = products.reduce((a,p)=> a+Number(p.gross_atomics||0), 0);
 	$('ov-prods').textContent = products.length;
 	$('ov-calls').textContent = calls;
-	$('ov-rev').innerHTML = `${fmtUsdc(gross)}<span class="u">USDC</span>`;
-	$('ov-store').innerHTML = settings.store_published && settings.store_handle ? `<a href="/store/${esc(settings.store_handle)}" target="_blank" rel="noopener">Live ↗</a>` : '<span style="color:var(--muted)">Draft</span>';
+	$('ov-rev').innerHTML = `${fmtUsdc(gross)}<span class="u" data-i18n="dashboard_x402_admin.usdc">USDC</span>`;
+	$('ov-store').innerHTML = settings.store_published && settings.store_handle ? `<a href="/store/${esc(settings.store_handle)}" target="_blank" rel="noopener" data-i18n="dashboard_x402_admin.live">Live ↗</a>` : '<span style="color:var(--muted)" data-i18n="dashboard_x402_admin.draft">Draft</span>';
 	const checks = [
 		{ done: !!(settings.payout_evm || settings.payout_solana), main: 'Add a payout wallet', sub: 'Where your USDC settles', tab: 'payout' },
 		{ done: products.length>0, main: 'Create a product', sub: 'A paid endpoint with a price', tab: 'products' },
