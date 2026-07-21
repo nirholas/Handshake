@@ -7794,8 +7794,7 @@ a.anchor-link {
     white-space: normal;
   }
 </style>
-<!-- End of mermaid configuration -->
-	<link rel="canonical" href="https://three.ws/cookbook">
+<!-- End of mermaid configuration -->	<link rel="canonical" href="https://three.ws/cookbook">
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
 	<meta property="og:type" content="website">
 	<meta property="og:site_name" content="three.ws">
@@ -7856,7 +7855,7 @@ downloadable 3D objects, and then turns the model's vision on its own output.
 That generate, render, inspect, repair loop is the shape you need any time a
 tool's output is generative and can silently miss: image generation, chart
 rendering, UI screenshots, 3D.</p>
-<p><img alt="Pipeline architecture: a one-line brief goes to a gpt-5-mini art director, which issues parallel function calls to the keyless three.ws text-to-3D API; each GLB is rendered to a PNG and inspected by a vision critic returning a structured verdict; failed props are rebuilt once from the critic's revised prompt; passing props render in an interactive 3D gallery" src="/cookbook/pipeline.svg"/></p>
+<p><img alt="Pipeline architecture: a one-line brief goes to a gpt-5-mini art director, which issues parallel function calls to the keyless three.ws text-to-3D API; each GLB is rendered to a PNG and inspected by a vision critic returning a structured verdict; failed props are rebuilt once from the critic's revised prompt; passing props render in an interactive 3D gallery" src="../../images/threews_self_correcting_3d_pipeline.svg"/></p>
 <h2 id="What-you'll-learn">What you'll learn<a class="anchor-link" href="#What-you'll-learn">¶</a></h2><ol>
 <li>Wrap an external REST API as a <strong>function tool</strong> and describe it so the model
 produces clean arguments.</li>
@@ -8550,13 +8549,14 @@ own brief in the last line:</p>
     <span class="s2">"Design a collectible set of chunky potted houseplants for a sunny "</span>
     <span class="s2">"windowsill: succulents, cacti, and broad-leaf plants in characterful pots."</span>
 <span class="p">)</span>
+<span class="n">THEME</span> <span class="o">=</span> <span class="s2">"A windowsill of houseplants"</span>   <span class="c1"># gallery headline; keep it matching the brief</span>
 
 <span class="n">collection</span> <span class="o">=</span> <span class="n">run_art_director</span><span class="p">(</span><span class="n">WINDOWSILL_BRIEF</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Art director:"</span><span class="p">,</span> <span class="n">collection</span><span class="p">[</span><span class="s2">"reply"</span><span class="p">])</span>
 <span class="n">render_models</span><span class="p">(</span>
     <span class="n">collection</span><span class="p">[</span><span class="s2">"items"</span><span class="p">],</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">"A windowsill of houseplants"</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="n">THEME</span><span class="p">,</span>
     <span class="n">subtitle</span><span class="o">=</span><span class="s2">"Designed and built by the model from a single-line brief."</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
@@ -9117,7 +9117,7 @@ human.</p>
 <span class="n">render_models</span><span class="p">(</span>
     <span class="p">[{</span><span class="o">**</span><span class="n">it</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">:</span> <span class="n">it</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="s2">" · rebuilt"</span> <span class="k">if</span> <span class="n">it</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"repaired"</span><span class="p">)</span> <span class="k">else</span> <span class="s2">""</span><span class="p">)}</span>
      <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="n">windowsill_final</span><span class="p">],</span>
-    <span class="n">title</span><span class="o">=</span><span class="s2">"The windowsill, after QA"</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">THEME</span><span class="si">}</span><span class="s2">, after QA"</span><span class="p">,</span>
     <span class="n">subtitle</span><span class="o">=</span><span class="s2">"Every prop was inspected by the model; failures were rebuilt from "</span>
              <span class="s2">"the critic's own revised prompt."</span><span class="p">,</span>
 <span class="p">)</span>
@@ -9174,7 +9174,7 @@ human.</p>
 <script src="https://unpkg.com/@google/model-viewer@^3.5.0/dist/model-viewer.min.js" type="module"></script>
 <div class="head">
 <span class="eyebrow">// three.ws × function calling</span>
-<h3>The windowsill, after QA</h3><p class="sub">Every prop was inspected by the model; failures were rebuilt from the critic's own revised prompt.</p>
+<h3>A windowsill of houseplants, after QA</h3><p class="sub">Every prop was inspected by the model; failures were rebuilt from the critic's own revised prompt.</p>
 </div>
 <div class="grid">
 <figure>
