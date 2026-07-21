@@ -135,7 +135,7 @@ function chainLocals(side, upperDir, lowerDir, handDir, handNormal) {
 // convention), which reads naturally after the retargeter's bind correction
 // where a geometrically-derived "down" did not.
 function signingPose() {
-	const right = chainLocals('Right', vNorm([-0.3, -0.85, 0.3]), vNorm([0.1, 0.8, 0.45]), [0, 1, 0], [0, 0, -1]);
+	const right = chainLocals('Right', vNorm([-0.25, -0.9, 0.3]), vNorm([-0.22, 0.38, 0.9]), [0, 1, 0], [0, 0, -1]);
 	return {
 		...right,
 		LeftArm: qNorm([0.5402, 0.1202, -0.0234, 0.8326]),
