@@ -13,6 +13,15 @@
 //   oracle group: conviction-gated entries (bite after score maturity)
 //   llm group: no rule shields; a model judges each launch (grok / claude /
 //                  openrouter auto-router), safety rails still enforced
+//   boost group: event-driven — buy the pump AMM at migration and sell into
+//                  pump.fun's 5-minute BOOST buyback window (live 2026-07-21)
+//
+// The boost-ride arm is PROVISIONED here too (agent identity + custodial wallet
+// + strategy row) because unlike the first ten arms it has no pre-existing
+// strategy to reshape. Provisioning is idempotent (keyed by agent name + owner).
+// NOTE the wallet secret is encrypted with the process env's WALLET_ENCRYPTION_KEY
+// (JWT_SECRET fallback) — run this with the SAME key material the agent-sniper
+// service decrypts with, or the worker will load a wallet it cannot open.
 
 import { execSync } from 'node:child_process';
 import { createRequire } from 'node:module';
@@ -21,6 +30,11 @@ const require = createRequire(import.meta.url);
 const { Pool } = require('@neondatabase/serverless');
 
 const APPLY = process.argv.includes('--apply');
+// --only <label>: touch a single arm (and skip the rest entirely). Use this for
+// late-added arms so a re-run can never clobber params the live optimizer has
+// evolved on the original fleet since the first seeding.
+const _onlyIdx = process.argv.indexOf('--only');
+const ONLY = _onlyIdx >= 0 ? process.argv[_onlyIdx + 1] : null;
 const NETWORK = 'mainnet';
 
 // agent_id (unique per arm) → the experiment definition. `set` contains only
@@ -121,6 +135,89 @@ const ARMS = [
 	},
 ];
 
+// ── boost-ride: the 11th arm (provisioned, not reshaped) ─────────────────────
+// pump.fun BOOST mode injects ~17.6 SOL of buyback+burn TWAP over the 5 minutes
+// after every non-Mayhem migration. The arm buys the fresh AMM pool at the
+// migration event and exits INSIDE that window:
+//   max_hold_seconds 240  — the timed sell into the TWAP (the play itself)
+//   trailing_stop 8%      — locks the pop if it front-runs the window
+//   take_profit 20%       — ceiling; a bigger pop than BOOST alone explains
+//   stop_loss 15%         — hard cap; migration dumps overwhelm the TWAP
+// Owner is the same user that owns the core arms; sizing matches the fleet.
+const BOOST_ARM = {
+	label: 'boost-ride',
+	group: 'boost',
+	agentName: 'Sniper Arm: Boost Ride',
+	note: 'buy the AMM at migration, sell into the 5-min BOOST buyback window',
+	ownerUser: 'a6a6aed1-9ecc-40cd-889b-340895ee4d8c',
+	strategy: {
+		enabled: true,
+		kill_switch: false,
+		trigger: 'graduation_ride',
+		decision_mode: 'rules',
+		require_socials: false,
+		require_sol_quote: true,
+		min_market_cap_usd: null,
+		max_market_cap_usd: null,
+		min_oracle_score: null,
+		per_trade_lamports: '10000000',
+		daily_budget_lamports: '50000000',
+		max_concurrent_positions: 1,
+		slippage_bps: 500,
+		max_price_impact_pct: 10,
+		stop_loss_pct: 15,
+		trailing_stop_pct: 8,
+		take_profit_pct: 20,
+		max_hold_seconds: 240,
+		initials_out_multiple: null, // ladder off — a 4-minute ride full-exits
+		auto_fund_enabled: true,
+	},
+};
+
+async function provisionBoostArm(pool) {
+	const arm = BOOST_ARM;
+	// 1. find-or-create the agent identity (idempotent on name + owner).
+	const { rows: agents } = await pool.query(
+		'select id from agent_identities where user_id = $1 and name = $2 and deleted_at is null',
+		[arm.ownerUser, arm.agentName],
+	);
+	let agentId = agents[0]?.id;
+	console.log(`${APPLY ? 'APPLY' : 'PLAN '} ${arm.label.padEnd(16)} ${agentId ? `agent ${agentId.slice(0, 8)} exists` : 'create agent + wallet'}: ${arm.note}`);
+	for (const [k, v] of Object.entries(arm.strategy)) console.log(`        ${k} = ${JSON.stringify(v)}`);
+	if (!APPLY) return;
+
+	if (!agentId) {
+		const { rows: created } = await pool.query(
+			`insert into agent_identities (user_id, name, description, is_public)
+			 values ($1, $2, $3, false) returning id`,
+			[arm.ownerUser, arm.agentName,
+			 'Autonomous sniper experiment arm: buys the pump AMM at migration and sells into the BOOST buyback window.'],
+		);
+		agentId = created[0].id;
+		console.log(`        created agent ${agentId}`);
+	}
+
+	// 2. custodial Solana wallet (idempotent — ensureAgentWallet no-ops when the
+	// agent already holds a valid address + encrypted secret).
+	const { ensureAgentWallet } = await import('../api/_lib/agent-wallet.js');
+	const wallet = await ensureAgentWallet(agentId, arm.ownerUser, { reason: 'sniper_experiment_seed' });
+	console.log(`        wallet ${wallet.address}${wallet.created ? ' (new — auto-funder will top it up)' : ''}`);
+
+	// 3. strategy upsert (same shape as the arm API's upsert).
+	const s = { ...arm.strategy, agent_id: agentId, user_id: arm.ownerUser, network: NETWORK, label: arm.label, experiment_group: arm.group };
+	const cols = Object.keys(s);
+	const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ');
+	const updates = cols.filter((c) => !['agent_id', 'network'].includes(c)).map((c) => `${c} = excluded.${c}`).join(', ');
+	const { rows: [row] } = await pool.query(
+		`insert into agent_sniper_strategies (${cols.join(', ')}, updated_at)
+		 values (${placeholders}, now())
+		 on conflict (agent_id, network) do update set ${updates}, updated_at = now()
+		 returning id, enabled`,
+		cols.map((c) => s[c]),
+	);
+	console.log(`        strategy ${row.id} armed (enabled=${row.enabled})`);
+}
+
 function resolveDatabaseUrl() {
 	if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
 	const svc = JSON.parse(execSync(
@@ -143,6 +240,7 @@ const byAgent = new Map(existing.map((r) => [r.agent_id, r]));
 
 let updated = 0;
 for (const arm of ARMS) {
+	if (ONLY && arm.label !== ONLY) continue;
 	const cur = byAgent.get(arm.agent);
 	if (!cur) {
 		console.log(`SKIP  ${arm.label}: no ${NETWORK} strategy exists for agent ${arm.agent} (arms only reshape existing strategies)`);
@@ -168,6 +266,8 @@ for (const arm of ARMS) {
 	);
 	updated++;
 }
+
+if (!ONLY || ONLY === BOOST_ARM.label) await provisionBoostArm(pool);
 
 if (APPLY) console.log(`\nDone: ${updated} strategies updated.`);
 else console.log('\nDry-run only. Re-run with --apply to write.');

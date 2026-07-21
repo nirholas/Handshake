@@ -10,6 +10,12 @@ take-profit / trailing-stop / timeout exit. Two triggers arm a strategy:
   a creator pulls their accrued creator/delegated rewards for the **first time
   ever** — an irreversible "the creator is live and taking real fees" signal.
   Buys the creator's coin after an owner-set delay.
+- **`graduation_ride`** — listens for PumpPortal migration events and buys the
+  coin's fresh pump AMM pool the moment it leaves the bonding curve, to sell
+  into pump.fun's BOOST window (live 2026-07-21: ~17.6 SOL of buyback+burn
+  TWAP'd over the 5 minutes after every non-Mayhem migration). The exit is the
+  unchanged exit engine: `max_hold_seconds` set inside the window (e.g. 240 s)
+  is the timed sell, stop-loss/trailing-stop stay the rails.
 
 It is deliberately **not** a scheduled cron: periodic ticks can't snipe a launch.
 
@@ -27,6 +33,7 @@ It is deliberately **not** a scheduled cron: periodic ticks can't snipe a launch
 | `trade-client.js` | Wraps `PumpTradeClient`; `signAndSend` assembles a v0 tx, signs with the agent keypair, broadcasts, confirms. |
 | `executor.js` | `executeBuy` / `executeSell` — every guardrail, the idempotency lock, the only place that signs. Routes graduated coins through the AMM. |
 | `positions.js` | `runPositionSweep` — re-quotes open positions (curve OR AMM) and triggers exits. |
+| `graduation-ride.js` | `graduationRideGate` (pure, tested) + `executeBoostRideBuy` — the BOOST-window entry: gate the migration event, wait for the new AMM pool, buy via `executeBuy` with `venue:'amm'`. |
 | `amm-exit.js` | `quoteAmmSell` / `buildAmmSellInstructions` / `isGraduated` — post-graduation AMM pricing + sell build (shared with the user-driven path's pool resolution). |
 
 State lives in two tables (migrations `…20260615020000_agent_sniper.sql` +
@@ -105,6 +112,11 @@ Every strategy row carries a `decision_mode`:
   OpenRouter outage. The non-negotiable safety rails (Mayhem exclusion, trade
   firewall round-trip, budgets, concurrency, headroom, spend policy) still apply
   to both modes at the `executeBuy` chokepoint.
+
+The fleet's experiment groups: **rules** (shield-based entries at different
+strictness), **oracle** (conviction-gated), **llm** (model-judged), and
+**boost** (event-driven — the `graduation_ride` arm above, which trades the
+post-migration BOOST buyback window instead of new launches).
 
 Strategies also carry a human `label` + `experiment_group` so deliberately
 different rule sets can trade side by side and be compared honestly:

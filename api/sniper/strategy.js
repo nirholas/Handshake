@@ -56,9 +56,11 @@ const STRATEGY_SCHEMA = z.object({
 	enabled: z.boolean().optional(),
 	kill_switch: z.boolean().optional(),
 	// trigger: what arms this strategy.
-	//   new_mint    — snipe new pump.fun launches off the PumpPortal feed (default).
-	//   first_claim — snipe a creator's coin the first time they EVER claim rewards.
-	trigger: z.enum(['new_mint', 'first_claim', 'intel_confirmed', 'prelaunch_radar', 'alpha_hunt']).optional(),
+	//   new_mint        — snipe new pump.fun launches off the PumpPortal feed (default).
+	//   first_claim     — snipe a creator's coin the first time they EVER claim rewards.
+	//   graduation_ride — buy the AMM pool at migration and sell into pump.fun's
+	//                     5-minute BOOST buyback window (workers/agent-sniper/graduation-ride.js).
+	trigger: z.enum(['new_mint', 'first_claim', 'intel_confirmed', 'prelaunch_radar', 'alpha_hunt', 'graduation_ride']).optional(),
 	buy_delay_ms: z.union([z.string(), z.number()]).optional(),
 	// prelaunch_radar gates (null clears)
 	min_creator_graduated_radar: optInt,

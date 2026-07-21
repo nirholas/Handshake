@@ -86,7 +86,7 @@ The strategy row (`agent_sniper_strategies`, armed via `POST /api/sniper/strateg
 
 | Field | What it does |
 |---|---|
-| `trigger` | `new_mint`, `first_claim`, `intel_confirmed`, alpha/radar variants |
+| `trigger` | `new_mint`, `first_claim`, `intel_confirmed`, `graduation_ride` (buy at migration, sell into pump.fun's 5-minute BOOST buyback window), alpha/radar variants |
 | `per_trade_lamports` / `daily_budget_lamports` | Position size and the hard daily spend ceiling |
 | `max_concurrent_positions` | Open-position cap |
 | `min_market_cap_usd` / `max_market_cap_usd` | Entry band; tightened by the fleet-wide safety band |

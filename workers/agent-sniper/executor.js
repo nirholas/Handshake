@@ -21,7 +21,7 @@ import {
 	checkDailyLoss, recordCustodyEvent,
 	SOL_FEE_HEADROOM_LAMPORTS,
 } from '../../api/_lib/agent-trade-guards.js';
-import { buildAmmSellInstructions } from './amm-exit.js';
+import { buildAmmSellInstructions, quoteAmmBuy, buildAmmBuyInstructions } from './amm-exit.js';
 import { getWalletBaseBalance, reconcileVanishedBag } from './reconcile.js';
 import { assessTradeSafety, recordFirewallDecision, criticalFirewallReason } from '../../api/_lib/trade-firewall.js';
 import { recordDecision } from '../../api/_lib/reasoning-ledger.js';
@@ -350,10 +350,24 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 			const mintPk = new ctx.web3.PublicKey(mint.mint);
 			const slippagePct = strat.slippage_bps / 100;
 
+			// Venue: an 'amm' entry (graduation_ride) trades the post-migration pump
+			// AMM pool; everything else prices the bonding curve. The AMM path
+			// enforces a wSOL quote itself (amm_quote_not_sol), so the explicit
+			// require_sol_quote check below only guards the curve branch.
+			const ammEntry = mint.venue === 'amm';
+
 			// 6. quote + price-impact circuit breaker
-			const quote = await ctx.client.quoteForBuy({ mint: mintPk, quoteAmount: bn(ctx, perTrade), slippagePct });
-			if (strat.require_sol_quote && !quote.quoteMint.equals(ctx.web3.PublicKey.default) && quote.quoteMint.toBase58() !== 'So11111111111111111111111111111111111111112') {
-				return await fail(posId, tag, 'quote_not_sol');
+			let quote;
+			if (ammEntry) {
+				const ammQuote = await quoteAmmBuy({
+					network: cfg.network, mint: mint.mint, quoteAmount: bn(ctx, perTrade), slippagePct,
+				});
+				quote = { priceImpactPct: ammQuote.priceImpactPct };
+			} else {
+				quote = await ctx.client.quoteForBuy({ mint: mintPk, quoteAmount: bn(ctx, perTrade), slippagePct });
+				if (strat.require_sol_quote && !quote.quoteMint.equals(ctx.web3.PublicKey.default) && quote.quoteMint.toBase58() !== 'So11111111111111111111111111111111111111112') {
+					return await fail(posId, tag, 'quote_not_sol');
+				}
 			}
 			const impact = checkPriceImpact(Number(quote.priceImpactPct), Number(strat.max_price_impact_pct));
 			if (impact) return await fail(posId, tag, impact.reason);
@@ -426,9 +440,18 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 			}
 
 			// 7. build + (live) broadcast
-			const built = await ctx.client.buildBuyInstructions({
-				mint: mintPk, user: keypair.publicKey, quoteAmount: bn(ctx, perTrade), slippagePct,
-			});
+			let built;
+			if (ammEntry) {
+				const ammBuilt = await buildAmmBuyInstructions({
+					network: cfg.network, mint: mint.mint, user: keypair.publicKey,
+					quoteAmount: bn(ctx, perTrade), slippagePct,
+				});
+				built = { instructions: ammBuilt.instructions, expectedBaseTokens: ammBuilt.expectedBaseOut };
+			} else {
+				built = await ctx.client.buildBuyInstructions({
+					mint: mintPk, user: keypair.publicKey, quoteAmount: bn(ctx, perTrade), slippagePct,
+				});
+			}
 			const baseAmount = BigInt(built.expectedBaseTokens.toString());
 			if (baseAmount <= 0n) return await fail(posId, tag, 'zero_tokens');
 
@@ -460,9 +483,13 @@ export async function executeBuy({ cfg, strat, mint, throttle }) {
 			}
 
 			const pricePerToken = Number(perTrade) / Number(baseAmount);
+			// An AMM entry is born graduated: flag it exactly like a curve position
+			// that graduated mid-hold, so the sweep re-quotes it off the AMM and
+			// executeSell routes the exit there instead of the dead curve.
 			await sql`
 				UPDATE agent_sniper_positions SET
 					status = 'open', buy_sig = ${sig},
+					error = ${ammEntry ? 'graduated:amm_entry' : null},
 					entry_quote_lamports = ${perTrade.toString()},
 					base_amount = ${baseAmount.toString()},
 					entry_price_lamports_per_token = ${pricePerToken},

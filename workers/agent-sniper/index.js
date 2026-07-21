@@ -36,6 +36,7 @@ import {
 import { screenPush } from './screen-push.js';
 import { scoreAlpha } from './alpha-hunt.js';
 import { startAutoClaimerWatch } from './auto-claimer.js';
+import { graduationRideGate, executeBoostRideBuy } from './graduation-ride.js';
 import { startAutoFunderWatch } from './auto-funder.js';
 import { startLauncherWatch } from './launcher.js';
 import { startMarketMakerWatch } from './market-maker.js';
@@ -130,7 +131,31 @@ async function main() {
 	const onEvent = ({ kind, data }) => {
 		lastEventAt = Date.now();
 		feedConnected = true; // an event is proof the subscription is live
-		if (kind !== 'mint' || draining || cfg.globalKill) return;
+		if (draining || cfg.globalKill) return;
+
+		// Migration events drive graduation_ride (BOOST-window) strategies: the
+		// coin just left the curve, pump.fun's 5-minute buyback+burn TWAP is
+		// starting, and the arm buys the new AMM pool to sell into that window.
+		// executeBoostRideBuy waits for the pool then flows through the same
+		// executeBuy chokepoint (Mayhem gate, firewall, budgets) as every path.
+		if (kind === 'graduation') {
+			const gsym = (data.symbol || data.mint?.slice(0, 6) || '?').toUpperCase();
+			for (const strat of cachedStrategies()) {
+				const gate = graduationRideGate(data, strat);
+				if (!gate.pass) {
+					if (gate.reason !== 'not_graduation_ride') log.info('boost-ride gate skip', { agent: strat.agent_id, mint: data.mint, reason: gate.reason });
+					continue;
+				}
+				log.info('boost-ride candidate', { agent: strat.agent_id, mint: data.mint, symbol: data.symbol });
+				screenPush(`$${gsym} migrated — riding the BOOST window`, 'trade');
+				queue.push(async () => {
+					await executeBoostRideBuy({ cfg, strat, ev: data, throttle });
+				});
+			}
+			return;
+		}
+
+		if (kind !== 'mint') return;
 		const sym = (data.symbol || data.mint.slice(0, 6)).toUpperCase();
 		screenPush(`New token: $${sym} — scoring`, 'analysis');
 		const strategies = cachedStrategies();
@@ -191,7 +216,9 @@ async function main() {
 	};
 
 	const abort = new AbortController();
-	let stopFeed = connectPumpFunFeed({ kind: 'mint', signal: abort.signal, onEvent });
+	// kind 'all' = new mints + migrations (no per-mint trade subs without tracked
+	// mints). Migrations feed the graduation_ride (BOOST-window) strategies.
+	let stopFeed = connectPumpFunFeed({ kind: 'all', signal: abort.signal, onEvent });
 	feedConnected = true;
 	log.info('feed connected', {});
 
@@ -410,7 +437,7 @@ async function main() {
 			lastEventAt = Date.now();
 			const a2 = new AbortController();
 			abort.signal.addEventListener('abort', () => a2.abort());
-			stopFeed = connectPumpFunFeed({ kind: 'mint', signal: a2.signal, onEvent });
+			stopFeed = connectPumpFunFeed({ kind: 'all', signal: a2.signal, onEvent });
 		}
 	}, Math.min(cfg.feedWatchdogMs, 60_000));
 
