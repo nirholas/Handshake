@@ -346,31 +346,26 @@ export function providerChain({ anthropicKey, anthropicModel, grokKey = null, gr
 			model: CEREBRAS_MODEL,
 		}));
 	}
-	// One provider entry per OpenRouter key: when the primary account runs out
-	// of credits (402) or hits a rate limit, the next key takes over. Fallback
-	// keys are typically unfunded free-tier accounts, so they get the model's
-	// :free variant — the paid model would 402 on them unconditionally. The
-	// primary key ALSO gets a :free rung right behind its paid rung: an
-	// out-of-credits primary account (the July 2026 prod state) can still serve
-	// the :free variant, so exhausted credits cost one fast 402, not the lane.
+	// One provider entry per OpenRouter key, ALWAYS on the model's :free variant.
+	// The platform host key must never be charged for a paid OpenRouter model: the
+	// funded reliability lane is the GCP-credits Vertex anchor below (vertexGemini),
+	// not paid OpenRouter. The primary key used to lead with the PAID model, so once
+	// the account carried ANY balance (e.g. credits bought to raise free-tier limits)
+	// every call that fell past a throttled Groq (constant in prod) was billed to
+	// the paid tier, ahead of the free NVIDIA/OVH/Vertex rungs right below it. That
+	// silently burned the balance (and our llm-pricing meters openrouter at $0, so it
+	// was invisible). :free-only keeps the balance serving only its intended purpose
+	// (higher free-tier limits); an exhausted :free rung fails over to the next key,
+	// then to the free/credits lanes below.
 	const openrouterKeys = [...new Set([env.OPENROUTER_API_KEY, ...env.OPENROUTER_FALLBACK_KEYS].filter(Boolean))];
 	openrouterKeys.forEach((key, i) => {
 		chain.push(openaiCompatProvider({
 			name: i === 0 ? 'openrouter' : `openrouter#${i + 1}`,
 			key,
 			url: 'https://openrouter.ai/api/v1/chat/completions',
-			model: i === 0 ? OPENROUTER_MODEL : `${OPENROUTER_MODEL}:free`,
+			model: `${OPENROUTER_MODEL}:free`,
 			extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws' },
 		}));
-		if (i === 0) {
-			chain.push(openaiCompatProvider({
-				name: 'openrouter:free',
-				key,
-				url: 'https://openrouter.ai/api/v1/chat/completions',
-				model: `${OPENROUTER_MODEL}:free`,
-				extraHeaders: { 'HTTP-Referer': 'https://three.ws', 'X-Title': 'three.ws' },
-			}));
-		}
 	});
 	if (env.NVIDIA_API_KEY) {
 		chain.push(openaiCompatProvider({

@@ -3,6 +3,15 @@
 	"entries": [
 		{
 			"date": "2026-07-21",
+			"title": "A free CC0 object library: hundreds of props, ready to drop in",
+			"summary": "A new Object Library brings hundreds of free 3D objects and props to three.ws - furniture, lighting, electronics, containers, decor. Every one is CC0 public domain: free to use commercially with no attribution. Browse them at /objects, preview any one live in your browser, or download the GLB to use anywhere.",
+			"tags": [
+				"feature"
+			],
+			"link": "/objects"
+		},
+		{
+			"date": "2026-07-21",
 			"title": "The sniper fleet now runs its full self-improvement loop autonomously",
 			"summary": "Both halves of the fleet's learning loop now run on their own schedule with no human in the loop. The intra-arm optimizer (every 6h) tunes each strategy's own knobs from its real results, and the portfolio evolution engine (every 12h) reallocates budget toward the arms that actually win and retires the ones that provably don't. Every change is bounded, reversible, and journaled; neither loop can touch a safety field or raise the total spend cap.",
 			"tags": [
@@ -15223,6 +15232,17 @@
 				"improvement"
 			],
 			"link": "/marketplace?tab=skills"
+		},
+		{
+			"date": "2026-07-21",
+			"title": "The trading fleet now improves itself, hands-off",
+			"summary": "The autonomous sniper fleet gained a full self-improvement loop that runs on its own. Every pump.fun launch outcome is labeled as ground truth (about 62,000 coins, of which ~12% actually pump 3x or graduate), and the fleet learns from it on two levels: each strategy auto-tunes its own stops, take-profit and sizing from its real results, and a new portfolio engine reallocates the shared daily budget toward the strategies that are actually winning while defunding the ones proven worse than the base rate. Both run on a schedule with no human input, and both are safe by construction: they can only move budgets and thresholds, never the hard safety rails (stop-loss, honeypot firewall, spend caps) which stay enforced in code. A production database that had quietly hit its storage cap, silently starving the whole learning loop, was also fixed so the ground-truth data keeps flowing.",
+			"tags": [
+				"feature",
+				"improvement",
+				"infra"
+			],
+			"link": "/sniper/experiments"
 		}
 	]
 }

@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-21T12:46:50.016Z",
+	"generated_at": "2026-07-21T12:53:54.013Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -76,6 +76,18 @@
 			"link": "/docs/agent-sniper",
 			"tags": [
 				"feature",
+				"infra"
+			]
+		},
+		{
+			"date": "2026-07-21",
+			"type": "update",
+			"title": "The trading fleet now improves itself, hands-off",
+			"summary": "The autonomous sniper fleet gained a full self-improvement loop that runs on its own. Every pump.fun launch outcome is labeled as ground truth (about 62,000 coins, of which ~12% actually pump 3x or graduate), and the fleet learns from it on two levels: each strategy auto-tunes its own stops, take-profit and sizing from its real results, and a new portfolio engine reallocates the shared daily budget toward the strategies that are actually winning while defunding the ones proven worse than the base rate. Both run on a schedule with no human input, and both are safe by construction: they can only move budgets and thresholds, never the hard safety rails (stop-loss, honeypot firewall, spend caps) which stay enforced in code. A production database that had quietly hit its storage cap, silently starving the whole learning loop, was also fixed so the ground-truth data keeps flowing.",
+			"link": "/sniper/experiments",
+			"tags": [
+				"feature",
+				"improvement",
 				"infra"
 			]
 		},

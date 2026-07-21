@@ -474,21 +474,37 @@ export async function settleRingPayment({ paymentPayload, requirement, conn, fee
 		}
 		// web3.js drops the structured preflight cause (res.error.data.err), so on
 		// some RPCs a duplicate-signature rejection arrives as a bare "Transaction
-		// simulation failed" with empty logs. One status-cache probe names it: if
-		// this exact signature already landed, the failure is already-processed,
-		// not a simulation fault. Deliberately still a failure (fail closed) — the
-		// landed transfer belongs to the payment that broadcast it first; only the
-		// message-matched branch above, a true idempotent resend, recovers success.
+		// simulation failed" with empty logs — including our own maxRetries resend
+		// racing the first landing. Probe the signature: if it already landed with no
+		// error, this IS this payment's settlement, not a stranger's. The x402
+		// authorization is single-use (payment-identifier-server.js reserves a SHA-256
+		// lock on the signed X-PAYMENT before settle, and the on-chain nonce is consumed
+		// on first settle), so no other payment can reproduce this exact signature.
+		// Failing closed here 502'd payments that had actually settled — the dominant
+		// settle_failed wave. Recover success identically to the message-matched
+		// idempotent-replay branch above; the buyer is owed the product, not a 502.
 		let alreadyLanded = false;
 		if (sig && /simulation failed/i.test(m)) {
 			try {
-				const st = (await connection.getSignatureStatuses([sig]))?.value?.[0];
+				// searchTransactionHistory so a tx that landed a moment earlier and aged
+				// out of the recent-status cache is still found — else the probe returns
+				// null and we wrongly fail a settled payment.
+				const st = (await connection.getSignatureStatuses([sig], { searchTransactionHistory: true }))
+					?.value?.[0];
 				alreadyLanded = st != null && st.err == null;
 			} catch { /* probe is best-effort; the generic reason below stands */ }
 		}
-		const detail = alreadyLanded
-			? `already_processed:${sig}`
-			: m.replace(/\s+/g, ' ').trim();
+		if (alreadyLanded) {
+			return {
+				success: true,
+				transaction: sig,
+				network,
+				payer,
+				feeLamports: estFeeLamports,
+				replayed: true,
+			};
+		}
+		const detail = m.replace(/\s+/g, ' ').trim();
 		return { success: false, reason: `broadcast_failed:${detail}`.slice(0, 300) };
 	}
 

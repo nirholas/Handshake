@@ -198,6 +198,7 @@ export const NAV_GROUPS = [
 					},
 					{ title: 'Avatar Gallery', href: '/gallery', desc: 'Every public 3D avatar' },
 					{ title: 'Character Library', href: '/character-library', desc: '106 rigged characters, ready to animate' },
+				{ title: 'Object Library', href: '/objects', desc: 'Free CC0 3D props, ready to use' },
 					{ title: 'Animation Gallery', href: '/animations', desc: 'Community animations for avatars' },
 					{
 						title: 'Worlds',

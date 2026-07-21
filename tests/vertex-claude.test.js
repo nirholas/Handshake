@@ -210,13 +210,14 @@ describe('providerChain free-tier resilience rungs', () => {
 		process.env.NVIDIA_API_KEY = 'nv';
 	});
 
-	it('the primary OpenRouter key gets a :free-variant rung behind its paid rung', () => {
+	it('the OpenRouter host-key rung uses the :free model — never the paid tier', () => {
 		const chain = providerChain();
-		const paid = chain.find((p) => p.name === 'openrouter');
-		const free = chain.find((p) => p.name === 'openrouter:free');
-		expect(paid.model).toBe('meta-llama/llama-3.3-70b-instruct');
-		expect(free.model).toBe('meta-llama/llama-3.3-70b-instruct:free');
-		expect(chain.indexOf(paid)).toBeLessThan(chain.indexOf(free));
+		const or = chain.find((p) => p.name === 'openrouter');
+		expect(or.model).toBe('meta-llama/llama-3.3-70b-instruct:free');
+		// The host key must never bill a paid OpenRouter model: no paid rung, and no
+		// separate openrouter:free rung (the single rung is already :free).
+		expect(chain.some((p) => p.model === 'meta-llama/llama-3.3-70b-instruct')).toBe(false);
+		expect(chain.some((p) => p.name === 'openrouter:free')).toBe(false);
 	});
 
 	it('cerebras and gemini rungs appear only when their keys are configured', () => {
@@ -239,7 +240,7 @@ describe('providerChain free-tier resilience rungs', () => {
 		process.env.OPENROUTER_FALLBACK_KEYS = 'or-fb1,or-fb2';
 		const n = providerChain().map((p) => p.name);
 		const stepDown = n.indexOf('groq#instant');
-		for (const seventyB of ['groq', 'openrouter', 'openrouter:free', 'openrouter#2', 'openrouter#3', 'nvidia']) {
+		for (const seventyB of ['groq', 'openrouter', 'openrouter#2', 'openrouter#3', 'nvidia']) {
 			expect(n.indexOf(seventyB), `${seventyB} should precede groq#instant`).toBeLessThan(stepDown);
 		}
 	});

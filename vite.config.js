@@ -577,6 +577,7 @@ const appConfig = {
 				'pose-mini': resolve(__dirname, 'pages/pose-mini.html'),
 				animations: resolve(__dirname, 'pages/animations.html'),
 				'character-library': resolve(__dirname, 'pages/character-library.html'),
+				objects: resolve(__dirname, 'pages/objects.html'),
 				'avatar-engines': resolve(__dirname, 'pages/avatar-engines.html'),
 				splat: resolve(__dirname, 'pages/splat.html'),
 				capture: resolve(__dirname, 'pages/capture.html'),

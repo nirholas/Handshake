@@ -192,11 +192,10 @@ describe('llmComplete — multiple OpenRouter keys', () => {
 		const out = await llm.llmComplete({ system: 's', user: 'u' });
 		expect(out.provider).toBe('openrouter#2');
 		expect(out.text).toBe('served by fallback key');
-		// The primary key gets a :free rung right behind its paid rung, so an
-		// out-of-credits primary account still tries its own free variant (also 402
-		// here) before the chain rotates to the fallback key's :free model.
+		// Every OpenRouter key runs the :free model (the host key never bills a paid
+		// model). The primary key's :free rung 402s here, so the chain rotates to the
+		// fallback key's :free model.
 		expect(calls).toEqual([
-			{ auth: 'Bearer or-primary', model: 'meta-llama/llama-3.3-70b-instruct' },
 			{ auth: 'Bearer or-primary', model: 'meta-llama/llama-3.3-70b-instruct:free' },
 			{ auth: 'Bearer or-fallback', model: 'meta-llama/llama-3.3-70b-instruct:free' },
 		]);
@@ -211,12 +210,11 @@ describe('llmComplete — multiple OpenRouter keys', () => {
 			return errResp(500);
 		});
 		await expect(llm.llmComplete({ system: 's', user: 'u' })).rejects.toMatchObject({ status: 502 });
-		// or-same is deduped to a single key, but the primary key legitimately has
-		// two rungs (paid model + its :free variant), then or-extra's :free rung —
-		// three OpenRouter fetches (without dedup or-same would be tried again as a
-		// fallback too). The chain then falls through the two unconditional keyless
-		// lanes (OVH, Pollinations) before giving up — five fetches total.
-		expect(n).toBe(5);
+		// or-same is deduped to a single key (one :free rung), then or-extra's :free
+		// rung — two OpenRouter fetches (without dedup or-same would be tried again as
+		// a fallback too). The chain then falls through the two unconditional keyless
+		// lanes (OVH, Pollinations) before giving up — four fetches total.
+		expect(n).toBe(4);
 	});
 
 	it('llmConfigured is true with only fallback keys set', () => {

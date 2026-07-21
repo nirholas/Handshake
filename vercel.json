@@ -3861,6 +3861,10 @@
 			"dest": "/character-library.html"
 		},
 		{
+			"src": "/objects/?",
+			"dest": "/objects.html"
+		},
+		{
 			"src": "/gallery",
 			"dest": "/gallery/index.html"
 		},
