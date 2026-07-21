@@ -263,6 +263,67 @@ def test_rest_pose_emits_canonical_bind_local():
     assert abs(up[3]) < 0.1, "LeftUpLeg bind must be a large rotation, not identity"
 
 
+def _canonical_fk_dir(clip, bone, start, chain):
+    """World direction of `bone` when the clip's first frame is applied to the
+    canonical rig, starting from `start`'s rest world and walking `chain`
+    (each bone's authored local; clavicles fall back to their bind local).
+    Returns the unit world dir of the bone's rest axis (+X for arms in the
+    T-pose rest)."""
+    from canonical_rest import REST_LOCAL, REST_WORLD
+    import pose_solver as ps
+
+    tracks = {t["name"].split(".")[0]: t for t in clip["tracks"]}
+
+    def local(b):
+        if b in tracks:
+            return np.asarray(tracks[b]["values"]).reshape(-1, 4)[0]
+        return np.asarray(REST_LOCAL[b], float)
+
+    w = np.asarray(REST_WORLD[start], float)
+    for b in chain:
+        w = ps._quat_multiply(w, local(b))
+    axl = ps._rotate_vec(ps._quat_conjugate(np.asarray(REST_WORLD[bone], float)), np.array([1.0, 0, 0]))
+    return ps._rotate_vec(w, axl)
+
+
+def test_arm_hang_down_does_not_fold():
+    """The regression that broke the feature: with the arm hanging straight down,
+    the forearm must also point DOWN. Resolving a child against its parent's REST
+    frame (instead of its animated frame) folded the elbow ~90-180°, snapping the
+    hand up to the head. Author a full clip and forward-kinematic the canonical
+    arm chain to prove the elbow stays where the video put it."""
+    p = t_pose_world()
+    # Left arm hanging straight down (y-down world: down = positive y), wrist
+    # below elbow below shoulder.
+    p[LEFT_ELBOW] = [0.20, -0.25, 0.0]
+    p[LEFT_WRIST] = [0.20, 0.00, 0.0]
+    p[LEFT_INDEX] = [0.20, 0.10, 0.0]
+    p[LEFT_PINKY] = [0.22, 0.10, 0.02]
+    clip = landmarks_to_clip(np.stack([p] * 4), fps=24, name="hang")
+    # Chain from Spine2 (rest) through the (unanimated) clavicle to the arm.
+    arm = _canonical_fk_dir(clip, "LeftArm", "Spine2", ["LeftShoulder", "LeftArm"])
+    fore = _canonical_fk_dir(clip, "LeftForeArm", "Spine2", ["LeftShoulder", "LeftArm", "LeftForeArm"])
+    # -Y is straight down in the rig (y-up) space.
+    assert arm[1] < -0.9, f"upper arm should hang down, got {np.round(arm,2)}"
+    assert fore[1] < -0.9, f"forearm should hang down (no fold), got {np.round(fore,2)}"
+
+
+def test_unsettled_boundary_frames_are_held():
+    """A garbage lock-on frame at the very start (and its no-detection repeat)
+    must be replaced by the first settled pose, not left inverting the body."""
+    from pose_solver import _hold_unsettled_ends
+
+    good = t_pose_world()
+    seq = np.stack([good] * 20)
+    # Frame 0 garbage + frame 1 a verbatim repeat (mediapipe reuses the previous
+    # frame when it detects nothing) → the teleport is 1→2, not 0→1.
+    seq[0] = good + 3.0
+    seq[1] = seq[0].copy()
+    held = _hold_unsettled_ends(seq)
+    assert np.allclose(held[0], good) and np.allclose(held[1], good), "leading garbage not held"
+    assert np.allclose(held[5], good), "interior frame must be untouched"
+
+
 def test_clip_without_hands_unchanged():
     frames = np.stack([t_pose_world()] * 4)
     clip = landmarks_to_clip(frames, fps=24, name="nohands")

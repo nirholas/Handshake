@@ -70,14 +70,24 @@ async function ensureServer() {
 			waitUntil: 'domcontentloaded',
 		});
 		const boot = await page.evaluate(() => window.__film.ready);
-		console.log(`harness ready — ${boot.bones} bones, ${boot.canonical} canonical, height ${boot.height.toFixed(2)}m`);
+		console.log(`harness ready: ${boot.bones} bones, ${boot.canonical} canonical, height ${boot.height.toFixed(2)}m`);
+		const range = typeof flags.range === 'string' ? flags.range.split(',').map(Number) : [];
 		const { dataUrl, coverage, duration } = await page.evaluate(
-			({ clipJson, count, views }) =>
-				window.__film.renderFilmstrip(clipJson, 'debug', { count, views }),
-			{ clipJson, count: COUNT, views: VIEWS },
+			({ clipJson, count, views, opts }) =>
+				window.__film.renderFilmstrip(clipJson, 'debug', { count, views, ...opts }),
+			{
+				clipJson,
+				count: COUNT,
+				views: VIEWS,
+				opts: {
+					cellW: flags.cell ? Number(flags.cell) : undefined,
+					t0: range[0],
+					t1: range[1],
+				},
+			},
 		);
 		writeFileSync(OUT, Buffer.from(dataUrl.replace(/^data:image\/png;base64,/, ''), 'base64'));
-		console.log(`wrote ${OUT} — coverage ${(coverage * 100).toFixed(0)}%, duration ${duration.toFixed(1)}s, ${COUNT}×${VIEWS.length} frames`);
+		console.log(`wrote ${OUT}: coverage ${(coverage * 100).toFixed(0)}%, duration ${duration.toFixed(1)}s, ${COUNT}×${VIEWS.length} frames`);
 	} finally {
 		await browser.close();
 		if (server) server.kill();

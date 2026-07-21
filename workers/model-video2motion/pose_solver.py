@@ -17,7 +17,10 @@ Method: per frame,
      direction onto the observed parent→child landmark direction, using the
      limb's bend plane (upper/lower segment cross product) to fix the twist
      about the bone axis where the geometry defines it,
-  4. convert globals to locals against the parent chain,
+  4. convert the per-bone globals to canonical-rig LOCALS by hierarchical
+     forward kinematics: each child is resolved against its parent's ANIMATED
+     world (not its rest world), so a swinging chain (upper arm to forearm)
+     stays intact instead of folding by the parent's rotation,
   5. smooth landmarks with a fps-aware exponential filter and keep quaternion
      hemisphere continuity across frames.
 
@@ -265,8 +268,16 @@ _BODY_PARENTS = {
     "Neck": "Spine2", "Head": "Neck",
     "LeftUpLeg": "Hips", "LeftLeg": "LeftUpLeg", "LeftFoot": "LeftLeg",
     "RightUpLeg": "Hips", "RightLeg": "RightUpLeg", "RightFoot": "RightLeg",
-    "LeftArm": "Spine2", "LeftForeArm": "LeftArm", "LeftHand": "LeftForeArm",
-    "RightArm": "Spine2", "RightForeArm": "RightArm", "RightHand": "RightForeArm",
+    # The canonical (Wolf3D/Mixamo) skeleton has a clavicle bone between the
+    # chest and the upper arm: Spine2 → {Left,Right}Shoulder → {Left,Right}Arm.
+    # The arm's canonical LOCAL rest is expressed relative to that clavicle, so
+    # _to_canonical_local must transport the world delta through the clavicle's
+    # rest frame, not Spine2's. Using Spine2 as the parent skipped the ~120°
+    # clavicle rotation and sent every arm pose off by that much (arms folded up
+    # by the head). The solver does not animate the clavicle (it barely moves in
+    # real motion), so its rest world orientation is the correct fixed frame.
+    "LeftArm": "LeftShoulder", "LeftForeArm": "LeftArm", "LeftHand": "LeftForeArm",
+    "RightArm": "RightShoulder", "RightForeArm": "RightArm", "RightHand": "RightForeArm",
 }
 _ALL_PARENTS = {**_BODY_PARENTS, **_FINGER_PARENTS}
 
@@ -342,22 +353,65 @@ def _rest_globals() -> dict:
     return _REST_GLOBALS_CACHE
 
 
-def _to_canonical_local(bone: str, g: np.ndarray, rest_globals: dict) -> np.ndarray:
-    """World orientation `g` of `bone` → canonical-convention local keyframe."""
-    rs = REST_LOCAL.get(bone)
-    if rs is None:
-        return _IDENTITY.copy()
-    rs = np.asarray(rs, dtype=np.float64)
+def _canonical_world_anim(bone: str, globals_: dict, rest_globals: dict, cache: dict) -> np.ndarray:
+    """Animated WORLD orientation of `bone` on the canonical rig.
+
+    A bone the solver observed this frame is rotated from its canonical rest
+    world by the physical world delta it underwent from ITS OWN rest
+    (delta = g · grest⁻¹, frame-independent). A bone the solver does not drive
+    (the clavicles, an undetected finger) rides its animated parent at its bind
+    local, so it follows the torso/hand instead of freezing in world space.
+    """
+    cached = cache.get(bone)
+    if cached is not None:
+        return cached
+    wr = REST_WORLD.get(bone)
+    if wr is None:
+        cache[bone] = _IDENTITY.copy()
+        return cache[bone]
+    wr = np.asarray(wr, dtype=np.float64)
+    g = globals_.get(bone)
     grest = rest_globals.get(bone)
-    if grest is None:
-        return rs
-    # D = g · grest⁻¹  (physical world delta from rest)
-    delta = _quat_multiply(g, _quat_conjugate(grest))
-    parent = _ALL_PARENTS.get(bone)
-    wsp = np.asarray(REST_WORLD[parent], dtype=np.float64) if parent else _IDENTITY
-    wsp_inv = _quat_conjugate(wsp)
-    q = _quat_multiply(_quat_multiply(_quat_multiply(wsp_inv, delta), wsp), rs)
-    return _quat_normalize(q)
+    if g is not None and grest is not None:
+        delta = _quat_multiply(g, _quat_conjugate(grest))
+        w = _quat_multiply(delta, wr)
+    else:
+        parent = _ALL_PARENTS.get(bone)
+        rl = np.asarray(REST_LOCAL.get(bone, _IDENTITY), dtype=np.float64)
+        w = _quat_multiply(_canonical_world_anim(parent, globals_, rest_globals, cache), rl) if parent else wr
+    w = _quat_normalize(w)
+    cache[bone] = w
+    return w
+
+
+def _globals_to_canonical_locals(globals_: dict, rest_globals: dict, bones: list) -> dict:
+    """Batch-convert a frame of solver world orientations → canonical-rig LOCAL
+    keyframes via true hierarchical FK.
+
+    Each bone's local is taken against its parent's ANIMATED world, not its rest
+    world. This is the difference that keeps a swinging chain intact: the
+    forearm's parent (the upper arm) rotates up to 180° in real motion, so
+    resolving the forearm against the arm's REST frame folds it by that much
+    (hands snapping to the head). Resolving it against the arm's animated frame
+    keeps the elbow where the video puts it.
+    """
+    cache: dict = {}
+    out = {}
+    for bone in bones:
+        wb = _canonical_world_anim(bone, globals_, rest_globals, cache)
+        parent = _ALL_PARENTS.get(bone)
+        if parent is None:
+            # Armature offset A = W_rest · L_rest⁻¹ (identity when the root sits
+            # at world origin); L_root = A⁻¹ · W_anim keeps the root track in the
+            # model's own root-local frame.
+            wr = np.asarray(REST_WORLD.get(bone, _IDENTITY), dtype=np.float64)
+            rl = np.asarray(REST_LOCAL.get(bone, _IDENTITY), dtype=np.float64)
+            a_inv = _quat_conjugate(_quat_multiply(wr, _quat_conjugate(rl)))
+            out[bone] = _quat_normalize(_quat_multiply(a_inv, wb))
+        else:
+            wp = _canonical_world_anim(parent, globals_, rest_globals, cache)
+            out[bone] = _quat_normalize(_quat_multiply(_quat_conjugate(wp), wb))
+    return out
 
 
 def _smooth_quaternion_track(values: np.ndarray, fps: float) -> np.ndarray:
@@ -392,6 +446,48 @@ def _smooth_quaternion_track(values: np.ndarray, fps: float) -> np.ndarray:
             alpha = min(alpha, 0.25)  # suspected teleport: ease in, don't snap
         prev = _quat_slerp(prev, raw, float(np.clip(alpha, 0.04, 1.0)))
         out[t] = prev
+    return out
+
+
+def _hold_unsettled_ends(world: np.ndarray, max_frames: int = 12) -> np.ndarray:
+    """Replace leading/trailing frames from before MediaPipe's tracker locked on
+    with the first/last settled frame.
+
+    The VIDEO-mode landmarker needs a frame or two to converge, and the tail of
+    a clip can end on a half-lost detection. Those frames read as a body that
+    teleports (limbs flung, torso inverted) for ~0.1s at each end. We can't drop
+    them (the compositor pins clip frame t to video frame t via the anchors),
+    so we HOLD the nearest settled pose instead, keeping the frame count and
+    timing intact. A frame is "unsettled" when its whole-body jump to its
+    neighbour is a gross outlier (teleport) versus the clip's median jump.
+    """
+    world = np.asarray(world, dtype=np.float64)
+    n = world.shape[0]
+    if n < 5:
+        return world
+    jump = np.linalg.norm(np.diff(world, axis=0), axis=2).mean(axis=1)  # (n-1,)
+    med = float(np.median(jump))
+    # A mostly-static clip has median jump ≈ 0; fall back to the absolute floor
+    # so a genuine lock-on teleport is still caught rather than skipped.
+    thresh = max(6.0 * med, 0.15)
+    cap = min(max_frames, n // 4)
+    out = world.copy()
+    # A lock-on failure often repeats the same bad frame (no detection reuses the
+    # previous frame), so the teleport is the jump OUT of the garbage, not into
+    # it. Hold everything up to the frame after the LAST leading teleport within
+    # the window (and symmetrically at the tail), not just the first.
+    lead_settle = 0
+    for k in range(min(cap, jump.shape[0])):
+        if jump[k] > thresh:
+            lead_settle = k + 1
+    for t in range(lead_settle):
+        out[t] = world[lead_settle]
+    tail_settle = 0
+    for k in range(min(cap, jump.shape[0])):
+        if jump[n - 2 - k] > thresh:
+            tail_settle = k + 1
+    for t in range(tail_settle):
+        out[n - 1 - t] = world[n - 1 - tail_settle]
     return out
 
 
@@ -706,6 +802,7 @@ def landmarks_to_clip(
             sides.append(seq)
 
     rig = _to_rig_space(world)
+    rig = _hold_unsettled_ends(rig)
     if smooth:
         rig = smooth_landmarks(rig, fps)
 
@@ -722,17 +819,14 @@ def landmarks_to_clip(
                 for si, side in enumerate(("Left", "Right"))
             }
         sol = solve_frame(rig[t], prev_solution, frame_hands)
+        # Author in the canonical rig convention via hierarchical FK (see
+        # _globals_to_canonical_locals), not the solver's own T-pose frame, so
+        # the browser retarget round-trips instead of folding the skeleton, and
+        # each child resolves against its parent's ANIMATED pose (the fix that
+        # keeps forearms/lower legs from snapping when the parent swings).
+        locals_canon = _globals_to_canonical_locals(sol["globals"], rest_globals, track_bones)
         for bone in track_bones:
-            # Author in the canonical rig convention (see _to_canonical_local),
-            # not the solver's own T-pose frame, so the browser retarget
-            # round-trips instead of folding the skeleton. A held bone (no global
-            # this frame, e.g. an undetected finger) rests at its bind local.
-            gb = sol["globals"].get(bone)
-            if gb is None:
-                q = np.asarray(REST_LOCAL.get(bone, _IDENTITY), dtype=np.float64)
-            else:
-                q = _to_canonical_local(bone, gb, rest_globals)
-            q = _hemisphere(prev_quats.get(bone), q)
+            q = _hemisphere(prev_quats.get(bone), locals_canon[bone])
             prev_quats[bone] = q
             per_bone[bone].append(q)
         prev_solution = sol
