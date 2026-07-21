@@ -7918,7 +7918,8 @@ Neither needs an account or API key, so both are free to run.</p>
 below is real committed output from a live run, readable without executing
 anything. The <code>RUN_LIVE</code> flag in the Setup cell (default <code>False</code>) gates every
 cell that calls an external service, so a plain Run All makes no network calls
-beyond <code>pip</code>; flip the flag to <code>True</code> to reproduce the pipeline yourself. A
+beyond <code>pip</code> and replays the committed contact sheets in place of the live
+galleries; flip the flag to <code>True</code> to reproduce the pipeline yourself. A
 live run takes roughly 10 to 15 minutes end to end, almost all of it 3D
 generation time (about 30 to 90 seconds per prop, run in parallel).</p>
 </div>
@@ -8003,8 +8004,28 @@ generation time (about 30 to 90 seconds per prop, run in parallel).</p>
 <span class="c1"># True to opt in and reproduce the whole pipeline yourself.</span>
 <span class="n">RUN_LIVE</span> <span class="o">=</span> <span class="kc">False</span>
 
-<span class="n">SKIP_NOTE</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"RUN_LIVE is False: this cell kept its committed results instead of "</span>
-             <span class="s2">"calling the live services. Set RUN_LIVE = True in the Setup cell to run it."</span><span class="p">)</span>
+<span class="n">SKIP_NOTE</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"RUN_LIVE is False: skipped the live calls and replayed this cell's "</span>
+             <span class="s2">"committed results below. Set RUN_LIVE = True in the Setup cell to run it live."</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">show_committed</span><span class="p">(</span><span class="o">*</span><span class="n">receipts</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Replay the committed static contact sheets when a live cell is skipped,</span>
+<span class="sd">    so a keyless Run All still ends with every result visible. Looks for the</span>
+<span class="sd">    repo's images/ directory relative to common working directories; a</span>
+<span class="sd">    standalone copy of the notebook falls back to a pointer at the hosted run.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="n">SKIP_NOTE</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">receipts</span><span class="p">:</span>
+        <span class="n">hit</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">p</span> <span class="o">/</span> <span class="n">name</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span>
+                    <span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">"../../images"</span><span class="p">),</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"images"</span><span class="p">),</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"."</span><span class="p">))</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">p</span> <span class="o">/</span> <span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">is_file</span><span class="p">()),</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">hit</span><span class="p">:</span>
+            <span class="n">display</span><span class="p">(</span><span class="n">Image</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">hit</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  (static receipt </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> not found locally; see the committed "</span>
+                  <span class="sa">f</span><span class="s2">"run at https://three.ws/cookbook)"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8332,7 +8353,7 @@ the batch. Every model below was generated live by this cell.</p>
                  <span class="s2">"lane and rendered inline. Drag to orbit; tap AR on a phone."</span><span class="p">,</span>
     <span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">SKIP_NOTE</span><span class="p">)</span>
+    <span class="n">show_committed</span><span class="p">(</span><span class="s2">"threews_wizard_study_set.png"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -8617,7 +8638,7 @@ own brief in the last line:</p>
         <span class="n">subtitle</span><span class="o">=</span><span class="s2">"Designed and built by the model from a single-line brief."</span><span class="p">,</span>
     <span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">SKIP_NOTE</span><span class="p">)</span>
+    <span class="n">show_committed</span><span class="p">(</span><span class="s2">"threews_houseplant_set.png"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -9028,7 +9049,7 @@ survive script-free views too.</p>
         <span class="n">subtitle</span><span class="o">=</span><span class="s2">"Each card is the exact image the model inspected, with its structured verdict."</span><span class="p">,</span>
     <span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">SKIP_NOTE</span><span class="p">)</span>
+    <span class="n">show_committed</span><span class="p">(</span><span class="s2">"threews_houseplant_qa_verdicts.png"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -9185,7 +9206,7 @@ human.</p>
                  <span class="s2">"the critic's own revised prompt."</span><span class="p">,</span>
     <span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">SKIP_NOTE</span><span class="p">)</span>
+    <span class="n">show_committed</span><span class="p">(</span><span class="s2">"threews_houseplant_set_after_qa.png"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -9339,7 +9360,7 @@ the cell to copy into your own project.</p>
                  <span class="s2">"one sentence. Drag to orbit; tap AR on a phone."</span><span class="p">,</span>
     <span class="p">)</span>
 <span class="k">else</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">SKIP_NOTE</span><span class="p">)</span>
+    <span class="n">show_committed</span><span class="p">(</span><span class="s2">"threews_deep_sea_cabin_set.png"</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
