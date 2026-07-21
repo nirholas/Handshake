@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-21T14:08:45.687Z",
+	"generated_at": "2026-07-21T14:12:39.555Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
@@ -34,6 +34,17 @@
 			"link": "/objects",
 			"tags": [
 				"launch"
+			]
+		},
+		{
+			"date": "2026-07-21",
+			"type": "update",
+			"title": "3D viewers now hold the angle you choose",
+			"summary": "Dragging a model in any 3D viewer now stops the auto-spin for good, so you can actually study the back of a model instead of watching the turntable carry it away from you. Every viewer across the site (model pages, avatar pages, the marketplace, creation previews) picks up the fix, keyboard orbiting counts too, and display-only showcase turntables keep their idle spin.",
+			"link": null,
+			"tags": [
+				"fix",
+				"improvement"
 			]
 		},
 		{
