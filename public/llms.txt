@@ -390,6 +390,7 @@ Docs, tutorials, and reference.
 - [Tutorial: Build a Scene](https://three.ws/tutorials/build-a-scene): Step-by-step tutorial for building a 3D scene.
 - [Tutorial · Arm an Autonomous Sniper on Your Agent](https://three.ws/tutorials/arm-an-agent-sniper): Arm a three.ws agent to trade new pump.fun launches autonomously: fund its wallet, set the entry filters and exit ladder, watch the decision ledger, and know the off switches.
 - [three.ws on AWS](https://three.ws/aws): three.ws is an AWS Partner: the open-source 3D AI agent platform on AWS.
+- [Docs · NVIDIA Inception membership](https://three.ws/docs/nvidia-inception): three.ws is a member of the NVIDIA Inception program: what the platform runs on NVIDIA today, what membership adds (GPU credits, ACE/NIM migration, ecosystem access), and who is building it.
 
 ## Blog
 

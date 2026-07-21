@@ -6,6 +6,8 @@ three.ws runs a large share of its AI on NVIDIA's free hosted models. **One key 
 
 This document is the canonical map of **which NVIDIA-hosted model does what, where it's wired, and why**. Every model and endpoint below is in production source — nothing here is aspirational.
 
+As of July 2026, three.ws LLC is also a **member of the NVIDIA Inception program** ([details](/docs/nvidia-inception)). The free hosted lane on this page is unchanged by that: membership adds GPU credits, hardware access, and engineering support on top of it, which is how the platform scales past free-tier rate limits without giving up the free-first design.
+
 ---
 
 ## How the platform talks to NVIDIA

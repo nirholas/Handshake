@@ -2242,6 +2242,12 @@ URL: https://three.ws/aws
 
 three.ws is an AWS Partner: the open-source 3D AI agent platform on AWS.
 
+### Docs · NVIDIA Inception membership
+
+URL: https://three.ws/docs/nvidia-inception
+
+three.ws is a member of the NVIDIA Inception program: what the platform runs on NVIDIA today, what membership adds (GPU credits, ACE/NIM migration, ecosystem access), and who is building it.
+
 ## Blog
 
 Long-form announcements, launches, and writing from three.ws.

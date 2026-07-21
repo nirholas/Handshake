@@ -1,5 +1,5 @@
 {
-	"generated_at": "2026-07-21T01:13:06.713Z",
+	"generated_at": "2026-07-21T03:42:49.606Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json",
 	"site": {
 		"name": "three.ws",
@@ -3682,6 +3682,16 @@
 					"title": "three.ws on AWS",
 					"description": "three.ws is an AWS Partner: the open-source 3D AI agent platform on AWS.",
 					"added": null,
+					"auth": null,
+					"indexable": true,
+					"tags": [],
+					"showcase": false
+				},
+				{
+					"path": "/docs/nvidia-inception",
+					"title": "Docs · NVIDIA Inception membership",
+					"description": "three.ws is a member of the NVIDIA Inception program: what the platform runs on NVIDIA today, what membership adds (GPU credits, ACE/NIM migration, ecosystem access), and who is building it.",
+					"added": "2026-07-21",
 					"auth": null,
 					"indexable": true,
 					"tags": [],

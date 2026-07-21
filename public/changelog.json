@@ -1,11 +1,21 @@
 {
-	"generated_at": "2026-07-21T01:13:06.727Z",
+	"generated_at": "2026-07-21T03:42:49.620Z",
 	"generated_by": "scripts/build-page-index.mjs from data/pages.json + data/changelog.json",
 	"site": {
 		"name": "three.ws",
 		"url": "https://three.ws"
 	},
 	"entries": [
+		{
+			"date": "2026-07-21",
+			"type": "launch",
+			"title": "Docs · NVIDIA Inception membership",
+			"summary": "three.ws is a member of the NVIDIA Inception program: what the platform runs on NVIDIA today, what membership adds (GPU credits, ACE/NIM migration, ecosystem access), and who is building it.",
+			"link": "/docs/nvidia-inception",
+			"tags": [
+				"launch"
+			]
+		},
 		{
 			"date": "2026-07-21",
 			"type": "update",

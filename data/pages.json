@@ -2896,6 +2896,14 @@
 					"description": "three.ws is an AWS Partner: the open-source 3D AI agent platform on AWS.",
 					"priority": 0.6,
 					"changefreq": "weekly"
+				},
+				{
+					"path": "/docs/nvidia-inception",
+					"title": "Docs · NVIDIA Inception membership",
+					"description": "three.ws is a member of the NVIDIA Inception program: what the platform runs on NVIDIA today, what membership adds (GPU credits, ACE/NIM migration, ecosystem access), and who is building it.",
+					"priority": 0.6,
+					"changefreq": "monthly",
+					"added": "2026-07-21"
 				}
 			]
 		},
