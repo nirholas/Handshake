@@ -137,6 +137,12 @@ const EXTRA_ALIASES = (() => {
 	const SIDED = [
 		['leftUpperArm', 'LeftArm'], ['lUpperArm', 'LeftArm'], ['shoulderL', 'LeftArm'], ['lShldr', 'LeftArm'], ['lShldrBend', 'LeftArm'],
 		['leftLowerArm', 'LeftForeArm'], ['lLowerArm', 'LeftForeArm'], ['elbowL', 'LeftForeArm'], ['lForeArm', 'LeftForeArm'], ['lForearmBend', 'LeftForeArm'],
+		// Rigify/Blender anatomical spelling (`forearm.L`, `upper_arm.L`) — the side
+		// is a `.L`/`.R` SUFFIX, so it normalises to `forearml`, which none of the
+		// side-PREFIX spellings above (`lForeArm`, `lLowerArm`) reach. Without this
+		// the elbow bone drops and every Rigify-rigged character (Quaternius, many
+		// Blender exports) animates with a rigid, unbending forearm.
+		['forearmL', 'LeftForeArm'], ['upperArmL', 'LeftArm'],
 		['wristL', 'LeftHand'], ['lHand', 'LeftHand'],
 		['lCollar', 'LeftShoulder'], ['collarL', 'LeftShoulder'], ['lClavicle', 'LeftShoulder'],
 		['leftUpperLeg', 'LeftUpLeg'], ['lUpperLeg', 'LeftUpLeg'], ['hipL', 'LeftUpLeg'], ['lThigh', 'LeftUpLeg'], ['lThighBend', 'LeftUpLeg'],
@@ -245,17 +251,52 @@ export function canonicalizeJointNodes(json) {
 			for (const idx of skin.joints) jointIndices.add(idx);
 		}
 	}
-	let renamed = 0;
-	const samples = [];
+	// Pass 1: resolve each joint to a canonical target (or null).
+	const plan = [];
+	const targetCount = new Map();
 	for (const idx of jointIndices) {
 		const node = json.nodes[idx];
 		if (!node || typeof node.name !== 'string') continue;
 		const canonical = canonicalizeBoneName(node.name);
-		if (canonical && canonical !== node.name) {
-			if (samples.length < 5) samples.push({ from: node.name, to: canonical });
-			node.name = canonical;
-			renamed++;
+		if (!canonical || canonical === node.name) continue;
+		plan.push({ node, raw: node.name, canonical });
+		targetCount.set(canonical, (targetCount.get(canonical) || 0) + 1);
+	}
+
+	// Pass 1.5: collision-aware shoulder/upper-arm split. Rigify and other
+	// anatomical rigs name the clavicle `shoulder.L` and the upper arm
+	// `upper_arm.L`; both normalise onto `LeftArm`, so two joints would take the
+	// same name and the clip's arm rotation would bind to the clavicle instead of
+	// the upper arm (arm swings from the shoulder blade). When an Arm target is
+	// contested and one contender is clavicle-spelled, demote it to the Shoulder
+	// bone (which the clip library also drives) — but only if Shoulder is free, so
+	// this can never fire on a rig that doesn't actually have the collision.
+	const isClavicle = (raw) => /shoulder|clavicle|collar/i.test(raw);
+	const isUpperArm = (raw) => /upper.?arm|upperarm/i.test(raw);
+	for (const side of ['Left', 'Right']) {
+		const arm = `${side}Arm`;
+		const shoulder = `${side}Shoulder`;
+		if ((targetCount.get(arm) || 0) < 2 || (targetCount.get(shoulder) || 0) > 0) continue;
+		const contenders = plan.filter((p) => p.canonical === arm);
+		const hasUpperArm = contenders.some((p) => isUpperArm(p.raw));
+		if (!hasUpperArm) continue;
+		for (const p of contenders) {
+			if (isClavicle(p.raw) && !isUpperArm(p.raw)) {
+				p.canonical = shoulder;
+				targetCount.set(arm, targetCount.get(arm) - 1);
+				targetCount.set(shoulder, 1);
+				break;
+			}
 		}
+	}
+
+	// Pass 2: apply.
+	let renamed = 0;
+	const samples = [];
+	for (const p of plan) {
+		if (samples.length < 5) samples.push({ from: p.raw, to: p.canonical });
+		p.node.name = p.canonical;
+		renamed++;
 	}
 	return { renamed, samples };
 }

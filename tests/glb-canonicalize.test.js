@@ -385,6 +385,21 @@ describe('canonicalizeBoneName', () => {
 		expect(canonicalizeBoneName(input)).toBe(expected);
 	});
 
+	// Rigify / Blender anatomical arm chain: side is a `.L`/`.R` suffix and the
+	// forearm is spelled `forearm` (not `lowerarm`/`elbow`). The suffix normalises
+	// to `forearml`, which the side-prefix spellings never reach — so before the
+	// alias was added the elbow dropped and Rigify characters (Quaternius, many
+	// Blender exports) animated with a rigid forearm.
+	it.each([
+		['forearm.L',      'LeftForeArm'],
+		['forearm.R',      'RightForeArm'],
+		['DEF-forearm.L',  'LeftForeArm'],
+		['DEF-upper_arm.L','LeftArm'],
+		['upper_arm.R',    'RightArm'],
+	])('maps Rigify/Blender anatomical arm bones: %s → %s', (input, expected) => {
+		expect(canonicalizeBoneName(input)).toBe(expected);
+	});
+
 	it('only strips the suffix when the plain form does not already resolve', () => {
 		// A genuinely numbered finger bone must keep its index — the un-stripped
 		// form resolves first, so we never reach the suffix strip.
@@ -416,6 +431,40 @@ describe('canonicalizeJointNodes (in-place rewrite)', () => {
 		expect(json.nodes[3].name).toBe('mixamorig:Decoration_NotABone');
 		expect(samples).toHaveLength(3);
 		expect(samples[0]).toEqual({ from: 'mixamorig:Hips', to: 'Hips' });
+	});
+
+	it('splits a Rigify shoulder/upper-arm collision (clavicle → Shoulder, upper arm → Arm)', () => {
+		// Both `shoulder.L` (clavicle) and `upper_arm.L` normalise onto LeftArm.
+		// Without collision resolution two joints take the name LeftArm and the arm
+		// clip binds to the clavicle. The resolver demotes the clavicle to Shoulder.
+		const json = {
+			nodes: [
+				{ name: 'DEF-hips' },
+				{ name: 'DEF-shoulder.L' }, { name: 'DEF-upper_arm.L' }, { name: 'DEF-forearm.L' }, { name: 'DEF-hand.L' },
+				{ name: 'DEF-shoulder.R' }, { name: 'DEF-upper_arm.R' }, { name: 'DEF-forearm.R' }, { name: 'DEF-hand.R' },
+			],
+			skins: [{ joints: [0, 1, 2, 3, 4, 5, 6, 7, 8] }],
+		};
+		canonicalizeJointNodes(json);
+		const names = json.nodes.map((n) => n.name);
+		expect(names.filter((n) => n === 'LeftArm')).toHaveLength(1);
+		expect(names.filter((n) => n === 'LeftShoulder')).toHaveLength(1);
+		expect(names.filter((n) => n === 'LeftForeArm')).toHaveLength(1);
+		expect(names.filter((n) => n === 'RightArm')).toHaveLength(1);
+		expect(names.filter((n) => n === 'RightShoulder')).toHaveLength(1);
+	});
+
+	it('does NOT invent a Shoulder when there is no collision (simple rig: shoulder = the arm)', () => {
+		// A simple 3-joint rig names its upper arm `shoulderL` and has no separate
+		// upper-arm bone — so shoulder must stay LeftArm, never demote to Shoulder.
+		const json = {
+			nodes: [{ name: 'Hips' }, { name: 'shoulderL' }, { name: 'elbowL' }, { name: 'wristL' }],
+			skins: [{ joints: [0, 1, 2, 3] }],
+		};
+		canonicalizeJointNodes(json);
+		const names = json.nodes.map((n) => n.name);
+		expect(names).toContain('LeftArm');
+		expect(names).not.toContain('LeftShoulder');
 	});
 
 	it('returns 0 when the rig is already canonical', () => {
