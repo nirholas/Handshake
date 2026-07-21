@@ -87,12 +87,28 @@
 			<description>The sniper fleet now has an intra-arm optimizer that learns from each strategy's real trading record and proposes bounded adjustments to its own knobs (take-profit, trailing/stop, hold time, entry-quality, size). It runs in shadow mode by default, recording exactly what it would change without touching anything, and in apply mode only tunes strategies that opted in, logging every change to the agent's tamper-evident reasoning ledger. It pairs with the portfolio evolution engine (which reallocates budget across arms): the optimizer tunes each arm inward, evolution decides which arms get capital. Neither can touch a safety field.</description>
 		</item>
 		<item>
+			<title>The Oracle now learns from real trades, and the sniper learns from the Oracle</title>
+			<link>https://three.ws/docs/agent-sniper</link>
+			<guid isPermaLink="false">2026-07-21:The Oracle now learns from real trades, and the sniper learns from the Oracle</guid>
+			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
+			<category>feature</category>
+			<description>We connected the two learning systems that used to run in separate silos. The Oracle (which scores coins) now trains on the fleet's real realized profit and loss, not just whether a coin pumped on a chart. The sniper optimizer now reads each strategy's win rate bucketed by the Oracle's conviction and tunes its entry threshold toward the conviction band where it actually wins. And a new calibration job measures whether an 80-conviction coin really wins about 80 percent of the time by realized money, exposed at /api/oracle/calibration. Every layer is now pulled toward what actually paid.</description>
+		</item>
+		<item>
 			<title>The sniper fleet now runs its full self-improvement loop autonomously</title>
 			<link>https://three.ws/docs/agent-sniper</link>
 			<guid isPermaLink="false">2026-07-21:The sniper fleet now runs its full self-improvement loop autonomously</guid>
 			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
 			<category>feature</category>
 			<description>Both halves of the fleet's learning loop now run on their own schedule with no human in the loop. The intra-arm optimizer (every 6h) tunes each strategy's own knobs from its real results, and the portfolio evolution engine (every 12h) reallocates budget toward the arms that actually win and retires the ones that provably don't. Every change is bounded, reversible, and journaled; neither loop can touch a safety field or raise the total spend cap.</description>
+		</item>
+		<item>
+			<title>The sniper learned what a rug actually looks like, from its own data</title>
+			<link>https://three.ws/sniper/experiments</link>
+			<guid isPermaLink="false">2026-07-21:The sniper learned what a rug actually looks like, from its own data</guid>
+			<pubDate>Tue, 21 Jul 2026 12:00:00 GMT</pubDate>
+			<category>improvement</category>
+			<description>A human spots a manufactured chart instantly: a big opening candle, then a slow stairstep up on a handful of wallets with no real crowd underneath. Bots miss it and buy the trap. We stopped guessing at the signature and measured it. Across the fleet's own labeled outcomes, on coins that had a real market at entry, buying blind wins about 31 percent. The tells that actually separate a winner from a rug turned out to be whale concentration (is the whole float in ten wallets), crowd size (are there really 30-plus buyers or just a few), and front-loading (was all the volume crammed into the opening candle). Demanding a real crowd, an un-front-loaded tape, and a float that is not whale-held lifts the win rate to about 75 percent. Notably, the presence of sellers, which an earlier version leaned on, barely mattered. The detector now weights the proven tells, and both the rule agents and the LLM-judged agents see the same read.</description>
 		</item>
 		<item>
 			<title>The trading fleet now improves itself, hands-off</title>

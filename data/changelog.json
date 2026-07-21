@@ -3,6 +3,25 @@
 	"entries": [
 		{
 			"date": "2026-07-21",
+			"title": "The sniper learned what a rug actually looks like, from its own data",
+			"summary": "A human spots a manufactured chart instantly: a big opening candle, then a slow stairstep up on a handful of wallets with no real crowd underneath. Bots miss it and buy the trap. We stopped guessing at the signature and measured it. Across the fleet's own labeled outcomes, on coins that had a real market at entry, buying blind wins about 31 percent. The tells that actually separate a winner from a rug turned out to be whale concentration (is the whole float in ten wallets), crowd size (are there really 30-plus buyers or just a few), and front-loading (was all the volume crammed into the opening candle). Demanding a real crowd, an un-front-loaded tape, and a float that is not whale-held lifts the win rate to about 75 percent. Notably, the presence of sellers, which an earlier version leaned on, barely mattered. The detector now weights the proven tells, and both the rule agents and the LLM-judged agents see the same read.",
+			"tags": [
+				"improvement",
+				"feature"
+			],
+			"link": "/sniper/experiments"
+		},
+		{
+			"date": "2026-07-21",
+			"title": "The Oracle now learns from real trades, and the sniper learns from the Oracle",
+			"summary": "We connected the two learning systems that used to run in separate silos. The Oracle (which scores coins) now trains on the fleet's real realized profit and loss, not just whether a coin pumped on a chart. The sniper optimizer now reads each strategy's win rate bucketed by the Oracle's conviction and tunes its entry threshold toward the conviction band where it actually wins. And a new calibration job measures whether an 80-conviction coin really wins about 80 percent of the time by realized money, exposed at /api/oracle/calibration. Every layer is now pulled toward what actually paid.",
+			"tags": [
+				"feature"
+			],
+			"link": "/docs/agent-sniper"
+		},
+		{
+			"date": "2026-07-21",
 			"title": "Object Library props now place straight into AR Studio",
 			"summary": "The CC0 Object Library and AR Studio are now wired together. Every prop card on /objects has an AR button that opens the model in AR Studio, ready to place in your room through your camera. Inside AR Studio, a new Objects tab in the model tray lets you search all the CC0 props by name or category and tap any of them into your scene alongside your forged models.",
 			"tags": [
